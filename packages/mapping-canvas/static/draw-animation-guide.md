@@ -1,12 +1,12 @@
 # Draw animation: Codex artwork, editable motion
 
-Open /animate. Choose Open sample tutorial for an original 20-second example. Animation projects use a separate local store; your mapping canvas stays intact.
+Choose Motion from a Draw canvas, or open `/animate?project=<project-id>`. Canvas and Motion are separate spaces of the same local-first project: representable Canvas objects keep their actual IDs, and their Motion poses remain attached when you move between spaces. Choose Open sample tutorial for an original 20-second example.
 
 ## Human workflow
 
 Add a circle, pencil stroke, caption, or image. Select a drawing, move the playhead, and drag it or change its pose controls. The change creates a key pose. Edit points moves the same stroke points in that pose. Ease and Linear interpolate toward the next pose; Hold keeps the pose until the next key. Onion skins show neighboring frames. Play evaluates the saved poses locally; no AI requests occur during playback.
 
-Use Save project to download the complete editable project, including image bytes. Open project creates a separate copy. Projects survive reload in this browser, but clearing site data removes local storage: keep downloaded backups. Copy saved drawing imports marks without replacing your original map. Mapping-only groups/connectors are omitted; inspect the copy before animation.
+Use Save project to download the complete editable Motion state, including image bytes. Open project creates a separate project. Projects survive reload in this browser, but clearing site data removes local storage: keep downloaded backups. Existing Canvas and legacy Motion projects are discovered and copied into the shared project store without deleting their old browser data. Canvas notes, strokes, rectangles, ellipses, and arrows can become Motion drawings; mapping-only groups and connectors remain in Canvas and are omitted from Motion.
 
 ## Codex account generation
 
@@ -16,7 +16,7 @@ Import the generated PNG/JPEG/WebP with Image / asset. For provenance, Codex can
 
 ## Agent workflow
 
-Use the page's WebMCP tools: draw_animation_inspect for settings, revision and compact artwork/asset inventory; draw_animation_drawing for one exact drawing; draw_animation_apply for atomic edits; draw_animation_seek to share the playhead/selection; draw_animation_history for undo/redo. Always use the inspected expectedRevision. A stale edit fails without overwriting another edit. For a new pose, copy the evaluated pose and modify only the required fields. Keep point count/order stable. Coordinates are local to each drawing; rotation is in degrees around its origin. The easing on the left key controls the transition.
+In Canvas, create and format the source objects with the `draw_*` WebMCP tools, then use the visible Motion link. In Motion, use `draw_animation_inspect` for the shared project ID, revision, compact artwork inventory, and Canvas source IDs; `draw_animation_drawing` for one exact drawing; `draw_animation_apply` for atomic edits; `draw_animation_seek` to share the playhead/selection; and `draw_animation_history` for undo/redo. Always use the inspected `expectedRevision`. A stale edit fails without overwriting another edit. For a new pose, copy the evaluated pose and modify only the required fields. Keep point count/order stable. Coordinates are local to each drawing; rotation is in degrees around its origin. The easing on the left key controls the transition.
 
 ## Export and Remotion
 

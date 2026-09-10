@@ -104,6 +104,7 @@ export function animationTools(c: AnimationController): DrawWebMcpTool[] {
       assets: p.assets.map(({ data, ...a }) => ({ ...a, characters: data.length })),
       drawings: p.drawings.map((d) => ({
         id: d.id,
+        source: d.source,
         name: d.name,
         kind: d.kind,
         assetId: d.assetId,

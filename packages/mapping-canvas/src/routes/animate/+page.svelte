@@ -31,7 +31,6 @@
   import { download, png, exportVideo } from '$lib/animation/export';
   import { importMap } from '$lib/animation/import-map';
   import { parse as parseMap } from '$lib/document';
-  import { loadDocument } from '$lib/persistence';
   import { registerDrawWebMcpTools } from '$lib/webmcp';
   import './page.css';
   let project = $state.raw<Project>(newProject()),
@@ -80,7 +79,7 @@
           projects = [{ id: project.id, title: project.title, revision: project.revision }];
         }
         ready = true;
-        status = 'Saved on this device';
+        status = `Canvas + Motion · ${project.id}`;
       } catch (e) {
         status = message(e);
       }
@@ -197,6 +196,11 @@
   function stop() {
     playing = false;
     cancelAnimationFrame(raf);
+  }
+  async function openCanvas(event: MouseEvent) {
+    event.preventDefault();
+    await queue;
+    location.href = `/?project=${project.id}`;
   }
   function play() {
     if (playing) {
@@ -315,13 +319,6 @@
       if (bundle.version !== 'draw.asset.v1') throw new Error('Expected a draw.asset.v1 bundle.');
       await addAsset({ ...bundle.asset, id: makeId() }, projectId, revision);
     } else await addAsset(await importImage(file), projectId, revision);
-  }
-  async function copyMap() {
-    const map = await loadDocument();
-    if (!map) throw new Error('No drawing saved on this device.');
-    const result = importMap(map);
-    await fresh({ ...newProject(), title: `${map.title} · animation`, drawings: result.drawings });
-    status = `Copied ${result.drawings.length} marks; ${result.skipped} mapping-only objects omitted. Original map preserved.`;
   }
   function add(kind: 'circle' | 'text') {
     const d: Drawing = {
@@ -486,7 +483,9 @@
 >
 <main>
   <header>
-    <a href="/" class="brand">DRAW <span>ANIMATION</span></a><input
+    <a href={`/?project=${project.id}`} onclick={openCanvas} class="brand"
+      >DRAW <span>MOTION</span></a
+    ><input
       aria-label="Animation title"
       value={project.title}
       onchange={(e) => changeSetting('title', e.currentTarget.value)}
@@ -503,7 +502,7 @@
           'animation.draw.json'
         )}
       disabled={!ready}>Save project</button
-    ><a href="/">Back to drawing</a>
+    ><a href={`/?project=${project.id}`} onclick={openCanvas}>Canvas</a>
   </header>
   {#if showHelp}<aside class="help">
       <strong>Create artwork in your Codex conversation.</strong> Ask Codex to generate an
@@ -568,8 +567,6 @@
             await fresh({ ...parseProject(await r.text()), id: makeId(), revision: 0 });
           })}
         disabled={!ready || busy || exporting}>Open sample tutorial</button
-      ><button onclick={() => run(copyMap)} disabled={!ready || busy || exporting}
-        >Copy saved drawing</button
       >
       <div class="drawing-list">
         {#each project.drawings as d (d.id)}<button

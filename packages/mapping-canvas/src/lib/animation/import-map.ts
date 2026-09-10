@@ -1,6 +1,7 @@
 import { type CanvasDocument, objectBounds } from '../document';
-import { basePose, makeId, type Drawing } from './model';
-/** Copy representable marks; never mutate the source map or its local storage. */
+import { basePose, newProject, type Drawing, type Project } from './model';
+
+/** Materialize representable Canvas marks in Motion without changing their identity. */
 export function importMap(map: CanvasDocument): { drawings: Drawing[]; skipped: number } {
   const bounds = objectBounds(map.objects);
   const scale = Math.min(1, 1100 / bounds.width, 560 / bounds.height);
@@ -8,7 +9,8 @@ export function importMap(map: CanvasDocument): { drawings: Drawing[]; skipped: 
   const drawings: Drawing[] = [];
   for (const object of map.objects) {
     const common = {
-      id: makeId(),
+      id: object.id,
+      source: { space: 'canvas' as const, objectId: object.id },
       name: object.kind === 'note' ? object.text.slice(0, 80) : object.kind,
       kind: 'stroke' as const,
       color: 'color' in object && /^#[\da-f]{6}$/i.test(object.color) ? object.color : '#282522',
@@ -78,4 +80,40 @@ export function importMap(map: CanvasDocument): { drawings: Drawing[]; skipped: 
     } else skipped++;
   }
   return { drawings, skipped };
+}
+
+function retainAnimation(source: Drawing, prior: Drawing | undefined): Drawing {
+  if (!prior || prior.source?.space !== 'canvas') return source;
+  const samePointCount = prior.points.length === source.points.length;
+  return {
+    ...source,
+    space: prior.space,
+    boil: source.kind === 'stroke' ? prior.boil : undefined,
+    poses: prior.poses.map((pose) => ({
+      ...pose,
+      points: samePointCount ? pose.points : undefined
+    }))
+  };
+}
+
+/** Reconcile the Canvas space into Motion while preserving poses and Motion-only artwork. */
+export function syncMotionProject(map: CanvasDocument, existing?: Project): Project {
+  const imported = importMap(map);
+  const prior = new Map(existing?.drawings.map((drawing) => [drawing.id, drawing]));
+  const canvasDrawings = imported.drawings.map((drawing) =>
+    retainAnimation(drawing, prior.get(drawing.id))
+  );
+  const motionOnly =
+    existing?.drawings.filter((drawing) => drawing.source?.space !== 'canvas') ?? [];
+  const drawings = [
+    ...canvasDrawings,
+    ...motionOnly.filter(
+      (drawing) => !prior.has(drawing.id) || !canvasDrawings.some(({ id }) => id === drawing.id)
+    )
+  ];
+  if (!existing) return { ...newProject(), id: map.id, title: map.title, drawings };
+  const candidate = { ...existing, id: map.id, title: map.title, drawings };
+  return JSON.stringify(candidate) === JSON.stringify(existing)
+    ? existing
+    : { ...candidate, revision: existing.revision + 1 };
 }

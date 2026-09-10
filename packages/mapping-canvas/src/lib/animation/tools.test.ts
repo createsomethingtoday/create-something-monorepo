@@ -16,6 +16,36 @@ it('returns cloneable compact receipts and rejects stale agent edits', async () 
       )
     }
   ];
+  p.drawings = [
+    {
+      id: 'canvas-stroke',
+      source: { space: 'canvas', objectId: 'canvas-stroke' },
+      name: 'Shared stroke',
+      kind: 'stroke',
+      points: [
+        { x: 0, y: 0 },
+        { x: 20, y: 20 }
+      ],
+      color: '#222222',
+      weight: 3,
+      text: '',
+      width: 20,
+      height: 20,
+      poses: [
+        {
+          time: 0,
+          x: 0,
+          y: 0,
+          rotation: 0,
+          scaleX: 1,
+          scaleY: 1,
+          opacity: 1,
+          reveal: 1,
+          easing: 'ease'
+        }
+      ]
+    }
+  ];
   const tools = animationTools({
     get: () => p,
     apply: async (ops, r) => {
@@ -26,6 +56,9 @@ it('returns cloneable compact receipts and rejects stale agent edits', async () 
     history: async () => {}
   });
   const read = await tools[0].execute({});
+  expect(read).toMatchObject({
+    drawings: [{ id: 'canvas-stroke', source: { space: 'canvas', objectId: 'canvas-stroke' } }]
+  });
   expect(() => structuredClone(read)).not.toThrow();
   expect(JSON.stringify(read)).not.toContain('base64');
   await expect(

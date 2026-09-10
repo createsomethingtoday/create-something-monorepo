@@ -1,4 +1,4 @@
-/** Animation owns a separate document: old mapping drafts are never migrated in place. */
+/** Motion is a separate editing space attached to the same logical Draw project. */
 export type Point = { x: number; y: number };
 export type Easing = 'linear' | 'ease' | 'hold';
 export type Pose = {
@@ -37,6 +37,7 @@ export type Flipbook = {
   registration: 'cell' | 'alpha';
 };
 export type Drawing = {
+  source?: { space: 'canvas'; objectId: string };
   space?: 'world' | 'screen';
   boil?: Boil;
   flipbook?: Flipbook;
@@ -212,7 +213,8 @@ export function validateProject(value: unknown): asserts value is Project {
         'poses',
         'space',
         'boil',
-        'flipbook'
+        'flipbook',
+        'source'
       ]) ||
       !id(d.id) ||
       drawingIds.has(d.id) ||
@@ -231,6 +233,15 @@ export function validateProject(value: unknown): asserts value is Project {
       (d.kind === 'stroke' && d.points.length < 2)
     )
       throw new Error('Invalid drawing, asset reference or drawing limits.');
+    if (
+      d.source !== undefined &&
+      (!d.source ||
+        !keys(d.source, ['space', 'objectId']) ||
+        d.source.space !== 'canvas' ||
+        !id(d.source.objectId) ||
+        d.source.objectId !== d.id)
+    )
+      throw new Error('Canvas-backed motion drawings must preserve their source object ID.');
     if (d.space !== undefined && !['world', 'screen'].includes(d.space))
       throw new Error('Invalid drawing space.');
     if (

@@ -547,7 +547,8 @@
 
   async function initializeSession() {
     if (!nativeShell) {
-      await loadDocument().then((saved) => { if (saved) { history = { past: [], present: saved, future: [] }; restoreManagedShare(saved.id); status = 'Restored from this device'; } else status = 'New local session'; }).catch(() => status = 'Local storage unavailable · export copies');
+      const requested = new URL(location.href).searchParams.get('project') ?? undefined;
+      await loadDocument(requested).then((saved) => { if (saved) { history = { past: [], present: saved, future: [] }; restoreManagedShare(saved.id); status = 'Restored from this device'; } else status = 'New local session'; }).catch(() => status = 'Local storage unavailable · export copies');
       ready = true;
       return;
     }
@@ -656,6 +657,7 @@
     return navigator.locks ? navigator.locks.request(DRAW_DOCUMENT_LOCK, run) : run();
   }
   function queueSave(next: CanvasDocument) { if (!browser || nativeRole !== 'web') return; clearTimeout(saveTimer); status = 'Saving locally…'; saveTimer = setTimeout(() => void persistCurrentDocument(next).then((saved) => status = saved ? 'Saved on this device' : 'Another tab replaced this canvas · reload to continue').catch(() => status = 'Local save failed · export a copy'), 120); }
+  async function openMotion(event: MouseEvent) { event.preventDefault(); noteInput.flushAll(); clearTimeout(saveTimer); saveTimer = undefined; await saveDocument(document); location.href = `/animate?project=${document.id}`; }
   function commitNoteText(id: string, text: string) { if (!companionCanEdit()) return; const current = document.objects.find((entry) => entry.id === id); if (!current || current.kind !== 'note' || (current.text === text && !current.content)) return; const changed = { ...current, text, content: undefined }; const next = withObjects(document, document.objects.map((entry) => entry.id === id ? changed : entry)); history = { ...history, present: next }; queueSave(next); sendNative([{ type: 'put_object', object: changed }]); }
   function formatSelectedNote(blockType?: NoteBlockType, mark?: 'bold' | 'italic' | 'underline' | 'code' | 'link') {
     const note = selectedIds.length === 1 ? history.present.objects.find((entry) => entry.id === selectedIds[0]) : null;
@@ -1130,7 +1132,7 @@
 
 <main class="app-shell" class:native-shell={nativeShell}>
   <header class="topbar">
-    <div class="identity"><img src="/brand/create-something-agency-white.svg" alt="CREATE SOMETHING .agency" /><span>Draw · Mapping canvas</span>{#if nativeRole === 'web'}<a class="source-link" href="/animate">Animate</a>{/if}<a class="source-link" href="/download" target="_blank" rel="noreferrer">Mac</a><a class="source-link" href="https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/mapping-canvas" target="_blank" rel="noreferrer">Source</a>{#if nativeRole !== 'web'}<button class="native-link" aria-label="Open device pairing" onclick={openPairing}>{nativeRole === 'host' ? 'Pair' : nativeSession.sessionId ? 'Linked' : 'Link'}</button>{/if}</div>
+    <div class="identity"><img src="/brand/create-something-agency-white.svg" alt="CREATE SOMETHING .agency" /><span>Draw · Canvas</span>{#if nativeRole === 'web'}<a class="source-link" href={`/animate?project=${document.id}`} onclick={openMotion}>Motion</a>{/if}<a class="source-link" href="/download" target="_blank" rel="noreferrer">Mac</a><a class="source-link" href="https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/mapping-canvas" target="_blank" rel="noreferrer">Source</a>{#if nativeRole !== 'web'}<button class="native-link" aria-label="Open device pairing" onclick={openPairing}>{nativeRole === 'host' ? 'Pair' : nativeSession.sessionId ? 'Linked' : 'Link'}</button>{/if}</div>
     <input class="title" aria-label="Canvas title" maxlength="240" value={document.title} oninput={(event) => updateTitle(event.currentTarget)} />
     {#if nativeRole !== 'companion'}<div class="file-actions"><button onclick={() => fileInput?.click()} disabled={sharing || replacingDocument}>Import</button><button onclick={exportJson}>JSON</button><button onclick={exportSvg}>SVG</button><button onclick={exportPng}>PNG</button>{#if nativeRole === 'web'}{#if share}<button onclick={copyShareLink}>Copy link</button><button onclick={updateSnapshot} disabled={sharing || replacingDocument}>Update link</button><button onclick={revokeSnapshot} disabled={sharing || replacingDocument}>Revoke</button>{:else}<button class="share-action" onclick={publishSnapshot} disabled={sharing || replacingDocument}>Publish view-only</button>{/if}{/if}<button onclick={resetCanvas} disabled={sharing || replacingDocument}>Reset</button><input bind:this={fileInput} class="visually-hidden" type="file" accept="application/json,.json" disabled={sharing || replacingDocument} onchange={importJson} /></div>{/if}
   </header>
