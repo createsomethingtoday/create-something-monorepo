@@ -59,10 +59,11 @@ if (!(await view.getByRole('heading', { name: 'Updated proof' }).isVisible())) t
 const invalid = await context.request.delete(`${baseUrl}/api/shares/${published.shareId}`, { headers: { Origin: new URL(baseUrl).origin, Authorization: `Bearer ${'A'.repeat(43)}` } });
 if (invalid.status() !== 404) throw new Error('Invalid capability disclosed share state.');
 const beforeReset = await page.evaluate(() => window.__drawWebMcpTools.draw_get_state.execute({}));
-await page.evaluate(() => window.__drawWebMcpTools.draw_reset.execute({ confirmation: 'RESET CANVAS' }));
+const resetProjectId = await page.evaluate(async () => { await window.__drawWebMcpTools.draw_reset.execute({ confirmation: 'RESET CANVAS' }); return (await window.__drawWebMcpTools.draw_get_state.execute({})).document.id; });
 await page.waitForTimeout(300);
 await page.reload({ waitUntil: 'networkidle' });
 await page.waitForFunction(() => Object.keys(window.__drawWebMcpTools).filter((name) => name.startsWith('draw_')).length === 24);
+await page.waitForFunction(async (projectId) => { try { return (await window.__drawWebMcpTools.draw_get_state.execute({})).document.id === projectId; } catch { return false; } }, resetProjectId);
 const resetState = await page.evaluate(async () => ({ state: await window.__drawWebMcpTools.draw_get_state.execute({}), share: await window.__drawWebMcpTools.draw_get_share_status.execute({}), projectParam: new URL(location.href).searchParams.get('project') }));
 if (resetState.share.share || resetState.state.document.id === beforeReset.document.id || resetState.projectParam !== resetState.state.document.id) throw new Error('Reset transferred a retained project capability or left a stale project URL.');
 await page.goto(`${baseUrl}/?project=${encodeURIComponent(beforeReset.document.id)}`, { waitUntil: 'networkidle' });
