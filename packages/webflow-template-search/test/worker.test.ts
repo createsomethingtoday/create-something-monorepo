@@ -2208,6 +2208,16 @@ describe('webflow-template-search worker', () => {
       expect(relaxedPayload.items.map((item) => item.name)).toEqual(['Agentflow']);
       expect(relaxedPayload.applied_filters.relaxed).toBe(true);
 
+      const strictSearch = await callWorker(new Request('https://templates.test/api/templates/search?q=workflow%20zzznomatch&strict=true'), env);
+      const strictPayload = await strictSearch.json() as { items: unknown[]; applied_filters: { relaxed: boolean } };
+      expect(strictPayload.items).toEqual([]);
+      expect(strictPayload.applied_filters.relaxed).toBe(false);
+      const exactSearch = await callWorker(new Request('https://templates.test/api/templates/search?template_slug=agentflow-website-template&include=items'), env);
+      const exactPayload = await exactSearch.json() as { items: Array<{ template_slug: string }> };
+      expect(exactPayload.items.map(item => item.template_slug)).toEqual(['agentflow-website-template']);
+      const missingExact = await callWorker(new Request('https://templates.test/api/templates/search?template_slug=not-a-real-template&include=items'), env);
+      expect((await missingExact.json() as { items: unknown[] }).items).toEqual([]);
+
       // A single unmatched token cannot be relaxed; the empty result stands.
       const unmatchedSearch = await callWorker(
         new Request('https://templates.test/api/templates/search?q=zzznomatch'),

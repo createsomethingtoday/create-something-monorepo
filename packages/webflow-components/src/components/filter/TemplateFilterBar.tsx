@@ -793,6 +793,9 @@ function readRouteContext(
     scope = 'landing_pages';
   }
 
+  const queryScope = url.searchParams.get('scope');
+  if (queryScope === 'featured' || queryScope === 'free' || queryScope === 'landing_pages') scope = queryScope;
+
   return {
     scope: scopeOverride && scopeOverride !== 'all' ? scopeOverride : scope,
     categoryGroupSlug: categoryParam || categorySlugOverride || (categoryMatch ? categoryMatch[1] : null),

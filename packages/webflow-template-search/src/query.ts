@@ -70,6 +70,8 @@ export function parseSearchParams(url: URL, defaultPageSize = 24): SearchParams 
 
   return {
     q: q?.trim() ? q.trim() : null,
+    templateSlug: normalizeSlug(params.get("template_slug")),
+    strict: toBoolean(params.get("strict")),
     scope: parseScope(params),
     categoryGroupSlug: params.get('category_group_slug')?.trim() || null,
     childCategorySlug: params.get('child_category_slug')?.trim() || null,

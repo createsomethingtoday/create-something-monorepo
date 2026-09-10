@@ -178,6 +178,8 @@ export interface TemplateDocumentInput {
 }
 
 export interface SearchParams {
+  templateSlug?: string | null;
+  strict?: boolean;
   q: string | null;
   scope: TemplateScope;
   categoryGroupSlug: string | null;
@@ -221,6 +223,10 @@ export interface SearchItem {
   is_featured: boolean;
   reviewer_pick_reason: string | null;
   description_short?: string;
+  description?: string;
+  included_pages?: string[];
+  features?: string[];
+  source_updated_at?: string | null;
   template_type: string | null;
   popularity_score: number | null;
   unique_viewers: number | null;

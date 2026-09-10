@@ -121,7 +121,7 @@ function includeCacheValue(params: SearchParams): string {
 }
 
 function buildPublicSearchCacheRequest(requestUrl: URL, params: SearchParams, cacheVersion: string): Request | null {
-  if (params.page !== 1 || params.q) return null;
+  if (params.page !== 1 || params.q || params.templateSlug || params.strict) return null;
 
   const cacheUrl = new URL(requestUrl.pathname, requestUrl.origin);
   cacheUrl.searchParams.set('cache_version', cacheVersion);

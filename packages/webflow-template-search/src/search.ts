@@ -1,3 +1,4 @@
+import { extractDescriptionList } from './html.js';
 import { lookupPublicSlugMap, resolveAlias } from './db.js';
 import type {
   DocumentCountRow,
@@ -211,6 +212,8 @@ function buildSqlParts(params: SearchParams, options: FilterOptions = {}): SqlPa
     binds.push(...candidates.binds);
     queryMode = true;
   }
+
+  if (params.templateSlug) { clauses.push('d.template_slug = ?'); binds.push(params.templateSlug); }
 
   if (params.scope === 'featured') clauses.push('d.is_featured = 1');
   if (params.scope === 'free') clauses.push(FREE_TEMPLATE_CLAUSE);
@@ -623,7 +626,7 @@ export async function searchTemplates(env: Env, rawParams: SearchParams): Promis
     // A strict query AND-matches every token, so one typo'd or unmatched token
     // yields a dead-end empty grid. Retry once with tokens OR'ed; consumers see
     // applied_filters.relaxed and can message "showing related results".
-    if (totalItems === 0 && sqlParts.queryMode && canRelaxQuery(params.q)) {
+    if (!params.strict && !params.templateSlug && totalItems === 0 && sqlParts.queryMode && canRelaxQuery(params.q)) {
       const relaxedParts = buildSqlParts(params, { relaxedQuery: true });
       const relaxedTotal = await getTotalCount(env.DB, relaxedParts);
       if (relaxedTotal > 0) {
@@ -712,6 +715,11 @@ export async function searchTemplates(env: Env, rawParams: SearchParams): Promis
 
     if (includeExtendedDetails) {
       item.tags = buildTags(tags, tagSlugs);
+      item.description_short = row.description_short;
+      item.description = row.description_long_text;
+      item.included_pages = extractDescriptionList(row.description_long_html, 'pages');
+      item.features = extractDescriptionList(row.description_long_html, 'features');
+      item.source_updated_at = row.source_last_modified_time;
     }
 
     return item;
