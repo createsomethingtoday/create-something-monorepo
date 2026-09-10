@@ -492,7 +492,11 @@ export function boiledPoints(points: Point[], boil: Boil | undefined, time: numb
       steps = Math.max(1, Math.ceil(length / spacing));
     for (let j = 1; j <= steps; j++) {
       const t = j / steps,
-        amount = j === steps ? 0 : noise(index++) * boil.amplitude;
+        amount = i === points.length - 1 && j === steps ? 0 : noise(index++) * boil.amplitude;
+      if (i === points.length - 1 && j === steps) {
+        out.push(b);
+        continue;
+      }
       out.push({
         x: a.x + (b.x - a.x) * t - ((b.y - a.y) / (length || 1)) * amount,
         y: a.y + (b.y - a.y) * t + ((b.x - a.x) / (length || 1)) * amount

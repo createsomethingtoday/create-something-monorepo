@@ -32,7 +32,7 @@ This uses Motion Studio's pinned Remotion runtime and the exact same Draw evalua
 
 ## Hand-drawn motion
 
-Select a vector and enable Hand-drawn redraw. Line variation controls its roughness, Redraws / second controls the drawing cadence, and the seed makes that variation repeatable. Original points and connector endpoints stay anchored. Use Reveal key poses from 0 to 1 to grow a line along its length; time the next element to appear when the line arrives.
+Select a vector and enable Hand-drawn redraw. Line variation controls its roughness, Redraws / second controls the drawing cadence, and the seed makes that variation repeatable. Stored geometry stays editable; the first and last stroke endpoints stay anchored. Use Reveal key poses from 0 to 1 to grow a line along its length; time the next element to appear when the line arrives.
 
 For raster redraws, ask Codex for a transparent, evenly spaced image sheet with a few variations of the same illustration. Import it once, enable Play image variations, and set the sheet columns, rows and frame count. Cells play left to right, then down. Eight redraws per second is a useful starting point. Align transparent silhouettes normalizes each cell's visible bounds; Keep sheet cell positions preserves intentional differences in size and placement. Use consistently shaped variants for a steady silhouette. These are reusable raster cells, not editable vector points or new image-generation calls on every frame.
 

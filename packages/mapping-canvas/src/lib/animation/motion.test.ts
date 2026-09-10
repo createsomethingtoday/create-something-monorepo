@@ -72,6 +72,22 @@ describe('motion contracts', () => {
     expect(a.at(-1)).toEqual(stroke.points.at(-1));
     expect(stroke.points).toHaveLength(2);
   });
+  it('redraws dense pencil samples and built-in circles while retaining endpoints', () => {
+    const pencil = Array.from({ length: 40 }, (_, i) => ({ x: i * 3.1, y: 0 }));
+    const circle = Array.from({ length: 49 }, (_, i) => ({
+      x: Math.cos((i / 48) * Math.PI * 2) * 55,
+      y: Math.sin((i / 48) * Math.PI * 2) * 55
+    }));
+    for (const points of [pencil, circle]) {
+      const original = structuredClone(points);
+      const a = boiledPoints(points, { amplitude: 2, fps: 8, seed: 1 }, 0);
+      const b = boiledPoints(points, { amplitude: 2, fps: 8, seed: 1 }, 0.125);
+      expect(a).not.toEqual(b);
+      expect(a[0]).toEqual(points[0]);
+      expect(a.at(-1)).toEqual(points.at(-1));
+      expect(points).toEqual(original);
+    }
+  });
   it('bounds resampling for long paths', () => {
     const pts = Array.from({ length: 1000 }, (_, i) => ({ x: i % 2 ? 10000 : -10000, y: i }));
     expect(boiledPoints(pts, { amplitude: 5, fps: 12, seed: 1 }, 1).length).toBeLessThanOrEqual(
