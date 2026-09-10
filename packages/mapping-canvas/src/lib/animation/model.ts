@@ -104,6 +104,15 @@ export const newProject = (): Project => ({
   assets: [],
   drawings: []
 });
+/** Create a Motion-only copy. Canvas provenance belongs to the original shared project ID. */
+export function independentProjectCopy(project: Project, projectId: string = makeId()): Project {
+  return {
+    ...project,
+    id: projectId,
+    revision: 0,
+    drawings: project.drawings.map(({ source: _source, ...drawing }) => drawing)
+  };
+}
 const finite = (x: unknown, min: number, max: number) =>
   typeof x === 'number' && Number.isFinite(x) && x >= min && x <= max;
 const string = (x: unknown, max: number) => typeof x === 'string' && x.length <= max;

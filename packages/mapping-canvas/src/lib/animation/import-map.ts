@@ -1,5 +1,21 @@
 import { type CanvasDocument, objectBounds } from '../document';
-import { basePose, isMotionDrawingId, newProject, type Drawing, type Project } from './model';
+import {
+  basePose,
+  isMotionDrawingId,
+  LIMITS,
+  newProject,
+  type Drawing,
+  type Point,
+  type Project
+} from './model';
+
+function boundedStrokePoints(points: Point[]): Point[] {
+  if (points.length <= LIMITS.points) return points;
+  const last = points.length - 1;
+  return Array.from({ length: LIMITS.points }, (_, index) =>
+    points[Math.round((index * last) / (LIMITS.points - 1))]
+  );
+}
 
 /** Materialize representable Canvas marks in Motion without changing their identity. */
 export function importMap(map: CanvasDocument): { drawings: Drawing[]; skipped: number } {
@@ -39,7 +55,13 @@ export function importMap(map: CanvasDocument): { drawings: Drawing[]; skipped: 
       };
     };
     if (object.kind === 'stroke')
-      drawings.push(sourced({ ...common, points: object.points, weight: object.width }));
+      drawings.push(
+        sourced({
+          ...common,
+          points: boundedStrokePoints(object.points),
+          weight: Math.min(100, Math.max(0.1, object.width))
+        })
+      );
     else if (object.kind === 'note')
       drawings.push(sourced({
         ...common,
@@ -109,7 +131,13 @@ function retainAnimation(source: Drawing, prior: Drawing | undefined): Drawing {
       y: newOrigin.y + (pose.y - oldOrigin.y) * scaleY,
       scaleX: pose.scaleX * scaleX,
       scaleY: pose.scaleY * scaleY,
-      points: samePointCount ? pose.points : undefined
+      points:
+        samePointCount && pose.points
+          ? pose.points.map((point, index) => ({
+              x: source.points[index].x + (point.x - prior.points[index].x),
+              y: source.points[index].y + (point.y - prior.points[index].y)
+            }))
+          : undefined
     }))
   };
 }

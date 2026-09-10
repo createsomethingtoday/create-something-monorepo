@@ -8,6 +8,7 @@
     newProject,
     basePose,
     makeId,
+    independentProjectCopy,
     evaluate,
     applyOperations,
     parseProject,
@@ -277,7 +278,7 @@
       p = { ...newProject(), title: map.title, drawings: result.drawings };
       status = `Copied drawing; ${result.skipped} mapping-only objects omitted`;
     }
-    await fresh({ ...p, id: makeId(), revision: 0 });
+    await fresh(independentProjectCopy(p));
   }
   async function addAsset(asset: Asset, projectId: string, revision: number) {
     if (project.id !== projectId || project.revision !== revision)
@@ -564,7 +565,7 @@
           run(async () => {
             const r = await fetch('/approval-pilot.draw.json');
             if (!r.ok) throw new Error('Sample could not load.');
-            await fresh({ ...parseProject(await r.text()), id: makeId(), revision: 0 });
+            await fresh(independentProjectCopy(parseProject(await r.text())));
           })}
         disabled={!ready || busy || exporting}>Open sample tutorial</button
       >
