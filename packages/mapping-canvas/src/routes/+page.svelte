@@ -3,6 +3,7 @@
   import { browser } from '$app/environment';
   import { onMount } from 'svelte';
   import { loadDocument, saveDocument } from '$lib/persistence';
+  import { activateCanvasProject } from '$lib/project-storage';
   import { commit, convert, createDocument, createObjectCenterResolver, expandCompoundIds, objectBounds, parse, redo, removeObjects, resizeGroup, restoreConversion, selectObjectIdsInBounds, serialize, uid, undo, withObjects, type CanvasDocument, type CanvasObject, type History, type Point, type Shape, type Stroke, type Tool } from '$lib/document';
   import { DEFAULT_DRAWING_COLOR, DRAWING_COLOR_PREFERENCE, DRAWING_PALETTE, isColorableObject, isDrawingColor, recolorObjects, type DrawingColor } from '$lib/palette';
   import { applyCanvasOperations, isValidCanvasTitle, type CanvasOperation } from '$lib/paired-session';
@@ -548,7 +549,7 @@
   async function initializeSession() {
     if (!nativeShell) {
       const requested = new URL(location.href).searchParams.get('project') ?? undefined;
-      await loadDocument(requested).then((saved) => { if (saved) { history = { past: [], present: saved, future: [] }; restoreManagedShare(saved.id); status = 'Restored from this device'; } else status = 'New local session'; }).catch(() => status = 'Local storage unavailable · export copies');
+      await loadDocument(requested).then(async (saved) => { if (saved) { if (requested) await activateCanvasProject(saved.id); history = { past: [], present: saved, future: [] }; restoreManagedShare(saved.id); status = 'Restored from this device'; } else status = 'New local session'; }).catch(() => status = 'Local storage unavailable · export copies');
       ready = true;
       return;
     }

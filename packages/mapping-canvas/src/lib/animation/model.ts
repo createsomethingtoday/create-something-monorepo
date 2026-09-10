@@ -37,7 +37,11 @@ export type Flipbook = {
   registration: 'cell' | 'alpha';
 };
 export type Drawing = {
-  source?: { space: 'canvas'; objectId: string };
+  source?: {
+    space: 'canvas';
+    objectId: string;
+    origin?: { x: number; y: number; scaleX: number; scaleY: number };
+  };
   space?: 'world' | 'screen';
   boil?: Boil;
   flipbook?: Flipbook;
@@ -236,10 +240,17 @@ export function validateProject(value: unknown): asserts value is Project {
     if (
       d.source !== undefined &&
       (!d.source ||
-        !keys(d.source, ['space', 'objectId']) ||
+        !keys(d.source, ['space', 'objectId', 'origin']) ||
         d.source.space !== 'canvas' ||
         !id(d.source.objectId) ||
-        d.source.objectId !== d.id)
+        d.source.objectId !== d.id ||
+        (d.source.origin !== undefined &&
+          (!d.source.origin ||
+            !keys(d.source.origin, ['x', 'y', 'scaleX', 'scaleY']) ||
+            !finite(d.source.origin.x, -10000, 10000) ||
+            !finite(d.source.origin.y, -10000, 10000) ||
+            !finite(d.source.origin.scaleX, 0.01, 100) ||
+            !finite(d.source.origin.scaleY, 0.01, 100))))
     )
       throw new Error('Canvas-backed motion drawings must preserve their source object ID.');
     if (d.space !== undefined && !['world', 'screen'].includes(d.space))

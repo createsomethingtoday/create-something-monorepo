@@ -1,5 +1,11 @@
 import { normalizeDocument, type CanvasDocument } from './document';
-import { clearCanvasProject, loadCanvasProject, saveCanvasProject } from './project-storage';
+import {
+  canvasSpaceForProject,
+  clearCanvasProject,
+  loadCanvasProject,
+  loadProjectRecord,
+  saveCanvasProject
+} from './project-storage';
 
 const LEGACY_DATABASE = 'create-something-mapping-canvas';
 const LEGACY_STORE = 'documents';
@@ -31,6 +37,14 @@ async function loadLegacyDocument(): Promise<CanvasDocument | null> {
 export async function loadDocument(id?: string): Promise<CanvasDocument | null> {
   const shared = await loadCanvasProject(id);
   if (shared) return shared;
+  if (id) {
+    const record = await loadProjectRecord(id);
+    if (record?.motion) {
+      const canvas = canvasSpaceForProject(record)!;
+      await saveCanvasProject(canvas);
+      return canvas;
+    }
+  }
   const legacy = await loadLegacyDocument();
   if (!legacy || (id && legacy.id !== id)) return null;
   await saveCanvasProject(legacy);

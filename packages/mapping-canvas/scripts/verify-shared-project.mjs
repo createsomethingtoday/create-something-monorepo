@@ -213,6 +213,47 @@ if (!returned.objectIdsRetained || returned.noteText !== 'A person approves\n•
 if (!legacySourcesRetained.canvas || !legacySourcesRetained.motion)
   throw new Error('Legacy source data was deleted during migration.');
 
+await page.getByRole('link', { name: 'Motion', exact: true }).click();
+await page.waitForURL((url) => url.pathname === '/animate');
+await page.waitForLoadState('networkidle');
+await page.locator('select[aria-label="Saved animation project"]').selectOption(legacyMotionId);
+await page.waitForURL((url) => url.searchParams.get('project') === legacyMotionId);
+await page.waitForFunction(async (projectId) => {
+  try {
+    return (await window.__drawWebMcpTools?.draw_animation_inspect?.execute({}))?.id === projectId;
+  } catch {
+    return false;
+  }
+}, legacyMotionId);
+await page.getByRole('link', { name: 'Canvas', exact: true }).click();
+await page.waitForURL((url) => url.pathname === '/' && url.searchParams.get('project') === legacyMotionId);
+await page.waitForLoadState('networkidle');
+await page.waitForFunction(async (projectId) => {
+  try {
+    return (await window.__drawWebMcpTools?.draw_get_state?.execute({}))?.document?.id === projectId;
+  } catch {
+    return false;
+  }
+}, legacyMotionId);
+const motionOnlyCanvas = await page.evaluate(async () => {
+  const tools = window.__drawWebMcpTools;
+  const state = await tools.draw_get_state.execute({});
+  const created = await tools.draw_compose.execute({
+    nodes: [{ ref: 'proof', text: 'Motion-only project kept its identity' }],
+    placement: 'visible-center'
+  });
+  return { projectId: state.document.id, noteId: created.refs.proof };
+});
+await page.reload({ waitUntil: 'networkidle' });
+await page.waitForFunction(async ({ projectId, noteId }) => {
+  try {
+    const state = await window.__drawWebMcpTools?.draw_get_state?.execute({});
+    return state?.document?.id === projectId && state.document.objects.some(({ id }) => id === noteId);
+  } catch {
+    return false;
+  }
+}, motionOnlyCanvas);
+
 await context.close();
 await browser.close();
 console.log(JSON.stringify({
@@ -222,6 +263,8 @@ console.log(JSON.stringify({
   legacyCanvasMigrated: canvas.projectId === legacyCanvasId,
   legacyMotionPreserved: true,
   legacySourcesRetained: legacySourcesRetained.canvas && legacySourcesRetained.motion,
+  motionOnlyCanvasProjectId: motionOnlyCanvas.projectId,
+  motionOnlyCanvasReloaded: motionOnlyCanvas.projectId === legacyMotionId,
   canvasObjectIds: [canvas.noteId, canvas.releaseId, canvas.connectorId],
   motionObjectIds: [canvas.noteId, canvas.releaseId],
   formattedText: returned.noteText,

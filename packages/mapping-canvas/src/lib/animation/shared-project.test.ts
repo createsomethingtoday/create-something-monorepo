@@ -2,7 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { createDocument, type CanvasDocument } from '../document';
 import { basePose, type Project } from './model';
 import { importMap, syncMotionProject } from './import-map';
-import { mergeProjectRecord, type DrawProjectRecord } from '../project-storage';
+import {
+  canvasSpaceForProject,
+  mergeProjectRecord,
+  type DrawProjectRecord
+} from '../project-storage';
 
 function canvas(): CanvasDocument {
   const document = createDocument('One shared project');
@@ -67,11 +71,16 @@ describe('shared Draw project contract', () => {
     const animated: Project = {
       ...initial,
       revision: 1,
-      drawings: initial.drawings.map((drawing) =>
-        drawing.id === 'stroke-stable'
-          ? { ...drawing, poses: [...drawing.poses, { ...basePose(1), x: 90 }] }
-          : drawing
-      )
+      drawings: initial.drawings.map((drawing) => {
+        if (drawing.id === 'stroke-stable')
+          return { ...drawing, poses: [...drawing.poses, { ...basePose(1), x: 90 }] };
+        if (drawing.id === 'note-stable')
+          return {
+            ...drawing,
+            poses: [...drawing.poses, { ...drawing.poses[0], time: 1, x: drawing.poses[0].x + 40 }]
+          };
+        return drawing;
+      })
     };
     const edited = {
       ...source,
@@ -84,6 +93,8 @@ describe('shared Draw project contract', () => {
                 { x: 210, y: 120 }
               ]
             }
+          : object.id === 'note-stable' && object.kind === 'note'
+            ? { ...object, x: object.x + 120 }
           : object
       )
     };
@@ -95,6 +106,31 @@ describe('shared Draw project contract', () => {
     expect(synchronized.drawings.find(({ id }) => id === 'stroke-stable')?.poses.at(-1)?.x).toBe(
       90
     );
+    const oldNote = animated.drawings.find(({ id }) => id === 'note-stable')!;
+    const importedNote = importMap(edited).drawings.find(({ id }) => id === 'note-stable')!;
+    const delta = importedNote.poses[0].x - oldNote.source!.origin!.x;
+    const synchronizedNote = synchronized.drawings.find(({ id }) => id === 'note-stable')!;
+    expect(synchronizedNote.poses.map(({ x }) => x)).toEqual(
+      oldNote.poses.map(({ x }) => x + delta)
+    );
+  });
+
+  it('keeps a Motion-specific title while Canvas content is reconciled', () => {
+    const source = canvas();
+    const existing = { ...syncMotionProject(source), title: 'Motion cut' };
+
+    expect(syncMotionProject({ ...source, title: 'Canvas map' }, existing).title).toBe('Motion cut');
+  });
+
+  it('creates a Canvas space with the identity of a Motion-only project', () => {
+    const motion = { ...syncMotionProject(canvas()), title: 'Motion-only project' };
+    const record = mergeProjectRecord(undefined, { motion });
+
+    expect(canvasSpaceForProject(record)).toMatchObject({
+      id: motion.id,
+      title: 'Motion-only project',
+      objects: []
+    });
   });
 
   it('merges Canvas and Motion writes without replacing the other space', () => {

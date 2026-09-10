@@ -10,7 +10,6 @@ export function importMap(map: CanvasDocument): { drawings: Drawing[]; skipped: 
   for (const object of map.objects) {
     const common = {
       id: object.id,
-      source: { space: 'canvas' as const, objectId: object.id },
       name: object.kind === 'note' ? object.text.slice(0, 80) : object.kind,
       kind: 'stroke' as const,
       color: 'color' in object && /^#[\da-f]{6}$/i.test(object.color) ? object.color : '#282522',
@@ -28,10 +27,17 @@ export function importMap(map: CanvasDocument): { drawings: Drawing[]; skipped: 
         }
       ]
     };
+    const sourced = <T extends Drawing>(drawing: T): T => {
+      const { x, y, scaleX, scaleY } = drawing.poses[0];
+      return {
+        ...drawing,
+        source: { space: 'canvas', objectId: object.id, origin: { x, y, scaleX, scaleY } }
+      };
+    };
     if (object.kind === 'stroke')
-      drawings.push({ ...common, points: object.points, weight: object.width });
+      drawings.push(sourced({ ...common, points: object.points, weight: object.width }));
     else if (object.kind === 'note')
-      drawings.push({
+      drawings.push(sourced({
         ...common,
         kind: 'text',
         points: [],
@@ -47,7 +53,7 @@ export function importMap(map: CanvasDocument): { drawings: Drawing[]; skipped: 
             y: 60 + (object.y - bounds.y) * scale
           }
         ]
-      });
+      }));
     else if (object.kind === 'rectangle' || object.kind === 'ellipse' || object.kind === 'arrow') {
       const a = object.from,
         b = object.to;
@@ -76,7 +82,7 @@ export function importMap(map: CanvasDocument): { drawings: Drawing[]; skipped: 
                   }
                 ];
               })();
-      drawings.push({ ...common, points });
+      drawings.push(sourced({ ...common, points }));
     } else skipped++;
   }
   return { drawings, skipped };
@@ -85,12 +91,20 @@ export function importMap(map: CanvasDocument): { drawings: Drawing[]; skipped: 
 function retainAnimation(source: Drawing, prior: Drawing | undefined): Drawing {
   if (!prior || prior.source?.space !== 'canvas') return source;
   const samePointCount = prior.points.length === source.points.length;
+  const oldOrigin = prior.source.origin ?? prior.poses[0];
+  const newOrigin = source.source!.origin!;
+  const scaleX = newOrigin.scaleX / oldOrigin.scaleX;
+  const scaleY = newOrigin.scaleY / oldOrigin.scaleY;
   return {
     ...source,
     space: prior.space,
     boil: source.kind === 'stroke' ? prior.boil : undefined,
     poses: prior.poses.map((pose) => ({
       ...pose,
+      x: newOrigin.x + (pose.x - oldOrigin.x) * scaleX,
+      y: newOrigin.y + (pose.y - oldOrigin.y) * scaleY,
+      scaleX: pose.scaleX * scaleX,
+      scaleY: pose.scaleY * scaleY,
       points: samePointCount ? pose.points : undefined
     }))
   };
@@ -112,7 +126,7 @@ export function syncMotionProject(map: CanvasDocument, existing?: Project): Proj
     )
   ];
   if (!existing) return { ...newProject(), id: map.id, title: map.title, drawings };
-  const candidate = { ...existing, id: map.id, title: map.title, drawings };
+  const candidate = { ...existing, id: map.id, drawings };
   return JSON.stringify(candidate) === JSON.stringify(existing)
     ? existing
     : { ...candidate, revision: existing.revision + 1 };

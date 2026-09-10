@@ -1,4 +1,4 @@
-import { normalizeDocument, type CanvasDocument } from './document';
+import { createDocument, normalizeDocument, type CanvasDocument } from './document';
 import { validateProject, type Project } from './animation/model';
 
 export const DRAW_PROJECT_VERSION = 'draw.project.v1' as const;
@@ -56,6 +56,37 @@ export function mergeProjectRecord(
     ...(update.canvas ? { canvas: JSON.parse(JSON.stringify(update.canvas)) } : {}),
     ...(update.motion ? { motion: JSON.parse(JSON.stringify(update.motion)) } : {})
   };
+}
+
+export function canvasSpaceForProject(record: DrawProjectRecord): CanvasDocument | null {
+  if (record.canvas) return clone(record.canvas);
+  if (!record.motion) return null;
+  return { ...createDocument(record.motion.title), id: record.id };
+}
+
+export async function activateCanvasProject(id: string): Promise<void> {
+  const db = await open();
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction([STORE, META], 'readwrite');
+    const request = transaction.objectStore(STORE).get(id);
+    request.onsuccess = () => {
+      if (!normalizeDocument(request.result?.canvas)) {
+        transaction.abort();
+        return;
+      }
+      transaction.objectStore(META).put(id, ACTIVE_CANVAS);
+    };
+    request.onerror = () => reject(request.error);
+    transaction.oncomplete = () => {
+      db.close();
+      resolve();
+    };
+    transaction.onabort = () => {
+      db.close();
+      reject(new Error('Draw project has no Canvas space to activate.'));
+    };
+    transaction.onerror = () => {};
+  });
 }
 
 export async function loadProjectRecord(id: string): Promise<DrawProjectRecord | null> {
