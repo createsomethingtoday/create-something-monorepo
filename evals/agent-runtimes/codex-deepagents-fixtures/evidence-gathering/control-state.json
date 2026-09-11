@@ -1,0 +1,10 @@
+{
+  "status": "ready",
+  "sources": [
+    { "id": "mcp-health", "observed": "healthy" },
+    { "id": "mcp-errors", "observed": "zero actionable errors" },
+    { "id": "mcp-activity", "observed": "stable request volume" }
+  ],
+  "allowed_decision": "observe_only",
+  "recovery": "none"
+}
