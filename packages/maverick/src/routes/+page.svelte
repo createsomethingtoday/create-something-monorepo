@@ -31,9 +31,9 @@
     style="position:relative;display:flex;align-items:flex-end;overflow:hidden"
     data-screen-label="Home hero"
   >
-    <Media kind="home" opacity={0.55} />
+    <Media kind="home" opacity={1} />
     <div
-      style="position:absolute;inset:0;background:linear-gradient(rgba(0,0,0,.2) 40%,rgba(0,0,0,.85))"
+      style="position:absolute;inset:0;background:linear-gradient(rgba(0,0,0,.08) 40%,rgba(0,0,0,.65))"
     ></div>
     <div class="hero-copy" style="position:relative;padding:0 48px 96px;max-width:1100px;">
       <div
@@ -115,7 +115,7 @@
     <a class="sector-card" href="/oil-gas">
       <Media kind="oil" />
       <div
-        style="position:absolute;inset:0;background:linear-gradient(rgba(0,0,0,.1) 40%,rgba(0,0,0,.9))"
+        style="position:absolute;inset:0;background:linear-gradient(rgba(0,0,0,.05) 40%,rgba(0,0,0,.7))"
       ></div>
       <div class="sector-copy" style="position:absolute;left:44px;right:44px;bottom:44px">
         <div
@@ -144,7 +144,7 @@
     <a class="sector-card" href="/mining">
       <Media kind="mining" />
       <div
-        style="position:absolute;inset:0;background:linear-gradient(rgba(0,0,0,.1) 40%,rgba(0,0,0,.9))"
+        style="position:absolute;inset:0;background:linear-gradient(rgba(0,0,0,.05) 40%,rgba(0,0,0,.7))"
       ></div>
       <div class="sector-copy" style="position:absolute;left:44px;right:44px;bottom:44px">
         <div

@@ -23,3 +23,5 @@ Before production, record the current Cloudflare Pages deployment. Baseline prod
 ## Preview video scope
 
 The latest user instruction limits delivery to preview. Media uses the six exact MP4s from the supplied local HTML, including its existing stock watermarks. reference-media.json records source IDs and SHA256 hashes. Oil and Mining heroes use separate clips from their supporting cards; News shares the Oil supporting clip. About has its own clip. Production promotion is not authorized by this preview change.
+
+September 11 follow-up: homepage clip replaced with supplied unwatermarked 197985421 H264HD720 file, preserved byte-for-byte. Hero media now uses full opacity with lighter localized gradients for text contrast; sector gradients also lightened. Preview only.

@@ -53,7 +53,6 @@
   border: 1px solid #ffffff20;
 }
 .redesign .sector-card video {
-  opacity: 0.5;
   transition: transform 0.6s ease;
 }
 .redesign .sector-card:hover video {

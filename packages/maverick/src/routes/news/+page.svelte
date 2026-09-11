@@ -22,9 +22,9 @@
     style="position:relative;padding:220px 48px 100px;border-bottom:1px solid rgba(255,255,255,.12);overflow:hidden"
     data-screen-label="News"
   >
-    <Media kind="oil" opacity={0.55} />
+    <Media kind="oil" opacity={1} />
     <div
-      style="position:absolute;inset:0;background:linear-gradient(rgba(0,0,0,.3),rgba(0,0,0,.85))"
+      style="position:absolute;inset:0;background:linear-gradient(rgba(0,0,0,.08) 40%,rgba(0,0,0,.65))"
     ></div>
     <div style="position:relative;max-width:1100px;margin:0 auto;">
       <div

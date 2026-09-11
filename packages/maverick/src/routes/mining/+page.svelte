@@ -22,9 +22,9 @@
     style="position:relative;display:flex;align-items:flex-end;overflow:hidden"
     data-screen-label="Mining hero"
   >
-    <Media kind="miningHero" opacity={0.55} />
+    <Media kind="miningHero" opacity={1} />
     <div
-      style="position:absolute;inset:0;background:linear-gradient(rgba(0,0,0,.2) 40%,rgba(0,0,0,.85))"
+      style="position:absolute;inset:0;background:linear-gradient(rgba(0,0,0,.08) 40%,rgba(0,0,0,.65))"
     ></div>
     <div class="hero-copy" style="position:relative;padding:0 48px 88px;max-width:1000px;">
       <div
