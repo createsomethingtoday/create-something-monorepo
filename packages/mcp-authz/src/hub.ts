@@ -53,6 +53,14 @@ function classifyInvocationAccessType(invocationAction?: string | null): Authori
   return null;
 }
 
+// Reviewed first-party data effects. "Registry" here means NPPES data, not
+// administration of the Hub registry. Do not generalize this to vendor tools
+// or trust their self-declared annotations to override authorization.
+const HEALTHCARE_ROUTE_EFFECTS = new Map<string, AuthorizationAccessType>([
+  ['search_registry_sourcing', 'read'],
+  ['estimate_registry_travel', 'write'],
+]);
+
 export function classifyHubRoute(route: {
   proxyToolName: string;
   serverName: string;
@@ -66,8 +74,12 @@ export function classifyHubRoute(route: {
   tags: string[];
 } {
   const invocationAccessType = classifyInvocationAccessType(options?.invocationAction);
-  let accessType: AuthorizationAccessType = invocationAccessType ?? 'read';
-  if (!invocationAccessType) {
+  const reviewedAccessType = route.serverName === 'abundance-healthcare-mcp'
+    && route.proxyToolName === `${route.serverName}__${route.downstreamToolName}`
+    ? HEALTHCARE_ROUTE_EFFECTS.get(route.downstreamToolName)
+    : undefined;
+  let accessType: AuthorizationAccessType = invocationAccessType ?? reviewedAccessType ?? 'read';
+  if (!invocationAccessType && !reviewedAccessType) {
     // Classify from stable identifiers instead of free-form vendor descriptions.
     // Descriptions frequently contain incidental nouns like "state" or "trash"
     // in otherwise read-only tools, which creates false control-plane or
