@@ -60,11 +60,11 @@ function canvas(): CanvasDocument {
 }
 
 describe('shared Draw project contract', () => {
-  it('renders linked neutral ink against current paper before and after reload', () => {
+  it.each(['#f3ebe4', '#f7f4ee'])('renders linked neutral ink %s against current paper before and after reload', (chalk) => {
     const source = canvas();
     const stroke = source.objects[0];
     if (stroke.kind !== 'stroke') throw new Error('Expected stroke fixture');
-    stroke.color = '#f3ebe4';
+    stroke.color = chalk;
     source.objects.push({ ...stroke, id: 'custom-ink', color: '#282522' });
     const imported = syncMotionProject(source);
     imported.drawings.push({ ...imported.drawings[0], id: 'motion-only', source: undefined, color: '#f3ebe4' });
@@ -89,7 +89,7 @@ describe('shared Draw project contract', () => {
     expect(ink(light)).toEqual(ink(imported));
     const reloaded = syncMotionProject(source, JSON.parse(JSON.stringify(light)));
     expect(ink(reloaded)).toEqual(ink(imported));
-    expect(stroke.color).toBe('#f3ebe4');
+    expect(stroke.color).toBe(chalk);
     expect(reloaded.drawings[0].source).toEqual(imported.drawings[0].source);
     expect(ink(independentProjectCopy(reloaded))).toEqual(ink(reloaded));
     expect(ink(independentProjectCopy(dark))).toEqual(ink(dark));

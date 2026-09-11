@@ -118,7 +118,9 @@ function paperInk(background: string): string {
 
 /** Resolve linked neutral ink while leaving literal Motion colors unchanged. */
 export function drawingInk(drawing: Drawing, background: string): string {
-  return drawing.source?.space === 'canvas' && drawing.color.toLowerCase() === DEFAULT_DRAWING_COLOR
+  const color = drawing.color.toLowerCase();
+  const neutral = color === DEFAULT_DRAWING_COLOR || color === '#f7f4ee'; // Former Canvas chalk.
+  return drawing.source?.space === 'canvas' && neutral
     ? paperInk(background)
     : drawing.color;
 }
