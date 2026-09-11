@@ -567,7 +567,7 @@ test('public agency copy rejects tiers and organization specializations not docu
   const tempDir = mkdtempSync(path.join(tmpdir(), 'agency-copy-'));
   const fixture = path.join(tempDir, '+page.svelte');
   try {
-    for (const claim of ['OpenAI Advanced Partner', 'OpenAI Elite Partner', 'OpenAI Select Partner with Codex specialization', 'OpenAI Select Partner — API Platform Specialization', 'OpenAI ChatGPT specialization']) {
+    for (const claim of ['OpenAI Advanced Partner', 'OpenAI Elite Partner', 'OpenAI Premier Partner', 'OpenAI Gold Partner', 'OpenAI Select Regional Partner', 'OpenAI Select Partner with Codex specialization', 'OpenAI Select Partner — API Platform Specialization', 'OpenAI ChatGPT specialization']) {
       writeFileSync(fixture, claim);
       assert.ok(auditPublicCopy([fixture]).some(({ rule }) => rule === 'unsupported-openai-tier' || rule === 'unsupported-openai-specialization'), claim);
     }

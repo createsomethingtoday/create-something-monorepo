@@ -208,7 +208,8 @@ export const PUBLIC_COPY_RULES = [
   },
   {
     id: 'unsupported-openai-tier',
-    pattern: /\bOpenAI\s+(?:Advanced|Elite)\s+Partner\b/gi,
+    // Select is the only documented tier; reject invented and future tier labels too.
+    pattern: /\bOpenAI[ \t]+(?!Select[ \t]+Partner\b)(?:[A-Za-z][A-Za-z-]*[ \t]+)+Partner\b/gi,
     replacement: 'OpenAI Select Partner'
   },
   {
