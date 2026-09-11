@@ -10,7 +10,7 @@ Use the exact designation **OpenAI Select Partner** in proposals and customer-fa
 
 ## Individual qualifications
 
-Micah Johnson holds nine OpenAI-issued credentials:
+Micah Johnson earned nine OpenAI-issued credentials:
 
 | Credential | Issued | Valid through |
 | --- | --- | --- |

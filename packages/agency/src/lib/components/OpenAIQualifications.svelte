@@ -16,9 +16,9 @@
   <p class="eyebrow">Partner status and qualifications</p>
   <h2 id="openai-qualifications-title">OpenAI Select Partner</h2>
   <p>CREATE SOMETHING is an OpenAI Select Partner in the OpenAI Partner Network.</p>
-  <p>Micah Johnson, the operator behind CREATE SOMETHING, holds the nine OpenAI-issued credentials listed below. We bring that learning to the work: connecting tools, defining when AI needs a person, and testing what happens.</p>
+  <p>Micah Johnson, the operator behind CREATE SOMETHING, earned the nine OpenAI-issued credentials listed below. We bring that learning to the work: connecting tools, defining when AI needs a person, and testing what happens.</p>
   <details>
-    <summary>View Micah’s nine credentials</summary>
+    <summary>View Micah’s nine earned credentials</summary>
     <ul>
       {#each qualifications as qualification}
         <li>{qualification}</li>

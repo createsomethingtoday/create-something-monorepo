@@ -556,8 +556,21 @@ test('public agency copy permits the documented Select tier and named individual
   const tempDir = mkdtempSync(path.join(tmpdir(), 'agency-copy-'));
   const fixture = path.join(tempDir, '+page.svelte');
   try {
-    writeFileSync(fixture, 'CREATE SOMETHING is an OpenAI Select Partner. Micah Johnson holds the Codex Deployment Practitioner credential.');
+    writeFileSync(fixture, 'CREATE SOMETHING is an OpenAI Select Partner. Micah Johnson earned the Codex Deployment Practitioner credential.');
     assert.deepEqual(auditPublicCopy([fixture]), []);
+  } finally {
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('public agency copy rejects tiers and organization specializations not documented for CREATE SOMETHING', () => {
+  const tempDir = mkdtempSync(path.join(tmpdir(), 'agency-copy-'));
+  const fixture = path.join(tempDir, '+page.svelte');
+  try {
+    for (const claim of ['OpenAI Advanced Partner', 'OpenAI Elite Partner', 'OpenAI Select Partner with Codex specialization', 'OpenAI Select Partner — API Platform Specialization', 'OpenAI ChatGPT specialization']) {
+      writeFileSync(fixture, claim);
+      assert.ok(auditPublicCopy([fixture]).some(({ rule }) => rule === 'unsupported-openai-tier' || rule === 'unsupported-openai-specialization'), claim);
+    }
   } finally {
     rmSync(tempDir, { recursive: true, force: true });
   }

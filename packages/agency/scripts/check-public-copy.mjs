@@ -207,6 +207,16 @@ export const PUBLIC_COPY_RULES = [
     replacement: 'official authorization claim'
   },
   {
+    id: 'unsupported-openai-tier',
+    pattern: /\bOpenAI\s+(?:Advanced|Elite)\s+Partner\b/gi,
+    replacement: 'OpenAI Select Partner'
+  },
+  {
+    id: 'unsupported-openai-specialization',
+    pattern: /\bOpenAI\s+(?:(?:Select|Advanced|Elite)\s+Partner\s*(?:with\s+|[-—–:]\s*)?)?(?:API(?:\s+Platform)?|ChatGPT|Codex)\s+speciali[sz]ation\b/gi,
+    replacement: 'OpenAI Select Partner'
+  },
+  {
     id: 'official-openai-partner',
     pattern: /\bofficial\s+OpenAI\s+partner\b/gi,
     replacement: 'built with OpenAI Codex and designed to remain client-owned'
