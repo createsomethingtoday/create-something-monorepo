@@ -58,6 +58,23 @@ function canvas(): CanvasDocument {
 }
 
 describe('shared Draw project contract', () => {
+  it('keeps chalk artwork legible on Motion paper across synchronization without changing Canvas', () => {
+    const source = canvas();
+    const stroke = source.objects[0];
+    if (stroke.kind !== 'stroke') throw new Error('Expected stroke fixture');
+    stroke.color = '#f3ebe4';
+    const imported = syncMotionProject(source);
+    expect(imported.drawings[0].color).toBe('#282522');
+    expect(imported.drawings[0].source?.objectId).toBe(stroke.id);
+    const reloaded = syncMotionProject(source, JSON.parse(JSON.stringify(imported)));
+    expect(reloaded.drawings[0].color).toBe('#282522');
+    expect(stroke.color).toBe('#f3ebe4');
+    const darkPaper = syncMotionProject(source, { ...reloaded, background: '#171717' });
+    expect(darkPaper.drawings[0].color).toBe('#f3ebe4');
+    expect(darkPaper.drawings.find(d => d.kind === 'text')?.color).toBe('#f3ebe4');
+    expect(darkPaper.drawings[0].source).toEqual(imported.drawings[0].source);
+  });
+
   it('materializes motion drawings with the same project and object IDs', () => {
     const source = canvas();
     const result = importMap(source);
