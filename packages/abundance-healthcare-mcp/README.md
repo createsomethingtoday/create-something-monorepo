@@ -54,7 +54,7 @@ remain recruiter-verification fields. The current source is primary Family NP
 only; unsupported taxonomy requests fail explicitly rather than claiming an
 empty AGNP population.
 
-Production prerequisites: apply Agency migration 0048, deploy Agency and this
+Production prerequisites: apply Agency migrations 0048 then 0049 (both are required for the warmup composite key), deploy Agency and this
 Worker, warm practice-address geocodes through the service-only sourcing endpoint,
 and refresh the Dify tool inventory. The PDL key is separate and is not needed
 for registry contact export or radius calculations.
