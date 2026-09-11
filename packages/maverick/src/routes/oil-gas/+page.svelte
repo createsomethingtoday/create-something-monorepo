@@ -1,149 +1,193 @@
 <script lang="ts">
-	/**
-	 * PetroX - Oil & Gas Solutions
-	 * Maverick X
-	 *
-	 * Content fetched from CMS at request time (not build time)
-	 */
-
-	import KineticHero from '$lib/components/KineticHero.svelte';
-	import TabbedSolutions from '$lib/components/TabbedSolutions.svelte';
-	import OperationsHotspot from '$lib/components/OperationsHotspot.svelte';
-	import WhySection from '$lib/components/WhySection.svelte';
-	import SEO from '$lib/components/SEO.svelte';
-	import {
-		petroxSolutions,
-		petroxSolutionsHeader,
-		petroxOperations,
-		petroxOperationsHeader,
-		petroxOperationsImages
-	} from '$lib/data/petrox';
-	import type { PageData } from './$types';
-
-	interface Props {
-		data: PageData;
-	}
-
-	type PetroxFeature = {
-		icon: string;
-		title: string;
-	};
-
-	let { data }: Props = $props();
-	const content = $derived(data.content);
-
-	// Hero content with CMS overrides
-	const heroTitle = $derived(content?.hero?.title ?? 'Targeted Non-Hazmat Chemistry');
-	const heroSubtitle = $derived(content?.hero?.subtitle ?? 'Boost production and slash costs with PetroX™ — Advanced non-hazmat chemistry for superior oilfield operations');
-	const heroVideo = $derived(content?.hero?.video ?? 'https://pub-fb87e05654104f5fbb33989fc4dca65b.r2.dev/videos/082466515-oil-rig-pumpjack-working-natur.mp4');
-	const heroCta = $derived(content?.hero?.cta ?? 'Learn More');
-
-	// Why PetroX section with CMS overrides
-	const whyTitle = $derived(content?.why?.title ?? 'Why PetroX™?');
-	const whySubtitle = $derived(content?.why?.subtitle ?? 'Industry-leading oilfield chemistry that delivers results without the downsides of traditional treatments.');
-	const whyFeatures = $derived(content?.whyFeatures ?? [
-		{ icon: 'zap', title: 'Superior Performance' },
-		{ icon: 'shield-check', title: 'Non-Hazmat' },
-		{ icon: 'wrench', title: 'Infrastructure-Safe' },
-		{ icon: 'clock', title: 'Minimal Downtime' }
-	]);
-
-	// Section headers with CMS overrides
-	const solutionsHeadline = $derived(content?.solutionsHeader?.headline ?? petroxSolutionsHeader.headline);
-	const operationsHeadline = $derived(content?.operationsHeader?.headline ?? petroxOperationsHeader.headline);
-
-	// Transform petrox solutions to TabbedSolutions format
-	const tabbedSolutions = petroxSolutions.map(solution => ({
-		id: solution.id,
-		name: solution.name,
-		headline: solution.headline,
-		description: solution.description,
-		details: solution.details,
-		image: solution.image,
-		youtubeId: solution.youtubeId,
-		features: solution.features,
-		stats: solution.stats
-	}));
-
-	const jsonLd = {
-		"@context": "https://schema.org",
-		"@type": "Product",
-		"name": "PetroX",
-		"brand": {
-			"@type": "Brand",
-			"name": "Maverick X"
-		},
-		"description": "Advanced oilfield chemistry solutions for enhanced oil recovery, sludge remediation, production optimization, and well stimulation",
-		"category": "Oilfield Chemistry",
-		"offers": {
-			"@type": "AggregateOffer",
-			"availability": "https://schema.org/InStock",
-			"priceCurrency": "USD"
-		}
-	};
+  import Media from '$lib/redesign/Media.svelte';
+  import SEO from '$lib/components/SEO.svelte';
+  import { openContact } from '$lib/redesign/contact';
+  import { oilApps } from '$lib/redesign/content';
+  import type { PageData } from './$types';
+  let { data }: { data: PageData } = $props();
+  const overrides = $derived(data.content?.redesign);
+  const categoryId = 'petrox';
 </script>
 
 <SEO
-	title="PetroX | Oil & Gas Chemistry Solutions"
-	description="Advanced oilfield chemistry solutions for enhanced recovery, sludge remediation, production optimization, and well stimulation. PetroX delivers proven results for the oil & gas industry."
-	canonical="https://maverickx.com/oil-gas"
-	ogType="product"
-	{jsonLd}
+  title="Oil & Gas | Maverick X"
+  description="Revitalizing critical resource extraction with precision biologics."
+  canonical="https://www.maverickx.com/oil-gas"
+  ogImage="https://www.maverickx.com/images/logo.png"
 />
 
-<!-- Hero Section (Main) -->
-<KineticHero
-	videoSrc={heroVideo}
-	title={heroTitle}
-	subtitle={heroSubtitle}
-	ctaText={heroCta}
-/>
+<div>
+  <section
+    class="design-section design-hero"
+    style="position:relative;display:flex;align-items:flex-end;overflow:hidden"
+    data-screen-label="Oil hero"
+  >
+    <Media kind="oil" />
+    <div
+      style="position:absolute;inset:0;background:linear-gradient(rgba(0,0,0,.2) 40%,rgba(0,0,0,.85))"
+    ></div>
+    <div class="hero-copy" style="position:relative;padding:0 48px 88px;max-width:1000px;">
+      <div
+        style="font-size:13px;letter-spacing:4px;text-transform:uppercase;color:rgba(255,255,255,.7);margin-bottom:20px"
+      >
+        Oil &amp; Gas
+      </div>
+      <h1
+        class="display-title"
+        style="margin:0;font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:clamp(52px,6.5vw,96px);line-height:.95;text-transform:uppercase"
+      >
+        {#if overrides?.title}{overrides.title}{:else}More Oil<br />From Every Well{/if}
+      </h1>
+      <p
+        style="margin:26px 0 0;font-size:19px;color:rgba(255,255,255,.85);max-width:560px;line-height:1.5;text-wrap:pretty"
+      >
+        {#if overrides?.subtitle}{overrides.subtitle}{:else}Next-gen stimulation chemistry that
+          breaks silicates through ultra-strong chelation — boosting production rates and extending
+          well life.{/if}
+      </p>
+    </div>
+  </section>
 
-<!-- Tabbed Solutions Section -->
-<TabbedSolutions
-	headline={solutionsHeadline}
-	solutions={tabbedSolutions}
-	productPrefix="PetroX"
-	accentColor="petrox"
-	labelType="name"
-/>
+  <section
+    class="design-section"
+    style="padding:120px 48px;border-bottom:1px solid rgba(255,255,255,.12)"
+    data-screen-label="PetroX Boost"
+  >
+    <div
+      class="grid-two"
+      style="max-width:1200px;margin:0 auto;display:grid;gap:72px;align-items:center"
+    >
+      <div>
+        <div
+          style="font-size:13px;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.6);margin-bottom:16px"
+        >
+          Production Enhancement
+        </div>
+        <h2
+          class="display-title"
+          style="margin:0 0 24px;font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:60px;line-height:1;text-transform:uppercase"
+        >
+          PetroX Boost
+        </h2>
+        <p
+          style="margin:0 0 18px;font-size:18px;color:rgba(255,255,255,.85);line-height:1.6;text-wrap:pretty"
+        >
+          Our production enhancement technology breaks down the silicates that trap oil, enhancing
+          porosity and permeability to supercharge production rates. Where surfactants only change
+          wettability, PetroX Boost changes the rock itself.
+        </p>
+        <p
+          style="margin:0 0 32px;font-size:18px;color:rgba(255,255,255,.85);line-height:1.6;text-wrap:pretty"
+        >
+          Treatments are non-hazmat and run through your existing infrastructure.
+        </p>
+        <button
+          type="button"
+          onclick={() => openContact(categoryId)}
+          style="cursor:pointer;display:inline-block;background:#fff;color:#000;font-size:13px;font-weight:600;letter-spacing:2.5px;text-transform:uppercase;padding:16px 34px"
+          >Talk to Us</button
+        >
+      </div>
+      <div class="media-panel" style="position:relative;height:480px;overflow:hidden">
+        <Media kind="oil" />
+      </div>
+    </div>
+  </section>
 
-<!-- Features: Why PetroX Section -->
-{#snippet petroxIcons(feature: PetroxFeature)}
-	{#if feature.icon === 'zap'}
-		<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="why-icon">
-			<path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"></path>
-		</svg>
-	{:else if feature.icon === 'shield-check'}
-		<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="why-icon">
-			<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"></path>
-			<path d="m9 12 2 2 4-4"></path>
-		</svg>
-	{:else if feature.icon === 'wrench'}
-		<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="why-icon">
-			<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.106-3.105c.32-.322.863-.22.983.218a6 6 0 0 1-8.259 7.057l-7.91 7.91a1 1 0 0 1-2.999-3l7.91-7.91a6 6 0 0 1 7.057-8.259c.438.12.54.662.219.984z"></path>
-		</svg>
-	{:else}
-		<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="why-icon">
-			<path d="M12 6v6l4 2"></path>
-			<circle cx="12" cy="12" r="10"></circle>
-		</svg>
-	{/if}
-{/snippet}
+  <section
+    class="design-section"
+    style="padding:120px 48px;border-bottom:1px solid rgba(255,255,255,.12)"
+  >
+    <div style="max-width:1200px;margin:0 auto">
+      <h2
+        class="display-title"
+        style="margin:0 0 56px;font-family:'Barlow Condensed',sans-serif;font-weight:500;font-size:44px;text-transform:uppercase"
+      >
+        Applications
+      </h2>
+      <div
+        class="grid-three"
+        style="display:grid;gap:1px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.12)"
+      >
+        {#each oilApps as app}
+          <div style="background:#000;padding:36px 32px 44px">
+            <div
+              style="font-family:'Barlow Condensed',sans-serif;font-size:15px;color:rgba(255,255,255,.4);margin-bottom:18px"
+            >
+              {app.num}
+            </div>
+            <h3
+              class="display-title"
+              style="margin:0 0 12px;font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:26px;text-transform:uppercase;letter-spacing:.5px"
+            >
+              {app.name}
+            </h3>
+            <p style="margin:0;font-size:15px;color:rgba(255,255,255,.7);line-height:1.55">
+              {app.desc}
+            </p>
+          </div>
+        {/each}
+        <div style="background:#000;padding:36px 32px 44px;display:flex;align-items:flex-end">
+          <button
+            type="button"
+            onclick={() => openContact(categoryId)}
+            style="cursor:pointer;font-size:13px;font-weight:600;letter-spacing:2.5px;text-transform:uppercase;border-bottom:1px solid rgba(255,255,255,.6);padding-bottom:4px"
+            >Discuss your application →</button
+          >
+        </div>
+      </div>
+    </div>
+  </section>
 
-<WhySection
-	title={whyTitle}
-	subtitle={whySubtitle}
-	features={whyFeatures}
-	videoUrl="https://pub-fb87e05654104f5fbb33989fc4dca65b.r2.dev/videos/oil-pump-field.mp4"
-	accentColor="petrox"
-	iconSnippet={petroxIcons}
-/>
-
-<!-- Operations Hotspot Section -->
-<OperationsHotspot
-	headline={operationsHeadline}
-	hotspots={petroxOperations}
-	imageUrl={petroxOperationsImages.desktop}
-	mobileImageUrl={petroxOperationsImages.mobile}
-/>
+  <section
+    class="design-section"
+    style="padding:100px 48px;border-bottom:1px solid rgba(255,255,255,.12)"
+  >
+    <div class="grid-four" style="max-width:1200px;margin:0 auto;display:grid;gap:48px">
+      <div>
+        <div style="width:32px;height:2px;background:#fff;margin-bottom:20px"></div>
+        <div
+          style="font-size:15px;font-weight:600;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px"
+        >
+          Increased Production
+        </div>
+        <div style="font-size:14px;color:rgba(255,255,255,.65);line-height:1.5">
+          Enhanced porosity and permeability lift production rates in treated wells.
+        </div>
+      </div>
+      <div>
+        <div style="width:32px;height:2px;background:#fff;margin-bottom:20px"></div>
+        <div
+          style="font-size:15px;font-weight:600;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px"
+        >
+          Extended Well Life
+        </div>
+        <div style="font-size:14px;color:rgba(255,255,255,.65);line-height:1.5">
+          Keeps mature wells economic longer by recovering oil conventional methods leave behind.
+        </div>
+      </div>
+      <div>
+        <div style="width:32px;height:2px;background:#fff;margin-bottom:20px"></div>
+        <div
+          style="font-size:15px;font-weight:600;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px"
+        >
+          Non-Hazardous
+        </div>
+        <div style="font-size:14px;color:rgba(255,255,255,.65);line-height:1.5">
+          Non-hazmat chemistry — safe to ship, store, and handle in the field.
+        </div>
+      </div>
+      <div>
+        <div style="width:32px;height:2px;background:#fff;margin-bottom:20px"></div>
+        <div
+          style="font-size:15px;font-weight:600;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px"
+        >
+          Drop-In Deployment
+        </div>
+        <div style="font-size:14px;color:rgba(255,255,255,.65);line-height:1.5">
+          Infrastructure-safe treatments run through your existing wellsite equipment.
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
