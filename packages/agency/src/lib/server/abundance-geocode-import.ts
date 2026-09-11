@@ -33,8 +33,10 @@ export async function readGeocodeSource(db:D1Database,id:string,cursor:string){
 export async function importGeocodes(db:D1Database,input:unknown){
  const parsed=geocodeImportSchema.parse(input);await completedRun(db,parsed.run_id);
  const data=JSON.stringify(parsed.results.map(r=>({...r,...(r.status==='matched'?unitVector(r.latitude!,r.longitude!):{})})));
+ // Keep the bounded upload rows outermost so SQLite probes the (run_id, NPI) index.
+ // A reorderable JOIN scans the whole national snapshot against every batch row.
  const matching=await db.prepare(`SELECT count(*) AS n FROM json_each(?) i
- JOIN abundance_healthcare_nationwide_memberships m ON m.run_id=? AND m.provider_npi=json_extract(i.value,'$.npi')
+ CROSS JOIN abundance_healthcare_nationwide_memberships m ON m.run_id=? AND m.provider_npi=json_extract(i.value,'$.npi')
  WHERE json_extract(m.provider_snapshot_json,'$.source_payload_hash')=json_extract(i.value,'$.source_payload_hash')`).bind(data,parsed.run_id).first<{n:number}>();
  if(matching?.n!==parsed.results.length)throw new TypeError('Every geocode must match the pinned NPI source version; no rows imported.');
  // One statement is atomic and retries retain exactly one entry per NPI/source version.
@@ -45,7 +47,7 @@ export async function importGeocodes(db:D1Database,input:unknown){
  json_extract(i.value,'$.latitude'),json_extract(i.value,'$.longitude'),json_extract(i.value,'$.x'),json_extract(i.value,'$.y'),json_extract(i.value,'$.z'),json_extract(i.value,'$.matched_address'),json_extract(i.value,'$.fetched_at')
  FROM json_each(?) i
  WHERE EXISTS(SELECT 1 FROM abundance_healthcare_nationwide_runs WHERE id=? AND status='succeeded')
- AND (SELECT count(*) FROM json_each(?) v JOIN abundance_healthcare_nationwide_memberships m ON m.run_id=? AND m.provider_npi=json_extract(v.value,'$.npi') WHERE json_extract(m.provider_snapshot_json,'$.source_payload_hash')=json_extract(v.value,'$.source_payload_hash'))=?
+ AND (SELECT count(*) FROM json_each(?) v CROSS JOIN abundance_healthcare_nationwide_memberships m ON m.run_id=? AND m.provider_npi=json_extract(v.value,'$.npi') WHERE json_extract(m.provider_snapshot_json,'$.source_payload_hash')=json_extract(v.value,'$.source_payload_hash'))=?
  ON CONFLICT(provider_npi,source_payload_hash) DO UPDATE SET status=excluded.status,latitude=excluded.latitude,longitude=excluded.longitude,unit_x=excluded.unit_x,unit_y=excluded.unit_y,unit_z=excluded.unit_z,matched_address=excluded.matched_address,fetched_at=excluded.fetched_at`).bind(data,parsed.run_id,data,parsed.run_id,parsed.results.length).run();
  if(result.meta.changes!==parsed.results.length)throw new Error('Snapshot changed during import; retry after checking retained source.');
  return {imported:parsed.results.length,matched:parsed.results.filter(r=>r.status==='matched').length,unmatched:parsed.results.filter(r=>r.status==='unmatched').length};
