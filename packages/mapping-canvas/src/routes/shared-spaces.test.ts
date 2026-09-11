@@ -17,7 +17,7 @@ it('navigates between Canvas and Motion using the same project identity', () => 
   expect(canvas).toContain(
     'parsed.id === previous.id ? { ...parsed, updatedAt: mintReplacementTimestamp(previous.updatedAt) } : { ...parsed, id: crypto.randomUUID()'
   );
-  expect(canvas).toContain('await loadDocument(next.id)');
+  expect(canvas).toContain('writeCanvasDocument(next, persistedCanvasVersions.get(next.id) ?? null)');
   expect(canvas).toContain('persistedCanvasVersions.get(next.id)');
   expect(canvas).toContain('await activateCanvasProject(saved.id)');
   expect(motion).toContain('href={`/?project=${encodeURIComponent(project.id)}`}');
@@ -54,4 +54,6 @@ it('guards Motion synchronization with the loaded Canvas version and makes migra
     '(current?.canvas?.updatedAt ?? null) !== expectedCanvasUpdatedAt'
   );
   expect(projectStorage).toContain("conflict = 'canvas'");
+  expect(canvas).toContain('writeCanvasDocument(next, persistedCanvasVersions.get(next.id) ?? null)');
+  expect(projectStorage).toContain('(normalizeProjectRecord(request.result)?.canvas?.updatedAt ?? null) !== expectedCanvasUpdatedAt');
 });

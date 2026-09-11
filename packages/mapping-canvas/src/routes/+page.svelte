@@ -655,10 +655,10 @@
   function point(event: PointerEvent): Point { const rect = surface.getBoundingClientRect(); return { x: (event.clientX - rect.left - viewport.x) / viewport.zoom, y: (event.clientY - rect.top - viewport.y) / viewport.zoom }; }
   function companionCanEdit() { if (replacingDocument) { status = 'Wait for the document replacement to finish'; return false; } if (nativeRole !== 'companion') return true; if (nativeSession.sessionId && !nativeSession.requiresRepair) return true; status = nativeSession.requiresRepair ? 'Pairing credentials rejected · export if needed, then forget and re-pair' : 'Pair this iPhone with a Mac before editing'; return false; }
   async function persistCurrentDocument(next: CanvasDocument) {
-    const run = async () => { const persisted = await loadDocument(next.id), expected = persistedCanvasVersions.get(next.id) ?? null; if ((persisted?.updatedAt ?? null) !== expected) return false; await writeCanvasDocument(next); return true; };
+    const run = () => writeCanvasDocument(next, persistedCanvasVersions.get(next.id) ?? null);
     return navigator.locks ? navigator.locks.request(`${DRAW_DOCUMENT_LOCK}:${next.id}`, run) : run();
   }
-  async function writeCanvasDocument(next: CanvasDocument) { await saveDocument(next); persistedCanvasVersions.set(next.id, next.updatedAt); }
+  async function writeCanvasDocument(next: CanvasDocument, expectedCanvasUpdatedAt?: string | null) { const saved = await saveDocument(next, expectedCanvasUpdatedAt); if (saved) persistedCanvasVersions.set(next.id, next.updatedAt); return saved; }
   function persistedVersionMatches(id: string, persisted: CanvasDocument | null) { return (persisted?.updatedAt ?? null) === (persistedCanvasVersions.get(id) ?? null); }
   function mintReplacementTimestamp(reserved: string) {
     let milliseconds = Date.now(), candidate = new Date(milliseconds).toISOString();

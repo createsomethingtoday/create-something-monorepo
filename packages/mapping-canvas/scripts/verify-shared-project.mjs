@@ -410,6 +410,72 @@ await page.waitForFunction(async (noteId) => {
   }
 }, canvas.noteId);
 
+const atomicStaleCanvas = await context.newPage();
+await atomicStaleCanvas.addInitScript(() => {
+  window.__drawWebMcpTools = {};
+  Object.defineProperty(document, 'modelContext', {
+    configurable: true,
+    value: { registerTool(tool) { window.__drawWebMcpTools[tool.name] = tool; } }
+  });
+});
+await atomicStaleCanvas.goto(`${baseUrl}/?project=${canvas.projectId}`, { waitUntil: 'networkidle' });
+await atomicStaleCanvas.waitForFunction(async (projectId) => {
+  try { return (await window.__drawWebMcpTools?.draw_get_state?.execute({}))?.document?.id === projectId; }
+  catch { return false; }
+}, canvas.projectId);
+const atomicMotion = await context.newPage();
+await atomicMotion.addInitScript(() => {
+  window.__drawWebMcpTools = {};
+  Object.defineProperty(document, 'modelContext', {
+    configurable: true,
+    value: { registerTool(tool) { window.__drawWebMcpTools[tool.name] = tool; } }
+  });
+});
+await atomicMotion.goto(`${baseUrl}/animate?project=${canvas.projectId}`, { waitUntil: 'networkidle' });
+await atomicMotion.waitForFunction(async (projectId) => {
+  try { return (await window.__drawWebMcpTools?.draw_animation_inspect?.execute({}))?.id === projectId; }
+  catch { return false; }
+}, canvas.projectId);
+await atomicMotion.evaluate(async () => {
+  const tools = window.__drawWebMcpTools;
+  const before = await tools.draw_animation_inspect.execute({});
+  await tools.draw_animation_apply.execute({
+    expectedRevision: before.revision,
+    operations: [{ type: 'settings', background: '#345678' }]
+  });
+});
+await atomicMotion.close();
+await atomicStaleCanvas.evaluate(async () => {
+  const tools = window.__drawWebMcpTools;
+  const before = await tools.draw_inspect.execute({ limit: 1 });
+  await tools.draw_apply_operations.execute({
+    expectedRevision: before.revision,
+    operations: [{ type: 'set_title', title: 'Stale Canvas must not win' }]
+  });
+});
+await atomicStaleCanvas.waitForTimeout(350);
+const atomicRecord = await atomicStaleCanvas.evaluate((projectId) => new Promise((resolve, reject) => {
+  const request = indexedDB.open('create-something-draw-projects', 1);
+  request.onsuccess = () => {
+    const db = request.result;
+    const transaction = db.transaction('projects');
+    const query = transaction.objectStore('projects').get(projectId);
+    query.onsuccess = () => resolve(query.result);
+    query.onerror = () => reject(query.error);
+    transaction.oncomplete = () => db.close();
+  };
+  request.onerror = () => reject(request.error);
+}), canvas.projectId);
+const atomicCanvasWriteDenied = atomicRecord?.canvas?.background === '#345678' && atomicRecord?.canvas?.title !== 'Stale Canvas must not win';
+if (!atomicCanvasWriteDenied)
+  throw new Error('A stale Canvas write won the transaction after Motion changed the shared background.');
+await atomicStaleCanvas.close();
+await page.reload({ waitUntil: 'networkidle' });
+await page.waitForFunction(async (projectId) => {
+  try { return (await window.__drawWebMcpTools?.draw_get_state?.execute({}))?.document?.id === projectId; }
+  catch { return false; }
+}, canvas.projectId);
+
 await page.getByRole('link', { name: 'Motion', exact: true }).click();
 await page.waitForURL((url) => url.pathname === '/animate');
 await page.waitForLoadState('networkidle');
@@ -474,6 +540,7 @@ console.log(
       staleCanvasNavigationDenied: staleCanvasDenied,
       staleCanvasAfterUndoDenied,
       staleMotionSaveDenied: staleMotionDenied,
+      atomicCanvasWriteDenied,
       undoRedoPersisted: true,
       motionOnlyCanvasProjectId: motionOnlyCanvas.projectId,
       motionOnlyCanvasReloaded: motionOnlyCanvas.projectId === legacyMotionId,

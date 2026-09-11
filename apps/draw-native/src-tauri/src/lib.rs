@@ -398,11 +398,13 @@ fn load_companion_state(path: &Path) -> Option<StoredCompanionSession> {
         .and_then(|bytes| serde_json::from_slice(&bytes).ok())
         .map(|mut stored: StoredCompanionSession| {
             stored.document = normalize_document_compat(stored.document);
+            if stored.host.protocol_version != PROTOCOL_VERSION {
+                stored.online = false;
+                stored.requires_repair = true;
+            }
             stored
         })
-        .filter(|stored: &StoredCompanionSession| {
-            stored.host.protocol_version == PROTOCOL_VERSION && valid_document(&stored.document)
-        })
+        .filter(|stored: &StoredCompanionSession| valid_document(&stored.document))
 }
 
 #[cfg(any(target_os = "macos", target_os = "ios"))]
@@ -1604,7 +1606,7 @@ mod tests {
     }
 
     #[test]
-    fn upgraded_companions_do_not_restore_pairings_for_older_hosts() {
+    fn upgraded_companions_preserve_old_protocol_queues_in_a_repair_state() {
         let directory = std::env::temp_dir().join(format!("draw-old-pairing-{}", Uuid::new_v4()));
         let path = directory.join(COMPANION_STATE_FILE);
         let session = CompanionSession {
@@ -1620,7 +1622,17 @@ mod tests {
             expires_at: "2099-01-01T00:00:00Z".into(),
             revision: 0,
             document: initial_state().document,
-            queue: VecDeque::new(),
+            queue: VecDeque::from([OperationEnvelope {
+                protocol_version: PROTOCOL_VERSION.into(),
+                document_version: DOCUMENT_VERSION.into(),
+                session_id: "session-old-host".into(),
+                client_id: "iphone-test".into(),
+                operation_id: "offline-edit".into(),
+                base_revision: 0,
+                sent_at: "2026-08-29T16:00:00Z".into(),
+                capability: "never-write-this-secret".into(),
+                operation: CanvasOperation::SetTitle { title: "Preserve me".into() },
+            }]),
             online: true,
             requires_repair: false,
         };
@@ -1629,7 +1641,11 @@ mod tests {
         stored["host"]["protocolVersion"] = json!("create-something.draw-pairing.v1");
         fs::write(&path, serde_json::to_vec_pretty(&stored).unwrap()).unwrap();
 
-        assert!(load_companion_state(&path).is_none());
+        let retained = load_companion_state(&path).expect("old pairing retained for explicit repair");
+        assert!(!retained.online);
+        assert!(retained.requires_repair);
+        assert_eq!(retained.queue.len(), 1);
+        assert_eq!(retained.queue[0].operation_id, "offline-edit");
         let _ = fs::remove_dir_all(directory);
     }
 

@@ -191,21 +191,30 @@ export async function loadCanvasProject(id?: string): Promise<CanvasDocument | n
   });
 }
 
-export async function saveCanvasProject(canvas: CanvasDocument): Promise<void> {
+export async function saveCanvasProject(
+  canvas: CanvasDocument,
+  expectedCanvasUpdatedAt?: string | null
+): Promise<boolean> {
   const db = await open();
   const portable = clone(canvas);
   return new Promise((resolve, reject) => {
     const transaction = db.transaction([STORE, META], 'readwrite');
     const projects = transaction.objectStore(STORE);
     const request = projects.get(canvas.id);
+    let saved = false;
     request.onsuccess = () => {
+      if (
+        expectedCanvasUpdatedAt !== undefined &&
+        (normalizeProjectRecord(request.result)?.canvas?.updatedAt ?? null) !== expectedCanvasUpdatedAt
+      ) return;
       projects.put(mergeProjectRecord(request.result, { canvas: portable }));
       transaction.objectStore(META).put(canvas.id, ACTIVE_CANVAS);
+      saved = true;
     };
     request.onerror = () => reject(request.error);
     transaction.oncomplete = () => {
       db.close();
-      resolve();
+      resolve(saved);
     };
     transaction.onerror = () => reject(transaction.error);
   });
