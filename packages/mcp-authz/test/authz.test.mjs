@@ -606,3 +606,18 @@ test('partner toolkit auth policy allows reviewed pin operations with consent', 
   assert.equal(result.final.decision, 'allow');
   assert.match(result.final.reason, /after human review/i);
 });
+
+test('healthcare registry routes classify their reviewed effects without changing administration rules', async () => {
+ for (const [tool,access] of [['search_registry_sourcing','read'],['estimate_registry_travel','write']]) {
+  const route={proxyToolName:'abundance-healthcare-mcp__'+tool,serverName:'abundance-healthcare-mcp',downstreamToolName:tool};
+  assert.equal(classifyHubRoute(route).accessType,access);
+  for(const toolMode of ['read_only','read_write']){
+   const request=buildHubAuthorizationRequest({...route,accountId:'npg-test',sessionId:'test',toolMode,identitySource:'session',actionName:'execute'});
+   const result=await evaluateAuthorizationRequest('policy.hub-route-authorization.v1',request,{mode:'legacy_enforce',canaryPercent:0},{mode:'legacy'});
+   assert.equal(result.final.decision,access==='write'&&toolMode==='read_only'?'block':'allow');
+  }
+ }
+ assert.equal(classifyHubRoute({proxyToolName:'other__estimate_registry_travel',serverName:'other',downstreamToolName:'estimate_registry_travel'}).accessType,'control_plane');
+ assert.equal(classifyHubRoute({proxyToolName:'abundance-healthcare-mcp__delete_registry_record',serverName:'abundance-healthcare-mcp',downstreamToolName:'delete_registry_record'}).accessType,'destructive');
+ assert.equal(classifyHubRoute({proxyToolName:'hub__registry_update',serverName:'hub',downstreamToolName:'registry_update'}).accessType,'control_plane');
+});
