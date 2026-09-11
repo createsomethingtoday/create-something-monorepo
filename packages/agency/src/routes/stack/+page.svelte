@@ -10,6 +10,7 @@
     type PerformanceCtaItem,
     type PerformanceNarrativeScene
   } from '@create-something/canon';
+  import OpenAIQualifications from '$lib/components/OpenAIQualifications.svelte';
   import PublicAtlasStoryCanvas from '$lib/components/PublicAtlasStoryCanvas.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
   import { playbookHeroMedia } from '$lib/data/playbookHeroMedia';
@@ -297,6 +298,8 @@
     {/if}
   {/snippet}
 </PerformanceNarrativeStage>
+
+<OpenAIQualifications />
 
 <PerformanceConversionHandoff
   expression="editorial"

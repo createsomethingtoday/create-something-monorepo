@@ -551,3 +551,14 @@ test('integration proof keeps compatibility distinct from partnership and delive
   assert.match(mapCanvas, /Connector context added/);
   assert.doesNotMatch(`${rail}\n${catalog}`, /certified integration|official partner|1,041/gi);
 });
+
+test('public agency copy permits the documented Select tier and named individual credentials', () => {
+  const tempDir = mkdtempSync(path.join(tmpdir(), 'agency-copy-'));
+  const fixture = path.join(tempDir, '+page.svelte');
+  try {
+    writeFileSync(fixture, 'CREATE SOMETHING is an OpenAI Select Partner. Micah Johnson holds the Codex Deployment Practitioner credential.');
+    assert.deepEqual(auditPublicCopy([fixture]), []);
+  } finally {
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});

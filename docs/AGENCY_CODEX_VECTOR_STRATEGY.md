@@ -60,7 +60,9 @@ Apply the doctrine through one context-specific hierarchy:
 OpenAI Codex is the current primary setup, demonstration, repository, and
 agent-operable delivery environment. That choice is explicit because it is a
 real operating conviction. It is not the category, the paid offer, or a claim
-of official OpenAI partnership.
+of partnership on its own. CREATE SOMETHING separately holds **OpenAI Select
+Partner** status, confirmed September 11, 2026; see
+[OpenAI partner status](./OPENAI_PARTNER_READINESS_PACKET.md).
 
 The portable unit is the surrounding system: data, MCP contracts, harnesses,
 skills, prompts, policy, evals, receipts, routing, fallback, and recovery.
