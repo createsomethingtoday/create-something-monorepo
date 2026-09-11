@@ -3,7 +3,7 @@ import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { z } from 'zod';
 
 export const SERVER_NAME = 'abundance-healthcare-mcp';
-export const SERVER_VERSION = '1.2.0';
+export const SERVER_VERSION = '1.3.0';
 export const DEFAULT_AGENCY_BASE_URL = 'https://createsomething.agency';
 export const DEFAULT_EXA_AGENT_BASE_URL = 'https://api.exa.ai';
 
@@ -77,6 +77,32 @@ const searchCandidatesSchema = z.object({
   limit: z.number().int().min(1).max(25).default(10),
   offset: z.number().int().min(0).max(1_000_000).default(0),
 }).strict();
+const sourcingSchema = z.object({
+  state: stateCodeSchema.optional(), city: z.string().trim().min(1).max(100).optional(),
+  name: z.string().trim().min(1).max(100).optional(),
+  taxonomy_code: z.string().default('363LF0000X'),
+  center_address: z.string().trim().min(8).max(300).optional(),
+  radius_miles: z.number().min(0.1).max(250).optional(),
+  location_mode: z.enum(['within_radius','unresolved']).default('within_radius'),
+  run_id: z.string().optional(), limit: z.number().int().min(1).max(100).default(25),
+  offset: z.number().int().min(0).max(1000000).default(0),
+}).strict();
+export async function searchRegistrySourcing(input: z.input<typeof sourcingSchema>, options: HealthcareClientOptions) {
+ const parsed=sourcingSchema.parse(input);
+ const key=options.agencyApiKey?.trim();
+ if(!key)throw new Error('AGENCY_INTERNAL_API_KEY is not configured.');
+ const base=(options.agencyBaseUrl?.trim() || DEFAULT_AGENCY_BASE_URL).replace(/\/$/,'');
+ const params=new URLSearchParams();
+ for(const [name,value] of Object.entries(parsed))if(value!==undefined)params.set(name,String(value));
+ const response=await (options.fetchFn??fetch)(base+'/api/abundance/healthcare-providers/sourcing?'+params,{headers:{Authorization:'Bearer '+key}});
+ if(!response.ok)throw new Error(`Sourcing API returned HTTP ${response.status}. Check the center street address, radius and supported taxonomy; no complete list was produced.`);
+ const payload=await response.json() as {success:boolean;data:Record<string,unknown>};
+ if(!payload.success || !Array.isArray(payload.data?.results) || typeof payload.data.run_id!=='string')throw new Error('Malformed sourcing response.');
+ const exportParams=new URLSearchParams(params);exportParams.delete('limit');exportParams.delete('offset');exportParams.set('run_id',payload.data.run_id);
+ return {...payload.data,csv_download_url:base+'/delivery/abundance/sourcing.csv?'+exportParams,
+  csv_access:'NPG sign-in required. Downloads every match in this snapshot, not just the displayed page.',
+  outreach_policy:'Human review required before outreach. Do not infer experience, certification, availability or commute from registry fields.'};
+}
 const practitionerSchema = z.object({ market_id: marketIdSchema, npi: z.string().regex(/^\d{10}$/, 'NPI must contain exactly 10 digits.') }).strict();
 const providerContactSchema = z.object({
   npi: z.string().regex(/^\d{10}$/, 'NPI must contain exactly 10 digits.'),
@@ -448,6 +474,11 @@ function summarizeProvider(provider: HealthcareProvider, readiness?: HealthcareR
     npi: provider.npi, name: provider.name, credential: cleanString(provider.credential), status: cleanString(provider.status),
     last_updated_date: provider.last_updated_date, primary_taxonomy_description: cleanString(provider.primary_taxonomy_description),
     practice_city: cleanString(provider.practice_city), practice_state: cleanString(provider.practice_state),
+    practice_address_1: cleanString(provider.practice_address_1), practice_address_2: cleanString(provider.practice_address_2),
+    practice_postal_code: cleanString(provider.practice_postal_code), practice_country: cleanString(provider.practice_country),
+    practice_phone: cleanString(provider.practice_phone), contact_route_status: 'public_registry_unverified',
+    contact_limitation: 'Unverified NPPES practice contact; not proof of personal ownership, current employment or permission to contact.',
+    clinical_verification_status: 'recruiter_verification_required',
     source_fetched_at: provider.source_fetched_at, recruiting_stage: stage,
     direct_outreach_status: stage === 'recruiter_ready' ? 'ready' : 'blocked',
     missing_evidence_kinds: readiness ? readiness.gates.filter((gate) => gate.status !== 'passed').map((gate) => gate.kind) : requiredKinds,
@@ -658,9 +689,10 @@ export function createAbundanceHealthcareServer(options: HealthcareClientOptions
   return server;
 }
 export function registerAbundanceHealthcareTools(server: McpServer, options: HealthcareClientOptions): void {
-  server.resource('abundance-healthcare-status', 'abundance-healthcare://status', { description: 'Healthcare MCP status and approved NPG market IDs. Contains no secret values.', mimeType: 'application/json' }, async () => ({ contents: [{ uri: 'abundance-healthcare://status', mimeType: 'application/json', text: JSON.stringify({ name: SERVER_NAME, version: SERVER_VERSION, tools: ['list_healthcare_markets', 'get_healthcare_coverage', 'search_coverage_candidates', 'get_healthcare_practitioner', 'get_provider_contact_information', 'enrich_provider_professional_contact'], market_ids: NPG_HEALTHCARE_MARKETS.map((market) => market.id), coverage_model: 'monthly_full_plus_weekly_incremental', refresh_policy: 'weekly_default_daily_locale_opt_in', contact_enrichment_policy: 'owned_registry_first_explicit_paid_exa_fallback' }, null, 2) }] }));
+  server.resource('abundance-healthcare-status', 'abundance-healthcare://status', { description: 'Healthcare MCP status and approved NPG market IDs. Contains no secret values.', mimeType: 'application/json' }, async () => ({ contents: [{ uri: 'abundance-healthcare://status', mimeType: 'application/json', text: JSON.stringify({ name: SERVER_NAME, version: SERVER_VERSION, tools: ['search_registry_sourcing', 'list_healthcare_markets', 'get_healthcare_coverage', 'search_coverage_candidates', 'get_healthcare_practitioner', 'get_provider_contact_information', 'enrich_provider_professional_contact'], market_ids: NPG_HEALTHCARE_MARKETS.map((market) => market.id), coverage_model: 'monthly_full_plus_weekly_incremental', refresh_policy: 'weekly_default_daily_locale_opt_in', contact_enrichment_policy: 'owned_registry_first_explicit_paid_exa_fallback' }, null, 2) }] }));
   server.registerTool('list_healthcare_markets', { description: 'List nationwide and approved derived NPG healthcare views with source freshness and outreach status. Read-only.', inputSchema: z.object({}).strict(), annotations: readOnlyAnnotations() }, async () => structuredJson(await listHealthcareMarkets(options)));
-  server.registerTool('search_coverage_candidates', { description: 'Search the nationwide Family NP snapshot by optional US state and city, or search an approved named local view. Results are bounded and omit practice phone and street address. Read-only.', inputSchema: searchCandidatesSchema, annotations: readOnlyAnnotations() }, async (input) => structuredJson(await searchCoverageCandidates(input, options)));
+  server.registerTool('search_registry_sourcing', { description: 'Build a paginated NPG registry sourcing list with full unverified practice addresses and phones and a complete CSV download. For radius search provide a full center street address and radius_miles; omit state/city so borders do not hide matches. Unresolved addresses are separate, never assumed inside the radius. Distance is straight-line practice-location distance, not commute time. Taxonomy does not establish board certification or clinical experience.', inputSchema: sourcingSchema, annotations: { ...readOnlyAnnotations(), openWorldHint: true } }, async (input) => structuredJson(await searchRegistrySourcing(input, options)));
+  server.registerTool('search_coverage_candidates', { description: 'Search the nationwide Family NP snapshot by optional US state and city, or search an approved named local view. Results are paginated and include full available NPPES practice addresses and phones, explicitly labeled unverified registry data. Continue pagination for all matches. Clinical experience, board certification, commute time and availability require separate verification. Read-only.', inputSchema: searchCandidatesSchema, annotations: readOnlyAnnotations() }, async (input) => structuredJson(await searchCoverageCandidates(input, options)));
   server.registerTool('get_healthcare_practitioner', { description: 'Read one practitioner by NPI, including public NPPES practice fields and fail-closed evidence gates. Read-only.', inputSchema: practitionerSchema, annotations: readOnlyAnnotations() }, async (input) => structuredJson(await getHealthcarePractitioner(input, options)));
   server.registerTool('get_provider_contact_information', { description: 'Read public NPPES phone and address fields for one exact Family NP NPI. Classifies individual records as possibly personal or residential and never establishes consent, employment, advertising eligibility, or recruiting readiness. Read-only.', inputSchema: providerContactSchema, outputSchema: providerContactOutputSchema, annotations: readOnlyAnnotations() }, async (input) => structuredJson(await getProviderContactInformation(input, options)));
   server.registerTool('enrich_provider_professional_contact', { description: 'Run one bounded paid Exa Agent lookup for an exact Family NP NPI when registry contact is missing or unsuitable. Requires explicit paid-enrichment confirmation, requests at most one email and one phone, returns citations, and never establishes consent, employment, advertising eligibility, or recruiting readiness.', inputSchema: providerEnrichmentSchema, outputSchema: providerEnrichmentOutputSchema, annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true } }, async (input) => structuredJson(await enrichProviderProfessionalContact(input, options)));
