@@ -1,17 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  let { kind, opacity = 1 }: { kind: 'home' | 'oil' | 'mining'; opacity?: number } = $props();
-  // Reuse media already serving the production site, never the watermarked prototype clips.
-  const sources = {
-    home: '089014528-smokestack-and-american-flag-o.mp4',
-    oil: '082466515-oil-rig-pumpjack-working-natur.mp4',
-    mining: '168384056-deep-open-pit-mine-copper-ore-.mp4'
-  };
-  const posters = {
-    home: '/redesign/hero-home.jpg',
-    oil: '/redesign/hero-oil.jpg',
-    mining: '/redesign/hero-mining.jpg'
-  };
+  let { kind, opacity = 1 }: { kind: 'home' | 'oil' | 'mining' | 'oilHero' | 'miningHero' | 'about'; opacity?: number } = $props();
+  // Exact supplied reference clips, retained without transcoding for preview review.
   let animate = $state(false);
   onMount(() => {
     const preference = matchMedia('(prefers-reduced-motion: reduce)');
@@ -34,11 +24,11 @@
     loop
     playsinline
     preload="metadata"
-    poster={posters[kind]}
-    src={`https://pub-fb87e05654104f5fbb33989fc4dca65b.r2.dev/videos/${sources[kind]}`}
+    poster={`/redesign/reference-${kind}.jpg`}
+    src={`/redesign/reference-${kind}.mp4`}
   ></video>
 {:else}
-  <img style:opacity src={posters[kind]} alt="" />
+  <img style:opacity src={`/redesign/reference-${kind}.jpg`} alt="" />
 {/if}
 
 <style>

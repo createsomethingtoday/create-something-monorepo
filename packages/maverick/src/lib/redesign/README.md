@@ -19,3 +19,7 @@ Existing KV namespaces, page keys, admin API, D1, R2, contact modal and `/api/co
 Run package `check` and `build`, then `node packages/maverick/scripts/verify-release.mjs <origin>`. This HTTP check supports, but does not replace, desktop/mobile browser checks of navigation, portraits, media, contact focus/validation/close and reload persistence. It only sends an empty invalid contact payload, rejected before persistence or email.
 
 Before production, record the current Cloudflare Pages deployment. Baseline production: `21bde5fb-509b-4c7c-8238-0cbd38c2d5c6` (main source `d85c80c`); baseline preview: `4cf89236-8b15-4e78-a2de-d77ce71d3dae`. Use the Pages production rollback action for the baseline deployment if promotion fails. Canonical production is `https://www.maverickx.com`; preview alias is `https://preview.maverick-x.pages.dev`.
+
+## Preview video scope
+
+The latest user instruction limits delivery to preview. Media uses the six exact MP4s from the supplied local HTML, including its existing stock watermarks. reference-media.json records source IDs and SHA256 hashes. Oil and Mining heroes use separate clips from their supporting cards; News shares the Oil supporting clip. About has its own clip. Production promotion is not authorized by this preview change.
