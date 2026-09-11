@@ -149,15 +149,19 @@ export async function geocodeStreetAddress(address: string, fetchFn: typeof fetc
 }
 const join = `LEFT JOIN abundance_healthcare_geocodes g ON g.provider_npi=m.provider_npi
  AND g.source_payload_hash=json_extract(m.provider_snapshot_json,'$.source_payload_hash')`;
-async function prepareQuery(db: D1Database, q: SourcingQuery, fetchFn: typeof fetch) {
+export async function selectSourcingRun(db: D1Database, runId?: string) {
   const run = await db
     .prepare(
       `SELECT id, taxonomy_scope, source_published_at, finished_at FROM abundance_healthcare_nationwide_runs
- WHERE status='succeeded' ${q.runId ? 'AND id=?' : ''} ORDER BY (taxonomy_scope='all_np_taxonomies') DESC, source_published_at DESC, finished_at DESC LIMIT 1`
+ WHERE status='succeeded' ${runId ? 'AND id=?' : ''} ORDER BY (taxonomy_scope='all_np_taxonomies') DESC, source_published_at DESC, finished_at DESC LIMIT 1`
     )
-    .bind(...(q.runId ? [q.runId] : []))
+    .bind(...(runId ? [runId] : []))
     .first<{ id: string; taxonomy_scope: 'primary_family_np' | 'all_np_taxonomies'; source_published_at: string; finished_at: string }>();
-  if (!run) throw new Error('Requested completed snapshot is unavailable.');
+  if (!run) throw new TypeError('Requested completed snapshot is unavailable.');
+  return run;
+}
+async function prepareQuery(db: D1Database, q: SourcingQuery, fetchFn: typeof fetch) {
+  const run = await selectSourcingRun(db, q.runId);
   const codes = q.taxonomy.split(',');
   if (run.taxonomy_scope !== 'all_np_taxonomies' && codes.some(code => code !== '363LF0000X'))
     throw new TypeError('This snapshot requires a broader completed import for the requested specialties.');
@@ -340,13 +344,14 @@ export async function geocodeSourcingBatch(
   fetchFn: typeof fetch = fetch
 ) {
   if (!/^[A-Z]{2}$/.test(state)) throw new TypeError('state must be a two-letter code.');
+  const run = await selectSourcingRun(db);
   const rows = await db
     .prepare(
       `SELECT m.provider_snapshot_json FROM abundance_healthcare_nationwide_memberships m ${join}
- WHERE m.run_id=(SELECT id FROM abundance_healthcare_nationwide_runs WHERE status='succeeded' ORDER BY finished_at DESC LIMIT 1)
+ WHERE m.run_id=?
  AND m.practice_state=? AND g.provider_npi IS NULL ORDER BY m.provider_npi LIMIT 10`
     )
-    .bind(state)
+    .bind(run.id, state)
     .all<{ provider_snapshot_json: string }>();
   let matched = 0,
     unmatched = 0;
