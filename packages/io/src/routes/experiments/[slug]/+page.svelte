@@ -2,6 +2,7 @@
 	import { page } from '$app/stores';
 	import { ResearchArtifactPage } from '@create-something/canon/domains/io';
 	import type { Paper } from '@create-something/canon/types';
+	import { experimentGuides } from '$lib/config/experimentSharpness';
 	import {
 		clearExperimentCompletion,
 		getNextPaper,
@@ -71,4 +72,7 @@
 	{isCompleted}
 	onReset={handleReset}
 	kind="experiment"
+	sharpenExperiment={experimentGuides['experiments/[slug]']}
+	progressiveRecord
+	progressiveActions
 />

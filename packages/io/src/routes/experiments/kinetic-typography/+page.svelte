@@ -1,6 +1,9 @@
 <script lang="ts">
 	import { QuoteBlock, SEO } from '@create-something/canon';
+	import ExperimentOrientation from '$lib/components/ExperimentOrientation.svelte';
+	import ExperimentRecord from '$lib/components/ExperimentRecord.svelte';
 	import ExperimentVisualSummary from '$lib/components/ExperimentVisualSummary.svelte';
+	import { experimentGuides } from '$lib/config/experimentSharpness';
 	import { FluidAssembly } from '@create-something/canon/experiments/kinetic-typography';
 	import type { PageData } from './$types';
 
@@ -29,8 +32,10 @@
 			<span class="reading-time">{experiment.reading_time_minutes} min read</span>
 		</div>
 		<h1>{experiment.title}</h1>
+		<ExperimentOrientation guide={experimentGuides['experiments/kinetic-typography']} />
 		<p class="subtitle">{experiment.description}</p>
 	</header>
+	<ExperimentRecord>
 
 	<!-- ASCII Art -->
 	{#if experiment.ascii_art}
@@ -334,6 +339,7 @@ const weight = 400 + (600 - 400) * emphasisProgress;`}</pre>
 		</p>
 	</section>
 
+	</ExperimentRecord>
 	<!-- Tags -->
 	<footer class="experiment-footer">
 		<div class="tags">

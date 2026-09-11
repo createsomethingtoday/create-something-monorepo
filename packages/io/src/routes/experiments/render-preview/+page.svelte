@@ -1,6 +1,9 @@
 <script lang="ts">
 	import { QuoteBlock, SEO } from '@create-something/canon';
+	import ExperimentOrientation from '$lib/components/ExperimentOrientation.svelte';
+	import ProgressiveExperiment from '$lib/components/ProgressiveExperiment.svelte';
 	import ExperimentVisualSummary from '$lib/components/ExperimentVisualSummary.svelte';
+	import { experimentGuides } from '$lib/config/experimentSharpness';
 	import { PreviewCanvas } from '@create-something/canon/experiments/render-preview';
 	import { Sparkles, CheckCircle2, AlertCircle } from 'lucide-svelte';
 	import type { PageData } from './$types';
@@ -339,8 +342,10 @@
 			<span class="reading-time">{experiment.reading_time_minutes} min read</span>
 		</div>
 		<h1>{experiment.title}</h1>
+		<ExperimentOrientation guide={experimentGuides['experiments/render-preview']} />
 		<p class="subtitle">{experiment.description}</p>
 	</header>
+	<ProgressiveExperiment fallback="The experiment question and evidence test remain available above. Enable JavaScript to load a floor plan and compare its preview with a render.">
 
 	<!-- ASCII Art -->
 	{#if experiment.ascii_art}
@@ -570,6 +575,7 @@
 			Tests: {experiment.tests_principles?.join(', ') ?? 'None specified'}
 		</p>
 	</footer>
+	</ProgressiveExperiment>
 </article>
 
 <style>

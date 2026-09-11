@@ -10,7 +10,10 @@
 	 */
 
 	import { SEO } from '@create-something/canon';
+	import ExperimentOrientation from '$lib/components/ExperimentOrientation.svelte';
+	import ExperimentRecord from '$lib/components/ExperimentRecord.svelte';
 	import ExperimentVisualSummary from '$lib/components/ExperimentVisualSummary.svelte';
+	import { experimentGuides } from '$lib/config/experimentSharpness';
 	import {
 		ComparativeSparklines,
 		DistributionBar,
@@ -113,12 +116,14 @@
 	<!-- Header -->
 	<div class="header-section pb-8">
 		<h1 class="page-title mb-3">Agentic Visualization Experiment</h1>
+		<ExperimentOrientation guide={experimentGuides['experiments/agentic-visualization']} />
 		<p class="text-secondary max-w-3xl">
 			Research experiment demonstrating autonomous UI components that embody Edward Tufte's principles
 			for displaying quantitative information. Components make intelligent decisions about data presentation,
 			transforming visualization from manual craft into intelligent revelation.
 		</p>
 	</div>
+	<ExperimentRecord>
 
 	<ExperimentVisualSummary visual={experiment.visual_summary} />
 
@@ -543,6 +548,7 @@
 		</div>
 	</section>
 
+	</ExperimentRecord>
 		<!-- Footer -->
 		<div class="section-divider pt-6">
 			<p class="text-body-sm text-muted">

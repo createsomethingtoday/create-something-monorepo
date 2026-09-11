@@ -11,7 +11,10 @@
 
 	import { onMount } from 'svelte';
 	import { SEO } from '@create-something/canon';
+	import ExperimentOrientation from '$lib/components/ExperimentOrientation.svelte';
+	import ProgressiveExperiment from '$lib/components/ProgressiveExperiment.svelte';
 	import ExperimentVisualSummary from '$lib/components/ExperimentVisualSummary.svelte';
+	import { experimentGuides } from '$lib/config/experimentSharpness';
 	import type { PageData } from './$types';
 	import {
 		Shield,
@@ -112,6 +115,10 @@
 		lightingMode = initialEffects.lightingMode;
 		currentEvent = { ...currentEvent, attendance: initialEffects.attendance };
 		regenerateParticles();
+		if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+			window.setTimeout(() => document.getAnimations().forEach((animation) => animation.cancel()), 0);
+			return;
+		}
 
 		// Simulation tick - creates the "living" effect
 		const interval = setInterval(() => {
@@ -232,12 +239,14 @@
 		<div class="header-content">
 			<span class="experiment-label">Experiment</span>
 			<h1 class="experiment-title">Living Arena</h1>
+			<ExperimentOrientation guide={experimentGuides['experiments/living-arena']} />
 			<p class="experiment-description">
 				What if your building could help people without them having to ask?
 				The lights guide you to your seat. The air feels right before you notice.
 				And through it all, <strong>safety comes first</strong>—always.
 			</p>
 		</div>
+		<ProgressiveExperiment fallback="Enable JavaScript to pause the simulation and inspect the current event.">
 		<div class="header-right">
 			<button class="live-toggle" class:active={liveMode} onclick={() => liveMode = !liveMode}>
 				<span class="live-indicator" class:pulsing={liveMode}></span>
@@ -249,7 +258,9 @@
 				<span class="attendance">{currentEvent.attendance.toLocaleString()} / {currentEvent.capacity.toLocaleString()}</span>
 			</div>
 		</div>
+		</ProgressiveExperiment>
 	</header>
+	<ProgressiveExperiment fallback="This is a simulated venue model. Enable JavaScript to change scenarios and inspect system responses.">
 
 	<ExperimentVisualSummary visual={experiment.visual_summary} />
 
@@ -766,7 +777,7 @@
 				<text x="15" y="48" font-size="14" fill="var(--color-fg-default)" font-weight="600">{currentScenario.trigger}</text>
 
 				<!-- Phase indicator -->
-				<rect x="15" y="60" width="auto" height="18" rx="3" fill="var(--color-accent)" opacity="0.2" />
+				<rect x="15" y="60" width="180" height="18" rx="3" fill="var(--color-accent)" opacity="0.2" />
 				<text x="22" y="73" font-size="10" fill="var(--color-accent)" font-weight="500">{currentScenario.phase}</text>
 
 				<!-- Visual cue -->
@@ -1198,6 +1209,7 @@
 			</div>
 		</div>
 	</footer>
+	</ProgressiveExperiment>
 </div>
 
 <style>
@@ -1233,10 +1245,8 @@
 		font-size: var(--text-performance-h1);
 		font-weight: 700;
 		margin-bottom: var(--space-performance-sm);
-		background: linear-gradient(135deg, var(--color-performance-fg-primary), var(--color-accent));
-		-webkit-background-clip: text;
-		-webkit-text-fill-color: transparent;
-		background-clip: text;
+		color: var(--color-performance-fg-primary);
+		-webkit-text-fill-color: currentColor;
 	}
 
 	.experiment-description {
@@ -2770,5 +2780,15 @@
 
 	.holistic-benefit strong {
 		color: var(--color-performance-fg-secondary);
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.arena-experiment *,
+		.arena-experiment *::before,
+		.arena-experiment *::after {
+			animation-duration: 0.01ms !important;
+			animation-iteration-count: 1 !important;
+			transition-duration: 0.01ms !important;
+		}
 	}
 </style>

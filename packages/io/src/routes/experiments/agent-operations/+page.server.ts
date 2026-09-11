@@ -60,6 +60,12 @@ export const load: PageServerLoad = async ({ fetch }) => {
 	const status: StatusResponse | null = statusResult.status === 'fulfilled' ? statusResult.value as StatusResponse : null;
 	const health: AgentHealth | null = healthResult.status === 'fulfilled' ? healthResult.value as AgentHealth : null;
 	const logsData: LogsResponse | null = logsResult.status === 'fulfilled' ? logsResult.value as LogsResponse : null;
+	const dataAvailability = {
+		status: status !== null,
+		health: health !== null,
+		logs: logsData !== null,
+		complete: status !== null && health !== null && logsData !== null,
+	};
 
 	// Process logs to get agent stats
 	const agentStats: Record<string, {
@@ -108,6 +114,7 @@ export const load: PageServerLoad = async ({ fetch }) => {
 		status,
 		health,
 		logs: logsData?.logs || [],
+		dataAvailability,
 		agentStats,
 		recentDeployments,
 		error: null,
