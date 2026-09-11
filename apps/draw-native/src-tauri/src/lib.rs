@@ -400,7 +400,9 @@ fn load_companion_state(path: &Path) -> Option<StoredCompanionSession> {
             stored.document = normalize_document_compat(stored.document);
             stored
         })
-        .filter(|stored: &StoredCompanionSession| valid_document(&stored.document))
+        .filter(|stored: &StoredCompanionSession| {
+            stored.host.protocol_version == PROTOCOL_VERSION && valid_document(&stored.document)
+        })
 }
 
 #[cfg(any(target_os = "macos", target_os = "ios"))]
@@ -1598,6 +1600,36 @@ mod tests {
             restored.queue[0].operation_id,
             "operation-persisted-offline"
         );
+        let _ = fs::remove_dir_all(directory);
+    }
+
+    #[test]
+    fn upgraded_companions_do_not_restore_pairings_for_older_hosts() {
+        let directory = std::env::temp_dir().join(format!("draw-old-pairing-{}", Uuid::new_v4()));
+        let path = directory.join(COMPANION_STATE_FILE);
+        let session = CompanionSession {
+            host: transport::DiscoveredHost {
+                endpoint: "https://draw-mac.local:4242".into(),
+                session_id: "session-old-host".into(),
+                protocol_version: PROTOCOL_VERSION.into(),
+                certificate_fingerprint: "a".repeat(64),
+                certificate_der: "fixture-certificate".into(),
+            },
+            client_id: "iphone-test".into(),
+            capability: "never-write-this-secret".into(),
+            expires_at: "2099-01-01T00:00:00Z".into(),
+            revision: 0,
+            document: initial_state().document,
+            queue: VecDeque::new(),
+            online: true,
+            requires_repair: false,
+        };
+        persist_companion_state(&path, &session).unwrap();
+        let mut stored: Value = serde_json::from_slice(&fs::read(&path).unwrap()).unwrap();
+        stored["host"]["protocolVersion"] = json!("create-something.draw-pairing.v1");
+        fs::write(&path, serde_json::to_vec_pretty(&stored).unwrap()).unwrap();
+
+        assert!(load_companion_state(&path).is_none());
         let _ = fs::remove_dir_all(directory);
     }
 

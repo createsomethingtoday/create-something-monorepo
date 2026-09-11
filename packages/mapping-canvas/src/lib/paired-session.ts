@@ -12,7 +12,7 @@ import {
   type Viewport
 } from './document';
 
-export const PAIRING_PROTOCOL_VERSION = 'create-something.draw-pairing.v1' as const;
+export const PAIRING_PROTOCOL_VERSION = 'create-something.draw-pairing.v2' as const;
 
 export type CanvasOperation =
   | { type: 'put_object'; object: CanvasObject }

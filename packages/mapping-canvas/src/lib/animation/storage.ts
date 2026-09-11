@@ -51,7 +51,12 @@ async function migrateLegacyProjects(): Promise<void> {
           const existing = await loadProjectRecord(project.id);
           if (existing?.motion) break;
           try {
-            await saveMotionProject(project, null, existing?.canvas?.updatedAt ?? null);
+            await saveMotionProject(
+              project,
+              null,
+              existing?.canvas?.updatedAt ?? null,
+              'legacy-migration'
+            );
             break;
           } catch (error) {
             lastError = error;

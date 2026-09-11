@@ -46,6 +46,8 @@ it('guards Motion synchronization with the loaded Canvas version and makes migra
   expect(motionStorage).toContain('if ((await loadProjectRecord(project.id))?.motion) break;');
   expect(motionStorage).toContain('const activeMigration = (async () => {');
   expect(motionStorage).toContain('existing?.canvas?.updatedAt ?? null');
+  expect(motionStorage).toContain("'legacy-migration'");
+  expect(projectStorage).toContain("update.motionBackgroundSource === 'legacy-migration'");
   expect(motionStorage).toContain('if (attempt === 2) throw lastError;');
   expect(motionStorage).toContain('if (migration === activeMigration) migration = undefined;');
   expect(projectStorage).toContain(

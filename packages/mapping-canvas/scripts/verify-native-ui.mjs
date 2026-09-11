@@ -38,6 +38,7 @@ const blankDocument = {
   title: 'Untitled mapping session',
   createdAt: '2026-08-29T16:00:00Z',
   updatedAt: '2026-08-29T16:00:00Z',
+  background: '#000000',
   viewport: { x: 0, y: 0, zoom: 1 },
   objects: []
 };
@@ -64,7 +65,7 @@ async function nativePage(role, viewport, restoredQueue = false) {
         if (command === 'draw_host_status') return { sessionId: 'session-native', revision, document, pairedClients: [{ clientId: 'iphone-d5794285-1d79-4609-9d08-6a5adab8bd56', revokedAt: null }], transport: { endpoint: 'https://192.0.2.1:4242', certificateFingerprint: 'a'.repeat(64) } };
         if (command === 'draw_companion_status') return restoredQueue ? { status: 'paired', sessionId: 'session-native', revision, document, certificateFingerprint: 'abcdef0123456789'.repeat(4), queueDepth: 1, online: true } : { status: 'unpaired' };
         if (command === 'draw_pair_begin') return { code: '271828', expiresAt: '2099-01-01T00:00:00Z' };
-        if (command === 'draw_discover_hosts') return [{ endpoint: 'https://draw-mac.local:4242', sessionId: 'session-native', protocolVersion: 'create-something.draw-pairing.v1', certificateFingerprint: 'abcdef0123456789'.repeat(4), certificateDer: 'fixture-certificate' }];
+        if (command === 'draw_discover_hosts') return [{ endpoint: 'https://draw-mac.local:4242', sessionId: 'session-native', protocolVersion: 'create-something.draw-pairing.v2', certificateFingerprint: 'abcdef0123456789'.repeat(4), certificateDer: 'fixture-certificate' }];
         if (command === 'draw_companion_pair') return { status: 'paired', sessionId: 'session-native', revision, document, certificateFingerprint: 'abcdef0123456789'.repeat(4), queueDepth: 0, online };
         if (command === 'draw_companion_set_online') {
           online = args.online;
@@ -117,6 +118,7 @@ async function nativePage(role, viewport, restoredQueue = false) {
           }
           if (operation.type === 'put_object') document = { ...document, objects: [...document.objects.filter((item) => item.id !== operation.object.id), operation.object] };
           if (operation.type === 'set_title') document = { ...document, title: operation.title };
+          if (operation.type === 'set_background') document = { ...document, background: operation.background };
           if (operation.type === 'set_viewport') document = { ...document, viewport: operation.viewport };
           if (operation.type === 'remove_objects') document = { ...document, objects: document.objects.filter((item) => !operation.ids.includes(item.id)) };
           if (operation.type === 'replace_objects') document = { ...document, objects: operation.objects };
@@ -397,6 +399,7 @@ try {
   await surface.dispatchEvent('pointermove', { pointerId: 60, pointerType: 'mouse', button: 0, clientX: currentBox.x + 180, clientY: currentBox.y + 140 });
   await surface.dispatchEvent('pointerup', { pointerId: 60, pointerType: 'mouse', button: 0, clientX: currentBox.x + 180, clientY: currentBox.y + 140 });
   await page.locator('path[aria-label="Ink stroke"]').last().waitFor();
+  await page.waitForFunction(() => window.__nativeCalls.some(({ command, args }) => command === 'draw_companion_submit' && args?.operation?.type === 'put_object' && args.operation.object?.kind === 'stroke'));
   const queuedInk = await page.evaluate(() => window.__nativeCalls.some(({ command, args }) => command === 'draw_companion_submit' && args?.operation?.type === 'put_object' && args.operation.object?.kind === 'stroke'));
   if (!queuedInk) throw new Error('Offline ink did not reach the durable companion queue');
   await page.getByRole('button', { name: 'Open device pairing' }).click();

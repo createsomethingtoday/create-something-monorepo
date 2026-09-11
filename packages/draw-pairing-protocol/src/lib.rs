@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use sha2::{Digest, Sha256};
 
-pub const PROTOCOL_VERSION: &str = "create-something.draw-pairing.v1";
+pub const PROTOCOL_VERSION: &str = "create-something.draw-pairing.v2";
 pub const DOCUMENT_VERSION: &str = "create-something.mapping-canvas.v1";
 pub const DEFAULT_DOCUMENT_BACKGROUND: &str = "#000000";
 pub const MAX_APPLIED_RECEIPTS: usize = 4096;
@@ -1092,6 +1092,20 @@ mod tests {
             apply_envelope(state(), invalid, NOW),
             OperationResult::Rejected {
                 code: OperationErrorCode::InvalidEnvelope,
+                ..
+            }
+        ));
+    }
+
+    #[test]
+    fn background_capable_hosts_reject_v1_envelopes_before_deserialization_can_stall_edits() {
+        assert_eq!(PROTOCOL_VERSION, "create-something.draw-pairing.v2");
+        let mut older = fixture();
+        older.protocol_version = "create-something.draw-pairing.v1".into();
+        assert!(matches!(
+            apply_envelope(state(), older, NOW),
+            OperationResult::Rejected {
+                code: OperationErrorCode::UnsupportedProtocol,
                 ..
             }
         ));

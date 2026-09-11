@@ -351,6 +351,20 @@ describe('shared Draw project contract', () => {
     });
   });
 
+  it('preserves an authored Canvas paper when legacy Motion migrates later', () => {
+    const authoredCanvas = { ...canvas(), background: '#123abc' };
+    const legacyMotion = { ...syncMotionProject(canvas()), background: '#eee5d4' };
+    const current = mergeProjectRecord(undefined, { canvas: authoredCanvas });
+
+    expect(mergeProjectRecord(current, {
+      motion: legacyMotion,
+      motionBackgroundSource: 'legacy-migration'
+    })).toMatchObject({
+      canvas: { background: '#123abc' },
+      motion: { background: '#123abc' }
+    });
+  });
+
   it('preserves valid Canvas IDs that include punctuation', () => {
     const source = canvas();
     source.objects = source.objects

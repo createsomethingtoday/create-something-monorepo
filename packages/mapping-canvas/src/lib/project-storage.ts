@@ -14,6 +14,7 @@ type ProjectUpdate = {
   canvas?: CanvasDocument;
   motion?: Project;
   canvasBackgroundSource?: 'authored' | 'compatibility-default';
+  motionBackgroundSource?: 'authored' | 'legacy-migration';
 };
 
 const DATABASE = 'create-something-draw-projects';
@@ -79,7 +80,9 @@ export function mergeProjectRecord(
   }
   const background = update.canvasBackgroundSource === 'compatibility-default' && normalizedCurrent?.motion
     ? normalizedCurrent.motion.background
-    : update.canvas?.background ?? update.motion?.background;
+    : update.motionBackgroundSource === 'legacy-migration' && normalizedCurrent?.canvas
+      ? normalizedCurrent.canvas.background
+      : update.canvas?.background ?? update.motion?.background;
   const canvas = update.canvas ?? normalizedCurrent?.canvas;
   const motion = update.motion ?? normalizedCurrent?.motion;
   const reconciledCanvas = canvas && background && canvas.background !== background
@@ -265,7 +268,8 @@ export async function clearCanvasProject(id?: string): Promise<void> {
 export async function saveMotionProject(
   motion: Project,
   expectedRevision: number | null,
-  expectedCanvasUpdatedAt?: string | null
+  expectedCanvasUpdatedAt?: string | null,
+  motionBackgroundSource: 'authored' | 'legacy-migration' = 'authored'
 ): Promise<string | null> {
   validateProject(motion);
   const portable = clone(motion);
@@ -291,7 +295,7 @@ export async function saveMotionProject(
         transaction.abort();
         return;
       }
-      const merged = mergeProjectRecord(current, { motion: portable });
+      const merged = mergeProjectRecord(current, { motion: portable, motionBackgroundSource });
       committedCanvasUpdatedAt = merged.canvas?.updatedAt ?? null;
       projects.put(merged);
     };
