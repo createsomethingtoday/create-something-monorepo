@@ -148,7 +148,10 @@ function isValidatorReviewBridgeScript(script) {
   if (!/window\.__WF_REVIEW_BRIDGE\s*=/.test(script)) {
     return false;
   }
-  if (!script.includes(REVIEW_BRIDGE_MARKER) || !/bridgeToken\s*:\s*["']wfbt_[a-f0-9]+["']/i.test(script)) {
+  // Accept both the installed token (wfbt_<hex>) and the pre-install placeholder:
+  // snippet/status hands creators a "__REPLACE_WITH_TOKEN__" copy for manual
+  // Site Settings installs, so published templates legitimately carry it.
+  if (!script.includes(REVIEW_BRIDGE_MARKER) || !/bridgeToken\s*:\s*["'](?:wfbt_[a-f0-9]+|__REPLACE_WITH_TOKEN__)["']/i.test(script)) {
     return false;
   }
   const withoutBridgeConfig = script.replace(/window\.__WF_REVIEW_BRIDGE\s*=\s*\{[\s\S]*?\}\s*;?/, "");
