@@ -77,6 +77,7 @@ declare global {
 				// Set to api.workway.co once DNS route is configured
 				WORKWAY_API_URL?: string;
 				AGENCY_INTERNAL_API_KEY?: string;
+                GEOCODIO_API_KEY?: string;
 				AGENCY_OPERATOR_EMAILS?: string;
 				NPG_HEALTHCARE_ANALYST_URL?: string;
 				CANON_OPERATOR_ORIGINS?: string;

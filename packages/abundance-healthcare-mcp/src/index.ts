@@ -3,7 +3,7 @@ import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { z } from 'zod';
 
 export const SERVER_NAME = 'abundance-healthcare-mcp';
-export const SERVER_VERSION = '1.3.0';
+export const SERVER_VERSION = '1.4.0';
 export const DEFAULT_AGENCY_BASE_URL = 'https://createsomething.agency';
 export const DEFAULT_EXA_AGENT_BASE_URL = 'https://api.exa.ai';
 
@@ -77,6 +77,22 @@ const searchCandidatesSchema = z.object({
   limit: z.number().int().min(1).max(25).default(10),
   offset: z.number().int().min(0).max(1_000_000).default(0),
 }).strict();
+const travelSchema = z.object({
+ npis: z.array(z.string().regex(/^\d{10}$/)).min(1).max(50).refine(a=>new Set(a).size===a.length),
+ clinics: z.array(z.object({id:z.string().regex(/^[a-zA-Z0-9_-]{1,60}$/),address:z.string().trim().min(8).max(300).regex(/^\d+[A-Za-z]?(?:-\d+)?\s+\S/, "Use a full clinic street address.")}).strict()).min(1).max(3).refine(a=>new Set(a.map(c=>c.id)).size===a.length),
+ max_minutes:z.union([z.literal(30),z.literal(45)]),clinic_match:z.enum(['any','all']),
+ run_id:z.string().regex(/^abnationalrun_[a-zA-Z0-9_-]+$/).optional()
+}).strict();
+export async function estimateRegistryTravel(input:z.input<typeof travelSchema>,options:HealthcareClientOptions){
+ const parsed=travelSchema.parse(input),key=options.agencyApiKey?.trim();
+ if(!key)throw new Error('AGENCY_INTERNAL_API_KEY is not configured.');
+ const base=(options.agencyBaseUrl?.trim()||DEFAULT_AGENCY_BASE_URL).replace(/\/$/,'');
+ const response=await (options.fetchFn??fetch)(base+'/api/abundance/healthcare-providers/travel',{method:'POST',headers:{Authorization:'Bearer '+key,'Content-Type':'application/json'},body:JSON.stringify(parsed),signal:AbortSignal.timeout(90000)});
+ if(!response.ok)throw new Error(`Travel API returned HTTP ${response.status}; no complete travel report was produced.`);
+ const payload=await response.json() as {success:boolean;data:Record<string,unknown>};
+ if(!payload.success||!Array.isArray(payload.data?.results)||typeof payload.data.id!=='string'||!/^abtravel_[a-f0-9-]{36}$/.test(payload.data.id))throw new Error('Malformed travel response.');
+ return {...payload.data,csv_download_url:base+'/delivery/abundance/travel.csv?id='+encodeURIComponent(payload.data.id),csv_access:'NPG sign-in required. Includes all selected practices, including unresolved and outside-limit results.',scope:'selected_npis_only',limitation:'This batch is not a complete sourcing population. Practice travel is not home commute. Continue through the sourcing population before claiming complete travel filtering.'};
+}
 const sourcingSchema = z.object({
   state: stateCodeSchema.optional(), city: z.string().trim().min(1).max(100).optional(),
   name: z.string().trim().min(1).max(100).optional(),
@@ -689,8 +705,9 @@ export function createAbundanceHealthcareServer(options: HealthcareClientOptions
   return server;
 }
 export function registerAbundanceHealthcareTools(server: McpServer, options: HealthcareClientOptions): void {
-  server.resource('abundance-healthcare-status', 'abundance-healthcare://status', { description: 'Healthcare MCP status and approved NPG market IDs. Contains no secret values.', mimeType: 'application/json' }, async () => ({ contents: [{ uri: 'abundance-healthcare://status', mimeType: 'application/json', text: JSON.stringify({ name: SERVER_NAME, version: SERVER_VERSION, tools: ['search_registry_sourcing', 'list_healthcare_markets', 'get_healthcare_coverage', 'search_coverage_candidates', 'get_healthcare_practitioner', 'get_provider_contact_information', 'enrich_provider_professional_contact'], market_ids: NPG_HEALTHCARE_MARKETS.map((market) => market.id), coverage_model: 'monthly_full_plus_weekly_incremental', refresh_policy: 'weekly_default_daily_locale_opt_in', contact_enrichment_policy: 'owned_registry_first_explicit_paid_exa_fallback' }, null, 2) }] }));
+  server.resource('abundance-healthcare-status', 'abundance-healthcare://status', { description: 'Healthcare MCP status and approved NPG market IDs. Contains no secret values.', mimeType: 'application/json' }, async () => ({ contents: [{ uri: 'abundance-healthcare://status', mimeType: 'application/json', text: JSON.stringify({ name: SERVER_NAME, version: SERVER_VERSION, tools: ['estimate_registry_travel', 'search_registry_sourcing', 'list_healthcare_markets', 'get_healthcare_coverage', 'search_coverage_candidates', 'get_healthcare_practitioner', 'get_provider_contact_information', 'enrich_provider_professional_contact'], market_ids: NPG_HEALTHCARE_MARKETS.map((market) => market.id), coverage_model: 'monthly_full_plus_weekly_incremental', refresh_policy: 'weekly_default_daily_locale_opt_in', contact_enrichment_policy: 'owned_registry_first_explicit_paid_exa_fallback' }, null, 2) }] }));
   server.registerTool('list_healthcare_markets', { description: 'List nationwide and approved derived NPG healthcare views with source freshness and outreach status. Read-only.', inputSchema: z.object({}).strict(), annotations: readOnlyAnnotations() }, async () => structuredJson(await listHealthcareMarkets(options)));
+  server.registerTool('estimate_registry_travel', { description: 'Estimate typical one-way driving time from selected NPPES practice locations to 1–3 operator-supplied clinic street addresses. Choose any or all clinics and 30 or 45 minutes. Uses cached geocodes; missing locations and routes remain unresolved. Reserves bounded Geocodio credits and stores a report. Processes at most 50 selected NPIs; this is not a complete population search or candidate home commute. Return the complete report CSV link.', inputSchema: travelSchema, annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true } }, async (input) => structuredJson(await estimateRegistryTravel(input, options)));
   server.registerTool('search_registry_sourcing', { description: 'Build a paginated NPG registry sourcing list with full unverified practice addresses and phones and a complete CSV download. For radius search provide a full center street address and radius_miles; omit state/city so borders do not hide matches. Unresolved addresses are separate, never assumed inside the radius. Distance is straight-line practice-location distance, not commute time. Taxonomy does not establish board certification or clinical experience.', inputSchema: sourcingSchema, annotations: { ...readOnlyAnnotations(), openWorldHint: true } }, async (input) => structuredJson(await searchRegistrySourcing(input, options)));
   server.registerTool('search_coverage_candidates', { description: 'Search the nationwide Family NP snapshot by optional US state and city, or search an approved named local view. Results are paginated and include full available NPPES practice addresses and phones, explicitly labeled unverified registry data. Continue pagination for all matches. Clinical experience, board certification, commute time and availability require separate verification. Read-only.', inputSchema: searchCandidatesSchema, annotations: readOnlyAnnotations() }, async (input) => structuredJson(await searchCoverageCandidates(input, options)));
   server.registerTool('get_healthcare_practitioner', { description: 'Read one practitioner by NPI, including public NPPES practice fields and fail-closed evidence gates. Read-only.', inputSchema: practitionerSchema, annotations: readOnlyAnnotations() }, async (input) => structuredJson(await getHealthcarePractitioner(input, options)));

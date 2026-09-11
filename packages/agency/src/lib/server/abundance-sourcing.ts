@@ -106,24 +106,32 @@ export async function geocodeStreetAddress(address: string, fetchFn: typeof fetc
     benchmark: 'Public_AR_Current',
     format: 'json'
   }).toString();
-  const response = await fetchFn(url, { signal: AbortSignal.timeout(15000) });
-  if (!response.ok) throw new Error('Address geocoding service unavailable.');
-  const body = (await response.json()) as {
+  let body: {
     result?: {
       addressMatches?: Array<{ matchedAddress?: string; coordinates?: { x?: number; y?: number } }>;
     };
   };
-  const matches = body.result?.addressMatches ?? [];
+  try {
+    const response = await fetchFn(url, { signal: AbortSignal.timeout(15000) });
+    if (!response.ok) throw new Error();
+    body = await response.json();
+  } catch {
+    throw new Error('Address geocoding service unavailable.');
+  }
+  if (!body || !Array.isArray(body.result?.addressMatches))
+    throw new Error('Invalid geocoder response.');
+  const matches = body.result.addressMatches;
+  if (matches.length !== 1)
+    throw new AddressNotMatchedError(
+      'Address not uniquely geocoded; provide a complete street address.'
+    );
   const match = matches[0];
   if (
-    matches.length !== 1 ||
     !match?.matchedAddress ||
     !Number.isFinite(match.coordinates?.x) ||
     !Number.isFinite(match.coordinates?.y)
   )
-    throw new AddressNotMatchedError(
-      'Address not uniquely geocoded; provide a complete street address.'
-    );
+    throw new Error('Invalid geocoder response.');
   const longitude = match.coordinates!.x!,
     latitude = match.coordinates!.y!;
   if (Math.abs(latitude) > 90 || Math.abs(longitude) > 180)
@@ -235,8 +243,10 @@ export async function querySourcing(
     next_offset: q.offset + q.limit < total ? q.offset + q.limit : undefined,
     center: plan.center,
     unresolved_address_count: unresolved?.total ?? 0,
-    completeness: plan.center && (unresolved?.total ?? 0) > 0
-      ? 'incomplete_geocoding' : 'all_matching_records_in_selected_snapshot',
+    completeness:
+      plan.center && (unresolved?.total ?? 0) > 0
+        ? 'incomplete_geocoding'
+        : 'all_matching_records_in_selected_snapshot',
     limitation:
       'Snapshot scope is primary Family NP until broader NP import is completed. Taxonomy is not board certification. Address-range distance is straight-line practice-to-center distance, not home location or commute time. Unresolved records cannot be classified inside or outside the radius.',
     results: (rows.results ?? []).map((row) => {
