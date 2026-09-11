@@ -726,7 +726,7 @@
                 [
                   {
                     type: 'put_drawing',
-                    drawing: independentDrawingCopy(current!)
+                    drawing: independentDrawingCopy(current!, undefined, project.background)
                   }
                 ],
                 project.revision

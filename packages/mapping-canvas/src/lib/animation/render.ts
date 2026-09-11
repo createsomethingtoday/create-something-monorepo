@@ -1,5 +1,5 @@
-import { DEFAULT_DRAWING_COLOR } from '../palette';
 import {
+  drawingInk,
   evaluateCamera,
   sceneToScreen,
   boiledPoints,
@@ -11,16 +11,6 @@ import {
   type Point,
   type Project
 } from './model';
-/** Chalk and note text are neutral ink; choose their light/dark variant for the paper. */
-function paperInk(background: string): string {
-  const channels = [1, 3, 5].map((offset) => {
-    const value = Number.parseInt(background.slice(offset, offset + 2), 16) / 255;
-    return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
-  });
-  const luminance = channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722;
-  return luminance > 0.179 ? '#282522' : DEFAULT_DRAWING_COLOR;
-}
-
 export function toWorld(point: Point, pose: ReturnType<typeof evaluate>): Point {
   const r = (pose.rotation * Math.PI) / 180,
     x = point.x * pose.scaleX,
@@ -210,9 +200,7 @@ export class Renderer {
     ctx.translate(k.x, k.y);
     ctx.rotate((k.rotation * Math.PI) / 180);
     ctx.scale(k.scaleX, k.scaleY);
-    const ink = d.source?.space === 'canvas' && d.color.toLowerCase() === DEFAULT_DRAWING_COLOR
-      ? paperInk(project.background)
-      : d.color;
+    const ink = drawingInk(d, project.background);
     ctx.strokeStyle = tint ?? ink;
     ctx.fillStyle = tint ?? ink;
     ctx.lineWidth = d.weight;

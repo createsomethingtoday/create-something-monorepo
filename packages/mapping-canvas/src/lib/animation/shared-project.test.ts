@@ -91,6 +91,9 @@ describe('shared Draw project contract', () => {
     expect(ink(reloaded)).toEqual(ink(imported));
     expect(stroke.color).toBe('#f3ebe4');
     expect(reloaded.drawings[0].source).toEqual(imported.drawings[0].source);
+    expect(ink(independentProjectCopy(reloaded))).toEqual(ink(reloaded));
+    expect(ink(independentProjectCopy(dark))).toEqual(ink(dark));
+    expect(independentDrawingCopy(reloaded.drawings[0]).color).toBe('#282522');
   });
 
   it('materializes motion drawings with the same project and object IDs', () => {
