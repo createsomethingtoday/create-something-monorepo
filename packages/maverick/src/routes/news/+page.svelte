@@ -18,11 +18,11 @@
 
 <div>
   <section
-    class="design-section"
+    class="design-section hero-banner"
     style="position:relative;padding:220px 48px 100px;border-bottom:1px solid rgba(255,255,255,.12);overflow:hidden"
     data-screen-label="News"
   >
-    <Media kind="oil" />
+    <Media kind="oil" opacity={0.55} />
     <div
       style="position:absolute;inset:0;background:linear-gradient(rgba(0,0,0,.3),rgba(0,0,0,.85))"
     ></div>

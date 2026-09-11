@@ -15,11 +15,11 @@
 
 <div>
   <section
-    class="design-section"
+    class="design-section hero-banner"
     style="position:relative;padding:220px 48px 120px;overflow:hidden"
     data-screen-label="About"
   >
-    <Media kind="home" />
+    <Media kind="home" opacity={0.85} />
     <div
       style="position:absolute;inset:0;background:linear-gradient(rgba(0,0,0,.15),rgba(0,0,0,.7))"
     ></div>

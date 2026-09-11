@@ -22,7 +22,7 @@
     style="position:relative;display:flex;align-items:flex-end;overflow:hidden"
     data-screen-label="Oil hero"
   >
-    <Media kind="oil" />
+    <Media kind="oil" opacity={0.55} />
     <div
       style="position:absolute;inset:0;background:linear-gradient(rgba(0,0,0,.2) 40%,rgba(0,0,0,.85))"
     ></div>

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  let { kind }: { kind: 'home' | 'oil' | 'mining' } = $props();
+  let { kind, opacity = 1 }: { kind: 'home' | 'oil' | 'mining'; opacity?: number } = $props();
   // Reuse media already serving the production site, never the watermarked prototype clips.
   const sources = {
     home: '089014528-smokestack-and-american-flag-o.mp4',
@@ -8,9 +8,9 @@
     mining: '168384056-deep-open-pit-mine-copper-ore-.mp4'
   };
   const posters = {
-    home: '/images/petrox-production.jpg',
-    oil: '/images/petrox-eor.jpg',
-    mining: '/images/lithx-copper-heap.png'
+    home: '/redesign/hero-home.jpg',
+    oil: '/redesign/hero-oil.jpg',
+    mining: '/redesign/hero-mining.jpg'
   };
   let animate = $state(false);
   onMount(() => {
@@ -26,6 +26,7 @@
 
 {#if animate}
   <video
+    style:opacity
     aria-hidden="true"
     tabindex="-1"
     autoplay
@@ -37,7 +38,7 @@
     src={`https://pub-fb87e05654104f5fbb33989fc4dca65b.r2.dev/videos/${sources[kind]}`}
   ></video>
 {:else}
-  <img src={posters[kind]} alt="" />
+  <img style:opacity src={posters[kind]} alt="" />
 {/if}
 
 <style>
@@ -48,5 +49,6 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
+    object-position: center;
   }
 </style>
