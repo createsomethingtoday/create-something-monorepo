@@ -65,8 +65,7 @@
     align-items: center;
     height: 72px;
     padding: 0 48px;
-    background: linear-gradient(#000e, #0009);
-    backdrop-filter: blur(2px);
+    background: linear-gradient(#0004, #0000);
   }
   img {
     display: block;

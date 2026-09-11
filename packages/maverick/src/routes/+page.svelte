@@ -31,7 +31,7 @@
     style="position:relative;display:flex;align-items:flex-end;overflow:hidden"
     data-screen-label="Home hero"
   >
-    <Media kind="home" opacity={1} />
+    <Media kind="home" opacity={0.9} />
     <div
       style="position:absolute;inset:0;background:linear-gradient(rgba(0,0,0,.08) 40%,rgba(0,0,0,.65))"
     ></div>
