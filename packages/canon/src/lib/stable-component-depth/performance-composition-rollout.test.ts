@@ -198,14 +198,22 @@ describe('Performance composition cross-property rollout', () => {
 		}
 	});
 
-	it('uses shared product compositions on the staff agent roster', () => {
+	it('keeps the retired staff agent app on one explicit transition path', () => {
 		const source = routeSource('packages/ona-agents/src/routes/agents/+page.svelte');
 
-		expect(source).toContain('PerformanceThesisConditions');
-		expect(source).toContain('PerformanceEvidenceIndex');
+		expect(source.match(/data-performance-chapter=/g)).toHaveLength(3);
+		expect(source).toContain('data-performance-chapter="thesis"');
+		expect(source).toContain('data-performance-chapter="evidence-body"');
+		expect(source).toContain('data-performance-chapter="continuation"');
+		expect(source).toContain('This standalone agent app is closed.');
+		expect(source).toContain('CRE-1233-RUNTIME');
+		expect(source).toContain('CRE-1233-ROUTE');
+		expect(source).toContain('CRE-1233-GATE');
 		expect(source).not.toContain('class="agents-header');
 		expect(source).not.toContain('class="proof-strip');
 		expect(source).not.toContain('class="agent-grid');
+		expect(source).not.toContain('PerformanceThesisConditions');
+		expect(source).not.toContain('PerformanceEvidenceIndex');
 	});
 
 	it('keeps active Performance consumers off legacy composition shells', () => {
