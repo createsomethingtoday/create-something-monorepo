@@ -58,3 +58,9 @@ Production prerequisites: apply Agency migrations 0048 then 0049 (both are requi
 Worker, warm practice-address geocodes through the service-only sourcing endpoint,
 and refresh the Dify tool inventory. The PDL key is separate and is not needed
 for registry contact export or radius calculations.
+
+### Practice travel estimates
+
+`estimate_registry_travel` compares up to 50 selected snapshot NPIs with 1–3 clinic street addresses, with explicit `clinic_match` (`any`/`all`) and `max_minutes` (30/45). It reserves bounded Geocodio credits and stores an exportable report. It is an open-world write tool, not read-only. Results describe typical one-way registered-practice travel, not home commute, and retain unresolved records. The report CSV requires NPG sign-in. Population-wide sourcing still requires processing all relevant source pages.
+
+Production requires Agency migrations 0050 and 0051, GEOCODIO_API_KEY in Agency (from Infisical prod /abundance), Agency deployment, and Healthcare MCP 1.4.0. See docs/deliveries/abundance/2026-09-11-practice-travel.md for prerequisites, limits, verification and rollback.

@@ -36,14 +36,14 @@ const headers = [
   'Recruiter Notes',
   'Outreach Review'
 ];
-function cell(value: unknown): string {
+export function sourcingCsvCell(value: unknown): string {
   let text = value == null ? '' : String(value);
   // Quoting alone does not prevent spreadsheet formula execution.
   if (/^[\s]*[=+\-@\t\r\n]/.test(text)) text = "'" + text;
   return '"' + text.replace(/"/g, '""') + '"';
 }
 export function sourcingCsvHeader(): string {
-  return headers.map(cell).join(',') + '\r\n';
+  return headers.map(sourcingCsvCell).join(',') + '\r\n';
 }
 export function sourcingCsvRow(
   p: HealthcareProvider,
@@ -82,7 +82,7 @@ export function sourcingCsvRow(
       '',
       'Human review required'
     ]
-      .map(cell)
+      .map(sourcingCsvCell)
       .join(',') + '\r\n'
   );
 }
