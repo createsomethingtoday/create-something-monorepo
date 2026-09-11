@@ -25,6 +25,7 @@ test('public agency copy guard discovers every visitor-facing route', () => {
   const files = discoverPublicCopyFiles().map(packageRelative);
 
   assert.ok(files.includes('src/routes/+page.svelte'));
+  assert.ok(files.includes('content/sales/openai-qualifications.md'));
   assert.ok(files.includes('src/routes/cloudflare/+page.svelte'));
   assert.ok(files.includes('src/routes/products/ground/+page.svelte'));
   assert.ok(files.includes('src/routes/terms/+page.svelte'));

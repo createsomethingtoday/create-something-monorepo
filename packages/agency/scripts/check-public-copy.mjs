@@ -386,6 +386,8 @@ export function discoverPublicCopyFiles() {
     ? [canonicalSeo, ...canonicalAtlasFiles, ...canonicalAtlasDistFiles]
     : [...canonicalAtlasFiles, ...canonicalAtlasDistFiles];
   if (existsSync(schedulerEmail)) extraFiles.push(schedulerEmail);
+  // Canonical customer-facing partner copy belongs to the same claim boundary.
+  extraFiles.push(path.join(packageRoot, 'content/sales/openai-qualifications.md'));
 
   return uniqueSorted([
     ...routeFiles,
