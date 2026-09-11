@@ -10,6 +10,10 @@
 
 Use [Technical review](technical-review.md) when a founder or team needs help checking an existing product before a customer pilot. Send `/technical-review` to explain the first engagement, findings, and quote boundary.
 
+## Partner qualifications
+
+Use [OpenAI partner status and individual qualifications](./openai-qualifications.md) for proposals and customer conversations. The approved organization designation is **OpenAI Select Partner**.
+
 ## Asset map
 
 1. **Control buyer brief (send before or after first call)**

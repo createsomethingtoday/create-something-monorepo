@@ -161,6 +161,7 @@
     <h2 id="home-ownership-title">Built with OpenAI and Cloudflare. Designed to remain yours.</h2>
     <p>Your team owns the system. We use OpenAI Codex, an AI coding tool, to build and help you change the project. Cloudflare can provide hosting and storage.</p>
     <p>You keep the code, workflow plan, rules, tests, history, and recovery instructions. If you change AI models or tools, that knowledge stays with you. A new setup still needs testing.</p>
+    <p><strong>CREATE SOMETHING is an OpenAI Select Partner.</strong> <a href="/stack#openai-qualifications">View our qualifications →</a></p>
     <a href="/stack">See what you keep →</a>
     <a href="https://createsomething.ltd/canon/concepts/conviction-without-dependence">Why we build this way</a>
   </aside>

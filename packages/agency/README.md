@@ -186,8 +186,10 @@ Apply the contract in this order:
    skills, prompts, policy, evals, receipts, routing, fallback, and recovery.
 4. Describe portability as a tested exit path to Claude, compatible harnesses,
    open-weight executors, or custom models—not as indifference to model quality.
-5. Do not imply OpenAI partnership, certification, affiliation, resale,
-   endorsement, or Frontier Alliance status without documentary authorization.
+5. Use the documented **OpenAI Select Partner** designation for CREATE SOMETHING.
+   See `content/sales/openai-qualifications.md` for individual credentials and
+   evidence. Other tiers, specializations, resale, endorsement, and Frontier
+   Alliance claims still require their own documentary authorization.
 
 The technical shorthand is:
 

@@ -25,6 +25,7 @@ test('public agency copy guard discovers every visitor-facing route', () => {
   const files = discoverPublicCopyFiles().map(packageRelative);
 
   assert.ok(files.includes('src/routes/+page.svelte'));
+  assert.ok(files.includes('content/sales/openai-qualifications.md'));
   assert.ok(files.includes('src/routes/cloudflare/+page.svelte'));
   assert.ok(files.includes('src/routes/products/ground/+page.svelte'));
   assert.ok(files.includes('src/routes/terms/+page.svelte'));
@@ -550,4 +551,28 @@ test('integration proof keeps compatibility distinct from partnership and delive
   assert.match(mapCanvas, /seedIntegrationContext\(\)/);
   assert.match(mapCanvas, /Connector context added/);
   assert.doesNotMatch(`${rail}\n${catalog}`, /certified integration|official partner|1,041/gi);
+});
+
+test('public agency copy permits the documented Select tier and named individual credentials', () => {
+  const tempDir = mkdtempSync(path.join(tmpdir(), 'agency-copy-'));
+  const fixture = path.join(tempDir, '+page.svelte');
+  try {
+    writeFileSync(fixture, 'CREATE SOMETHING is an OpenAI Select Partner. Micah Johnson earned the Codex Deployment Practitioner credential.');
+    assert.deepEqual(auditPublicCopy([fixture]), []);
+  } finally {
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('public agency copy rejects tiers and organization specializations not documented for CREATE SOMETHING', () => {
+  const tempDir = mkdtempSync(path.join(tmpdir(), 'agency-copy-'));
+  const fixture = path.join(tempDir, '+page.svelte');
+  try {
+    for (const claim of ['OpenAI Advanced Partner', 'OpenAI Elite Partner', 'OpenAI Premier Partner', 'OpenAI Gold Partner', 'OpenAI Select Regional Partner', 'OpenAI Select Partner with Codex specialization', 'OpenAI Select Partner — API Platform Specialization', 'OpenAI ChatGPT specialization']) {
+      writeFileSync(fixture, claim);
+      assert.ok(auditPublicCopy([fixture]).some(({ rule }) => rule === 'unsupported-openai-tier' || rule === 'unsupported-openai-specialization'), claim);
+    }
+  } finally {
+    rmSync(tempDir, { recursive: true, force: true });
+  }
 });
