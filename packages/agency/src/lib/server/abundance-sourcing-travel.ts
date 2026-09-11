@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { geocodeStreetAddress } from './abundance-sourcing';
 import { estimatePracticeTravel, type TravelLocation } from './abundance-travel';
+import { withTravelReportClaim } from './abundance-travel-claims';
 import { reserveTravelCredits } from './abundance-travel-quota';
 const schema = z
   .object({
@@ -14,7 +15,12 @@ const schema = z
         z
           .object({
             id: z.string().regex(/^[a-zA-Z0-9_-]{1,60}$/),
-            address: z.string().trim().min(8).max(300)
+            address: z
+              .string()
+              .trim()
+              .min(8)
+              .max(300)
+              .regex(/^\d+[A-Za-z]?(?:-\d+)?\s+\S/, 'Use a full clinic street address.')
           })
           .strict()
       )
@@ -64,7 +70,9 @@ export async function calculateSourcingTravel(
     }>();
   if (rows.results.length !== input.npis.length)
     throw new TypeError('One or more selected NPIs are absent from this snapshot.');
-  const clinics = [];
+  const clinics: Array<
+    { id: string; address: string } & Awaited<ReturnType<typeof geocodeStreetAddress>>
+  > = [];
   for (const clinic of input.clinics)
     clinics.push({ ...clinic, ...(await geocodeStreetAddress(clinic.address, fetchFn)) });
   const origins: TravelLocation[] = rows.results
@@ -75,56 +83,62 @@ export async function calculateSourcingTravel(
     new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(material))),
     (v) => v.toString(16).padStart(2, '0')
   ).join('');
-  const cached = await db
-    .prepare(
-      'SELECT report_json FROM abundance_travel_reports WHERE cache_key=? AND created_at_ms>=? ORDER BY created_at_ms DESC LIMIT 1'
-    )
-    .bind(cacheKey, Date.now() - 30 * 86400000)
-    .first<{ report_json: string }>();
-  if (cached) return { ...JSON.parse(cached.report_json), cache_hit: true };
-  const estimate = origins.length
-    ? await estimatePracticeTravel(
-        { origins, clinics, maxMinutes: input.max_minutes, match: input.clinic_match },
-        { apiKey, fetchFn, reserveCredits: (credits) => reserveTravelCredits(db, credits) }
+  const readCached = async () =>
+    await db
+      .prepare(
+        'SELECT report_json FROM abundance_travel_reports WHERE cache_key=? AND created_at_ms>=? ORDER BY created_at_ms DESC LIMIT 1'
       )
-    : null;
-  const id = 'abtravel_' + crypto.randomUUID();
-  const report = {
-    id,
-    run_id: run.id,
-    scope: 'selected_npis_only',
-    requested_count: input.npis.length,
-    basis: 'registered_practice_to_clinic_typical_traffic',
-    source: 'geocodio_distance',
-    calculated_at: new Date().toISOString(),
-    max_minutes: input.max_minutes,
-    clinic_match: input.clinic_match,
-    clinics: clinics.map((c) => ({
-      id: c.id,
-      address: c.matched_address,
-      source: c.source,
-      precision: c.precision,
-      confirmation: 'operator_supplied_not_role_verified'
-    })),
-    reserved_credits: estimate?.reserved_credits ?? 0,
-    unresolved_geocode_count: input.npis.length - origins.length,
-    limitation:
-      'Selected practices only; not a complete sourcing population or candidate home commute. Clinics are operator-supplied, not independently linked to a requisition. Missing geocodes and routes remain unresolved.',
-    results: rows.results.map((row) => ({
-      npi: row.provider_npi,
-      source_hash: row.source_hash,
-      ...(estimate?.results.find((r) => r.origin_id === row.provider_npi) ?? {
-        match: 'unresolved',
-        routes: [],
-        reason: 'unresolved_practice_geocode'
-      })
-    }))
-  };
-  await db
-    .prepare(
-      'INSERT INTO abundance_travel_reports(id,source_run_id,cache_key,created_at_ms,report_json) VALUES(?,?,?,?,?)'
-    )
-    .bind(id, run.id, cacheKey, Date.now(), JSON.stringify(report))
-    .run();
-  return { ...report, cache_hit: false };
+      .bind(cacheKey, Date.now() - 30 * 86400000)
+      .first<{ report_json: string }>();
+  const cached = await readCached();
+  if (cached) return { ...JSON.parse(cached.report_json), cache_hit: true };
+  return withTravelReportClaim(db, cacheKey, async () => {
+    const completed = await readCached();
+    if (completed) return { ...JSON.parse(completed.report_json), cache_hit: true };
+    const estimate = origins.length
+      ? await estimatePracticeTravel(
+          { origins, clinics, maxMinutes: input.max_minutes, match: input.clinic_match },
+          { apiKey, fetchFn, reserveCredits: (credits) => reserveTravelCredits(db, credits) }
+        )
+      : null;
+    const id = 'abtravel_' + crypto.randomUUID();
+    const report = {
+      id,
+      run_id: run.id,
+      scope: 'selected_npis_only',
+      requested_count: input.npis.length,
+      basis: 'registered_practice_to_clinic_typical_traffic',
+      source: 'geocodio_distance',
+      calculated_at: new Date().toISOString(),
+      max_minutes: input.max_minutes,
+      clinic_match: input.clinic_match,
+      clinics: clinics.map((c) => ({
+        id: c.id,
+        address: c.matched_address,
+        source: c.source,
+        precision: c.precision,
+        confirmation: 'operator_supplied_not_role_verified'
+      })),
+      reserved_credits: estimate?.reserved_credits ?? 0,
+      unresolved_geocode_count: input.npis.length - origins.length,
+      limitation:
+        'Selected practices only; not a complete sourcing population or candidate home commute. Clinics are operator-supplied, not independently linked to a requisition. Missing geocodes and routes remain unresolved.',
+      results: rows.results.map((row) => ({
+        npi: row.provider_npi,
+        source_hash: row.source_hash,
+        ...(estimate?.results.find((r) => r.origin_id === row.provider_npi) ?? {
+          match: 'unresolved',
+          routes: [],
+          reason: 'unresolved_practice_geocode'
+        })
+      }))
+    };
+    await db
+      .prepare(
+        'INSERT INTO abundance_travel_reports(id,source_run_id,cache_key,created_at_ms,report_json) VALUES(?,?,?,?,?)'
+      )
+      .bind(id, run.id, cacheKey, Date.now(), JSON.stringify(report))
+      .run();
+    return { ...report, cache_hit: false };
+  });
 }

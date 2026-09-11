@@ -9,7 +9,7 @@ The API reserves two credits per driving pair with a shared atomic 2,000-credit 
 ## Promotion
 
 1. Run Agency check and Abundance tests, Healthcare MCP test/typecheck, and repository PR gates.
-2. Apply Agency migrations 0050_abundance_travel_quota.sql and 0051_abundance_travel_reports.sql; earlier sourcing migrations 0048 and 0049 remain prerequisites.
+2. Apply Agency migrations 0050_abundance_travel_quota.sql, 0051_abundance_travel_reports.sql, and 0052_abundance_travel_claims.sql; earlier sourcing migrations 0048 and 0049 remain prerequisites.
 3. Bind GEOCODIO_API_KEY from Infisical prod /abundance to the Agency production environment. Do not expose it to the MCP client or Dify.
 4. Merge through review, deploy Agency through the standard production workflow, deploy Healthcare MCP from the merged source, and verify version 1.4.0.
 5. Verify service-authorized POST /api/abundance/healthcare-providers/travel with a source NPI having a matched geocode and an explicitly test-designated public center. Verify repeat cache hit, unchanged reservations, and correct route duration/labels. Verify protected /delivery/abundance/travel.csv?id=<returned-report-id> through NPG sign-in. The report ID is returned by the API; it is not a credential.
@@ -24,3 +24,5 @@ Rollback: restore prior Agency deployment and Healthcare worker version ae277924
 - This slice has not yet been deployed or verified through Dify. National geocode backfill, broader NP taxonomy import, confirmed clinic configuration, and population-wide routing remain in the active goal.
 
 Provider contract: https://www.geocod.io/docs/#distance-matrix (verified September 11, 2026).
+
+Review hardening: identical cache misses use a five-minute leased claim before reserving credits. Concurrent callers receive a retryable in-progress response. Clinic input must start with a street number. Census network/JSON failures remain service failures, distinct from unresolved or invalid clinic input.

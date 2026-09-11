@@ -193,3 +193,17 @@ test('warming a changed snapshot preserves the earlier geocode version', async (
     f.sqlite.close();
   }
 });
+
+test('upstream geocoder network and JSON failures are service errors, not address validation', async () => {
+  for (const fn of [
+    async () => {
+      throw new TypeError('network failed');
+    },
+    async () => new Response('not JSON')
+  ]) {
+    await assert.rejects(
+      geocodeStreetAddress('12 Main St, Albany, NY', fn),
+      (e) => e instanceof Error && !(e instanceof TypeError) && !(e instanceof SyntaxError)
+    );
+  }
+});

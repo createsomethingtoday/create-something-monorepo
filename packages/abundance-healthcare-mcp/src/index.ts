@@ -79,7 +79,7 @@ const searchCandidatesSchema = z.object({
 }).strict();
 const travelSchema = z.object({
  npis: z.array(z.string().regex(/^\d{10}$/)).min(1).max(50).refine(a=>new Set(a).size===a.length),
- clinics: z.array(z.object({id:z.string().regex(/^[a-zA-Z0-9_-]{1,60}$/),address:z.string().trim().min(8).max(300)}).strict()).min(1).max(3).refine(a=>new Set(a.map(c=>c.id)).size===a.length),
+ clinics: z.array(z.object({id:z.string().regex(/^[a-zA-Z0-9_-]{1,60}$/),address:z.string().trim().min(8).max(300).regex(/^\d+[A-Za-z]?(?:-\d+)?\s+\S/, "Use a full clinic street address.")}).strict()).min(1).max(3).refine(a=>new Set(a.map(c=>c.id)).size===a.length),
  max_minutes:z.union([z.literal(30),z.literal(45)]),clinic_match:z.enum(['any','all']),
  run_id:z.string().regex(/^abnationalrun_[a-zA-Z0-9_-]+$/).optional()
 }).strict();

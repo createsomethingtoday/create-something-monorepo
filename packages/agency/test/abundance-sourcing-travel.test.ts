@@ -15,7 +15,8 @@ test('snapshot routing preserves unresolved practices and reuses a report withou
       '0048_abundance_sourcing_geocodes',
       '0049_abundance_sourcing_geocode_versions',
       '0050_abundance_travel_quota',
-      '0051_abundance_travel_reports'
+      '0051_abundance_travel_reports',
+      '0052_abundance_travel_claims'
     ])
       sqlite.exec(readFileSync(new URL(`../migrations/${file}.sql`, import.meta.url), 'utf8'));
     sqlite.exec(
@@ -66,6 +67,22 @@ test('snapshot routing preserves unresolved practices and reuses a report withou
     assert.equal(repeat.id, first.id);
     assert.equal(repeat.cache_hit, true);
     assert.equal(drivingCalls, 1);
+    const parallel = await Promise.allSettled([
+      calculateSourcingTravel(db, { ...input, max_minutes: 30 }, 'test', fetchFn),
+      calculateSourcingTravel(db, { ...input, max_minutes: 30 }, 'test', fetchFn)
+    ]);
+    assert.equal(drivingCalls, 2, 'identical overlapping requests must make one paid call');
+    assert.ok(parallel.some((r) => r.status === 'fulfilled'));
+    await assert.rejects(
+      calculateSourcingTravel(
+        db,
+        { ...input, clinics: [{ id: 'city', address: 'Albany, NY 12205' }] },
+        'test',
+        fetchFn
+      ),
+      /street/
+    );
+
     const csvResponse = await exportTravelCsv(db, first.id);
     const csv = await csvResponse.text();
     assert.equal(csv.trim().split('\r\n').length, 3);
@@ -77,7 +94,7 @@ test('snapshot routing preserves unresolved practices and reuses a report withou
       sqlite
         .prepare('SELECT sum(credits) AS credits FROM abundance_travel_credit_reservations')
         .get()?.credits,
-      2
+      4
     );
     await assert.rejects(
       calculateSourcingTravel(db, { ...input, npis: ['1000000003'] }, 'test', fetchFn),

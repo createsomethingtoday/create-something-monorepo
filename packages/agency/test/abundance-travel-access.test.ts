@@ -32,3 +32,42 @@ test('travel CSV rejects unrelated users and redirects signed-out users to sign 
     }
   );
 });
+
+test('an upstream geocoder outage returns 503 for an otherwise valid travel request', async () => {
+  const db = {
+    prepare: () => ({
+      bind: () => ({
+        first: async () => ({ id: 'abnationalrun_test' }),
+        all: async () => ({
+          results: [
+            {
+              provider_npi: '1000000001',
+              source_hash: 'hash',
+              latitude: null,
+              longitude: null,
+              status: null
+            }
+          ]
+        })
+      })
+    })
+  };
+  const request = new Request('https://example.test/api/abundance/healthcare-providers/travel', {
+    method: 'POST',
+    headers: { Authorization: 'Bearer key' },
+    body: JSON.stringify({
+      npis: ['1000000001'],
+      clinics: [{ id: 'c', address: '12 Main St, Albany, NY' }],
+      max_minutes: 45,
+      clinic_match: 'any'
+    })
+  });
+  const response = await POST({
+    request,
+    platform: { env: { DB: db, AGENCY_INTERNAL_API_KEY: 'key', GEOCODIO_API_KEY: 'vendor' } },
+    fetch: async () => {
+      throw new TypeError('network failed');
+    }
+  } as never);
+  assert.equal(response.status, 503);
+});

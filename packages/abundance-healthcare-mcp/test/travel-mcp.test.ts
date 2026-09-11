@@ -31,3 +31,23 @@ test('travel tool pins export to the saved report and never includes a credentia
   );
   assert.equal(JSON.stringify(result).includes('secret'), false);
 });
+
+test('travel tool rejects city or ZIP centers before invoking the service', async () => {
+  await assert.rejects(
+    estimateRegistryTravel(
+      {
+        npis: ['1000000001'],
+        clinics: [{ id: 'albany', address: 'Albany, NY 12205' }],
+        max_minutes: 45,
+        clinic_match: 'any'
+      },
+      {
+        agencyApiKey: 'secret',
+        fetchFn: async () => {
+          throw new Error('must not call service');
+        }
+      }
+    ),
+    /street/
+  );
+});

@@ -35,3 +35,35 @@ test('concurrent reservations cannot exceed the rolling routing allowance', asyn
     sqlite.close();
   }
 });
+
+test('failed and expired report claims can recover without leaving a permanent lock', async () => {
+  const { withTravelReportClaim } = await import('../src/lib/server/abundance-travel-claims.ts');
+  const sqlite = new DatabaseSync(':memory:');
+  try {
+    sqlite.exec(
+      readFileSync(
+        new URL('../migrations/0052_abundance_travel_claims.sql', import.meta.url),
+        'utf8'
+      )
+    );
+    const db = {
+      prepare: (sql: string) => ({
+        bind: (...args: SQLInputValue[]) => ({
+          first: async () => sqlite.prepare(sql).get(...args) ?? null,
+          run: async () => sqlite.prepare(sql).run(...args)
+        })
+      })
+    } as unknown as D1Database;
+    await assert.rejects(
+      withTravelReportClaim(db, 'key', async () => {
+        throw new Error('vendor failure');
+      }),
+      /vendor failure/
+    );
+    assert.equal(await withTravelReportClaim(db, 'key', async () => 42), 42);
+    sqlite.exec("INSERT INTO abundance_travel_claims VALUES('key','crashed-owner',0)");
+    assert.equal(await withTravelReportClaim(db, 'key', async () => 43), 43);
+  } finally {
+    sqlite.close();
+  }
+});
