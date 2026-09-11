@@ -30,6 +30,33 @@ The Space contract test enforces exact JSON contract parity between that generat
 
 `WorkWayRealityKitAdapter` contains `WorkWayRoomChapterRealityView`, a visionOS-only `RealityView` adapter. It makes a thin floor footprint from the room’s deterministic dimensions in meters. It intentionally does not load an asset, track a room, or expose global free walking.
 
+## Launchable simulator app
+
+`WorkWayVisionOSApp` is the smallest native app bundle that proves the issued
+design-intent asset can be admitted by a real visionOS window:
+
+- It starts in a normal SwiftUI window, not an immersive space.
+- It accepts only the issued `native-massing-usdz` representation for the
+  selected kitchen chapter.
+- It requires the package contract to be valid, source documents excluded,
+  construction readiness false, physical 1:1 eligibility false, plain USD
+  unissued, and the bundled USDZ SHA-256 to match the spatial package.
+- It loads the entity asynchronously into `RealityView` and applies a
+  deterministic **1:50 tabletop display transform**. That transform is only
+  how the native client frames this design-intent massing; it never changes the
+  canonical geometry or makes a physical 1:1 claim.
+
+Run it against a booted Apple Vision Pro Simulator:
+
+```bash
+cd apps/workway-visionos
+./scripts/run-visionos-app.sh
+```
+
+The simulator app bundle uses the local `WorkWaySpatialContract` package
+directly and copies the issued USDZ into the app bundle. It does not fetch
+private files, source documents, a cloud model, or an unissued USD asset.
+
 The intended Vision Pro launch sequence is:
 
 1. Begin in a normal SwiftUI window with the tabletop/project controls.
@@ -42,13 +69,30 @@ Apple describes `RealityView` as the SwiftUI container for RealityKit content an
 
 ## Current native-validation gate
 
-This Mac has Xcode 26.6 and full local Apple USD/RealityKit tooling. The issued USDZ passes `usdchecker --arkit --strict` and loads through local macOS RealityKit. A visionOS SDK and Vision Pro Simulator runtime are not installed, so the following gates are intentionally **not run**:
+This Mac has Xcode 26.6, the visionOS 26.5 Simulator runtime, and full local
+Apple USD/RealityKit tooling. The issued USDZ passes `usdchecker --arkit
+--strict` and loads through local macOS RealityKit.
+
+Run the reproducible Simulator SDK compile check:
+
+```bash
+cd apps/workway-visionos
+./scripts/check-visionos-simulator.sh
+```
+
+It compiles the public `WorkWayRealityKitAdapter` target against the installed
+`xrsimulator` SDK. The launchable app performs the rendering proof separately.
+The macOS-only `WorkWaySpatialContractVerifier` remains the portable
+fixture/contract proof; the app target owns simulator rendering.
+
+The remaining gates are intentionally **not claimed**:
 
 | Gate | Evidence required |
 | --- | --- |
-| RealityKit compile | Full Xcode with the visionOS platform; build `WorkWayRealityKitAdapter` for a visionOS app target. |
-| Simulator render | An Apple Vision Pro simulator launch; verify the kitchen footprint, local-stage messaging, and that only the issued design-intent USDZ loads. |
+| RealityKit compile | Passed locally: both `WorkWayRealityKitAdapter` and `WorkWayVisionOSApp` compile against the installed visionOS Simulator SDK. |
+| Simulator render | Passed locally: a booted Apple Vision Pro Simulator installed and launched `WorkWayVisionOSApp`; RealityKit recorded a successful asynchronous USDZ entity load after SHA-256 and contract gates. |
 | Device interaction | Physical Vision Pro: inspect scale, gestures, comfort, occlusion, and session recovery. |
 | Shared spatial alignment | Two Vision Pros with the selected Apple collaboration approach; verify state/anchor consistency and failure recovery. |
 
-When the visionOS platform is installed, add this package to a visionOS app target, run the three checks above, and record screenshots/video plus the exact Xcode and visionOS runtime versions. A simulator result remains separate from physical-device evidence.
+The local result was built with Xcode 26.6 and visionOS 26.5 Simulator. A
+simulator result remains separate from physical-device evidence.
