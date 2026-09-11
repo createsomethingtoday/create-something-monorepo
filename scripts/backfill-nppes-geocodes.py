@@ -27,7 +27,7 @@ API = '/api/abundance/healthcare-providers/geocodes'
 def api_request(base, token, params=None, body=None):
     url = base + API + ('?' + urllib.parse.urlencode(params) if params else '')
     data = json.dumps(body, separators=(',', ':')).encode() if body is not None else None
-    req = urllib.request.Request(url, data=data, headers={'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json'})
+    req = urllib.request.Request(url, data=data, headers={'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', 'User-Agent': 'CREATE-SOMETHING-NPPES-Backfill/1.0'})
     for attempt in range(5):
         try:
             with urllib.request.urlopen(req, timeout=120) as response:

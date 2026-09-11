@@ -58,3 +58,19 @@ print(json.dumps(calls))
  const lines=execFileSync('python3',['-c',program,resolve('../../scripts/backfill-nppes-geocodes.py')],{encoding:'utf8'}).trim().split('\n');
  assert.deepEqual(JSON.parse(lines.at(-1)!),{census:1,upload:2,source:1});
 });
+
+test('backfill identifies authenticated API requests with the service user agent',()=>{
+ const program=String.raw`
+import importlib.util,json,sys,io
+s=importlib.util.spec_from_file_location('backfill',sys.argv[1]);m=importlib.util.module_from_spec(s);s.loader.exec_module(m)
+seen=[]
+def fake(req,timeout):
+ seen.append(req.get_header('User-agent'))
+ return io.StringIO('{"success":true,"data":{}}')
+m.urllib.request.urlopen=fake
+m.api_request('https://createsomething.agency','test',params={'run_id':'abnationalrun_test'})
+m.api_request('https://createsomething.agency','test',body={'results':[]})
+print(json.dumps(seen))
+`;
+ assert.deepEqual(JSON.parse(execFileSync('python3',['-c',program,resolve('../../scripts/backfill-nppes-geocodes.py')],{encoding:'utf8'})),['CREATE-SOMETHING-NPPES-Backfill/1.0','CREATE-SOMETHING-NPPES-Backfill/1.0']);
+});
