@@ -1,0 +1,30 @@
+{
+  "name": "lookup_npg_location",
+  "description": "Look up one NPG appointment office in the caller-safe current directory. Use this before stating an address, building, floor, suite, office, or arrival instruction. Only a response whose status is matched is approved for caller guidance.",
+  "type": "webhook",
+  "api_schema": {
+    "url": "https://abundance-concierge-chat.pages.dev/api/npg/locations/lookup",
+    "method": "POST",
+    "request_body_schema": {
+      "type": "object",
+      "description": "A bounded location query based only on the city, state, and address information supplied by the caller.",
+      "properties": {
+        "query": {
+          "type": "string",
+          "description": "City, state, and street address from the caller or appointment paperwork. Do not include a person name, provider name, phone number, appointment identifier, or medical information."
+        }
+      },
+      "required": ["query"]
+    },
+    "request_headers": {
+      "Content-Type": "application/json"
+    }
+  },
+  "response_timeout_secs": 10,
+  "dynamic_variables": {
+    "dynamic_variable_placeholders": {}
+  },
+  "assignments": [],
+  "disable_interruptions": true,
+  "force_pre_tool_speech": false
+}
