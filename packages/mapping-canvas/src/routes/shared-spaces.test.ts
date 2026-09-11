@@ -17,7 +17,7 @@ it('navigates between Canvas and Motion using the same project identity', () => 
   expect(canvas).toContain(
     'parsed.id === previous.id ? { ...parsed, updatedAt: mintReplacementTimestamp(previous.updatedAt) } : { ...parsed, id: crypto.randomUUID()'
   );
-  expect(canvas).toContain('await loadDocument(next.id)');
+  expect(canvas).toContain('writeCanvasDocument(next, persistedCanvasVersions.get(next.id) ?? null)');
   expect(canvas).toContain('persistedCanvasVersions.get(next.id)');
   expect(canvas).toContain('await activateCanvasProject(saved.id)');
   expect(motion).toContain('href={`/?project=${encodeURIComponent(project.id)}`}');
@@ -28,6 +28,7 @@ it('navigates between Canvas and Motion using the same project identity', () => 
   expect(motion).toContain('queueImport(() => importFile(e))');
   expect(motion).toContain('queueImport(() => imageFile(e))');
   expect(motion).toContain("status = 'Animation is still loading'");
+  expect(motion).toContain('p = { ...newProject(), title: map.title, background: map.background, drawings: result.drawings }');
   expect(motion).toContain('queue = loading.catch(() => {});');
   expect(motion.match(/queue = work\.catch\(\(\) => \{\}\);/g)).toHaveLength(4);
   expect(motion).not.toContain('Copy saved drawing');
@@ -38,17 +39,22 @@ it('navigates between Canvas and Motion using the same project identity', () => 
 });
 
 it('guards Motion synchronization with the loaded Canvas version and makes migration idempotent', () => {
-  expect(motionStorage).toContain('loadedCanvasVersions.set(id, record.canvas.updatedAt)');
+  expect(motionStorage).toContain('loadedCanvasVersions.set(id, committedCanvasUpdatedAt)');
+  expect(motionStorage).toContain('loadedCanvasVersions.set(project.id, canvasUpdatedAt)');
   expect(motionStorage).toContain('record.motion?.revision ?? null');
   expect(motionStorage).toContain('record.canvas.updatedAt');
   expect(motionStorage).toContain('for (let attempt = 0; attempt < 3; attempt++)');
   expect(motionStorage).toContain('if ((await loadProjectRecord(project.id))?.motion) break;');
   expect(motionStorage).toContain('const activeMigration = (async () => {');
   expect(motionStorage).toContain('existing?.canvas?.updatedAt ?? null');
+  expect(motionStorage).toContain("'legacy-migration'");
+  expect(projectStorage).toContain("update.motionBackgroundSource === 'legacy-migration'");
   expect(motionStorage).toContain('if (attempt === 2) throw lastError;');
   expect(motionStorage).toContain('if (migration === activeMigration) migration = undefined;');
   expect(projectStorage).toContain(
     '(current?.canvas?.updatedAt ?? null) !== expectedCanvasUpdatedAt'
   );
   expect(projectStorage).toContain("conflict = 'canvas'");
+  expect(canvas).toContain('writeCanvasDocument(next, persistedCanvasVersions.get(next.id) ?? null)');
+  expect(projectStorage).toContain('(normalizeProjectRecord(request.result)?.canvas?.updatedAt ?? null) !== expectedCanvasUpdatedAt');
 });

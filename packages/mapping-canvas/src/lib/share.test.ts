@@ -57,6 +57,16 @@ describe('share snapshot domain', () => {
     await expect(createShare(db, createDocument(), '2999-01-01T00:00:00.000Z')).rejects.toThrow('within one year');
   });
 
+  it('keeps legacy view-only snapshots readable with the black background default', async () => {
+    const memory = new MemoryDb(), db = memory as unknown as ShareDb;
+    const created = await createShare(db, { ...createDocument('Legacy snapshot'), background: '#123abc' });
+    const stored = memory.shares.get(created.shareId)!;
+    const legacy = JSON.parse(String(stored.document_json));
+    delete legacy.background;
+    stored.document_json = JSON.stringify(legacy);
+    expect((await readShare(db, created.shareId))?.document.background).toBe('#000000');
+  });
+
   it('rate limits authorized updates by opaque capability', async () => {
     const memory = new MemoryDb(), db = memory as unknown as ShareDb, document = createDocument('Limited updates');
     const created = await createShare(db, document);

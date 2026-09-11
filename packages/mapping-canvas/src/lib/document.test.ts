@@ -3,6 +3,13 @@ import { DOCUMENT_VERSION, commit, convert, createDocument, createObjectCenterRe
 const stroke = (id: string, x = 10): Stroke => ({ id, kind: 'stroke', createdAt: '2026-08-27T00:00:00Z', points: [{ x, y: 20 }, { x: x + 40, y: 60 }], color: '#f7f4ee', width: 3 });
 describe('mapping canvas contract', () => {
   it('creates a versioned document', () => expect(createDocument().version).toBe(DOCUMENT_VERSION));
+  it('creates a black project background and migrates legacy documents to it', () => {
+    const fresh = createDocument();
+    expect(fresh.background).toBe('#000000');
+    const { background: _background, ...legacy } = fresh;
+    expect(parse(JSON.stringify(legacy)).background).toBe('#000000');
+    expect(() => parse(JSON.stringify({ ...fresh, background: 'linear-gradient(red, blue)' }))).toThrow(/not a supported/);
+  });
   it('accepts formatted notes only when their canonical text projection matches', () => {
     const base = createDocument();
     const content = { blocks: [{ type: 'heading2' as const, runs: [{ text: 'Evidence', bold: true as const }] }, { type: 'numbered' as const, runs: [{ text: 'Verify' }] }] };

@@ -2,6 +2,7 @@ import {
   DOCUMENT_VERSION,
   convertWithIdentity,
   normalizeCanvasObject,
+  isCanvasBackground,
   isDocument,
   removeObjects,
   restoreConversion,
@@ -11,13 +12,14 @@ import {
   type Viewport
 } from './document';
 
-export const PAIRING_PROTOCOL_VERSION = 'create-something.draw-pairing.v1' as const;
+export const PAIRING_PROTOCOL_VERSION = 'create-something.draw-pairing.v2' as const;
 
 export type CanvasOperation =
   | { type: 'put_object'; object: CanvasObject }
   | { type: 'remove_objects'; ids: string[] }
   | { type: 'replace_objects'; objects: CanvasObject[] }
   | { type: 'set_title'; title: string }
+  | { type: 'set_background'; background: string }
   | { type: 'set_viewport'; viewport: Viewport }
   | { type: 'convert'; selectedIds: string[]; target: 'note' | 'connector' | 'group'; resultId: string; createdAt: string }
   | { type: 'restore_conversion'; id: string };
@@ -127,6 +129,7 @@ export function isCanvasOperation(value: unknown): value is CanvasOperation {
   if (operation.type === 'remove_objects') return Array.isArray(operation.ids) && operation.ids.length > 0 && operation.ids.every((id) => typeof id === 'string' && id.length > 0);
   if (operation.type === 'replace_objects') return Array.isArray(operation.objects) && operation.objects.every((object) => normalizeCanvasObject(object) !== null);
   if (operation.type === 'set_title') return isValidCanvasTitle(operation.title);
+  if (operation.type === 'set_background') return isCanvasBackground(operation.background);
   if (operation.type === 'set_viewport') return isViewport(operation.viewport);
   if (operation.type === 'convert') return Array.isArray(operation.selectedIds) && operation.selectedIds.length > 0 && operation.selectedIds.every((id) => typeof id === 'string' && id.length > 0) && ['note', 'connector', 'group'].includes(operation.target) && typeof operation.resultId === 'string' && operation.resultId.length > 0 && typeof operation.createdAt === 'string' && operation.createdAt.length > 0;
   return operation.type === 'restore_conversion' && typeof operation.id === 'string' && operation.id.length > 0;
@@ -146,6 +149,7 @@ export function applyCanvasOperation(document: CanvasDocument, operation: Canvas
   if (operation.type === 'remove_objects') return removeObjects(document, operation.ids);
   if (operation.type === 'replace_objects') { const objects = operation.objects.map(normalizeCanvasObject); return objects.some((object) => object === null) ? undefined : withObjects(document, objects as CanvasObject[]); }
   if (operation.type === 'set_title') return { ...document, title: operation.title, updatedAt: new Date().toISOString() };
+  if (operation.type === 'set_background') return { ...document, background: operation.background.toLowerCase(), updatedAt: new Date().toISOString() };
   if (operation.type === 'set_viewport') return { ...document, viewport: operation.viewport, updatedAt: new Date().toISOString() };
   if (operation.type === 'convert') {
     if (document.objects.some(({ id }) => id === operation.resultId)) return undefined;

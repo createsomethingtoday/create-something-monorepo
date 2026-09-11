@@ -1,6 +1,7 @@
 import { normalizeNoteContent, noteContentText, type NoteContent } from './note-content';
 
 export const DOCUMENT_VERSION = 'create-something.mapping-canvas.v1' as const;
+export const DEFAULT_CANVAS_BACKGROUND = '#000000' as const;
 export type Point = { x: number; y: number };
 export type Viewport = { x: number; y: number; zoom: number };
 export type Tool = 'select' | 'pen' | 'eraser' | 'rectangle' | 'ellipse' | 'arrow' | 'note' | 'connector' | 'group' | 'pan';
@@ -11,21 +12,22 @@ export type Note = Base & { kind: 'note'; x: number; y: number; width: number; h
 export type Connector = Base & { kind: 'connector'; fromId: string; toId: string; label: string };
 export type Group = Base & { kind: 'group'; x: number; y: number; width: number; height: number; label: string; childIds: string[] };
 export type CanvasObject = Stroke | Shape | Note | Connector | Group;
-export type CanvasDocument = { version: typeof DOCUMENT_VERSION; id: string; title: string; createdAt: string; updatedAt: string; viewport: Viewport; objects: CanvasObject[] };
+export type CanvasDocument = { version: typeof DOCUMENT_VERSION; id: string; title: string; background: string; createdAt: string; updatedAt: string; viewport: Viewport; objects: CanvasObject[] };
 export type History = { past: CanvasDocument[]; present: CanvasDocument; future: CanvasDocument[] };
 
 const now = () => new Date().toISOString();
 export const uid = (prefix: string) => `${prefix}-${crypto.randomUUID()}`;
+export const isCanvasBackground = (value: unknown): value is string => typeof value === 'string' && /^#[\da-f]{6}$/i.test(value);
 
 export function createDocument(title = 'Untitled mapping session'): CanvasDocument {
   const timestamp = now();
-  return { version: DOCUMENT_VERSION, id: uid('canvas'), title, createdAt: timestamp, updatedAt: timestamp, viewport: { x: 0, y: 0, zoom: 1 }, objects: [] };
+  return { version: DOCUMENT_VERSION, id: uid('canvas'), title, background: DEFAULT_CANVAS_BACKGROUND, createdAt: timestamp, updatedAt: timestamp, viewport: { x: 0, y: 0, zoom: 1 }, objects: [] };
 }
 
 export function isDocument(value: unknown): value is CanvasDocument {
   if (!value || typeof value !== 'object') return false;
   const candidate = value as Partial<CanvasDocument>;
-  if (candidate.version !== DOCUMENT_VERSION || typeof candidate.id !== 'string' || candidate.id.length < 1 || candidate.id.length > 240 || typeof candidate.title !== 'string' || typeof candidate.createdAt !== 'string' || typeof candidate.updatedAt !== 'string' || !Array.isArray(candidate.objects) || !isViewport(candidate.viewport) || !candidate.objects.every((object) => isCanvasObject(object))) return false;
+  if (candidate.version !== DOCUMENT_VERSION || typeof candidate.id !== 'string' || candidate.id.length < 1 || candidate.id.length > 240 || typeof candidate.title !== 'string' || !isCanvasBackground(candidate.background) || typeof candidate.createdAt !== 'string' || typeof candidate.updatedAt !== 'string' || !Array.isArray(candidate.objects) || !isViewport(candidate.viewport) || !candidate.objects.every((object) => isCanvasObject(object))) return false;
   const ids = new Set(candidate.objects.map(({ id }) => id));
   return ids.size === candidate.objects.length && candidate.objects.every((object) => {
     if (object.kind === 'connector') return object.fromId !== object.toId && ids.has(object.fromId) && ids.has(object.toId);
@@ -37,7 +39,8 @@ export function isDocument(value: unknown): value is CanvasDocument {
 export function normalizeDocument(value: unknown): CanvasDocument | null {
   if (!value || typeof value !== 'object') return null;
   const candidate = value as Partial<CanvasDocument>;
-  if (candidate.version !== DOCUMENT_VERSION || typeof candidate.id !== 'string' || candidate.id.length < 1 || candidate.id.length > 240 || typeof candidate.title !== 'string' || typeof candidate.createdAt !== 'string' || typeof candidate.updatedAt !== 'string' || !Array.isArray(candidate.objects) || !isViewport(candidate.viewport)) return null;
+  const background = candidate.background === undefined ? DEFAULT_CANVAS_BACKGROUND : candidate.background;
+  if (candidate.version !== DOCUMENT_VERSION || typeof candidate.id !== 'string' || candidate.id.length < 1 || candidate.id.length > 240 || typeof candidate.title !== 'string' || !isCanvasBackground(background) || typeof candidate.createdAt !== 'string' || typeof candidate.updatedAt !== 'string' || !Array.isArray(candidate.objects) || !isViewport(candidate.viewport)) return null;
   const objects = candidate.objects.map(normalizeCanvasObject);
   if (objects.some((object) => object === null)) return null;
   const normalizedObjects = objects as CanvasObject[];
@@ -60,7 +63,7 @@ export function normalizeDocument(value: unknown): CanvasDocument | null {
   }
   const retained = normalizedObjects.filter(({ id }) => !invalid.has(id));
   const retainedIds = new Set(retained.map(({ id }) => id));
-  const repaired = { ...candidate, objects: retained.map((object) => object.kind === 'group' ? { ...object, childIds: object.childIds.filter((id) => retainedIds.has(id)) } : object) } as CanvasDocument;
+  const repaired = { ...candidate, background, objects: retained.map((object) => object.kind === 'group' ? { ...object, childIds: object.childIds.filter((id) => retainedIds.has(id)) } : object) } as CanvasDocument;
   return isDocument(repaired) ? repaired : null;
 }
 

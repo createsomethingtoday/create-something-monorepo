@@ -30,9 +30,9 @@
 
 <svelte:head><title>{document.title} · View-only Draw snapshot</title><meta name="robots" content="noindex,nofollow" /></svelte:head>
 <main><header><img src="/brand/create-something-agency-white.svg" alt="CREATE SOMETHING" /><div><strong>{document.title}</strong><span>View-only snapshot · revision {data.share.revision}{#if copyStatus} · {copyStatus}{/if}</span></div><button onclick={copyLocal}>Copy into Draw</button></header>
-  <section aria-label={`View-only snapshot: ${document.title}`}>
+  <section aria-label={`View-only snapshot: ${document.title}`} style:background={document.background}>
     <svg viewBox={`${frame.x} ${frame.y} ${frame.width} ${frame.height}`} role="img" aria-label={document.title}>
-      <defs><marker id="head" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="context-stroke" /></marker></defs><rect x={frame.x} y={frame.y} width={frame.width} height={frame.height} fill="#000" />
+      <defs><marker id="head" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="context-stroke" /></marker></defs><rect data-testid="snapshot-background" x={frame.x} y={frame.y} width={frame.width} height={frame.height} fill={document.background} />
       {#each objects as object (object.id)}
         {#if object.kind === 'stroke'}<path d={path(object.points)} fill="none" stroke={object.color} stroke-width={object.width} stroke-linecap="round" stroke-linejoin="round" />
         {:else if object.kind === 'rectangle'}<rect x={Math.min(object.from.x,object.to.x)} y={Math.min(object.from.y,object.to.y)} width={Math.abs(object.to.x-object.from.x)} height={Math.abs(object.to.y-object.from.y)} fill="none" stroke={object.color} />

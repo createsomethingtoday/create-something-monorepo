@@ -26,6 +26,13 @@ const envelope = (overrides: Partial<OperationEnvelope> = {}): OperationEnvelope
 const apply = (state: PairingHostState, value: unknown) => applyEnvelope(state, value, { now: '2026-08-29T12:00:00.000Z', digestCapability: digest });
 
 describe('paired session protocol', () => {
+  it('uses a new protocol generation for background-capable peers', () => {
+    expect(PAIRING_PROTOCOL_VERSION).toBe('create-something.draw-pairing.v2');
+    expect(apply(baseState(), { ...envelope(), protocolVersion: 'create-something.draw-pairing.v1' as typeof PAIRING_PROTOCOL_VERSION })).toMatchObject({
+      status: 'rejected',
+      code: 'UNSUPPORTED_PROTOCOL'
+    });
+  });
   it('accepts an older client text edit by dropping stale formatted content', () => {
     const note = { id: 'legacy-note', kind: 'note' as const, createdAt: stroke.createdAt, x: 1, y: 2, width: 200, height: 100, text: 'Edited on old client', content: { blocks: [{ type: 'heading1' as const, runs: [{ text: 'Old formatting' }] }] } };
     const applied = applyCanvasOperation(createDocument(), { type: 'put_object', object: note });
@@ -95,6 +102,13 @@ describe('paired session protocol', () => {
     expect(isValidCanvasTitle(invalid)).toBe(false);
     expect(isOperationEnvelope(envelope({ operation: { type: 'set_title', title: valid } }))).toBe(true);
     expect(isOperationEnvelope(envelope({ operation: { type: 'set_title', title: invalid } }))).toBe(false);
+  });
+
+  it('applies only opaque RGB project backgrounds through the shared operation contract', () => {
+    const valid = envelope({ operation: { type: 'set_background', background: '#123abc' } });
+    expect(isOperationEnvelope(valid)).toBe(true);
+    expect(apply(baseState(), valid).state.document.background).toBe('#123abc');
+    expect(isOperationEnvelope({ ...valid, operation: { type: 'set_background', background: 'rgba(1,2,3,.5)' } })).toBe(false);
   });
 
   it('replays conversion with an envelope-owned identity', () => {

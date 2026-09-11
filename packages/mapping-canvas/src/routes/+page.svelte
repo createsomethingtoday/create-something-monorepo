@@ -655,10 +655,10 @@
   function point(event: PointerEvent): Point { const rect = surface.getBoundingClientRect(); return { x: (event.clientX - rect.left - viewport.x) / viewport.zoom, y: (event.clientY - rect.top - viewport.y) / viewport.zoom }; }
   function companionCanEdit() { if (replacingDocument) { status = 'Wait for the document replacement to finish'; return false; } if (nativeRole !== 'companion') return true; if (nativeSession.sessionId && !nativeSession.requiresRepair) return true; status = nativeSession.requiresRepair ? 'Pairing credentials rejected · export if needed, then forget and re-pair' : 'Pair this iPhone with a Mac before editing'; return false; }
   async function persistCurrentDocument(next: CanvasDocument) {
-    const run = async () => { const persisted = await loadDocument(next.id), expected = persistedCanvasVersions.get(next.id) ?? null; if ((persisted?.updatedAt ?? null) !== expected) return false; await writeCanvasDocument(next); return true; };
+    const run = () => writeCanvasDocument(next, persistedCanvasVersions.get(next.id) ?? null);
     return navigator.locks ? navigator.locks.request(`${DRAW_DOCUMENT_LOCK}:${next.id}`, run) : run();
   }
-  async function writeCanvasDocument(next: CanvasDocument) { await saveDocument(next); persistedCanvasVersions.set(next.id, next.updatedAt); }
+  async function writeCanvasDocument(next: CanvasDocument, expectedCanvasUpdatedAt?: string | null) { const saved = await saveDocument(next, expectedCanvasUpdatedAt); if (saved) persistedCanvasVersions.set(next.id, next.updatedAt); return saved; }
   function persistedVersionMatches(id: string, persisted: CanvasDocument | null) { return (persisted?.updatedAt ?? null) === (persistedCanvasVersions.get(id) ?? null); }
   function mintReplacementTimestamp(reserved: string) {
     let milliseconds = Date.now(), candidate = new Date(milliseconds).toISOString();
@@ -701,11 +701,13 @@
       operations.push({ type: 'replace_objects', objects: to.objects });
     }
     if (from.title !== to.title) operations.push({ type: 'set_title', title: to.title });
+    if (from.background !== to.background) operations.push({ type: 'set_background', background: to.background });
     if (JSON.stringify(from.viewport) !== JSON.stringify(to.viewport)) operations.push({ type: 'set_viewport', viewport: to.viewport });
     return operations;
   }
   function updateViewport(next: CanvasDocument['viewport'], authoritative = true) { if (!companionCanEdit()) return; if (authoritative) { clearTimeout(wheelTimer); wheelTimer = undefined; } const updated = { ...document, viewport: next, updatedAt: new Date().toISOString() }; history = { ...history, present: updated }; queueSave(updated); if (authoritative) sendNative([{ type: 'set_viewport', viewport: next }]); }
   function chooseColor(color: DrawingColor, label: string) { drawingColor = color; try { localStorage.setItem(DRAWING_COLOR_PREFERENCE, color); } catch { /* Keep drawing when preference storage is unavailable. */ } const next = recolorObjects(document, selectedIds, color); if (next !== document) { const changed = next.objects.filter((object) => selectedIds.includes(object.id)); apply(next, changed.map((object) => ({ type: 'put_object', object }))); status = `Selected marks changed to ${label}`; } else status = `${label} selected for new marks`; }
+  function updateBackground(background: string) { if (!companionCanEdit() || background === document.background) return; apply({ ...document, background, updatedAt: new Date().toISOString() }, { type: 'set_background', background }); status = `Paper changed to ${background.toUpperCase()}`; }
   function toggleSidebar() { sidebarCollapsed = !sidebarCollapsed; try { localStorage.setItem(TOOL_SIDEBAR_PREFERENCE, String(sidebarCollapsed)); } catch { /* Keep the rail usable when preference storage is unavailable. */ } }
   function createTapObject(action: { point: Point; tool: 'note' | 'group' }) {
     const { point: here } = action;
@@ -1088,7 +1090,7 @@
   function exportSvg() { download(svgMarkup(), 'image/svg+xml', 'svg'); status = 'SVG exported'; }
   async function exportPng() {
     const ratio = devicePixelRatio, canvas = window.document.createElement('canvas'); canvas.width = viewportWidth * ratio; canvas.height = viewportHeight * ratio;
-    const context = canvas.getContext('2d')!; context.scale(ratio, ratio); context.fillStyle = '#000'; context.fillRect(0, 0, viewportWidth, viewportHeight);
+    const context = canvas.getContext('2d')!; context.scale(ratio, ratio); context.fillStyle = document.background; context.fillRect(0, 0, viewportWidth, viewportHeight);
     context.strokeStyle = 'rgba(255,255,255,.055)'; context.lineWidth = 1;
     for (let x = 0; x < viewportWidth; x += 32) { context.beginPath(); context.moveTo(x, 0); context.lineTo(x, viewportHeight); context.stroke(); }
     for (let y = 0; y < viewportHeight; y += 32) { context.beginPath(); context.moveTo(0, y); context.lineTo(viewportWidth, y); context.stroke(); }
@@ -1156,9 +1158,10 @@
   <section class="workbench" class:tool-sidebar-collapsed={sidebarCollapsed} aria-label="Mapping canvas workbench">
     <nav class="toolbar" aria-label="Canvas tools"><button class="sidebar-toggle" aria-expanded={!sidebarCollapsed} aria-label={sidebarCollapsed ? 'Expand tool sidebar' : 'Collapse tool sidebar'} title={sidebarCollapsed ? 'Expand tools' : 'Collapse tools'} onclick={toggleSidebar}><i aria-hidden="true">{sidebarCollapsed ? '›' : '‹'}</i><span>{sidebarCollapsed ? 'Expand' : 'Collapse'}</span></button>{#each tools as entry}<button class:active={tool === entry.id} aria-pressed={tool === entry.id} aria-label={`${entry.label} tool (${entry.key})`} aria-keyshortcuts={entry.key} title={`${entry.label} · ${entry.key}`} onclick={() => tool = entry.id}><ToolIcon tool={entry.id} /><span class="tool-label">{entry.label}</span><kbd class="tool-key" aria-hidden="true">{entry.key}</kbd></button>{/each}</nav>
     <div class="canvas-frame">
+      <label class="paper" data-ui="true">Paper<input aria-label="Canvas background color" type="color" value={document.background} disabled={nativeRole === 'companion' && (!nativeSession.sessionId || nativeSession.requiresRepair)} onchange={(event) => updateBackground(event.currentTarget.value)} /></label>
       <svg bind:this={surface} class:crosshair={tool !== 'select' && tool !== 'pan'} role="group" aria-label="Canvas objects" viewBox={`0 0 ${viewportWidth} ${viewportHeight}`} onpointerdowncapture={trackTouchPointer} onpointerdown={pointerDown} onpointermove={pointerMove} onpointerup={pointerUp} onpointercancel={pointerUp} onwheel={wheel}>
         <defs><pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse"><path d="M32 0L0 0 0 32" fill="none" stroke="rgba(255,255,255,.055)" /></pattern><marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="context-stroke" /></marker><filter id="selected"><feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="#fcaa2d" flood-opacity=".6" /></filter></defs>
-        <rect width="100%" height="100%" fill="#000" /><rect width="100%" height="100%" fill="url(#grid)" />
+        <rect data-testid="canvas-background" width="100%" height="100%" fill={document.background} /><rect width="100%" height="100%" fill="url(#grid)" />
         <g bind:this={canvasContent} class:agent-camera={agentCameraActive} data-agent-camera={agentCameraActive ? 'following' : 'idle'} transform={transform}>
           {#each renderObjects as object (object.id)}
             {@const selected = selectedIdSet.has(object.id)}

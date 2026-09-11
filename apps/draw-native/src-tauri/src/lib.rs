@@ -61,6 +61,10 @@ fn is_safe_idempotent(document: &Value, operation: &CanvasOperation) -> bool {
         CanvasOperation::SetTitle { title } => {
             document.get("title").and_then(Value::as_str) == Some(title)
         }
+        CanvasOperation::SetBackground { background } => document
+            .get("background")
+            .and_then(Value::as_str)
+            .is_some_and(|current| current.eq_ignore_ascii_case(background)),
         CanvasOperation::SetViewport { viewport } => serde_json::to_value(viewport)
             .ok()
             .is_some_and(|value| document.get("viewport") == Some(&value)),
@@ -129,6 +133,7 @@ fn operation_references_id(operation: &CanvasOperation, id: &str) -> bool {
         }
         CanvasOperation::RestoreConversion { id: restored } => restored == id,
         CanvasOperation::SetTitle { .. }
+        | CanvasOperation::SetBackground { .. }
         | CanvasOperation::SetViewport { .. }
         | CanvasOperation::ReplaceObjects { .. } => false,
     }
@@ -292,6 +297,7 @@ fn initial_state() -> PairingHostState {
             "version": DOCUMENT_VERSION,
             "id": format!("canvas-{}", Uuid::new_v4()),
             "title": "Untitled mapping session",
+            "background": "#000000",
             "createdAt": timestamp,
             "updatedAt": timestamp,
             "viewport": { "x": 0, "y": 0, "zoom": 1 },
@@ -392,6 +398,10 @@ fn load_companion_state(path: &Path) -> Option<StoredCompanionSession> {
         .and_then(|bytes| serde_json::from_slice(&bytes).ok())
         .map(|mut stored: StoredCompanionSession| {
             stored.document = normalize_document_compat(stored.document);
+            if stored.host.protocol_version != PROTOCOL_VERSION {
+                stored.online = false;
+                stored.requires_repair = true;
+            }
             stored
         })
         .filter(|stored: &StoredCompanionSession| valid_document(&stored.document))
@@ -1592,6 +1602,50 @@ mod tests {
             restored.queue[0].operation_id,
             "operation-persisted-offline"
         );
+        let _ = fs::remove_dir_all(directory);
+    }
+
+    #[test]
+    fn upgraded_companions_preserve_old_protocol_queues_in_a_repair_state() {
+        let directory = std::env::temp_dir().join(format!("draw-old-pairing-{}", Uuid::new_v4()));
+        let path = directory.join(COMPANION_STATE_FILE);
+        let session = CompanionSession {
+            host: transport::DiscoveredHost {
+                endpoint: "https://draw-mac.local:4242".into(),
+                session_id: "session-old-host".into(),
+                protocol_version: PROTOCOL_VERSION.into(),
+                certificate_fingerprint: "a".repeat(64),
+                certificate_der: "fixture-certificate".into(),
+            },
+            client_id: "iphone-test".into(),
+            capability: "never-write-this-secret".into(),
+            expires_at: "2099-01-01T00:00:00Z".into(),
+            revision: 0,
+            document: initial_state().document,
+            queue: VecDeque::from([OperationEnvelope {
+                protocol_version: PROTOCOL_VERSION.into(),
+                document_version: DOCUMENT_VERSION.into(),
+                session_id: "session-old-host".into(),
+                client_id: "iphone-test".into(),
+                operation_id: "offline-edit".into(),
+                base_revision: 0,
+                sent_at: "2026-08-29T16:00:00Z".into(),
+                capability: "never-write-this-secret".into(),
+                operation: CanvasOperation::SetTitle { title: "Preserve me".into() },
+            }]),
+            online: true,
+            requires_repair: false,
+        };
+        persist_companion_state(&path, &session).unwrap();
+        let mut stored: Value = serde_json::from_slice(&fs::read(&path).unwrap()).unwrap();
+        stored["host"]["protocolVersion"] = json!("create-something.draw-pairing.v1");
+        fs::write(&path, serde_json::to_vec_pretty(&stored).unwrap()).unwrap();
+
+        let retained = load_companion_state(&path).expect("old pairing retained for explicit repair");
+        assert!(!retained.online);
+        assert!(retained.requires_repair);
+        assert_eq!(retained.queue.len(), 1);
+        assert_eq!(retained.queue[0].operation_id, "offline-edit");
         let _ = fs::remove_dir_all(directory);
     }
 
