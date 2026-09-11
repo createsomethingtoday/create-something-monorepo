@@ -161,7 +161,13 @@
     <h2 id="home-ownership-title">Built with OpenAI and Cloudflare. Designed to remain yours.</h2>
     <p>Your team owns the system. We use OpenAI Codex, an AI coding tool, to build and help you change the project. Cloudflare can provide hosting and storage.</p>
     <p>You keep the code, workflow plan, rules, tests, history, and recovery instructions. If you change AI models or tools, that knowledge stays with you. A new setup still needs testing.</p>
-    <p><strong>CREATE SOMETHING is an OpenAI Select Partner.</strong> <a href="/stack#openai-qualifications">View our qualifications →</a></p>
+    <div class="partner-callout">
+      <div>
+        <span class="partner-label">OpenAI Partner Network</span>
+        <p><strong>CREATE SOMETHING is an OpenAI Select Partner.</strong></p>
+      </div>
+      <a href="/stack#openai-qualifications">View our qualifications <span aria-hidden="true">→</span></a>
+    </div>
     <a href="/stack">See what you keep →</a>
     <a href="https://createsomething.ltd/canon/concepts/conviction-without-dependence">Why we build this way</a>
   </aside>
@@ -190,6 +196,12 @@
 </div>
 
 <style>
+  .partner-callout { display: flex; align-items: center; justify-content: space-between; gap: var(--space-performance-md); border-block: 1px solid var(--color-performance-line-strong); margin-block: var(--space-performance-lg) var(--space-performance-sm); padding-block: var(--space-performance-md); }
+  .partner-label { display: block; margin-bottom: var(--space-performance-xs); color: var(--color-performance-ink-soft); font-family: var(--font-performance-mono); font-size: 0.7rem; text-transform: uppercase; }
+  .partner-callout p { margin: 0; }
+  .partner-callout a { flex-shrink: 0; gap: var(--space-performance-sm); margin: 0; font-size: 0.9rem; }
+  .partner-callout a:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; }
+  @media (max-width: 640px) { .partner-callout { align-items: flex-start; flex-direction: column; gap: var(--space-performance-xs); } }
   .home-pilot { background: var(--color-performance-paper, #f3f3f0); color: var(--color-performance-ink, #090909); }
   .home-section { padding: clamp(2rem, 5vw, 5rem) max(1.25rem, calc((100% - 80rem) / 2)); border-bottom: 1px solid var(--color-performance-line, #d7d7d2); }
   .home-section > span, article > span, dt { font-size: 0.8rem; font-weight: 650; }
