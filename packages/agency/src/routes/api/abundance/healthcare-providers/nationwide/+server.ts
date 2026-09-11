@@ -51,9 +51,11 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 			if (body.source_kind !== 'monthly_full' && body.source_kind !== 'weekly_incremental') {
 				throw new TypeError('source_kind must be monthly_full or weekly_incremental.');
 			}
+			if (body.taxonomy_scope !== undefined && body.taxonomy_scope !== 'primary_family_np' && body.taxonomy_scope !== 'all_np_taxonomies') throw new TypeError('Invalid taxonomy_scope.');
 			const run = await beginNationwideRun(platform.env.DB, {
 				id: requiredString(body.run_id, 'run_id'),
 				sourceKind: body.source_kind,
+				taxonomyScope: body.taxonomy_scope as 'primary_family_np' | 'all_np_taxonomies' | undefined,
 				sourceFile: requiredString(body.source_file, 'source_file'),
 				sourceUrl: requiredString(body.source_url, 'source_url'),
 				sourcePublishedAt: optionalString(body.source_published_at),

@@ -20,6 +20,7 @@ export type SourcingQuery = {
   city?: string;
   name?: string;
   taxonomy: string;
+  licenseState?: string;
   runId?: string;
   centerAddress?: string;
   radiusMiles?: number;
@@ -33,6 +34,7 @@ export function parseSourcingQuery(params: URLSearchParams): SourcingQuery {
     'city',
     'name',
     'taxonomy_code',
+    'license_state',
     'run_id',
     'center_address',
     'radius_miles',
@@ -66,13 +68,12 @@ export function parseSourcingQuery(params: URLSearchParams): SourcingQuery {
     throw new TypeError(
       'Radius searches cross city/state borders; omit state and city. Use a separate city search for location associations.'
     );
-  const taxonomy = clean('taxonomy_code') ?? '363LF0000X';
-  if (taxonomy !== '363LF0000X')
-    throw new TypeError(
-      'This snapshot contains primary Family NP records only. AGNP and other specialties require a broader completed import; no complete specialty result is available yet.'
-    );
-  if (!/^363L[A-Z0-9]{5}X$/.test(taxonomy))
-    throw new TypeError('Use a Nurse Practitioner taxonomy code.');
+  const codes = [...new Set((clean('taxonomy_code') ?? '363LF0000X').split(',').map(code => code.trim()))].sort();
+  if (codes.length > 20 || codes.some(code => !/^363L[A-Z0-9]{5}X$/.test(code)))
+    throw new TypeError('Use up to 20 comma-separated Nurse Practitioner taxonomy codes.');
+  const taxonomy = codes.join(',');
+  const licenseState = clean('license_state')?.toUpperCase();
+  if (licenseState && !/^[A-Z]{2}$/.test(licenseState)) throw new TypeError('license_state must be a two-letter code.');
   const locationMode = clean('location_mode') ?? 'within_radius';
   if (locationMode !== 'within_radius' && locationMode !== 'unresolved')
     throw new TypeError('Invalid location_mode.');
@@ -90,6 +91,7 @@ export function parseSourcingQuery(params: URLSearchParams): SourcingQuery {
     city,
     name: clean('name'),
     taxonomy,
+    licenseState,
     runId,
     centerAddress,
     radiusMiles,
@@ -150,14 +152,30 @@ const join = `LEFT JOIN abundance_healthcare_geocodes g ON g.provider_npi=m.prov
 async function prepareQuery(db: D1Database, q: SourcingQuery, fetchFn: typeof fetch) {
   const run = await db
     .prepare(
-      `SELECT id, source_published_at, finished_at FROM abundance_healthcare_nationwide_runs
- WHERE status='succeeded' ${q.runId ? 'AND id=?' : ''} ORDER BY finished_at DESC LIMIT 1`
+      `SELECT id, taxonomy_scope, source_published_at, finished_at FROM abundance_healthcare_nationwide_runs
+ WHERE status='succeeded' ${q.runId ? 'AND id=?' : ''} ORDER BY (taxonomy_scope='all_np_taxonomies') DESC, source_published_at DESC, finished_at DESC LIMIT 1`
     )
     .bind(...(q.runId ? [q.runId] : []))
-    .first<{ id: string; source_published_at: string; finished_at: string }>();
+    .first<{ id: string; taxonomy_scope: 'primary_family_np' | 'all_np_taxonomies'; source_published_at: string; finished_at: string }>();
   if (!run) throw new Error('Requested completed snapshot is unavailable.');
-  const filters = ['m.run_id=?', 'm.primary_taxonomy_code=?'],
-    args: unknown[] = [run.id, q.taxonomy];
+  const codes = q.taxonomy.split(',');
+  if (run.taxonomy_scope !== 'all_np_taxonomies' && codes.some(code => code !== '363LF0000X'))
+    throw new TypeError('This snapshot requires a broader completed import for the requested specialties.');
+  const placeholders = codes.map(() => '?').join(',');
+  const taxonomyJson = "coalesce(json_extract(m.provider_snapshot_json,'$.taxonomies_json'),'[]')";
+  const safeTaxonomyJson = `CASE WHEN json_valid(${taxonomyJson}) THEN ${taxonomyJson} ELSE '[]' END`;
+  const filters = ['m.run_id=?'];
+  const args: unknown[] = [run.id];
+  if (run.taxonomy_scope === 'all_np_taxonomies') {
+    filters.push(`(m.primary_taxonomy_code IN (${placeholders}) OR EXISTS (SELECT 1 FROM json_each(${safeTaxonomyJson}) t WHERE json_extract(t.value,'$.code') IN (${placeholders})))`);
+    args.push(...codes,...codes);
+  } else {
+    filters.push('m.primary_taxonomy_code=?'); args.push('363LF0000X');
+  }
+  if (q.licenseState) {
+    filters.push(`(upper(json_extract(m.provider_snapshot_json,'$.license_state'))=? OR EXISTS (SELECT 1 FROM json_each(${safeTaxonomyJson}) t WHERE upper(json_extract(t.value,'$.license_state'))=?))`);
+    args.push(q.licenseState,q.licenseState);
+  }
   if (q.state) {
     filters.push('m.practice_state=?');
     args.push(q.state);
@@ -236,6 +254,7 @@ export async function querySourcing(
   const total = count?.total ?? 0;
   return {
     run_id: plan.run.id,
+    taxonomy_scope: plan.run.taxonomy_scope,
     source_published_at: plan.run.source_published_at,
     total,
     limit: q.limit,
@@ -248,7 +267,7 @@ export async function querySourcing(
         ? 'incomplete_geocoding'
         : 'all_matching_records_in_selected_snapshot',
     limitation:
-      'Snapshot scope is primary Family NP until broader NP import is completed. Taxonomy is not board certification. Address-range distance is straight-line practice-to-center distance, not home location or commute time. Unresolved records cannot be classified inside or outside the radius.',
+      `Snapshot scope: ${plan.run.taxonomy_scope}. Taxonomy is not board certification. Registry license fields do not establish active license status. Address-range distance is straight-line practice-to-center distance, not home location or commute time. Unresolved records cannot be classified inside or outside the radius.`,
     results: (rows.results ?? []).map((row) => {
       const p = project(row, plan.center);
       return {

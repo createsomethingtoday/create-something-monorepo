@@ -247,6 +247,30 @@ test('coverage health and outreach are derived from the full cohort, not the fir
 	} finally { fixture.database.close(); }
 });
 
+test('broad NP imports preserve secondary specialties without expanding legacy FNP reports', async () => {
+ const fixture = await createDatabase();
+ try {
+  const start = {sourceKind: 'monthly_full' as const, sourceFile: 'shared.zip', sourceUrl: 'https://download.cms.gov/shared.zip', startedAt: new Date().toISOString()};
+  await beginNationwideRun(fixture.db, {...start, id: 'abnationalrun_family'});
+  const family = provider('1000000001', 'NY', 'Albany');
+  await applyNationwideChunk(fixture.db, {runId:'abnationalrun_family',providers:[family],removeNpis:[],processedRowCount:3,rejectedCount:0});
+  await finalizeNationwideRun(fixture.db,{runId:'abnationalrun_family',finishedAt:'2026-09-11T01:00:00Z',sourceSha256:'a'.repeat(64),expectedProcessedRowCount:3});
+  await assert.rejects(beginNationwideRun(fixture.db, {...start,id:'abnationalrun_invalid_base',sourceKind:'weekly_incremental',taxonomyScope:'all_np_taxonomies'}), /base snapshot/i);
+  await beginNationwideRun(fixture.db, {...start,id:'abnationalrun_broad',taxonomyScope:'all_np_taxonomies'});
+  const secondary = {...provider('1000000002','NY','Albany'), primary_taxonomy_code:'163W00000X', taxonomies_json:JSON.stringify([{code:'163W00000X',primary:true},{code:'363LA2200X',primary:false,license_state:'NY'}])};
+  await applyNationwideChunk(fixture.db,{runId:'abnationalrun_broad',providers:[family,secondary],removeNpis:[],processedRowCount:3,rejectedCount:0});
+  const broad = await finalizeNationwideRun(fixture.db,{runId:'abnationalrun_broad',finishedAt:'2026-09-11T02:00:00Z',sourceSha256:'a'.repeat(64),expectedProcessedRowCount:3});
+  assert.equal(broad.taxonomy_scope,'all_np_taxonomies');
+  assert.equal(broad.provider_count,2);
+  const legacy = await queryNationwideCoverage(fixture.db,{state:'NY'});
+  assert.equal(legacy.total,1);
+  assert.equal(legacy.providers[0].npi,family.npi);
+  const receipts = await listAppliedNationwideSources(fixture.db);
+  assert.equal(receipts.length,2);
+  assert.deepEqual(new Set(receipts.map(r=>r.taxonomy_scope)),new Set(['primary_family_np','all_np_taxonomies']));
+ } finally {fixture.database.close();}
+});
+
 test('nationwide migration records provenance and immutable membership snapshots', async () => {
 	const migration = await readFile(new URL('../migrations/0046_abundance_healthcare_nationwide_coverage.sql', import.meta.url), 'utf8');
 	assert.match(migration, /source_kind TEXT NOT NULL/);
@@ -269,7 +293,7 @@ function provider(npi: string, state: string, city: string): HealthcareProvider 
 
 async function createDatabase(): Promise<{ database: DatabaseSync; db: D1Database }> {
 	const database = new DatabaseSync(':memory:');
-	for (const name of ['0044_abundance_healthcare_provider_coverage.sql', '0045_abundance_healthcare_recruiting_evidence.sql', '0046_abundance_healthcare_nationwide_coverage.sql']) {
+	for (const name of ['0044_abundance_healthcare_provider_coverage.sql', '0045_abundance_healthcare_recruiting_evidence.sql', '0046_abundance_healthcare_nationwide_coverage.sql', '0053_abundance_np_taxonomy_scope.sql']) {
 		database.exec(await readFile(new URL(`../migrations/${name}`, import.meta.url), 'utf8'));
 	}
 	class BoundStatement {
