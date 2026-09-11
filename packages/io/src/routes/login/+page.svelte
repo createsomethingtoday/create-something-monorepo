@@ -11,13 +11,40 @@
 	let { data } = $props();
 
 	type AuthMode = 'login' | 'signup' | 'magic';
+
+	function friendlyLoginError(code: string | null): string | null {
+		if (!code) return null;
+		if (['invalid_token', 'verification_failed', 'exchange_failed'].includes(code)) {
+			return 'This sign-in link is invalid or has expired. Use your password or request a new email link below.';
+		}
+		return 'Sign-in could not continue. Choose a sign-in method below and try again.';
+	}
+
+	function labelReturnDestination(path: string): string {
+		if (path === '/account') return 'your IO research account';
+		if (path === '/papers' || path.startsWith('/papers/')) return 'the paper library';
+		if (path === '/experiments' || path.startsWith('/experiments/')) return 'the experiments';
+		if (path === '/graph' || path.startsWith('/graph/')) return 'the research graph';
+		if (path === '/') return 'the IO research home';
+		return 'your requested IO research page';
+	}
+
 	let mode: AuthMode = $state('login');
 	let isLoading = $state(false);
-	let error: string | null = $state(null);
+	let errorOverride = $state<string | null | undefined>(undefined);
+	const error = $derived(
+		errorOverride === undefined ? friendlyLoginError(data.error) : errorOverride
+	);
+	const returnDestinationLabel = $derived(labelReturnDestination(data.redirectTo));
+
+	function switchMode(nextMode: AuthMode) {
+		errorOverride = null;
+		mode = nextMode;
+	}
 
 	async function handleLogin(credentials: { email: string; password: string }): Promise<boolean> {
 		isLoading = true;
-		error = null;
+		errorOverride = null;
 
 		try {
 			const response = await fetch('/api/public/auth/login', {
@@ -29,17 +56,17 @@
 			const result = (await response.json()) as AuthResponse;
 
 			if (!response.ok) {
-				error = result.error || 'Login failed';
+				errorOverride = result.error || 'Login failed';
 				return false;
 			}
 
 			// Invalidate all load functions to refresh user state
 			await invalidateAll();
 			const redirectTo = data.redirectTo || '/';
-			goto(redirectTo);
+			await goto(redirectTo);
 			return true;
 		} catch {
-			error = 'An unexpected error occurred';
+			errorOverride = 'An unexpected error occurred';
 			return false;
 		} finally {
 			isLoading = false;
@@ -48,7 +75,7 @@
 
 	async function handleSignup(credentials: { email: string; password: string; name?: string }): Promise<boolean> {
 		isLoading = true;
-		error = null;
+		errorOverride = null;
 
 		try {
 			const response = await fetch('/api/public/auth/signup', {
@@ -60,17 +87,17 @@
 			const result = (await response.json()) as AuthResponse;
 
 			if (!response.ok) {
-				error = result.error || 'Signup failed';
+				errorOverride = result.error || 'Signup failed';
 				return false;
 			}
 
 			// Invalidate all load functions to refresh user state
 			await invalidateAll();
 			const redirectTo = data.redirectTo || '/';
-			goto(redirectTo);
+			await goto(redirectTo);
 			return true;
 		} catch {
-			error = 'An unexpected error occurred';
+			errorOverride = 'An unexpected error occurred';
 			return false;
 		} finally {
 			isLoading = false;
@@ -79,7 +106,7 @@
 
 	async function handleMagicLink(email: string): Promise<boolean> {
 		isLoading = true;
-		error = null;
+		errorOverride = null;
 
 		try {
 			const response = await fetch('/api/public/auth/magic-login', {
@@ -91,13 +118,13 @@
 			const result = (await response.json()) as AuthResponse;
 
 			if (!response.ok) {
-				error = result.error || 'Failed to send magic link';
+				errorOverride = result.error || 'Failed to send magic link';
 				return false;
 			}
 
 			return true;
 		} catch {
-			error = 'An unexpected error occurred';
+			errorOverride = 'An unexpected error occurred';
 			return false;
 		} finally {
 			isLoading = false;
@@ -112,34 +139,42 @@
 	noindex={true}
 />
 
-<div class="auth-container">
-	<div class="auth-card">
-		<div class="auth-header">
-			<h1>
-				{#if mode === 'login'}
-					Sign in
-				{:else if mode === 'signup'}
-					Create account
-				{:else}
-					Passwordless sign in
-				{/if}
-			</h1>
-			<p class="auth-subtitle">
-				{#if mode === 'login'}
-					Welcome back to CREATE SOMETHING
-				{:else if mode === 'signup'}
-					Join the research community
-				{:else}
-					We'll send you a magic link
-				{/if}
-			</p>
+<div class="auth-shell property-performance">
+	<section class="auth-context" data-performance-chapter="task-state" aria-labelledby="auth-heading">
+		<div class="auth-status">
+			<span>IO research access</span>
+			<strong>
+				{mode === 'login' ? 'Sign in' : mode === 'signup' ? 'Create account' : 'Email link'}
+			</strong>
 		</div>
+		<p class="auth-eyebrow">Your next step</p>
+		<h1 id="auth-heading">
+			{mode === 'login'
+				? 'Sign in to IO research.'
+				: mode === 'signup'
+					? 'Create your IO research account.'
+					: 'Email yourself an IO sign-in link.'}
+		</h1>
+		<p class="auth-summary">
+			{#if mode === 'magic'}
+				Enter your email. We will send a one-time link, then return you to {returnDestinationLabel}.
+			{:else}
+				Use your CREATE SOMETHING email and password. We will return you to {returnDestinationLabel}
+				when this step is complete.
+			{/if}
+		</p>
+		<div class="auth-boundary" aria-label="Account boundary">
+			<span>Checked by CREATE SOMETHING Identity</span>
+			<span>Research access stays with this account</span>
+		</div>
+	</section>
 
+	<section class="auth-card" data-performance-chapter="workspace" aria-label="Account form">
 		{#if mode === 'login'}
 			<LoginForm
 				onSubmit={handleLogin}
-				onSwitchToSignup={() => (mode = 'signup')}
-				onSwitchToMagicLink={() => (mode = 'magic')}
+				onSwitchToSignup={() => switchMode('signup')}
+				onSwitchToMagicLink={() => switchMode('magic')}
 				{isLoading}
 				{error}
 				showMagicLinkOption={true}
@@ -148,8 +183,8 @@
 		{:else if mode === 'signup'}
 			<SignupForm
 				onSubmit={handleSignup}
-				onSwitchToLogin={() => (mode = 'login')}
-				onSwitchToMagicLink={() => (mode = 'magic')}
+				onSwitchToLogin={() => switchMode('login')}
+				onSwitchToMagicLink={() => switchMode('magic')}
 				{isLoading}
 				{error}
 				source="io"
@@ -157,46 +192,147 @@
 		{:else}
 			<MagicLinkForm
 				onSubmit={handleMagicLink}
-				onSwitchToLogin={() => (mode = 'login')}
+				onSwitchToLogin={() => switchMode('login')}
 				{isLoading}
 				{error}
 			/>
 		{/if}
-	</div>
+	</section>
+
+	<section class="auth-handoff" data-performance-chapter="decision-receipt">
+		<span>
+			{mode === 'login'
+				? 'After sign-in'
+				: mode === 'signup'
+					? 'After account creation'
+					: 'After opening the email'}
+		</span>
+		<strong>{returnDestinationLabel}</strong>
+		{#if mode === 'magic'}
+			<p>Check your email, open the link, and return to {returnDestinationLabel}.</p>
+		{:else}
+			<p>If a link fails, stay here and choose another sign-in method. Your return path stays inside IO.</p>
+		{/if}
+	</section>
 </div>
 
 <style>
-	.auth-container {
+	.auth-shell {
+		width: min(var(--content-width-performance), calc(100% - 2rem));
 		min-height: calc(100vh - 72px);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		padding: var(--space-performance-lg);
+		margin: 0 auto;
+		padding: clamp(2rem, 7vw, 6rem) 0;
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) minmax(20rem, 30rem);
+		align-items: start;
+		gap: clamp(2rem, 6vw, 6rem);
 	}
 
 	.auth-card {
-		width: 100%;
-		max-width: 480px;
 		background: var(--color-performance-bg-surface);
 		border-radius: var(--radius-performance-scale-lg);
 		padding: var(--space-performance-xl);
 	}
 
-	.auth-header {
-		text-align: center;
-		margin-bottom: var(--space-performance-lg);
+	.auth-context {
+		border-top: 1px solid var(--color-performance-border-subtle);
+		padding-top: var(--space-performance-md);
 	}
 
-	.auth-header h1 {
-		font-size: var(--text-performance-h2);
+	.auth-status,
+	.auth-boundary {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: space-between;
+		gap: var(--space-performance-sm) var(--space-performance-lg);
+		font-family: var(--font-performance-mono);
+		font-size: var(--text-performance-caption);
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
+	}
+
+	.auth-status span,
+	.auth-boundary,
+	.auth-eyebrow,
+	.auth-handoff span {
+		color: var(--color-performance-fg-muted);
+	}
+
+	.auth-status strong {
+		color: var(--color-performance-ready);
+	}
+
+	.auth-eyebrow {
+		margin: clamp(3rem, 8vw, 7rem) 0 var(--space-performance-sm);
+		font-family: var(--font-performance-mono);
+		font-size: var(--text-performance-caption);
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+	}
+
+	h1 {
+		max-width: 13ch;
+		margin: 0;
+		font-size: clamp(2.5rem, 6vw, 5.5rem);
 		font-weight: var(--font-performance-bold);
 		color: var(--color-performance-fg-primary);
-		margin: 0 0 var(--space-performance-xs) 0;
+		letter-spacing: -0.055em;
+		line-height: 0.94;
 	}
 
-	.auth-subtitle {
-		font-size: var(--text-performance-body-sm);
+	.auth-summary {
+		max-width: 44rem;
+		margin: var(--space-performance-lg) 0;
+		font-size: var(--text-performance-body);
 		color: var(--color-performance-fg-tertiary);
+		line-height: 1.65;
+	}
+
+	.auth-boundary {
+		justify-content: flex-start;
+		padding-top: var(--space-performance-md);
+		border-top: 1px solid var(--color-performance-border-subtle);
+	}
+
+	.auth-handoff {
+		grid-column: 1 / -1;
+		display: grid;
+		grid-template-columns: minmax(8rem, 0.35fr) minmax(12rem, 0.65fr) minmax(0, 1fr);
+		gap: var(--space-performance-md);
+		align-items: baseline;
+		border-top: 1px solid var(--color-performance-border-subtle);
+		padding-top: var(--space-performance-md);
+	}
+
+	.auth-handoff span {
+		font-family: var(--font-performance-mono);
+		font-size: var(--text-performance-caption);
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
+	}
+
+	.auth-handoff strong,
+	.auth-handoff p {
 		margin: 0;
+	}
+
+	.auth-handoff p {
+		color: var(--color-performance-fg-tertiary);
+		line-height: 1.5;
+	}
+
+	@media (max-width: 760px) {
+		.auth-shell,
+		.auth-handoff {
+			grid-template-columns: 1fr;
+		}
+
+		.auth-eyebrow {
+			margin-top: var(--space-performance-xl);
+		}
+
+		h1 {
+			font-size: clamp(2.5rem, 13vw, 4rem);
+		}
 	}
 </style>

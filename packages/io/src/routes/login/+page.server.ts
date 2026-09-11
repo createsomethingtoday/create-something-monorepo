@@ -1,8 +1,11 @@
 import type { PageServerLoad } from './$types';
 import { redirect } from '@sveltejs/kit';
 import { createSessionManager } from '@create-something/canon/auth';
+import { safeIoReturnPath } from './return-path';
 
 export const load: PageServerLoad = async ({ url, cookies, platform }) => {
+	const redirectTo = safeIoReturnPath(url.searchParams.get('redirect'));
+
 	// Check if already authenticated
 	const session = createSessionManager(cookies, {
 		isProduction: platform?.env?.ENVIRONMENT === 'production',
@@ -12,11 +15,11 @@ export const load: PageServerLoad = async ({ url, cookies, platform }) => {
 	const user = await session.getUser();
 	if (user) {
 		// Already logged in, redirect to home or intended destination
-		const redirectTo = url.searchParams.get('redirect') || '/';
 		redirect(302, redirectTo);
 	}
 
 	return {
-		redirectTo: url.searchParams.get('redirect') || '/'
+		redirectTo,
+		error: url.searchParams.get('error')
 	};
 };
