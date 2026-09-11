@@ -74,32 +74,21 @@ function sceneFit(map: CanvasDocument) {
   };
 }
 
-/** Chalk and note text are neutral ink; choose their light/dark variant for the paper. */
-function paperInk(background: string): string {
-  const channels = [1, 3, 5].map((offset) => {
-    const value = Number.parseInt(background.slice(offset, offset + 2), 16) / 255;
-    return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
-  });
-  const luminance = channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722;
-  return luminance > 0.179 ? '#282522' : DEFAULT_DRAWING_COLOR;
-}
-
 /** Materialize representable Canvas marks in Motion without changing their identity. */
-export function importMap(map: CanvasDocument, background = '#eee5d4'): { drawings: Drawing[]; skipped: number } {
+export function importMap(map: CanvasDocument): { drawings: Drawing[]; skipped: number } {
   const objects = map.objects.filter(isImportableCanvasObject).slice(0, LIMITS.drawings);
   const retainedMap = { ...map, objects };
   const { scale, toScene } = sceneFit(retainedMap);
   const skipped = map.objects.length - objects.length;
   const drawings: Drawing[] = [];
-  const neutralInk = paperInk(background);
   for (const object of objects) {
     const common = {
       id: object.id,
       name: object.kind === 'note' ? object.text.slice(0, 80) : object.kind,
       kind: 'stroke' as const,
       color: 'color' in object && /^#[\da-f]{6}$/i.test(object.color)
-        ? object.color.toLowerCase() === DEFAULT_DRAWING_COLOR ? neutralInk : object.color
-        : neutralInk,
+        ? object.color
+        : DEFAULT_DRAWING_COLOR,
       weight: Math.max(0.1, 3 * scale),
       text: '',
       width: 100,
@@ -132,7 +121,7 @@ export function importMap(map: CanvasDocument, background = '#eee5d4'): { drawin
           kind: 'text',
           points: [],
           text: object.text.slice(0, 2000),
-          color: neutralInk,
+          color: DEFAULT_DRAWING_COLOR,
           weight: Math.max(0.1, 24 * scale),
           width: Math.max(1, object.width * scale),
           height: Math.max(1, object.height * scale),
@@ -284,7 +273,7 @@ export function syncMotionProject(map: CanvasDocument, existing?: Project): Proj
   let candidate = assemble([]);
   for (;;) {
     const selectedMap = { ...map, objects: [...updateableExistingObjects, ...newObjects] };
-    const imported = importMap(selectedMap, template.background).drawings;
+    const imported = importMap(selectedMap).drawings;
     const importedById = new Map(imported.map((drawing) => [drawing.id, drawing]));
     let selected = existingObjects
       .map((object) => prior.get(object.id))
