@@ -11,5 +11,7 @@ describe('Draw share page', () => {
     expect(page).toContain('location.href = `/?project=${encodeURIComponent(projectId)}`');
     expect(page).toContain("const DRAW_DOCUMENT_LOCK = 'draw-active-document'");
     expect(page).toContain('navigator.locks.request(DRAW_DOCUMENT_LOCK, replace)');
+    expect(page).toContain('fill={document.background}');
+    expect(page).toContain('style:background={document.background}');
   });
 });

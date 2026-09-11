@@ -247,8 +247,8 @@ export function syncMotionProject(map: CanvasDocument, existing?: Project): Proj
   };
   const capacity = Math.max(0, LIMITS.drawings - priorMotionOnly.length);
   const template = existing
-    ? { ...existing, id: map.id, revision: existing.revision + 1 }
-    : { ...newProject(), id: map.id, title: map.title.slice(0, 240) };
+    ? { ...existing, id: map.id, revision: existing.revision + 1, background: map.background }
+    : { ...newProject(), id: map.id, title: map.title.slice(0, 240), background: map.background };
   const emptyProjectBytes = JSON.stringify({ ...template, drawings: [] }).length;
   const assemble = (selected: Drawing[]) => {
     const canvasDrawings = [...selected].sort(

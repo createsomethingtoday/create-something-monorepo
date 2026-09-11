@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createDocument, isDocument, type CanvasDocument } from '../document';
+import { createDocument, isDocument, normalizeDocument, type CanvasDocument } from '../document';
 import {
   applyOperations,
   basePose,
@@ -14,6 +14,7 @@ import { Renderer } from './render';
 import {
   canvasSpaceForProject,
   mergeProjectRecord,
+  normalizeProjectRecord,
   type DrawProjectRecord
 } from '../project-storage';
 
@@ -61,7 +62,7 @@ function canvas(): CanvasDocument {
 
 describe('shared Draw project contract', () => {
   it.each(['#f3ebe4', '#f7f4ee'])('renders linked neutral ink %s against current paper before and after reload', (chalk) => {
-    const source = canvas();
+    const source = { ...canvas(), background: '#eee5d4' };
     const stroke = source.objects[0];
     if (stroke.kind !== 'stroke') throw new Error('Expected stroke fixture');
     stroke.color = chalk;
@@ -306,7 +307,47 @@ describe('shared Draw project contract', () => {
     expect(canvasSpaceForProject(record)).toMatchObject({
       id: motion.id,
       title: 'Motion-only project',
+      background: motion.background,
       objects: []
+    });
+  });
+
+  it('reconciles one background in both Canvas and Motion spaces', () => {
+    const source = { ...canvas(), background: '#123abc' };
+    const motion = syncMotionProject(source);
+    expect(motion.background).toBe('#123abc');
+
+    const record = mergeProjectRecord(undefined, { canvas: source, motion });
+    const changedInMotion = { ...motion, revision: motion.revision + 1, background: '#fedcba' };
+    const reconciled = mergeProjectRecord(record, { motion: changedInMotion });
+    expect(reconciled).toMatchObject({
+      canvas: { background: '#fedcba' },
+      motion: { background: '#fedcba' }
+    });
+    expect(reconciled.canvas?.updatedAt).not.toBe(source.updatedAt);
+  });
+
+  it('migrates existing shared records without changing an authored Motion paper color', () => {
+    const source = canvas();
+    const { background: _background, ...legacyCanvas } = source;
+    expect(normalizeProjectRecord({ version: 'draw.project.v1', id: source.id, canvas: legacyCanvas })?.canvas?.background).toBe('#000000');
+    const motion = syncMotionProject(source);
+    expect(normalizeProjectRecord({ version: 'draw.project.v1', id: source.id, canvas: legacyCanvas, motion })?.canvas?.background).toBe(motion.background);
+  });
+
+  it('preserves authored Motion paper when a separately migrated legacy Canvas arrives', () => {
+    const source = canvas();
+    const { background: _background, ...legacyCanvas } = source;
+    const compatibleCanvas = normalizeDocument(legacyCanvas)!;
+    const motion = { ...syncMotionProject(source), background: '#abcdef' };
+    const current = mergeProjectRecord(undefined, { motion });
+
+    expect(mergeProjectRecord(current, {
+      canvas: compatibleCanvas,
+      canvasBackgroundSource: 'compatibility-default'
+    })).toMatchObject({
+      canvas: { background: '#abcdef' },
+      motion: { background: '#abcdef' }
     });
   });
 

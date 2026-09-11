@@ -97,6 +97,13 @@ describe('paired session protocol', () => {
     expect(isOperationEnvelope(envelope({ operation: { type: 'set_title', title: invalid } }))).toBe(false);
   });
 
+  it('applies only opaque RGB project backgrounds through the shared operation contract', () => {
+    const valid = envelope({ operation: { type: 'set_background', background: '#123abc' } });
+    expect(isOperationEnvelope(valid)).toBe(true);
+    expect(apply(baseState(), valid).state.document.background).toBe('#123abc');
+    expect(isOperationEnvelope({ ...valid, operation: { type: 'set_background', background: 'rgba(1,2,3,.5)' } })).toBe(false);
+  });
+
   it('replays conversion with an envelope-owned identity', () => {
     const first = apply(baseState(), envelope());
     const result = apply(first.state, envelope({

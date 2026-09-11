@@ -3,7 +3,7 @@ import type { CanvasOperation } from './paired-session';
 import { DRAWING_PALETTE } from './palette';
 import { normalizeNoteContent, noteContentText } from './note-content';
 
-export const DRAW_WEBMCP_VERSION = '2026-09-06.1';
+export const DRAW_WEBMCP_VERSION = '2026-09-10.1';
 export const REPLACE_CONFIRMATION = 'REPLACE CANVAS';
 export const RESET_CONFIRMATION = 'RESET CANVAS';
 export const DELETE_CONFIRMATION = 'DELETE OBJECTS';
@@ -67,6 +67,7 @@ const canvasTitleSchema = {
   description: 'Canvas title. Maximum 240 UTF-8 bytes; this byte limit is validated atomically when the operation runs.',
   'x-maxUtf8Bytes': 240
 };
+const canvasBackgroundSchema = { type: 'string', pattern: '^#[0-9a-fA-F]{6}$', description: 'Opaque project background in #RRGGBB format.' };
 const canvasObjectSchema = {
   oneOf: [
     { type: 'object', required: ['id', 'kind', 'createdAt', 'points', 'color', 'width'], properties: { id: { type: 'string' }, kind: { const: 'stroke' }, createdAt: { type: 'string' }, points: { type: 'array', minItems: 2, items: pointSchema }, color: { type: 'string' }, width: { type: 'number', exclusiveMinimum: 0 } } },
@@ -82,6 +83,7 @@ const operationSchema = {
     { type: 'object', required: ['type', 'ids'], additionalProperties: false, properties: { type: { const: 'remove_objects' }, ids: { type: 'array', minItems: 1, items: { type: 'string' } } } },
     { type: 'object', required: ['type', 'objects'], additionalProperties: false, properties: { type: { const: 'replace_objects' }, objects: { type: 'array', items: canvasObjectSchema } } },
     { type: 'object', required: ['type', 'title'], additionalProperties: false, properties: { type: { const: 'set_title' }, title: canvasTitleSchema } },
+    { type: 'object', required: ['type', 'background'], additionalProperties: false, properties: { type: { const: 'set_background' }, background: canvasBackgroundSchema } },
     { type: 'object', required: ['type', 'viewport'], additionalProperties: false, properties: { type: { const: 'set_viewport' }, viewport: { type: 'object', required: ['x', 'y', 'zoom'], additionalProperties: false, properties: { x: { type: 'number' }, y: { type: 'number' }, zoom: { type: 'number', minimum: 0.25, maximum: 3 } } } } },
     { type: 'object', required: ['type', 'selectedIds', 'target', 'resultId', 'createdAt'], additionalProperties: false, properties: { type: { const: 'convert' }, selectedIds: { type: 'array', minItems: 1, uniqueItems: true, items: { type: 'string' } }, target: { type: 'string', enum: ['note', 'group'] }, resultId: { type: 'string' }, createdAt: { type: 'string' } } },
     { type: 'object', required: ['type', 'selectedIds', 'target', 'resultId', 'createdAt'], additionalProperties: false, properties: { type: { const: 'convert' }, selectedIds: { type: 'array', minItems: 2, uniqueItems: true, items: { type: 'string' } }, target: { const: 'connector' }, resultId: { type: 'string' }, createdAt: { type: 'string' } } },
@@ -868,7 +870,7 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
         const { x, y, zoom } = state.document.viewport;
         const projection = {
           version: DRAW_WEBMCP_VERSION,
-          document: { id: state.document.id, title: state.document.title, version: state.document.version, updatedAt: state.document.updatedAt },
+          document: { id: state.document.id, title: state.document.title, background: state.document.background, version: state.document.version, updatedAt: state.document.updatedAt },
           revision: drawRevision(state.document),
           palette: Object.fromEntries(DRAWING_PALETTE.map(({ id, value }) => [id, value])),
           surface,
@@ -1376,6 +1378,7 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
           if (depends) throw new Error(`Object ${object.id} depends on an object created by ${changeId}; targeted revert refused.`);
         }
         if (change.before.title !== change.after.title && current.title !== change.after.title) throw new Error(`Canvas title changed since ${changeId}; targeted revert refused.`);
+        if (change.before.background !== change.after.background && current.background !== change.after.background) throw new Error(`Canvas background changed since ${changeId}; targeted revert refused.`);
         const restoresViewport = JSON.stringify(change.before.viewport) !== JSON.stringify(change.after.viewport);
         if (restoresViewport && JSON.stringify(current.viewport) !== JSON.stringify(change.after.viewport)) throw new Error(`Canvas viewport changed since ${changeId}; targeted revert refused.`);
         const objectChanged = new Set(change.objectIds);
@@ -1415,6 +1418,7 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
         }
         const operations: CanvasOperation[] = [{ type: 'replace_objects', objects: restored }];
         if (change.before.title !== change.after.title) operations.push({ type: 'set_title', title: change.before.title });
+        if (change.before.background !== change.after.background) operations.push({ type: 'set_background', background: change.before.background });
         if (restoresViewport) operations.push({ type: 'set_viewport', viewport: change.before.viewport });
         const result = await controller.applyOperations(operations, drawRevision(current));
         journalBytes -= change.bytes;
@@ -1461,7 +1465,7 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
     },
     {
       name: 'draw_apply_operations', title: 'Change Draw canvas',
-      description: `Atomically apply browser-local Draw document operations. Supported types: put_object, remove_objects, replace_objects, set_title, set_viewport, convert, restore_conversion. replace_objects requires confirmation exactly "${REPLACE_CONFIRMATION}". Changes share the visible browser canvas, history, and persistence. Native Mac and iPhone shells reject WebMCP mutations and use their dedicated pairing protocol.`,
+      description: `Atomically apply browser-local Draw document operations. Supported types: put_object, remove_objects, replace_objects, set_title, set_background, set_viewport, convert, restore_conversion. replace_objects requires confirmation exactly "${REPLACE_CONFIRMATION}". Changes share the visible browser canvas, history, and persistence. Native Mac and iPhone shells reject WebMCP mutations and use their dedicated pairing protocol.`,
       inputSchema: { type: 'object', required: ['operations'], additionalProperties: false, properties: { operations: { type: 'array', minItems: 1, maxItems: 100, items: operationSchema }, expectedRevision: { type: 'string', description: 'Optional optimistic concurrency token from draw_inspect or a mutation receipt.' }, confirmation: { type: 'string' } } },
       annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: false },
       execute: async (input) => {

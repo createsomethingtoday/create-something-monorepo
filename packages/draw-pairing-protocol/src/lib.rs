@@ -6,6 +6,7 @@ use sha2::{Digest, Sha256};
 
 pub const PROTOCOL_VERSION: &str = "create-something.draw-pairing.v1";
 pub const DOCUMENT_VERSION: &str = "create-something.mapping-canvas.v1";
+pub const DEFAULT_DOCUMENT_BACKGROUND: &str = "#000000";
 pub const MAX_APPLIED_RECEIPTS: usize = 4096;
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
@@ -36,6 +37,9 @@ pub enum CanvasOperation {
     },
     SetTitle {
         title: String,
+    },
+    SetBackground {
+        background: String,
     },
     SetViewport {
         viewport: Viewport,
@@ -170,6 +174,12 @@ fn non_empty(value: &str) -> bool {
     !value.trim().is_empty()
 }
 
+fn rgb_color(value: &str) -> bool {
+    value.len() == 7
+        && value.starts_with('#')
+        && value.as_bytes()[1..].iter().all(u8::is_ascii_hexdigit)
+}
+
 fn unsafe_link_character(character: char) -> bool {
     matches!(
         character as u32,
@@ -294,6 +304,11 @@ fn normalize_object_compat(object: &mut Value) {
 }
 
 pub fn normalize_document_compat(mut document: Value) -> Value {
+    if let Some(fields) = document.as_object_mut() {
+        fields
+            .entry("background")
+            .or_insert_with(|| Value::String(DEFAULT_DOCUMENT_BACKGROUND.into()));
+    }
     if let Some(objects) = document.get_mut("objects").and_then(Value::as_array_mut) {
         objects.iter_mut().for_each(normalize_object_compat);
     }
@@ -313,6 +328,10 @@ pub fn valid_document(document: &Value) -> bool {
             .and_then(Value::as_str)
             .is_some_and(non_empty)
         && document.get("title").and_then(Value::as_str).is_some()
+        && document
+            .get("background")
+            .and_then(Value::as_str)
+            .is_some_and(rgb_color)
         && document
             .get("createdAt")
             .and_then(Value::as_str)
@@ -577,6 +596,7 @@ fn validate_envelope(envelope: &OperationEnvelope) -> bool {
         }
         CanvasOperation::ReplaceObjects { objects } => valid_object_set(objects, &HashSet::new()),
         CanvasOperation::SetTitle { title } => non_empty(title) && title.len() <= 240,
+        CanvasOperation::SetBackground { background } => rgb_color(background),
         CanvasOperation::SetViewport { viewport } => {
             viewport.x.is_finite()
                 && viewport.y.is_finite()
@@ -781,6 +801,13 @@ pub fn apply_canvas_operation(
             }
             next["title"] = Value::String(title.clone());
         }
+        CanvasOperation::SetBackground { background } => {
+            let background = background.to_ascii_lowercase();
+            if next.get("background").and_then(Value::as_str) == Some(&background) {
+                return None;
+            }
+            next["background"] = Value::String(background);
+        }
         CanvasOperation::SetViewport { viewport } => {
             let value = serde_json::to_value(viewport).ok()?;
             if next.get("viewport") == Some(&value) {
@@ -971,6 +998,7 @@ mod tests {
                 "version": DOCUMENT_VERSION,
                 "id": "canvas-fixture",
                 "title": "Fixture",
+                "background": DEFAULT_DOCUMENT_BACKGROUND,
                 "createdAt": "2026-08-29T12:00:00.000Z",
                 "updatedAt": "2026-08-29T12:00:00.000Z",
                 "viewport": { "x": 0, "y": 0, "zoom": 1 },
@@ -1042,6 +1070,34 @@ mod tests {
     }
 
     #[test]
+    fn applies_only_opaque_rgb_project_backgrounds() {
+        let mut background = fixture();
+        background.operation = CanvasOperation::SetBackground {
+            background: "#123ABC".into(),
+        };
+        let OperationResult::Applied {
+            state: applied_state,
+            ..
+        } = apply_envelope(state(), background, NOW)
+        else {
+            panic!("expected background application");
+        };
+        assert_eq!(applied_state.document["background"], "#123abc");
+
+        let mut invalid = fixture();
+        invalid.operation = CanvasOperation::SetBackground {
+            background: "rgba(1,2,3,.5)".into(),
+        };
+        assert!(matches!(
+            apply_envelope(state(), invalid, NOW),
+            OperationResult::Rejected {
+                code: OperationErrorCode::InvalidEnvelope,
+                ..
+            }
+        ));
+    }
+
+    #[test]
     fn stale_rich_content_from_older_companions_cannot_hide_text_edits() {
         let mut document = state().document;
         document["objects"] = serde_json::json!([{
@@ -1065,6 +1121,7 @@ mod tests {
     #[test]
     fn native_compat_normalization_retains_valid_content_and_drops_unsafe_content() {
         let mut document = state().document;
+        document.as_object_mut().unwrap().remove("background");
         document["objects"] = serde_json::json!([
             {
                 "id": "safe", "kind": "note", "text": "Heading\n• Link", "x": 0, "y": 0,
@@ -1081,6 +1138,7 @@ mod tests {
             }
         ]);
         let normalized = normalize_document_compat(document);
+        assert_eq!(normalized["background"], "#000000");
         assert!(normalized["objects"][0].get("content").is_some());
         assert!(normalized["objects"][1].get("content").is_none());
     }

@@ -89,7 +89,7 @@ describe('Draw WebMCP tools', () => {
     expect(inspect).toBeDefined();
     const projection = await inspect.execute({ kinds: ['note'], text: 'owner', limit: 10 });
     expect(projection).toMatchObject({
-      version: '2026-09-06.1',
+      version: '2026-09-10.1',
       revision: expect.any(String),
       palette: { chalk: '#f3ebe4', signal: '#0057b8' },
       surface: { width: 1200, height: 800 },
@@ -951,6 +951,20 @@ describe('Draw WebMCP tools', () => {
     expect(controller.read().title).toBe('After title');
     await tools.find(({ name }) => name === 'draw_revert_change')!.execute({ changeId: titleChange.changeId });
     expect(controller.read().title).toBe('Before title');
+  });
+
+  it('sets and reverts the shared project background with optimistic revisions', async () => {
+    const controller = harness();
+    const tools = createDrawWebMcpTools(controller);
+    const inspect = tools.find(({ name }) => name === 'draw_inspect')!;
+    const apply = tools.find(({ name }) => name === 'draw_apply_operations')!;
+    const before = await inspect.execute({}) as { revision: string };
+    const changed = await apply.execute({ expectedRevision: before.revision, operations: [{ type: 'set_background', background: '#123abc' }] }) as { changeId: string; revision: string };
+    expect(controller.read().background).toBe('#123abc');
+    expect(changed.revision).not.toBe(before.revision);
+    await expect(apply.execute({ expectedRevision: before.revision, operations: [{ type: 'set_background', background: '#fedcba' }] })).rejects.toThrow('revision');
+    await tools.find(({ name }) => name === 'draw_revert_change')!.execute({ changeId: changed.changeId });
+    expect(controller.read().background).toBe('#000000');
   });
 
   it('returns the post-focus revision for safe mutation chaining', async () => {

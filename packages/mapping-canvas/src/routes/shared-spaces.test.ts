@@ -38,7 +38,8 @@ it('navigates between Canvas and Motion using the same project identity', () => 
 });
 
 it('guards Motion synchronization with the loaded Canvas version and makes migration idempotent', () => {
-  expect(motionStorage).toContain('loadedCanvasVersions.set(id, record.canvas.updatedAt)');
+  expect(motionStorage).toContain('loadedCanvasVersions.set(id, committedCanvasUpdatedAt)');
+  expect(motionStorage).toContain('loadedCanvasVersions.set(project.id, canvasUpdatedAt)');
   expect(motionStorage).toContain('record.motion?.revision ?? null');
   expect(motionStorage).toContain('record.canvas.updatedAt');
   expect(motionStorage).toContain('for (let attempt = 0; attempt < 3; attempt++)');

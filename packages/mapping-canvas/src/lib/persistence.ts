@@ -24,12 +24,18 @@ function openLegacy(): Promise<IDBDatabase> {
   });
 }
 
-async function loadLegacyDocument(): Promise<CanvasDocument | null> {
+async function loadLegacyDocument(): Promise<{ document: CanvasDocument; backgroundWasMissing: boolean } | null> {
   const db = await openLegacy();
   return new Promise((resolve, reject) => {
     const transaction = db.transaction(LEGACY_STORE);
     const request = transaction.objectStore(LEGACY_STORE).get(LEGACY_KEY);
-    request.onsuccess = () => resolve(normalizeDocument(request.result));
+    request.onsuccess = () => {
+      const normalized = normalizeDocument(request.result);
+      resolve(normalized ? {
+        document: normalized,
+        backgroundWasMissing: request.result?.background === undefined
+      } : null);
+    };
     request.onerror = () => reject(request.error);
     transaction.oncomplete = () => db.close();
   });
@@ -40,8 +46,8 @@ export async function loadDocument(id?: string): Promise<CanvasDocument | null> 
   if (shared) return shared;
   const legacy = await loadLegacyDocument();
   if (legacy) {
-    await migrateLegacyCanvasProject(legacy);
-    if (!id || legacy.id === id) return legacy;
+    await migrateLegacyCanvasProject(legacy.document, legacy.backgroundWasMissing);
+    if (!id || legacy.document.id === id) return (await loadCanvasProject(legacy.document.id)) ?? legacy.document;
   }
   if (id) {
     const record = await loadProjectRecord(id);

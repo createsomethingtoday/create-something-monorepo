@@ -61,6 +61,10 @@ fn is_safe_idempotent(document: &Value, operation: &CanvasOperation) -> bool {
         CanvasOperation::SetTitle { title } => {
             document.get("title").and_then(Value::as_str) == Some(title)
         }
+        CanvasOperation::SetBackground { background } => document
+            .get("background")
+            .and_then(Value::as_str)
+            .is_some_and(|current| current.eq_ignore_ascii_case(background)),
         CanvasOperation::SetViewport { viewport } => serde_json::to_value(viewport)
             .ok()
             .is_some_and(|value| document.get("viewport") == Some(&value)),
@@ -129,6 +133,7 @@ fn operation_references_id(operation: &CanvasOperation, id: &str) -> bool {
         }
         CanvasOperation::RestoreConversion { id: restored } => restored == id,
         CanvasOperation::SetTitle { .. }
+        | CanvasOperation::SetBackground { .. }
         | CanvasOperation::SetViewport { .. }
         | CanvasOperation::ReplaceObjects { .. } => false,
     }
@@ -292,6 +297,7 @@ fn initial_state() -> PairingHostState {
             "version": DOCUMENT_VERSION,
             "id": format!("canvas-{}", Uuid::new_v4()),
             "title": "Untitled mapping session",
+            "background": "#000000",
             "createdAt": timestamp,
             "updatedAt": timestamp,
             "viewport": { "x": 0, "y": 0, "zoom": 1 },

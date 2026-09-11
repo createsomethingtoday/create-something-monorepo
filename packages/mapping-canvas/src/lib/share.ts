@@ -1,4 +1,4 @@
-import { isDocument, type CanvasDocument } from './document';
+import { normalizeDocument, type CanvasDocument } from './document';
 import type { D1Database } from '@cloudflare/workers-types';
 
 export const SHARE_ID_PATTERN = /^[A-Za-z0-9_-]{22}$/;
@@ -16,10 +16,11 @@ const constantTimeEqual = (left: string, right: unknown) => { const candidate = 
 export const capabilityHash = async (token: string) => hex(await crypto.subtle.digest('SHA-256', encoder.encode(token)));
 
 export function validateSnapshot(value: unknown): CanvasDocument {
-  if (!isDocument(value)) throw new Error('Snapshot is not a supported Draw document.');
-  const bytes = encoder.encode(JSON.stringify(value)).length;
-  if (bytes > MAX_DOCUMENT_BYTES || value.objects.length > 1_000 || encoder.encode(value.title).length > 240) throw new Error('Snapshot exceeds Draw sharing limits.');
-  return structuredClone(value);
+  const document = normalizeDocument(value);
+  if (!document) throw new Error('Snapshot is not a supported Draw document.');
+  const bytes = encoder.encode(JSON.stringify(document)).length;
+  if (bytes > MAX_DOCUMENT_BYTES || document.objects.length > 1_000 || encoder.encode(document.title).length > 240) throw new Error('Snapshot exceeds Draw sharing limits.');
+  return structuredClone(document);
 }
 
 const rowToShare = (row: Record<string, unknown>): ShareRecord => ({
@@ -42,7 +43,7 @@ export async function readShare(db: ShareDb, shareId: string): Promise<ShareReco
   if (!SHARE_ID_PATTERN.test(shareId)) return null;
   const row = await db.prepare('SELECT share_id, document_json, revision, published_at, updated_at, expires_at FROM draw_shares WHERE share_id = ? AND revoked_at IS NULL AND (expires_at IS NULL OR expires_at > ?)').bind(shareId, new Date().toISOString()).first<Record<string, unknown>>();
   if (!row) return null;
-  try { const share = rowToShare(row); return isDocument(share.document) ? share : null; } catch { return null; }
+  try { const share = rowToShare(row), document = normalizeDocument(share.document); return document ? { ...share, document } : null; } catch { return null; }
 }
 
 async function authorize(db: ShareDb, shareId: string, token: string) {

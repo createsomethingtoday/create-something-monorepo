@@ -158,13 +158,20 @@ const canvas = await page.evaluate(async (legacyProjectId) => {
       ]
     }
   });
+  const background = '#123abc';
+  const afterEdit = await tools.draw_inspect.execute({ limit: 1 });
+  await tools.draw_apply_operations.execute({
+    expectedRevision: afterEdit.revision,
+    operations: [{ type: 'set_background', background }]
+  });
   const state = await tools.draw_get_state.execute({});
   if (state.document.id !== legacyProjectId) throw new Error('Legacy Canvas was not migrated.');
   return {
     projectId: state.document.id,
     noteId: composed.refs.approval,
     releaseId: composed.refs.release,
-    connectorId: composed.refs.handoff
+    connectorId: composed.refs.handoff,
+    background
   };
 }, legacyCanvasId);
 
@@ -196,6 +203,7 @@ const motion = await page.evaluate(async ({ projectId, noteId, releaseId }) => {
   const tools = window.__drawWebMcpTools;
   const before = await tools.draw_animation_inspect.execute({});
   if (before.id !== projectId) throw new Error('Motion opened a different Draw project.');
+  if (before.background !== '#123abc') throw new Error('Motion did not inherit the Canvas project background.');
   for (const id of [noteId, releaseId]) {
     const summary = before.drawings.find((drawing) => drawing.id === id);
     if (summary?.source?.space !== 'canvas' || summary.source.objectId !== id)
@@ -205,9 +213,9 @@ const motion = await page.evaluate(async ({ projectId, noteId, releaseId }) => {
   const pose = { ...note.drawing.poses[0], time: 1, x: note.drawing.poses[0].x + 80 };
   const applied = await tools.draw_animation_apply.execute({
     expectedRevision: before.revision,
-    operations: [{ type: 'put_pose', id: noteId, pose }]
+    operations: [{ type: 'put_pose', id: noteId, pose }, { type: 'settings', background: '#fedcba' }]
   });
-  return { revision: applied.revision, poseTime: pose.time };
+  return { revision: applied.revision, poseTime: pose.time, background: '#fedcba' };
 }, canvas);
 
 await page.reload({ waitUntil: 'networkidle' });
@@ -223,6 +231,7 @@ const reloaded = await page.evaluate(
   async ({ noteId, expectedRevision }) => {
     const tools = window.__drawWebMcpTools;
     const drawing = await tools.draw_animation_drawing.execute({ id: noteId });
+    const project = await tools.draw_animation_inspect.execute({});
     let staleRevisionDenied = false;
     try {
       await tools.draw_animation_apply.execute({
@@ -235,7 +244,8 @@ const reloaded = await page.evaluate(
     return {
       revision: drawing.revision,
       poseTimes: drawing.drawing.poses.map((pose) => pose.time),
-      staleRevisionDenied
+      staleRevisionDenied,
+      background: project.background
     };
   },
   { noteId: canvas.noteId, expectedRevision: motion.revision }
@@ -244,6 +254,7 @@ const reloaded = await page.evaluate(
 if (reloaded.revision !== motion.revision || !reloaded.poseTimes.includes(motion.poseTime))
   throw new Error('Motion edit did not survive reload.');
 if (!reloaded.staleRevisionDenied) throw new Error('Motion accepted a stale revision.');
+if (reloaded.background !== motion.background) throw new Error('Motion background did not survive reload.');
 
 await page.getByRole('link', { name: 'Canvas', exact: true }).click();
 await page.waitForURL(
@@ -266,7 +277,8 @@ const returned = await page.evaluate(async ({ noteId, releaseId }) => {
   return {
     projectId: state.document.id,
     noteText: state.document.objects.find((object) => object.id === noteId)?.text,
-    objectIdsRetained: ids.includes(noteId) && ids.includes(releaseId)
+    objectIdsRetained: ids.includes(noteId) && ids.includes(releaseId),
+    background: state.document.background
   };
 }, canvas);
 
@@ -301,6 +313,8 @@ if (
   throw new Error('Canvas did not retain stable IDs and formatted-note projection after Motion.');
 if (!legacySourcesRetained.canvas || !legacySourcesRetained.motion)
   throw new Error('Legacy source data was deleted during migration.');
+if (returned.background !== motion.background)
+  throw new Error('Canvas did not receive the background changed in Motion.');
 
 const staleMotionPage = await context.newPage();
 await staleMotionPage.addInitScript(() => {
@@ -429,7 +443,7 @@ const motionOnlyCanvas = await page.evaluate(async () => {
     nodes: [{ ref: 'proof', text: 'Motion-only project kept its identity' }],
     placement: 'visible-center'
   });
-  return { projectId: state.document.id, noteId: created.refs.proof };
+  return { projectId: state.document.id, noteId: created.refs.proof, background: state.document.background };
 });
 await page.reload({ waitUntil: 'networkidle' });
 await page.waitForFunction(async ({ projectId, noteId }) => {
@@ -442,6 +456,8 @@ await page.waitForFunction(async ({ projectId, noteId }) => {
     return false;
   }
 }, motionOnlyCanvas);
+if (motionOnlyCanvas.background !== '#eee5d4')
+  throw new Error('A Motion-only project did not materialize Canvas with its paper color.');
 
 await context.close();
 await browser.close();
@@ -464,6 +480,10 @@ console.log(
       canvasObjectIds: [canvas.noteId, canvas.releaseId, canvas.connectorId],
       motionObjectIds: [canvas.noteId, canvas.releaseId],
       formattedText: returned.noteText,
+      canvasBackground: canvas.background,
+      motionBackground: motion.background,
+      returnedCanvasBackground: returned.background,
+      motionOnlyCanvasBackground: motionOnlyCanvas.background,
       motionRevision: motion.revision,
       poseTimes: reloaded.poseTimes,
       staleRevisionDenied: reloaded.staleRevisionDenied,

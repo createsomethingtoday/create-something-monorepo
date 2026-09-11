@@ -93,13 +93,14 @@ export async function loadProject(id: string): Promise<Project> {
     if (!record.canvas) throw new Error('Draw project has no Canvas or Motion space.');
     const synchronized = syncMotionProject(record.canvas, record.motion);
     try {
+      let committedCanvasUpdatedAt = record.canvas.updatedAt;
       if (!record.motion || synchronized !== record.motion)
-        await saveMotionProject(
+        committedCanvasUpdatedAt = (await saveMotionProject(
           synchronized,
           record.motion?.revision ?? null,
           record.canvas.updatedAt
-        );
-      loadedCanvasVersions.set(id, record.canvas.updatedAt);
+        )) ?? record.canvas.updatedAt;
+      loadedCanvasVersions.set(id, committedCanvasUpdatedAt);
       return synchronized;
     } catch (error) {
       lastError = error;
@@ -112,5 +113,10 @@ export async function saveProject(
   project: Project,
   expectedRevision: number | null
 ): Promise<void> {
-  await saveMotionProject(project, expectedRevision, loadedCanvasVersions.get(project.id) ?? null);
+  const canvasUpdatedAt = await saveMotionProject(
+    project,
+    expectedRevision,
+    loadedCanvasVersions.get(project.id) ?? null
+  );
+  loadedCanvasVersions.set(project.id, canvasUpdatedAt);
 }
