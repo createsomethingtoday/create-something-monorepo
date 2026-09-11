@@ -694,7 +694,7 @@ test('Exa enrichment rejects multi-number and NPI-as-phone values and normalizes
   assert.equal(npiAsPhoneResult.contact_route_status, 'no_contact_candidate_found');
 });
 
-test('candidate search is bounded, filterable, and omits bulk contact fields', async () => {
+test('candidate search returns registry contacts with unverified labels and preserves readiness', async () => {
   const providers = [
     {
       npi: '1265049910',
@@ -747,7 +747,10 @@ test('candidate search is bounded, filterable, and omits bulk contact fields', a
   assert.equal(result.results[0].name, 'Alissa Joy Snider');
   assert.equal(result.results[0].recruiting_stage, 'coverage_candidate');
   const serialized = JSON.stringify(result);
-  assert.doesNotMatch(serialized, /Private In Bulk|417555/);
+  assert.equal(result.results[0].practice_phone, '4175550100');
+  assert.equal(result.results[0].practice_address_1, '100 Private In Bulk Ave');
+  assert.equal(result.results[0].contact_route_status, 'public_registry_unverified');
+  assert.equal(result.results[0].direct_outreach_status, 'blocked');
 });
 
 test('candidate search derives an arbitrary city market from the nationwide snapshot', async () => {
@@ -799,7 +802,8 @@ test('candidate search derives an arbitrary city market from the nationwide snap
   });
   assert.equal(result.total, 882);
   assert.equal(result.results.length, 1);
-  assert.doesNotMatch(JSON.stringify(result), /Private In Bulk|512555/);
+  assert.equal(result.results[0].practice_phone, '5125550100');
+  assert.equal(result.results[0].contact_route_status, 'public_registry_unverified');
 });
 
 test('candidate search rejects an unknown US state code before querying coverage', async () => {
@@ -916,4 +920,14 @@ test('MCP discovery advertises the registry-first contact tools and paid fallbac
   });
   assert.equal(result.isError, undefined);
   assert.equal((result.structuredContent as Record<string, unknown>).outreach_authority_status, 'not_established');
+});
+
+test('sourcing tool returns a snapshot-pinned complete CSV link without credentials', async () => {
+ const { searchRegistrySourcing } = await import('../src/index.ts');
+ const result=await searchRegistrySourcing({state:'NY',city:'Albany',limit:1},{agencyApiKey:'secret-test-key',fetchFn:async()=>Response.json({success:true,data:{run_id:'abnationalrun_test',total:100,results:[],next_offset:1}})});
+ const url=new URL(result.csv_download_url);
+ assert.equal(url.searchParams.get('run_id'),'abnationalrun_test');
+ assert.equal(url.searchParams.has('limit'),false);
+ assert.equal(url.searchParams.has('offset'),false);
+ assert.doesNotMatch(result.csv_download_url,/secret-test-key/);
 });
