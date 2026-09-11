@@ -235,7 +235,8 @@ export async function querySourcing(
     next_offset: q.offset + q.limit < total ? q.offset + q.limit : undefined,
     center: plan.center,
     unresolved_address_count: unresolved?.total ?? 0,
-    completeness: 'all_matching_records_in_selected_snapshot',
+    completeness: plan.center && (unresolved?.total ?? 0) > 0
+      ? 'incomplete_geocoding' : 'all_matching_records_in_selected_snapshot',
     limitation:
       'Snapshot scope is primary Family NP until broader NP import is completed. Taxonomy is not board certification. Address-range distance is straight-line practice-to-center distance, not home location or commute time. Unresolved records cannot be classified inside or outside the radius.',
     results: (rows.results ?? []).map((row) => {
