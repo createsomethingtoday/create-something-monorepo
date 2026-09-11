@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import type { ConciergeThread } from '../src/lib/chat/thread-store.ts';
-import { buildStaffOnboardingPayload } from '../src/lib/server/abundance/staff-onboarding.ts';
+import type { ConciergeThread } from '../src/lib/chat/thread-store';
+import { buildStaffOnboardingPayload } from '../src/lib/server/abundance/staff-onboarding';
 
 function field(key: string, value: string, fieldClass: 'identity' | 'contact' | 'consent' | 'regulated' | 'credential' | 'preference') {
 	return {
