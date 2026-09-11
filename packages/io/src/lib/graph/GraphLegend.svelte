@@ -21,38 +21,38 @@
 	const edgeTypes = [
 		{
 			type: 'explicit',
-			label: 'Explicit (UNDERSTANDING.md)',
-			color: 'rgba(255, 255, 255, 0.6)',
+			label: 'Declared dependency',
+			color: 'rgba(27, 31, 35, 0.72)',
 			style: 'solid',
-			description: 'Architectural dependencies'
+			description: 'Recorded in an UNDERSTANDING.md file'
 		},
 		{
 			type: 'cross-reference',
-			label: 'Cross-reference (links)',
-			color: 'rgba(255, 255, 255, 0.46)',
+			label: 'Linked document',
+			color: 'rgba(27, 31, 35, 0.56)',
 			style: 'solid',
-			description: 'Markdown links between files'
+			description: 'One source file links to another'
 		},
 		{
 			type: 'concept',
-			label: 'Concept (shared terms)',
-			color: 'rgba(255, 255, 255, 0.2)',
+			label: 'Shared term',
+			color: 'rgba(27, 31, 35, 0.34)',
 			style: 'dashed',
-			description: 'Shared philosophical concepts'
+			description: 'Both documents use the same defined term'
 		},
 		{
 			type: 'semantic',
-			label: 'Semantic (embeddings)',
-			color: 'rgba(255, 255, 255, 0.1)',
+			label: 'Similar text',
+			color: 'rgba(27, 31, 35, 0.22)',
 			style: 'dotted',
-			description: 'Content similarity via embeddings'
+			description: 'The documents contain similar language'
 		},
 		{
 			type: 'infrastructure',
-			label: 'Infrastructure (D1/KV/R2)',
+			label: 'Shared service',
 			color: 'var(--color-performance-data-4, #fbbf24)',
 			style: 'solid',
-			description: 'Shared Cloudflare resources'
+			description: 'Both documents use the same database, storage, or service'
 		}
 	];
 </script>
@@ -74,7 +74,7 @@
 	</div>
 
 	<div class="legend-section">
-		<h3 class="section-title">Edge Types</h3>
+		<h3 class="section-title">Connections</h3>
 		<div class="legend-items">
 			{#each edgeTypes as edge}
 				<div class="legend-item">

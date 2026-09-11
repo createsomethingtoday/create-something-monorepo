@@ -12,6 +12,12 @@
 	}
 
 	let { node }: Props = $props();
+
+	function sourceUrl(path: string): string | null {
+		if (!path || path.startsWith('/') || path.includes('..')) return null;
+		const safePath = path.split('/').map(encodeURIComponent).join('/');
+		return `https://github.com/createsomethingtoday/create-something-monorepo/blob/main/${safePath}`;
+	}
 </script>
 
 {#if node}
@@ -28,6 +34,11 @@
 		</div>
 
 		<div class="detail-body">
+			{#if sourceUrl(node.id)}
+				<a class="source-link" href={sourceUrl(node.id) ?? undefined} target="_blank" rel="noreferrer">
+					Open source <span aria-hidden="true">↗</span>
+				</a>
+			{/if}
 			<div class="detail-section">
 				<h3 class="section-title">Path</h3>
 				<code class="path">{node.id}</code>
@@ -117,6 +128,16 @@
 		flex-direction: column;
 		gap: var(--space-performance-md);
 		padding-top: var(--space-performance-md);
+	}
+
+	.source-link {
+		display: inline-flex;
+		align-self: flex-start;
+		min-height: 44px;
+		align-items: center;
+		gap: var(--space-performance-xs);
+		color: var(--color-performance-fg-primary);
+		text-underline-offset: 3px;
 	}
 
 	.detail-section {

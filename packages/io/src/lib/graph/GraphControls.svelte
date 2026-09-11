@@ -13,6 +13,7 @@
 		showLabels: boolean;
 		showEdgeLabels: boolean;
 		hideOrphans: boolean;
+		canFocus?: boolean;
 		onViewModeChange?: (mode: ViewMode) => void;
 		onEdgeFilterChange?: (filters: EdgeFilters) => void;
 		onToggleLabels?: () => void;
@@ -26,6 +27,7 @@
 		showLabels,
 		showEdgeLabels,
 		hideOrphans,
+		canFocus = false,
 		onViewModeChange,
 		onEdgeFilterChange,
 		onToggleLabels,
@@ -51,34 +53,41 @@
 
 <div class="controls">
 	<div class="controls-section">
-		<h3 class="section-title">View Mode</h3>
+		<h3 class="section-title">Map view</h3>
 		<div class="button-group">
 			<button
 				class="control-btn"
 				class:active={viewMode === 'full'}
+				aria-pressed={viewMode === 'full'}
 				onclick={() => handleViewModeClick('full')}
 			>
-				Full Graph
+				All documents
 			</button>
 			<button
 				class="control-btn"
 				class:active={viewMode === 'package'}
+				aria-pressed={viewMode === 'package'}
+				disabled={!canFocus}
+				title={canFocus ? 'Show documents in the selected package' : 'Select a document first'}
 				onclick={() => handleViewModeClick('package')}
 			>
-				Package Focus
+				Same package
 			</button>
 			<button
 				class="control-btn"
 				class:active={viewMode === 'concept'}
+				aria-pressed={viewMode === 'concept'}
+				disabled={!canFocus}
+				title={canFocus ? 'Show documents with the selected document’s first shared concept' : 'Select a document first'}
 				onclick={() => handleViewModeClick('concept')}
 			>
-				Concept Focus
+				Shared concept
 			</button>
 		</div>
 	</div>
 
 	<div class="controls-section">
-		<h3 class="section-title">Edge Types</h3>
+		<h3 class="section-title">Connections</h3>
 		<div class="checkbox-group">
 			<label class="checkbox-label">
 				<input
@@ -86,7 +95,7 @@
 					checked={edgeFilters.explicit}
 					onchange={() => handleEdgeFilterToggle('explicit')}
 				/>
-				<span class="checkbox-text">Explicit (UNDERSTANDING.md)</span>
+				<span class="checkbox-text">Declared dependencies</span>
 			</label>
 			<label class="checkbox-label">
 				<input
@@ -94,7 +103,7 @@
 					checked={edgeFilters.crossReference}
 					onchange={() => handleEdgeFilterToggle('crossReference')}
 				/>
-				<span class="checkbox-text">Cross-references (links)</span>
+				<span class="checkbox-text">Linked documents</span>
 			</label>
 			<label class="checkbox-label">
 				<input
@@ -102,7 +111,7 @@
 					checked={edgeFilters.concept}
 					onchange={() => handleEdgeFilterToggle('concept')}
 				/>
-				<span class="checkbox-text">Concept (shared terms)</span>
+				<span class="checkbox-text">Shared terms</span>
 			</label>
 			<label class="checkbox-label">
 				<input
@@ -110,7 +119,7 @@
 					checked={edgeFilters.semantic}
 					onchange={() => handleEdgeFilterToggle('semantic')}
 				/>
-				<span class="checkbox-text">Semantic (embeddings)</span>
+				<span class="checkbox-text">Similar text</span>
 			</label>
 			<label class="checkbox-label">
 				<input
@@ -118,7 +127,7 @@
 					checked={edgeFilters.infrastructure}
 					onchange={() => handleEdgeFilterToggle('infrastructure')}
 				/>
-				<span class="checkbox-text infrastructure">Infrastructure (D1/KV/R2)</span>
+				<span class="checkbox-text infrastructure">Shared services</span>
 			</label>
 		</div>
 	</div>
@@ -188,6 +197,11 @@
 	.control-btn:hover {
 		background: var(--color-performance-hover);
 		border-color: var(--color-performance-border-emphasis);
+	}
+
+	.control-btn:disabled {
+		opacity: 0.55;
+		cursor: not-allowed;
 	}
 
 	.control-btn.active {
