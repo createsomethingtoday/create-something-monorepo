@@ -44,7 +44,9 @@ recorded candidate qualifications or authority to send outreach.
 1. Run Agency checks and abundance tests; MCP tests and typecheck.
 2. Merge through repository PR checks; deploy Agency through Agency Pages Deploy.
 3. Apply packages/agency/migrations/0048_abundance_sourcing_geocodes.sql to the
-   Agency D1 database before accepting radius requests; deploy Healthcare MCP.
+   Agency D1 database, then apply 0049_abundance_sourcing_geocode_versions.sql
+   before accepting radius or warmup requests; deploy Healthcare MCP. Both
+   migrations are required: 0049 creates the composite key used by warmup writes.
 4. Warm selected states using the service-authorized POST sourcing endpoint with
    action geocode_batch and state. Each invocation processes at most ten records;
    continue until processed is zero. Network failures remain retryable and are
