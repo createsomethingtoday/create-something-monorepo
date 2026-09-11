@@ -320,7 +320,7 @@
     else {
       const map = parseMap(text),
         result = importMap(map);
-      p = { ...newProject(), title: map.title, drawings: result.drawings };
+      p = { ...newProject(), title: map.title, background: map.background, drawings: result.drawings };
       status = `Copied drawing; ${result.skipped} mapping-only objects omitted`;
     }
     await fresh(independentProjectCopy(p));

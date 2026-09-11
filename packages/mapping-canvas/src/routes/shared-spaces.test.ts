@@ -28,6 +28,7 @@ it('navigates between Canvas and Motion using the same project identity', () => 
   expect(motion).toContain('queueImport(() => importFile(e))');
   expect(motion).toContain('queueImport(() => imageFile(e))');
   expect(motion).toContain("status = 'Animation is still loading'");
+  expect(motion).toContain('p = { ...newProject(), title: map.title, background: map.background, drawings: result.drawings }');
   expect(motion).toContain('queue = loading.catch(() => {});');
   expect(motion.match(/queue = work\.catch\(\(\) => \{\}\);/g)).toHaveLength(4);
   expect(motion).not.toContain('Copy saved drawing');
