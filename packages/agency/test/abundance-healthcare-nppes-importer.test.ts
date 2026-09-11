@@ -86,3 +86,23 @@ print(json.dumps({
 	assert.match(result.cross_year_weeklies[0], /122126_122726/);
 	assert.match(result.cross_year_weeklies[1], /010427_011027/);
 });
+
+
+test('broad importer retains secondary NP membership and preserves the original primary taxonomy', () => {
+ const program=String.raw`
+import importlib.util,json,sys
+spec=importlib.util.spec_from_file_location("sync",sys.argv[1]);m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
+r={"NPI":"1234567890","Entity Type Code":"1","Healthcare Provider Taxonomy Code_1":"163W00000X","Healthcare Provider Primary Taxonomy Switch_1":"Y","Healthcare Provider Taxonomy Code_2":"363LA2200X","Provider License Number State Code_2":"NY"}
+legacy,_=m.provider_from_row(r,"2026-09-11")
+broad,_=m.provider_from_row(r,"2026-09-11","all_np_taxonomies")
+r["Healthcare Provider Taxonomy Code_2"]="207Q00000X"
+non_np,removed=m.provider_from_row(r,"2026-09-11","all_np_taxonomies")
+print(json.dumps(dict(legacy=legacy,broad=broad,non_np=non_np,removed=removed)))
+`;
+ const r=JSON.parse(execFileSync('python3',['-c',program,importerPath],{encoding:'utf8'}));
+ assert.equal(r.legacy,null);assert.equal(r.non_np,null);assert.equal(r.removed,'1234567890');
+ assert.equal(r.broad.primary_taxonomy_code,'163W00000X');
+ assert.equal(r.broad.primary_taxonomy_description,undefined);
+ assert.equal(JSON.parse(r.broad.taxonomies_json)[1].code,'363LA2200X');
+ assert.equal(JSON.parse(r.broad.taxonomies_json)[1].license_state,'NY');
+});

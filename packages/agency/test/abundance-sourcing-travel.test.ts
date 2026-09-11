@@ -7,9 +7,9 @@ import { calculateSourcingTravel } from '../src/lib/server/abundance-sourcing-tr
 test('snapshot routing preserves unresolved practices and reuses a report without rebilling', async () => {
   const sqlite = new DatabaseSync(':memory:');
   try {
-    sqlite.exec(`CREATE TABLE abundance_healthcare_nationwide_runs(id TEXT,status TEXT,finished_at TEXT);
+    sqlite.exec(`CREATE TABLE abundance_healthcare_nationwide_runs(id TEXT,status TEXT,finished_at TEXT,taxonomy_scope TEXT,source_published_at TEXT);
  CREATE TABLE abundance_healthcare_nationwide_memberships(run_id TEXT,provider_npi TEXT,provider_snapshot_json TEXT);
- INSERT INTO abundance_healthcare_nationwide_runs VALUES('abnationalrun_test','succeeded','2026-09-11');
+ INSERT INTO abundance_healthcare_nationwide_runs VALUES('abnationalrun_test','succeeded','2026-09-11','all_np_taxonomies','2026-09-07'),('abnationalrun_newer_family','succeeded','2026-09-12','primary_family_np','2026-09-07');
  INSERT INTO abundance_healthcare_nationwide_memberships VALUES('abnationalrun_test','1000000001','{"source_payload_hash":"one"}'),('abnationalrun_test','1000000002','{"source_payload_hash":"two"}');`);
     for (const file of [
       '0048_abundance_sourcing_geocodes',
@@ -59,6 +59,7 @@ test('snapshot routing preserves unresolved practices and reuses a report withou
       clinic_match: 'all'
     };
     const first = await calculateSourcingTravel(db, input, 'test', fetchFn);
+    assert.equal(first.run_id,'abnationalrun_test','travel uses the same broad snapshot as sourcing');
     assert.equal(first.unresolved_geocode_count, 1);
     assert.equal(first.results[0].match, 'within_limit');
     assert.equal(first.results[1].match, 'unresolved');

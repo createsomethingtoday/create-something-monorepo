@@ -14,11 +14,14 @@ export const NATIONAL_FAMILY_NP_PERSONA: NursingPersonaCoverageQuery = {
 	taxonomy_description: 'Nurse Practitioner, Family'
 };
 
+export type NationwideTaxonomyScope = 'primary_family_np' | 'all_np_taxonomies';
+
 export type NationwideRunKind = 'monthly_full' | 'weekly_incremental';
 
 export interface NationwideRun {
 	id: string;
 	source_kind: NationwideRunKind;
+	taxonomy_scope: NationwideTaxonomyScope;
 	source_file: string;
 	source_url: string;
 	source_published_at?: string;
@@ -36,6 +39,7 @@ export interface NationwideRun {
 export async function beginNationwideRun(db: D1Database, input: {
 	id: string;
 	sourceKind: NationwideRunKind;
+	taxonomyScope?: NationwideTaxonomyScope;
 	sourceFile: string;
 	sourceUrl: string;
 	sourcePublishedAt?: string;
@@ -44,7 +48,9 @@ export async function beginNationwideRun(db: D1Database, input: {
 	await reapStaleNationwideRuns(db);
 	if (!/^abnationalrun_[a-zA-Z0-9_-]+$/.test(input.id)) throw new TypeError('Invalid nationwide run id.');
 	if (!input.sourceFile.trim()) throw new TypeError('source_file is required.');
-	const latest = await latestSuccessfulNationwideRun(db);
+	const scope = input.taxonomyScope ?? 'primary_family_np';
+	if (!['primary_family_np', 'all_np_taxonomies'].includes(scope)) throw new TypeError('Invalid taxonomy_scope.');
+	const latest = await latestSuccessfulNationwideRun(db, scope);
 	if (input.sourceKind === 'weekly_incremental' && !latest) {
 		throw new Error('A weekly incremental requires a successful nationwide base snapshot.');
 	}
@@ -52,8 +58,8 @@ export async function beginNationwideRun(db: D1Database, input: {
 	const insert = db.prepare(`
 		INSERT INTO abundance_healthcare_nationwide_runs (
 			id, source_kind, source_file, source_url, source_published_at,
-			base_run_id, status, started_at
-		) VALUES (?, ?, ?, ?, ?, ?, 'running', ?)
+			base_run_id, status, started_at, taxonomy_scope
+		) VALUES (?, ?, ?, ?, ?, ?, 'running', ?, ?)
 	`).bind(
 		input.id,
 		input.sourceKind,
@@ -61,7 +67,8 @@ export async function beginNationwideRun(db: D1Database, input: {
 		input.sourceUrl,
 		input.sourcePublishedAt ?? null,
 		input.sourceKind === 'weekly_incremental' ? latest?.id ?? null : null,
-		input.startedAt
+		input.startedAt,
+		scope
 	);
 	const statements = [insert];
 	if (input.sourceKind === 'weekly_incremental' && latest) {
@@ -90,7 +97,6 @@ export async function applyNationwideChunk(db: D1Database, input: {
 	rejectedCount: number;
 }): Promise<void> {
 	const run = await requireRunningRun(db, input.runId);
-	void run;
 	if (!Number.isInteger(input.processedRowCount) || input.processedRowCount < 0) {
 		throw new TypeError('processed_row_count must be a non-negative integer.');
 	}
@@ -98,8 +104,8 @@ export async function applyNationwideChunk(db: D1Database, input: {
 		throw new TypeError('A nationwide chunk accepts at most 50 providers and 100 removals.');
 	}
 	for (const provider of input.providers) {
-		if (provider.primary_taxonomy_code !== FAMILY_NP_TAXONOMY_CODE) {
-			throw new TypeError(`Provider ${provider.npi} is not a primary Family Nurse Practitioner.`);
+		if (provider.enumeration_type !== 'NPI-1' || (run.taxonomy_scope === 'primary_family_np' ? provider.primary_taxonomy_code !== FAMILY_NP_TAXONOMY_CODE : !hasNpTaxonomy(provider))) {
+			throw new TypeError(`Provider ${provider.npi} does not match the import taxonomy scope.`);
 		}
 	}
 	const providerNpis = new Set(input.providers.map((provider) => provider.npi));
@@ -188,7 +194,8 @@ export async function finalizeNationwideRun(db: D1Database, input: {
 	expectedProcessedRowCount: number;
 }): Promise<NationwideRun> {
 	const run = await requireRunningRun(db, input.runId);
-	assertSourceIsCurrent(run.source_published_at, await latestSuccessfulNationwideRun(db));
+	assertSourceIsCurrent(run.source_published_at, await latestSuccessfulNationwideRun(db, run.taxonomy_scope));
+	if (run.rejected_count > 0) throw new Error('Nationwide run contains rejected source rows; repair normalization before finalizing.');
 	if (!/^[a-f0-9]{64}$/.test(input.sourceSha256)) throw new TypeError('source_sha256 must be a lowercase SHA-256 digest.');
 	if (run.processed_row_count !== input.expectedProcessedRowCount) {
 		throw new Error(`Nationwide run is incomplete: processed ${run.processed_row_count} of ${input.expectedProcessedRowCount} rows.`);
@@ -198,14 +205,14 @@ export async function finalizeNationwideRun(db: D1Database, input: {
 		FROM abundance_healthcare_nationwide_memberships
 		WHERE run_id = ?
 	`).bind(input.runId).first<{ provider_count: number }>();
-	if (!count?.provider_count) throw new Error('Nationwide run cannot succeed with zero Family Nurse Practitioners.');
+	if (!count?.provider_count) throw new Error('Nationwide run cannot succeed with zero Nurse Practitioners.');
 	await db.batch([
 		db.prepare(`
-			INSERT INTO abundance_healthcare_nationwide_source_receipts (
-				source_file, source_kind, source_url, source_published_at, source_sha256, run_id,
+			INSERT INTO abundance_healthcare_scoped_source_receipts (
+				source_file, taxonomy_scope, source_kind, source_url, source_published_at, source_sha256, run_id,
 				applied_at, processed_row_count, provider_count
 			)
-			SELECT source_file, source_kind, source_url, coalesce(source_published_at, started_at), ?, id, ?, processed_row_count, ?
+			SELECT source_file, taxonomy_scope, source_kind, source_url, coalesce(source_published_at, started_at), ?, id, ?, processed_row_count, ?
 			FROM abundance_healthcare_nationwide_runs
 			WHERE id = ? AND status = 'running'
 		`).bind(input.sourceSha256, input.finishedAt, count.provider_count, input.runId),
@@ -262,10 +269,8 @@ export async function reapStaleNationwideRuns(db: D1Database, olderThanHours = 8
 
 export async function pruneNationwideSnapshots(db: D1Database, retain = 2): Promise<string[]> {
 	const old = await db.prepare(`
-		SELECT id FROM abundance_healthcare_nationwide_runs
-		WHERE status = 'succeeded'
-		ORDER BY finished_at DESC
-		LIMIT -1 OFFSET ?
+		SELECT id FROM (SELECT id, ROW_NUMBER() OVER (PARTITION BY taxonomy_scope ORDER BY finished_at DESC) AS rank
+		FROM abundance_healthcare_nationwide_runs WHERE status='succeeded') WHERE rank > ?
 	`).bind(Math.max(1, retain)).all<{ id: string }>();
 	const ids = (old.results ?? []).map((row) => row.id);
 	if (ids.length === 0) return [];
@@ -301,8 +306,8 @@ export async function queryNationwideCoverage(db: D1Database, input: {
 	if (!run) throw new Error('No successful nationwide healthcare snapshot is available.');
 	const limit = Math.min(Math.max(input.limit ?? 25, 1), 25);
 	const offset = Math.min(Math.max(input.offset ?? 0, 0), 1_000_000);
-	const filters = ['m.run_id = ?'];
-	const args: unknown[] = [run.id];
+	const filters = ['m.run_id = ?', 'm.primary_taxonomy_code = ?'];
+	const args: unknown[] = [run.id, FAMILY_NP_TAXONOMY_CODE];
 	if (input.state) { filters.push('m.practice_state = upper(?)'); args.push(input.state); }
 	if (input.city) { filters.push('m.practice_city = lower(?)'); args.push(input.city); }
 	if (input.name) { filters.push('m.name_search LIKE ?'); args.push(`%${input.name.toLowerCase()}%`); }
@@ -454,21 +459,21 @@ function applyAggregateCoverageJudgment(
 		];
 }
 
-export async function latestSuccessfulNationwideRun(db: D1Database): Promise<NationwideRun | null> {
+export async function latestSuccessfulNationwideRun(db: D1Database, scope?: NationwideTaxonomyScope): Promise<NationwideRun | null> {
 	return db.prepare(`
-		SELECT id, source_kind, source_file, source_url, source_published_at,
+		SELECT id, taxonomy_scope, source_kind, source_file, source_url, source_published_at,
 			base_run_id, status, started_at, finished_at, processed_row_count,
 			included_count, removed_count, rejected_count, provider_count
 		FROM abundance_healthcare_nationwide_runs
-		WHERE status = 'succeeded'
-		ORDER BY finished_at DESC
+		WHERE status = 'succeeded' ${scope ? 'AND taxonomy_scope=?' : ''}
+		ORDER BY coalesce(source_published_at, finished_at) DESC, finished_at DESC
 		LIMIT 1
-	`).first<NationwideRun>();
+	`).bind(...(scope ? [scope] : [])).first<NationwideRun>();
 }
 
 export async function listSuccessfulNationwideRuns(db: D1Database, limit = 24): Promise<NationwideRun[]> {
 	const result = await db.prepare(`
-		SELECT id, source_kind, source_file, source_url, source_published_at,
+		SELECT id, taxonomy_scope, source_kind, source_file, source_url, source_published_at,
 			base_run_id, status, started_at, finished_at, processed_row_count,
 			included_count, removed_count, rejected_count, provider_count
 		FROM abundance_healthcare_nationwide_runs
@@ -482,6 +487,7 @@ export async function listSuccessfulNationwideRuns(db: D1Database, limit = 24): 
 export async function listAppliedNationwideSources(db: D1Database, limit = 120): Promise<Array<{
 	source_file: string;
 	source_kind: NationwideRunKind;
+	taxonomy_scope: NationwideTaxonomyScope;
 	source_url: string;
 	source_published_at: string;
 	source_sha256: string;
@@ -491,13 +497,14 @@ export async function listAppliedNationwideSources(db: D1Database, limit = 120):
 	provider_count: number;
 }>> {
 	const result = await db.prepare(`
-		SELECT source_file, source_kind, source_url, source_published_at, source_sha256, run_id,
+		SELECT source_file, taxonomy_scope, source_kind, source_url, source_published_at, source_sha256, run_id,
 			applied_at, processed_row_count, provider_count
-		FROM abundance_healthcare_nationwide_source_receipts
+		FROM abundance_healthcare_scoped_source_receipts
 		ORDER BY applied_at DESC
 		LIMIT ?
 	`).bind(Math.min(Math.max(limit, 1), 500)).all<{
-		source_file: string; source_kind: NationwideRunKind; source_url: string;
+		source_file: string; source_kind: NationwideRunKind;
+	taxonomy_scope: NationwideTaxonomyScope; source_url: string;
 		source_published_at: string;
 		source_sha256: string; run_id: string; applied_at: string;
 		processed_row_count: number; provider_count: number;
@@ -507,7 +514,7 @@ export async function listAppliedNationwideSources(db: D1Database, limit = 120):
 
 async function readNationwideRun(db: D1Database, id: string): Promise<NationwideRun | null> {
 	return db.prepare(`
-		SELECT id, source_kind, source_file, source_url, source_published_at,
+		SELECT id, taxonomy_scope, source_kind, source_file, source_url, source_published_at,
 			base_run_id, status, started_at, finished_at, processed_row_count,
 			included_count, removed_count, rejected_count, provider_count
 		FROM abundance_healthcare_nationwide_runs WHERE id = ?
@@ -518,4 +525,12 @@ async function requireRunningRun(db: D1Database, id: string): Promise<Nationwide
 	const run = await readNationwideRun(db, id);
 	if (!run || run.status !== 'running') throw new Error(`Nationwide run ${id} is not running.`);
 	return run;
+}
+
+function hasNpTaxonomy(provider: HealthcareProvider): boolean {
+ if (/^363L[A-Z0-9]{5}X$/.test(provider.primary_taxonomy_code ?? '')) return true;
+ try {
+  const entries: unknown = JSON.parse(provider.taxonomies_json);
+  return Array.isArray(entries) && entries.some(entry => entry && typeof entry.code === 'string' && /^363L[A-Z0-9]{5}X$/.test(entry.code));
+ } catch { return false; }
 }

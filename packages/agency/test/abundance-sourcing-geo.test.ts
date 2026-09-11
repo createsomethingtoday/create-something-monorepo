@@ -53,7 +53,7 @@ import {
 } from '../src/lib/server/abundance-sourcing.ts';
 function fixture() {
   const sqlite = new DatabaseSync(':memory:');
-  sqlite.exec(`CREATE TABLE abundance_healthcare_nationwide_runs(id TEXT, status TEXT, source_published_at TEXT, finished_at TEXT);
+  sqlite.exec(`CREATE TABLE abundance_healthcare_nationwide_runs(id TEXT, status TEXT, source_published_at TEXT, finished_at TEXT, taxonomy_scope TEXT DEFAULT 'primary_family_np');
  CREATE TABLE abundance_healthcare_nationwide_memberships(run_id TEXT,provider_npi TEXT,provider_snapshot_json TEXT,primary_taxonomy_code TEXT,practice_state TEXT,practice_city TEXT,name_search TEXT);`);
   sqlite.exec(
     readFileSync(
@@ -68,7 +68,7 @@ function fixture() {
     )
   );
   sqlite.exec(
-    "INSERT INTO abundance_healthcare_nationwide_runs VALUES('abnationalrun_test','succeeded','2026-09-01','2026-09-02')"
+    "INSERT INTO abundance_healthcare_nationwide_runs(id,status,source_published_at,finished_at) VALUES('abnationalrun_test','succeeded','2026-09-01','2026-09-02')"
   );
   const add = (npi: string, lat?: number, hash = 'hash') => {
     sqlite
@@ -168,11 +168,22 @@ test('CSV export ignores UI pagination and exports beyond one database batch', a
   }
 });
 
-test('unsupported specialties fail explicitly rather than looking like zero matches', () => {
-  assert.throws(
-    () => parseSourcingQuery(new URLSearchParams('taxonomy_code=363LA2200X')),
-    /broader completed import/
-  );
+test('broader specialties require a completed broad snapshot and OR-match secondary taxonomies once', async () => {
+ const f=fixture();
+ try {
+  f.add('1000000001'); f.add('1000000002');
+  const q=parseSourcingQuery(new URLSearchParams('taxonomy_code=363LF0000X,363LA2200X,363LG0600X&license_state=NY'));
+  await assert.rejects(querySourcing(f.db,q), /broader completed import/);
+  f.sqlite.exec("UPDATE abundance_healthcare_nationwide_runs SET taxonomy_scope='all_np_taxonomies'");
+  const p={npi:'1000000002',name:'Secondary NP',source_payload_hash:'hash',taxonomies_json:JSON.stringify([{code:'363LA2200X',license_state:'NY'},{code:'363LG0600X',license_state:'NY'}])};
+  f.sqlite.prepare('UPDATE abundance_healthcare_nationwide_memberships SET provider_snapshot_json=?,primary_taxonomy_code=? WHERE provider_npi=?').run(JSON.stringify(p),'163W00000X',p.npi);
+  const r=await querySourcing(f.db,q);
+  assert.equal(r.total,1); assert.equal(r.results[0].npi,p.npi);
+  assert.equal(r.taxonomy_scope,'all_np_taxonomies');
+  assert.match(r.limitation,/not board certification/);
+  const csv=await (await exportSourcingCsv(f.db,q)).text();
+  assert.equal(csv.trim().split('\r\n').length,2);
+ } finally {f.sqlite.close();}
 });
 
 test('warming a changed snapshot preserves the earlier geocode version', async () => {

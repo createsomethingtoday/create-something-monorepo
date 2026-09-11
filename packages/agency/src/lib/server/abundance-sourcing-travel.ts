@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { geocodeStreetAddress } from './abundance-sourcing';
+import { geocodeStreetAddress, selectSourcingRun } from './abundance-sourcing';
 import { estimatePracticeTravel, type TravelLocation } from './abundance-travel';
 import { withTravelReportClaim } from './abundance-travel-claims';
 import { reserveTravelCredits } from './abundance-travel-quota';
@@ -47,13 +47,7 @@ export async function calculateSourcingTravel(
       'Use 1–50 unique NPIs, 1–3 clinic street addresses with unique IDs, max_minutes 30 or 45, and clinic_match any or all.'
     );
   const input = parsed.data;
-  const run = await db
-    .prepare(
-      `SELECT id FROM abundance_healthcare_nationwide_runs WHERE status='succeeded' ${input.run_id ? 'AND id=?' : ''} ORDER BY finished_at DESC LIMIT 1`
-    )
-    .bind(...(input.run_id ? [input.run_id] : []))
-    .first<{ id: string }>();
-  if (!run) throw new TypeError('Requested completed source snapshot is unavailable.');
+  const run = await selectSourcingRun(db, input.run_id);
   const rows = await db
     .prepare(
       `SELECT m.provider_npi,json_extract(m.provider_snapshot_json,'$.source_payload_hash') AS source_hash,g.latitude,g.longitude,g.status

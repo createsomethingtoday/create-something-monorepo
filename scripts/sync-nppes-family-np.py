@@ -127,7 +127,7 @@ def postal(value: str | None, country: str | None) -> str | None:
     return value[:5] if (country or "US").upper() == "US" else value
 
 
-def provider_from_row(row: dict[str, str], fetched_at: str) -> tuple[dict | None, str | None]:
+def provider_from_row(row: dict[str, str], fetched_at: str, taxonomy_scope: str = "primary_family_np") -> tuple[dict | None, str | None]:
     npi = clean(row.get("NPI"))
     if not npi or not re.fullmatch(r"\d{10}", npi):
         return None, None
@@ -149,7 +149,12 @@ def provider_from_row(row: dict[str, str], fetched_at: str) -> tuple[dict | None
         taxonomies.append(item)
         if item["primary"]:
             primary = item
-    if not primary or primary["code"] != FAMILY_NP:
+    if taxonomy_scope not in ("primary_family_np", "all_np_taxonomies"):
+        raise ValueError("Invalid taxonomy scope")
+    if taxonomy_scope == "primary_family_np":
+        if not primary or primary["code"] != FAMILY_NP:
+            return None, npi
+    elif not any(re.fullmatch(r"363L[A-Z0-9]{5}X", item["code"]) for item in taxonomies):
         return None, npi
     first = title(row.get("Provider First Name"))
     middle = title(row.get("Provider Middle Name"))
@@ -169,8 +174,8 @@ def provider_from_row(row: dict[str, str], fetched_at: str) -> tuple[dict | None
         "enumeration_date": iso_date(row.get("Provider Enumeration Date")),
         "last_updated_date": iso_date(row.get("Last Update Date")),
         "certification_date": iso_date(row.get("Certification Date")),
-        "primary_taxonomy_code": FAMILY_NP, "primary_taxonomy_description": "Nurse Practitioner, Family",
-        "license_state": primary["license_state"], "license_number": primary["license_number"],
+        "primary_taxonomy_code": primary["code"] if primary else None, "primary_taxonomy_description": primary["description"] if primary else None,
+        "license_state": primary["license_state"] if primary else None, "license_number": primary["license_number"] if primary else None,
         "taxonomies_json": json.dumps(taxonomies, sort_keys=True, separators=(",", ":")),
         "practice_address_1": title(row.get("Provider First Line Business Practice Location Address")),
         "practice_address_2": title(row.get("Provider Second Line Business Practice Location Address")),
@@ -192,7 +197,7 @@ def flush(api_url: str, token: str, run_id: str, providers: list[dict], removals
     })
 
 
-def import_zip(api_url: str, token: str, source_url: str, kind: str) -> dict:
+def import_zip(api_url: str, token: str, source_url: str, kind: str, taxonomy_scope: str = "primary_family_np") -> dict:
     fetched_at = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
     run_id = "abnationalrun_" + hashlib.sha256((source_url + fetched_at).encode()).hexdigest()[:24]
     source_file = Path(urllib.parse.urlparse(source_url).path).name
@@ -217,7 +222,7 @@ def import_zip(api_url: str, token: str, source_url: str, kind: str) -> dict:
                 request_json(api_url, token, {
                     "action": "begin", "run_id": run_id, "source_kind": kind, "source_file": source_file,
                     "source_url": source_url, "source_published_at": source_published_at,
-                    "started_at": fetched_at,
+                    "started_at": fetched_at, "taxonomy_scope": taxonomy_scope,
                 })
                 run_started = True
                 with bundle.open(names[0]) as binary:
@@ -227,7 +232,7 @@ def import_zip(api_url: str, token: str, source_url: str, kind: str) -> dict:
                         processed += 1
                         pending_rows += 1
                         try:
-                            provider, removal = provider_from_row(row, fetched_at)
+                            provider, removal = provider_from_row(row, fetched_at, taxonomy_scope)
                             if provider:
                                 providers.append(provider)
                             elif removal and kind == "weekly_incremental":
@@ -257,6 +262,7 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--kind", choices=("monthly_full", "weekly_incremental"), required=True)
     parser.add_argument("--source-url")
+    parser.add_argument("--taxonomy-scope", choices=("primary_family_np", "all_np_taxonomies"), default="primary_family_np")
     parser.add_argument("--agency-base-url", default="https://createsomething.agency")
     args = parser.parse_args()
     token = os.environ.get("AGENCY_INTERNAL_API_KEY", "").strip()
@@ -265,6 +271,7 @@ def main() -> int:
     api_url = args.agency_base_url.rstrip("/") + API_PATH
     request_json(api_url, token, {"action": "maintenance"})
     receipts = request_json(api_url + "?runs=true", token)["runs"]
+    receipts = [run for run in receipts if run.get("taxonomy_scope", "primary_family_np") == args.taxonomy_scope]
     applied = {run["source_file"] for run in receipts}
     urls = [args.source_url] if args.source_url else discover_urls(args.kind)
     if args.kind == "weekly_incremental":
@@ -275,7 +282,7 @@ def main() -> int:
     if not pending:
         print(json.dumps({"status": "current", "source_kind": args.kind}))
         return 0
-    receipts = [import_zip(api_url, token, url, args.kind) for url in pending]
+    receipts = [import_zip(api_url, token, url, args.kind, args.taxonomy_scope) for url in pending]
     print(json.dumps({"status": "succeeded", "runs": receipts}, separators=(",", ":")))
     return 0
 

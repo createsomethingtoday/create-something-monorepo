@@ -3,7 +3,7 @@ import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { z } from 'zod';
 
 export const SERVER_NAME = 'abundance-healthcare-mcp';
-export const SERVER_VERSION = '1.4.0';
+export const SERVER_VERSION = '1.5.0';
 export const DEFAULT_AGENCY_BASE_URL = 'https://createsomething.agency';
 export const DEFAULT_EXA_AGENT_BASE_URL = 'https://api.exa.ai';
 
@@ -96,7 +96,8 @@ export async function estimateRegistryTravel(input:z.input<typeof travelSchema>,
 const sourcingSchema = z.object({
   state: stateCodeSchema.optional(), city: z.string().trim().min(1).max(100).optional(),
   name: z.string().trim().min(1).max(100).optional(),
-  taxonomy_code: z.string().default('363LF0000X'),
+  taxonomy_code: z.string().default('363LF0000X').describe('Comma-separated NP taxonomy codes, matched with OR. Family363LF0000X, Adult Health363LA2200X, Gerontology363LG0600X; taxonomy does not prove board certification.'),
+  license_state: z.string().regex(/^[A-Za-z]{2}$/).optional().describe('State recorded in any registry license field; active licensure requires verification.'),
   center_address: z.string().trim().min(8).max(300).optional(),
   radius_miles: z.number().min(0.1).max(250).optional(),
   location_mode: z.enum(['within_radius','unresolved']).default('within_radius'),

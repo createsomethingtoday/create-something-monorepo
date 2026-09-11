@@ -13,6 +13,14 @@ on:
         options:
           - weekly_incremental
           - monthly_full
+      taxonomy_scope:
+        description: Import all registered NP specialties or the legacy primary Family NP cohort.
+        required: true
+        type: choice
+        default: all_np_taxonomies
+        options:
+          - all_np_taxonomies
+          - primary_family_np
       source_url:
         description: Optional explicit official CMS ZIP URL.
         required: false
@@ -41,16 +49,17 @@ jobs:
           kind="${DISPATCH_KIND:-weekly_incremental}"
           printf 'kind=%s\n' "$kind" >> "$GITHUB_OUTPUT"
           printf 'url=%s\n' "${DISPATCH_URL:-}" >> "$GITHUB_OUTPUT"
-      - name: Sync official NPPES Family NP snapshot
+      - name: Sync official NPPES NP snapshot
         env:
           AGENCY_INTERNAL_API_KEY: ${{ secrets.AGENCY_INTERNAL_API_KEY }}
+          TAXONOMY_SCOPE: ${{ inputs.taxonomy_scope || 'all_np_taxonomies' }}
           SOURCE_KIND: ${{ steps.source.outputs.kind }}
           SOURCE_URL: ${{ steps.source.outputs.url }}
         run: |
           set -euo pipefail
           if [[ "$SOURCE_KIND" == "weekly_incremental" ]]; then
-            python3 scripts/sync-nppes-family-np.py --kind monthly_full
+            python3 scripts/sync-nppes-family-np.py --kind monthly_full --taxonomy-scope "$TAXONOMY_SCOPE"
           fi
-          args=(--kind "$SOURCE_KIND")
+          args=(--kind "$SOURCE_KIND" --taxonomy-scope "$TAXONOMY_SCOPE")
           if [[ -n "$SOURCE_URL" ]]; then args+=(--source-url "$SOURCE_URL"); fi
           python3 scripts/sync-nppes-family-np.py "${args[@]}"
