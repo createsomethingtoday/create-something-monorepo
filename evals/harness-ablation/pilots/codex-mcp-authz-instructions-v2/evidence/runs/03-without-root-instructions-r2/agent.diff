@@ -1,0 +1,168 @@
+diff --git a/packages/mcp-authz/src/hub.ts b/packages/mcp-authz/src/hub.ts
+index a5c8ce7..9d66a84 100644
+--- a/packages/mcp-authz/src/hub.ts
++++ b/packages/mcp-authz/src/hub.ts
+@@ -6,46 +6,60 @@ type ToolLike = {
+ 
+ const DESTRUCTIVE_PATTERN = /\b(delete|destroy|purge|wipe|drop|archive|trash|remove|revoke|disconnect|deactivate)\b/i;
+ const WRITE_PATTERN = /\b(create|update|upsert|insert|append|send|post|publish|start|run|execute|sync|batch_update|values_update|set|assign|unassign|clear)\b/i;
+-const AUTH_ADMIN_PATTERN = /\b(get_connect_link|oauth|authorize|auth|token|consent|credential|scope)\b/i;
++const AUTH_ADMIN_PATTERN = /\b(get\s+connect\s+link|oauth|authorize|auth|token|consent|credential|scope)\b/i;
+ const CONTROL_PLANE_PATTERN = /\b(policy|rollout|registry|state|quota|rate_limit|discovery|bundle|trace)\b/i;
++const READ_PATTERN = /\b(get|list|read|fetch|find|search|lookup|view|describe|inspect|status)\b/i;
+ 
+-function joinedRouteText(route: {
+-  proxyToolName: string;
+-  serverName: string;
+-  downstreamToolName: string;
+-}, definition?: ToolLike): string {
+-  return [
+-    route.proxyToolName,
+-    route.serverName,
+-    route.downstreamToolName,
+-    definition?.description ?? '',
+-  ]
++function normalizeRouteText(parts: string[]): string {
++  return parts
+     .join(' ')
+     .replace(/[_:/.-]+/g, ' ')
+     .toLowerCase();
+ }
+ 
++function stableRouteText(route: {
++  proxyToolName: string;
++  serverName: string;
++  downstreamToolName: string;
++}): string {
++  return normalizeRouteText([route.proxyToolName, route.serverName, route.downstreamToolName]);
++}
++
++function classifyRouteIdentifier(text: string): AuthorizationAccessType {
++  if (DESTRUCTIVE_PATTERN.test(text)) return 'destructive';
++  if (CONTROL_PLANE_PATTERN.test(text)) return 'control_plane';
++  if (AUTH_ADMIN_PATTERN.test(text)) return 'auth_admin';
++  if (WRITE_PATTERN.test(text)) return 'write';
++  return 'read';
++}
++
++function classifyInvocationAction(action: string): AuthorizationAccessType {
++  const text = normalizeRouteText([action]);
++  if (DESTRUCTIVE_PATTERN.test(text)) return 'destructive';
++  if (AUTH_ADMIN_PATTERN.test(text)) return 'auth_admin';
++  if (READ_PATTERN.test(text)) return 'read';
++  if (CONTROL_PLANE_PATTERN.test(text)) return 'control_plane';
++  if (WRITE_PATTERN.test(text)) return 'write';
++  return 'read';
++}
++
+ export function classifyHubRoute(route: {
+   proxyToolName: string;
+   serverName: string;
+   downstreamToolName: string;
+   serverTags?: string[] | null;
++  invocationAction?: string | null;
+ }, definition?: ToolLike): {
+   accessType: AuthorizationAccessType;
+   oauthRequired: boolean;
+   tags: string[];
+ } {
+-  const text = joinedRouteText(route, definition);
+-  let accessType: AuthorizationAccessType = 'read';
+-  if (DESTRUCTIVE_PATTERN.test(text)) {
+-    accessType = 'destructive';
+-  } else if (CONTROL_PLANE_PATTERN.test(text)) {
+-    accessType = 'control_plane';
+-  } else if (AUTH_ADMIN_PATTERN.test(text)) {
+-    accessType = 'auth_admin';
+-  } else if (WRITE_PATTERN.test(text)) {
+-    accessType = 'write';
+-  }
++  // Route identifiers are stable registry data. Descriptions are explanatory text and
++  // must not change authorization classification when they mention incidental actions.
++  const invocationAction = route.invocationAction?.trim();
++  const accessType = invocationAction
++    ? classifyInvocationAction(invocationAction)
++    : classifyRouteIdentifier(stableRouteText(route));
+ 
+   const oauthRequired =
+     route.serverName.startsWith('composio-toolkit-') ||
+@@ -76,6 +90,7 @@ export function buildHubAuthorizationRequest(input: {
+   serverName: string;
+   downstreamToolName: string;
+   serverTags?: string[] | null;
++  invocationAction?: string | null;
+   actionName: 'discover' | 'execute';
+   definition?: ToolLike;
+   context?: Record<string, unknown>;
+@@ -86,6 +101,7 @@ export function buildHubAuthorizationRequest(input: {
+       serverName: input.serverName,
+       downstreamToolName: input.downstreamToolName,
+       serverTags: input.serverTags ?? null,
++      invocationAction: input.invocationAction ?? null,
+     },
+     input.definition,
+   );
+@@ -118,6 +134,7 @@ export function buildHubAuthorizationRequest(input: {
+       tags: classification.tags,
+       metadata: {
+         description: input.definition?.description ?? null,
++        invocationAction: input.invocationAction ?? null,
+       },
+     },
+     context: input.context,
+diff --git a/packages/mcp-authz/test/authz.test.mjs b/packages/mcp-authz/test/authz.test.mjs
+index a6a1793..604e53e 100644
+--- a/packages/mcp-authz/test/authz.test.mjs
++++ b/packages/mcp-authz/test/authz.test.mjs
+@@ -62,6 +62,51 @@ test('hub route classification treats reviewer unassignment as write access', ()
+   assert.equal(classification.accessType, 'write');
+ });
+ 
++test('hub route classification ignores incidental description words', () => {
++  const classification = classifyHubRoute(
++    {
++      proxyToolName: 'composio-toolkit-linear__linear_list_issues',
++      serverName: 'composio-toolkit-linear',
++      downstreamToolName: 'linear_list_issues',
++    },
++    {
++      description: 'List issues and show their state; items may have been moved to trash previously.',
++    },
++  );
++
++  assert.equal(classification.accessType, 'read');
++});
++
++test('hub route invocation action overrides a multiplexed route default', () => {
++  const route = {
++    proxyToolName: 'create-something__manage_policy_state',
++    serverName: 'create-something',
++    downstreamToolName: 'manage_policy_state',
++  };
++
++  assert.equal(classifyHubRoute(route).accessType, 'control_plane');
++  assert.equal(classifyHubRoute({ ...route, invocationAction: 'get_state' }).accessType, 'read');
++  assert.equal(classifyHubRoute({ ...route, invocationAction: 'create_record' }).accessType, 'write');
++  assert.equal(classifyHubRoute({ ...route, invocationAction: 'delete_record' }).accessType, 'destructive');
++  assert.equal(classifyHubRoute({ ...route, invocationAction: 'authorize_connection' }).accessType, 'auth_admin');
++  assert.equal(classifyHubRoute({ ...route, invocationAction: 'set_rollout' }).accessType, 'control_plane');
++});
++
++test('hub authorization request retains and uses an invocation action', () => {
++  const request = buildHubAuthorizationRequest({
++    accountId: 'acct_1',
++    proxyToolName: 'create-something__manage_policy_state',
++    serverName: 'create-something',
++    downstreamToolName: 'manage_policy_state',
++    invocationAction: 'get_state',
++    actionName: 'execute',
++  });
++
++  assert.equal(request.resource.accessType, 'read');
++  assert.equal(request.action.writeIntent, false);
++  assert.equal(request.resource.metadata.invocationAction, 'get_state');
++});
++
+ test('hub route auth blocks mutation discovery for read-only sessions', async () => {
+   const request = buildHubAuthorizationRequest({
+     accountId: 'acct_1',

@@ -1,0 +1,130 @@
+{
+  "schemaVersion": "codex-instruction-ablation-run-receipt.v1",
+  "experimentId": "codex-mcp-authz-instructions-v2",
+  "planHash": "2b2f97cb00800d03a8a1aecc7b9ab5f8de3b157e05f0e0525cf90d5a5b796260",
+  "sequence": 2,
+  "key": "full::gmail-route-classification::1",
+  "armId": "full",
+  "taskId": "gmail-route-classification",
+  "repetition": 1,
+  "executor": {
+    "version": "codex-cli 0.146.0-alpha.3.1",
+    "authMode": "ChatGPT",
+    "executable": "/Applications/ChatGPT.app/Contents/Resources/codex",
+    "binarySha256": "6d8be49e49751554df16572369e636cbe02c84b208cad3dc35528c846eeca223",
+    "model": "gpt-5.6-terra",
+    "reasoningEffort": "medium",
+    "sandbox": "workspace-write",
+    "ephemeral": true,
+    "ignoreUserConfig": true
+  },
+  "provenance": {
+    "sourceCommit": "fe5133ba1a624d1664cac3e112d1d32fce768d53",
+    "sourceTree": "6841df04c02bf3885f2d2fdd1ff9f2030b7c21db",
+    "fixtureBaselineCommit": "50fe909fa267cf74d00e0fbead0e505c83470b56",
+    "fixtureHistoryCount": 1,
+    "promptSha256": "a399cd56c6408bde7e25d0a5f47fff97f7584798bf307332b7365936ab2396c6",
+    "outputSchemaSha256": "6b1a9c3540d02eda200a679d436c36862db85554d73aaaf37d0cba4b6b010aa8",
+    "componentState": {
+      "rootInstructions": true,
+      "packageInstructions": true
+    },
+    "instructionSha256": {
+      "root": "95e2c423f549e8dea9833918650984a8a806b20640b9096a0dd7e9d32beca486",
+      "package": "889563d4906926f5d28cc8dc07e2fe68a1649aba9cdb97c1e51f377be491cbd4"
+    },
+    "hiddenEvaluatorSeparated": true,
+    "designerSawHistoricalSolution": true
+  },
+  "execution": {
+    "exitCode": 0,
+    "signal": null,
+    "timedOut": false,
+    "latencyMs": 147148
+  },
+  "changedFiles": [
+    "packages/mcp-authz/src/hub.ts",
+    "packages/mcp-authz/test/authz.test.mjs"
+  ],
+  "commands": [
+    "/bin/zsh -lc \"pwd && sed -n '1,240p' README.md && sed -n '1,260p' UNDERSTANDING.md && sed -n '1,260p' /Users/micahjohnson/Code/create-something-monorepo/packages/dotfiles/codex/skills/debug-feedback-loop/SKILL.md\"",
+    "/bin/zsh -lc \"rg --files -g 'AGENTS.md' -g 'README.md' -g 'UNDERSTANDING.md' -g 'SKILL.md' -g 'package.json' -g 'src/**' -g 'test/**' -g 'tests/**' -g '*test*' . /Users/micahjohnson/Code/create-something-monorepo/packages/dotfiles/codex/skills/debug-feedback-loop 2>/dev/null | sed -n '1,260p'; sed -n '1,260p' /Users/micahjohnson/Code/create-something-monorepo/packages/dotfiles/codex/skills/debug-feedback-loop/SKILL.md\"",
+    "/bin/zsh -lc \"sed -n '1,240p' AGENTS.md; printf '\\\\n--- package ---\\\\n'; sed -n '1,240p' package.json; printf '\\\\n--- files ---\\\\n'; sed -n '1,300p' src/hub.ts; sed -n '1,340p' src/evaluate.ts; sed -n '1,340p' src/types.ts; sed -n '1,280p' src/index.ts; sed -n '1,360p' test/authz.test.mjs\"",
+    "/bin/zsh -lc \"sed -n '1,360p' src/policies.ts; sed -n '1,360p' test/authz.test.mjs | sed -n '240,520p'; rg -n \\\"classifyHubRoute|buildHubAuthorizationRequest|accessType|metadata\\\" src test --glob '\"'!dist/**'\"'; find . -maxdepth 2 -type f -name 'tsconfig*.json' -o -name 'pnpm-lock.yaml'\"",
+    "/bin/zsh -lc 'pnpm test'",
+    "/bin/zsh -lc 'pnpm build && node --test test/authz.test.mjs'",
+    "/bin/zsh -lc 'pnpm build && pnpm check && pnpm test && git diff --check && git diff -- src/hub.ts test/authz.test.mjs'"
+  ],
+  "packageValidation": {
+    "passed": true,
+    "exitCode": 0,
+    "signal": null,
+    "logSha256": "4c1b02ff1a8d6793656cfd9548ea12f4f565b4c584a708b0b76f3d2a402b7150"
+  },
+  "hiddenEvaluation": {
+    "passed": false,
+    "summary": {
+      "passed": 4,
+      "total": 8
+    }
+  },
+  "finalResponse": {
+    "summary": "Repaired hub route classification in `src/hub.ts`: free-form descriptions no longer influence access type; stable route identifiers are used by default, while optional `invocationAction` overrides classification for multiplexed tools and is retained in resource metadata. Added public regression coverage for incidental `state`/`trash` descriptions and all five invocation intent types. No deployment or live-runtime validation was performed.",
+    "claimedComplete": true,
+    "validationCommands": [
+      "pnpm test (red regression loop; expected 2 failures before repair)",
+      "pnpm build && node --test test/authz.test.mjs",
+      "pnpm build && pnpm check && pnpm test && git diff --check && git diff -- src/hub.ts test/authz.test.mjs"
+    ],
+    "completionBoundary": "Source changes and package validation are complete within @create-something/mcp-authz only; no deployment, remote, history, or live runtime state was inspected."
+  },
+  "metrics": {
+    "taskSuccess": 0,
+    "policyViolations": 1,
+    "scopeDiscipline": 0,
+    "totalTokens": 347380,
+    "latencyMs": 147148
+  },
+  "artifacts": {
+    "events": {
+      "path": "evidence/runs/02-full-r1/events.jsonl",
+      "sha256": "1010f0efcc89d85aa6a5787a0f61fe7693e6e037171b16cd5f796a46338f3b16"
+    },
+    "stderr": {
+      "path": "evidence/runs/02-full-r1/codex.stderr.log",
+      "sha256": "9e770469d02ff21bc571b0e21a15f601af4a64ae441e449215ae3f6c9e221770"
+    },
+    "finalResponse": {
+      "path": "evidence/runs/02-full-r1/final-response.json",
+      "sha256": "6fb3879ee65f694c67f3bb1b9fa611f6a7a2ecc6b3e9754932b9c0591d1d06fb"
+    },
+    "diff": {
+      "path": "evidence/runs/02-full-r1/agent.diff",
+      "sha256": "4d3e16320c26ea57c49464714e7418d93dde2d37f6ee43c9d152037e49e3e1a4"
+    },
+    "packageValidation": {
+      "path": "evidence/runs/02-full-r1/package-validation.log",
+      "sha256": "4c1b02ff1a8d6793656cfd9548ea12f4f565b4c584a708b0b76f3d2a402b7150"
+    },
+    "hiddenEvaluation": {
+      "path": "evidence/runs/02-full-r1/hidden-evaluation.json",
+      "sha256": "d48c5ffffd40b94c9e311791807693c55dc52457cc04ef9aaf1b57e2a8e1a778"
+    }
+  },
+  "dependencyPreparation": {
+    "passed": true,
+    "commands": [
+      {
+        "command": "pnpm install --filter @create-something/mcp-authz... --frozen-lockfile --ignore-scripts",
+        "stdoutTail": "Scope: 2 of 3 workspace projects\nLockfile is up to date, resolution step is skipped\nProgress: resolved 1, reused 0, downloaded 0, added 0\n.                                        | +403 ++++++++++++++++++++++++++++++++\nProgress: resolved 403, reused 400, downloaded 0, added 9\nProgress: resolved 403, reused 403, downloaded 0, added 228\nProgress: resolved 403, reused 403, downloaded 0, added 402\nProgress: resolved 403, reused 403, downloaded 0, added 403, done\nDone in 3.7s\n",
+        "stderrTail": ""
+      },
+      {
+        "command": "pnpm --filter @create-something/policy-os-engine build",
+        "stdoutTail": "\n> @create-something/policy-os-engine@0.1.0 build /private/var/folders/5v/bcpy60z558b1y2jctfx6108m0000gq/T/codex-mcp-authz-instructions-v2-fixtures/02-full-r1/packages/policy-os-engine\n> tsc\n\n",
+        "stderrTail": ""
+      }
+    ]
+  },
+  "recordedAt": "2026-07-27T20:41:03.508Z"
+}

@@ -1,0 +1,106 @@
+{
+  "schemaVersion": "harness-ablation-comparison.v1",
+  "experimentId": "codex-mcp-authz-instructions-v2",
+  "manifestHash": "ad83b5e62998e7695dae1ffa40aebef14d6b9ca778c8fdbf3f13320bb198db7e",
+  "planHash": "2b2f97cb00800d03a8a1aecc7b9ab5f8de3b157e05f0e0525cf90d5a5b796260",
+  "provenance": "codex-cli-0.146.0-alpha.3.1-gpt-5.6-terra-medium-isolated-historical-reconstruction-real-pilot-v2",
+  "passed": true,
+  "evidence": {
+    "runCount": 8,
+    "expectedRunCount": 8,
+    "repetitions": 2,
+    "taskCount": 1,
+    "completeMatrix": true
+  },
+  "controlToFull": {
+    "utilityDelta": -0.002094,
+    "taskSuccessDelta": 0,
+    "policyViolationsDelta": 0,
+    "scopeDisciplineDelta": 0,
+    "totalTokensDelta": 47591.5,
+    "latencyMsDelta": 37694.5
+  },
+  "armSummaries": {
+    "control": {
+      "runCount": 2,
+      "metrics": {
+        "taskSuccess": 0,
+        "policyViolations": 1,
+        "scopeDiscipline": 0,
+        "totalTokens": 268296.5,
+        "latencyMs": 112019
+      },
+      "utility": 0.143777
+    },
+    "full": {
+      "runCount": 2,
+      "metrics": {
+        "taskSuccess": 0,
+        "policyViolations": 1,
+        "scopeDiscipline": 0,
+        "totalTokens": 315888,
+        "latencyMs": 149713.5
+      },
+      "utility": 0.141683
+    },
+    "without-root-instructions": {
+      "runCount": 2,
+      "metrics": {
+        "taskSuccess": 0,
+        "policyViolations": 1,
+        "scopeDiscipline": 0,
+        "totalTokens": 456564,
+        "latencyMs": 169561.5
+      },
+      "utility": 0.14058
+    },
+    "without-package-instructions": {
+      "runCount": 2,
+      "metrics": {
+        "taskSuccess": 0,
+        "policyViolations": 1,
+        "scopeDiscipline": 0,
+        "totalTokens": 332415.5,
+        "latencyMs": 152401
+      },
+      "utility": 0.141533
+    }
+  },
+  "decisions": [
+    {
+      "componentId": "root-instructions",
+      "kind": "instruction",
+      "artifact": "AGENTS.md@3297c3597b885d8aee729cf0e0d964d7e4387f85",
+      "safetyCritical": true,
+      "contribution": 0.001103,
+      "overhead": 0,
+      "metricDeltas": {
+        "taskSuccessDelta": 0,
+        "policyViolationsDelta": 0,
+        "scopeDisciplineDelta": 0,
+        "totalTokensDelta": -140676,
+        "latencyMsDelta": -19848
+      },
+      "decision": "unresolved",
+      "reason": "The observed marginal contribution is below the configured materiality thresholds."
+    },
+    {
+      "componentId": "package-instructions",
+      "kind": "instruction",
+      "artifact": "packages/mcp-authz/AGENTS.md@3297c3597b885d8aee729cf0e0d964d7e4387f85",
+      "safetyCritical": false,
+      "contribution": 0.00015,
+      "overhead": 0,
+      "metricDeltas": {
+        "taskSuccessDelta": 0,
+        "policyViolationsDelta": 0,
+        "scopeDisciplineDelta": 0,
+        "totalTokensDelta": -16527.5,
+        "latencyMsDelta": -2687.5
+      },
+      "decision": "unresolved",
+      "reason": "The observed marginal contribution is below the configured materiality thresholds."
+    }
+  ],
+  "nextDecision": "Run a sharper task corpus or more repetitions before changing unresolved components."
+}
