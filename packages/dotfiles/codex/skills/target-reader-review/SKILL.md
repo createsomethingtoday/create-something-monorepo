@@ -28,22 +28,26 @@ Return `hold` when missing source, approval, or factual context could change the
 1. State what the prose helps the reader understand, decide, believe, or do.
 2. State the answer or recommended path the reader is likely to take away. Mark a buried or ambiguous answer.
 3. Trace the information structure. Check that each section supports the point above it and each paragraph has one recognizable job.
-4. Mark the first place the reader loses the actor, action, context, important new information, stakes, evidence, or reason to continue.
-5. Check whether owned terms are defined locally or grounded by a concrete example.
-6. Check whether claims remain attached to proof, uncertainty, and scope limits.
-7. For operator content, simulate the path: orient, find the default, start, complete, recover, and verify. Mark the first missing link and the most likely incorrect action.
-8. Run `pnpm prose:check -- <file> --format json` when a repository file is available. Report unrelated file-level deterministic findings separately from the scoped judgment verdict.
-9. Suggest the smallest structural or sentence-level edit that restores meaning or use without changing the claim.
+4. Test local comprehension at the first encounter with each section or major claim. Identify the recognizable actor, meaningful action, and observable result or consequence. Later context cannot retroactively repair an unclear opening.
+5. Restate the point without CREATE SOMETHING vocabulary. Record that restatement as `plain_language_restatement`; mark friction when it requires guessing or drops a material claim.
+6. Mark the first place the reader loses the actor, action, context, important new information, stakes, evidence, or reason to continue.
+7. Check whether owned terms are defined locally or grounded by a concrete example. Treat artifact-facing meta-copy as friction unless the artifact itself is the subject.
+8. Check whether claims remain attached to proof, uncertainty, and scope limits.
+9. For operator content, simulate the path: orient, find the default, start, complete, recover, and verify. Mark the first missing link and the most likely incorrect action.
+10. Run `pnpm prose:check -- <file> --format json` when a repository file is available. Report unrelated file-level deterministic findings separately from the scoped judgment verdict.
+11. Suggest the smallest structural or sentence-level edit that restores meaning or use without changing the claim.
 
 Do not infer a rewrite from a score. Do not invent evidence or human texture. Do not silently replace exact labels, citations, approved claims, controlled vocabulary, or safety language.
 
 ## Verdicts
 
-- `pass`: the target reader can follow and use the prose for its stated purpose; minor optional polish may remain.
+- `pass`: the target reader can follow and use the prose for its stated purpose; `first_friction` is `none`, no material friction remains, and the plain-language restatement preserves the claim. Minor optional polish may remain.
 - `revise`: a bounded structural or sentence-level edit would materially improve orientation, meaning, trust, actionability, recovery, or verification without requiring new evidence.
 - `hold`: source facts, reader context, approval, or policy authority are missing and must be resolved before rewriting.
 
-An operator artifact with a required `no` in its usable path cannot pass. A `hold` is judgment escalation and must not masquerade as a deterministic CI failure.
+Material friction requires `revise`; it cannot coexist with `pass`. An operator artifact with a required `no` in its usable path cannot pass. A `hold` is judgment escalation and must not masquerade as a deterministic CI failure.
+
+An exact-string assertion proves preservation, not clarity. A green build proves executable integrity, a render proves visible context, and a linter proves only its declared rules. None of those is a reader verdict.
 
 ## Output
 
@@ -56,6 +60,7 @@ artifact_type: <operator-instructions | report | argument | technical-explanatio
 review_scope: <rendered component, document section, or other explicit boundary>
 purpose: <what the prose helps the reader understand, decide, believe, or do>
 answer_or_default: <the answer or recommended path the reader receives>
+plain_language_restatement: <the same point without CREATE SOMETHING vocabulary, or unable without guessing>
 first_friction: <location and reader effect, or none>
 operator_path:
   can_orient: yes | no | not-applicable

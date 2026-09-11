@@ -458,6 +458,57 @@ test('writing skills route realistic artifacts through bounded framework stacks'
   }
 });
 
+test('writing skills reject local-clarity false positives', () => {
+  const writer = read('packages/dotfiles/codex/skills/writing-for-humans/SKILL.md');
+  const reviewer = read('packages/dotfiles/codex/skills/target-reader-review/SKILL.md');
+  const sentenceClarity = read(
+    'packages/dotfiles/codex/skills/writing-for-humans/references/sentence-clarity.md'
+  );
+  const policy = JSON.parse(read('docs/policies/v1/policy.prose-quality.v1.json'));
+  const corpus = JSON.parse(read('scripts/prose-quality/evals/target-reader.v1.json'));
+
+  for (const expectation of [
+    /first encounter/i,
+    /artifact-facing meta-copy/i,
+    /actor.*action.*observable result/is,
+    /downstream.*cannot.*rescue/is,
+    /exact-string.*preservation evidence/is
+  ]) {
+    assert.match(writer, expectation);
+  }
+
+  assert.match(sentenceClarity, /actor.*action.*observable result/is);
+  assert.match(reviewer, /plain_language_restatement/);
+  assert.match(reviewer, /first_friction.*none/is);
+  assert.match(reviewer, /material friction.*revise/is);
+
+  assert.deepEqual(policy.reader_judgment_contract, {
+    local_comprehension: ['recognizable_actor', 'meaningful_action', 'observable_result'],
+    plain_language_restatement: true,
+    pass_invariants: ['first_friction_none', 'no_material_frictions'],
+    non_proof: ['exact_string_assertion', 'build', 'render', 'linter']
+  });
+
+  const agencyPair = corpus.cases.filter((entry) => entry.pair === 'agency-operating-story');
+  assert.deepEqual(
+    agencyPair.map((entry) => entry.expected).sort(),
+    ['pass', 'revise']
+  );
+  const agencyNegative = agencyPair.find((entry) => entry.expected === 'revise');
+  const agencyPositive = agencyPair.find((entry) => entry.expected === 'pass');
+  assert.match(
+    agencyNegative?.source?.file ?? '',
+    /^scripts\/prose-quality\/evals\/fixtures\//
+  );
+  assert.match(agencyNegative?.source?.provenance?.revision ?? '', /^[0-9a-f]{40}$/);
+  assert.equal(
+    agencyNegative?.source?.provenance?.file,
+    'packages/agency/src/routes/+page.svelte'
+  );
+  assert.match(agencyNegative?.source?.anchor ?? '', /The page now holds one argument/);
+  assert.match(agencyPositive?.fixture?.excerpt ?? '', /Your team sets the limits/);
+});
+
 test('repo-owned Codex skill installer links the adapted skills', (t) => {
   const codexHome = mkdtempSync(path.join(tmpdir(), 'codex-skills-effectiveness-'));
   t.after(() => rmSync(codexHome, { recursive: true, force: true }));

@@ -17,6 +17,20 @@ You must not invent metrics, customers, examples, anecdotes, experiences, opinio
 
 Keep property voice intact. Explain owned terms in plain language where the reader first needs them. Keep code, legal language, exact UI labels, and technical terms when accuracy depends on them.
 
+## Local Comprehension Gate
+
+Test the first encounter with every section, step, and major claim before relying on later explanation. The opening must give the target reader enough local meaning to earn the next sentence:
+
+- name a recognizable actor or affected thing
+- express a meaningful action as a verb
+- show an observable result, consequence, or decision when the claim depends on one
+
+Artifact-facing meta-copy such as `this page explains` or `the section now holds` describes the writing instead of the reader's subject. Rewrite it unless the artifact itself is what the reader came to understand.
+
+Downstream labels, cards, examples, or definitions cannot rescue an unclear first encounter. Ask a reviewer to restate the point without CREATE SOMETHING vocabulary. If the restatement requires guessing, repair the opening before polishing what follows.
+
+An exact-string assertion is preservation evidence only. It can prove that approved wording remains present; it cannot prove that the wording is clear.
+
 ## Core Workflow
 
 1. Name the reader and outcome: after reading, what should they understand, decide, believe, or do?
@@ -24,7 +38,7 @@ Keep property voice intact. Explain owned terms in plain language where the read
 3. Build the smallest useful framework stack for the artifact job. Do not apply every framework.
 4. Group two to four supporting ideas beneath the answer. Put evidence, examples, limits, and qualifications under the idea they support.
 5. Give each paragraph one job. Connect the paragraph's claim, evidence or example, meaning, and next point.
-6. Repair difficult sentences: make the main character the subject, express the main action as a verb, begin with familiar context, and place important new information near the end.
+6. Repair difficult sentences: make the main character the subject, express the main action as a verb, state the observable result, begin with familiar context, and place important new information near the end.
 7. Remove throat-clearing, repeated conclusions, inflated phrasing, hidden verbs, and unnecessary choices.
 8. Read once for factual integrity, once for reader use, and once aloud for voice and rhythm.
 
