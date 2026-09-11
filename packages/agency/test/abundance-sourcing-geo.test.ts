@@ -46,7 +46,11 @@ test('spherical distance agrees at zero and across longitude boundary', () => {
 
 import { DatabaseSync, type SQLInputValue } from 'node:sqlite';
 import { readFileSync } from 'node:fs';
-import { querySourcing, exportSourcingCsv } from '../src/lib/server/abundance-sourcing.ts';
+import {
+  querySourcing,
+  exportSourcingCsv,
+  geocodeSourcingBatch
+} from '../src/lib/server/abundance-sourcing.ts';
 function fixture() {
   const sqlite = new DatabaseSync(':memory:');
   sqlite.exec(`CREATE TABLE abundance_healthcare_nationwide_runs(id TEXT, status TEXT, source_published_at TEXT, finished_at TEXT);
@@ -54,6 +58,12 @@ function fixture() {
   sqlite.exec(
     readFileSync(
       new URL('../migrations/0048_abundance_sourcing_geocodes.sql', import.meta.url),
+      'utf8'
+    )
+  );
+  sqlite.exec(
+    readFileSync(
+      new URL('../migrations/0049_abundance_sourcing_geocode_versions.sql', import.meta.url),
       'utf8'
     )
   );
@@ -97,6 +107,9 @@ function fixture() {
     }
     async first() {
       return sqlite.prepare(this.sql).get(...(this.args as SQLInputValue[])) ?? null;
+    }
+    async run() {
+      return sqlite.prepare(this.sql).run(...(this.args as SQLInputValue[]));
     }
     async all() {
       return { results: sqlite.prepare(this.sql).all(...(this.args as SQLInputValue[])) };
@@ -160,4 +173,23 @@ test('unsupported specialties fail explicitly rather than looking like zero matc
     () => parseSourcingQuery(new URLSearchParams('taxonomy_code=363LA2200X')),
     /broader completed import/
   );
+});
+
+test('warming a changed snapshot preserves the earlier geocode version', async () => {
+  const f = fixture();
+  try {
+    f.add('1000000001', 42.65, 'older-hash');
+    await geocodeSourcingBatch(f.db, 'NY', geocoder);
+    const versions = f.sqlite
+      .prepare(
+        'SELECT source_payload_hash FROM abundance_healthcare_geocodes ORDER BY source_payload_hash'
+      )
+      .all();
+    assert.deepEqual(
+      versions.map((row) => row.source_payload_hash),
+      ['hash', 'older-hash']
+    );
+  } finally {
+    f.sqlite.close();
+  }
 });

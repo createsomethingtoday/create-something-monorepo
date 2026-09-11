@@ -904,6 +904,9 @@ test('MCP discovery advertises the registry-first contact tools and paid fallbac
   const registryTool = tools.find((tool) => tool.name === 'get_provider_contact_information');
   const enrichmentTool = tools.find((tool) => tool.name === 'enrich_provider_professional_contact');
   assert.ok(registryTool?.outputSchema);
+  const sourcingTool = tools.find(tool => tool.name === 'search_registry_sourcing');
+  assert.equal(sourcingTool?.annotations?.readOnlyHint, true);
+  assert.equal(sourcingTool?.annotations?.openWorldHint, true);
   assert.equal(registryTool.annotations?.readOnlyHint, true);
   assert.equal(registryTool.annotations?.openWorldHint, false);
   assert.ok(enrichmentTool?.outputSchema);

@@ -65,3 +65,11 @@ on codex/CRE-1992-agent-worktree until production verification.
 - https://www.census.gov/data/developers/data-sets/Geocoding-services.html
 - https://developers.google.com/maps/documentation/routes/compute_route_matrix
 - https://taxonomy.nucc.org/
+
+### Routing provider recommendation
+
+Retain Census geocodes and add Geocodio Distance for typical driving duration from registered practice to confirmed clinic. This is not the candidate's home commute. Geocodio offers 2,500 free daily credits; driving pairs cost two credits, then $1/1,000 credits. Enable Distance API permission and store `GEOCODIO_API_KEY` in Infisical. Use existing coordinates, per-clinic results, and explicit any-clinic versus all-required-clinics semantics. No routing account or secret has been connected. Confirm clinic addresses first; the secondary Albany listing is not sufficient evidence.
+
+Sources checked September 11, 2026: https://www.geocod.io/pricing ; https://www.geocod.io/docs/ ; https://www.geocod.io/terms-of-use . Geocodio supports retained results subject to underlying sources. Typical traffic only; scheduled traffic would need a different routing contract such as Google Routes, whose storage restrictions need separate consideration.
+
+Review fixes: additive migration 0049 preserves geocodes keyed by NPI plus source hash across retained snapshots. The sourcing MCP tool declares its external geocoder via `openWorldHint: true`. Regression checks: 86 Agency tests and 28 MCP tests pass.

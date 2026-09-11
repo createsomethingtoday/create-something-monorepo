@@ -339,7 +339,7 @@ export async function geocodeSourcingBatch(
     await db
       .prepare(
         `INSERT INTO abundance_healthcare_geocodes(provider_npi,source_payload_hash,status,latitude,longitude,unit_x,unit_y,unit_z,matched_address,fetched_at)
-   VALUES(?,?,?,?,?,?,?,?,?,?) ON CONFLICT(provider_npi) DO UPDATE SET source_payload_hash=excluded.source_payload_hash,status=excluded.status,latitude=excluded.latitude,longitude=excluded.longitude,unit_x=excluded.unit_x,unit_y=excluded.unit_y,unit_z=excluded.unit_z,matched_address=excluded.matched_address,fetched_at=excluded.fetched_at`
+   VALUES(?,?,?,?,?,?,?,?,?,?) ON CONFLICT(provider_npi,source_payload_hash) DO UPDATE SET source_payload_hash=excluded.source_payload_hash,status=excluded.status,latitude=excluded.latitude,longitude=excluded.longitude,unit_x=excluded.unit_x,unit_y=excluded.unit_y,unit_z=excluded.unit_z,matched_address=excluded.matched_address,fetched_at=excluded.fetched_at`
       )
       .bind(
         p.npi,
