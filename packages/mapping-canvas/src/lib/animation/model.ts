@@ -1,3 +1,5 @@
+import { DEFAULT_DRAWING_COLOR } from '../palette';
+
 /** Motion is a separate editing space attached to the same logical Draw project. */
 export type Point = { x: number; y: number };
 export type Easing = 'linear' | 'ease' | 'hold';
@@ -104,18 +106,42 @@ export const newProject = (): Project => ({
   assets: [],
   drawings: []
 });
+/** Chalk and note text are neutral ink; choose their light/dark variant for the paper. */
+function paperInk(background: string): string {
+  const channels = [1, 3, 5].map((offset) => {
+    const value = Number.parseInt(background.slice(offset, offset + 2), 16) / 255;
+    return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+  });
+  const luminance = channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722;
+  return luminance > 0.179 ? '#282522' : DEFAULT_DRAWING_COLOR;
+}
+
+/** Resolve linked neutral ink while leaving literal Motion colors unchanged. */
+export function drawingInk(drawing: Drawing, background: string): string {
+  const color = drawing.color.toLowerCase();
+  const neutral = color === DEFAULT_DRAWING_COLOR || color === '#f7f4ee'; // Former Canvas chalk.
+  return drawing.source?.space === 'canvas' && neutral
+    ? paperInk(background)
+    : drawing.color;
+}
+
 /** Create a Motion-only copy. Canvas provenance belongs to the original shared project ID. */
 export function independentProjectCopy(project: Project, projectId: string = makeId()): Project {
   return {
     ...project,
     id: projectId,
     revision: 0,
-    drawings: project.drawings.map(({ source: _source, ...drawing }) => drawing)
+    drawings: project.drawings.map((drawing) => {
+      const { source: _source, ...copy } = drawing;
+      return { ...copy, color: drawingInk(drawing, project.background) };
+    })
   };
 }
-export function independentDrawingCopy(drawing: Drawing, drawingId: string = makeId()): Drawing {
+export function independentDrawingCopy(
+  drawing: Drawing, drawingId: string = makeId(), background = '#eee5d4'
+): Drawing {
   const { source: _source, ...copy } = drawing;
-  return { ...copy, id: drawingId, name: `${drawing.name} copy` };
+  return { ...copy, id: drawingId, name: `${drawing.name} copy`, color: drawingInk(drawing, background) };
 }
 const finite = (x: unknown, min: number, max: number) =>
   typeof x === 'number' && Number.isFinite(x) && x >= min && x <= max;

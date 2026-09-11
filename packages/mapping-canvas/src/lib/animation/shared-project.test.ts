@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createDocument, isDocument, type CanvasDocument } from '../document';
 import {
+  applyOperations,
   basePose,
   independentDrawingCopy,
   independentProjectCopy,
@@ -9,6 +10,7 @@ import {
   type Project
 } from './model';
 import { importMap, syncMotionProject } from './import-map';
+import { Renderer } from './render';
 import {
   canvasSpaceForProject,
   mergeProjectRecord,
@@ -58,6 +60,42 @@ function canvas(): CanvasDocument {
 }
 
 describe('shared Draw project contract', () => {
+  it.each(['#f3ebe4', '#f7f4ee'])('renders linked neutral ink %s against current paper before and after reload', (chalk) => {
+    const source = canvas();
+    const stroke = source.objects[0];
+    if (stroke.kind !== 'stroke') throw new Error('Expected stroke fixture');
+    stroke.color = chalk;
+    source.objects.push({ ...stroke, id: 'custom-ink', color: '#282522' });
+    const imported = syncMotionProject(source);
+    imported.drawings.push({ ...imported.drawings[0], id: 'motion-only', source: undefined, color: '#f3ebe4' });
+    const renderer = new Renderer();
+    const ink = (project: Project) => {
+      const strokes: unknown[] = [], text: unknown[] = [];
+      const state: Record<string, unknown> = { canvas: { width: 1280, height: 720 } };
+      const ctx = new Proxy(state, {
+        get(target, key: string) {
+          if (key === 'stroke') return () => strokes.push(target.strokeStyle);
+          if (key === 'fillText') return () => text.push(target.fillStyle);
+          return target[key] ?? (() => {});
+        }
+      }) as unknown as CanvasRenderingContext2D;
+      renderer.paint(ctx, project, 0);
+      return { strokes, text };
+    };
+    expect(ink(imported)).toEqual({ strokes: ['#282522', '#282522', '#f3ebe4'], text: ['#282522'] });
+    const dark = applyOperations(imported, [{ type: 'settings', background: '#171717' }], imported.revision);
+    expect(ink(dark)).toEqual({ strokes: ['#f3ebe4', '#282522', '#f3ebe4'], text: ['#f3ebe4'] });
+    const light = applyOperations(dark, [{ type: 'settings', background: '#eee5d4' }], dark.revision);
+    expect(ink(light)).toEqual(ink(imported));
+    const reloaded = syncMotionProject(source, JSON.parse(JSON.stringify(light)));
+    expect(ink(reloaded)).toEqual(ink(imported));
+    expect(stroke.color).toBe(chalk);
+    expect(reloaded.drawings[0].source).toEqual(imported.drawings[0].source);
+    expect(ink(independentProjectCopy(reloaded))).toEqual(ink(reloaded));
+    expect(ink(independentProjectCopy(dark))).toEqual(ink(dark));
+    expect(independentDrawingCopy(reloaded.drawings[0]).color).toBe('#282522');
+  });
+
   it('materializes motion drawings with the same project and object IDs', () => {
     const source = canvas();
     const result = importMap(source);

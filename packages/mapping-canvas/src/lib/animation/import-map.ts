@@ -1,4 +1,5 @@
 import { type CanvasDocument } from '../document';
+import { DEFAULT_DRAWING_COLOR } from '../palette';
 import {
   basePose,
   isMotionDrawingId,
@@ -85,7 +86,9 @@ export function importMap(map: CanvasDocument): { drawings: Drawing[]; skipped: 
       id: object.id,
       name: object.kind === 'note' ? object.text.slice(0, 80) : object.kind,
       kind: 'stroke' as const,
-      color: 'color' in object && /^#[\da-f]{6}$/i.test(object.color) ? object.color : '#282522',
+      color: 'color' in object && /^#[\da-f]{6}$/i.test(object.color)
+        ? object.color
+        : DEFAULT_DRAWING_COLOR,
       weight: Math.max(0.1, 3 * scale),
       text: '',
       width: 100,
@@ -118,7 +121,7 @@ export function importMap(map: CanvasDocument): { drawings: Drawing[]; skipped: 
           kind: 'text',
           points: [],
           text: object.text.slice(0, 2000),
-          color: '#282522',
+          color: DEFAULT_DRAWING_COLOR,
           weight: Math.max(0.1, 24 * scale),
           width: Math.max(1, object.width * scale),
           height: Math.max(1, object.height * scale),

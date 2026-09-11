@@ -1,4 +1,5 @@
 import {
+  drawingInk,
   evaluateCamera,
   sceneToScreen,
   boiledPoints,
@@ -199,8 +200,9 @@ export class Renderer {
     ctx.translate(k.x, k.y);
     ctx.rotate((k.rotation * Math.PI) / 180);
     ctx.scale(k.scaleX, k.scaleY);
-    ctx.strokeStyle = tint ?? d.color;
-    ctx.fillStyle = tint ?? d.color;
+    const ink = drawingInk(d, project.background);
+    ctx.strokeStyle = tint ?? ink;
+    ctx.fillStyle = tint ?? ink;
     ctx.lineWidth = d.weight;
     ctx.lineJoin = 'round';
     ctx.lineCap = 'round';
