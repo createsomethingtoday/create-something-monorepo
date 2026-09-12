@@ -188,7 +188,9 @@ export async function enrichPdlProfile(input: PdlInput, options: { apiKey?: stri
   let result: PdlResult;
   try {
     const response = await (options.fetchFn ?? fetch)((options.baseUrl ?? 'https://api.peopledatalabs.com') + '/v5/person/enrich', {
-      method: 'POST', redirect: 'error',
+      // workerd accepts only 'follow' | 'manual'; 'error' throws a TypeError before the request is sent.
+      // A 3xx under 'manual' is !ok and is reported as unavailable below.
+      method: 'POST', redirect: 'manual',
       headers: { 'X-Api-Key': options.apiKey.trim(), 'Content-Type': 'application/json' },
       body: JSON.stringify(requestBody),
       signal: AbortSignal.timeout(15000),
