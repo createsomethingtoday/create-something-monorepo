@@ -729,7 +729,7 @@ const candidateProfileSchema = z.object({
   confirm_paid_enrichment: z.literal(true),
   include_personal_contact: z.boolean().default(true).describe('Request mobile phone, personal emails and home city/state. Default true.'),
   require_contact: z.boolean().default(false).describe('Only pay for a match that includes at least one contact value.'),
-  min_likelihood: z.number().int().min(1).max(10).optional().describe('PDL likelihood floor. Defaults: 8 for profile URLs, 6 for name or NPI matches.'),
+  min_likelihood: z.number().int().min(1).max(10).optional().describe('PDL likelihood floor 1-10. Defaults: 8 for profile URLs, 4 for name or NPI matches (PDL scores name+location matches 2-5; the returned name is checked separately). Raise it to trade coverage for confidence.'),
 }).strict();
 export async function enrichCandidateProfile(input: z.input<typeof candidateProfileSchema>, options: HealthcareClientOptions) {
   const parsed = candidateProfileSchema.parse(input);

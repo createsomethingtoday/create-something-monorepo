@@ -31,7 +31,7 @@ const common = {
   include_personal_contact: z.boolean().default(true),
   /** Only pay for a match that carries at least one contact value (PDL `required`). */
   require_contact: z.boolean().default(false),
-  /** PDL likelihood floor, 1-10. Defaults: 8 for profile URLs, 6 for name matches. */
+  /** PDL likelihood floor, 1-10. Defaults: 8 for profile URLs, 4 for name matches (PDL scores name+location matches 2-5; identity is separately gated on the returned name). */
   min_likelihood: z.number().int().min(1).max(10).optional(),
   /** Registry NPI this lookup is about. Stored for provenance only; never sent to PDL. */
   subject_npi: z.string().regex(/^\d{10}$/).optional(),
@@ -88,6 +88,10 @@ export interface PdlStore extends PdlTransaction {
   transaction<T>(fn: (store: PdlTransaction) => Promise<T>): Promise<T>;
 }
 export const PDL_DEFAULT_DAILY_LIMIT = 25;
+// PDL guidance: likelihood >= 6 is high accuracy for rich inputs; name + location inputs rarely exceed 4.
+// Name mode therefore floors at 4 and relies on the returned-name identity gate; operators can raise it.
+export const PROFILE_LIKELIHOOD_FLOOR = 8;
+export const NAME_LIKELIHOOD_FLOOR = 4;
 const DAY = 86_400_000;
 const HOUR = 3_600_000;
 // Vendor/config failures are retried after an hour; definitive outcomes are held for seven days.
@@ -110,7 +114,7 @@ async function sha256(value: string): Promise<string> {
 function buildRequest(parsed: ParsedInput): Record<string, unknown> {
   const fields: string[] = [...PDL_PROFESSIONAL_FIELDS];
   if (parsed.include_personal_contact) fields.push(...PDL_PERSONAL_CONTACT_FIELDS);
-  const body: Record<string, unknown> = { min_likelihood: parsed.min_likelihood ?? ('profile_url' in parsed ? 8 : 6), data_include: fields.join(','), include_if_matched: true };
+  const body: Record<string, unknown> = { min_likelihood: parsed.min_likelihood ?? ('profile_url' in parsed ? PROFILE_LIKELIHOOD_FLOOR : NAME_LIKELIHOOD_FLOOR), data_include: fields.join(','), include_if_matched: true };
   if ('profile_url' in parsed) body.profile = parsed.profile_url;
   else {
     body.name = parsed.name;
