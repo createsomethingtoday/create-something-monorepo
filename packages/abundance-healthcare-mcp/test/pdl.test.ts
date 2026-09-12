@@ -25,7 +25,7 @@ test('PDL profile lookup requests professional and personal contact fields and r
   const store = new Store();
   const out = await enrichPdlProfile(profileInput, { apiKey: 'secret', store, fetchFn: async (url, init) => {
     assert.equal(String(url), 'https://api.peopledatalabs.com/v5/person/enrich');
-    assert.equal(init?.method, 'POST'); assert.equal(init?.redirect, 'error');
+    assert.equal(init?.method, 'POST'); assert.equal(init?.redirect, 'manual');
     assert.equal(new Headers(init?.headers).get('X-Api-Key'), 'secret');
     assert.deepEqual(JSON.parse(String(init?.body)), { profile: profileInput.profile_url, min_likelihood: 8, include_if_matched: true, data_include: [...PDL_PROFESSIONAL_FIELDS, ...PDL_PERSONAL_CONTACT_FIELDS].join(',') });
     return okResponse(['profile']);
@@ -109,7 +109,7 @@ test('PDL shares a configurable rolling budget across sessions and caches repeat
 });
 
 test('PDL preserves uncertain failures and never retries or returns upstream error bodies', async () => {
-  for (const failure of [async () => new Response('secret PRIVATE_PHONE', { status: 403 }), async () => { throw new Error('secret PRIVATE_PHONE'); }]) {
+  for (const failure of [async () => new Response('secret PRIVATE_PHONE', { status: 403 }), async () => new Response(null, { status: 302, headers: { location: 'https://evil.test/PRIVATE_PHONE' } }), async () => { throw new Error('secret PRIVATE_PHONE'); }]) {
     let calls = 0; const store = new Store();
     const options = { apiKey: 'secret', store, fetchFn: async () => { calls++; return failure(); } };
     const out = await enrichPdlProfile(profileInput, options);
