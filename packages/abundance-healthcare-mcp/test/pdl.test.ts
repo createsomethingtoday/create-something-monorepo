@@ -115,6 +115,8 @@ test('PDL preserves uncertain failures and never retries or returns upstream err
     const out = await enrichPdlProfile(profileInput, options);
     assert.equal(out.status, 'unavailable'); assert.equal(JSON.stringify(out).includes('secret'), false);
     await enrichPdlProfile(profileInput, options); assert.equal(calls, 1);
+    // Unavailable outcomes are held for an hour, not seven days, so a corrected key or recovered vendor can be retried.
+    await enrichPdlProfile(profileInput, { ...options, now: Date.now() + 61 * 60_000 }); assert.equal(calls, 2);
   }
 });
 

@@ -89,6 +89,9 @@ export interface PdlStore extends PdlTransaction {
 }
 export const PDL_DEFAULT_DAILY_LIMIT = 25;
 const DAY = 86_400_000;
+const HOUR = 3_600_000;
+// Vendor/config failures are retried after an hour; definitive outcomes are held for seven days.
+const RESULT_TTL: Record<PdlResult['status'], number> = { pending: 7 * DAY, matched: 7 * DAY, no_match: 7 * DAY, ambiguous: 7 * DAY, unavailable: HOUR };
 const LIMITATION = 'Vendor-reported profile and contact data; recruiter must confirm identity before use. Contact values are unverified and carry no consent record: a recruiter may place a manual call or send a personal email, but autodialed calls or SMS to a mobile number need prior express consent (TCPA), and any opt-out must be honored. Registry practice_phone remains labeled separately. Does not establish licensure, employment, availability or recruiting readiness.';
 
 const E164 = /^\+[1-9]\d{6,14}$/;
@@ -170,12 +173,15 @@ export async function enrichPdlProfile(input: PdlInput, options: { apiKey?: stri
     limitation: LIMITATION,
   };
   const existing = await options.store.transaction(async store => {
-    const cached = await store.get<{ expires: number; result: PdlResult }>(cacheKey);
-    if (cached && cached.expires > now) return cached.result;
+    const cached = await store.get<{ expires: number; stored_at?: number; result: PdlResult }>(cacheKey);
+    // TTL is decided by outcome at read time so an earlier long-lived failure entry does not block a retry.
+    const ttl = RESULT_TTL[cached?.result.status ?? 'pending'];
+    const storedAt = cached?.stored_at ?? (cached && cached.result.status !== 'unavailable' ? cached.expires - 7 * DAY : Number.NEGATIVE_INFINITY);
+    if (cached && now - storedAt < ttl && cached.expires > now) return cached.result;
     const attempts = (await store.get<number[]>('attempts') ?? []).filter(t => t > now - DAY);
     if (attempts.length >= dailyLimit) throw new Error(`PDL daily limit reached: at most ${dailyLimit} new lookups per rolling 24 hours.`);
     await store.put('attempts', [...attempts, now]);
-    await store.put(cacheKey, { expires: now + 7 * DAY, result: base });
+    await store.put(cacheKey, { expires: now + 7 * DAY, stored_at: now, result: base });
     return undefined;
   });
   if (existing) return { ...existing, cached: true };
@@ -211,6 +217,6 @@ export async function enrichPdlProfile(input: PdlInput, options: { apiKey?: stri
   } catch {
     result = { ...base, status: 'unavailable', limitation: `PDL response could not be confirmed. No automatic retry. ${LIMITATION}` };
   }
-  await options.store.put(cacheKey, { expires: now + 7 * DAY, result });
+  await options.store.put(cacheKey, { expires: now + RESULT_TTL[result.status], stored_at: now, result });
   return { ...result, cached: false };
 }
