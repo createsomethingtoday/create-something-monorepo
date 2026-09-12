@@ -66,3 +66,7 @@ for registry contact export or radius calculations.
 Production requires Agency migrations 0050, 0051 and 0052, GEOCODIO_API_KEY in Agency (from Infisical prod /abundance), Agency deployment, and Healthcare MCP 1.4.0. See docs/deliveries/abundance/2026-09-11-practice-travel.md for prerequisites, limits, verification and rollback.
 
 Review hardening: identical cache misses use a five-minute leased claim before reserving credits. Concurrent callers receive a retryable in-progress response. Clinic input must start with a street number. Census network/JSON failures remain service failures, distinct from unresolved or invalid clinic input.
+
+### PDL professional profiles
+
+Healthcare MCP 1.7.0 adds `enrich_professional_profile` for exact LinkedIn profile enrichment, with explicit paid confirmation, professional-field allowlisting, a shared rolling daily cap and seven-day result caching. It does not return private contact data. See [PDL_INTEGRATION.md](PDL_INTEGRATION.md) for the contract, deployment and rollback.

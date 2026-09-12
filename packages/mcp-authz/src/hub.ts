@@ -59,6 +59,7 @@ function classifyInvocationAccessType(invocationAction?: string | null): Authori
 const HEALTHCARE_ROUTE_EFFECTS = new Map<string, AuthorizationAccessType>([
   ['search_registry_sourcing', 'read'],
   ['estimate_registry_travel', 'write'],
+  ['enrich_professional_profile', 'write'],
   ['request_professional_contact_enrichment', 'write'],
   ['get_professional_contact_enrichment', 'read'],
 ]);
