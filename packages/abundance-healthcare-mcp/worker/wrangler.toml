@@ -12,6 +12,7 @@ enabled = true
 LANGFUSE_PROJECT_NAME = "CREATE SOMETHING"
 MCP_ACCOUNT_ID = "abundance-healthcare-agent"
 AGENCY_BASE_URL = "https://createsomething.agency"
+PDL_DAILY_LIMIT = "25"
 
 [[durable_objects.bindings]]
 name = "MCP_OBJECT"
@@ -25,3 +26,11 @@ new_sqlite_classes = ["AbundanceHealthcareMCP"]
 binding = "TELEMETRY_DB"
 database_name = "cs-telemetry"
 database_id = "f710641a-0c85-4a7b-bb73-2c16f8d024c3"
+
+[[durable_objects.bindings]]
+name = "PDL_PROFILES"
+class_name = "PdlProfiles"
+
+[[migrations]]
+tag = "v2"
+new_sqlite_classes = ["PdlProfiles"]

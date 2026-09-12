@@ -608,7 +608,7 @@ test('partner toolkit auth policy allows reviewed pin operations with consent', 
 });
 
 test('healthcare registry routes classify their reviewed effects without changing administration rules', async () => {
- for (const [tool,access] of [['search_registry_sourcing','read'],['estimate_registry_travel','write'],['request_professional_contact_enrichment','write'],['get_professional_contact_enrichment','read']]) {
+ for (const [tool,access] of [['search_registry_sourcing','read'],['estimate_registry_travel','write'],['enrich_candidate_profile','write'],['request_professional_contact_enrichment','write'],['get_professional_contact_enrichment','read']]) {
   const route={proxyToolName:'abundance-healthcare-mcp__'+tool,serverName:'abundance-healthcare-mcp',downstreamToolName:tool};
   assert.equal(classifyHubRoute(route).accessType,access);
   for(const toolMode of ['read_only','read_write']){

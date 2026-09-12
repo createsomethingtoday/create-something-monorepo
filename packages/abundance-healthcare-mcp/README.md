@@ -66,3 +66,7 @@ for registry contact export or radius calculations.
 Production requires Agency migrations 0050, 0051 and 0052, GEOCODIO_API_KEY in Agency (from Infisical prod /abundance), Agency deployment, and Healthcare MCP 1.4.0. See docs/deliveries/abundance/2026-09-11-practice-travel.md for prerequisites, limits, verification and rollback.
 
 Review hardening: identical cache misses use a five-minute leased claim before reserving credits. Concurrent callers receive a retryable in-progress response. Clinic input must start with a street number. Census network/JSON failures remain service failures, distinct from unresolved or invalid clinic input.
+
+### PDL candidate profiles
+
+Healthcare MCP 1.7.0 adds `enrich_candidate_profile`, a People Data Labs lookup that returns a candidate's professional profile (LinkedIn, title, employer, work email) and personal contact details (mobile phone, personal emails, home city/state). It accepts a registry NPI, an exact LinkedIn URL, or a name plus location/employer, requires explicit paid confirmation, and applies a shared rolling daily cap with seven-day caching. Every contact value carries source, retrieval date and an unverified/no-consent-recorded provenance record. See [PDL_INTEGRATION.md](PDL_INTEGRATION.md) for the contract, deployment and rollback.

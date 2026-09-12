@@ -1,9 +1,10 @@
+import { type PdlInput, type PdlResult } from './pdl.js';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { z } from 'zod';
 
 export const SERVER_NAME = 'abundance-healthcare-mcp';
-export const SERVER_VERSION = '1.6.0';
+export const SERVER_VERSION = '1.7.0';
 export const DEFAULT_AGENCY_BASE_URL = 'https://createsomething.agency';
 export const DEFAULT_EXA_AGENT_BASE_URL = 'https://api.exa.ai';
 
@@ -31,6 +32,7 @@ export interface HealthcareApiResponse {
   data: { report: HealthcareCoverageReport; providers: HealthcareProvider[]; readiness: HealthcareReadiness[]; total: number; limit: number; offset: number; run?: Record<string, unknown> };
 }
 export interface HealthcareClientOptions {
+  pdlEnrich?: (input: PdlInput) => Promise<PdlResult>;
   agencyApiKey?: string;
   agencyBaseUrl?: string;
   exaApiKey?: string;
@@ -716,11 +718,52 @@ export async function callClayEnrichment(input: {npi:string;confirm_paid_enrichm
   if(!result.success||!result.data)throw new Error('Invalid enrichment response.');
   return result.data;
 }
+const candidateProfileSchema = z.object({
+  npi: z.string().regex(/^\d{10}$/, 'NPI must contain exactly 10 digits.').optional().describe('Registry NPI. Name and practice city/state are resolved from NPPES and used as the PDL match input.'),
+  market_id: marketIdSchema.optional().describe('Market holding the NPI. Defaults to the nationwide snapshot.'),
+  profile_url: z.string().max(400).url().optional().describe('Exact HTTPS LinkedIn profile URL.'),
+  name: z.string().trim().min(1).max(120).optional(),
+  locality: z.string().trim().min(1).max(80).optional().describe('City used with name matching.'),
+  region: z.string().trim().min(1).max(80).optional().describe('State or region used with name matching.'),
+  company: z.string().trim().min(1).max(120).optional().describe('Employer name or website used with name matching.'),
+  confirm_paid_enrichment: z.literal(true),
+  include_personal_contact: z.boolean().default(true).describe('Request mobile phone, personal emails and home city/state. Default true.'),
+  require_contact: z.boolean().default(false).describe('Only pay for a match that includes at least one contact value.'),
+  min_likelihood: z.number().int().min(1).max(10).optional().describe('PDL likelihood floor. Defaults: 8 for profile URLs, 6 for name or NPI matches.'),
+}).strict();
+export async function enrichCandidateProfile(input: z.input<typeof candidateProfileSchema>, options: HealthcareClientOptions) {
+  const parsed = candidateProfileSchema.parse(input);
+  if (!options.pdlEnrich) throw new Error('PDL integration is not configured.');
+  const modes = [parsed.npi, parsed.profile_url, parsed.name].filter(Boolean).length;
+  if (modes !== 1) throw new Error('Identify the candidate with exactly one of npi, profile_url or name.');
+  const common = { confirm_paid_enrichment: true as const, include_personal_contact: parsed.include_personal_contact, require_contact: parsed.require_contact, ...(parsed.min_likelihood ? { min_likelihood: parsed.min_likelihood } : {}) };
+  let registry: Record<string, unknown> | undefined;
+  let pdlInput: PdlInput;
+  if (parsed.npi) {
+    const record = await getHealthcarePractitioner({ market_id: parsed.market_id ?? 'npg-family-np-nationwide', npi: parsed.npi }, options);
+    const provider = record.provider as Record<string, string | undefined>;
+    const name = [provider.first_name, provider.last_name].filter(Boolean).join(' ') || provider.name;
+    if (!name || (!provider.practice_city && !provider.practice_state)) throw new Error('Registry record lacks the name and practice location needed for a PDL match.');
+    registry = compactObject({ npi: provider.npi, name: provider.name, credential: provider.credential, primary_taxonomy_description: provider.primary_taxonomy_description, practice_city: provider.practice_city, practice_state: provider.practice_state, practice_phone: provider.practice_phone, contact_route_status: 'public_registry_unverified', recruiting_stage: record.readiness.stage });
+    pdlInput = { name, locality: provider.practice_city, region: provider.practice_state, subject_npi: parsed.npi, ...common };
+  } else if (parsed.profile_url) {
+    pdlInput = { profile_url: parsed.profile_url, ...common };
+  } else {
+    pdlInput = { name: parsed.name!, locality: parsed.locality, region: parsed.region, company: parsed.company, ...common };
+  }
+  const result = await options.pdlEnrich(pdlInput);
+  return compactObject({ ...result, registry, match_input: 'profile_url' in pdlInput ? { profile_url: pdlInput.profile_url } : compactObject({ name: pdlInput.name, locality: pdlInput.locality, region: pdlInput.region, company: pdlInput.company }) });
+}
 export function registerAbundanceHealthcareTools(server: McpServer, options: HealthcareClientOptions): void {
+  server.registerTool('enrich_candidate_profile', {
+    description: 'Use People Data Labs to enrich one candidate with a professional profile (LinkedIn, current title, employer, work email) and personal contact details (mobile phone, personal emails, home city/state). Identify the candidate by exactly one of: a registry NPI (name and practice city/state are taken from NPPES), an exact LinkedIn profile URL, or a name plus locality/region/company. Explicit paid confirmation required; a shared rolling daily cap and seven-day caching apply. Set require_contact to pay only for matches that include a contact value. Results are vendor-reported and unverified: confirm identity before use; personal contacts carry no consent record, so manual recruiter outreach only, no autodialer or SMS campaigns. Registry practice_phone stays labeled separately.',
+    inputSchema: candidateProfileSchema,
+    annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
+  }, async input => structuredJson(await enrichCandidateProfile(input, options)));
   server.registerTool('request_professional_contact_enrichment',{description:'Request one asynchronous Clay lookup of contacts explicitly published for professional use for one exact registry NPI. Requires explicit paid confirmation. Never seek private personal contacts. Returns a cached or pending job; at most five new requests per rolling day. Results require source and identity review; never overwrite registry contacts.',inputSchema:z.object({npi:z.string().regex(/^\d{10}$/),confirm_paid_enrichment:z.literal(true)}).strict(),annotations:{readOnlyHint:false,destructiveHint:false,idempotentHint:false,openWorldHint:true}},async(input)=>structuredJson(await callClayEnrichment(input,options)));
   server.registerTool('get_professional_contact_enrichment',{description:'Read a Clay enrichment job by its returned ID without starting another paid lookup. Preserve pending, delivery_unknown, no_match, ambiguous or review_required states. Contacts are unverified public professional candidates, not personal ownership or outreach permission.',inputSchema:z.object({id:z.string().regex(/^npgclay_[a-f0-9-]{36}$/)}).strict(),annotations:readOnlyAnnotations()},async(input)=>structuredJson(await callClayEnrichment(input,options)));
 
-  server.resource('abundance-healthcare-status', 'abundance-healthcare://status', { description: 'Healthcare MCP status and approved NPG market IDs. Contains no secret values.', mimeType: 'application/json' }, async () => ({ contents: [{ uri: 'abundance-healthcare://status', mimeType: 'application/json', text: JSON.stringify({ name: SERVER_NAME, version: SERVER_VERSION, tools: ['request_professional_contact_enrichment', 'get_professional_contact_enrichment', 'estimate_registry_travel', 'search_registry_sourcing', 'list_healthcare_markets', 'get_healthcare_coverage', 'search_coverage_candidates', 'get_healthcare_practitioner', 'get_provider_contact_information', 'enrich_provider_professional_contact'], market_ids: NPG_HEALTHCARE_MARKETS.map((market) => market.id), coverage_model: 'monthly_full_plus_weekly_incremental', refresh_policy: 'weekly_default_daily_locale_opt_in', contact_enrichment_policy: 'registry_first_explicit_paid_public_professional_enrichment_operator_review' }, null, 2) }] }));
+  server.resource('abundance-healthcare-status', 'abundance-healthcare://status', { description: 'Healthcare MCP status and approved NPG market IDs. Contains no secret values.', mimeType: 'application/json' }, async () => ({ contents: [{ uri: 'abundance-healthcare://status', mimeType: 'application/json', text: JSON.stringify({ name: SERVER_NAME, version: SERVER_VERSION, tools: ['enrich_candidate_profile', 'request_professional_contact_enrichment', 'get_professional_contact_enrichment', 'estimate_registry_travel', 'search_registry_sourcing', 'list_healthcare_markets', 'get_healthcare_coverage', 'search_coverage_candidates', 'get_healthcare_practitioner', 'get_provider_contact_information', 'enrich_provider_professional_contact'], market_ids: NPG_HEALTHCARE_MARKETS.map((market) => market.id), coverage_model: 'monthly_full_plus_weekly_incremental', refresh_policy: 'weekly_default_daily_locale_opt_in', contact_enrichment_policy: 'registry_first_explicit_paid_public_professional_enrichment_operator_review' }, null, 2) }] }));
   server.registerTool('list_healthcare_markets', { description: 'List nationwide and approved derived NPG healthcare views with source freshness and outreach status. Read-only.', inputSchema: z.object({}).strict(), annotations: readOnlyAnnotations() }, async () => structuredJson(await listHealthcareMarkets(options)));
   server.registerTool('estimate_registry_travel', { description: 'Estimate typical one-way driving time from selected NPPES practice locations to 1–3 operator-supplied clinic street addresses. Choose any or all clinics and 30 or 45 minutes. Uses cached geocodes; missing locations and routes remain unresolved. Reserves bounded Geocodio credits and stores a report. Processes at most 50 selected NPIs; this is not a complete population search or candidate home commute. Return the complete report CSV link.', inputSchema: travelSchema, annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true } }, async (input) => structuredJson(await estimateRegistryTravel(input, options)));
   server.registerTool('search_registry_sourcing', { description: 'Build a paginated NPG registry sourcing list with full unverified practice addresses and phones and a complete CSV download. For radius search provide a full center street address and radius_miles; omit state/city so borders do not hide matches. Unresolved addresses are separate, never assumed inside the radius. Distance is straight-line practice-location distance, not commute time. Taxonomy does not establish board certification or clinical experience.', inputSchema: sourcingSchema, annotations: { ...readOnlyAnnotations(), openWorldHint: true } }, async (input) => structuredJson(await searchRegistrySourcing(input, options)));
