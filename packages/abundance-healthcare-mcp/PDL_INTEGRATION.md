@@ -10,9 +10,9 @@
 
 The candidate is identified by exactly one of:
 
-- `npi` (+ optional `market_id`): NPPES first/last name and practice city/state become the PDL match input. Default likelihood floor 6.
+- `npi` (+ optional `market_id`): NPPES first/last name and practice city/state become the PDL match input. Default likelihood floor 4: PDL scores name-plus-location matches 2-5, so a higher floor rejects most true matches; the returned-name identity gate below still applies, and `min_likelihood` can be raised for a stricter run.
 - `profile_url`: exact HTTPS LinkedIn profile URL. Default likelihood floor 8; the returned `linkedin_url` must equal the requested one.
-- `name` + at least one of `locality`, `region`, `company`. Default likelihood floor 6.
+- `name` + at least one of `locality`, `region`, `company`. Default likelihood floor 4 (adding `company` raises PDL's score).
 
 Every call requires `confirm_paid_enrichment: true`. Optional: `include_personal_contact` (default true), `require_contact` (PDL `required: mobile_phone OR phone_numbers OR personal_emails`, so a credit is only spent on matches that carry a contact value), `min_likelihood`.
 
@@ -30,7 +30,7 @@ PDL data establishes a probable contact route, not permission. The `limitation` 
 
 ## Credits and reliability
 
-A singleton SQLite Durable Object (`PdlProfiles`) reserves attempts across all MCP sessions: at most `PDL_DAILY_LIMIT` new lookups per rolling 24 hours (default 25). Each distinct request is cached for seven days, including `no_match`, `ambiguous` and `unavailable` outcomes, so repeats never spend a second credit. Failed or uncertain requests keep their reservation and are not retried automatically. Request timeout is 15 seconds, redirects are rejected, and vendor error bodies are never surfaced. PDL charges per match; `require_contact` narrows what counts as a match.
+A singleton SQLite Durable Object (`PdlProfiles`) reserves attempts across all MCP sessions: at most `PDL_DAILY_LIMIT` new lookups per rolling 24 hours (default 25). Each distinct request is cached so repeats never spend a second credit: `matched`, `no_match` and `ambiguous` for seven days, `unavailable` (vendor error, timeout, credential problem) for one hour so a corrected configuration can be retried. Failed or uncertain requests keep their reservation and are not retried automatically. Request timeout is 15 seconds, redirects are rejected, and vendor error bodies are never surfaced. PDL charges per match; `require_contact` narrows what counts as a match.
 
 ## Deployment
 

@@ -51,7 +51,7 @@ test('PDL name lookup sends location context, requires the vendor to match on na
   let body: Record<string, unknown> = {};
   const out = await enrichPdlProfile({ ...nameInput, require_contact: true }, { apiKey: 'secret', store: new Store(), fetchFn: async (_url, init) => { body = JSON.parse(String(init?.body)); return okResponse(['name', 'locality']); } });
   assert.equal(body.name, 'Jordan Test'); assert.equal(body.locality, 'Albany'); assert.equal(body.region, 'New York');
-  assert.equal(body.min_likelihood, 6); assert.equal(body.required, 'mobile_phone OR phone_numbers OR personal_emails');
+  assert.equal(body.min_likelihood, 4); assert.equal(body.required, 'mobile_phone OR phone_numbers OR personal_emails');
   assert.equal('subject_npi' in body, false);
   assert.equal(out.status, 'matched'); assert.equal(out.subject_npi, '1234567893'); assert.deepEqual(out.matched_on, ['name', 'locality']);
   const notOnName = await enrichPdlProfile(nameInput, { apiKey: 'secret', store: new Store(), fetchFn: async () => okResponse(['locality']) });
