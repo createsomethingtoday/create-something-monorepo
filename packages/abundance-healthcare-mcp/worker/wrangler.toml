@@ -12,6 +12,7 @@ enabled = true
 LANGFUSE_PROJECT_NAME = "CREATE SOMETHING"
 MCP_ACCOUNT_ID = "abundance-healthcare-agent"
 AGENCY_BASE_URL = "https://createsomething.agency"
+PDL_DAILY_LIMIT = "25"
 
 [[durable_objects.bindings]]
 name = "MCP_OBJECT"

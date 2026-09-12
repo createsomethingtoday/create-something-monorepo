@@ -13,6 +13,7 @@ import {
 
 interface Env {
   PDL_API_KEY?: string;
+  PDL_DAILY_LIMIT?: string;
   PDL_PROFILES: DurableObjectNamespace;
   MCP_OBJECT: DurableObjectNamespace;
   TELEMETRY_DB?: D1Database;
@@ -61,10 +62,10 @@ export class AbundanceHealthcareMCP extends McpAgent<Env> {
       agencyBaseUrl: this.env.AGENCY_BASE_URL?.trim() || DEFAULT_AGENCY_BASE_URL,
       exaApiKey: this.env.EXA_API_KEY,
       pdlEnrich: async input => {
-        const stub = this.env.PDL_PROFILES.get(this.env.PDL_PROFILES.idFromName('npg-professional-profiles-v1'));
+        const stub = this.env.PDL_PROFILES.get(this.env.PDL_PROFILES.idFromName('npg-candidate-profiles-v1'));
         const response = await stub.fetch('https://pdl.internal/enrich', { method: 'POST', body: JSON.stringify(input) });
         if (!response.ok) {
-          if (response.status === 429) throw new Error('PDL daily limit reached: five new profiles per rolling 24 hours.');
+          if (response.status === 429) throw new Error('PDL daily limit reached for the rolling 24-hour window. Cached results remain available; raise PDL_DAILY_LIMIT to allow more paid lookups.');
           throw new Error('PDL integration is unavailable. Check configuration; no automatic retry.');
         }
         return await response.json() as PdlResult;
@@ -77,7 +78,8 @@ export class PdlProfiles extends DurableObject<Env> {
   async fetch(request: Request): Promise<Response> {
     if (request.method !== 'POST' || new URL(request.url).pathname !== '/enrich') return new Response(null, { status: 404 });
     try {
-      const result = await enrichPdlProfile(await request.json(), { apiKey: this.env.PDL_API_KEY, store: this.ctx.storage });
+      const limit = Number.parseInt(this.env.PDL_DAILY_LIMIT ?? '', 10);
+      const result = await enrichPdlProfile(await request.json(), { apiKey: this.env.PDL_API_KEY, store: this.ctx.storage, dailyLimit: Number.isFinite(limit) && limit > 0 ? limit : undefined });
       return Response.json(result);
     } catch (error) {
       const limited = error instanceof Error && error.message.startsWith('PDL daily limit');
