@@ -14,6 +14,7 @@ export type TemplateReviewHandoffEvidence = {
   sourceInvocationSha256: string;
   dispatchedAt: string;
   receivedAt: string;
+  maximumAgeMs: number;
   observation: TemplateReviewHandoffObservation;
 };
 type Row = {
@@ -29,6 +30,7 @@ type Row = {
   evidence_sha256: string;
   dispatched_at: string;
   received_at: string;
+  maximum_age_ms: number;
 };
 
 /** Stores results from the trusted source gateway; never authorizes dispatch or
@@ -98,7 +100,7 @@ export class D1TemplateReviewHandoffEvidenceStore {
         requestSha256: attempt.capabilityParameterSha256,
         dispatchedAt: row.dispatched_at,
         receivedAt: row.received_at,
-        maximumAgeMs: this.maximumAgeMs
+        maximumAgeMs: row.maximum_age_ms
       }
     );
     if (Date.parse(row.dispatched_at) < Date.parse(attempt.createdAt))
@@ -110,6 +112,7 @@ export class D1TemplateReviewHandoffEvidenceStore {
       sourceInvocationSha256: row.source_invocation_sha256,
       dispatchedAt: row.dispatched_at,
       receivedAt: row.received_at,
+      maximumAgeMs: row.maximum_age_ms,
       observation
     };
   }
@@ -126,11 +129,13 @@ export class D1TemplateReviewHandoffEvidenceStore {
     if (!attempt) throw new Error('handoff_attempt_unavailable');
     if (!/^sha256:[a-f0-9]{64}$/.test(input.sourceInvocationSha256))
       throw new Error('handoff_invocation_invalid');
+    const replay = await this.find(input);
+    const maximumAgeMs = replay?.maximumAgeMs ?? this.maximumAgeMs;
     const observation = validateTemplateReviewHandoffObservation(input.observation, {
       requestSha256: attempt.capabilityParameterSha256,
       dispatchedAt: input.dispatchedAt,
       receivedAt: input.receivedAt,
-      maximumAgeMs: this.maximumAgeMs
+      maximumAgeMs
     });
     if (Date.parse(input.dispatchedAt) < Date.parse(attempt.createdAt))
       throw new Error('handoff_evidence_predates_intent');
@@ -141,9 +146,9 @@ export class D1TemplateReviewHandoffEvidenceStore {
       sourceInvocationSha256: input.sourceInvocationSha256,
       dispatchedAt: input.dispatchedAt,
       receivedAt: input.receivedAt,
+      maximumAgeMs,
       observation
     };
-    const replay = await this.find(input);
     if (replay) {
       if (JSON.stringify(replay) !== JSON.stringify(expected))
         throw new Error('handoff_evidence_conflict');
@@ -154,8 +159,8 @@ export class D1TemplateReviewHandoffEvidenceStore {
         this.database
           .prepare(
             `INSERT INTO control_workflow_runtime_handoff_observations
-        (run_id,step_id,attempt_id,request_sha256,source_invocation_sha256,observed_at,observation_state,reason,next_action,evidence_sha256,dispatched_at,received_at)
-        VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12)`
+        (run_id,step_id,attempt_id,request_sha256,source_invocation_sha256,observed_at,observation_state,reason,next_action,evidence_sha256,dispatched_at,received_at,maximum_age_ms)
+        VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12,?13)`
           )
           .bind(
             input.runId,
@@ -169,7 +174,8 @@ export class D1TemplateReviewHandoffEvidenceStore {
             observation.nextAction,
             observation.evidenceSha256,
             input.dispatchedAt,
-            input.receivedAt
+            input.receivedAt,
+            maximumAgeMs
           )
       ]);
     } catch {

@@ -2030,6 +2030,13 @@ test('handoff evidence binds the verified tenant attempt and replays without alt
   );
   const saved = await store.record(record);
   assert.deepEqual(await store.record(record), saved);
+  const stricter = new D1TemplateReviewHandoffEvidenceStore(
+    d1(input.path),
+    trustedRuntimeManifestAuthority([{ digest: runtimeDigest('8'), manifest }]),
+    1
+  );
+  assert.deepEqual(await stricter.find(record), saved);
+  assert.deepEqual(await stricter.record(record), saved);
   assert.equal(await store.find({ ...record, scope: { ...scope, tenantId: 'other' } }), undefined);
   await assert.rejects(() =>
     store.record({

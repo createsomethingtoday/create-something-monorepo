@@ -23,6 +23,7 @@ CREATE TABLE control_workflow_runtime_handoff_observations (
   ),
   dispatched_at TEXT NOT NULL CHECK (length(dispatched_at) = 24 AND julianday(dispatched_at) IS NOT NULL),
   received_at TEXT NOT NULL CHECK (length(received_at) = 24 AND julianday(received_at) IS NOT NULL),
+  maximum_age_ms INTEGER NOT NULL CHECK (typeof(maximum_age_ms) = 'integer' AND maximum_age_ms BETWEEN 1 AND 9007199254740991),
   PRIMARY KEY (run_id, step_id, attempt_id),
   UNIQUE (source_invocation_sha256),
   FOREIGN KEY (run_id, step_id, attempt_id)

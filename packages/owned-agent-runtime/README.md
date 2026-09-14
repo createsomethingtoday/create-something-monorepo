@@ -98,7 +98,8 @@ The separate handoff evidence store validates the source-owned
 `create-something/template-handoff-observation@1` contract against a verified
 `template-review.handoff.observe.v1` attempt. Its capability parameter digest
 must equal the source request digest. The host configures an observation age
-limit; this is never a deadline for submission processing. The store rejects raw
+limit, persisted with each observation so policy changes do not rewrite historical
+acceptance; this is never a deadline for submission processing. The store rejects raw
 fields and inconsistent classification/action pairs, preserves one immutable
 result per attempt, and permits identical readback after a stop without changing
 the checkpoint. It requires the existing trusted manifest/proof reader and

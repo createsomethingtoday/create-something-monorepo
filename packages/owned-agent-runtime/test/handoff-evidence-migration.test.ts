@@ -25,7 +25,7 @@ test('handoff evidence requires an attempt, valid disposition, and immutable exa
       )
     );
     const digest = 'sha256:' + '1'.repeat(64);
-    const insert = `INSERT INTO control_workflow_runtime_handoff_observations VALUES ('run','step','attempt','${digest}','${digest}','2026-09-14T23:00:01.000Z','confirmed','review_ready','await_review','${digest}','2026-09-14T23:00:00.000Z','2026-09-14T23:00:02.000Z');`;
+    const insert = `INSERT INTO control_workflow_runtime_handoff_observations VALUES ('run','step','attempt','${digest}','${digest}','2026-09-14T23:00:01.000Z','confirmed','review_ready','await_review','${digest}','2026-09-14T23:00:00.000Z','2026-09-14T23:00:02.000Z',30000);`;
     assert.throws(() => sql(insert));
     sql("INSERT INTO control_workflow_runtime_attempts VALUES('run','step','attempt');");
     for (const altered of [
