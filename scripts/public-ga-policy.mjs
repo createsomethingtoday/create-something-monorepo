@@ -4,6 +4,39 @@ function issue(condition, message, issues) {
   if (!condition) issues.push(message);
 }
 
+const REQUIRED_MAP_CHECK_IDS = new Set(
+  ['desktop', 'mobile'].flatMap((viewport) => [
+    `${viewport}_route_and_responsive_render`,
+    `${viewport}_starter_booking_context`,
+    `${viewport}_edit_booking_context`,
+    `${viewport}_restore_booking_context`,
+    `${viewport}_reset_booking_context`,
+    `${viewport}_mapping_agent_non_mutating_boundary`,
+    `${viewport}_map_health`,
+    `${viewport}_console_health`
+  ])
+);
+
+function hasCompletePassingMapChecks(checks) {
+  if (!Array.isArray(checks) || checks.length !== REQUIRED_MAP_CHECK_IDS.size) return false;
+  const seen = new Set();
+  for (const check of checks) {
+    if (
+      !check ||
+      typeof check.id !== 'string' ||
+      !REQUIRED_MAP_CHECK_IDS.has(check.id) ||
+      seen.has(check.id) ||
+      check.ok !== true ||
+      !Number.isFinite(check.durationMs) ||
+      check.durationMs < 0
+    ) {
+      return false;
+    }
+    seen.add(check.id);
+  }
+  return seen.size === REQUIRED_MAP_CHECK_IDS.size;
+}
+
 function stringValues(value, output = []) {
   if (typeof value === 'string') output.push(value);
   else if (Array.isArray(value)) value.forEach((entry) => stringValues(entry, output));
@@ -18,7 +51,7 @@ function stringValues(value, output = []) {
 
 export function validateGaConfig(config) {
   const issues = [];
-  issue(config?.schemaVersion === 1, 'GA config schemaVersion must equal 1', issues);
+  issue(config?.schemaVersion === 2, 'GA config schemaVersion must equal 2', issues);
   issue(config?.repository?.owner, 'GA config requires repository.owner', issues);
   issue(config?.repository?.name, 'GA config requires repository.name', issues);
   issue(
@@ -80,6 +113,44 @@ export function validateGaConfig(config) {
   issue(
     config?.npm?.trustedPublisherMode === 'stage-only',
     'GA config requires stage-only npm trusted publishing',
+    issues
+  );
+  const receiptSource = config?.map?.receiptSource;
+  issue(
+    receiptSource?.kind === 'cloudflare-d1',
+    'GA config requires the Cloudflare D1 Map receipt source',
+    issues
+  );
+  issue(
+    receiptSource?.workerName === 'map-production-monitor',
+    'GA config requires the map-production-monitor Worker',
+    issues
+  );
+  issue(
+    receiptSource?.workerHealthUrl ===
+      'https://map-production-monitor.createsomething.workers.dev/health',
+    'GA config requires the Map monitor health URL',
+    issues
+  );
+  issue(
+    receiptSource?.databaseName === 'create-something-db' &&
+      receiptSource?.wranglerConfig === 'packages/agency/wrangler.jsonc',
+    'GA config requires the shared CREATE SOMETHING D1 receipt binding',
+    issues
+  );
+  issue(
+    receiptSource?.table === 'map_production_monitor_receipts',
+    'GA config requires the Map receipt table',
+    issues
+  );
+  issue(
+    receiptSource?.alertTable === 'map_production_monitor_alerts',
+    'GA config requires the Map operator-alert table',
+    issues
+  );
+  issue(
+    receiptSource?.receiptRetentionDays === 30,
+    'GA config requires thirty-day Map receipt retention',
     issues
   );
   issue(config?.map?.requiredConsecutiveDays === 7, 'GA config requires seven Map days', issues);
@@ -454,48 +525,115 @@ function calendarDay(value, timeZone) {
   return { label, ordinal: Date.parse(`${label}T00:00:00Z`) / 86_400_000 };
 }
 
-export function selectMapBurnIn(runs, mapPolicy, minimumCreatedAt) {
-  const eligible = (runs ?? [])
-    .filter((run) => ['schedule', 'workflow_dispatch'].includes(run.event))
-    .filter((run) => run.status === 'completed')
-    .filter((run) => !minimumCreatedAt || new Date(run.created_at) >= new Date(minimumCreatedAt))
-    .sort((left, right) => new Date(left.created_at) - new Date(right.created_at));
+export function selectMapBurnIn(receipts, mapPolicy, minimumCreatedAt, expectedSourceSha, now = new Date()) {
+  const issues = [];
+  const minimum = minimumCreatedAt ? new Date(minimumCreatedAt) : null;
+  issue(
+    minimum === null || !Number.isNaN(minimum.valueOf()),
+    'Map receipt selector requires a valid minimum timestamp',
+    issues
+  );
+  issue(
+    typeof expectedSourceSha === 'string' && /^[0-9a-f]{40}$/i.test(expectedSourceSha),
+    'Map receipt selector requires the exact GA source SHA',
+    issues
+  );
+
+  const grouped = new Map();
+  for (const receipt of receipts ?? []) {
+    const scheduledAt = new Date(receipt?.scheduledAt ?? 'invalid');
+    if (Number.isNaN(scheduledAt.valueOf())) {
+      issues.push(`Map receipt ${receipt?.receiptId ?? 'unknown'} has an invalid scheduled timestamp`);
+      continue;
+    }
+    if (minimum && scheduledAt < minimum) continue;
+    const day = calendarDay(scheduledAt.toISOString(), mapPolicy.timeZone);
+    const entry = { receipt, scheduledAt, day };
+    const entries = grouped.get(day.label) ?? [];
+    entries.push(entry);
+    grouped.set(day.label, entries);
+  }
 
   let streak = [];
-  for (const run of eligible) {
-    if (run.conclusion !== 'success') {
+  let currentStreakIssues = [];
+  for (const entries of [...grouped.values()].sort(
+    (left, right) => left[0].day.ordinal - right[0].day.ordinal
+  )) {
+    const { day } = entries[0];
+    const invalid = entries.find(({ receipt, scheduledAt }) => {
+      const completedAt = new Date(receipt?.completedAt ?? 'invalid');
+      return (
+        receipt?.schemaVersion !== 1 ||
+        receipt?.trigger !== 'scheduled' ||
+        receipt?.complete !== true ||
+        receipt?.status !== 'passed' ||
+        receipt?.sourceSha !== expectedSourceSha ||
+        receipt?.baseUrl !== 'https://createsomething.agency' ||
+        receipt?.customerDataUsed !== false ||
+        receipt?.agentMutationUsed !== false ||
+        receipt?.bookingSubmitted !== false ||
+        typeof receipt?.workerVersion !== 'string' ||
+        receipt.workerVersion.length === 0 ||
+        !hasCompletePassingMapChecks(receipt?.checks) ||
+        Number.isNaN(completedAt.valueOf()) ||
+        completedAt < scheduledAt
+      );
+    });
+    if (invalid) {
+      const receiptId = invalid.receipt?.receiptId ?? 'unknown';
+      if (invalid.receipt?.sourceSha !== expectedSourceSha) {
+        currentStreakIssues = [`Map receipt ${receiptId} source SHA does not match the GA commit`];
+      } else if (!hasCompletePassingMapChecks(invalid.receipt?.checks)) {
+        currentStreakIssues = [
+          `Map receipt ${receiptId} does not contain complete passing synthetic checks`
+        ];
+      } else {
+        currentStreakIssues = [`Map receipt ${receiptId} is not a complete passing scheduled receipt`];
+      }
+      // A single red, incomplete, or malformed receipt invalidates the whole calendar day.
+      // Later same-day greens are diagnostic only and never recover the streak.
       streak = [];
       continue;
     }
-    const day = calendarDay(run.created_at, mapPolicy.timeZone);
+
+    const selected = entries
+      .slice()
+      .sort((left, right) => left.scheduledAt - right.scheduledAt)[0];
     const prior = streak.at(-1);
     if (!prior) {
-      streak = [{ date: day.label, ordinal: day.ordinal, run }];
-    } else if (day.ordinal === prior.ordinal) {
-      continue;
+      streak = [{ date: day.label, ordinal: day.ordinal, receipt: selected.receipt }];
+      currentStreakIssues = [];
     } else if (day.ordinal === prior.ordinal + 1) {
-      streak.push({ date: day.label, ordinal: day.ordinal, run });
+      streak.push({ date: day.label, ordinal: day.ordinal, receipt: selected.receipt });
     } else {
-      streak = [{ date: day.label, ordinal: day.ordinal, run }];
+      streak = [{ date: day.label, ordinal: day.ordinal, receipt: selected.receipt }];
+      currentStreakIssues = [];
     }
   }
 
   const selected = streak.slice(-mapPolicy.requiredConsecutiveDays);
-  const issues = [];
+  issues.push(...currentStreakIssues);
   issue(
     streak.length >= mapPolicy.requiredConsecutiveDays,
     `Map requires ${mapPolicy.requiredConsecutiveDays} consecutive green days; current streak is ${streak.length}`,
     issues
   );
+  const currentDay = calendarDay(now.toISOString(), mapPolicy.timeZone).label;
+  issue(
+    selected.at(-1)?.date === currentDay,
+    `Map streak must end on the current ${mapPolicy.timeZone} calendar day`,
+    issues
+  );
   return {
     issues,
-    days: selected.map(({ date, run }) => ({
+    days: selected.map(({ date, receipt }) => ({
       date,
-      runId: run.id,
-      url: run.html_url,
-      sha: run.head_sha,
-      event: run.event,
-      createdAt: run.created_at
+      receiptId: receipt.receiptId,
+      workerVersion: receipt.workerVersion,
+      sourceSha: receipt.sourceSha,
+      scheduledAt: receipt.scheduledAt,
+      completedAt: receipt.completedAt,
+      status: receipt.status
     }))
   };
 }

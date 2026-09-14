@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "repository": {
     "owner": "createsomethingtoday",
     "name": "create-something-monorepo",
@@ -62,7 +62,16 @@
     "browserEvidenceMaxAgeHours": 24
   },
   "map": {
-    "workflow": "agency-map-production-monitor.yml",
+    "receiptSource": {
+      "kind": "cloudflare-d1",
+      "workerName": "map-production-monitor",
+      "workerHealthUrl": "https://map-production-monitor.createsomething.workers.dev/health",
+      "databaseName": "create-something-db",
+      "wranglerConfig": "packages/agency/wrangler.jsonc",
+      "table": "map_production_monitor_receipts",
+      "alertTable": "map_production_monitor_alerts",
+      "receiptRetentionDays": 30
+    },
     "requiredConsecutiveDays": 7,
     "timeZone": "America/Chicago"
   }
