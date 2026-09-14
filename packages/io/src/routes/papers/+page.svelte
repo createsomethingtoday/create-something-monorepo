@@ -116,7 +116,7 @@
 	<div class="max-w-7xl mx-auto">
 		<div class="text-center space-y-4">
 			<h1 class="hero-title">Research Papers</h1>
-			<p class="hero-subtitle">
+			<p class="hero-subtitle" role="status" aria-live="polite" aria-atomic="true">
 				{#if isFiltered}
 					{resultCount} of {papers.length} papers
 				{:else}
@@ -167,27 +167,31 @@
 
 			<!-- Category Filter Chips -->
 			<div class="flex justify-center">
-				<div class="flex flex-wrap justify-center gap-2">
+				<div class="flex flex-wrap justify-center gap-2" role="group" aria-label="Paper category">
 					<button
 						onclick={() => categoryFilter = 'all'}
+						aria-pressed={categoryFilter === 'all'}
 						class="filter-chip {categoryFilter === 'all' ? 'active' : ''}"
 					>
 						All
 					</button>
 					<button
 						onclick={() => categoryFilter = 'research'}
+						aria-pressed={categoryFilter === 'research'}
 						class="filter-chip {categoryFilter === 'research' ? 'active' : ''}"
 					>
 						Research
 					</button>
 					<button
 						onclick={() => categoryFilter = 'case-study'}
+						aria-pressed={categoryFilter === 'case-study'}
 						class="filter-chip {categoryFilter === 'case-study' ? 'active' : ''}"
 					>
 						Case Study
 					</button>
 					<button
 						onclick={() => categoryFilter = 'methodology'}
+						aria-pressed={categoryFilter === 'methodology'}
 						class="filter-chip {categoryFilter === 'methodology' ? 'active' : ''}"
 					>
 						Methodology
@@ -197,21 +201,24 @@
 
 			<!-- Sort Control -->
 			<div class="flex justify-center">
-				<div class="sort-control">
+				<div class="sort-control" role="group" aria-label="Paper order">
 					<button
 						onclick={() => sortBy = 'newest'}
+						aria-pressed={sortBy === 'newest'}
 						class="sort-button {sortBy === 'newest' ? 'active' : ''}"
 					>
 						Newest
 					</button>
 					<button
 						onclick={() => sortBy = 'oldest'}
+						aria-pressed={sortBy === 'oldest'}
 						class="sort-button {sortBy === 'oldest' ? 'active' : ''}"
 					>
 						Oldest
 					</button>
 					<button
 						onclick={() => sortBy = 'reading-time'}
+						aria-pressed={sortBy === 'reading-time'}
 						class="sort-button {sortBy === 'reading-time' ? 'active' : ''}"
 					>
 						Quick Reads
@@ -568,6 +575,8 @@
 
 	/* Papers Grid */
 	.papers-grid {
+		/* The index hero owns separation from controls; avoid global section padding. */
+		padding-block: 0;
 		display: flex;
 		flex-direction: column;
 		gap: var(--space-performance-md);
