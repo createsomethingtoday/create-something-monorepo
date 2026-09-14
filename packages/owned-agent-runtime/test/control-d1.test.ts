@@ -2091,3 +2091,50 @@ test('reconciliation proof refuses a succeeded handoff with no source evidence',
     /handoff_success_without_evidence/
   );
 });
+
+
+test('reconciliation proof rejects a source dispatch change without a run version change', async () => {
+  const input = fixture();
+  const { parent, prepared, plan } = await persistedTemplateReviewAttempt(input);
+  const database = d1(input.path);
+  const adapter = new D1TemplateReviewQueueObservationAdapter(
+    database,
+    { async verify() { throw new Error('source verification is not part of this read'); } },
+    { capabilityParameterDigest: runtimeDigest('f') },
+    activeControlActivationAuthority(input.path)
+  );
+  const originalPrepare = database.prepare.bind(database);
+  let inserted = false;
+  database.prepare = (sql: string) => {
+    const statement = originalPrepare(sql);
+    if (!sql.includes('SELECT count(*) AS count')) return statement;
+    return {
+      bind(...values: unknown[]) {
+        const bound = statement.bind(...values);
+        return {
+          async first() {
+            const result = await bound.first();
+            if (!inserted) {
+              inserted = true;
+              const preparation = await adapter.prepare({
+                scope, manifest: templateReviewRuntimeManifest, run: prepared, plan,
+                attemptId: 'template-review-attempt-1'
+              });
+              assert.equal(preparation.type, 'preflight');
+            }
+            return result;
+          }
+        };
+      }
+    } as D1PreparedStatement;
+  };
+  const reader = new D1WorkflowRuntimeHandoffProofReader(
+    database,
+    trustedRuntimeManifestAuthority([{ digest: runtimeDigest('8'), manifest: templateReviewRuntimeManifest }]),
+    30_000
+  );
+  await assert.rejects(() => reader.find({ scope, runId: parent.id }), /handoff_proof_changed_during_read/);
+  const stable = await reader.find({ scope, runId: parent.id });
+  assert.equal(stable?.runtime.run.version, prepared.version);
+  assert.equal(stable?.runtime.capabilityObservations.length, 1);
+});

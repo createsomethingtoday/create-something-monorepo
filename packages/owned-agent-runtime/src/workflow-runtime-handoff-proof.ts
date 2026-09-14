@@ -33,7 +33,7 @@ export class D1WorkflowRuntimeHandoffProofReader implements WorkflowRuntimeHando
     this.runtime = new D1WorkflowRuntimeProofReader(database, manifests);
     this.evidence = new D1TemplateReviewHandoffEvidenceStore(database, manifests, maximumAgeMs);
   }
-  async find(input: {
+  private async read(input: {
     scope: WorkflowRuntimeScope;
     runId: string;
   }): Promise<WorkflowRuntimeHandoffProof | undefined> {
@@ -60,15 +60,24 @@ export class D1WorkflowRuntimeHandoffProofReader implements WorkflowRuntimeHando
       .bind(input.runId)
       .first<{ count: number }>();
     if (count?.count !== observations.length) throw new Error('handoff_evidence_attempt_mismatch');
-    // Recheck the version to avoid returning mixed snapshots if a stop or step
-    // transition happened while the evidence was read.
-    const current = await this.runtime.find(input);
-    if (!current || current.run.version !== runtime.run.version)
-      throw new Error('handoff_proof_changed_during_read');
     return {
       schema: 'create-something/control-reconciliation-proof@1',
       runtime,
       handoffObservations: observations
     };
   }
+  async find(input: {
+    scope: WorkflowRuntimeScope;
+    runId: string;
+  }): Promise<WorkflowRuntimeHandoffProof | undefined> {
+    const initial = await this.read(input);
+    if (!initial) return undefined;
+    // Dispatch verification and immutable evidence inserts do not advance the
+    // run version. Compare both complete reads, including their evidence sets.
+    const current = await this.read(input);
+    if (JSON.stringify(current) !== JSON.stringify(initial))
+      throw new Error('handoff_proof_changed_during_read');
+    return initial;
+  }
+
 }
