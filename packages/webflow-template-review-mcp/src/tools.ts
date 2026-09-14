@@ -20,6 +20,7 @@ import {
 } from './thumbnail-proxy.js';
 import type { AirtableClient, TemplateReviewAssetThumbnails, TemplateReviewQueueItem } from './airtable.js';
 import { AirtableClientError } from './airtable.js';
+import { observeTemplateHandoff, templateHandoffRequestSchema } from './handoff-observation.js';
 import { CHECKLIST_KIND_VALUES, parseChecklist } from './checklist.js';
 import { COMPREHENSIVE_REVIEW_LANE_IDS, EVIDENCE_LABELS, formatComprehensiveAgentReviewFeedback } from './comprehensive-review-feedback.js';
 import { COMPREHENSIVE_REVIEW_CONTRACT } from './comprehensive-review-contract.js';
@@ -1449,6 +1450,21 @@ export function registerTools(
         });
       } catch (error) {
         return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'template_review_observe_handoff',
+    'Read one exact linked template asset/version and return minimized status evidence and the next inspection action. Does not prove a webhook, infer a processing deadline, send messages, or change review status. Missing evidence is never permission to resubmit.',
+    templateHandoffRequestSchema.shape,
+    { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
+    async (input) => {
+      try {
+        return asSuccess(await observeTemplateHandoff(getClient(), input, { observedAt: new Date().toISOString() }));
+      } catch {
+        // Never expose source error details, raw IDs, or authentication material.
+        return jsonContent({ ok: false, error: { code: 'HANDOFF_OBSERVATION_UNAVAILABLE' } }, true);
       }
     },
   );
