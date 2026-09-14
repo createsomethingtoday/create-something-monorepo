@@ -8,10 +8,12 @@ import test from 'node:test';
 import {
   ControlRunConflictError,
   createControlRunService,
+  type FrozenControlActivation,
   type ControlActor,
   type ControlRunExecutor,
   type ControlScope
 } from '../src/control.js';
+import { D1ControlSourcePermitAuthority } from '../src/control-source-permit.js';
 import { D1ControlActivationAuthority, D1ControlRunRepository } from '../src/control-store.js';
 import { D1WorkflowRuntimeHandoffProofReader } from '../src/workflow-runtime-handoff-proof.js';
 import { D1TemplateReviewHandoffEvidenceStore } from '../src/template-review-handoff-store.js';
@@ -2145,4 +2147,43 @@ test('reconciliation proof rejects a source dispatch change without a run versio
   const stable = await reader.find({ scope, runId: parent.id });
   assert.equal(stable?.runtime.run.version, prepared.version);
   assert.equal(stable?.runtime.capabilityObservations.length, 1);
+});
+
+
+test('Agency source permit atomically matches frozen authority and never redeems twice', async () => {
+  const input = fixture();
+  execFileSync('sqlite3', [input.path], {
+    input: readFileSync(new URL('../../agency/migrations/0056_control_source_permits.sql', import.meta.url), 'utf8')
+  });
+  const activation = await activeControlActivationAuthority(input.path).findActive(scope, 'activation-a');
+  assert.ok(activation);
+  let id = 0;
+  const authority = new D1ControlSourcePermitAuthority(d1(input.path),
+    () => new Date('2026-09-14T00:00:00.000Z'), () => `permit-${++id}`);
+  const request = { activation, runId: 'run-a', stepId: 'observe', attemptId: 'attempt-a',
+    requestSha256: runtimeDigest('a'), tool: 'mcp:read', resource: 'resource:public' };
+  for (const key of Object.keys(activation) as (keyof typeof activation)[]) {
+    const altered: FrozenControlActivation = structuredClone(activation);
+    const old = altered[key];
+    Object.assign(altered, { [key]: Array.isArray(old) ? [...old, 'extra'] :
+      typeof old === 'number' ? old + 1 : `${old}-other` });
+    assert.equal(await authority.redeem({ ...request, activation: altered }), undefined, key);
+  }
+  assert.equal(await authority.redeem({ ...request, tool: 'mcp:write' }), undefined);
+  assert.equal(await authority.redeem({ ...request, resource: 'resource:private' }), undefined);
+  const permit = await authority.redeem(request);
+  assert.ok(permit);
+  assert.equal(await authority.redeem(request), undefined);
+  assert.equal(await authority.redeem({ ...request, requestSha256: runtimeDigest('b') }), undefined);
+  const competing = await Promise.all([
+    authority.redeem({ ...request, attemptId: 'competing' }),
+    authority.redeem({ ...request, attemptId: 'competing' })
+  ]);
+  assert.equal(competing.filter(Boolean).length, 1);
+  const runSql = (sql: string) => execFileSync('sqlite3', ['-bail', input.path], { input: sql, stdio: 'pipe' });
+  assert.throws(() => runSql("UPDATE customer_control_source_permits SET tool = 'other';"));
+  assert.throws(() => runSql('DELETE FROM customer_control_source_permits;'));
+  assert.throws(() => runSql('INSERT OR REPLACE INTO customer_control_source_permits SELECT * FROM customer_control_source_permits;'));
+  runSql("UPDATE customer_control_activations SET status='suspended' WHERE id='activation-a';");
+  assert.equal(await authority.redeem({ ...request, attemptId: 'attempt-b' }), undefined);
 });

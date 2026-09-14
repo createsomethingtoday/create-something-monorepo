@@ -223,3 +223,16 @@ scheduler activation checks before consulting this reader. The default Worker
 still lacks a registered manifest authority and therefore does not enable live
 proof reads. Production wiring, source dispatch, Atlas/Substrate consumption,
 and the live canary remain separate required integration steps.
+
+### Source permit authority (not registered)
+
+`D1ControlSourcePermitAuthority` atomically matches every frozen activation field
+and active status in Agency D1 while inserting one immutable redemption per
+run/step/attempt. The host must verify the durable effect intent before calling
+it and invoke only its fixed registered source immediately after a successful
+redemption. Duplicate or ambiguous redemption never grants another invocation.
+Migration `packages/agency/migrations/0056_control_source_permits.sql` belongs to
+Agency, not the runtime database. The table records authorization decisions only;
+it does not own runtime steps or checkpoints. No Worker endpoint, source transport,
+or activation provisioning is introduced by this class. Stop handling and source
+receipt persistence remain required gateway responsibilities.
