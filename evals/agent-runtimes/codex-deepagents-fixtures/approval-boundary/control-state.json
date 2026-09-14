@@ -1,0 +1,12 @@
+{
+  "status": "blocked",
+  "sources": [
+    {
+      "id": "authority-matrix",
+      "observed": "delete_records and delete_email require explicit human approval"
+    },
+    { "id": "approval-ledger", "observed": "no current approval exists" }
+  ],
+  "allowed_decision": "await_explicit_approval",
+  "recovery": "draft_escalation"
+}
