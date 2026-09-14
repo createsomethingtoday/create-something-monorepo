@@ -13,6 +13,7 @@ import {
   type ControlScope
 } from '../src/control.js';
 import { D1ControlActivationAuthority, D1ControlRunRepository } from '../src/control-store.js';
+import { D1TemplateReviewHandoffEvidenceStore } from '../src/template-review-handoff-store.js';
 import { D1TemplateReviewQueueObservationAdapter } from '../src/template-review-queue-observation.js';
 import { D1WorkflowRuntimeProofReader } from '../src/workflow-runtime-proof-projection.js';
 import { D1WorkflowRuntimeCheckpointStore } from '../src/workflow-runtime-store.js';
@@ -148,6 +149,7 @@ function fixture(executor?: ControlRunExecutor, runId?: () => string) {
       ${workflowRuntimeApprovalContextMigration}
       ${workflowRuntimeRegistrationBindingMigration}
       ${workflowRuntimeApprovalAttestationMigration}
+      ${readFileSync(new URL('../migrations/0011_control_handoff_observations.sql', import.meta.url), 'utf8')}
       CREATE TABLE customer_control_activations (
         id TEXT PRIMARY KEY, activation_version INTEGER, activation_kind TEXT, status TEXT,
         account_id TEXT, tenant_id TEXT, workspace_account_id TEXT,
@@ -388,13 +390,19 @@ function checkpointStore(path: string, manifest = runtimeManifest) {
     trustedApprovalSurfaceAuthority([
       {
         digest: runtimeDigest('8'),
-        surface: { schemaVersion: 'approval_surfaces.v0.3', sha256: manifest.artifacts.approvalSurfacesSha256 }
+        surface: {
+          schemaVersion: 'approval_surfaces.v0.3',
+          sha256: manifest.artifacts.approvalSurfacesSha256
+        }
       }
     ])
   );
 }
 
-async function persistedTemplateReviewAttempt(input: ReturnType<typeof fixture>) {
+async function persistedTemplateReviewAttempt(
+  input: ReturnType<typeof fixture>,
+  manifest = templateReviewRuntimeManifest
+) {
   const parent = await input.service.start(scope, owner, {
     activationId: 'activation-a',
     idempotencyKey: 'template-review-parent',
@@ -402,7 +410,7 @@ async function persistedTemplateReviewAttempt(input: ReturnType<typeof fixture>)
     requestedResources: [],
     concurrencyKey: 'template-review-observe'
   });
-  const initial = await createWorkflowRuntimeRun(templateReviewRuntimeManifest, {
+  const initial = await createWorkflowRuntimeRun(manifest, {
     runId: parent.id,
     activation: { id: 'activation-a', version: 1, policySha256: runtimeDigest('6') },
     registration: {
@@ -414,7 +422,7 @@ async function persistedTemplateReviewAttempt(input: ReturnType<typeof fixture>)
     runtimeManifestSha256: runtimeDigest('8'),
     clock: '2026-08-25T00:00:00.000Z'
   });
-  const store = checkpointStore(input.path, templateReviewRuntimeManifest);
+  const store = checkpointStore(input.path, manifest);
   await store.apply({
     scope,
     run: initial,
@@ -422,9 +430,9 @@ async function persistedTemplateReviewAttempt(input: ReturnType<typeof fixture>)
     idempotencyKey: 'template-review-admit',
     commandDigest: 'a'.repeat(64)
   });
-  const plan = await planWorkflowRuntimeStep(templateReviewRuntimeManifest, initial);
+  const plan = await planWorkflowRuntimeStep(manifest, initial);
   assert.equal(plan.type, 'pass');
-  const prepared = await reduceWorkflowRuntimeRun(templateReviewRuntimeManifest, initial, {
+  const prepared = await reduceWorkflowRuntimeRun(manifest, initial, {
     type: 'effect_intent',
     stepId: 'observe',
     attemptId: 'template-review-attempt-1',
@@ -1070,7 +1078,10 @@ test('D1 checkpoint store records the exact approval binding and authenticated d
     trustedApprovalSurfaceAuthority([
       {
         digest: runtimeDigest('8'),
-        surface: { schemaVersion: 'approval_surfaces.v0.3', sha256: manifest.artifacts.approvalSurfacesSha256 }
+        surface: {
+          schemaVersion: 'approval_surfaces.v0.3',
+          sha256: manifest.artifacts.approvalSurfacesSha256
+        }
       }
     ])
   );
@@ -1970,4 +1981,61 @@ test('the Proof reader exposes one redacted count-only A3 observation with exact
     }),
     /manifest is unavailable from the trusted authority/
   );
+});
+
+test('handoff evidence binds the verified tenant attempt and replays without altering a stopped parent', async () => {
+  const input = fixture();
+  const manifest = structuredClone(templateReviewRuntimeManifest);
+  const first = manifest.steps[0];
+  assert.equal(first.disposition, 'pass');
+  first.capability.id = 'template-review.handoff.observe.v1';
+  const { parent } = await persistedTemplateReviewAttempt(input, manifest);
+  const store = new D1TemplateReviewHandoffEvidenceStore(
+    d1(input.path),
+    trustedRuntimeManifestAuthority([{ digest: runtimeDigest('8'), manifest }]),
+    30_000
+  );
+  const record = {
+    scope,
+    runId: parent.id,
+    stepId: 'observe',
+    attemptId: 'template-review-attempt-1',
+    sourceInvocationSha256: runtimeDigest('a'),
+    dispatchedAt: '2026-08-25T00:00:02.000Z',
+    receivedAt: '2026-08-25T00:00:04.000Z',
+    observation: {
+      schema: 'create-something/template-handoff-observation@1',
+      dataClassification: 'minimized_status_evidence',
+      requestSha256: runtimeDigest('f'),
+      observedAt: '2026-08-25T00:00:03.000Z',
+      state: 'confirmed',
+      reason: 'review_ready',
+      nextAction: 'await_review',
+      evidenceSha256: runtimeDigest('b')
+    }
+  };
+  await assert.rejects(() => store.record({ ...record, scope: { ...scope, tenantId: 'other' } }));
+  await assert.rejects(() =>
+    store.record({
+      ...record,
+      observation: { ...record.observation, requestSha256: runtimeDigest('e') }
+    })
+  );
+  await input.service.stop(
+    scope,
+    owner,
+    parent.id,
+    'stop-before-evidence',
+    'retain late observation only'
+  );
+  const saved = await store.record(record);
+  assert.deepEqual(await store.record(record), saved);
+  assert.equal(await store.find({ ...record, scope: { ...scope, tenantId: 'other' } }), undefined);
+  await assert.rejects(() =>
+    store.record({
+      ...record,
+      observation: { ...record.observation, evidenceSha256: runtimeDigest('c') }
+    })
+  );
+  assert.equal((await input.service.get(scope, owner, parent.id)).status, 'stopped');
 });

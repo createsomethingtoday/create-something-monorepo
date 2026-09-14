@@ -94,6 +94,19 @@ results retain the same bounded count and source digests for reconciliation,
 but failure codes and verifier labels are constrained to safe machine
 identifiers.
 
+The separate handoff evidence store validates the source-owned
+`create-something/template-handoff-observation@1` contract against a verified
+`template-review.handoff.observe.v1` attempt. Its capability parameter digest
+must equal the source request digest. The host configures an observation age
+limit; this is never a deadline for submission processing. The store rejects raw
+fields and inconsistent classification/action pairs, preserves one immutable
+result per attempt, and permits identical readback after a stop without changing
+the checkpoint. It requires the existing trusted manifest/proof reader and
+retains only minimized facts and digests in migration `0011`.
+This evidence store is not an invocation permit, source transport, executor
+registration, or proof of the original submission-to-record correlation. Those
+remain required before production reconciliation can run.
+
 `D1WorkflowRuntimeProofReader` is the paired read-only database reader.
 Control owns the ledger that it reads. Future Substrate and Atlas views may
 display its result, but cannot change a run. The reader resolves the manifest
