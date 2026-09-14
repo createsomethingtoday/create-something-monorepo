@@ -38,6 +38,11 @@ const workflowRuntimeApprovalAttestationMigration = readFileSync(
   'utf8'
 );
 
+const handoffObservationMigration = readFileSync(
+  new URL('../migrations/0011_control_handoff_observations.sql', import.meta.url),
+  'utf8'
+);
+
 test('Control activation binding is the Agency-owned D1', () => {
   const runtimeConfig = readFileSync(new URL('../wrangler.jsonc', import.meta.url), 'utf8');
   const agencyConfig = readFileSync(
@@ -59,10 +64,8 @@ function database(includeApprovalAttestationMigration = true) {
   const path = join(mkdtempSync(join(tmpdir(), 'control-run-')), 'runtime.sqlite');
   execFileSync('sqlite3', [path], {
     input: `PRAGMA foreign_keys=ON;\n${migration}\n${workflowRuntimeMigration}\n${workflowRuntimeEffectAmbiguityMigration}\n${workflowRuntimeDispatchMigration}\n${workflowRuntimeProofMigration}\n${workflowRuntimeApprovalContextMigration}\n${workflowRuntimeRegistrationBindingMigration}${
-      includeApprovalAttestationMigration
-        ? `\n${workflowRuntimeApprovalAttestationMigration}`
-        : ''
-    }`
+      includeApprovalAttestationMigration ? `\n${workflowRuntimeApprovalAttestationMigration}` : ''
+    }\n${handoffObservationMigration}`
   });
   return path;
 }
@@ -788,7 +791,10 @@ test('registration-binding migration binds an approval context to its parent, wa
   }
   sql(path, approvalSql('approval-valid', context));
   sql(path, workflowRuntimeApprovalAttestationMigration);
-  assert.equal(sql(path, 'SELECT COUNT(*) FROM control_workflow_runtime_approval_attestations;'), '0');
+  assert.equal(
+    sql(path, 'SELECT COUNT(*) FROM control_workflow_runtime_approval_attestations;'),
+    '0'
+  );
   sql(
     path,
     `UPDATE control_workflow_runtime_approvals
@@ -796,7 +802,10 @@ test('registration-binding migration binds an approval context to its parent, wa
      WHERE approval_id = 'approval-valid';`
   );
   assert.equal(
-    sql(path, "SELECT decision || ':' || decided_at FROM control_workflow_runtime_approvals WHERE approval_id = 'approval-valid';"),
+    sql(
+      path,
+      "SELECT decision || ':' || decided_at FROM control_workflow_runtime_approvals WHERE approval_id = 'approval-valid';"
+    ),
     'approved:2026-07-19T00:01:00.000Z'
   );
   const forgedContexts: Array<[string, object]> = [
