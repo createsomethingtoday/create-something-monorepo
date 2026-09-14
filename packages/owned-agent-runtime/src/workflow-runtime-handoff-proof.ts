@@ -5,7 +5,8 @@ import {
   type WorkflowRuntimeProofProjection
 } from './workflow-runtime-proof-projection.js';
 import {
-  D1TemplateReviewHandoffEvidenceStore,
+  parseTemplateReviewHandoffEvidence,
+  type TemplateReviewHandoffEvidenceRow,
   type TemplateReviewHandoffEvidence
 } from './template-review-handoff-store.js';
 
@@ -24,14 +25,12 @@ export interface WorkflowRuntimeHandoffProofReader {
 /** A read-only projection over the same Control ledger, not another state owner. */
 export class D1WorkflowRuntimeHandoffProofReader implements WorkflowRuntimeHandoffProofReader {
   private readonly runtime: D1WorkflowRuntimeProofReader;
-  private readonly evidence: D1TemplateReviewHandoffEvidenceStore;
   constructor(
     private readonly database: D1Database,
     manifests: WorkflowRuntimeManifestAuthority,
-    maximumAgeMs: number
+    _maximumAgeMs: number
   ) {
     this.runtime = new D1WorkflowRuntimeProofReader(database, manifests);
-    this.evidence = new D1TemplateReviewHandoffEvidenceStore(database, manifests, maximumAgeMs);
   }
   private async read(input: {
     scope: WorkflowRuntimeScope;
@@ -39,27 +38,31 @@ export class D1WorkflowRuntimeHandoffProofReader implements WorkflowRuntimeHando
   }): Promise<WorkflowRuntimeHandoffProof | undefined> {
     const runtime = await this.runtime.find(input);
     if (!runtime) return undefined;
+    const rows = await this.database.prepare(`
+      SELECT evidence.* FROM control_workflow_runtime_handoff_observations evidence
+      JOIN control_runs parent ON parent.id = evidence.run_id
+      WHERE evidence.run_id = ?1 AND parent.account_id = ?2 AND parent.tenant_id = ?3
+        AND parent.workspace_account_id = ?4
+      ORDER BY evidence.step_id, evidence.attempt_id
+    `).bind(input.runId, input.scope.accountId, input.scope.tenantId,
+      input.scope.workspaceAccountId).all<TemplateReviewHandoffEvidenceRow>();
+    const byAttempt = new Map(rows.results.map(row => [JSON.stringify([row.step_id, row.attempt_id]), row]));
+    const intents = new Set(runtime.receipts.filter(receipt => receipt.eventType === 'effect_intent')
+      .map(receipt => JSON.stringify([receipt.stepId, receipt.attemptId])));
     const observations: TemplateReviewHandoffEvidence[] = [];
     for (const step of runtime.steps) {
       for (const attempt of step.attempts) {
         if (attempt.capabilityId !== 'template-review.handoff.observe.v1') continue;
-        const observation = await this.evidence.find({
-          ...input,
-          stepId: step.id,
-          attemptId: attempt.id
-        });
-        if (observation) observations.push(observation);
-        else if (attempt.status === 'succeeded')
-          throw new Error('handoff_success_without_evidence');
+        const key = JSON.stringify([step.id, attempt.id]);
+        const row = byAttempt.get(key);
+        if (row) {
+          if (!intents.has(key)) throw new Error('handoff_evidence_attempt_mismatch');
+          observations.push(parseTemplateReviewHandoffEvidence(row, attempt));
+          byAttempt.delete(key);
+        } else if (attempt.status === 'succeeded') throw new Error('handoff_success_without_evidence');
       }
     }
-    const count = await this.database
-      .prepare(
-        `SELECT count(*) AS count FROM control_workflow_runtime_handoff_observations WHERE run_id=?1`
-      )
-      .bind(input.runId)
-      .first<{ count: number }>();
-    if (count?.count !== observations.length) throw new Error('handoff_evidence_attempt_mismatch');
+    if (byAttempt.size) throw new Error('handoff_evidence_attempt_mismatch');
     return {
       schema: 'create-something/control-reconciliation-proof@1',
       runtime,

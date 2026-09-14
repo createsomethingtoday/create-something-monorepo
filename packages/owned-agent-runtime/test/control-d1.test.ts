@@ -2038,13 +2038,21 @@ test('handoff evidence binds the verified tenant attempt and replays without alt
   );
   assert.deepEqual(await stricter.find(record), saved);
   assert.deepEqual(await stricter.record(record), saved);
+  const proofDatabase = d1(input.path);
+  const prepareProofQuery = proofDatabase.prepare.bind(proofDatabase);
+  let completeProofReads = 0;
+  proofDatabase.prepare = (sql: string) => {
+    if (sql.includes('SELECT runtime.run_json')) completeProofReads++;
+    return prepareProofQuery(sql);
+  };
   const proofReader = new D1WorkflowRuntimeHandoffProofReader(
-    d1(input.path),
+    proofDatabase,
     trustedRuntimeManifestAuthority([{ digest: runtimeDigest('8'), manifest }]),
     30_000
   );
   const proof = await proofReader.find({ scope, runId: parent.id });
   assert.deepEqual(proof?.handoffObservations, [saved]);
+  assert.equal(completeProofReads, 2, 'evidence reads must reuse the two verified runtime projections');
   assert.equal(proof?.runtime.run.id, parent.id);
   assert.equal(
     await proofReader.find({ scope: { ...scope, tenantId: 'other' }, runId: parent.id }),
@@ -2107,13 +2115,13 @@ test('reconciliation proof rejects a source dispatch change without a run versio
   let inserted = false;
   database.prepare = (sql: string) => {
     const statement = originalPrepare(sql);
-    if (!sql.includes('SELECT count(*) AS count')) return statement;
+    if (!sql.includes('SELECT evidence.*')) return statement;
     return {
       bind(...values: unknown[]) {
         const bound = statement.bind(...values);
         return {
-          async first() {
-            const result = await bound.first();
+          async all() {
+            const result = await bound.all();
             if (!inserted) {
               inserted = true;
               const preparation = await adapter.prepare({
