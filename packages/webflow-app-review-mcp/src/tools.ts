@@ -450,7 +450,7 @@ export function registerTools(
 
   server.tool(
     'app_review_list_versions',
-    'List all submission versions for an app asset.',
+    'List all submission versions for an app asset, including separate reviewFeedback and rejectionFeedback. Empty reviewFeedback does not mean rejection findings are absent.',
     {
       asset_id: z.string().min(1),
       limit: z.number().int().min(1).max(500).optional(),
@@ -469,7 +469,7 @@ export function registerTools(
 
   server.tool(
     'app_review_get_version',
-    'Get one version record by version_id (apps-only scoped).',
+    'Get one version record by version_id (apps-only scoped), including separate reviewFeedback and rejectionFeedback. Check both fields for findings.',
     {
       version_id: z.string().min(1),
     },

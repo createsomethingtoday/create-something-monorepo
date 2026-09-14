@@ -58,6 +58,7 @@ export const FIELD_IDS = {
     rejectionReason: 'fldC7Hfkd0TlLtbcy',
     reviewer: 'fldoZScwdH94PVVQE',
     reviewFeedback: 'fldHxIGHMHn4xb9U4',
+    rejectionFeedback: 'fldXIdcnOQXLVrsuN',
     submissionDatetime: 'fldWTKKh989L4lTTB',
     submissionDatetimeOverride: 'fldtAJZzh7oVHFmkF',
     daysInCurrentStage: 'fldbVdznI0sOQrEnX',
@@ -516,6 +517,7 @@ export const APP_REVIEW_FIELD_MAP = {
     },
     readOnly: {
       reviewer: FIELD_IDS.versions.reviewer,
+      rejection_feedback: FIELD_IDS.versions.rejectionFeedback,
       submission_datetime: FIELD_IDS.versions.submissionDatetime,
       days_in_current_stage: FIELD_IDS.versions.daysInCurrentStage,
       version_number: FIELD_IDS.versions.versionNumber,

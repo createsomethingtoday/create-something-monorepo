@@ -243,3 +243,7 @@ pnpm exec wrangler secret put MCP_API_KEY
 ```
 
 Distribute the new token to the app review team and invalidate prior copies operationally.
+
+### Reading rejection findings
+
+Version reads, version history, and review context expose `reviewFeedback` (📝Review Feedback) and `rejectionFeedback` (🚩Rejection Feedback) separately. An empty `reviewFeedback` does not mean no findings exist: rejected versions may store their findings only in `rejectionFeedback`. The field map advertises `rejection_feedback` as read-only; existing feedback writes continue to target 📝Review Feedback.
