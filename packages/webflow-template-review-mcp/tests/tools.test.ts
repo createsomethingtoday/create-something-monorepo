@@ -28,6 +28,11 @@ function createServerHarness() {
   const annotations = new Map<string, Record<string, unknown>>();
 
   const server = {
+    registerTool(name: string, config: { annotations?: Record<string, unknown> }, handler: ToolHandler) {
+      names.push(name);
+      handlers.set(name, handler);
+      if (config.annotations) annotations.set(name, config.annotations);
+    },
     tool(name: string, ...args: unknown[]) {
       names.push(name);
       const handler = args.at(-1) as ToolHandler;
