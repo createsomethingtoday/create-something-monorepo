@@ -28,6 +28,11 @@ function createServerHarness() {
   const annotations = new Map<string, Record<string, unknown>>();
 
   const server = {
+    registerTool(name: string, config: { annotations?: Record<string, unknown> }, handler: ToolHandler) {
+      names.push(name);
+      handlers.set(name, handler);
+      if (config.annotations) annotations.set(name, config.annotations);
+    },
     tool(name: string, ...args: unknown[]) {
       names.push(name);
       const handler = args.at(-1) as ToolHandler;
@@ -1950,4 +1955,33 @@ test('set_featured_flag is restricted to featured-batch coordinators', async () 
   const allowedPayload = parsePayload(allowed);
   assert.equal(allowedPayload.ok, true);
   assert.equal(clientCalled, true);
+});
+
+test('handoff observation exposes minimized evidence and stays outside queue-only discovery', async () => {
+  const {server, handlers, annotations} = createServerHarness();
+  const client = {
+    getAssetById: async () => ({assetId: 'recAAAAAAAAAAAAAA', templateName: 'private'}),
+    getVersionById: async () => ({versionId: 'recBBBBBBBBBBBBBB', assetId: 'recAAAAAAAAAAAAAA', reviewStatus: '🆕Ready for Review', rawFields: {email: 'private@example.com'}}),
+  } as unknown as AirtableClient;
+  registerTools(server, () => client, () => reviewer, {}, {allowWrites: false});
+  const handler = handlers.get('template_review_observe_handoff');
+  assert.ok(handler);
+  const result = await handler({assetId: 'recAAAAAAAAAAAAAA', versionId: 'recBBBBBBBBBBBBBB'});
+  assert.equal(parsePayload(result).data?.state, 'confirmed');
+  assert.equal(JSON.stringify(result).includes('private'), false);
+  assert.equal(annotations.get('template_review_observe_handoff')?.readOnlyHint, true);
+  const restricted = createServerHarness();
+  registerTools(restricted.server, () => client, () => reviewer, {}, {allowWrites: false, allowedToolNames: new Set(['template_review_list_queue'])});
+  assert.equal(restricted.handlers.has('template_review_observe_handoff'), false);
+});
+
+test('handoff source errors do not leak raw upstream messages or record identifiers', async () => {
+  const {server, handlers} = createServerHarness();
+  registerTools(server, () => ({getAssetById: async () => {throw new Error('secret record recAAAAAAAAAAAAAA');}, getVersionById: async () => null}) as unknown as AirtableClient);
+  const handler = handlers.get('template_review_observe_handoff');
+  assert.ok(handler);
+  const result = await handler({assetId: 'recAAAAAAAAAAAAAA', versionId: 'recBBBBBBBBBBBBBB'});
+  assert.equal(result.isError, true);
+  assert.equal(JSON.stringify(result).includes('secret'), false);
+  assert.equal(JSON.stringify(result).includes('recAAAAAAAAAAAAAA'), false);
 });
