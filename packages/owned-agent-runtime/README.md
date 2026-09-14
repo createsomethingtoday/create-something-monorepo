@@ -16,11 +16,13 @@ Authenticated Control transports share one service contract:
 
 - `POST /v1/control/runs` queues a run against an exact active activation.
 - `GET /v1/control/runs/:runId` reads one run inside the verified tenant scope.
+- `GET /v1/control/runs/:runId/proof` reads verified runtime and handoff evidence
+  through a configured trusted proof reader; missing configuration fails closed.
 - `POST /v1/control/runs/:runId/actions` applies approval, rejection, stop,
   cancellation, retry, recovery start/completion, or termination.
 - `POST /v1/control/runs/:runId/process` is scheduler-only.
 - `POST /mcp` exposes the same customer operations as `control_run_get`,
-  `control_run_start`, and `control_run_action` tools.
+  `control_run_start`, `control_run_proof`, and `control_run_action` tools.
 
 Control requests require a first-party Identity JWT with the exact configured
 issuer and audience plus signed `account_id`, `tenant_id`,
@@ -210,3 +212,14 @@ it uses the workspace compiler package. Build workflow-runtime first.
 | Validation surfaces | Typed runtime contracts, immutable receipts, signed compiler inventory, checkpoint verifier, and source readback |
 | UI validation path | No UI in this package. Verify consumer consoles in their owning browser surface. |
 | Escalation rule | Stop before expanded source access, customer activation, unregistered executors, source writes, or an unverified receipt. |
+
+## Reconciliation proof projection
+
+`D1WorkflowRuntimeHandoffProofReader` combines the existing verified runtime
+projection with immutable handoff observations. It rejects orphan observations,
+succeeded handoff attempts without evidence, and runtime version changes during
+a read. REST and MCP apply the existing Identity, admission, run ownership, and
+scheduler activation checks before consulting this reader. The default Worker
+still lacks a registered manifest authority and therefore does not enable live
+proof reads. Production wiring, source dispatch, Atlas/Substrate consumption,
+and the live canary remain separate required integration steps.
