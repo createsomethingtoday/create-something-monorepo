@@ -99,6 +99,7 @@ const VERSION_FIELD_IDS = [
   FIELD_IDS.versions.submissionDatetimeOverride,
   FIELD_IDS.versions.rejectionReason,
   FIELD_IDS.versions.reviewFeedback,
+  FIELD_IDS.versions.rejectionFeedback,
   FIELD_IDS.versions.daysInCurrentStage,
   FIELD_IDS.versions.assetLink,
   FIELD_IDS.versions.assetRecordIdRollup,
@@ -260,6 +261,7 @@ export interface AppReviewVersion {
   submissionDatetimeOverride?: string;
   rejectionReason?: string;
   reviewFeedback?: string;
+  rejectionFeedback?: string;
   daysInCurrentStage?: number;
   exceptionStatus?: string;
   exceptionType?: string;
@@ -361,6 +363,7 @@ export interface AppReviewContext {
   reviewType?: string;
   rejectionReason?: string;
   reviewFeedback?: string;
+  rejectionFeedback?: string;
   isAssigned: boolean;
   asset?: AppReviewAsset | null;
   version: AppReviewVersion;
@@ -691,6 +694,9 @@ function mapVersionRecord(record: AirtableRecord): AppReviewVersion {
     submissionDatetimeOverride: firstString(fields[FIELD_IDS.versions.submissionDatetimeOverride]),
     rejectionReason: firstString(fields[FIELD_IDS.versions.rejectionReason]),
     reviewFeedback: firstString(fields[FIELD_IDS.versions.reviewFeedback]),
+    rejectionFeedback: typeof fields[FIELD_IDS.versions.rejectionFeedback] === 'string'
+      ? fields[FIELD_IDS.versions.rejectionFeedback] as string
+      : undefined,
     daysInCurrentStage: toNumberValue(fields[FIELD_IDS.versions.daysInCurrentStage]),
     exceptionStatus: firstString(fields[FIELD_IDS.versions.exceptionStatus]),
     exceptionType: firstString(fields[FIELD_IDS.versions.exceptionType]),
@@ -1684,6 +1690,7 @@ export class AirtableClient {
       reviewType: version.reviewType,
       rejectionReason: version.rejectionReason,
       reviewFeedback: version.reviewFeedback,
+      rejectionFeedback: version.rejectionFeedback,
       isAssigned: Boolean(version.reviewer?.id),
       asset,
       version,
