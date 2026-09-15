@@ -1,3 +1,4 @@
+import { composeTemplateReviewControl } from '../src/template-review-control-composition.js';
 import { createControlRunWorker } from '../src/control-worker.js';
 import { D1WorkflowRuntimeWakeReconciler } from '../src/workflow-runtime-wake-reconciler.js';
 import { WorkflowRuntimeQueue, type WorkflowRuntimeWake } from '../src/workflow-runtime-queue.js';
@@ -271,7 +272,7 @@ test('admits a real signed compiler release and rejects mismatched registration,
       let earlyDelivery = true;
       let sourceMode: 'healthy' | 'unknown' | 'late-stop' = 'healthy';
       let stopDuringSource: (() => Promise<void>) | undefined;
-      const host = await createTemplateReviewHost({ runtimeDb: database, agencyDb: database, activation, policy,
+      const hostInput: Parameters<typeof createTemplateReviewHost>[0] = { runtimeDb: database, agencyDb: database, activation, policy,
         artifacts: reader, parameters: { assetId: sourceInput.assetId, versionId: sourceInput.versionId },
         observationStep: { stepId: signedStep.id, capabilityId: signedStep.capability.id,
           capabilityParameterSha256: signedStep.capability.parameterDigest },
@@ -287,7 +288,8 @@ test('admits a real signed compiler release and rejects mismatched registration,
           context: { scope: proofScope, actor: actor ?? { subject: 'fixture-scheduler', role: 'control_scheduler' },
             credentialSource: 'bearer', ...(actor ? {} : { schedulerActivationId: activation.id }) },
           activationId: activation.id, approvalPolicies: { 'account-owner': ['account_owner'] }
-        }), queue: { async enqueue(message) { await scheduledQueue.enqueue(message); } } });
+        }), queue: { async enqueue(message) { await scheduledQueue.enqueue(message); } } };
+      const host = await createTemplateReviewHost(hostInput);
       assert.equal(host.executor.supports({ ...activation, contractSha256: 'f'.repeat(64) }), false);
       let executionId = 0;
       const executingControl = createControlRunService({ repository: new D1ControlRunRepository(database),
@@ -349,6 +351,36 @@ test('admits a real signed compiler release and rejects mismatched registration,
       for (const wake of wakes) assert.equal(await scheduledQueue.consume(wake), 'ack');
       assert.equal(sourceCalls, 1, 'signed execution replay never calls the source twice');
       assert.equal(await reconciler.reconcile(), 0, 'terminal runs are not republished');
+      const composedWakes: WorkflowRuntimeWake[] = [];
+      const ownerActor = { subject: 'fixture-operator', role: 'account_owner' as const };
+      const compositionInput = { ...hostInput, approvalPolicies: { 'account-owner': ['account_owner' as const] },
+        async send(message: WorkflowRuntimeWake) { composedWakes.push(message); } };
+      const operatorComposition = await composeTemplateReviewControl({ ...compositionInput,
+        context: { scope: proofScope, actor: ownerActor, credentialSource: 'bearer' } });
+      await assert.rejects(operatorComposition.consume({}), /activation-bound scheduler/);
+      await assert.rejects(operatorComposition.reconcile(), /activation-bound scheduler/);
+      const schedulerComposition = await composeTemplateReviewControl({ ...compositionInput,
+        context: { scope: proofScope, actor: { subject: 'fixture-scheduler', role: 'control_scheduler' },
+          credentialSource: 'bearer', schedulerActivationId: activation.id } });
+      const composedRun = await operatorComposition.service.start(proofScope, ownerActor,
+        { activationId: activation.id, idempotencyKey: 'composition-start', concurrencyKey: 'composition',
+          requestedTools: activation.allowedTools, requestedResources: activation.allowedResources });
+      const beforeComposition = sourceCalls;
+      assert.equal(await schedulerComposition.reconcile(), 1);
+      assert.equal(await schedulerComposition.consume(composedWakes.at(-1)), 'ack');
+      assert.equal(sourceCalls, beforeComposition);
+      const composedCheckpoint = (await checkpoints.find(proofScope, composedRun.id))!;
+      const composedApproval = composedCheckpoint.steps.find(step => step.id === 'authorize')!.approval!;
+      await operatorComposition.service.approve(proofScope, ownerActor, composedRun.id,
+        'composition-approve', 'explicit observation approval', { step_id: 'authorize',
+          approval_id: composedApproval.id, binding_sha256: composedApproval.bindingSha256,
+          checkpoint_version: composedCheckpoint.version });
+      assert.equal(await schedulerComposition.consume(composedWakes.at(-1)), 'ack');
+      const composedProof = await operatorComposition.proofs.find({ scope: proofScope, runId: composedRun.id });
+      assert.equal(composedProof?.runtime.run.status, 'completed');
+      assert.equal(sourceCalls, beforeComposition + 1);
+      for (const wake of composedWakes) assert.equal(await schedulerComposition.consume(wake), 'ack');
+      assert.equal(sourceCalls, beforeComposition + 1);
       earlyDelivery = true;
       for (const mode of ['unknown', 'late-stop'] as const) {
         sourceMode = mode;

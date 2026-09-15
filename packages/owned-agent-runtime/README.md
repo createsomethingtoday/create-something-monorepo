@@ -379,3 +379,33 @@ network/tool calls, and sanitizes errors. The source result envelope is decoded
 before the gateway validates observation evidence. It neither provisions OAuth
 nor stores tokens. Hosted credential binding and authenticated production
 invocation remain separate verification requirements.
+
+### Internal Marketplace deployment bindings
+
+The Worker entry point composes the signed Marketplace host only when
+`TEMPLATE_REVIEW_DEPLOYMENT` is configured. This operator-owned JSON uses
+`template-review-deployment@1` and the `TemplateReviewDeployment` contract in
+`src/template-review-worker.ts`: exact frozen activation, full artifact admission
+policy, fixed source pair and compiled observation step, evidence age/skew bounds,
+and explicit approval-policy role mapping. Request bodies cannot supply these
+values. Registration, signature and frozen activation are independently checked.
+
+Enablement also requires `WORKFLOW_ARTIFACTS` (R2), `WORKFLOW_RUNTIME_QUEUE`
+(Queue producer and this Worker's consumer), `TEMPLATE_REVIEW_SOURCE_TOKEN`
+(secret), and `CONTROL_SCHEDULER_TOKEN` (secret). The scheduler token must be an
+unexpired first-party JWT for this resource with the exact deployment scope and
+activation. The source token must independently authorize the fixed review MCP
+resource. Secret bindings do not bypass either resource's authorization.
+
+The scheduled handler rebuilds lost wakes from queued D1 state. Configure its
+cron trigger as part of the reviewed production release, together with queue
+retry/dead-letter settings and token renewal ownership. The queue consumer
+re-verifies scheduler Identity on every batch and explicitly retries failed
+messages. An operator's HTTP approval context cannot execute scheduled work.
+Expired credentials leave work pending; ambiguous source attempts remain blocked
+from automatic redispatch.
+
+These bindings are intentionally absent from the shared Wrangler configuration
+until the exact internal release and source credentials are provisioned. Their
+presence alone does not establish production acceptance: retain migration,
+activation, source observation, recovery and authenticated operator receipts.

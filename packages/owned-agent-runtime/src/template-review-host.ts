@@ -109,6 +109,6 @@ export async function createTemplateReviewHost(input: {
       throw new Error('runtime_approval_scope_mismatch');
     return (await resolve(decision.actor)).host;
   }, input.clock);
-  return { executor, runtimeApprovals,
+  return { executor, runtimeApprovals, checkpoints: storage,
     proofs: new D1WorkflowRuntimeHandoffProofReader(input.runtimeDb, manifests, input.maximumAgeMs, 'verified-build-v2', true) };
 }
