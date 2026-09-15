@@ -26,5 +26,9 @@ let package = Package(
             name: "WorkWaySpatialContractVerifier",
             dependencies: ["WorkWaySpatialContract"]
         ),
+        .testTarget(
+            name: "WorkWaySpatialContractTests",
+            dependencies: ["WorkWaySpatialContract"]
+        ),
     ]
 )
