@@ -36,14 +36,19 @@ export interface BuildReleaseVerifierReference {
 	status: BuildReleaseVerifierStatus;
 }
 
-export type BuildReleaseArtifactSet = Record<BuildReleaseArtifactName, BuildReleaseArtifactReference> & { runtime_binding?: BuildReleaseArtifactReference };
+type LegacyBuildArtifacts = Record<BuildReleaseArtifactName, BuildReleaseArtifactReference> & { runtime_binding?: never };
+type RuntimeBuildArtifacts = Record<BuildReleaseArtifactName, BuildReleaseArtifactReference> & { runtime_binding: BuildReleaseArtifactReference };
+export type BuildReleaseArtifactSet = LegacyBuildArtifacts | RuntimeBuildArtifacts;
 
 function artifactNames(artifacts: BuildReleaseArtifactSet): Array<BuildReleaseArtifactName | 'runtime_binding'> {
  return artifacts.runtime_binding === undefined ? [...BUILD_RELEASE_ARTIFACTS] : [...BUILD_RELEASE_ARTIFACTS, 'runtime_binding'];
 }
 
-export interface BuildReleaseManifest {
-	schema: typeof BUILD_RELEASE_SCHEMA | typeof BUILD_RUNTIME_RELEASE_SCHEMA;
+export type BuildReleaseManifest = BuildReleaseManifestBase & (
+  | {schema: typeof BUILD_RELEASE_SCHEMA; artifacts: LegacyBuildArtifacts}
+  | {schema: typeof BUILD_RUNTIME_RELEASE_SCHEMA; artifacts: RuntimeBuildArtifacts}
+);
+interface BuildReleaseManifestBase {
 	releaseId: string;
 	createdAt: string;
 	handoff: {
@@ -55,7 +60,6 @@ export interface BuildReleaseManifest {
 		accountId: string;
 		workspaceAccountId: string;
 	};
-	artifacts: BuildReleaseArtifactSet;
 	verification: {
 		staging: BuildReleaseVerifierReference;
 		uat: BuildReleaseVerifierReference;
@@ -453,8 +457,14 @@ export function parseBuildReleaseManifest(input: unknown): BuildReleaseManifest 
 		issues,
 	);
 
+	const schema = literalAt(root.schema, '$.schema', [BUILD_RELEASE_SCHEMA, BUILD_RUNTIME_RELEASE_SCHEMA], issues);
+	const legacyArtifacts = Object.fromEntries(BUILD_RELEASE_ARTIFACTS.map(name =>
+      [name, parseArtifact(artifacts[name], `$.artifacts.${name}`, issues)]
+    )) as Record<BuildReleaseArtifactName, BuildReleaseArtifactReference>;
 	const manifest: BuildReleaseManifest = {
-		schema: literalAt(root.schema, '$.schema', [BUILD_RELEASE_SCHEMA, BUILD_RUNTIME_RELEASE_SCHEMA], issues),
+      ...(schema === BUILD_RUNTIME_RELEASE_SCHEMA
+        ? {schema, artifacts:{...legacyArtifacts, runtime_binding:parseArtifact(artifacts.runtime_binding, '$.artifacts.runtime_binding', issues)}}
+        : {schema, artifacts:legacyArtifacts}),
 		releaseId: stringAt(root.releaseId, '$.releaseId', issues),
 		createdAt: isoTimestampAt(root.createdAt, '$.createdAt', issues),
 		handoff: {
@@ -475,12 +485,6 @@ export function parseBuildReleaseManifest(input: unknown): BuildReleaseManifest 
 				issues,
 			),
 		},
-		artifacts: Object.fromEntries(
-			names.map((name) => [
-				name,
-				parseArtifact(artifacts[name], `$.artifacts.${name}`, issues),
-			]),
-		) as BuildReleaseArtifactSet,
 		verification: {
 			staging: parseVerifierReference(verification.staging, '$.verification.staging', issues),
 			uat: parseVerifierReference(verification.uat, '$.verification.uat', issues),
