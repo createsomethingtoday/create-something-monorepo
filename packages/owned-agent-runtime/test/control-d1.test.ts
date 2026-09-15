@@ -2202,6 +2202,6 @@ test('source permits preserve authorized URI syntax and 300-character resource n
   const activation = await activeControlActivationAuthority(input.path).findActive(scope, 'activation-a');
   assert.ok(activation);
   const authority = new D1ControlSourcePermitAuthority(d1(input.path));
-  assert.ok(await authority.redeem({ activation, runId: 'run-a', stepId: 'step-a',
-    attemptId: 'attempt-a', requestSha256: runtimeDigest('a'), tool, resource }));
+  assert.ok(await authority.redeem({ activation, runId: 'run@'.padEnd(160, 'r'), stepId: 'step @'.padEnd(160, 's'),
+    attemptId: 'attempt@1'.padEnd(240, 'a'), requestSha256: runtimeDigest('a'), tool, resource }));
 });
