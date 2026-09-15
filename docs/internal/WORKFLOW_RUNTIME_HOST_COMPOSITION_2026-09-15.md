@@ -30,6 +30,19 @@ return completed merely because a checkpoint was admitted or a step was queued.
 
 ## Proof obligations
 
+The local `driveTemplateReviewRuntime` adapter now advances an admitted checkpoint
+inside a claimed Control operation. It permits one declared handoff observation,
+persists intent before gateway dispatch, and requires confirmed stored evidence
+and a matching success receipt before returning completion. Existing running
+attempts require reconciliation; they are not dispatched by a resumed driver.
+Its real Control/D1 test covers healthy completion, unknown source outcome,
+source discrepancy and operator stop during dispatch. This is a local legacy
+fixture test, not signed v2 hosted composition or live source proof. The HTTP wait/approval/resume test now checks missing, mismatched and stale
+decisions, exact HTTP/MCP replay and one observation after approval. The
+production factory and signed v2 end-to-end composition remain required. The factory
+must supply v2 storage/gateway, verified registration, authenticated scheduler,
+and the owning receipt sink; test no-op ports must not become production defaults.
+
 An integration test must drive real Control process and D1 checkpoint storage,
 not call the gateway alone: signed accepted Build admission, persisted wait,
 exact approval/resume, single observation, terminal parent/runtime agreement,
@@ -39,12 +52,16 @@ production invocation and matching API/MCP/Substrate/Atlas readbacks.
 
 This document does not authorize or claim production activation or deployment.
 
-## Approval transport integration still required
+## Bound approval transport
 
-`control-worker.ts` delegates approval to `service.approve`, which currently
-requeues the parent and clears `pendingApprovalKind`. It does not dispatch a
-`ZeroWriteWorkflowRuntimeHost.transition` approval event. Production composition
-must carry and verify the exact runtime approval ID, binding digest, step and
-checkpoint version using the authenticated operator identity before resuming.
-A parent approval receipt alone must never synthesize a step approval. Test the
-real action route with stale and mismatched bindings as well as successful resume.
+HTTP and MCP approve/reject actions accept an optional strict `runtime_approval`
+tuple: step ID, approval ID, binding digest and checkpoint version. Control
+requires that tuple and a configured authority for `workflow-runtime:` waits;
+ordinary parent approval cannot requeue them. The tuple participates in the
+parent command digest. The authority persists the authenticated runtime decision
+before Control changes the parent, so a parent-write interruption can replay the
+exact step decision. Parent optimistic concurrency preserves a concurrent stop.
+
+The production resolver must supply the host for the exact registered release,
+v2 storage and authenticated actor/role. Local tests use injected Identity;
+this does not establish a live operator session or activate an executor.
