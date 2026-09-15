@@ -275,3 +275,10 @@ one query. It shares the exhaustive activation-column mapping with source
 permits and returns a frozen registration value. Each new claim must repeat
 lookup and current signer-policy checks; this read is not a source permit and
 does not implement the verified Build registration writer or host wiring.
+
+Agency runtime lookup requires registration version 2 and returns the accepted
+Build manifest, artifact-set, and binding digests separately from the compiler
+inventory. It matches the complete frozen activation and rejects suspension.
+Consumers must preserve these identities in the versioned Control binding;
+lookup alone is not signature verification or an execution permit. The draft
+registry writer and Control migration remain required before hosted use.

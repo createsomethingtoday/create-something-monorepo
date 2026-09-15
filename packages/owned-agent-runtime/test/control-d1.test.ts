@@ -2242,16 +2242,21 @@ test('runtime registration lookup requires exact current frozen activation autho
   const reader = new D1WorkflowArtifactRegistrationReader(d1(input.path));
   assert.equal(await reader.find(activation),undefined);
   execFileSync('sqlite3',[input.path], {input:`INSERT INTO customer_control_runtime_registrations
-    (activation_id,activation_version,account_id,tenant_id,workspace_account_id,build_release_id,contract_sha256,runtime_policy_sha256,
+    (registration_version,build_manifest_sha256,build_artifact_set_sha256,binding_sha256,activation_id,activation_version,account_id,tenant_id,workspace_account_id,build_release_id,contract_sha256,runtime_policy_sha256,
     workflow_id,workflow_version,compiler_version,runtime_manifest_schema,definition_hash,artifact_manifest_sha256,runtime_manifest_sha256,
     attestation_public_key_fingerprint,attestation_key_id,artifact_prefix,verified_by,verified_at)
-    SELECT id,activation_version,account_id,tenant_id,workspace_account_id,build_release_id,contract_sha256,policy_sha256,
-    'marketplace','1','compiler-v1','workflow_runtime_manifest.v0.2','sha256:${'a'.repeat(64)}','sha256:' || build_manifest_sha256,'sha256:${'c'.repeat(64)}',
-    'sha256:${'d'.repeat(64)}','test','workflow-artifacts/' || build_manifest_sha256 || '/','operator','2026-09-15T00:00:00.000Z'
+    SELECT 2,build_manifest_sha256,build_artifact_set_sha256,'sha256:${'e'.repeat(64)}',id,activation_version,account_id,tenant_id,workspace_account_id,build_release_id,contract_sha256,policy_sha256,
+    'marketplace','1','compiler-v1','workflow_runtime_manifest.v0.2','sha256:${'a'.repeat(64)}','sha256:${'b'.repeat(64)}','sha256:${'c'.repeat(64)}',
+    'sha256:${'d'.repeat(64)}','test','workflow-artifacts/${'b'.repeat(64)}/','operator','2026-09-15T00:00:00.000Z'
     FROM customer_control_activations WHERE id='activation-a';`});
   const registered = await reader.find(activation);
   assert.equal(registered?.workflowId,'marketplace');
-  assert.equal(registered?.artifactManifestSha256,'sha256:'+activation.buildManifestSha256);
+  assert.equal(registered?.artifactManifestSha256,'sha256:'+'b'.repeat(64));
+  assert.notEqual(registered?.artifactManifestSha256,'sha256:'+activation.buildManifestSha256);
+  assert.equal(registered?.registrationVersion,2);
+  assert.equal(registered?.buildManifestSha256,activation.buildManifestSha256);
+  assert.equal(registered?.buildArtifactSetSha256,activation.buildArtifactSetSha256);
+  assert.equal(registered?.bindingSha256,'sha256:'+'e'.repeat(64));
   assert.equal(registered?.runtimeManifestSha256,'sha256:'+'c'.repeat(64));
   assert.ok(Object.isFrozen(registered));
   for (const key of Object.keys(activation) as Array<keyof typeof activation>) {
