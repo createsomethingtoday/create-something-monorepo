@@ -552,6 +552,16 @@ test('D1 checkpoint store survives a process restart, replays exactly, and retai
     initial
   );
   assert.deepEqual(await store.replay(scope, 'runtime-admit', 'a'.repeat(64)), initial);
+  const verifiedStore = checkpointStore(path, runtimeManifest, 'verified-build-v2');
+  assert.equal(await verifiedStore.find(scope, parent.id), undefined);
+  assert.equal(await verifiedStore.replay(scope, 'runtime-admit', 'a'.repeat(64)), undefined);
+  await assert.rejects(verifiedStore.apply({ scope, run: initial, expectedVersion: initial.version,
+    idempotencyKey: 'verified-legacy-update', commandDigest: 'f'.repeat(64) }), /selected binding mode/);
+  for (const migration of ['0014_control_verified_build_bindings.sql', '0015_control_build_binding_admission.sql'])
+    execFileSync('sqlite3', [path], { input: readFileSync(new URL('../migrations/' + migration, import.meta.url), 'utf8') });
+  assert.equal(await verifiedStore.find(scope, parent.id), undefined, 'migrated historical row remains legacy');
+  assert.equal(await verifiedStore.replay(scope, 'runtime-admit', 'a'.repeat(64)), undefined);
+  assert.deepEqual(await store.find(scope, parent.id), initial);
 
   const planned = await reduceWorkflowRuntimeRun(runtimeManifest, initial, {
     type: 'effect_intent',

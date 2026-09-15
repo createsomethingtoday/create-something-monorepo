@@ -4,7 +4,7 @@ import { D1WorkflowRuntimeSourceBindings, handoffRequestDigest } from '../src/wo
 import { D1TemplateReviewHandoffEvidenceStore } from '../src/template-review-handoff-store.js';
 import { reduceWorkflowRuntimeRun } from '@createsomething/workflow-runtime';
 import { D1WorkflowRuntimeHandoffProofReader } from '../src/workflow-runtime-handoff-proof.js';
-import { createControlRunService } from '../src/control.js';
+import { createControlRunService, ControlRunConflictError } from '../src/control.js';
 import { D1ControlRunRepository, D1ControlActivationAuthority } from '../src/control-store.js';
 import { D1VerifiedBuildWorkflowRuntimeProofReader } from '../src/workflow-runtime-proof-projection.js';
 import { createWorkflowRuntimeRun, type RuntimeDigest } from '../../workflow-runtime/src/index.js';
@@ -167,6 +167,11 @@ test('admits a real signed compiler release and rejects mismatched registration,
       await checkpoints.apply({scope:activation,run:admittedRun,expectedVersion:null,
         idempotencyKey:'signed-admission',commandDigest:'a'.repeat(64)});
       assert.deepEqual(await checkpoints.find(activation,publication.runId),admittedRun);
+      const legacyStore = new D1WorkflowRuntimeCheckpointStore(database, manifests, manifests.approvalSurfaces);
+      assert.equal(await legacyStore.find(activation, publication.runId), undefined);
+      assert.equal(await legacyStore.replay(activation, 'signed-admission', 'a'.repeat(64)), undefined);
+      await assert.rejects(legacyStore.apply({ scope: activation, run: admittedRun, expectedVersion: admittedRun.version,
+        idempotencyKey: 'legacy-v2-update', commandDigest: 'f'.repeat(64) }), /selected binding mode/);
       const sourceBindings = new D1WorkflowRuntimeSourceBindings(database, manifests);
       const signedStep = verifiedRuntime.steps[0];
       assert.equal(signedStep.disposition, 'pass');
@@ -236,6 +241,8 @@ test('admits a real signed compiler release and rejects mismatched registration,
       await assert.rejects(new D1WorkflowRuntimeHandoffProofReader(database, manifests, 30_000, 'verified-build-v2').find(publication), /attempt_mismatch/);
       execFileSync('sqlite3', [databasePath], { input: await readFile(new URL('../../agency/migrations/0056_control_source_permits.sql', import.meta.url), 'utf8') });
       let sourceCalls = 0;
+      let sourceMode: 'healthy' | 'unknown' | 'late-stop' = 'healthy';
+      let stopDuringSource: (() => Promise<void>) | undefined;
       const receiptVersions: number[] = [];
       const host = await createTemplateReviewHost({ runtimeDb: database, agencyDb: database, activation, policy,
         artifacts: reader, parameters: { assetId: sourceInput.assetId, versionId: sourceInput.versionId },
@@ -244,6 +251,8 @@ test('admits a real signed compiler release and rejects mismatched registration,
         source: { async observe(parameters) {
           sourceCalls++;
           assert.deepEqual(parameters, { assetId: sourceInput.assetId, versionId: sourceInput.versionId });
+          if (sourceMode === 'unknown') throw new Error('fixture transport lost response');
+          if (sourceMode === 'late-stop') await stopDuringSource!();
           return { ...observationInput.observation, observedAt: '2026-09-15T00:00:05.000Z' };
         } }, maximumAgeMs: 30_000, maximumClockSkewMs: 0, schedulerSubject: 'fixture-scheduler',
         clock: () => '2026-09-15T00:00:05.000Z',
@@ -272,6 +281,41 @@ test('admits a real signed compiler release and rejects mismatched registration,
       await executingControl.process(proofScope, { subject: 'fixture-scheduler', role: 'control_scheduler' },
         execution.id, 'signed-execution-process', activation.id);
       assert.equal(sourceCalls, 1, 'signed execution replay never calls the source twice');
+      for (const mode of ['unknown', 'late-stop'] as const) {
+        sourceMode = mode;
+        const before: number = sourceCalls;
+        const interrupted = await executingControl.start(proofScope, { subject: 'fixture-operator', role: 'account_owner' },
+          { activationId: activation.id, idempotencyKey: `signed-${mode}-start`, concurrencyKey: `signed-${mode}`,
+            requestedTools: activation.allowedTools, requestedResources: activation.allowedResources });
+        stopDuringSource = async () => {
+          await executingControl.stop(proofScope, { subject: 'fixture-operator', role: 'account_owner' },
+            interrupted.id, 'signed-late-stop', 'operator stopped during source read');
+        };
+        const process = () => executingControl.process(proofScope, { subject: 'fixture-scheduler', role: 'control_scheduler' },
+          interrupted.id, `signed-${mode}-process`, activation.id);
+        if (mode === 'late-stop') await assert.rejects(process, ControlRunConflictError);
+        else assert.equal((await process()).status, 'failed');
+        const stopped = await executingControl.get(proofScope, { subject: 'fixture-operator', role: 'account_owner' }, interrupted.id);
+        assert.equal(stopped.status, mode === 'late-stop' ? 'stopped' : 'failed');
+        const interruptedProof = await host.proofs.find({ scope: proofScope, runId: interrupted.id });
+        assert.equal(interruptedProof?.runtime.run.status, 'running');
+        assert.equal(interruptedProof?.handoffObservations.length, mode === 'late-stop' ? 1 : 0);
+        assert.equal(interruptedProof?.runtime.receipts.some(receipt => receipt.eventType === 'step_succeeded'), false);
+        if (mode === 'late-stop') await assert.rejects(process, ControlRunConflictError);
+        else await process();
+        assert.equal(sourceCalls, before + 1, 'interrupted signed process is never redispatched on replay');
+        if (mode === 'unknown') {
+          await assert.rejects(executingControl.retry(proofScope, { subject: 'fixture-operator', role: 'account_owner' },
+            interrupted.id, 'unknown-retry'), /failed terminally/);
+        } else {
+          await executingControl.retry(proofScope, { subject: 'fixture-operator', role: 'account_owner' },
+            interrupted.id, 'stopped-retry');
+          const resumed = await executingControl.process(proofScope, { subject: 'fixture-scheduler', role: 'control_scheduler' },
+            interrupted.id, 'stopped-resume', activation.id);
+          assert.equal(resumed.status, 'failed', 'prepared effect requires reconciliation before recovery');
+        }
+        assert.equal(sourceCalls, before + 1, 'retry cannot dispatch an unresolved prepared effect');
+      }
       const stored = await new D1WorkflowArtifactRegistrationReader(database).find(activation);
       assert.equal(stored?.bindingSha256,written.bindingSha256);
       assert.equal(stored?.buildManifestSha256,written.buildManifestSha256);
