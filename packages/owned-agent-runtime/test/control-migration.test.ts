@@ -1263,5 +1263,23 @@ test('verified Build binding migration preserves parents and requires distinct e
   expectSqlFailure(path,insert(binding,'INSERT OR REPLACE'),/immutable/);
   expectSqlFailure(path,"UPDATE control_workflow_runtime_build_bindings SET workflow_version='2';",/immutable/);
   expectSqlFailure(path,'DELETE FROM control_workflow_runtime_build_bindings;',/immutable/);
-  assert.equal(sql(path,'SELECT json_object(\'activation\',activation_json,\'status\',status,\'version\',version) FROM control_runs;'),before);
+  assert.equal(sql(path,'SELECT json_object(\'activation\',activation_json,\'status\',status,\'version\',version) FROM control_runs;'),before);  const run = {
+    schema:'workflow_runtime_run.v0.2',id:'run-a',status:'queued',version:1,
+    activation:{id:'activation-a',version:1,policySha256:binding.runtime_policy_sha256},
+    registration:{buildReleaseId:'release-a',contractSha256:binding.contract_sha256,runtimePolicySha256:binding.runtime_policy_sha256},
+    runtimeManifestSchema:binding.runtime_manifest_schema,
+    artifactManifestSha256:binding.artifact_manifest_sha256,runtimeManifestSha256:binding.runtime_manifest_sha256,
+    steps:[],receipts:[]
+  };
+  sql(path,readFileSync(new URL('../migrations/0015_control_build_binding_admission.sql',import.meta.url),'utf8'));
+  const checkpoint = (version: number | undefined, artifact = binding.artifact_manifest_sha256) => `INSERT INTO control_workflow_runtime_runs
+    (run_id,admission_command_id,artifact_manifest_sha256,runtime_manifest_sha256,status,version,run_json,created_at,updated_at${version===undefined?'':',build_binding_version'})
+    VALUES ('run-a','admission-a','${artifact}','${binding.runtime_manifest_sha256}','queued',1,
+      '${JSON.stringify({...run,artifactManifestSha256:artifact})}','2026-09-15T00:00:00.000Z','2026-09-15T00:00:00.000Z'${version===undefined?'':','+version});`;
+  expectSqlFailure(path,checkpoint(undefined),/verified_build_binding_required|registration does not match/);
+  expectSqlFailure(path,checkpoint(1),/verified_build_binding_required|registration does not match/);
+  expectSqlFailure(path,checkpoint(2,'sha256:'+'a'.repeat(64)),/verified_build_binding_required|registration does not match/);
+  sql(path,checkpoint(2));
+  assert.equal(sql(path,'SELECT build_binding_version FROM control_workflow_runtime_runs;'),'2');
+  expectSqlFailure(path,'UPDATE control_workflow_runtime_runs SET build_binding_version=1;',/version_immutable/);
 });
