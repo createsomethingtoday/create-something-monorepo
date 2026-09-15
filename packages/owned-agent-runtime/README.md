@@ -311,3 +311,11 @@ The activation contract hash is intentionally outside the accepted runtime
 binding: Agency derives it from the source (including Build hashes) and policy.
 The writer uses the Agency-loaded contract hash and matches it atomically;
 putting it in the binding would create a circular digest dependency.
+
+Checkpoint stores select `verified-build-v2` as the fourth constructor argument
+for the new admission path. It writes `build_binding_version=2` and requires the
+persisted exact verified Build relation, preserving distinct delivery/compiler
+hashes. The default `legacy-v1` is the pre-transition compatibility path;
+migration0015 rejects its new inserts. Existing checkpoint updates keep their
+persisted semantics. Hosted activation must explicitly select the v2 path after
+binding publication; the proof reader still requires integration before release.

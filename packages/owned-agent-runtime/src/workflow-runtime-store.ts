@@ -90,7 +90,8 @@ export class D1WorkflowRuntimeCheckpointStore implements WorkflowRuntimeCheckpoi
   constructor(
     private readonly database: D1Database,
     private readonly manifests?: WorkflowRuntimeManifestAuthority,
-    private readonly approvalSurfaces?: WorkflowRuntimeApprovalSurfaceAuthority
+    private readonly approvalSurfaces?: WorkflowRuntimeApprovalSurfaceAuthority,
+    private readonly admissionBinding: 'legacy-v1' | 'verified-build-v2' = 'legacy-v1'
   ) {}
 
   async find(scope: WorkflowRuntimeScope, runId: string): Promise<WorkflowRuntimeRun | undefined> {
@@ -173,14 +174,21 @@ export class D1WorkflowRuntimeCheckpointStore implements WorkflowRuntimeCheckpoi
           .prepare(
             `INSERT INTO control_workflow_runtime_runs
              (run_id, artifact_manifest_sha256, runtime_manifest_sha256, status, version,
-               run_json, created_at, updated_at, admission_command_id)
-             SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?7, ?17
+               run_json, created_at, updated_at, admission_command_id${this.admissionBinding === 'verified-build-v2' ? ', build_binding_version' : ''})
+             SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?7, ?17${this.admissionBinding === 'verified-build-v2' ? ', 2' : ''}
              WHERE EXISTS (
                SELECT 1 FROM control_runs
                WHERE id = ?1 AND account_id = ?8 AND tenant_id = ?9 AND workspace_account_id = ?10
                  AND activation_id = ?11 AND activation_version = ?12
                  AND json_extract(activation_json, '$.policySha256') = substr(?13, 8)
-                 AND json_extract(activation_json, '$.buildManifestSha256') = substr(?2, 8)
+                 AND ${this.admissionBinding === 'verified-build-v2' ? `EXISTS (
+                   SELECT 1 FROM control_workflow_runtime_build_bindings b
+                   WHERE b.run_id = ?1 AND b.registration_version = 2
+                     AND b.artifact_manifest_sha256 = ?2 AND b.runtime_manifest_sha256 = ?3
+                     AND b.activation_id = ?11 AND b.activation_version = ?12
+                     AND b.build_manifest_sha256 = 'sha256:' || json_extract(control_runs.activation_json, '$.buildManifestSha256')
+                     AND b.build_artifact_set_sha256 = 'sha256:' || json_extract(control_runs.activation_json, '$.buildArtifactSetSha256')
+                 )` : "json_extract(activation_json, '$.buildManifestSha256') = substr(?2, 8)"}
                  AND (
                    (?14 IS NULL AND json_extract(?6, '$.schema') = 'workflow_runtime_run.v0.1')
                    OR (

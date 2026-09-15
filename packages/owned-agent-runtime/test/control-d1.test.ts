@@ -328,7 +328,7 @@ const templateReviewRuntimeManifest = parseWorkflowRuntimeManifest({
   ]
 });
 
-function checkpointStore(path: string, manifest = runtimeManifest) {
+function checkpointStore(path: string, manifest = runtimeManifest, binding: 'legacy-v1' | 'verified-build-v2' = 'legacy-v1') {
   return new D1WorkflowRuntimeCheckpointStore(
     d1(path),
     trustedRuntimeManifestAuthority([{ digest: runtimeDigest('8'), manifest }]),
@@ -340,7 +340,8 @@ function checkpointStore(path: string, manifest = runtimeManifest) {
           sha256: manifest.artifacts.approvalSurfacesSha256
         }
       }
-    ])
+    ]),
+    binding
   );
 }
 
@@ -2207,4 +2208,37 @@ test('runtime registration lookup requires exact current frozen activation autho
   }
   execFileSync('sqlite3',[input.path],{input:"UPDATE customer_control_activations SET status='suspended' WHERE id='activation-a';"});
   assert.equal(await reader.find(activation),undefined);
+});
+
+
+test('verified Build checkpoint writer requires the relation and persists distinct artifact identity', async () => {
+  const input = fixture();
+  const parent = await input.service.start(scope,owner,{activationId:'activation-a',idempotencyKey:'binding-parent',requestedTools:[],requestedResources:[],concurrencyKey:'binding-proof'});
+  for (const migration of ['0014_control_verified_build_bindings.sql','0015_control_build_binding_admission.sql'])
+    execFileSync('sqlite3',[input.path],{input:readFileSync(new URL('../migrations/'+migration,import.meta.url),'utf8')});
+  const initial = await createWorkflowRuntimeRun(runtimeManifest,{
+    runId:parent.id,activation:{id:'activation-a',version:1,policySha256:runtimeDigest('6')},
+    registration:{buildReleaseId:'release-a',contractSha256:runtimeDigest('7'),runtimePolicySha256:runtimeDigest('6')},
+    artifactManifestSha256:runtimeDigest('a'),runtimeManifestSha256:runtimeDigest('8'),clock:'2026-08-25T00:00:00.000Z'
+  });
+  const store = checkpointStore(input.path,runtimeManifest,'verified-build-v2');
+  const command = {scope,run:initial,expectedVersion:null,idempotencyKey:'binding-admit',commandDigest:'a'.repeat(64)};
+  await assert.rejects(store.apply(command));
+  execFileSync('sqlite3',[input.path],{input:`INSERT INTO control_workflow_runtime_build_bindings
+    (run_id,registration_version,activation_id,activation_version,account_id,tenant_id,workspace_account_id,build_release_id,
+     build_manifest_sha256,build_artifact_set_sha256,binding_sha256,contract_sha256,runtime_policy_sha256,
+     artifact_manifest_sha256,runtime_manifest_sha256,definition_hash,attestation_public_key_fingerprint,
+     workflow_id,workflow_version,compiler_version,runtime_manifest_schema,attestation_key_id,artifact_prefix,verified_at)
+    SELECT id,2,activation_id,activation_version,account_id,tenant_id,workspace_account_id,'release-a',
+      'sha256:' || json_extract(activation_json,'$.buildManifestSha256'),
+      'sha256:' || json_extract(activation_json,'$.buildArtifactSetSha256'),
+      '${runtimeDigest('b')}','${runtimeDigest('7')}','${runtimeDigest('6')}',
+      '${runtimeDigest('a')}','${runtimeDigest('8')}','${runtimeManifest.workflow.definitionHash}','${runtimeDigest('c')}',
+      '${runtimeManifest.workflow.id}','${runtimeManifest.workflow.version}','${runtimeManifest.workflow.compilerVersion}',
+      '${runtimeManifest.schemaVersion}','fixture','workflow-artifacts/${'a'.repeat(64)}/','2026-08-25T00:00:00.000Z'
+    FROM control_runs WHERE id=${literal(parent.id)};`});
+  await store.apply(command);
+  assert.deepEqual(await store.find(scope,parent.id),initial);
+  assert.equal(execFileSync('sqlite3',[input.path,'SELECT build_binding_version FROM control_workflow_runtime_runs;'],{encoding:'utf8'}).trim(),'2');
+  assert.notEqual(initial.artifactManifestSha256,'sha256:'+parent.activation.buildManifestSha256);
 });
