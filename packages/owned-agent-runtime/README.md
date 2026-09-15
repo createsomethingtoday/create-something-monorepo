@@ -268,3 +268,10 @@ implement that registry, activation check, revocation service or hosted executor
 Admission also verifies each correlated governance artifact hash, requires an
 explicit governed-interaction host contract and compatible public compatibility
 decision, and deeply freezes the returned runtime manifest before sharing it.
+
+`D1WorkflowArtifactRegistrationReader` resolves Agency's immutable registration
+only when every frozen activation field still matches an active activation in
+one query. It shares the exhaustive activation-column mapping with source
+permits and returns a frozen registration value. Each new claim must repeat
+lookup and current signer-policy checks; this read is not a source permit and
+does not implement the verified Build registration writer or host wiring.
