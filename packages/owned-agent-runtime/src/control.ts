@@ -609,7 +609,9 @@ export function createControlRunService(options: {
             allowedResources: [...claimed.requestedResources]
           });
         } catch {
-          outcome = { type: 'failed', reason: 'executor_failed', retryable: true };
+          // An exception cannot prove whether a dispatched effect occurred.
+          // Only an explicit executor outcome may authorize a safe retry.
+          outcome = { type: 'failed', reason: 'executor_failed', retryable: false };
         }
 
         finished.pendingApprovalKind = null;
