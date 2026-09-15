@@ -76,3 +76,12 @@ test('clock skew is explicit, bounded, and does not extend the observation age b
   for (const maximumClockSkewMs of [-1, 0.5, 60001, Infinity])
     assert.throws(() => validateTemplateReviewHandoffObservation(observation, { ...context, maximumClockSkewMs }));
 });
+
+test('positive source skew consumes age budget while version 1 remains readable', () => {
+  const ahead = { ...observation, observedAt: '2026-09-14T23:01:00.000Z' };
+  const delayed = { ...context, receivedAt:'2026-09-14T23:00:40.000Z', maximumClockSkewMs:60_000, maximumAgeMs:30_000 };
+  assert.throws(() => validateTemplateReviewHandoffObservation(ahead, delayed));
+  assert.deepEqual(validateTemplateReviewHandoffObservation(ahead, {...delayed,agePolicyVersion:1}),ahead);
+  assert.deepEqual(validateTemplateReviewHandoffObservation(ahead, {...delayed,maximumAgeMs:40_000}),ahead);
+  assert.throws(() => validateTemplateReviewHandoffObservation(ahead, {...delayed,maximumAgeMs:39_999}));
+});

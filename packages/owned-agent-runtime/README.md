@@ -269,3 +269,11 @@ No generic URL or tool argument is accepted. Production transport, signed regist
 configuration, hosted executor transitions, and deployment are still required.
 Local gateway tests exercise real SQLite/Control lifecycle with a test source; they
 do not establish authenticated production invocation or submission correlation.
+
+Handoff age policy version 2 charges the full allowed positive source-clock
+skew against `maximumAgeMs`. Migration `0013` marks existing evidence version 1
+without changing its accepted bytes or timestamps; historical reads and identical
+replays retain that stored interpretation. New evidence written by the current
+store uses version 2. SQL also enforces the version 2 age budget. Do not roll
+back the writer to one that omits this policy column after promotion; the legacy
+default exists for historical schema compatibility, not new source admission.

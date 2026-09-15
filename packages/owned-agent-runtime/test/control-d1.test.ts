@@ -155,6 +155,7 @@ function fixture(executor?: ControlRunExecutor, runId?: () => string) {
       ${workflowRuntimeApprovalAttestationMigration}
       ${readFileSync(new URL('../migrations/0011_control_handoff_observations.sql', import.meta.url), 'utf8')}
       ${readFileSync(new URL('../migrations/0012_control_handoff_clock_policy.sql', import.meta.url), 'utf8')}
+${readFileSync(new URL('../migrations/0013_control_handoff_age_policy.sql', import.meta.url), 'utf8')}
       CREATE TABLE customer_control_activations (
         id TEXT PRIMARY KEY, activation_version INTEGER, activation_kind TEXT, status TEXT,
         account_id TEXT, tenant_id TEXT, workspace_account_id TEXT,
