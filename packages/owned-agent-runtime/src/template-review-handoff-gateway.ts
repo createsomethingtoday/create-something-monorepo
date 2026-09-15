@@ -72,9 +72,16 @@ export class D1TemplateReviewHandoffGateway {
     // Repository.find also reads receipts after its run row. Check status/version
     // in one final query so a stop during receipt assembly cannot authorize.
     const current = await this.database.prepare(
-      `SELECT status, version FROM control_runs
-       WHERE id = ? AND account_id = ? AND tenant_id = ? AND workspace_account_id = ?`
-    ).bind(target.runId, target.scope.accountId, target.scope.tenantId, target.scope.workspaceAccountId)
+      `SELECT p.status, p.version FROM control_runs p
+       JOIN control_workflow_runtime_runs r ON r.run_id=p.id
+       WHERE p.id = ? AND p.account_id = ? AND p.tenant_id = ? AND p.workspace_account_id = ?
+         AND r.version = ? AND r.status = 'running'
+         AND EXISTS (SELECT 1 FROM json_each(r.run_json,'$.steps') s,
+           json_each(s.value,'$.attempts') a
+           WHERE json_extract(s.value,'$.id')=? AND json_extract(s.value,'$.status')='running'
+             AND json_extract(a.value,'$.id')=? AND json_extract(a.value,'$.status')='prepared')`
+    ).bind(target.runId, target.scope.accountId, target.scope.tenantId, target.scope.workspaceAccountId,
+      proof.run.version, target.stepId, target.attemptId)
       .first<{status: string; version: number}>();
     return current?.status === 'running' && current.version === parent.version ? parent : undefined;
   }
