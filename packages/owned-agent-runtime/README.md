@@ -244,3 +244,15 @@ Migration `0012` preserves existing rows with zero skew and retains immutable
 receipt constraints. Historical reads/replays use the stored policy even after
 host configuration changes. Gateway configuration and remote migration remain
 separate promotion steps.
+
+### Immutable artifact transport (not registered)
+
+`R2WorkflowArtifactReader` reads `workflow-artifacts/<manifest hex digest>/`
+from its injected bucket. It requires an attestation, validates inventory paths
+before fetching them, and bounds actual stream bytes (1 MiB manifest, 16 KiB
+attestation, 4 MiB per artifact, 16 MiB total, 512 artifacts). These host limits
+are deliberately below the compiler's general filesystem limits. The release
+pipeline must use the same content-addressed prefix and enforce write-once
+publication. This reader does not configure R2, prove immutability, authenticate
+a signature, or grant execution. Its byte snapshot must pass the public compiler
+verifier and the registered signer/release/runtime policy before admission.
