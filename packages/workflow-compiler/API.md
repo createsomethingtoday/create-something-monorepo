@@ -338,3 +338,17 @@ with an `actions` array. Each entry identifies `actionId`, descriptive `status`
 adapter APIs evaluate current evidence and construct a plan. Console envelopes
 optionally embed this separately versioned summary as `adapterReadiness`.
 Historical envelopes without it remain readable.
+
+### `verifyWorkflowArtifactSnapshot(files, options)`
+
+Verifies a complete serialized release from a `ReadonlyMap<string, Uint8Array>`
+without filesystem reads. Keys are exact relative artifact paths, including
+`manifest.json` and optional `attestation.json`. Supply `options.publicKey` for
+signed verification; omitting it proves integrity only.
+
+The verifier copies bounded input before its first asynchronous boundary and
+applies the existing manifest, required-file, content-hash, compiled-identity and
+attestation checks. It rejects unsafe, missing and undeclared paths and returns
+`WorkflowArtifactVerificationReceipt`. The host still owns immutable retrieval,
+trusted signer policy, schema compatibility and runtime registration. A valid
+signature alone does not authorize execution.

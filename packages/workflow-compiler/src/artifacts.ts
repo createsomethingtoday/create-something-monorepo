@@ -206,11 +206,23 @@ function isDirectRevisionTarget(outDir: string, target: string): boolean {
   return dirname(target) === revisionsDir && basename(target).startsWith('revision-');
 }
 
-async function readValidatedArtifactManifest(rootDir: string): Promise<WorkflowArtifactManifest> {
+async function readValidatedArtifactManifest(
+  rootDir: string,
+  snapshot?: ReadonlyMap<string, Buffer>
+): Promise<WorkflowArtifactManifest> {
+  const readBytes = async (target: string): Promise<Buffer> => {
+    if (!snapshot) return readFile(target);
+    const bytes = snapshot.get(relative(rootDir, target).replaceAll('\\', '/'));
+    if (!bytes) throw Object.assign(new Error('Missing artifact'), { code: 'ENOENT' });
+    return bytes;
+  };
+  const statEntry = async (target: string) => snapshot
+    ? { isFile: () => true, size: (await readBytes(target)).byteLength }
+    : lstat(target);
   const manifestPath = join(rootDir, 'manifest.json');
   let manifest: unknown;
   try {
-    const manifestEntry = await lstat(manifestPath);
+    const manifestEntry = await statEntry(manifestPath);
     if (!manifestEntry.isFile()) {
       throw new WorkflowArtifactVerificationError(
         'INVALID_ARTIFACT_TYPE',
@@ -225,7 +237,7 @@ async function readValidatedArtifactManifest(rootDir: string): Promise<WorkflowA
         'manifest.json'
       );
     }
-    const manifestBytes = await readFile(manifestPath);
+    const manifestBytes = await readBytes(manifestPath);
     if (manifestBytes.byteLength > MAX_MANIFEST_BYTES) {
       throw new WorkflowArtifactVerificationError(
         'RESOURCE_LIMIT_EXCEEDED',
@@ -335,7 +347,7 @@ async function readValidatedArtifactManifest(rootDir: string): Promise<WorkflowA
     }
     let artifactEntry;
     try {
-      artifactEntry = await lstat(target);
+      artifactEntry = await statEntry(target);
     } catch (error) {
       if (isMissing(error)) {
         throw new WorkflowArtifactVerificationError(
@@ -367,7 +379,7 @@ async function readValidatedArtifactManifest(rootDir: string): Promise<WorkflowA
         value.path
       );
     }
-    const artifactBytes = await readFile(target);
+    const artifactBytes = await readBytes(target);
     if (artifactBytes.byteLength > MAX_ARTIFACT_BYTES) {
       throw new WorkflowArtifactVerificationError(
         'RESOURCE_LIMIT_EXCEEDED',
@@ -406,7 +418,7 @@ async function readValidatedArtifactManifest(rootDir: string): Promise<WorkflowA
   let compiledWorkflow: unknown;
   try {
     compiledWorkflow = JSON.parse(
-      await readFile(artifactTarget(rootDir, 'compiled-workflow.json'), 'utf8')
+      (await readBytes(artifactTarget(rootDir, 'compiled-workflow.json'))).toString('utf8')
     );
   } catch {
     throw new WorkflowArtifactVerificationError(
@@ -609,6 +621,58 @@ export async function verifyWorkflowArtifactBundleWithRootPinnedHook(
             keyId: attestation.keyId,
             publicKeyFingerprint: attestation.publicKeyFingerprint
           }
+  };
+}
+
+/** Verify a complete serialized immutable release without accessing the filesystem.
+ * The host supplies the entire exact object inventory and owns retrieval/authentication.
+ */
+export async function verifyWorkflowArtifactSnapshot(
+  input: ReadonlyMap<string, Uint8Array>,
+  options: VerifyWorkflowArtifactBundleOptions = {}
+): Promise<WorkflowArtifactVerificationReceipt> {
+  const snapshot = new Map<string, Buffer>();
+  let total = 0;
+  if (input.size > MAX_ARTIFACT_FILES + 2)
+    throw new WorkflowArtifactVerificationError('RESOURCE_LIMIT_EXCEEDED', 'Snapshot has too many files.');
+  for (const [path, bytes] of input) {
+    assertSafeArtifactPath(path);
+    const maximum = path === 'manifest.json' ? MAX_MANIFEST_BYTES :
+      path === 'attestation.json' ? MAX_ATTESTATION_BYTES : MAX_ARTIFACT_BYTES;
+    if (!(bytes instanceof Uint8Array) || bytes.byteLength > maximum)
+      throw new WorkflowArtifactVerificationError('RESOURCE_LIMIT_EXCEEDED', 'Snapshot file exceeds its size limit.', path);
+    total += bytes.byteLength;
+    if (total > MAX_TOTAL_ARTIFACT_BYTES + MAX_MANIFEST_BYTES + MAX_ATTESTATION_BYTES)
+      throw new WorkflowArtifactVerificationError('RESOURCE_LIMIT_EXCEEDED', 'Snapshot exceeds its total size limit.');
+    snapshot.set(path, Buffer.from(bytes));
+  }
+  const manifest = await readValidatedArtifactManifest('/', snapshot);
+  const expected = new Set(['manifest.json', ...manifest.files.map(file => file.path)]);
+  const attestationBytes = snapshot.get('attestation.json');
+  if (attestationBytes) expected.add('attestation.json');
+  for (const path of snapshot.keys())
+    if (!expected.has(path)) throw new WorkflowArtifactVerificationError('UNDECLARED_ARTIFACT', 'Snapshot contains an undeclared artifact.', path);
+  if (!attestationBytes && options.publicKey !== undefined)
+    throw new WorkflowArtifactAttestationError('ATTESTATION_MISSING', 'Signed snapshot requires an attestation.');
+  let attestationValue: unknown;
+  if (attestationBytes) {
+    try { attestationValue = JSON.parse(attestationBytes.toString('utf8')); }
+    catch { throw new WorkflowArtifactAttestationError('INVALID_ATTESTATION', 'Snapshot attestation is not valid JSON.'); }
+  }
+  const attestation = attestationBytes === undefined ? undefined : options.publicKey === undefined
+    ? parseWorkflowArtifactAttestation(attestationValue)
+    : verifyWorkflowArtifactAttestation(manifest, attestationValue, options.publicKey);
+  return {
+    schemaVersion: 'workflow_artifact_verification_receipt.v0.1',
+    status: options.publicKey === undefined ? 'integrity_verified' : 'verified',
+    workflowId: manifest.workflowId, workflowVersion: manifest.workflowVersion,
+    definitionHash: manifest.definitionHash, compilerVersion: manifest.compilerVersion,
+    manifestHash: workflowArtifactManifestHash(manifest), fileCount: manifest.files.length,
+    attestation: attestation === undefined ? { status: 'unsigned' } : {
+      status: options.publicKey === undefined ? 'present_unverified' : 'verified',
+      algorithm: attestation.algorithm, keyId: attestation.keyId,
+      publicKeyFingerprint: attestation.publicKeyFingerprint
+    }
   };
 }
 

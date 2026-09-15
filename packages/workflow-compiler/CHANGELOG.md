@@ -4,6 +4,11 @@ All notable changes to this package are documented here. This project follows
 Semantic Versioning for its npm API and separately versions its workflow and
 artifact schemas.
 
+## Unreleased
+
+- Add `verifyWorkflowArtifactSnapshot` for complete serialized artifact inventories,
+  reusing manifest/content/signature validation without filesystem reads.
+
 ## 0.5.0
 
 - Reject unknown fields in every closed workflow and replay record, including
