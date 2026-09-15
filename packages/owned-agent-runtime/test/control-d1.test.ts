@@ -2366,6 +2366,17 @@ test('handoff gateway binds persisted authority, invokes once, and retains late 
     if (mode === 'wrong-request') assert.equal(result?.type, 'not_authorized');
     if (mode === 'late-stop') assert.equal((await input.service.get(scope, owner, parent.id)).status, 'stopped');
     if (mode === 'healthy') {
+      for (const migration of ['0014_control_verified_build_bindings.sql','0015_control_build_binding_admission.sql'])
+        execFileSync('sqlite3',[input.path],{input:readFileSync(new URL('../migrations/'+migration,import.meta.url),'utf8')});
+      const strict = new D1TemplateReviewHandoffGateway(d1(input.path),
+        trustedRuntimeManifestAuthority([{digest:runtimeDigest('8'),manifest}]),
+        new D1ControlSourcePermitAuthority(d1(input.path)),
+        {async observe(){assert.fail('legacy checkpoint must not dispatch through verified Build mode');}},
+        {...parameters,artifactManifestSha256:runtimeDigest('7'),runtimeManifestSha256:runtimeDigest('8')},
+        30_000,()=> '2026-08-25T00:00:03.000Z',0,'verified-build-v2');
+      // Fresh unmatched attempt avoids the historical immutable-evidence replay path.
+      await assert.rejects(strict.observe({scope,runId:parent.id,stepId:'observe',attemptId:'fresh-attempt'}),
+        /binding is missing or inconsistent/);
       const changed = new D1TemplateReviewHandoffGateway(d1(input.path),
         trustedRuntimeManifestAuthority([{ digest: runtimeDigest('8'), manifest }]),
         new D1ControlSourcePermitAuthority(d1(input.path)), { async observe() { assert.fail('must not invoke changed pair'); } },

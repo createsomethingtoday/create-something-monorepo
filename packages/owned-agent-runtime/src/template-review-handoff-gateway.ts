@@ -1,6 +1,6 @@
 import type { WorkflowRuntimeScope } from '@createsomething/workflow-runtime';
 import type { WorkflowRuntimeManifestAuthority } from './workflow-runtime-manifest-authority.js';
-import { D1WorkflowRuntimeProofReader } from './workflow-runtime-proof-projection.js';
+import { D1WorkflowRuntimeProofReader, D1VerifiedBuildWorkflowRuntimeProofReader } from './workflow-runtime-proof-projection.js';
 import { D1ControlRunRepository } from './control-store.js';
 import { D1ControlSourcePermitAuthority } from './control-source-permit.js';
 import { D1TemplateReviewHandoffEvidenceStore, type TemplateReviewHandoffEvidence } from './template-review-handoff-store.js';
@@ -22,7 +22,7 @@ async function digest(value: unknown): Promise<string> {
 
 /** Fixed registered source only. No caller-selected URL, tool, or record pair. */
 export class D1TemplateReviewHandoffGateway {
-  private readonly proofs: D1WorkflowRuntimeProofReader;
+  private readonly proofs: Pick<D1WorkflowRuntimeProofReader, 'find'>;
   private readonly parents: D1ControlRunRepository;
   private readonly evidence: D1TemplateReviewHandoffEvidenceStore;
   private readonly registration: Readonly<{
@@ -36,7 +36,8 @@ export class D1TemplateReviewHandoffGateway {
     registration: { assetId: string; versionId: string; artifactManifestSha256: string; runtimeManifestSha256: string },
     maximumAgeMs: number,
     private readonly clock: () => string = () => new Date().toISOString(),
-    maximumClockSkewMs = 0
+    maximumClockSkewMs = 0,
+    bindingMode: 'legacy-v1' | 'verified-build-v2' = 'legacy-v1'
   ) {
     if (!Number.isSafeInteger(maximumClockSkewMs) || maximumClockSkewMs < 0 || maximumClockSkewMs > 60_000)
       throw new Error('invalid_handoff_clock_policy');
@@ -47,7 +48,9 @@ export class D1TemplateReviewHandoffGateway {
     for (const value of [registration.artifactManifestSha256, registration.runtimeManifestSha256])
       if (!/^sha256:[0-9a-f]{64}$/.test(value)) throw new Error('invalid_handoff_registration');
     this.registration = Object.freeze({ ...registration });
-    this.proofs = new D1WorkflowRuntimeProofReader(database, manifests);
+    this.proofs = bindingMode === 'verified-build-v2'
+      ? new D1VerifiedBuildWorkflowRuntimeProofReader(database, manifests)
+      : new D1WorkflowRuntimeProofReader(database, manifests);
     this.parents = new D1ControlRunRepository(database);
     this.evidence = new D1TemplateReviewHandoffEvidenceStore(database, manifests, maximumAgeMs, maximumClockSkewMs);
   }
