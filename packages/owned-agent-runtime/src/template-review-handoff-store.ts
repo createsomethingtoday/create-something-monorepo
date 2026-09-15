@@ -1,4 +1,5 @@
 import type { WorkflowRuntimeScope } from '@createsomething/workflow-runtime';
+import { D1WorkflowRuntimeSourceBindings, type WorkflowRuntimeSourceBinding } from './workflow-runtime-source-binding.js';
 import type { WorkflowRuntimeManifestAuthority } from './workflow-runtime-manifest-authority.js';
 import { D1WorkflowRuntimeProofReader } from './workflow-runtime-proof-projection.js';
 import {
@@ -18,6 +19,7 @@ export type TemplateReviewHandoffEvidence = {
   maximumClockSkewMs: number;
   agePolicyVersion: 1 | 2;
   observation: TemplateReviewHandoffObservation;
+  sourceBinding?: WorkflowRuntimeSourceBinding;
 };
 export type TemplateReviewHandoffEvidenceRow = {
   run_id: string;
@@ -35,6 +37,7 @@ export type TemplateReviewHandoffEvidenceRow = {
   maximum_age_ms: number;
   maximum_clock_skew_ms: number;
   age_policy_version: 1 | 2;
+  source_binding_version?: 1 | 2;
 };
 
 /** Stores results from the trusted source gateway; never authorizes dispatch or
@@ -42,13 +45,16 @@ export type TemplateReviewHandoffEvidenceRow = {
  */
 export class D1TemplateReviewHandoffEvidenceStore {
   private readonly proofs: D1WorkflowRuntimeProofReader;
+  private readonly sourceBindings?: D1WorkflowRuntimeSourceBindings;
   constructor(
     private readonly database: D1Database,
     manifests: WorkflowRuntimeManifestAuthority,
     private readonly maximumAgeMs: number,
-    private readonly maximumClockSkewMs = 0
+    private readonly maximumClockSkewMs = 0,
+    mappedSource = false
   ) {
     this.proofs = new D1WorkflowRuntimeProofReader(database, manifests);
+    if (mappedSource) this.sourceBindings = new D1WorkflowRuntimeSourceBindings(database, manifests);
   }
 
   private async attempt(target: Target) {
@@ -56,9 +62,12 @@ export class D1TemplateReviewHandoffEvidenceStore {
     const attempt = proof?.steps
       .find((step) => step.id === target.stepId)
       ?.attempts.find((attempt) => attempt.id === target.attemptId);
+    const binding = this.sourceBindings ? await this.sourceBindings.find(target.scope, target.runId, target.stepId) : undefined;
     if (
       !attempt ||
-      attempt.capabilityId !== 'template-review.handoff.observe.v1' ||
+      (this.sourceBindings
+        ? !binding || attempt.capabilityId !== binding.capability_id || attempt.capabilityParameterSha256 !== binding.capability_parameter_sha256
+        : attempt.capabilityId !== 'template-review.handoff.observe.v1') ||
       !proof?.receipts.some(
         (receipt) =>
           receipt.eventType === 'effect_intent' &&
@@ -67,7 +76,7 @@ export class D1TemplateReviewHandoffEvidenceStore {
       )
     )
       return undefined;
-    return attempt;
+    return { ...attempt, sourceBinding: binding };
   }
 
   async find(target: Target): Promise<TemplateReviewHandoffEvidence | undefined> {
@@ -90,7 +99,7 @@ export class D1TemplateReviewHandoffEvidenceStore {
       )
       .first<TemplateReviewHandoffEvidenceRow>();
     if (!row) return undefined;
-    return parseTemplateReviewHandoffEvidence(row, attempt);
+    return parseTemplateReviewHandoffEvidence(row, attempt, attempt.sourceBinding);
   }
 
   async record(
@@ -110,7 +119,7 @@ export class D1TemplateReviewHandoffEvidenceStore {
     const maximumClockSkewMs = replay?.maximumClockSkewMs ?? this.maximumClockSkewMs;
     const agePolicyVersion = replay?.agePolicyVersion ?? 2;
     const observation = validateTemplateReviewHandoffObservation(input.observation, {
-      requestSha256: attempt.capabilityParameterSha256,
+      requestSha256: attempt.sourceBinding?.request_sha256 ?? attempt.capabilityParameterSha256,
       dispatchedAt: input.dispatchedAt,
       receivedAt: input.receivedAt,
       maximumAgeMs,
@@ -129,7 +138,8 @@ export class D1TemplateReviewHandoffEvidenceStore {
       maximumAgeMs,
       maximumClockSkewMs,
       agePolicyVersion,
-      observation
+      observation,
+      ...(attempt.sourceBinding ? { sourceBinding: attempt.sourceBinding } : {})
     };
     if (replay) {
       if (JSON.stringify(replay) !== JSON.stringify(expected))
@@ -141,8 +151,8 @@ export class D1TemplateReviewHandoffEvidenceStore {
         this.database
           .prepare(
             `INSERT INTO control_workflow_runtime_handoff_observations
-        (run_id,step_id,attempt_id,request_sha256,source_invocation_sha256,observed_at,observation_state,reason,next_action,evidence_sha256,dispatched_at,received_at,maximum_age_ms,maximum_clock_skew_ms,age_policy_version)
-        VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12,?13,?14,?15)`
+        (run_id,step_id,attempt_id,request_sha256,source_invocation_sha256,observed_at,observation_state,reason,next_action,evidence_sha256,dispatched_at,received_at,maximum_age_ms,maximum_clock_skew_ms,age_policy_version${attempt.sourceBinding ? ',source_binding_version' : ''})
+        VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12,?13,?14,?15${attempt.sourceBinding ? ',2' : ''})`
           )
           .bind(
             input.runId,
@@ -177,8 +187,12 @@ export class D1TemplateReviewHandoffEvidenceStore {
 /** Validate a stored row against its already verified effect-intent attempt. */
 export function parseTemplateReviewHandoffEvidence(
   row: TemplateReviewHandoffEvidenceRow,
-  attempt: { capabilityParameterSha256: string; createdAt: string }
+  attempt: { capabilityParameterSha256: string; createdAt: string },
+  sourceBinding?: WorkflowRuntimeSourceBinding
 ): TemplateReviewHandoffEvidence {
+    if (sourceBinding ? row.source_binding_version !== 2 || sourceBinding.run_id !== row.run_id ||
+        sourceBinding.step_id !== row.step_id || sourceBinding.capability_parameter_sha256 !== attempt.capabilityParameterSha256
+      : (row.source_binding_version ?? 1) !== 1) throw new Error('handoff_source_binding_invalid');
     if (row.age_policy_version !== 1 && row.age_policy_version !== 2)
       throw new Error('handoff_age_policy_invalid');
     const observation = validateTemplateReviewHandoffObservation(
@@ -193,7 +207,7 @@ export function parseTemplateReviewHandoffEvidence(
         evidenceSha256: row.evidence_sha256
       },
       {
-        requestSha256: attempt.capabilityParameterSha256,
+        requestSha256: sourceBinding?.request_sha256 ?? attempt.capabilityParameterSha256,
         dispatchedAt: row.dispatched_at,
         receivedAt: row.received_at,
         maximumAgeMs: row.maximum_age_ms,
@@ -213,6 +227,7 @@ export function parseTemplateReviewHandoffEvidence(
       maximumAgeMs: row.maximum_age_ms,
       maximumClockSkewMs: row.maximum_clock_skew_ms,
       agePolicyVersion: row.age_policy_version,
-      observation
+      observation,
+      ...(sourceBinding ? { sourceBinding } : {})
     };
 }

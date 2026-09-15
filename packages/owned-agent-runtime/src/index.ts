@@ -1,3 +1,4 @@
+import { templateReviewWorkerComposition, templateReviewScheduler, type TemplateReviewWorkerBindings } from './template-review-worker.js';
 import { OpenAIAgentExecutor } from './openai.js';
 import { CloudflareAgentAdmission, CloudflareControlRunAdmission } from './admission.js';
 import { createControlRunService } from './control.js';
@@ -72,7 +73,7 @@ export type {
   FrozenControlActivation
 } from './control.js';
 
-export type Env = {
+export type Env = TemplateReviewWorkerBindings & {
   AGENT_RUNTIME_DB: D1Database;
   CONTROL_DB: D1Database;
   OPENAI_API_KEY: string;
@@ -142,6 +143,21 @@ function controlTransportFailure(
 }
 
 export default {
+  async queue(batch: MessageBatch<unknown>, env: Env): Promise<void> {
+    let runtime: Awaited<ReturnType<typeof templateReviewScheduler>>;
+    try { runtime = await templateReviewScheduler(env, controlIdentity(env)); }
+    catch { batch.retryAll({ delaySeconds: 60 }); return; }
+    for (const message of batch.messages) {
+      try {
+        if (await runtime.consume(message.body) === 'ack') message.ack();
+        else message.retry({ delaySeconds: 60 });
+      } catch { message.retry({ delaySeconds: 60 }); }
+    }
+  },
+  async scheduled(_event: ScheduledController, env: Env): Promise<void> {
+    const runtime = await templateReviewScheduler(env, controlIdentity(env));
+    await runtime.reconcile();
+  },
   async fetch(request: Request, env: Env): Promise<Response> {
     const pathname = new URL(request.url).pathname;
     if (pathname.startsWith('/v1/control/') || pathname === '/mcp') {
@@ -161,9 +177,14 @@ export default {
         }
       }
       try {
+        const identity = controlIdentity(env);
+        // Bind the host to this request's verified claims, never ambient actor state.
+        const context = env.TEMPLATE_REVIEW_DEPLOYMENT ? await identity.resolve(request) : undefined;
+        const runtime = context ? await templateReviewWorkerComposition(env, context) : undefined;
         const control = createControlRunWorker({
-          identity: controlIdentity(env),
-          service: createControlRunService({
+          identity: env.TEMPLATE_REVIEW_DEPLOYMENT ? { async resolve() { return context; } } : identity,
+          proofs: runtime?.proofs,
+          service: runtime?.service ?? createControlRunService({
             repository: new D1ControlRunRepository(env.AGENT_RUNTIME_DB),
             activations: new D1ControlActivationAuthority(env.CONTROL_DB),
             executor: new RegisteredControlWorkflowExecutor([])

@@ -496,3 +496,46 @@ test('REST and MCP proof reads share authorization and fail closed without proof
     503
   );
 });
+
+
+test('REST and MCP reject unsupported approval bindings without resuming the parent', async () => {
+  const service = createControlRunService({
+    repository: new MemoryControlRunRepository(), activations: authority,
+    executor: { supports: () => true, async execute() {
+      return { type: 'waiting_for_approval', reason: 'review', approvalKind: 'review' };
+    } }
+  });
+  const owner = { subject: 'owner-a', role: 'account_owner' as const };
+  const parent = await service.start(scope, owner, {
+    activationId: activation.id, idempotencyKey: 'binding-start',
+    requestedTools: [], requestedResources: [], concurrencyKey: 'binding'
+  });
+  const waiting = await service.process(scope, {subject:'scheduler',role:'control_scheduler'},
+    parent.id, 'binding-process', activation.id);
+  const runtime = createControlRunWorker({identity, service});
+  const headers = {authorization:'Bearer owner','content-type':'application/json'};
+  const action = {action:'approve',idempotency_key:'binding-approve',reason:'reviewed',
+    approval_binding_sha256:'sha256:'+'a'.repeat(64)};
+  const rest = await runtime.fetch(new Request(`https://runtime.example/v1/control/runs/${parent.id}/actions`,
+    {method:'POST',headers,body:JSON.stringify(action)}));
+  assert.equal(rest?.status,400);
+  const mcp = await runtime.fetch(new Request('https://runtime.example/mcp', {
+    method:'POST',headers,body:JSON.stringify({jsonrpc:'2.0',id:1,method:'tools/call',
+      params:{name:'control_run_action',arguments:{run_id:parent.id,...action}}})
+  }));
+  assert.equal(((await mcp!.json()) as {error:{code:number}}).error.code,-32602);
+  for (const extra of [{recovery:'resume'}, {outcome:'complete'}]) {
+    const rejected = await runtime.fetch(new Request(`https://runtime.example/v1/control/runs/${parent.id}/actions`, {
+      method:'POST',headers,body:JSON.stringify({action:'approve',idempotency_key:'wrong-action-field',reason:'reviewed',...extra})
+    }));
+    assert.equal(rejected?.status,400);
+  }
+  assert.deepEqual(await service.get(scope,owner,parent.id),waiting);
+  const accepted = await runtime.fetch(new Request('https://runtime.example/mcp', {
+    method:'POST',headers,body:JSON.stringify({jsonrpc:'2.0',id:2,method:'tools/call',
+      params:{name:'control_run_action',arguments:{run_id:parent.id,action:'approve',
+        idempotency_key:'ordinary-approve',reason:'reviewed'}}})
+  }));
+  assert.ok(((await accepted!.json()) as {result?:unknown}).result);
+  assert.equal((await service.get(scope,owner,parent.id)).status,'queued');
+});

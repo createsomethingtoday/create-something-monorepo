@@ -1,6 +1,7 @@
 import type { WorkflowRuntimeScope } from '@createsomething/workflow-runtime';
+import { D1WorkflowRuntimeSourceBindings } from './workflow-runtime-source-binding.js';
 import type { WorkflowRuntimeManifestAuthority } from './workflow-runtime-manifest-authority.js';
-import { D1WorkflowRuntimeProofReader } from './workflow-runtime-proof-projection.js';
+import { D1WorkflowRuntimeProofReader, D1VerifiedBuildWorkflowRuntimeProofReader } from './workflow-runtime-proof-projection.js';
 import { D1ControlRunRepository } from './control-store.js';
 import { D1ControlSourcePermitAuthority } from './control-source-permit.js';
 import { D1TemplateReviewHandoffEvidenceStore, type TemplateReviewHandoffEvidence } from './template-review-handoff-store.js';
@@ -22,9 +23,10 @@ async function digest(value: unknown): Promise<string> {
 
 /** Fixed registered source only. No caller-selected URL, tool, or record pair. */
 export class D1TemplateReviewHandoffGateway {
-  private readonly proofs: D1WorkflowRuntimeProofReader;
+  private readonly proofs: Pick<D1WorkflowRuntimeProofReader, 'find'>;
   private readonly parents: D1ControlRunRepository;
   private readonly evidence: D1TemplateReviewHandoffEvidenceStore;
+  private readonly sourceBindings?: D1WorkflowRuntimeSourceBindings;
   private readonly registration: Readonly<{
     assetId: string; versionId: string; artifactManifestSha256: string; runtimeManifestSha256: string;
   }>;
@@ -36,7 +38,9 @@ export class D1TemplateReviewHandoffGateway {
     registration: { assetId: string; versionId: string; artifactManifestSha256: string; runtimeManifestSha256: string },
     maximumAgeMs: number,
     private readonly clock: () => string = () => new Date().toISOString(),
-    maximumClockSkewMs = 0
+    maximumClockSkewMs = 0,
+    bindingMode: 'legacy-v1' | 'verified-build-v2' = 'legacy-v1',
+    mappedSource = false
   ) {
     if (!Number.isSafeInteger(maximumClockSkewMs) || maximumClockSkewMs < 0 || maximumClockSkewMs > 60_000)
       throw new Error('invalid_handoff_clock_policy');
@@ -47,9 +51,13 @@ export class D1TemplateReviewHandoffGateway {
     for (const value of [registration.artifactManifestSha256, registration.runtimeManifestSha256])
       if (!/^sha256:[0-9a-f]{64}$/.test(value)) throw new Error('invalid_handoff_registration');
     this.registration = Object.freeze({ ...registration });
-    this.proofs = new D1WorkflowRuntimeProofReader(database, manifests);
+    this.proofs = bindingMode === 'verified-build-v2'
+      ? new D1VerifiedBuildWorkflowRuntimeProofReader(database, manifests)
+      : new D1WorkflowRuntimeProofReader(database, manifests);
     this.parents = new D1ControlRunRepository(database);
-    this.evidence = new D1TemplateReviewHandoffEvidenceStore(database, manifests, maximumAgeMs, maximumClockSkewMs);
+    if (mappedSource && bindingMode !== 'verified-build-v2') throw new Error('mapped_source_requires_verified_build');
+    if (mappedSource) this.sourceBindings = new D1WorkflowRuntimeSourceBindings(database, manifests);
+    this.evidence = new D1TemplateReviewHandoffEvidenceStore(database, manifests, maximumAgeMs, maximumClockSkewMs, mappedSource);
   }
 
   private async authorized(target: Target, requestSha256: string) {
@@ -58,6 +66,7 @@ export class D1TemplateReviewHandoffGateway {
     const parent = await this.parents.find(target.scope, target.runId);
     const step = proof?.steps.find(step => step.id === target.stepId);
     const attempt = step?.attempts.find(attempt => attempt.id === target.attemptId);
+    const binding = this.sourceBindings ? await this.sourceBindings.find(target.scope, target.runId, target.stepId) : undefined;
     if (!parent || parent.status !== 'running' ||
         !parent.requestedTools.includes(TOOL) || !parent.requestedResources.includes(RESOURCE) || !proof || proof.run.status !== 'running' ||
         proof.run.artifactManifestSha256 !== this.registration.artifactManifestSha256 ||
@@ -65,8 +74,10 @@ export class D1TemplateReviewHandoffGateway {
         proof.run.activation.id !== parent.activation.id ||
         proof.run.activation.version !== parent.activation.activationVersion ||
         step?.status !== 'running' || attempt?.status !== 'prepared' ||
-        attempt.capabilityId !== 'template-review.handoff.observe.v1' ||
-        attempt.capabilityParameterSha256 !== requestSha256 ||
+        (this.sourceBindings ? !binding || binding.asset_id !== this.registration.assetId ||
+          binding.version_id !== this.registration.versionId || binding.request_sha256 !== requestSha256 ||
+          attempt.capabilityId !== binding.capability_id || attempt.capabilityParameterSha256 !== binding.capability_parameter_sha256
+          : attempt.capabilityId !== 'template-review.handoff.observe.v1' || attempt.capabilityParameterSha256 !== requestSha256) ||
         !proof.receipts.some(receipt => receipt.eventType === 'effect_intent' &&
           receipt.stepId === target.stepId && receipt.attemptId === target.attemptId)) return undefined;
     // Repository.find also reads receipts after its run row. Check status/version

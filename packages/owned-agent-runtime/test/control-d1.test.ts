@@ -14,6 +14,9 @@ import {
   type ControlScope
 } from '../src/control.js';
 import { D1TemplateReviewHandoffGateway, type TemplateReviewHandoffGatewayResult } from '../src/template-review-handoff-gateway.js';
+import { driveTemplateReviewRuntime } from '../src/template-review-runtime-driver.js';
+import { WorkflowRuntimeBoundApprovalAuthority } from '../src/workflow-runtime-approval-authority.js';
+import { createControlRunWorker } from '../src/control-worker.js';
 import { D1ControlSourcePermitAuthority } from '../src/control-source-permit.js';
 import { D1ControlActivationAuthority, D1ControlRunRepository } from '../src/control-store.js';
 import { D1WorkflowRuntimeHandoffProofReader } from '../src/workflow-runtime-handoff-proof.js';
@@ -22,13 +25,14 @@ import { D1TemplateReviewQueueObservationAdapter } from '../src/template-review-
 import { D1WorkflowRuntimeProofReader } from '../src/workflow-runtime-proof-projection.js';
 import { D1WorkflowRuntimeCheckpointStore } from '../src/workflow-runtime-store.js';
 import {
+  ZeroWriteWorkflowRuntimeHost,
   createWorkflowRuntimeRun,
   planWorkflowRuntimeStep,
   parseWorkflowRuntimeManifest,
   reduceWorkflowRuntimeRun,
   type RuntimeDigest,
   type WorkflowRuntimeManifest
-} from '../../workflow-runtime/src/index.js';
+} from '@createsomething/workflow-runtime';
 
 import { literal, bindSql, d1 } from './sqlite-d1.fixture.js';
 
@@ -44,7 +48,8 @@ const scope: ControlScope = {
 const owner: ControlActor = { subject: 'owner-a', role: 'account_owner' };
 const scheduler: ControlActor = { subject: 'scheduler-a', role: 'control_scheduler' };
 
-function fixture(executor?: ControlRunExecutor, runId?: () => string) {
+function fixture(executor?: ControlRunExecutor, runId?: () => string,
+  runtimeApprovals?: Parameters<typeof createControlRunService>[0]['runtimeApprovals']) {
   const path = join(mkdtempSync(join(tmpdir(), 'control-run-d1-')), 'runtime.sqlite');
   const migration = readFileSync(
     new URL('../migrations/0003_control_run_lifecycle.sql', import.meta.url),
@@ -119,6 +124,7 @@ ${readFileSync(new URL('../migrations/0013_control_handoff_age_policy.sql', impo
   let id = 0;
   const database = d1(path);
   const service = createControlRunService({
+    runtimeApprovals,
     repository: new D1ControlRunRepository(database),
     activations: new D1ControlActivationAuthority(database),
     executor: executor ?? {
@@ -330,7 +336,121 @@ const templateReviewRuntimeManifest = parseWorkflowRuntimeManifest({
   ]
 });
 
-function checkpointStore(path: string, manifest = runtimeManifest) {
+test('bounded driver advances real Control and D1 only after a confirmed source observation', async () => {
+  for (const mode of ['healthy', 'unknown', 'discrepancy', 'late-stop', 'approval']) {
+    const parameters = { assetId: 'recAAAAAAAAAAAAAA', versionId: 'recBBBBBBBBBBBBBB' };
+    const requestSha256 = `sha256:${Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',
+      new TextEncoder().encode(JSON.stringify({ schema: 'template-handoff-request@1', ...parameters })))),
+      byte => byte.toString(16).padStart(2, '0')).join('')}` as RuntimeDigest;
+    const manifest = structuredClone(templateReviewRuntimeManifest);
+    assert.equal(manifest.steps[0].disposition, 'pass');
+    manifest.steps[0].capability = { id: 'template-review.handoff.observe.v1', parameterDigest: requestSha256 };
+    if (mode === 'approval') {
+      manifest.steps[0].dependsOn = ['review'];
+      manifest.steps.unshift({ id: 'review', actionId: 'review', dependsOn: [], disposition: 'wait',
+        approval: { policyId: 'account-owner', expiresAt: '2026-08-26T00:00:00.000Z' },
+        evidenceDigest: runtimeDigest('2'), recovery: 'manual_fallback' });
+    }
+    const tool = 'template_review_observe_handoff';
+    const resource = 'https://webflow-template-review-mcp.createsomething.workers.dev/mcp';
+    const clock = () => '2026-08-25T00:00:03.000Z';
+    let drive: (runId: string) => ReturnType<typeof driveTemplateReviewRuntime>;
+    let calls = 0;
+    let approvalHost: ZeroWriteWorkflowRuntimeHost;
+    const input = fixture({ supports: () => true, execute: ({ run }) => drive(run.id) }, undefined,
+      new WorkflowRuntimeBoundApprovalAuthority(async decision => {
+        assert.deepEqual(decision.actor, owner);
+        assert.deepEqual(decision.scope, scope);
+        return approvalHost;
+      }, clock));
+    execFileSync('sqlite3', [input.path], { input:
+      readFileSync(new URL('../../agency/migrations/0056_control_source_permits.sql', import.meta.url), 'utf8') +
+      `UPDATE customer_control_activations SET allowed_tools_json=${literal(JSON.stringify([tool]))},
+      allowed_resources_json=${literal(JSON.stringify([resource]))};` });
+    const parent = await input.service.start(scope, owner, { activationId: 'activation-a',
+      idempotencyKey: 'driver-parent', concurrencyKey: 'driver', requestedTools: [tool], requestedResources: [resource] });
+    const store = checkpointStore(input.path, manifest);
+    const initial = await createWorkflowRuntimeRun(manifest, { runId: parent.id,
+      activation: { id: 'activation-a', version: 1, policySha256: runtimeDigest('6') },
+      registration: { buildReleaseId: 'release-a', contractSha256: runtimeDigest('7'), runtimePolicySha256: runtimeDigest('6') },
+      artifactManifestSha256: runtimeDigest('7'), runtimeManifestSha256: runtimeDigest('8'), clock: clock() });
+    await store.apply({ scope, run: initial, expectedVersion: null, idempotencyKey: 'driver-admit', commandDigest: 'a'.repeat(64) });
+    const authority = trustedRuntimeManifestAuthority([{ digest: runtimeDigest('8'), manifest }]);
+    const evidence = new D1TemplateReviewHandoffEvidenceStore(d1(input.path), authority, 30_000);
+    const gateway = new D1TemplateReviewHandoffGateway(d1(input.path), authority,
+      new D1ControlSourcePermitAuthority(d1(input.path)), { async observe() {
+        calls++;
+        if (mode === 'unknown') throw new Error('source unavailable');
+        if (mode === 'late-stop') await input.service.stop(scope, owner, parent.id, 'late-stop', 'operator stop');
+        return { schema: 'create-something/template-handoff-observation@1', dataClassification: 'minimized_status_evidence',
+          requestSha256, observedAt: clock(), state: mode === 'discrepancy' ? 'insufficient_evidence' : 'confirmed',
+          reason: mode === 'discrepancy' ? 'asset_missing' : 'review_ready',
+          nextAction: mode === 'discrepancy' ? 'inspect_source_evidence' : 'await_review', evidenceSha256: runtimeDigest('b') };
+      } }, { ...parameters, artifactManifestSha256: runtimeDigest('7'), runtimeManifestSha256: runtimeDigest('8') }, 30_000, clock);
+    const host = new ZeroWriteWorkflowRuntimeHost(manifest, { storage: store, clock,
+      identity: { async assert(_scope, subject) { return subject; } },
+      queue: { async enqueue() {} }, receiptSink: { async write() {} }, executor: undefined as never });
+    approvalHost = new ZeroWriteWorkflowRuntimeHost(manifest, { storage: store, clock,
+      identity: { async assert(actualScope, subject, policy) {
+        assert.deepEqual(actualScope, scope); assert.equal(subject, owner.subject);
+        assert.ok(policy === 'account-owner' || policy === null);
+        return owner;
+      } }, queue: { async enqueue() {} }, receiptSink: { async write() {} }, executor: undefined as never });
+    drive = runId => driveTemplateReviewRuntime({ scope, runId, manifest, host, storage: store,
+      gateway, evidence, schedulerSubject: scheduler.subject, clock });
+    const process = () => input.service.process(scope, scheduler, parent.id, 'driver-process', 'activation-a');
+    if (mode === 'late-stop') await assert.rejects(process, ControlRunConflictError);
+    else await process();
+    if (mode === 'approval') {
+      assert.equal(calls, 0, 'wait is persisted without invoking source');
+      const waiting = (await store.find(scope, parent.id))!;
+      assert.equal(waiting.status, 'waiting_for_approval');
+      const approval = waiting.steps[0].approval!;
+      const worker = createControlRunWorker({ service: input.service, identity: { async resolve(request) {
+        return request.headers.get('authorization') === 'Bearer fixture-owner'
+          ? { scope, actor: owner, credentialSource: 'bearer' as const } : undefined;
+      } } });
+      const action = { action: 'approve', reason: 'approve exact observation', idempotency_key: 'bound-decision',
+        runtime_approval: { step_id: 'review', approval_id: approval.id,
+          binding_sha256: approval.bindingSha256, checkpoint_version: waiting.version } };
+      const request = async (body: unknown) => {
+        const response = await worker.fetch(new Request(`https://runtime.test/v1/control/runs/${parent.id}/actions`,
+          { method: 'POST', headers: { 'content-type': 'application/json', authorization: 'Bearer fixture-owner' }, body: JSON.stringify(body) }));
+        assert.ok(response); return response;
+      };
+      assert.equal((await request({ ...action, runtime_approval: undefined })).status, 403);
+      assert.equal((await request({ ...action, runtime_approval: { ...action.runtime_approval, approval_id: 'wrong' } })).status, 409);
+      assert.equal((await request({ ...action, runtime_approval: { ...action.runtime_approval, checkpoint_version: waiting.version - 1 } })).status, 409);
+      assert.deepEqual(await store.find(scope, parent.id), waiting, 'rejected decisions leave checkpoint unchanged');
+      assert.equal(calls, 0);
+      assert.equal((await request(action)).status, 200);
+      assert.equal((await request(action)).status, 200, 'exact decision replay');
+      const mcp = await worker.fetch(new Request('https://runtime.test/mcp', { method: 'POST',
+        headers: { 'content-type': 'application/json', authorization: 'Bearer fixture-owner' },
+        body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/call',
+          params: { name: 'control_run_action', arguments: { run_id: parent.id, ...action } } }) }));
+      assert.ok(mcp);
+      const envelope = await mcp.json() as { error?: unknown; result?: unknown };
+      assert.equal(envelope.error, undefined); assert.ok(envelope.result, 'MCP exact approval replay');
+      await input.service.process(scope, scheduler, parent.id, 'driver-resume', 'activation-a');
+    }
+    const result = await input.service.get(scope, owner, parent.id);
+    assert.equal(calls, 1);
+    assert.equal((await store.find(scope, parent.id))?.status, ['healthy', 'approval'].includes(mode) ? 'completed' : 'running');
+    assert.equal(result.status === 'completed', ['healthy', 'approval'].includes(mode));
+    if (mode === 'late-stop') {
+      assert.equal(result.status, 'stopped');
+      await assert.rejects(process, ControlRunConflictError);
+    } else await process();
+    assert.equal(calls, 1, 'Control replay cannot dispatch again');
+    if (!['healthy', 'approval'].includes(mode)) {
+      assert.equal((await drive(parent.id)).type, 'failed');
+      assert.equal(calls, 1, 'prepared attempts require explicit reconciliation');
+    }
+  }
+});
+
+function checkpointStore(path: string, manifest = runtimeManifest, binding: 'legacy-v1' | 'verified-build-v2' = 'legacy-v1') {
   return new D1WorkflowRuntimeCheckpointStore(
     d1(path),
     trustedRuntimeManifestAuthority([{ digest: runtimeDigest('8'), manifest }]),
@@ -342,7 +462,8 @@ function checkpointStore(path: string, manifest = runtimeManifest) {
           sha256: manifest.artifacts.approvalSurfacesSha256
         }
       }
-    ])
+    ]),
+    binding
   );
 }
 
@@ -431,6 +552,16 @@ test('D1 checkpoint store survives a process restart, replays exactly, and retai
     initial
   );
   assert.deepEqual(await store.replay(scope, 'runtime-admit', 'a'.repeat(64)), initial);
+  const verifiedStore = checkpointStore(path, runtimeManifest, 'verified-build-v2');
+  assert.equal(await verifiedStore.find(scope, parent.id), undefined);
+  assert.equal(await verifiedStore.replay(scope, 'runtime-admit', 'a'.repeat(64)), undefined);
+  await assert.rejects(verifiedStore.apply({ scope, run: initial, expectedVersion: initial.version,
+    idempotencyKey: 'verified-legacy-update', commandDigest: 'f'.repeat(64) }), /selected binding mode/);
+  for (const migration of ['0014_control_verified_build_bindings.sql', '0015_control_build_binding_admission.sql'])
+    execFileSync('sqlite3', [path], { input: readFileSync(new URL('../migrations/' + migration, import.meta.url), 'utf8') });
+  assert.equal(await verifiedStore.find(scope, parent.id), undefined, 'migrated historical row remains legacy');
+  assert.equal(await verifiedStore.replay(scope, 'runtime-admit', 'a'.repeat(64)), undefined);
+  assert.deepEqual(await store.find(scope, parent.id), initial);
 
   const planned = await reduceWorkflowRuntimeRun(runtimeManifest, initial, {
     type: 'effect_intent',
@@ -1127,23 +1258,41 @@ test('D1 checkpoint store records the exact approval binding and authenticated d
     idempotencyKey: 'approval-wait',
     commandDigest: 'f'.repeat(64)
   });
-  const decided = await reduceWorkflowRuntimeRun(manifest, waiting, {
-    type: 'approval_decided',
+  let identityChecks = 0;
+  const host = new ZeroWriteWorkflowRuntimeHost(manifest, {
+    storage: store,
+    clock: () => '2026-08-25T00:00:04.000Z',
+    identity: { async assert(actualScope, subject, policy) {
+      assert.deepEqual(actualScope, scope);
+      assert.equal(subject, owner.subject);
+      assert.equal(policy, identityChecks < 2 ? 'account-owner' : null);
+      identityChecks++;
+      return { subject: owner.subject, role: owner.role };
+    } },
+    queue: { async enqueue() { assert.fail('terminal approval must not enqueue'); } },
+    receiptSink: { async write() {} },
+    executor: undefined as never
+  });
+  const event = {
+    type: 'approval_decided' as const,
     stepId: longReviewStepId,
     approvalId: wait.approval.id,
     approvalBindingSha256: wait.approval.bindingSha256,
-    decision: 'approved',
+    decision: 'approved' as const,
     actorSubject: owner.subject,
-    actorRole: owner.role,
     observedAt: '2026-08-25T00:00:04.000Z'
-  });
-  await store.apply({
-    scope,
-    run: decided,
-    expectedVersion: waiting.version,
-    idempotencyKey: 'approval-decide',
-    commandDigest: '1'.repeat(64)
-  });
+  };
+  await assert.rejects(host.transition(scope, parent.id, waiting.version,
+    {...event, approvalBindingSha256: runtimeDigest('0')}, 'wrong-binding', 'ignored'),
+    /stale, mismatched, or expired/);
+  assert.deepEqual(await store.find(scope, parent.id), waiting);
+  const decided = await host.transition(scope, parent.id, waiting.version,
+    event, 'approval-decide', 'ignored');
+  assert.equal(identityChecks, 2);
+  assert.deepEqual(await host.transition(scope, parent.id, waiting.version,
+    event, 'approval-decide', 'ignored'), decided);
+  assert.deepEqual(await store.find(scope, parent.id), decided);
+  assert.equal(identityChecks, 3);
   assert.equal(decided.status, 'completed');
   assert.equal(
     execFileSync('sqlite3', ['-noheader', path], {
@@ -2211,6 +2360,60 @@ test('runtime registration lookup requires exact current frozen activation autho
   assert.equal(await reader.find(activation),undefined);
 });
 
+
+test('verified Build checkpoint writer requires the relation and persists distinct artifact identity', async () => {
+  const input = fixture();
+  const parent = await input.service.start(scope,owner,{activationId:'activation-a',idempotencyKey:'binding-parent',requestedTools:[],requestedResources:[],concurrencyKey:'binding-proof'});
+  for (const migration of ['0014_control_verified_build_bindings.sql','0015_control_build_binding_admission.sql'])
+    execFileSync('sqlite3',[input.path],{input:readFileSync(new URL('../migrations/'+migration,import.meta.url),'utf8')});
+  const initial = await createWorkflowRuntimeRun(runtimeManifest,{
+    runId:parent.id,activation:{id:'activation-a',version:1,policySha256:runtimeDigest('6')},
+    registration:{buildReleaseId:'release-a',contractSha256:runtimeDigest('7'),runtimePolicySha256:runtimeDigest('6')},
+    artifactManifestSha256:runtimeDigest('a'),runtimeManifestSha256:runtimeDigest('8'),clock:'2026-08-25T00:00:00.000Z'
+  });
+  const store = checkpointStore(input.path,runtimeManifest,'verified-build-v2');
+  const command = {scope,run:initial,expectedVersion:null,idempotencyKey:'binding-admit',commandDigest:'a'.repeat(64)};
+  await assert.rejects(store.apply(command));
+  execFileSync('sqlite3',[input.path],{input:`INSERT INTO control_workflow_runtime_build_bindings
+    (run_id,registration_version,activation_id,activation_version,account_id,tenant_id,workspace_account_id,build_release_id,
+     build_manifest_sha256,build_artifact_set_sha256,binding_sha256,contract_sha256,runtime_policy_sha256,
+     artifact_manifest_sha256,runtime_manifest_sha256,definition_hash,attestation_public_key_fingerprint,
+     workflow_id,workflow_version,compiler_version,runtime_manifest_schema,attestation_key_id,artifact_prefix,verified_at)
+    SELECT id,2,activation_id,activation_version,account_id,tenant_id,workspace_account_id,'release-a',
+      'sha256:' || json_extract(activation_json,'$.buildManifestSha256'),
+      'sha256:' || json_extract(activation_json,'$.buildArtifactSetSha256'),
+      '${runtimeDigest('b')}','${runtimeDigest('7')}','${runtimeDigest('6')}',
+      '${runtimeDigest('a')}','${runtimeDigest('8')}','${runtimeManifest.workflow.definitionHash}','${runtimeDigest('c')}',
+      '${runtimeManifest.workflow.id}','${runtimeManifest.workflow.version}','${runtimeManifest.workflow.compilerVersion}',
+      '${runtimeManifest.schemaVersion}','fixture','workflow-artifacts/${'a'.repeat(64)}/','2026-08-25T00:00:00.000Z'
+    FROM control_runs WHERE id=${literal(parent.id)};`});
+  await store.apply(command);
+  assert.deepEqual(await store.find(scope,parent.id),initial);
+  assert.equal(execFileSync('sqlite3',[input.path,'SELECT build_binding_version FROM control_workflow_runtime_runs;'],{encoding:'utf8'}).trim(),'2');
+  assert.notEqual(initial.artifactManifestSha256,'sha256:'+parent.activation.buildManifestSha256);
+  const {D1VerifiedBuildWorkflowRuntimeProofReader} = await import('../src/workflow-runtime-proof-projection.js');
+  const proofReader = new D1VerifiedBuildWorkflowRuntimeProofReader(d1(input.path),trustedRuntimeManifestAuthority([{digest:runtimeDigest('8'),manifest:runtimeManifest}]));
+  const proof = await proofReader.find({scope,runId:parent.id});
+  assert.equal(proof?.schema,'create-something/workflow-runtime-proof@2');
+  assert.ok(proof && proof.schema === 'create-something/workflow-runtime-proof@2');
+  assert.equal(proof.buildBinding.bindingSha256,runtimeDigest('b'));
+  assert.equal(proof.buildBinding.buildManifestSha256,'sha256:'+parent.activation.buildManifestSha256);
+  assert.equal(await proofReader.find({scope:{...scope,tenantId:'other'},runId:parent.id}),undefined);
+  const handoffReader = new D1WorkflowRuntimeHandoffProofReader(d1(input.path),
+    trustedRuntimeManifestAuthority([{digest:runtimeDigest('8'),manifest:runtimeManifest}]),
+    30_000, 'verified-build-v2');
+  const handoffProof = await handoffReader.find({scope,runId:parent.id});
+  assert.deepEqual(handoffProof?.runtime,proof);
+  assert.deepEqual(handoffProof?.handoffObservations,[]);
+  assert.equal(await handoffReader.find({scope:{...scope,tenantId:'other'},runId:parent.id}),undefined);
+  // Deliberate fixture corruption checks readback independently of insert guards.
+  execFileSync('sqlite3',[input.path],{input:"DROP TRIGGER control_workflow_runtime_build_binding_no_update; UPDATE control_workflow_runtime_build_bindings SET workflow_id='foreign';"});
+  await assert.rejects(proofReader.find({scope,runId:parent.id}),/binding is missing or inconsistent/);
+  await assert.rejects(handoffReader.find({scope,runId:parent.id}),/binding is missing or inconsistent/);
+
+});
+
+
 test('handoff gateway binds persisted authority, invokes once, and retains late evidence without resuming stop', async () => {
   for (const mode of ['healthy', 'late-stop', 'source-error', 'wrong-request', 'suspended', 'stop-during-proof', 'allowed-skew', 'unallowed-skew', 'stop-during-parent-receipts', 'runtime-stop-during-parent-receipts']) {
     const parameters = { assetId: 'recAAAAAAAAAAAAAA', versionId: 'recBBBBBBBBBBBBBB' };
@@ -2311,6 +2514,17 @@ test('handoff gateway binds persisted authority, invokes once, and retains late 
     if (mode === 'wrong-request') assert.equal(result?.type, 'not_authorized');
     if (mode === 'late-stop') assert.equal((await input.service.get(scope, owner, parent.id)).status, 'stopped');
     if (mode === 'healthy') {
+      for (const migration of ['0014_control_verified_build_bindings.sql','0015_control_build_binding_admission.sql'])
+        execFileSync('sqlite3',[input.path],{input:readFileSync(new URL('../migrations/'+migration,import.meta.url),'utf8')});
+      const strict = new D1TemplateReviewHandoffGateway(d1(input.path),
+        trustedRuntimeManifestAuthority([{digest:runtimeDigest('8'),manifest}]),
+        new D1ControlSourcePermitAuthority(d1(input.path)),
+        {async observe(){assert.fail('legacy checkpoint must not dispatch through verified Build mode');}},
+        {...parameters,artifactManifestSha256:runtimeDigest('7'),runtimeManifestSha256:runtimeDigest('8')},
+        30_000,()=> '2026-08-25T00:00:03.000Z',0,'verified-build-v2');
+      // Fresh unmatched attempt avoids the historical immutable-evidence replay path.
+      await assert.rejects(strict.observe({scope,runId:parent.id,stepId:'observe',attemptId:'fresh-attempt'}),
+        /binding is missing or inconsistent/);
       const changed = new D1TemplateReviewHandoffGateway(d1(input.path),
         trustedRuntimeManifestAuthority([{ digest: runtimeDigest('8'), manifest }]),
         new D1ControlSourcePermitAuthority(d1(input.path)), { async observe() { assert.fail('must not invoke changed pair'); } },

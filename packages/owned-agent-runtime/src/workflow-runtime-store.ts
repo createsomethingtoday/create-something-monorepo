@@ -90,8 +90,16 @@ export class D1WorkflowRuntimeCheckpointStore implements WorkflowRuntimeCheckpoi
   constructor(
     private readonly database: D1Database,
     private readonly manifests?: WorkflowRuntimeManifestAuthority,
-    private readonly approvalSurfaces?: WorkflowRuntimeApprovalSurfaceAuthority
+    private readonly approvalSurfaces?: WorkflowRuntimeApprovalSurfaceAuthority,
+    private readonly admissionBinding: 'legacy-v1' | 'verified-build-v2' = 'legacy-v1'
   ) {}
+
+  private async bindingPredicate(alias: string): Promise<string> {
+    const columns = await this.database.prepare('PRAGMA table_info(control_workflow_runtime_runs)').all<{name:string}>();
+    if (!columns.results.some(column => column.name === 'build_binding_version'))
+      return this.admissionBinding === 'legacy-v1' ? '1=1' : '0=1';
+    return `${alias}.build_binding_version=${this.admissionBinding === 'verified-build-v2' ? 2 : 1}`;
+  }
 
   async find(scope: WorkflowRuntimeScope, runId: string): Promise<WorkflowRuntimeRun | undefined> {
     const row = await this.database
@@ -100,7 +108,7 @@ export class D1WorkflowRuntimeCheckpointStore implements WorkflowRuntimeCheckpoi
          FROM control_workflow_runtime_runs runtime
          JOIN control_runs control ON control.id = runtime.run_id
          WHERE runtime.run_id = ?1 AND control.account_id = ?2 AND control.tenant_id = ?3
-           AND control.workspace_account_id = ?4`
+           AND control.workspace_account_id = ?4 AND ${await this.bindingPredicate('runtime')}`
       )
       .bind(runId, scope.accountId, scope.tenantId, scope.workspaceAccountId)
       .first<RuntimeRow>();
@@ -117,6 +125,8 @@ export class D1WorkflowRuntimeCheckpointStore implements WorkflowRuntimeCheckpoi
   }
 
   async apply(input: Parameters<WorkflowRuntimeCheckpointStore['apply']>[0]) {
+    if (input.expectedVersion !== null && !(await this.find(input.scope, input.run.id)))
+      throw new RuntimeValidationError('INVALID_STATE', 'Checkpoint unavailable for selected binding mode');
     const commandSha256 = commandDigest(input.commandDigest);
     const existing = await this.command(input.scope, input.idempotencyKey);
     if (existing?.result_json) {
@@ -173,14 +183,21 @@ export class D1WorkflowRuntimeCheckpointStore implements WorkflowRuntimeCheckpoi
           .prepare(
             `INSERT INTO control_workflow_runtime_runs
              (run_id, artifact_manifest_sha256, runtime_manifest_sha256, status, version,
-               run_json, created_at, updated_at, admission_command_id)
-             SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?7, ?17
+               run_json, created_at, updated_at, admission_command_id${this.admissionBinding === 'verified-build-v2' ? ', build_binding_version' : ''})
+             SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?7, ?17${this.admissionBinding === 'verified-build-v2' ? ', 2' : ''}
              WHERE EXISTS (
                SELECT 1 FROM control_runs
                WHERE id = ?1 AND account_id = ?8 AND tenant_id = ?9 AND workspace_account_id = ?10
                  AND activation_id = ?11 AND activation_version = ?12
                  AND json_extract(activation_json, '$.policySha256') = substr(?13, 8)
-                 AND json_extract(activation_json, '$.buildManifestSha256') = substr(?2, 8)
+                 AND ${this.admissionBinding === 'verified-build-v2' ? `EXISTS (
+                   SELECT 1 FROM control_workflow_runtime_build_bindings b
+                   WHERE b.run_id = ?1 AND b.registration_version = 2
+                     AND b.artifact_manifest_sha256 = ?2 AND b.runtime_manifest_sha256 = ?3
+                     AND b.activation_id = ?11 AND b.activation_version = ?12
+                     AND b.build_manifest_sha256 = 'sha256:' || json_extract(control_runs.activation_json, '$.buildManifestSha256')
+                     AND b.build_artifact_set_sha256 = 'sha256:' || json_extract(control_runs.activation_json, '$.buildArtifactSetSha256')
+                 )` : "json_extract(activation_json, '$.buildManifestSha256') = substr(?2, 8)"}
                  AND (
                    (?14 IS NULL AND json_extract(?6, '$.schema') = 'workflow_runtime_run.v0.1')
                    OR (
@@ -270,6 +287,7 @@ export class D1WorkflowRuntimeCheckpointStore implements WorkflowRuntimeCheckpoi
             `UPDATE control_workflow_runtime_runs SET
                status = ?1, version = ?2, run_json = ?3, updated_at = ?4
              WHERE run_id = ?5 AND version = ?6
+               AND ${await this.bindingPredicate('control_workflow_runtime_runs')}
                AND EXISTS (SELECT 1 FROM control_workflow_runtime_commands WHERE id = ?7)
                AND EXISTS (
                  SELECT 1 FROM control_runs control
@@ -580,16 +598,18 @@ export class D1WorkflowRuntimeCheckpointStore implements WorkflowRuntimeCheckpoi
     };
   }
 
-  private command(scope: WorkflowRuntimeScope, idempotencyKey: string): Promise<CommandRow | null> {
+  private async command(scope: WorkflowRuntimeScope, idempotencyKey: string): Promise<CommandRow | null> {
     return this.database
       .prepare(
         `SELECT command.id, command.run_id, command.command_sha256, command.result_json
          FROM control_workflow_runtime_commands command
          JOIN control_runs control ON control.id = command.run_id
+         JOIN control_workflow_runtime_runs runtime ON runtime.run_id = command.run_id
          WHERE command.idempotency_key = ?1 AND command.account_id = ?2
            AND command.tenant_id = ?3 AND command.workspace_account_id = ?4
            AND control.account_id = command.account_id AND control.tenant_id = command.tenant_id
-           AND control.workspace_account_id = command.workspace_account_id`
+           AND control.workspace_account_id = command.workspace_account_id
+           AND ${await this.bindingPredicate('runtime')}`
       )
       .bind(idempotencyKey, scope.accountId, scope.tenantId, scope.workspaceAccountId)
       .first<CommandRow>();

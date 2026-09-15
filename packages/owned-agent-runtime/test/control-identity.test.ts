@@ -1,3 +1,5 @@
+import entrypoint, { type Env } from '../src/index.js';
+import { templateReviewScheduler } from '../src/template-review-worker.js';
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import test from 'node:test';
@@ -59,6 +61,28 @@ test('cryptographically derives Control scope and role from first-party identity
   }
 
   const valid = await token();
+  const env = {
+    CS_IDENTITY_ISSUER: issuer, CS_IDENTITY_AUDIENCE: audience,
+    CS_IDENTITY_JWKS_URL: `http://127.0.0.1:${address.port}/.well-known/jwks.json`,
+    TEMPLATE_REVIEW_DEPLOYMENT: '{}'
+  } as Env;
+  // The real entry point must authenticate before reading configured release
+  // storage. No D1/R2 bindings are supplied, so accidental access would fail.
+  const anonymous = await entrypoint.fetch(new Request('https://runtime.example/v1/control/runs/x'), env);
+  assert.equal(anonymous.status, 401);
+  const forged = await entrypoint.fetch(new Request('https://runtime.example/v1/control/runs/x', {
+    headers: { authorization: 'Bearer forged', 'x-control-role': 'control_scheduler' }
+  }), env);
+  assert.equal(forged.status, 401);
+  await assert.rejects(templateReviewScheduler({ ...env, CONTROL_SCHEDULER_TOKEN: valid }, identity),
+    /Verified scheduler credential required/);
+  const wrongResourceScheduler = await token({ audience: 'https://other.example',
+    claims: { roles: ['control_scheduler'], activation_id: 'activation-a' } });
+  await assert.rejects(templateReviewScheduler({ ...env, CONTROL_SCHEDULER_TOKEN: wrongResourceScheduler }, identity),
+    /Verified scheduler credential required/);
+  let retries = 0;
+  await entrypoint.queue({ retryAll() { retries++; } } as MessageBatch<unknown>, env);
+  assert.equal(retries, 1, 'missing scheduler authority retains queue delivery');
   const context = await identity.resolve(new Request('https://runtime.example/v1/control/runs', {
     headers: {
       authorization: `Bearer ${valid}`,

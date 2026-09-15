@@ -1,7 +1,9 @@
 import type { WorkflowRuntimeScope } from '@createsomething/workflow-runtime';
+import { D1WorkflowRuntimeSourceBindings, type WorkflowRuntimeSourceBinding } from './workflow-runtime-source-binding.js';
 import type { WorkflowRuntimeManifestAuthority } from './workflow-runtime-manifest-authority.js';
 import {
   D1WorkflowRuntimeProofReader,
+  D1VerifiedBuildWorkflowRuntimeProofReader,
   type WorkflowRuntimeProofProjection
 } from './workflow-runtime-proof-projection.js';
 import {
@@ -14,6 +16,7 @@ export interface WorkflowRuntimeHandoffProof {
   schema: 'create-something/control-reconciliation-proof@1';
   runtime: WorkflowRuntimeProofProjection;
   handoffObservations: TemplateReviewHandoffEvidence[];
+  sourceBindings?: WorkflowRuntimeSourceBinding[];
 }
 export interface WorkflowRuntimeHandoffProofReader {
   find(input: {
@@ -24,13 +27,20 @@ export interface WorkflowRuntimeHandoffProofReader {
 
 /** A read-only projection over the same Control ledger, not another state owner. */
 export class D1WorkflowRuntimeHandoffProofReader implements WorkflowRuntimeHandoffProofReader {
-  private readonly runtime: D1WorkflowRuntimeProofReader;
+  private readonly runtime: Pick<D1WorkflowRuntimeProofReader, 'find'>;
+  private readonly sourceBindings?: D1WorkflowRuntimeSourceBindings;
   constructor(
     private readonly database: D1Database,
     manifests: WorkflowRuntimeManifestAuthority,
-    _maximumAgeMs: number
+    _maximumAgeMs: number,
+    bindingMode: 'legacy-v1' | 'verified-build-v2' = 'legacy-v1',
+    mappedSource = false
   ) {
-    this.runtime = new D1WorkflowRuntimeProofReader(database, manifests);
+    if (mappedSource && bindingMode !== 'verified-build-v2') throw new Error('mapped_source_requires_verified_build');
+    if (mappedSource) this.sourceBindings = new D1WorkflowRuntimeSourceBindings(database, manifests);
+    this.runtime = bindingMode === 'verified-build-v2'
+      ? new D1VerifiedBuildWorkflowRuntimeProofReader(database, manifests)
+      : new D1WorkflowRuntimeProofReader(database, manifests);
   }
   private async read(input: {
     scope: WorkflowRuntimeScope;
@@ -50,14 +60,28 @@ export class D1WorkflowRuntimeHandoffProofReader implements WorkflowRuntimeHando
     const intents = new Set(runtime.receipts.filter(receipt => receipt.eventType === 'effect_intent')
       .map(receipt => JSON.stringify([receipt.stepId, receipt.attemptId])));
     const observations: TemplateReviewHandoffEvidence[] = [];
+    const bindings: WorkflowRuntimeSourceBinding[] = [];
+    if (this.sourceBindings) {
+      const rows = await this.database.prepare('SELECT step_id FROM control_workflow_runtime_source_bindings WHERE run_id=?1 ORDER BY step_id')
+        .bind(input.runId).all<{step_id:string}>();
+      for (const row of rows.results) {
+        const binding = await this.sourceBindings.find(input.scope, input.runId, row.step_id);
+        if (!binding) throw new Error('handoff_source_binding_invalid');
+        bindings.push(binding);
+      }
+    }
     for (const step of runtime.steps) {
+      const binding = bindings.find(binding => binding.step_id === step.id);
       for (const attempt of step.attempts) {
-        if (attempt.capabilityId !== 'template-review.handoff.observe.v1') continue;
+        if (this.sourceBindings) {
+          if (!binding || attempt.capabilityId !== binding.capability_id || attempt.capabilityParameterSha256 !== binding.capability_parameter_sha256)
+            throw new Error('handoff_source_binding_invalid');
+        } else if (attempt.capabilityId !== 'template-review.handoff.observe.v1') continue;
         const key = JSON.stringify([step.id, attempt.id]);
         const row = byAttempt.get(key);
         if (row) {
           if (!intents.has(key)) throw new Error('handoff_evidence_attempt_mismatch');
-          observations.push(parseTemplateReviewHandoffEvidence(row, attempt));
+          observations.push(parseTemplateReviewHandoffEvidence(row, attempt, binding));
           byAttempt.delete(key);
         } else if (attempt.status === 'succeeded') throw new Error('handoff_success_without_evidence');
       }
@@ -66,7 +90,8 @@ export class D1WorkflowRuntimeHandoffProofReader implements WorkflowRuntimeHando
     return {
       schema: 'create-something/control-reconciliation-proof@1',
       runtime,
-      handoffObservations: observations
+      handoffObservations: observations,
+      ...(this.sourceBindings ? { sourceBindings: bindings } : {})
     };
   }
   async find(input: {

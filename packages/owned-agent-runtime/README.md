@@ -333,9 +333,99 @@ The activation contract hash is intentionally outside the accepted runtime
 binding: Agency derives it from the source (including Build hashes) and policy.
 The writer uses the Agency-loaded contract hash and matches it atomically;
 putting it in the binding would create a circular digest dependency.
+
+Checkpoint stores select `verified-build-v2` as the fourth constructor argument
+for the new admission path. It writes `build_binding_version=2` and requires the
+persisted exact verified Build relation, preserving distinct delivery/compiler
+hashes. The default `legacy-v1` is the pre-transition compatibility path;
+migration0015 rejects its new inserts. Existing checkpoint updates keep their
+persisted semantics. Hosted activation must explicitly select the v2 path after
+binding publication; the proof reader still requires integration before release.
+
+`D1VerifiedBuildWorkflowRuntimeProofReader` emits
+`create-something/workflow-runtime-proof@2`, including the immutable accepted
+Build/artifact-set/binding digests and signer identity. It verifies the persisted
+relation against the scoped parent, current checkpoint version and trusted
+manifest identity after ordinary receipt-chain verification. Missing or
+inconsistent relations fail closed. The existing reader retains proof@1 for
+legacy checkpoints; hosted wiring must select the versioned reader for v2
+admissions before production promotion.
+
+`publishControlBuildBinding` composes the runtime parent, current Agency registry,
+independent signed admission and immutable Control binding insert. It rechecks
+Agency registration after artifact verification and guards parent state/activation
+at insertion. Exact existing bindings can be reused; conflicting identities fail.
+The operation records evidence, not a durable source permit: source dispatch must
+still obtain its current authorization. Concurrent duplicate insert races remain
+explicit failures; a subsequent exact retry reads the stored relation.
+
+The reconciliation proof reader accepts an explicit `verified-build-v2` mode.
+This retains the verified Build binding in its nested runtime proof and fails
+closed when that relation is inconsistent. The default remains `legacy-v1`
+for historical consumers; hosted production composition must select v2 for
+newly admitted Build-bound runs. This option alone does not enable execution.
+
 Artifact admission requires `sourceDefinition` from the owning host registration,
 not from an HTTP request or the signed artifact itself. The host recompiles it
 and requires the registered definition hash and canonical compiled bundle to
 match exactly. This catches consistently omitted assignments across generated
 artifacts. A historical compiler output that the pinned host compiler cannot
 reproduce is rejected; an allowlisted version alone does not bypass this check.
+
+`AuthenticatedTemplateReviewHandoffSource` is the fixed MCP transport for the
+handoff gateway. It uses the repository-pinned SDK, accepts tokens only from an
+injected credential owner, rejects redirects, disables reconnect retries, bounds
+network/tool calls, and sanitizes errors. The source result envelope is decoded
+before the gateway validates observation evidence. It neither provisions OAuth
+nor stores tokens. Hosted credential binding and authenticated production
+invocation remain separate verification requirements.
+
+### Internal Marketplace deployment bindings
+
+The Worker entry point composes the signed Marketplace host only when
+`TEMPLATE_REVIEW_DEPLOYMENT` is configured. This operator-owned JSON uses
+`template-review-deployment@1` and the `TemplateReviewDeployment` contract in
+`src/template-review-worker.ts`: exact frozen activation, full artifact admission
+policy, fixed source pair and compiled observation step, evidence age/skew bounds,
+and explicit approval-policy role mapping. Request bodies cannot supply these
+values. Registration, signature and frozen activation are independently checked.
+
+Enablement also requires `WORKFLOW_ARTIFACTS` (R2), `WORKFLOW_RUNTIME_QUEUE`
+(Queue producer and this Worker's consumer), `TEMPLATE_REVIEW_SOURCE_TOKEN`
+(secret), and `CONTROL_SCHEDULER_TOKEN` (secret). The scheduler token must be an
+unexpired first-party JWT for this resource with the exact deployment scope and
+activation. The source token must independently authorize the fixed review MCP
+resource. Secret bindings do not bypass either resource's authorization.
+
+The scheduled handler rebuilds lost wakes from queued D1 state. Configure its
+cron trigger as part of the reviewed production release, together with queue
+retry/dead-letter settings and token renewal ownership. The queue consumer
+re-verifies scheduler Identity on every batch and explicitly retries failed
+messages. An operator's HTTP approval context cannot execute scheduled work.
+Expired credentials leave work pending; ambiguous source attempts remain blocked
+from automatic redispatch.
+
+These bindings are intentionally absent from the shared Wrangler configuration
+until the exact internal release and source credentials are provisioned. Their
+presence alone does not establish production acceptance: retain migration,
+activation, source observation, recovery and authenticated operator receipts.
+
+For a stopped run with one persisted, confirmed source observation, the internal
+recovery path is `reconcile-confirmed-observation`. An operator starts recovery;
+an activation-bound scheduler finishes it only after the host re-verifies the
+signed proof and exact evidence. The recovered Control receipt contains the
+SHA-256 of a `control-handoff-recovery@1` envelope (`runId`, `recovery`, and the
+complete reconciliation `proof`). This reconciles the observed result without
+changing the historical runtime checkpoint or calling the source again. A
+reconciled run cannot be retried. Missing or uncertain observations do not qualify
+for this path; they remain unresolved and are not relabeled as success.
+
+For unattended production scheduling, provision `CONTROL_SCHEDULER_ISSUER_KEY`
+through Identity's service-key workflow with `control_scheduler_token_issue`
+permission. When configured, the Worker requests a fresh five-minute token from
+Identity's fixed production issuance endpoint for the deployment's exact scope,
+activation and runtime audience, then verifies the JWT normally. It does not
+cache the token across invocations or fall back to an old token after issuance
+failure. `CONTROL_SCHEDULER_TOKEN` remains an explicitly supplied short-lived
+option for bounded verification. Neither option creates the Identity service
+key, grants permissions, or authorizes the separate source MCP credential.

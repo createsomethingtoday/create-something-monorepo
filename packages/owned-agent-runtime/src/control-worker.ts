@@ -59,15 +59,34 @@ const CONTROL_ACTIONS = [
   'terminate'
 ] as const;
 
+const runtimeApprovalInput = z.object({
+  step_id: z.string().min(1).max(180),
+  approval_id: z.string().min(1).max(500),
+  binding_sha256: z.string().regex(/^sha256:[a-f0-9]{64}$/),
+  checkpoint_version: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER)
+}).strict();
+
 const actionInput = z
   .object({
     action: z.enum(CONTROL_ACTIONS),
     idempotency_key: z.string().trim().min(1).max(180),
     reason: z.string().trim().min(1).max(1000).optional(),
     recovery: z.string().trim().min(1).max(240).optional(),
-    outcome: z.string().trim().min(1).max(1000).optional()
+    outcome: z.string().trim().min(1).max(1000).optional(),
+    runtime_approval: runtimeApprovalInput.optional()
   })
+  .strict()
   .superRefine((value, context) => {
+    if (value.runtime_approval && !['approve', 'reject'].includes(value.action))
+      context.addIssue({code:'custom',path:['runtime_approval'],message:'Only approval decisions accept a runtime binding'});
+    for (const field of ['reason', 'recovery', 'outcome'] as const) {
+      const allowed = field === 'reason'
+        ? ['approve', 'reject', 'stop', 'cancel', 'terminate'].includes(value.action)
+        : field === 'recovery' ? value.action === 'begin_recovery' : value.action === 'finish_recovery';
+      if (value[field] !== undefined && !allowed) {
+        context.addIssue({code:'custom',path:[field],message:`${value.action} does not accept ${field}`});
+      }
+    }
     if (
       ['approve', 'reject', 'stop', 'cancel', 'terminate'].includes(value.action) &&
       !value.reason
@@ -179,9 +198,9 @@ async function runAction(
   const { scope, actor } = context;
   switch (input.action) {
     case 'approve':
-      return service.approve(scope, actor, runId, input.idempotency_key, input.reason!);
+      return service.approve(scope, actor, runId, input.idempotency_key, input.reason!, input.runtime_approval);
     case 'reject':
-      return service.reject(scope, actor, runId, input.idempotency_key, input.reason!);
+      return service.reject(scope, actor, runId, input.idempotency_key, input.reason!, input.runtime_approval);
     case 'stop':
       return service.stop(scope, actor, runId, input.idempotency_key, input.reason!);
     case 'cancel':
@@ -212,6 +231,17 @@ function toolDefinitions() {
       idempotency_key: { type: 'string' }
     };
     const required = ['run_id', 'action', 'idempotency_key'];
+    if (['approve', 'reject'].includes(action)) {
+      properties.runtime_approval = {
+        type: 'object', additionalProperties: false,
+        properties: {
+          step_id: { type: 'string', minLength: 1, maxLength: 180 },
+          approval_id: { type: 'string', minLength: 1, maxLength: 500 },
+          binding_sha256: { type: 'string', pattern: '^sha256:[a-f0-9]{64}$' },
+          checkpoint_version: { type: 'integer', minimum: 0, maximum: Number.MAX_SAFE_INTEGER }
+        }, required: ['step_id', 'approval_id', 'binding_sha256', 'checkpoint_version']
+      };
+    }
     if (['approve', 'reject', 'stop', 'cancel', 'terminate'].includes(action)) {
       properties.reason = { type: 'string' };
       required.push('reason');
@@ -475,7 +505,8 @@ export function createControlRunWorker(dependencies: {
         return rpc(message.id, toolResult(run));
       }
       if (name === 'control_run_action' && typeof values.run_id === 'string') {
-        const validated = actionInput.safeParse(values);
+        const { run_id, ...action } = values;
+        const validated = actionInput.safeParse(action);
         if (!validated.success) return rpcError(message.id, -32602, 'Invalid tool arguments');
         return rpc(
           message.id,

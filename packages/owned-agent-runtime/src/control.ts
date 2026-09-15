@@ -26,6 +26,25 @@ export interface ControlActor {
   role: ControlActorRole;
 }
 
+export interface ControlRuntimeApprovalBinding {
+  step_id: string;
+  approval_id: string;
+  binding_sha256: string;
+  checkpoint_version: number;
+}
+
+export interface ControlRuntimeApprovalAuthority {
+  decide(input: {
+    scope: ControlScope; actor: ControlActor; run: ControlRunRecord;
+    binding: ControlRuntimeApprovalBinding; decision: 'approved' | 'rejected';
+    idempotencyKey: string;
+  }): Promise<void>;
+}
+
+export interface ControlRuntimeRecoveryAuthority {
+  verify(input: { scope: ControlScope; actor: ControlActor; run: ControlRunRecord }): Promise<string>;
+}
+
 export interface FrozenControlActivation extends ControlScope {
   id: string;
   activationVersion: number;
@@ -325,6 +344,8 @@ export function createControlRunService(options: {
   id?: () => string;
   clock?: () => Date;
   maxAttempts?: number;
+  runtimeApprovals?: ControlRuntimeApprovalAuthority;
+  runtimeRecovery?: ControlRuntimeRecoveryAuthority;
 }) {
   const newId = options.id ?? (() => crypto.randomUUID());
   const clock = options.clock ?? (() => new Date());
@@ -444,7 +465,7 @@ export function createControlRunService(options: {
     outcome: string;
     verifier?: string;
     command?: unknown;
-    mutate?: (run: ControlRunRecord) => void;
+    mutate?: (run: ControlRunRecord) => void | Promise<void>;
   }) {
     requireWriteActor(input.actor);
     const normalizedRunId = text(input.runId, 'Run ID');
@@ -461,7 +482,7 @@ export function createControlRunService(options: {
       throw new ControlRunConflictError(`${input.operation} is not allowed from ${run.status}`);
     }
     const expectedVersion = run.version;
-    input.mutate?.(run);
+    await input.mutate?.(run);
     run.status = input.status;
     if (input.status !== 'waiting_for_approval') run.pendingApprovalKind = null;
     run.version += 1;
@@ -478,6 +499,19 @@ export function createControlRunService(options: {
       run,
       command
     );
+  }
+
+  async function decideRuntimeApproval(scope: ControlScope, actor: ControlActor, run: ControlRunRecord,
+    binding: ControlRuntimeApprovalBinding | undefined, decision: 'approved' | 'rejected', idempotencyKey: string) {
+    const bound = run.pendingApprovalKind?.startsWith('workflow-runtime:');
+    if (!bound && !binding) return;
+    if (!bound || !binding || !options.runtimeApprovals ||
+        run.pendingApprovalKind !== `workflow-runtime:${binding.binding_sha256}`)
+      throw new ControlRunPolicyError('Exact runtime approval and configured authority required');
+    // Persist the step decision first. A crash before the parent commit replays
+    // that exact command; a concurrent stop still wins the parent CAS.
+    await options.runtimeApprovals.decide({ scope, actor, run: structuredClone(run), binding,
+      decision, idempotencyKey });
   }
 
   return {
@@ -609,7 +643,9 @@ export function createControlRunService(options: {
             allowedResources: [...claimed.requestedResources]
           });
         } catch {
-          outcome = { type: 'failed', reason: 'executor_failed', retryable: true };
+          // An exception cannot prove whether a dispatched effect occurred.
+          // Only an explicit executor outcome may authorize a safe retry.
+          outcome = { type: 'failed', reason: 'executor_failed', retryable: false };
         }
 
         finished.pendingApprovalKind = null;
@@ -667,7 +703,7 @@ export function createControlRunService(options: {
       );
     },
 
-    approve(scope: ControlScope, actor: ControlActor, runId: string, idempotencyKey: string, reason: string) {
+    approve(scope: ControlScope, actor: ControlActor, runId: string, idempotencyKey: string, reason: string, runtimeApproval?: ControlRuntimeApprovalBinding) {
       return transition({
         scope,
         actor,
@@ -677,8 +713,11 @@ export function createControlRunService(options: {
         allowedFrom: ['waiting_for_approval'],
         status: 'queued',
         outcome: text(reason, 'Approval reason', 1000),
-        command: { reason },
-        mutate(run) { run.pendingApprovalKind = null; }
+        command: runtimeApproval ? { reason, runtimeApproval } : { reason },
+        async mutate(run) {
+          await decideRuntimeApproval(scope, actor, run, runtimeApproval, 'approved', idempotencyKey);
+          run.pendingApprovalKind = null;
+        }
       });
     },
 
@@ -690,8 +729,11 @@ export function createControlRunService(options: {
       return transition({ scope, actor, runId, idempotencyKey, operation: 'cancel', allowedFrom: ['queued', 'running', 'waiting_for_approval', 'stopped', 'failed', 'fallback_required', 'recovering', 'recovered'], status: 'cancelled', outcome: text(reason, 'Cancellation reason', 1000), command: { reason } });
     },
 
-    reject(scope: ControlScope, actor: ControlActor, runId: string, idempotencyKey: string, reason: string) {
-      return transition({ scope, actor, runId, idempotencyKey, operation: 'reject', allowedFrom: ['waiting_for_approval'], status: 'terminated', outcome: text(reason, 'Rejection reason', 1000), command: { reason }, mutate(run) { run.pendingApprovalKind = null; } });
+    reject(scope: ControlScope, actor: ControlActor, runId: string, idempotencyKey: string, reason: string, runtimeApproval?: ControlRuntimeApprovalBinding) {
+      return transition({ scope, actor, runId, idempotencyKey, operation: 'reject', allowedFrom: ['waiting_for_approval'], status: 'terminated', outcome: text(reason, 'Rejection reason', 1000), command: runtimeApproval ? { reason, runtimeApproval } : { reason }, async mutate(run) {
+        await decideRuntimeApproval(scope, actor, run, runtimeApproval, 'rejected', idempotencyKey);
+        run.pendingApprovalKind = null;
+      } });
     },
 
     terminate(scope: ControlScope, actor: ControlActor, runId: string, idempotencyKey: string, reason: string) {
@@ -700,6 +742,8 @@ export function createControlRunService(options: {
 
     retry(scope: ControlScope, actor: ControlActor, runId: string, idempotencyKey: string) {
       return transition({ scope, actor, runId, idempotencyKey, operation: 'retry', allowedFrom: ['stopped', 'failed', 'recovered'], status: 'queued', outcome: 'Run queued for another bounded attempt', mutate(run) {
+        if (options.runtimeRecovery && run.status === 'recovered')
+          throw new ControlRunConflictError('Reconciled runtime observation cannot be retried');
         if (
           run.status === 'failed' &&
           run.receipts.at(-1)?.verifier !== 'retryable_failure'
@@ -750,11 +794,16 @@ export function createControlRunService(options: {
         throw new ControlRunAccessError('Scheduler token is not bound to the run activation');
       }
       if (run.status !== 'recovering') throw new ControlRunConflictError(`finish_recovery is not allowed from ${run.status}`);
+      if (options.runtimeApprovals && !options.runtimeRecovery)
+        throw new ControlRunConflictError('Runtime recovery evidence authority is not configured');
+      const verifier = options.runtimeRecovery
+        ? await options.runtimeRecovery.verify({ scope, actor, run: structuredClone(run) })
+        : actor.subject;
       const expectedVersion = run.version;
       run.status = 'recovered';
       run.version += 1;
       run.updatedAt = clock().toISOString();
-      await appendReceipt(run, actor, 'recovered', { outcome: normalizedOutcome, verifier: actor.subject });
+      await appendReceipt(run, actor, 'recovered', { outcome: normalizedOutcome, verifier });
       return apply(scope, idempotencyKey, 'finish_recovery', expectedVersion, run, command);
     }
   };
