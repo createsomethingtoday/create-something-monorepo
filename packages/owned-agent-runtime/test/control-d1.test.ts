@@ -22,6 +22,7 @@ import { D1TemplateReviewQueueObservationAdapter } from '../src/template-review-
 import { D1WorkflowRuntimeProofReader } from '../src/workflow-runtime-proof-projection.js';
 import { D1WorkflowRuntimeCheckpointStore } from '../src/workflow-runtime-store.js';
 import {
+  ZeroWriteWorkflowRuntimeHost,
   createWorkflowRuntimeRun,
   planWorkflowRuntimeStep,
   parseWorkflowRuntimeManifest,
@@ -1128,23 +1129,41 @@ test('D1 checkpoint store records the exact approval binding and authenticated d
     idempotencyKey: 'approval-wait',
     commandDigest: 'f'.repeat(64)
   });
-  const decided = await reduceWorkflowRuntimeRun(manifest, waiting, {
-    type: 'approval_decided',
+  let identityChecks = 0;
+  const host = new ZeroWriteWorkflowRuntimeHost(manifest, {
+    storage: store,
+    clock: () => '2026-08-25T00:00:04.000Z',
+    identity: { async assert(actualScope, subject, policy) {
+      assert.deepEqual(actualScope, scope);
+      assert.equal(subject, owner.subject);
+      assert.equal(policy, identityChecks < 2 ? 'account-owner' : null);
+      identityChecks++;
+      return { subject: owner.subject, role: owner.role };
+    } },
+    queue: { async enqueue() { assert.fail('terminal approval must not enqueue'); } },
+    receiptSink: { async write() {} },
+    executor: undefined as never
+  });
+  const event = {
+    type: 'approval_decided' as const,
     stepId: longReviewStepId,
     approvalId: wait.approval.id,
     approvalBindingSha256: wait.approval.bindingSha256,
-    decision: 'approved',
+    decision: 'approved' as const,
     actorSubject: owner.subject,
-    actorRole: owner.role,
     observedAt: '2026-08-25T00:00:04.000Z'
-  });
-  await store.apply({
-    scope,
-    run: decided,
-    expectedVersion: waiting.version,
-    idempotencyKey: 'approval-decide',
-    commandDigest: '1'.repeat(64)
-  });
+  };
+  await assert.rejects(host.transition(scope, parent.id, waiting.version,
+    {...event, approvalBindingSha256: runtimeDigest('0')}, 'wrong-binding', 'ignored'),
+    /stale, mismatched, or expired/);
+  assert.deepEqual(await store.find(scope, parent.id), waiting);
+  const decided = await host.transition(scope, parent.id, waiting.version,
+    event, 'approval-decide', 'ignored');
+  assert.equal(identityChecks, 2);
+  assert.deepEqual(await host.transition(scope, parent.id, waiting.version,
+    event, 'approval-decide', 'ignored'), decided);
+  assert.deepEqual(await store.find(scope, parent.id), decided);
+  assert.equal(identityChecks, 3);
   assert.equal(decided.status, 'completed');
   assert.equal(
     execFileSync('sqlite3', ['-noheader', path], {
