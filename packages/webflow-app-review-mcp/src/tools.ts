@@ -645,7 +645,7 @@ export function registerTools(
 
   server.tool(
     'app_review_get_review_context',
-    'Read-only starting point to prepare, start, or kick off a new MCP review cycle, including asset updates. Reads the existing reviewer and status without changing either. Wait for the bundle if it has not been uploaded. Never assign a reviewer or set In Review merely to prepare a review.',
+    'Read-only starting point to prepare, start, or kick off a new MCP review cycle, including asset updates. Reads the existing reviewer and status without changing either. Wait for the bundle if it has not been uploaded. Never assign a reviewer or set In Review merely to prepare a review. Returns separate reviewFeedback and rejectionFeedback at both context and context.version. Check both fields for findings; reviewFeedback may be absent or empty even when rejectionFeedback contains rejection findings.',
     {
       version_id: z.string().min(1),
     },
