@@ -63,7 +63,7 @@ test('handoff evidence requires an attempt, valid disposition, and immutable exa
     assert.throws(() => sql('UPDATE control_workflow_runtime_handoff_observations SET maximum_clock_skew_ms=60000;'));
     assert.throws(() => sql('DELETE FROM control_workflow_runtime_handoff_observations;'));
     sql("INSERT INTO control_workflow_runtime_attempts VALUES('run','step','ahead-old');");
-    const aheadInsert = insert.replaceAll("'attempt'", "'ahead-old'")
+    const aheadInsert = insert.replaceAll(digest, 'sha256:'+'3'.repeat(64)).replaceAll("'attempt'", "'ahead-old'")
       .replace('23:00:01.000Z','23:01:00.000Z').replace('23:00:02.000Z','23:00:40.000Z')
       .replace(',30000)',',60000,30000)');
     sql(aheadInsert);
@@ -72,7 +72,7 @@ test('handoff evidence requires an attempt, valid disposition, and immutable exa
     assert.equal(sql('SELECT COUNT(*) FROM control_workflow_runtime_handoff_observations WHERE age_policy_version=1;'),'3');
     assert.equal(sql('SELECT * FROM control_workflow_runtime_handoff_observations ORDER BY attempt_id;'),oldRows.split('\n').map(row=>row+'|1').join('\n'));
     sql("INSERT INTO control_workflow_runtime_attempts VALUES('run','step','ahead-new');");
-    const newInsert = aheadInsert.replaceAll('ahead-old','ahead-new').replace(',60000,30000)',',60000,30000,2)');
+    const newInsert = aheadInsert.replaceAll('sha256:'+'3'.repeat(64),'sha256:'+'4'.repeat(64)).replaceAll('ahead-old','ahead-new').replace(',60000,30000)',',60000,30000,2)');
     assert.throws(()=>sql(newInsert),/age_budget_exceeded/);
     assert.throws(()=>sql(newInsert.replace(',30000,2)',',39999,2)')),/age_budget_exceeded/);
     sql(newInsert.replace(',30000,2)',',40000,2)'));
