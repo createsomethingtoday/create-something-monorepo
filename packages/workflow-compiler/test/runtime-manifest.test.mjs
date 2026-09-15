@@ -192,3 +192,33 @@ test('runtime validation rejects duplicate policy IDs and mismatched nested arti
     assert.throws(()=>validateWorkflowRuntimeManifestArtifact(bundle,runtime),/exact compiled workflow/);
   }
 });
+
+
+test('runtime validation binds agent autonomy to decisions and allowed actions', async () => {
+  const definition = JSON.parse(await readFile(new URL('../fixtures/notion-custom-agent/workflow.json',import.meta.url),'utf8'));
+  definition.schemaVersion = 'workflow_definition.v0.3';
+  const source = compileWorkflowDefinition(definition);
+  const actionId = 'create_review_suggestion';
+  const mutations = [
+    bundle => {
+      const decision = bundle.decisionInventory.decisions.find(d=>d.actionId===actionId);
+      decision.autonomy='auto_allow';
+      if (decision.toolContract) decision.toolContract.autonomy='auto_allow';
+      bundle.governedInteraction.actions.find(d=>d.actionId===actionId).autonomy='auto_allow';
+      bundle.approvalSurfaces.actions=bundle.approvalSurfaces.actions.filter(d=>d.actionId!==actionId);
+      const tool=bundle.toolContracts.tools.find(d=>d.actionId===actionId);
+      if(tool) tool.autonomy='auto_allow';
+    },
+    bundle => {bundle.agentContracts.agents[0].actionAutonomy=[];},
+    bundle => {bundle.agentContracts.agents[0].actionAutonomy.push({...bundle.agentContracts.agents[0].actionAutonomy[0]});},
+    bundle => {bundle.agentContracts.agents[0].allowedActionIds.push('unknown-action');}
+  ];
+  for(const mutate of mutations) {
+    const bundle=structuredClone(source); mutate(bundle);
+    const runtime=createWorkflowRuntimeManifest(bundle,{
+      schemaVersion:'workflow_runtime_manifest_input.v0.1',target:'create-something/control-runtime.v1',
+      approvalExpiresAt:'2026-12-31T00:00:00.000Z',steps:[{id:'suggest',actionId,dependsOn:[]}]
+    });
+    assert.throws(()=>validateWorkflowRuntimeManifestArtifact(bundle,runtime),/exact compiled workflow/);
+  }
+});

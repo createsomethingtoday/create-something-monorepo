@@ -448,6 +448,21 @@ export function validateWorkflowRuntimeManifestArtifact(
     const decisions = bundle.decisionInventory.decisions;
     const same = (left: unknown, right: unknown) =>
       JSON.stringify(canonicalize(left)) === JSON.stringify(canonicalize(right));
+    const decisionsById = new Map(decisions.map(decision => [decision.actionId, decision]));
+    const agentIds = new Set<string>();
+    for (const agent of bundle.agentContracts.agents) {
+      if (typeof agent.id !== 'string' || !agent.id.trim() || agentIds.has(agent.id))
+        throw new Error('compiled agent IDs must be unique');
+      agentIds.add(agent.id);
+      const allowed = agent.allowedActionIds;
+      if (!Array.isArray(allowed) || new Set(allowed).size !== allowed.length ||
+          allowed.some(id => !decisionsById.has(id)))
+        throw new Error('compiled agent references an invalid action');
+      const expected = allowed.map(actionId => ({actionId, autonomy: decisionsById.get(actionId)!.autonomy}))
+        .sort((left, right) => left.actionId.localeCompare(right.actionId));
+      const actual = [...agent.actionAutonomy].sort((left, right) => left.actionId.localeCompare(right.actionId));
+      if (!same(expected, actual)) throw new Error('compiled agent autonomy disagrees with decisions');
+    }
     const interactions = decisions.map(({toolContract: _tool, ...decision}) => decision);
     const approvals = decisions.filter(decision => decision.autonomy !== 'auto_allow').map(decision => ({
       actionId: decision.actionId,
