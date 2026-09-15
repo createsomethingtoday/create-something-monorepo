@@ -82,6 +82,12 @@ test('handoff evidence requires an attempt, valid disposition, and immutable exa
     assert.throws(()=>sql(newInsert),/age_budget_exceeded/);
     assert.throws(()=>sql(newInsert.replace(',30000,2)',',39999,2)')),/age_budget_exceeded/);
     sql(newInsert.replace(',30000,2)',',40000,2)'));
+    sql("INSERT INTO control_workflow_runtime_attempts VALUES('run','step','aligned-new');");
+    const alignedInsert = newInsert.replaceAll('ahead-new','aligned-new')
+      .replaceAll('sha256:'+'4'.repeat(64),'sha256:'+'5'.repeat(64))
+      .replace('23:01:00.000Z','23:00:00.000Z').replace('23:00:40.000Z','23:00:02.000Z');
+    assert.throws(()=>sql(alignedInsert.replace(',30000,2)',',1999,2)')),/age_budget_exceeded/);
+    sql(alignedInsert.replace(',30000,2)',',2000,2)'));
     assert.throws(()=>sql('UPDATE control_workflow_runtime_handoff_observations SET age_policy_version=2;'),/immutable/);
   } finally {
     rmSync(dir, { recursive: true, force: true });
