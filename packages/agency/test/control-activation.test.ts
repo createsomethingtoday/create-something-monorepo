@@ -1,3 +1,6 @@
+import { readFileSync, rmSync } from 'node:fs';
+import { inspectBuildReleasePackage } from '../../delivery-schema/src/build-release.js';
+import { writeRepresentativePackage } from '../../delivery-schema/test/build-release.fixture.js';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
@@ -331,6 +334,7 @@ test('scheduler authority requires the run frozen activation in its exact scope'
 
 test('Control source is derived and registered only from a strict ready Build inspection', async () => {
   const inspection = {
+    manifestSha256: 'd'.repeat(64),
     manifest: {
       releaseId: 'release_1',
       handoff: { receiptSha256: 'a'.repeat(64) },
@@ -539,4 +543,45 @@ test('supersession, suspension, rollback, change links, and projection replay pr
     ControlActivationAccessError
   );
   assert.equal((await ledger.listProjectionEvents(scopeB, actor(scopeB))).length, 0);
+});
+
+
+test('accepted Build v2 reaches Agency activation without a contract hash cycle', async () => {
+  const digest = 'sha256:'+'a'.repeat(64);
+  const binding = {
+    schema:'create-something/build-runtime-binding@1',buildReleaseId:'release_example_001',
+    runtimePolicySha256:'sha256:'+policy.sha256,artifactManifestSha256:digest,runtimeManifestSha256:digest,
+    workflowId:'marketplace',workflowVersion:'1',definitionHash:digest,compilerVersion:'compiler-v1',
+    runtimeManifestSchema:'workflow_runtime_manifest.v0.2',attestationKeyId:'fixture',
+    attestationPublicKeyFingerprint:digest,artifactPrefix:'workflow-artifacts/'+'a'.repeat(64)+'/'
+  };
+  const build = writeRepresentativePackage({runtimeBinding:JSON.stringify(binding)});
+  try {
+    const originalBytes = readFileSync(build.manifestPath);
+    const inspection = inspectBuildReleasePackage(build.manifestPath);
+    assert.equal(inspection.releaseReady,true);
+    const scope = {...scopeA,accountId:'account_example',workspaceAccountId:'workspace_example'};
+    let id = 0;
+    const ledger = createControlActivationLedger({repository:createMemoryRepository(),id:()=>`cycle_${++id}`,clock:()=> '2026-09-15T00:00:00.000Z'});
+    const registration = {inspection,manifestSha256:inspection.manifestSha256!,mapVersionId:'map-version-3',mapCanvasSha256:'f'.repeat(64)};
+    await assert.rejects(ledger.registerBuildEvidence(scope,actor(scope),{
+      ...registration,manifestSha256:'0'.repeat(64)
+    }), /exact inspected Build manifest digest/);
+    await assert.rejects(ledger.registerBuildEvidence(scope,actor(scope),{
+      ...registration,inspection:{...inspection,manifestSha256:undefined}
+    }), /exact inspected Build manifest digest/);
+    const evidence = await ledger.registerBuildEvidence(scope,actor(scope),registration);
+    const source = controlActivationSourceFromBuildInspection(inspection,registration);
+    const result = await ledger.activate(scope,actor(scope),{idempotencyKey:'cycle-free',source,policy});
+    assert.equal(result.activation.buildManifestSha256,inspection.manifestSha256);
+    assert.equal(result.activation.buildArtifactSetSha256,inspection.acceptanceReceipt!.artifactSetSha256);
+    assert.equal(result.activation.buildManifestSha256,evidence.buildManifestSha256);
+    assert.match(result.activation.contractSha256,/^[a-f0-9]{64}$/);
+    assert.notEqual(result.activation.contractSha256,result.activation.buildManifestSha256);
+    assert.equal('contractSha256' in inspection.runtimeBinding!,false);
+    assert.deepEqual(readFileSync(build.manifestPath),originalBytes);
+    const reinspection = inspectBuildReleasePackage(build.manifestPath);
+    assert.equal(reinspection.releaseReady,true);
+    assert.equal(reinspection.manifestSha256,result.activation.buildManifestSha256);
+  } finally { rmSync(build.root,{recursive:true,force:true}); }
 });

@@ -3662,6 +3662,9 @@ importers:
 
   packages/owned-agent-runtime:
     dependencies:
+      '@create-something/delivery-schema':
+        specifier: workspace:*
+        version: link:../delivery-schema
       '@createsomething/workflow-compiler':
         specifier: workspace:*
         version: link:../workflow-compiler

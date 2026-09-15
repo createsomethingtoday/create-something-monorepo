@@ -1,3 +1,8 @@
+import { execFileSync } from 'node:child_process';
+import { d1, literal } from './sqlite-d1.fixture.js';
+import { activationColumns } from '../src/control-activation-binding.js';
+import { registerVerifiedBuildRuntime } from '../src/build-runtime-registration-writer.js';
+import { D1WorkflowArtifactRegistrationReader } from '../src/workflow-artifact-registration.js';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { generateKeyPairSync, createHash } from 'node:crypto';
@@ -5,6 +10,10 @@ import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createWorkflowArtifactAttestation, workflowArtifactManifestHash, compileWorkflowDefinition, createWorkflowRuntimeManifest, writeCompiledWorkflowArtifacts, verifyWorkflowArtifactBundle } from '@createsomething/workflow-compiler';
+import { verifyBuildRuntimeRegistration } from '../src/build-runtime-registration-verifier.js';
+import { writeRepresentativePackage } from '../../delivery-schema/test/build-release.fixture.js';
+import { inspectBuildReleasePackage } from '@create-something/delivery-schema/build-release';
+import type { FrozenControlActivation } from '../src/control.js';
 import { admitWorkflowArtifact, type WorkflowArtifactAdmissionPolicy } from '../src/workflow-artifact-admission.js';
 
 test('admits a real signed compiler release and rejects mismatched registration, policy and bytes', async () => {
@@ -40,6 +49,78 @@ test('admits a real signed compiler release and rejects mismatched registration,
       capabilities:runtime.steps.flatMap(step=>step.disposition==='pass'?[step.capability.id]:[])
     };
     const reader={async read(){return files;}};
+    const binding = {
+      ...registration, schema:'create-something/build-runtime-binding@1',
+      buildReleaseId:'release_example_001',
+      runtimePolicySha256:'sha256:'+'b'.repeat(64),
+      artifactPrefix:`workflow-artifacts/${registration.artifactManifestSha256.slice(7)}/`
+    };
+    const build = writeRepresentativePackage({runtimeBinding:JSON.stringify(binding)});
+    try {
+      const inspected = inspectBuildReleasePackage(build.manifestPath);
+      const buildManifest = inspected.manifest!;
+      const activation: FrozenControlActivation = {
+        id:'activation-test', activationVersion:1, activationKind:'initial', status:'active',
+        accountId:'account_example',tenantId:'tenant_example',workspaceAccountId:'workspace_example',
+        mapId:'map_example_001',mapVersionId:'map-version-test',mapVersion:3,mapCanvasSha256:'c'.repeat(64),
+        handoffId:'handoff_example_001',handoffReceiptSha256:buildManifest.handoff.receiptSha256,
+        buildReleaseId:buildManifest.releaseId,buildManifestSha256:inspected.manifestSha256!,
+        buildArtifactSetSha256:inspected.acceptanceReceipt!.artifactSetSha256,
+        buildAcceptanceReceiptId:inspected.acceptanceReceipt!.receiptId,
+        buildAcceptanceReceiptSha256:buildManifest.acceptance.receiptSha256,
+        contractSha256:'a'.repeat(64),policySha256:'b'.repeat(64),policyVersion:'test',
+        entitlementSnapshotSha256:'d'.repeat(64),allowedTools:[],allowedResources:[]
+      };
+      // Agency derives this enclosing contract only after accepted Build hashes
+      // exist. It is deliberately absent from the hashed binding artifact.
+      activation.contractSha256 = createHash('sha256').update(JSON.stringify({
+        source:{buildManifestSha256:activation.buildManifestSha256,buildArtifactSetSha256:activation.buildArtifactSetSha256},
+        policy:{sha256:activation.policySha256}
+      })).digest('hex');
+      assert.equal('contractSha256' in binding,false);
+      const databasePath = join(build.root,'registration.sqlite');
+      const columns = Object.entries(activationColumns);
+      const values = columns.map(([key]) => {
+        const value = activation[key as keyof typeof activation];
+        return literal(Array.isArray(value)?JSON.stringify(value):value);
+      });
+      execFileSync('sqlite3',[databasePath],{input:`CREATE TABLE customer_control_activations (
+        ${columns.map(([key,column])=>`${column} ${typeof activation[key as keyof typeof activation] === 'number'?'INTEGER':'TEXT'} ${key==='id'?'PRIMARY KEY':''}`).join(',')});
+        INSERT INTO customer_control_activations VALUES (${values.join(',')});
+        ${await readFile(new URL('../../agency/migrations/0057_control_runtime_registrations.sql',import.meta.url),'utf8')}`});
+      const database = d1(databasePath);
+      const request = {manifestPath:build.manifestPath,scope:activation,activationId:activation.id,verifiedBy:'fixture-operator'};
+      await assert.rejects(registerVerifiedBuildRuntime(database,request,reader,
+        {...policy,sourceDefinition:{...definition,title:'A different registered source'}}),/not_admitted/);
+      assert.equal(execFileSync('sqlite3',[databasePath,'SELECT COUNT(*) FROM customer_control_runtime_registrations;'],{encoding:'utf8'}).trim(),'0');
+      // Suspension while signed bytes are being read must prevent the write.
+      await assert.rejects(registerVerifiedBuildRuntime(database,request,{async read(){
+        execFileSync('sqlite3',[databasePath],{input:"UPDATE customer_control_activations SET status='suspended';"});
+        return files;
+      }},policy),/activation_changed/);
+      assert.equal(execFileSync('sqlite3',[databasePath,'SELECT COUNT(*) FROM customer_control_runtime_registrations;'],{encoding:'utf8'}).trim(),'0');
+      execFileSync('sqlite3',[databasePath],{input:"UPDATE customer_control_activations SET status='active';"});
+      const written = await registerVerifiedBuildRuntime(database,request,reader,policy);
+      const stored = await new D1WorkflowArtifactRegistrationReader(database).find(activation);
+      assert.equal(stored?.bindingSha256,written.bindingSha256);
+      assert.equal(stored?.buildManifestSha256,written.buildManifestSha256);
+      assert.equal(stored?.artifactManifestSha256,written.binding.artifactManifestSha256);
+      await assert.rejects(registerVerifiedBuildRuntime(database,request,reader,policy),/immutable/);
+      const verified = await verifyBuildRuntimeRegistration(build.manifestPath,activation,reader,policy);
+      assert.equal(verified.buildManifestSha256, inspected.manifestSha256);
+      assert.notEqual('sha256:'+verified.buildManifestSha256, verified.binding.artifactManifestSha256);
+      assert.equal(verified.binding.artifactManifestSha256,registration.artifactManifestSha256);
+      assert.equal(verified.bindingSha256,'sha256:'+buildManifest.artifacts.runtime_binding!.sha256);
+      assert.ok(Object.isFrozen(verified) && Object.isFrozen(verified.binding));
+      for (const field of ['status','accountId','workspaceAccountId','mapId','mapVersion','handoffId',
+        'handoffReceiptSha256','buildReleaseId','buildManifestSha256','buildArtifactSetSha256',
+        'buildAcceptanceReceiptId','buildAcceptanceReceiptSha256','policySha256']) {
+        await assert.rejects(verifyBuildRuntimeRegistration(build.manifestPath,{...activation,[field]:'wrong'},reader,policy),/not_verified/);
+      }
+      await assert.rejects(verifyBuildRuntimeRegistration(build.manifestPath,activation,reader,{...policy,signer:{...policy.signer,keyId:'other'}}));
+      const missing = new Map(files); missing.delete('runtime-manifest.json');
+      await assert.rejects(verifyBuildRuntimeRegistration(build.manifestPath,activation,{async read(){return missing;}},policy));
+    } finally { await rm(build.root,{recursive:true,force:true}); }
     const admitted = await admitWorkflowArtifact(reader,registration,policy);
     assert.deepEqual(admitted,runtime);
     assert.throws(() => { admitted.workflow.id = 'mutated'; }, TypeError);

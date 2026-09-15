@@ -291,6 +291,48 @@ Admission also verifies each correlated governance artifact hash, requires an
 explicit governed-interaction host contract and compatible public compatibility
 decision, and deeply freezes the returned runtime manifest before sharing it.
 
+### Accepted Build runtime candidate verification
+
+`verifyBuildRuntimeRegistration` is an operator-side filesystem verifier. It
+reads a ready Build v2 package, compares its inspected delivery manifest,
+accepted artifact set, handoff, contract and policy with a trusted frozen
+activation, then invokes signed compiler admission under independent host policy.
+The immutable candidate preserves the separate Build manifest, binding artifact,
+and compiler inventory hashes. It does not register or activate anything.
+
+The owning Agency writer must load the activation from Agency and revalidate it
+transactionally when inserting the candidate. Do not expose this function as a
+caller-supplied activation endpoint or import its filesystem path into the Worker.
+Registration schema and Control receipt binding still require the versioned
+Build/compiler relation correction before production use.
+
+`D1WorkflowArtifactRegistrationReader` resolves Agency's immutable registration
+only when every frozen activation field still matches an active activation in
+one query. It shares the exhaustive activation-column mapping with source
+permits and returns a frozen registration value. Each new claim must repeat
+lookup and current signer-policy checks; this read is not a source permit and
+does not implement the verified Build registration writer or host wiring.
+
+Agency runtime lookup requires registration version 2 and returns the accepted
+Build manifest, artifact-set, and binding digests separately from the compiler
+inventory. It matches the complete frozen activation and rejects suspension.
+Consumers must preserve these identities in the versioned Control binding;
+lookup alone is not signature verification or an execution permit. The draft
+registry writer and Control migration remain required before hosted use.
+
+`registerVerifiedBuildRuntime` is the operator-side write path. It loads the
+activation from the supplied Agency database, verifies Build and signed compiler
+artifacts, and uses one guarded INSERT SELECT RETURNING statement matching every
+frozen activation field. Suspension during verification produces no row; duplicate
+registration is rejected by the immutable ledger. Database access and signer
+policy must come from trusted operator configuration. This function does not add
+a hosted endpoint, provision credentials, or change activation status. Production
+transport, Control receipt migration and live verification remain outstanding.
+
+The activation contract hash is intentionally outside the accepted runtime
+binding: Agency derives it from the source (including Build hashes) and policy.
+The writer uses the Agency-loaded contract hash and matches it atomically;
+putting it in the binding would create a circular digest dependency.
 Artifact admission requires `sourceDefinition` from the owning host registration,
 not from an HTTP request or the signed artifact itself. The host recompiles it
 and requires the registered definition hash and canonical compiled bundle to
