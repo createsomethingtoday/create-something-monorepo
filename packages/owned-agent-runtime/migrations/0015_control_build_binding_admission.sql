@@ -106,6 +106,7 @@ WHEN json_extract(NEW.run_json, '$.schema') = 'workflow_runtime_run.v0.2'
               AND b.activation_id = parent.activation_id AND b.activation_version = parent.activation_version
               AND b.artifact_manifest_sha256 = NEW.artifact_manifest_sha256
               AND b.runtime_manifest_sha256 = NEW.runtime_manifest_sha256
+              AND b.runtime_manifest_schema = json_extract(NEW.run_json, '$.runtimeManifestSchema')
               AND b.build_manifest_sha256 = 'sha256:' || json_extract(parent.activation_json, '$.buildManifestSha256')
               AND b.build_artifact_set_sha256 = 'sha256:' || json_extract(parent.activation_json, '$.buildArtifactSetSha256')
           ))
@@ -212,6 +213,7 @@ WHEN json_extract(NEW.run_json, '$.schema') = 'workflow_runtime_run.v0.2'
               AND b.activation_id = parent.activation_id AND b.activation_version = parent.activation_version
               AND b.artifact_manifest_sha256 = NEW.artifact_manifest_sha256
               AND b.runtime_manifest_sha256 = NEW.runtime_manifest_sha256
+              AND b.runtime_manifest_schema = json_extract(NEW.run_json, '$.runtimeManifestSchema')
               AND b.build_manifest_sha256 = 'sha256:' || json_extract(parent.activation_json, '$.buildManifestSha256')
               AND b.build_artifact_set_sha256 = 'sha256:' || json_extract(parent.activation_json, '$.buildArtifactSetSha256')
           ))

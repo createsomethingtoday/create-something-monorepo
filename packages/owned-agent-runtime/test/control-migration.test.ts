@@ -1296,6 +1296,7 @@ test('verified Build binding migration preserves parents and requires distinct e
   expectSqlFailure(path,checkpoint(1),/verified_build_binding_required|registration does not match/);
   expectSqlFailure(path,checkpoint(2,'sha256:'+'a'.repeat(64)),/verified_build_binding_required|registration does not match/);
   sql(path,checkpoint(2));
+  expectSqlFailure(path, `UPDATE control_workflow_runtime_runs SET version=2,run_json='${JSON.stringify({...run,version:2,runtimeManifestSchema:run.runtimeManifestSchema === 'workflow_runtime_manifest.v0.2' ? 'workflow_runtime_manifest.v0.1' : 'workflow_runtime_manifest.v0.2'})}' WHERE run_id='run-a';`, /registration does not match/);
   assert.equal(sql(path,'SELECT build_binding_version FROM control_workflow_runtime_runs WHERE run_id="run-a";'),'2');
   expectSqlFailure(path,'UPDATE control_workflow_runtime_runs SET build_binding_version=1;',/version_immutable|immutable or non-monotonic/);
 });
