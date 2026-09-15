@@ -67,6 +67,7 @@ const actionInput = z
     recovery: z.string().trim().min(1).max(240).optional(),
     outcome: z.string().trim().min(1).max(1000).optional()
   })
+  .strict()
   .superRefine((value, context) => {
     if (
       ['approve', 'reject', 'stop', 'cancel', 'terminate'].includes(value.action) &&
@@ -475,7 +476,8 @@ export function createControlRunWorker(dependencies: {
         return rpc(message.id, toolResult(run));
       }
       if (name === 'control_run_action' && typeof values.run_id === 'string') {
-        const validated = actionInput.safeParse(values);
+        const { run_id, ...action } = values;
+        const validated = actionInput.safeParse(action);
         if (!validated.success) return rpcError(message.id, -32602, 'Invalid tool arguments');
         return rpc(
           message.id,
