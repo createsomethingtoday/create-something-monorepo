@@ -171,6 +171,8 @@ export interface BuildReleaseInspectionIssue {
 }
 
 export interface BuildReleaseInspection {
+	/** Digest of the exact manifest bytes inspected; absent if parsing failed. */
+	manifestSha256?: string;
 	runtimeBinding?: Readonly<BuildRuntimeBinding>;
 	manifest: BuildReleaseManifest | null;
 	handoffReceipt: MapBuildHandoffReceipt | null;
@@ -751,9 +753,6 @@ const CANONICAL_ARTIFACT_FILENAMES: Record<BuildReleaseArtifactName | 'runtime_b
 	runtime_binding: 'runtime-binding.json',
 };
 
-function fileSha256(path: string): string {
-	return createHash('sha256').update(readFileSync(path)).digest('hex');
-}
 
 export function buildReleaseArtifactSetSha256(
 	artifacts: BuildReleaseArtifactSet,
@@ -790,9 +789,12 @@ function resolvedPackagePath(
 export function inspectBuildReleasePackage(manifestPath: string): BuildReleaseInspection {
 	const issues: BuildReleaseInspectionIssue[] = [];
 	let manifest: BuildReleaseManifest;
+	let manifestSha256: string;
 
 	try {
-		manifest = parseBuildReleaseManifest(JSON.parse(readFileSync(manifestPath, 'utf8')) as unknown);
+		const manifestBytes = readFileSync(manifestPath);
+		manifest = parseBuildReleaseManifest(JSON.parse(new TextDecoder('utf-8', {fatal:true}).decode(manifestBytes)) as unknown);
+		manifestSha256 = createHash('sha256').update(manifestBytes).digest('hex');
 	} catch (error) {
 		const details =
 			error instanceof BuildReleaseValidationError
@@ -833,7 +835,8 @@ export function inspectBuildReleasePackage(manifestPath: string): BuildReleaseIn
 			message: `Map handoff receipt is missing: ${manifest.handoff.receiptPath}.`,
 		});
 	} else if (receiptPath !== null) {
-		if (fileSha256(receiptPath) !== manifest.handoff.receiptSha256) {
+		const receiptPathBytes = readFileSync(receiptPath);
+		if (createHash('sha256').update(receiptPathBytes).digest('hex') !== manifest.handoff.receiptSha256) {
 			issues.push({
 				code: 'receipt_hash_mismatch',
 				category: 'integrity',
@@ -843,7 +846,7 @@ export function inspectBuildReleasePackage(manifestPath: string): BuildReleaseIn
 		}
 		try {
 			handoffReceipt = parseMapBuildHandoffReceipt(
-				JSON.parse(readFileSync(receiptPath, 'utf8')) as unknown,
+				JSON.parse(new TextDecoder('utf-8', {fatal:true}).decode(receiptPathBytes)) as unknown,
 			);
 		} catch (error) {
 			issues.push({
@@ -900,7 +903,8 @@ export function inspectBuildReleasePackage(manifestPath: string): BuildReleaseIn
 			message: `Build acceptance receipt is missing: ${manifest.acceptance.receiptPath}.`,
 		});
 	} else if (acceptancePath !== null) {
-		if (fileSha256(acceptancePath) !== manifest.acceptance.receiptSha256) {
+		const acceptancePathBytes = readFileSync(acceptancePath);
+		if (createHash('sha256').update(acceptancePathBytes).digest('hex') !== manifest.acceptance.receiptSha256) {
 			issues.push({
 				code: 'acceptance_hash_mismatch',
 				category: 'integrity',
@@ -910,7 +914,7 @@ export function inspectBuildReleasePackage(manifestPath: string): BuildReleaseIn
 		}
 		try {
 			acceptanceReceipt = parseBuildAcceptanceReceipt(
-				JSON.parse(readFileSync(acceptancePath, 'utf8')) as unknown,
+				JSON.parse(new TextDecoder('utf-8', {fatal:true}).decode(acceptancePathBytes)) as unknown,
 			);
 		} catch (error) {
 			issues.push({
@@ -990,7 +994,8 @@ export function inspectBuildReleasePackage(manifestPath: string): BuildReleaseIn
 			continue;
 		}
 		if (verifierPath === null) continue;
-		if (fileSha256(verifierPath) !== reference.receiptSha256) {
+		const verifierPathBytes = readFileSync(verifierPath);
+		if (createHash('sha256').update(verifierPathBytes).digest('hex') !== reference.receiptSha256) {
 			issues.push({
 				code: 'verifier_hash_mismatch',
 				category: 'integrity',
@@ -1000,7 +1005,7 @@ export function inspectBuildReleasePackage(manifestPath: string): BuildReleaseIn
 		}
 		try {
 			verificationReceipts[kind] = parseBuildVerificationReceipt(
-				JSON.parse(readFileSync(verifierPath, 'utf8')) as unknown,
+				JSON.parse(new TextDecoder('utf-8', {fatal:true}).decode(verifierPathBytes)) as unknown,
 			);
 		} catch (error) {
 			issues.push({
@@ -1173,6 +1178,7 @@ export function inspectBuildReleasePackage(manifestPath: string): BuildReleaseIn
 
 	const evidenceValid = !issues.some((issue) => issue.category === 'integrity');
 	return {
+		manifestSha256,
 		manifest,
 		handoffReceipt,
 		acceptanceReceipt,
