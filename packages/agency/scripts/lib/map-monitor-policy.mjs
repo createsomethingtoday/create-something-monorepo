@@ -32,7 +32,7 @@ export const MAP_MONITOR_POLICY = Object.freeze({
 	},
 	alert: {
 		consecutiveFailures: 2,
-		route: 'GitHub Actions failed scheduled run, then CRE-1289 operator escalation',
+		route: 'Cloudflare scheduled D1 receipt failure, then CRE-1289 operator escalation',
 		severity: 'SEV-2 when booking context mismatches; SEV-3 for a single availability failure'
 	}
 });

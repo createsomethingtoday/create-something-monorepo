@@ -1,8 +1,6 @@
-name: Agency Map Production Monitor
+name: Agency Map Production Monitor (manual diagnostic)
 
 on:
-  schedule:
-    - cron: '7,22,37,52 * * * *'
   workflow_dispatch:
     inputs:
       base_url:
