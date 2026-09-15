@@ -9,6 +9,7 @@
 	"exports": {
 		".": "./src/index.ts",
 		"./build-release": "./src/build-release.ts",
+		"./build-runtime-binding": "./src/build-runtime-binding.ts",
 		"./client-workspace-package": "./src/client-workspace-package.ts"
 	},
 	"scripts": {

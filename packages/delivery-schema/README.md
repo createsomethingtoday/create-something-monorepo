@@ -36,3 +36,10 @@ artifact-set hashes, and package inspection verifies its bytes. Manifest `@1`
 retains its five-artifact digest unchanged and rejects the new field. This is
 artifact integrity only; the runtime registration verifier must still parse the
 binding and verify its compiler signature, policy and distinct manifest identity.
+
+The `./build-runtime-binding` export parses the closed
+`create-something/build-runtime-binding@1` artifact into an immutable value.
+All digests use `sha256:` prefixes. The binding names the Build release but omits
+the containing delivery manifest hash to avoid a circular dependency. Parsing
+proves shape only; the owning verifier must match accepted binding bytes and
+independently verify the named compiler inventory/signature before registration.
