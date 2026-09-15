@@ -3,7 +3,9 @@ import {
   getPublicSearchCacheVersion,
   getActiveSyncJob,
   getLatestSyncJob,
+  enqueuePendingRecordSyncIds,
   getSyncStateRecords,
+  getTemplateDocumentIdBySlug,
   hasTemplateDocument,
   healthCounts,
   publicSyncJobRecord,
@@ -299,7 +301,47 @@ function parseCreatorNames(url: URL): string[] {
   );
 }
 
-const WEBHOOK_TRIGGER_TYPES = new Set(['collection_item_created', 'collection_item_changed', 'collection_item_published']);
+const WEBHOOK_TRIGGER_TYPES = new Set([
+  'collection_item_created',
+  'collection_item_changed',
+  'collection_item_published',
+  'collection_item_unpublished',
+  'collection_item_deleted',
+]);
+const NON_LIVE_WEBHOOK_TRIGGER_TYPES = new Set(['collection_item_unpublished', 'collection_item_deleted']);
+
+function webhookFieldString(fieldData: Record<string, unknown> | undefined, key: string): string | null {
+  const value = fieldData?.[key];
+  return typeof value === 'string' && value.trim() ? value.trim() : null;
+}
+
+// Re-run one Airtable record through the sync (and therefore the listing gate).
+// The id is queued in D1 before the immediate attempt: Webflow has already been
+// acknowledged, so a busy sync lock or a request-scoped waitUntil that dies
+// must not lose the event. The incremental cron drains the queue, and a
+// successful records sync clears its own entry.
+function queueRecordSync(env: Env, ctx: ExecutionContext, syncRecordId: string): void {
+  ctx.waitUntil(
+    (async () => {
+      try {
+        await enqueuePendingRecordSyncIds(env.DB, [syncRecordId]);
+      } catch (error) {
+        console.warn(`Could not queue template ${syncRecordId} for record sync: ${error instanceof Error ? error.message : String(error)}`);
+      }
+      try {
+        await syncTemplateRecordsByIds(env, [syncRecordId]);
+      } catch (error) {
+        const detail =
+          error instanceof SyncAlreadyRunningError
+            ? 'another sync job holds the lock; the incremental sweep will drain the queue'
+            : error instanceof Error
+              ? error.message
+              : String(error);
+        console.warn(`Webflow webhook could not sync template ${syncRecordId} immediately: ${detail}`);
+      }
+    })(),
+  );
+}
 
 async function handleWebflowWebhook(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
   const rawBody = await request.text();
@@ -338,7 +380,27 @@ async function handleWebflowWebhook(request: Request, env: Env, ctx: ExecutionCo
 
   if (collectionId === TEMPLATES_COLLECTION_ID) {
     const record = mapWebhookTemplateItem(webhook);
-    if (!record) return jsonResponse(request, env, { status: 'ignored', reason: 'no template identity or item not live' });
+
+    if (record === null || NON_LIVE_WEBHOOK_TRIGGER_TYPES.has(triggerType)) {
+      // The listing is no longer live (archived, draft, unpublished, or deleted)
+      // while Airtable may still say Published. Re-run the record through the
+      // listing gate so an indexed card does not keep linking to a 404.
+      const syncRecordId = webhookFieldString(payload.fieldData, 'sync-record-id');
+      const templateSlug = webhookFieldString(payload.fieldData, 'slug');
+      const documentId = syncRecordId ?? (templateSlug ? await getTemplateDocumentIdBySlug(env.DB, templateSlug) : null);
+      if (!documentId) {
+        return jsonResponse(request, env, { status: 'ignored', reason: 'no template identity for non-live item' });
+      }
+      queueRecordSync(env, ctx, documentId);
+      return jsonResponse(request, env, {
+        status: 'requeued',
+        collection: 'templates',
+        id: documentId,
+        reason: 'listing not live',
+        queued_record_sync: true,
+      });
+    }
+
     await updateTemplateImagesFromWebflow(env.DB, [record], syncedAt);
 
     // Published Airtable records are held out of the index until their Templates
@@ -348,17 +410,7 @@ async function handleWebflowWebhook(request: Request, env: Env, ctx: ExecutionCo
     let queuedRecordSync = false;
     if (syncRecordId && !(await hasTemplateDocument(env.DB, syncRecordId))) {
       queuedRecordSync = true;
-      ctx.waitUntil(
-        syncTemplateRecordsByIds(env, [syncRecordId]).catch((error: unknown) => {
-          const detail =
-            error instanceof SyncAlreadyRunningError
-              ? 'another sync job holds the lock; the incremental sweep will pick it up'
-              : error instanceof Error
-                ? error.message
-                : String(error);
-          console.warn(`Webflow webhook could not index template ${syncRecordId}: ${detail}`);
-        }),
-      );
+      queueRecordSync(env, ctx, syncRecordId);
     }
 
     return jsonResponse(request, env, {

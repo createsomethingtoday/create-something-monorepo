@@ -678,7 +678,11 @@ export async function loadWebflowTemplateImageIndex(
   const offerByTemplateKey = new Map<string, WebflowTemplateOffer>();
   const identityByTemplateKey = new Map<string, WebflowTemplateIdentity[]>();
   const identityBySyncRecordId = new Map<string, WebflowTemplateIdentity>();
-  const cmsToken = env.WEBFLOW_API_TOKEN?.trim() || env.CMS_READ_ONLY?.trim();
+  // Same preference as the targeted lookups in webflow.ts: CMS_READ_ONLY is the
+  // cms:read token, while WEBFLOW_API_TOKEN may only carry assets:read. Using
+  // the asset token here would fail the CMS pass and leave listing coverage
+  // incomplete on every full rebuild.
+  const cmsToken = env.CMS_READ_ONLY?.trim() || env.WEBFLOW_API_TOKEN?.trim();
   const cmsIndexEnabled = env.WEBFLOW_TEMPLATE_ENABLE_CMS_INDEX !== 'false';
   let listingCoverageComplete = false;
   if (cmsToken && cmsIndexEnabled) {

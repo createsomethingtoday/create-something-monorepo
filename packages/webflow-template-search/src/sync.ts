@@ -35,6 +35,9 @@ import {
   updateTemplateImagesFromWebflow,
   upsertSlugAliases,
   upsertTemplateDocuments,
+  clearPendingRecordSyncIds,
+  listPendingRecordSyncIds,
+  listTemplateSlugsByIds,
 } from './db.js';
 import {
   fetchWebflowDesignerAvatars,
@@ -893,12 +896,24 @@ function recentModifiedPublishedSweepSinceDate(now: Date): string {
   return since.toISOString();
 }
 
-function templateLookupTargets(records: Array<AirtableRecord<AirtableAssetFields>>) {
-  return records.map((record) => ({
-    id: record.id,
-    templateSlug: String(record.fields['🥞CMS Slug'] ?? record.fields['🥞CMS Slug (formula)'] ?? '').trim() || null,
-    name: String(record.fields.Name ?? '').trim() || null,
-  }));
+// The first target for each record is always the Airtable identity. When the
+// record is already indexed under a different slug, a second target carries
+// that slug so a template whose Airtable slug and name both changed is still
+// found (and then matched by sync-record-id) instead of being held out.
+function templateLookupTargets(
+  records: Array<AirtableRecord<AirtableAssetFields>>,
+  indexedSlugsById: Map<string, string> = new Map(),
+) {
+  return records.flatMap((record) => {
+    const templateSlug = String(record.fields['🥞CMS Slug'] ?? record.fields['🥞CMS Slug (formula)'] ?? '').trim() || null;
+    const name = String(record.fields.Name ?? '').trim() || null;
+    const targets = [{ id: record.id, templateSlug, name }];
+    const indexedSlug = indexedSlugsById.get(record.id);
+    if (indexedSlug && indexedSlug.toLowerCase() !== (templateSlug ?? '').toLowerCase()) {
+      targets.push({ id: record.id, templateSlug: indexedSlug, name });
+    }
+    return targets;
+  });
 }
 
 async function fetchChangedRecentPublishedAssets(
@@ -1045,6 +1060,19 @@ async function runIncrementalSync(env: Env, heartbeat: SyncHeartbeat): Promise<S
     recentPublishedRecords = recentPublishedAssets.length;
   }
 
+  // Drain records queued by Webflow webhooks whose immediate sync could not run
+  // (sync lock held, or the request-scoped waitUntil died). Cursor sync would
+  // never revisit them on its own: the Airtable row did not change.
+  const pendingRecordIds = await listPendingRecordSyncIds(env.DB);
+  if (pendingRecordIds.length > 0) {
+    const queuedIds = new Set(assets.map((record) => record.id));
+    const pendingToFetch = pendingRecordIds.filter((id) => !queuedIds.has(id));
+    if (pendingToFetch.length > 0) {
+      assets.push(...(await fetchAssetRecordsByIds(env, pendingToFetch)));
+    }
+    await heartbeat();
+  }
+
   const toUpsert: TemplateDocumentInput[] = [];
   const toDelete: string[] = [];
   let aliasRecords = 0;
@@ -1055,10 +1083,14 @@ async function runIncrementalSync(env: Env, heartbeat: SyncHeartbeat): Promise<S
     const lookups = await loadLookupMaps(env);
     aliasRecords = await upsertSlugAliases(env.DB, lookups.childCategoryAliases);
     await heartbeat();
+    const indexedSlugsById = await listTemplateSlugsByIds(
+      env.DB,
+      assets.map((record) => record.id),
+    );
     const [loadedWebflowImageIndex, webflowDesigners] = await withPeriodicHeartbeat(
       heartbeat,
       Promise.all([
-        bestEffortTargetedWebflowTemplateIndex(env, warnings, templateLookupTargets(assets), { onPage: heartbeat }),
+        bestEffortTargetedWebflowTemplateIndex(env, warnings, templateLookupTargets(assets, indexedSlugsById), { onPage: heartbeat }),
         bestEffortTargetedWebflowDesignerAvatars(env, warnings, designerLookupTargets(assets, lookups), { onPage: heartbeat }),
       ]),
     );
@@ -1083,6 +1115,7 @@ async function runIncrementalSync(env: Env, heartbeat: SyncHeartbeat): Promise<S
 
   if (toDelete.length > 0) await deleteTemplateDocumentsInChunks(env.DB, toDelete, heartbeat);
   if (toUpsert.length > 0) await upsertTemplateDocumentsInChunks(env.DB, toUpsert, heartbeat);
+  if (pendingRecordIds.length > 0) await clearPendingRecordSyncIds(env.DB, pendingRecordIds);
   await heartbeat();
   const imageRefreshedRecords = 0;
   await heartbeat();
@@ -1108,6 +1141,7 @@ async function runIncrementalSync(env: Env, heartbeat: SyncHeartbeat): Promise<S
     skipped_empty_windows: skippedEmptyWindows,
     recent_published_records: recentPublishedRecords,
     listing_gated_records: listingGatedRecords,
+    queued_record_sync_records: pendingRecordIds.length,
   };
 
   await setSyncCursor(env.DB, newCursor);
@@ -1129,12 +1163,16 @@ export async function syncTemplateRecordsByIds(env: Env, recordIds: string[]): P
     const startedAt = nowIso();
     const warnings: SyncWarning[] = [];
     const uniqueRecordIds = uniqueStrings(recordIds.map((id) => id.trim()).filter(Boolean));
-    const [lookups, assets] = await Promise.all([loadLookupMaps(env), fetchAssetRecordsByIds(env, uniqueRecordIds)]);
+    const [lookups, assets, indexedSlugsById] = await Promise.all([
+      loadLookupMaps(env),
+      fetchAssetRecordsByIds(env, uniqueRecordIds),
+      listTemplateSlugsByIds(env.DB, uniqueRecordIds),
+    ]);
     await heartbeat();
     const aliasRecords = await upsertSlugAliases(env.DB, lookups.childCategoryAliases);
     await heartbeat();
     const [webflowImageIndex, webflowDesigners] = await Promise.all([
-      bestEffortTargetedWebflowTemplateIndex(env, warnings, templateLookupTargets(assets), { onPage: heartbeat }),
+      bestEffortTargetedWebflowTemplateIndex(env, warnings, templateLookupTargets(assets, indexedSlugsById), { onPage: heartbeat }),
       bestEffortTargetedWebflowDesignerAvatars(env, warnings, designerLookupTargets(assets, lookups), { onPage: heartbeat }),
     ]);
     await heartbeat();
@@ -1156,6 +1194,8 @@ export async function syncTemplateRecordsByIds(env: Env, recordIds: string[]): P
 
     if (toDelete.length > 0) await deleteTemplateDocuments(env.DB, toDelete);
     if (documents.length > 0) await upsertTemplateDocuments(env.DB, documents);
+    // Whatever queued these ids (a Webflow webhook) has now been served.
+    await clearPendingRecordSyncIds(env.DB, uniqueRecordIds);
     await heartbeat();
     const imageRefreshedRecords = documents.length
       ? await refreshIndexedWebflowImages(

@@ -480,6 +480,75 @@ export async function hasTemplateDocument(db: D1Database, id: string): Promise<b
   return Boolean(row);
 }
 
+export async function getTemplateDocumentIdBySlug(db: D1Database, templateSlug: string): Promise<string | null> {
+  const row = await db
+    .prepare('SELECT id FROM template_documents WHERE template_slug = ? LIMIT 1')
+    .bind(templateSlug)
+    .first<{ id: string }>();
+  return row?.id ?? null;
+}
+
+// Slugs currently stored for the given document ids. Sync feeds these back into
+// the targeted CMS lookup so a template whose Airtable slug and name both
+// changed can still be found under the slug it was last indexed with.
+export async function listTemplateSlugsByIds(db: D1Database, ids: string[]): Promise<Map<string, string>> {
+  const slugsById = new Map<string, string>();
+  const uniqueIds = Array.from(new Set(ids.filter(Boolean)));
+  for (const idBatch of chunk(uniqueIds, 90)) {
+    const result = await db
+      .prepare(`SELECT id, template_slug FROM template_documents WHERE id IN (${placeholderList(idBatch.length)})`)
+      .bind(...idBatch)
+      .all<{ id: string; template_slug: string | null }>();
+    for (const row of result.results ?? []) {
+      if (row.template_slug) slugsById.set(row.id, row.template_slug);
+    }
+  }
+  return slugsById;
+}
+
+// Record ids waiting for a targeted re-sync. Webflow webhooks enqueue here
+// before attempting an immediate sync, so a busy sync lock or a dead waitUntil
+// cannot lose the event after the webhook has been acknowledged; the
+// incremental cron drains the queue.
+const PENDING_RECORD_SYNC_KEY = 'pending_record_sync_ids';
+const PENDING_RECORD_SYNC_LIMIT = 500;
+
+export async function listPendingRecordSyncIds(db: D1Database): Promise<string[]> {
+  const row = await db.prepare('SELECT value_json FROM sync_state WHERE key = ?').bind(PENDING_RECORD_SYNC_KEY).first<{ value_json: string }>();
+  if (!row?.value_json) return [];
+  try {
+    const parsed = JSON.parse(row.value_json) as { ids?: unknown };
+    return Array.isArray(parsed.ids) ? parsed.ids.filter((id): id is string => typeof id === 'string' && id.length > 0) : [];
+  } catch {
+    return [];
+  }
+}
+
+async function writePendingRecordSyncIds(db: D1Database, ids: string[]): Promise<void> {
+  await db
+    .prepare(
+      'INSERT INTO sync_state (key, value_json, updated_at) VALUES (?, ?, ?) ON CONFLICT(key) DO UPDATE SET value_json = excluded.value_json, updated_at = excluded.updated_at',
+    )
+    .bind(PENDING_RECORD_SYNC_KEY, JSON.stringify({ ids }), nowIso())
+    .run();
+}
+
+export async function enqueuePendingRecordSyncIds(db: D1Database, ids: string[]): Promise<string[]> {
+  const current = await listPendingRecordSyncIds(db);
+  const next = Array.from(new Set([...current, ...ids.map((id) => id.trim()).filter(Boolean)])).slice(-PENDING_RECORD_SYNC_LIMIT);
+  await writePendingRecordSyncIds(db, next);
+  return next;
+}
+
+export async function clearPendingRecordSyncIds(db: D1Database, ids: string[]): Promise<void> {
+  if (ids.length === 0) return;
+  const current = await listPendingRecordSyncIds(db);
+  if (current.length === 0) return;
+  const remove = new Set(ids);
+  const next = current.filter((id) => !remove.has(id));
+  if (next.length !== current.length) await writePendingRecordSyncIds(db, next);
+}
+
 export async function listTemplateDocumentIds(db: D1Database): Promise<string[]> {
   const { results } = await db.prepare('SELECT id FROM template_documents').all<{ id: string }>();
   return (results ?? []).map((row) => row.id);

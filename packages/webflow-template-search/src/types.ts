@@ -297,6 +297,8 @@ export interface SyncSummary {
   // Published Airtable records held out of the index because no live Webflow
   // Templates CMS item exists for them yet.
   listing_gated_records?: number;
+  // Record ids drained from the webhook pending-sync queue in this pass.
+  queued_record_sync_records?: number;
   warnings?: Array<{ source: string; message: string }>;
 }
 

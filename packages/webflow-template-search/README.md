@@ -144,6 +144,19 @@ recent-published sweep every incremental run, and the Templates `collection_item
 webhook indexes the record as soon as the CMS item appears. The 2026-09-15 baseline against
 production found exactly 5 of 11,460 indexed rows without a live listing, all of them 404s.
 
+Two details keep the gate safe around edge cases:
+
+- **Webhook durability.** A Templates webhook first appends the record id to the
+  `pending_record_sync_ids` entry in `sync_state`, then attempts an immediate records sync.
+  If that sync cannot take the lock (or the request-scoped `waitUntil` dies), the incremental
+  cron drains the queue on its next run and reports `queued_record_sync_records`. A webhook
+  whose item is archived, draft, unpublished, or deleted re-runs the record the same way so
+  an indexed card is removed when its listing goes non-live.
+- **Renames.** Targeted CMS lookups query by slug and name, so a template whose Airtable slug
+  and name both changed would otherwise look listing-less. Sync adds the slug the record is
+  currently indexed under as a second lookup target; the CMS item is then matched by
+  `sync-record-id`, and the card keeps linking to the slug Webflow actually serves.
+
 Configure:
 
 - `WEBFLOW_TEMPLATE_ASSET_SITE_ID`: Webflow site ID that owns stable template image assets.
