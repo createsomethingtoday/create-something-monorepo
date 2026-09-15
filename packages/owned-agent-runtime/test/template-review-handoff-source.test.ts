@@ -9,7 +9,7 @@ test('fixed authenticated source uses the SDK and extracts only the source envel
   const data = { schema: 'test-observation' };
   const request: typeof fetch = async (url, init) => {
     assert.equal(String(url), 'https://webflow-template-review-mcp.createsomething.workers.dev/mcp');
-    assert.equal(init?.redirect, 'error');
+    assert.equal(init?.redirect, 'manual');
     assert.equal(new Headers(init?.headers).get('authorization'), 'Bearer test-token');
     assert.ok(init?.signal);
     if (init?.method === 'GET') return new Response(null, { status: 405 });
@@ -44,4 +44,18 @@ test('invalid record IDs never reach credentials or transport', async () => {
   });
   await assert.rejects(() => source.observe({ ...parameters, assetId: 'invalid' }),
     { message: 'handoff_source_unavailable' });
+});
+
+
+test('redirect responses are rejected without following or retrying', async () => {
+  for (const status of [301,302,303,307,308]) {
+    let calls=0;
+    const source=new AuthenticatedTemplateReviewHandoffSource(async ()=>'test-token',async (_url,init)=>{
+      calls++;
+      assert.equal(init?.redirect,'manual');
+      return new Response(null,{status,headers:{location:'https://other.example/mcp'}});
+    });
+    await assert.rejects(source.observe(parameters),{message:'handoff_source_unavailable'});
+    assert.equal(calls,1);
+  }
 });

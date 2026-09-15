@@ -21,12 +21,17 @@ export class AuthenticatedTemplateReviewHandoffSource implements TemplateReviewH
       if (!token || /\s/.test(token)) throw new Error('invalid_token');
       client = new Client({ name: 'control-marketplace-reconciliation', version: '1.0.0' }, { capabilities: {} });
       const transport = new StreamableHTTPClientTransport(new URL(ENDPOINT), {
-        requestInit: { headers: { Authorization: `Bearer ${token}` }, redirect: 'error' },
+        requestInit: { headers: { Authorization: `Bearer ${token}` }, redirect: 'manual' },
         reconnectionOptions: { maxRetries: 0, initialReconnectionDelay: 1000,
           maxReconnectionDelay: 1000, reconnectionDelayGrowFactor: 1 },
         fetch: async (url, init) => {
           if (String(url) !== ENDPOINT) throw new Error('source_origin_mismatch');
-          return this.request(ENDPOINT, { ...init, redirect: 'error', signal: AbortSignal.any([...(init?.signal ? [init.signal] : []), AbortSignal.timeout(TIMEOUT_MS)]) });
+          const response = await this.request(ENDPOINT, { ...init, redirect: 'manual', signal: AbortSignal.any([...(init?.signal ? [init.signal] : []), AbortSignal.timeout(TIMEOUT_MS)]) });
+          if (response.status >= 300 && response.status < 400) {
+            await response.body?.cancel().catch(() => undefined);
+            throw new Error('source_redirect_rejected');
+          }
+          return response;
         }
       });
       await client.connect(transport, { timeout: TIMEOUT_MS });
