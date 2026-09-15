@@ -247,3 +247,30 @@ Distribute the new token to the app review team and invalidate prior copies oper
 ### Reading rejection findings
 
 Version reads, version history, and review context expose `reviewFeedback` (📝Review Feedback) and `rejectionFeedback` (🚩Rejection Feedback) separately. An empty `reviewFeedback` does not mean no findings exist: rejected versions may store their findings only in `rejectionFeedback`. The field map advertises `rejection_feedback` as read-only; existing feedback writes continue to target 📝Review Feedback.
+
+
+### Claude read-only acceptance prompt
+
+```text
+Use the App Review MCP for a read-only acceptance test. Do not change any records.
+
+Inspect app_review_get_field_map and confirm rejection_feedback is read-only.
+Inspect the app_review_get_review_context tool description: it should explain
+that reviewFeedback and rejectionFeedback are separate and that reviewFeedback
+may be absent or empty while rejectionFeedback contains findings.
+
+Read CMS Smart Sync v11 (recXSCBkWEJpHDRyM), v8 (recZ7pVe7IqORZ0WB), and
+v2 (rec6e6obcWflILmlW) using app_review_get_version and
+app_review_get_review_context. Compare their rejectionFeedback against
+app_review_list_versions for asset recHMcKKoYD6VUSi2. Display v11 rejection
+feedback in full, preserving Markdown and whitespace.
+
+Expected baseline from September 14, 2026: v11 has 10 bullets, v8 has 9, and v2
+has 7. For these records, accept reviewFeedback being absent or an empty string;
+do not require reviewFeedback === "". Report any changed live data rather than
+forcing the baseline. Do not substitute rejectionReason for rejectionFeedback.
+
+Return a pass/fail table with tools and observed values. Distinguish a visual
+comparison from a programmatic exact-string comparison; do not claim byte-level
+proof unless you performed that comparison. Report tool failures explicitly.
+```
