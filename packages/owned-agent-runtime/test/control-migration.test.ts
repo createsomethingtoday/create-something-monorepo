@@ -1227,3 +1227,41 @@ test('database permits only explicitly retryable failed runs to requeue', () => 
     'queued:2'
   );
 });
+
+test('verified Build binding migration preserves parents and requires distinct explicit identities', () => {
+  const path = database();
+  const activation = {id:'activation-a',buildReleaseId:'release-a',buildManifestSha256:'1'.repeat(64),
+    buildArtifactSetSha256:'2'.repeat(64),contractSha256:'3'.repeat(64),policySha256:'4'.repeat(64)};
+  sql(path,insertRun.replace('{"id":"activation-a"}',JSON.stringify(activation)));
+  const before = sql(path,'SELECT json_object(\'activation\',activation_json,\'status\',status,\'version\',version) FROM control_runs;');
+  sql(path,readFileSync(new URL('../migrations/0014_control_verified_build_bindings.sql',import.meta.url),'utf8'));
+  assert.equal(sql(path,'SELECT COUNT(*) FROM control_workflow_runtime_build_bindings;'),'0');
+  const binding: Record<string,string|number> = {
+    run_id:'run-a',registration_version:2,activation_id:'activation-a',activation_version:1,
+    account_id:'account-a',tenant_id:'tenant-a',workspace_account_id:'workspace-a',build_release_id:'release-a',
+    build_manifest_sha256:'sha256:'+'1'.repeat(64),build_artifact_set_sha256:'sha256:'+'2'.repeat(64),
+    contract_sha256:'sha256:'+'3'.repeat(64),runtime_policy_sha256:'sha256:'+'4'.repeat(64),
+    binding_sha256:'sha256:'+'5'.repeat(64),artifact_manifest_sha256:'sha256:'+'6'.repeat(64),
+    runtime_manifest_sha256:'sha256:'+'7'.repeat(64),definition_hash:'sha256:'+'8'.repeat(64),
+    attestation_public_key_fingerprint:'sha256:'+'9'.repeat(64),workflow_id:'marketplace',workflow_version:'1',
+    compiler_version:'0.5.0',runtime_manifest_schema:'workflow_runtime_manifest.v0.2',attestation_key_id:'fixture',
+    artifact_prefix:'workflow-artifacts/'+'6'.repeat(64)+'/',verified_at:'2026-09-15T00:00:00.000Z'
+  };
+  const insert = (value:typeof binding,verb='INSERT') => `${verb} INTO control_workflow_runtime_build_bindings
+    (${Object.keys(value).join(',')}) VALUES (${Object.values(value).map(v=>typeof v==='number'?v:"'"+v.replaceAll("'","''")+"'").join(',')});`;
+  for (const field of ['run_id','activation_id','activation_version','account_id','tenant_id','workspace_account_id',
+    'build_release_id','build_manifest_sha256','build_artifact_set_sha256','contract_sha256','runtime_policy_sha256']) {
+    expectSqlFailure(path,insert({...binding,[field]:field==='activation_version'?2:'wrong'}),/parent_mismatch/);
+  }
+  const legacy = {...binding}; delete legacy.registration_version;
+  expectSqlFailure(path,insert(legacy),/NOT NULL/);
+  expectSqlFailure(path,insert({...binding,registration_version:1}),/CHECK/);
+  expectSqlFailure(path,insert({...binding,binding_sha256:'bad'}),/CHECK/);
+  sql(path,insert(binding));
+  assert.notEqual(binding.build_manifest_sha256,binding.artifact_manifest_sha256);
+  assert.equal(sql(path,'SELECT binding_sha256 FROM control_workflow_runtime_build_bindings;'),binding.binding_sha256);
+  expectSqlFailure(path,insert(binding,'INSERT OR REPLACE'),/immutable/);
+  expectSqlFailure(path,"UPDATE control_workflow_runtime_build_bindings SET workflow_version='2';",/immutable/);
+  expectSqlFailure(path,'DELETE FROM control_workflow_runtime_build_bindings;',/immutable/);
+  assert.equal(sql(path,'SELECT json_object(\'activation\',activation_json,\'status\',status,\'version\',version) FROM control_runs;'),before);
+});
