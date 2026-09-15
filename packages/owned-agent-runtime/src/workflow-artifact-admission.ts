@@ -1,4 +1,4 @@
-import { evaluateGovernedInteractionCompatibility, parseGovernedInteractionBundle, verifyWorkflowArtifactSnapshot } from '@createsomething/workflow-compiler';
+import { evaluateGovernedInteractionCompatibility, parseGovernedInteractionBundle, validateWorkflowRuntimeManifestArtifact, verifyWorkflowArtifactSnapshot } from '@createsomething/workflow-compiler';
 import { parseWorkflowRuntimeManifest, type WorkflowRuntimeManifest } from '@createsomething/workflow-runtime';
 
 /** Supplied by the owning immutable release registry, never by an HTTP caller. */
@@ -51,6 +51,12 @@ export async function admitWorkflowArtifact(
   const digest = `sha256:${Array.from(new Uint8Array(digestBytes), byte => byte.toString(16).padStart(2, '0')).join('')}`;
   if (digest !== registration.runtimeManifestSha256) reject();
   const manifest = parseWorkflowRuntimeManifest(JSON.parse(new TextDecoder('utf-8', {fatal:true}).decode(bytes)));
+  const compiledBytes = files.get('compiled-workflow.json');
+  if (!compiledBytes) return reject();
+  try {
+    const compiled = JSON.parse(new TextDecoder('utf-8', {fatal:true}).decode(compiledBytes));
+    validateWorkflowRuntimeManifestArtifact(compiled, manifest);
+  } catch { return reject(); }
   if (manifest.schemaVersion !== registration.runtimeManifestSchema ||
       manifest.workflow.id !== registration.workflowId || manifest.workflow.version !== registration.workflowVersion ||
       manifest.workflow.definitionHash !== registration.definitionHash || manifest.workflow.compilerVersion !== registration.compilerVersion ||

@@ -81,6 +81,19 @@ test('admits a real signed compiler release and rejects mismatched registration,
       reboundFiles.set('attestation.json',new TextEncoder().encode(JSON.stringify(createWorkflowArtifactAttestation(reboundOuter,{privateKey,keyId:'test'}))));
       await assert.rejects(admitWorkflowArtifact({async read(){return reboundFiles;}},{...registration,runtimeManifestSha256:hash(runtimeBytes),artifactManifestSha256:workflowArtifactManifestHash(reboundOuter)},policy),/not_admitted/);
     }
+    // Keep the allowlisted pass capability, but point it at an approval-required
+    // compiled action. Re-sign all modified hashes to isolate semantic validation.
+    const approvalBypass = structuredClone(runtime);
+    approvalBypass.steps[0].actionId = 'approve_template';
+    const bypassBytes = new TextEncoder().encode(JSON.stringify(approvalBypass));
+    const bypassDigest = 'sha256:'+createHash('sha256').update(bypassBytes).digest('hex');
+    const bypassOuter = structuredClone(manifest);
+    bypassOuter.files.find((file:{path:string})=>file.path==='runtime-manifest.json').hash=bypassDigest;
+    const bypassFiles = new Map(files);
+    bypassFiles.set('runtime-manifest.json',bypassBytes);
+    bypassFiles.set('manifest.json',new TextEncoder().encode(JSON.stringify(bypassOuter)));
+    bypassFiles.set('attestation.json',new TextEncoder().encode(JSON.stringify(createWorkflowArtifactAttestation(bypassOuter,{privateKey,keyId:'test'}))));
+    await assert.rejects(admitWorkflowArtifact({async read(){return bypassFiles;}},{...registration,runtimeManifestSha256:bypassDigest,artifactManifestSha256:workflowArtifactManifestHash(bypassOuter)},policy),/not_admitted/);
     files.get('runtime-manifest.json')![0]^=1;
     await assert.rejects(admitWorkflowArtifact(reader,registration,policy));
   } finally { await rm(root,{recursive:true,force:true}); }
