@@ -1594,14 +1594,14 @@ function MediaEditorPanel({
   const latestCompletedReceipt = project?.receipts.slice().reverse().find((receipt) => receipt.status === 'completed');
 
   return (
-    <aside className={`drawer media-editor ${open ? 'open' : ''}`} aria-label="Transcript editor">
+    <aside className={`drawer media-editor ${open ? 'open' : ''}`} aria-label="Media project">
       <section className="drawer-section">
         <div className="section-title">
           <span className="title-lockup">
             <span className="title-icon"><Clapperboard aria-hidden="true" /></span>
-            <span><strong>Transcript edit</strong><em>{project ? `${clips.length} durable clip nodes` : 'No media project attached'}</em></span>
+            <span><strong>Media project</strong><em>{project ? `${clips.length} durable clip nodes` : 'No local media project'}</em></span>
           </span>
-          <button aria-label="Close transcript editor" className="icon-only" onClick={onClose} title="Close transcript editor" type="button"><X aria-hidden="true" /></button>
+          <button aria-label="Close media project" className="icon-only" onClick={onClose} title="Close media project" type="button"><X aria-hidden="true" /></button>
         </div>
         {!project ? (
           <div className="media-actions media-import">
@@ -2044,14 +2044,14 @@ function TranscriptEditorPanel({
   );
 
   return (
-    <aside className="transcript-editor-panel" aria-label="Transcript editor">
+    <aside className="transcript-editor-panel" aria-label="Transcript cuts">
       <div className="database-panel-header">
         <span className="title-lockup">
           <span className="title-icon">
             <Film aria-hidden="true" />
           </span>
           <span>
-            <strong>Transcript editor</strong>
+            <strong>Transcript cuts</strong>
             <em>
               {snapshot
                 ? 'Accepted revision, derived timeline, dependency graph, and visible clip diffs'
@@ -2070,10 +2070,10 @@ function TranscriptEditorPanel({
             </a>
           ) : null}
           <button
-            aria-label="Close transcript editor"
+            aria-label="Close transcript cuts"
             className="icon-only"
             onClick={onClose}
-            title="Close transcript editor"
+            title="Close transcript cuts"
             type="button"
           >
             <X aria-hidden="true" />
@@ -3059,9 +3059,9 @@ function AtlasStudio(): React.ReactElement {
             active={mediaEditorOpen}
             icon={Clapperboard}
             onClick={() => setMediaEditorOpen((value) => !value)}
-            title={mediaEditorOpen ? 'Hide transcript editor' : 'Show transcript editor'}
+            title={mediaEditorOpen ? 'Hide media project' : 'Show media project'}
           >
-            Edit
+            Media
           </IconButton>
           <IconButton
             active={railOpen}
@@ -3098,9 +3098,9 @@ function AtlasStudio(): React.ReactElement {
               setDatabaseOpen(false);
               void loadTranscriptProject();
             }}
-            title={transcriptEditorOpen ? 'Hide transcript editor' : 'Show transcript editor'}
+            title={transcriptEditorOpen ? 'Hide transcript cuts' : 'Show transcript cuts'}
           >
-            Edit
+            Cuts
           </IconButton>
           <IconButton
             active={activePresenterStory}

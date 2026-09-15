@@ -26,6 +26,17 @@ test('Atlas client inherits Canon tokens and reserves the editorial brand signal
   assert.match(styles, /--blue: var\(--color-performance-signal\);/);
 });
 
+test('Atlas keeps local media and transcript cuts as distinct top-level editor surfaces', async () => {
+  const client = await readFile(new URL('../src/studio/client/App.tsx', import.meta.url), 'utf8');
+
+  assert.match(client, /Show media project/);
+  assert.match(client, /Show transcript cuts/);
+  assert.match(client, /<strong>Media project<\/strong>/);
+  assert.match(client, /<strong>Transcript cuts<\/strong>/);
+  assert.match(client, /Close media project/);
+  assert.match(client, /Close transcript cuts/);
+});
+
 function makeNode(overrides) {
   return {
     createdBy: 'agent',
