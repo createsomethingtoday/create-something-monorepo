@@ -137,7 +137,22 @@ export interface WorkflowRuntimeProofCapabilityObservation {
   failureCode: string | null;
 }
 
-export interface WorkflowRuntimeProofProjection {
+export interface WorkflowRuntimeBuildBindingProof {
+  registrationVersion: 2;
+  buildManifestSha256: string;
+  buildArtifactSetSha256: string;
+  bindingSha256: string;
+  attestationKeyId: string;
+  attestationPublicKeyFingerprint: string;
+}
+export type WorkflowRuntimeProofProjection = LegacyWorkflowRuntimeProofProjection | (
+  Omit<LegacyWorkflowRuntimeProofProjection, 'schema'> & {
+    schema: 'create-something/workflow-runtime-proof@2';
+    buildBinding: Readonly<WorkflowRuntimeBuildBindingProof>;
+  }
+);
+
+export interface LegacyWorkflowRuntimeProofProjection {
   schema: 'create-something/workflow-runtime-proof@1';
   run: {
     id: string;
@@ -1138,5 +1153,48 @@ export class D1WorkflowRuntimeProofReader {
       approvals: approvalRows.map((approval) => parseApproval(approval, input.scope)),
       capabilityObservations: observationRows.map(parseCapabilityObservation)
     });
+  }
+}
+
+
+/** Versioned hosted readback. A legacy checkpoint must use the legacy reader;
+ * it cannot acquire new binding semantics by being read through this surface. */
+export class D1VerifiedBuildWorkflowRuntimeProofReader {
+  private readonly runtime: D1WorkflowRuntimeProofReader;
+  constructor(private readonly database: D1Database, manifests: WorkflowRuntimeManifestAuthority) {
+    this.runtime = new D1WorkflowRuntimeProofReader(database, manifests);
+  }
+  async find(input: {scope: WorkflowRuntimeScope;runId: string}): Promise<WorkflowRuntimeProofProjection | undefined> {
+    const request = structuredClone(input);
+    const proof = await this.runtime.find(request);
+    if (!proof) return undefined;
+    const row = await this.database.prepare(`
+      SELECT b.registration_version AS registrationVersion,
+        b.build_manifest_sha256 AS buildManifestSha256,b.build_artifact_set_sha256 AS buildArtifactSetSha256,
+        b.binding_sha256 AS bindingSha256,b.attestation_key_id AS attestationKeyId,
+        b.attestation_public_key_fingerprint AS attestationPublicKeyFingerprint
+      FROM control_workflow_runtime_build_bindings b
+      JOIN control_workflow_runtime_runs r ON r.run_id=b.run_id AND r.build_binding_version=2
+      JOIN control_runs p ON p.id=r.run_id
+      WHERE b.run_id=?1 AND r.version=?2 AND b.registration_version=2
+        AND p.account_id=?3 AND p.tenant_id=?4 AND p.workspace_account_id=?5
+        AND b.account_id=p.account_id AND b.tenant_id=p.tenant_id AND b.workspace_account_id=p.workspace_account_id
+        AND b.activation_id=p.activation_id AND b.activation_version=p.activation_version
+        AND b.build_manifest_sha256='sha256:' || json_extract(p.activation_json,'$.buildManifestSha256')
+        AND b.build_artifact_set_sha256='sha256:' || json_extract(p.activation_json,'$.buildArtifactSetSha256')
+        AND b.build_release_id=json_extract(p.activation_json,'$.buildReleaseId')
+        AND b.contract_sha256='sha256:' || json_extract(p.activation_json,'$.contractSha256')
+        AND b.runtime_policy_sha256='sha256:' || json_extract(p.activation_json,'$.policySha256')
+        AND b.artifact_manifest_sha256=?6 AND b.runtime_manifest_sha256=?7
+        AND b.workflow_id=?8 AND b.workflow_version=?9 AND b.compiler_version=?10 AND b.definition_hash=?11
+        AND b.runtime_manifest_schema=?12
+    `).bind(request.runId,proof.run.version,request.scope.accountId,request.scope.tenantId,request.scope.workspaceAccountId,
+      proof.run.artifactManifestSha256,proof.run.runtimeManifestSha256,proof.run.workflow.id,proof.run.workflow.version,
+      proof.run.workflow.compilerVersion,proof.run.workflow.definitionHash,proof.run.runtimeManifestSchema).first<WorkflowRuntimeBuildBindingProof>();
+    if (!row || row.registrationVersion !== 2 || !row.attestationKeyId.trim() ||
+        [row.buildManifestSha256,row.buildArtifactSetSha256,row.bindingSha256,row.attestationPublicKeyFingerprint].some(value=>!/^sha256:[a-f0-9]{64}$/.test(value))) {
+      throw new RuntimeValidationError('INVALID_STATE','Verified Build proof binding is missing or inconsistent');
+    }
+    return {...proof,schema:'create-something/workflow-runtime-proof@2',buildBinding:Object.freeze({...row})};
   }
 }

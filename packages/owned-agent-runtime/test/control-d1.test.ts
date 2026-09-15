@@ -2241,4 +2241,16 @@ test('verified Build checkpoint writer requires the relation and persists distin
   assert.deepEqual(await store.find(scope,parent.id),initial);
   assert.equal(execFileSync('sqlite3',[input.path,'SELECT build_binding_version FROM control_workflow_runtime_runs;'],{encoding:'utf8'}).trim(),'2');
   assert.notEqual(initial.artifactManifestSha256,'sha256:'+parent.activation.buildManifestSha256);
+  const {D1VerifiedBuildWorkflowRuntimeProofReader} = await import('../src/workflow-runtime-proof-projection.js');
+  const proofReader = new D1VerifiedBuildWorkflowRuntimeProofReader(d1(input.path),trustedRuntimeManifestAuthority([{digest:runtimeDigest('8'),manifest:runtimeManifest}]));
+  const proof = await proofReader.find({scope,runId:parent.id});
+  assert.equal(proof?.schema,'create-something/workflow-runtime-proof@2');
+  assert.ok(proof && proof.schema === 'create-something/workflow-runtime-proof@2');
+  assert.equal(proof.buildBinding.bindingSha256,runtimeDigest('b'));
+  assert.equal(proof.buildBinding.buildManifestSha256,'sha256:'+parent.activation.buildManifestSha256);
+  assert.equal(await proofReader.find({scope:{...scope,tenantId:'other'},runId:parent.id}),undefined);
+  // Deliberate fixture corruption checks readback independently of insert guards.
+  execFileSync('sqlite3',[input.path],{input:"DROP TRIGGER control_workflow_runtime_build_binding_no_update; UPDATE control_workflow_runtime_build_bindings SET workflow_id='foreign';"});
+  await assert.rejects(proofReader.find({scope,runId:parent.id}),/binding is missing or inconsistent/);
+
 });

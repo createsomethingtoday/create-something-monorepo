@@ -319,3 +319,12 @@ hashes. The default `legacy-v1` is the pre-transition compatibility path;
 migration0015 rejects its new inserts. Existing checkpoint updates keep their
 persisted semantics. Hosted activation must explicitly select the v2 path after
 binding publication; the proof reader still requires integration before release.
+
+`D1VerifiedBuildWorkflowRuntimeProofReader` emits
+`create-something/workflow-runtime-proof@2`, including the immutable accepted
+Build/artifact-set/binding digests and signer identity. It verifies the persisted
+relation against the scoped parent, current checkpoint version and trusted
+manifest identity after ordinary receipt-chain verification. Missing or
+inconsistent relations fail closed. The existing reader retains proof@1 for
+legacy checkpoints; hosted wiring must select the versioned reader for v2
+admissions before production promotion.
