@@ -1,3 +1,5 @@
+import { createWorkflowRuntimeRun, type RuntimeDigest } from '../../workflow-runtime/src/index.js';
+import { D1WorkflowRuntimeCheckpointStore } from '../src/workflow-runtime-store.js';
 import { RegisteredWorkflowManifestAuthority } from '../src/registered-workflow-manifest-authority.js';
 import { publishControlBuildBinding } from '../src/control-build-binding-publication.js';
 import { execFileSync } from 'node:child_process';
@@ -8,7 +10,7 @@ import { D1WorkflowArtifactRegistrationReader } from '../src/workflow-artifact-r
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { generateKeyPairSync, createHash } from 'node:crypto';
-import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { mkdtemp, readFile, readdir, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createWorkflowArtifactAttestation, workflowArtifactManifestHash, compileWorkflowDefinition, createWorkflowRuntimeManifest, writeCompiledWorkflowArtifacts, verifyWorkflowArtifactBundle } from '@createsomething/workflow-compiler';
@@ -103,7 +105,7 @@ test('admits a real signed compiler release and rejects mismatched registration,
       assert.equal(execFileSync('sqlite3',[databasePath,'SELECT COUNT(*) FROM customer_control_runtime_registrations;'],{encoding:'utf8'}).trim(),'0');
       execFileSync('sqlite3',[databasePath],{input:"UPDATE customer_control_activations SET status='active';"});
       const written = await registerVerifiedBuildRuntime(database,request,reader,policy);
-      for (const migration of ['0003_control_run_lifecycle.sql','0004_control_workflow_runtime_zero_write.sql','0014_control_verified_build_bindings.sql'])
+      for (const migration of (await readdir(new URL('../migrations/',import.meta.url))).filter(name => /^\d{4}_control/.test(name)).sort())
         execFileSync('sqlite3',[databasePath],{input:await readFile(new URL('../migrations/'+migration,import.meta.url),'utf8')});
       execFileSync('sqlite3',[databasePath],{input:`INSERT INTO control_runs
         (id,account_id,tenant_id,workspace_account_id,activation_id,activation_version,activation_json,status,version,attempt,concurrency_key,
@@ -124,6 +126,27 @@ test('admits a real signed compiler release and rejects mismatched registration,
       assert.equal(published.build_manifest_sha256,'sha256:'+written.buildManifestSha256);
       await publishControlBuildBinding(database,database,publication,reader,policy);
       assert.equal(execFileSync('sqlite3',[databasePath,'SELECT COUNT(*) FROM control_workflow_runtime_build_bindings;'],{encoding:'utf8'}).trim(),'1');
+      const manifests = new RegisteredWorkflowManifestAuthority(reader,[{registration,policy}]);
+      const checkpoints = new D1WorkflowRuntimeCheckpointStore(database,manifests,
+        manifests.approvalSurfaces,'verified-build-v2');
+      const verifiedRuntime = await manifests.findByRuntimeManifestSha256(registration.runtimeManifestSha256 as RuntimeDigest);
+      assert.ok(verifiedRuntime);
+      const admittedRun = await createWorkflowRuntimeRun(verifiedRuntime,{
+        runId:publication.runId,
+        activation:{id:activation.id,version:activation.activationVersion,
+          policySha256:('sha256:'+activation.policySha256) as RuntimeDigest},
+        registration:{buildReleaseId:activation.buildReleaseId,
+          contractSha256:('sha256:'+activation.contractSha256) as RuntimeDigest,
+          runtimePolicySha256:('sha256:'+activation.policySha256) as RuntimeDigest},
+        artifactManifestSha256:registration.artifactManifestSha256 as RuntimeDigest,
+        runtimeManifestSha256:registration.runtimeManifestSha256 as RuntimeDigest,
+        clock:'2026-09-15T00:00:00.000Z'
+      });
+      await checkpoints.apply({scope:activation,run:admittedRun,expectedVersion:null,
+        idempotencyKey:'signed-admission',commandDigest:'a'.repeat(64)});
+      assert.deepEqual(await checkpoints.find(activation,publication.runId),admittedRun);
+      assert.equal(execFileSync('sqlite3',[databasePath,
+        'SELECT build_binding_version FROM control_workflow_runtime_runs;'],{encoding:'utf8'}).trim(),'2');
       const stored = await new D1WorkflowArtifactRegistrationReader(database).find(activation);
       assert.equal(stored?.bindingSha256,written.bindingSha256);
       assert.equal(stored?.buildManifestSha256,written.buildManifestSha256);
