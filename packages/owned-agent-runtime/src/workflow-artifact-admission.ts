@@ -1,4 +1,4 @@
-import { evaluateGovernedInteractionCompatibility, verifyWorkflowArtifactSnapshot } from '@createsomething/workflow-compiler';
+import { evaluateGovernedInteractionCompatibility, parseGovernedInteractionBundle, verifyWorkflowArtifactSnapshot } from '@createsomething/workflow-compiler';
 import { parseWorkflowRuntimeManifest, type WorkflowRuntimeManifest } from '@createsomething/workflow-runtime';
 
 /** Supplied by the owning immutable release registry, never by an HTTP caller. */
@@ -69,7 +69,10 @@ export async function admitWorkflowArtifact(
     if (manifest.artifacts[field as keyof typeof links] !== actual) reject();
   }
   if (!policy.interactionHost.schemaVersions?.length) reject();
-  const interaction = JSON.parse(new TextDecoder('utf-8', {fatal:true}).decode(files.get('governed-interaction.json')!));
+  const interaction = parseGovernedInteractionBundle(JSON.parse(new TextDecoder('utf-8', {fatal:true}).decode(files.get('governed-interaction.json')!)));
+  if (interaction.workflowId !== registration.workflowId ||
+      interaction.workflowVersion !== registration.workflowVersion ||
+      interaction.definitionHash !== registration.definitionHash) reject();
   if (!evaluateGovernedInteractionCompatibility(interaction, policy.interactionHost).compatible) reject();
   const freeze = (value: object): void => {
     for (const child of Object.values(value)) if (child && typeof child === 'object') freeze(child);

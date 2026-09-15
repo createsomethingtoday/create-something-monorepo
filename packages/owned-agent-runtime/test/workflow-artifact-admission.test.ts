@@ -61,6 +61,26 @@ test('admits a real signed compiler release and rejects mismatched registration,
     staleFiles.set('manifest.json',new TextEncoder().encode(JSON.stringify(staleOuter)));
     staleFiles.set('attestation.json',new TextEncoder().encode(JSON.stringify(createWorkflowArtifactAttestation(staleOuter,{privateKey,keyId:'test'}))));
     await assert.rejects(admitWorkflowArtifact({async read(){return staleFiles;}},{...registration,runtimeManifestSha256:staleDigest,artifactManifestSha256:workflowArtifactManifestHash(staleOuter)},policy),/not_admitted/);
+    for (const field of ['workflowId','workflowVersion','definitionHash']) {
+      const interaction = JSON.parse(new TextDecoder().decode(files.get('governed-interaction.json')!));
+      interaction[field] = field === 'definitionHash' ? 'sha256:'+'e'.repeat(64) : 'another-workflow';
+      const interactionBytes = new TextEncoder().encode(JSON.stringify(interaction));
+      const hash = (bytes:Uint8Array) => 'sha256:'+createHash('sha256').update(bytes).digest('hex');
+      const reboundRuntime = structuredClone(runtime);
+      reboundRuntime.artifacts.governedInteractionSha256 = hash(interactionBytes) as `sha256:${string}`;
+      const runtimeBytes = new TextEncoder().encode(JSON.stringify(reboundRuntime));
+      const reboundOuter = structuredClone(manifest);
+      for (const entry of reboundOuter.files) {
+        if (entry.path === 'runtime-manifest.json') entry.hash = hash(runtimeBytes);
+        if (entry.path === 'governed-interaction.json') entry.hash = hash(interactionBytes);
+      }
+      const reboundFiles = new Map(files);
+      reboundFiles.set('governed-interaction.json',interactionBytes);
+      reboundFiles.set('runtime-manifest.json',runtimeBytes);
+      reboundFiles.set('manifest.json',new TextEncoder().encode(JSON.stringify(reboundOuter)));
+      reboundFiles.set('attestation.json',new TextEncoder().encode(JSON.stringify(createWorkflowArtifactAttestation(reboundOuter,{privateKey,keyId:'test'}))));
+      await assert.rejects(admitWorkflowArtifact({async read(){return reboundFiles;}},{...registration,runtimeManifestSha256:hash(runtimeBytes),artifactManifestSha256:workflowArtifactManifestHash(reboundOuter)},policy),/not_admitted/);
+    }
     files.get('runtime-manifest.json')![0]^=1;
     await assert.rejects(admitWorkflowArtifact(reader,registration,policy));
   } finally { await rm(root,{recursive:true,force:true}); }
