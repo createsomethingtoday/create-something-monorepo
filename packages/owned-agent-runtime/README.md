@@ -336,3 +336,9 @@ at insertion. Exact existing bindings can be reused; conflicting identities fail
 The operation records evidence, not a durable source permit: source dispatch must
 still obtain its current authorization. Concurrent duplicate insert races remain
 explicit failures; a subsequent exact retry reads the stored relation.
+
+The reconciliation proof reader accepts an explicit `verified-build-v2` mode.
+This retains the verified Build binding in its nested runtime proof and fails
+closed when that relation is inconsistent. The default remains `legacy-v1`
+for historical consumers; hosted production composition must select v2 for
+newly admitted Build-bound runs. This option alone does not enable execution.

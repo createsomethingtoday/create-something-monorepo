@@ -2249,8 +2249,16 @@ test('verified Build checkpoint writer requires the relation and persists distin
   assert.equal(proof.buildBinding.bindingSha256,runtimeDigest('b'));
   assert.equal(proof.buildBinding.buildManifestSha256,'sha256:'+parent.activation.buildManifestSha256);
   assert.equal(await proofReader.find({scope:{...scope,tenantId:'other'},runId:parent.id}),undefined);
+  const handoffReader = new D1WorkflowRuntimeHandoffProofReader(d1(input.path),
+    trustedRuntimeManifestAuthority([{digest:runtimeDigest('8'),manifest:runtimeManifest}]),
+    30_000, 'verified-build-v2');
+  const handoffProof = await handoffReader.find({scope,runId:parent.id});
+  assert.deepEqual(handoffProof?.runtime,proof);
+  assert.deepEqual(handoffProof?.handoffObservations,[]);
+  assert.equal(await handoffReader.find({scope:{...scope,tenantId:'other'},runId:parent.id}),undefined);
   // Deliberate fixture corruption checks readback independently of insert guards.
   execFileSync('sqlite3',[input.path],{input:"DROP TRIGGER control_workflow_runtime_build_binding_no_update; UPDATE control_workflow_runtime_build_bindings SET workflow_id='foreign';"});
   await assert.rejects(proofReader.find({scope,runId:parent.id}),/binding is missing or inconsistent/);
+  await assert.rejects(handoffReader.find({scope,runId:parent.id}),/binding is missing or inconsistent/);
 
 });

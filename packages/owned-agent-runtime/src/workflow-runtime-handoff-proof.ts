@@ -2,6 +2,7 @@ import type { WorkflowRuntimeScope } from '@createsomething/workflow-runtime';
 import type { WorkflowRuntimeManifestAuthority } from './workflow-runtime-manifest-authority.js';
 import {
   D1WorkflowRuntimeProofReader,
+  D1VerifiedBuildWorkflowRuntimeProofReader,
   type WorkflowRuntimeProofProjection
 } from './workflow-runtime-proof-projection.js';
 import {
@@ -24,13 +25,16 @@ export interface WorkflowRuntimeHandoffProofReader {
 
 /** A read-only projection over the same Control ledger, not another state owner. */
 export class D1WorkflowRuntimeHandoffProofReader implements WorkflowRuntimeHandoffProofReader {
-  private readonly runtime: D1WorkflowRuntimeProofReader;
+  private readonly runtime: Pick<D1WorkflowRuntimeProofReader, 'find'>;
   constructor(
     private readonly database: D1Database,
     manifests: WorkflowRuntimeManifestAuthority,
-    _maximumAgeMs: number
+    _maximumAgeMs: number,
+    bindingMode: 'legacy-v1' | 'verified-build-v2' = 'legacy-v1'
   ) {
-    this.runtime = new D1WorkflowRuntimeProofReader(database, manifests);
+    this.runtime = bindingMode === 'verified-build-v2'
+      ? new D1VerifiedBuildWorkflowRuntimeProofReader(database, manifests)
+      : new D1WorkflowRuntimeProofReader(database, manifests);
   }
   private async read(input: {
     scope: WorkflowRuntimeScope;
