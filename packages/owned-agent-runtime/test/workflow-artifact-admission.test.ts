@@ -1,3 +1,6 @@
+import { createControlRunService } from '../src/control.js';
+import { D1ControlRunRepository, D1ControlActivationAuthority } from '../src/control-store.js';
+import { D1VerifiedBuildWorkflowRuntimeProofReader } from '../src/workflow-runtime-proof-projection.js';
 import { createWorkflowRuntimeRun, type RuntimeDigest } from '../../workflow-runtime/src/index.js';
 import { D1WorkflowRuntimeCheckpointStore } from '../src/workflow-runtime-store.js';
 import { RegisteredWorkflowManifestAuthority } from '../src/registered-workflow-manifest-authority.js';
@@ -107,12 +110,17 @@ test('admits a real signed compiler release and rejects mismatched registration,
       const written = await registerVerifiedBuildRuntime(database,request,reader,policy);
       for (const migration of (await readdir(new URL('../migrations/',import.meta.url))).filter(name => /^\d{4}_control/.test(name)).sort())
         execFileSync('sqlite3',[databasePath],{input:await readFile(new URL('../migrations/'+migration,import.meta.url),'utf8')});
-      execFileSync('sqlite3',[databasePath],{input:`INSERT INTO control_runs
-        (id,account_id,tenant_id,workspace_account_id,activation_id,activation_version,activation_json,status,version,attempt,concurrency_key,
-         requested_tools_json,requested_resources_json,created_by,created_at,updated_at)
-        VALUES ('published-run',${literal(activation.accountId)},${literal(activation.tenantId)},${literal(activation.workspaceAccountId)},
-          ${literal(activation.id)},1,${literal(JSON.stringify(activation))},'queued',1,1,'publication','[]','[]','fixture','2026-09-15T00:00:00.000Z','2026-09-15T00:00:00.000Z');`});
-      const publication = {scope:activation,runId:'published-run'};
+      const control = createControlRunService({
+        repository:new D1ControlRunRepository(database),
+        activations:new D1ControlActivationAuthority(database),
+        executor:{supports:()=>true,async execute(){assert.fail('admission must not execute');}},
+        id:()=> 'published-run',clock:()=>new Date('2026-09-15T00:00:00.000Z')
+      });
+      const parent = await control.start(activation,{subject:'fixture-operator',role:'account_owner'},{
+        activationId:activation.id,idempotencyKey:'signed-parent',requestedTools:[],
+        requestedResources:[],concurrencyKey:'publication'
+      });
+      const publication = {scope:activation,runId:parent.id};
       await assert.rejects(publishControlBuildBinding(database,database,publication,{async read(){
         execFileSync('sqlite3',[databasePath],{input:"UPDATE customer_control_activations SET status='suspended';"});
         return files;
@@ -147,6 +155,11 @@ test('admits a real signed compiler release and rejects mismatched registration,
       assert.deepEqual(await checkpoints.find(activation,publication.runId),admittedRun);
       assert.equal(execFileSync('sqlite3',[databasePath,
         'SELECT build_binding_version FROM control_workflow_runtime_runs;'],{encoding:'utf8'}).trim(),'2');
+      const proof = await new D1VerifiedBuildWorkflowRuntimeProofReader(database,manifests).find(publication);
+      assert.ok(proof && proof.schema === 'create-something/workflow-runtime-proof@2');
+      assert.equal(proof.buildBinding.bindingSha256,written.bindingSha256);
+      assert.equal(proof.buildBinding.buildManifestSha256,'sha256:'+written.buildManifestSha256);
+      assert.equal(proof.run.artifactManifestSha256,registration.artifactManifestSha256);
       const stored = await new D1WorkflowArtifactRegistrationReader(database).find(activation);
       assert.equal(stored?.bindingSha256,written.bindingSha256);
       assert.equal(stored?.buildManifestSha256,written.buildManifestSha256);
