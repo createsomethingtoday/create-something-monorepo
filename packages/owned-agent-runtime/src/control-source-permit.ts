@@ -35,8 +35,12 @@ export class D1ControlSourcePermitAuthority {
     const { activation } = input;
     if (activation.status !== 'active' || !activation.allowedTools.includes(input.tool) ||
         !activation.allowedResources.includes(input.resource)) return undefined;
-    for (const value of [input.runId, input.stepId, input.attemptId, input.tool, input.resource]) {
+    for (const value of [input.runId, input.stepId, input.attemptId]) {
       if (!/^[A-Za-z0-9_.:/-]{1,256}$/.test(value)) throw new Error('invalid_source_permit_binding');
+    }
+    for (const value of [input.tool, input.resource]) {
+      if (!value || value.length > 300 || value !== value.trim().replace(/\s+/g, ' '))
+        throw new Error('invalid_source_permit_source');
     }
     if (!/^sha256:[0-9a-f]{64}$/.test(input.requestSha256))
       throw new Error('invalid_source_permit_request');

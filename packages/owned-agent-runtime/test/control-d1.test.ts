@@ -2187,3 +2187,21 @@ test('Agency source permit atomically matches frozen authority and never redeems
   runSql("UPDATE customer_control_activations SET status='suspended' WHERE id='activation-a';");
   assert.equal(await authority.redeem({ ...request, attemptId: 'attempt-b' }), undefined);
 });
+
+
+test('source permits preserve authorized URI syntax and 300-character resource names', async () => {
+  const input = fixture();
+  const resource = 'https://example.test/items?cursor=next&filter=%20#'.padEnd(300, 'x');
+  assert.equal(resource.length, 300);
+  const tool = 'tool?' + 'y'.repeat(295);
+  execFileSync('sqlite3', [input.path], { input:
+    readFileSync(new URL('../../agency/migrations/0056_control_source_permits.sql', import.meta.url), 'utf8') +
+    `UPDATE customer_control_activations SET allowed_tools_json=${literal(JSON.stringify([tool]))},
+      allowed_resources_json=${literal(JSON.stringify([resource]))};`
+  });
+  const activation = await activeControlActivationAuthority(input.path).findActive(scope, 'activation-a');
+  assert.ok(activation);
+  const authority = new D1ControlSourcePermitAuthority(d1(input.path));
+  assert.ok(await authority.redeem({ activation, runId: 'run-a', stepId: 'step-a',
+    attemptId: 'attempt-a', requestSha256: runtimeDigest('a'), tool, resource }));
+});
