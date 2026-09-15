@@ -3662,6 +3662,9 @@ importers:
 
   packages/owned-agent-runtime:
     dependencies:
+      '@createsomething/workflow-compiler':
+        specifier: workspace:*
+        version: link:../workflow-compiler
       '@createsomething/workflow-runtime':
         specifier: workspace:*
         version: link:../workflow-runtime

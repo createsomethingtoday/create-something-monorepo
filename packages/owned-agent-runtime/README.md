@@ -256,3 +256,22 @@ pipeline must use the same content-addressed prefix and enforce write-once
 publication. This reader does not configure R2, prove immutability, authenticate
 a signature, or grant execution. Its byte snapshot must pass the public compiler
 verifier and the registered signer/release/runtime policy before admission.
+
+`admitWorkflowArtifact` consumes the reader's serialized bytes through the public
+compiler signature verifier and runtime parser. It requires exact registered
+outer/runtime hashes, workflow/compiler identity, signer key/fingerprint and
+schema, plus independent host capability/compiler/schema allowlists. It copies
+policy, registration and bytes across asynchronous boundaries. The owning
+registry must supply this input after activation/release authorization and must
+check revocation on each new admission or step claim. This function does not
+implement that registry, activation check, revocation service or hosted executor.
+Admission also verifies each correlated governance artifact hash, requires an
+explicit governed-interaction host contract and compatible public compatibility
+decision, and deeply freezes the returned runtime manifest before sharing it.
+
+Artifact admission requires `sourceDefinition` from the owning host registration,
+not from an HTTP request or the signed artifact itself. The host recompiles it
+and requires the registered definition hash and canonical compiled bundle to
+match exactly. This catches consistently omitted assignments across generated
+artifacts. A historical compiler output that the pinned host compiler cannot
+reproduce is rejected; an allowlisted version alone does not bypass this check.
