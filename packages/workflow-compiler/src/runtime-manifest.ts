@@ -1,3 +1,4 @@
+import { rejectMismatchedNestedArtifactSchemas } from './replay.js';
 import { createHash } from 'node:crypto';
 
 import type {
@@ -436,6 +437,13 @@ export function validateWorkflowRuntimeManifestArtifact(
 ): void {
   const bundle = runtimeBundle(source);
   try {
+    rejectMismatchedNestedArtifactSchemas(bundle);
+    for (const actions of [bundle.decisionInventory.decisions, bundle.governedInteraction.actions,
+      bundle.approvalSurfaces.actions, bundle.toolContracts.tools]) {
+      const ids = actions.map(action => action.actionId);
+      if (ids.some(id => typeof id !== 'string' || !id.trim()) || new Set(ids).size !== ids.length)
+        throw new Error('compiled governance action IDs must be unique');
+    }
     // Runtime step derivation must not choose one of conflicting signed policies.
     const decisions = bundle.decisionInventory.decisions;
     const same = (left: unknown, right: unknown) =>
