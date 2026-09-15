@@ -8,6 +8,7 @@ import {
 import type { ControlRunExecutorOutcome } from './control.js';
 import type { D1TemplateReviewHandoffGateway } from './template-review-handoff-gateway.js';
 import type { D1TemplateReviewHandoffEvidenceStore } from './template-review-handoff-store.js';
+import type { D1WorkflowRuntimeSourceBindings } from './workflow-runtime-source-binding.js';
 
 /** Drives an already admitted, verified release inside one claimed Control operation.
  * Admission, current activation authority and exact approval are owned by the caller.
@@ -23,13 +24,14 @@ export async function driveTemplateReviewRuntime(input: {
   evidence: Pick<D1TemplateReviewHandoffEvidenceStore, 'find'>;
   schedulerSubject: string;
   clock: () => string;
+  sourceBindings?: Pick<D1WorkflowRuntimeSourceBindings, 'find'>;
 }): Promise<ControlRunExecutorOutcome> {
   const failed = (reason: string): ControlRunExecutorOutcome => ({ type: 'failed', reason, retryable: false });
   // The fixed observation lane is small. Refuse larger manifests before effects.
   if (input.manifest.steps.length > 32) return failed('runtime_execution_bound_exceeded');
   const effects = input.manifest.steps.filter(step => step.disposition === 'pass');
   if (effects.length !== 1 || effects[0].disposition !== 'pass' ||
-      effects[0].capability.id !== 'template-review.handoff.observe.v1')
+      (!input.sourceBindings && effects[0].capability.id !== 'template-review.handoff.observe.v1'))
     return failed('runtime_capability_not_supported');
   const runHash = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',
     new TextEncoder().encode(input.runId))), byte => byte.toString(16).padStart(2, '0')).join('');
@@ -77,8 +79,14 @@ export async function driveTemplateReviewRuntime(input: {
           actorSubject: input.schedulerSubject, observedAt: input.clock() }, `${command}:stop`, '');
       return failed('runtime_policy_stop');
     }
-    if (plan.type !== 'pass' || plan.capability.id !== 'template-review.handoff.observe.v1')
+    if (plan.type !== 'pass' || (!input.sourceBindings && plan.capability.id !== 'template-review.handoff.observe.v1'))
       return failed('runtime_capability_not_supported');
+    if (input.sourceBindings) {
+      const binding = await input.sourceBindings.find(input.scope, run.id, plan.stepId);
+      if (!binding || binding.capability_id !== plan.capability.id ||
+          binding.capability_parameter_sha256 !== plan.capability.parameterDigest)
+        return failed('runtime_source_binding_missing');
+    }
     const attemptId = `handoff-attempt-${run.version}`;
     const prepared = await input.host.transition(input.scope, run.id, run.version,
       { type: 'effect_intent', stepId: plan.stepId, attemptId, capability: plan.capability,

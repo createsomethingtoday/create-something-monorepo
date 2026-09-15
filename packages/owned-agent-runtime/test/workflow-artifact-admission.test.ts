@@ -1,4 +1,8 @@
 import { createControlRunWorker } from '../src/control-worker.js';
+import { createTemplateReviewHost } from '../src/template-review-host.js';
+import { D1WorkflowRuntimeSourceBindings, handoffRequestDigest } from '../src/workflow-runtime-source-binding.js';
+import { D1TemplateReviewHandoffEvidenceStore } from '../src/template-review-handoff-store.js';
+import { reduceWorkflowRuntimeRun } from '@createsomething/workflow-runtime';
 import { D1WorkflowRuntimeHandoffProofReader } from '../src/workflow-runtime-handoff-proof.js';
 import { createControlRunService } from '../src/control.js';
 import { D1ControlRunRepository, D1ControlActivationAuthority } from '../src/control-store.js';
@@ -30,6 +34,13 @@ test('admits a real signed compiler release and rejects mismatched registration,
   try {
     const definition = JSON.parse(await readFile(new URL('../../workflow-compiler/fixtures/marketplace/workflow.json', import.meta.url), 'utf8'));
     definition.schemaVersion = 'workflow_definition.v0.3';
+    const observationAction = definition.actions.find((action: {id:string}) => action.id === 'validate_submission');
+    observationAction.kind = 'read';
+    observationAction.title = 'Observe template handoff';
+    observationAction.requiredEvidence.push('assetId', 'versionId');
+    observationAction.tool = { name: 'template_review_observe_handoff', targetSystemId: 'template-review-mcp',
+      parameters: [{ name: 'assetId', type: 'string', description: 'Exact registered asset ID.' },
+        { name: 'versionId', type: 'string', description: 'Exact registered version ID.' }] };
     const bundle = compileWorkflowDefinition(definition);
     const runtime = createWorkflowRuntimeManifest(bundle, {
       schemaVersion: 'workflow_runtime_manifest_input.v0.1', target: 'create-something/control-runtime.v1',
@@ -78,7 +89,8 @@ test('admits a real signed compiler release and rejects mismatched registration,
         buildAcceptanceReceiptId:inspected.acceptanceReceipt!.receiptId,
         buildAcceptanceReceiptSha256:buildManifest.acceptance.receiptSha256,
         contractSha256:'a'.repeat(64),policySha256:'b'.repeat(64),policyVersion:'test',
-        entitlementSnapshotSha256:'d'.repeat(64),allowedTools:[],allowedResources:[]
+        entitlementSnapshotSha256:'d'.repeat(64),allowedTools:['template_review_observe_handoff'],
+        allowedResources:['https://webflow-template-review-mcp.createsomething.workers.dev/mcp']
       };
       // Agency derives this enclosing contract only after accepted Build hashes
       // exist. It is deliberately absent from the hashed binding artifact.
@@ -155,6 +167,24 @@ test('admits a real signed compiler release and rejects mismatched registration,
       await checkpoints.apply({scope:activation,run:admittedRun,expectedVersion:null,
         idempotencyKey:'signed-admission',commandDigest:'a'.repeat(64)});
       assert.deepEqual(await checkpoints.find(activation,publication.runId),admittedRun);
+      const sourceBindings = new D1WorkflowRuntimeSourceBindings(database, manifests);
+      const signedStep = verifiedRuntime.steps[0];
+      assert.equal(signedStep.disposition, 'pass');
+      const sourceInput = { scope: activation, runId: publication.runId, stepId: signedStep.id,
+        capabilityId: signedStep.capability.id, capabilityParameterSha256: signedStep.capability.parameterDigest,
+        assetId: 'recAAAAAAAAAAAAAA', versionId: 'recBBBBBBBBBBBBBB' };
+      await assert.rejects(sourceBindings.publish({ ...sourceInput, capabilityId: 'prototype-capability' }), /compiled_capability_mismatch/);
+      const sourceBinding = await sourceBindings.publish(sourceInput);
+      assert.equal(sourceBinding.request_sha256, await handoffRequestDigest(sourceInput.assetId, sourceInput.versionId));
+      assert.notEqual(sourceBinding.request_sha256, sourceBinding.capability_parameter_sha256);
+      assert.deepEqual(await sourceBindings.publish(sourceInput), sourceBinding);
+      await assert.rejects(sourceBindings.publish({ ...sourceInput, assetId: 'recCCCCCCCCCCCCCC' }), /binding_conflict/);
+      await assert.rejects(sourceBindings.find({ ...activation, tenantId: 'other' }, publication.runId, signedStep.id), /checkpoint_unavailable/);
+      for (const sql of [
+        "UPDATE control_workflow_runtime_source_bindings SET asset_id='recCCCCCCCCCCCCCC'",
+        'DELETE FROM control_workflow_runtime_source_bindings',
+        'INSERT OR REPLACE INTO control_workflow_runtime_source_bindings SELECT * FROM control_workflow_runtime_source_bindings'
+      ]) assert.throws(() => execFileSync('sqlite3', [databasePath], { input: sql }), /immutable|unexecuted_checkpoint/);
       assert.equal(execFileSync('sqlite3',[databasePath,
         'SELECT build_binding_version FROM control_workflow_runtime_runs;'],{encoding:'utf8'}).trim(),'2');
       const proof = await new D1VerifiedBuildWorkflowRuntimeProofReader(database,manifests).find(publication);
@@ -184,6 +214,64 @@ test('admits a real signed compiler release and rejects mismatched registration,
       }));
       const mcpBody=await mcp!.json() as {result:{structuredContent:unknown}};
       assert.deepEqual(mcpBody.result.structuredContent,httpBody);
+      const prepared = await reduceWorkflowRuntimeRun(verifiedRuntime, admittedRun, {
+        type: 'effect_intent', stepId: signedStep.id, attemptId: 'mapped-attempt',
+        capability: signedStep.capability, observedAt: '2026-09-15T00:00:01.000Z' });
+      await checkpoints.apply({ scope: activation, run: prepared, expectedVersion: admittedRun.version,
+        idempotencyKey: 'mapped-intent', commandDigest: 'c'.repeat(64) });
+      const evidenceStore = new D1TemplateReviewHandoffEvidenceStore(database, manifests, 30_000, 0, true);
+      const observationInput = { scope: activation, runId: parent.id, stepId: signedStep.id, attemptId: 'mapped-attempt',
+        sourceInvocationSha256: 'sha256:'+'d'.repeat(64), dispatchedAt: '2026-09-15T00:00:02.000Z',
+        receivedAt: '2026-09-15T00:00:03.000Z', observation: {
+          schema: 'create-something/template-handoff-observation@1', dataClassification: 'minimized_status_evidence',
+          requestSha256: sourceBinding.request_sha256, observedAt: '2026-09-15T00:00:02.000Z',
+          state: 'confirmed', reason: 'review_ready', nextAction: 'await_review', evidenceSha256: 'sha256:'+'e'.repeat(64) } };
+      await assert.rejects(evidenceStore.record({ ...observationInput,
+        observation: { ...observationInput.observation, requestSha256: signedStep.capability.parameterDigest } }), /handoff_observation_context_mismatch/);
+      const mappedEvidence = await evidenceStore.record(observationInput);
+      assert.deepEqual(mappedEvidence.sourceBinding, sourceBinding);
+      assert.deepEqual(await evidenceStore.record(observationInput), mappedEvidence);
+      const mappedProof = await new D1WorkflowRuntimeHandoffProofReader(database, manifests, 30_000, 'verified-build-v2', true).find(publication);
+      assert.deepEqual(mappedProof?.handoffObservations, [mappedEvidence]);
+      await assert.rejects(new D1WorkflowRuntimeHandoffProofReader(database, manifests, 30_000, 'verified-build-v2').find(publication), /attempt_mismatch/);
+      execFileSync('sqlite3', [databasePath], { input: await readFile(new URL('../../agency/migrations/0056_control_source_permits.sql', import.meta.url), 'utf8') });
+      let sourceCalls = 0;
+      const receiptVersions: number[] = [];
+      const host = await createTemplateReviewHost({ runtimeDb: database, agencyDb: database, activation, policy,
+        artifacts: reader, parameters: { assetId: sourceInput.assetId, versionId: sourceInput.versionId },
+        observationStep: { stepId: signedStep.id, capabilityId: signedStep.capability.id,
+          capabilityParameterSha256: signedStep.capability.parameterDigest },
+        source: { async observe(parameters) {
+          sourceCalls++;
+          assert.deepEqual(parameters, { assetId: sourceInput.assetId, versionId: sourceInput.versionId });
+          return { ...observationInput.observation, observedAt: '2026-09-15T00:00:05.000Z' };
+        } }, maximumAgeMs: 30_000, maximumClockSkewMs: 0, schedulerSubject: 'fixture-scheduler',
+        clock: () => '2026-09-15T00:00:05.000Z',
+        identity: actor => ({ async assert(scope, subject) {
+          assert.deepEqual(scope, proofScope); assert.equal(subject, actor?.subject ?? null);
+          return actor;
+        } }), queue: { async enqueue() {} }, receiptSink: { async write(run) { receiptVersions.push(run.version); } } });
+      assert.equal(host.executor.supports({ ...activation, contractSha256: 'f'.repeat(64) }), false);
+      let executionId = 0;
+      const executingControl = createControlRunService({ repository: new D1ControlRunRepository(database),
+        activations: new D1ControlActivationAuthority(database), executor: host.executor,
+        runtimeApprovals: host.runtimeApprovals, id: () => `signed-execution-${++executionId}`,
+        clock: () => new Date('2026-09-15T00:00:05.000Z') });
+      const execution = await executingControl.start(proofScope, { subject: 'fixture-operator', role: 'account_owner' },
+        { activationId: activation.id, idempotencyKey: 'signed-execution-start', concurrencyKey: 'signed-execution',
+          requestedTools: activation.allowedTools, requestedResources: activation.allowedResources });
+      const completed = await executingControl.process(proofScope, { subject: 'fixture-scheduler', role: 'control_scheduler' },
+        execution.id, 'signed-execution-process', activation.id);
+      assert.equal(completed.status, 'completed');
+      assert.equal(sourceCalls, 1);
+      const executionProof = await host.proofs.find({ scope: proofScope, runId: execution.id });
+      assert.equal(executionProof?.runtime.run.status, 'completed');
+      assert.equal(executionProof?.handoffObservations.length, 1);
+      assert.equal(executionProof?.sourceBindings?.[0].capability_id, signedStep.capability.id);
+      assert.equal(receiptVersions.length, 3, 'admission, intent and success reach the receipt sink');
+      await executingControl.process(proofScope, { subject: 'fixture-scheduler', role: 'control_scheduler' },
+        execution.id, 'signed-execution-process', activation.id);
+      assert.equal(sourceCalls, 1, 'signed execution replay never calls the source twice');
       const stored = await new D1WorkflowArtifactRegistrationReader(database).find(activation);
       assert.equal(stored?.bindingSha256,written.bindingSha256);
       assert.equal(stored?.buildManifestSha256,written.buildManifestSha256);
