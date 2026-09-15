@@ -1,6 +1,7 @@
+import { compileWorkflowDefinition } from '@createsomething/workflow-compiler';
 import type { RuntimeDigest, WorkflowRuntimeManifest } from '@createsomething/workflow-runtime';
 import { admitWorkflowArtifact, type RegisteredWorkflowArtifact, type WorkflowArtifactAdmissionPolicy } from './workflow-artifact-admission.js';
-import type { WorkflowRuntimeManifestAuthority } from './workflow-runtime-manifest-authority.js';
+import type { WorkflowRuntimeManifestAuthority, WorkflowRuntimeApprovalSurfaceAuthority } from './workflow-runtime-manifest-authority.js';
 
 /** Immutable host configuration, never request data. Reconstruct after a policy
  * change. This verifies artifact identity, not current activation/source access. */
@@ -19,6 +20,19 @@ export class RegisteredWorkflowManifestAuthority implements WorkflowRuntimeManif
     if (digests.some(digest => !/^sha256:[a-f0-9]{64}$/.test(digest)) || new Set(digests).size !== digests.length)
       throw new Error('runtime_manifest_registration_ambiguous');
   }
+
+  readonly approvalSurfaces: WorkflowRuntimeApprovalSurfaceAuthority = Object.freeze({
+    findByRuntimeManifestSha256: async (digest: RuntimeDigest) => {
+      const manifest = await this.findByRuntimeManifestSha256(digest);
+      if (!manifest) return undefined;
+      const release = this.releases.find(entry => entry.registration.runtimeManifestSha256 === digest)!;
+      const compiled = compileWorkflowDefinition(release.policy.sourceDefinition);
+      return Object.freeze({
+        schemaVersion: compiled.approvalSurfaces.schemaVersion,
+        sha256: manifest.artifacts.approvalSurfacesSha256
+      });
+    }
+  });
 
   async findByRuntimeManifestSha256(digest: RuntimeDigest): Promise<WorkflowRuntimeManifest | undefined> {
     const release = this.releases.find(entry => entry.registration.runtimeManifestSha256 === digest);

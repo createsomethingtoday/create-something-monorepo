@@ -153,6 +153,11 @@ test('admits a real signed compiler release and rejects mismatched registration,
     assert.deepEqual(await authority.findByRuntimeManifestSha256(registration.runtimeManifestSha256 as `sha256:${string}`),runtime);
     assert.equal(await authority.findByRuntimeManifestSha256('sha256:'+'0'.repeat(64) as `sha256:${string}`),undefined);
     assert.throws(()=>new RegisteredWorkflowManifestAuthority(reader,[{registration,policy},{registration,policy}]),/ambiguous/);
+    const approvalSurface = await authority.approvalSurfaces.findByRuntimeManifestSha256(registration.runtimeManifestSha256 as `sha256:${string}`);
+    assert.deepEqual(approvalSurface,{schemaVersion:bundle.approvalSurfaces.schemaVersion,sha256:runtime.artifacts.approvalSurfacesSha256});
+    assert.ok(Object.isFrozen(approvalSurface));
+    assert.equal(await authority.approvalSurfaces.findByRuntimeManifestSha256('sha256:'+'0'.repeat(64) as `sha256:${string}`),undefined);
+
 
     assert.throws(() => { admitted.workflow.id = 'mutated'; }, TypeError);
     assert.throws(() => { admitted.steps.push(admitted.steps[0]); }, TypeError);
@@ -230,6 +235,7 @@ test('admits a real signed compiler release and rejects mismatched registration,
       {...registration,artifactManifestSha256:workflowArtifactManifestHash(omittedOuter)},policy),/not_admitted/);
     files.get('runtime-manifest.json')![0]^=1;
     await assert.rejects(authority.findByRuntimeManifestSha256(registration.runtimeManifestSha256 as `sha256:${string}`));
+    await assert.rejects(authority.approvalSurfaces.findByRuntimeManifestSha256(registration.runtimeManifestSha256 as `sha256:${string}`));
     await assert.rejects(admitWorkflowArtifact(reader,registration,policy));
   } finally { await rm(root,{recursive:true,force:true}); }
 });
