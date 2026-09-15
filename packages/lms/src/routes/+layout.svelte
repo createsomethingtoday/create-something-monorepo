@@ -149,7 +149,12 @@
 <div class="layout theme-light property-performance">
   <Navigation
     logo="CREATE SOMETHING"
-    logoSuffix=".learn"
+    logoAsset={{
+      src: '/brand/create-something-horizontal-v3.svg',
+      mobileSrc: '/brand/create-something-mark-v3.svg',
+      label: 'CREATE SOMETHING Learn'
+    }}
+    logoAssetSuffix=".learn"
     links={navLinks}
     currentPath={$page.url.pathname}
     fixed={true}
@@ -180,6 +185,10 @@
     showSocial={true}
     isAuthenticated={!!data.user}
     visualStyle="performance"
+    brandAsset={{
+      src: '/brand/create-something-footer-signature-v3.svg',
+      label: 'CREATE SOMETHING Learn'
+    }}
   />
 
   <ModeIndicator current="learn" />
@@ -195,63 +204,4 @@
     padding-top: 72px;
   }
 
-  :global(.nav-performance .nav-logo) {
-    max-width: calc(100% - 3.5rem);
-    gap: 0.18rem;
-  }
-
-  :global(.nav-performance .nav-logo-mark) {
-    width: 1.6rem;
-    height: 1.6rem;
-    margin-right: 0.45rem;
-  }
-
-  :global(.nav-performance .nav-logo-text),
-  :global(.nav-performance .nav-logo-suffix) {
-    position: static !important;
-    width: auto !important;
-    height: auto !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    overflow: visible !important;
-    clip: auto !important;
-    white-space: nowrap !important;
-  }
-
-  :global(.nav-performance .nav-logo .nav-logo-text) {
-    color: var(--color-performance-ink, #090909) !important;
-    font-size: 1rem !important;
-    font-weight: var(--font-bold) !important;
-    line-height: 1 !important;
-  }
-
-  :global(.nav-performance .nav-logo .nav-logo-suffix) {
-    color: var(--color-performance-muted, #5e6268) !important;
-    font-family: var(--font-mono) !important;
-    font-size: 0.72rem !important;
-    font-weight: var(--font-semibold) !important;
-    letter-spacing: 0 !important;
-    line-height: 1 !important;
-    text-transform: uppercase !important;
-  }
-
-  @media (max-width: 480px) {
-    :global(.nav-performance .nav-logo) {
-      gap: 0.14rem;
-    }
-
-    :global(.nav-performance .nav-logo-mark) {
-      width: 1.35rem;
-      height: 1.35rem;
-      margin-right: 0.32rem;
-    }
-
-    :global(.nav-performance .nav-logo .nav-logo-text) {
-      font-size: 0.9rem !important;
-    }
-
-    :global(.nav-performance .nav-logo .nav-logo-suffix) {
-      font-size: 0.68rem !important;
-    }
-  }
 </style>
