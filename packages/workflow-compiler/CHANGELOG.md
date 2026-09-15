@@ -6,6 +6,9 @@ artifact schemas.
 
 ## Unreleased
 
+- Reject runtime manifests derived from compiled decision policies that disagree
+  with interaction, approval, or tool contracts.
+
 - Add `verifyWorkflowArtifactSnapshot` for complete serialized artifact inventories,
   reusing manifest/content/signature validation without filesystem reads.
 
