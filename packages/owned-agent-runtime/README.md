@@ -364,3 +364,10 @@ store uses version 2. SQL also enforces the version 2 age budget. Do not roll
 back the writer to one that omits this policy column after promotion; the legacy
 default preserves historical rows, and a trigger rejects new version-1 inserts
 (including old writers that omit the column).
+
+Artifact admission requires `sourceDefinition` from the owning host registration,
+not from an HTTP request or the signed artifact itself. The host recompiles it
+and requires the registered definition hash and canonical compiled bundle to
+match exactly. This catches consistently omitted assignments across generated
+artifacts. A historical compiler output that the pinned host compiler cannot
+reproduce is rejected; an allowlisted version alone does not bypass this check.

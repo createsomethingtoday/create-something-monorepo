@@ -43,6 +43,7 @@ test('admits a real signed compiler release and rejects mismatched registration,
       attestationKeyId:'test',attestationPublicKeyFingerprint:receipt.attestation.publicKeyFingerprint
     };
     const policy: WorkflowArtifactAdmissionPolicy = {
+      sourceDefinition:definition,
       interactionHost:{hostId:'control',language:'create-something/control',schemaVersions:['governed_interaction_bundle.v0.1','governed_interaction_bundle.v0.2','governed_interaction_bundle.v0.3'],runtimeVersions:['0.1.0'],capabilities:['interaction.select','receipt.inspect','replay.inspect','workflow.inspect'],operations:['select_replay_case']},
       signer:{keyId:'test',publicKeyPem:publicKey.export({type:'spki',format:'pem'}).toString(),fingerprint:receipt.attestation.publicKeyFingerprint},
       compilerVersions:[receipt.compilerVersion], runtimeManifestSchemas:[runtime.schemaVersion],
@@ -90,6 +91,9 @@ test('admits a real signed compiler release and rejects mismatched registration,
         ${await readFile(new URL('../../agency/migrations/0057_control_runtime_registrations.sql',import.meta.url),'utf8')}`});
       const database = d1(databasePath);
       const request = {manifestPath:build.manifestPath,scope:activation,activationId:activation.id,verifiedBy:'fixture-operator'};
+      await assert.rejects(registerVerifiedBuildRuntime(database,request,reader,
+        {...policy,sourceDefinition:{...definition,title:'A different registered source'}}),/not_admitted/);
+      assert.equal(execFileSync('sqlite3',[databasePath,'SELECT COUNT(*) FROM customer_control_runtime_registrations;'],{encoding:'utf8'}).trim(),'0');
       // Suspension while signed bytes are being read must prevent the write.
       await assert.rejects(registerVerifiedBuildRuntime(database,request,{async read(){
         execFileSync('sqlite3',[databasePath],{input:"UPDATE customer_control_activations SET status='suspended';"});
@@ -194,6 +198,27 @@ test('admits a real signed compiler release and rejects mismatched registration,
     bypassFiles.set('manifest.json',new TextEncoder().encode(JSON.stringify(bypassOuter)));
     bypassFiles.set('attestation.json',new TextEncoder().encode(JSON.stringify(createWorkflowArtifactAttestation(bypassOuter,{privateKey,keyId:'test'}))));
     await assert.rejects(admitWorkflowArtifact({async read(){return bypassFiles;}},{...registration,runtimeManifestSha256:bypassDigest,artifactManifestSha256:workflowArtifactManifestHash(bypassOuter)},policy),/not_admitted/);
+    const agentBytes = new TextEncoder().encode(JSON.stringify({...bundle.agentContracts,agents:[]}));
+    const agentOuter = structuredClone(manifest);
+    agentOuter.files.find((file:{path:string})=>file.path==='agent-contracts.json').hash =
+      'sha256:'+createHash('sha256').update(agentBytes).digest('hex');
+    const agentFiles = new Map(files);
+    agentFiles.set('agent-contracts.json',agentBytes);
+    agentFiles.set('manifest.json',new TextEncoder().encode(JSON.stringify(agentOuter)));
+    agentFiles.set('attestation.json',new TextEncoder().encode(JSON.stringify(createWorkflowArtifactAttestation(agentOuter,{privateKey,keyId:'test'}))));
+    await assert.rejects(admitWorkflowArtifact({async read(){return agentFiles;}},
+      {...registration,artifactManifestSha256:workflowArtifactManifestHash(agentOuter)},policy),/not_admitted/);
+    const omittedFiles = new Map(files);
+    const omittedBundle = structuredClone(bundle);
+    omittedBundle.agentContracts.agents=[];
+    omittedFiles.set('compiled-workflow.json',new TextEncoder().encode(JSON.stringify(omittedBundle)));
+    omittedFiles.set('agent-contracts.json',new TextEncoder().encode(JSON.stringify(omittedBundle.agentContracts)));
+    const omittedOuter=structuredClone(manifest);
+    for(const entry of omittedOuter.files) entry.hash='sha256:'+createHash('sha256').update(omittedFiles.get(entry.path)!).digest('hex');
+    omittedFiles.set('manifest.json',new TextEncoder().encode(JSON.stringify(omittedOuter)));
+    omittedFiles.set('attestation.json',new TextEncoder().encode(JSON.stringify(createWorkflowArtifactAttestation(omittedOuter,{privateKey,keyId:'test'}))));
+    await assert.rejects(admitWorkflowArtifact({async read(){return omittedFiles;}},
+      {...registration,artifactManifestSha256:workflowArtifactManifestHash(omittedOuter)},policy),/not_admitted/);
     files.get('runtime-manifest.json')![0]^=1;
     await assert.rejects(admitWorkflowArtifact(reader,registration,policy));
   } finally { await rm(root,{recursive:true,force:true}); }
