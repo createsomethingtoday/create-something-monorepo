@@ -1,3 +1,4 @@
+import { publishControlBuildBinding } from '../src/control-build-binding-publication.js';
 import { execFileSync } from 'node:child_process';
 import { d1, literal } from './sqlite-d1.fixture.js';
 import { activationColumns } from '../src/control-activation-binding.js';
@@ -97,6 +98,27 @@ test('admits a real signed compiler release and rejects mismatched registration,
       assert.equal(execFileSync('sqlite3',[databasePath,'SELECT COUNT(*) FROM customer_control_runtime_registrations;'],{encoding:'utf8'}).trim(),'0');
       execFileSync('sqlite3',[databasePath],{input:"UPDATE customer_control_activations SET status='active';"});
       const written = await registerVerifiedBuildRuntime(database,request,reader,policy);
+      for (const migration of ['0003_control_run_lifecycle.sql','0004_control_workflow_runtime_zero_write.sql','0014_control_verified_build_bindings.sql'])
+        execFileSync('sqlite3',[databasePath],{input:await readFile(new URL('../migrations/'+migration,import.meta.url),'utf8')});
+      execFileSync('sqlite3',[databasePath],{input:`INSERT INTO control_runs
+        (id,account_id,tenant_id,workspace_account_id,activation_id,activation_version,activation_json,status,version,attempt,concurrency_key,
+         requested_tools_json,requested_resources_json,created_by,created_at,updated_at)
+        VALUES ('published-run',${literal(activation.accountId)},${literal(activation.tenantId)},${literal(activation.workspaceAccountId)},
+          ${literal(activation.id)},1,${literal(JSON.stringify(activation))},'queued',1,1,'publication','[]','[]','fixture','2026-09-15T00:00:00.000Z','2026-09-15T00:00:00.000Z');`});
+      const publication = {scope:activation,runId:'published-run'};
+      await assert.rejects(publishControlBuildBinding(database,database,publication,{async read(){
+        execFileSync('sqlite3',[databasePath],{input:"UPDATE customer_control_activations SET status='suspended';"});
+        return files;
+      }},policy),/registration_changed/);
+      assert.equal(execFileSync('sqlite3',[databasePath,'SELECT COUNT(*) FROM control_workflow_runtime_build_bindings;'],{encoding:'utf8'}).trim(),'0');
+      execFileSync('sqlite3',[databasePath],{input:"UPDATE customer_control_activations SET status='active';"});
+      await publishControlBuildBinding(database,database,publication,reader,policy);
+      const published = JSON.parse(execFileSync('sqlite3',['-json',databasePath,'SELECT * FROM control_workflow_runtime_build_bindings;'],{encoding:'utf8'}))[0];
+      assert.equal(published.binding_sha256,written.bindingSha256);
+      assert.equal(published.artifact_manifest_sha256,registration.artifactManifestSha256);
+      assert.equal(published.build_manifest_sha256,'sha256:'+written.buildManifestSha256);
+      await publishControlBuildBinding(database,database,publication,reader,policy);
+      assert.equal(execFileSync('sqlite3',[databasePath,'SELECT COUNT(*) FROM control_workflow_runtime_build_bindings;'],{encoding:'utf8'}).trim(),'1');
       const stored = await new D1WorkflowArtifactRegistrationReader(database).find(activation);
       assert.equal(stored?.bindingSha256,written.bindingSha256);
       assert.equal(stored?.buildManifestSha256,written.buildManifestSha256);

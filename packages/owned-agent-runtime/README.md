@@ -328,3 +328,11 @@ manifest identity after ordinary receipt-chain verification. Missing or
 inconsistent relations fail closed. The existing reader retains proof@1 for
 legacy checkpoints; hosted wiring must select the versioned reader for v2
 admissions before production promotion.
+
+`publishControlBuildBinding` composes the runtime parent, current Agency registry,
+independent signed admission and immutable Control binding insert. It rechecks
+Agency registration after artifact verification and guards parent state/activation
+at insertion. Exact existing bindings can be reused; conflicting identities fail.
+The operation records evidence, not a durable source permit: source dispatch must
+still obtain its current authorization. Concurrent duplicate insert races remain
+explicit failures; a subsequent exact retry reads the stored relation.
