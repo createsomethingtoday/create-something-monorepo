@@ -283,3 +283,17 @@ transactionally when inserting the candidate. Do not expose this function as a
 caller-supplied activation endpoint or import its filesystem path into the Worker.
 Registration schema and Control receipt binding still require the versioned
 Build/compiler relation correction before production use.
+
+`D1WorkflowArtifactRegistrationReader` resolves Agency's immutable registration
+only when every frozen activation field still matches an active activation in
+one query. It shares the exhaustive activation-column mapping with source
+permits and returns a frozen registration value. Each new claim must repeat
+lookup and current signer-policy checks; this read is not a source permit and
+does not implement the verified Build registration writer or host wiring.
+
+Agency runtime lookup requires registration version 2 and returns the accepted
+Build manifest, artifact-set, and binding digests separately from the compiler
+inventory. It matches the complete frozen activation and rejects suspension.
+Consumers must preserve these identities in the versioned Control binding;
+lookup alone is not signature verification or an execution permit. The draft
+registry writer and Control migration remain required before hosted use.
