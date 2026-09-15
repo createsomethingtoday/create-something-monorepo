@@ -257,6 +257,28 @@ publication. This reader does not configure R2, prove immutability, authenticate
 a signature, or grant execution. Its byte snapshot must pass the public compiler
 verifier and the registered signer/release/runtime policy before admission.
 
+### Handoff gateway (not registered)
+
+`D1TemplateReviewHandoffGateway` connects persisted Control proof, fixed manifest
+and record-pair registration, requested source scopes, Agency single-use permits,
+and immutable source observation evidence. It rechecks the prepared attempt after
+redemption, invokes only its injected fixed source, and sanitizes ambiguous failures.
+Identical evidence is readable after stop; the gateway never advances a checkpoint.
+The injection boundary requires the owning authenticated Template Review transport.
+No generic URL or tool argument is accepted. Production transport, signed registry
+configuration, hosted executor transitions, and deployment are still required.
+Local gateway tests exercise real SQLite/Control lifecycle with a test source; they
+do not establish authenticated production invocation or submission correlation.
+
+Handoff age policy version 2 computes age from the later of dispatch time
+and source observation time minus allowed clock skew. Migration `0013` marks existing evidence version 1
+without changing its accepted bytes or timestamps; historical reads and identical
+replays retain that stored interpretation. New evidence written by the current
+store uses version 2. SQL also enforces the version 2 age budget. Do not roll
+back the writer to one that omits this policy column after promotion; the legacy
+default preserves historical rows, and a trigger rejects new version-1 inserts
+(including old writers that omit the column).
+
 `admitWorkflowArtifact` consumes the reader's serialized bytes through the public
 compiler signature verifier and runtime parser. It requires exact registered
 outer/runtime hashes, workflow/compiler identity, signer key/fingerprint and
