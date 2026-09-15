@@ -88,7 +88,7 @@ When coordinating agents, pass **policy artifacts** alongside task artifacts.
 6. Verify symbols and import paths before using them.
 7. Run the relevant quality gates.
 8. Record evidence in Linear when the checkpoint affects handoff, review,
-   rollback, or promotion. Tracked-work closeout must include `Worktree
+    rollback, or promotion. Tracked-work closeout must include `Worktree
    disposition:` with `removed`, `preserved at <path/branch>`, or `retained
    until <checkpoint>` so workspace ownership does not become ambient state.
 9. For production-relevant agentic work, default to a complete closeout:
@@ -175,6 +175,20 @@ Common library IDs used here:
 - **Code verification**: `ground analyze`, `ground find-duplicates`
 - **Task coordination**: `pnpm linear:*`
 - **Priority ranking**: Linear project views and `pnpm linear:ready`
+
+### Context-efficient local summaries
+
+RTK is an optional local convenience for explicitly requested, noisy **successful**
+test, build, or lint summaries. Use it only at the final summary boundary, for
+example `rtk test pnpm test` or `rtk err pnpm check`. It is never a required
+repository, CI, or production dependency: when it is unavailable, run the
+native command unchanged.
+
+Do not install RTK's global hook (`rtk init -g`). Keep CTX retrieval, Ground
+commands and their findings, Linear/Git receipts, raw diffs, exact errors,
+source reads, review evidence, and all pipelines/redirections unfiltered. Use
+the native command in those cases; `rtk proxy <command>` is permitted only when
+tracking an otherwise byte-for-byte native command is useful.
 
 Linear replaces Loom in this repository. Use Linear for shared and repo-local task state.
 

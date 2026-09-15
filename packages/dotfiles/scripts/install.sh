@@ -288,6 +288,19 @@ echo ""
 "$SCRIPT_DIR/install-codex-skills.sh"
 
 # ─────────────────────────────────────────────────────────────
+# RTK (optional local summary utility)
+# ─────────────────────────────────────────────────────────────
+
+echo ""
+if command -v rtk &> /dev/null; then
+    echo "Optional RTK available: $(rtk --version)"
+    echo "  Explicit summaries only; its global hook must remain disabled."
+else
+    echo "Optional RTK is not installed; agents will use native commands."
+    echo "  To opt in locally: pnpm --filter @create-something/dotfiles install-rtk"
+fi
+
+# ─────────────────────────────────────────────────────────────
 # Credentials Setup
 # ─────────────────────────────────────────────────────────────
 
