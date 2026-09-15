@@ -4,6 +4,29 @@ import { AuthenticatedTemplateReviewHandoffSource } from '../src/template-review
 
 const parameters = { assetId: 'recAAAAAAAAAAAAAA', versionId: 'recBBBBBBBBBBBBBB' };
 
+test('oversized JSON and SSE streams are cancelled before unbounded SDK parsing', async () => {
+  for (const contentType of ['application/json', 'text/event-stream']) {
+    let calls = 0;
+    let pulls = 0;
+    let cancelled = false;
+    const source = new AuthenticatedTemplateReviewHandoffSource(async () => 'test-token', async () => {
+      calls++;
+      return new Response(new ReadableStream<Uint8Array>({
+        pull(controller) {
+          pulls++;
+          // No complete JSON/SSE message: only the transport limit can stop this stream.
+          controller.enqueue(new TextEncoder().encode(' '.repeat(32_768)));
+        },
+        cancel() { cancelled = true; }
+      }), { headers: { 'content-type': contentType } });
+    });
+    await assert.rejects(source.observe(parameters), { message: 'handoff_source_unavailable' });
+    assert.equal(cancelled, true);
+    assert.ok(pulls <= 4, `unbounded stream consumption: ${pulls}`);
+    assert.equal(calls, 1);
+  }
+});
+
 test('fixed authenticated source uses the SDK and extracts only the source envelope', async () => {
   const methods: string[] = [];
   const data = { schema: 'test-observation' };
