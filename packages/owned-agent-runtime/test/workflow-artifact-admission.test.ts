@@ -1,3 +1,8 @@
+import { execFileSync } from 'node:child_process';
+import { d1, literal } from './sqlite-d1.fixture.js';
+import { activationColumns } from '../src/control-activation-binding.js';
+import { registerVerifiedBuildRuntime } from '../src/build-runtime-registration-writer.js';
+import { D1WorkflowArtifactRegistrationReader } from '../src/workflow-artifact-registration.js';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { generateKeyPairSync, createHash } from 'node:crypto';
@@ -65,6 +70,31 @@ test('admits a real signed compiler release and rejects mismatched registration,
         contractSha256:'a'.repeat(64),policySha256:'b'.repeat(64),policyVersion:'test',
         entitlementSnapshotSha256:'d'.repeat(64),allowedTools:[],allowedResources:[]
       };
+      const databasePath = join(build.root,'registration.sqlite');
+      const columns = Object.entries(activationColumns);
+      const values = columns.map(([key]) => {
+        const value = activation[key as keyof typeof activation];
+        return literal(Array.isArray(value)?JSON.stringify(value):value);
+      });
+      execFileSync('sqlite3',[databasePath],{input:`CREATE TABLE customer_control_activations (
+        ${columns.map(([key,column])=>`${column} ${typeof activation[key as keyof typeof activation] === 'number'?'INTEGER':'TEXT'} ${key==='id'?'PRIMARY KEY':''}`).join(',')});
+        INSERT INTO customer_control_activations VALUES (${values.join(',')});
+        ${await readFile(new URL('../../agency/migrations/0057_control_runtime_registrations.sql',import.meta.url),'utf8')}`});
+      const database = d1(databasePath);
+      const request = {manifestPath:build.manifestPath,scope:activation,activationId:activation.id,verifiedBy:'fixture-operator'};
+      // Suspension while signed bytes are being read must prevent the write.
+      await assert.rejects(registerVerifiedBuildRuntime(database,request,{async read(){
+        execFileSync('sqlite3',[databasePath],{input:"UPDATE customer_control_activations SET status='suspended';"});
+        return files;
+      }},policy),/activation_changed/);
+      assert.equal(execFileSync('sqlite3',[databasePath,'SELECT COUNT(*) FROM customer_control_runtime_registrations;'],{encoding:'utf8'}).trim(),'0');
+      execFileSync('sqlite3',[databasePath],{input:"UPDATE customer_control_activations SET status='active';"});
+      const written = await registerVerifiedBuildRuntime(database,request,reader,policy);
+      const stored = await new D1WorkflowArtifactRegistrationReader(database).find(activation);
+      assert.equal(stored?.bindingSha256,written.bindingSha256);
+      assert.equal(stored?.buildManifestSha256,written.buildManifestSha256);
+      assert.equal(stored?.artifactManifestSha256,written.binding.artifactManifestSha256);
+      await assert.rejects(registerVerifiedBuildRuntime(database,request,reader,policy),/immutable/);
       const verified = await verifyBuildRuntimeRegistration(build.manifestPath,activation,reader,policy);
       assert.equal(verified.buildManifestSha256, inspected.manifestSha256);
       assert.notEqual('sha256:'+verified.buildManifestSha256, verified.binding.artifactManifestSha256);

@@ -297,3 +297,12 @@ inventory. It matches the complete frozen activation and rejects suspension.
 Consumers must preserve these identities in the versioned Control binding;
 lookup alone is not signature verification or an execution permit. The draft
 registry writer and Control migration remain required before hosted use.
+
+`registerVerifiedBuildRuntime` is the operator-side write path. It loads the
+activation from the supplied Agency database, verifies Build and signed compiler
+artifacts, and uses one guarded INSERT SELECT RETURNING statement matching every
+frozen activation field. Suspension during verification produces no row; duplicate
+registration is rejected by the immutable ledger. Database access and signer
+policy must come from trusted operator configuration. This function does not add
+a hosted endpoint, provision credentials, or change activation status. Production
+transport, Control receipt migration and live verification remain outstanding.
