@@ -29,7 +29,7 @@ export class D1TemplateReviewHandoffGateway {
     assetId: string; versionId: string; artifactManifestSha256: string; runtimeManifestSha256: string;
   }>;
   constructor(
-    database: D1Database,
+    private readonly database: D1Database,
     manifests: WorkflowRuntimeManifestAuthority,
     private readonly permits: D1ControlSourcePermitAuthority,
     private readonly source: TemplateReviewHandoffSource,
@@ -69,7 +69,14 @@ export class D1TemplateReviewHandoffGateway {
         attempt.capabilityParameterSha256 !== requestSha256 ||
         !proof.receipts.some(receipt => receipt.eventType === 'effect_intent' &&
           receipt.stepId === target.stepId && receipt.attemptId === target.attemptId)) return undefined;
-    return parent;
+    // Repository.find also reads receipts after its run row. Check status/version
+    // in one final query so a stop during receipt assembly cannot authorize.
+    const current = await this.database.prepare(
+      `SELECT status, version FROM control_runs
+       WHERE id = ? AND account_id = ? AND tenant_id = ? AND workspace_account_id = ?`
+    ).bind(target.runId, target.scope.accountId, target.scope.tenantId, target.scope.workspaceAccountId)
+      .first<{status: string; version: number}>();
+    return current?.status === 'running' && current.version === parent.version ? parent : undefined;
   }
 
   async observe(target: Target): Promise<TemplateReviewHandoffGatewayResult> {

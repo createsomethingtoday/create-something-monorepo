@@ -2235,7 +2235,7 @@ test('source permits preserve authorized URI syntax and 300-character resource n
 
 
 test('handoff gateway binds persisted authority, invokes once, and retains late evidence without resuming stop', async () => {
-  for (const mode of ['healthy', 'late-stop', 'source-error', 'wrong-request', 'suspended', 'stop-during-proof', 'allowed-skew', 'unallowed-skew']) {
+  for (const mode of ['healthy', 'late-stop', 'source-error', 'wrong-request', 'suspended', 'stop-during-proof', 'allowed-skew', 'unallowed-skew', 'stop-during-parent-receipts']) {
     const parameters = { assetId: 'recAAAAAAAAAAAAAA', versionId: 'recBBBBBBBBBBBBBB' };
     const bytes = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify({
       schema: 'template-handoff-request@1', ...parameters
@@ -2280,6 +2280,20 @@ test('handoff gateway binds persisted authority, invokes once, and retains late 
         } };
       } } as D1PreparedStatement;
     };
+    let parentReads = 0;
+    if (mode === 'stop-during-parent-receipts') gatewayDatabase.prepare = (sql: string) => {
+      const statement = prepareQuery(sql);
+      if (!sql.includes('SELECT receipt_json FROM control_run_receipts')) return statement;
+      return { bind(...values: unknown[]) {
+        const bound = statement.bind(...values);
+        return { async all() {
+          const rows = await bound.all();
+          if (++parentReads === 2)
+            await input.service.stop(scope, owner, parent.id, 'parent-stop', 'stop during parent receipts');
+          return rows;
+        } };
+      } } as D1PreparedStatement;
+    };
     gateway = new D1TemplateReviewHandoffGateway(gatewayDatabase,
       trustedRuntimeManifestAuthority([{ digest: runtimeDigest('8'), manifest }]),
       new D1ControlSourcePermitAuthority(d1(input.path)), {
@@ -2301,9 +2315,9 @@ test('handoff gateway binds persisted authority, invokes once, and retains late 
       input: "UPDATE customer_control_activations SET status='suspended';"
     });
     const process = () => input.service.process(scope, scheduler, parent.id, 'gateway-process', 'activation-a');
-    if (mode === 'late-stop' || mode === 'stop-during-proof') await assert.rejects(process, ControlRunConflictError);
+    if (mode === 'late-stop' || mode === 'stop-during-proof' || mode === 'stop-during-parent-receipts') await assert.rejects(process, ControlRunConflictError);
     else await process();
-    assert.equal(calls, ['wrong-request', 'suspended', 'stop-during-proof'].includes(mode) ? 0 : 1, mode);
+    assert.equal(calls, ['wrong-request', 'suspended', 'stop-during-proof', 'stop-during-parent-receipts'].includes(mode) ? 0 : 1, mode);
     if (mode === 'healthy' || mode === 'late-stop' || mode === 'allowed-skew') assert.equal(result?.type, 'observed', mode);
     if (mode === 'source-error' || mode === 'unallowed-skew') assert.equal(result?.type, 'effect_unknown');
     if (mode === 'wrong-request') assert.equal(result?.type, 'not_authorized');
