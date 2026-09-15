@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { execFileSync } from 'node:child_process';
+import { execFile, execFileSync } from 'node:child_process';
 import { mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -2175,10 +2175,34 @@ test('Agency source permit atomically matches frozen authority and never redeems
   assert.ok(permit);
   assert.equal(await authority.redeem(request), undefined);
   assert.equal(await authority.redeem({ ...request, requestSha256: runtimeDigest('b') }), undefined);
+  let releaseRace: () => void = () => undefined;
+  const raceReady = new Promise<void>(resolve => { releaseRace = resolve; });
+  let arrivals = 0;
+  const raceDatabase = {
+    prepare(sql: string) {
+      return { bind(...values: unknown[]) {
+        return { async first() {
+          if (++arrivals === 2) releaseRace();
+          await raceReady;
+          // Two independent processes now contend for the same SQLite writer.
+          return new Promise((resolve, reject) => {
+            const child = execFile('sqlite3', ['-json', '-bail', '-cmd', '.timeout 5000', input.path],
+              { encoding: 'utf8' }, (error, stdout) => {
+                if (error) reject(error);
+                else resolve((JSON.parse(stdout.trim() || '[]') as unknown[])[0] ?? null);
+              });
+            child.stdin?.end(`PRAGMA foreign_keys=ON; ${bindSql(sql, values)};`);
+          });
+        } };
+      } };
+    }
+  } as unknown as D1Database;
+  const raceAuthority = new D1ControlSourcePermitAuthority(raceDatabase);
   const competing = await Promise.all([
-    authority.redeem({ ...request, attemptId: 'competing' }),
-    authority.redeem({ ...request, attemptId: 'competing' })
+    raceAuthority.redeem({ ...request, attemptId: 'competing' }),
+    raceAuthority.redeem({ ...request, attemptId: 'competing' })
   ]);
+  assert.equal(arrivals, 2);
   assert.equal(competing.filter(Boolean).length, 1);
   const runSql = (sql: string) => execFileSync('sqlite3', ['-bail', input.path], { input: sql, stdio: 'pipe' });
   assert.throws(() => runSql("UPDATE customer_control_source_permits SET tool = 'other';"));
