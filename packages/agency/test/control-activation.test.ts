@@ -334,6 +334,7 @@ test('scheduler authority requires the run frozen activation in its exact scope'
 
 test('Control source is derived and registered only from a strict ready Build inspection', async () => {
   const inspection = {
+    manifestSha256: 'd'.repeat(64),
     manifest: {
       releaseId: 'release_1',
       handoff: { receiptSha256: 'a'.repeat(64) },
@@ -563,6 +564,12 @@ test('accepted Build v2 reaches Agency activation without a contract hash cycle'
     let id = 0;
     const ledger = createControlActivationLedger({repository:createMemoryRepository(),id:()=>`cycle_${++id}`,clock:()=> '2026-09-15T00:00:00.000Z'});
     const registration = {inspection,manifestSha256:inspection.manifestSha256!,mapVersionId:'map-version-3',mapCanvasSha256:'f'.repeat(64)};
+    await assert.rejects(ledger.registerBuildEvidence(scope,actor(scope),{
+      ...registration,manifestSha256:'0'.repeat(64)
+    }), /exact inspected Build manifest digest/);
+    await assert.rejects(ledger.registerBuildEvidence(scope,actor(scope),{
+      ...registration,inspection:{...inspection,manifestSha256:undefined}
+    }), /exact inspected Build manifest digest/);
     const evidence = await ledger.registerBuildEvidence(scope,actor(scope),registration);
     const source = controlActivationSourceFromBuildInspection(inspection,registration);
     const result = await ledger.activate(scope,actor(scope),{idempotencyKey:'cycle-free',source,policy});

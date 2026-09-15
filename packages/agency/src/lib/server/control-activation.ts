@@ -384,6 +384,11 @@ export function controlActivationSourceFromBuildInspection(
       'Control activation requires a verified, ready Build release package'
     );
   }
+  if (!inspection.manifestSha256 || inspection.manifestSha256 !== input.manifestSha256) {
+    throw new ControlActivationValidationError(
+      'Control activation requires the exact inspected Build manifest digest'
+    );
+  }
   const { manifest, handoffReceipt, acceptanceReceipt } = inspection;
   if (handoffReceipt.status !== 'accepted' || acceptanceReceipt.status !== 'accepted') {
     throw new ControlActivationValidationError(
@@ -398,7 +403,7 @@ export function controlActivationSourceFromBuildInspection(
     handoffId: handoffReceipt.handoffId,
     handoffReceiptSha256: manifest.handoff.receiptSha256,
     buildReleaseId: manifest.releaseId,
-    buildManifestSha256: input.manifestSha256,
+    buildManifestSha256: inspection.manifestSha256,
     buildArtifactSetSha256: acceptanceReceipt.artifactSetSha256,
     buildAcceptanceReceiptId: acceptanceReceipt.receiptId,
     buildAcceptanceReceiptSha256: manifest.acceptance.receiptSha256,
