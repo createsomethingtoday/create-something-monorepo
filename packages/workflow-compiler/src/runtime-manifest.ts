@@ -436,6 +436,26 @@ export function validateWorkflowRuntimeManifestArtifact(
 ): void {
   const bundle = runtimeBundle(source);
   try {
+    // Runtime step derivation must not choose one of conflicting signed policies.
+    const decisions = bundle.decisionInventory.decisions;
+    const same = (left: unknown, right: unknown) =>
+      JSON.stringify(canonicalize(left)) === JSON.stringify(canonicalize(right));
+    const interactions = decisions.map(({toolContract: _tool, ...decision}) => decision);
+    const approvals = decisions.filter(decision => decision.autonomy !== 'auto_allow').map(decision => ({
+      actionId: decision.actionId,
+      title: decision.title,
+      mode: decision.autonomy,
+      owner: decision.approvalOwner ?? decision.recovery.owner,
+      requiredEvidence: decision.requiredEvidence,
+      ...(decision.requiredEvidenceValues ? {requiredEvidenceValues: decision.requiredEvidenceValues} : {}),
+      ...(decision.requiredEvidenceMatchers ? {requiredEvidenceMatchers: decision.requiredEvidenceMatchers} : {}),
+      recovery: decision.recovery
+    }));
+    const tools = decisions.flatMap(decision => decision.toolContract ? [decision.toolContract] : []);
+    if (!same(interactions, bundle.governedInteraction.actions) ||
+        !same(approvals, bundle.approvalSurfaces.actions) || !same(tools, bundle.toolContracts.tools)) {
+      throw new Error('compiled governance contracts disagree');
+    }
     if (!manifest || !Array.isArray(manifest.steps) || manifest.steps.length === 0) {
       throw new Error('runtime manifest has no steps');
     }
