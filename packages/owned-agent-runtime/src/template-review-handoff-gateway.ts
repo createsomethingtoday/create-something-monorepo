@@ -35,8 +35,11 @@ export class D1TemplateReviewHandoffGateway {
     private readonly source: TemplateReviewHandoffSource,
     registration: { assetId: string; versionId: string; artifactManifestSha256: string; runtimeManifestSha256: string },
     maximumAgeMs: number,
-    private readonly clock: () => string = () => new Date().toISOString()
+    private readonly clock: () => string = () => new Date().toISOString(),
+    maximumClockSkewMs = 0
   ) {
+    if (!Number.isSafeInteger(maximumClockSkewMs) || maximumClockSkewMs < 0 || maximumClockSkewMs > 60_000)
+      throw new Error('invalid_handoff_clock_policy');
     if (!Number.isSafeInteger(maximumAgeMs) || maximumAgeMs <= 0)
       throw new Error('invalid_handoff_freshness_policy');
     for (const value of [registration.assetId, registration.versionId])
@@ -46,7 +49,7 @@ export class D1TemplateReviewHandoffGateway {
     this.registration = Object.freeze({ ...registration });
     this.proofs = new D1WorkflowRuntimeProofReader(database, manifests);
     this.parents = new D1ControlRunRepository(database);
-    this.evidence = new D1TemplateReviewHandoffEvidenceStore(database, manifests, maximumAgeMs);
+    this.evidence = new D1TemplateReviewHandoffEvidenceStore(database, manifests, maximumAgeMs, maximumClockSkewMs);
   }
 
   private async authorized(target: Target, requestSha256: string) {

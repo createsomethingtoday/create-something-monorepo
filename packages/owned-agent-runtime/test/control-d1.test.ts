@@ -2235,7 +2235,7 @@ test('source permits preserve authorized URI syntax and 300-character resource n
 
 
 test('handoff gateway binds persisted authority, invokes once, and retains late evidence without resuming stop', async () => {
-  for (const mode of ['healthy', 'late-stop', 'source-error', 'wrong-request', 'suspended', 'stop-during-proof']) {
+  for (const mode of ['healthy', 'late-stop', 'source-error', 'wrong-request', 'suspended', 'stop-during-proof', 'allowed-skew', 'unallowed-skew']) {
     const parameters = { assetId: 'recAAAAAAAAAAAAAA', versionId: 'recBBBBBBBBBBBBBB' };
     const bytes = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify({
       schema: 'template-handoff-request@1', ...parameters
@@ -2290,11 +2290,11 @@ test('handoff gateway binds persisted authority, invokes once, and retains late 
           if (mode === 'late-stop') await input.service.stop(scope, owner, parent.id, 'source-stop', 'stop during observation');
           return { schema: 'create-something/template-handoff-observation@1',
             dataClassification: 'minimized_status_evidence', requestSha256,
-            observedAt: '2026-08-25T00:00:03.000Z', state: 'confirmed', reason: 'review_ready',
+            observedAt: mode.endsWith('skew') ? '2026-08-25T00:00:02.500Z' : '2026-08-25T00:00:03.000Z', state: 'confirmed', reason: 'review_ready',
             nextAction: 'await_review', evidenceSha256: runtimeDigest('b') };
         }
       }, { ...parameters, artifactManifestSha256: runtimeDigest('7'), runtimeManifestSha256: runtimeDigest('8') },
-      30_000, () => '2026-08-25T00:00:03.000Z');
+      30_000, () => '2026-08-25T00:00:03.000Z', mode === 'allowed-skew' ? 500 : 0);
     assert.equal((await gateway.observe({ scope: { ...scope, tenantId: 'other' }, runId: parent.id,
       stepId: 'observe', attemptId: 'template-review-attempt-1' })).type, 'not_authorized');
     if (mode === 'suspended') execFileSync('sqlite3', [input.path], {
@@ -2304,8 +2304,8 @@ test('handoff gateway binds persisted authority, invokes once, and retains late 
     if (mode === 'late-stop' || mode === 'stop-during-proof') await assert.rejects(process, ControlRunConflictError);
     else await process();
     assert.equal(calls, ['wrong-request', 'suspended', 'stop-during-proof'].includes(mode) ? 0 : 1, mode);
-    if (mode === 'healthy' || mode === 'late-stop') assert.equal(result?.type, 'observed', mode);
-    if (mode === 'source-error') assert.equal(result?.type, 'effect_unknown');
+    if (mode === 'healthy' || mode === 'late-stop' || mode === 'allowed-skew') assert.equal(result?.type, 'observed', mode);
+    if (mode === 'source-error' || mode === 'unallowed-skew') assert.equal(result?.type, 'effect_unknown');
     if (mode === 'wrong-request') assert.equal(result?.type, 'not_authorized');
     if (mode === 'late-stop') assert.equal((await input.service.get(scope, owner, parent.id)).status, 'stopped');
     if (mode === 'healthy') {
