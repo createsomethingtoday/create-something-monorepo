@@ -144,3 +144,24 @@ test('rejects a tampered runtime manifest and a graph that could create concurre
     /compiled workflow transition/
   );
 });
+
+test('rejects runtime manifests re-derived from divergent compiled governance', async () => {
+  const definition = JSON.parse(await readFile(fixtureUrl, 'utf8'));
+  definition.schemaVersion = 'workflow_definition.v0.3';
+  const source = compileWorkflowDefinition(definition);
+  const mutations = [
+    bundle => { bundle.decisionInventory.decisions.find(d => d.actionId === 'approve_template').autonomy = 'auto_allow'; },
+    bundle => { bundle.approvalSurfaces.actions.find(d => d.actionId === 'approve_template').owner = 'another-owner'; },
+    bundle => { bundle.governedInteraction.actions.find(d => d.actionId === 'approve_template').requiredEvidence = []; },
+    bundle => { bundle.toolContracts.tools = []; }
+  ];
+  for (const mutate of mutations) {
+    const bundle = structuredClone(source);
+    mutate(bundle);
+    const runtime = createWorkflowRuntimeManifest(bundle, {
+      schemaVersion:'workflow_runtime_manifest_input.v0.1',target:'create-something/control-runtime.v1',
+      approvalExpiresAt:'2026-12-31T00:00:00.000Z',steps:[{id:'approve',actionId:'approve_template',dependsOn:[]}]
+    });
+    assert.throws(() => validateWorkflowRuntimeManifestArtifact(bundle,runtime), /exact compiled workflow/);
+  }
+});
