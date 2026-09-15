@@ -475,6 +475,11 @@ export async function heartbeatSyncJobLock(db: D1Database, lock: SyncJobLock, he
     .run();
 }
 
+export async function hasTemplateDocument(db: D1Database, id: string): Promise<boolean> {
+  const row = await db.prepare('SELECT 1 AS present FROM template_documents WHERE id = ? LIMIT 1').bind(id).first<{ present: number }>();
+  return Boolean(row);
+}
+
 export async function listTemplateDocumentIds(db: D1Database): Promise<string[]> {
   const { results } = await db.prepare('SELECT id FROM template_documents').all<{ id: string }>();
   return (results ?? []).map((row) => row.id);

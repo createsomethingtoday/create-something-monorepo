@@ -206,6 +206,80 @@ async function bestEffortTargetedWebflowTemplateImages(
   }
 }
 
+// Targeted CMS lookup that also records whether the lookup itself succeeded.
+// A successful lookup that finds nothing is a real signal (the listing does not
+// exist yet); a failed lookup returns null so nothing is gated on it.
+async function bestEffortTargetedWebflowTemplateIndex(
+  env: Env,
+  warnings: SyncWarning[],
+  targets: Array<{ id?: string | null; templateSlug?: string | null; name?: string | null }>,
+  options: { onPage?: () => Promise<void> } = {},
+): Promise<WebflowTemplateImageIndex | null> {
+  if (!hasWebflowCmsToken(env)) return null;
+
+  try {
+    const records = await fetchWebflowTemplateImagesForTargets(env, targets, options);
+    return buildWebflowTemplateImageIndexFromRecords(records, { listingCoverageComplete: true });
+  } catch (error) {
+    pushWarning(warnings, 'webflow_template_targets', error);
+    return null;
+  }
+}
+
+// Airtable flips a template to Published at approval, but the public listing
+// only exists once the Templates CMS item is created (Whalesync holds that back
+// while, for example, the creator's Stripe onboarding is incomplete). Indexing
+// the Airtable row early produces a blank card that links to a 404, so a
+// published record is held out of the index until a live CMS item is confirmed.
+//
+// The guard keeps a bad or empty CMS read from emptying the marketplace: when
+// the share of gated records in one pass is implausibly high, every record is
+// kept and the run is flagged instead.
+const LISTING_GATE_GUARD_MIN_RECORDS = 5;
+const LISTING_GATE_GUARD_RATIO = 0.02;
+const LISTING_GATE_WARNING_SAMPLE = 20;
+
+interface NormalizedTemplateRecord {
+  document: TemplateDocumentInput;
+  // True when the CMS lookup completed and found no live Templates item for
+  // this record. False when a listing was found or the lookup was unavailable.
+  listingMissing: boolean;
+}
+
+interface ListingGateResult {
+  documents: TemplateDocumentInput[];
+  gatedIds: string[];
+}
+
+function applyListingGate(records: NormalizedTemplateRecord[], warnings: SyncWarning[]): ListingGateResult {
+  const gated = records.filter((record) => record.listingMissing);
+  if (gated.length === 0) {
+    return { documents: records.map((record) => record.document), gatedIds: [] };
+  }
+
+  const sample = gated
+    .slice(0, LISTING_GATE_WARNING_SAMPLE)
+    .map((record) => record.document.templateSlug)
+    .join(', ');
+  const guardThreshold = Math.max(LISTING_GATE_GUARD_MIN_RECORDS, Math.ceil(records.length * LISTING_GATE_GUARD_RATIO));
+  if (gated.length >= guardThreshold) {
+    warnings.push({
+      source: 'listing_gate_guard',
+      message: `Kept ${gated.length} of ${records.length} published templates with no live Webflow listing: the count meets the guard threshold of ${guardThreshold}, so the CMS lookup is treated as unreliable for this run. Sample: ${sample}`,
+    });
+    return { documents: records.map((record) => record.document), gatedIds: [] };
+  }
+
+  warnings.push({
+    source: 'listing_gate',
+    message: `Held ${gated.length} published template(s) out of search until a live Webflow listing exists: ${sample}`,
+  });
+  return {
+    documents: records.filter((record) => !record.listingMissing).map((record) => record.document),
+    gatedIds: gated.map((record) => record.document.id),
+  };
+}
+
 async function bestEffortTargetedWebflowDesignerAvatars(
   env: Env,
   warnings: SyncWarning[],
@@ -583,7 +657,7 @@ function normalizeTemplateRecord(
   syncedAt: string,
   webflowImageIndex: WebflowTemplateImageIndex | null,
   webflowDesignerIndex: WebflowDesignerAvatarIndex | null = null,
-): TemplateDocumentInput | null {
+): NormalizedTemplateRecord | null {
   if (!isPublishedTemplate(record)) return null;
 
   const name = String(record.fields.Name ?? '').trim();
@@ -611,7 +685,12 @@ function normalizeTemplateRecord(
   const descriptionLongHtml = String(record.fields['ℹ️Description (Long).html'] ?? '').trim();
   const templateType =
     typeof record.fields['🥞Template Type (🏗️ only)'] === 'string' ? record.fields['🥞Template Type (🏗️ only)'] : null;
-  const webflowIdentity = resolveWebflowTemplateIdentity(webflowImageIndex, { templateSlug: sourceTemplateSlug, name });
+  const webflowIdentity = resolveWebflowTemplateIdentity(webflowImageIndex, {
+    templateSlug: sourceTemplateSlug,
+    name,
+    syncRecordId: record.id,
+  });
+  const listingMissing = webflowImageIndex?.listingCoverageComplete === true && webflowIdentity === null;
   const templateSlug = webflowIdentity?.templateSlug ?? sourceTemplateSlug;
   const webflowImages = resolveWebflowTemplateImages(webflowImageIndex, { templateSlug: sourceTemplateSlug, name });
   const airtableThumbnailUrl = stableAttachmentUrl(attachmentUrl(record.fields['🖼️Thumbnail Image']));
@@ -622,7 +701,7 @@ function normalizeTemplateRecord(
   const isFree = webflowOffer?.isFree ?? (price === null ? ensureBoolean(record.fields['Is free?']) : price === 0);
   const creator = resolveCreatorMetadata(record, lookups, webflowDesignerIndex);
 
-  return {
+  const document: TemplateDocumentInput = {
     id: record.id,
     templateSlug,
     name,
@@ -676,6 +755,8 @@ function normalizeTemplateRecord(
     sourceLastModifiedTime: typeof record.fields['📅LMT'] === 'string' ? record.fields['📅LMT'] : null,
     syncedAt,
   };
+
+  return { document, listingMissing };
 }
 
 // A full rebuild must never leave the live index empty: search serves the
@@ -703,9 +784,11 @@ async function runFullSync(env: Env, heartbeat: SyncHeartbeat): Promise<SyncSumm
   const aliasRecords = await withPeriodicHeartbeat(heartbeat, upsertSlugAliases(env.DB, lookups.childCategoryAliases));
   await heartbeat();
   const webflowDesignerIndex = buildWebflowDesignerAvatarIndex(webflowDesigners);
-  const documents = assets
+  const normalizedRecords = assets
     .map((record) => normalizeTemplateRecord(record, lookups, startedAt, webflowImageIndex, webflowDesignerIndex))
     .filter((value): value is NonNullable<typeof value> => Boolean(value));
+  const listingGate = applyListingGate(normalizedRecords, warnings);
+  const documents = listingGate.documents;
 
   const existingIds = await listTemplateDocumentIds(env.DB);
   await withPeriodicHeartbeat(heartbeat, upsertTemplateDocuments(env.DB, documents));
@@ -750,6 +833,7 @@ async function runFullSync(env: Env, heartbeat: SyncHeartbeat): Promise<SyncSumm
     backfilled_records: nameBackfilledRecords + lookupBackfilledRecords + webflowCreatorRecords,
     image_refreshed_records: imageRefreshedRecords,
     cursor: startedAt,
+    listing_gated_records: listingGate.gatedIds.length,
   };
 
   await setSyncCursor(env.DB, startedAt);
@@ -964,6 +1048,7 @@ async function runIncrementalSync(env: Env, heartbeat: SyncHeartbeat): Promise<S
   const toUpsert: TemplateDocumentInput[] = [];
   const toDelete: string[] = [];
   let aliasRecords = 0;
+  let listingGatedRecords = 0;
   let webflowImageIndex: Awaited<ReturnType<typeof loadWebflowTemplateImageIndex>> = null;
 
   if (assets.length > 0) {
@@ -973,9 +1058,7 @@ async function runIncrementalSync(env: Env, heartbeat: SyncHeartbeat): Promise<S
     const [loadedWebflowImageIndex, webflowDesigners] = await withPeriodicHeartbeat(
       heartbeat,
       Promise.all([
-        bestEffortTargetedWebflowTemplateImages(env, warnings, templateLookupTargets(assets), { onPage: heartbeat }).then((records) =>
-          buildWebflowTemplateImageIndexFromRecords(records),
-        ),
+        bestEffortTargetedWebflowTemplateIndex(env, warnings, templateLookupTargets(assets), { onPage: heartbeat }),
         bestEffortTargetedWebflowDesignerAvatars(env, warnings, designerLookupTargets(assets, lookups), { onPage: heartbeat }),
       ]),
     );
@@ -983,14 +1066,19 @@ async function runIncrementalSync(env: Env, heartbeat: SyncHeartbeat): Promise<S
     webflowImageIndex = loadedWebflowImageIndex;
     const webflowDesignerIndex = buildWebflowDesignerAvatarIndex(webflowDesigners);
 
+    const normalizedRecords: NormalizedTemplateRecord[] = [];
     for (const record of assets) {
       const normalized = normalizeTemplateRecord(record, lookups, startedAt, webflowImageIndex, webflowDesignerIndex);
       if (normalized) {
-        toUpsert.push(normalized);
+        normalizedRecords.push(normalized);
       } else {
         toDelete.push(record.id);
       }
     }
+    const listingGate = applyListingGate(normalizedRecords, warnings);
+    toUpsert.push(...listingGate.documents);
+    toDelete.push(...listingGate.gatedIds);
+    listingGatedRecords = listingGate.gatedIds.length;
   }
 
   if (toDelete.length > 0) await deleteTemplateDocumentsInChunks(env.DB, toDelete, heartbeat);
@@ -1019,6 +1107,7 @@ async function runIncrementalSync(env: Env, heartbeat: SyncHeartbeat): Promise<S
     cursor: newCursor,
     skipped_empty_windows: skippedEmptyWindows,
     recent_published_records: recentPublishedRecords,
+    listing_gated_records: listingGatedRecords,
   };
 
   await setSyncCursor(env.DB, newCursor);
@@ -1044,24 +1133,26 @@ export async function syncTemplateRecordsByIds(env: Env, recordIds: string[]): P
     await heartbeat();
     const aliasRecords = await upsertSlugAliases(env.DB, lookups.childCategoryAliases);
     await heartbeat();
-    const [webflowTemplateRecords, webflowDesigners] = await Promise.all([
-      bestEffortTargetedWebflowTemplateImages(env, warnings, templateLookupTargets(assets), { onPage: heartbeat }),
+    const [webflowImageIndex, webflowDesigners] = await Promise.all([
+      bestEffortTargetedWebflowTemplateIndex(env, warnings, templateLookupTargets(assets), { onPage: heartbeat }),
       bestEffortTargetedWebflowDesignerAvatars(env, warnings, designerLookupTargets(assets, lookups), { onPage: heartbeat }),
     ]);
     await heartbeat();
-    const webflowImageIndex = buildWebflowTemplateImageIndexFromRecords(webflowTemplateRecords);
     const webflowDesignerIndex = buildWebflowDesignerAvatarIndex(webflowDesigners);
-    const documents: TemplateDocumentInput[] = [];
+    const normalizedRecords: NormalizedTemplateRecord[] = [];
     const toDelete: string[] = [];
 
     for (const record of assets) {
       const normalized = normalizeTemplateRecord(record, lookups, startedAt, webflowImageIndex, webflowDesignerIndex);
       if (normalized) {
-        documents.push(normalized);
+        normalizedRecords.push(normalized);
       } else {
         toDelete.push(record.id);
       }
     }
+    const listingGate = applyListingGate(normalizedRecords, warnings);
+    const documents = listingGate.documents;
+    toDelete.push(...listingGate.gatedIds);
 
     if (toDelete.length > 0) await deleteTemplateDocuments(env.DB, toDelete);
     if (documents.length > 0) await upsertTemplateDocuments(env.DB, documents);
@@ -1094,6 +1185,7 @@ export async function syncTemplateRecordsByIds(env: Env, recordIds: string[]): P
       backfilled_records: nameBackfilledRecords + lookupBackfilledRecords,
       image_refreshed_records: imageRefreshedRecords,
       cursor: startedAt,
+      listing_gated_records: listingGate.gatedIds.length,
     };
 
     if (

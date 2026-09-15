@@ -4,6 +4,7 @@ import {
   getActiveSyncJob,
   getLatestSyncJob,
   getSyncStateRecords,
+  hasTemplateDocument,
   healthCounts,
   publicSyncJobRecord,
   publicSyncStateRecord,
@@ -300,7 +301,7 @@ function parseCreatorNames(url: URL): string[] {
 
 const WEBHOOK_TRIGGER_TYPES = new Set(['collection_item_created', 'collection_item_changed', 'collection_item_published']);
 
-async function handleWebflowWebhook(request: Request, env: Env): Promise<Response> {
+async function handleWebflowWebhook(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
   const rawBody = await request.text();
 
   if (env.WEBFLOW_WEBHOOK_SECRET) {
@@ -339,7 +340,33 @@ async function handleWebflowWebhook(request: Request, env: Env): Promise<Respons
     const record = mapWebhookTemplateItem(webhook);
     if (!record) return jsonResponse(request, env, { status: 'ignored', reason: 'no template identity or item not live' });
     await updateTemplateImagesFromWebflow(env.DB, [record], syncedAt);
-    return jsonResponse(request, env, { status: 'updated', collection: 'templates', id: record.id ?? record.templateSlug ?? record.name });
+
+    // Published Airtable records are held out of the index until their Templates
+    // CMS item exists. This webhook is the moment that item appears, so index the
+    // record now rather than waiting for the next recent-published sweep.
+    const syncRecordId = record.id;
+    let queuedRecordSync = false;
+    if (syncRecordId && !(await hasTemplateDocument(env.DB, syncRecordId))) {
+      queuedRecordSync = true;
+      ctx.waitUntil(
+        syncTemplateRecordsByIds(env, [syncRecordId]).catch((error: unknown) => {
+          const detail =
+            error instanceof SyncAlreadyRunningError
+              ? 'another sync job holds the lock; the incremental sweep will pick it up'
+              : error instanceof Error
+                ? error.message
+                : String(error);
+          console.warn(`Webflow webhook could not index template ${syncRecordId}: ${detail}`);
+        }),
+      );
+    }
+
+    return jsonResponse(request, env, {
+      status: 'updated',
+      collection: 'templates',
+      id: record.id ?? record.templateSlug ?? record.name,
+      queued_record_sync: queuedRecordSync,
+    });
   }
 
   if (collectionId === DESIGNERS_COLLECTION_ID) {
@@ -511,7 +538,7 @@ export default {
       }
 
       if (url.pathname === '/api/templates/webhooks/webflow' && request.method === 'POST') {
-        return await handleWebflowWebhook(request, env);
+        return await handleWebflowWebhook(request, env, ctx);
       }
 
       if (url.pathname === '/api/templates/admin/backfill-images' && request.method === 'POST') {

@@ -294,6 +294,9 @@ export interface SyncSummary {
   cursor: string;
   skipped_empty_windows?: number;
   recent_published_records?: number;
+  // Published Airtable records held out of the index because no live Webflow
+  // Templates CMS item exists for them yet.
+  listing_gated_records?: number;
   warnings?: Array<{ source: string; message: string }>;
 }
 
