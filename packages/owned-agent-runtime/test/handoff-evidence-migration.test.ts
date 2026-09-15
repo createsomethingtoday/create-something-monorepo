@@ -49,6 +49,19 @@ test('handoff evidence requires an attempt, valid disposition, and immutable exa
       sql('SELECT observation_state FROM control_workflow_runtime_handoff_observations;'),
       'confirmed'
     );
+    const before = sql('SELECT json_array(run_id,step_id,attempt_id,request_sha256,source_invocation_sha256,observed_at,observation_state,reason,next_action,evidence_sha256,dispatched_at,received_at,maximum_age_ms) FROM control_workflow_runtime_handoff_observations;');
+    sql(readFileSync(new URL('../migrations/0012_control_handoff_clock_policy.sql', import.meta.url), 'utf8'));
+    assert.equal(sql('SELECT json_array(run_id,step_id,attempt_id,request_sha256,source_invocation_sha256,observed_at,observation_state,reason,next_action,evidence_sha256,dispatched_at,received_at,maximum_age_ms) FROM control_workflow_runtime_handoff_observations;'), before);
+    assert.equal(sql('SELECT maximum_clock_skew_ms FROM control_workflow_runtime_handoff_observations;'), '0');
+    sql("INSERT INTO control_workflow_runtime_attempts VALUES('run','step','skew-attempt');");
+    const skewInsert = insert.replaceAll("'attempt'", "'skew-attempt'")
+      .replaceAll(digest, 'sha256:' + '2'.repeat(64))
+      .replace('23:00:01.000Z', '22:59:59.500Z').replace(',30000)', ',500,30000)');
+    assert.throws(() => sql(skewInsert.replace(',500,30000)', ',499,30000)')));
+    sql(skewInsert);
+    assert.throws(() => sql(skewInsert.replace('INSERT INTO', 'INSERT OR REPLACE INTO')));
+    assert.throws(() => sql('UPDATE control_workflow_runtime_handoff_observations SET maximum_clock_skew_ms=60000;'));
+    assert.throws(() => sql('DELETE FROM control_workflow_runtime_handoff_observations;'));
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

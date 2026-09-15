@@ -15,6 +15,7 @@ export type TemplateReviewHandoffEvidence = {
   dispatchedAt: string;
   receivedAt: string;
   maximumAgeMs: number;
+  maximumClockSkewMs: number;
   observation: TemplateReviewHandoffObservation;
 };
 export type TemplateReviewHandoffEvidenceRow = {
@@ -31,6 +32,7 @@ export type TemplateReviewHandoffEvidenceRow = {
   dispatched_at: string;
   received_at: string;
   maximum_age_ms: number;
+  maximum_clock_skew_ms: number;
 };
 
 /** Stores results from the trusted source gateway; never authorizes dispatch or
@@ -41,7 +43,8 @@ export class D1TemplateReviewHandoffEvidenceStore {
   constructor(
     private readonly database: D1Database,
     manifests: WorkflowRuntimeManifestAuthority,
-    private readonly maximumAgeMs: number
+    private readonly maximumAgeMs: number,
+    private readonly maximumClockSkewMs = 0
   ) {
     this.proofs = new D1WorkflowRuntimeProofReader(database, manifests);
   }
@@ -102,11 +105,13 @@ export class D1TemplateReviewHandoffEvidenceStore {
       throw new Error('handoff_invocation_invalid');
     const replay = await this.find(input);
     const maximumAgeMs = replay?.maximumAgeMs ?? this.maximumAgeMs;
+    const maximumClockSkewMs = replay?.maximumClockSkewMs ?? this.maximumClockSkewMs;
     const observation = validateTemplateReviewHandoffObservation(input.observation, {
       requestSha256: attempt.capabilityParameterSha256,
       dispatchedAt: input.dispatchedAt,
       receivedAt: input.receivedAt,
-      maximumAgeMs
+      maximumAgeMs,
+      maximumClockSkewMs
     });
     if (Date.parse(input.dispatchedAt) < Date.parse(attempt.createdAt))
       throw new Error('handoff_evidence_predates_intent');
@@ -118,6 +123,7 @@ export class D1TemplateReviewHandoffEvidenceStore {
       dispatchedAt: input.dispatchedAt,
       receivedAt: input.receivedAt,
       maximumAgeMs,
+      maximumClockSkewMs,
       observation
     };
     if (replay) {
@@ -130,8 +136,8 @@ export class D1TemplateReviewHandoffEvidenceStore {
         this.database
           .prepare(
             `INSERT INTO control_workflow_runtime_handoff_observations
-        (run_id,step_id,attempt_id,request_sha256,source_invocation_sha256,observed_at,observation_state,reason,next_action,evidence_sha256,dispatched_at,received_at,maximum_age_ms)
-        VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12,?13)`
+        (run_id,step_id,attempt_id,request_sha256,source_invocation_sha256,observed_at,observation_state,reason,next_action,evidence_sha256,dispatched_at,received_at,maximum_age_ms,maximum_clock_skew_ms)
+        VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12,?13,?14)`
           )
           .bind(
             input.runId,
@@ -146,7 +152,8 @@ export class D1TemplateReviewHandoffEvidenceStore {
             observation.evidenceSha256,
             input.dispatchedAt,
             input.receivedAt,
-            maximumAgeMs
+            maximumAgeMs,
+            maximumClockSkewMs
           )
       ]);
     } catch {
@@ -181,7 +188,8 @@ export function parseTemplateReviewHandoffEvidence(
         requestSha256: attempt.capabilityParameterSha256,
         dispatchedAt: row.dispatched_at,
         receivedAt: row.received_at,
-        maximumAgeMs: row.maximum_age_ms
+        maximumAgeMs: row.maximum_age_ms,
+        maximumClockSkewMs: row.maximum_clock_skew_ms
       }
     );
     if (Date.parse(row.dispatched_at) < Date.parse(attempt.createdAt))
@@ -194,6 +202,7 @@ export function parseTemplateReviewHandoffEvidence(
       dispatchedAt: row.dispatched_at,
       receivedAt: row.received_at,
       maximumAgeMs: row.maximum_age_ms,
+      maximumClockSkewMs: row.maximum_clock_skew_ms,
       observation
     };
 }

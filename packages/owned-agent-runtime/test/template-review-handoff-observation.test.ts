@@ -65,3 +65,14 @@ test('rejects invalid freshness policy or backwards host clock', () => {
     })
   );
 });
+
+
+test('clock skew is explicit, bounded, and does not extend the observation age budget', () => {
+  const early = { ...observation, observedAt: '2026-09-14T22:59:59.500Z' };
+  assert.throws(() => validateTemplateReviewHandoffObservation(early, context));
+  assert.deepEqual(validateTemplateReviewHandoffObservation(early, { ...context, maximumClockSkewMs: 500 }), early);
+  assert.throws(() => validateTemplateReviewHandoffObservation(early, { ...context, maximumClockSkewMs: 499 }));
+  assert.throws(() => validateTemplateReviewHandoffObservation(early, { ...context, maximumClockSkewMs: 500, maximumAgeMs: 2000 }));
+  for (const maximumClockSkewMs of [-1, 0.5, 60001, Infinity])
+    assert.throws(() => validateTemplateReviewHandoffObservation(observation, { ...context, maximumClockSkewMs }));
+});

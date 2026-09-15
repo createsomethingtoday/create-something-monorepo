@@ -65,7 +65,7 @@ function database(includeApprovalAttestationMigration = true) {
   execFileSync('sqlite3', [path], {
     input: `PRAGMA foreign_keys=ON;\n${migration}\n${workflowRuntimeMigration}\n${workflowRuntimeEffectAmbiguityMigration}\n${workflowRuntimeDispatchMigration}\n${workflowRuntimeProofMigration}\n${workflowRuntimeApprovalContextMigration}\n${workflowRuntimeRegistrationBindingMigration}${
       includeApprovalAttestationMigration ? `\n${workflowRuntimeApprovalAttestationMigration}` : ''
-    }\n${handoffObservationMigration}`
+    }\n${handoffObservationMigration}\n${readFileSync(new URL('../migrations/0012_control_handoff_clock_policy.sql', import.meta.url), 'utf8')}`
   });
   return path;
 }
