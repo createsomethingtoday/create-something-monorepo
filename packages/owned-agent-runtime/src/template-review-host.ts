@@ -1,7 +1,7 @@
 import { ZeroWriteWorkflowRuntimeHost, type RuntimeDigest, type WorkflowRuntimeHostPorts } from '@createsomething/workflow-runtime';
 import { activationColumns } from './control-activation-binding.js';
 import { publishControlBuildBinding } from './control-build-binding-publication.js';
-import type { ControlActor, ControlRunExecutor, FrozenControlActivation } from './control.js';
+import type { ControlActor, ControlRunExecutor, ControlRuntimeRecoveryAuthority, FrozenControlActivation } from './control.js';
 import { D1ControlSourcePermitAuthority } from './control-source-permit.js';
 import { RegisteredWorkflowManifestAuthority } from './registered-workflow-manifest-authority.js';
 import { D1TemplateReviewHandoffGateway, type TemplateReviewHandoffSource } from './template-review-handoff-gateway.js';
@@ -109,6 +109,25 @@ export async function createTemplateReviewHost(input: {
       throw new Error('runtime_approval_scope_mismatch');
     return (await resolve(decision.actor)).host;
   }, input.clock);
-  return { executor, runtimeApprovals, checkpoints: storage,
-    proofs: new D1WorkflowRuntimeHandoffProofReader(input.runtimeDb, manifests, input.maximumAgeMs, 'verified-build-v2', true) };
+  const proofs = new D1WorkflowRuntimeHandoffProofReader(input.runtimeDb, manifests, input.maximumAgeMs, 'verified-build-v2', true);
+  const runtimeRecovery: ControlRuntimeRecoveryAuthority = {
+    async verify({ scope, actor, run }) {
+      if (!supports(run.activation) || run.recovery !== 'reconcile-confirmed-observation' ||
+          !run.receipts.some(receipt => receipt.status === 'stopped'))
+        throw new Error('runtime_recovery_path_not_authorized');
+      await input.identity(actor).assert(scope, actor.subject, null);
+      const proof = await proofs.find({ scope, runId: run.id });
+      const attempts = proof?.runtime.steps.flatMap(step => step.attempts) ?? [];
+      if (!proof || proof.handoffObservations.length !== 1 || attempts.length !== 1 ||
+          proof.handoffObservations[0].observation.state !== 'confirmed')
+        throw new Error('runtime_recovery_confirmed_evidence_required');
+      // Recovery records a verified observation of the stopped attempt. It does
+      // not rewrite execution history, requeue a capability, or call its source.
+      const bytes = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify({
+        schema: 'control-handoff-recovery@1', runId: run.id, recovery: run.recovery, proof
+      })));
+      return `sha256:${Array.from(new Uint8Array(bytes), byte => byte.toString(16).padStart(2, '0')).join('')}`;
+    }
+  };
+  return { executor, runtimeApprovals, runtimeRecovery, checkpoints: storage, proofs };
 }

@@ -41,6 +41,10 @@ export interface ControlRuntimeApprovalAuthority {
   }): Promise<void>;
 }
 
+export interface ControlRuntimeRecoveryAuthority {
+  verify(input: { scope: ControlScope; actor: ControlActor; run: ControlRunRecord }): Promise<string>;
+}
+
 export interface FrozenControlActivation extends ControlScope {
   id: string;
   activationVersion: number;
@@ -341,6 +345,7 @@ export function createControlRunService(options: {
   clock?: () => Date;
   maxAttempts?: number;
   runtimeApprovals?: ControlRuntimeApprovalAuthority;
+  runtimeRecovery?: ControlRuntimeRecoveryAuthority;
 }) {
   const newId = options.id ?? (() => crypto.randomUUID());
   const clock = options.clock ?? (() => new Date());
@@ -737,6 +742,8 @@ export function createControlRunService(options: {
 
     retry(scope: ControlScope, actor: ControlActor, runId: string, idempotencyKey: string) {
       return transition({ scope, actor, runId, idempotencyKey, operation: 'retry', allowedFrom: ['stopped', 'failed', 'recovered'], status: 'queued', outcome: 'Run queued for another bounded attempt', mutate(run) {
+        if (options.runtimeRecovery && run.status === 'recovered')
+          throw new ControlRunConflictError('Reconciled runtime observation cannot be retried');
         if (
           run.status === 'failed' &&
           run.receipts.at(-1)?.verifier !== 'retryable_failure'
@@ -787,11 +794,16 @@ export function createControlRunService(options: {
         throw new ControlRunAccessError('Scheduler token is not bound to the run activation');
       }
       if (run.status !== 'recovering') throw new ControlRunConflictError(`finish_recovery is not allowed from ${run.status}`);
+      if (options.runtimeApprovals && !options.runtimeRecovery)
+        throw new ControlRunConflictError('Runtime recovery evidence authority is not configured');
+      const verifier = options.runtimeRecovery
+        ? await options.runtimeRecovery.verify({ scope, actor, run: structuredClone(run) })
+        : actor.subject;
       const expectedVersion = run.version;
       run.status = 'recovered';
       run.version += 1;
       run.updatedAt = clock().toISOString();
-      await appendReceipt(run, actor, 'recovered', { outcome: normalizedOutcome, verifier: actor.subject });
+      await appendReceipt(run, actor, 'recovered', { outcome: normalizedOutcome, verifier });
       return apply(scope, idempotencyKey, 'finish_recovery', expectedVersion, run, command);
     }
   };

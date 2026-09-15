@@ -409,3 +409,13 @@ These bindings are intentionally absent from the shared Wrangler configuration
 until the exact internal release and source credentials are provisioned. Their
 presence alone does not establish production acceptance: retain migration,
 activation, source observation, recovery and authenticated operator receipts.
+
+For a stopped run with one persisted, confirmed source observation, the internal
+recovery path is `reconcile-confirmed-observation`. An operator starts recovery;
+an activation-bound scheduler finishes it only after the host re-verifies the
+signed proof and exact evidence. The recovered Control receipt contains the
+SHA-256 of a `control-handoff-recovery@1` envelope (`runId`, `recovery`, and the
+complete reconciliation `proof`). This reconciles the observed result without
+changing the historical runtime checkpoint or calling the source again. A
+reconciled run cannot be retried. Missing or uncertain observations do not qualify
+for this path; they remain unresolved and are not relabeled as success.

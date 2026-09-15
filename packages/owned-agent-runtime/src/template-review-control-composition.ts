@@ -42,7 +42,7 @@ export async function composeTemplateReviewControl(input: Omit<HostInput,
     } });
   const service = createControlRunService({ repository,
     activations: new D1ControlActivationAuthority(input.agencyDb),
-    executor: host.executor, runtimeApprovals: host.runtimeApprovals,
+    executor: host.executor, runtimeApprovals: host.runtimeApprovals, runtimeRecovery: host.runtimeRecovery,
     clock: () => new Date(input.clock()) });
   const reconciler = new D1WorkflowRuntimeWakeReconciler(input.runtimeDb, input.activation, queue);
   return { service, proofs: host.proofs,

@@ -286,7 +286,7 @@ test('admits a real signed compiler release and rejects mismatched registration,
         clock: () => '2026-09-15T00:00:05.000Z',
         identity: actor => workflowRuntimeIdentity({
           context: { scope: proofScope, actor: actor ?? { subject: 'fixture-scheduler', role: 'control_scheduler' },
-            credentialSource: 'bearer', ...(actor ? {} : { schedulerActivationId: activation.id }) },
+            credentialSource: 'bearer', ...(!actor || actor.role === 'control_scheduler' ? { schedulerActivationId: activation.id } : {}) },
           activationId: activation.id, approvalPolicies: { 'account-owner': ['account_owner'] }
         }), queue: { async enqueue(message) { await scheduledQueue.enqueue(message); } } };
       const host = await createTemplateReviewHost(hostInput);
@@ -294,7 +294,7 @@ test('admits a real signed compiler release and rejects mismatched registration,
       let executionId = 0;
       const executingControl = createControlRunService({ repository: new D1ControlRunRepository(database),
         activations: new D1ControlActivationAuthority(database), executor: host.executor,
-        runtimeApprovals: host.runtimeApprovals, id: () => `signed-execution-${++executionId}`,
+        runtimeApprovals: host.runtimeApprovals, runtimeRecovery: host.runtimeRecovery, id: () => `signed-execution-${++executionId}`,
         clock: () => new Date('2026-09-15T00:00:05.000Z') });
       scheduledQueue = new WorkflowRuntimeQueue({ scope: proofScope, checkpoints, parents: new D1ControlRunRepository(database),
         async send(message) { if (message.expectedVersion !== null) assert.ok(await sourceBindings.find(proofScope, message.runId, signedStep.id), 'source binding precedes exposed checkpoint wake'); wakes.push(message); if (earlyDelivery) assert.equal(await scheduledQueue.consume(message), 'retry', 'wake before parent transition must wait'); },
@@ -410,11 +410,23 @@ test('admits a real signed compiler release and rejects mismatched registration,
           await assert.rejects(executingControl.retry(proofScope, { subject: 'fixture-operator', role: 'account_owner' },
             interrupted.id, 'unknown-retry'), /failed terminally/);
         } else {
-          await executingControl.retry(proofScope, { subject: 'fixture-operator', role: 'account_owner' },
-            interrupted.id, 'stopped-retry');
-          const resumed = await executingControl.process(proofScope, { subject: 'fixture-scheduler', role: 'control_scheduler' },
-            interrupted.id, 'stopped-resume', activation.id);
-          assert.equal(resumed.status, 'failed', 'prepared effect requires reconciliation before recovery');
+          const recoveryScheduler = { subject: 'fixture-scheduler', role: 'control_scheduler' as const };
+          await executingControl.beginRecovery(proofScope, ownerActor, interrupted.id,
+            'stopped-recovery', 'reconcile-confirmed-observation');
+          const recovering = await executingControl.get(proofScope, ownerActor, interrupted.id);
+          const verifier = await host.runtimeRecovery.verify({ scope: proofScope, actor: recoveryScheduler, run: recovering });
+          await assert.rejects(host.runtimeRecovery.verify({ scope: proofScope, actor: recoveryScheduler,
+            run: { ...recovering, recovery: 'redispatch' } }), /path_not_authorized/);
+          const recovered = await executingControl.finishRecovery(proofScope, recoveryScheduler,
+            interrupted.id, 'stopped-recovery-finish', 'confirmed stopped observation reconciled', activation.id);
+          assert.equal(recovered.status, 'recovered');
+          assert.equal(recovered.receipts.at(-1)?.verifier, verifier);
+          assert.deepEqual(await executingControl.finishRecovery(proofScope, recoveryScheduler,
+            interrupted.id, 'stopped-recovery-finish', 'confirmed stopped observation reconciled', activation.id), recovered);
+          assert.deepEqual(await host.proofs.find({ scope: proofScope, runId: interrupted.id }), interruptedProof,
+            'reconciliation does not rewrite stopped execution history');
+          await assert.rejects(executingControl.retry(proofScope, ownerActor, interrupted.id, 'recovered-retry'));
+          assert.equal(sourceCalls, before + 1, 'successful recovery never invokes source again');
         }
         assert.equal(sourceCalls, before + 1, 'retry cannot dispatch an unresolved prepared effect');
       }
