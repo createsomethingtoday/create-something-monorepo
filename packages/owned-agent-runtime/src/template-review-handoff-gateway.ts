@@ -50,8 +50,9 @@ export class D1TemplateReviewHandoffGateway {
   }
 
   private async authorized(target: Target, requestSha256: string) {
-    const parent = await this.parents.find(target.scope, target.runId);
     const proof = await this.proofs.find(target);
+    // Parent stop does not mutate the runtime checkpoint: read it last.
+    const parent = await this.parents.find(target.scope, target.runId);
     const step = proof?.steps.find(step => step.id === target.stepId);
     const attempt = step?.attempts.find(attempt => attempt.id === target.attemptId);
     if (!parent || parent.status !== 'running' ||
@@ -73,10 +74,11 @@ export class D1TemplateReviewHandoffGateway {
     if (!registered || registered.run.artifactManifestSha256 !== this.registration.artifactManifestSha256 ||
         registered.run.runtimeManifestSha256 !== this.registration.runtimeManifestSha256)
       return { type: 'not_authorized' };
-    const replay = await this.evidence.find(target);
-    if (replay) return { type: 'observed', evidence: replay };
     const parameters = { assetId: this.registration.assetId, versionId: this.registration.versionId };
     const requestSha256 = await digest({ schema: 'template-handoff-request@1', ...parameters });
+    const replay = await this.evidence.find(target);
+    if (replay) return replay.observation.requestSha256 === requestSha256
+      ? { type: 'observed', evidence: replay } : { type: 'not_authorized' };
     const parent = await this.authorized(target, requestSha256);
     if (!parent) return { type: 'not_authorized' };
     // Redemption is not replayable. Any uncertainty after this point requires
@@ -86,9 +88,9 @@ export class D1TemplateReviewHandoffGateway {
         runId: target.runId, stepId: target.stepId, attemptId: target.attemptId,
         requestSha256, tool: TOOL, resource: RESOURCE });
       if (!permit) return { type: 'effect_unknown' };
-      if (!(await this.authorized(target, requestSha256))) return { type: 'not_authorized' };
       const sourceInvocationSha256 = await digest({ schema: 'control-handoff-invocation@1',
         permitId: permit.permitId, requestSha256 });
+      if (!(await this.authorized(target, requestSha256))) return { type: 'not_authorized' };
       const dispatchedAt = this.clock();
       const observation = await this.source.observe(parameters);
       const receivedAt = this.clock();

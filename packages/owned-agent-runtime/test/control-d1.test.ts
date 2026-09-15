@@ -2235,7 +2235,7 @@ test('source permits preserve authorized URI syntax and 300-character resource n
 
 
 test('handoff gateway binds persisted authority, invokes once, and retains late evidence without resuming stop', async () => {
-  for (const mode of ['healthy', 'late-stop', 'source-error', 'wrong-request', 'suspended']) {
+  for (const mode of ['healthy', 'late-stop', 'source-error', 'wrong-request', 'suspended', 'stop-during-proof']) {
     const parameters = { assetId: 'recAAAAAAAAAAAAAA', versionId: 'recBBBBBBBBBBBBBB' };
     const bytes = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify({
       schema: 'template-handoff-request@1', ...parameters
@@ -2264,7 +2264,23 @@ test('handoff gateway binds persisted authority, invokes once, and retains late 
     first.capability.parameterDigest = mode === 'wrong-request' ? runtimeDigest('f') : requestSha256;
     const { parent } = await persistedTemplateReviewAttempt(input, manifest,
       { requestedTools: [tool], requestedResources: [resource] });
-    gateway = new D1TemplateReviewHandoffGateway(d1(input.path),
+    const gatewayDatabase = d1(input.path);
+    const prepareQuery = gatewayDatabase.prepare.bind(gatewayDatabase);
+    let proofReads = 0;
+    if (mode === 'stop-during-proof') gatewayDatabase.prepare = (sql: string) => {
+      const statement = prepareQuery(sql);
+      if (!sql.includes('SELECT runtime.run_json')) return statement;
+      return { bind(...values: unknown[]) {
+        const bound = statement.bind(...values);
+        return { async first() {
+          const row = await bound.first();
+          if (row && ++proofReads === 4)
+            await input.service.stop(scope, owner, parent.id, 'proof-stop', 'stop during proof');
+          return row;
+        } };
+      } } as D1PreparedStatement;
+    };
+    gateway = new D1TemplateReviewHandoffGateway(gatewayDatabase,
       trustedRuntimeManifestAuthority([{ digest: runtimeDigest('8'), manifest }]),
       new D1ControlSourcePermitAuthority(d1(input.path)), {
         async observe(actual) {
@@ -2285,12 +2301,20 @@ test('handoff gateway binds persisted authority, invokes once, and retains late 
       input: "UPDATE customer_control_activations SET status='suspended';"
     });
     const process = () => input.service.process(scope, scheduler, parent.id, 'gateway-process', 'activation-a');
-    if (mode === 'late-stop') await assert.rejects(process, ControlRunConflictError);
+    if (mode === 'late-stop' || mode === 'stop-during-proof') await assert.rejects(process, ControlRunConflictError);
     else await process();
-    assert.equal(calls, ['wrong-request', 'suspended'].includes(mode) ? 0 : 1, mode);
+    assert.equal(calls, ['wrong-request', 'suspended', 'stop-during-proof'].includes(mode) ? 0 : 1, mode);
     if (mode === 'healthy' || mode === 'late-stop') assert.equal(result?.type, 'observed', mode);
     if (mode === 'source-error') assert.equal(result?.type, 'effect_unknown');
     if (mode === 'wrong-request') assert.equal(result?.type, 'not_authorized');
     if (mode === 'late-stop') assert.equal((await input.service.get(scope, owner, parent.id)).status, 'stopped');
+    if (mode === 'healthy') {
+      const changed = new D1TemplateReviewHandoffGateway(d1(input.path),
+        trustedRuntimeManifestAuthority([{ digest: runtimeDigest('8'), manifest }]),
+        new D1ControlSourcePermitAuthority(d1(input.path)), { async observe() { assert.fail('must not invoke changed pair'); } },
+        { ...parameters, versionId: 'recCCCCCCCCCCCCCC', artifactManifestSha256: runtimeDigest('7'), runtimeManifestSha256: runtimeDigest('8') }, 30_000);
+      assert.equal((await changed.observe({ scope, runId: parent.id, stepId: 'observe',
+        attemptId: 'template-review-attempt-1' })).type, 'not_authorized');
+    }
   }
 });
