@@ -156,7 +156,7 @@ function rejectUnverifiedCompiledBundle(bundle: CompiledWorkflowBundle): void {
   ]);
 }
 
-function rejectMismatchedNestedArtifactSchemas(bundle: CompiledWorkflowBundle): void {
+export function rejectMismatchedNestedArtifactSchemas(bundle: CompiledWorkflowBundle): void {
   const expectedSchemaVersions = expectedNestedArtifactSchemaVersions(bundle);
   const artifacts = [
     ['decisionInventory', bundle.decisionInventory],
