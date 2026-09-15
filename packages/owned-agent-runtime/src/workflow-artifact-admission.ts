@@ -1,4 +1,4 @@
-import { verifyWorkflowArtifactSnapshot } from '@createsomething/workflow-compiler';
+import { evaluateGovernedInteractionCompatibility, verifyWorkflowArtifactSnapshot } from '@createsomething/workflow-compiler';
 import { parseWorkflowRuntimeManifest, type WorkflowRuntimeManifest } from '@createsomething/workflow-runtime';
 
 /** Supplied by the owning immutable release registry, never by an HTTP caller. */
@@ -20,6 +20,7 @@ export interface WorkflowArtifactAdmissionPolicy {
   compilerVersions: readonly string[];
   runtimeManifestSchemas: readonly string[];
   capabilities: readonly string[];
+  interactionHost: Parameters<typeof evaluateGovernedInteractionCompatibility>[1];
 }
 
 export async function admitWorkflowArtifact(
@@ -54,5 +55,26 @@ export async function admitWorkflowArtifact(
       manifest.workflow.id !== registration.workflowId || manifest.workflow.version !== registration.workflowVersion ||
       manifest.workflow.definitionHash !== registration.definitionHash || manifest.workflow.compilerVersion !== registration.compilerVersion ||
       manifest.steps.some(step => step.disposition === 'pass' && !policy.capabilities.includes(step.capability.id))) reject();
+  const links = {
+    governedInteractionSha256: 'governed-interaction.json',
+    decisionInventorySha256: 'decision-inventory.json',
+    approvalSurfacesSha256: 'approval-surfaces.json',
+    toolContractsSha256: 'tool-contracts.json'
+  } as const;
+  for (const [field, path] of Object.entries(links)) {
+    const artifact = files.get(path);
+    if (!artifact) return reject();
+    const hash = await crypto.subtle.digest('SHA-256', Uint8Array.from(artifact));
+    const actual = `sha256:${Array.from(new Uint8Array(hash), byte => byte.toString(16).padStart(2, '0')).join('')}`;
+    if (manifest.artifacts[field as keyof typeof links] !== actual) reject();
+  }
+  if (!policy.interactionHost.schemaVersions?.length) reject();
+  const interaction = JSON.parse(new TextDecoder('utf-8', {fatal:true}).decode(files.get('governed-interaction.json')!));
+  if (!evaluateGovernedInteractionCompatibility(interaction, policy.interactionHost).compatible) reject();
+  const freeze = (value: object): void => {
+    for (const child of Object.values(value)) if (child && typeof child === 'object') freeze(child);
+    Object.freeze(value);
+  };
+  freeze(manifest);
   return manifest;
 }

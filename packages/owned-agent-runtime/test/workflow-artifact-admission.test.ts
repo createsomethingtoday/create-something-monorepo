@@ -4,8 +4,8 @@ import { generateKeyPairSync, createHash } from 'node:crypto';
 import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { compileWorkflowDefinition, createWorkflowRuntimeManifest, writeCompiledWorkflowArtifacts, verifyWorkflowArtifactBundle } from '@createsomething/workflow-compiler';
-import { admitWorkflowArtifact } from '../src/workflow-artifact-admission.js';
+import { createWorkflowArtifactAttestation, workflowArtifactManifestHash, compileWorkflowDefinition, createWorkflowRuntimeManifest, writeCompiledWorkflowArtifacts, verifyWorkflowArtifactBundle } from '@createsomething/workflow-compiler';
+import { admitWorkflowArtifact, type WorkflowArtifactAdmissionPolicy } from '../src/workflow-artifact-admission.js';
 
 test('admits a real signed compiler release and rejects mismatched registration, policy and bytes', async () => {
   const root = await mkdtemp(join(tmpdir(), 'control-admission-'));
@@ -32,18 +32,35 @@ test('admits a real signed compiler release and rejects mismatched registration,
       compilerVersion:receipt.compilerVersion, runtimeManifestSchema:runtime.schemaVersion,
       attestationKeyId:'test',attestationPublicKeyFingerprint:receipt.attestation.publicKeyFingerprint
     };
-    const policy = {
+    const policy: WorkflowArtifactAdmissionPolicy = {
+      interactionHost:{hostId:'control',language:'create-something/control',schemaVersions:['governed_interaction_bundle.v0.1','governed_interaction_bundle.v0.2','governed_interaction_bundle.v0.3'],runtimeVersions:['0.1.0'],capabilities:['interaction.select','receipt.inspect','replay.inspect','workflow.inspect'],operations:['select_replay_case']},
       signer:{keyId:'test',publicKeyPem:publicKey.export({type:'spki',format:'pem'}).toString(),fingerprint:receipt.attestation.publicKeyFingerprint},
       compilerVersions:[receipt.compilerVersion], runtimeManifestSchemas:[runtime.schemaVersion],
       capabilities:runtime.steps.flatMap(step=>step.disposition==='pass'?[step.capability.id]:[])
     };
     const reader={async read(){return files;}};
-    assert.deepEqual(await admitWorkflowArtifact(reader,registration,policy),runtime);
+    const admitted = await admitWorkflowArtifact(reader,registration,policy);
+    assert.deepEqual(admitted,runtime);
+    assert.throws(() => { admitted.workflow.id = 'mutated'; }, TypeError);
+    assert.throws(() => { admitted.steps.push(admitted.steps[0]); }, TypeError);
+    await assert.rejects(admitWorkflowArtifact(reader,registration,{...policy,interactionHost:{...policy.interactionHost,operations:[]}}));
+    await assert.rejects(admitWorkflowArtifact(reader,registration,{...policy,interactionHost:{...policy.interactionHost,runtimeVersions:[]}}));
     for (const field of Object.keys(registration)) {
       await assert.rejects(admitWorkflowArtifact(reader,{...registration,[field]:'incorrect'},policy));
     }
     await assert.rejects(admitWorkflowArtifact(reader,registration,{...policy,capabilities:[]}));
     await assert.rejects(admitWorkflowArtifact(reader,registration,{...policy,compilerVersions:[]}));
+    const stale = structuredClone(runtime);
+    stale.artifacts.governedInteractionSha256 = 'sha256:'+'0'.repeat(64);
+    const staleBytes = new TextEncoder().encode(JSON.stringify(stale));
+    const staleDigest = 'sha256:'+createHash('sha256').update(staleBytes).digest('hex');
+    const staleOuter = structuredClone(manifest);
+    staleOuter.files.find((file:{path:string})=>file.path==='runtime-manifest.json').hash = staleDigest;
+    const staleFiles = new Map(files);
+    staleFiles.set('runtime-manifest.json',staleBytes);
+    staleFiles.set('manifest.json',new TextEncoder().encode(JSON.stringify(staleOuter)));
+    staleFiles.set('attestation.json',new TextEncoder().encode(JSON.stringify(createWorkflowArtifactAttestation(staleOuter,{privateKey,keyId:'test'}))));
+    await assert.rejects(admitWorkflowArtifact({async read(){return staleFiles;}},{...registration,runtimeManifestSha256:staleDigest,artifactManifestSha256:workflowArtifactManifestHash(staleOuter)},policy),/not_admitted/);
     files.get('runtime-manifest.json')![0]^=1;
     await assert.rejects(admitWorkflowArtifact(reader,registration,policy));
   } finally { await rm(root,{recursive:true,force:true}); }
