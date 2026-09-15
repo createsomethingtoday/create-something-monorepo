@@ -276,4 +276,5 @@ without changing its accepted bytes or timestamps; historical reads and identica
 replays retain that stored interpretation. New evidence written by the current
 store uses version 2. SQL also enforces the version 2 age budget. Do not roll
 back the writer to one that omits this policy column after promotion; the legacy
-default exists for historical schema compatibility, not new source admission.
+default preserves historical rows, and a trigger rejects new version-1 inserts
+(including old writers that omit the column).

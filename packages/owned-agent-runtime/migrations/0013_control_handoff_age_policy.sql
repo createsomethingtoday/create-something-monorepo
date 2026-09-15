@@ -10,3 +10,8 @@ WHEN NEW.age_policy_version = 2 AND (
   NEW.maximum_clock_skew_ms > NEW.maximum_age_ms
 )
 BEGIN SELECT RAISE(ABORT, 'handoff_age_budget_exceeded'); END;
+-- Only rows present before this migration may retain legacy age interpretation.
+CREATE TRIGGER control_handoff_require_current_age_policy
+BEFORE INSERT ON control_workflow_runtime_handoff_observations
+WHEN NEW.age_policy_version != 2
+BEGIN SELECT RAISE(ABORT, 'handoff_current_age_policy_required'); END;
