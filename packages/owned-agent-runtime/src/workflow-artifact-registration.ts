@@ -30,6 +30,7 @@ export class D1WorkflowArtifactRegistrationReader {
         AND a.account_id = r.account_id AND a.tenant_id = r.tenant_id
         AND a.workspace_account_id = r.workspace_account_id
         AND a.build_release_id = r.build_release_id
+        AND a.build_manifest_sha256 = substr(r.artifact_manifest_sha256,8)
         AND a.contract_sha256 = r.contract_sha256
         AND a.policy_sha256 = r.runtime_policy_sha256
       WHERE a.status = 'active' AND ${matches.join(' AND ')}
