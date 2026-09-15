@@ -29,3 +29,10 @@ pnpm build:release:check -- <path/to/build-release.json>
 ```
 
 See `config/delivery/build-releases/example-non-production` for the synthetic second-operator fixture.
+
+Build release manifest `@2` requires a sixth artifact, `runtime_binding`, at
+`runtime-binding.json`. Its digest participates in staging, UAT and acceptance
+artifact-set hashes, and package inspection verifies its bytes. Manifest `@1`
+retains its five-artifact digest unchanged and rejects the new field. This is
+artifact integrity only; the runtime registration verifier must still parse the
+binding and verify its compiler signature, policy and distinct manifest identity.

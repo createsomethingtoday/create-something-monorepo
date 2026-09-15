@@ -89,6 +89,7 @@ function validArtifactSetSha256(): string {
 }
 
 function writeRepresentativePackage(overrides?: {
+	runtimeBinding?: string;
 	handoffStatus?: 'prepared' | 'accepted' | 'cancelled';
 	accountId?: string;
 	stagingStatus?: 'passed' | 'failed';
@@ -133,6 +134,11 @@ function writeRepresentativePackage(overrides?: {
 	manifest.acceptance.status = overrides?.acceptanceStatus ?? 'accepted';
 	for (const name of Object.keys(artifactContent) as Array<keyof typeof artifactContent>) {
 		manifest.artifacts[name].sha256 = sha256(artifactContent[name]);
+	}
+	if (overrides?.runtimeBinding !== undefined) {
+		manifest.schema = 'create-something/build-release-manifest@2';
+		manifest.artifacts.runtime_binding = {path:'artifacts/runtime-binding.json',sha256:sha256(overrides.runtimeBinding)};
+		writeFileSync(join(root,'artifacts/runtime-binding.json'),overrides.runtimeBinding);
 	}
 	const artifactSetSha256 = buildReleaseArtifactSetSha256(manifest.artifacts);
 
@@ -608,4 +614,27 @@ test('the repository representative package remains internally coherent', () => 
 	assert.equal(result.releaseReady, true);
 	assert.equal(result.manifest?.release.environment, 'staging');
 	assert.match(result.acceptanceReceipt?.note ?? '', /not a customer decision/);
+});
+
+test('Build v2 requires a runtime binding covered by the accepted artifact-set digest', () => {
+  const legacy = parseBuildReleaseManifest(validManifest());
+  const before = buildReleaseArtifactSetSha256(legacy.artifacts);
+  const runtime_binding = {path:'artifacts/runtime-binding.json',sha256:'1'.repeat(64)};
+  const next = parseBuildReleaseManifest({...legacy,schema:'create-something/build-release-manifest@2',artifacts:{...legacy.artifacts,runtime_binding}});
+  assert.notEqual(buildReleaseArtifactSetSha256(next.artifacts),before);
+  assert.notEqual(buildReleaseArtifactSetSha256({...next.artifacts,runtime_binding:{...runtime_binding,sha256:'2'.repeat(64)}}),buildReleaseArtifactSetSha256(next.artifacts));
+  assert.equal(buildReleaseArtifactSetSha256(parseBuildReleaseManifest(legacy).artifacts),before);
+  assert.throws(()=>parseBuildReleaseManifest({...legacy,schema:'create-something/build-release-manifest@2'}));
+  assert.throws(()=>parseBuildReleaseManifest({...legacy,artifacts:{...legacy.artifacts,runtime_binding}}));
+});
+
+// This verifies artifact inclusion/integrity; runtime binding semantics and signer
+// verification belong to the subsequent runtime registration verifier.
+test('Build package inspection verifies runtime binding bytes after acceptance', () => {
+  const fixture = writeRepresentativePackage({runtimeBinding:'{"fixture":"binding-integrity-only"}'});
+  assert.equal(inspectBuildReleasePackage(fixture.manifestPath).evidenceValid,true);
+  writeFileSync(join(fixture.root,'artifacts/runtime-binding.json'),'changed');
+  const result = inspectBuildReleasePackage(fixture.manifestPath);
+  assert.equal(result.evidenceValid,false);
+  assert.ok(result.issues.some(issue=>issue.code==='artifact_hash_mismatch'));
 });
