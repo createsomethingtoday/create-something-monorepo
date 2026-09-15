@@ -48,3 +48,10 @@ binding to 16 KiB, and matches its Build release ID. Invalid or foreign-release
 bindings invalidate package evidence. A parsed `runtimeBinding` is returned only
 when all package integrity checks pass. Callers must still require `releaseReady`
 and verify the compiler signature and host policy before registration.
+
+Build inspection returns `manifestSha256` for the exact manifest bytes parsed.
+Consumers freezing a release identity should use this digest instead of a second
+filesystem read. Handoff, verification, and acceptance receipts are each hashed
+and parsed from one byte buffer. The digest identifies inspected input; consumers
+must still require `releaseReady`, accepted evidence, and independent runtime
+signature and policy verification before registration.

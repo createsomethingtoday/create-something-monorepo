@@ -649,3 +649,16 @@ test('Build package inspection verifies runtime binding bytes after acceptance',
   assert.equal(result.evidenceValid,false);
   assert.ok(result.issues.some(issue=>issue.code==='artifact_hash_mismatch'));
 });
+
+
+test('inspection reports the exact manifest byte digest and rejects malformed encoding', () => {
+  const {manifestPath} = writeRepresentativePackage();
+  const bytes = readFileSync(manifestPath);
+  const inspected = inspectBuildReleasePackage(manifestPath);
+  assert.equal(inspected.releaseReady, true);
+  assert.equal(inspected.manifestSha256, createHash('sha256').update(bytes).digest('hex'));
+  writeFileSync(manifestPath, Buffer.concat([bytes, Buffer.from([0xff])]));
+  const invalid = inspectBuildReleasePackage(manifestPath);
+  assert.equal(invalid.releaseReady, false);
+  assert.equal(invalid.manifestSha256, undefined);
+});
