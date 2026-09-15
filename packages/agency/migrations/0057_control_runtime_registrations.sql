@@ -31,6 +31,7 @@ WHEN NOT EXISTS (
     AND a.account_id = NEW.account_id AND a.tenant_id = NEW.tenant_id
     AND a.workspace_account_id = NEW.workspace_account_id
     AND a.build_release_id = NEW.build_release_id
+    AND a.build_manifest_sha256 = substr(NEW.artifact_manifest_sha256,8)
     AND a.contract_sha256 = NEW.contract_sha256
     AND a.policy_sha256 = NEW.runtime_policy_sha256
     AND a.status = 'active'
