@@ -256,3 +256,12 @@ pipeline must use the same content-addressed prefix and enforce write-once
 publication. This reader does not configure R2, prove immutability, authenticate
 a signature, or grant execution. Its byte snapshot must pass the public compiler
 verifier and the registered signer/release/runtime policy before admission.
+
+`admitWorkflowArtifact` consumes the reader's serialized bytes through the public
+compiler signature verifier and runtime parser. It requires exact registered
+outer/runtime hashes, workflow/compiler identity, signer key/fingerprint and
+schema, plus independent host capability/compiler/schema allowlists. It copies
+policy, registration and bytes across asynchronous boundaries. The owning
+registry must supply this input after activation/release authorization and must
+check revocation on each new admission or step claim. This function does not
+implement that registry, activation check, revocation service or hosted executor.
