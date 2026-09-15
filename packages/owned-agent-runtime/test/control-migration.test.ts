@@ -1263,7 +1263,8 @@ test('verified Build binding migration preserves parents and requires distinct e
   expectSqlFailure(path,insert(binding,'INSERT OR REPLACE'),/immutable/);
   expectSqlFailure(path,"UPDATE control_workflow_runtime_build_bindings SET workflow_version='2';",/immutable/);
   expectSqlFailure(path,'DELETE FROM control_workflow_runtime_build_bindings;',/immutable/);
-  assert.equal(sql(path,'SELECT json_object(\'activation\',activation_json,\'status\',status,\'version\',version) FROM control_runs;'),before);  const run = {
+  assert.equal(sql(path,'SELECT json_object(\'activation\',activation_json,\'status\',status,\'version\',version) FROM control_runs;'),before);
+  const run = {
     schema:'workflow_runtime_run.v0.2',id:'run-a',status:'queued',version:1,
     activation:{id:'activation-a',version:1,policySha256:binding.runtime_policy_sha256},
     registration:{buildReleaseId:'release-a',contractSha256:binding.contract_sha256,runtimePolicySha256:binding.runtime_policy_sha256},
@@ -1271,7 +1272,22 @@ test('verified Build binding migration preserves parents and requires distinct e
     artifactManifestSha256:binding.artifact_manifest_sha256,runtimeManifestSha256:binding.runtime_manifest_sha256,
     steps:[],receipts:[]
   };
+  // An existing registration-bound checkpoint retains the old equality rule.
+  const historicalRun = {...run,id:'run-historical',artifactManifestSha256:binding.build_manifest_sha256};
+  sql(path,insertRun.replace("'run-a'","'run-historical'").replace("'exclusive'","'historical'").replace('{"id":"activation-a"}',JSON.stringify(activation)));
+  sql(path,`INSERT INTO control_workflow_runtime_runs
+    (run_id,admission_command_id,artifact_manifest_sha256,runtime_manifest_sha256,status,version,run_json,created_at,updated_at)
+    VALUES ('run-historical','historical-admission','${binding.build_manifest_sha256}','${binding.runtime_manifest_sha256}',
+      'queued',1,'${JSON.stringify(historicalRun)}','2026-09-15T00:00:00.000Z','2026-09-15T00:00:00.000Z');`);
+  const historicalBefore = sql(path,"SELECT run_json FROM control_workflow_runtime_runs WHERE run_id='run-historical';");
   sql(path,readFileSync(new URL('../migrations/0015_control_build_binding_admission.sql',import.meta.url),'utf8'));
+  assert.equal(sql(path,"SELECT run_json FROM control_workflow_runtime_runs WHERE run_id='run-historical';"),historicalBefore);
+  assert.equal(sql(path,"SELECT build_binding_version FROM control_workflow_runtime_runs WHERE run_id='run-historical';"),'1');
+  assert.equal(sql(path,"SELECT COUNT(*) FROM control_workflow_runtime_build_bindings WHERE run_id='run-historical';"),'0');
+  // Updating under its original semantics remains possible; reinterpreting it is not.
+  sql(path,`UPDATE control_workflow_runtime_runs SET version=2,run_json='${JSON.stringify({...historicalRun,version:2})}' WHERE run_id='run-historical';`);
+  expectSqlFailure(path,"UPDATE control_workflow_runtime_runs SET build_binding_version=2 WHERE run_id='run-historical';",/version_immutable|immutable or non-monotonic/);
+
   const checkpoint = (version: number | undefined, artifact = binding.artifact_manifest_sha256) => `INSERT INTO control_workflow_runtime_runs
     (run_id,admission_command_id,artifact_manifest_sha256,runtime_manifest_sha256,status,version,run_json,created_at,updated_at${version===undefined?'':',build_binding_version'})
     VALUES ('run-a','admission-a','${artifact}','${binding.runtime_manifest_sha256}','queued',1,
@@ -1280,6 +1296,6 @@ test('verified Build binding migration preserves parents and requires distinct e
   expectSqlFailure(path,checkpoint(1),/verified_build_binding_required|registration does not match/);
   expectSqlFailure(path,checkpoint(2,'sha256:'+'a'.repeat(64)),/verified_build_binding_required|registration does not match/);
   sql(path,checkpoint(2));
-  assert.equal(sql(path,'SELECT build_binding_version FROM control_workflow_runtime_runs;'),'2');
-  expectSqlFailure(path,'UPDATE control_workflow_runtime_runs SET build_binding_version=1;',/version_immutable/);
+  assert.equal(sql(path,'SELECT build_binding_version FROM control_workflow_runtime_runs WHERE run_id="run-a";'),'2');
+  expectSqlFailure(path,'UPDATE control_workflow_runtime_runs SET build_binding_version=1;',/version_immutable|immutable or non-monotonic/);
 });
