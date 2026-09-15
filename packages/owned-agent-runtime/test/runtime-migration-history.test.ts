@@ -10,8 +10,8 @@ test('pending runtime migrations preserve populated legacy ledger bytes and rela
   const path = join(directory, 'history.sqlite');
   const migrations = new URL('../migrations/', import.meta.url);
   const sql = (input: string) => execFileSync('sqlite3', ['-bail', '-json', path], {
-    input: `PRAGMA foreign_keys=ON;\n${input}`, encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe']
-  }).trim();
+    input: `.limit expr_depth 100\nPRAGMA foreign_keys=ON;\n${input}`, encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe']
+  }).replace(/^\s*expr_depth 100\r?\n/, '').trim();
   const quote = (value: unknown) => value === null ? 'NULL' : `'${String(value).replaceAll("'", "''")}'`;
   const insert = (table: string, row: Record<string, unknown>) => sql(
     `INSERT INTO ${table} (${Object.keys(row).join(',')}) VALUES (${Object.values(row).map(quote).join(',')});`);

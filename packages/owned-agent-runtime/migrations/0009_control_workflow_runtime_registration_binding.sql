@@ -323,6 +323,8 @@ BEGIN
   SELECT RAISE(ABORT, 'Workflow Runtime checkpoint receipts must match its immutable ledger');
 END;
 
+-- Bound both boolean chains below SQLite/D1 expression depth 100. Grouping
+-- preserves every predicate and SQL three-valued AND/OR semantics.
 CREATE TRIGGER control_workflow_runtime_registration_approval_matches_run
 BEFORE INSERT ON control_workflow_runtime_approvals
 WHEN EXISTS (
@@ -331,6 +333,7 @@ WHEN EXISTS (
     AND json_extract(runtime.run_json, '$.schema') = 'workflow_runtime_run.v0.2'
 )
   AND (
+    (
     EXISTS (
       SELECT 1 FROM json_tree(NEW.approval_json) entry
       WHERE entry.key IS NOT NULL
@@ -360,7 +363,10 @@ WHEN EXISTS (
     OR length(json_extract(NEW.approval_json, '$.expiresAt')) > 64
     OR strftime('%Y-%m-%dT%H:%M:%fZ', json_extract(NEW.approval_json, '$.expiresAt')) IS NOT
       json_extract(NEW.approval_json, '$.expiresAt')
-    OR json_extract(NEW.approval_context_json, '$.schema') IS NOT
+    )
+    OR
+    (
+    json_extract(NEW.approval_context_json, '$.schema') IS NOT
       'create-something/workflow-runtime-approval-context@2'
     OR json_extract(NEW.approval_context_json, '$.version') IS NOT 2
     OR EXISTS (
@@ -405,7 +411,10 @@ WHEN EXISTS (
       SELECT 1 FROM json_each(NEW.approval_context_json, '$.workflow')
       WHERE key NOT IN ('compiledBundleSchema', 'compilerVersion', 'definitionHash', 'id', 'version')
     )
-    OR json_extract(NEW.approval_context_json, '$.workflow.compiledBundleSchema') IS NOT
+    )
+    OR
+    (
+    json_extract(NEW.approval_context_json, '$.workflow.compiledBundleSchema') IS NOT
       'compiled_workflow_bundle.v0.3'
     OR json_type(NEW.approval_context_json, '$.runVersion') IS NOT 'integer'
     OR json_extract(NEW.approval_context_json, '$.runVersion') < 1
@@ -426,7 +435,10 @@ WHEN EXISTS (
     OR length(trim(json_extract(NEW.approval_context_json, '$.scope.accountId'))) > 180
     OR length(trim(json_extract(NEW.approval_context_json, '$.scope.tenantId'))) < 1
     OR length(trim(json_extract(NEW.approval_context_json, '$.scope.tenantId'))) > 180
-    OR length(trim(json_extract(NEW.approval_context_json, '$.scope.workspaceAccountId'))) < 1
+    )
+    OR
+    (
+    length(trim(json_extract(NEW.approval_context_json, '$.scope.workspaceAccountId'))) < 1
     OR length(trim(json_extract(NEW.approval_context_json, '$.scope.workspaceAccountId'))) > 180
     OR length(trim(json_extract(NEW.approval_context_json, '$.activation.id'))) < 1
     OR length(trim(json_extract(NEW.approval_context_json, '$.activation.id'))) > 180
@@ -446,7 +458,10 @@ WHEN EXISTS (
     OR length(json_extract(NEW.approval_context_json, '$.artifactManifestSha256')) IS NOT 71
     OR substr(json_extract(NEW.approval_context_json, '$.artifactManifestSha256'), 1, 7) IS NOT 'sha256:'
     OR substr(json_extract(NEW.approval_context_json, '$.artifactManifestSha256'), 8) GLOB '*[^0-9a-f]*'
-    OR length(json_extract(NEW.approval_context_json, '$.runtimeManifestSha256')) IS NOT 71
+    )
+    OR
+    (
+    length(json_extract(NEW.approval_context_json, '$.runtimeManifestSha256')) IS NOT 71
     OR substr(json_extract(NEW.approval_context_json, '$.runtimeManifestSha256'), 1, 7) IS NOT 'sha256:'
     OR substr(json_extract(NEW.approval_context_json, '$.runtimeManifestSha256'), 8) GLOB '*[^0-9a-f]*'
     OR length(json_extract(NEW.approval_context_json, '$.workflow.definitionHash')) IS NOT 71
@@ -477,7 +492,8 @@ WHEN EXISTS (
         ON json_extract(checkpoint_step.value, '$.id') IS step.step_id
       JOIN control_workflow_runtime_receipts receipt
         ON receipt.run_id = runtime.run_id
-      WHERE runtime.run_id = NEW.run_id
+      WHERE (
+        runtime.run_id = NEW.run_id
         AND json_extract(runtime.run_json, '$.schema') = 'workflow_runtime_run.v0.2'
         AND parent.account_id = json_extract(NEW.approval_context_json, '$.scope.accountId')
         AND parent.tenant_id = json_extract(NEW.approval_context_json, '$.scope.tenantId')
@@ -491,7 +507,9 @@ WHEN EXISTS (
           json_extract(NEW.approval_context_json, '$.registration.buildReleaseId')
         AND json_extract(runtime.run_json, '$.registration.contractSha256') =
           json_extract(NEW.approval_context_json, '$.registration.contractSha256')
-        AND json_extract(runtime.run_json, '$.registration.runtimePolicySha256') =
+      )
+      AND (
+        json_extract(runtime.run_json, '$.registration.runtimePolicySha256') =
           json_extract(NEW.approval_context_json, '$.registration.runtimePolicySha256')
         AND json_extract(runtime.run_json, '$.runtimeManifestSchema') =
           json_extract(NEW.approval_context_json, '$.runtimeManifestSchema')
@@ -507,7 +525,9 @@ WHEN EXISTS (
         AND json_extract(receipt.receipt_json, '$.attemptId') IS NULL
         AND json_extract(receipt.receipt_json, '$.runVersion') =
           json_extract(NEW.approval_context_json, '$.runVersion')
-        AND json_extract(receipt.receipt_json, '$.stepVersion') =
+      )
+      AND (
+        json_extract(receipt.receipt_json, '$.stepVersion') =
           json_extract(NEW.approval_context_json, '$.stepVersion')
         AND step.version = json_extract(NEW.approval_context_json, '$.stepVersion')
         AND json_extract(checkpoint_step.value, '$.status') IS step.status
@@ -521,7 +541,9 @@ WHEN EXISTS (
           json_extract(NEW.approval_json, '$.expiresAt')
         AND json_extract(receipt.receipt_json, '$.activationId') =
           json_extract(NEW.approval_context_json, '$.activation.id')
-        AND json_extract(receipt.receipt_json, '$.activationVersion') =
+      )
+      AND (
+        json_extract(receipt.receipt_json, '$.activationVersion') =
           json_extract(NEW.approval_context_json, '$.activation.version')
         AND json_extract(receipt.receipt_json, '$.activationPolicySha256') =
           json_extract(NEW.approval_context_json, '$.activation.policySha256')
@@ -541,7 +563,9 @@ WHEN EXISTS (
           json_extract(NEW.approval_context_json, '$.workflow.id')
         AND json_extract(receipt.receipt_json, '$.workflowVersion') =
           json_extract(NEW.approval_context_json, '$.workflow.version')
-        AND json_extract(receipt.receipt_json, '$.workflowCompilerVersion') =
+      )
+      AND (
+        json_extract(receipt.receipt_json, '$.workflowCompilerVersion') =
           json_extract(NEW.approval_context_json, '$.workflow.compilerVersion')
         AND json_extract(receipt.receipt_json, '$.definitionHash') =
           json_extract(NEW.approval_context_json, '$.workflow.definitionHash')
@@ -549,6 +573,8 @@ WHEN EXISTS (
           json_extract(NEW.approval_context_json, '$.evidenceDigest')
         AND json_extract(receipt.receipt_json, '$.actionId') =
           json_extract(NEW.approval_context_json, '$.actionId')
+      )
+    )
     )
   )
 BEGIN
