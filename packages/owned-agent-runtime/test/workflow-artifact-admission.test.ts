@@ -1,3 +1,4 @@
+import { RegisteredWorkflowManifestAuthority } from '../src/registered-workflow-manifest-authority.js';
 import { publishControlBuildBinding } from '../src/control-build-binding-publication.js';
 import { execFileSync } from 'node:child_process';
 import { d1, literal } from './sqlite-d1.fixture.js';
@@ -145,6 +146,14 @@ test('admits a real signed compiler release and rejects mismatched registration,
     } finally { await rm(build.root,{recursive:true,force:true}); }
     const admitted = await admitWorkflowArtifact(reader,registration,policy);
     assert.deepEqual(admitted,runtime);
+    const configured = [{registration:{...registration},policy:structuredClone(policy)}];
+    const authority = new RegisteredWorkflowManifestAuthority(reader,configured);
+    configured[0].registration.runtimeManifestSha256='sha256:'+'0'.repeat(64);
+    configured[0].policy.capabilities=[];
+    assert.deepEqual(await authority.findByRuntimeManifestSha256(registration.runtimeManifestSha256 as `sha256:${string}`),runtime);
+    assert.equal(await authority.findByRuntimeManifestSha256('sha256:'+'0'.repeat(64) as `sha256:${string}`),undefined);
+    assert.throws(()=>new RegisteredWorkflowManifestAuthority(reader,[{registration,policy},{registration,policy}]),/ambiguous/);
+
     assert.throws(() => { admitted.workflow.id = 'mutated'; }, TypeError);
     assert.throws(() => { admitted.steps.push(admitted.steps[0]); }, TypeError);
     await assert.rejects(admitWorkflowArtifact(reader,registration,{...policy,interactionHost:{...policy.interactionHost,operations:[]}}));
@@ -220,6 +229,7 @@ test('admits a real signed compiler release and rejects mismatched registration,
     await assert.rejects(admitWorkflowArtifact({async read(){return omittedFiles;}},
       {...registration,artifactManifestSha256:workflowArtifactManifestHash(omittedOuter)},policy),/not_admitted/);
     files.get('runtime-manifest.json')![0]^=1;
+    await assert.rejects(authority.findByRuntimeManifestSha256(registration.runtimeManifestSha256 as `sha256:${string}`));
     await assert.rejects(admitWorkflowArtifact(reader,registration,policy));
   } finally { await rm(root,{recursive:true,force:true}); }
 });
