@@ -23,6 +23,7 @@ import {
   createWorkflowArtifactAttestation,
   parseWorkflowArtifactAttestation,
   verifyWorkflowArtifactBundle,
+  verifyWorkflowArtifactSnapshot,
   WorkflowArtifactAttestationError,
   WorkflowArtifactVerificationError
 } from '../dist/index.js';
@@ -633,4 +634,42 @@ test('the CLI distinguishes unsigned bundles and invalid signatures as verificat
   } finally {
     await rm(root, { recursive: true, force: true });
   }
+});
+
+
+test('serialized snapshot verification matches filesystem receipts and rejects inventory/signature tampering', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'workflow-snapshot-'));
+  const outDir = join(root, 'output');
+  try {
+    const compile = spawnSync(process.execPath,
+      ['dist/cli.js', 'compile', '--workflow', fixturePath.pathname, '--out', outDir],
+      { cwd: packageRoot, encoding: 'utf8' });
+    assert.equal(compile.status, 0, compile.stderr || compile.stdout);
+    const manifestBytes = await readFile(join(outDir, 'manifest.json'));
+    const manifest = JSON.parse(manifestBytes);
+    const files = new Map([['manifest.json', manifestBytes]]);
+    for (const file of manifest.files) files.set(file.path, await readFile(join(outDir, file.path)));
+    assert.deepEqual(await verifyWorkflowArtifactSnapshot(files), await verifyWorkflowArtifactBundle(outDir));
+    const signer = generateKeyPairSync('ed25519');
+    const attestation = createWorkflowArtifactAttestation(manifest, { keyId: 'snapshot-test', privateKey: signer.privateKey });
+    files.set('attestation.json', Buffer.from(JSON.stringify(attestation)));
+    await writeFile(join(outDir, 'attestation.json'), JSON.stringify(attestation));
+    const expected = await verifyWorkflowArtifactBundle(outDir, { publicKey: signer.publicKey });
+    assert.deepEqual(await verifyWorkflowArtifactSnapshot(files, { publicKey: signer.publicKey }), expected);
+    await assert.rejects(verifyWorkflowArtifactSnapshot(files, { publicKey: generateKeyPairSync('ed25519').publicKey }),
+      { code: 'KEY_FINGERPRINT_MISMATCH' });
+    for (const [mutation, code] of [
+      [map => map.delete('workflow-map.json'), 'MISSING_ARTIFACT'],
+      [map => map.set('workflow-map.json', Buffer.from('tampered')), 'ARTIFACT_HASH_MISMATCH'],
+      [map => map.set('undeclared.json', Buffer.from('{}')), 'UNDECLARED_ARTIFACT'],
+      [map => map.set('../escape', Buffer.from('{}')), 'UNSAFE_ARTIFACT_PATH'],
+      [map => map.delete('attestation.json'), 'ATTESTATION_MISSING']
+    ]) {
+      const changed = new Map(files); mutation(changed);
+      await assert.rejects(verifyWorkflowArtifactSnapshot(changed, { publicKey: signer.publicKey }), { code });
+    }
+    const pending = verifyWorkflowArtifactSnapshot(files, { publicKey: signer.publicKey });
+    files.get('workflow-map.json').fill(0);
+    assert.deepEqual(await pending, expected, 'caller mutation cannot change the pinned snapshot');
+  } finally { await rm(root, { recursive: true, force: true }); }
 });

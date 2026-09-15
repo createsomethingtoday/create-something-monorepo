@@ -7,6 +7,7 @@ export {
 } from './compile.js';
 export {
   verifyWorkflowArtifactBundle,
+  verifyWorkflowArtifactSnapshot,
   WorkflowArtifactOutputError,
   WorkflowArtifactVerificationError,
   writeCompiledWorkflowArtifacts
