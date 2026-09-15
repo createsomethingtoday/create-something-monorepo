@@ -1,3 +1,4 @@
+import type { WorkflowRuntimeHandoffProofReader } from './workflow-runtime-handoff-proof.js';
 import { z } from 'zod';
 
 import {
@@ -17,6 +18,7 @@ type ControlRunService = ReturnType<typeof createControlRunService>;
 
 export const CONTROL_RUN_API_OPERATIONS = Object.freeze([
   'get',
+  'proof',
   'start',
   'approve',
   'reject',
@@ -57,23 +59,40 @@ const CONTROL_ACTIONS = [
   'terminate'
 ] as const;
 
-const actionInput = z.object({
-  action: z.enum(CONTROL_ACTIONS),
-  idempotency_key: z.string().trim().min(1).max(180),
-  reason: z.string().trim().min(1).max(1000).optional(),
-  recovery: z.string().trim().min(1).max(240).optional(),
-  outcome: z.string().trim().min(1).max(1000).optional()
-}).superRefine((value, context) => {
-  if (['approve', 'reject', 'stop', 'cancel', 'terminate'].includes(value.action) && !value.reason) {
-    context.addIssue({ code: 'custom', path: ['reason'], message: `${value.action} requires an explicit reason` });
-  }
-  if (value.action === 'begin_recovery' && !value.recovery) {
-    context.addIssue({ code: 'custom', path: ['recovery'], message: 'begin_recovery requires an explicit path' });
-  }
-  if (value.action === 'finish_recovery' && !value.outcome) {
-    context.addIssue({ code: 'custom', path: ['outcome'], message: 'finish_recovery requires an explicit outcome' });
-  }
-});
+const actionInput = z
+  .object({
+    action: z.enum(CONTROL_ACTIONS),
+    idempotency_key: z.string().trim().min(1).max(180),
+    reason: z.string().trim().min(1).max(1000).optional(),
+    recovery: z.string().trim().min(1).max(240).optional(),
+    outcome: z.string().trim().min(1).max(1000).optional()
+  })
+  .superRefine((value, context) => {
+    if (
+      ['approve', 'reject', 'stop', 'cancel', 'terminate'].includes(value.action) &&
+      !value.reason
+    ) {
+      context.addIssue({
+        code: 'custom',
+        path: ['reason'],
+        message: `${value.action} requires an explicit reason`
+      });
+    }
+    if (value.action === 'begin_recovery' && !value.recovery) {
+      context.addIssue({
+        code: 'custom',
+        path: ['recovery'],
+        message: 'begin_recovery requires an explicit path'
+      });
+    }
+    if (value.action === 'finish_recovery' && !value.outcome) {
+      context.addIssue({
+        code: 'custom',
+        path: ['outcome'],
+        message: 'finish_recovery requires an explicit outcome'
+      });
+    }
+  });
 
 const processInput = z.object({
   idempotency_key: z.string().trim().min(1).max(180)
@@ -114,14 +133,18 @@ async function rpcDenied(
   id: string | number | null | undefined,
   access: { denied: Response; retryAfter?: true }
 ) {
-  const payload = await access.denied.clone().json().catch(() => ({})) as { error?: string };
-  const code = access.denied.status === 401
-    ? -32001
-    : access.denied.status === 403
-      ? -32003
-      : access.denied.status === 429
-        ? -32029
-        : -32000;
+  const payload = (await access.denied
+    .clone()
+    .json()
+    .catch(() => ({}))) as { error?: string };
+  const code =
+    access.denied.status === 401
+      ? -32001
+      : access.denied.status === 403
+        ? -32003
+        : access.denied.status === 429
+          ? -32029
+          : -32000;
   const denied = rpcError(id, code, payload.error ?? 'request_denied', access.denied.status);
   if (access.retryAfter) denied.headers.set('retry-after', '60');
   return denied;
@@ -166,13 +189,7 @@ async function runAction(
     case 'retry':
       return service.retry(scope, actor, runId, input.idempotency_key);
     case 'begin_recovery':
-      return service.beginRecovery(
-        scope,
-        actor,
-        runId,
-        input.idempotency_key,
-        input.recovery!
-      );
+      return service.beginRecovery(scope, actor, runId, input.idempotency_key, input.recovery!);
     case 'finish_recovery':
       return service.finishRecovery(
         scope,
@@ -219,6 +236,23 @@ function toolDefinitions() {
       }
     },
     {
+      name: 'control_run_proof',
+      description:
+        'Read the verified runtime and minimized handoff evidence for one authorized run.',
+      annotations: {
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false
+      },
+      inputSchema: {
+        type: 'object',
+        properties: { run_id: { type: 'string' } },
+        required: ['run_id'],
+        additionalProperties: false
+      }
+    },
+    {
       name: 'control_run_start',
       description: 'Queue a run against an active frozen Control activation.',
       inputSchema: {
@@ -236,7 +270,8 @@ function toolDefinitions() {
     },
     {
       name: 'control_run_action',
-      description: 'Apply an approval, stop, cancellation, retry, recovery, or termination command.',
+      description:
+        'Apply an approval, stop, cancellation, retry, recovery, or termination command.',
       inputSchema: { oneOf: actionSchemas }
     }
   ];
@@ -246,7 +281,21 @@ export function createControlRunWorker(dependencies: {
   identity: ControlIdentityResolver;
   service: ControlRunService;
   admission?: ControlRunAdmission;
+  proofs?: WorkflowRuntimeHandoffProofReader;
 }) {
+  async function proof(context: ControlRequestContext, runId: string) {
+    await dependencies.service.get(
+      context.scope,
+      context.actor,
+      runId,
+      context.schedulerActivationId
+    );
+    if (!dependencies.proofs) throw new Error('control_proof_unavailable');
+    const result = await dependencies.proofs.find({ scope: context.scope, runId });
+    if (!result || result.runtime.run.id !== runId) throw new Error('control_proof_unavailable');
+    return result;
+  }
+
   async function context(request: Request, operation: string) {
     let resolved: ControlRequestContext | undefined;
     try {
@@ -260,7 +309,11 @@ export function createControlRunWorker(dependencies: {
     if (!resolved) return { denied: response({ error: 'unauthorized' }, 401) } as const;
     if (dependencies.admission) {
       try {
-        const decision = await dependencies.admission.check({ request, context: resolved, operation });
+        const decision = await dependencies.admission.check({
+          request,
+          context: resolved,
+          operation
+        });
         if (decision === 'rate_limited') {
           return {
             denied: response({ error: 'rate_limited' }, 429),
@@ -277,11 +330,19 @@ export function createControlRunWorker(dependencies: {
   async function api(request: Request, url: URL): Promise<Response | undefined> {
     if (!url.pathname.startsWith('/v1/control/')) return undefined;
     const runRoute = url.pathname.match(/^\/v1\/control\/runs\/([^/]+)$/);
+    const proofRoute = url.pathname.match(/^\/v1\/control\/runs\/([^/]+)\/proof$/);
     const actionRoute = url.pathname.match(/^\/v1\/control\/runs\/([^/]+)\/actions$/);
     const processRoute = url.pathname.match(/^\/v1\/control\/runs\/([^/]+)\/process$/);
-    const operation = request.method === 'POST' && url.pathname === '/v1/control/runs'
-      ? 'start'
-      : processRoute ? 'process' : actionRoute ? 'action' : 'get';
+    const operation =
+      request.method === 'POST' && url.pathname === '/v1/control/runs'
+        ? 'start'
+        : processRoute
+          ? 'process'
+          : actionRoute
+            ? 'action'
+            : proofRoute
+              ? 'proof'
+              : 'get';
     const access = await context(request, operation);
     if ('denied' in access) {
       if (access.retryAfter) access.denied.headers.set('retry-after', '60');
@@ -289,6 +350,9 @@ export function createControlRunWorker(dependencies: {
     }
     const { scope, actor } = access.resolved;
 
+    if (request.method === 'GET' && proofRoute) {
+      return response({ proof: await proof(access.resolved, decodeURIComponent(proofRoute[1])) });
+    }
     if (request.method === 'GET' && runRoute) {
       return response({
         run: await dependencies.service.get(
@@ -301,7 +365,8 @@ export function createControlRunWorker(dependencies: {
     }
     if (request.method === 'POST' && url.pathname === '/v1/control/runs') {
       const parsed = startInput.safeParse(await parsedJson(request));
-      if (!parsed.success) return response({ error: 'invalid_request', issues: parsed.error.issues }, 400);
+      if (!parsed.success)
+        return response({ error: 'invalid_request', issues: parsed.error.issues }, 400);
       const run = await dependencies.service.start(scope, actor, {
         activationId: parsed.data.activation_id,
         idempotencyKey: parsed.data.idempotency_key,
@@ -313,14 +378,21 @@ export function createControlRunWorker(dependencies: {
     }
     if (request.method === 'POST' && actionRoute) {
       const parsed = actionInput.safeParse(await parsedJson(request));
-      if (!parsed.success) return response({ error: 'invalid_request', issues: parsed.error.issues }, 400);
+      if (!parsed.success)
+        return response({ error: 'invalid_request', issues: parsed.error.issues }, 400);
       return response({
-        run: await runAction(dependencies.service, access.resolved, decodeURIComponent(actionRoute[1]), parsed.data)
+        run: await runAction(
+          dependencies.service,
+          access.resolved,
+          decodeURIComponent(actionRoute[1]),
+          parsed.data
+        )
       });
     }
     if (request.method === 'POST' && processRoute) {
       const parsed = processInput.safeParse(await parsedJson(request));
-      if (!parsed.success) return response({ error: 'invalid_request', issues: parsed.error.issues }, 400);
+      if (!parsed.success)
+        return response({ error: 'invalid_request', issues: parsed.error.issues }, 400);
       return response({
         run: await dependencies.service.process(
           scope,
@@ -341,9 +413,8 @@ export function createControlRunWorker(dependencies: {
     if (!parsed.success) return rpcError(null, -32600, 'Invalid Request', 400);
     const message = parsed.data;
     const name = typeof message.params?.name === 'string' ? message.params.name : '';
-    const operation = message.method === 'tools/call' && name
-      ? `mcp:${name}`
-      : `mcp:${message.method}`;
+    const operation =
+      message.method === 'tools/call' && name ? `mcp:${name}` : `mcp:${message.method}`;
     const access = await context(request, operation);
     if ('denied' in access && access.denied) {
       return rpcDenied(message.id, {
@@ -366,13 +437,30 @@ export function createControlRunWorker(dependencies: {
         return rpcError(message.id, -32602, 'Invalid tool arguments');
       }
       const values = args as Record<string, unknown>;
+      if (name === 'control_run_proof') {
+        const parsed = z
+          .object({ run_id: z.string().trim().min(1).max(240) })
+          .strict()
+          .safeParse(values);
+        if (!parsed.success) return rpcError(message.id, -32602, 'Invalid tool arguments');
+        const result = { proof: await proof(access.resolved, parsed.data.run_id) };
+        return rpc(message.id, {
+          content: [{ type: 'text', text: JSON.stringify(result) }],
+          structuredContent: result
+        });
+      }
       if (name === 'control_run_get' && typeof values.run_id === 'string') {
-        return rpc(message.id, toolResult(await dependencies.service.get(
-          access.resolved.scope,
-          access.resolved.actor,
-          values.run_id,
-          access.resolved.schedulerActivationId
-        )));
+        return rpc(
+          message.id,
+          toolResult(
+            await dependencies.service.get(
+              access.resolved.scope,
+              access.resolved.actor,
+              values.run_id,
+              access.resolved.schedulerActivationId
+            )
+          )
+        );
       }
       if (name === 'control_run_start') {
         const validated = startInput.safeParse(values);
@@ -389,12 +477,12 @@ export function createControlRunWorker(dependencies: {
       if (name === 'control_run_action' && typeof values.run_id === 'string') {
         const validated = actionInput.safeParse(values);
         if (!validated.success) return rpcError(message.id, -32602, 'Invalid tool arguments');
-        return rpc(message.id, toolResult(await runAction(
-          dependencies.service,
-          access.resolved,
-          values.run_id,
-          validated.data
-        )));
+        return rpc(
+          message.id,
+          toolResult(
+            await runAction(dependencies.service, access.resolved, values.run_id, validated.data)
+          )
+        );
       }
       return rpcError(message.id, -32602, 'Unknown tool or invalid arguments');
     } catch (error) {

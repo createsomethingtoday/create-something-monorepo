@@ -13,6 +13,7 @@ import {
   type ControlScope
 } from '../src/control.js';
 import { D1ControlActivationAuthority, D1ControlRunRepository } from '../src/control-store.js';
+import { D1WorkflowRuntimeHandoffProofReader } from '../src/workflow-runtime-handoff-proof.js';
 import { D1TemplateReviewHandoffEvidenceStore } from '../src/template-review-handoff-store.js';
 import { D1TemplateReviewQueueObservationAdapter } from '../src/template-review-queue-observation.js';
 import { D1WorkflowRuntimeProofReader } from '../src/workflow-runtime-proof-projection.js';
@@ -2037,6 +2038,26 @@ test('handoff evidence binds the verified tenant attempt and replays without alt
   );
   assert.deepEqual(await stricter.find(record), saved);
   assert.deepEqual(await stricter.record(record), saved);
+  const proofDatabase = d1(input.path);
+  const prepareProofQuery = proofDatabase.prepare.bind(proofDatabase);
+  let completeProofReads = 0;
+  proofDatabase.prepare = (sql: string) => {
+    if (sql.includes('SELECT runtime.run_json')) completeProofReads++;
+    return prepareProofQuery(sql);
+  };
+  const proofReader = new D1WorkflowRuntimeHandoffProofReader(
+    proofDatabase,
+    trustedRuntimeManifestAuthority([{ digest: runtimeDigest('8'), manifest }]),
+    30_000
+  );
+  const proof = await proofReader.find({ scope, runId: parent.id });
+  assert.deepEqual(proof?.handoffObservations, [saved]);
+  assert.equal(completeProofReads, 2, 'evidence reads must reuse the two verified runtime projections');
+  assert.equal(proof?.runtime.run.id, parent.id);
+  assert.equal(
+    await proofReader.find({ scope: { ...scope, tenantId: 'other' }, runId: parent.id }),
+    undefined
+  );
   assert.equal(await store.find({ ...record, scope: { ...scope, tenantId: 'other' } }), undefined);
   await assert.rejects(() =>
     store.record({
@@ -2045,4 +2066,83 @@ test('handoff evidence binds the verified tenant attempt and replays without alt
     })
   );
   assert.equal((await input.service.get(scope, owner, parent.id)).status, 'stopped');
+});
+
+test('reconciliation proof refuses a succeeded handoff with no source evidence', async () => {
+  const input = fixture();
+  const manifest = structuredClone(templateReviewRuntimeManifest);
+  const first = manifest.steps[0];
+  assert.equal(first.disposition, 'pass');
+  first.capability.id = 'template-review.handoff.observe.v1';
+  const { parent, prepared } = await persistedTemplateReviewAttempt(input, manifest);
+  const completed = await reduceWorkflowRuntimeRun(manifest, prepared, {
+    type: 'step_succeeded',
+    stepId: 'observe',
+    attemptId: 'template-review-attempt-1',
+    verifier: 'handoff-observation',
+    observedAt: '2026-08-25T00:00:04.000Z'
+  });
+  await checkpointStore(input.path, manifest).apply({
+    scope,
+    run: completed,
+    expectedVersion: prepared.version,
+    idempotencyKey: 'complete-without-observation',
+    commandDigest: 'c'.repeat(64)
+  });
+  const reader = new D1WorkflowRuntimeHandoffProofReader(
+    d1(input.path),
+    trustedRuntimeManifestAuthority([{ digest: runtimeDigest('8'), manifest }]),
+    30_000
+  );
+  await assert.rejects(
+    () => reader.find({ scope, runId: parent.id }),
+    /handoff_success_without_evidence/
+  );
+});
+
+
+test('reconciliation proof rejects a source dispatch change without a run version change', async () => {
+  const input = fixture();
+  const { parent, prepared, plan } = await persistedTemplateReviewAttempt(input);
+  const database = d1(input.path);
+  const adapter = new D1TemplateReviewQueueObservationAdapter(
+    database,
+    { async verify() { throw new Error('source verification is not part of this read'); } },
+    { capabilityParameterDigest: runtimeDigest('f') },
+    activeControlActivationAuthority(input.path)
+  );
+  const originalPrepare = database.prepare.bind(database);
+  let inserted = false;
+  database.prepare = (sql: string) => {
+    const statement = originalPrepare(sql);
+    if (!sql.includes('SELECT evidence.*')) return statement;
+    return {
+      bind(...values: unknown[]) {
+        const bound = statement.bind(...values);
+        return {
+          async all() {
+            const result = await bound.all();
+            if (!inserted) {
+              inserted = true;
+              const preparation = await adapter.prepare({
+                scope, manifest: templateReviewRuntimeManifest, run: prepared, plan,
+                attemptId: 'template-review-attempt-1'
+              });
+              assert.equal(preparation.type, 'preflight');
+            }
+            return result;
+          }
+        };
+      }
+    } as D1PreparedStatement;
+  };
+  const reader = new D1WorkflowRuntimeHandoffProofReader(
+    database,
+    trustedRuntimeManifestAuthority([{ digest: runtimeDigest('8'), manifest: templateReviewRuntimeManifest }]),
+    30_000
+  );
+  await assert.rejects(() => reader.find({ scope, runId: parent.id }), /handoff_proof_changed_during_read/);
+  const stable = await reader.find({ scope, runId: parent.id });
+  assert.equal(stable?.runtime.run.version, prepared.version);
+  assert.equal(stable?.runtime.capabilityObservations.length, 1);
 });

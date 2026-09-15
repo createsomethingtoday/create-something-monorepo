@@ -17,7 +17,7 @@ export type TemplateReviewHandoffEvidence = {
   maximumAgeMs: number;
   observation: TemplateReviewHandoffObservation;
 };
-type Row = {
+export type TemplateReviewHandoffEvidenceRow = {
   run_id: string;
   step_id: string;
   attempt_id: string;
@@ -83,38 +83,9 @@ export class D1TemplateReviewHandoffEvidenceStore {
         target.scope.tenantId,
         target.scope.workspaceAccountId
       )
-      .first<Row>();
+      .first<TemplateReviewHandoffEvidenceRow>();
     if (!row) return undefined;
-    const observation = validateTemplateReviewHandoffObservation(
-      {
-        schema: 'create-something/template-handoff-observation@1',
-        dataClassification: 'minimized_status_evidence',
-        requestSha256: row.request_sha256,
-        observedAt: row.observed_at,
-        state: row.observation_state,
-        reason: row.reason,
-        nextAction: row.next_action,
-        evidenceSha256: row.evidence_sha256
-      },
-      {
-        requestSha256: attempt.capabilityParameterSha256,
-        dispatchedAt: row.dispatched_at,
-        receivedAt: row.received_at,
-        maximumAgeMs: row.maximum_age_ms
-      }
-    );
-    if (Date.parse(row.dispatched_at) < Date.parse(attempt.createdAt))
-      throw new Error('handoff_evidence_predates_intent');
-    return {
-      runId: row.run_id,
-      stepId: row.step_id,
-      attemptId: row.attempt_id,
-      sourceInvocationSha256: row.source_invocation_sha256,
-      dispatchedAt: row.dispatched_at,
-      receivedAt: row.received_at,
-      maximumAgeMs: row.maximum_age_ms,
-      observation
-    };
+    return parseTemplateReviewHandoffEvidence(row, attempt);
   }
 
   async record(
@@ -188,4 +159,41 @@ export class D1TemplateReviewHandoffEvidenceStore {
       throw new Error('handoff_evidence_not_persisted');
     return saved;
   }
+}
+
+/** Validate a stored row against its already verified effect-intent attempt. */
+export function parseTemplateReviewHandoffEvidence(
+  row: TemplateReviewHandoffEvidenceRow,
+  attempt: { capabilityParameterSha256: string; createdAt: string }
+): TemplateReviewHandoffEvidence {
+    const observation = validateTemplateReviewHandoffObservation(
+      {
+        schema: 'create-something/template-handoff-observation@1',
+        dataClassification: 'minimized_status_evidence',
+        requestSha256: row.request_sha256,
+        observedAt: row.observed_at,
+        state: row.observation_state,
+        reason: row.reason,
+        nextAction: row.next_action,
+        evidenceSha256: row.evidence_sha256
+      },
+      {
+        requestSha256: attempt.capabilityParameterSha256,
+        dispatchedAt: row.dispatched_at,
+        receivedAt: row.received_at,
+        maximumAgeMs: row.maximum_age_ms
+      }
+    );
+    if (Date.parse(row.dispatched_at) < Date.parse(attempt.createdAt))
+      throw new Error('handoff_evidence_predates_intent');
+    return {
+      runId: row.run_id,
+      stepId: row.step_id,
+      attemptId: row.attempt_id,
+      sourceInvocationSha256: row.source_invocation_sha256,
+      dispatchedAt: row.dispatched_at,
+      receivedAt: row.received_at,
+      maximumAgeMs: row.maximum_age_ms,
+      observation
+    };
 }
