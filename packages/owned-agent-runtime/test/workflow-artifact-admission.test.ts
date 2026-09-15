@@ -1,3 +1,5 @@
+import { createControlRunWorker } from '../src/control-worker.js';
+import { D1WorkflowRuntimeHandoffProofReader } from '../src/workflow-runtime-handoff-proof.js';
 import { createControlRunService } from '../src/control.js';
 import { D1ControlRunRepository, D1ControlActivationAuthority } from '../src/control-store.js';
 import { D1VerifiedBuildWorkflowRuntimeProofReader } from '../src/workflow-runtime-proof-projection.js';
@@ -160,6 +162,28 @@ test('admits a real signed compiler release and rejects mismatched registration,
       assert.equal(proof.buildBinding.bindingSha256,written.bindingSha256);
       assert.equal(proof.buildBinding.buildManifestSha256,'sha256:'+written.buildManifestSha256);
       assert.equal(proof.run.artifactManifestSha256,registration.artifactManifestSha256);
+      const proofScope = {accountId:activation.accountId,tenantId:activation.tenantId,
+        workspaceAccountId:activation.workspaceAccountId};
+      const transport = createControlRunWorker({service:control,
+        identity:{async resolve(request){
+          if(request.headers.get('authorization') !== 'Bearer fixture') return undefined;
+          return {scope:proofScope,actor:{subject:'fixture-operator',role:'account_owner'},credentialSource:'bearer'};
+        }},
+        proofs:new D1WorkflowRuntimeHandoffProofReader(database,manifests,30_000,'verified-build-v2')
+      });
+      const headers={authorization:'Bearer fixture','content-type':'application/json'};
+      const proofUrl=`https://runtime.example/v1/control/runs/${parent.id}/proof`;
+      assert.equal((await transport.fetch(new Request(proofUrl)))?.status,401);
+      const http = await transport.fetch(new Request(proofUrl,{headers}));
+      assert.equal(http?.status,200);
+      const httpBody = await http!.json() as {proof:{runtime:unknown}};
+      assert.deepEqual(httpBody.proof.runtime,proof);
+      const mcp = await transport.fetch(new Request('https://runtime.example/mcp',{
+        method:'POST',headers,body:JSON.stringify({jsonrpc:'2.0',id:1,method:'tools/call',
+          params:{name:'control_run_proof',arguments:{run_id:parent.id}}})
+      }));
+      const mcpBody=await mcp!.json() as {result:{structuredContent:unknown}};
+      assert.deepEqual(mcpBody.result.structuredContent,httpBody);
       const stored = await new D1WorkflowArtifactRegistrationReader(database).find(activation);
       assert.equal(stored?.bindingSha256,written.bindingSha256);
       assert.equal(stored?.buildManifestSha256,written.buildManifestSha256);
