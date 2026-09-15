@@ -1,7 +1,15 @@
 -- Agency owns the immutable verified release registration. Only the owning
 -- Build verification path may insert after signature/policy verification.
 -- SQL binds authority; it does not itself verify artifact signatures.
+-- Version 2 preserves the accepted delivery Build digest separately from the
+-- signed compiler inventory. The owning verifier checks binding_sha256 under
+-- the accepted artifact set before INSERT. No equality-only writer is accepted.
+-- This migration is unpromoted: no historical registry rows exist to reinterpret.
 CREATE TABLE customer_control_runtime_registrations (
+  registration_version INTEGER NOT NULL CHECK (registration_version = 2),
+  build_manifest_sha256 TEXT NOT NULL CHECK (length(build_manifest_sha256) = 64 AND build_manifest_sha256 NOT GLOB '*[^0-9a-f]*'),
+  build_artifact_set_sha256 TEXT NOT NULL CHECK (length(build_artifact_set_sha256) = 64 AND build_artifact_set_sha256 NOT GLOB '*[^0-9a-f]*'),
+  binding_sha256 TEXT NOT NULL CHECK (length(binding_sha256) = 71 AND substr(binding_sha256,1,7) = 'sha256:' AND substr(binding_sha256,8) NOT GLOB '*[^0-9a-f]*'),
   activation_id TEXT PRIMARY KEY REFERENCES customer_control_activations(id) ON DELETE RESTRICT,
   activation_version INTEGER NOT NULL CHECK (activation_version >= 1),
   account_id TEXT NOT NULL,
@@ -31,7 +39,8 @@ WHEN NOT EXISTS (
     AND a.account_id = NEW.account_id AND a.tenant_id = NEW.tenant_id
     AND a.workspace_account_id = NEW.workspace_account_id
     AND a.build_release_id = NEW.build_release_id
-    AND a.build_manifest_sha256 = substr(NEW.artifact_manifest_sha256,8)
+    AND a.build_manifest_sha256 = NEW.build_manifest_sha256
+    AND a.build_artifact_set_sha256 = NEW.build_artifact_set_sha256
     AND a.contract_sha256 = NEW.contract_sha256
     AND a.policy_sha256 = NEW.runtime_policy_sha256
     AND a.status = 'active'
