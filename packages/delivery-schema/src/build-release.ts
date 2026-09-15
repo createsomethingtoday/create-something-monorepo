@@ -1,3 +1,4 @@
+import { parseBuildRuntimeBinding, type BuildRuntimeBinding } from './build-runtime-binding.js';
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, realpathSync, statSync } from 'node:fs';
 import { basename, dirname, resolve, sep } from 'node:path';
@@ -159,7 +160,8 @@ export type BuildReleaseInspectionIssueCode =
 	| 'verifier_identity_mismatch'
 	| 'verifier_sequence_invalid'
 	| 'verifier_failed'
-	| 'release_rejected';
+	| 'release_rejected'
+	| 'runtime_binding_invalid';
 
 export interface BuildReleaseInspectionIssue {
 	code: BuildReleaseInspectionIssueCode;
@@ -169,6 +171,7 @@ export interface BuildReleaseInspectionIssue {
 }
 
 export interface BuildReleaseInspection {
+	runtimeBinding?: Readonly<BuildRuntimeBinding>;
 	manifest: BuildReleaseManifest | null;
 	handoffReceipt: MapBuildHandoffReceipt | null;
 	acceptanceReceipt: BuildAcceptanceReceipt | null;
@@ -1086,6 +1089,7 @@ export function inspectBuildReleasePackage(manifestPath: string): BuildReleaseIn
 		}
 	}
 
+	let runtimeBinding: Readonly<BuildRuntimeBinding> | undefined;
 	const seenArtifactPaths = new Set<string>();
 	for (const name of artifactNames(manifest.artifacts)) {
 		const reference = manifest.artifacts[name]!;
@@ -1123,7 +1127,12 @@ export function inspectBuildReleasePackage(manifestPath: string): BuildReleaseIn
 			});
 			continue;
 		}
-		if (fileSha256(artifactPath) !== reference.sha256) {
+        if (name === 'runtime_binding' && statSync(artifactPath).size > 16_384) {
+          issues.push({code:'runtime_binding_invalid',category:'integrity',path:'$.artifacts.runtime_binding',message:'Runtime binding exceeds its size limit.'});
+          continue;
+        }
+        const artifactBytes = readFileSync(artifactPath);
+		if (createHash('sha256').update(artifactBytes).digest('hex') !== reference.sha256) {
 			issues.push({
 				code: 'artifact_hash_mismatch',
 				category: 'integrity',
@@ -1131,6 +1140,16 @@ export function inspectBuildReleasePackage(manifestPath: string): BuildReleaseIn
 				message: `${CANONICAL_ARTIFACT_FILENAMES[name]} SHA-256 does not match the manifest.`,
 			});
 		}
+        if (name === 'runtime_binding') {
+          try {
+            if (artifactBytes.byteLength > 16_384) throw new Error('binding too large');
+            const parsed = parseBuildRuntimeBinding(JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(artifactBytes)));
+            if (parsed.buildReleaseId !== manifest.releaseId) throw new Error('binding release mismatch');
+            runtimeBinding = parsed;
+          } catch {
+            issues.push({code:'runtime_binding_invalid',category:'integrity',path:'$.artifacts.runtime_binding',message:'Runtime binding is invalid or identifies another Build release.'});
+          }
+        }
 	}
 
 	for (const verifier of ['staging', 'uat'] as const) {
@@ -1159,6 +1178,7 @@ export function inspectBuildReleasePackage(manifestPath: string): BuildReleaseIn
 		acceptanceReceipt,
 		verificationReceipts,
 		evidenceValid,
+		...(evidenceValid && runtimeBinding ? {runtimeBinding} : {}),
 		releaseReady: evidenceValid && !issues.some((issue) => issue.category === 'readiness'),
 		issues,
 	};

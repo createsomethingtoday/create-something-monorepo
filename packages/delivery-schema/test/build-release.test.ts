@@ -628,10 +628,21 @@ test('Build v2 requires a runtime binding covered by the accepted artifact-set d
   assert.throws(()=>parseBuildReleaseManifest({...legacy,artifacts:{...legacy.artifacts,runtime_binding}}));
 });
 
-// This verifies artifact inclusion/integrity; runtime binding semantics and signer
-// verification belong to the subsequent runtime registration verifier.
+// Compiler signature verification remains an independent registration gate.
 test('Build package inspection verifies runtime binding bytes after acceptance', () => {
-  const fixture = writeRepresentativePackage({runtimeBinding:'{"fixture":"binding-integrity-only"}'});
+  const digest='sha256:'+'a'.repeat(64);
+  const binding={schema:'create-something/build-runtime-binding@1',buildReleaseId:'release_example_001',contractSha256:digest,runtimePolicySha256:digest,
+    artifactManifestSha256:digest,runtimeManifestSha256:digest,workflowId:'marketplace',workflowVersion:'1',definitionHash:digest,compilerVersion:'compiler',
+    runtimeManifestSchema:'workflow_runtime_manifest.v0.2',attestationKeyId:'signer',attestationPublicKeyFingerprint:digest,artifactPrefix:'workflow-artifacts/'+'a'.repeat(64)+'/'};
+  const fixture = writeRepresentativePackage({runtimeBinding:JSON.stringify(binding)});
+  assert.deepEqual(inspectBuildReleasePackage(fixture.manifestPath).runtimeBinding,binding);
+  for (const value of [{...binding,buildReleaseId:'other'}, {...binding,unknown:true}, {}]) {
+    const invalid=writeRepresentativePackage({runtimeBinding:JSON.stringify(value)});
+    const result=inspectBuildReleasePackage(invalid.manifestPath);
+    assert.equal(result.evidenceValid,false);
+    assert.equal(result.runtimeBinding,undefined);
+    assert.ok(result.issues.some(issue=>issue.code==='runtime_binding_invalid'));
+  }
   assert.equal(inspectBuildReleasePackage(fixture.manifestPath).evidenceValid,true);
   writeFileSync(join(fixture.root,'artifacts/runtime-binding.json'),'changed');
   const result = inspectBuildReleasePackage(fixture.manifestPath);
