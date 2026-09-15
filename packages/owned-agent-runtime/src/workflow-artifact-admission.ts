@@ -56,6 +56,18 @@ export async function admitWorkflowArtifact(
   try {
     const compiled = JSON.parse(new TextDecoder('utf-8', {fatal:true}).decode(compiledBytes));
     validateWorkflowRuntimeManifestArtifact(compiled, manifest);
+    const agentBytes = files.get('agent-contracts.json');
+    if (!agentBytes) return reject();
+    const agents = JSON.parse(new TextDecoder('utf-8', {fatal:true}).decode(agentBytes));
+    const canonical = (value: unknown): unknown => {
+      if (Array.isArray(value)) return value.map(canonical);
+      if (value && typeof value === 'object') return Object.fromEntries(
+        Object.entries(value).sort(([left],[right]) => left.localeCompare(right))
+          .map(([key,child]) => [key,canonical(child)])
+      );
+      return value;
+    };
+    if (JSON.stringify(canonical(agents)) !== JSON.stringify(canonical(compiled.agentContracts))) return reject();
   } catch { return reject(); }
   if (manifest.schemaVersion !== registration.runtimeManifestSchema ||
       manifest.workflow.id !== registration.workflowId || manifest.workflow.version !== registration.workflowVersion ||

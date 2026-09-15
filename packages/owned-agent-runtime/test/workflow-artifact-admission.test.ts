@@ -94,6 +94,16 @@ test('admits a real signed compiler release and rejects mismatched registration,
     bypassFiles.set('manifest.json',new TextEncoder().encode(JSON.stringify(bypassOuter)));
     bypassFiles.set('attestation.json',new TextEncoder().encode(JSON.stringify(createWorkflowArtifactAttestation(bypassOuter,{privateKey,keyId:'test'}))));
     await assert.rejects(admitWorkflowArtifact({async read(){return bypassFiles;}},{...registration,runtimeManifestSha256:bypassDigest,artifactManifestSha256:workflowArtifactManifestHash(bypassOuter)},policy),/not_admitted/);
+    const agentBytes = new TextEncoder().encode(JSON.stringify({...bundle.agentContracts,agents:[]}));
+    const agentOuter = structuredClone(manifest);
+    agentOuter.files.find((file:{path:string})=>file.path==='agent-contracts.json').hash =
+      'sha256:'+createHash('sha256').update(agentBytes).digest('hex');
+    const agentFiles = new Map(files);
+    agentFiles.set('agent-contracts.json',agentBytes);
+    agentFiles.set('manifest.json',new TextEncoder().encode(JSON.stringify(agentOuter)));
+    agentFiles.set('attestation.json',new TextEncoder().encode(JSON.stringify(createWorkflowArtifactAttestation(agentOuter,{privateKey,keyId:'test'}))));
+    await assert.rejects(admitWorkflowArtifact({async read(){return agentFiles;}},
+      {...registration,artifactManifestSha256:workflowArtifactManifestHash(agentOuter)},policy),/not_admitted/);
     files.get('runtime-manifest.json')![0]^=1;
     await assert.rejects(admitWorkflowArtifact(reader,registration,policy));
   } finally { await rm(root,{recursive:true,force:true}); }
