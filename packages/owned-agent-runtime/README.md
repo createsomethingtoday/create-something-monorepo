@@ -256,3 +256,16 @@ pipeline must use the same content-addressed prefix and enforce write-once
 publication. This reader does not configure R2, prove immutability, authenticate
 a signature, or grant execution. Its byte snapshot must pass the public compiler
 verifier and the registered signer/release/runtime policy before admission.
+
+### Handoff gateway (not registered)
+
+`D1TemplateReviewHandoffGateway` connects persisted Control proof, fixed manifest
+and record-pair registration, requested source scopes, Agency single-use permits,
+and immutable source observation evidence. It rechecks the prepared attempt after
+redemption, invokes only its injected fixed source, and sanitizes ambiguous failures.
+Identical evidence is readable after stop; the gateway never advances a checkpoint.
+The injection boundary requires the owning authenticated Template Review transport.
+No generic URL or tool argument is accepted. Production transport, signed registry
+configuration, hosted executor transitions, and deployment are still required.
+Local gateway tests exercise real SQLite/Control lifecycle with a test source; they
+do not establish authenticated production invocation or submission correlation.

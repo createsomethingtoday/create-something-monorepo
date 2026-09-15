@@ -13,6 +13,7 @@ import {
   type ControlRunExecutor,
   type ControlScope
 } from '../src/control.js';
+import { D1TemplateReviewHandoffGateway, type TemplateReviewHandoffGatewayResult } from '../src/template-review-handoff-gateway.js';
 import { D1ControlSourcePermitAuthority } from '../src/control-source-permit.js';
 import { D1ControlActivationAuthority, D1ControlRunRepository } from '../src/control-store.js';
 import { D1WorkflowRuntimeHandoffProofReader } from '../src/workflow-runtime-handoff-proof.js';
@@ -405,13 +406,13 @@ function checkpointStore(path: string, manifest = runtimeManifest) {
 
 async function persistedTemplateReviewAttempt(
   input: ReturnType<typeof fixture>,
-  manifest = templateReviewRuntimeManifest
+  manifest = templateReviewRuntimeManifest,
+  requested: { requestedTools: string[]; requestedResources: string[] } = { requestedTools: [], requestedResources: [] }
 ) {
   const parent = await input.service.start(scope, owner, {
     activationId: 'activation-a',
     idempotencyKey: 'template-review-parent',
-    requestedTools: [],
-    requestedResources: [],
+    ...requested,
     concurrencyKey: 'template-review-observe'
   });
   const initial = await createWorkflowRuntimeRun(manifest, {
@@ -2230,4 +2231,66 @@ test('source permits preserve authorized URI syntax and 300-character resource n
   const authority = new D1ControlSourcePermitAuthority(d1(input.path));
   assert.ok(await authority.redeem({ activation, runId: 'run@'.padEnd(160, 'r'), stepId: 'step @'.padEnd(160, 's'),
     attemptId: 'attempt@1'.padEnd(240, 'a'), requestSha256: runtimeDigest('a'), tool, resource }));
+});
+
+
+test('handoff gateway binds persisted authority, invokes once, and retains late evidence without resuming stop', async () => {
+  for (const mode of ['healthy', 'late-stop', 'source-error', 'wrong-request', 'suspended']) {
+    const parameters = { assetId: 'recAAAAAAAAAAAAAA', versionId: 'recBBBBBBBBBBBBBB' };
+    const bytes = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify({
+      schema: 'template-handoff-request@1', ...parameters
+    })));
+    const requestSha256 = ('sha256:' + Array.from(new Uint8Array(bytes), b => b.toString(16).padStart(2, '0')).join('')) as RuntimeDigest;
+    const tool = 'template_review_observe_handoff';
+    const resource = 'https://webflow-template-review-mcp.createsomething.workers.dev/mcp';
+    let gateway: D1TemplateReviewHandoffGateway;
+    let result: TemplateReviewHandoffGatewayResult | undefined;
+    let calls = 0;
+    const input = fixture({ supports: () => true, async execute({ run }) {
+      const target = { scope, runId: run.id, stepId: 'observe', attemptId: 'template-review-attempt-1' };
+      result = await gateway.observe(target);
+      await gateway.observe(target);
+      return { type: 'completed', outcome: 'gateway-test', verifier: 'gateway-test' };
+    } });
+    execFileSync('sqlite3', [input.path], { input:
+      readFileSync(new URL('../../agency/migrations/0056_control_source_permits.sql', import.meta.url), 'utf8') +
+      `UPDATE customer_control_activations SET allowed_tools_json=${literal(JSON.stringify([tool]))},
+        allowed_resources_json=${literal(JSON.stringify([resource]))};`
+    });
+    const manifest = structuredClone(templateReviewRuntimeManifest);
+    const first = manifest.steps[0];
+    assert.equal(first.disposition, 'pass');
+    first.capability.id = 'template-review.handoff.observe.v1';
+    first.capability.parameterDigest = mode === 'wrong-request' ? runtimeDigest('f') : requestSha256;
+    const { parent } = await persistedTemplateReviewAttempt(input, manifest,
+      { requestedTools: [tool], requestedResources: [resource] });
+    gateway = new D1TemplateReviewHandoffGateway(d1(input.path),
+      trustedRuntimeManifestAuthority([{ digest: runtimeDigest('8'), manifest }]),
+      new D1ControlSourcePermitAuthority(d1(input.path)), {
+        async observe(actual) {
+          calls++;
+          assert.deepEqual(actual, parameters);
+          if (mode === 'source-error') throw new Error('secret source error');
+          if (mode === 'late-stop') await input.service.stop(scope, owner, parent.id, 'source-stop', 'stop during observation');
+          return { schema: 'create-something/template-handoff-observation@1',
+            dataClassification: 'minimized_status_evidence', requestSha256,
+            observedAt: '2026-08-25T00:00:03.000Z', state: 'confirmed', reason: 'review_ready',
+            nextAction: 'await_review', evidenceSha256: runtimeDigest('b') };
+        }
+      }, { ...parameters, artifactManifestSha256: runtimeDigest('7'), runtimeManifestSha256: runtimeDigest('8') },
+      30_000, () => '2026-08-25T00:00:03.000Z');
+    assert.equal((await gateway.observe({ scope: { ...scope, tenantId: 'other' }, runId: parent.id,
+      stepId: 'observe', attemptId: 'template-review-attempt-1' })).type, 'not_authorized');
+    if (mode === 'suspended') execFileSync('sqlite3', [input.path], {
+      input: "UPDATE customer_control_activations SET status='suspended';"
+    });
+    const process = () => input.service.process(scope, scheduler, parent.id, 'gateway-process', 'activation-a');
+    if (mode === 'late-stop') await assert.rejects(process, ControlRunConflictError);
+    else await process();
+    assert.equal(calls, ['wrong-request', 'suspended'].includes(mode) ? 0 : 1, mode);
+    if (mode === 'healthy' || mode === 'late-stop') assert.equal(result?.type, 'observed', mode);
+    if (mode === 'source-error') assert.equal(result?.type, 'effect_unknown');
+    if (mode === 'wrong-request') assert.equal(result?.type, 'not_authorized');
+    if (mode === 'late-stop') assert.equal((await input.service.get(scope, owner, parent.id)).status, 'stopped');
+  }
 });
