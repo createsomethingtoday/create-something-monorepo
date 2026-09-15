@@ -153,6 +153,7 @@ function fixture(executor?: ControlRunExecutor, runId?: () => string) {
       ${workflowRuntimeRegistrationBindingMigration}
       ${workflowRuntimeApprovalAttestationMigration}
       ${readFileSync(new URL('../migrations/0011_control_handoff_observations.sql', import.meta.url), 'utf8')}
+      ${readFileSync(new URL('../migrations/0012_control_handoff_clock_policy.sql', import.meta.url), 'utf8')}
       CREATE TABLE customer_control_activations (
         id TEXT PRIMARY KEY, activation_version INTEGER, activation_kind TEXT, status TEXT,
         account_id TEXT, tenant_id TEXT, workspace_account_id TEXT,
@@ -1996,7 +1997,8 @@ test('handoff evidence binds the verified tenant attempt and replays without alt
   const store = new D1TemplateReviewHandoffEvidenceStore(
     d1(input.path),
     trustedRuntimeManifestAuthority([{ digest: runtimeDigest('8'), manifest }]),
-    30_000
+    30_000,
+    1000
   );
   const record = {
     scope,
@@ -2010,7 +2012,7 @@ test('handoff evidence binds the verified tenant attempt and replays without alt
       schema: 'create-something/template-handoff-observation@1',
       dataClassification: 'minimized_status_evidence',
       requestSha256: runtimeDigest('f'),
-      observedAt: '2026-08-25T00:00:03.000Z',
+      observedAt: '2026-08-25T00:00:01.500Z',
       state: 'confirmed',
       reason: 'review_ready',
       nextAction: 'await_review',

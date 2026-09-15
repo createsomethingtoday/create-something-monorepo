@@ -61,6 +61,7 @@ export function validateTemplateReviewHandoffObservation(
     dispatchedAt: string;
     receivedAt: string;
     maximumAgeMs: number;
+    maximumClockSkewMs?: number;
   }
 ): TemplateReviewHandoffObservation {
   const parsed = schema.safeParse(value);
@@ -69,7 +70,8 @@ export function validateTemplateReviewHandoffObservation(
       requestSha256: digest,
       dispatchedAt: timestamp,
       receivedAt: timestamp,
-      maximumAgeMs: z.number().int().positive().max(Number.MAX_SAFE_INTEGER)
+      maximumAgeMs: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
+      maximumClockSkewMs: z.number().int().min(0).max(60_000).optional()
     })
     .strict()
     .safeParse(context);
@@ -79,13 +81,14 @@ export function validateTemplateReviewHandoffObservation(
   const dispatched = Date.parse(context.dispatchedAt);
   const received = Date.parse(context.receivedAt);
   const observed = Date.parse(result.observedAt);
+  const skew = context.maximumClockSkewMs ?? 0;
   if (
     result.requestSha256 !== context.requestSha256 ||
     result.state !== expected[0] ||
     result.nextAction !== expected[1] ||
     received < dispatched ||
-    observed < dispatched ||
-    observed > received ||
+    observed < dispatched - skew ||
+    observed > received + skew ||
     received - observed > context.maximumAgeMs
   ) {
     throw new Error('handoff_observation_context_mismatch');

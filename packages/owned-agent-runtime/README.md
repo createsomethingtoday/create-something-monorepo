@@ -236,3 +236,11 @@ Agency, not the runtime database. The table records authorization decisions only
 it does not own runtime steps or checkpoints. No Worker endpoint, source transport,
 or activation provisioning is introduced by this class. Stop handling and source
 receipt persistence remain required gateway responsibilities.
+
+Observation clock skew is an explicit stored policy (`maximumClockSkewMs`, default
+zero, at most 60 seconds). It permits bounded source clock offset around dispatch
+and reception without rewriting the source timestamp or increasing maximum age.
+Migration `0012` preserves existing rows with zero skew and retains immutable
+receipt constraints. Historical reads/replays use the stored policy even after
+host configuration changes. Gateway configuration and remote migration remain
+separate promotion steps.
