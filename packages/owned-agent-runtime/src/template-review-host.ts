@@ -13,6 +13,7 @@ import { WorkflowRuntimeBoundApprovalAuthority } from './workflow-runtime-approv
 import { D1WorkflowRuntimeHandoffProofReader } from './workflow-runtime-handoff-proof.js';
 import { D1WorkflowRuntimeCheckpointStore } from './workflow-runtime-store.js';
 import { D1WorkflowRuntimeSourceBindings } from './workflow-runtime-source-binding.js';
+import { D1VerifiedWorkflowRuntimeReceiptSink } from './workflow-runtime-receipt-sink.js';
 
 /** Internal, fixed-release composition. All configuration and ports come from
  * the owning Worker, never from Control request parameters. This does not itself
@@ -33,7 +34,6 @@ export async function createTemplateReviewHost(input: {
   clock: () => string;
   identity: (actor: ControlActor | null) => WorkflowRuntimeHostPorts['identity'];
   queue: WorkflowRuntimeHostPorts['queue'];
-  receiptSink: WorkflowRuntimeHostPorts['receiptSink'];
 }) {
   const activation = structuredClone(input.activation);
   const policy = structuredClone(input.policy);
@@ -48,6 +48,9 @@ export async function createTemplateReviewHost(input: {
   const storage = new D1WorkflowRuntimeCheckpointStore(input.runtimeDb, manifests,
     manifests.approvalSurfaces, 'verified-build-v2');
   const sourceBindings = new D1WorkflowRuntimeSourceBindings(input.runtimeDb, manifests);
+  const receiptSink = new D1VerifiedWorkflowRuntimeReceiptSink(input.runtimeDb, manifests, {
+    accountId: activation.accountId, tenantId: activation.tenantId, workspaceAccountId: activation.workspaceAccountId
+  });
   const evidence = new D1TemplateReviewHandoffEvidenceStore(input.runtimeDb, manifests,
     input.maximumAgeMs, input.maximumClockSkewMs, true);
   const gateway = new D1TemplateReviewHandoffGateway(input.runtimeDb, manifests,
@@ -62,7 +65,7 @@ export async function createTemplateReviewHost(input: {
     const manifest = await manifests.findByRuntimeManifestSha256(registration!.runtimeManifestSha256 as RuntimeDigest);
     if (!manifest) throw new Error('runtime_manifest_unavailable');
     const host = new ZeroWriteWorkflowRuntimeHost(manifest, { storage, clock: input.clock,
-      identity: input.identity(actor), queue: input.queue, receiptSink: input.receiptSink,
+      identity: input.identity(actor), queue: input.queue, receiptSink,
       executor: undefined as never });
     return { manifest, host };
   }

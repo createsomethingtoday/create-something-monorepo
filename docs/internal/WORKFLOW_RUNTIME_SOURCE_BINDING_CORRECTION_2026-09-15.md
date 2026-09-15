@@ -57,6 +57,12 @@ capability, request pair, mapping, activation or source digest before dispatch.
 Retain stop, late evidence, unknown outcome and approval replay coverage.
 
 `template-review-host.ts` is tested locally but remains unenabled in the Worker.
-Its ports are explicit. The test source and queue/receipt ports are injected;
-durable receipt storage, owned queue behavior and real Identity integration
-remain required before production promotion.
+The signed local test covers an approval gate, exact decision/replay, single
+observation, source loss and late stop. Source and Identity are injected.
+The host uses D1VerifiedWorkflowRuntimeReceiptSink to independently verify
+the immutable ledger receipts committed with each checkpoint. It does not
+introduce a second writer. WorkflowRuntimeQueue verifies checkpoint versions
+and parent state, defers early approval wakes, and drops stale messages; its
+consumer resumes the signed local workflow without duplicate dispatch. Actual
+Cloudflare delivery, initial-parent scheduling, crash-safe wake publication and
+real Identity integration remain required before production promotion.

@@ -1,8 +1,10 @@
 import { createControlRunWorker } from '../src/control-worker.js';
+import { WorkflowRuntimeQueue, type WorkflowRuntimeWake } from '../src/workflow-runtime-queue.js';
 import { createTemplateReviewHost } from '../src/template-review-host.js';
+import { D1VerifiedWorkflowRuntimeReceiptSink } from '../src/workflow-runtime-receipt-sink.js';
 import { D1WorkflowRuntimeSourceBindings, handoffRequestDigest } from '../src/workflow-runtime-source-binding.js';
 import { D1TemplateReviewHandoffEvidenceStore } from '../src/template-review-handoff-store.js';
-import { reduceWorkflowRuntimeRun } from '@createsomething/workflow-runtime';
+import { reduceWorkflowRuntimeRun, planWorkflowRuntimeStep } from '@createsomething/workflow-runtime';
 import { D1WorkflowRuntimeHandoffProofReader } from '../src/workflow-runtime-handoff-proof.js';
 import { createControlRunService, ControlRunConflictError } from '../src/control.js';
 import { D1ControlRunRepository, D1ControlActivationAuthority } from '../src/control-store.js';
@@ -38,13 +40,21 @@ test('admits a real signed compiler release and rejects mismatched registration,
     observationAction.kind = 'read';
     observationAction.title = 'Observe template handoff';
     observationAction.requiredEvidence.push('assetId', 'versionId');
+    const gate = definition.actions.find((action: {id:string}) => action.id === 'run_published_validation');
+    gate.title = 'Authorize handoff observation';
+    gate.kind = 'decision';
+    gate.autonomy = 'approval_required';
+    gate.approval = { required: true, owner: 'account-owner' };
+    delete gate.tool;
     observationAction.tool = { name: 'template_review_observe_handoff', targetSystemId: 'template-review-mcp',
       parameters: [{ name: 'assetId', type: 'string', description: 'Exact registered asset ID.' },
         { name: 'versionId', type: 'string', description: 'Exact registered version ID.' }] };
     const bundle = compileWorkflowDefinition(definition);
     const runtime = createWorkflowRuntimeManifest(bundle, {
       schemaVersion: 'workflow_runtime_manifest_input.v0.1', target: 'create-something/control-runtime.v1',
-      approvalExpiresAt: '2026-12-31T00:00:00.000Z', steps: [{id:'validate',actionId:'validate_submission',dependsOn:[]}]
+      approvalExpiresAt: '2026-12-31T00:00:00.000Z', steps: [
+        {id:'authorize',actionId:'run_published_validation',dependsOn:[]},
+        {id:'validate',actionId:'validate_submission',dependsOn:['authorize']}]
     });
     const {privateKey, publicKey} = generateKeyPairSync('ed25519');
     await writeCompiledWorkflowArtifacts(bundle, join(root,'release'), undefined, {privateKey,keyId:'test'}, runtime);
@@ -173,7 +183,7 @@ test('admits a real signed compiler release and rejects mismatched registration,
       await assert.rejects(legacyStore.apply({ scope: activation, run: admittedRun, expectedVersion: admittedRun.version,
         idempotencyKey: 'legacy-v2-update', commandDigest: 'f'.repeat(64) }), /selected binding mode/);
       const sourceBindings = new D1WorkflowRuntimeSourceBindings(database, manifests);
-      const signedStep = verifiedRuntime.steps[0];
+      const signedStep = verifiedRuntime.steps.find(step => step.id === 'validate')!;
       assert.equal(signedStep.disposition, 'pass');
       const sourceInput = { scope: activation, runId: publication.runId, stepId: signedStep.id,
         capabilityId: signedStep.capability.id, capabilityParameterSha256: signedStep.capability.parameterDigest,
@@ -219,10 +229,23 @@ test('admits a real signed compiler release and rejects mismatched registration,
       }));
       const mcpBody=await mcp!.json() as {result:{structuredContent:unknown}};
       assert.deepEqual(mcpBody.result.structuredContent,httpBody);
-      const prepared = await reduceWorkflowRuntimeRun(verifiedRuntime, admittedRun, {
+      const approvalPlan = await planWorkflowRuntimeStep(verifiedRuntime, admittedRun);
+      assert.equal(approvalPlan.type, 'wait');
+      const waiting = await reduceWorkflowRuntimeRun(verifiedRuntime, admittedRun, {
+        type: 'wait_created', stepId: approvalPlan.stepId, approval: approvalPlan.approval,
+        observedAt: '2026-09-15T00:00:00.000Z' });
+      await checkpoints.apply({ scope: proofScope, run: waiting, expectedVersion: admittedRun.version,
+        idempotencyKey: 'mapped-wait', commandDigest: '1'.repeat(64) });
+      const authorized = await reduceWorkflowRuntimeRun(verifiedRuntime, waiting, {
+        type: 'approval_decided', stepId: approvalPlan.stepId, approvalId: approvalPlan.approval.id,
+        approvalBindingSha256: approvalPlan.approval.bindingSha256, decision: 'approved',
+        actorSubject: 'fixture-operator', actorRole: 'account_owner', observedAt: '2026-09-15T00:00:00.000Z' });
+      await checkpoints.apply({ scope: proofScope, run: authorized, expectedVersion: waiting.version,
+        idempotencyKey: 'mapped-approve', commandDigest: '2'.repeat(64) });
+      const prepared = await reduceWorkflowRuntimeRun(verifiedRuntime, authorized, {
         type: 'effect_intent', stepId: signedStep.id, attemptId: 'mapped-attempt',
         capability: signedStep.capability, observedAt: '2026-09-15T00:00:01.000Z' });
-      await checkpoints.apply({ scope: activation, run: prepared, expectedVersion: admittedRun.version,
+      await checkpoints.apply({ scope: proofScope, run: prepared, expectedVersion: authorized.version,
         idempotencyKey: 'mapped-intent', commandDigest: 'c'.repeat(64) });
       const evidenceStore = new D1TemplateReviewHandoffEvidenceStore(database, manifests, 30_000, 0, true);
       const observationInput = { scope: activation, runId: parent.id, stepId: signedStep.id, attemptId: 'mapped-attempt',
@@ -241,9 +264,10 @@ test('admits a real signed compiler release and rejects mismatched registration,
       await assert.rejects(new D1WorkflowRuntimeHandoffProofReader(database, manifests, 30_000, 'verified-build-v2').find(publication), /attempt_mismatch/);
       execFileSync('sqlite3', [databasePath], { input: await readFile(new URL('../../agency/migrations/0056_control_source_permits.sql', import.meta.url), 'utf8') });
       let sourceCalls = 0;
+      let scheduledQueue: WorkflowRuntimeQueue;
+      const wakes: WorkflowRuntimeWake[] = [];
       let sourceMode: 'healthy' | 'unknown' | 'late-stop' = 'healthy';
       let stopDuringSource: (() => Promise<void>) | undefined;
-      const receiptVersions: number[] = [];
       const host = await createTemplateReviewHost({ runtimeDb: database, agencyDb: database, activation, policy,
         artifacts: reader, parameters: { assetId: sourceInput.assetId, versionId: sourceInput.versionId },
         observationStep: { stepId: signedStep.id, capabilityId: signedStep.capability.id,
@@ -259,27 +283,57 @@ test('admits a real signed compiler release and rejects mismatched registration,
         identity: actor => ({ async assert(scope, subject) {
           assert.deepEqual(scope, proofScope); assert.equal(subject, actor?.subject ?? null);
           return actor;
-        } }), queue: { async enqueue() {} }, receiptSink: { async write(run) { receiptVersions.push(run.version); } } });
+        } }), queue: { async enqueue(message) { await scheduledQueue.enqueue(message); } } });
       assert.equal(host.executor.supports({ ...activation, contractSha256: 'f'.repeat(64) }), false);
       let executionId = 0;
       const executingControl = createControlRunService({ repository: new D1ControlRunRepository(database),
         activations: new D1ControlActivationAuthority(database), executor: host.executor,
         runtimeApprovals: host.runtimeApprovals, id: () => `signed-execution-${++executionId}`,
         clock: () => new Date('2026-09-15T00:00:05.000Z') });
+      scheduledQueue = new WorkflowRuntimeQueue({ scope: proofScope, checkpoints, parents: new D1ControlRunRepository(database),
+        async send(message) { wakes.push(message); assert.equal(await scheduledQueue.consume(message), 'retry', 'wake before parent transition must wait'); },
+        process: (runId, key) => executingControl.process(proofScope, { subject: 'fixture-scheduler', role: 'control_scheduler' }, runId, key, activation.id) });
       const execution = await executingControl.start(proofScope, { subject: 'fixture-operator', role: 'account_owner' },
         { activationId: activation.id, idempotencyKey: 'signed-execution-start', concurrencyKey: 'signed-execution',
           requestedTools: activation.allowedTools, requestedResources: activation.allowedResources });
-      const completed = await executingControl.process(proofScope, { subject: 'fixture-scheduler', role: 'control_scheduler' },
-        execution.id, 'signed-execution-process', activation.id);
+      async function approveSignedRun(runId: string) {
+        const before: number = sourceCalls;
+        const waitingParent = await executingControl.process(proofScope, { subject: 'fixture-scheduler', role: 'control_scheduler' },
+          runId, `${runId}-wait`, activation.id);
+        assert.equal(waitingParent.status, 'waiting_for_approval');
+        assert.equal(sourceCalls, before, 'signed wait cannot invoke source');
+        const waitingProof = await host.proofs.find({ scope: proofScope, runId });
+        assert.equal(waitingProof?.runtime.run.status, 'waiting_for_approval');
+        const waitingCheckpoint = (await checkpoints.find(proofScope, runId))!;
+        const step = waitingCheckpoint.steps.find(step => step.id === 'authorize')!;
+        const binding = { step_id: step.id, approval_id: step.approval!.id,
+          binding_sha256: step.approval!.bindingSha256, checkpoint_version: waitingProof!.runtime.run.version };
+        const owner = { subject: 'fixture-operator', role: 'account_owner' as const };
+        await assert.rejects(executingControl.approve(proofScope, owner, runId, `${runId}-approve`, 'explicit observation approval'), /Exact runtime approval/);
+        await executingControl.approve(proofScope, owner, runId, `${runId}-approve`, 'explicit observation approval', binding);
+        await executingControl.approve(proofScope, owner, runId, `${runId}-approve`, 'explicit observation approval', binding);
+        assert.equal(sourceCalls, before);
+      }
+      await approveSignedRun(execution.id);
+      const approvedWake = wakes.at(-1)!;
+      assert.equal(await scheduledQueue.consume(approvedWake), 'ack');
+      const completed = await executingControl.get(proofScope, { subject: 'fixture-operator', role: 'account_owner' }, execution.id);
       assert.equal(completed.status, 'completed');
       assert.equal(sourceCalls, 1);
       const executionProof = await host.proofs.find({ scope: proofScope, runId: execution.id });
       assert.equal(executionProof?.runtime.run.status, 'completed');
       assert.equal(executionProof?.handoffObservations.length, 1);
       assert.equal(executionProof?.sourceBindings?.[0].capability_id, signedStep.capability.id);
-      assert.equal(receiptVersions.length, 3, 'admission, intent and success reach the receipt sink');
-      await executingControl.process(proofScope, { subject: 'fixture-scheduler', role: 'control_scheduler' },
-        execution.id, 'signed-execution-process', activation.id);
+      const completedCheckpoint = (await checkpoints.find(proofScope, execution.id))!;
+      const sink = new D1VerifiedWorkflowRuntimeReceiptSink(database, manifests, proofScope);
+      await sink.write(completedCheckpoint);
+      assert.equal(executionProof!.runtime.receipts.length, completedCheckpoint.receipts.length);
+      await assert.rejects(new D1VerifiedWorkflowRuntimeReceiptSink(database, manifests,
+        { ...proofScope, tenantId: 'other' }).write(completedCheckpoint), /ledger_mismatch/);
+      const corrupted = structuredClone(completedCheckpoint);
+      corrupted.receipts[0].receiptSha256 = ('sha256:' + 'f'.repeat(64)) as RuntimeDigest;
+      await assert.rejects(sink.write(corrupted));
+      for (const wake of wakes) assert.equal(await scheduledQueue.consume(wake), 'ack');
       assert.equal(sourceCalls, 1, 'signed execution replay never calls the source twice');
       for (const mode of ['unknown', 'late-stop'] as const) {
         sourceMode = mode;
@@ -291,6 +345,7 @@ test('admits a real signed compiler release and rejects mismatched registration,
           await executingControl.stop(proofScope, { subject: 'fixture-operator', role: 'account_owner' },
             interrupted.id, 'signed-late-stop', 'operator stopped during source read');
         };
+        await approveSignedRun(interrupted.id);
         const process = () => executingControl.process(proofScope, { subject: 'fixture-scheduler', role: 'control_scheduler' },
           interrupted.id, `signed-${mode}-process`, activation.id);
         if (mode === 'late-stop') await assert.rejects(process, ControlRunConflictError);
@@ -394,7 +449,7 @@ test('admits a real signed compiler release and rejects mismatched registration,
     // Keep the allowlisted pass capability, but point it at an approval-required
     // compiled action. Re-sign all modified hashes to isolate semantic validation.
     const approvalBypass = structuredClone(runtime);
-    approvalBypass.steps[0].actionId = 'approve_template';
+    approvalBypass.steps.find((step: {disposition:string}) => step.disposition === 'pass')!.actionId = 'approve_template';
     const bypassBytes = new TextEncoder().encode(JSON.stringify(approvalBypass));
     const bypassDigest = 'sha256:'+createHash('sha256').update(bypassBytes).digest('hex');
     const bypassOuter = structuredClone(manifest);
