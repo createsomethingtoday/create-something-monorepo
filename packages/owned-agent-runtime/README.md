@@ -278,3 +278,11 @@ store uses version 2. SQL also enforces the version 2 age budget. Do not roll
 back the writer to one that omits this policy column after promotion; the legacy
 default preserves historical rows, and a trigger rejects new version-1 inserts
 (including old writers that omit the column).
+
+`AuthenticatedTemplateReviewHandoffSource` is the fixed MCP transport for the
+handoff gateway. It uses the repository-pinned SDK, accepts tokens only from an
+injected credential owner, rejects redirects, disables reconnect retries, bounds
+network/tool calls, and sanitizes errors. The source result envelope is decoded
+before the gateway validates observation evidence. It neither provisions OAuth
+nor stores tokens. Hosted credential binding and authenticated production
+invocation remain separate verification requirements.

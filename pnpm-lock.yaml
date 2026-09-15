@@ -3665,6 +3665,9 @@ importers:
       '@createsomething/workflow-runtime':
         specifier: workspace:*
         version: link:../workflow-runtime
+      '@modelcontextprotocol/sdk':
+        specifier: 1.26.0
+        version: 1.26.0(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(zod@4.3.6)
       '@openai/agents':
         specifier: ^0.4.10
         version: 0.4.10(@aws-sdk/credential-provider-node@3.972.81)(@cfworker/json-schema@4.1.1)(@smithy/signature-v4@5.7.3)(bufferutil@4.1.0)(utf-8-validate@6.0.6)(ws@8.21.3(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
