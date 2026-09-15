@@ -20,7 +20,8 @@
     "hono": "^4.12.34",
     "jose": "^6.1.3",
     "zod": "^4.3.6",
-    "@createsomething/workflow-compiler": "workspace:*"
+    "@createsomething/workflow-compiler": "workspace:*",
+    "@create-something/delivery-schema": "workspace:*"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260621.1",

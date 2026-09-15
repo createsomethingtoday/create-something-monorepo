@@ -268,3 +268,18 @@ implement that registry, activation check, revocation service or hosted executor
 Admission also verifies each correlated governance artifact hash, requires an
 explicit governed-interaction host contract and compatible public compatibility
 decision, and deeply freezes the returned runtime manifest before sharing it.
+
+### Accepted Build runtime candidate verification
+
+`verifyBuildRuntimeRegistration` is an operator-side filesystem verifier. It
+reads a ready Build v2 package, compares its inspected delivery manifest,
+accepted artifact set, handoff, contract and policy with a trusted frozen
+activation, then invokes signed compiler admission under independent host policy.
+The immutable candidate preserves the separate Build manifest, binding artifact,
+and compiler inventory hashes. It does not register or activate anything.
+
+The owning Agency writer must load the activation from Agency and revalidate it
+transactionally when inserting the candidate. Do not expose this function as a
+caller-supplied activation endpoint or import its filesystem path into the Worker.
+Registration schema and Control receipt binding still require the versioned
+Build/compiler relation correction before production use.

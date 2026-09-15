@@ -5,6 +5,10 @@ import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createWorkflowArtifactAttestation, workflowArtifactManifestHash, compileWorkflowDefinition, createWorkflowRuntimeManifest, writeCompiledWorkflowArtifacts, verifyWorkflowArtifactBundle } from '@createsomething/workflow-compiler';
+import { verifyBuildRuntimeRegistration } from '../src/build-runtime-registration-verifier.js';
+import { writeRepresentativePackage } from '../../delivery-schema/test/build-release.fixture.js';
+import { inspectBuildReleasePackage } from '@create-something/delivery-schema/build-release';
+import type { FrozenControlActivation } from '../src/control.js';
 import { admitWorkflowArtifact, type WorkflowArtifactAdmissionPolicy } from '../src/workflow-artifact-admission.js';
 
 test('admits a real signed compiler release and rejects mismatched registration, policy and bytes', async () => {
@@ -39,6 +43,43 @@ test('admits a real signed compiler release and rejects mismatched registration,
       capabilities:runtime.steps.flatMap(step=>step.disposition==='pass'?[step.capability.id]:[])
     };
     const reader={async read(){return files;}};
+    const binding = {
+      ...registration, schema:'create-something/build-runtime-binding@1',
+      buildReleaseId:'release_example_001', contractSha256:'sha256:'+'a'.repeat(64),
+      runtimePolicySha256:'sha256:'+'b'.repeat(64),
+      artifactPrefix:`workflow-artifacts/${registration.artifactManifestSha256.slice(7)}/`
+    };
+    const build = writeRepresentativePackage({runtimeBinding:JSON.stringify(binding)});
+    try {
+      const inspected = inspectBuildReleasePackage(build.manifestPath);
+      const buildManifest = inspected.manifest!;
+      const activation: FrozenControlActivation = {
+        id:'activation-test', activationVersion:1, activationKind:'initial', status:'active',
+        accountId:'account_example',tenantId:'tenant_example',workspaceAccountId:'workspace_example',
+        mapId:'map_example_001',mapVersionId:'map-version-test',mapVersion:3,mapCanvasSha256:'c'.repeat(64),
+        handoffId:'handoff_example_001',handoffReceiptSha256:buildManifest.handoff.receiptSha256,
+        buildReleaseId:buildManifest.releaseId,buildManifestSha256:inspected.manifestSha256!,
+        buildArtifactSetSha256:inspected.acceptanceReceipt!.artifactSetSha256,
+        buildAcceptanceReceiptId:inspected.acceptanceReceipt!.receiptId,
+        buildAcceptanceReceiptSha256:buildManifest.acceptance.receiptSha256,
+        contractSha256:'a'.repeat(64),policySha256:'b'.repeat(64),policyVersion:'test',
+        entitlementSnapshotSha256:'d'.repeat(64),allowedTools:[],allowedResources:[]
+      };
+      const verified = await verifyBuildRuntimeRegistration(build.manifestPath,activation,reader,policy);
+      assert.equal(verified.buildManifestSha256, inspected.manifestSha256);
+      assert.notEqual('sha256:'+verified.buildManifestSha256, verified.binding.artifactManifestSha256);
+      assert.equal(verified.binding.artifactManifestSha256,registration.artifactManifestSha256);
+      assert.equal(verified.bindingSha256,'sha256:'+buildManifest.artifacts.runtime_binding!.sha256);
+      assert.ok(Object.isFrozen(verified) && Object.isFrozen(verified.binding));
+      for (const field of ['status','accountId','workspaceAccountId','mapId','mapVersion','handoffId',
+        'handoffReceiptSha256','buildReleaseId','buildManifestSha256','buildArtifactSetSha256',
+        'buildAcceptanceReceiptId','buildAcceptanceReceiptSha256','contractSha256','policySha256']) {
+        await assert.rejects(verifyBuildRuntimeRegistration(build.manifestPath,{...activation,[field]:'wrong'},reader,policy),/not_verified/);
+      }
+      await assert.rejects(verifyBuildRuntimeRegistration(build.manifestPath,activation,reader,{...policy,signer:{...policy.signer,keyId:'other'}}));
+      const missing = new Map(files); missing.delete('runtime-manifest.json');
+      await assert.rejects(verifyBuildRuntimeRegistration(build.manifestPath,activation,{async read(){return missing;}},policy));
+    } finally { await rm(build.root,{recursive:true,force:true}); }
     const admitted = await admitWorkflowArtifact(reader,registration,policy);
     assert.deepEqual(admitted,runtime);
     assert.throws(() => { admitted.workflow.id = 'mutated'; }, TypeError);
