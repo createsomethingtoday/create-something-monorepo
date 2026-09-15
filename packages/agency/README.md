@@ -766,3 +766,12 @@ pnpm --filter @create-something/agency deploy
 - [The MCP-First Thesis](../../docs/MCP_FIRST_THESIS.md) — Strategic context
 - [CLAUDE.md](../../CLAUDE.md) — Monorepo standards and philosophy
 - [WORKWAY](https://workway.co) — The vertical play (construction via Procore)
+
+Pending migration `0057_control_runtime_registrations.sql` uses registration
+version 2. It records the accepted delivery Build manifest and artifact-set
+hashes separately from the compiler inventory and runtime-binding artifact.
+Only the owning verified Build writer may insert after checking the binding
+under accepted evidence and independently verifying compiler signature/policy.
+The SQL guard rechecks the active activation and exact delivery identities;
+it does not perform cryptographic verification. Legacy equality-only inserts
+are rejected. This draft migration is not production promotion evidence.
