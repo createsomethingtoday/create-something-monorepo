@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { execFileSync } from 'node:child_process';
+import { execFile, execFileSync } from 'node:child_process';
 import { mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -8,10 +8,12 @@ import test from 'node:test';
 import {
   ControlRunConflictError,
   createControlRunService,
+  type FrozenControlActivation,
   type ControlActor,
   type ControlRunExecutor,
   type ControlScope
 } from '../src/control.js';
+import { D1ControlSourcePermitAuthority } from '../src/control-source-permit.js';
 import { D1ControlActivationAuthority, D1ControlRunRepository } from '../src/control-store.js';
 import { D1WorkflowRuntimeHandoffProofReader } from '../src/workflow-runtime-handoff-proof.js';
 import { D1TemplateReviewHandoffEvidenceStore } from '../src/template-review-handoff-store.js';
@@ -2145,4 +2147,85 @@ test('reconciliation proof rejects a source dispatch change without a run versio
   const stable = await reader.find({ scope, runId: parent.id });
   assert.equal(stable?.runtime.run.version, prepared.version);
   assert.equal(stable?.runtime.capabilityObservations.length, 1);
+});
+
+
+test('Agency source permit atomically matches frozen authority and never redeems twice', async () => {
+  const input = fixture();
+  execFileSync('sqlite3', [input.path], {
+    input: readFileSync(new URL('../../agency/migrations/0056_control_source_permits.sql', import.meta.url), 'utf8')
+  });
+  const activation = await activeControlActivationAuthority(input.path).findActive(scope, 'activation-a');
+  assert.ok(activation);
+  let id = 0;
+  const authority = new D1ControlSourcePermitAuthority(d1(input.path),
+    () => new Date('2026-09-14T00:00:00.000Z'), () => `permit-${++id}`);
+  const request = { activation, runId: 'run-a', stepId: 'observe', attemptId: 'attempt-a',
+    requestSha256: runtimeDigest('a'), tool: 'mcp:read', resource: 'resource:public' };
+  for (const key of Object.keys(activation) as (keyof typeof activation)[]) {
+    const altered: FrozenControlActivation = structuredClone(activation);
+    const old = altered[key];
+    Object.assign(altered, { [key]: Array.isArray(old) ? [...old, 'extra'] :
+      typeof old === 'number' ? old + 1 : `${old}-other` });
+    assert.equal(await authority.redeem({ ...request, activation: altered }), undefined, key);
+  }
+  assert.equal(await authority.redeem({ ...request, tool: 'mcp:write' }), undefined);
+  assert.equal(await authority.redeem({ ...request, resource: 'resource:private' }), undefined);
+  const permit = await authority.redeem(request);
+  assert.ok(permit);
+  assert.equal(await authority.redeem(request), undefined);
+  assert.equal(await authority.redeem({ ...request, requestSha256: runtimeDigest('b') }), undefined);
+  let releaseRace: () => void = () => undefined;
+  const raceReady = new Promise<void>(resolve => { releaseRace = resolve; });
+  let arrivals = 0;
+  const raceDatabase = {
+    prepare(sql: string) {
+      return { bind(...values: unknown[]) {
+        return { async first() {
+          if (++arrivals === 2) releaseRace();
+          await raceReady;
+          // Two independent processes now contend for the same SQLite writer.
+          return new Promise((resolve, reject) => {
+            const child = execFile('sqlite3', ['-json', '-bail', '-cmd', '.timeout 5000', input.path],
+              { encoding: 'utf8' }, (error, stdout) => {
+                if (error) reject(error);
+                else resolve((JSON.parse(stdout.trim() || '[]') as unknown[])[0] ?? null);
+              });
+            child.stdin?.end(`PRAGMA foreign_keys=ON; ${bindSql(sql, values)};`);
+          });
+        } };
+      } };
+    }
+  } as unknown as D1Database;
+  const raceAuthority = new D1ControlSourcePermitAuthority(raceDatabase);
+  const competing = await Promise.all([
+    raceAuthority.redeem({ ...request, attemptId: 'competing' }),
+    raceAuthority.redeem({ ...request, attemptId: 'competing' })
+  ]);
+  assert.equal(arrivals, 2);
+  assert.equal(competing.filter(Boolean).length, 1);
+  const runSql = (sql: string) => execFileSync('sqlite3', ['-bail', input.path], { input: sql, stdio: 'pipe' });
+  assert.throws(() => runSql("UPDATE customer_control_source_permits SET tool = 'other';"));
+  assert.throws(() => runSql('DELETE FROM customer_control_source_permits;'));
+  assert.throws(() => runSql('INSERT OR REPLACE INTO customer_control_source_permits SELECT * FROM customer_control_source_permits;'));
+  runSql("UPDATE customer_control_activations SET status='suspended' WHERE id='activation-a';");
+  assert.equal(await authority.redeem({ ...request, attemptId: 'attempt-b' }), undefined);
+});
+
+
+test('source permits preserve authorized URI syntax and 300-character resource names', async () => {
+  const input = fixture();
+  const resource = 'https://example.test/items?cursor=next&filter=%20#'.padEnd(300, 'x');
+  assert.equal(resource.length, 300);
+  const tool = 'tool?' + 'y'.repeat(295);
+  execFileSync('sqlite3', [input.path], { input:
+    readFileSync(new URL('../../agency/migrations/0056_control_source_permits.sql', import.meta.url), 'utf8') +
+    `UPDATE customer_control_activations SET allowed_tools_json=${literal(JSON.stringify([tool]))},
+      allowed_resources_json=${literal(JSON.stringify([resource]))};`
+  });
+  const activation = await activeControlActivationAuthority(input.path).findActive(scope, 'activation-a');
+  assert.ok(activation);
+  const authority = new D1ControlSourcePermitAuthority(d1(input.path));
+  assert.ok(await authority.redeem({ activation, runId: 'run@'.padEnd(160, 'r'), stepId: 'step @'.padEnd(160, 's'),
+    attemptId: 'attempt@1'.padEnd(240, 'a'), requestSha256: runtimeDigest('a'), tool, resource }));
 });
