@@ -371,3 +371,11 @@ and requires the registered definition hash and canonical compiled bundle to
 match exactly. This catches consistently omitted assignments across generated
 artifacts. A historical compiler output that the pinned host compiler cannot
 reproduce is rejected; an allowlisted version alone does not bypass this check.
+
+`AuthenticatedTemplateReviewHandoffSource` is the fixed MCP transport for the
+handoff gateway. It uses the repository-pinned SDK, accepts tokens only from an
+injected credential owner, rejects redirects, disables reconnect retries, bounds
+network/tool calls, and sanitizes errors. The source result envelope is decoded
+before the gateway validates observation evidence. It neither provisions OAuth
+nor stores tokens. Hosted credential binding and authenticated production
+invocation remain separate verification requirements.
