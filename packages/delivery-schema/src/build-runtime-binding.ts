@@ -1,9 +1,9 @@
 /** Accepted Build artifact. It deliberately omits its containing Build manifest
- * hash to avoid a circular digest; Agency freezes that separate identity. */
+ * and activation contract hashes to avoid circular digests; Agency freezes
+ * those separate identities after Build acceptance. */
 export interface BuildRuntimeBinding {
   schema: 'create-something/build-runtime-binding@1';
   buildReleaseId: string;
-  contractSha256: string;
   runtimePolicySha256: string;
   artifactManifestSha256: string;
   runtimeManifestSha256: string;
@@ -17,7 +17,7 @@ export interface BuildRuntimeBinding {
   artifactPrefix: string;
 }
 
-const digestFields = ['contractSha256','runtimePolicySha256','artifactManifestSha256',
+const digestFields = ['runtimePolicySha256','artifactManifestSha256',
   'runtimeManifestSha256','definitionHash','attestationPublicKeyFingerprint'] as const;
 const textFields = ['buildReleaseId','workflowId','workflowVersion','compilerVersion','attestationKeyId'] as const;
 const fields = ['schema','runtimeManifestSchema','artifactPrefix',...digestFields,...textFields];

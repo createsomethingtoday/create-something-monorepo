@@ -55,3 +55,9 @@ filesystem read. Handoff, verification, and acceptance receipts are each hashed
 and parsed from one byte buffer. The digest identifies inspected input; consumers
 must still require `releaseReady`, accepted evidence, and independent runtime
 signature and policy verification before registration.
+
+The runtime binding excludes the activation `contractSha256`: Agency computes
+that contract from `{source, policy}` after the accepted Build hashes are known.
+Including it in the accepted binding would create a hash cycle. The pre-Build
+runtime policy digest remains in the binding. Registration must obtain the
+activation contract digest from Agency and check it at insertion.

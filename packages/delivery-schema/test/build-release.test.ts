@@ -631,7 +631,7 @@ test('Build v2 requires a runtime binding covered by the accepted artifact-set d
 // Compiler signature verification remains an independent registration gate.
 test('Build package inspection verifies runtime binding bytes after acceptance', () => {
   const digest='sha256:'+'a'.repeat(64);
-  const binding={schema:'create-something/build-runtime-binding@1',buildReleaseId:'release_example_001',contractSha256:digest,runtimePolicySha256:digest,
+  const binding={schema:'create-something/build-runtime-binding@1',buildReleaseId:'release_example_001',runtimePolicySha256:digest,
     artifactManifestSha256:digest,runtimeManifestSha256:digest,workflowId:'marketplace',workflowVersion:'1',definitionHash:digest,compilerVersion:'compiler',
     runtimeManifestSchema:'workflow_runtime_manifest.v0.2',attestationKeyId:'signer',attestationPublicKeyFingerprint:digest,artifactPrefix:'workflow-artifacts/'+'a'.repeat(64)+'/'};
   const fixture = writeRepresentativePackage({runtimeBinding:JSON.stringify(binding)});
