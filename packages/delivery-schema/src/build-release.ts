@@ -1,8 +1,10 @@
+import { parseBuildRuntimeBinding, type BuildRuntimeBinding } from './build-runtime-binding.js';
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, realpathSync, statSync } from 'node:fs';
 import { basename, dirname, resolve, sep } from 'node:path';
 
 export const BUILD_RELEASE_SCHEMA = 'create-something/build-release-manifest@1' as const;
+export const BUILD_RUNTIME_RELEASE_SCHEMA = 'create-something/build-release-manifest@2' as const;
 export const MAP_BUILD_HANDOFF_RECEIPT_SCHEMA =
 	'create-something/map-to-build-handoff-receipt@1' as const;
 export const BUILD_ACCEPTANCE_RECEIPT_SCHEMA =
@@ -34,8 +36,19 @@ export interface BuildReleaseVerifierReference {
 	status: BuildReleaseVerifierStatus;
 }
 
-export interface BuildReleaseManifest {
-	schema: typeof BUILD_RELEASE_SCHEMA;
+type LegacyBuildArtifacts = Record<BuildReleaseArtifactName, BuildReleaseArtifactReference> & { runtime_binding?: never };
+type RuntimeBuildArtifacts = Record<BuildReleaseArtifactName, BuildReleaseArtifactReference> & { runtime_binding: BuildReleaseArtifactReference };
+export type BuildReleaseArtifactSet = LegacyBuildArtifacts | RuntimeBuildArtifacts;
+
+function artifactNames(artifacts: BuildReleaseArtifactSet): Array<BuildReleaseArtifactName | 'runtime_binding'> {
+ return artifacts.runtime_binding === undefined ? [...BUILD_RELEASE_ARTIFACTS] : [...BUILD_RELEASE_ARTIFACTS, 'runtime_binding'];
+}
+
+export type BuildReleaseManifest = BuildReleaseManifestBase & (
+  | {schema: typeof BUILD_RELEASE_SCHEMA; artifacts: LegacyBuildArtifacts}
+  | {schema: typeof BUILD_RUNTIME_RELEASE_SCHEMA; artifacts: RuntimeBuildArtifacts}
+);
+interface BuildReleaseManifestBase {
 	releaseId: string;
 	createdAt: string;
 	handoff: {
@@ -47,7 +60,6 @@ export interface BuildReleaseManifest {
 		accountId: string;
 		workspaceAccountId: string;
 	};
-	artifacts: Record<BuildReleaseArtifactName, BuildReleaseArtifactReference>;
 	verification: {
 		staging: BuildReleaseVerifierReference;
 		uat: BuildReleaseVerifierReference;
@@ -152,7 +164,8 @@ export type BuildReleaseInspectionIssueCode =
 	| 'verifier_identity_mismatch'
 	| 'verifier_sequence_invalid'
 	| 'verifier_failed'
-	| 'release_rejected';
+	| 'release_rejected'
+	| 'runtime_binding_invalid';
 
 export interface BuildReleaseInspectionIssue {
 	code: BuildReleaseInspectionIssueCode;
@@ -162,6 +175,9 @@ export interface BuildReleaseInspectionIssue {
 }
 
 export interface BuildReleaseInspection {
+	/** Digest of the exact manifest bytes inspected; absent if parsing failed. */
+	manifestSha256?: string;
+	runtimeBinding?: Readonly<BuildRuntimeBinding>;
 	manifest: BuildReleaseManifest | null;
 	handoffReceipt: MapBuildHandoffReceipt | null;
 	acceptanceReceipt: BuildAcceptanceReceipt | null;
@@ -418,7 +434,8 @@ export function parseBuildReleaseManifest(input: unknown): BuildReleaseManifest 
 		],
 		issues,
 	);
-	const artifacts = objectAt(root.artifacts, '$.artifacts', BUILD_RELEASE_ARTIFACTS, issues);
+	const names = root.schema === BUILD_RUNTIME_RELEASE_SCHEMA ? [...BUILD_RELEASE_ARTIFACTS, 'runtime_binding'] : [...BUILD_RELEASE_ARTIFACTS];
+	const artifacts = objectAt(root.artifacts, '$.artifacts', names, issues);
 	const verification = objectAt(root.verification, '$.verification', ['staging', 'uat'], issues);
 	const release = objectAt(
 		root.release,
@@ -440,8 +457,14 @@ export function parseBuildReleaseManifest(input: unknown): BuildReleaseManifest 
 		issues,
 	);
 
+	const schema = literalAt(root.schema, '$.schema', [BUILD_RELEASE_SCHEMA, BUILD_RUNTIME_RELEASE_SCHEMA], issues);
+	const legacyArtifacts = Object.fromEntries(BUILD_RELEASE_ARTIFACTS.map(name =>
+      [name, parseArtifact(artifacts[name], `$.artifacts.${name}`, issues)]
+    )) as Record<BuildReleaseArtifactName, BuildReleaseArtifactReference>;
 	const manifest: BuildReleaseManifest = {
-		schema: literalAt(root.schema, '$.schema', [BUILD_RELEASE_SCHEMA], issues),
+      ...(schema === BUILD_RUNTIME_RELEASE_SCHEMA
+        ? {schema, artifacts:{...legacyArtifacts, runtime_binding:parseArtifact(artifacts.runtime_binding, '$.artifacts.runtime_binding', issues)}}
+        : {schema, artifacts:legacyArtifacts}),
 		releaseId: stringAt(root.releaseId, '$.releaseId', issues),
 		createdAt: isoTimestampAt(root.createdAt, '$.createdAt', issues),
 		handoff: {
@@ -462,12 +485,6 @@ export function parseBuildReleaseManifest(input: unknown): BuildReleaseManifest 
 				issues,
 			),
 		},
-		artifacts: Object.fromEntries(
-			BUILD_RELEASE_ARTIFACTS.map((name) => [
-				name,
-				parseArtifact(artifacts[name], `$.artifacts.${name}`, issues),
-			]),
-		) as Record<BuildReleaseArtifactName, BuildReleaseArtifactReference>,
 		verification: {
 			staging: parseVerifierReference(verification.staging, '$.verification.staging', issues),
 			uat: parseVerifierReference(verification.uat, '$.verification.uat', issues),
@@ -731,24 +748,22 @@ export function parseBuildVerificationReceipt(input: unknown): BuildVerification
 	return receipt;
 }
 
-const CANONICAL_ARTIFACT_FILENAMES: Record<BuildReleaseArtifactName, string> = {
+const CANONICAL_ARTIFACT_FILENAMES: Record<BuildReleaseArtifactName | 'runtime_binding', string> = {
 	mcp_contract: 'mcp_contract.yaml',
 	agent_contract: 'agent_contract.yaml',
 	outcome_contract: 'outcome_contract.md',
 	golden_tasks: 'golden_tasks.yaml',
 	runbook: 'runbook.md',
+	runtime_binding: 'runtime-binding.json',
 };
 
-function fileSha256(path: string): string {
-	return createHash('sha256').update(readFileSync(path)).digest('hex');
-}
 
 export function buildReleaseArtifactSetSha256(
-	artifacts: Record<BuildReleaseArtifactName, BuildReleaseArtifactReference>,
+	artifacts: BuildReleaseArtifactSet,
 ): string {
-	const canonicalArtifactSet = BUILD_RELEASE_ARTIFACTS.map((name) => [
+	const canonicalArtifactSet = artifactNames(artifacts).map((name) => [
 		name,
-		artifacts[name].sha256,
+		artifacts[name]!.sha256,
 	]);
 	return createHash('sha256').update(JSON.stringify(canonicalArtifactSet)).digest('hex');
 }
@@ -778,9 +793,12 @@ function resolvedPackagePath(
 export function inspectBuildReleasePackage(manifestPath: string): BuildReleaseInspection {
 	const issues: BuildReleaseInspectionIssue[] = [];
 	let manifest: BuildReleaseManifest;
+	let manifestSha256: string;
 
 	try {
-		manifest = parseBuildReleaseManifest(JSON.parse(readFileSync(manifestPath, 'utf8')) as unknown);
+		const manifestBytes = readFileSync(manifestPath);
+		manifest = parseBuildReleaseManifest(JSON.parse(new TextDecoder('utf-8', {fatal:true}).decode(manifestBytes)) as unknown);
+		manifestSha256 = createHash('sha256').update(manifestBytes).digest('hex');
 	} catch (error) {
 		const details =
 			error instanceof BuildReleaseValidationError
@@ -821,7 +839,8 @@ export function inspectBuildReleasePackage(manifestPath: string): BuildReleaseIn
 			message: `Map handoff receipt is missing: ${manifest.handoff.receiptPath}.`,
 		});
 	} else if (receiptPath !== null) {
-		if (fileSha256(receiptPath) !== manifest.handoff.receiptSha256) {
+		const receiptPathBytes = readFileSync(receiptPath);
+		if (createHash('sha256').update(receiptPathBytes).digest('hex') !== manifest.handoff.receiptSha256) {
 			issues.push({
 				code: 'receipt_hash_mismatch',
 				category: 'integrity',
@@ -831,7 +850,7 @@ export function inspectBuildReleasePackage(manifestPath: string): BuildReleaseIn
 		}
 		try {
 			handoffReceipt = parseMapBuildHandoffReceipt(
-				JSON.parse(readFileSync(receiptPath, 'utf8')) as unknown,
+				JSON.parse(new TextDecoder('utf-8', {fatal:true}).decode(receiptPathBytes)) as unknown,
 			);
 		} catch (error) {
 			issues.push({
@@ -888,7 +907,8 @@ export function inspectBuildReleasePackage(manifestPath: string): BuildReleaseIn
 			message: `Build acceptance receipt is missing: ${manifest.acceptance.receiptPath}.`,
 		});
 	} else if (acceptancePath !== null) {
-		if (fileSha256(acceptancePath) !== manifest.acceptance.receiptSha256) {
+		const acceptancePathBytes = readFileSync(acceptancePath);
+		if (createHash('sha256').update(acceptancePathBytes).digest('hex') !== manifest.acceptance.receiptSha256) {
 			issues.push({
 				code: 'acceptance_hash_mismatch',
 				category: 'integrity',
@@ -898,7 +918,7 @@ export function inspectBuildReleasePackage(manifestPath: string): BuildReleaseIn
 		}
 		try {
 			acceptanceReceipt = parseBuildAcceptanceReceipt(
-				JSON.parse(readFileSync(acceptancePath, 'utf8')) as unknown,
+				JSON.parse(new TextDecoder('utf-8', {fatal:true}).decode(acceptancePathBytes)) as unknown,
 			);
 		} catch (error) {
 			issues.push({
@@ -978,7 +998,8 @@ export function inspectBuildReleasePackage(manifestPath: string): BuildReleaseIn
 			continue;
 		}
 		if (verifierPath === null) continue;
-		if (fileSha256(verifierPath) !== reference.receiptSha256) {
+		const verifierPathBytes = readFileSync(verifierPath);
+		if (createHash('sha256').update(verifierPathBytes).digest('hex') !== reference.receiptSha256) {
 			issues.push({
 				code: 'verifier_hash_mismatch',
 				category: 'integrity',
@@ -988,7 +1009,7 @@ export function inspectBuildReleasePackage(manifestPath: string): BuildReleaseIn
 		}
 		try {
 			verificationReceipts[kind] = parseBuildVerificationReceipt(
-				JSON.parse(readFileSync(verifierPath, 'utf8')) as unknown,
+				JSON.parse(new TextDecoder('utf-8', {fatal:true}).decode(verifierPathBytes)) as unknown,
 			);
 		} catch (error) {
 			issues.push({
@@ -1077,9 +1098,10 @@ export function inspectBuildReleasePackage(manifestPath: string): BuildReleaseIn
 		}
 	}
 
+	let runtimeBinding: Readonly<BuildRuntimeBinding> | undefined;
 	const seenArtifactPaths = new Set<string>();
-	for (const name of BUILD_RELEASE_ARTIFACTS) {
-		const reference = manifest.artifacts[name];
+	for (const name of artifactNames(manifest.artifacts)) {
+		const reference = manifest.artifacts[name]!;
 		if (basename(reference.path) !== CANONICAL_ARTIFACT_FILENAMES[name]) {
 			issues.push({
 				code: 'artifact_path_mismatch',
@@ -1114,7 +1136,12 @@ export function inspectBuildReleasePackage(manifestPath: string): BuildReleaseIn
 			});
 			continue;
 		}
-		if (fileSha256(artifactPath) !== reference.sha256) {
+        if (name === 'runtime_binding' && statSync(artifactPath).size > 16_384) {
+          issues.push({code:'runtime_binding_invalid',category:'integrity',path:'$.artifacts.runtime_binding',message:'Runtime binding exceeds its size limit.'});
+          continue;
+        }
+        const artifactBytes = readFileSync(artifactPath);
+		if (createHash('sha256').update(artifactBytes).digest('hex') !== reference.sha256) {
 			issues.push({
 				code: 'artifact_hash_mismatch',
 				category: 'integrity',
@@ -1122,6 +1149,16 @@ export function inspectBuildReleasePackage(manifestPath: string): BuildReleaseIn
 				message: `${CANONICAL_ARTIFACT_FILENAMES[name]} SHA-256 does not match the manifest.`,
 			});
 		}
+        if (name === 'runtime_binding') {
+          try {
+            if (artifactBytes.byteLength > 16_384) throw new Error('binding too large');
+            const parsed = parseBuildRuntimeBinding(JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(artifactBytes)));
+            if (parsed.buildReleaseId !== manifest.releaseId) throw new Error('binding release mismatch');
+            runtimeBinding = parsed;
+          } catch {
+            issues.push({code:'runtime_binding_invalid',category:'integrity',path:'$.artifacts.runtime_binding',message:'Runtime binding is invalid or identifies another Build release.'});
+          }
+        }
 	}
 
 	for (const verifier of ['staging', 'uat'] as const) {
@@ -1145,11 +1182,13 @@ export function inspectBuildReleasePackage(manifestPath: string): BuildReleaseIn
 
 	const evidenceValid = !issues.some((issue) => issue.category === 'integrity');
 	return {
+		manifestSha256,
 		manifest,
 		handoffReceipt,
 		acceptanceReceipt,
 		verificationReceipts,
 		evidenceValid,
+		...(evidenceValid && runtimeBinding ? {runtimeBinding} : {}),
 		releaseReady: evidenceValid && !issues.some((issue) => issue.category === 'readiness'),
 		issues,
 	};
