@@ -165,3 +165,60 @@ test('rejects runtime manifests re-derived from divergent compiled governance', 
     assert.throws(() => validateWorkflowRuntimeManifestArtifact(bundle,runtime), /exact compiled workflow/);
   }
 });
+
+
+test('runtime validation rejects duplicate policy IDs and mismatched nested artifact headers', async () => {
+  const definition = JSON.parse(await readFile(fixtureUrl,'utf8'));
+  definition.schemaVersion = 'workflow_definition.v0.3';
+  const source = compileWorkflowDefinition(definition);
+  const mutations = [bundle => {
+    const duplicate = structuredClone(bundle.decisionInventory.decisions.find(d=>d.actionId==='approve_template'));
+    duplicate.autonomy='auto_allow';
+    bundle.decisionInventory.decisions.push(duplicate);
+    const {toolContract,...interaction} = duplicate;
+    bundle.governedInteraction.actions.push(interaction);
+    if (toolContract) bundle.toolContracts.tools.push(toolContract);
+  }];
+  for (const artifact of ['decisionInventory','governedInteraction','approvalSurfaces','toolContracts']) {
+    for (const field of ['schemaVersion','workflowId','workflowVersion','definitionHash'])
+      mutations.push(bundle => {bundle[artifact][field]='foreign';});
+  }
+  for (const mutate of mutations) {
+    const bundle = structuredClone(source); mutate(bundle);
+    const runtime = createWorkflowRuntimeManifest(bundle,{
+      schemaVersion:'workflow_runtime_manifest_input.v0.1',target:'create-something/control-runtime.v1',
+      approvalExpiresAt:'2026-12-31T00:00:00.000Z',steps:[{id:'approve',actionId:'approve_template',dependsOn:[]}]
+    });
+    assert.throws(()=>validateWorkflowRuntimeManifestArtifact(bundle,runtime),/exact compiled workflow/);
+  }
+});
+
+
+test('runtime validation binds agent autonomy to decisions and allowed actions', async () => {
+  const definition = JSON.parse(await readFile(new URL('../fixtures/notion-custom-agent/workflow.json',import.meta.url),'utf8'));
+  definition.schemaVersion = 'workflow_definition.v0.3';
+  const source = compileWorkflowDefinition(definition);
+  const actionId = 'create_review_suggestion';
+  const mutations = [
+    bundle => {
+      const decision = bundle.decisionInventory.decisions.find(d=>d.actionId===actionId);
+      decision.autonomy='auto_allow';
+      if (decision.toolContract) decision.toolContract.autonomy='auto_allow';
+      bundle.governedInteraction.actions.find(d=>d.actionId===actionId).autonomy='auto_allow';
+      bundle.approvalSurfaces.actions=bundle.approvalSurfaces.actions.filter(d=>d.actionId!==actionId);
+      const tool=bundle.toolContracts.tools.find(d=>d.actionId===actionId);
+      if(tool) tool.autonomy='auto_allow';
+    },
+    bundle => {bundle.agentContracts.agents[0].actionAutonomy=[];},
+    bundle => {bundle.agentContracts.agents[0].actionAutonomy.push({...bundle.agentContracts.agents[0].actionAutonomy[0]});},
+    bundle => {bundle.agentContracts.agents[0].allowedActionIds.push('unknown-action');}
+  ];
+  for(const mutate of mutations) {
+    const bundle=structuredClone(source); mutate(bundle);
+    const runtime=createWorkflowRuntimeManifest(bundle,{
+      schemaVersion:'workflow_runtime_manifest_input.v0.1',target:'create-something/control-runtime.v1',
+      approvalExpiresAt:'2026-12-31T00:00:00.000Z',steps:[{id:'suggest',actionId,dependsOn:[]}]
+    });
+    assert.throws(()=>validateWorkflowRuntimeManifestArtifact(bundle,runtime),/exact compiled workflow/);
+  }
+});

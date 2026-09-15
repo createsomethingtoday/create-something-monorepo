@@ -1,3 +1,4 @@
+import { rejectMismatchedNestedArtifactSchemas } from './replay.js';
 import { createHash } from 'node:crypto';
 
 import type {
@@ -436,10 +437,32 @@ export function validateWorkflowRuntimeManifestArtifact(
 ): void {
   const bundle = runtimeBundle(source);
   try {
+    rejectMismatchedNestedArtifactSchemas(bundle);
+    for (const actions of [bundle.decisionInventory.decisions, bundle.governedInteraction.actions,
+      bundle.approvalSurfaces.actions, bundle.toolContracts.tools]) {
+      const ids = actions.map(action => action.actionId);
+      if (ids.some(id => typeof id !== 'string' || !id.trim()) || new Set(ids).size !== ids.length)
+        throw new Error('compiled governance action IDs must be unique');
+    }
     // Runtime step derivation must not choose one of conflicting signed policies.
     const decisions = bundle.decisionInventory.decisions;
     const same = (left: unknown, right: unknown) =>
       JSON.stringify(canonicalize(left)) === JSON.stringify(canonicalize(right));
+    const decisionsById = new Map(decisions.map(decision => [decision.actionId, decision]));
+    const agentIds = new Set<string>();
+    for (const agent of bundle.agentContracts.agents) {
+      if (typeof agent.id !== 'string' || !agent.id.trim() || agentIds.has(agent.id))
+        throw new Error('compiled agent IDs must be unique');
+      agentIds.add(agent.id);
+      const allowed = agent.allowedActionIds;
+      if (!Array.isArray(allowed) || new Set(allowed).size !== allowed.length ||
+          allowed.some(id => !decisionsById.has(id)))
+        throw new Error('compiled agent references an invalid action');
+      const expected = allowed.map(actionId => ({actionId, autonomy: decisionsById.get(actionId)!.autonomy}))
+        .sort((left, right) => left.actionId.localeCompare(right.actionId));
+      const actual = [...agent.actionAutonomy].sort((left, right) => left.actionId.localeCompare(right.actionId));
+      if (!same(expected, actual)) throw new Error('compiled agent autonomy disagrees with decisions');
+    }
     const interactions = decisions.map(({toolContract: _tool, ...decision}) => decision);
     const approvals = decisions.filter(decision => decision.autonomy !== 'auto_allow').map(decision => ({
       actionId: decision.actionId,
