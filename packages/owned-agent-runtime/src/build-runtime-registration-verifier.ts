@@ -32,7 +32,6 @@ export async function verifyBuildRuntimeRegistration(
     buildArtifactSetSha256: acceptance.artifactSetSha256,
     buildAcceptanceReceiptId: acceptance.receiptId,
     buildAcceptanceReceiptSha256: manifest.acceptance.receiptSha256,
-    contractSha256: binding.contractSha256.slice(7),
     policySha256: binding.runtimePolicySha256.slice(7)
   };
   for (const key of Object.keys(expected) as (keyof FrozenControlActivation)[])

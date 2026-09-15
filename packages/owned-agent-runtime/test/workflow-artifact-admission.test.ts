@@ -50,7 +50,7 @@ test('admits a real signed compiler release and rejects mismatched registration,
     const reader={async read(){return files;}};
     const binding = {
       ...registration, schema:'create-something/build-runtime-binding@1',
-      buildReleaseId:'release_example_001', contractSha256:'sha256:'+'a'.repeat(64),
+      buildReleaseId:'release_example_001',
       runtimePolicySha256:'sha256:'+'b'.repeat(64),
       artifactPrefix:`workflow-artifacts/${registration.artifactManifestSha256.slice(7)}/`
     };
@@ -70,6 +70,13 @@ test('admits a real signed compiler release and rejects mismatched registration,
         contractSha256:'a'.repeat(64),policySha256:'b'.repeat(64),policyVersion:'test',
         entitlementSnapshotSha256:'d'.repeat(64),allowedTools:[],allowedResources:[]
       };
+      // Agency derives this enclosing contract only after accepted Build hashes
+      // exist. It is deliberately absent from the hashed binding artifact.
+      activation.contractSha256 = createHash('sha256').update(JSON.stringify({
+        source:{buildManifestSha256:activation.buildManifestSha256,buildArtifactSetSha256:activation.buildArtifactSetSha256},
+        policy:{sha256:activation.policySha256}
+      })).digest('hex');
+      assert.equal('contractSha256' in binding,false);
       const databasePath = join(build.root,'registration.sqlite');
       const columns = Object.entries(activationColumns);
       const values = columns.map(([key]) => {
@@ -103,7 +110,7 @@ test('admits a real signed compiler release and rejects mismatched registration,
       assert.ok(Object.isFrozen(verified) && Object.isFrozen(verified.binding));
       for (const field of ['status','accountId','workspaceAccountId','mapId','mapVersion','handoffId',
         'handoffReceiptSha256','buildReleaseId','buildManifestSha256','buildArtifactSetSha256',
-        'buildAcceptanceReceiptId','buildAcceptanceReceiptSha256','contractSha256','policySha256']) {
+        'buildAcceptanceReceiptId','buildAcceptanceReceiptSha256','policySha256']) {
         await assert.rejects(verifyBuildRuntimeRegistration(build.manifestPath,{...activation,[field]:'wrong'},reader,policy),/not_verified/);
       }
       await assert.rejects(verifyBuildRuntimeRegistration(build.manifestPath,activation,reader,{...policy,signer:{...policy.signer,keyId:'other'}}));

@@ -306,3 +306,8 @@ registration is rejected by the immutable ledger. Database access and signer
 policy must come from trusted operator configuration. This function does not add
 a hosted endpoint, provision credentials, or change activation status. Production
 transport, Control receipt migration and live verification remain outstanding.
+
+The activation contract hash is intentionally outside the accepted runtime
+binding: Agency derives it from the source (including Build hashes) and policy.
+The writer uses the Agency-loaded contract hash and matches it atomically;
+putting it in the binding would create a circular digest dependency.

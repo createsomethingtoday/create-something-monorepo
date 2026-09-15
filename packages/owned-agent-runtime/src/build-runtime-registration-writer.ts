@@ -26,7 +26,7 @@ export async function registerVerifiedBuildRuntime(
     build_release_id:binding.buildReleaseId,
     build_manifest_sha256:verified.buildManifestSha256,build_artifact_set_sha256:verified.buildArtifactSetSha256,
     binding_sha256:verified.bindingSha256,
-    contract_sha256:binding.contractSha256.slice(7),runtime_policy_sha256:binding.runtimePolicySha256.slice(7),
+    contract_sha256:activation.contractSha256,runtime_policy_sha256:binding.runtimePolicySha256.slice(7),
     workflow_id:binding.workflowId,workflow_version:binding.workflowVersion,compiler_version:binding.compilerVersion,
     runtime_manifest_schema:binding.runtimeManifestSchema,definition_hash:binding.definitionHash,
     artifact_manifest_sha256:binding.artifactManifestSha256,runtime_manifest_sha256:binding.runtimeManifestSha256,
