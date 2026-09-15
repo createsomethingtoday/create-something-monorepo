@@ -1167,12 +1167,19 @@ export async function syncTemplateRecordsByIds(env: Env, recordIds: string[]): P
         )
       : 0;
     await heartbeat();
-    const [nameBackfilledRecords, lookupBackfilledRecords] = await Promise.all([
-      backfillCreatorFieldsByName(env.DB, startedAt, { documentIds: documents.map((document) => document.id) }),
-      backfillCreatorFieldsFromLookup(env.DB, lookups.creators, startedAt, {
-        documentIds: documents.map((document) => document.id),
-      }),
-    ]);
+    // The backfill helpers treat an empty id list as "no filter" and scan the
+    // whole table, which exceeds D1's CPU limit on the production index. A
+    // records sync that indexed nothing (every record unpublished or gated)
+    // has nothing to backfill, so skip them outright.
+    const [nameBackfilledRecords, lookupBackfilledRecords] =
+      documents.length > 0
+        ? await Promise.all([
+            backfillCreatorFieldsByName(env.DB, startedAt, { documentIds: documents.map((document) => document.id) }),
+            backfillCreatorFieldsFromLookup(env.DB, lookups.creators, startedAt, {
+              documentIds: documents.map((document) => document.id),
+            }),
+          ])
+        : [0, 0];
     await heartbeat();
 
     const summary: SyncSummary = {

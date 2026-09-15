@@ -881,6 +881,7 @@ describe('webflow-template-search worker', () => {
     });
     const { env, close } = createTestEnv();
     env.WEBFLOW_API_TOKEN = 'test-webflow-cms-token';
+    const prepareSpy = vi.spyOn(env.DB, 'prepare');
 
     try {
       const response = await callWorker(
@@ -901,10 +902,19 @@ describe('webflow-template-search worker', () => {
       expect(payload.warnings?.map((warning) => warning.source)).toContain('listing_gate');
       expect(payload.warnings?.find((warning) => warning.source === 'listing_gate')?.message).toContain('agentflow-website-template');
 
+      // A records sync that indexed nothing must not fall through to the
+      // unfiltered creator backfill: on the production index that whole-table
+      // UPDATE exceeds D1's CPU limit and kills the job.
+      const templateUpdates = prepareSpy.mock.calls
+        .map(([sql]) => String(sql))
+        .filter((sql) => /UPDATE\s+template_documents/i.test(sql));
+      expect(templateUpdates).toEqual([]);
+
       const search = await callWorker(new Request('https://templates.test/api/templates/search?q=agentflow'), env);
       const searchPayload = (await search.json()) as { items: Array<{ name: string }> };
       expect(searchPayload.items).toEqual([]);
     } finally {
+      prepareSpy.mockRestore();
       fetchMock.mockRestore();
       close();
     }
