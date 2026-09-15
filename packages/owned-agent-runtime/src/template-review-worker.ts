@@ -1,3 +1,4 @@
+import { issueControlSchedulerToken } from './control-scheduler-token.js';
 import type { ControlRequestContext, FirstPartyControlIdentity } from './control-identity.js';
 import { ControlRunAccessError } from './control.js';
 import { composeTemplateReviewControl } from './template-review-control-composition.js';
@@ -18,6 +19,7 @@ export interface TemplateReviewWorkerBindings {
   WORKFLOW_ARTIFACTS?: R2Bucket;
   WORKFLOW_RUNTIME_QUEUE?: Queue<WorkflowRuntimeWake>;
   CONTROL_SCHEDULER_TOKEN?: string;
+  CONTROL_SCHEDULER_ISSUER_KEY?: string;
   TEMPLATE_REVIEW_SOURCE_TOKEN?: string;
 }
 
@@ -51,9 +53,17 @@ export async function templateReviewWorkerComposition(env: TemplateReviewWorkerB
  */
 export async function templateReviewScheduler(env: TemplateReviewWorkerBindings,
   identity: FirstPartyControlIdentity) {
-  if (!env.CONTROL_SCHEDULER_TOKEN) throw new Error('control_scheduler_unconfigured');
+  let token = env.CONTROL_SCHEDULER_TOKEN;
+  if (env.CONTROL_SCHEDULER_ISSUER_KEY) {
+    if (!env.TEMPLATE_REVIEW_DEPLOYMENT || env.TEMPLATE_REVIEW_DEPLOYMENT.length > 1_048_576)
+      throw new Error('template_review_unconfigured');
+    const config = JSON.parse(env.TEMPLATE_REVIEW_DEPLOYMENT) as TemplateReviewDeployment;
+    if (config.schema !== 'template-review-deployment@1') throw new Error('template_review_configuration_invalid');
+    token = await issueControlSchedulerToken(env.CONTROL_SCHEDULER_ISSUER_KEY, config.activation);
+  }
+  if (!token) throw new Error('control_scheduler_unconfigured');
   const context = await identity.resolve(new Request('https://control.invalid/internal-scheduler', {
-    headers: { authorization: `Bearer ${env.CONTROL_SCHEDULER_TOKEN}` }
+    headers: { authorization: `Bearer ${token}` }
   }));
   if (!context || context.actor.role !== 'control_scheduler' || !context.schedulerActivationId)
     throw new ControlRunAccessError('Verified scheduler credential required');

@@ -419,3 +419,13 @@ complete reconciliation `proof`). This reconciles the observed result without
 changing the historical runtime checkpoint or calling the source again. A
 reconciled run cannot be retried. Missing or uncertain observations do not qualify
 for this path; they remain unresolved and are not relabeled as success.
+
+For unattended production scheduling, provision `CONTROL_SCHEDULER_ISSUER_KEY`
+through Identity's service-key workflow with `control_scheduler_token_issue`
+permission. When configured, the Worker requests a fresh five-minute token from
+Identity's fixed production issuance endpoint for the deployment's exact scope,
+activation and runtime audience, then verifies the JWT normally. It does not
+cache the token across invocations or fall back to an old token after issuance
+failure. `CONTROL_SCHEDULER_TOKEN` remains an explicitly supplied short-lived
+option for bounded verification. Neither option creates the Identity service
+key, grants permissions, or authorizes the separate source MCP credential.
