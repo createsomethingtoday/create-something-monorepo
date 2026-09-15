@@ -37,27 +37,13 @@ import { admitWorkflowArtifact, type WorkflowArtifactAdmissionPolicy } from '../
 test('admits a real signed compiler release and rejects mismatched registration, policy and bytes', async () => {
   const root = await mkdtemp(join(tmpdir(), 'control-admission-'));
   try {
-    const definition = JSON.parse(await readFile(new URL('../../workflow-compiler/fixtures/marketplace/workflow.json', import.meta.url), 'utf8'));
-    definition.schemaVersion = 'workflow_definition.v0.3';
-    const observationAction = definition.actions.find((action: {id:string}) => action.id === 'validate_submission');
-    observationAction.kind = 'read';
-    observationAction.title = 'Observe template handoff';
-    observationAction.requiredEvidence.push('assetId', 'versionId');
-    const gate = definition.actions.find((action: {id:string}) => action.id === 'run_published_validation');
-    gate.title = 'Authorize handoff observation';
-    gate.kind = 'decision';
-    gate.autonomy = 'approval_required';
-    gate.approval = { required: true, owner: 'account-owner' };
-    delete gate.tool;
-    observationAction.tool = { name: 'template_review_observe_handoff', targetSystemId: 'template-review-mcp',
-      parameters: [{ name: 'assetId', type: 'string', description: 'Exact registered asset ID.' },
-        { name: 'versionId', type: 'string', description: 'Exact registered version ID.' }] };
+    const definition = JSON.parse(await readFile(new URL('../workflows/marketplace-reconciliation/workflow.json', import.meta.url), 'utf8'));
     const bundle = compileWorkflowDefinition(definition);
     const runtime = createWorkflowRuntimeManifest(bundle, {
       schemaVersion: 'workflow_runtime_manifest_input.v0.1', target: 'create-something/control-runtime.v1',
       approvalExpiresAt: '2026-12-31T00:00:00.000Z', steps: [
-        {id:'authorize',actionId:'run_published_validation',dependsOn:[]},
-        {id:'validate',actionId:'validate_submission',dependsOn:['authorize']}]
+        {id:'authorize',actionId:'authorize_observation',dependsOn:[]},
+        {id:'validate',actionId:'observe_handoff',dependsOn:['authorize']}]
     });
     const {privateKey, publicKey} = generateKeyPairSync('ed25519');
     await writeCompiledWorkflowArtifacts(bundle, join(root,'release'), undefined, {privateKey,keyId:'test'}, runtime);
