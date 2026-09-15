@@ -270,14 +270,33 @@ configuration, hosted executor transitions, and deployment are still required.
 Local gateway tests exercise real SQLite/Control lifecycle with a test source; they
 do not establish authenticated production invocation or submission correlation.
 
-Handoff age policy version 2 charges the full allowed positive source-clock
-skew against `maximumAgeMs`. Migration `0013` marks existing evidence version 1
+Handoff age policy version 2 computes age from the later of dispatch time
+and source observation time minus allowed clock skew. Migration `0013` marks existing evidence version 1
 without changing its accepted bytes or timestamps; historical reads and identical
 replays retain that stored interpretation. New evidence written by the current
 store uses version 2. SQL also enforces the version 2 age budget. Do not roll
 back the writer to one that omits this policy column after promotion; the legacy
 default preserves historical rows, and a trigger rejects new version-1 inserts
 (including old writers that omit the column).
+
+`admitWorkflowArtifact` consumes the reader's serialized bytes through the public
+compiler signature verifier and runtime parser. It requires exact registered
+outer/runtime hashes, workflow/compiler identity, signer key/fingerprint and
+schema, plus independent host capability/compiler/schema allowlists. It copies
+policy, registration and bytes across asynchronous boundaries. The owning
+registry must supply this input after activation/release authorization and must
+check revocation on each new admission or step claim. This function does not
+implement that registry, activation check, revocation service or hosted executor.
+Admission also verifies each correlated governance artifact hash, requires an
+explicit governed-interaction host contract and compatible public compatibility
+decision, and deeply freezes the returned runtime manifest before sharing it.
+
+Artifact admission requires `sourceDefinition` from the owning host registration,
+not from an HTTP request or the signed artifact itself. The host recompiles it
+and requires the registered definition hash and canonical compiled bundle to
+match exactly. This catches consistently omitted assignments across generated
+artifacts. A historical compiler output that the pinned host compiler cannot
+reproduce is rejected; an allowlisted version alone does not bypass this check.
 
 `AuthenticatedTemplateReviewHandoffSource` is the fixed MCP transport for the
 handoff gateway. It uses the repository-pinned SDK, accepts tokens only from an

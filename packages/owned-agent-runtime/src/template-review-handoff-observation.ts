@@ -91,7 +91,7 @@ export function validateTemplateReviewHandoffObservation(
     received < dispatched ||
     observed < dispatched - skew ||
     observed > received + skew ||
-    received - observed + ((context.agePolicyVersion ?? 2) === 2 ? skew : 0) > context.maximumAgeMs
+    received - ((context.agePolicyVersion ?? 2) === 2 ? Math.max(dispatched, observed - skew) : observed) > context.maximumAgeMs
   ) {
     throw new Error('handoff_observation_context_mismatch');
   }
