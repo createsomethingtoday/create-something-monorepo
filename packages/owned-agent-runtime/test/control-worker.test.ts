@@ -524,6 +524,12 @@ test('REST and MCP reject unsupported approval bindings without resuming the par
       params:{name:'control_run_action',arguments:{run_id:parent.id,...action}}})
   }));
   assert.equal(((await mcp!.json()) as {error:{code:number}}).error.code,-32602);
+  for (const extra of [{recovery:'resume'}, {outcome:'complete'}]) {
+    const rejected = await runtime.fetch(new Request(`https://runtime.example/v1/control/runs/${parent.id}/actions`, {
+      method:'POST',headers,body:JSON.stringify({action:'approve',idempotency_key:'wrong-action-field',reason:'reviewed',...extra})
+    }));
+    assert.equal(rejected?.status,400);
+  }
   assert.deepEqual(await service.get(scope,owner,parent.id),waiting);
   const accepted = await runtime.fetch(new Request('https://runtime.example/mcp', {
     method:'POST',headers,body:JSON.stringify({jsonrpc:'2.0',id:2,method:'tools/call',

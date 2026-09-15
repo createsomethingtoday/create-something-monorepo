@@ -69,6 +69,14 @@ const actionInput = z
   })
   .strict()
   .superRefine((value, context) => {
+    for (const field of ['reason', 'recovery', 'outcome'] as const) {
+      const allowed = field === 'reason'
+        ? ['approve', 'reject', 'stop', 'cancel', 'terminate'].includes(value.action)
+        : field === 'recovery' ? value.action === 'begin_recovery' : value.action === 'finish_recovery';
+      if (value[field] !== undefined && !allowed) {
+        context.addIssue({code:'custom',path:[field],message:`${value.action} does not accept ${field}`});
+      }
+    }
     if (
       ['approve', 'reject', 'stop', 'cancel', 'terminate'].includes(value.action) &&
       !value.reason
