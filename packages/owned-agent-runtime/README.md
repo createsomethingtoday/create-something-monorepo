@@ -342,3 +342,25 @@ This retains the verified Build binding in its nested runtime proof and fails
 closed when that relation is inconsistent. The default remains `legacy-v1`
 for historical consumers; hosted production composition must select v2 for
 newly admitted Build-bound runs. This option alone does not enable execution.
+
+### Handoff gateway (not registered)
+
+`D1TemplateReviewHandoffGateway` connects persisted Control proof, fixed manifest
+and record-pair registration, requested source scopes, Agency single-use permits,
+and immutable source observation evidence. It rechecks the prepared attempt after
+redemption, invokes only its injected fixed source, and sanitizes ambiguous failures.
+Identical evidence is readable after stop; the gateway never advances a checkpoint.
+The injection boundary requires the owning authenticated Template Review transport.
+No generic URL or tool argument is accepted. Production transport, signed registry
+configuration, hosted executor transitions, and deployment are still required.
+Local gateway tests exercise real SQLite/Control lifecycle with a test source; they
+do not establish authenticated production invocation or submission correlation.
+
+Handoff age policy version 2 computes age as received time minus the later
+of dispatch time and source observation time minus allowed clock skew. Migration `0013` marks existing evidence version 1
+without changing its accepted bytes or timestamps; historical reads and identical
+replays retain that stored interpretation. New evidence written by the current
+store uses version 2. SQL also enforces the version 2 age budget. Do not roll
+back the writer to one that omits this policy column after promotion; the legacy
+default preserves historical rows, and a trigger rejects new version-1 inserts
+(including old writers that omit the column).
