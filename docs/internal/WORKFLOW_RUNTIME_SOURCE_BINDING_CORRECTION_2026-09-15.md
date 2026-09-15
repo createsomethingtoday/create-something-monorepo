@@ -66,3 +66,14 @@ and parent state, defers early approval wakes, and drops stale messages; its
 consumer resumes the signed local workflow without duplicate dispatch. Actual
 Cloudflare delivery, initial-parent scheduling, crash-safe wake publication and
 real Identity integration remain required before production promotion.
+
+## Wake and Identity integration checkpoint
+
+D1WorkflowRuntimeWakeReconciler rebuilds initial and continuation notifications
+from durable queued state under the exact frozen activation. Signed tests
+discard an approval wake and resume from ledger reconciliation without another
+source call. Admission notifications are held until the source binding is
+published. workflowRuntimeIdentity checks the verified context's scope, subject,
+approval policy/role and scheduler activation; tests still supply fixture contexts.
+Worker JWT resolver wiring, actual queue delivery and periodic scheduling remain
+required, along with live production verification.

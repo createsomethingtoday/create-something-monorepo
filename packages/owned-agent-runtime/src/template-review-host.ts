@@ -77,10 +77,15 @@ export async function createTemplateReviewHost(input: {
         workspaceAccountId: activation.workspaceAccountId };
       await publishControlBuildBinding(input.runtimeDb, input.agencyDb, { scope, runId: run.id }, input.artifacts, policy);
       const { manifest, host } = await resolve(null);
+      const admissionWakes: Array<{runId:string;expectedVersion:number}> = [];
       if (!(await storage.find(scope, run.id))) {
         const hash = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',
           new TextEncoder().encode(run.id))), byte => byte.toString(16).padStart(2, '0')).join('');
-        await host.admit(scope, { runId: run.id,
+        const admissionHost = new ZeroWriteWorkflowRuntimeHost(manifest, {
+          storage, clock: input.clock, identity: input.identity(null), receiptSink,
+          queue: { async enqueue(message) { admissionWakes.push(message); } }, executor: undefined as never
+        });
+        await admissionHost.admit(scope, { runId: run.id,
           activation: { id: activation.id, version: activation.activationVersion,
             policySha256: `sha256:${activation.policySha256}` },
           registration: { buildReleaseId: activation.buildReleaseId,
@@ -91,6 +96,9 @@ export async function createTemplateReviewHost(input: {
           clock: input.clock() }, `runtime-admit:${hash}`, '');
       }
       await sourceBindings.publish({ scope, runId: run.id, ...sourceConfiguration });
+      // No consumer sees a newly admitted checkpoint before its fixed request
+      // mapping exists. Durable queued state permits recovery of a lost send.
+      for (const wake of admissionWakes) await input.queue.enqueue(wake);
       return driveTemplateReviewRuntime({ scope, runId: run.id, manifest, host, storage,
         gateway, evidence, sourceBindings, schedulerSubject: input.schedulerSubject, clock: input.clock });
     }

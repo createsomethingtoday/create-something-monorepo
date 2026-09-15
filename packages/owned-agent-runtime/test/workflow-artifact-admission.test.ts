@@ -1,5 +1,7 @@
 import { createControlRunWorker } from '../src/control-worker.js';
+import { D1WorkflowRuntimeWakeReconciler } from '../src/workflow-runtime-wake-reconciler.js';
 import { WorkflowRuntimeQueue, type WorkflowRuntimeWake } from '../src/workflow-runtime-queue.js';
+import { workflowRuntimeIdentity } from '../src/workflow-runtime-identity.js';
 import { createTemplateReviewHost } from '../src/template-review-host.js';
 import { D1VerifiedWorkflowRuntimeReceiptSink } from '../src/workflow-runtime-receipt-sink.js';
 import { D1WorkflowRuntimeSourceBindings, handoffRequestDigest } from '../src/workflow-runtime-source-binding.js';
@@ -266,6 +268,7 @@ test('admits a real signed compiler release and rejects mismatched registration,
       let sourceCalls = 0;
       let scheduledQueue: WorkflowRuntimeQueue;
       const wakes: WorkflowRuntimeWake[] = [];
+      let earlyDelivery = true;
       let sourceMode: 'healthy' | 'unknown' | 'late-stop' = 'healthy';
       let stopDuringSource: (() => Promise<void>) | undefined;
       const host = await createTemplateReviewHost({ runtimeDb: database, agencyDb: database, activation, policy,
@@ -280,10 +283,11 @@ test('admits a real signed compiler release and rejects mismatched registration,
           return { ...observationInput.observation, observedAt: '2026-09-15T00:00:05.000Z' };
         } }, maximumAgeMs: 30_000, maximumClockSkewMs: 0, schedulerSubject: 'fixture-scheduler',
         clock: () => '2026-09-15T00:00:05.000Z',
-        identity: actor => ({ async assert(scope, subject) {
-          assert.deepEqual(scope, proofScope); assert.equal(subject, actor?.subject ?? null);
-          return actor;
-        } }), queue: { async enqueue(message) { await scheduledQueue.enqueue(message); } } });
+        identity: actor => workflowRuntimeIdentity({
+          context: { scope: proofScope, actor: actor ?? { subject: 'fixture-scheduler', role: 'control_scheduler' },
+            credentialSource: 'bearer', ...(actor ? {} : { schedulerActivationId: activation.id }) },
+          activationId: activation.id, approvalPolicies: { 'account-owner': ['account_owner'] }
+        }), queue: { async enqueue(message) { await scheduledQueue.enqueue(message); } } });
       assert.equal(host.executor.supports({ ...activation, contractSha256: 'f'.repeat(64) }), false);
       let executionId = 0;
       const executingControl = createControlRunService({ repository: new D1ControlRunRepository(database),
@@ -291,15 +295,21 @@ test('admits a real signed compiler release and rejects mismatched registration,
         runtimeApprovals: host.runtimeApprovals, id: () => `signed-execution-${++executionId}`,
         clock: () => new Date('2026-09-15T00:00:05.000Z') });
       scheduledQueue = new WorkflowRuntimeQueue({ scope: proofScope, checkpoints, parents: new D1ControlRunRepository(database),
-        async send(message) { wakes.push(message); assert.equal(await scheduledQueue.consume(message), 'retry', 'wake before parent transition must wait'); },
+        async send(message) { if (message.expectedVersion !== null) assert.ok(await sourceBindings.find(proofScope, message.runId, signedStep.id), 'source binding precedes exposed checkpoint wake'); wakes.push(message); if (earlyDelivery) assert.equal(await scheduledQueue.consume(message), 'retry', 'wake before parent transition must wait'); },
         process: (runId, key) => executingControl.process(proofScope, { subject: 'fixture-scheduler', role: 'control_scheduler' }, runId, key, activation.id) });
+      const reconciler = new D1WorkflowRuntimeWakeReconciler(database, activation, scheduledQueue);
       const execution = await executingControl.start(proofScope, { subject: 'fixture-operator', role: 'account_owner' },
         { activationId: activation.id, idempotencyKey: 'signed-execution-start', concurrencyKey: 'signed-execution',
           requestedTools: activation.allowedTools, requestedResources: activation.allowedResources });
       async function approveSignedRun(runId: string) {
         const before: number = sourceCalls;
-        const waitingParent = await executingControl.process(proofScope, { subject: 'fixture-scheduler', role: 'control_scheduler' },
-          runId, `${runId}-wait`, activation.id);
+        earlyDelivery = false;
+        assert.equal(await reconciler.reconcile(), 1);
+        const initialWake = wakes.at(-1)!;
+        assert.equal(initialWake.expectedVersion, null);
+        earlyDelivery = true;
+        assert.equal(await scheduledQueue.consume(initialWake), 'ack');
+        const waitingParent = await executingControl.get(proofScope, { subject: 'fixture-operator', role: 'account_owner' }, runId);
         assert.equal(waitingParent.status, 'waiting_for_approval');
         assert.equal(sourceCalls, before, 'signed wait cannot invoke source');
         const waitingProof = await host.proofs.find({ scope: proofScope, runId });
@@ -315,6 +325,9 @@ test('admits a real signed compiler release and rejects mismatched registration,
         assert.equal(sourceCalls, before);
       }
       await approveSignedRun(execution.id);
+      wakes.length = 0; // Simulate lost transport delivery after the approval commit.
+      earlyDelivery = false;
+      assert.equal(await reconciler.reconcile(), 1);
       const approvedWake = wakes.at(-1)!;
       assert.equal(await scheduledQueue.consume(approvedWake), 'ack');
       const completed = await executingControl.get(proofScope, { subject: 'fixture-operator', role: 'account_owner' }, execution.id);
@@ -335,6 +348,8 @@ test('admits a real signed compiler release and rejects mismatched registration,
       await assert.rejects(sink.write(corrupted));
       for (const wake of wakes) assert.equal(await scheduledQueue.consume(wake), 'ack');
       assert.equal(sourceCalls, 1, 'signed execution replay never calls the source twice');
+      assert.equal(await reconciler.reconcile(), 0, 'terminal runs are not republished');
+      earlyDelivery = true;
       for (const mode of ['unknown', 'late-stop'] as const) {
         sourceMode = mode;
         const before: number = sourceCalls;

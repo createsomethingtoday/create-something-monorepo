@@ -5,7 +5,7 @@ import { ControlRunConflictError, type ControlRunRepository } from './control.js
 const messageSchema = z.object({
   schema: z.literal('control-runtime-wake@1'),
   runId: z.string().min(1).max(180),
-  expectedVersion: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER)
+  expectedVersion: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER).nullable()
 }).strict();
 export type WorkflowRuntimeWake = z.infer<typeof messageSchema>;
 
@@ -23,11 +23,14 @@ export class WorkflowRuntimeQueue {
   }) { this.scope = structuredClone(input.scope); this.ports = input; }
   private readonly ports;
 
-  async enqueue(input: { runId: string; expectedVersion: number }): Promise<void> {
+  async enqueue(input: { runId: string; expectedVersion: number | null }): Promise<void> {
     const message = messageSchema.parse({ schema: 'control-runtime-wake@1', ...input });
     const run = await this.ports.checkpoints.find(this.scope, message.runId);
-    if (!run || run.version !== message.expectedVersion || run.status !== 'queued')
-      throw new Error('runtime_wake_checkpoint_mismatch');
+    if (message.expectedVersion === null) {
+      const parent = await this.ports.parents.find(this.scope, message.runId);
+      if (run || !parent || parent.status !== 'queued') throw new Error('runtime_wake_initial_parent_mismatch');
+    } else if (!run || run.version !== message.expectedVersion || run.status !== 'queued')
+        throw new Error('runtime_wake_checkpoint_mismatch');
     await this.ports.send(message);
   }
 
@@ -36,8 +39,12 @@ export class WorkflowRuntimeQueue {
     if (!parsed.success) return 'ack';
     const message = parsed.data;
     const run = await this.ports.checkpoints.find(this.scope, message.runId);
-    if (!run || run.version > message.expectedVersion || run.status !== 'queued') return 'ack';
-    if (run.version < message.expectedVersion) return 'retry';
+    if (message.expectedVersion === null) {
+      if (run) return 'ack';
+    } else {
+      if (!run || run.version > message.expectedVersion || run.status !== 'queued') return 'ack';
+      if (run.version < message.expectedVersion) return 'retry';
+    }
     const parent = await this.ports.parents.find(this.scope, message.runId);
     if (!parent) return 'ack';
     // Approval persists the runtime decision before requeueing the parent.
