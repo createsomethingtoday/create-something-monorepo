@@ -268,3 +268,10 @@ implement that registry, activation check, revocation service or hosted executor
 Admission also verifies each correlated governance artifact hash, requires an
 explicit governed-interaction host contract and compatible public compatibility
 decision, and deeply freezes the returned runtime manifest before sharing it.
+
+Artifact admission requires `sourceDefinition` from the owning host registration,
+not from an HTTP request or the signed artifact itself. The host recompiles it
+and requires the registered definition hash and canonical compiled bundle to
+match exactly. This catches consistently omitted assignments across generated
+artifacts. A historical compiler output that the pinned host compiler cannot
+reproduce is rejected; an allowlisted version alone does not bypass this check.

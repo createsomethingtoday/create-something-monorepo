@@ -1,4 +1,4 @@
-import { evaluateGovernedInteractionCompatibility, parseGovernedInteractionBundle, validateWorkflowRuntimeManifestArtifact, verifyWorkflowArtifactSnapshot } from '@createsomething/workflow-compiler';
+import { compileWorkflowDefinition, evaluateGovernedInteractionCompatibility, parseGovernedInteractionBundle, validateWorkflowRuntimeManifestArtifact, verifyWorkflowArtifactSnapshot } from '@createsomething/workflow-compiler';
 import { parseWorkflowRuntimeManifest, type WorkflowRuntimeManifest } from '@createsomething/workflow-runtime';
 
 /** Supplied by the owning immutable release registry, never by an HTTP caller. */
@@ -16,6 +16,8 @@ export interface RegisteredWorkflowArtifact {
 
 /** Host policy is independent of the bundle and must be checked anew after revocation. */
 export interface WorkflowArtifactAdmissionPolicy {
+  /** Owning host registration input; never sourced from the artifact or request. */
+  sourceDefinition: Parameters<typeof compileWorkflowDefinition>[0];
   signer: { keyId: string; publicKeyPem: string; fingerprint: string };
   compilerVersions: readonly string[];
   runtimeManifestSchemas: readonly string[];
@@ -67,6 +69,9 @@ export async function admitWorkflowArtifact(
       );
       return value;
     };
+    const expected = compileWorkflowDefinition(policy.sourceDefinition);
+    if (expected.definitionHash !== registration.definitionHash ||
+        JSON.stringify(canonical(expected)) !== JSON.stringify(canonical(compiled))) return reject();
     if (JSON.stringify(canonical(agents)) !== JSON.stringify(canonical(compiled.agentContracts))) return reject();
   } catch { return reject(); }
   if (manifest.schemaVersion !== registration.runtimeManifestSchema ||
