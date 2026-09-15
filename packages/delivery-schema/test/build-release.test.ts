@@ -89,6 +89,7 @@ function validArtifactSetSha256(): string {
 }
 
 function writeRepresentativePackage(overrides?: {
+	runtimeBinding?: string;
 	handoffStatus?: 'prepared' | 'accepted' | 'cancelled';
 	accountId?: string;
 	stagingStatus?: 'passed' | 'failed';
@@ -133,6 +134,11 @@ function writeRepresentativePackage(overrides?: {
 	manifest.acceptance.status = overrides?.acceptanceStatus ?? 'accepted';
 	for (const name of Object.keys(artifactContent) as Array<keyof typeof artifactContent>) {
 		manifest.artifacts[name].sha256 = sha256(artifactContent[name]);
+	}
+	if (overrides?.runtimeBinding !== undefined) {
+		manifest.schema = 'create-something/build-release-manifest@2';
+		manifest.artifacts.runtime_binding = {path:'artifacts/runtime-binding.json',sha256:sha256(overrides.runtimeBinding)};
+		writeFileSync(join(root,'artifacts/runtime-binding.json'),overrides.runtimeBinding);
 	}
 	const artifactSetSha256 = buildReleaseArtifactSetSha256(manifest.artifacts);
 
@@ -608,4 +614,51 @@ test('the repository representative package remains internally coherent', () => 
 	assert.equal(result.releaseReady, true);
 	assert.equal(result.manifest?.release.environment, 'staging');
 	assert.match(result.acceptanceReceipt?.note ?? '', /not a customer decision/);
+});
+
+test('Build v2 requires a runtime binding covered by the accepted artifact-set digest', () => {
+  const legacy = parseBuildReleaseManifest(validManifest());
+  const before = buildReleaseArtifactSetSha256(legacy.artifacts);
+  const runtime_binding = {path:'artifacts/runtime-binding.json',sha256:'1'.repeat(64)};
+  const next = parseBuildReleaseManifest({...legacy,schema:'create-something/build-release-manifest@2',artifacts:{...legacy.artifacts,runtime_binding}});
+  assert.notEqual(buildReleaseArtifactSetSha256(next.artifacts),before);
+  assert.notEqual(buildReleaseArtifactSetSha256({...next.artifacts,runtime_binding:{...runtime_binding,sha256:'2'.repeat(64)}}),buildReleaseArtifactSetSha256(next.artifacts));
+  assert.equal(buildReleaseArtifactSetSha256(parseBuildReleaseManifest(legacy).artifacts),before);
+  assert.throws(()=>parseBuildReleaseManifest({...legacy,schema:'create-something/build-release-manifest@2'}));
+  assert.throws(()=>parseBuildReleaseManifest({...legacy,artifacts:{...legacy.artifacts,runtime_binding}}));
+});
+
+// Compiler signature verification remains an independent registration gate.
+test('Build package inspection verifies runtime binding bytes after acceptance', () => {
+  const digest='sha256:'+'a'.repeat(64);
+  const binding={schema:'create-something/build-runtime-binding@1',buildReleaseId:'release_example_001',runtimePolicySha256:digest,
+    artifactManifestSha256:digest,runtimeManifestSha256:digest,workflowId:'marketplace',workflowVersion:'1',definitionHash:digest,compilerVersion:'compiler',
+    runtimeManifestSchema:'workflow_runtime_manifest.v0.2',attestationKeyId:'signer',attestationPublicKeyFingerprint:digest,artifactPrefix:'workflow-artifacts/'+'a'.repeat(64)+'/'};
+  const fixture = writeRepresentativePackage({runtimeBinding:JSON.stringify(binding)});
+  assert.deepEqual(inspectBuildReleasePackage(fixture.manifestPath).runtimeBinding,binding);
+  for (const value of [{...binding,buildReleaseId:'other'}, {...binding,unknown:true}, {}]) {
+    const invalid=writeRepresentativePackage({runtimeBinding:JSON.stringify(value)});
+    const result=inspectBuildReleasePackage(invalid.manifestPath);
+    assert.equal(result.evidenceValid,false);
+    assert.equal(result.runtimeBinding,undefined);
+    assert.ok(result.issues.some(issue=>issue.code==='runtime_binding_invalid'));
+  }
+  assert.equal(inspectBuildReleasePackage(fixture.manifestPath).evidenceValid,true);
+  writeFileSync(join(fixture.root,'artifacts/runtime-binding.json'),'changed');
+  const result = inspectBuildReleasePackage(fixture.manifestPath);
+  assert.equal(result.evidenceValid,false);
+  assert.ok(result.issues.some(issue=>issue.code==='artifact_hash_mismatch'));
+});
+
+
+test('inspection reports the exact manifest byte digest and rejects malformed encoding', () => {
+  const {manifestPath} = writeRepresentativePackage();
+  const bytes = readFileSync(manifestPath);
+  const inspected = inspectBuildReleasePackage(manifestPath);
+  assert.equal(inspected.releaseReady, true);
+  assert.equal(inspected.manifestSha256, createHash('sha256').update(bytes).digest('hex'));
+  writeFileSync(manifestPath, Buffer.concat([bytes, Buffer.from([0xff])]));
+  const invalid = inspectBuildReleasePackage(manifestPath);
+  assert.equal(invalid.releaseReady, false);
+  assert.equal(invalid.manifestSha256, undefined);
 });
