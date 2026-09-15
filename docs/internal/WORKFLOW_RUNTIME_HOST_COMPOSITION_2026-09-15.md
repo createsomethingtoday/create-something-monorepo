@@ -38,3 +38,13 @@ injected for local tests but the final objective still requires authenticated
 production invocation and matching API/MCP/Substrate/Atlas readbacks.
 
 This document does not authorize or claim production activation or deployment.
+
+## Approval transport integration still required
+
+`control-worker.ts` delegates approval to `service.approve`, which currently
+requeues the parent and clears `pendingApprovalKind`. It does not dispatch a
+`ZeroWriteWorkflowRuntimeHost.transition` approval event. Production composition
+must carry and verify the exact runtime approval ID, binding digest, step and
+checkpoint version using the authenticated operator identity before resuming.
+A parent approval receipt alone must never synthesize a step approval. Test the
+real action route with stale and mismatched bindings as well as successful resume.
