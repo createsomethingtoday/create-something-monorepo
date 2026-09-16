@@ -57,6 +57,7 @@ interface Env {
   CF_ACCESS_AUD?: string;
   OAUTH_ALLOWED_EMAIL_DOMAIN?: string;
   OAUTH_ALLOWED_EMAILS?: string;
+  OAUTH_ADDITIONAL_RESOURCES?: string;
   WEBFLOW_TEMPLATE_VALIDATION_WORKER_URL?: string;
   GSAP_VALIDATION_WORKER_URL?: string;
   TEMPLATE_REVIEW_VALIDATION_TIMEOUT_MS?: string;
@@ -262,6 +263,15 @@ function identityIssuer(env: Env): string {
   return env.CS_IDENTITY_ISSUER?.trim().replace(/\/+$/, '') ?? '';
 }
 
+function additionalOAuthResources(env: Env): Set<string> {
+  return new Set(
+    (env.OAUTH_ADDITIONAL_RESOURCES ?? '')
+      .split(',')
+      .map((resource) => resource.trim().replace(/\/+$/, ''))
+      .filter(Boolean),
+  );
+}
+
 async function authenticateWithIdentity(
   request: Request,
   env: Env,
@@ -276,6 +286,7 @@ async function authenticateWithIdentity(
     request,
     issuer,
     expectedResource: `${origin}/mcp`,
+    additionalExpectedResources: additionalOAuthResources(env),
     allowedDomain: allowedDomain(env),
     allowedEmails: parseAllowedEmails(env.OAUTH_ALLOWED_EMAILS),
     directory: resolveReviewerDirectory(env),
