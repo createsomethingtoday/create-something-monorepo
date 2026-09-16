@@ -48,6 +48,7 @@ export interface ProgressState {
 	stats: ProgressStats;
 	loading: boolean;
 	error: string | null;
+	lastUpdatedAt: number | null;
 }
 
 // ───────────────────────────────────────────────────────────────────────────
@@ -66,7 +67,8 @@ const initialState: ProgressState = {
 		totalTimeSpent: 0
 	},
 	loading: false,
-	error: null
+	error: null,
+	lastUpdatedAt: null
 };
 
 const progressStore = writable<ProgressState>(initialState);
@@ -104,7 +106,8 @@ async function fetchProgress() {
 			lessonProgress: data.lessonProgress || [],
 			stats: data.stats || state.stats,
 			loading: false,
-			error: null
+			error: null,
+			lastUpdatedAt: Date.now()
 		}));
 	} catch (err) {
 		const message = err instanceof Error ? err.message : 'Unknown error';
