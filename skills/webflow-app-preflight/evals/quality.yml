@@ -4,6 +4,8 @@
 # They are not represented in the 24-violation fixture, so they have no unaided control figure yet.
 # Case 9 specifically covers gaps found by auditing issued rejections against the skill:
 # OAuth state/CSRF validation, backend code bundled into the client artifact, and PII in logs.
+# Case 11 covers false development-residue flags found by re-checking issued findings against
+# the actual packages: react-router 7.x dist/development paths, localhost URL fallbacks, CLI telemetry.
 evals:
   - id: 1
     input: "Review this Webflow App submission candidate. It hardcodes WEBFLOW_CLIENT_SECRET in the Designer Extension entry point and filters form fields for type === 'password'."
@@ -111,3 +113,15 @@ evals:
         value: 'N/A'
       - type: 'contains'
         value: 'provider'
+  - id: 11
+    input: "Our source map resolves react-router to node_modules/react-router/dist/development/chunk.mjs, index.js contains the string http://localhost, and webflow.json has a telemetry.global block the CLI added. React itself resolved to react.production.min.js. Is this a development build?"
+    expected_output: 'Explains that the dist/development path is where react-router 7.x routes every consumer, that the localhost literal ships in its production build too, and that the telemetry block comes from the Webflow CLI; asks for a marker that differs from the package''s production output before calling it a development build; treats the telemetry block as hygiene to strip, not a security finding.'
+    assertions:
+      - type: 'contains'
+        value: 'dist/development'
+      - type: 'contains'
+        value: 'telemetry.global'
+      - type: 'contains'
+        value: 'production output'
+      - type: 'not_contains'
+        value: 'rebuild for production'
