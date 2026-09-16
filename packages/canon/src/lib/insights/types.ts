@@ -119,6 +119,8 @@ export interface KeyInsightProps {
 	variant?: 'fullscreen' | 'inline' | 'card';
 	/** Animation direction: forward (full→essence) or reverse (essence→full) */
 	direction?: 'forward' | 'reverse';
+	/** Optional action phrase prepended to the source title */
+	sourceAction?: string;
 	/** Additional CSS classes */
 	class?: string;
 }
