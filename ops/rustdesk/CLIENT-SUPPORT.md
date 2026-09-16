@@ -4,6 +4,8 @@ Use the shared RustDesk kit when a client needs help on their Mac. Keep each cli
 
 Owner: Micah. Current platform: Apple Silicon Mac. Confirm another platform separately before offering the kit. RustDesk provides screen access; the local agent, SaaS authentication and code review keep their existing approval rules.
 
+Agents completing setup should start with [the agent instructions](AGENTS.md), including the Grantbot task and onboarding issue links.
+
 ## Shared kit
 
 Build from the repository root:
