@@ -1,0 +1,113 @@
+{
+  "schemaVersion": "codex-instruction-ablation-run-receipt.v1",
+  "experimentId": "codex-mcp-authz-instructions-v1",
+  "planHash": "569e8675171f057d49aceec48cb5490d945cf2eeccaea3ba6201460135934bf8",
+  "sequence": 1,
+  "key": "control::gmail-route-classification::1",
+  "armId": "control",
+  "taskId": "gmail-route-classification",
+  "repetition": 1,
+  "executor": {
+    "version": "codex-cli 0.142.5",
+    "authMode": "ChatGPT",
+    "model": "gpt-5.6-terra",
+    "reasoningEffort": "medium",
+    "sandbox": "workspace-write",
+    "ephemeral": true,
+    "ignoreUserConfig": true
+  },
+  "provenance": {
+    "sourceCommit": "fe5133ba1a624d1664cac3e112d1d32fce768d53",
+    "sourceTree": "6841df04c02bf3885f2d2fdd1ff9f2030b7c21db",
+    "fixtureBaselineCommit": "ffa7d892da33299cfe078b1f843c86289290df83",
+    "fixtureHistoryCount": 1,
+    "promptSha256": "a399cd56c6408bde7e25d0a5f47fff97f7584798bf307332b7365936ab2396c6",
+    "outputSchemaSha256": "6b1a9c3540d02eda200a679d436c36862db85554d73aaaf37d0cba4b6b010aa8",
+    "componentState": {
+      "rootInstructions": false,
+      "packageInstructions": false
+    },
+    "instructionSha256": {
+      "root": null,
+      "package": null
+    },
+    "hiddenEvaluatorSeparated": true,
+    "designerSawHistoricalSolution": true
+  },
+  "execution": {
+    "exitCode": 1,
+    "signal": null,
+    "timedOut": false,
+    "latencyMs": 4060
+  },
+  "changedFiles": [],
+  "commands": [],
+  "packageValidation": {
+    "passed": true,
+    "exitCode": 0,
+    "signal": null,
+    "logSha256": "420f275725962180b4f323c8ebd18edd59cd55eb93b6ddfabeced2f8d4631dfa"
+  },
+  "hiddenEvaluation": {
+    "passed": false,
+    "summary": {
+      "passed": 1,
+      "total": 8
+    }
+  },
+  "finalResponse": {
+    "claimedComplete": false,
+    "validationCommands": [],
+    "summary": "",
+    "completionBoundary": ""
+  },
+  "metrics": {
+    "taskSuccess": 0,
+    "policyViolations": 0,
+    "scopeDiscipline": 1,
+    "totalTokens": 0,
+    "latencyMs": 4060
+  },
+  "artifacts": {
+    "events": {
+      "path": "evidence/runs/01-control-r1/events.jsonl",
+      "sha256": "e7d3dfdc6f4671815dd0e27995cad1e3d504d7c77ddbc9b9710566c111f0b0dc"
+    },
+    "stderr": {
+      "path": "evidence/runs/01-control-r1/codex.stderr.log",
+      "sha256": "1a0931bccecda2c3b0c9ead40c61388143eb3487be5e94f6755e63c7c521b775"
+    },
+    "finalResponse": {
+      "path": "evidence/runs/01-control-r1/final-response.json",
+      "sha256": null
+    },
+    "diff": {
+      "path": "evidence/runs/01-control-r1/agent.diff",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "packageValidation": {
+      "path": "evidence/runs/01-control-r1/package-validation.log",
+      "sha256": "420f275725962180b4f323c8ebd18edd59cd55eb93b6ddfabeced2f8d4631dfa"
+    },
+    "hiddenEvaluation": {
+      "path": "evidence/runs/01-control-r1/hidden-evaluation.json",
+      "sha256": "8220f88fd1e3aca3b4ae5efe80ef94e58dddb4774d7af3c1eb68d3fb6eac7d4d"
+    }
+  },
+  "dependencyPreparation": {
+    "passed": true,
+    "commands": [
+      {
+        "command": "pnpm install --filter @create-something/mcp-authz... --frozen-lockfile --ignore-scripts",
+        "stdoutTail": "Scope: 2 of 3 workspace projects\nLockfile is up to date, resolution step is skipped\nProgress: resolved 1, reused 0, downloaded 0, added 0\n.                                        | +403 ++++++++++++++++++++++++++++++++\nProgress: resolved 403, reused 403, downloaded 0, added 222\nProgress: resolved 403, reused 403, downloaded 0, added 401\nProgress: resolved 403, reused 403, downloaded 0, added 403, done\nDone in 2.6s\n",
+        "stderrTail": ""
+      },
+      {
+        "command": "pnpm --filter @create-something/policy-os-engine build",
+        "stdoutTail": "\n> @create-something/policy-os-engine@0.1.0 build /private/var/folders/5v/bcpy60z558b1y2jctfx6108m0000gq/T/codex-mcp-authz-instructions-v1-fixtures/01-control-r1/packages/policy-os-engine\n> tsc\n\n",
+        "stderrTail": ""
+      }
+    ]
+  },
+  "recordedAt": "2026-07-27T20:12:15.860Z"
+}

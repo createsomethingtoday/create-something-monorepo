@@ -1,0 +1,110 @@
+{
+  "schemaVersion": "codex-instruction-ablation-preflight.v1",
+  "experimentId": "codex-mcp-authz-instructions-v2",
+  "planHash": "2b2f97cb00800d03a8a1aecc7b9ab5f8de3b157e05f0e0525cf90d5a5b796260",
+  "row": {
+    "sequence": 1,
+    "key": "control::gmail-route-classification::2",
+    "armId": "control",
+    "taskId": "gmail-route-classification",
+    "repetition": 2
+  },
+  "executor": {
+    "version": "codex-cli 0.146.0-alpha.3.1",
+    "authMode": "ChatGPT",
+    "executable": "/Applications/ChatGPT.app/Contents/Resources/codex",
+    "binarySha256": "6d8be49e49751554df16572369e636cbe02c84b208cad3dc35528c846eeca223"
+  },
+  "source": {
+    "sourceTree": "6841df04c02bf3885f2d2fdd1ff9f2030b7c21db",
+    "rootInstructionSha256": "95e2c423f549e8dea9833918650984a8a806b20640b9096a0dd7e9d32beca486",
+    "packageInstructionSha256": "889563d4906926f5d28cc8dc07e2fe68a1649aba9cdb97c1e51f377be491cbd4"
+  },
+  "fixture": {
+    "runDir": "/var/folders/5v/bcpy60z558b1y2jctfx6108m0000gq/T/codex-mcp-authz-instructions-v2-fixtures/01-control-r2",
+    "baselineCommit": "eb131ccf2984b718f4baca0c5adf02c595406b0d",
+    "historyCount": 1,
+    "componentState": {
+      "rootInstructions": false,
+      "packageInstructions": false
+    },
+    "instructionSha256": {
+      "root": null,
+      "package": null
+    }
+  },
+  "dependencyPreparation": {
+    "passed": true,
+    "commands": [
+      {
+        "command": "pnpm install --filter @create-something/mcp-authz... --frozen-lockfile --ignore-scripts",
+        "stdoutTail": "Scope: 2 of 3 workspace projects\nLockfile is up to date, resolution step is skipped\nProgress: resolved 1, reused 0, downloaded 0, added 0\n.                                        | +403 ++++++++++++++++++++++++++++++++\nProgress: resolved 403, reused 403, downloaded 0, added 208\nProgress: resolved 403, reused 403, downloaded 0, added 401\nProgress: resolved 403, reused 403, downloaded 0, added 403, done\nDone in 2.6s\n",
+        "stderrTail": ""
+      },
+      {
+        "command": "pnpm --filter @create-something/policy-os-engine build",
+        "stdoutTail": "\n> @create-something/policy-os-engine@0.1.0 build /private/var/folders/5v/bcpy60z558b1y2jctfx6108m0000gq/T/codex-mcp-authz-instructions-v2-fixtures/01-control-r2/packages/policy-os-engine\n> tsc\n\n",
+        "stderrTail": ""
+      }
+    ]
+  },
+  "hiddenBaseline": {
+    "schemaVersion": "codex-instruction-ablation-hidden-evaluation.v1",
+    "passed": false,
+    "build": {
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "stdoutTail": "\n> @create-something/mcp-authz@0.1.0 build /private/var/folders/5v/bcpy60z558b1y2jctfx6108m0000gq/T/codex-mcp-authz-instructions-v2-fixtures/01-control-r2/packages/mcp-authz\n> tsc\n\n",
+      "stderrTail": ""
+    },
+    "cases": [
+      {
+        "name": "read description ignores control-plane prose",
+        "passed": false,
+        "error": "accessType: expected \"read\", received \"control_plane\""
+      },
+      {
+        "name": "read description ignores destructive prose",
+        "passed": false,
+        "error": "accessType: expected \"read\", received \"destructive\""
+      },
+      {
+        "name": "multiplexed list invocation classifies as read",
+        "passed": false,
+        "error": "accessType: expected \"read\", received \"write\""
+      },
+      {
+        "name": "multiplexed mutation invocation classifies as write",
+        "passed": true,
+        "error": null
+      },
+      {
+        "name": "destructive invocation takes precedence",
+        "passed": false,
+        "error": "accessType: expected \"destructive\", received \"read\""
+      },
+      {
+        "name": "authentication invocation takes precedence",
+        "passed": false,
+        "error": "accessType: expected \"auth_admin\", received \"read\""
+      },
+      {
+        "name": "control-plane invocation remains control-plane",
+        "passed": false,
+        "error": "control-plane accessType: expected \"control_plane\", received \"read\""
+      },
+      {
+        "name": "authorization request retains invocation evidence",
+        "passed": false,
+        "error": "resource accessType: expected \"read\", received \"write\""
+      }
+    ],
+    "summary": {
+      "passed": 1,
+      "total": 8
+    }
+  },
+  "hiddenEvaluatorPath": "/private/var/folders/5v/bcpy60z558b1y2jctfx6108m0000gq/T/cre-1474-agent-worktree/evals/harness-ablation/pilots/codex-mcp-authz-instructions-v2/hidden-evaluator.mjs",
+  "createdAt": "2026-07-27T20:35:35.956Z"
+}

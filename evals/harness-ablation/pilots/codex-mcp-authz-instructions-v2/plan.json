@@ -1,0 +1,129 @@
+{
+  "schemaVersion": "harness-ablation-plan.v1",
+  "experimentId": "codex-mcp-authz-instructions-v2",
+  "manifestHash": "ad83b5e62998e7695dae1ffa40aebef14d6b9ca778c8fdbf3f13320bb198db7e",
+  "environment": "isolated",
+  "hypothesis": "Current root and package AGENTS.md instructions improve reliable scoped mcp-authz repair enough to justify their context and latency overhead.",
+  "repetitions": 2,
+  "randomizationSeed": "cre-1474-codex-mcp-authz-instructions-v1",
+  "taskIds": [
+    "gmail-route-classification"
+  ],
+  "arms": [
+    {
+      "id": "control",
+      "label": "Model and harness baseline without declared CREATE SOMETHING components",
+      "enabledComponents": [],
+      "disabledComponents": [
+        "root-instructions",
+        "package-instructions"
+      ],
+      "ablatedComponent": null,
+      "requiresIsolatedExecution": true
+    },
+    {
+      "id": "full",
+      "label": "Full declared harness",
+      "enabledComponents": [
+        "root-instructions",
+        "package-instructions"
+      ],
+      "disabledComponents": [],
+      "ablatedComponent": null,
+      "requiresIsolatedExecution": false
+    },
+    {
+      "id": "without-root-instructions",
+      "label": "Full harness without root-instructions",
+      "enabledComponents": [
+        "package-instructions"
+      ],
+      "disabledComponents": [
+        "root-instructions"
+      ],
+      "ablatedComponent": "root-instructions",
+      "requiresIsolatedExecution": true
+    },
+    {
+      "id": "without-package-instructions",
+      "label": "Full harness without package-instructions",
+      "enabledComponents": [
+        "root-instructions"
+      ],
+      "disabledComponents": [
+        "package-instructions"
+      ],
+      "ablatedComponent": "package-instructions",
+      "requiresIsolatedExecution": false
+    }
+  ],
+  "schedule": [
+    {
+      "sequence": 1,
+      "key": "control::gmail-route-classification::2",
+      "armId": "control",
+      "taskId": "gmail-route-classification",
+      "repetition": 2
+    },
+    {
+      "sequence": 2,
+      "key": "full::gmail-route-classification::1",
+      "armId": "full",
+      "taskId": "gmail-route-classification",
+      "repetition": 1
+    },
+    {
+      "sequence": 3,
+      "key": "without-root-instructions::gmail-route-classification::2",
+      "armId": "without-root-instructions",
+      "taskId": "gmail-route-classification",
+      "repetition": 2
+    },
+    {
+      "sequence": 4,
+      "key": "full::gmail-route-classification::2",
+      "armId": "full",
+      "taskId": "gmail-route-classification",
+      "repetition": 2
+    },
+    {
+      "sequence": 5,
+      "key": "without-package-instructions::gmail-route-classification::1",
+      "armId": "without-package-instructions",
+      "taskId": "gmail-route-classification",
+      "repetition": 1
+    },
+    {
+      "sequence": 6,
+      "key": "control::gmail-route-classification::1",
+      "armId": "control",
+      "taskId": "gmail-route-classification",
+      "repetition": 1
+    },
+    {
+      "sequence": 7,
+      "key": "without-root-instructions::gmail-route-classification::1",
+      "armId": "without-root-instructions",
+      "taskId": "gmail-route-classification",
+      "repetition": 1
+    },
+    {
+      "sequence": 8,
+      "key": "without-package-instructions::gmail-route-classification::2",
+      "armId": "without-package-instructions",
+      "taskId": "gmail-route-classification",
+      "repetition": 2
+    }
+  ],
+  "executionBoundary": {
+    "writesProduction": false,
+    "launchesAgents": false,
+    "allowedEnvironments": [
+      "isolated",
+      "shadow"
+    ],
+    "note": "Execute each planned arm through an owning isolated or shadow harness, then return versioned run receipts."
+  },
+  "planHash": "2b2f97cb00800d03a8a1aecc7b9ab5f8de3b157e05f0e0525cf90d5a5b796260",
+  "expectedRunCount": 8
+}

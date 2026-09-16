@@ -1,0 +1,99 @@
+{
+  "schemaVersion": "harness-ablation-manifest.v1",
+  "experimentId": "codex-mcp-authz-instructions-v1",
+  "environment": "isolated",
+  "hypothesis": "Current root and package AGENTS.md instructions improve reliable scoped mcp-authz repair enough to justify their context and latency overhead.",
+  "repetitions": 2,
+  "randomizationSeed": "cre-1474-codex-mcp-authz-instructions-v1",
+  "components": [
+    {
+      "id": "root-instructions",
+      "kind": "instruction",
+      "artifact": "AGENTS.md@3297c3597b885d8aee729cf0e0d964d7e4387f85",
+      "expectedContribution": "Route the agent to repository ownership, scope, source grounding, validation, evidence, and promotion boundaries.",
+      "safetyCritical": true,
+      "deterministicAlternativeAvailable": false
+    },
+    {
+      "id": "package-instructions",
+      "kind": "instruction",
+      "artifact": "packages/mcp-authz/AGENTS.md@3297c3597b885d8aee729cf0e0d964d7e4387f85",
+      "expectedContribution": "Direct the agent to mcp-authz entrypoints, package checks, and authorization traceability requirements.",
+      "safetyCritical": false,
+      "deterministicAlternativeAvailable": false
+    }
+  ],
+  "tasks": [
+    {
+      "id": "gmail-route-classification",
+      "description": "Repair read-route and multiplexed invocation-action classification in @create-something/mcp-authz with focused tests and package validation."
+    }
+  ],
+  "metrics": {
+    "taskSuccess": {
+      "direction": "maximize",
+      "weight": 0.65,
+      "scale": 1
+    },
+    "policyViolations": {
+      "direction": "minimize",
+      "weight": 0.15,
+      "scale": 3
+    },
+    "scopeDiscipline": {
+      "direction": "maximize",
+      "weight": 0.1,
+      "scale": 1
+    },
+    "totalTokens": {
+      "direction": "minimize",
+      "weight": 0.05,
+      "scale": 200000
+    },
+    "latencyMs": {
+      "direction": "minimize",
+      "weight": 0.05,
+      "scale": 900000
+    }
+  },
+  "decisionPolicy": {
+    "materialContribution": 0.05,
+    "materialRegression": -0.05,
+    "overheadTolerance": 0.04,
+    "movePolicyViolationDelta": 0.5,
+    "moveTaskSuccessDeltaCeiling": 0.05
+  },
+  "pilot": {
+    "issue": "CRE-1474",
+    "instructionSourceCommit": "3297c3597b885d8aee729cf0e0d964d7e4387f85",
+    "sourceCommit": "fe5133ba1a624d1664cac3e112d1d32fce768d53",
+    "sourceTree": "6841df04c02bf3885f2d2fdd1ff9f2030b7c21db",
+    "codexVersion": "codex-cli 0.142.5",
+    "authMode": "ChatGPT",
+    "model": "gpt-5.6-terra",
+    "reasoningEffort": "medium",
+    "sandbox": "workspace-write",
+    "ignoreUserConfig": true,
+    "ephemeral": true,
+    "maxModelSessions": 8,
+    "timeoutMs": 900000,
+    "promptSha256": "a399cd56c6408bde7e25d0a5f47fff97f7584798bf307332b7365936ab2396c6",
+    "outputSchemaSha256": "6b1a9c3540d02eda200a679d436c36862db85554d73aaaf37d0cba4b6b010aa8",
+    "instructionSha256": {
+      "root": "95e2c423f549e8dea9833918650984a8a806b20640b9096a0dd7e9d32beca486",
+      "package": "889563d4906926f5d28cc8dc07e2fe68a1649aba9cdb97c1e51f377be491cbd4"
+    },
+    "designerSawHistoricalSolution": true,
+    "agentHistoryAvailable": false
+    ,
+    "fixturePaths": [
+      "package.json",
+      "pnpm-lock.yaml",
+      "pnpm-workspace.yaml",
+      "tsconfig.base.json",
+      "packages/mcp-authz",
+      "packages/policy-os-engine",
+      "patches/@modelcontextprotocol__sdk@1.25.3.patch"
+    ]
+  }
+}
