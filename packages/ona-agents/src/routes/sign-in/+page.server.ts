@@ -1,10 +1,10 @@
 import type { PageServerLoad } from './$types';
+import { labelAgentReturnPath, safeAgentReturnPath } from '$lib/server/auth/return-path';
 
-function safeRedirect(value: string | null): string {
-  if (!value || !value.startsWith('/') || value.startsWith('//')) return '/agents';
-  return value;
-}
-
-export const load: PageServerLoad = async ({ url }) => ({
-  redirectTo: safeRedirect(url.searchParams.get('redirect'))
-});
+export const load: PageServerLoad = async ({ url }) => {
+  const redirectTo = safeAgentReturnPath(url.searchParams.get('redirect'));
+  return {
+    redirectTo,
+    returnDestinationLabel: labelAgentReturnPath(redirectTo)
+  };
+};
