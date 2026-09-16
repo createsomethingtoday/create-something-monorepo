@@ -1,0 +1,12 @@
+[Unit]
+Description=Encrypted consistent RustDesk recovery snapshot
+After=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 /usr/local/lib/rustdesk/backup.py
+UMask=0077
+PrivateTmp=true
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=/var/backups/rustdesk /run
