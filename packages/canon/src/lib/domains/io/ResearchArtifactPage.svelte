@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import ArticleContent from './ArticleContent.svelte';
 	import ArticleHeader from './ArticleHeader.svelte';
 	import NextExperimentCard from './NextExperimentCard.svelte';
@@ -22,6 +23,16 @@
 		isCompleted?: boolean;
 		nextPaper?: Paper | null;
 		onReset?: () => void;
+		sharpenExperiment?: {
+			question: string;
+			action: string;
+			evidence: string;
+			limit: string;
+			nextLabel: string;
+			nextHref: string;
+		} | null;
+		progressiveRecord?: boolean;
+		progressiveActions?: boolean;
 	}
 
 	let {
@@ -31,8 +42,13 @@
 		fullUrl,
 		isCompleted = false,
 		nextPaper = null,
-		onReset
+		onReset,
+		sharpenExperiment = null,
+		progressiveRecord = false,
+		progressiveActions = false
 	}: Props = $props();
+	let enhanced = $state(false);
+	onMount(() => { enhanced = true; });
 
 	let showMarkdownPreview = $state(false);
 	let markdownContent = $state('');
@@ -115,11 +131,12 @@ ${hasInteractive && paper.interactive_demo_url ? `
 />
 
 <div class="min-h-screen research-artifact-page">
-	<ArticleHeader {paper} />
+	<ArticleHeader {paper} prioritizeTitle={!!sharpenExperiment} orientation={sharpenExperiment} />
 
 	<div class="shell-inner-pad">
 		<div class="grid grid-cols-1 lg:grid-cols-[80px_1fr] gap-12">
 			<aside class="hidden lg:block">
+				{#if !progressiveActions || enhanced}
 				<div class="flex flex-col gap-4">
 					<ShareButtons title={paper.title} url={artifactUrl} {isCompleted} />
 					<PageActions
@@ -134,10 +151,18 @@ ${hasInteractive && paper.interactive_demo_url ? `
 						onpreview={handlePreview}
 					/>
 				</div>
+				{/if}
 			</aside>
 
 			<div class="min-w-0">
-				<ArticleContent {paper} {isCompleted} {onReset} />
+				{#if progressiveRecord}
+					<details class="artifact-record">
+						<summary>Open the full research record <span aria-hidden="true">＋</span></summary>
+						<ArticleContent {paper} {isCompleted} {onReset} />
+					</details>
+				{:else}
+					<ArticleContent {paper} {isCompleted} {onReset} />
+				{/if}
 			</div>
 		</div>
 	</div>
@@ -195,4 +220,7 @@ ${hasInteractive && paper.interactive_demo_url ? `
 	.back-link:hover {
 		color: var(--color-performance-fg-primary);
 	}
+
+	.artifact-record { border-block: 1px solid var(--color-performance-border-subtle); }
+	.artifact-record summary { display: flex; justify-content: space-between; padding-block: 1rem; cursor: pointer; font-weight: 700; }
 </style>

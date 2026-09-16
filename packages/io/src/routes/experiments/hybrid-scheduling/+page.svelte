@@ -10,6 +10,9 @@
 	 */
 
 	import { SEO } from '@create-something/canon';
+	import ExperimentOrientation from '$lib/components/ExperimentOrientation.svelte';
+	import ExperimentRecord from '$lib/components/ExperimentRecord.svelte';
+	import { experimentGuides } from '$lib/config/experimentSharpness';
 
 	// Cost comparison data
 	const modalLimitations = {
@@ -53,11 +56,13 @@
 		<!-- Header -->
 		<div class="header-section pb-8">
 			<h1 class="page-title mb-3">Hybrid Scheduling Experiment</h1>
+			<ExperimentOrientation guide={experimentGuides['experiments/hybrid-scheduling']} />
 			<p class="text-secondary max-w-3xl">
 				Exploring how Cloudflare Workers Cron Triggers can complement Modal's scheduled jobs,
 				overcoming free tier limitations while maintaining cost efficiency.
 			</p>
 		</div>
+		<ExperimentRecord>
 
 		<!-- Abstract -->
 		<section class="abstract-section pl-6 space-y-4">
@@ -542,6 +547,7 @@
 			</div>
 		</section>
 
+		</ExperimentRecord>
 		<!-- Footer -->
 		<div class="section-divider pt-6">
 			<p class="text-body-sm text-muted">

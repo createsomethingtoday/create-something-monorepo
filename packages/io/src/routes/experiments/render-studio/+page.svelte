@@ -8,7 +8,10 @@
 	 * - Conditioning image is transparent (see what the AI sees)
 	 */
 	import { QuoteBlock, SEO } from '@create-something/canon';
+	import ExperimentOrientation from '$lib/components/ExperimentOrientation.svelte';
+	import ProgressiveExperiment from '$lib/components/ProgressiveExperiment.svelte';
 	import ExperimentVisualSummary from '$lib/components/ExperimentVisualSummary.svelte';
+	import { experimentGuides } from '$lib/config/experimentSharpness';
 	import {
 		PresetPicker,
 		OperationPicker,
@@ -414,8 +417,10 @@
 			<span class="reading-time">{experiment.reading_time_minutes} min read</span>
 		</div>
 		<h1>{experiment.title}</h1>
+		<ExperimentOrientation guide={experimentGuides['experiments/render-studio']} />
 		<p class="subtitle">{experiment.description}</p>
 	</header>
+	<ProgressiveExperiment fallback="The experiment question and workflow remain available above. Enable JavaScript to edit a floor plan and send it to the preview.">
 
 	<!-- ASCII Art -->
 	{#if experiment.ascii_art}
@@ -591,6 +596,7 @@
 			Tests: {experiment.tests_principles?.join(', ') ?? 'None specified'}
 		</p>
 	</footer>
+	</ProgressiveExperiment>
 </article>
 
 <style>
