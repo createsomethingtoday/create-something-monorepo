@@ -26,7 +26,7 @@ First complete the authority classification in `SKILL.md`. Mark conditional item
 - [ ] Client Secret is server-side only — not in the bundle, client JS, or repo.
 - [ ] Designer Extension source code is readable and uploaded through the version manager.
 - [ ] Archive contains exactly one canonical `webflow.json`, and the app title is the real product name — no scaffold defaults like "My React App".
-- [ ] The **bundled** `webflow.json` carries no CLI telemetry block (`telemetry.global.allowTelemetry`) — the CLI can inject one at bundle time even when your source manifest is clean, so check the artifact you upload, not the file in your repo.
+- [ ] The **bundled** `webflow.json` carries no CLI telemetry block (`telemetry.global.allowTelemetry`). Webflow CLI 2.3.0 and earlier write that block into the project's `webflow.json` when you answer the telemetry prompt (2.7.x moved the global preference out of the project file), so it appears without you adding it. Strip it or upgrade the CLI. It is packaging hygiene, not a security finding, and not evidence of a development build.
 - [ ] The artifact you verify is the artifact you upload — run production checks against the contents of `bundle.zip`, not a working-directory build output that a dev server can overwrite.
 - [ ] `bundle.zip` does not exceed the 5MB Designer Extension bundle limit — an oversized bundle fails at upload, before review starts.
 - [ ] The bundled `webflow.json` declares the required manifest fields — `name`, `apiVersion` (`"2"`), and `publicDir` matching your build output directory.
@@ -47,7 +47,7 @@ Reviewers verify these by calling your endpoints and asking for evidence, not by
 - [ ] Uploads validated server-side for type, size, count, and file signature; archive contents inspected.
 - [ ] Actions are attributed to the authenticated user — no hardcoded owner or service identity standing in for real users.
 - [ ] `[control]` Dependency audit clean of High/Critical advisories, or a documented function-level reachability analysis; production manifest and lockfile available on request.
-- [ ] No staging, localhost, or tunnel hostnames anywhere in the artifact, and the declared installation URL is a production host.
+- [ ] No staging, localhost, or tunnel hostname is used as a request destination in the artifact, and the declared installation URL is a production host. A `localhost` string in a hostname blocklist, in a library's URL-parsing fallback, or in a test fixture is not a development artifact — check what the string does, not that it exists.
 - [ ] `[control]` OAuth callback validates a single-use, server-stored `state` bound to the pending authorization — the CSRF control in Webflow's OAuth flow (PKCE is not part of Webflow's documented flow; use PKCE on third-party OAuth flows your app performs that support it).
 - [ ] Client bundle contains client code only — no server handlers, database schema, JWT logic, or backend dependencies (check the source map, which will reveal whatever the bundle contains).
 - [ ] Production logs contain no personal data or credentials; sensitive fields redacted at the logging boundary.

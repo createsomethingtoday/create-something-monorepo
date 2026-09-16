@@ -60,6 +60,8 @@ Checks that the eval files parse and are internally consistent, that every `cont
 
 **Coverage note.** The 24-violation fixture is bundle- and lifecycle-weighted. The **Backend and API surface** section — server-side identity resolution, object-level authorization, destination allowlisting, CORS as defense-in-depth, credential storage, upload validation, dependency-advisory hygiene, and production-only infrastructure — was added after that baseline was measured, and is exercised by quality cases 6–8 plus the `backend_authorization` rubric criterion. It has no unaided control figure yet. Those checks address the class of failure that review finds by _calling_ a service rather than by reading a bundle, so a static review of source alone cannot fully confirm them; the skill states them as requirements the developer must be able to demonstrate.
 
+**False-flag note.** Quality case 11 and the matching Anti-advice item were added after re-checking issued findings against the packages they cited: a `dist/development` source-map path (react-router 7.x routes every consumer there), a `localhost` literal in a URL fallback or hostname blocklist, and the `telemetry.global` block the Webflow CLI writes into `webflow.json` all ship in production builds. The skill now asks for a marker that differs from the dependency's production output before calling anything a development build.
+
 ## Using it
 
 **In an agent that supports skills** (e.g. Claude Code): drop the `webflow-app-preflight/` directory into your skills location (for Claude Code: `~/.claude/skills/`) and invoke it when building or preparing a Webflow App.

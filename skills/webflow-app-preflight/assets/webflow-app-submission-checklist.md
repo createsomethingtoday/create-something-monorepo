@@ -42,7 +42,7 @@ If you can answer yes to all three _with evidence_, the App passes.
 - [ ] Client Secret is server-side only — not in the bundle, client JS, or repo.
 - [ ] Designer Extension source is readable and uploaded through the version manager.
 - [ ] Archive contains exactly one canonical `webflow.json`, and the app title is your real product name — no scaffold defaults like "My React App".
-- [ ] The **bundled** `webflow.json` carries no CLI telemetry block (`telemetry.global.allowTelemetry`). The CLI can add one at bundle time even when your source manifest is clean, so check the file inside the artifact you upload.
+- [ ] The **bundled** `webflow.json` carries no CLI telemetry block (`telemetry.global.allowTelemetry`). Webflow CLI 2.3.0 and earlier write that block into the project's `webflow.json` when you answer the telemetry prompt (2.7.x moved the global preference out of the project file), so it appears without you adding it. Strip it or upgrade the CLI. It is packaging hygiene, not a security finding.
 - [ ] The artifact you verify is the artifact you upload — run your production checks against the contents of `bundle.zip`, not a working-directory build a dev server can overwrite.
 - [ ] `bundle.zip` does not exceed the 5MB Designer Extension bundle limit — an oversized bundle fails at upload, before review starts.
 - [ ] The bundled `webflow.json` declares the required manifest fields — `name`, `apiVersion` (`"2"`), and `publicDir` matching your build output directory.
@@ -69,7 +69,7 @@ Reviewers verify these by calling your endpoints and asking for evidence, not by
 - [ ] Uploads validated server-side for type, size, count, and file signature; archive contents inspected.
 - [ ] Actions are attributed to the authenticated user — no hardcoded owner or service identity standing in for real users.
 - [ ] `[control]` Dependency audit clean of High and Critical advisories, or a documented function-level reachability analysis. Production manifest and lockfile available on request.
-- [ ] No staging, localhost, or tunnel hostnames anywhere in the artifact, and the installation URL you declare is a production host.
+- [ ] No staging, localhost, or tunnel hostname is used as a request destination in the artifact, and the installation URL you declare is a production host. A `localhost` string in a hostname blocklist, in a library's URL-parsing fallback, or in a test fixture is not a development artifact — check what the string does, not that it exists.
 - [ ] `[control]` OAuth callback validates a single-use, server-stored `state` bound to the pending authorization — the CSRF control in Webflow's OAuth flow (PKCE is not part of Webflow's documented flow; use PKCE on third-party OAuth flows your app performs that support it).
 - [ ] Client bundle contains client code only — no server handlers, database schema, JWT logic, or backend dependencies (check the source map, which will reveal whatever the bundle contains).
 - [ ] Production logs contain no personal data or credentials; sensitive fields redacted at the logging boundary.
@@ -149,7 +149,7 @@ These are the recurring reasons a well-intentioned App gets bounced or pulled in
 
 **7 · Backend endpoints that trust the client.** An endpoint acting on a client-supplied site, account, or project ID with no caller authentication — or with authentication but no check that this caller owns that record. Often paired with `Access-Control-Allow-Origin: *` or a credential returned contrary to its provider's documented client architecture. This is the class reviewers find by _calling_ your endpoint, so it survives an otherwise clean-looking submission. _Classify authority first. For Webflow-authorized actions, resolve identity server-side from the Webflow ID token and bind it to the record. Enforce and test object-level authorization. Treat CORS as defense-in-depth, never as the control that keeps callers out._
 
-**8 · Non-production infrastructure in a production artifact.** The bundle points at staging, localhost, or a tunnel host, or the declared installation URL is a non-production endpoint. _Deploy a documented production service, generate a production-only bundle, separate test and production data, and add a build rule that fails when development endpoints appear in a Marketplace artifact. Check the installation URL you declare, not just the code._
+**8 · Non-production infrastructure in a production artifact.** The bundle points at staging, localhost, or a tunnel host, or the declared installation URL is a non-production endpoint. Not this pattern: a `localhost` literal in a hostname blocklist or a library's URL-parsing fallback, a source map resolving a dependency to a `dist/development` path the package routes everyone through (react-router 7.x), or the `telemetry.global` block the Webflow CLI writes into `webflow.json` — those ship in production builds. _Deploy a documented production service, generate a production-only bundle, separate test and production data, and add a build rule that fails when development endpoints appear as request destinations in a Marketplace artifact. Check the installation URL you declare, not just the code._
 
 **9 · "Private" is not a lower bar or a testing tier.** Private Apps go through the same rigorous review as public Apps — a private App is a workspace-specific custom App, not a beta tier. _Build to the production bar from the start. To validate with outside users before launch, use Webflow's user testing process._
 
@@ -169,6 +169,7 @@ Two more on the backend side:
 
 - ❌ "The endpoint is safe because CORS restricts which origins can call it." CORS is a browser policy, not authorization. A non-browser client ignores it entirely.
 - ❌ "Only our extension knows that site ID, so it's safe to key on." Site IDs appear in published page source.
+- ❌ "The source map points at `dist/development`, so rebuild for production." A path name is not a build mode. react-router 7.x publishes every consumer's code under `dist/development`, and its `localhost` URL fallback ships in production too. Prove a development build with a marker that differs from the package's production output, or drop the finding.
 
 ---
 

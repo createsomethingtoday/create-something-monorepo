@@ -71,9 +71,11 @@ Note the actual objection, because it explains the carve-out: a Designer Extensi
 
 **Pattern:** The submitted bundle points at staging, localhost, or a tunnel host, or the declared installation URL is a non-production endpoint. Sometimes it's even disclosed in the submission notes and shipped anyway.
 
+**Not this pattern:** a `localhost` literal in a hostname blocklist or in a library's URL-parsing fallback, a source map that resolves a dependency to a `dist/development` path the package routes every consumer through (react-router 7.x), or the `telemetry.global` block the Webflow CLI writes into `webflow.json`. Those ship in production builds and are not development residue. Prove a development build with a marker that differs from the dependency's production output.
+
 **Why it matters:** Marketplace Apps must run on production infrastructure that stays available through review and in use. A staging dependency means customers rely on a host with no production guarantees, and reviewers can't verify what the App really does. It also tends to travel with test credentials and permissive CORS.
 
-**Fix:** Deploy a documented production service, generate a production-only bundle, keep test and production data separate, and add a build rule that fails when development, staging, localhost, or tunnel endpoints appear in a Marketplace artifact. Check the installation URL you declare, not just the code.
+**Fix:** Deploy a documented production service, generate a production-only bundle, keep test and production data separate, and add a build rule that fails when development, staging, localhost, or tunnel endpoints appear as request destinations in a Marketplace artifact. Check the installation URL you declare, not just the code.
 
 ---
 

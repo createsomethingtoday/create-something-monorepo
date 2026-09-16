@@ -103,6 +103,7 @@ For code changes:
 - Add the failing test or reproduction first when it is safe and deterministic.
 - Make the narrowest change that satisfies the acceptance criterion.
 - Keep development fallbacks out of the production artifact, including source maps and generated archives when those are submitted.
+- Prove a development-build claim with a marker that differs between the dependency's development and production output. Not proof on its own: a `dist/development` source-map path (react-router 7.x routes every consumer there; its production folder differs by one warnings flag), a `localhost` literal in a URL-parsing fallback or hostname blocklist (present in production builds too), or the `telemetry.global` block the Webflow CLI writes into `webflow.json` (packaging hygiene: strip it or upgrade the CLI). When an issued finding rests only on those, record it as `needs reviewer clarification` with the artifact evidence instead of performing a rebuild that changes nothing.
 - Validate the final `bundle.zip`, manifest, source maps, dependency manifest, installation URL, and requested scopes—not only source files.
 - For backend changes, test authentication, object ownership, response minimization, and failure behavior independently.
 - For Custom Code changes, test registration, application, update, removal at site and page level, and the user-facing publish prompt.
