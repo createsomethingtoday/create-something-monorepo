@@ -541,17 +541,36 @@ test('CLI preserves a deleted source file as an explicit coverage exclusion', (t
 test('repository npm binary is only selected on its compatible development platform', (t) => {
   const repo = mkdtempSync(join(tmpdir(), 'ground-review-platform-'));
   t.after(() => rmSync(repo, { recursive: true, force: true }));
-  const npmGround = writeFixtureFile(repo, 'packages/ground/npm/bin/ground.js', '#!/bin/sh\n');
+  writeFixtureFile(repo, 'packages/ground/npm/package.json', '{"version":"0.3.6"}\n');
+  const npmGround = writeFixtureFile(
+    repo,
+    'packages/ground/npm/bin/ground.js',
+    '#!/bin/sh\nprintf \'{"name":"ground","version":"0.3.6"}\\n\'\n'
+  );
   const npmNativeGround = writeFixtureFile(
     repo,
     'packages/ground/npm/bin/native/ground',
-    '#!/bin/sh\n'
+    '#!/bin/sh\nprintf \'{"name":"ground","version":"0.3.6"}\\n\'\n'
   );
   chmodSync(npmGround, 0o755);
   chmodSync(npmNativeGround, 0o755);
 
   assert.equal(resolveGroundBinary(repo, 'linux', 'x64'), 'ground');
   assert.equal(resolveGroundBinary(repo, 'darwin', 'arm64'), npmGround);
+});
+
+test('repository native binary is rejected when its build provenance is stale', (t) => {
+  const repo = mkdtempSync(join(tmpdir(), 'ground-review-stale-binary-'));
+  t.after(() => rmSync(repo, { recursive: true, force: true }));
+  writeFixtureFile(repo, 'packages/ground/npm/package.json', '{"version":"0.3.6"}\n');
+  const stale = writeFixtureFile(
+    repo,
+    'packages/ground/target/release/ground',
+    '#!/bin/sh\nprintf \'{"name":"ground","version":"0.3.2"}\\n\'\n'
+  );
+  chmodSync(stale, 0o755);
+
+  assert.equal(resolveGroundBinary(repo, 'darwin', 'arm64'), 'ground');
 });
 
 test('repository npm wrapper is not selected before its native release asset exists', (t) => {
@@ -874,7 +893,7 @@ printf '%s\\n' '{"discovered_changed_files":1,"analyzable_changed_files":0,"chan
   assert.equal(receipt.status, 'no_analyzable_files');
 });
 
-test('CLI preserves unsupported Unicode paths when Ground cannot round-trip them', (t) => {
+test('CLI preserves supported Svelte Unicode paths when Ground cannot round-trip them', (t) => {
   const repo = mkdtempSync(join(tmpdir(), 'ground-review-unsupported-unicode-'));
   const binaryDir = mkdtempSync(join(tmpdir(), 'ground-review-unsupported-unicode-binary-'));
   t.after(() => {
@@ -909,7 +928,7 @@ printf '%s\\n' '{"discovered_changed_files":2,"analyzable_changed_files":1,"chan
   const receipt = JSON.parse(result.stdout);
   assert.equal(receipt.coverage.analyzable_changed_files, 1);
   assert.deepEqual(receipt.coverage.excluded_changed_files, [
-    { path: 'packages/example/src/café.svelte', reason: 'unsupported_extension' }
+    { path: 'packages/example/src/café.svelte', reason: 'ground_path_mismatch' }
   ]);
 });
 

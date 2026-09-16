@@ -1,0 +1,22 @@
+{
+  "schema_version": "ground-incremental-fixture.v1",
+  "module": "src/lib.ts",
+  "scope": "src",
+  "initial": {
+    "src/lib.ts": "export const first = 1;\nexport const other = 2;\n",
+    "src/use.ts": "import { first } from './lib';\nconsole.log(first);\n",
+    "src/else.ts": "export const first = 3;\nexport const other = 4;\n"
+  },
+  "steps": [
+    {"id":"cold","dead":["other"]},
+    {"id":"warm","dead":["other"]},
+    {"id":"same-size-edit","write":{"src/use.ts":"import { other } from './lib';\nconsole.log(other);\n"},"dead":["first"]},
+    {"id":"delete-consumer","delete":["src/use.ts"],"dead":["first","other"]},
+    {"id":"new-consumer","write":{"src/new.ts":"import { first } from './lib';\nconsole.log(first);\n"},"dead":["other"]},
+    {"id":"malformed-source","write":{"src/new.ts":"import { first from './lib';"},"error":true},
+    {"id":"repair-and-alias","write":{"src/new.ts":"import { first } from '@source';\nconsole.log(first);\n","tsconfig.json":"{\"compilerOptions\":{\"paths\":{\"@source\":[\"./src/lib.ts\"]}}}"},"dead":["other"]},
+    {"id":"alias-target-change","write":{"tsconfig.json":"{\"compilerOptions\":{\"paths\":{\"@source\":[\"./src/else.ts\"]}}}"},"dead":["first","other"]},
+    {"id":"revision-restored","write":{"src/new.ts":"import { first } from './lib';\nconsole.log(first);\n"},"dead":["other"]},
+    {"id":"warm-after-invalidation","dead":["other"]}
+  ]
+}

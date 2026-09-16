@@ -81,35 +81,24 @@ iconography or unverified market claims to make the page feel bigger.
 Public `.agency` copy should read like a clear business conversation before it
 reads like a strategy memo.
 
+The primary reader is a business owner or operations lead who knows the task
+but does not know AI terminology. Apply On Writing Well to every active public
+page, shared component, form, guide, and metadata description.
+
 Use this order:
 
-1. Name the category in plain language: `AI workflow systems`. The homepage may add the outcome: `Operating systems for AI work`.
-2. Name the business situation: one messy handoff, repeated workflow, or live
-   operating risk.
-3. State the operating loop: Signals, Decisions, and Proof.
-4. Show the proof object: a CREATE SOMETHING Map, decision inbox, delivery record, or
-   audit trail.
-5. Explain the stack only after the workflow boundary is visible.
+1. Name the task or business problem.
+2. Explain what we do and what the customer receives.
+3. Give a supported result or an explicitly illustrative example.
+4. Keep pricing, ownership, approvals, known limits, and launch scope clear.
+5. Offer one useful next step; place developer detail beside the task it supports.
 
-Prefer public words like:
-
-- signal
-- decision
-- proof
-- workflow
-- handoff
-- map
-- pilot
-- owner
-- approval
-- stop point
-- audit trail
-- evidence
-- runbook
-- playbook
-- play
-- offense
-- defense
+Cut or combine repeated sections. Define agent, repository, runbook, MCP, and
+other unfamiliar terms where they are first needed. Map, Build, and Control are
+service names, not prerequisites for understanding the offer. Sports metaphors
+belong in the founder story or relevant demonstrations, not in the basic service
+explanation. Do not stack internal terms such as signal, boundary, authority,
+receipt, surface, and governed in place of a concrete actor and action.
 
 Avoid public words and frames like:
 
@@ -197,8 +186,10 @@ Apply the contract in this order:
    skills, prompts, policy, evals, receipts, routing, fallback, and recovery.
 4. Describe portability as a tested exit path to Claude, compatible harnesses,
    open-weight executors, or custom models—not as indifference to model quality.
-5. Do not imply OpenAI partnership, certification, affiliation, resale,
-   endorsement, or Frontier Alliance status without documentary authorization.
+5. Use the documented **OpenAI Select Partner** designation for CREATE SOMETHING.
+   See `content/sales/openai-qualifications.md` for individual credentials and
+   evidence. Other tiers, specializations, resale, endorsement, and Frontier
+   Alliance claims still require their own documentary authorization.
 
 The technical shorthand is:
 
@@ -775,3 +766,12 @@ pnpm --filter @create-something/agency deploy
 - [The MCP-First Thesis](../../docs/MCP_FIRST_THESIS.md) — Strategic context
 - [CLAUDE.md](../../CLAUDE.md) — Monorepo standards and philosophy
 - [WORKWAY](https://workway.co) — The vertical play (construction via Procore)
+
+Pending migration `0057_control_runtime_registrations.sql` uses registration
+version 2. It records the accepted delivery Build manifest and artifact-set
+hashes separately from the compiler inventory and runtime-binding artifact.
+Only the owning verified Build writer may insert after checking the binding
+under accepted evidence and independently verifying compiler signature/policy.
+The SQL guard rechecks the active activation and exact delivery identities;
+it does not perform cryptographic verification. Legacy equality-only inserts
+are rejected. This draft migration is not production promotion evidence.

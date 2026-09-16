@@ -48,3 +48,57 @@ fn find_orphans_uses_canonical_wrangler_entry_point_evidence() {
                     .contains("wrangler.json main")
         }));
 }
+
+#[test]
+fn doctor_reports_policy_and_workspace_provenance() {
+    let directory = tempdir().unwrap();
+    fs::write(directory.path().join("pnpm-workspace.yaml"), "packages:\n  - 'packages/*'\n").unwrap();
+    fs::write(directory.path().join("package.json"), r#"{"name":"@create-something/monorepo"}"#).unwrap();
+    fs::write(directory.path().join(".ground.yml"), "version: '1'\n").unwrap();
+    fs::create_dir_all(directory.path().join("packages/example")).unwrap();
+    fs::write(directory.path().join("packages/example/package.json"), r#"{"name":"@create-something/example"}"#).unwrap();
+
+    let output = Command::new(env!("CARGO_BIN_EXE_ground"))
+        .arg("doctor")
+        .arg(directory.path())
+        .arg("--json")
+        .output()
+        .unwrap();
+    assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+    let report: Value = serde_json::from_slice(&output.stdout).unwrap();
+    assert_eq!(report["verification_status"], "PASS");
+    assert_eq!(report["workspace"]["packages"], 1);
+    assert_eq!(report["workspace"]["is_create_something"], true);
+    assert_eq!(report["policy"]["sha256"].as_str().unwrap().len(), 64);
+}
+
+#[test]
+fn doctor_fails_when_repository_policy_is_invalid() {
+    let directory = tempdir().unwrap();
+    fs::write(directory.path().join(".ground.yml"), "thresholds: [broken\n").unwrap();
+    let output = Command::new(env!("CARGO_BIN_EXE_ground"))
+        .arg("doctor")
+        .arg(directory.path())
+        .arg("--json")
+        .output()
+        .unwrap();
+    assert!(!output.status.success());
+    assert!(String::from_utf8_lossy(&output.stderr).contains("Parse error"));
+}
+
+#[test]
+fn bounded_worker_option_reaches_duplicate_analysis() {
+    let dir = tempdir().unwrap();
+    fs::write(dir.path().join("a.ts"), "export function shared(x: number) {\n const value = x + 1;\n return value;\n}\n").unwrap();
+    let run = |workers: &str| Command::new(env!("CARGO_BIN_EXE_ground"))
+        .args(["--db"]).arg(dir.path().join("registry.db"))
+        .arg("analyze").arg(dir.path())
+        .args(["--checks", "duplicates", "--workers", workers]).output().unwrap();
+    for workers in ["0", "1", "4"] {
+        let output = run(workers);
+        assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+        let value: Value = serde_json::from_slice(&output.stdout).unwrap();
+        assert_eq!(value["coverage"]["duplicates"]["status"], "PASS");
+    }
+    assert!(!run("5").status.success());
+}

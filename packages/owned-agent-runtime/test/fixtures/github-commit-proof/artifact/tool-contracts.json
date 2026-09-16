@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "tool_contracts.v0.3",
+  "workflowId": "internal.github.commit-observation",
+  "workflowVersion": "1.0.0",
+  "definitionHash": "sha256:5eede120873e8e1b59a7b5a51f0ec56836108ceff58d1be7ea03b5d1fb2d4c3a",
+  "tools": [
+    {
+      "actionId": "read_commit",
+      "name": "read_commit",
+      "targetSystemId": "github",
+      "authority": "createsomethingtoday",
+      "autonomy": "auto_allow",
+      "requiredEvidence": [
+        "commit_sha",
+        "repository"
+      ],
+      "receiptFields": [
+        "action_id",
+        "correlation_id",
+        "outcome",
+        "workflow_id"
+      ],
+      "parameters": [
+        {
+          "name": "commit_sha",
+          "type": "string",
+          "description": "Exact immutable commit"
+        },
+        {
+          "name": "repository",
+          "type": "string",
+          "description": "Exact owned repository"
+        }
+      ],
+      "requiredEvidenceValues": {
+        "commit_sha": "13ed8944c0babce358a08a70cd92347c8e78f830",
+        "repository": "createsomethingtoday/create-something-monorepo"
+      }
+    }
+  ]
+}

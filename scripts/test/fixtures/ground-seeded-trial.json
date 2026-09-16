@@ -1,0 +1,105 @@
+{
+  "schema_version": "ground-seeded-trial.v1",
+  "issue": "CRE-1946",
+  "description": "Frozen source-only trial. Expected answers are never passed to Ground. Minimal replicas of monorepo package, barrel, tool-config and Svelte patterns; not an independently authored blind study.",
+  "cases": [
+    {
+      "id": "cross-package-duplicate",
+      "mode": "analyze",
+      "checks": ["duplicates"],
+      "expected_status": "FAIL",
+      "expected_function": "summarizeReceipts",
+      "files": {
+        "packages/alpha/src/receipt.ts": "export function summarizeReceipts(values: number[]) {\n  const valid = values.filter(value => Number.isFinite(value));\n  const positive = valid.filter(value => value > 0);\n  const total = positive.reduce((sum, value) => sum + value, 0);\n  const count = positive.length;\n  const average = count ? total / count : 0;\n  return { total, count, average };\n}\n",
+        "packages/beta/src/receipt.ts": "export function summarizeReceipts(values: number[]) {\n  const valid = values.filter(value => Number.isFinite(value));\n  const positive = valid.filter(value => value > 0);\n  const total = positive.reduce((sum, value) => sum + value, 0);\n  const count = positive.length;\n  const average = count ? total / count : 0;\n  return { total, count, average };\n}\n"
+      }
+    },
+    {
+      "id": "unused-internal-export",
+      "mode": "exports",
+      "module": "packages/core/src/internal.ts",
+      "expected_dead": ["unusedReceipt"],
+      "files": {"packages/core/src/internal.ts": "export const unusedReceipt = 42;\n"}
+    },
+    {
+      "id": "public-export-external-consumer",
+      "mode": "exports",
+      "module": "packages/core/src/receipt.ts",
+      "expected_dead": [],
+      "files": {
+        "packages/core/package.json": "{\"name\":\"@trial/core\",\"exports\":{\".\":{\"types\":\"./dist/index.d.ts\",\"default\":\"./dist/index.js\"}}}",
+        "packages/core/src/receipt.ts": "export const publicReceipt = 42;\n",
+        "packages/core/src/index.ts": "export { publicReceipt } from './receipt.js';\n",
+        "packages/consumer/src/index.ts": "import { publicReceipt } from '@trial/core';\nconsole.log(publicReceipt);\n"
+      }
+    },
+    {
+      "id": "unrelated-same-name-import",
+      "mode": "exports",
+      "module": "packages/core/src/receipt.ts",
+      "expected_dead": ["receipt"],
+      "files": {
+        "packages/core/src/receipt.ts": "export const receipt = 42;\n",
+        "packages/consumer/src/other.ts": "export const receipt = 99;\n",
+        "packages/consumer/src/index.ts": "import { receipt } from './other.js';\nconsole.log(receipt);\n"
+      }
+    },
+    {
+      "id": "indirect-tool-entrypoint",
+      "mode": "analyze",
+      "checks": ["orphans"],
+      "expected_status": "PASS",
+      "expected_entry": "eslint.evidence.config.mjs",
+      "files": {
+        ".ground.yml": "version: '1'\nentry_points:\n  manual:\n    - eslint.evidence.config.mjs\n",
+        "package.json": "{\"name\":\"trial-config\",\"scripts\":{\"lint\":\"eslint --config eslint.evidence.config.mjs src\"}}",
+        "eslint.evidence.config.mjs": "export default [];\n"
+      }
+    },
+    {
+      "id": "svelte-instance-dependency",
+      "mode": "exports",
+      "module": "src/receipt.ts",
+      "expected_dead": [],
+      "files": {
+        "src/receipt.ts": "export const displayReceipt = 'ready';\n",
+        "src/routes/+page.svelte": "<script lang=\"ts\">\nimport { displayReceipt } from '../receipt.js';\n</script>\n<p>{displayReceipt}</p>\n"
+      }
+    },
+    {
+      "id": "malformed-export-source",
+      "mode": "exports",
+      "module": "src/broken.ts",
+      "expected_error": true,
+      "files": {"src/broken.ts": "export function broken( { !!!\n"}
+    },
+    {
+      "id": "malformed-consumer",
+      "mode": "exports",
+      "module": "src/receipt.ts",
+      "expected_error": true,
+      "files": {
+        "src/receipt.ts": "export const uncertainReceipt = 42;\n",
+        "src/consumer.ts": "import { uncertainReceipt from './receipt.js'; !!!\n"
+      }
+    },
+    {
+      "id": "malformed-duplicate-source",
+      "mode": "analyze",
+      "checks": ["duplicates"],
+      "expected_incomplete": true,
+      "files": {"src/broken.ts": "export function broken( { !!!\n"}
+    },
+    {
+      "id": "broken-import",
+      "mode": "compiler",
+      "expected_code": 2307,
+      "files": {"src/index.ts": "import { missingReceipt } from './missing.js';\nconsole.log(missingReceipt);\n"}
+    },
+    {
+      "id": "runtime-to-type-export",
+      "mode": "api-contract",
+      "files": {"src/index.ts": "export type { createScopedServer, jsonContent } from './server.js';\n"}
+    }
+  ]
+}

@@ -12,6 +12,8 @@ REVIEW_FEEDBACK="${REVIEW_FEEDBACK:-Phase B smoke verification from reviewer-sco
 REJECTION_REASON="${REJECTION_REASON:-Other}"
 REVIEW_TYPE="${REVIEW_TYPE:-}"
 REVIEW_STATUS="${REVIEW_STATUS:-🏃🏾In Review}"
+CONFIRM_STATUS_CHANGE="${CONFIRM_STATUS_CHANGE:-false}"
+EXPECTED_REVIEW_STATUS_JSON="null"
 
 reviewer_url() {
   case "$1" in
@@ -142,11 +144,13 @@ build_args_json() {
       jq -cn \
         --arg version_id "$VERSION_ID" \
         --arg review_status "$REVIEW_STATUS" \
+        --argjson expected_status "$EXPECTED_REVIEW_STATUS_JSON" \
         '{
           proxyToolName:"webflow-app-review-mcp__app_review_set_review_status",
           args:{
             version_id:$version_id,
-            review_status:$review_status
+            review_status:$review_status,
+            status_change:{confirmed:true,expected_status:$expected_status}
           }
         }'
       ;;
@@ -222,6 +226,11 @@ main() {
     exit 1
   fi
 
+  if [[ "$ACTION" == "set_review_status" && "$CONFIRM_STATUS_CHANGE" != "true" ]]; then
+    echo "set CONFIRM_STATUS_CHANGE=true only after explicitly authorizing this Airtable status change" >&2
+    exit 1
+  fi
+
   local hub_url secret_name token args_json response
   hub_url="$(reviewer_url "$REVIEWER")"
   secret_name="$(reviewer_secret_name "$REVIEWER")"
@@ -229,6 +238,20 @@ main() {
   if ! token="$(resolve_token "$secret_name")"; then
     echo "missing ${secret_name} and unable to fetch from Infisical" >&2
     exit 1
+  fi
+
+  if [[ "$ACTION" == "set_review_status" ]]; then
+    local context_args context_response context_json
+    context_args="$(jq -cn --arg version_id "$VERSION_ID" '{proxyToolName:"webflow-app-review-mcp__app_review_get_review_context",args:{version_id:$version_id}}')"
+    context_response="$(mcp_call "$hub_url" "$token" "hub_execute_proxy_tool" "$context_args")"
+    assert_no_rpc_error "$context_response" "read current review context"
+    assert_downstream_success "$context_response" "read current review context"
+    context_json="$(echo "$context_response" | jq -er '.result.content[0].text')"
+    if ! echo "$context_json" | jq -e --arg version_id "$VERSION_ID" '.ok == true and .data.context.versionId == $version_id' >/dev/null; then
+      echo "current review context is missing or does not match VERSION_ID; refusing status write" >&2
+      exit 1
+    fi
+    EXPECTED_REVIEW_STATUS_JSON="$(echo "$context_json" | jq -c '.data.context.reviewStatus // null')"
   fi
 
   args_json="$(build_args_json)"

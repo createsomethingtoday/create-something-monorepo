@@ -1,6 +1,6 @@
 {
 	"name": "@create-something/space",
-	"description": "The Workbench — live tools for building, testing, and analyzing automation infrastructure",
+	"description": "The public workshop \u2014 tools, workflows, skills, plugins, and reusable building blocks",
 	"private": true,
 	"version": "1.0.0",
 	"createSomething": {
@@ -24,14 +24,15 @@
 		"test:search": "vitest run src/lib/search/sitemap.test.ts",
 		"test:workway": "tsx --test src/lib/workway/threshold-dwelling-spatial-package.test.ts src/lib/workway/threshold-dwelling-massing.test.ts src/lib/workway/threshold-dwelling-material-study.test.ts",
 		"generate:threshold-spatial-fixture": "tsx scripts/generate-threshold-dwelling-spatial-fixture.ts",
-		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings && pnpm test:search && pnpm test:workway",
+		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings && pnpm test:search && pnpm test:workway && pnpm test:workshop",
 		"test:nba": "tsx --test src/lib/nba/scoreboard-state.test.ts src/lib/nba/api.test.ts workers/nba-proxy/src/scoreboard.test.ts workers/nba-proxy/src/archive.test.ts workers/nba-proxy/src/index.test.ts",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings --watch",
 		"deploy": "pnpm build && CLOUDFLARE_ACCOUNT_ID=9645bd52e640b8a4f40a3a55ff1dd75a node ../../scripts/run-wrangler.mjs pages deploy .svelte-kit/cloudflare --project-name=create-something-space --commit-dirty=true",
 		"deploy:preview": "pnpm build && CLOUDFLARE_ACCOUNT_ID=9645bd52e640b8a4f40a3a55ff1dd75a node ../../scripts/run-wrangler.mjs pages deploy .svelte-kit/cloudflare --project-name=create-something-space --branch=preview --commit-dirty=true",
 		"cf-typegen": "node ../../scripts/run-wrangler.mjs types",
 		"migrate:papers": "tsx scripts/migrate-papers.ts",
-		"migrate:papers:prod": "MIGRATION_URL=https://createsomething.space/api/migrate/sync-papers tsx scripts/migrate-papers.ts"
+		"migrate:papers:prod": "MIGRATION_URL=https://createsomething.space/api/migrate/sync-papers tsx scripts/migrate-papers.ts",
+		"test:workshop": "vitest run src/lib/workshop/catalog.test.ts"
 	},
 	"devDependencies": {
 		"@cloudflare/workers-types": "^4.20260621.1",

@@ -80,6 +80,14 @@ export interface WebflowTemplateImageIndex {
   byTemplateKey: Map<string, WebflowTemplateImageCandidate[]>;
   offerByTemplateKey: Map<string, WebflowTemplateOffer>;
   identityByTemplateKey: Map<string, WebflowTemplateIdentity[]>;
+  // Live Templates CMS items keyed by their `sync-record-id` (the Airtable asset
+  // record ID). This is the most reliable listing-existence signal because it
+  // survives slug renames and duplicate template names.
+  identityBySyncRecordId: Map<string, WebflowTemplateIdentity>;
+  // True only when every Templates CMS item relevant to the current sync was
+  // read successfully. Sync uses this to decide whether "no CMS item found"
+  // means the listing does not exist yet, or merely that the lookup failed.
+  listingCoverageComplete: boolean;
 }
 
 export interface ResolvedWebflowTemplateImages {
@@ -448,10 +456,21 @@ function explicitCmsImageRole(fieldName: string): 'main thumbnail' | 'primary th
   return null;
 }
 
+function appendSyncRecordIdentity(
+  identityBySyncRecordId: WebflowTemplateImageIndex['identityBySyncRecordId'],
+  syncRecordId: string | null | undefined,
+  templateSlug: string,
+) {
+  const key = typeof syncRecordId === 'string' ? syncRecordId.trim() : '';
+  if (!key || !templateSlug || identityBySyncRecordId.has(key)) return;
+  identityBySyncRecordId.set(key, { templateSlug, listingUrl: publishedTemplateUrl(templateSlug, null) });
+}
+
 function appendCollectionItemImages(
   byTemplateKey: WebflowTemplateImageIndex['byTemplateKey'],
   offerByTemplateKey: WebflowTemplateImageIndex['offerByTemplateKey'],
   identityByTemplateKey: WebflowTemplateImageIndex['identityByTemplateKey'],
+  identityBySyncRecordId: WebflowTemplateImageIndex['identityBySyncRecordId'],
   item: WebflowCollectionItem,
 ): number {
   const fieldData = item.fieldData ?? {};
@@ -462,6 +481,7 @@ function appendCollectionItemImages(
   const offer = extractTemplateOffer(fieldData);
   if (offer) appendTemplateOfferCandidate(offerByTemplateKey, templateSlug, name, offer);
   appendTemplateIdentityCandidate(identityByTemplateKey, templateSlug, name);
+  appendSyncRecordIdentity(identityBySyncRecordId, fieldData['sync-record-id'] as string | undefined, templateSlug);
 
   let added = 0;
   for (const [fieldName, value] of Object.entries(fieldData)) {
@@ -477,10 +497,19 @@ function appendCollectionItemImages(
   return added;
 }
 
-export function buildWebflowTemplateImageIndexFromRecords(records: WebflowTemplateImageRecord[]): WebflowTemplateImageIndex | null {
+// `listingCoverageComplete` says the records are the full, successfully fetched
+// set of live CMS items for the templates being synced. Only then does an empty
+// or non-matching index mean "this template has no Webflow listing yet"; with
+// it unset, a missing match is treated as unknown and never gates indexing.
+export function buildWebflowTemplateImageIndexFromRecords(
+  records: WebflowTemplateImageRecord[],
+  options: { listingCoverageComplete?: boolean } = {},
+): WebflowTemplateImageIndex | null {
   const byTemplateKey = new Map<string, WebflowTemplateImageCandidate[]>();
   const offerByTemplateKey = new Map<string, WebflowTemplateOffer>();
   const identityByTemplateKey = new Map<string, WebflowTemplateIdentity[]>();
+  const identityBySyncRecordId = new Map<string, WebflowTemplateIdentity>();
+  const listingCoverageComplete = options.listingCoverageComplete === true;
 
   for (const record of records) {
     const templateSlug = record.templateSlug ?? '';
@@ -494,6 +523,7 @@ export function buildWebflowTemplateImageIndexFromRecords(records: WebflowTempla
       });
     }
     appendTemplateIdentityCandidate(identityByTemplateKey, templateSlug, name);
+    appendSyncRecordIdentity(identityBySyncRecordId, record.id, templateSlug);
 
     if (isImageUrl(record.thumbnailImageUrl ?? undefined)) {
       appendTemplateCandidate(byTemplateKey, templateSlug, name, {
@@ -516,8 +546,8 @@ export function buildWebflowTemplateImageIndexFromRecords(records: WebflowTempla
     }
   }
 
-  return byTemplateKey.size > 0 || offerByTemplateKey.size > 0 || identityByTemplateKey.size > 0
-    ? { byTemplateKey, offerByTemplateKey, identityByTemplateKey }
+  return listingCoverageComplete || byTemplateKey.size > 0 || offerByTemplateKey.size > 0 || identityByTemplateKey.size > 0
+    ? { byTemplateKey, offerByTemplateKey, identityByTemplateKey, identityBySyncRecordId, listingCoverageComplete }
     : null;
 }
 
@@ -528,10 +558,15 @@ async function appendWebflowCmsImages(
   byTemplateKey: WebflowTemplateImageIndex['byTemplateKey'],
   offerByTemplateKey: WebflowTemplateImageIndex['offerByTemplateKey'],
   identityByTemplateKey: WebflowTemplateImageIndex['identityByTemplateKey'],
+  identityBySyncRecordId: WebflowTemplateImageIndex['identityBySyncRecordId'],
   options: { onPage?: () => Promise<void> } = {},
-): Promise<number> {
+): Promise<{ added: number; complete: boolean }> {
   const collectionIds = await resolveTemplateCollectionIds(env, siteId, token);
   let added = 0;
+  // Coverage is complete only when at least one template collection was read
+  // to its final page. A request failure mid-way leaves the index usable for
+  // images but not trustworthy as proof that a listing does not exist.
+  let complete = collectionIds.length > 0;
   const limit = 100;
 
   for (const collectionId of collectionIds) {
@@ -549,13 +584,14 @@ async function appendWebflowCmsImages(
       });
       if (!response.ok) {
         console.warn(`Webflow collection items request failed (${response.status}); skipping collection ${collectionId}.`);
+        complete = false;
         break;
       }
 
       const payload = (await response.json()) as WebflowCollectionItemsResponse;
       const items = payload.items ?? [];
       for (const item of items) {
-        added += appendCollectionItemImages(byTemplateKey, offerByTemplateKey, identityByTemplateKey, item);
+        added += appendCollectionItemImages(byTemplateKey, offerByTemplateKey, identityByTemplateKey, identityBySyncRecordId, item);
       }
 
       const total = payload.pagination?.total ?? items.length;
@@ -565,7 +601,7 @@ async function appendWebflowCmsImages(
     }
   }
 
-  return added;
+  return { added, complete };
 }
 
 async function appendWebflowAssetImages(
@@ -641,10 +677,26 @@ export async function loadWebflowTemplateImageIndex(
   const byTemplateKey = new Map<string, WebflowTemplateImageCandidate[]>();
   const offerByTemplateKey = new Map<string, WebflowTemplateOffer>();
   const identityByTemplateKey = new Map<string, WebflowTemplateIdentity[]>();
-  const cmsToken = env.WEBFLOW_API_TOKEN?.trim() || env.CMS_READ_ONLY?.trim();
+  const identityBySyncRecordId = new Map<string, WebflowTemplateIdentity>();
+  // Same preference as the targeted lookups in webflow.ts: CMS_READ_ONLY is the
+  // cms:read token, while WEBFLOW_API_TOKEN may only carry assets:read. Using
+  // the asset token here would fail the CMS pass and leave listing coverage
+  // incomplete on every full rebuild.
+  const cmsToken = env.CMS_READ_ONLY?.trim() || env.WEBFLOW_API_TOKEN?.trim();
   const cmsIndexEnabled = env.WEBFLOW_TEMPLATE_ENABLE_CMS_INDEX !== 'false';
+  let listingCoverageComplete = false;
   if (cmsToken && cmsIndexEnabled) {
-    await appendWebflowCmsImages(env, siteId, cmsToken, byTemplateKey, offerByTemplateKey, identityByTemplateKey, options);
+    const cms = await appendWebflowCmsImages(
+      env,
+      siteId,
+      cmsToken,
+      byTemplateKey,
+      offerByTemplateKey,
+      identityByTemplateKey,
+      identityBySyncRecordId,
+      options,
+    );
+    listingCoverageComplete = cms.complete;
   }
 
   const assetToken = env.WEBFLOW_API_TOKEN?.trim();
@@ -652,8 +704,10 @@ export async function loadWebflowTemplateImageIndex(
     await appendWebflowAssetImages(env, siteId, assetToken, byTemplateKey, options);
   }
 
-  return byTemplateKey.size > 0 || offerByTemplateKey.size > 0 || identityByTemplateKey.size > 0
-    ? { byTemplateKey, offerByTemplateKey, identityByTemplateKey }
+  // A fully read but empty Templates collection is still a complete answer
+  // about which listings exist, so it is returned rather than treated as absent.
+  return listingCoverageComplete || byTemplateKey.size > 0 || offerByTemplateKey.size > 0 || identityByTemplateKey.size > 0
+    ? { byTemplateKey, offerByTemplateKey, identityByTemplateKey, identityBySyncRecordId, listingCoverageComplete }
     : null;
 }
 
@@ -696,9 +750,15 @@ export function resolveWebflowTemplateOffer(
 
 export function resolveWebflowTemplateIdentity(
   index: WebflowTemplateImageIndex | null,
-  template: { templateSlug: string; name: string },
+  template: { templateSlug: string; name: string; syncRecordId?: string | null },
 ): WebflowTemplateIdentity | null {
   if (!index) return null;
+
+  const syncRecordId = template.syncRecordId?.trim();
+  if (syncRecordId) {
+    const bySyncRecordId = index.identityBySyncRecordId.get(syncRecordId);
+    if (bySyncRecordId) return bySyncRecordId;
+  }
 
   const groups = templateKeyGroups(template.templateSlug, template.name);
   for (const keyGroup of [groups.exactSlug, groups.exactName]) {

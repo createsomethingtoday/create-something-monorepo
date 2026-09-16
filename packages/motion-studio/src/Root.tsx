@@ -53,6 +53,8 @@ import {
   WORKFLOW_REEL_CONFIG,
   WorkflowDayReel,
   WORKFLOW_DAY_REEL_CONFIG,
+  CrackedStatusWalkthrough,
+  CRACKED_STATUS_WALKTHROUGH_CONFIG,
 } from './commercials';
 
 // Primitives
@@ -446,6 +448,16 @@ export const RemotionRoot: React.FC = () => {
         width={TEND_WALKTHROUGH_CONFIG.width}
         height={TEND_WALKTHROUGH_CONFIG.height}
         defaultProps={TEND_WALKTHROUGH_CONFIG.defaultProps}
+      />
+
+      {/* Cracked Live - Half Dozen ticket status map walkthrough */}
+      <Composition
+        id={CRACKED_STATUS_WALKTHROUGH_CONFIG.id}
+        component={CrackedStatusWalkthrough}
+        durationInFrames={CRACKED_STATUS_WALKTHROUGH_CONFIG.durationInFrames}
+        fps={CRACKED_STATUS_WALKTHROUGH_CONFIG.fps}
+        width={CRACKED_STATUS_WALKTHROUGH_CONFIG.width}
+        height={CRACKED_STATUS_WALKTHROUGH_CONFIG.height}
       />
       
       {/* Tufte Mobile - Wireframe → Desktop → Mobile transformation */}

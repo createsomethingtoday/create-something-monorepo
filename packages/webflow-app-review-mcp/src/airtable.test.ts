@@ -871,3 +871,13 @@ describe('AirtableClient queue stats aggregation', () => {
     expect(fetchFn).not.toHaveBeenCalled();
   });
 });
+
+
+describe('reviewer assignment is read-only at the writer', () => {
+  it.each([{ id: 'usrMicah' }, null])('rejects %j before contacting Airtable', async (reviewer) => {
+    const fetchFn = vi.fn().mockResolvedValue(jsonResponse({ records: [versionRecord('recVersion')] }));
+    const client = new AirtableClient({ apiKey: 'token', fetchFn });
+    await expect(client.updateVersionReview('recVersion', { reviewer, review_status: '🏃🏾In Review' })).rejects.toMatchObject({ code: 'REVIEWER_ASSIGNMENT_READ_ONLY' });
+    expect(fetchFn).not.toHaveBeenCalled();
+  });
+});

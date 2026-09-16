@@ -409,6 +409,35 @@ test('stop, cancel, rejection, and provider failures reach declared terminal or 
   assert.equal(run.status, 'cancelled');
 });
 
+test('an exception after an effect cannot authorize replay or recovery', async () => {
+  let effects = 0;
+  const runs = service({
+    supports: () => true,
+    async execute() {
+      effects += 1;
+      throw new Error('source response lost after dispatch');
+    }
+  });
+  let run = await runs.start(scope, owner, {
+    activationId: activation.id,
+    idempotencyKey: 'start-unknown-effect',
+    requestedTools: [],
+    requestedResources: [],
+    concurrencyKey: 'unknown-effect'
+  });
+  run = await runs.process(scope, scheduler, run.id, 'process-unknown-effect', activation.id);
+  assert.equal(run.status, 'failed');
+  assert.equal(run.lastError, 'executor_failed');
+  assert.equal(run.receipts.at(-1)?.verifier, 'terminal_failure');
+  await assert.rejects(runs.retry(scope, owner, run.id, 'retry-unknown-effect'), /failed terminally/);
+  await assert.rejects(
+    runs.beginRecovery(scope, owner, run.id, 'recover-unknown-effect', 'resume'),
+    /failed terminally/
+  );
+  await runs.process(scope, scheduler, run.id, 'process-unknown-effect', activation.id);
+  assert.equal(effects, 1);
+});
+
 test('terminal executor failures cannot be retried', async () => {
   const runs = service({
     supports: () => true,

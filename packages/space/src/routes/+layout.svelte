@@ -1,6 +1,7 @@
 <script lang="ts">
   import '../app.css';
   import { Navigation, Footer, Analytics, ModeIndicator, LayoutSEO } from '@create-something/canon';
+  import { projects } from '$lib/workshop/catalog';
   import { UnifiedSearch } from '@create-something/canon/navigation';
   import { page } from '$app/stores';
   import { onMount } from 'svelte';
@@ -29,14 +30,37 @@
   });
 
   const navLinks = [
-    { label: 'Playground', href: '/playground' },
-    { label: 'Praxis', href: '/praxis' },
-    { label: 'Motion', href: '/motion' },
-    { label: 'Data', href: '/data' }
+    { label: 'Projects', href: '/projects' },
+    { label: 'Workbench', href: '/workbench' },
+    { label: 'About', href: '/about' }
   ];
 
   // Quick access items for unified search
   const quickAccessItems = [
+    {
+      id: 'nav-projects',
+      label: 'All projects',
+      description: 'Tools, workflows, skills, plugins and building blocks',
+      href: '/projects',
+      icon: '>',
+      keywords: ['catalog', 'skills', 'plugins', 'building blocks']
+    },
+    {
+      id: 'nav-workbench',
+      label: 'Workbench',
+      description: 'The playground, labs and data tools',
+      href: '/workbench',
+      icon: '>',
+      keywords: ['tools', 'practice']
+    },
+    ...projects.map((project) => ({
+      id: `project-${project.slug}`,
+      label: project.name,
+      description: project.summary,
+      href: `/projects/${project.slug}`,
+      icon: '>',
+      keywords: [project.kind, project.usage]
+    })),
     {
       id: 'nav-playground',
       label: 'Code Playground',
@@ -137,65 +161,63 @@
     {@render children()}
   </main>
 {:else}
-<Analytics property="space" />
+  <Analytics property="space" />
 
-<!-- Unified Search - Cmd/Ctrl+K to open -->
-<UnifiedSearch
-  currentProperty="space"
-  localItems={quickAccessItems}
-  showMobileButton={!mobileNavigationOpen}
-  deferMobileButtonUntilCampaignExit={$page.url.pathname === '/'}
-/>
-
-<div class="layout property-performance">
-  <Navigation
-    logo="CREATE SOMETHING"
-    logoSuffix=".space"
-    logoAsset={{
-      src: '/brand/create-something-horizontal-black.svg',
-      mobileSrc: '/brand/create-something-mark-black.svg',
-      label: 'CREATE SOMETHING .space'
-    }}
-    links={navLinks}
-    currentPath={$page.url.pathname}
-    fixed={true}
-    ctaLabel=".io"
-    ctaHref="https://createsomething.io"
-    showLogin={false}
-    visualStyle="editorial"
-    onMobileMenuChange={(open) => (mobileNavigationOpen = open)}
+  <!-- Unified Search - Cmd/Ctrl+K to open -->
+  <UnifiedSearch
+    currentProperty="space"
+    searchApiUrl="/api/workshop"
+    placeholder="Search workshop projects and tools..."
+    localItems={quickAccessItems}
+    showMobileButton={!mobileNavigationOpen}
+    deferMobileButtonUntilCampaignExit={['/', '/workbench'].includes($page.url.pathname)}
   />
 
-  <main id="main-content" class="content">
-    {@render children()}
-  </main>
+  <div class="layout property-performance">
+    <Navigation
+      logo="CREATE SOMETHING"
+      logoSuffix=".space"
+      logoAsset={{
+        src: '/brand/create-something-horizontal-black.svg',
+        mobileSrc: '/brand/create-something-mark-black.svg',
+        label: 'CREATE SOMETHING .space'
+      }}
+      links={navLinks}
+      currentPath={$page.url.pathname}
+      fixed={true}
+      ctaLabel="GitHub"
+      ctaHref="https://github.com/createsomethingtoday"
+      showLogin={false}
+      visualStyle="editorial"
+      onMobileMenuChange={(open) => (mobileNavigationOpen = open)}
+    />
 
-  <Footer
-    mode="space"
-    showNewsletter={false}
-    aboutText="The workbench for automation infrastructure. Build, test, and analyze with live tools powered by Cloudflare Workers."
-    quickLinks={[
-      { label: 'Playground', href: '/playground' },
-      { label: 'Praxis', href: '/praxis' },
-      { label: 'Motion Lab', href: '/motion' },
-      { label: 'Data Studio', href: '/data' }
-    ]}
-    footerCta={{
-      title: 'Ready to move a proven pattern into practice?',
-      label: 'Bring the runtime to .agency',
-      href: 'https://createsomething.agency/practice?source=space&intent=runtime-to-practice',
-      description: 'Carry the route, output, and failure behavior into a governed workflow.'
-    }}
-    showSocial={true}
-    visualStyle="editorial"
-    brandAsset={{
-      src: '/brand/create-something-footer-white.svg',
-      label: 'CREATE SOMETHING .space'
-    }}
-  />
+    <main id="main-content" class="content">
+      {@render children()}
+    </main>
 
-  <ModeIndicator current="space" />
-</div>
+    <Footer
+      mode="space"
+      showNewsletter={false}
+      aboutText="The public workshop. Tools, workflows, skills, and building blocks from CREATE SOMETHING."
+      quickLinks={[
+        { label: 'Projects', href: '/projects' },
+        { label: 'Skills', href: '/projects?type=Skill' },
+        { label: 'Building blocks', href: '/projects?type=Building+block' },
+        { label: 'Workbench', href: '/workbench' }
+      ]}
+      showSocial={true}
+      visualStyle="editorial"
+      brandAsset={{
+        src: '/brand/create-something-footer-white.svg',
+        label: 'CREATE SOMETHING .space'
+      }}
+    />
+
+    {#if !['/', '/projects', '/about'].includes($page.url.pathname) && !$page.url.pathname.startsWith('/projects/')}
+      <ModeIndicator current="space" />
+    {/if}
+  </div>
 {/if}
 
 <style>

@@ -159,3 +159,16 @@ Atomic artifact promotion requires a local filesystem that supports symbolic
 links and atomic rename within one parent directory. Callers must not place the
 public output path and its compiler control directory on different filesystems.
 Windows is not currently a supported production target.
+
+## Package 0.5.0 validation and inspection
+
+Closed workflow and replay records now reject unrecognized fields at every
+nesting level. Remove ignored extension fields; intentionally open evidence
+and evidence-constraint maps retain arbitrary governed keys. No existing valid
+approval or recovery field is reinterpreted.
+
+Console v0.1/v0.2/v0.3 envelopes may include the optional, independently
+versioned `adapterReadiness` summary. Older envelopes remain readable.
+`WORKFLOW_COMPILER_PACKAGE_VERSION` and CLI `--version` identify the npm
+release; `WORKFLOW_COMPILER_VERSION` remains the historical compatibility
+marker. Hosts must also pin the artifact digest and Build release identity.

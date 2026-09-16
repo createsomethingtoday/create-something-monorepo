@@ -14,7 +14,7 @@
     {
       question: 'What is the Decision product?',
       answer:
-        'Decision is the queue for judgment. It shows which Signal needs human review, agent action, policy approval, or a stop state before work continues.'
+        'Decision is the approval queue inside Control. It shows which tasks can run, which need a person, and which must stop.'
     },
     {
       question: 'How does Decision support human-in-the-loop work?',
@@ -34,7 +34,7 @@
       icon: 'check',
       title: 'A focused judgment surface',
       detail:
-        'Decision turns Signals into run, wait, or stop states so the right human, agent, or policy path can act with context.',
+        'Decision checks incoming work against your rules and sends it to the right person or agent.',
       points: ['Run', 'Wait', 'Stop', 'Escalate']
     },
     {
@@ -76,14 +76,14 @@
       icon: 'user',
       title: 'The review owner',
       detail:
-        'Decision owns the named review owner, allowed action, escalation reason, policy reason, and current run-wait-stop state.'
+        'Each task shows the reviewer, proposed action, applicable rule, and why it is running, waiting, or stopped.'
     },
     {
       eyebrow: 'Consumes',
       icon: 'plus',
       title: 'The incoming Signal',
       detail:
-        'Decision should not start from a vague task. It consumes a Signal with source context, affected system, and reason to review.'
+        'Start with a specific update, its source, the tool it affects, and why it needs review.'
     },
     {
       eyebrow: 'Produces',
@@ -158,8 +158,8 @@
 
 <GovernanceProductPage
   {product}
-  title="The queue where humans, agents, and policy decide what happens next."
-  description="Decision gives operators one surface to review Signals, approve bounded action, ask for more context, or stop work before risk moves downstream."
+  title="Approve the work, ask for more information, or stop it."
+  description="Decision shows incoming tasks and the information needed to review them. Your team can approve, reject, request evidence, or stop an action."
   {heroCards}
   {pathItems}
   {detailCards}

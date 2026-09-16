@@ -167,12 +167,16 @@
       "maxProxyTools": null
     },
     "abundance-thenpgroup-review": {
-      "description": "NPG Abundance review pack: compact brokered access for Jotform, Mailchimp, and WhatsApp account status during final delivery review.",
+      "description": "NPG Abundance review pack: compact brokered access for account status plus read-only nationwide healthcare coverage during delivery review.",
       "mode": "compact",
       "activeServers": [
         "composio-toolkit-jotform",
         "composio-toolkit-mailchimp",
-        "composio-toolkit-whatsapp"
+        "composio-toolkit-whatsapp",
+        "abundance-healthcare-mcp"
+      ],
+      "excludedProxyTools": [
+        "abundance-healthcare-mcp__enrich_provider_professional_contact"
       ],
       "maxProxyTools": 30
     },

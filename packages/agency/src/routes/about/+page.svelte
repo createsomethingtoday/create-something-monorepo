@@ -23,12 +23,12 @@
     {
       label: 'Call the play',
       value: 'Build',
-      detail: 'Install the approved route with named decisions and executable Runbooks.'
+      detail: 'Build the agreed steps, with clear approvals and instructions.'
     },
     {
       label: 'Review the film',
       value: 'Control',
-      detail: 'Run offense and defense with visible stops, recovery, and proof.'
+      detail: 'Review results and learn from failures.'
     }
   ];
 
@@ -41,15 +41,15 @@
     },
     {
       label: 'Name the decision',
-      title: 'Classify the judgment states',
+      title: 'Decide what needs a person',
       detail:
         'Separate safe work from approval-needed work and actions that should be blocked with an inspectable reason.'
     },
     {
       label: 'Install the play',
-      title: 'Ship the control layer',
+      title: 'Build and test the workflow',
       detail:
-        'Use MCP, skills, runbooks, release checks, and trust receipts to make the workflow portable and controlled.'
+        'Connect the tools, write the instructions, and test the work so the client can keep using and changing it.'
     },
     {
       label: 'Review the film',
@@ -94,13 +94,13 @@
       label: 'Method',
       title: 'Subtract before automating',
       detail:
-        'The Subtractive Triad removes duplication, excess, and disconnection so automation has fewer failure paths.'
+        'Remove repeated steps, unnecessary work, and gaps between tools before automating.'
     },
     {
       label: 'Client contract',
       title: 'Bring the workflow and owner',
       detail:
-        'Clients bring the operating constraints and decision owner. I bring diagnosis, controls, runbooks, evidence, and working software.'
+        'Clients bring the task and the person responsible for it. I help diagnose the problem, build the software, and leave instructions and test results.'
     }
   ];
 
@@ -127,7 +127,7 @@
       summary: 'Rehearse the decision',
       title: 'Map the play before AI runs it.',
       detail:
-        'The method makes the route, judgment states, control layer, and operator brief explicit before agent capacity expands.',
+        'We agree on the steps, who approves them, and how to check the result before giving AI more to do.',
       tone: 'allow',
       receipts: ['workflow map', 'judgment states', 'control layer', 'operator brief']
     },
@@ -137,7 +137,7 @@
       summary: 'Offense + defense',
       title: 'Advance approved work. Protect operator authority.',
       detail:
-        'One operating path becomes trustworthy before the system grows. The client keeps the Playbook, controls, evidence, and working software.',
+        'We test one task before expanding. The client keeps the workflow plan, rules, results, and software.',
       tone: 'review',
       receipts: ['cleanup loop', 'Subtractive Triad', 'client-owned path']
     },
@@ -195,7 +195,7 @@
 
 <SEO
   title="Micah Johnson | CREATE SOMETHING .agency"
-  description="Micah Johnson builds workflow control layers for operator-owned outcomes: scoped actions, approval paths, evidence, and escalation surfaces for human judgment."
+  description="Micah Johnson helps teams build AI workflows they can understand and own, with clear responsibilities, tested results, and human review."
   keywords="Micah Johnson, workflow control layer, production automation, systems architecture, automation reliability, controlled workflows"
   ogImage="/og-image.png"
   propertyName="agency"
@@ -207,8 +207,8 @@
   titleLevel="h1"
   expression="editorial"
   eyebrow="About CREATE SOMETHING"
-  title="The operator should see the whole court."
-  description="Division III basketball taught me to read spacing, pressure, roles, and the next decision as one shared picture. CREATE SOMETHING brings that discipline to AI operations: map the play, name who decides, and keep proof attached."
+  title="I help teams make sense of the work before automating it."
+  description="Playing Division III basketball taught me to pay attention to the whole team. Who is doing what? Where is the pressure? What happens next? I bring that habit to building AI systems."
 >
   {#snippet aside()}
     <PlaybookField variant="about" embedded />
@@ -225,7 +225,7 @@
 <PerformanceNarrativeStage
   id="about-operating-story"
   eyebrow="One operating story"
-  title="The biography matters because it became the method."
+  title="How I came to this work."
   description="Court vision, pressure, practice, and review became a way to build AI systems that operators can understand, trust, and own."
   scenes={aboutScenes}
   ariaLabel="About operating story"

@@ -7,7 +7,7 @@ import {
   deriveSessionName,
   parseArgs,
   renderText,
-  slugify,
+  slugify
 } from '../zellij-agent-workflow.mjs';
 
 test('zellij workflow parses Linear-like task context', () => {
@@ -36,7 +36,7 @@ test('zellij workflow parses Linear-like task context', () => {
     'revert the docs patch',
     '--escalation',
     'escalate if verification fails',
-    '--json',
+    '--json'
   ]);
 
   assert.equal(options.issue, 'CRE-123');
@@ -59,7 +59,10 @@ test('zellij workflow requires a stable issue or title', () => {
 
 test('zellij workflow derives compact session slugs', () => {
   assert.equal(slugify('CRE-123: Ship Zellij Lane!'), 'cre-123-ship-zellij-lane');
-  assert.equal(deriveSessionName('CRE-123', 'Ship the Zellij Linear agent workflow'), 'cre-123-ship-the-zellij-linear-agent-workflow');
+  assert.equal(
+    deriveSessionName('CRE-123', 'Ship the Zellij Linear agent workflow'),
+    'cre-123-ship-the-zellij-linear-agent-workflow'
+  );
 });
 
 test('zellij workflow prompt carries authority, acceptance, verification, and closeout', () => {
@@ -71,7 +74,7 @@ test('zellij workflow prompt carries authority, acceptance, verification, and cl
     '--acceptance',
     'Board shows active lane',
     '--verification',
-    'dump-screen returns output',
+    'dump-screen returns output'
   ]);
   const prompt = buildPrompt(options);
 
@@ -98,8 +101,8 @@ test('zellij workflow dry-run exposes launch, board, readback, send, and evidenc
       '--acceptance',
       'Return evidence',
       '--verification',
-      'node --test',
-    ]),
+      'node --test'
+    ])
   );
 
   assert.equal(workflow.dryRun, true);
@@ -132,4 +135,8 @@ test('zellij workflow text render contains no legacy terminal dependency wording
   assert.match(text, /Zellij Linear Agent Workflow/);
   assert.match(text, /Autonomy: A1/);
   assert.doesNotMatch(text, /CMUX|Ghostty|cmux|ghostty/);
+});
+
+test('legacy immediate prompt sending fails before starting a worker', () => {
+  assert.throws(() => parseArgs(['--title', 'test', '--launch', '--send-prompt']), /retired/);
 });

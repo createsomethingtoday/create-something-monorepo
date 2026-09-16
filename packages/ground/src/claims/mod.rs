@@ -32,6 +32,11 @@ pub enum ClaimRejected {
     EvidenceContradicts {
         reason: String,
     },
+
+    #[error("Evidence is stale: {reason}. Recompute the evidence before making this claim")]
+    StaleEvidence {
+        reason: String,
+    },
 }
 
 // =============================================================================

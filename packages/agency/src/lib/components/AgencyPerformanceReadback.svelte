@@ -20,8 +20,7 @@
         <span>Verified field result</span>
         <h2 id="performance-readback-title">{templateReviewFieldReport.title}</h2>
         <p>
-          Routine evidence moved before review. Approval, rejection, and consequential action stayed
-          with a named person.
+          The system gathered evidence for reviewers. A person still decided whether to approve or reject each submission.
         </p>
       </div>
 
@@ -52,19 +51,19 @@
           <dd>{templateReviewFieldReport.verifiedPeriod}</dd>
         </div>
         <div>
-          <dt>External writes</dt>
+          <dt>Changes to external systems</dt>
           <dd>{evidence.externalWrites}</dd>
         </div>
       </dl>
 
       <aside class="performance-readback__limit" data-control-state="stop">
         <div>
-          <span>Visible limit</span>
-          <strong>Automated judgment remains blocked.</strong>
+          <span>What this does not show</span>
+          <strong>The system cannot approve or reject submissions.</strong>
           <p>Reviewer time savings remain unmeasured.</p>
         </div>
         <a href={`/field-reports/${templateReviewFieldReport.slug}`}>
-          Inspect the full field report <span aria-hidden="true">↗</span>
+          Read the full field report <span aria-hidden="true">↗</span>
         </a>
       </aside>
     </div>

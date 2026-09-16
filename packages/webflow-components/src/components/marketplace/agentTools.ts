@@ -1,3 +1,4 @@
+import { marketplaceSignals } from './marketplaceSignals';
 /**
  * WebMCP tools for the Template Marketplace search and discovery experience.
  *
@@ -18,6 +19,7 @@
  */
 import {
   applyPageAction,
+  buildPageActionUrl,
   normalizePageActionPayload,
   pageActionChangesFilters,
   pageHasTemplateGrid,
@@ -36,7 +38,7 @@ import {
   type TemplateRouteState,
 } from './templateRoute';
 
-export const MARKETPLACE_AGENT_TOOLS_VERSION = '2026-08-31.1';
+export const MARKETPLACE_AGENT_TOOLS_VERSION = '2026-09-10.1';
 
 // Same default + rewrite guard as the sibling marketplace components:
 // webflow.com's CSP is `connect-src https://*.webflow.com`, so direct worker
@@ -56,6 +58,8 @@ export function resolveAgentToolsApiBase(raw?: string | null): string {
 // so the tool schemas deliberately do not advertise them.
 
 export interface AgentSearchInput {
+  template_slug?: string;
+  strict?: boolean;
   q?: string;
   scope?: string;
   category_group_slug?: string;
@@ -94,6 +98,8 @@ export function buildAgentSearchUrl(
   url.searchParams.set('view', view);
   url.searchParams.set('page', String(clampInt(input.page, 1, 500, 1)));
   url.searchParams.set('page_size', String(clampInt(input.page_size, 1, 24, 12)));
+  if (input.template_slug) url.searchParams.set('template_slug', input.template_slug);
+  if (input.strict != null) url.searchParams.set('strict', String(input.strict));
   if (input.q?.trim()) url.searchParams.set('q', input.q.trim());
   if (input.scope?.trim()) url.searchParams.set('scope', input.scope.trim());
   if (input.category_group_slug?.trim()) {
@@ -133,6 +139,13 @@ interface SearchApiItem {
   template_type?: string | null;
   cumulative_purchases?: number | null;
   published_date?: string | null;
+  description_short?: string;
+  description?: string;
+  included_pages?: string[];
+  features?: string[];
+  source_updated_at?: string | null;
+  popularity_score?: number | null;
+  unique_viewers?: number | null;
   category_groups?: SearchApiNamedRef[];
   child_categories?: SearchApiNamedRef[];
   styles?: Array<string | SearchApiNamedRef>;
@@ -195,7 +208,8 @@ export function summarizeSearchItem(item: SearchApiItem): Record<string, unknown
     subcategories: (item.child_categories ?? []).map((child) => child.name).filter(Boolean),
     styles: namedList(item.styles),
     tags: namedList(item.tags),
-    demand: demandTier(item.cumulative_purchases),
+    demand: marketplaceSignals(item)[0] ?? null,
+    marketplace_signals: { labels: marketplaceSignals(item), window_days: 30, source_updated_at: null, freshness: 'unknown' },
     published_date: item.published_date ?? null,
     url: item.url ?? null,
     preview_url: item.preview_url ?? null,
@@ -240,6 +254,7 @@ const SEARCH_INPUT_SCHEMA: Record<string, unknown> = {
   type: 'object',
   additionalProperties: false,
   properties: {
+    strict: { type: 'boolean', description: 'Require all search terms. Defaults to true; false explicitly allows broader suggestions.' },
     q: {
       type: 'string',
       description:
@@ -248,7 +263,7 @@ const SEARCH_INPUT_SCHEMA: Record<string, unknown> = {
     scope: { type: 'string', enum: SCOPE_ENUM },
     category_group_slug: {
       type: 'string',
-      description: "Category slug from list_categories_and_styles (e.g. 'business').",
+      description: "Category slug from list_categories_and_styles (e.g. 'portfolio-and-agency-websites').",
     },
     child_category_slug: { type: 'string', description: 'Subcategory slug within a category.' },
     styles: { type: 'array', items: { type: 'string' }, description: 'Style slugs.' },
@@ -268,6 +283,10 @@ const UPDATE_PAGE_INPUT_SCHEMA: Record<string, unknown> = {
   additionalProperties: false,
   properties: {
     q: { type: 'string', description: 'Search text to apply to the visible grid.' },
+    child_category_slug: { type: 'string', description: 'Subcategory slug from list_categories_and_styles.' },
+    scope: { type: 'string', enum: SCOPE_ENUM },
+    page: { type: 'integer', minimum: 1, maximum: 500 },
+    strict: { type: 'boolean', description: 'Require all search terms. Defaults to true when applying a query.' },
     category_group_slug: { type: 'string', description: 'Category slug to filter the page to.' },
     styles: { type: 'array', items: { type: 'string' } },
     types: { type: 'array', items: { type: 'string', enum: TYPE_ENUM } },
@@ -506,7 +525,11 @@ function preserveResolvedPageParams(win: Window, payload: PageActionPayload): vo
 
 function sanitizePageActionInput(input: Record<string, unknown>): PageActionPayload {
   const payload: PageActionPayload = {};
-  if (typeof input.q === 'string') payload.q = input.q;
+  if (typeof input.q === 'string') { payload.q = input.q; payload.strict = input.strict !== false; }
+  if (typeof input.child_category_slug === 'string') payload.child_category_slug = input.child_category_slug;
+  if (typeof input.scope === 'string' && SCOPE_ENUM.includes(input.scope)) payload.scope = input.scope;
+  if (input.page != null) payload.page = clampInt(input.page, 1, 500, 1);
+  if (typeof input.strict === 'boolean') payload.strict = input.strict;
   if (typeof input.category_group_slug === 'string') {
     payload.category_group_slug = input.category_group_slug;
   }
@@ -577,6 +600,26 @@ export function createMarketplaceAgentTools(
     };
   }
 
+  async function validateTaxonomy(input: Record<string, unknown>): Promise<Record<string, unknown> | null> {
+    if (!input.category_group_slug && !input.child_category_slug && !stringList(input.styles).length) return null;
+    const taxonomy = await fetchSearch(buildAgentSearchUrl(apiBase, { page_size: 1, category_group_slug: typeof input.category_group_slug === 'string' ? input.category_group_slug : undefined }, 'grid', 'facets,pills'));
+    // Validate vocabulary globally; a valid combination may legitimately match zero templates.
+    const styleTaxonomy = input.category_group_slug && stringList(input.styles).length
+      ? await fetchSearch(buildAgentSearchUrl(apiBase, { page_size: 1 }, 'grid', 'facets,pills'))
+      : taxonomy;
+    const checks: Array<[string, string[], Array<{slug?: string; name?: string}>]> = [
+      ['category_group_slug', typeof input.category_group_slug === 'string' && input.category_group_slug ? [input.category_group_slug] : [], taxonomy.category_pills ?? []],
+      ['styles', stringList(input.styles), styleTaxonomy.available_facets?.styles ?? []],
+    ];
+    if (input.child_category_slug && !input.category_group_slug) return { ok: false, error: 'category_required', message: 'Provide category_group_slug with child_category_slug so the subcategory can be validated.' };
+    if (input.child_category_slug) checks.push(['child_category_slug', [String(input.child_category_slug)], taxonomy.subcategory_pills ?? []]);
+    for (const [field, values, allowed] of checks) {
+      const invalid = values.filter(value => !allowed.some(entry => entry.slug === value));
+      if (invalid.length) return { ok: false, error: 'invalid_taxonomy', field, invalid, valid_values: allowed, message: 'Choose a slug from valid_values or call list_categories_and_styles.' };
+    }
+    return null;
+  }
+
   const searchTemplates: MarketplaceAgentTool = {
     name: 'search_templates',
     description:
@@ -584,8 +627,13 @@ export function createMarketplaceAgentTools(
     inputSchema: SEARCH_INPUT_SCHEMA,
     annotations: { readOnlyHint: true },
     async execute(input) {
-      const body = await fetchSearch(buildAgentSearchUrl(apiBase, input as AgentSearchInput));
-      return searchResultSummary(body);
+      const invalid = await validateTaxonomy(input);
+      if (invalid) return invalid;
+      const body = await fetchSearch(buildAgentSearchUrl(apiBase, { ...input, strict: input.strict !== false } as AgentSearchInput));
+      const summary = searchResultSummary(body);
+      return body.applied_filters?.relaxed
+        ? { ...summary, items: [], suggestions: summary.items, total_items: 0, suggestion_total: summary.total_items, note: 'No exact matches. Broader suggestions are separate from matching results.' }
+        : summary;
     },
   };
 
@@ -633,7 +681,7 @@ export function createMarketplaceAgentTools(
   const getTemplate: MarketplaceAgentTool = {
     name: 'get_template',
     description:
-      'Get full details for one template by its template_slug (from search_templates results): pricing, categories, styles, tags, preview and purchase links.',
+      'Look up one exact template_slug. Returns public description, explicitly listed pages/features, pricing, 30-day buyer signals, source timestamp and preview/purchase links. Missing information is unknown, not evidence of absence.',
     inputSchema: {
       type: 'object',
       additionalProperties: false,
@@ -646,25 +694,13 @@ export function createMarketplaceAgentTools(
     async execute(input) {
       const slug = String(input.template_slug ?? '').trim().toLowerCase();
       if (!slug) return { ok: false, message: 'template_slug is required.' };
-      // The search worker has no exact-slug filter (its FTS index covers
-      // names/descriptions/taxonomy, not slugs), so this is a best-effort
-      // name-token lookup: try the full slug, then without a duplicate-name
-      // numeric suffix (e.g. "zenith-2" → "zenith").
-      const queries = [slug.replace(/-/g, ' ')];
-      const withoutSuffix = slug.replace(/-\d+$/, '');
-      if (withoutSuffix !== slug) queries.push(withoutSuffix.replace(/-/g, ' '));
-      let items: SearchApiItem[] = [];
-      let match: SearchApiItem | undefined;
-      for (const q of queries) {
-        const body = await fetchSearch(buildAgentSearchUrl(apiBase, { q, page_size: 24 }));
-        items = body.items ?? [];
-        match = items.find((item) => (item.template_slug ?? '').toLowerCase() === slug);
-        if (match) break;
-      }
+      const body = await fetchSearch(buildAgentSearchUrl(apiBase, { template_slug: slug, strict: true, page_size: 1 }));
+      const items = body.items ?? [];
+      const match = items.find(item => item.template_slug === slug);
       if (!match) {
         return {
           ok: false,
-          message: `No template found with slug "${slug}". Slug lookup is best-effort (the search API has no exact-slug filter) — try search_templates with the template's name instead.`,
+          message: `No template found with slug "${slug}". Use search_templates to discover a current template slug.`,
           suggestions: items.slice(0, 5).map(summarizeSearchItem),
         };
       }
@@ -672,6 +708,13 @@ export function createMarketplaceAgentTools(
         ok: true,
         template: {
           ...summarizeSearchItem(match),
+          description: match.description_short ?? null,
+          included_pages: match.included_pages ?? [],
+          features: match.features ?? [],
+          details_source: 'public_listing_description',
+          completeness: 'Only explicitly described pages and features are listed; absent information is unknown.',
+          details: match.description ?? null,
+          source_updated_at: match.source_updated_at ?? null,
           is_featured: match.is_featured ?? false,
           reviewer_pick_reason: match.reviewer_pick_reason ?? null,
           website_url: match.website_url ?? null,
@@ -688,13 +731,15 @@ export function createMarketplaceAgentTools(
   const updatePageFilters: MarketplaceAgentTool = {
     name: 'update_page_filters',
     description:
-      'Apply search text, filters, or sorting to the template grid on the CURRENT page — the user sees the change immediately, controls pulse to show what changed, and Back undoes it. Only works on webflow.com/templates pages that show a template grid.',
+      'Apply search, subcategory, scope, styles, type, sorting or page to the visible grid. Returns ready only after matching results render; Back undoes the action. If this page has no grid, open the returned next_url and fetch tools again.',
     inputSchema: UPDATE_PAGE_INPUT_SCHEMA,
     annotations: { readOnlyHint: false },
     async execute(input) {
       if (typeof window === 'undefined' || typeof document === 'undefined') {
         return { ok: false, message: 'Page context unavailable.' };
       }
+      const invalid = await validateTaxonomy(input);
+      if (invalid) return invalid;
       const requested = sanitizePageActionInput(input);
       const payload = normalizePageActionPayload(requested);
       // Normalization drops unknown category slugs; report that instead of
@@ -719,7 +764,9 @@ export function createMarketplaceAgentTools(
         return {
           ok: false,
           message:
-            'No filter-aware template grid on this page. Navigate to https://webflow.com/templates (or a category page under /templates) and call update_page_filters again.',
+            'This page has no filter-aware grid. Open next_url to show the requested results.',
+          next_url: buildPageActionUrl('https://webflow.com/templates/all', payload),
+          status: 'navigation_required',
         };
       }
       // Disabling free-only must also drop the free query aliases the
@@ -762,6 +809,20 @@ export function createMarketplaceAgentTools(
         preserveResolvedPageParams(window, payload);
       }
       applyPageAction(payload, highlightMisses, timers, { history: historyMode });
+      const targetHref = window.location.href;
+      if (pageActionChangesFilters(payload)) {
+        const deadline = Date.now() + 8_000;
+        while (Date.now() < deadline) {
+          const state = (window as unknown as Record<string, unknown>).__templateMarketplaceGridState as Record<string, unknown> | undefined;
+          if (window.location.href !== targetHref) return { ok: false, status: 'superseded', href: window.location.href };
+          if (state?.href === targetHref && state.status === 'error') return { ok: false, status: 'error', error: state.error, href: targetHref };
+          if (state?.href === targetHref && state.result_href === targetHref && state.status === 'ready') {
+            return { ok: true, status: 'ready', applied: payload, href: targetHref, result_revision: state.result_revision, page: state.page, total_items: state.total_items, preserved_route_filters: routeOwned, note: routeOwned.length ? 'These filters come from the page path or component and remain active. Navigate to https://webflow.com/templates/all for an unfiltered view.' : 'Matching results are rendered.' };
+          }
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+        return { ok: false, status: 'loading', applied: payload, href: targetHref, message: 'Results have not finished rendering. Call get_page_state before describing the results.' };
+      }
       return {
         ok: true,
         applied: payload,
@@ -769,7 +830,7 @@ export function createMarketplaceAgentTools(
         ...(routeOwned.length > 0
           ? {
               preserved_route_filters: routeOwned,
-              note: 'Query filters were cleared, but these filters come from the page path itself and remain active. Navigate to https://webflow.com/templates for a fully unfiltered view.',
+              note: 'Query filters were cleared, but these filters come from the page path itself and remain active. Navigate to https://webflow.com/templates/all for a fully unfiltered view.',
             }
           : {
               note: 'Filters applied to the visible page; the grid refetches and highlights render asynchronously.',
@@ -781,7 +842,7 @@ export function createMarketplaceAgentTools(
   const getPageState: MarketplaceAgentTool = {
     name: 'get_page_state',
     description:
-      'Read what the user currently sees on this marketplace page: active filters, route kind, and the template slugs visible in the grid.',
+      'Read loading/ready/error state, result revision, pagination and active filters. Visible template slugs are returned only for ready results; never describe loading results as matches.',
     inputSchema: { type: 'object', additionalProperties: false, properties: {} },
     annotations: { readOnlyHint: true },
     async execute() {
@@ -833,7 +894,7 @@ export function createMarketplaceAgentTools(
         href,
         path_kind: route.pathKind,
         filters:
-          gridStateIsCurrent && gridState
+          hasGrid && gridStateIsCurrent && gridState
             ? gridState
             : snapshotIsCurrent && snapshot
               ? snapshot
@@ -849,9 +910,13 @@ export function createMarketplaceAgentTools(
                   freeOnly: route.freeOnly,
                   sort: route.sort,
                 },
-        filters_source: gridStateIsCurrent ? 'grid' : snapshotIsCurrent ? 'event' : 'url',
+        filters_source: hasGrid && gridStateIsCurrent ? 'grid' : snapshotIsCurrent ? 'event' : 'url',
         has_template_grid: hasGrid,
-        visible_template_slugs: Array.from(seen),
+        status: hasGrid && gridStateIsCurrent && gridState?.status ? gridState.status : hasGrid ? 'loading' : 'no_grid',
+        result_revision: gridState?.result_revision ?? null,
+        pagination: hasGrid && gridStateIsCurrent && gridState?.status === 'ready' ? { page: gridState?.page, page_size: gridState?.page_size, total_items: gridState?.total_items, has_next_page: gridState?.has_next_page } : null,
+        error: gridStateIsCurrent ? gridState?.error ?? null : null,
+        visible_template_slugs: hasGrid && (!gridStateIsCurrent || gridState?.status !== 'ready') ? [] : Array.from(seen),
         visible_slug_source: slugSource,
       };
     },

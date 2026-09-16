@@ -84,8 +84,8 @@
   <PerformanceNarrativeStage
     id={`arc-${data.arc.slug}`}
     eyebrow="Presentation-native operating route"
-    title="Read the method. Follow the route. Inspect the proof."
-    description="This Arc is generated from the registered source. It adds a presentation view without copying workflow authority or claiming a completed run."
+    title="Follow the steps and check the records."
+    description="This presentation comes from the registered workflow definition. It explains the plan; it does not grant access or show that a task has run."
     {scenes}
     ariaLabel={`${data.arc.title} Arc scenes`}
     enablePresentation
@@ -127,7 +127,7 @@
   <section class="registry-arc__contract" aria-labelledby="registry-arc-contract-title">
     <div>
       <span>One source · three views</span>
-      <h2 id="registry-arc-contract-title">The map remains the operating center.</h2>
+      <h2 id="registry-arc-contract-title">Open the workflow plan for the full context.</h2>
     </div>
     <ol>
       {#each composition.routes as route}

@@ -1,3 +1,4 @@
+import { marketplaceSignals, signalDensityForPosition, type MarketplaceSignalDensity } from '../marketplace/marketplaceSignals';
 import React, {
   CSSProperties,
   memo,
@@ -86,6 +87,8 @@ interface ApiResponse {
 type TemplateScope = 'all' | 'featured' | 'free' | 'landing_pages';
 
 interface FilterState {
+  requestedPage?: number;
+  strict?: boolean;
   q: string;
   scope: TemplateScope;
   categoryGroupSlug: string | null;
@@ -492,6 +495,8 @@ function parseRouteState(
   const types = params.getAll('types').flatMap((v) => v.split(',')).filter(Boolean);
 
   return {
+    requestedPage: params.has("page") ? Math.min(500, Math.max(1, Math.trunc(Number(params.get("page")) || 1))) : undefined,
+    strict: params.get("strict") === "true",
     q: qRaw.trim(),
     scope: resolvedScopeOverride ?? scope,
     // An explicit query-param filter can override a route/Designer default.
@@ -585,6 +590,8 @@ function areStringArraysEqual(a: string[], b: string[]): boolean {
 
 function areFiltersEqual(a: FilterState, b: FilterState): boolean {
   return (
+    a.requestedPage === b.requestedPage &&
+    a.strict === b.strict &&
     a.q === b.q &&
     a.scope === b.scope &&
     a.categoryGroupSlug === b.categoryGroupSlug &&
@@ -607,6 +614,7 @@ function buildApiUrl(base: string, filters: FilterState, page: number, pageSize:
     ? `${window.location.origin}${base}`
     : base;
   const url = new URL(`${absolute}/api/templates/search`);
+  if (filters.strict) url.searchParams.set('strict', 'true');
   if (filters.q) url.searchParams.set('q', filters.q);
   if (filters.scope !== 'all') url.searchParams.set('scope', filters.scope);
   if (filters.categoryGroupSlug) url.searchParams.set('category_group_slug', filters.categoryGroupSlug);
@@ -659,9 +667,10 @@ async function fetchGridResponse(url: string, signal?: AbortSignal): Promise<Api
 function updateUrlParams(filters: FilterState, defaultSort: TemplateSort = 'popular'): void {
   if (typeof window === 'undefined') return;
   const url = new URL(window.location.href);
-  ['q', 'query', 'search', 'styles', 'tags', 'types', 'free_only', 'sort', 'page'].forEach((k) =>
+  ['q', 'query', 'search', 'styles', 'tags', 'types', 'free_only', 'sort', 'page', 'strict'].forEach((k) =>
     url.searchParams.delete(k),
   );
+  if (filters.strict) url.searchParams.set('strict', 'true');
   if (filters.q) url.searchParams.set('q', filters.q);
   if (filters.sort && filters.sort !== defaultSort) url.searchParams.set('sort', filters.sort);
   if (filters.freeOnly && filters.scope !== 'free') url.searchParams.set('free_only', 'true');
@@ -709,49 +718,6 @@ function previewTemplateLink(item: ApiItem): TemplateCardLink | undefined {
 function featuredBadge(item: ApiItem, enabled: boolean): { badgeText?: string; badgeVariant?: TemplateCardBadge } {
   if (!enabled || !item.is_featured) return {};
   return { badgeText: 'Featured', badgeVariant: 'featured' };
-}
-
-function formatCompactNumber(value: number): string {
-  if (value >= 1_000_000) return `${Number((value / 1_000_000).toFixed(value >= 10_000_000 ? 0 : 1))}M`;
-  if (value >= 1_000) return `${Number((value / 1_000).toFixed(value >= 10_000 ? 0 : 1))}k`;
-  return String(value);
-}
-
-function pluralize(value: number, singular: string, plural = `${singular}s`): string {
-  return `${formatCompactNumber(value)} ${value === 1 ? singular : plural}`;
-}
-
-type MarketplaceSignalDensity = 'full' | 'selective' | 'strict';
-
-function signalDensityForPosition(position: number): MarketplaceSignalDensity {
-  if (position <= 12) return 'full';
-  if (position <= 24) return 'selective';
-  return 'strict';
-}
-
-function marketplaceSignals(item: ApiItem, position: number): string[] {
-  // The backend field name is historical; the value is a rolling 30-day
-  // purchase count, so keep the card labels bucketed instead of implying
-  // lifetime proof from exact low counts.
-  const purchases = typeof item.cumulative_purchases === 'number' ? item.cumulative_purchases : 0;
-  const viewers = typeof item.unique_viewers === 'number' ? item.unique_viewers : 0;
-  const popularity = typeof item.popularity_score === 'number' ? item.popularity_score : 0;
-  const density = signalDensityForPosition(position);
-  const isPopular = popularity >= 5;
-  const hasSales = purchases > 0;
-  const hasHighViews = viewers >= 5_000;
-
-  if (purchases >= 250) return ['Marketplace favorite', '250+ purchases'];
-  if (purchases >= 100) return ['Top seller', '100+ purchases'];
-  if (purchases >= 50) return ['Strong seller', '50+ purchases'];
-  if (purchases >= 20 && density !== 'strict') return ['Sales momentum', '20+ purchases'];
-  if (purchases >= 10 && density === 'full') return ['Recently purchased', '10+ purchases'];
-  if (hasSales && isPopular && density === 'full') return ['Recently purchased'];
-  if (hasSales && hasHighViews && density === 'full') return ['Buyer interest'];
-  if (isPopular && hasHighViews && density !== 'strict') return ['High interest', pluralize(viewers, 'view')];
-  if (isPopular && density === 'full') return ['Popular'];
-  if (hasHighViews && density === 'full') return [pluralize(viewers, 'view')];
-  return [];
 }
 
 function isRecentlyPublished(publishedDate: string | null): boolean {
@@ -1274,6 +1240,7 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
   );
 
   const [items, setItems] = useState<ApiItem[]>([]);
+  const [resultIdentity, setResultIdentity] = useState<{ key: string; href: string; revision: number } | null>(null);
   const [page, setPage] = useState(1);
   const [hasNextPage, setHasNextPage] = useState(false);
   const [totalItems, setTotalItems] = useState<number | null>(null);
@@ -1292,11 +1259,19 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
   // agent tooling can read what this grid actually shows — the URL alone
   // misses prop-driven constraints like categorySlug or scopeOverride.
   // propOverrides records provenance: these constraints survive URL resets.
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (typeof window === 'undefined') return;
     (window as unknown as Record<string, unknown>).__templateMarketplaceGridState = {
       href: window.location.href,
       ...filters,
+      status: loading || loadingMore || (!error && resultIdentity?.key !== JSON.stringify(filters)) ? 'loading' : error ? 'error' : 'ready',
+      result_href: resultIdentity?.href ?? null,
+      result_revision: resultIdentity?.revision ?? null,
+      page,
+      page_size: resolvedPageSize,
+      total_items: totalItems,
+      has_next_page: hasNextPage,
+      error,
       propOverrides: {
         categorySlug: categorySlugProp || null,
         scopeOverride: scopeOverride || null,
@@ -1308,7 +1283,7 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
       updatedAt: Date.now(),
     };
   }, [
-    filters,
+    filters, resultIdentity, loading, loadingMore, error, page, totalItems, hasNextPage, resolvedPageSize,
     categorySlugProp,
     scopeOverride,
     styleSlugProp,
@@ -1355,6 +1330,7 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
   const fetchPage = useCallback(
     async (targetPage: number, currentFilters: FilterState, append: boolean) => {
       const epoch = ++fetchEpochRef.current;
+      const identity = { key: JSON.stringify(currentFilters), href: window.location.href, revision: epoch };
       activeFetchAbortRef.current?.abort();
       const controller = new AbortController();
       activeFetchAbortRef.current = controller;
@@ -1365,6 +1341,7 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
         if (activeFetchAbortRef.current === controller) activeFetchAbortRef.current = null;
         setError(null);
         setItems((prev) => (append ? [...prev, ...cached.items] : cached.items));
+        setResultIdentity(identity);
         setPage(cached.pagination.page);
         setHasNextPage(cached.pagination.has_next_page);
         setTotalItems(cached.pagination.total_items);
@@ -1390,6 +1367,7 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
         if (epoch !== fetchEpochRef.current) return;
 
         setItems((prev) => (append ? [...prev, ...data.items] : data.items));
+        setResultIdentity(identity);
         setPage(data.pagination.page);
         setHasNextPage(data.pagination.has_next_page);
         setTotalItems(data.pagination.total_items);
@@ -1411,7 +1389,7 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
 
   // Re-fetch from page 1 whenever filters change
   useEffect(() => {
-    fetchPage(1, filters, false);
+    fetchPage(filters.requestedPage ?? 1, filters, false);
   }, [filters, fetchPage]);
 
   const rendersComponentEmptyState = showEmptyState || showEmptyRecommendations;
@@ -1502,6 +1480,7 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
     if (
       !sentinelVisibleRef.current ||
       loadMoreInFlightRef.current ||
+      state.filters.requestedPage != null ||
       !state.hasNextPage ||
       state.loadingMore ||
       state.loading ||
@@ -1555,7 +1534,7 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
 
     function applyFilters(patch: Partial<FilterState>) {
       setFilters((prev) => {
-        const next = { ...prev, ...patch };
+        const next = { ...prev, ...patch, requestedPage: undefined };
         updateUrlParams(next, initialSort);
         return next;
       });
@@ -1810,6 +1789,7 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
   const clearFilters = useCallback(() => {
     const next: FilterState = {
       ...filters,
+      requestedPage: undefined,
       q: '',
       styles: [],
       tags: [],
@@ -2217,6 +2197,12 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
   }
 
   const isRefreshing = loading && items.length > 0;
+  const changeResultPage = (nextPage: number) => {
+    const url = new URL(window.location.href);
+    url.searchParams.set('page', String(nextPage));
+    window.history.pushState({}, '', url);
+    window.dispatchEvent(new PopStateEvent('popstate'));
+  };
   const shouldShowMcpCampaign = shouldShowTemplateGridCampaign({
     enabled: showMcpCampaign,
     coverage: campaignCoverage,
@@ -2258,6 +2244,13 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
         </div>
       </div>
 
+      {filters.requestedPage != null && (
+        <nav aria-label="Template result pages" style={S.loadMoreWrapper}>
+          <button type="button" style={{ ...S.emptyButton, opacity: page <= 1 || loading ? 0.45 : 1 }} disabled={page <= 1 || loading} onClick={() => changeResultPage(page - 1)}>Previous</button>
+          <span aria-live="polite" style={{ margin: '0 16px' }}>Page {page} of {Math.max(1, Math.ceil((totalItems ?? 0) / resolvedPageSize))}</span>
+          <button type="button" style={{ ...S.emptyButton, opacity: !hasNextPage || loading ? 0.45 : 1 }} disabled={!hasNextPage || loading} onClick={() => changeResultPage(page + 1)}>Next</button>
+        </nav>
+      )}
       {/* Infinite scroll sentinel */}
       <div ref={sentinelRefCallback} style={{ height: 1 }} aria-hidden="true" />
 
@@ -2267,7 +2260,7 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
         </div>
       )}
 
-      {!hasNextPage && items.length > 0 && (
+      {filters.requestedPage == null && !hasNextPage && items.length > 0 && (
         <div
           style={{
             ...S.loadMoreWrapper,

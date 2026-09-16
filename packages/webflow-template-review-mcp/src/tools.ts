@@ -20,6 +20,7 @@ import {
 } from './thumbnail-proxy.js';
 import type { AirtableClient, TemplateReviewAssetThumbnails, TemplateReviewQueueItem } from './airtable.js';
 import { AirtableClientError } from './airtable.js';
+import { observeTemplateHandoff, templateHandoffRequestSchema } from './handoff-observation.js';
 import { CHECKLIST_KIND_VALUES, parseChecklist } from './checklist.js';
 import { COMPREHENSIVE_REVIEW_LANE_IDS, EVIDENCE_LABELS, formatComprehensiveAgentReviewFeedback } from './comprehensive-review-feedback.js';
 import { COMPREHENSIVE_REVIEW_CONTRACT } from './comprehensive-review-contract.js';
@@ -250,6 +251,11 @@ export function registerTools(
 ): void {
   const registerOnServer = mcpServer.tool.bind(mcpServer) as (...args: unknown[]) => unknown;
   const server = {
+    registerTool: ((name: string, ...rest: unknown[]) => {
+      if (access.allowedToolNames && !access.allowedToolNames.has(name)) return undefined;
+      if (!access.allowWrites && WRITE_TOOL_NAMES.has(name)) return undefined;
+      return (mcpServer.registerTool.bind(mcpServer) as (...args: unknown[]) => unknown)(name, ...rest);
+    }) as McpServer['registerTool'],
     tool: ((name: string, ...rest: unknown[]) => {
       if (access.allowedToolNames && !access.allowedToolNames.has(name)) return undefined;
       if (!access.allowWrites && WRITE_TOOL_NAMES.has(name)) return undefined;
@@ -1449,6 +1455,21 @@ export function registerTools(
         });
       } catch (error) {
         return asError(error);
+      }
+    },
+  );
+
+  server.registerTool(
+    'template_review_observe_handoff',
+    { description: 'Read one exact linked template asset/version and return minimized status evidence and the next inspection action. Does not prove a webhook, infer a processing deadline, send messages, or change review status. Missing evidence is never permission to resubmit.',
+    inputSchema: templateHandoffRequestSchema,
+    annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true } },
+    async (input) => {
+      try {
+        return asSuccess(await observeTemplateHandoff(getClient(), input, { observedAt: new Date().toISOString() }));
+      } catch {
+        // Never expose source error details, raw IDs, or authentication material.
+        return jsonContent({ ok: false, error: { code: 'HANDOFF_OBSERVATION_UNAVAILABLE' } }, true);
       }
     },
   );

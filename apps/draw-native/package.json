@@ -12,6 +12,7 @@
     "build:app": "tauri build --bundles app",
     "build:dmg": "tauri build --bundles dmg",
     "verify:installed": "node scripts/installed-acceptance.mjs",
+    "receipt:production": "node scripts/production-release-receipt.mjs",
     "ios:init": "tauri ios init",
     "ios:dev": "tauri ios dev",
     "ios:build": "tauri ios build"

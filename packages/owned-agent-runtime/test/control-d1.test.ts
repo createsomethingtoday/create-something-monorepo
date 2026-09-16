@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { execFileSync } from 'node:child_process';
+import { execFile, execFileSync } from 'node:child_process';
 import { mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -8,83 +8,33 @@ import test from 'node:test';
 import {
   ControlRunConflictError,
   createControlRunService,
+  type FrozenControlActivation,
   type ControlActor,
   type ControlRunExecutor,
   type ControlScope
 } from '../src/control.js';
+import { D1TemplateReviewHandoffGateway, type TemplateReviewHandoffGatewayResult } from '../src/template-review-handoff-gateway.js';
+import { driveTemplateReviewRuntime } from '../src/template-review-runtime-driver.js';
+import { WorkflowRuntimeBoundApprovalAuthority } from '../src/workflow-runtime-approval-authority.js';
+import { createControlRunWorker } from '../src/control-worker.js';
+import { D1ControlSourcePermitAuthority } from '../src/control-source-permit.js';
 import { D1ControlActivationAuthority, D1ControlRunRepository } from '../src/control-store.js';
+import { D1WorkflowRuntimeHandoffProofReader } from '../src/workflow-runtime-handoff-proof.js';
+import { D1TemplateReviewHandoffEvidenceStore } from '../src/template-review-handoff-store.js';
 import { D1TemplateReviewQueueObservationAdapter } from '../src/template-review-queue-observation.js';
 import { D1WorkflowRuntimeProofReader } from '../src/workflow-runtime-proof-projection.js';
 import { D1WorkflowRuntimeCheckpointStore } from '../src/workflow-runtime-store.js';
 import {
+  ZeroWriteWorkflowRuntimeHost,
   createWorkflowRuntimeRun,
   planWorkflowRuntimeStep,
   parseWorkflowRuntimeManifest,
   reduceWorkflowRuntimeRun,
   type RuntimeDigest,
   type WorkflowRuntimeManifest
-} from '../../workflow-runtime/src/index.js';
+} from '@createsomething/workflow-runtime';
 
-function literal(value: unknown): string {
-  if (value === null || value === undefined) return 'NULL';
-  if (typeof value === 'number') return String(value);
-  return `'${String(value).replaceAll("'", "''")}'`;
-}
-
-function bindSql(sql: string, values: unknown[]): string {
-  let sequential = 0;
-  return sql.replace(/\?(\d+)?/g, (_match, numbered: string | undefined) => {
-    const index = numbered ? Number(numbered) - 1 : sequential++;
-    if (index < 0 || index >= values.length) throw new Error(`Missing SQL binding ${index + 1}`);
-    return literal(values[index]);
-  });
-}
-
-class Statement {
-  constructor(
-    readonly path: string,
-    readonly sql: string,
-    readonly values: unknown[] = []
-  ) {}
-  bind(...values: unknown[]) {
-    return new Statement(this.path, this.sql, values);
-  }
-  bound() {
-    return bindSql(this.sql, this.values);
-  }
-  async first<T>() {
-    const output = execFileSync('sqlite3', ['-json', this.path], {
-      input: `PRAGMA foreign_keys=ON; ${this.bound()};`,
-      encoding: 'utf8'
-    }).trim();
-    return (output ? (JSON.parse(output) as T[]) : [])[0] ?? null;
-  }
-  async all<T>() {
-    const output = execFileSync('sqlite3', ['-json', this.path], {
-      input: `PRAGMA foreign_keys=ON; ${this.bound()};`,
-      encoding: 'utf8'
-    }).trim();
-    return { success: true, results: output ? (JSON.parse(output) as T[]) : [], meta: {} };
-  }
-}
-
-function d1(path: string): D1Database {
-  return {
-    prepare(sql: string) {
-      return new Statement(path, sql) as unknown as D1PreparedStatement;
-    },
-    async batch(statements: D1PreparedStatement[]) {
-      const body = statements
-        .map((statement) => (statement as unknown as Statement).bound())
-        .join(';\n');
-      execFileSync('sqlite3', ['-bail', path], {
-        input: `PRAGMA foreign_keys=ON; BEGIN IMMEDIATE; ${body}; COMMIT;`,
-        encoding: 'utf8'
-      });
-      return statements.map(() => ({ success: true, meta: { changes: 1 } })) as D1Result<unknown>[];
-    }
-  } as unknown as D1Database;
-}
+import { literal, bindSql, d1 } from './sqlite-d1.fixture.js';
 
 function activeControlActivationAuthority(path: string): D1ControlActivationAuthority {
   return new D1ControlActivationAuthority(d1(path));
@@ -98,7 +48,8 @@ const scope: ControlScope = {
 const owner: ControlActor = { subject: 'owner-a', role: 'account_owner' };
 const scheduler: ControlActor = { subject: 'scheduler-a', role: 'control_scheduler' };
 
-function fixture(executor?: ControlRunExecutor, runId?: () => string) {
+function fixture(executor?: ControlRunExecutor, runId?: () => string,
+  runtimeApprovals?: Parameters<typeof createControlRunService>[0]['runtimeApprovals']) {
   const path = join(mkdtempSync(join(tmpdir(), 'control-run-d1-')), 'runtime.sqlite');
   const migration = readFileSync(
     new URL('../migrations/0003_control_run_lifecycle.sql', import.meta.url),
@@ -148,6 +99,9 @@ function fixture(executor?: ControlRunExecutor, runId?: () => string) {
       ${workflowRuntimeApprovalContextMigration}
       ${workflowRuntimeRegistrationBindingMigration}
       ${workflowRuntimeApprovalAttestationMigration}
+      ${readFileSync(new URL('../migrations/0011_control_handoff_observations.sql', import.meta.url), 'utf8')}
+      ${readFileSync(new URL('../migrations/0012_control_handoff_clock_policy.sql', import.meta.url), 'utf8')}
+${readFileSync(new URL('../migrations/0013_control_handoff_age_policy.sql', import.meta.url), 'utf8')}
       CREATE TABLE customer_control_activations (
         id TEXT PRIMARY KEY, activation_version INTEGER, activation_kind TEXT, status TEXT,
         account_id TEXT, tenant_id TEXT, workspace_account_id TEXT,
@@ -170,6 +124,7 @@ function fixture(executor?: ControlRunExecutor, runId?: () => string) {
   let id = 0;
   const database = d1(path);
   const service = createControlRunService({
+    runtimeApprovals,
     repository: new D1ControlRunRepository(database),
     activations: new D1ControlActivationAuthority(database),
     executor: executor ?? {
@@ -381,28 +336,149 @@ const templateReviewRuntimeManifest = parseWorkflowRuntimeManifest({
   ]
 });
 
-function checkpointStore(path: string, manifest = runtimeManifest) {
+test('bounded driver advances real Control and D1 only after a confirmed source observation', async () => {
+  for (const mode of ['healthy', 'unknown', 'discrepancy', 'late-stop', 'approval']) {
+    const parameters = { assetId: 'recAAAAAAAAAAAAAA', versionId: 'recBBBBBBBBBBBBBB' };
+    const requestSha256 = `sha256:${Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',
+      new TextEncoder().encode(JSON.stringify({ schema: 'template-handoff-request@1', ...parameters })))),
+      byte => byte.toString(16).padStart(2, '0')).join('')}` as RuntimeDigest;
+    const manifest = structuredClone(templateReviewRuntimeManifest);
+    assert.equal(manifest.steps[0].disposition, 'pass');
+    manifest.steps[0].capability = { id: 'template-review.handoff.observe.v1', parameterDigest: requestSha256 };
+    if (mode === 'approval') {
+      manifest.steps[0].dependsOn = ['review'];
+      manifest.steps.unshift({ id: 'review', actionId: 'review', dependsOn: [], disposition: 'wait',
+        approval: { policyId: 'account-owner', expiresAt: '2026-08-26T00:00:00.000Z' },
+        evidenceDigest: runtimeDigest('2'), recovery: 'manual_fallback' });
+    }
+    const tool = 'template_review_observe_handoff';
+    const resource = 'https://webflow-template-review-mcp.createsomething.workers.dev/mcp';
+    const clock = () => '2026-08-25T00:00:03.000Z';
+    let drive: (runId: string) => ReturnType<typeof driveTemplateReviewRuntime>;
+    let calls = 0;
+    let approvalHost: ZeroWriteWorkflowRuntimeHost;
+    const input = fixture({ supports: () => true, execute: ({ run }) => drive(run.id) }, undefined,
+      new WorkflowRuntimeBoundApprovalAuthority(async decision => {
+        assert.deepEqual(decision.actor, owner);
+        assert.deepEqual(decision.scope, scope);
+        return approvalHost;
+      }, clock));
+    execFileSync('sqlite3', [input.path], { input:
+      readFileSync(new URL('../../agency/migrations/0056_control_source_permits.sql', import.meta.url), 'utf8') +
+      `UPDATE customer_control_activations SET allowed_tools_json=${literal(JSON.stringify([tool]))},
+      allowed_resources_json=${literal(JSON.stringify([resource]))};` });
+    const parent = await input.service.start(scope, owner, { activationId: 'activation-a',
+      idempotencyKey: 'driver-parent', concurrencyKey: 'driver', requestedTools: [tool], requestedResources: [resource] });
+    const store = checkpointStore(input.path, manifest);
+    const initial = await createWorkflowRuntimeRun(manifest, { runId: parent.id,
+      activation: { id: 'activation-a', version: 1, policySha256: runtimeDigest('6') },
+      registration: { buildReleaseId: 'release-a', contractSha256: runtimeDigest('7'), runtimePolicySha256: runtimeDigest('6') },
+      artifactManifestSha256: runtimeDigest('7'), runtimeManifestSha256: runtimeDigest('8'), clock: clock() });
+    await store.apply({ scope, run: initial, expectedVersion: null, idempotencyKey: 'driver-admit', commandDigest: 'a'.repeat(64) });
+    const authority = trustedRuntimeManifestAuthority([{ digest: runtimeDigest('8'), manifest }]);
+    const evidence = new D1TemplateReviewHandoffEvidenceStore(d1(input.path), authority, 30_000);
+    const gateway = new D1TemplateReviewHandoffGateway(d1(input.path), authority,
+      new D1ControlSourcePermitAuthority(d1(input.path)), { async observe() {
+        calls++;
+        if (mode === 'unknown') throw new Error('source unavailable');
+        if (mode === 'late-stop') await input.service.stop(scope, owner, parent.id, 'late-stop', 'operator stop');
+        return { schema: 'create-something/template-handoff-observation@1', dataClassification: 'minimized_status_evidence',
+          requestSha256, observedAt: clock(), state: mode === 'discrepancy' ? 'insufficient_evidence' : 'confirmed',
+          reason: mode === 'discrepancy' ? 'asset_missing' : 'review_ready',
+          nextAction: mode === 'discrepancy' ? 'inspect_source_evidence' : 'await_review', evidenceSha256: runtimeDigest('b') };
+      } }, { ...parameters, artifactManifestSha256: runtimeDigest('7'), runtimeManifestSha256: runtimeDigest('8') }, 30_000, clock);
+    const host = new ZeroWriteWorkflowRuntimeHost(manifest, { storage: store, clock,
+      identity: { async assert(_scope, subject) { return subject; } },
+      queue: { async enqueue() {} }, receiptSink: { async write() {} }, executor: undefined as never });
+    approvalHost = new ZeroWriteWorkflowRuntimeHost(manifest, { storage: store, clock,
+      identity: { async assert(actualScope, subject, policy) {
+        assert.deepEqual(actualScope, scope); assert.equal(subject, owner.subject);
+        assert.ok(policy === 'account-owner' || policy === null);
+        return owner;
+      } }, queue: { async enqueue() {} }, receiptSink: { async write() {} }, executor: undefined as never });
+    drive = runId => driveTemplateReviewRuntime({ scope, runId, manifest, host, storage: store,
+      gateway, evidence, schedulerSubject: scheduler.subject, clock });
+    const process = () => input.service.process(scope, scheduler, parent.id, 'driver-process', 'activation-a');
+    if (mode === 'late-stop') await assert.rejects(process, ControlRunConflictError);
+    else await process();
+    if (mode === 'approval') {
+      assert.equal(calls, 0, 'wait is persisted without invoking source');
+      const waiting = (await store.find(scope, parent.id))!;
+      assert.equal(waiting.status, 'waiting_for_approval');
+      const approval = waiting.steps[0].approval!;
+      const worker = createControlRunWorker({ service: input.service, identity: { async resolve(request) {
+        return request.headers.get('authorization') === 'Bearer fixture-owner'
+          ? { scope, actor: owner, credentialSource: 'bearer' as const } : undefined;
+      } } });
+      const action = { action: 'approve', reason: 'approve exact observation', idempotency_key: 'bound-decision',
+        runtime_approval: { step_id: 'review', approval_id: approval.id,
+          binding_sha256: approval.bindingSha256, checkpoint_version: waiting.version } };
+      const request = async (body: unknown) => {
+        const response = await worker.fetch(new Request(`https://runtime.test/v1/control/runs/${parent.id}/actions`,
+          { method: 'POST', headers: { 'content-type': 'application/json', authorization: 'Bearer fixture-owner' }, body: JSON.stringify(body) }));
+        assert.ok(response); return response;
+      };
+      assert.equal((await request({ ...action, runtime_approval: undefined })).status, 403);
+      assert.equal((await request({ ...action, runtime_approval: { ...action.runtime_approval, approval_id: 'wrong' } })).status, 409);
+      assert.equal((await request({ ...action, runtime_approval: { ...action.runtime_approval, checkpoint_version: waiting.version - 1 } })).status, 409);
+      assert.deepEqual(await store.find(scope, parent.id), waiting, 'rejected decisions leave checkpoint unchanged');
+      assert.equal(calls, 0);
+      assert.equal((await request(action)).status, 200);
+      assert.equal((await request(action)).status, 200, 'exact decision replay');
+      const mcp = await worker.fetch(new Request('https://runtime.test/mcp', { method: 'POST',
+        headers: { 'content-type': 'application/json', authorization: 'Bearer fixture-owner' },
+        body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/call',
+          params: { name: 'control_run_action', arguments: { run_id: parent.id, ...action } } }) }));
+      assert.ok(mcp);
+      const envelope = await mcp.json() as { error?: unknown; result?: unknown };
+      assert.equal(envelope.error, undefined); assert.ok(envelope.result, 'MCP exact approval replay');
+      await input.service.process(scope, scheduler, parent.id, 'driver-resume', 'activation-a');
+    }
+    const result = await input.service.get(scope, owner, parent.id);
+    assert.equal(calls, 1);
+    assert.equal((await store.find(scope, parent.id))?.status, ['healthy', 'approval'].includes(mode) ? 'completed' : 'running');
+    assert.equal(result.status === 'completed', ['healthy', 'approval'].includes(mode));
+    if (mode === 'late-stop') {
+      assert.equal(result.status, 'stopped');
+      await assert.rejects(process, ControlRunConflictError);
+    } else await process();
+    assert.equal(calls, 1, 'Control replay cannot dispatch again');
+    if (!['healthy', 'approval'].includes(mode)) {
+      assert.equal((await drive(parent.id)).type, 'failed');
+      assert.equal(calls, 1, 'prepared attempts require explicit reconciliation');
+    }
+  }
+});
+
+function checkpointStore(path: string, manifest = runtimeManifest, binding: 'legacy-v1' | 'verified-build-v2' = 'legacy-v1') {
   return new D1WorkflowRuntimeCheckpointStore(
     d1(path),
     trustedRuntimeManifestAuthority([{ digest: runtimeDigest('8'), manifest }]),
     trustedApprovalSurfaceAuthority([
       {
         digest: runtimeDigest('8'),
-        surface: { schemaVersion: 'approval_surfaces.v0.3', sha256: manifest.artifacts.approvalSurfacesSha256 }
+        surface: {
+          schemaVersion: 'approval_surfaces.v0.3',
+          sha256: manifest.artifacts.approvalSurfacesSha256
+        }
       }
-    ])
+    ]),
+    binding
   );
 }
 
-async function persistedTemplateReviewAttempt(input: ReturnType<typeof fixture>) {
+async function persistedTemplateReviewAttempt(
+  input: ReturnType<typeof fixture>,
+  manifest = templateReviewRuntimeManifest,
+  requested: { requestedTools: string[]; requestedResources: string[] } = { requestedTools: [], requestedResources: [] }
+) {
   const parent = await input.service.start(scope, owner, {
     activationId: 'activation-a',
     idempotencyKey: 'template-review-parent',
-    requestedTools: [],
-    requestedResources: [],
+    ...requested,
     concurrencyKey: 'template-review-observe'
   });
-  const initial = await createWorkflowRuntimeRun(templateReviewRuntimeManifest, {
+  const initial = await createWorkflowRuntimeRun(manifest, {
     runId: parent.id,
     activation: { id: 'activation-a', version: 1, policySha256: runtimeDigest('6') },
     registration: {
@@ -414,7 +490,7 @@ async function persistedTemplateReviewAttempt(input: ReturnType<typeof fixture>)
     runtimeManifestSha256: runtimeDigest('8'),
     clock: '2026-08-25T00:00:00.000Z'
   });
-  const store = checkpointStore(input.path, templateReviewRuntimeManifest);
+  const store = checkpointStore(input.path, manifest);
   await store.apply({
     scope,
     run: initial,
@@ -422,9 +498,9 @@ async function persistedTemplateReviewAttempt(input: ReturnType<typeof fixture>)
     idempotencyKey: 'template-review-admit',
     commandDigest: 'a'.repeat(64)
   });
-  const plan = await planWorkflowRuntimeStep(templateReviewRuntimeManifest, initial);
+  const plan = await planWorkflowRuntimeStep(manifest, initial);
   assert.equal(plan.type, 'pass');
-  const prepared = await reduceWorkflowRuntimeRun(templateReviewRuntimeManifest, initial, {
+  const prepared = await reduceWorkflowRuntimeRun(manifest, initial, {
     type: 'effect_intent',
     stepId: 'observe',
     attemptId: 'template-review-attempt-1',
@@ -476,6 +552,16 @@ test('D1 checkpoint store survives a process restart, replays exactly, and retai
     initial
   );
   assert.deepEqual(await store.replay(scope, 'runtime-admit', 'a'.repeat(64)), initial);
+  const verifiedStore = checkpointStore(path, runtimeManifest, 'verified-build-v2');
+  assert.equal(await verifiedStore.find(scope, parent.id), undefined);
+  assert.equal(await verifiedStore.replay(scope, 'runtime-admit', 'a'.repeat(64)), undefined);
+  await assert.rejects(verifiedStore.apply({ scope, run: initial, expectedVersion: initial.version,
+    idempotencyKey: 'verified-legacy-update', commandDigest: 'f'.repeat(64) }), /selected binding mode/);
+  for (const migration of ['0014_control_verified_build_bindings.sql', '0015_control_build_binding_admission.sql'])
+    execFileSync('sqlite3', [path], { input: readFileSync(new URL('../migrations/' + migration, import.meta.url), 'utf8') });
+  assert.equal(await verifiedStore.find(scope, parent.id), undefined, 'migrated historical row remains legacy');
+  assert.equal(await verifiedStore.replay(scope, 'runtime-admit', 'a'.repeat(64)), undefined);
+  assert.deepEqual(await store.find(scope, parent.id), initial);
 
   const planned = await reduceWorkflowRuntimeRun(runtimeManifest, initial, {
     type: 'effect_intent',
@@ -1070,7 +1156,10 @@ test('D1 checkpoint store records the exact approval binding and authenticated d
     trustedApprovalSurfaceAuthority([
       {
         digest: runtimeDigest('8'),
-        surface: { schemaVersion: 'approval_surfaces.v0.3', sha256: manifest.artifacts.approvalSurfacesSha256 }
+        surface: {
+          schemaVersion: 'approval_surfaces.v0.3',
+          sha256: manifest.artifacts.approvalSurfacesSha256
+        }
       }
     ])
   );
@@ -1169,23 +1258,41 @@ test('D1 checkpoint store records the exact approval binding and authenticated d
     idempotencyKey: 'approval-wait',
     commandDigest: 'f'.repeat(64)
   });
-  const decided = await reduceWorkflowRuntimeRun(manifest, waiting, {
-    type: 'approval_decided',
+  let identityChecks = 0;
+  const host = new ZeroWriteWorkflowRuntimeHost(manifest, {
+    storage: store,
+    clock: () => '2026-08-25T00:00:04.000Z',
+    identity: { async assert(actualScope, subject, policy) {
+      assert.deepEqual(actualScope, scope);
+      assert.equal(subject, owner.subject);
+      assert.equal(policy, identityChecks < 2 ? 'account-owner' : null);
+      identityChecks++;
+      return { subject: owner.subject, role: owner.role };
+    } },
+    queue: { async enqueue() { assert.fail('terminal approval must not enqueue'); } },
+    receiptSink: { async write() {} },
+    executor: undefined as never
+  });
+  const event = {
+    type: 'approval_decided' as const,
     stepId: longReviewStepId,
     approvalId: wait.approval.id,
     approvalBindingSha256: wait.approval.bindingSha256,
-    decision: 'approved',
+    decision: 'approved' as const,
     actorSubject: owner.subject,
-    actorRole: owner.role,
     observedAt: '2026-08-25T00:00:04.000Z'
-  });
-  await store.apply({
-    scope,
-    run: decided,
-    expectedVersion: waiting.version,
-    idempotencyKey: 'approval-decide',
-    commandDigest: '1'.repeat(64)
-  });
+  };
+  await assert.rejects(host.transition(scope, parent.id, waiting.version,
+    {...event, approvalBindingSha256: runtimeDigest('0')}, 'wrong-binding', 'ignored'),
+    /stale, mismatched, or expired/);
+  assert.deepEqual(await store.find(scope, parent.id), waiting);
+  const decided = await host.transition(scope, parent.id, waiting.version,
+    event, 'approval-decide', 'ignored');
+  assert.equal(identityChecks, 2);
+  assert.deepEqual(await host.transition(scope, parent.id, waiting.version,
+    event, 'approval-decide', 'ignored'), decided);
+  assert.deepEqual(await store.find(scope, parent.id), decided);
+  assert.equal(identityChecks, 3);
   assert.equal(decided.status, 'completed');
   assert.equal(
     execFileSync('sqlite3', ['-noheader', path], {
@@ -1970,4 +2077,460 @@ test('the Proof reader exposes one redacted count-only A3 observation with exact
     }),
     /manifest is unavailable from the trusted authority/
   );
+});
+
+test('handoff evidence binds the verified tenant attempt and replays without altering a stopped parent', async () => {
+  const input = fixture();
+  const manifest = structuredClone(templateReviewRuntimeManifest);
+  const first = manifest.steps[0];
+  assert.equal(first.disposition, 'pass');
+  first.capability.id = 'template-review.handoff.observe.v1';
+  const { parent } = await persistedTemplateReviewAttempt(input, manifest);
+  const store = new D1TemplateReviewHandoffEvidenceStore(
+    d1(input.path),
+    trustedRuntimeManifestAuthority([{ digest: runtimeDigest('8'), manifest }]),
+    30_000,
+    1000
+  );
+  const record = {
+    scope,
+    runId: parent.id,
+    stepId: 'observe',
+    attemptId: 'template-review-attempt-1',
+    sourceInvocationSha256: runtimeDigest('a'),
+    dispatchedAt: '2026-08-25T00:00:02.000Z',
+    receivedAt: '2026-08-25T00:00:04.000Z',
+    observation: {
+      schema: 'create-something/template-handoff-observation@1',
+      dataClassification: 'minimized_status_evidence',
+      requestSha256: runtimeDigest('f'),
+      observedAt: '2026-08-25T00:00:01.500Z',
+      state: 'confirmed',
+      reason: 'review_ready',
+      nextAction: 'await_review',
+      evidenceSha256: runtimeDigest('b')
+    }
+  };
+  await assert.rejects(() => store.record({ ...record, scope: { ...scope, tenantId: 'other' } }));
+  await assert.rejects(() =>
+    store.record({
+      ...record,
+      observation: { ...record.observation, requestSha256: runtimeDigest('e') }
+    })
+  );
+  await input.service.stop(
+    scope,
+    owner,
+    parent.id,
+    'stop-before-evidence',
+    'retain late observation only'
+  );
+  const saved = await store.record(record);
+  assert.deepEqual(await store.record(record), saved);
+  const stricter = new D1TemplateReviewHandoffEvidenceStore(
+    d1(input.path),
+    trustedRuntimeManifestAuthority([{ digest: runtimeDigest('8'), manifest }]),
+    1
+  );
+  assert.deepEqual(await stricter.find(record), saved);
+  assert.deepEqual(await stricter.record(record), saved);
+  const proofDatabase = d1(input.path);
+  const prepareProofQuery = proofDatabase.prepare.bind(proofDatabase);
+  let completeProofReads = 0;
+  proofDatabase.prepare = (sql: string) => {
+    if (sql.includes('SELECT runtime.run_json')) completeProofReads++;
+    return prepareProofQuery(sql);
+  };
+  const proofReader = new D1WorkflowRuntimeHandoffProofReader(
+    proofDatabase,
+    trustedRuntimeManifestAuthority([{ digest: runtimeDigest('8'), manifest }]),
+    30_000
+  );
+  const proof = await proofReader.find({ scope, runId: parent.id });
+  assert.deepEqual(proof?.handoffObservations, [saved]);
+  assert.equal(completeProofReads, 2, 'evidence reads must reuse the two verified runtime projections');
+  assert.equal(proof?.runtime.run.id, parent.id);
+  assert.equal(
+    await proofReader.find({ scope: { ...scope, tenantId: 'other' }, runId: parent.id }),
+    undefined
+  );
+  assert.equal(await store.find({ ...record, scope: { ...scope, tenantId: 'other' } }), undefined);
+  await assert.rejects(() =>
+    store.record({
+      ...record,
+      observation: { ...record.observation, evidenceSha256: runtimeDigest('c') }
+    })
+  );
+  assert.equal((await input.service.get(scope, owner, parent.id)).status, 'stopped');
+});
+
+test('reconciliation proof refuses a succeeded handoff with no source evidence', async () => {
+  const input = fixture();
+  const manifest = structuredClone(templateReviewRuntimeManifest);
+  const first = manifest.steps[0];
+  assert.equal(first.disposition, 'pass');
+  first.capability.id = 'template-review.handoff.observe.v1';
+  const { parent, prepared } = await persistedTemplateReviewAttempt(input, manifest);
+  const completed = await reduceWorkflowRuntimeRun(manifest, prepared, {
+    type: 'step_succeeded',
+    stepId: 'observe',
+    attemptId: 'template-review-attempt-1',
+    verifier: 'handoff-observation',
+    observedAt: '2026-08-25T00:00:04.000Z'
+  });
+  await checkpointStore(input.path, manifest).apply({
+    scope,
+    run: completed,
+    expectedVersion: prepared.version,
+    idempotencyKey: 'complete-without-observation',
+    commandDigest: 'c'.repeat(64)
+  });
+  const reader = new D1WorkflowRuntimeHandoffProofReader(
+    d1(input.path),
+    trustedRuntimeManifestAuthority([{ digest: runtimeDigest('8'), manifest }]),
+    30_000
+  );
+  await assert.rejects(
+    () => reader.find({ scope, runId: parent.id }),
+    /handoff_success_without_evidence/
+  );
+});
+
+
+test('reconciliation proof rejects a source dispatch change without a run version change', async () => {
+  const input = fixture();
+  const { parent, prepared, plan } = await persistedTemplateReviewAttempt(input);
+  const database = d1(input.path);
+  const adapter = new D1TemplateReviewQueueObservationAdapter(
+    database,
+    { async verify() { throw new Error('source verification is not part of this read'); } },
+    { capabilityParameterDigest: runtimeDigest('f') },
+    activeControlActivationAuthority(input.path)
+  );
+  const originalPrepare = database.prepare.bind(database);
+  let inserted = false;
+  database.prepare = (sql: string) => {
+    const statement = originalPrepare(sql);
+    if (!sql.includes('SELECT evidence.*')) return statement;
+    return {
+      bind(...values: unknown[]) {
+        const bound = statement.bind(...values);
+        return {
+          async all() {
+            const result = await bound.all();
+            if (!inserted) {
+              inserted = true;
+              const preparation = await adapter.prepare({
+                scope, manifest: templateReviewRuntimeManifest, run: prepared, plan,
+                attemptId: 'template-review-attempt-1'
+              });
+              assert.equal(preparation.type, 'preflight');
+            }
+            return result;
+          }
+        };
+      }
+    } as D1PreparedStatement;
+  };
+  const reader = new D1WorkflowRuntimeHandoffProofReader(
+    database,
+    trustedRuntimeManifestAuthority([{ digest: runtimeDigest('8'), manifest: templateReviewRuntimeManifest }]),
+    30_000
+  );
+  await assert.rejects(() => reader.find({ scope, runId: parent.id }), /handoff_proof_changed_during_read/);
+  const stable = await reader.find({ scope, runId: parent.id });
+  assert.equal(stable?.runtime.run.version, prepared.version);
+  assert.equal(stable?.runtime.capabilityObservations.length, 1);
+});
+
+
+test('Agency source permit atomically matches frozen authority and never redeems twice', async () => {
+  const input = fixture();
+  execFileSync('sqlite3', [input.path], {
+    input: readFileSync(new URL('../../agency/migrations/0056_control_source_permits.sql', import.meta.url), 'utf8')
+  });
+  const activation = await activeControlActivationAuthority(input.path).findActive(scope, 'activation-a');
+  assert.ok(activation);
+  let id = 0;
+  const authority = new D1ControlSourcePermitAuthority(d1(input.path),
+    () => new Date('2026-09-14T00:00:00.000Z'), () => `permit-${++id}`);
+  const request = { activation, runId: 'run-a', stepId: 'observe', attemptId: 'attempt-a',
+    requestSha256: runtimeDigest('a'), tool: 'mcp:read', resource: 'resource:public' };
+  for (const key of Object.keys(activation) as (keyof typeof activation)[]) {
+    const altered: FrozenControlActivation = structuredClone(activation);
+    const old = altered[key];
+    Object.assign(altered, { [key]: Array.isArray(old) ? [...old, 'extra'] :
+      typeof old === 'number' ? old + 1 : `${old}-other` });
+    assert.equal(await authority.redeem({ ...request, activation: altered }), undefined, key);
+  }
+  assert.equal(await authority.redeem({ ...request, tool: 'mcp:write' }), undefined);
+  assert.equal(await authority.redeem({ ...request, resource: 'resource:private' }), undefined);
+  const permit = await authority.redeem(request);
+  assert.ok(permit);
+  assert.equal(await authority.redeem(request), undefined);
+  assert.equal(await authority.redeem({ ...request, requestSha256: runtimeDigest('b') }), undefined);
+  let releaseRace: () => void = () => undefined;
+  const raceReady = new Promise<void>(resolve => { releaseRace = resolve; });
+  let arrivals = 0;
+  const raceDatabase = {
+    prepare(sql: string) {
+      return { bind(...values: unknown[]) {
+        return { async first() {
+          if (++arrivals === 2) releaseRace();
+          await raceReady;
+          // Two independent processes now contend for the same SQLite writer.
+          return new Promise((resolve, reject) => {
+            const child = execFile('sqlite3', ['-json', '-bail', '-cmd', '.timeout 5000', input.path],
+              { encoding: 'utf8' }, (error, stdout) => {
+                if (error) reject(error);
+                else resolve((JSON.parse(stdout.trim() || '[]') as unknown[])[0] ?? null);
+              });
+            child.stdin?.end(`PRAGMA foreign_keys=ON; ${bindSql(sql, values)};`);
+          });
+        } };
+      } };
+    }
+  } as unknown as D1Database;
+  const raceAuthority = new D1ControlSourcePermitAuthority(raceDatabase);
+  const competing = await Promise.all([
+    raceAuthority.redeem({ ...request, attemptId: 'competing' }),
+    raceAuthority.redeem({ ...request, attemptId: 'competing' })
+  ]);
+  assert.equal(arrivals, 2);
+  assert.equal(competing.filter(Boolean).length, 1);
+  const runSql = (sql: string) => execFileSync('sqlite3', ['-bail', input.path], { input: sql, stdio: 'pipe' });
+  assert.throws(() => runSql("UPDATE customer_control_source_permits SET tool = 'other';"));
+  assert.throws(() => runSql('DELETE FROM customer_control_source_permits;'));
+  assert.throws(() => runSql('INSERT OR REPLACE INTO customer_control_source_permits SELECT * FROM customer_control_source_permits;'));
+  runSql("UPDATE customer_control_activations SET status='suspended' WHERE id='activation-a';");
+  assert.equal(await authority.redeem({ ...request, attemptId: 'attempt-b' }), undefined);
+});
+
+
+test('source permits preserve authorized URI syntax and 300-character resource names', async () => {
+  const input = fixture();
+  const resource = 'https://example.test/items?cursor=next&filter=%20#'.padEnd(300, 'x');
+  assert.equal(resource.length, 300);
+  const tool = 'tool?' + 'y'.repeat(295);
+  execFileSync('sqlite3', [input.path], { input:
+    readFileSync(new URL('../../agency/migrations/0056_control_source_permits.sql', import.meta.url), 'utf8') +
+    `UPDATE customer_control_activations SET allowed_tools_json=${literal(JSON.stringify([tool]))},
+      allowed_resources_json=${literal(JSON.stringify([resource]))};`
+  });
+  const activation = await activeControlActivationAuthority(input.path).findActive(scope, 'activation-a');
+  assert.ok(activation);
+  const authority = new D1ControlSourcePermitAuthority(d1(input.path));
+  assert.ok(await authority.redeem({ activation, runId: 'run@'.padEnd(160, 'r'), stepId: 'step @'.padEnd(160, 's'),
+    attemptId: 'attempt@1'.padEnd(240, 'a'), requestSha256: runtimeDigest('a'), tool, resource }));
+});
+
+test('runtime registration lookup requires exact current frozen activation authority', async () => {
+  const { D1WorkflowArtifactRegistrationReader } = await import('../src/workflow-artifact-registration.js');
+  const input = fixture();
+  execFileSync('sqlite3',[input.path], {input:readFileSync(new URL('../../agency/migrations/0057_control_runtime_registrations.sql',import.meta.url),'utf8')});
+  const authority = activeControlActivationAuthority(input.path);
+  const activation = await authority.findActive(scope,'activation-a');
+  assert.ok(activation);
+  const reader = new D1WorkflowArtifactRegistrationReader(d1(input.path));
+  assert.equal(await reader.find(activation),undefined);
+  execFileSync('sqlite3',[input.path], {input:`INSERT INTO customer_control_runtime_registrations
+    (registration_version,build_manifest_sha256,build_artifact_set_sha256,binding_sha256,activation_id,activation_version,account_id,tenant_id,workspace_account_id,build_release_id,contract_sha256,runtime_policy_sha256,
+    workflow_id,workflow_version,compiler_version,runtime_manifest_schema,definition_hash,artifact_manifest_sha256,runtime_manifest_sha256,
+    attestation_public_key_fingerprint,attestation_key_id,artifact_prefix,verified_by,verified_at)
+    SELECT 2,build_manifest_sha256,build_artifact_set_sha256,'sha256:${'e'.repeat(64)}',id,activation_version,account_id,tenant_id,workspace_account_id,build_release_id,contract_sha256,policy_sha256,
+    'marketplace','1','compiler-v1','workflow_runtime_manifest.v0.2','sha256:${'a'.repeat(64)}','sha256:${'b'.repeat(64)}','sha256:${'c'.repeat(64)}',
+    'sha256:${'d'.repeat(64)}','test','workflow-artifacts/${'b'.repeat(64)}/','operator','2026-09-15T00:00:00.000Z'
+    FROM customer_control_activations WHERE id='activation-a';`});
+  const registered = await reader.find(activation);
+  assert.equal(registered?.workflowId,'marketplace');
+  assert.equal(registered?.artifactManifestSha256,'sha256:'+'b'.repeat(64));
+  assert.notEqual(registered?.artifactManifestSha256,'sha256:'+activation.buildManifestSha256);
+  assert.equal(registered?.registrationVersion,2);
+  assert.equal(registered?.buildManifestSha256,activation.buildManifestSha256);
+  assert.equal(registered?.buildArtifactSetSha256,activation.buildArtifactSetSha256);
+  assert.equal(registered?.bindingSha256,'sha256:'+'e'.repeat(64));
+  assert.equal(registered?.runtimeManifestSha256,'sha256:'+'c'.repeat(64));
+  assert.ok(Object.isFrozen(registered));
+  for (const key of Object.keys(activation) as Array<keyof typeof activation>) {
+    const value: string | number | string[] = activation[key];
+    const changed: string | number | string[] = typeof value === 'number' ? value+1 : Array.isArray(value) ? [...value,'changed'] : value+'changed';
+    assert.equal(await reader.find({...activation,[key]:changed}),undefined,key);
+  }
+  execFileSync('sqlite3',[input.path],{input:"UPDATE customer_control_activations SET status='suspended' WHERE id='activation-a';"});
+  assert.equal(await reader.find(activation),undefined);
+});
+
+
+test('verified Build checkpoint writer requires the relation and persists distinct artifact identity', async () => {
+  const input = fixture();
+  const parent = await input.service.start(scope,owner,{activationId:'activation-a',idempotencyKey:'binding-parent',requestedTools:[],requestedResources:[],concurrencyKey:'binding-proof'});
+  for (const migration of ['0014_control_verified_build_bindings.sql','0015_control_build_binding_admission.sql'])
+    execFileSync('sqlite3',[input.path],{input:readFileSync(new URL('../migrations/'+migration,import.meta.url),'utf8')});
+  const initial = await createWorkflowRuntimeRun(runtimeManifest,{
+    runId:parent.id,activation:{id:'activation-a',version:1,policySha256:runtimeDigest('6')},
+    registration:{buildReleaseId:'release-a',contractSha256:runtimeDigest('7'),runtimePolicySha256:runtimeDigest('6')},
+    artifactManifestSha256:runtimeDigest('a'),runtimeManifestSha256:runtimeDigest('8'),clock:'2026-08-25T00:00:00.000Z'
+  });
+  const store = checkpointStore(input.path,runtimeManifest,'verified-build-v2');
+  const command = {scope,run:initial,expectedVersion:null,idempotencyKey:'binding-admit',commandDigest:'a'.repeat(64)};
+  await assert.rejects(store.apply(command));
+  execFileSync('sqlite3',[input.path],{input:`INSERT INTO control_workflow_runtime_build_bindings
+    (run_id,registration_version,activation_id,activation_version,account_id,tenant_id,workspace_account_id,build_release_id,
+     build_manifest_sha256,build_artifact_set_sha256,binding_sha256,contract_sha256,runtime_policy_sha256,
+     artifact_manifest_sha256,runtime_manifest_sha256,definition_hash,attestation_public_key_fingerprint,
+     workflow_id,workflow_version,compiler_version,runtime_manifest_schema,attestation_key_id,artifact_prefix,verified_at)
+    SELECT id,2,activation_id,activation_version,account_id,tenant_id,workspace_account_id,'release-a',
+      'sha256:' || json_extract(activation_json,'$.buildManifestSha256'),
+      'sha256:' || json_extract(activation_json,'$.buildArtifactSetSha256'),
+      '${runtimeDigest('b')}','${runtimeDigest('7')}','${runtimeDigest('6')}',
+      '${runtimeDigest('a')}','${runtimeDigest('8')}','${runtimeManifest.workflow.definitionHash}','${runtimeDigest('c')}',
+      '${runtimeManifest.workflow.id}','${runtimeManifest.workflow.version}','${runtimeManifest.workflow.compilerVersion}',
+      '${runtimeManifest.schemaVersion}','fixture','workflow-artifacts/${'a'.repeat(64)}/','2026-08-25T00:00:00.000Z'
+    FROM control_runs WHERE id=${literal(parent.id)};`});
+  await store.apply(command);
+  assert.deepEqual(await store.find(scope,parent.id),initial);
+  assert.equal(execFileSync('sqlite3',[input.path,'SELECT build_binding_version FROM control_workflow_runtime_runs;'],{encoding:'utf8'}).trim(),'2');
+  assert.notEqual(initial.artifactManifestSha256,'sha256:'+parent.activation.buildManifestSha256);
+  const {D1VerifiedBuildWorkflowRuntimeProofReader} = await import('../src/workflow-runtime-proof-projection.js');
+  const proofReader = new D1VerifiedBuildWorkflowRuntimeProofReader(d1(input.path),trustedRuntimeManifestAuthority([{digest:runtimeDigest('8'),manifest:runtimeManifest}]));
+  const proof = await proofReader.find({scope,runId:parent.id});
+  assert.equal(proof?.schema,'create-something/workflow-runtime-proof@2');
+  assert.ok(proof && proof.schema === 'create-something/workflow-runtime-proof@2');
+  assert.equal(proof.buildBinding.bindingSha256,runtimeDigest('b'));
+  assert.equal(proof.buildBinding.buildManifestSha256,'sha256:'+parent.activation.buildManifestSha256);
+  assert.equal(await proofReader.find({scope:{...scope,tenantId:'other'},runId:parent.id}),undefined);
+  const handoffReader = new D1WorkflowRuntimeHandoffProofReader(d1(input.path),
+    trustedRuntimeManifestAuthority([{digest:runtimeDigest('8'),manifest:runtimeManifest}]),
+    30_000, 'verified-build-v2');
+  const handoffProof = await handoffReader.find({scope,runId:parent.id});
+  assert.deepEqual(handoffProof?.runtime,proof);
+  assert.deepEqual(handoffProof?.handoffObservations,[]);
+  assert.equal(await handoffReader.find({scope:{...scope,tenantId:'other'},runId:parent.id}),undefined);
+  // Deliberate fixture corruption checks readback independently of insert guards.
+  execFileSync('sqlite3',[input.path],{input:"DROP TRIGGER control_workflow_runtime_build_binding_no_update; UPDATE control_workflow_runtime_build_bindings SET workflow_id='foreign';"});
+  await assert.rejects(proofReader.find({scope,runId:parent.id}),/binding is missing or inconsistent/);
+  await assert.rejects(handoffReader.find({scope,runId:parent.id}),/binding is missing or inconsistent/);
+
+});
+
+
+test('handoff gateway binds persisted authority, invokes once, and retains late evidence without resuming stop', async () => {
+  for (const mode of ['healthy', 'late-stop', 'source-error', 'wrong-request', 'suspended', 'stop-during-proof', 'allowed-skew', 'unallowed-skew', 'stop-during-parent-receipts', 'runtime-stop-during-parent-receipts']) {
+    const parameters = { assetId: 'recAAAAAAAAAAAAAA', versionId: 'recBBBBBBBBBBBBBB' };
+    const bytes = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify({
+      schema: 'template-handoff-request@1', ...parameters
+    })));
+    const requestSha256 = ('sha256:' + Array.from(new Uint8Array(bytes), b => b.toString(16).padStart(2, '0')).join('')) as RuntimeDigest;
+    const tool = 'template_review_observe_handoff';
+    const resource = 'https://webflow-template-review-mcp.createsomething.workers.dev/mcp';
+    let gateway: D1TemplateReviewHandoffGateway;
+    let result: TemplateReviewHandoffGatewayResult | undefined;
+    let calls = 0;
+    const input = fixture({ supports: () => true, async execute({ run }) {
+      const target = { scope, runId: run.id, stepId: 'observe', attemptId: 'template-review-attempt-1' };
+      result = await gateway.observe(target);
+      await gateway.observe(target);
+      return { type: 'completed', outcome: 'gateway-test', verifier: 'gateway-test' };
+    } });
+    execFileSync('sqlite3', [input.path], { input:
+      readFileSync(new URL('../../agency/migrations/0056_control_source_permits.sql', import.meta.url), 'utf8') +
+      `UPDATE customer_control_activations SET allowed_tools_json=${literal(JSON.stringify([tool]))},
+        allowed_resources_json=${literal(JSON.stringify([resource]))};`
+    });
+    const manifest = structuredClone(templateReviewRuntimeManifest);
+    const first = manifest.steps[0];
+    assert.equal(first.disposition, 'pass');
+    first.capability.id = 'template-review.handoff.observe.v1';
+    first.capability.parameterDigest = mode === 'wrong-request' ? runtimeDigest('f') : requestSha256;
+    const { parent } = await persistedTemplateReviewAttempt(input, manifest,
+      { requestedTools: [tool], requestedResources: [resource] });
+    const gatewayDatabase = d1(input.path);
+    const prepareQuery = gatewayDatabase.prepare.bind(gatewayDatabase);
+    let proofReads = 0;
+    if (mode === 'stop-during-proof') gatewayDatabase.prepare = (sql: string) => {
+      const statement = prepareQuery(sql);
+      if (!sql.includes('SELECT runtime.run_json')) return statement;
+      return { bind(...values: unknown[]) {
+        const bound = statement.bind(...values);
+        return { async first() {
+          const row = await bound.first();
+          if (row && ++proofReads === 4)
+            await input.service.stop(scope, owner, parent.id, 'proof-stop', 'stop during proof');
+          return row;
+        } };
+      } } as D1PreparedStatement;
+    };
+    let parentReads = 0;
+    if (mode === 'stop-during-parent-receipts' || mode === 'runtime-stop-during-parent-receipts') gatewayDatabase.prepare = (sql: string) => {
+      const statement = prepareQuery(sql);
+      if (!sql.includes('SELECT receipt_json FROM control_run_receipts')) return statement;
+      return { bind(...values: unknown[]) {
+        const bound = statement.bind(...values);
+        return { async all() {
+          const rows = await bound.all();
+          if (++parentReads === 2) {
+            if (mode === 'runtime-stop-during-parent-receipts') {
+              const store = checkpointStore(input.path,manifest);
+              const current = await store.find(scope,parent.id);
+              assert.ok(current);
+              const stopped = await reduceWorkflowRuntimeRun(manifest,current,{
+                type:'stop_requested',stepId:'observe',reason:'stop during authorization',
+                actorSubject:owner.subject,observedAt:'2026-08-25T00:00:03.000Z'
+              });
+              await store.apply({scope,run:stopped,expectedVersion:current.version,
+                idempotencyKey:'runtime-stop-race',commandDigest:'c'.repeat(64)});
+            } else await input.service.stop(scope, owner, parent.id, 'parent-stop', 'stop during parent receipts');
+          }
+          return rows;
+        } };
+      } } as D1PreparedStatement;
+    };
+    gateway = new D1TemplateReviewHandoffGateway(gatewayDatabase,
+      trustedRuntimeManifestAuthority([{ digest: runtimeDigest('8'), manifest }]),
+      new D1ControlSourcePermitAuthority(d1(input.path)), {
+        async observe(actual) {
+          calls++;
+          assert.deepEqual(actual, parameters);
+          if (mode === 'source-error') throw new Error('secret source error');
+          if (mode === 'late-stop') await input.service.stop(scope, owner, parent.id, 'source-stop', 'stop during observation');
+          return { schema: 'create-something/template-handoff-observation@1',
+            dataClassification: 'minimized_status_evidence', requestSha256,
+            observedAt: mode.endsWith('skew') ? '2026-08-25T00:00:02.500Z' : '2026-08-25T00:00:03.000Z', state: 'confirmed', reason: 'review_ready',
+            nextAction: 'await_review', evidenceSha256: runtimeDigest('b') };
+        }
+      }, { ...parameters, artifactManifestSha256: runtimeDigest('7'), runtimeManifestSha256: runtimeDigest('8') },
+      30_000, () => '2026-08-25T00:00:03.000Z', mode === 'allowed-skew' ? 500 : 0);
+    assert.equal((await gateway.observe({ scope: { ...scope, tenantId: 'other' }, runId: parent.id,
+      stepId: 'observe', attemptId: 'template-review-attempt-1' })).type, 'not_authorized');
+    if (mode === 'suspended') execFileSync('sqlite3', [input.path], {
+      input: "UPDATE customer_control_activations SET status='suspended';"
+    });
+    const process = () => input.service.process(scope, scheduler, parent.id, 'gateway-process', 'activation-a');
+    if (mode === 'late-stop' || mode === 'stop-during-proof' || mode === 'stop-during-parent-receipts') await assert.rejects(process, ControlRunConflictError);
+    else await process();
+    assert.equal(calls, ['wrong-request', 'suspended', 'stop-during-proof', 'stop-during-parent-receipts', 'runtime-stop-during-parent-receipts'].includes(mode) ? 0 : 1, mode);
+    if (mode === 'healthy' || mode === 'late-stop' || mode === 'allowed-skew') assert.equal(result?.type, 'observed', mode);
+    if (mode === 'source-error' || mode === 'unallowed-skew') assert.equal(result?.type, 'effect_unknown');
+    if (mode === 'wrong-request') assert.equal(result?.type, 'not_authorized');
+    if (mode === 'late-stop') assert.equal((await input.service.get(scope, owner, parent.id)).status, 'stopped');
+    if (mode === 'healthy') {
+      for (const migration of ['0014_control_verified_build_bindings.sql','0015_control_build_binding_admission.sql'])
+        execFileSync('sqlite3',[input.path],{input:readFileSync(new URL('../migrations/'+migration,import.meta.url),'utf8')});
+      const strict = new D1TemplateReviewHandoffGateway(d1(input.path),
+        trustedRuntimeManifestAuthority([{digest:runtimeDigest('8'),manifest}]),
+        new D1ControlSourcePermitAuthority(d1(input.path)),
+        {async observe(){assert.fail('legacy checkpoint must not dispatch through verified Build mode');}},
+        {...parameters,artifactManifestSha256:runtimeDigest('7'),runtimeManifestSha256:runtimeDigest('8')},
+        30_000,()=> '2026-08-25T00:00:03.000Z',0,'verified-build-v2');
+      // Fresh unmatched attempt avoids the historical immutable-evidence replay path.
+      await assert.rejects(strict.observe({scope,runId:parent.id,stepId:'observe',attemptId:'fresh-attempt'}),
+        /binding is missing or inconsistent/);
+      const changed = new D1TemplateReviewHandoffGateway(d1(input.path),
+        trustedRuntimeManifestAuthority([{ digest: runtimeDigest('8'), manifest }]),
+        new D1ControlSourcePermitAuthority(d1(input.path)), { async observe() { assert.fail('must not invoke changed pair'); } },
+        { ...parameters, versionId: 'recCCCCCCCCCCCCCC', artifactManifestSha256: runtimeDigest('7'), runtimeManifestSha256: runtimeDigest('8') }, 30_000);
+      assert.equal((await changed.observe({ scope, runId: parent.id, stepId: 'observe',
+        attemptId: 'template-review-attempt-1' })).type, 'not_authorized');
+    }
+  }
 });

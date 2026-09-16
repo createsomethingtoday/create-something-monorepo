@@ -31,6 +31,10 @@ macro_rules! log {
 #[command(name = "ground-mcp")]
 #[command(about = "Ground MCP Server - Grounded claims for code")]
 struct Cli {
+    /// Disable process-local parsed records and graph reuse
+    #[arg(long, global = true)]
+    no_cache: bool,
+
     /// Path to registry database
     #[arg(long, default_value = ".ground/registry.db")]
     db: PathBuf,
@@ -154,6 +158,7 @@ fn shorten_path(path: &str) -> String {
 
 fn main() {
     let cli = Cli::parse();
+    ground::computations::derived_cache::set_enabled(!cli.no_cache);
     
     // Change to workspace directory if provided
     // This makes all relative paths work correctly
@@ -371,7 +376,7 @@ Use `ground_find_duplicate_functions` on the target path. Duplicates are the #1 
 - Duplicates often have subtle differences that reveal which version is canonical.
 
 ## Step 2: Find Dead Exports
-Use `ground_find_dead_exports` on each module in the target path. Dead exports are safe to remove because nothing depends on them. They're low-risk wins that:
+Use `ground_find_dead_exports` on each module in the target path. Findings are unused-export candidates within the supplied search scope, not proof that removal is safe. Check public package exports, external consumers, dynamic loading, and scan completeness before proposing removal. Reviewed internal candidates can help:
 - Reduce bundle size and API surface.
 - Simplify the dependency graph for later steps.
 
@@ -564,7 +569,8 @@ Summarize with a compatibility score: what percentage of the codebase is Workers
                             "content": [{
                                 "type": "text",
                                 "text": serde_json::to_string_pretty(&result.content).unwrap()
-                            }]
+                            }],
+                            "_meta": { "ground_cache": ground::computations::derived_cache::stats() }
                         }))
                     } else {
                         let error_msg = result.error.clone().unwrap_or_else(|| "Unknown error".to_string());
@@ -574,6 +580,7 @@ Summarize with a compatibility score: what percentage of the codebase is Workers
                                 "type": "text",
                                 "text": error_msg
                             }],
+                            "_meta": { "ground_cache": ground::computations::derived_cache::stats() },
                             "isError": true
                         }))
                     }

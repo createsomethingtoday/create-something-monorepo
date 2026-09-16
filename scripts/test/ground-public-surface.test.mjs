@@ -27,14 +27,22 @@ test('Ground public surfaces use executable agent-client commands', async () => 
   ]);
 
   const command = 'codex mcp add ground -- npx --yes -p @createsomething/ground-mcp ground-mcp';
-  assert.match(agency, new RegExp(command.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+  assert.match(
+    agency.replaceAll('@createsomething/ground-mcp@0.4.3', '@createsomething/ground-mcp'),
+    new RegExp(command.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+  );
   assert.match(docs, new RegExp(command.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
   assert.match(readme, new RegExp(command.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
   assert.doesNotMatch(agency, /codex mcp add ground --command/);
   assert.doesNotMatch(docs, /codex mcp add ground --command/);
   assert.doesNotMatch(readme, /codex mcp add ground --command/);
 
-  for (const source of [agency, docs, readme]) {
+  assert.match(agency, /npm install -g @createsomething\/ground-mcp@0\.4\.3/);
+  for (const source of [
+    agency.replaceAll('@createsomething/ground-mcp@0.4.3', '@createsomething/ground-mcp'),
+    docs,
+    readme
+  ]) {
     assert.match(source, /"--yes"/);
     assert.match(source, /"-p"/);
     assert.match(source, /"@createsomething\/ground-mcp"/);
@@ -44,7 +52,7 @@ test('Ground public surfaces use executable agent-client commands', async () => 
 
 test('Ground package README states the exact TS, JS, Svelte, and SvelteKit boundary', async () => {
   const readme = await readFile(packageReadme, 'utf8');
-  assert.match(readme, /Ground 0\.3\.6 supports TypeScript/);
+  assert.match(readme, /Ground 0\.4\.0 supports TypeScript/);
   assert.match(readme, /JavaScript/);
   assert.match(readme, /Svelte component/);
   assert.match(readme, /SvelteKit configuration/);
@@ -98,7 +106,7 @@ test('Agency production deployment waits for the released Ground source tree', a
   assert.match(workflow, /git merge-base --is-ancestor "\$release_sha" "\$GITHUB_SHA"/);
   assert.match(workflow, /git rev-parse "\$\{release_sha\}:\$\{release_path\}"/);
   assert.match(workflow, /git rev-parse "\$\{GITHUB_SHA\}:\$\{release_path\}"/);
-  assert.match(workflow, /packages\/ground/);
+  assert.match(workflow, /agency-ground-release-parity\.mjs "\$release_sha" "\$GITHUB_SHA"/);
   assert.match(workflow, /config\/ground-ga\.v1\.json/);
   assert.match(workflow, /scripts\/ground-calibration-verify\.mjs/);
   assert.match(workflow, /scripts\/ground-calibration-execution-receipt\.mjs/);

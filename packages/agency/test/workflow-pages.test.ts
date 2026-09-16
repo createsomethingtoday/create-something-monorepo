@@ -132,10 +132,10 @@ test('workflow route implementation is prerendered, indexable, and playbook-nati
   assert.match(hubPage, /<PerformanceNarrativeStage/);
   assert.match(hubPage, /<PerformanceConversionHandoff/);
   assert.match(hubPage, /Operator playbook/);
-  assert.match(hubPage, /Map the play\. Build the system\. Keep control\./);
+  assert.match(hubPage, /Practical guides to putting AI to work\./);
   assert.match(hubPage, /Signal → Decision → Proof/);
-  assert.match(routePage, /Playbook route/);
-  assert.match(routePage, /Run the play/);
+  assert.match(routePage, /How to use this guide/);
+  assert.match(routePage, /Read the steps/);
   assert.match(layoutServer, /if \(building\)/);
   assert.match(layoutServer, /user: undefined/);
   assert.doesNotMatch(`${routeServer}\n${routePage}\n${hubPage}`, waterEraTerms);
@@ -208,5 +208,5 @@ test('workflow titles use the Agency editorial face while operating content stay
     guidePage,
     /\.guide-answer\s*\{[\s\S]*?font-family:\s*var\(--font-performance-prose\)/
   );
-  assert.match(hubPage, /lede="A practical playbook/);
+  assert.match(hubPage, /lede="Choose the guide for your task/);
 });

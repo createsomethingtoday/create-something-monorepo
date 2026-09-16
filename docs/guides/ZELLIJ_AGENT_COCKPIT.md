@@ -55,7 +55,9 @@ The repo config uses the CREATE SOMETHING terminal canon:
 
 ## Start A Worker
 
-Use the repo launcher:
+For the new Claude sidebar and receipt controller, use `cs-zellij launch` from
+the extension section below. The following commands retain the legacy generic
+terminal lane without the plugin:
 
 ```bash
 pnpm zellij:agent -- --name claude-webflow --pane-name claude --command 'claude'
@@ -110,16 +112,9 @@ pnpm zellij:workflow -- \
   --launch
 ```
 
-Paste the generated prompt only after reviewing it, or use `--send-prompt` with
-`--launch` when the lane is safe to start immediately:
-
-```bash
-pnpm zellij:workflow -- \
-  --issue CRE-123 \
-  --title "Debug template publish pipeline" \
-  --launch \
-  --send-prompt
-```
+Automatic `--send-prompt` is retired because pane creation does not prove Claude
+is ready. Use the cockpit controller below to inspect the exact prompt before
+sending. The legacy flag now fails before launching anything.
 
 Approval safety is enforced by this workflow boundary, not by trusting a
 specific model. Opus, GPT, Claude, local models, or future foundation models can
@@ -209,3 +204,74 @@ Stop the Zellij lane and fall back if:
 - The session cannot be named, attached, or cleaned up.
 - The worker mutates an external surface without readback proof.
 - Evidence is weaker than direct Claude CLI output.
+
+## CREATE SOMETHING cockpit extension
+
+The first release adds a Rust/WASM sidebar and a local, persistent task controller.
+The sidebar displays task identity, terminal connectivity, observed Claude state,
+and the most recent event time. Enter or click focuses the assigned worker only
+while that exact terminal exists and has not exited. It never approves Claude tools.
+
+Build and install on this Mac:
+
+```bash
+rustup target add wasm32-wasip1
+pnpm zellij:cockpit:build
+pnpm zellij:agent:test
+pnpm zellij:cockpit:install
+```
+
+The installer stores a content-addressed release beneath
+`~/Library/Application Support/CREATE SOMETHING/Zellij/releases`, switches the
+`current` symlink, and installs `~/.local/bin/cs-zellij`. Existing sessions keep
+running. The install receipt includes hashes and the previous release path.
+
+Launch a task (choose a unique task ID for each new conversation):
+
+```bash
+cs-zellij launch --id claude-review --title "Claude review"
+```
+
+The returned attach command opens the same session for operator supervision.
+The plugin requests read/change workspace permissions for pane status and focus.
+These permissions do not authorize Claude tools or external writes.
+
+To register an existing session, use `adopt` with an explicitly inspected
+`--session` and `--pane-id`. Adoption does not restart the worker, send text,
+or install hooks into its existing process. Agent state is unknown until events
+are available. Never guess among multiple terminal panes.
+
+Codex control loop:
+
+1. `cs-zellij inspect --id claude-review` checks the recorded target.
+2. `cs-zellij capture --id claude-review` returns the screen and its SHA-256 hash.
+3. Inspect that screen: Claude must be at an empty input prompt, not a dialog,
+   tool permission, shell, or partially typed draft.
+4. Save the exact approved task text in a UTF-8 file. Use `send --id`, `--file`,
+   and `--screen-hash` from the capture. A changed screen refuses delivery.
+5. Read the returned receipt. `accepted` requires a matching Claude
+   UserPromptSubmit hook. `unconfirmed` must be inspected, never automatically
+   retried. Neither state proves the task completed.
+6. Capture the result and run the owning verifier before declaring completion.
+
+The controller persists metadata, event summaries and prompt hashes, not raw
+prompts or tool arguments. CLI capture intentionally returns terminal text to the
+caller. Scope any retained captures to the task's privacy requirements.
+
+Claude hooks are added only to newly launched cockpit sessions with `--settings`.
+They observe startup, submissions, tools, approval requests, response completion,
+and disconnect. They return no permission decision and do not change account,
+MCP or approval configuration. A response-finished event is not verified completion.
+
+A controller invocation can be restarted without losing task identity; task state
+lives under the app-data `tasks` directory. If a worker disappears, exits, or a
+managed Claude process identity changes, create/adopt a new task after inspection.
+A crashed sender can leave `send.lock`: inspect any uncertain receipt and current
+screen before removing that specific stale lock. Never replay a prompt blindly.
+
+Rollback: retain the install receipt and identify a previously verified release.
+Run the installer with `--rollback` and that release ID; it checks every checksum
+before switching `current`. Verify `cs-zellij inspect` afterward. A receipt’s
+`previous` field records history, not proof that the previous candidate passed. For an
+initial install, stop using the new launcher; existing Zellij config and sessions
+are unchanged. Do not delete task records or release directories during rollback.

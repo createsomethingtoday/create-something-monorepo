@@ -95,6 +95,22 @@ Write posture:
 
 - no reviewer session or assigned-reviewer context is required
 - queue filters can inspect assigned, unassigned, or all records without binding to a reviewer
+- reviewer assignment is read-only, including through `app_review_update_version_review`;
+  supplying `reviewer` (even null or the existing owner) fails the entire request
+  with `REVIEWER_ASSIGNMENT_READ_ONLY`. Assign or reassign in Airtable.
+- “start / kick off a new MCP review cycle” means read `app_review_get_review_context`,
+  preserve owner/status, and wait for the bundle if needed. It does not authorize
+  setting In Review. Never infer ownership from shared credentials or remembered IDs.
+- `app_review_set_review_status`, `app_review_update_version_review.review_status`,
+  and `app_review_update_asset_metadata.latest_review_status` require
+  `status_change: { confirmed: true, expected_status: "<current reviewStatus>" }`.
+  Use null only for an unset current status. Supply confirmation only after an
+  explicit operator request to change Airtable status. Missing confirmation fails
+  with `REVIEW_STATUS_CONFIRMATION_REQUIRED`; a changed starting status fails with
+  `REVIEW_STATUS_CONFLICT`. This is a fresh-read precondition, not an atomic Airtable
+  compare-and-swap or independent proof of human consent.
+- Narrow approve/reject/request-changes verbs retain their explicit decision
+  contracts. Approval exception gates also apply to routed asset status changes.
 - draft feedback and controlled status changes write explicit Airtable fields only
 - narrow decision verbs are available for request-changes, approve, and reject
 - broad metadata and marketplace-status updates should stay operator-gated
@@ -227,3 +243,34 @@ pnpm exec wrangler secret put MCP_API_KEY
 ```
 
 Distribute the new token to the app review team and invalidate prior copies operationally.
+
+### Reading rejection findings
+
+Version reads, version history, and review context expose `reviewFeedback` (📝Review Feedback) and `rejectionFeedback` (🚩Rejection Feedback) separately. An empty `reviewFeedback` does not mean no findings exist: rejected versions may store their findings only in `rejectionFeedback`. The field map advertises `rejection_feedback` as read-only; existing feedback writes continue to target 📝Review Feedback.
+
+
+### Claude read-only acceptance prompt
+
+```text
+Use the App Review MCP for a read-only acceptance test. Do not change any records.
+
+Inspect app_review_get_field_map and confirm rejection_feedback is read-only.
+Inspect the app_review_get_review_context tool description: it should explain
+that reviewFeedback and rejectionFeedback are separate and that reviewFeedback
+may be absent or empty while rejectionFeedback contains findings.
+
+Read CMS Smart Sync v11 (recXSCBkWEJpHDRyM), v8 (recZ7pVe7IqORZ0WB), and
+v2 (rec6e6obcWflILmlW) using app_review_get_version and
+app_review_get_review_context. Compare their rejectionFeedback against
+app_review_list_versions for asset recHMcKKoYD6VUSi2. Display v11 rejection
+feedback in full, preserving Markdown and whitespace.
+
+Expected baseline from September 14, 2026: v11 has 10 bullets, v8 has 9, and v2
+has 7. For these records, accept reviewFeedback being absent or an empty string;
+do not require reviewFeedback === "". Report any changed live data rather than
+forcing the baseline. Do not substitute rejectionReason for rejectionFeedback.
+
+Return a pass/fail table with tools and observed values. Distinguish a visual
+comparison from a programmatic exact-string comparison; do not claim byte-level
+proof unless you performed that comparison. Report tool failures explicitly.
+```

@@ -137,7 +137,7 @@
 
 <SEO
   title="Map, Build, and Control | CREATE SOMETHING .agency"
-  description="Choose the CREATE SOMETHING path that fits: Map defines the workflow, Build connects it, and Control operates it with explicit authority and proof."
+  description="Plan with Map, implement with Build, and support live work with Control. Compare the services and the tools included."
   keywords="workflow mapping subscription, AI workflow control, governed execution, workflow implementation service, operator surfaces"
   ogImage="/og-image.png"
   propertyName="agency"
@@ -147,8 +147,8 @@
 <PerformanceCampaignOpening
   eyebrow="Product system"
   expression="editorial"
-  title="One playbook. Three operating paths."
-  lede="Map defines the client-owned Playbook. Build makes its approved Runbooks executable. Control operates and improves the system with visible authority and proof."
+  title="Plan, build, and support your AI workflow."
+  lede="Map helps you plan the work. Build turns the plan into a tested system. Control keeps it monitored and supported after launch. Your team keeps the code and operating instructions."
   media={playbookHeroMedia.products}
   mediaMobilePlacement="background"
   density="compact"
@@ -166,8 +166,8 @@
 <PerformanceNarrativeStage
   id="choose-product"
   eyebrow="Product chooser"
-  title="Choose where the workflow is now."
-  description="Two products and one implementation service. Signal, Decision, and Proof are operator surfaces. They sit inside Control—not as additive licenses."
+  title="Choose the help you need now."
+  description="Map and Control are subscriptions. Build is quoted for the agreed project. Control includes Map and the views for incoming work, approvals, and results."
   scenes={productScenes}
   ariaLabel="Choose a CREATE SOMETHING product path"
 >
@@ -214,7 +214,7 @@
   <div class="product-proof-shelf__heading">
     <div>
       <span>Technical proof</span>
-      <h2 id="product-proof-title">Inspect the discipline beneath the system.</h2>
+      <h2 id="product-proof-title">Tools we use to check the work.</h2>
     </div>
     <p>
       Historical and open tools are evidence, not additional commercial products. Ground and the
@@ -248,7 +248,7 @@
 <PerformanceConversionHandoff
   expression="editorial"
   eyebrow="Apply the system"
-  title="Start with the workflow your team still protects by hand."
+  title="Start with a task your team still checks manually."
   description="Use Map to define it, Build to connect it, or Control to operate it with approvals and proof. Control includes Map."
   handoff={{
     owner: 'Workflow owner',

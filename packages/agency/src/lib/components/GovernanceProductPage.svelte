@@ -86,7 +86,7 @@
       id: 'contract',
       label: 'Production contract',
       summary: 'Inspect ownership',
-      title: 'The boundary stays small enough for operators to inspect.',
+      title: 'See what this view does and which records it keeps.',
       detail: `In production, ${product.name} is required because it owns ${product.owns.join(', ')}.`,
       tone: 'review',
       evidence: detailCards.map((item) => item.title),
@@ -96,9 +96,9 @@
       id: 'connected-loop',
       label: 'Connected loop',
       summary: 'Continue with context',
-      title: 'Map connects this surface to the rest of the governance loop.',
+      title: 'Map shows how this view connects to the rest of the workflow.',
       detail:
-        'Production workflows need Map, Signal, Decision, and Proof attached to the same operating boundary.',
+        'Keep the workflow plan, incoming tasks, approvals, and results connected.',
       tone: 'allow',
       evidence: relatedCards.map((item) => item.title),
       receipts: relatedLinks.map((link) => link.label),
@@ -135,7 +135,7 @@
   id={`${product.id}-operating-boundary`}
   eyebrow={`${product.name} operating boundary`}
   title="One surface. Three questions."
-  description="See what the surface owns, inspect its production contract, then continue through the connected governance loop."
+  description="Read what this view shows, how it works, and where to go next."
   scenes={productScenes}
   ariaLabel={`${product.name} operating boundary`}
 >
@@ -178,7 +178,7 @@
   expression="editorial"
   eyebrow={`${product.name} implementation`}
   title="Attach this surface to a real workflow."
-  description="Start with one live workflow, connect the source signal, name the decision owner, and decide which proof record must survive the action."
+  description="Start with one live task. Agree on who approves it and what record your team needs afterward."
   steps={ctaItems}
   handoff={{
     owner: `${product.name} operator`,

@@ -167,6 +167,9 @@ function readPackFiles() {
 
 async function main() {
   const manifest = JSON.parse(await readFile(resolve(packageRoot, 'package.json'), 'utf8'));
+  const { WORKFLOW_COMPILER_PACKAGE_VERSION } = await import('../dist/index.js');
+  if (WORKFLOW_COMPILER_PACKAGE_VERSION !== manifest.version)
+    throw new Error('Compiled package version must match package.json.');
   const lock = JSON.parse(await readFile(resolve(packageRoot, 'package-lock.json'), 'utf8'));
   const inventory = JSON.parse(await readFile(resolve(packageRoot, 'package-files.json'), 'utf8'));
   const issues = validateReleaseManifest(manifest);

@@ -31,6 +31,7 @@ import type {
 } from './types.js';
 
 export const WORKFLOW_COMPILER_VERSION = 'workflow-compiler-v0.1';
+export const WORKFLOW_COMPILER_PACKAGE_VERSION = '0.5.0';
 
 const REQUIRED_RECEIPT_FIELDS = ['workflow_id', 'action_id', 'correlation_id', 'outcome'];
 
@@ -86,9 +87,7 @@ function matchesEvidenceMatcher(
     case 'contains_case_insensitive':
       return (
         typeof value === 'string' &&
-        matcher.values.some((candidate) =>
-          value.toLowerCase().includes(candidate.toLowerCase())
-        )
+        matcher.values.some((candidate) => value.toLowerCase().includes(candidate.toLowerCase()))
       );
     case 'equals_one_of':
       return typeof value === 'string' && matcher.values.includes(value);
@@ -447,9 +446,7 @@ export function compileWorkflowDefinition(input: unknown): CompiledWorkflowBundl
     autonomy: action.autonomy,
     requiredEvidence: sorted(action.requiredEvidence),
     receiptFields: sorted(action.receipt.requiredFields),
-    ...(action.tool!.parameters
-      ? { parameters: [...action.tool!.parameters].sort(byName) }
-      : {})
+    ...(action.tool!.parameters ? { parameters: [...action.tool!.parameters].sort(byName) } : {})
   });
   const toolContracts: ToolContractsArtifactV0_1 = {
     schemaVersion: 'tool_contracts.v0.1',
@@ -527,7 +524,7 @@ export function compileWorkflowDefinition(input: unknown): CompiledWorkflowBundl
 
   if (definition.schemaVersion !== 'workflow_definition.v0.1') {
     const schemaVersion = definition.schemaVersion === 'workflow_definition.v0.3' ? 'v0.3' : 'v0.2';
-    const constrainedToolContract = (action: typeof definition.actions[number]) => ({
+    const constrainedToolContract = (action: (typeof definition.actions)[number]) => ({
       ...toolContract(action),
       ...(action.requiredEvidenceValues
         ? { requiredEvidenceValues: sortedEvidenceValues(action.requiredEvidenceValues) }
@@ -605,7 +602,9 @@ export function compileWorkflowDefinition(input: unknown): CompiledWorkflowBundl
           operations: [{ kind: 'select_replay_case' }]
         }
       ],
-      actions: decisionInventory.decisions.map(({ toolContract: _toolContract, ...decision }) => decision)
+      actions: decisionInventory.decisions.map(
+        ({ toolContract: _toolContract, ...decision }) => decision
+      )
     };
     if (definition.schemaVersion === 'workflow_definition.v0.3') {
       return finalizeCompiledWorkflowBundle({

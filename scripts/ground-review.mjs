@@ -15,7 +15,7 @@ import process from 'node:process';
 import { pathToFileURL } from 'node:url';
 import { parse as parseYaml } from 'yaml';
 
-const SUPPORTED_EXTENSIONS = new Set(['.ts', '.tsx', '.js', '.jsx', '.mjs']);
+const SUPPORTED_EXTENSIONS = new Set(['.ts', '.tsx', '.js', '.jsx', '.mjs', '.svelte']);
 const CHECKS = ['duplicates', 'orphans'];
 const GROUND_SCAN_LIMIT = 500;
 const IGNORED_SCAN_DIRECTORIES = new Set([
@@ -387,10 +387,18 @@ export function resolveGroundBinary(
   platform = process.platform,
   architecture = process.arch
 ) {
-  const candidates = [
-    process.env.GROUND_BINARY,
-    join(root, 'packages/ground/target/release/ground')
-  ];
+  if (process.env.GROUND_BINARY) return process.env.GROUND_BINARY;
+
+  let expectedVersion;
+  try {
+    expectedVersion = JSON.parse(
+      readFileSync(join(root, 'packages/ground/npm/package.json'), 'utf8')
+    ).version;
+  } catch {
+    expectedVersion = undefined;
+  }
+
+  const candidates = [join(root, 'packages/ground/target/release/ground')];
   // The npm package ships a platform-neutral JavaScript wrapper. It installs
   // the matching verified release asset into its native directory at install time.
   if (platform === 'darwin' && architecture === 'arm64') {
@@ -409,6 +417,16 @@ export function resolveGroundBinary(
   for (const candidate of candidates) {
     try {
       accessSync(candidate, constants.X_OK);
+      if (expectedVersion) {
+        const result = spawnSync(candidate, ['build-info', '--json'], {
+          cwd: root,
+          encoding: 'utf8',
+          timeout: 10_000
+        });
+        if (result.status !== 0) continue;
+        const build = JSON.parse(result.stdout);
+        if (build.version !== expectedVersion || build.name !== 'ground') continue;
+      }
       return candidate;
     } catch {
       // Try the next explicit or repository-local binary.

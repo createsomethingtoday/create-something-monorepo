@@ -1,0 +1,95 @@
+{
+  "schemaVersion": "decision_inventory.v0.3",
+  "workflowId": "internal.github.commit-observation",
+  "workflowVersion": "1.0.0",
+  "definitionHash": "sha256:5eede120873e8e1b59a7b5a51f0ec56836108ceff58d1be7ea03b5d1fb2d4c3a",
+  "decisions": [
+    {
+      "actionId": "read_commit",
+      "title": "Read exact commit",
+      "kind": "read",
+      "authority": "createsomethingtoday",
+      "autonomy": "auto_allow",
+      "systemsTouched": [
+        "github"
+      ],
+      "requiredEvidence": [
+        "commit_sha",
+        "repository"
+      ],
+      "requiredEvidenceValues": {
+        "commit_sha": "13ed8944c0babce358a08a70cd92347c8e78f830",
+        "repository": "createsomethingtoday/create-something-monorepo"
+      },
+      "toolContract": {
+        "actionId": "read_commit",
+        "name": "read_commit",
+        "targetSystemId": "github",
+        "authority": "createsomethingtoday",
+        "autonomy": "auto_allow",
+        "requiredEvidence": [
+          "commit_sha",
+          "repository"
+        ],
+        "receiptFields": [
+          "action_id",
+          "correlation_id",
+          "outcome",
+          "workflow_id"
+        ],
+        "parameters": [
+          {
+            "name": "commit_sha",
+            "type": "string",
+            "description": "Exact immutable commit"
+          },
+          {
+            "name": "repository",
+            "type": "string",
+            "description": "Exact owned repository"
+          }
+        ],
+        "requiredEvidenceValues": {
+          "commit_sha": "13ed8944c0babce358a08a70cd92347c8e78f830",
+          "repository": "createsomethingtoday/create-something-monorepo"
+        }
+      },
+      "receiptFields": [
+        "action_id",
+        "correlation_id",
+        "outcome",
+        "workflow_id"
+      ],
+      "recovery": {
+        "mode": "manual_fallback",
+        "owner": "createsomethingtoday",
+        "path": "Reconcile the retained attempt; never resend an ambiguous read automatically."
+      }
+    },
+    {
+      "actionId": "review_observation",
+      "title": "Wait for human review",
+      "kind": "decision",
+      "authority": "createsomethingtoday",
+      "autonomy": "approval_required",
+      "systemsTouched": [
+        "github"
+      ],
+      "requiredEvidence": [
+        "observation_receipt"
+      ],
+      "approvalOwner": "createsomethingtoday",
+      "receiptFields": [
+        "action_id",
+        "correlation_id",
+        "outcome",
+        "workflow_id"
+      ],
+      "recovery": {
+        "mode": "manual_fallback",
+        "owner": "createsomethingtoday",
+        "path": "Reconcile the retained attempt; never resend an ambiguous read automatically."
+      }
+    }
+  ]
+}

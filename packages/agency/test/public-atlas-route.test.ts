@@ -134,8 +134,11 @@ test('Map route keeps one editable map with a compact worked-example rail', () =
 	assert.equal(mapRoute.match(/<PublicAtlasCanvas/g)?.length, 1);
 	assert.ok(mapRoute.includes('<SystemContextRail'));
 	assert.ok(mapRoute.includes('bookingHref="/book"'));
-	assert.ok(mapRoute.includes('eyebrow="Public mapping surface"'));
-	assert.ok(mapRoute.includes('The canvas turns a starting sheet into operating context.'));
+	assert.ok(mapRoute.includes('eyebrow="Private workflow draft"'));
+	assert.ok(mapRoute.includes('Map one real workflow before you connect AI to it.'));
+	assert.ok(mapRoute.includes('Start with a blank canvas or an industry starter.'));
+	assert.ok(mapRoute.includes('The canvas never connects to production'));
+	assert.ok(!mapRoute.includes('Cold readers'));
 });
 
 test('services route keeps one public Map canvas and one product-family grid', () => {

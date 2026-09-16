@@ -17,7 +17,7 @@ import {
 } from './db';
 import { syncTranscriptToNotion } from './notion';
 import type { Env, SyncRunSummary, TranscriptQueueMessage } from './types';
-import { downloadTranscript, listTranscriptCandidates, parseTranscript } from './zoom';
+import { downloadTranscript, inspectMeetingRecordings, listTranscriptCandidates, parseTranscript } from './zoom';
 
 const DISCOVERY_LOCK_ID = 'zoom-transcript-sync-discovery';
 const LOCK_TTL_SECONDS = 10 * 60;
@@ -52,6 +52,28 @@ export default {
         listLedgerEntries(env.DB, limit, status),
       ]);
       return json({ ok: true, runs, ledger });
+    }
+
+    if (url.pathname.startsWith('/recordings/') && request.method === 'GET') {
+      const authError = requireApiKey(request, env);
+      if (authError) return authError;
+
+      const meetingId = decodeURIComponent(url.pathname.slice('/recordings/'.length)).trim();
+      if (!meetingId) {
+        return json({ ok: false, error: 'meeting_id is required' }, 400);
+      }
+
+      try {
+        const inspection = await inspectMeetingRecordings(env, meetingId, {
+          from: url.searchParams.get('from') ?? undefined,
+          to: url.searchParams.get('to') ?? undefined,
+        });
+        return json({ ok: true, ...inspection });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        const status = message.startsWith('from ') || message.startsWith('to ') ? 400 : 502;
+        return json({ ok: false, error: message }, status);
+      }
     }
 
     if (url.pathname === '/scan' && request.method === 'POST') {

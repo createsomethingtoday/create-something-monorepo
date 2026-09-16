@@ -1,3 +1,4 @@
+import { MarketplaceAgentTools } from './MarketplaceAgentTools';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { trackMarketplaceEvent } from './analytics';
@@ -84,6 +85,7 @@ const CATEGORY_ROUTE_ALIASES: Record<string, string> = {
   'retail-and-e-commerce': 'retail-and-e-commerce-websites',
   'construction-and-home-services': 'home-services-websites',
   'construction-and-home-services-websites': 'home-services-websites',
+  'documentation-and-help-center': 'documentation-websites',
 };
 
 const CATEGORY_LABEL_ALIASES: Record<string, string> = {
@@ -673,6 +675,7 @@ const TemplateDetailHeroInner: React.FC<TemplateDetailHeroProps> = ({
 
   return (
     <div className="wfdt" data-template-detail-hero="" ref={heroRootRef}>
+      <MarketplaceAgentTools />
       <style>{TEMPLATE_DETAIL_STYLES}</style>
       <section className="wfdt-hero">
         <div className="wfdt-hero-copy">

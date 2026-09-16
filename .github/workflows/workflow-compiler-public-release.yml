@@ -8,6 +8,11 @@ on:
       - 'pnpm-lock.yaml'
   workflow_dispatch:
     inputs:
+      operation:
+        description: Stage a candidate or independently verify an existing registry release
+        type: choice
+        options: [stage, verify]
+        default: stage
       version:
         description: Exact workflow compiler version expected on protected main
         required: true
@@ -50,7 +55,7 @@ jobs:
 
   publish:
     name: Stage workflow compiler through npm trusted publishing
-    if: ${{ github.event_name == 'workflow_dispatch' }}
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.operation != 'verify' }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     environment: npm-public
@@ -89,3 +94,32 @@ jobs:
       - name: Stage package with automatic provenance for 2FA approval
         working-directory: packages/workflow-compiler
         run: npm stage publish --access public
+
+  registry:
+    name: Verify published compiler on Node ${{ matrix.node }}
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.operation == 'verify' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ['22', '24']
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: main
+      - name: Verify protected verifier source
+        run: test "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)"
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version: ${{ matrix.node }}
+          package-manager-cache: false
+      - run: npm install --global npm@11.15.0
+      - name: Verify the exact installed public release
+        env:
+          RELEASE_VERSION: ${{ inputs.version }}
+        run: |
+          test "$(node -p "require('./packages/workflow-compiler/package.json').version")" = "$RELEASE_VERSION"
+          node packages/workflow-compiler/scripts/registry-consumer.mjs "$RELEASE_VERSION"

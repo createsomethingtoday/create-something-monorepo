@@ -51,11 +51,11 @@
       <span class="compatibility-rail__eyebrow">Tool compatibility</span>
       <h2 id="compatibility-{surface}-title">
         {homepageSurface
-          ? 'Connect the workflow after the boundary is clear.'
-          : 'Built on a controlled core. Connected to the tools your team already uses.'}
+          ? 'Connect the tools your task needs.'
+          : 'Build around the tools your team already uses.'}
       </h2>
       {#if homepageSurface}
-        <p>Map the owner, approvals, and proof first. Then choose the tool paths the workflow needs.</p>
+        <p>Agree on the task and approvals first. Then choose the connections it needs.</p>
       {/if}
     </div>
     <a
@@ -108,8 +108,7 @@
   </div>
 
   <p class="compatibility-rail__disclaimer">
-    Brand marks identify tool paths, not partnerships or endorsements. Accounts, permissions, and
-    write access are scoped for each workflow.
+    These logos identify available connections. They do not imply partnerships or endorsements. Account access and permission to change records are agreed for each workflow.
   </p>
 </section>
 

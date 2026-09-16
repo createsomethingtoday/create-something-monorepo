@@ -14,7 +14,7 @@
     {
       question: 'What is an AI workflow system?',
       answer:
-        'An AI workflow system connects a business signal to a bounded decision and a verifiable result. It names records, owners, tools, approval rights, exceptions, and proof instead of treating a model response as completed work.'
+        'An AI workflow system connects tools to carry out a business task. Its rules define what AI may do, who approves the work, and how to check the result.'
     },
     {
       question: 'Where should a team begin with AI workflow automation?',
@@ -33,9 +33,9 @@
       id: 'signal',
       label: 'Read',
       summary: 'Start from observed work',
-      title: 'Read the signal before choosing the system.',
+      title: 'Start with the task you want to improve.',
       detail:
-        'Match the guide to a live handoff, delay, exception, or review queue. The starting point is an operating signal—not a model or automation product.',
+        'Choose a task that causes delays, repeated work, or review problems. Use that task to decide which guide to read.',
       tone: 'review',
       evidence: ['live handoff', 'named owner', 'observed delay or rework']
     },
@@ -53,9 +53,9 @@
       id: 'run',
       label: 'Run',
       summary: 'Follow the owned route',
-      title: 'Run the play and keep its operating artifacts.',
+      title: 'Follow the steps and keep the results.',
       detail:
-        'Use the guide to name the source, action, decision state, output, and recovery route. The artifacts remain useful after a vendor or model changes.',
+        'Record the inputs, steps, approvals, results, and recovery instructions. Keep them when you change tools or AI models.',
       tone: 'allow',
       evidence: ['workflow map', 'runbook', 'decision rules', 'recovery path']
     },
@@ -73,8 +73,8 @@
 </script>
 
 <SEO
-  title="AI Workflow Playbook | CREATE SOMETHING .agency"
-  description="Twelve practical playbook guides for operators mapping, building, and controlling AI workflows and MCP systems with explicit ownership and proof."
+  title="Practical AI Workflow Guides | CREATE SOMETHING .agency"
+  description="Twelve guides to planning AI tasks, connecting tools, testing results, and keeping people in control."
   keywords="AI workflow guides, MCP server development, AI workflow governance, human in the loop AI, Webflow Marketplace operations"
   canonical="https://createsomething.agency/workflows"
   {faqItems}
@@ -86,8 +86,8 @@
     eyebrow="Operator playbook / 12 field guides"
     propertyRole="Workflow library"
     expression="editorial"
-    title="Map the play. Build the system. Keep control."
-    lede="A practical playbook for the business handoffs that need to move faster without losing the owner, the approval boundary, or the proof."
+    title="Practical guides to putting AI to work."
+    lede="Choose the guide for your task. Each explains when the approach helps, the steps to take, and how to check the result."
     proof={[
       { label: 'Library', value: '12 field guides' },
       { label: 'Operating route', value: 'Map / Build / Control' },
@@ -99,15 +99,15 @@
   >
     {#snippet actions()}
       <Button href="#guides" size="lg">Browse the guides</Button>
-      <Button href="/map" variant="secondary">Start a private workflow draft</Button>
+      <Button href="/map" variant="secondary">Map your workflow</Button>
     {/snippet}
   </PerformanceCampaignOpening>
 
   <div class="library-shell">
     <section id="guides" class="guide-index" aria-labelledby="guide-index-heading">
       <header>
-        <span>Choose the next play</span>
-        <h2 id="guide-index-heading">Twelve operating routes for work that has to hold up.</h2>
+        <span>Browse the guides</span>
+        <h2 id="guide-index-heading">Choose the question you need to answer.</h2>
       </header>
 
       <ol>
@@ -184,7 +184,7 @@
     density="concise"
   >
     {#snippet actions()}
-      <Button href="/map" size="lg">Start a private workflow draft</Button>
+      <Button href="/map" size="lg">Map your workflow</Button>
       <Button href="#guides" variant="secondary">Return to the guides</Button>
     {/snippet}
   </PerformanceConversionHandoff>

@@ -47,6 +47,7 @@ use glob::Pattern;
 
 /// Ground configuration loaded from .ground.yml
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(deny_unknown_fields)]
 pub struct GroundConfig {
     /// Config version
     #[serde(default = "default_version")]
@@ -79,6 +80,7 @@ fn default_version() -> String {
 
 /// Ignore configuration
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(deny_unknown_fields)]
 pub struct IgnoreConfig {
     /// Function names to ignore in duplicate detection
     #[serde(default)]
@@ -99,6 +101,7 @@ pub struct IgnoreConfig {
 
 /// Entry-point configuration for analysis checks.
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(deny_unknown_fields)]
 pub struct EntryPointConfig {
     /// Exact paths, relative to the analysis directory, for documented manual CLIs.
     #[serde(default)]
@@ -107,6 +110,7 @@ pub struct EntryPointConfig {
 
 /// Threshold configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct ThresholdConfig {
     /// Similarity threshold for duplicate detection (0-100)
     #[serde(default = "default_similarity")]
@@ -136,6 +140,7 @@ impl Default for ThresholdConfig {
 
 /// Report configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct ReportConfig {
     /// Output format
     #[serde(default = "default_format")]
@@ -190,6 +195,36 @@ impl GroundConfig {
     pub fn load(path: &Path) -> Result<Self, ConfigError> {
         Self::load_with_depth(path, 0)
     }
+
+    /// Load the nearest repository policy and return its source path. Invalid
+    /// policy is an error; callers must not silently replace it with defaults.
+    pub fn load_for_path(start: &Path) -> Result<(Self, Option<PathBuf>), ConfigError> {
+        let mut current = if start.is_file() {
+            start.parent().unwrap_or(start).to_path_buf()
+        } else if start.is_absolute() {
+            start.to_path_buf()
+        } else {
+            std::env::current_dir()
+                .map_err(|error| ConfigError::Io(error.to_string()))?
+                .join(start)
+        };
+        if let Ok(canonical) = current.canonicalize() {
+            current = canonical;
+        }
+
+        loop {
+            for name in [".ground.yml", ".ground.yaml", "ground.yml", "ground.yaml"] {
+                let candidate = current.join(name);
+                if candidate.exists() {
+                    return Self::load(&candidate).map(|config| (config, Some(candidate)));
+                }
+            }
+            let Some(parent) = current.parent() else { break };
+            current = parent.to_path_buf();
+        }
+
+        Ok((Self::default(), None))
+    }
     
     /// Internal load with depth tracking to prevent infinite recursion
     fn load_with_depth(path: &Path, depth: usize) -> Result<Self, ConfigError> {
@@ -219,11 +254,14 @@ impl GroundConfig {
             
             for extend_path in extends {
                 let extended_path = base_dir.join(&extend_path);
-                if extended_path.exists() {
-                    let extended_config = Self::load_with_depth(&extended_path, depth + 1)?;
-                    config.merge(extended_config);
+                if !extended_path.exists() {
+                    return Err(ConfigError::Io(format!(
+                        "extended configuration does not exist: {}",
+                        extended_path.display()
+                    )));
                 }
-                // Silently skip missing extended files (they might be optional)
+                let extended_config = Self::load_with_depth(&extended_path, depth + 1)?;
+                config.merge(extended_config);
             }
         }
         
@@ -461,5 +499,35 @@ report:
             Path::new("packages/example"),
             Path::new("packages/example/scripts/install.mjs")
         ));
+    }
+
+    #[test]
+    fn unknown_policy_sections_are_rejected() {
+        let result = serde_yaml::from_str::<GroundConfig>(
+            "version: '1'\ndependency_health:\n  enabled: true\n",
+        );
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn repository_policy_is_found_from_deep_workspace_paths() {
+        let repository = tempfile::tempdir().unwrap();
+        std::fs::write(
+            repository.path().join(".ground.yml"),
+            "version: '1'\nthresholds:\n  duplicate_similarity: 91\n",
+        )
+        .unwrap();
+        let mut deep = repository.path().to_path_buf();
+        for level in 0..14 {
+            deep.push(format!("level-{level}"));
+        }
+        std::fs::create_dir_all(&deep).unwrap();
+
+        let (config, source) = GroundConfig::load_for_path(&deep).unwrap();
+        assert_eq!(config.thresholds.duplicate_similarity, 91);
+        assert_eq!(
+            source,
+            Some(repository.path().canonicalize().unwrap().join(".ground.yml"))
+        );
     }
 }

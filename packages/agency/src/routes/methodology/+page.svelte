@@ -18,7 +18,7 @@
       question: 'Have we built this before?',
       action: 'Unify',
       description:
-        'I look for duplicate tools, repeated workflows, and the same data being entered twice. If three teams solve the same problem three different ways, that is design debt. We map it, measure it, and collapse it into one clearer system.',
+        'I look for duplicate tools, repeated steps, and data entered more than once. We map the work and remove repetition before adding automation.',
       outcome: 'Less duplication, cleaner data, lower drag.'
     },
     {
@@ -28,7 +28,7 @@
       question: 'Does this earn its existence?',
       action: 'Remove',
       description:
-        'Named for Dieter Rams: less, but better. Every tool, workflow, and automation has to justify its place in the stack. If nobody would miss it, trust it, or measure it, we stop carrying it.',
+        'Dieter Rams called it “less, but better.” We ask which tools and steps are useful, then remove those the team no longer needs.',
       outcome: 'A leaner stack where every component earns its keep.'
     },
     {
@@ -38,7 +38,7 @@
       question: 'Does this serve the whole?',
       action: 'Reconnect',
       description:
-        'Named for the hermeneutic circle: every part must serve the whole, and the whole gives meaning to every part. The tools that survive the first two cuts must connect into one operating system, not a row of isolated islands.',
+        'Check how each remaining part serves the work as a whole. Connect the tools so people do not have to carry information between them.',
       outcome: 'A connected system where every component serves the mission.'
     }
   ];
@@ -77,7 +77,7 @@
       summary: 'Subtract before control',
       title: 'The Core Principle',
       detail:
-        'Most automation strategies fail because they add more tools, exceptions, and hidden handoffs than the operator can monitor. Remove what does not belong first, then control the records, actions, judgment states, and receipts that remain.',
+        'Extra tools can create more exceptions and handovers to manage. Remove unnecessary steps first, then agree on permissions and checks for the work that remains.',
       tone: 'block',
       receipts: ['less duplication', 'less excess', 'less disconnection']
     },
@@ -97,7 +97,7 @@
       summary: 'Map → subtract → classify → ship',
       title: 'The Process Applied',
       detail:
-        'The Triad becomes a calm operating path by naming the burden, removing noise, classifying decisions, and shipping the smallest operator surface.',
+        'Find the repeated work, remove unnecessary steps, agree on approvals, and build the smallest useful change.',
       tone: 'allow'
     },
     {
@@ -106,7 +106,7 @@
       summary: 'Make the boundary visible',
       title: 'The method as a map',
       detail:
-        'The same canvas language shows what can run, what waits for judgment, what stops, and where proof lands before a workflow earns more authority.',
+        'The map shows which tasks can run, which need approval, and what record is kept.',
       tone: 'neutral',
       actions: [{ label: agencyCoreMessaging.selfMapLabel, href: agencyCoreMessaging.selfMapHref }]
     }
@@ -138,9 +138,7 @@
       </BlurFade>
       <BlurFade delay={0.2}>
         <p class="hero-subtitle">
-          Calm, transparent workflow systems do not start by adding more agents. They start by
-          removing duplication, stripping excess, reconnecting what matters, and then deciding what
-          agents and tools can do, what needs approval, and what should stop.
+          First, remove duplicate steps and tools. Then connect what remains. Agree on what AI may do, what needs approval, and when it must stop.
         </p>
       </BlurFade>
     </div>
@@ -150,7 +148,7 @@
     id="methodology-argument"
     eyebrow="One subtractive method"
     title="Remove what obscures, then test what survives."
-    description="The method is one continuous argument: simplify the system, test each surviving part against the whole, turn the result into an operating path, and make its authority boundary visible."
+    description="Simplify the work, check how the remaining steps fit together, then build and test the first useful change."
     scenes={methodologyScenes}
     ariaLabel="Subtractive methodology argument"
   >
@@ -158,10 +156,7 @@
       {#if scene.id === 'principle'}
         <div class="principle-card methodology-artifact">
           <p class="principle-body">
-            Most automation strategies fail because they add more tools, more exceptions, and more
-            hidden handoffs than the operator can actually monitor. The Subtractive Triad inverts
-            that instinct. Remove what does not belong first, then control the workflow that
-            remains: records, actions, judgment states, and receipts.
+            Adding tools can also add work: more exceptions, more handovers, and more things to watch. Our method, the Subtractive Triad, starts by removing duplication and unnecessary steps. Then we connect what remains.
           </p>
         </div>
       {:else if scene.id === 'checks'}
@@ -229,7 +224,7 @@
     expression="editorial"
     eyebrow="Apply the method"
     title="Ready to make the workflow quieter?"
-    description="Every project starts with this operating model. We remove what does not belong, then ship the smallest controlled path that lets the operator stop watching everything."
+    description="Every project starts by simplifying the work. Then we build and test one task, with clear rules for when a person needs to step in."
     handoff={{
       owner: 'Workflow owner',
       authority: 'One named handoff',

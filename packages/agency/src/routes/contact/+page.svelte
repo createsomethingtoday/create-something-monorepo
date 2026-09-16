@@ -33,7 +33,7 @@
       value: 'governance-checklist',
       label: 'Send the control checklist',
       description:
-        'Best for cold readers who want the approval, logging, and recovery questions first.',
+        'Start here if you want a checklist for planning an AI task.',
       funnelStage: 'awareness',
       serviceInterest: 'AI workflow control checklist',
       submitLabel: 'Request checklist',
@@ -42,29 +42,29 @@
     {
       value: 'workflow-teardown',
       label: 'Request a workflow map',
-      description: 'Best when you can name the stack, owner, bottleneck, and risk boundary.',
+      description: 'Ask us to review a task, its tools, and the part that slows you down.',
       funnelStage: 'consideration',
       serviceInterest: 'Workflow Map',
       submitLabel: 'Request map',
-      successMessage: "Sent. I'll review the workflow and reply with the likely operating path."
+      successMessage: "Sent. I’ll review the task and reply with a suggested next step."
     },
     {
       value: 'workflow-mapping',
       label: 'Book a mapping session',
       description:
-        'Best when there is a real workflow, owner, approval authority, and decision timeline.',
+        'Talk through a task with the person responsible for it.',
       funnelStage: 'decision',
       serviceInterest: 'Workflow mapping session',
       submitLabel: 'Send mapping details',
-      successMessage: "Received. I'll review the details before confirming the right mapping path."
+      successMessage: "Received. I’ll review the details and reply about the next step."
     }
   ];
 
   const laneOptions: Array<{ value: ServiceLane; label: string }> = [
     { value: 'not_sure', label: 'Not sure yet' },
-    { value: 'workflow_infrastructure', label: 'Map / Build' },
-    { value: 'reliability_and_control', label: 'Support Recovery / Ongoing Control' },
-    { value: 'enterprise_extension', label: 'Enterprise Extension' },
+    { value: 'workflow_infrastructure', label: 'Plan or build an AI task' },
+    { value: 'reliability_and_control', label: 'Fix or support a live system' },
+    { value: 'enterprise_extension', label: 'A larger or more complex project' },
     { value: 'system_development_referral', label: 'System Development Referral' }
   ];
 
@@ -93,10 +93,10 @@
         'Use the checklist to name what an agent can do, what needs approval, what must stop, and what evidence your team should keep.',
       formTitle: 'Request the control checklist',
       formDescription:
-        'Send where to reply and one workflow you are considering. A short note is enough for a cold start.',
+        'Send where to reply and one workflow you are considering. A short note is enough.',
       messageLabel: 'Which workflow should the checklist help you evaluate?',
       messageHelper:
-        'Name the tools, handoff, or decision boundary if you know it. Do not include credentials or client secrets.',
+        'Tell us the tools you use and what you want help with. Do not include credentials or client secrets.',
       messagePlaceholder:
         'e.g., We want AI to help with support follow-up, but need approval rules, blocked states, and receipts before anything can act.'
     },
@@ -105,15 +105,15 @@
       seoDescription:
         'Request a workflow map for the stack, bottleneck, risk boundary, owners, action rules, audit trail, and first controlled pilot.',
       eyebrow: 'Workflow map',
-      title: 'Bring the workflow that needs a control path.',
+      title: 'Tell us which task needs attention.',
       description:
-        'Use this path when you can name the stack, bottleneck, owner, and the place where approval or evidence matters. The first output is a fixed-scope map, not an open-ended build.',
+        'Tell us how the task works today, who handles it, and what slows it down. The first project is a workflow plan with an agreed scope.',
       formTitle: 'Request a workflow map',
       formDescription:
-        'Share the current workflow shape so I can identify the likely operating path, first controlled pilot, and no-build stop condition.',
+        'Describe the task so we can suggest a first step and assess whether building an agent would help.',
       messageLabel: 'Which workflow needs attention first?',
       messageHelper:
-        'Name the stack, bottleneck, owner, and what should require approval before AI takes action. Do not include credentials or client secrets.',
+        'List the tools, the problem, who handles it, and what needs approval. Do not include credentials or client secrets.',
       messagePlaceholder:
         'e.g., Zendesk + Shopify + Stripe. Support can draft replies, but credits, refunds, and account changes need approval rules and receipts before anything can act.'
     },
@@ -124,20 +124,20 @@
       eyebrow: 'Mapping session',
       title: 'Start when the workflow and owner are clear.',
       description:
-        'Use this path when there is a real workflow, a decision owner, and enough urgency to map the allowed, approval-needed, blocked, and receipt states before a build decision.',
+        'Send a task you want to improve and who is responsible for it. We’ll discuss what AI could do and what should stay with a person.',
       formTitle: 'Send mapping details',
       formDescription:
-        'Share the workflow, owner, systems, timeline, and first decision you need to make before booking.',
+        'Tell us the task, tools, person responsible, and timing.',
       messageLabel: 'What should we map in the session?',
       messageHelper:
-        'Name the workflow, owner, source systems, approval authority, and decision timeline. Do not include credentials or client secrets.',
+        'Describe the task, the tools, who approves the work, and when you need it. Do not include credentials or client secrets.',
       messagePlaceholder:
         'e.g., Finance needs an approval path before AI drafts vendor follow-up. The owner is ops, the source systems are QuickBooks and Notion, and we need a decision this month.'
     }
   };
 
   const contactPathCards: PerformanceCardItem[] = contactPathOptions.map((option) => ({
-    eyebrow: option.funnelStage,
+    eyebrow: 'Get started',
     icon:
       option.funnelStage === 'awareness'
         ? 'document'
@@ -374,7 +374,7 @@
 <PerformancePageSection
   variant="white"
   eyebrow="Funnel routing"
-  title="One intake path, four levels of commitment."
+  title="Choose a useful next step."
 >
   {#snippet after()}
     <FunnelLadder />

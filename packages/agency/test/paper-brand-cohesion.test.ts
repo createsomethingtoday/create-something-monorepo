@@ -97,21 +97,11 @@ test('the Agency footer uses one linked lockup instead of repeating the brand in
   assert.match(footer, /\.footer-editorial-identity--link:focus-visible/);
 });
 
-test('the Agency operating story uses a scoped GSAP motion intent with an immediate reduced-motion state', () => {
+test('the homepage service steps are readable without scene motion', () => {
   const home = read('src/routes/+page.svelte');
-  const narrative = read(
-    '../canon/src/lib/components/performance/PerformanceNarrativeStage.svelte'
-  );
-
-  assert.match(home, /id: 'agency-operating-story-v1'/);
-  assert.match(home, /event: 'agency\.operating-story\.scene\.selected'/);
-  assert.match(home, /reducedMotion: 'settle-immediately'/);
-  assert.match(home, /motionIntent=\{agencyOperatingStoryMotion\}/);
-  assert.match(narrative, /motionIntent\?: MotionIntent/);
-  assert.match(narrative, /await import\('gsap'\)/);
-  assert.match(narrative, /prefers-reduced-motion: reduce/);
-  assert.match(narrative, /cancelSceneMotion\(\);/);
-  assert.doesNotMatch(home, /ScrollTrigger|Lenis|SmoothScroll/);
+  assert.match(home, /id="agency-operating-story"/);
+  assert.match(home, /class="home-steps"/);
+  assert.doesNotMatch(home, /PerformanceNarrativeStage|motionIntent|ScrollTrigger|Lenis|SmoothScroll/);
 });
 
 test('the Agency hero makes the Playbook operating grammar visible without a provider logo lockup', () => {
@@ -121,12 +111,12 @@ test('the Agency hero makes the Playbook operating grammar visible without a pro
   );
   const field = read('src/lib/components/PlaybookField.svelte');
 
-  assert.match(home, /title="Your people and AI need the same playbook\."/);
+  assert.match(home, /title="Put AI to work on one useful task\."/);
   assert.match(home, /media=\{playbookHomeHeroMedia\}/);
   assert.match(home, /mediaMobilePlacement="background"/);
-  assert.match(home, /client-owned Playbook/);
-  assert.match(home, /Offense advances approved work/);
-  assert.match(home, /Defense protects decisions, proof, and recovery/);
+  assert.match(home, /You keep the code/);
+  assert.match(home, /what AI may do/);
+  assert.match(home, /what needs approval/);
   assert.doesNotMatch(home, /OpenAI[^\n]{0,80}<img|Cloudflare[^\n]{0,80}<img/);
   assert.match(campaignOpening, /media\?: PerformanceCampaignMedia/);
   assert.match(field, /O = owner/);
@@ -191,7 +181,7 @@ test('Field Reports carries an attached-proof Playbook macro study with its auth
 
   assert.match(reports, /media=\{playbookHeroMedia\.fieldReports\}/);
   assert.match(reports, /mediaMobilePlacement="background"/);
-  assert.match(reports, /Review the film\. Improve the playbook\./);
+  assert.match(reports, /Read the results, including the limits\./);
   assert.doesNotMatch(reports, /<PlaybookField variant="proof"/);
 });
 
@@ -219,7 +209,10 @@ test('Map and Template Review each carry a route-specific Playbook court hero wi
   assert.match(map, /media=\{playbookHeroMedia\.map\}/);
   assert.match(map, /mediaMobilePlacement="background"/);
   assert.doesNotMatch(map, /artifactOwnsMedia|artifactMobilePlacement/);
-  assert.match(map, /<PlaybookField variant="map" embedded \/>/);
+  assert.match(map, /src=\{playbookMapSectionMedia\.src\}/);
+  assert.match(map, /srcset=\{playbookMapSectionMedia\.mobileSrc\}/);
+  assert.match(map, /data-campaign-media="map-overhead-study"/);
+  assert.doesNotMatch(map, /<PlaybookField variant="map"/);
   assert.match(templateReview, /media=\{playbookHeroMedia\.templateReview\}/);
   assert.match(templateReview, /mediaMobilePlacement="background"/);
   assert.doesNotMatch(templateReview, /paperAttachedReceiptMedia/);

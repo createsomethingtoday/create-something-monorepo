@@ -1,8 +1,31 @@
-# OpenAI Partner Readiness Packet
+# OpenAI Partner Status and Readiness History
 
 > Owner: CREATE SOMETHING
-> Status: readiness review, not approved-partner status
+> Status: OpenAI Select Partner, confirmed September 11, 2026
 > Scope: OpenAI ecosystem positioning, startup/community paths, agent runtime proof, and public-claim guardrails
+
+## Current status
+
+CREATE SOMETHING is an **OpenAI Select Partner** in the OpenAI Partner Network.
+The operator supplied OpenAI's acceptance email on September 11, 2026. It confirms
+this exact designation and permits website and customer-facing use. Release
+tracking: CRE-1993.
+
+Use the exact tier in public copy. Individual qualifications belong to Micah
+Johnson and are listed with issue and expiry dates in
+[the sales qualifications reference](../packages/agency/content/sales/openai-qualifications.md).
+Public reference: https://createsomething.agency/stack#openai-qualifications
+
+This supersedes the pre-acceptance posture below. It does not authorize other
+tiers, organizational specializations, resale, product endorsement, or Frontier
+Alliance claims. The website uses text; no badge has been reconstructed from
+brand guide examples. Private program documents remain with the operator.
+
+## Historical readiness review — superseded September 11, 2026
+
+The remaining sections preserve the earlier application strategy and evidence.
+Their pre-acceptance restrictions and suggested application routes are historical,
+not the current status or publishing policy. Use the current status above.
 
 ## Positioning
 

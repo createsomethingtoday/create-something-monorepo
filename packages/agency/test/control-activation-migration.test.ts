@@ -132,6 +132,34 @@ test('Control activation migration pins accepted sources and immutable projectio
         ),
       /immutable/i
     );
+    // Apply to an already populated, source-validated Agency activation ledger.
+    const beforeRegistration = sqlite(database, `SELECT json_object('id',id,'status',status,'version',activation_version) FROM customer_control_activations;`);
+    sqlite(database, readFileSync(new URL('0057_control_runtime_registrations.sql', migrationRoot), 'utf8'));
+    assert.equal(sqlite(database, 'SELECT COUNT(*) FROM customer_control_runtime_registrations;'), '0');
+    const registration: Record<string, string | number> = {
+      registration_version:2, build_manifest_sha256:'3'.repeat(64), build_artifact_set_sha256:'4'.repeat(64), binding_sha256:'sha256:'+'e'.repeat(64),
+      activation_id:'activation_a', activation_version:1, account_id:'acct_a', tenant_id:'tenant_a', workspace_account_id:'workspace_a',
+      build_release_id:'release_a', contract_sha256:'7'.repeat(64), runtime_policy_sha256:'6'.repeat(64),
+      workflow_id:'marketplace', workflow_version:'1', compiler_version:'compiler-v1', runtime_manifest_schema:'workflow_runtime_manifest.v0.2',
+      definition_hash:'sha256:'+'a'.repeat(64), artifact_manifest_sha256:'sha256:'+'b'.repeat(64), runtime_manifest_sha256:'sha256:'+'c'.repeat(64),
+      attestation_public_key_fingerprint:'sha256:'+'d'.repeat(64), attestation_key_id:'test',
+      artifact_prefix:'workflow-artifacts/'+'b'.repeat(64)+'/', verified_by:'identity|operator', verified_at:'2026-09-15T00:00:00.000Z'
+    };
+    const register = (record: typeof registration, verb = 'INSERT') => `${verb} INTO customer_control_runtime_registrations (${Object.keys(record).join(',')}) VALUES (${Object.values(record).map(value => typeof value === 'number' ? value : "'"+value.replaceAll("'", "''")+"'").join(',')});`;
+    for (const field of ['activation_id','activation_version','account_id','tenant_id','workspace_account_id','build_release_id','build_manifest_sha256','build_artifact_set_sha256','contract_sha256','runtime_policy_sha256']) {
+      assert.throws(() => sqlite(database,register({...registration,[field]: field === 'activation_version' ? 2 : 'wrong'})), /activation_mismatch/);
+    }
+    assert.throws(() => sqlite(database,register({...registration,artifact_prefix:'other/'})), /CHECK/);
+    assert.throws(() => sqlite(database,register({...registration,registration_version:1})), /CHECK/);
+    const legacy = {...registration}; delete legacy.registration_version; delete legacy.binding_sha256;
+    assert.throws(() => sqlite(database,register(legacy)), /NOT NULL/);
+    assert.throws(() => sqlite(database,register({...registration,binding_sha256:'not-a-digest'})), /CHECK/);
+    assert.notEqual(registration.build_manifest_sha256, String(registration.artifact_manifest_sha256).slice(7));
+    sqlite(database,register(registration));
+    assert.throws(() => sqlite(database,register(registration,'INSERT OR REPLACE')), /immutable/);
+    assert.throws(() => sqlite(database,"UPDATE customer_control_runtime_registrations SET workflow_version='2';"), /immutable/);
+    assert.throws(() => sqlite(database,'DELETE FROM customer_control_runtime_registrations;'), /immutable/);
+    assert.equal(sqlite(database, `SELECT json_object('id',id,'status',status,'version',activation_version) FROM customer_control_activations;`), beforeRegistration);
   } finally {
     rmSync(directory, { recursive: true, force: true });
   }

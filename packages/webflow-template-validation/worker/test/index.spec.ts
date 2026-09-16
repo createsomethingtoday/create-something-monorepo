@@ -568,7 +568,7 @@ describe('Designer Validator', () => {
 		expect(byId('seo.missing-og-image-home')?.severity).toBe('error');
 	});
 
-	it('does not block on SEO Metadata when Designer SEO collection failed for every page', async () => {
+		it('does not block on SEO Metadata when Designer SEO collection failed for every page', async () => {
 		const result = await validateDesignerData({
 			variables: { collections: [] },
 			components: [],
@@ -584,10 +584,33 @@ describe('Designer Validator', () => {
 		const seoCategory = result.categories.find(c => c.category === 'SEO Metadata');
 		expect(seoCategory!.passed).toBe(true);
 		expect(seoCategory!.issues.map(i => i.id)).toEqual(['seo.data-unavailable']);
-		expect(seoCategory!.issues[0].severity).toBe('warning');
-	});
+			expect(seoCategory!.issues[0].severity).toBe('warning');
+		});
 
-	it('passes SEO Metadata when every page has unique metadata and the home page has an OG image', async () => {
+		it('does not treat the non-routable Ecommerce SKU template as a public SEO page', async () => {
+			const result = await validateDesignerData({
+				variables: { collections: [] },
+				components: [],
+				styles: [],
+				pages: [
+					{
+						id: 'p1', name: 'Home', slug: '', type: 'Page', isHomePage: true, publishPath: '/',
+						seo: { title: 'Acme - Webflow HTML website template', description: 'D'.repeat(140), openGraphImage: 'https://example.com/og.jpg' }
+					},
+					{
+						id: 'p2', name: 'SKUs Template', slug: 'sku', type: 'Page', kind: 'ecommerce',
+						isCmsTemplate: true, publishPath: '/sku', seo: {}
+					}
+				],
+				assets: []
+			} as any);
+
+			const seoCategory = result.categories.find(c => c.category === 'SEO Metadata');
+			expect(seoCategory!.issues.find(i => i.id === 'seo.missing-title')).toBeUndefined();
+			expect(seoCategory!.issues.find(i => i.id === 'seo.missing-description')).toBeUndefined();
+		});
+
+		it('passes SEO Metadata when every page has unique metadata and the home page has an OG image', async () => {
 		const result = await validateDesignerData({
 			variables: { collections: [] },
 			components: [],
@@ -2454,12 +2477,19 @@ describe('Validation Submission Endpoint', () => {
 							{
 								category: 'Assets & Images',
 								passed: false,
-								issues: [
-									{
-										severity: 'error',
-										message: 'Oversized asset found',
-										details: { bridgeToken: 'wfbt_should_not_persist' }
+							issues: [
+								{
+									id: 'seo.missing-title',
+									severity: 'error',
+									message: '1 page(s) are missing an SEO title.',
+									howToFix: 'Set a unique SEO title in the page settings.',
+									location: 'Designer pages panel',
+									details: {
+										pages: ['Log In (/log-in)'],
+										duplicates: [['About (/about)', 'Contact (/contact)']],
+										bridgeToken: 'wfbt_should_not_persist'
 									}
+								}
 								]
 							}
 						]
@@ -2488,7 +2518,18 @@ describe('Validation Submission Endpoint', () => {
 		expect(options.customMetadata.siteId).toBe('site_artifact');
 		expect(body).not.toContain('wfbt_should_not_persist');
 		expect(body).toContain('"raw_bridge_token_stored": false');
-		expect(body).toContain('Oversized asset found');
+		const artifact = JSON.parse(body);
+		expect(artifact.validation_results.categories[0].issues[0]).toEqual({
+			id: 'seo.missing-title',
+			severity: 'error',
+			message: '1 page(s) are missing an SEO title.',
+			howToFix: 'Set a unique SEO title in the page settings.',
+			location: 'Designer pages panel',
+			details: {
+				pages: ['Log In (/log-in)'],
+				duplicates: [['About (/about)', 'Contact (/contact)']]
+			}
+		});
 	});
 
 	it('rate limits repeated submissions per site', async () => {

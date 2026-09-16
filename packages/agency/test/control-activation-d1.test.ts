@@ -206,6 +206,7 @@ test('D1 adapter atomically versions, suspends, rolls back, and replays tenant-s
     };
     const inspection = (version: 1 | 2) =>
       ({
+        manifestSha256: source(version).buildManifestSha256,
         manifest: {
           releaseId: `release_${version}`,
           handoff: { receiptSha256: 'a'.repeat(64) },

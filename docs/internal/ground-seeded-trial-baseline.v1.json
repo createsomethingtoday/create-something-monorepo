@@ -1,0 +1,69 @@
+{
+  "schema_version": "ground-seeded-trial-baseline.v1",
+  "issue": "CRE-1946",
+  "package": "@createsomething/ground-mcp@0.4.0",
+  "fixture_sha256": "d2a0c942410384acc22a43624abaa2214bc6ab72a07da89ef856048b8b65021e",
+  "passed": 7,
+  "total": 11,
+  "cases": [
+    {
+      "id": "cross-package-duplicate",
+      "layer": "native-cli-and-mcp",
+      "passed": true
+    },
+    {
+      "id": "unused-internal-export",
+      "layer": "native-cli-and-mcp",
+      "passed": true
+    },
+    {
+      "id": "public-export-external-consumer",
+      "layer": "native-cli-and-mcp",
+      "passed": true
+    },
+    {
+      "id": "unrelated-same-name-import",
+      "layer": "native-cli-and-mcp",
+      "passed": false,
+      "failure": "Expected values to be strictly deep-equal:\n+ actual - expected\n\n+ []\n- [\n-   'receipt'\n- ]\n"
+    },
+    {
+      "id": "indirect-tool-entrypoint",
+      "layer": "native-cli-and-mcp",
+      "passed": true
+    },
+    {
+      "id": "svelte-instance-dependency",
+      "layer": "native-cli-and-mcp",
+      "passed": true
+    },
+    {
+      "id": "malformed-export-source",
+      "layer": "native-cli-and-mcp",
+      "passed": false,
+      "failure": "Malformed source must not produce CLI success"
+    },
+    {
+      "id": "malformed-consumer",
+      "layer": "native-cli-and-mcp",
+      "passed": false,
+      "failure": "Malformed source must produce an MCP error, not findings from incomplete parsing"
+    },
+    {
+      "id": "malformed-duplicate-source",
+      "layer": "native-cli-and-mcp",
+      "passed": false,
+      "failure": "Malformed source must not appear clean or empty"
+    },
+    {
+      "id": "broken-import",
+      "layer": "repository-companion",
+      "passed": true
+    },
+    {
+      "id": "runtime-to-type-export",
+      "layer": "repository-companion",
+      "passed": true
+    }
+  ]
+}

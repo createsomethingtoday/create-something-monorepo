@@ -1,0 +1,115 @@
+{
+  "schema_version": "ground-incremental-receipt.v1",
+  "execution": "published-npm",
+  "package": "@createsomething/ground-mcp@0.4.2",
+  "baseline": true,
+  "fixture_sha256": "89f283364baed34b9507955ba18b56e7a00b903181b7a3d3c6728f6f57f0a025",
+  "cases": [
+    {
+      "id": "cold",
+      "passed": true,
+      "warm_ms": 5.1864170000001195,
+      "fresh_ms": 1.026792000000114
+    },
+    {
+      "id": "warm",
+      "passed": true,
+      "warm_ms": 0.9529999999999745,
+      "fresh_ms": 0.9780840000003082
+    },
+    {
+      "id": "same-size-edit",
+      "passed": true,
+      "warm_ms": 1.0029169999997976,
+      "fresh_ms": 1.2241670000003069
+    },
+    {
+      "id": "delete-consumer",
+      "passed": true,
+      "warm_ms": 0.7431660000002012,
+      "fresh_ms": 2.453874999999698
+    },
+    {
+      "id": "new-consumer",
+      "passed": true,
+      "warm_ms": 1.4783750000001419,
+      "fresh_ms": 1.1529169999998885
+    },
+    {
+      "id": "malformed-source",
+      "passed": true,
+      "warm_ms": 0.7136249999998654,
+      "fresh_ms": 0.8191670000005615
+    },
+    {
+      "id": "repair-and-alias",
+      "passed": true,
+      "warm_ms": 1.1769580000000133,
+      "fresh_ms": 1.334500000000844
+    },
+    {
+      "id": "alias-target-change",
+      "passed": true,
+      "warm_ms": 1.7279170000001614,
+      "fresh_ms": 1.8710000000000946
+    },
+    {
+      "id": "revision-restored",
+      "passed": true,
+      "warm_ms": 1.6222920000000158,
+      "fresh_ms": 1.8149590000002718
+    },
+    {
+      "id": "warm-after-invalidation",
+      "passed": true,
+      "warm_ms": 1.905917000000045,
+      "fresh_ms": 3.380707999999686
+    }
+  ],
+  "real_queries": [
+    {
+      "repeat": 0,
+      "module": "packages/mcp-core/src/server.ts",
+      "warm_ms": 136.81158399999913,
+      "fresh_ms": 114.402333
+    },
+    {
+      "repeat": 0,
+      "module": "packages/mcp-core/src/auth.ts",
+      "warm_ms": 60.26116600000023,
+      "fresh_ms": 42.525792000000365
+    },
+    {
+      "repeat": 1,
+      "module": "packages/mcp-core/src/server.ts",
+      "warm_ms": 90.85070799999994,
+      "fresh_ms": 94.29108300000007
+    },
+    {
+      "repeat": 1,
+      "module": "packages/mcp-core/src/auth.ts",
+      "warm_ms": 41.7918750000008,
+      "fresh_ms": 45.43641699999898
+    },
+    {
+      "repeat": 2,
+      "module": "packages/mcp-core/src/server.ts",
+      "warm_ms": 76.39358300000094,
+      "fresh_ms": 76.80895899999996
+    },
+    {
+      "repeat": 2,
+      "module": "packages/mcp-core/src/auth.ts",
+      "warm_ms": 42.8877080000002,
+      "fresh_ms": 55.88479200000074
+    }
+  ],
+  "ready": true,
+  "build": {
+    "name": "ground",
+    "version": "0.4.2",
+    "source_sha": "2fb3f49e774cb5918d87a76396b5d5c1da670525",
+    "target_triple": "aarch64-apple-darwin",
+    "receipt_schema_version": "ground-review-receipt.v1"
+  }
+}

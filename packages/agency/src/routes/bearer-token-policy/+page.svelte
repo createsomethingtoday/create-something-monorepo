@@ -74,7 +74,7 @@
   variant="hero"
   titleLevel="h1"
   eyebrow="Bearer Token Policy"
-  title="The token is portable. Authorization is conditional."
+  title="An access token does not grant every permission."
   description="CREATE SOMETHING .agency issues one managed bearer token per authenticated user for approved hosts, local tools, and background agents. A valid token does not guarantee access unless current policy and entitlement checks pass."
 >
   {#snippet actions()}
@@ -89,7 +89,7 @@
 <PerformancePageSection
   variant="white"
   eyebrow={`Effective ${effectiveDate}`}
-  title="User responsibilities are part of the control model."
+  title="Keep your access token private."
   description="Bearer tokens are useful because they are managed, revocable, and auditable. They become risky when treated as shared credentials or bypass paths."
 >
   {#snippet after()}
@@ -100,6 +100,6 @@
 <PerformancePageSection
   variant="soft"
   eyebrow="Enforcement"
-  title="Revocation terminates token usability at once."
+  title="Revoked tokens stop working immediately."
   description="CREATE SOMETHING may revoke or suspend bearer-token access immediately where compromise, misuse, billing delinquency, contract failure, policy violation, or other legal, operational, or security risk is detected."
 />

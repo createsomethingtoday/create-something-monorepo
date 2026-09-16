@@ -40,9 +40,9 @@ export const agentReadinessStudyVariants: Record<
   baseline: {
     id: 'baseline',
     hero: {
-      title: 'See what AI buyers understand—and get wrong—about your business.',
+      title: 'See what AI tells people about your business.',
       lede:
-        'We test 25 high-intent buyer questions across major AI answer surfaces, compare the answers with up to three competitors, and inspect whether agents can find your pricing, proof, documentation, policies, and implementation details.',
+        'We ask major AI services 25 buyer questions about your business and compare the answers with up to three competitors. We check whether AI can find your pricing, evidence, documentation, policies, and implementation details.',
       proof: [
         { label: 'Price', value: '$3,000 one-time' },
         { label: 'Scope', value: 'One brand · one market' },
@@ -50,9 +50,9 @@ export const agentReadinessStudyVariants: Record<
       ]
     },
     diagnostic: {
-      title: 'Ask, compare, and prove before you rebuild anything.',
+      title: 'Find what is missing before changing your site.',
       description:
-        'The audit separates answer-surface symptoms from missing business evidence, then gives each recommended change a source, priority, and owner.',
+        'We check the AI answers against your published information. You get recommended changes, the evidence for each, and a clear order of work.',
       scenes: [
         {
           id: 'questions',
@@ -60,14 +60,14 @@ export const agentReadinessStudyVariants: Record<
           summary: '25 buyer questions',
           title: 'Test the questions people ask before they contact you.',
           detail:
-            'We run 25 high-intent buyer questions across major AI answer surfaces and preserve the model, surface, retrieval context, and time of every response.',
+            'We ask 25 buyer questions across major AI services. We record each answer, the model, the service, the information it used, and the time.',
           tone: 'review',
           receipts: ['one brand', 'one market', 'timestamped answers']
         },
         {
           id: 'comparison',
           label: 'Compare',
-          summary: 'Your answer set in context',
+          summary: 'Compare the answers',
           title: 'See where competitors are easier to understand.',
           detail:
             'We compare your answer set with up to three competitors and inspect whether agents can find usable pricing, proof, documentation, policies, and implementation details.',
@@ -78,7 +78,7 @@ export const agentReadinessStudyVariants: Record<
           id: 'plan',
           label: 'Prove',
           summary: 'Evidence before implementation',
-          title: 'Turn the gaps into a bounded 30-day plan.',
+          title: 'Get a plan for the next 30 days.',
           detail:
             'You receive cited sources, the evidence behind each gap, and a prioritized 30-day plan. The audit diagnoses the problem; it does not include implementation.',
           tone: 'allow',
@@ -93,7 +93,7 @@ export const agentReadinessStudyVariants: Record<
     handoff: {
       title: 'Start with evidence before changing the site.',
       description:
-        'The $3,000 audit diagnoses the problem; it does not include implementation. If the evidence justifies action, CREATE SOMETHING proposes a separately scoped Build. Control from $900/month after launch is available for ongoing Managed AI Operations. No guaranteed rankings, citations, or recommendations.'
+        'The $3,000 audit diagnoses the problem; it does not include implementation. If the evidence justifies action, CREATE SOMETHING proposes a separately scoped Build. Control from $900/month after launch is available for ongoing Managed AI Operations. The audit does not guarantee rankings, citations, or recommendations.'
     }
   },
   'proof-first': {
@@ -111,7 +111,7 @@ export const agentReadinessStudyVariants: Record<
     diagnostic: {
       title: 'Inspect the evidence before you decide what to build.',
       description:
-        'The audit leads with the answer record, then separates missing business evidence from an answer-surface symptom and assigns a source, priority, and owner.',
+        'The audit leads with the answer record, then separates missing business evidence from an problem in an AI answer and assigns a source, priority, and owner.',
       scenes: [
         {
           id: 'questions',
@@ -119,7 +119,7 @@ export const agentReadinessStudyVariants: Record<
           summary: 'Timestamped answers',
           title: 'Keep the answer, source, model, surface, and time together.',
           detail:
-            'We run 25 high-intent buyer questions across major AI answer surfaces and preserve the response context before any recommendation is made.',
+            'We run 25 high-intent buyer questions across major AI services and preserve the response context before any recommendation is made.',
           tone: 'review',
           receipts: ['25 buyer questions', 'timestamped answers', 'retrieval context']
         },
@@ -152,7 +152,7 @@ export const agentReadinessStudyVariants: Record<
     handoff: {
       title: 'Review the record before you approve a change.',
       description:
-        'The $3,000 audit produces the evidence record and 30-day plan; it does not include implementation. If the evidence justifies action, CREATE SOMETHING proposes a separately scoped Build. Control from $900/month after launch is available for ongoing Managed AI Operations. No guaranteed rankings, citations, or recommendations.'
+        'The $3,000 audit produces the evidence record and 30-day plan; it does not include implementation. If the evidence justifies action, CREATE SOMETHING proposes a separately scoped Build. Control from $900/month after launch is available for ongoing Managed AI Operations. The audit does not guarantee rankings, citations, or recommendations.'
     }
   },
   'outcome-first': {
@@ -168,7 +168,7 @@ export const agentReadinessStudyVariants: Record<
       ]
     },
     diagnostic: {
-      title: 'Get to the next justified action in three bounded moves.',
+      title: 'Find the next useful change in three steps.',
       description:
         'The audit starts from the decision you need to make, establishes the answer evidence, and leaves a plan that can be approved without treating a diagnosis as implementation.',
       scenes: [
@@ -176,9 +176,9 @@ export const agentReadinessStudyVariants: Record<
           id: 'questions',
           label: 'Frame',
           summary: 'One brand · one market',
-          title: 'Set a bounded question before the evidence expands.',
+          title: 'Agree on the questions to test.',
           detail:
-            'We define the buyer questions for one brand and one market, then run 25 high-intent questions across major AI answer surfaces.',
+            'We define the buyer questions for one brand and one market, then run 25 high-intent questions across major AI services.',
           tone: 'review',
           receipts: ['one brand', 'one market', '25 buyer questions']
         },
@@ -211,7 +211,7 @@ export const agentReadinessStudyVariants: Record<
     handoff: {
       title: 'Approve a plan before you commission a Build.',
       description:
-        'The $3,000 audit gives you a bounded diagnostic and cited 30-day plan; it does not include implementation. If the evidence justifies action, CREATE SOMETHING proposes a separately scoped Build. Control from $900/month after launch is available for ongoing Managed AI Operations. No guaranteed rankings, citations, or recommendations.'
+        'The $3,000 audit gives you a focused assessment and cited 30-day plan; it does not include implementation. If the evidence justifies action, CREATE SOMETHING proposes a separately scoped Build. Control from $900/month after launch is available for ongoing Managed AI Operations. The audit does not guarantee rankings, citations, or recommendations.'
     }
   }
 };

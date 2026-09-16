@@ -1,0 +1,25 @@
+{
+  "name": "@create-something/abundance-healthcare-mcp",
+  "version": "1.0.0",
+  "description": "Governed read-only MCP for NPG healthcare market coverage and practitioner discovery.",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "pnpm --filter @create-something/mcp-core build && tsc",
+    "test": "pnpm --filter @create-something/mcp-core build && node --import tsx --test test/*.test.ts",
+    "typecheck": "pnpm --filter @create-something/mcp-core build && tsc --noEmit"
+  },
+  "dependencies": {
+    "@create-something/mcp-core": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.26.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260621.1",
+    "@types/node": "^22.0.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  },
+  "private": true
+}

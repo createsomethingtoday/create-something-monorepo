@@ -1,4 +1,5 @@
 import { Temporal } from '@js-temporal/polyfill';
+import { normalizeSchedulerOfferIntent } from '../offers/intent.js';
 
 const BOOKING_ID = /^[A-Za-z0-9_-]{1,200}$/;
 const ACTION_TOKEN = /^[A-Za-z0-9._~-]{16,4096}$/;
@@ -22,8 +23,9 @@ export function buildBookingManageUrl(input: {
 
   const url = new URL('/book', origin);
   url.searchParams.set('booking', input.bookingId);
-  if (input.intent === 'compiler-integration') {
-    url.searchParams.set('intent', input.intent);
+  const offerIntent = normalizeSchedulerOfferIntent(input.intent);
+  if (offerIntent) {
+    url.searchParams.set('intent', offerIntent);
   }
   url.hash = `access=${input.actionToken}`;
   return url.toString();

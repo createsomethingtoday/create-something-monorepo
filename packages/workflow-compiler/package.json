@@ -1,6 +1,6 @@
 {
   "name": "@createsomething/workflow-compiler",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "description": "Compile versioned operating workflows into deterministic, governed artifacts and provider-neutral execution plans.",
   "type": "module",
   "createSomething": {
@@ -47,7 +47,8 @@
     "test:acceptance": "npm run build && node scripts/acceptance.mjs",
     "release:check": "npm run build && node scripts/release-contract.mjs",
     "release:consumer": "npm run release:check && node scripts/clean-consumer.mjs",
-    "prepack": "npm run release:check"
+    "prepack": "npm run release:check",
+    "release:registry": "node scripts/registry-consumer.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

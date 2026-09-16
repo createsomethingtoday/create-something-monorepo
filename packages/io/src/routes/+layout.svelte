@@ -6,6 +6,7 @@
   import { UnifiedSearch } from '@create-something/canon/navigation';
   import { getIoFooterHandoff } from '$lib/config/footerHandoff';
   import { page } from '$app/stores';
+  import { newsletterMetadata } from '$lib/newsletter/measurement';
 
   // View Transitions API - Hermeneutic Navigation
   // "Navigation should feel like dwelling, not jumping"
@@ -100,6 +101,14 @@
       keywords: ['topics', 'browse']
     },
     {
+      id: 'nav-newsletters',
+      label: 'Newsletter archive',
+      description: 'Operator field notes and practical links',
+      href: '/newsletters',
+      icon: '✉️',
+      keywords: ['newsletter', 'field notes', 'archive', 'subscribe']
+    },
+    {
       id: 'nav-space',
       label: 'Go to .space',
       description: 'Interactive experiments',
@@ -169,6 +178,7 @@
 
 <Analytics
   property="io"
+  globalMetadata={newsletterMetadata($page.url)}
   userId={data.user?.id}
   userOptedOut={data.user?.analytics_opt_out ?? false}
 />
@@ -227,6 +237,7 @@
           { label: 'Methodology', href: '/methodology' },
           { label: 'Categories', href: '/categories' },
           { label: 'About', href: '/about' },
+          { label: 'Newsletters', href: '/newsletters' },
           { label: 'Contact', href: '/contact' }
         ]}
         footerCta={footerHandoff.showCommercialCta

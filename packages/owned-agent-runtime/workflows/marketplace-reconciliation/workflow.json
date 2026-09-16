@@ -1,0 +1,206 @@
+{
+  "schemaVersion": "workflow_definition.v0.3",
+  "workflowId": "createsomething.marketplace.handoff-reconciliation",
+  "version": "0.1.0",
+  "title": "Marketplace handoff reconciliation",
+  "businessObjective": "Observe the exact registered Marketplace asset/version handoff after operator approval, record minimized evidence, and reconcile interruptions without changing review outcomes.",
+  "owners": {
+    "workflow": "micah-johnson",
+    "policy": "micah-johnson",
+    "technical": "create-something"
+  },
+  "systems": [
+    {
+      "id": "airtable-marketplace",
+      "title": "Airtable Marketplace Assets",
+      "tier": "database",
+      "owningSurface": "Airtable Assets, Asset Versions, and Asset Releases",
+      "sourceOfTruth": true
+    },
+    {
+      "id": "template-review-mcp",
+      "title": "Webflow Template Review MCP",
+      "tier": "automation",
+      "owningSurface": "packages/webflow-template-review-mcp",
+      "sourceOfTruth": false
+    }
+  ],
+  "objects": [
+    {
+      "id": "template_handoff",
+      "title": "Registered template handoff",
+      "sourceSystemId": "airtable-marketplace",
+      "requiredFields": [
+        "assetId",
+        "versionId"
+      ]
+    }
+  ],
+  "events": [
+    {
+      "id": "observation_requested",
+      "title": "Registered handoff observation requested",
+      "objectId": "template_handoff",
+      "requiredEvidence": [
+        "assetId",
+        "versionId"
+      ]
+    }
+  ],
+  "actors": [
+    {
+      "id": "account-owner",
+      "title": "Account owner"
+    },
+    {
+      "id": "workflow-runtime",
+      "title": "Activation-bound runtime scheduler"
+    }
+  ],
+  "states": [
+    {
+      "id": "pending",
+      "title": "Awaiting observation authorization"
+    },
+    {
+      "id": "authorized",
+      "title": "Observation authorized"
+    },
+    {
+      "id": "observed",
+      "title": "Observation recorded",
+      "terminal": true
+    }
+  ],
+  "actions": [
+    {
+      "id": "authorize_observation",
+      "title": "Authorize the registered observation",
+      "kind": "decision",
+      "authority": "account-owner",
+      "autonomy": "approval_required",
+      "systemsTouched": [
+        "template-review-mcp",
+        "airtable-marketplace"
+      ],
+      "requiredEvidence": [
+        "assetId",
+        "versionId"
+      ],
+      "approval": {
+        "required": true,
+        "owner": "account-owner"
+      },
+      "receipt": {
+        "requiredFields": [
+          "workflow_id",
+          "action_id",
+          "correlation_id",
+          "outcome",
+          "evidence_refs"
+        ]
+      },
+      "recovery": {
+        "mode": "escalate",
+        "owner": "account-owner",
+        "path": "Preserve the attempt and request evidence-bound operator reconciliation. Never automatically repeat an uncertain observation."
+      }
+    },
+    {
+      "id": "observe_handoff",
+      "title": "Observe the registered template handoff",
+      "kind": "read",
+      "authority": "workflow-runtime",
+      "autonomy": "auto_allow",
+      "systemsTouched": [
+        "template-review-mcp",
+        "airtable-marketplace"
+      ],
+      "requiredEvidence": [
+        "assetId",
+        "versionId"
+      ],
+      "approval": {
+        "required": false
+      },
+      "receipt": {
+        "requiredFields": [
+          "workflow_id",
+          "action_id",
+          "correlation_id",
+          "outcome",
+          "evidence_refs"
+        ]
+      },
+      "recovery": {
+        "mode": "escalate",
+        "owner": "account-owner",
+        "path": "Preserve the attempt and request evidence-bound operator reconciliation. Never automatically repeat an uncertain observation."
+      },
+      "agentId": "handoff-observer",
+      "tool": {
+        "name": "template_review_observe_handoff",
+        "targetSystemId": "template-review-mcp",
+        "parameters": [
+          {
+            "name": "assetId",
+            "type": "string",
+            "description": "Exact registered asset ID."
+          },
+          {
+            "name": "versionId",
+            "type": "string",
+            "description": "Exact registered version ID."
+          }
+        ]
+      }
+    }
+  ],
+  "transitions": [
+    {
+      "id": "authorize",
+      "from": "pending",
+      "to": "authorized",
+      "actionId": "authorize_observation"
+    },
+    {
+      "id": "observe",
+      "from": "authorized",
+      "to": "observed",
+      "actionId": "observe_handoff"
+    }
+  ],
+  "agents": [
+    {
+      "id": "handoff-observer",
+      "title": "Marketplace handoff observer",
+      "purpose": "Read minimized handoff status after exact approval; preserve receipts and escalate uncertainty.",
+      "allowedActionIds": [
+        "observe_handoff"
+      ],
+      "escalationOwner": "account-owner"
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "observation-requires-approval",
+      "title": "Observation authorization requires the account owner",
+      "actionId": "authorize_observation",
+      "expectedOutcome": "approval_required",
+      "requiredEvidence": [
+        "assetId",
+        "versionId"
+      ]
+    },
+    {
+      "id": "registered-observation",
+      "title": "Registered observation can read evidence",
+      "actionId": "observe_handoff",
+      "expectedOutcome": "pass",
+      "requiredEvidence": [
+        "assetId",
+        "versionId"
+      ]
+    }
+  ]
+}

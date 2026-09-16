@@ -17,7 +17,7 @@
   <title>App Review Governance Arc · CREATE SOMETHING</title>
   <meta
     name="description"
-    content="A presentation-native Arc showing how App Review intake, Preflight evidence, governed action, and receipts fit together."
+    content="A presentation showing app submission, automated checks, review decisions, and the record of each result."
   />
   <meta name="robots" content="noindex, nofollow" />
 </svelte:head>

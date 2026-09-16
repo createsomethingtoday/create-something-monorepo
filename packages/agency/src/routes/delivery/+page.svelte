@@ -25,7 +25,7 @@
 
 <SEO
   title="Delivery Records | CREATE SOMETHING .agency"
-  description="Client-safe CREATE SOMETHING delivery records for active workflow pilots, handoffs, proof pages, and owner decisions."
+  description="Public project updates showing what was delivered, what was tested, and what still needs a decision."
   keywords="CREATE SOMETHING delivery records, workflow proof, client-safe delivery pages"
   canonical="https://createsomething.agency/delivery"
   ogImage="/og-image.png"
@@ -37,7 +37,7 @@
   eyebrow="Delivery records"
   expression="editorial"
   title="Published work lives here."
-  lede="Each record says what changed, what remains private, what is blocked, and who decides next. Open the work directly; private evidence stays outside the public page."
+  lede="Read what changed, what is blocked, and who decides next. Private client information is kept out of these public records."
   density="compact"
   media={paperAttachedReceiptMedia}
   proof={[
@@ -54,8 +54,8 @@
 <PerformanceEvidenceIndex
   id="delivery-records"
   eyebrow="Published records"
-  title="Choose the delivery record that owns the proof."
-  description="Every destination keeps the business outcome, operating boundary, validation state, and unresolved owner decisions together."
+  title="Read a project update."
+  description="Each update shows the intended result, checks completed, limits, and decisions still needed."
   items={deliveryRecords}
   ariaLabel="Published client-safe delivery records"
 />
@@ -73,6 +73,6 @@
   }}
 >
   {#snippet actions()}
-    <Button href="/map">Start a private workflow draft</Button>
+    <Button href="/map">Map your workflow</Button>
   {/snippet}
 </PerformanceConversionHandoff>

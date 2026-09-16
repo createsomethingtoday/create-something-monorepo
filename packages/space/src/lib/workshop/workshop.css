@@ -1,0 +1,107 @@
+.workshop {
+  color: var(--color-performance-ink, #090909);
+  background: var(--color-performance-paper, #f3f3f0);
+}
+.workshop .wrap {
+  width: min(1280px, calc(100% - 5rem));
+  margin-inline: auto;
+}
+.workshop .eyebrow {
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.72rem;
+  line-height: 1.6;
+}
+.workshop h1,
+.workshop h2,
+.workshop h3 {
+  font-family: var(--font-performance-heading);
+}
+.workshop h1 {
+  font-size: clamp(3rem, 6.5vw, 6.5rem);
+  line-height: 0.97;
+  letter-spacing: -0.065em;
+  font-weight: 600;
+  text-wrap: balance;
+}
+.workshop h2 {
+  font-size: clamp(2.1rem, 4vw, 4rem);
+  line-height: 1.04;
+  letter-spacing: -0.055em;
+  font-weight: 500;
+  text-wrap: balance;
+}
+.workshop p {
+  line-height: 1.65;
+}
+.workshop .lead {
+  font-size: clamp(1.05rem, 1.6vw, 1.3rem);
+  max-width: 40rem;
+}
+.workshop .actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem 1.75rem;
+  margin-top: 2rem;
+}
+.workshop .primary {
+  display: inline-flex;
+  padding: 0.95rem 1.35rem;
+  border-radius: 2px;
+  background: var(--color-performance-ink, #090909);
+  color: var(--color-performance-paper, #f3f3f0);
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+.workshop .text-link {
+  text-decoration: underline;
+  text-underline-offset: 0.3em;
+  font-size: 0.9rem;
+}
+.workshop .section {
+  padding-block: clamp(3.5rem, 7vw, 7rem);
+}
+.workshop .section-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 2rem;
+  margin-bottom: 2.5rem;
+}
+.workshop .section-head .eyebrow {
+  margin-bottom: 1rem;
+}
+.workshop .project-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 3.5rem 2rem;
+}
+.workshop a:focus-visible,
+.workshop button:focus-visible,
+.workshop input:focus-visible,
+.workshop select:focus-visible {
+  outline: 3px solid var(--color-performance-signal-blue, #2458d3);
+  outline-offset: 5px;
+}
+.workshop .muted {
+  color: var(--color-performance-fg-secondary);
+}
+@media (max-width: 640px) {
+  .workshop .wrap {
+    width: calc(100% - 2.5rem);
+  }
+  .workshop .project-grid {
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+  }
+  .workshop .section-head {
+    display: block;
+  }
+  .workshop .section-head > a {
+    display: inline-block;
+    margin-top: 1.25rem;
+  }
+}

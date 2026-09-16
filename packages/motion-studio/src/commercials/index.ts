@@ -93,6 +93,12 @@ export {
   WORKFLOW_DAY_REEL_SPEC,
 } from './workflow-day-reel';
 
+// Cracked Live status walkthrough
+export {
+  CrackedStatusWalkthrough,
+  CRACKED_STATUS_WALKTHROUGH_CONFIG,
+} from './cracked-status-walkthrough';
+
 // Shared primitives
 export {
   KineticHeadline,

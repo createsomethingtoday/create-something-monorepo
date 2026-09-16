@@ -1,0 +1,225 @@
+[
+  {
+    "antipattern": "all-caps-body",
+    "name": "All-caps body text",
+    "description": "Long passages in uppercase are hard to read. We recognize words by shape (ascenders and descenders), which all-caps removes. Reserve uppercase for short labels and headings.",
+    "severity": "warning",
+    "category": "quality",
+    "file": "https://createsomething.agency/",
+    "line": 0,
+    "snippet": "text-transform: uppercase on 86 chars of body text"
+  },
+  {
+    "antipattern": "side-tab",
+    "name": "Side-tab accent border",
+    "description": "Thick colored border on one side of a card — the most recognizable tell of AI-generated UIs. Use a subtler accent or remove it entirely.",
+    "severity": "warning",
+    "category": "slop",
+    "file": "https://createsomething.agency/",
+    "line": 0,
+    "snippet": "border-left: 4px"
+  },
+  {
+    "antipattern": "body-text-viewport-edge",
+    "name": "Body text touching viewport edge",
+    "description": "Body paragraphs render flush against the left or right viewport edge with no container providing horizontal padding. Wrap content in a container with at least 16px (ideally 24-32px) of horizontal padding, or apply max-width with mx-auto.",
+    "severity": "warning",
+    "category": "quality",
+    "file": "https://createsomething.agency/",
+    "line": 0,
+    "snippet": "<p> with 191-char body bleeds to viewport edge (left 12px / right 12px)"
+  },
+  {
+    "antipattern": "body-text-viewport-edge",
+    "name": "Body text touching viewport edge",
+    "description": "Body paragraphs render flush against the left or right viewport edge with no container providing horizontal padding. Wrap content in a container with at least 16px (ideally 24-32px) of horizontal padding, or apply max-width with mx-auto.",
+    "severity": "warning",
+    "category": "quality",
+    "file": "https://createsomething.agency/",
+    "line": 0,
+    "snippet": "<p> with 144-char body bleeds to viewport edge (left 12px / right 12px)"
+  },
+  {
+    "antipattern": "body-text-viewport-edge",
+    "name": "Body text touching viewport edge",
+    "description": "Body paragraphs render flush against the left or right viewport edge with no container providing horizontal padding. Wrap content in a container with at least 16px (ideally 24-32px) of horizontal padding, or apply max-width with mx-auto.",
+    "severity": "warning",
+    "category": "quality",
+    "file": "https://createsomething.agency/",
+    "line": 0,
+    "snippet": "<p> with 125-char body bleeds to viewport edge (left 12px / right 12px)"
+  },
+  {
+    "antipattern": "body-text-viewport-edge",
+    "name": "Body text touching viewport edge",
+    "description": "Body paragraphs render flush against the left or right viewport edge with no container providing horizontal padding. Wrap content in a container with at least 16px (ideally 24-32px) of horizontal padding, or apply max-width with mx-auto.",
+    "severity": "warning",
+    "category": "quality",
+    "file": "https://createsomething.agency/",
+    "line": 0,
+    "snippet": "<p> with 215-char body bleeds to viewport edge (left 12px / right 12px)"
+  },
+  {
+    "antipattern": "side-tab",
+    "name": "Side-tab accent border",
+    "description": "Thick colored border on one side of a card — the most recognizable tell of AI-generated UIs. Use a subtler accent or remove it entirely.",
+    "severity": "warning",
+    "category": "slop",
+    "file": "https://createsomething.agency/",
+    "line": 0,
+    "snippet": "border-top: 4px"
+  },
+  {
+    "antipattern": "body-text-viewport-edge",
+    "name": "Body text touching viewport edge",
+    "description": "Body paragraphs render flush against the left or right viewport edge with no container providing horizontal padding. Wrap content in a container with at least 16px (ideally 24-32px) of horizontal padding, or apply max-width with mx-auto.",
+    "severity": "warning",
+    "category": "quality",
+    "file": "https://createsomething.agency/",
+    "line": 0,
+    "snippet": "<p> with 58-char body bleeds to viewport edge (left 12px)"
+  },
+  {
+    "antipattern": "all-caps-body",
+    "name": "All-caps body text",
+    "description": "Long passages in uppercase are hard to read. We recognize words by shape (ascenders and descenders), which all-caps removes. Reserve uppercase for short labels and headings.",
+    "severity": "warning",
+    "category": "quality",
+    "file": "https://createsomething.agency/",
+    "line": 0,
+    "snippet": "text-transform: uppercase on 58 chars of body text"
+  },
+  {
+    "antipattern": "body-text-viewport-edge",
+    "name": "Body text touching viewport edge",
+    "description": "Body paragraphs render flush against the left or right viewport edge with no container providing horizontal padding. Wrap content in a container with at least 16px (ideally 24-32px) of horizontal padding, or apply max-width with mx-auto.",
+    "severity": "warning",
+    "category": "quality",
+    "file": "https://createsomething.agency/",
+    "line": 0,
+    "snippet": "<p> with 58-char body bleeds to viewport edge (left 14px / right 14px)"
+  },
+  {
+    "antipattern": "kicker-above-heading",
+    "name": "Kicker / eyebrow label above heading",
+    "description": "A tiny tracked uppercase or small-caps label sitting as its own block directly above a heading is banned outright, repeated or not. Generated kickers never earn their place: the heading carries its own weight. Delete the label and let the heading speak; if the words matter, work them into the heading or the body.",
+    "severity": "warning",
+    "category": "slop",
+    "file": "https://createsomething.agency/",
+    "line": 0,
+    "snippet": "kicker \"Common questions\" above h2 \"What to expect.\""
+  },
+  {
+    "antipattern": "bounce-easing",
+    "name": "Bounce or elastic easing",
+    "description": "Bounce and elastic easing feel dated and tacky. Real objects decelerate smoothly — use exponential easing (ease-out-quart/quint/expo) instead.",
+    "severity": "warning",
+    "category": "slop",
+    "file": "https://createsomething.agency/",
+    "line": 0,
+    "snippet": "cubic-bezier(.175, .885, .32, 2.2)"
+  },
+  {
+    "antipattern": "repeating-stripes-gradient",
+    "name": "Repeating-gradient stripes",
+    "description": "Repeating-gradient stripes used as surface decoration are a recurring generated-UI signature. Reach for a deliberate texture or leave the surface plain.",
+    "severity": "advisory",
+    "category": "slop",
+    "file": "https://createsomething.agency/",
+    "line": 0,
+    "snippet": "repeating-gradient decorative stripes",
+    "advisory": true
+  },
+  {
+    "antipattern": "low-contrast",
+    "name": "Low contrast text",
+    "description": "Text does not meet WCAG AA contrast requirements (4.5:1 for body, 3:1 for large text). Increase the contrast between text and background.",
+    "severity": "warning",
+    "category": "quality",
+    "file": "https://createsomething.agency/",
+    "line": 0,
+    "snippet": "browser contrast 1.0:1 median 1.0:1 (need 3:1) via analytic-gradient+alpha \"Start with the task you want help with.\""
+  },
+  {
+    "antipattern": "low-contrast",
+    "name": "Low contrast text",
+    "description": "Text does not meet WCAG AA contrast requirements (4.5:1 for body, 3:1 for large text). Increase the contrast between text and background.",
+    "severity": "warning",
+    "category": "quality",
+    "file": "https://createsomething.agency/",
+    "line": 0,
+    "snippet": "browser contrast 1.0:1 median 1.0:1 (need 4.5:1) via analytic-gradient+alpha \"Bring an idea or an existing project, an example of the work, and what a good re\""
+  },
+  {
+    "antipattern": "gpt-thin-border-wide-shadow",
+    "name": "Hairline border with wide shadow",
+    "description": "A hairline border paired with a wide, diffuse shadow is a recurring generated-UI signature. Commit to one — a defined edge or a soft elevation — rather than both at once.",
+    "severity": "advisory",
+    "category": "slop",
+    "file": "https://createsomething.io/papers",
+    "line": 0,
+    "snippet": "1px border + 48px shadow blur",
+    "advisory": true
+  },
+  {
+    "antipattern": "body-text-viewport-edge",
+    "name": "Body text touching viewport edge",
+    "description": "Body paragraphs render flush against the left or right viewport edge with no container providing horizontal padding. Wrap content in a container with at least 16px (ideally 24-32px) of horizontal padding, or apply max-width with mx-auto.",
+    "severity": "warning",
+    "category": "quality",
+    "file": "https://createsomething.io/papers",
+    "line": 0,
+    "snippet": "<p> with 47-char body bleeds to viewport edge (left 12px)"
+  },
+  {
+    "antipattern": "all-caps-body",
+    "name": "All-caps body text",
+    "description": "Long passages in uppercase are hard to read. We recognize words by shape (ascenders and descenders), which all-caps removes. Reserve uppercase for short labels and headings.",
+    "severity": "warning",
+    "category": "quality",
+    "file": "https://createsomething.io/papers",
+    "line": 0,
+    "snippet": "text-transform: uppercase on 47 chars of body text"
+  },
+  {
+    "antipattern": "body-text-viewport-edge",
+    "name": "Body text touching viewport edge",
+    "description": "Body paragraphs render flush against the left or right viewport edge with no container providing horizontal padding. Wrap content in a container with at least 16px (ideally 24-32px) of horizontal padding, or apply max-width with mx-auto.",
+    "severity": "warning",
+    "category": "quality",
+    "file": "https://createsomething.io/papers",
+    "line": 0,
+    "snippet": "<p> with 58-char body bleeds to viewport edge (left 14px / right 14px)"
+  },
+  {
+    "antipattern": "kicker-above-heading",
+    "name": "Kicker / eyebrow label above heading",
+    "description": "A tiny tracked uppercase or small-caps label sitting as its own block directly above a heading is banned outright, repeated or not. Generated kickers never earn their place: the heading carries its own weight. Delete the label and let the heading speak; if the words matter, work them into the heading or the body.",
+    "severity": "warning",
+    "category": "slop",
+    "file": "https://createsomething.io/papers",
+    "line": 0,
+    "snippet": "kicker \"Next possession\" above h2 \"Ready to turn evidence into an operating decision?\""
+  },
+  {
+    "antipattern": "bounce-easing",
+    "name": "Bounce or elastic easing",
+    "description": "Bounce and elastic easing feel dated and tacky. Real objects decelerate smoothly — use exponential easing (ease-out-quart/quint/expo) instead.",
+    "severity": "warning",
+    "category": "slop",
+    "file": "https://createsomething.io/papers",
+    "line": 0,
+    "snippet": "cubic-bezier(.175, .885, .32, 2.2)"
+  },
+  {
+    "antipattern": "repeating-stripes-gradient",
+    "name": "Repeating-gradient stripes",
+    "description": "Repeating-gradient stripes used as surface decoration are a recurring generated-UI signature. Reach for a deliberate texture or leave the surface plain.",
+    "severity": "advisory",
+    "category": "slop",
+    "file": "https://createsomething.io/papers",
+    "line": 0,
+    "snippet": "repeating-gradient decorative stripes",
+    "advisory": true
+  }
+]

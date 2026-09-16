@@ -1,23 +1,14 @@
 import assert from 'node:assert/strict';
 import { existsSync } from 'node:fs';
-import { dirname, join, parse, resolve } from 'node:path';
+import { resolve } from 'node:path';
 import test from 'node:test';
+import { findWorkspaceRoot } from './workspace-root.ts';
 
 import {
   GroundNativeClientError,
   parseGroundAnalysisToolResult,
   runGroundAnalysis
 } from './ground-native-client.ts';
-
-function findWorkspaceRoot(start: string): string {
-  let current = resolve(start);
-  const root = parse(current).root;
-  while (current !== root) {
-    if (existsSync(join(current, 'pnpm-workspace.yaml'))) return current;
-    current = dirname(current);
-  }
-  throw new Error(`Unable to find workspace root from ${start}`);
-}
 
 const workspace = findWorkspaceRoot(process.cwd());
 const binaryPath =

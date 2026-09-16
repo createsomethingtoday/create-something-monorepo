@@ -20,7 +20,9 @@ test('the public manifest declares the complete release and support boundary', a
 
   assert.deepEqual(validateReleaseManifest(manifest), []);
   assert.equal(manifest.name, CANONICAL_PACKAGE_NAME);
-  assert.equal(manifest.version, '0.4.1');
+  assert.equal(manifest.version, '0.5.0');
+  const api = await import('../dist/index.js');
+  assert.equal(api.WORKFLOW_COMPILER_PACKAGE_VERSION, manifest.version);
   assert.deepEqual(manifest.engines, { node: '>=20' });
   assert.equal(manifest.publishConfig.access, 'public');
   assert.equal(manifest.publishConfig.provenance, true);
@@ -112,11 +114,14 @@ test('the trusted workflow validates supported LTS nodes and stages from protect
   assert.match(workflow, /test "\$\(git rev-parse HEAD\)" = "\$\(git rev-parse origin\/main\)"/);
 });
 
-test('the stable quickstart pins the verified public release during staging', async () => {
+test('the quickstart pins the exact documented release', async () => {
   const readme = await readFile(new URL('../README.md', import.meta.url), 'utf8');
-  assert.match(readme, /npm install @createsomething\/workflow-compiler@0\.4\.0(?:\r?\n|$)/);
-  assert.doesNotMatch(readme, /npm install @createsomething\/workflow-compiler@latest(?:\r?\n|$)/);
-  assert.doesNotMatch(readme, /npm install @createsomething\/workflow-compiler@0\.4\.1(?:\r?\n|$)/);
+  const manifest = JSON.parse(await readFile(packageJsonUrl, 'utf8'));
+  assert.ok(
+    readme.includes('npm install ' + CANONICAL_PACKAGE_NAME + '@' + manifest.version + '\n')
+  );
+  assert.ok(readme.includes('This README documents **' + manifest.version + '**'));
+  assert.doesNotMatch(readme, /npm install @createsomething\/workflow-compiler@latest/);
   assert.doesNotMatch(readme, /npm install @createsomething\/workflow-compiler@bootstrap/);
 });
 

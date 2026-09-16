@@ -328,3 +328,27 @@ receipt evaluators, attestation receipts, and governed interaction host
 contracts. Treat the generated `.d.ts` files as the exact type source; this
 document describes the supported seams rather than duplicating every structural
 field.
+
+## Adapter contract readiness
+
+`createWorkflowAdapterReadiness(bundle)` returns `workflow_adapter_readiness.v0.1`
+with an `actions` array. Each entry identifies `actionId`, descriptive `status`
+(`contract_declared`, `wait`, or `stop`), `reasonCode`, `nextStep`, and
+`canInvoke: false`. It inspects declared contracts only; only the existing
+adapter APIs evaluate current evidence and construct a plan. Console envelopes
+optionally embed this separately versioned summary as `adapterReadiness`.
+Historical envelopes without it remain readable.
+
+### `verifyWorkflowArtifactSnapshot(files, options)`
+
+Verifies a complete serialized release from a `ReadonlyMap<string, Uint8Array>`
+without filesystem reads. Keys are exact relative artifact paths, including
+`manifest.json` and optional `attestation.json`. Supply `options.publicKey` for
+signed verification; omitting it proves integrity only.
+
+The verifier copies bounded input before its first asynchronous boundary and
+applies the existing manifest, required-file, content-hash, compiled-identity and
+attestation checks. It rejects unsafe, missing and undeclared paths and returns
+`WorkflowArtifactVerificationReceipt`. The host still owns immutable retrieval,
+trusted signer policy, schema compatibility and runtime registration. A valid
+signature alone does not authorize execution.

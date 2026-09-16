@@ -11,6 +11,6 @@
 		"isolatedModules": true,
 		"types": ["node"]
 	},
-	"include": ["src/**/*"],
+	"include": ["src/**/*", "test/build-release.types.ts"],
 	"exclude": ["node_modules"]
 }

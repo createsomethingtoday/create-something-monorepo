@@ -375,10 +375,16 @@ cd "/Users/micahjohnson/Documents/Github/Create Something/create-something-monor
 
 REVIEWER=pablo \
 ACTION=set_review_status \
+CONFIRM_STATUS_CHANGE=true \
 VERSION_ID="rec_replace_me" \
 REVIEW_STATUS="🏃🏾In Review" \
 ./scripts/webflow-app-review-phase-b-smoke.sh
 ```
+
+`CONFIRM_STATUS_CHANGE=true` is an explicit opt-in to change Airtable status.
+The script first reads the current review context and sends that status as the
+write precondition. Preparing an MCP review cycle does not authorize this smoke
+write. Reviewer assignment remains read-only in the App Review MCP.
 
 ```bash
 cd "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo"

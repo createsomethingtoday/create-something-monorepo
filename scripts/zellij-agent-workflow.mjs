@@ -14,7 +14,8 @@ const DEFAULT_AUTHORITY =
   'Agent may prepare and inspect evidence for Codex/operator review; mutation authority must be supplied by policy or explicit operator instruction.';
 const DEFAULT_RECEIPT_CONTRACT =
   'Intent, authority, source of truth, action taken, verification result, rollback or recovery path, and client/operator-facing proof.';
-const DEFAULT_ROLLBACK = 'No write authority by default; rollback is no-op unless a bounded mutation is explicitly authorized.';
+const DEFAULT_ROLLBACK =
+  'No write authority by default; rollback is no-op unless a bounded mutation is explicitly authorized.';
 const DEFAULT_ESCALATION =
   'Escalate when source of truth, authority, verifier, rollback, or required receipt evidence is missing.';
 
@@ -38,7 +39,7 @@ function parseArgs(argv = process.argv.slice(2)) {
     agentCommand: DEFAULT_AGENT_COMMAND,
     launch: false,
     sendPrompt: false,
-    json: false,
+    json: false
   };
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -69,7 +70,12 @@ function parseArgs(argv = process.argv.slice(2)) {
   }
 
   if (options.help) return options;
-  if (!options.issue && !options.title) throw new Error('Provide --issue or --title so the lane has a stable task identity.');
+  if (options.sendPrompt)
+    throw new Error(
+      '--send-prompt is retired: launch, inspect readiness, then use zellij:cockpit send with the captured screen hash.'
+    );
+  if (!options.issue && !options.title)
+    throw new Error('Provide --issue or --title so the lane has a stable task identity.');
   if (!options.title && options.issue) options.title = options.issue;
   if (!options.goal) options.goal = options.title;
   if (!options.agentCommand.trim()) throw new Error('--agent-command must not be empty');
@@ -116,7 +122,9 @@ function bulletList(items, fallback) {
 }
 
 function buildPrompt(options) {
-  const linearLine = options.issue ? `Linear: ${options.issue}` : 'Linear: none, explicit operator task';
+  const linearLine = options.issue
+    ? `Linear: ${options.issue}`
+    : 'Linear: none, explicit operator task';
   return [
     '# CREATE SOMETHING Zellij Worker Packet',
     '',
@@ -132,7 +140,8 @@ function buildPrompt(options) {
     'CREATE SOMETHING is operated as an agent-run-with-receipts business. Agents operate inside explicit authority envelopes; receipts prove the work; humans govern exceptions when the receipt contract cannot be satisfied.',
     '',
     '## Context',
-    options.description || 'Use the repository and visible terminal state as the source of truth. Ask only if the finish line changes.',
+    options.description ||
+      'Use the repository and visible terminal state as the source of truth. Ask only if the finish line changes.',
     '',
     '## Authority',
     options.authority,
@@ -140,17 +149,23 @@ function buildPrompt(options) {
     '## Policy',
     bulletList(
       options.policy,
-      'Codex/operator owns the done decision; worker output is evidence and must include exact commands, files, and verification. This applies regardless of the foundation model in the pane.',
+      'Codex/operator owns the done decision; worker output is evidence and must include exact commands, files, and verification. This applies regardless of the foundation model in the pane.'
     ),
     '',
     '## Receipt Contract',
     options.receiptContract,
     '',
     '## Acceptance Criteria',
-    bulletList(options.acceptance, 'Return a concrete result plus the exact evidence needed for Codex/operator review.'),
+    bulletList(
+      options.acceptance,
+      'Return a concrete result plus the exact evidence needed for Codex/operator review.'
+    ),
     '',
     '## Verification',
-    bulletList(options.verification, 'Run the narrowest relevant check and report the command plus result.'),
+    bulletList(
+      options.verification,
+      'Run the narrowest relevant check and report the command plus result.'
+    ),
     '',
     '## Rollback',
     options.rollback,
@@ -167,7 +182,7 @@ function buildPrompt(options) {
     '- Summarize observed facts separately from assumptions.',
     '- List files changed or external surfaces inspected.',
     '- Include exact commands, outputs, screenshots, URLs, or readbacks needed for final evidence.',
-    '- Do not mark the task done yourself; hand evidence back to Codex/operator.',
+    '- Do not mark the task done yourself; hand evidence back to Codex/operator.'
   ].join('\n');
 }
 
@@ -191,7 +206,7 @@ function buildEvidenceTemplate(options) {
     '  - result:',
     `- Rollback / recovery: ${options.rollback}`,
     `- Escalation condition: ${options.escalation}`,
-    '- Follow-up / blockers:',
+    '- Follow-up / blockers:'
   ].join('\n');
 }
 
@@ -201,11 +216,15 @@ function buildWorkflow(options) {
     sessionName: options.sessionName,
     paneName: options.paneName,
     cwd: options.cwd,
-    command: options.agentCommand,
+    command: options.agentCommand
   };
   const commands = buildZellijCommands(zellijOptions);
-  const sendPrompt = commands.sendText.map((part) => (part === '<pane-id>' ? '<pane-id-from-launch>' : part === '<text>' ? prompt : part));
-  const sendEnter = commands.sendEnter.map((part) => (part === '<pane-id>' ? '<pane-id-from-launch>' : part));
+  const sendPrompt = commands.sendText.map((part) =>
+    part === '<pane-id>' ? '<pane-id-from-launch>' : part === '<text>' ? prompt : part
+  );
+  const sendEnter = commands.sendEnter.map((part) =>
+    part === '<pane-id>' ? '<pane-id-from-launch>' : part
+  );
   const launchArgs = [
     'pnpm',
     'zellij:agent',
@@ -217,7 +236,7 @@ function buildWorkflow(options) {
     '--cwd',
     options.cwd,
     '--command',
-    options.agentCommand,
+    options.agentCommand
   ];
 
   return {
@@ -248,14 +267,14 @@ function buildWorkflow(options) {
       kill: formatCommand(commands.killSession),
       linearComment: options.issue
         ? `pnpm linear:comment -- --issue ${shellQuote(options.issue)} --body ${shellQuote('<paste evidence template after verification>')}`
-        : null,
+        : null
     },
     approvalGates: [
       'Approval safety is enforced by the workflow boundary, not by trusting a specific model family.',
       'The lane is complete only when the receipt contract is satisfied.',
       'Linear mutation is not performed by this workflow; run the printed linear:comment command only after review.',
-      'Public, irreversible, credential, deploy, purchase, send, or third-party mutation actions require explicit approval.',
-    ],
+      'Public, irreversible, credential, deploy, purchase, send, or third-party mutation actions require explicit approval.'
+    ]
   };
 }
 
@@ -284,14 +303,15 @@ function renderText(workflow) {
     workflow.commands.sendEnter,
     '',
     'Closeout',
-    workflow.commands.linearComment || 'No Linear issue supplied; paste evidence into the owning thread or handoff.',
+    workflow.commands.linearComment ||
+      'No Linear issue supplied; paste evidence into the owning thread or handoff.',
     workflow.commands.kill,
     '',
     'Prompt Packet',
     workflow.prompt,
     '',
     'Evidence Template',
-    workflow.evidenceTemplate,
+    workflow.evidenceTemplate
   ];
   return lines.join('\n');
 }
@@ -306,35 +326,18 @@ function runLaunch(options) {
     '--cwd',
     options.cwd,
     '--command',
-    options.agentCommand,
+    options.agentCommand
   ];
   const result = spawnSync(process.execPath, args, {
     cwd: process.cwd(),
     env: { ...process.env, ZELLIJ_SOCKET_DIR: DEFAULT_SOCKET_DIR },
     encoding: 'utf8',
-    stdio: ['ignore', 'pipe', 'pipe'],
+    stdio: ['ignore', 'pipe', 'pipe']
   });
   if (result.status !== 0) {
     throw new Error(result.stderr.trim() || result.stdout.trim() || 'zellij lane launch failed');
   }
   const launched = JSON.parse(result.stdout);
-  if (options.sendPrompt) {
-    const prompt = buildPrompt(options);
-    const paste = spawnSync('zellij', ['--session', options.sessionName, 'action', 'paste', '--pane-id', launched.paneId, prompt], {
-      cwd: options.cwd,
-      env: { ...process.env, ZELLIJ_SOCKET_DIR: DEFAULT_SOCKET_DIR },
-      encoding: 'utf8',
-      stdio: ['ignore', 'pipe', 'pipe'],
-    });
-    if (paste.status !== 0) throw new Error(paste.stderr.trim() || paste.stdout.trim() || 'zellij paste failed');
-    const enter = spawnSync('zellij', ['--session', options.sessionName, 'action', 'send-keys', '--pane-id', launched.paneId, 'Enter'], {
-      cwd: options.cwd,
-      env: { ...process.env, ZELLIJ_SOCKET_DIR: DEFAULT_SOCKET_DIR },
-      encoding: 'utf8',
-      stdio: ['ignore', 'pipe', 'pipe'],
-    });
-    if (enter.status !== 0) throw new Error(enter.stderr.trim() || enter.stdout.trim() || 'zellij send-keys failed');
-  }
   return launched;
 }
 
@@ -368,5 +371,5 @@ export {
   deriveSessionName,
   parseArgs,
   renderText,
-  slugify,
+  slugify
 };

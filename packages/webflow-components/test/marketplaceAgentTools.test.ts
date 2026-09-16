@@ -156,7 +156,8 @@ test('summarizeSearchItem shapes output and withholds raw sales counts', () => {
     preview_url: 'https://zenith-template.webflow.io',
   });
   assert.equal(summary.price, '$79');
-  assert.equal(summary.demand, 'top seller');
+  assert.equal(summary.demand, 'Marketplace favorite');
+  assert.deepEqual(summary.marketplace_signals, { labels: ['Marketplace favorite', '250+ purchases'], window_days: 30, source_updated_at: null, freshness: 'unknown' });
   assert.deepEqual(summary.categories, ['Business']);
   assert.deepEqual(summary.styles, ['Minimal', 'Dark']);
   assert.deepEqual(summary.tags, ['saas']);
@@ -182,16 +183,17 @@ async function runTool(tools: MarketplaceAgentTool[], name: string, input = {}) 
   return tool.execute(input);
 }
 
-test('search_templates summarizes results and surfaces the relaxed flag', async () => {
+test('search_templates separates fallback suggestions from exact matches', async () => {
   const tools = createMarketplaceAgentTools({ fetchImpl: stubFetch(SEARCH_BODY) });
   const result = (await runTool(tools, 'search_templates', { q: 'zenith' })) as Record<
     string,
     unknown
   >;
-  assert.equal(result.total_items, 2);
+  assert.equal(result.total_items, 0);
   assert.equal(result.relaxed, true);
-  assert.ok(String(result.note).includes('related results'));
-  assert.equal((result.items as unknown[]).length, 2);
+  assert.ok(String(result.note).includes('No exact matches'));
+  assert.equal((result.items as unknown[]).length, 0);
+  assert.equal((result.suggestions as unknown[]).length, 2);
 });
 
 test('search responses are cached per URL for repeat calls', async () => {
@@ -349,7 +351,7 @@ test('window handle lists and routes tool calls', async () => {
   const result = (await handle.callTool('search_templates', { q: 'zenith' })) as {
     total_items: number;
   };
-  assert.equal(result.total_items, 2);
+  assert.equal(result.total_items, 0);
   await assert.rejects(() => handle.callTool('unknown_tool'), /Unknown marketplace agent tool/);
 });
 
@@ -422,10 +424,15 @@ function fakeWindow(href: string): Record<string, unknown> {
         entries[entries.length - 1] = win.location.href;
       },
     },
-    dispatchEvent: () => true,
+    // Model a grid that publishes its committed result snapshot on the filter event.
+    dispatchEvent: () => {
+      win.__templateMarketplaceGridState = { ...(win.__templateMarketplaceGridState as object ?? {}), href: win.location.href, result_href: win.location.href, status: 'ready', result_revision: 1 };
+      return true;
+    },
     setTimeout: () => 1,
     clearTimeout: () => undefined,
   };
+  win.__templateMarketplaceGridState = { href, result_href: href, status: 'ready', result_revision: 1 };
   installWindow(win);
   return win;
 }
@@ -511,7 +518,7 @@ test('update_page_filters rejects unknown categories and empty normalized payloa
     category_group_slug: 'not-a-real-category',
   })) as { ok: boolean; message: string };
   assert.equal(unknown.ok, false);
-  assert.match(unknown.message, /Unknown category "not-a-real-category"/);
+  assert.match(unknown.message, /Choose a slug/);
 
   const empty = (await runTool(tools, 'update_page_filters', {})) as {
     ok: boolean;
@@ -567,7 +574,7 @@ test('a throwing analytics callback never breaks a tool call', async () => {
   const result = (await runTool(tools, 'search_templates', { q: 'zenith' })) as {
     total_items: number;
   };
-  assert.equal(result.total_items, 2);
+  assert.equal(result.total_items, 0);
 });
 
 // ── Codex review round 5: route preservation, empty grids, false clears ──────
@@ -616,7 +623,7 @@ test('a mounted grid with zero results still accepts filter changes via its mark
 // ── Codex review round 6: grid state, empty recommendations, telemetry ───────
 
 test('get_page_state prefers the grid-published resolved state', async () => {
-  fakeDoc({});
+  fakeDoc({ [FILTER_AWARE_MARKER]: [{}] });
   const win = fakeWindow('https://webflow.com/templates');
   win.__templateMarketplaceGridState = {
     href: 'https://webflow.com/templates',
@@ -683,11 +690,11 @@ test('clear_filters removes alias params like scope and pricing', async () => {
   assert.doesNotMatch(result.href, /scope=|pricing=|style_slug=/);
 });
 
-test('get_template retries without a duplicate-name suffix', async () => {
+test('get_template resolves duplicate-name suffixes by exact identity', async () => {
   const fetchByQuery = (async (input: unknown) => {
-    const q = new URL(String(input)).searchParams.get('q');
+    const q = new URL(String(input)).searchParams.get('template_slug');
     const items =
-      q === 'zenith'
+      q === 'zenith-2'
         ? [{ template_slug: 'zenith-2', name: 'Zenith', creator_name: 'Studio A' }]
         : [];
     return { ok: true, status: 200, json: async () => ({ items }) };
@@ -705,7 +712,7 @@ test('get_template retries without a duplicate-name suffix', async () => {
     message: string;
   };
   assert.equal(miss.ok, false);
-  assert.match(miss.message, /best-effort/);
+  assert.match(miss.message, /current template slug/);
 });
 
 test('clear_filters reports component prop-owned constraints as preserved', async () => {
@@ -881,4 +888,51 @@ test('free_only:false keeps the original free entry reachable via Back', async (
   assert.equal(entries.length, 2);
   assert.match(entries[0], /scope=free/);
   assert.doesNotMatch(entries[1], /scope=free/);
+});
+
+test('pending grid results never masquerade as matches for newly requested filters', async () => {
+  const card = { getAttribute: () => 'old-card' };
+  fakeDoc({ [FILTER_AWARE_MARKER]: [card], [CHAT_GRID_MARKER]: [card], [GRID_SCOPED_SLUGS]: [card] });
+  const win = fakeWindow('https://webflow.com/templates/all');
+  win.dispatchEvent = () => {
+    win.__templateMarketplaceGridState = { href: (win.location as {href:string}).href, status: 'loading', result_revision: 1, result_href: 'https://webflow.com/templates/all' };
+    return true;
+  };
+  const tools = createMarketplaceAgentTools({ fetchImpl: stubFetch({}) });
+  const pending = runTool(tools, 'update_page_filters', {q:'studio'});
+  await new Promise(resolve => setTimeout(resolve, 0));
+  const state = await runTool(tools, 'get_page_state') as {status:string;visible_template_slugs:string[]};
+  assert.equal(state.status, 'loading');
+  assert.deepEqual(state.visible_template_slugs, []);
+  const href = (win.location as {href:string}).href;
+  win.__templateMarketplaceGridState = {href,result_href:href,status:'ready',result_revision:2,total_items:1,page:1};
+  const done = await pending as {ok:boolean;status:string;result_revision:number};
+  assert.equal(done.ok, true);
+  assert.equal(done.status, 'ready');
+  assert.equal(done.result_revision, 2);
+});
+
+test('grid failure is reported as failure by the filter action', async () => {
+  fakeDoc({ [FILTER_AWARE_MARKER]: [{}] });
+  const win = fakeWindow('https://webflow.com/templates/all');
+  win.dispatchEvent = () => {
+    win.__templateMarketplaceGridState = {href:(win.location as {href:string}).href,status:'error',error:'API 503'};
+    return true;
+  };
+  const tools = createMarketplaceAgentTools({fetchImpl:stubFetch({})});
+  const result = await runTool(tools,'update_page_filters',{q:'studio'}) as {ok:boolean;status:string;error:string};
+  assert.equal(result.ok,false);
+  assert.equal(result.status,'error');
+  assert.equal(result.error,'API 503');
+});
+
+test('homepage handoff retains the buyer request in a working results URL', async () => {
+  fakeDoc({}); fakeWindow('https://webflow.com/templates');
+  const tools = createMarketplaceAgentTools({fetchImpl:stubFetch({})});
+  const result = await runTool(tools,'update_page_filters',{q:'studio',free_only:true}) as {status:string;next_url:string};
+  assert.equal(result.status,'navigation_required');
+  const url = new URL(result.next_url);
+  assert.equal(url.pathname,'/templates/all');
+  assert.equal(url.searchParams.get('q'),'studio');
+  assert.equal(url.searchParams.get('free_only'),'true');
 });

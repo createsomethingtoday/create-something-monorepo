@@ -40,7 +40,12 @@ The installed CLI exposes the same batch and Git-aware entry points:
 ```bash
 ground analyze ./src --checks duplicates,dead_exports
 ground diff ./src --base origin/main --checks duplicates
+ground doctor . --json
 ```
+
+`ground doctor` fails on invalid policy and reports the native build, effective
+policy SHA-256, workspace package count, and internal dependency count. Run it
+before treating a repository result as authoritative.
 
 Both commands print JSON evidence. `ground diff` only returns files inside the
 requested directory and resolves Git paths from the repository root, so it is
@@ -67,7 +72,7 @@ view; read `discovered_changed_files`, `analyzable_changed_files`, and
 `unsupported_changed_files` and `excluded_changed_files`, so a clean claim is
 valid only with `PASS`.
 
-Ground 0.3.6 supports TypeScript (`.ts`, `.tsx`), JavaScript (`.js`, `.jsx`,
+Ground 0.4.0 supports TypeScript (`.ts`, `.tsx`), JavaScript (`.js`, `.jsx`,
 `.mjs`), and Svelte (`.svelte`) in the declared analysis lane. Svelte component
 scripts participate in duplicate analysis, while SvelteKit configuration,
 routes, aliases, actions, stores, and framework entry points inform reachability
@@ -91,6 +96,12 @@ that produced a receipt with:
 ```bash
 ground build-info --json
 ```
+
+Ground rejects malformed or unknown native policy fields instead of using
+defaults. Claim commands recompute current evidence and reject a stored result
+when source, scope, or the current engine's computation has changed. Duplicate
+suggestions remain review-only unless a planner produces and validates a
+concrete patch; similarity alone does not authorize a rewrite.
 
 ### Maintainers: trusted publishing
 
@@ -347,7 +358,7 @@ Run ground_analyze on packages/sdk to find dead code
 ```
 
 ```
-What's the CSS token adoption ratio in packages/components?
+What's the CSS token adoption ratio in packages/canon?
 ```
 
 ```

@@ -227,6 +227,29 @@ export function parseWorkflowDefinition(input: unknown): WorkflowDefinition {
   const collections = requireTopLevelCollections(input);
   const validator = new Validator();
 
+  validator.unknownFields(
+    input,
+    [
+      'schemaVersion',
+      'workflowId',
+      'version',
+      'title',
+      'businessObjective',
+      'owners',
+      'systems',
+      'objects',
+      'events',
+      'actors',
+      'states',
+      'actions',
+      'transitions',
+      'agents',
+      'evaluations'
+    ],
+    '$',
+    'workflow'
+  );
+
   const supportsEvidenceConstraints =
     input.schemaVersion === 'workflow_definition.v0.2' ||
     input.schemaVersion === 'workflow_definition.v0.3';
@@ -239,7 +262,8 @@ export function parseWorkflowDefinition(input: unknown): WorkflowDefinition {
     validator.diagnostics.push({
       code: input.schemaVersion === undefined ? 'REQUIRED_FIELD' : 'UNSUPPORTED_SCHEMA_VERSION',
       path: '$.schemaVersion',
-      message: 'Expected workflow_definition.v0.1, workflow_definition.v0.2, or workflow_definition.v0.3.'
+      message:
+        'Expected workflow_definition.v0.1, workflow_definition.v0.2, or workflow_definition.v0.3.'
     });
   }
   validator.string(input.workflowId, '$.workflowId');
@@ -249,12 +273,19 @@ export function parseWorkflowDefinition(input: unknown): WorkflowDefinition {
 
   const owners = validator.record(input.owners, '$.owners');
   if (owners) {
+    validator.unknownFields(owners, ['workflow', 'policy', 'technical'], '$.owners', 'owners');
     validator.string(owners.workflow, '$.owners.workflow');
     validator.string(owners.policy, '$.owners.policy');
     validator.string(owners.technical, '$.owners.technical');
   }
 
   validator.records(collections.systems, '$.systems', (system, path) => {
+    validator.unknownFields(
+      system,
+      ['id', 'title', 'tier', 'owningSurface', 'sourceOfTruth'],
+      path,
+      'system'
+    );
     validator.string(system.id, `${path}.id`);
     validator.string(system.title, `${path}.title`);
     validator.enumeration(system.tier, ['database', 'automation', 'judgment'], `${path}.tier`);
@@ -262,22 +293,31 @@ export function parseWorkflowDefinition(input: unknown): WorkflowDefinition {
     validator.boolean(system.sourceOfTruth, `${path}.sourceOfTruth`);
   });
   validator.records(collections.objects, '$.objects', (object, path) => {
+    validator.unknownFields(
+      object,
+      ['id', 'title', 'sourceSystemId', 'requiredFields'],
+      path,
+      'object'
+    );
     validator.string(object.id, `${path}.id`);
     validator.string(object.title, `${path}.title`);
     validator.string(object.sourceSystemId, `${path}.sourceSystemId`);
     validator.stringArray(object.requiredFields, `${path}.requiredFields`);
   });
   validator.records(collections.events, '$.events', (event, path) => {
+    validator.unknownFields(event, ['id', 'title', 'objectId', 'requiredEvidence'], path, 'event');
     validator.string(event.id, `${path}.id`);
     validator.string(event.title, `${path}.title`);
     validator.string(event.objectId, `${path}.objectId`);
     validator.stringArray(event.requiredEvidence, `${path}.requiredEvidence`);
   });
   validator.records(collections.actors, '$.actors', (actor, path) => {
+    validator.unknownFields(actor, ['id', 'title'], path, 'actor');
     validator.string(actor.id, `${path}.id`);
     validator.string(actor.title, `${path}.title`);
   });
   validator.records(collections.states, '$.states', (state, path) => {
+    validator.unknownFields(state, ['id', 'title', 'terminal'], path, 'state');
     validator.string(state.id, `${path}.id`);
     validator.string(state.title, `${path}.title`);
     validator.boolean(state.terminal, `${path}.terminal`, true);
@@ -320,7 +360,8 @@ export function parseWorkflowDefinition(input: unknown): WorkflowDefinition {
         validator.diagnostics.push({
           code: 'INVALID_VALUE',
           path: `${path}.requiredEvidenceValues`,
-          message: 'Evidence constraints require workflow_definition.v0.2 or workflow_definition.v0.3.'
+          message:
+            'Evidence constraints require workflow_definition.v0.2 or workflow_definition.v0.3.'
         });
       }
       const requiredEvidenceValues = validator.record(
@@ -345,7 +386,8 @@ export function parseWorkflowDefinition(input: unknown): WorkflowDefinition {
         validator.diagnostics.push({
           code: 'INVALID_VALUE',
           path: `${path}.requiredEvidenceMatchers`,
-          message: 'Evidence constraints require workflow_definition.v0.2 or workflow_definition.v0.3.'
+          message:
+            'Evidence constraints require workflow_definition.v0.2 or workflow_definition.v0.3.'
         });
       }
       const requiredEvidenceMatchers = validator.record(
@@ -405,13 +447,18 @@ export function parseWorkflowDefinition(input: unknown): WorkflowDefinition {
 
     const approval = validator.record(action.approval, `${path}.approval`);
     if (approval) {
+      validator.unknownFields(approval, ['required', 'owner'], `${path}.approval`, 'approval');
       validator.boolean(approval.required, `${path}.approval.required`);
       validator.optionalString(approval.owner, `${path}.approval.owner`);
     }
     const receipt = validator.record(action.receipt, `${path}.receipt`);
-    if (receipt) validator.stringArray(receipt.requiredFields, `${path}.receipt.requiredFields`);
+    if (receipt) {
+      validator.unknownFields(receipt, ['requiredFields'], `${path}.receipt`, 'receipt');
+      validator.stringArray(receipt.requiredFields, `${path}.receipt.requiredFields`);
+    }
     const recovery = validator.record(action.recovery, `${path}.recovery`);
     if (recovery) {
+      validator.unknownFields(recovery, ['mode', 'owner', 'path'], `${path}.recovery`, 'recovery');
       validator.enumeration(
         recovery.mode,
         ['rollback', 'escalate', 'manual_fallback'],
@@ -423,12 +470,24 @@ export function parseWorkflowDefinition(input: unknown): WorkflowDefinition {
     if (action.tool !== undefined) {
       const tool = validator.record(action.tool, `${path}.tool`);
       if (tool) {
+        validator.unknownFields(
+          tool,
+          ['name', 'targetSystemId', 'parameters'],
+          `${path}.tool`,
+          'tool'
+        );
         validator.string(tool.name, `${path}.tool.name`);
         validator.string(tool.targetSystemId, `${path}.tool.targetSystemId`);
         if (tool.parameters !== undefined) {
           const parameters = validator.array(tool.parameters, `${path}.tool.parameters`);
           if (!parameters) return;
           validator.records(parameters, `${path}.tool.parameters`, (parameter, parameterPath) => {
+            validator.unknownFields(
+              parameter,
+              ['name', 'type', 'description'],
+              parameterPath,
+              'parameter'
+            );
             validator.string(parameter.name, `${parameterPath}.name`);
             validator.enumeration(
               parameter.type,
@@ -444,12 +503,19 @@ export function parseWorkflowDefinition(input: unknown): WorkflowDefinition {
     validator.optionalString(action.agentId, `${path}.agentId`);
   });
   validator.records(collections.transitions, '$.transitions', (transition, path) => {
+    validator.unknownFields(transition, ['id', 'from', 'to', 'actionId'], path, 'transition');
     validator.string(transition.id, `${path}.id`);
     validator.string(transition.from, `${path}.from`);
     validator.string(transition.to, `${path}.to`);
     validator.string(transition.actionId, `${path}.actionId`);
   });
   validator.records(collections.agents, '$.agents', (agent, path) => {
+    validator.unknownFields(
+      agent,
+      ['id', 'title', 'purpose', 'allowedActionIds', 'escalationOwner'],
+      path,
+      'agent'
+    );
     validator.string(agent.id, `${path}.id`);
     validator.string(agent.title, `${path}.title`);
     validator.string(agent.purpose, `${path}.purpose`);
@@ -457,6 +523,12 @@ export function parseWorkflowDefinition(input: unknown): WorkflowDefinition {
     validator.string(agent.escalationOwner, `${path}.escalationOwner`);
   });
   validator.records(collections.evaluations, '$.evaluations', (evaluation, path) => {
+    validator.unknownFields(
+      evaluation,
+      ['id', 'title', 'actionId', 'expectedOutcome', 'requiredEvidence'],
+      path,
+      'evaluation'
+    );
     validator.string(evaluation.id, `${path}.id`);
     validator.string(evaluation.title, `${path}.title`);
     validator.string(evaluation.actionId, `${path}.actionId`);
@@ -511,6 +583,7 @@ export function parseWorkflowReplayManifest(input: unknown): WorkflowReplayManif
   }
 
   const validator = new Validator();
+  validator.unknownFields(input, ['schemaVersion', 'workflowId', 'cases'], '$', 'replay manifest');
   const cases = validator.array(input.cases, '$.cases');
   if (!cases) throw new ReplayInputValidationError(validator.diagnostics);
 
@@ -523,6 +596,22 @@ export function parseWorkflowReplayManifest(input: unknown): WorkflowReplayManif
   }
   validator.string(input.workflowId, '$.workflowId');
   validator.records(cases, '$.cases', (replayCase, path) => {
+    validator.unknownFields(
+      replayCase,
+      [
+        'caseId',
+        'title',
+        'initialState',
+        'actionId',
+        'actorId',
+        'evidence',
+        'approvals',
+        'expectedOutcome',
+        'expectedState'
+      ],
+      path,
+      'replay case'
+    );
     validator.string(replayCase.caseId, `${path}.caseId`);
     validator.string(replayCase.title, `${path}.title`);
     validator.string(replayCase.initialState, `${path}.initialState`);

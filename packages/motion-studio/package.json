@@ -17,7 +17,7 @@
     "validate:motion-studio": "npx tsx scripts/validate-motion-studio.ts",
     "validate:workflow-reel": "npx tsx scripts/validate-workflow-reel.ts",
     "validate:workflow-film": "npx tsx scripts/validate-workflow-film.ts",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.draw-animation.json",
     "generate-voiceover": "npx ts-node scripts/generate-voiceover.ts",
     "generate-sounds": "npx tsx scripts/generate-sounds.ts",
     "generate:workflow-score": "npx tsx scripts/generate-workflow-score.ts",

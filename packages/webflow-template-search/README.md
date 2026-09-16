@@ -105,6 +105,11 @@ artifacts are intentionally ignored by Git because they contain temporary eviden
 The sync pipeline indexes Marketplace template metadata from Airtable, but Webflow is the
 source of truth for public template thumbnails. Source precedence:
 
+For a named production card with missing thumbnails, use the
+[Webflow Template Search Image Refresh Runbook](../../docs/guides/WEBFLOW_TEMPLATE_SEARCH_IMAGE_REFRESH_RUNBOOK.md).
+It requires source, lock, receipt, API, CDN, and rendered-card proof and keeps CMS edits,
+broad reconciliation, pruning, and deploys outside the targeted repair boundary.
+
 1. Webflow CMS template fields are preferred for canonical slugs, listing URLs,
    thumbnails, hover thumbnails, and carousel images when a Webflow API token is configured.
 2. Airtable `Marketplace Assets` remains the metadata source of truth for names,
@@ -118,6 +123,39 @@ source of truth for public template thumbnails. Source precedence:
 5. Airtable attachment URLs are used only when they are stable. Temporary Airtable hosts
    such as `airtableusercontent.com` and `dl.airtable.com` are filtered out of the public
    index.
+
+## Listing gate
+
+Airtable flips `🚀Marketplace Status` to Published at approval, but the public listing only
+exists once Whalesync creates the Templates CMS item, and Whalesync holds that back while the
+asset has a publishing validation error (most often `🚩Creator Stripe Status Invalid` on a
+first-time creator). Indexing the Airtable row in that window produced blank cards that linked
+to a 404.
+
+Sync therefore holds a published record out of the index until a live Templates CMS item is
+confirmed for it, matched by `sync-record-id`, then unique slug, then unique name. The gate only
+applies when the CMS lookup completed (`listingCoverageComplete`); a failed or unconfigured
+lookup never gates. A pass where the gated share is implausibly high (at least 5 records and
+2% of the batch) keeps every row and records a `listing_gate_guard` warning instead.
+
+Summaries report `listing_gated_records`, and each gated slug appears in a `listing_gate`
+warning on `GET /api/templates/admin/sync-status`. Held-out templates are retried by the
+recent-published sweep every incremental run, and the Templates `collection_item_created`
+webhook indexes the record as soon as the CMS item appears. The 2026-09-15 baseline against
+production found exactly 5 of 11,460 indexed rows without a live listing, all of them 404s.
+
+Two details keep the gate safe around edge cases:
+
+- **Webhook durability.** A Templates webhook first appends the record id to the
+  `pending_record_sync_ids` entry in `sync_state`, then attempts an immediate records sync.
+  If that sync cannot take the lock (or the request-scoped `waitUntil` dies), the incremental
+  cron drains the queue on its next run and reports `queued_record_sync_records`. A webhook
+  whose item is archived, draft, unpublished, or deleted re-runs the record the same way so
+  an indexed card is removed when its listing goes non-live.
+- **Renames.** Targeted CMS lookups query by slug and name, so a template whose Airtable slug
+  and name both changed would otherwise look listing-less. Sync adds the slug the record is
+  currently indexed under as a second lookup target; the CMS item is then matched by
+  `sync-record-id`, and the card keeps linking to the slug Webflow actually serves.
 
 Configure:
 

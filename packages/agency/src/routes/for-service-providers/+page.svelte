@@ -14,7 +14,7 @@
       icon: 'document',
       title: 'Map the client workflow',
       detail:
-        'Name the handoff, accountable owner, source systems, decisions, stop conditions, and proof before proposing a build.',
+        'List the task, the person responsible, the tools involved, and the approvals needed before proposing a build.',
       points: ['One workflow', 'Named owner', 'Visible current state']
     },
     {
@@ -38,7 +38,7 @@
       icon: 'arrow-right',
       title: 'Hand over proof or operate with Control',
       detail:
-        'Give the client an inspectable map and operating record. Add Control only when the launched workflow needs ongoing operation.',
+        'Give the client the workflow plan and work history. Add Control when the live system needs ongoing support.',
       points: ['Client-safe receipt', 'Owned documentation', 'Optional managed operation']
     }
   ];
@@ -48,7 +48,7 @@
       eyebrow: 'Reusable',
       title: 'Reuse the structure, not the client data.',
       detail:
-        'Workflow shapes, checks, and receipt patterns can repeat. Credentials, records, approvals, and account authority cannot.'
+        'Reuse workflow structures and checks. Keep each client’s logins, data, approvals, and access separate.'
     },
     {
       eyebrow: 'Relationship',
@@ -85,7 +85,7 @@
 
 <SEO
   title="Use CREATE SOMETHING With Clients | Service Providers"
-  description="A bounded client-delivery path for consultants and service providers using CREATE SOMETHING Map, Build, and Control."
+  description="Plan, build, and support AI workflows for your clients. Agree on responsibilities and keep each client’s data and access separate."
   keywords="AI workflow service provider, client workflow mapping, governed client delivery, workflow implementation service"
   propertyName="agency"
   {faqItems}
@@ -99,7 +99,7 @@
     expression="editorial"
     eyebrow="For service providers"
     title="Use CREATE SOMETHING with your clients."
-    description="Bring one client workflow. Map the ownership and tool boundary, build only the approved path, and leave the client with proof they can inspect."
+    description="Bring one client task. We agree on who owns the work, what to build, and who approves it. The client keeps the plan and results."
   >
     {#snippet actions()}
       <Button href="/map?source=service-provider&intent=client-workflow">Start a client map</Button>
@@ -113,8 +113,8 @@
   <PerformancePageSection
     variant="white"
     eyebrow="Client delivery lifecycle"
-    title="One governed path from first map to operating handoff."
-    description="The same Map → Build → Control system applies. The client boundary stays visible at every step."
+    title="From planning to client handover."
+    description="Use Map to plan, Build to implement, and Control for support. Agree on each party’s responsibilities at every step."
   >
     {#snippet after()}
       <PerformanceCardGrid
@@ -128,7 +128,7 @@
   <PerformancePageSection
     variant="soft"
     eyebrow="What can travel"
-    title="Carry the method forward without carrying hidden authority."
+    title="Reuse the approach. Keep client access separate."
     description="Reusable delivery should make the next engagement clearer. It must not blur account ownership, consent, or responsibility."
   >
     {#snippet after()}
@@ -140,7 +140,7 @@
     expression="editorial"
     eyebrow="Start with one client"
     title="Name the workflow and the accountable client owner."
-    description="Use the public Map to prepare the current state. Bring that map into a scoped delivery conversation only when the owner and workflow are clear."
+    description="Draft the task in the public Map. Bring the plan and the person responsible to a conversation about the project."
     handoff={{
       owner: 'Client workflow owner',
       authority: 'Named delivery boundary',

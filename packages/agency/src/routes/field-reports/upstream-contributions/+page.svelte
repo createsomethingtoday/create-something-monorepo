@@ -18,7 +18,7 @@
       id: 'reproduce',
       label: 'Reproduce',
       summary: 'Start with the failure',
-      title: 'The work began with a narrow, reproducible boundary.',
+      title: 'Start with a problem we can reproduce.',
       detail:
         'CTX failed to compile on macOS ARM64 because stat output differed by platform. Codex Security needed explicit repository scope before inventory could be trusted.',
       tone: 'review',
@@ -29,7 +29,7 @@
       id: 'contribute',
       label: 'Contribute',
       summary: 'Maintainers shaped the patch',
-      title: 'Acceptance improved the implementation without erasing its origin.',
+      title: 'Maintainers refined the contributions.',
       detail:
         'CTX maintainers added signed device identity handling and a regression test. OpenAI maintainers narrowed the security change while preserving the contributed design and credit.',
       tone: 'neutral',
@@ -40,7 +40,7 @@
       id: 'accept',
       label: 'Accept',
       summary: 'Merge and release are separate',
-      title: 'The receipts show two different levels of acceptance.',
+      title: 'Check what merged and what shipped.',
       detail:
         'CTX merged the reliability fix on August 9. OpenAI merged the security work on August 10 and released it in Codex Security 0.1.9 on August 11.',
       tone: 'allow',
@@ -64,7 +64,7 @@
 
 <SEO
   title="Upstream Open-Source Contributions | CREATE SOMETHING .agency"
-  description="Direct merge and release receipts for CREATE SOMETHING contributions to CTX and OpenAI Codex Security, with the relationship boundary stated clearly."
+  description="Links to accepted CREATE SOMETHING contributions to CTX and OpenAI Codex Security. Contributions do not imply a partnership or endorsement."
   keywords="CTX contributor, OpenAI Codex Security contributor, open source contributions, agent infrastructure, software reliability"
   propertyName="agency"
 />
@@ -112,7 +112,7 @@
     expression="editorial"
     eyebrow="Operating implication"
     title="Bring one workflow that must hold up under review."
-    description="We build against the same standard: reproduce the boundary, propose the smallest change, preserve maintainer judgment, and attach the final receipt."
+    description="We reproduce the problem, propose a focused fix, and record the result. The people responsible for the system decide what to accept."
     handoff={{
       owner: 'Workflow owner',
       authority: 'Human review',

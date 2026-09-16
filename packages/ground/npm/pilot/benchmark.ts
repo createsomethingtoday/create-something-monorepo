@@ -1,10 +1,10 @@
 import { createHash } from 'node:crypto';
 import { spawn, execFile } from 'node:child_process';
 import { mkdir, mkdtemp, readFile, rm, stat, writeFile } from 'node:fs/promises';
-import { existsSync } from 'node:fs';
-import { dirname, join, parse, relative, resolve } from 'node:path';
+import { dirname, join, relative, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { promisify } from 'node:util';
+import { findWorkspaceRoot } from './workspace-root.ts';
 
 import {
   type GroundAnalysis,
@@ -485,16 +485,6 @@ export async function runGroundBenchmark(
         : 'Do not promote the native path until protocol failures or inconsistent results are resolved.'
     }
   };
-}
-
-function findWorkspaceRoot(start: string): string {
-  let current = resolve(start);
-  const root = parse(current).root;
-  while (current !== root) {
-    if (existsSync(join(current, 'pnpm-workspace.yaml'))) return current;
-    current = dirname(current);
-  }
-  throw new Error(`Unable to find workspace root from ${start}`);
 }
 
 function argValue(name: string): string | undefined {

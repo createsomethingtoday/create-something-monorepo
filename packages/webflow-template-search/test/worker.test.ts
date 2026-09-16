@@ -6,6 +6,7 @@ import {
   acquireSyncJobLock,
   backfillCreatorFieldsByName,
   backfillCreatorFieldsFromLookup,
+  finishSyncJobLock,
   getPublicSearchCacheVersion,
   heartbeatSyncJobLock,
   listTemplateImageBackfillRows,
@@ -772,6 +773,14 @@ describe('webflow-template-search worker', () => {
         },
       ],
       webflowCollectionItems: {
+        [TEMPLATES_COLLECTION_ID]: [
+          {
+            id: 'item-agentflow',
+            isArchived: false,
+            isDraft: false,
+            fieldData: { 'sync-record-id': 'recAgentflow', name: 'Agentflow', slug: 'agentflow-website-template' },
+          },
+        ],
         [DESIGNERS_COLLECTION_ID]: [
           {
             id: 'designer-brix',
@@ -850,6 +859,504 @@ describe('webflow-template-search worker', () => {
       const missingSearch = await callWorker(new Request('https://templates.test/api/templates/search?q=setrex'), env);
       const missingPayload = (await missingSearch.json()) as { pagination: { total_items: number } };
       expect(missingPayload.pagination.total_items).toBe(0);
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
+  it('holds a published template out of search until its Webflow listing exists', async () => {
+    // Airtable flips to Published at approval, but Whalesync only creates the
+    // Templates CMS item once publishing validation passes (for example the
+    // creator's Stripe onboarding). Until then the card would be blank and
+    // link to a 404, so the record must not be indexed.
+    const fetchMock = installAirtableFetchMock({
+      publishedAssets: [PUBLISHED_ASSETS[0]],
+      styles: LOOKUPS.styles,
+      childCategories: LOOKUPS.childCategories,
+      tags: LOOKUPS.tags,
+      creators: LOOKUPS.creators,
+      webflowCollectionItems: {
+        [TEMPLATES_COLLECTION_ID]: [],
+      },
+    });
+    const { env, close } = createTestEnv();
+    env.WEBFLOW_API_TOKEN = 'test-webflow-cms-token';
+    const prepareSpy = vi.spyOn(env.DB, 'prepare');
+
+    try {
+      const response = await callWorker(
+        new Request('https://templates.test/api/templates/admin/sync-records', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token', 'content-type': 'application/json' },
+          body: JSON.stringify({ ids: ['recAgentflow'] }),
+        }),
+        env,
+      );
+      expect(response.status).toBe(200);
+      const payload = (await response.json()) as {
+        indexed_records: number;
+        listing_gated_records: number;
+        warnings?: Array<{ source: string; message: string }>;
+      };
+      expect(payload).toMatchObject({ indexed_records: 0, listing_gated_records: 1 });
+      expect(payload.warnings?.map((warning) => warning.source)).toContain('listing_gate');
+      expect(payload.warnings?.find((warning) => warning.source === 'listing_gate')?.message).toContain('agentflow-website-template');
+
+      // A records sync that indexed nothing must not fall through to the
+      // unfiltered creator backfill: on the production index that whole-table
+      // UPDATE exceeds D1's CPU limit and kills the job.
+      const templateUpdates = prepareSpy.mock.calls
+        .map(([sql]) => String(sql))
+        .filter((sql) => /UPDATE\s+template_documents/i.test(sql));
+      expect(templateUpdates).toEqual([]);
+
+      const search = await callWorker(new Request('https://templates.test/api/templates/search?q=agentflow'), env);
+      const searchPayload = (await search.json()) as { items: Array<{ name: string }> };
+      expect(searchPayload.items).toEqual([]);
+    } finally {
+      prepareSpy.mockRestore();
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
+  it('removes an already indexed template whose Webflow listing has disappeared', async () => {
+    const fetchMock = installAirtableFetchMock({
+      publishedAssets: [PUBLISHED_ASSETS[0]],
+      styles: LOOKUPS.styles,
+      childCategories: LOOKUPS.childCategories,
+      tags: LOOKUPS.tags,
+      creators: LOOKUPS.creators,
+      webflowCollectionItems: {
+        [TEMPLATES_COLLECTION_ID]: [
+          {
+            id: 'item-agentflow',
+            isArchived: false,
+            isDraft: false,
+            fieldData: { 'sync-record-id': 'recAgentflow', name: 'Agentflow', slug: 'agentflow-website-template' },
+          },
+        ],
+      },
+    });
+    const { env, close } = createTestEnv();
+    env.WEBFLOW_API_TOKEN = 'test-webflow-cms-token';
+
+    const syncRecords = () =>
+      callWorker(
+        new Request('https://templates.test/api/templates/admin/sync-records', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token', 'content-type': 'application/json' },
+          body: JSON.stringify({ ids: ['recAgentflow'] }),
+        }),
+        env,
+      );
+
+    try {
+      await expect(syncRecords().then((response) => response.json())).resolves.toMatchObject({ indexed_records: 1 });
+      expect(await env.DB.prepare('SELECT COUNT(*) AS count FROM template_documents').first<{ count: number }>()).toMatchObject({ count: 1 });
+
+      // The CMS item is gone (archived or deleted) but Airtable still says Published.
+      fetchMock.mockRestore();
+      const secondFetchMock = installAirtableFetchMock({
+        publishedAssets: [PUBLISHED_ASSETS[0]],
+        styles: LOOKUPS.styles,
+        childCategories: LOOKUPS.childCategories,
+        tags: LOOKUPS.tags,
+        creators: LOOKUPS.creators,
+        webflowCollectionItems: { [TEMPLATES_COLLECTION_ID]: [] },
+      });
+      try {
+        await expect(syncRecords().then((response) => response.json())).resolves.toMatchObject({
+          indexed_records: 0,
+          removed_records: 1,
+          listing_gated_records: 1,
+        });
+        expect(await env.DB.prepare('SELECT COUNT(*) AS count FROM template_documents').first<{ count: number }>()).toMatchObject({ count: 0 });
+      } finally {
+        secondFetchMock.mockRestore();
+      }
+    } finally {
+      close();
+    }
+  });
+
+  it('keeps indexing published templates when the Webflow CMS lookup itself fails', async () => {
+    // A failed lookup is not evidence that the listing is missing: fail open and warn.
+    const fetchMock = installAirtableFetchMock({
+      publishedAssets: [PUBLISHED_ASSETS[0]],
+      styles: LOOKUPS.styles,
+      childCategories: LOOKUPS.childCategories,
+      tags: LOOKUPS.tags,
+      creators: LOOKUPS.creators,
+      webflowCollectionItemErrors: {
+        [TEMPLATES_COLLECTION_ID]: {
+          status: 500,
+          body: { message: 'An Internal Error Occurred', code: 'internal_error', details: [] },
+          headers: { 'retry-after': '0' },
+        },
+      },
+    });
+    const { env, close } = createTestEnv();
+    env.WEBFLOW_API_TOKEN = 'test-webflow-cms-token';
+
+    try {
+      const response = await callWorker(
+        new Request('https://templates.test/api/templates/admin/sync-records', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token', 'content-type': 'application/json' },
+          body: JSON.stringify({ ids: ['recAgentflow'] }),
+        }),
+        env,
+      );
+      const payload = (await response.json()) as {
+        indexed_records: number;
+        listing_gated_records: number;
+        warnings?: Array<{ source: string; message: string }>;
+      };
+      expect(payload).toMatchObject({ indexed_records: 1, listing_gated_records: 0 });
+      expect(payload.warnings?.map((warning) => warning.source)).toContain('webflow_template_targets');
+      expect(payload.warnings?.map((warning) => warning.source)).not.toContain('listing_gate');
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
+  it('refuses to gate an implausible share of published templates in one pass', async () => {
+    // If every template in a batch "has no listing", the CMS read is suspect;
+    // keep the rows and flag the run instead of emptying the marketplace.
+    const bulkAssets = Array.from({ length: 6 }, (_, index) => ({
+      ...PUBLISHED_ASSETS[0],
+      id: `recGateGuard${index}`,
+      fields: {
+        ...PUBLISHED_ASSETS[0].fields,
+        Name: `Gate Guard ${index}`,
+        '🥞CMS Slug (formula)': `gate-guard-${index}-website-template`,
+      },
+    }));
+    const fetchMock = installAirtableFetchMock({
+      publishedAssets: bulkAssets,
+      styles: LOOKUPS.styles,
+      childCategories: LOOKUPS.childCategories,
+      tags: LOOKUPS.tags,
+      creators: LOOKUPS.creators,
+      webflowCollectionItems: { [TEMPLATES_COLLECTION_ID]: [] },
+    });
+    const { env, close } = createTestEnv();
+    env.WEBFLOW_API_TOKEN = 'test-webflow-cms-token';
+
+    try {
+      const response = await callWorker(
+        new Request('https://templates.test/api/templates/admin/sync-records', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token', 'content-type': 'application/json' },
+          body: JSON.stringify({ ids: bulkAssets.map((asset) => asset.id) }),
+        }),
+        env,
+      );
+      const payload = (await response.json()) as {
+        indexed_records: number;
+        listing_gated_records: number;
+        warnings?: Array<{ source: string; message: string }>;
+      };
+      expect(payload).toMatchObject({ indexed_records: 6, listing_gated_records: 0 });
+      expect(payload.warnings?.map((warning) => warning.source)).toContain('listing_gate_guard');
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
+  it('indexes a held-out template as soon as its Webflow CMS item webhook arrives', async () => {
+    const dataset = {
+      publishedAssets: [PUBLISHED_ASSETS[0]],
+      styles: LOOKUPS.styles,
+      childCategories: LOOKUPS.childCategories,
+      tags: LOOKUPS.tags,
+      creators: LOOKUPS.creators,
+      webflowCollections: [{ id: TEMPLATES_COLLECTION_ID, slug: 'templates', displayName: 'Templates' }],
+      webflowCollectionItems: { [TEMPLATES_COLLECTION_ID]: [] as Array<Record<string, unknown>> },
+    };
+    const fetchMock = installAirtableFetchMock(dataset);
+    const { env, close } = createTestEnv();
+    env.WEBFLOW_API_TOKEN = 'test-webflow-cms-token';
+    env.WEBFLOW_TEMPLATE_ASSET_SITE_ID = '5e593fb060cf877cf875dd1f';
+    env.WEBFLOW_WEBHOOK_SECRET = 'webhook-secret';
+
+    try {
+      const rebuild = await callWorker(
+        new Request('https://templates.test/api/templates/admin/rebuild', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(rebuild.status).toBe(200);
+      // The rebuild runs through waitUntil, which callWorker awaits, so the
+      // summary is read back from sync_state rather than the response body.
+      const fullSyncState = await env.DB.prepare("SELECT value_json FROM sync_state WHERE key = 'last_full_sync'").first<{
+        value_json: string;
+      }>();
+      expect(JSON.parse(fullSyncState?.value_json ?? '{}')).toMatchObject({ indexed_records: 0, listing_gated_records: 1 });
+      const heldOut = await callWorker(new Request('https://templates.test/api/templates/search?q=agentflow'), env);
+      await expect(heldOut.json()).resolves.toMatchObject({ items: [] });
+
+      // Whalesync creates the CMS item once the creator clears publishing validation.
+      const cmsItem = {
+        id: 'item-agentflow',
+        isArchived: false,
+        isDraft: false,
+        fieldData: {
+          'sync-record-id': 'recAgentflow',
+          name: 'Agentflow',
+          slug: 'agentflow-website-template',
+          thumbnail: { url: 'https://cdn.prod.website-files.com/site/agentflow-live.webp' },
+        },
+      };
+      dataset.webflowCollectionItems[TEMPLATES_COLLECTION_ID].push(cmsItem);
+
+      const webhook = await callWorker(
+        signedWebhookRequest({
+          triggerType: 'collection_item_created',
+          payload: { ...cmsItem, collectionId: TEMPLATES_COLLECTION_ID },
+        }),
+        env,
+      );
+      expect(webhook.status).toBe(200);
+      await expect(webhook.json()).resolves.toMatchObject({ status: 'updated', collection: 'templates', queued_record_sync: true });
+
+      const search = await callWorker(new Request('https://templates.test/api/templates/search?q=agentflow'), env);
+      const searchPayload = (await search.json()) as { items: Array<{ name: string; thumbnail_image_url: string | null }> };
+      expect(searchPayload.items.map((item) => item.name)).toEqual(['Agentflow']);
+      expect(searchPayload.items[0]?.thumbnail_image_url).toBe('https://cdn.prod.website-files.com/site/agentflow-live.webp');
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
+  it('removes an indexed template when its Webflow CMS item webhook reports it archived', async () => {
+    const cmsItem = {
+      id: 'item-agentflow',
+      isArchived: false,
+      isDraft: false,
+      fieldData: { 'sync-record-id': 'recAgentflow', name: 'Agentflow', slug: 'agentflow-website-template' },
+    };
+    const dataset = {
+      publishedAssets: [PUBLISHED_ASSETS[0]],
+      styles: LOOKUPS.styles,
+      childCategories: LOOKUPS.childCategories,
+      tags: LOOKUPS.tags,
+      creators: LOOKUPS.creators,
+      webflowCollectionItems: { [TEMPLATES_COLLECTION_ID]: [cmsItem] },
+    };
+    const fetchMock = installAirtableFetchMock(dataset);
+    const { env, close } = createTestEnv();
+    env.WEBFLOW_API_TOKEN = 'test-webflow-cms-token';
+    env.WEBFLOW_WEBHOOK_SECRET = 'webhook-secret';
+
+    try {
+      const indexed = await callWorker(
+        new Request('https://templates.test/api/templates/admin/sync-records', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token', 'content-type': 'application/json' },
+          body: JSON.stringify({ ids: ['recAgentflow'] }),
+        }),
+        env,
+      );
+      await expect(indexed.json()).resolves.toMatchObject({ indexed_records: 1 });
+
+      // The creator archives the CMS item; Airtable still says Published.
+      cmsItem.isArchived = true;
+      const webhook = await callWorker(
+        signedWebhookRequest({
+          triggerType: 'collection_item_changed',
+          payload: { ...cmsItem, collectionId: TEMPLATES_COLLECTION_ID },
+        }),
+        env,
+      );
+      expect(webhook.status).toBe(200);
+      await expect(webhook.json()).resolves.toMatchObject({ status: 'requeued', id: 'recAgentflow', queued_record_sync: true });
+
+      const search = await callWorker(new Request('https://templates.test/api/templates/search?q=agentflow'), env);
+      await expect(search.json()).resolves.toMatchObject({ items: [] });
+      expect(await env.DB.prepare('SELECT COUNT(*) AS count FROM template_documents').first<{ count: number }>()).toMatchObject({ count: 0 });
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
+  it('queues webhook indexing for the incremental sync when the sync lock is busy', async () => {
+    const fetchMock = installAirtableFetchMock({
+      publishedAssets: [PUBLISHED_ASSETS[0]],
+      styles: LOOKUPS.styles,
+      childCategories: LOOKUPS.childCategories,
+      tags: LOOKUPS.tags,
+      creators: LOOKUPS.creators,
+      webflowCollectionItems: {
+        [TEMPLATES_COLLECTION_ID]: [
+          {
+            id: 'item-agentflow',
+            isArchived: false,
+            isDraft: false,
+            fieldData: { 'sync-record-id': 'recAgentflow', name: 'Agentflow', slug: 'agentflow-website-template' },
+          },
+        ],
+      },
+    });
+    const { env, close } = createTestEnv();
+    env.WEBFLOW_API_TOKEN = 'test-webflow-cms-token';
+    env.WEBFLOW_WEBHOOK_SECRET = 'webhook-secret';
+
+    try {
+      const lock = await acquireSyncJobLock(env.DB, 'full', { ttlMs: 60_000 });
+      expect(lock.acquired).toBe(true);
+
+      const webhook = await callWorker(
+        signedWebhookRequest({
+          triggerType: 'collection_item_created',
+          payload: {
+            id: 'item-agentflow',
+            collectionId: TEMPLATES_COLLECTION_ID,
+            isArchived: false,
+            isDraft: false,
+            fieldData: { 'sync-record-id': 'recAgentflow', name: 'Agentflow', slug: 'agentflow-website-template' },
+          },
+        }),
+        env,
+      );
+      await expect(webhook.json()).resolves.toMatchObject({ status: 'updated', queued_record_sync: true });
+
+      // The immediate sync could not take the lock, so the id must be waiting in the queue.
+      const queued = await env.DB.prepare("SELECT value_json FROM sync_state WHERE key = 'pending_record_sync_ids'").first<{ value_json: string }>();
+      expect(JSON.parse(queued?.value_json ?? '{}')).toEqual({ ids: ['recAgentflow'] });
+      const notYet = await callWorker(new Request('https://templates.test/api/templates/search?q=agentflow'), env);
+      await expect(notYet.json()).resolves.toMatchObject({ items: [] });
+
+      if (lock.acquired) await finishSyncJobLock(env.DB, lock.lock, { status: 'succeeded', summary: {} });
+      await setSyncCursor(env.DB, new Date(Date.now() - 60_000).toISOString());
+      const incremental = await callWorker(
+        new Request('https://templates.test/api/templates/admin/sync', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(incremental.status).toBe(200);
+
+      const drained = await env.DB.prepare("SELECT value_json FROM sync_state WHERE key = 'pending_record_sync_ids'").first<{ value_json: string }>();
+      expect(JSON.parse(drained?.value_json ?? '{}')).toEqual({ ids: [] });
+      const incrementalState = await env.DB.prepare("SELECT value_json FROM sync_state WHERE key = 'last_incremental_sync'").first<{ value_json: string }>();
+      expect(JSON.parse(incrementalState?.value_json ?? '{}')).toMatchObject({ indexed_records: 1, queued_record_sync_records: 1 });
+      const search = await callWorker(new Request('https://templates.test/api/templates/search?q=agentflow'), env);
+      const payload = (await search.json()) as { items: Array<{ name: string }> };
+      expect(payload.items.map((item) => item.name)).toEqual(['Agentflow']);
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
+  it('keeps an indexed template whose Airtable slug and name both changed when the CMS item carries its sync-record-id', async () => {
+    const airtableAsset = {
+      ...PUBLISHED_ASSETS[0],
+      fields: { ...PUBLISHED_ASSETS[0].fields },
+    };
+    const fetchMock = installAirtableFetchMock({
+      publishedAssets: [airtableAsset],
+      styles: LOOKUPS.styles,
+      childCategories: LOOKUPS.childCategories,
+      tags: LOOKUPS.tags,
+      creators: LOOKUPS.creators,
+      webflowCollectionItems: {
+        [TEMPLATES_COLLECTION_ID]: [
+          {
+            id: 'item-agentflow',
+            isArchived: false,
+            isDraft: false,
+            fieldData: { 'sync-record-id': 'recAgentflow', name: 'Agentflow', slug: 'agentflow-website-template' },
+          },
+        ],
+      },
+    });
+    const { env, close } = createTestEnv();
+    env.WEBFLOW_API_TOKEN = 'test-webflow-cms-token';
+
+    const syncRecords = () =>
+      callWorker(
+        new Request('https://templates.test/api/templates/admin/sync-records', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token', 'content-type': 'application/json' },
+          body: JSON.stringify({ ids: ['recAgentflow'] }),
+        }),
+        env,
+      );
+
+    try {
+      await expect(syncRecords().then((response) => response.json())).resolves.toMatchObject({ indexed_records: 1 });
+
+      // Rebrand in Airtable: neither the slug nor the name matches the CMS item any more.
+      airtableAsset.fields.Name = 'Flowagent';
+      airtableAsset.fields['🥞CMS Slug (formula)'] = 'flowagent-website-template';
+
+      await expect(syncRecords().then((response) => response.json())).resolves.toMatchObject({
+        indexed_records: 1,
+        listing_gated_records: 0,
+      });
+      const row = await env.DB.prepare('SELECT name, template_slug FROM template_documents WHERE id = ?')
+        .bind('recAgentflow')
+        .first<{ name: string; template_slug: string }>();
+      // The live listing still lives at the CMS slug, so that is what the card links to.
+      expect(row).toMatchObject({ name: 'Flowagent', template_slug: 'agentflow-website-template' });
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
+  it('reads the full Templates CMS index with the cms:read token when both Webflow tokens are set', async () => {
+    const fetchMock = installAirtableFetchMock({
+      publishedAssets: [PUBLISHED_ASSETS[0]],
+      styles: LOOKUPS.styles,
+      childCategories: LOOKUPS.childCategories,
+      tags: LOOKUPS.tags,
+      webflowCollections: [{ id: TEMPLATES_COLLECTION_ID, slug: 'templates', displayName: 'Templates' }],
+      webflowCollectionItems: {
+        [TEMPLATES_COLLECTION_ID]: [
+          {
+            id: 'item-agentflow',
+            fieldData: { 'sync-record-id': 'recAgentflow', name: 'Agentflow', slug: 'agentflow-website-template' },
+          },
+        ],
+      },
+    });
+    const { env, close } = createTestEnv();
+    env.WEBFLOW_API_TOKEN = 'assets-only-token';
+    env.CMS_READ_ONLY = 'cms-read-token';
+    env.WEBFLOW_TEMPLATE_ASSET_SITE_ID = '5e593fb060cf877cf875dd1f';
+
+    try {
+      const rebuild = await callWorker(
+        new Request('https://templates.test/api/templates/admin/rebuild', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(rebuild.status).toBe(200);
+
+      const cmsPageCalls = fetchMock.mock.calls.filter(([input]) => {
+        const url = new URL(typeof input === 'string' ? input : input.url);
+        return url.pathname === `/v2/collections/${TEMPLATES_COLLECTION_ID}/items` && !url.searchParams.get('slug') && !url.searchParams.get('name');
+      });
+      expect(cmsPageCalls.length).toBeGreaterThan(0);
+      for (const [, init] of cmsPageCalls) {
+        expect((init?.headers as Record<string, string> | undefined)?.Authorization).toBe('Bearer cms-read-token');
+      }
+      const fullSyncState = await env.DB.prepare("SELECT value_json FROM sync_state WHERE key = 'last_full_sync'").first<{ value_json: string }>();
+      expect(JSON.parse(fullSyncState?.value_json ?? '{}')).toMatchObject({ indexed_records: 1, listing_gated_records: 0 });
     } finally {
       fetchMock.mockRestore();
       close();
@@ -953,6 +1460,16 @@ describe('webflow-template-search worker', () => {
       childCategories: LOOKUPS.childCategories,
       tags: LOOKUPS.tags,
       creators: LOOKUPS.creators,
+      webflowCollectionItems: {
+        [TEMPLATES_COLLECTION_ID]: [
+          {
+            id: 'item-agentflow',
+            isArchived: false,
+            isDraft: false,
+            fieldData: { 'sync-record-id': 'recAgentflow', name: 'Agentflow', slug: 'agentflow-website-template' },
+          },
+        ],
+      },
       webflowCollectionItemErrors: {
         [DESIGNERS_COLLECTION_ID]: {
           status: 500,
@@ -1425,6 +1942,14 @@ describe('webflow-template-search worker', () => {
         },
       ],
       webflowCollectionItems: {
+        [TEMPLATES_COLLECTION_ID]: [
+          {
+            id: 'item-focused',
+            isArchived: false,
+            isDraft: false,
+            fieldData: { 'sync-record-id': 'recFocused', name: 'Focused', slug: 'focused-website-template' },
+          },
+        ],
         [DESIGNERS_COLLECTION_ID]: [
           {
             id: 'designer-guilty-archive',
@@ -2208,6 +2733,16 @@ describe('webflow-template-search worker', () => {
       expect(relaxedPayload.items.map((item) => item.name)).toEqual(['Agentflow']);
       expect(relaxedPayload.applied_filters.relaxed).toBe(true);
 
+      const strictSearch = await callWorker(new Request('https://templates.test/api/templates/search?q=workflow%20zzznomatch&strict=true'), env);
+      const strictPayload = await strictSearch.json() as { items: unknown[]; applied_filters: { relaxed: boolean } };
+      expect(strictPayload.items).toEqual([]);
+      expect(strictPayload.applied_filters.relaxed).toBe(false);
+      const exactSearch = await callWorker(new Request('https://templates.test/api/templates/search?template_slug=agentflow-website-template&include=items'), env);
+      const exactPayload = await exactSearch.json() as { items: Array<{ template_slug: string }> };
+      expect(exactPayload.items.map(item => item.template_slug)).toEqual(['agentflow-website-template']);
+      const missingExact = await callWorker(new Request('https://templates.test/api/templates/search?template_slug=not-a-real-template&include=items'), env);
+      expect((await missingExact.json() as { items: unknown[] }).items).toEqual([]);
+
       // A single unmatched token cannot be relaxed; the empty result stands.
       const unmatchedSearch = await callWorker(
         new Request('https://templates.test/api/templates/search?q=zzznomatch'),
@@ -2926,6 +3461,14 @@ describe('webflow-template-search worker', () => {
               slug: 'agentflow-website-template',
               name: 'Agentflow',
               'thumbnail-image': { url: 'https://cdn.prod.website-files.com/site/agentflow-cms.webp' },
+            },
+          },
+          {
+            // Live listing with no CMS image: the site-assets fallback must fill it in.
+            id: 'item-setrex',
+            fieldData: {
+              slug: 'setrex-website-template',
+              name: 'Setrex',
             },
           },
         ],

@@ -156,8 +156,15 @@ interface ValidationSubmissionSummary {
 }
 
 interface ValidationCategoryIssueDetail {
+	id?: string;
 	severity: 'error' | 'warning' | 'info';
 	message: string;
+	howToFix?: string;
+	location?: string;
+	details?: {
+		pages?: string[];
+		duplicates?: string[][];
+	};
 }
 
 interface ValidationCategoryDetail {
@@ -2619,23 +2626,15 @@ function sanitizeValidationResults(
 	};
 	const categories = Array.isArray(validationResults?.categories)
 		? validationResults.categories.map((category) => ({
-				category:
-					typeof category?.category === 'string' ? category.category : 'Uncategorized',
-				passed: Boolean(category?.passed),
-				issues: Array.isArray(category?.issues)
-					? category.issues
-							.filter((issue) => issue && typeof issue.message === 'string')
-							.map((issue) => ({
-								severity:
-									issue?.severity === 'error' ||
-									issue?.severity === 'warning' ||
-									issue?.severity === 'info'
-										? issue.severity
-										: 'info',
-								message: issue?.message || ''
-							}))
-					: []
-		  }))
+					category:
+						typeof category?.category === 'string' ? category.category : 'Uncategorized',
+					passed: Boolean(category?.passed),
+					issues: Array.isArray(category?.issues)
+						? category.issues
+								.map(sanitizeValidationIssue)
+								.filter((issue): issue is ValidationCategoryIssueDetail => issue !== null)
+						: []
+			  }))
 		: [];
 
 	return {
@@ -2646,6 +2645,75 @@ function sanitizeValidationResults(
 		summary,
 		categories,
 		scope: sanitizeValidationScope(validationResults?.scope)
+	};
+}
+
+const ISSUE_ID_MAX_LENGTH = 128;
+const ISSUE_MESSAGE_MAX_LENGTH = 4000;
+const ISSUE_FIX_MAX_LENGTH = 4000;
+const ISSUE_LOCATION_MAX_LENGTH = 1000;
+const ISSUE_DETAIL_LABEL_MAX_LENGTH = 1000;
+const ISSUE_DETAIL_PAGE_LIMIT = 10;
+const ISSUE_DETAIL_DUPLICATE_GROUP_LIMIT = 5;
+const ISSUE_DETAIL_DUPLICATE_MEMBER_LIMIT = 6;
+
+function sanitizeBoundedString(value: unknown, maxLength: number): string | undefined {
+	if (typeof value !== 'string') return undefined;
+	const trimmed = value.trim();
+	if (trimmed === '') return undefined;
+	return trimmed.slice(0, maxLength);
+}
+
+function sanitizeIssueDetails(value: unknown): ValidationCategoryIssueDetail['details'] | undefined {
+	if (!value || typeof value !== 'object') return undefined;
+	const details = value as Record<string, unknown>;
+	const pages = Array.isArray(details.pages)
+		? details.pages
+				.map((page) => sanitizeBoundedString(page, ISSUE_DETAIL_LABEL_MAX_LENGTH))
+				.filter((page): page is string => Boolean(page))
+				.slice(0, ISSUE_DETAIL_PAGE_LIMIT)
+		: [];
+	const duplicates = Array.isArray(details.duplicates)
+		? details.duplicates
+				.filter((group): group is unknown[] => Array.isArray(group))
+				.map((group) =>
+					group
+						.map((page) => sanitizeBoundedString(page, ISSUE_DETAIL_LABEL_MAX_LENGTH))
+						.filter((page): page is string => Boolean(page))
+						.slice(0, ISSUE_DETAIL_DUPLICATE_MEMBER_LIMIT)
+				)
+				.filter((group) => group.length > 0)
+				.slice(0, ISSUE_DETAIL_DUPLICATE_GROUP_LIMIT)
+		: [];
+
+	if (pages.length === 0 && duplicates.length === 0) return undefined;
+	return {
+		...(pages.length > 0 ? { pages } : {}),
+		...(duplicates.length > 0 ? { duplicates } : {})
+	};
+}
+
+function sanitizeValidationIssue(value: unknown): ValidationCategoryIssueDetail | null {
+	if (!value || typeof value !== 'object') return null;
+	const issue = value as Record<string, unknown>;
+	const message = sanitizeBoundedString(issue.message, ISSUE_MESSAGE_MAX_LENGTH);
+	if (!message) return null;
+	const severity =
+		issue.severity === 'error' || issue.severity === 'warning' || issue.severity === 'info'
+			? issue.severity
+			: 'info';
+	const id = sanitizeBoundedString(issue.id, ISSUE_ID_MAX_LENGTH);
+	const howToFix = sanitizeBoundedString(issue.howToFix, ISSUE_FIX_MAX_LENGTH);
+	const location = sanitizeBoundedString(issue.location, ISSUE_LOCATION_MAX_LENGTH);
+	const details = sanitizeIssueDetails(issue.details);
+
+	return {
+		...(id ? { id } : {}),
+		severity,
+		message,
+		...(howToFix ? { howToFix } : {}),
+		...(location ? { location } : {}),
+		...(details ? { details } : {})
 	};
 }
 
@@ -2688,19 +2756,8 @@ function getCategoryDetails(
 			passed: category.passed === true,
 			issues: Array.isArray(category.issues)
 				? category.issues
-						.filter(
-							(issue): issue is ValidationCategoryIssueDetail =>
-								Boolean(issue) &&
-								(issue.severity === 'error' ||
-									issue.severity === 'warning' ||
-									issue.severity === 'info') &&
-								typeof issue.message === 'string' &&
-								issue.message.trim() !== ''
-						)
-						.map((issue) => ({
-							severity: issue.severity,
-							message: issue.message.trim()
-						}))
+						.map(sanitizeValidationIssue)
+						.filter((issue): issue is ValidationCategoryIssueDetail => issue !== null)
 				: []
 		}))
 		.slice(0, 10);

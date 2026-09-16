@@ -10,9 +10,9 @@ use std::{
 mod transport;
 
 use create_something_draw_pairing_protocol::{
-    apply_canvas_operation, apply_envelope, digest_capability, prune_applied_receipts,
-    valid_document, AppliedOperation, CanvasOperation, OperationEnvelope, OperationResult,
-    PairedClient, PairingHostState, DOCUMENT_VERSION, PROTOCOL_VERSION,
+    apply_canvas_operation, apply_envelope, digest_capability, normalize_document_compat,
+    prune_applied_receipts, valid_document, AppliedOperation, CanvasOperation, OperationEnvelope,
+    OperationResult, PairedClient, PairingHostState, DOCUMENT_VERSION, PROTOCOL_VERSION,
 };
 use rand::{distr::Alphanumeric, Rng};
 use serde::Serialize;
@@ -61,6 +61,10 @@ fn is_safe_idempotent(document: &Value, operation: &CanvasOperation) -> bool {
         CanvasOperation::SetTitle { title } => {
             document.get("title").and_then(Value::as_str) == Some(title)
         }
+        CanvasOperation::SetBackground { background } => document
+            .get("background")
+            .and_then(Value::as_str)
+            .is_some_and(|current| current.eq_ignore_ascii_case(background)),
         CanvasOperation::SetViewport { viewport } => serde_json::to_value(viewport)
             .ok()
             .is_some_and(|value| document.get("viewport") == Some(&value)),
@@ -97,7 +101,7 @@ fn is_safe_idempotent(document: &Value, operation: &CanvasOperation) -> bool {
                 object.get("kind").and_then(Value::as_str) == Some(expected_kind)
                     && object.get("sourceIds") == serde_json::to_value(selected_ids).ok().as_ref()
             }),
-        CanvasOperation::RestoreConversion { .. } => false,
+        CanvasOperation::RestoreConversion { .. } | CanvasOperation::ReplaceObjects { .. } => false,
     }
 }
 
@@ -128,8 +132,23 @@ fn operation_references_id(operation: &CanvasOperation, id: &str) -> bool {
             selected_ids.iter().any(|candidate| candidate == id)
         }
         CanvasOperation::RestoreConversion { id: restored } => restored == id,
-        CanvasOperation::SetTitle { .. } | CanvasOperation::SetViewport { .. } => false,
+        CanvasOperation::SetTitle { .. }
+        | CanvasOperation::SetBackground { .. }
+        | CanvasOperation::SetViewport { .. }
+        | CanvasOperation::ReplaceObjects { .. } => false,
     }
+}
+
+fn discard_queue_with_replacement(queue: &mut VecDeque<OperationEnvelope>) -> usize {
+    if !queue
+        .iter()
+        .any(|envelope| matches!(envelope.operation, CanvasOperation::ReplaceObjects { .. }))
+    {
+        return 0;
+    }
+    let discarded = queue.len();
+    queue.clear();
+    discarded
 }
 
 pub(crate) struct DrawRuntime {
@@ -193,7 +212,7 @@ fn companion_session_from_grant(
     let revision = grant["revision"]
         .as_u64()
         .ok_or("Pairing grant omitted revision")?;
-    let document = grant["document"].clone();
+    let document = normalize_document_compat(grant["document"].clone());
     if !valid_document(&document) {
         return Err("Pairing grant contains an invalid canvas document".into());
     }
@@ -278,6 +297,7 @@ fn initial_state() -> PairingHostState {
             "version": DOCUMENT_VERSION,
             "id": format!("canvas-{}", Uuid::new_v4()),
             "title": "Untitled mapping session",
+            "background": "#000000",
             "createdAt": timestamp,
             "updatedAt": timestamp,
             "viewport": { "x": 0, "y": 0, "zoom": 1 },
@@ -291,12 +311,13 @@ fn initial_state() -> PairingHostState {
 fn load_state(path: &Path) -> Result<PairingHostState, String> {
     match fs::read(path) {
         Ok(bytes) => {
-            let state: PairingHostState = serde_json::from_slice(&bytes).map_err(|error| {
+            let mut state: PairingHostState = serde_json::from_slice(&bytes).map_err(|error| {
                 format!(
                     "Canonical Draw state is unreadable at {}: {error}",
                     path.display()
                 )
             })?;
+            state.document = normalize_document_compat(state.document);
             if !valid_document(&state.document) {
                 return Err(format!(
                     "Canonical Draw document is invalid at {}",
@@ -375,6 +396,14 @@ fn load_companion_state(path: &Path) -> Option<StoredCompanionSession> {
     fs::read(path)
         .ok()
         .and_then(|bytes| serde_json::from_slice(&bytes).ok())
+        .map(|mut stored: StoredCompanionSession| {
+            stored.document = normalize_document_compat(stored.document);
+            if stored.host.protocol_version != PROTOCOL_VERSION {
+                stored.online = false;
+                stored.requires_repair = true;
+            }
+            stored
+        })
         .filter(|stored: &StoredCompanionSession| valid_document(&stored.document))
 }
 
@@ -720,7 +749,7 @@ fn install_companion_snapshot(
         return Ok(false);
     }
     session.revision = snapshot_revision;
-    session.document = snapshot["document"].clone();
+    session.document = normalize_document_compat(snapshot["document"].clone());
     Ok(true)
 }
 
@@ -802,6 +831,7 @@ fn replace_host_document(
     if cfg!(mobile) {
         return Err("Only the Mac authority can replace the canonical document".into());
     }
+    let document = normalize_document_compat(document);
     if !valid_document(&document) {
         return Err("Replacement document is invalid".into());
     }
@@ -939,7 +969,7 @@ async fn flush_companion(runtime: &DrawRuntime) -> Result<Value, String> {
                 session.revision = result["revision"]
                     .as_u64()
                     .ok_or("Host response omitted revision")?;
-                session.document = result["document"].clone();
+                session.document = normalize_document_compat(result["document"].clone());
                 if session
                     .queue
                     .front()
@@ -1017,7 +1047,7 @@ async fn flush_companion(runtime: &DrawRuntime) -> Result<Value, String> {
         session.revision = snapshot["revision"]
             .as_u64()
             .ok_or("Snapshot omitted revision")?;
-        session.document = snapshot["document"].clone();
+        session.document = normalize_document_compat(snapshot["document"].clone());
         if invalid_operation {
             let safely_reconciled = session
                 .queue
@@ -1035,6 +1065,18 @@ async fn flush_companion(runtime: &DrawRuntime) -> Result<Value, String> {
                 "revision": session.revision,
                 "document": optimistic_companion_document(session),
                 "code": "INVALID_OPERATION"
+            }));
+        }
+        let discarded_operations = discard_queue_with_replacement(&mut session.queue);
+        if discarded_operations > 0 {
+            persist_companion_state(&runtime.companion_state_path, session)?;
+            return Ok(json!({
+                "status": "conflict",
+                "queueDepth": session.queue.len(),
+                "revision": session.revision,
+                "document": session.document,
+                "code": "STALE_REVISION",
+                "discardedOperations": discarded_operations
             }));
         }
         let revision = session.revision;
@@ -1564,6 +1606,50 @@ mod tests {
     }
 
     #[test]
+    fn upgraded_companions_preserve_old_protocol_queues_in_a_repair_state() {
+        let directory = std::env::temp_dir().join(format!("draw-old-pairing-{}", Uuid::new_v4()));
+        let path = directory.join(COMPANION_STATE_FILE);
+        let session = CompanionSession {
+            host: transport::DiscoveredHost {
+                endpoint: "https://draw-mac.local:4242".into(),
+                session_id: "session-old-host".into(),
+                protocol_version: PROTOCOL_VERSION.into(),
+                certificate_fingerprint: "a".repeat(64),
+                certificate_der: "fixture-certificate".into(),
+            },
+            client_id: "iphone-test".into(),
+            capability: "never-write-this-secret".into(),
+            expires_at: "2099-01-01T00:00:00Z".into(),
+            revision: 0,
+            document: initial_state().document,
+            queue: VecDeque::from([OperationEnvelope {
+                protocol_version: PROTOCOL_VERSION.into(),
+                document_version: DOCUMENT_VERSION.into(),
+                session_id: "session-old-host".into(),
+                client_id: "iphone-test".into(),
+                operation_id: "offline-edit".into(),
+                base_revision: 0,
+                sent_at: "2026-08-29T16:00:00Z".into(),
+                capability: "never-write-this-secret".into(),
+                operation: CanvasOperation::SetTitle { title: "Preserve me".into() },
+            }]),
+            online: true,
+            requires_repair: false,
+        };
+        persist_companion_state(&path, &session).unwrap();
+        let mut stored: Value = serde_json::from_slice(&fs::read(&path).unwrap()).unwrap();
+        stored["host"]["protocolVersion"] = json!("create-something.draw-pairing.v1");
+        fs::write(&path, serde_json::to_vec_pretty(&stored).unwrap()).unwrap();
+
+        let retained = load_companion_state(&path).expect("old pairing retained for explicit repair");
+        assert!(!retained.online);
+        assert!(retained.requires_repair);
+        assert_eq!(retained.queue.len(), 1);
+        assert_eq!(retained.queue[0].operation_id, "offline-edit");
+        let _ = fs::remove_dir_all(directory);
+    }
+
+    #[test]
     fn companion_status_replays_the_durable_offline_queue() {
         let directory = std::env::temp_dir().join(format!("draw-status-{}", Uuid::new_v4()));
         let mut queue = VecDeque::new();
@@ -1996,6 +2082,50 @@ mod tests {
         );
         drop(companion);
         let _ = fs::remove_dir_all(directory);
+    }
+
+    #[test]
+    fn stale_rebase_discards_the_whole_history_batch_around_a_replacement() {
+        let operation = |id: &str, operation| OperationEnvelope {
+            protocol_version: PROTOCOL_VERSION.into(),
+            document_version: DOCUMENT_VERSION.into(),
+            session_id: "session-test".into(),
+            operation_id: id.into(),
+            client_id: "iphone-test".into(),
+            base_revision: 4,
+            operation,
+            sent_at: "2026-08-29T16:00:00Z".into(),
+            capability: "fixture-secret".into(),
+        };
+        let mut queue = VecDeque::from([
+            operation(
+                "safe-before",
+                CanvasOperation::SetTitle {
+                    title: "Safe".into(),
+                },
+            ),
+            operation(
+                "unsafe-middle",
+                CanvasOperation::ReplaceObjects { objects: vec![] },
+            ),
+            operation(
+                "safe-after",
+                CanvasOperation::SetViewport {
+                    viewport: create_something_draw_pairing_protocol::Viewport {
+                        x: 1.0,
+                        y: 2.0,
+                        zoom: 1.0,
+                    },
+                },
+            ),
+            operation(
+                "unsafe-last",
+                CanvasOperation::ReplaceObjects { objects: vec![] },
+            ),
+        ]);
+
+        assert_eq!(discard_queue_with_replacement(&mut queue), 4);
+        assert!(queue.is_empty());
     }
 
     #[test]

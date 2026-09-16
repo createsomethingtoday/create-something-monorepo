@@ -44,6 +44,8 @@ function calibration(overrides = {}) {
     },
     execution: { failures: 0 },
     precision: 10 / 11,
+    recall: 1,
+    recall_evidence: { expected: 10, detected: 10, missed: 0 },
     false_positive_rate: 1 / 11,
     promotion: { ready: true, reasons: [] },
     ...overrides
@@ -98,6 +100,13 @@ function evidence(overrides = {}) {
             { verification_status: 'FAIL', finding: `fixture-${language.id}` }
           ])
         ),
+        trust_contract: {
+          invalid_policy_rejected: true,
+          stale_evidence_rejected: true,
+          inferred_fixes_review_only: true,
+          workspace_discovery_verified: true,
+          policy_digest_verified: true
+        },
         ready: true
       }
     ])

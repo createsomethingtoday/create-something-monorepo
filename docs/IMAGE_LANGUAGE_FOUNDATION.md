@@ -134,6 +134,13 @@ Use the route that matches the work:
 | Image based on an existing Atlas graph or SVG brief | Preserve the graph/brief as source context, then generate or edit the publishable export |
 | Screenshot evidence | Capture the real surface, redact, annotate, and label as screenshot evidence |
 
+Use `pnpm marketing:image:screenshot -- --help` for public screenshot evidence.
+The command preserves the screenshot outside declared redaction regions, creates
+a 1080×1350 LinkedIn composition with authored text, and writes a provenance
+manifest with source and output hashes. It fails closed unless at least one
+redaction is declared or the operator explicitly passes `--allow-unredacted`
+after reviewing the source.
+
 Keep model, quality, size, prompt, source inputs, owner, and review status beside
 the generated export. GPT image access may require OpenAI organization
 verification; treat that as an environment prerequisite, not a reason to change

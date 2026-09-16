@@ -1,28 +1,18 @@
 //! CREATE SOMETHING Monorepo Awareness
 //!
-//! Opinionated configuration for the CREATE SOMETHING monorepo.
-//! Understands package structure, suggests specific refactoring targets,
-//! and emits Linear commands for task tracking.
+//! Workspace discovery for the CREATE SOMETHING monorepo.
+//! Follows pnpm workspace patterns, manifests, and dependency relationships.
 //!
 //! ## Package Structure
 //!
 //! ```text
-//! packages/
-//! ├── components/          # @create-something/components (shared library)
-//! │   └── src/lib/
-//! │       ├── analytics/   # Analytics handlers
-//! │       ├── auth/        # Auth handlers  
-//! │       ├── newsletter/  # Newsletter handlers
-//! │       └── ...
-//! ├── agency/              # SvelteKit app (property)
-//! ├── io/                  # SvelteKit app (property)
-//! ├── ltd/                 # SvelteKit app (property)
-//! ├── space/               # SvelteKit app (property)
-//! ├── lms/                 # SvelteKit app (property)
-//! ├── identity-worker/     # Cloudflare Worker (auth)
-//! └── harness/             # Agent infrastructure
+//! apps/*
+//! packages/*
+//! packages/*/worker
+//! packages/*/workers/*
 //! ```
 
+use std::collections::{BTreeSet, HashSet};
 use std::path::{Path, PathBuf};
 use std::fs;
 use serde::{Serialize, Deserialize};
@@ -31,21 +21,7 @@ use serde::{Serialize, Deserialize};
 pub const PROPERTY_PACKAGES: &[&str] = &["agency", "io", "ltd", "space", "lms"];
 
 /// Shared library package
-pub const SHARED_PACKAGE: &str = "components";
-
-/// Known export paths in @create-something/components
-pub const COMPONENT_EXPORTS: &[(&str, &str)] = &[
-    ("analytics", "Analytics handlers and tracking"),
-    ("auth", "Authentication handlers and session management"),
-    ("auth/server", "Server-side auth validation"),
-    ("newsletter", "Newsletter subscription handlers"),
-    ("gdpr", "GDPR consent management"),
-    ("api", "API client utilities"),
-    ("utils", "Shared utilities"),
-    ("forms", "Form components"),
-    ("validation", "Validation utilities"),
-    ("types", "Shared TypeScript types"),
-];
+pub const SHARED_PACKAGE: &str = "canon";
 
 /// Monorepo detection result
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -66,7 +42,7 @@ pub struct MonorepoInfo {
 /// Information about a package
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PackageInfo {
-    /// Package name (e.g., "@create-something/components")
+    /// Package name (e.g., "@create-something/canon")
     pub name: String,
     
     /// Package path relative to monorepo root
@@ -85,7 +61,7 @@ pub struct PackageInfo {
 /// Type of package
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum PackageType {
-    /// Shared library (@create-something/components)
+    /// Shared library (@create-something/canon)
     SharedLibrary,
     /// SvelteKit property app (agency, io, ltd, etc.)
     Property,
@@ -106,7 +82,7 @@ pub struct RefactoringSuggestion {
     /// Human-readable description
     pub description: String,
     
-    /// Target location in @create-something/components
+    /// Target location, present only after resolution and validation
     pub target_path: String,
     
     /// Import statement to use after refactoring
@@ -142,20 +118,42 @@ pub fn detect_monorepo(start_path: &Path) -> Option<MonorepoInfo> {
         return None;
     }
     
-    // Check if this is specifically the CREATE SOMETHING monorepo
-    // (has packages/components with package.json)
-    let components_path = root.join("packages/components");
-    let is_create_something = components_path.exists() && 
-        root.join("packages/components/package.json").exists();
+    let is_create_something = fs::read_to_string(root.join("package.json"))
+        .ok()
+        .and_then(|content| serde_json::from_str::<serde_json::Value>(&content).ok())
+        .and_then(|manifest| manifest.get("name").and_then(|name| name.as_str()).map(str::to_owned))
+        .is_some_and(|name| name == "@create-something/monorepo");
     
     // Detect packages
     let packages = detect_packages(&root);
+    let package_names = packages.iter().map(|package| package.name.clone()).collect::<HashSet<_>>();
+    let mut dependencies = Vec::new();
+    for package in &packages {
+        let Ok(content) = fs::read_to_string(root.join(&package.path).join("package.json")) else {
+            continue;
+        };
+        let Ok(manifest) = serde_json::from_str::<serde_json::Value>(&content) else {
+            continue;
+        };
+        for section in ["dependencies", "devDependencies", "peerDependencies", "optionalDependencies"] {
+            let Some(entries) = manifest.get(section).and_then(|value| value.as_object()) else {
+                continue;
+            };
+            for dependency in entries.keys() {
+                if package_names.contains(dependency) {
+                    dependencies.push((package.name.clone(), dependency.clone()));
+                }
+            }
+        }
+    }
+    dependencies.sort();
+    dependencies.dedup();
     
     Some(MonorepoInfo {
         root,
         is_create_something,
         packages,
-        dependencies: Vec::new(), // TODO: Parse package.json dependencies
+        dependencies,
     })
 }
 
@@ -166,30 +164,23 @@ fn find_monorepo_root(start: &Path) -> Option<PathBuf> {
         start
     };
     
-    for _ in 0..10 {
+    while let Some(parent) = current.parent() {
         if current.join("pnpm-workspace.yaml").exists() {
             return Some(current.to_path_buf());
         }
-        current = current.parent()?;
+        current = parent;
     }
-    
+
+    if current.join("pnpm-workspace.yaml").exists() {
+        return Some(current.to_path_buf());
+    }
     None
 }
 
 fn detect_packages(root: &Path) -> Vec<PackageInfo> {
     let mut packages = Vec::new();
-    
-    let packages_dir = root.join("packages");
-    if !packages_dir.exists() {
-        return packages;
-    }
-    
-    for entry in fs::read_dir(&packages_dir).into_iter().flatten().flatten() {
-        let path = entry.path();
-        if !path.is_dir() {
-            continue;
-        }
-        
+
+    for path in discover_workspace_package_paths(root) {
         let name = path.file_name()
             .and_then(|n| n.to_str())
             .unwrap_or("")
@@ -201,16 +192,14 @@ fn detect_packages(root: &Path) -> Vec<PackageInfo> {
         }
         
         let package_json = path.join("package.json");
-        if !package_json.exists() {
-            continue;
-        }
         
         // Determine package type
+        let relative_path = path.strip_prefix(root).unwrap_or(&path);
         let package_type = if name == SHARED_PACKAGE {
             PackageType::SharedLibrary
-        } else if PROPERTY_PACKAGES.contains(&name.as_str()) {
+        } else if relative_path.starts_with("apps") || PROPERTY_PACKAGES.contains(&name.as_str()) {
             PackageType::Property
-        } else if path.join("wrangler.toml").exists() {
+        } else if path.join("wrangler.toml").exists() || name == "worker" || name.ends_with("-worker") {
             PackageType::Worker
         } else if name.contains("agent") || name.contains("harness") || name.contains("orchestration") {
             PackageType::Infrastructure
@@ -220,7 +209,7 @@ fn detect_packages(root: &Path) -> Vec<PackageInfo> {
         
         let is_sveltekit = path.join("svelte.config.js").exists() || 
                           path.join("src/routes").exists();
-        let is_worker = path.join("wrangler.toml").exists();
+        let is_worker = path.join("wrangler.toml").exists() || name == "worker" || name.ends_with("-worker");
         
         // Get npm package name
         let npm_name = fs::read_to_string(&package_json)
@@ -245,167 +234,56 @@ fn detect_packages(root: &Path) -> Vec<PackageInfo> {
     packages
 }
 
-/// Generate refactoring suggestion for a DRY violation
-pub fn suggest_refactoring(
-    file_a: &Path,
-    file_b: &Path,
-    similarity: f64,
-    monorepo: &MonorepoInfo,
-) -> Option<RefactoringSuggestion> {
-    let file_a_str = file_a.to_string_lossy();
-    let file_b_str = file_b.to_string_lossy();
-    
-    // Detect the pattern
-    let pattern = detect_violation_pattern(&file_a_str, &file_b_str);
-    
-    match pattern {
-        ViolationPattern::ApiHandler(handler_type) => {
-            let target_module = match handler_type.as_str() {
-                "analytics" => "analytics",
-                "newsletter" => "newsletter",
-                "auth" | "login" | "signup" => "auth",
-                "user" => "auth",
-                _ => "api",
-            };
-            
-            Some(RefactoringSuggestion {
-                action: RefactoringAction::CreateHandlerFactory,
-                description: format!(
-                    "Create shared {} handler factory in @create-something/components/{}",
-                    handler_type, target_module
-                ),
-                target_path: format!("packages/components/src/lib/{}/handlers.ts", target_module),
-                import_statement: format!(
-                    "import {{ create{}Handler }} from '@create-something/components/{}'",
-                    to_pascal_case(&handler_type), target_module
-                ),
-                linear_command: linear_create_command(
-                    &format!("Extract shared {} handler ({:.0}% duplicate)", handler_type, similarity * 100.0),
-                    &["refactor", "dry"],
-                    "high",
-                ),
-                priority: if similarity > 0.95 { "P0" } else { "P1" }.to_string(),
-            })
+/// Expand the repository's declared pnpm workspace patterns. Package discovery
+/// must follow the same include and exclude contract as pnpm so analysis does
+/// not silently omit apps or nested workers.
+pub fn discover_workspace_package_paths(root: &Path) -> Vec<PathBuf> {
+    let Ok(contents) = fs::read_to_string(root.join("pnpm-workspace.yaml")) else {
+        return Vec::new();
+    };
+    let Ok(document) = serde_yaml::from_str::<serde_yaml::Value>(&contents) else {
+        return Vec::new();
+    };
+    let Some(patterns) = document.get("packages").and_then(|value| value.as_sequence()) else {
+        return Vec::new();
+    };
+
+    let mut included = BTreeSet::new();
+    let mut excluded = Vec::new();
+    for pattern in patterns.iter().filter_map(|value| value.as_str()) {
+        if let Some(pattern) = pattern.strip_prefix('!') {
+            if let Ok(pattern) = glob::Pattern::new(pattern) {
+                excluded.push(pattern);
+            }
+            continue;
         }
-        ViolationPattern::PageLoader(loader_type) => {
-            Some(RefactoringSuggestion {
-                action: RefactoringAction::CreateHandlerFactory,
-                description: format!(
-                    "Create shared {} page loader in @create-something/components/auth",
-                    loader_type
-                ),
-                target_path: "packages/components/src/lib/auth/handlers.ts".to_string(),
-                import_statement: format!(
-                    "import {{ create{}PageLoader }} from '@create-something/components/auth'",
-                    to_pascal_case(&loader_type)
-                ),
-                linear_command: linear_create_command(
-                    &format!("Extract shared {} loader ({:.0}% duplicate)", loader_type, similarity * 100.0),
-                    &["refactor", "dry"],
-                    "high",
-                ),
-                priority: "P1".to_string(),
-            })
-        }
-        ViolationPattern::SvelteComponent(component_name) => {
-            Some(RefactoringSuggestion {
-                action: RefactoringAction::ExtractToShared,
-                description: format!(
-                    "Move {} component to @create-something/components",
-                    component_name
-                ),
-                target_path: format!("packages/components/src/lib/components/{}.svelte", component_name),
-                import_statement: format!(
-                    "import {{ {} }} from '@create-something/components/components'",
-                    component_name
-                ),
-                linear_command: linear_create_command(
-                    &format!("Move {} to shared components ({:.0}% duplicate)", component_name, similarity * 100.0),
-                    &["refactor", "dry"],
-                    "normal",
-                ),
-                priority: "P2".to_string(),
-            })
-        }
-        ViolationPattern::UtilityFunction(func_name) => {
-            Some(RefactoringSuggestion {
-                action: RefactoringAction::MoveDuplicateFunction,
-                description: format!(
-                    "Extract {} function to @create-something/components/utils",
-                    func_name
-                ),
-                target_path: "packages/components/src/lib/utils/index.ts".to_string(),
-                import_statement: format!(
-                    "import {{ {} }} from '@create-something/components/utils'",
-                    func_name
-                ),
-                linear_command: linear_create_command(
-                    &format!("Extract {} to shared utils ({:.0}% duplicate)", func_name, similarity * 100.0),
-                    &["refactor", "dry"],
-                    "normal",
-                ),
-                priority: "P2".to_string(),
-            })
-        }
-        ViolationPattern::Unknown => {
-            // For non-CREATE SOMETHING monorepos or unrecognized patterns,
-            // provide a generic suggestion
-            if !monorepo.is_create_something {
-                // Find common parent package or suggest shared package
-                let pkg_a = find_package_name(file_a, monorepo);
-                let pkg_b = find_package_name(file_b, monorepo);
-                
-                let (target_path, import_suggestion) = if pkg_a == pkg_b && pkg_a.is_some() {
-                    // Same package - create local utils
-                    (
-                        format!("packages/{}/src/utils/shared.ts", pkg_a.as_ref().unwrap()),
-                        "import { ... } from './utils/shared'".to_string()
-                    )
-                } else {
-                    // Different packages - suggest shared package
-                    (
-                        "packages/shared/src/index.ts".to_string(),
-                        "import { ... } from '@your-org/shared'".to_string()
-                    )
-                };
-                
-                Some(RefactoringSuggestion {
-                    action: RefactoringAction::ExtractToShared,
-                    description: format!(
-                        "Extract duplicate code to shared location"
-                    ),
-                    target_path,
-                    import_statement: import_suggestion,
-                    linear_command: linear_create_command(
-                        &format!("DRY violation: {:.0}% similar files", similarity * 100.0),
-                        &["refactor", "dry"],
-                        if similarity > 0.95 { "urgent" } else { "high" },
-                    ),
-                    priority: if similarity > 0.95 { "P0" } else { "P1" }.to_string(),
-                })
-            } else {
-                None
+        let absolute_pattern = root.join(pattern).to_string_lossy().to_string();
+        let Ok(matches) = glob::glob(&absolute_pattern) else {
+            continue;
+        };
+        for candidate in matches.flatten() {
+            if candidate.is_dir() && candidate.join("package.json").is_file() {
+                included.insert(candidate);
             }
         }
     }
+
+    included
+        .into_iter()
+        .filter(|path| {
+            let relative = path.strip_prefix(root).unwrap_or(path);
+            !excluded.iter().any(|pattern| pattern.matches_path(relative))
+        })
+        .collect()
 }
 
-/// Find the package name from a file path
-fn find_package_name(file: &Path, monorepo: &MonorepoInfo) -> Option<String> {
-    let file_str = file.to_string_lossy();
-    let root_str = monorepo.root.to_string_lossy();
-    
-    // Remove root prefix
-    let relative = file_str.strip_prefix(root_str.as_ref())?;
-    let relative = relative.trim_start_matches('/');
-    
-    // Look for packages/<name>/
-    if relative.starts_with("packages/") {
-        let after_packages = relative.strip_prefix("packages/")?;
-        let pkg_name = after_packages.split('/').next()?;
-        return Some(pkg_name.to_string());
-    }
-    
+/// Generate refactoring suggestion for a DRY violation
+pub fn suggest_refactoring(
+    _file_a: &Path,
+    _file_b: &Path,
+    _similarity: f64,
+    _monorepo: &MonorepoInfo,
+) -> Option<RefactoringSuggestion> {
     None
 }
 
@@ -464,87 +342,6 @@ fn shell_quote(value: &str) -> String {
     format!("\"{}\"", value.replace('"', "\\\""))
 }
 
-#[derive(Debug)]
-#[allow(dead_code)] // UtilityFunction detection planned but not yet implemented
-enum ViolationPattern {
-    ApiHandler(String),
-    PageLoader(String),
-    SvelteComponent(String),
-    UtilityFunction(String),
-    Unknown,
-}
-
-fn detect_violation_pattern(file_a: &str, file_b: &str) -> ViolationPattern {
-    // Check for API handlers (+server.ts in routes/api/)
-    if file_a.contains("/routes/api/") && file_b.contains("/routes/api/") {
-        // Extract handler type from path
-        let handler_type = extract_api_handler_type(file_a)
-            .or_else(|| extract_api_handler_type(file_b))
-            .unwrap_or_else(|| "api".to_string());
-        return ViolationPattern::ApiHandler(handler_type);
-    }
-    
-    // Check for page loaders (+page.server.ts)
-    if (file_a.contains("+page.server.ts") || file_a.contains("+layout.server.ts")) &&
-       (file_b.contains("+page.server.ts") || file_b.contains("+layout.server.ts")) {
-        let loader_type = extract_loader_type(file_a)
-            .or_else(|| extract_loader_type(file_b))
-            .unwrap_or_else(|| "page".to_string());
-        return ViolationPattern::PageLoader(loader_type);
-    }
-    
-    // Check for Svelte components
-    if file_a.ends_with(".svelte") && file_b.ends_with(".svelte") {
-        let component_name = extract_component_name(file_a)
-            .or_else(|| extract_component_name(file_b))
-            .unwrap_or_else(|| "Component".to_string());
-        return ViolationPattern::SvelteComponent(component_name);
-    }
-    
-    ViolationPattern::Unknown
-}
-
-fn extract_api_handler_type(path: &str) -> Option<String> {
-    // /routes/api/analytics/... -> "analytics"
-    // /routes/api/newsletter/... -> "newsletter"
-    // /routes/api/auth/login/... -> "login"
-    let parts: Vec<&str> = path.split('/').collect();
-    let api_idx = parts.iter().position(|&p| p == "api")?;
-    parts.get(api_idx + 1).map(|s| s.to_string())
-}
-
-fn extract_loader_type(path: &str) -> Option<String> {
-    // /routes/account/+page.server.ts -> "account"
-    // /routes/login/+page.server.ts -> "login"
-    let parts: Vec<&str> = path.split('/').collect();
-    let routes_idx = parts.iter().position(|&p| p == "routes")?;
-    
-    // Get the segment after routes that isn't a file
-    for part in parts.iter().skip(routes_idx + 1) {
-        if !part.starts_with('+') && !part.contains('.') {
-            return Some(part.to_string());
-        }
-    }
-    None
-}
-
-fn extract_component_name(path: &str) -> Option<String> {
-    let file_name = path.split('/').last()?;
-    Some(file_name.trim_end_matches(".svelte").to_string())
-}
-
-fn to_pascal_case(s: &str) -> String {
-    s.split(|c: char| c == '_' || c == '-' || c == ' ')
-        .map(|word| {
-            let mut chars = word.chars();
-            match chars.next() {
-                None => String::new(),
-                Some(first) => first.to_uppercase().chain(chars).collect(),
-            }
-        })
-        .collect()
-}
-
 /// Get recommended threshold for a package type
 pub fn recommended_threshold(package_type: &PackageType) -> f64 {
     match package_type {
@@ -561,48 +358,71 @@ mod tests {
     use super::*;
     
     #[test]
-    fn test_detect_api_handler_pattern() {
-        let file_a = "packages/agency/src/routes/api/analytics/events/+server.ts";
-        let file_b = "packages/ltd/src/routes/api/analytics/events/+server.ts";
-        
-        match detect_violation_pattern(file_a, file_b) {
-            ViolationPattern::ApiHandler(handler_type) => {
-                assert_eq!(handler_type, "analytics");
-            }
-            _ => panic!("Expected ApiHandler pattern"),
+    fn discovers_included_apps_and_nested_packages_with_dependencies_and_exclusions() {
+        let repo = tempfile::tempdir().unwrap();
+        fs::write(
+            repo.path().join("pnpm-workspace.yaml"),
+            "packages:\n  - 'apps/*'\n  - 'packages/*'\n  - 'packages/*/worker'\n  - '!packages/legacy'\n",
+        )
+        .unwrap();
+        fs::write(
+            repo.path().join("package.json"),
+            r#"{"name":"@create-something/monorepo"}"#,
+        )
+        .unwrap();
+        for directory in ["apps/studio", "packages/service", "packages/service/worker", "packages/legacy"] {
+            fs::create_dir_all(repo.path().join(directory)).unwrap();
         }
+        fs::write(
+            repo.path().join("apps/studio/package.json"),
+            r#"{"name":"@create-something/studio","dependencies":{"@create-something/service":"workspace:*"}}"#,
+        )
+        .unwrap();
+        fs::write(
+            repo.path().join("packages/service/package.json"),
+            r#"{"name":"@create-something/service"}"#,
+        )
+        .unwrap();
+        fs::write(
+            repo.path().join("packages/service/worker/package.json"),
+            r#"{"name":"@create-something/service-worker","dependencies":{"@create-something/service":"workspace:*"}}"#,
+        )
+        .unwrap();
+        fs::write(
+            repo.path().join("packages/legacy/package.json"),
+            r#"{"name":"@create-something/legacy"}"#,
+        )
+        .unwrap();
+
+        let detected = detect_monorepo(repo.path()).unwrap();
+        let names = detected.packages.iter().map(|package| package.name.as_str()).collect::<Vec<_>>();
+        assert_eq!(names, vec![
+            "@create-something/studio",
+            "@create-something/service",
+            "@create-something/service-worker",
+        ]);
+        assert!(detected.is_create_something);
+        assert_eq!(detected.dependencies, vec![
+            ("@create-something/service-worker".to_string(), "@create-something/service".to_string()),
+            ("@create-something/studio".to_string(), "@create-something/service".to_string()),
+        ]);
     }
-    
+
     #[test]
-    fn test_detect_page_loader_pattern() {
-        let file_a = "packages/agency/src/routes/account/+page.server.ts";
-        let file_b = "packages/ltd/src/routes/account/+page.server.ts";
-        
-        match detect_violation_pattern(file_a, file_b) {
-            ViolationPattern::PageLoader(loader_type) => {
-                assert_eq!(loader_type, "account");
-            }
-            _ => panic!("Expected PageLoader pattern"),
-        }
-    }
-    
-    #[test]
-    fn test_detect_svelte_component_pattern() {
-        let file_a = "packages/agency/src/lib/components/Header.svelte";
-        let file_b = "packages/ltd/src/lib/components/Header.svelte";
-        
-        match detect_violation_pattern(file_a, file_b) {
-            ViolationPattern::SvelteComponent(name) => {
-                assert_eq!(name, "Header");
-            }
-            _ => panic!("Expected SvelteComponent pattern"),
-        }
-    }
-    
-    #[test]
-    fn test_to_pascal_case() {
-        assert_eq!(to_pascal_case("analytics"), "Analytics");
-        assert_eq!(to_pascal_case("user_analytics"), "UserAnalytics");
-        assert_eq!(to_pascal_case("cross-domain"), "CrossDomain");
+    fn create_something_refactors_require_resolved_exports_before_suggesting_a_target() {
+        let monorepo = MonorepoInfo {
+            root: PathBuf::from("/repo"),
+            is_create_something: true,
+            packages: Vec::new(),
+            dependencies: Vec::new(),
+        };
+
+        assert!(suggest_refactoring(
+            Path::new("/repo/apps/agency/src/routes/api/auth/+server.ts"),
+            Path::new("/repo/apps/io/src/routes/api/auth/+server.ts"),
+            0.95,
+            &monorepo,
+        )
+        .is_none());
     }
 }

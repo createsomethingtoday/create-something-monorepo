@@ -1,0 +1,126 @@
+{
+  "schema_version": "ground-public-performance.v1",
+  "measured_at": "2026-09-07T19:27:52.080007+00:00",
+  "workload": {
+    "query": "ground_find_dead_exports",
+    "module": "packages/agency/src/lib/community/monitors/types.ts",
+    "search_scope": "packages/agency/src",
+    "machine": "macOS ARM64",
+    "same_corpus_verified": true,
+    "comparison_corpus_sha256": "2b56a5c5b7fad34e251718947246008072e4a7c733ab6033753a84cec4c07f57"
+  },
+  "baseline": {
+    "name": "ground",
+    "version": "0.4.2",
+    "source_sha": "2fb3f49e774cb5918d87a76396b5d5c1da670525",
+    "target_triple": "aarch64-apple-darwin",
+    "receipt_schema_version": "ground-review-receipt.v1"
+  },
+  "candidate": {
+    "name": "ground",
+    "version": "0.4.3",
+    "source_sha": "8d3a7c3becff0a7dfa51bb819dbe43186df0f685",
+    "target_triple": "aarch64-apple-darwin",
+    "receipt_schema_version": "ground-review-receipt.v1"
+  },
+  "summary": {
+    "module": "packages/agency/src/lib/community/monitors/types.ts",
+    "published_0_4_2_median_ms": 723.9448335000006,
+    "published_0_4_3_warm_median_ms": 71.86937449999823,
+    "published_0_4_3_uncached_median_ms": 530.2002290000019,
+    "speedup": 10.073064341196103
+  },
+  "baseline_samples": [
+    {
+      "repeat": 0,
+      "module": "packages/agency/src/lib/community/monitors/types.ts",
+      "warm_ms": 849.2330000000002,
+      "fresh_ms": 726.4987920000003,
+      "warm_rss_bytes": 17842176,
+      "fresh_rss_bytes": 17825792
+    },
+    {
+      "repeat": 1,
+      "module": "packages/agency/src/lib/community/monitors/types.ts",
+      "warm_ms": 731.0955420000009,
+      "fresh_ms": 751.4801250000019,
+      "warm_rss_bytes": 17874944,
+      "fresh_rss_bytes": 17956864
+    },
+    {
+      "repeat": 2,
+      "module": "packages/agency/src/lib/community/monitors/types.ts",
+      "warm_ms": 716.7941250000003,
+      "fresh_ms": 728.5047080000004,
+      "warm_rss_bytes": 17154048,
+      "fresh_rss_bytes": 17825792
+    }
+  ],
+  "candidate_samples": [
+    {
+      "repeat": 0,
+      "module": "packages/agency/src/lib/community/monitors/types.ts",
+      "warm_ms": 721.7187089999934,
+      "fresh_ms": 536.3802920000016,
+      "warm_rss_bytes": 21053440,
+      "fresh_rss_bytes": 19103744,
+      "cache": {
+        "enabled": true,
+        "entries": 512,
+        "evictions": 752,
+        "graph_hits": 0,
+        "max_entries": 512,
+        "max_payload_bytes": 16777216,
+        "misses": 1264,
+        "parse_hits": 1,
+        "payload_bytes": 1634695
+      }
+    },
+    {
+      "repeat": 1,
+      "module": "packages/agency/src/lib/community/monitors/types.ts",
+      "warm_ms": 73.00845799999661,
+      "fresh_ms": 528.8998750000028,
+      "warm_rss_bytes": 22478848,
+      "fresh_rss_bytes": 19054592,
+      "cache": {
+        "enabled": true,
+        "entries": 512,
+        "evictions": 753,
+        "graph_hits": 1,
+        "max_entries": 512,
+        "max_payload_bytes": 16777216,
+        "misses": 1265,
+        "parse_hits": 422,
+        "payload_bytes": 1635073
+      }
+    },
+    {
+      "repeat": 2,
+      "module": "packages/agency/src/lib/community/monitors/types.ts",
+      "warm_ms": 70.73029099999985,
+      "fresh_ms": 531.5005830000009,
+      "warm_rss_bytes": 22659072,
+      "fresh_rss_bytes": 19005440,
+      "cache": {
+        "enabled": true,
+        "entries": 512,
+        "evictions": 753,
+        "graph_hits": 2,
+        "max_entries": 512,
+        "max_payload_bytes": 16777216,
+        "misses": 1265,
+        "parse_hits": 844,
+        "payload_bytes": 1635073
+      }
+    }
+  ],
+  "limitations": [
+    "One macOS ARM64 host; machine and workload dependent.",
+    "Repeated queries in persistent MCP; excludes npm/process initialization.",
+    "No OS cache eviction; RSS samples after responses are not peak RSS.",
+    "Cold and tiny queries can be slower; CLI remains uncached by default.",
+    "Baseline and candidate trials ran sequentially; fresh uncached candidate is an additional same-version oracle."
+  ],
+  "release_url": "https://github.com/createsomethingtoday/create-something-monorepo/releases/tag/ground-v0.4.3"
+}

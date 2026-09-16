@@ -20,7 +20,7 @@
 
 <SEO
   title="Workflow Compiler Integration | CREATE SOMETHING"
-  description="Install one governed AI workflow contract, its MCP or agent tool boundary, policy artifacts, receipts, and CI gate in your repository."
+  description="Turn one workflow plan into code, permission rules, and automated checks in your repository. For teams that already have a developer."
   keywords="workflow compiler integration, governed AI workflow, MCP integration, agent CI gate, workflow policy artifacts"
   propertyName="agency"
 />
@@ -52,8 +52,8 @@
   <PerformanceNarrativeStage
     id="workflow-compiler-integration-story"
     eyebrow="What ships"
-    title="A governed workflow your builders can keep composing."
-    description="The engagement turns one consequential workflow into a local and CI contract without introducing a hosted runtime or transferring operating authority."
+    title="A workflow your developers can test and extend."
+    description="We add one workflow definition and automated checks to your existing project. Your team keeps control of hosting and permissions."
     scenes={workflowCompilerIntegrationScenes}
     ariaLabel="Workflow Compiler Integration delivery sequence"
   >

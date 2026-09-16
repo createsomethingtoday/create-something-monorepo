@@ -14,12 +14,12 @@
     {
       question: 'What does Signal collect?',
       answer:
-        'Signal collects source updates, exceptions, Slack posts, API changes, account context, affected systems, and the reason a reviewer or agent should care.'
+        'Signal collects updates from your tools and explains which work they affect.'
     },
     {
       question: 'How does Signal connect back to Map?',
       answer:
-        'Map shows where the Signal enters the workflow, which systems it touches, and which Decision queue should review it.'
+        'Map shows where the update came from, the tools it affects, and who should review it.'
     },
     {
       question: 'Does Signal replace review?',
@@ -34,7 +34,7 @@
       icon: 'plus',
       title: 'One queue for important updates',
       detail:
-        'Signal watches API updates, Slack channels, schema diffs, incidents, PRs, support notes, and reviewer exceptions before they become hidden process debt.',
+        'Signal watches for changes in connected tools, messages, code, support notes, and review queues.',
       points: ['Source', 'Owner', 'Affected system', 'Reason to review']
     },
     {
@@ -76,14 +76,14 @@
       icon: 'document',
       title: 'Source context',
       detail:
-        'Signal owns the source event, account owner, affected system, urgency, authority context, and why the update matters.'
+        'Each update includes its source, account owner, affected tool, urgency, permissions, and reason for review.'
     },
     {
       eyebrow: 'Produces',
       icon: 'check',
       title: 'A review requirement',
       detail:
-        'A good Signal produces a Decision requirement instead of silently changing documentation, API review, or front-end behavior.'
+        'An update goes to review before it can change documentation, app behavior, or review rules.'
     },
     {
       eyebrow: 'Records',
@@ -158,8 +158,8 @@
 
 <GovernanceProductPage
   {product}
-  title="The inbox for updates that should not surprise reviewers."
-  description="Signal watches the places where work changes and turns each update into reviewable context, with its source still attached."
+  title="See the updates your team needs to review."
+  description="Signal is the inbox inside Control. It gathers updates from connected tools and links each one to its source and affected workflow."
   {heroCards}
   {pathItems}
   {detailCards}

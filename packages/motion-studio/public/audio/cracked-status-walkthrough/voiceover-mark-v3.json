@@ -1,0 +1,24 @@
+{
+  "provider": "ElevenLabs",
+  "model": "eleven_v3",
+  "voice": {
+    "name": "Mark - Natural Conversations",
+    "id": "UgBBYS2sOqTuMpoF3BR0"
+  },
+  "generation": {
+    "take": 2,
+    "stability": 0.5,
+    "output_format": "mp3_44100_128",
+    "source_duration_seconds": 54.831,
+    "generated_at": "2026-08-31T21:19:57-05:00"
+  },
+  "post_processing": {
+    "atempo": 0.9,
+    "sample_rate_hz": 44100,
+    "channels": 1,
+    "bitrate_kbps": 192,
+    "final_duration_seconds": 60.943673
+  },
+  "sha256": "41e9fc1ca10839a1583b52da4d262452aebafdbc3ffe0034280c8dd14d20daa5",
+  "linear_issue": "CRE-1907"
+}

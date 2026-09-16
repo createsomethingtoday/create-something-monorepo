@@ -131,3 +131,12 @@ For the first stable release, replace a beta range with an exact `0.1.x`
 version, rerun the clean-consumer gate on Node 22 and 24, and recompile all
 production-bound definitions. Do not assume a beta-generated plan is approved
 for live execution merely because the stable compiler can parse it.
+
+## 0.4.x to 0.5.0
+
+Run `validate` before promotion. Unknown fields that older parsers ignored
+inside workflow owners, approval, receipt, recovery, tool, transition, and replay
+records now produce `INVALID_VALUE` diagnostics at the exact field path. Remove
+unused metadata and correct misspelled fields; do not move policy into evidence
+as a workaround. Evidence maps remain extensible. Runtime-manifest helpers
+require a v0.3 compiled workflow and explicitly selected serial steps.

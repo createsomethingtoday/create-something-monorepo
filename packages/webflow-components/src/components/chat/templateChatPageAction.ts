@@ -101,12 +101,17 @@ const FILTER_PARAM_KEYS = [
   'designer_record_id',
   'sort',
   'page',
+  'strict',
 ] as const;
 
 /** Does this action change what the grid is showing (rather than just highlight)? */
 export function pageActionChangesFilters(payload: PageActionPayload): boolean {
   return (
     Boolean(payload.clear_filters) ||
+    payload.child_category_slug != null ||
+    payload.page != null ||
+    payload.scope != null ||
+    payload.strict != null ||
     payload.q != null ||
     payload.category_group_slug != null ||
     payload.styles != null ||
@@ -140,6 +145,13 @@ export function buildPageActionUrl(currentHref: string, payload: PageActionPaylo
     if (payload.category_group_slug) url.searchParams.set('category', payload.category_group_slug);
     else url.searchParams.delete('category');
   }
+  if (payload.child_category_slug != null) {
+    url.searchParams.delete('child_category_slug');
+    if (payload.child_category_slug) url.searchParams.set('subcategory', payload.child_category_slug);
+    else url.searchParams.delete('subcategory');
+  }
+  if (payload.scope != null) url.searchParams.set('scope', payload.scope);
+  if (payload.strict != null) url.searchParams.set('strict', String(payload.strict));
   if (payload.styles != null) {
     url.searchParams.delete('styles');
     for (const style of payload.styles) url.searchParams.append('styles', style);
@@ -155,6 +167,7 @@ export function buildPageActionUrl(currentHref: string, payload: PageActionPaylo
   if (payload.sort) url.searchParams.set('sort', payload.sort);
   // Any filter change invalidates the current page offset.
   url.searchParams.delete('page');
+  if (payload.page != null) url.searchParams.set('page', String(payload.page));
   return url.toString();
 }
 

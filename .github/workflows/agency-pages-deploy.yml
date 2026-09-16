@@ -11,6 +11,8 @@ on:
       - 'packages/tufte/**'
       - 'scripts/run-wrangler.mjs'
       - 'scripts/agency-pages-deploy-eligibility.mjs'
+      - 'scripts/agency-ground-release-parity.mjs'
+      - 'scripts/agency-ground-release-parity.test.mjs'
       - 'package.json'
       - 'pnpm-lock.yaml'
       - '.github/workflows/agency-pages-deploy.yml'
@@ -81,8 +83,9 @@ jobs:
           tag="ground-v${version}"
           release_sha=$(gh api "repos/${GITHUB_REPOSITORY}/commits/${tag}" --jq '.sha')
           git merge-base --is-ancestor "$release_sha" "$GITHUB_SHA"
+          node --test scripts/agency-ground-release-parity.test.mjs
+          node scripts/agency-ground-release-parity.mjs "$release_sha" "$GITHUB_SHA"
           for release_path in \
-            packages/ground \
             config/ground-ga.v1.json \
             scripts/ground-adjudication.mjs \
             scripts/ground-calibration-execution-receipt.mjs \

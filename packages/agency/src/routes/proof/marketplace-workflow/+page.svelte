@@ -34,7 +34,7 @@
       icon: 'check',
       title: 'One versioned workflow becomes a testable bundle.',
       detail:
-        'The compiler validates the boundary, generates linked operating artifacts, replays representative cases, and fails closed.'
+        'The compiler turns a workflow definition into files and tests. It checks permissions and stops when a rule is missing.'
     }
   ];
 
@@ -160,7 +160,7 @@
 
 <SEO
   title="Marketplace Workflow Compiler Proof | CREATE SOMETHING .agency"
-  description="A complete, explicitly shadow-only Marketplace workflow example: from a versioned workflow map to compiled contracts, representative replay cases, and deterministic proof."
+  description="A local test of a Marketplace workflow, with generated files and repeatable cases. It cannot publish, approve, or change production records."
   keywords="workflow compiler, Marketplace workflow, CREATE SOMETHING Map, governed AI workflow, workflow proof, approval routing, deterministic replay"
   canonical="https://createsomething.agency/proof/marketplace-workflow"
   ogType="article"
@@ -181,8 +181,8 @@
   <PerformanceCampaignOpening
     eyebrow="Complete workflow · Active development"
     expression="editorial"
-    title="Turn a watched review queue into a testable workflow."
-    lede="This worked example maps the Marketplace template lifecycle from submission through monitoring, then tests it with representative local fixtures. It runs in shadow mode only. Nothing is written, published, or approved in production."
+    title="Test how a review queue should work."
+    lede="This example maps a template from submission through monitoring and tests the steps with local sample cases. It runs in shadow mode: nothing is written, published, or approved in production."
     media={paperAttachedReceiptMedia}
     proof={[
       { label: 'Status', value: 'Prototype' },
@@ -201,7 +201,7 @@
     id="marketplace-proof-story"
     eyebrow="One proof argument"
     title="Every claim here traces back to an artifact."
-    description="The worked example now answers one question: what changed for the operator, how the workflow was compiled, which artifacts remain owned, and what evidence makes the prototype claim inspectable."
+    description="See what the prototype generates, how it is tested, and the limits of the result."
     scenes={proofScenes}
     ariaLabel="Marketplace workflow proof argument"
   >
@@ -248,7 +248,7 @@
     expression="editorial"
     eyebrow="Apply the method"
     title="Bring the handoff your team still watches by hand."
-    description="Map can define the systems, the owners, and the failure points first. Build follows only when the controlled lane is clear enough to test."
+    description="Map the tools, people, and likely failures first. Start building when the task and checks are clear."
     handoff={{
       owner: 'Workflow owner',
       authority: 'Separate pilot approval',

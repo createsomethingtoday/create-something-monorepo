@@ -594,6 +594,7 @@ creator-facing feedback.
 - `template_review_set_featured_flag` (batch finalization; coordinator-only via `featuredCoordinator` directory grant)
 - `template_review_search_assets`
 - `template_review_search_versions`
+- `template_review_observe_handoff` (exact linked asset/version status evidence; no raw records)
 - `template_review_get_asset`
 - `template_review_list_versions`
 - `template_review_get_version`
@@ -829,3 +830,27 @@ Behavior:
 - lets the Dify agent use Hub MCP and first-class E2B tools for comprehensive review
 - expects comprehensive reviews to take several minutes per item; keep scheduled concurrency at `1` until live timings are stable
 - authorizes only the narrow `template_review_save_agent_feedback` write path; the runner does not write review status, creator-facing feedback, owner, or publishing fields directly
+
+
+### Handoff observation boundary
+
+`template_review_observe_handoff` accepts exact Airtable `assetId` and `versionId`
+and reads both through the source-owned client. It returns `confirmed`,
+`insufficient_evidence`, or `conflicting_evidence`, a fixed next inspection
+action, observation time, request digest and evidence digest. Names, record IDs,
+feedback, creator/reviewer details and raw errors are omitted from the response.
+Queue-only sessions cannot discover this tool.
+
+Confirmed means the selected linked version currently has a recognized active
+or completed review status. Archived or unknown statuses cannot establish that
+handoff. This is not a webhook receipt or proof that an unknown submission maps
+to those records. It does not identify submissions without source correlation,
+infer a stall timeout, retry intake, notify creators or change review status.
+Missing records and source failures must not be relabeled as successful delivery
+or as authority to resubmit. The intake owner's polling timeout remains processing.
+
+The evidence digest binds the minimized source facts to the exact request and
+observation time. It is a content digest, not a signature or source attestation.
+A Control host must independently supply authenticated transport, current
+activation authority, a durable attempt, freshness policy, duplicate suppression
+and a verifier before treating the observation as a runtime checkpoint.

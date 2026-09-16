@@ -2,6 +2,7 @@ export const AGENCY_PROTECTED_PATHS = [
 	'/account',
 	'/dashboard',
 	'/admin',
+	'/delivery/abundance/healthcare-analyst',
 	'/api/community',
 	'/api/control',
 	'/mcp-access',

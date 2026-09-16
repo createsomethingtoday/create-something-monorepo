@@ -207,6 +207,17 @@ export const PUBLIC_COPY_RULES = [
     replacement: 'official authorization claim'
   },
   {
+    id: 'unsupported-openai-tier',
+    // Select is the only documented tier; reject invented and future tier labels too.
+    pattern: /\bOpenAI[ \t]+(?!Select[ \t]+Partner\b)(?:[A-Za-z][A-Za-z-]*[ \t]+)+Partner\b/gi,
+    replacement: 'OpenAI Select Partner'
+  },
+  {
+    id: 'unsupported-openai-specialization',
+    pattern: /\bOpenAI\s+(?:(?:Select|Advanced|Elite)\s+Partner\s*(?:with\s+|[-—–:]\s*)?)?(?:API(?:\s+Platform)?|ChatGPT|Codex)\s+speciali[sz]ation\b/gi,
+    replacement: 'OpenAI Select Partner'
+  },
+  {
     id: 'official-openai-partner',
     pattern: /\bofficial\s+OpenAI\s+partner\b/gi,
     replacement: 'built with OpenAI Codex and designed to remain client-owned'
@@ -375,6 +386,8 @@ export function discoverPublicCopyFiles() {
     ? [canonicalSeo, ...canonicalAtlasFiles, ...canonicalAtlasDistFiles]
     : [...canonicalAtlasFiles, ...canonicalAtlasDistFiles];
   if (existsSync(schedulerEmail)) extraFiles.push(schedulerEmail);
+  // Canonical customer-facing partner copy belongs to the same claim boundary.
+  extraFiles.push(path.join(packageRoot, 'content/sales/openai-qualifications.md'));
 
   return uniqueSorted([
     ...routeFiles,
