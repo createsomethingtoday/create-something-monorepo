@@ -1,0 +1,34 @@
+name = "halfdozen-blondish-ticket-sync"
+main = "src/index.ts"
+compatibility_date = "2026-05-28"
+compatibility_flags = ["nodejs_compat"]
+account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
+workers_dev = true
+
+[observability]
+enabled = true
+
+[[kv_namespaces]]
+binding = "WEBHOOK_STATE"
+id = "30de4d226b6f41f3adacf2c043df6d32"
+
+[triggers]
+# Real-time sync is webhook-driven. This cron is a reconciliation fallback for
+# missed webhook deliveries and daily HD -> BLOND:ISH status repair.
+crons = ["0 13 * * *"]
+
+[vars]
+BLONDISH_SUPPORT_TICKETS_DATA_SOURCE_ID = "fda87fb8-b156-820b-9542-8774717a42f6"
+HALFDOZEN_TICKETS_DATABASE_ID = "368019187ac58071a25af2bed93a8abb"
+HALFDOZEN_TICKETS_DATA_SOURCE_TITLE = "Tickets [HD]"
+BLONDISH_OS_STATUS_PROPERTY = "Status"
+FORWARD_SYNC_ON_SCHEDULE = "false"
+
+# Required secrets before live writes:
+# SYNC_API_KEY
+# BLONDISH_NOTION_API_KEY
+# HALFDOZEN_NOTION_API_KEY
+# NOTION_WEBHOOK_VERIFICATION_TOKEN
+#
+# Optional:
+# HALFDOZEN_TICKETS_DATA_SOURCE_ID
