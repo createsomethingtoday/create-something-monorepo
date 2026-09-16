@@ -18,6 +18,9 @@ The smoke runner is now wired to the three contract bundles via `--scenario`:
 - `inbox-triage` (Gmail)
 - `fleet-watchdog` (Telemetry)
 
+The coded agent path defaults to `gpt-5.5`. Use `--model` to override it for a
+specific run.
+
 List scenario defaults and linked contract files:
 
 ```bash
@@ -42,11 +45,36 @@ pnpm agent:halfdozen:smoke --scenario inbox-triage --connect-only
 pnpm agent:halfdozen:smoke --scenario fleet-watchdog --connect-only
 ```
 
+## Governance Eval
+
+Until Notion exposes programmatic Custom Agent testing through the private beta,
+the repo-owned governance eval is the programmable review gate. It validates the
+coded agent scenario setup without calling OpenAI or Notion:
+
+```bash
+pnpm agent:halfdozen:governance-eval
+```
+
+It checks default model selection, contract bundle file presence, destructive
+tool blocklists, generic MCP tool collision blocklists, approval/escalation
+language, and fleet-watchdog evidence-tool requirements.
+
+To generate a JSON payload that can be mirrored into `Test Reports [OS]`:
+
+```bash
+pnpm agent:halfdozen:governance-eval -- --output .cache/halfdozen-agent-governance-eval.json
+```
+
+The output includes a `notion_test_report` object so the execution target can be
+swapped from the coded runner to Notion's beta API without changing the report
+shape.
+
 You can still override any scenario default:
 
 ```bash
 pnpm agent:halfdozen:smoke \
   --scenario dedup \
+  --model gpt-5.5 \
   --query "Only generate candidate clusters and escalation artifacts." \
   --max-turns 6
 ```

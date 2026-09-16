@@ -16,11 +16,19 @@ scenario until a scenario-specific runbook is written.
 Smoke runner scenario mapping is implemented in:
 
 - `scripts/openai-agent-sdk-halfdozen-smoke.ts` via `--scenario dedup|inbox-triage|fleet-watchdog`
+- Default model: `gpt-5.5` (`--model` overrides per run)
 
 List scenario metadata:
 
 ```bash
 pnpm agent:halfdozen:smoke --list-scenarios
+```
+
+Run the repo-owned governance eval while Notion programmatic agent testing is
+private-beta gated:
+
+```bash
+pnpm agent:halfdozen:governance-eval
 ```
 
 ## 1) Dedup + Canonicalization (`hd-dedup-v1`)

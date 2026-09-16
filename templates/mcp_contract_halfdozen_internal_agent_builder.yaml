@@ -1,0 +1,135 @@
+version: "1.0"
+contract_type: "mcp_contract"
+
+metadata:
+  client_name: "half-dozen"
+  engagement_id: "hd-internal-agent-builder-v1"
+  package_name: "policy-os"
+  status: "draft"
+  approved_workflows:
+    - "notion-agent-spec-builder"
+  approval_mode: "human-in-the-loop"
+  escalation_policy: "HD-AGENT-BUILDER-POLICY"
+  review_cadence: "weekly-review-monthly-tuning"
+  owners:
+    technical_owner: "create-something-platform"
+    client_owner: "halfdozen-ops"
+
+mcp_server:
+  name: "notion-halfdozen-create-something"
+  version: "2026.02"
+  transport: "remote"
+  endpoints:
+    production: "https://createsomething-notion.mcp.workway.co/mcp"
+    staging: "https://createsomething-notion.mcp.workway.co/mcp"
+  runtime:
+    framework: "@create-something/mcp-core"
+    hosting: "cloudflare-workers"
+
+source_of_truth:
+  required_notion_databases:
+    - name: "AI Agents [HD]"
+      purpose: "Find similar existing agents and create Draft records after confirmation."
+      required_access:
+        - "read"
+        - "create_page"
+        - "append_blocks"
+        - "update_page"
+    - name: "AI Toolkits [HD]"
+      purpose: "Verify whether external toolkits are available and Validated before recommendation."
+      required_access:
+        - "read"
+
+auth:
+  strategy: "oauth"
+  provider: "notion"
+  scopes:
+    required:
+      - "notion:databases.read"
+      - "notion:pages.read"
+      - "notion:pages.write"
+    forbidden_outputs:
+      - "credentials"
+      - "secrets"
+      - "bearer tokens"
+      - "API keys"
+      - "private connection tokens"
+  token_lifecycle:
+    refresh_policy: "Fail closed and ask the operator to reconnect or grant database access."
+    revocation_policy: "Stop write attempts and mark the inventory check blocked."
+
+tools:
+  - name: "notion_search"
+    description: "Find AI Agents [HD], AI Toolkits [HD], related pages, or source databases when IDs are unknown."
+    side_effect_level: "read"
+    approval_required: "never"
+    idempotent: true
+  - name: "notion_list_databases"
+    description: "Confirm which databases the integration can access."
+    side_effect_level: "read"
+    approval_required: "never"
+    idempotent: true
+  - name: "notion_get_database"
+    description: "Fetch schema before querying or creating Draft records."
+    side_effect_level: "read"
+    approval_required: "never"
+    idempotent: true
+  - name: "notion_query_database"
+    description: "Search AI Agents [HD] and AI Toolkits [HD] with schema-valid filters."
+    side_effect_level: "read"
+    approval_required: "never"
+    idempotent: true
+  - name: "notion_get_page"
+    description: "Load existing agent records or toolkit details for evidence."
+    side_effect_level: "read"
+    approval_required: "never"
+    idempotent: true
+  - name: "notion_list_block_children"
+    description: "Read existing instruction pages or draft templates."
+    side_effect_level: "read"
+    approval_required: "never"
+    idempotent: true
+  - name: "notion_create_page"
+    description: "Create the AI Agents [HD] Draft row after explicit confirmation."
+    side_effect_level: "write"
+    approval_required: "always"
+    idempotent: false
+  - name: "notion_update_page"
+    description: "Set Draft row properties or Agent URL only after explicit confirmation."
+    side_effect_level: "write"
+    approval_required: "always"
+    idempotent: true
+  - name: "notion_append_blocks"
+    description: "Append Agent Spec, Instructions, and Test Plan to the confirmed Draft page."
+    side_effect_level: "write"
+    approval_required: "always"
+    idempotent: false
+
+blocked_tools:
+  - name: "notion_create_database"
+    reason: "The builder must not change workspace schema."
+  - name: "notion_update_database"
+    reason: "The builder must not change workspace schema."
+  - name: "notion_archive_page"
+    reason: "Draft correction requires separate approval."
+  - name: "notion_archive_block"
+    reason: "Draft correction requires separate approval."
+  - name: "notion_bulk_update"
+    reason: "Bulk page updates are too broad for the builder workflow."
+  - name: "notion_bulk_archive"
+    reason: "Bulk destructive actions are out of scope."
+
+error_model:
+  retry_policy:
+    max_retries: 1
+    backoff_ms: 500
+  codes:
+    - code: "INVENTORY_SOURCE_UNAVAILABLE"
+      meaning: "AI Agents [HD] or AI Toolkits [HD] is not visible to the integration."
+      user_action: "Grant access or approve a caveated spec-only workflow."
+    - code: "SCHEMA_MISMATCH"
+      meaning: "Required draft properties are missing or renamed."
+      user_action: "Confirm the current schema and rerun the draft step."
+    - code: "PRIVATE_BETA_UNAVAILABLE"
+      meaning: "Programmatic Notion agent creation is not available."
+      user_action: "Use Draft page output as the handoff until API/private beta access is enabled."

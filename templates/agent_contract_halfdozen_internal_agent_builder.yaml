@@ -1,0 +1,148 @@
+version: "1.0"
+contract_type: "agent_contract"
+
+metadata:
+  client_name: "half-dozen"
+  engagement_id: "hd-internal-agent-builder-v1"
+  status: "draft"
+  package_name: "policy-os"
+  approved_workflows:
+    - "notion-agent-spec-builder"
+  approval_mode: "human-in-the-loop"
+  escalation_policy: "HD-AGENT-BUILDER-POLICY"
+  review_cadence: "weekly-review-monthly-tuning"
+  billing_and_entitlement_assumptions:
+    service_tier: "policy_os_core"
+    service_entitled: true
+    policy_accepted: true
+    contract_active: true
+    billing_active: true
+
+agent_profile:
+  name: "halfdozen-internal-agent-builder"
+  purpose: "Gather Notion agent requirements, check existing agent/toolkit inventory, and produce ready-to-paste production-agent instructions."
+  primary_interface: "codex"
+  default_model: "gpt-5.5"
+  portability:
+    required: true
+    supported_clients:
+      - "codex"
+      - "openai-agents-sdk"
+
+workflow:
+  modes:
+    - id: "discovery"
+      description: "Ask focused clarifying questions and search AI Agents [HD] plus AI Toolkits [HD]."
+    - id: "spec"
+      description: "Produce Agent Spec, Instructions, Install / Enablement, Test Plan, Database row fields, and Open risks / missing permissions."
+    - id: "draft_creation"
+      description: "Create AI Agents [HD] Draft page only after explicit user confirmation that the spec is ready."
+    - id: "agent_creation"
+      description: "Attempt programmatic Notion agent creation only when Notion agent API/private beta access is available and explicitly requested."
+  triggers:
+    - id: "manual-agent-intake"
+      type: "manual"
+      condition: "A Half Dozen teammate asks for a new or updated Notion agent."
+  output_artifacts:
+    - "agent_spec.md"
+    - "agent_instructions.md"
+    - "install_enablement.md"
+    - "test_plan.md"
+    - "ai_agents_hd_draft_page"
+
+capability_scope:
+  required_inventory_sources:
+    - "AI Agents [HD]"
+    - "AI Toolkits [HD]"
+  allowed_tools:
+    - "notion_search"
+    - "notion_list_databases"
+    - "notion_get_database"
+    - "notion_query_database"
+    - "notion_get_page"
+    - "notion_list_block_children"
+    - "notion_create_page"
+    - "notion_update_page"
+    - "notion_append_blocks"
+  blocked_tools:
+    - "notion_create_database"
+    - "notion_update_database"
+    - "notion_archive_page"
+    - "notion_archive_block"
+    - "notion_bulk_update"
+    - "notion_bulk_archive"
+    - "delete_automation"
+  allowed_resource_patterns:
+    - "notion://workspaces"
+    - "notion://tools"
+
+approval_and_control:
+  mode: "human-in-the-loop"
+  write_operations: "approval-required"
+  destructive_operations: "always-human"
+  explicit_confirmation_required_for:
+    - "creating AI Agents [HD] Draft rows"
+    - "updating existing agent records"
+    - "attempting Notion private-beta agent creation"
+    - "any irreversible action"
+  stop_conditions:
+    - "missing target database/page or trigger surface"
+    - "missing required property names/types"
+    - "missing auth owner"
+    - "destructive or irreversible action without explicit confirmation"
+    - "Notion agent API/private beta access unavailable"
+    - "no examples for judgment-heavy workflow"
+
+judgment_layer:
+  policy_artifacts:
+    - id: "HD-AGENT-BUILDER-POLICY"
+      description: "Builder workflow rules for inventory checks, Notion-native-first design, draft creation, and private-beta gating."
+      owner: "operations"
+      version: "1.0"
+    - id: "HD-TOOLKIT-SOURCE-OF-TRUTH-POLICY"
+      description: "AI Toolkits [HD] is authoritative for usable external toolkit status."
+      owner: "platform"
+      version: "1.0"
+  design_rubric:
+    - "complexity/risk"
+    - "maintainability"
+    - "permissions footprint"
+    - "testability"
+    - "time-to-first-value"
+
+privacy_and_security:
+  prohibited_content:
+    - "credentials"
+    - "secrets"
+    - "bearer tokens"
+    - "API keys"
+    - "private connection tokens"
+  redaction_required: true
+
+observability:
+  log_sink: "Test Reports [OS]"
+  required_metrics:
+    - "spec_completeness_score"
+    - "inventory_preflight_coverage"
+    - "draft_creation_confirmation_rate"
+    - "test_plan_coverage"
+    - "permission_block_rate"
+
+success_metrics:
+  - id: "spec_completeness"
+    target: ">= 95% of final specs include required sections and property mappings"
+  - id: "source_of_truth_preflight"
+    target: "100% of recommendations check AI Agents [HD] and AI Toolkits [HD] or clearly mark the check blocked"
+  - id: "unauthorized_writes"
+    target: "0 Draft pages or agent changes without explicit confirmation"
+  - id: "test_plan_quality"
+    target: ">= 90% of test plans include happy path, missing-input, permission-failure, and must-not-change assertions"
+
+runbook:
+  codex_setup_included: true
+  policy_pack_included: true
+  operator_runbook_included: true
+  rollback_steps:
+    - "Archive or correct only the newly created Draft page after operator approval"
+    - "Leave existing agent records unchanged unless a separate update was explicitly requested"
+    - "Record blocked inventory or permission checks in the Test Reports [OS] evidence"
