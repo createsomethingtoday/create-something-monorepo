@@ -55,3 +55,15 @@ Choose the subject from paragraph context. Do not rewrite mechanically when the 
 > Small businesses increasingly depend on digital payments, and customers expect immediate transactions. But rural businesses often have unreliable internet access. Therefore, payment systems need an offline mode.
 
 The movement is useful because the tension motivates the direction. A direct operator instruction would not need this narrative setup.
+
+## Local Public-Copy Repair
+
+Before:
+
+> The page now holds one argument: keep consequential judgment, make the workflow visible, then operate the first lane with proof attached.
+
+After:
+
+> Your team sets the limits before work moves. We map the handoff, test one workflow, and keep a record of every run.
+
+The revision stops describing the artifact, gives the decisions to a recognizable actor, turns the method into actions, and translates `proof` into an observable record. The exact wording is an example, not a golden string; preserve the meaning and fit the surrounding component.

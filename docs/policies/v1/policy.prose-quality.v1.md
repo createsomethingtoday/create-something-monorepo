@@ -27,6 +27,8 @@ The target reader is the least-tenured credible practitioner in the document's a
 7. Intentional teaching examples MAY be excluded only with balanced, reason-bearing prose-ignore markers. The exclusion MUST NOT conceal published claims.
 8. Operator-facing prose MUST make its usable path discoverable: outcome, applicability, prerequisites, first action, expected result, recovery, and completion proof. Short artifacts MAY combine these elements when the sequence remains clear.
 9. Writers MUST select the smallest framework stack that fits the artifact. Human-facing prose MUST NOT gain tables, checklists, terminology, or theory solely to make it easier for an agent to parse.
+10. The first encounter with a section, step, or major claim MUST provide enough local meaning for the target reader to recognize the actor, action, and observable result or consequence. Downstream content MUST NOT be used to launder an unclear opening.
+11. Exact-string assertions prove preservation only. Builds, renders, linters, and source anchors provide their declared evidence; none of them independently proves reader comprehension.
 
 ## Enforcement Boundary
 
@@ -41,6 +43,8 @@ The target reader is the least-tenured credible practitioner in the document's a
 Readable prose should create useful momentum: concrete stakes, visible progress or discovery, coherent information flow, varied rhythm, and respect for the reader. It does not require jokes, slang, fake anecdotes, or forced informality.
 
 Light writing means low cognitive load, not merely short sentences. The reader should be able to find the point, the recommended path, and the next action without reconstructing the author's organization. Present one default before alternatives, introduce the concrete task before optional architecture, and place expected results and recovery beside the actions they qualify.
+
+At each first encounter, the target reader should be able to restate the point without CREATE SOMETHING vocabulary. Artifact-facing meta-copy, an unexplained metaphor, or a stack of abstract terms is material friction when that restatement requires guessing. A target-reader `pass` requires `first_friction: none` and no material frictions; otherwise the verdict is `revise`.
 
 Writers and reviewers MUST preserve facts, citations, uncertainty, scope limits, technical labels, and approved property voice. They MUST NOT invent metrics, examples, experiences, opinions, or customer details to make prose feel human.
 
@@ -86,7 +90,7 @@ Changed-file checks compare the current finding multiset with the selected Git b
 
 ## Evaluation and Human Review
 
-The target-reader corpus contains six pass and six revise examples across public copy, navigation, operator guides, and technical explanations. Operator cases record whether a junior practitioner can orient, find the default, start, complete, recover, and verify. Corpus verdicts calibrate judgment; they are not token bans and do not authorize automatic rewrites.
+The target-reader corpus contains balanced pass and revise examples across public copy, navigation, operator guides, and technical explanations. Operator cases record whether a junior practitioner can orient, find the default, start, complete, recover, and verify. Paired fixtures distinguish semantic preservation from reader clarity without turning a proposed production sentence into its own quality test. Corpus verdicts calibrate judgment; they are not token bans and do not authorize automatic rewrites.
 
 The writing-task corpus covers operator instructions, reports, arguments, technical explanations, case studies, and teaching. It records the expected information sequence, framework reference, and preservation requirements for each artifact type. The deterministic test validates this contract without pretending that a live model outcome has been proven.
 

@@ -21,6 +21,12 @@
     "recovery",
     "completion_proof"
   ],
+  "reader_judgment_contract": {
+    "local_comprehension": ["recognizable_actor", "meaningful_action", "observable_result"],
+    "plain_language_restatement": true,
+    "pass_invariants": ["first_friction_none", "no_material_frictions"],
+    "non_proof": ["exact_string_assertion", "build", "render", "linter"]
+  },
   "framework_routing": {
     "operator_instructions": ["plain_language", "answer_first", "sentence_clarity", "revision"],
     "reports_and_proposals": ["answer_first", "grouped_supports", "sentence_clarity", "revision"],
