@@ -1,5 +1,5 @@
 import type { Asset } from '$lib/server/airtable';
-import { VIEWER_DATA_AVAILABLE } from '$lib/config/viewer-data';
+import { CONVERSION_DATA_AVAILABLE, VIEWER_DATA_AVAILABLE } from '$lib/config/viewer-data';
 
 export type TemplateHealthStatus = 'strong' | 'watch' | 'needs_attention' | 'limited_data';
 export type TemplateHealthTone = 'positive' | 'neutral' | 'warning' | 'critical';
@@ -125,14 +125,19 @@ function addActionOnce(actions: TemplateHealthAction[], action: TemplateHealthAc
 export function computeTemplateHealth(
 	asset: Asset,
 	now = new Date(),
-	options?: { viewerDataAvailable?: boolean }
+	options?: { viewerDataAvailable?: boolean; conversionDataAvailable?: boolean }
 ): TemplateHealthModel {
-	// Viewer counts froze on 2026-07-21 (see $lib/config/viewer-data); while
-	// unavailable, health must not judge templates on viewers or conversion.
-	const viewersKnown = options?.viewerDataAvailable ?? VIEWER_DATA_AVAILABLE;
+	// Viewers come from the beacon epoch (see $lib/config/viewer-data). A
+	// template whose count is still unknown (undefined) is judged as if viewer
+	// data were unavailable, so a beacon outage never reads as zero traffic.
+	// Conversion is held separately until the beacon holds a full 90-day window.
+	const viewersKnown =
+		(options?.viewerDataAvailable ?? VIEWER_DATA_AVAILABLE) && asset.uniqueViewers !== undefined;
+	const conversionKnown =
+		viewersKnown && (options?.conversionDataAvailable ?? CONVERSION_DATA_AVAILABLE);
 	const viewers = viewersKnown ? Math.max(0, asset.uniqueViewers ?? 0) : 0;
 	const purchases = Math.max(0, asset.cumulativePurchases ?? 0);
-	const conversionRate = viewersKnown && viewers > 0 ? (purchases / viewers) * 100 : null;
+	const conversionRate = conversionKnown && viewers > 0 ? (purchases / viewers) * 100 : null;
 	const publishedDate =
 		parseDate(asset.publishedDate) ||
 		(asset.status === 'Published' ? parseDate(asset.decisionDate) : null);
@@ -285,7 +290,7 @@ export function computeTemplateHealth(
 		},
 		{
 			label: 'Conversion',
-			value: viewersKnown ? formatPercent(conversionRate) : 'Unavailable',
+			value: conversionKnown ? formatPercent(conversionRate) : 'Unavailable',
 			tone:
 				conversionRate === null || !hasEnoughViewers
 					? 'neutral'
@@ -296,7 +301,9 @@ export function computeTemplateHealth(
 							: 'critical',
 			description: !viewersKnown
 				? 'Marketplace view tracking is being rebuilt; conversion returns once new view data is collected.'
-				: conversionRate === null || !hasEnoughViewers
+				: !conversionKnown
+					? 'Conversion returns once the new view tracking has collected a full 90 days of data.'
+					: conversionRate === null || !hasEnoughViewers
 					? 'Conversion becomes meaningful after at least 100 viewers.'
 					: 'Purchases divided by unique viewers, used as a buyer-fit signal.'
 		},

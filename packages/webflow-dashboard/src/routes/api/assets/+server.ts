@@ -1,6 +1,7 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { getAirtableClient } from '$lib/server/airtable';
+import { applyTemplateViews } from '$lib/server/template-views';
 
 export const GET: RequestHandler = async ({ locals, platform }) => {
 	// Check authentication
@@ -10,7 +11,11 @@ export const GET: RequestHandler = async ({ locals, platform }) => {
 
 	try {
 		const airtable = getAirtableClient(platform?.env);
-		const assets = await airtable.getAssetsByEmail(locals.user.email);
+		const assets = await applyTemplateViews(
+			platform?.env,
+			await airtable.getAssetsByEmail(locals.user.email),
+			{ waitUntil: (p) => platform?.context?.waitUntil(p) }
+		);
 
 		return json({ assets });
 	} catch (err) {

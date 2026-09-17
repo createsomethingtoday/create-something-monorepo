@@ -11,6 +11,7 @@
  * Endpoints:
  *   POST /v            beacon ingest (text/plain JSON, no preflight needed)
  *   GET  /stats        daily rollups   (Bearer STATS_API_KEY)
+ *   GET  /stats/totals lifetime totals per slug, ?slugs=a,b,c (Bearer STATS_API_KEY)
  *   GET  /             health
  */
 
@@ -90,8 +91,7 @@ async function ingest(request: Request, env: Env, ctx: ExecutionContext): Promis
 }
 
 async function stats(request: Request, env: Env): Promise<Response> {
-	const auth = request.headers.get('Authorization') ?? '';
-	if (!env.STATS_API_KEY || auth !== `Bearer ${env.STATS_API_KEY}`) {
+	if (!isAuthorized(request, env)) {
 		return Response.json({ error: 'unauthorized' }, { status: 401 });
 	}
 
@@ -112,6 +112,51 @@ async function stats(request: Request, env: Env): Promise<Response> {
 	return Response.json({ since, days, rows: results });
 }
 
+const MAX_TOTALS_SLUGS = 50;
+
+function isAuthorized(request: Request, env: Env): boolean {
+	const auth = request.headers.get('Authorization') ?? '';
+	return Boolean(env.STATS_API_KEY) && auth === `Bearer ${env.STATS_API_KEY}`;
+}
+
+/**
+ * Lifetime totals for a batch of slugs in one query. The dashboard resolves
+ * a creator's whole portfolio with this instead of one /stats call per
+ * template. Slugs are bound as parameters (never interpolated).
+ */
+async function totals(request: Request, env: Env): Promise<Response> {
+	if (!isAuthorized(request, env)) {
+		return Response.json({ error: 'unauthorized' }, { status: 401 });
+	}
+
+	const url = new URL(request.url);
+	const slugs = Array.from(
+		new Set(
+			(url.searchParams.get('slugs') ?? '')
+				.split(',')
+				.map((slug) => slug.trim())
+				.filter((slug) => slug.length > 0 && slug.length <= 200)
+		)
+	);
+
+	if (slugs.length === 0) {
+		return Response.json({ error: 'slugs required' }, { status: 400 });
+	}
+	if (slugs.length > MAX_TOTALS_SLUGS) {
+		return Response.json({ error: `at most ${MAX_TOTALS_SLUGS} slugs per request` }, { status: 400 });
+	}
+
+	const placeholders = slugs.map(() => '?').join(', ');
+	const { results } = await env.DB.prepare(
+		`SELECT slug, SUM(views) AS views, SUM(sessions) AS sessions, MIN(day) AS first_day, MAX(day) AS last_day
+		 FROM template_views_daily WHERE slug IN (${placeholders}) GROUP BY slug`
+	)
+		.bind(...slugs)
+		.all();
+
+	return Response.json({ rows: results });
+}
+
 export default {
 	async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
 		const url = new URL(request.url);
@@ -129,6 +174,10 @@ export default {
 
 		if (request.method === 'GET' && url.pathname === '/t.js') {
 			return ingestScript(request, env, ctx);
+		}
+
+		if (request.method === 'GET' && url.pathname === '/stats/totals') {
+			return totals(request, env);
 		}
 
 		if (request.method === 'GET' && url.pathname === '/stats') {

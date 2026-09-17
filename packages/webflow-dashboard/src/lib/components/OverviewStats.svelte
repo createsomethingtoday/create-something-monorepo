@@ -3,7 +3,7 @@
   import KineticNumber from './KineticNumber.svelte';
   import DataFreshnessIndicator from './DataFreshnessIndicator.svelte';
   import type { Asset } from '$lib/server/airtable';
-  import { VIEWER_DATA_AVAILABLE } from '$lib/config/viewer-data';
+  import { VIEWER_DATA_AVAILABLE, VIEWER_DATA_EPOCH_LABEL } from '$lib/config/viewer-data';
   import { sortAssetTypes } from '$lib/utils/asset-actions';
 
   interface Props {
@@ -101,7 +101,7 @@
               <div class="performance-item">
                 <div class="performance-content">
                   <span class="performance-value"><KineticNumber value={totals.viewers} /></span>
-                  <span class="performance-label">Total Viewers</span>
+                  <span class="performance-label">Viewers {VIEWER_DATA_EPOCH_LABEL}</span>
                 </div>
               </div>
             {/if}

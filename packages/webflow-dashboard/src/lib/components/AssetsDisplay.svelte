@@ -17,7 +17,7 @@
   import DataFreshnessIndicator from './DataFreshnessIndicator.svelte';
   import Search from './Search.svelte';
   import type { Asset } from '$lib/server/airtable';
-  import { VIEWER_DATA_AVAILABLE } from '$lib/config/viewer-data';
+  import { VIEWER_DATA_AVAILABLE, VIEWER_DATA_EPOCH_LABEL } from '$lib/config/viewer-data';
   import type { AssetActionDescriptor } from '$lib/utils/asset-actions';
   import {
     getAssetActionConfig,
@@ -477,7 +477,8 @@
                                 type="button"
                                 class="sort-btn"
                                 class:active={sortConfig.key === 'uniqueViewers'}
-                                aria-label="Sort by viewers"
+                                aria-label="Sort by viewers ({VIEWER_DATA_EPOCH_LABEL})"
+                                title="Viewers {VIEWER_DATA_EPOCH_LABEL}"
                                 onclick={() => requestSort('uniqueViewers')}
                               >
                                 Viewers{getSortIndicator('uniqueViewers')}
@@ -610,7 +611,7 @@
                             <div>
                               <span class="mobile-label">Viewers</span>
                               <span class="mobile-value"
-                                >{asset.uniqueViewers?.toLocaleString() ?? '0'}</span
+                                >{asset.uniqueViewers?.toLocaleString() ?? '—'}</span
                               >
                             </div>
                           {/if}

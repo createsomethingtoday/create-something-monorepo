@@ -44,6 +44,7 @@ Templates site custom code (docs/site-snippet.html)
 |---|---|---|---|
 | POST | `/v` | none (CORS-restricted origins) | Beacon ingest |
 | GET | `/stats?slug=&days=30` | `Authorization: Bearer <STATS_API_KEY>` | Daily rollups |
+| GET | `/stats/totals?slugs=a,b,c` | `Authorization: Bearer <STATS_API_KEY>` | Lifetime totals per slug (max 50 slugs) |
 | GET | `/` | none | Health |
 
 ## Deploy
@@ -65,9 +66,14 @@ Then install `docs/site-snippet.html` in the Template Marketplace site's
 Footer Code (Site Settings → Custom Code) with the deployed URL, and publish
 the site.
 
-## Restoring the dashboard widget
+## Dashboard widget (restored 2026-09-17)
 
-Once ~30 days of beacon history exist:
+`webflow-dashboard` reads `/stats/totals` for portfolio viewer counts and
+`/stats?slug=` for the per-template trend (`src/lib/server/template-views.ts`).
+Viewer metrics are labelled with the beacon epoch (since Aug 5, 2026); conversion
+stays held behind `CONVERSION_DATA_AVAILABLE` until a full 90-day window exists.
+
+Original plan, kept for reference:
 
 1. Add a fetch of `GET /stats` to `webflow-dashboard` (server-side, using
    `STATS_API_KEY`), keyed by the asset's CMS slug (`🥞CMS Slug` — same slug
