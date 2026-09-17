@@ -61,6 +61,8 @@ interface Env {
   ZENDESK_API_TOKEN?: string;
   ZENDESK_API_EMAIL?: string;
   ZENDESK_SUBDOMAIN?: string;
+  /** Zendesk group that owns Marketplace review tickets; search default + status-write boundary. */
+  MARKETPLACE_ZENDESK_GROUP_ID?: string;
   /** Kill switch for developer-facing hold notices + 7-day reminders ("1" disables). */
   HOLD_NOTICES_DISABLED?: string;
 }
@@ -122,6 +124,7 @@ function buildZendesk(env: Env): ZendeskClient | null {
     subdomain: env.ZENDESK_SUBDOMAIN ?? 'webflow2579',
     email: env.ZENDESK_API_EMAIL,
     apiToken: env.ZENDESK_API_TOKEN,
+    marketplaceGroupId: env.MARKETPLACE_ZENDESK_GROUP_ID ? Number(env.MARKETPLACE_ZENDESK_GROUP_ID) : undefined,
   });
 }
 

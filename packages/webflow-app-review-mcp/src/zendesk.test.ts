@@ -174,3 +174,130 @@ describe('ZendeskClient.getTicketThread', () => {
     await expect(client.getTicketThread('abc')).rejects.toMatchObject({ code: 'INVALID_TICKET_ID' });
   });
 });
+
+describe('ZendeskClient.searchTickets', () => {
+  const searchJson = {
+    results: [
+      { id: 1188879, subject: 'Your Webflow Marketplace App submission', status: 'solved', requester_id: 11, assignee_id: 22, group_id: 1500002744702, created_at: '2026-09-10T14:26:00Z', updated_at: '2026-09-14T20:31:07Z', tags: ['marketplace', 'app_review'], result_type: 'ticket' },
+      { id: 1170775, subject: 'Wistia submission', status: 'pending', requester_id: 33, assignee_id: null, group_id: 1500002744702, created_at: '2026-08-01T00:00:00Z', updated_at: '2026-08-02T00:00:00Z', tags: [], result_type: 'ticket' },
+    ],
+    count: 2,
+    next_page: null,
+  };
+  function fetchSpy() {
+    const calls: string[] = [];
+    const fetchFn = vi.fn(async (input: RequestInfo | URL) => {
+      calls.push(String(input));
+      return { ok: true, status: 200, json: async () => searchJson, text: async () => '' } as unknown as Response;
+    });
+    return { fetchFn, calls };
+  }
+  const opts = { subdomain: 'webflow2579', email: 'a@b.c', apiToken: 't', marketplaceGroupId: 1500002744702 };
+
+  it('scopes to the Marketplace Review group by default and composes Zendesk search syntax', async () => {
+    const { fetchFn, calls } = fetchSpy();
+    const client = new ZendeskClient({ ...opts, fetchFn });
+    const result = await client.searchTickets({
+      query: 'CMS Smart Sync',
+      status: 'pending',
+      tags: ['app_review'],
+      requesterEmail: 'dev@example.com',
+      createdAfter: '2026-09-01',
+      limit: 10,
+      sortBy: 'updated_at',
+      sortOrder: 'desc',
+    });
+    const url = new URL(calls[0]!);
+    expect(url.pathname).toBe('/api/v2/search.json');
+    expect(url.searchParams.get('query')).toBe(
+      'type:ticket group:1500002744702 CMS Smart Sync status:pending tags:app_review requester:dev@example.com created>2026-09-01',
+    );
+    expect(url.searchParams.get('per_page')).toBe('10');
+    expect(url.searchParams.get('sort_by')).toBe('updated_at');
+    expect(url.searchParams.get('sort_order')).toBe('desc');
+    expect(result.scope).toBe('marketplace_review');
+    expect(result.count).toBe(2);
+    expect(result.tickets[0]).toMatchObject({ ticketId: '1188879', status: 'solved', groupId: 1500002744702, tags: ['marketplace', 'app_review'] });
+    expect(result.tickets[1]).toMatchObject({ ticketId: '1170775', assigneeId: null });
+  });
+
+  it('omits the group clause only when scope is explicitly "all"', async () => {
+    const { fetchFn, calls } = fetchSpy();
+    const client = new ZendeskClient({ ...opts, fetchFn });
+    const result = await client.searchTickets({ query: 'refund', scope: 'all' });
+    const url = new URL(calls[0]!);
+    expect(url.searchParams.get('query')).toBe('type:ticket refund');
+    expect(url.searchParams.get('per_page')).toBe('25');
+    expect(result.scope).toBe('all');
+  });
+});
+
+describe('ZendeskClient.updateTicketStatus', () => {
+  const ticket = (over: Record<string, unknown> = {}) => ({
+    ticket: { id: 1188879, status: 'pending', group_id: 1500002744702, tags: ['marketplace'], ...over },
+  });
+  function fetchSeq(getJson: unknown, putJson: unknown = { ticket: { id: 1188879, status: 'solved', tags: ['marketplace', 'resolved'] }, audit: { id: 99 } }) {
+    const calls: Array<{ url: string; method: string; body: unknown }> = [];
+    const fetchFn = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const method = init?.method ?? 'GET';
+      calls.push({ url: String(input), method, body: init?.body ? JSON.parse(String(init.body)) : undefined });
+      const json = method === 'PUT' ? putJson : getJson;
+      return { ok: true, status: 200, json: async () => json, text: async () => '' } as unknown as Response;
+    });
+    return { fetchFn, calls };
+  }
+  const opts = { subdomain: 'webflow2579', email: 'a@b.c', apiToken: 't', marketplaceGroupId: 1500002744702 };
+
+  it('re-reads the ticket, checks expected status and scope, then writes status/tags/private note', async () => {
+    const { fetchFn, calls } = fetchSeq(ticket());
+    const client = new ZendeskClient({ ...opts, fetchFn });
+    const result = await client.updateTicketStatus('1188879', {
+      status: 'solved',
+      expectedStatus: 'pending',
+      additionalTags: ['resolved'],
+      removeTags: ['needs_reply'],
+      privateNote: 'Closing after v12 approval.',
+    });
+    expect(calls[0]).toMatchObject({ method: 'GET' });
+    expect(calls[0]!.url).toContain('/tickets/1188879.json');
+    expect(calls[1]).toMatchObject({ method: 'PUT' });
+    expect(calls[1]!.body).toEqual({
+      ticket: {
+        status: 'solved',
+        additional_tags: ['resolved'],
+        remove_tags: ['needs_reply'],
+        comment: { body: 'Closing after v12 approval.', public: false },
+      },
+    });
+    expect(result).toMatchObject({ ticketId: '1188879', previousStatus: 'pending', status: 'solved', auditId: 99 });
+  });
+
+  it('refuses when the fresh status differs from expected_status and does not write', async () => {
+    const { fetchFn, calls } = fetchSeq(ticket({ status: 'open' }));
+    const client = new ZendeskClient({ ...opts, fetchFn });
+    await expect(client.updateTicketStatus('1188879', { status: 'solved', expectedStatus: 'pending' })).rejects.toMatchObject({
+      code: 'ZENDESK_STATUS_CONFLICT',
+      status: 409,
+    });
+    expect(calls.filter((c) => c.method === 'PUT')).toHaveLength(0);
+  });
+
+  it('refuses tickets outside the Marketplace Review group', async () => {
+    const { fetchFn, calls } = fetchSeq(ticket({ group_id: 46157931219347 }));
+    const client = new ZendeskClient({ ...opts, fetchFn });
+    await expect(client.updateTicketStatus('1188879', { status: 'solved', expectedStatus: 'pending' })).rejects.toMatchObject({
+      code: 'ZENDESK_TICKET_OUT_OF_SCOPE',
+      status: 403,
+    });
+    expect(calls.filter((c) => c.method === 'PUT')).toHaveLength(0);
+  });
+
+  it('never writes "closed" (Zendesk rejects it) and never sends a public comment', async () => {
+    const { fetchFn, calls } = fetchSeq(ticket());
+    const client = new ZendeskClient({ ...opts, fetchFn });
+    await expect(
+      client.updateTicketStatus('1188879', { status: 'closed' as never, expectedStatus: 'pending' }),
+    ).rejects.toMatchObject({ code: 'INVALID_TICKET_STATUS' });
+    expect(calls).toHaveLength(0);
+  });
+});

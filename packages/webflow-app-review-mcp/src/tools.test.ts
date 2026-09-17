@@ -827,6 +827,87 @@ describe('registerTools', () => {
     expect(parsePayload(unconfigured!)).toMatchObject({ ok: false });
   });
 
+  describe('app_review_search_tickets', () => {
+    it('searches Marketplace Review tickets by default and passes filters through', async () => {
+      const { server, handlers } = createServerHarness();
+      const searchTickets = vi.fn().mockResolvedValue({ scope: 'marketplace_review', count: 1, tickets: [{ ticketId: '1188879' }] });
+      registerTools(server, () => ({}) as unknown as AirtableClient, () => null, () => ({ searchTickets }) as unknown as ZendeskClient);
+      const result = await handlers.get('app_review_search_tickets')?.({
+        query: 'CMS Smart Sync',
+        status: 'pending',
+        requester_email: 'dev@example.com',
+        limit: 10,
+      });
+      const payload = parsePayload(result!);
+      expect(payload.ok).toBe(true);
+      expect(payload.data).toMatchObject({ scope: 'marketplace_review', count: 1 });
+      expect(searchTickets).toHaveBeenCalledWith(
+        expect.objectContaining({ query: 'CMS Smart Sync', status: 'pending', requesterEmail: 'dev@example.com', limit: 10, scope: 'marketplace_review' }),
+      );
+    });
+
+    it('fails closed when Zendesk is not configured', async () => {
+      const { server, handlers } = createServerHarness();
+      registerTools(server, () => ({}) as unknown as AirtableClient);
+      const result = await handlers.get('app_review_search_tickets')?.({ query: 'x' });
+      expect(parsePayload(result!)).toMatchObject({ ok: false, error: { code: 'ZENDESK_NOT_CONFIGURED' } });
+    });
+  });
+
+  describe('app_review_update_ticket_status', () => {
+    const zendeskWith = (updateTicketStatus: ReturnType<typeof vi.fn>) =>
+      ({ updateTicketStatus }) as unknown as ZendeskClient;
+
+    it('requires status_change confirmation with an expected status before touching Zendesk', async () => {
+      const { server, handlers } = createServerHarness();
+      const updateTicketStatus = vi.fn();
+      registerTools(server, () => ({}) as unknown as AirtableClient, () => null, () => zendeskWith(updateTicketStatus));
+      const missing = await handlers.get('app_review_update_ticket_status')?.({ ticket_id: '1188879', status: 'solved' });
+      expect(parsePayload(missing!)).toMatchObject({ ok: false, error: { code: 'TICKET_STATUS_CONFIRMATION_REQUIRED' } });
+      const unconfirmed = await handlers.get('app_review_update_ticket_status')?.({
+        ticket_id: '1188879',
+        status: 'solved',
+        status_change: { confirmed: false, expected_status: 'pending' },
+      });
+      expect(parsePayload(unconfirmed!)).toMatchObject({ ok: false, error: { code: 'TICKET_STATUS_CONFIRMATION_REQUIRED' } });
+      expect(updateTicketStatus).not.toHaveBeenCalled();
+    });
+
+    it('writes through the client with the expected status and optional private note', async () => {
+      const { server, handlers } = createServerHarness();
+      const updateTicketStatus = vi.fn().mockResolvedValue({ ticketId: '1188879', previousStatus: 'pending', status: 'solved', auditId: 99, tags: ['marketplace'] });
+      registerTools(server, () => ({}) as unknown as AirtableClient, () => null, () => zendeskWith(updateTicketStatus));
+      const result = await handlers.get('app_review_update_ticket_status')?.({
+        ticket_id: '1188879',
+        status: 'solved',
+        private_note: 'Closing after approval.',
+        additional_tags: ['resolved'],
+        status_change: { confirmed: true, expected_status: 'pending' },
+      });
+      const payload = parsePayload(result!);
+      expect(payload.ok).toBe(true);
+      expect(payload.data).toMatchObject({ ticket_id: '1188879', previous_status: 'pending', status: 'solved', ticket_url: 'https://webflow2579.zendesk.com/agent/tickets/1188879' });
+      expect(updateTicketStatus).toHaveBeenCalledWith('1188879', {
+        status: 'solved',
+        expectedStatus: 'pending',
+        privateNote: 'Closing after approval.',
+        additionalTags: ['resolved'],
+        removeTags: undefined,
+      });
+    });
+
+    it('fails closed when Zendesk is not configured', async () => {
+      const { server, handlers } = createServerHarness();
+      registerTools(server, () => ({}) as unknown as AirtableClient);
+      const result = await handlers.get('app_review_update_ticket_status')?.({
+        ticket_id: '1188879',
+        status: 'solved',
+        status_change: { confirmed: true, expected_status: 'pending' },
+      });
+      expect(parsePayload(result!)).toMatchObject({ ok: false, error: { code: 'ZENDESK_NOT_CONFIGURED' } });
+    });
+  });
+
   describe('app_review_resolve_exception_item', () => {
     it('resolves a row through the client and returns the updated item', async () => {
       const { server, handlers } = createServerHarness();
