@@ -31,6 +31,30 @@ const delivery = {
 };
 
 describe('ResendNotificationPort', () => {
+  it.each(['confirmation', 'reminder', 'rescheduled'] as const)('renders %s in the saved visitor timezone, including next-day dates', async (kind) => {
+    const fetch = vi.fn(async (_url: string | URL | Request, init?: RequestInit) => {
+      const body = JSON.parse(String(init?.body));
+      expect(body.text).toContain('Wednesday, July 15, 2026');
+      expect(body.text).toContain('1:00 AM');
+      expect(body.html).toContain('1:00 AM');
+      return Response.json({ id: 'tz-email' });
+    });
+    await new ResendNotificationPort({ apiKey: 'test', fetch }).sendNotification({ ...notification, kind }, { ...delivery, booking: { ...booking, timezone: 'Asia/Tokyo' } });
+    expect(fetch).toHaveBeenCalledOnce();
+  });
+  it.each([
+    [undefined, '2026-07-14T16:00:00Z', '11:00 AM'],
+    ['America/Los_Angeles', '2026-07-14T16:00:00Z', '9:00 AM'],
+    ['America/Los_Angeles', '2026-12-15T16:00:00Z', '8:00 AM'],
+    ['Asia/Kathmandu', '2026-07-14T16:00:00Z', '9:45 PM']
+  ])('uses legacy fallback or date-specific offset for %s', async (timezone, start, expected) => {
+    const fetch = vi.fn(async (_url: string | URL | Request, init?: RequestInit) => {
+      expect(JSON.parse(String(init?.body)).text).toContain(expected);
+      return Response.json({ id: 'tz-email' });
+    });
+    await new ResendNotificationPort({ apiKey: 'test', fetch }).sendNotification(notification, { ...delivery, booking: { ...booking, timezone, slot: { start: start!, end: new Date(Date.parse(start!) + 1800000).toISOString() } } });
+  });
+
   it('sends Performance HTML and aligned text without persisting the management credential', async () => {
     const fetch = vi.fn(async (_input: string | URL | Request, init?: RequestInit) => {
       expect(init?.headers).toMatchObject({

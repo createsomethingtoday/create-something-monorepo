@@ -254,6 +254,7 @@ describe('scheduler MCP contract', () => {
             start: '2026-07-14T16:00:00Z',
             end: '2026-07-14T16:30:00Z'
           },
+          timezone: 'Asia/Tokyo',
           scheduler: {
             name: 'Controlled Test',
             email: 'controlled@example.com'
@@ -269,7 +270,7 @@ describe('scheduler MCP contract', () => {
           explicitIntent: true
         }
       });
-      expect(committed.structuredContent).toMatchObject({ status: 'committed' });
+      expect(committed.structuredContent).toMatchObject({ status: 'committed', booking: { timezone: 'Asia/Tokyo' } });
       expect(eventCount).toBe(1);
       const committedContent = committed.structuredContent as {
         booking?: { bookingId?: string };
@@ -285,6 +286,7 @@ describe('scheduler MCP contract', () => {
             start: '2026-07-16T18:00:00Z',
             end: '2026-07-16T18:30:00Z'
           },
+          timezone: 'Europe/London',
           idempotencyKey: 'mcp-reschedule',
           explicitIntent: true
         }
@@ -296,7 +298,7 @@ describe('scheduler MCP contract', () => {
       });
       expect(read.structuredContent).toMatchObject({
         status: 'rescheduled',
-        booking: { bookingId, status: 'rescheduled' }
+        booking: { bookingId, status: 'rescheduled', timezone: 'Europe/London' }
       });
       const cancelled = await client.callTool({
         name: 'scheduler_cancel_booking',

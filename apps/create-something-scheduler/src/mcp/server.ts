@@ -103,6 +103,7 @@ const prepareOutputSchema = z.object({
   status: z.enum(['proposed', 'rejected', 'retryable']),
   proposalId: z.string().optional(),
   proposalToken: z.string().optional(),
+  timezone: z.string().optional(),
   expiresAt: z.string().optional(),
   slot: slotSchema.optional(),
   context: bookingContextSchema.optional(),
@@ -114,6 +115,7 @@ const bookingSchema = z.object({
   status: z.enum(['committed', 'rescheduled', 'cancelled']),
   slot: slotSchema,
   scheduler: schedulerSchema,
+  timezone: z.string().max(100).optional(),
   context: bookingContextSchema.optional(),
   provider: z.object({ eventId: z.string(), meetUrl: z.string().url() })
 });
@@ -346,6 +348,7 @@ export function createSchedulerMcpServer(
       inputSchema: z.object({
         slot: slotSchema,
         scheduler: schedulerSchema,
+        timezone: z.string().max(100).optional(),
         context: bookingContextSchema.optional()
       }),
       outputSchema: prepareOutputSchema,
@@ -361,6 +364,7 @@ export function createSchedulerMcpServer(
       const result = await service.prepareBooking({
         slot: input.slot,
         scheduler: input.scheduler,
+        timezone: input.timezone,
         ...(context ? { context } : {})
       });
       const structuredContent = jsonContract(result);
@@ -647,6 +651,7 @@ export function createSchedulerMcpServer(
         inputSchema: z.object({
           bookingId: z.string().min(1),
           newSlot: slotSchema,
+          timezone: z.string().max(100).optional(),
           idempotencyKey: z.string().trim().min(1).max(200),
           explicitIntent: z.literal(true)
         }),

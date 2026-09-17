@@ -137,10 +137,15 @@ export function schedulerPage(input: {
     .day-head { display:flex; justify-content:space-between; gap:16px; align-items:baseline; padding-bottom:8px; border-bottom:1px solid var(--color-performance-line); }
     .day h3 { margin:0; font:700 11px/1.2 var(--font-mono); letter-spacing:.05em; text-transform:uppercase; }
     .day-meta { color:var(--color-performance-muted); font:700 9px/1 var(--font-mono); letter-spacing:.05em; text-transform:uppercase; white-space:nowrap; }
+    .timezone-picker { display:grid; gap:8px; margin-bottom:24px; }
+    .timezone-picker label { display:grid; gap:8px; font:500 12px/1.5 var(--font-mono); }
+    .timezone-picker select { width:100%; min-width:0; min-height:44px; padding:10px; border:1px solid var(--color-performance-line); border-radius:0; background:var(--color-performance-panel); color:var(--color-performance-ink); font:inherit; }
+    .timezone-picker p { margin:0; color:var(--color-performance-muted); font-size:12px; }
+    .timezone-picker button { justify-self:start; }
     .slots { display:grid; grid-template-columns:repeat(auto-fill,minmax(112px,1fr)); gap:8px; }
     button,.button { appearance:none; display:inline-grid; place-items:center; min-height:44px; padding:11px 14px; border:1px solid var(--color-performance-ink); border-radius:0; background:var(--color-performance-panel); color:var(--color-performance-ink); font:700 11px/1 var(--font-mono); letter-spacing:.04em; text-decoration:none; text-transform:uppercase; cursor:pointer; }
     button:hover { background:var(--color-performance-ink); color:white; }
-    button:focus-visible,.button:focus-visible,input:focus-visible { outline:3px solid var(--color-performance-signal); outline-offset:3px; }
+    button:focus-visible,.button:focus-visible,input:focus-visible,select:focus-visible { outline:3px solid var(--color-performance-signal); outline-offset:3px; }
     button[aria-pressed="true"] { border-color:var(--color-performance-signal); background:var(--color-performance-signal); color:white; box-shadow:inset 4px 0 white; }
     button.primary { border-color:var(--color-performance-ink); background:var(--color-performance-ink); color:white; box-shadow:inset 5px 0 var(--color-performance-signal); }
     button.danger { border-color:var(--color-performance-stop); color:var(--color-performance-stop); }
@@ -177,6 +182,11 @@ export function schedulerPage(input: {
   </header>
   <div class="layout">
     <section class="panel" aria-labelledby="booking-heading">
+      <div class="timezone-picker">
+        <label for="timezone">Times shown in <select id="timezone" aria-describedby="timezone-note"></select></label>
+        <p id="timezone-note">Detecting your timezone…</p>
+        <button id="use-device-timezone" type="button">Use device timezone</button>
+      </div>
       <div id="scheduler-view">
         <nav class="steps" aria-label="Booking progress"><span data-step="1" aria-current="step">01 · Time</span><span data-step="2">02 · Details</span><span data-step="3">03 · Confirm</span></nav>
         <h2 id="booking-heading">Choose a time</h2>
@@ -225,7 +235,47 @@ export function schedulerPage(input: {
   const durationSummary = document.querySelector('#duration-summary');
   const durationButtons = Array.from(document.querySelectorAll('[data-duration]'));
   const stepNodes = Array.from(document.querySelectorAll('[data-step]'));
-  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Chicago';
+  const timezoneSelect = document.querySelector('#timezone');
+  const timezoneNote = document.querySelector('#timezone-note');
+  const deviceTimezoneButton = document.querySelector('#use-device-timezone');
+  const timezoneStorageKey = 'scheduler:timezone';
+  function validTimezone(value) {
+    if (typeof value !== 'string' || !value || value.length > 100 || /^[+-]/.test(value)) return null;
+    try { return new Intl.DateTimeFormat(undefined,{timeZone:value}).resolvedOptions().timeZone; } catch { return null; }
+  }
+  let detectedTimezone = null;
+  try { detectedTimezone = validTimezone(Intl.DateTimeFormat().resolvedOptions().timeZone); } catch {}
+  let savedTimezone = null;
+  try { savedTimezone = validTimezone(localStorage.getItem(timezoneStorageKey)); } catch {}
+  let timezone = savedTimezone || detectedTimezone || 'America/Chicago';
+  let timezoneChoices = ['UTC','America/Chicago','America/New_York','America/Los_Angeles','Europe/London','Europe/Paris','Asia/Tokyo','Asia/Kolkata','Asia/Kathmandu','Australia/Sydney','Pacific/Auckland'];
+  try { timezoneChoices = Intl.supportedValuesOf('timeZone'); } catch {}
+  function syncTimezoneControl(note) {
+    if (![...timezoneSelect.options].some(option=>option.value===timezone)) {
+      const option=document.createElement('option'); option.value=timezone; option.textContent=timezone.replaceAll('_',' '); timezoneSelect.append(option);
+    }
+    timezoneSelect.value=timezone;
+    timezoneNote.textContent=note;
+  }
+  for (const zone of [...new Set(['UTC',timezone,...timezoneChoices])].sort()) {
+    const option=document.createElement('option'); option.value=zone; option.textContent=zone.replaceAll('_',' '); timezoneSelect.append(option);
+  }
+  syncTimezoneControl(savedTimezone ? 'Your saved timezone. Change it if needed.' : detectedTimezone ? 'Detected from your device. Change it if needed.' : 'Using Central Time. Choose your timezone.');
+  function changeTimezone(value, useDevice) {
+    const next=validTimezone(value); if (!next) return;
+    timezone=next;
+    try { if (useDevice) localStorage.removeItem(timezoneStorageKey); else localStorage.setItem(timezoneStorageKey,timezone); } catch {}
+    syncTimezoneControl(useDevice ? 'Detected from your device.' : 'Your timezone choice. Used in booking emails.');
+    if (state.selected) state.selectedDay=formatDay(state.selected.start);
+    else state.selectedDay=null;
+    renderSlots();
+    if (state.selected) selectSlot(state.selected);
+    else if (state.slots.length) setStatus(state.slots.length+' verified '+state.durationMinutes+'-minute openings · '+timezone.replaceAll('_',' ')+'.','ready');
+    queueParentHeight();
+  }
+  timezoneSelect.addEventListener('change',()=>changeTimezone(timezoneSelect.value,false));
+  deviceTimezoneButton.disabled=!detectedTimezone;
+  deviceTimezoneButton.addEventListener('click',()=>changeTimezone(detectedTimezone,true));
   window.schedulerProofReady = token => { state.browserProof = token; };
 
   function schedulerContext(input) {
@@ -323,19 +373,25 @@ export function schedulerPage(input: {
     return body;
   }
 
+  let availabilityRequest = 0;
   async function loadAvailability() {
+    const request = ++availabilityRequest;
+    state.slots=[];
     setStatus('Checking the calendar…','controlled');
+    form.hidden=true; document.querySelector('#move-meeting')?.remove();
     state.selected=null; state.selectedDay=null; selectedSummary.textContent='Choose a time'; updateSteps(1);
     days.replaceChildren();
     const from = new Date();
     const to = new Date(from.getTime() + 28 * 24 * 60 * 60 * 1000);
     try {
       const result = await api('/api/v1/availability?' + new URLSearchParams({from:from.toISOString(),to:to.toISOString(),timezone,durationMinutes:String(state.durationMinutes)}));
+      if (request !== availabilityRequest) return;
       state.slots = result.slots;
       renderSlots();
       setStatus(result.slots.length ? result.slots.length + ' verified '+state.durationMinutes+'-minute openings · ' + timezone.replaceAll('_',' ') + '.' : 'No open times in the next four weeks.',result.slots.length ? 'ready' : 'review');
       queueParentHeight();
     } catch (error) {
+      if (request !== availabilityRequest) return;
       setStatus(error.message + ' No time can be booked until Calendar is confirmed.', 'stop');
       queueParentHeight();
     }
@@ -377,7 +433,7 @@ export function schedulerPage(input: {
     state.selected = slot; renderSlots();
     if (state.mode === 'reschedule') { renderRescheduleConfirmation(); return; }
     form.hidden = false; form.querySelector('input').focus();
-    selectedSummary.textContent=formatDay(slot.start)+' · '+formatTime(slot.start)+' · '+state.durationMinutes+' min'; updateSteps(2);
+    selectedSummary.textContent=formatDay(slot.start)+' · '+formatTime(slot.start)+' · '+state.durationMinutes+' min · '+timezone.replaceAll('_',' '); updateSteps(2);
     setStatus('Selected ' + formatDay(slot.start) + ' at ' + formatTime(slot.start) + ' for '+state.durationMinutes+' minutes.','review');
     if (!state.formStarted) { state.formStarted=true; notifyParent('booking_form_started',{durationMinutes:state.durationMinutes}); }
     queueParentHeight();
@@ -387,28 +443,31 @@ export function schedulerPage(input: {
     event.preventDefault();
     if (!state.selected) return;
     if (config.turnstileSiteKey && !state.browserProof) { setStatus('Complete the verification before booking.','review'); return; }
-    const submit = form.querySelector('button[type=submit]'); submit.disabled=true; updateSteps(3); setStatus('Confirming your meeting…','controlled');
+    const submit = form.querySelector('button[type=submit]'); submit.disabled=true; timezoneSelect.disabled=true; deviceTimezoneButton.disabled=true; updateSteps(3); setStatus('Confirming your meeting…','controlled');
     notifyParent('booking_initiated',{durationMinutes:state.durationMinutes});
     try {
       const data = new FormData(form);
-      const prepared = await api('/api/v1/bookings/prepare',{method:'POST',body:JSON.stringify({slot:state.selected,scheduler:{name:data.get('name'),email:data.get('email')},...(state.context?{context:state.context}:{})})});
+      const prepared = await api('/api/v1/bookings/prepare',{method:'POST',body:JSON.stringify({slot:state.selected,timezone,scheduler:{name:data.get('name'),email:data.get('email')},...(state.context?{context:state.context}:{})})});
       const committed = await api('/api/v1/bookings',{method:'POST',headers:{'x-browser-proof':state.browserProof || ''},body:JSON.stringify({proposalToken:prepared.proposalToken,idempotencyKey:idempotency('browser-book'),explicitIntent:true})});
       state.booking=committed.booking; state.actionToken=committed.actionToken;
       sessionStorage.setItem(tokenKey(state.booking.bookingId),state.actionToken);
       history.replaceState({},'',canonicalBookingUrl(state.booking.bookingId));
       notifyParent('booking_completed',{bookingId:state.booking.bookingId,receiptId:committed.receiptId,durationMinutes:state.durationMinutes});
       showBooking(committed);
-    } catch (error) { setStatus(error.message,'stop'); submit.disabled=false; }
+    } catch (error) { setStatus(error.message,'stop'); submit.disabled=false; timezoneSelect.disabled=false; deviceTimezoneButton.disabled=!detectedTimezone; }
   });
 
   function showBooking(result) {
+    timezone=validTimezone(result.booking.timezone) || 'America/Chicago';
+    syncTimezoneControl('Booking timezone. Used in confirmation and reminder emails.');
+    timezoneSelect.disabled=true; deviceTimezoneButton.disabled=true;
     state.durationMinutes=slotDuration(result.booking.slot); renderDuration();
     updateSteps(3); schedulerView.hidden=true; confirmation.hidden=false;
     const managementActions=renderBookingManagementActions(result.booking.status);
     const canManageBooking=Boolean(managementActions);
     confirmation.innerHTML='<div class="eyebrow">'+escapeHtml(result.status)+'</div><h2>Your meeting is '+escapeHtml(result.status)+'.</h2><p>'+escapeHtml(formatDay(result.booking.slot.start))+' at '+escapeHtml(formatTime(result.booking.slot.start))+' · '+escapeHtml(state.durationMinutes)+' minutes · '+timezone.replaceAll('_',' ')+'</p><p><a class="button" href="'+escapeAttribute(result.booking.provider.meetUrl)+'">Open Google Meet</a></p><div class="receipt">Booking '+escapeHtml(result.booking.bookingId)+'<br>Receipt '+escapeHtml(result.receiptId)+'</div>'+managementActions;
     if (canManageBooking) {
-      confirmation.querySelector('#reschedule').addEventListener('click',()=>{ state.mode='reschedule'; renderDuration(); confirmation.hidden=true; schedulerView.hidden=false; form.hidden=true; state.selected=null; loadAvailability(); });
+      confirmation.querySelector('#reschedule').addEventListener('click',()=>{ state.mode='reschedule'; timezoneSelect.disabled=false; deviceTimezoneButton.disabled=!detectedTimezone; renderDuration(); confirmation.hidden=true; schedulerView.hidden=false; form.hidden=true; state.selected=null; loadAvailability(); });
       confirmation.querySelector('#cancel').addEventListener('click',()=>{
         confirmation.querySelector('#confirm-action').innerHTML='<p>Cancel this meeting for everyone?</p><button id="confirm-cancel" class="danger" type="button">Confirm cancellation</button>';
         confirmation.querySelector('#confirm-cancel').addEventListener('click',cancelBooking);
@@ -428,7 +487,7 @@ export function schedulerPage(input: {
   async function rescheduleBooking() {
     if (!state.booking || !state.selected) return;
     try {
-      const result=await api('/api/v1/bookings/'+encodeURIComponent(state.booking.bookingId)+'/reschedule',{method:'POST',headers:{'x-booking-action-token':state.actionToken},body:JSON.stringify({newSlot:state.selected,idempotencyKey:idempotency('browser-reschedule'),explicitIntent:true})});
+      const result=await api('/api/v1/bookings/'+encodeURIComponent(state.booking.bookingId)+'/reschedule',{method:'POST',headers:{'x-booking-action-token':state.actionToken},body:JSON.stringify({newSlot:state.selected,timezone,idempotencyKey:idempotency('browser-reschedule'),explicitIntent:true})});
       state.booking=result.booking; state.actionToken=result.actionToken;
       sessionStorage.setItem(tokenKey(state.booking.bookingId),state.actionToken);
       document.querySelector('#move-meeting')?.remove(); showBooking(result);

@@ -128,9 +128,9 @@ export const schedulerOpenApi = {
         agentMessages: { type: 'integer', minimum: 0, maximum: 200 },
         warmupNotes: { type: 'string', maxLength: 2000 }
       }, []),
-      PrepareBookingInput: object({ slot: ref('Slot'), scheduler: ref('Scheduler'), context: ref('BookingContext') }, ['slot', 'scheduler']),
+      PrepareBookingInput: object({ timezone: { type: 'string', description: 'Visitor IANA timezone for confirmation and reminder emails. Defaults to America/Chicago for legacy clients.' }, slot: ref('Slot'), scheduler: ref('Scheduler'), context: ref('BookingContext') }, ['slot', 'scheduler']),
       CommitBookingInput: object({ proposalToken: { type: 'string' }, idempotencyKey: { type: 'string' }, explicitIntent: { const: true } }, ['proposalToken', 'idempotencyKey', 'explicitIntent']),
-      RescheduleBookingInput: object({ newSlot: ref('Slot'), idempotencyKey: { type: 'string' }, explicitIntent: { const: true } }, ['newSlot', 'idempotencyKey', 'explicitIntent']),
+      RescheduleBookingInput: object({ timezone: { type: 'string', description: 'Optional visitor IANA timezone; omission retains the booking timezone.' }, newSlot: ref('Slot'), idempotencyKey: { type: 'string' }, explicitIntent: { const: true } }, ['newSlot', 'idempotencyKey', 'explicitIntent']),
       CancelBookingInput: object({ idempotencyKey: { type: 'string' }, explicitIntent: { const: true } }, ['idempotencyKey', 'explicitIntent']),
       CreateRoomInput: object({
         bookingId: { type: 'string' },
