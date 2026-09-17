@@ -252,7 +252,12 @@
 					</div>
 					<h3 class="no-data-title">No Analytics Data Yet</h3>
 					<p class="no-data-description">
-						Analytics data will appear here once your template is published and starts receiving views.
+						{#if VIEWER_DATA_AVAILABLE}
+							Analytics data will appear here once your template is published and starts receiving views.
+						{:else}
+							Analytics data will appear here after your template's first purchase. View counts are
+							temporarily unavailable while we rebuild view tracking.
+						{/if}
 					</p>
 				</div>
 			</CardContent>
