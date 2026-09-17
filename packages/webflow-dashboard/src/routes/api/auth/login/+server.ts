@@ -4,6 +4,7 @@ import { getAirtableClient, validateEmail } from '$lib/server/airtable';
 import { checkRateLimit } from '$lib/server/kv';
 import { v4 as uuidv4 } from 'uuid';
 import { hashString } from '$lib/utils/hash';
+import { triggerKnockLoginWorkflow } from '@create-something/webflow-dashboard-core/knock';
 
 // Server-side analytics tracking for security paper trail
 async function trackServerEvent(
@@ -30,9 +31,14 @@ async function trackServerEvent(
  *
  * Initiates login by:
  * 1. Generating a verification token
- * 2. Storing it in Airtable (triggers automation to send email)
+ * 2. Storing it in Airtable
+ * 3. Delivering it by email:
+ *    - Knock workflow `asset-dashboard-login-validation` (Postmark) when
+ *      KNOCK_LOGIN_ENABLED=true and KNOCK_API_KEY is set
+ *    - otherwise the legacy Airtable automation (null → value transition on the
+ *      token field triggers the "Asset Dashboard Verification Gmail" automation)
  */
-export const POST: RequestHandler = async ({ request, platform, getClientAddress }) => {
+export const POST: RequestHandler = async ({ request, platform, getClientAddress, url }) => {
 	const clientIp = getClientAddress();
 	const db = platform?.env?.DB;
 	const sessions = platform?.env?.SESSIONS;
@@ -114,15 +120,37 @@ export const POST: RequestHandler = async ({ request, platform, getClientAddress
 		const token = uuidv4();
 		const expirationTime = new Date(Date.now() + 60 * 60000); // 60 minutes
 
-		// Store token in Airtable and trigger automation to send email
-		// Uses two-step update: null → value transition triggers the Airtable automation
-		await airtable.triggerVerificationEmailAutomation(user.id, token, expirationTime);
+		const env = platform?.env;
+		const knockEnabled = env?.KNOCK_LOGIN_ENABLED === 'true' && Boolean(env?.KNOCK_API_KEY);
+
+		if (knockEnabled) {
+			// Store token in Airtable (single write, does not trip the legacy automation
+			// on its own) and deliver via Knock → Postmark.
+			await airtable.setVerificationToken(user.id, token, expirationTime);
+			await triggerKnockLoginWorkflow({
+				apiKey: env!.KNOCK_API_KEY!,
+				workflowKey: env?.KNOCK_LOGIN_WORKFLOW_KEY ?? 'asset-dashboard-login-validation',
+				recipient: { id: user.id, email: validatedEmail },
+				data: {
+					verificationToken: token,
+					expiresAtIso: expirationTime.toISOString(),
+					// Standalone code-entry page on this deployment's own origin, so the
+					// email works without the original login tab staying open.
+					verifyUrl: new URL('/verify', url.origin).toString()
+				}
+			});
+		} else {
+			// Store token in Airtable and trigger automation to send email
+			// Uses two-step update: null → value transition triggers the Airtable automation
+			await airtable.triggerVerificationEmailAutomation(user.id, token, expirationTime);
+		}
 
 		// Track successful login initiation - security paper trail
 		const emailHash = await hashString(validatedEmail);
 		await trackServerEvent(db, 'auth_login_token_generated', {
 			email_hash: emailHash,
-			email_domain: validatedEmail.split('@')[1] || 'unknown'
+			email_domain: validatedEmail.split('@')[1] || 'unknown',
+			delivery: knockEnabled ? 'knock' : 'airtable-automation'
 		});
 
 		return json({
