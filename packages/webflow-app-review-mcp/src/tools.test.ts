@@ -732,6 +732,70 @@ describe('registerTools', () => {
     expect(addTicketComment).toHaveBeenCalledWith('1170775', expect.objectContaining({ isPublic: true }));
   });
 
+  it('get_ticket_thread reads the linked ticket conversation through the version record', async () => {
+    const { server, handlers } = createServerHarness();
+    const client = {
+      getVersionById: vi.fn().mockResolvedValue({
+        versionId: 'recVersion',
+        assetId: 'recAsset',
+        versionNumber: 11,
+        zendeskTicketId: '1188879',
+        zendeskSubject: 'Your Webflow Marketplace App submission',
+      }),
+      getAssetById: vi.fn().mockResolvedValue({ assetId: 'recAsset', appName: 'CMS Smart Sync' }),
+    } as unknown as AirtableClient;
+    const getTicketThread = vi.fn().mockResolvedValue({
+      ticketId: '1188879',
+      subject: 'Your Webflow Marketplace App submission',
+      status: 'pending',
+      comments: [{ id: 1, isPublic: true, body: 'We fixed the CSP.', author: { name: 'Dev', role: 'end-user' } }],
+    });
+    const zendesk = { getTicketThread } as unknown as ZendeskClient;
+
+    registerTools(server, () => client, () => null, () => zendesk);
+    const result = await handlers.get('app_review_get_ticket_thread')?.({
+      version_id: 'recVersion',
+      include_internal_notes: true,
+      limit: 5,
+    });
+
+    const payload = parsePayload(result!);
+    expect(payload.ok).toBe(true);
+    expect(payload.data).toMatchObject({
+      version_id: 'recVersion',
+      version_number: 11,
+      ticket_url: 'https://webflow2579.zendesk.com/agent/tickets/1188879',
+      thread: { ticketId: '1188879', status: 'pending' },
+    });
+    expect(getTicketThread).toHaveBeenCalledWith('1188879', { includeInternalNotes: true, limit: 5 });
+  });
+
+  it('get_ticket_thread fails closed without a ticket link or Zendesk config', async () => {
+    const { server, handlers } = createServerHarness();
+    const client = {
+      getVersionById: vi.fn().mockResolvedValue({ versionId: 'recVersion', assetId: 'recAsset' }),
+      getAssetById: vi.fn().mockResolvedValue({ assetId: 'recAsset', appName: 'CMS Smart Sync' }),
+    } as unknown as AirtableClient;
+    const getTicketThread = vi.fn();
+    registerTools(server, () => client, () => null, () => ({ getTicketThread }) as unknown as ZendeskClient);
+    const noTicket = await handlers.get('app_review_get_ticket_thread')?.({
+      version_id: 'recVersion',
+      include_internal_notes: false,
+      limit: 20,
+    });
+    expect(parsePayload(noTicket!)).toMatchObject({ ok: false, error: { code: 'NO_ZENDESK_TICKET' } });
+    expect(getTicketThread).not.toHaveBeenCalled();
+
+    const { server: server2, handlers: handlers2 } = createServerHarness();
+    registerTools(server2, () => client);
+    const unconfigured = await handlers2.get('app_review_get_ticket_thread')?.({
+      version_id: 'recVersion',
+      include_internal_notes: false,
+      limit: 20,
+    });
+    expect(parsePayload(unconfigured!)).toMatchObject({ ok: false, error: { code: 'ZENDESK_NOT_CONFIGURED' } });
+  });
+
   it('send_ticket_followup fails closed when Zendesk is unconfigured or the ticket link is missing', async () => {
     const { server, handlers } = createServerHarness();
     const client = {
