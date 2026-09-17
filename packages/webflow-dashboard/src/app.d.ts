@@ -19,6 +19,9 @@ declare global {
 				ENVIRONMENT?: string;
 				DEBUG_LOGS?: string;
 				DEBUG_AIRTABLE?: string;
+				KNOCK_API_KEY?: string;
+				KNOCK_LOGIN_WORKFLOW_KEY?: string;
+				KNOCK_LOGIN_ENABLED?: string;
 			};
 			context: {
 				waitUntil(promise: Promise<unknown>): void;
