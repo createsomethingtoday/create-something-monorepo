@@ -29,8 +29,10 @@ import {
   type FetchFn,
   type VersionExceptionWebhookContext,
 } from './airtable.js';
+import { renderHoldNoticeMarkdown, type HoldNoticeStore } from './hold-notices.js';
 import { FIELD_IDS, TABLE_IDS } from './schema.js';
 import { SlackClient } from './slack.js';
+import { renderCreatorFacingHtml, type ZendeskClient } from './zendesk.js';
 
 // --- State -------------------------------------------------------------------
 
@@ -430,6 +432,12 @@ export interface ExceptionWebhookProcessorDeps {
   versionViewUrlBase: string;
   /** Reviewer-exceptions knowledge base for auto-proposal; omit to skip. */
   kb?: { apiKey: string; baseId: string; tableId: string } | null;
+  /**
+   * Developer-facing hold notice (9/16/2026). Both must be present for the
+   * notice to send; either missing = the hold stays internal-only as before.
+   */
+  zendesk?: ZendeskClient | null;
+  holdNotices?: HoldNoticeStore | null;
   logger?: (message: string) => void;
 }
 
@@ -919,6 +927,14 @@ async function handleVersionHold(
     deps.airtable.getVersionExceptionWebhookContext(versionId),
   );
   if (!ctx) return;
+
+  // Developer touch: an exception hold used to be silent on the developer's
+  // ticket. Independent of the Slack thread — the thread roots on an
+  // exception the developer never sees.
+  if (holdReason === 'Pending Exception Decision') {
+    await sendDeveloperHoldNotice(deps, ctx, result, checkpoint, stepPrefix);
+  }
+
   // The native hold automation already posts the loud channel message. Only
   // add to the thread when one exists — the thread roots on the exception.
   if (!ctx.exceptionSlackTs) return;
@@ -936,6 +952,43 @@ async function handleVersionHold(
     `${stepPrefix}:hold-reply`,
   );
   result.actions.push(`hold ${versionId}`);
+}
+
+async function sendDeveloperHoldNotice(
+  deps: ExceptionWebhookProcessorDeps,
+  ctx: VersionExceptionWebhookContext,
+  result: ProcessResult,
+  checkpoint: PayloadStepCheckpoint,
+  stepPrefix: string,
+): Promise<void> {
+  if (!deps.zendesk || !deps.holdNotices) return; // not configured — internal-only hold, as before
+  if (!ctx.zendeskTicketId) {
+    result.actions.push(`hold-notice ${ctx.id} skipped: no ticket`);
+    return;
+  }
+  const existing = await deps.holdNotices.get(ctx.id);
+  if (existing && !existing.closedAt) {
+    result.actions.push(`hold-notice ${ctx.id} already-sent`);
+    return;
+  }
+
+  // Version records are named "<App> v<N>"; avoid "Awesome Popups v5 v5".
+  const appName = (ctx.name ?? ctx.id).replace(/\s+v\d+$/i, '');
+  const markdown = renderHoldNoticeMarkdown({
+    appName,
+    versionNumber: ctx.versionNumber,
+    creatorName: ctx.creatorName,
+  });
+  const ticketId = ctx.zendeskTicketId;
+  const zendesk = deps.zendesk;
+  const holdNotices = deps.holdNotices;
+  await checkpoint.run(`${stepPrefix}:hold-dev-notice`, () =>
+    zendesk.addTicketComment(ticketId, { htmlBody: renderCreatorFacingHtml(markdown), isPublic: true }),
+  );
+  await checkpoint.run(`${stepPrefix}:hold-dev-notice-record`, () =>
+    holdNotices.put(ctx.id, { ticketId, noticeAt: new Date().toISOString(), reminders: 0 }),
+  );
+  result.actions.push(`hold-notice ${ctx.id} ticket ${ticketId}`);
 }
 
 async function handleExceptionItemStatus(
@@ -999,6 +1052,16 @@ async function handleExceptionItemStatus(
     ]
       .filter(Boolean)
       .join('\n');
+  } else if (status === '🔙Withdrawn' && item.resolvedInVersionId) {
+    // Not a retraction: a resubmission fixed it and the reviewer verified.
+    text = [
+      `:white_check_mark: Exception item *resolved in resubmission* — ${itemLabel}${user?.name ? ` (${user.name})` : ''}`,
+      item.resolutionNotes ? `*Verified:* ${clip(item.resolutionNotes, 1500)}` : null,
+      `<${deps.versionViewUrlBase}${item.resolvedInVersionId}|Open resolving version>`,
+      '_Closed without a decision-maker: the fix is in the new bundle. Policy items still wait on their decision._',
+    ]
+      .filter(Boolean)
+      .join('\n');
   } else if (status === '🔙Withdrawn') {
     text = `:leftwards_arrow_with_hook: Exception item *withdrawn* — ${itemLabel}${user?.name ? ` (${user.name})` : ''}`;
   }
@@ -1012,5 +1075,7 @@ async function handleExceptionItemStatus(
     checkpoint,
     `${stepPrefix}:status-reply`,
   );
-  result.actions.push(`item ${status} ${itemId}`);
+  result.actions.push(
+    status === '🔙Withdrawn' && item.resolvedInVersionId ? `item resolved ${itemId}` : `item ${status} ${itemId}`,
+  );
 }

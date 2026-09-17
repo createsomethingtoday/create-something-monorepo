@@ -98,6 +98,19 @@ describe('schema helpers', () => {
     expect(APP_REVIEW_FIELD_MAP.statusOptions.holdReason).toContain('Pending Exception Decision');
   });
 
+  it('exposes the resolved-in-resubmission evidence fields', () => {
+    // Gap 1 (9/16/2026): rows fixed by a resubmission close as 🔙Withdrawn plus
+    // evidence, because the status field cannot grow a new option via API.
+    expect(FIELD_IDS.exceptions.resolvedInVersionLink).toBe('fldjk5Nj7NMJM1gz5');
+    expect(FIELD_IDS.exceptions.resolutionNotes).toBe('fldGdY0Zyl1m9vMcw');
+    expect(FIELD_IDS.exceptions.resolvedDatetime).toBe('fldUJpPcA8A2EQkZD');
+    expect(FIELD_IDS.versions.resolvedExceptionItems).toBe('fldNi85OKGFEg8vQg');
+    expect(APP_REVIEW_FIELD_MAP.exceptions.writable.resolved_in_version_id).toBe(FIELD_IDS.exceptions.resolvedInVersionLink);
+    expect(APP_REVIEW_FIELD_MAP.exceptions.writable.resolution_notes).toBe(FIELD_IDS.exceptions.resolutionNotes);
+    expect(APP_REVIEW_FIELD_MAP.exceptions.readOnly.resolved_datetime).toBe(FIELD_IDS.exceptions.resolvedDatetime);
+    expect(APP_REVIEW_FIELD_MAP.versions.readOnly.resolved_exception_items).toBe(FIELD_IDS.versions.resolvedExceptionItems);
+  });
+
   it('exposes governance finding table, field names, and enum options', () => {
     expect(TABLE_IDS.governanceFindings).toBe('App Review Governance Findings');
     expect(GOVERNANCE_FINDING_FIELD_NAMES.title).toBe('Title');

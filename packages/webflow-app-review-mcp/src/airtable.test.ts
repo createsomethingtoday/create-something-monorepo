@@ -335,6 +335,144 @@ describe('AirtableClient exception handling', () => {
     expect(fetchFn).not.toHaveBeenCalled();
   });
 
+  describe('resolveExceptionItem (resolved in resubmission)', () => {
+    const E = FIELD_IDS.exceptions;
+    const V = FIELD_IDS.versions;
+
+    function itemRecord(overrides: Record<string, unknown> = {}) {
+      return {
+        id: 'recItem1',
+        createdTime: '2026-08-11T16:10:07.000Z',
+        fields: {
+          [E.item]: 'Sentry hidden iframes',
+          [E.status]: '👀Under Review',
+          [E.assetVersionLink]: ['recV99'],
+          [E.assetLink]: ['recAsset'],
+          [E.decisionNotes]: 'Partner-lead recommendation: DENY (8/18).',
+          [E.undecided]: 1,
+          ...overrides,
+        },
+      };
+    }
+
+    function stub(options: { item?: Record<string, unknown>; version?: Record<string, unknown> | null }) {
+      const writes: Array<Record<string, unknown>> = [];
+      const fetchFn = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = new URL(String(input));
+        if (init?.method === 'PATCH') {
+          const body = JSON.parse(String(init.body)) as { records: Array<{ id: string; fields: Record<string, unknown> }> };
+          writes.push(body.records[0]!);
+          return jsonResponse({
+            records: [
+              {
+                id: 'recItem1',
+                fields: { ...itemRecord().fields, ...(options.item ?? {}), ...body.records[0]!.fields, [E.undecided]: 0 },
+              },
+            ],
+          });
+        }
+        if (url.pathname.includes(`/${TABLE_IDS.exceptions}/recItem1`)) {
+          return jsonResponse(itemRecord(options.item));
+        }
+        if (url.pathname.includes(`/${TABLE_IDS.assetVersions}/recV102`)) {
+          if (options.version === null) return jsonResponse({ error: { type: 'NOT_FOUND' } }, 404);
+          return jsonResponse({
+            id: 'recV102',
+            fields: {
+              [V.assetLink]: ['recAsset'],
+              [V.assetRecordIdRollup]: ['recAsset'],
+              [V.versionNumber]: 102,
+              ...(options.version ?? {}),
+            },
+          });
+        }
+        throw new Error(`Unexpected fetch: ${url}`);
+      });
+      return { fetchFn, writes };
+    }
+
+    it('closes the row as Withdrawn with version link, notes, and appended history', async () => {
+      const { fetchFn, writes } = stub({});
+      const client = new AirtableClient({ apiKey: 'token', fetchFn });
+
+      const result = await client.resolveExceptionItem('recItem1', {
+        resolved_in_version_id: 'recV102',
+        resolution_notes: 'Sentry removed; no iframe creation in v102 index.js.',
+        resolved_by: 'Micah Johnson',
+        now: new Date('2026-09-16T21:00:00.000Z'),
+      });
+
+      expect(writes).toHaveLength(1);
+      const fields = (writes[0] as { fields: Record<string, unknown> }).fields;
+      expect(fields[E.status]).toBe('🔙Withdrawn');
+      expect(fields[E.resolvedInVersionLink]).toEqual(['recV102']);
+      expect(fields[E.resolutionNotes]).toBe('Sentry removed; no iframe creation in v102 index.js.');
+      // decision_notes OVERWRITES in Airtable — the client must resend history + the new line.
+      expect(String(fields[E.decisionNotes])).toContain('Partner-lead recommendation: DENY (8/18).');
+      expect(String(fields[E.decisionNotes])).toContain('Resolved in v102');
+      expect(String(fields[E.decisionNotes])).toContain('2026-09-16');
+      expect(String(fields[E.decisionNotes])).toContain('Micah Johnson');
+      expect(result.exceptionStatus).toBe('🔙Withdrawn');
+      expect(result.resolvedInVersionId).toBe('recV102');
+      expect(result.isResolved).toBe(true);
+    });
+
+    it('refuses to resolve a row that already carries a decision', async () => {
+      const { fetchFn, writes } = stub({ item: { [E.status]: '❌Denied', [E.undecided]: 0 } });
+      const client = new AirtableClient({ apiKey: 'token', fetchFn });
+      await expect(
+        client.resolveExceptionItem('recItem1', { resolved_in_version_id: 'recV102', resolution_notes: 'x' }),
+      ).rejects.toMatchObject({ code: 'EXCEPTION_ALREADY_DECIDED', status: 409 });
+      expect(writes).toHaveLength(0);
+    });
+
+    it('refuses a resolving version that belongs to a different app', async () => {
+      const { fetchFn, writes } = stub({ version: { [V.assetLink]: ['recOtherApp'], [V.assetRecordIdRollup]: ['recOtherApp'] } });
+      const client = new AirtableClient({ apiKey: 'token', fetchFn });
+      await expect(
+        client.resolveExceptionItem('recItem1', { resolved_in_version_id: 'recV102', resolution_notes: 'x' }),
+      ).rejects.toMatchObject({ code: 'VERSION_ASSET_MISMATCH', status: 400 });
+      expect(writes).toHaveLength(0);
+    });
+
+    it('requires resolution notes and an existing version', async () => {
+      const { fetchFn } = stub({ version: null });
+      const client = new AirtableClient({ apiKey: 'token', fetchFn });
+      await expect(
+        client.resolveExceptionItem('recItem1', { resolved_in_version_id: 'recV102', resolution_notes: '   ' }),
+      ).rejects.toMatchObject({ code: 'RESOLUTION_NOTES_REQUIRED', status: 400 });
+      await expect(
+        client.resolveExceptionItem('recItem1', { resolved_in_version_id: 'recV102', resolution_notes: 'ok' }),
+      ).rejects.toMatchObject({ code: 'VERSION_NOT_FOUND', status: 404 });
+    });
+
+    it('maps the resolution evidence on read', async () => {
+      const fetchFn = vi.fn(async () =>
+        jsonResponse({
+          records: [
+            {
+              id: 'recItem9',
+              fields: {
+                [E.item]: 'Fixed thing',
+                [E.status]: '🔙Withdrawn',
+                [E.resolvedInVersionLink]: ['recV102'],
+                [E.resolutionNotes]: 'verified',
+                [E.resolvedDatetime]: '2026-09-16T21:00:00.000Z',
+                [E.undecided]: 0,
+              },
+            },
+            { id: 'recItem8', fields: { [E.item]: 'Plain withdrawal', [E.status]: '🔙Withdrawn', [E.undecided]: 0 } },
+          ],
+        }),
+      );
+      const client = new AirtableClient({ apiKey: 'token', fetchFn });
+      const [resolved, withdrawn] = await client.listAllExceptionItems();
+      expect(resolved).toMatchObject({ resolvedInVersionId: 'recV102', resolutionNotes: 'verified', resolvedDatetime: '2026-09-16T21:00:00.000Z', isResolved: true });
+      expect(withdrawn?.isResolved).toBe(false);
+      expect(withdrawn?.resolvedInVersionId).toBeUndefined();
+    });
+  });
+
   it('lists exception items via the version link field', async () => {
     const fetchFn = vi.fn(async (input: RequestInfo | URL) => {
       const url = new URL(String(input));

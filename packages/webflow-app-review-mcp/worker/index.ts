@@ -16,6 +16,7 @@ import {
   type WebhookApiConfig,
   type WebhookLegStateStore,
 } from '../src/exception-webhook.js';
+import { createD1HoldNoticeStore, sendPendingHoldReminders } from '../src/hold-notices.js';
 import { SlackClient } from '../src/slack.js';
 import {
   cloudflareAccessServePath,
@@ -60,6 +61,8 @@ interface Env {
   ZENDESK_API_TOKEN?: string;
   ZENDESK_API_EMAIL?: string;
   ZENDESK_SUBDOMAIN?: string;
+  /** Kill switch for developer-facing hold notices + 7-day reminders ("1" disables). */
+  HOLD_NOTICES_DISABLED?: string;
 }
 
 type RequestProps = {
@@ -105,21 +108,25 @@ export class WebflowAppReviewMCP extends McpAgent<Env, unknown, RequestProps> {
       });
     };
 
-    const getZendesk = () => {
-      if (!this.env.ZENDESK_API_TOKEN || !this.env.ZENDESK_API_EMAIL) {
-        return null;
-      }
-      return new ZendeskClient({
-        subdomain: this.env.ZENDESK_SUBDOMAIN ?? 'webflow2579',
-        email: this.env.ZENDESK_API_EMAIL,
-        apiToken: this.env.ZENDESK_API_TOKEN,
-      });
-    };
+    const getZendesk = () => buildZendesk(this.env);
 
     registerResources(this.server, getClient);
     registerTools(this.server, getClient, () => null, getZendesk);
     registerPrompts(this.server);
   }
+}
+
+function buildZendesk(env: Env): ZendeskClient | null {
+  if (!env.ZENDESK_API_TOKEN || !env.ZENDESK_API_EMAIL) return null;
+  return new ZendeskClient({
+    subdomain: env.ZENDESK_SUBDOMAIN ?? 'webflow2579',
+    email: env.ZENDESK_API_EMAIL,
+    apiToken: env.ZENDESK_API_TOKEN,
+  });
+}
+
+function holdNoticesEnabled(env: Env): boolean {
+  return env.HOLD_NOTICES_DISABLED?.trim() !== '1';
 }
 
 const CORS_HEADERS: Record<string, string> = {
@@ -224,6 +231,9 @@ function buildWebhookLeg(env: Env): WebhookLeg | { missing: string[] } {
         }
       : null;
 
+  const zendesk = holdNoticesEnabled(env) ? buildZendesk(env) : null;
+  const holdNotices = holdNoticesEnabled(env) ? createD1HoldNoticeStore(env.TELEMETRY_DB!) : null;
+
   return {
     webhookApi,
     store,
@@ -235,6 +245,8 @@ function buildWebhookLeg(env: Env): WebhookLeg | { missing: string[] } {
       exceptionChannelId: env.EXCEPTION_SLACK_CHANNEL_ID ?? DEFAULT_EXCEPTION_CHANNEL_ID,
       versionViewUrlBase: env.EXCEPTION_DECISIONS_VIEW_URL ?? DEFAULT_DECISIONS_VIEW_URL,
       kb,
+      zendesk,
+      holdNotices,
       logger: (message) => console.log(message),
     },
   };
@@ -422,6 +434,11 @@ export default {
               const leg = buildWebhookLeg(env);
               return 'missing' in leg ? { configured: false, missing: leg.missing } : { configured: true };
             })(),
+            holdNotices: {
+              enabled: holdNoticesEnabled(env),
+              zendeskConfigured: buildZendesk(env) !== null,
+              reminderIntervalDays: 7,
+            },
             tables: {
               assets: 'tblRwzpWoLgE9MrUm',
               assetVersions: 'tblHxZ2hgSFLZxsZu',
@@ -458,6 +475,20 @@ export default {
         if (errors.length > 0) console.error(`exception-webhook refresh errors: ${errors.join('; ')}`);
         else console.log(`exception-webhook refreshed ${refreshed} subscription(s)`);
         await processExceptionWebhookPayloads(leg.deps);
+
+        // Developer-facing reminders for holds whose notice we sent (7-day pacing).
+        if (leg.deps.zendesk && leg.deps.holdNotices) {
+          const reminders = await sendPendingHoldReminders({
+            zendesk: leg.deps.zendesk,
+            slack: leg.deps.slack,
+            airtable: leg.deps.airtable,
+            store: leg.deps.holdNotices,
+            exceptionChannelId: leg.deps.exceptionChannelId,
+            versionViewUrlBase: leg.deps.versionViewUrlBase,
+            logger: (message) => console.log(message),
+          });
+          if (reminders.errors.length > 0) console.error(`hold-reminder errors: ${reminders.errors.join('; ')}`);
+        }
       })().catch((error) => console.error(`exception-webhook cron failed: ${String(error)}`)),
     );
   },
