@@ -763,6 +763,80 @@ describe('registerTools', () => {
     expect(parsePayload(unconfigured!)).toMatchObject({ ok: false });
   });
 
+  describe('app_review_resolve_exception_item', () => {
+    it('resolves a row through the client and returns the updated item', async () => {
+      const { server, handlers } = createServerHarness();
+      const client = {
+        resolveExceptionItem: vi.fn().mockResolvedValue({
+          exceptionItemId: 'recItem1',
+          exceptionStatus: '🔙Withdrawn',
+          resolvedInVersionId: 'recV102',
+          resolutionNotes: 'Sentry gone in v102.',
+          isResolved: true,
+        }),
+      } as unknown as AirtableClient;
+      registerTools(server, () => client);
+
+      const result = await handlers.get('app_review_resolve_exception_item')?.({
+        exception_item_id: 'recItem1',
+        resolved_in_version_id: 'recV102',
+        resolution_notes: 'Sentry gone in v102.',
+        resolved_by: 'Micah Johnson',
+      });
+
+      expect(client.resolveExceptionItem).toHaveBeenCalledWith('recItem1', {
+        resolved_in_version_id: 'recV102',
+        resolution_notes: 'Sentry gone in v102.',
+        resolved_by: 'Micah Johnson',
+      });
+      const payload = parsePayload(result!);
+      expect(payload.ok).toBe(true);
+      expect((payload.data?.exception_item as { isResolved?: boolean }).isResolved).toBe(true);
+    });
+
+    it('surfaces client refusals through the standard error envelope', async () => {
+      const { server, handlers } = createServerHarness();
+      const client = {
+        resolveExceptionItem: vi.fn().mockRejectedValue(
+          new AirtableClientError('EXCEPTION_ALREADY_DECIDED', 'Row already decided.', 409),
+        ),
+      } as unknown as AirtableClient;
+      registerTools(server, () => client);
+      const result = await handlers.get('app_review_resolve_exception_item')?.({
+        exception_item_id: 'recItem1',
+        resolved_in_version_id: 'recV102',
+        resolution_notes: 'x',
+      });
+      const payload = JSON.parse(result?.content[0]?.text ?? '{}') as { ok: boolean; error?: { code: string; status: number } };
+      expect(payload.ok).toBe(false);
+      expect(payload.error).toMatchObject({ code: 'EXCEPTION_ALREADY_DECIDED', status: 409 });
+    });
+  });
+
+  it('renders resolved-in-resubmission rows distinctly in the asset history copy block', async () => {
+    const { server, handlers } = createServerHarness();
+    const client = {
+      getAssetById: vi.fn().mockResolvedValue({ assetId: 'recAsset', appName: 'Optibase', capabilities: 'Hybrid' }),
+      listVersionsForAsset: vi.fn().mockResolvedValue([
+        { versionId: 'recV99', versionNumber: 99, exceptionItemIds: ['recA', 'recB'], assetExceptionHistoryIds: ['recA', 'recB'] },
+        { versionId: 'recV102', versionNumber: 102, exceptionItemIds: [], assetExceptionHistoryIds: ['recA', 'recB'] },
+      ]),
+      listExceptionItemsByIds: vi.fn().mockResolvedValue([
+        { exceptionItemId: 'recA', item: 'Sentry iframes', assetVersionId: 'recV99', exceptionStatus: '🔙Withdrawn', resolvedInVersionId: 'recV102', resolutionNotes: 'Sentry removed in v102', resolvedDatetime: '2026-09-16T21:00:00.000Z', isResolved: true },
+        { exceptionItemId: 'recB', item: 'Old request', assetVersionId: 'recV99', exceptionStatus: '🔙Withdrawn', isResolved: false },
+      ]),
+    } as unknown as AirtableClient;
+    registerTools(server, () => client);
+
+    const result = await handlers.get('app_review_list_asset_exceptions')?.({ asset_id: 'recAsset' });
+    const payload = parsePayload(result!);
+    const block = String(payload.data?.copy_block);
+    expect(block).toContain('Sentry iframes [v99 · resolved in v102 2026-09-16]');
+    expect(block).toContain('  Resolution: Sentry removed in v102');
+    expect(block).toContain('- Old request [v99]');
+    expect(block).not.toContain('Old request [v99 · resolved');
+  });
+
   it('lists asset-level exception history across versions with a copy block', async () => {
     const { server, handlers } = createServerHarness();
     const client = {
