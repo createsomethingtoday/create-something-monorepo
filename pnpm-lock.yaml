@@ -2901,6 +2901,8 @@ importers:
         specifier: ^4.103.0
         version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(@types/node@24.10.9)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
+  packages/jev-client: {}
+
   packages/judgment-layer:
     dependencies:
       '@create-something/policy-os-engine':
@@ -4660,6 +4662,10 @@ importers:
         version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(@types/node@24.10.9)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
   packages/webflow-apps-admin/workers/audit-agent:
+    dependencies:
+      '@create-something/jev-client':
+        specifier: workspace:*
+        version: link:../../../jev-client
     devDependencies:
       '@cloudflare/workers-types':
         specifier: ^4.20260621.1
@@ -4971,6 +4977,9 @@ importers:
 
   packages/webflow-site-analyzer-mcp:
     dependencies:
+      '@create-something/jev-client':
+        specifier: workspace:*
+        version: link:../jev-client
       '@create-something/observability':
         specifier: workspace:*
         version: link:../observability
