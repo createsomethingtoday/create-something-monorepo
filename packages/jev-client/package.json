@@ -1,0 +1,22 @@
+{
+  "name": "@create-something/jev-client",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./index.d.mts",
+      "default": "./index.mjs"
+    },
+    "./decisions": {
+      "types": "./decisions.d.mts",
+      "default": "./decisions.mjs"
+    }
+  },
+  "scripts": {
+    "test": "node --test test.mjs decisions.test.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

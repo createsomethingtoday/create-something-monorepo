@@ -15,7 +15,7 @@
     "start": "node dist/index.js",
     "start:http": "node dist/http.js",
     "test": "pnpm run test:providers && pnpm build && node scripts/test-review-utils.mjs",
-    "test:providers": "tsx --test src/providers/*.test.ts src/worker.test.ts scripts/compare-browser-run.test.ts",
+    "test:providers": "tsx --test src/providers/*.test.ts src/worker.test.ts scripts/compare-browser-run.test.ts src/url-classifier.jev.test.ts",
     "verify:browser-run": "tsx scripts/compare-browser-run.ts",
     "verify:browser-run:corpus": "tsx scripts/compare-browser-run.ts --validate",
     "test:classifier": "pnpm build && infisical run -- node scripts/test-url-classifier-live.mjs",
@@ -43,7 +43,8 @@
     "@temporalio/worker": "^1.14.1",
     "@temporalio/workflow": "^1.14.1",
     "puppeteer-core": "^23.0.0",
-    "steel-sdk": "^0.16.0"
+    "steel-sdk": "^0.16.0",
+    "@create-something/jev-client": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

@@ -1,3 +1,4 @@
+import { choose, type DecisionOptions } from '@create-something/jev-client/decisions';
 /**
  * URL Classification Module
  *
@@ -250,6 +251,8 @@ export async function classifyUrlsWithLLM(
 // =============================================================================
 
 export interface ClassifyOptions extends LLMClassifierOptions {
+  /** Explicit server-side provider and durable budget reservation. */
+  jev?: DecisionOptions;
   /** Use LLM classification. Default: true if API key available. */
   useLLM?: boolean;
 }
@@ -263,6 +266,52 @@ export async function classifyUrls(
   startUrl: string,
   options: ClassifyOptions = {}
 ): Promise<ClassifiedUrl[]> {
+  if (options.jev && options.useLLM !== false) {
+    const results: ClassifiedUrl[] = [];
+    for (const url of urls) {
+      const baseline = classifyUrlDeterministic(url, url === startUrl);
+      // Preserve exact homepage and recognized utility/error paths, including crawl priority.
+      if (baseline.confidence >= 0.7) {
+        results.push(baseline);
+        continue;
+      }
+      const decision = await choose({
+        ...options.jev,
+        state: { path: new URL(url).pathname },
+        instructions:
+          'Classify this website path by page purpose. Do not infer that a required page actually exists or satisfies a review rule.',
+        criteria: {
+          content: 'Regular about, contact, pricing or FAQ page.',
+          'utility:license': 'Licensing, terms or legal information.',
+          'utility:instructions': 'Template setup or usage instructions.',
+          'utility:changelog': 'Version history or release notes.',
+          'utility:style-guide': 'Design system or visual style guide.',
+          'utility:other': 'Other utility page.',
+          'cms-listing': 'Collection index or listing.',
+          'cms-detail': 'Individual collection item.',
+          ecommerce: 'Shopping, cart, checkout or product page.',
+          'error-page': 'Error or password page.',
+          other: 'Cannot determine purpose from this path.'
+        },
+        fallback: 'other'
+      });
+      if (decision.status !== 'accepted') {
+        results.push(baseline);
+        continue;
+      }
+      const classification = decision.choice as PageClassification;
+      results.push({
+        url,
+        classification,
+        confidence: decision.answer!.probabilities[classification],
+        priority:
+          classification.startsWith('utility:') && classification !== 'utility:other'
+            ? 'critical'
+            : baseline.priority
+      });
+    }
+    return results;
+  }
   const useLLM = options.useLLM ?? Boolean(
     options.apiKey || process.env.WEBFLOW_GROQ_API_KEY || process.env.WEBFLOW_OPENAI_API_KEY
   );
