@@ -126,6 +126,7 @@ describe('scheduler HTTP API v1', () => {
             start: '2026-07-14T16:00:00Z',
             end: '2026-07-14T16:30:00Z'
           },
+          timezone: 'Asia/Tokyo',
           scheduler: {
             name: 'Controlled Test',
             email: 'controlled@example.com'
@@ -139,7 +140,7 @@ describe('scheduler HTTP API v1', () => {
       proposalToken?: string;
     };
     expect(prepareResponse.status).toBe(200);
-    expect(proposal.status).toBe('proposed');
+    expect(proposal).toMatchObject({ status: 'proposed', timezone: 'Asia/Tokyo' });
 
     const commitBody = JSON.stringify({
       proposalToken: proposal.proposalToken,
@@ -174,7 +175,7 @@ describe('scheduler HTTP API v1', () => {
       receiptId?: string;
       actionToken?: string;
     };
-    expect(committed).toMatchObject({ status: 'committed' });
+    expect(committed).toMatchObject({ status: 'committed', booking: { timezone: 'Asia/Tokyo' } });
     expect(committed.actionToken).toBe('action:2026-07-14T16:00:00Z');
     expect(eventCount).toBe(1);
 
@@ -185,7 +186,7 @@ describe('scheduler HTTP API v1', () => {
       service,
       { role: 'operator' }
     );
-    expect(await read.json()).toMatchObject({ status: 'committed' });
+    expect(await read.json()).toMatchObject({ status: 'committed', booking: { timezone: 'Asia/Tokyo' } });
     const reschedule = await handleApiRequest(
       new Request(`https://scheduler.local/api/v1/bookings/${bookingId}/reschedule`, {
         method: 'POST',
@@ -195,6 +196,7 @@ describe('scheduler HTTP API v1', () => {
             start: '2026-07-16T18:00:00Z',
             end: '2026-07-16T18:30:00Z'
           },
+          timezone: 'America/Los_Angeles',
           idempotencyKey: 'api-reschedule',
           explicitIntent: true
         })

@@ -29,7 +29,7 @@ export class ResendNotificationPort {
       slot: input.booking.slot,
       meetUrl: input.booking.provider.meetUrl,
       manageUrl: input.manageUrl,
-      timezone: 'America/Chicago'
+      timezone: input.booking.timezone ?? 'America/Chicago'
     });
     const response = await this.fetch('https://api.resend.com/emails', {
       method: 'POST',
