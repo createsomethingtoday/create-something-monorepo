@@ -89,7 +89,7 @@
     const product = getPublicProduct(id);
     return { label: product.shortName, href: product.route };
   });
-  const primaryCtaHref = agencyCoreMessaging.agentFoundationHref;
+  const primaryCtaHref = agencyCoreMessaging.membershipHref;
   const agencyFooterMacroMedia = {
     src: '/images/performance-lab/playbook-footer-decision-gate-macro.webp',
     alt: 'Macro-real Playbook decision gate: an ivory AI-agent marker held inside a black steel ring as amber and proof-green routes cross a physical court surface.'
@@ -450,7 +450,7 @@
     links={navLinks}
     currentPath={$page.url.pathname}
     fixed={true}
-    ctaLabel={agencyCoreMessaging.reviewAgentFoundationLabel}
+    ctaLabel={agencyCoreMessaging.membershipLabel}
     ctaHref={primaryCtaHref}
     user={data.user}
     onLogout={handleLogout}
@@ -476,7 +476,7 @@
       ? undefined
       : {
           title: 'Ready to put AI to work on a useful task?',
-          label: agencyCoreMessaging.reviewAgentFoundationLabel,
+          label: agencyCoreMessaging.membershipLabel,
           href: primaryCtaHref,
           description: 'Bring an idea or a project and one task you want help with.',
           media: agencyFooterMacroMedia

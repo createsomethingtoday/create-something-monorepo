@@ -1,4 +1,9 @@
 export const agencyCoreMessaging = {
+  membershipHref: '/services#membership',
+  membershipLabel: 'Explore membership',
+  membershipInquiryHref:
+    '/contact?source=membership&intent=membership&lane=workflow_infrastructure',
+  membershipInquiryLabel: 'Discuss membership',
   categoryLabel: 'AI workflow systems',
   startWithWorkflowLabel: 'Map your workflow',
   startWithWorkflowHref: '/map',

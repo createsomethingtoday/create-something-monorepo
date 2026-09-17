@@ -1,4 +1,5 @@
 export const PUBLIC_PRICING = {
+  membership: { monthlyUsd: 900, label: '$900/month', terms: 'Cancel anytime' },
   publicSource: {
     amountUsd: 0,
     label: '$0 / MIT',
