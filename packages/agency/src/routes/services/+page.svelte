@@ -1,4 +1,5 @@
 <script lang="ts">
+  import BuiltWork from '$lib/components/BuiltWork.svelte';
   import MembershipOffer from '$lib/components/MembershipOffer.svelte';
   import ProjectReviewEntry from '$lib/components/ProjectReviewEntry.svelte';
   import { Button, PerformanceCampaignOpening, SEO } from '@create-something/canon';
@@ -110,6 +111,8 @@
       </Button>
     {/snippet}
   </PerformanceCampaignOpening>
+
+  <BuiltWork />
 
   <MembershipOffer />
 

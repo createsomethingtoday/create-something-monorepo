@@ -1,4 +1,5 @@
 <script lang="ts">
+  import BuiltWork from '$lib/components/BuiltWork.svelte';
   import MembershipOffer from '$lib/components/MembershipOffer.svelte';
   import ProjectReviewEntry from '$lib/components/ProjectReviewEntry.svelte';
   import { Button, MeridianAccordion, PerformanceCampaignOpening, PerformanceConversionHandoff, SEO } from '@create-something/canon';
@@ -101,9 +102,11 @@
   >
     {#snippet actions()}
       <Button href={agencyCoreMessaging.membershipHref}>{agencyCoreMessaging.membershipLabel}</Button>
-      <Button href="/proof/marketplace-workflow" variant="secondary">See a verified result</Button>
+      <Button href="#built-work" variant="secondary">See what we’ve built</Button>
     {/snippet}
   </PerformanceCampaignOpening>
+
+  <BuiltWork />
 
   <MembershipOffer />
 
