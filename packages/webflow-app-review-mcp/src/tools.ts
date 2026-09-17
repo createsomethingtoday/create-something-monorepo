@@ -4,7 +4,7 @@ import { z } from 'zod';
 import type { AirtableClient, AppReviewVersion, CollaboratorRef } from './airtable.js';
 import { AirtableClientError, assertReviewerAssignmentReadOnly } from './airtable.js';
 import type { ZendeskClient } from './zendesk.js';
-import { ZendeskClientError, renderCreatorFacingHtml } from './zendesk.js';
+import { ZENDESK_WRITABLE_STATUSES, ZendeskClientError, renderCreatorFacingHtml } from './zendesk.js';
 import {
   APP_REVIEW_FIELD_MAP,
   CAPABILITIES_OPTIONS,
@@ -309,6 +309,18 @@ function ensureRequestChangesStatus(value: string | undefined) {
       allowed: REQUEST_CHANGES_STATUS_OPTIONS,
     },
   );
+}
+
+function requireZendesk(getZendesk: ZendeskFactory, verb: 'reads' | 'writes'): ZendeskClient {
+  const zendesk = getZendesk();
+  if (!zendesk) {
+    throw new ZendeskClientError(
+      'ZENDESK_NOT_CONFIGURED',
+      `Zendesk ${verb} are not configured on this deployment (ZENDESK_API_TOKEN / ZENDESK_API_EMAIL missing).`,
+      503,
+    );
+  }
+  return zendesk;
 }
 
 export function registerTools(
@@ -764,6 +776,94 @@ export function registerTools(
           version_number: version.versionNumber,
           ticket_url: `https://webflow2579.zendesk.com/agent/tickets/${version.zendeskTicketId}`,
           thread,
+        });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'app_review_search_tickets',
+    'Search Zendesk tickets. Read-only. Scoped by default to the Marketplace Review Team group (app and template submission tickets); pass scope="all" only when the reviewer explicitly asks to look outside review tickets. Combine free text with status, tags, requester email, assignee, and created-date filters. Returns ticket IDs to feed app_review_get_ticket_thread (via the version) or app_review_update_ticket_status.',
+    {
+      query: z.string().optional().describe('Free text or Zendesk search syntax, e.g. "CMS Smart Sync" or subject:"App submission".'),
+      status: z.enum(['new', 'open', 'pending', 'hold', 'solved', 'closed']).optional(),
+      tags: z.array(z.string().min(1)).optional(),
+      requester_email: z.string().email().optional(),
+      assignee_id: z.number().int().positive().optional(),
+      created_after: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().describe('YYYY-MM-DD'),
+      created_before: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().describe('YYYY-MM-DD'),
+      sort_by: z.enum(['updated_at', 'created_at', 'priority', 'status']).optional(),
+      sort_order: z.enum(['asc', 'desc']).optional(),
+      limit: z.number().int().min(1).max(100).default(25),
+      scope: z.enum(['marketplace_review', 'all']).default('marketplace_review'),
+    },
+    async (params) => {
+      try {
+        const zendesk = requireZendesk(getZendesk, 'reads');
+        const result = await zendesk.searchTickets({
+          query: params.query,
+          status: params.status,
+          tags: params.tags,
+          requesterEmail: params.requester_email,
+          assigneeId: params.assignee_id,
+          createdAfter: params.created_after,
+          createdBefore: params.created_before,
+          sortBy: params.sort_by,
+          sortOrder: params.sort_order,
+          limit: params.limit ?? 25,
+          scope: params.scope ?? 'marketplace_review',
+        });
+        return asSuccess({
+          ...result,
+          tickets: result.tickets.map((t) => ({ ...t, ticketUrl: `https://webflow2579.zendesk.com/agent/tickets/${t.ticketId}` })),
+        });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'app_review_update_ticket_status',
+    'Change a Zendesk ticket status and tags, optionally with a PRIVATE internal note. Only on explicit reviewer request. Confined to tickets in the Marketplace Review Team group. Requires status_change: { confirmed: true, expected_status: "<status from a fresh read>" }; a changed status fails with ZENDESK_STATUS_CONFLICT. Never posts a public reply — use app_review_send_ticket_followup for creator-facing messages. Setting "solved" triggers Zendesk\'s solved-notification email to the developer.',
+    {
+      ticket_id: z.string().regex(/^\d+$/),
+      status: z.enum(ZENDESK_WRITABLE_STATUSES),
+      private_note: z.string().min(1).optional(),
+      additional_tags: z.array(z.string().min(1)).optional(),
+      remove_tags: z.array(z.string().min(1)).optional(),
+      status_change: z
+        .object({ confirmed: z.boolean(), expected_status: z.string().min(1) })
+        .optional(),
+    },
+    async ({ ticket_id, status, private_note, additional_tags, remove_tags, status_change }) => {
+      try {
+        if (!status_change || status_change.confirmed !== true) {
+          throw new ZendeskClientError(
+            'TICKET_STATUS_CONFIRMATION_REQUIRED',
+            'Supply status_change.confirmed=true and status_change.expected_status from a fresh read (app_review_search_tickets or app_review_get_ticket_thread) after an explicit operator request to change the ticket status.',
+            400,
+            { ticket_id },
+          );
+        }
+        const zendesk = requireZendesk(getZendesk, 'writes');
+        const result = await zendesk.updateTicketStatus(ticket_id, {
+          status,
+          expectedStatus: status_change.expected_status,
+          privateNote: private_note,
+          additionalTags: additional_tags,
+          removeTags: remove_tags,
+        });
+        return asSuccess({
+          ticket_id: result.ticketId,
+          ticket_url: `https://webflow2579.zendesk.com/agent/tickets/${result.ticketId}`,
+          previous_status: result.previousStatus,
+          status: result.status,
+          tags: result.tags,
+          audit_id: result.auditId,
+          private_note_added: Boolean(private_note?.trim()),
         });
       } catch (error) {
         return asError(error);

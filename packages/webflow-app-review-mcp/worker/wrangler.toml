@@ -35,6 +35,10 @@ EXCEPTION_SLACK_CHANNEL_ID = "C0BN54FQU84"
 # /webflow/zendesk key `wfm`); the tool stays disabled until it is provisioned.
 ZENDESK_API_EMAIL = "micah@webflow.com"
 ZENDESK_SUBDOMAIN = "webflow2579"
+# Marketplace Review Team group. app_review_search_tickets scopes here by default and
+# app_review_update_ticket_status refuses tickets in any other group (Programs Support
+# 46157931219347 is where triggers park new tickets — not in scope).
+MARKETPLACE_ZENDESK_GROUP_ID = "1500002744702"
 EXCEPTION_DECISIONS_VIEW_URL = "https://airtable.com/appMoIgXMTTTNIc3p/tblHxZ2hgSFLZxsZu/viwM48eXQT4Mxc4Ak/"
 EXCEPTIONS_KB_BASE_ID = "appXfYXnivsUT1kLg"
 EXCEPTIONS_KB_TABLE_ID = "tblqkbW0SptshgPiw"
