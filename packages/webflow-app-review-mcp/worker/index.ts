@@ -331,8 +331,16 @@ async function handleWebhookRoutes(
     } catch (error) {
       remote = { error: String(error) };
     }
+    let holdNotices: unknown = null;
+    if (leg.deps.holdNotices) {
+      try {
+        holdNotices = await leg.deps.holdNotices.list();
+      } catch (error) {
+        holdNotices = { error: String(error) };
+      }
+    }
     return new Response(
-      JSON.stringify({ ok: true, state: state ? summarizeState(state) : null, remote }, null, 2),
+      JSON.stringify({ ok: true, state: state ? summarizeState(state) : null, remote, holdNotices }, null, 2),
       { status: 200, headers: JSON_HEADERS },
     );
   }

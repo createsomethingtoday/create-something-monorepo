@@ -27,12 +27,19 @@ export const HOLD_REMINDER_INTERVAL_DAYS = 7;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 export interface HoldNoticeRecord {
-  ticketId: string;
-  /** ISO datetime the developer notice went out. */
-  noticeAt: string;
+  /** Null while the notice is pending a ticket (see pendingSince). */
+  ticketId: string | null;
+  /** ISO datetime the developer notice went out; null while pending. */
+  noticeAt: string | null;
   reminders: number;
   lastReminderAt?: string;
-  /** Set by the sweep when the version left the hold; closed records are never reminded. */
+  /**
+   * Set when the hold fired before the Zap wrote the Zendesk ticket ID onto the
+   * version (Awesome Popups v6, 9/17/2026: version 06:12:06Z, ticket 06:12:25Z).
+   * The sweep completes the notice once the ticket exists, then clears this.
+   */
+  pendingSince?: string;
+  /** Set by the sweep when the version left the hold; closed records are never touched again. */
   closedAt?: string;
 }
 
@@ -160,6 +167,8 @@ export interface HoldReminderDeps {
 }
 
 export interface HoldReminderResult {
+  /** Pending notices completed this pass (ticket appeared after the hold). */
+  noticed: string[];
   reminded: string[];
   closed: string[];
   skipped: string[];
@@ -179,7 +188,7 @@ function daysBetween(fromIso: string, to: Date): number {
 export async function sendPendingHoldReminders(deps: HoldReminderDeps): Promise<HoldReminderResult> {
   const now = (deps.now ?? (() => new Date()))();
   const log = deps.logger ?? (() => {});
-  const result: HoldReminderResult = { reminded: [], closed: [], skipped: [], errors: [] };
+  const result: HoldReminderResult = { noticed: [], reminded: [], closed: [], skipped: [], errors: [] };
 
   const records = await deps.store.list();
   for (const record of records) {
@@ -197,17 +206,49 @@ export async function sendPendingHoldReminders(deps: HoldReminderDeps): Promise<
         continue;
       }
 
+      const asset = version.assetId ? await deps.airtable.getAssetById(version.assetId) : null;
+      const appName = asset?.appName ?? version.versionId;
+      const versionLabelText = `${appName}${version.versionNumber !== undefined ? ` v${version.versionNumber}` : ''}`;
+      const copy = { appName, versionNumber: version.versionNumber ?? null, creatorName: null };
+      const link = `<${deps.versionViewUrlBase}${versionId}|Open Asset Version>`;
+
+      // Pending: the hold fired before the ticket existed. Complete the notice now.
+      if (notice.noticeAt === null) {
+        const ticketId = version.zendeskTicketId ?? notice.ticketId;
+        if (!ticketId) {
+          result.skipped.push(versionId);
+          continue;
+        }
+        await deps.zendesk.addTicketComment(ticketId, {
+          htmlBody: renderCreatorFacingHtml(renderHoldNoticeMarkdown(copy)),
+          isPublic: true,
+        });
+        const { pendingSince: _pendingSince, ...rest } = notice;
+        await deps.store.put(versionId, { ...rest, ticketId, noticeAt: now.toISOString(), reminders: 0 });
+        await deps.slack.postMessage({
+          channel: deps.exceptionChannelId,
+          text: [
+            `:mailbox_with_mail: Developer hold notice sent — \`${versionLabelText}\` on Zendesk ticket ${ticketId}.`,
+            `The ticket ID landed on the version after the hold fired, so the notice went out on the sweep${notice.pendingSince ? ` (${Math.round((now.getTime() - new Date(notice.pendingSince).getTime()) / 60000)} min late)` : ''}.`,
+            link,
+          ].join('\n'),
+        });
+        result.noticed.push(versionId);
+        continue;
+      }
+
       const sinceIso = notice.lastReminderAt ?? notice.noticeAt;
       if (daysBetween(sinceIso, now) < HOLD_REMINDER_INTERVAL_DAYS) {
         result.skipped.push(versionId);
         continue;
       }
 
-      const asset = version.assetId ? await deps.airtable.getAssetById(version.assetId) : null;
-      const appName = asset?.appName ?? version.versionId;
       const daysOnHold = daysBetween(notice.noticeAt, now);
       const ticketId = version.zendeskTicketId ?? notice.ticketId;
-      const copy = { appName, versionNumber: version.versionNumber ?? null, creatorName: null };
+      if (!ticketId) {
+        result.skipped.push(versionId);
+        continue;
+      }
 
       await deps.zendesk.addTicketComment(ticketId, {
         htmlBody: renderCreatorFacingHtml(renderHoldReminderMarkdown({ ...copy, daysOnHold })),
@@ -217,9 +258,9 @@ export async function sendPendingHoldReminders(deps: HoldReminderDeps): Promise<
       await deps.slack.postMessage({
         channel: deps.exceptionChannelId,
         text: [
-          `:hourglass_flowing_sand: *Still on hold ${daysOnHold} days* — \`${appName}${version.versionNumber !== undefined ? ` v${version.versionNumber}` : ''}\``,
+          `:hourglass_flowing_sand: *Still on hold ${daysOnHold} days* — \`${versionLabelText}\``,
           `Developer reminded on Zendesk ticket ${ticketId} (reminder ${nth}). The hold clears when every ⚖️ row on this app is decided or resolved in resubmission.`,
-          `<${deps.versionViewUrlBase}${versionId}|Open Asset Version>`,
+          link,
         ].join('\n'),
       });
       await deps.store.put(versionId, { ...notice, reminders: nth, lastReminderAt: now.toISOString() });
@@ -229,8 +270,8 @@ export async function sendPendingHoldReminders(deps: HoldReminderDeps): Promise<
     }
   }
 
-  if (result.reminded.length > 0 || result.errors.length > 0) {
-    log(`hold-reminders reminded=${result.reminded.join(',') || '-'} closed=${result.closed.join(',') || '-'} errors=${result.errors.join('; ') || '-'}`);
+  if (result.noticed.length > 0 || result.reminded.length > 0 || result.errors.length > 0) {
+    log(`hold-reminders noticed=${result.noticed.join(',') || '-'} reminded=${result.reminded.join(',') || '-'} closed=${result.closed.join(',') || '-'} errors=${result.errors.join('; ') || '-'}`);
   }
   return result;
 }

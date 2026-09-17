@@ -962,13 +962,22 @@ async function sendDeveloperHoldNotice(
   stepPrefix: string,
 ): Promise<void> {
   if (!deps.zendesk || !deps.holdNotices) return; // not configured — internal-only hold, as before
-  if (!ctx.zendeskTicketId) {
-    result.actions.push(`hold-notice ${ctx.id} skipped: no ticket`);
+  const holdNotices = deps.holdNotices;
+  const existing = await holdNotices.get(ctx.id);
+  const live = existing && !existing.closedAt ? existing : null;
+  if (live?.noticeAt) {
+    result.actions.push(`hold-notice ${ctx.id} already-sent`);
     return;
   }
-  const existing = await deps.holdNotices.get(ctx.id);
-  if (existing && !existing.closedAt) {
-    result.actions.push(`hold-notice ${ctx.id} already-sent`);
+  if (!ctx.zendeskTicketId) {
+    // The Zap writes the ticket ID back after the hold fires; leave a pending
+    // record for the sweep to complete instead of dropping the notice.
+    if (!live) {
+      await checkpoint.run(`${stepPrefix}:hold-dev-notice-pending`, () =>
+        holdNotices.put(ctx.id, { ticketId: null, noticeAt: null, reminders: 0, pendingSince: new Date().toISOString() }),
+      );
+    }
+    result.actions.push(`hold-notice ${ctx.id} pending: no ticket yet`);
     return;
   }
 
@@ -981,7 +990,6 @@ async function sendDeveloperHoldNotice(
   });
   const ticketId = ctx.zendeskTicketId;
   const zendesk = deps.zendesk;
-  const holdNotices = deps.holdNotices;
   await checkpoint.run(`${stepPrefix}:hold-dev-notice`, () =>
     zendesk.addTicketComment(ticketId, { htmlBody: renderCreatorFacingHtml(markdown), isPublic: true }),
   );

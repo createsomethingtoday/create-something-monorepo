@@ -920,7 +920,12 @@ describe('processExceptionWebhookPayloads', () => {
     const zendeskB = new ZendeskClient({ subdomain: 'x', email: 'e', apiToken: 't', fetchFn: b.fetchFn as unknown as typeof fetch });
     const result = await processExceptionWebhookPayloads(buildDeps(b.fetchFn as unknown as typeof fetch, memoryStore(baseState()), { zendesk: zendeskB, holdNotices }));
     expect(b.zendeskCalls).toHaveLength(0);
-    expect(result.actions).toContain('hold-notice recVersion1 skipped: no ticket');
+    // Race: the hold fires before the Zap writes the ticket ID back onto the version
+    // (Awesome Popups v6, 9/17: version 06:12:06, ticket 06:12:25). Record a pending
+    // notice so the sweep completes it once the ticket exists.
+    expect(result.actions).toContain('hold-notice recVersion1 pending: no ticket yet');
+    expect(holdNotices.records.get('recVersion1')).toMatchObject({ ticketId: null, noticeAt: null, reminders: 0 });
+    expect(holdNotices.records.get('recVersion1')?.pendingSince).toBeTruthy();
   });
 
   it('skips processing and marks a pending sweep when another run holds the lock', async () => {

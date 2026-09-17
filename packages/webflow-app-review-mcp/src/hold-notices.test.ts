@@ -161,6 +161,50 @@ describe('hold notices', () => {
     expect(d.zendesk.addTicketComment).not.toHaveBeenCalled();
   });
 
+  it('completes a pending notice once the version has a ticket, sending the NOTICE copy, not a reminder', async () => {
+    const store = memoryHoldNotices({
+      recV6: { ticketId: null, noticeAt: null, reminders: 0, pendingSince: new Date(NOW.getTime() - 60 * 60 * 1000).toISOString() },
+    });
+    const d = deps({ store, versions: { recV6: heldVersion({ versionId: 'recV6', versionNumber: 6, zendeskTicketId: '1193675', daysInCurrentStage: 0 }) } });
+
+    const result = await sendPendingHoldReminders(d);
+
+    expect(result.noticed).toEqual(['recV6']);
+    expect(result.reminded).toEqual([]);
+    expect(d.zendesk.addTicketComment).toHaveBeenCalledTimes(1);
+    expect(d.zendesk.addTicketComment).toHaveBeenCalledWith('1193675', expect.objectContaining({ isPublic: true }));
+    const html = (d.zendesk.addTicketComment as ReturnType<typeof vi.fn>).mock.calls[0]?.[1]?.htmlBody as string;
+    expect(html).toContain('We received');
+    expect(html).toContain('Awesome Popups v6');
+    expect(html).not.toContain('on hold for');
+    expect(store.records.get('recV6')).toMatchObject({ ticketId: '1193675', noticeAt: NOW.toISOString(), reminders: 0 });
+    expect(store.records.get('recV6')?.pendingSince).toBeUndefined();
+    // Internal trace so the channel knows the late notice went out.
+    const slackText = String((d.slack.postMessage as ReturnType<typeof vi.fn>).mock.calls[0]?.[0]?.text);
+    expect(slackText).toContain('notice sent');
+    expect(slackText).toContain('1193675');
+  });
+
+  it('keeps a pending notice waiting while the version still has no ticket, and closes it if the hold lifts', async () => {
+    const store = memoryHoldNotices({
+      recNoTicket: { ticketId: null, noticeAt: null, reminders: 0, pendingSince: NOW.toISOString() },
+      recLifted: { ticketId: null, noticeAt: null, reminders: 0, pendingSince: NOW.toISOString() },
+    });
+    const d = deps({
+      store,
+      versions: {
+        recNoTicket: heldVersion({ versionId: 'recNoTicket', zendeskTicketId: undefined }),
+        recLifted: heldVersion({ versionId: 'recLifted', reviewStatus: '🆕Ready for Review', holdReason: undefined }),
+      },
+    });
+    const result = await sendPendingHoldReminders(d);
+    expect(result.noticed).toEqual([]);
+    expect(result.skipped).toContain('recNoTicket');
+    expect(result.closed).toEqual(['recLifted']);
+    expect(d.zendesk.addTicketComment).not.toHaveBeenCalled();
+    expect(store.records.get('recNoTicket')?.pendingSince).toBe(NOW.toISOString());
+  });
+
   it('round-trips records through the D1-shaped store', async () => {
     const rows = new Map<string, string>();
     const db = {
