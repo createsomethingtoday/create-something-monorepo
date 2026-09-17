@@ -139,7 +139,8 @@ Write posture:
   fails with `ZENDESK_STATUS_CONFLICT` if the ticket moved. It never posts a
   public comment. Setting `solved` fires Zendesk's solved-notification email to
   the developer, so use it only on explicit reviewer request. Writes are
-  attributed to `ZENDESK_API_EMAIL`.
+  attributed to `ZENDESK_API_EMAIL` (the support-admin integration user, shared
+  with the Zendesk MCP, since 2026-09-17).
 - `app_review_send_ticket_followup` posts directly on the creator's Zendesk
   ticket (resolved from the version record, never an arbitrary ticket ID),
   rendering Markdown with HTML escaping so literal tags can't truncate the
