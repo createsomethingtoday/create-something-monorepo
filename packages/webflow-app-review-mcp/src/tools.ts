@@ -994,8 +994,9 @@ export function registerTools(
             const pending = (PENDING_EXCEPTION_STATUS_OPTIONS as readonly string[])
               .includes(item.exceptionStatus ?? '');
             const type = item.exceptionType ? ` [${item.exceptionType}]` : '';
+            const resolved = item.isResolved ? ' (resolved in resubmission)' : '';
             lines.push(
-              `- ${pending ? '☐' : '☑'} ${item.exceptionItemId}${type} ${item.item ?? '(untitled item)'} — ${item.exceptionStatus ?? '(no status)'}`,
+              `- ${pending ? '☐' : '☑'} ${item.exceptionItemId}${type} ${item.item ?? '(untitled item)'} — ${item.exceptionStatus ?? '(no status)'}${resolved}`,
             );
           }
         }
@@ -1094,16 +1095,26 @@ export function registerTools(
             lines.push('', `${status}:`);
           }
           const versionNumber = item.assetVersionId ? versionNumberById.get(item.assetVersionId) : undefined;
+          const resolvedVersionNumber = item.resolvedInVersionId
+            ? versionNumberById.get(item.resolvedInVersionId)
+            : undefined;
+          const resolvedLabel = item.isResolved
+            ? `resolved in ${resolvedVersionNumber !== undefined ? `v${resolvedVersionNumber}` : item.resolvedInVersionId}${
+                item.resolvedDatetime ? ` ${item.resolvedDatetime.slice(0, 10)}` : ''
+              }`
+            : undefined;
           const meta = [
             versionNumber !== undefined ? `v${versionNumber}` : undefined,
             item.exceptionType,
+            resolvedLabel,
             item.decisionDatetime
               ? `decided ${item.decisionDatetime.slice(0, 10)}${item.decisionBy?.name ? ` by ${item.decisionBy.name}` : ''}`
-              : item.requestedDatetime
+              : !item.isResolved && item.requestedDatetime
                 ? `requested ${item.requestedDatetime.slice(0, 10)}`
                 : undefined,
           ].filter(Boolean).join(' · ');
           lines.push(`- ${item.item ?? '(untitled item)'}${meta ? ` [${meta}]` : ''}`);
+          if (item.isResolved && item.resolutionNotes) lines.push(`  Resolution: ${item.resolutionNotes}`);
           if (item.decisionNotes) lines.push(`  Decision: ${item.decisionNotes}`);
         }
 
@@ -1168,6 +1179,30 @@ export function registerTools(
           exception_type: params.exception_type,
           rationale: params.rationale,
           decision_notes: params.decision_notes,
+        }));
+        return asSuccess({ exception_item: updated });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'app_review_resolve_exception_item',
+    'Close a per-item exception row as RESOLVED IN RESUBMISSION: the reviewer verified in the newer bundle that the item is fixed, so it must stop counting toward the app\'s undecided exceptions without waiting on the decision-maker. Sets ⚖️Status = 🔙Withdrawn plus ✔️Resolved in Version, ✔️Resolution Notes, and a dated history line in decision notes, in one write. Refuses rows already ✅Approved/❌Denied and versions from a different app. Use for objective fixes only (code changed, evidence cited); policy questions still go to the decision-maker.',
+    {
+      exception_item_id: z.string().min(1),
+      resolved_in_version_id: z.string().min(1).describe('The resubmitted Asset Version whose bundle you verified'),
+      resolution_notes: z.string().min(1).describe('What you verified — file/line/evidence in the new bundle'),
+      resolved_by: z.string().optional().describe('Your display name for the history line (e.g. "Shea Sisco")'),
+    },
+    async (params) => {
+      try {
+        const client = getClient();
+        const updated = await client.resolveExceptionItem(params.exception_item_id, cleanObject({
+          resolved_in_version_id: params.resolved_in_version_id,
+          resolution_notes: params.resolution_notes,
+          resolved_by: params.resolved_by,
         }));
         return asSuccess({ exception_item: updated });
       } catch (error) {
