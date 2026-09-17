@@ -5,7 +5,8 @@ import {
 	applyTemplateViews,
 	deriveBeaconSlug,
 	fetchTemplateViewDaily,
-	fetchTemplateViewTotals
+	fetchTemplateViewTotals,
+	mergeBeaconViewers
 } from './template-views';
 
 const ENV = { TEMPLATE_VIEWS_STATS_API_KEY: 'test-key', TEMPLATE_VIEWS_STATS_URL: 'https://beacon.test/' };
@@ -159,5 +160,41 @@ describe('applyTemplateViews', () => {
 		const fetchMock = vi.fn(async () => jsonResponse({}, 500));
 		const [tpl] = await applyTemplateViews(ENV, [template()], { fetch: fetchMock as typeof fetch });
 		expect(tpl.uniqueViewers).toBeUndefined();
+	});
+});
+
+describe('mergeBeaconViewers', () => {
+	const snapshots = [
+		{ captured_at: '2026-09-02', unique_viewers: 9999, cumulative_purchases: 1, cumulative_revenue: 99 },
+		{ captured_at: '2026-09-04', unique_viewers: 9999, cumulative_purchases: 2, cumulative_revenue: 198 }
+	];
+	const beacon = [
+		{ day: '2026-09-01', sessions: 3 },
+		{ day: '2026-09-02', sessions: 2 },
+		{ day: '2026-09-03', sessions: 5 }
+	];
+
+	it('returns snapshots untouched when the beacon is unavailable', () => {
+		expect(mergeBeaconViewers(snapshots, null, 30)).toBe(snapshots);
+	});
+
+	it('replaces viewers with cumulative sessions and carries purchases forward across synthesized days', () => {
+		const merged = mergeBeaconViewers(snapshots, beacon, 30);
+		expect(merged.map((row) => row.captured_at)).toEqual([
+			'2026-09-01',
+			'2026-09-02',
+			'2026-09-03',
+			'2026-09-04'
+		]);
+		expect(merged.map((row) => row.unique_viewers)).toEqual([3, 5, 10, 10]);
+		expect(merged.map((row) => row.cumulative_purchases)).toEqual([0, 1, 1, 2]);
+		expect(merged[2].cumulative_revenue).toBe(99);
+	});
+
+	it('trims to the requested window from the most recent day', () => {
+		expect(mergeBeaconViewers(snapshots, beacon, 2).map((row) => row.captured_at)).toEqual([
+			'2026-09-03',
+			'2026-09-04'
+		]);
 	});
 });

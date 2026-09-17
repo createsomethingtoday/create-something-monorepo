@@ -10,7 +10,7 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { getAirtableClient } from '$lib/server/airtable';
-import { deriveBeaconSlug, fetchTemplateViewDaily } from '$lib/server/template-views';
+import { deriveBeaconSlug, fetchTemplateViewDaily, mergeBeaconViewers } from '$lib/server/template-views';
 import { VIEWER_DATA_AVAILABLE } from '$lib/config/viewer-data';
 
 export interface AnalyticsSnapshot {
@@ -101,53 +101,3 @@ export const GET: RequestHandler = async ({ params, url, locals, platform }) => 
 	}
 };
 
-/**
- * Replace the frozen Airtable viewer column with cumulative beacon sessions.
- *
- * Snapshot rows carry purchases/revenue from the nightly cron; their
- * `unique_viewers` column is the dead pre-2026-07-21 Airtable value. When the
- * beacon has rows for this template, viewers become the running total of
- * sessions up to each day. Days the beacon saw but the cron did not (common:
- * the cron only snapshots assets with sales) are synthesized, carrying the
- * last known purchases/revenue forward so every metric shares one x-axis.
- */
-export function mergeBeaconViewers(
-	snapshots: AnalyticsSnapshot[],
-	beaconDaily: Array<{ day: string; sessions: number }> | null,
-	days: number
-): AnalyticsSnapshot[] {
-	if (!beaconDaily) return snapshots;
-
-	const purchasesByDay = new Map<string, Pick<AnalyticsSnapshot, 'cumulative_purchases' | 'cumulative_revenue'>>();
-	for (const snapshot of snapshots) {
-		purchasesByDay.set(snapshot.captured_at.slice(0, 10), {
-			cumulative_purchases: snapshot.cumulative_purchases,
-			cumulative_revenue: snapshot.cumulative_revenue
-		});
-	}
-
-	const dayset = new Set<string>([...purchasesByDay.keys(), ...beaconDaily.map((row) => row.day)]);
-	const orderedDays = Array.from(dayset).sort();
-	const sessionsByDay = new Map(beaconDaily.map((row) => [row.day, row.sessions]));
-
-	let cumulativeSessions = 0;
-	let lastPurchases = 0;
-	let lastRevenue = 0;
-	const merged: AnalyticsSnapshot[] = [];
-	for (const day of orderedDays) {
-		cumulativeSessions += sessionsByDay.get(day) ?? 0;
-		const known = purchasesByDay.get(day);
-		if (known) {
-			lastPurchases = known.cumulative_purchases;
-			lastRevenue = known.cumulative_revenue;
-		}
-		merged.push({
-			captured_at: day,
-			unique_viewers: cumulativeSessions,
-			cumulative_purchases: lastPurchases,
-			cumulative_revenue: lastRevenue
-		});
-	}
-
-	return merged.slice(-days);
-}
