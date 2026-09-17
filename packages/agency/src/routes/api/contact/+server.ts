@@ -23,6 +23,7 @@ function resolveLeadStage(intent: string | undefined): ContactLeadStage {
 	switch (intent) {
 		case 'governance-checklist':
 			return 'awareness';
+		case 'membership':
 		case 'workflow-mapping':
 			return 'decision';
 		case 'workflow-teardown':

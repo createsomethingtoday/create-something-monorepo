@@ -1,4 +1,5 @@
 <script lang="ts">
+  import MembershipOffer from '$lib/components/MembershipOffer.svelte';
   import ProjectReviewEntry from '$lib/components/ProjectReviewEntry.svelte';
   import { Button, PerformanceCampaignOpening, SEO } from '@create-something/canon';
   import AgencyPerformanceReadback from '$lib/components/AgencyPerformanceReadback.svelte';
@@ -14,6 +15,7 @@
   const controlProduct = getPublicProduct('control');
 
   const services = [
+    { name: 'Agent engineering membership', description: 'Skills, workflow guidance, Slack support and weekly check-ins.', type: 'Membership', price: PUBLIC_PRICING.membership.label, priceDescription: PUBLIC_PRICING.membership.terms },
     {
       name: mapProduct.name,
       description: mapProduct.customerJob,
@@ -49,7 +51,7 @@
     {
       question: 'What is your primary service?',
       answer:
-        'Start with Map to plan the work. Build turns that plan into a working system. After launch, Control provides ongoing support and includes Map.'
+        'The membership provides skills, guidance and operator support for $900/month. Map, custom Build projects and managed Control remain separate paths for planning, implementation and live operations.'
     },
     {
       question: 'Are agents part of the workforce?',
@@ -88,8 +90,8 @@
   <PerformanceCampaignOpening
     eyebrow="How It Works"
     expression="editorial"
-    title="Start with what you have."
-    lede="Bring a task to automate or a product you have already built. We can review the existing work, plan a new workflow, or build and test an agent. We agree on the scope before you commit."
+    title="Support for the work ahead."
+    lede="Bring a task to automate or a product you have already built. Our $900/month membership helps you learn, troubleshoot and improve one workflow at a time. Custom implementation is scoped separately."
     media={playbookHeroMedia.services}
     mediaMobilePlacement="background"
     density="compact"
@@ -100,14 +102,16 @@
     ]}
   >
     {#snippet actions()}
-      <Button href={agencyCoreMessaging.selfMapHref}>
-        {agencyCoreMessaging.selfMapLabel}
+      <Button href={agencyCoreMessaging.membershipInquiryHref}>
+        {agencyCoreMessaging.membershipInquiryLabel}
       </Button>
       <Button href={agencyCoreMessaging.servicesMappingSessionHref} variant="secondary">
         {agencyCoreMessaging.bookMappingSessionLabel}
       </Button>
     {/snippet}
   </PerformanceCampaignOpening>
+
+  <MembershipOffer />
 
   <ProjectReviewEntry />
 
