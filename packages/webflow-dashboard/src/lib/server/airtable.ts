@@ -650,7 +650,16 @@ export interface Asset {
 	submittedDate?: string;
 	publishedDate?: string;
 	decisionDate?: string;
+	/**
+	 * Beacon-era unique viewers (sessions) from `$lib/server/template-views`.
+	 * Undefined until applyTemplateViews() runs, or when the beacon is
+	 * unavailable — never read from the frozen Airtable `📋 Unique Viewers`.
+	 */
 	uniqueViewers?: number;
+	/** Marketplace detail path, e.g. `/templates/html/<slug>` (templates only). */
+	adminDetailPagePath?: string;
+	/** Slug the view beacon keys on; set by applyTemplateViews(). */
+	beaconSlug?: string;
 	cumulativePurchases?: number;
 	cumulativeRevenue?: number;
 	latestReviewStatus?: string;
@@ -1186,7 +1195,9 @@ export function mapAssetRecord(record: Airtable.Record<Airtable.FieldSet>): Asse
 			firstString(record.fields['🚀📅Published Date']) ||
 			firstString(record.fields['👀📅Published Date (Override)']),
 		decisionDate: firstString(record.fields['🚀📅Decision Date']),
-		uniqueViewers: Number(record.fields['📋 Unique Viewers']) || 0,
+		// 📋 Unique Viewers froze on 2026-07-21; viewers come from the beacon overlay.
+		uniqueViewers: undefined,
+		adminDetailPagePath: firstString(record.fields['🏸Admin Detail Page Path (🏗️ only)']),
 		cumulativePurchases: Number(record.fields['📋 Cumulative Purchases']) || 0,
 		cumulativeRevenue: Number(record.fields['📋 Cumulative Revenue']) || 0,
 		latestReviewStatus: firstString(record.fields['📝Latest Review Status']),

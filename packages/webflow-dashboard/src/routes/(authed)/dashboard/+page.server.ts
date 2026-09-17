@@ -1,6 +1,7 @@
 import type { PageServerLoad } from './$types';
 import { getAirtableClient, type Asset } from '$lib/server/airtable';
 import { getCachedAssets, setCachedAssets } from '$lib/server/assets-cache';
+import { applyTemplateViews } from '$lib/server/template-views';
 
 export const load: PageServerLoad = async ({ locals, platform, depends }) => {
 	// Mark this load function as dependent on 'app:assets'
@@ -20,7 +21,11 @@ export const load: PageServerLoad = async ({ locals, platform, depends }) => {
 				assets = cached;
 			} else {
 				const airtable = getAirtableClient(platform.env);
-				assets = await airtable.getAssetsByEmail(locals.user.email);
+				assets = await applyTemplateViews(
+					platform.env,
+					await airtable.getAssetsByEmail(locals.user.email),
+					{ waitUntil: (p) => platform.context?.waitUntil(p) }
+				);
 				if (kv) {
 					setCachedAssets(kv, locals.user.email, assets, (p) =>
 						platform.context?.waitUntil(p)

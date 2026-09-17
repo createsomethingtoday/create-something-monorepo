@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Asset } from '$lib/server/airtable';
-	import { VIEWER_DATA_AVAILABLE } from '$lib/config/viewer-data';
+	import { VIEWER_DATA_AVAILABLE, VIEWER_DATA_EPOCH_LABEL } from '$lib/config/viewer-data';
 	import {
 		computeTemplateHealth,
 		type TemplateHealthTone
@@ -69,8 +69,8 @@
 			<div class="health-metrics" aria-label="Template health summary">
 				{#if VIEWER_DATA_AVAILABLE}
 					<div class="metric">
-						<span class="metric-label">Viewers</span>
-						<span class="metric-value">{formatWholeNumber(asset.uniqueViewers, '0')}</span>
+						<span class="metric-label" title="Viewers {VIEWER_DATA_EPOCH_LABEL}">Viewers</span>
+						<span class="metric-value">{formatWholeNumber(asset.uniqueViewers, '—')}</span>
 					</div>
 				{/if}
 				<div class="metric">
