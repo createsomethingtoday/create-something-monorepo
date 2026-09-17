@@ -728,6 +728,50 @@ export function registerTools(
   );
 
   server.tool(
+    'app_review_get_ticket_thread',
+    'Read the Zendesk ticket linked to an app version: subject, status, requester, and the conversation (developer replies and review-team messages), oldest to newest. Read-only; resolves the ticket from the version record, never from an arbitrary ticket ID. Public comments only by default — set include_internal_notes=true to also return private agent notes. Use this to answer "what did the developer say / were they notified / what did we send" before drafting any follow-up.',
+    {
+      version_id: z.string().min(1),
+      include_internal_notes: z.boolean().default(false),
+      limit: z.number().int().min(1).max(100).default(20),
+    },
+    async ({ version_id, include_internal_notes, limit }) => {
+      try {
+        const zendesk = getZendesk();
+        if (!zendesk) {
+          throw new ZendeskClientError(
+            'ZENDESK_NOT_CONFIGURED',
+            'Zendesk reads are not configured on this deployment (ZENDESK_API_TOKEN / ZENDESK_API_EMAIL missing).',
+            503,
+          );
+        }
+        const version = await requireAppVersion(getClient(), version_id);
+        if (!version.zendeskTicketId) {
+          throw new ZendeskClientError(
+            'NO_ZENDESK_TICKET',
+            'This version has no linked Zendesk ticket.',
+            404,
+            { version_id },
+          );
+        }
+        const thread = await zendesk.getTicketThread(version.zendeskTicketId, {
+          includeInternalNotes: include_internal_notes,
+          limit,
+        });
+        return asSuccess({
+          version_id,
+          asset_id: version.assetId,
+          version_number: version.versionNumber,
+          ticket_url: `https://webflow2579.zendesk.com/agent/tickets/${version.zendeskTicketId}`,
+          thread,
+        });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
     'app_review_send_ticket_followup',
     'Send a follow-up comment on the Zendesk ticket linked to an app version. CREATOR-FACING when visibility is "public" — use only when the reviewer explicitly asks to send it (e.g. correcting a truncated review email, answering a creator question). The message is delivered verbatim, rendered from Markdown with HTML escaping; the Airtable composer wrapper does NOT apply on this path, so include a greeting and sign-off. Standard closing line for resubmission asks (neutral tone, no "please"): "Once you\'ve addressed the required feedback necessary for approval, [submit a new bundle](https://developers.webflow.com/submit) for review."',
     {

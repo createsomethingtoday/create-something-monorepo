@@ -92,6 +92,37 @@ export interface TicketCommentResult {
   ticketStatus?: string;
 }
 
+export interface TicketThreadAuthor {
+  id: number | null;
+  name: string | null;
+  role: string | null;
+  email: string | null;
+}
+
+export interface TicketThreadComment {
+  id: number;
+  createdAt: string | null;
+  isPublic: boolean;
+  author: TicketThreadAuthor;
+  body: string;
+  attachments: Array<{ fileName: string | null; contentType: string | null; url: string | null }>;
+}
+
+export interface TicketThread {
+  ticketId: string;
+  subject: string | null;
+  status: string | null;
+  priority: string | null;
+  createdAt: string | null;
+  updatedAt: string | null;
+  tags: string[];
+  requester: TicketThreadAuthor | null;
+  assignee: TicketThreadAuthor | null;
+  comments: TicketThreadComment[];
+  totalCommentsOnTicket: number | null;
+  includesInternalNotes: boolean;
+}
+
 export class ZendeskClient {
   private readonly baseUrl: string;
   private readonly authHeader: string;
@@ -152,6 +183,117 @@ export class ZendeskClient {
       isPublic: input.isPublic,
       auditId: payload.audit?.id,
       ticketStatus: payload.ticket?.status,
+    };
+  }
+
+  /**
+   * Read a ticket plus its most recent comments (oldest → newest in the result).
+   * Read-only. Private/internal notes are dropped unless `includeInternalNotes` is set.
+   */
+  async getTicketThread(
+    ticketId: string,
+    options: { includeInternalNotes?: boolean; limit?: number } = {},
+  ): Promise<TicketThread> {
+    if (!/^\d+$/.test(ticketId)) {
+      throw new ZendeskClientError('INVALID_TICKET_ID', 'Zendesk ticket ID must be numeric.', 400, { ticketId });
+    }
+    const limit = Math.min(Math.max(options.limit ?? 20, 1), 100);
+    const includeInternalNotes = options.includeInternalNotes === true;
+    const headers = { Authorization: this.authHeader, Accept: 'application/json' };
+
+    const [ticketRes, commentsRes] = await Promise.all([
+      this.fetchFn(`${this.baseUrl}/tickets/${ticketId}.json?include=users`, { headers }),
+      this.fetchFn(
+        `${this.baseUrl}/tickets/${ticketId}/comments.json?include=users&sort_order=desc&per_page=${limit}`,
+        { headers },
+      ),
+    ]);
+    for (const [label, res] of [['ticket', ticketRes], ['comments', commentsRes]] as const) {
+      if (!res.ok) {
+        let details: unknown;
+        try {
+          details = await res.json();
+        } catch {
+          details = await res.text().catch(() => undefined);
+        }
+        throw new ZendeskClientError(
+          res.status === 404 ? 'ZENDESK_TICKET_NOT_FOUND' : 'ZENDESK_REQUEST_FAILED',
+          `Zendesk ${label} read failed with status ${res.status}.`,
+          res.status,
+          { ticketId, details },
+        );
+      }
+    }
+
+    type RawUser = { id?: number; name?: string; role?: string; email?: string };
+    type RawTicket = {
+      ticket?: {
+        subject?: string;
+        status?: string;
+        priority?: string | null;
+        created_at?: string;
+        updated_at?: string;
+        tags?: string[];
+        requester_id?: number;
+        assignee_id?: number | null;
+      };
+      users?: RawUser[];
+    };
+    type RawComments = {
+      comments?: Array<{
+        id: number;
+        author_id?: number;
+        public?: boolean;
+        body?: string;
+        plain_body?: string;
+        created_at?: string;
+        attachments?: Array<{ file_name?: string; content_type?: string; content_url?: string }>;
+      }>;
+      users?: RawUser[];
+      count?: number;
+    };
+    const ticketPayload = (await ticketRes.json()) as RawTicket;
+    const commentsPayload = (await commentsRes.json()) as RawComments;
+
+    const users = new Map<number, RawUser>();
+    for (const u of [...(ticketPayload.users ?? []), ...(commentsPayload.users ?? [])]) {
+      if (typeof u.id === 'number') users.set(u.id, u);
+    }
+    const author = (id: number | null | undefined): TicketThreadAuthor => {
+      const u = typeof id === 'number' ? users.get(id) : undefined;
+      return { id: id ?? null, name: u?.name ?? null, role: u?.role ?? null, email: u?.email ?? null };
+    };
+
+    const comments = (commentsPayload.comments ?? [])
+      .filter((c) => includeInternalNotes || c.public !== false)
+      .map<TicketThreadComment>((c) => ({
+        id: c.id,
+        createdAt: c.created_at ?? null,
+        isPublic: c.public !== false,
+        author: author(c.author_id),
+        body: (c.plain_body ?? c.body ?? '').trim(),
+        attachments: (c.attachments ?? []).map((a) => ({
+          fileName: a.file_name ?? null,
+          contentType: a.content_type ?? null,
+          url: a.content_url ?? null,
+        })),
+      }))
+      .reverse();
+
+    const t = ticketPayload.ticket ?? {};
+    return {
+      ticketId,
+      subject: t.subject ?? null,
+      status: t.status ?? null,
+      priority: t.priority ?? null,
+      createdAt: t.created_at ?? null,
+      updatedAt: t.updated_at ?? null,
+      tags: t.tags ?? [],
+      requester: typeof t.requester_id === 'number' ? author(t.requester_id) : null,
+      assignee: typeof t.assignee_id === 'number' ? author(t.assignee_id) : null,
+      comments,
+      totalCommentsOnTicket: typeof commentsPayload.count === 'number' ? commentsPayload.count : null,
+      includesInternalNotes: includeInternalNotes,
     };
   }
 }

@@ -78,6 +78,7 @@ Optional:
 - `app_review_create_governance_finding`
 - `app_review_update_governance_finding`
 - `app_review_request_changes`
+- `app_review_get_ticket_thread`
 - `app_review_send_ticket_followup`
 - `app_review_approve_version`
 - `app_review_reject_version`
@@ -118,6 +119,13 @@ Write posture:
   across all apps, versions, and statuses. Its `reference_view_id`
   (`viwGawHG68xIIIDaQ`) identifies the operator's grid; the query itself is
   deliberately scoped to the entire table and follows every Airtable page.
+- `app_review_get_ticket_thread` is the read side of the same link: it returns
+  the linked ticket's subject, status, requester/assignee, and the conversation
+  (oldest → newest) so a reviewer can see what the developer said and what the
+  team sent before drafting anything. Public comments only by default;
+  `include_internal_notes: true` adds private agent notes. Same fail-closed
+  rules as the follow-up tool (version-scoped ticket, requires the Zendesk
+  secrets). Arbitrary ticket search stays in the separate Zendesk MCP.
 - `app_review_send_ticket_followup` posts directly on the creator's Zendesk
   ticket (resolved from the version record, never an arbitrary ticket ID),
   rendering Markdown with HTML escaping so literal tags can't truncate the
