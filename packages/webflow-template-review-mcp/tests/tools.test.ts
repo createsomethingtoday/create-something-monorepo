@@ -1985,3 +1985,60 @@ test('handoff source errors do not leak raw upstream messages or record identifi
   assert.equal(JSON.stringify(result).includes('secret'), false);
   assert.equal(JSON.stringify(result).includes('recAAAAAAAAAAAAAA'), false);
 });
+
+test('template_review_fetch_published_site_stylesheet returns compiled CSS through the runtime fetcher and stays read-only', async () => {
+  const { server, names, handlers, annotations } = createServerHarness();
+  const client = {} as unknown as AirtableClient;
+  const calls: string[] = [];
+  const cssUrl = 'https://cdn.prod.website-files.com/68a1/css/example-template.webflow.5f3a1c9e2.css';
+  const fetcher: typeof fetch = async (input) => {
+    const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
+    calls.push(url);
+    if (url === 'https://example-template.webflow.io/') {
+      return new Response(`<html><head><link rel="stylesheet" href="${cssUrl}"><style>.custom{color:red}</style></head><body></body></html>`, {
+        status: 200,
+        headers: { 'Content-Type': 'text/html' },
+      });
+    }
+    if (url === cssUrl) {
+      return new Response('.hero{font-family:"Inter",sans-serif}@media (max-width:479px){.hero{display:none}}', {
+        status: 200,
+        headers: { 'Content-Type': 'text/css' },
+      });
+    }
+    return new Response('nope', { status: 404 });
+  };
+
+  registerTools(server, () => client, () => reviewer, { fetcher }, { allowWrites: false });
+
+  assert.ok(names.includes('template_review_fetch_published_site_stylesheet'), 'read-only sessions must still see the stylesheet tool');
+  assert.equal(WRITE_TOOL_NAMES.has('template_review_fetch_published_site_stylesheet'), false);
+  assert.equal(annotations.get('template_review_fetch_published_site_stylesheet')?.readOnlyHint, true);
+
+  const result = await handlers.get('template_review_fetch_published_site_stylesheet')?.({
+    published_url: 'https://example-template.webflow.io',
+    search: ['inter'],
+  });
+  assert.ok(result);
+  const payload = parsePayload(result);
+  assert.equal(payload.ok, true);
+  assert.deepEqual(calls, ['https://example-template.webflow.io/', cssUrl]);
+  const data = payload.data as {
+    stylesheets: Array<{ href: string; fetched: boolean; css: string; summary: { font_families: string[]; media_queries: string[] } }>;
+    inline_styles: Array<{ css: string }>;
+    search_matches: Array<{ snippet: string }>;
+  };
+  assert.equal(data.stylesheets[0]?.href, cssUrl);
+  assert.equal(data.stylesheets[0]?.fetched, true);
+  assert.deepEqual(data.stylesheets[0]?.summary.font_families, ['Inter']);
+  assert.deepEqual(data.stylesheets[0]?.summary.media_queries, ['(max-width:479px)']);
+  assert.equal(data.inline_styles[0]?.css, '.custom{color:red}');
+  assert.equal(data.search_matches[0]?.snippet, '.hero{font-family:"Inter",sans-serif}');
+
+  const rejected = await handlers.get('template_review_fetch_published_site_stylesheet')?.({
+    published_url: 'https://example.com/',
+  });
+  assert.ok(rejected);
+  assert.equal(rejected.isError, true);
+  assert.equal(parsePayload(rejected).error?.code, 'INVALID_PUBLISHED_URL');
+});

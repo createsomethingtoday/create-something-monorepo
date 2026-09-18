@@ -26,6 +26,8 @@ test('review workflow aligns placeholder and alt-text interpretation with valida
 
 test('direct-Claude workflow exposes bounded E2B evidence without automating reviewer judgment', () => {
   assert.match(SERVER_INSTRUCTIONS, /template_review_run_published_site_sandbox/);
+  assert.match(SERVER_INSTRUCTIONS, /template_review_fetch_published_site_stylesheet/);
+  assert.match(REVIEW_WORKFLOW, /template_review_fetch_published_site_stylesheet/);
   assert.match(REVIEW_WORKFLOW, /fixed, bounded E2B collector/);
   assert.match(REVIEW_WORKFLOW, /does not accept caller-provided code, commands, packages, secrets/);
   assert.match(REVIEW_WORKFLOW, /Automated validation and sandbox evidence do not approve, reject/);
