@@ -38,6 +38,14 @@ import {
   SCREENSHOT_VIEWPORT_NAMES,
   type ScreenshotCaptureConfig,
 } from './published-site-screenshots.js';
+import {
+  fetchPublishedSiteStylesheet,
+  MAX_SEARCH_TERMS,
+  MAX_STYLESHEET_BYTES,
+  MAX_STYLESHEET_MAX_CHARS,
+  MIN_STYLESHEET_MAX_CHARS,
+  PublishedSiteStylesheetError,
+} from './published-site-stylesheet.js';
 import { TEMPLATE_REVIEW_FIELD_MAP } from './schema.js';
 import { REVIEW_WORKFLOW } from './prompts.js';
 import type { ReviewerProfile } from './reviewer-directory.js';
@@ -206,6 +214,8 @@ export interface ToolRuntimeConfig extends ValidationToolConfig {
   adminExecute?: AdminExecuteConfig;
   marketplaceAdmin?: MarketplaceAdminConfig;
   screenshotCapture?: ScreenshotCaptureConfig;
+  /** Timeout for published-site stylesheet fetches (defaults to 20s). */
+  stylesheetTimeoutMs?: number;
 }
 
 /**
@@ -463,6 +473,42 @@ export function registerTools(
     },
   );
 
+
+  server.tool(
+    'template_review_fetch_published_site_stylesheet',
+    'Read-only: fetch the compiled CSS of a published *.webflow.io template site. Fetches the published page server-side, resolves its <link rel="stylesheet"> hrefs, and returns each Webflow-hosted stylesheet as text (bounded by max_chars, pageable with offset/next_offset) plus a structural summary (approx rule count, @media queries, font families, @font-face count, !important count, custom properties) and any inline <style> blocks from the page HTML (where Webflow custom-code CSS lives). Use this whenever you need to read a template\'s compiled CSS — the claude.ai code-execution sandbox CANNOT fetch cdn.prod.website-files.com itself (host_not_allowed), so never try to curl or fetch the stylesheet from a sandbox. Prefer search (case-insensitive substrings, up to 10 terms) over paging when you are checking for specific selectors, properties, or fonts; matches return the enclosing rule block. Third-party stylesheets are listed but only fetched with include_third_party=true. Performs no Airtable write and makes no review decision.',
+    {
+      published_url: z.string().url(),
+      include_css: z.boolean().optional(),
+      include_third_party: z.boolean().optional(),
+      max_chars: z.number().int().min(MIN_STYLESHEET_MAX_CHARS).max(MAX_STYLESHEET_MAX_CHARS).optional(),
+      offset: z.number().int().min(0).max(MAX_STYLESHEET_BYTES).optional(),
+      search: z.array(z.string().min(2).max(120)).min(1).max(MAX_SEARCH_TERMS).optional(),
+    },
+    {
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: true,
+    },
+    async (input) => {
+      try {
+        const result = await fetchPublishedSiteStylesheet(input, {
+          fetcher: runtimeConfig.fetcher,
+          ...(runtimeConfig.stylesheetTimeoutMs !== undefined ? { timeoutMs: runtimeConfig.stylesheetTimeoutMs } : {}),
+        });
+        return asSuccess(result);
+      } catch (error) {
+        if (error instanceof PublishedSiteStylesheetError) {
+          return jsonContent(
+            { ok: false, error: { code: error.code, message: error.message, status: error.status, details: error.details } },
+            true,
+          );
+        }
+        return asError(error);
+      }
+    },
+  );
   server.tool(
     'template_review_format_agent_review_feedback',
     'Read-only: validate lane-shaped comprehensive review evidence and format a schema-checked Agent Review Feedback draft. Does not write to Airtable.',
