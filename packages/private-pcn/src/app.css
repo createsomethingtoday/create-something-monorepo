@@ -88,6 +88,7 @@ textarea:focus-visible {
 }
 .masthead nav {
   display: flex;
+  flex-wrap: wrap;
   gap: 32px;
   font-size: 13px;
 }
@@ -453,9 +454,6 @@ input[type='file'] {
   .masthead nav {
     gap: 15px;
     font-size: 11px;
-  }
-  .masthead nav a:first-child {
-    display: none;
   }
   .lede {
     font-size: 16px;
@@ -1000,9 +998,6 @@ input[type='file'] {
   }
   .masthead nav {
     gap: 15px;
-  }
-  .masthead nav a:first-child {
-    display: none;
   }
   .wordmark {
     font-size: 11px;
