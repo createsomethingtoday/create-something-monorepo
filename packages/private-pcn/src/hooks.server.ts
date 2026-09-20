@@ -107,9 +107,15 @@ export const handle: Handle = async ({ event, resolve }) => {
   const support = await applyImpersonation(event);
   const response = support.response || (await resolve(event));
   if (support.auditId && event.platform?.env.DB) {
-    await event.platform.env.DB.prepare('UPDATE impersonation_requests SET status=? WHERE id=?')
-      .bind(response.status, support.auditId)
-      .run();
+    try {
+      await event.platform.env.DB.prepare('UPDATE impersonation_requests SET status=? WHERE id=?')
+        .bind(response.status, support.auditId)
+        .run();
+    } catch {
+      // The pre-execution receipt persists. Never turn a committed write into a
+      // retryable failure merely because outcome recording is unavailable.
+      console.error('Private support audit outcome pending', support.auditId);
+    }
   }
   response.headers.set('X-Content-Type-Options', 'nosniff');
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');

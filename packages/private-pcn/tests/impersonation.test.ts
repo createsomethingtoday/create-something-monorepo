@@ -252,3 +252,28 @@ it('binds the opaque session to its original actor and live target subject', asy
   expect((await handle({ event: event('/api/networks', {}), resolve } as any)).status).toBe(401);
   expect(resolve).not.toHaveBeenCalled();
 });
+it('preserves a committed creator write when audit outcome persistence fails', async () => {
+  await POST(
+    event('/api/impersonation', {
+      email: 'creator@example.com',
+      reason: 'Verify committed response'
+    })
+  );
+  const e = event('/api/networks', { name: 'Committed draft', slug: 'committed-draft' });
+  const prepare = e.platform.env.DB.prepare;
+  e.platform.env.DB.prepare = (query: string) =>
+    query === 'UPDATE impersonation_requests SET status=? WHERE id=?'
+      ? {
+          bind: () => ({
+            run: async () => {
+              throw new Error('transient outcome failure');
+            }
+          })
+        }
+      : prepare(query);
+  expect((await handle({ event: e, resolve: createNetwork } as any)).status).toBe(201);
+  expect(
+    sql.prepare("SELECT owner_id FROM networks WHERE slug='committed-draft'").get()?.owner_id
+  ).toBe('creator');
+  expect(sql.prepare('SELECT status FROM impersonation_requests').get()?.status).toBeNull();
+});
