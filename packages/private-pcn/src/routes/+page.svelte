@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Icon from '$lib/components/Icon.svelte';
   import { BOOKING_URL } from '$lib/client';
   import NetworkPreview from '$lib/components/NetworkPreview.svelte';
 </script>
@@ -26,8 +27,10 @@
         </p>
         <div class="hero-actions">
           <a class="button" href={BOOKING_URL}
-            >Build your network <span aria-hidden="true">↗</span></a
-          ><a class="inline-link" href="#network-preview">Explore the possibilities ↓</a>
+            >Build your network <span aria-hidden="true"><Icon name="external-link" /></span></a
+          ><a class="inline-link" href="#network-preview"
+            >Explore the possibilities <Icon name="arrow-down" /></a
+          >
         </div>
         <p class="hero-note">Custom-built with you. Your brand. Your domain.</p>
       </div>
@@ -47,7 +50,7 @@
         <div class="field-route"><span>CURATE + PUBLISH</span></div>
         <div class="field-network">
           <div class="field-network-header">
-            <span>YOUR PRIVATE NETWORK</span><span aria-hidden="true">↗</span>
+            <span>YOUR PRIVATE NETWORK</span><Icon name="network" size={20} />
           </div>
           <strong>From working code<br />to shared understanding.</strong>
           <div class="field-topics">
@@ -132,7 +135,9 @@
         Bring your audience, a few recordings, or an idea for a network. We’ll map the experience,
         agree the scope, and build it with you.
       </p>
-      <a class="button" href={BOOKING_URL}>Build your network <span aria-hidden="true">↗</span></a>
+      <a class="button" href={BOOKING_URL}
+        >Build your network <span aria-hidden="true"><Icon name="external-link" /></span></a
+      >
     </div>
     <div class="delivery-steps">
       <article>

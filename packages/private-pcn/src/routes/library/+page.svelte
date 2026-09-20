@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Icon from '$lib/components/Icon.svelte';
   import { onMount } from 'svelte';
   import { api, type CatalogVideo } from '$lib/client';
   import Player from '$lib/components/Player.svelte';
@@ -48,9 +49,11 @@
     </div>
     <div class="workspace-actions">
       {#if data.identity?.role === 'admin'}<a class="button secondary" href="/admin"
-          >Creator workspace ↗</a
+          >Creator workspace <Icon name="arrow-right" /></a
         >{/if}{#if data.identity}<button class="text-button" onclick={logout}>Sign out</button
-        >{:else}<a class="button secondary" href="/login">Member sign in ↗</a>{/if}
+        >{:else}<a class="button secondary" href="/login"
+          >Member sign in <Icon name="arrow-right" /></a
+        >{/if}
     </div>
   </div>
   {#if data.identity?.role === 'blocked'}<aside class="notice">
@@ -113,7 +116,7 @@
           ><div class="video-cover">
             <span>{video.series}</span><strong>{String(index + 1).padStart(2, '0')}</strong><span
               class="video-play"
-              aria-hidden="true">↗</span
+              aria-hidden="true"><Icon name="arrow-right" /></span
             >
           </div>
           <div class="video-caption">

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Icon from '$lib/components/Icon.svelte';
   import '../app.css';
   import { onMount } from 'svelte';
   import { api } from '$lib/client';
@@ -22,7 +23,7 @@
   >
   <nav aria-label="Primary">
     <a href="/#network-preview">Explore networks</a><a href="/library">Library</a><a href="/login"
-      >Member sign in <span aria-hidden="true">↗</span></a
+      >Member sign in <span aria-hidden="true"><Icon name="arrow-right" /></span></a
     >
   </nav>
 </header>

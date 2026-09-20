@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Icon from '$lib/components/Icon.svelte';
   import { api, BOOKING_URL } from '$lib/client';
   let email = $state('');
   let password = $state('');
@@ -42,11 +43,12 @@
         required
       /></label
     >{#if error}<p role="alert" class="error">{error}</p>{/if}<button class="button" disabled={busy}
-      >{busy ? 'Signing in…' : 'Sign in'} <span aria-hidden="true">↗</span></button
+      >{busy ? 'Signing in…' : 'Sign in'}
+      <span aria-hidden="true"><Icon name="arrow-right" /></span></button
     >
   </form>
   <p class="muted">
     Need access or help with your account? <a href={BOOKING_URL}>Speak with CREATE SOMETHING.</a>
   </p>
-  <a href="/library">Browse public previews →</a>
+  <a href="/library">Browse public previews <Icon name="arrow-right" /></a>
 </main>
