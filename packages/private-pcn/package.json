@@ -1,0 +1,31 @@
+{
+  "name": "@create-something/private-pcn",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite dev",
+    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+    "build": "vite build",
+    "test": "vitest run",
+    "deploy": "pnpm build && node ../../scripts/run-wrangler.mjs deploy",
+    "db:migrate": "node ../../scripts/run-wrangler.mjs d1 migrations apply cs-private-pcn --remote"
+  },
+  "dependencies": {
+    "@create-something/canon": "workspace:*",
+    "hls.js": "^1.6.15",
+    "tus-js-client": "^4.3.1"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260621.1",
+    "@sveltejs/adapter-cloudflare": "^6.0.0",
+    "@sveltejs/kit": "^2.70.2",
+    "@sveltejs/vite-plugin-svelte": "^5.0.3",
+    "svelte": "^5.56.9",
+    "svelte-check": "^4.1.1",
+    "typescript": "^5.7.2",
+    "vite": "^6.4.3",
+    "vitest": "^4.0.18",
+    "wrangler": "^4.103.0"
+  }
+}
