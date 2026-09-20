@@ -1,12 +1,51 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { readFileSync } from 'node:fs';
-import { DatabaseSync } from 'node:sqlite';
+import { readFileSync, mkdtempSync, rmSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { startEnrollment, completeEnrollment } from '../src/services/enrollment.ts';
 import { verifyPassword } from '../src/services/crypto.ts';
 
 function fixture(t: any) {
-  const db = new DatabaseSync(':memory:');
+  // Match the owning Identity CI's Node20-compatible SQLite fixture boundary.
+  const directory = mkdtempSync(join(tmpdir(), 'identity-enrollment-'));
+  const database = join(directory, 'identity.sqlite');
+  const literal = (value: unknown) =>
+    value == null
+      ? 'NULL'
+      : typeof value === 'number'
+        ? String(value)
+        : `'${String(value).replaceAll("'", "''")}'`;
+  function bind(sql: string, values: unknown[]) {
+    let index = 0;
+    const result = sql.replaceAll('?', () => {
+      if (index >= values.length) throw new Error('Missing binding');
+      return literal(values[index++]);
+    });
+    if (index !== values.length) throw new Error('Unused binding');
+    return result;
+  }
+  const execute = (sql: string) =>
+    execFileSync('sqlite3', ['-bail', '-json', database], {
+      input: `PRAGMA foreign_keys=ON; ${sql}`,
+      encoding: 'utf8'
+    }).trim();
+  const db = {
+    exec: (sql: string) => {
+      execute(sql);
+    },
+    prepare: (sql: string) => ({
+      get: (...values: unknown[]) => {
+        const result = execute(bind(sql, values) + ';');
+        return result ? JSON.parse(result)[0] : undefined;
+      },
+      run: (...values: unknown[]) => {
+        const result = execute(bind(sql, values) + '; SELECT changes() AS changes;');
+        return JSON.parse(result)[0];
+      }
+    })
+  };
   db.exec(readFileSync(new URL('../migrations/0001_initial.sql', import.meta.url), 'utf8'));
   db.exec('ALTER TABLE users ADD COLUMN deleted_at TEXT');
   db.exec(
@@ -15,6 +54,7 @@ function fixture(t: any) {
   function statement(sql: string, values: any[] = []): any {
     return {
       bind: (...args: any[]) => statement(sql, args),
+      toSql: () => bind(sql, values),
       first: async () => db.prepare(sql).get(...values) || null,
       run: async () => ({ meta: { changes: db.prepare(sql).run(...values).changes } })
     };
@@ -25,16 +65,8 @@ function fixture(t: any) {
     DB: {
       prepare: statement,
       batch: async (statements: any[]) => {
-        db.exec('BEGIN');
-        try {
-          const result = [];
-          for (const s of statements) result.push(await s.run());
-          db.exec('COMMIT');
-          return result;
-        } catch (e) {
-          db.exec('ROLLBACK');
-          throw e;
-        }
+        db.exec(`BEGIN; ${statements.map((s) => s.toSql()).join('; ')}; COMMIT;`);
+        return statements.map(() => ({ meta: { changes: 1 } }));
       }
     }
   } as any;
@@ -44,7 +76,7 @@ function fixture(t: any) {
     mails.push(JSON.parse(options.body));
     return Response.json({ id: 'test-mail' });
   });
-  t.after(() => db.close());
+  t.after(() => rmSync(directory, { recursive: true, force: true }));
   const request = (input: unknown) =>
     new Request('https://id.createsomething.space/v1/auth/enrollment/start', {
       method: 'POST',
