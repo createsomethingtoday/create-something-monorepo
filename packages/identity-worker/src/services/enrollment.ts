@@ -6,6 +6,13 @@ const reply = (body: unknown, status = 200) =>
 const unavailable = () => reply({ error: 'Account verification is temporarily unavailable.' }, 503);
 const invalid = () =>
   reply({ error: 'This verification link is invalid or expired. Request a new link.' }, 400);
+const enrollmentOpen = (env: Env) =>
+  env.PUBLIC_ENROLLMENT_ENABLED === 'true' || !!env.ENROLLMENT_ALLOWED_EMAILS?.trim();
+const emailAllowed = (env: Env, email: string) =>
+  env.PUBLIC_ENROLLMENT_ENABLED === 'true' ||
+  (env.ENROLLMENT_ALLOWED_EMAILS || '')
+    .split(',')
+    .some((entry) => entry.trim().toLowerCase() === email);
 const origin = 'https://private.createsomething.agency';
 async function body(request: Request): Promise<Record<string, unknown>> {
   const reader = request.body?.getReader();
@@ -51,7 +58,7 @@ async function allowed(env: Env, key: string, max: number, now: number) {
 // Called directly by the browser so CF-Connecting-IP is the actual client.
 // No forwarded IP headers or caller-supplied return URLs are trusted.
 export async function startEnrollment(request: Request, env: Env): Promise<Response> {
-  if (env.PUBLIC_ENROLLMENT_ENABLED !== 'true' || !env.RESEND_API_KEY) return unavailable();
+  if (!enrollmentOpen(env) || !env.RESEND_API_KEY) return unavailable();
   const now = Math.floor(Date.now() / 1000);
   const ip = request.headers.get('CF-Connecting-IP');
   if (!ip) return unavailable();
@@ -71,6 +78,7 @@ export async function startEnrollment(request: Request, env: Env): Promise<Respo
     !['signup', 'recovery'].includes(String(purpose))
   )
     return reply({ error: 'Enter a valid email address and request type.' }, 400);
+  if (!emailAllowed(env, email)) return unavailable();
   const accepted = () =>
     reply({
       success: true,
@@ -127,7 +135,7 @@ export async function startEnrollment(request: Request, env: Env): Promise<Respo
 }
 
 export async function completeEnrollment(request: Request, env: Env): Promise<Response> {
-  if (env.PUBLIC_ENROLLMENT_ENABLED !== 'true') return unavailable();
+  if (!enrollmentOpen(env)) return unavailable();
   const now = Math.floor(Date.now() / 1000);
   const ip = request.headers.get('CF-Connecting-IP');
   if (!ip) return unavailable();
@@ -154,6 +162,7 @@ export async function completeEnrollment(request: Request, env: Env): Promise<Re
     .bind(digest, now)
     .first<{ email: string; purpose: 'signup' | 'recovery' }>();
   if (!proof) return invalid();
+  if (!emailAllowed(env, proof.email)) return unavailable();
   const password = await hashPassword(input.password);
   // Compare-and-set is the replay boundary, including concurrent completions.
   const claimed = await env.DB.prepare(
