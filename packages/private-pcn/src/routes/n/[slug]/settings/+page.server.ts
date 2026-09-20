@@ -18,6 +18,7 @@ export const load = async ({ locals, url, platform }) => {
     .first());
   return {
     trial,
+    trialEnabled: platform?.env.PCN_CREATOR_TRIAL_ENABLED === 'true',
     invited,
     billing: row
       ? {

@@ -151,9 +151,13 @@ it('starts one calendar month only for an approved invited creator and never ext
   const e = () => {
     const v = event({});
     v.locals.network = { id: 'alpha', slug: 'alpha', owner_id: 'creator' };
-    v.platform.env.PCN_SELF_SERVICE_ENABLED = 'true';
+    v.platform.env.PCN_SELF_SERVICE_ENABLED = 'false';
+    v.platform.env.PCN_CREATOR_TRIAL_ENABLED = 'true';
     return v;
   };
+  const disabled = e();
+  disabled.platform.env.PCN_CREATOR_TRIAL_ENABLED = 'false';
+  expect((await activateTrial(disabled)).status).toBe(503);
   expect((await activateTrial(e())).status).toBe(403);
   await review(
     event(
@@ -299,7 +303,8 @@ it('never grants a creator trial to a company support workspace', async () => {
   );
   const e = event({});
   e.locals.network = { id: 'company', owner_id: 'creator' };
-  e.platform.env.PCN_SELF_SERVICE_ENABLED = 'true';
+  e.platform.env.PCN_SELF_SERVICE_ENABLED = 'false';
+  e.platform.env.PCN_CREATOR_TRIAL_ENABLED = 'true';
   expect((await activateTrial(e)).status).toBe(409);
 });
 
