@@ -1,157 +1,158 @@
 <script lang="ts">
   import { BOOKING_URL } from '$lib/client';
+  import NetworkPreview from '$lib/components/NetworkPreview.svelte';
 </script>
 
 <svelte:head>
-  <title>Private content networks, built for you | CREATE SOMETHING Private</title>
+  <title>Private networks for agentic engineering creators | CREATE SOMETHING</title>
   <meta
     name="description"
-    content="A branded home for your video library and members. CREATE SOMETHING builds, launches, and supports private content networks on your own domain."
+    content="Your own network for teaching agentic engineering. Publish technical walkthroughs, curate a video library, and choose who gets access. Built around your brand and domain."
   />
   <link rel="canonical" href="https://private.createsomething.agency/" />
 </svelte:head>
 <main id="main">
-  <section class="hero">
-    <div class="hero-copy">
-      <p class="eyebrow">01 / YOUR OWN CONTENT NETWORK</p>
-      <h1>Make room<br />for{' '}<em>your people.</em></h1>
-      <p class="lede">
-        Your films, courses, and field knowledge deserve a home of their own. We build private
-        content networks around your brand, your audience, and the way you want to share.
-      </p>
-      <a class="button" href={BOOKING_URL}>Discuss your network <span aria-hidden="true">↗</span></a
-      >
-      <p class="hero-note">Built for you. On your domain. Supported after launch.</p>
+  <section class="creator-hero">
+    <div class="creator-hero-top">
+      <p class="eyebrow">PRIVATE NETWORKS / AGENTIC ENGINEERING</p>
+      <span class="hero-edition">BUILT FOR INDEPENDENT CREATORS</span>
     </div>
-    <a
-      class="hero-library"
-      href="/library"
-      aria-label="Explore the CREATE SOMETHING demonstration library"
-    >
-      <div class="library-chrome">
-        <span>PRIVATE / LIBRARY</span><span class="status-dot">YOUR BRAND HERE</span>
-      </div>
-      <div class="cover-study">
-        <div class="study-grid"></div>
-        <span class="study-label">A SPACE TO GO DEEPER</span>
-        <div class="study-title">Beyond<br /><i>the feed.</i></div>
-        <span class="study-index">FIELD NOTES / VOL. 01</span><span
-          class="play-mark"
-          aria-hidden="true">↗</span
-        >
-      </div>
-      <div class="library-caption">
-        <div>
-          <span class="eyebrow">CREATE SOMETHING / DEMONSTRATION</span>
-          <h2>A library with a point of view.</h2>
+    <div class="creator-hero-grid">
+      <div>
+        <h1>Teach what<br />you’re{' '}<em>building.</em></h1>
+        <p class="lede">
+          Give your agent builds, technical deep dives, and hard-won knowledge a home. A private
+          content network shaped around your audience and your way of teaching.
+        </p>
+        <div class="hero-actions">
+          <a class="button" href={BOOKING_URL}
+            >Build your network <span aria-hidden="true">↗</span></a
+          ><a class="inline-link" href="#network-preview">Explore the possibilities ↓</a>
         </div>
-        <span aria-hidden="true">↗</span>
+        <p class="hero-note">Custom-built with you. Your brand. Your domain.</p>
       </div>
-    </a>
+      <div
+        class="engineering-field"
+        role="img"
+        aria-label="A creator publishes a build walkthrough, reviews access, and shares it with members. Example network structure."
+      >
+        <div class="field-caption"><span>KNOWLEDGE, WITH CONTEXT</span><span>FIG. 01</span></div>
+        <div class="field-source">
+          <span class="field-node">01</span>
+          <div>
+            <small>THE CREATOR</small><strong>What you know.</strong>
+            <p>Builds / methods / lessons learned</p>
+          </div>
+        </div>
+        <div class="field-route"><span>CURATE + PUBLISH</span></div>
+        <div class="field-network">
+          <div class="field-network-header">
+            <span>YOUR PRIVATE NETWORK</span><span aria-hidden="true">↗</span>
+          </div>
+          <strong>From working code<br />to shared understanding.</strong>
+          <div class="field-topics">
+            <span>MCP integrations</span><span>Agent workflows</span><span
+              >Evaluation walkthroughs</span
+            >
+          </div>
+          <div class="field-gate">
+            <span>ACCESS / YOU DECIDE</span><b>Public preview · Invited members</b>
+          </div>
+        </div>
+        <div class="field-footer">
+          <span>02 / YOUR AUDIENCE</span>
+          <p>A place to learn from the work.</p>
+        </div>
+      </div>
+    </div>
+    <div class="creator-scope">
+      <span>FOR EDUCATORS</span><span>FOR BUILDERS</span><span>FOR RESEARCHERS</span><span
+        >FOR TECHNICAL COMMUNITIES</span
+      >
+    </div>
   </section>
-  <div class="scope-strip" aria-label="Service essentials">
-    <span>YOUR DOMAIN</span><span>MEMBER ACCESS</span><span>VIDEO PUBLISHING</span><span
-      >ONGOING SUPPORT</span
-    >
-  </div>
-  <section class="service-section" id="the-service">
+  <NetworkPreview />
+  <section class="service-section creator-service" id="the-service">
     <div>
-      <p class="eyebrow">02 / WHAT WE BUILD</p>
-      <h2>A destination.<br /><em>And the system behind it.</em></h2>
+      <p class="eyebrow">03 / THE NETWORK IS YOURS</p>
+      <h2>Keep the depth.<br /><em>Choose the boundaries.</em></h2>
       <p class="section-intro">
-        A public feed can help people find you. Your own network gives them somewhere to stay,
-        learn, and return.
+        Your work can be public. Your deeper explanation can have a more deliberate home. We build
+        the library, access, and publishing workflow around how you want to teach.
       </p>
     </div>
     <div class="service-rows">
       <article>
         <span>01</span>
         <div>
-          <h3>A library that feels like you</h3>
+          <h3>Organize around what people learn</h3>
           <p>
-            Your visual identity, curated series, and a watch experience that works across screens.
-            Bring your existing content; we plan the migration with you.
+            Group video walkthroughs into your own series: agent architecture, tool use, evals, or
+            the next subject you want to explore.
           </p>
         </div>
       </article>
       <article>
         <span>02</span>
         <div>
-          <h3>Access you can control</h3>
+          <h3>Choose what stays private</h3>
           <p>
-            Invite members, publish a public preview, and keep the rest private. Paid memberships
-            can be included when your business needs them.
+            Invite members and publish public previews. Decide which lessons welcome new people and
+            which belong inside your network.
           </p>
         </div>
       </article>
       <article>
         <span>03</span>
         <div>
-          <h3>A publishing workflow you can run</h3>
+          <h3>Publish without rebuilding a platform</h3>
           <p>
-            Upload, review, and publish from one place. See playback requests and keep a record of
-            publishing and access changes.
+            Upload a private draft, check processing, then publish. Manage content and member access
+            from one creator workspace.
           </p>
         </div>
       </article>
       <article>
         <span>04</span>
         <div>
-          <h3>Someone there after launch</h3>
+          <h3>Make it unmistakably yours</h3>
           <p>
-            Documented operation, training, and a support agreement with clear responsibilities. You
-            know what you own and who to call.
+            Your identity, your domain, your library structure. Paid memberships, repository
+            integrations, and other extensions are scoped with you.
           </p>
         </div>
       </article>
     </div>
   </section>
-  <section class="delivery-section">
-    <p class="eyebrow">03 / FROM LIBRARY TO LAUNCH</p>
-    <h2>Built around your content.<br /><em>Scoped before we start.</em></h2>
-    <div class="delivery-grid">
+  <section class="creator-handoff" id="start">
+    <div>
+      <p class="eyebrow">04 / BUILD WITH CREATE SOMETHING</p>
+      <h2>You bring the knowledge.<br /><em>We build the place.</em></h2>
+      <p>
+        Bring your audience, a few recordings, or an idea for a network. We’ll map the experience,
+        agree the scope, and build it with you.
+      </p>
+      <a class="button" href={BOOKING_URL}>Build your network <span aria-hidden="true">↗</span></a>
+    </div>
+    <div class="delivery-steps">
       <article>
         <span>01 / DEFINE</span>
-        <h3>Find the right shape.</h3>
-        <p>
-          We review your library, audience, access model, and brand. You receive a scope with
-          deliverables, responsibilities, and acceptance criteria.
-        </p>
+        <h3>Audience, content, access.</h3>
+        <p>Set the structure, brand, membership model, and ownership before the build.</p>
       </article>
       <article>
-        <span>02 / BUILD</span>
-        <h3>Make it yours.</h3>
-        <p>
-          We configure your network, migrate the agreed content, and test the publishing and member
-          experience together.
-        </p>
+        <span>02 / LAUNCH</span>
+        <h3>Build, migrate, verify.</h3>
+        <p>Move the agreed content and test the publishing and member experience together.</p>
       </article>
       <article>
         <span>03 / OPERATE</span>
-        <h3>Launch with a plan.</h3>
+        <h3>Keep publishing.</h3>
         <p>
-          Your team gets training and a runbook. Hosting, video usage, and ongoing support are
-          defined in your agreement.
+          Training, a runbook, and an agreed support plan. Build, support, and video usage are
+          quoted separately.
         </p>
       </article>
-    </div>
-  </section>
-  <section class="invitation">
-    <div>
-      <p class="eyebrow">04 / START A CONVERSATION</p>
-      <h2>What would you<br /><em>put inside?</em></h2>
-    </div>
-    <div>
-      <p>
-        Bring a library, an audience, or a plan for one. We’ll help you define a network worth
-        building.
-      </p>
-      <p class="muted">
-        Custom implementation + ongoing operations. Your quote separates the build, support, and
-        video usage. Content production and additional integrations are scoped separately.
-      </p>
-      <a class="button" href={BOOKING_URL}>Discuss your network <span aria-hidden="true">↗</span></a
-      >
     </div>
   </section>
 </main>

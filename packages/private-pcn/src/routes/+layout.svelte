@@ -21,7 +21,7 @@
     >CREATE SOMETHING<span>PRIVATE / .AGENCY</span></a
   >
   <nav aria-label="Primary">
-    <a href="/library">Explore the library</a><a href="/login"
+    <a href="/#network-preview">Explore networks</a><a href="/library">Library</a><a href="/login"
       >Member sign in <span aria-hidden="true">↗</span></a
     >
   </nav>
@@ -29,7 +29,7 @@
 {@render children()}
 <footer>
   <a href="https://createsomething.agency">CREATE SOMETHING .agency</a><span
-    >Your content. Your audience. Your platform.</span
+    >Independent knowledge. Your own network.</span
   >
   <div>
     <a href="https://createsomething.agency/privacy">Privacy</a><a
