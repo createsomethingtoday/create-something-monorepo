@@ -3308,7 +3308,7 @@ async function handlePrivateSupportTarget(request: Request, env: Env): Promise<R
  const target = await findUserByEmail(env.DB, body.email.trim().toLowerCase());
  if (!isActiveVerifiedIdentity(target) || target.id === actor.sub || admins.includes(target.email.toLowerCase()))
    return json({ error: 'Eligible active user not found.' }, 404);
- return json({ id: target.id, email: target.email, email_verified: true });
+ return json({ id: target.id, email: target.email, email_verified: true }, 200, { 'Cache-Control': 'private, no-store' });
 }
 
 async function handleGetMe(request: Request, env: Env): Promise<Response> {

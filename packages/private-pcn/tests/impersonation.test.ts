@@ -231,3 +231,24 @@ it('requires an administrator, a reason, same origin and rejects nesting', async
     ).status
   ).toBe(409);
 });
+it('binds the opaque session to its original actor and live target subject', async () => {
+  await POST(
+    event('/api/impersonation', { email: 'creator@example.com', reason: 'Verify session binding' })
+  );
+  const resolve = vi.fn(async () => new Response('unsafe'));
+  const changed = event('/api/networks', {});
+  changed.fetch = vi.fn(
+    async (url: string) =>
+      new Response(
+        JSON.stringify(
+          url.endsWith('/users/me')
+            ? { id: 'admin', email: 'admin@example.com', email_verified: true }
+            : { id: 'replacement', email: 'creator@example.com', email_verified: true }
+        )
+      )
+  );
+  expect((await handle({ event: changed, resolve } as any)).status).toBe(403);
+  sql.exec("UPDATE impersonation_sessions SET actor_subject='another-admin'");
+  expect((await handle({ event: event('/api/networks', {}), resolve } as any)).status).toBe(401);
+  expect(resolve).not.toHaveBeenCalled();
+});
