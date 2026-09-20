@@ -77,6 +77,9 @@ beforeEach(() => {
   sqlite.exec(
     readFileSync(new URL('../migrations/0003_resource_limits.sql', import.meta.url), 'utf8')
   );
+  sqlite.exec(
+    readFileSync(new URL('../migrations/0006_builder_assets.sql', import.meta.url), 'utf8')
+  );
   remote = vi.fn();
   vi.stubGlobal('fetch', remote);
 });
@@ -458,11 +461,44 @@ describe('self-service recovery and data ownership', () => {
     seed('ours');
     seed('theirs');
     sqlite.prepare("UPDATE videos SET network_id='alpha' WHERE id='ours'").run();
+    for (const [id, network] of [
+      ['asset-ours', 'alpha'],
+      ['asset-theirs', 'default']
+    ]) {
+      sqlite
+        .prepare(
+          'INSERT INTO builder_assets(id,network_id,title,kind,summary,price_cents) VALUES(?,?,?,?,?,?)'
+        )
+        .run(id, network, id, 'skill', 'Useful technique', 1900);
+      sqlite
+        .prepare(
+          'INSERT INTO asset_releases(id,network_id,asset_id,version,manifest,object_key,sha256,size_bytes) VALUES(?,?,?,?,?,?,?,?)'
+        )
+        .run(
+          `release-${id}`,
+          network,
+          id,
+          '1.0.0',
+          JSON.stringify({ license: 'Personal use', install: 'Read the guide' }),
+          `private-object-key/${id}`,
+          'a'.repeat(64),
+          4
+        );
+    }
     const e = event('export', undefined, 'admin');
     e.locals.network = { id: 'alpha', slug: 'alpha', owner_id: 'fixture-user' };
     const response = await exportNetwork(e);
     const data = await response.json();
+    expect(data.schemaVersion).toBe(2);
     expect(data.sessions.map((v: any) => v.id)).toEqual(['ours']);
+    expect(data.assets.map((a: any) => a.id)).toEqual(['asset-ours']);
+    expect(data.releases).toHaveLength(1);
+    expect(data.releases[0]).toMatchObject({
+      asset_id: 'asset-ours',
+      manifest: { license: 'Personal use', install: 'Read the guide' }
+    });
+    expect(JSON.stringify(data)).not.toContain('private-object-key');
+    expect(JSON.stringify(data)).not.toContain('asset-theirs');
     expect(JSON.stringify(data)).not.toContain('private-uid');
     expect(response.headers.get('Content-Disposition')).toContain('attachment');
     e.locals.identity.subject = 'other';

@@ -133,8 +133,9 @@
     >
     <p><a href={`/api/networks/${data.network?.slug}/export`}>Download network records →</a></p>
     <p class="muted">
-      The JSON export includes session metadata, members, and activity. Keep your original video
-      files as your media backup.
+      The JSON export includes sessions, members, activity, asset metadata and release
+      documentation. It does not include video files or ZIP packages. Download packages from their
+      asset pages and keep your original files as backups.
     </p>
   </section>
   <section class="notice" aria-labelledby="billing-title">

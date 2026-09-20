@@ -34,3 +34,5 @@ Acceptance must include actual seller setup, public/private asset discovery, an 
 Migration0006 adds tables only; previous self-service Worker ignores them. Rollback preview by restoring prior Worker24a158ce-3ad4-479b-9c3e-98632ecfd031 and retaining the bucket/tables. No destructive rollback is needed. Production self-service migrations0002–0005 still have the separately documented membership rollback boundary.
 
 CTX lexical retrieval succeeded for builder composability and independent operation/installation/rollback. `ctx status` timed out; search availability is verified, index freshness is not.
+
+Network export schema version 2 includes scoped asset metadata and immutable release documentation (license, compatibility, installation, verification, removal and checksum). Object keys, ZIP binaries and video originals are excluded. Owners download packages separately from their asset pages.
