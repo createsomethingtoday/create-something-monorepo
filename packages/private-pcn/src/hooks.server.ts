@@ -10,7 +10,10 @@ export const handle: Handle = async ({ event, resolve }) => {
     destination.search = event.url.search;
     return new Response(null, { status: 308, headers: { Location: destination.href } });
   }
-  if (event.url.pathname.startsWith('/api/') && event.url.pathname !== '/api/billing/webhook') {
+  if (
+    event.url.pathname.startsWith('/api/') &&
+    !['/api/billing/webhook', '/api/commerce/webhook'].includes(event.url.pathname)
+  ) {
     const limiter = event.platform?.env.PCN_RATE_LIMIT;
     if (!limiter && event.platform?.env.ENVIRONMENT === 'production') {
       return new Response('Service configuration unavailable.', { status: 503 });

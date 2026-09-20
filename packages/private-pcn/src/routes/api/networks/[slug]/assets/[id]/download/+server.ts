@@ -1,6 +1,7 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import type { AssetRelease } from '$lib/assets';
+import { refreshBuyerRelease } from '$lib/server/asset-orders';
 import { ownsNetwork, hasRelease } from '$lib/server/builder-assets';
 export const GET: RequestHandler = async ({ locals, platform, params, url }) => {
   const db = platform?.env.DB,
@@ -13,6 +14,16 @@ export const GET: RequestHandler = async ({ locals, platform, params, url }) => 
     .prepare('SELECT * FROM asset_releases WHERE network_id=? AND asset_id=? AND id=?')
     .bind(locals.network.id, params.id, url.searchParams.get('release') || '')
     .first<AssetRelease>();
+  if (release && !ownsNetwork(locals)) {
+    try {
+      await refreshBuyerRelease(platform!.env, release, locals.identity.subject);
+    } catch {
+      return json(
+        { error: 'Your payment status could not be verified. Try again shortly.' },
+        { status: 503 }
+      );
+    }
+  }
   if (
     !release ||
     (!ownsNetwork(locals) && !(await hasRelease(db, release, locals.identity.subject)))

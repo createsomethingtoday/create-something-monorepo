@@ -95,7 +95,7 @@ export async function startEnrollment(request: Request, env: Env): Promise<Respo
     .run();
   const next =
     typeof input.next_path === 'string' &&
-    /^\/(?:start|dashboard|collection|library|n\/[a-z0-9-]{3,48}(?:\/(?:studio|settings|assets(?:\/[a-z0-9-]{1,64})?))?)$/.test(
+    /^\/(?:start|dashboard|collection|library|n\/[a-z0-9-]{3,48}(?:\/(?:studio|settings|seller|assets(?:\/[a-z0-9-]{1,64})?))?)$/.test(
       input.next_path
     )
       ? input.next_path

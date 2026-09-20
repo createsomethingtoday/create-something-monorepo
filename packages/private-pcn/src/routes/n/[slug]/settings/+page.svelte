@@ -91,6 +91,7 @@
       </p>
     </aside>{/if}
   <nav class="workspace-trail" aria-label="Builder setup">
+    <a href={`/n/${data.network?.slug}/seller`}>Seller payments →</a>
     <a href={`/n/${data.network?.slug}/assets`}>Package an asset →</a><a
       href={`/n/${data.network?.slug}/studio`}>Teach a technique →</a
     >

@@ -131,7 +131,7 @@ function seedRelease() {
 function grant(buyer = 'buyer-a') {
   sql
     .prepare(
-      "INSERT INTO asset_entitlements(id,network_id,asset_id,release_id,buyer_id,source,status) VALUES(?,?,?,?,?,'stripe','active')"
+      "INSERT INTO asset_entitlements(id,network_id,asset_id,release_id,buyer_id,source,status) VALUES(?,?,?,?,?,'free','active')"
     )
     .run('grant-a', 'net-a', 'asset-a', 'release-a', buyer);
 }
@@ -153,7 +153,9 @@ beforeEach(() => {
   for (const name of [
     '0001_private_pcn.sql',
     '0002_network_ownership.sql',
-    '0006_builder_assets.sql'
+    '0006_builder_assets.sql',
+    '0004_subscriptions.sql',
+    '0007_builder_commerce.sql'
   ])
     sql.exec(readFileSync(new URL(`../migrations/${name}`, import.meta.url), 'utf8'));
   sql
@@ -202,7 +204,7 @@ describe('builder-owned asset drafts and releases', () => {
     expect(sql.prepare('SELECT manifest FROM asset_releases').get()?.manifest).toBe(
       JSON.stringify(manifest)
     );
-    expect((await saveAsset(event({ ...body, visibility: 'published' }))).status).toBe(400);
+    expect((await saveAsset(event({ ...body, visibility: 'published' }))).status).toBe(503);
   });
   it('rejects nonowners and foreign-origin mutations', async () => {
     await expect(create(event({}, { subject: 'buyer-a', role: 'member' }))).rejects.toMatchObject({

@@ -23,7 +23,9 @@
     "ENVIRONMENT": "production",
     "PCN_ADMIN_EMAILS": "micah@createsomething.io",
     "CLOUDFLARE_ACCOUNT_ID": "9645bd52e640b8a4f40a3a55ff1dd75a",
-    "PCN_SELF_SERVICE_ENABLED": "false"
+    "PCN_SELF_SERVICE_ENABLED": "false",
+    "PCN_CONNECT_ENABLED": "false",
+    "PCN_ASSET_COMMERCE_ENABLED": "false"
   },
   "d1_databases": [
     {
@@ -55,7 +57,9 @@
         "ENVIRONMENT": "production",
         "PCN_ADMIN_EMAILS": "micah@createsomething.io",
         "CLOUDFLARE_ACCOUNT_ID": "9645bd52e640b8a4f40a3a55ff1dd75a",
-        "PCN_SELF_SERVICE_ENABLED": "false"
+        "PCN_SELF_SERVICE_ENABLED": "false",
+        "PCN_CONNECT_ENABLED": "false",
+        "PCN_ASSET_COMMERCE_ENABLED": "false"
       },
       "d1_databases": [
         {

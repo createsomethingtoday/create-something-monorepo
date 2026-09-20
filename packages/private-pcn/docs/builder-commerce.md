@@ -8,11 +8,11 @@ Database: tenant-scoped asset drafts, immutable releases, exact buyer/release en
 
 Builder path: dashboard → network → assets → draft → private release → review buyer details. Draft fields remain editable; release files, license and install guidance cannot be overwritten. ZIP files have a16MiB limit, five releases including pending uploads per asset, and50assets per network. Capacity reservations precede object writes. Unknown writes keep their reservation; owner recovery finalizes only an object matching the stored size and checksum metadata. Missing uncertain uploads are retained for operator reconciliation; they are not automatically retried or freed. A ZIP signature is format validation only, not malware or compatibility certification. No package code executes on the platform.
 
-Buyer path: asset link → inspect runtime/prerequisites/permissions/license/support → account verification → same asset → payment (pending) → collection → exact purchased release → download/install/verify/remove. A collection does not require owning or subscribing to a network. Acquiring an asset does not grant membership, future releases or redistribution rights. Existing active entitlements remain usable after a listing is archived, independent of membership. Refund/revocation must remove the exact entitlement before future downloads. There is no public object URL or installation-content leak in the unauthenticated page payload. Owner preview may access draft files.
+Buyer path: asset link → inspect runtime/prerequisites/permissions/license/support → account verification → same asset → server-confirmed payment → collection → exact purchased release → download/install/verify/remove. A collection does not require owning or subscribing to a network. Acquiring an asset does not grant membership, future releases or redistribution rights. Existing active entitlements remain usable after a listing is archived, independent of membership. Refund/revocation must remove the exact entitlement before future downloads. There is no public object URL or installation-content leak in the unauthenticated page payload. Owner preview may access draft files.
 
 Entry without an asset link: `/start` lets people choose learning/collecting or sharing/selling; account roles are not permanently exclusive. Login, signup, recovery and verification preserve bounded relative return paths. Identity and PCN allowlists include asset paths and reject hosts, queries and fragments.
 
-## Commercial decisions still pending
+## Commercial model and fee confirmation
 
 The current USD24.50/network/month price is50%below Uscreen Starter's USD49monthly base (September20,2026). It is a hosting subscription, not an asset price or commission.
 
@@ -23,15 +23,15 @@ Current primary-source digital product benchmarks:
 
 These establish advertised prices, not sales volume or feature parity. Fifty percent of Gumroad's direct platform fee is5%+$0.25; fifty percent of Lemon Squeezy's advertised base is2.5%+$0.25. Neither arithmetic comparison establishes a50%lower total seller bill when subscription, Stripe processing and merchant-of-record responsibilities differ. Do not publish a blanket cheaper-than claim or configure a commission until fee scope and the payment relationship are confirmed.
 
-Recommendation pending user choice: independent builders own their sales/customer relationships, receipts and refund support. The alternative is CREATE SOMETHING collecting/distributing payments and owning buyer payment support. Stripe Connect configuration and fee approval follow that choice. No connected accounts, purchases, or fake entitlements have been created remotely. The existing platform subscription integration is separate. A seller payout flow, refund/dispute reconciliation, tax presentation, checkout return recovery and receipt flow remain required before selling.
+Approved relationship: independent builders own their sales/customer relationships, receipts and refund support. The proposed fee is USD24.50/network/month and zero platform commission, awaiting explicit fee confirmation. The existing platform subscription integration is separate. See [Connect implementation](connect-implementation.md) for the implemented configuration, recovery model and remaining provider acceptance. No connected accounts, purchases, or fake entitlements have been created remotely.
 
 ## Preview and release gates
 
-Preview only: private bucket `cs-private-pcn-assets-preview`, binding `ASSET_PACKAGES`. Production has no asset bucket bound. Publishing remains unavailable; no buy button pretends checkout works. Identity enrollment remains disabled remotely. Stream and Stripe test access plus real buyer/seller identity and mailbox acceptance remain open.
+Preview only: private bucket `cs-private-pcn-assets-preview`, binding `ASSET_PACKAGES`. Production has no asset bucket bound. Publishing and checkout remain gated by explicit environment configuration and provider readiness. Identity enrollment remains disabled remotely. Stream and Stripe test access plus real buyer/seller identity and mailbox acceptance remain open.
 
 Acceptance must include actual seller setup, public/private asset discovery, an exact test-mode purchase, duplicate/delayed webhook recovery, ownership change attempts, cancellation/refund/revocation, original-release download and installation instructions, and mobile/keyboard browser review. Current SQL/provider-mock tests do not prove these live workflows. Browser remains handed to Micah; no browser activity until sign-in completion is confirmed.
 
-Migration0006 adds tables only; previous self-service Worker ignores them. Rollback preview by restoring prior Worker24a158ce-3ad4-479b-9c3e-98632ecfd031 and retaining the bucket/tables. No destructive rollback is needed. Production self-service migrations0002–0005 still have the separately documented membership rollback boundary.
+Migrations0006 and0007 add tables only; previous self-service Worker ignores them. Rollback preview by restoring prior Worker24a158ce-3ad4-479b-9c3e-98632ecfd031 and retaining the bucket/tables. No destructive rollback is needed. Production self-service migrations0002–0005 still have the separately documented membership rollback boundary.
 
 CTX lexical retrieval succeeded for builder composability and independent operation/installation/rollback. `ctx status` timed out; search availability is verified, index freshness is not.
 

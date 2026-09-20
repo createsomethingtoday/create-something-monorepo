@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { untrack } from 'svelte';
+  import { page } from '$app/state';
+  import { onMount, untrack } from 'svelte';
   import { api } from '$lib/client';
   import { invalidateAll } from '$app/navigation';
   import { assetKinds, assetPrice, type ReleaseManifest } from '$lib/assets';
@@ -11,7 +12,7 @@
       kind: data.asset.kind,
       price: (data.asset.price_cents / 100).toFixed(2),
       audience: data.asset.audience,
-      visibility: data.asset.visibility === 'archived' ? 'archived' : 'draft'
+      visibility: data.asset.visibility
     }))
   );
   async function saveDetails(event: SubmitEvent) {
@@ -32,6 +33,43 @@
     files = $state<FileList>(),
     busy = $state(false),
     message = $state('');
+  let acceptLicense = $state(false),
+    purchaseMessage = $state(''),
+    purchaseBusy = $state(false);
+  async function purchase(action: 'acquire' | 'check') {
+    if (!release) return;
+    purchaseBusy = true;
+    purchaseMessage = '';
+    try {
+      const result = await api(
+        `assets/${data.asset.id}/purchase`,
+        { action, release: release.id, acceptLicense },
+        data.network!.slug
+      );
+      if (result.url) {
+        window.location.assign(result.url);
+        return;
+      }
+      purchaseMessage =
+        result.status === 'paid'
+          ? 'Payment confirmed. Your package is ready.'
+          : result.status === 'refunded'
+            ? 'This payment was refunded. Contact the builder for support.'
+            : result.status === 'disputed'
+              ? 'Access is paused while the payment is under review.'
+              : result.status === 'not_started'
+                ? 'No purchase has been started for this release.'
+                : 'Payment has not been confirmed. If you completed checkout, check again shortly before trying another payment.';
+      await invalidateAll();
+    } catch (e) {
+      purchaseMessage = (e as Error).message;
+    } finally {
+      purchaseBusy = false;
+    }
+  }
+  onMount(() => {
+    if (page.url.searchParams.has('purchase') && data.identity) void purchase('check');
+  });
   let selected = $state(untrack(() => data.selectedRelease));
   const release = $derived(data.releases.find((r) => r.id === selected) || data.releases[0]);
   let manifest = $state<ReleaseManifest>({
@@ -218,12 +256,39 @@
             >Sign in</a
           >. We’ll bring you back to this asset.
         </p>
+      {:else if release && data.commerceReady && data.asset.visibility === 'published' && !data.owner}
+        <label class="license-consent"
+          ><input type="checkbox" bind:checked={acceptLicense} /> I have reviewed and accept this release’s
+          license and the builder’s refund policy.</label
+        >
+        <p class="muted">
+          Sold by the builder of {data.network!.name}. Taxes are calculated at checkout. You pay the
+          builder directly; contact them for payment support.
+        </p>
+        <button
+          class="button"
+          disabled={purchaseBusy || !acceptLicense}
+          onclick={() => purchase('acquire')}
+          >{purchaseBusy
+            ? 'Confirming…'
+            : data.asset.price_cents
+              ? `Buy v${release.version} · ${assetPrice(data.asset.price_cents)}`
+              : 'Add release to collection'} ↗</button
+        >
       {:else}<p class="availability" role="status">
-          Purchasing is not available yet. You have not been charged.
+          Purchasing is not available for this listing. No new payment has been started.
         </p>{/if}
+      {#if data.identity && !data.owner && release}<button
+          class="button secondary"
+          disabled={purchaseBusy}
+          onclick={() => purchase('check')}>{purchaseBusy ? 'Checking…' : 'Check purchase'}</button
+        >{/if}
+      {#if purchaseMessage}<p class="availability" role="status">{purchaseMessage}</p>{/if}
       {#if data.owner}<p class="muted">
-          Publishing stays unavailable until seller payments and private delivery pass acceptance.
-          Your draft and uploaded releases remain private.
+          {data.commerceReady
+            ? 'Publish only when the release and its support policy are ready for buyers.'
+            : 'Publishing is awaiting payment and delivery acceptance. Your drafts remain private.'}
+          <a href={`/n/${data.network!.slug}/seller`}>Set up seller payments →</a>
         </p>{/if}
       <a href="/collection">Your collection →</a>
     </aside>
@@ -312,3 +377,22 @@
       </form>
     </section>{/if}
 </main>
+
+<style>
+  .license-consent {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    font-size: 13px;
+    margin: 24px 0;
+  }
+  .license-consent input {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .purchase-panel button {
+    margin: 8px 0;
+  }
+</style>
