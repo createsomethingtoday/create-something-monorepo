@@ -37,6 +37,12 @@
       "migrations_dir": "migrations"
     }
   ],
+  "r2_buckets": [
+    {
+      "binding": "ASSET_PACKAGES",
+      "bucket_name": "cs-private-pcn-assets"
+    }
+  ],
   "ratelimits": [
     {
       "name": "PCN_RATE_LIMIT",
