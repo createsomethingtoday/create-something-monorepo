@@ -1,0 +1,33 @@
+name: Private PCN
+on:
+  pull_request:
+    paths:
+      - 'packages/private-pcn/**'
+      - 'packages/canon/src/lib/auth/**'
+      - 'packages/auth-platform/**'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/private-pcn.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+        with:
+          version: 9.15.0
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: 22.21.1
+          cache: pnpm
+      - run: pnpm install --filter @create-something/private-pcn... --frozen-lockfile
+      - run: pnpm --filter @create-something/auth-platform build
+      - run: pnpm --filter @create-something/tufte package
+      - run: pnpm --filter @create-something/canon package
+      - run: pnpm --filter @create-something/private-pcn check
+      - run: pnpm --filter @create-something/private-pcn test
+      - run: pnpm --filter @create-something/private-pcn build
+      - run: pnpm auth:retired-provider:check

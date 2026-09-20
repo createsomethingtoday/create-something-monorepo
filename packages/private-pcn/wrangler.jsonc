@@ -1,0 +1,80 @@
+{
+  "name": "cs-private-pcn",
+  "account_id": "9645bd52e640b8a4f40a3a55ff1dd75a",
+  "main": ".svelte-kit/cloudflare/_worker.js",
+  "compatibility_date": "2026-06-01",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "assets": {
+    "directory": ".svelte-kit/cloudflare",
+    "binding": "ASSETS",
+    "run_worker_first": true
+  },
+  "routes": [
+    {
+      "pattern": "private.createsomething.agency",
+      "custom_domain": true
+    },
+    {
+      "pattern": "private.createsomething.io",
+      "custom_domain": true
+    }
+  ],
+  "vars": {
+    "ENVIRONMENT": "production",
+    "PCN_ADMIN_EMAILS": "micah@createsomething.io",
+    "CLOUDFLARE_ACCOUNT_ID": "9645bd52e640b8a4f40a3a55ff1dd75a"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "cs-private-pcn",
+      "database_id": "4305a4b7-c13b-4085-b800-bb6395fa502a",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "ratelimits": [
+    {
+      "name": "PCN_RATE_LIMIT",
+      "namespace_id": "2030001",
+      "simple": {
+        "limit": 30,
+        "period": 60
+      }
+    }
+  ],
+  "observability": {
+    "enabled": true
+  },
+  "env": {
+    "preview": {
+      "name": "cs-private-pcn-preview",
+      "workers_dev": true,
+      "routes": [],
+      "vars": {
+        "ENVIRONMENT": "production",
+        "PCN_ADMIN_EMAILS": "micah@createsomething.io",
+        "CLOUDFLARE_ACCOUNT_ID": "9645bd52e640b8a4f40a3a55ff1dd75a"
+      },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "cs-private-pcn-preview",
+          "database_id": "f25dc8ad-ceb3-4fe9-b0ef-5b3cf444a296",
+          "migrations_dir": "migrations"
+        }
+      ],
+      "ratelimits": [
+        {
+          "name": "PCN_RATE_LIMIT",
+          "namespace_id": "2030002",
+          "simple": {
+            "limit": 30,
+            "period": 60
+          }
+        }
+      ]
+    }
+  }
+}
