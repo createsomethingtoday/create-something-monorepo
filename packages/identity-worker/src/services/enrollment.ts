@@ -78,12 +78,12 @@ export async function startEnrollment(request: Request, env: Env): Promise<Respo
     !['signup', 'recovery'].includes(String(purpose))
   )
     return reply({ error: 'Enter a valid email address and request type.' }, 400);
-  if (!emailAllowed(env, email)) return unavailable();
   const accepted = () =>
     reply({
       success: true,
       message: 'If this address can receive account verification, a link will arrive shortly.'
     });
+  if (!emailAllowed(env, email)) return accepted();
   if (!(await allowed(env, `email:${email}`, 3, now))) return accepted();
   // Bounded expiry cleanup contains no plaintext tokens and never deletes live proof.
   await env.DB.batch([

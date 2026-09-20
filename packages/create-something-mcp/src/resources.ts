@@ -66,13 +66,17 @@ export function registerResources(server: McpServer) {
       description: 'Versioned AI-readable CREATE SOMETHING auth platform discovery contract',
       mimeType: 'application/json'
     },
-    async (uri) => ({
-      contents: [{
-        uri: uri.href,
-        mimeType: 'application/json',
-        text: JSON.stringify(createAuthPlatformContract(PRODUCTION_IDENTITY_ORIGIN), null, 2)
-      }]
-    })
+    async (uri) => {
+      const response = await fetch(`${PRODUCTION_IDENTITY_ORIGIN}/.well-known/create-something-auth`, {
+        signal: AbortSignal.timeout(5000),
+        redirect: 'error'
+      });
+      if (!response.ok) throw new Error('Live auth discovery is unavailable.');
+      const contract = await response.json() as { issuer?: string; schema?: string };
+      if (contract.issuer !== PRODUCTION_IDENTITY_ORIGIN || contract.schema !== createAuthPlatformContract().schema)
+        throw new Error('Live auth discovery returned an invalid contract.');
+      return { contents: [{ uri: uri.href, mimeType: 'application/json', text: JSON.stringify(contract, null, 2) }] };
+    }
   );
 
   server.resource(

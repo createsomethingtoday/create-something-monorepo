@@ -252,7 +252,7 @@ test('limited enrollment proves only explicitly allowed mailboxes while public s
   assert.equal(
     (await startEnrollment(f.request({ email: 'other@example.com', purpose: 'signup' }), f.env))
       .status,
-    503
+    200
   );
   assert.equal(f.mails.length, 0);
   assert.equal(

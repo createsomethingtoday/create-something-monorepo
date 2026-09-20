@@ -127,8 +127,8 @@ async function route(request: Request, env: Env, method: string, path: string): 
 	}
 	if (path === '/.well-known/create-something-auth' && method === 'GET') {
 		const enabled = enrollmentOpen(env) && !!env.RESEND_API_KEY;
-		const contract = createAuthPlatformContract(new URL(request.url).origin, { enrollmentEnabled: enabled });
-		return json({ ...contract, enrollment: { ...contract.enrollment, mode: !enabled ? 'disabled' : env.PUBLIC_ENROLLMENT_ENABLED === 'true' ? 'public' : 'restricted' } }, 200, {
+		const contract = createAuthPlatformContract(new URL(request.url).origin, { enrollmentEnabled: enabled, enrollmentMode: env.PUBLIC_ENROLLMENT_ENABLED === 'true' ? 'public' : 'restricted' });
+		return json(contract, 200, {
 			'Cache-Control': 'public, max-age=300',
 		});
 	}
