@@ -9,7 +9,7 @@ export const POST: RequestHandler = async ({ locals, platform, request }) => {
     locals.network.owner_id !== locals.identity.subject
   )
     return json({ error: 'Network owner access required.' }, { status: 403 });
-  if (platform?.env.PCN_SELF_SERVICE_ENABLED !== 'true')
+  if (platform?.env.PCN_CREATOR_TRIAL_ENABLED !== 'true')
     return json(
       { error: 'Network activation is not available yet. Your draft is saved.' },
       { status: 503 }

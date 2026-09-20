@@ -15,6 +15,7 @@ routes = [{ pattern = "id.createsomething.space", custom_domain = true }]
 
 [vars]
 PUBLIC_ENROLLMENT_ENABLED = "false"
+PCN_ENROLLMENT_ENABLED = "false"
 # Optional secret ENROLLMENT_ALLOWED_EMAILS: comma-separated exact mailboxes for
 # controlled enrollment while public signup is closed. Mailbox proof is mandatory.
 # Remove a mailbox to block both new requests and outstanding completions.
@@ -40,6 +41,12 @@ database_id = "f3c1ec56-0ca1-4f8c-89ef-881682ef391a"
 binding = "LMS_DB"
 database_name = "lms-db"
 database_id = "2ec4ea2e-c25f-4832-b78f-a608ff9f8ad7"
+
+# Enrollment reads current application invitations; it never writes PCN records.
+[[d1_databases]]
+binding = "PCN_DB"
+database_name = "cs-private-pcn"
+database_id = "4305a4b7-c13b-4085-b800-bb6395fa502a"
 
 # R2 Bucket - User avatars
 [[r2_buckets]]

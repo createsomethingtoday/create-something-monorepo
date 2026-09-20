@@ -276,3 +276,99 @@ test('limited enrollment proves only explicitly allowed mailboxes while public s
   );
   assert.equal(f.db.prepare('SELECT email_verified FROM users').get()?.email_verified, 1);
 });
+
+test('invited PCN member can prove mailbox while public signup stays closed; revocation blocks completion', async (t) => {
+  const f = fixture(t);
+  f.env.PUBLIC_ENROLLMENT_ENABLED = 'false';
+  f.env.PCN_ENROLLMENT_ENABLED = 'true';
+  f.env.PCN_DB = f.env.DB;
+  f.db.exec(`CREATE TABLE networks(id TEXT PRIMARY KEY,status TEXT);
+    CREATE TABLE members(network_id TEXT,email TEXT,active INTEGER);
+    CREATE TABLE creator_applications(subject TEXT PRIMARY KEY,status TEXT);
+    CREATE TABLE creator_invitations(sponsor TEXT,recipient_email TEXT,redeemed_by TEXT,expires_at INTEGER);
+    INSERT INTO networks VALUES('fixture','active');
+    INSERT INTO members VALUES('fixture','invited@example.com',1);`);
+  assert.equal(
+    (await startEnrollment(f.request({ email: 'invited@example.com', purpose: 'signup' }), f.env))
+      .status,
+    200
+  );
+  assert.equal(f.mails.length, 1);
+  const token = f.token();
+  f.db.exec('UPDATE members SET active=0');
+  assert.equal(
+    (await completeEnrollment(f.request({ token, password: 'secure fixture password' }), f.env))
+      .status,
+    503
+  );
+  assert.equal(f.db.prepare('SELECT COUNT(*) AS count FROM users').get().count, 0);
+});
+
+test('PCN invitation signup rejects expired or suspended sponsors and requires live eligibility at completion', async (t) => {
+  const f = fixture(t);
+  f.env.PUBLIC_ENROLLMENT_ENABLED = 'false';
+  f.env.PCN_ENROLLMENT_ENABLED = 'true';
+  f.env.PCN_DB = f.env.DB;
+  f.db
+    .exec(`CREATE TABLE networks(id TEXT,status TEXT); CREATE TABLE members(network_id TEXT,email TEXT,active INTEGER);
+    CREATE TABLE creator_applications(subject TEXT,status TEXT);
+    CREATE TABLE creator_invitations(sponsor TEXT,recipient_email TEXT,redeemed_by TEXT,expires_at INTEGER);
+    INSERT INTO creator_applications VALUES('sponsor','approved');
+    INSERT INTO creator_invitations VALUES('sponsor','teacher@example.com',NULL,9999999999);`);
+  assert.equal(
+    (await startEnrollment(f.request({ email: 'teacher@example.com', purpose: 'signup' }), f.env))
+      .status,
+    200
+  );
+  const token = f.token();
+  f.db.exec("UPDATE creator_applications SET status='suspended'");
+  assert.equal(
+    (await completeEnrollment(f.request({ token, password: 'secure fixture password' }), f.env))
+      .status,
+    503
+  );
+  await startEnrollment(f.request({ email: 'teacher@example.com', purpose: 'signup' }), f.env);
+  assert.equal(f.mails.length, 1);
+  f.db.exec(
+    "UPDATE creator_applications SET status='approved'; UPDATE creator_invitations SET expires_at=1"
+  );
+  await startEnrollment(f.request({ email: 'teacher@example.com', purpose: 'signup' }), f.env);
+  assert.equal(f.mails.length, 1);
+  f.db.exec('UPDATE creator_invitations SET expires_at=9999999999');
+  assert.equal(
+    (await completeEnrollment(f.request({ token, password: 'secure fixture password' }), f.env))
+      .status,
+    200
+  );
+  assert.equal(f.db.prepare('SELECT status FROM creator_applications').get().status, 'approved');
+  assert.equal(f.db.prepare('SELECT COUNT(*) AS count FROM creator_applications').get().count, 1);
+  assert.equal(f.db.prepare('SELECT COUNT(*) AS count FROM members').get().count, 0);
+});
+
+test('existing verified accounts can recover in invited mode without a current PCN membership', async (t) => {
+  const f = fixture(t);
+  await startEnrollment(f.request({ email: 'recover@example.com', purpose: 'signup' }), f.env);
+  await completeEnrollment(
+    f.request({ token: f.token(), password: 'original secure password' }),
+    f.env
+  );
+  f.env.PUBLIC_ENROLLMENT_ENABLED = 'false';
+  f.env.PCN_ENROLLMENT_ENABLED = 'true';
+  f.env.PCN_DB = f.env.DB;
+  const before = f.mails.length;
+  assert.equal(
+    (await startEnrollment(f.request({ email: 'recover@example.com', purpose: 'recovery' }), f.env))
+      .status,
+    200
+  );
+  assert.equal(f.mails.length, before + 1);
+  assert.equal(
+    (
+      await completeEnrollment(
+        f.request({ token: f.token(), password: 'replacement secure password' }),
+        f.env
+      )
+    ).status,
+    200
+  );
+});
