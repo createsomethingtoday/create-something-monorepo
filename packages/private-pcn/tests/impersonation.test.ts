@@ -88,11 +88,23 @@ beforeEach(() => {
   sql.exec(
     "INSERT INTO creator_applications(subject,email,display_name,credentials,teaching_video_url,status) VALUES('creator','creator@example.com','Creator','Real evidence','https://example.com/video','approved')"
   );
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({ id: 'creator', email: 'creator@example.com', email_verified: true })
+        )
+    )
+  );
   cookies.clear();
   cookies.set('__Host-pcn_access', 'admin-token');
   verify.mockResolvedValue({ subject: 'admin', email: 'admin@example.com' });
 });
-afterEach(() => sql.close());
+afterEach(() => {
+  sql.close();
+  vi.unstubAllGlobals();
+});
 it('starts a bounded support session and writes a network under the target, retaining the administrator audit', async () => {
   const response = await POST(
     event('/api/impersonation', {
@@ -174,7 +186,17 @@ it('fails closed on expiry, administrator revocation, target revocation and audi
         )
       : new Response('', { status: 404 })
   );
+  vi.stubGlobal('fetch', inactive.fetch);
   expect((await handle({ event: inactive, resolve } as any)).status).toBe(503);
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({ id: 'creator', email: 'creator@example.com', email_verified: true })
+        )
+    )
+  );
   sql.exec('DROP TABLE impersonation_requests');
   expect((await handle({ event: event('/api/networks', {}), resolve } as any)).status).toBe(503);
   sql.exec('UPDATE impersonation_sessions SET expires_at=0');
@@ -247,6 +269,7 @@ it('binds the opaque session to its original actor and live target subject', asy
         )
       )
   );
+  vi.stubGlobal('fetch', changed.fetch);
   expect((await handle({ event: changed, resolve } as any)).status).toBe(403);
   sql.exec("UPDATE impersonation_sessions SET actor_subject='another-admin'");
   expect((await handle({ event: event('/api/networks', {}), resolve } as any)).status).toBe(401);
@@ -276,4 +299,25 @@ it('preserves a committed creator write when audit outcome persistence fails', a
     sql.prepare("SELECT owner_id FROM networks WHERE slug='committed-draft'").get()?.owner_id
   ).toBe('creator');
   expect(sql.prepare('SELECT status FROM impersonation_requests').get()?.status).toBeNull();
+});
+it('uses a server-only deputy request without inheriting the browser Origin header', async () => {
+  const e = event('/api/impersonation', {
+    email: 'creator@example.com',
+    reason: 'Verify server deputy boundary'
+  });
+  e.fetch = vi.fn(async () => new Response('', { status: 403 }));
+  const serverFetch = vi.fn(async (_url: string, init: RequestInit) => {
+    expect(new Headers(init.headers).has('origin')).toBe(false);
+    return new Response(
+      JSON.stringify({ id: 'creator', email: 'creator@example.com', email_verified: true })
+    );
+  });
+  vi.stubGlobal('fetch', serverFetch);
+  try {
+    expect((await POST(e)).status).toBe(201);
+    expect(serverFetch).toHaveBeenCalled();
+    expect(e.fetch).not.toHaveBeenCalled();
+  } finally {
+    vi.unstubAllGlobals();
+  }
 });

@@ -24,3 +24,14 @@ CRE-2030: explicit read/write support impersonation requested by Micah. This is 
 5. Only after that proof, enable production `PCN_IMPERSONATION_ENABLED` through a reviewed promotion, migrate production, deploy and repeat a bounded designated-account check. Production payments and creator-trial flags remain independent.
 
 Rollback: set `PCN_IMPERSONATION_ENABLED=false` and redeploy the prior Worker. Set Identity `PCN_SUPPORT_ADMIN_EMAILS` empty to disable the deputy. Preserve the additive tables and audit history. The cookie cannot grant access without a current administrator Identity session. Do not remove audit tables to roll back.
+
+## Server fetch boundary
+
+The target deputy must use server-native `fetch`, not SvelteKit `event.fetch`. SvelteKit adds the incoming page Origin to cross-origin requests, which Identity correctly rejects on this server-only endpoint. Preview acceptance caught this before production activation; the regression test emulates the rejected inherited-Origin request. Never relax the Identity Origin rejection to make support sessions work.
+
+
+## Preview acceptance — 2026-09-20
+
+On preview `f4d03600-ef24-49b4-b971-4dddd64228a5`, the operator approved a bounded session for the designated second account. Browser proved the target banner, actual `POST /api/networks` 201, draft settings, seller-page 403, reviewer-page 403 and return to administrator without sign-in. D1 readback confirmed the target owner, real actor and target audit, and session revocation. An old tab's refresh request was rejected409 by the context guard. The network `support-acceptance-20260920` remains a private unpublished preview draft, without billing or trial activation.
+
+Production `PCN_IMPERSONATION_ENABLED=true` is promoted with the server-native fetch fix after this acceptance. Payment, creator-trial and enrollment flags remain unchanged. Production session start still requires explicit operator action; preview proof is not a claim of completed production write acceptance.
