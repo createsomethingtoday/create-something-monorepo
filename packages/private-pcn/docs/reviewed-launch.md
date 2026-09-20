@@ -59,3 +59,5 @@ Audience context: Map PCN business and engineer leads (task01a0c0d4-a517-7cf3-b9
 Creator free-month activation uses PCN_CREATOR_TRIAL_ENABLED independently of PCN_SELF_SERVICE_ENABLED (paid hosting checkout). The trial still requires an approved creator, redeemed invitation, eligible draft network and unused atomic trial entitlement. No Stripe call or automatic subscription follows activation. Turn off the trial flag to stop new activations; existing trial dates remain authoritative.
 
 Production PCN_CREATOR_TRIAL_ENABLED remains false until invited activation acceptance passes; preview enables the independent trial switch. This source release does not claim the production free month is available.
+
+Production PCN_ENROLLMENT_ENABLED also remains false pending invitation/mailbox acceptance. The existing exact-mailbox allowlist stays operational during this staged rollout. The new eligibility code and database binding do not themselves make invitation signup available while the flag is false.
