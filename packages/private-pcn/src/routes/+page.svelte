@@ -1,14 +1,14 @@
 <script lang="ts">
   import Icon from '$lib/components/Icon.svelte';
-  import { BOOKING_URL } from '$lib/client';
+  let { data } = $props();
   import NetworkPreview from '$lib/components/NetworkPreview.svelte';
 </script>
 
 <svelte:head>
-  <title>Private networks for agentic engineering creators | CREATE SOMETHING</title>
+  <title>Private networks for agentic engineering builders | CREATE SOMETHING</title>
   <meta
     name="description"
-    content="Your own network for teaching agentic engineering. Publish technical walkthroughs, curate a video library, and choose who gets access. Built around your brand and domain."
+    content="A private home for agentic engineering builders: share techniques and package MCP servers, agent plugins and skills with the context to use them."
   />
   <link rel="canonical" href="https://private.createsomething.agency/" />
 </svelte:head>
@@ -16,23 +16,27 @@
   <section class="creator-hero">
     <div class="creator-hero-top">
       <p class="eyebrow">PRIVATE NETWORKS / AGENTIC ENGINEERING</p>
-      <span class="hero-edition">BUILT FOR INDEPENDENT CREATORS</span>
+      <span class="hero-edition">BUILT FOR INDEPENDENT BUILDERS</span>
     </div>
     <div class="creator-hero-grid">
       <div>
-        <h1>Teach what<br />you’re{' '}<em>building.</em></h1>
+        <h1>Share the practice.<br /><em>Package the work.</em></h1>
         <p class="lede">
-          Give your agent builds, technical deep dives, and hard-won knowledge a home. A private
-          content network shaped around your audience and your way of teaching.
+          Build a private home for your agentic engineering techniques and the tools behind them.
+          Bring MCP servers, agent plugins and skills together with the context that makes them
+          useful.
         </p>
         <div class="hero-actions">
-          <a class="button" href={BOOKING_URL}
-            >Build your network <span aria-hidden="true"><Icon name="external-link" /></span></a
+          <a class="button" href="/apply" data-impact="primary_action"
+            >Apply as a creator <Icon name="arrow-right" /></a
           ><a class="inline-link" href="#network-preview"
             >Explore the possibilities <Icon name="arrow-down" /></a
           >
         </div>
-        <p class="hero-note">Custom-built with you. Your brand. Your domain.</p>
+        <p class="hero-note">
+          Reviewed creators. Your offerings, your prices. Invited creators receive one free month
+          after approval.
+        </p>
       </div>
       <div
         class="engineering-field"
@@ -44,7 +48,7 @@
           <span class="field-node">01</span>
           <div>
             <small>THE CREATOR</small><strong>What you know.</strong>
-            <p>Builds / methods / lessons learned</p>
+            <p>Techniques / packages / lessons learned</p>
           </div>
         </div>
         <div class="field-route"><span>CURATE + PUBLISH</span></div>
@@ -54,7 +58,7 @@
           </div>
           <strong>From working code<br />to shared understanding.</strong>
           <div class="field-topics">
-            <span>MCP integrations</span><span>Agent workflows</span><span
+            <span>MCP servers</span><span>Agent plugins & skills</span><span
               >Evaluation walkthroughs</span
             >
           </div>
@@ -75,6 +79,31 @@
     </div>
   </section>
   <NetworkPreview />
+  {#if data.selfServiceEnabled}
+    <section id="pricing" class="launch-plan">
+      <div>
+        <p class="eyebrow">CREATOR / MONTHLY</p>
+        <h2>A private home<br />for your <em>practice.</em></h2>
+        <p>For independent creators teaching agent workflows, technical methods, and research.</p>
+      </div>
+      <div>
+        <p class="plan-price">$24.50 <span>USD / month per network</span></p>
+        <ul>
+          <li>One owner and 100 active members</li>
+          <li>20 sessions, up to 30 minutes and 1 GB each</li>
+          <li>5,000 delivered video minutes per calendar month</li>
+          <li>Private access and selected public previews</li>
+          <li>Your network address, membership controls, and record export</li>
+        </ul>
+        <p>No automatic overage charges. Cancel renewal through your billing portal.</p>
+        <a class="button" href="/apply">Apply to create a network <Icon name="arrow-right" /></a>
+        <p class="muted">
+          Custom domains, migrations, and bespoke integrations are available through a separately
+          scoped managed build.
+        </p>
+      </div>
+    </section>
+  {/if}
   <section class="service-section creator-service" id="the-service">
     <div>
       <p class="eyebrow">03 / THE NETWORK IS YOURS</p>
@@ -120,8 +149,8 @@
         <div>
           <h3>Make it unmistakably yours</h3>
           <p>
-            Your identity, your domain, your library structure. Paid memberships, repository
-            integrations, and other extensions are scoped with you.
+            Your network name, structure and access rules. Choose your asset prices and document the
+            permissions, evaluation and support behind each release.
           </p>
         </div>
       </article>
@@ -129,35 +158,81 @@
   </section>
   <section class="creator-handoff" id="start">
     <div>
-      <p class="eyebrow">04 / BUILD WITH CREATE SOMETHING</p>
-      <h2>You bring the knowledge.<br /><em>We build the place.</em></h2>
+      <p class="eyebrow">04 / A REVIEWED CREATOR NETWORK</p>
+      <h2>Useful work.<br /><em>A standard worth sharing.</em></h2>
       <p>
-        Bring your audience, a few recordings, or an idea for a network. We’ll map the experience,
-        agree the scope, and build it with you.
+        Show your credentials and teach one concrete agentic engineering technique. Once approved,
+        build a network around the practice and assets you want to share.
       </p>
-      <a class="button" href={BOOKING_URL}
-        >Build your network <span aria-hidden="true"><Icon name="external-link" /></span></a
+      <a class="button" href="/apply" data-impact="primary_action"
+        >Apply as a creator <Icon name="arrow-right" /></a
       >
+      <p>
+        <a href="/support">Company project? Explore private support <Icon name="arrow-right" /></a>
+      </p>
     </div>
     <div class="delivery-steps">
       <article>
-        <span>01 / DEFINE</span>
-        <h3>Audience, content, access.</h3>
-        <p>Set the structure, brand, membership model, and ownership before the build.</p>
+        <span>01 / SUBMIT</span>
+        <h3>Credentials and a teaching video.</h3>
+        <p>Explain the technique, its constraints, how you evaluated it, and where it can fail.</p>
       </article>
       <article>
-        <span>02 / LAUNCH</span>
-        <h3>Build, migrate, verify.</h3>
-        <p>Move the agreed content and test the publishing and member experience together.</p>
-      </article>
-      <article>
-        <span>03 / OPERATE</span>
-        <h3>Keep publishing.</h3>
+        <span>02 / REVIEW</span>
+        <h3>Human judgment before access.</h3>
         <p>
-          Training, a runbook, and an agreed support plan. Build, support, and video usage are
-          quoted separately.
+          Every creator is reviewed. An invitation from another creator includes a free month of
+          hosting after approval.
+        </p>
+      </article>
+      <article>
+        <span>03 / SHARE</span>
+        <h3>Your practice, your offerings.</h3>
+        <p>
+          Teach in private sessions, sell composable assets at your own prices, and record the
+          evidence behind your work.
         </p>
       </article>
     </div>
   </section>
 </main>
+
+<style>
+  .launch-plan {
+    padding: 80px 4.5vw;
+    border-top: 1px solid var(--line);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8vw;
+  }
+  .launch-plan h2 {
+    font-size: clamp(36px, 4vw, 60px);
+    letter-spacing: -2px;
+  }
+  .plan-price {
+    font-size: 48px;
+    letter-spacing: -2px;
+  }
+  .plan-price span {
+    display: block;
+    font-size: 14px;
+    letter-spacing: 0;
+    color: var(--muted);
+  }
+  .launch-plan li {
+    line-height: 1.6;
+    margin: 12px 0;
+  }
+  .launch-plan .muted {
+    font-size: 13px;
+    margin-top: 24px;
+  }
+  @media (max-width: 760px) {
+    .launch-plan {
+      grid-template-columns: 1fr;
+      gap: 32px;
+      padding-top: 48px;
+      padding-bottom: 48px;
+    }
+  }
+</style>

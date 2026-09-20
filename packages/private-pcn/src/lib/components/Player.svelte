@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { api } from '$lib/client';
-  let { id, title }: { id: string; title: string } = $props();
+  let { id, title, networkSlug }: { id: string; title: string; networkSlug?: string } = $props();
   let element: HTMLVideoElement;
   let message = $state('Preparing playback…');
   onMount(() => {
@@ -10,7 +10,7 @@
     let timer: ReturnType<typeof setTimeout>;
     async function load(renew = false) {
       try {
-        const grant = await api('playback', { id });
+        const grant = await api('playback', { id }, networkSlug);
         if (stopped) return;
         const position = renew ? element.currentTime : 0;
         const playing = renew && !element.paused;

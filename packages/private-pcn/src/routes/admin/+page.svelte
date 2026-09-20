@@ -1,11 +1,16 @@
 <script lang="ts">
   import Icon from '$lib/components/Icon.svelte';
   import { onMount } from 'svelte';
-  import { api, type CatalogVideo } from '$lib/client';
+  import { api as requestApi, type CatalogVideo } from '$lib/client';
+  let { data } = $props();
+  const slug = $derived(data.network?.slug === 'create-something' ? undefined : data.network?.slug);
+  const api = (path: string, body?: unknown) => requestApi(path, body, slug);
+  const libraryPath = $derived(slug ? `/n/${slug}` : '/library');
   let videos = $state<CatalogVideo[]>([]);
   let members = $state<{ email: string; active: number }[]>([]);
   let receipts = $state<{ action: string; target: string; created_at: string }[]>([]);
   let plays = $state<{ video_id: string; grants: number }[]>([]);
+  let reservations = $state<{ id: string; title: string; state: string }[]>([]);
   let error = $state('');
   let message = $state('');
   let busy = $state(false);
@@ -22,6 +27,7 @@
       members = data.members;
       receipts = data.receipts;
       plays = data.plays;
+      reservations = data.reservations || [];
     } catch (e) {
       error = (e as Error).message;
     }
@@ -39,6 +45,15 @@
     } finally {
       busy = false;
     }
+  }
+  async function remove(video: CatalogVideo) {
+    if (
+      !window.confirm(
+        `Permanently delete “${video.title}”? This archives the session, deletes its stored video and cannot be undone. Keep an original copy before continuing.`
+      )
+    )
+      return;
+    await mutate('videos/delete', { id: video.id, title: video.title, confirm: true });
   }
   async function upload(event: SubmitEvent) {
     event.preventDefault();
@@ -87,13 +102,35 @@
   <p class="eyebrow">PRIVATE / CREATOR WORKSPACE</p>
   <h1>Publish your <em>knowledge.</em></h1>
   <p>Uploads start private and unpublished. Review processing before you choose an audience.</p>
-  <a href="/library"><Icon name="arrow-left" /> Back to library</a>
+  <a href={libraryPath}><Icon name="arrow-left" /> Back to library</a>{#if slug}<a
+      href={`/n/${slug}/settings`}
+      class="settings-link">Network settings and billing <Icon name="arrow-right" /></a
+    >{/if}
   {#if error}<p class="notice error" role="alert">{error}</p>{/if}{#if message}<p
       class="notice"
       role="status"
     >
       {message}
     </p>{/if}
+  {#if reservations.length}<section class="notice">
+      <h2>Uploads to reconcile</h2>
+      <p>
+        These storage slots are reserved while the provider result is uncertain. Checking restores a
+        confirmed private draft or releases a slot when no asset exists.
+      </p>
+      {#each reservations as reservation}<p>
+          {reservation.title}
+          <button
+            class="text-button"
+            disabled={busy}
+            onclick={() => mutate('uploads/reconcile', { id: reservation.id })}>Check upload</button
+          >
+        </p>{/each}
+    </section>{/if}
+  <p class="muted">
+    After granting access, share <a href={libraryPath}>{libraryPath}</a> with the member. They should
+    sign in or create an account using the invited email. Granting access does not send an email.
+  </p>
   <div class="admin-grid">
     <section>
       <h2>Add a walkthrough</h2>
@@ -186,6 +223,8 @@
                 visibility: 'archived',
                 access: video.access
               })}>Archive</button
+          ><button disabled={busy} class="text-button" onclick={() => remove(video)}
+            >Delete permanently</button
           >
         </div>
       </article>{/each}

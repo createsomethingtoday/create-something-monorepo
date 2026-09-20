@@ -1,6 +1,8 @@
+import { paidAccess } from '$lib/server/billing';
 import type { Handle } from '@sveltejs/kit';
 import { verifyIdentityToken } from '@create-something/canon/auth/server';
 import { normalizeEmail } from '$lib/server/policy';
+import { networkRole, networkSlug, type Network } from '$lib/server/networks';
 
 export const handle: Handle = async ({ event, resolve }) => {
   if (event.url.hostname === 'private.createsomething.io') {
@@ -9,7 +11,10 @@ export const handle: Handle = async ({ event, resolve }) => {
     destination.search = event.url.search;
     return new Response(null, { status: 308, headers: { Location: destination.href } });
   }
-  if (event.url.pathname.startsWith('/api/')) {
+  if (
+    event.url.pathname.startsWith('/api/') &&
+    !['/api/billing/webhook', '/api/commerce/webhook'].includes(event.url.pathname)
+  ) {
     const limiter = event.platform?.env.PCN_RATE_LIMIT;
     if (!limiter && event.platform?.env.ENVIRONMENT === 'production') {
       return new Response('Service configuration unavailable.', { status: 503 });
@@ -29,6 +34,28 @@ export const handle: Handle = async ({ event, resolve }) => {
     }
   }
   event.locals.identity = null;
+  event.locals.network = null;
+  const slug = networkSlug(event.url.pathname);
+  if (event.platform?.env.DB) {
+    event.locals.network = await event.platform.env.DB.prepare(
+      'SELECT * FROM networks WHERE slug = ?'
+    )
+      .bind(slug || 'create-something')
+      .first<Network>();
+    if (slug && !event.locals.network) return new Response('Network not found.', { status: 404 });
+    if (
+      event.locals.network &&
+      event.locals.network.id !== 'default' &&
+      event.locals.network.status === 'active'
+    ) {
+      try {
+        if (!(await paidAccess(event.platform.env, event.locals.network)))
+          event.locals.network.status = 'suspended';
+      } catch {
+        event.locals.network.status = 'suspended';
+      }
+    }
+  }
   const token = event.cookies.get('__Host-pcn_access');
   if (token && event.platform?.env.DB) {
     const identity = await verifyIdentityToken(token, {
@@ -60,16 +87,15 @@ export const handle: Handle = async ({ event, resolve }) => {
           const admins = String(event.platform.env.PCN_ADMIN_EMAILS || '')
             .split(',')
             .map((v) => v.trim().toLowerCase());
-          const member = await event.platform.env.DB.prepare(
-            'SELECT active FROM members WHERE email = ?'
-          )
-            .bind(email)
-            .first<{ active: number }>();
-          event.locals.identity = {
-            subject: identity.subject,
-            email,
-            role: admins.includes(email) ? 'admin' : member?.active === 1 ? 'member' : 'blocked'
-          };
+          const role = event.locals.network
+            ? await networkRole(
+                event.platform.env.DB,
+                event.locals.network,
+                { subject: identity.subject, email },
+                admins.includes(email)
+              )
+            : 'blocked';
+          event.locals.identity = { subject: identity.subject, email, role: role || 'blocked' };
         }
       } catch {
         /* Fail closed when authoritative identity is unavailable. */

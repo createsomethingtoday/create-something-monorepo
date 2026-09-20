@@ -5,6 +5,7 @@ on:
       - 'packages/private-pcn/**'
       - 'packages/canon/src/lib/auth/**'
       - 'packages/auth-platform/**'
+      - 'packages/identity-worker/**'
       - 'pnpm-lock.yaml'
       - '.github/workflows/private-pcn.yml'
   workflow_dispatch:
@@ -23,11 +24,12 @@ jobs:
         with:
           node-version: 22.21.1
           cache: pnpm
-      - run: pnpm install --filter @create-something/private-pcn... --frozen-lockfile
+      - run: pnpm install --filter @create-something/private-pcn... --filter @create-something/identity-worker... --frozen-lockfile
       - run: pnpm --filter @create-something/auth-platform build
       - run: pnpm --filter @create-something/tufte package
       - run: pnpm --filter @create-something/canon package
       - run: pnpm --filter @create-something/private-pcn check
       - run: pnpm --filter @create-something/private-pcn test
       - run: pnpm --filter @create-something/private-pcn build
+      - run: pnpm --filter @create-something/identity-worker test
       - run: pnpm auth:retired-provider:check

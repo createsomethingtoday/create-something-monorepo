@@ -3789,9 +3789,15 @@ importers:
       '@create-something/canon':
         specifier: workspace:*
         version: link:../canon
+      '@stripe/connect-js':
+        specifier: ^3.4.6
+        version: 3.4.6
       hls.js:
         specifier: ^1.6.15
         version: 1.6.15
+      stripe:
+        specifier: 22.6.2
+        version: 22.6.2(@types/node@24.10.9)
       tus-js-client:
         specifier: ^4.3.1
         version: 4.3.1
@@ -10042,6 +10048,9 @@ packages:
   '@standard-schema/spec@1.1.0':
     resolution: {integrity: sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w==}
 
+  '@stripe/connect-js@3.4.6':
+    resolution: {integrity: sha512-fuC/U/ONDBMKwTBxKAnEBQH+m0x+Tze62/bV1ZDLT7oRnsJgddEnRi7FzdwIxz9pmFZhOJpSaikLIBw9g/1o1w==}
+
   '@svelte-put/shortcut@4.2.0':
     resolution: {integrity: sha512-hqNLo4yEc++SLgAkZUvuwMxIAsii9qjQtTuzfcYVf3xRxa+0HFcfaWFK7LdU3l+15s9SYVNbPB0qQj9CHFqSuw==}
     peerDependencies:
@@ -15458,7 +15467,7 @@ packages:
     resolution: {integrity: sha512-2xVS1NCZAfjtVdvXiyegxzJ447GyqCeEI5V7ApgQVOWnros1p5lGNovJNapwPpMombyFBfqDwt7AD3n2l0KOfQ==}
     engines: {node: '>=18.0.0'}
     peerDependencies:
-      postcss: '>=8.5.18'
+      postcss: '>=8.5.23'
 
   postcss-js@4.1.0:
     resolution: {integrity: sha512-oIAOTqgIo7q2EOwbhb8UalYePMvYoIeRY2YKntdpFQXNosSu3vLrniGgmH9OKs/qAkfoj5oB3le/7mINW1LCfw==}
@@ -16524,6 +16533,15 @@ packages:
   stripe@20.2.0:
     resolution: {integrity: sha512-m8niTfdm3nPP/yQswRWMwQxqEUcTtB3RTJQ9oo6NINDzgi7aPOadsH/fPXIIfL1Sc5+lqQFKSk7WiO6CXmvaeA==}
     engines: {node: '>=16'}
+    peerDependencies:
+      '@types/node': 24.10.9
+    peerDependenciesMeta:
+      '@types/node':
+        optional: true
+
+  stripe@22.6.2:
+    resolution: {integrity: sha512-PwRE2scocvXqDKPiskMa5vRJEAEkq46W69XyUYmAwrNSLr675lQnfqLwnsndAWizwgihOWw/irLmoFRo3ez7ew==}
+    engines: {node: '>=18'}
     peerDependencies:
       '@types/node': 24.10.9
     peerDependenciesMeta:
@@ -23776,6 +23794,8 @@ snapshots:
   '@stablelib/base64@1.0.1': {}
 
   '@standard-schema/spec@1.1.0': {}
+
+  '@stripe/connect-js@3.4.6': {}
 
   '@svelte-put/shortcut@4.2.0(svelte@5.56.9(@typescript-eslint/types@8.58.2))':
     dependencies:
@@ -31988,6 +32008,10 @@ snapshots:
   stripe@20.2.0(@types/node@24.10.9):
     dependencies:
       qs: 6.15.3
+    optionalDependencies:
+      '@types/node': 24.10.9
+
+  stripe@22.6.2(@types/node@24.10.9):
     optionalDependencies:
       '@types/node': 24.10.9
 

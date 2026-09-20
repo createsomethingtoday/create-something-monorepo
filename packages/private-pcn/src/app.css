@@ -86,15 +86,15 @@ textarea:focus-visible {
   margin-top: 9px;
   color: var(--muted);
 }
-nav {
+.masthead nav {
   display: flex;
   gap: 32px;
   font-size: 13px;
 }
-nav a {
+.masthead nav a {
   text-decoration: none;
 }
-nav a:hover {
+.masthead nav a:hover {
   color: var(--signal);
 }
 .eyebrow {
@@ -450,11 +450,11 @@ input[type='file'] {
   .wordmark {
     font-size: 12px;
   }
-  nav {
+  .masthead nav {
     gap: 15px;
     font-size: 11px;
   }
-  nav a:first-child {
+  .masthead nav a:first-child {
     display: none;
   }
   .lede {
@@ -998,10 +998,10 @@ input[type='file'] {
   .masthead {
     padding: 20px 24px;
   }
-  nav {
+  .masthead nav {
     gap: 15px;
   }
-  nav a:first-child {
+  .masthead nav a:first-child {
     display: none;
   }
   .wordmark {
@@ -1013,4 +1013,253 @@ input[type='file'] {
   .lesson-list li {
     gap: 10px;
   }
+}
+
+/* Builder storefront and onboarding: the same hierarchy for sellers and buyers. */
+.builder-workspace {
+  max-width: 1440px;
+  margin: auto;
+  padding: 48px 4.5vw 100px;
+}
+.builder-workspace h1 {
+  font-size: clamp(44px, 6vw, 84px);
+}
+.builder-workspace .asset-heading {
+  max-width: 1000px;
+  overflow-wrap: anywhere;
+}
+.workspace-trail {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: 13px;
+  margin: 0 0 40px;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+.builder-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  gap: 20px;
+  margin: 32px 0 64px;
+}
+.builder-panel,
+.asset-card {
+  border: 1px solid var(--line);
+  padding: 28px;
+  min-width: 0;
+}
+.asset-card {
+  display: flex;
+  flex-direction: column;
+  text-decoration: none;
+  transition: border-color 0.15s;
+}
+.asset-card:hover {
+  border-color: var(--signal);
+}
+.asset-card h2,
+.builder-panel h2 {
+  font-size: 28px;
+  letter-spacing: -0.7px;
+  overflow-wrap: anywhere;
+}
+.asset-card > p:not(.eyebrow) {
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+.card-foot {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  padding-top: 28px;
+  margin-top: auto;
+  font-size: 13px;
+  color: var(--signal);
+}
+.builder-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7vw;
+  border-top: 1px solid var(--line);
+  padding-top: 48px;
+  margin-top: 64px;
+}
+.builder-split h2 {
+  font-size: 32px;
+  letter-spacing: -1px;
+}
+.builder-form {
+  display: grid;
+  gap: 24px;
+  min-width: 0;
+}
+.builder-form textarea {
+  min-height: 112px;
+  resize: vertical;
+}
+.field-hint {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--muted);
+  line-height: 1.6;
+}
+.catalog-tools {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 20px;
+  margin-top: 40px;
+}
+.asset-detail {
+  grid-template-columns: minmax(0, 1.5fr) minmax(260px, 1fr);
+  align-items: start;
+}
+.manifest-section {
+  padding: 24px 0;
+  border-bottom: 1px solid var(--line);
+}
+.manifest-section h2 {
+  font-size: 22px;
+  letter-spacing: -0.5px;
+}
+.preserve {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.release-facts {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-top: 24px;
+  font: 12px/1.6 monospace;
+  color: var(--muted);
+}
+.checksum {
+  display: block;
+  overflow-wrap: anywhere;
+  font-size: 11px;
+  color: var(--muted);
+}
+.availability {
+  border-left: 2px solid var(--signal);
+  padding: 12px 16px;
+  font-size: 14px;
+}
+.install-steps {
+  padding-left: 22px;
+  line-height: 1.8;
+}
+.install-steps li {
+  padding: 6px 0;
+}
+.onboarding-choices .asset-card {
+  min-height: 320px;
+}
+@media (max-width: 760px) {
+  .builder-split,
+  .asset-detail,
+  .catalog-tools {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+  .builder-workspace {
+    padding-top: 32px;
+  }
+  .builder-workspace h1 {
+    letter-spacing: -2px;
+  }
+  .builder-panel,
+  .asset-card {
+    padding: 22px;
+  }
+}
+
+@media (max-width: 650px) {
+  .masthead {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 18px;
+  }
+  .masthead nav {
+    flex-wrap: wrap;
+  }
+}
+.practice-steps {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  margin: 40px 0;
+}
+.practice-steps li {
+  padding: 24px 20px 24px 0;
+  line-height: 1.6;
+}
+.practice-steps span {
+  display: block;
+  font: 11px/2 monospace;
+  color: var(--muted);
+}
+.review-application {
+  margin: 24px 0;
+}
+.review-application label {
+  display: block;
+  margin: 24px 0;
+}
+.review-application textarea {
+  display: block;
+  width: 100%;
+  min-height: 100px;
+}
+@media (max-width: 650px) {
+  .practice-steps {
+    grid-template-columns: 1fr;
+  }
+  .practice-steps li {
+    border-bottom: 1px solid var(--line);
+  }
+}
+.field-dossier {
+  border: 1px solid var(--line);
+  padding: 32px;
+  background: var(--panel, #141414);
+}
+.field-dossier h2 {
+  font-size: clamp(25px, 3vw, 38px);
+}
+.field-dossier dt {
+  font: 11px/2 monospace;
+  color: var(--muted);
+  margin-top: 24px;
+}
+.field-dossier dd {
+  margin: 0;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+  line-height: 1.6;
+}
+.impact-table {
+  overflow-x: auto;
+}
+.impact-table table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 13px;
+}
+.impact-table th,
+.impact-table td {
+  padding: 12px 8px;
+  border-bottom: 1px solid var(--line);
+}
+
+.network-subnav {
+  display: flex;
+  gap: 24px;
+  padding: 18px max(24px, 5vw);
+  border-bottom: 1px solid var(--line);
+  font-size: 13px;
 }

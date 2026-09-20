@@ -1,10 +1,13 @@
 <script lang="ts">
   import Icon from '$lib/components/Icon.svelte';
   import { onMount } from 'svelte';
-  import { api, type CatalogVideo } from '$lib/client';
+  import { api as requestApi, type CatalogVideo } from '$lib/client';
   import Player from '$lib/components/Player.svelte';
   import { filterCatalog } from '$lib/catalog';
   let { data } = $props();
+  const slug = $derived(data.network?.slug === 'create-something' ? undefined : data.network?.slug);
+  const api = (path: string, body?: unknown) => requestApi(path, body, slug);
+  const libraryPath = $derived(slug ? `/n/${slug}` : '/library');
   let videos = $state<CatalogVideo[]>([]);
   let selected = $state<CatalogVideo | null>(null);
   let error = $state('');
@@ -26,7 +29,7 @@
   }
   async function logout() {
     await api('logout', {});
-    window.location.assign('/library');
+    window.location.assign(libraryPath);
   }
   onMount(load);
 </script>
@@ -41,17 +44,21 @@
   <div class="workspace-title">
     <div>
       <p class="eyebrow">PRIVATE / AGENTIC ENGINEERING</p>
-      <h1>The knowledge <em>library.</em></h1>
+      <h1>
+        {#if slug}{data.network?.name}{:else}The knowledge <em>library.</em>{/if}
+      </h1>
       <p>
         Technical walkthroughs, agent builds, and lessons from implementation. Explore public
         sessions or sign in to access your member library.
       </p>
     </div>
     <div class="workspace-actions">
-      {#if data.identity?.role === 'admin'}<a class="button secondary" href="/admin"
+      {#if data.identity?.role === 'admin'}<a
+          class="button secondary"
+          href={slug ? `/n/${slug}/studio` : '/admin'}
           >Creator workspace <Icon name="arrow-right" /></a
         >{/if}{#if data.identity}<button class="text-button" onclick={logout}>Sign out</button
-        >{:else}<a class="button secondary" href="/login"
+        >{:else}<a class="button secondary" href={`/login?next=${encodeURIComponent(libraryPath)}`}
           >Member sign in <Icon name="arrow-right" /></a
         >{/if}
     </div>
@@ -64,7 +71,7 @@
         <h2>{selected.title}</h2>
         <button class="text-button" onclick={() => (selected = null)}>Close video ×</button>
       </div>
-      {#key selected.id}<Player id={selected.id} title={selected.title} />{/key}
+      {#key selected.id}<Player id={selected.id} title={selected.title} networkSlug={slug} />{/key}
       <p>{selected.description}</p>
     </section>{/if}
   {#if videos.length}<div class="library-tools">
