@@ -145,6 +145,21 @@
         Approval lets you publish your own offerings at your own prices. Delivering CREATE SOMETHING
         company support requires separate partner approval.
       </p>
+      <h3>A recording workflow to try</h3>
+      <p>
+        <a
+          href="https://www.descript.com/screen-recording"
+          target="_blank"
+          rel="noopener noreferrer">Descript</a
+        >
+        combines screen recording, transcript editing and captions. Record one technique, trim distractions,
+        and check the transcript before sharing your review link. Any recording tool is welcome; we review
+        the teaching, not the software.
+      </p>
+      <p class="field-hint">
+        A review link keeps its host’s sharing settings. For member-only lessons, export your video
+        and upload it to Private so network access rules govern delivery.
+      </p>
       <a href="/field-engineering">Build a field practice portfolio <Icon name="arrow-right" /></a>
     </aside>
   </div>
