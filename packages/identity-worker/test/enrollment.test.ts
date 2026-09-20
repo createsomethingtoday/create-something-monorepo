@@ -239,7 +239,7 @@ test('enrollment preserves buyer and seller return paths and rejects external na
       f.request({ email: `return${index}@example.com`, purpose: 'signup', next_path: path }),
       f.env
     );
-    const expected = index === 2 ? '/start' : path;
+    const expected = path === '//evil.example' ? '/start' : path;
     assert.ok(f.mails[index].text.includes(`next=${encodeURIComponent(expected)}#token=`));
     assert.ok(!f.mails[index].text.includes('evil.example'));
   }
