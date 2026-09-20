@@ -105,7 +105,7 @@ test('signup proves mailbox, hashes the password and grants no session or member
   assert.equal(f.db.prepare('SELECT COUNT(*) AS count FROM users').get()?.count, 0);
   assert.match(
     f.mails[0].text,
-    /https:\/\/private.createsomething.agency\/verify\?mode=signup&next=%2Fdashboard#token=/
+    /https:\/\/private.createsomething.agency\/verify\?mode=signup&next=%2Fstart#token=/
   );
   assert.doesNotMatch(f.mails[0].text, /evil.example/);
   const token = f.token();
@@ -220,4 +220,21 @@ test('email and client limits bound mail requests without exposing account exist
       .status,
     429
   );
+});
+
+test('enrollment preserves buyer and seller return paths and rejects external navigation', async (t) => {
+  const f = fixture(t);
+  for (const [index, path] of [
+    '/n/builder-lab/assets/asset-one',
+    '/collection',
+    '//evil.example'
+  ].entries()) {
+    await startEnrollment(
+      f.request({ email: `return${index}@example.com`, purpose: 'signup', next_path: path }),
+      f.env
+    );
+    const expected = index === 2 ? '/start' : path;
+    assert.ok(f.mails[index].text.includes(`next=${encodeURIComponent(expected)}#token=`));
+    assert.ok(!f.mails[index].text.includes('evil.example'));
+  }
 });

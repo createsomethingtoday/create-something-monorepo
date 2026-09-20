@@ -3,9 +3,7 @@
   "account_id": "9645bd52e640b8a4f40a3a55ff1dd75a",
   "main": ".svelte-kit/cloudflare/_worker.js",
   "compatibility_date": "2026-06-01",
-  "compatibility_flags": [
-    "nodejs_compat"
-  ],
+  "compatibility_flags": ["nodejs_compat"],
   "assets": {
     "directory": ".svelte-kit/cloudflare",
     "binding": "ASSETS",
@@ -75,6 +73,12 @@
             "limit": 30,
             "period": 60
           }
+        }
+      ],
+      "r2_buckets": [
+        {
+          "binding": "ASSET_PACKAGES",
+          "bucket_name": "cs-private-pcn-assets-preview"
         }
       ]
     }

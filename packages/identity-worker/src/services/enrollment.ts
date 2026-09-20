@@ -95,9 +95,11 @@ export async function startEnrollment(request: Request, env: Env): Promise<Respo
     .run();
   const next =
     typeof input.next_path === 'string' &&
-    /^\/(?:dashboard|library|n\/[a-z0-9-]{3,48})$/.test(input.next_path)
+    /^\/(?:start|dashboard|collection|library|n\/[a-z0-9-]{3,48}(?:\/(?:studio|settings|assets(?:\/[a-z0-9-]{1,64})?))?)$/.test(
+      input.next_path
+    )
       ? input.next_path
-      : '/dashboard';
+      : '/start';
   const link = `${origin}/verify?mode=${purpose}&next=${encodeURIComponent(next)}#token=${encodeURIComponent(token)}`;
   const action = purpose === 'recovery' ? 'reset your password' : 'create your account';
   try {

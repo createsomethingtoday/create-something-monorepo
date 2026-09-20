@@ -1,9 +1,10 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { enrollment } from '$lib/enrollment';
+  import { safeReturnPath } from '$lib/return-path';
   import { api } from '$lib/client';
   let recovery = $state(false);
-  let next = $state('/dashboard');
+  let next = $state('/start');
   let token = $state('');
   let password = $state('');
   let confirm = $state('');
@@ -15,8 +16,7 @@
     token = new URLSearchParams(window.location.hash.slice(1)).get('token') || '';
     recovery = new URLSearchParams(window.location.search).get('mode') === 'recovery';
     const requested = new URLSearchParams(window.location.search).get('next');
-    if (requested && /^\/(?:dashboard|library|n\/[a-z0-9-]{3,48})$/.test(requested))
-      next = requested;
+    next = safeReturnPath(requested);
     // Mailbox proof stays out of history, query logs, and referrers.
     window.history.replaceState(null, '', window.location.pathname);
     ready = true;

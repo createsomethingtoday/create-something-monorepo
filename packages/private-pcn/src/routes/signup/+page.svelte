@@ -1,10 +1,13 @@
 <script lang="ts">
+  import { safeReturnPath } from '$lib/return-path';
   import { page } from '$app/state';
   import { enrollment } from '$lib/enrollment';
   let email = $state('');
   let busy = $state(false);
   let error = $state('');
   let sent = $state(false);
+  const next = $derived(safeReturnPath(page.url.searchParams.get('next')));
+  const collecting = $derived(next === '/collection' || next.includes('/assets/'));
   const recovery = $derived(page.url.searchParams.get('mode') === 'recovery');
   async function submit(event: SubmitEvent) {
     event.preventDefault();
@@ -14,7 +17,7 @@
       await enrollment('start', {
         email,
         purpose: recovery ? 'recovery' : 'signup',
-        next_path: page.url.searchParams.get('next')
+        next_path: next
       });
       sent = true;
     } catch (e) {
@@ -31,9 +34,15 @@
   ><meta name="robots" content="noindex" /></svelte:head
 >
 <main id="main" class="form-page">
-  <p class="eyebrow">PRIVATE / {recovery ? 'ACCOUNT RECOVERY' : 'CREATOR ACCESS'}</p>
+  <p class="eyebrow">
+    PRIVATE / {recovery
+      ? 'ACCOUNT RECOVERY'
+      : collecting
+        ? 'YOUR BUILDER COLLECTION'
+        : 'BUILDER ACCESS'}
+  </p>
   <h1>
-    {recovery ? 'Find your' : 'Start your'}<br /><em>{recovery ? 'way back.' : 'network.'}</em>
+    {recovery ? 'Find your' : 'Make it'}<br /><em>{recovery ? 'way back.' : 'yours.'}</em>
   </h1>
   {#if sent}
     <div role="status">
@@ -54,7 +63,9 @@
     <p>
       {recovery
         ? 'Verify your email to choose a new password for your CREATE SOMETHING account.'
-        : 'Verify your email, create a password, and set up your first private network. Creating an account does not charge you.'}
+        : collecting
+          ? 'Verify your email and create a password. We’ll return you to your asset. Creating an account does not purchase anything or start a network subscription.'
+          : 'One account to learn from builders, collect useful assets and share your own practice. Verify your email to get started. There is no charge to create an account.'}
     </p>
     <form onsubmit={submit}>
       <label
@@ -77,5 +88,7 @@
       >
     </form>
   {/if}
-  <p class="muted">Already have an account? <a href="/login">Sign in →</a></p>
+  <p class="muted">
+    Already have an account? <a href={`/login?next=${encodeURIComponent(next)}`}>Sign in →</a>
+  </p>
 </main>

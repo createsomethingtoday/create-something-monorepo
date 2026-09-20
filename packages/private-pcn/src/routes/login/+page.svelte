@@ -1,5 +1,6 @@
 <script lang="ts">
   import { api } from '$lib/client';
+  import { safeReturnPath } from '$lib/return-path';
   import { page } from '$app/state';
   let email = $state('');
   let password = $state('');
@@ -11,12 +12,7 @@
     error = '';
     try {
       await api('login', { email, password });
-      const next = page.url.searchParams.get('next');
-      window.location.assign(
-        next && /^\/(?:dashboard|n\/[a-z0-9-]+(?:\/studio|\/settings)?|library)$/.test(next)
-          ? next
-          : '/dashboard'
-      );
+      window.location.assign(safeReturnPath(page.url.searchParams.get('next')));
     } catch (e) {
       error = (e as Error).message;
     } finally {
@@ -26,17 +22,17 @@
 </script>
 
 <svelte:head
-  ><title>Member sign in | CREATE SOMETHING Private</title><meta
+  ><title>Sign in | CREATE SOMETHING Private</title><meta
     name="robots"
     content="noindex"
   /></svelte:head
 >
 <main id="main" class="form-page">
-  <p class="eyebrow">PRIVATE / MEMBER ACCESS</p>
+  <p class="eyebrow">PRIVATE / BUILDER ACCESS</p>
   <h1>Welcome<br /><em>back.</em></h1>
   <p>
-    Sign in to your knowledge network with your CREATE SOMETHING account. Private sessions are
-    available to invited members.
+    Sign in to your CREATE SOMETHING account to open your collection or manage your network. Private
+    networks require an invitation.
   </p>
   <form onsubmit={login}>
     <label>Email<input type="email" autocomplete="username" bind:value={email} required /></label
@@ -53,9 +49,12 @@
   </form>
   <p class="muted">
     New here? <a
-      href={`/signup?next=${encodeURIComponent(page.url.searchParams.get('next') || '/dashboard')}`}
+      href={`/signup?next=${encodeURIComponent(safeReturnPath(page.url.searchParams.get('next')))}`}
       >Create an account.</a
-    ><br /><a href="/signup?mode=recovery">Forgot your password?</a>
+    ><br /><a
+      href={`/signup?mode=recovery&next=${encodeURIComponent(safeReturnPath(page.url.searchParams.get('next')))}`}
+      >Forgot your password?</a
+    >
   </p>
   <a href="/library">Browse public previews →</a>
 </main>

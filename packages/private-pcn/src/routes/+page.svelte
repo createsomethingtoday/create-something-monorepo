@@ -5,7 +5,7 @@
 </script>
 
 <svelte:head>
-  <title>Private networks for agentic engineering creators | CREATE SOMETHING</title>
+  <title>Private networks for agentic engineering builders | CREATE SOMETHING</title>
   <meta
     name="description"
     content="Your own network for teaching agentic engineering. Publish technical walkthroughs, curate a video library, and choose who gets access. Built around your brand and domain."
@@ -16,14 +16,15 @@
   <section class="creator-hero">
     <div class="creator-hero-top">
       <p class="eyebrow">PRIVATE NETWORKS / AGENTIC ENGINEERING</p>
-      <span class="hero-edition">BUILT FOR INDEPENDENT CREATORS</span>
+      <span class="hero-edition">BUILT FOR INDEPENDENT BUILDERS</span>
     </div>
     <div class="creator-hero-grid">
       <div>
-        <h1>Teach what<br />you’re{' '}<em>building.</em></h1>
+        <h1>Share the practice.<br /><em>Package the work.</em></h1>
         <p class="lede">
-          Give your agent builds, technical deep dives, and hard-won knowledge a home. A private
-          content network shaped around your audience and your way of teaching.
+          Build a private home for your agentic engineering techniques and the tools behind them.
+          Bring MCP servers, agent plugins and skills together with the context that makes them
+          useful.
         </p>
         <div class="hero-actions">
           <a class="button" href={data.selfServiceEnabled ? '/signup' : BOOKING_URL}
@@ -47,7 +48,7 @@
           <span class="field-node">01</span>
           <div>
             <small>THE CREATOR</small><strong>What you know.</strong>
-            <p>Builds / methods / lessons learned</p>
+            <p>Techniques / packages / lessons learned</p>
           </div>
         </div>
         <div class="field-route"><span>CURATE + PUBLISH</span></div>
@@ -57,7 +58,7 @@
           </div>
           <strong>From working code<br />to shared understanding.</strong>
           <div class="field-topics">
-            <span>MCP integrations</span><span>Agent workflows</span><span
+            <span>MCP servers</span><span>Agent plugins & skills</span><span
               >Evaluation walkthroughs</span
             >
           </div>

@@ -29,12 +29,13 @@
   /></svelte:head
 >
 <main id="main" class="workspace">
-  <p class="eyebrow">PRIVATE / CREATOR WORKSPACE</p>
-  <h1>Your knowledge.<br /><em>Your networks.</em></h1>
+  <p class="eyebrow">PRIVATE / BUILDER WORKSPACE</p>
+  <h1>Your practice.<br /><em>Made useful.</em></h1>
   <p class="lede">
-    Create a home for your technical sessions, agent workflows, and research. Each network has its
-    own library and member access.
+    Create a home for the techniques you use and the assets behind them. Package MCP servers, agent
+    plugins and skills alongside technical sessions.
   </p>
+  <p><a href="/collection">Looking for an asset you acquired? Open your collection →</a></p>
   <section aria-labelledby="networks-title">
     <h2 id="networks-title">Your networks <span class="muted">({data.networks.length})</span></h2>
     {#if data.networks.length}
@@ -49,9 +50,11 @@
                 'Add a description to help members understand what belongs here.'}
             </p>
             <div class="actions">
-              <a href={`/n/${network.slug}/studio`}>Open studio →</a><a
-                href={`/n/${network.slug}/settings`}>Settings</a
-              ><a href={`/n/${network.slug}`}>View library</a>
+              <a href={`/n/${network.slug}/assets`}>Manage assets →</a><a
+                href={`/n/${network.slug}/studio`}>Sessions</a
+              ><a href={`/n/${network.slug}/settings`}>Settings</a><a href={`/n/${network.slug}`}
+                >View library</a
+              >
             </div>
           </article>
         {/each}

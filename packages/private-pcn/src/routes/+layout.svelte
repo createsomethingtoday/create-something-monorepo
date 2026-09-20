@@ -22,9 +22,9 @@
   >
   <nav aria-label="Primary">
     <a href="/#network-preview">Explore networks</a><a href="/library">Library</a>
-    {#if data.identity}<a href="/dashboard">Your networks</a>{:else}<a href="/login"
-        >Sign in <span aria-hidden="true">↗</span></a
-      >{/if}
+    {#if data.identity}<a href="/collection">Your collection</a><a href="/dashboard"
+        >Builder workspace</a
+      >{:else}<a href="/login">Sign in <span aria-hidden="true">↗</span></a>{/if}
   </nav>
 </header>
 {@render children()}
