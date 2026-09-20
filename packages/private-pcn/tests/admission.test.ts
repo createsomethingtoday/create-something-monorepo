@@ -25,7 +25,12 @@ function statement(query: string, values: any[] = []): any {
     bind: (...args: any[]) => statement(query, args),
     first: async () => sql.prepare(query).get(...values),
     all: async () => ({ results: sql.prepare(query).all(...values) }),
-    run: async () => ({ meta: { changes: sql.prepare(query).run(...values).changes } })
+    run: async () => {
+      const before = Number(sql.prepare('SELECT total_changes() AS count').get()!.count);
+      sql.prepare(query).run(...values);
+      const after = Number(sql.prepare('SELECT total_changes() AS count').get()!.count);
+      return { meta: { changes: after - before } };
+    }
   };
 }
 function event(body?: unknown, subject = 'creator', email = 'creator@example.com'): any {

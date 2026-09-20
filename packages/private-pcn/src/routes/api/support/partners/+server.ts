@@ -34,7 +34,8 @@ export const POST: RequestHandler = async ({ locals, platform, request }) => {
       b.approved ? 1 : 0
     )
     .run();
-  if (result.meta.changes !== 1)
+  // D1 includes audit-trigger writes in changes; zero alone means no matched row.
+  if (result.meta.changes === 0)
     return json(
       { error: 'Approve the creator before granting support-partner access.' },
       { status: 409 }

@@ -42,7 +42,8 @@ export const POST: RequestHandler = async ({ locals, platform, request }) => {
       body.revision
     )
     .run();
-  if (result.meta.changes !== 1)
+  // D1 includes audit-trigger writes in changes; zero alone means no matched row.
+  if (result.meta.changes === 0)
     return json({ error: 'This application changed. Refresh before reviewing.' }, { status: 409 });
   return json({ success: true });
 };

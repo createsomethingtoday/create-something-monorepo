@@ -178,3 +178,20 @@ export async function sellerSession(
     throw new BillingError('Seller onboarding session could not be verified.');
   return { clientSecret: session.client_secret, publishableKey: env.STRIPE_PUBLISHABLE_KEY };
 }
+
+export async function sellerCountries(stripe: Stripe): Promise<string[]> {
+  const countries: string[] = [];
+  let cursor: string | undefined;
+  for (let page = 0; page < 5; page++) {
+    const specs = await stripe.countrySpecs.list({
+      limit: 100,
+      ...(cursor ? { starting_after: cursor } : {})
+    });
+    countries.push(...specs.data.map((c) => c.id));
+    if (!specs.has_more) return countries;
+    const next = specs.data.at(-1)?.id;
+    if (!next || next === cursor) break;
+    cursor = next;
+  }
+  throw new BillingError('Country selection is temporarily unavailable.');
+}
