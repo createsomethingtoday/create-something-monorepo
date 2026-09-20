@@ -28,7 +28,10 @@
 <main id="main" class="form-page">
   <p class="eyebrow">PRIVATE / MEMBER ACCESS</p>
   <h1>Welcome<br /><em>back.</em></h1>
-  <p>Use your CREATE SOMETHING account. Library access is available to invited members.</p>
+  <p>
+    Sign in to your knowledge network with your CREATE SOMETHING account. Private sessions are
+    available to invited members.
+  </p>
   <form onsubmit={login}>
     <label>Email<input type="email" autocomplete="username" bind:value={email} required /></label
     ><label

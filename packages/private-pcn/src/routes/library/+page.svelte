@@ -2,11 +2,16 @@
   import { onMount } from 'svelte';
   import { api, type CatalogVideo } from '$lib/client';
   import Player from '$lib/components/Player.svelte';
+  import { filterCatalog } from '$lib/catalog';
   let { data } = $props();
   let videos = $state<CatalogVideo[]>([]);
   let selected = $state<CatalogVideo | null>(null);
   let error = $state('');
   let loading = $state(true);
+  let query = $state('');
+  let series = $state('');
+  const seriesOptions = $derived([...new Set(videos.map((video) => video.series))].sort());
+  const visibleVideos = $derived(filterCatalog(videos, query, series));
   async function load() {
     error = '';
     loading = true;
@@ -34,15 +39,16 @@
 <main id="main" class="workspace">
   <div class="workspace-title">
     <div>
-      <p class="eyebrow">CREATE SOMETHING / DEMONSTRATION NETWORK</p>
-      <h1>Field <em>notes.</em></h1>
+      <p class="eyebrow">PRIVATE / AGENTIC ENGINEERING</p>
+      <h1>The knowledge <em>library.</em></h1>
       <p>
-        A look inside a private content network. This demonstration uses CREATE SOMETHING material.
+        Technical walkthroughs, agent builds, and lessons from implementation. Explore public
+        sessions or sign in to access your member library.
       </p>
     </div>
     <div class="workspace-actions">
       {#if data.identity?.role === 'admin'}<a class="button secondary" href="/admin"
-          >Manage network ↗</a
+          >Creator workspace ↗</a
         >{/if}{#if data.identity}<button class="text-button" onclick={logout}>Sign out</button
         >{:else}<a class="button secondary" href="/login">Member sign in ↗</a>{/if}
     </div>
@@ -58,6 +64,25 @@
       {#key selected.id}<Player id={selected.id} title={selected.title} />{/key}
       <p>{selected.description}</p>
     </section>{/if}
+  {#if videos.length}<div class="library-tools">
+      <label
+        >Search the library<input
+          type="search"
+          bind:value={query}
+          placeholder="Search topics, titles, or methods"
+        /></label
+      ><label
+        >Series<select bind:value={series}
+          ><option value="">All series</option>{#each seriesOptions as option}<option value={option}
+              >{option}</option
+            >{/each}</select
+        ></label
+      >
+      <p aria-live="polite">
+        {visibleVideos.length}
+        {visibleVideos.length === 1 ? 'session' : 'sessions'}
+      </p>
+    </div>{/if}
   {#if loading}<p role="status">Loading the library…</p>{:else if error}<div
       class="notice"
       role="alert"
@@ -66,10 +91,25 @@
       <button class="button secondary" onclick={load}>Try again</button>
     </div>{:else if !videos.length}<div class="empty-state">
       <p class="eyebrow">THE LIBRARY</p>
-      <h2>No published films to show yet.</h2>
-      <p>Members see the collections available to them. Sign in if you have an invitation.</p>
+      <h2>No published sessions yet.</h2>
+      <p>
+        Published sessions will appear here. Invited members can sign in to see their private
+        series.
+      </p>
+    </div>{:else if !visibleVideos.length}<div class="empty-state">
+      <h2>No sessions match this search.</h2>
+      <p>Try another topic or view the full library.</p>
+      <button
+        class="button secondary"
+        onclick={() => {
+          query = '';
+          series = '';
+        }}>Clear filters</button
+      >
     </div>{:else}<div class="catalog">
-      {#each videos as video, index}<button class="video-card" onclick={() => (selected = video)}
+      {#each visibleVideos as video, index}<button
+          class="video-card"
+          onclick={() => (selected = video)}
           ><div class="video-cover">
             <span>{video.series}</span><strong>{String(index + 1).padStart(2, '0')}</strong><span
               class="video-play"
@@ -78,7 +118,7 @@
           </div>
           <div class="video-caption">
             <span class="eyebrow"
-              >{video.access === 'public' ? 'PUBLIC PREVIEW' : 'MEMBER FILM'}{video.duration
+              >{video.access === 'public' ? 'PUBLIC PREVIEW' : 'MEMBER SESSION'}{video.duration
                 ? ` / ${Math.ceil(video.duration / 60)} MIN`
                 : ''}</span
             >

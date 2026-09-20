@@ -10,7 +10,7 @@
   let busy = $state(false);
   let title = $state('');
   let description = $state('');
-  let series = $state('Field notes');
+  let series = $state('Agent engineering');
   let email = $state('');
   let files = $state<FileList>();
   let progress = $state(0);
@@ -83,8 +83,8 @@
   /></svelte:head
 >
 <main id="main" class="workspace">
-  <p class="eyebrow">PRIVATE / NETWORK ADMINISTRATION</p>
-  <h1>Make it <em>available.</em></h1>
+  <p class="eyebrow">PRIVATE / CREATOR WORKSPACE</p>
+  <h1>Publish your <em>knowledge.</em></h1>
   <p>Uploads start private and unpublished. Review processing before you choose an audience.</p>
   <a href="/library">← Back to library</a>
   {#if error}<p class="notice error" role="alert">{error}</p>{/if}{#if message}<p
@@ -95,10 +95,10 @@
     </p>{/if}
   <div class="admin-grid">
     <section>
-      <h2>Add a film</h2>
+      <h2>Add a walkthrough</h2>
       <form onsubmit={upload}>
-        <label>Title<input bind:value={title} required maxlength="160" /></label><label
-          >Series<input bind:value={series} required maxlength="100" /></label
+        <label>Session title<input bind:value={title} required maxlength="160" /></label><label
+          >Series or learning track<input bind:value={series} required maxlength="100" /></label
         ><label>Description<textarea bind:value={description} maxlength="2000"></textarea></label
         ><label
           >Video file · up to 1 GB / 30 minutes<input
@@ -190,7 +190,7 @@
       </article>{/each}
     <p class="muted">
       Playback grants measure access requests, including renewals. They are not unique viewers or
-      completed watches. Archiving removes a film from the library; it does not delete stored media
+      completed watches. Archiving removes a video from the library; it does not delete stored media
       or reduce storage charges.
     </p>
   </section>
