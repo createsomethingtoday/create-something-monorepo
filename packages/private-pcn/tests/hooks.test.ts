@@ -132,3 +132,17 @@ describe('network ownership in the real request hook', () => {
     expect(c.event.locals.identity.role).toBe('blocked');
   });
 });
+
+it('hides active network content immediately when its creator approval is missing', async () => {
+  const c = context('https://private.createsomething.agency/n/alpha');
+  c.event.platform.env.DB.prepare = (query: string) => ({
+    bind: () => ({
+      first: async () =>
+        query.includes('FROM networks')
+          ? { id: 'alpha', slug: 'alpha', owner_id: 'owner', status: 'active' }
+          : null
+    })
+  });
+  await handle(c);
+  expect(c.event.locals.network.status).toBe('suspended');
+});

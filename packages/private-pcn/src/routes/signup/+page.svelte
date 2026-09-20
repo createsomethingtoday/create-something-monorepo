@@ -66,7 +66,7 @@
         ? 'Verify your email to choose a new password for your CREATE SOMETHING account.'
         : collecting
           ? 'Verify your email and create a password. We’ll return you to your asset. Creating an account does not purchase anything or start a network subscription.'
-          : 'One account to learn from builders, collect useful assets and share your own practice. Verify your email to get started. There is no charge to create an account.'}
+          : 'One account to learn from builders, collect useful assets and share your own practice. Verify your email to get started. There is no charge to create an account. Publishing your own offerings requires creator review.'}
     </p>
     <form onsubmit={submit}>
       <label

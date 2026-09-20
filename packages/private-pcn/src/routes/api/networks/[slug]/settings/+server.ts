@@ -24,6 +24,8 @@ export const POST: RequestHandler = async ({ request, locals, platform }) => {
     !['members', 'preview'].includes(body.access_model)
   )
     return json({ error: 'Check the name, description, and access model.' }, { status: 400 });
+  if (locals.network.kind === 'support' && body.access_model !== 'members')
+    return json({ error: 'Company support workspaces remain private.' }, { status: 403 });
   const db = platform.env.DB;
   await db.batch([
     db

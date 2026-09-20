@@ -35,6 +35,18 @@ export const GET: RequestHandler = async ({ locals, platform, params, url }) => 
       { error: 'Package unavailable. Contact the builder with this release version.' },
       { status: 503 }
     );
+  // Aggregate the server-authorized delivery, without buyer identity or installation claims.
+  await db
+    .prepare(
+      `INSERT INTO network_impact_daily(day,network_id,event,count) VALUES(date('now'),?,'package_delivery_granted',1)
+    ON CONFLICT(day,network_id,event) DO UPDATE SET count=count+1`
+    )
+    .bind(locals.network.id)
+    .run();
+  await db
+    .prepare("DELETE FROM network_impact_daily WHERE network_id=? AND day<date('now','-90 days')")
+    .bind(locals.network.id)
+    .run();
   // Workers and DOM declare different stream types for the same runtime interface.
   return new Response(object.body as unknown as ReadableStream<Uint8Array>, {
     headers: {

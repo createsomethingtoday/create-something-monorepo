@@ -1,6 +1,7 @@
 import type { D1Database } from '@cloudflare/workers-types';
 export type Network = {
   id: string;
+  kind?: 'creator' | 'support';
   slug: string;
   owner_id: string | null;
   name: string;
@@ -41,6 +42,15 @@ export async function networkRole(
   // Platform administration is deliberately confined to the original network.
   if (network.owner_id === identity.subject || (network.id === 'default' && platformAdmin))
     return 'admin';
+  if (network.kind === 'support') {
+    const partner = await db
+      .prepare(
+        "SELECT s.partner_id FROM support_workspaces s JOIN support_partners p ON p.subject=s.partner_id JOIN creator_applications a ON a.subject=p.subject WHERE s.network_id=? AND s.partner_id=? AND s.status='agreed' AND p.approved=1 AND a.status='approved'"
+      )
+      .bind(network.id, identity.subject)
+      .first();
+    if (partner) return 'member';
+  }
   const member = await db
     .prepare('SELECT active FROM members WHERE network_id = ? AND email = ?')
     .bind(network.id, identity.email)

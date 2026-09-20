@@ -43,6 +43,33 @@ export function stripeClient(env: Env) {
     timeout: 10000
   });
 }
+
+type BillingTerms = { amount: number; priceId: string; partnerId?: string; destination?: string };
+async function billingTerms(env: Env, network: Network): Promise<BillingTerms> {
+  const support = await env.DB.prepare(
+    'SELECT partner_id,status FROM support_workspaces WHERE network_id=?'
+  )
+    .bind(network.id)
+    .first<{ partner_id: string; status: string }>();
+  if (!support) return { amount: PLAN.amount, priceId: String(env.STRIPE_PRICE_ID || '') };
+  const partner = await env.DB.prepare(
+    "SELECT p.account_id FROM support_partners p JOIN creator_applications a ON a.subject=p.subject WHERE p.subject=? AND p.approved=1 AND a.status='approved'"
+  )
+    .bind(support.partner_id)
+    .first<{ account_id: string | null }>();
+  if (support.status !== 'agreed' || !partner?.account_id)
+    throw new BillingError(
+      'An agreed scope and approved support partner with payment setup are required.',
+      403
+    );
+  return {
+    amount: 90000,
+    priceId: String(env.STRIPE_SUPPORT_PRICE_ID || ''),
+    partnerId: support.partner_id,
+    destination: partner.account_id
+  };
+}
+
 const seconds = () => Math.floor(Date.now() / 1000);
 const objectId = (value: string | { id: string } | null) =>
   typeof value === 'string' ? value : value?.id || null;
@@ -90,7 +117,8 @@ function validateSubscription(
   subscription: Stripe.Subscription,
   row: BillingRow,
   network: Network,
-  env: Env
+  env: Env,
+  terms: BillingTerms
 ) {
   const item = subscription.items.data[0];
   if (
@@ -98,12 +126,18 @@ function validateSubscription(
     subscription.metadata.network_id !== network.id ||
     subscription.metadata.owner_id !== network.owner_id ||
     subscription.items.data.length !== 1 ||
-    item.price.id !== env.STRIPE_PRICE_ID ||
+    item.price.id !== terms.priceId ||
     item.quantity !== 1 ||
     item.price.currency !== PLAN.currency ||
-    item.price.unit_amount !== PLAN.amount ||
+    item.price.unit_amount !== terms.amount ||
     item.price.recurring?.interval !== PLAN.interval ||
     item.price.recurring.interval_count !== 1 ||
+    (terms.destination
+      ? objectId(subscription.transfer_data?.destination || null) !== terms.destination ||
+        subscription.transfer_data?.amount_percent !== 95 ||
+        subscription.application_fee_percent != null ||
+        subscription.metadata.support_partner !== terms.partnerId
+      : !!subscription.transfer_data || !!subscription.application_fee_percent) ||
     subscription.livemode !== String(env.STRIPE_SECRET_KEY).includes('_live_')
   )
     throw new BillingError('Subscription ownership or plan could not be verified.');
@@ -133,9 +167,38 @@ async function synchronize(
     throw new BillingError('More than one subscription needs reconciliation. Contact support.');
   const subscription = current[0] || relevant.sort((a, b) => b.created - a.created)[0];
   if (!subscription) return row;
-  const item = validateSubscription(subscription, row, network, env);
+  const terms = await billingTerms(env, network);
+  const item = validateSubscription(subscription, row, network, env, terms);
   const invoice = subscription.latest_invoice;
-  const paid = typeof invoice === 'object' && invoice !== null && invoice.status === 'paid';
+  let paid = typeof invoice === 'object' && invoice !== null && invoice.status === 'paid';
+  if (paid && invoice && typeof invoice === 'object') {
+    const payments = await stripe.invoicePayments.list({
+      invoice: invoice.id,
+      status: 'paid',
+      limit: 100
+    });
+    paid = !payments.has_more && payments.data.length > 0;
+    for (const payment of payments.data) {
+      const id = objectId(payment.payment.payment_intent || null);
+      if (payment.payment.type !== 'payment_intent' || !id) {
+        paid = false;
+        continue;
+      }
+      const intent = await stripe.paymentIntents.retrieve(id, { expand: ['latest_charge'] });
+      const charge = intent.latest_charge;
+      if (
+        objectId(intent.customer) !== row.customer_id ||
+        intent.status !== 'succeeded' ||
+        !charge ||
+        typeof charge === 'string' ||
+        !charge.paid ||
+        charge.disputed ||
+        charge.refunded ||
+        charge.amount_refunded > 0
+      )
+        paid = false;
+    }
+  }
   const active =
     paid &&
     subscription.status === 'active' &&
@@ -174,6 +237,30 @@ export async function refreshBilling(env: Env, network: Network, stripe = stripe
 }
 export async function paidAccess(env: Env, network: Network) {
   if (network.id === 'default') return network.status === 'active';
+  const support = await env.DB.prepare(
+    'SELECT network_id FROM support_workspaces WHERE network_id=?'
+  )
+    .bind(network.id)
+    .first();
+  if (support) {
+    try {
+      await billingTerms(env, network);
+    } catch {
+      return false;
+    }
+  }
+  const approved = await env.DB.prepare(
+    "SELECT subject FROM creator_applications WHERE subject=? AND status='approved'"
+  )
+    .bind(network.owner_id)
+    .first();
+  if (!support && !approved) return false;
+  const trial = await env.DB.prepare(
+    'SELECT ends_at FROM creator_trials WHERE subject=? AND network_id=?'
+  )
+    .bind(network.owner_id, network.id)
+    .first<{ ends_at: number }>();
+  if (!support && trial && trial.ends_at > seconds()) return true;
   let row = await readBilling(env.DB, network.id);
   if (!row?.subscription_id) return false;
   if (row.checked_at < seconds() - 300) row = await refreshBilling(env, network);
@@ -186,7 +273,11 @@ export async function checkout(
   returnOrigin: string,
   stripe = stripeClient(env)
 ) {
-  if (env.PCN_SELF_SERVICE_ENABLED !== 'true' || !env.CLOUDFLARE_STREAM_API_TOKEN)
+  const terms = await billingTerms(env, network);
+  if (
+    (terms.destination ? env.PCN_SUPPORT_ENABLED : env.PCN_SELF_SERVICE_ENABLED) !== 'true' ||
+    (!terms.destination && !env.CLOUDFLARE_STREAM_API_TOKEN)
+  )
     throw new BillingError('Paid activation is not available yet. Your draft is saved.');
   if (
     ![
@@ -195,11 +286,42 @@ export async function checkout(
     ].includes(returnOrigin)
   )
     throw new BillingError('Checkout is unavailable on this address.');
+  const approval = await env.DB.prepare(
+    "SELECT subject FROM creator_applications WHERE subject=? AND status='approved'"
+  )
+    .bind(network.owner_id)
+    .first();
+  if (!terms.destination && !approval)
+    throw new BillingError('Creator approval is required before subscribing.', 403);
+  const trial = await env.DB.prepare(
+    'SELECT ends_at FROM creator_trials WHERE subject=? AND network_id=?'
+  )
+    .bind(network.owner_id, network.id)
+    .first<{ ends_at: number }>();
+  if (!terms.destination && trial && trial.ends_at > seconds())
+    throw new BillingError('Your free month is still active. Subscribe after it ends.', 409);
+  if (terms.destination) {
+    const account = await stripe.v2.core.accounts.retrieve(terms.destination, {
+      include: ['configuration.recipient', 'defaults']
+    });
+    if (
+      account.closed ||
+      account.livemode !== String(env.STRIPE_SECRET_KEY).includes('_live_') ||
+      account.metadata?.application !== 'private_pcn_support' ||
+      account.metadata?.pcn_support_partner !== terms.partnerId ||
+      account.dashboard !== 'express' ||
+      account.defaults?.responsibilities?.fees_collector !== 'application' ||
+      account.defaults?.responsibilities?.losses_collector !== 'application' ||
+      account.configuration?.recipient?.capabilities?.stripe_balance?.stripe_transfers?.status !==
+        'active'
+    )
+      throw new BillingError('Support partner payout configuration could not be verified.');
+  }
   return locked(env.DB, network.id, async (row, lease) => {
-    const price = await stripe.prices.retrieve(String(env.STRIPE_PRICE_ID));
+    const price = await stripe.prices.retrieve(terms.priceId);
     if (
       !price.active ||
-      price.unit_amount !== PLAN.amount ||
+      price.unit_amount !== terms.amount ||
       price.currency !== PLAN.currency ||
       price.recurring?.interval !== PLAN.interval ||
       price.recurring.interval_count !== 1
@@ -246,13 +368,23 @@ export async function checkout(
     const session = await stripe.checkout.sessions.create(
       {
         mode: 'subscription',
+        integration_identifier: terms.destination ? 'pcn_support_qmwrzjht' : 'pcn_hosting_qmwrzjht',
         customer: row.customer_id!,
         line_items: [{ price: price.id, quantity: 1 }],
         success_url: `${destination}?checkout=returned`,
         cancel_url: destination,
         client_reference_id: network.id,
         metadata: { network_id: network.id, checkout_key: row.checkout_key },
-        subscription_data: { metadata: { network_id: network.id, owner_id: network.owner_id! } },
+        subscription_data: {
+          metadata: {
+            network_id: network.id,
+            owner_id: network.owner_id!,
+            ...(terms.partnerId ? { support_partner: terms.partnerId } : {})
+          },
+          ...(terms.destination
+            ? { transfer_data: { destination: terms.destination, amount_percent: 95 } }
+            : {})
+        },
         billing_address_collection: 'required',
         ...(env.STRIPE_AUTOMATIC_TAX_ENABLED === 'true' ? { automatic_tax: { enabled: true } } : {})
       },
@@ -303,12 +435,21 @@ export async function processBillingEvent(
   event: Stripe.Event,
   stripe = stripeClient(env)
 ) {
-  if (!/^(customer\.subscription\.|checkout\.session\.|invoice\.)/.test(event.type)) return;
+  if (
+    !/^(customer\.subscription\.|checkout\.session\.|invoice\.|charge\.refunded$|charge\.dispute\.|refund\.)/.test(
+      event.type
+    )
+  )
+    return;
   const object = event.data.object as unknown as {
     customer?: string | { id: string };
     metadata?: Record<string, string>;
+    charge?: string | { id: string };
   };
-  const customer = objectId(object.customer || null);
+  let customer = objectId(object.customer || null);
+  const chargeId = objectId(object.charge || null);
+  if (!customer && chargeId)
+    customer = objectId((await stripe.charges.retrieve(chargeId)).customer);
   if (!customer) return;
   const row = await env.DB.prepare('SELECT * FROM network_billing WHERE customer_id=?')
     .bind(customer)

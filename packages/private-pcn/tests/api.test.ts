@@ -80,6 +80,12 @@ beforeEach(() => {
   sqlite.exec(
     readFileSync(new URL('../migrations/0006_builder_assets.sql', import.meta.url), 'utf8')
   );
+  sqlite.exec(
+    readFileSync(new URL('../migrations/0008_creator_admission.sql', import.meta.url), 'utf8')
+  );
+  sqlite.exec(
+    readFileSync(new URL('../migrations/0010_company_support.sql', import.meta.url), 'utf8')
+  );
   remote = vi.fn();
   vi.stubGlobal('fetch', remote);
 });
@@ -203,6 +209,24 @@ describe('API against migrated SQLite schema (supporting proof)', () => {
 });
 
 describe('network ownership isolation', () => {
+  it('requires creator approval before reserving a network, regardless of client claims', async () => {
+    const response = await createNetwork(
+      event(
+        'networks',
+        {
+          name: 'Unreviewed',
+          slug: 'unreviewed',
+          approved: true
+        },
+        'blocked'
+      )
+    );
+    expect(response.status).toBe(403);
+    expect(
+      sqlite.prepare("SELECT COUNT(*) AS count FROM networks WHERE slug='unreviewed'").get()?.count
+    ).toBe(0);
+  });
+
   const network = (id: string, owner: string) => {
     sqlite
       .prepare(
@@ -250,7 +274,14 @@ describe('network ownership isolation', () => {
       { network_id: 'bravo', active: 0 }
     ]);
   });
+  const approve = (subject = 'fixture-user') =>
+    sqlite
+      .prepare(
+        "INSERT INTO creator_applications(subject,email,display_name,credentials,teaching_video_url,status) VALUES(?, 'creator@example.com','Builder','Experience','https://example.com/video','approved')"
+      )
+      .run(subject);
   it('assigns ownership from verified identity and never accepts client activation', async () => {
+    approve();
     const e = event(
       'networks',
       { name: 'Builders', slug: 'builders', owner_id: 'attacker', status: 'active' },
@@ -266,6 +297,8 @@ describe('network ownership isolation', () => {
     expect((await (await listNetworks(other)).json()).networks).toEqual([]);
   });
   it('requires authentication to reserve a network and handles repeated creation without duplication', async () => {
+    approve();
+    approve('other');
     const body = { name: 'Builders', slug: 'builders' };
     expect((await createNetwork(event('networks', body))).status).toBe(401);
     expect((await createNetwork(event('networks', body, 'blocked'))).status).toBe(201);
@@ -504,4 +537,18 @@ describe('self-service recovery and data ownership', () => {
     e.locals.identity.subject = 'other';
     expect((await exportNetwork(e)).status).toBe(403);
   });
+});
+it('does not turn a private company support network into a public creator storefront', async () => {
+  sqlite
+    .prepare(
+      "INSERT INTO networks(id,slug,owner_id,name) VALUES('company','company','fixture-user','Company')"
+    )
+    .run();
+  const e = event(
+    'settings',
+    { name: 'Company', description: 'Support project', access_model: 'preview' },
+    'admin'
+  );
+  e.locals.network = { id: 'company', owner_id: 'fixture-user', kind: 'support' };
+  expect((await saveSettings(e)).status).toBe(403);
 });

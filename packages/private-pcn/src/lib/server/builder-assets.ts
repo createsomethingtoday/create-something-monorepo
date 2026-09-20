@@ -5,7 +5,10 @@ import type { Network } from './networks';
 
 export function ownsNetwork(locals: App.Locals) {
   return (
-    !!locals.identity && !!locals.network && locals.network.owner_id === locals.identity.subject
+    !!locals.identity &&
+    !!locals.network &&
+    locals.network.kind !== 'support' &&
+    locals.network.owner_id === locals.identity.subject
   );
 }
 export function canBrowseAsset(asset: BuilderAsset, locals: App.Locals) {

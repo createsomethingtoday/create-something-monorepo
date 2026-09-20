@@ -25,7 +25,9 @@
     "CLOUDFLARE_ACCOUNT_ID": "9645bd52e640b8a4f40a3a55ff1dd75a",
     "PCN_SELF_SERVICE_ENABLED": "false",
     "PCN_CONNECT_ENABLED": "false",
-    "PCN_ASSET_COMMERCE_ENABLED": "false"
+    "PCN_ASSET_COMMERCE_ENABLED": "false",
+    "PCN_SUPPORT_ENABLED": "false",
+    "PCN_SUPPORT_CONNECT_ENABLED": "false"
   },
   "d1_databases": [
     {
@@ -59,7 +61,9 @@
         "CLOUDFLARE_ACCOUNT_ID": "9645bd52e640b8a4f40a3a55ff1dd75a",
         "PCN_SELF_SERVICE_ENABLED": "false",
         "PCN_CONNECT_ENABLED": "false",
-        "PCN_ASSET_COMMERCE_ENABLED": "false"
+        "PCN_ASSET_COMMERCE_ENABLED": "false",
+        "PCN_SUPPORT_ENABLED": "false",
+        "PCN_SUPPORT_CONNECT_ENABLED": "false"
       },
       "d1_databases": [
         {

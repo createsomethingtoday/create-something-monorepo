@@ -17,6 +17,20 @@
   let busy = $state(false);
   let message = $state('');
   let failed = $state(false);
+  async function trial() {
+    busy = true;
+    failed = false;
+    try {
+      await api('trial', {}, data.network!.slug);
+      await invalidateAll();
+      message = 'Your free month has started.';
+    } catch (e) {
+      failed = true;
+      message = (e as Error).message;
+    } finally {
+      busy = false;
+    }
+  }
   async function loadUsage() {
     busy = true;
     message = '';
@@ -77,6 +91,19 @@
   <p class="eyebrow">PRIVATE / NETWORK SETTINGS</p>
   <h1>Shape your<br /><em>network.</em></h1>
   <p class="muted">/n/{data.network?.slug} · {data.network?.status}</p>
+  {#if data.trial}<p class="availability">
+      Your creator free month ends {new Date(data.trial.ends_at * 1000).toLocaleDateString()}. No
+      automatic charge. Start a paid subscription after it ends to continue.
+    </p>{:else if data.invited}<aside class="notice">
+      <h2>Your invitation includes a free month.</h2>
+      <p>
+        Start when your network is ready. It applies once to this network’s hosting, with no
+        automatic charge.
+      </p>
+      <button class="button" disabled={busy || !data.billingEnabled} onclick={trial}
+        >Start your free month</button
+      >{#if !data.billingEnabled}<p>Activation opens after service verification.</p>{/if}
+    </aside>{/if}
   {#if data.network?.status === 'draft'}<aside class="notice">
       <h2>Your draft is ready.</h2>
       <p>

@@ -1,10 +1,20 @@
 <script lang="ts">
   import Icon from '$lib/components/Icon.svelte';
   import '../app.css';
+  import { afterNavigate } from '$app/navigation';
+  import { trackImpact } from '$lib/impact';
   import { onMount } from 'svelte';
   import { api } from '$lib/client';
   let { children, data } = $props();
+  afterNavigate(({ to }) => {
+    if (to) trackImpact('page_view', to.url.pathname);
+  });
   onMount(() => {
+    const click = (event: MouseEvent) => {
+      if (event.target instanceof Element && event.target.closest('[data-impact="primary_action"]'))
+        trackImpact('primary_action', window.location.pathname);
+    };
+    document.addEventListener('click', click);
     // Keep active viewing sessions alive; every grant still checks current membership.
     const timer = setInterval(
       () => {
@@ -12,7 +22,10 @@
       },
       10 * 60 * 1000
     );
-    return () => clearInterval(timer);
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener('click', click);
+    };
   });
 </script>
 
@@ -22,12 +35,13 @@
     >CREATE SOMETHING<span>PRIVATE / .AGENCY</span></a
   >
   <nav aria-label="Primary">
-    <a href="/#network-preview">Explore networks</a><a href="/library">Library</a>
+    <a href="/field-engineering">Field practice</a><a href="/library">Library</a>
     {#if data.identity}<a href="/collection">Your collection</a><a href="/dashboard"
         >Builder workspace</a
       >{:else}<a href="/login"
         >Sign in <span aria-hidden="true"><Icon name="arrow-right" /></span></a
       >{/if}
+    {#if data.reviewer}<a href="/review">Review queue</a><a href="/impact">Impact</a>{/if}
   </nav>
 </header>
 {@render children()}

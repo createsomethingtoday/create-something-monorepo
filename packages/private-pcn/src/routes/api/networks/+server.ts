@@ -7,7 +7,7 @@ export const GET: RequestHandler = async ({ locals, platform }) => {
   if (!locals.identity) return json({ error: 'Sign in to manage your networks.' }, { status: 401 });
   if (!platform?.env.DB) return json({ error: 'Network setup is unavailable.' }, { status: 503 });
   const { results } = await platform.env.DB.prepare(
-    'SELECT * FROM networks WHERE owner_id = ? ORDER BY created_at DESC'
+    "SELECT * FROM networks WHERE owner_id = ? AND kind <> 'support' ORDER BY created_at DESC"
   )
     .bind(locals.identity.subject)
     .all<Network>();
@@ -19,6 +19,18 @@ export const POST: RequestHandler = async ({ locals, platform, request }) => {
   if (!locals.identity) return json({ error: 'Sign in to create your network.' }, { status: 401 });
   const db = platform?.env.DB;
   if (!db) return json({ error: 'Network setup is unavailable.' }, { status: 503 });
+  const approval = await db
+    .prepare('SELECT status FROM creator_applications WHERE subject=?')
+    .bind(locals.identity.subject)
+    .first<{ status: string }>();
+  if (approval?.status !== 'approved')
+    return json(
+      {
+        error:
+          'Creator approval is required. Submit your credentials and teaching video for review.'
+      },
+      { status: 403 }
+    );
   let body: Record<string, unknown>;
   try {
     body = JSON.parse(await boundedText(request));
@@ -54,9 +66,18 @@ export const POST: RequestHandler = async ({ locals, platform, request }) => {
   try {
     const result = await db
       .prepare(
-        'INSERT INTO networks(id,slug,owner_id,name,format,access_model) SELECT ?,?,?,?,?,? WHERE (SELECT COUNT(*) FROM networks WHERE owner_id = ?) < 3'
+        "INSERT INTO networks(id,slug,owner_id,name,format,access_model) SELECT ?,?,?,?,?,? WHERE (SELECT COUNT(*) FROM networks WHERE owner_id = ?) < 3 AND EXISTS(SELECT 1 FROM creator_applications WHERE subject=? AND status='approved')"
       )
-      .bind(id, slug, locals.identity.subject, name, format, access, locals.identity.subject)
+      .bind(
+        id,
+        slug,
+        locals.identity.subject,
+        name,
+        format,
+        access,
+        locals.identity.subject,
+        locals.identity.subject
+      )
       .run();
     if (result.meta.changes !== 1)
       return json(

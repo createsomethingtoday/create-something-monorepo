@@ -155,7 +155,10 @@ beforeEach(() => {
     '0002_network_ownership.sql',
     '0006_builder_assets.sql',
     '0004_subscriptions.sql',
-    '0007_builder_commerce.sql'
+    '0007_builder_commerce.sql',
+    '0008_creator_admission.sql',
+    '0010_company_support.sql',
+    '0009_impact.sql'
   ])
     sql.exec(readFileSync(new URL(`../migrations/${name}`, import.meta.url), 'utf8'));
   sql

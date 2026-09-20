@@ -60,11 +60,16 @@ beforeEach(() => {
     '0002_network_ownership.sql',
     '0004_subscriptions.sql',
     '0006_builder_assets.sql',
-    '0007_builder_commerce.sql'
+    '0007_builder_commerce.sql',
+    '0008_creator_admission.sql',
+    '0010_company_support.sql'
   ])
     sql.exec(readFileSync(new URL(`../migrations/${name}`, import.meta.url), 'utf8'));
   sql.exec(
     "INSERT INTO networks(id,slug,owner_id,name,format,access_model,status) VALUES('net','builder','owner','Builder','academy','preview','active'); INSERT INTO builder_assets(id,network_id,title,kind,summary,price_cents,audience,visibility) VALUES('asset','net','Skill','skill','Review',1900,'public','published'); INSERT INTO asset_releases(id,network_id,asset_id,version,manifest,object_key,sha256,size_bytes) VALUES('release','net','asset','1.0.0','{}','private.zip','hash',4); INSERT INTO seller_accounts(owner_id,account_id,creation_key,contact_email,display_name,country) VALUES('owner','acct_seller','seller-key','owner@example.com','Builder','US');"
+  );
+  sql.exec(
+    "INSERT INTO creator_applications(subject,email,display_name,credentials,teaching_video_url,status) VALUES('owner','owner@example.com','Builder','Experience','https://example.com/video','approved')"
   );
   const now = Math.floor(Date.now() / 1000);
   sql

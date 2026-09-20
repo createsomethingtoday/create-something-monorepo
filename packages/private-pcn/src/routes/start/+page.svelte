@@ -28,16 +28,16 @@
           >Your collection <Icon name="arrow-right" /></span
         >
       </div></a
-    ><a class="asset-card" href="/dashboard"
+    ><a class="asset-card" href="/apply"
       ><p class="eyebrow"><Icon name="network" size={24} /> 02 / SHARE & SELL</p>
       <h2>Turn your practice<br />into useful assets.</h2>
       <p>
-        Create a private network, package your techniques and prepare a storefront for your
+        Apply with your credentials and a teaching video. Once approved, build a network for your
         community.
       </p>
       <div class="card-foot">
-        <span>Draft first. Subscribe when ready.</span><span
-          >Builder workspace <Icon name="arrow-right" /></span
+        <span>Invitation or application. Human review.</span><span
+          >Creator application <Icon name="arrow-right" /></span
         >
       </div></a
     >

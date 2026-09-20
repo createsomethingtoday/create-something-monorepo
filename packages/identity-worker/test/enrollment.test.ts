@@ -227,6 +227,12 @@ test('enrollment preserves buyer and seller return paths and rejects external na
   for (const [index, path] of [
     '/n/builder-lab/assets/asset-one',
     '/collection',
+    '/apply',
+    '/support',
+    '/support/partner',
+    '/support/12345678-1234-1234-1234-123456789abc',
+    '/n/builders/field-notes',
+    '/n/builders/impact',
     '//evil.example'
   ].entries()) {
     await startEnrollment(

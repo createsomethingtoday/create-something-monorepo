@@ -48,6 +48,28 @@ function provider() {
         metadata: { network_id: 'alpha', owner_id: 'owner' }
       }))
     },
+    invoicePayments: {
+      list: vi.fn(async () => ({
+        has_more: false,
+        data: [
+          { status: 'paid', payment: { type: 'payment_intent', payment_intent: 'pi_invoice' } }
+        ]
+      }))
+    },
+    paymentIntents: {
+      retrieve: vi.fn(async () => ({
+        id: 'pi_invoice',
+        customer: 'cus_fixture',
+        status: 'succeeded',
+        latest_charge: {
+          id: 'ch_invoice',
+          paid: true,
+          refunded: false,
+          amount_refunded: 0,
+          disputed: false
+        }
+      }))
+    },
     subscriptions: { list: vi.fn(async () => ({ data: [], has_more: false })) },
     checkout: {
       sessions: {
@@ -70,7 +92,7 @@ function subscription(status = 'active') {
     status,
     created: 1,
     livemode: false,
-    latest_invoice:{id:'in_fixture',status:'paid'},
+    latest_invoice: { id: 'in_fixture', status: 'paid' },
     metadata: { network_id: 'alpha', owner_id: 'owner' },
     pause_collection: null,
     cancel_at_period_end: false,
@@ -90,12 +112,17 @@ beforeEach(() => {
     '0001_private_pcn',
     '0002_network_ownership',
     '0003_resource_limits',
-    '0004_subscriptions'
+    '0004_subscriptions',
+    '0008_creator_admission',
+    '0010_company_support'
   ])
     sqlite.exec(readFileSync(new URL(`../migrations/${migration}.sql`, import.meta.url), 'utf8'));
   sqlite
     .prepare('INSERT INTO networks(id,slug,owner_id,name) VALUES(?,?,?,?)')
     .run('alpha', 'alpha', 'owner', 'Alpha');
+  sqlite.exec(
+    "INSERT INTO creator_applications(subject,email,display_name,credentials,teaching_video_url,status) VALUES('owner','owner@example.com','Builder','Experience','https://example.com/video','approved')"
+  );
   env = {
     DB: { prepare: statement },
     STRIPE_SECRET_KEY: 'sk_test_fixture',
@@ -287,4 +314,113 @@ describe('billing lifecycle against migrated SQLite (supporting proof)', () => {
       ).status
     ).toBe(400);
   });
+});
+it('does not charge an unapproved creator or charge away their unused trial time', async () => {
+  const stripe = provider();
+  sqlite.exec("UPDATE creator_applications SET status='pending'");
+  await expect(
+    checkout(env, network, 'owner@example.com', 'https://private.createsomething.agency', stripe)
+  ).rejects.toThrow('approval');
+  expect(stripe.customers.create).not.toHaveBeenCalled();
+  sqlite.exec("UPDATE creator_applications SET status='approved'");
+  sqlite
+    .prepare('INSERT INTO creator_trials(subject,network_id,starts_at,ends_at) VALUES(?,?,?,?)')
+    .run('owner', 'alpha', 1, Math.floor(Date.now() / 1000) + 3600);
+  await expect(
+    checkout(env, network, 'owner@example.com', 'https://private.createsomething.agency', stripe)
+  ).rejects.toThrow('free month');
+  expect(stripe.customers.create).not.toHaveBeenCalled();
+});
+
+it('prices approved company support at $900 with 95 percent sent to the approved partner only', async () => {
+  sqlite.exec(
+    "INSERT INTO creator_applications(subject,email,display_name,credentials,teaching_video_url,status) VALUES('partner','partner@example.com','Partner','Experience','https://example.com/video','approved'); INSERT INTO support_partners(subject,approved,account_id,review_note,reviewed_by) VALUES('partner',1,'acct_partner','Approved','reviewer'); INSERT INTO support_workspaces(network_id,owner_id,partner_id,company,workflow,status) VALUES('alpha','owner','partner','Company','One agreed workflow','agreed');"
+  );
+  const stripe = provider();
+  stripe.prices.retrieve.mockResolvedValue({ ...price, id: 'price_support', unit_amount: 90000 });
+  stripe.v2 = {
+    core: {
+      accounts: {
+        retrieve: vi.fn(async () => ({
+          id: 'acct_partner',
+          livemode: false,
+          dashboard: 'express',
+          metadata: { application: 'private_pcn_support', pcn_support_partner: 'partner' },
+          defaults: {
+            responsibilities: { fees_collector: 'application', losses_collector: 'application' }
+          },
+          configuration: {
+            recipient: {
+              capabilities: { stripe_balance: { stripe_transfers: { status: 'active' } } }
+            }
+          }
+        }))
+      }
+    }
+  };
+  env.STRIPE_SUPPORT_PRICE_ID = 'price_support';
+  env.PCN_SUPPORT_ENABLED = 'true';
+  await checkout(
+    env,
+    network,
+    'owner@example.com',
+    'https://private.createsomething.agency',
+    stripe
+  );
+  expect(stripe.checkout.sessions.create.mock.calls[0][0]).toMatchObject({
+    line_items: [{ price: 'price_support', quantity: 1 }],
+    subscription_data: { transfer_data: { destination: 'acct_partner', amount_percent: 95 } }
+  });
+  expect(stripe.checkout.sessions.create.mock.calls[0][0].subscription_data).not.toHaveProperty(
+    'trial_period_days'
+  );
+});
+
+it('withdraws paid access when the current invoice is refunded or disputed', async () => {
+  seedBilling();
+  const stripe = provider();
+  stripe.subscriptions.list.mockResolvedValue({ data: [subscription()], has_more: false });
+  stripe.paymentIntents.retrieve.mockResolvedValue({
+    id: 'pi_invoice',
+    customer: 'cus_fixture',
+    status: 'succeeded',
+    latest_charge: {
+      id: 'ch_invoice',
+      paid: true,
+      refunded: true,
+      amount_refunded: 2450,
+      disputed: false
+    }
+  });
+  const row = await refreshBilling(env, network, stripe);
+  expect(row.status).toBe('payment_pending');
+  expect(await paidAccess(env, network)).toBe(false);
+});
+it('reconciles refund events immediately instead of waiting for a subscription change', async () => {
+  seedBilling();
+  const stripe = provider();
+  stripe.subscriptions.list.mockResolvedValue({ data: [subscription()], has_more: false });
+  await refreshBilling(env, network, stripe);
+  stripe.paymentIntents.retrieve.mockResolvedValue({
+    id: 'pi_invoice',
+    customer: 'cus_fixture',
+    status: 'succeeded',
+    latest_charge: {
+      id: 'ch_invoice',
+      paid: true,
+      refunded: true,
+      amount_refunded: 2450,
+      disputed: false
+    }
+  });
+  await processBillingEvent(
+    env,
+    {
+      id: 'evt_refund',
+      type: 'charge.refunded',
+      data: { object: { customer: 'cus_fixture' } }
+    } as any,
+    stripe
+  );
+  expect(await paidAccess(env, network)).toBe(false);
 });

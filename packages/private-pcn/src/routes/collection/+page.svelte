@@ -47,8 +47,6 @@
       </section>{/each}
   </div>
   <p class="workspace-trail">
-    Have a technique to share? <a href="/dashboard"
-      >Create your own network <Icon name="arrow-right" /></a
-    >
+    Have a technique to share? <a href="/apply">Apply as a creator <Icon name="arrow-right" /></a>
   </p>
 </main>

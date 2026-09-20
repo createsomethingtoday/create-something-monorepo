@@ -1,6 +1,5 @@
 <script lang="ts">
   import Icon from '$lib/components/Icon.svelte';
-  import { BOOKING_URL } from '$lib/client';
   let { data } = $props();
   import NetworkPreview from '$lib/components/NetworkPreview.svelte';
 </script>
@@ -28,19 +27,15 @@
           useful.
         </p>
         <div class="hero-actions">
-          <a class="button" href={data.selfServiceEnabled ? '/signup' : BOOKING_URL}
-            >{data.selfServiceEnabled ? 'Create your network' : 'Build your network'}
-            <span aria-hidden="true"
-              ><Icon name={data.selfServiceEnabled ? 'arrow-right' : 'external-link'} /></span
-            ></a
+          <a class="button" href="/apply" data-impact="primary_action"
+            >Apply as a creator <Icon name="arrow-right" /></a
           ><a class="inline-link" href="#network-preview"
             >Explore the possibilities <Icon name="arrow-down" /></a
           >
         </div>
         <p class="hero-note">
-          {data.selfServiceEnabled
-            ? 'From $24.50 USD per network/month. Create a draft before you subscribe.'
-            : 'Custom-built with you. Your brand. Your domain.'}
+          Reviewed creators. Your offerings, your prices. Invited creators receive one free month
+          after approval.
         </p>
       </div>
       <div
@@ -101,7 +96,7 @@
           <li>Your network address, membership controls, and record export</li>
         </ul>
         <p>No automatic overage charges. Cancel renewal through your billing portal.</p>
-        <a class="button" href="/signup">Create your draft network <Icon name="arrow-right" /></a>
+        <a class="button" href="/apply">Apply to create a network <Icon name="arrow-right" /></a>
         <p class="muted">
           Custom domains, migrations, and bespoke integrations are available through a separately
           scoped managed build.
@@ -154,8 +149,8 @@
         <div>
           <h3>Make it unmistakably yours</h3>
           <p>
-            Your identity, your domain, your library structure. Paid memberships, repository
-            integrations, and other extensions are scoped with you.
+            Your network name, structure and access rules. Choose your asset prices and document the
+            permissions, evaluation and support behind each release.
           </p>
         </div>
       </article>
@@ -163,33 +158,39 @@
   </section>
   <section class="creator-handoff" id="start">
     <div>
-      <p class="eyebrow">04 / BUILD WITH CREATE SOMETHING</p>
-      <h2>You bring the knowledge.<br /><em>We build the place.</em></h2>
+      <p class="eyebrow">04 / A REVIEWED CREATOR NETWORK</p>
+      <h2>Useful work.<br /><em>A standard worth sharing.</em></h2>
       <p>
-        Bring your audience, a few recordings, or an idea for a network. We’ll map the experience,
-        agree the scope, and build it with you.
+        Show your credentials and teach one concrete agentic engineering technique. Once approved,
+        build a network around the practice and assets you want to share.
       </p>
-      <a class="button" href={BOOKING_URL}
-        >Build your network <span aria-hidden="true"><Icon name="external-link" /></span></a
+      <a class="button" href="/apply" data-impact="primary_action"
+        >Apply as a creator <Icon name="arrow-right" /></a
       >
+      <p>
+        <a href="/support">Company project? Explore private support <Icon name="arrow-right" /></a>
+      </p>
     </div>
     <div class="delivery-steps">
       <article>
-        <span>01 / DEFINE</span>
-        <h3>Audience, content, access.</h3>
-        <p>Set the structure, brand, membership model, and ownership before the build.</p>
+        <span>01 / SUBMIT</span>
+        <h3>Credentials and a teaching video.</h3>
+        <p>Explain the technique, its constraints, how you evaluated it, and where it can fail.</p>
       </article>
       <article>
-        <span>02 / LAUNCH</span>
-        <h3>Build, migrate, verify.</h3>
-        <p>Move the agreed content and test the publishing and member experience together.</p>
-      </article>
-      <article>
-        <span>03 / OPERATE</span>
-        <h3>Keep publishing.</h3>
+        <span>02 / REVIEW</span>
+        <h3>Human judgment before access.</h3>
         <p>
-          Training, a runbook, and an agreed support plan. Build, support, and video usage are
-          quoted separately.
+          Every creator is reviewed. An invitation from another creator includes a free month of
+          hosting after approval.
+        </p>
+      </article>
+      <article>
+        <span>03 / SHARE</span>
+        <h3>Your practice, your offerings.</h3>
+        <p>
+          Teach in private sessions, sell composable assets at your own prices, and record the
+          evidence behind your work.
         </p>
       </article>
     </div>

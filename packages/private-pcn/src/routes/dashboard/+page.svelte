@@ -8,6 +8,21 @@
   let access = $state('members');
   let busy = $state(false);
   let message = $state('');
+  let inviteEmail = $state(''),
+    inviteUrl = $state('');
+  async function invite(e: SubmitEvent) {
+    e.preventDefault();
+    busy = true;
+    message = '';
+    try {
+      const result = await api('creators/invitations', { action: 'create', email: inviteEmail });
+      inviteUrl = new URL(result.url, window.location.origin).href;
+    } catch (e) {
+      message = (e as Error).message;
+    } finally {
+      busy = false;
+    }
+  }
   async function create(event: SubmitEvent) {
     event.preventDefault();
     busy = true;
@@ -41,6 +56,27 @@
       >Looking for an asset you acquired? Open your collection <Icon name="arrow-right" /></a
     >
   </p>
+  {#if data.approved}<details class="builder-panel">
+      <summary>Invite a creator · one free month after approval</summary>
+      <p>
+        Invite someone whose engineering practice you trust. They submit credentials and a teaching
+        video for review. Share the link with the exact email address below.
+      </p>
+      <form class="builder-form" onsubmit={invite}>
+        <label>Creator email<input type="email" bind:value={inviteEmail} required /></label><button
+          class="button secondary"
+          disabled={busy}>Create invitation</button
+        >
+      </form>
+      {#if inviteUrl}<label
+          >Invitation link<input
+            readonly
+            value={inviteUrl}
+            onclick={(e) => e.currentTarget.select()}
+          /></label
+        >
+        <p class="field-hint">Valid for 30 days. Only the invited email can redeem it.</p>{/if}
+    </details>{/if}
   <section aria-labelledby="networks-title">
     <h2 id="networks-title">Your networks <span class="muted">({data.networks.length})</span></h2>
     {#if data.networks.length}
@@ -57,8 +93,10 @@
             <div class="actions">
               <a href={`/n/${network.slug}/assets`}>Manage assets <Icon name="arrow-right" /></a><a
                 href={`/n/${network.slug}/studio`}>Sessions</a
-              ><a href={`/n/${network.slug}/settings`}>Settings</a><a href={`/n/${network.slug}`}
-                >View library</a
+              ><a href={`/n/${network.slug}/settings`}>Settings</a><a
+                href={`/n/${network.slug}/impact`}>Impact</a
+              ><a href={`/n/${network.slug}/field-notes`}>Field notes</a><a
+                href={`/n/${network.slug}`}>View library</a
               >
             </div>
           </article>
@@ -71,7 +109,15 @@
       </p>
     {/if}
   </section>
-  {#if data.networks.length < 3}
+  {#if !data.approved}<aside class="notice">
+      <h2>Creator review comes first.</h2>
+      <p>
+        Submit your professional credentials and a video teaching an agentic engineering technique.
+        We review every creator before they can open a network.
+      </p>
+      <a class="button" href="/apply">Your application <Icon name="arrow-right" /></a>
+    </aside>{/if}
+  {#if data.approved && data.networks.length < 3}
     <section class="setup" aria-labelledby="create-title">
       <div>
         <p class="eyebrow">01 / CREATE A NETWORK</p>

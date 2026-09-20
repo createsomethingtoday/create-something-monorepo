@@ -1,3 +1,4 @@
+import { paidAccess } from '$lib/server/billing';
 import type { Handle } from '@sveltejs/kit';
 import { verifyIdentityToken } from '@create-something/canon/auth/server';
 import { normalizeEmail } from '$lib/server/policy';
@@ -42,6 +43,18 @@ export const handle: Handle = async ({ event, resolve }) => {
       .bind(slug || 'create-something')
       .first<Network>();
     if (slug && !event.locals.network) return new Response('Network not found.', { status: 404 });
+    if (
+      event.locals.network &&
+      event.locals.network.id !== 'default' &&
+      event.locals.network.status === 'active'
+    ) {
+      try {
+        if (!(await paidAccess(event.platform.env, event.locals.network)))
+          event.locals.network.status = 'suspended';
+      } catch {
+        event.locals.network.status = 'suspended';
+      }
+    }
   }
   const token = event.cookies.get('__Host-pcn_access');
   if (token && event.platform?.env.DB) {

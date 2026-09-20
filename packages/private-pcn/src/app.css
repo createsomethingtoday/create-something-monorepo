@@ -1184,3 +1184,82 @@ input[type='file'] {
     flex-wrap: wrap;
   }
 }
+.practice-steps {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  margin: 40px 0;
+}
+.practice-steps li {
+  padding: 24px 20px 24px 0;
+  line-height: 1.6;
+}
+.practice-steps span {
+  display: block;
+  font: 11px/2 monospace;
+  color: var(--muted);
+}
+.review-application {
+  margin: 24px 0;
+}
+.review-application label {
+  display: block;
+  margin: 24px 0;
+}
+.review-application textarea {
+  display: block;
+  width: 100%;
+  min-height: 100px;
+}
+@media (max-width: 650px) {
+  .practice-steps {
+    grid-template-columns: 1fr;
+  }
+  .practice-steps li {
+    border-bottom: 1px solid var(--line);
+  }
+}
+.field-dossier {
+  border: 1px solid var(--line);
+  padding: 32px;
+  background: var(--panel, #141414);
+}
+.field-dossier h2 {
+  font-size: clamp(25px, 3vw, 38px);
+}
+.field-dossier dt {
+  font: 11px/2 monospace;
+  color: var(--muted);
+  margin-top: 24px;
+}
+.field-dossier dd {
+  margin: 0;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+  line-height: 1.6;
+}
+.impact-table {
+  overflow-x: auto;
+}
+.impact-table table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 13px;
+}
+.impact-table th,
+.impact-table td {
+  padding: 12px 8px;
+  border-bottom: 1px solid var(--line);
+}
+
+.network-subnav {
+  display: flex;
+  gap: 24px;
+  padding: 18px max(24px, 5vw);
+  border-bottom: 1px solid var(--line);
+  font-size: 13px;
+}

@@ -33,7 +33,7 @@
   <h1>Welcome<br /><em>back.</em></h1>
   <p>
     Sign in to your CREATE SOMETHING account to open your collection or manage your network. Private
-    networks require an invitation.
+    networks may require a member invitation. Creator publishing requires approval.
   </p>
   <form onsubmit={login}>
     <label>Email<input type="email" autocomplete="username" bind:value={email} required /></label
