@@ -345,6 +345,7 @@ describe('intent-preserving onboarding and inputs', () => {
       '/start',
       '/collection',
       '/dashboard',
+      '/support-session',
       '/n/builder-a/assets/asset-a',
       '/n/builder-a/assets'
     ])
