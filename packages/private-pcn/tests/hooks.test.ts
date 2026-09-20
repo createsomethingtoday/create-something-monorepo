@@ -16,7 +16,20 @@ function context(
     fetch: vi.fn(async () => new Response(JSON.stringify(current))),
     platform: {
       env: {
-        DB: { prepare: () => ({ bind: () => ({ first }) }) },
+        DB: {
+          prepare: (sql: string) => ({
+            bind: () => ({
+              first: sql.includes('FROM networks')
+                ? async () => ({
+                    id: 'default',
+                    slug: 'create-something',
+                    status: 'active',
+                    owner_id: null
+                  })
+                : first
+            })
+          })
+        },
         PCN_ADMIN_EMAILS: 'owner@example.com',
         ENVIRONMENT: 'production',
         PCN_RATE_LIMIT: { limit: vi.fn(async () => ({ success: true })) }
@@ -76,5 +89,46 @@ describe('session and redirect boundaries', () => {
     await handle(c);
     expect(c.event.locals.identity).toBeNull();
     expect(c.event.fetch).not.toHaveBeenCalled();
+  });
+});
+
+describe('network ownership in the real request hook', () => {
+  it('grants the verified owner access only to their network', async () => {
+    membership = 0;
+    const c = context('https://private.createsomething.agency/n/alpha/studio');
+    c.event.platform.env.DB.prepare = (sql: string) => ({
+      bind: (...args: unknown[]) => ({
+        first: async () =>
+          sql.includes('FROM networks')
+            ? { id: 'alpha', slug: 'alpha', owner_id: 'subject', status: 'active' }
+            : { active: 0 }
+      })
+    });
+    await handle(c);
+    expect(c.event.locals.identity.role).toBe('admin');
+    c.event.platform.env.DB.prepare = (sql: string) => ({
+      bind: () => ({
+        first: async () =>
+          sql.includes('FROM networks')
+            ? { id: 'bravo', slug: 'bravo', owner_id: 'another-subject', status: 'active' }
+            : { active: 0 }
+      })
+    });
+    await handle(c);
+    expect(c.event.locals.identity.role).toBe('blocked');
+  });
+  it('does not give platform admins control of creator-owned networks', async () => {
+    const c = context('https://private.createsomething.agency/n/alpha/studio');
+    c.event.platform.env.PCN_ADMIN_EMAILS = 'member@example.com';
+    c.event.platform.env.DB.prepare = (sql: string) => ({
+      bind: () => ({
+        first: async () =>
+          sql.includes('FROM networks')
+            ? { id: 'alpha', slug: 'alpha', owner_id: 'another-subject', status: 'active' }
+            : { active: 0 }
+      })
+    });
+    await handle(c);
+    expect(c.event.locals.identity.role).toBe('blocked');
   });
 });

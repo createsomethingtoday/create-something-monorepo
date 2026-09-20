@@ -21,9 +21,10 @@
     >CREATE SOMETHING<span>PRIVATE / .AGENCY</span></a
   >
   <nav aria-label="Primary">
-    <a href="/#network-preview">Explore networks</a><a href="/library">Library</a><a href="/login"
-      >Member sign in <span aria-hidden="true">↗</span></a
-    >
+    <a href="/#network-preview">Explore networks</a><a href="/library">Library</a>
+    {#if data.identity}<a href="/dashboard">Your networks</a>{:else}<a href="/login"
+        >Sign in <span aria-hidden="true">↗</span></a
+      >{/if}
   </nav>
 </header>
 {@render children()}

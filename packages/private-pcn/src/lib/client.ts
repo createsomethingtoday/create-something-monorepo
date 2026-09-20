@@ -1,6 +1,7 @@
-export async function api(path: string, body?: unknown) {
+export async function api(path: string, body?: unknown, networkSlug?: string) {
+  const prefix = networkSlug ? `/api/networks/${encodeURIComponent(networkSlug)}` : '/api';
   const response = await fetch(
-    `/api/${path}`,
+    `${prefix}/${path}`,
     body === undefined
       ? {}
       : {

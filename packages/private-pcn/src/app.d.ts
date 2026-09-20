@@ -1,3 +1,4 @@
+import type { Network } from './lib/server/networks';
 import type { D1Database } from '@cloudflare/workers-types';
 declare global {
   namespace App {
@@ -13,6 +14,7 @@ declare global {
       };
     }
     interface Locals {
+      network: Network | null;
       identity: { subject: string; email: string; role: 'admin' | 'member' | 'blocked' } | null;
     }
   }

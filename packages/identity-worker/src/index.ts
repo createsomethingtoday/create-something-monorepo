@@ -74,6 +74,7 @@ import {
 	isOAuthRefreshFamilyActive,
 	revokeOAuthRefreshFamily,
 } from './db/queries';
+import { startEnrollment, completeEnrollment } from './services/enrollment';
 import { sendVerificationEmail, sendDeletionConfirmationEmail } from './services/email';
 import { claimLmsMagicProof, hashMailboxMagicToken, verifyLmsMagicExchangeToken } from './services/magic-auth';
 import type { RolloutConfig } from '@create-something/policy-os-engine';
@@ -125,7 +126,7 @@ async function route(request: Request, env: Env, method: string, path: string): 
 		return json(jwks, 200, { 'Cache-Control': 'public, max-age=3600' });
 	}
 	if (path === '/.well-known/create-something-auth' && method === 'GET') {
-		return json(createAuthPlatformContract(new URL(request.url).origin), 200, {
+		return json(createAuthPlatformContract(new URL(request.url).origin, { enrollmentEnabled: env.PUBLIC_ENROLLMENT_ENABLED === 'true' && !!env.RESEND_API_KEY }), 200, {
 			'Cache-Control': 'public, max-age=300',
 		});
 	}
@@ -158,6 +159,8 @@ async function route(request: Request, env: Env, method: string, path: string): 
 	}
 
 	// Auth endpoints
+	if (path === '/v1/auth/enrollment/start' && method === 'POST') return startEnrollment(request, env);
+	if (path === '/v1/auth/enrollment/complete' && method === 'POST') return completeEnrollment(request, env);
 	if (path === '/v1/auth/signup' && method === 'POST') return handleSignup(request, env);
 	if (path === '/v1/auth/login' && method === 'POST') return handleLogin(request, env);
 	if (path === '/v1/auth/magic-login' && method === 'POST') return handleLegacyMagicAuth();

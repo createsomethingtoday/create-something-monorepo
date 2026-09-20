@@ -1,5 +1,6 @@
 <script lang="ts">
   import { BOOKING_URL } from '$lib/client';
+  let { data } = $props();
   import NetworkPreview from '$lib/components/NetworkPreview.svelte';
 </script>
 
@@ -25,11 +26,16 @@
           content network shaped around your audience and your way of teaching.
         </p>
         <div class="hero-actions">
-          <a class="button" href={BOOKING_URL}
-            >Build your network <span aria-hidden="true">↗</span></a
+          <a class="button" href={data.selfServiceEnabled ? '/signup' : BOOKING_URL}
+            >{data.selfServiceEnabled ? 'Create your network' : 'Build your network'}
+            <span aria-hidden="true">↗</span></a
           ><a class="inline-link" href="#network-preview">Explore the possibilities ↓</a>
         </div>
-        <p class="hero-note">Custom-built with you. Your brand. Your domain.</p>
+        <p class="hero-note">
+          {data.selfServiceEnabled
+            ? 'From $24.50 USD per network/month. Create a draft before you subscribe.'
+            : 'Custom-built with you. Your brand. Your domain.'}
+        </p>
       </div>
       <div
         class="engineering-field"
@@ -72,6 +78,31 @@
     </div>
   </section>
   <NetworkPreview />
+  {#if data.selfServiceEnabled}
+    <section id="pricing" class="launch-plan">
+      <div>
+        <p class="eyebrow">CREATOR / MONTHLY</p>
+        <h2>A private home<br />for your <em>practice.</em></h2>
+        <p>For independent creators teaching agent workflows, technical methods, and research.</p>
+      </div>
+      <div>
+        <p class="plan-price">$24.50 <span>USD / month per network</span></p>
+        <ul>
+          <li>One owner and 100 active members</li>
+          <li>20 sessions, up to 30 minutes and 1 GB each</li>
+          <li>5,000 delivered video minutes per calendar month</li>
+          <li>Private access and selected public previews</li>
+          <li>Your network address, membership controls, and record export</li>
+        </ul>
+        <p>No automatic overage charges. Cancel renewal through your billing portal.</p>
+        <a class="button" href="/signup">Create your draft network →</a>
+        <p class="muted">
+          Custom domains, migrations, and bespoke integrations are available through a separately
+          scoped managed build.
+        </p>
+      </div>
+    </section>
+  {/if}
   <section class="service-section creator-service" id="the-service">
     <div>
       <p class="eyebrow">03 / THE NETWORK IS YOURS</p>
@@ -156,3 +187,43 @@
     </div>
   </section>
 </main>
+
+<style>
+  .launch-plan {
+    padding: 80px 4.5vw;
+    border-top: 1px solid var(--line);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8vw;
+  }
+  .launch-plan h2 {
+    font-size: clamp(36px, 4vw, 60px);
+    letter-spacing: -2px;
+  }
+  .plan-price {
+    font-size: 48px;
+    letter-spacing: -2px;
+  }
+  .plan-price span {
+    display: block;
+    font-size: 14px;
+    letter-spacing: 0;
+    color: var(--muted);
+  }
+  .launch-plan li {
+    line-height: 1.6;
+    margin: 12px 0;
+  }
+  .launch-plan .muted {
+    font-size: 13px;
+    margin-top: 24px;
+  }
+  @media (max-width: 760px) {
+    .launch-plan {
+      grid-template-columns: 1fr;
+      gap: 32px;
+      padding-top: 48px;
+      padding-bottom: 48px;
+    }
+  }
+</style>

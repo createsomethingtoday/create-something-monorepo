@@ -3792,6 +3792,9 @@ importers:
       hls.js:
         specifier: ^1.6.15
         version: 1.6.15
+      stripe:
+        specifier: 22.6.2
+        version: 22.6.2(@types/node@24.10.9)
       tus-js-client:
         specifier: ^4.3.1
         version: 4.3.1
@@ -16524,6 +16527,15 @@ packages:
   stripe@20.2.0:
     resolution: {integrity: sha512-m8niTfdm3nPP/yQswRWMwQxqEUcTtB3RTJQ9oo6NINDzgi7aPOadsH/fPXIIfL1Sc5+lqQFKSk7WiO6CXmvaeA==}
     engines: {node: '>=16'}
+    peerDependencies:
+      '@types/node': 24.10.9
+    peerDependenciesMeta:
+      '@types/node':
+        optional: true
+
+  stripe@22.6.2:
+    resolution: {integrity: sha512-PwRE2scocvXqDKPiskMa5vRJEAEkq46W69XyUYmAwrNSLr675lQnfqLwnsndAWizwgihOWw/irLmoFRo3ez7ew==}
+    engines: {node: '>=18'}
     peerDependencies:
       '@types/node': 24.10.9
     peerDependenciesMeta:
@@ -31988,6 +32000,10 @@ snapshots:
   stripe@20.2.0(@types/node@24.10.9):
     dependencies:
       qs: 6.15.3
+    optionalDependencies:
+      '@types/node': 24.10.9
+
+  stripe@22.6.2(@types/node@24.10.9):
     optionalDependencies:
       '@types/node': 24.10.9
 

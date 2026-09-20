@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { api, BOOKING_URL } from '$lib/client';
+  import { api } from '$lib/client';
+  import { page } from '$app/state';
   let email = $state('');
   let password = $state('');
   let error = $state('');
@@ -10,7 +11,12 @@
     error = '';
     try {
       await api('login', { email, password });
-      window.location.assign('/library');
+      const next = page.url.searchParams.get('next');
+      window.location.assign(
+        next && /^\/(?:dashboard|n\/[a-z0-9-]+(?:\/studio|\/settings)?|library)$/.test(next)
+          ? next
+          : '/dashboard'
+      );
     } catch (e) {
       error = (e as Error).message;
     } finally {
@@ -46,7 +52,10 @@
     >
   </form>
   <p class="muted">
-    Need access or help with your account? <a href={BOOKING_URL}>Speak with CREATE SOMETHING.</a>
+    New here? <a
+      href={`/signup?next=${encodeURIComponent(page.url.searchParams.get('next') || '/dashboard')}`}
+      >Create an account.</a
+    ><br /><a href="/signup?mode=recovery">Forgot your password?</a>
   </p>
   <a href="/library">Browse public previews →</a>
 </main>
