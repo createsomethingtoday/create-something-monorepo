@@ -15,6 +15,7 @@ declare global {
       };
     }
     interface Locals {
+      impersonation?: { id?: string; email: string; expiresAt: number; invalid: boolean } | null;
       network: Network | null;
       identity: { subject: string; email: string; role: 'admin' | 'member' | 'blocked' } | null;
     }

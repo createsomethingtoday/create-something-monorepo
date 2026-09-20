@@ -1,3 +1,10 @@
+export function supportHeaders(): Record<string, string> {
+  const id =
+    typeof document === 'undefined'
+      ? ''
+      : document.querySelector('meta[name="pcn-support-session"]')?.getAttribute('content');
+  return id ? { 'X-PCN-Support-Session': id } : {};
+}
 export async function api(path: string, body?: unknown, networkSlug?: string) {
   const prefix = networkSlug ? `/api/networks/${encodeURIComponent(networkSlug)}` : '/api';
   const response = await fetch(
@@ -6,7 +13,7 @@ export async function api(path: string, body?: unknown, networkSlug?: string) {
       ? {}
       : {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', ...supportHeaders() },
           body: JSON.stringify(body)
         }
   );

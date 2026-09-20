@@ -1,3 +1,4 @@
+import { applyImpersonation } from '$lib/server/impersonation';
 import { paidAccess } from '$lib/server/billing';
 import type { Handle } from '@sveltejs/kit';
 import { verifyIdentityToken } from '@create-something/canon/auth/server';
@@ -33,6 +34,7 @@ export const handle: Handle = async ({ event, resolve }) => {
         });
     }
   }
+  event.locals.impersonation = null;
   event.locals.identity = null;
   event.locals.network = null;
   const slug = networkSlug(event.url.pathname);
@@ -102,7 +104,13 @@ export const handle: Handle = async ({ event, resolve }) => {
       }
     }
   }
-  const response = await resolve(event);
+  const support = await applyImpersonation(event);
+  const response = support.response || (await resolve(event));
+  if (support.auditId && event.platform?.env.DB) {
+    await event.platform.env.DB.prepare('UPDATE impersonation_requests SET status=? WHERE id=?')
+      .bind(response.status, support.auditId)
+      .run();
+  }
   response.headers.set('X-Content-Type-Options', 'nosniff');
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
   response.headers.set('X-Frame-Options', 'DENY');

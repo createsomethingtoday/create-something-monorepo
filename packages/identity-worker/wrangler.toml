@@ -16,6 +16,8 @@ routes = [{ pattern = "id.createsomething.space", custom_domain = true }]
 [vars]
 PUBLIC_ENROLLMENT_ENABLED = "false"
 PCN_ENROLLMENT_ENABLED = "false"
+# Narrow read-only deputy for Private support sessions; no target credentials.
+PCN_SUPPORT_ADMIN_EMAILS = "micah@createsomething.io"
 # Optional secret ENROLLMENT_ALLOWED_EMAILS: comma-separated exact mailboxes for
 # controlled enrollment while public signup is closed. Mailbox proof is mandatory.
 # Remove a mailbox to block both new requests and outstanding completions.

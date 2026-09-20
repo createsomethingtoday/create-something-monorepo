@@ -11,7 +11,7 @@ function context(
   const event = {
     url: new URL(url),
     request: new Request(url),
-    cookies: { get: () => 'fixture-token' },
+    cookies: { get: (name: string) => name === '__Host-pcn_access' ? 'fixture-token' : undefined },
     locals: { identity: null },
     fetch: vi.fn(async () => new Response(JSON.stringify(current))),
     platform: {

@@ -19,6 +19,7 @@ export function impactSurface(path: string): string | null {
 export function trackImpact(event: 'page_view' | 'primary_action', path: string) {
   const surface = impactSurface(path);
   if (
+    document.querySelector('meta[name="pcn-support-session"]')?.getAttribute('content') ||
     !surface ||
     navigator.doNotTrack === '1' ||
     (navigator as Navigator & { globalPrivacyControl?: boolean }).globalPrivacyControl
