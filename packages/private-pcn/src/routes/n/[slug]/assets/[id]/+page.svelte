@@ -2,7 +2,7 @@
   import Icon from '$lib/components/Icon.svelte';
   import { page } from '$app/state';
   import { onMount, untrack } from 'svelte';
-  import { api } from '$lib/client';
+  import { supportHeaders, api } from '$lib/client';
   import { invalidateAll } from '$app/navigation';
   import { assetKinds, assetPrice, type ReleaseManifest } from '$lib/assets';
   let { data } = $props();
@@ -156,7 +156,7 @@
       form.set('manifest', JSON.stringify(manifest));
       const response = await fetch(
         `/api/networks/${data.network!.slug}/assets/${data.asset.id}/release`,
-        { method: 'POST', body: form }
+        { method: 'POST', headers: supportHeaders(), body: form }
       );
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || 'Release upload failed.');

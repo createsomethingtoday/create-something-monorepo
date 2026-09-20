@@ -177,3 +177,34 @@ test('service validation requires the caller to name one recognized audience', a
 
 	assert.equal(response.status, 400);
 });
+
+
+test('Private support lookup requires an active agency administrator and returns only target identity', async () => {
+ const { accessToken, db } = await createValidationFixture([], { aud: ['agency'] });
+ const original = db.prepare.bind(db);
+ db.prepare = ((sql: string) => sql.includes('FROM users WHERE email') ? {
+   bind: () => ({ first: async () => ({ id: 'target', email: 'target@example.com', email_verified: 1, deleted_at: null, password_hash: 'never-return' }) })
+ } : original(sql)) as typeof db.prepare;
+ const request = () => new Request('https://id.createsomething.space/v1/private/support-target', {
+   method: 'POST', headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+   body: JSON.stringify({ email: 'target@example.com' })
+ });
+ const env = { DB: db, ENVIRONMENT: 'test', ALLOWED_ORIGINS: '', PCN_SUPPORT_ADMIN_EMAILS: 'live-email@createsomething.ltd' } as never;
+ const response = await identityWorker.fetch(request(), env);
+ assert.equal(response.status, 200);
+ assert.deepEqual(await response.json(), { id: 'target', email: 'target@example.com', email_verified: true });
+ assert.equal((await identityWorker.fetch(request(), { ...env as object, PCN_SUPPORT_ADMIN_EMAILS: '' } as never)).status, 403);
+});
+
+
+test('Private support lookup rejects browser calls, wrong audiences, inactive actors and inactive targets', async () => {
+ for (const variant of ['browser', 'audience', 'actor', 'target', 'admin-target']) {
+  const {accessToken,db}=await createValidationFixture([], {aud:variant==='audience'?['ltd']:['agency']}, variant==='actor'?{email_verified:0}:{});
+  const original=db.prepare.bind(db);
+  db.prepare=((sql:string)=>sql.includes('FROM users WHERE email')?{bind:()=>({first:async()=>({id:'target',email:variant==='admin-target'?'live-email@createsomething.ltd':'target@example.com',email_verified:variant==='target'?0:1,deleted_at:null})})}:original(sql)) as typeof db.prepare;
+  const response=await identityWorker.fetch(new Request('https://id.createsomething.space/v1/private/support-target',{
+   method:'POST',headers:{Authorization:`Bearer ${accessToken}`,...(variant==='browser'?{Origin:'https://private.createsomething.agency'}:{})},body:JSON.stringify({email:'target@example.com'})
+  }),{DB:db,ENVIRONMENT:'test',ALLOWED_ORIGINS:'',PCN_SUPPORT_ADMIN_EMAILS:'live-email@createsomething.ltd'} as never);
+  assert.ok([401,403,404].includes(response.status),variant);
+ }
+});

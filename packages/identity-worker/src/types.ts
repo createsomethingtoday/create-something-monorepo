@@ -14,6 +14,7 @@ export interface Env {
 	PUBLIC_ENROLLMENT_ENABLED?: string;
 	ENROLLMENT_ALLOWED_EMAILS?: string;
 	PCN_ENROLLMENT_ENABLED?: string;
+	PCN_SUPPORT_ADMIN_EMAILS?: string;
 	PCN_DB?: D1Database;
 	MCP_HUB_URL?: string;
 	MCP_SESSION_RESOLVE_TOKEN?: string;
