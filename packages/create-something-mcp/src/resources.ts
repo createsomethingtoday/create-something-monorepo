@@ -67,14 +67,20 @@ export function registerResources(server: McpServer) {
       mimeType: 'application/json'
     },
     async (uri) => {
+      let contract: unknown;
+      try {
       const response = await fetch(`${PRODUCTION_IDENTITY_ORIGIN}/.well-known/create-something-auth`, {
         signal: AbortSignal.timeout(5000),
         redirect: 'error'
       });
       if (!response.ok) throw new Error('Live auth discovery is unavailable.');
-      const contract = await response.json() as { issuer?: string; schema?: string };
-      if (contract.issuer !== PRODUCTION_IDENTITY_ORIGIN || contract.schema !== createAuthPlatformContract().schema)
+      const live = await response.json() as { issuer?: string; schema?: string };
+      if (live.issuer !== PRODUCTION_IDENTITY_ORIGIN || live.schema !== createAuthPlatformContract().schema)
         throw new Error('Live auth discovery returned an invalid contract.');
+      contract = live;
+      } catch {
+        contract = { ...createAuthPlatformContract(PRODUCTION_IDENTITY_ORIGIN), runtime_status: 'unavailable' };
+      }
       return { contents: [{ uri: uri.href, mimeType: 'application/json', text: JSON.stringify(contract, null, 2) }] };
     }
   );

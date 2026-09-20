@@ -39,6 +39,10 @@ globalThis.fetch = async (input) => {
 };
 const contractResource = requireResource('auth://platform/contract');
 const contract = JSON.parse((await contractResource.handler(new URL(contractResource.uri))).contents[0]!.text);
+globalThis.fetch = async () => { throw new Error('Offline fixture'); };
+const offline = JSON.parse((await contractResource.handler(new URL(contractResource.uri))).contents[0]!.text);
+assert.equal(offline.enrollment.enabled, false);
+assert.equal(offline.runtime_status, 'unavailable');
 globalThis.fetch = originalFetch;
 assert.equal(contract.enrollment.mode, 'restricted');
 assert.equal(contract.enrollment.enabled, true);
