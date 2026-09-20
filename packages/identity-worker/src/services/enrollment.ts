@@ -6,7 +6,7 @@ const reply = (body: unknown, status = 200) =>
 const unavailable = () => reply({ error: 'Account verification is temporarily unavailable.' }, 503);
 const invalid = () =>
   reply({ error: 'This verification link is invalid or expired. Request a new link.' }, 400);
-const enrollmentOpen = (env: Env) =>
+export const enrollmentOpen = (env: Env) =>
   env.PUBLIC_ENROLLMENT_ENABLED === 'true' || !!env.ENROLLMENT_ALLOWED_EMAILS?.trim();
 const emailAllowed = (env: Env, email: string) =>
   env.PUBLIC_ENROLLMENT_ENABLED === 'true' ||

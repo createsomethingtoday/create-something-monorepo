@@ -55,3 +55,18 @@ test('identity worker publishes an auth-focused OpenAPI contract', async () => {
   assert.equal(body.components.securitySchemes.bearerAuth.scheme, 'bearer');
   assert.doesNotMatch(JSON.stringify(body), /password_hash|private_key|refresh_token_value/i);
 });
+
+test('discovery distinguishes restricted enrollment without exposing mailboxes', async () => {
+  for (const [config, mode, enabled] of [
+    [{PUBLIC_ENROLLMENT_ENABLED:'false',ENROLLMENT_ALLOWED_EMAILS:'invited@example.com',RESEND_API_KEY:'test'},'restricted',true],
+    [{PUBLIC_ENROLLMENT_ENABLED:'true',RESEND_API_KEY:'test'},'public',true],
+    [{PUBLIC_ENROLLMENT_ENABLED:'false'},'disabled',false],
+    [{ENROLLMENT_ALLOWED_EMAILS:'invited@example.com'},'disabled',false]
+  ] as const) {
+    const response=await identityWorker.fetch(new Request('https://id.createsomething.space/.well-known/create-something-auth'),{...env,...config});
+    const body=await response.json() as any;
+    assert.equal(body.enrollment.enabled,enabled);
+    assert.equal(body.enrollment.mode,mode);
+    assert.doesNotMatch(JSON.stringify(body),/invited@example.com/);
+  }
+});
