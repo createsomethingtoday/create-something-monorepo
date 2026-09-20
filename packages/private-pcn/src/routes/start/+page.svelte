@@ -1,3 +1,7 @@
+<script lang="ts">
+  import Icon from '$lib/components/Icon.svelte';
+</script>
+
 <svelte:head
   ><title>What brings you here? | CREATE SOMETHING Private</title><meta
     name="robots"
@@ -13,24 +17,28 @@
   </p>
   <div class="builder-grid onboarding-choices">
     <a class="asset-card" href="/collection"
-      ><p class="eyebrow">01 / LEARN & BUILD</p>
+      ><p class="eyebrow"><Icon name="package" size={24} /> 01 / LEARN & BUILD</p>
       <h2>Use what others<br />have figured out.</h2>
       <p>
         Keep your MCP servers, agent plugins and skills in one collection, with release details and
         installation guidance.
       </p>
       <div class="card-foot">
-        <span>No network subscription required</span><span>Your collection ↗</span>
+        <span>No network subscription required</span><span
+          >Your collection <Icon name="arrow-right" /></span
+        >
       </div></a
     ><a class="asset-card" href="/dashboard"
-      ><p class="eyebrow">02 / SHARE & SELL</p>
+      ><p class="eyebrow"><Icon name="network" size={24} /> 02 / SHARE & SELL</p>
       <h2>Turn your practice<br />into useful assets.</h2>
       <p>
         Create a private network, package your techniques and prepare a storefront for your
         community.
       </p>
       <div class="card-foot">
-        <span>Draft first. Subscribe when ready.</span><span>Builder workspace ↗</span>
+        <span>Draft first. Subscribe when ready.</span><span
+          >Builder workspace <Icon name="arrow-right" /></span
+        >
       </div></a
     >
   </div>

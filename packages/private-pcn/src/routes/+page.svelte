@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Icon from '$lib/components/Icon.svelte';
   import { BOOKING_URL } from '$lib/client';
   let { data } = $props();
   import NetworkPreview from '$lib/components/NetworkPreview.svelte';
@@ -29,8 +30,12 @@
         <div class="hero-actions">
           <a class="button" href={data.selfServiceEnabled ? '/signup' : BOOKING_URL}
             >{data.selfServiceEnabled ? 'Create your network' : 'Build your network'}
-            <span aria-hidden="true">↗</span></a
-          ><a class="inline-link" href="#network-preview">Explore the possibilities ↓</a>
+            <span aria-hidden="true"
+              ><Icon name={data.selfServiceEnabled ? 'arrow-right' : 'external-link'} /></span
+            ></a
+          ><a class="inline-link" href="#network-preview"
+            >Explore the possibilities <Icon name="arrow-down" /></a
+          >
         </div>
         <p class="hero-note">
           {data.selfServiceEnabled
@@ -54,7 +59,7 @@
         <div class="field-route"><span>CURATE + PUBLISH</span></div>
         <div class="field-network">
           <div class="field-network-header">
-            <span>YOUR PRIVATE NETWORK</span><span aria-hidden="true">↗</span>
+            <span>YOUR PRIVATE NETWORK</span><Icon name="network" size={20} />
           </div>
           <strong>From working code<br />to shared understanding.</strong>
           <div class="field-topics">
@@ -96,7 +101,7 @@
           <li>Your network address, membership controls, and record export</li>
         </ul>
         <p>No automatic overage charges. Cancel renewal through your billing portal.</p>
-        <a class="button" href="/signup">Create your draft network →</a>
+        <a class="button" href="/signup">Create your draft network <Icon name="arrow-right" /></a>
         <p class="muted">
           Custom domains, migrations, and bespoke integrations are available through a separately
           scoped managed build.
@@ -164,7 +169,9 @@
         Bring your audience, a few recordings, or an idea for a network. We’ll map the experience,
         agree the scope, and build it with you.
       </p>
-      <a class="button" href={BOOKING_URL}>Build your network <span aria-hidden="true">↗</span></a>
+      <a class="button" href={BOOKING_URL}
+        >Build your network <span aria-hidden="true"><Icon name="external-link" /></span></a
+      >
     </div>
     <div class="delivery-steps">
       <article>

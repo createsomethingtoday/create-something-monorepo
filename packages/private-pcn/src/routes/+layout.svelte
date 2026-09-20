@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Icon from '$lib/components/Icon.svelte';
   import '../app.css';
   import { onMount } from 'svelte';
   import { api } from '$lib/client';
@@ -24,7 +25,9 @@
     <a href="/#network-preview">Explore networks</a><a href="/library">Library</a>
     {#if data.identity}<a href="/collection">Your collection</a><a href="/dashboard"
         >Builder workspace</a
-      >{:else}<a href="/login">Sign in <span aria-hidden="true">↗</span></a>{/if}
+      >{:else}<a href="/login"
+        >Sign in <span aria-hidden="true"><Icon name="arrow-right" /></span></a
+      >{/if}
   </nav>
 </header>
 {@render children()}

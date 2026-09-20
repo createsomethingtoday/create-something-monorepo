@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Icon from '$lib/components/Icon.svelte';
   import { safeReturnPath } from '$lib/return-path';
   import { page } from '$app/state';
   import { enrollment } from '$lib/enrollment';
@@ -84,11 +85,13 @@
       {#if error}<p class="error" role="alert">{error}</p>{/if}
       <button class="button" disabled={busy}
         >{busy ? 'Requesting link…' : 'Email verification link'}
-        <span aria-hidden="true">↗</span></button
+        <span aria-hidden="true"><Icon name="arrow-right" /></span></button
       >
     </form>
   {/if}
   <p class="muted">
-    Already have an account? <a href={`/login?next=${encodeURIComponent(next)}`}>Sign in →</a>
+    Already have an account? <a href={`/login?next=${encodeURIComponent(next)}`}
+      >Sign in <Icon name="arrow-right" /></a
+    >
   </p>
 </main>

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Icon from '$lib/components/Icon.svelte';
   import { onMount } from 'svelte';
   import { api as requestApi, type CatalogVideo } from '$lib/client';
   let { data } = $props();
@@ -101,9 +102,9 @@
   <p class="eyebrow">PRIVATE / CREATOR WORKSPACE</p>
   <h1>Publish your <em>knowledge.</em></h1>
   <p>Uploads start private and unpublished. Review processing before you choose an audience.</p>
-  <a href={libraryPath}>← Back to library</a>{#if slug}<a
+  <a href={libraryPath}><Icon name="arrow-left" /> Back to library</a>{#if slug}<a
       href={`/n/${slug}/settings`}
-      class="settings-link">Network settings and billing →</a
+      class="settings-link">Network settings and billing <Icon name="arrow-right" /></a
     >{/if}
   {#if error}<p class="notice error" role="alert">{error}</p>{/if}{#if message}<p
       class="notice"

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Icon from '$lib/components/Icon.svelte';
   import { onMount } from 'svelte';
   import { enrollment } from '$lib/enrollment';
   import { safeReturnPath } from '$lib/return-path';
@@ -60,11 +61,15 @@
   <h1>Make it<br /><em>yours.</em></h1>
   {#if !ready}<p>Reading your verification link…</p>
   {:else if verified}<p role="status">{error || 'Account verified. Opening your workspace…'}</p>
-    <a class="button" href={`/login?next=${encodeURIComponent(next)}`}>Sign in →</a>
+    <a class="button" href={`/login?next=${encodeURIComponent(next)}`}
+      >Sign in <Icon name="arrow-right" /></a
+    >
   {:else if !token}<p>
       This page needs the link from your verification email. Request a new link to continue.
     </p>
-    <a class="button" href={recovery ? '/signup?mode=recovery' : '/signup'}>Request a link →</a>
+    <a class="button" href={recovery ? '/signup?mode=recovery' : '/signup'}
+      >Request a link <Icon name="arrow-right" /></a
+    >
   {:else}
     <p>Choose a password for your CREATE SOMETHING account. This link can be used once.</p>
     <form onsubmit={submit}>
@@ -91,7 +96,8 @@
       <p class="muted">Use at least 12 characters. A long, unique passphrase works well.</p>
       {#if error}<p class="error" role="alert">{error}</p>{/if}
       <button class="button" disabled={busy}
-        >{busy ? 'Verifying…' : 'Verify and continue'} <span aria-hidden="true">↗</span></button
+        >{busy ? 'Verifying…' : 'Verify and continue'}
+        <span aria-hidden="true"><Icon name="arrow-right" /></span></button
       >
     </form>
     <p class="muted">

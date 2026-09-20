@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Icon from '$lib/components/Icon.svelte';
   import { page } from '$app/state';
   import { onMount, untrack } from 'svelte';
   import { api } from '$lib/client';
@@ -183,6 +184,7 @@
     >
   </div>
   <p class="eyebrow">
+    <Icon name={data.asset.kind} size={20} />
     {assetKinds[data.asset.kind]} / {data.owner ? data.asset.visibility : 'BUILDER ASSET'}
   </p>
   <h1 class="asset-heading">{data.asset.title}</h1>
@@ -241,14 +243,14 @@
       {#if release?.entitled}<a
           class="button"
           href={`/api/networks/${data.network!.slug}/assets/${data.asset.id}/download?release=${release.id}`}
-          >Download v{release.version} ↓</a
+          >Download v{release.version} <Icon name="download" /></a
         >
         <p class="muted">SHA-256</p>
         <code class="checksum">{release.sha256}</code>
       {:else if !data.identity}<a
           class="button"
           href={`/signup?next=${encodeURIComponent(`/n/${data.network!.slug}/assets/${data.asset.id}`)}`}
-          >Create account to continue ↗</a
+          >Create account to continue <Icon name="arrow-right" /></a
         >
         <p class="muted">
           Already a member? <a
@@ -273,7 +275,8 @@
             ? 'Confirming…'
             : data.asset.price_cents
               ? `Buy v${release.version} · ${assetPrice(data.asset.price_cents)}`
-              : 'Add release to collection'} ↗</button
+              : 'Add release to collection'}
+          <Icon name="arrow-right" /></button
         >
       {:else}<p class="availability" role="status">
           Purchasing is not available for this listing. No new payment has been started.
@@ -288,9 +291,11 @@
           {data.commerceReady
             ? 'Publish only when the release and its support policy are ready for buyers.'
             : 'Publishing is awaiting payment and delivery acceptance. Your drafts remain private.'}
-          <a href={`/n/${data.network!.slug}/seller`}>Set up seller payments →</a>
+          <a href={`/n/${data.network!.slug}/seller`}
+            >Set up seller payments <Icon name="arrow-right" /></a
+          >
         </p>{/if}
-      <a href="/collection">Your collection →</a>
+      <a href="/collection">Your collection <Icon name="arrow-right" /></a>
     </aside>
   </div>
   {#if data.owner}<section class="builder-split">
@@ -367,7 +372,7 @@
           >{/each}{#if message}<p role="status" class="availability">{message}</p>{/if}<button
           class="button"
           disabled={busy || !data.storageReady || data.releases.length >= 5}
-          >{busy ? 'Saving…' : 'Save private release'} ↗</button
+          >{busy ? 'Saving…' : 'Save private release'} <Icon name="upload" /></button
         ><button
           class="button secondary"
           type="button"

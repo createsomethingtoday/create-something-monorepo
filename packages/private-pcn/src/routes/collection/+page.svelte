@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Icon from '$lib/components/Icon.svelte';
   import { assetKinds } from '$lib/assets';
   let { data } = $props();
 </script>
@@ -18,12 +19,15 @@
   </p>
   <div class="builder-grid">
     {#each data.collection as item}<article class="asset-card">
-        <p class="eyebrow">{assetKinds[item.kind]} / v{item.version}</p>
+        <p class="eyebrow">
+          <Icon name={item.kind} size={20} />
+          {assetKinds[item.kind]} / v{item.version}
+        </p>
         <h2>{item.title}</h2>
         <p>{item.network_name}</p>
         {#if item.status === 'active'}<a
             href={`/n/${item.slug}/assets/${item.id}?release=${item.release_id}`}
-            >Open package and installation guide →</a
+            >Open package and installation guide <Icon name="arrow-right" /></a
           >{:else}<p class="availability">
             Access to this release has been revoked. Contact the builder for payment support.
           </p>{/if}
@@ -39,10 +43,12 @@
           You don’t need to create or subscribe to a network to collect assets. Private listings may
           require an invitation.
         </p>
-        <a href="/library">Browse available sessions →</a>
+        <a href="/library">Browse available sessions <Icon name="arrow-right" /></a>
       </section>{/each}
   </div>
   <p class="workspace-trail">
-    Have a technique to share? <a href="/dashboard">Create your own network →</a>
+    Have a technique to share? <a href="/dashboard"
+      >Create your own network <Icon name="arrow-right" /></a
+    >
   </p>
 </main>

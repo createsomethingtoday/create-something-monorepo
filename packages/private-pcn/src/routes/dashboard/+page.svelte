@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Icon from '$lib/components/Icon.svelte';
   import { api } from '$lib/client';
   let { data } = $props();
   let name = $state('');
@@ -35,7 +36,11 @@
     Create a home for the techniques you use and the assets behind them. Package MCP servers, agent
     plugins and skills alongside technical sessions.
   </p>
-  <p><a href="/collection">Looking for an asset you acquired? Open your collection →</a></p>
+  <p>
+    <a href="/collection"
+      >Looking for an asset you acquired? Open your collection <Icon name="arrow-right" /></a
+    >
+  </p>
   <section aria-labelledby="networks-title">
     <h2 id="networks-title">Your networks <span class="muted">({data.networks.length})</span></h2>
     {#if data.networks.length}
@@ -50,7 +55,7 @@
                 'Add a description to help members understand what belongs here.'}
             </p>
             <div class="actions">
-              <a href={`/n/${network.slug}/assets`}>Manage assets →</a><a
+              <a href={`/n/${network.slug}/assets`}>Manage assets <Icon name="arrow-right" /></a><a
                 href={`/n/${network.slug}/studio`}>Sessions</a
               ><a href={`/n/${network.slug}/settings`}>Settings</a><a href={`/n/${network.slug}`}
                 >View library</a
@@ -119,7 +124,8 @@
         </p>
         {#if message}<p class="error" role="alert">{message}</p>{/if}
         <button class="button" disabled={busy}
-          >{busy ? 'Creating…' : 'Create draft network'} <span aria-hidden="true">↗</span></button
+          >{busy ? 'Creating…' : 'Create draft network'}
+          <span aria-hidden="true"><Icon name="arrow-right" /></span></button
         >
       </form>
     </section>

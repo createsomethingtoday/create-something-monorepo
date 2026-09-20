@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Icon from '$lib/components/Icon.svelte';
   const formats = [
     {
       label: 'Engineering academy',
@@ -48,7 +49,9 @@
       {#each formats as item, index}
         <label class:chosen={selected === index}>
           <input type="radio" name="network-format" value={index} bind:group={selected} />
-          <span>{item.label}</span><span aria-hidden="true">↗</span>
+          <span>{item.label}</span><span aria-hidden="true"
+            ><Icon name={selected === index ? 'check' : 'plus'} /></span
+          >
         </label>
       {/each}
     </fieldset>
@@ -69,7 +72,7 @@
     <div class="window-bar"><span>YOUR NETWORK / PREVIEW</span><span>01—03</span></div>
     <div class="network-window-body">
       <div class="network-heading">
-        <div class="network-monogram" aria-hidden="true">↗</div>
+        <div class="network-monogram" aria-hidden="true"><Icon name="network" size={24} /></div>
         <div>
           <p class="eyebrow">INDEPENDENT KNOWLEDGE NETWORK</p>
           <h3>{name.trim() || format.name}</h3>
@@ -80,9 +83,9 @@
         <span class="eyebrow">FEATURED SERIES</span>
         <h4>{format.series}</h4>
         <div class="execution-diagram" aria-label="Build, evaluate, and share">
-          <span>BUILD</span><b aria-hidden="true">→</b><span>EVALUATE</span><b aria-hidden="true"
-            >→</b
-          ><span>SHARE</span>
+          <span>BUILD</span><b aria-hidden="true"><Icon name="arrow-right" /></b><span
+            >EVALUATE</span
+          ><b aria-hidden="true"><Icon name="arrow-right" /></b><span>SHARE</span>
         </div>
         <span class="example-label">EXAMPLE CONTENT / NOT PLAYABLE</span>
       </div>

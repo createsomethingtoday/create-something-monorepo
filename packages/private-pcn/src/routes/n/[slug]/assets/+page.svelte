@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Icon from '$lib/components/Icon.svelte';
   import { assetKinds, assetPrice } from '$lib/assets';
   import { api } from '$lib/client';
   let { data } = $props();
@@ -60,7 +61,7 @@
       <a
         class="button"
         href={`/login?next=${encodeURIComponent(`/n/${data.network!.slug}/assets`)}`}
-        >Sign in to this network →</a
+        >Sign in to this network <Icon name="arrow-right" /></a
       >
     </section>
   {:else}
@@ -84,6 +85,7 @@
           class="asset-card"
           href={`/n/${data.network!.slug}/assets/${asset.id}`}
           ><p class="eyebrow">
+            <Icon name={asset.kind} size={20} />
             {assetKinds[asset.kind]}{#if data.owner}
               / {asset.visibility}{/if}
           </p>
@@ -91,7 +93,7 @@
           <p>{asset.summary}</p>
           <div class="card-foot">
             <span>{assetPrice(asset.price_cents)}{asset.price_cents ? ' USD' : ''}</span><span
-              >Inspect asset ↗</span
+              >Inspect asset <Icon name="arrow-right" /></span
             >
           </div></a
         >
@@ -174,7 +176,7 @@
         </p>
         {#if message}<p class="error" role="alert">{message}</p>{/if}<button
           class="button"
-          disabled={busy}>{busy ? 'Saving…' : 'Create asset draft'} ↗</button
+          disabled={busy}>{busy ? 'Saving…' : 'Create asset draft'} <Icon name="plus" /></button
         >
       </form>
     </section>{/if}

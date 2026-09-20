@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Icon from '$lib/components/Icon.svelte';
   import { onMount, onDestroy } from 'svelte';
   import { api } from '$lib/client';
   import type { StripeConnectInstance } from '@stripe/connect-js';
@@ -134,7 +135,7 @@
       </p>
       <p>
         <a href="https://stripe.com/pricing" target="_blank" rel="noreferrer"
-          >Stripe processing fees ↗</a
+          >Stripe processing fees <Icon name="external-link" /></a
         >
       </p>
       <p class="muted">
@@ -142,7 +143,7 @@
         refunds, tax settings and payouts.
       </p>
       <a href="https://dashboard.stripe.com" target="_blank" rel="noreferrer"
-        >Open your Stripe Dashboard ↗</a
+        >Open your Stripe Dashboard <Icon name="external-link" /></a
       >
     </section>
     <section class="builder-panel">
@@ -164,7 +165,8 @@
         Choose where your business is based. Stripe locks the country when the account is created.
       </p>
       <button class="button" disabled={busy || !data.onboardingEnabled || !country} onclick={start}
-        >{busy ? 'Opening Stripe…' : connect ? 'Reload secure setup' : 'Open secure Stripe setup'} ↗</button
+        >{busy ? 'Opening Stripe…' : connect ? 'Reload secure setup' : 'Open secure Stripe setup'}
+        <Icon name="lock" /></button
       ><button class="button secondary" disabled={busy} onclick={refresh}>Check readiness</button
       >{#if !data.onboardingEnabled}<p class="muted">
           Seller onboarding is awaiting platform configuration. Your network and asset drafts are
@@ -185,7 +187,7 @@
     </div>{/if}
   <div bind:this={host} class="stripe-host"></div>
   <p class="workspace-trail">
-    <a href={`/n/${data.network!.slug}/assets`}>Back to your assets →</a>
+    <a href={`/n/${data.network!.slug}/assets`}><Icon name="arrow-left" /> Back to your assets</a>
   </p>
 </main>
 

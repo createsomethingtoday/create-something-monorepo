@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Icon from '$lib/components/Icon.svelte';
   import { api } from '$lib/client';
   import { invalidateAll } from '$app/navigation';
   let { data } = $props();
@@ -72,7 +73,7 @@
   /></svelte:head
 >
 <main id="main" class="form-page">
-  <a href="/dashboard">← Your networks</a>
+  <a href="/dashboard"><Icon name="arrow-left" /> Your networks</a>
   <p class="eyebrow">PRIVATE / NETWORK SETTINGS</p>
   <h1>Shape your<br /><em>network.</em></h1>
   <p class="muted">/n/{data.network?.slug} · {data.network?.status}</p>
@@ -91,9 +92,9 @@
       </p>
     </aside>{/if}
   <nav class="workspace-trail" aria-label="Builder setup">
-    <a href={`/n/${data.network?.slug}/seller`}>Seller payments →</a>
-    <a href={`/n/${data.network?.slug}/assets`}>Package an asset →</a><a
-      href={`/n/${data.network?.slug}/studio`}>Teach a technique →</a
+    <a href={`/n/${data.network?.slug}/seller`}><Icon name="payment" /> Seller payments</a>
+    <a href={`/n/${data.network?.slug}/assets`}><Icon name="package" /> Package an asset</a><a
+      href={`/n/${data.network?.slug}/studio`}><Icon name="terminal" /> Teach a technique</a
     >
   </nav>
   <form onsubmit={save}>
@@ -132,7 +133,11 @@
     <button class="button secondary" type="button" disabled={busy} onclick={loadUsage}
       >Check delivery usage</button
     >
-    <p><a href={`/api/networks/${data.network?.slug}/export`}>Download network records →</a></p>
+    <p>
+      <a href={`/api/networks/${data.network?.slug}/export`}
+        >Download network records <Icon name="download" /></a
+      >
+    </p>
     <p class="muted">
       The JSON export includes sessions, members, activity, asset metadata and release
       documentation. It does not include video files or ZIP packages. Download packages from their
@@ -164,7 +169,7 @@
           class="button secondary"
           type="button"
           disabled={busy}
-          onclick={() => billing('portal')}>Manage billing →</button
+          onclick={() => billing('portal')}>Manage billing <Icon name="arrow-right" /></button
         ><button
           class="button secondary"
           type="button"
@@ -175,7 +180,8 @@
           class="button"
           type="button"
           disabled={busy}
-          onclick={() => billing('checkout')}>Activate for $24.50/month →</button
+          onclick={() => billing('checkout')}
+          >Activate for $24.50/month <Icon name="arrow-right" /></button
         >{/if}
     </div>
     {#if !data.billingEnabled}<p class="muted">
@@ -183,8 +189,8 @@
       </p>{/if}
   </section>
   <div class="links">
-    <a href={`/n/${data.network?.slug}/studio`}>Open studio →</a><a
-      href={`/n/${data.network?.slug}`}>View library →</a
+    <a href={`/n/${data.network?.slug}/studio`}>Open studio <Icon name="arrow-right" /></a><a
+      href={`/n/${data.network?.slug}`}>View library <Icon name="arrow-right" /></a
     >
   </div>
 </main>

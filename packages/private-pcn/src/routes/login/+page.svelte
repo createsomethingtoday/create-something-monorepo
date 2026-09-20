@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Icon from '$lib/components/Icon.svelte';
   import { api } from '$lib/client';
   import { safeReturnPath } from '$lib/return-path';
   import { page } from '$app/state';
@@ -44,7 +45,8 @@
         required
       /></label
     >{#if error}<p role="alert" class="error">{error}</p>{/if}<button class="button" disabled={busy}
-      >{busy ? 'Signing in…' : 'Sign in'} <span aria-hidden="true">↗</span></button
+      >{busy ? 'Signing in…' : 'Sign in'}
+      <span aria-hidden="true"><Icon name="arrow-right" /></span></button
     >
   </form>
   <p class="muted">
@@ -56,5 +58,5 @@
       >Forgot your password?</a
     >
   </p>
-  <a href="/library">Browse public previews →</a>
+  <a href="/library">Browse public previews <Icon name="arrow-right" /></a>
 </main>

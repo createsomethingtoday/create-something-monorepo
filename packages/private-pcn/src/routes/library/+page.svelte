@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Icon from '$lib/components/Icon.svelte';
   import { onMount } from 'svelte';
   import { api as requestApi, type CatalogVideo } from '$lib/client';
   import Player from '$lib/components/Player.svelte';
@@ -54,10 +55,11 @@
     <div class="workspace-actions">
       {#if data.identity?.role === 'admin'}<a
           class="button secondary"
-          href={slug ? `/n/${slug}/studio` : '/admin'}>Creator workspace ↗</a
+          href={slug ? `/n/${slug}/studio` : '/admin'}
+          >Creator workspace <Icon name="arrow-right" /></a
         >{/if}{#if data.identity}<button class="text-button" onclick={logout}>Sign out</button
         >{:else}<a class="button secondary" href={`/login?next=${encodeURIComponent(libraryPath)}`}
-          >Member sign in ↗</a
+          >Member sign in <Icon name="arrow-right" /></a
         >{/if}
     </div>
   </div>
@@ -121,7 +123,7 @@
           ><div class="video-cover">
             <span>{video.series}</span><strong>{String(index + 1).padStart(2, '0')}</strong><span
               class="video-play"
-              aria-hidden="true">↗</span
+              aria-hidden="true"><Icon name="arrow-right" /></span
             >
           </div>
           <div class="video-caption">
