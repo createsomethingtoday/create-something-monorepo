@@ -9,7 +9,7 @@ import {
   refreshBuyerRelease,
   acquireAsset
 } from '../src/lib/server/asset-orders';
-import { ensureSeller, PLATFORM_ACCOUNT_ID } from '../src/lib/server/seller-accounts';
+import { ensureSeller, sellerCountries, PLATFORM_ACCOUNT_ID } from '../src/lib/server/seller-accounts';
 import { POST as webhook } from '../src/routes/api/commerce/webhook/+server';
 let sql: DatabaseSync, env: any, stripe: any, session: any, disputes: any[];
 const metadata = {
@@ -454,4 +454,12 @@ it('does not bypass pending purchase recovery when a builder changes the price t
     )
   ).rejects.toThrow('existing purchase');
   expect(grant()).toBeUndefined();
+});
+
+it('loads seller countries across provider pages', async () => {
+  const list = vi.fn()
+    .mockResolvedValueOnce({ data: [{ id: 'CA' }], has_more: true })
+    .mockResolvedValueOnce({ data: [{ id: 'US' }], has_more: false });
+  expect(await sellerCountries({ countrySpecs: { list } } as any)).toEqual(['CA', 'US']);
+  expect(list).toHaveBeenLastCalledWith({ limit: 100, starting_after: 'CA' });
 });

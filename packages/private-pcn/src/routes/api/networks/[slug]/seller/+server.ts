@@ -4,7 +4,7 @@ import { requireOwner } from '$lib/server/builder-assets';
 import { isSameOrigin } from '$lib/server/policy';
 import { BillingError } from '$lib/server/billing';
 import { boundedText } from '$lib/server/body';
-import { commerceStripe, readSeller, syncSeller, sellerSession } from '$lib/server/seller-accounts';
+import { commerceStripe, readSeller, syncSeller, sellerSession, sellerCountries } from '$lib/server/seller-accounts';
 export const GET: RequestHandler = async ({ locals, platform }) => {
   requireOwner(locals);
   if (!platform?.env.DB) return json({ error: 'Seller setup unavailable.' }, { status: 503 });
@@ -12,9 +12,7 @@ export const GET: RequestHandler = async ({ locals, platform }) => {
     const row = await readSeller(platform.env.DB, locals.identity!.subject);
     let countries: string[] = row?.country ? [row.country] : [];
     if (!row && platform.env.PCN_CONNECT_ENABLED === 'true') {
-      const specs = await commerceStripe(platform.env).countrySpecs.list({ limit: 100 });
-      if (specs.has_more) throw new BillingError('Country selection is temporarily unavailable.');
-      countries = specs.data.map((c) => c.id);
+      countries = await sellerCountries(commerceStripe(platform.env));
     }
     return json({
       ...(row?.account_id
