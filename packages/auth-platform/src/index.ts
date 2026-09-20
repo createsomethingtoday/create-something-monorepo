@@ -67,7 +67,7 @@ const operation = (operationId: string, summary: string, security = false) => ({
   },
 });
 
-export function createAuthPlatformContract(origin = PRODUCTION_IDENTITY_ORIGIN, options: { enrollmentEnabled?: boolean } = {}) {
+export function createAuthPlatformContract(origin = PRODUCTION_IDENTITY_ORIGIN, options: { enrollmentEnabled?: boolean; enrollmentMode?: 'public' | 'restricted' | 'disabled' } = {}) {
   const issuer = normalizeOrigin(origin);
   return {
     schema: AUTH_PLATFORM_SCHEMA,
@@ -83,7 +83,7 @@ export function createAuthPlatformContract(origin = PRODUCTION_IDENTITY_ORIGIN, 
       refresh: `${issuer}/v1/auth/refresh`, logout: `${issuer}/v1/auth/logout`,
       me: `${issuer}/v1/users/me`,
     },
-    enrollment: { enabled: options.enrollmentEnabled === true, mailbox_proof_required: true, proof_ttl_seconds: 900, direct_signup_enabled: false },
+    enrollment: { enabled: options.enrollmentEnabled === true, mode: options.enrollmentEnabled === true ? (options.enrollmentMode ?? 'public') : 'disabled', mailbox_proof_required: true, proof_ttl_seconds: 900, direct_signup_enabled: false },
     jwt: {
       algorithms: ['ES256'],
       verification: ['signature', 'issuer', 'audience', 'expiration', 'kind', 'session_version', 'email_verified'],

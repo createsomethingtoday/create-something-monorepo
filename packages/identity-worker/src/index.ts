@@ -74,7 +74,7 @@ import {
 	isOAuthRefreshFamilyActive,
 	revokeOAuthRefreshFamily,
 } from './db/queries';
-import { startEnrollment, completeEnrollment } from './services/enrollment';
+import { startEnrollment, completeEnrollment, enrollmentOpen } from './services/enrollment';
 import { sendVerificationEmail, sendDeletionConfirmationEmail } from './services/email';
 import { claimLmsMagicProof, hashMailboxMagicToken, verifyLmsMagicExchangeToken } from './services/magic-auth';
 import type { RolloutConfig } from '@create-something/policy-os-engine';
@@ -126,7 +126,9 @@ async function route(request: Request, env: Env, method: string, path: string): 
 		return json(jwks, 200, { 'Cache-Control': 'public, max-age=3600' });
 	}
 	if (path === '/.well-known/create-something-auth' && method === 'GET') {
-		return json(createAuthPlatformContract(new URL(request.url).origin, { enrollmentEnabled: env.PUBLIC_ENROLLMENT_ENABLED === 'true' && !!env.RESEND_API_KEY }), 200, {
+		const enabled = enrollmentOpen(env) && !!env.RESEND_API_KEY;
+		const contract = createAuthPlatformContract(new URL(request.url).origin, { enrollmentEnabled: enabled, enrollmentMode: env.PUBLIC_ENROLLMENT_ENABLED === 'true' ? 'public' : 'restricted' });
+		return json(contract, 200, {
 			'Cache-Control': 'public, max-age=300',
 		});
 	}

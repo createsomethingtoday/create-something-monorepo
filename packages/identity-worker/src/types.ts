@@ -12,6 +12,7 @@ export interface Env {
 	ALLOWED_ORIGINS: string;
 	RESEND_API_KEY?: string;
 	PUBLIC_ENROLLMENT_ENABLED?: string;
+	ENROLLMENT_ALLOWED_EMAILS?: string;
 	MCP_HUB_URL?: string;
 	MCP_SESSION_RESOLVE_TOKEN?: string;
 	OSO_URL?: string;

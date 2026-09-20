@@ -244,3 +244,35 @@ test('enrollment preserves buyer and seller return paths and rejects external na
     assert.ok(!f.mails[index].text.includes('evil.example'));
   }
 });
+
+test('limited enrollment proves only explicitly allowed mailboxes while public signup stays closed', async (t) => {
+  const f = fixture(t);
+  f.env.PUBLIC_ENROLLMENT_ENABLED = 'false';
+  f.env.ENROLLMENT_ALLOWED_EMAILS = ' invited@example.com ';
+  assert.equal(
+    (await startEnrollment(f.request({ email: 'other@example.com', purpose: 'signup' }), f.env))
+      .status,
+    200
+  );
+  assert.equal(f.mails.length, 0);
+  assert.equal(
+    (await startEnrollment(f.request({ email: 'INVITED@example.com', purpose: 'signup' }), f.env))
+      .status,
+    200
+  );
+  const token = f.token();
+  f.env.ENROLLMENT_ALLOWED_EMAILS = '';
+  assert.equal(
+    (await completeEnrollment(f.request({ token, password: 'limited fixture password' }), f.env))
+      .status,
+    503
+  );
+  assert.equal(f.db.prepare('SELECT COUNT(*) AS count FROM users').get()?.count, 0);
+  f.env.ENROLLMENT_ALLOWED_EMAILS = 'invited@example.com';
+  assert.equal(
+    (await completeEnrollment(f.request({ token, password: 'limited fixture password' }), f.env))
+      .status,
+    200
+  );
+  assert.equal(f.db.prepare('SELECT email_verified FROM users').get()?.email_verified, 1);
+});
