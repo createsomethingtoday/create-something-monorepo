@@ -102,13 +102,13 @@
       </p>
       <button class="button" disabled={busy || !data.trialEnabled} onclick={trial}
         >Start your free month</button
-      >{#if !data.billingEnabled}<p>Activation opens after service verification.</p>{/if}
+      >{#if !data.trialEnabled}<p>Activation opens after service verification.</p>{/if}
     </aside>{/if}
   {#if data.network?.status === 'draft'}<aside class="notice">
       <h2>Your draft is ready.</h2>
       <p>
         Choose your network’s name and access below, then prepare your first asset. Video uploads
-        require subscription activation; asset sales open after seller payment setup.
+        require an active free month or subscription; asset sales open after seller payment setup.
       </p>
     </aside>{/if}
   {#if data.network?.status === 'suspended'}<aside class="notice">

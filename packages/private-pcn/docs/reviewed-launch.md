@@ -57,3 +57,5 @@ Disable PCN_ENROLLMENT_ENABLED to stop this route, including outstanding signup 
 Audience context: Map PCN business and engineer leads (task01a0c0d4-a517-7cf3-b957-d7c1b27c90ff) separates business learners from practical engineers teaching techniques; its narrower company segment is undecided. Invitation signup does not imply a paid plan or creator approval.
 
 Creator free-month activation uses PCN_CREATOR_TRIAL_ENABLED independently of PCN_SELF_SERVICE_ENABLED (paid hosting checkout). The trial still requires an approved creator, redeemed invitation, eligible draft network and unused atomic trial entitlement. No Stripe call or automatic subscription follows activation. Turn off the trial flag to stop new activations; existing trial dates remain authoritative.
+
+Production PCN_CREATOR_TRIAL_ENABLED remains false until invited activation acceptance passes; preview enables the independent trial switch. This source release does not claim the production free month is available.
