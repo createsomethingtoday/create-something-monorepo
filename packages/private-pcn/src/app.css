@@ -86,15 +86,15 @@ textarea:focus-visible {
   margin-top: 9px;
   color: var(--muted);
 }
-nav {
+.masthead nav {
   display: flex;
   gap: 32px;
   font-size: 13px;
 }
-nav a {
+.masthead nav a {
   text-decoration: none;
 }
-nav a:hover {
+.masthead nav a:hover {
   color: var(--signal);
 }
 .eyebrow {
@@ -450,11 +450,11 @@ input[type='file'] {
   .wordmark {
     font-size: 12px;
   }
-  nav {
+  .masthead nav {
     gap: 15px;
     font-size: 11px;
   }
-  nav a:first-child {
+  .masthead nav a:first-child {
     display: none;
   }
   .lede {
@@ -998,10 +998,10 @@ input[type='file'] {
   .masthead {
     padding: 20px 24px;
   }
-  nav {
+  .masthead nav {
     gap: 15px;
   }
-  nav a:first-child {
+  .masthead nav a:first-child {
     display: none;
   }
   .wordmark {
@@ -1171,5 +1171,16 @@ input[type='file'] {
   .builder-panel,
   .asset-card {
     padding: 22px;
+  }
+}
+
+@media (max-width: 650px) {
+  .masthead {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 18px;
+  }
+  .masthead nav {
+    flex-wrap: wrap;
   }
 }

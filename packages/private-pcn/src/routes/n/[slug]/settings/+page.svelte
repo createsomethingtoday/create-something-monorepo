@@ -79,8 +79,8 @@
   {#if data.network?.status === 'draft'}<aside class="notice">
       <h2>Your draft is ready.</h2>
       <p>
-        Configure your network now. Publishing and uploads become available after subscription
-        activation.
+        Choose your network’s name and access below, then prepare your first asset. Video uploads
+        require subscription activation; asset sales open after seller payment setup.
       </p>
     </aside>{/if}
   {#if data.network?.status === 'suspended'}<aside class="notice">
@@ -90,6 +90,11 @@
         available here.
       </p>
     </aside>{/if}
+  <nav class="workspace-trail" aria-label="Builder setup">
+    <a href={`/n/${data.network?.slug}/assets`}>Package an asset →</a><a
+      href={`/n/${data.network?.slug}/studio`}>Teach a technique →</a
+    >
+  </nav>
   <form onsubmit={save}>
     <label>Network name<input bind:value={name} required maxlength="80" /></label>
     <label
@@ -108,8 +113,8 @@
       ></label
     >
     <p class="muted">
-      Switching to members only makes every existing public preview private. Switching back does not
-      republish those previews.
+      Switching to members only makes every existing public video preview private. Switching back
+      does not republish those previews.
     </p>
     {#if message}<p role={failed ? 'alert' : 'status'} class:error={failed}>{message}</p>{/if}
     <button class="button" disabled={busy}>{busy ? 'Saving…' : 'Save settings'}</button>

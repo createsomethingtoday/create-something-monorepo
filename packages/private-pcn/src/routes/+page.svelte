@@ -8,7 +8,7 @@
   <title>Private networks for agentic engineering builders | CREATE SOMETHING</title>
   <meta
     name="description"
-    content="Your own network for teaching agentic engineering. Publish technical walkthroughs, curate a video library, and choose who gets access. Built around your brand and domain."
+    content="A private home for agentic engineering builders: share techniques and package MCP servers, agent plugins and skills with the context to use them."
   />
   <link rel="canonical" href="https://private.createsomething.agency/" />
 </svelte:head>
