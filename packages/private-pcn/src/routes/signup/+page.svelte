@@ -65,8 +65,8 @@
       {recovery
         ? 'Verify your email to choose a new password for your CREATE SOMETHING account.'
         : collecting
-          ? 'Verify your email and create a password. We’ll return you to your asset. Creating an account does not purchase anything or start a network subscription.'
-          : 'One account to learn from builders, collect useful assets and share your own practice. Verify your email to get started. There is no charge to create an account. Publishing your own offerings requires creator review.'}
+          ? 'Use your invited email to verify your account and create a password. We’ll return you to your asset. Creating an account does not purchase anything or start a network subscription.'
+          : 'Private starts with an invitation. Use the email invited to a network or by an approved creator. Verify your email to learn from builders, collect useful assets or apply to teach your own practice. Account creation is free; publishing requires a separate creator review.'}
     </p>
     <form onsubmit={submit}>
       <label

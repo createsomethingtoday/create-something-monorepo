@@ -7,12 +7,40 @@ const unavailable = () => reply({ error: 'Account verification is temporarily un
 const invalid = () =>
   reply({ error: 'This verification link is invalid or expired. Request a new link.' }, 400);
 export const enrollmentOpen = (env: Env) =>
-  env.PUBLIC_ENROLLMENT_ENABLED === 'true' || !!env.ENROLLMENT_ALLOWED_EMAILS?.trim();
-const emailAllowed = (env: Env, email: string) =>
   env.PUBLIC_ENROLLMENT_ENABLED === 'true' ||
-  (env.ENROLLMENT_ALLOWED_EMAILS || '')
-    .split(',')
-    .some((entry) => entry.trim().toLowerCase() === email);
+  !!env.ENROLLMENT_ALLOWED_EMAILS?.trim() ||
+  (env.PCN_ENROLLMENT_ENABLED === 'true' && !!env.PCN_DB);
+async function emailAllowed(env: Env, email: string, now: number, purpose: string) {
+  if (
+    env.PUBLIC_ENROLLMENT_ENABLED === 'true' ||
+    (env.ENROLLMENT_ALLOWED_EMAILS || '')
+      .split(',')
+      .some((entry) => entry.trim().toLowerCase() === email)
+  )
+    return true;
+  if (env.PCN_ENROLLMENT_ENABLED !== 'true' || !env.PCN_DB) return false;
+  if (purpose === 'recovery')
+    return !!(await env.DB.prepare(
+      'SELECT 1 FROM users WHERE email=? AND deleted_at IS NULL AND email_verified=1'
+    )
+      .bind(email)
+      .first());
+  // PCN owns admission. Read current production invitation state at both steps;
+  // email proof creates an Identity only, never application access or approval.
+  const eligible = await env.PCN_DB.prepare(
+    `
+    SELECT 1 AS eligible FROM members m JOIN networks n ON n.id=m.network_id
+    WHERE m.email=? COLLATE NOCASE AND m.active=1 AND n.status='active'
+    UNION ALL
+    SELECT 1 FROM creator_invitations i JOIN creator_applications a ON a.subject=i.sponsor
+    WHERE i.recipient_email=? COLLATE NOCASE AND i.redeemed_by IS NULL
+      AND i.expires_at>? AND a.status='approved'
+    LIMIT 1`
+  )
+    .bind(email, email, now)
+    .first();
+  return !!eligible;
+}
 const origin = 'https://private.createsomething.agency';
 async function body(request: Request): Promise<Record<string, unknown>> {
   const reader = request.body?.getReader();
@@ -83,7 +111,11 @@ export async function startEnrollment(request: Request, env: Env): Promise<Respo
       success: true,
       message: 'If this address can receive account verification, a link will arrive shortly.'
     });
-  if (!emailAllowed(env, email)) return accepted();
+  try {
+    if (!(await emailAllowed(env, email, now, String(purpose)))) return accepted();
+  } catch {
+    return unavailable();
+  }
   if (!(await allowed(env, `email:${email}`, 3, now))) return accepted();
   // Bounded expiry cleanup contains no plaintext tokens and never deletes live proof.
   await env.DB.batch([
@@ -162,7 +194,11 @@ export async function completeEnrollment(request: Request, env: Env): Promise<Re
     .bind(digest, now)
     .first<{ email: string; purpose: 'signup' | 'recovery' }>();
   if (!proof) return invalid();
-  if (!emailAllowed(env, proof.email)) return unavailable();
+  try {
+    if (!(await emailAllowed(env, proof.email, now, proof.purpose))) return unavailable();
+  } catch {
+    return unavailable();
+  }
   const password = await hashPassword(input.password);
   // Compare-and-set is the replay boundary, including concurrent completions.
   const claimed = await env.DB.prepare(
