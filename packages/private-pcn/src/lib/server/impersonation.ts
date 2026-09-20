@@ -20,7 +20,8 @@ export async function digest(value: string) {
   ).join('');
 }
 export async function liveTarget(event: RequestEvent, email: string) {
-  const response = await event.fetch('https://id.createsomething.space/v1/private/support-target', {
+  // SvelteKit event.fetch inherits Origin; the deputy intentionally rejects browser requests.
+  const response = await fetch('https://id.createsomething.space/v1/private/support-target', {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${event.cookies.get('__Host-pcn_access') || ''}`,
@@ -90,7 +91,7 @@ export async function applyImpersonation(
     response: event.url.pathname.startsWith('/api/')
       ? json({ error: message }, { status })
       : new Response(
-          '<!doctype html><html lang="en"><meta name="viewport" content="width=device-width"><title>Support session | Private</title><main><h1>Support session needs attention</h1><p>' +
+          '<!doctype html><html lang="en"><meta name="viewport" content="width=device-width"><title>Support session | Private</title><style>body{margin:0;background:#080a08;color:#f4f4ef;font:18px/1.6 system-ui,sans-serif}main{max-width:640px;margin:10vh auto;padding:24px}h1{font-size:clamp(32px,6vw,56px);line-height:1.1;font-weight:500}a{display:inline-block;color:#131b18;background:#dce8f3;padding:14px 24px;margin-top:20px;text-decoration:none}a:focus-visible{outline:3px solid #b9cd80;outline-offset:5px}</style><main><p>CREATE SOMETHING / PRIVATE</p><h1>Support session needs attention</h1><p>' +
             message +
             '</p><a href="/support-session">Return to administrator</a></main></html>',
           {
