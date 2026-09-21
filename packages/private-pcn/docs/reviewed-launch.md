@@ -70,3 +70,11 @@ Preview acceptance verified creator publication, a separate buyer’s free entit
 
 ## Impact retention deployment
 Apply migration0013 before deploying the impact report and the separate cron-only retention Worker. Deploy the scheduled Worker with `node ../../scripts/run-wrangler.mjs deploy --config wrangler.retention.jsonc --env preview` (preview) or `--env ''` (production). It has no HTTP route, workers.dev endpoint or secrets; each environment binds only its own PCN database. Daily cleanup removes expired platform, customer and network engagement aggregates independently of application traffic. Request-path cleanup remains an additional opportunistic pass. Verify the configured trigger and a real scheduled execution. Keep this worker running if rolling back the reporting UI; the additive table and retention are backward compatible.
+
+## Support delivery receipts
+
+Company-support fulfillment is tracked separately from payment settlement. Each paid Stripe billing period has 180 included minutes. PRIVATE records server-timed intervals only after an accepted request; the partner confirms both participants are ready before starting. Either participant may pause. Only one timer per partner may run. A timer is bounded by the accepted session window and the verified paid period. It does not observe RustDesk/Zoom connection state, disconnect a device, or prove useful work.
+
+Ending a timed session requires an outcome. The buyer confirms or disputes its time and outcome. Only confirmed seconds count toward delivered hours; pending and disputed time are shown separately. Disputed receipts require CREATE SOMETHING follow-up and are never silently approved. Immutable audit events retain actors, period boundaries, timer transitions, outcome and receipt decisions. Old sessions receive no inferred credit. Missing billing-period starts require provider reconciliation, never a guessed thirty-day period.
+
+This ledger does not prorate or withhold partner payouts, charge overages, or grant support hours with asset purchases. Existing payout and refund policies remain in force. Deploy migrations 0020 and 0021 before the Worker. Roll back code if necessary while retaining the additive schema and audit records.

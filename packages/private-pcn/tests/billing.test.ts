@@ -98,7 +98,14 @@ function subscription(status = 'active') {
     cancel_at_period_end: false,
     cancel_at: null as number | null,
     items: {
-      data: [{ price, quantity: 1, current_period_end: Math.floor(Date.now() / 1000) + 3600 }]
+      data: [
+        {
+          price,
+          quantity: 1,
+          current_period_start: Math.floor(Date.now() / 1000) - 3600,
+          current_period_end: Math.floor(Date.now() / 1000) + 3600
+        }
+      ]
     }
   };
 }
@@ -116,7 +123,8 @@ beforeEach(() => {
     '0004_subscriptions',
     '0008_creator_admission',
     '0010_company_support',
-    '0016_support_settlements'
+    '0016_support_settlements',
+    '0020_billing_period_start'
   ])
     sqlite.exec(readFileSync(new URL(`../migrations/${migration}.sql`, import.meta.url), 'utf8'));
   sqlite
@@ -242,6 +250,7 @@ describe('billing lifecycle against migrated SQLite (supporting proof)', () => {
     stripe.subscriptions.list.mockResolvedValue({ data: [sub], has_more: false });
     const row = await refreshBilling(env, network, stripe);
     expect(row.period_end).toBe(sub.items.data[0].current_period_end);
+    expect(row.period_start).toBe(sub.items.data[0].current_period_start);
     expect(row.cancel_at_period_end).toBe(0);
     expect(await paidAccess(env, network)).toBe(true);
   });

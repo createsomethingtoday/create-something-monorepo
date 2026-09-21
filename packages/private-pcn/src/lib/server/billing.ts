@@ -29,6 +29,7 @@ export interface BillingRow {
   checkout_key: string;
   status: string;
   period_end: number;
+  period_start: number;
   checked_at: number;
   cancel_at_period_end: number;
   lease_id: string | null;
@@ -218,7 +219,7 @@ async function synchronize(
     db,
     network.id,
     lease,
-    'subscription_id=?,status=?,period_end=?,checked_at=?,cancel_at_period_end=?',
+    'subscription_id=?,status=?,period_end=?,period_start=?,checked_at=?,cancel_at_period_end=?',
     [
       subscription.id,
       subscription.pause_collection
@@ -227,6 +228,7 @@ async function synchronize(
           ? 'payment_pending'
           : subscription.status,
       periodEnd,
+      item.current_period_start || 0,
       seconds(),
       cancellationScheduled ? 1 : 0
     ]

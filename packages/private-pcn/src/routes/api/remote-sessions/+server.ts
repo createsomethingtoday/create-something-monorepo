@@ -1,3 +1,10 @@
+import {
+  elapsedSql,
+  expireTimers,
+  supportLedger,
+  timeAction,
+  type TimedSession
+} from '$lib/server/support-time';
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { boundedText } from '$lib/server/body';
@@ -55,13 +62,15 @@ export const GET: RequestHandler = async ({ locals, platform }) => {
     return json({ error: 'Sign in to view support sessions.' }, { status: 401 });
   if (locals.impersonation)
     return json({ error: 'Use your own account for remote support.' }, { status: 403 });
+  await expireTimers(platform.env.DB, locals.identity.subject, Math.floor(Date.now() / 1000));
   const { results: sessions } = await platform.env.DB.prepare(
-    'SELECT s.*,n.name,n.slug FROM remote_sessions s JOIN networks n ON n.id=s.network_id WHERE s.buyer_id=? OR s.creator_id=? ORDER BY s.created_at DESC LIMIT 100'
+    'SELECT s.*,n.name,n.slug,n.kind FROM remote_sessions s JOIN networks n ON n.id=s.network_id WHERE s.buyer_id=? OR s.creator_id=? ORDER BY s.created_at DESC LIMIT 100'
   )
     .bind(locals.identity.subject, locals.identity.subject)
     .all();
   return json({
     sessions,
+    ledger: await supportLedger(platform.env.DB, locals.identity.subject),
     subject: locals.identity.subject,
     enabled: platform.env.PCN_REMOTE_SESSIONS_ENABLED === 'true'
   });
@@ -85,6 +94,7 @@ export const POST: RequestHandler = async ({ locals, platform, request }) => {
     return json({ error: 'Invalid session request.' }, { status: 400 });
   }
   const now = Math.floor(Date.now() / 1000);
+  await expireTimers(db, subject, now);
   if (b?.action === 'request') {
     if (
       typeof b.network !== 'string' ||
@@ -150,16 +160,12 @@ export const POST: RequestHandler = async ({ locals, platform, request }) => {
   const row = await db
     .prepare('SELECT * FROM remote_sessions WHERE id=? AND (buyer_id=? OR creator_id=?)')
     .bind(b.id, subject, subject)
-    .first<{
-      id: string;
-      network_id: string;
-      buyer_id: string;
-      creator_id: string;
-      method: string;
-      status: string;
-      expires_at: number;
-    }>();
+    .first<TimedSession>();
   if (!row) return json({ error: 'Session not found.' }, { status: 404 });
+  if (['time_start', 'time_pause', 'time_confirm', 'time_dispute'].includes(b.action))
+    return timeAction(db, row, subject, b, now, () =>
+      relationship(env, row.network_id, row.buyer_id)
+    );
   if (b.action === 'accept') {
     if (subject !== row.creator_id || row.expires_at <= now)
       return json(
@@ -212,11 +218,19 @@ export const POST: RequestHandler = async ({ locals, platform, request }) => {
       return json({ error: 'Only the creator can decline.' }, { status: 403 });
     if (typeof b.outcome !== 'string' || b.outcome.length > 4000)
       return json({ error: 'Provide a short outcome without credentials.' }, { status: 400 });
+    if (
+      (row.tracked_seconds > 0 || row.timer_started_at !== null) &&
+      (b.action !== 'end' || b.outcome.trim().length < 10)
+    )
+      return json(
+        { error: 'Describe the work and verification before submitting time for buyer review.' },
+        { status: 400 }
+      );
     const result = await db
       .prepare(
-        "UPDATE remote_sessions SET status=?,outcome=?,updated_by=?,updated_at=? WHERE id=? AND status IN ('requested','accepted')"
+        `UPDATE remote_sessions SET tracked_seconds=${elapsedSql},timer_started_at=NULL,receipt_status=CASE WHEN support_period_start IS NOT NULL THEN 'pending' ELSE 'none' END,status=?,outcome=?,updated_by=?,updated_at=? WHERE id=? AND status IN ('requested','accepted')`
       )
-      .bind(b.action === 'end' ? 'ended' : 'declined', b.outcome.trim(), subject, now, row.id)
+      .bind(now, b.action === 'end' ? 'ended' : 'declined', b.outcome.trim(), subject, now, row.id)
       .run();
     return result.meta.changes > 0
       ? json({ success: true })
