@@ -9,7 +9,7 @@ import urllib.request
 import zipfile
 
 SOURCE = Path(__file__).resolve().parent / 'client'
-DEST = Path.home() / '.codex/artifacts/rustdesk-grant-production'
+DEST = Path.home() / '.codex/artifacts/client-support/apple-silicon'
 KIT = DEST / 'CREATE-SOMETHING-Support-Apple-Silicon'
 DMG = 'rustdesk-1.4.9-aarch64.dmg'
 SHA = 'f7935597b247d42c8f2a2ed71176a9f5868018cd9e1a33b8096418a668c8caf0'
