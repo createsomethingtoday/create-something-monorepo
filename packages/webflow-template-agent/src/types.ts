@@ -26,6 +26,10 @@ export interface Env {
   CF_ANALYTICS_API_TOKEN?: string;
   SLACK_WEBHOOK_URL?: string;
   TELEMETRY_READ_KEY?: string;
+  // Snapshot publishing: the digest routine's sandbox can only reach
+  // raw.githubusercontent.com, so the hourly cron commits the summary there.
+  GITHUB_SNAPSHOT_TOKEN?: string;
+  GITHUB_SNAPSHOT_REPO?: string;
 }
 
 // ── Chat protocol (client <-> agent worker) ──────────────────────────────────

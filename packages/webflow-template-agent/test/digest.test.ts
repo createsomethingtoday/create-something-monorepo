@@ -172,6 +172,117 @@ describe('keysEqual', () => {
   });
 });
 
+describe('publishSnapshot', () => {
+  const summary = {
+    generated_at: '2026-08-03T14:05:00.000Z',
+    window_24h: {
+      turns_settled: 76,
+      turns_failed: 0,
+      turns_denied: {},
+      sessions_minted: 47,
+      sessions_rejected: 0,
+      spend_usd: 19.0514,
+    },
+    window_7d: { turns_settled: 556, turns_failed: 0, spend_usd: 138.3769 },
+    daily_budget_usd: 40,
+  };
+
+  it('no-ops without a token so the alert scan still runs', async () => {
+    const { publishSnapshot } = await import('../src/digest.js');
+    const fetcher = vi.fn();
+    expect(await publishSnapshot(makeEnv(), summary, fetcher as unknown as typeof fetch)).toBe(false);
+    expect(fetcher).not.toHaveBeenCalled();
+  });
+
+  it('commits the summary with the current blob sha and leaks no secrets', async () => {
+    const { publishSnapshot } = await import('../src/digest.js');
+    const fetcher = vi.fn(async (_url: string, init?: RequestInit) => {
+      if (init?.method === 'PUT') return new Response('{}', { status: 200 });
+      return new Response(JSON.stringify({ sha: 'blob-sha-1' }), { status: 200 });
+    });
+
+    const env = makeEnv({ GITHUB_SNAPSHOT_TOKEN: 'ghp-must-not-appear', GITHUB_SNAPSHOT_REPO: 'owner/repo' });
+    expect(await publishSnapshot(env, summary, fetcher as unknown as typeof fetch)).toBe(true);
+
+    const put = fetcher.mock.calls.find(([, init]) => (init as RequestInit)?.method === 'PUT');
+    expect(String(put?.[0])).toBe('https://api.github.com/repos/owner/repo/contents/summary.json');
+    const body = JSON.parse(String((put?.[1] as RequestInit)?.body));
+    expect(body.sha).toBe('blob-sha-1');
+    expect(JSON.parse(atob(body.content)).window_24h.turns_settled).toBe(76);
+    expect(body.content).not.toContain('ghp-must-not-appear');
+  });
+
+  it('creates the file when it does not exist yet', async () => {
+    const { publishSnapshot } = await import('../src/digest.js');
+    const fetcher = vi.fn(async (_url: string, init?: RequestInit) => {
+      if (init?.method === 'PUT') return new Response('{}', { status: 201 });
+      return new Response('Not Found', { status: 404 });
+    });
+
+    await publishSnapshot(
+      makeEnv({ GITHUB_SNAPSHOT_TOKEN: 'ghp' }),
+      summary,
+      fetcher as unknown as typeof fetch,
+    );
+
+    const put = fetcher.mock.calls.find(([, init]) => (init as RequestInit)?.method === 'PUT');
+    expect(JSON.parse(String((put?.[1] as RequestInit)?.body)).sha).toBeUndefined();
+  });
+
+  it('throws on a rejected write so the caller can log it', async () => {
+    const { publishSnapshot } = await import('../src/digest.js');
+    const fetcher = vi.fn(async (_url: string, init?: RequestInit) =>
+      init?.method === 'PUT' ? new Response('nope', { status: 403 }) : new Response(JSON.stringify({ sha: 'x' })),
+    );
+    await expect(
+      publishSnapshot(makeEnv({ GITHUB_SNAPSHOT_TOKEN: 'ghp' }), summary, fetcher as unknown as typeof fetch),
+    ).rejects.toThrow('403');
+  });
+
+  it('publishes on the hourly scan without breaking alert delivery', async () => {
+    const fetcher = vi.fn(async (url: string, init?: RequestInit) => {
+      if (String(url).includes('analytics_engine')) {
+        return aeResponse([{ type: 'turn_settled', reason: '', n: '76', micro_usd: '19051400' }]);
+      }
+      if (String(url).includes('api.github.com')) {
+        return init?.method === 'PUT'
+          ? new Response('{}', { status: 200 })
+          : new Response(JSON.stringify({ sha: 'blob-sha-1' }), { status: 200 });
+      }
+      return new Response('ok', { status: 200 });
+    });
+
+    await runScheduled(
+      { cron: ALERT_SCAN_CRON } as ScheduledController,
+      makeEnv({ GITHUB_SNAPSHOT_TOKEN: 'ghp' }),
+      fetcher as unknown as typeof fetch,
+    );
+
+    const put = fetcher.mock.calls.find(([, init]) => (init as RequestInit)?.method === 'PUT');
+    expect(JSON.parse(atob(JSON.parse(String((put?.[1] as RequestInit)?.body)).content)).window_24h.turns_settled).toBe(76);
+  });
+
+  it('keeps scanning alerts when GitHub fails', async () => {
+    const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const fetcher = vi.fn(async (url: string) => {
+      if (String(url).includes('analytics_engine')) return aeResponse([]);
+      if (String(url).includes('api.github.com')) return new Response('boom', { status: 500 });
+      return new Response('ok', { status: 200 });
+    });
+
+    await runScheduled(
+      { cron: ALERT_SCAN_CRON } as ScheduledController,
+      makeEnv({ GITHUB_SNAPSHOT_TOKEN: 'ghp', SLACK_WEBHOOK_URL: 'https://hooks.slack.test/T/B/x' }),
+      fetcher as unknown as typeof fetch,
+    );
+
+    expect(log.mock.calls.some(([line]) => String(line).includes('snapshot publish failed'))).toBe(true);
+    // A1 zero-traffic still reached Slack.
+    expect(fetcher.mock.calls.some(([url]) => String(url).includes('hooks.slack.test'))).toBe(true);
+    log.mockRestore();
+  });
+});
+
 describe('buildSummary', () => {
   it('returns aggregate windows and budget without secrets', async () => {
     const { buildSummary } = await import('../src/digest.js');
@@ -190,5 +301,54 @@ describe('buildSummary', () => {
     expect(summary.window_24h.spend_usd).toBeCloseTo(12.2166, 3);
     expect(summary.daily_budget_usd).toBe(40);
     expect(JSON.stringify(summary)).not.toContain('token-must-not-appear');
+  });
+});
+
+
+describe('snapshot recovery safety', () => {
+  it.each([401, 403, 429, 500])('never writes after GitHub read status %s', async (status) => {
+    const { publishSnapshot } = await import('../src/digest.js');
+    const fetcher = vi.fn().mockResolvedValue(new Response('unavailable', { status }));
+    await expect(publishSnapshot(makeEnv({ GITHUB_SNAPSHOT_TOKEN: 'fixture' }), {} as any, fetcher))
+      .rejects.toThrow(String(status));
+    expect(fetcher).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([{}, { sha: '' }, { sha: 42 }])('rejects an invalid existing-file response %j without writing', async (payload) => {
+    const { publishSnapshot } = await import('../src/digest.js');
+    const fetcher = vi.fn().mockResolvedValue(new Response(JSON.stringify(payload)));
+    await expect(publishSnapshot(makeEnv({ GITHUB_SNAPSHOT_TOKEN: 'fixture' }), {} as any, fetcher))
+      .rejects.toThrow('blob SHA');
+    expect(fetcher).toHaveBeenCalledTimes(1);
+  });
+
+  it('rejects a repository URL before sending credentials', async () => {
+    const { publishSnapshot } = await import('../src/digest.js');
+    const fetcher = vi.fn();
+    await expect(publishSnapshot(makeEnv({ GITHUB_SNAPSHOT_TOKEN: 'fixture', GITHUB_SNAPSHOT_REPO: 'https://example.test/repo' }), {} as any, fetcher))
+      .rejects.toThrow('Invalid snapshot repository');
+    expect(fetcher).not.toHaveBeenCalled();
+  });
+
+  it('a failed 7-day snapshot query does not suppress hourly alerts', async () => {
+    const calls: string[] = [];
+    const fetcher = vi.fn(async (url: string | URL | Request, init?: RequestInit) => {
+      calls.push(String(url));
+      if (String(url).includes('analytics_engine')) {
+        if (String(init?.body).includes("INTERVAL '168' HOUR")) return new Response('fail', { status: 500 });
+        return aeResponse([]);
+      }
+      return new Response('{}');
+    });
+    await runScheduled({ cron: ALERT_SCAN_CRON } as ScheduledController,
+      makeEnv({ GITHUB_SNAPSHOT_TOKEN: 'fixture', SLACK_WEBHOOK_URL: 'https://hooks.slack.test/fixture' }), fetcher);
+    expect(calls.some((url) => url.includes('hooks.slack.test'))).toBe(true);
+    expect(calls.some((url) => url.includes('api.github.com'))).toBe(false);
+  });
+
+  it('a disabled publisher performs only the original three hourly queries', async () => {
+    const fetcher = vi.fn().mockImplementation(async () => aeResponse([]));
+    await runScheduled({ cron: ALERT_SCAN_CRON } as ScheduledController, makeEnv(), fetcher);
+    expect(fetcher).toHaveBeenCalledTimes(3);
   });
 });

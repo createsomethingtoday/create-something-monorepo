@@ -1,0 +1,30 @@
+name: Webflow component and telemetry contracts
+on:
+  pull_request:
+    paths:
+      - 'packages/webflow-components/**'
+      - 'packages/webflow-template-agent/**'
+      - '.github/workflows/webflow-recovery-contracts.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'packages/webflow-components/**'
+      - 'packages/webflow-template-agent/**'
+      - '.github/workflows/webflow-recovery-contracts.yml'
+permissions:
+  contents: read
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+        with:
+          version: 9.15.0
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: '22'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @create-something/webflow-components check
+      - run: pnpm --filter @create-something/webflow-template-agent check

@@ -16,13 +16,28 @@ cd packages/webflow-components
 npm install
 ```
 
+## Cato source authority
+
+Cato's delivery source is [createsomethingtoday/cato-webflow-components](https://github.com/createsomethingtoday/cato-webflow-components).
+The monorepo Cato components and retained June snapshot are historical copies.
+The standalone repository contains later CMS hydration, team ordering, navigation,
+and author-layout work; do not recover an older copy by sharing it over that library.
+The monorepo share preflight rejects any manifest that resolves Cato components,
+including a catch-all manifest. Use a scoped non-Cato manifest for other libraries.
+Local bundling remains available for historical comparison; it is not a share.
+
 ## Publish to Webflow
 
+Use the guarded, scoped script for an approved Marketplace share. From the repository root:
+
 ```bash
-npx webflow library share
+WEBFLOW_LIBRARY_SHARE_APPROVED=1 infisical run --env=prod --path=/webflow/template-marketplace -- pnpm --dir packages/webflow-components run share:marketplace
 ```
 
-This will prompt for Workspace authentication and upload the component library.
+This resolves the Marketplace manifest, rejects Cato/internal components, checks source
+freshness, and uses the Marketplace workspace credential. Direct `webflow library share`
+bypasses these guards. The catch-all `share` and historical `share:cato` commands are blocked
+because their manifests include superseded Cato source.
 
 ## Verify Locally
 
@@ -241,7 +256,7 @@ Business logic components are designed to work with static Webflow props first. 
 
 ### Cato Supply (Group: Cato Supply)
 
-These components are based on the exported project at `/Users/micahjohnson/Downloads/cato-supply.webflow` and are meant to replace the slow native/MCP delivery path for the remaining Cato surfaces.
+This is a historical inventory of the monorepo copy. Current Cato components, client content, and delivery instructions belong to the standalone repository linked above; the historical contracts below are not current promotion instructions.
 
 | Component | Description | Key Props |
 |-----------|-------------|-----------|
@@ -272,18 +287,19 @@ The endpoint may return an array directly or an object containing `people`, `ite
 
 #### Cato-Specific Webflow Library
 
-Use `webflow.cato.json` when sharing Cato-only components into the Cato Supply workspace. This creates or updates the `Cato Supply Components` library with the stable library ID `cato-supply-components` and includes only `src/components/cato/**/*.webflow.*` declarations, including the restored `Cato Navigation` declaration.
+The historical `webflow.cato.json` identifies the `Cato Supply Components` library
+(`cato-supply-components`). It is retained only for local comparison:
 
 ```bash
 pnpm --dir packages/webflow-components run bundle:cato
-pnpm --dir packages/webflow-components run share:cato
 ```
 
-The `share:cato` script intentionally clears `WEBFLOW_WORKSPACE_API_TOKEN` so the Webflow CLI opens the workspace-selection OAuth flow. Select **Cato Supply** in the browser prompt. Do not rely on the package `.env` token unless it was just verified to resolve to `workspace/cato-supply`.
+Sharing from this package is blocked. Follow the standalone repository's reviewed
+source and delivery workflow for current Cato work.
 
-#### Cato Insights CMS Archive Build
+#### Historical Cato Insights CMS Archive Contract
 
-Use a public cache endpoint for live CMS archives. The Code Component should never call the authenticated Webflow API directly from the browser.
+The historical implementation used a public cache endpoint rather than authenticated Webflow API calls in the browser. The following records that implementation; verify current configuration in the standalone source before any delivery.
 
 1. Deploy the Cato Insights CMS Worker from `packages/agency/clients/cato-supply-insights-review`.
 2. Set the component `Items Endpoint URL` to `/api/cato/insights` on the Worker route, or pass a filtered URL such as `/api/cato/insights?category=newsroom`.
