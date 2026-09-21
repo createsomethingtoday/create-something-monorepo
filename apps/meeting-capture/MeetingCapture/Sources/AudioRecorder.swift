@@ -362,8 +362,23 @@ enum AudioFileMixer {
     }
 }
 
-private final class MicrophoneAudioRecorder: NSObject, AVAudioRecorderDelegate, MicrophoneAudioRecording {
-    private var recorder: AVAudioRecorder?
+protocol MicrophoneRecordingDevice: AnyObject {
+    var delegate: AVAudioRecorderDelegate? { get set }
+    var deviceCurrentTime: TimeInterval { get }
+    func prepareToRecord() -> Bool
+    func record(atTime: TimeInterval) -> Bool
+    func stop()
+}
+
+extension AVAudioRecorder: MicrophoneRecordingDevice {}
+
+final class MicrophoneAudioRecorder: NSObject, AVAudioRecorderDelegate, MicrophoneAudioRecording {
+    private let makeRecorder: (URL, [String: Any]) throws -> MicrophoneRecordingDevice
+    init(makeRecorder: @escaping (URL, [String: Any]) throws -> MicrophoneRecordingDevice = { try AVAudioRecorder(url: $0, settings: $1) }) {
+        self.makeRecorder = makeRecorder
+        super.init()
+    }
+    private var recorder: MicrophoneRecordingDevice?
     private var outputURL: URL?
     private(set) var startHostTime: CMTime?
 
@@ -373,6 +388,16 @@ private final class MicrophoneAudioRecorder: NSObject, AVAudioRecorderDelegate, 
         let filename = "\(meetingId).m4a"
         let url = tempDir.appendingPathComponent(filename)
         outputURL = url
+        var started = false
+        defer {
+            if !started {
+                recorder?.stop()
+                recorder = nil
+                outputURL = nil
+                startHostTime = nil
+                try? FileManager.default.removeItem(at: url)
+            }
+        }
 
         try? FileManager.default.removeItem(at: url)
 
@@ -384,7 +409,7 @@ private final class MicrophoneAudioRecorder: NSObject, AVAudioRecorderDelegate, 
         ]
 
         do {
-            let audioRecorder = try AVAudioRecorder(url: url, settings: settings)
+            let audioRecorder = try makeRecorder(url, settings)
             audioRecorder.delegate = self
             recorder = audioRecorder
 
@@ -395,16 +420,15 @@ private final class MicrophoneAudioRecorder: NSObject, AVAudioRecorderDelegate, 
             let leadTime = 0.1
             if audioRecorder.record(atTime: deviceNow + leadTime) {
                 startHostTime = CMTime(seconds: (hostBefore + hostAfter) / 2 + leadTime, preferredTimescale: 1_000_000_000)
+                started = true
                 print("Microphone recording started: \(url.path)")
                 return true
             }
 
             print("Failed to start microphone recording")
-            recorder = nil
             return false
         } catch {
             print("Failed to create microphone recorder: \(error)")
-            recorder = nil
             return false
         }
     }
