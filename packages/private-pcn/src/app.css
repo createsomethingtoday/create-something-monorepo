@@ -1268,18 +1268,23 @@ input[type='file'] {
    Every state also has a label and icon; color never grants access or proves skill. */
 [data-tone='neutral'] {
   --state-color: var(--muted);
+  --state-mark: var(--muted);
 }
 [data-tone='info'] {
   --state-color: var(--state-info);
+  --state-mark: var(--state-info);
 }
 [data-tone='success'] {
   --state-color: var(--state-success);
+  --state-mark: var(--color-performance-success);
 }
 [data-tone='warning'] {
   --state-color: var(--state-warning);
+  --state-mark: var(--color-performance-warning);
 }
 [data-tone='error'] {
   --state-color: var(--state-error);
+  --state-mark: var(--color-performance-error);
 }
 .state-badge {
   display: inline-flex;
@@ -1303,7 +1308,7 @@ input[type='file'] {
   padding: var(--space-performance-sm) var(--space-performance-md);
   color: var(--state-color);
   border: 1px solid var(--line);
-  border-inline-start: 3px solid var(--state-color);
+  border-inline-start: 3px solid var(--state-mark);
   background: color-mix(in srgb, var(--state-color) 6%, var(--color-performance-ink));
   line-height: 1.6;
   overflow-wrap: anywhere;
@@ -1337,4 +1342,9 @@ input[type='file'] {
   .state-notice {
     border-color: CanvasText;
   }
+}
+
+.state-badge .pcn-icon,
+.state-notice > span:first-child {
+  color: var(--state-mark);
 }
