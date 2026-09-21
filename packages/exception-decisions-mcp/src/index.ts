@@ -1144,7 +1144,16 @@ export default {
           { status: decider ? 403 : 401, headers: JSON_HEADERS },
         );
       }
-      const body = (await request.json().catch(() => ({}))) as { dry_run?: unknown; cap?: unknown };
+      let body: { dry_run?: unknown; cap?: unknown };
+      try {
+        const parsed: unknown = await request.json();
+        if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) throw new Error("object required");
+        body = parsed as typeof body;
+        if (body.dry_run !== undefined && typeof body.dry_run !== "boolean") throw new Error("boolean required");
+        if (body.cap !== undefined && (typeof body.cap !== "number" || !Number.isSafeInteger(body.cap) || body.cap < 0)) throw new Error("nonnegative integer required");
+      } catch {
+        return new Response(JSON.stringify({ ok: false, error: { code: "INVALID_REQUEST", message: "Expected a JSON object with optional boolean dry_run and nonnegative integer cap." } }), { status: 400, headers: JSON_HEADERS });
+      }
       const receipt = await runRecommendationPass(env, {
         dryRun: body.dry_run === true,
         cap: typeof body.cap === "number" ? body.cap : undefined,

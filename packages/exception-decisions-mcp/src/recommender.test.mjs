@@ -298,6 +298,16 @@ describe("recommendation lane (cron)", () => {
     assert.equal(automation.status, 200);
   });
 
+  it("rejects malformed manual requests before any network work", async () => {
+    globalThis.fetch = async () => { throw new Error("No network permitted"); };
+    for (const body of ["{", "null", "[]", '{"dry_run":"true"}', '{"cap":-1}', '{"cap":1.5}']) {
+      const response = await worker.fetch(new Request("https://x/runs/recommend", {
+        method: "POST", headers: { Authorization: `Bearer ${OPERATOR_KEY}`, "Content-Type": "application/json" }, body,
+      }), env);
+      assert.equal(response.status, 400);
+    }
+  });
+
   it("health reports the recommendation lane configuration", async () => {
     const response = await worker.fetch(new Request("https://x/health"), env);
     const body = await response.json();
