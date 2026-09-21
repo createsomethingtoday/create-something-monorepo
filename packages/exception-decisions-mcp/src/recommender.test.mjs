@@ -483,3 +483,17 @@ it("stamps authoritative confidence, ruleset, and run metadata in the persisted 
   const runDate=receipt.ran_at.slice(0,16).replace(":","");
   assert.ok(note.includes(`[confidence 0.9 · Ruleset v1 · dify run ${runDate}]`));
 });
+
+for (const cap of [0, 1]) {
+  it(`stops model inference when the run cap ${cap} is exhausted`, async () => {
+    const patches=[],difyCalls=[];
+    globalThis.fetch=makeAirtable({patches,difyCalls,leans:{
+      recTechNew:{recommendation:"deny",confidence:0.9,route:null,notes:"A yes means accepting the documented technical finding for this app."},
+      recLowConf:{recommendation:"approve",confidence:0.9,route:null,notes:"A yes means accepting the documented technical finding for this app."}
+    }});
+    const receipt=await runRecommendationPass(env,{dryRun:true,cap});
+    assert.equal(difyCalls.length,cap);
+    assert.equal(receipt.written.length,cap);
+    assert.equal(patches.length,0);
+  });
+}

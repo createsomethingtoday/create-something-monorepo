@@ -918,6 +918,10 @@ export async function runRecommendationPass(env: Env, options: { dryRun?: boolea
         receipt.needs_human.push(`${item.id} — ${item.title} (partnership or relationship stakes, route Greg)`);
         continue;
       }
+      if (writes >= cap) {
+        receipt.skipped.push(`${item.id} — ${item.title} (run cap ${cap} reached)`);
+        continue;
+      }
       const answer = await difyCompletionOnce(env, leanQuery(item, detail, precedents));
       const lean = parseLean(extractJson(answer));
       if (lean.recommendation === "needs-human" || lean.route !== null || lean.confidence < CONFIDENCE_FLOOR) {
@@ -928,10 +932,6 @@ export async function runRecommendationPass(env: Env, options: { dryRun?: boolea
         throw new Error("Missing business meaning: actionable notes must start with A yes means and explain the outcome");
       }
       const auditedNotes = `${lean.notes.trim()} [confidence ${lean.confidence} · Ruleset v1 · dify run ${runDate}]`;
-      if (writes >= cap) {
-        receipt.skipped.push(`${item.id} — ${item.title} (run cap ${cap} reached)`);
-        continue;
-      }
       if (options.dryRun) {
         writes += 1;
         receipt.written.push(`${item.id} — ${item.title} → would write ${lean.recommendation.toUpperCase()} (${lean.confidence})`);
