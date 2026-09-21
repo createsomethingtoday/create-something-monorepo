@@ -376,6 +376,7 @@ it('keeps company updates private and revokes partner access immediately', async
     ).status
   ).toBe(201);
   expect((await supportDetail(e('stranger'))).status).toBe(404);
+  expect((await (await supportDetail(e('company'))).json()).workspace.partner_percent).toBe(75);
   expect((await (await supportDetail(e('partner'))).json()).updates).toHaveLength(1);
   await partnerReview(
     event(

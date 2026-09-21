@@ -15,7 +15,7 @@ export const GET: RequestHandler = async ({ locals, platform, params }) => {
   )
     .bind(workspace.network_id)
     .all();
-  return json({ workspace, updates: results });
+  return json({ workspace: { ...workspace, partner_percent: 75 }, updates: results });
 };
 export const POST: RequestHandler = async ({ locals, platform, params, request }) => {
   if (!isSameOrigin(request))
