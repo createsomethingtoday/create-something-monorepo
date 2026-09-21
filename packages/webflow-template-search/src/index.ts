@@ -1,5 +1,6 @@
 import {
   backfillCreatorFieldsByName,
+  bumpPublicSearchCacheVersion,
   getPublicSearchCacheVersion,
   getActiveSyncJob,
   getLatestSyncJob,
@@ -124,10 +125,13 @@ function includeCacheValue(params: SearchParams): string {
 }
 
 function buildPublicSearchCacheRequest(requestUrl: URL, params: SearchParams, cacheVersion: string): Request | null {
-  if (params.page !== 1 || params.q || params.templateSlug || params.strict) return null;
+  if (params.templateSlug || params.strict || params.page < 1 || params.page > 10) return null;
+  const cacheQuery = params.q ?? '';
+  if (cacheQuery.length > 64) return null;
 
   const cacheUrl = new URL(requestUrl.pathname, requestUrl.origin);
   cacheUrl.searchParams.set('cache_version', cacheVersion);
+  if (cacheQuery) cacheUrl.searchParams.set('q', cacheQuery);
   for (const key of PUBLIC_SEARCH_CACHE_PARAM_ORDER) {
     switch (key) {
       case 'view':
@@ -164,7 +168,7 @@ function buildPublicSearchCacheRequest(requestUrl: URL, params: SearchParams, ca
         cacheUrl.searchParams.set(key, params.sort);
         break;
       case 'page':
-        cacheUrl.searchParams.set(key, '1');
+        cacheUrl.searchParams.set(key, String(params.page));
         break;
       case 'page_size':
         cacheUrl.searchParams.set(key, String(params.pageSize));
@@ -191,11 +195,15 @@ async function handleSearch(request: Request, env: Env, ctx: ExecutionContext): 
   const cache = cacheRequest ? getDefaultCache() : null;
 
   if (cache && cacheRequest) {
-    const cached = await cache.match(cacheRequest);
-    if (cached) return publicSearchResponse(request, env, await cached.text(), 'HIT');
+    try {
+      const cached = await cache.match(cacheRequest);
+      if (cached) return publicSearchResponse(request, env, await cached.text(), 'HIT');
+    } catch {
+      // The edge cache is optional: unreadable entries must not prevent a D1 search.
+    }
   }
 
-  const body = JSON.stringify(await searchTemplates(env, params));
+  const body = JSON.stringify(await searchTemplates(env, params, cacheVersion));
   if (cache && cacheRequest) {
     ctx.waitUntil(
       cache
@@ -401,7 +409,8 @@ async function handleWebflowWebhook(request: Request, env: Env, ctx: ExecutionCo
       });
     }
 
-    await updateTemplateImagesFromWebflow(env.DB, [record], syncedAt);
+    const updated = await updateTemplateImagesFromWebflow(env.DB, [record], syncedAt);
+    if (updated > 0) await bumpPublicSearchCacheVersion(env.DB, 'template_webhook');
 
     // Published Airtable records are held out of the index until their Templates
     // CMS item exists. This webhook is the moment that item appears, so index the
@@ -426,6 +435,7 @@ async function handleWebflowWebhook(request: Request, env: Env, ctx: ExecutionCo
     if (!record) return jsonResponse(request, env, { status: 'ignored', reason: 'no designer identity or item not live' });
     const updated = await updateCreatorAvatarsFromWebflow(env.DB, [record], syncedAt);
     const backfilled = await backfillCreatorFieldsByName(env.DB, syncedAt);
+    if (updated > 0 || backfilled > 0) await bumpPublicSearchCacheVersion(env.DB, 'designer_webhook');
     return jsonResponse(request, env, { status: 'updated', collection: 'designers', id: record.syncRecordId, updated, backfilled });
   }
 

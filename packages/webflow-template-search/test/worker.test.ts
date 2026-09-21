@@ -18,6 +18,8 @@ import {
   updateTemplateImagesFromWebflow,
 } from '../src/db.js';
 import worker from '../src/index.js';
+import { searchTemplates } from '../src/search.js';
+import { parseSearchParams } from '../src/query.js';
 import { DESIGNERS_COLLECTION_ID, TEMPLATES_COLLECTION_ID, extractTemplateOffer } from '../src/webflow.js';
 import { installAirtableFetchMock } from './support/airtable.js';
 import { callScheduled, callWorker, createTestEnv } from './support/worker.js';
@@ -219,18 +221,26 @@ function signedWebhookRequest(payload: unknown, secret = 'webhook-secret') {
   });
 }
 
-function installSearchCacheStub() {
+function installSearchCacheStub(named = false) {
   const store = new Map<string, Response>();
   const match = vi.fn(async (request: Request) => store.get(request.url)?.clone());
   const put = vi.fn(async (request: Request, response: Response) => {
     store.set(request.url, response.clone());
   });
 
+  const memoStore = new Map<string, Response>();
+  const memo = {
+    match: vi.fn(async (request: Request) => memoStore.get(request.url)?.clone()),
+    put: vi.fn(async (request: Request, response: Response) => {
+      memoStore.set(request.url, response.clone());
+    }),
+  };
   vi.stubGlobal('caches', {
     default: { match, put },
+    ...(named ? { open: vi.fn(async () => memo) } : {}),
   });
 
-  return { store, match, put };
+  return { store, match, put, memoStore, memo };
 }
 
 describe('webflow-template-search worker', () => {
@@ -2238,6 +2248,7 @@ describe('webflow-template-search worker', () => {
         },
       ],
     });
+    installSearchCacheStub(true);
     const { env, close } = createTestEnv();
 
     try {
@@ -2253,6 +2264,10 @@ describe('webflow-template-search worker', () => {
         .bind('recFitizo', 'fitizo-gym-website-template', 'Fitizo', 'Onmix', '2026-05-19T00:00:00.000Z')
         .run();
 
+      const searchUrl = 'https://templates.test/api/templates/search?creator_slug=onmix';
+      const before = await callWorker(new Request(searchUrl), env);
+      expect((await before.json() as any).pagination.total_items).toBe(0);
+
       const response = await callWorker(
         new Request('https://templates.test/api/templates/admin/backfill-creators?name=Onmix', {
           method: 'POST',
@@ -2263,6 +2278,9 @@ describe('webflow-template-search worker', () => {
       const payload = (await response.json()) as { mode: string; fetched_records: number; backfilled_records: number };
       expect(response.status).toBe(200);
       expect(payload).toMatchObject({ mode: 'creator_backfill', fetched_records: 1 });
+
+      const after = await callWorker(new Request(searchUrl), env);
+      expect((await after.json() as any).pagination.total_items).toBe(1);
 
       const row = await env.DB.prepare(
         `SELECT creator_record_id, creator_slug, creator_profile_url
@@ -2319,6 +2337,7 @@ describe('webflow-template-search worker', () => {
       childCategories: LOOKUPS.childCategories,
       tags: LOOKUPS.tags,
     });
+    installSearchCacheStub(true);
     const { env, close } = createTestEnv();
     env.WEBFLOW_WEBHOOK_SECRET = 'webhook-secret';
 
@@ -2331,6 +2350,10 @@ describe('webflow-template-search worker', () => {
         env,
       );
       expect(rebuild.status).toBe(200);
+
+      const searchUrl = 'https://templates.test/api/templates/search?q=agentflow';
+      const before = await callWorker(new Request(searchUrl), env);
+      expect((await before.json() as any).items[0].thumbnail_image_url).not.toBe('https://cdn.prod.website-files.com/site/agentflow-webhook.webp');
 
       const response = await callWorker(
         signedWebhookRequest({
@@ -2363,6 +2386,9 @@ describe('webflow-template-search worker', () => {
         collection: 'templates',
         id: 'recAgentflow',
       });
+
+      const after = await callWorker(new Request(searchUrl), env);
+      expect((await after.json() as any).items[0].thumbnail_image_url).toBe('https://cdn.prod.website-files.com/site/agentflow-webhook.webp');
 
       const row = await env.DB.prepare(
         `SELECT template_slug, listing_url, thumbnail_image_url, thumbnail_image_secondary_url, carousel_image_urls_json, price, is_free
@@ -2405,6 +2431,7 @@ describe('webflow-template-search worker', () => {
       childCategories: LOOKUPS.childCategories,
       tags: LOOKUPS.tags,
     });
+    installSearchCacheStub(true);
     const { env, close } = createTestEnv();
     env.WEBFLOW_WEBHOOK_SECRET = 'webhook-secret';
 
@@ -2435,6 +2462,10 @@ describe('webflow-template-search worker', () => {
         )
         .run();
 
+      const searchUrl = 'https://templates.test/api/templates/search?q=agentflow';
+      const before = await callWorker(new Request(searchUrl), env);
+      expect((await before.json() as any).items[0].creator_avatar_url).not.toBe('https://cdn.prod.website-files.com/site/brix-avatar.webp');
+
       const response = await callWorker(
         signedWebhookRequest({
           triggerType: 'collection_item_published',
@@ -2463,6 +2494,9 @@ describe('webflow-template-search worker', () => {
         collection: 'designers',
         id: 'recDesignerBrix',
       });
+
+      const after = await callWorker(new Request(searchUrl), env);
+      expect((await after.json() as any).items[0].creator_avatar_url).toBe('https://cdn.prod.website-files.com/site/brix-avatar.webp');
 
       const row = await env.DB.prepare(
         `SELECT creator_record_id, creator_profile_url, creator_avatar_url, creator_avatar_alt
@@ -3264,6 +3298,155 @@ describe('webflow-template-search worker', () => {
       fetchMock.mockRestore();
       close();
     }
+  });
+
+  it('caches text-query and paginated public searches under distinct keys', async () => {
+    const fetchMock = installAirtableFetchMock({
+      publishedAssets: PUBLISHED_ASSETS,
+      styles: LOOKUPS.styles,
+      childCategories: LOOKUPS.childCategories,
+      tags: LOOKUPS.tags,
+      creators: LOOKUPS.creators,
+    });
+    const cache = installSearchCacheStub();
+    const { env, close } = createTestEnv();
+
+    try {
+      const rebuild = await callWorker(
+        new Request('https://templates.test/api/templates/admin/rebuild', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(rebuild.status).toBe(200);
+
+      const qRequest = new Request(
+        'https://templates.test/api/templates/search?q=agentflow&include=items&view=grid&page=1&page_size=24',
+      );
+      const first = await callWorker(qRequest, env);
+      expect(first.headers.get('x-template-search-cache')).toBe('MISS');
+      const second = await callWorker(qRequest, env);
+      expect(second.headers.get('x-template-search-cache')).toBe('HIT');
+
+      const pageTwo = await callWorker(
+        new Request(
+          'https://templates.test/api/templates/search?q=agentflow&include=items&view=grid&page=2&page_size=24',
+        ),
+        env,
+      );
+      expect(pageTwo.headers.get('x-template-search-cache')).toBe('MISS');
+
+      const keys = [...cache.store.keys()];
+      expect(keys.some((key) => key.includes('q=agentflow') && key.includes('page=1'))).toBe(true);
+      expect(keys.some((key) => key.includes('q=agentflow') && key.includes('page=2'))).toBe(true);
+
+      // Deep pagination and long queries stay uncacheable.
+      const deepPage = await callWorker(
+        new Request(
+          'https://templates.test/api/templates/search?q=agentflow&include=items&view=grid&page=11&page_size=24',
+        ),
+        env,
+      );
+      expect(deepPage.headers.get('x-template-search-cache')).toBe('BYPASS');
+      const longQuery = await callWorker(
+        new Request(
+          `https://templates.test/api/templates/search?q=${'a'.repeat(65)}&include=items&view=grid&page=1&page_size=24`,
+        ),
+        env,
+      );
+      expect(longQuery.headers.get('x-template-search-cache')).toBe('BYPASS');
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
+
+  it('memoizes counts and facets without conflating exact slugs, and rotates after sync', async () => {
+    const fetchMock = installAirtableFetchMock({ publishedAssets: PUBLISHED_ASSETS, ...LOOKUPS });
+    const cache = installSearchCacheStub(true);
+    const { env, close } = createTestEnv();
+    try {
+      const rebuild = await callWorker(new Request('https://templates.test/api/templates/admin/rebuild', {
+        method: 'POST', headers: { Authorization: 'Bearer sync-token' },
+      }), env);
+      expect(rebuild.status).toBe(200);
+      const request = new Request('https://templates.test/api/templates/search?template_slug=agentflow-website-template');
+      const first = await (await callWorker(request, env)).json() as any;
+      expect(first.pagination.total_items).toBe(1);
+      expect(cache.memoStore.size).toBeGreaterThan(0);
+      const writes = cache.memo.put.mock.calls.length;
+      await callWorker(request, env);
+      expect(cache.memo.put).toHaveBeenCalledTimes(writes);
+      const missing = await (await callWorker(new Request('https://templates.test/api/templates/search?template_slug=does-not-exist'), env)).json() as any;
+      expect(missing.pagination.total_items).toBe(0);
+      expect(missing.items).toEqual([]);
+      const beforeSyncWrites = cache.memo.put.mock.calls.length;
+      // Model an index removal, then use the real sync path to rotate its epoch.
+      await env.DB.prepare('DELETE FROM template_documents WHERE id = ?').bind('recAgentflow').run();
+      const sync = await callWorker(new Request('https://templates.test/api/templates/admin/sync-records', {
+        method: 'POST', headers: { Authorization: 'Bearer sync-token', 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: ['recSetrex'] }),
+      }), env);
+      expect(sync.status).toBe(200);
+      const afterSync = await (await callWorker(request, env)).json() as any;
+      expect(afterSync.pagination.total_items).toBe(0);
+      expect(afterSync.items).toEqual([]);
+      expect(cache.memo.put.mock.calls.length).toBeGreaterThan(beforeSyncWrites);
+    } finally { fetchMock.mockRestore(); close(); }
+  });
+
+  it.each(['open', 'match', 'put'] as const)('keeps search available when query-cache %s fails', async (failure) => {
+    const cache = installSearchCacheStub(true);
+    if (failure === 'open') vi.mocked(caches.open).mockRejectedValue(new Error('cache unavailable'));
+    else cache.memo[failure].mockRejectedValue(new Error('cache unavailable'));
+    const { env, close } = createTestEnv();
+    try {
+      const response = await callWorker(new Request('https://templates.test/api/templates/search?template_slug=does-not-exist'), env);
+      expect(response.status).toBe(200);
+      expect((await response.json() as any).pagination.total_items).toBe(0);
+    } finally { close(); }
+  });
+
+  it.each(['match', 'body', 'put'] as const)('falls back to D1 when public-cache %s fails', async (failure) => {
+    const cache = installSearchCacheStub(true);
+    if (failure === 'body') {
+      cache.match.mockResolvedValue({ text: async () => { throw new Error('cache body unavailable'); } } as Response);
+    } else {
+      cache[failure].mockRejectedValue(new Error('cache unavailable'));
+    }
+    const { env, close } = createTestEnv();
+    try {
+      for (const query of ['q=missing', 'page=2']) {
+        const response = await callWorker(new Request('https://templates.test/api/templates/search?' + query), env);
+        expect(response.status).toBe(200);
+        expect((await response.json() as any).pagination.total_items).toBe(0);
+        expect(response.headers.get('x-template-search-cache')).toBe('MISS');
+      }
+    } finally { close(); }
+  });
+
+  it('does not memoize direct search callers without an index epoch', async () => {
+    const cache = installSearchCacheStub(true);
+    const { env, close } = createTestEnv();
+    try {
+      await searchTemplates(env, parseSearchParams(new URL('https://templates.test/api/templates/search')));
+      expect(cache.memo.match).not.toHaveBeenCalled();
+      expect(cache.memo.put).not.toHaveBeenCalled();
+    } finally { close(); }
+  });
+
+  it('keeps exact and strict searches out of the public response cache', async () => {
+    const cache = installSearchCacheStub(true);
+    const { env, close } = createTestEnv();
+    try {
+      for (const query of ['template_slug=does-not-exist', 'q=missing&strict=true']) {
+        const response = await callWorker(new Request('https://templates.test/api/templates/search?' + query), env);
+        expect(response.headers.get('x-template-search-cache')).toBe('BYPASS');
+      }
+      expect(cache.put).not.toHaveBeenCalled();
+    } finally { close(); }
   });
 
   it('serves cacheable first-page public searches from the edge cache', async () => {
@@ -4285,6 +4468,7 @@ describe('webflow-template-search worker', () => {
       },
     };
     const fetchMock = installAirtableFetchMock(dataset);
+    installSearchCacheStub(true);
     const { env, close } = createTestEnv();
     env.WEBFLOW_API_TOKEN = 'test-webflow-cms-token';
 
@@ -4301,6 +4485,9 @@ describe('webflow-template-search worker', () => {
       const beforeRefresh = await callWorker(new Request('https://templates.test/api/templates/search?q=agentflow'), env);
       const beforePayload = (await beforeRefresh.json()) as { items: Array<{ price: number | null; is_free: boolean }> };
       expect(beforePayload.items[0]).toMatchObject({ price: 169, is_free: false });
+
+      const beforeFree = await callWorker(new Request('https://templates.test/api/templates/search?q=agentflow&free_only=true'), env);
+      expect((await beforeFree.json() as any).pagination.total_items).toBe(0);
 
       dataset.webflowCollectionItems[TEMPLATES_COLLECTION_ID] = [
         {
@@ -5499,6 +5686,7 @@ describe('webflow-template-search worker', () => {
         '/templates/html/setrex-website-template': '<html><head><title>Setrex</title></head></html>',
       },
     });
+    installSearchCacheStub(true);
     const { env, close } = createTestEnv();
 
     try {
@@ -5514,6 +5702,11 @@ describe('webflow-template-search worker', () => {
       await env.DB.prepare('UPDATE template_documents SET thumbnail_image_url = NULL WHERE id IN (?, ?)')
         .bind('recAgentflow', 'recSetrex')
         .run();
+
+      for (const query of ['q=agentflow', 'template_slug=agentflow-website-template']) {
+        const response = await callWorker(new Request('https://templates.test/api/templates/search?' + query), env);
+        expect((await response.json() as any).pagination.total_items).toBe(1);
+      }
 
       const prune = await callWorker(
         new Request(
@@ -5539,6 +5732,11 @@ describe('webflow-template-search worker', () => {
         pruned_records: 1,
         skipped_records: [{ template_slug: 'setrex-website-template', status: 200, reason: 'listing_not_404' }],
       });
+
+      const exact = await callWorker(new Request('https://templates.test/api/templates/search?template_slug=agentflow-website-template'), env);
+      const exactBody = await exact.json() as any;
+      expect(exactBody.items).toEqual([]);
+      expect(exactBody.pagination.total_items).toBe(0);
 
       const agentflowResponse = await callWorker(new Request('https://templates.test/api/templates/search?q=agentflow'), env);
       const agentflowPayload = (await agentflowResponse.json()) as { pagination: { total_items: number } };
