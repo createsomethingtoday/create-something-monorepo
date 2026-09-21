@@ -53,30 +53,32 @@ omit a sync version bypass query memoization.
 
 ## CMS capability recovery (not activated)
 
-Migration `0013_template_cms_capability.sql` adds only a nullable `has_cms`
-column. Apply this additive migration before deploying this source. Existing
-rows remain `null` (unknown); responses must never label them `false`.
-Authoritative sync reads Assets checkbox `fldZY9vzOYaaCR5vv`, named
-`ℹ️Type: CMS? (🏗️ only)`. This schema was verified read-only on September 21,
-2026. A successful checkbox read supplies true/false; it is not inferred from
-names, descriptions, tags or template type.
+Production already records migration `0008_template_capabilities.sql` and has
+its six columns. This recovery restores that exact historical migration in source;
+no duplicate column migration should be applied. Read-only production verification
+found 11,501 rows: 9,973 true, 999 false, and 529 unknown on September 21, 2026.
+Unknown values remain null in responses.
 
-Public `has_cms=true|false` (`cms` alias) filters return 503 unless
-`CMS_FILTER_ENABLED=true` and no indexed document has an unknown value.
-This check precedes cache reads. Leave the variable unset until a controlled
-backfill has been completed and its true/false counts reconciled with the
-source. Unconstrained responses retain unknown rows. Public cache keys include
-the filter and a response-schema version; query memo keys include every filter.
+Source is Assets checkbox `fldZY9vzOYaaCR5vv` (`ℹ️Type: CMS? (🏗️ only)`).
+Successful Airtable checkbox reads omit unchecked values; malformed values fail.
+With `CMS_FILTER_ENABLED` unset, existing `has_cms` callers retain legacy
+unconstrained search and `applied_filters.has_cms` is null. After explicit enablement,
+true/false filters require zero unknown rows; readiness errors retain CORS headers
+and occur before cache reads.
 
-Promotion remains staged: review source and regression tests, inspect the live
-D1 schema, apply only 0013, deploy with filtering disabled, backfill capabilities
-without deleting/rebuilding the index, verify IDs/counts and cache invalidation,
-then enable filtering. The retained six-column 0008 migration is not used.
-Do not run a full rebuild merely to fill this column. A resumable, bounded
-capability-only backfill and production readback are still required.
+Authenticated `POST /api/templates/admin/backfill-cms` accepts JSON
+`{"limit":50}` for a read-only preview or `{"limit":50,"apply":true}` for one
+bounded batch (maximum100). Repeat until `counts.unknown` is zero. Each batch
+selects unknown rows, validates a complete source response before writes, updates
+only has_cms with a synced_at concurrency guard, and atomically invalidates search
+caches. Changed rows are skipped and remain resumable; no index rows are removed.
+Stop on provider errors or repeated no-progress batches and inspect the source.
 
-Rollback: disable `CMS_FILTER_ENABLED`, then restore the prior Worker version.
-The additive nullable column can remain; do not drop data or undo later migrations.
+Promotion: confirm schema, deploy with filtering disabled, preview/apply bounded
+backfill batches, reconcile counts and IDs, then enable filtering and verify true,
+false and unconstrained results. Do not use a full rebuild to fill this column.
+Rollback: disable CMS_FILTER_ENABLED and restore the prior Worker version, retaining
+the pre-existing database columns and migration history.
 
 ## Featured creator monthly batch
 

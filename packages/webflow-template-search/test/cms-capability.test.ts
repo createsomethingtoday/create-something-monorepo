@@ -28,9 +28,14 @@ describe('CMS capability recovery', () => {
     const request = () => new Request('https://test/api/templates/search?has_cms=false');
     try {
       await seed(env);
-      expect((await callWorker(request(), env)).status).toBe(503);
+      const legacy = await callWorker(request(), env);
+      expect(legacy.status).toBe(200);
+      expect((await legacy.json() as any).pagination.total_items).toBe(3);
       env.CMS_FILTER_ENABLED = 'true';
-      expect((await callWorker(request(), env)).status).toBe(503);
+      const unavailable = await callWorker(new Request('https://test/api/templates/search?has_cms=false', { headers: { Origin: 'https://webflow.com' } }), env);
+      expect(unavailable.status).toBe(503);
+      expect(unavailable.headers.get('Access-Control-Allow-Origin')).toBe('https://webflow.com');
+      expect(unavailable.headers.get('Vary')).toContain('Origin');
       await env.DB.prepare('UPDATE template_documents SET has_cms = 0 WHERE has_cms IS NULL').run();
       const response = await callWorker(request(), env);
       expect(response.status).toBe(200);

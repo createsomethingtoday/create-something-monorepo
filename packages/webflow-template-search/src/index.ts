@@ -1,3 +1,4 @@
+import { backfillCms } from './cms-backfill.js';
 import {
   backfillCreatorFieldsByName,
   bumpPublicSearchCacheVersion,
@@ -191,10 +192,12 @@ async function handleSearch(request: Request, env: Env, ctx: ExecutionContext): 
   const defaultPageSize = Number(env.DEFAULT_PAGE_SIZE ?? '24') || 24;
   const url = new URL(request.url);
   const params = parseSearchParams(url, defaultPageSize);
+  // Existing callers already send this parameter; preserve legacy unconstrained
+  // behavior until activation rather than introducing a rollout outage.
+  if (env.CMS_FILTER_ENABLED !== 'true') params.hasCms = null;
   if (params.hasCms !== null) {
-    if (env.CMS_FILTER_ENABLED !== 'true') return new Response('CMS filtering is not enabled', { status: 503 });
     const unknown = await env.DB.prepare('SELECT COUNT(*) AS count FROM template_documents WHERE has_cms IS NULL').first<{ count: number }>();
-    if (!unknown || Number(unknown.count) > 0) return new Response('CMS capability backfill is incomplete', { status: 503 });
+    if (!unknown || Number(unknown.count) > 0) return jsonResponse(request, env, { error: 'CMS capability backfill is incomplete' }, 503);
   }
   const cacheVersion = await getPublicSearchCacheVersion(env.DB, DEFAULT_PUBLIC_SEARCH_CACHE_VERSION);
   const cacheRequest = buildPublicSearchCacheRequest(url, params, cacheVersion);
@@ -573,6 +576,14 @@ export default {
 
       if (url.pathname === '/api/templates/admin/sync' && request.method === 'POST') {
         return await handleManualSync(request, env, ctx, 'incremental');
+      }
+
+      if (url.pathname === '/api/templates/admin/backfill-cms' && request.method === 'POST') {
+        const authError = validateAdminToken(request, env);
+        if (authError) return authError;
+        const body = await request.json() as { apply?: boolean; limit?: number };
+        if (body.apply !== undefined && typeof body.apply !== 'boolean') return jsonResponse(request, env, { error: 'apply must be boolean' }, 400);
+        return jsonResponse(request, env, await backfillCms(env, body.apply === true, body.limit ?? 50));
       }
 
       if (url.pathname === '/api/templates/admin/sync-records' && request.method === 'POST') {

@@ -1,3 +1,4 @@
+import { cmsCheckbox } from './cms-backfill.js';
 import {
   fetchAssetRecordsByIds,
   fetchModifiedAssetsSince,
@@ -739,7 +740,7 @@ function normalizeTemplateRecord(
     tags: tags.map((entry) => entry.name),
     tagSlugs: tags.map((entry) => entry.slug),
     templateType,
-    hasCms: ensureBoolean(record.fields['ℹ️Type: CMS? (🏗️ only)']),
+    hasCms: cmsCheckbox(record.fields['ℹ️Type: CMS? (🏗️ only)']),
     isFree,
     isFeatured:
       ensureBoolean(record.fields['🥞Is Currently Featured? (🏗️ only)']) ||
