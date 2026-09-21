@@ -398,3 +398,15 @@ it('caps a running timer at a shortened paid boundary', async () => {
     receipt_status: 'pending'
   });
 });
+
+it('reports the current shortened billing boundary rather than the original receipt end', async () => {
+  const now = supportFixture();
+  const id = await acceptedSupport();
+  await POST(event('creator', { action: 'time_start', id, ready: true }));
+  sql.exec(`UPDATE network_billing SET period_end=${now + 20},checked_at=${now + 60}`);
+  vi.setSystemTime(new Date((now + 90) * 1000));
+  expect((await (await GET(event('buyer'))).json()).ledger[0]).toMatchObject({
+    period_end: now + 20,
+    active: false
+  });
+});

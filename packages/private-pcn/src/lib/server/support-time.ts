@@ -34,7 +34,7 @@ export async function supportLedger(db: D1Database, subject: string) {
       UNION
       SELECT network_id,support_period_start,MAX(support_period_end) FROM remote_sessions WHERE support_period_start>0 GROUP BY network_id,support_period_start
     ), monthly AS (SELECT network_id,period_start,MAX(period_end) AS period_end FROM periods GROUP BY network_id,period_start)
-    SELECT n.id AS network_id,n.name,p.period_start,p.period_end,
+    SELECT n.id AS network_id,n.name,p.period_start,CASE WHEN p.period_start=b.period_start THEN b.period_end ELSE p.period_end END AS period_end,
     CASE WHEN p.period_start=b.period_start THEN b.status ELSE 'historical' END AS billing_status,w.status AS workspace_status,
     COALESCE(SUM(CASE WHEN s.receipt_status='confirmed' THEN s.tracked_seconds ELSE 0 END),0) AS confirmed_seconds,
     COALESCE(SUM(CASE WHEN s.receipt_status='pending' THEN s.tracked_seconds ELSE 0 END),0) AS pending_seconds,
