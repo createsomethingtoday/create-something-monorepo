@@ -1,3 +1,4 @@
+import retention from '../src/retention-worker';
 import { readFileSync, readdirSync } from 'node:fs';
 import { DatabaseSync } from 'node:sqlite';
 import { beforeEach, afterEach, expect, it, vi } from 'vitest';
@@ -543,4 +544,13 @@ it('separates operator engagement and reports invitation and free acquisition ou
   expect(result.outcomes.acquisitions).toEqual([{ source: 'free', status: 'active', count: 1 }]);
   expect(result.legacyEngagement).toEqual({ count: 99 });
   expect(result.note).toContain('operator');
+});
+
+it('expires impact aggregates on a scheduled invocation without customer traffic', async () => {
+  sql.exec(
+    "INSERT INTO impact_daily VALUES('2000-01-01','home','page_view',3); INSERT INTO customer_impact_daily VALUES('2000-01-01','home','page_view',4); INSERT INTO customer_impact_daily VALUES(date('now'),'home','page_view',5)"
+  );
+  await retention.scheduled({}, event().platform.env);
+  expect(sql.prepare('SELECT COUNT(*) AS count FROM impact_daily').get()?.count).toBe(0);
+  expect(sql.prepare('SELECT count FROM customer_impact_daily').all()).toEqual([{ count: 5 }]);
 });

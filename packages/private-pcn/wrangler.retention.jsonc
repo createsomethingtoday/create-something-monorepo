@@ -1,0 +1,42 @@
+{
+  "name": "cs-private-pcn-retention",
+  "account_id": "9645bd52e640b8a4f40a3a55ff1dd75a",
+  "main": "src/retention-worker.ts",
+  "compatibility_date": "2026-06-01",
+  "workers_dev": false,
+  "preview_urls": false,
+  "triggers": {
+    "crons": [
+      "15 3 * * *"
+    ]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "cs-private-pcn",
+      "database_id": "4305a4b7-c13b-4085-b800-bb6395fa502a"
+    }
+  ],
+  "observability": {
+    "enabled": true
+  },
+  "env": {
+    "preview": {
+      "name": "cs-private-pcn-retention-preview",
+      "workers_dev": false,
+      "preview_urls": false,
+      "triggers": {
+        "crons": [
+          "30 3 * * *"
+        ]
+      },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "cs-private-pcn-preview",
+          "database_id": "f25dc8ad-ceb3-4fe9-b0ef-5b3cf444a296"
+        }
+      ]
+    }
+  }
+}
