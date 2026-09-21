@@ -7,6 +7,7 @@ import { GET as listNetworks, POST as createNetwork } from '../src/routes/api/ne
 import { GET as exportNetwork } from '../src/routes/api/networks/[slug]/export/+server';
 import { POST as saveSettings } from '../src/routes/api/networks/[slug]/settings/+server';
 let sqlite: DatabaseSync;
+let batchQueue: Promise<unknown> = Promise.resolve();
 let remote: ReturnType<typeof vi.fn>;
 function statement(sql: string, values: unknown[] = []) {
   return {
@@ -32,17 +33,21 @@ function event(
       env: {
         DB: {
           prepare: statement,
-          batch: async (statements: any[]) => {
-            sqlite.exec('BEGIN');
-            try {
-              const result = [];
-              for (const s of statements) result.push(await s.run());
-              sqlite.exec('COMMIT');
-              return result;
-            } catch (e) {
-              sqlite.exec('ROLLBACK');
-              throw e;
-            }
+          batch: (statements: any[]) => {
+            const operation = batchQueue.then(async () => {
+              sqlite.exec('BEGIN');
+              try {
+                const result = [];
+                for (const s of statements) result.push(await s.run());
+                sqlite.exec('COMMIT');
+                return result;
+              } catch (e) {
+                sqlite.exec('ROLLBACK');
+                throw e;
+              }
+            });
+            batchQueue = operation.catch(() => {});
+            return operation;
           }
         },
         CLOUDFLARE_ACCOUNT_ID: 'test-account',
@@ -69,6 +74,7 @@ function seed(id: string, access = 'members', visibility = 'published', status =
     .run(id, `${id}-private-uid`, id, access, visibility, status);
 }
 beforeEach(() => {
+  batchQueue = Promise.resolve();
   sqlite = new DatabaseSync(':memory:');
   sqlite.exec(readFileSync(new URL('../migrations/0001_private_pcn.sql', import.meta.url), 'utf8'));
   sqlite.exec(
@@ -89,6 +95,9 @@ beforeEach(() => {
   sqlite.exec(
     readFileSync(new URL('../migrations/0014_lesson_material.sql', import.meta.url), 'utf8')
   );
+  sqlite.exec(
+    readFileSync(new URL('../migrations/0015_guided_learning.sql', import.meta.url), 'utf8')
+  );
   remote = vi.fn();
   vi.stubGlobal('fetch', remote);
 });
@@ -98,6 +107,218 @@ afterEach(() => {
 });
 
 describe('API against migrated SQLite schema (supporting proof)', () => {
+  it('does not expose archived, cross-network or suspended paths, or accept stale edits', async () => {
+    seed('one');
+    seed('two');
+    const payload = {
+      title: 'Scoped path',
+      outcome: 'Apply a technique',
+      prerequisites: '',
+      estimated_minutes: 10,
+      lesson_ids: ['one', 'two'],
+      visibility: 'published'
+    };
+    const { id } = await (await POST(event('learning/paths/save', payload, 'admin'))).json();
+    expect(
+      (await POST(event('learning/paths/save', { ...payload, id, revision: 0 }, 'admin'))).status
+    ).toBe(409);
+    expect(
+      (
+        await POST(
+          event('learning/paths/save', { ...payload, lesson_ids: ['one', 'one'] }, 'admin')
+        )
+      ).status
+    ).toBe(400);
+    expect((await POST(event('learning/paths/save', payload, 'member'))).status).toBe(403);
+    expect(
+      (await POST(event('learning/paths/save', payload, 'admin', 'https://evil.example'))).status
+    ).toBe(403);
+    const cross = event(`learning/paths/${id}`, undefined, 'admin');
+    cross.locals.network = { id: 'other', status: 'active' };
+    expect((await GET(cross)).status).toBe(404);
+    const suspended = event(`learning/paths/${id}`, undefined, 'member');
+    suspended.locals.network = { id: 'default', status: 'suspended' };
+    expect((await GET(suspended)).status).toBe(404);
+    sqlite.prepare("UPDATE videos SET visibility='archived' WHERE id='two'").run();
+    expect((await GET(event(`learning/paths/${id}`, undefined, 'member'))).status).toBe(404);
+    expect((await (await GET(event('learning/paths', undefined, 'member'))).json()).paths).toEqual(
+      []
+    );
+  });
+  it('keeps a path repairable by its creator after a lesson is deleted while hiding it from members', async () => {
+    seed('remove-me');
+    seed('replacement');
+    const payload = {
+      title: 'Repairable path',
+      outcome: 'Build',
+      prerequisites: '',
+      estimated_minutes: 5,
+      lesson_ids: ['remove-me'],
+      visibility: 'published'
+    };
+    const { id } = await (await POST(event('learning/paths/save', payload, 'admin'))).json();
+    sqlite.prepare('DELETE FROM videos WHERE id=?').run('remove-me');
+    expect((await GET(event(`learning/paths/${id}`, undefined, 'member'))).status).toBe(404);
+    const view = await GET(event(`learning/paths/${id}`, undefined, 'admin'));
+    expect(view.status).toBe(200);
+    expect(await view.json()).toMatchObject({
+      lesson_ids: ['remove-me'],
+      missingLessonCount: 1,
+      lessons: []
+    });
+    expect(
+      (
+        await POST(
+          event(
+            'learning/paths/save',
+            { ...payload, id, revision: 1, lesson_ids: ['replacement'] },
+            'admin'
+          )
+        )
+      ).status
+    ).toBe(200);
+    expect((await GET(event(`learning/paths/${id}`, undefined, 'member'))).status).toBe(200);
+  });
+  it('limits concurrent path creation to the last available slot without an extra receipt', async () => {
+    seed('capacity-lesson');
+    const insert = sqlite.prepare(
+      "INSERT INTO learning_paths(id,network_id,title,outcome,estimated_minutes,lesson_ids,visibility) VALUES(?,'default','Path','Build',5,'[\"capacity-lesson\"]','draft')"
+    );
+    for (let i = 0; i < 49; i++) insert.run(`capacity-${i}`);
+    const body = {
+      title: 'Last slot',
+      outcome: 'Build',
+      prerequisites: '',
+      estimated_minutes: 5,
+      lesson_ids: ['capacity-lesson'],
+      visibility: 'draft'
+    };
+    const results = await Promise.all([
+      POST(event('learning/paths/save', body, 'admin')),
+      POST(event('learning/paths/save', body, 'admin'))
+    ]);
+    expect(results.map((r) => r.status).sort()).toEqual([200, 409]);
+    expect(sqlite.prepare('SELECT COUNT(*) AS count FROM learning_paths').get()?.count).toBe(50);
+    expect(
+      sqlite
+        .prepare("SELECT COUNT(*) AS count FROM receipts WHERE action='learning_path.saved'")
+        .get()?.count
+    ).toBe(1);
+  });
+  it('rolls back path saves if the activity receipt cannot be persisted', async () => {
+    seed('atomic-lesson');
+    sqlite.exec(
+      "CREATE TRIGGER receipt_failure BEFORE INSERT ON receipts WHEN NEW.action='learning_path.saved' BEGIN SELECT RAISE(ABORT,'receipt unavailable'); END;"
+    );
+    await expect(
+      POST(
+        event(
+          'learning/paths/save',
+          {
+            title: 'Atomic path',
+            outcome: 'Build',
+            prerequisites: '',
+            estimated_minutes: 5,
+            lesson_ids: ['atomic-lesson'],
+            visibility: 'draft'
+          },
+          'admin'
+        )
+      )
+    ).rejects.toThrow('receipt unavailable');
+    expect(sqlite.prepare('SELECT COUNT(*) AS count FROM learning_paths').get()?.count).toBe(0);
+  });
+  it('removes revoked lessons from resume and rejects cross-network or impersonated progress writes', async () => {
+    seed('progress-lesson');
+    sqlite.prepare('UPDATE videos SET duration=125 WHERE id=?').run('progress-lesson');
+    const body = { id: 'progress-lesson', action: 'position', position: 40 };
+    expect((await POST(event('learning/progress', body, 'member'))).status).toBe(200);
+    const resume = await (await GET(event('learning/continue', undefined, 'member'))).json();
+    expect(resume.lessons).toHaveLength(1);
+    expect(JSON.stringify(resume)).not.toContain('fixture-user');
+    const cross = event('learning/progress', body, 'member');
+    cross.locals.network = { id: 'other', status: 'active' };
+    expect((await POST(cross)).status).toBe(404);
+    const support = event('learning/progress', body, 'admin');
+    support.locals.impersonation = { id: 'support', invalid: false };
+    expect((await POST(support)).status).toBe(404);
+    const suspended = event('learning/continue', undefined, 'member');
+    suspended.locals.network = { id: 'default', status: 'suspended' };
+    expect((await (await GET(suspended)).json()).lessons).toEqual([]);
+    expect(
+      (await (await GET(event('learning/continue', undefined, 'blocked'))).json()).lessons
+    ).toEqual([]);
+    sqlite.prepare("UPDATE videos SET visibility='archived' WHERE id=?").run('progress-lesson');
+    expect(
+      (await (await GET(event('learning/continue', undefined, 'member'))).json()).lessons
+    ).toEqual([]);
+    expect((await POST(event('learning/progress', body, 'member'))).status).toBe(404);
+  });
+  it('persists personal resume and self-reported practice without sharing another member progress', async () => {
+    seed('lesson');
+    sqlite
+      .prepare('INSERT INTO lesson_material(video_id,network_id,practice) VALUES(?,?,?)')
+      .run('lesson', 'default', 'Verify an MCP tool');
+    sqlite.prepare('UPDATE videos SET duration=125 WHERE id=?').run('lesson');
+    const saved = await POST(
+      event('learning/progress', { id: 'lesson', action: 'position', position: 42 }, 'member')
+    );
+    expect(saved.status).toBe(200);
+    const viewed = await GET(event('lessons/lesson', undefined, 'member'));
+    expect((await viewed.json()).progress.position).toBe(42);
+    const other = event('lessons/lesson', undefined, 'member');
+    other.locals.identity.subject = 'another-member';
+    expect((await (await GET(other)).json()).progress).toBeNull();
+    expect(
+      (await POST(event('learning/progress', { id: 'lesson', action: 'practice' }, 'member')))
+        .status
+    ).toBe(200);
+    const progress = (await (await GET(event('lessons/lesson', undefined, 'member'))).json())
+      .progress;
+    expect(progress.practice_started_at).toBeTruthy();
+    expect(progress.watched_at).toBeNull();
+    expect(
+      (
+        await POST(
+          event('learning/progress', { id: 'lesson', action: 'position', position: 999 }, 'member')
+        )
+      ).status
+    ).toBe(400);
+    expect(
+      (
+        await POST(
+          event('learning/progress', { id: 'lesson', action: 'position', position: 5 }, 'blocked')
+        )
+      ).status
+    ).toBe(404);
+  });
+  it('lets a creator publish an ordered path and members read only its authorized lessons', async () => {
+    seed('first');
+    seed('second');
+    const create = await POST(
+      event(
+        'learning/paths/save',
+        {
+          title: 'Connect an MCP',
+          outcome: 'Verify scoped tool access',
+          prerequisites: 'An MCP client',
+          estimated_minutes: 20,
+          lesson_ids: ['second', 'first'],
+          visibility: 'published'
+        },
+        'admin'
+      )
+    );
+    expect(create.status).toBe(200);
+    const { id } = await create.json();
+    const view = await GET(event(`learning/paths/${id}`, undefined, 'member'));
+    expect(view.status).toBe(200);
+    const body = await view.json();
+    expect(body.lessons.map((v: any) => v.id)).toEqual(['second', 'first']);
+    expect(JSON.stringify(body)).not.toContain('private-uid');
+    expect((await GET(event(`learning/paths/${id}`))).status).toBe(404);
+  });
+
   it('anonymous catalog omits member metadata, drafts and provider IDs', async () => {
     seed('private');
     seed('preview', 'public');
@@ -629,6 +850,9 @@ describe('self-service recovery and data ownership', () => {
     sqlite.exec(
       "INSERT INTO lesson_material(video_id,network_id,outcome) VALUES('ours','alpha','Our lesson outcome'),('theirs','default','Private other lesson')"
     );
+    sqlite.exec(
+      `INSERT INTO learning_paths(id,network_id,title,outcome,estimated_minutes,lesson_ids,visibility) VALUES('our-path','alpha','Our path','Build',10,'["ours"]','draft'),('their-path','default','Private other path','Build',10,'["theirs"]','draft'); INSERT INTO lesson_progress(network_id,subject,video_id,position) VALUES('alpha','learner-private-subject','ours',15)`
+    );
     const e = event('export', undefined, 'admin');
     e.locals.network = { id: 'alpha', slug: 'alpha', owner_id: 'fixture-user' };
     const response = await exportNetwork(e);
@@ -637,7 +861,13 @@ describe('self-service recovery and data ownership', () => {
       expect.objectContaining({ video_id: 'ours', outcome: 'Our lesson outcome' })
     ]);
     expect(JSON.stringify(data)).not.toContain('Private other lesson');
-    expect(data.schemaVersion).toBe(3);
+    expect(data.schemaVersion).toBe(4);
+    expect(data.learningPaths).toEqual([
+      expect.objectContaining({ title: 'Our path', lesson_ids: ['ours'] })
+    ]);
+    expect(JSON.stringify(data)).not.toContain('Private other path');
+    expect(JSON.stringify(data)).not.toContain('learner-private-subject');
+    expect(data).not.toHaveProperty('lessonProgress');
     expect(data.sessions.map((v: any) => v.id)).toEqual(['ours']);
     expect(data.assets.map((a: any) => a.id)).toEqual(['asset-ours']);
     expect(data.releases).toHaveLength(1);

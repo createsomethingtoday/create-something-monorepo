@@ -4,6 +4,7 @@ import type { D1Database } from '@cloudflare/workers-types';
 export default {
   async scheduled(_event: unknown, env: { DB: D1Database }) {
     await env.DB.batch([
+      env.DB.prepare("DELETE FROM lesson_progress WHERE updated_at<datetime('now','-365 days')"),
       env.DB.prepare("DELETE FROM impact_daily WHERE day<date('now','-90 days')"),
       env.DB.prepare("DELETE FROM customer_impact_daily WHERE day<date('now','-90 days')"),
       env.DB.prepare("DELETE FROM network_impact_daily WHERE day<date('now','-90 days')")
