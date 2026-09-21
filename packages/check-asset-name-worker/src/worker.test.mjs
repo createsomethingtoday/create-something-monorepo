@@ -208,13 +208,15 @@ test('checks library user existence and permission against legacy library tables
 
     if (url.pathname === '/v0/appTest/creators') {
       assert.match(url.searchParams.get('filterByFormula'), /fldhvneqrRuoF5grB/);
+      // Default permission field is a field ID, so the worker must ask Airtable to key fields by ID.
+      assert.equal(url.searchParams.get('returnFieldsByFieldId'), 'true');
       return {
         records: [
           {
             id: 'recPermission',
             fields: {
-              Name: 'Template User',
-              '⚙️Can submit Libraries?': 1
+              fldQIcXYW9GJY7NKG: 'Template User',
+              fldfhEDlfAbZqpIhb: 1
             }
           }
         ]
@@ -292,6 +294,7 @@ test('checks configured library user permission', async () => {
   const calls = installAirtableMock((url) => {
     if (url.pathname === '/v0/appTest/libraryUsers') {
       assert.match(url.searchParams.get('filterByFormula'), /REGEX_MATCH/);
+      assert.equal(url.searchParams.get('returnFieldsByFieldId'), null);
       return {
         records: [
           {

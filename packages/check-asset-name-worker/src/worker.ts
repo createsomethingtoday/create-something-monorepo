@@ -46,7 +46,10 @@ const DEFAULT_CREATORS_TABLE_ID = 'tbljt0plqxdMARZXb';
 const DEFAULT_BANNED_INSTANCES_TABLE_ID = 'tblEaBjs3Y6f4YmlR';
 const DEFAULT_LIBRARY_USERS_TABLE_ID = 'tbldQNGszIyOjt9a1';
 const DEFAULT_LIBRARY_ASSET_TYPE = 'Library📚';
-const DEFAULT_LIBRARY_PERMISSION_FIELD = '⚙️Can submit Libraries?';
+// 🎨Creators → '❌⚙️📚Can submit Libraries?' (formula: 1 when '📚Library Creator Form Submitted?' is checked).
+// Referenced by field ID so Airtable label edits cannot silently break the gate again (label drifted, 2026-09-21).
+const DEFAULT_LIBRARY_PERMISSION_FIELD = 'fldfhEDlfAbZqpIhb';
+const AIRTABLE_FIELD_ID_PATTERN = /^fld[A-Za-z0-9]{14}$/;
 const DEFAULT_LIBRARY_PERMISSION_ALLOWED_VALUES = ['1', 'true', 'yes', 'approved', 'allowed'];
 const BAN_STATUS_FIELD_ID = 'fldIvMlWqF6LZeLeW';
 const DEFAULT_WHITELISTED_CREATORS = ['hello@zealousweb.com'] as const;
@@ -186,6 +189,7 @@ async function airtableQuery(
     fields?: string[];
     viewId?: string;
     maxRecords?: number;
+    returnFieldsByFieldId?: boolean;
   }
 ): Promise<AirtableRecord[]> {
   const records: AirtableRecord[] = [];
@@ -202,6 +206,9 @@ async function airtableQuery(
     }
     if (options.fields) {
       for (const field of options.fields) params.append('fields[]', field);
+    }
+    if (options.returnFieldsByFieldId) {
+      params.set('returnFieldsByFieldId', 'true');
     }
     if (offset) {
       params.set('offset', offset);
@@ -879,6 +886,7 @@ async function handleCheckLibraryuser(
     );
   }
 
+  const permissionField = getLibraryPermissionField(env);
   const [userRecords, permissionRecords] = await Promise.all([
     airtableQuery(env, {
       tableId: getLibraryUsersTableId(env),
@@ -890,7 +898,9 @@ async function handleCheckLibraryuser(
       tableId: getLibraryPermissionTableId(env),
       viewId: getLibraryPermissionViewId(env),
       formula: buildLibraryPermissionEmailFormula(email, env),
-      maxRecords: 1
+      maxRecords: 1,
+      // A field-ID permission field must be read back keyed by ID, not by its (mutable) label.
+      returnFieldsByFieldId: AIRTABLE_FIELD_ID_PATTERN.test(permissionField)
     })
   ]);
 
@@ -899,7 +909,7 @@ async function handleCheckLibraryuser(
   const userExists = Boolean(userRecord);
   const canSubmitLibraries = permissionRecord
     ? hasAllowedPermission(
-        permissionRecord.fields[getLibraryPermissionField(env)],
+        permissionRecord.fields[permissionField],
         getLibraryPermissionAllowedValues(env)
       )
     : false;
