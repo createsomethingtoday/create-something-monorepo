@@ -145,6 +145,12 @@ createsomething.io/admin/meetings (future)
 
 ## Audio synchronization acceptance
 
+Dual-source capture is disabled by default. Source can be merged with this gate closed;
+installation and activation remain a separate supervised checkpoint. The Boolean preference
+`captureMicrophoneAlongsideSystemAudio` must be explicitly true to include microphone
+input alongside system audio. The normal system-audio path does not prompt for microphone
+permission; microphone fallback still requests permission if system capture fails.
+
 The mixer preserves relative track starts rather than placing both sources at zero.
 System audio uses its first sample presentation timestamp. The microphone is scheduled
 against `AVAudioRecorder.deviceCurrentTime`; paired host-clock readings map that start
@@ -156,7 +162,7 @@ Run `swift test --package-path apps/meeting-capture/MeetingCapture` from the rep
 root. The regression decodes the exported M4A and verifies silence before the delayed
 track, audible content afterward, and the full delayed tail in both start orders.
 
-Before installing/promoting this recovery, supervise a short recording with headphones:
+Before installing and enabling dual-source capture, supervise a short recording with headphones:
 
 1. Start with microphone permission undecided and wait before granting it. Verify capture
    starts afterward, and a denied microphone still permits system-only recording.

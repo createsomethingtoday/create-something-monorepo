@@ -80,3 +80,17 @@ func preservesRelativeTrackStart(lateSystem: Bool) async throws {
     #expect(rms(1.15, 1.35) > 0.05)
     #expect(Double(buffer.frameLength) / rate >= 1.49)
 }
+
+@Test
+func dualSourceCaptureRequiresExplicitOptIn() {
+    let suite = "meeting-capture-preferences-\(UUID().uuidString)"
+    let defaults = UserDefaults(suiteName: suite)!
+    defer { defaults.removePersistentDomain(forName: suite) }
+    #expect(!RecordingPreferences.includesMicrophone(defaults: defaults))
+    defaults.set(true, forKey: RecordingPreferences.microphoneKey)
+    #expect(RecordingPreferences.includesMicrophone(defaults: defaults))
+    defaults.set(false, forKey: RecordingPreferences.microphoneKey)
+    #expect(!RecordingPreferences.includesMicrophone(defaults: defaults))
+    defaults.set("true", forKey: RecordingPreferences.microphoneKey)
+    #expect(!RecordingPreferences.includesMicrophone(defaults: defaults))
+}

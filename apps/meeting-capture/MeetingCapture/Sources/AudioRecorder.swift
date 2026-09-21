@@ -71,7 +71,8 @@ final class AudioRecorder {
 
     func startRecording(
         meetingId: String,
-        promptForScreenRecordingAccessIfNeeded: Bool = false
+        promptForScreenRecordingAccessIfNeeded: Bool = false,
+        includeMicrophone: Bool = false
     ) async -> AudioRecorderStartResult {
         guard !isRecording, !isTransitioning else { return .failed }
         isTransitioning = true
@@ -89,7 +90,7 @@ final class AudioRecorder {
         guard !Task.isCancelled else { return .failed }
 
         // Resolve permission before either source starts; a prompt may take minutes.
-        let microphoneGranted = await requestMicrophoneAccessIfNeeded()
+        let microphoneGranted = includeMicrophone ? await requestMicrophoneAccessIfNeeded() : false
         guard !Task.isCancelled else { return .failed }
 
         if await systemAudioRecorder.startRecording(meetingId: "\(meetingId)-system") {
@@ -97,7 +98,7 @@ final class AudioRecorder {
                 _ = await systemAudioRecorder.stopRecording()
                 return .failed
             }
-            let microphoneStarted = microphoneGranted && microphoneRecorder.startRecording(meetingId: "\(meetingId)-microphone")
+            let microphoneStarted = includeMicrophone && microphoneGranted && microphoneRecorder.startRecording(meetingId: "\(meetingId)-microphone")
             isRecording = true
             activeMeetingId = meetingId
             activeBackend = microphoneStarted ? .systemAudioAndMicrophone : .systemAudio
@@ -107,7 +108,9 @@ final class AudioRecorder {
         guard !Task.isCancelled else { return .failed }
 
         // Fallback path for environments where ScreenCaptureKit capture is unavailable.
-        if microphoneGranted && microphoneRecorder.startRecording(meetingId: meetingId) {
+        let fallbackGranted = includeMicrophone ? microphoneGranted : await requestMicrophoneAccessIfNeeded()
+        guard !Task.isCancelled else { return .failed }
+        if fallbackGranted && microphoneRecorder.startRecording(meetingId: meetingId) {
             isRecording = true
             activeMeetingId = meetingId
             activeBackend = .microphone

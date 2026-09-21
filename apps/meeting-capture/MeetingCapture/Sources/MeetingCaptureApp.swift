@@ -190,7 +190,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
             }
             let result = await audioRecorder.startRecording(
                 meetingId: context.meetingId,
-                promptForScreenRecordingAccessIfNeeded: context.origin == .manual
+                promptForScreenRecordingAccessIfNeeded: context.origin == .manual,
+                includeMicrophone: RecordingPreferences.includesMicrophone(defaults: .standard)
             )
 
             if Task.isCancelled {
