@@ -55,7 +55,8 @@ configured, existing legacy reads remain unchanged. With a table configured,
 malformed, empty or unavailable snapshots fail rather than silently falling back.
 Both projections share one validated snapshot within a client instance. API
 responses expose the unique summary; the page rejects mixed-source/timestamp
-responses. New history keys use template IDs; old name-keyed history is preserved
+responses, including same-week corrections, using a SHA-256 hash of the complete
+validated content. New history keys use template IDs; old name-keyed history is preserved
 but not attached to new identities by guessing.
 
 Create and validate the additive table only after its proposal is approved.
@@ -82,3 +83,14 @@ separate warehouse provenance. No name fallback is permitted.
 The corrected dry-run stops before publication on a selling template with missing
 category metadata. Resolve that authoritative source field before activation;
 do not drop the seller or invent a category. No Airtable records were written.
+
+## Remaining source-data gates
+
+Read-only full-seller audit found 1,283 selling templates mapped to 1,290 asset
+records. SmartBank (`rec0nOOH6hIItZ2uf`) has no category. The archived library
+`recfCwAtG31OIBs0T` has no category and links to 96 template IDs, including selling
+ones, so its ownership mapping requires authoritative reconciliation. Used tags
+`Events`, `Music Events & Festivals`, and `Health & Wellness` have no usable
+parent-group mapping in the inspected taxonomy. Do not repair these by guessing,
+silently dropping sellers, or treating archived library metadata as creator truth.
+The code remains opt-in; source recovery is separate from runtime activation.

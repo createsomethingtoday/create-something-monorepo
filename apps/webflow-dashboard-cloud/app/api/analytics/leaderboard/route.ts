@@ -79,6 +79,7 @@ export async function GET(request: Request) {
             }
           : null,
         totalMarketplaceSales,
+        snapshotVersion: leaderboardResult.snapshotVersion,
         salesSource: leaderboardResult.marketplaceSummary ? 'marketplace-snapshot' : 'leaderboard-top-50',
         userTotalRevenue,
         userBestRank:

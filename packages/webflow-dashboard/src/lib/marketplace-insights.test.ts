@@ -94,8 +94,8 @@ describe('marketplace insights composition', () => {
 
 
 it('uses unique snapshot totals instead of overlapping categories or truncated leaderboard sums', () => {
-  const leaderboard = {...leaderboardData, summary: {...leaderboardData.summary, totalMarketplaceSales: 3, salesSource: 'marketplace-snapshot' as const}};
-  const categories = {...categoriesData, summary: {...categoriesData.summary, totalSales: 3, lastUpdated: leaderboard.summary.lastUpdated, salesSource: 'marketplace-snapshot' as const}};
+  const leaderboard = {...leaderboardData, summary: {...leaderboardData.summary, totalMarketplaceSales: 3, snapshotVersion: 'a'.repeat(64), salesSource: 'marketplace-snapshot' as const}};
+  const categories = {...categoriesData, summary: {...categoriesData.summary, totalSales: 3, snapshotVersion: 'a'.repeat(64), lastUpdated: leaderboard.summary.lastUpdated, salesSource: 'marketplace-snapshot' as const}};
   expect(buildMarketplaceSummary(leaderboard, categories).totalMarketplaceSales).toBe(3);
   expect(buildMarketplaceSummary(leaderboard, categories).salesSource).toBe('marketplace-snapshot');
 });
@@ -106,4 +106,12 @@ it('does not present a mixed-version snapshot as a marketplace total', () => {
   const categories = {...categoriesData, summary: {...categoriesData.summary, salesSource: 'marketplace-snapshot' as const}};
   expect(buildMarketplaceSummary(leaderboard, categories).totalMarketplaceSales).toBeNull();
   expect(() => composeMarketplaceData(leaderboard, categories)).toThrow('snapshots differ');
+});
+
+it('rejects corrected same-week content with unchanged sales', () => {
+ const leaderboard = {...leaderboardData, summary: {...leaderboardData.summary, totalMarketplaceSales: 3, snapshotVersion: 'a'.repeat(64), salesSource: 'marketplace-snapshot' as const}};
+ const categories = {...categoriesData, summary: {...categoriesData.summary, totalSales: 3, lastUpdated: leaderboard.summary.lastUpdated, snapshotVersion: 'b'.repeat(64), salesSource: 'marketplace-snapshot' as const}};
+ expect(() => composeMarketplaceData(leaderboard, categories)).toThrow('snapshots differ');
+ categories.summary.snapshotVersion = leaderboard.summary.snapshotVersion;
+ expect(composeMarketplaceData(leaderboard, categories).summary.totalMarketplaceSales).toBe(3);
 });

@@ -50,4 +50,4 @@ export function fetchMarketplaceSnapshot(
     MARKETPLACE_INSIGHTS_SNAPSHOT_TABLE_ID?: string;
   },
   fetcher?: typeof fetch
-): Promise<MarketplaceSnapshot | null>;
+): Promise<(MarketplaceSnapshot & { contentVersion: string }) | null>;

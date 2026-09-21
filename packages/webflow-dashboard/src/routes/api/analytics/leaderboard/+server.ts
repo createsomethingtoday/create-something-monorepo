@@ -113,7 +113,8 @@ export const GET: RequestHandler = async ({ locals, platform }) => {
 								}
 							: null,
 						totalMarketplaceSales,
-            salesSource: leaderboardResult.marketplaceSummary ? 'marketplace-snapshot' : 'leaderboard-top-50',
+            snapshotVersion: leaderboardResult.snapshotVersion,
+        salesSource: leaderboardResult.marketplaceSummary ? 'marketplace-snapshot' : 'leaderboard-top-50',
 						userTotalRevenue,
 						userBestRank:
 							userTemplates.length > 0

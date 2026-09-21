@@ -35,6 +35,8 @@ test('both core readers share a complete snapshot and expose unique totals', asy
     client.getCategoryPerformance()
   ]);
   assert.equal(calls, 1);
+  assert.match(leaderboard.snapshotVersion!, /^[a-f0-9]{64}$/);
+  assert.equal(leaderboard.snapshotVersion, categories.snapshotVersion);
   assert.equal(leaderboard.records[0].templateId, 'a'.repeat(24));
   assert.equal(categories.marketplaceSummary?.totalSales, 3);
   assert.equal(

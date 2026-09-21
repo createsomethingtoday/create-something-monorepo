@@ -250,5 +250,8 @@ export async function fetchMarketplaceSnapshot(env, fetcher = fetch) {
   if (!response.ok) throw new Error(`Marketplace snapshot read failed (${response.status})`);
   const data = await response.json();
   if (!data.records?.length) reject('configured source is empty');
-  return snapshotFromFields(data.records[0].fields);
+  const snapshot = snapshotFromFields(data.records[0].fields);
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify(snapshot)));
+  const contentVersion = Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, '0')).join('');
+  return { ...snapshot, contentVersion };
 }

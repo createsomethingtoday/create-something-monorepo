@@ -1353,7 +1353,7 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 	}
 
 	const base = new Airtable({ apiKey: env.AIRTABLE_API_KEY }).base(env.AIRTABLE_BASE_ID);
-  let snapshotPromise: Promise<MarketplaceSnapshot | null> | undefined;
+  let snapshotPromise: ReturnType<typeof fetchMarketplaceSnapshot> | undefined;
   const getSnapshot = () => snapshotPromise ??= fetchMarketplaceSnapshot(env);
 	const debugEnabled = env.DEBUG_AIRTABLE === 'true';
 	const debugLog = (...args: unknown[]) => {
@@ -2448,11 +2448,12 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 			}>;
 			freshness: MarketplaceFreshnessMetadata;
       marketplaceSummary?: MarketplaceSnapshot['summary'];
+      snapshotVersion?: string;
 		}> {
 			const maxRecords = options.maxRecords === undefined ? 50 : options.maxRecords;
       const snapshot = await getSnapshot();
       if (snapshot) return { records: typeof maxRecords === 'number' ? snapshot.leaderboard.slice(0, maxRecords) : snapshot.leaderboard,
-        freshness: {timestamp: snapshot.snapshotAt, source: 'field', fieldName: 'SNAPSHOT_AT'}, marketplaceSummary: snapshot.summary };
+        freshness: {timestamp: snapshot.snapshotAt, source: 'field', fieldName: 'SNAPSHOT_AT'}, snapshotVersion: snapshot.contentVersion, marketplaceSummary: snapshot.summary };
 			const records = await base(TABLES.LEADERBOARD)
 				.select({
 					view: VIEWS.LEADERBOARD,
@@ -2491,9 +2492,10 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 			}>;
 			freshness: MarketplaceFreshnessMetadata;
       marketplaceSummary?: MarketplaceSnapshot['summary'];
+      snapshotVersion?: string;
 		}> {
 			const snapshot = await getSnapshot();
-      if (snapshot) return {records: snapshot.categories, freshness: {timestamp: snapshot.snapshotAt, source: 'field', fieldName: 'SNAPSHOT_AT'}, marketplaceSummary: snapshot.summary};
+      if (snapshot) return {records: snapshot.categories, freshness: {timestamp: snapshot.snapshotAt, source: 'field', fieldName: 'SNAPSHOT_AT'}, snapshotVersion: snapshot.contentVersion, marketplaceSummary: snapshot.summary};
       const records = await base(TABLES.CATEGORY_PERFORMANCE)
 				.select({
 					view: VIEWS.CATEGORY_PERFORMANCE,

@@ -34,6 +34,7 @@ export interface LeaderboardResponse {
 	userCategories?: string[];
 	summary: {
 		totalMarketplaceSales: number;
+    snapshotVersion?: string;
     salesSource?: 'marketplace-snapshot' | 'leaderboard-top-50';
 		userBestRank: number | null;
 		lastUpdated: string;
@@ -68,6 +69,7 @@ export interface CategoriesResponse {
 		totalCategories: number;
 		totalTemplates: number;
 		totalSales: number;
+    snapshotVersion?: string;
     salesSource?: 'marketplace-snapshot' | 'category-performance';
 		totalRevenue: number;
 		avgRevenue: number;
@@ -143,7 +145,7 @@ export function buildMarketplaceSummary(
 	};
 
   if (categorySummary.salesSource === 'marketplace-snapshot' || leaderboardData.summary.salesSource === 'marketplace-snapshot') {
-    if (categorySummary.salesSource !== 'marketplace-snapshot' || leaderboardData.summary.salesSource !== 'marketplace-snapshot' || categorySummary.lastUpdated !== leaderboardData.summary.lastUpdated || categoryTotal !== leaderboardTotal) {
+    if (categorySummary.salesSource !== 'marketplace-snapshot' || leaderboardData.summary.salesSource !== 'marketplace-snapshot' || categorySummary.lastUpdated !== leaderboardData.summary.lastUpdated || categoryTotal !== leaderboardTotal || !categorySummary.snapshotVersion || categorySummary.snapshotVersion !== leaderboardData.summary.snapshotVersion) {
       return { ...baseSummary, dataWarning: 'Marketplace snapshots differ; refresh to load a consistent snapshot.' };
     }
     return { ...baseSummary, totalMarketplaceSales: categoryTotal, salesSource: 'marketplace-snapshot', dataWarning: null };

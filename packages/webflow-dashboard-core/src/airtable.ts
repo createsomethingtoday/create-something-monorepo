@@ -708,7 +708,7 @@ export function getAirtableClient(env: AirtableEnvLike | undefined) {
   }
 
   const base = new Airtable({ apiKey: env.AIRTABLE_API_KEY }).base(env.AIRTABLE_BASE_ID);
-  let snapshotPromise: Promise<MarketplaceSnapshot | null> | undefined;
+  let snapshotPromise: ReturnType<typeof fetchMarketplaceSnapshot> | undefined;
   const getSnapshot = () => snapshotPromise ??= fetchMarketplaceSnapshot(env);
   type MutationFields = Record<string, unknown>;
 
@@ -1533,9 +1533,10 @@ export function getAirtableClient(env: AirtableEnvLike | undefined) {
       }>;
       freshness: MarketplaceFreshnessMetadata;
       marketplaceSummary?: MarketplaceSnapshot['summary'];
+      snapshotVersion?: string;
     }> {
       const snapshot = await getSnapshot();
-      if (snapshot) return { records: options.maxRecords === null ? snapshot.leaderboard : snapshot.leaderboard.slice(0, options.maxRecords ?? 50), freshness: {timestamp: snapshot.snapshotAt, source: 'field', fieldName: 'SNAPSHOT_AT'}, marketplaceSummary: snapshot.summary };
+      if (snapshot) return { records: options.maxRecords === null ? snapshot.leaderboard : snapshot.leaderboard.slice(0, options.maxRecords ?? 50), freshness: {timestamp: snapshot.snapshotAt, source: 'field', fieldName: 'SNAPSHOT_AT'}, snapshotVersion: snapshot.contentVersion, marketplaceSummary: snapshot.summary };
       const records = await base(TABLES.LEADERBOARD)
         .select({
           view: VIEWS.LEADERBOARD,
@@ -1571,9 +1572,10 @@ export function getAirtableClient(env: AirtableEnvLike | undefined) {
       }>;
       freshness: MarketplaceFreshnessMetadata;
       marketplaceSummary?: MarketplaceSnapshot['summary'];
+      snapshotVersion?: string;
     }> {
       const snapshot = await getSnapshot();
-      if (snapshot) return {records: snapshot.categories, freshness: {timestamp: snapshot.snapshotAt, source: 'field', fieldName: 'SNAPSHOT_AT'}, marketplaceSummary: snapshot.summary};
+      if (snapshot) return {records: snapshot.categories, freshness: {timestamp: snapshot.snapshotAt, source: 'field', fieldName: 'SNAPSHOT_AT'}, snapshotVersion: snapshot.contentVersion, marketplaceSummary: snapshot.summary};
       const records = await base(TABLES.CATEGORY_PERFORMANCE)
         .select({
           view: VIEWS.CATEGORY_PERFORMANCE,

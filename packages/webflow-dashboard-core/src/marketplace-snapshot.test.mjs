@@ -154,5 +154,20 @@ test('reader validates and returns the complete atomic snapshot', async () => {
     },
     async () => Response.json({ records: [{ fields: snapshotToFields(snapshot) }] })
   );
-  assert.deepEqual(observed, snapshot);
+  const { contentVersion, ...payload } = observed;
+  assert.match(contentVersion, /^[a-f0-9]{64}$/);
+  assert.deepEqual(payload, snapshot);
+});
+
+test('metadata-only corrections change content identity within the same week', async () => {
+ const snapshot = buildMarketplaceSnapshot(fixture());
+ const env = {MARKETPLACE_INSIGHTS_SNAPSHOT_TABLE_ID: 'tblSnapshotTest01'};
+ const read = () => fetchMarketplaceSnapshot(env, async () => Response.json({records: [{fields: snapshotToFields(snapshot)}]}));
+ const before = await read();
+ snapshot.leaderboard[0].creatorEmail = 'corrected@example.test';
+ const after = await read();
+ assert.equal(before.snapshotAt, after.snapshotAt);
+ assert.deepEqual(before.summary, after.summary);
+ assert.notEqual(before.contentVersion, after.contentVersion);
+ assert.equal(after.contentVersion, (await read()).contentVersion);
 });

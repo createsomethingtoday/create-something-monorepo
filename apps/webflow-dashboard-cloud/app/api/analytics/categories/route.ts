@@ -88,6 +88,7 @@ export async function GET(request: Request) {
         totalCategories: categories.length,
         totalTemplates,
         totalSales,
+        snapshotVersion: categoryResult.snapshotVersion,
         salesSource: categoryResult.marketplaceSummary ? 'marketplace-snapshot' : 'category-performance',
         totalRevenue,
         avgRevenue: Math.round(avgRevenue),
