@@ -12,6 +12,7 @@
 
 <PerformancePageSection
   variant="hero"
+  expression="editorial"
   titleLevel="h1"
   eyebrow="Terms"
   title="Terms for using CREATE SOMETHING .agency."

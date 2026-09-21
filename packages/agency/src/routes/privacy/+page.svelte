@@ -12,6 +12,7 @@
 
 <PerformancePageSection
   variant="hero"
+  expression="editorial"
   titleLevel="h1"
   eyebrow="Privacy"
   title="First-party analytics, no ad pixels."
