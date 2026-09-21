@@ -333,8 +333,10 @@
           ></label
         ><label
           >Listing state<select bind:value={draft.visibility}
-            ><option value="draft">Private draft</option><option value="archived">Archived</option
-            ></select
+            ><option value="draft">Private draft</option
+            >{#if data.commerceReady && data.releases.length > 0}<option value="published"
+                >Published</option
+              >{/if}<option value="archived">Archived</option></select
           ></label
         >
         <p class="muted">
