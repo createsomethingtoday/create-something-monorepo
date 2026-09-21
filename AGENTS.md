@@ -44,6 +44,7 @@ When you need:
 - **Architecture / governance**: `docs/THREE_TIER_FRAMEWORK.md`, `docs/MCP_HUB_CONTROL_PLANE.md`, `docs/HUB_EXECUTION_GOVERNANCE_PLAN.md`
 - **Policy artifacts**: `docs/policies/README.md`
 - **Operational runbooks**: runbooks in `docs/` and `docs/guides/`
+- **Client remote support / Grant setup**: read `ops/rustdesk/AGENTS.md`, then `ops/rustdesk/CLIENT-SUPPORT.md`. Complete authorized setup when needed and record device acceptance in the client's Linear issue.
 - **Historical context / decisions**: `docs/internal/`
 
 ## Working model

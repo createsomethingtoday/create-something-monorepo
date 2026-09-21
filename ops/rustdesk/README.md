@@ -2,7 +2,7 @@
 
 Owner: Micah. Tracking: [CRE-2014](https://linear.app/createsomething/issue/CRE-2014/ship-rustdesk-production-endpoint-and-grant-apple-silicon-onboarding).
 
-RustDesk provides machine access. Local agents, Composio authentication and Git remain separate. Clients personally approve account/OAuth actions. This release supplies the official Apple Silicon client, a native server-settings import and a short guide. It does not configure permanent passwords, install a client startup service, enroll Grant automatically, or provide Pro tenant management/audit features.
+RustDesk provides machine access. Local agents, Composio authentication and Git remain separate. Clients personally approve account/OAuth actions. The shared kit supplies the official Apple Silicon client, a native server-settings import and a short guide for any client who needs attended support. It does not configure permanent passwords, install a client startup service, enroll Grant automatically, or provide Pro tenant management/audit features.
 
 ## Deployed endpoint
 
@@ -18,11 +18,13 @@ The rendezvous process still advertises `198.199.76.7:21117`, the tested relay. 
 
 ## Client delivery
 
-Run `python3 ops/rustdesk/package.py`. The script downloads the exact official ARM64 DMG, verifies its pinned SHA-256, checks the configuration payload and its reference from the guide, and creates a ZIP outside Git in `~/.codex/artifacts/rustdesk-grant-production/`.
+Use [the client support procedure](CLIENT-SUPPORT.md) for each engagement. [Client record fields](client-record.md) belong in the client's Linear project; the shared kit carries no client identity.
 
-Deliver the ZIP privately to Grant when Micah chooses to send it. Grant opens `START-HERE.html`, installs the official app, grants macOS permissions, imports the settings, and uses a one-time password for an agreed session. No message to Grant was sent by this work.
+Run `python3 ops/rustdesk/package.py`. The script downloads the exact official ARM64 DMG, verifies its pinned SHA-256, checks the configuration payload and its reference from the guide, and creates a ZIP outside Git in `~/.codex/artifacts/client-support/apple-silicon/`.
 
-Grant acceptance remains manual: install on his Apple Silicon Mac, restart to Ready, confirm screen/pointer/typing with Micah, quit RustDesk and confirm the session ends. Keep RustDesk closed between attended sessions. Disconnecting one session alone does not prove permanent revocation; remove permissions or uninstall when support ends. Do not claim unattended support, client isolation policies or centralized approval from the OSS server.
+Deliver the ZIP privately to the authorized client contact when sending is approved. The client opens `START-HERE.html`, installs the official app, grants macOS permissions, imports the settings, and uses a one-time password for an agreed session. Building the kit does not send it or grant access.
+
+Test each client device after installation and a restart to Ready. Confirm screen display, pointer movement and typing with the support operator. Have the client quit RustDesk, then confirm the session ends. Keep RustDesk closed between attended sessions. Disconnecting one session alone does not prove permanent revocation; remove permissions or uninstall when support ends. Do not claim unattended support, client isolation policies or centralized approval from the OSS server.
 
 ## Health and recovery
 

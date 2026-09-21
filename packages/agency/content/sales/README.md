@@ -112,6 +112,10 @@ Use [OpenAI partner status and individual qualifications](./openai-qualification
 
 ---
 
+## Remote support during delivery
+
+Use [the remote support brief](remote-support.md) when a client needs help on their Mac. It explains consent, session closure and the agreed support scope. The [operator procedure](../../../../ops/rustdesk/CLIENT-SUPPORT.md) owns onboarding, per-client records and offboarding.
+
 ## Message taxonomy
 
 - Core phrase: "Production-safe workflow infrastructure."
