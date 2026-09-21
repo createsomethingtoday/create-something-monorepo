@@ -507,3 +507,36 @@ it('allows partner revocation after the creator has already been suspended', asy
     ).status
   ).toBe(200);
 });
+
+it('separates operator engagement and reports invitation and free acquisition outcomes', async () => {
+  const operator = event(
+    { event: 'page_view', surface: 'home' },
+    'operator',
+    'reviewer@example.com'
+  );
+  await track(operator);
+  const supportSession = event({ event: 'page_view', surface: 'home' });
+  supportSession.locals.impersonation = { id: 'support', invalid: false };
+  await track(supportSession);
+  await track(event({ event: 'page_view', surface: 'home' }));
+  await POST(event(application));
+  await POST(event(application, 'operator', 'operator@example.com'));
+  sql.exec(
+    "INSERT INTO creator_invitations(token_hash,sponsor,recipient_email,expires_at) VALUES('real','creator','new@example.com',9999999999),('test','creator','operator@example.com',9999999999)"
+  );
+  const request = event(undefined, 'reviewer', 'reviewer@example.com');
+  request.platform.env.PCN_ANALYTICS_OPERATOR_SUBJECTS = 'operator';
+  request.platform.env.PCN_ANALYTICS_OPERATOR_EMAILS = 'operator@example.com';
+  sql.exec(`INSERT INTO networks(id,slug,owner_id,name,status) VALUES('impact-net','impact-net','creator','Impact','active');
+    INSERT INTO builder_assets(id,network_id,title,kind,summary,price_cents) VALUES('asset','impact-net','Skill','skill','Fixture',0);
+    INSERT INTO asset_releases(id,network_id,asset_id,version,manifest,object_key,sha256,size_bytes) VALUES('release','impact-net','asset','1.0.0','{}','fixture','hash',10);
+    INSERT INTO asset_entitlements(id,network_id,asset_id,release_id,buyer_id,source,status) VALUES('real-buy','impact-net','asset','release','buyer','free','active'),('test-buy','impact-net','asset','release','operator','free','active');
+    INSERT INTO impact_daily(day,surface,event,count) VALUES(date('now'),'home','page_view',99);`);
+  const result = await (await report(request)).json();
+  expect(result.engagement).toEqual([expect.objectContaining({ surface: 'home', count: 1 })]);
+  expect(result.outcomes.applications).toEqual([{ status: 'pending', count: 1 }]);
+  expect(result.outcomes.invitations).toMatchObject({ issued: 1, redeemed: 0 });
+  expect(result.outcomes.acquisitions).toEqual([{ source: 'free', status: 'active', count: 1 }]);
+  expect(result.legacyEngagement).toEqual({ count: 99 });
+  expect(result.note).toContain('operator');
+});
