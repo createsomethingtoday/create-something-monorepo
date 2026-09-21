@@ -570,12 +570,6 @@ input[type='file'] {
   letter-spacing: 1px;
   color: var(--muted);
 }
-.engineering-field {
-  background: var(--paper);
-  color: var(--color-performance-ink);
-  padding: 24px 28px;
-  border: 1px solid var(--color-performance-line);
-}
 .field-caption {
   display: flex;
   justify-content: space-between;
@@ -583,99 +577,6 @@ input[type='file'] {
   letter-spacing: 1px;
   padding-bottom: 28px;
   border-bottom: 1px solid var(--color-performance-line);
-}
-.field-source {
-  display: flex;
-  gap: 20px;
-  align-items: center;
-  padding: 26px 0 0;
-}
-.field-node {
-  width: 44px;
-  height: 44px;
-  display: grid;
-  place-items: center;
-  border: 1px solid var(--color-performance-ink);
-  border-radius: 50%;
-  font: 12px monospace;
-  flex-shrink: 0;
-}
-.field-source small {
-  display: block;
-  font: 9px monospace;
-  letter-spacing: 1px;
-  margin-bottom: 8px;
-}
-.field-source strong {
-  font-size: 23px;
-  font-weight: 500;
-  letter-spacing: -0.8px;
-}
-.field-source p {
-  font-size: 12px;
-  margin: 5px 0 0;
-}
-.field-route {
-  margin-left: 21px;
-  padding: 25px 0 25px 41px;
-  border-left: 1px solid var(--color-performance-ink);
-  font: 9px monospace;
-  letter-spacing: 1px;
-}
-.field-network {
-  background: var(--color-performance-ink);
-  color: var(--paper);
-  padding: 23px;
-}
-.field-network-header {
-  display: flex;
-  justify-content: space-between;
-  color: var(--signal);
-  font: 9px monospace;
-  letter-spacing: 1px;
-  margin-bottom: 25px;
-}
-.field-network > strong {
-  display: block;
-  font-size: clamp(24px, 2.4vw, 34px);
-  line-height: 1.1;
-  letter-spacing: -1px;
-  font-weight: 400;
-}
-.field-topics {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 15px;
-  margin: 24px 0;
-  font: 10px/1.6 monospace;
-  color: var(--muted);
-}
-.field-gate {
-  border-top: 1px solid var(--line);
-  padding-top: 18px;
-  display: grid;
-  gap: 8px;
-}
-.field-gate span {
-  font: 9px monospace;
-  color: var(--signal);
-}
-.field-gate b {
-  font-size: 12px;
-  font-weight: 400;
-}
-.field-footer {
-  margin: 0 0 0 21px;
-  padding: 23px 0 0 41px;
-  border-left: 1px solid var(--color-performance-ink);
-}
-.field-footer span {
-  font: 9px monospace;
-  letter-spacing: 1px;
-}
-.field-footer p {
-  font-size: 15px;
-  margin: 8px 0 0;
 }
 .network-builder {
   padding: 100px 4.5vw;
@@ -966,9 +867,6 @@ input[type='file'] {
   }
   .creator-hero .lede {
     font-size: 16px;
-  }
-  .engineering-field {
-    padding: 20px;
   }
   .creator-scope {
     display: grid;
