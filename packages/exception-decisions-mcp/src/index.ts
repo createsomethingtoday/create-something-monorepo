@@ -1,6 +1,6 @@
 // exception-decisions-mcp — decision-scoped MCP for the app-review exceptions loop.
-// v1.5.1: completion-only judgment and strict numeric confidence; hosted cron defaults disabled.
-// v1.5.0: the advisory recommendation lane runs INSIDE the worker on a cron (replaces the
+// v1.5.1: manual completion-only recommendations; scheduled execution withheld (CRE-2040).
+// v1.5.0 retained prototype: advisory recommendation lane inside the Worker (replacing the
 //         laptop launchd job + scripts/scheduled-run.sh). Dify judges, the worker writes under
 //         the role=automation identity from DECIDERS_JSON. Manual trigger: POST /runs/recommend.
 // v1.2.0: role-aware recommendation prefix + automation keys refused on decide tools.
@@ -14,11 +14,11 @@ interface Env {
   AIRTABLE_BASE_ID?: string;
   DECIDERS_JSON?: string;
   DECISIONS_VIEW_URL?: string;
-  // Recommendation lane (cron). Dedicated tool-free Dify completion app:
+  // Manual recommendation lane. Dedicated tool-free Dify completion app:
   // Text Generation app key. Its prompt template must render the required {{prompt}} input.
   DIFY_RECOMMENDER_COMPLETION_APP_KEY?: string;
   RECOMMENDER_CAP?: string;
-  // Set to "true" to make the cron a no-op without redeploying (kill switch).
+  // Set to "true" to disable recommendation write passes; explicit dry runs remain available.
   RECOMMENDER_DISABLED?: string;
 }
 
@@ -702,7 +702,7 @@ async function toolDraftDeveloperUpdate(ctx: Ctx, args: { version_id: string }):
 
 // ---------------------------------------------------------------------------------------------
 // Recommendation lane (advisory, automation identity). Formerly scripts/leans-dify.mjs +
-// scripts/runner.mjs on a laptop launchd schedule; now the worker's own cron. Hard guarantees are
+// scripts/runner.mjs on a laptop launchd schedule; now an authenticated manual pass. Hard guarantees are
 // unchanged and still server-side: automation keys cannot approve or act at the version level, and
 // decided items refuse writes. Soft guarantees implemented here: technical types only, skip items
 // already Under Review or already carrying any recommendation, confidence >= 0.7, capped writes.
@@ -1181,7 +1181,7 @@ export default {
       }
       return handleMcp(request, env, decider);
     }
-    // Manual trigger for the recommendation lane (same pass the cron runs). Operator or automation
+    // Manual trigger for the recommendation lane. The caller owns receipt handoff. Operator or automation
     // keys only; body { "dry_run": true } previews without writing. Returns the run receipt.
     if (url.pathname === "/runs/recommend") {
       if (request.method !== "POST") {
@@ -1214,14 +1214,5 @@ export default {
     return new Response("Not found", { status: 404, headers: JSON_HEADERS });
   },
 
-  // Cron: the advisory recommendation pass (see wrangler.*.jsonc triggers). Writes only under the
-  // role=automation identity; this pass never invokes a final decision tool.
-  async scheduled(event: ScheduledEvent, env: Env, ctx: ExecutionContext): Promise<void> {
-    ctx.waitUntil(
-      (async () => {
-        const receipt = await runRecommendationPass(env);
-        console.log(JSON.stringify({ event: "recommendation_pass", trigger: "cron", cron: event.cron, ...receipt }));
-      })(),
-    );
-  },
+  // Scheduled execution is withheld until durable human handoff exists (CRE-2040).
 };

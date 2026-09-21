@@ -111,21 +111,24 @@ root-preserve-20260811-1955 tree.
 
 ## Recommendation activation gate
 
-The Webflow Hosting configuration defaults to `RECOMMENDER_DISABLED=true`. Keep it disabled
+Both deployment configurations have empty cron schedules and default to `RECOMMENDER_DISABLED=true`. Keep it disabled
 until a dedicated Dify **Text Generation** app is published with one required text input,
 `prompt`, rendered verbatim in its prompt template. Store that app's key as
 `DIFY_RECOMMENDER_COMPLETION_APP_KEY`. No legacy partner-lead agent key is accepted or used
 as a fallback. The fixed `/v1/completion-messages` endpoint rejects agent/chat/workflow apps
 before generation. See the [Dify service implementation](https://github.com/langgenius/dify/blob/main/api/controllers/service_api/app/completion.py).
 
-Verify a representative dry run, confirm the expected policy output and zero Airtable writes,
-then explicitly set `RECOMMENDER_DISABLED=false` in the deployment config to activate the cron.
-A local mock test or source merge is not that live acceptance. The legacy CREATE SOMETHING
-configuration has no cron. Manual decision tools retain their existing authorization policy.
+Scheduled execution is not shipped in this release: the Worker has no `scheduled` handler.
+A manual caller receives the complete receipt and owns any needs-human handoff. A route in a
+receipt is not a delivered notification. [CRE-2040](https://linear.app/createsomething/issue/CRE-2040/gate-exception-cron-activation-on-durable-human-handoff)
+tracks durable recipient delivery/acknowledgement, retries, idempotency, and overlapping-run
+ownership required before a later reviewed change can introduce scheduling. Do not activate
+write passes merely because the provider or dry-run checks pass. Existing manual decision
+tools retain their authorization policy.
 
 ### Review guardrails (2026-09-21)
 
-An authenticated `dry_run: true` remains available while `RECOMMENDER_DISABLED=true` blocks write passes and cron. Every pass refreshes approved/denied precedent rows before asking Dify; queue or precedent fetch failures return an error receipt without writing. Bundled findings and exposure/leak findings are conservatively routed to Adam before generation, including where partnership metadata is unavailable. Any non-null model escalation route also prevents a write. These text checks are conservative routing aids, not a complete semantic classifier; live acceptance is still required before enabling scheduling. Only successful writes consume the write cap (dry runs count successful simulated writes).
+An authenticated `dry_run: true` remains available while `RECOMMENDER_DISABLED=true` blocks recommendation write passes. Every pass refreshes approved/denied precedent rows before asking Dify; queue or precedent fetch failures return an error receipt without writing. Bundled findings and exposure/leak findings are conservatively routed to Adam before generation, including where partnership metadata is unavailable. Any non-null model escalation route also prevents a write. These text checks are conservative routing aids, not a complete semantic classifier; live acceptance is still required before enabling scheduling. Only successful writes consume the write cap (dry runs count successful simulated writes).
 
 The dedicated completion app passed a synthetic exposure case on 2026-09-21 and the completion endpoint rejected the old agent app credential. Its secret is stored at Infisical `prod:/exception-decisions-mcp:DIFY_RECOMMENDER_COMPLETION_APP_KEY`. This proves the provider mode boundary, not a deployed worker dry run or scheduler activation.
 

@@ -8,10 +8,8 @@
   "main": "src/index.ts",
   "compatibility_date": "2026-08-01",
   "observability": { "enabled": true },
-  // Advisory recommendation pass, weekdays 08:30 + 13:30 America/Chicago while on CDT (UTC-5).
-  // Cron is UTC-only; during CST (UTC-6, from early November) these land at 07:30 + 12:30 local,
-  // which is fine for a queue that Adam reads in the morning. Kill switch: RECOMMENDER_DISABLED=true.
-  "triggers": { "crons": ["30 13 * * 1-5", "30 18 * * 1-5"] },
+  // No scheduling until durable recipient handoff and run ownership are verified (CRE-2040).
+  "triggers": { "crons": [] },
   // Secrets (wrangler secret put <NAME> --config wrangler.webflow-hosting.jsonc):
   //   AIRTABLE_API_KEY            Airtable PAT scoped to appMoIgXMTTTNIc3p
   //   DECIDERS_JSON               key → {name, email, role, surface?} map (must include one role=automation identity)

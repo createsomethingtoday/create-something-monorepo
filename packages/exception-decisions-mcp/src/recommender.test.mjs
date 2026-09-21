@@ -122,7 +122,7 @@ function makeAirtable({ leans, patches, difyCalls, overrides = {}, failFirstPatc
   };
 }
 
-describe("recommendation lane (cron)", () => {
+describe("manual recommendation lane", () => {
   for (const confidence of ["invalid", "0.9", true, 1.5, -1, null]) {
     it(`rejects malformed confidence ${JSON.stringify(confidence)} without writing`, async () => {
       const patches = [];
@@ -239,7 +239,7 @@ describe("recommendation lane (cron)", () => {
     assert.ok(receipt.skipped.some((s) => s.includes("run cap 1 reached")));
   });
 
-  it("is a no-op when disabled or misconfigured, and never throws out of the cron", async () => {
+  it("is a no-op when disabled or misconfigured", async () => {
     globalThis.fetch = async () => {
       throw new Error("must not be called");
     };
@@ -257,24 +257,7 @@ describe("recommendation lane (cron)", () => {
     assert.equal(noAutomation.mode, "misconfigured");
     assert.match(noAutomation.errors[0], /no role=automation identity/);
 
-    const logs = [];
-    const originalLog = console.log;
-    console.log = (line) => logs.push(line);
-    try {
-      let pending;
-      await worker.scheduled({ cron: "30 13 * * 1-5", scheduledTime: Date.now() }, { ...env, RECOMMENDER_DISABLED: "true" }, {
-        waitUntil: (p) => {
-          pending = p;
-        },
-      });
-      await pending;
-    } finally {
-      console.log = originalLog;
-    }
-    const logged = JSON.parse(logs[0]);
-    assert.equal(logged.event, "recommendation_pass");
-    assert.equal(logged.trigger, "cron");
-    assert.equal(logged.mode, "disabled");
+
   });
 
   it("exposes POST /runs/recommend to operator and automation keys only", async () => {
@@ -497,3 +480,13 @@ for (const cap of [0, 1]) {
     assert.equal(patches.length,0);
   });
 }
+
+it("ships manual recommendation runs only until durable human handoff is implemented", () => {
+  assert.equal(worker.scheduled, undefined);
+  for (const config of ["wrangler.jsonc", "wrangler.webflow-hosting.jsonc"]) {
+    const source=readFileSync(resolve(PKG_DIR,config),"utf8");
+    const parsed=JSON.parse(source.replace(/^\s*\/\/.*$/gm,""));
+    assert.deepEqual(parsed.triggers.crons,[]);
+    assert.equal(parsed.vars.RECOMMENDER_DISABLED,"true");
+  }
+});
