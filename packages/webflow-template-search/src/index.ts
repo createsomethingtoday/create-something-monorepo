@@ -194,8 +194,12 @@ async function handleSearch(request: Request, env: Env, ctx: ExecutionContext): 
   const cache = cacheRequest ? getDefaultCache() : null;
 
   if (cache && cacheRequest) {
-    const cached = await cache.match(cacheRequest);
-    if (cached) return publicSearchResponse(request, env, await cached.text(), 'HIT');
+    try {
+      const cached = await cache.match(cacheRequest);
+      if (cached) return publicSearchResponse(request, env, await cached.text(), 'HIT');
+    } catch {
+      // The edge cache is optional: unreadable entries must not prevent a D1 search.
+    }
   }
 
   const body = JSON.stringify(await searchTemplates(env, params, cacheVersion));

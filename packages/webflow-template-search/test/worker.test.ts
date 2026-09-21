@@ -3385,6 +3385,24 @@ describe('webflow-template-search worker', () => {
     } finally { close(); }
   });
 
+  it.each(['match', 'body', 'put'] as const)('falls back to D1 when public-cache %s fails', async (failure) => {
+    const cache = installSearchCacheStub(true);
+    if (failure === 'body') {
+      cache.match.mockResolvedValue({ text: async () => { throw new Error('cache body unavailable'); } } as Response);
+    } else {
+      cache[failure].mockRejectedValue(new Error('cache unavailable'));
+    }
+    const { env, close } = createTestEnv();
+    try {
+      for (const query of ['q=missing', 'page=2']) {
+        const response = await callWorker(new Request('https://templates.test/api/templates/search?' + query), env);
+        expect(response.status).toBe(200);
+        expect((await response.json() as any).pagination.total_items).toBe(0);
+        expect(response.headers.get('x-template-search-cache')).toBe('MISS');
+      }
+    } finally { close(); }
+  });
+
   it('does not memoize direct search callers without an index epoch', async () => {
     const cache = installSearchCacheStub(true);
     const { env, close } = createTestEnv();
