@@ -84,7 +84,24 @@
               maxlength="4000"
               placeholder="Describe the workflow, current bottleneck, operator and outcome you need. Exclude credentials and sensitive client data."
             ></textarea></label
-          ><button class="button" disabled={busy} data-impact="primary_action"
+          >
+          <p class="field-hint">
+            This request is shared with CREATE SOMETHING and your chosen partner to scope support.
+            See <a
+              href="/privacy#access"
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Opens in a new tab">who can access it</a
+            >
+            and the
+            <a
+              href="/terms#support"
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Opens in a new tab">company-support terms</a
+            >.
+          </p>
+          <button class="button" disabled={busy} data-impact="primary_action"
             >{busy ? 'Submitting…' : 'Request scoped support'} <Icon name="arrow-right" /></button
           >
         </form>{:else}<p class="availability">
