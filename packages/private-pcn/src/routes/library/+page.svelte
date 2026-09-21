@@ -1,4 +1,5 @@
 <script lang="ts">
+  import LearningOverview from '$lib/components/LearningOverview.svelte';
   import Icon from '$lib/components/Icon.svelte';
   import { onMount, onDestroy } from 'svelte';
   import { page } from '$app/state';
@@ -97,6 +98,9 @@
         ask the creator to check the email on your invitation.
       </p>
     </aside>{/if}
+  {#if data.identity && data.identity.role !== 'blocked'}{#key slug}<LearningOverview
+        {slug}
+      />{/key}{/if}
   {#if videos.length}<div class="library-tools">
       <label
         >Search the library<input
