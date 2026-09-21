@@ -79,8 +79,8 @@
         /></label
       >
       {#if !recovery}<p class="muted">
-          By continuing, you agree to the <a href="https://createsomething.agency/terms">Terms</a>
-          and acknowledge the <a href="https://createsomething.agency/privacy">Privacy Policy</a>.
+          By continuing, you agree to the <a href="/terms">Terms</a>
+          and acknowledge the <a href="/privacy">Privacy Policy</a>.
         </p>{/if}
       {#if error}<p class="error" role="alert">{error}</p>{/if}
       <button class="button" disabled={busy}

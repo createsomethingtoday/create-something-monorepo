@@ -77,9 +77,7 @@
     >Independent knowledge. Your own network.</span
   >
   <div>
-    <a href="https://createsomething.agency/privacy">Privacy</a><a
-      href="https://createsomething.agency/terms">Terms</a
-    >
+    <a href="/privacy">Privacy</a><a href="/terms">Terms</a>
   </div>
 </footer>
 
