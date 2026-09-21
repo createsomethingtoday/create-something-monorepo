@@ -1,6 +1,7 @@
 import Stripe from 'stripe';
 import type { D1Database } from '@cloudflare/workers-types';
 import type { Network } from './networks';
+import { SUPPORT_POLICY, reconcileSupportPayments } from './support-settlements';
 
 export const PLAN = {
   amount: 2450,
@@ -133,8 +134,9 @@ function validateSubscription(
     item.price.recurring?.interval !== PLAN.interval ||
     item.price.recurring.interval_count !== 1 ||
     (terms.destination
-      ? objectId(subscription.transfer_data?.destination || null) !== terms.destination ||
-        subscription.transfer_data?.amount_percent !== 95 ||
+      ? !!subscription.transfer_data ||
+        subscription.metadata.support_destination !== terms.destination ||
+        subscription.metadata.support_policy !== SUPPORT_POLICY ||
         subscription.application_fee_percent != null ||
         subscription.metadata.support_partner !== terms.partnerId
       : !!subscription.transfer_data || !!subscription.application_fee_percent) ||
@@ -309,6 +311,8 @@ export async function checkout(
   if (!terms.destination && trial && trial.ends_at > seconds())
     throw new BillingError('Your free month is still active. Subscribe after it ends.', 409);
   if (terms.destination) {
+    if (env.STRIPE_AUTOMATIC_TAX_ENABLED === 'true')
+      throw new BillingError('Support tax settlement requires review before checkout.');
     const account = await stripe.v2.core.accounts.retrieve(terms.destination, {
       include: ['configuration.recipient', 'defaults']
     });
@@ -359,7 +363,11 @@ export async function checkout(
     const ours = sessions.data.filter((s) => s.metadata?.network_id === network.id);
     const open = ours.filter((s) => s.status === 'open');
     if (open.length > 1) throw new BillingError('Checkout needs reconciliation. Contact support.');
-    if (open[0]?.url) return { url: open[0].url };
+    if (open[0]?.url) {
+      if (terms.destination && open[0].metadata?.support_policy !== SUPPORT_POLICY)
+        throw new BillingError('An older support checkout must be expired before continuing.', 409);
+      return { url: open[0].url };
+    }
     if (
       row.status === 'none' &&
       ours.some((s) => s.status === 'complete' && s.payment_status === 'unpaid')
@@ -382,16 +390,23 @@ export async function checkout(
         success_url: `${destination}?checkout=returned`,
         cancel_url: destination,
         client_reference_id: network.id,
-        metadata: { network_id: network.id, checkout_key: row.checkout_key },
+        metadata: {
+          network_id: network.id,
+          checkout_key: row.checkout_key,
+          ...(terms.destination ? { support_policy: SUPPORT_POLICY } : {})
+        },
         subscription_data: {
           metadata: {
             network_id: network.id,
             owner_id: network.owner_id!,
-            ...(terms.partnerId ? { support_partner: terms.partnerId } : {})
-          },
-          ...(terms.destination
-            ? { transfer_data: { destination: terms.destination, amount_percent: 95 } }
-            : {})
+            ...(terms.partnerId && terms.destination
+              ? {
+                  support_partner: terms.partnerId,
+                  support_destination: terms.destination,
+                  support_policy: SUPPORT_POLICY
+                }
+              : {})
+          }
         },
         billing_address_collection: 'required',
         ...(env.STRIPE_AUTOMATIC_TAX_ENABLED === 'true' ? { automatic_tax: { enabled: true } } : {})
@@ -444,7 +459,7 @@ export async function processBillingEvent(
   stripe = stripeClient(env)
 ) {
   if (
-    !/^(customer\.subscription\.|checkout\.session\.|invoice\.|charge\.refunded$|charge\.dispute\.|refund\.)/.test(
+    !/^(customer\.subscription\.|checkout\.session\.|invoice\.|charge\.refunded$|charge\.updated$|charge\.dispute\.|refund\.)/.test(
       event.type
     )
   )
@@ -473,6 +488,7 @@ export async function processBillingEvent(
     .bind(row.network_id)
     .first<Network>();
   if (!network) throw new BillingError('Network missing during billing reconciliation.');
+  await reconcileSupportPayments(env, network, stripe);
   await refreshBilling(env, network, stripe);
   await env.DB.prepare(
     'INSERT INTO billing_events(event_id,network_id,event_type) VALUES(?,?,?) ON CONFLICT(event_id) DO NOTHING'
