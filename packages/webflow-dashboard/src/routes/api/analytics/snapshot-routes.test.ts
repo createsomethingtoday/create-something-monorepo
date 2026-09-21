@@ -20,12 +20,12 @@ describe('snapshot analytics API contracts', () => {
       ],
       assets: [
         {
-          mrpId: 'b'.repeat(24),
+          templateId: 'a'.repeat(24),
           creatorEmail: 'owner@example.test',
           categories: ['Agency', 'Portfolio']
         },
         {
-          mrpId: 'd'.repeat(24),
+          templateId: 'c'.repeat(24),
           creatorEmail: 'competitor@example.test',
           categories: ['Agency', 'Portfolio']
         }

@@ -14,7 +14,7 @@ describe('dashboard snapshot reader', () => {
       ],
       assets: [
         {
-          mrpId: 'b'.repeat(24),
+          templateId: 'a'.repeat(24),
           creatorEmail: 'fixture@example.test',
           categories: ['Agency', 'Portfolio']
         }

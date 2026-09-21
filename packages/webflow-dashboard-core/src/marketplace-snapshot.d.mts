@@ -36,7 +36,7 @@ export function buildMarketplaceSnapshot(input: {
     sales: number;
     revenue: number;
   }>;
-  assets: Array<{ mrpId: string; creatorEmail: string; categories: string[] }>;
+  assets: Array<{ templateId: string; creatorEmail: string; categories: string[] }>;
   categories: Array<{ name: string; group: string }>;
   snapshotAt: string;
 }): MarketplaceSnapshot;

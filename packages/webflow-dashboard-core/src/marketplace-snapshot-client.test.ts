@@ -10,7 +10,7 @@ test('both core readers share a complete snapshot and expose unique totals', asy
     ],
     assets: [
       {
-        mrpId: 'b'.repeat(24),
+        templateId: 'a'.repeat(24),
         creatorEmail: 'fixture@example.test',
         categories: ['Agency', 'Portfolio']
       }

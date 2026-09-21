@@ -177,12 +177,16 @@ export function composeMarketplaceData(
 	leaderboardData: LeaderboardResponse,
 	categoriesData: CategoriesResponse
 ): MarketplaceData {
+  const summary = buildMarketplaceSummary(leaderboardData, categoriesData);
+  if ((leaderboardData.summary.salesSource === 'marketplace-snapshot' || categoriesData.summary.salesSource === 'marketplace-snapshot') && summary.salesSource !== 'marketplace-snapshot') {
+    throw new Error('Marketplace snapshots differ; refresh to load a consistent snapshot.');
+  }
 	return {
 		leaderboard: leaderboardData.leaderboard,
 		userTemplates: leaderboardData.userTemplates,
 		userCategories: leaderboardData.userCategories ?? [],
 		categories: categoriesData.categories,
 		insights: categoriesData.insights,
-		summary: buildMarketplaceSummary(leaderboardData, categoriesData)
+		summary
 	};
 }

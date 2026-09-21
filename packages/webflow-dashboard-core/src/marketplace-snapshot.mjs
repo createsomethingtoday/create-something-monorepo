@@ -37,7 +37,7 @@ function ranks(rows, metric) {
   return result;
 }
 
-/** Input assets are keyed by marketplace product ID, never by display name. */
+/** Input assets are keyed by template resource ID, never by display name. */
 export function buildMarketplaceSnapshot({ sellers, assets, categories, snapshotAt }) {
   if (
     !Array.isArray(sellers) ||
@@ -55,21 +55,21 @@ export function buildMarketplaceSnapshot({ sellers, assets, categories, snapshot
     if (groups.has(name) && groups.get(name) !== group) reject('ambiguous category mapping');
     groups.set(name, group);
   }
-  const usedProducts = new Set(sellers.map((row) => id(row.mrpId)));
-  const byProduct = new Map();
+  const usedTemplates = new Set(sellers.map((row) => id(row.templateId)));
+  const byTemplate = new Map();
   for (const asset of assets) {
     // Assets without product IDs are not published marketplace resources.
-    if (!asset.mrpId) continue;
-    const key = String(asset.mrpId).trim().toLowerCase();
-    if (!usedProducts.has(key)) continue;
+    if (!asset.templateId) continue;
+    const key = String(asset.templateId).trim().toLowerCase();
+    if (!usedTemplates.has(key)) continue;
     const normalized = {
       creatorEmail: text(asset.creatorEmail, 'creator email'),
       categories: [...new Set(asset.categories.map((c) => text(c, 'asset category')))].sort()
     };
     if (!normalized.categories.length) reject(`missing category for ${key}`);
-    if (byProduct.has(key) && JSON.stringify(byProduct.get(key)) !== JSON.stringify(normalized))
+    if (byTemplate.has(key) && JSON.stringify(byTemplate.get(key)) !== JSON.stringify(normalized))
       reject(`ambiguous asset mapping for ${key}`);
-    byProduct.set(key, normalized);
+    byTemplate.set(key, normalized);
   }
   const seen = new Set();
   const rows = sellers.map((seller) => {
@@ -77,8 +77,8 @@ export function buildMarketplaceSnapshot({ sellers, assets, categories, snapshot
     const mrpId = id(seller.mrpId);
     if (seen.has(templateId)) reject(`duplicate template ID ${templateId}`);
     seen.add(templateId);
-    const asset = byProduct.get(mrpId);
-    if (!asset) reject(`missing asset mapping for ${mrpId}`);
+    const asset = byTemplate.get(templateId);
+    if (!asset) reject(`missing asset mapping for ${templateId}`);
     for (const category of asset.categories)
       if (!groups.has(category)) reject(`missing taxonomy mapping for ${category}`);
     const totalSales30d = number(seller.sales, 'sales', true);

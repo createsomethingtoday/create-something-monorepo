@@ -102,6 +102,8 @@ it('uses unique snapshot totals instead of overlapping categories or truncated l
 it('does not present a mixed-version snapshot as a marketplace total', () => {
   const leaderboard = {...leaderboardData, summary: {...leaderboardData.summary, salesSource: 'marketplace-snapshot' as const}};
   expect(buildMarketplaceSummary(leaderboard, categoriesData).totalMarketplaceSales).toBeNull();
+  expect(() => composeMarketplaceData(leaderboard, categoriesData)).toThrow('snapshots differ');
   const categories = {...categoriesData, summary: {...categoriesData.summary, salesSource: 'marketplace-snapshot' as const}};
   expect(buildMarketplaceSummary(leaderboard, categories).totalMarketplaceSales).toBeNull();
+  expect(() => composeMarketplaceData(leaderboard, categories)).toThrow('snapshots differ');
 });

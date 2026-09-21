@@ -178,8 +178,8 @@ async function main() {
       })),
     assets: assetRecords.flatMap((r) =>
       values(r.fields.fldFeWROxzwzCo84b).flatMap((value) =>
-        value.split(',').map((mrpId) => ({
-          mrpId: mrpId.trim(),
+        value.split(',').map((templateId) => ({
+          templateId: templateId.trim(),
           creatorEmail: values(r.fields.fldHhxmfSNMp117SP)[0],
           categories: values(r.fields.fldBv3YTf6Bd5HDXN)
         }))

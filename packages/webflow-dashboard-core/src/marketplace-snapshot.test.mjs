@@ -13,7 +13,7 @@ const fixture = () => ({
   ],
   assets: [
     {
-      mrpId: 'b'.repeat(24),
+      templateId: 'a'.repeat(24),
       creatorEmail: 'one@example.test',
       categories: ['Agency', 'Portfolio', 'Agency']
     }
@@ -45,7 +45,7 @@ test('same-name templates remain distinct and retain their own creators', () => 
     revenue: 100
   });
   input.assets.push({
-    mrpId: 'd'.repeat(24),
+    templateId: 'c'.repeat(24),
     creatorEmail: 'two@example.test',
     categories: ['Agency']
   });
@@ -67,7 +67,7 @@ test('marketplace totals cover sellers beyond the top 160', () => {
   for (let i = 0; i < 161; i++) {
     const id = i.toString(16).padStart(24, '0');
     input.sellers.push({ templateId: id, mrpId: id, name: 'Template', sales: 1, revenue: 10 });
-    input.assets.push({ mrpId: id, creatorEmail: 'fixture@example.test', categories: ['Agency'] });
+    input.assets.push({ templateId: id, creatorEmail: 'fixture@example.test', categories: ['Agency'] });
   }
   const snapshot = buildMarketplaceSnapshot(input);
   assert.equal(snapshot.leaderboard.length, 160);
@@ -97,7 +97,7 @@ for (const [name, change] of [
   [
     'missing mapping',
     (x) => {
-      x.assets[0].mrpId = 'c'.repeat(24);
+      x.assets[0].templateId = 'c'.repeat(24);
     }
   ],
   [

@@ -556,6 +556,7 @@ function buildMetricPointMap<Row>(
 }
 
 function getLeaderboardHistoryKey(row: LeaderboardHistoryRow): string {
+  if (/^template:[a-f0-9]{24}$/.test(row.record_key ?? "")) return row.record_key!;
   if (row.template_name && row.category && row.creator_email) {
     return buildLeaderboardSnapshotKey({
       templateName: row.template_name,

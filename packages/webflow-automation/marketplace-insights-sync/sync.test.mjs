@@ -34,7 +34,7 @@ const fixture = () => ({
       {
         id: 'recAsset',
         fields: {
-          fldFeWROxzwzCo84b: 'b'.repeat(24),
+          fldFeWROxzwzCo84b: 'a'.repeat(24),
           fldBv3YTf6Bd5HDXN: ['Agency'],
           fldHhxmfSNMp117SP: ['fixture@example.test']
         }
@@ -165,7 +165,7 @@ test('duplicate names preserve stable IDs and creator attribution', () => {
   data.records[tables.assets].push({
     id: 'recOther',
     fields: {
-      fldFeWROxzwzCo84b: 'd'.repeat(24),
+      fldFeWROxzwzCo84b: 'c'.repeat(24),
       fldBv3YTf6Bd5HDXN: ['Agency'],
       fldHhxmfSNMp117SP: ['other@example.test']
     }
@@ -193,7 +193,7 @@ test('multiple tags keep the unique marketplace aggregate', () => {
 });
 test('unmapped sellers fail before publication', () => {
   const data = fixture();
-  data.sellers[0].MRP_ID = 'f'.repeat(24);
+  data.sellers[0].TEMPLATE_ID = 'f'.repeat(24);
   const result = run(data);
   assert.equal(result.status, 1);
   assert.equal(result.writes.length, 0);

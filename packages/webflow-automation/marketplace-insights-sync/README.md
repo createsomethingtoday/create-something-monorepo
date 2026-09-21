@@ -6,7 +6,7 @@ artifact. No legacy leaderboard/category record is created, updated or deleted.
 
 ## Correctness contract
 
-- Group orders by stable template ID and marketplace product ID. Join product IDs
+- Group orders by stable template ID and marketplace product ID. Join template resource IDs
   to Assets `ℹ️MRP ID` (`fldFeWROxzwzCo84b`), never by template name.
 - Reject duplicate template IDs, missing identity/creator/taxonomy mappings,
   conflicting asset metadata, empty sources and invalid numeric values.
@@ -72,10 +72,13 @@ Tests mock Snowflake and Airtable without production credentials or requests.
 Dashboard/core tests cover reader consistency, unique totals, identity-based
 history and mixed-snapshot rejection. See `ARCHITECTURE.md` for ownership.
 
-## Current activation gate (September 21, 2026)
+## Source identity verification (September 21, 2026)
 
-A real read-only dry-run reached Snowflake and Airtable, then rejected a selling
-product without an Assets product-ID mapping. No snapshot was published. Resolve
-the authoritative mapping before a publication attempt; do not guess by name or
-drop unmatched sellers to make the run pass. The additive table also requires
-explicit schema approval. No reader or schedule has been activated.
+Live read-only comparison found all 1,283 selling template IDs in Assets; zero
+warehouse product IDs matched. Despite its label, `ℹ️MRP ID` contains template
+resource IDs. The join uses this verified identity domain. Product IDs remain
+separate warehouse provenance. No name fallback is permitted.
+
+The corrected dry-run stops before publication on a selling template with missing
+category metadata. Resolve that authoritative source field before activation;
+do not drop the seller or invent a category. No Airtable records were written.
