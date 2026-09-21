@@ -107,6 +107,9 @@ export function resolveManifestComponents(componentGlobs, { packageRoot = PACKAG
 // (control/business) components to an external workspace.
 export function evaluateManifestScope({ matches, forbid }) {
   const failures = [];
+  if (matches.some((entry) => entry.replaceAll('\\', '/').startsWith('src/components/cato/'))) {
+    failures.push('Cato source authority moved to createsomethingtoday/cato-webflow-components. The monorepo copy is historical and must not be shared.');
+  }
 
   if (matches.length === 0) {
     failures.push('Manifest component globs resolve to zero files; the share would publish an empty library.');
@@ -220,7 +223,8 @@ Fails closed before Webflow Code Component library sharing unless:
 - ${APPROVAL_ENV}=1 is set after explicit approval
 - the current branch has an upstream and is not behind it
 - relevant webflow-components files are clean, unless --allow-dirty or ${ALLOW_DIRTY_ENV}=1 is intentionally supplied
-- when --forbid is supplied: the manifest resolves at least one component and none under the forbidden component directories
+- the manifest resolves at least one component and excludes the historical Cato source
+- when --forbid is supplied: no components resolve under the forbidden directories
 
 This command does not mutate Webflow. It may run git fetch unless --no-fetch is supplied.`);
 }
@@ -233,13 +237,10 @@ function main() {
   }
 
   const manifest = readManifest(options.manifest);
-  const manifestScope =
-    options.forbid.length > 0
-      ? evaluateManifestScope({
-          matches: resolveManifestComponents(manifest.componentGlobs),
-          forbid: options.forbid
-        })
-      : { ok: true, failures: [] };
+  const manifestScope = evaluateManifestScope({
+    matches: resolveManifestComponents(manifest.componentGlobs),
+    forbid: options.forbid
+  });
 
   if (options.fetch) {
     const fetch = runGit(['fetch', '--quiet']);
