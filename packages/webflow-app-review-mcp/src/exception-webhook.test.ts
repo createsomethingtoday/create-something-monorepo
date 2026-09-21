@@ -11,8 +11,10 @@ import {
   type WebhookLegState,
   type WebhookLegStateStore,
 } from './exception-webhook.js';
+import type { HoldNoticeRecord, HoldNoticeStore } from './hold-notices.js';
 import { FIELD_IDS, TABLE_IDS } from './schema.js';
 import { SlackClient } from './slack.js';
+import { ZendeskClient } from './zendesk.js';
 
 function jsonResponse(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -130,6 +132,7 @@ function buildFetchStub(options: {
 }) {
   const slackCalls: Array<Record<string, unknown>> = [];
   const airtableWrites: Array<{ url: string; body: Record<string, unknown> }> = [];
+  const zendeskCalls: Array<{ url: string; body: Record<string, unknown> }> = [];
   let slackCounter = 0;
 
   const fetchFn = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -164,6 +167,11 @@ function buildFetchStub(options: {
       return (options.itemResponse ?? (() => jsonResponse({ id: 'recItem1', fields: {} })))();
     }
 
+    if (url.includes('.zendesk.com/api/v2/tickets/') && init?.method === 'PUT') {
+      zendeskCalls.push({ url, body: JSON.parse(String(init.body)) as Record<string, unknown> });
+      return jsonResponse({ audit: { id: 9001 }, ticket: { status: 'open' } });
+    }
+
     if (init?.method === 'PATCH' || init?.method === 'POST') {
       airtableWrites.push({ url, body: JSON.parse(String(init.body)) as Record<string, unknown> });
       return jsonResponse({ records: [{ id: 'recWritten', fields: {} }] });
@@ -172,10 +180,14 @@ function buildFetchStub(options: {
     throw new Error(`Unexpected fetch: ${url}`);
   });
 
-  return { fetchFn, slackCalls, airtableWrites };
+  return { fetchFn, slackCalls, airtableWrites, zendeskCalls };
 }
 
-function buildDeps(fetchFn: typeof fetch, store: WebhookLegStateStore): ExceptionWebhookProcessorDeps {
+function buildDeps(
+  fetchFn: typeof fetch,
+  store: WebhookLegStateStore,
+  extras: Partial<Pick<ExceptionWebhookProcessorDeps, 'zendesk' | 'holdNotices'>> = {},
+): ExceptionWebhookProcessorDeps {
   return {
     airtable: new AirtableClient({ apiKey: 'at-token', fetchFn }),
     slack: new SlackClient({ token: 'xoxb-test', fetchFn }),
@@ -184,6 +196,23 @@ function buildDeps(fetchFn: typeof fetch, store: WebhookLegStateStore): Exceptio
     exceptionChannelId: 'C0BN54FQU84',
     versionViewUrlBase: 'https://airtable.com/appMoIgXMTTTNIc3p/tblHxZ2hgSFLZxsZu/viwM48eXQT4Mxc4Ak/',
     kb: null,
+    ...extras,
+  };
+}
+
+function memoryHoldNotices(): HoldNoticeStore & { records: Map<string, HoldNoticeRecord> } {
+  const records = new Map<string, HoldNoticeRecord>();
+  return {
+    records,
+    async get(versionId) {
+      return records.get(versionId) ?? null;
+    },
+    async put(versionId, record) {
+      records.set(versionId, record);
+    },
+    async list() {
+      return [...records.entries()].map(([versionId, record]) => ({ versionId, ...record }));
+    },
   };
 }
 
@@ -741,6 +770,162 @@ describe('processExceptionWebhookPayloads', () => {
     const emptyStore = memoryStore(null);
     const missing = await processExceptionWebhookPayloads(buildDeps(fetchFn as unknown as typeof fetch, emptyStore));
     expect(missing.errors[0]).toContain('No webhook state');
+  });
+
+  it('narrates a resolved-in-resubmission row as resolved, not withdrawn', async () => {
+    const payload: AirtableWebhookPayload = {
+      actionMetadata: { source: 'publicApi' },
+      changedTablesById: {
+        [TABLE_IDS.exceptions]: {
+          changedRecordsById: {
+            recItem1: { current: { cellValuesByFieldId: { [FIELD_IDS.exceptions.status]: { id: 'sel', name: '🔙Withdrawn' } } } },
+          },
+        },
+      },
+    };
+    const E = FIELD_IDS.exceptions;
+    const { fetchFn, slackCalls } = buildFetchStub({
+      payloadsByWebhook: { achItems: [payload] },
+      itemResponse: () =>
+        jsonResponse({
+          id: 'recItem1',
+          fields: {
+            [E.item]: 'Sentry hidden iframes',
+            [E.status]: '🔙Withdrawn',
+            [E.assetVersionLink]: ['recVersion1'],
+            [E.resolvedInVersionLink]: ['recV102'],
+            [E.resolutionNotes]: 'Sentry removed; no iframe creation in v102.',
+          },
+        }),
+      versionResponse: () => versionRecordResponse({ [V.exceptionSlackTs]: '1785000000.000700' }),
+    });
+    const store = memoryStore(baseState());
+    const result = await processExceptionWebhookPayloads(buildDeps(fetchFn as unknown as typeof fetch, store));
+
+    expect(result.errors).toEqual([]);
+    const reply = slackCalls.find((c) => c.thread_ts === '1785000000.000700');
+    expect(String(reply?.text)).toContain('resolved in resubmission');
+    expect(String(reply?.text)).toContain('Sentry hidden iframes');
+    expect(String(reply?.text)).toContain('Sentry removed; no iframe creation in v102.');
+    expect(String(reply?.text)).not.toContain('*withdrawn*');
+    expect(result.actions).toContain('item resolved recItem1');
+  });
+
+  it('sends the developer a public hold notice on Pending Exception Decision, without needing a Slack thread', async () => {
+    const holdPayload: AirtableWebhookPayload = {
+      actionMetadata: { source: 'automation' },
+      changedTablesById: {
+        [TABLE_IDS.assetVersions]: {
+          changedRecordsById: {
+            recVersion1: {
+              current: { cellValuesByFieldId: { [V.holdReason]: { id: 'sel', name: 'Pending Exception Decision' } } },
+            },
+          },
+        },
+      },
+    };
+    const { fetchFn, slackCalls, zendeskCalls } = buildFetchStub({
+      payloadsByWebhook: { achVersions: [holdPayload] },
+      versionResponse: () =>
+        versionRecordResponse({
+          [V.exceptionSlackTs]: undefined,
+          [V.reviewStatus]: '⏸️On Hold',
+          [V.holdReason]: 'Pending Exception Decision',
+          [V.zendeskTicketId]: '1178490',
+          [V.versionNumber]: 5,
+          [V.name]: 'Awesome Popups v5',
+          [V.creatorName]: 'Flowout',
+        }),
+    });
+    const store = memoryStore(baseState());
+    const holdNotices = memoryHoldNotices();
+    const zendesk = new ZendeskClient({ subdomain: 'webflow2579', email: 'bot@webflow.com', apiToken: 'zd', fetchFn: fetchFn as unknown as typeof fetch });
+
+    const result = await processExceptionWebhookPayloads(
+      buildDeps(fetchFn as unknown as typeof fetch, store, { zendesk, holdNotices }),
+    );
+
+    expect(result.errors).toEqual([]);
+    expect(result.actions).toContain('hold-notice recVersion1 ticket 1178490');
+    expect(zendeskCalls).toHaveLength(1);
+    expect(zendeskCalls[0]?.url).toContain('/tickets/1178490.json');
+    const comment = (zendeskCalls[0]?.body as { ticket: { comment: { html_body: string; public: boolean } } }).ticket.comment;
+    expect(comment.public).toBe(true);
+    expect(comment.html_body).toContain('Awesome Popups');
+    expect(comment.html_body).toContain('nothing you need to do');
+    expect(comment.html_body).toContain('Webflow Marketplace Team');
+    // No Slack thread exists, and none is created for a hold notice.
+    expect(slackCalls).toHaveLength(0);
+    // The notice is recorded so the reminder sweep can pace follow-ups.
+    expect(holdNotices.records.get('recVersion1')).toMatchObject({ ticketId: '1178490', reminders: 0 });
+    expect(holdNotices.records.get('recVersion1')?.noticeAt).toBeTruthy();
+  });
+
+  it('does not repeat the developer hold notice for a version that already has one', async () => {
+    const holdPayload: AirtableWebhookPayload = {
+      actionMetadata: { source: 'automation' },
+      changedTablesById: {
+        [TABLE_IDS.assetVersions]: {
+          changedRecordsById: {
+            recVersion1: {
+              current: { cellValuesByFieldId: { [V.holdReason]: { id: 'sel', name: 'Pending Exception Decision' } } },
+            },
+          },
+        },
+      },
+    };
+    const { fetchFn, zendeskCalls } = buildFetchStub({
+      payloadsByWebhook: { achVersions: [holdPayload] },
+      versionResponse: () =>
+        versionRecordResponse({ [V.exceptionSlackTs]: undefined, [V.reviewStatus]: '⏸️On Hold', [V.zendeskTicketId]: '1178490' }),
+    });
+    const store = memoryStore(baseState());
+    const holdNotices = memoryHoldNotices();
+    await holdNotices.put('recVersion1', { ticketId: '1178490', noticeAt: '2026-09-01T00:00:00.000Z', reminders: 0 });
+    const zendesk = new ZendeskClient({ subdomain: 'webflow2579', email: 'bot@webflow.com', apiToken: 'zd', fetchFn: fetchFn as unknown as typeof fetch });
+
+    const result = await processExceptionWebhookPayloads(
+      buildDeps(fetchFn as unknown as typeof fetch, store, { zendesk, holdNotices }),
+    );
+    expect(result.errors).toEqual([]);
+    expect(zendeskCalls).toHaveLength(0);
+    expect(result.actions).toContain('hold-notice recVersion1 already-sent');
+  });
+
+  it('skips the developer hold notice for other hold reasons and when no ticket is linked', async () => {
+    const mk = (reason: string): AirtableWebhookPayload => ({
+      actionMetadata: { source: 'client' },
+      changedTablesById: {
+        [TABLE_IDS.assetVersions]: {
+          changedRecordsById: {
+            recVersion1: { current: { cellValuesByFieldId: { [V.holdReason]: { id: 'sel', name: reason } } } },
+          },
+        },
+      },
+    });
+    const holdNotices = memoryHoldNotices();
+
+    const a = buildFetchStub({
+      payloadsByWebhook: { achVersions: [mk('Awaiting Creator Response')] },
+      versionResponse: () => versionRecordResponse({ [V.exceptionSlackTs]: undefined, [V.zendeskTicketId]: '1178490' }),
+    });
+    const zendeskA = new ZendeskClient({ subdomain: 'x', email: 'e', apiToken: 't', fetchFn: a.fetchFn as unknown as typeof fetch });
+    await processExceptionWebhookPayloads(buildDeps(a.fetchFn as unknown as typeof fetch, memoryStore(baseState()), { zendesk: zendeskA, holdNotices }));
+    expect(a.zendeskCalls).toHaveLength(0);
+
+    const b = buildFetchStub({
+      payloadsByWebhook: { achVersions: [mk('Pending Exception Decision')] },
+      versionResponse: () => versionRecordResponse({ [V.exceptionSlackTs]: undefined, [V.zendeskTicketId]: undefined }),
+    });
+    const zendeskB = new ZendeskClient({ subdomain: 'x', email: 'e', apiToken: 't', fetchFn: b.fetchFn as unknown as typeof fetch });
+    const result = await processExceptionWebhookPayloads(buildDeps(b.fetchFn as unknown as typeof fetch, memoryStore(baseState()), { zendesk: zendeskB, holdNotices }));
+    expect(b.zendeskCalls).toHaveLength(0);
+    // Race: the hold fires before the Zap writes the ticket ID back onto the version
+    // (Awesome Popups v6, 9/17: version 06:12:06, ticket 06:12:25). Record a pending
+    // notice so the sweep completes it once the ticket exists.
+    expect(result.actions).toContain('hold-notice recVersion1 pending: no ticket yet');
+    expect(holdNotices.records.get('recVersion1')).toMatchObject({ ticketId: null, noticeAt: null, reminders: 0 });
+    expect(holdNotices.records.get('recVersion1')?.pendingSince).toBeTruthy();
   });
 
   it('skips processing and marks a pending sweep when another run holds the lock', async () => {

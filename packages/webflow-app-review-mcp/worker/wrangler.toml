@@ -30,11 +30,19 @@ CF_ACCESS_AUD = "3b4a38c7c99ec7127bcbb99d9c8aae7b0011a51370bff31b7085385e1a2807b
 # AIRTABLE_WEBHOOK_API_KEY (optional — PAT with webhook:manage; falls back to
 # AIRTABLE_API_KEY), EXCEPTIONS_KB_API_KEY (optional — enables auto-proposal).
 EXCEPTION_SLACK_CHANNEL_ID = "C0BN54FQU84"
-# Zendesk follow-up leg (app_review_send_ticket_followup). The API token is a
-# secret (wrangler secret put ZENDESK_API_TOKEN — value lives in Infisical at
-# /webflow/zendesk key `wfm`); the tool stays disabled until it is provisioned.
-ZENDESK_API_EMAIL = "micah@webflow.com"
+# Zendesk leg (get_ticket_thread, search_tickets, update_ticket_status,
+# send_ticket_followup, developer hold notices). The API token is a secret
+# (wrangler secret put ZENDESK_API_TOKEN — value lives in Infisical at
+# /webflow/zendesk key `wfm`); the tools stay disabled until it is provisioned.
+# The email selects the agent every write is attributed to. Switched 9/17/2026
+# from micah@webflow.com to the support-admin integration user (Zendesk user
+# 1507275866202, "Zendesk Support Admin") — same identity the Zendesk MCP uses.
+ZENDESK_API_EMAIL = "support-admin@webflow.com"
 ZENDESK_SUBDOMAIN = "webflow2579"
+# Marketplace Review Team group. app_review_search_tickets scopes here by default and
+# app_review_update_ticket_status refuses tickets in any other group (Programs Support
+# 46157931219347 is where triggers park new tickets — not in scope).
+MARKETPLACE_ZENDESK_GROUP_ID = "1500002744702"
 EXCEPTION_DECISIONS_VIEW_URL = "https://airtable.com/appMoIgXMTTTNIc3p/tblHxZ2hgSFLZxsZu/viwM48eXQT4Mxc4Ak/"
 EXCEPTIONS_KB_BASE_ID = "appXfYXnivsUT1kLg"
 EXCEPTIONS_KB_TABLE_ID = "tblqkbW0SptshgPiw"

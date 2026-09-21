@@ -153,6 +153,9 @@ const EXCEPTION_ITEM_FIELD_IDS = [
   FIELD_IDS.exceptions.decisionDatetime,
   FIELD_IDS.exceptions.undecided,
   FIELD_IDS.exceptions.denied,
+  FIELD_IDS.exceptions.resolvedInVersionLink,
+  FIELD_IDS.exceptions.resolutionNotes,
+  FIELD_IDS.exceptions.resolvedDatetime,
 ] as const;
 
 export class AirtableClientError extends Error {
@@ -300,6 +303,12 @@ export interface AppReviewExceptionItem {
   decisionDatetime?: string;
   isUndecided?: boolean;
   isDenied?: boolean;
+  /** Set when a resubmission fixed this item (status 🔙Withdrawn + evidence). */
+  resolvedInVersionId?: string;
+  resolutionNotes?: string;
+  resolvedDatetime?: string;
+  /** True when resolvedInVersionId is set — distinguishes a fix from a plain withdrawal. */
+  isResolved?: boolean;
   createdTime?: string;
 }
 
@@ -461,6 +470,17 @@ export interface ExceptionItemUpdateInput {
   decision_notes?: string;
 }
 
+export interface ExceptionItemResolveInput {
+  /** The resubmitted version whose bundle the reviewer verified the fix in. */
+  resolved_in_version_id: string;
+  /** What was verified (file, line, evidence). Required — this is the audit trail. */
+  resolution_notes: string;
+  /** Display name of the verifying reviewer, appended to the decision-notes history line. */
+  resolved_by?: string;
+  /** Injectable clock for tests. */
+  now?: Date;
+}
+
 export interface AssetMetadataUpdateInput {
   [key: string]: unknown;
 }
@@ -483,12 +503,16 @@ export interface VersionExceptionWebhookContext {
   holdReason: string | null;
   holdNotes: string | null;
   partnershipApp: boolean;
+  zendeskTicketId: string | null;
+  versionNumber: number | null;
 }
 
 export interface ExceptionItemWebhookContext {
   id: string;
   item: string | null;
   status: string | null;
+  resolvedInVersionId: string | null;
+  resolutionNotes: string | null;
   type: string | null;
   rationale: string | null;
   decisionNotes: string | null;
@@ -725,6 +749,7 @@ function mapExceptionItemRecord(record: AirtableRecord): AppReviewExceptionItem 
   const fields = record.fields;
   const undecided = toNumberValue(fields[FIELD_IDS.exceptions.undecided]);
   const denied = toNumberValue(fields[FIELD_IDS.exceptions.denied]);
+  const resolvedInVersionId = toStringArray(fields[FIELD_IDS.exceptions.resolvedInVersionLink])[0];
   return {
     exceptionItemId: record.id,
     item: firstString(fields[FIELD_IDS.exceptions.item]),
@@ -740,6 +765,10 @@ function mapExceptionItemRecord(record: AirtableRecord): AppReviewExceptionItem 
     decisionDatetime: firstString(fields[FIELD_IDS.exceptions.decisionDatetime]),
     isUndecided: undecided === undefined ? undefined : undecided > 0,
     isDenied: denied === undefined ? undefined : denied > 0,
+    resolvedInVersionId,
+    resolutionNotes: firstString(fields[FIELD_IDS.exceptions.resolutionNotes]),
+    resolvedDatetime: firstString(fields[FIELD_IDS.exceptions.resolvedDatetime]),
+    isResolved: resolvedInVersionId !== undefined,
     createdTime: record.createdTime,
   };
 }
@@ -1888,6 +1917,81 @@ export class AirtableClient {
     return mapExceptionItemRecord(updated);
   }
 
+  /**
+   * Close a per-item exception row as "resolved in resubmission": the reviewer
+   * verified the fix in a newer bundle, so the row must stop counting toward the
+   * asset's undecided total without waiting on the decision-maker.
+   *
+   * Writes, in one update: ⚖️Status = 🔙Withdrawn (already excluded from the
+   * Undecided? formula), ✔️Resolved in Version, ✔️Resolution Notes, and the
+   * decision-notes history with a dated "Resolved in vN" line appended (the
+   * field overwrites, so the existing trail is resent). Refuses rows that
+   * already carry a decision and versions that belong to a different app.
+   */
+  async resolveExceptionItem(exceptionItemId: string, input: ExceptionItemResolveInput): Promise<AppReviewExceptionItem> {
+    const notes = input.resolution_notes?.trim();
+    if (!notes) {
+      throw new AirtableClientError(
+        'RESOLUTION_NOTES_REQUIRED',
+        'resolution_notes must say what was verified in the resubmitted bundle.',
+        400,
+      );
+    }
+
+    const record = await this.getRecord(TABLE_IDS.exceptions, exceptionItemId, [...EXCEPTION_ITEM_FIELD_IDS]);
+    if (!record) {
+      throw new AirtableClientError('EXCEPTION_ITEM_NOT_FOUND', `Exception item ${exceptionItemId} was not found.`, 404);
+    }
+    const item = mapExceptionItemRecord(record);
+
+    if (item.exceptionStatus === '✅Approved' || item.exceptionStatus === '❌Denied') {
+      throw new AirtableClientError(
+        'EXCEPTION_ALREADY_DECIDED',
+        `Exception item is already ${item.exceptionStatus}; a decided row is not resolved, it is closed.`,
+        409,
+        { exceptionItemId, exceptionStatus: item.exceptionStatus },
+      );
+    }
+
+    const version = await this.getVersionById(input.resolved_in_version_id);
+    if (!version) {
+      throw new AirtableClientError(
+        'VERSION_NOT_FOUND',
+        `Asset Version ${input.resolved_in_version_id} was not found.`,
+        404,
+        { versionId: input.resolved_in_version_id },
+      );
+    }
+
+    let itemAssetId = item.assetId;
+    if (!itemAssetId && item.assetVersionId) {
+      const originVersion = await this.getVersionById(item.assetVersionId);
+      itemAssetId = originVersion?.assetId;
+    }
+    if (!itemAssetId || !version.assetId || itemAssetId !== version.assetId) {
+      throw new AirtableClientError(
+        'VERSION_ASSET_MISMATCH',
+        'The resolving version must belong to the same app as the exception item.',
+        400,
+        { exceptionItemId, itemAssetId: itemAssetId ?? null, versionAssetId: version.assetId ?? null },
+      );
+    }
+
+    const now = input.now ?? new Date();
+    const stamp = now.toISOString().slice(0, 10);
+    const versionLabel = version.versionNumber !== undefined ? `v${version.versionNumber}` : version.versionId;
+    const historyLine = `Resolved in ${versionLabel} (${stamp}${input.resolved_by ? `, ${input.resolved_by}` : ''}): ${notes}`;
+    const decisionNotes = item.decisionNotes ? `${item.decisionNotes}\n\n${historyLine}` : historyLine;
+
+    const updated = await this.updateRecord(TABLE_IDS.exceptions, exceptionItemId, {
+      [FIELD_IDS.exceptions.status]: '🔙Withdrawn',
+      [FIELD_IDS.exceptions.resolvedInVersionLink]: [version.versionId],
+      [FIELD_IDS.exceptions.resolutionNotes]: notes,
+      [FIELD_IDS.exceptions.decisionNotes]: decisionNotes,
+    });
+    return mapExceptionItemRecord(updated);
+  }
+
   // --- Exception webhook leg (Slack enrichment) -----------------------------
   // Narrow reads/writes used by src/exception-webhook.ts. Writes are limited
   // to the script-era fields (Slack TS + actor stamps) that native Airtable
@@ -1912,6 +2016,8 @@ export class AirtableClient {
       v.holdReason,
       v.holdNotes,
       v.partnershipApp,
+      v.zendeskTicketId,
+      v.versionNumber,
     ]);
     if (!record) return null;
 
@@ -1934,6 +2040,8 @@ export class AirtableClient {
       holdReason: firstString(fields[v.holdReason]) ?? null,
       holdNotes: firstString(fields[v.holdNotes]) ?? null,
       partnershipApp: toBooleanValue(firstString(fields[v.partnershipApp])) ?? Boolean(firstString(fields[v.partnershipApp])),
+      zendeskTicketId: firstString(fields[v.zendeskTicketId]) ?? null,
+      versionNumber: toNumberValue(fields[v.versionNumber]) ?? null,
     };
   }
 
@@ -1948,15 +2056,20 @@ export class AirtableClient {
       e.requestedBy,
       e.decisionBy,
       e.assetVersionLink,
+      e.resolvedInVersionLink,
+      e.resolutionNotes,
     ]);
     if (!record) return null;
 
     const fields = record.fields;
     const versionLink = fields[e.assetVersionLink];
+    const resolvedLink = fields[e.resolvedInVersionLink];
     return {
       id: record.id,
       item: firstString(fields[e.item]) ?? null,
       status: firstString(fields[e.status]) ?? null,
+      resolvedInVersionId: Array.isArray(resolvedLink) && typeof resolvedLink[0] === 'string' ? resolvedLink[0] : null,
+      resolutionNotes: firstString(fields[e.resolutionNotes]) ?? null,
       type: firstString(fields[e.type]) ?? null,
       rationale: firstString(fields[e.rationale]) ?? null,
       decisionNotes: firstString(fields[e.decisionNotes]) ?? null,

@@ -12,7 +12,11 @@
 
   let { data }: { data: PageData } = $props();
 
-  type ContactIntent = 'governance-checklist' | 'workflow-teardown' | 'workflow-mapping';
+  type ContactIntent =
+    | 'membership'
+    | 'governance-checklist'
+    | 'workflow-teardown'
+    | 'workflow-mapping';
   type ServiceLane =
     | 'workflow_infrastructure'
     | 'reliability_and_control'
@@ -30,10 +34,20 @@
     successMessage: string;
   }> = [
     {
+      value: 'membership',
+      label: 'Discuss membership',
+      description:
+        '$900/month for skills, workflow guidance and operator support. Confirm fit before payment.',
+      funnelStage: 'decision',
+      serviceInterest: 'Agent engineering membership',
+      submitLabel: 'Send membership inquiry',
+      successMessage:
+        'Received. We will review your workflow and reply with fit and onboarding details.'
+    },
+    {
       value: 'governance-checklist',
       label: 'Send the control checklist',
-      description:
-        'Start here if you want a checklist for planning an AI task.',
+      description: 'Start here if you want a checklist for planning an AI task.',
       funnelStage: 'awareness',
       serviceInterest: 'AI workflow control checklist',
       submitLabel: 'Request checklist',
@@ -46,17 +60,16 @@
       funnelStage: 'consideration',
       serviceInterest: 'Workflow Map',
       submitLabel: 'Request map',
-      successMessage: "Sent. I’ll review the task and reply with a suggested next step."
+      successMessage: 'Sent. I’ll review the task and reply with a suggested next step.'
     },
     {
       value: 'workflow-mapping',
       label: 'Book a mapping session',
-      description:
-        'Talk through a task with the person responsible for it.',
+      description: 'Talk through a task with the person responsible for it.',
       funnelStage: 'decision',
       serviceInterest: 'Workflow mapping session',
       submitLabel: 'Send mapping details',
-      successMessage: "Received. I’ll review the details and reply about the next step."
+      successMessage: 'Received. I’ll review the details and reply about the next step.'
     }
   ];
 
@@ -83,6 +96,20 @@
       messagePlaceholder: string;
     }
   > = {
+    membership: {
+      seoTitle: 'Discuss Membership | CREATE SOMETHING',
+      seoDescription: 'Discuss the $900/month agent engineering membership before payment.',
+      eyebrow: 'Agent engineering membership',
+      title: 'Start with the workflow you want to improve.',
+      description:
+        '$900/month. Cancel anytime. We confirm support scope and onboarding availability before you pay. Custom builds and AI usage are separate.',
+      formTitle: 'Discuss membership',
+      formDescription: 'Tell us where you are starting and what is getting in the way.',
+      messageLabel: 'What would you like help with?',
+      messageHelper:
+        'Include your tools and the result you want. Do not include passwords or client secrets.',
+      messagePlaceholder: 'We want to improve one workflow. We currently use…'
+    },
     'governance-checklist': {
       seoTitle: 'Get the Workflow Control Checklist | CREATE SOMETHING .agency',
       seoDescription:
@@ -126,8 +153,7 @@
       description:
         'Send a task you want to improve and who is responsible for it. We’ll discuss what AI could do and what should stay with a person.',
       formTitle: 'Send mapping details',
-      formDescription:
-        'Tell us the task, tools, person responsible, and timing.',
+      formDescription: 'Tell us the task, tools, person responsible, and timing.',
       messageLabel: 'What should we map in the session?',
       messageHelper:
         'Describe the task, the tools, who approves the work, and when you need it. Do not include credentials or client secrets.',
@@ -371,11 +397,7 @@
   </div>
 </section>
 
-<PerformancePageSection
-  variant="white"
-  eyebrow="Funnel routing"
-  title="Choose a useful next step."
->
+<PerformancePageSection variant="white" eyebrow="Funnel routing" title="Choose a useful next step.">
   {#snippet after()}
     <FunnelLadder />
   {/snippet}
@@ -442,20 +464,20 @@
     line-height: 1.55;
   }
 
-	.cal-button {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 0.75rem;
-		align-items: center;
-	}
+  .cal-button {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: center;
+  }
 
-	.calendar-link {
-		color: var(--color-performance-ink, #090909);
-		font-size: 0.95rem;
-		font-weight: var(--font-performance-medium);
-		text-decoration: underline;
-		text-underline-offset: 0.18em;
-	}
+  .calendar-link {
+    color: var(--color-performance-ink, #090909);
+    font-size: 0.95rem;
+    font-weight: var(--font-performance-medium);
+    text-decoration: underline;
+    text-underline-offset: 0.18em;
+  }
 
   .contact-option :global(.booking-cta) {
     border-radius: var(--radius-performance-sm, 4px);
@@ -568,7 +590,8 @@
     border-radius: var(--radius-performance-sm, 4px);
     color: var(--color-performance-ink, #090909);
     font-size: 1rem;
-    transition: border-color var(--duration-performance-micro, 200ms) var(--ease-performance-standard);
+    transition: border-color var(--duration-performance-micro, 200ms)
+      var(--ease-performance-standard);
   }
 
   .form-input::placeholder {

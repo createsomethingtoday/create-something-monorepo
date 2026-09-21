@@ -2,6 +2,7 @@ import type { PageServerLoad } from './$types';
 import { error } from '@sveltejs/kit';
 import { getAirtableClient, type RequiredFixExceptionItem } from '$lib/server/airtable';
 import { isReviewFeedbackReleased } from '$lib/utils/review-status';
+import { applyTemplateViews } from '$lib/server/template-views';
 
 export const load: PageServerLoad = async ({ params, locals, platform }) => {
 	// Check authentication
@@ -16,13 +17,19 @@ export const load: PageServerLoad = async ({ params, locals, platform }) => {
 	const airtable = getAirtableClient(platform.env);
 
 	// Single Airtable call: fetch the record once, derive both ownership and the asset from it.
-	const { asset, isOwner } = await airtable.getAssetForOwner(params.id, locals.user.email);
-	if (!asset) {
+	const { asset: ownedAsset, isOwner } = await airtable.getAssetForOwner(
+		params.id,
+		locals.user.email
+	);
+	if (!ownedAsset) {
 		throw error(404, 'Asset not found');
 	}
 	if (!isOwner) {
 		throw error(403, 'You do not have permission to view this asset');
 	}
+	const [asset] = await applyTemplateViews(platform.env, [ownedAsset], {
+		waitUntil: (p) => platform.context?.waitUntil(p)
+	});
 
 	// Partner-app exception ledger (❌Denied = fix required). Gated on:
 	// (1) ownership above, (2) App type, (3) the 🤝Partnership App flag, and

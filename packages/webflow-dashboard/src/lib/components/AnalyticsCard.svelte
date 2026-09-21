@@ -10,7 +10,11 @@
 	 * gracefully falls back to no sparklines if history not yet collected.
 	 */
 	import { onMount } from 'svelte';
-	import { VIEWER_DATA_AVAILABLE } from '$lib/config/viewer-data';
+	import {
+		CONVERSION_DATA_AVAILABLE,
+		VIEWER_DATA_AVAILABLE,
+		VIEWER_DATA_EPOCH_LABEL
+	} from '$lib/config/viewer-data';
 	import type { Asset } from '$lib/server/airtable';
 	import { Card, CardHeader, CardTitle, CardContent } from './ui';
 	import Sparkline from './Sparkline.svelte';
@@ -94,8 +98,9 @@
 	});
 
 	// Check if we have data to show
+	const viewersKnown = $derived(VIEWER_DATA_AVAILABLE && asset.uniqueViewers !== undefined);
 	const hasData = $derived(
-		(VIEWER_DATA_AVAILABLE && asset.uniqueViewers && asset.uniqueViewers > 0) ||
+		(viewersKnown && (asset.uniqueViewers ?? 0) > 0) ||
 		(asset.cumulativePurchases && asset.cumulativePurchases > 0) ||
 		(asset.cumulativeRevenue && asset.cumulativeRevenue > 0)
 	);
@@ -112,13 +117,13 @@
 				</div>
 			</CardHeader>
 			<CardContent>
-				<div class="metrics-grid" class:metrics-grid--two={!VIEWER_DATA_AVAILABLE}>
-					{#if VIEWER_DATA_AVAILABLE}
-						<!-- Unique Viewers -->
+				<div class="metrics-grid" class:metrics-grid--two={!viewersKnown}>
+					{#if viewersKnown}
+						<!-- Unique Viewers (beacon epoch) -->
 						<div class="metric-card">
 							<div class="metric-header">
 								<Users size={18} class="metric-icon viewers" />
-								<span class="metric-label">Unique Viewers</span>
+								<span class="metric-label">Viewers <span class="metric-epoch">{VIEWER_DATA_EPOCH_LABEL}</span></span>
 							</div>
 							<div class="metric-value">
 								<KineticNumber value={asset.uniqueViewers || 0} />
@@ -176,7 +181,7 @@
 			</CardHeader>
 			<CardContent>
 				<div class="insights-grid">
-					{#if VIEWER_DATA_AVAILABLE}
+					{#if viewersKnown && CONVERSION_DATA_AVAILABLE}
 						<div class="insight">
 							<div class="insight-icon">
 								<Percent size={16} />
@@ -208,7 +213,7 @@
 						</div>
 					</div>
 
-					{#if VIEWER_DATA_AVAILABLE}
+					{#if viewersKnown && CONVERSION_DATA_AVAILABLE}
 						<div class="insight">
 							<div class="insight-icon">
 								<TrendingUp size={16} />
@@ -252,7 +257,12 @@
 					</div>
 					<h3 class="no-data-title">No Analytics Data Yet</h3>
 					<p class="no-data-description">
-						Analytics data will appear here once your template is published and starts receiving views.
+						{#if VIEWER_DATA_AVAILABLE}
+							Analytics data will appear here once your template is published and starts receiving views.
+						{:else}
+							Analytics data will appear here after your template's first purchase. View counts are
+							temporarily unavailable while we rebuild view tracking.
+						{/if}
 					</p>
 				</div>
 			</CardContent>
@@ -265,6 +275,12 @@
 		display: flex;
 		flex-direction: column;
 		gap: var(--space-lg);
+	}
+
+	.metric-epoch {
+		font-weight: normal;
+		color: var(--color-fg-muted);
+		white-space: nowrap;
 	}
 
 	.header-with-indicator {

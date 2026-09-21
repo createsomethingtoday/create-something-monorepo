@@ -184,14 +184,14 @@ test('public agency surfaces explain ownership and provider roles', () => {
 test('the homepage introduces a business task before developer and provider details', () => {
   const home = readFileSync(new URL('../src/routes/+page.svelte', import.meta.url), 'utf8');
   const opening = home.slice(home.indexOf('<PerformanceCampaignOpening'), home.indexOf('</PerformanceCampaignOpening>'));
-  assert.match(opening, /title="Put AI to work on one useful task\."/);
+  assert.match(opening, /title="Keep building with agents\."/);
   assert.match(opening, /Bring a task your team repeats, an idea, or a project you started/);
-  assert.match(opening, /Going live is scoped separately/);
+  assert.match(opening, /\$900\/month\. Cancel anytime/);
   assert.match(opening, /media=\{playbookHomeHeroMedia\}/);
   assert.match(opening, /expression="editorial"/);
   assert.match(opening, /mediaMobilePlacement="background"/);
   assert.doesNotMatch(opening, /Codex|GitHub|governed|authority|MCP/);
-  assert.match(opening, /agencyCoreMessaging.agentFoundationHref/);
+  assert.match(opening, /agencyCoreMessaging.membershipHref/);
   assert.ok(home.indexOf('An agent is software') < home.indexOf('<aside class="home-section ownership-callout"'));
 });
 

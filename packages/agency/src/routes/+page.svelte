@@ -1,4 +1,6 @@
 <script lang="ts">
+  import BuiltWork from '$lib/components/BuiltWork.svelte';
+  import MembershipOffer from '$lib/components/MembershipOffer.svelte';
   import ProjectReviewEntry from '$lib/components/ProjectReviewEntry.svelte';
   import { Button, MeridianAccordion, PerformanceCampaignOpening, PerformanceConversionHandoff, SEO } from '@create-something/canon';
   import AgencyPerformanceReadback from '$lib/components/AgencyPerformanceReadback.svelte';
@@ -7,6 +9,7 @@
   import { PUBLIC_PRICING } from '$lib/data/publicPricing';
 
   const services = [
+    { name: 'Agent engineering membership', description: 'Skills, guided workflows, Slack support and weekly check-ins around one active workflow.', type: 'Membership', price: PUBLIC_PRICING.membership.label, priceDescription: PUBLIC_PRICING.membership.terms },
     {
       name: 'Map',
       description:
@@ -72,8 +75,8 @@
 </script>
 
 <SEO
-  title="AI Help for Your Business | CREATE SOMETHING .agency"
-  description="We build AI agents for one useful business task at a time. You keep the code, instructions, and tests. Going live is a separate project."
+  title="Agent Engineering Membership | CREATE SOMETHING .agency"
+  description="Build with agents with CREATE SOMETHING. $900/month for reusable skills, workflow guidance, Slack support and weekly check-ins. Cancel anytime. Custom builds are separate."
   keywords="AI workflow systems, business task automation, client-owned AI agent, agent foundation"
   ogImage="/og-image.png"
   propertyName="agency"
@@ -84,24 +87,28 @@
 <div class="home-pilot property-performance">
   <PerformanceCampaignOpening
     eyebrow="CREATE SOMETHING .agency"
-    propertyRole="AI for everyday business work"
+    propertyRole="Agent engineering membership"
     expression="editorial"
-    title="Put AI to work on one useful task."
-    lede="Bring a task your team repeats, an idea, or a project you started. We build an AI agent to do one agreed job. You keep the code and learn how to change it. Going live is scoped separately."
+    title="Keep building with agents."
+    lede="Bring a task your team repeats, an idea, or a project you started. Get reusable skills, practical guidance and operator support to keep improving one workflow at a time. $900/month. Cancel anytime."
     media={playbookHomeHeroMedia}
     proof={[
-      { label: 'First project', value: 'One tested task' },
-      { label: 'You keep', value: 'Code and instructions' },
-      { label: 'Going live', value: 'Separate launch project' }
+      { label: 'Membership', value: PUBLIC_PRICING.membership.label },
+      { label: 'Support', value: 'Weekly check-ins' },
+      { label: 'Focus', value: 'One active workflow' }
     ]}
     density="compact"
     mediaMobilePlacement="background"
   >
     {#snippet actions()}
-      <Button href={agencyCoreMessaging.agentFoundationHref}>{agencyCoreMessaging.reviewAgentFoundationLabel}</Button>
-      <Button href="/proof/marketplace-workflow" variant="secondary">See a verified result</Button>
+      <Button href={agencyCoreMessaging.membershipHref}>{agencyCoreMessaging.membershipLabel}</Button>
+      <Button href="#built-work" variant="secondary">See what we’ve built</Button>
     {/snippet}
   </PerformanceCampaignOpening>
+
+  <BuiltWork />
+
+  <MembershipOffer />
 
   <ProjectReviewEntry />
 
@@ -182,14 +189,14 @@
 
   <PerformanceConversionHandoff
     expression="editorial"
-    eyebrow="Your first project"
+    eyebrow="Start with one workflow"
     title="Start with the task you want help with."
-    description="Bring an idea or an existing project, an example of the work, and what a good result looks like. We’ll discuss whether we can help and what the first project would include. Going live is quoted separately."
+    description="Tell us what you want to improve. We will confirm membership fit, support scope and onboarding availability before you pay. Custom implementation and going live are quoted separately."
     handoff={{ owner: 'Your project lead', authority: 'Agree on the task and limits', proof: 'One example of the work', state: 'ready' }}
     density="concise"
   >
     {#snippet actions()}
-      <Button href={agencyCoreMessaging.agentFoundationBookingHref}>{agencyCoreMessaging.bookAgentFoundationLabel}</Button>
+      <Button href={agencyCoreMessaging.membershipInquiryHref}>{agencyCoreMessaging.membershipInquiryLabel}</Button>
       <Button href={agencyCoreMessaging.agentFoundationHref} variant="secondary">See what the first project includes</Button>
     {/snippet}
   </PerformanceConversionHandoff>

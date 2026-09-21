@@ -32,6 +32,7 @@ export type ApiOptions = {
 };
 
 const prepareSchema = z.object({
+  timezone: z.string().max(100).optional(),
   slot: z.object({
     start: z.string().datetime({ offset: true }),
     end: z.string().datetime({ offset: true })
@@ -60,6 +61,7 @@ const commitSchema = z.object({
 });
 
 const rescheduleSchema = z.object({
+  timezone: z.string().max(100).optional(),
   newSlot: z.object({
     start: z.string().datetime({ offset: true }),
     end: z.string().datetime({ offset: true })
@@ -148,6 +150,7 @@ export async function handleApiRequest(
     const result = await service.prepareBooking({
       slot: parsed.data.slot,
       scheduler: parsed.data.scheduler,
+      timezone: parsed.data.timezone,
       ...(context ? { context } : {})
     });
     return json(result, result.status === 'proposed' ? 200 : result.status === 'retryable' ? 503 : 409);

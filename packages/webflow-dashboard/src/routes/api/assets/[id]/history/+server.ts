@@ -10,6 +10,8 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { getAirtableClient } from '$lib/server/airtable';
+import { deriveBeaconSlug, fetchTemplateViewDaily, mergeBeaconViewers } from '$lib/server/template-views';
+import { VIEWER_DATA_AVAILABLE } from '$lib/config/viewer-data';
 
 export interface AnalyticsSnapshot {
 	captured_at: string;
@@ -40,10 +42,11 @@ export const GET: RequestHandler = async ({ params, url, locals, platform }) => 
 		throw error(500, 'Platform environment not available');
 	}
 
-	// Enforce ownership before exposing per-asset analytics history
+	// Enforce ownership before exposing per-asset analytics history. The same
+	// record also yields the beacon slug for the viewer trend.
 	const airtable = getAirtableClient(platform.env);
-	const isOwner = await airtable.verifyAssetOwnership(id, locals.user.email);
-	if (!isOwner) {
+	const { asset, isOwner } = await airtable.getAssetForOwner(id, locals.user.email);
+	if (!asset || !isOwner) {
 		throw error(403, 'You do not have permission to view this asset');
 	}
 
@@ -62,20 +65,24 @@ export const GET: RequestHandler = async ({ params, url, locals, platform }) => 
 	const days = Math.min(Math.max(parseInt(daysParam || '30', 10) || 30, 1), 90);
 
 	try {
-		const result = await db.prepare(`
-			SELECT 
-				captured_at,
-				unique_viewers,
-				cumulative_purchases,
-				cumulative_revenue
-			FROM analytics_snapshots
-			WHERE asset_id = ?
-			ORDER BY captured_at DESC
-			LIMIT ?
-		`).bind(id, days).all<AnalyticsSnapshot>();
+		const beaconSlug = VIEWER_DATA_AVAILABLE ? deriveBeaconSlug(asset) : undefined;
+		const [result, beaconDaily] = await Promise.all([
+			db.prepare(`
+				SELECT 
+					captured_at,
+					unique_viewers,
+					cumulative_purchases,
+					cumulative_revenue
+				FROM analytics_snapshots
+				WHERE asset_id = ?
+				ORDER BY captured_at DESC
+				LIMIT ?
+			`).bind(id, days).all<AnalyticsSnapshot>(),
+			beaconSlug ? fetchTemplateViewDaily(platform.env, beaconSlug, 365) : Promise.resolve(null)
+		]);
 
 		// Reverse to get chronological order (oldest first) for sparklines
-		const snapshots = (result.results || []).reverse();
+		const snapshots = mergeBeaconViewers((result.results || []).reverse(), beaconDaily, days);
 
 		return json({
 			asset_id: id,
@@ -93,3 +100,4 @@ export const GET: RequestHandler = async ({ params, url, locals, platform }) => 
 		} satisfies HistoryResponse);
 	}
 };
+

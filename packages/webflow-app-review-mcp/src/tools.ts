@@ -4,7 +4,7 @@ import { z } from 'zod';
 import type { AirtableClient, AppReviewVersion, CollaboratorRef } from './airtable.js';
 import { AirtableClientError, assertReviewerAssignmentReadOnly } from './airtable.js';
 import type { ZendeskClient } from './zendesk.js';
-import { ZendeskClientError, renderCreatorFacingHtml } from './zendesk.js';
+import { ZENDESK_WRITABLE_STATUSES, ZendeskClientError, renderCreatorFacingHtml } from './zendesk.js';
 import {
   APP_REVIEW_FIELD_MAP,
   CAPABILITIES_OPTIONS,
@@ -309,6 +309,18 @@ function ensureRequestChangesStatus(value: string | undefined) {
       allowed: REQUEST_CHANGES_STATUS_OPTIONS,
     },
   );
+}
+
+function requireZendesk(getZendesk: ZendeskFactory, verb: 'reads' | 'writes'): ZendeskClient {
+  const zendesk = getZendesk();
+  if (!zendesk) {
+    throw new ZendeskClientError(
+      'ZENDESK_NOT_CONFIGURED',
+      `Zendesk ${verb} are not configured on this deployment (ZENDESK_API_TOKEN / ZENDESK_API_EMAIL missing).`,
+      503,
+    );
+  }
+  return zendesk;
 }
 
 export function registerTools(
@@ -728,6 +740,138 @@ export function registerTools(
   );
 
   server.tool(
+    'app_review_get_ticket_thread',
+    'Read the Zendesk ticket linked to an app version: subject, status, requester, and the conversation (developer replies and review-team messages), oldest to newest. Read-only; resolves the ticket from the version record, never from an arbitrary ticket ID. Public comments only by default — set include_internal_notes=true to also return private agent notes. Use this to answer "what did the developer say / were they notified / what did we send" before drafting any follow-up.',
+    {
+      version_id: z.string().min(1),
+      include_internal_notes: z.boolean().default(false),
+      limit: z.number().int().min(1).max(100).default(20),
+    },
+    async ({ version_id, include_internal_notes, limit }) => {
+      try {
+        const zendesk = getZendesk();
+        if (!zendesk) {
+          throw new ZendeskClientError(
+            'ZENDESK_NOT_CONFIGURED',
+            'Zendesk reads are not configured on this deployment (ZENDESK_API_TOKEN / ZENDESK_API_EMAIL missing).',
+            503,
+          );
+        }
+        const version = await requireAppVersion(getClient(), version_id);
+        if (!version.zendeskTicketId) {
+          throw new ZendeskClientError(
+            'NO_ZENDESK_TICKET',
+            'This version has no linked Zendesk ticket.',
+            404,
+            { version_id },
+          );
+        }
+        const thread = await zendesk.getTicketThread(version.zendeskTicketId, {
+          includeInternalNotes: include_internal_notes,
+          limit,
+        });
+        return asSuccess({
+          version_id,
+          asset_id: version.assetId,
+          version_number: version.versionNumber,
+          ticket_url: `https://webflow2579.zendesk.com/agent/tickets/${version.zendeskTicketId}`,
+          thread,
+        });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'app_review_search_tickets',
+    'Search Zendesk tickets. Read-only. Scoped by default to the Marketplace Review Team group (app and template submission tickets); pass scope="all" only when the reviewer explicitly asks to look outside review tickets. Combine free text with status, tags, requester email, assignee, and created-date filters. Returns ticket IDs to feed app_review_get_ticket_thread (via the version) or app_review_update_ticket_status.',
+    {
+      query: z.string().optional().describe('Free text or Zendesk search syntax, e.g. "CMS Smart Sync" or subject:"App submission".'),
+      status: z.enum(['new', 'open', 'pending', 'hold', 'solved', 'closed']).optional(),
+      tags: z.array(z.string().min(1)).optional(),
+      requester_email: z.string().email().optional(),
+      assignee_id: z.number().int().positive().optional(),
+      created_after: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().describe('YYYY-MM-DD'),
+      created_before: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().describe('YYYY-MM-DD'),
+      sort_by: z.enum(['updated_at', 'created_at', 'priority', 'status']).optional(),
+      sort_order: z.enum(['asc', 'desc']).optional(),
+      limit: z.number().int().min(1).max(100).default(25),
+      scope: z.enum(['marketplace_review', 'all']).default('marketplace_review'),
+    },
+    async (params) => {
+      try {
+        const zendesk = requireZendesk(getZendesk, 'reads');
+        const result = await zendesk.searchTickets({
+          query: params.query,
+          status: params.status,
+          tags: params.tags,
+          requesterEmail: params.requester_email,
+          assigneeId: params.assignee_id,
+          createdAfter: params.created_after,
+          createdBefore: params.created_before,
+          sortBy: params.sort_by,
+          sortOrder: params.sort_order,
+          limit: params.limit ?? 25,
+          scope: params.scope ?? 'marketplace_review',
+        });
+        return asSuccess({
+          ...result,
+          tickets: result.tickets.map((t) => ({ ...t, ticketUrl: `https://webflow2579.zendesk.com/agent/tickets/${t.ticketId}` })),
+        });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'app_review_update_ticket_status',
+    'Change a Zendesk ticket status and tags, optionally with a PRIVATE internal note. Only on explicit reviewer request. Confined to tickets in the Marketplace Review Team group. Requires status_change: { confirmed: true, expected_status: "<status from a fresh read>" }; a changed status fails with ZENDESK_STATUS_CONFLICT. Never posts a public reply — use app_review_send_ticket_followup for creator-facing messages. Setting "solved" triggers Zendesk\'s solved-notification email to the developer.',
+    {
+      ticket_id: z.string().regex(/^\d+$/),
+      status: z.enum(ZENDESK_WRITABLE_STATUSES),
+      private_note: z.string().min(1).optional(),
+      additional_tags: z.array(z.string().min(1)).optional(),
+      remove_tags: z.array(z.string().min(1)).optional(),
+      status_change: z
+        .object({ confirmed: z.boolean(), expected_status: z.string().min(1) })
+        .optional(),
+    },
+    async ({ ticket_id, status, private_note, additional_tags, remove_tags, status_change }) => {
+      try {
+        if (!status_change || status_change.confirmed !== true) {
+          throw new ZendeskClientError(
+            'TICKET_STATUS_CONFIRMATION_REQUIRED',
+            'Supply status_change.confirmed=true and status_change.expected_status from a fresh read (app_review_search_tickets or app_review_get_ticket_thread) after an explicit operator request to change the ticket status.',
+            400,
+            { ticket_id },
+          );
+        }
+        const zendesk = requireZendesk(getZendesk, 'writes');
+        const result = await zendesk.updateTicketStatus(ticket_id, {
+          status,
+          expectedStatus: status_change.expected_status,
+          privateNote: private_note,
+          additionalTags: additional_tags,
+          removeTags: remove_tags,
+        });
+        return asSuccess({
+          ticket_id: result.ticketId,
+          ticket_url: `https://webflow2579.zendesk.com/agent/tickets/${result.ticketId}`,
+          previous_status: result.previousStatus,
+          status: result.status,
+          tags: result.tags,
+          audit_id: result.auditId,
+          private_note_added: Boolean(private_note?.trim()),
+        });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
     'app_review_send_ticket_followup',
     'Send a follow-up comment on the Zendesk ticket linked to an app version. CREATOR-FACING when visibility is "public" — use only when the reviewer explicitly asks to send it (e.g. correcting a truncated review email, answering a creator question). The message is delivered verbatim, rendered from Markdown with HTML escaping; the Airtable composer wrapper does NOT apply on this path, so include a greeting and sign-off. Standard closing line for resubmission asks (neutral tone, no "please"): "Once you\'ve addressed the required feedback necessary for approval, [submit a new bundle](https://developers.webflow.com/submit) for review."',
     {
@@ -994,8 +1138,9 @@ export function registerTools(
             const pending = (PENDING_EXCEPTION_STATUS_OPTIONS as readonly string[])
               .includes(item.exceptionStatus ?? '');
             const type = item.exceptionType ? ` [${item.exceptionType}]` : '';
+            const resolved = item.isResolved ? ' (resolved in resubmission)' : '';
             lines.push(
-              `- ${pending ? '☐' : '☑'} ${item.exceptionItemId}${type} ${item.item ?? '(untitled item)'} — ${item.exceptionStatus ?? '(no status)'}`,
+              `- ${pending ? '☐' : '☑'} ${item.exceptionItemId}${type} ${item.item ?? '(untitled item)'} — ${item.exceptionStatus ?? '(no status)'}${resolved}`,
             );
           }
         }
@@ -1094,16 +1239,26 @@ export function registerTools(
             lines.push('', `${status}:`);
           }
           const versionNumber = item.assetVersionId ? versionNumberById.get(item.assetVersionId) : undefined;
+          const resolvedVersionNumber = item.resolvedInVersionId
+            ? versionNumberById.get(item.resolvedInVersionId)
+            : undefined;
+          const resolvedLabel = item.isResolved
+            ? `resolved in ${resolvedVersionNumber !== undefined ? `v${resolvedVersionNumber}` : item.resolvedInVersionId}${
+                item.resolvedDatetime ? ` ${item.resolvedDatetime.slice(0, 10)}` : ''
+              }`
+            : undefined;
           const meta = [
             versionNumber !== undefined ? `v${versionNumber}` : undefined,
             item.exceptionType,
+            resolvedLabel,
             item.decisionDatetime
               ? `decided ${item.decisionDatetime.slice(0, 10)}${item.decisionBy?.name ? ` by ${item.decisionBy.name}` : ''}`
-              : item.requestedDatetime
+              : !item.isResolved && item.requestedDatetime
                 ? `requested ${item.requestedDatetime.slice(0, 10)}`
                 : undefined,
           ].filter(Boolean).join(' · ');
           lines.push(`- ${item.item ?? '(untitled item)'}${meta ? ` [${meta}]` : ''}`);
+          if (item.isResolved && item.resolutionNotes) lines.push(`  Resolution: ${item.resolutionNotes}`);
           if (item.decisionNotes) lines.push(`  Decision: ${item.decisionNotes}`);
         }
 
@@ -1168,6 +1323,30 @@ export function registerTools(
           exception_type: params.exception_type,
           rationale: params.rationale,
           decision_notes: params.decision_notes,
+        }));
+        return asSuccess({ exception_item: updated });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'app_review_resolve_exception_item',
+    'Close a per-item exception row as RESOLVED IN RESUBMISSION: the reviewer verified in the newer bundle that the item is fixed, so it must stop counting toward the app\'s undecided exceptions without waiting on the decision-maker. Sets ⚖️Status = 🔙Withdrawn plus ✔️Resolved in Version, ✔️Resolution Notes, and a dated history line in decision notes, in one write. Refuses rows already ✅Approved/❌Denied and versions from a different app. Use for objective fixes only (code changed, evidence cited); policy questions still go to the decision-maker.',
+    {
+      exception_item_id: z.string().min(1),
+      resolved_in_version_id: z.string().min(1).describe('The resubmitted Asset Version whose bundle you verified'),
+      resolution_notes: z.string().min(1).describe('What you verified — file/line/evidence in the new bundle'),
+      resolved_by: z.string().optional().describe('Your display name for the history line (e.g. "Shea Sisco")'),
+    },
+    async (params) => {
+      try {
+        const client = getClient();
+        const updated = await client.resolveExceptionItem(params.exception_item_id, cleanObject({
+          resolved_in_version_id: params.resolved_in_version_id,
+          resolution_notes: params.resolution_notes,
+          resolved_by: params.resolved_by,
         }));
         return asSuccess({ exception_item: updated });
       } catch (error) {

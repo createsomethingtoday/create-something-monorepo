@@ -30,7 +30,7 @@ describe('computeTemplateHealth', () => {
 				cumulativePurchases: 0
 			}),
 			NOW,
-			{ viewerDataAvailable: true }
+			{ viewerDataAvailable: true, conversionDataAvailable: true }
 		);
 
 		expect(health.status).toBe('limited_data');
@@ -45,7 +45,7 @@ describe('computeTemplateHealth', () => {
 				decisionDate: '2026-05-01T00:00:00.000Z'
 			}),
 			NOW,
-			{ viewerDataAvailable: true }
+			{ viewerDataAvailable: true, conversionDataAvailable: true }
 		);
 
 		expect(health.daysLive).toBe(33);
@@ -60,7 +60,7 @@ describe('computeTemplateHealth', () => {
 				cumulativePurchases: 25
 			}),
 			NOW,
-			{ viewerDataAvailable: true }
+			{ viewerDataAvailable: true, conversionDataAvailable: true }
 		);
 
 		expect(health.status).toBe('strong');
@@ -76,7 +76,7 @@ describe('computeTemplateHealth', () => {
 				qualityScore: 'Good'
 			}),
 			NOW,
-			{ viewerDataAvailable: true }
+			{ viewerDataAvailable: true, conversionDataAvailable: true }
 		);
 
 		expect(health.status).toBe('needs_attention');
@@ -91,7 +91,7 @@ describe('computeTemplateHealth', () => {
 				qualityScore: 'Good'
 			}),
 			NOW,
-			{ viewerDataAvailable: true }
+			{ viewerDataAvailable: true, conversionDataAvailable: true }
 		);
 
 		expect(health.status).toBe('limited_data');
@@ -108,7 +108,7 @@ describe('computeTemplateHealth', () => {
 				cumulativePurchases: 6
 			}),
 			NOW,
-			{ viewerDataAvailable: true }
+			{ viewerDataAvailable: true, conversionDataAvailable: true }
 		);
 
 		expect(health.status).toBe('needs_attention');
@@ -125,7 +125,7 @@ describe('computeTemplateHealth', () => {
 				searchVisibility: 'Detail only'
 			}),
 			NOW,
-			{ viewerDataAvailable: true }
+			{ viewerDataAvailable: true, conversionDataAvailable: true }
 		);
 
 		expect(health.searchVisibilitySuppressed).toBe(true);

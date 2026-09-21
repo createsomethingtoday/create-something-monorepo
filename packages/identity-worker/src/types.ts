@@ -11,6 +11,12 @@ export interface Env {
 	ENVIRONMENT: string;
 	ALLOWED_ORIGINS: string;
 	RESEND_API_KEY?: string;
+	PUBLIC_ENROLLMENT_ENABLED?: string;
+	ENROLLMENT_ALLOWED_EMAILS?: string;
+	PCN_ENROLLMENT_ENABLED?: string;
+	PCN_ENROLLMENT_CANARY_EMAILS?: string;
+	PCN_SUPPORT_ADMIN_EMAILS?: string;
+	PCN_DB?: D1Database;
 	MCP_HUB_URL?: string;
 	MCP_SESSION_RESOLVE_TOKEN?: string;
 	OSO_URL?: string;

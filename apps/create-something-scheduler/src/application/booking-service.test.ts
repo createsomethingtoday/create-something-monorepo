@@ -17,6 +17,54 @@ const passThroughSigner = {
 };
 
 describe('BookingService availability', () => {
+  it.each(['Mars/Olympus', '', '+05:30', null, 123])('rejects invalid booking timezone %j before Calendar access', async (timezone) => {
+    const listBusyIntervals = vi.fn();
+    const service = new BookingService({ calendar: { listBusyIntervals, async createEvent() { throw new Error('Unexpected write'); } }, clock: fixedClock, proposalSigner: passThroughSigner });
+    const result = await service.prepareBooking({ slot: { start: '2026-07-14T16:00:00Z', end: '2026-07-14T16:30:00Z' }, scheduler: { name: 'Test', email: 'test@example.com' }, timezone: timezone as string });
+    expect(result).toMatchObject({ status: 'rejected', reason: 'invalid_timezone' });
+    expect(listBusyIntervals).not.toHaveBeenCalled();
+  });
+
+  it('commits legacy signed proposals without a timezone using Central Time', async () => {
+    const service = new BookingService({
+      calendar: {
+        async listBusyIntervals() { return { status: 'available', intervals: [] }; },
+        async createEvent() { return { status: 'created', eventId: 'legacy-event', meetUrl: 'https://meet.google.com/legacy' }; }
+      },
+      clock: fixedClock, proposalSigner: passThroughSigner, bookingStore: new InMemoryBookingStore()
+    });
+    const prepared = await service.prepareBooking({ slot: { start: '2026-07-14T16:00:00Z', end: '2026-07-14T16:30:00Z' }, scheduler: { name: 'Legacy', email: 'legacy@example.com' } });
+    expect(prepared).toMatchObject({ status: 'proposed', timezone: 'America/Chicago' });
+    if (prepared.status !== 'proposed') throw new Error('Expected proposal');
+    const payload = JSON.parse(passThroughSigner.verify(prepared.proposalToken)!);
+    delete payload.timezone;
+    expect(await service.commitBooking({ proposalToken: passThroughSigner.sign(JSON.stringify(payload)), idempotencyKey: 'legacy-commit', explicitIntent: true })).toMatchObject({ status: 'committed', booking: { timezone: 'America/Chicago' } });
+  });
+
+  it('retains the visitor timezone through signed proposal, commit, readback and reschedule', async () => {
+    const service = new BookingService({
+      calendar: {
+        async listBusyIntervals() { return { status: 'available', intervals: [] }; },
+        async createEvent() { return { status: 'created', eventId: 'tz-event', meetUrl: 'https://meet.google.com/tz-test' }; },
+        async updateEvent() { return { status: 'updated', eventId: 'tz-event', meetUrl: 'https://meet.google.com/tz-test' }; }
+      },
+      clock: fixedClock, proposalSigner: passThroughSigner, bookingStore: new InMemoryBookingStore()
+    });
+    const prepared = await service.prepareBooking({
+      slot: { start: '2026-07-14T16:00:00Z', end: '2026-07-14T16:30:00Z' },
+      scheduler: { name: 'Timezone Test', email: 'timezone@example.com' },
+      timezone: 'Asia/Tokyo'
+    });
+    expect(prepared).toMatchObject({ status: 'proposed', timezone: 'Asia/Tokyo' });
+    if (prepared.status !== 'proposed') throw new Error('Expected proposal');
+    const committed = await service.commitBooking({ proposalToken: prepared.proposalToken, idempotencyKey: 'tz-commit', explicitIntent: true });
+    expect(committed).toMatchObject({ status: 'committed', booking: { timezone: 'Asia/Tokyo' } });
+    if (committed.status !== 'committed') throw new Error('Expected booking');
+    expect(await service.getBooking(committed.booking.bookingId)).toMatchObject({ booking: { timezone: 'Asia/Tokyo' } });
+    expect(await service.rescheduleBooking({ bookingId: committed.booking.bookingId, timezone: 'Invalid/Zone', newSlot: { start: '2026-07-16T16:00:00Z', end: '2026-07-16T16:30:00Z' }, idempotencyKey: 'tz-invalid-move', explicitIntent: true })).toMatchObject({ status: 'rejected', reason: 'invalid_timezone' });
+    expect(await service.rescheduleBooking({ bookingId: committed.booking.bookingId, newSlot: { start: '2026-07-16T16:00:00Z', end: '2026-07-16T16:30:00Z' }, idempotencyKey: 'tz-move', explicitIntent: true })).toMatchObject({ status: 'rescheduled', booking: { timezone: 'Asia/Tokyo' } });
+  });
+
   it('reports the owned room policy whenever the conferencing port is configured', () => {
     const calendar = {
       async listBusyIntervals() { return { status: 'available' as const, intervals: [] }; },

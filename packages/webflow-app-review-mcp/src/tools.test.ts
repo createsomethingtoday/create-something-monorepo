@@ -732,6 +732,70 @@ describe('registerTools', () => {
     expect(addTicketComment).toHaveBeenCalledWith('1170775', expect.objectContaining({ isPublic: true }));
   });
 
+  it('get_ticket_thread reads the linked ticket conversation through the version record', async () => {
+    const { server, handlers } = createServerHarness();
+    const client = {
+      getVersionById: vi.fn().mockResolvedValue({
+        versionId: 'recVersion',
+        assetId: 'recAsset',
+        versionNumber: 11,
+        zendeskTicketId: '1188879',
+        zendeskSubject: 'Your Webflow Marketplace App submission',
+      }),
+      getAssetById: vi.fn().mockResolvedValue({ assetId: 'recAsset', appName: 'CMS Smart Sync' }),
+    } as unknown as AirtableClient;
+    const getTicketThread = vi.fn().mockResolvedValue({
+      ticketId: '1188879',
+      subject: 'Your Webflow Marketplace App submission',
+      status: 'pending',
+      comments: [{ id: 1, isPublic: true, body: 'We fixed the CSP.', author: { name: 'Dev', role: 'end-user' } }],
+    });
+    const zendesk = { getTicketThread } as unknown as ZendeskClient;
+
+    registerTools(server, () => client, () => null, () => zendesk);
+    const result = await handlers.get('app_review_get_ticket_thread')?.({
+      version_id: 'recVersion',
+      include_internal_notes: true,
+      limit: 5,
+    });
+
+    const payload = parsePayload(result!);
+    expect(payload.ok).toBe(true);
+    expect(payload.data).toMatchObject({
+      version_id: 'recVersion',
+      version_number: 11,
+      ticket_url: 'https://webflow2579.zendesk.com/agent/tickets/1188879',
+      thread: { ticketId: '1188879', status: 'pending' },
+    });
+    expect(getTicketThread).toHaveBeenCalledWith('1188879', { includeInternalNotes: true, limit: 5 });
+  });
+
+  it('get_ticket_thread fails closed without a ticket link or Zendesk config', async () => {
+    const { server, handlers } = createServerHarness();
+    const client = {
+      getVersionById: vi.fn().mockResolvedValue({ versionId: 'recVersion', assetId: 'recAsset' }),
+      getAssetById: vi.fn().mockResolvedValue({ assetId: 'recAsset', appName: 'CMS Smart Sync' }),
+    } as unknown as AirtableClient;
+    const getTicketThread = vi.fn();
+    registerTools(server, () => client, () => null, () => ({ getTicketThread }) as unknown as ZendeskClient);
+    const noTicket = await handlers.get('app_review_get_ticket_thread')?.({
+      version_id: 'recVersion',
+      include_internal_notes: false,
+      limit: 20,
+    });
+    expect(parsePayload(noTicket!)).toMatchObject({ ok: false, error: { code: 'NO_ZENDESK_TICKET' } });
+    expect(getTicketThread).not.toHaveBeenCalled();
+
+    const { server: server2, handlers: handlers2 } = createServerHarness();
+    registerTools(server2, () => client);
+    const unconfigured = await handlers2.get('app_review_get_ticket_thread')?.({
+      version_id: 'recVersion',
+      include_internal_notes: false,
+      limit: 20,
+    });
+    expect(parsePayload(unconfigured!)).toMatchObject({ ok: false, error: { code: 'ZENDESK_NOT_CONFIGURED' } });
+  });
+
   it('send_ticket_followup fails closed when Zendesk is unconfigured or the ticket link is missing', async () => {
     const { server, handlers } = createServerHarness();
     const client = {
@@ -761,6 +825,161 @@ describe('registerTools', () => {
       visibility: 'public',
     });
     expect(parsePayload(unconfigured!)).toMatchObject({ ok: false });
+  });
+
+  describe('app_review_search_tickets', () => {
+    it('searches Marketplace Review tickets by default and passes filters through', async () => {
+      const { server, handlers } = createServerHarness();
+      const searchTickets = vi.fn().mockResolvedValue({ scope: 'marketplace_review', count: 1, tickets: [{ ticketId: '1188879' }] });
+      registerTools(server, () => ({}) as unknown as AirtableClient, () => null, () => ({ searchTickets }) as unknown as ZendeskClient);
+      const result = await handlers.get('app_review_search_tickets')?.({
+        query: 'CMS Smart Sync',
+        status: 'pending',
+        requester_email: 'dev@example.com',
+        limit: 10,
+      });
+      const payload = parsePayload(result!);
+      expect(payload.ok).toBe(true);
+      expect(payload.data).toMatchObject({ scope: 'marketplace_review', count: 1 });
+      expect(searchTickets).toHaveBeenCalledWith(
+        expect.objectContaining({ query: 'CMS Smart Sync', status: 'pending', requesterEmail: 'dev@example.com', limit: 10, scope: 'marketplace_review' }),
+      );
+    });
+
+    it('fails closed when Zendesk is not configured', async () => {
+      const { server, handlers } = createServerHarness();
+      registerTools(server, () => ({}) as unknown as AirtableClient);
+      const result = await handlers.get('app_review_search_tickets')?.({ query: 'x' });
+      expect(parsePayload(result!)).toMatchObject({ ok: false, error: { code: 'ZENDESK_NOT_CONFIGURED' } });
+    });
+  });
+
+  describe('app_review_update_ticket_status', () => {
+    const zendeskWith = (updateTicketStatus: ReturnType<typeof vi.fn>) =>
+      ({ updateTicketStatus }) as unknown as ZendeskClient;
+
+    it('requires status_change confirmation with an expected status before touching Zendesk', async () => {
+      const { server, handlers } = createServerHarness();
+      const updateTicketStatus = vi.fn();
+      registerTools(server, () => ({}) as unknown as AirtableClient, () => null, () => zendeskWith(updateTicketStatus));
+      const missing = await handlers.get('app_review_update_ticket_status')?.({ ticket_id: '1188879', status: 'solved' });
+      expect(parsePayload(missing!)).toMatchObject({ ok: false, error: { code: 'TICKET_STATUS_CONFIRMATION_REQUIRED' } });
+      const unconfirmed = await handlers.get('app_review_update_ticket_status')?.({
+        ticket_id: '1188879',
+        status: 'solved',
+        status_change: { confirmed: false, expected_status: 'pending' },
+      });
+      expect(parsePayload(unconfirmed!)).toMatchObject({ ok: false, error: { code: 'TICKET_STATUS_CONFIRMATION_REQUIRED' } });
+      expect(updateTicketStatus).not.toHaveBeenCalled();
+    });
+
+    it('writes through the client with the expected status and optional private note', async () => {
+      const { server, handlers } = createServerHarness();
+      const updateTicketStatus = vi.fn().mockResolvedValue({ ticketId: '1188879', previousStatus: 'pending', status: 'solved', auditId: 99, tags: ['marketplace'] });
+      registerTools(server, () => ({}) as unknown as AirtableClient, () => null, () => zendeskWith(updateTicketStatus));
+      const result = await handlers.get('app_review_update_ticket_status')?.({
+        ticket_id: '1188879',
+        status: 'solved',
+        private_note: 'Closing after approval.',
+        additional_tags: ['resolved'],
+        status_change: { confirmed: true, expected_status: 'pending' },
+      });
+      const payload = parsePayload(result!);
+      expect(payload.ok).toBe(true);
+      expect(payload.data).toMatchObject({ ticket_id: '1188879', previous_status: 'pending', status: 'solved', ticket_url: 'https://webflow2579.zendesk.com/agent/tickets/1188879' });
+      expect(updateTicketStatus).toHaveBeenCalledWith('1188879', {
+        status: 'solved',
+        expectedStatus: 'pending',
+        privateNote: 'Closing after approval.',
+        additionalTags: ['resolved'],
+        removeTags: undefined,
+      });
+    });
+
+    it('fails closed when Zendesk is not configured', async () => {
+      const { server, handlers } = createServerHarness();
+      registerTools(server, () => ({}) as unknown as AirtableClient);
+      const result = await handlers.get('app_review_update_ticket_status')?.({
+        ticket_id: '1188879',
+        status: 'solved',
+        status_change: { confirmed: true, expected_status: 'pending' },
+      });
+      expect(parsePayload(result!)).toMatchObject({ ok: false, error: { code: 'ZENDESK_NOT_CONFIGURED' } });
+    });
+  });
+
+  describe('app_review_resolve_exception_item', () => {
+    it('resolves a row through the client and returns the updated item', async () => {
+      const { server, handlers } = createServerHarness();
+      const client = {
+        resolveExceptionItem: vi.fn().mockResolvedValue({
+          exceptionItemId: 'recItem1',
+          exceptionStatus: '🔙Withdrawn',
+          resolvedInVersionId: 'recV102',
+          resolutionNotes: 'Sentry gone in v102.',
+          isResolved: true,
+        }),
+      } as unknown as AirtableClient;
+      registerTools(server, () => client);
+
+      const result = await handlers.get('app_review_resolve_exception_item')?.({
+        exception_item_id: 'recItem1',
+        resolved_in_version_id: 'recV102',
+        resolution_notes: 'Sentry gone in v102.',
+        resolved_by: 'Micah Johnson',
+      });
+
+      expect(client.resolveExceptionItem).toHaveBeenCalledWith('recItem1', {
+        resolved_in_version_id: 'recV102',
+        resolution_notes: 'Sentry gone in v102.',
+        resolved_by: 'Micah Johnson',
+      });
+      const payload = parsePayload(result!);
+      expect(payload.ok).toBe(true);
+      expect((payload.data?.exception_item as { isResolved?: boolean }).isResolved).toBe(true);
+    });
+
+    it('surfaces client refusals through the standard error envelope', async () => {
+      const { server, handlers } = createServerHarness();
+      const client = {
+        resolveExceptionItem: vi.fn().mockRejectedValue(
+          new AirtableClientError('EXCEPTION_ALREADY_DECIDED', 'Row already decided.', 409),
+        ),
+      } as unknown as AirtableClient;
+      registerTools(server, () => client);
+      const result = await handlers.get('app_review_resolve_exception_item')?.({
+        exception_item_id: 'recItem1',
+        resolved_in_version_id: 'recV102',
+        resolution_notes: 'x',
+      });
+      const payload = JSON.parse(result?.content[0]?.text ?? '{}') as { ok: boolean; error?: { code: string; status: number } };
+      expect(payload.ok).toBe(false);
+      expect(payload.error).toMatchObject({ code: 'EXCEPTION_ALREADY_DECIDED', status: 409 });
+    });
+  });
+
+  it('renders resolved-in-resubmission rows distinctly in the asset history copy block', async () => {
+    const { server, handlers } = createServerHarness();
+    const client = {
+      getAssetById: vi.fn().mockResolvedValue({ assetId: 'recAsset', appName: 'Optibase', capabilities: 'Hybrid' }),
+      listVersionsForAsset: vi.fn().mockResolvedValue([
+        { versionId: 'recV99', versionNumber: 99, exceptionItemIds: ['recA', 'recB'], assetExceptionHistoryIds: ['recA', 'recB'] },
+        { versionId: 'recV102', versionNumber: 102, exceptionItemIds: [], assetExceptionHistoryIds: ['recA', 'recB'] },
+      ]),
+      listExceptionItemsByIds: vi.fn().mockResolvedValue([
+        { exceptionItemId: 'recA', item: 'Sentry iframes', assetVersionId: 'recV99', exceptionStatus: '🔙Withdrawn', resolvedInVersionId: 'recV102', resolutionNotes: 'Sentry removed in v102', resolvedDatetime: '2026-09-16T21:00:00.000Z', isResolved: true },
+        { exceptionItemId: 'recB', item: 'Old request', assetVersionId: 'recV99', exceptionStatus: '🔙Withdrawn', isResolved: false },
+      ]),
+    } as unknown as AirtableClient;
+    registerTools(server, () => client);
+
+    const result = await handlers.get('app_review_list_asset_exceptions')?.({ asset_id: 'recAsset' });
+    const payload = parsePayload(result!);
+    const block = String(payload.data?.copy_block);
+    expect(block).toContain('Sentry iframes [v99 · resolved in v102 2026-09-16]');
+    expect(block).toContain('  Resolution: Sentry removed in v102');
+    expect(block).toContain('- Old request [v99]');
+    expect(block).not.toContain('Old request [v99 · resolved');
   });
 
   it('lists asset-level exception history across versions with a copy block', async () => {

@@ -82,6 +82,8 @@ export const FIELD_IDS = {
     partnershipApp: 'fldczL9zgq44MjxQE',
     zendeskTicketId: 'fldHKvyh55jJ0VK1u',
     zendeskSubject: 'fldit9ZTSm7non29Z',
+    /** Reverse of ⚖️Exceptions.✔️Resolved in Version — rows THIS resubmission fixed (9/16/2026). */
+    resolvedExceptionItems: 'fldNi85OKGFEg8vQg',
   },
   exceptions: {
     item: 'fldmJcVJCytD1VY1r',
@@ -97,6 +99,12 @@ export const FIELD_IDS = {
     decisionDatetime: 'fldhqW4RSpazA6421',
     undecided: 'fldDwkkTHErvn4atw',
     denied: 'fldJXVOBAeKLACZtc',
+    // Resolved-in-resubmission evidence (9/16/2026). The ⚖️Status select cannot
+    // grow a new option via API, so a row fixed by a resubmission closes as
+    // 🔙Withdrawn (already excluded from Undecided?) plus these three fields.
+    resolvedInVersionLink: 'fldjk5Nj7NMJM1gz5',
+    resolutionNotes: 'fldGdY0Zyl1m9vMcw',
+    resolvedDatetime: 'fldUJpPcA8A2EQkZD',
   },
 } as const;
 
@@ -532,6 +540,7 @@ export const APP_REVIEW_FIELD_MAP = {
       asset_undecided_exceptions: FIELD_IDS.versions.assetUndecidedExceptions,
       asset_approved_exceptions: FIELD_IDS.versions.assetApprovedExceptions,
       asset_exception_history: FIELD_IDS.versions.assetExceptionHistory,
+      resolved_exception_items: FIELD_IDS.versions.resolvedExceptionItems,
       is_partnership_app: FIELD_IDS.versions.partnershipApp,
     },
   },
@@ -546,12 +555,15 @@ export const APP_REVIEW_FIELD_MAP = {
       decision_notes: FIELD_IDS.exceptions.decisionNotes,
       requested_by: FIELD_IDS.exceptions.requestedBy,
       decision_by: FIELD_IDS.exceptions.decisionBy,
+      resolved_in_version_id: FIELD_IDS.exceptions.resolvedInVersionLink,
+      resolution_notes: FIELD_IDS.exceptions.resolutionNotes,
     },
     readOnly: {
       requested_datetime: FIELD_IDS.exceptions.requestedDatetime,
       decision_datetime: FIELD_IDS.exceptions.decisionDatetime,
       undecided: FIELD_IDS.exceptions.undecided,
       denied: FIELD_IDS.exceptions.denied,
+      resolved_datetime: FIELD_IDS.exceptions.resolvedDatetime,
     },
   },
   governanceFindings: {

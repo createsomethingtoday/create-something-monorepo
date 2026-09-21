@@ -28,6 +28,16 @@ Test each client device after installation and a restart to Ready. Confirm scree
 
 ## Health and recovery
 
+The monitor writes `FAILED` to `status.txt` and retains diagnostics in
+`status.tmp` when a check or copy fails. Its error handler must never read
+`status.tmp` into the health block's redirected stderr: that copies the file
+into itself and can fill the operator disk. A later successful run replaces
+the failure receipt and removes the temporary file.
+
+Run `python3 ops/rustdesk/test_monitor.py` to check SSH failure, copy failure,
+and success without contacting the server or reading real credentials. The
+test bounds output so the historical failure cannot fill the test machine.
+
 Server `rustdesk-backup.timer` runs `backup.py` every six hours. SQLite's backup API takes a consistent snapshot without stopping support. The archive contains compose, the server key pair, and the database. It is age-encrypted using only the public recipient in `/etc/rustdesk-backup.recipient`. Up to 120 snapshots are retained in `/var/backups/rustdesk` (normally 30 days).
 
 The operator Mac has:
@@ -39,6 +49,7 @@ The operator Mac has:
   backups/*.tar.age            # encrypted off-host copies
   check-and-pull.sh
   status.txt                   # latest health result
+  status.tmp                   # diagnostic output retained after a failed run
   monitor.log / monitor-error.log
   restore-verification.txt
 ~/Library/LaunchAgents/io.createsomething.rustdesk-operations.plist

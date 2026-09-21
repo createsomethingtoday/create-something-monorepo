@@ -57,3 +57,15 @@ evals:
         value: 'N/A'
       - type: contains
         value: 'needs reviewer clarification'
+  - id: 6
+    input: 'Finding WF-04 says our bundle is a development build because the source map points at react-router/dist/development and index.js contains http://localhost, and asks us to rebuild for production. React already resolves to react.production.min.js. What do we change?'
+    expected_output: 'Preserves WF-04, checks whether the cited markers differ from react-router''s production output, explains that react-router 7.x routes every consumer to dist/development and ships the same localhost literal in production, records the finding as needs reviewer clarification with artifact evidence, and does not perform a rebuild that changes nothing.'
+    assertions:
+      - type: contains
+        value: 'WF-04'
+      - type: contains
+        value: 'dist/development'
+      - type: contains
+        value: 'production output'
+      - type: contains
+        value: 'needs reviewer clarification'

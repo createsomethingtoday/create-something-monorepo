@@ -30,7 +30,7 @@ Use this checklist for each issued blocker — P1 or `unassigned` (treat `unassi
 
 - [ ] The exact production build command is recorded and passed.
 - [ ] The final submitted directory and `bundle.zip` were inspected—not only source output.
-- [ ] Development endpoints, tunnel hosts, stub identities, test data, and development framework code are absent from every submitted file, including source maps.
+- [ ] Development endpoints, tunnel hosts, stub identities, test data, and development framework code are absent from every submitted file, including source maps — judged by a marker that differs from the dependency's production output, not by a `dist/development` path name or a `localhost` literal in library or validation code.
 - [ ] The manifest, product title, installation URL, requested scopes, dependency manifest, and source-map relationship match the intended release.
 - [ ] The artifact identifier or checksum is recorded.
 

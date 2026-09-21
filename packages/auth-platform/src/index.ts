@@ -67,7 +67,7 @@ const operation = (operationId: string, summary: string, security = false) => ({
   },
 });
 
-export function createAuthPlatformContract(origin = PRODUCTION_IDENTITY_ORIGIN) {
+export function createAuthPlatformContract(origin = PRODUCTION_IDENTITY_ORIGIN, options: { enrollmentEnabled?: boolean; enrollmentMode?: 'public' | 'restricted' | 'disabled' } = {}) {
   const issuer = normalizeOrigin(origin);
   return {
     schema: AUTH_PLATFORM_SCHEMA,
@@ -78,10 +78,12 @@ export function createAuthPlatformContract(origin = PRODUCTION_IDENTITY_ORIGIN) 
     jwks_uri: `${issuer}/.well-known/jwks.json`,
     openapi_uri: `${issuer}/v1/auth/openapi.json`,
     endpoints: {
+      enrollment_start: `${issuer}/v1/auth/enrollment/start`, enrollment_complete: `${issuer}/v1/auth/enrollment/complete`,
       signup: `${issuer}/v1/auth/signup`, login: `${issuer}/v1/auth/login`,
       refresh: `${issuer}/v1/auth/refresh`, logout: `${issuer}/v1/auth/logout`,
       me: `${issuer}/v1/users/me`,
     },
+    enrollment: { enabled: options.enrollmentEnabled === true, mode: options.enrollmentEnabled === true ? (options.enrollmentMode ?? 'public') : 'disabled', mailbox_proof_required: true, proof_ttl_seconds: 900, direct_signup_enabled: false },
     jwt: {
       algorithms: ['ES256'],
       verification: ['signature', 'issuer', 'audience', 'expiration', 'kind', 'session_version', 'email_verified'],
@@ -113,7 +115,17 @@ export function createAuthOpenApi(origin = PRODUCTION_IDENTITY_ORIGIN) {
     },
     servers: [{ url: issuer }],
     paths: {
-      '/v1/auth/signup': { post: operation('signup', 'Create a password identity') },
+      '/v1/auth/signup': { post: { ...operation('signup', 'Retired direct signup; mailbox verification is required'), responses: { '403': { description: 'Mailbox verification required' } } } },
+      '/v1/auth/enrollment/start': { post: {
+        ...operation('startEnrollment', 'Email a single-use mailbox proof for signup or password recovery when enabled'),
+        requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['email','purpose'], properties: { email: { type: 'string', format: 'email', maxLength: 254 }, purpose: { type: 'string', enum: ['signup','recovery'] } } } } } },
+        responses: { '200': { description: 'Request accepted; no account existence is disclosed' }, '400': { description: 'Invalid input' }, '429': { description: 'Rate limited' }, '503': { description: 'Enrollment disabled or mail unavailable' } }
+      } },
+      '/v1/auth/enrollment/complete': { post: {
+        ...operation('completeEnrollment', 'Consume mailbox proof and save a password; does not create a session or grant application access'),
+        requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['token','password'], properties: { token: { type: 'string', minLength: 40, maxLength: 128 }, password: { type: 'string', minLength: 12, maxLength: 256 } } } } } },
+        responses: { '200': { description: 'Account verified; normal login is required' }, '400': { description: 'Invalid, expired, or consumed proof' }, '409': { description: 'Account state conflicts with operation' }, '429': { description: 'Rate limited' }, '503': { description: 'Enrollment disabled' } }
+      } },
       '/v1/auth/login': { post: operation('login', 'Exchange credentials for a session') },
       '/v1/auth/refresh': { post: operation('refreshSession', 'Rotate a refresh token and session') },
       '/v1/auth/logout': { post: operation('logout', 'Revoke a refresh token') },

@@ -78,6 +78,9 @@ Optional:
 - `app_review_create_governance_finding`
 - `app_review_update_governance_finding`
 - `app_review_request_changes`
+- `app_review_get_ticket_thread`
+- `app_review_search_tickets`
+- `app_review_update_ticket_status`
 - `app_review_send_ticket_followup`
 - `app_review_approve_version`
 - `app_review_reject_version`
@@ -118,6 +121,26 @@ Write posture:
   across all apps, versions, and statuses. Its `reference_view_id`
   (`viwGawHG68xIIIDaQ`) identifies the operator's grid; the query itself is
   deliberately scoped to the entire table and follows every Airtable page.
+- `app_review_get_ticket_thread` is the read side of the same link: it returns
+  the linked ticket's subject, status, requester/assignee, and the conversation
+  (oldest → newest) so a reviewer can see what the developer said and what the
+  team sent before drafting anything. Public comments only by default;
+  `include_internal_notes: true` adds private agent notes. Same fail-closed
+  rules as the follow-up tool (version-scoped ticket, requires the Zendesk
+  secrets). Arbitrary ticket search stays in the separate Zendesk MCP.
+- `app_review_search_tickets` is read-only cross-ticket search. It is scoped by
+  default to the Marketplace Review Team group (`MARKETPLACE_ZENDESK_GROUP_ID`,
+  1500002744702); `scope: "all"` widens to the whole account only on explicit
+  request. Free text plus status/tags/requester/assignee/created filters.
+- `app_review_update_ticket_status` changes status (new/open/pending/hold/solved)
+  and tags, optionally with a private internal note. It refuses tickets outside
+  the Marketplace Review group (`ZENDESK_TICKET_OUT_OF_SCOPE`), requires
+  `status_change: { confirmed: true, expected_status }` from a fresh read, and
+  fails with `ZENDESK_STATUS_CONFLICT` if the ticket moved. It never posts a
+  public comment. Setting `solved` fires Zendesk's solved-notification email to
+  the developer, so use it only on explicit reviewer request. Writes are
+  attributed to `ZENDESK_API_EMAIL` (the support-admin integration user, shared
+  with the Zendesk MCP, since 2026-09-17).
 - `app_review_send_ticket_followup` posts directly on the creator's Zendesk
   ticket (resolved from the version record, never an arbitrary ticket ID),
   rendering Markdown with HTML escaping so literal tags can't truncate the

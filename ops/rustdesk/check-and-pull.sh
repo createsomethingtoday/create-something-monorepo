@@ -7,7 +7,9 @@ mkdir -p "$BASE/backups"
 export PATH=/usr/bin:/bin:/usr/sbin:/sbin:/opt/homebrew/bin
 status="$BASE/status.txt"
 tmp="$BASE/status.tmp"
-trap 'cat "$tmp" >&2; printf "FAILED %s: inspect monitor.log\n" "$(date -u +%FT%TZ)" > "$status"' ERR
+# The health block redirects stderr into $tmp. Reading it here would copy the
+# file into itself until the disk fills. Keep diagnostics in place on failure.
+trap 'printf "FAILED %s: inspect status.tmp\n" "$(date -u +%FT%TZ)" > "$status"' ERR
 {
   date -u +%FT%TZ
   for port in 21115 21116 21117; do

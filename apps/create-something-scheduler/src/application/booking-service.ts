@@ -226,6 +226,7 @@ export type AvailabilityResult =
     });
 
 export type PrepareBookingInput = {
+  timezone?: string | undefined;
   slot: AvailableSlot;
   scheduler: SchedulerIdentity;
   context?: BookingContext;
@@ -234,6 +235,7 @@ export type PrepareBookingInput = {
 export type PrepareBookingResult =
   | (ResultMetadata & {
       status: 'proposed';
+      timezone: string;
       proposalId: string;
       proposalToken: string;
       expiresAt: string;
@@ -246,6 +248,8 @@ export type PrepareBookingResult =
     });
 
 export type Booking = {
+  /** Visitor timezone; absent on legacy records. */
+  timezone?: string | undefined;
   bookingId: string;
   proposalId: string;
   status: 'committed' | 'rescheduled' | 'cancelled';
@@ -308,6 +312,7 @@ export type BookingReadResult = ResultMetadata & (
 );
 
 export type RescheduleBookingInput = {
+  timezone?: string | undefined;
   bookingId: string;
   newSlot: AvailableSlot;
   idempotencyKey: string;
@@ -331,6 +336,7 @@ export type ReceiptReadResult = ResultMetadata & (
 );
 
 type ProposalPayload = {
+  timezone?: string | undefined;
   proposalId: string;
   link: string;
   slot: AvailableSlot;
@@ -713,6 +719,8 @@ export class BookingService {
       occurredAt,
       nextActions: []
     };
+    const timezone = normalizeBookingTimezone(input.timezone);
+    if (!timezone) return { ...metadata, status: 'rejected', reason: 'invalid_timezone', nextActions: ['choose_timezone'] };
     let durationMinutes: MeetingDurationMinutes;
     try {
       durationMinutes = meetingDuration(slotDurationMinutes(input.slot));
@@ -761,6 +769,7 @@ export class BookingService {
       link: LINK_POLICY.slug,
       slot: selectedSlot,
       scheduler: input.scheduler,
+      timezone,
       expiresAt,
       policyVersion: LINK_POLICY.version,
       ...(context ? { context } : {})
@@ -769,6 +778,7 @@ export class BookingService {
     return {
       ...metadata,
       status: 'proposed',
+      timezone,
       proposalId,
       proposalToken: await signer.sign(proposalPayload),
       expiresAt,
@@ -889,6 +899,7 @@ export class BookingService {
           status: 'committed',
           slot: proposal.slot,
           scheduler: proposal.scheduler,
+          timezone: proposal.timezone ?? LINK_POLICY.timezone,
           ...(proposal.context ? { context: proposal.context } : {}),
           provider: {
             eventId: event.eventId,
@@ -955,6 +966,8 @@ export class BookingService {
         receipt: transitionReceipt
       },
       async (booking) => {
+        const timezone = normalizeBookingTimezone(input.timezone === undefined ? booking.timezone : input.timezone);
+        if (!timezone) return { status: 'rejected', reason: 'invalid_timezone' };
         const currentDuration = slotDurationMinutes(booking.slot);
         const requestedDuration = slotDurationMinutes(input.newSlot);
         if (requestedDuration !== currentDuration) {
@@ -996,6 +1009,7 @@ export class BookingService {
           const updatedBooking: Booking = {
             ...booking,
             status: 'rescheduled',
+            timezone,
             slot: input.newSlot,
             provider: {
               eventId: provider.eventId,
@@ -1391,12 +1405,15 @@ function parseProposal(payload: string | null): ProposalPayload | null {
       typeof value.scheduler?.name !== 'string' ||
       typeof value.scheduler.email !== 'string'
     ) return null;
+    const timezone = normalizeBookingTimezone(value.timezone);
+    if (!timezone) return null;
     const context = normalizeBookingContext(value.context);
     const proposal: ProposalPayload = {
       proposalId: value.proposalId,
       link: value.link,
       slot: value.slot as AvailableSlot,
       scheduler: value.scheduler as SchedulerIdentity,
+      timezone,
       expiresAt: value.expiresAt,
       policyVersion: value.policyVersion,
       ...(context ? { context } : {})
@@ -1444,4 +1461,15 @@ function providerFailureReason(error: unknown): string {
     return error.message;
   }
   return 'provider_event_unavailable';
+}
+
+/** Accept named IANA zones (including UTC), never fixed offsets or untrusted labels. */
+export function normalizeBookingTimezone(value: unknown): string | null {
+  if (value === undefined) return LINK_POLICY.timezone;
+  if (typeof value !== 'string' || !value.trim() || value.length > 100 || /^[+-]/.test(value)) return null;
+  try {
+    return new Intl.DateTimeFormat('en-US', { timeZone: value.trim() }).resolvedOptions().timeZone;
+  } catch {
+    return null;
+  }
 }

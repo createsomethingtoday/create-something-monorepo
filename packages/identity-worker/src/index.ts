@@ -74,6 +74,7 @@ import {
 	isOAuthRefreshFamilyActive,
 	revokeOAuthRefreshFamily,
 } from './db/queries';
+import { startEnrollment, completeEnrollment, enrollmentOpen } from './services/enrollment';
 import { sendVerificationEmail, sendDeletionConfirmationEmail } from './services/email';
 import { claimLmsMagicProof, hashMailboxMagicToken, verifyLmsMagicExchangeToken } from './services/magic-auth';
 import type { RolloutConfig } from '@create-something/policy-os-engine';
@@ -125,7 +126,9 @@ async function route(request: Request, env: Env, method: string, path: string): 
 		return json(jwks, 200, { 'Cache-Control': 'public, max-age=3600' });
 	}
 	if (path === '/.well-known/create-something-auth' && method === 'GET') {
-		return json(createAuthPlatformContract(new URL(request.url).origin), 200, {
+		const enabled = enrollmentOpen(env) && !!env.RESEND_API_KEY;
+		const contract = createAuthPlatformContract(new URL(request.url).origin, { enrollmentEnabled: enabled, enrollmentMode: env.PUBLIC_ENROLLMENT_ENABLED === 'true' ? 'public' : 'restricted' });
+		return json(contract, 200, {
 			'Cache-Control': 'public, max-age=300',
 		});
 	}
@@ -158,6 +161,8 @@ async function route(request: Request, env: Env, method: string, path: string): 
 	}
 
 	// Auth endpoints
+	if (path === '/v1/auth/enrollment/start' && method === 'POST') return startEnrollment(request, env);
+	if (path === '/v1/auth/enrollment/complete' && method === 'POST') return completeEnrollment(request, env);
 	if (path === '/v1/auth/signup' && method === 'POST') return handleSignup(request, env);
 	if (path === '/v1/auth/login' && method === 'POST') return handleLogin(request, env);
 	if (path === '/v1/auth/magic-login' && method === 'POST') return handleLegacyMagicAuth();
@@ -202,6 +207,7 @@ async function route(request: Request, env: Env, method: string, path: string): 
 	}
 
 	// User endpoints (protected)
+	if (path === '/v1/private/support-target' && method === 'POST') return handlePrivateSupportTarget(request, env);
 	if (path === '/v1/users/me' && method === 'GET') return handleGetMe(request, env);
 	if (path === '/v1/users/me' && method === 'PATCH') return handleUpdateMe(request, env);
 	if (path === '/v1/users/me' && method === 'DELETE') return handleDeleteMe(request, env);
@@ -3287,6 +3293,23 @@ async function handleMagicSignup(request: Request, env: Env): Promise<Response> 
 }
 
 // User Handlers
+
+// Read-only deputy: no target credentials are minted or disclosed. Private owns
+// the bounded support session and rechecks this endpoint on every request.
+async function handlePrivateSupportTarget(request: Request, env: Env): Promise<Response> {
+ if (request.headers.has('Origin')) return json({ error: 'Server request required.' }, 403);
+ const actor = await authenticate(request, env, 'agency');
+ if (!actor) return json({ error: 'Sign in required.' }, 401);
+ const current = await findUserById(env.DB, actor.sub);
+ const admins = String(env.PCN_SUPPORT_ADMIN_EMAILS || '').split(',').map(v => v.trim().toLowerCase()).filter(Boolean);
+ if (!current || !admins.includes(current.email.toLowerCase())) return json({ error: 'Support administrator required.' }, 403);
+ const body = await parseJSON<{ email?: unknown }>(request);
+ if (typeof body?.email !== 'string' || body.email.length > 254 || !isValidEmail(body.email)) return json({ error: 'Valid email required.' }, 400);
+ const target = await findUserByEmail(env.DB, body.email.trim().toLowerCase());
+ if (!isActiveVerifiedIdentity(target) || target.id === actor.sub || admins.includes(target.email.toLowerCase()))
+   return json({ error: 'Eligible active user not found.' }, 404);
+ return json({ id: target.id, email: target.email, email_verified: true }, 200, { 'Cache-Control': 'private, no-store' });
+}
 
 async function handleGetMe(request: Request, env: Env): Promise<Response> {
 	const payload = await authenticate(request, env);

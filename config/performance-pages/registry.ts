@@ -60,10 +60,17 @@ export const performancePageRegistry: PerformancePageRegistryGroup[] = [
     'migrated',
     contract(
       'landing',
-      'Decide whether an existing agent project is ready for a client-owned working foundation.',
-      'The opening and operating stage bind one agent job to an owned repository, explicit proof, and a separate production boundary.',
-      'Bring one agent project'
+      'Decide whether the $900/month agent engineering membership fits one active workflow.',
+      'A source-backed work index demonstrates engineering breadth; membership terms distinguish guidance from custom builds, runtime costs and production responsibility.',
+      'Discuss membership fit'
     )
+  ),
+  group(
+    'agency-technical-review',
+    'agency',
+    ['technical-review'],
+    'pending',
+    contract('commercial', 'Decide whether one existing customer workflow needs technical review.', 'A clearly labeled sample report explains review scope and exclusions.', 'Discuss the existing project')
   ),
   group(
     'agency-commercial',

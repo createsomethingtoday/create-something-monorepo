@@ -158,3 +158,9 @@ Rejected conferencing alternatives:
 - Direct RealtimeKit calls from adapters: rejected because provider tokens, presets, idempotency, and lifecycle policy would leak across callers.
 - Provider participant token in the join URL: rejected because URLs leak through history, logs, referrals, and calendar forwarding; exchange a scoped application capability for a fresh token instead.
 - Recording/transcription in V1: rejected because it expands consent, retention, storage, cost, and deletion policy before the live one-to-one call loop is proven.
+
+### Visitor timezone
+
+The browser defaults to the device IANA timezone and exposes a persistent “Times shown in” selector. Explicit overrides are retained on the device; “Use device timezone” clears that override. Unavailable detection falls back visibly to America/Chicago, and blocked storage does not prevent booking. Changing the display zone regroups UTC slots without moving the selected instant or altering host availability.
+
+`prepareBooking` accepts an optional named IANA `timezone`, validates it in BookingService, includes the normalized value in the signed proposal, and persists it on commit. Confirmation, reminder and reschedule notification adapters format using the booking timezone. Legacy proposals/records default to America/Chicago. Reschedule accepts an optional replacement timezone; omission preserves the saved zone. Invalid zones are rejected before provider mutation. Host hours and Google Calendar event instants remain unchanged.

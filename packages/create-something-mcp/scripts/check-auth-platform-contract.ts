@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 
+import { createAuthPlatformContract } from '@create-something/auth-platform';
+
 import { registerResources } from '../src/resources.js';
 import { registerTools } from '../src/tools.js';
 
@@ -30,8 +32,20 @@ const server = {
 registerResources(server as unknown as McpServer);
 registerTools(server as unknown as McpServer);
 
+const originalFetch = globalThis.fetch;
+globalThis.fetch = async (input) => {
+  assert.equal(String(input), 'https://id.createsomething.space/.well-known/create-something-auth');
+  return Response.json({...createAuthPlatformContract(), enrollment: {enabled:true,mode:'restricted'}});
+};
 const contractResource = requireResource('auth://platform/contract');
 const contract = JSON.parse((await contractResource.handler(new URL(contractResource.uri))).contents[0]!.text);
+globalThis.fetch = async () => { throw new Error('Offline fixture'); };
+const offline = JSON.parse((await contractResource.handler(new URL(contractResource.uri))).contents[0]!.text);
+assert.equal(offline.enrollment.enabled, false);
+assert.equal(offline.runtime_status, 'unavailable');
+globalThis.fetch = originalFetch;
+assert.equal(contract.enrollment.mode, 'restricted');
+assert.equal(contract.enrollment.enabled, true);
 assert.equal(contract.version, '1.0.0');
 assert.equal(contract.issuer, 'https://id.createsomething.space');
 assert.deepEqual(contract.mcp.mutations, []);

@@ -1,0 +1,45 @@
+<script lang="ts">
+  import Icon from '$lib/components/Icon.svelte';
+</script>
+
+<svelte:head
+  ><title>What brings you here? | CREATE SOMETHING Private</title><meta
+    name="robots"
+    content="noindex"
+  /></svelte:head
+>
+<main id="main" class="builder-workspace">
+  <p class="eyebrow">PRIVATE / MAKE IT YOURS</p>
+  <h1>Learn a technique.<br /><em>Build on it.</em></h1>
+  <p class="lede">
+    One account for learning from other builders and sharing your own practice. Choose where to
+    start. You can do both.
+  </p>
+  <div class="builder-grid onboarding-choices">
+    <a class="asset-card" href="/collection"
+      ><p class="eyebrow"><Icon name="package" size={24} /> 01 / LEARN & BUILD</p>
+      <h2>Use what others<br />have figured out.</h2>
+      <p>
+        Keep your MCP servers, agent plugins and skills in one collection, with release details and
+        installation guidance.
+      </p>
+      <div class="card-foot">
+        <span>No network subscription required</span><span
+          >Your collection <Icon name="arrow-right" /></span
+        >
+      </div></a
+    ><a class="asset-card" href="/apply"
+      ><p class="eyebrow"><Icon name="network" size={24} /> 02 / SHARE & SELL</p>
+      <h2>Turn your practice<br />into useful assets.</h2>
+      <p>
+        Apply with your credentials and a teaching video. Once approved, build a network for your
+        community.
+      </p>
+      <div class="card-foot">
+        <span>Invitation or application. Human review.</span><span
+          >Creator application <Icon name="arrow-right" /></span
+        >
+      </div></a
+    >
+  </div>
+</main>

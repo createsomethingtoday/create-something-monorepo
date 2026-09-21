@@ -510,6 +510,7 @@ describe('scheduler Worker transport', () => {
       body: JSON.stringify({
         slot: { start: '2037-07-14T16:00:00Z', end: '2037-07-14T16:30:00Z' },
         scheduler: { name: 'Controlled Worker', email: 'controlled@example.com' },
+        timezone: 'Asia/Tokyo',
         context: { intent: 'compiler-integration' }
       })
     });
@@ -567,7 +568,7 @@ describe('scheduler Worker transport', () => {
     expect(read.status).toBe(200);
     expect(await read.json()).toMatchObject({
       status: 'committed',
-      booking: { bookingId: committed.booking.bookingId }
+      booking: { bookingId: committed.booking.bookingId, timezone: 'Asia/Tokyo' }
     });
     const reschedule = await SELF.fetch(
       `https://scheduler.local/api/v1/bookings/${committed.booking.bookingId}/reschedule`,
@@ -632,6 +633,7 @@ describe('scheduler Worker transport', () => {
       ])
     );
     expect(resendDeliveries).toHaveLength(2);
+    expect(resendDeliveries[0]?.body.text).toContain('Wednesday, July 15, 2037');
     expect(resendDeliveries.map((delivery) => delivery.idempotencyKey)).toEqual([
       expect.stringMatching(/^notification_confirmation_/),
       expect.stringMatching(/^notification_rescheduled_/)
@@ -647,7 +649,7 @@ describe('scheduler Worker transport', () => {
         to: ['controlled@example.com'],
         subject: 'Your CREATE SOMETHING meeting has moved',
         html: expect.stringContaining('intent=compiler-integration'),
-        text: expect.stringContaining('Thursday, July 16, 2037')
+        text: expect.stringContaining('Friday, July 17, 2037')
       })
     ]);
     expect(freeBusyCalls).toBe(3);
