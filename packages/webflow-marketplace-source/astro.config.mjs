@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 export default defineConfig({
   site: 'https://webflow.com',
   output: 'server',
+  compressHTML: true,
   adapter: node({ mode: 'standalone' }),
   integrations: [react()],
   vite: {

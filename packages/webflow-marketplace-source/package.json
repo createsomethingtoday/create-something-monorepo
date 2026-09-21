@@ -12,18 +12,18 @@
     "sync:components": "node scripts/sync-components.mjs"
   },
   "dependencies": {
-    "astro": "6.4.8",
-    "@astrojs/react": "5.0.7",
-    "@astrojs/node": "10.1.4",
+    "@astrojs/node": "11.1.6",
+    "@astrojs/react": "6.0.6",
+    "astro": "7.3.3",
+    "cheerio": "1.1.2",
     "react": "18.3.1",
-    "react-dom": "18.3.1",
-    "cheerio": "1.1.2"
+    "react-dom": "18.3.1"
   },
   "devDependencies": {
     "@astrojs/check": "0.9.4",
-    "typescript": "5.9.3",
     "@types/react": "18.3.28",
-    "@types/react-dom": "18.3.7"
+    "@types/react-dom": "18.3.7",
+    "typescript": "5.9.3"
   },
   "engines": {
     "node": ">=22.12.0"

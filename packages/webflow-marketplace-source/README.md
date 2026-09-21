@@ -1,6 +1,6 @@
 # Template Marketplace for Source Nightly
 
-Astro 6 buyer-facing frontend connected in Source Nightly as `webflow-marketplace-source`. It retains the exported Webflow styles, fonts, images, navigation, home content and rich detail content. Search, filters and template interactions use the existing repository-owned React components.
+Astro 7 buyer-facing frontend connected in Source Nightly as `webflow-marketplace-source`. It retains the exported Webflow styles, fonts, images, navigation, home content and rich detail content. Search, filters and template interactions use the existing repository-owned React components.
 
 This is a local Source project and review candidate, not a production cutover.
 
