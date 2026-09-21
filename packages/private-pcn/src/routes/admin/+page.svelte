@@ -1,4 +1,7 @@
 <script lang="ts">
+  import StateBadge from '$lib/components/StateBadge.svelte';
+  import StatusNotice from '$lib/components/StatusNotice.svelte';
+
   import { lessonPath } from '$lib/lessons';
   import Icon from '$lib/components/Icon.svelte';
   import { onMount } from 'svelte';
@@ -107,12 +110,8 @@
       href={`/n/${slug}/settings`}
       class="settings-link">Network settings and billing <Icon name="arrow-right" /></a
     >{/if}
-  {#if error}<p class="notice error" role="alert">{error}</p>{/if}{#if message}<p
-      class="notice"
-      role="status"
-    >
-      {message}
-    </p>{/if}
+  {#if error}<StatusNotice tone="error" message={error} />{/if}
+  {#if message}<StatusNotice tone="success" {message} />{/if}
   {#if reservations.length}<section class="notice">
       <h2>Uploads to reconcile</h2>
       <p>
@@ -189,11 +188,47 @@
     {#each videos as video}<article class="admin-video">
         <div>
           <h3>{video.title}</h3>
-          <p>
-            {video.ingest_status} · {video.visibility} · {video.access} · {plays.find(
-              (p) => p.video_id === video.id
-            )?.grants || 0} playback grants
-          </p>
+          <div class="state-row">
+            <StateBadge
+              label={video.ingest_status === 'ready'
+                ? 'Video ready'
+                : video.ingest_status === 'failed'
+                  ? 'Processing failed'
+                  : video.ingest_status}
+              tone={video.ingest_status === 'ready'
+                ? 'success'
+                : video.ingest_status === 'failed'
+                  ? 'error'
+                  : 'info'}
+              icon={video.ingest_status === 'ready'
+                ? 'check'
+                : video.ingest_status === 'failed'
+                  ? 'error'
+                  : 'clock'}
+            />
+            <StateBadge
+              label={video.visibility === 'published'
+                ? 'Published'
+                : video.visibility === 'archived'
+                  ? 'Archived'
+                  : 'Draft'}
+              tone={video.visibility === 'published' ? 'success' : 'neutral'}
+              icon={video.visibility === 'published'
+                ? 'check'
+                : video.visibility === 'archived'
+                  ? 'archive'
+                  : 'document'}
+            />
+            <StateBadge
+              label={video.access === 'public'
+                ? 'Public preview'
+                : video.access === 'members'
+                  ? 'Members'
+                  : 'Private'}
+              icon={video.access === 'public' ? 'users' : 'lock'}
+            />
+          </div>
+          <p>{plays.find((p) => p.video_id === video.id)?.grants || 0} playback grants</p>
         </div>
         <div class="workspace-actions">
           <a href={lessonPath(video.id, slug)}>Lesson page and material</a>

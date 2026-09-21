@@ -1,4 +1,7 @@
 <script lang="ts">
+  import StateBadge from '$lib/components/StateBadge.svelte';
+  import StatusNotice from '$lib/components/StatusNotice.svelte';
+
   import { invalidateAll } from '$app/navigation';
   import { api } from '$lib/client';
   import Icon from '$lib/components/Icon.svelte';
@@ -73,7 +76,22 @@
   </ol>
   <div class="builder-split">
     <section class="builder-panel">
-      {#if data.application}<p class="eyebrow">APPLICATION / {data.application.status}</p>
+      {#if data.application}<p class="eyebrow">APPLICATION</p>
+        <StateBadge
+          label={data.application.status === 'approved'
+            ? 'Creator approved'
+            : data.application.status === 'pending'
+              ? 'In review'
+              : data.application.status === 'rejected'
+                ? 'Changes requested'
+                : 'Suspended'}
+          tone={data.application.status === 'approved' ? 'success' : 'warning'}
+          icon={data.application.status === 'approved'
+            ? 'check'
+            : data.application.status === 'pending'
+              ? 'clock'
+              : 'warning'}
+        />
         <h2>
           {data.application.status === 'approved'
             ? 'You’re approved.'
@@ -143,7 +161,7 @@
           disabled={busy}
           onclick={claim}>Apply your invitation</button
         >{/if}
-      {#if message}<p class:error={failed} role={failed ? 'alert' : 'status'}>{message}</p>{/if}
+      {#if message}<StatusNotice tone={failed ? 'error' : 'success'} {message} />{/if}
     </section>
     <aside>
       <p class="eyebrow">WHAT WE REVIEW</p>
