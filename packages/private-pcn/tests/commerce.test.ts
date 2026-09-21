@@ -9,7 +9,11 @@ import {
   refreshBuyerRelease,
   acquireAsset
 } from '../src/lib/server/asset-orders';
-import { ensureSeller, sellerCountries, PLATFORM_ACCOUNT_ID } from '../src/lib/server/seller-accounts';
+import {
+  ensureSeller,
+  sellerCountries,
+  PLATFORM_ACCOUNT_ID
+} from '../src/lib/server/seller-accounts';
 import { POST as webhook } from '../src/routes/api/commerce/webhook/+server';
 let sql: DatabaseSync, env: any, stripe: any, session: any, disputes: any[];
 const metadata = {
@@ -410,6 +414,29 @@ it('reuses an open checkout and rotates its key after expiry', async () => {
   expect(stripe.checkout.sessions.create.mock.calls[0][1].idempotencyKey).not.toBe('pcn-order-key');
   expect(grant()).toBeUndefined();
 });
+it('delivers a free release without Stripe configuration while paid purchasing stays disabled', async () => {
+  env.PCN_ASSET_COMMERCE_ENABLED = 'false';
+  env.PCN_FREE_ASSETS_ENABLED = 'true';
+  delete env.STRIPE_SECRET_KEY;
+  delete env.PCN_ASSET_FEE_POLICY;
+  const n: any = sql.prepare("SELECT * FROM networks WHERE id='net'").get();
+  const a: any = { ...sql.prepare('SELECT * FROM builder_assets').get(), price_cents: 0 };
+  const r: any = sql.prepare('SELECT * FROM asset_releases').get();
+  const acquire = (asset = a) =>
+    acquireAsset(
+      env,
+      n,
+      asset,
+      r,
+      { subject: 'buyer', email: 'buyer@example.com' },
+      'https://private.createsomething.agency'
+    );
+  await expect(acquire()).resolves.toMatchObject({ status: 'acquired' });
+  expect(grant()).toMatchObject({ source: 'free', status: 'active' });
+  await expect(acquire({ ...a, price_cents: 100 })).rejects.toThrow('not available');
+  env.PCN_FREE_ASSETS_ENABLED = 'false';
+  await expect(acquire()).rejects.toThrow('not available');
+});
 it('keeps a free release grant idempotent and refuses to reverse its revocation', async () => {
   const n: any = sql.prepare("SELECT * FROM networks WHERE id='net'").get(),
     a: any = { ...sql.prepare('SELECT * FROM builder_assets').get(), price_cents: 0 },
@@ -457,7 +484,8 @@ it('does not bypass pending purchase recovery when a builder changes the price t
 });
 
 it('loads seller countries across provider pages', async () => {
-  const list = vi.fn()
+  const list = vi
+    .fn()
     .mockResolvedValueOnce({ data: [{ id: 'CA' }], has_more: true })
     .mockResolvedValueOnce({ data: [{ id: 'US' }], has_more: false });
   expect(await sellerCountries({ countrySpecs: { list } } as any)).toEqual(['CA', 'US']);

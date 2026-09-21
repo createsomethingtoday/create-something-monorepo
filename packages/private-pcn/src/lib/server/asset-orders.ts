@@ -38,6 +38,11 @@ export function commerceEnabled(env: CommerceEnv) {
     env.PCN_ASSET_COMMERCE_ENABLED === 'true' && env.PCN_ASSET_FEE_POLICY === 'hosting_only_v1'
   );
 }
+export function assetAcquisitionEnabled(env: CommerceEnv, priceCents: number) {
+  return priceCents === 0
+    ? env.PCN_FREE_ASSETS_ENABLED === 'true' || commerceEnabled(env)
+    : commerceEnabled(env);
+}
 const orderById = (env: CommerceEnv, id: string) =>
   env.DB.prepare('SELECT * FROM asset_orders WHERE id=?').bind(id).first<AssetOrder>();
 async function locked<T>(
@@ -217,9 +222,9 @@ export async function acquireAsset(
   release: AssetRelease,
   buyer: { subject: string; email: string },
   origin: string,
-  stripe = commerceStripe(env)
+  stripe?: Stripe
 ) {
-  if (!commerceEnabled(env))
+  if (!assetAcquisitionEnabled(env, asset.price_cents))
     throw new BillingError('Asset purchasing is not available yet. You have not been charged.');
   if (
     !network.owner_id ||
@@ -274,6 +279,7 @@ export async function acquireAsset(
       url: `/n/${network.slug}/assets/${asset.id}?release=${release.id}`
     };
   }
+  stripe ??= commerceStripe(env);
   const ready = await syncSeller(env, network.owner_id, stripe);
   if (!ready.chargesReady || !ready.payoutsReady)
     throw new BillingError('This builder needs to complete payment setup before accepting sales.');

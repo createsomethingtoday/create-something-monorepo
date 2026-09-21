@@ -264,8 +264,13 @@
           license and the builder’s refund policy.</label
         >
         <p class="muted">
-          Sold by the builder of {data.network!.name}. Taxes are calculated at checkout. You pay the
-          builder directly; contact them for payment support.
+          {#if data.asset.price_cents}
+            Sold by the builder of {data.network!.name}. Taxes are calculated at checkout. You pay
+            the builder directly; contact them for payment support.
+          {:else}
+            A free release from {data.network!.name}. Add this version to your collection to access
+            its package and installation instructions. No payment details are needed.
+          {/if}
         </p>
         <button
           class="button"
@@ -279,7 +284,7 @@
           <Icon name="arrow-right" /></button
         >
       {:else}<p class="availability" role="status">
-          Purchasing is not available for this listing. No new payment has been started.
+          This release is not available to acquire yet.
         </p>{/if}
       {#if data.identity && !data.owner && release}<button
           class="button secondary"
@@ -290,10 +295,10 @@
       {#if data.owner}<p class="muted">
           {data.commerceReady
             ? 'Publish only when the release and its support policy are ready for buyers.'
-            : 'Publishing is awaiting payment and delivery acceptance. Your drafts remain private.'}
-          <a href={`/n/${data.network!.slug}/seller`}
-            >Set up seller payments <Icon name="arrow-right" /></a
-          >
+            : 'Publishing is awaiting activation and delivery acceptance. Your drafts remain private.'}
+          {#if data.asset.price_cents > 0}<a href={`/n/${data.network!.slug}/seller`}
+              >Set up seller payments <Icon name="arrow-right" /></a
+            >{/if}
         </p>{/if}
       <a href="/collection">Your collection <Icon name="arrow-right" /></a>
     </aside>

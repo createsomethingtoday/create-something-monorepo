@@ -28,6 +28,7 @@
     "PCN_CREATOR_TRIAL_ENABLED": "false",
     "PCN_CONNECT_ENABLED": "false",
     "PCN_ASSET_COMMERCE_ENABLED": "false",
+    "PCN_FREE_ASSETS_ENABLED": "false",
     "PCN_SUPPORT_ENABLED": "false",
     "PCN_SUPPORT_CONNECT_ENABLED": "false"
   },
@@ -72,6 +73,7 @@
         "PCN_CREATOR_TRIAL_ENABLED": "true",
         "PCN_CONNECT_ENABLED": "false",
         "PCN_ASSET_COMMERCE_ENABLED": "false",
+        "PCN_FREE_ASSETS_ENABLED": "true",
         "PCN_SUPPORT_ENABLED": "false",
         "PCN_SUPPORT_CONNECT_ENABLED": "false"
       },
