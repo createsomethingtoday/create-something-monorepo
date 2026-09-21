@@ -554,3 +554,15 @@ it('expires impact aggregates on a scheduled invocation without customer traffic
   expect(sql.prepare('SELECT COUNT(*) AS count FROM impact_daily').get()?.count).toBe(0);
   expect(sql.prepare('SELECT count FROM customer_impact_daily').all()).toEqual([{ count: 5 }]);
 });
+
+it('reports the remaining creator allowance including owned company support workspaces', async () => {
+  const { load } = await import('../src/routes/dashboard/+page.server');
+  sql.exec(`INSERT INTO networks(id,slug,owner_id,name,kind) VALUES
+    ('creator-a','creator-a','creator','Practice A','creator'),
+    ('creator-b','creator-b','creator','Practice B','creator'),
+    ('support-a','support-a','creator','Company support','support'),
+    ('other-a','other-a','other','Other practice','creator')`);
+  const result = (await load(event())) as any;
+  expect(result.networks).toHaveLength(2);
+  expect(result.remainingNetworks).toBe(0);
+});
