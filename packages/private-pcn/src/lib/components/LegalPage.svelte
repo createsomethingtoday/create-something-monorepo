@@ -3,11 +3,15 @@
   let {
     title,
     description,
+    effectiveDate = 'September 20, 2026',
+    version = '1.0',
     sections,
     children
   }: {
     title: string;
     description: string;
+    effectiveDate?: string;
+    version?: string;
     sections: { id: string; title: string }[];
     children: Snippet;
   } = $props();
@@ -22,7 +26,7 @@
     <p class="eyebrow">PRIVATE / THE AGREEMENT</p>
     <h1>{title}</h1>
     <p class="intro">{description}</p>
-    <p class="updated">Effective September 20, 2026 · Version 1.0</p>
+    <p class="updated">Effective {effectiveDate} · Version {version}</p>
     <nav class="documents" aria-label="Legal documents">
       <a href="/terms" aria-current={title === 'Terms of Service' ? 'page' : undefined}
         >Terms of Service</a
