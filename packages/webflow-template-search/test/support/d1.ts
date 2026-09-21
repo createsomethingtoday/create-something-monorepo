@@ -52,8 +52,12 @@ class MockPreparedStatement {
   }
 
   async run() {
-    runSqlite(this.dbPath, bindSql(this.sql, this.values));
-    return { success: true, meta: { changes: 0, last_row_id: 0 } };
+    const rows = runSqlite(
+      this.dbPath,
+      `${bindSql(this.sql, this.values)}; SELECT changes() AS changes, last_insert_rowid() AS last_row_id;`,
+      true,
+    ) as Array<{ changes: number; last_row_id: number }>;
+    return { success: true, meta: rows[0] };
   }
 }
 

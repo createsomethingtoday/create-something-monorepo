@@ -1290,6 +1290,9 @@ async function runImageUrlRefresh(env: Env, heartbeat: SyncHeartbeat): Promise<I
       backfilled_records: backfilledAvatars + lookupBackfilledAvatars + nameBackfilledAvatars,
     };
 
+    if (summary.refreshed_records > 0 || summary.backfilled_records > 0) {
+      await bumpPublicSearchCacheVersion(env.DB, summary.mode);
+    }
     await recordSyncSummary(env.DB, summary, 'last_image_refresh');
     return summary;
   }
@@ -1329,6 +1332,9 @@ async function runImageUrlRefresh(env: Env, heartbeat: SyncHeartbeat): Promise<I
     backfilled_records: backfilledAvatars + lookupBackfilledAvatars + nameBackfilledAvatars,
   };
 
+  if (summary.refreshed_records > 0 || summary.backfilled_records > 0) {
+    await bumpPublicSearchCacheVersion(env.DB, summary.mode);
+  }
   await recordSyncSummary(env.DB, summary, 'last_image_refresh');
   return summary;
 }
@@ -1369,6 +1375,9 @@ async function runCreatorFieldBackfill(
     backfilled_records: lookupBackfilledRecords,
   };
 
+  if (summary.refreshed_records > 0 || summary.backfilled_records > 0) {
+    await bumpPublicSearchCacheVersion(env.DB, summary.mode);
+  }
   await recordSyncSummary(env.DB, summary, 'last_creator_backfill');
   return summary;
 }
@@ -1408,6 +1417,9 @@ async function runCreatorProfileRefresh(env: Env, heartbeat: SyncHeartbeat): Pro
     backfilled_records: lookupBackfilledAvatars,
   };
 
+  if (summary.refreshed_records > 0 || summary.backfilled_records > 0) {
+    await bumpPublicSearchCacheVersion(env.DB, summary.mode);
+  }
   await recordSyncSummary(env.DB, summary, 'last_creator_refresh');
   return summary;
 }
@@ -1446,6 +1458,9 @@ async function runForcedCreatorProfileRefresh(
     backfilled_records: 0,
   };
 
+  if (summary.refreshed_records > 0 || summary.backfilled_records > 0) {
+    await bumpPublicSearchCacheVersion(env.DB, summary.mode);
+  }
   await recordSyncSummary(env.DB, summary, 'last_creator_refresh');
   return summary;
 }
@@ -1576,6 +1591,7 @@ export async function pruneMissingTemplateImages(
     }
 
     await deleteTemplateDocuments(env.DB, idsToDelete);
+    if (idsToDelete.length > 0) await bumpPublicSearchCacheVersion(env.DB, 'image_prune');
     await heartbeat();
     const imageSourceStats = await templateImageSourceStats(env.DB);
     await heartbeat();

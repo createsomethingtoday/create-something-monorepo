@@ -2248,6 +2248,7 @@ describe('webflow-template-search worker', () => {
         },
       ],
     });
+    installSearchCacheStub(true);
     const { env, close } = createTestEnv();
 
     try {
@@ -2263,6 +2264,10 @@ describe('webflow-template-search worker', () => {
         .bind('recFitizo', 'fitizo-gym-website-template', 'Fitizo', 'Onmix', '2026-05-19T00:00:00.000Z')
         .run();
 
+      const searchUrl = 'https://templates.test/api/templates/search?creator_slug=onmix';
+      const before = await callWorker(new Request(searchUrl), env);
+      expect((await before.json() as any).pagination.total_items).toBe(0);
+
       const response = await callWorker(
         new Request('https://templates.test/api/templates/admin/backfill-creators?name=Onmix', {
           method: 'POST',
@@ -2273,6 +2278,9 @@ describe('webflow-template-search worker', () => {
       const payload = (await response.json()) as { mode: string; fetched_records: number; backfilled_records: number };
       expect(response.status).toBe(200);
       expect(payload).toMatchObject({ mode: 'creator_backfill', fetched_records: 1 });
+
+      const after = await callWorker(new Request(searchUrl), env);
+      expect((await after.json() as any).pagination.total_items).toBe(1);
 
       const row = await env.DB.prepare(
         `SELECT creator_record_id, creator_slug, creator_profile_url
@@ -2329,6 +2337,7 @@ describe('webflow-template-search worker', () => {
       childCategories: LOOKUPS.childCategories,
       tags: LOOKUPS.tags,
     });
+    installSearchCacheStub(true);
     const { env, close } = createTestEnv();
     env.WEBFLOW_WEBHOOK_SECRET = 'webhook-secret';
 
@@ -2341,6 +2350,10 @@ describe('webflow-template-search worker', () => {
         env,
       );
       expect(rebuild.status).toBe(200);
+
+      const searchUrl = 'https://templates.test/api/templates/search?q=agentflow';
+      const before = await callWorker(new Request(searchUrl), env);
+      expect((await before.json() as any).items[0].thumbnail_image_url).not.toBe('https://cdn.prod.website-files.com/site/agentflow-webhook.webp');
 
       const response = await callWorker(
         signedWebhookRequest({
@@ -2373,6 +2386,9 @@ describe('webflow-template-search worker', () => {
         collection: 'templates',
         id: 'recAgentflow',
       });
+
+      const after = await callWorker(new Request(searchUrl), env);
+      expect((await after.json() as any).items[0].thumbnail_image_url).toBe('https://cdn.prod.website-files.com/site/agentflow-webhook.webp');
 
       const row = await env.DB.prepare(
         `SELECT template_slug, listing_url, thumbnail_image_url, thumbnail_image_secondary_url, carousel_image_urls_json, price, is_free
@@ -2415,6 +2431,7 @@ describe('webflow-template-search worker', () => {
       childCategories: LOOKUPS.childCategories,
       tags: LOOKUPS.tags,
     });
+    installSearchCacheStub(true);
     const { env, close } = createTestEnv();
     env.WEBFLOW_WEBHOOK_SECRET = 'webhook-secret';
 
@@ -2445,6 +2462,10 @@ describe('webflow-template-search worker', () => {
         )
         .run();
 
+      const searchUrl = 'https://templates.test/api/templates/search?q=agentflow';
+      const before = await callWorker(new Request(searchUrl), env);
+      expect((await before.json() as any).items[0].creator_avatar_url).not.toBe('https://cdn.prod.website-files.com/site/brix-avatar.webp');
+
       const response = await callWorker(
         signedWebhookRequest({
           triggerType: 'collection_item_published',
@@ -2473,6 +2494,9 @@ describe('webflow-template-search worker', () => {
         collection: 'designers',
         id: 'recDesignerBrix',
       });
+
+      const after = await callWorker(new Request(searchUrl), env);
+      expect((await after.json() as any).items[0].creator_avatar_url).toBe('https://cdn.prod.website-files.com/site/brix-avatar.webp');
 
       const row = await env.DB.prepare(
         `SELECT creator_record_id, creator_profile_url, creator_avatar_url, creator_avatar_alt
@@ -4444,6 +4468,7 @@ describe('webflow-template-search worker', () => {
       },
     };
     const fetchMock = installAirtableFetchMock(dataset);
+    installSearchCacheStub(true);
     const { env, close } = createTestEnv();
     env.WEBFLOW_API_TOKEN = 'test-webflow-cms-token';
 
@@ -4460,6 +4485,9 @@ describe('webflow-template-search worker', () => {
       const beforeRefresh = await callWorker(new Request('https://templates.test/api/templates/search?q=agentflow'), env);
       const beforePayload = (await beforeRefresh.json()) as { items: Array<{ price: number | null; is_free: boolean }> };
       expect(beforePayload.items[0]).toMatchObject({ price: 169, is_free: false });
+
+      const beforeFree = await callWorker(new Request('https://templates.test/api/templates/search?q=agentflow&free_only=true'), env);
+      expect((await beforeFree.json() as any).pagination.total_items).toBe(0);
 
       dataset.webflowCollectionItems[TEMPLATES_COLLECTION_ID] = [
         {
@@ -5658,6 +5686,7 @@ describe('webflow-template-search worker', () => {
         '/templates/html/setrex-website-template': '<html><head><title>Setrex</title></head></html>',
       },
     });
+    installSearchCacheStub(true);
     const { env, close } = createTestEnv();
 
     try {
@@ -5673,6 +5702,11 @@ describe('webflow-template-search worker', () => {
       await env.DB.prepare('UPDATE template_documents SET thumbnail_image_url = NULL WHERE id IN (?, ?)')
         .bind('recAgentflow', 'recSetrex')
         .run();
+
+      for (const query of ['q=agentflow', 'template_slug=agentflow-website-template']) {
+        const response = await callWorker(new Request('https://templates.test/api/templates/search?' + query), env);
+        expect((await response.json() as any).pagination.total_items).toBe(1);
+      }
 
       const prune = await callWorker(
         new Request(
@@ -5698,6 +5732,11 @@ describe('webflow-template-search worker', () => {
         pruned_records: 1,
         skipped_records: [{ template_slug: 'setrex-website-template', status: 200, reason: 'listing_not_404' }],
       });
+
+      const exact = await callWorker(new Request('https://templates.test/api/templates/search?template_slug=agentflow-website-template'), env);
+      const exactBody = await exact.json() as any;
+      expect(exactBody.items).toEqual([]);
+      expect(exactBody.pagination.total_items).toBe(0);
 
       const agentflowResponse = await callWorker(new Request('https://templates.test/api/templates/search?q=agentflow'), env);
       const agentflowPayload = (await agentflowResponse.json()) as { pagination: { total_items: number } };

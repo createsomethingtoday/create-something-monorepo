@@ -45,8 +45,9 @@ Designer profile pages should use the Webflow **Template Filter Bar** plus **Tem
 Public responses can be cached for pages 1–10 and queries up to 64 characters.
 Exact `template_slug` and `strict` requests bypass the public response cache.
 Counts and facets share a separate memo across pages, keyed by all search filters,
-relaxed-query mode and the existing sync cache version. Sync writes invalidate
-both layers; memo entries expire after five minutes for counts and thirty minutes
+relaxed-query mode and the existing sync cache version. Completed sync, image
+maintenance, creator maintenance and signed webhook writes invalidate both layers.
+Memo entries expire after five minutes for counts and thirty minutes
 for facets. Cache failures fall back to D1. Direct `searchTemplates` callers that
 omit a sync version bypass query memoization.
 

@@ -1,5 +1,6 @@
 import {
   backfillCreatorFieldsByName,
+  bumpPublicSearchCacheVersion,
   getPublicSearchCacheVersion,
   getActiveSyncJob,
   getLatestSyncJob,
@@ -408,7 +409,8 @@ async function handleWebflowWebhook(request: Request, env: Env, ctx: ExecutionCo
       });
     }
 
-    await updateTemplateImagesFromWebflow(env.DB, [record], syncedAt);
+    const updated = await updateTemplateImagesFromWebflow(env.DB, [record], syncedAt);
+    if (updated > 0) await bumpPublicSearchCacheVersion(env.DB, 'template_webhook');
 
     // Published Airtable records are held out of the index until their Templates
     // CMS item exists. This webhook is the moment that item appears, so index the
@@ -433,6 +435,7 @@ async function handleWebflowWebhook(request: Request, env: Env, ctx: ExecutionCo
     if (!record) return jsonResponse(request, env, { status: 'ignored', reason: 'no designer identity or item not live' });
     const updated = await updateCreatorAvatarsFromWebflow(env.DB, [record], syncedAt);
     const backfilled = await backfillCreatorFieldsByName(env.DB, syncedAt);
+    if (updated > 0 || backfilled > 0) await bumpPublicSearchCacheVersion(env.DB, 'designer_webhook');
     return jsonResponse(request, env, { status: 'updated', collection: 'designers', id: record.syncRecordId, updated, backfilled });
   }
 
