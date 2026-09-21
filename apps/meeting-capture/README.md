@@ -22,7 +22,7 @@ The tool recedes: a small icon in your menubar, invisible during normal use. Whe
 - macOS 13.0 (Ventura) or later
 - Screen Recording permission (primary system-audio capture)
 - Automation permission (for meeting detection)
-- Microphone permission (fallback capture mode only)
+- Microphone permission (local speech and fallback capture)
 
 ## Building
 
@@ -45,7 +45,7 @@ On first launch, you'll need to grant:
 2. **Automation** - Required to detect active meetings via AppleScript
    - System Preferences → Privacy & Security → Automation → Meeting Capture ✓
 
-3. **Microphone** - Optional fallback if system-audio capture is unavailable
+3. **Microphone** - Optional local speech alongside system audio, or fallback when system capture fails
    - System Preferences → Privacy & Security → Microphone → Meeting Capture ✓
 
 ## Configuration
@@ -67,7 +67,7 @@ Click the menubar icon → Settings to configure:
 ├─────────────────────────────────────────────────────────────┤
 │  Audio Capture                                               │
 │  └─ Uses ScreenCaptureKit (macOS 13+)                       │
-│  └─ Captures system audio first, microphone fallback         │
+│  └─ Captures system audio plus microphone when permitted         │
 │  └─ Saves to temp directory as .m4a                         │
 ├─────────────────────────────────────────────────────────────┤
 │  Upload                                                      │
@@ -142,3 +142,28 @@ Queue → Workers AI Whisper → Claude → D1
        ↓
 createsomething.io/admin/meetings (future)
 ```
+
+## Audio synchronization acceptance
+
+The mixer preserves relative track starts rather than placing both sources at zero.
+System audio uses its first sample presentation timestamp. The microphone is scheduled
+against `AVAudioRecorder.deviceCurrentTime`; paired host-clock readings map that start
+to the system timeline. Permission is resolved before either source starts. This avoids
+permission-dialog delays in the recording. Hardware latency and clock drift still require
+measurement on the actual capture devices; decoded synthetic fixtures do not prove them.
+
+Run `swift test --package-path apps/meeting-capture/MeetingCapture` from the repository
+root. The regression decodes the exported M4A and verifies silence before the delayed
+track, audible content afterward, and the full delayed tail in both start orders.
+
+Before installing/promoting this recovery, supervise a short recording with headphones:
+
+1. Start with microphone permission undecided and wait before granting it. Verify capture
+   starts afterward, and a denied microphone still permits system-only recording.
+2. Capture known timed sounds from both system output and the microphone. Check their
+   relative positions in the exported audio against the observed source timing.
+3. Repeat with microphone input changing and a longer recording to check drift.
+4. Verify stopping produces a playable file, and upload/transcript completion separately.
+
+Do not launch or record unattended as part of the test suite. Keep the installed app and
+its privacy grants unchanged until the operator supervises this acceptance.

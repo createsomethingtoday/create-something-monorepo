@@ -34,6 +34,7 @@ struct MeetingCaptureApp: App {
     }
 }
 
+@MainActor
 class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     var statusItem: NSStatusItem?
     var popover: NSPopover?
@@ -47,6 +48,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     @Published var screenRecordingPermissionGranted = false
 
     private var activeRecordingContext: RecordingContext?
+    private var pendingRecordingContext: RecordingContext?
+    private var recordingStartTask: Task<Void, Never>?
     private var hasShownScreenRecordingPermissionWarning = false
 
     private var autoStartEnabled: Bool {
@@ -152,6 +155,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     }
 
     private func handleMeetingEnded(_ meeting: DetectedMeeting) {
+        if let pending = pendingRecordingContext,
+           pending.origin == .automatic, pending.meetingId == meeting.id {
+            recordingStartTask?.cancel()
+            return
+        }
         guard isRecording else { return }
         guard let context = activeRecordingContext else { return }
         guard context.origin == .automatic, context.meetingId == meeting.id else { return }
@@ -172,14 +180,23 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     }
 
     private func startRecording(with context: RecordingContext) {
-        guard !isRecording else { return }
+        guard !isRecording, recordingStartTask == nil else { return }
+        pendingRecordingContext = context
 
-        Task {
+        recordingStartTask = Task {
+            defer {
+                recordingStartTask = nil
+                pendingRecordingContext = nil
+            }
             let result = await audioRecorder.startRecording(
                 meetingId: context.meetingId,
                 promptForScreenRecordingAccessIfNeeded: context.origin == .manual
             )
 
+            if Task.isCancelled {
+                _ = await audioRecorder.stopRecording()
+                return
+            }
             await MainActor.run { [weak self] in
                 guard let self else { return }
                 self.refreshPermissionState()
@@ -234,6 +251,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     }
 
     func stopRecording() {
+        recordingStartTask?.cancel()
         guard isRecording, let context = activeRecordingContext else { return }
 
         let capturedContext = context
