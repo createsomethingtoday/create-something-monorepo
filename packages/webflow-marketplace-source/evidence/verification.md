@@ -23,7 +23,7 @@ Performed through the requested Codex in-app browser, not simulated DOM fixtures
 
 ## Checks and disposition
 
-- Astro check: 0 errors, 0 warnings, 0 hints (14 files).
+- Astro check: 0 errors, 0 warnings, 5 pre-existing component hints (41 files, after Astro 6 and snapshot migration).
 - Astro standalone build: passed.
 - Package route-boundary tests: 3 passed.
 - Existing TemplateDetailHero / templateDetailOffer tests: 25 passed.
@@ -32,3 +32,9 @@ Performed through the requested Codex in-app browser, not simulated DOM fixtures
 No production routing, backend ownership, CMS records, analytics configuration or checkout state changed. Production promotion still requires allowed-origin iframe verification, full deployment-level visual acceptance, consent/analytics and sitemap/redirect continuity. Keep CRE-2050 open through that handoff if those gates remain in the tracked scope.
 
 Worktree disposition: retained at `/private/tmp/cre-2050-marketplace-source` / `codex/cre-2050-marketplace-source`; Source is connected to it. Dirty original root preserved.
+
+## Hosted attempt and current gate
+
+Source provisioned site `6ab1b3e0f9ea871c3fee6010`, app `477da3e6-4ef7-4d60-9256-d644f30fb856`, environment `27cebcb2-00f5-418b-a526-f2c216ceeef1` in workspace `63e421146216743f3c52476a`. Initial deployment `79f5a2ca-8797-417d-9194-be76088517b3` failed. After upgrading to Astro 6.4.8 and making the upload self-contained, deployment `60d2a0e2-d483-4901-99ab-90dda2b0ee52` also failed. Root cause is unconfirmed; Source only reports failure and directs the user to Webflow build logs. IAB Webflow dashboard redirects to login and displays Access to this page has been denied. User sign-in requested; no third blind deployment attempted.
+
+Review: https://github.com/createsomethingtoday/create-something-monorepo/pull/1740 (draft). Local/build receipts passed again after the upgrade. Goal remains active and CRE-2050 remains open pending hosted verification; do not equate local success with completed migration.
