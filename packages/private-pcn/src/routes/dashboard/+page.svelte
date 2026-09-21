@@ -64,9 +64,9 @@
     <div class="section-heading">
       <h2 id="networks-title">
         {data.networks.length ? 'Continue your work' : 'Start your network'}
-        <span class="muted">({data.networks.length} / 3)</span>
+        <span class="muted">({data.networks.length})</span>
       </h2>
-      {#if data.approved && data.networks.length > 0 && data.networks.length < 3}<a
+      {#if data.approved && data.networks.length > 0 && data.remainingNetworks > 0}<a
           href="#network-setup">Create another network <Icon name="arrow-right" /></a
         >{/if}
     </div>
@@ -171,7 +171,11 @@
       </p>
       <a class="button" href="/apply">Your application <Icon name="arrow-right" /></a>
     </aside>{/if}
-  {#if data.approved && data.networks.length < 3}
+  {#if data.approved && data.remainingNetworks === 0}<p class="capacity-note">
+      Your account has reached its three-network limit, including company-support workspaces.
+      Continue with an existing network.
+    </p>{/if}
+  {#if data.approved && data.remainingNetworks > 0}
     <section class="setup" id="network-setup" aria-labelledby="create-title">
       <div>
         <p class="eyebrow">CREATE A PRIVATE DRAFT</p>
@@ -470,6 +474,10 @@
   }
   .invite-panel .error {
     color: var(--color-performance-risk-soft);
+  }
+  .capacity-note {
+    color: var(--muted);
+    margin-top: var(--space-performance-md);
   }
   .notice {
     margin-top: var(--space-performance-md);
