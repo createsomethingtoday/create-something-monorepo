@@ -223,7 +223,8 @@ Fails closed before Webflow Code Component library sharing unless:
 - ${APPROVAL_ENV}=1 is set after explicit approval
 - the current branch has an upstream and is not behind it
 - relevant webflow-components files are clean, unless --allow-dirty or ${ALLOW_DIRTY_ENV}=1 is intentionally supplied
-- when --forbid is supplied: the manifest resolves at least one component and none under the forbidden component directories
+- the manifest resolves at least one component and excludes the historical Cato source
+- when --forbid is supplied: no components resolve under the forbidden directories
 
 This command does not mutate Webflow. It may run git fetch unless --no-fetch is supplied.`);
 }
