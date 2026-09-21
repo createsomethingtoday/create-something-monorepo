@@ -1,6 +1,7 @@
 <script lang="ts">
   import { ICON_PATHS, type IconName } from '@create-something/canon/icons';
   const objects = {
+    archive: 'M3 3h18v5H3z M5 8v13h14V8 M10 12h4',
     mcp: 'M4 4h16v6H4z M4 14h16v6H4z M7 7h.01 M7 17h.01 M12 10v4',
     plugin: 'M8 3v5 M16 3v5 M6 8h12v4a6 6 0 0 1-12 0V8Z M12 18v3',
     skill: 'M5 3h14v18H5z M9 7h6 M9 11h6 M9 16l2 2 4-4',

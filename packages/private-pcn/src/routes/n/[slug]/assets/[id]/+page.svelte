@@ -1,4 +1,6 @@
 <script lang="ts">
+  import StateBadge from '$lib/components/StateBadge.svelte';
+  import StatusNotice from '$lib/components/StatusNotice.svelte';
   import Icon from '$lib/components/Icon.svelte';
   import { page } from '$app/state';
   import { onMount, untrack } from 'svelte';
@@ -20,11 +22,14 @@
     event.preventDefault();
     busy = true;
     message = '';
+    failed = false;
+    messageTone = 'success';
     try {
       await api(`assets/${data.asset.id}`, draft, data.network!.slug);
       await invalidateAll();
       message = 'Asset details saved. Existing release files and licenses are unchanged.';
     } catch (e) {
+      failed = true;
       message = (e as Error).message;
     } finally {
       busy = false;
@@ -33,14 +38,18 @@
   let version = $state('1.0.0'),
     files = $state<FileList>(),
     busy = $state(false),
-    message = $state('');
+    message = $state(''),
+    failed = $state(false),
+    messageTone = $state<'info' | 'success'>('success');
   let acceptLicense = $state(false),
     purchaseMessage = $state(''),
-    purchaseBusy = $state(false);
+    purchaseBusy = $state(false),
+    purchaseTone = $state<'info' | 'success' | 'warning' | 'error'>('info');
   async function purchase(action: 'acquire' | 'check') {
     if (!release) return;
     purchaseBusy = true;
     purchaseMessage = '';
+    purchaseTone = 'info';
     try {
       const result = await api(
         `assets/${data.asset.id}/purchase`,
@@ -51,6 +60,12 @@
         window.location.assign(result.url);
         return;
       }
+      purchaseTone =
+        result.status === 'paid'
+          ? 'success'
+          : result.status === 'refunded' || result.status === 'disputed'
+            ? 'warning'
+            : 'info';
       purchaseMessage =
         result.status === 'paid'
           ? 'Payment confirmed. Your package is ready.'
@@ -63,6 +78,7 @@
                 : 'Payment has not been confirmed. If you completed checkout, check again shortly before trying another payment.';
       await invalidateAll();
     } catch (e) {
+      purchaseTone = 'error';
       purchaseMessage = (e as Error).message;
     } finally {
       purchaseBusy = false;
@@ -134,11 +150,15 @@
   async function recover() {
     busy = true;
     message = '';
+    failed = false;
+    messageTone = 'success';
     try {
       const result = await api(`assets/${data.asset.id}/recover`, {}, data.network!.slug);
       await invalidateAll();
+      messageTone = 'info';
       message = `${result.recovered} recovered. ${result.message}`;
     } catch (e) {
+      failed = true;
       message = (e as Error).message;
     } finally {
       busy = false;
@@ -149,6 +169,8 @@
     if (!files?.[0]) return;
     busy = true;
     message = '';
+    failed = false;
+    messageTone = 'success';
     try {
       const form = new FormData();
       form.set('package', files[0]);
@@ -164,6 +186,7 @@
       selected = result.id;
       message = 'Release saved. Inspect the buyer details before publishing.';
     } catch (e) {
+      failed = true;
       message = (e as Error).message;
     } finally {
       busy = false;
@@ -185,8 +208,21 @@
   </div>
   <p class="eyebrow">
     <Icon name={data.asset.kind} size={20} />
-    {assetKinds[data.asset.kind]} / {data.owner ? data.asset.visibility : 'BUILDER ASSET'}
+    {assetKinds[data.asset.kind]} / BUILDER ASSET
   </p>
+  {#if data.owner}<StateBadge
+      label={data.asset.visibility === 'published'
+        ? 'Published'
+        : data.asset.visibility === 'archived'
+          ? 'Archived'
+          : 'Draft'}
+      tone={data.asset.visibility === 'published' ? 'success' : 'neutral'}
+      icon={data.asset.visibility === 'published'
+        ? 'check'
+        : data.asset.visibility === 'archived'
+          ? 'archive'
+          : 'document'}
+    />{/if}
   <h1 class="asset-heading">{data.asset.title}</h1>
   <p class="lede">{data.asset.summary}</p>
   <div class="builder-split asset-detail">
@@ -291,7 +327,7 @@
           disabled={purchaseBusy}
           onclick={() => purchase('check')}>{purchaseBusy ? 'Checking…' : 'Check purchase'}</button
         >{/if}
-      {#if purchaseMessage}<p class="availability" role="status">{purchaseMessage}</p>{/if}
+      {#if purchaseMessage}<StatusNotice tone={purchaseTone} message={purchaseMessage} />{/if}
       {#if data.owner}<p class="muted">
           {data.commerceReady
             ? 'Publish only when the release and its support policy are ready for buyers.'
@@ -376,7 +412,10 @@
               maxlength={['install', 'license'].includes(field.key) ? 4000 : 1500}
               aria-describedby={`hint-${field.key}`}
             ></textarea><span id={`hint-${field.key}`} class="field-hint">{field.hint}</span></label
-          >{/each}{#if message}<p role="status" class="availability">{message}</p>{/if}<button
+          >{/each}{#if message}<StatusNotice
+            tone={failed ? 'error' : messageTone}
+            {message}
+          />{/if}<button
           class="button"
           disabled={busy || !data.storageReady || data.releases.length >= 5}
           >{busy ? 'Saving…' : 'Save private release'} <Icon name="upload" /></button

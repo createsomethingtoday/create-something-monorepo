@@ -13,6 +13,10 @@
   --line: #343b35;
   --signal: var(--color-performance-signal-soft);
   --paper: var(--color-performance-paper);
+  --state-info: var(--color-performance-signal-soft);
+  --state-success: var(--color-performance-growth-soft);
+  --state-warning: var(--color-performance-gold-soft);
+  --state-error: var(--color-performance-risk-soft);
 }
 * {
   box-sizing: border-box;
@@ -38,14 +42,15 @@ button {
   cursor: pointer;
 }
 button:disabled {
-  cursor: wait;
+  cursor: not-allowed;
   opacity: 0.5;
 }
 a:focus-visible,
 button:focus-visible,
 input:focus-visible,
 select:focus-visible,
-textarea:focus-visible {
+textarea:focus-visible,
+summary:focus-visible {
   outline: 3px solid var(--signal);
   outline-offset: 5px;
 }
@@ -257,7 +262,7 @@ textarea {
   min-height: 100px;
 }
 .error {
-  color: #ffc4b4;
+  color: var(--state-error);
 }
 .workspace {
   padding: 65px 4.5vw 100px;
@@ -1257,4 +1262,79 @@ input[type='file'] {
   padding: 18px max(24px, 5vw);
   border-bottom: 1px solid var(--line);
   font-size: 13px;
+}
+
+/* PRIVATE states use Canon's pale semantic colors on its dark product surface.
+   Every state also has a label and icon; color never grants access or proves skill. */
+[data-tone='neutral'] {
+  --state-color: var(--muted);
+}
+[data-tone='info'] {
+  --state-color: var(--state-info);
+}
+[data-tone='success'] {
+  --state-color: var(--state-success);
+}
+[data-tone='warning'] {
+  --state-color: var(--state-warning);
+}
+[data-tone='error'] {
+  --state-color: var(--state-error);
+}
+.state-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  max-width: 100%;
+  padding: 0.3rem 0.55rem;
+  color: var(--state-color);
+  border: 1px solid color-mix(in srgb, var(--state-color) 50%, var(--color-performance-ink));
+  background: color-mix(in srgb, var(--state-color) 6%, var(--color-performance-ink));
+  font: 12px/1.5 var(--font-performance-mono);
+  letter-spacing: 0;
+  text-transform: none;
+  overflow-wrap: anywhere;
+}
+.state-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  margin-block: var(--space-performance-md);
+  padding: var(--space-performance-sm) var(--space-performance-md);
+  color: var(--state-color);
+  border: 1px solid var(--line);
+  border-inline-start: 3px solid var(--state-color);
+  background: color-mix(in srgb, var(--state-color) 6%, var(--color-performance-ink));
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.state-notice > span:first-child {
+  flex-shrink: 0;
+}
+.state-row {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.state-working {
+  display: inline-flex;
+  margin-top: 0.3em;
+  animation: state-turn 1.2s linear infinite;
+}
+@keyframes state-turn {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .state-working {
+    animation: none;
+  }
+}
+@media (forced-colors: active) {
+  .state-badge,
+  .state-notice {
+    border-color: CanvasText;
+  }
 }

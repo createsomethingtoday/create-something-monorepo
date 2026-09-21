@@ -1,4 +1,7 @@
 <script lang="ts">
+  import StateBadge from '$lib/components/StateBadge.svelte';
+  import StatusNotice from '$lib/components/StatusNotice.svelte';
+
   import Icon from '$lib/components/Icon.svelte';
   import { assetKinds, assetPrice } from '$lib/assets';
   import { api } from '$lib/client';
@@ -86,9 +89,21 @@
           href={`/n/${data.network!.slug}/assets/${asset.id}`}
           ><p class="eyebrow">
             <Icon name={asset.kind} size={20} />
-            {assetKinds[asset.kind]}{#if data.owner}
-              / {asset.visibility}{/if}
+            {assetKinds[asset.kind]}
           </p>
+          {#if data.owner}<StateBadge
+              label={asset.visibility === 'published'
+                ? 'Published'
+                : asset.visibility === 'archived'
+                  ? 'Archived'
+                  : 'Draft'}
+              tone={asset.visibility === 'published' ? 'success' : 'neutral'}
+              icon={asset.visibility === 'published'
+                ? 'check'
+                : asset.visibility === 'archived'
+                  ? 'archive'
+                  : 'document'}
+            />{/if}
           <h2>{asset.title}</h2>
           <p>{asset.summary}</p>
           <div class="card-foot">
@@ -174,7 +189,7 @@
           A purchase grants the selected release. It does not include private sessions, future
           versions, or permission to redistribute.
         </p>
-        {#if message}<p class="error" role="alert">{message}</p>{/if}<button
+        {#if message}<StatusNotice tone="error" {message} />{/if}<button
           class="button"
           disabled={busy}>{busy ? 'Saving…' : 'Create asset draft'} <Icon name="plus" /></button
         >

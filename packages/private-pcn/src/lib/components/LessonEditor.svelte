@@ -1,4 +1,6 @@
 <script lang="ts">
+  import StatusNotice from '$lib/components/StatusNotice.svelte';
+
   import { untrack } from 'svelte';
   import { invalidateAll } from '$app/navigation';
   import { api } from '$lib/client';
@@ -50,7 +52,7 @@
     These optional details help members apply the walkthrough. Saved changes are visible immediately
     wherever this session is published. Video publication and access stay separate.
   </p>
-  <form onsubmit={save}>
+  <form onsubmit={save} aria-busy={busy}>
     <fieldset disabled={busy}>
       <label
         >What will the learner be able to do?<textarea
@@ -105,8 +107,9 @@
       </p>
       <button class="button" type="submit">{busy ? 'Saving…' : 'Save lesson material'}</button>
     </fieldset>
-    {#if error}<p role="alert" class="notice error">{error}</p>{/if}
-    {#if message}<p role="status" class="notice">{message}</p>{/if}
+    {#if busy}<StatusNotice message="Saving lesson material…" busy />{/if}
+    {#if error}<StatusNotice tone="error" message={error} />{/if}
+    {#if message}<StatusNotice tone="success" {message} />{/if}
   </form>
 </details>
 
