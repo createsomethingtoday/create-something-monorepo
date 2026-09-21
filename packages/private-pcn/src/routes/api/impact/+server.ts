@@ -42,6 +42,7 @@ export const POST: RequestHandler = async ({ locals, platform, request }) => {
   await platform.env.DB.prepare(
     "DELETE FROM customer_impact_daily WHERE day<date('now','-90 days')"
   ).run();
+  await platform.env.DB.prepare("DELETE FROM impact_daily WHERE day<date('now','-90 days')").run();
   return new Response(null, { status: 204 });
 };
 export const GET: RequestHandler = async ({ locals, platform }) => {

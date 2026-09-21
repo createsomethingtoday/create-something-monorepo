@@ -518,7 +518,11 @@ it('separates operator engagement and reports invitation and free acquisition ou
   const supportSession = event({ event: 'page_view', surface: 'home' });
   supportSession.locals.impersonation = { id: 'support', invalid: false };
   await track(supportSession);
+  sql.exec(
+    "INSERT INTO impact_daily(day,surface,event,count) VALUES('2000-01-01','home','page_view',500)"
+  );
   await track(event({ event: 'page_view', surface: 'home' }));
+  expect(sql.prepare('SELECT COUNT(*) AS count FROM impact_daily').get()?.count).toBe(0);
   await POST(event(application));
   await POST(event(application, 'operator', 'operator@example.com'));
   sql.exec(
