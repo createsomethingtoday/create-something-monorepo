@@ -292,3 +292,52 @@ describe('enrichCategoryRecordsWithHistory', () => {
 		expect(enriched[0].changePercent).toBeUndefined();
 	});
 });
+
+it('stable template IDs separate identical display names in history', () => {
+  const common = { templateName: 'Same', category: 'Business', creatorEmail: 'same@example.test' };
+  const first = buildLeaderboardSnapshotKey({...common, templateId: 'a'.repeat(24)});
+  const second = buildLeaderboardSnapshotKey({...common, templateId: 'b'.repeat(24)});
+  expect(first).not.toBe(second);
+});
+
+it('retains template identity despite populated legacy columns', () => {
+  const records: MarketplaceLeaderboardRecord[] = [
+    {
+      templateId: 'a'.repeat(24),
+      templateName: 'Alture',
+      category: 'Design',
+      creatorEmail: 'hi@template.supply',
+      totalSales30d: 34,
+      totalRevenue30d: 3508.8,
+      avgRevenuePerSale: 103.2,
+      salesRank: 10,
+      revenueRank: 8
+    }
+  ];
+
+  const enriched = enrichLeaderboardRecordsWithHistory(
+    records,
+    [
+      {
+        snapshot_at: '2026-03-30T16:04:32.000Z',
+        record_key: 'template:' + 'a'.repeat(24),
+        template_name: 'Alture',
+        category: 'Design',
+        creator_email: 'hi@template.supply',
+        total_sales_30d: 53
+      },
+      {
+        snapshot_at: '2026-04-20T16:00:00.000Z',
+        record_key: buildLeaderboardSnapshotKey(records[0]),
+        template_name: 'Alture',
+        category: 'Design',
+        creator_email: 'hi@template.supply',
+        total_sales_30d: 34
+      }
+    ],
+    { timestamp: null, source: 'none' },
+    { now: new Date('2026-04-22T12:00:00.000Z') }
+  );
+
+  expect(enriched[0].trendData).toEqual([53, 34]);
+});

@@ -9,6 +9,7 @@ declare global {
 				UPLOADS: R2Bucket;
 				AIRTABLE_API_KEY: string;
 				AIRTABLE_BASE_ID: string;
+        MARKETPLACE_INSIGHTS_SNAPSHOT_TABLE_ID?: string;
 				CRON_SECRET?: string;
 				ADMIN_EMAILS?: string;
 				CSRF_TRUSTED_ORIGINS?: string;
