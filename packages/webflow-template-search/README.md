@@ -40,6 +40,21 @@ Use `Authorization: Bearer <SYNC_ADMIN_TOKEN>` or `X-API-Key`.
 
 Designer profile pages should use the Webflow **Template Filter Bar** plus **Template Grid** components instead of a native Collection List when the page needs to show every published template for a creator. The components infer `creator_slug` from `/templates/designers/{slug}` automatically and can bind `creator_record_id` when the current Designer CMS item exposes the sync record ID.
 
+## Search caching
+
+Public responses can be cached for pages 1–10 and queries up to 64 characters.
+Exact `template_slug` and `strict` requests bypass the public response cache.
+Counts and facets share a separate memo across pages, keyed by all search filters,
+relaxed-query mode and the existing sync cache version. Completed sync, image
+maintenance, creator maintenance and signed webhook writes invalidate both layers.
+Memo entries expire after five minutes for counts and thirty minutes
+for facets. Cache failures fall back to D1. Direct `searchTemplates` callers that
+omit a sync version bypass query memoization.
+
+The retained CMS-filter prototype is not part of this recovery: its `has_cms`
+column and backfill are absent from the current schema. Do not advertise that
+filter or apply its older snapshot over the current listing-visibility rules.
+
 ## Featured creator monthly batch
 
 Generate a read-only monthly candidate batch from Airtable for the Webflow CMS-backed
