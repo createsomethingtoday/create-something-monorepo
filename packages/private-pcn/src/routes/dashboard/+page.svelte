@@ -241,6 +241,7 @@
         <label
           >Creator email<input
             type="email"
+            disabled={inviteBusy}
             bind:value={inviteEmail}
             oninput={() => {
               inviteUrl = '';
