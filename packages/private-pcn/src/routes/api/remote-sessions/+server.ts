@@ -228,9 +228,17 @@ export const POST: RequestHandler = async ({ locals, platform, request }) => {
       );
     const result = await db
       .prepare(
-        `UPDATE remote_sessions SET tracked_seconds=${elapsedSql},timer_started_at=NULL,receipt_status=CASE WHEN support_period_start IS NOT NULL THEN 'pending' ELSE 'none' END,status=?,outcome=?,updated_by=?,updated_at=? WHERE id=? AND status IN ('requested','accepted')`
+        `UPDATE remote_sessions SET tracked_seconds=${elapsedSql},timer_started_at=NULL,receipt_status=CASE WHEN support_period_start IS NOT NULL THEN 'pending' ELSE 'none' END,status=?,outcome=?,updated_by=?,updated_at=? WHERE id=? AND status IN ('requested','accepted') AND ((tracked_seconds=0 AND timer_started_at IS NULL) OR ?)`
       )
-      .bind(now, b.action === 'end' ? 'ended' : 'declined', b.outcome.trim(), subject, now, row.id)
+      .bind(
+        now,
+        b.action === 'end' ? 'ended' : 'declined',
+        b.outcome.trim(),
+        subject,
+        now,
+        row.id,
+        b.action === 'end' && b.outcome.trim().length >= 10 ? 1 : 0
+      )
       .run();
     return result.meta.changes > 0
       ? json({ success: true })

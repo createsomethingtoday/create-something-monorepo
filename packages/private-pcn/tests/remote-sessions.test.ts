@@ -27,6 +27,7 @@ function event(subject: string, body?: any): any {
 }
 beforeEach(() => {
   sql = new DatabaseSync(':memory:');
+  sql.function('unixepoch', () => Math.floor(Date.now() / 1000));
   for (const f of readdirSync(new URL('../migrations/', import.meta.url)).sort())
     sql.exec(readFileSync(new URL('../migrations/' + f, import.meta.url), 'utf8'));
   sql.exec(`INSERT INTO networks(id,slug,owner_id,name) VALUES('net','creator','creator','Creator');
@@ -453,4 +454,48 @@ it('rejects a billing change in the final timer-start statement', async () => {
   expect(
     sql.prepare('SELECT timer_started_at FROM remote_sessions WHERE id=?').get(id)?.timer_started_at
   ).toBeNull();
+});
+
+it('does not count billing-verification delay as support time', async () => {
+  const now = supportFixture();
+  const id = await acceptedSupport();
+  const e = event('creator', { action: 'time_start', id, ready: true });
+  e.platform.env.DB.prepare = (q: string) => {
+    if (q === 'SELECT period_start,period_end,status FROM network_billing WHERE network_id=?')
+      vi.setSystemTime(new Date((now + 60) * 1000));
+    return stmt(q);
+  };
+  expect((await POST(e)).status).toBe(200);
+  expect(
+    sql.prepare('SELECT timer_started_at FROM remote_sessions WHERE id=?').get(id)?.timer_started_at
+  ).toBe(now + 60);
+});
+it('rejects an expired session after billing verification completes', async () => {
+  const now = supportFixture();
+  const id = await acceptedSupport();
+  const e = event('creator', { action: 'time_start', id, ready: true });
+  e.platform.env.DB.prepare = (q: string) => {
+    if (q === 'SELECT period_start,period_end,status FROM network_billing WHERE network_id=?')
+      vi.setSystemTime(new Date((now + 7300) * 1000));
+    return stmt(q);
+  };
+  expect((await POST(e)).status).toBe(409);
+});
+it('requires an outcome even when a timer starts concurrently with ending', async () => {
+  const now = supportFixture();
+  const id = await acceptedSupport();
+  const e = event('creator', { action: 'end', id, outcome: '' });
+  e.platform.env.DB.prepare = (q: string) => {
+    if (q.startsWith('UPDATE remote_sessions SET tracked_seconds=') && q.includes('status IN'))
+      sql
+        .prepare(
+          'UPDATE remote_sessions SET timer_started_at=?,support_period_start=?,support_period_end=? WHERE id=?'
+        )
+        .run(now - 30, now - 3600, now + 3600, id);
+    return stmt(q);
+  };
+  expect((await POST(e)).status).toBe(409);
+  expect(sql.prepare('SELECT status FROM remote_sessions WHERE id=?').get(id)?.status).toBe(
+    'accepted'
+  );
 });
