@@ -73,6 +73,13 @@ for pkg in $PACKAGES_TO_CHECK; do
     # Plain tsc cannot validate component bodies or named Svelte type exports.
     CHECK_SCRIPT=$(jq -r '.scripts.check // ""' "$PKG_DIR/package.json" 2>/dev/null || true)
     if [[ "$CHECK_SCRIPT" == *svelte-check* ]]; then
+      if [[ "$CHECK_SCRIPT" == *"svelte-kit sync"* ]]; then
+        log_msg "Preparing $pkg with svelte-kit sync"
+        CHECK_OUTPUT=$(cd "$PKG_DIR" && pnpm exec svelte-kit sync 2>&1) || {
+          ERRORS="$ERRORS\n\n=== $pkg (svelte-kit sync) ===\n$CHECK_OUTPUT"
+          continue
+        }
+      fi
       log_msg "Checking $pkg with svelte-check"
       CHECK_OUTPUT=$(cd "$PKG_DIR" && pnpm exec svelte-check --tsconfig ./tsconfig.json --threshold error 2>&1) || {
         ERRORS="$ERRORS\n\n=== $pkg (svelte-check) ===\n$CHECK_OUTPUT"
