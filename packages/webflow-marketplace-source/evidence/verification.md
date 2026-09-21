@@ -2,7 +2,7 @@
 
 ## Actual destination
 
-Source Nightly (`/Applications/Source Nightly.app`) connected the package directory through its native folder picker. It detected Astro. Site → Run project → Start preview ran `npm run dev`. Native readback at closeout: workspace `webflow-marketplace-source`, Local / This project is running locally, “Project running … http://127.0.0.1:4321/,” with the rendered Marketplace home and live template cards in Site Browser. No Source cloud deployment identifier exists; this is a local connected project.
+Source Nightly (`/Applications/Source Nightly.app`) connected the package directory through its native folder picker. It detected Astro. Site → Run project → Start preview ran `npm run dev`. Native readback at closeout: workspace `webflow-marketplace-source`, Local / This project is running locally, “Project running … http://127.0.0.1:4321/,” with the rendered Marketplace home and live template cards in Site Browser. This local preview is separate from the failed Cloud deployment attempts recorded below.
 
 ## Browser observations
 
@@ -42,3 +42,13 @@ Review: https://github.com/createsomethingtoday/create-something-monorepo/pull/1
 ## Dependency security repair
 
 PR dependency review rejected Astro 6.4.8 for GHSA-26w7-cxv4-gfx2. Upgraded to Astro 7.3.3 with @astrojs/node 11.1.6 and @astrojs/react 6.0.6; retained compressHTML true to preserve prior whitespace behavior. npm audit reports zero vulnerabilities. Astro check: zero errors/warnings and five existing hints. Build and three route tests pass. Fresh standalone production build on port 4322 passed all ten HTTP routes, strict empty search, canonical and noindex checks (build-http-verification.json). IAB verified hydrated portfolio search and selected Minimal filter with URL persistence; Source-managed preview still renders. Cloud deployment was not retried without failure logs.
+
+## Source restart and design ownership
+
+After the Astro major upgrade, the old Source-managed dev process served a stale Vite client (`__SERVER_FORWARD_CONSOLE__` undefined), leaving catalog SSR fallback visible. Stopped that task through Source. A Source chat restart returned 502 upstream unavailable; closing and reconnecting the same folder restored the native startup path and Source reported Project running at port 4321. Hydrated category navigation and filters returned without new console errors. Restart Source after major toolchain upgrades; a rendered homepage alone is insufficient hydration proof.
+
+CI strict check found missing Canon ownership declarations for this Webflow-brand package. Added a bounded product-local exemption consistent with the owning webflow-components library; the requested Webflow style remains authoritative. Canon codification audit passes with zero undecided files; both existing codification tests pass.
+
+Matched tablet inspection found the live page head applies root font sizes 16px desktop, 15px at <=991px, 14px at <=767px, and 13px at <=479px; these head rules were absent from the ZIP. Restored the same responsive rem scale in source.css. This is a fidelity correction, not a new design system.
+
+Responsive catalog readback: mobile 390px matched the live heading at 18.2px/top175px; tablet 840px matched 30px/top193.398px. Both had no horizontal document overflow. Restored the exported desktop minmax(264px,.3fr) sidebar and 34px column gap after live 1280px inspection showed the prior handcrafted 240px/40px pair shifted the results column 18px left. Fixed catalog navigation and six-rem top padding follow the published layout; full pixel-diff remains unavailable. Mobile menu opened and closed after these changes. Full Canon check passed in addition to the targeted audit/tests.
