@@ -1,0 +1,34 @@
+[
+  {
+    "id": "task",
+    "title": "Start with the task.",
+    "caption": "Find the document.",
+    "start": 0,
+    "end": 4.5,
+    "still": 3.9
+  },
+  {
+    "id": "test",
+    "title": "Test beyond the happy path.",
+    "caption": "The test can write, too.",
+    "start": 4.5,
+    "end": 9,
+    "still": 7.8
+  },
+  {
+    "id": "boundary",
+    "title": "Give the agent a smaller tool.",
+    "caption": "Expose only the read.",
+    "start": 9,
+    "end": 13.5,
+    "still": 12.3
+  },
+  {
+    "id": "verify",
+    "title": "Test the boundary again.",
+    "caption": "Read succeeds. Write is unavailable.",
+    "start": 13.5,
+    "end": 18,
+    "still": 16.5
+  }
+]
