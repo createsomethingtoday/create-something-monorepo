@@ -72,6 +72,9 @@ bounded batch (maximum100). Repeat until `counts.unknown` is zero. Each batch
 selects unknown rows, validates a complete source response before writes, updates
 only has_cms with a synced_at concurrency guard, and atomically invalidates search
 caches. Changed rows are skipped and remain resumable; no index rows are removed.
+For a reconciled mismatch in an already-known value, supply an explicit
+`recordIds` array (at most the batch limit). All targets must exist; both the
+previous capability value and synced_at must still match at write time.
 Stop on provider errors or repeated no-progress batches and inspect the source.
 
 Promotion: confirm schema, deploy with filtering disabled, preview/apply bounded

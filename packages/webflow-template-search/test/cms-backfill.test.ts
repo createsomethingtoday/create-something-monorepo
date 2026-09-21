@@ -46,3 +46,13 @@ it('requires admin authentication before backfill access',async()=>{
  const {env,close}=createTestEnv();try {expect((await callWorker(new Request('https://test/api/templates/admin/backfill-cms',{method:'POST',body:'{}'}),env)).status).toBe(401);}finally{close();}
 });
 it('rejects malformed checkbox data rather than converting it to false',()=>{expect(()=>cmsCheckbox(null)).toThrow();expect(()=>cmsCheckbox('false')).toThrow();expect(cmsCheckbox(undefined)).toBe(false);});
+
+it('repairs only explicitly selected known values and rejects missing targets', async () => {
+ const {env,close}=createTestEnv();try {
+  await seed(env);await env.DB.prepare('UPDATE template_documents SET has_cms=0').run();
+  source([{id:'recOne',fields:{[CMS_FIELD]:true}}]);
+  expect(await backfillCms(env,true,50,['recOne'])).toMatchObject({selected:1,updated:1});
+  expect(await env.DB.prepare("SELECT has_cms FROM template_documents WHERE id='recTwo'").first()).toEqual({has_cms:0});
+  await expect(backfillCms(env,true,50,['recMissing'])).rejects.toThrow('missing');
+ }finally{close();}
+});

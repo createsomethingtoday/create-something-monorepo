@@ -581,9 +581,9 @@ export default {
       if (url.pathname === '/api/templates/admin/backfill-cms' && request.method === 'POST') {
         const authError = validateAdminToken(request, env);
         if (authError) return authError;
-        const body = await request.json() as { apply?: boolean; limit?: number };
+        const body = await request.json() as { apply?: boolean; limit?: number; recordIds?: string[] };
         if (body.apply !== undefined && typeof body.apply !== 'boolean') return jsonResponse(request, env, { error: 'apply must be boolean' }, 400);
-        return jsonResponse(request, env, await backfillCms(env, body.apply === true, body.limit ?? 50));
+        return jsonResponse(request, env, await backfillCms(env, body.apply === true, body.limit ?? 50, body.recordIds));
       }
 
       if (url.pathname === '/api/templates/admin/sync-records' && request.method === 'POST') {
