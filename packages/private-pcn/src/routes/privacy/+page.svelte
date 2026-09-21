@@ -16,6 +16,8 @@
 
 <LegalPage
   title="Privacy Policy"
+  effectiveDate="September 21, 2026"
+  version="1.1"
   description="How CREATE SOMETHING Private handles accounts, creator applications, private networks, assets, and support activity."
   {sections}
 >
