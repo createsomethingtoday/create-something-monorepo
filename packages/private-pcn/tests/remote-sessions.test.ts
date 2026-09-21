@@ -49,6 +49,9 @@ it('lets a buyer request attended support and keeps an outsider out', async () =
   );
   expect(res.status).toBe(201);
   const { id } = await res.json();
+  expect((await (await GET(event('creator'))).json()).sessions[0].buyer_email).toBe(
+    'buyer@example.com'
+  );
   expect((await (await GET(event('outsider'))).json()).sessions).toHaveLength(0);
   expect((await POST(event('outsider', { action: 'accept', id }))).status).toBe(404);
   expect((await POST(event('creator', { action: 'accept', id }))).status).toBe(200);

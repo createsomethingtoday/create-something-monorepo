@@ -125,7 +125,7 @@ export const POST: RequestHandler = async ({ locals, platform, request }) => {
     try {
       await db
         .prepare(
-          'INSERT INTO remote_sessions(id,network_id,buyer_id,creator_id,method,scope,budget_cents,consent_version,updated_by,expires_at) VALUES(?,?,?,?,?,?,?,?,?,?)'
+          'INSERT INTO remote_sessions(id,network_id,buyer_id,creator_id,method,scope,budget_cents,consent_version,updated_by,expires_at,buyer_email) VALUES(?,?,?,?,?,?,?,?,?,?,?)'
         )
         .bind(
           id,
@@ -137,7 +137,8 @@ export const POST: RequestHandler = async ({ locals, platform, request }) => {
           b.budget,
           'attended_v1',
           subject,
-          now + 86400
+          now + 86400,
+          locals.identity.email
         )
         .run();
     } catch {

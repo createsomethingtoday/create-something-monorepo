@@ -9,6 +9,14 @@
     consent = $state(false),
     busy = $state(false),
     message = $state('');
+  const openRequest = $derived(
+    data.sessions.some(
+      (s: any) =>
+        s.network_id === data.network &&
+        ['requested', 'accepted'].includes(s.status) &&
+        s.expires_at * 1000 > Date.now()
+    )
+  );
   let meeting = $state<Record<string, string>>({}),
     outcome = $state<Record<string, string>>({});
   async function act(body: Record<string, unknown>) {
@@ -44,7 +52,7 @@
   {#if !data.enabled}<p class="availability">
       Remote-session setup is awaiting verification. Existing records remain available.
     </p>{/if}
-  {#if data.network && data.enabled}
+  {#if data.network && data.enabled && !openRequest}
     <section class="builder-panel">
       <h2>Request a working session</h2>
       <form
@@ -101,6 +109,9 @@
         >
       </form>
     </section>
+  {:else if openRequest}<p class="availability">
+      Your request is open. Continue in the session below.
+    </p>
   {:else if !data.network}<p>
       Open an owned asset or active company workspace to request a session with its creator.
     </p>{/if}
@@ -120,6 +131,7 @@
           : s.status.toUpperCase()}
       </p>
       <h3>{s.name}</h3>
+      {#if creator}<p>Requested by {s.buyer_email || 'a verified buyer'}.</p>{/if}
       <p class="preserve">{s.scope}</p>
       <p>
         Buyer’s additional provider budget: ${(s.budget_cents / 100).toFixed(2)}. {s.status ===
