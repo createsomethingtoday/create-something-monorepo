@@ -66,7 +66,7 @@ export async function learningGet(db: D1Database, locals: App.Locals, route: str
     });
   }
   if (route === 'learning/paths') {
-    if (!admitted(locals)) return json({ paths: [], continued: [] });
+    if (!admitted(locals)) return json({ paths: [] });
     const rows = await db
       .prepare(
         'SELECT * FROM learning_paths WHERE network_id=? ORDER BY updated_at DESC,id LIMIT 50'
@@ -169,33 +169,42 @@ export async function learningPost(
     JSON.stringify(body.lesson_ids),
     body.visibility
   ];
-  if (body.id) {
-    if (!Number.isInteger(body.revision)) return fail('Reload this path before saving.', 409);
-    const result = await db
+  if (body.id && !Number.isInteger(body.revision))
+    return fail('Reload this path before saving.', 409);
+  const mutation = body.id
+    ? db
+        .prepare(
+          'UPDATE learning_paths SET title=?,outcome=?,prerequisites=?,estimated_minutes=?,lesson_ids=?,visibility=?,revision=revision+1,updated_at=CURRENT_TIMESTAMP WHERE id=? AND network_id=? AND revision=?'
+        )
+        .bind(...values, id, network(locals), body.revision)
+    : db
+        .prepare(
+          'INSERT INTO learning_paths (id,network_id,title,outcome,prerequisites,estimated_minutes,lesson_ids,visibility) SELECT ?,?,?,?,?,?,?,? WHERE (SELECT COUNT(*) FROM learning_paths WHERE network_id=?)<50'
+        )
+        .bind(id, network(locals), ...values, network(locals));
+  // The mutation and its receipt commit together. A rejected stale/capacity write
+  // must not create an audit receipt or an unreported partial save.
+  const [result] = await db.batch([
+    mutation,
+    db
       .prepare(
-        'UPDATE learning_paths SET title=?,outcome=?,prerequisites=?,estimated_minutes=?,lesson_ids=?,visibility=?,revision=revision+1,updated_at=CURRENT_TIMESTAMP WHERE id=? AND network_id=? AND revision=?'
+        'INSERT INTO receipts(id,actor,action,target,network_id) SELECT ?,?,?,?,? WHERE changes()=1'
       )
-      .bind(...values, id, network(locals), body.revision)
-      .run();
-    if (!result.meta.changes)
-      return fail('This path changed or is unavailable. Reload before saving.', 409);
-  } else {
-    const count = await db
-      .prepare('SELECT COUNT(*) AS count FROM learning_paths WHERE network_id=?')
-      .bind(network(locals))
-      .first<{ count: number }>();
-    if ((count?.count || 0) >= 50) return fail('This network has reached its 50-path limit.', 409);
-    await db
-      .prepare(
-        'INSERT INTO learning_paths (id,network_id,title,outcome,prerequisites,estimated_minutes,lesson_ids,visibility) VALUES(?,?,?,?,?,?,?,?)'
+      .bind(
+        crypto.randomUUID(),
+        locals.identity.subject,
+        'learning_path.saved',
+        id,
+        network(locals)
       )
-      .bind(id, network(locals), ...values)
-      .run();
-  }
-  await db
-    .prepare('INSERT INTO receipts(id,actor,action,target,network_id) VALUES(?,?,?,?,?)')
-    .bind(crypto.randomUUID(), locals.identity.subject, 'learning_path.saved', id, network(locals))
-    .run();
+  ]);
+  if (!result.meta.changes)
+    return fail(
+      body.id
+        ? 'This path changed or is unavailable. Reload before saving.'
+        : 'This network has reached its 50-path limit.',
+      409
+    );
   return json({ id });
 }
 

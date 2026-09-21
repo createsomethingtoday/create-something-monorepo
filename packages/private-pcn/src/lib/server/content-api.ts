@@ -33,7 +33,7 @@ export const GET: RequestHandler = async ({ params, platform, locals }) => {
   if (!db) return fail('The library is temporarily unavailable.', 503);
   const role = locals.identity?.role;
   const networkId = locals.network?.id || 'default';
-  if (params.path?.startsWith('learning/')) return learningGet(db,locals,params.path);
+  if (params.path?.startsWith('learning/')) return learningGet(db, locals, params.path);
   if (params.path?.startsWith('lessons/')) {
     if (locals.network && locals.network.status !== 'active' && role !== 'admin')
       return fail('Lesson unavailable or access required.', 404);
@@ -44,7 +44,7 @@ export const GET: RequestHandler = async ({ params, platform, locals }) => {
     if (!video || !canRead(video, role)) return fail('Lesson unavailable or access required.', 404);
     return json({
       video: publicVideo(video),
-      progress: await progressFor(db,locals,video.id),
+      progress: await progressFor(db, locals, video.id),
       ...(await lessonView(db, video.id, networkId, locals))
     });
   }
@@ -183,7 +183,7 @@ export const POST: RequestHandler = async ({
   const role = locals.identity?.role;
   const networkId = locals.network?.id || 'default';
   const env = platform.env as unknown as StreamConfigEnv;
-  if (path?.startsWith('learning/')) return learningPost(db,locals,path,body);
+  if (path?.startsWith('learning/')) return learningPost(db, locals, path, body);
   if (path === 'playback') {
     if (locals.network && locals.network.status !== 'active')
       return fail('Network is not active.', 403);

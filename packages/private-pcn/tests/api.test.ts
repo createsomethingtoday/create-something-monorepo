@@ -139,6 +139,29 @@ describe('API against migrated SQLite schema (supporting proof)', () => {
       []
     );
   });
+  it('rolls back path saves if the activity receipt cannot be persisted', async () => {
+    seed('atomic-lesson');
+    sqlite.exec(
+      "CREATE TRIGGER receipt_failure BEFORE INSERT ON receipts WHEN NEW.action='learning_path.saved' BEGIN SELECT RAISE(ABORT,'receipt unavailable'); END;"
+    );
+    await expect(
+      POST(
+        event(
+          'learning/paths/save',
+          {
+            title: 'Atomic path',
+            outcome: 'Build',
+            prerequisites: '',
+            estimated_minutes: 5,
+            lesson_ids: ['atomic-lesson'],
+            visibility: 'draft'
+          },
+          'admin'
+        )
+      )
+    ).rejects.toThrow('receipt unavailable');
+    expect(sqlite.prepare('SELECT COUNT(*) AS count FROM learning_paths').get()?.count).toBe(0);
+  });
   it('removes revoked lessons from resume and rejects cross-network or impersonated progress writes', async () => {
     seed('progress-lesson');
     sqlite.prepare('UPDATE videos SET duration=125 WHERE id=?').run('progress-lesson');
