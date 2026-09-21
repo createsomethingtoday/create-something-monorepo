@@ -2,6 +2,7 @@
   import Icon from '$lib/components/Icon.svelte';
   let { data } = $props();
   import NetworkPreview from '$lib/components/NetworkPreview.svelte';
+  import HumanInkHero from '$lib/components/HumanInkHero.svelte';
 </script>
 
 <svelte:head>
@@ -38,39 +39,7 @@
           after approval.
         </p>
       </div>
-      <div
-        class="engineering-field"
-        role="img"
-        aria-label="A creator publishes a build walkthrough, reviews access, and shares it with members. Example network structure."
-      >
-        <div class="field-caption"><span>KNOWLEDGE, WITH CONTEXT</span><span>FIG. 01</span></div>
-        <div class="field-source">
-          <span class="field-node">01</span>
-          <div>
-            <small>THE CREATOR</small><strong>What you know.</strong>
-            <p>Techniques / packages / lessons learned</p>
-          </div>
-        </div>
-        <div class="field-route"><span>CURATE + PUBLISH</span></div>
-        <div class="field-network">
-          <div class="field-network-header">
-            <span>YOUR PRIVATE NETWORK</span><Icon name="network" size={20} />
-          </div>
-          <strong>From working code<br />to shared understanding.</strong>
-          <div class="field-topics">
-            <span>MCP servers</span><span>Agent plugins & skills</span><span
-              >Evaluation walkthroughs</span
-            >
-          </div>
-          <div class="field-gate">
-            <span>ACCESS / YOU DECIDE</span><b>Public preview · Invited members</b>
-          </div>
-        </div>
-        <div class="field-footer">
-          <span>02 / YOUR AUDIENCE</span>
-          <p>A place to learn from the work.</p>
-        </div>
-      </div>
+      <HumanInkHero />
     </div>
     <div class="creator-scope">
       <span>FOR EDUCATORS</span><span>FOR BUILDERS</span><span>FOR RESEARCHERS</span><span
