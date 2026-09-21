@@ -399,6 +399,17 @@ test('PCN canary rollout still requires a live invitation and rechecks the canar
   await startEnrollment(f.request({ email: 'INVITED@example.com', purpose: 'signup' }), f.env);
   assert.equal(f.mails.length, 1);
   const token = f.token();
+  f.env.PCN_ENROLLMENT_CANARY_EMAILS = '';
+  assert.equal(
+    (await startEnrollment(f.request({ email: 'invited@example.com', purpose: 'signup' }), f.env))
+      .status,
+    503
+  );
+  assert.equal(
+    (await completeEnrollment(f.request({ token, password: 'secure fixture password' }), f.env))
+      .status,
+    503
+  );
   f.env.PCN_ENROLLMENT_CANARY_EMAILS = 'another@example.com';
   assert.equal(
     (await completeEnrollment(f.request({ token, password: 'secure fixture password' }), f.env))
