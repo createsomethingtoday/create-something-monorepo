@@ -1,117 +1,81 @@
-# Marketplace Insights Sync
+# Marketplace Insights snapshots
 
-Weekly Snowflake → Airtable sync for the Asset Dashboard's Marketplace Insights
-page. Replaces the legacy worksheet-based warehouse sync (Fivetran push set up
-during the 2024 template-search experiment).
+Compute one complete weekly snapshot from Snowflake delivered template orders and
+Airtable asset/taxonomy metadata. The default command produces a local review
+artifact. No legacy leaderboard/category record is created, updated or deleted.
 
-## Why it exists
+## Correctness contract
 
-Validated 2026-08-26 (see `runs/` receipts and CRE follow-up): the legacy sync's
-"30-day" numbers were ~1.4–2x true delivered sales (effective window wider than
-labeled), individual rows froze for weeks at a time, revenue was derived as
-`count × price × 0.95` (older frozen rows: `× 0.80`), and the parent-category
-mapping was stale (e.g. Transportation & Logistics listed under "Business";
-the base's own taxonomy puts it under "Transportation & Automotive").
+- Group orders by stable template ID and marketplace product ID. Join product IDs
+  to Assets `ℹ️MRP ID` (`fldFeWROxzwzCo84b`), never by template name.
+- Reject duplicate template IDs, missing identity/creator/taxonomy mappings,
+  conflicting asset metadata, empty sources and invalid numeric values.
+- Compute total sales, gross list revenue and selling-template count from the
+  complete seller set before expanding category tags or truncating the top 160.
+- A multi-tag seller contributes to each category breakdown. These overlapping
+  breakdowns must never be summed into the marketplace headline.
+- Publish leaderboard, category breakdown and unique totals in one Airtable
+  record. Read back and validate the complete record before reporting success.
+- No partial two-table replacement and no pruning of previous snapshots.
 
-This sync computes the numbers the dashboard's labels actually claim.
-
-## Definitions
-
-| Value | Definition |
-|---|---|
-| Sale | `MARKETPLACE_ORDERS` row, `RESOURCE_TYPE='Template'`, `STATUS='delivered'` at query time (refunded orders drop out), `CREATED_ON` in the window |
-| Window | Rolling 30 days ending at the most recent **Monday 16:00 UTC** (`--as-of <ISO>` to override) |
-| Revenue | `SUM(PRICE_VALUE)` — gross list price, measured, no multiplier |
-| `TEMPLATES_IN_SUBCATEGORY` | Distinct templates with ≥1 sale in the window ("selling templates" — not inventory, not a qualification threshold) |
-| `AVG_REVENUE_PER_TEMPLATE` | Window revenue ÷ selling templates |
-| Taxonomy | The base's own 🪣Categories → 🪣Category Groups links (primary group per category); a selling template contributes to every category it is tagged with |
-| `SNAPSHOT_AT` | The window end (Monday 16:00 UTC) — this is what the dashboard's freshness display reads |
-
-Templates are joined Snowflake → Airtable by normalized name. Sellers with no
-matching asset (renamed/delisted twins) are listed in the run receipt under
-`unmatchedSellers` with the sales volume they represent — watch that number.
-
-## Targets (unchanged — the dashboard needs no changes)
-
-- `Top Templates by Sales / 30 Days` (`tblcXLVLYobhNmrg6`), top 160 by sales
-- `Template Category/Subcategory Performance / 30 days` (`tblDU1oUiobNfMQP9`),
-  one row per (category group, category) with ≥1 selling template
-
-Upserts merge on `TEMPLATE_NAME` / `ID` (`group::category`); rows not in the
-new set are deleted (all rows are derived and fully regenerable).
+The window is 30 days ending at the latest Monday 16:00 UTC; `--as-of` can specify
+another boundary. Revenue is `SUM(PRICE_VALUE)`, not a payout/net revenue measure.
 
 ## Running
 
-```bash
-# Dry run (no writes) — prints and saves counts and a receipt
-AIRTABLE_API_KEY=... node sync.mjs
-
-# Execute
-AIRTABLE_API_KEY=... node sync.mjs --execute
-
-# Recompute a past week
-node sync.mjs --as-of 2026-08-24T16:00:00Z --execute
-```
-
-Snowflake auth is Okta `externalbrowser` (a browser window opens unless an SSO
-token is cached). Airtable needs a PAT with `data.records:read`/`write` on
-`appMoIgXMTTTNIc3p` — `run.sh` resolves it from the environment, then Infisical
-(`prod /webflow/app-reviewer-airtable-mcp AIRTABLE_API_KEY`, an existing key
-with access to this base), then
-`~/.config/webflow-automation/airtable-marketplace-assets.key`.
-
-## Schedule
-
-`com.webflow.marketplace-insights-sync.plist` → Mondays 11:30 local (CT), which
-is 16:30/17:30 UTC — after the window boundary and after the legacy sync's
-~16:00–16:04 UTC write observed during the original rollout. Two independent
-writers still require coordination; scheduled timing does not guarantee order.
+From this directory, with Airtable credentials already supplied by the approved
+secret manager and Snowflake CLI/SSO available:
 
 ```bash
-cp com.webflow.marketplace-insights-sync.plist ~/Library/LaunchAgents/
-launchctl load ~/Library/LaunchAgents/com.webflow.marketplace-insights-sync.plist
+node sync.mjs
 ```
 
-The dashboard's D1 mirror (GitHub Actions `webflow-dashboard-snapshot-cron`,
-daily 18:30 UTC) picks the new values up the same day, no changes needed.
+Inspect `runs/snapshot-<date>.json` and its dry-run receipt. These contain private
+sales/creator data, stay local, and are ignored by Git. Use a reviewed snapshot
+and explicit destination configuration before execution:
 
-## Transition plan
+```bash
+node sync.mjs --execute
+```
 
-1. Dry-run, review the receipt (row counts, top templates, unmatched sellers).
-2. First `--execute` — numbers on the dashboard drop to true 30-day values
-   (headline ~5.1k → ~2.3k; that is the correction, not a regression). Expect a
-   one-week trend-percentage spike in the D1 history as accurate values replace
-   inflated ones, and one week where D1 holds both a `16:0x` (legacy) and
-   `16:00:00` (ours) snapshot for the same Monday.
-3. Load the launchd job.
-4. Turn off the legacy warehouse sync (Aaron Resnick's worksheet → Fivetran
-   push; coordinate with the data team). Until then there are two writers: the observed timing is not an ordering
-   guarantee. Inspect receipts and coordinate retirement of the legacy writer.
+Execution fails before provider access unless
+`MARKETPLACE_INSIGHTS_SNAPSHOT_TABLE_ID` identifies the approved additive table.
+Its schema is documented in `AIRTABLE_PROPOSAL.md`. There are no placeholder IDs
+or automatic schema changes. `run.sh` also requires that configuration and uses
+its own checkout's script; it always executes. Do not use it for dry-run review.
 
-## Known consequences of the definition change
+The historical launchd definition is not part of this recovery. The existing
+root checkout and active schedule remain untouched. Activating a new schedule
+requires a separate verified runtime checkpoint and retiring the old writer.
 
-- "Categories tracked" drops from 778 to roughly the count of categories with
-  ≥1 sale in a true 30-day window.
-- `TEMPLATES_IN_SUBCATEGORY` rises (real seller counts, e.g. T&L 10 → 25) and
-  `AVG_REVENUE_PER_TEMPLATE` falls accordingly (e.g. T&L $520 → ~$158). The
-  dashboard's "Active Templates" tooltip may deserve a copy tweak to "templates
-  with sales in the window".
-- Parent categories move to the base's current taxonomy (T&L leaves
-  "Business").
+## Dashboard migration
 
-## Replacement safety
+The shared snapshot reader is in `webflow-dashboard-core`. With no snapshot table
+configured, existing legacy reads remain unchanged. With a table configured,
+malformed, empty or unavailable snapshots fail rather than silently falling back.
+Both projections share one validated snapshot within a client instance. API
+responses expose the unique summary; the page rejects mixed-source/timestamp
+responses. New history keys use template IDs; old name-keyed history is preserved
+but not attached to new identities by guessing.
 
-Source recovery adds a pre-write gate: sellers, assets and taxonomy must all be
-nonempty; neither destination plan may be empty. Both table plans are checked
-before any write. By default a plan cannot delete more than 25% of either
-existing table. A large but intentional change requires reviewing the dry-run
-receipt and explicitly passing `--max-delete-fraction <0..1>` when executing;
-this option never permits empty source or empty output. Scheduled runs retain
-the conservative default. `run.sh` always executes, so use `node sync.mjs` for
-dry-run review.
+Create and validate the additive table only after its proposal is approved.
+Populate a reviewed snapshot before configuring the dashboard reader. Rollback
+removes the reader configuration; legacy tables and historical records remain.
 
-Run `node --test sync.test.mjs` for isolated contracts. Tests substitute both
-Snowflake and Airtable, make no external requests, and never use production
-credentials. Runtime receipts and logs in `runs/` remain local and are excluded
-from source control. No schedule installation or provider write is required to
-validate the recovery.
+## Validation
+
+```bash
+node --test sync.test.mjs ../../webflow-dashboard-core/src/marketplace-snapshot.test.mjs
+```
+
+Tests mock Snowflake and Airtable without production credentials or requests.
+Dashboard/core tests cover reader consistency, unique totals, identity-based
+history and mixed-snapshot rejection. See `ARCHITECTURE.md` for ownership.
+
+## Current activation gate (September 21, 2026)
+
+A real read-only dry-run reached Snowflake and Airtable, then rejected a selling
+product without an Assets product-ID mapping. No snapshot was published. Resolve
+the authoritative mapping before a publication attempt; do not guess by name or
+drop unmatched sellers to make the run pass. The additive table also requires
+explicit schema approval. No reader or schedule has been activated.

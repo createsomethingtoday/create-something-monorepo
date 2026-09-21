@@ -1,3 +1,4 @@
+import { fetchMarketplaceSnapshot, type MarketplaceSnapshot } from '@create-something/webflow-dashboard-core/marketplace-snapshot';
 import Airtable from 'airtable';
 import { randomBytes, createHash } from 'node:crypto';
 import { isLongDescriptionOnlyAssetVersionChange } from '../utils/asset-version-changes';
@@ -68,6 +69,7 @@ const VIEWS = {
 interface AirtableEnv {
 	AIRTABLE_API_KEY: string;
 	AIRTABLE_BASE_ID: string;
+	MARKETPLACE_INSIGHTS_SNAPSHOT_TABLE_ID?: string;
 	ENVIRONMENT?: string;
 	DEBUG_AIRTABLE?: string;
 }
@@ -1351,6 +1353,8 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 	}
 
 	const base = new Airtable({ apiKey: env.AIRTABLE_API_KEY }).base(env.AIRTABLE_BASE_ID);
+  let snapshotPromise: Promise<MarketplaceSnapshot | null> | undefined;
+  const getSnapshot = () => snapshotPromise ??= fetchMarketplaceSnapshot(env);
 	const debugEnabled = env.DEBUG_AIRTABLE === 'true';
 	const debugLog = (...args: unknown[]) => {
 		if (debugEnabled) {
@@ -2432,7 +2436,8 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 		 */
 		async getLeaderboard(options: { maxRecords?: number | null } = {}): Promise<{
 			records: Array<{
-				templateName: string;
+				templateId?: string;
+        templateName: string;
 				category: string;
 				creatorEmail: string;
 				totalSales30d: number;
@@ -2442,8 +2447,12 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 				revenueRank: number;
 			}>;
 			freshness: MarketplaceFreshnessMetadata;
+      marketplaceSummary?: MarketplaceSnapshot['summary'];
 		}> {
 			const maxRecords = options.maxRecords === undefined ? 50 : options.maxRecords;
+      const snapshot = await getSnapshot();
+      if (snapshot) return { records: typeof maxRecords === 'number' ? snapshot.leaderboard.slice(0, maxRecords) : snapshot.leaderboard,
+        freshness: {timestamp: snapshot.snapshotAt, source: 'field', fieldName: 'SNAPSHOT_AT'}, marketplaceSummary: snapshot.summary };
 			const records = await base(TABLES.LEADERBOARD)
 				.select({
 					view: VIEWS.LEADERBOARD,
@@ -2481,8 +2490,11 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 				revenueRank: number;
 			}>;
 			freshness: MarketplaceFreshnessMetadata;
+      marketplaceSummary?: MarketplaceSnapshot['summary'];
 		}> {
-			const records = await base(TABLES.CATEGORY_PERFORMANCE)
+			const snapshot = await getSnapshot();
+      if (snapshot) return {records: snapshot.categories, freshness: {timestamp: snapshot.snapshotAt, source: 'field', fieldName: 'SNAPSHOT_AT'}, marketplaceSummary: snapshot.summary};
+      const records = await base(TABLES.CATEGORY_PERFORMANCE)
 				.select({
 					view: VIEWS.CATEGORY_PERFORMANCE,
 					sort: [{ field: 'REVENUE_RANK', direction: 'asc' }]

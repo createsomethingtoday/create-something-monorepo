@@ -28,7 +28,7 @@ export async function GET(request: Request) {
       categoryResult.freshness
     );
     const topCategories = categories.slice(0, 5);
-    const totalSales = categories.reduce((sum, category) => sum + category.totalSales30d, 0);
+    const totalSales = categoryResult.marketplaceSummary?.totalSales ?? categories.reduce((sum, category) => sum + category.totalSales30d, 0);
     const avgRevenue =
       categories.length > 0
         ? categories.reduce((sum, category) => sum + category.avgRevenuePerTemplate, 0) /
@@ -71,11 +71,11 @@ export async function GET(request: Request) {
       actualSource: categoryResult.freshness.source
     });
 
-    const totalRevenue = categories.reduce(
+    const totalRevenue = categoryResult.marketplaceSummary?.totalRevenue ?? categories.reduce(
       (sum, category) => sum + (category.totalRevenue30d || 0),
       0
     );
-    const totalTemplates = categories.reduce(
+    const totalTemplates = categoryResult.marketplaceSummary?.sellingTemplates ?? categories.reduce(
       (sum, category) => sum + category.templatesInSubcategory,
       0
     );
@@ -88,6 +88,7 @@ export async function GET(request: Request) {
         totalCategories: categories.length,
         totalTemplates,
         totalSales,
+        salesSource: categoryResult.marketplaceSummary ? 'marketplace-snapshot' : 'category-performance',
         totalRevenue,
         avgRevenue: Math.round(avgRevenue),
         lowestCompetition,

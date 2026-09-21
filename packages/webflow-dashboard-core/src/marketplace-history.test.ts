@@ -199,3 +199,10 @@ test('enrichCategoryRecordsWithHistory returns neutral for unchanged values', ()
   assert.equal(enriched[0].trend, 'neutral');
   assert.equal(enriched[0].changePercent, 0);
 });
+
+test('stable template IDs separate identical display names in history', () => {
+  const common = { templateName: 'Same', category: 'Business', creatorEmail: 'same@example.test' };
+  const first = buildLeaderboardSnapshotKey({...common, templateId: 'a'.repeat(24)});
+  const second = buildLeaderboardSnapshotKey({...common, templateId: 'b'.repeat(24)});
+  assert.notEqual(first, second);
+});

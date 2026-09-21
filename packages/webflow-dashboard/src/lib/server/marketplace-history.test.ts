@@ -292,3 +292,10 @@ describe('enrichCategoryRecordsWithHistory', () => {
 		expect(enriched[0].changePercent).toBeUndefined();
 	});
 });
+
+it('stable template IDs separate identical display names in history', () => {
+  const common = { templateName: 'Same', category: 'Business', creatorEmail: 'same@example.test' };
+  const first = buildLeaderboardSnapshotKey({...common, templateId: 'a'.repeat(24)});
+  const second = buildLeaderboardSnapshotKey({...common, templateId: 'b'.repeat(24)});
+  expect(first).not.toBe(second);
+});

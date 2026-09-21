@@ -3,11 +3,17 @@ on:
   pull_request:
     paths:
       - 'packages/webflow-automation/marketplace-insights-sync/**'
+      - 'packages/webflow-dashboard-core/**'
+      - 'packages/webflow-dashboard/**'
+      - 'apps/webflow-dashboard-cloud/**'
       - '.github/workflows/marketplace-insights-contracts.yml'
   push:
     branches: [main]
     paths:
       - 'packages/webflow-automation/marketplace-insights-sync/**'
+      - 'packages/webflow-dashboard-core/**'
+      - 'packages/webflow-dashboard/**'
+      - 'apps/webflow-dashboard-cloud/**'
       - '.github/workflows/marketplace-insights-contracts.yml'
 permissions:
   contents: read
@@ -16,9 +22,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+        with:
+          version: 9.15.0
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
         with:
           node-version: '22'
           package-manager-cache: false
+      - run: pnpm install --frozen-lockfile
       - run: bash -n packages/webflow-automation/marketplace-insights-sync/run.sh
-      - run: node --test packages/webflow-automation/marketplace-insights-sync/sync.test.mjs
+      - run: node --test packages/webflow-automation/marketplace-insights-sync/sync.test.mjs packages/webflow-dashboard-core/src/marketplace-snapshot.test.mjs
+      - run: pnpm --filter @create-something/webflow-dashboard-core check
+      - run: pnpm --filter @create-something/webflow-dashboard-core test
+      - run: pnpm --filter @create-something/webflow-dashboard check
+      - run: pnpm --filter @create-something/webflow-dashboard test
+      - run: pnpm --filter @create-something/webflow-dashboard-cloud check

@@ -1,4 +1,5 @@
 export interface LeaderboardEntry {
+  templateId?: string;
 	templateName: string;
 	category: string;
 	totalSales30d: number;
@@ -33,6 +34,7 @@ export interface LeaderboardResponse {
 	userCategories?: string[];
 	summary: {
 		totalMarketplaceSales: number;
+    salesSource?: 'marketplace-snapshot' | 'leaderboard-top-50';
 		userBestRank: number | null;
 		lastUpdated: string;
 		nextUpdateDate?: string;
@@ -48,11 +50,12 @@ export interface LeaderboardResponse {
 }
 
 export type MarketplaceSalesSource =
+  | 'marketplace-snapshot'
 	| 'category-performance'
 	| 'leaderboard-top-50'
 	| 'unavailable';
 
-export type MarketplaceSummary = Omit<LeaderboardResponse['summary'], 'totalMarketplaceSales'> & {
+export type MarketplaceSummary = Omit<LeaderboardResponse['summary'], 'totalMarketplaceSales' | 'salesSource'> & {
 	totalMarketplaceSales: number | null;
 	salesSource: MarketplaceSalesSource;
 	dataWarning?: string | null;
@@ -65,6 +68,7 @@ export interface CategoriesResponse {
 		totalCategories: number;
 		totalTemplates: number;
 		totalSales: number;
+    salesSource?: 'marketplace-snapshot' | 'category-performance';
 		totalRevenue: number;
 		avgRevenue: number;
 		lastUpdated: string;
@@ -137,6 +141,13 @@ export function buildMarketplaceSummary(
 		dataWarning:
 			'Marketplace sales snapshot is unavailable; zero is not shown because the source snapshot is empty.'
 	};
+
+  if (categorySummary.salesSource === 'marketplace-snapshot' || leaderboardData.summary.salesSource === 'marketplace-snapshot') {
+    if (categorySummary.salesSource !== 'marketplace-snapshot' || leaderboardData.summary.salesSource !== 'marketplace-snapshot' || categorySummary.lastUpdated !== leaderboardData.summary.lastUpdated || categoryTotal !== leaderboardTotal) {
+      return { ...baseSummary, dataWarning: 'Marketplace snapshots differ; refresh to load a consistent snapshot.' };
+    }
+    return { ...baseSummary, totalMarketplaceSales: categoryTotal, salesSource: 'marketplace-snapshot', dataWarning: null };
+  }
 
 	if (categoryRows > 0 && categoryTotal > 0) {
 		return {

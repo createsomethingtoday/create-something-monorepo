@@ -38,6 +38,7 @@ export async function GET(request: Request) {
       const isUserTemplate = userEmails.has(creatorEmail.toLowerCase());
 
       return {
+        templateId: record.templateId,
         templateName: record.templateName || '',
         category: record.category || '',
         creatorEmail: isUserTemplate ? creatorEmail : undefined,
@@ -53,7 +54,7 @@ export async function GET(request: Request) {
 
     const userTemplates = leaderboard.filter((template) => template.isUserTemplate);
     const topTemplate = leaderboard[0] || null;
-    const totalMarketplaceSales = leaderboard.reduce(
+    const totalMarketplaceSales = leaderboardResult.marketplaceSummary?.totalSales ?? leaderboard.reduce(
       (sum, template) => sum + template.totalSales30d,
       0
     );
@@ -78,6 +79,7 @@ export async function GET(request: Request) {
             }
           : null,
         totalMarketplaceSales,
+        salesSource: leaderboardResult.marketplaceSummary ? 'marketplace-snapshot' : 'leaderboard-top-50',
         userTotalRevenue,
         userBestRank:
           userTemplates.length > 0
