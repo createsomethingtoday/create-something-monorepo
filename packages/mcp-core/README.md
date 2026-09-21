@@ -39,3 +39,14 @@ for published CLI/MCP verification and the public-API finding dispositions.
 - `@create-something/mcp-authz`
 - `@create-something/observability`
 - `@create-something/cs-mcp-hub`
+
+## Optional trace delivery wait
+
+`enableTelemetry` accepts `awaitFlush: true` in its Langfuse options when the
+caller needs to keep the invocation open until trace delivery settles. The
+default remains nonblocking. Both `tool` and `registerTool` handlers preserve
+their original result or error if export fails. Opting in adds the exporter's
+latency and timeout/retry budget; it does not change D1 metering or guarantee
+delivery during provider failures. No consumers are opted in by this change.
+
+Run `pnpm --filter @create-something/mcp-core test` for controlled-flush tests.

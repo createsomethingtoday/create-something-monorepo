@@ -1,0 +1,25 @@
+name: Dotfiles account helper
+on:
+  pull_request:
+    paths:
+      - 'packages/dotfiles/scripts/codex-account.py'
+      - 'packages/dotfiles/scripts/install-codex-account.sh'
+      - 'packages/dotfiles/tests/**'
+      - '.github/workflows/dotfiles-account-helper.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'packages/dotfiles/scripts/codex-account.py'
+      - 'packages/dotfiles/scripts/install-codex-account.sh'
+      - 'packages/dotfiles/tests/**'
+      - '.github/workflows/dotfiles-account-helper.yml'
+permissions:
+  contents: read
+jobs:
+  fixtures:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - run: python3 -m unittest discover -s packages/dotfiles/tests -v
+      - run: bash -n packages/dotfiles/scripts/install-codex-account.sh

@@ -34,6 +34,7 @@ struct MeetingCaptureApp: App {
     }
 }
 
+@MainActor
 class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     var statusItem: NSStatusItem?
     var popover: NSPopover?
@@ -47,6 +48,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     @Published var screenRecordingPermissionGranted = false
 
     private var activeRecordingContext: RecordingContext?
+    private var pendingStarts = RecordingStartQueue()
+    private var recordingStartTask: Task<Void, Never>?
     private var hasShownScreenRecordingPermissionWarning = false
 
     private var autoStartEnabled: Bool {
@@ -152,6 +155,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     }
 
     private func handleMeetingEnded(_ meeting: DetectedMeeting) {
+        if pendingStarts.cancel(meetingId: meeting.id) {
+            if pendingStarts.currentCancelled { recordingStartTask?.cancel() }
+            return
+        }
         guard isRecording else { return }
         guard let context = activeRecordingContext else { return }
         guard context.origin == .automatic, context.meetingId == meeting.id else { return }
@@ -172,14 +179,26 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     }
 
     private func startRecording(with context: RecordingContext) {
-        guard !isRecording else { return }
+        guard !isRecording, pendingStarts.begin(context) else { return }
 
-        Task {
+        recordingStartTask = Task {
+            defer {
+                recordingStartTask = nil
+                if let next = pendingStarts.finish() {
+                    startRecording(with: next)
+                }
+            }
             let result = await audioRecorder.startRecording(
                 meetingId: context.meetingId,
-                promptForScreenRecordingAccessIfNeeded: context.origin == .manual
+                promptForScreenRecordingAccessIfNeeded: context.origin == .manual,
+                includeMicrophone: RecordingPreferences.includesMicrophone(defaults: .standard)
             )
 
+            if Task.isCancelled {
+                let abandoned = await audioRecorder.stopRecording()
+                abandoned?.removeLocalFiles()
+                return
+            }
             await MainActor.run { [weak self] in
                 guard let self else { return }
                 self.refreshPermissionState()
@@ -234,6 +253,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     }
 
     func stopRecording() {
+        pendingStarts.cancel()
+        recordingStartTask?.cancel()
         guard isRecording, let context = activeRecordingContext else { return }
 
         let capturedContext = context
@@ -263,13 +284,16 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
                 metadata: context.toUploadMetadata()
             )
 
+            let recoveryNote = result.additionalLocalURLs.isEmpty ? "" :
+                (shouldDeleteAfterUpload ? " Unmixed source audio deleted with the upload." :
+                 " Unmixed source audio retained at \(result.additionalLocalURLs.map(\.path).joined(separator: ", ")).")
             showNotification(
                 title: "Upload Complete",
-                body: "Meeting \(meetingId) uploaded (\(result.backend.rawValue))."
+                body: "Meeting \(meetingId) uploaded (\(result.backend.rawValue))." + recoveryNote
             )
 
             if shouldDeleteAfterUpload {
-                try? FileManager.default.removeItem(at: result.url)
+                result.removeLocalFiles()
             }
         } catch {
             showNotification(

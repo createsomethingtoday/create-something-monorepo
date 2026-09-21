@@ -1,0 +1,21 @@
+name: Meeting Capture
+on:
+  pull_request:
+    paths:
+      - 'apps/meeting-capture/**'
+      - '.github/workflows/meeting-capture.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'apps/meeting-capture/**'
+      - '.github/workflows/meeting-capture.yml'
+permissions:
+  contents: read
+jobs:
+  synthetic-audio:
+    runs-on: macos-15
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - run: swift test --package-path apps/meeting-capture/MeetingCapture
+      - run: swift build -c release --package-path apps/meeting-capture/MeetingCapture
