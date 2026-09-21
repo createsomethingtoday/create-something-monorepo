@@ -62,6 +62,7 @@ export const GET: RequestHandler = async ({ locals, platform }) => {
 			const isUserTemplate = userEmails.has(creatorEmail.toLowerCase());
 
 			return {
+				templateId: record.templateId,
 				templateName: record.templateName || '',
 				category: record.category || '',
 				// Only show email for user's own templates
@@ -89,7 +90,7 @@ export const GET: RequestHandler = async ({ locals, platform }) => {
 
 		// Calculate summary stats
 		const topTemplate = leaderboard[0] || null;
-		const totalMarketplaceSales = leaderboard.reduce((sum, t) => sum + t.totalSales30d, 0);
+		const totalMarketplaceSales = leaderboardResult.marketplaceSummary?.totalSales ?? leaderboard.reduce((sum, t) => sum + t.totalSales30d, 0);
 		const userTotalRevenue = userTemplates.reduce((sum, t) => sum + (t.totalRevenue30d || 0), 0);
 
 		// Get actual sync schedule metadata (not current time)
@@ -112,6 +113,8 @@ export const GET: RequestHandler = async ({ locals, platform }) => {
 								}
 							: null,
 						totalMarketplaceSales,
+            snapshotVersion: leaderboardResult.snapshotVersion,
+        salesSource: leaderboardResult.marketplaceSummary ? 'marketplace-snapshot' : 'leaderboard-top-50',
 						userTotalRevenue,
 						userBestRank:
 							userTemplates.length > 0

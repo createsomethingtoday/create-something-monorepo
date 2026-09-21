@@ -20,7 +20,8 @@
     "./submission": "./src/submission.ts",
     "./sync-schedule": "./src/sync-schedule.ts",
     "./upload-validation": "./src/upload-validation.ts",
-    "./uploads-url": "./src/uploads-url.ts"
+    "./uploads-url": "./src/uploads-url.ts",
+    "./marketplace-snapshot": "./src/marketplace-snapshot.mjs"
   },
   "scripts": {
     "check": "tsc --noEmit",

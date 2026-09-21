@@ -21,6 +21,7 @@ const CANONICAL_KEY_COLUMN = 'record_key';
 type MarketplaceTableSchema = 'canonical' | 'legacy';
 
 export interface MarketplaceLeaderboardRecord {
+  templateId?: string;
 	templateName: string;
 	category: string;
 	creatorEmail: string;
@@ -207,9 +208,10 @@ export function enrichCategoryRecordsWithHistory(
 }
 
 export function buildLeaderboardSnapshotKey(
-	record: Pick<MarketplaceLeaderboardRecord, 'templateName' | 'category' | 'creatorEmail'>
+	record: Pick<MarketplaceLeaderboardRecord, 'templateId' | 'templateName' | 'category' | 'creatorEmail'>
 ): string {
-	return [
+	if (record.templateId) return `template:${record.templateId.toLowerCase()}`;
+  return [
 		normalizeKeyPart(record.templateName),
 		normalizeKeyPart(record.creatorEmail),
 		normalizeKeyPart(record.category)
@@ -576,6 +578,7 @@ function buildMetricPointMap<Row>(
 }
 
 function getLeaderboardHistoryKey(row: LeaderboardHistoryRow): string {
+  if (/^template:[a-f0-9]{24}$/.test(row.record_key ?? "")) return row.record_key!;
 	if (row.template_name && row.category && row.creator_email) {
 		return buildLeaderboardSnapshotKey({
 			templateName: row.template_name,

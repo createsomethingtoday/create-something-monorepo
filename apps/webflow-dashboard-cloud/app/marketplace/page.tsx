@@ -156,7 +156,7 @@ export default async function MarketplacePage() {
             </thead>
             <tbody>
               {leaderboard.map((entry) => (
-                <tr key={`${entry.templateName}-${entry.salesRank}`}>
+                <tr key={entry.templateId ?? `${entry.templateName}-${entry.salesRank}`}>
                   <td>
                     <strong>{entry.templateName}</strong>
                     {entry.isUserTemplate ? (

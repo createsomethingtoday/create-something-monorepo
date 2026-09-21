@@ -304,7 +304,7 @@
   // Template names are not unique across creators; index is the final tiebreaker
   // so a collision degrades to positional keying instead of throwing.
   function getLeaderboardKey(template: LeaderboardEntry, index: number): string {
-    return `${template.templateName}::${template.category}::${index}`;
+    return template.templateId ?? `${template.templateName}::${template.category}::${index}`;
   }
 
   function getMarketplaceSalesSupport(): string {

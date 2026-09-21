@@ -4,6 +4,7 @@ export interface DashboardCloudflareEnv {
   UPLOADS?: R2Bucket;
   AIRTABLE_API_KEY?: string;
   AIRTABLE_BASE_ID?: string;
+  MARKETPLACE_INSIGHTS_SNAPSHOT_TABLE_ID?: string;
   RESEND_API_KEY?: string;
   CRON_SECRET?: string;
   ADMIN_EMAILS?: string;
@@ -25,6 +26,7 @@ export interface DashboardCloudflareEnv {
 const PROCESS_ENV_KEYS = [
   'AIRTABLE_API_KEY',
   'AIRTABLE_BASE_ID',
+  'MARKETPLACE_INSIGHTS_SNAPSHOT_TABLE_ID',
   'RESEND_API_KEY',
   'CRON_SECRET',
   'ADMIN_EMAILS',
