@@ -1,5 +1,9 @@
 import base64
 import json
+import argparse
+import importlib.util
+import stat
+from unittest import mock
 import os
 from pathlib import Path
 import subprocess
@@ -130,6 +134,35 @@ class AccountHelperTests(unittest.TestCase):
         self.assertFalse((self.directory / 'codex-account-rollback.json').exists())
         self.run_helper('sync', '--apply', '--clients-closed')
         self.assert_untouched()
+
+    def test_receipt_is_durable_before_config_and_rollback_removal(self):
+        spec = importlib.util.spec_from_file_location('account_helper', SCRIPT)
+        helper = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(helper)
+        events = []
+        real_fsync, real_replace, real_unlink = os.fsync, os.replace, Path.unlink
+        def fsync(fd):
+            events.append(('fsync', 'directory' if stat.S_ISDIR(os.fstat(fd).st_mode) else 'file'))
+            return real_fsync(fd)
+        def replace(source, target):
+            events.append(('replace', Path(target).name))
+            return real_replace(source, target)
+        def unlink(path, *args, **kwargs):
+            events.append(('unlink', path.name))
+            return real_unlink(path, *args, **kwargs)
+        args = argparse.Namespace(directory=str(self.directory), command='sync', apply=True,
+                                  clients_closed=True, allow_full_access=False)
+        with mock.patch.object(helper.os, 'fsync', fsync), mock.patch.object(helper.os, 'replace', replace), mock.patch.object(Path, 'unlink', unlink):
+            helper.run(args)
+            self.assertEqual(events, [
+                ('fsync', 'file'), ('replace', 'codex-account-rollback.json'), ('fsync', 'directory'),
+                ('fsync', 'file'), ('replace', 'config.toml'), ('fsync', 'directory')])
+            events.clear()
+            args.command = 'rollback'
+            helper.run(args)
+            self.assertEqual(events, [
+                ('fsync', 'file'), ('replace', 'config.toml'), ('fsync', 'directory'),
+                ('unlink', 'codex-account-rollback.json'), ('fsync', 'directory')])
 
 if __name__ == '__main__':
     unittest.main()

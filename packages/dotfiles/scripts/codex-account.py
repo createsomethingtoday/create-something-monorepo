@@ -67,6 +67,14 @@ def digest(raw):
     return hashlib.sha256(raw).hexdigest()
 
 
+def sync_directory(directory):
+    fd = os.open(directory, os.O_RDONLY | os.O_DIRECTORY)
+    try:
+        os.fsync(fd)
+    finally:
+        os.close(fd)
+
+
 def write_private(path, raw):
     fd, temporary = tempfile.mkstemp(dir=path.parent, prefix=".codex-account-")
     try:
@@ -75,6 +83,7 @@ def write_private(path, raw):
             stream.flush()
             os.fsync(stream.fileno())
         os.replace(temporary, path)
+        sync_directory(path.parent)
     finally:
         if os.path.exists(temporary):
             os.unlink(temporary)
@@ -109,6 +118,7 @@ def run(args):
                 if raw != restored:
                     write_private(config_path, restored)
                 receipt_path.unlink()
+                sync_directory(directory)
             print("Rolled back config" if args.apply else "Rollback available; pass --apply --clients-closed")
             return
         auth = read_private(directory / "auth.json")
