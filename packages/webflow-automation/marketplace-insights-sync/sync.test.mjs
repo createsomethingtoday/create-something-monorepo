@@ -34,6 +34,7 @@ const fixture = () => ({
       {
         id: 'recAsset',
         fields: {
+          fldmfcD7pebc82EuN: ['recA2YsPEHSuAHOLD'],
           fldFeWROxzwzCo84b: 'a'.repeat(24),
           fldBv3YTf6Bd5HDXN: ['Agency'],
           fldHhxmfSNMp117SP: ['fixture@example.test']
@@ -165,6 +166,7 @@ test('duplicate names preserve stable IDs and creator attribution', () => {
   data.records[tables.assets].push({
     id: 'recOther',
     fields: {
+      fldmfcD7pebc82EuN: ['recA2YsPEHSuAHOLD'],
       fldFeWROxzwzCo84b: 'c'.repeat(24),
       fldBv3YTf6Bd5HDXN: ['Agency'],
       fldHhxmfSNMp117SP: ['other@example.test']
@@ -205,4 +207,12 @@ test('failed publication readback never reports completion', () => {
   assert.equal(result.status, 1);
   assert.equal(result.writes.length, 1);
   assert.doesNotMatch(result.stdout, /"mode":"execute"/);
+});
+
+test('library records cannot supply template attribution even with overlapping IDs', () => {
+ const data = fixture();
+ data.records[tables.assets].push({id:'recLibrary',fields:{fldmfcD7pebc82EuN:['recU07tAbkf8OjzXO'],fldFeWROxzwzCo84b:'a'.repeat(24),fldHhxmfSNMp117SP:['wrong@example.test']}});
+ const result = run(data);
+ assert.equal(result.status,0,result.stderr);
+ assert.equal(result.snapshot.leaderboard[0].creatorEmail,'fixture@example.test');
 });

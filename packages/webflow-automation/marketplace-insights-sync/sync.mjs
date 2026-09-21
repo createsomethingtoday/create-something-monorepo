@@ -165,7 +165,8 @@ async function main() {
   const assetRecords = await listAll('tblRwzpWoLgE9MrUm', [
     'fldFeWROxzwzCo84b',
     'fldHhxmfSNMp117SP',
-    'fldBv3YTf6Bd5HDXN'
+    'fldBv3YTf6Bd5HDXN',
+    'fldmfcD7pebc82EuN'
   ]);
   const snapshot = buildMarketplaceSnapshot({
     snapshotAt: asOf.toISOString(),
@@ -176,7 +177,7 @@ async function main() {
         name: r.fields.fldWQDQuXlqwWxORG,
         group: values(r.fields.fldDSMRYPV8KBIeX7)[0]
       })),
-    assets: assetRecords.flatMap((r) =>
+    assets: assetRecords.filter(r => values(r.fields.fldmfcD7pebc82EuN).includes('recA2YsPEHSuAHOLD')).flatMap((r) =>
       values(r.fields.fldFeWROxzwzCo84b).flatMap((value) =>
         value.split(',').map((templateId) => ({
           templateId: templateId.trim(),

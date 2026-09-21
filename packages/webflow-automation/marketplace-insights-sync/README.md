@@ -87,9 +87,10 @@ do not drop the seller or invent a category. No Airtable records were written.
 ## Remaining source-data gates
 
 Read-only full-seller audit found 1,283 selling templates mapped to 1,290 asset
-records. SmartBank (`rec0nOOH6hIItZ2uf`) has no category. The archived library
-`recfCwAtG31OIBs0T` has no category and links to 96 template IDs, including selling
-ones, so its ownership mapping requires authoritative reconciliation. Used tags
+records before asset-type filtering. SmartBank (`rec0nOOH6hIItZ2uf`) has no category. The archived library
+`recfCwAtG31OIBs0T` links to 96 resource IDs, including selling templates. Its
+verified Library type is excluded: only linked Template type `recA2YsPEHSuAHOLD`
+can supply attribution for Template orders. This requires no Airtable repair. Used tags
 `Events`, `Music Events & Festivals`, and `Health & Wellness` have no usable
 parent-group mapping in the inspected taxonomy. Do not repair these by guessing,
 silently dropping sellers, or treating archived library metadata as creator truth.
