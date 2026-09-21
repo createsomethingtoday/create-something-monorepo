@@ -99,3 +99,12 @@ Consistent across all tools:
 
 For optional, explicit Codex account policy alignment, see [the manual account helper](CODEX_ACCOUNT.md).
 It is installed separately and does not watch logins or migrate existing task permissions.
+
+### Existing Zellij configuration
+
+The installer preserves an existing `~/.config/zellij/config.kdl` file or other
+symlink in a unique `config.kdl.backup.*/config.kdl` location before linking the
+repo configuration. It prints the backup path, leaves earlier backups intact,
+and makes no change when the intended symlink is already installed. A directory
+at the config-file path is refused. To install only this config, run
+`bash packages/dotfiles/scripts/install-zellij-config.sh` from the repo root.
