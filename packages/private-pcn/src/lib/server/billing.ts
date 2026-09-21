@@ -199,11 +199,19 @@ async function synchronize(
         paid = false;
     }
   }
+  // Flexible billing can schedule portal cancellation with cancel_at only.
+  // Bound access by both the paid period and the provider's cancellation cutoff.
+  const periodEnd = subscription.cancel_at
+    ? Math.min(item.current_period_end, subscription.cancel_at)
+    : item.current_period_end;
+  const cancellationScheduled =
+    subscription.cancel_at_period_end ||
+    (subscription.cancel_at != null && subscription.cancel_at <= item.current_period_end);
   const active =
     paid &&
     subscription.status === 'active' &&
     !subscription.pause_collection &&
-    item.current_period_end > seconds();
+    periodEnd > seconds();
   await update(
     db,
     network.id,
@@ -216,9 +224,9 @@ async function synchronize(
         : subscription.status === 'active' && !paid
           ? 'payment_pending'
           : subscription.status,
-      item.current_period_end,
+      periodEnd,
       seconds(),
-      subscription.cancel_at_period_end ? 1 : 0
+      cancellationScheduled ? 1 : 0
     ]
   );
   // Conditional lease guard also protects the cross-table entitlement update.

@@ -1,6 +1,6 @@
 # Self-service launch — CRE-2030
 
-Status: implementation in progress. Production still serves the managed-service release c96d5466a. No self-service database migration, signup enablement, or payment configuration has been applied remotely.
+Status, September 21, 2026: the implementation and non-payment release have been deployed. The original implementation checklist below is historical and must not be read as current acceptance status. See [live payment activation](live-payment-activation.md) for the bounded hosting release, current provider evidence, remaining gates and rollback. Broad/public enrollment and creator/support commerce remain independently gated.
 
 ## Commercial decision
 
@@ -26,7 +26,7 @@ At full utilization, allocated video costs are approximately3USD storage plus5US
 - Signup/recovery pages use the owning Identity service directly, preserving actual client IP limits.
 - Identity enrollment is disabled by default. Random single-use15minute mailbox proof is hashed at rest; signup never overwrites existing accounts; recovery revokes refresh tokens. No session or membership is minted from an email alone.
 
-## Required before promotion
+## Original promotion checklist (historical; current evidence linked above)
 
 1. Review first-party enrollment contract, full Identity regressions, mail sender/domain configuration, CORS, independent preview and real verification/recovery acceptance. No real email has been sent in tests.
 2. Stripe test-mode key or restored connector; hosted subscription Checkout, Customer Portal, signed/replay-safe lifecycle handling, server-side entitlement reconciliation, cancel/payment-failure recovery. Existing discovered key is live; no test charge is authorized with it.
@@ -50,7 +50,7 @@ Runtime dependencies still needed: Stream Read/Edit plus Account Analytics permi
 
 PCN: `STRIPE_SECRET_KEY`, `STRIPE_PRICE_ID`, `STRIPE_WEBHOOK_SECRET`, and a dedicated `STRIPE_PORTAL_CONFIGURATION_ID`; use separate test and live objects. Portal configuration must allow payment-method updates, invoices and cancellation at period end, with subscription plan switching disabled. Subscribe to checkout.session.completed/async_payment_succeeded/async_payment_failed and customer.subscription.created/updated/deleted plus invoice.paid/payment_failed. Confirm the endpoint signs the raw payload and failed deliveries retry. `STRIPE_AUTOMATIC_TAX_ENABLED` must only be set after checking registrations and the owning tax configuration.
 
-Enable `PCN_SELF_SERVICE_ENABLED` only after full first-party onboarding, Stream/Analytics and Stripe test acceptance, actual live object readback, terms/usage review and immutable release promotion. Identity enrollment requires migration0016, verified Resend sender, exact private-domain CORS, and `PUBLIC_ENROLLMENT_ENABLED=true`. Discovery reports whether enrollment is configured. The normal login endpoint remains the only session-issuing path.
+Enable `PCN_SELF_SERVICE_ENABLED` only after first-party onboarding, Stream/Analytics and Stripe test acceptance, actual live object readback, terms/usage review and immutable release promotion. Identity enrollment requires migration0016, verified Resend sender and exact private-domain CORS. Use the invitation/canary policy in [reviewed launch](reviewed-launch.md); keep `PUBLIC_ENROLLMENT_ENABLED=false`. Hosting activation does not broaden signup eligibility. Discovery reports whether enrollment is configured. The normal login endpoint remains the only session-issuing path.
 
 Apply PCN migrations0002–0005 to the isolated preview first. They preserve existing rows, but0002 changes the membership primary key; the old Worker is not a write-compatible rollback after this migration. Capture a D1 Time Travel bookmark/export before production migration. Prefer a forward fix or disable paid activation while preserving the new schema; reverting to the old Worker requires a deliberate database restore and reconciliation of every post-bookmark write. Never silently restore over new customer records.
 
