@@ -122,3 +122,9 @@ Verify a representative dry run, confirm the expected policy output and zero Air
 then explicitly set `RECOMMENDER_DISABLED=false` in the deployment config to activate the cron.
 A local mock test or source merge is not that live acceptance. The legacy CREATE SOMETHING
 configuration has no cron. Manual decision tools retain their existing authorization policy.
+
+### Review guardrails (2026-09-21)
+
+An authenticated `dry_run: true` remains available while `RECOMMENDER_DISABLED=true` blocks write passes and cron. Every pass refreshes approved/denied precedent rows before asking Dify; queue or precedent fetch failures return an error receipt without writing. Bundled findings and exposure/leak findings are conservatively routed to Adam before generation, including where partnership metadata is unavailable. Any non-null model escalation route also prevents a write. These text checks are conservative routing aids, not a complete semantic classifier; live acceptance is still required before enabling scheduling. Only successful writes consume the write cap (dry runs count successful simulated writes).
+
+The dedicated completion app passed a synthetic exposure case on 2026-09-21 and the completion endpoint rejected the old agent app credential. Its secret is stored at Infisical `prod:/exception-decisions-mcp:DIFY_RECOMMENDER_COMPLETION_APP_KEY`. This proves the provider mode boundary, not a deployed worker dry run or scheduler activation.

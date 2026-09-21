@@ -179,7 +179,9 @@
       "requiredEvidence": [
         "item_id",
         "exception_type",
-        "recommendation_confidence"
+        "recommendation_confidence",
+        "recommendation",
+        "notes"
       ],
       "approval": {
         "required": false
@@ -208,14 +210,14 @@
             "description": "Airtable exception item record id."
           },
           {
-            "name": "exception_type",
+            "name": "recommendation",
             "type": "string",
-            "description": "Exception type driving the routing rule."
+            "description": "Advisory lean: approve or deny."
           },
           {
-            "name": "recommendation_confidence",
+            "name": "notes",
             "type": "string",
-            "description": "Ruleset confidence for the advisory lean."
+            "description": "Business meaning, rationale, confidence, and precedent references."
           }
         ]
       },

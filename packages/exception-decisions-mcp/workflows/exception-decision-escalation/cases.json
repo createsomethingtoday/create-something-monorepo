@@ -11,7 +11,9 @@
       "evidence": {
         "item_id": "recG5BfFwXi8nZBLG",
         "exception_type": "Security",
-        "recommendation_confidence": "0.82"
+        "recommendation_confidence": "0.82",
+        "recommendation": "deny",
+        "notes": "Advisory deny at confidence 0.82; retain the guideline pending human decision."
       },
       "approvals": [],
       "expectedOutcome": "pass",

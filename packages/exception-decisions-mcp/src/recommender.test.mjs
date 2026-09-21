@@ -38,7 +38,7 @@ function json(body, init = {}) {
 }
 
 // A queue with one version and five items covering every guardrail branch.
-function makeAirtable({ leans, patches, difyCalls }) {
+function makeAirtable({ leans, patches, difyCalls, overrides = {}, failFirstPatch = false }) {
   const items = {
     recTechNew: { title: "Token in GET URL", type: "Security", status: "🆕Requested", notes: "" },
     recTechRecd: { title: "Already recommended", type: "Security", status: "🆕Requested", notes: "Partner-lead recommendation: DENY — carried" },
@@ -47,6 +47,8 @@ function makeAirtable({ leans, patches, difyCalls }) {
     recLowConf: { title: "Ambiguous iframe", type: "Custom Code / Scopes", status: "🆕Requested", notes: "" },
     recDecided: { title: "Decided long ago", type: "Security", status: "✅Approved", notes: "" },
   };
+  Object.assign(items, overrides);
+  let patchAttempts = 0;
   return async (input, init = {}) => {
     const url = new URL(String(input));
     if (url.hostname === "api.dify.ai") {
@@ -61,6 +63,7 @@ function makeAirtable({ leans, patches, difyCalls }) {
     assert.equal(url.hostname, "api.airtable.com");
     const path = url.pathname.replace("/v0/appMoIgXMTTTNIc3p/", "");
     if (init.method === "PATCH") {
+      if (failFirstPatch && patchAttempts++ === 0) return json({ error: "temporary failure" }, { status: 429 });
       patches.push({ path, body: JSON.parse(init.body) });
       return json({ records: [] });
     }
@@ -82,6 +85,10 @@ function makeAirtable({ leans, patches, difyCalls }) {
     }
     if (path === "tblnbaaIbIulWl0b7") {
       const formula = url.searchParams.get("filterByFormula") ?? "";
+      if (formula.includes("✅Approved")) return json({ records: [{ id: 'recPrecedent', fields: {
+        fldmJcVJCytD1VY1r: 'Recent precedent', fld0D5PoJAWhYeHiI: '❌Denied',
+        fldUqjcnkOUO7RRKS: 'Security', fldZvSg7gpbBw89Hz: 'Recent final rationale'
+      }}] });
       const ids = [...formula.matchAll(/RECORD_ID\(\)='(rec[A-Za-z0-9]+)'/g)].map((m) => m[1]);
       return json({
         records: ids.map((id) => ({
@@ -104,7 +111,7 @@ function makeAirtable({ leans, patches, difyCalls }) {
           fldmJcVJCytD1VY1r: item.title,
           fld0D5PoJAWhYeHiI: item.status,
           fldUqjcnkOUO7RRKS: item.type,
-          fldHNABt611HJ6JxI: `Technical finding for ${item.title}. In plain English (test): it leaks. Why it matters: shoppers.`,
+          fldHNABt611HJ6JxI: item.detail ?? `Technical finding for ${item.title}. No additional context.`,
           fldZvSg7gpbBw89Hz: item.notes,
           fldqVk39RERL1tVPP: ["recVersion1"],
         },
@@ -270,7 +277,10 @@ describe("recommendation lane (cron)", () => {
   });
 
   it("exposes POST /runs/recommend to operator and automation keys only", async () => {
-    globalThis.fetch = makeAirtable({ patches: [], difyCalls: [], leans: {} });
+    globalThis.fetch = makeAirtable({ patches: [], difyCalls: [], leans: {
+      recTechNew: { recommendation: "deny", confidence: 0.9, notes: "advisory" },
+      recLowConf: { recommendation: "needs-human", confidence: 0.4, notes: "review" }
+    } });
     const call = (key, body) =>
       worker.fetch(
         new Request("https://exception-decisions-mcp.webflow-inc.workers.dev/runs/recommend", {
@@ -292,7 +302,7 @@ describe("recommendation lane (cron)", () => {
     assert.equal(operator.status, 200);
     const payload = await operator.json();
     assert.equal(payload.ok, true);
-    assert.equal(payload.receipt.mode, "disabled");
+    assert.equal(payload.receipt.mode, "dry_run");
 
     const automation = await call(AUTOMATION_KEY, {});
     assert.equal(automation.status, 200);
@@ -314,5 +324,57 @@ describe("recommendation lane (cron)", () => {
     assert.equal(body.version, "1.5.1");
     assert.equal(body.configured.recommender, true);
     assert.equal(body.configured.recommender_disabled, false);
+  });
+});
+
+describe("review regression coverage", () => {
+  const leans = {
+    recTechNew: { recommendation: "deny", confidence: 0.95, route: null, notes: "advisory" },
+    recLowConf: { recommendation: "approve", confidence: 0.95, route: null, notes: "advisory" }
+  };
+  it("permits an explicit dry run while cron writes are disabled and refreshes precedents", async () => {
+    const patches = [], difyCalls = [];
+    globalThis.fetch = makeAirtable({ patches, difyCalls, leans });
+    const receipt = await runRecommendationPass({ ...env, RECOMMENDER_DISABLED: "true" }, { dryRun: true });
+    assert.equal(receipt.mode, "dry_run");
+    assert.equal(receipt.written.length, 2);
+    assert.equal(patches.length, 0);
+    assert.ok(difyCalls.every(c => c.inputs.prompt.includes("Recent final rationale")));
+  });
+  it("returns a receipt on queue setup failures", async () => {
+    globalThis.fetch = async () => json({ error: "rate limited" }, { status: 429 });
+    const receipt = await runRecommendationPass(env);
+    assert.equal(receipt.errors.length, 1);
+    assert.match(receipt.errors[0], /429/);
+    assert.equal(receipt.written.length, 0);
+  });
+  it("does not spend the successful-write cap on a failed PATCH", async () => {
+    const patches = [];
+    globalThis.fetch = makeAirtable({ patches, difyCalls: [], leans, failFirstPatch: true });
+    const receipt = await runRecommendationPass(env, { cap: 1 });
+    assert.equal(receipt.errors.length, 1);
+    assert.equal(patches.length, 1);
+    assert.match(receipt.written[0], /recLowConf/);
+  });
+  for (const title of ["Security findings bundle", "Public data exposure", "Leaked customer records"]) {
+    it(`routes ${title} to a human before generation or write`, async () => {
+      const patches = [], difyCalls = [];
+      globalThis.fetch = makeAirtable({ patches, difyCalls, leans, overrides: {
+        recTechNew: { title, type: "Security", status: "🆕Requested", notes: "" }
+      }});
+      const receipt = await runRecommendationPass(env);
+      assert.ok(receipt.needs_human.some(x => x.includes("recTechNew")));
+      assert.ok(!patches.some(x => x.body.records[0].id === "recTechNew"));
+      assert.ok(difyCalls.every(x => !x.inputs.prompt.includes("## Item recTechNew")));
+    });
+  }
+  it("honors explicit escalation even for a high-confidence approve", async () => {
+    const patches = [];
+    globalThis.fetch = makeAirtable({ patches, difyCalls: [], leans: { ...leans,
+      recTechNew: { recommendation: "approve", confidence: 0.99, route: "Adam", notes: "escalate" }
+    }});
+    const receipt = await runRecommendationPass(env);
+    assert.ok(receipt.needs_human.some(x => x.includes("recTechNew")));
+    assert.ok(!patches.some(x => x.body.records[0].id === "recTechNew"));
   });
 });
