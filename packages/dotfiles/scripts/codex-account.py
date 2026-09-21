@@ -114,12 +114,15 @@ def run(args):
         if args.command == "rollback":
             receipt = json.loads(read_private(receipt_path))
             restored = base64.b64decode(receipt["before"], validate=True)
-            tomllib.loads(restored.decode())
+            restored_config = tomllib.loads(restored.decode())
             # The receipt is committed first. If config replacement never happened,
             # remove that pending receipt without rewriting the already-original file.
             if raw != restored and digest(raw) != receipt["after_sha256"]:
                 raise ValueError("Config changed since sync; refusing to overwrite later edits")
+            print("Rollback policy: " + json.dumps({key: restored_config.get(key) for key in ("approval_policy", "sandbox_mode")}))
             if args.apply:
+                if raw != restored and restored_config.get("sandbox_mode") == "danger-full-access" and not args.allow_full_access:
+                    raise ValueError("Restoring full access requires explicit --allow-full-access")
                 if raw != restored:
                     write_private(config_path, restored)
                 receipt_path.unlink()

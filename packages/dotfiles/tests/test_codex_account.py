@@ -65,7 +65,7 @@ class AccountHelperTests(unittest.TestCase):
         self.assertIn('# keep comment', updated)
         self.assertIn('[features]\nexample = true', updated)
         self.assertEqual((self.directory / 'config.toml').stat().st_mode & 0o777, 0o600)
-        self.run_helper('rollback', '--apply', '--clients-closed')
+        self.run_helper('rollback', '--apply', '--clients-closed', '--allow-full-access')
         self.assertEqual((self.directory / 'config.toml').read_bytes(), self.config)
         self.assert_untouched()
 
@@ -159,6 +159,7 @@ class AccountHelperTests(unittest.TestCase):
                 ('fsync', 'file'), ('replace', 'config.toml'), ('fsync', 'directory')])
             events.clear()
             args.command = 'rollback'
+            args.allow_full_access = True
             helper.run(args)
             self.assertEqual(events, [
                 ('fsync', 'file'), ('replace', 'config.toml'), ('fsync', 'directory'),
@@ -169,6 +170,14 @@ class AccountHelperTests(unittest.TestCase):
             self.write('config.toml', raw)
             self.run_helper('status', success=False)
             self.assertEqual((self.directory / 'config.toml').read_bytes(), raw)
+
+    def test_rollback_to_full_access_requires_explicit_opt_in(self):
+        self.run_helper('sync', '--apply', '--clients-closed')
+        aligned = (self.directory / 'config.toml').read_bytes()
+        self.run_helper('rollback', '--apply', '--clients-closed', success=False)
+        self.assertEqual((self.directory / 'config.toml').read_bytes(), aligned)
+        self.run_helper('rollback', '--apply', '--clients-closed', '--allow-full-access')
+        self.assertEqual((self.directory / 'config.toml').read_bytes(), self.config)
 
 if __name__ == '__main__':
     unittest.main()

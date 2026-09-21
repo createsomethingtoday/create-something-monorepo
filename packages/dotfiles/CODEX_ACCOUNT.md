@@ -36,7 +36,8 @@ layers or change the permissions of running/resumed tasks.
 
 A private rollback receipt preserves the exact previous config bytes. Preview with
 `codex-account rollback`; apply with `codex-account rollback --apply --clients-closed`.
-Rollback refuses to overwrite any edits made since the helper's change. If apply was
+Restoring a full-access policy additionally requires `--allow-full-access`; preview shows
+the policy being restored. Rollback refuses to overwrite any edits made since the helper's change. If apply was
 interrupted after saving the receipt but before replacing config, rollback clears that
 pending receipt while leaving the original config unchanged. Keep that receipt
 until the change is accepted; a second mutation is refused while it exists.
