@@ -4,7 +4,7 @@ import { isSameOrigin } from '$lib/server/policy';
 import { boundedText } from '$lib/server/body';
 import { BillingError } from '$lib/server/billing';
 import { hostedOnboarding } from '$lib/server/hosted-onboarding';
-import { commerceStripe, liveMode } from '$lib/server/seller-accounts';
+import { commerceStripe, liveMode, sellerCountries } from '$lib/server/seller-accounts';
 import {
   ensureSupportPartner,
   supportPartnerSession,
@@ -25,8 +25,7 @@ export const GET: RequestHandler = async ({ locals, platform }) => {
     return json({ state: 'not_enabled', countries: [], country: row.country });
   try {
     const stripe = commerceStripe(env);
-    const specs = await stripe.countrySpecs.list({ limit: 100 });
-    if (specs.has_more) throw new Error('Incomplete country list');
+    const countries = await sellerCountries(stripe);
     const ready = row.account_id
       ? validateSupportAccount(
           await stripe.v2.core.accounts.retrieve(row.account_id, {
@@ -39,7 +38,7 @@ export const GET: RequestHandler = async ({ locals, platform }) => {
     return json({
       state: ready ? 'ready' : 'requirements_due',
       payoutsReady: ready,
-      countries: specs.data.map((c) => c.id),
+      countries,
       country: row.country
     });
   } catch {
