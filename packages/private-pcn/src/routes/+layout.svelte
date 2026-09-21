@@ -43,7 +43,10 @@
 {#if data.impersonation}
   <aside class="support-banner" aria-label="Administrator impersonation">
     <div>
-      <strong>Acting as {data.impersonation.email || 'an unavailable account'}</strong>
+      <strong
+        ><Icon name="warning" /> Acting as {data.impersonation.email ||
+          'an unavailable account'}</strong
+      >
       <p>
         Read and write support session. Changes are real and audited. Ends {new Date(
           data.impersonation.expiresAt * 1000
@@ -51,7 +54,7 @@
       </p>
     </div>
     <button class="button secondary" onclick={leaveSupport}>Return to administrator</button>
-    {#if accountMessage}<p role="alert">{accountMessage}</p>{/if}
+    {#if accountMessage}<p class="error" role="alert">{accountMessage}</p>{/if}
   </aside>
 {/if}
 <a class="skip" href="#main">Skip to content</a>
@@ -92,9 +95,9 @@
     gap: 1rem;
     flex-wrap: wrap;
     padding: 1rem 2rem;
-    color: #171d18;
-    background: #e4e8bf;
-    border-bottom: 2px solid #687145;
+    color: var(--state-warning);
+    background: var(--color-performance-ink);
+    border-bottom: 2px solid var(--state-warning);
   }
   .support-banner p {
     margin: 0.4rem 0 0;

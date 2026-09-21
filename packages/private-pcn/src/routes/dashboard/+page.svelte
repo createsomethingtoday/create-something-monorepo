@@ -1,4 +1,7 @@
 <script lang="ts">
+  import StateBadge from '$lib/components/StateBadge.svelte';
+  import StatusNotice from '$lib/components/StatusNotice.svelte';
+
   import Icon from '$lib/components/Icon.svelte';
   import { api } from '$lib/client';
   let { data } = $props();
@@ -77,13 +80,25 @@
             <div class="network-heading">
               <Icon name="network" size={24} />
               <p class="eyebrow">{network.format}</p>
-              <span class="network-status"
-                >{network.status === 'active'
-                  ? 'Active'
-                  : network.status === 'draft'
-                    ? 'Draft'
-                    : 'Suspended'}</span
-              >
+              <div class="network-status">
+                <StateBadge
+                  label={network.status === 'active'
+                    ? 'Active'
+                    : network.status === 'draft'
+                      ? 'Draft'
+                      : 'Suspended'}
+                  tone={network.status === 'active'
+                    ? 'success'
+                    : network.status === 'draft'
+                      ? 'neutral'
+                      : 'warning'}
+                  icon={network.status === 'active'
+                    ? 'check'
+                    : network.status === 'draft'
+                      ? 'document'
+                      : 'warning'}
+                />
+              </div>
             </div>
             <h3>{network.name}</h3>
             <p class="muted address">/n/{network.slug}</p>
@@ -227,7 +242,7 @@
           Sessions remain private until you publish them. Public previews require an explicit choice
           for each session.
         </p>
-        {#if message}<p class="error" role="alert">{message}</p>{/if}
+        {#if message}<StatusNotice tone="error" {message} />{/if}
         <button class="button" disabled={busy}
           >{busy ? 'Creating…' : 'Create draft network'}
           <span aria-hidden="true"><Icon name="arrow-right" /></span></button
@@ -257,8 +272,11 @@
           >{inviteBusy ? 'Creating invitation…' : 'Create invitation'}</button
         >
       </form>
-      {#if inviteMessage}<p class="error" role="alert">{inviteMessage}</p>{/if}
-      {#if inviteUrl}<p role="status">Invitation ready. Share this link with {inviteEmail}.</p>
+      {#if inviteMessage}<StatusNotice tone="error" message={inviteMessage} />{/if}
+      {#if inviteUrl}<StatusNotice
+          tone="success"
+          message={`Invitation ready. Share this link with ${inviteEmail}.`}
+        />
         <label
           >Invitation link<input
             readonly
@@ -347,9 +365,6 @@
   }
   .network-status {
     margin-left: auto;
-    border: 1px solid var(--line);
-    padding: 4px 10px;
-    font: 12px var(--font-performance-mono);
   }
   .network-card h3 {
     font-size: 28px;
@@ -471,9 +486,6 @@
   }
   .invite-panel form {
     max-width: 560px;
-  }
-  .invite-panel .error {
-    color: var(--color-performance-risk-soft);
   }
   .capacity-note {
     color: var(--muted);
