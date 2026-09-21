@@ -353,6 +353,77 @@ async function getTotalCount(db: D1Database, sqlParts: SqlParts): Promise<number
   return Number(row?.total ?? 0);
 }
 
+// Counts and facets are shared across pages, but never across sync epochs.
+// Passing no epoch disables memoization for direct callers.
+const QUERY_MEMO_BASE_URL = 'https://query-memo.webflow-template-search.internal/';
+export const FACET_MEMO_TTL_SECONDS = 1800;
+export const COUNT_MEMO_TTL_SECONDS = 300;
+
+function memoFilterKey(params: SearchParams, relaxedQuery: boolean, cacheVersion?: string): string | null {
+  if (!cacheVersion) return null;
+  // Exclude presentation/pagination only; include every current and future filter.
+  const { page, pageSize, sort, view, include, ...filters } = params;
+  return JSON.stringify({
+    cacheVersion,
+    ...filters,
+    styles: [...params.styles].sort(),
+    tags: [...params.tags].sort(),
+    types: [...params.types].sort(),
+    relaxedQuery,
+  });
+}
+
+async function withQueryMemo<T>(
+  kind: string,
+  ttlSeconds: number,
+  key: string | null,
+  compute: () => Promise<T>,
+): Promise<T> {
+  if (key === null) return compute();
+  let cache: Cache | null = null;
+  let cacheKey: Request | null = null;
+  try {
+    // Keep query results separate from public HTTP response entries.
+    if (typeof caches !== 'undefined' && typeof caches.open === 'function') {
+      const url = new URL(kind, QUERY_MEMO_BASE_URL);
+      url.searchParams.set('k', key);
+      cacheKey = new Request(url.toString(), { method: 'GET' });
+      cache = await caches.open('template-search-query-memo-v2');
+    }
+  } catch {
+    cache = null;
+  }
+
+  if (cache && cacheKey) {
+    try {
+      const hit = await cache.match(cacheKey);
+      if (hit) return (await hit.json()) as T;
+    } catch {
+      // A broken cache read is a miss, never a failure.
+    }
+  }
+
+  const value = await compute();
+
+  if (cache && cacheKey) {
+    try {
+      await cache.put(
+        cacheKey,
+        new Response(JSON.stringify(value), {
+          headers: {
+            'Content-Type': 'application/json',
+            'Cache-Control': `public, max-age=${ttlSeconds}`,
+          },
+        }),
+      );
+    } catch {
+      // Best-effort: memo writes must never fail the search.
+    }
+  }
+
+  return value;
+}
+
 async function resolveCategoryGroupSlugForChild(env: Env, childCategorySlug: string): Promise<string | null> {
   const membershipRow = await env.DB
     .prepare(`
@@ -392,6 +463,7 @@ async function loadCategoryPills(
   env: Env,
   params: SearchParams,
   relaxedQuery = false,
+  cacheVersion?: string,
 ): Promise<Array<{ name: string; slug: string; count: number }>> {
   const scopedParams: SearchParams = {
     ...params,
@@ -401,82 +473,89 @@ async function loadCategoryPills(
     tags: [],
     types: [],
   };
-  const sqlParts = buildSqlParts(scopedParams, {
-    excludeCategoryGroup: true,
-    excludeChildCategory: true,
-    excludeStyles: true,
-    excludeTags: true,
-    excludeTypes: true,
-    relaxedQuery,
+  return withQueryMemo('pills', FACET_MEMO_TTL_SECONDS, memoFilterKey(scopedParams, relaxedQuery, cacheVersion), async () => {
+    const sqlParts = buildSqlParts(scopedParams, {
+      excludeCategoryGroup: true,
+      excludeChildCategory: true,
+      excludeStyles: true,
+      excludeTags: true,
+      excludeTypes: true,
+      relaxedQuery,
+    });
+
+    const result = await env.DB
+      .prepare(`
+        WITH filtered AS (
+          SELECT d.id, d.category_groups_json, d.category_group_slugs_json
+          ${sqlParts.fromClause}
+          ${sqlParts.whereClause}
+        )
+        SELECT
+          names.value AS name,
+          slugs.value AS slug,
+          COUNT(DISTINCT filtered.id) AS count
+        FROM filtered
+        JOIN json_each(filtered.category_group_slugs_json) slugs
+        JOIN json_each(filtered.category_groups_json) names ON names.key = slugs.key
+        GROUP BY slugs.value, names.value
+        ORDER BY names.value ASC
+      `)
+      .bind(...sqlParts.binds)
+      .all<PillRow>();
+
+    return (result.results ?? []).map((row) => ({
+      name: row.name,
+      slug: row.slug,
+      count: Number(row.count),
+    }));
   });
-
-  const result = await env.DB
-    .prepare(`
-      WITH filtered AS (
-        SELECT d.id, d.category_groups_json, d.category_group_slugs_json
-        ${sqlParts.fromClause}
-        ${sqlParts.whereClause}
-      )
-      SELECT
-        names.value AS name,
-        slugs.value AS slug,
-        COUNT(DISTINCT filtered.id) AS count
-      FROM filtered
-      JOIN json_each(filtered.category_group_slugs_json) slugs
-      JOIN json_each(filtered.category_groups_json) names ON names.key = slugs.key
-      GROUP BY slugs.value, names.value
-      ORDER BY names.value ASC
-    `)
-    .bind(...sqlParts.binds)
-    .all<PillRow>();
-
-  return (result.results ?? []).map((row) => ({
-    name: row.name,
-    slug: row.slug,
-    count: Number(row.count),
-  }));
 }
 
-async function loadFacetStyles(env: Env, params: SearchParams, relaxedQuery = false): Promise<FacetStyleRow[]> {
-  const sqlParts = buildSqlParts(params, { excludeStyles: true, excludeTypes: true, relaxedQuery });
-  const result = await env.DB
-    .prepare(`
-      WITH filtered AS (
-        SELECT d.id
-        ${sqlParts.fromClause}
-        ${sqlParts.whereClause}
-      )
-      SELECT ts.style_name AS name, ts.style_slug AS slug, COUNT(DISTINCT ts.template_document_id) AS count
-      FROM filtered
-      JOIN template_styles ts ON ts.template_document_id = filtered.id
-      GROUP BY ts.style_slug, ts.style_name
-      ORDER BY ts.style_name ASC
-    `)
-    .bind(...sqlParts.binds)
-    .all<FacetStyleRow>();
-  return result.results ?? [];
+async function loadFacetStyles(env: Env, params: SearchParams, relaxedQuery = false, cacheVersion?: string): Promise<FacetStyleRow[]> {
+  return withQueryMemo('facet-styles', FACET_MEMO_TTL_SECONDS, memoFilterKey(params, relaxedQuery, cacheVersion), async () => {
+    const sqlParts = buildSqlParts(params, { excludeStyles: true, excludeTypes: true, relaxedQuery });
+    const result = await env.DB
+      .prepare(`
+        WITH filtered AS (
+          SELECT d.id
+          ${sqlParts.fromClause}
+          ${sqlParts.whereClause}
+        )
+        SELECT ts.style_name AS name, ts.style_slug AS slug, COUNT(DISTINCT ts.template_document_id) AS count
+        FROM filtered
+        JOIN template_styles ts ON ts.template_document_id = filtered.id
+        GROUP BY ts.style_slug, ts.style_name
+        ORDER BY ts.style_name ASC
+      `)
+      .bind(...sqlParts.binds)
+      .all<FacetStyleRow>();
+    return result.results ?? [];
+  });
 }
 
-async function loadFacetTypes(env: Env, params: SearchParams, relaxedQuery = false): Promise<FacetTypeRow[]> {
-  const sqlParts = buildSqlParts(params, { excludeStyles: true, excludeTypes: true, relaxedQuery });
-  const result = await env.DB
-    .prepare(`
-      SELECT d.template_type AS value, COUNT(*) AS count
-      ${sqlParts.fromClause}
-      ${sqlParts.whereClause}
-      GROUP BY d.template_type
-      HAVING d.template_type IS NOT NULL
-      ORDER BY d.template_type ASC
-    `)
-    .bind(...sqlParts.binds)
-    .all<FacetTypeRow>();
-  return result.results ?? [];
+async function loadFacetTypes(env: Env, params: SearchParams, relaxedQuery = false, cacheVersion?: string): Promise<FacetTypeRow[]> {
+  return withQueryMemo('facet-types', FACET_MEMO_TTL_SECONDS, memoFilterKey(params, relaxedQuery, cacheVersion), async () => {
+    const sqlParts = buildSqlParts(params, { excludeStyles: true, excludeTypes: true, relaxedQuery });
+    const result = await env.DB
+      .prepare(`
+        SELECT d.template_type AS value, COUNT(*) AS count
+        ${sqlParts.fromClause}
+        ${sqlParts.whereClause}
+        GROUP BY d.template_type
+        HAVING d.template_type IS NOT NULL
+        ORDER BY d.template_type ASC
+      `)
+      .bind(...sqlParts.binds)
+      .all<FacetTypeRow>();
+    return result.results ?? [];
+  });
 }
 
 async function loadSubcategoryPills(
   env: Env,
   params: SearchParams,
   relaxedQuery = false,
+  cacheVersion?: string,
 ): Promise<Array<{ name: string; slug: string; count: number }>> {
   const groupSlug =
     params.categoryGroupSlug ?? (params.childCategorySlug ? await resolveCategoryGroupSlugForChild(env, params.childCategorySlug) : null);
@@ -490,12 +569,13 @@ async function loadSubcategoryPills(
     tags: [],
     types: [],
   };
-  const sqlParts = buildSqlParts(scopedParams, {
-    excludeChildCategory: true,
-    excludeStyles: true,
-    excludeTags: true,
-    excludeTypes: true,
-    relaxedQuery,
+  return withQueryMemo('subpills', FACET_MEMO_TTL_SECONDS, memoFilterKey(scopedParams, relaxedQuery, cacheVersion), async () => {
+    const sqlParts = buildSqlParts(scopedParams, {
+      excludeChildCategory: true,
+      excludeStyles: true,
+      excludeTags: true,
+      excludeTypes: true,
+      relaxedQuery,
   });
 
   const membershipResult = await env.DB
@@ -555,6 +635,7 @@ async function loadSubcategoryPills(
     slug: row.slug,
     count: Number(row.count),
   }));
+  });
 }
 
 function toTemplateUrl(row: DocumentRow): string | null {
@@ -593,7 +674,7 @@ function buildChildCategories(
   });
 }
 
-export async function searchTemplates(env: Env, rawParams: SearchParams): Promise<SearchResponsePayload> {
+export async function searchTemplates(env: Env, rawParams: SearchParams, cacheVersion?: string): Promise<SearchResponsePayload> {
   const params = await resolveAliases(env, rawParams);
   let sqlParts = buildSqlParts(params);
   let relaxedQuery = false;
@@ -621,14 +702,18 @@ export async function searchTemplates(env: Env, rawParams: SearchParams): Promis
   // each request's D1 work serial so page-level fan-out does not multiply into
   // D1 queue overload during syncs.
   if (includeItems) {
-    totalItems = await getTotalCount(env.DB, sqlParts);
+    totalItems = await withQueryMemo('count', COUNT_MEMO_TTL_SECONDS, memoFilterKey(params, false, cacheVersion), () =>
+      getTotalCount(env.DB, sqlParts),
+    );
 
     // A strict query AND-matches every token, so one typo'd or unmatched token
     // yields a dead-end empty grid. Retry once with tokens OR'ed; consumers see
     // applied_filters.relaxed and can message "showing related results".
     if (!params.strict && !params.templateSlug && totalItems === 0 && sqlParts.queryMode && canRelaxQuery(params.q)) {
       const relaxedParts = buildSqlParts(params, { relaxedQuery: true });
-      const relaxedTotal = await getTotalCount(env.DB, relaxedParts);
+      const relaxedTotal = await withQueryMemo('count', COUNT_MEMO_TTL_SECONDS, memoFilterKey(params, true, cacheVersion), () =>
+        getTotalCount(env.DB, relaxedParts),
+      );
       if (relaxedTotal > 0) {
         sqlParts = relaxedParts;
         totalItems = relaxedTotal;
@@ -651,13 +736,13 @@ export async function searchTemplates(env: Env, rawParams: SearchParams): Promis
   }
 
   if (includeFacets) {
-    styleFacets = await loadFacetStyles(env, params, relaxedQuery);
-    typeFacets = await loadFacetTypes(env, params, relaxedQuery);
+    styleFacets = await loadFacetStyles(env, params, relaxedQuery, cacheVersion);
+    typeFacets = await loadFacetTypes(env, params, relaxedQuery, cacheVersion);
   }
 
   if (includePills) {
-    categoryPills = await loadCategoryPills(env, params, relaxedQuery);
-    pills = await loadSubcategoryPills(env, params, relaxedQuery);
+    categoryPills = await loadCategoryPills(env, params, relaxedQuery, cacheVersion);
+    pills = await loadSubcategoryPills(env, params, relaxedQuery, cacheVersion);
   }
 
   const rowResults = rows.results ?? [];

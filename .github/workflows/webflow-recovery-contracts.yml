@@ -1,15 +1,17 @@
-name: Webflow component and telemetry contracts
+name: Webflow recovery contracts
 on:
   pull_request:
     paths:
       - 'packages/webflow-components/**'
       - 'packages/webflow-template-agent/**'
+      - 'packages/webflow-template-search/**'
       - '.github/workflows/webflow-recovery-contracts.yml'
   push:
     branches: [main]
     paths:
       - 'packages/webflow-components/**'
       - 'packages/webflow-template-agent/**'
+      - 'packages/webflow-template-search/**'
       - '.github/workflows/webflow-recovery-contracts.yml'
 permissions:
   contents: read
@@ -28,3 +30,4 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @create-something/webflow-components check
       - run: pnpm --filter @create-something/webflow-template-agent check
+      - run: pnpm --filter @create-something/webflow-template-search check

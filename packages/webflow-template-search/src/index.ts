@@ -124,10 +124,13 @@ function includeCacheValue(params: SearchParams): string {
 }
 
 function buildPublicSearchCacheRequest(requestUrl: URL, params: SearchParams, cacheVersion: string): Request | null {
-  if (params.page !== 1 || params.q || params.templateSlug || params.strict) return null;
+  if (params.templateSlug || params.strict || params.page < 1 || params.page > 10) return null;
+  const cacheQuery = params.q ?? '';
+  if (cacheQuery.length > 64) return null;
 
   const cacheUrl = new URL(requestUrl.pathname, requestUrl.origin);
   cacheUrl.searchParams.set('cache_version', cacheVersion);
+  if (cacheQuery) cacheUrl.searchParams.set('q', cacheQuery);
   for (const key of PUBLIC_SEARCH_CACHE_PARAM_ORDER) {
     switch (key) {
       case 'view':
@@ -164,7 +167,7 @@ function buildPublicSearchCacheRequest(requestUrl: URL, params: SearchParams, ca
         cacheUrl.searchParams.set(key, params.sort);
         break;
       case 'page':
-        cacheUrl.searchParams.set(key, '1');
+        cacheUrl.searchParams.set(key, String(params.page));
         break;
       case 'page_size':
         cacheUrl.searchParams.set(key, String(params.pageSize));
@@ -195,7 +198,7 @@ async function handleSearch(request: Request, env: Env, ctx: ExecutionContext): 
     if (cached) return publicSearchResponse(request, env, await cached.text(), 'HIT');
   }
 
-  const body = JSON.stringify(await searchTemplates(env, params));
+  const body = JSON.stringify(await searchTemplates(env, params, cacheVersion));
   if (cache && cacheRequest) {
     ctx.waitUntil(
       cache
