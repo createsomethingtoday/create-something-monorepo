@@ -1,4 +1,5 @@
 <script lang="ts">
+  import AgencyLegalContent from '$lib/components/AgencyLegalContent.svelte';
   import { PerformancePageSection, PrivacyPolicyContent, SEO } from '@create-something/canon';
 </script>
 
@@ -11,16 +12,19 @@
 
 <PerformancePageSection
   variant="hero"
+  expression="editorial"
   titleLevel="h1"
   eyebrow="Privacy"
   title="First-party analytics, no ad pixels."
   description="We measure how the site works and how people find our services. We do not sell browsing behavior or install ad-network trackers."
 >
   {#snippet after()}
-    <PrivacyPolicyContent
-      property="agency"
-      domain="createsomething.agency"
-      lastUpdated="January 29, 2026"
-    />
+    <AgencyLegalContent>
+      <PrivacyPolicyContent
+        property="agency"
+        domain="createsomething.agency"
+        lastUpdated="January 29, 2026"
+      />
+    </AgencyLegalContent>
   {/snippet}
 </PerformancePageSection>
