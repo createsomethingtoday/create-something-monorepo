@@ -30,4 +30,6 @@ Creative study and reusable style complete. This is an illustrative lesson, not 
 
 The local verified study is packaged here with a portable render wrapper and the same source/media assets. No PRIVATE runtime or deployment configuration changes are included.
 
-- Repository promotion validation: `pnpm bootstrap:worktree` passed. The checkout-relative `render.sh` completed a fresh 432-frame render and full decode. Both the regenerated Draw JSON and MP4 match the previously browser-verified artifacts byte-for-byte. Plugin and skill validation passed.
+- Repository promotion validation: `pnpm bootstrap:worktree` passed. The checkout-relative `render.sh` completed a fresh 432-frame render and full decode. The initial packaged Draw JSON and MP4 matched the previously browser-verified artifacts byte-for-byte; the review fix centralizes scene definitions and preserves the identical MP4. Plugin and skill validation passed.
+
+- Review remediation: regeneration now refreshes VTT captions and scene timing from the animation definitions, then all four stills, storyboard and media metadata from the current video. A temporary changed-caption/changed-timing scenario verified that both captions and Draw source update, the newly selected video frame is extracted, and stale accessibility artifacts are replaced. Full rerender/decode passed; MP4 remains byte-identical to browser-verified media.

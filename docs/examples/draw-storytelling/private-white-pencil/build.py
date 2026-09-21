@@ -3,6 +3,12 @@ import json,math,base64,pathlib
 from PIL import Image
 OUT=pathlib.Path(__file__).resolve().parent
 D=[]; BG='#090909'; INK='#f3f3f0'; MUTED='#a6aca7'; RED='#d68179'; END=18
+SCENES=[
+ dict(id='task',title='Start with the task.',caption='Find the document.',start=0,end=4.5,still=3.9),
+ dict(id='test',title='Test beyond the happy path.',caption='The test can write, too.',start=4.5,end=9,still=7.8),
+ dict(id='boundary',title='Give the agent a smaller tool.',caption='Expose only the read.',start=9,end=13.5,still=12.3),
+ dict(id='verify',title='Test the boundary again.',caption='Read succeeds. Write is unavailable.',start=13.5,end=18,still=16.5),
+]
 
 def pose(t,x=0,y=0,o=1,r=1,e='hold'):
  return dict(time=t,x=x,y=y,rotation=0,scaleX=1,scaleY=1,opacity=o,reveal=r,easing=e)
@@ -35,10 +41,9 @@ def arrow(id,pts,a=0,b=END,color=INK):
 text('brand','PRIVATE   /   FIELD NOTES',64,36,size=17,color=MUTED)
 text('edition','01     TOOL BOUNDARIES',925,36,size=16,color=MUTED,w=310)
 line('top-rule',[(64,76),(1216,76)],weight=.7,boil=0,color='#343b35')
-for id,s,a,b in [('task','Start with the task.',0,4.5),('test','Test beyond the happy path.',4.5,9),('boundary','Give the agent a smaller tool.',9,13.5),('verify','Test the boundary again.',13.5,18)]:
- text(id,s,64,111,a,b,48)
-for id,s,a,b in [('task-caption','Find the document.',0,4.5),('test-caption','The test can write, too.',4.5,9),('boundary-caption','Expose only the read.',9,13.5),('verify-caption','Read succeeds. Write is unavailable.',13.5,18)]:
- text(id,s,64,612,a,b,34)
+for scene in SCENES:
+ text(scene['id'],scene['title'],64,111,scene['start'],scene['end'],48)
+ text(scene['id']+'-caption',scene['caption'],64,612,scene['start'],scene['end'],34)
 text('footer','ILLUSTRATIVE LESSON   /   WHITE PENCIL',64,676,size=15,color=MUTED)
 text('takeaway','Teach the boundary, not just the happy path.',720,678,14.5,18,16,MUTED,500)
 # Stable architecture; one actor, two recognisable tools.
@@ -80,3 +85,10 @@ actor['poses']=[pose(0,166,344,0,e='ease'),pose(.5,166,344,e='hold'),pose(2,166,
 p=dict(version='draw.animation.v1',id='private-white-pencil-study',revision=0,title='PRIVATE / White Pencil — Teach the boundary',width=1280,height=720,duration=18,fps=24,background=BG,assets=[a],drawings=D)
 (OUT/'private-white-pencil.draw.json').write_text(json.dumps(p))
 print(f'{len(D)} drawings, {len(p["assets"])} reusable asset, 18 seconds')
+
+# Captions and still extraction share the same scene timing as the animation.
+def timestamp(seconds):
+ ms=round(seconds*1000)
+ return f'{ms//3600000:02}:{ms//60000%60:02}:{ms//1000%60:02}.{ms%1000:03}'
+(OUT/'scene-times.json').write_text(json.dumps(SCENES,indent=2)+'\n')
+(OUT/'captions.vtt').write_text('WEBVTT\n\n'+'\n'.join(f"{timestamp(sc['start'])} --> {timestamp(sc['end'])}\n{sc['title']} {sc['caption']}\n" for sc in SCENES))

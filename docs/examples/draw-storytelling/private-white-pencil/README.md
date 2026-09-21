@@ -9,7 +9,7 @@ An 18-second learning animation and reusable dark variant of Graphite Motion.
 - `private-white-pencil.mp4`: H.264, 1280×720, 24 fps; 18-second silent study.
 - `private-white-pencil.draw.json`: self-contained editable project with embedded artwork. Import using Draw Motion's Open project control.
 - `index.html`, `frame-1.png` through `frame-4.png`, and `captions.vtt`: review page, static storyboard and captions.
-- `build.py`: editable story, geometry and keyframes. Python 3 with Pillow reads the sprite dimensions without modifying it.
+- `build.py`: editable story, geometry and keyframes; shared scene timing also generates captions and `scene-times.json`. Python 3 with Pillow reads the sprite dimensions without modifying it.
 - `assets/white-pencil-circle-3-frame.png`: transparent sprite with three registered redraws at 8 fps.
 - `generation-prompt.md` and `asset-check.json`: source provenance and alpha-registration measurements.
 
@@ -32,6 +32,6 @@ pnpm bootstrap:worktree
 ./docs/examples/draw-storytelling/private-white-pencil/render.sh
 ```
 
-The script uses the repository's existing Draw/Remotion renderer. The original verified export used renderer source `0155ed2b4cb137548f11e90354242f4e3fe90fe1`; current regeneration follows the checked-out renderer. The source project is portable without local rendering dependencies.
+The script uses the repository's existing Draw/Remotion renderer, then regenerates all four stills, the storyboard, and media metadata from the new video. Captions are rebuilt from the same scene definitions as the animation. The original verified export used renderer source `0155ed2b4cb137548f11e90354242f4e3fe90fe1`; current regeneration follows the checked-out renderer. The source project is portable without local rendering dependencies.
 
 The reusable plugin lives in [packages/graphite-motion-plugin](../../../../packages/graphite-motion-plugin/README.md). Its original warm-paper mode and sprite remain intact. This is a creative study; it does not modify or deploy the PRIVATE application.
