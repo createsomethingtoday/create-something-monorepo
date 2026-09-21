@@ -1,0 +1,25 @@
+name: RustDesk Monitor
+
+on:
+  pull_request:
+    paths:
+      - 'ops/rustdesk/**'
+      - '.github/workflows/rustdesk-monitor.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'ops/rustdesk/**'
+      - '.github/workflows/rustdesk-monitor.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  monitor-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - run: bash -n ops/rustdesk/check-and-pull.sh
+      - run: python3 ops/rustdesk/test_monitor.py
