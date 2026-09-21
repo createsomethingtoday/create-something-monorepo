@@ -1,12 +1,12 @@
 # Template Marketplace for Source Nightly
 
-Astro buyer-facing frontend connected in Source Nightly as `webflow-marketplace-source`. It retains the exported Webflow styles, fonts, images, navigation, home content and rich detail content. Search, filters and template interactions use the existing repository-owned React components.
+Astro 6 buyer-facing frontend connected in Source Nightly as `webflow-marketplace-source`. It retains the exported Webflow styles, fonts, images, navigation, home content and rich detail content. Search, filters and template interactions use the existing repository-owned React components.
 
 This is a local Source project and review candidate, not a production cutover.
 
 ## Open and run
 
-Keep this package inside the monorepo: it imports `../webflow-components/src/components`. In Source Nightly, choose **Connect a codebase**, select this package directory, then **Site → Run project → Start preview**. Source detects Astro and runs `npm run dev`.
+This folder is self-contained for Source uploads. Its 27 repository-owned component dependencies are snapshotted in `src/vendor/marketplace`; `component-snapshot.json` records SHA-256 provenance. Run `npm run sync:components` from the monorepo after changing the owning `webflow-components` package; do not hand-edit the snapshot. The standalone npm package is excluded from the root pnpm workspace. In Source Nightly, choose **Connect a codebase**, select this package directory, then **Site → Run project → Start preview**. Source detects Astro and runs `npm run dev`.
 
 For a fresh checkout, from this package:
 
@@ -53,3 +53,5 @@ Before production promotion: review the PR; choose the owning Source/Webflow dep
 No domain or production route was changed. Local rollback is to reopen the existing Webflow site or stop this Source preview. After any future routing promotion, rollback must restore the previous `/templates` route owner and deployment. Do not retire the existing CMS/search publishers.
 
 Worktree disposition: retained at `/private/tmp/cre-2050-marketplace-source` on `codex/cre-2050-marketplace-source` because Source points to this checkout. Reconnect Source before moving or removing it; Git is the durable backup, not the temporary path.
+
+Cloud compatibility follows [Webflow framework requirements](https://developers.webflow.com/webflow-cloud/environment/framework-customization). Webflow supplies the Cloudflare adapter during its build; the Node adapter supports local standalone verification.

@@ -8,12 +8,13 @@
     "build": "astro build",
     "start": "node ./dist/server/entry.mjs",
     "check": "astro check",
-    "test": "node --test test/*.test.mjs"
+    "test": "node --test test/*.test.mjs",
+    "sync:components": "node scripts/sync-components.mjs"
   },
   "dependencies": {
-    "astro": "5.18.2",
-    "@astrojs/react": "4.4.2",
-    "@astrojs/node": "9.5.5",
+    "astro": "6.4.8",
+    "@astrojs/react": "5.0.7",
+    "@astrojs/node": "10.1.4",
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "cheerio": "1.1.2"
@@ -23,5 +24,8 @@
     "typescript": "5.9.3",
     "@types/react": "18.3.28",
     "@types/react-dom": "18.3.7"
+  },
+  "engines": {
+    "node": ">=22.12.0"
   }
 }

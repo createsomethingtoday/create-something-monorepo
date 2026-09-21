@@ -1,0 +1,32 @@
+{
+  "sourcePackage": "packages/webflow-components/src/components",
+  "files": {
+    "cards/TemplateCard.tsx": "5cb30cd78d5a5b2465f988281b857531875a39a7835f74af575860c48a626d24",
+    "grid/TemplateGrid.tsx": "9c423983cb11bf931b13d6ad9aee8fe66543c11fdbc405404e92898a0975980a",
+    "marketplace/marketplaceSignals.ts": "124c1d1a15e24e65ca60239a43349641731f5d02e406f42168a40cbd152c195c",
+    "marketplace/analytics.ts": "ba080bac788aef31e99fa254f5492f449a8d8fa7a9673c40fb2c95728af337c8",
+    "marketplace/telemetryFallback.ts": "99cc378267624d7f3448320b1336c399d116c0dd35d303f1fcf369efd1cc4cc5",
+    "marketplace/FeaturedTemplatePreview.tsx": "b4ec71ea1b1ca0ff0dc03499c55f5388d6097735a23666486a5500b5184d6ede",
+    "marketplace/modalIsolation.ts": "38341a43fba50ddff9209149575572447e2b0c93a92e06d55f8535e8f9cda16d",
+    "marketplace/templateDetailOffer.ts": "c679254c18fedc5382a0c0d1c77d9d30d2475c7fc080c0e835434d1e8a8b1f6c",
+    "marketplace/templateAttribution.ts": "f330a74bf1c041eabbc25eee8ea0a4bdbcf8a1de2c1edf0bbf6d6fdbfd5c1dc4",
+    "marketplace/templateUrlSafety.ts": "3d4c28822df56a9a1871005f3c9b79b568fbcac83478e4f4b575ab27ea2dd2c2",
+    "marketplace/TemplateCampaignLane.tsx": "c4aeaf9dbe0abb5ea248a28cecbcb9cb4ccf2d310e8a68ba49b738bc3135d893",
+    "marketplace/MarketplaceComponentErrorBoundary.tsx": "04e2b0db8cb69ab3d6c43a4777922e0c2b3b93484fc9512046634e323c2c692b",
+    "marketplace/templateRoute.ts": "14b9438187a4022af199db5f26eb1386d0494441376fd160253bdf4efd0aa3b5",
+    "filter/TemplateFilterBar.tsx": "efea26e9831bcc8ffb998d14fc128cd0ec9cf3eb4357942a07fbf9d0b0ec5b22",
+    "marketplace/TemplateSearchSidebar.tsx": "ca9c34c0f13b93b9ec0347fce6f4e63f364af5fc566f696fc280f373aa922905",
+    "marketplace/TemplateSearchBox.tsx": "a258ada05d9450c14d9d6b960afb255f6701d5e93228fef5f1050df04706d035",
+    "marketplace/TemplateMarketplaceHeading.tsx": "4efaa5388259afca77aa0360de86bb848cd642997daa4fcccdd7270da67099ed",
+    "marketplace/templateTelemetry.ts": "5bf504d401a746c7af926da9cffca1c79f8c25f148161174a06271f2512e7e33",
+    "marketplace/TemplateDetailHero.tsx": "8b3e0f1f16d9deadea6f2a4ab2844900210f5a8b95f5dd8b3de8a9325f9c78bb",
+    "marketplace/MarketplaceAgentTools.tsx": "6b136c512d24c4cf29a06b383f658def9bb77787b984eda9a0340d5d0c561a45",
+    "marketplace/agentTools.ts": "752d65d4430772deb43b64554ca8ad22a5ef26dc62eb7a68424ac4d7cc5d8e48",
+    "chat/templateChatPageAction.ts": "a46225f42253b265f0777b6b1059aacd650a19a019919257820b45720b4a3e30",
+    "chat/templateChatRuntime.ts": "967b3ac89d0cebb93b04d3d3a2fc51df97408fdcc860b90190cc392307056bf0",
+    "chat/templateChatProtocol.ts": "1e59675b4aac8493a570690754ff4898a436d9cc099559c1cd0c71b8851a48b6",
+    "chat/templateChatStyles.ts": "238c84ca5c109dc365e73d0e6b7df909b48c46e3641ab9a543481d89c9dfdcf0",
+    "marketplace/templateDetailStyles.ts": "6c868806f3a10578a852acda1d93dbd7e8924a6fbeecd9f3c663c0179672e0fc",
+    "marketplace/TemplateDetailStickyBar.tsx": "5f17aa2fbeb3870db6fd40416a3197b80779f4b4b5caee24f8d42166fb5f266e"
+  }
+}

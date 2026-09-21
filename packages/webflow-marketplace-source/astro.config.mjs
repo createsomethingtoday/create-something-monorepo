@@ -8,7 +8,7 @@ export default defineConfig({
   adapter: node({ mode: 'standalone' }),
   integrations: [react()],
   vite: {
-    resolve: { alias: { '@marketplace': fileURLToPath(new URL('../webflow-components/src/components', import.meta.url)) }, dedupe: ['react', 'react-dom'] },
+    resolve: { alias: { '@marketplace': fileURLToPath(new URL('./src/vendor/marketplace', import.meta.url)) }, dedupe: ['react', 'react-dom'] },
     server: { fs: { allow: [fileURLToPath(new URL('../', import.meta.url))] } },
   },
 });
