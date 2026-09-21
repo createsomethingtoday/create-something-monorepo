@@ -164,5 +164,11 @@ class AccountHelperTests(unittest.TestCase):
                 ('fsync', 'file'), ('replace', 'config.toml'), ('fsync', 'directory'),
                 ('unlink', 'codex-account-rollback.json'), ('fsync', 'directory')])
 
+    def test_status_rejects_profile_based_permissions(self):
+        for raw in [b'default_permissions = ":workspace"\n', b'profile = "managed"\n', b'[profiles.managed]\nsandbox_mode = "workspace-write"\n', b'[permissions.custom]\nextends = ":workspace"\n']:
+            self.write('config.toml', raw)
+            self.run_helper('status', success=False)
+            self.assertEqual((self.directory / 'config.toml').read_bytes(), raw)
+
 if __name__ == '__main__':
     unittest.main()

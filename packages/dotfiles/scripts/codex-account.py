@@ -43,11 +43,16 @@ def account_for(auth):
     return account
 
 
+def supported_config(raw):
+    config = tomllib.loads(raw.decode())
+    if any(key in config for key in ("default_permissions", "permissions", "profile", "profiles")):
+        raise ValueError("Profile configuration requires manual review; no legacy policy inferred or injected")
+    return config
+
+
 def render_policy(raw, account):
     text = raw.decode()
-    config = tomllib.loads(text)
-    if any(key in config for key in ("default_permissions", "permissions", "profile", "profiles")):
-        raise ValueError("Profile configuration requires manual review; no legacy policy injected")
+    config = supported_config(raw)
     desired = POLICIES[account]
     lines = text.splitlines(keepends=True)
     end = next((i for i, line in enumerate(lines) if line.lstrip().startswith("[")), len(lines))
@@ -125,7 +130,8 @@ def run(args):
         account = account_for(auth)
         print(f"Allowlisted account: {account}")
         if args.command == "status":
-            print("Local policy: " + json.dumps({key: tomllib.loads(raw.decode()).get(key) for key in POLICIES[account]}))
+            config = supported_config(raw)
+            print("Local policy: " + json.dumps({key: config.get(key) for key in POLICIES[account]}))
             return
         target = render_policy(raw, account)
         print("Proposed policy: " + json.dumps(POLICIES[account]))
