@@ -1,0 +1,13 @@
+WEBVTT
+
+00:00.000 --> 00:04.500
+Start with the task. Find the document.
+
+00:04.500 --> 00:09.000
+Test beyond the happy path. The test can write, too.
+
+00:09.000 --> 00:13.500
+Give the agent a smaller tool. Expose only the read.
+
+00:13.500 --> 00:18.000
+Test the boundary again. Read succeeds. Write is unavailable.

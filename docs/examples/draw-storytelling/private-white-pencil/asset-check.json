@@ -1,0 +1,39 @@
+{
+  "source": "exec-c3af164e-9d8a-4ec3-accb-6cec74f5921a.png",
+  "sha256": "931ab4541787644b9178fd1b2bf2fa47cfe569a4947034a9a89c3d266d0804c3",
+  "width": 2172,
+  "height": 724,
+  "cells": [
+    {
+      "bounds": [
+        114,
+        116,
+        615,
+        606
+      ],
+      "alpha_mean": 64.22,
+      "alpha_under_64": 0.635
+    },
+    {
+      "bounds": [
+        113,
+        116,
+        612,
+        608
+      ],
+      "alpha_mean": 70.67,
+      "alpha_under_64": 0.6
+    },
+    {
+      "bounds": [
+        95,
+        116,
+        590,
+        608
+      ],
+      "alpha_mean": 69.32,
+      "alpha_under_64": 0.609
+    }
+  ],
+  "note": "First candidate inspected in actual rendered animation on #090909: pencil hatching and alpha gaps visible. Tool inline preview had misleading white appearance; later candidates not used."
+}
