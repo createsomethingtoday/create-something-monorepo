@@ -32,7 +32,7 @@
     "PCN_ASSET_COMMERCE_ENABLED": "false",
     "PCN_FREE_ASSETS_ENABLED": "true",
     "PCN_SUPPORT_ENABLED": "false",
-    "PCN_REMOTE_SESSIONS_ENABLED": "false",
+    "PCN_REMOTE_SESSIONS_ENABLED": "true",
     "PCN_SUPPORT_CONNECT_ENABLED": "true"
   },
   "d1_databases": [
