@@ -24,6 +24,15 @@ function toBoolean(value: string | null): boolean {
   return ['1', 'true', 'yes', 'on'].includes(value.toLowerCase());
 }
 
+/** Tri-state: absent/unrecognized = null (no constraint), otherwise the explicit boolean. */
+function toTriStateBoolean(value: string | null): boolean | null {
+  if (value === null) return null;
+  const normalized = value.trim().toLowerCase();
+  if (['1', 'true', 'yes', 'on'].includes(normalized)) return true;
+  if (['0', 'false', 'no', 'off'].includes(normalized)) return false;
+  return null;
+}
+
 function normalizeSlug(value: string | null): string | null {
   const slug = value?.trim().toLowerCase().replace(/^\/+|\/+$/g, '');
   return slug || null;
@@ -83,6 +92,7 @@ export function parseSearchParams(url: URL, defaultPageSize = 24): SearchParams 
     tags: parseList(params, 'tags'),
     types: parseList(params, 'types').filter((value) => VALID_TYPES.has(value)),
     freeOnly: toBoolean(params.get('free_only')) || toBoolean(params.get('free')) || (params.get('pricing') ?? '') === 'free',
+    hasCms: toTriStateBoolean(firstParam(params, ['has_cms', 'cms'])),
     sort: normalizeSort(params.get('sort')),
     view: VALID_VIEWS.has(params.get('view') ?? '') ? (params.get('view') as SearchParams['view']) : 'full',
     page: clamp(Number(params.get('page') ?? 1) || 1, 1, 500),

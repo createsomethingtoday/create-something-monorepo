@@ -126,6 +126,7 @@ const UPSERT_TEMPLATE_SQL = `
     tags_json,
     tag_slugs_json,
     template_type,
+    has_cms,
     is_free,
     is_featured,
     is_landing_page,
@@ -143,7 +144,7 @@ const UPSERT_TEMPLATE_SQL = `
     styles_text,
     tags_text
   ) VALUES (
-    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
   )
   ON CONFLICT(id) DO UPDATE SET
     template_slug = excluded.template_slug,
@@ -215,6 +216,7 @@ const UPSERT_TEMPLATE_SQL = `
     tags_json = excluded.tags_json,
     tag_slugs_json = excluded.tag_slugs_json,
     template_type = excluded.template_type,
+    has_cms = excluded.has_cms,
     is_free = excluded.is_free,
     is_featured = excluded.is_featured,
     is_landing_page = excluded.is_landing_page,
@@ -616,6 +618,7 @@ export async function upsertTemplateDocuments(db: D1Database, documents: Templat
         toJson(document.tags),
         toJson(document.tagSlugs),
         document.templateType,
+        document.hasCms === null ? null : document.hasCms ? 1 : 0,
         document.isFree ? 1 : 0,
         document.isFeatured ? 1 : 0,
         document.isLandingPage ? 1 : 0,

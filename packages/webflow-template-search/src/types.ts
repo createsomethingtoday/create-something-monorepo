@@ -14,6 +14,7 @@ export interface Env {
   AIRTABLE_TAGS_TABLE_ID?: string;
   WEBFLOW_API_TOKEN?: string;
   CMS_READ_ONLY?: string;
+  CMS_FILTER_ENABLED?: string;
   WEBFLOW_TEMPLATE_ASSET_SITE_ID?: string;
   WEBFLOW_TEMPLATE_ASSET_FOLDER_ID?: string;
   WEBFLOW_TEMPLATE_COLLECTION_ID?: string;
@@ -65,6 +66,7 @@ export interface AirtableAssetFields extends Record<string, unknown> {
   'ℹ️👘Styles'?: string[];
   'ℹ️🏷️Tags (Multi)'?: string[];
   '🥞Template Type (🏗️ only)'?: string;
+  'ℹ️Type: CMS? (🏗️ only)'?: number | boolean;
   'Is free?'?: number | boolean;
   '🥞Is Currently Featured? (🏗️ only)'?: number | boolean;
   'ℹ️Is Featured? (🖥️, 🏗️only)'?: number | boolean;
@@ -163,6 +165,7 @@ export interface TemplateDocumentInput {
   tags: string[];
   tagSlugs: string[];
   templateType: string | null;
+  hasCms: boolean | null;
   isFree: boolean;
   isFeatured: boolean;
   isLandingPage: boolean;
@@ -192,6 +195,7 @@ export interface SearchParams {
   tags: string[];
   types: string[];
   freeOnly: boolean;
+  hasCms: boolean | null;
   sort: TemplateSort;
   view: TemplateSearchView;
   page: number;
@@ -228,6 +232,7 @@ export interface SearchItem {
   features?: string[];
   source_updated_at?: string | null;
   template_type: string | null;
+  has_cms: boolean | null;
   popularity_score: number | null;
   unique_viewers: number | null;
   cumulative_purchases: number | null;
@@ -262,6 +267,7 @@ export interface SearchResponsePayload {
     tags: string[];
     types: string[];
     free_only: boolean;
+    has_cms: boolean | null;
     /** True when the strict all-tokens query matched nothing and results come from an OR-relaxed retry. */
     relaxed: boolean;
   };
@@ -370,6 +376,7 @@ export interface DocumentRow {
   tags_json: string;
   tag_slugs_json: string;
   template_type: string | null;
+  has_cms: number | null;
   is_free: number;
   is_featured: number;
   is_landing_page: number;

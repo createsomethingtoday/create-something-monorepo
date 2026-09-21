@@ -51,9 +51,32 @@ Memo entries expire after five minutes for counts and thirty minutes
 for facets. Cache failures fall back to D1. Direct `searchTemplates` callers that
 omit a sync version bypass query memoization.
 
-The retained CMS-filter prototype is not part of this recovery: its `has_cms`
-column and backfill are absent from the current schema. Do not advertise that
-filter or apply its older snapshot over the current listing-visibility rules.
+## CMS capability recovery (not activated)
+
+Migration `0013_template_cms_capability.sql` adds only a nullable `has_cms`
+column. Apply this additive migration before deploying this source. Existing
+rows remain `null` (unknown); responses must never label them `false`.
+Authoritative sync reads Assets checkbox `fldZY9vzOYaaCR5vv`, named
+`ℹ️Type: CMS? (🏗️ only)`. This schema was verified read-only on September 21,
+2026. A successful checkbox read supplies true/false; it is not inferred from
+names, descriptions, tags or template type.
+
+Public `has_cms=true|false` (`cms` alias) filters return 503 unless
+`CMS_FILTER_ENABLED=true` and no indexed document has an unknown value.
+This check precedes cache reads. Leave the variable unset until a controlled
+backfill has been completed and its true/false counts reconciled with the
+source. Unconstrained responses retain unknown rows. Public cache keys include
+the filter and a response-schema version; query memo keys include every filter.
+
+Promotion remains staged: review source and regression tests, inspect the live
+D1 schema, apply only 0013, deploy with filtering disabled, backfill capabilities
+without deleting/rebuilding the index, verify IDs/counts and cache invalidation,
+then enable filtering. The retained six-column 0008 migration is not used.
+Do not run a full rebuild merely to fill this column. A resumable, bounded
+capability-only backfill and production readback are still required.
+
+Rollback: disable `CMS_FILTER_ENABLED`, then restore the prior Worker version.
+The additive nullable column can remain; do not drop data or undo later migrations.
 
 ## Featured creator monthly batch
 

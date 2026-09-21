@@ -130,7 +130,7 @@ function buildPublicSearchCacheRequest(requestUrl: URL, params: SearchParams, ca
   if (cacheQuery.length > 64) return null;
 
   const cacheUrl = new URL(requestUrl.pathname, requestUrl.origin);
-  cacheUrl.searchParams.set('cache_version', cacheVersion);
+  cacheUrl.searchParams.set('cache_version', `${cacheVersion}:cms-v1`);
   if (cacheQuery) cacheUrl.searchParams.set('q', cacheQuery);
   for (const key of PUBLIC_SEARCH_CACHE_PARAM_ORDER) {
     switch (key) {
@@ -179,6 +179,7 @@ function buildPublicSearchCacheRequest(requestUrl: URL, params: SearchParams, ca
   appendSearchCacheList(cacheUrl, 'styles', params.styles);
   appendSearchCacheList(cacheUrl, 'tags', params.tags);
   appendSearchCacheList(cacheUrl, 'types', params.types);
+  if (params.hasCms !== null) cacheUrl.searchParams.set('has_cms', String(params.hasCms));
   return new Request(cacheUrl.toString(), { method: 'GET' });
 }
 
@@ -190,6 +191,11 @@ async function handleSearch(request: Request, env: Env, ctx: ExecutionContext): 
   const defaultPageSize = Number(env.DEFAULT_PAGE_SIZE ?? '24') || 24;
   const url = new URL(request.url);
   const params = parseSearchParams(url, defaultPageSize);
+  if (params.hasCms !== null) {
+    if (env.CMS_FILTER_ENABLED !== 'true') return new Response('CMS filtering is not enabled', { status: 503 });
+    const unknown = await env.DB.prepare('SELECT COUNT(*) AS count FROM template_documents WHERE has_cms IS NULL').first<{ count: number }>();
+    if (!unknown || Number(unknown.count) > 0) return new Response('CMS capability backfill is incomplete', { status: 503 });
+  }
   const cacheVersion = await getPublicSearchCacheVersion(env.DB, DEFAULT_PUBLIC_SEARCH_CACHE_VERSION);
   const cacheRequest = buildPublicSearchCacheRequest(url, params, cacheVersion);
   const cache = cacheRequest ? getDefaultCache() : null;

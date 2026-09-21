@@ -113,6 +113,7 @@ const PUBLISHED_ASSETS = [
       'ℹ️👘Styles': ['style-modern'],
       'ℹ️🏷️Tags (Multi)': ['tag-automation'],
       '🥞Template Type (🏗️ only)': 'Multi Layout',
+      'ℹ️Type: CMS? (🏗️ only)': 1,
       'Is free?': 1, // Stale checkbox on a paid template; numeric price should win.
       '🥞Is Currently Featured? (🏗️ only)': 1,
       'ℹ️Is Featured? (🖥️, 🏗️only)': 0,
