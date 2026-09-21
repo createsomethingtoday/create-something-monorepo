@@ -1,4 +1,6 @@
 <script lang="ts">
+  import HumanInkHandoff from '$lib/components/HumanInkHandoff.svelte';
+  import { inkReveal } from '$lib/ink-motion';
   import Icon from '$lib/components/Icon.svelte';
   let { data } = $props();
   import NetworkPreview from '$lib/components/NetworkPreview.svelte';
@@ -50,7 +52,7 @@
   <NetworkPreview />
   {#if data.selfServiceEnabled}
     <section id="pricing" class="launch-plan">
-      <div>
+      <div use:inkReveal>
         <p class="eyebrow">CREATOR / MONTHLY</p>
         <h2>A private home<br />for your <em>practice.</em></h2>
         <p>For independent creators teaching agent workflows, technical methods, and research.</p>
@@ -74,16 +76,17 @@
     </section>
   {/if}
   <section class="service-section creator-service" id="the-service">
-    <div>
+    <div use:inkReveal>
       <p class="eyebrow">03 / THE NETWORK IS YOURS</p>
       <h2>Keep the depth.<br /><em>Choose the boundaries.</em></h2>
       <p class="section-intro">
         Your work can be public. Your deeper explanation can have a more deliberate home. We build
         the library, access, and publishing workflow around how you want to teach.
       </p>
+      <HumanInkHandoff />
     </div>
     <div class="service-rows">
-      <article>
+      <article use:inkReveal>
         <span>01</span>
         <div>
           <h3>Organize around what people learn</h3>
@@ -93,7 +96,7 @@
           </p>
         </div>
       </article>
-      <article>
+      <article use:inkReveal>
         <span>02</span>
         <div>
           <h3>Choose what stays private</h3>
@@ -103,7 +106,7 @@
           </p>
         </div>
       </article>
-      <article>
+      <article use:inkReveal>
         <span>03</span>
         <div>
           <h3>Publish without rebuilding a platform</h3>
@@ -113,7 +116,7 @@
           </p>
         </div>
       </article>
-      <article>
+      <article use:inkReveal>
         <span>04</span>
         <div>
           <h3>Make it unmistakably yours</h3>
@@ -141,12 +144,12 @@
       </p>
     </div>
     <div class="delivery-steps">
-      <article>
+      <article use:inkReveal>
         <span>01 / SUBMIT</span>
         <h3>Credentials and a teaching video.</h3>
         <p>Explain the technique, its constraints, how you evaluated it, and where it can fail.</p>
       </article>
-      <article>
+      <article use:inkReveal>
         <span>02 / REVIEW</span>
         <h3>Human judgment before access.</h3>
         <p>
@@ -154,7 +157,7 @@
           hosting after approval.
         </p>
       </article>
-      <article>
+      <article use:inkReveal>
         <span>03 / SHARE</span>
         <h3>Your practice, your offerings.</h3>
         <p>

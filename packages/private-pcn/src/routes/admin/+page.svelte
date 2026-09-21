@@ -18,6 +18,7 @@
   let error = $state('');
   let message = $state('');
   let busy = $state(false);
+  let loaded = $state(false);
   let title = $state('');
   let description = $state('');
   let series = $state('Agent engineering');
@@ -32,6 +33,7 @@
       receipts = data.receipts;
       plays = data.plays;
       reservations = data.reservations || [];
+      loaded = true;
     } catch (e) {
       error = (e as Error).message;
     }
@@ -133,7 +135,7 @@
   </p>
   <div class="admin-grid">
     <section>
-      <h2>Add a walkthrough</h2>
+      <h2 id="upload-walkthrough" tabindex="-1">Add a walkthrough</h2>
       <form onsubmit={upload}>
         <label>Session title<input bind:value={title} required maxlength="160" /></label><label
           >Series or learning track<input bind:value={series} required maxlength="100" /></label
@@ -185,6 +187,19 @@
   </div>
   <section class="admin-videos">
     <h2>Publishing desk</h2>
+    {#if loaded && !error && !videos.length && !reservations.length}
+      <div class="ink-empty">
+        <img src="/media/human-ink/card.webp" width="1280" height="1280" alt="" loading="lazy" />
+        <div>
+          <h3>Give your practice a first page.</h3>
+          <p>
+            Your first walkthrough starts as a private draft. Upload it, review processing, then
+            choose who can watch.
+          </p>
+          <a class="button secondary" href="#upload-walkthrough">Add your first walkthrough</a>
+        </div>
+      </div>
+    {/if}
     {#each videos as video}<article class="admin-video">
         <div>
           <h3>{video.title}</h3>
@@ -281,3 +296,27 @@
     </ul>
   </section>
 </main>
+
+<style>
+  .ink-empty {
+    display: flex;
+    gap: 24px;
+    align-items: center;
+    max-width: 700px;
+    padding: 24px 0;
+  }
+  .ink-empty img {
+    width: 140px;
+    height: 140px;
+    object-fit: contain;
+  }
+  .ink-empty p {
+    color: var(--muted);
+  }
+  @media (max-width: 600px) {
+    .ink-empty {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
+</style>
