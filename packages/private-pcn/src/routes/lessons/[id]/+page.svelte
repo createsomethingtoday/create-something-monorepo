@@ -36,7 +36,11 @@
       <h1>{content.video.title}</h1>
       <div class="lesson-meta">
         <StateBadge
-          label={content.video.access === 'public' ? 'Public preview' : 'Members'}
+          label={content.video.access === 'public'
+            ? 'Public preview'
+            : content.video.access === 'members'
+              ? 'Members'
+              : 'Private'}
           icon={content.video.access === 'public' ? 'users' : 'lock'}
         />
         {#if content.video.duration}<span>{Math.ceil(content.video.duration / 60)} min</span>{/if}
