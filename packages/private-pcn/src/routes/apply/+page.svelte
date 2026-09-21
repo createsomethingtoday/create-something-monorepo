@@ -123,7 +123,13 @@
           <p class="field-hint">
             Your credentials and teaching link are used for creator review under the <a
               href="/privacy#information">Private Privacy Policy</a
-            >. Publishing and participation follow the <a href="/terms#admission">Private Terms</a>.
+            >. Publishing and participation follow the
+            <a
+              href="/terms#admission"
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Opens in a new tab">Private Terms</a
+            >.
           </p>
           <button class="button" disabled={busy}
             >{busy ? 'Submitting…' : 'Submit for review'} <Icon name="arrow-right" /></button
