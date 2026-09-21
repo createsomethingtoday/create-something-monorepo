@@ -1,14 +1,19 @@
 <script lang="ts">
+  import StateBadge from '$lib/components/StateBadge.svelte';
+  import StatusNotice from '$lib/components/StatusNotice.svelte';
+
   import { api } from '$lib/client';
   import { invalidateAll } from '$app/navigation';
   import Icon from '$lib/components/Icon.svelte';
   let { data } = $props();
   let busy = $state(false),
-    message = $state('');
+    message = $state(''),
+    failed = $state(false);
   let notes = $state<Record<string, string>>({});
   async function decide(subject: string, revision: number, status: string) {
     busy = true;
     message = '';
+    failed = false;
     try {
       await api('creators/review', {
         subject,
@@ -19,6 +24,7 @@
       await invalidateAll();
       message = 'Decision recorded.';
     } catch (e) {
+      failed = true;
       message = (e as Error).message;
     } finally {
       busy = false;
@@ -27,11 +33,13 @@
   async function partner(subject: string, approved: boolean) {
     busy = true;
     message = '';
+    failed = false;
     try {
       await api('support/partners', { subject, approved, note: notes[subject] || '' });
       await invalidateAll();
       message = 'Partner decision recorded.';
     } catch (e) {
+      failed = true;
       message = (e as Error).message;
     } finally {
       busy = false;
@@ -50,9 +58,25 @@
     evaluation and responsible handling of access. Creator approval does not confer support-partner
     status.
   </p>
-  {#if message}<p role="status">{message}</p>{/if}
+  {#if message}<StatusNotice tone={failed ? 'error' : 'success'} {message} />{/if}
   {#each data.applications as application}<article class="builder-panel review-application">
-      <p class="eyebrow">{application.status} / revision {application.revision}</p>
+      <div class="state-row">
+        <StateBadge
+          label={application.status === 'approved'
+            ? 'Creator approved'
+            : application.status === 'pending'
+              ? 'In review'
+              : application.status === 'rejected'
+                ? 'Changes requested'
+                : 'Suspended'}
+          tone={application.status === 'approved' ? 'success' : 'warning'}
+          icon={application.status === 'approved'
+            ? 'check'
+            : application.status === 'pending'
+              ? 'clock'
+              : 'warning'}
+        /><span>Revision {application.revision}</span>
+      </div>
       <h2>{application.display_name}</h2>
       <p>{application.email}</p>
       <p class="preserve">{application.credentials}</p>
