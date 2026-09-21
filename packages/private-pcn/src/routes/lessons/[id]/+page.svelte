@@ -1,4 +1,7 @@
 <script lang="ts">
+  import LessonProgressControls from '$lib/components/LessonProgressControls.svelte';
+  import { pathBase } from '$lib/learning';
+  import { lessonPath } from '$lib/lessons';
   import StateBadge from '$lib/components/StateBadge.svelte';
 
   import { page } from '$app/state';
@@ -6,6 +9,13 @@
   import Player from '$lib/components/Player.svelte';
   import LessonEditor from '$lib/components/LessonEditor.svelte';
   let { data } = $props();
+  const nextLesson = $derived(
+    data.learningPath?.lessons[
+      (data.learningPath?.lessons.findIndex(
+        (v: { id: string }) => v.id === data.lessonData?.video.id
+      ) ?? -1) + 1
+    ]
+  );
   const content = $derived(data.lessonData);
   const material = $derived(content?.lesson);
   const slug = $derived(data.network?.slug === 'create-something' ? undefined : data.network?.slug);
@@ -67,8 +77,17 @@
               id={content.video.id}
               title={content.video.title}
               networkSlug={slug}
+              duration={content.video.duration || 0}
+              initialPosition={content.progress?.position || 0}
+              saveProgress={!!data.canSaveProgress}
             />{/key}
         </section>
+        {#if data.canSaveProgress}{#key content.video.id}<LessonProgressControls
+              id={content.video.id}
+              {slug}
+              progress={content.progress}
+              practice={!!material?.practice}
+            />{/key}{/if}
         {#if material?.outcome}<section class="material">
             <p class="eyebrow">OUTCOME</p>
             <h2>What you’ll be able to do</h2>
@@ -88,6 +107,21 @@
           </section>{/if}
       </div>
       <aside aria-label="Lesson context">
+        {#if data.learningPath}<section>
+            <p class="eyebrow">LEARNING PATH</p>
+            <h2>{data.learningPath.title}</h2>
+            <a href={`${pathBase(slug)}/${data.learningPath.id}`}
+              >View the sequence <Icon name="arrow-right" /></a
+            >
+            {#if nextLesson}<p>Up next: {nextLesson.title}</p>
+              <a
+                class="button secondary"
+                href={`${lessonPath(nextLesson.id, slug)}?path=${encodeURIComponent(data.learningPath.id)}`}
+                >Next lesson <Icon name="arrow-right" /></a
+              >{:else}<p>
+                This is the last lesson in the sequence. Return to the path to review your practice.
+              </p>{/if}
+          </section>{/if}
         <section>
           <p class="eyebrow">YOUR NETWORK</p>
           <h2>{data.network?.name || 'CREATE SOMETHING'}</h2>

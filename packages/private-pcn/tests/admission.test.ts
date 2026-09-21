@@ -203,6 +203,26 @@ it('ends access on trial expiry or creator suspension without trusting cached ne
   expect(await paidAccess(e.platform.env, n)).toBe(false);
 });
 
+it('counts lesson engagement without storing identifiers and rejects unrelated surfaces', async () => {
+  for (const action of ['lesson_start', 'lesson_resume', 'practice_start']) {
+    expect(
+      (
+        await track(
+          event({ event: action, surface: 'lesson', subject: 'not-stored', lesson: 'private-id' })
+        )
+      ).status
+    ).toBe(204);
+    expect((await track(event({ event: action, surface: 'home' }))).status).toBe(400);
+  }
+  const blocked = event({ event: 'lesson_start', surface: 'lesson' });
+  blocked.request.headers.set('DNT', '1');
+  expect((await track(blocked)).status).toBe(204);
+  const rows = sql.prepare('SELECT surface,event,count FROM customer_impact_daily').all();
+  expect(rows).toHaveLength(3);
+  expect(rows.every((row) => row.count === 1)).toBe(true);
+  expect(JSON.stringify(rows)).not.toContain('private-id');
+});
+
 it('keeps client engagement separate from trusted outcomes and restricts impact reporting', async () => {
   expect((await track(event({ event: 'purchase_paid', surface: 'home' }))).status).toBe(400);
   expect(
@@ -544,6 +564,16 @@ it('separates operator engagement and reports invitation and free acquisition ou
   expect(result.outcomes.acquisitions).toEqual([{ source: 'free', status: 'active', count: 1 }]);
   expect(result.legacyEngagement).toEqual({ count: 99 });
   expect(result.note).toContain('operator');
+});
+
+it('expires inactive personal learning progress without removing recent progress or paths', async () => {
+  sql.exec(
+    "INSERT INTO videos(id,stream_uid,title) VALUES('lesson','stream','Lesson'); INSERT INTO lesson_progress(network_id,subject,video_id,position,updated_at) VALUES('default','old','lesson',42,'2000-01-01'),('default','recent','lesson',30,CURRENT_TIMESTAMP)"
+  );
+  await retention.scheduled({}, event().platform.env);
+  expect(sql.prepare('SELECT subject,position FROM lesson_progress').all()).toEqual([
+    { subject: 'recent', position: 30 }
+  ]);
 });
 
 it('expires impact aggregates on a scheduled invocation without customer traffic', async () => {

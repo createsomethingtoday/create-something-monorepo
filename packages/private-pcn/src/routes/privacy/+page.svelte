@@ -58,6 +58,12 @@
         Information comes from creators, participants, and authorized workspace operators.
       </li>
       <li>
+        <strong>Personal learning progress:</strong> your account identifier, network and lesson identifiers,
+        saved playback position, the watched status you choose, practice-start notes, and update timestamps.
+        These support resuming lessons across visits. They do not certify competence. Individual progress
+        is available to you and authorized platform support, not included in creator network exports.
+      </li>
+      <li>
         <strong>Company support:</strong> the company and contact information, project needs, workspace
         participants, requests, status, and updates submitted during an engagement.
       </li>
@@ -204,9 +210,15 @@
     </p>
     <p>
       The aggregate engagement and package-delivery tables use a 90-day cleanup window. Cleanup runs
-      when those records are written; it is not a promise that every system record is erased at
-      exactly 90 days. Playback events, security audits, account records, and provider logs are
-      separate from those aggregates and do not share that automatic cleanup rule.
+      on a daily schedule and when those records are written; it is not a promise that every system
+      record is erased at exactly 90 days. Playback events, security audits, account records, and
+      provider logs are separate from those aggregates and do not share that automatic cleanup rule.
+    </p>
+    <p>
+      Personal learning progress is removed by scheduled cleanup after 365 days without an update to
+      that lesson’s progress. Saving progress is a functional account feature; Do Not Track and
+      Global Privacy Control suppress optional aggregate engagement measurement, not your saved
+      position.
     </p>
     <p>
       Archiving a session or listing, revoking membership, and ending a subscription restrict

@@ -14,6 +14,7 @@ const surfaces = new Set([
   'collection',
   'library',
   'lesson',
+  'learning_path',
   'workspace',
   'support',
   'network',
@@ -30,7 +31,15 @@ export const POST: RequestHandler = async ({ locals, platform, request }) => {
   } catch {
     return json({ error: 'Invalid event.' }, { status: 400 });
   }
-  if (!body || !['page_view', 'primary_action'].includes(body.event) || !surfaces.has(body.surface))
+  if (
+    !body ||
+    !['page_view', 'primary_action', 'lesson_start', 'lesson_resume', 'practice_start'].includes(
+      body.event
+    ) ||
+    !surfaces.has(body.surface) ||
+    (['lesson_start', 'lesson_resume', 'practice_start'].includes(body.event) &&
+      body.surface !== 'lesson')
+  )
     return json({ error: 'Unknown engagement event.' }, { status: 400 });
   if (isOperatorActivity(locals, platform.env)) return new Response(null, { status: 204 });
   if (request.headers.get('DNT') === '1' || request.headers.get('Sec-GPC') === '1')
