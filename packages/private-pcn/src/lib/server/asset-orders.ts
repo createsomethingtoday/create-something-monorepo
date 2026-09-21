@@ -239,7 +239,6 @@ export async function acquireAsset(
     throw new BillingError('You already own this package. Download it from the asset page.', 409);
   if (!(await paidAccess(env, network)))
     throw new BillingError('This builder’s storefront is temporarily unavailable.');
-  const target = originFor(origin);
   const existingEntitlement = await env.DB.prepare(
     'SELECT source,status FROM asset_entitlements WHERE network_id=? AND asset_id=? AND release_id=? AND buyer_id=?'
   )
@@ -279,6 +278,7 @@ export async function acquireAsset(
       url: `/n/${network.slug}/assets/${asset.id}?release=${release.id}`
     };
   }
+  const target = originFor(origin);
   stripe ??= commerceStripe(env);
   const ready = await syncSeller(env, network.owner_id, stripe);
   if (!ready.chargesReady || !ready.payoutsReady)

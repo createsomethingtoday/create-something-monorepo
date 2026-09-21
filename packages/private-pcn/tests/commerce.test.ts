@@ -429,13 +429,27 @@ it('delivers a free release without Stripe configuration while paid purchasing s
       asset,
       r,
       { subject: 'buyer', email: 'buyer@example.com' },
-      'https://private.createsomething.agency'
+      'http://localhost:8787'
     );
   await expect(acquire()).resolves.toMatchObject({ status: 'acquired' });
   expect(grant()).toMatchObject({ source: 'free', status: 'active' });
   await expect(acquire({ ...a, price_cents: 100 })).rejects.toThrow('not available');
   env.PCN_FREE_ASSETS_ENABLED = 'false';
   await expect(acquire()).rejects.toThrow('not available');
+  env.PCN_ASSET_COMMERCE_ENABLED = 'true';
+  env.PCN_ASSET_FEE_POLICY = 'hosting_only_v1';
+  await expect(
+    acquireAsset(
+      env,
+      n,
+      { ...a, price_cents: 100 },
+      r,
+      { subject: 'other-buyer', email: 'other@example.com' },
+      'http://localhost:8787',
+      stripe
+    )
+  ).rejects.toThrow('Unsupported checkout origin');
+  expect(stripe.checkout.sessions.create).not.toHaveBeenCalled();
 });
 it('keeps a free release grant idempotent and refuses to reverse its revocation', async () => {
   const n: any = sql.prepare("SELECT * FROM networks WHERE id='net'").get(),

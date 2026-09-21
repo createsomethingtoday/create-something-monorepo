@@ -58,7 +58,7 @@ Audience context: Map PCN business and engineer leads (task01a0c0d4-a517-7cf3-b9
 
 Creator free-month activation uses PCN_CREATOR_TRIAL_ENABLED independently of PCN_SELF_SERVICE_ENABLED (paid hosting checkout). The trial still requires an approved creator, redeemed invitation, eligible draft network and unused atomic trial entitlement. No Stripe call or automatic subscription follows activation. Turn off the trial flag to stop new activations; existing trial dates remain authoritative.
 
-Production PCN_CREATOR_TRIAL_ENABLED remains false until invited activation acceptance passes; preview enables the independent trial switch. This source release does not claim the production free month is available.
+Production PCN_CREATOR_TRIAL_ENABLED is enabled after preview acceptance: a reviewed invitation recipient activated exactly one calendar month through an audited support session, with reload persistence and no automatic charge. Production activation readback is a separate final acceptance step.
 
 Production PCN_ENROLLMENT_ENABLED also remains false pending invitation/mailbox acceptance. The existing exact-mailbox allowlist stays operational during this staged rollout. The new eligibility code and database binding do not themselves make invitation signup available while the flag is false.
 
@@ -66,4 +66,4 @@ Production PCN_ENROLLMENT_ENABLED also remains false pending invitation/mailbox 
 
 `PCN_FREE_ASSETS_ENABLED` permits only zero-price release publishing and acquisition. It does not enable paid listings, Stripe checkout, seller setup or company support. Free publishing still requires approved creator access, an active eligible network, a complete immutable release and matching private R2 object metadata. Acquisition preserves exact-release entitlements, idempotency, revocation and pending paid-order recovery. No Stripe credential is needed for a free acquisition on an active creator trial. Existing paid-commerce activation continues to include free releases.
 
-Preview enables this switch for acceptance; production remains false until actual recipient acquisition, file delivery and denial are verified. Existing entitlements can still download after the switch is disabled. Rollback should disable new free acquisitions while retaining D1 entitlements and private R2 binding, not delete delivered releases.
+Preview acceptance verified creator publication, a separate buyer’s free entitlement and collection, the downloaded ZIP checksum against its source and private R2 readback, and anonymous page/download denial. This release enables the independent free-assets switch in production; live production readback remains a separate promotion check. Existing entitlements can still download after the switch is disabled. Rollback should disable new free acquisitions while retaining D1 entitlements and private R2 binding, not delete delivered releases.
