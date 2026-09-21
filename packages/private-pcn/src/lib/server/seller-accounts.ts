@@ -140,9 +140,9 @@ export async function ensureSeller(
         const rejection = onboardingRejection(error);
         if (rejection) {
           await env.DB.prepare(
-            'UPDATE seller_accounts SET creation_started=0 WHERE owner_id=? AND lease_id=? AND account_id IS NULL'
+            'UPDATE seller_accounts SET creation_started=0,creation_key=? WHERE owner_id=? AND lease_id=? AND account_id IS NULL'
           )
-            .bind(owner.subject, lease)
+            .bind(crypto.randomUUID(), owner.subject, lease)
             .run();
           throw rejection;
         }

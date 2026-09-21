@@ -64,7 +64,7 @@ export const GET: RequestHandler = async ({ locals, platform }) => {
     return json({ error: 'Use your own account for remote support.' }, { status: 403 });
   await expireTimers(platform.env.DB, locals.identity.subject, Math.floor(Date.now() / 1000));
   const { results: sessions } = await platform.env.DB.prepare(
-    'SELECT s.*,n.name,n.slug,n.kind FROM remote_sessions s JOIN networks n ON n.id=s.network_id WHERE s.buyer_id=? OR s.creator_id=? ORDER BY s.created_at DESC LIMIT 100'
+    `WITH visible AS (SELECT * FROM remote_sessions WHERE buyer_id=? OR creator_id=?), recent AS (SELECT id FROM visible ORDER BY created_at DESC LIMIT 100) SELECT s.*,n.name,n.slug,n.kind FROM visible s JOIN networks n ON n.id=s.network_id WHERE s.receipt_status='pending' OR s.id IN (SELECT id FROM recent) ORDER BY s.created_at DESC`
   )
     .bind(locals.identity.subject, locals.identity.subject)
     .all();

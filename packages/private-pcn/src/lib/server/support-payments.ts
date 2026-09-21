@@ -104,9 +104,9 @@ export async function ensureSupportPartner(
         if (rejection) {
           await db
             .prepare(
-              'UPDATE support_partners SET creation_started=0 WHERE subject=? AND lease_id=? AND account_id IS NULL'
+              'UPDATE support_partners SET creation_started=0,creation_key=? WHERE subject=? AND lease_id=? AND account_id IS NULL'
             )
-            .bind(subject, lease)
+            .bind(crypto.randomUUID(), subject, lease)
             .run();
           throw rejection;
         }

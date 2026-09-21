@@ -645,6 +645,6 @@ it.each(['forbidden', 'account_create_activation_required'])(
     expect(await ensureSupportPartner(e.platform.env, e.locals.identity, 'US', stripe)).toBe(
       'acct_support'
     );
-    expect(create.mock.calls[0][1].idempotencyKey).toBe(create.mock.calls[1][1].idempotencyKey);
+    expect(create.mock.calls[0][1].idempotencyKey).not.toBe(create.mock.calls[1][1].idempotencyKey);
   }
 );

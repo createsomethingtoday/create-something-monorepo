@@ -329,3 +329,72 @@ it('preserves paused work for buyer review when its session expires', async () =
   });
   expect((await POST(event('buyer', { action: 'time_confirm', id }))).status).toBe(200);
 });
+it('stops accrual at billing revocation and preserves it after renewal', async () => {
+  const now = supportFixture();
+  const id = await acceptedSupport();
+  await POST(event('creator', { action: 'time_start', id, ready: true }));
+  sql.exec(`UPDATE network_billing SET status='canceled',checked_at=${now + 30}`);
+  vi.setSystemTime(new Date((now + 90) * 1000));
+  let body = await (await GET(event('buyer'))).json();
+  expect(body.sessions[0]).toMatchObject({
+    status: 'ended',
+    tracked_seconds: 30,
+    timer_started_at: null,
+    receipt_status: 'pending'
+  });
+  sql.exec(
+    `UPDATE network_billing SET status='active',period_start=${now + 60},period_end=${now + 90000}`
+  );
+  body = await (await GET(event('buyer'))).json();
+  expect(body.ledger).toHaveLength(2);
+  expect(body.ledger.find((p: any) => p.period_start === now - 3600).pending_seconds).toBe(30);
+  await POST(event('buyer', { action: 'time_confirm', id }));
+  expect(
+    (await (await GET(event('buyer'))).json()).ledger.find(
+      (p: any) => p.period_start === now - 3600
+    ).confirmed_seconds
+  ).toBe(30);
+});
+it('clears timers ended by legacy workers and avoids zero-second pending receipts', async () => {
+  supportFixture();
+  const id = await acceptedSupport();
+  await POST(event('creator', { action: 'time_start', id, ready: true }));
+  sql.exec(`UPDATE remote_sessions SET status='ended' WHERE id='${id}'`);
+  expect(
+    sql.prepare('SELECT timer_started_at FROM remote_sessions WHERE id=?').get(id)?.timer_started_at
+  ).toBeNull();
+  const next = await acceptedSupport();
+  await POST(event('creator', { action: 'time_start', id: next, ready: true }));
+  await POST(
+    event('creator', { action: 'end', id: next, outcome: 'Ended before any work began.' })
+  );
+  expect(
+    sql.prepare('SELECT receipt_status FROM remote_sessions WHERE id=?').get(next)?.receipt_status
+  ).toBe('none');
+});
+it('keeps pending receipts visible beyond the latest 100 sessions', async () => {
+  const now = supportFixture();
+  const id = await acceptedSupport();
+  await POST(event('creator', { action: 'time_start', id, ready: true }));
+  vi.setSystemTime(new Date((now + 30) * 1000));
+  await POST(event('creator', { action: 'end', id, outcome: 'Configuration verified together.' }));
+  sql.exec(`WITH RECURSIVE nums(x) AS (VALUES(1) UNION ALL SELECT x+1 FROM nums WHERE x<101)
+    INSERT INTO remote_sessions(id,network_id,buyer_id,buyer_email,creator_id,method,status,scope,budget_cents,consent_version,created_at,updated_at,expires_at,updated_by)
+    SELECT 'new-'||x,'net','buyer','buyer@example.com','creator','rustdesk','ended','Test',0,'test',${now}+x,${now},${now},'buyer' FROM nums`);
+  expect((await (await GET(event('buyer'))).json()).sessions.some((s: any) => s.id === id)).toBe(
+    true
+  );
+});
+it('caps a running timer at a shortened paid boundary', async () => {
+  const now = supportFixture();
+  const id = await acceptedSupport();
+  await POST(event('creator', { action: 'time_start', id, ready: true }));
+  sql.exec(`UPDATE network_billing SET period_end=${now + 20},checked_at=${now + 60}`);
+  const row = sql.prepare('SELECT * FROM remote_sessions WHERE id=?').get(id);
+  expect(row).toMatchObject({
+    tracked_seconds: 20,
+    timer_started_at: null,
+    status: 'ended',
+    receipt_status: 'pending'
+  });
+});
