@@ -1,0 +1,27 @@
+name: Retained tooling recovery contracts
+on:
+  pull_request:
+    paths:
+      - '.claude/hooks/typecheck-stop.sh'
+      - 'packages/dotfiles/scripts/install*.sh'
+      - 'scripts/test/typecheck-stop.test.py'
+      - 'scripts/test/zellij-config-install.test.py'
+      - '.github/workflows/recovery-tooling-contracts.yml'
+  push:
+    branches: [main]
+    paths:
+      - '.claude/hooks/typecheck-stop.sh'
+      - 'packages/dotfiles/scripts/install*.sh'
+      - 'scripts/test/typecheck-stop.test.py'
+      - 'scripts/test/zellij-config-install.test.py'
+      - '.github/workflows/recovery-tooling-contracts.yml'
+permissions:
+  contents: read
+jobs:
+  tooling-contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - run: bash -n .claude/hooks/typecheck-stop.sh packages/dotfiles/scripts/install.sh packages/dotfiles/scripts/install-zellij-config.sh
+      - run: python3 scripts/test/typecheck-stop.test.py
+      - run: python3 scripts/test/zellij-config-install.test.py
