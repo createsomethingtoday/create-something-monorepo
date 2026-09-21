@@ -296,7 +296,7 @@ it('requires separate partner approval and keeps company support isolated from c
     network_id: workspace.id,
     status: 'requested',
     amount: 90000,
-    partner_percent: 95
+    partner_percent: 75
   });
   expect(
     (await (await supportList(event(undefined, 'other', 'other@example.com'))).json()).workspaces

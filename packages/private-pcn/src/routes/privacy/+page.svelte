@@ -17,7 +17,7 @@
 <LegalPage
   title="Privacy Policy"
   effectiveDate="September 21, 2026"
-  version="1.1"
+  version="1.2"
   description="How CREATE SOMETHING Private handles accounts, creator applications, private networks, assets, and support activity."
   {sections}
 >
@@ -279,6 +279,17 @@
       Contract or content-rights questions:
       <a href="mailto:legal@createsomething.io">legal@createsomething.io</a>. See the
       <a href="/terms">Private Terms of Service</a> for participation and content rules.
+    </p>
+  </section>
+  <section>
+    <h2>Remote-support records</h2>
+    <p>
+      PRIVATE stores session participants, method, agreed task, consent version, budget, status
+      changes, meeting links and outcome notes. These records are visible to the session
+      participants; authorized administrative access follows the controls described above. Never
+      enter device passwords or API keys. RustDesk or Zoom processes the remote connection under its
+      own policies. PRIVATE does not record screens or store remote-access passwords. Ending a
+      PRIVATE record does not disconnect RustDesk or Zoom.
     </p>
   </section>
 </LegalPage>

@@ -52,6 +52,17 @@
     }
     host.appendChild(component);
   }
+  async function hosted() {
+    busy = true;
+    message = '';
+    try {
+      const result = await api('seller', { country, action: 'hosted' }, data.network!.slug);
+      window.location.assign(result.url);
+    } catch (e) {
+      message = (e as Error).message;
+      busy = false;
+    }
+  }
   async function start() {
     busy = true;
     message = '';
@@ -185,6 +196,15 @@
         ></label
       >
     </div>{/if}
+  <button
+    class="button secondary"
+    disabled={busy || !country || !data.onboardingEnabled}
+    onclick={hosted}>Continue on Stripe <Icon name="external-link" /></button
+  >
+  <p class="field-hint">
+    Use Stripe’s hosted setup if the embedded form cannot connect. If the link expires, return here
+    to open a new one.
+  </p>
   <div bind:this={host} class="stripe-host"></div>
   <p class="workspace-trail">
     <a href={`/n/${data.network!.slug}/assets`}><Icon name="arrow-left" /> Back to your assets</a>

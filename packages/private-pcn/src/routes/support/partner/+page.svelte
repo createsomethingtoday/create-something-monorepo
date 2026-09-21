@@ -49,6 +49,17 @@
     }
     host.appendChild(component);
   }
+  async function hosted() {
+    busy = true;
+    message = '';
+    try {
+      const result = await api('support/payouts', { country, action: 'hosted' });
+      window.location.assign(result.url);
+    } catch (e) {
+      message = (e as Error).message;
+      busy = false;
+    }
+  }
   async function start() {
     busy = true;
     message = '';
@@ -102,8 +113,9 @@
   <h1>Deliver the support.<br /><em>Receive your share.</em></h1>
   <p class="lede">
     This payout account is for CREATE SOMETHING’s $900/month support subscription. The partner share
-    is 95%; CREATE SOMETHING retains 5% before processing fees. Your independent creator sales use a
-    separate payment account.
+    is 75% after Stripe’s actual transaction-processing fee; CREATE SOMETHING retains 25% of that
+    net amount and covers Billing and Connect fees from its share. Your independent creator sales
+    use a separate payment account.
   </p>
   <section class="builder-panel">
     <h2>Partner verification</h2>
@@ -136,6 +148,15 @@
     {#if !data.onboardingEnabled}<p class="availability">
         Partner payout onboarding is awaiting provider verification.
       </p>{/if}
+    <button
+      class="button secondary"
+      disabled={busy || !country || !data.onboardingEnabled}
+      onclick={hosted}>Continue on Stripe <Icon name="external-link" /></button
+    >
+    <p class="field-hint">
+      Use Stripe’s hosted setup if the embedded form cannot connect. If your link expires, return
+      here and choose Continue on Stripe again.
+    </p>
     <div bind:this={host}></div>
   </section>
 </main>

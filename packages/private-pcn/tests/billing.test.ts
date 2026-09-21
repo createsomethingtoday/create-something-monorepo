@@ -115,7 +115,8 @@ beforeEach(() => {
     '0003_resource_limits',
     '0004_subscriptions',
     '0008_creator_admission',
-    '0010_company_support'
+    '0010_company_support',
+    '0016_support_settlements'
   ])
     sqlite.exec(readFileSync(new URL(`../migrations/${migration}.sql`, import.meta.url), 'utf8'));
   sqlite
@@ -330,6 +331,18 @@ describe('billing lifecycle against migrated SQLite (supporting proof)', () => {
         })
       } as any);
     expect((await call(payload)).status).toBe(200);
+    const connectedPayload = JSON.stringify({ ...JSON.parse(payload), account: 'acct_other' });
+    expect(
+      (
+        await call(
+          connectedPayload,
+          stripe.webhooks.generateTestHeaderString({
+            payload: connectedPayload,
+            secret: env.STRIPE_WEBHOOK_SECRET
+          })
+        )
+      ).status
+    ).toBe(400);
     expect((await call(payload + ' ')).status).toBe(400);
     expect(
       (
@@ -362,7 +375,7 @@ it('does not charge an unapproved creator or charge away their unused trial time
   expect(stripe.customers.create).not.toHaveBeenCalled();
 });
 
-it('prices approved company support at $900 with 95 percent sent to the approved partner only', async () => {
+it('prices support at $900 and records the net 75 percent settlement policy without an automatic transfer', async () => {
   sqlite.exec(
     "INSERT INTO creator_applications(subject,email,display_name,credentials,teaching_video_url,status) VALUES('partner','partner@example.com','Partner','Experience','https://example.com/video','approved'); INSERT INTO support_partners(subject,approved,account_id,review_note,reviewed_by) VALUES('partner',1,'acct_partner','Approved','reviewer'); INSERT INTO support_workspaces(network_id,owner_id,partner_id,company,workflow,status) VALUES('alpha','owner','partner','Company','One agreed workflow','agreed');"
   );
@@ -399,8 +412,17 @@ it('prices approved company support at $900 with 95 percent sent to the approved
   );
   expect(stripe.checkout.sessions.create.mock.calls[0][0]).toMatchObject({
     line_items: [{ price: 'price_support', quantity: 1 }],
-    subscription_data: { transfer_data: { destination: 'acct_partner', amount_percent: 95 } }
+    subscription_data: {
+      metadata: {
+        support_destination: 'acct_partner',
+        support_partner: 'partner',
+        support_policy: 'net_processing_75_v1'
+      }
+    }
   });
+  expect(stripe.checkout.sessions.create.mock.calls[0][0].subscription_data).not.toHaveProperty(
+    'transfer_data'
+  );
   expect(stripe.checkout.sessions.create.mock.calls[0][0].subscription_data).not.toHaveProperty(
     'trial_period_days'
   );
