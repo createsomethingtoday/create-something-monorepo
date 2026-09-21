@@ -321,7 +321,10 @@ function getLibraryPermissionEmailFields(env: Env): string[] {
 }
 
 function getLibraryPermissionField(env: Env): string {
-  return env.AIRTABLE_LIBRARY_PERMISSION_FIELD || DEFAULT_LIBRARY_PERMISSION_FIELD;
+  return env.AIRTABLE_LIBRARY_PERMISSION_FIELD ||
+    (getLibraryPermissionTableId(env) === DEFAULT_CREATORS_TABLE_ID
+      ? DEFAULT_LIBRARY_PERMISSION_FIELD
+      : '⚙️Can submit Libraries?');
 }
 
 function getLibraryPermissionAllowedValues(env: Env): Set<string> {
