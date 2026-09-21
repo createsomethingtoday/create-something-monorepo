@@ -30,11 +30,13 @@ export async function supportLedger(db: D1Database, subject: string) {
   const { results } = await db
     .prepare(
       `WITH periods AS (
+      SELECT network_id,period_start,period_end FROM support_billing_periods
+      UNION
       SELECT network_id,period_start,period_end FROM network_billing WHERE period_start>0
       UNION
       SELECT network_id,support_period_start,MAX(support_period_end) FROM remote_sessions WHERE support_period_start>0 GROUP BY network_id,support_period_start
     ), monthly AS (SELECT network_id,period_start,MAX(period_end) AS period_end FROM periods GROUP BY network_id,period_start)
-    SELECT n.id AS network_id,n.name,p.period_start,CASE WHEN p.period_start=b.period_start THEN b.period_end ELSE p.period_end END AS period_end,
+    SELECT n.id AS network_id,n.name,p.period_start,CASE WHEN p.period_start=b.period_start THEN b.period_end ELSE COALESCE(history.period_end,p.period_end) END AS period_end,
     CASE WHEN p.period_start=b.period_start THEN b.status ELSE 'historical' END AS billing_status,w.status AS workspace_status, n.status AS network_status, partner.approved AS partner_approved, application.status AS creator_status,
     COALESCE(SUM(CASE WHEN s.receipt_status='confirmed' THEN s.tracked_seconds ELSE 0 END),0) AS confirmed_seconds,
     COALESCE(SUM(CASE WHEN s.receipt_status='pending' THEN s.tracked_seconds ELSE 0 END),0) AS pending_seconds,
@@ -42,6 +44,7 @@ export async function supportLedger(db: D1Database, subject: string) {
     FROM support_workspaces w JOIN networks n ON n.id=w.network_id JOIN monthly p ON p.network_id=n.id
     LEFT JOIN support_partners partner ON partner.subject=w.partner_id
     LEFT JOIN creator_applications application ON application.subject=w.partner_id
+    LEFT JOIN support_billing_periods history ON history.network_id=n.id AND history.period_start=p.period_start
     LEFT JOIN network_billing b ON b.network_id=n.id
     LEFT JOIN remote_sessions s ON s.network_id=n.id AND s.support_period_start=p.period_start
     WHERE (w.owner_id=? OR w.partner_id=?) GROUP BY n.id,p.period_start ORDER BY p.period_start DESC`

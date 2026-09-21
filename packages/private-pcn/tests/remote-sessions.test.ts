@@ -376,19 +376,28 @@ it('clears timers ended by legacy workers and avoids zero-second pending receipt
     sql.prepare('SELECT receipt_status FROM remote_sessions WHERE id=?').get(next)?.receipt_status
   ).toBe('none');
 });
-it('keeps pending receipts visible beyond the latest 100 sessions', async () => {
-  const now = supportFixture();
-  const id = await acceptedSupport();
-  await POST(event('creator', { action: 'time_start', id, ready: true }));
-  vi.setSystemTime(new Date((now + 30) * 1000));
-  await POST(event('creator', { action: 'end', id, outcome: 'Configuration verified together.' }));
-  sql.exec(`WITH RECURSIVE nums(x) AS (VALUES(1) UNION ALL SELECT x+1 FROM nums WHERE x<101)
+it.each(['pending', 'disputed'])(
+  'keeps %s receipts visible beyond the latest 100 sessions',
+  async (receipt) => {
+    const now = supportFixture();
+    const id = await acceptedSupport();
+    await POST(event('creator', { action: 'time_start', id, ready: true }));
+    vi.setSystemTime(new Date((now + 30) * 1000));
+    await POST(
+      event('creator', { action: 'end', id, outcome: 'Configuration verified together.' })
+    );
+    if (receipt === 'disputed')
+      await POST(
+        event('buyer', { action: 'time_dispute', id, note: 'The recorded duration needs review.' })
+      );
+    sql.exec(`WITH RECURSIVE nums(x) AS (VALUES(1) UNION ALL SELECT x+1 FROM nums WHERE x<101)
     INSERT INTO remote_sessions(id,network_id,buyer_id,buyer_email,creator_id,method,status,scope,budget_cents,consent_version,created_at,updated_at,expires_at,updated_by)
     SELECT 'new-'||x,'net','buyer','buyer@example.com','creator','rustdesk','ended','Test',0,'test',${now}+x,${now},${now},'buyer' FROM nums`);
-  expect((await (await GET(event('buyer'))).json()).sessions.some((s: any) => s.id === id)).toBe(
-    true
-  );
-});
+    expect((await (await GET(event('buyer'))).json()).sessions.some((s: any) => s.id === id)).toBe(
+      true
+    );
+  }
+);
 it('caps a running timer at a shortened paid boundary', async () => {
   const now = supportFixture();
   const id = await acceptedSupport();
@@ -513,3 +522,15 @@ it.each(['partner', 'creator', 'network'])(
     expect((await (await GET(event('buyer'))).json()).ledger[0].active).toBe(false);
   }
 );
+
+it('retains a shortened historical period end after renewal', async () => {
+  const now = supportFixture();
+  const id = await acceptedSupport();
+  await POST(event('creator', { action: 'time_start', id, ready: true }));
+  sql.exec(`UPDATE network_billing SET period_end=${now + 20},checked_at=${now + 30}`);
+  sql.exec(
+    `UPDATE network_billing SET period_start=${now + 20},period_end=${now + 90000},checked_at=${now + 40}`
+  );
+  const ledger = (await (await GET(event('buyer'))).json()).ledger;
+  expect(ledger.find((p: any) => p.period_start === now - 3600).period_end).toBe(now + 20);
+});
