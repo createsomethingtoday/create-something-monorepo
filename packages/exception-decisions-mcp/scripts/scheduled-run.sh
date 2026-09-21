@@ -1,4 +1,10 @@
 #!/bin/bash
+# LEGACY SCHEDULER: retained during the 2026-09-21 source recovery. The Worker release has
+# no scheduled handler or cron triggers; it has NOT replaced this launchd path.
+# CRE-2040 tracks durable human handoff and scheduled execution ownership before migration.
+# Do not run, unload, or retire this job based on the source merge. Verify its current owner,
+# status, credentials, and a delivered replacement receipt through the owning workflow first.
+#
 # Scheduled advisory recommendation run — twice a day via launchd
 # (~/Library/LaunchAgents/com.webflow.exception-recommender.plist).
 #

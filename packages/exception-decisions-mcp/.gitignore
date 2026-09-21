@@ -4,3 +4,4 @@
 .dify-console.token
 node_modules/
 runs/
+dist-dry-run/
