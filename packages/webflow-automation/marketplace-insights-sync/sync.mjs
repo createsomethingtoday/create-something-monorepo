@@ -173,10 +173,11 @@ async function main() {
     sellers,
     categories: categoryRecords
       .filter((r) => r.fields.fldWQDQuXlqwWxORG && values(r.fields.fldDSMRYPV8KBIeX7).length)
-      .map((r) => ({
-        name: r.fields.fldWQDQuXlqwWxORG,
-        group: values(r.fields.fldDSMRYPV8KBIeX7)[0]
-      })),
+      .map((r) => {
+        const groups = [...new Set(values(r.fields.fldDSMRYPV8KBIeX7))];
+        if (groups.length !== 1) fail(`Ambiguous taxonomy parent group for ${r.id}`);
+        return { name: r.fields.fldWQDQuXlqwWxORG, group: groups[0] };
+      }),
     assets: assetRecords.filter(r => values(r.fields.fldmfcD7pebc82EuN).includes('recA2YsPEHSuAHOLD')).flatMap((r) =>
       values(r.fields.fldFeWROxzwzCo84b).flatMap((value) =>
         value.split(',').map((templateId) => ({

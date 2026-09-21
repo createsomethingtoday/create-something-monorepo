@@ -216,3 +216,18 @@ test('library records cannot supply template attribution even with overlapping I
  assert.equal(result.status,0,result.stderr);
  assert.equal(result.snapshot.leaderboard[0].creatorEmail,'fixture@example.test');
 });
+
+test('multiple distinct taxonomy parents fail before publication', () => {
+ const data = fixture();
+ data.records[tables.categories][0].fields.fldDSMRYPV8KBIeX7 = ['Business', 'Creative'];
+ const result = run(data);
+ assert.equal(result.status,1);
+ assert.match(result.stderr,/Ambiguous taxonomy parent/);
+ assert.equal(result.writes.length,0);
+});
+test('repeated identical taxonomy parents remain unambiguous', () => {
+ const data = fixture();
+ data.records[tables.categories][0].fields.fldDSMRYPV8KBIeX7 = ['Business', 'Business'];
+ const result = run(data);
+ assert.equal(result.status,0,result.stderr);
+});
