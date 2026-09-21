@@ -770,13 +770,10 @@ export default {
         return withCors(authFailure);
       }
 
-      if (normalizedRequest.method === 'GET') {
-        const acceptHeader = (normalizedRequest.headers.get('accept') ?? '').toLowerCase();
-        if (!acceptHeader.includes('text/event-stream')) {
-          return withCors(
-            jsonResponse({ error: 'Not Acceptable: Client must accept text/event-stream' }, 406),
-          );
-        }
+      // This stateless transport has neither a notification stream nor sessions
+      // to terminate. Reject before creating a runtime or downstream connections.
+      if (normalizedRequest.method === 'GET' || normalizedRequest.method === 'DELETE') {
+        return withCors(new Response(null, { status: 405, headers: { Allow: 'POST, OPTIONS' } }));
       }
 
       try {
