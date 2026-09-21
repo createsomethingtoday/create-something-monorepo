@@ -534,3 +534,20 @@ it('retains a shortened historical period end after renewal', async () => {
   const ledger = (await (await GET(event('buyer'))).json()).ledger;
   expect(ledger.find((p: any) => p.period_start === now - 3600).period_end).toBe(now + 20);
 });
+it('keeps the last immutable receipt event consistent after a zero-second end', async () => {
+  supportFixture();
+  const id = await acceptedSupport();
+  await POST(event('creator', { action: 'time_start', id, ready: true }));
+  await POST(event('creator', { action: 'end', id, outcome: 'No work began before ending.' }));
+  const row = sql
+    .prepare(
+      'SELECT receipt_status,tracked_seconds,timer_started_at FROM remote_sessions WHERE id=?'
+    )
+    .get(id);
+  const audit = sql
+    .prepare(
+      'SELECT receipt_status,tracked_seconds,timer_started_at FROM support_time_events WHERE session_id=? ORDER BY id DESC LIMIT 1'
+    )
+    .get(id);
+  expect(audit).toEqual(row);
+});

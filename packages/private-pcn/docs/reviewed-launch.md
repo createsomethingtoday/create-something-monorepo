@@ -77,6 +77,6 @@ Company-support fulfillment is tracked separately from payment settlement. Each 
 
 Ending a timed session requires an outcome. The buyer confirms or disputes its time and outcome. Only confirmed seconds count toward delivered hours; pending and disputed time are shown separately. Disputed receipts require CREATE SOMETHING follow-up and are never silently approved. Immutable audit events retain actors, period boundaries, timer transitions, outcome and receipt decisions. Old sessions receive no inferred credit. Missing billing-period starts require provider reconciliation, never a guessed thirty-day period.
 
-This ledger does not prorate or withhold partner payouts, charge overages, or grant support hours with asset purchases. Existing payout and refund policies remain in force. Deploy migrations 0020 through 0024 before the Worker. Roll back code if necessary while retaining the additive schema and audit records.
+This ledger does not prorate or withhold partner payouts, charge overages, or grant support hours with asset purchases. Existing payout and refund policies remain in force. Deploy migrations 0020 through 0025 before the Worker. Roll back code if necessary while retaining the additive schema and audit records.
 
 Billing transitions settle running support time at the server-observed cutoff. Renewals retain prior-period receipts, and pending receipts remain visible outside the recent-session history limit. Migration 0022 also clears running timers when older Worker code ends a session during rollback.
