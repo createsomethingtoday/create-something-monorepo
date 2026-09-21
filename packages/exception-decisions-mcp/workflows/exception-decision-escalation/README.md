@@ -38,8 +38,8 @@ node packages/workflow-compiler/dist/cli.js verify --dir /tmp/exception-decision
 
 Revalidated 2026-09-21: four decisions, all six replay cases match, 18 compiled files,
 `externalMutations: false`, `integrity_verified`, unsigned attestation. Definition hash:
-`sha256:b61889f890a579d1aab4d7820bc2e6a989ed10f3543a27ccfecc2fa9981d3799`.
-Manifest hash: `sha256:2c0841060a34998456b54788405b1f28bef01a5b28c8401594741a148e6a1ed8`.
+`sha256:99aff26ba610d9108c488bddecd783d670ba56363c363f2ad25bbf5e8d2da7f1`.
+Manifest hash: `sha256:c7e67bc604276450aef3226a7c13bb1fc7f2f6d4a006da0a8e0520243aa87dc0`.
 This validates the contract only. The August deployment observations below are historical,
 not a September readback of Airtable or Slack.
 

@@ -795,11 +795,17 @@ function parseLean(raw: unknown): Lean {
   if (typeof lean.confidence !== "number" || !Number.isFinite(lean.confidence) || lean.confidence < 0 || lean.confidence > 1) {
     throw new Error("Invalid recommendation confidence: expected a finite number in [0, 1]");
   }
+  if (lean.route !== null && lean.route !== "Greg" && lean.route !== "Adam") {
+    throw new Error("Invalid escalation route: expected Greg, Adam, or null");
+  }
+  if (typeof lean.notes !== "string" || !lean.notes.trim()) {
+    throw new Error("Invalid recommendation notes: expected nonblank rationale");
+  }
   return {
     recommendation: rec === "approve" || rec === "deny" ? rec : "needs-human",
     confidence: lean.confidence,
-    route: typeof lean.route === "string" ? lean.route : null,
-    notes: String(lean.notes ?? ""),
+    route: lean.route,
+    notes: lean.notes,
   };
 }
 

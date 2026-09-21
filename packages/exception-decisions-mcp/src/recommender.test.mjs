@@ -58,7 +58,7 @@ function makeAirtable({ leans, patches, difyCalls, overrides = {}, failFirstPatc
       assert.equal(body.response_mode, "blocking");
       const itemId = body.inputs.prompt.match(/## Item (rec[A-Za-z]+)/)[1];
       const lean = leans[itemId];
-      return json({ answer: "```json\n" + JSON.stringify(lean) + "\n```" });
+      return json({ answer: "```json\n" + JSON.stringify({ route: null, ...lean }) + "\n```" });
     }
     assert.equal(url.hostname, "api.airtable.com");
     const path = url.pathname.replace("/v0/appMoIgXMTTTNIc3p/", "");
@@ -378,3 +378,45 @@ describe("review regression coverage", () => {
     assert.ok(!patches.some(x => x.body.records[0].id === "recTechNew"));
   });
 });
+
+for (const route of [false, 0, {}, [], "unknown", undefined]) {
+  it(`rejects malformed or missing escalation route ${JSON.stringify(route)}`, async () => {
+    const patches = [];
+    globalThis.fetch = makeAirtable({ patches, difyCalls: [], leans: {
+      recTechNew: { recommendation: "approve", confidence: 0.99, route, notes: "invalid route" },
+      recLowConf: { recommendation: "needs-human", confidence: 0.4, route: null, notes: "review" }
+    }});
+    const receipt = await runRecommendationPass(env);
+    assert.equal(patches.length, 0);
+    assert.ok(receipt.errors.some(x => x.includes("route")));
+  });
+}
+
+it("keeps every compiled MCP action compatible with the advertised tool schema", async () => {
+  const response = await worker.fetch(new Request("https://x/mcp", {
+    method: "POST", headers: { Authorization: `Bearer ${OPERATOR_KEY}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "tools/list", params: {} })
+  }), env);
+  const { result } = await response.json();
+  const definition = JSON.parse(readFileSync(resolve(PKG_DIR, "workflows/exception-decision-escalation/workflow.json"), "utf8"));
+  for (const action of definition.actions.filter(a => a.tool?.targetSystemId === "exception-decisions-mcp")) {
+    const schema = result.tools.find(t => t.name === action.tool.name)?.inputSchema;
+    assert.ok(schema, action.tool.name);
+    const parameters = action.tool.parameters.map(p => p.name);
+    for (const name of schema.required) assert.ok(parameters.includes(name), `${action.id} missing ${name}`);
+    for (const parameter of action.tool.parameters) assert.equal(parameter.type, schema.properties[parameter.name]?.type, `${action.id} unsupported ${parameter.name}`);
+  }
+});
+
+for (const notes of [undefined, null, 42, {}, " "]) {
+  it(`rejects missing or malformed rationale ${JSON.stringify(notes)}`, async () => {
+    const patches = [];
+    globalThis.fetch = makeAirtable({ patches, difyCalls: [], leans: {
+      recTechNew: { recommendation: "approve", confidence: 0.99, route: null, notes },
+      recLowConf: { recommendation: "needs-human", confidence: 0.4, route: null, notes: "review" }
+    }});
+    const receipt = await runRecommendationPass(env);
+    assert.equal(patches.length, 0);
+    assert.ok(receipt.errors.some(x => x.includes("notes")));
+  });
+}

@@ -43,7 +43,8 @@
       "evidence": {
         "item_id": "recHjEZpiYAceDeEG",
         "decider_id": "final-decider",
-        "decision_notes": "Vendor credential, not a Webflow token."
+        "decision": "denied",
+        "notes": "Vendor credential, not a Webflow token."
       },
       "approvals": [],
       "expectedOutcome": "approval_required",
@@ -73,7 +74,8 @@
       "evidence": {
         "item_id": "recHjEZpiYAceDeEG",
         "decider_id": "recommendation-automation",
-        "decision_notes": "Automated recommendation (advisory)"
+        "decision": "denied",
+        "notes": "Automated recommendation (advisory)"
       },
       "approvals": [],
       "expectedOutcome": "blocked",
@@ -87,7 +89,8 @@
       "actorId": "final-decider",
       "evidence": {
         "item_id": "recVuh5WPhl8RKiIn",
-        "decider_id": "final-decider"
+        "decider_id": "final-decider",
+        "decision": "denied"
       },
       "approvals": [],
       "expectedOutcome": "blocked",

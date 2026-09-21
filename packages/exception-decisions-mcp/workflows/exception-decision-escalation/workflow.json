@@ -292,7 +292,8 @@
       "requiredEvidence": [
         "item_id",
         "decider_id",
-        "decision_notes"
+        "decision",
+        "notes"
       ],
       "approval": {
         "required": true,
@@ -322,14 +323,14 @@
             "description": "Airtable exception item record id."
           },
           {
-            "name": "decider_id",
+            "name": "decision",
             "type": "string",
-            "description": "Identity key of the deciding person."
+            "description": "Human decision: approved, denied, or under_review."
           },
           {
-            "name": "decision_notes",
+            "name": "notes",
             "type": "string",
-            "description": "Written rationale recorded on the item."
+            "description": "Written decision rationale. Identity comes from the authenticated MCP key."
           }
         ]
       }
@@ -467,7 +468,8 @@
       "requiredEvidence": [
         "item_id",
         "decider_id",
-        "decision_notes"
+        "decision",
+        "notes"
       ]
     },
     {
