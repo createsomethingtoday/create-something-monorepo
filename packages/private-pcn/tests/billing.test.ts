@@ -96,6 +96,7 @@ function subscription(status = 'active') {
     metadata: { network_id: 'alpha', owner_id: 'owner' },
     pause_collection: null,
     cancel_at_period_end: false,
+    cancel_at: null as number | null,
     items: {
       data: [{ price, quantity: 1, current_period_end: Math.floor(Date.now() / 1000) + 3600 }]
     }
@@ -213,6 +214,35 @@ describe('billing lifecycle against migrated SQLite (supporting proof)', () => {
     expect(await paidAccess(env, network)).toBe(true);
     sqlite.prepare('UPDATE network_billing SET period_end=1').run();
     expect(await paidAccess(env, network)).toBe(false);
+  });
+  it('shows a portal cancellation timestamp and stops access at that cutoff', async () => {
+    seedBilling();
+    const stripe = provider();
+    const sub = subscription();
+    // Stripe flexible billing portal supplies cancel_at while the legacy flag stays false.
+    sub.cancel_at = Math.floor(Date.now() / 1000) + 1800;
+    stripe.subscriptions.list.mockResolvedValue({ data: [sub], has_more: false });
+    const row = await refreshBilling(env, network, stripe);
+    expect(row.cancel_at_period_end).toBe(1);
+    expect(row.period_end).toBe(sub.cancel_at);
+    expect(await paidAccess(env, network)).toBe(true);
+    sub.cancel_at = Math.floor(Date.now() / 1000) - 1;
+    await refreshBilling(env, network, stripe);
+    expect(await paidAccess(env, network)).toBe(false);
+    expect(sqlite.prepare('SELECT status FROM networks WHERE id=?').get('alpha')?.status).toBe(
+      'suspended'
+    );
+  });
+  it('does not label the current period as final when cancellation is later', async () => {
+    seedBilling();
+    const stripe = provider();
+    const sub = subscription();
+    sub.cancel_at = sub.items.data[0].current_period_end + 3600;
+    stripe.subscriptions.list.mockResolvedValue({ data: [sub], has_more: false });
+    const row = await refreshBilling(env, network, stripe);
+    expect(row.period_end).toBe(sub.items.data[0].current_period_end);
+    expect(row.cancel_at_period_end).toBe(0);
+    expect(await paidAccess(env, network)).toBe(true);
   });
   it('does not activate paused collections or an unexpected plan', async () => {
     seedBilling();
