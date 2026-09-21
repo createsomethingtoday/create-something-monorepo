@@ -125,7 +125,7 @@ export async function timeAction(
     try {
       const result = await db
         .prepare(
-          `UPDATE remote_sessions SET timer_started_at=?,support_period_start=?,support_period_end=?,updated_by=?,updated_at=? WHERE id=? AND status='accepted' AND timer_started_at IS NULL AND receipt_status='none' AND (support_period_start IS NULL OR (support_period_start=? AND support_period_end=?))`
+          `UPDATE remote_sessions SET timer_started_at=?,support_period_start=?,support_period_end=?,updated_by=?,updated_at=? WHERE id=? AND status='accepted' AND timer_started_at IS NULL AND receipt_status='none' AND (support_period_start IS NULL OR (support_period_start=? AND support_period_end=?)) AND EXISTS (SELECT 1 FROM network_billing b JOIN support_workspaces w ON w.network_id=b.network_id JOIN networks n ON n.id=b.network_id JOIN support_partners p ON p.subject=w.partner_id JOIN creator_applications a ON a.subject=p.subject WHERE b.network_id=remote_sessions.network_id AND b.status='active' AND b.period_start=? AND b.period_end=? AND w.status='agreed' AND w.partner_id=remote_sessions.creator_id AND n.status='active' AND p.approved=1 AND a.status='approved')`
         )
         .bind(
           now,
@@ -134,6 +134,8 @@ export async function timeAction(
           subject,
           now,
           row.id,
+          period.period_start,
+          period.period_end,
           period.period_start,
           period.period_end
         )

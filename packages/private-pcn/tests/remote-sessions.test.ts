@@ -259,8 +259,11 @@ it('rejects unready, buyer-started, duplicate and revoked-partner timers', async
   );
   expect((await POST(event('buyer', { action: 'time_pause', id }))).status).toBe(200);
   sql.exec('UPDATE support_partners SET approved=0');
+  expect(sql.prepare('SELECT status FROM remote_sessions WHERE id=?').get(id)?.status).toBe(
+    'ended'
+  );
   expect((await POST(event('creator', { action: 'time_start', id, ready: true }))).status).toBe(
-    403
+    409
   );
 });
 it('does not let an asset purchase claim included company-support hours', async () => {
@@ -409,4 +412,45 @@ it('reports the current shortened billing boundary rather than the original rece
     period_end: now + 20,
     active: false
   });
+});
+it.each(['partner', 'creator'])(
+  'settles running time when %s approval is revoked',
+  async (kind) => {
+    const now = supportFixture();
+    const id = await acceptedSupport();
+    await POST(event('creator', { action: 'time_start', id, ready: true }));
+    const boundary = Number(sql.prepare('SELECT unixepoch() AS t').get()?.t);
+    sql
+      .prepare(
+        'UPDATE remote_sessions SET timer_started_at=?,expires_at=?,support_period_end=? WHERE id=?'
+      )
+      .run(boundary - 30, boundary + 3600, boundary + 3600, id);
+    sql.exec(
+      kind === 'partner'
+        ? 'UPDATE support_partners SET approved=0'
+        : "UPDATE creator_applications SET status='suspended'"
+    );
+    const row = sql.prepare('SELECT * FROM remote_sessions WHERE id=?').get(id);
+    expect(row).toMatchObject({
+      status: 'ended',
+      timer_started_at: null,
+      receipt_status: 'pending'
+    });
+    expect(Number(row?.tracked_seconds)).toBeGreaterThanOrEqual(30);
+    expect(Number(row?.tracked_seconds)).toBeLessThan(33);
+  }
+);
+it('rejects a billing change in the final timer-start statement', async () => {
+  supportFixture();
+  const id = await acceptedSupport();
+  const e = event('creator', { action: 'time_start', id, ready: true });
+  e.platform.env.DB.prepare = (q: string) => {
+    if (q.startsWith('UPDATE remote_sessions SET timer_started_at='))
+      sql.exec("UPDATE network_billing SET status='canceled'");
+    return stmt(q);
+  };
+  expect((await POST(e)).status).toBe(409);
+  expect(
+    sql.prepare('SELECT timer_started_at FROM remote_sessions WHERE id=?').get(id)?.timer_started_at
+  ).toBeNull();
 });
