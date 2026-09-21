@@ -7,7 +7,7 @@ export const GET: RequestHandler = async ({ locals, platform }) => {
   if (!platform?.env.DB) return json({ error: 'Export unavailable.' }, { status: 503 });
   const db = platform.env.DB;
   const id = locals.network.id;
-  const [videos, members, receipts, assets, releases] = await Promise.all([
+  const [videos, members, receipts, assets, releases, lessons] = await Promise.all([
     db
       .prepare(
         'SELECT id,title,description,series,visibility,access,ingest_status,duration,created_at,updated_at FROM videos WHERE network_id=? ORDER BY created_at'
@@ -45,14 +45,21 @@ export const GET: RequestHandler = async ({ locals, platform }) => {
         sha256: string;
         size_bytes: number;
         created_at: string;
-      }>()
+      }>(),
+    db
+      .prepare(
+        'SELECT video_id,outcome,prerequisites,tools,transcript,practice,release_id,updated_at FROM lesson_material WHERE network_id=? ORDER BY video_id'
+      )
+      .bind(id)
+      .all()
   ]);
   return json(
     {
-      schemaVersion: 2,
+      schemaVersion: 3,
       exportedAt: new Date().toISOString(),
       network: publicNetwork(locals.network),
       sessions: videos.results,
+      lessonMaterial: lessons.results,
       members: members.results,
       activity: receipts.results,
       assets: assets.results,

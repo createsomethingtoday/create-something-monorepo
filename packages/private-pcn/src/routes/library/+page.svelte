@@ -1,31 +1,35 @@
 <script lang="ts">
   import Icon from '$lib/components/Icon.svelte';
-  import { onMount, tick } from 'svelte';
+  import { onMount, onDestroy } from 'svelte';
+  import { page } from '$app/state';
+  import { replaceState } from '$app/navigation';
+  import { lessonPath, libraryReturnPath } from '$lib/lessons';
   import { api as requestApi, type CatalogVideo } from '$lib/client';
-  import Player from '$lib/components/Player.svelte';
   import { filterCatalog } from '$lib/catalog';
   let { data } = $props();
   const slug = $derived(data.network?.slug === 'create-something' ? undefined : data.network?.slug);
   const api = (path: string, body?: unknown) => requestApi(path, body, slug);
   const libraryPath = $derived(slug ? `/n/${slug}` : '/library');
   let videos = $state<CatalogVideo[]>([]);
-  let selected = $state<CatalogVideo | null>(null);
   let error = $state('');
   let loading = $state(true);
   let query = $state('');
   let series = $state('');
-  let playerHeading = $state<HTMLHeadingElement>();
-  let opener: HTMLButtonElement | null = null;
-  async function openVideo(video: CatalogVideo, button: HTMLButtonElement) {
-    opener = button;
-    selected = video;
-    await tick();
-    playerHeading?.focus();
+  let filterTimer: ReturnType<typeof setTimeout>;
+  onDestroy(() => clearTimeout(filterTimer));
+  function scheduleFilters() {
+    clearTimeout(filterTimer);
+    filterTimer = setTimeout(rememberFilters, 250);
   }
-  async function closeVideo() {
-    selected = null;
-    await tick();
-    if (opener?.isConnected) opener.focus();
+  function rememberFilters() {
+    clearTimeout(filterTimer);
+    const params = new URLSearchParams();
+    if (query) params.set('q', query);
+    if (series) params.set('series', series);
+    replaceState(libraryReturnPath(slug, params), {
+      ...page.state,
+      libraryFilters: { path: libraryPath, query, series }
+    });
   }
   const seriesOptions = $derived([...new Set(videos.map((video) => video.series))].sort());
   const visibleVideos = $derived(filterCatalog(videos, query, series));
@@ -44,6 +48,11 @@
     await api('logout', {});
     window.location.assign(libraryPath);
   }
+  $effect(() => {
+    const saved = page.state.libraryFilters;
+    query = saved?.path === libraryPath ? saved.query : page.url.searchParams.get('q') || '';
+    series = saved?.path === libraryPath ? saved.series : page.url.searchParams.get('series') || '';
+  });
   onMount(load);
 </script>
 
@@ -88,23 +97,25 @@
         ask the creator to check the email on your invitation.
       </p>
     </aside>{/if}
-  {#if selected}<section class="watch-panel" aria-label="Video playback">
-      <div class="panel-heading">
-        <h2 bind:this={playerHeading} tabindex="-1">{selected.title}</h2>
-        <button class="text-button" onclick={closeVideo}>Back to sessions ×</button>
-      </div>
-      {#key selected.id}<Player id={selected.id} title={selected.title} networkSlug={slug} />{/key}
-      <p>{selected.description}</p>
-    </section>{/if}
   {#if videos.length}<div class="library-tools">
       <label
         >Search the library<input
           type="search"
+          maxlength="200"
           bind:value={query}
+          oninput={(event) => {
+            query = event.currentTarget.value;
+            scheduleFilters();
+          }}
           placeholder="Search topics, titles, or methods"
         /></label
       ><label
-        >Series<select bind:value={series}
+        >Series<select
+          bind:value={series}
+          onchange={(event) => {
+            series = event.currentTarget.value;
+            rememberFilters();
+          }}
           ><option value="">All series</option>{#each seriesOptions as option}<option value={option}
               >{option}</option
             >{/each}</select
@@ -143,12 +154,14 @@
         onclick={() => {
           query = '';
           series = '';
+          rememberFilters();
         }}>Clear filters</button
       >
     </div>{:else}<div class="catalog">
-      {#each visibleVideos as video, index}<button
+      {#each visibleVideos as video, index}<a
           class="video-card"
-          onclick={(event) => openVideo(video, event.currentTarget)}
+          href={lessonPath(video.id, slug, query, series)}
+          onclick={rememberFilters}
           ><div class="video-cover">
             <span>{video.series}</span><strong>{String(index + 1).padStart(2, '0')}</strong><span
               class="video-play"
@@ -163,7 +176,7 @@
             >
             <h2>{video.title}</h2>
             <p>{video.description}</p>
-          </div></button
+          </div></a
         >{/each}
     </div>{/if}
 </main>
@@ -224,9 +237,8 @@
     font-size: 26px;
     letter-spacing: -0.03em;
   }
-  .panel-heading h2:focus {
-    outline: 2px solid var(--signal);
-    outline-offset: 6px;
+  .video-card {
+    text-decoration: none;
   }
   @media (max-width: 760px) {
     .workspace-title {

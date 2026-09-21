@@ -2,6 +2,9 @@ import type { Network } from './lib/server/networks';
 import type { D1Database, R2Bucket } from '@cloudflare/workers-types';
 declare global {
   namespace App {
+    interface PageState {
+      libraryFilters?: { path: string; query: string; series: string };
+    }
     interface Platform {
       env: {
         DB: D1Database;

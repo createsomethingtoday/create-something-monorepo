@@ -7,10 +7,12 @@ export function impactSurface(path: string): string | null {
     '/signup': 'signup',
     '/login': 'login',
     '/collection': 'collection',
+    '/library': 'library',
     '/dashboard': 'workspace',
     '/support': 'support'
   };
   if (pages[path]) return pages[path];
+  if (/^\/(?:n\/[a-z0-9-]+\/)?lessons\/[a-z0-9-]+$/.test(path)) return 'lesson';
   if (/^\/n\/[a-z0-9-]+\/assets\/[a-z0-9-]+$/.test(path)) return 'asset';
   if (/^\/n\/[a-z0-9-]+\/settings$/.test(path)) return 'settings';
   if (/^\/n\/[a-z0-9-]+$/.test(path)) return 'network';
