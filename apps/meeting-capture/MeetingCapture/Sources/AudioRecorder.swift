@@ -129,17 +129,20 @@ final class AudioRecorder {
         isTransitioning = true
         defer { isTransitioning = false }
         let url: URL?
+        var resultBackend = backend
         switch backend {
         case .systemAudio:
             url = await systemAudioRecorder.stopRecording()
         case .systemAudioAndMicrophone:
             let microphoneURL = microphoneRecorder.stopRecording()
             let systemAudioURL = await systemAudioRecorder.stopRecording()
-            url = await combineRecordings(
+            let combined = await combineRecordings(
                 systemAudioURL: systemAudioURL,
                 microphoneURL: microphoneURL,
                 meetingId: activeMeetingId
             )
+            url = combined?.url
+            resultBackend = combined?.backend ?? backend
         case .microphone:
             url = microphoneRecorder.stopRecording()
         }
@@ -152,16 +155,20 @@ final class AudioRecorder {
             return nil
         }
 
-        return AudioRecordingResult(url: outputURL, backend: backend)
+        return AudioRecordingResult(url: outputURL, backend: resultBackend)
     }
 
     private func combineRecordings(
         systemAudioURL: URL?,
         microphoneURL: URL?,
         meetingId: String?
-    ) async -> URL? {
-        guard let systemAudioURL else { return microphoneURL }
-        guard let microphoneURL, let meetingId else { return systemAudioURL }
+    ) async -> AudioRecordingResult? {
+        guard let systemAudioURL else {
+            return microphoneURL.map { AudioRecordingResult(url: $0, backend: .microphone) }
+        }
+        guard let microphoneURL, let meetingId else {
+            return AudioRecordingResult(url: systemAudioURL, backend: .systemAudio)
+        }
 
         let outputURL = FileManager.default.temporaryDirectory
             .appendingPathComponent("\(meetingId).m4a")
@@ -177,10 +184,10 @@ final class AudioRecorder {
             )
             try? FileManager.default.removeItem(at: systemAudioURL)
             try? FileManager.default.removeItem(at: microphoneURL)
-            return outputURL
+            return AudioRecordingResult(url: outputURL, backend: .systemAudioAndMicrophone)
         } catch {
             print("Failed to mix system and microphone audio: \(error)")
-            return systemAudioURL
+            return AudioRecordingResult(url: systemAudioURL, backend: .systemAudio)
         }
     }
 }
