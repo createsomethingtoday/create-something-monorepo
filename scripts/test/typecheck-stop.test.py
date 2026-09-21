@@ -10,7 +10,7 @@ HOOK = Path(__file__).resolve().parents[2] / '.claude/hooks/typecheck-stop.sh'
 
 
 class TypecheckStopTests(unittest.TestCase):
-    def run_hook(self, *, svelte=False, checker_exit=0, tsc_exit=0, sync_exit=0, active=False):
+    def run_hook(self, *, svelte=False, checker_exit=0, tsc_exit=0, sync_exit=0, indirect=False, active=False):
         with tempfile.TemporaryDirectory(prefix='typecheck hook ') as directory:
             root = Path(directory)
             package = root / 'packages/example'
@@ -18,8 +18,8 @@ class TypecheckStopTests(unittest.TestCase):
             (package / 'node_modules').mkdir()
             (package / 'tsconfig.json').write_text(json.dumps({'extends': './.svelte-kit/tsconfig.json'} if svelte else {}))
             (package / 'package.json').write_text(json.dumps({'scripts': {
-                'check': 'svelte-kit sync && svelte-check' if svelte else 'tsc --noEmit'
-            }}))
+                'check': ('pnpm package && svelte-check' if indirect else 'svelte-kit sync && svelte-check') if svelte else 'tsc --noEmit'
+            }, 'devDependencies': {'@sveltejs/kit': '^2.0.0'} if svelte else {}}))
             source = package / ('Example.svelte' if svelte else 'example.ts')
             source.write_text('before\n')
             for args in [['init', '-q'], ['add', '.'], ['-c', 'user.name=Fixture', '-c',
@@ -75,6 +75,12 @@ sys.exit(code)
 
     def test_fresh_sveltekit_package_generates_config_before_checking(self):
         result, commands = self.run_hook(svelte=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(commands[0], ['exec', 'svelte-kit', 'sync'])
+        self.assertIn('svelte-check', commands[1])
+
+    def test_indirect_sveltekit_setup_generates_config(self):
+        result, commands = self.run_hook(svelte=True, indirect=True)
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(commands[0], ['exec', 'svelte-kit', 'sync'])
         self.assertIn('svelte-check', commands[1])
