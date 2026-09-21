@@ -72,7 +72,7 @@
       {#each data.ledger as period}
         <h3>{period.name}</h3>
         {#if !period.active}<p class="field-hint">
-            Historical billing period. These records do not authorize new support time.
+            Support is not currently available for this period. These records do not authorize new support time.
           </p>{/if}
         <p>
           {new Date(period.period_start * 1000).toLocaleDateString()} – {new Date(

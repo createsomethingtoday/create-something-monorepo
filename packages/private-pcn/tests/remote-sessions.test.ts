@@ -499,3 +499,17 @@ it('requires an outcome even when a timer starts concurrently with ending', asyn
     'accepted'
   );
 });
+it.each(['partner', 'creator', 'network'])(
+  'marks ledger inactive after %s access is revoked',
+  async (kind) => {
+    supportFixture();
+    sql.exec(
+      kind === 'partner'
+        ? 'UPDATE support_partners SET approved=0'
+        : kind === 'creator'
+          ? "UPDATE creator_applications SET status='suspended'"
+          : "UPDATE networks SET status='suspended'"
+    );
+    expect((await (await GET(event('buyer'))).json()).ledger[0].active).toBe(false);
+  }
+);
