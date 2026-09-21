@@ -22,6 +22,8 @@
   "vars": {
     "ENVIRONMENT": "production",
     "PCN_ADMIN_EMAILS": "micah@createsomething.io",
+    "PCN_ANALYTICS_OPERATOR_EMAILS": "micah@createsomething.io,mjohnson25@gmail.com,micah+private-acceptance@createsomething.io",
+    "PCN_ANALYTICS_OPERATOR_SUBJECTS": "b8adb839-ddbb-4747-968e-7668687cf140,22dce525-57de-461b-8f9f-c3c86bc8c28d",
     "PCN_IMPERSONATION_ENABLED": "true",
     "CLOUDFLARE_ACCOUNT_ID": "9645bd52e640b8a4f40a3a55ff1dd75a",
     "PCN_SELF_SERVICE_ENABLED": "false",
@@ -67,6 +69,8 @@
       "vars": {
         "ENVIRONMENT": "production",
         "PCN_ADMIN_EMAILS": "micah@createsomething.io",
+        "PCN_ANALYTICS_OPERATOR_EMAILS": "micah@createsomething.io,mjohnson25@gmail.com,micah+private-acceptance@createsomething.io",
+        "PCN_ANALYTICS_OPERATOR_SUBJECTS": "b8adb839-ddbb-4747-968e-7668687cf140,22dce525-57de-461b-8f9f-c3c86bc8c28d",
         "PCN_IMPERSONATION_ENABLED": "true",
         "CLOUDFLARE_ACCOUNT_ID": "9645bd52e640b8a4f40a3a55ff1dd75a",
         "PCN_SELF_SERVICE_ENABLED": "false",
