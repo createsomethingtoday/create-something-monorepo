@@ -26,7 +26,7 @@
       "actionId": "notify_decider",
       "actorId": "notification-automation",
       "evidence": {
-        "decider_id": "adam.lehman@webflow.com",
+        "decider_id": "U0ACR9V5UC9",
         "undecided_count": "33",
         "oldest_requested_at": "2026-08-04T05:00:00.000Z"
       },

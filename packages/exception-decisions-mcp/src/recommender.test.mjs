@@ -227,8 +227,8 @@ describe("recommendation lane (cron)", () => {
       patches,
       difyCalls,
       leans: {
-        recTechNew: { recommendation: "approve", confidence: 0.8, route: null, notes: "Category-inherent." },
-        recLowConf: { recommendation: "deny", confidence: 0.95, route: null, notes: "CORS open." },
+        recTechNew: { recommendation: "approve", confidence: 0.8, route: null, notes: "A yes means accepting the documented category-inherent behavior." },
+        recLowConf: { recommendation: "deny", confidence: 0.95, route: null, notes: "A yes means allowing credentialed requests from arbitrary origins." },
       },
     });
     const receipt = await runRecommendationPass(env, { dryRun: true, cap: 1 });
@@ -279,7 +279,7 @@ describe("recommendation lane (cron)", () => {
 
   it("exposes POST /runs/recommend to operator and automation keys only", async () => {
     globalThis.fetch = makeAirtable({ patches: [], difyCalls: [], leans: {
-      recTechNew: { recommendation: "deny", confidence: 0.9, notes: "advisory" },
+      recTechNew: { recommendation: "deny", confidence: 0.9, notes: "A yes means accepting the documented technical finding for this app." },
       recLowConf: { recommendation: "needs-human", confidence: 0.4, notes: "review" }
     } });
     const call = (key, body) =>
@@ -330,8 +330,8 @@ describe("recommendation lane (cron)", () => {
 
 describe("review regression coverage", () => {
   const leans = {
-    recTechNew: { recommendation: "deny", confidence: 0.95, route: null, notes: "advisory" },
-    recLowConf: { recommendation: "approve", confidence: 0.95, route: null, notes: "advisory" }
+    recTechNew: { recommendation: "deny", confidence: 0.95, route: null, notes: "A yes means accepting the documented technical finding for this app." },
+    recLowConf: { recommendation: "approve", confidence: 0.95, route: null, notes: "A yes means accepting the documented technical finding for this app." }
   };
   it("permits an explicit dry run while cron writes are disabled and refreshes precedents", async () => {
     const patches = [], difyCalls = [];
@@ -425,7 +425,7 @@ for (const notes of [undefined, null, 42, {}, " "]) {
 it("rechecks an overlapping recommendation at the write boundary", async () => {
   const patches=[];
   globalThis.fetch=makeAirtable({patches,difyCalls:[],leans:{
-    recTechNew:{recommendation:"deny",confidence:0.9,route:null,notes:"candidate"},
+    recTechNew:{recommendation:"deny",confidence:0.9,route:null,notes:"A yes means accepting the documented technical finding for this app."},
     recLowConf:{recommendation:"needs-human",confidence:0.3,route:null,notes:"review"}
   },afterDify(items,id){if(id==="recTechNew"){
     items[id].status="👀Under Review";
@@ -439,7 +439,7 @@ for (const detail of ["A yes protects our partnership strategy.","Relationship s
   it(`routes relationship context before inference: ${detail}`,async()=>{
     const patches=[],difyCalls=[];
     globalThis.fetch=makeAirtable({patches,difyCalls,leans:{
-      recTechNew:{recommendation:"approve",confidence:0.99,route:null,notes:"candidate"},
+      recTechNew:{recommendation:"approve",confidence:0.99,route:null,notes:"A yes means accepting the documented technical finding for this app."},
       recLowConf:{recommendation:"needs-human",confidence:0.3,route:null,notes:"review"}
     },overrides:{recTechNew:{title:"Technical exception",type:"Guideline",status:"🆕Requested",notes:"",detail}}});
     const receipt=await runRecommendationPass(env);
@@ -448,3 +448,38 @@ for (const detail of ["A yes protects our partnership strategy.","Relationship s
     assert.ok(difyCalls.every(x=>!x.inputs.prompt.includes("## Item recTechNew")));
   });
 }
+
+for (const detail of ["", "  "]) {
+  it("routes missing rationale before inference",async()=>{
+    const patches=[],difyCalls=[];
+    globalThis.fetch=makeAirtable({patches,difyCalls,leans:{
+      recTechNew:{recommendation:"approve",confidence:0.99,route:null,notes:"A yes means accepting the finding without supporting evidence."},
+      recLowConf:{recommendation:"needs-human",confidence:0.3,route:null,notes:"review"}
+    },overrides:{recTechNew:{title:"Technical exception",type:"Guideline",status:"🆕Requested",notes:"",detail}}});
+    const receipt=await runRecommendationPass(env);
+    assert.equal(patches.length,0);
+    assert.ok(receipt.needs_human.some(x=>x.includes("missing rationale")));
+    assert.ok(difyCalls.every(x=>!x.inputs.prompt.includes("## Item recTechNew")));
+  });
+}
+it("refuses an actionable note without business meaning",async()=>{
+  const patches=[];
+  globalThis.fetch=makeAirtable({patches,difyCalls:[],leans:{
+    recTechNew:{recommendation:"approve",confidence:0.99,route:null,notes:"ok"},
+    recLowConf:{recommendation:"needs-human",confidence:0.3,route:null,notes:"review"}
+  }});
+  const receipt=await runRecommendationPass(env);
+  assert.equal(patches.length,0);
+  assert.ok(receipt.errors.some(x=>x.includes("business meaning")));
+});
+it("stamps authoritative confidence, ruleset, and run metadata in the persisted note",async()=>{
+  const patches=[];
+  globalThis.fetch=makeAirtable({patches,difyCalls:[],leans:{
+    recTechNew:{recommendation:"deny",confidence:0.9,route:null,notes:"A yes means accepting a known unpatched vulnerability in the shipped app."},
+    recLowConf:{recommendation:"needs-human",confidence:0.3,route:null,notes:"review"}
+  }});
+  const receipt=await runRecommendationPass(env);
+  const note=patches[0].body.records[0].fields.fldZvSg7gpbBw89Hz;
+  const runDate=receipt.ran_at.slice(0,16).replace(":","");
+  assert.ok(note.includes(`[confidence 0.9 · Ruleset v1 · dify run ${runDate}]`));
+});

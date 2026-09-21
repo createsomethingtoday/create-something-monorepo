@@ -769,7 +769,7 @@ async function difyCompletionOnce(env: Env, prompt: string): Promise<string> {
   return result.answer;
 }
 
-function leanQuery(item: { id: string; type: string; title: string }, detail: string, runDate: string, precedents: string): string {
+function leanQuery(item: { id: string; type: string; title: string }, detail: string, precedents: string): string {
   return [
     "ANALYSIS ONLY. Do not call any tool. Do not record, recommend, or decide anything through",
     "your tools. Do not send anything. Reply with ONLY a JSON object and no other text.",
@@ -783,8 +783,7 @@ function leanQuery(item: { id: string; type: string; title: string }, detail: st
     "",
     'Reply schema: { "recommendation": "approve" | "deny" | "needs-human",',
     '  "confidence": 0.0-1.0, "route": "Greg" | "Adam" | null,',
-    '  "notes": "what a yes means for the business, note style per the ruleset, ending with',
-    `[confidence N · Ruleset v1 · dify run ${runDate}]" }`,
+    '  "notes": "Start with A yes means and explain the concrete business outcome. Follow the ruleset note style. Omit confidence/run metadata; the Worker stamps it." }',
     "",
     `## Item ${item.id} · [${item.type}] ${item.title}`,
     "",
@@ -904,6 +903,10 @@ export async function runRecommendationPass(env: Env, options: { dryRun?: boolea
       }
       // The engine judges the finding, not the conversation about it: notes are excluded.
       const detail = text(record.fields[I.rationale]);
+      if (!detail.trim()) {
+        receipt.needs_human.push(`${item.id} — ${item.title} (missing rationale, route Adam)`);
+        continue;
+      }
       // Without a structured partnership flag, conservatively route all exposure findings.
       // Bundles must first be split into per-finding rows; neither rule depends on model compliance.
       const finding = `${item.title}\n${detail}`;
@@ -915,12 +918,16 @@ export async function runRecommendationPass(env: Env, options: { dryRun?: boolea
         receipt.needs_human.push(`${item.id} — ${item.title} (partnership or relationship stakes, route Greg)`);
         continue;
       }
-      const answer = await difyCompletionOnce(env, leanQuery(item, detail, runDate, precedents));
+      const answer = await difyCompletionOnce(env, leanQuery(item, detail, precedents));
       const lean = parseLean(extractJson(answer));
       if (lean.recommendation === "needs-human" || lean.route !== null || lean.confidence < CONFIDENCE_FLOOR) {
         receipt.needs_human.push(`${item.id} — ${item.title} (${lean.recommendation}, confidence ${lean.confidence}${lean.route ? `, route ${lean.route}` : ""})`);
         continue;
       }
+      if (!/^A yes means\s+\S[\s\S]{19,}/i.test(lean.notes.trim())) {
+        throw new Error("Missing business meaning: actionable notes must start with A yes means and explain the outcome");
+      }
+      const auditedNotes = `${lean.notes.trim()} [confidence ${lean.confidence} · Ruleset v1 · dify run ${runDate}]`;
       if (writes >= cap) {
         receipt.skipped.push(`${item.id} — ${item.title} (run cap ${cap} reached)`);
         continue;
@@ -930,7 +937,7 @@ export async function runRecommendationPass(env: Env, options: { dryRun?: boolea
         receipt.written.push(`${item.id} — ${item.title} → would write ${lean.recommendation.toUpperCase()} (${lean.confidence})`);
         continue;
       }
-      const result = await toolRecommendItem(ctx, { item_id: item.id, recommendation: lean.recommendation, notes: lean.notes });
+      const result = await toolRecommendItem(ctx, { item_id: item.id, recommendation: lean.recommendation, notes: auditedNotes });
       if (result.startsWith("No write made:")) {
         receipt.skipped.push(`${item.id}: ${result}`);
         continue;
