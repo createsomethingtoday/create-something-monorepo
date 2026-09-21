@@ -81,6 +81,8 @@ export function buildMarketplaceSnapshot({ sellers, assets, categories, snapshot
     if (!asset) reject(`missing asset mapping for ${templateId}`);
     for (const category of asset.categories)
       if (!groups.has(category)) reject(`missing taxonomy mapping for ${category}`);
+    const parentGroups = new Set(asset.categories.map(category => groups.get(category)));
+    if (parentGroups.size !== 1) reject(`ambiguous asset parent group for ${templateId}`);
     const totalSales30d = number(seller.sales, 'sales', true);
     if (totalSales30d === 0) reject('seller without delivered sales');
     return {

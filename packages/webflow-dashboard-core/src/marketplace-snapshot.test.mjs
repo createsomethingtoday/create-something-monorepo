@@ -171,3 +171,9 @@ test('metadata-only corrections change content identity within the same week', a
  assert.notEqual(before.contentVersion, after.contentVersion);
  assert.equal(after.contentVersion, (await read()).contentVersion);
 });
+
+test('rejects cross-group template tags instead of choosing an alphabetical primary', () => {
+ const input = fixture();
+ input.categories[1].group = 'Creative';
+ assert.throws(() => buildMarketplaceSnapshot(input), /ambiguous asset parent group/);
+});
