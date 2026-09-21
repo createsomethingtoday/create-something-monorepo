@@ -314,3 +314,18 @@ it('uses the real period boundary, excludes earlier receipts, and keeps cancella
   sql.exec(`UPDATE network_billing SET period_start=${now + 60},period_end=${now + 86400}`);
   expect((await (await GET(event('buyer'))).json()).ledger[0].confirmed_seconds).toBe(0);
 });
+it('preserves paused work for buyer review when its session expires', async () => {
+  const now = supportFixture();
+  const id = await acceptedSupport();
+  await POST(event('creator', { action: 'time_start', id, ready: true }));
+  vi.setSystemTime(new Date((now + 30) * 1000));
+  await POST(event('buyer', { action: 'time_pause', id }));
+  vi.setSystemTime(new Date((now + 8000) * 1000));
+  const body = await (await GET(event('buyer'))).json();
+  expect(body.sessions[0]).toMatchObject({
+    status: 'ended',
+    tracked_seconds: 30,
+    receipt_status: 'pending'
+  });
+  expect((await POST(event('buyer', { action: 'time_confirm', id }))).status).toBe(200);
+});

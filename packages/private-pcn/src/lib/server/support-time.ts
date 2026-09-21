@@ -21,7 +21,7 @@ export const elapsedSql =
 export async function expireTimers(db: D1Database, subject: string, now: number) {
   await db
     .prepare(
-      `UPDATE remote_sessions SET tracked_seconds=${elapsedSql},timer_started_at=NULL,status='ended',receipt_status='pending',outcome='Session window expired. Review the recorded time and outcome with the other participant.',updated_by='system:expiry',updated_at=? WHERE (buyer_id=? OR creator_id=?) AND timer_started_at IS NOT NULL AND (expires_at<=? OR support_period_end<=?)`
+      `UPDATE remote_sessions SET tracked_seconds=${elapsedSql},timer_started_at=NULL,status='ended',receipt_status='pending',outcome='Session window expired. Review the recorded time and outcome with the other participant.',updated_by='system:expiry',updated_at=? WHERE (buyer_id=? OR creator_id=?) AND support_period_start IS NOT NULL AND status='accepted' AND (expires_at<=? OR support_period_end<=?)`
     )
     .bind(now, now, subject, subject, now, now)
     .run();
