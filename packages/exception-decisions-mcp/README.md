@@ -6,19 +6,20 @@ fields are out of scope (those live in `webflow-app-review-mcp`).
 
 - **Production:** `https://exceptions.mcp.createsomething.agency` (worker `exception-decisions-mcp`,
   CREATE SOMETHING Cloudflare account)
-- **Version:** 1.4.0 candidate
+- **Source version:** 1.5.1 (recovers the worker recommendation lane with strict confidence validation and a completion-only engine; deployment/activation must be verified separately)
 - **Data:** Airtable base `appMoIgXMTTTNIc3p` — `🖌️Asset Versions` (`tblHxZ2hgSFLZxsZu`) and
   `⚖️Exceptions` (`tblnbaaIbIulWl0b7`), via the `⚖️ Exception Decisions` version view
   (`viwM48eXQT4Mxc4Ak`) and the complete Exceptions grid (`viwGawHG68xIIIDaQ`)
 
 ## The contract (MCP, not OpenAPI)
 
-This service speaks MCP only. There is no REST or OpenAPI surface: clients read the live tool
-contract from `tools/list`, so the contract ships in the same deploy as the behavior. Endpoints:
+Decision tools use MCP; clients read their contract from `tools/list`. The operator-only
+recommendation trigger is an HTTP endpoint. Endpoints:
 
 | Path | What it is |
 |---|---|
 | `/` and `/health` | Status JSON: name, version, whether Airtable and deciders are configured |
+| `/runs/recommend` | POST, operator/automation key; `{ "dry_run": true }` previews without Airtable writes |
 | `/mcp` | MCP over HTTP. `Authorization: Bearer <key>`, or path form `/mcp/<key>` for clients without header support (claude.ai custom connectors, some Dify setups) |
 
 Dify agents register this as an MCP server (not a custom tool, so no OpenAPI schema to maintain).
@@ -107,3 +108,17 @@ Companion docs: `docs/dify-recommendation-runbook.md` (the automation lane),
 `docs/shadow-run-2026-08-18.md` (first run), and the canonical loop runbook
 `packages/webflow-app-review-mcp/docs/exception-transparency-loop.md` in the
 root-preserve-20260811-1955 tree.
+
+## Recommendation activation gate
+
+The Webflow Hosting configuration defaults to `RECOMMENDER_DISABLED=true`. Keep it disabled
+until a dedicated Dify **Text Generation** app is published with one required text input,
+`prompt`, rendered verbatim in its prompt template. Store that app's key as
+`DIFY_RECOMMENDER_COMPLETION_APP_KEY`. No legacy partner-lead agent key is accepted or used
+as a fallback. The fixed `/v1/completion-messages` endpoint rejects agent/chat/workflow apps
+before generation. See the [Dify service implementation](https://github.com/langgenius/dify/blob/main/api/controllers/service_api/app/completion.py).
+
+Verify a representative dry run, confirm the expected policy output and zero Airtable writes,
+then explicitly set `RECOMMENDER_DISABLED=false` in the deployment config to activate the cron.
+A local mock test or source merge is not that live acceptance. The legacy CREATE SOMETHING
+configuration has no cron. Manual decision tools retain their existing authorization policy.

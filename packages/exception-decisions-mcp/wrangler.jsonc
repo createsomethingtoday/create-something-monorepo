@@ -3,12 +3,17 @@
   "account_id": "9645bd52e640b8a4f40a3a55ff1dd75a",
   "main": "src/index.ts",
   "compatibility_date": "2026-08-01",
+  "observability": { "enabled": true },
   "routes": [
     {
       "pattern": "exceptions.mcp.createsomething.agency",
       "custom_domain": true
     }
   ]
+  // LEGACY (CREATE SOMETHING account). The Webflow-owned deployment is wrangler.webflow-hosting.jsonc;
+  // this config stays until every client has moved off exceptions.mcp.createsomething.agency.
+  // It deliberately carries NO cron: the recommendation lane runs only on the Webflow Hosting copy,
+  // so two deployments can never double-write recommendations.
   // Secrets (set via `wrangler secret put`, never in this file):
   //   AIRTABLE_API_KEY  — Airtable PAT scoped to appMoIgXMTTTNIc3p
   //   DECIDERS_JSON     — key → {name, email, role, surface?} map; keep .deciders.local.json in sync

@@ -1,13 +1,25 @@
 // exception-decisions-mcp — decision-scoped MCP for the app-review exceptions loop.
+// v1.5.1: completion-only judgment and strict numeric confidence; hosted cron defaults disabled.
+// v1.5.0: the advisory recommendation lane runs INSIDE the worker on a cron (replaces the
+//         laptop launchd job + scripts/scheduled-run.sh). Dify judges, the worker writes under
+//         the role=automation identity from DECIDERS_JSON. Manual trigger: POST /runs/recommend.
 // v1.2.0: role-aware recommendation prefix + automation keys refused on decide tools.
 // v1.1.0 source was lost from disk; reconstructed 2026-08-18 from the deployed bundle
 // (docs/recovered-deploy-v1.1.0.js) — behavior is identical except the v1.2.0 changes.
+
+import { RULESET_V1 } from "./ruleset-v1";
 
 interface Env {
   AIRTABLE_API_KEY?: string;
   AIRTABLE_BASE_ID?: string;
   DECIDERS_JSON?: string;
   DECISIONS_VIEW_URL?: string;
+  // Recommendation lane (cron). Dedicated tool-free Dify completion app:
+  // Text Generation app key. Its prompt template must render the required {{prompt}} input.
+  DIFY_RECOMMENDER_COMPLETION_APP_KEY?: string;
+  RECOMMENDER_CAP?: string;
+  // Set to "true" to make the cron a no-op without redeploying (kill switch).
+  RECOMMENDER_DISABLED?: string;
 }
 
 interface Decider {
@@ -36,7 +48,13 @@ const VERSIONS_TABLE = "tblHxZ2hgSFLZxsZu";
 const ITEMS_TABLE = "tblnbaaIbIulWl0b7";
 const DECISIONS_VIEW = "viwM48eXQT4Mxc4Ak";
 const ITEMS_VIEW = "viwGawHG68xIIIDaQ";
-const VERSION = "1.4.0";
+const VERSION = "1.5.1";
+
+// Recommendation lane guardrails (mirrors scripts/runner.mjs + leans-dify.mjs, which this replaces).
+const TECH_TYPES = new Set(["Security", "Custom Code / Scopes", "Guideline"]);
+const CONFIDENCE_FLOOR = 0.7;
+const DEFAULT_CAP = 25;
+const DIFY_COMPLETION_URL = "https://api.dify.ai/v1/completion-messages";
 
 const V = {
   name: "fldKA9eJja5uajlok",
@@ -436,7 +454,7 @@ async function toolListAllExceptions(ctx: Ctx, args: { status?: string }): Promi
   );
 }
 
-async function toolListPending(ctx: Ctx): Promise<string> {
+async function loadPendingQueue(ctx: Ctx): Promise<{ versions: AirtableRecord[]; itemsByVersion: Map<string, AirtableRecord[]> }> {
   const versions = (
     await ctx.airtable.list(VERSIONS_TABLE, {
       view: DECISIONS_VIEW,
@@ -446,9 +464,6 @@ async function toolListPending(ctx: Ctx): Promise<string> {
     const status = selectName(record.fields[V.exceptionStatus]);
     return status === VERSION_STATUS.requested || status === VERSION_STATUS.underReview;
   });
-  if (versions.length === 0) {
-    return "The decision queue is empty — no exception requests are awaiting a decision.";
-  }
   const allItemIds = versions.flatMap((record) => linkIds(record.fields[V.itemsLink]));
   const items = allItemIds.length ? await ctx.airtable.getByIds(ITEMS_TABLE, allItemIds, [I.item, I.status, I.type, I.versionLink]) : [];
   const itemsByVersion = new Map<string, AirtableRecord[]>();
@@ -458,6 +473,14 @@ async function toolListPending(ctx: Ctx): Promise<string> {
       bucket.push(item);
       itemsByVersion.set(versionId, bucket);
     }
+  }
+  return { versions, itemsByVersion };
+}
+
+async function toolListPending(ctx: Ctx): Promise<string> {
+  const { versions, itemsByVersion } = await loadPendingQueue(ctx);
+  if (versions.length === 0) {
+    return "The decision queue is empty — no exception requests are awaiting a decision.";
   }
   const sections = versions.map((record) => {
     const rows = itemsByVersion.get(record.id) ?? [];
@@ -674,6 +697,214 @@ async function toolDraftDeveloperUpdate(ctx: Ctx, args: { version_id: string }):
   return sections.join("\n");
 }
 
+// ---------------------------------------------------------------------------------------------
+// Recommendation lane (advisory, automation identity). Formerly scripts/leans-dify.mjs +
+// scripts/runner.mjs on a laptop launchd schedule; now the worker's own cron. Hard guarantees are
+// unchanged and still server-side: automation keys cannot approve or act at the version level, and
+// decided items refuse writes. Soft guarantees implemented here: technical types only, skip items
+// already Under Review or already carrying any recommendation, confidence >= 0.7, capped writes.
+// ---------------------------------------------------------------------------------------------
+
+interface RecommendationReceipt {
+  ran_at: string;
+  mode: "write" | "dry_run" | "disabled" | "misconfigured";
+  engine: "dify";
+  decider?: string;
+  targets: number;
+  written: string[];
+  needs_human: string[];
+  skipped: string[];
+  errors: string[];
+  tool_warnings: string[];
+}
+
+interface Lean {
+  recommendation: "approve" | "deny" | "needs-human";
+  confidence: number;
+  route: string | null;
+  notes: string;
+}
+
+function automationDecider(env: Env): Decider | null {
+  if (!env.DECIDERS_JSON) return null;
+  try {
+    const deciders = JSON.parse(env.DECIDERS_JSON) as Record<string, Decider>;
+    return Object.values(deciders).find((d) => d.role === "automation") ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function alreadyRecommended(decisionNotes: string): boolean {
+  return /recommendation[^:]*:/i.test(decisionNotes);
+}
+
+function extractJson(answer: string): unknown {
+  const fenced = answer.match(/```(?:json)?\s*([\s\S]*?)```/);
+  const raw = fenced ? fenced[1] : answer.slice(answer.indexOf("{"), answer.lastIndexOf("}") + 1);
+  return JSON.parse(raw);
+}
+
+// Dify rejects non-completion apps on this endpoint before generation. Never fall back to
+// chat-messages: an agent key could execute write tools even during our local dry run.
+async function difyCompletionOnce(env: Env, prompt: string): Promise<string> {
+  const response = await fetch(DIFY_COMPLETION_URL, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${env.DIFY_RECOMMENDER_COMPLETION_APP_KEY}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      inputs: { prompt },
+      response_mode: "blocking",
+      user: "exception-reco-automation",
+    }),
+    signal: AbortSignal.timeout(60_000),
+  });
+  if (!response.ok) throw new Error(`Dify completion HTTP ${response.status}`);
+  const result = await response.json() as { answer?: unknown };
+  if (typeof result.answer !== "string" || !result.answer.trim()) {
+    throw new Error("Dify completion returned no answer");
+  }
+  return result.answer;
+}
+
+function leanQuery(item: { id: string; type: string; title: string }, detail: string, runDate: string): string {
+  return [
+    "ANALYSIS ONLY. Do not call any tool. Do not record, recommend, or decide anything through",
+    "your tools. Do not send anything. Reply with ONLY a JSON object and no other text.",
+    "",
+    "Apply this ruleset verbatim to the exception item below and produce your lean:",
+    "",
+    RULESET_V1,
+    "",
+    'Reply schema: { "recommendation": "approve" | "deny" | "needs-human",',
+    '  "confidence": 0.0-1.0, "route": "Greg" | "Adam" | null,',
+    '  "notes": "what a yes means for the business, note style per the ruleset, ending with',
+    `[confidence N · Ruleset v1 · dify run ${runDate}]" }`,
+    "",
+    `## Item ${item.id} · [${item.type}] ${item.title}`,
+    "",
+    detail,
+  ].join("\n");
+}
+
+function parseLean(raw: unknown): Lean {
+  const lean = (raw ?? {}) as { recommendation?: unknown; confidence?: unknown; route?: unknown; notes?: unknown };
+  const rec = String(lean.recommendation ?? "").toLowerCase();
+  if (typeof lean.confidence !== "number" || !Number.isFinite(lean.confidence) || lean.confidence < 0 || lean.confidence > 1) {
+    throw new Error("Invalid recommendation confidence: expected a finite number in [0, 1]");
+  }
+  return {
+    recommendation: rec === "approve" || rec === "deny" ? rec : "needs-human",
+    confidence: lean.confidence,
+    route: typeof lean.route === "string" ? lean.route : null,
+    notes: String(lean.notes ?? ""),
+  };
+}
+
+export async function runRecommendationPass(env: Env, options: { dryRun?: boolean; cap?: number } = {}): Promise<RecommendationReceipt> {
+  const receipt: RecommendationReceipt = {
+    ran_at: new Date().toISOString(),
+    mode: options.dryRun ? "dry_run" : "write",
+    engine: "dify",
+    targets: 0,
+    written: [],
+    needs_human: [],
+    skipped: [],
+    errors: [],
+    tool_warnings: [],
+  };
+  if (env.RECOMMENDER_DISABLED === "true") {
+    receipt.mode = "disabled";
+    return receipt;
+  }
+  const decider = automationDecider(env);
+  if (!decider || !env.AIRTABLE_API_KEY || !env.DIFY_RECOMMENDER_COMPLETION_APP_KEY) {
+    receipt.mode = "misconfigured";
+    receipt.errors.push(
+      [
+        !decider ? "no role=automation identity in DECIDERS_JSON" : null,
+        !env.AIRTABLE_API_KEY ? "AIRTABLE_API_KEY missing" : null,
+        !env.DIFY_RECOMMENDER_COMPLETION_APP_KEY ? "DIFY_RECOMMENDER_COMPLETION_APP_KEY missing" : null,
+      ]
+        .filter(Boolean)
+        .join("; "),
+    );
+    return receipt;
+  }
+  receipt.decider = `${decider.name} <${decider.email}>`;
+  const baseId = env.AIRTABLE_BASE_ID ?? BASE_ID_DEFAULT;
+  const ctx: Ctx = {
+    airtable: new Airtable(env.AIRTABLE_API_KEY, baseId),
+    baseId,
+    decider,
+    viewUrl: env.DECISIONS_VIEW_URL ?? VIEW_URL_DEFAULT,
+  };
+  const envCap = Number(env.RECOMMENDER_CAP);
+  const cap = Math.max(0, options.cap ?? (Number.isFinite(envCap) && envCap > 0 ? envCap : DEFAULT_CAP));
+  const runDate = receipt.ran_at.slice(0, 16).replace(":", "");
+
+  const { itemsByVersion } = await loadPendingQueue(ctx);
+  const seen = new Set<string>();
+  const targets: { id: string; type: string; title: string }[] = [];
+  for (const rows of itemsByVersion.values()) {
+    for (const row of rows) {
+      if (seen.has(row.id)) continue;
+      seen.add(row.id);
+      const status = selectName(row.fields[I.status]);
+      const type = selectName(row.fields[I.type]);
+      const title = text(row.fields[I.item]);
+      if (!isUndecided(status)) continue;
+      if (!TECH_TYPES.has(type)) {
+        receipt.skipped.push(`${row.id} — ${title} (type "${type}" is not the technical lane)`);
+        continue;
+      }
+      if (status === ITEM_STATUS.underReview) {
+        receipt.skipped.push(`${row.id} — ${title} (already Under Review — assumed recommended)`);
+        continue;
+      }
+      targets.push({ id: row.id, type, title });
+    }
+  }
+  receipt.targets = targets.length;
+
+  let writes = 0;
+  for (const item of targets) {
+    try {
+      const record = await ctx.airtable.getOne(ITEMS_TABLE, item.id);
+      const notes = text(record.fields[I.decisionNotes]);
+      if (alreadyRecommended(notes)) {
+        receipt.skipped.push(`${item.id} — ${item.title} (recommendation already in notes)`);
+        continue;
+      }
+      // The engine judges the finding, not the conversation about it: notes are excluded.
+      const detail = text(record.fields[I.rationale]);
+      const answer = await difyCompletionOnce(env, leanQuery(item, detail, runDate));
+      const lean = parseLean(extractJson(answer));
+      if (lean.recommendation === "needs-human" || lean.confidence < CONFIDENCE_FLOOR) {
+        receipt.needs_human.push(`${item.id} — ${item.title} (${lean.recommendation}, confidence ${lean.confidence}${lean.route ? `, route ${lean.route}` : ""})`);
+        continue;
+      }
+      if (writes >= cap) {
+        receipt.skipped.push(`${item.id} — ${item.title} (run cap ${cap} reached)`);
+        continue;
+      }
+      writes += 1;
+      if (options.dryRun) {
+        receipt.written.push(`${item.id} — ${item.title} → would write ${lean.recommendation.toUpperCase()} (${lean.confidence})`);
+        continue;
+      }
+      const result = await toolRecommendItem(ctx, { item_id: item.id, recommendation: lean.recommendation, notes: lean.notes });
+      if (!result.includes("Recorded recommendation")) {
+        receipt.errors.push(`${item.id}: unexpected response: ${result.slice(0, 120)}`);
+        continue;
+      }
+      receipt.written.push(`${item.id} — ${item.title} → ${lean.recommendation.toUpperCase()} (${lean.confidence})`);
+    } catch (error) {
+      receipt.errors.push(`${item.id} — ${item.title}: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+  return receipt;
+}
+
 function toolWhoami(ctx: Ctx): string {
   return [
     `You are deciding as ${ctx.decider.name} <${ctx.decider.email}>${ctx.decider.role ? ` (${ctx.decider.role})` : ""}.`,
@@ -875,10 +1106,12 @@ export default {
             description:
               "Decision-scoped MCP for the app-review exceptions loop: read the complete exception register, list the pending queue, read dual-register items, and record approve/deny with identity stamping. Reviewer-side fields are out of scope.",
             auth: "Per-person key — Authorization: Bearer <key>, or path form /mcp/<key> for clients without header support.",
-            endpoints: { mcp: "/mcp (bearer) or /mcp/<key>" },
+            endpoints: { mcp: "/mcp (bearer) or /mcp/<key>", recommend: "POST /runs/recommend (operator/automation key; {dry_run:true} to preview)" },
             configured: {
               airtable: Boolean(env.AIRTABLE_API_KEY),
               deciders: Boolean(env.DECIDERS_JSON),
+              recommender: Boolean(env.DIFY_RECOMMENDER_COMPLETION_APP_KEY) && automationDecider(env) !== null,
+              recommender_disabled: env.RECOMMENDER_DISABLED === "true",
             },
           },
           null,
@@ -898,6 +1131,38 @@ export default {
       }
       return handleMcp(request, env, decider);
     }
+    // Manual trigger for the recommendation lane (same pass the cron runs). Operator or automation
+    // keys only; body { "dry_run": true } previews without writing. Returns the run receipt.
+    if (url.pathname === "/runs/recommend") {
+      if (request.method !== "POST") {
+        return new Response("Method Not Allowed", { status: 405, headers: JSON_HEADERS });
+      }
+      const decider = resolveDecider(request, null, env);
+      if (!decider || (decider.role !== "operator" && decider.role !== "automation")) {
+        return new Response(
+          JSON.stringify({ ok: false, error: { code: "FORBIDDEN", message: "Operator or automation key required." } }),
+          { status: decider ? 403 : 401, headers: JSON_HEADERS },
+        );
+      }
+      const body = (await request.json().catch(() => ({}))) as { dry_run?: unknown; cap?: unknown };
+      const receipt = await runRecommendationPass(env, {
+        dryRun: body.dry_run === true,
+        cap: typeof body.cap === "number" ? body.cap : undefined,
+      });
+      console.log(JSON.stringify({ event: "recommendation_pass", trigger: "manual", by: decider.email, ...receipt }));
+      return new Response(JSON.stringify({ ok: receipt.errors.length === 0, receipt }, null, 2), { headers: JSON_HEADERS });
+    }
     return new Response("Not found", { status: 404, headers: JSON_HEADERS });
+  },
+
+  // Cron: the advisory recommendation pass (see wrangler.*.jsonc triggers). Writes only under the
+  // role=automation identity; this pass never invokes a final decision tool.
+  async scheduled(event: ScheduledEvent, env: Env, ctx: ExecutionContext): Promise<void> {
+    ctx.waitUntil(
+      (async () => {
+        const receipt = await runRecommendationPass(env);
+        console.log(JSON.stringify({ event: "recommendation_pass", trigger: "cron", cron: event.cron, ...receipt }));
+      })(),
+    );
   },
 };

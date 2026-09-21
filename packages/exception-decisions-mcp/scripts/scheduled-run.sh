@@ -1,4 +1,9 @@
 #!/bin/bash
+# RETIRED PATH (2026-09-15): the recommendation lane now runs as the worker's own cron on the
+# Webflow Hosting deployment (see wrangler.webflow-hosting.jsonc, `scheduled()` in src/index.ts, and
+# the package README activation gate). Keep this script only as the
+# manual fallback; unload the launchd job once the worker cron has produced receipts.
+#
 # Scheduled advisory recommendation run — twice a day via launchd
 # (~/Library/LaunchAgents/com.webflow.exception-recommender.plist).
 #

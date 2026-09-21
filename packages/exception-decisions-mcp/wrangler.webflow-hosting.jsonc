@@ -1,0 +1,21 @@
+{
+  // PRODUCTION (Webflow-owned): Cloudflare account "Webflow Hosting". Deploy with
+  //   pnpm --filter @create-something/exception-decisions-mcp run deploy:webflow-hosting
+  // using CLOUDFLARE_API_TOKEN scoped to this account (Infisical prod CLOUDFLARE_WEBFLOW_HOSTING_API_TOKEN
+  // until an account-owned token exists — see the package README activation gate).
+  "name": "exception-decisions-mcp",
+  "account_id": "ac24bc906aca8307bdba8c2a85ff08c9",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-08-01",
+  "observability": { "enabled": true },
+  // Advisory recommendation pass, weekdays 08:30 + 13:30 America/Chicago while on CDT (UTC-5).
+  // Cron is UTC-only; during CST (UTC-6, from early November) these land at 07:30 + 12:30 local,
+  // which is fine for a queue that Adam reads in the morning. Kill switch: RECOMMENDER_DISABLED=true.
+  "triggers": { "crons": ["30 13 * * 1-5", "30 18 * * 1-5"] },
+  // Secrets (wrangler secret put <NAME> --config wrangler.webflow-hosting.jsonc):
+  //   AIRTABLE_API_KEY            Airtable PAT scoped to appMoIgXMTTTNIc3p
+  //   DECIDERS_JSON               key → {name, email, role, surface?} map (must include one role=automation identity)
+  //   DIFY_RECOMMENDER_COMPLETION_APP_KEY   Dedicated Dify Text Generation app key; required prompt input
+  // Optional vars: AIRTABLE_BASE_ID, DECISIONS_VIEW_URL, RECOMMENDER_CAP, RECOMMENDER_DISABLED
+  "vars": { "RECOMMENDER_DISABLED": "true" }
+}

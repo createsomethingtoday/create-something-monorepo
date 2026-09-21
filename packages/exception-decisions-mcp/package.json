@@ -1,11 +1,14 @@
 {
   "name": "@create-something/exception-decisions-mcp",
-  "version": "1.4.0",
+  "version": "1.5.1",
   "private": true,
-  "description": "Decision-scoped MCP for the Webflow app-review exceptions loop — identity-stamped recommendations and decisions over the ⚖️Exceptions table.",
+  "description": "Decision-scoped MCP for the Webflow app-review exceptions loop \u2014 identity-stamped recommendations and decisions over the \u2696\ufe0fExceptions table.",
   "scripts": {
     "deploy": "wrangler deploy",
-    "test": "pnpm --workspace-root exec tsx --test packages/exception-decisions-mcp/src/index.test.mjs",
+    "deploy:webflow-hosting": "wrangler deploy --config wrangler.webflow-hosting.jsonc",
+    "deploy:webflow-hosting:dry-run": "wrangler deploy --dry-run --outdir dist-dry-run --config wrangler.webflow-hosting.jsonc",
+    "ruleset:sync": "node scripts/sync-ruleset.mjs",
+    "test": "pnpm --workspace-root exec tsx --test packages/exception-decisions-mcp/src/index.test.mjs packages/exception-decisions-mcp/src/recommender.test.mjs",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
