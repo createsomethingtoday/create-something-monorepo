@@ -635,6 +635,9 @@ async function toolRecommendItem(
   }
   const label = isAutomation(ctx.decider) ? "Automated recommendation (advisory)" : "Partner-lead recommendation";
   const existingNotes = text(record.fields[I.decisionNotes]);
+  if (isAutomation(ctx.decider) && (current === ITEM_STATUS.underReview || alreadyRecommended(existingNotes))) {
+    return `No write made: "${text(record.fields[I.item])}" already has a recommendation or is under review.`;
+  }
   const line = `${label}: ${args.recommendation.toUpperCase()}${args.notes ? ` — ${args.notes}` : ""}`;
   const notes = `${existingNotes ? `${existingNotes}\n\n` : ""}${line}${attribution(ctx.decider, "Recommendation")}`;
   await ctx.airtable.update(ITEMS_TABLE, args.item_id, {
@@ -908,6 +911,10 @@ export async function runRecommendationPass(env: Env, options: { dryRun?: boolea
         receipt.needs_human.push(`${item.id} — ${item.title} (bundle or exposure finding, route Adam)`);
         continue;
       }
+      if (/\bpartnership\b|\brelationship\b|\bstrategic partner\b/i.test(finding)) {
+        receipt.needs_human.push(`${item.id} — ${item.title} (partnership or relationship stakes, route Greg)`);
+        continue;
+      }
       const answer = await difyCompletionOnce(env, leanQuery(item, detail, runDate, precedents));
       const lean = parseLean(extractJson(answer));
       if (lean.recommendation === "needs-human" || lean.route !== null || lean.confidence < CONFIDENCE_FLOOR) {
@@ -924,6 +931,10 @@ export async function runRecommendationPass(env: Env, options: { dryRun?: boolea
         continue;
       }
       const result = await toolRecommendItem(ctx, { item_id: item.id, recommendation: lean.recommendation, notes: lean.notes });
+      if (result.startsWith("No write made:")) {
+        receipt.skipped.push(`${item.id}: ${result}`);
+        continue;
+      }
       if (!result.includes("Recorded recommendation")) {
         receipt.errors.push(`${item.id}: unexpected response: ${result.slice(0, 120)}`);
         continue;

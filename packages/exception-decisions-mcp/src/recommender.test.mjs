@@ -38,7 +38,7 @@ function json(body, init = {}) {
 }
 
 // A queue with one version and five items covering every guardrail branch.
-function makeAirtable({ leans, patches, difyCalls, overrides = {}, failFirstPatch = false }) {
+function makeAirtable({ leans, patches, difyCalls, overrides = {}, failFirstPatch = false, afterDify = () => {} }) {
   const items = {
     recTechNew: { title: "Token in GET URL", type: "Security", status: "🆕Requested", notes: "" },
     recTechRecd: { title: "Already recommended", type: "Security", status: "🆕Requested", notes: "Partner-lead recommendation: DENY — carried" },
@@ -58,6 +58,7 @@ function makeAirtable({ leans, patches, difyCalls, overrides = {}, failFirstPatc
       assert.equal(body.response_mode, "blocking");
       const itemId = body.inputs.prompt.match(/## Item (rec[A-Za-z]+)/)[1];
       const lean = leans[itemId];
+      afterDify(items, itemId);
       return json({ answer: "```json\n" + JSON.stringify({ route: null, ...lean }) + "\n```" });
     }
     assert.equal(url.hostname, "api.airtable.com");
@@ -418,5 +419,32 @@ for (const notes of [undefined, null, 42, {}, " "]) {
     const receipt = await runRecommendationPass(env);
     assert.equal(patches.length, 0);
     assert.ok(receipt.errors.some(x => x.includes("notes")));
+  });
+}
+
+it("rechecks an overlapping recommendation at the write boundary", async () => {
+  const patches=[];
+  globalThis.fetch=makeAirtable({patches,difyCalls:[],leans:{
+    recTechNew:{recommendation:"deny",confidence:0.9,route:null,notes:"candidate"},
+    recLowConf:{recommendation:"needs-human",confidence:0.3,route:null,notes:"review"}
+  },afterDify(items,id){if(id==="recTechNew"){
+    items[id].status="👀Under Review";
+    items[id].notes="Automated recommendation (advisory): APPROVE — another pass already wrote";
+  }}});
+  const receipt=await runRecommendationPass(env);
+  assert.equal(patches.length,0);
+  assert.ok(receipt.skipped.some(x=>x.includes("already has a recommendation")));
+});
+for (const detail of ["A yes protects our partnership strategy.","Relationship stakes override the technical finding.","This is a strategic partner."]) {
+  it(`routes relationship context before inference: ${detail}`,async()=>{
+    const patches=[],difyCalls=[];
+    globalThis.fetch=makeAirtable({patches,difyCalls,leans:{
+      recTechNew:{recommendation:"approve",confidence:0.99,route:null,notes:"candidate"},
+      recLowConf:{recommendation:"needs-human",confidence:0.3,route:null,notes:"review"}
+    },overrides:{recTechNew:{title:"Technical exception",type:"Guideline",status:"🆕Requested",notes:"",detail}}});
+    const receipt=await runRecommendationPass(env);
+    assert.equal(patches.length,0);
+    assert.ok(receipt.needs_human.some(x=>x.includes("route Greg")));
+    assert.ok(difyCalls.every(x=>!x.inputs.prompt.includes("## Item recTechNew")));
   });
 }
