@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { lessonPath } from '$lib/lessons';
   import Icon from '$lib/components/Icon.svelte';
   import { onMount } from 'svelte';
   import { api as requestApi, type CatalogVideo } from '$lib/client';
@@ -195,6 +196,7 @@
           </p>
         </div>
         <div class="workspace-actions">
+          <a href={lessonPath(video.id, slug)}>Lesson page and material</a>
           <button
             disabled={busy}
             class="text-button"

@@ -1,3 +1,4 @@
+import { lessonView, parseLesson } from './lessons';
 import { withinDeliveryAllowance } from '$lib/server/usage';
 import { paidAccess } from '$lib/server/billing';
 import { json } from '@sveltejs/kit';
@@ -31,6 +32,19 @@ export const GET: RequestHandler = async ({ params, platform, locals }) => {
   if (!db) return fail('The library is temporarily unavailable.', 503);
   const role = locals.identity?.role;
   const networkId = locals.network?.id || 'default';
+  if (params.path?.startsWith('lessons/')) {
+    if (locals.network && locals.network.status !== 'active' && role !== 'admin')
+      return fail('Lesson unavailable or access required.', 404);
+    const video = await db
+      .prepare('SELECT * FROM videos WHERE id=? AND network_id=?')
+      .bind(params.path.slice('lessons/'.length), networkId)
+      .first<Video>();
+    if (!video || !canRead(video, role)) return fail('Lesson unavailable or access required.', 404);
+    return json({
+      video: publicVideo(video),
+      ...(await lessonView(db, video.id, networkId, locals))
+    });
+  }
   if (params.path === 'videos') {
     if (locals.network?.status !== 'active' && role !== 'admin' && locals.network)
       return json({ videos: [] });
@@ -92,10 +106,11 @@ export const POST: RequestHandler = async ({
   if (!isSameOrigin(request)) return fail('Same-origin request required.', 403);
   const path = params.path;
   let body: Record<string, unknown>;
-  if (Number(request.headers.get('content-length') || 0) > 16384)
+  const bodyLimit = path === 'lessons/save' ? 65536 : 16384;
+  if (Number(request.headers.get('content-length') || 0) > bodyLimit)
     return fail('Request too large.', 413);
   try {
-    const raw = await boundedText(request);
+    const raw = await boundedText(request, bodyLimit);
     body = raw ? JSON.parse(raw) : {};
     if (!body || typeof body !== 'object' || Array.isArray(body)) return fail('Invalid request.');
   } catch (error) {
@@ -199,6 +214,44 @@ export const POST: RequestHandler = async ({
         'INSERT INTO receipts (id, actor, action, target, network_id) VALUES (?, ?, ?, ?, ?)'
       )
       .bind(crypto.randomUUID(), actor, action, target, networkId);
+  if (path === 'lessons/save') {
+    if (typeof body.id !== 'string') return fail('Choose a lesson.');
+    const video = await db
+      .prepare('SELECT id FROM videos WHERE id=? AND network_id=?')
+      .bind(body.id, networkId)
+      .first();
+    if (!video) return fail('Lesson not found.', 404);
+    const material = parseLesson(body);
+    if (!material) return fail('Check the lesson fields and their length limits.');
+    if (
+      material.release_id &&
+      (locals.network?.kind === 'support' ||
+        !(await db
+          .prepare('SELECT id FROM asset_releases WHERE id=? AND network_id=?')
+          .bind(material.release_id, networkId)
+          .first()))
+    )
+      return fail('Choose an exact release from this network.');
+    await db.batch([
+      db
+        .prepare(
+          `INSERT INTO lesson_material(video_id,network_id,outcome,prerequisites,tools,transcript,practice,release_id)
+        VALUES(?,?,?,?,?,?,?,?) ON CONFLICT(video_id) DO UPDATE SET outcome=excluded.outcome,prerequisites=excluded.prerequisites,tools=excluded.tools,transcript=excluded.transcript,practice=excluded.practice,release_id=excluded.release_id,updated_at=CURRENT_TIMESTAMP`
+        )
+        .bind(
+          body.id,
+          networkId,
+          material.outcome,
+          material.prerequisites,
+          material.tools,
+          material.transcript,
+          material.practice,
+          material.release_id
+        ),
+      receipt('lesson.updated', body.id)
+    ]);
+    return json({ success: true });
+  }
   if (path === 'members') {
     const email = normalizeEmail(body.email);
     if (!email || typeof body.active !== 'boolean')

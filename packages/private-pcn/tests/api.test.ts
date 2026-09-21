@@ -86,6 +86,9 @@ beforeEach(() => {
   sqlite.exec(
     readFileSync(new URL('../migrations/0010_company_support.sql', import.meta.url), 'utf8')
   );
+  sqlite.exec(
+    readFileSync(new URL('../migrations/0014_lesson_material.sql', import.meta.url), 'utf8')
+  );
   remote = vi.fn();
   vi.stubGlobal('fetch', remote);
 });
@@ -103,6 +106,111 @@ describe('API against migrated SQLite schema (supporting proof)', () => {
     const body = await response.json();
     expect(body.videos.map((v: any) => v.id)).toEqual(['preview']);
     expect(JSON.stringify(body)).not.toContain('private-uid');
+  });
+  it('serves a direct lesson only within its network and current publication access', async () => {
+    seed('private');
+    seed('public', 'public');
+    seed('draft', 'public', 'draft');
+    expect((await GET(event('lessons/private'))).status).toBe(404);
+    expect((await GET(event('lessons/draft', undefined, 'member'))).status).toBe(404);
+    const response = await GET(event('lessons/private', undefined, 'member'));
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({ video: { id: 'private' }, lesson: null });
+    const cross = event('lessons/private', undefined, 'admin');
+    cross.locals.network = { id: 'other', status: 'active' };
+    expect((await GET(cross)).status).toBe(404);
+    const suspended = event('lessons/public', undefined, 'member');
+    suspended.locals.network = { id: 'default', status: 'suspended' };
+    expect((await GET(suspended)).status).toBe(404);
+    const body = await (await GET(event('lessons/public'))).text();
+    expect(body).not.toContain('private-uid');
+  });
+  it('lets only the network admin save bounded lesson material with an audit receipt', async () => {
+    seed('private');
+    const details = {
+      id: 'private',
+      outcome: 'Build a safe MCP connection',
+      prerequisites: 'A test workspace',
+      tools: 'Claude Desktop',
+      transcript: '<script>plain text</script>',
+      practice: 'Audit one page',
+      release_id: ''
+    };
+    expect((await POST(event('lessons/save', details, 'member'))).status).toBe(403);
+    expect(
+      (await POST(event('lessons/save', details, 'admin', 'https://other.example'))).status
+    ).toBe(403);
+    const cross = event('lessons/save', details, 'admin');
+    cross.locals.network = { id: 'other', status: 'active' };
+    expect((await POST(cross)).status).toBe(404);
+    expect(
+      (await POST(event('lessons/save', { ...details, outcome: 'x'.repeat(1001) }, 'admin'))).status
+    ).toBe(400);
+    expect(
+      (await POST(event('lessons/save', { ...details, release_id: 'foreign-release' }, 'admin')))
+        .status
+    ).toBe(400);
+    expect((await POST(event('lessons/save', details, 'admin'))).status).toBe(200);
+    const result = await (await GET(event('lessons/private', undefined, 'member'))).json();
+    expect(result.lesson).toMatchObject({
+      outcome: details.outcome,
+      transcript: details.transcript,
+      practice: details.practice
+    });
+    expect(result.release).toBeNull();
+    expect(result.releaseOptions).toEqual([]);
+    expect(sqlite.prepare("SELECT action FROM receipts WHERE target='private'").get()?.action).toBe(
+      'lesson.updated'
+    );
+  });
+  it('links an exact release without leaking private asset metadata or granting entitlement', async () => {
+    seed('public', 'public');
+    sqlite.exec(
+      "INSERT INTO builder_assets(id,network_id,title,kind,summary,price_cents,visibility,audience) VALUES('asset','default','Restricted skill','skill','Private details',0,'published','members')"
+    );
+    sqlite.exec(
+      "INSERT INTO asset_releases(id,network_id,asset_id,version,manifest,object_key,sha256,size_bytes) VALUES('release','default','asset','1.2.3','{}','secret-key','hash',1)"
+    );
+    const body = {
+      id: 'public',
+      outcome: '',
+      prerequisites: '',
+      tools: '',
+      transcript: '',
+      practice: '',
+      release_id: 'release'
+    };
+    expect((await POST(event('lessons/save', body, 'admin'))).status).toBe(200);
+    const request = event('lessons/public');
+    request.locals.network = {
+      id: 'default',
+      slug: 'create-something',
+      status: 'active',
+      access_model: 'preview'
+    };
+    const anonymous = await (await GET(request)).json();
+    expect(anonymous.release).toBeNull();
+    expect(anonymous.lesson.release_id).toBeNull();
+    expect(JSON.stringify(anonymous)).not.toContain('Restricted skill');
+    expect(anonymous.releaseOptions).toEqual([]);
+    request.locals.identity = { role: 'member', subject: 'buyer', email: 'buyer@example.com' };
+    const member = await (await GET(request)).json();
+    expect(member.release).toEqual({
+      id: 'release',
+      asset_id: 'asset',
+      version: '1.2.3',
+      title: 'Restricted skill'
+    });
+    expect(JSON.stringify(member)).not.toContain('secret-key');
+    expect(sqlite.prepare('SELECT COUNT(*) AS total FROM asset_entitlements').get()?.total).toBe(0);
+    sqlite.exec("UPDATE builder_assets SET visibility='archived' WHERE id='asset'");
+    expect((await (await GET(request)).json()).release).toBeNull();
+    sqlite.exec(
+      "INSERT INTO asset_entitlements(id,network_id,asset_id,release_id,buyer_id,source,status) VALUES('entitlement','default','asset','release','buyer','free','active')"
+    );
+    expect((await (await GET(request)).json()).release.id).toBe('release');
+    sqlite.exec("UPDATE asset_entitlements SET status='revoked'");
+    expect((await (await GET(request)).json()).release).toBeNull();
   });
   it('denies private playback before any provider call', async () => {
     seed('private');
@@ -518,11 +626,18 @@ describe('self-service recovery and data ownership', () => {
           4
         );
     }
+    sqlite.exec(
+      "INSERT INTO lesson_material(video_id,network_id,outcome) VALUES('ours','alpha','Our lesson outcome'),('theirs','default','Private other lesson')"
+    );
     const e = event('export', undefined, 'admin');
     e.locals.network = { id: 'alpha', slug: 'alpha', owner_id: 'fixture-user' };
     const response = await exportNetwork(e);
     const data = await response.json();
-    expect(data.schemaVersion).toBe(2);
+    expect(data.lessonMaterial).toEqual([
+      expect.objectContaining({ video_id: 'ours', outcome: 'Our lesson outcome' })
+    ]);
+    expect(JSON.stringify(data)).not.toContain('Private other lesson');
+    expect(data.schemaVersion).toBe(3);
     expect(data.sessions.map((v: any) => v.id)).toEqual(['ours']);
     expect(data.assets.map((a: any) => a.id)).toEqual(['asset-ours']);
     expect(data.releases).toHaveLength(1);

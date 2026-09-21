@@ -12,6 +12,8 @@ const surfaces = new Set([
   'signup',
   'login',
   'collection',
+  'library',
+  'lesson',
   'workspace',
   'support',
   'network',
