@@ -99,12 +99,15 @@ def run(args):
         raw = read_private(config_path)
         if args.command == "rollback":
             receipt = json.loads(read_private(receipt_path))
-            if digest(raw) != receipt["after_sha256"]:
-                raise ValueError("Config changed since sync; refusing to overwrite later edits")
             restored = base64.b64decode(receipt["before"], validate=True)
             tomllib.loads(restored.decode())
+            # The receipt is committed first. If config replacement never happened,
+            # remove that pending receipt without rewriting the already-original file.
+            if raw != restored and digest(raw) != receipt["after_sha256"]:
+                raise ValueError("Config changed since sync; refusing to overwrite later edits")
             if args.apply:
-                write_private(config_path, restored)
+                if raw != restored:
+                    write_private(config_path, restored)
                 receipt_path.unlink()
             print("Rolled back config" if args.apply else "Rollback available; pass --apply --clients-closed")
             return

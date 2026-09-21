@@ -121,5 +121,15 @@ class AccountHelperTests(unittest.TestCase):
         self.run_helper('sync', '--apply', '--clients-closed')
         self.assertEqual((self.directory / 'codex-account-rollback.json').read_bytes(), receipt)
 
+    def test_rollback_recovers_interrupted_apply_before_config_replace(self):
+        self.run_helper('sync', '--apply', '--clients-closed')
+        # Durable state if killed after receipt replacement but before config replacement.
+        self.write('config.toml', self.config)
+        self.run_helper('rollback', '--apply', '--clients-closed')
+        self.assertEqual((self.directory / 'config.toml').read_bytes(), self.config)
+        self.assertFalse((self.directory / 'codex-account-rollback.json').exists())
+        self.run_helper('sync', '--apply', '--clients-closed')
+        self.assert_untouched()
+
 if __name__ == '__main__':
     unittest.main()
