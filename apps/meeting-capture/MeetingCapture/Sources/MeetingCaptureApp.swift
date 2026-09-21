@@ -195,7 +195,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
             )
 
             if Task.isCancelled {
-                _ = await audioRecorder.stopRecording()
+                let abandoned = await audioRecorder.stopRecording()
+                abandoned?.removeLocalFiles()
                 return
             }
             await MainActor.run { [weak self] in

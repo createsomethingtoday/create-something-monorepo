@@ -7,8 +7,14 @@ private final class FakeSystemRecorder: SystemAudioRecording {
     var firstSampleTime: CMTime? = CMTime(seconds: 100, preferredTimescale: 1_000)
     var starts: [String] = []
     var canStart = true
-    func startRecording(meetingId: String) async -> Bool { starts.append(meetingId); return canStart }
-    func stopRecording() async -> URL? { URL(fileURLWithPath: "/tmp/fixture-system.wav") }
+    var onStart: (() async -> Void)?
+    var output = URL(fileURLWithPath: "/tmp/fixture-system.wav")
+    func startRecording(meetingId: String) async -> Bool {
+        starts.append(meetingId)
+        if let onStart { await onStart() }
+        return canStart
+    }
+    func stopRecording() async -> URL? { output }
 }
 
 private final class FakeMicrophoneRecorder: MicrophoneAudioRecording {
@@ -113,4 +119,32 @@ func microphoneFallbackRequestsPermissionAndReportsItsBackend() async {
     #expect(permissionRequests == 1)
     #expect(microphone.starts == ["fallback"])
     #expect(recorder.activeBackend == .microphone)
+}
+
+@Test @MainActor
+func cancelledStartupDeletesFinalizedSystemAudio() async throws {
+    let file = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".m4a")
+    try Data("cancelled capture fixture".utf8).write(to: file)
+    defer { try? FileManager.default.removeItem(at: file) }
+    let system = FakeSystemRecorder()
+    system.output = file
+    var signal: AsyncStream<Void>.Continuation!
+    let entered = AsyncStream<Void> { signal = $0 }
+    var complete: CheckedContinuation<Void, Never>?
+    system.onStart = {
+        await withCheckedContinuation { continuation in
+            complete = continuation
+            signal.yield(())
+        }
+    }
+    let recorder = AudioRecorder(systemAudioRecorder: system,
+        microphoneRecorder: FakeMicrophoneRecorder(), screenPermission: { true })
+    let starting = Task { await recorder.startRecording(meetingId: "cancelled") }
+    for await _ in entered { break }
+    starting.cancel()
+    complete?.resume()
+    #expect(await starting.value == .failed)
+    #expect(!recorder.isRecording)
+    #expect(!FileManager.default.fileExists(atPath: file.path))
+    signal.finish()
 }

@@ -146,7 +146,9 @@ final class AudioRecorder {
 
         if await systemAudioRecorder.startRecording(meetingId: "\(meetingId)-system") {
             guard !Task.isCancelled else {
-                _ = await systemAudioRecorder.stopRecording()
+                if let abandoned = await systemAudioRecorder.stopRecording() {
+                    try? FileManager.default.removeItem(at: abandoned)
+                }
                 return .failed
             }
             let microphoneStarted = includeMicrophone && microphoneGranted && microphoneRecorder.startRecording(meetingId: "\(meetingId)-microphone")
