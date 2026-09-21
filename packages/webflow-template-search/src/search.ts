@@ -104,6 +104,7 @@ const GRID_ITEM_SELECT_COLUMNS = [
   'd.child_categories_json',
   'd.child_category_slugs_json',
   'd.template_type',
+  'd.has_cms',
   'd.is_free',
   'd.is_featured',
   'd.reviewer_pick_reason',
@@ -328,6 +329,11 @@ function buildSqlParts(params: SearchParams, options: FilterOptions = {}): SqlPa
   if (!options.excludeTypes && params.types.length > 0) {
     clauses.push(`d.template_type IN (${placeholderList(params.types.length)})`);
     binds.push(...params.types);
+  }
+
+  if (params.hasCms != null) {
+    clauses.push('d.has_cms = ?');
+    binds.push(params.hasCms ? 1 : 0);
   }
 
   return {
@@ -786,6 +792,7 @@ export async function searchTemplates(env: Env, rawParams: SearchParams, cacheVe
       is_featured: row.is_featured === 1,
       reviewer_pick_reason: row.reviewer_pick_reason,
       template_type: row.template_type,
+      has_cms: row.has_cms === null ? null : row.has_cms === 1,
       popularity_score: row.popularity_score,
       unique_viewers: row.unique_viewers,
       cumulative_purchases: row.cumulative_purchases,
@@ -836,6 +843,7 @@ export async function searchTemplates(env: Env, rawParams: SearchParams, cacheVe
       tags: params.tags,
       types: params.types,
       free_only: params.freeOnly,
+      has_cms: params.hasCms,
       relaxed: relaxedQuery,
     },
     available_facets: {

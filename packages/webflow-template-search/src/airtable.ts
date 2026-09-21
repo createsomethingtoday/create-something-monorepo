@@ -43,6 +43,7 @@ export const ASSET_FIELDS = [
   'ℹ️👘Styles',
   'ℹ️🏷️Tags (Multi)',
   '🥞Template Type (🏗️ only)',
+  'ℹ️Type: CMS? (🏗️ only)',
   'Is free?',
   '🥞Is Currently Featured? (🏗️ only)',
   'ℹ️Is Featured? (🖥️, 🏗️only)',

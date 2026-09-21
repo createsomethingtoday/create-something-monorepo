@@ -51,9 +51,37 @@ Memo entries expire after five minutes for counts and thirty minutes
 for facets. Cache failures fall back to D1. Direct `searchTemplates` callers that
 omit a sync version bypass query memoization.
 
-The retained CMS-filter prototype is not part of this recovery: its `has_cms`
-column and backfill are absent from the current schema. Do not advertise that
-filter or apply its older snapshot over the current listing-visibility rules.
+## CMS capability recovery (not activated)
+
+Production already records migration `0008_template_capabilities.sql` and has
+its six columns. This recovery restores that exact historical migration in source;
+no duplicate column migration should be applied. Read-only production verification
+found 11,501 rows: 9,973 true, 999 false, and 529 unknown on September 21, 2026.
+Unknown values remain null in responses.
+
+Source is Assets checkbox `fldZY9vzOYaaCR5vv` (`ℹ️Type: CMS? (🏗️ only)`).
+Successful Airtable checkbox reads omit unchecked values; malformed values fail.
+With `CMS_FILTER_ENABLED` unset, existing `has_cms` callers retain legacy
+unconstrained search and `applied_filters.has_cms` is null. After explicit enablement,
+true/false filters require zero unknown rows; readiness errors retain CORS headers
+and occur before cache reads.
+
+Authenticated `POST /api/templates/admin/backfill-cms` accepts JSON
+`{"limit":50}` for a read-only preview or `{"limit":50,"apply":true}` for one
+bounded batch (maximum100). Repeat until `counts.unknown` is zero. Each batch
+selects unknown rows, validates a complete source response before writes, updates
+only has_cms with a synced_at concurrency guard, and atomically invalidates search
+caches. Changed rows are skipped and remain resumable; no index rows are removed.
+For a reconciled mismatch in an already-known value, supply an explicit
+`recordIds` array (at most the batch limit). All targets must exist; both the
+previous capability value and synced_at must still match at write time.
+Stop on provider errors or repeated no-progress batches and inspect the source.
+
+Promotion: confirm schema, deploy with filtering disabled, preview/apply bounded
+backfill batches, reconcile counts and IDs, then enable filtering and verify true,
+false and unconstrained results. Do not use a full rebuild to fill this column.
+Rollback: disable CMS_FILTER_ENABLED and restore the prior Worker version, retaining
+the pre-existing database columns and migration history.
 
 ## Featured creator monthly batch
 
