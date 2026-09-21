@@ -1,7 +1,7 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { paidAccess } from '$lib/server/billing';
-import { commerceEnabled } from '$lib/server/asset-orders';
+import { assetAcquisitionEnabled } from '$lib/server/asset-orders';
 import { syncSeller } from '$lib/server/seller-accounts';
 import { validateAssetDraft } from '$lib/assets';
 import { findAsset, requireOwner } from '$lib/server/builder-assets';
@@ -30,12 +30,12 @@ export const POST: RequestHandler = async ({ request, locals, platform, params }
   if (input.visibility === 'published') {
     try {
       if (
-        !commerceEnabled(platform!.env) ||
+        !assetAcquisitionEnabled(platform!.env, draft.price_cents) ||
         !platform!.env.ASSET_PACKAGES ||
         !(await paidAccess(platform!.env, locals.network!))
       )
         return json(
-          { error: 'Publishing is awaiting payment and delivery acceptance.' },
+          { error: 'Publishing is awaiting activation and delivery acceptance.' },
           { status: 503 }
         );
       const release = await db

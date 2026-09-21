@@ -209,6 +209,40 @@ describe('builder-owned asset drafts and releases', () => {
     );
     expect((await saveAsset(event({ ...body, visibility: 'published' }))).status).toBe(503);
   });
+  it('publishes verified free releases during a creator trial without enabling paid listings', async () => {
+    seedAsset();
+    seedRelease();
+    sql.exec(
+      "INSERT INTO creator_applications(subject,email,display_name,credentials,teaching_video_url,status) VALUES('owner-a','owner@example.com','Builder','Practice','https://example.com/demo','approved')"
+    );
+    sql
+      .prepare('INSERT INTO creator_trials(subject,network_id,starts_at,ends_at) VALUES(?,?,?,?)')
+      .run('owner-a', 'net-a', 1, Math.floor(Date.now() / 1000) + 3600);
+    const body = {
+      title: 'Free review skill',
+      summary: 'A reusable technique',
+      kind: 'skill',
+      price: '0',
+      audience: 'public',
+      visibility: 'published'
+    };
+    const e = event(body);
+    e.platform.env.PCN_FREE_ASSETS_ENABLED = 'true';
+    e.platform.env.PCN_ASSET_COMMERCE_ENABLED = 'false';
+    e.platform.env.ASSET_PACKAGES.head.mockResolvedValue({
+      size: 4,
+      customMetadata: { sha256: 'a'.repeat(64) }
+    });
+    expect((await saveAsset(e)).status).toBe(200);
+    const page = event(undefined, null);
+    page.platform.env.PCN_FREE_ASSETS_ENABLED = 'true';
+    expect((await detail(page)).commerceReady).toBe(true);
+    const paid = event({ ...body, price: '10' });
+    paid.platform.env = e.platform.env;
+    expect((await saveAsset(paid)).status).toBe(503);
+    e.platform.env.ASSET_PACKAGES.head.mockResolvedValue(null);
+    expect((await saveAsset({ ...e, request: event(body).request })).status).toBe(409);
+  });
   it('rejects nonowners and foreign-origin mutations', async () => {
     await expect(create(event({}, { subject: 'buyer-a', role: 'member' }))).rejects.toMatchObject({
       status: 403

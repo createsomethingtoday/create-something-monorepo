@@ -1,4 +1,4 @@
-import { refreshBuyerRelease, commerceEnabled } from '$lib/server/asset-orders';
+import { refreshBuyerRelease, assetAcquisitionEnabled } from '$lib/server/asset-orders';
 import { error } from '@sveltejs/kit';
 import {
   findAsset,
@@ -56,6 +56,6 @@ export const load = async ({ locals, platform, params, url }) => {
     owner,
     purchase,
     storageReady: !!platform.env.ASSET_PACKAGES,
-    commerceReady: commerceEnabled(platform.env)
+    commerceReady: assetAcquisitionEnabled(platform.env, asset.price_cents)
   };
 };
