@@ -264,15 +264,15 @@ export async function reconcileSupportPayments(env: Env, network: Network, strip
               ? 'reversed'
               : 'settled';
         const saved = await env.DB.prepare(
-          'UPDATE support_settlements SET transfer_id=?,reversed_amount=?,state=?,updated_at=CURRENT_TIMESTAMP WHERE charge_id=? AND lease_id=?'
+          'UPDATE support_settlements SET transfer_id=?,transfer_amount=?,reversed_amount=?,state=?,updated_at=CURRENT_TIMESTAMP WHERE charge_id=? AND lease_id=?'
         )
-          .bind(transfer.id, transfer.amount_reversed, state, charge.id, lease)
+          .bind(transfer.id, transfer.amount, transfer.amount_reversed, state, charge.id, lease)
           .run();
         requireProof(saved.meta.changes === 1, 'lease changed; retry');
       } else {
         requireProof(!row.transfer_id, 'recorded transfer missing from provider history');
         await env.DB.prepare(
-          "UPDATE support_settlements SET state='withheld',updated_at=CURRENT_TIMESTAMP WHERE charge_id=? AND lease_id=?"
+          "UPDATE support_settlements SET state='withheld',transfer_amount=0,updated_at=CURRENT_TIMESTAMP WHERE charge_id=? AND lease_id=?"
         )
           .bind(charge.id, lease)
           .run();

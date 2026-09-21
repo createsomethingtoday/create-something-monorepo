@@ -225,3 +225,24 @@ it('refuses another account or an unapproved partner before sending money', asyn
   );
   expect(stripe.transfers.create).not.toHaveBeenCalled();
 });
+
+it('records the actual reduced transfer when a refund precedes first reconciliation', async () => {
+  charge.amount_refunded = 10000;
+  await reconcileSupportPayments(env, network as any, stripe);
+  await reconcileSupportPayments(env, network as any, stripe);
+  expect(transfers[0].amount).toBe(58020);
+  expect(sql.prepare('SELECT * FROM support_settlements').get()).toMatchObject({
+    partner_amount: 65520,
+    transfer_amount: 58020,
+    reversed_amount: 0,
+    state: 'settled'
+  });
+  charge.refunded = true;
+  charge.amount_refunded = 90000;
+  await reconcileSupportPayments(env, network as any, stripe);
+  expect(sql.prepare('SELECT * FROM support_settlements').get()).toMatchObject({
+    transfer_amount: 58020,
+    reversed_amount: 58020,
+    state: 'reversed'
+  });
+});
