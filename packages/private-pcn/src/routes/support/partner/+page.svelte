@@ -49,6 +49,17 @@
     }
     host.appendChild(component);
   }
+  async function hosted() {
+    busy = true;
+    message = '';
+    try {
+      const result = await api('support/payouts', { country, action: 'hosted' });
+      window.location.assign(result.url);
+    } catch (e) {
+      message = (e as Error).message;
+      busy = false;
+    }
+  }
   async function start() {
     busy = true;
     message = '';
@@ -137,6 +148,15 @@
     {#if !data.onboardingEnabled}<p class="availability">
         Partner payout onboarding is awaiting provider verification.
       </p>{/if}
+    <button
+      class="button secondary"
+      disabled={busy || !country || !data.onboardingEnabled}
+      onclick={hosted}>Continue on Stripe <Icon name="external-link" /></button
+    >
+    <p class="field-hint">
+      Use Stripe’s hosted setup if the embedded form cannot connect. If your link expires, return
+      here and choose Continue on Stripe again.
+    </p>
     <div bind:this={host}></div>
   </section>
 </main>

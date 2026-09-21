@@ -4,7 +4,16 @@ import { requireOwner } from '$lib/server/builder-assets';
 import { isSameOrigin } from '$lib/server/policy';
 import { BillingError } from '$lib/server/billing';
 import { boundedText } from '$lib/server/body';
-import { commerceStripe, readSeller, syncSeller, sellerSession, sellerCountries } from '$lib/server/seller-accounts';
+import { hostedOnboarding } from '$lib/server/hosted-onboarding';
+import {
+  ensureSeller,
+  liveMode,
+  commerceStripe,
+  readSeller,
+  syncSeller,
+  sellerSession,
+  sellerCountries
+} from '$lib/server/seller-accounts';
 export const GET: RequestHandler = async ({ locals, platform }) => {
   requireOwner(locals);
   if (!platform?.env.DB) return json({ error: 'Seller setup unavailable.' }, { status: 503 });
@@ -45,6 +54,25 @@ export const POST: RequestHandler = async ({ request, locals, platform }) => {
     return json({ error: 'Select your business country.' }, { status: 400 });
   }
   try {
+    if (body?.action === 'hosted') {
+      const stripe = commerceStripe(platform.env);
+      const account = await ensureSeller(
+        platform.env,
+        locals.identity!,
+        locals.network!.name,
+        typeof body.country === 'string' ? body.country : '',
+        stripe
+      );
+      return json(
+        await hostedOnboarding(
+          stripe,
+          account,
+          'merchant',
+          new URL(`/n/${locals.network!.slug}/seller`, request.url).href,
+          liveMode(platform.env)
+        )
+      );
+    }
     return json(
       await sellerSession(
         platform.env,

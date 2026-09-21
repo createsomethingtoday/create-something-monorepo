@@ -3,8 +3,13 @@ import type { RequestHandler } from './$types';
 import { isSameOrigin } from '$lib/server/policy';
 import { boundedText } from '$lib/server/body';
 import { BillingError } from '$lib/server/billing';
-import { commerceStripe } from '$lib/server/seller-accounts';
-import { supportPartnerSession, validateSupportAccount } from '$lib/server/support-payments';
+import { hostedOnboarding } from '$lib/server/hosted-onboarding';
+import { commerceStripe, liveMode } from '$lib/server/seller-accounts';
+import {
+  ensureSupportPartner,
+  supportPartnerSession,
+  validateSupportAccount
+} from '$lib/server/support-payments';
 export const GET: RequestHandler = async ({ locals, platform }) => {
   if (!locals.identity || !platform?.env.DB)
     return json({ error: 'Sign in to continue.' }, { status: 401 });
@@ -53,6 +58,24 @@ export const POST: RequestHandler = async ({ locals, platform, request }) => {
     return json({ error: 'Select a business country.' }, { status: 400 });
   }
   try {
+    if (b?.action === 'hosted') {
+      const stripe = commerceStripe(platform.env);
+      const account = await ensureSupportPartner(
+        platform.env,
+        locals.identity,
+        typeof b.country === 'string' ? b.country : '',
+        stripe
+      );
+      return json(
+        await hostedOnboarding(
+          stripe,
+          account,
+          'recipient',
+          new URL('/support/partner', request.url).href,
+          liveMode(platform.env)
+        )
+      );
+    }
     return json(
       await supportPartnerSession(
         platform.env,
