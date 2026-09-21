@@ -107,6 +107,14 @@
               <a href={`/n/${network.slug}`}>View library <Icon name="arrow-right" /></a>
             </div>
             <dl class="network-tools">
+              {#if network.status !== 'active'}<div>
+                  <dt><Icon name="package" /> Package</dt>
+                  <dd>
+                    <a href={`/n/${network.slug}/assets`}>Assets</a><span
+                      >MCPs, plugins and skills</span
+                    >
+                  </dd>
+                </div>{/if}
               <div>
                 <dt><Icon name="terminal" /> Teach</dt>
                 <dd>
@@ -368,7 +376,7 @@
   }
   .network-tools {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
     gap: var(--space-performance-sm);
     border-top: 1px solid var(--line);
     padding-top: var(--space-performance-md);
