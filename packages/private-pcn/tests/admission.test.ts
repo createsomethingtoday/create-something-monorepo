@@ -597,3 +597,54 @@ it('reports the remaining creator allowance including owned company support work
   expect(result.networks).toHaveLength(2);
   expect(result.remainingNetworks).toBe(0);
 });
+
+it.each(['forbidden', 'account_create_activation_required'])(
+  'explains definitive support onboarding rejection %s and allows safe retry',
+  async (code) => {
+    await POST(event(application, 'partner', 'partner@example.com'));
+    await review(
+      event(
+        { subject: 'partner', status: 'approved', review_note: 'Good creator.', revision: 0 },
+        'reviewer',
+        'reviewer@example.com'
+      )
+    );
+    await partnerReview(
+      event(
+        { subject: 'partner', approved: true, note: 'Reviewed for support.' },
+        'reviewer',
+        'reviewer@example.com'
+      )
+    );
+    const e = event(undefined, 'partner', 'partner@example.com');
+    e.platform.env.PCN_SUPPORT_CONNECT_ENABLED = 'true';
+    e.platform.env.STRIPE_SECRET_KEY = 'sk_test_fixture';
+    const account = {
+      id: 'acct_support',
+      livemode: false,
+      dashboard: 'express',
+      metadata: { application: 'private_pcn_support', pcn_support_partner: 'partner' },
+      defaults: {
+        responsibilities: { fees_collector: 'application', losses_collector: 'application' }
+      }
+    };
+    const create = vi
+      .fn()
+      .mockRejectedValueOnce(Object.assign(new Error('Provider rejection'), { code }))
+      .mockResolvedValue(account);
+    const stripe: any = {
+      accounts: { retrieve: vi.fn(async () => ({ id: 'acct_1JfTzIAzstI6Ecr5' })) },
+      countrySpecs: { retrieve: vi.fn(async () => ({ id: 'US' })) },
+      v2: { core: { accounts: { create, retrieve: vi.fn(async () => account) } } }
+    };
+    await expect(
+      ensureSupportPartner(e.platform.env, e.locals.identity, 'US', stripe)
+    ).rejects.toThrow(
+      code === 'forbidden' ? 'payment key lacks permission' : 'awaiting Stripe platform approval'
+    );
+    expect(await ensureSupportPartner(e.platform.env, e.locals.identity, 'US', stripe)).toBe(
+      'acct_support'
+    );
+    expect(create.mock.calls[0][1].idempotencyKey).not.toBe(create.mock.calls[1][1].idempotencyKey);
+  }
+);

@@ -505,3 +505,21 @@ it('loads seller countries across provider pages', async () => {
   expect(await sellerCountries({ countrySpecs: { list } } as any)).toEqual(['CA', 'US']);
   expect(list).toHaveBeenLastCalledWith({ limit: 100, starting_after: 'CA' });
 });
+
+it('explains platform review without stranding a rejected seller creation', async () => {
+  sql.exec('DELETE FROM seller_accounts');
+  stripe.v2.core.accounts.create.mockRejectedValueOnce(
+    Object.assign(new Error('Your account must be activated'), {
+      code: 'account_create_activation_required'
+    })
+  );
+  await expect(
+    ensureSeller(env, { subject: 'owner', email: 'owner@example.com' }, 'Builder', 'US', stripe)
+  ).rejects.toThrow('CREATE SOMETHING is awaiting Stripe platform approval');
+  expect(sql.prepare('SELECT creation_started FROM seller_accounts').get()?.creation_started).toBe(
+    0
+  );
+  expect(sql.prepare('SELECT creation_key FROM seller_accounts').get()?.creation_key).not.toBe(
+    stripe.v2.core.accounts.create.mock.calls.at(-1)[1].idempotencyKey.replace('pcn-seller-', '')
+  );
+});

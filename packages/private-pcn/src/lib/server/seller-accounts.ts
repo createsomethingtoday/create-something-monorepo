@@ -1,3 +1,4 @@
+import { onboardingRejection } from './onboarding-errors';
 import Stripe from 'stripe';
 import type { D1Database } from '@cloudflare/workers-types';
 import { BillingError } from './billing';
@@ -118,22 +119,35 @@ export async function ensureSeller(
     )
       .bind(now(), owner.subject, lease)
       .run();
-    const account = await stripe.v2.core.accounts.create(
-      {
-        contact_email: row.contact_email,
-        display_name: row.display_name,
-        identity: { country: row.country },
-        dashboard: 'full',
-        configuration: { merchant: { capabilities: { card_payments: { requested: true } } } },
-        defaults: {
-          currency: 'usd',
-          responsibilities: { fees_collector: 'stripe', losses_collector: 'stripe' }
+    const account = await stripe.v2.core.accounts
+      .create(
+        {
+          contact_email: row.contact_email,
+          display_name: row.display_name,
+          identity: { country: row.country },
+          dashboard: 'full',
+          configuration: { merchant: { capabilities: { card_payments: { requested: true } } } },
+          defaults: {
+            currency: 'usd',
+            responsibilities: { fees_collector: 'stripe', losses_collector: 'stripe' }
+          },
+          metadata: { application: 'private_pcn', pcn_owner: owner.subject },
+          include: ['configuration.merchant', 'defaults', 'requirements']
         },
-        metadata: { application: 'private_pcn', pcn_owner: owner.subject },
-        include: ['configuration.merchant', 'defaults', 'requirements']
-      },
-      { idempotencyKey: `pcn-seller-${row.creation_key}` }
-    );
+        { idempotencyKey: `pcn-seller-${row.creation_key}` }
+      )
+      .catch(async (error: unknown) => {
+        const rejection = onboardingRejection(error);
+        if (rejection) {
+          await env.DB.prepare(
+            'UPDATE seller_accounts SET creation_started=0,creation_key=? WHERE owner_id=? AND lease_id=? AND account_id IS NULL'
+          )
+            .bind(crypto.randomUUID(), owner.subject, lease)
+            .run();
+          throw rejection;
+        }
+        throw error;
+      });
     validateSeller(account, owner.subject, env);
     const saved = await env.DB.prepare(
       "UPDATE seller_accounts SET account_id=?,state='requirements_due' WHERE owner_id=? AND lease_id=? AND account_id IS NULL"

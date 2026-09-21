@@ -1,3 +1,4 @@
+import { onboardingRejection } from './onboarding-errors';
 import Stripe from 'stripe';
 import { BillingError } from './billing';
 import { commerceStripe, liveMode, now, PLATFORM_ACCOUNT_ID } from './seller-accounts';
@@ -77,24 +78,40 @@ export async function ensureSupportPartner(
       )
       .bind(now(), subject, lease)
       .run();
-    const account = await stripe.v2.core.accounts.create(
-      {
-        contact_email: identity.email,
-        display_name: application.display_name,
-        identity: { country: row.country },
-        dashboard: 'express',
-        configuration: {
-          recipient: { capabilities: { stripe_balance: { stripe_transfers: { requested: true } } } }
+    const account = await stripe.v2.core.accounts
+      .create(
+        {
+          contact_email: identity.email,
+          display_name: application.display_name,
+          identity: { country: row.country },
+          dashboard: 'express',
+          configuration: {
+            recipient: {
+              capabilities: { stripe_balance: { stripe_transfers: { requested: true } } }
+            }
+          },
+          defaults: {
+            currency: 'usd',
+            responsibilities: { fees_collector: 'application', losses_collector: 'application' }
+          },
+          metadata: { application: 'private_pcn_support', pcn_support_partner: subject },
+          include: ['configuration.recipient', 'defaults', 'requirements']
         },
-        defaults: {
-          currency: 'usd',
-          responsibilities: { fees_collector: 'application', losses_collector: 'application' }
-        },
-        metadata: { application: 'private_pcn_support', pcn_support_partner: subject },
-        include: ['configuration.recipient', 'defaults', 'requirements']
-      },
-      { idempotencyKey: `pcn-support-partner-${row.creation_key}` }
-    );
+        { idempotencyKey: `pcn-support-partner-${row.creation_key}` }
+      )
+      .catch(async (error: unknown) => {
+        const rejection = onboardingRejection(error);
+        if (rejection) {
+          await db
+            .prepare(
+              'UPDATE support_partners SET creation_started=0,creation_key=? WHERE subject=? AND lease_id=? AND account_id IS NULL'
+            )
+            .bind(crypto.randomUUID(), subject, lease)
+            .run();
+          throw rejection;
+        }
+        throw error;
+      });
     validateSupportAccount(account, subject, env);
     const saved = await db
       .prepare(
