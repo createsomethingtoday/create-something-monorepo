@@ -1,6 +1,6 @@
 #!/bin/bash
 # Type Check Stop Hook
-# Stop: Verifies TypeScript compiles before Claude finishes
+# Stop: Checks Svelte packages with svelte-check and plain TypeScript with tsc.
 # Exit code 2 blocks stopping and feeds error back to Claude
 
 set -e
@@ -69,28 +69,33 @@ for pkg in $PACKAGES_TO_CHECK; do
       continue
     fi
 
-    # Skip packages without typescript installed
-    if ! (cd "$PKG_DIR" && pnpm exec tsc --version >/dev/null 2>&1); then
-      log_msg "Skipping $pkg - tsc not available"
-      continue
-    fi
-
-    # Run tsc --noEmit and capture output
-    TSC_OUTPUT=$(cd "$PKG_DIR" && pnpm exec tsc --noEmit 2>&1) || true
-
-    # Filter out a known false-positive class: raw `tsc` can only see the
-    # ambient `declare module "*.svelte"` (default export only), so any
-    # `export { type X } from './Foo.svelte'` re-export reports TS2305/TS2614
-    # ("has no exported member"). These resolve correctly under the package's
-    # authoritative checker, `svelte-check` (see each Svelte package's
-    # `pnpm check` / `svelte-package`), which is svelte2tsx-aware. Drop only
-    # that class so genuine type errors still block.
-    REAL_ERRORS=$(echo "$TSC_OUTPUT" \
-      | grep -E "error TS[0-9]+:" \
-      | grep -vE "error TS(2305|2614):.*\"\*\.svelte\"" || true)
-
-    if [[ -n "$REAL_ERRORS" ]]; then
-      ERRORS="$ERRORS\n\n=== $pkg ===\n$REAL_ERRORS"
+    # Use the package's Svelte-aware checker when its check script declares one.
+    # Plain tsc cannot validate component bodies or named Svelte type exports.
+    CHECK_SCRIPT=$(jq -r '.scripts.check // ""' "$PKG_DIR/package.json" 2>/dev/null || true)
+    if [[ "$CHECK_SCRIPT" == *svelte-check* ]]; then
+      # Library packages may delegate sync through `pnpm package`.
+      HAS_SVELTEKIT=$(jq -r '(.dependencies["@sveltejs/kit"] // .devDependencies["@sveltejs/kit"] // .peerDependencies["@sveltejs/kit"] // "")' "$PKG_DIR/package.json" 2>/dev/null || true)
+      if [[ "$CHECK_SCRIPT" == *"svelte-kit sync"* || -n "$HAS_SVELTEKIT" ]]; then
+        log_msg "Preparing $pkg with svelte-kit sync"
+        CHECK_OUTPUT=$(cd "$PKG_DIR" && pnpm exec svelte-kit sync 2>&1) || {
+          ERRORS="$ERRORS\n\n=== $pkg (svelte-kit sync) ===\n$CHECK_OUTPUT"
+          continue
+        }
+      fi
+      log_msg "Checking $pkg with svelte-check"
+      CHECK_OUTPUT=$(cd "$PKG_DIR" && pnpm exec svelte-check --tsconfig ./tsconfig.json --threshold error 2>&1) || {
+        ERRORS="$ERRORS\n\n=== $pkg (svelte-check) ===\n$CHECK_OUTPUT"
+      }
+    else
+      # Preserve the existing skip for plain TS packages without a compiler.
+      if ! (cd "$PKG_DIR" && pnpm exec tsc --version >/dev/null 2>&1); then
+        log_msg "Skipping $pkg - tsc not available"
+        continue
+      fi
+      log_msg "Checking $pkg with tsc --noEmit"
+      CHECK_OUTPUT=$(cd "$PKG_DIR" && pnpm exec tsc --noEmit 2>&1) || {
+        ERRORS="$ERRORS\n\n=== $pkg ===\n$CHECK_OUTPUT"
+      }
     fi
   fi
 done

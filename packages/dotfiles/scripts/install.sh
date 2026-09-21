@@ -77,8 +77,7 @@ echo "Preparing Zellij agent cockpit..."
 mkdir -p /tmp/zellij
 mkdir -p ~/.config/zellij
 echo "  Created /tmp/zellij socket directory"
-ln -sf "$DOTFILES_DIR/zellij/config.kdl" ~/.config/zellij/config.kdl
-echo "  Symlinked Zellij config -> ~/.config/zellij/config.kdl"
+"$SCRIPT_DIR/install-zellij-config.sh"
 
 if ! command -v zellij &> /dev/null; then
     echo ""
