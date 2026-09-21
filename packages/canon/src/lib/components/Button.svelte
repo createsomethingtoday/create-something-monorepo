@@ -34,7 +34,7 @@
 </script>
 
 {#if href && !disabled}
-	<a {href} class={baseClasses} role="button" {onclick}>
+	<a {href} class={baseClasses} {onclick}>
 		{#if children}
 			{@render children()}
 		{/if}
