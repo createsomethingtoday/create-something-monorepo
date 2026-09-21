@@ -1,6 +1,8 @@
 # Live payment activation — CRE-2030
 
-## Hosting release, September 21, 2026
+## Hosting release candidate, September 21, 2026
+
+Promotion is pending the final PRIVATE creator-page readback, review resolution and CI on the cancellation fix. Production checkout remains off until that checkpoint is recorded.
 
 Enable `PCN_SELF_SERVICE_ENABLED` in production only. Approved creators may start a USD24.50 monthly hosting subscription. An active creator trial still blocks checkout until its end. Identity enrollment, creator approval and network ownership remain independent requirements. Preview configuration is unchanged.
 
@@ -8,7 +10,17 @@ Live account: `acct_1JfTzIAzstI6Ecr5`. Hosting price: `price_1UIAQ0AzstI6Ecr5uLy
 
 Platform billing webhook: `we_1UIAQ4AzstI6Ecr5ldY08jZK`, `/api/billing/webhook`. Connected-account commerce webhook: `we_1UIAQ6AzstI6Ecr52lHwcWC8`, `/api/commerce/webhook`. Both use API version `2026-08-26.dahlia`, matching the installed SDK. Credentials and signing secrets are held in Infisical `prod:/private-pcn` and Cloudflare secret bindings, never source.
 
-Verification before promotion: prior real test-mode hosting subscription `sub_1UHqKIAzstI6Ecr5M6DHOdHR` read back canceled; full 2450-cent refund `re_3UHqKHAzstI6Ecr5426UynHc` succeeded. Current application suite: 145 tests; Svelte check: zero errors/warnings. Both live webhook handlers accepted signed inert configuration probes and rejected invalid signatures and wrong-mode events. Those probes are not Stripe-origin delivery or purchase proof. No live payment or automatic renewal has been initiated by the operator.
+Verification before promotion: prior real test-mode hosting subscription `sub_1UHqKIAzstI6Ecr5M6DHOdHR` read back canceled; full 2450-cent refund `re_3UHqKHAzstI6Ecr5426UynHc` succeeded. Current application suite: 147 tests; Svelte check: zero errors/warnings. Both live webhook handlers accepted signed inert configuration probes and rejected invalid signatures and wrong-mode events. Those probes are not Stripe-origin delivery or purchase proof. No live payment or automatic renewal has been initiated by the operator.
+
+## Current acceptance evidence
+
+- Identity: the approved production acceptance alias completed mailbox signup and password recovery. Production Identity records verified email and consumed challenges; signed-in browser retained membership denial. Exact used-link replay and invitation revocation during signup remain separate enrollment checks. Broad enrollment remains off; this release sells only to existing verified, approved creators.
+- Stream/Analytics: CREATE SOMETHING's production credential reads Stream and the application's tenant-scoped usage query. Actual preview browser upload/processing, 125-second playback with five renewal grants, signed media and membership-revocation renewal denial were verified. Test media was archived and temporary membership revoked. These are real provider/preview results, not claims that a paid production customer completed playback. Production R2 checksum/private-bucket checks and dedicated bindings were verified.
+- Stripe failure/recovery: test subscription `sub_1UIAc4AzstI6Ecr5NCBXL7cN` with Stripe's decline-after-attachment fixture returned incomplete with zero paid. Stripe-origin `invoice.payment_failed` event `evt_1UIAc7AzstI6Ecr5uNKJ6M75` reached preview; billing became incomplete and the network stayed suspended. Paying that invoice with the successful test fixture delivered `invoice.paid` and activated the network through normal webhook reconciliation.
+- Portal cancellation: actual Stripe-hosted test portal showed the active USD24.50 plan and cancellation confirmation. The operator completed simulated cancellation; portal showed service ending October21. Stripe flexible billing supplied `cancel_at=1792602164` with the legacy boolean false. A failing regression reproduced PRIVATE's missing cancellation indication. The fix bounds access by the earlier of paid-period end and cancellation timestamp, and marks the final paid period appropriately. A separate regression prevents a later cancellation from labeling the current period as final.
+- Preview fix: Worker `a22bfcab-6c30-43f6-88a5-8991b61033a0` received a real subscription update and stored cancellation flag1/end1792602164 while correctly retaining already-paid access. Actual PRIVATE settings-page display is the remaining browser check. A direct provider-created portal session proves the Stripe UI, not PRIVATE's owner-only portal-launch route.
+
+Detailed operator receipts are under `.codex/private-pcn/` and CRE-2030: enrollment-canary-production-receipt, long-playback-preview-receipt, revoked-playback-preview-receipt and payment-activation-receipt. Tests and provider checks do not replace the remaining authenticated browser checkpoint.
 
 ## Separate gates
 
