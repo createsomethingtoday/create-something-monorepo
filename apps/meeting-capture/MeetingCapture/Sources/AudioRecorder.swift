@@ -104,6 +104,8 @@ final class AudioRecorder {
             return .started
         }
 
+        guard !Task.isCancelled else { return .failed }
+
         // Fallback path for environments where ScreenCaptureKit capture is unavailable.
         if microphoneGranted && microphoneRecorder.startRecording(meetingId: meetingId) {
             isRecording = true
