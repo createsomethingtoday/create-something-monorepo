@@ -21,7 +21,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
   } catch {
     return json({ error: 'Invalid webhook signature or payload.' }, { status: 400 });
   }
-  if (event.livemode !== String(env.STRIPE_SECRET_KEY).includes('_live_'))
+  if (event.account || event.livemode !== String(env.STRIPE_SECRET_KEY).includes('_live_'))
     return json({ error: 'Wrong billing mode.' }, { status: 400 });
   try {
     await processBillingEvent(env, event, stripe);

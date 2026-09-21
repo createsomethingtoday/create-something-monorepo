@@ -45,6 +45,9 @@
   <div class="builder-split">
     <section>
       <h2>The agreed workflow</h2>
+      <a href={`/remote-sessions?network=${data.workspace.network_id}`}
+        >Request remote support <Icon name="arrow-right" /></a
+      >
       <p class="preserve">{data.workspace.workflow}</p>
       <p>
         $900 USD/month. Guidance and scheduled check-ins for this workflow; custom builds, provider

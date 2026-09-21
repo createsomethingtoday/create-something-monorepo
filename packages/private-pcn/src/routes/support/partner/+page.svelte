@@ -102,8 +102,9 @@
   <h1>Deliver the support.<br /><em>Receive your share.</em></h1>
   <p class="lede">
     This payout account is for CREATE SOMETHING’s $900/month support subscription. The partner share
-    is 95%; CREATE SOMETHING retains 5% before processing fees. Your independent creator sales use a
-    separate payment account.
+    is 75% after Stripe’s actual transaction-processing fee; CREATE SOMETHING retains 25% of that
+    net amount and covers Billing and Connect fees from its share. Your independent creator sales
+    use a separate payment account.
   </p>
   <section class="builder-panel">
     <h2>Partner verification</h2>

@@ -64,7 +64,7 @@
   >
   <nav aria-label="Primary">
     <a href="/field-engineering">Field practice</a><a href="/library">Library</a>
-    {#if data.identity}<a href="/collection">Your collection</a><a href="/dashboard"
+    {#if data.identity}<a href="/collection">Your collection</a><a href="/remote-sessions">Remote support</a><a href="/dashboard"
         >Builder workspace</a
       >{:else}<a href="/login"
         >Sign in <span aria-hidden="true"><Icon name="arrow-right" /></span></a

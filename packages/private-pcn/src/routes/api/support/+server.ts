@@ -21,7 +21,7 @@ export const GET: RequestHandler = async ({ locals, platform }) => {
           .all()
       ).results
     : [];
-  return json({ partners, workspaces });
+  return json({ partners, workspaces: workspaces.map((w) => ({ ...w, partner_percent: 75 })) });
 };
 export const POST: RequestHandler = async ({ locals, platform, request }) => {
   if (!isSameOrigin(request))

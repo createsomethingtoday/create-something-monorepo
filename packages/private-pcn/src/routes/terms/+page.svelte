@@ -16,6 +16,8 @@
 </script>
 
 <LegalPage
+  version="1.1"
+  effectiveDate="September 21, 2026"
   title="Terms of Service"
   description="The agreement for learning, publishing, and sharing agentic engineering practice through CREATE SOMETHING Private."
   {sections}
@@ -130,8 +132,12 @@
     <p>
       The CREATE SOMETHING company-support subscription is <strong>USD $900 per month</strong> when
       available. Only separately approved CREATE SOMETHING partners may offer it. The
-      <strong>95% partner / 5% CREATE SOMETHING allocation applies only to this program</strong>; it
-      is not the commission for creator assets or other creator services.
+      <strong
+        >75% partner / 25% CREATE SOMETHING allocation, after Stripe’s actual transaction-processing
+        fee, applies only to this program</strong
+      >; it is not the commission for creator assets or other creator services. CREATE SOMETHING
+      covers Billing and Connect fees from its share. Refunds and disputes can reduce or reverse
+      partner transfers.
     </p>
     <p>
       The accepted engagement defines the project, participants, deliverables, access, and any
@@ -140,6 +146,18 @@
       only project information you are authorized to share. Any special confidentiality,
       regulated-data, security, or data-processing requirements must be agreed before that
       information is provided.
+    </p>
+  </section>
+  <section>
+    <h2>Attended remote support</h2>
+    <p>
+      Remote sessions require the buyer’s approval in RustDesk or Zoom. A PRIVATE session records
+      the agreed task and usage budget; it does not enforce provider spending, connect a device, or
+      terminate a remote connection. Buyers remain present, approve expanded scope separately, and
+      disconnect in the remote-access application. Creators must use only authorized access and must
+      not retain passwords or enable unattended access under this service. Buyers pay their own AI
+      and other provider usage. Asset ownership does not include support hours unless the creator
+      explicitly offers them.
     </p>
   </section>
   <section id="conduct">

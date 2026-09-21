@@ -201,6 +201,11 @@
   /></svelte:head
 >
 <main id="main" class="builder-workspace">
+  {#if data.releases.some((r) => r.entitled) && !data.owner}<a
+      href={`/remote-sessions?network=${data.asset.network_id}`}
+      >Request remote support from this builder <Icon name="arrow-right" /></a
+    >{/if}
+
   <div class="workspace-trail">
     <a href={`/n/${data.network!.slug}/assets`}>{data.network!.name} / Assets</a><span>/</span><span
       >{data.asset.title}</span
