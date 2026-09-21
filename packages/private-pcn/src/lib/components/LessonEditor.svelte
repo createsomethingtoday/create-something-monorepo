@@ -39,7 +39,10 @@
       await invalidateAll();
       message = 'Lesson material saved. Review the member view below.';
     } catch (e) {
-      error = (e as Error).message;
+      error =
+        e instanceof TypeError
+          ? 'Could not confirm the save. Your entries are still here. Check your connection, then save again.'
+          : (e as Error).message;
     } finally {
       busy = false;
     }
