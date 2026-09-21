@@ -1,4 +1,6 @@
 <script lang="ts">
+  import StateBadge from '$lib/components/StateBadge.svelte';
+
   import { page } from '$app/state';
   import Icon from '$lib/components/Icon.svelte';
   import Player from '$lib/components/Player.svelte';
@@ -33,11 +35,22 @@
       <p class="eyebrow">{data.network?.name || 'CREATE SOMETHING'} / {content.video.series}</p>
       <h1>{content.video.title}</h1>
       <div class="lesson-meta">
-        <span>{content.video.access === 'public' ? 'Public preview' : 'Member session'}</span
-        >{#if content.video.duration}<span>{Math.ceil(content.video.duration / 60)} min</span
-          >{/if}{#if content.video.visibility !== 'published'}<span
-            >Creator preview · {content.video.visibility}</span
-          >{/if}
+        <StateBadge
+          label={content.video.access === 'public'
+            ? 'Public preview'
+            : content.video.access === 'members'
+              ? 'Members'
+              : 'Private'}
+          icon={content.video.access === 'public' ? 'users' : 'lock'}
+        />
+        {#if content.video.duration}<span>{Math.ceil(content.video.duration / 60)} min</span>{/if}
+        {#if content.video.visibility !== 'published'}
+          <StateBadge
+            label={content.video.visibility === 'archived' ? 'Archived' : 'Draft'}
+            icon={content.video.visibility === 'archived' ? 'archive' : 'document'}
+          />
+          <span>Creator preview</span>
+        {/if}
       </div>
       {#if content.video.description}<p class="intro">{content.video.description}</p>{/if}
     </header>
