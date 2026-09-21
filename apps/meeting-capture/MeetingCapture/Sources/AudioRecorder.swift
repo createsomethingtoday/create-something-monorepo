@@ -18,9 +18,16 @@ enum RecordingBackend: String {
 struct AudioRecordingResult {
     let url: URL
     let backend: RecordingBackend
+    var additionalLocalURLs: [URL] = []
+
+    func removeLocalFiles() {
+        for file in [url] + additionalLocalURLs {
+            try? FileManager.default.removeItem(at: file)
+        }
+    }
 }
 
-enum AudioRecorderStartResult {
+enum AudioRecorderStartResult: Equatable {
     case started
     case missingScreenRecordingPermission
     case failed
@@ -37,10 +44,50 @@ private enum ScreenRecordingPermission {
     }
 }
 
+protocol SystemAudioRecording {
+    var firstSampleTime: CMTime? { get }
+    func startRecording(meetingId: String) async -> Bool
+    func stopRecording() async -> URL?
+}
+
+protocol MicrophoneAudioRecording {
+    var startHostTime: CMTime? { get }
+    func startRecording(meetingId: String) -> Bool
+    func stopRecording() -> URL?
+}
+
+struct AudioCaptureFiles {
+    let systemAudioURL: URL?
+    let microphoneURL: URL?
+    let meetingId: String?
+    let systemStartTime: TimeInterval
+    let microphoneStartTime: TimeInterval
+}
+
 @MainActor
 final class AudioRecorder {
-    private let systemAudioRecorder = SystemAudioRecorder()
-    private let microphoneRecorder = MicrophoneAudioRecorder()
+    private let systemAudioRecorder: any SystemAudioRecording
+    private let microphoneRecorder: any MicrophoneAudioRecording
+    private let screenPermission: () -> Bool
+    private let screenRequest: () -> Bool
+    private let microphonePermission: () async -> Bool
+    private let exportRecording: (AudioCaptureFiles) async -> AudioRecordingResult?
+
+    init(
+        systemAudioRecorder: (any SystemAudioRecording)? = nil,
+        microphoneRecorder: (any MicrophoneAudioRecording)? = nil,
+        screenPermission: (() -> Bool)? = nil,
+        screenRequest: (() -> Bool)? = nil,
+        microphonePermission: (() async -> Bool)? = nil,
+        exportRecording: ((AudioCaptureFiles) async -> AudioRecordingResult?)? = nil
+    ) {
+        self.systemAudioRecorder = systemAudioRecorder ?? SystemAudioRecorder()
+        self.microphoneRecorder = microphoneRecorder ?? MicrophoneAudioRecorder()
+        self.screenPermission = screenPermission ?? ScreenRecordingPermission.isGranted
+        self.screenRequest = screenRequest ?? ScreenRecordingPermission.requestAccess
+        self.microphonePermission = microphonePermission ?? { await Self.platformMicrophonePermission() }
+        self.exportRecording = exportRecording ?? { await AudioRecordingExporter.combine($0) }
+    }
 
     private(set) var isRecording = false
     private(set) var activeBackend: RecordingBackend?
@@ -48,15 +95,19 @@ final class AudioRecorder {
     private var isTransitioning = false
 
     func hasScreenRecordingPermission() -> Bool {
-        ScreenRecordingPermission.isGranted()
+        screenPermission()
     }
 
     @discardableResult
     func requestScreenRecordingAccess() -> Bool {
-        ScreenRecordingPermission.requestAccess()
+        screenRequest()
     }
 
     func requestMicrophoneAccessIfNeeded() async -> Bool {
+        await microphonePermission()
+    }
+
+    private static func platformMicrophonePermission() async -> Bool {
         switch AVCaptureDevice.authorizationStatus(for: .audio) {
         case .authorized:
             return true
@@ -78,9 +129,9 @@ final class AudioRecorder {
         isTransitioning = true
         defer { isTransitioning = false }
 
-        guard ScreenRecordingPermission.isGranted() else {
+        guard hasScreenRecordingPermission() else {
             if promptForScreenRecordingAccessIfNeeded {
-                _ = ScreenRecordingPermission.requestAccess()
+                _ = requestScreenRecordingAccess()
             }
 
             activeBackend = nil
@@ -122,47 +173,46 @@ final class AudioRecorder {
     }
 
     func stopRecording() async -> AudioRecordingResult? {
-        guard isRecording, !isTransitioning, let backend = activeBackend else {
-            return nil
-        }
-
+        guard isRecording, !isTransitioning, let backend = activeBackend else { return nil }
         isTransitioning = true
-        defer { isTransitioning = false }
-        let url: URL?
-        var resultBackend = backend
+        let meetingId = activeMeetingId
+        let systemURL: URL?
+        let microphoneURL: URL?
         switch backend {
         case .systemAudio:
-            url = await systemAudioRecorder.stopRecording()
+            systemURL = await systemAudioRecorder.stopRecording()
+            microphoneURL = nil
         case .systemAudioAndMicrophone:
-            let microphoneURL = microphoneRecorder.stopRecording()
-            let systemAudioURL = await systemAudioRecorder.stopRecording()
-            let combined = await combineRecordings(
-                systemAudioURL: systemAudioURL,
-                microphoneURL: microphoneURL,
-                meetingId: activeMeetingId
-            )
-            url = combined?.url
-            resultBackend = combined?.backend ?? backend
+            microphoneURL = microphoneRecorder.stopRecording()
+            systemURL = await systemAudioRecorder.stopRecording()
         case .microphone:
-            url = microphoneRecorder.stopRecording()
+            microphoneURL = microphoneRecorder.stopRecording()
+            systemURL = nil
         }
-
+        // Snapshot everything the exporter needs before another capture can reset it.
+        let capture = AudioCaptureFiles(
+            systemAudioURL: systemURL, microphoneURL: microphoneURL, meetingId: meetingId,
+            systemStartTime: systemAudioRecorder.firstSampleTime?.seconds ?? .nan,
+            microphoneStartTime: microphoneRecorder.startHostTime?.seconds ?? .nan
+        )
         isRecording = false
         activeBackend = nil
         activeMeetingId = nil
-
-        guard let outputURL = url else {
-            return nil
-        }
-
-        return AudioRecordingResult(url: outputURL, backend: resultBackend)
+        isTransitioning = false
+        // Export owns immutable file references, not this recorder's next session.
+        return await exportRecording(capture)
     }
 
-    private func combineRecordings(
-        systemAudioURL: URL?,
-        microphoneURL: URL?,
-        meetingId: String?
+}
+
+enum AudioRecordingExporter {
+    static func combine(
+        _ capture: AudioCaptureFiles,
+        mix: (URL, URL, URL, TimeInterval, TimeInterval) async throws -> Void = AudioFileMixer.mix
     ) async -> AudioRecordingResult? {
+        let systemAudioURL = capture.systemAudioURL
+        let microphoneURL = capture.microphoneURL
+        let meetingId = capture.meetingId
         guard let systemAudioURL else {
             return microphoneURL.map { AudioRecordingResult(url: $0, backend: .microphone) }
         }
@@ -175,19 +225,16 @@ final class AudioRecorder {
         try? FileManager.default.removeItem(at: outputURL)
 
         do {
-            try await AudioFileMixer.mix(
-                systemAudioURL: systemAudioURL,
-                microphoneURL: microphoneURL,
-                outputURL: outputURL,
-                systemStartTime: systemAudioRecorder.firstSampleTime?.seconds ?? .nan,
-                microphoneStartTime: microphoneRecorder.startHostTime?.seconds ?? .nan
-            )
+            try await mix(systemAudioURL, microphoneURL, outputURL,
+                          capture.systemStartTime, capture.microphoneStartTime)
             try? FileManager.default.removeItem(at: systemAudioURL)
             try? FileManager.default.removeItem(at: microphoneURL)
             return AudioRecordingResult(url: outputURL, backend: .systemAudioAndMicrophone)
         } catch {
             print("Failed to mix system and microphone audio: \(error)")
-            return AudioRecordingResult(url: systemAudioURL, backend: .systemAudio)
+            try? FileManager.default.removeItem(at: outputURL)
+            return AudioRecordingResult(url: systemAudioURL, backend: .systemAudio,
+                                        additionalLocalURLs: [microphoneURL])
         }
     }
 }
@@ -302,7 +349,7 @@ enum AudioFileMixer {
     }
 }
 
-private final class MicrophoneAudioRecorder: NSObject, AVAudioRecorderDelegate {
+private final class MicrophoneAudioRecorder: NSObject, AVAudioRecorderDelegate, MicrophoneAudioRecording {
     private var recorder: AVAudioRecorder?
     private var outputURL: URL?
     private(set) var startHostTime: CMTime?
@@ -363,7 +410,7 @@ private final class MicrophoneAudioRecorder: NSObject, AVAudioRecorderDelegate {
     }
 }
 
-private final class SystemAudioRecorder: NSObject, SCStreamOutput, SCStreamDelegate {
+private final class SystemAudioRecorder: NSObject, SCStreamOutput, SCStreamDelegate, SystemAudioRecording {
     private var stream: SCStream?
     private var writer: AVAssetWriter?
     private var writerInput: AVAssetWriterInput?

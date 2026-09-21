@@ -282,13 +282,16 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
                 metadata: context.toUploadMetadata()
             )
 
+            let recoveryNote = result.additionalLocalURLs.isEmpty ? "" :
+                (shouldDeleteAfterUpload ? " Unmixed source audio deleted with the upload." :
+                 " Unmixed source audio retained at \(result.additionalLocalURLs.map(\.path).joined(separator: ", ")).")
             showNotification(
                 title: "Upload Complete",
-                body: "Meeting \(meetingId) uploaded (\(result.backend.rawValue))."
+                body: "Meeting \(meetingId) uploaded (\(result.backend.rawValue))." + recoveryNote
             )
 
             if shouldDeleteAfterUpload {
-                try? FileManager.default.removeItem(at: result.url)
+                result.removeLocalFiles()
             }
         } catch {
             showNotification(

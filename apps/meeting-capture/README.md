@@ -173,3 +173,9 @@ Before installing and enabling dual-source capture, supervise a short recording 
 
 Do not launch or record unattended as part of the test suite. Keep the installed app and
 its privacy grants unchanged until the operator supervises this acceptance.
+
+Capture inputs are stopped and their file/timing metadata is snapshotted before export.
+The next recording can start while the previous one mixes. If mixing fails, partial output
+is removed and the system-only fallback carries its unused microphone file for recovery.
+Successful upload with “Delete after upload” enabled removes both; with deletion disabled,
+the completion notification identifies the retained source path. Failed uploads retain audio.
