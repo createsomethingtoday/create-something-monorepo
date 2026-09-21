@@ -43,7 +43,8 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "lint": "pnpm run typecheck && pnpm --filter @create-something/eslint-plugin-evidence build && node ../../scripts/evidence-lint-pilot.mjs --package packages/mcp-core",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test test/*.test.ts"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.26.0",

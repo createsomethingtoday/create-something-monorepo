@@ -93,6 +93,15 @@ export interface LangfuseTelemetryOptions {
   projectName?: string;
   environment?: string;
   enabled?: boolean;
+  /**
+   * Await the Langfuse trace flush before the tool handler returns.
+   *
+   * Defaults to false for compatibility. Opt in when the caller must keep
+   * its invocation alive until trace delivery settles. This adds exporter
+   * latency, including its timeout/retry budget; delivery failures remain
+   * best-effort and never replace the tool result or error.
+   */
+  awaitFlush?: boolean;
 }
 
 // =============================================================================
@@ -525,7 +534,9 @@ export function enableTelemetry(
     projectName: langfuseOptions?.projectName || serverName,
     environment: langfuseOptions?.environment,
     enabled: langfuseOptions?.enabled,
+    awaitFlush: langfuseOptions?.awaitFlush,
   };
+  const awaitLangfuseFlush = resolvedLangfuseOptions.awaitFlush === true;
   const langfuseEnabled = initLangfuseTelemetry(resolvedLangfuseOptions, serverName);
 
   const resolveInvocationAccountId = (handlerArgs: unknown[]): string => {
@@ -548,14 +559,11 @@ export function enableTelemetry(
 
   // Proxy server.tool() and server.registerTool() to wrap handlers with metering.
   // Cast through `any` to bypass TypeScript's strict overload checking on .apply().
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const originalToolFn = (server as any).tool;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const originalRegisterToolFn = (server as any).registerTool;
 
   const wrapRegisteredHandler = (
     toolName: string,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     originalHandler: any,
   ) => async (...handlerArgs: unknown[]) => {
     const start = Date.now();
@@ -575,7 +583,7 @@ export function enableTelemetry(
       }
 
       if (langfuseEnabled) {
-        emitLangfuseInvocation({
+        const emit = emitLangfuseInvocation({
           serverName,
           toolName,
           accountId,
@@ -587,6 +595,7 @@ export function enableTelemetry(
           projectName: resolvedLangfuseOptions.projectName,
           environment: resolvedLangfuseOptions.environment,
         }).catch((e: unknown) => console.warn(`[telemetry] langfuse emit failed for ${toolName}:`, e));
+        if (awaitLangfuseFlush) await emit;
       }
 
       return result;
@@ -600,7 +609,7 @@ export function enableTelemetry(
       }
 
       if (langfuseEnabled) {
-        emitLangfuseInvocation({
+        const emit = emitLangfuseInvocation({
           serverName,
           toolName,
           accountId,
@@ -612,6 +621,7 @@ export function enableTelemetry(
           projectName: resolvedLangfuseOptions.projectName,
           environment: resolvedLangfuseOptions.environment,
         }).catch((e: unknown) => console.warn(`[telemetry] langfuse emit failed for ${toolName}:`, e));
+        if (awaitLangfuseFlush) await emit;
       }
 
       throw error;

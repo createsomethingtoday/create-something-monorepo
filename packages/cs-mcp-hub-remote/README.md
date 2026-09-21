@@ -4,7 +4,8 @@ Remote runtime for the CREATE SOMETHING MCP gateway, exposed as one public endpo
 
 ## Endpoints
 
-- `/mcp` — Streamable HTTP MCP endpoint
+- `/mcp` — stateless Streamable HTTP MCP endpoint (POST; OPTIONS preflight)
+- Authenticated GET and DELETE requests to `/mcp` return 405 with `Allow: POST, OPTIONS`; this runtime provides neither an SSE notification stream nor sessions to terminate. Authentication still runs before method rejection.
 - `/health` — JSON health/status
 
 ## MCP Resources
