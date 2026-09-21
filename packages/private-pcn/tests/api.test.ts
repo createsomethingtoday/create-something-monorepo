@@ -7,6 +7,7 @@ import { GET as listNetworks, POST as createNetwork } from '../src/routes/api/ne
 import { GET as exportNetwork } from '../src/routes/api/networks/[slug]/export/+server';
 import { POST as saveSettings } from '../src/routes/api/networks/[slug]/settings/+server';
 let sqlite: DatabaseSync;
+let batchQueue: Promise<unknown> = Promise.resolve();
 let remote: ReturnType<typeof vi.fn>;
 function statement(sql: string, values: unknown[] = []) {
   return {
@@ -32,17 +33,21 @@ function event(
       env: {
         DB: {
           prepare: statement,
-          batch: async (statements: any[]) => {
-            sqlite.exec('BEGIN');
-            try {
-              const result = [];
-              for (const s of statements) result.push(await s.run());
-              sqlite.exec('COMMIT');
-              return result;
-            } catch (e) {
-              sqlite.exec('ROLLBACK');
-              throw e;
-            }
+          batch: (statements: any[]) => {
+            const operation = batchQueue.then(async () => {
+              sqlite.exec('BEGIN');
+              try {
+                const result = [];
+                for (const s of statements) result.push(await s.run());
+                sqlite.exec('COMMIT');
+                return result;
+              } catch (e) {
+                sqlite.exec('ROLLBACK');
+                throw e;
+              }
+            });
+            batchQueue = operation.catch(() => {});
+            return operation;
           }
         },
         CLOUDFLARE_ACCOUNT_ID: 'test-account',
@@ -69,6 +74,7 @@ function seed(id: string, access = 'members', visibility = 'published', status =
     .run(id, `${id}-private-uid`, id, access, visibility, status);
 }
 beforeEach(() => {
+  batchQueue = Promise.resolve();
   sqlite = new DatabaseSync(':memory:');
   sqlite.exec(readFileSync(new URL('../migrations/0001_private_pcn.sql', import.meta.url), 'utf8'));
   sqlite.exec(
@@ -138,6 +144,66 @@ describe('API against migrated SQLite schema (supporting proof)', () => {
     expect((await (await GET(event('learning/paths', undefined, 'member'))).json()).paths).toEqual(
       []
     );
+  });
+  it('keeps a path repairable by its creator after a lesson is deleted while hiding it from members', async () => {
+    seed('remove-me');
+    seed('replacement');
+    const payload = {
+      title: 'Repairable path',
+      outcome: 'Build',
+      prerequisites: '',
+      estimated_minutes: 5,
+      lesson_ids: ['remove-me'],
+      visibility: 'published'
+    };
+    const { id } = await (await POST(event('learning/paths/save', payload, 'admin'))).json();
+    sqlite.prepare('DELETE FROM videos WHERE id=?').run('remove-me');
+    expect((await GET(event(`learning/paths/${id}`, undefined, 'member'))).status).toBe(404);
+    const view = await GET(event(`learning/paths/${id}`, undefined, 'admin'));
+    expect(view.status).toBe(200);
+    expect(await view.json()).toMatchObject({
+      lesson_ids: ['remove-me'],
+      missingLessonCount: 1,
+      lessons: []
+    });
+    expect(
+      (
+        await POST(
+          event(
+            'learning/paths/save',
+            { ...payload, id, revision: 1, lesson_ids: ['replacement'] },
+            'admin'
+          )
+        )
+      ).status
+    ).toBe(200);
+    expect((await GET(event(`learning/paths/${id}`, undefined, 'member'))).status).toBe(200);
+  });
+  it('limits concurrent path creation to the last available slot without an extra receipt', async () => {
+    seed('capacity-lesson');
+    const insert = sqlite.prepare(
+      "INSERT INTO learning_paths(id,network_id,title,outcome,estimated_minutes,lesson_ids,visibility) VALUES(?,'default','Path','Build',5,'[\"capacity-lesson\"]','draft')"
+    );
+    for (let i = 0; i < 49; i++) insert.run(`capacity-${i}`);
+    const body = {
+      title: 'Last slot',
+      outcome: 'Build',
+      prerequisites: '',
+      estimated_minutes: 5,
+      lesson_ids: ['capacity-lesson'],
+      visibility: 'draft'
+    };
+    const results = await Promise.all([
+      POST(event('learning/paths/save', body, 'admin')),
+      POST(event('learning/paths/save', body, 'admin'))
+    ]);
+    expect(results.map((r) => r.status).sort()).toEqual([200, 409]);
+    expect(sqlite.prepare('SELECT COUNT(*) AS count FROM learning_paths').get()?.count).toBe(50);
+    expect(
+      sqlite
+        .prepare("SELECT COUNT(*) AS count FROM receipts WHERE action='learning_path.saved'")
+        .get()?.count
+    ).toBe(1);
   });
   it('rolls back path saves if the activity receipt cannot be persisted', async () => {
     seed('atomic-lesson');

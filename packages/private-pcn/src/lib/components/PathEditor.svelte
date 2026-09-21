@@ -88,8 +88,11 @@
         {#each lessons as id, index}<li>
             <label
               >Lesson {index + 1}<select bind:value={lessons[index]} required
-                ><option value="">Choose a lesson</option>{#each videos as video}<option
-                    value={video.id}>{video.title} · {video.visibility}</option
+                ><option value="">Choose a lesson</option
+                >{#if id && !videos.some((video) => video.id === id)}<option value={id}
+                    >Deleted lesson — replace or remove</option
+                  >{/if}{#each videos as video}<option value={video.id}
+                    >{video.title} · {video.visibility}</option
                   >{/each}</select
               ></label
             >

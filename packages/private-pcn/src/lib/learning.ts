@@ -14,6 +14,7 @@ export interface PathView {
   visibility: string;
   revision: number;
   lesson_ids: string[];
+  missingLessonCount: number;
   lessons: (CatalogVideo & { progress?: LessonProgress | null })[];
 }
 export const pathBase = (slug?: string) =>

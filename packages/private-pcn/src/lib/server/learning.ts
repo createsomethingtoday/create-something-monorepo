@@ -42,10 +42,14 @@ async function pathView(
   const lessons: CatalogVideo[] = [];
   for (const id of ids) {
     const video = videos.find((v) => v.id === id);
-    if (!video || !canRead(video, locals.identity?.role)) return null;
+    if (!video) {
+      if (admin) continue;
+      return null;
+    }
+    if (!canRead(video, locals.identity?.role)) return null;
     lessons.push(video);
   }
-  return { ...path, lesson_ids: ids, lessons };
+  return { ...path, lesson_ids: ids, lessons, missingLessonCount: ids.length - lessons.length };
 }
 export async function learningGet(db: D1Database, locals: App.Locals, route: string) {
   if (route === 'learning/continue') {

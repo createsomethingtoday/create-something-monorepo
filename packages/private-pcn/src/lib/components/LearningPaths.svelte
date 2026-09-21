@@ -5,6 +5,7 @@
   import type { CatalogVideo } from '$lib/client';
   import PathEditor from './PathEditor.svelte';
   import StateBadge from './StateBadge.svelte';
+  import StatusNotice from './StatusNotice.svelte';
   import Icon from './Icon.svelte';
   let {
     data
@@ -60,6 +61,10 @@
           />{/if}
       </div>
     </header>
+    {#if data.path.missingLessonCount}<StatusNotice
+        tone="warning"
+        message="A lesson was deleted. Replace or remove missing lessons before members can open this path."
+      />{/if}
     {#if data.canEdit}{#key data.path.id}<PathEditor
           path={data.path}
           videos={data.videos}
@@ -68,7 +73,9 @@
     <div class="path-grid">
       <section aria-label="Lesson sequence">
         <h2>Your next step</h2>
-        {#if next}<a class="button" href={link(next.id)}
+        {#if data.path.missingLessonCount}<p>
+            Edit this path to repair its lesson sequence.
+          </p>{:else if next}<a class="button" href={link(next.id)}
             >{next.progress?.position ? 'Continue learning' : 'Start next lesson'}
             <Icon name="arrow-right" /></a
           >{:else}<p>
@@ -136,6 +143,11 @@
             >
             <h2>{path.title}</h2>
             <p>{path.outcome}</p>
+            {#if path.missingLessonCount}<StateBadge
+                label="Needs repair"
+                tone="warning"
+                icon="warning"
+              />{/if}
             {#if path.visibility !== 'published'}<StateBadge
                 label={path.visibility === 'draft' ? 'Draft' : 'Archived'}
                 icon="document"
