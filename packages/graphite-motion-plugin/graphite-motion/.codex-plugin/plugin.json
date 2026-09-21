@@ -1,0 +1,18 @@
+{
+  "name": "graphite-motion",
+  "version": "0.2.0",
+  "description": "Create organic pencil animations on warm paper or PRIVATE black with reusable artwork and minimal text.",
+  "author": {
+    "name": "CREATE SOMETHING"
+  },
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Graphite Motion",
+    "shortDescription": "Organic pencil stories on paper or PRIVATE black.",
+    "longDescription": "Reusable graphite and PRIVATE White Pencil sprite artwork, style references, and a verified Draw Motion workflow for clear learning animations.",
+    "developerName": "CREATE SOMETHING",
+    "category": "Productivity",
+    "capabilities": [],
+    "defaultPrompt": "Use Graphite Motion to turn my idea into a short visual story with sketch-textured artifacts on warm paper and minimal text."
+  }
+}
