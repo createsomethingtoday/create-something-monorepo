@@ -96,3 +96,6 @@ Consistent across all tools:
 
 - `.claude/rules/dotfiles-conventions.md` - Full conventions
 - `.claude/rules/neomutt-patterns.md` - Email configuration details
+
+For optional, explicit Codex account policy alignment, see [the manual account helper](CODEX_ACCOUNT.md).
+It is installed separately and does not watch logins or migrate existing task permissions.
