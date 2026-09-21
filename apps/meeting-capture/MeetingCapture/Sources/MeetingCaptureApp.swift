@@ -48,7 +48,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     @Published var screenRecordingPermissionGranted = false
 
     private var activeRecordingContext: RecordingContext?
-    private var pendingRecordingContext: RecordingContext?
+    private var pendingStarts = RecordingStartQueue()
     private var recordingStartTask: Task<Void, Never>?
     private var hasShownScreenRecordingPermissionWarning = false
 
@@ -155,9 +155,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     }
 
     private func handleMeetingEnded(_ meeting: DetectedMeeting) {
-        if let pending = pendingRecordingContext,
-           pending.origin == .automatic, pending.meetingId == meeting.id {
-            recordingStartTask?.cancel()
+        if pendingStarts.cancel(meetingId: meeting.id) {
+            if pendingStarts.currentCancelled { recordingStartTask?.cancel() }
             return
         }
         guard isRecording else { return }
@@ -180,13 +179,14 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     }
 
     private func startRecording(with context: RecordingContext) {
-        guard !isRecording, recordingStartTask == nil else { return }
-        pendingRecordingContext = context
+        guard !isRecording, pendingStarts.begin(context) else { return }
 
         recordingStartTask = Task {
             defer {
                 recordingStartTask = nil
-                pendingRecordingContext = nil
+                if let next = pendingStarts.finish() {
+                    startRecording(with: next)
+                }
             }
             let result = await audioRecorder.startRecording(
                 meetingId: context.meetingId,
@@ -253,6 +253,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     }
 
     func stopRecording() {
+        pendingStarts.cancel()
         recordingStartTask?.cancel()
         guard isRecording, let context = activeRecordingContext else { return }
 

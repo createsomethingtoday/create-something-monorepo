@@ -8,13 +8,17 @@ private final class FakeSystemRecorder: SystemAudioRecording {
     var starts: [String] = []
     var canStart = true
     var onStart: (() async -> Void)?
+    var onStop: (() async -> Void)?
     var output = URL(fileURLWithPath: "/tmp/fixture-system.wav")
     func startRecording(meetingId: String) async -> Bool {
         starts.append(meetingId)
         if let onStart { await onStart() }
         return canStart
     }
-    func stopRecording() async -> URL? { output }
+    func stopRecording() async -> URL? {
+        if let onStop { await onStop() }
+        return output
+    }
 }
 
 private final class FakeMicrophoneRecorder: MicrophoneAudioRecording {
@@ -146,5 +150,35 @@ func cancelledStartupDeletesFinalizedSystemAudio() async throws {
     #expect(await starting.value == .failed)
     #expect(!recorder.isRecording)
     #expect(!FileManager.default.fileExists(atPath: file.path))
+    signal.finish()
+}
+
+@Test @MainActor
+func nextStartWaitsForInputShutdownInsteadOfBeingDropped() async {
+    let system = FakeSystemRecorder()
+    var signal: AsyncStream<Void>.Continuation!
+    let entered = AsyncStream<Void> { signal = $0 }
+    var complete: CheckedContinuation<Void, Never>?
+    system.onStop = {
+        await withCheckedContinuation { continuation in
+            complete = continuation
+            signal.yield(())
+        }
+    }
+    let recorder = AudioRecorder(systemAudioRecorder: system,
+        microphoneRecorder: FakeMicrophoneRecorder(), screenPermission: { true },
+        exportRecording: { _ in nil })
+    #expect(await recorder.startRecording(meetingId: "first") == .started)
+    let stopping = Task { await recorder.stopRecording() }
+    for await _ in entered { break }
+    let release = Task {
+        try? await Task.sleep(nanoseconds: 10_000_000)
+        complete?.resume()
+    }
+    #expect(await recorder.startRecording(meetingId: "second") == .started)
+    _ = await release.value
+    _ = await stopping.value
+    #expect(recorder.isRecording)
+    #expect(system.starts.count == 2)
     signal.finish()
 }

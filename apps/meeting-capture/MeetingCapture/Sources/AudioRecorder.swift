@@ -93,6 +93,14 @@ final class AudioRecorder {
     private(set) var activeBackend: RecordingBackend?
     private var activeMeetingId: String?
     private var isTransitioning = false
+    private var transitionWaiters: [CheckedContinuation<Void, Never>] = []
+
+    private func finishTransition() {
+        isTransitioning = false
+        let waiters = transitionWaiters
+        transitionWaiters.removeAll()
+        for waiter in waiters { waiter.resume() }
+    }
 
     func hasScreenRecordingPermission() -> Bool {
         screenPermission()
@@ -125,9 +133,12 @@ final class AudioRecorder {
         promptForScreenRecordingAccessIfNeeded: Bool = false,
         includeMicrophone: Bool = false
     ) async -> AudioRecorderStartResult {
-        guard !isRecording, !isTransitioning else { return .failed }
+        while isTransitioning {
+            await withCheckedContinuation { transitionWaiters.append($0) }
+        }
+        guard !isRecording, !Task.isCancelled else { return .failed }
         isTransitioning = true
-        defer { isTransitioning = false }
+        defer { finishTransition() }
 
         guard hasScreenRecordingPermission() else {
             if promptForScreenRecordingAccessIfNeeded {
@@ -200,7 +211,7 @@ final class AudioRecorder {
         isRecording = false
         activeBackend = nil
         activeMeetingId = nil
-        isTransitioning = false
+        finishTransition()
         // Export owns immutable file references, not this recorder's next session.
         return await exportRecording(capture)
     }
