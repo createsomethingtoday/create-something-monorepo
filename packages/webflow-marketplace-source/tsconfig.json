@@ -1,0 +1,1 @@
+{"extends":"astro/tsconfigs/strict","compilerOptions":{"jsx":"react-jsx","jsxImportSource":"react","baseUrl":".","paths":{"@marketplace/*":["../webflow-components/src/components/*"]}},"include":[".astro/types.d.ts","src/**/*"],"exclude":["dist","node_modules","original-export"]}

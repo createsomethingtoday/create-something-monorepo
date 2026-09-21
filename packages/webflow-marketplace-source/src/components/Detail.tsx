@@ -1,0 +1,8 @@
+import {TemplateDetailHero} from '@marketplace/marketplace/TemplateDetailHero';
+import {TemplateDetailStickyBar} from '@marketplace/marketplace/TemplateDetailStickyBar';
+import type {Template} from '../lib/api';
+import {localLink} from '../lib/routes.mjs';
+export default function Detail({item:t,heroProps={},allowEmbed=false}:{item:Template;heroProps?:Record<string,unknown>;allowEmbed?:boolean}){
+ const common={templateName:t.name,templateSlug:t.template_slug,creatorName:t.creator_name,price:t.is_free?'Free':`$${t.price} USD`,isFree:t.is_free,browserPreviewUrl:{href:t.website_url,target:'_blank'},designerPreviewUrl:{href:t.preview_url,target:'_blank'},checkoutUrl:{href:t.purchase_url,target:'_blank'},enableAnalytics:false};
+ return <><TemplateDetailHero {...heroProps} {...common} categoryNames={t.category_groups?.map(x=>x.name).join(',')} categoryLinks={t.category_groups?.map(x=>localLink(x.url)).join(',')} creatorLink={{href:localLink(t.creator_profile_url)}} creatorAvatar={t.creator_avatar_url?{src:t.creator_avatar_url,alt:t.creator_name}:undefined} summary={typeof heroProps.summary==='string'?heroProps.summary:undefined} previewIframeUrl={{href:t.website_url,target:'_blank'}} showPreviewIframe={allowEmbed} showPreviewDeviceControls={true}/>{!allowEmbed&&<div className="source-preview-fallback"><a href={t.website_url} target="_blank" rel="noopener noreferrer" aria-label={`Open live ${t.name} preview`}><img src={t.thumbnail_image_url} alt={`${t.name} template preview`}/></a><p>Open the live preview to explore this template. Embedded previews require a Webflow-hosted origin.</p></div>}<TemplateDetailStickyBar {...common} thumbnail={{src:t.thumbnail_image_url,alt:t.name}}/></>;
+}

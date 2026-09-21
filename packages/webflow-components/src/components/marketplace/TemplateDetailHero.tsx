@@ -676,7 +676,7 @@ const TemplateDetailHeroInner: React.FC<TemplateDetailHeroProps> = ({
   return (
     <div className="wfdt" data-template-detail-hero="" ref={heroRootRef}>
       <MarketplaceAgentTools />
-      <style>{TEMPLATE_DETAIL_STYLES}</style>
+      <style dangerouslySetInnerHTML={{ __html: TEMPLATE_DETAIL_STYLES }} />
       <section className="wfdt-hero">
         <div className="wfdt-hero-copy">
           <nav className="wfdt-breadcrumb" aria-label="Template breadcrumb">
