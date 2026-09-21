@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>com.webflow.marketplace-insights-sync</string>
+	<key>ProgramArguments</key>
+	<array>
+		<string>/bin/bash</string>
+		<string>/Users/micahjohnson/Code/create-something-monorepo/packages/webflow-automation/marketplace-insights-sync/run.sh</string>
+	</array>
+	<key>RunAtLoad</key>
+	<false/>
+	<!-- Mondays 11:30 local (CT): 16:30 UTC in CDT / 17:30 UTC in CST — always
+	     after the source window boundary (Monday 16:00 UTC), and after the
+	     legacy Fivetran sync (~16:00–16:04 UTC) so our write wins during the
+	     side-by-side transition. -->
+	<key>StartCalendarInterval</key>
+	<dict>
+		<key>Weekday</key>
+		<integer>1</integer>
+		<key>Hour</key>
+		<integer>11</integer>
+		<key>Minute</key>
+		<integer>30</integer>
+	</dict>
+	<key>StandardOutPath</key>
+	<string>/Users/micahjohnson/Code/create-something-monorepo/packages/webflow-automation/marketplace-insights-sync/runs/launchd.log</string>
+	<key>StandardErrorPath</key>
+	<string>/Users/micahjohnson/Code/create-something-monorepo/packages/webflow-automation/marketplace-insights-sync/runs/launchd.log</string>
+</dict>
+</plist>
