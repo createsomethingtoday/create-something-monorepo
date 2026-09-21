@@ -9,7 +9,8 @@ const invalid = () =>
 export const enrollmentOpen = (env: Env) =>
   env.PUBLIC_ENROLLMENT_ENABLED === 'true' ||
   !!env.ENROLLMENT_ALLOWED_EMAILS?.trim() ||
-  (env.PCN_ENROLLMENT_ENABLED === 'true' && !!env.PCN_DB);
+  ((env.PCN_ENROLLMENT_ENABLED === 'true' || !!env.PCN_ENROLLMENT_CANARY_EMAILS?.trim()) &&
+    !!env.PCN_DB);
 async function emailAllowed(env: Env, email: string, now: number, purpose: string) {
   if (
     env.PUBLIC_ENROLLMENT_ENABLED === 'true' ||
@@ -18,7 +19,11 @@ async function emailAllowed(env: Env, email: string, now: number, purpose: strin
       .some((entry) => entry.trim().toLowerCase() === email)
   )
     return true;
-  if (env.PCN_ENROLLMENT_ENABLED !== 'true' || !env.PCN_DB) return false;
+  // A canary narrows rollout only; it never replaces current PCN eligibility.
+  const canary = (env.PCN_ENROLLMENT_CANARY_EMAILS || '')
+    .split(',')
+    .some((entry) => entry.trim().toLowerCase() === email);
+  if ((env.PCN_ENROLLMENT_ENABLED !== 'true' && !canary) || !env.PCN_DB) return false;
   if (purpose === 'recovery')
     return !!(await env.DB.prepare(
       'SELECT 1 FROM users WHERE email=? AND deleted_at IS NULL AND email_verified=1'

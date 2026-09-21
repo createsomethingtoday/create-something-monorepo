@@ -372,3 +372,63 @@ test('existing verified accounts can recover in invited mode without a current P
     200
   );
 });
+
+test('PCN canary rollout still requires a live invitation and rechecks the canary at completion', async (t) => {
+  const f = fixture(t);
+  f.env.PUBLIC_ENROLLMENT_ENABLED = 'false';
+  f.env.PCN_ENROLLMENT_ENABLED = 'false';
+  f.env.PCN_ENROLLMENT_CANARY_EMAILS = ' invited@example.com ';
+  f.env.PCN_DB = f.env.DB;
+  f.db.exec(`CREATE TABLE networks(id TEXT,status TEXT);
+    CREATE TABLE members(network_id TEXT,email TEXT,active INTEGER);
+    CREATE TABLE creator_applications(subject TEXT,status TEXT);
+    CREATE TABLE creator_invitations(sponsor TEXT,recipient_email TEXT,redeemed_by TEXT,expires_at INTEGER);
+    INSERT INTO creator_applications VALUES('sponsor','approved');
+    INSERT INTO creator_invitations VALUES('sponsor','other@example.com',NULL,9999999999);`);
+  assert.equal(
+    (await startEnrollment(f.request({ email: 'invited@example.com', purpose: 'signup' }), f.env))
+      .status,
+    200
+  );
+  assert.equal(f.mails.length, 0);
+  await startEnrollment(f.request({ email: 'other@example.com', purpose: 'signup' }), f.env);
+  assert.equal(f.mails.length, 0);
+  f.db.exec(
+    "INSERT INTO creator_invitations VALUES('sponsor','invited@example.com',NULL,9999999999)"
+  );
+  await startEnrollment(f.request({ email: 'INVITED@example.com', purpose: 'signup' }), f.env);
+  assert.equal(f.mails.length, 1);
+  const token = f.token();
+  f.env.PCN_ENROLLMENT_CANARY_EMAILS = 'another@example.com';
+  assert.equal(
+    (await completeEnrollment(f.request({ token, password: 'secure fixture password' }), f.env))
+      .status,
+    503
+  );
+  assert.equal(f.db.prepare('SELECT COUNT(*) AS count FROM users').get().count, 0);
+  f.env.PCN_ENROLLMENT_CANARY_EMAILS = 'invited@example.com';
+  f.db.exec("UPDATE creator_applications SET status='suspended'");
+  assert.equal(
+    (await completeEnrollment(f.request({ token, password: 'secure fixture password' }), f.env))
+      .status,
+    503
+  );
+  f.db.exec("UPDATE creator_applications SET status='approved'");
+  assert.equal(
+    (await completeEnrollment(f.request({ token, password: 'secure fixture password' }), f.env))
+      .status,
+    200
+  );
+  f.db.exec("UPDATE creator_invitations SET redeemed_by='claimed'");
+  await startEnrollment(f.request({ email: 'invited@example.com', purpose: 'recovery' }), f.env);
+  assert.equal(f.mails.length, 2);
+  assert.equal(
+    (
+      await completeEnrollment(
+        f.request({ token: f.token(), password: 'replacement fixture password' }),
+        f.env
+      )
+    ).status,
+    200
+  );
+});
