@@ -59,6 +59,14 @@ import { Dialog, Toast, Spinner } from '@create-something/canon/components/feedb
 import { Tabs, Breadcrumbs, Drawer } from '@create-something/canon/components/navigation';
 ```
 
+### Button navigation and actions
+
+`Button` renders a native link when given a nonempty `href` and not disabled.
+Use that form for navigation; assistive technology receives link semantics.
+Without `href`, it renders a native button and honors `type` for actions or form
+submission. A disabled destination renders a disabled button, so it cannot
+navigate or activate its click handler.
+
 ## First-Party Authentication
 
 Canon is the reusable application layer for CREATE SOMETHING Identity. Server consumers use narrow subpath exports so authentication code does not import the visual component graph:
