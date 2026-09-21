@@ -208,6 +208,10 @@ export async function buildSummary(env: Env, now: Date, fetcher: typeof fetch): 
     fetchWindowStats(env, 24, fetcher),
     fetchWindowStats(env, 7 * 24, fetcher),
   ]);
+  return summaryFrom(last24h, last7d, now, env);
+}
+
+export function summaryFrom(last24h: WindowStats, last7d: WindowStats, now: Date, env: Env): TelemetrySummary {
   return {
     generated_at: now.toISOString(),
     window_24h: {
@@ -225,6 +229,63 @@ export async function buildSummary(env: Env, now: Date, fetcher: typeof fetch): 
     },
     daily_budget_usd: Number(env.DAILY_BUDGET_MICRO_USD ?? '40000000') / 1e6,
   };
+}
+
+// Optional aggregate snapshot for readers without Analytics Engine access.
+// GitHub failure must not delay the existing hourly alert path.
+const SNAPSHOT_PATH = 'summary.json';
+const DEFAULT_SNAPSHOT_REPO = 'createsomethingtoday/template-chat-telemetry';
+
+function toBase64(text: string): string {
+  const bytes = new TextEncoder().encode(text);
+  let binary = '';
+  for (const byte of bytes) binary += String.fromCharCode(byte);
+  return btoa(binary);
+}
+
+export async function publishSnapshot(
+  env: Env,
+  summary: TelemetrySummary,
+  fetcher: typeof fetch,
+): Promise<boolean> {
+  if (!env.GITHUB_SNAPSHOT_TOKEN) {
+    console.log('[telemetry] GITHUB_SNAPSHOT_TOKEN not configured; skipping snapshot publish.');
+    return false;
+  }
+  const repo = env.GITHUB_SNAPSHOT_REPO ?? DEFAULT_SNAPSHOT_REPO;
+  if (!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repo)) {
+    throw new Error('Invalid snapshot repository');
+  }
+  const endpoint = `https://api.github.com/repos/${repo}/contents/${SNAPSHOT_PATH}`;
+  const headers: Record<string, string> = {
+    Authorization: `Bearer ${env.GITHUB_SNAPSHOT_TOKEN}`,
+    Accept: 'application/vnd.github+json',
+    'User-Agent': 'webflow-template-agent-telemetry',
+  };
+
+  // Updating an existing file requires its current blob sha; a 404 means the
+  // file does not exist yet, which is a create rather than an error.
+  const head = await fetcher(endpoint, { headers, signal: AbortSignal.timeout(10_000) });
+  if (!head.ok && head.status !== 404) throw new Error(`Snapshot read failed: ${head.status}`);
+  const sha = head.ok ? ((await head.json()) as { sha?: string }).sha : undefined;
+  if (head.ok && (typeof sha !== 'string' || !sha.trim())) {
+    throw new Error('Snapshot read omitted blob SHA');
+  }
+
+  const response = await fetcher(endpoint, {
+    method: 'PUT',
+    signal: AbortSignal.timeout(10_000),
+    headers: { ...headers, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      message: `telemetry snapshot ${summary.generated_at}`,
+      content: toBase64(`${JSON.stringify(summary)}\n`),
+      ...(sha ? { sha } : {}),
+    }),
+  });
+  if (!response.ok) {
+    throw new Error(`Snapshot publish failed: ${response.status}`);
+  }
+  return true;
 }
 
 // Constant-time comparison so the read key can't be probed byte-by-byte.
@@ -252,7 +313,7 @@ export async function runScheduled(event: ScheduledController, env: Env, fetcher
     return;
   }
 
-  // Default (hourly) — alert scan.
+  // Complete the existing alert scan before optional snapshot work.
   const [last24h, last6h, last1h] = await Promise.all([
     fetchWindowStats(env, 24, fetcher),
     fetchWindowStats(env, 6, fetcher),
@@ -262,5 +323,15 @@ export async function runScheduled(event: ScheduledController, env: Env, fetcher
     if (await underCooldown(env, finding.dedupeKey)) continue;
     await deliver(env, `:rotating_light: *${finding.rule}* — ${finding.message}`, fetcher);
     await markFired(env, finding.dedupeKey, finding.cooldownSeconds);
+  }
+
+  if (!env.GITHUB_SNAPSHOT_TOKEN) return;
+  try {
+    const snapshotFetcher: typeof fetch = (input, init) =>
+      fetcher(input, { ...init, signal: AbortSignal.timeout(10_000) });
+    const last7d = await fetchWindowStats(env, 7 * 24, snapshotFetcher);
+    await publishSnapshot(env, summaryFrom(last24h, last7d, new Date(), env), fetcher);
+  } catch (error) {
+    console.log(`[telemetry] snapshot publish failed: ${error instanceof Error ? error.message : String(error)}`);
   }
 }

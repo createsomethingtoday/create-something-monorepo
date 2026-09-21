@@ -16,6 +16,16 @@ cd packages/webflow-components
 npm install
 ```
 
+## Cato source authority
+
+Cato's delivery source is [createsomethingtoday/cato-webflow-components](https://github.com/createsomethingtoday/cato-webflow-components).
+The monorepo Cato components and retained June snapshot are historical copies.
+The standalone repository contains later CMS hydration, team ordering, navigation,
+and author-layout work; do not recover an older copy by sharing it over that library.
+The monorepo share preflight rejects any manifest that resolves Cato components,
+including a catch-all manifest. Use a scoped non-Cato manifest for other libraries.
+Local bundling remains available for historical comparison; it is not a share.
+
 ## Publish to Webflow
 
 ```bash

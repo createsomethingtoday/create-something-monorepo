@@ -293,3 +293,23 @@ test('caps fallback volume per page', () => {
     fixture.restore();
   }
 });
+
+test('late wf_analytics initialization owns the single dataLayer delivery', () => {
+  const fixture = installFixture({ sdkPresent: false });
+  try {
+    const win = (globalThis as GlobalWithBrowser).window! as Window & { dataLayer: unknown[] };
+    win.dataLayer = [];
+    let initialized = false;
+    const queued: Array<{ event: string; data: unknown }> = [];
+    win.wf_analytics = {
+      isInitialized: () => initialized,
+      track: (event: string, data: unknown) => { queued.push({ event, data }); },
+    } as never;
+    trackMarketplaceEvent('Code Component Event', { component: 'TemplateGrid', scope: 'late-init' });
+    initialized = true;
+    for (const item of queued) win.dataLayer.push({ event: item.event, ...(item.data as object) });
+    flushIndeterminateForTests();
+    assert.equal(win.dataLayer.length, 1, 'the component must not race the SDK queue with a direct duplicate');
+    assert.equal(fixture.beaconCalls.length, 0);
+  } finally { fixture.restore(); }
+});

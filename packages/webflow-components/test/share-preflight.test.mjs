@@ -115,9 +115,10 @@ test('evaluateManifestScope fails on forbidden component paths', () => {
   });
 
   assert.equal(result.ok, false);
-  assert.equal(result.failures.length, 1);
-  assert.match(result.failures[0], /2 component\(s\) under forbidden/);
-  assert.match(result.failures[0], /cato\/CatoNavigation/);
+  assert.equal(result.failures.length, 2);
+  assert.match(result.failures.join('\n'), /2 component\(s\) under forbidden/);
+  assert.match(result.failures.join('\n'), /cato\/CatoNavigation/);
+  assert.match(result.failures.join('\n'), /cato-webflow-components/);
 });
 
 test('evaluateManifestScope fails on an empty component set', () => {
@@ -150,4 +151,10 @@ test('catch-all Canon manifest is caught by the forbid guard (regression fixture
   const result = evaluateManifestScope({ matches, forbid: ['cato', 'control', 'business'] });
 
   assert.equal(result.ok, false, 'the catch-all manifest should trip the guard');
+});
+
+test('monorepo cannot publish the superseded Cato source even without a forbid flag', () => {
+  const result = evaluateManifestScope({ matches: ['src/components/cato/CatoNavigation.webflow.tsx'], forbid: [] });
+  assert.equal(result.ok, false);
+  assert.match(result.failures.join('\n'), /cato-webflow-components/);
 });
