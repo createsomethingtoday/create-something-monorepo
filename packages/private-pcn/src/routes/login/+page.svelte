@@ -1,4 +1,5 @@
 <script lang="ts">
+  import SerifPhrase from '$lib/components/SerifPhrase.svelte';
   import Icon from '$lib/components/Icon.svelte';
   import { api } from '$lib/client';
   import { safeReturnPath } from '$lib/return-path';
@@ -30,7 +31,7 @@
 >
 <main id="main" class="form-page">
   <p class="eyebrow">PRIVATE / BUILDER ACCESS</p>
-  <h1>Welcome<br /><em>back.</em></h1>
+  <h1>Welcome<br /><SerifPhrase text="back." /></h1>
   <p>
     Sign in to your CREATE SOMETHING account to open your collection or manage your network. Private
     networks may require a member invitation. Creator publishing requires approval.

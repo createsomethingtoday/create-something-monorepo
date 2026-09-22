@@ -1,4 +1,5 @@
 <script lang="ts">
+  import SerifPhrase from '$lib/components/SerifPhrase.svelte';
   import { inkReveal, inkFeedback } from '$lib/ink-motion';
   import Icon from '$lib/components/Icon.svelte';
   const formats = [
@@ -40,7 +41,7 @@
 <section class="network-builder" id="network-preview" aria-labelledby="preview-heading">
   <div class="builder-intro" use:inkReveal>
     <p class="eyebrow">02 / SHAPE YOUR NETWORK</p>
-    <h2 id="preview-heading">Your format.<br /><em>Your way of teaching.</em></h2>
+    <h2 id="preview-heading">Your format.<br /><SerifPhrase text="Your way of teaching." /></h2>
     <p>
       Start with a direction. Try a name and an access model to see how your network could take
       shape.

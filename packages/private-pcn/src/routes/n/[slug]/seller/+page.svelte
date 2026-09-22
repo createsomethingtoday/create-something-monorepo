@@ -1,4 +1,5 @@
 <script lang="ts">
+  import SerifPhrase from '$lib/components/SerifPhrase.svelte';
   import Icon from '$lib/components/Icon.svelte';
   import { onMount, onDestroy } from 'svelte';
   import { api } from '$lib/client';
@@ -117,7 +118,7 @@
     >
   </div>
   <p class="eyebrow">YOUR BUSINESS / YOUR PAYMENTS</p>
-  <h1>Sell your work.<br /><em>Keep the relationship.</em></h1>
+  <h1>Sell your work.<br /><SerifPhrase text="Keep the relationship." /></h1>
   <p class="lede">
     Buyers pay your business directly through Stripe. You set asset prices and handle support,
     refunds and disputes. CREATE SOMETHING provides your network and private package delivery.

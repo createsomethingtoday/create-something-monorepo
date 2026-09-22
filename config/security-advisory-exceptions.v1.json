@@ -11,8 +11,8 @@
       "firstPatchedVersion": null,
       "owner": "createsomethingtoday",
       "trackingIssue": "CRE-1634",
-      "acceptedOn": "2026-08-21",
-      "reviewBy": "2026-09-21",
+      "acceptedOn": "2026-09-22",
+      "reviewBy": "2026-09-29",
       "state": "open-upstream-unpatched",
       "suppressesScanner": false,
       "runtimeExposure": "tooling-only",
@@ -27,7 +27,8 @@
       "evidence": [
         "GitHub Dependabot alert 1586 reports no first patched version.",
         "pnpm why extract-zip -r shows only Puppeteer, Cloudflare Puppeteer, and Remotion dependency chains.",
-        "scripts/security-advisory-exceptions.mjs verifies expiry, ownership, non-suppression, controls, and absence of direct source imports."
+        "scripts/security-advisory-exceptions.mjs verifies expiry, ownership, non-suppression, controls, and absence of direct source imports.",
+        "2026-09-22 review: GitHub alert 1586 remains open/high with first_patched_version null. pnpm why confirms existing Puppeteer/Remotion transitive chains; direct-import scan reports only expiry. Owner Micah explicitly approved seven-day renewal through September 29 in the CRE-2054 release conversation. Scanner visibility and compensating controls remain unchanged."
       ],
       "removalTrigger": "Replace or upgrade the affected dependency immediately when an upstream patched release is available, then delete this exception after the alert closes."
     }

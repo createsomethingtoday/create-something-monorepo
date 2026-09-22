@@ -1,4 +1,5 @@
 <script lang="ts">
+  import SerifPhrase from '$lib/components/SerifPhrase.svelte';
   import HumanInkHandoff from '$lib/components/HumanInkHandoff.svelte';
   import { inkReveal } from '$lib/ink-motion';
   import Icon from '$lib/components/Icon.svelte';
@@ -23,7 +24,7 @@
     </div>
     <div class="creator-hero-grid">
       <div>
-        <h1>Share the practice.<br /><em>Package the work.</em></h1>
+        <h1>Share the practice.<br /><SerifPhrase text="Package the work." /></h1>
         <p class="lede">
           Build a private home for your agentic engineering techniques and the tools behind them.
           Bring MCP servers, agent plugins and skills together with the context that makes them
@@ -54,7 +55,7 @@
     <section id="pricing" class="launch-plan">
       <div use:inkReveal>
         <p class="eyebrow">CREATOR / MONTHLY</p>
-        <h2>A private home<br />for your <em>practice.</em></h2>
+        <h2>A private home<br />for your <SerifPhrase text="practice." /></h2>
         <p>For independent creators teaching agent workflows, technical methods, and research.</p>
       </div>
       <div>
@@ -78,7 +79,7 @@
   <section class="service-section creator-service" id="the-service">
     <div use:inkReveal>
       <p class="eyebrow">03 / THE NETWORK IS YOURS</p>
-      <h2>Keep the depth.<br /><em>Choose the boundaries.</em></h2>
+      <h2>Keep the depth.<br /><SerifPhrase text="Choose the boundaries." /></h2>
       <p class="section-intro">
         Your work can be public. Your deeper explanation can have a more deliberate home. We build
         the library, access, and publishing workflow around how you want to teach.
@@ -131,7 +132,7 @@
   <section class="creator-handoff" id="start">
     <div>
       <p class="eyebrow">04 / A REVIEWED CREATOR NETWORK</p>
-      <h2>Useful work.<br /><em>A standard worth sharing.</em></h2>
+      <h2>Useful work.<br /><SerifPhrase text="A standard worth sharing." /></h2>
       <p>
         Show your credentials and teach one concrete agentic engineering technique. Once approved,
         build a network around the practice and assets you want to share.

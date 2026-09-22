@@ -1,4 +1,5 @@
 <script lang="ts">
+  import SerifPhrase from '$lib/components/SerifPhrase.svelte';
   import { api } from '$lib/client';
   import { invalidateAll } from '$app/navigation';
   import Icon from '$lib/components/Icon.svelte';
@@ -86,7 +87,7 @@
 <main id="main" class="builder-workspace">
   <a href={`/n/${data.network?.slug}`}><Icon name="arrow-left" /> Network library</a>
   <p class="eyebrow">PRIVATE / FIELD EVIDENCE</p>
-  <h1>Explain the decision.<br /><em>Show the result.</em></h1>
+  <h1>Explain the decision.<br /><SerifPhrase text="Show the result." /></h1>
   <p class="lede">
     Creator-reported evidence. These notes are not a CREATE SOMETHING certification or independent
     verification of outcomes.

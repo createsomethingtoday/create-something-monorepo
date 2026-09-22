@@ -1,4 +1,5 @@
 <script lang="ts">
+  import SerifPhrase from '$lib/components/SerifPhrase.svelte';
   import StateBadge from '$lib/components/StateBadge.svelte';
   import StatusNotice from '$lib/components/StatusNotice.svelte';
 
@@ -106,7 +107,7 @@
 >
 <main id="main" class="workspace">
   <p class="eyebrow">PRIVATE / CREATOR WORKSPACE</p>
-  <h1>Publish your <em>knowledge.</em></h1>
+  <h1>Publish your <SerifPhrase text="knowledge." /></h1>
   <p>Uploads start private and unpublished. Review processing before you choose an audience.</p>
   <a href={libraryPath}><Icon name="arrow-left" /> Back to library</a>{#if slug}<a
       href={`/n/${slug}/settings`}

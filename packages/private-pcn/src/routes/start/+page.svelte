@@ -1,4 +1,5 @@
 <script lang="ts">
+  import SerifPhrase from '$lib/components/SerifPhrase.svelte';
   import { inkReveal } from '$lib/ink-motion';
   import Icon from '$lib/components/Icon.svelte';
 </script>
@@ -13,7 +14,7 @@
   <div class="ink-onboarding">
     <div>
       <p class="eyebrow">PRIVATE / MAKE IT YOURS</p>
-      <h1>Learn a technique.<br /><em>Build on it.</em></h1>
+      <h1>Learn a technique.<br /><SerifPhrase text="Build on it." /></h1>
       <p class="lede">
         One account for learning from other builders and sharing your own practice. Choose where to
         start. You can do both.

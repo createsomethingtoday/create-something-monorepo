@@ -1,4 +1,5 @@
 <script lang="ts">
+  import SerifPhrase from '$lib/components/SerifPhrase.svelte';
   import Icon from '$lib/components/Icon.svelte';
 </script>
 
@@ -16,7 +17,7 @@
     <p class="eyebrow">PRIVATE / FORWARD DEPLOYED ENGINEERING</p>
     <div class="creator-hero-grid">
       <div>
-        <h1>Show how you work<br /><em>when it matters.</em></h1>
+        <h1>Show how you work<br /><SerifPhrase text="when it matters." /></h1>
         <p class="lede">
           A working demo starts the conversation. Your decisions, constraints and evidence show the
           engineering behind it. Build a private network around the practice you can explain and
@@ -50,7 +51,7 @@
   </section>
   <section class="builder-workspace">
     <p class="eyebrow">TEACH / PACKAGE / PROVE</p>
-    <h2>Make the reasoning<br /><em>as useful as the code.</em></h2>
+    <h2>Make the reasoning<br /><SerifPhrase text="as useful as the code." /></h2>
     <ol class="practice-steps">
       <li>
         <span><Icon name="terminal" /> TEACH THE TECHNIQUE</span>Walk through one real engineering
