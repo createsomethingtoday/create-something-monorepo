@@ -1,16 +1,18 @@
 interface Env {
   UPLOADS: R2Bucket;
   UPLOADS_WORKER_SECRET: string;
+  LIBRARY_UPLOADS_WORKER_SECRET?: string;
 }
 
 const UPLOAD_KINDS = new Set([
   'avatar',
   'thumbnail',
+  'library-thumbnail',
   'secondary-thumbnail',
   'gallery'
 ] as const);
 
-type UploadKind = 'avatar' | 'thumbnail' | 'secondary-thumbnail' | 'gallery';
+type UploadKind = 'avatar' | 'thumbnail' | 'library-thumbnail' | 'secondary-thumbnail' | 'gallery';
 
 function isUploadKind(value: string): value is UploadKind {
   return UPLOAD_KINDS.has(value as UploadKind);
@@ -65,13 +67,21 @@ function getPublicAssetHeaders(object: R2ObjectBody | R2Object): Headers {
 }
 
 async function handleUpload(request: Request, env: Env): Promise<Response> {
-  if (getUploadSecret(request) !== env.UPLOADS_WORKER_SECRET) {
+  const secret = getUploadSecret(request);
+  const uploadKind = request.headers.get('x-upload-kind')?.trim() || '';
+  const sharedAccess = Boolean(env.UPLOADS_WORKER_SECRET) && secret === env.UPLOADS_WORKER_SECRET;
+  // The Library app has its own credential so restoring it cannot rotate
+  // the credential used by existing template clients.
+  const libraryAccess =
+    Boolean(env.LIBRARY_UPLOADS_WORKER_SECRET) &&
+    secret === env.LIBRARY_UPLOADS_WORKER_SECRET &&
+    (uploadKind === 'library-thumbnail' || uploadKind === 'avatar');
+  if (!sharedAccess && !libraryAccess) {
     return json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   const filename = request.headers.get('x-upload-filename')?.trim() || 'upload.webp';
   const userEmail = request.headers.get('x-upload-email')?.trim().toLowerCase() || undefined;
-  const uploadKind = request.headers.get('x-upload-kind')?.trim() || '';
   const contentType = request.headers.get('content-type') || 'application/octet-stream';
   const file = await request.arrayBuffer();
 
