@@ -3,6 +3,20 @@
   import '../app.css';
   import { page } from '$app/state';
   let adminOpen = $state(false);
+  let menuOpen = $state(false);
+  let enhanced = $state(false);
+  let menuButton: HTMLButtonElement;
+  let adminDetails = $state<HTMLDetailsElement>();
+  function dismissMenu(event: KeyboardEvent) {
+    if (event.key !== 'Escape') return;
+    if (adminOpen) {
+      adminOpen = false;
+      adminDetails?.querySelector('summary')?.focus();
+    } else if (menuOpen) {
+      menuOpen = false;
+      menuButton?.focus();
+    }
+  }
   function current(path: string) {
     return page.url.pathname === path || page.url.pathname.startsWith(path + '/');
   }
@@ -22,9 +36,11 @@
   }
   afterNavigate(({ to }) => {
     adminOpen = false;
+    menuOpen = false;
     if (to) trackImpact('page_view', to.url.pathname);
   });
   onMount(() => {
+    enhanced = true;
     const click = (event: MouseEvent) => {
       if (event.target instanceof Element && event.target.closest('[data-impact="primary_action"]'))
         trackImpact('primary_action', window.location.pathname);
@@ -64,11 +80,24 @@
   </aside>
 {/if}
 <a class="skip" href="#main">Skip to content</a>
-<header class="masthead">
+<svelte:window onkeydown={dismissMenu} />
+<header class="masthead" class:enhanced>
   <a class="wordmark" href="/" aria-label="CREATE SOMETHING Private home"
     >CREATE SOMETHING<span>PRIVATE / .AGENCY</span></a
   >
-  <nav aria-label="Primary">
+  <button
+    class="menu-toggle"
+    bind:this={menuButton}
+    aria-expanded={menuOpen}
+    aria-controls="primary-navigation"
+    onclick={() => {
+      menuOpen = !menuOpen;
+      adminOpen = false;
+    }}
+    >{menuOpen ? 'Close menu' : 'Menu'}
+    <span aria-hidden="true">{menuOpen ? '−' : '+'}</span></button
+  >
+  <nav id="primary-navigation" aria-label="Primary" class:menu-open={menuOpen}>
     <a href="/field-engineering" aria-current={current('/field-engineering') ? 'page' : undefined}
       >Field practice</a
     ><a href="/library" aria-current={current('/library') ? 'page' : undefined}>Library</a>
@@ -83,7 +112,7 @@
         >Sign in <span aria-hidden="true"><Icon name="arrow-right" /></span></a
       >{/if}
     {#if data.reviewer}
-      <details class="admin-nav" bind:open={adminOpen}>
+      <details class="admin-nav" bind:this={adminDetails} bind:open={adminOpen}>
         <summary
           class:active={current('/review') || current('/support-session') || current('/impact')}
           >Administration</summary
@@ -142,16 +171,79 @@
     text-decoration: underline;
     text-underline-offset: 6px;
   }
-  @media (max-width: 600px) {
-    .admin-links {
-      position: static;
-      margin-top: 8px;
+  .menu-toggle {
+    display: none;
+  }
+  .masthead .wordmark {
+    flex-shrink: 0;
+  }
+  .masthead nav {
+    gap: 20px;
+  }
+  .masthead nav a,
+  .admin-nav summary {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+  }
+  .admin-nav summary {
+    gap: 8px;
+  }
+  @media (max-width: 1100px) {
+    .masthead {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 0;
+      padding: 20px 24px;
     }
-    .masthead nav a,
-    .admin-nav summary {
+    .enhanced .menu-toggle {
       display: inline-flex;
       align-items: center;
+      justify-content: space-between;
+      gap: 24px;
       min-height: 44px;
+      padding: 10px 14px;
+      color: var(--paper);
+      background: transparent;
+      border: 1px solid var(--line);
+      font-size: 14px;
+    }
+    .masthead nav {
+      grid-column: 1 / -1;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0;
+      margin-top: 20px;
+      padding-top: 12px;
+      border-top: 1px solid var(--line);
+      font-size: 15px;
+    }
+    .enhanced nav:not(.menu-open) {
+      display: none;
+    }
+    .masthead nav > a {
+      padding: 12px 0;
+      min-height: 48px;
+    }
+    .admin-nav {
+      border-top: 1px solid var(--line);
+      margin-top: 12px;
+      padding-top: 12px;
+    }
+    .admin-nav summary {
+      min-height: 48px;
+    }
+    .admin-links {
+      position: static;
+      border: 0;
+      border-left: 1px solid var(--line);
+      margin: 4px 0 8px;
+      padding: 0 0 0 16px;
+    }
+    .admin-links a {
+      padding: 12px 0;
     }
   }
 
