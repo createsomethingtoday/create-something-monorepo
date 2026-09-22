@@ -34,7 +34,7 @@
     "test:integration": "npx tsx integration-test.ts",
     "test:designer-mcp": "node scripts/test-designer-mcp.mjs",
     "test:template-review": "node scripts/test-template-review-mcp.mjs",
-    "test:classifier:offline": "tsx --test src/url-classifier.test.ts src/url-classifier-runtime.test.ts"
+    "test:classifier:offline": "tsx --test src/url-classifier.test.ts src/url-classifier-runtime.test.ts evaluation/jev/run.test.ts"
   },
   "dependencies": {
     "@create-something/observability": "workspace:*",

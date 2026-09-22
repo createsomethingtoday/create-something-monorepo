@@ -2,9 +2,10 @@ import fs from 'node:fs';
 import crypto from 'node:crypto';
 import { classifyUrls, classifyUrlsDeterministic } from '../../src/url-classifier.js';
 const protocol = JSON.parse(fs.readFileSync(new URL('./protocol.json', import.meta.url), 'utf8'));
-if (!process.env.TYPESAFE_API_KEY || !process.env.WEBFLOW_GROQ_API_KEY)
-  throw new Error('Both credentials required');
 const reference = process.env.EVAL_BASELINE === 'openai';
+const baselineKey = reference ? 'WEBFLOW_OPENAI_API_KEY' : 'WEBFLOW_GROQ_API_KEY';
+if (!process.env.TYPESAFE_API_KEY?.trim()) throw new Error('Missing TYPESAFE_API_KEY');
+if (!process.env[baselineKey]?.trim()) throw new Error(`Missing ${baselineKey}`);
 const fetchOriginal = globalThis.fetch;
 let network: { status: number; host: string }[] = [];
 globalThis.fetch = async (...args) => {
