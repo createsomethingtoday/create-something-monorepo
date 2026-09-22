@@ -58,3 +58,9 @@ pnpm test
 Live commands incur existing API usage. `run.ts` reconstructs the exact baseline with `git show`, evaluates both implementations, retains raw distributions/usage, and fails if revised results violate preservation, service-success, false-license, quality-nonregression or approved-regression gates. It does not adjust prompts. Candidate runs are research only and do not activate anything. Public source fetch hashes identify the reviewed snapshots; they are not current-health assertions.
 
 Production promotion uses the same off/canary/active controls described in [the original runbook](../README.md). Record actual merge/deployment versions, authenticated held-out and corrected-regression readback, complete real crawl/precheck, and rollback in CRE-2062. Endpoint health and these source tests alone do not prove the full workflow.
+
+## Production verifier repair
+
+The unchanged production baseline could not complete `run_template_review`: it returned `Passed function cannot be serialized!`. Upstream Puppeteer's serialization validates functions with `new Function`, which the Workers runtime forbids. The Worker adapter now uses the pinned Cloudflare Puppeteer fork; the Node adapter retains upstream Puppeteer. A regression test runs serialization with Node's `--disallow-code-generation-from-strings` restriction. Local tests and bundle validation establish the repair mechanism; a successful production review is still required before claiming the workflow is verified.
+
+The separate incumbent app categorization outage is tracked in [CRE-2064](https://linear.app/createsomething/issue/CRE-2064/restore-app-audit-categorization-after-workers-ai-model-deprecation). It is not evidence that Jev is more accurate than a functioning incumbent model.
