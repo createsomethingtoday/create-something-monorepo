@@ -1,0 +1,2364 @@
+{
+  "fetchedAt": "2026-09-22T21:31:02.523551+00:00",
+  "rows": [
+    {
+      "url": "https://webflow.com/apps/detail/airops",
+      "status": 200,
+      "sha256": "c9493cd676a3e29eb9e1b824371edc7cec018265a72cd4bbcca7a1b20c200157",
+      "meta": {
+        "": "",
+        "viewport": "width=device-width",
+        "title": "AirOps",
+        "description": "Effortlessly sync your Webflow and Airops data. Import, export, and update your collections.",
+        "twitter:card": "summary_large_image",
+        "twitter:site": "@webflow",
+        "twitter:creator": "@webflow",
+        "twitter:title": "AirOps App - Webflow Apps & Integrations",
+        "twitter:description": "Effortlessly sync your Webflow and Airops data. Import, export, and update your collections.",
+        "twitter:image": "https://uploads-ssl.webflow.com/63914d99794ebb7e15975e3c/666727b9efc631faff3ac712_airops-webflow-1-main.jpg",
+        "og:type": "website",
+        "og:title": "AirOps App - Webflow Apps & Integrations",
+        "og:description": "Effortlessly sync your Webflow and Airops data. Import, export, and update your collections.",
+        "og:site_name": "Webflow",
+        "og:url": "https://webflow.com/apps/detail/airops",
+        "image": "https://uploads-ssl.webflow.com/63914d99794ebb7e15975e3c/666727b9efc631faff3ac712_airops-webflow-1-main.jpg",
+        "fb:app_id": "183215435168053"
+      },
+      "links": [
+        {
+          "href": "/?r=0"
+        },
+        {
+          "href": "/designer?utm_source=marketplace"
+        },
+        {
+          "href": "/cms?utm_source=marketplace"
+        },
+        {
+          "href": "/ecommerce?utm_source=marketplace"
+        },
+        {
+          "href": "/interactions-animations?utm_source=marketplace"
+        },
+        {
+          "href": "/memberships?utm_source=marketplace"
+        },
+        {
+          "href": "/editor?utm_source=marketplace"
+        },
+        {
+          "href": "/logic?utm_source=marketplace"
+        },
+        {
+          "href": "/seo?utm_source=marketplace"
+        },
+        {
+          "href": "/hosting?utm_source=marketplace"
+        },
+        {
+          "href": "/security?utm_source=marketplace"
+        },
+        {
+          "href": "https://webflow.com/marketplace?utm_source=marketplace"
+        },
+        {
+          "href": "https://webflow.com/libraries?utm_source=marketplace"
+        },
+        {
+          "href": "/apps?utm_source=marketplace"
+        },
+        {
+          "href": "https://experts.webflow.com?utm_source=marketplace"
+        },
+        {
+          "href": "https://webflow.com/templates?utm_source=marketplace"
+        },
+        {
+          "href": "/made-in-webflow?utm_source=marketplace"
+        },
+        {
+          "href": "https://university.webflow.com/?utm_source=marketplace"
+        },
+        {
+          "href": "/community?utm_source=marketplace"
+        },
+        {
+          "href": "https://ebooks.webflow.com/?utm_source=marketplace"
+        },
+        {
+          "href": "https://community.webflow.com/?utm_source=marketplace"
+        },
+        {
+          "href": "/blog?utm_source=marketplace"
+        },
+        {
+          "href": "https://university.webflow.com/support?utm_source=marketplace"
+        },
+        {
+          "href": "/login"
+        },
+        {
+          "href": "https://webflow.com/contact-sales"
+        },
+        {
+          "href": "/signup"
+        },
+        {
+          "href": "/marketplace"
+        },
+        {
+          "href": "/apps"
+        },
+        {
+          "href": "/login?r=/apps/detail/airops"
+        },
+        {
+          "href": "/login?r=/apps/detail/airops"
+        },
+        {
+          "href": "https://www.airops.com/"
+        },
+        {
+          "href": "https://www.airops.com/"
+        },
+        {
+          "href": "https://info@airops.com"
+        },
+        {
+          "href": "https://www.airops.com/privacy-policy"
+        },
+        {
+          "href": "https://www.airops.com/terms"
+        },
+        {
+          "href": "/dashboard"
+        },
+        {
+          "href": "/marketplace"
+        },
+        {
+          "href": "/hire"
+        },
+        {
+          "href": "https://university.webflow.com/support"
+        },
+        {
+          "href": "https://university.webflow.com/?utm_source=marketplace"
+        },
+        {
+          "href": "https://university.webflow.com/courses/?utm_source=marketplace"
+        },
+        {
+          "href": "/blog/?utm_source=marketplace"
+        },
+        {
+          "href": "https://ebooks.webflow.com/"
+        },
+        {
+          "href": "https://community.webflow.com/"
+        },
+        {
+          "href": "/community/?utm_source=marketplace"
+        },
+        {
+          "href": "https://developers.webflow.com/?utm_source=marketplace"
+        },
+        {
+          "href": "https://wishlist.webflow.com/?utm_source=marketplace"
+        },
+        {
+          "href": "https://status.webflow.com/"
+        },
+        {
+          "href": "/about"
+        },
+        {
+          "href": "/careers"
+        },
+        {
+          "href": "/sitemap"
+        },
+        {
+          "href": "https://webflow.com/affiliates"
+        },
+        {
+          "href": "https://webflow.com/legal/terms"
+        },
+        {
+          "href": "https://webflow.com/legal/privacy"
+        },
+        {
+          "href": "https://webflow.com/legal/cookie-policy"
+        },
+        {
+          "href": "/made-in-webflow"
+        },
+        {
+          "href": "https://www.youtube.com/webflow"
+        },
+        {
+          "href": "https://twitter.com/webflow"
+        },
+        {
+          "href": "https://www.facebook.com/webflow/"
+        },
+        {
+          "href": "https://www.instagram.com/webflow/"
+        },
+        {
+          "href": "https://www.tiktok.com/@webflow"
+        },
+        {
+          "href": "/made-in-webflow"
+        },
+        {
+          "href": "https://www.youtube.com/webflow"
+        },
+        {
+          "href": "https://twitter.com/webflow"
+        },
+        {
+          "href": "https://www.facebook.com/webflow/"
+        },
+        {
+          "href": "https://www.instagram.com/webflow/"
+        },
+        {
+          "href": "https://www.tiktok.com/@webflow"
+        },
+        {
+          "href": "/dashboard"
+        },
+        {
+          "href": "/marketplace"
+        },
+        {
+          "href": "/hire"
+        },
+        {
+          "href": "https://university.webflow.com/support"
+        },
+        {
+          "href": "https://university.webflow.com/?utm_source=marketplace"
+        },
+        {
+          "href": "https://university.webflow.com/courses/?utm_source=marketplace"
+        },
+        {
+          "href": "/blog/?utm_source=marketplace"
+        },
+        {
+          "href": "https://ebooks.webflow.com/"
+        },
+        {
+          "href": "https://community.webflow.com/"
+        },
+        {
+          "href": "/community/?utm_source=marketplace"
+        },
+        {
+          "href": "https://developers.webflow.com/?utm_source=marketplace"
+        },
+        {
+          "href": "https://wishlist.webflow.com/?utm_source=marketplace"
+        },
+        {
+          "href": "https://status.webflow.com/"
+        },
+        {
+          "href": "/about"
+        },
+        {
+          "href": "/careers"
+        },
+        {
+          "href": "/sitemap"
+        },
+        {
+          "href": "https://webflow.com/affiliates"
+        },
+        {
+          "href": "https://webflow.com/legal/terms"
+        },
+        {
+          "href": "https://webflow.com/legal/privacy"
+        },
+        {
+          "href": "https://webflow.com/legal/cookie-policy"
+        },
+        {
+          "href": "/made-in-webflow"
+        },
+        {
+          "href": "https://www.youtube.com/webflow"
+        },
+        {
+          "href": "https://twitter.com/webflow"
+        },
+        {
+          "href": "https://www.facebook.com/webflow/"
+        },
+        {
+          "href": "https://www.instagram.com/webflow/"
+        },
+        {
+          "href": "https://www.tiktok.com/@webflow"
+        },
+        {
+          "href": "/made-in-webflow"
+        },
+        {
+          "href": "https://www.youtube.com/webflow"
+        },
+        {
+          "href": "https://twitter.com/webflow"
+        },
+        {
+          "href": "https://www.facebook.com/webflow/"
+        },
+        {
+          "href": "https://www.instagram.com/webflow/"
+        },
+        {
+          "href": "https://www.tiktok.com/@webflow"
+        }
+      ]
+    },
+    {
+      "url": "https://webflow.com/apps/detail/accessibe",
+      "status": 200,
+      "sha256": "3e23b0bc3e1fe08eeab0a8755a1be063c5884632b98ed85a898755d287e4c257",
+      "meta": {
+        "": "",
+        "viewport": "width=device-width",
+        "title": "accessiBe",
+        "description": "AI-driven web accessibility. ADA, EAA & WCAG aligned. No coding needed.",
+        "twitter:card": "summary_large_image",
+        "twitter:site": "@webflow",
+        "twitter:creator": "@webflow",
+        "twitter:title": "accessiBe App - Webflow Apps & Integrations",
+        "twitter:description": "AI-driven web accessibility. ADA, EAA & WCAG aligned. No coding needed.",
+        "twitter:image": "https://cdn.prod.website-files.com/67b2011a1e5b44ac3a646a98/68f788cfdda06c2d2830389e_1-szwsZDxm5WHlJFrBWuY935qz4JdlnK.jpg",
+        "og:type": "website",
+        "og:title": "accessiBe App - Webflow Apps & Integrations",
+        "og:description": "AI-driven web accessibility. ADA, EAA & WCAG aligned. No coding needed.",
+        "og:site_name": "Webflow",
+        "og:url": "https://webflow.com/apps/detail/accessibe",
+        "image": "https://cdn.prod.website-files.com/67b2011a1e5b44ac3a646a98/68f788cfdda06c2d2830389e_1-szwsZDxm5WHlJFrBWuY935qz4JdlnK.jpg",
+        "fb:app_id": "183215435168053"
+      },
+      "links": [
+        {
+          "href": "/?r=0"
+        },
+        {
+          "href": "/designer?utm_source=marketplace"
+        },
+        {
+          "href": "/cms?utm_source=marketplace"
+        },
+        {
+          "href": "/ecommerce?utm_source=marketplace"
+        },
+        {
+          "href": "/interactions-animations?utm_source=marketplace"
+        },
+        {
+          "href": "/memberships?utm_source=marketplace"
+        },
+        {
+          "href": "/editor?utm_source=marketplace"
+        },
+        {
+          "href": "/logic?utm_source=marketplace"
+        },
+        {
+          "href": "/seo?utm_source=marketplace"
+        },
+        {
+          "href": "/hosting?utm_source=marketplace"
+        },
+        {
+          "href": "/security?utm_source=marketplace"
+        },
+        {
+          "href": "https://webflow.com/marketplace?utm_source=marketplace"
+        },
+        {
+          "href": "https://webflow.com/libraries?utm_source=marketplace"
+        },
+        {
+          "href": "/apps?utm_source=marketplace"
+        },
+        {
+          "href": "https://experts.webflow.com?utm_source=marketplace"
+        },
+        {
+          "href": "https://webflow.com/templates?utm_source=marketplace"
+        },
+        {
+          "href": "/made-in-webflow?utm_source=marketplace"
+        },
+        {
+          "href": "https://university.webflow.com/?utm_source=marketplace"
+        },
+        {
+          "href": "/community?utm_source=marketplace"
+        },
+        {
+          "href": "https://ebooks.webflow.com/?utm_source=marketplace"
+        },
+        {
+          "href": "https://community.webflow.com/?utm_source=marketplace"
+        },
+        {
+          "href": "/blog?utm_source=marketplace"
+        },
+        {
+          "href": "https://university.webflow.com/support?utm_source=marketplace"
+        },
+        {
+          "href": "/login"
+        },
+        {
+          "href": "https://webflow.com/contact-sales"
+        },
+        {
+          "href": "/signup"
+        },
+        {
+          "href": "/marketplace"
+        },
+        {
+          "href": "/apps"
+        },
+        {
+          "href": "/login?r=/apps/detail/accessibe"
+        },
+        {
+          "href": "/login?r=/apps/detail/accessibe"
+        },
+        {
+          "href": "https://accessibe.com/"
+        },
+        {
+          "href": "https://accessibe.com/"
+        },
+        {
+          "href": "https://accessibe.com/privacy-notice"
+        },
+        {
+          "href": "https://accessibe.com/terms-of-service"
+        },
+        {
+          "href": "/dashboard"
+        },
+        {
+          "href": "/marketplace"
+        },
+        {
+          "href": "/hire"
+        },
+        {
+          "href": "https://university.webflow.com/support"
+        },
+        {
+          "href": "https://university.webflow.com/?utm_source=marketplace"
+        },
+        {
+          "href": "https://university.webflow.com/courses/?utm_source=marketplace"
+        },
+        {
+          "href": "/blog/?utm_source=marketplace"
+        },
+        {
+          "href": "https://ebooks.webflow.com/"
+        },
+        {
+          "href": "https://community.webflow.com/"
+        },
+        {
+          "href": "/community/?utm_source=marketplace"
+        },
+        {
+          "href": "https://developers.webflow.com/?utm_source=marketplace"
+        },
+        {
+          "href": "https://wishlist.webflow.com/?utm_source=marketplace"
+        },
+        {
+          "href": "https://status.webflow.com/"
+        },
+        {
+          "href": "/about"
+        },
+        {
+          "href": "/careers"
+        },
+        {
+          "href": "/sitemap"
+        },
+        {
+          "href": "https://webflow.com/affiliates"
+        },
+        {
+          "href": "https://webflow.com/legal/terms"
+        },
+        {
+          "href": "https://webflow.com/legal/privacy"
+        },
+        {
+          "href": "https://webflow.com/legal/cookie-policy"
+        },
+        {
+          "href": "/made-in-webflow"
+        },
+        {
+          "href": "https://www.youtube.com/webflow"
+        },
+        {
+          "href": "https://twitter.com/webflow"
+        },
+        {
+          "href": "https://www.facebook.com/webflow/"
+        },
+        {
+          "href": "https://www.instagram.com/webflow/"
+        },
+        {
+          "href": "https://www.tiktok.com/@webflow"
+        },
+        {
+          "href": "/made-in-webflow"
+        },
+        {
+          "href": "https://www.youtube.com/webflow"
+        },
+        {
+          "href": "https://twitter.com/webflow"
+        },
+        {
+          "href": "https://www.facebook.com/webflow/"
+        },
+        {
+          "href": "https://www.instagram.com/webflow/"
+        },
+        {
+          "href": "https://www.tiktok.com/@webflow"
+        },
+        {
+          "href": "/dashboard"
+        },
+        {
+          "href": "/marketplace"
+        },
+        {
+          "href": "/hire"
+        },
+        {
+          "href": "https://university.webflow.com/support"
+        },
+        {
+          "href": "https://university.webflow.com/?utm_source=marketplace"
+        },
+        {
+          "href": "https://university.webflow.com/courses/?utm_source=marketplace"
+        },
+        {
+          "href": "/blog/?utm_source=marketplace"
+        },
+        {
+          "href": "https://ebooks.webflow.com/"
+        },
+        {
+          "href": "https://community.webflow.com/"
+        },
+        {
+          "href": "/community/?utm_source=marketplace"
+        },
+        {
+          "href": "https://developers.webflow.com/?utm_source=marketplace"
+        },
+        {
+          "href": "https://wishlist.webflow.com/?utm_source=marketplace"
+        },
+        {
+          "href": "https://status.webflow.com/"
+        },
+        {
+          "href": "/about"
+        },
+        {
+          "href": "/careers"
+        },
+        {
+          "href": "/sitemap"
+        },
+        {
+          "href": "https://webflow.com/affiliates"
+        },
+        {
+          "href": "https://webflow.com/legal/terms"
+        },
+        {
+          "href": "https://webflow.com/legal/privacy"
+        },
+        {
+          "href": "https://webflow.com/legal/cookie-policy"
+        },
+        {
+          "href": "/made-in-webflow"
+        },
+        {
+          "href": "https://www.youtube.com/webflow"
+        },
+        {
+          "href": "https://twitter.com/webflow"
+        },
+        {
+          "href": "https://www.facebook.com/webflow/"
+        },
+        {
+          "href": "https://www.instagram.com/webflow/"
+        },
+        {
+          "href": "https://www.tiktok.com/@webflow"
+        },
+        {
+          "href": "/made-in-webflow"
+        },
+        {
+          "href": "https://www.youtube.com/webflow"
+        },
+        {
+          "href": "https://twitter.com/webflow"
+        },
+        {
+          "href": "https://www.facebook.com/webflow/"
+        },
+        {
+          "href": "https://www.instagram.com/webflow/"
+        },
+        {
+          "href": "https://www.tiktok.com/@webflow"
+        }
+      ]
+    },
+    {
+      "url": "https://webflow.com/apps/detail/crowdin",
+      "status": 200,
+      "sha256": "d891500ee20bca6d5c63b6c89b38c44643ba810c0de48fe819ad0a738788b5f3",
+      "meta": {
+        "": "",
+        "viewport": "width=device-width",
+        "title": "Crowdin",
+        "description": "Sophisticated Webflow localization: Translate your website with AI and professionals at Crowdin.",
+        "twitter:card": "summary_large_image",
+        "twitter:site": "@webflow",
+        "twitter:creator": "@webflow",
+        "twitter:title": "Crowdin App - Webflow Apps & Integrations",
+        "twitter:description": "Sophisticated Webflow localization: Translate your website with AI and professionals at Crowdin.",
+        "twitter:image": "https://uploads-ssl.webflow.com/63786c208cbe813ef2dfb4c2/65947b40d56e439569942447_22851f7f-4092-4620-bbbc-5eaec6eea8da.png",
+        "og:type": "website",
+        "og:title": "Crowdin App - Webflow Apps & Integrations",
+        "og:description": "Sophisticated Webflow localization: Translate your website with AI and professionals at Crowdin.",
+        "og:site_name": "Webflow",
+        "og:url": "https://webflow.com/apps/detail/crowdin",
+        "image": "https://uploads-ssl.webflow.com/63786c208cbe813ef2dfb4c2/65947b40d56e439569942447_22851f7f-4092-4620-bbbc-5eaec6eea8da.png",
+        "fb:app_id": "183215435168053"
+      },
+      "links": [
+        {
+          "href": "/?r=0"
+        },
+        {
+          "href": "/designer?utm_source=marketplace"
+        },
+        {
+          "href": "/cms?utm_source=marketplace"
+        },
+        {
+          "href": "/ecommerce?utm_source=marketplace"
+        },
+        {
+          "href": "/interactions-animations?utm_source=marketplace"
+        },
+        {
+          "href": "/memberships?utm_source=marketplace"
+        },
+        {
+          "href": "/editor?utm_source=marketplace"
+        },
+        {
+          "href": "/logic?utm_source=marketplace"
+        },
+        {
+          "href": "/seo?utm_source=marketplace"
+        },
+        {
+          "href": "/hosting?utm_source=marketplace"
+        },
+        {
+          "href": "/security?utm_source=marketplace"
+        },
+        {
+          "href": "https://webflow.com/marketplace?utm_source=marketplace"
+        },
+        {
+          "href": "https://webflow.com/libraries?utm_source=marketplace"
+        },
+        {
+          "href": "/apps?utm_source=marketplace"
+        },
+        {
+          "href": "https://experts.webflow.com?utm_source=marketplace"
+        },
+        {
+          "href": "https://webflow.com/templates?utm_source=marketplace"
+        },
+        {
+          "href": "/made-in-webflow?utm_source=marketplace"
+        },
+        {
+          "href": "https://university.webflow.com/?utm_source=marketplace"
+        },
+        {
+          "href": "/community?utm_source=marketplace"
+        },
+        {
+          "href": "https://ebooks.webflow.com/?utm_source=marketplace"
+        },
+        {
+          "href": "https://community.webflow.com/?utm_source=marketplace"
+        },
+        {
+          "href": "/blog?utm_source=marketplace"
+        },
+        {
+          "href": "https://university.webflow.com/support?utm_source=marketplace"
+        },
+        {
+          "href": "/login"
+        },
+        {
+          "href": "https://webflow.com/contact-sales"
+        },
+        {
+          "href": "/signup"
+        },
+        {
+          "href": "/marketplace"
+        },
+        {
+          "href": "/apps"
+        },
+        {
+          "href": "/login?r=/apps/detail/crowdin"
+        },
+        {
+          "href": "/login?r=/apps/detail/crowdin"
+        },
+        {
+          "href": "https://crowdin.com/"
+        },
+        {
+          "href": "https://crowdin.com/"
+        },
+        {
+          "href": "https://crowdin.com/contacts"
+        },
+        {
+          "href": "https://support.crowdin.com/privacy-policy/"
+        },
+        {
+          "href": "https://support.crowdin.com/terms/"
+        },
+        {
+          "href": "/dashboard"
+        },
+        {
+          "href": "/marketplace"
+        },
+        {
+          "href": "/hire"
+        },
+        {
+          "href": "https://university.webflow.com/support"
+        },
+        {
+          "href": "https://university.webflow.com/?utm_source=marketplace"
+        },
+        {
+          "href": "https://university.webflow.com/courses/?utm_source=marketplace"
+        },
+        {
+          "href": "/blog/?utm_source=marketplace"
+        },
+        {
+          "href": "https://ebooks.webflow.com/"
+        },
+        {
+          "href": "https://community.webflow.com/"
+        },
+        {
+          "href": "/community/?utm_source=marketplace"
+        },
+        {
+          "href": "https://developers.webflow.com/?utm_source=marketplace"
+        },
+        {
+          "href": "https://wishlist.webflow.com/?utm_source=marketplace"
+        },
+        {
+          "href": "https://status.webflow.com/"
+        },
+        {
+          "href": "/about"
+        },
+        {
+          "href": "/careers"
+        },
+        {
+          "href": "/sitemap"
+        },
+        {
+          "href": "https://webflow.com/affiliates"
+        },
+        {
+          "href": "https://webflow.com/legal/terms"
+        },
+        {
+          "href": "https://webflow.com/legal/privacy"
+        },
+        {
+          "href": "https://webflow.com/legal/cookie-policy"
+        },
+        {
+          "href": "/made-in-webflow"
+        },
+        {
+          "href": "https://www.youtube.com/webflow"
+        },
+        {
+          "href": "https://twitter.com/webflow"
+        },
+        {
+          "href": "https://www.facebook.com/webflow/"
+        },
+        {
+          "href": "https://www.instagram.com/webflow/"
+        },
+        {
+          "href": "https://www.tiktok.com/@webflow"
+        },
+        {
+          "href": "/made-in-webflow"
+        },
+        {
+          "href": "https://www.youtube.com/webflow"
+        },
+        {
+          "href": "https://twitter.com/webflow"
+        },
+        {
+          "href": "https://www.facebook.com/webflow/"
+        },
+        {
+          "href": "https://www.instagram.com/webflow/"
+        },
+        {
+          "href": "https://www.tiktok.com/@webflow"
+        },
+        {
+          "href": "/dashboard"
+        },
+        {
+          "href": "/marketplace"
+        },
+        {
+          "href": "/hire"
+        },
+        {
+          "href": "https://university.webflow.com/support"
+        },
+        {
+          "href": "https://university.webflow.com/?utm_source=marketplace"
+        },
+        {
+          "href": "https://university.webflow.com/courses/?utm_source=marketplace"
+        },
+        {
+          "href": "/blog/?utm_source=marketplace"
+        },
+        {
+          "href": "https://ebooks.webflow.com/"
+        },
+        {
+          "href": "https://community.webflow.com/"
+        },
+        {
+          "href": "/community/?utm_source=marketplace"
+        },
+        {
+          "href": "https://developers.webflow.com/?utm_source=marketplace"
+        },
+        {
+          "href": "https://wishlist.webflow.com/?utm_source=marketplace"
+        },
+        {
+          "href": "https://status.webflow.com/"
+        },
+        {
+          "href": "/about"
+        },
+        {
+          "href": "/careers"
+        },
+        {
+          "href": "/sitemap"
+        },
+        {
+          "href": "https://webflow.com/affiliates"
+        },
+        {
+          "href": "https://webflow.com/legal/terms"
+        },
+        {
+          "href": "https://webflow.com/legal/privacy"
+        },
+        {
+          "href": "https://webflow.com/legal/cookie-policy"
+        },
+        {
+          "href": "/made-in-webflow"
+        },
+        {
+          "href": "https://www.youtube.com/webflow"
+        },
+        {
+          "href": "https://twitter.com/webflow"
+        },
+        {
+          "href": "https://www.facebook.com/webflow/"
+        },
+        {
+          "href": "https://www.instagram.com/webflow/"
+        },
+        {
+          "href": "https://www.tiktok.com/@webflow"
+        },
+        {
+          "href": "/made-in-webflow"
+        },
+        {
+          "href": "https://www.youtube.com/webflow"
+        },
+        {
+          "href": "https://twitter.com/webflow"
+        },
+        {
+          "href": "https://www.facebook.com/webflow/"
+        },
+        {
+          "href": "https://www.instagram.com/webflow/"
+        },
+        {
+          "href": "https://www.tiktok.com/@webflow"
+        }
+      ]
+    },
+    {
+      "url": "https://webflow.com/apps/detail/figma-to-webflow",
+      "status": 200,
+      "sha256": "cecb78a69bea189c3fe58c9abba3f24ce55cbe21f217300cde92b19a1bb9178a",
+      "meta": {
+        "": "",
+        "viewport": "width=device-width",
+        "title": "Figma to Webflow",
+        "description": "Sync your design system from Figma to Webflow",
+        "twitter:card": "summary_large_image",
+        "twitter:site": "@webflow",
+        "twitter:creator": "@webflow",
+        "twitter:title": "Figma to Webflow App - Webflow Apps & Integrations",
+        "twitter:description": "Sync your design system from Figma to Webflow",
+        "twitter:image": "https://cdn.prod.website-files.com/63d85698e0557a811f5a9841/67a1bcced2f32256b8ec7622_1.png",
+        "og:type": "website",
+        "og:title": "Figma to Webflow App - Webflow Apps & Integrations",
+        "og:description": "Sync your design system from Figma to Webflow",
+        "og:site_name": "Webflow",
+        "og:url": "https://webflow.com/apps/detail/figma-to-webflow",
+        "image": "https://cdn.prod.website-files.com/63d85698e0557a811f5a9841/67a1bcced2f32256b8ec7622_1.png",
+        "fb:app_id": "183215435168053"
+      },
+      "links": [
+        {
+          "href": "/?r=0"
+        },
+        {
+          "href": "/designer?utm_source=marketplace"
+        },
+        {
+          "href": "/cms?utm_source=marketplace"
+        },
+        {
+          "href": "/ecommerce?utm_source=marketplace"
+        },
+        {
+          "href": "/interactions-animations?utm_source=marketplace"
+        },
+        {
+          "href": "/memberships?utm_source=marketplace"
+        },
+        {
+          "href": "/editor?utm_source=marketplace"
+        },
+        {
+          "href": "/logic?utm_source=marketplace"
+        },
+        {
+          "href": "/seo?utm_source=marketplace"
+        },
+        {
+          "href": "/hosting?utm_source=marketplace"
+        },
+        {
+          "href": "/security?utm_source=marketplace"
+        },
+        {
+          "href": "https://webflow.com/marketplace?utm_source=marketplace"
+        },
+        {
+          "href": "https://webflow.com/libraries?utm_source=marketplace"
+        },
+        {
+          "href": "/apps?utm_source=marketplace"
+        },
+        {
+          "href": "https://experts.webflow.com?utm_source=marketplace"
+        },
+        {
+          "href": "https://webflow.com/templates?utm_source=marketplace"
+        },
+        {
+          "href": "/made-in-webflow?utm_source=marketplace"
+        },
+        {
+          "href": "https://university.webflow.com/?utm_source=marketplace"
+        },
+        {
+          "href": "/community?utm_source=marketplace"
+        },
+        {
+          "href": "https://ebooks.webflow.com/?utm_source=marketplace"
+        },
+        {
+          "href": "https://community.webflow.com/?utm_source=marketplace"
+        },
+        {
+          "href": "/blog?utm_source=marketplace"
+        },
+        {
+          "href": "https://university.webflow.com/support?utm_source=marketplace"
+        },
+        {
+          "href": "/login"
+        },
+        {
+          "href": "https://webflow.com/contact-sales"
+        },
+        {
+          "href": "/signup"
+        },
+        {
+          "href": "/marketplace"
+        },
+        {
+          "href": "/apps"
+        },
+        {
+          "href": "/@webflow-labs"
+        },
+        {
+          "href": "/login?r=/apps/detail/figma-to-webflow"
+        },
+        {
+          "href": "/login?r=/apps/detail/figma-to-webflow"
+        },
+        {
+          "href": "https://webflow.com"
+        },
+        {
+          "href": "https://www.figma.com/community/plugin/1164923964214525039/figma-to-webflow-html-css-and-website"
+        },
+        {
+          "href": "https://help.webflow.com/hc/en-us/articles/33961260854675-Figma-to-Webflow-plugin"
+        },
+        {
+          "href": "https://www.figma.com/community/plugin/1164923964214525039/figma-to-webflow-html-css-and-website"
+        },
+        {
+          "href": "https://help.webflow.com/hc/en-us/articles/33961260854675-Figma-to-Webflow-plugin"
+        },
+        {
+          "href": "https://webflow.com"
+        },
+        {
+          "href": "https://help.webflow.com/hc/en-us/articles/33961260854675-Figma-to-Webflow-plugin"
+        },
+        {
+          "href": "https://webflow.com/legal/privacy"
+        },
+        {
+          "href": "https://webflow.com/legal/labs-terms"
+        },
+        {
+          "href": "/dashboard"
+        },
+        {
+          "href": "/marketplace"
+        },
+        {
+          "href": "/hire"
+        },
+        {
+          "href": "https://university.webflow.com/support"
+        },
+        {
+          "href": "https://university.webflow.com/?utm_source=marketplace"
+        },
+        {
+          "href": "https://university.webflow.com/courses/?utm_source=marketplace"
+        },
+        {
+          "href": "/blog/?utm_source=marketplace"
+        },
+        {
+          "href": "https://ebooks.webflow.com/"
+        },
+        {
+          "href": "https://community.webflow.com/"
+        },
+        {
+          "href": "/community/?utm_source=marketplace"
+        },
+        {
+          "href": "https://developers.webflow.com/?utm_source=marketplace"
+        },
+        {
+          "href": "https://wishlist.webflow.com/?utm_source=marketplace"
+        },
+        {
+          "href": "https://status.webflow.com/"
+        },
+        {
+          "href": "/about"
+        },
+        {
+          "href": "/careers"
+        },
+        {
+          "href": "/sitemap"
+        },
+        {
+          "href": "https://webflow.com/affiliates"
+        },
+        {
+          "href": "https://webflow.com/legal/terms"
+        },
+        {
+          "href": "https://webflow.com/legal/privacy"
+        },
+        {
+          "href": "https://webflow.com/legal/cookie-policy"
+        },
+        {
+          "href": "/made-in-webflow"
+        },
+        {
+          "href": "https://www.youtube.com/webflow"
+        },
+        {
+          "href": "https://twitter.com/webflow"
+        },
+        {
+          "href": "https://www.facebook.com/webflow/"
+        },
+        {
+          "href": "https://www.instagram.com/webflow/"
+        },
+        {
+          "href": "https://www.tiktok.com/@webflow"
+        },
+        {
+          "href": "/made-in-webflow"
+        },
+        {
+          "href": "https://www.youtube.com/webflow"
+        },
+        {
+          "href": "https://twitter.com/webflow"
+        },
+        {
+          "href": "https://www.facebook.com/webflow/"
+        },
+        {
+          "href": "https://www.instagram.com/webflow/"
+        },
+        {
+          "href": "https://www.tiktok.com/@webflow"
+        },
+        {
+          "href": "/dashboard"
+        },
+        {
+          "href": "/marketplace"
+        },
+        {
+          "href": "/hire"
+        },
+        {
+          "href": "https://university.webflow.com/support"
+        },
+        {
+          "href": "https://university.webflow.com/?utm_source=marketplace"
+        },
+        {
+          "href": "https://university.webflow.com/courses/?utm_source=marketplace"
+        },
+        {
+          "href": "/blog/?utm_source=marketplace"
+        },
+        {
+          "href": "https://ebooks.webflow.com/"
+        },
+        {
+          "href": "https://community.webflow.com/"
+        },
+        {
+          "href": "/community/?utm_source=marketplace"
+        },
+        {
+          "href": "https://developers.webflow.com/?utm_source=marketplace"
+        },
+        {
+          "href": "https://wishlist.webflow.com/?utm_source=marketplace"
+        },
+        {
+          "href": "https://status.webflow.com/"
+        },
+        {
+          "href": "/about"
+        },
+        {
+          "href": "/careers"
+        },
+        {
+          "href": "/sitemap"
+        },
+        {
+          "href": "https://webflow.com/affiliates"
+        },
+        {
+          "href": "https://webflow.com/legal/terms"
+        },
+        {
+          "href": "https://webflow.com/legal/privacy"
+        },
+        {
+          "href": "https://webflow.com/legal/cookie-policy"
+        },
+        {
+          "href": "/made-in-webflow"
+        },
+        {
+          "href": "https://www.youtube.com/webflow"
+        },
+        {
+          "href": "https://twitter.com/webflow"
+        },
+        {
+          "href": "https://www.facebook.com/webflow/"
+        },
+        {
+          "href": "https://www.instagram.com/webflow/"
+        },
+        {
+          "href": "https://www.tiktok.com/@webflow"
+        },
+        {
+          "href": "/made-in-webflow"
+        },
+        {
+          "href": "https://www.youtube.com/webflow"
+        },
+        {
+          "href": "https://twitter.com/webflow"
+        },
+        {
+          "href": "https://www.facebook.com/webflow/"
+        },
+        {
+          "href": "https://www.instagram.com/webflow/"
+        },
+        {
+          "href": "https://www.tiktok.com/@webflow"
+        }
+      ]
+    },
+    {
+      "url": "https://webflow.com/apps/detail/finsweet-table",
+      "error": "HTTP Error 404: Not Found"
+    },
+    {
+      "url": "https://webflow.com/apps/detail/slater",
+      "status": 200,
+      "sha256": "5f4a07641004a10cc541930cd929cbda4202b408ba240797d7726ff030d25736",
+      "meta": {
+        "": "",
+        "viewport": "width=device-width",
+        "title": "Slater",
+        "description": "Slater is the code environment designed for Webflow, powered by AI.",
+        "twitter:card": "summary_large_image",
+        "twitter:site": "@webflow",
+        "twitter:creator": "@webflow",
+        "twitter:title": "Slater App - Webflow Apps & Integrations",
+        "twitter:description": "Slater is the code environment designed for Webflow, powered by AI.",
+        "twitter:image": "https://cdn.prod.website-files.com/6328b5c7302aa13380f83211/67192b0a759bb7616b125573_572c8dd8-8224-4888-8d92-5935c80f547f.png",
+        "og:type": "website",
+        "og:title": "Slater App - Webflow Apps & Integrations",
+        "og:description": "Slater is the code environment designed for Webflow, powered by AI.",
+        "og:site_name": "Webflow",
+        "og:url": "https://webflow.com/apps/detail/slater",
+        "image": "https://cdn.prod.website-files.com/6328b5c7302aa13380f83211/67192b0a759bb7616b125573_572c8dd8-8224-4888-8d92-5935c80f547f.png",
+        "fb:app_id": "183215435168053"
+      },
+      "links": [
+        {
+          "href": "/?r=0"
+        },
+        {
+          "href": "/designer?utm_source=marketplace"
+        },
+        {
+          "href": "/cms?utm_source=marketplace"
+        },
+        {
+          "href": "/ecommerce?utm_source=marketplace"
+        },
+        {
+          "href": "/interactions-animations?utm_source=marketplace"
+        },
+        {
+          "href": "/memberships?utm_source=marketplace"
+        },
+        {
+          "href": "/editor?utm_source=marketplace"
+        },
+        {
+          "href": "/logic?utm_source=marketplace"
+        },
+        {
+          "href": "/seo?utm_source=marketplace"
+        },
+        {
+          "href": "/hosting?utm_source=marketplace"
+        },
+        {
+          "href": "/security?utm_source=marketplace"
+        },
+        {
+          "href": "https://webflow.com/marketplace?utm_source=marketplace"
+        },
+        {
+          "href": "https://webflow.com/libraries?utm_source=marketplace"
+        },
+        {
+          "href": "/apps?utm_source=marketplace"
+        },
+        {
+          "href": "https://experts.webflow.com?utm_source=marketplace"
+        },
+        {
+          "href": "https://webflow.com/templates?utm_source=marketplace"
+        },
+        {
+          "href": "/made-in-webflow?utm_source=marketplace"
+        },
+        {
+          "href": "https://university.webflow.com/?utm_source=marketplace"
+        },
+        {
+          "href": "/community?utm_source=marketplace"
+        },
+        {
+          "href": "https://ebooks.webflow.com/?utm_source=marketplace"
+        },
+        {
+          "href": "https://community.webflow.com/?utm_source=marketplace"
+        },
+        {
+          "href": "/blog?utm_source=marketplace"
+        },
+        {
+          "href": "https://university.webflow.com/support?utm_source=marketplace"
+        },
+        {
+          "href": "/login"
+        },
+        {
+          "href": "https://webflow.com/contact-sales"
+        },
+        {
+          "href": "/signup"
+        },
+        {
+          "href": "/marketplace"
+        },
+        {
+          "href": "/apps"
+        },
+        {
+          "href": "/@edgar-allan"
+        },
+        {
+          "href": "/login?r=/apps/detail/slater"
+        },
+        {
+          "href": "/login?r=/apps/detail/slater"
+        },
+        {
+          "href": "https://slater.app/"
+        },
+        {
+          "href": "https://slater.app/"
+        },
+        {
+          "href": "https://forms.clickup.com/1275906/f/16y02-72731/MIOTKGWMJ0M4U44LUZ"
+        },
+        {
+          "href": "https://slater.app/privacy"
+        },
+        {
+          "href": "https://slater.app/terms"
+        },
+        {
+          "href": "/dashboard"
+        },
+        {
+          "href": "/marketplace"
+        },
+        {
+          "href": "/hire"
+        },
+        {
+          "href": "https://university.webflow.com/support"
+        },
+        {
+          "href": "https://university.webflow.com/?utm_source=marketplace"
+        },
+        {
+          "href": "https://university.webflow.com/courses/?utm_source=marketplace"
+        },
+        {
+          "href": "/blog/?utm_source=marketplace"
+        },
+        {
+          "href": "https://ebooks.webflow.com/"
+        },
+        {
+          "href": "https://community.webflow.com/"
+        },
+        {
+          "href": "/community/?utm_source=marketplace"
+        },
+        {
+          "href": "https://developers.webflow.com/?utm_source=marketplace"
+        },
+        {
+          "href": "https://wishlist.webflow.com/?utm_source=marketplace"
+        },
+        {
+          "href": "https://status.webflow.com/"
+        },
+        {
+          "href": "/about"
+        },
+        {
+          "href": "/careers"
+        },
+        {
+          "href": "/sitemap"
+        },
+        {
+          "href": "https://webflow.com/affiliates"
+        },
+        {
+          "href": "https://webflow.com/legal/terms"
+        },
+        {
+          "href": "https://webflow.com/legal/privacy"
+        },
+        {
+          "href": "https://webflow.com/legal/cookie-policy"
+        },
+        {
+          "href": "/made-in-webflow"
+        },
+        {
+          "href": "https://www.youtube.com/webflow"
+        },
+        {
+          "href": "https://twitter.com/webflow"
+        },
+        {
+          "href": "https://www.facebook.com/webflow/"
+        },
+        {
+          "href": "https://www.instagram.com/webflow/"
+        },
+        {
+          "href": "https://www.tiktok.com/@webflow"
+        },
+        {
+          "href": "/made-in-webflow"
+        },
+        {
+          "href": "https://www.youtube.com/webflow"
+        },
+        {
+          "href": "https://twitter.com/webflow"
+        },
+        {
+          "href": "https://www.facebook.com/webflow/"
+        },
+        {
+          "href": "https://www.instagram.com/webflow/"
+        },
+        {
+          "href": "https://www.tiktok.com/@webflow"
+        },
+        {
+          "href": "/dashboard"
+        },
+        {
+          "href": "/marketplace"
+        },
+        {
+          "href": "/hire"
+        },
+        {
+          "href": "https://university.webflow.com/support"
+        },
+        {
+          "href": "https://university.webflow.com/?utm_source=marketplace"
+        },
+        {
+          "href": "https://university.webflow.com/courses/?utm_source=marketplace"
+        },
+        {
+          "href": "/blog/?utm_source=marketplace"
+        },
+        {
+          "href": "https://ebooks.webflow.com/"
+        },
+        {
+          "href": "https://community.webflow.com/"
+        },
+        {
+          "href": "/community/?utm_source=marketplace"
+        },
+        {
+          "href": "https://developers.webflow.com/?utm_source=marketplace"
+        },
+        {
+          "href": "https://wishlist.webflow.com/?utm_source=marketplace"
+        },
+        {
+          "href": "https://status.webflow.com/"
+        },
+        {
+          "href": "/about"
+        },
+        {
+          "href": "/careers"
+        },
+        {
+          "href": "/sitemap"
+        },
+        {
+          "href": "https://webflow.com/affiliates"
+        },
+        {
+          "href": "https://webflow.com/legal/terms"
+        },
+        {
+          "href": "https://webflow.com/legal/privacy"
+        },
+        {
+          "href": "https://webflow.com/legal/cookie-policy"
+        },
+        {
+          "href": "/made-in-webflow"
+        },
+        {
+          "href": "https://www.youtube.com/webflow"
+        },
+        {
+          "href": "https://twitter.com/webflow"
+        },
+        {
+          "href": "https://www.facebook.com/webflow/"
+        },
+        {
+          "href": "https://www.instagram.com/webflow/"
+        },
+        {
+          "href": "https://www.tiktok.com/@webflow"
+        },
+        {
+          "href": "/made-in-webflow"
+        },
+        {
+          "href": "https://www.youtube.com/webflow"
+        },
+        {
+          "href": "https://twitter.com/webflow"
+        },
+        {
+          "href": "https://www.facebook.com/webflow/"
+        },
+        {
+          "href": "https://www.instagram.com/webflow/"
+        },
+        {
+          "href": "https://www.tiktok.com/@webflow"
+        }
+      ]
+    },
+    {
+      "url": "https://meetup-w-wcopilot.webflow.io/",
+      "status": 200,
+      "sha256": "9678d0223c82c332a4dfa014201f6d5bf369a37a979e90b14cee27dc9b8ee133",
+      "meta": {
+        "": "",
+        "og:title": "Meetup W - Webflow HTML website template",
+        "twitter:title": "Meetup W - Webflow HTML website template",
+        "viewport": "width=device-width, initial-scale=1",
+        "generator": "Webflow"
+      },
+      "links": [
+        {
+          "href": "/home-1"
+        },
+        {
+          "href": "/home-1"
+        },
+        {
+          "href": "/home-1"
+        },
+        {
+          "href": "/home-2"
+        },
+        {
+          "href": "/home-3"
+        },
+        {
+          "href": "/events"
+        },
+        {
+          "href": "/events-2"
+        },
+        {
+          "href": "/events-3"
+        },
+        {
+          "href": "https://meetup-w-wcopilot.webflow.io/event/inspire-innovate-a-journey-of-possibilities"
+        },
+        {
+          "href": "/about-us"
+        },
+        {
+          "href": "/our-speakers"
+        },
+        {
+          "href": "/home-1"
+        },
+        {
+          "href": "/home-2"
+        },
+        {
+          "href": "/home-3"
+        },
+        {
+          "href": "/about-us"
+        },
+        {
+          "href": "/about-us-2"
+        },
+        {
+          "href": "/about-us-3"
+        },
+        {
+          "href": "/our-speakers"
+        },
+        {
+          "href": "https://meetup-w-wcopilot.webflow.io/speaker/karen-dorwart"
+        },
+        {
+          "href": "/sponsors"
+        },
+        {
+          "href": "/testimonials"
+        },
+        {
+          "href": "/faq"
+        },
+        {
+          "href": "/pricing"
+        },
+        {
+          "href": "/events"
+        },
+        {
+          "href": "/events-2"
+        },
+        {
+          "href": "/events-3"
+        },
+        {
+          "href": "https://meetup-w-wcopilot.webflow.io/event/inspire-innovate-a-journey-of-possibilities"
+        },
+        {
+          "href": "/contact-us"
+        },
+        {
+          "href": "/news"
+        },
+        {
+          "href": "https://meetup-w-wcopilot.webflow.io/news-posts/top-event-trends-shaping-the-future-of-experiences"
+        },
+        {
+          "href": "/contact-us"
+        },
+        {
+          "href": "/contact-us"
+        },
+        {
+          "href": "/home-1"
+        },
+        {
+          "href": "/home-2"
+        },
+        {
+          "href": "/home-3"
+        },
+        {
+          "href": "/about-us"
+        },
+        {
+          "href": "/about-us-2"
+        },
+        {
+          "href": "/about-us-3"
+        },
+        {
+          "href": "/our-speakers"
+        },
+        {
+          "href": "https://meetup-w-wcopilot.webflow.io/speaker/karen-dorwart"
+        },
+        {
+          "href": "/sponsors"
+        },
+        {
+          "href": "/testimonials"
+        },
+        {
+          "href": "/faq"
+        },
+        {
+          "href": "/pricing"
+        },
+        {
+          "href": "/events"
+        },
+        {
+          "href": "/events-2"
+        },
+        {
+          "href": "/events-3"
+        },
+        {
+          "href": "https://meetup-w-wcopilot.webflow.io/event/inspire-innovate-a-journey-of-possibilities"
+        },
+        {
+          "href": "/contact-us"
+        },
+        {
+          "href": "/news"
+        },
+        {
+          "href": "https://meetup-w-wcopilot.webflow.io/news-posts/top-event-trends-shaping-the-future-of-experiences"
+        },
+        {
+          "href": "https://meetup-w-wcopilot.webflow.io/news-categories/fintech"
+        },
+        {
+          "href": "/coming-soon"
+        },
+        {
+          "href": "https://wcopilot.com/"
+        },
+        {
+          "href": "/home-1"
+        },
+        {
+          "href": "/contact-us"
+        },
+        {
+          "href": "/home-1"
+        },
+        {
+          "href": "/events"
+        },
+        {
+          "href": "/our-speakers"
+        },
+        {
+          "href": "/about-us"
+        },
+        {
+          "href": "/news"
+        },
+        {
+          "href": "/contact-us"
+        },
+        {
+          "href": "/templates/licensing"
+        },
+        {
+          "href": "https://wcopilot.com/templates"
+        },
+        {
+          "href": "https://wcopilot.com/"
+        },
+        {
+          "href": "https://webflow.com/"
+        },
+        {
+          "href": "https://wcopilot.com/schedule-a-demo"
+        },
+        {
+          "href": "https://wcopilot.com/plans"
+        },
+        {
+          "href": "https://webflow.com/dashboard/marketplace-checkout/redirect?rtype=Template&rid=6568e2a76666fbba3d525cf7"
+        },
+        {
+          "href": "https://bit.ly/3Rr0Er7"
+        }
+      ]
+    },
+    {
+      "url": "https://woven-wear.webflow.io/",
+      "status": 200,
+      "sha256": "641e487c34ce1c4d9de7b5524006218685672af9fe7daf8bbe2b2e6634ba9c86",
+      "meta": {
+        "": "",
+        "description": "Woven \u2013 a modern Webflow Ecommerce template for fashion and lifestyle brands. Beautiful, smooth, and fully customizable.",
+        "og:title": "Woven - Webflow Ecommerce website template",
+        "og:description": "Woven \u2013 a modern Webflow Ecommerce template for fashion and lifestyle brands. Beautiful, smooth, and fully customizable.",
+        "og:image": "https://cdn.prod.website-files.com/68ce5fed7313122cbef03705/6928605b39ad90dbad7d3026_home-min.jpg",
+        "twitter:title": "Woven - Webflow Ecommerce website template",
+        "twitter:description": "Woven \u2013 a modern Webflow Ecommerce template for fashion and lifestyle brands. Beautiful, smooth, and fully customizable.",
+        "og:type": "website",
+        "twitter:card": "summary_large_image",
+        "viewport": "width=device-width, initial-scale=1",
+        "generator": "Webflow"
+      },
+      "links": [
+        {
+          "href": "/"
+        },
+        {
+          "href": "/about-us"
+        },
+        {
+          "href": "/shop"
+        },
+        {
+          "href": "/blogs"
+        },
+        {
+          "href": "/"
+        },
+        {
+          "href": "/blogs"
+        },
+        {
+          "href": "#"
+        },
+        {
+          "href": "#"
+        },
+        {
+          "href": "/checkout"
+        },
+        {
+          "href": "/shop"
+        },
+        {
+          "href": "#arrival"
+        },
+        {
+          "href": "/shop"
+        },
+        {
+          "href": "/product/faux-leather-hand-bag"
+        },
+        {
+          "href": "/checkout"
+        },
+        {
+          "href": "/product/faux-jac-caps"
+        },
+        {
+          "href": "/checkout"
+        },
+        {
+          "href": "/product/faux-joggers-main"
+        },
+        {
+          "href": "/checkout"
+        },
+        {
+          "href": "/category/shop-men"
+        },
+        {
+          "href": "/category/shop-women"
+        },
+        {
+          "href": "/about-us"
+        },
+        {
+          "href": "/about-us"
+        },
+        {
+          "href": "/blogs/caring-for-your-leather-bag"
+        },
+        {
+          "href": "/blogs/why-going-all-natural-transformed-my-skin"
+        },
+        {
+          "href": "/blogs/beyond-the-fabric-exploring-the-art-of-style"
+        },
+        {
+          "href": "/blogs/threads-that-connect-fashion-culture-and-craft"
+        },
+        {
+          "href": "https://www.instagram.com/pixybits/"
+        },
+        {
+          "href": "https://www.instagram.com/pixybits/"
+        },
+        {
+          "href": "https://www.instagram.com/pixybits/"
+        },
+        {
+          "href": "https://www.instagram.com/pixybits/"
+        },
+        {
+          "href": "https://www.instagram.com/pixybits/"
+        },
+        {
+          "href": "/"
+        },
+        {
+          "href": "https://www.pixybits.com/"
+        },
+        {
+          "href": "https://webflow.com/"
+        },
+        {
+          "href": "/"
+        },
+        {
+          "href": "/about-us"
+        },
+        {
+          "href": "/shop"
+        },
+        {
+          "href": "/blogs"
+        },
+        {
+          "href": "/utilities/style-guide"
+        },
+        {
+          "href": "/utilities/licenses"
+        },
+        {
+          "href": "/utilities/changelog"
+        },
+        {
+          "href": "/utilities/instruction"
+        },
+        {
+          "href": "/404"
+        },
+        {
+          "href": "/401"
+        },
+        {
+          "href": "https://www.pixybits.com"
+        },
+        {
+          "href": "https://webflow.com/templates/html/woven-wear-website-template"
+        },
+        {
+          "href": "https://webflow.com/templates/designers/pixybits"
+        }
+      ]
+    },
+    {
+      "url": "https://createsomething.agency/privacy",
+      "status": 200,
+      "sha256": "e76fea9dedacd57f6c86faebb72dd392d53b12d525349520aff8daa3f374a65d",
+      "meta": {
+        "": "IE=edge",
+        "viewport": "width=device-width, initial-scale=1.0",
+        "google-site-verification": "KynDnNoxrzCdi8zUOUo51ZnLpOGk6tOhhjZO93-U1x4",
+        "theme-color": "#000000",
+        "format-detection": "telephone=no",
+        "title": "Privacy Policy | CREATE SOMETHING Agency",
+        "description": "How CREATE SOMETHING collects, uses, and protects your data. We use Cloudflare only\u2014no Google, no Meta. Session data: 7 days. Analytics: 90 days. Full control over your data.",
+        "robots": "noindex, follow",
+        "author": "Create Something",
+        "og:type": "website",
+        "og:url": "https://createsomething.agency/privacy",
+        "og:title": "Privacy Policy | CREATE SOMETHING Agency",
+        "og:description": "How CREATE SOMETHING collects, uses, and protects your data. We use Cloudflare only\u2014no Google, no Meta. Session data: 7 days. Analytics: 90 days. Full control over your data.",
+        "og:image": "https://createsomething.agency/og-image.png",
+        "og:image:secure_url": "https://createsomething.agency/og-image.png",
+        "og:image:type": "image/png",
+        "og:image:width": "1200",
+        "og:image:height": "630",
+        "og:image:alt": "Privacy Policy | CREATE SOMETHING Agency",
+        "og:site_name": "CREATE SOMETHING Agency",
+        "twitter:card": "summary_large_image",
+        "twitter:url": "https://createsomething.agency/privacy",
+        "twitter:title": "Privacy Policy | CREATE SOMETHING Agency",
+        "twitter:description": "How CREATE SOMETHING collects, uses, and protects your data. We use Cloudflare only\u2014no Google, no Meta. Session data: 7 days. Analytics: 90 days. Full control over your data.",
+        "twitter:image": "https://createsomething.agency/og-image.png",
+        "twitter:image:alt": "Privacy Policy | CREATE SOMETHING Agency"
+      },
+      "links": [
+        {
+          "href": "/"
+        },
+        {
+          "href": "/services"
+        },
+        {
+          "href": "/stack"
+        },
+        {
+          "href": "/products"
+        },
+        {
+          "href": "/field-reports"
+        },
+        {
+          "href": "/services#membership"
+        },
+        {
+          "href": "https://www.cloudflare.com/privacypolicy/"
+        },
+        {
+          "href": "mailto:privacy@createsomething.io"
+        },
+        {
+          "href": "/services#membership"
+        },
+        {
+          "href": "/"
+        },
+        {
+          "href": "https://github.com/createsomethingtoday"
+        },
+        {
+          "href": "https://www.linkedin.com/in/micahryanjohnson/"
+        },
+        {
+          "href": "/services"
+        },
+        {
+          "href": "/agent-foundation"
+        },
+        {
+          "href": "/technical-review"
+        },
+        {
+          "href": "/agent-readiness"
+        },
+        {
+          "href": "/stack"
+        },
+        {
+          "href": "/products"
+        },
+        {
+          "href": "/field-reports"
+        },
+        {
+          "href": "/dispatch"
+        },
+        {
+          "href": "/for-service-providers"
+        },
+        {
+          "href": "/about"
+        },
+        {
+          "href": "/map"
+        },
+        {
+          "href": "/services"
+        },
+        {
+          "href": "/control"
+        },
+        {
+          "href": "/partners"
+        },
+        {
+          "href": "/cloudflare"
+        },
+        {
+          "href": "/workflows"
+        },
+        {
+          "href": "/contact?source=resource&intent=governance-checklist&lane=not_sure"
+        },
+        {
+          "href": "/security"
+        },
+        {
+          "href": "/bearer-token-policy"
+        },
+        {
+          "href": "https://createsomething.space"
+        },
+        {
+          "href": "https://learn.createsomething.space"
+        },
+        {
+          "href": "https://createsomething.io"
+        },
+        {
+          "href": "https://createsomething.agency"
+        },
+        {
+          "href": "https://createsomething.ltd"
+        },
+        {
+          "href": "https://github.com/createsomethingtoday"
+        },
+        {
+          "href": "/privacy"
+        },
+        {
+          "href": "/terms"
+        },
+        {
+          "href": "https://createsomething.space"
+        },
+        {
+          "href": "https://learn.createsomething.space"
+        },
+        {
+          "href": "https://createsomething.io"
+        },
+        {
+          "href": "https://createsomething.agency"
+        },
+        {
+          "href": "https://createsomething.ltd"
+        }
+      ]
+    },
+    {
+      "url": "https://createsomething.agency/terms",
+      "status": 200,
+      "sha256": "d8c9b9c8abbe17bfa235c443c5b27442336796797789db769e6e21d578ed05ff",
+      "meta": {
+        "": "IE=edge",
+        "viewport": "width=device-width, initial-scale=1.0",
+        "google-site-verification": "KynDnNoxrzCdi8zUOUo51ZnLpOGk6tOhhjZO93-U1x4",
+        "theme-color": "#000000",
+        "format-detection": "telephone=no",
+        "title": "Terms of Service | CREATE SOMETHING Agency",
+        "description": "Terms of Service for CREATE SOMETHING AGENCY. Read our terms governing your use of our website and services.",
+        "robots": "noindex, follow",
+        "author": "Create Something",
+        "og:type": "website",
+        "og:url": "https://createsomething.agency/terms",
+        "og:title": "Terms of Service | CREATE SOMETHING Agency",
+        "og:description": "Terms of Service for CREATE SOMETHING AGENCY. Read our terms governing your use of our website and services.",
+        "og:image": "https://createsomething.agency/og-image.png",
+        "og:image:secure_url": "https://createsomething.agency/og-image.png",
+        "og:image:type": "image/png",
+        "og:image:width": "1200",
+        "og:image:height": "630",
+        "og:image:alt": "Terms of Service | CREATE SOMETHING Agency",
+        "og:site_name": "CREATE SOMETHING Agency",
+        "twitter:card": "summary_large_image",
+        "twitter:url": "https://createsomething.agency/terms",
+        "twitter:title": "Terms of Service | CREATE SOMETHING Agency",
+        "twitter:description": "Terms of Service for CREATE SOMETHING AGENCY. Read our terms governing your use of our website and services.",
+        "twitter:image": "https://createsomething.agency/og-image.png",
+        "twitter:image:alt": "Terms of Service | CREATE SOMETHING Agency"
+      },
+      "links": [
+        {
+          "href": "/"
+        },
+        {
+          "href": "/services"
+        },
+        {
+          "href": "/stack"
+        },
+        {
+          "href": "/products"
+        },
+        {
+          "href": "/field-reports"
+        },
+        {
+          "href": "/services#membership"
+        },
+        {
+          "href": "https://createsomething.agency"
+        },
+        {
+          "href": "mailto:legal@createsomething.io"
+        },
+        {
+          "href": "mailto:legal@createsomething.io"
+        },
+        {
+          "href": "https://createsomething.agency/contact"
+        },
+        {
+          "href": "/services#membership"
+        },
+        {
+          "href": "/"
+        },
+        {
+          "href": "https://github.com/createsomethingtoday"
+        },
+        {
+          "href": "https://www.linkedin.com/in/micahryanjohnson/"
+        },
+        {
+          "href": "/services"
+        },
+        {
+          "href": "/agent-foundation"
+        },
+        {
+          "href": "/technical-review"
+        },
+        {
+          "href": "/agent-readiness"
+        },
+        {
+          "href": "/stack"
+        },
+        {
+          "href": "/products"
+        },
+        {
+          "href": "/field-reports"
+        },
+        {
+          "href": "/dispatch"
+        },
+        {
+          "href": "/for-service-providers"
+        },
+        {
+          "href": "/about"
+        },
+        {
+          "href": "/map"
+        },
+        {
+          "href": "/services"
+        },
+        {
+          "href": "/control"
+        },
+        {
+          "href": "/partners"
+        },
+        {
+          "href": "/cloudflare"
+        },
+        {
+          "href": "/workflows"
+        },
+        {
+          "href": "/contact?source=resource&intent=governance-checklist&lane=not_sure"
+        },
+        {
+          "href": "/security"
+        },
+        {
+          "href": "/bearer-token-policy"
+        },
+        {
+          "href": "https://createsomething.space"
+        },
+        {
+          "href": "https://learn.createsomething.space"
+        },
+        {
+          "href": "https://createsomething.io"
+        },
+        {
+          "href": "https://createsomething.agency"
+        },
+        {
+          "href": "https://createsomething.ltd"
+        },
+        {
+          "href": "https://github.com/createsomethingtoday"
+        },
+        {
+          "href": "/privacy"
+        },
+        {
+          "href": "/terms"
+        },
+        {
+          "href": "https://createsomething.space"
+        },
+        {
+          "href": "https://learn.createsomething.space"
+        },
+        {
+          "href": "https://createsomething.io"
+        },
+        {
+          "href": "https://createsomething.agency"
+        },
+        {
+          "href": "https://createsomething.ltd"
+        }
+      ]
+    }
+  ]
+}

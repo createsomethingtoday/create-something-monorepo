@@ -45,3 +45,7 @@ API and question contract checked against https://docs.typesafe.ai/api.md and ht
 Deploy the merged source disabled first using `--var JEV_URL_CLASSIFIER_MODE:off`; provision the secret through stdin; deploy canary with `--var JEV_URL_CLASSIFIER_MODE:canary`; verify authenticated output and unauthenticated denial before active deployment. Keep all other existing bindings/secrets and browser rollout configuration.
 
 Rollback: deploy the same source with `--var JEV_URL_CLASSIFIER_MODE:off`, or use `wrangler rollback 2d292a2a-b4f3-4fbe-97c7-419413c43fbd` from this package for the recorded pre-rollout Worker. No schema migrations or data rewrites are introduced. Record the actual new deployment versions and live results in CRE-2060; source merge alone is not rollout proof.
+
+## Documentation follow-through
+
+[CRE-2062 evaluation](followthrough/README.md) retains the original results, records the user-approved narrower generic-terms meaning, and adds held-out comparisons, failure telemetry and three further adoption decisions.

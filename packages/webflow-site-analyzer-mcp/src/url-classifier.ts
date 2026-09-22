@@ -29,8 +29,8 @@ const PATTERN_RULES: PatternRule[] = [
 
   // Utility pages (critical for review)
   { pattern: /\/licens/i, classification: 'utility:license', priority: 'critical' },
-  { pattern: /\/legal/i, classification: 'utility:license', priority: 'critical' },
-  { pattern: /\/terms/i, classification: 'utility:license', priority: 'critical' },
+  // General legal/privacy pages are not evidence of a template asset license.
+  { pattern: /\/(?:legal|terms|privacy|cookies?)(?:[-/]|$)/i, classification: 'utility:other', priority: 'low' },
   { pattern: /\/instruction/i, classification: 'utility:instructions', priority: 'critical' },
   { pattern: /\/guide/i, classification: 'utility:instructions', priority: 'critical' },
   { pattern: /\/changelog/i, classification: 'utility:changelog', priority: 'critical' },

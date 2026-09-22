@@ -1,0 +1,10 @@
+{
+  "approvedBy": "User in task 01a0c9fa-516d-73f3-bb80-cbe1e1b7cf72 on 2026-09-22",
+  "reason": "Generic legal/terms pages are not explicit template or asset licensing evidence",
+  "overrides": {
+    "https://example.test/condiciones-de-uso": [
+      "utility:other"
+    ]
+  },
+  "legacyUnitTest": "/legal/terms now utility:other"
+}
