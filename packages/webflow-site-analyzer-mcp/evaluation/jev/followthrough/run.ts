@@ -24,13 +24,16 @@ for (const name of ['url-classifier.ts', 'jev-url-classifier.ts', 'types.ts']) {
 const { classifyUrls: baseline } = await import(
   pathToFileURL(path.join(temp, 'url-classifier.ts')).href
 );
+const selectedProtocolText =
+  split === 'regression'
+    ? fs.readFileSync(new URL('../protocol.json', root), 'utf8')
+    : protocolText;
+const approvedText = fs.readFileSync(new URL('approved-expectations.json', root), 'utf8');
 const cases =
   split === 'regression'
-    ? JSON.parse(fs.readFileSync(new URL('../protocol.json', root), 'utf8')).groups.flatMap(
-        (g: any) => g.cases
-      )
+    ? JSON.parse(selectedProtocolText).groups.flatMap((g: any) => g.cases)
     : protocol.cases.filter((c: any) => c.split === split);
-const approved = JSON.parse(fs.readFileSync(new URL('approved-expectations.json', root), 'utf8'));
+const approved = JSON.parse(approvedText);
 if (split === 'regression')
   for (const c of cases) if (approved.overrides[c.url]) c.expected = approved.overrides[c.url];
 const groups: Record<string, any[]> = {};
@@ -165,7 +168,12 @@ fs.writeFileSync(
   JSON.stringify(
     {
       baselineSha,
-      protocolHash: crypto.createHash('sha256').update(protocolText).digest('hex'),
+      protocolHash: crypto.createHash('sha256').update(selectedProtocolText).digest('hex'),
+      expectationOverlayHash:
+        split === 'regression'
+          ? crypto.createHash('sha256').update(approvedText).digest('hex')
+          : undefined,
+      evaluatedCasesHash: crypto.createHash('sha256').update(JSON.stringify(cases)).digest('hex'),
       split,
       approvedExpectations: split === 'regression' ? approved : undefined,
       labels: protocol.labels,

@@ -252,3 +252,31 @@ test('receipts distinguish provider failure from valid abstention without exposi
     assert.equal(receipts[0].failureReason, undefined);
   }
 });
+
+test('legacy inference preserves exact legal routes and uses the narrower license rubric', async (t) => {
+  const urls = ['https://example.test/legal/terms', 'https://example.test/legal/licenses'];
+  let prompt = '';
+  t.mock.method(globalThis, 'fetch', async (_url: unknown, init?: RequestInit) => {
+    prompt = JSON.parse(String(init?.body)).messages[1].content;
+    return new Response(
+      JSON.stringify({
+        choices: [
+          {
+            message: {
+              content: JSON.stringify({
+                urls: urls.map((url) => ({ url, classification: 'utility:license', confidence: 1 }))
+              })
+            }
+          }
+        ]
+      })
+    );
+  });
+  const results = await classifyUrls(urls, 'https://example.test/', { apiKey: 'test-key' });
+  assert.deepEqual(
+    results.map((row) => row.classification),
+    ['utility:other', 'utility:license']
+  );
+  assert.doesNotMatch(prompt, /License\/terms\/legal pages/);
+  assert.match(prompt, /asset licensing/);
+});
