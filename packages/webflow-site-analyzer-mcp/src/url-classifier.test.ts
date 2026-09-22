@@ -280,3 +280,13 @@ test('legacy inference preserves exact legal routes and uses the narrower licens
   assert.doesNotMatch(prompt, /License\/terms\/legal pages/);
   assert.match(prompt, /asset licensing/);
 });
+
+
+test('legacy inference can still correct broad nonlegal regex matches', async (t) => {
+  const url = 'https://example.test/products/sale-item';
+  t.mock.method(globalThis, 'fetch', async () => new Response(JSON.stringify({
+    choices: [{ message: { content: JSON.stringify({ urls: [{ url, classification: 'ecommerce', confidence: 0.9 }] }) } }]
+  })));
+  const results = await classifyUrls([url], 'https://example.test/', { apiKey: 'test-key' });
+  assert.equal(results[0].classification, 'ecommerce');
+});

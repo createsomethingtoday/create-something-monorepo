@@ -217,7 +217,10 @@ export async function classifyUrlsWithLLM(
 
     return urls.map((url, index) => {
       const deterministic = classifyUrlDeterministic(url, url === startUrl);
-      if (deterministic.confidence !== 0.5) return deterministic;
+      if (deterministic.classification === 'utility:other' &&
+          /\/(?:legal|terms|privacy|cookies?)(?:[-/]|$)/i.test(new URL(url).pathname)) {
+        return deterministic;
+      }
       const path = paths[index];
       const llmResult = parsed.find(
         (r) => r.url === path || r.url === url
