@@ -37,6 +37,7 @@
     "test:classifier:offline": "tsx --test src/url-classifier.test.ts src/url-classifier-runtime.test.ts evaluation/jev/run.test.ts"
   },
   "dependencies": {
+    "@cloudflare/puppeteer": "1.3.0",
     "@create-something/observability": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.26.0",
     "@temporalio/activity": "^1.14.1",

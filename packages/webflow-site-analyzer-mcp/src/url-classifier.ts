@@ -29,8 +29,8 @@ const PATTERN_RULES: PatternRule[] = [
 
   // Utility pages (critical for review)
   { pattern: /\/licens/i, classification: 'utility:license', priority: 'critical' },
-  { pattern: /\/legal/i, classification: 'utility:license', priority: 'critical' },
-  { pattern: /\/terms/i, classification: 'utility:license', priority: 'critical' },
+  // General legal/privacy pages are not evidence of a template asset license.
+  { pattern: /\/(?:legal|terms|privacy|cookies?)(?:[-/]|$)/i, classification: 'utility:other', priority: 'low' },
   { pattern: /\/instruction/i, classification: 'utility:instructions', priority: 'critical' },
   { pattern: /\/guide/i, classification: 'utility:instructions', priority: 'critical' },
   { pattern: /\/changelog/i, classification: 'utility:changelog', priority: 'critical' },
@@ -93,11 +93,11 @@ const CLASSIFICATION_PROMPT = `Classify each URL into exactly one category. Retu
 Categories:
 - homepage: The main landing page
 - content: Regular content pages (about, contact, pricing, FAQ, etc.)
-- utility:license: License/terms/legal pages
+- utility:license: Explicit template or asset licensing and reuse-rights pages; exclude generic terms, legal notices, privacy and cookies
 - utility:instructions: Instructions/setup/guide pages
 - utility:changelog: Changelog/release notes pages
 - utility:style-guide: Style guide/design system pages
-- utility:other: Other utility pages (coming soon, search, etc.)
+- utility:other: Other utility pages (generic terms, legal notices, privacy, cookies, coming soon, search, etc.)
 - cms-listing: CMS collection list pages (blog index, events index)
 - cms-detail: CMS collection detail pages (individual blog post, event)
 - ecommerce: Shopping/cart/checkout pages
@@ -216,6 +216,11 @@ export async function classifyUrlsWithLLM(
     ]);
 
     return urls.map((url, index) => {
+      const deterministic = classifyUrlDeterministic(url, url === startUrl);
+      if (deterministic.classification === 'utility:other' &&
+          /\/(?:legal|terms|privacy|cookies?)(?:[-/]|$)/i.test(new URL(url).pathname)) {
+        return deterministic;
+      }
       const path = paths[index];
       const llmResult = parsed.find(
         (r) => r.url === path || r.url === url

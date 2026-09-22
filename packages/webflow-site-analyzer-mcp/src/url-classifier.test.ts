@@ -159,8 +159,134 @@ test('batches outside the evaluated size retain incumbent routing as a whole', a
   const urls = Array.from({ length: 40 }, (_, i) => `https://example.test/page${i}`);
   let jevCalls = 0;
   const actual = await classifyUrls(urls, 'https://example.test/', {
-    jev: { apiKey: 'key', fetchImpl: async () => { jevCalls++; return new Response('', {status: 500}); } },
+    jev: {
+      apiKey: 'key',
+      fetchImpl: async () => {
+        jevCalls++;
+        return new Response('', { status: 500 });
+      }
+    }
   });
   assert.equal(jevCalls, 0);
-  assert.deepEqual(actual.map(row => row.url), urls);
+  assert.deepEqual(
+    actual.map((row) => row.url),
+    urls
+  );
+});
+
+test('general legal pages do not satisfy the template-license discovery hint', async () => {
+  const paths = [
+    '/terms',
+    '/legal',
+    '/privacy-policy',
+    '/cookie-policy',
+    '/terms-of-service',
+    '/templates/licensing',
+    '/legal/licenses'
+  ];
+  const urls = paths.map((path) => `https://example.test${path}`);
+  const rows = await classifyUrls(urls, 'https://example.test/', { useLLM: false });
+  assert.deepEqual(
+    rows.map((row) => row.classification),
+    [
+      'utility:other',
+      'utility:other',
+      'utility:other',
+      'utility:other',
+      'utility:other',
+      'utility:license',
+      'utility:license'
+    ]
+  );
+  assert.deepEqual(
+    rows.map((row) => row.url),
+    urls
+  );
+});
+
+test('receipts distinguish provider failure from valid abstention without exposing paths', async () => {
+  const failures = [
+    {
+      response: () => new Response('sensitive-provider-body', { status: 429 }),
+      reason: 'rate_limited'
+    },
+    {
+      response: () => new Response('sensitive-provider-body', { status: 529 }),
+      reason: 'overloaded'
+    },
+    {
+      response: () => Response.json({ ...answer(), model: 'wrong-version' }),
+      reason: 'model_mismatch'
+    },
+    {
+      response: () => Response.json({ model: 'jev-1.13.0', answers: {} }),
+      reason: 'invalid_response'
+    }
+  ];
+  for (const scenario of failures) {
+    const receipts: any[] = [];
+    await classifyUrls(input, input[0], {
+      jev: {
+        apiKey: 'key',
+        fetchImpl: async () => scenario.response(),
+        onReceipt: (r) => receipts.push(r)
+      }
+    });
+    assert.equal(receipts[0].failureReason, scenario.reason);
+    assert.doesNotMatch(JSON.stringify(receipts), /sensitive-provider-body|example.test|ayuda/);
+  }
+  for (const [choice, confidence, field] of [
+    ['no_match', 1, 'abstained'],
+    ['content', 0.4, 'lowConfidence']
+  ] as const) {
+    const receipts: any[] = [];
+    await classifyUrls(input, input[0], {
+      jev: {
+        apiKey: 'key',
+        fetchImpl: async () => Response.json(answer(choice, confidence)),
+        onReceipt: (r) => receipts.push(r)
+      }
+    });
+    assert.equal(receipts[0].status, 'ok');
+    assert.equal(receipts[0][field], 1);
+    assert.equal(receipts[0].failureReason, undefined);
+  }
+});
+
+test('legacy inference preserves exact legal routes and uses the narrower license rubric', async (t) => {
+  const urls = ['https://example.test/legal/terms', 'https://example.test/legal/licenses'];
+  let prompt = '';
+  t.mock.method(globalThis, 'fetch', async (_url: unknown, init?: RequestInit) => {
+    prompt = JSON.parse(String(init?.body)).messages[1].content;
+    return new Response(
+      JSON.stringify({
+        choices: [
+          {
+            message: {
+              content: JSON.stringify({
+                urls: urls.map((url) => ({ url, classification: 'utility:license', confidence: 1 }))
+              })
+            }
+          }
+        ]
+      })
+    );
+  });
+  const results = await classifyUrls(urls, 'https://example.test/', { apiKey: 'test-key' });
+  assert.deepEqual(
+    results.map((row) => row.classification),
+    ['utility:other', 'utility:license']
+  );
+  assert.doesNotMatch(prompt, /License\/terms\/legal pages/);
+  assert.match(prompt, /asset licensing/);
+});
+
+
+test('legacy inference can still correct broad nonlegal regex matches', async (t) => {
+  const url = 'https://example.test/products/sale-item';
+  t.mock.method(globalThis, 'fetch', async () => new Response(JSON.stringify({
+    choices: [{ message: { content: JSON.stringify({ urls: [{ url, classification: 'ecommerce', confidence: 0.9 }] }) } }]
+  })));
+  const results = await classifyUrls([url], 'https://example.test/', { apiKey: 'test-key' });
+  assert.equal(results[0].classification, 'ecommerce');
 });

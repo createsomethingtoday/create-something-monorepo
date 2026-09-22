@@ -1,0 +1,223 @@
+{
+  "labels": "Frozen operator expectations using live public metadata; five apps is a feasibility sample, not rollout proof. Negatives explicitly planted.",
+  "criteria": {
+    "categorization": "all5 match descriptive primary-purpose rule; no activation without representative review-labeled corpus and consumer description field",
+    "selection": "all4 exact/no_match, compare deterministic lookup; no deploy if no incremental correct cases",
+    "verification": "all10 distinguish supported from unsupported; no deploy from planted negatives alone"
+  },
+  "apps": [
+    {
+      "name": "AirOps",
+      "slug": "airops",
+      "description": "Effortlessly sync your Webflow and Airops data. Import, export, and update your collections.",
+      "expected": "integration",
+      "source": "https://webflow.com/apps/detail/airops"
+    },
+    {
+      "name": "accessiBe",
+      "slug": "accessibe",
+      "description": "AI-driven web accessibility. ADA, EAA & WCAG aligned. No coding needed.",
+      "expected": "accessibility",
+      "source": "https://webflow.com/apps/detail/accessibe"
+    },
+    {
+      "name": "Crowdin",
+      "slug": "crowdin",
+      "description": "Sophisticated Webflow localization: Translate your website with AI and professionals at Crowdin.",
+      "expected": "localization",
+      "source": "https://webflow.com/apps/detail/crowdin"
+    },
+    {
+      "name": "Figma to Webflow",
+      "slug": "figma-to-webflow",
+      "description": "Sync your design system from Figma to Webflow",
+      "expected": "integration",
+      "source": "https://webflow.com/apps/detail/figma-to-webflow"
+    },
+    {
+      "name": "Slater",
+      "slug": "slater",
+      "description": "Slater is the code environment designed for Webflow, powered by AI.",
+      "expected": "developer-tools",
+      "source": "https://webflow.com/apps/detail/slater"
+    }
+  ],
+  "selection": [
+    {
+      "source": "https://meetup-w-wcopilot.webflow.io/",
+      "candidates": [
+        "/about-us",
+        "/about-us-2",
+        "/about-us-3",
+        "/coming-soon",
+        "/contact-us",
+        "/events",
+        "/events-2",
+        "/events-3",
+        "/faq",
+        "/home-1",
+        "/home-2",
+        "/home-3",
+        "/news",
+        "/our-speakers",
+        "/pricing",
+        "/sponsors",
+        "/templates/licensing",
+        "/testimonials"
+      ],
+      "role": "template license page",
+      "expected": "/templates/licensing"
+    },
+    {
+      "source": "https://meetup-w-wcopilot.webflow.io/",
+      "candidates": [
+        "/about-us",
+        "/about-us-2",
+        "/about-us-3",
+        "/coming-soon",
+        "/contact-us",
+        "/events",
+        "/events-2",
+        "/events-3",
+        "/faq",
+        "/home-1",
+        "/home-2",
+        "/home-3",
+        "/news",
+        "/our-speakers",
+        "/pricing",
+        "/sponsors",
+        "/templates/licensing",
+        "/testimonials"
+      ],
+      "role": "privacy policy page",
+      "expected": "no_match"
+    },
+    {
+      "source": "https://woven-wear.webflow.io/",
+      "candidates": [
+        "/",
+        "/401",
+        "/404",
+        "/about-us",
+        "/blogs",
+        "/blogs/beyond-the-fabric-exploring-the-art-of-style",
+        "/blogs/caring-for-your-leather-bag",
+        "/blogs/threads-that-connect-fashion-culture-and-craft",
+        "/blogs/why-going-all-natural-transformed-my-skin",
+        "/category/shop-men",
+        "/category/shop-women",
+        "/checkout",
+        "/product/faux-jac-caps",
+        "/product/faux-joggers-main",
+        "/product/faux-leather-hand-bag",
+        "/shop",
+        "/utilities/changelog",
+        "/utilities/instruction",
+        "/utilities/licenses",
+        "/utilities/style-guide"
+      ],
+      "role": "template license page",
+      "expected": "/utilities/licenses"
+    },
+    {
+      "source": "https://woven-wear.webflow.io/",
+      "candidates": [
+        "/",
+        "/401",
+        "/404",
+        "/about-us",
+        "/blogs",
+        "/blogs/beyond-the-fabric-exploring-the-art-of-style",
+        "/blogs/caring-for-your-leather-bag",
+        "/blogs/threads-that-connect-fashion-culture-and-craft",
+        "/blogs/why-going-all-natural-transformed-my-skin",
+        "/category/shop-men",
+        "/category/shop-women",
+        "/checkout",
+        "/product/faux-jac-caps",
+        "/product/faux-joggers-main",
+        "/product/faux-leather-hand-bag",
+        "/shop",
+        "/utilities/changelog",
+        "/utilities/instruction",
+        "/utilities/licenses",
+        "/utilities/style-guide"
+      ],
+      "role": "privacy policy page",
+      "expected": "no_match"
+    }
+  ],
+  "verification": [
+    {
+      "source": "https://webflow.com/apps/detail/airops",
+      "description": "Effortlessly sync your Webflow and Airops data. Import, export, and update your collections.",
+      "claim": "Effortlessly sync your Webflow and Airops data. Import, export, and update your collections.",
+      "expectedUnsupported": false,
+      "kind": "exact positive"
+    },
+    {
+      "source": "https://webflow.com/apps/detail/airops",
+      "description": "Effortlessly sync your Webflow and Airops data. Import, export, and update your collections.",
+      "claim": "This app is free forever and exports every Webflow project to WordPress.",
+      "expectedUnsupported": true,
+      "kind": "planted unsupported claim"
+    },
+    {
+      "source": "https://webflow.com/apps/detail/accessibe",
+      "description": "AI-driven web accessibility. ADA, EAA & WCAG aligned. No coding needed.",
+      "claim": "AI-driven web accessibility. ADA, EAA & WCAG aligned. No coding needed.",
+      "expectedUnsupported": false,
+      "kind": "exact positive"
+    },
+    {
+      "source": "https://webflow.com/apps/detail/accessibe",
+      "description": "AI-driven web accessibility. ADA, EAA & WCAG aligned. No coding needed.",
+      "claim": "This app is free forever and exports every Webflow project to WordPress.",
+      "expectedUnsupported": true,
+      "kind": "planted unsupported claim"
+    },
+    {
+      "source": "https://webflow.com/apps/detail/crowdin",
+      "description": "Sophisticated Webflow localization: Translate your website with AI and professionals at Crowdin.",
+      "claim": "Sophisticated Webflow localization: Translate your website with AI and professionals at Crowdin.",
+      "expectedUnsupported": false,
+      "kind": "exact positive"
+    },
+    {
+      "source": "https://webflow.com/apps/detail/crowdin",
+      "description": "Sophisticated Webflow localization: Translate your website with AI and professionals at Crowdin.",
+      "claim": "This app is free forever and exports every Webflow project to WordPress.",
+      "expectedUnsupported": true,
+      "kind": "planted unsupported claim"
+    },
+    {
+      "source": "https://webflow.com/apps/detail/figma-to-webflow",
+      "description": "Sync your design system from Figma to Webflow",
+      "claim": "Sync your design system from Figma to Webflow",
+      "expectedUnsupported": false,
+      "kind": "exact positive"
+    },
+    {
+      "source": "https://webflow.com/apps/detail/figma-to-webflow",
+      "description": "Sync your design system from Figma to Webflow",
+      "claim": "This app is free forever and exports every Webflow project to WordPress.",
+      "expectedUnsupported": true,
+      "kind": "planted unsupported claim"
+    },
+    {
+      "source": "https://webflow.com/apps/detail/slater",
+      "description": "Slater is the code environment designed for Webflow, powered by AI.",
+      "claim": "Slater is the code environment designed for Webflow, powered by AI.",
+      "expectedUnsupported": false,
+      "kind": "exact positive"
+    },
+    {
+      "source": "https://webflow.com/apps/detail/slater",
+      "description": "Slater is the code environment designed for Webflow, powered by AI.",
+      "claim": "This app is free forever and exports every Webflow project to WordPress.",
+      "expectedUnsupported": true,
+      "kind": "planted unsupported claim"
+    }
+  ]
+}
