@@ -62,6 +62,7 @@
       "packages/social-mcp",
       "packages/substrate-mcp",
       "packages/substrate-mcp/worker",
+      "packages/template-form-uploads-worker",
       "packages/three-tier-framework-mcp",
       "packages/three-tier-framework-mcp/worker",
       "packages/ui-preview-mcp",

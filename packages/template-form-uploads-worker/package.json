@@ -3,11 +3,12 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "test": "node --experimental-strip-types --test src/worker.test.mjs",
+    "test": "node --import tsx --test src/worker.test.mjs",
     "dev": "wrangler dev",
     "deploy": "wrangler deploy"
   },
   "devDependencies": {
+    "tsx": "4.21.0",
     "wrangler": "^4.103.0"
   }
 }
