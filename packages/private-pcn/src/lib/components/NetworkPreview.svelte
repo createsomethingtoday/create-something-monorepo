@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { inkReveal, inkFeedback } from '$lib/ink-motion';
   import Icon from '$lib/components/Icon.svelte';
   const formats = [
     {
@@ -37,7 +38,7 @@
 </script>
 
 <section class="network-builder" id="network-preview" aria-labelledby="preview-heading">
-  <div class="builder-intro">
+  <div class="builder-intro" use:inkReveal>
     <p class="eyebrow">02 / SHAPE YOUR NETWORK</p>
     <h2 id="preview-heading">Your format.<br /><em>Your way of teaching.</em></h2>
     <p>
@@ -68,7 +69,7 @@
       Illustrative preview. Changes stay on this page; no network or account is created.
     </p>
   </div>
-  <div class="network-window" aria-label="Illustrative network preview">
+  <div use:inkReveal={65} class="network-window" aria-label="Illustrative network preview">
     <div class="window-bar"><span>YOUR NETWORK / PREVIEW</span><span>01—03</span></div>
     <div class="network-window-body">
       <div class="network-heading">
@@ -81,12 +82,15 @@
       <p class="network-description">{format.description}</p>
       <div class="network-feature">
         <span class="eyebrow">FEATURED SERIES</span>
-        <h4>{format.series}</h4>
-        <div class="execution-diagram" aria-label="Build, evaluate, and share">
-          <span>BUILD</span><b aria-hidden="true"><Icon name="arrow-right" /></b><span
-            >EVALUATE</span
-          ><b aria-hidden="true"><Icon name="arrow-right" /></b><span>SHARE</span>
-        </div>
+        <h4 use:inkFeedback={format.series}>{format.series}</h4>
+        <img
+          class="ink-library"
+          src="/media/human-ink/shelf.webp"
+          width="1536"
+          height="1024"
+          loading="lazy"
+          alt=""
+        />
         <span class="example-label">EXAMPLE CONTENT / NOT PLAYABLE</span>
       </div>
       <ol class="lesson-list" aria-live="polite">
@@ -99,8 +103,18 @@
           </li>{/each}
       </ol>
       <div class="network-window-footer">
-        <span>Your brand. Your domain.</span><span>{audience}</span>
+        <span>Your brand. Your domain.</span><span use:inkFeedback={audience}>{audience}</span>
       </div>
     </div>
   </div>
 </section>
+
+<style>
+  .ink-library {
+    display: block;
+    width: 160px;
+    height: 150px;
+    object-fit: contain;
+    margin: 16px auto;
+  }
+</style>

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { inkReveal } from '$lib/ink-motion';
   import Icon from '$lib/components/Icon.svelte';
 </script>
 
@@ -9,14 +10,24 @@
   /></svelte:head
 >
 <main id="main" class="builder-workspace">
-  <p class="eyebrow">PRIVATE / MAKE IT YOURS</p>
-  <h1>Learn a technique.<br /><em>Build on it.</em></h1>
-  <p class="lede">
-    One account for learning from other builders and sharing your own practice. Choose where to
-    start. You can do both.
-  </p>
+  <div class="ink-onboarding">
+    <div>
+      <p class="eyebrow">PRIVATE / MAKE IT YOURS</p>
+      <h1>Learn a technique.<br /><em>Build on it.</em></h1>
+      <p class="lede">
+        One account for learning from other builders and sharing your own practice. Choose where to
+        start. You can do both.
+      </p>
+    </div>
+    <img
+      src="/media/human-ink/practice.webp"
+      width="1280"
+      height="1280"
+      alt="A hand holds a notebook of techniques and working notes."
+    />
+  </div>
   <div class="builder-grid onboarding-choices">
-    <a class="asset-card" href="/collection"
+    <a use:inkReveal class="asset-card" href="/collection"
       ><p class="eyebrow"><Icon name="package" size={24} /> 01 / LEARN & BUILD</p>
       <h2>Use what others<br />have figured out.</h2>
       <p>
@@ -28,7 +39,7 @@
           >Your collection <Icon name="arrow-right" /></span
         >
       </div></a
-    ><a class="asset-card" href="/apply"
+    ><a use:inkReveal class="asset-card" href="/apply"
       ><p class="eyebrow"><Icon name="network" size={24} /> 02 / SHARE & SELL</p>
       <h2>Turn your practice<br />into useful assets.</h2>
       <p>
@@ -43,3 +54,27 @@
     >
   </div>
 </main>
+
+<style>
+  .ink-onboarding {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 40px;
+    align-items: center;
+  }
+  .ink-onboarding img {
+    width: 100%;
+    max-width: 300px;
+    justify-self: center;
+    height: auto;
+  }
+  @media (max-width: 700px) {
+    .ink-onboarding {
+      grid-template-columns: 1fr;
+      gap: 20px;
+    }
+    .ink-onboarding img {
+      max-width: 210px;
+    }
+  }
+</style>
