@@ -44,6 +44,10 @@
     "./judgment-data": {
       "types": "./dist/judgment-data.d.ts",
       "default": "./dist/judgment-data.js"
+    },
+    "./judgment-data/v2": {
+      "types": "./dist/judgment-data-v2.d.ts",
+      "default": "./dist/judgment-data-v2.js"
     }
   },
   "scripts": {
@@ -80,13 +84,13 @@
     "topology:atlas-session": "node scripts/export-internal-atlas-session.mjs",
     "topology:3d:mcp": "node scripts/topology-3d-mcp.mjs",
     "test": "node --test test/*.test.mjs",
-    "judgment:test": "pnpm build && node --test test/judgment-data.test.mjs test/judgment-replay-cli.test.mjs"
+    "judgment:test": "pnpm build && node --test test/judgment-*.test.mjs"
   },
   "dependencies": {
     "@create-something/canvas-kernel": "workspace:*"
   },
   "devDependencies": {
-    "@types/node": "^22",
+    "@types/node": "24.10.9",
     "@x402/core": "2.22.0",
     "@x402/evm": "2.22.0",
     "typescript": "^5.7.0",

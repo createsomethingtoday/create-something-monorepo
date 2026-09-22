@@ -1,0 +1,28 @@
+{
+  "schemaVersion": "judgment-evidence.v2",
+  "caseId": "exception:synthetic-2",
+  "groupId": "app:synthetic-2",
+  "cutoff": "2026-09-01T12:00:00Z",
+  "certification": "synthetic",
+  "context": {
+    "finding": "naming",
+    "applicableGuideline": "The developer must acknowledge the naming finding."
+  },
+  "facts": {
+    "identityMatches": true
+  },
+  "eligibility": {
+    "scope": "complete",
+    "mandatoryHumanReview": false
+  },
+  "sources": [
+    {
+      "id": "developer",
+      "entityId": "exception:synthetic-2",
+      "sourceRef": "fixture:developer",
+      "observedAt": "2026-09-01T11:00:00Z",
+      "capturedAt": "2026-09-01T11:05:00Z",
+      "text": "I acknowledge the naming finding. We can address it next week."
+    }
+  ]
+}

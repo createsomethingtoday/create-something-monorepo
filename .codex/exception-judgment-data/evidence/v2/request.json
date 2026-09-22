@@ -1,0 +1,67 @@
+{
+  "model": "jev-1.13.0",
+  "questions": {
+    "ack": {
+      "criteria": {
+        "false": "No explicit acknowledgment",
+        "true": "Explicit acknowledgment"
+      },
+      "instructions": {
+        "evidencePaths": [
+          "`evidence.developer`"
+        ],
+        "task": {
+          "boundary": "A promise to fix alone is not acknowledgment.",
+          "task": "Does the developer explicitly acknowledge the naming finding?"
+        }
+      },
+      "type": "noul"
+    },
+    "detail": {
+      "criteria": [
+        "No remediation described",
+        "Action described without timing",
+        "Action and timing described"
+      ],
+      "instructions": {
+        "evidencePaths": [
+          "`evidence.developer`"
+        ],
+        "task": "How specific is the proposed remediation?"
+      },
+      "type": "score"
+    },
+    "route": {
+      "criteria": {
+        "naming": "Naming finding",
+        "none": "No matching finding",
+        "security": "Security finding"
+      },
+      "instructions": {
+        "evidencePaths": [
+          "`evidence.developer`"
+        ],
+        "task": "Which finding does the response address?"
+      },
+      "type": "choice"
+    }
+  },
+  "state": {
+    "context": {
+      "applicableGuideline": "The developer must acknowledge the naming finding.",
+      "finding": "naming"
+    },
+    "evidence": {
+      "developer": {
+        "capturedAt": "2026-09-01T11:05:00Z",
+        "entityId": "exception:synthetic-2",
+        "observedAt": "2026-09-01T11:00:00Z",
+        "sourceRef": "fixture:developer",
+        "text": "I acknowledge the naming finding. We can address it next week."
+      }
+    },
+    "facts": {
+      "identityMatches": true
+    }
+  }
+}

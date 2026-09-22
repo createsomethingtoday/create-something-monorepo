@@ -1,0 +1,12 @@
+{
+  "authority": "advisory_only",
+  "inferenceDigest": "5ff1a57b1a6a01f4787b2abbac894e62100dd8fea11deb6a918bffddc1f12c11",
+  "policyDigest": "90e758744402b45a9facb29ac37977505d624a531a3c37c5e2a933ec5d99d287",
+  "questionSetDigest": "53597686acb60f9f5c9bffb8c26b0f8c113d4715df507142839c5fa7eaa51f7b",
+  "reasons": [
+    "acknowledgment:requirement_not_met"
+  ],
+  "result": "needs_human",
+  "schemaVersion": "judgment-decision.v2",
+  "snapshotDigest": "c80e8a51f5af42c02cfa0cd56aeb82168d9eae1820895ab21f9c13b355a8193d"
+}

@@ -632,3 +632,9 @@ The [judgment data v1 contract](contracts/judgment-data/v1/README.md) adds a Nod
 applicable constraints, advisory receipts and offline replay. Run `pnpm judgment:test`
 for the synthetic integrity/behavior verifier. Independent exception-review labels
 and authenticated pre-decision evidence remain required before effectiveness claims.
+
+The [judgment data v2 contract](contracts/judgment-data/v2/README.md) preserves native
+TypeSafe Noul/Choice/Score measurements and separates inference from versioned decision
+policies. Use `@create-something/database-layer/judgment-data/v2` for new shared
+integrations. Its CLI supports offline request compilation, capture and recomposition;
+all decisions remain advisory and synthetic tests do not prove business effectiveness.

@@ -1,7 +1,7 @@
 # Exception judgment data plan
 
 Goal: [goal.md](goal.md). Linear: CRE-2061.
-Current phase: documentation review complete; phase 1b technical corrections are available before phase 2. Activation deferred: primary human-reviewed verifier unavailable. No business-effectiveness claim. Root preserved; worktree /private/tmp/cre-2061-judgment-data.
+Current phase: 1b in progress. User authorized technical corrections as a separately verifiable milestone; runtime goal active; implementation and local verification passed; PR publication remains. Original business goal is preserved in business-goal.md. No business-effectiveness claim. Root preserved; worktree /private/tmp/cre-2061-judgment-data.
 
 ## Phase 1: Durable offline foundation
 Status: complete
@@ -17,17 +17,17 @@ Exit criteria
 - [x] Review-ready committed/pushed draft PR 1748; retained worktree. Linear checkpoint 804da159 recorded.
 
 ## Phase 1b: Align shared contracts with TypeSafe primitives
-Status: pending
+Status: in progress
 Implementation
-- [ ] Preserve raw Noul/Choice/Score outputs separately from application decisions.
-- [ ] Separate evidence/question/inference identity from decision-policy identity.
-- [ ] Compile explicit structured TypeSafe requests and preserve exact response/usage.
-- [ ] Distinguish measurement, action eligibility, label provenance and evaluation lanes.
+- [x] Preserve raw Noul/Choice/Score outputs separately from application decisions.
+- [x] Separate evidence/question/inference identity from decision-policy identity.
+- [x] Compile explicit structured TypeSafe requests and preserve exact response/usage.
+- [x] Distinguish measurement, action eligibility, label provenance and evaluation lanes.
 Verification
-- [ ] Raw response round-trip; changed-policy recomposition without inference; actual request-shape validation.
-- [ ] Keep strict exception effectiveness gate while permitting clearly labeled development data.
+- [x] Raw response round-trip; changed-policy recomposition without inference; actual request-shape validation.
+- [x] Keep strict exception effectiveness gate while permitting clearly labeled development data.
 Exit criteria
-- [ ] Review findings in evidence/typesafe-docs-review.md resolved before shared adoption.
+- [x] Review findings in evidence/typesafe-docs-review.md resolved before shared adoption.
 
 ## Phase 2: Independent evaluation
 Status: blocked
@@ -53,6 +53,10 @@ Draft PR: https://github.com/createsomethingtoday/create-something-monorepo/pull
 Foundation commit: 6c12f1259. Build/typecheck pass; 195 tests pass.
 User asked asynchronously for reviewer-validated cases or the adjudicating policy owner.
 Git push used the already-signed-in createsomethingtoday account per process; global account unchanged.
-Runtime remains unactivated, with primary verifier preserved. No scheduled continuation.
+Historical foundation checkpoint: original business goal was not activated because its independent verifier was unavailable. The technical correction goal was subsequently activated; no scheduled continuation.
 
 2026-09-22 docs review: earlier offline implementation remains tested, but its sufficiency as a general Jev contract is superseded by the findings in [typesafe-docs-review.md](evidence/typesafe-docs-review.md). No runtime code changed. Human labels block effectiveness proof, not the technical corrections in phase 1b.
+
+2026-09-22 execution steering: complete the documented shared-contract corrections. Completion of the activated technical milestone does not close phases 2/3 or CRE-2061 business effectiveness work.
+
+Technical checks: 218 package tests, 39 judgment tests, build/typecheck and frozen lockfile pass. Independent Python audit verifies seven sealed artifacts, raw response preservation and two policy outcomes sharing one inference. Evidence: [v2/independent-audit.json](evidence/v2/independent-audit.json). Next: commit/push this checkpoint to PR 1748, read back CI and mark PR ready for review. External target authorized: existing codex/cre-2061-judgment-data branch and PR 1748; no merge or deploy claim.

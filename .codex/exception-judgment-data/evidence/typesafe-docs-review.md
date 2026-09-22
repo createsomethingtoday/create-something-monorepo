@@ -169,3 +169,26 @@ tests remain evidence of the earlier implementation, not proof that these new re
 are implemented. PR 1748 remains draft. The original full goal remains unactivated
 because its independent business verifier is still unavailable; technical preparation
 can continue without pretending that requirement is satisfied.
+
+## Technical correction disposition — 2026-09-22
+
+The preceding findings describe the historical v1 draft. They are resolved for the
+new shared v2 contract; v1 remains a compatible exception-specific API.
+
+| Finding | Implementation | Evidence |
+| --- | --- | --- |
+| 1: Raw primitive loss | v2 RawResponse/RawAnswer preserves all three primitives and usage | Native round-trip tests; independent saved-artifact audit |
+| 2: Inference/policy coupling | Separate sealed QuestionSet, InferenceRun, DecisionPolicy, DecisionRun | Fresh CLI changes threshold 0.8 to 0.9 with identical inference digest |
+| 3: Request compilation | Exact state/model/questions envelope, structured task and explicit evidence paths; requested/served model and trace | Compiler tests, saved request, missing/type/legend/usage rejection |
+| 4: Measurement/action conflation | Measurement available on mandatory-review cases; require/forbid rule direction; advisory-only decisions | Mandatory-review, violation, missing-fact and unknown-applicability tests |
+| 5: Overbroad human-label gate | Explicit provenance, development and effectiveness eligibility lanes | Machine-development acceptance; reviewer gate and grouped split tests |
+
+Temporal and grouped leakage checks pass. An injected-text fixture demonstrates that
+source content cannot alter deterministic authority; it is not a live model injection
+robustness test. Real adapter calls, reviewer authentication, context curation and
+business effectiveness remain owning-workflow requirements. No production authority,
+model-quality, merge or deployment claim follows from this correction.
+
+Validation: 218 package tests (39 judgment tests), build/typecheck, frozen-lockfile
+validation and independent Python audit of seven sealed artifacts all pass. See
+[v2 evidence](v2/independent-audit.json) and the v2 contract README for limitations.
