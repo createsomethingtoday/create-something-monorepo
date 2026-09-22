@@ -128,8 +128,8 @@ test('provider error and timeout fall back without retries or secret logging', a
     assert.doesNotMatch(JSON.stringify(receipts), /never-log-key|example.test|ayuda/);
   }
 });
-test('large inputs are bounded and preserve every URL including duplicates', async () => {
-  const urls = Array.from({ length: 70 }, (_, i) => `https://example.test/a${i % 10}`);
+test('maximum eligible batches are bounded and preserve every URL including duplicates', async () => {
+  const urls = Array.from({ length: 32 }, (_, i) => `https://example.test/a${i % 10}`);
   let calls = 0;
   const actual = await classifyUrls(urls, 'https://example.test/', {
     jev: {
@@ -153,4 +153,14 @@ test('large inputs are bounded and preserve every URL including duplicates', asy
     actual.map((r) => r.url),
     urls
   );
+});
+
+test('batches outside the evaluated size retain incumbent routing as a whole', async () => {
+  const urls = Array.from({ length: 40 }, (_, i) => `https://example.test/page${i}`);
+  let jevCalls = 0;
+  const actual = await classifyUrls(urls, 'https://example.test/', {
+    jev: { apiKey: 'key', fetchImpl: async () => { jevCalls++; return new Response('', {status: 500}); } },
+  });
+  assert.equal(jevCalls, 0);
+  assert.deepEqual(actual.map(row => row.url), urls);
 });

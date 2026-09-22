@@ -267,7 +267,11 @@ export async function classifyUrls(
   options: ClassifyOptions = {}
 ): Promise<ClassifiedUrl[]> {
   if (options.useLLM !== false && options.jev?.apiKey) {
-    return classifyAmbiguousPaths(classifyUrlsDeterministic(urls, startUrl), options.jev);
+    const baseline = classifyUrlsDeterministic(urls, startUrl);
+    // Larger batches retain the incumbent path until separately evaluated.
+    if (baseline.filter(row => row.confidence === 0.5).length <= 32) {
+      return classifyAmbiguousPaths(baseline, options.jev);
+    }
   }
   const useLLM = options.useLLM ?? Boolean(
     options.apiKey || process.env.WEBFLOW_GROQ_API_KEY || process.env.WEBFLOW_OPENAI_API_KEY
