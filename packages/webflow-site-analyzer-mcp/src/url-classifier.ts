@@ -9,6 +9,7 @@
  * non-standard paths, non-English templates, and creative naming.
  */
 
+import { classifyAmbiguousPaths, type JevUrlOptions } from './jev-url-classifier.js';
 import type { ClassifiedUrl, PageClassification } from './types.js';
 
 // =============================================================================
@@ -250,6 +251,8 @@ export async function classifyUrlsWithLLM(
 // =============================================================================
 
 export interface ClassifyOptions extends LLMClassifierOptions {
+  /** Explicit server-owned activation; useLLM:false still disables all inference. */
+  jev?: JevUrlOptions;
   /** Use LLM classification. Default: true if API key available. */
   useLLM?: boolean;
 }
@@ -263,6 +266,13 @@ export async function classifyUrls(
   startUrl: string,
   options: ClassifyOptions = {}
 ): Promise<ClassifiedUrl[]> {
+  if (options.useLLM !== false && options.jev?.apiKey) {
+    const baseline = classifyUrlsDeterministic(urls, startUrl);
+    // Larger batches retain the incumbent path until separately evaluated.
+    if (baseline.filter(row => row.confidence === 0.5).length <= 32) {
+      return classifyAmbiguousPaths(baseline, options.jev);
+    }
+  }
   const useLLM = options.useLLM ?? Boolean(
     options.apiKey || process.env.WEBFLOW_GROQ_API_KEY || process.env.WEBFLOW_OPENAI_API_KEY
   );

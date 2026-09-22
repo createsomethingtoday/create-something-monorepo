@@ -60,6 +60,7 @@ import {
   type TemplateReviewJobDurableObjectNamespace,
 } from './template-review-jobs.js';
 import { classifyUrls, type ClassifyOptions } from './url-classifier.js';
+import { getUrlClassifierOptions, getUrlClassifierHealth, type UrlClassifierBindings } from './url-classifier-runtime.js';
 import { is404PageTitle } from './review-utils.js';
 import { createBrowserRoutingHealth } from './browser-routing-health.js';
 import type {
@@ -110,6 +111,7 @@ let analyzerRuntimeConfig: AnalyzerRuntimeConfig | null = null;
 
 export interface AnalyzerRuntimeConfig {
   runtime: 'node' | 'worker';
+  urlClassifier?: UrlClassifierBindings;
   apiKey?: string;
   registryPath?: string;
   browserProvider?: BrowserProviderRuntimeConfig;
@@ -121,7 +123,9 @@ function sameAnalyzerRuntimeConfig(
   current: AnalyzerRuntimeConfig,
   next: AnalyzerRuntimeConfig,
 ): boolean {
-  return current.runtime === next.runtime
+  return current.urlClassifier?.JEV_URL_CLASSIFIER_MODE === next.urlClassifier?.JEV_URL_CLASSIFIER_MODE
+    && current.urlClassifier?.TYPESAFE_API_KEY === next.urlClassifier?.TYPESAFE_API_KEY
+    && current.runtime === next.runtime
     && current.apiKey === next.apiKey
     && current.registryPath === next.registryPath
     && current.templateReviewMaxConcurrentJobs === next.templateReviewMaxConcurrentJobs
@@ -1637,7 +1641,7 @@ async function runPublishedPrecheck(
   // Start classification on what we have so far (homepage links).
   // Sitemap URLs get classified in a second pass if new ones appear.
   const homepageUrls = Array.from(discovered).slice(0, 200);
-  const classifyPromise = classifyUrls(homepageUrls, startUrl);
+  const classifyPromise = classifyUrls(homepageUrls, startUrl, getUrlClassifierOptions(analyzerRuntimeConfig?.urlClassifier ?? {}));
 
   // Wait for both to complete concurrently
   const [sitemap, initialClassified] = await Promise.all([sitemapPromise, classifyPromise]);
@@ -1649,11 +1653,11 @@ async function runPublishedPrecheck(
 
   if (newFromSitemap.length > 0) {
     // Classify the new sitemap URLs (deterministic is instant; LLM adds ~200ms)
-    const extraClassified = await classifyUrls(newFromSitemap, startUrl);
+    const extraClassified = await classifyUrls(newFromSitemap, startUrl, getUrlClassifierOptions(analyzerRuntimeConfig?.urlClassifier ?? {}));
     classifiedUrls = [...initialClassified, ...extraClassified];
   }
 
-  // Derive requiredPages from classifications (more robust than pattern matching)
+  // Discovery hints from URL paths, not proof of page contents or review compliance.
   const hasClassification = (type: string) =>
     classifiedUrls.some((c) => c.classification === type);
 
@@ -3917,6 +3921,7 @@ export function getAnalyzerHealth(): Record<string, unknown> {
       durableStorageConfigured: Boolean(templateReviewJobDurableObjectNamespace)
     },
     browserRouting: createBrowserRoutingHealth(browserConfig, providerName),
+    urlClassification: getUrlClassifierHealth(analyzerRuntimeConfig?.urlClassifier ?? {}),
   };
 }
 
