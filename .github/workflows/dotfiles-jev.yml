@@ -24,5 +24,6 @@ jobs:
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
         with:
           node-version: '22'
+          package-manager-cache: false
       - run: python3 -m unittest discover -s packages/dotfiles/codex/jev -p 'test_*.py' -v
       - run: node --test scripts/test/agent-skills-effectiveness.test.mjs scripts/test/svg-education-precision.test.mjs
