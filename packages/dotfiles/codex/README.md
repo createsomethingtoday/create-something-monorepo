@@ -19,6 +19,7 @@ This symlinks repo-owned skills into `~/.codex/skills` without deleting unrelate
 - `debug-feedback-loop` - repro-first debugging for bugs, failing checks, flaky behavior, and performance regressions
 - `deep-module-design` - interface and module design using leverage, locality, tests, and tier ownership
 - `intent-mapping` - decision, scope, validation, and handoff capture before ambiguous or long-running work
+- `jev-coding-assist` - advisory Jev ranking for ambiguous code, documentation, and skill candidates; [MCP installation and verification](./jev/README.md)
 - `svg-education-precision` - exact educational SVGs from structured specs with overflow, text-fit, collision, and browser-render gates
 - `tdd-vertical-slice` - test-first behavior slices through public interfaces
 - `target-reader-review` - review whether the least-tenured credible practitioner can understand, act, recover, and verify without turning judgment into CI
@@ -40,6 +41,7 @@ Use $claude-agent-cli-handoff to package this Airtable update for Claude CLI.
 Use $debug-feedback-loop to diagnose this failing check before patching.
 Use $deep-module-design before refactoring this workflow interface.
 Use $intent-mapping before turning this ambiguous request into implementation work.
+Use $jev-coding-assist to prioritize this ambiguous shortlist before inspecting the source.
 Use $svg-education-precision for an exact workflow, policy, comparison, system, or evidence diagram.
 Use $tdd-vertical-slice to add this behavior through a public interface test.
 Use $target-reader-review to judge whether a junior practitioner can understand and use this prose.

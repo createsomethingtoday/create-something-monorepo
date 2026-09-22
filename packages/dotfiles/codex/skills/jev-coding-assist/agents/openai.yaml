@@ -1,0 +1,6 @@
+interface:
+  display_name: 'Jev Coding Assist'
+  short_description: 'Prioritize ambiguous context with advisory Jev decisions'
+  default_prompt: 'Use $jev-coding-assist to prioritize these candidates, then inspect the source and verify the result.'
+policy:
+  allow_implicit_invocation: true
