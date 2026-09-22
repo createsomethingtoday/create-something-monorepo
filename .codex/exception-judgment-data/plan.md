@@ -1,7 +1,7 @@
 # Exception judgment data plan
 
 Goal: [goal.md](goal.md). Linear: CRE-2061.
-Current phase: 2 (blocked on independent review input). Activation deferred: primary human-reviewed verifier unavailable. No business-effectiveness claim. Root preserved; worktree /private/tmp/cre-2061-judgment-data.
+Current phase: documentation review complete; phase 1b technical corrections are available before phase 2. Activation deferred: primary human-reviewed verifier unavailable. No business-effectiveness claim. Root preserved; worktree /private/tmp/cre-2061-judgment-data.
 
 ## Phase 1: Durable offline foundation
 Status: complete
@@ -15,6 +15,19 @@ Verification
 - [x] Package build/typecheck and relevant regression checks pass.
 Exit criteria
 - [x] Review-ready committed/pushed draft PR 1748; retained worktree. Linear checkpoint 804da159 recorded.
+
+## Phase 1b: Align shared contracts with TypeSafe primitives
+Status: pending
+Implementation
+- [ ] Preserve raw Noul/Choice/Score outputs separately from application decisions.
+- [ ] Separate evidence/question/inference identity from decision-policy identity.
+- [ ] Compile explicit structured TypeSafe requests and preserve exact response/usage.
+- [ ] Distinguish measurement, action eligibility, label provenance and evaluation lanes.
+Verification
+- [ ] Raw response round-trip; changed-policy recomposition without inference; actual request-shape validation.
+- [ ] Keep strict exception effectiveness gate while permitting clearly labeled development data.
+Exit criteria
+- [ ] Review findings in evidence/typesafe-docs-review.md resolved before shared adoption.
 
 ## Phase 2: Independent evaluation
 Status: blocked
@@ -41,3 +54,5 @@ Foundation commit: 6c12f1259. Build/typecheck pass; 195 tests pass.
 User asked asynchronously for reviewer-validated cases or the adjudicating policy owner.
 Git push used the already-signed-in createsomethingtoday account per process; global account unchanged.
 Runtime remains unactivated, with primary verifier preserved. No scheduled continuation.
+
+2026-09-22 docs review: earlier offline implementation remains tested, but its sufficiency as a general Jev contract is superseded by the findings in [typesafe-docs-review.md](evidence/typesafe-docs-review.md). No runtime code changed. Human labels block effectiveness proof, not the technical corrections in phase 1b.
