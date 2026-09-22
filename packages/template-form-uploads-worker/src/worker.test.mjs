@@ -63,3 +63,27 @@ test('unknown kinds and empty files never write storage', async () => {
   assert.deepEqual(await empty.json(), { error: 'No file uploaded.' });
   assert.equal(objects.size, 0);
 });
+
+test('Library credential accepts its thumbnail and creator avatar only', async () => {
+  const { env, objects } = fixture();
+  env.LIBRARY_UPLOADS_WORKER_SECRET = 'test-library-secret';
+  for (const kind of ['library-thumbnail', 'avatar']) {
+    assert.equal((await worker.fetch(upload(kind, 'test-library-secret'), env)).status, 200);
+  }
+  const count = objects.size;
+  for (const kind of ['thumbnail', 'secondary-thumbnail', 'gallery', 'unknown']) {
+    assert.equal((await worker.fetch(upload(kind, 'test-library-secret'), env)).status, 401);
+  }
+  assert.equal(objects.size, count);
+  assert.equal((await worker.fetch(upload('thumbnail'), env)).status, 200);
+});
+
+test('missing or empty configured credentials fail closed', async () => {
+  const { env, objects } = fixture();
+  for (const value of [undefined, '']) {
+    env.UPLOADS_WORKER_SECRET = value;
+    env.LIBRARY_UPLOADS_WORKER_SECRET = value;
+    assert.equal((await worker.fetch(upload('library-thumbnail', ''), env)).status, 401);
+  }
+  assert.equal(objects.size, 0);
+});
