@@ -8,7 +8,8 @@ export async function publishedCms(path:string){
  if(!/^\/(?:[a-z0-9-]+\/?)*$/.test(path))throw new Error('Invalid CMS path');
  let html=cache.get(path)?.expires!>Date.now()?cache.get(path)!.html:undefined;
  if(!html){
-  const res=await fetch(`https://templates.webflow.com${path}`,{signal:AbortSignal.timeout(15000),redirect:'error'});
+  // Edge fetch supports manual redirects; the non-2xx check below rejects them.
+  const res=await fetch(`https://templates.webflow.com${path}`,{signal:AbortSignal.timeout(15000),redirect:'manual'});
   if(res.status===404)throw new CmsNotFound('CMS page not found');
   if(!res.ok)throw new Error(`CMS returned ${res.status}`);
   html=await res.text();
