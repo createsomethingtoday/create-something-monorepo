@@ -40,7 +40,11 @@
     "./organization-review.json": "./data/create-something-organization-review.json",
     "./performance-contract.json": "./data/create-something-performance-contract.json",
     "./runtime-binding-coverage.json": "./data/create-something-runtime-binding-coverage.json",
-    "./topology-diagnostics.json": "./data/create-something-topology-diagnostics.json"
+    "./topology-diagnostics.json": "./data/create-something-topology-diagnostics.json",
+    "./judgment-data": {
+      "types": "./dist/judgment-data.d.ts",
+      "default": "./dist/judgment-data.js"
+    }
   },
   "scripts": {
     "prebuild": "pnpm --filter @create-something/canvas-kernel build",
@@ -75,12 +79,14 @@
     "topology:report": "node scripts/report-internal-topology.mjs",
     "topology:atlas-session": "node scripts/export-internal-atlas-session.mjs",
     "topology:3d:mcp": "node scripts/topology-3d-mcp.mjs",
-    "test": "node --test test/*.test.mjs"
+    "test": "node --test test/*.test.mjs",
+    "judgment:test": "pnpm build && node --test test/judgment-data.test.mjs test/judgment-replay-cli.test.mjs"
   },
   "dependencies": {
     "@create-something/canvas-kernel": "workspace:*"
   },
   "devDependencies": {
+    "@types/node": "^22",
     "@x402/core": "2.22.0",
     "@x402/evm": "2.22.0",
     "typescript": "^5.7.0",

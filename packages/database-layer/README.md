@@ -624,3 +624,11 @@ pnpm --filter @create-something/database-layer topology:atlas-session -- --insta
 That write is local-only. It creates or updates
 `.atlas-studio/sessions/create-something-internal-operating-topology.json`
 unless `CREATE_SOMETHING_ATLAS_HOME` points somewhere else.
+
+## Judgment evidence and replay
+
+The [judgment data v1 contract](contracts/judgment-data/v1/README.md) adds a Node-only
+`@create-something/database-layer/judgment-data` subpath for sealed evidence,
+applicable constraints, advisory receipts and offline replay. Run `pnpm judgment:test`
+for the synthetic integrity/behavior verifier. Independent exception-review labels
+and authenticated pre-decision evidence remain required before effectiveness claims.

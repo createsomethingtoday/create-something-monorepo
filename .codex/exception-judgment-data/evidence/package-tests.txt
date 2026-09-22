@@ -1,0 +1,1184 @@
+
+> @create-something/database-layer@0.1.0 test /private/tmp/cre-2061-judgment-data/packages/database-layer
+> node --test test/*.test.mjs
+
+TAP version 13
+# Subtest: CREATE SOMETHING agent commercial contract is schema-valid and fail-closed
+ok 1 - CREATE SOMETHING agent commercial contract is schema-valid and fail-closed
+  ---
+  duration_ms: 191.366833
+  type: 'test'
+  ...
+# Subtest: free read capabilities allow agent access without identity or payment
+ok 2 - free read capabilities allow agent access without identity or payment
+  ---
+  duration_ms: 0.838209
+  type: 'test'
+  ...
+# Subtest: entitled capabilities require an authenticated matching entitlement
+ok 3 - entitled capabilities require an authenticated matching entitlement
+  ---
+  duration_ms: 0.136958
+  type: 'test'
+  ...
+# Subtest: paid preview capabilities return a provider-neutral payment requirement
+ok 4 - paid preview capabilities return a provider-neutral payment requirement
+  ---
+  duration_ms: 0.065334
+  type: 'test'
+  ...
+# Subtest: preview capabilities remain unavailable in production
+ok 5 - preview capabilities remain unavailable in production
+  ---
+  duration_ms: 0.045875
+  type: 'test'
+  ...
+# Subtest: private write capabilities require both a grant and an approval receipt
+ok 6 - private write capabilities require both a grant and an approval receipt
+  ---
+  duration_ms: 0.060667
+  type: 'test'
+  ...
+# Subtest: mutating capabilities cannot bypass approval through a malformed catalog entry
+ok 7 - mutating capabilities cannot bypass approval through a malformed catalog entry
+  ---
+  duration_ms: 0.05275
+  type: 'test'
+  ...
+# Subtest: uncataloged capabilities fail closed
+ok 8 - uncataloged capabilities fail closed
+  ---
+  duration_ms: 0.096792
+  type: 'test'
+  ...
+# Subtest: canonical CREATE SOMETHING catalog is executable through the public evaluator
+ok 9 - canonical CREATE SOMETHING catalog is executable through the public evaluator
+  ---
+  duration_ms: 0.094417
+  type: 'test'
+  ...
+# Subtest: authorization commits a storage-ready receipt for an allowed request
+ok 10 - authorization commits a storage-ready receipt for an allowed request
+  ---
+  duration_ms: 2.190458
+  type: 'test'
+  ...
+# Subtest: authorization replays the original receipt for an idempotent retry
+ok 11 - authorization replays the original receipt for an idempotent retry
+  ---
+  duration_ms: 0.9845
+  type: 'test'
+  ...
+# Subtest: authorization fails closed when a decision id is reused for different facts
+ok 12 - authorization fails closed when a decision id is reused for different facts
+  ---
+  duration_ms: 0.371042
+  type: 'test'
+  ...
+# Subtest: paid preview execution is blocked until a verified payment receipt is committed
+ok 13 - paid preview execution is blocked until a verified payment receipt is committed
+  ---
+  duration_ms: 0.112959
+  type: 'test'
+  ...
+# Subtest: authorization rejects invalid receipt identity before calling storage
+ok 14 - authorization rejects invalid receipt identity before calling storage
+  ---
+  duration_ms: 0.084375
+  type: 'test'
+  ...
+# Subtest: D1 receipt store commits with prepared statements and reads back primary truth
+ok 15 - D1 receipt store commits with prepared statements and reads back primary truth
+  ---
+  duration_ms: 2.793167
+  type: 'test'
+  ...
+# Subtest: D1 receipt store reports an existing idempotent receipt
+ok 16 - D1 receipt store reports an existing idempotent receipt
+  ---
+  duration_ms: 0.154791
+  type: 'test'
+  ...
+# Subtest: D1 receipt store fails closed when primary readback is missing
+ok 17 - D1 receipt store fails closed when primary readback is missing
+  ---
+  duration_ms: 0.360542
+  type: 'test'
+  ...
+# Subtest: D1 preview migration owns a unique decision id and no production binding
+ok 18 - D1 preview migration owns a unique decision id and no production binding
+  ---
+  duration_ms: 0.369125
+  type: 'test'
+  ...
+# Subtest: production Worker binds the dedicated D1 ledger to the additive receipt migration
+ok 19 - production Worker binds the dedicated D1 ledger to the additive receipt migration
+  ---
+  duration_ms: 0.496958
+  type: 'test'
+  ...
+# Subtest: wallet-create emits only the address and stores the disposable key mode 0600
+ok 20 - wallet-create emits only the address and stores the disposable key mode 0600
+  ---
+  duration_ms: 1230.659334
+  type: 'test'
+  ...
+# Subtest: canary requirements are capped to one atomic test USDC on Base Sepolia
+ok 21 - canary requirements are capped to one atomic test USDC on Base Sepolia
+  ---
+  duration_ms: 0.761208
+  type: 'test'
+  ...
+# Subtest: canary requirements reject mainnet, another asset, or a larger amount
+ok 22 - canary requirements reject mainnet, another asset, or a larger amount
+  ---
+  duration_ms: 0.216875
+  type: 'test'
+  ...
+# Subtest: canary verifies before one settlement and emits only sanitized evidence
+ok 23 - canary verifies before one settlement and emits only sanitized evidence
+  ---
+  duration_ms: 3.888
+  type: 'test'
+  ...
+# Subtest: canary never settles when facilitator verification fails
+ok 24 - canary never settles when facilitator verification fails
+  ---
+  duration_ms: 0.432041
+  type: 'test'
+  ...
+# Subtest: canary rejects unsupported facilitator capability before signing
+ok 25 - canary rejects unsupported facilitator capability before signing
+  ---
+  duration_ms: 0.91525
+  type: 'test'
+  ...
+# Subtest: canary records an indeterminate settlement once and does not retry
+ok 26 - canary records an indeterminate settlement once and does not retry
+  ---
+  duration_ms: 0.345042
+  type: 'test'
+  ...
+# Subtest: committed canary receipt is fixed to testnet and contains no signing material
+ok 27 - committed canary receipt is fixed to testnet and contains no signing material
+  ---
+  duration_ms: 4.351083
+  type: 'test'
+  ...
+# Subtest: x402 testnet verifier normalizes a valid facilitator response
+ok 28 - x402 testnet verifier normalizes a valid facilitator response
+  ---
+  duration_ms: 1.070625
+  type: 'test'
+  ...
+# Subtest: x402 verifier rejects mainnet before calling the facilitator
+ok 29 - x402 verifier rejects mainnet before calling the facilitator
+  ---
+  duration_ms: 0.937417
+  type: 'test'
+  ...
+# Subtest: x402 verifier rejects non-v2 and non-exact payloads before facilitator I/O
+ok 30 - x402 verifier rejects non-v2 and non-exact payloads before facilitator I/O
+  ---
+  duration_ms: 0.138667
+  type: 'test'
+  ...
+# Subtest: x402 verifier fails closed on mismatched or invalid payment facts
+ok 31 - x402 verifier fails closed on mismatched or invalid payment facts
+  ---
+  duration_ms: 0.490209
+  type: 'test'
+  ...
+# Subtest: HTTP facilitator posts only to the configured verify endpoint
+ok 32 - HTTP facilitator posts only to the configured verify endpoint
+  ---
+  duration_ms: 33.63775
+  type: 'test'
+  ...
+# Subtest: HTTP facilitator rejects insecure URLs and non-JSON failures
+ok 33 - HTTP facilitator rejects insecure URLs and non-JSON failures
+  ---
+  duration_ms: 0.436958
+  type: 'test'
+  ...
+# Subtest: agent config coverage maps Dify agents and MCP intake configs
+ok 34 - agent config coverage maps Dify agents and MCP intake configs
+  ---
+  duration_ms: 0.432541
+  type: 'test'
+  ...
+# Subtest: agent config coverage captures server refs, tool counts, smoke status, and eval status
+ok 35 - agent config coverage captures server refs, tool counts, smoke status, and eval status
+  ---
+  duration_ms: 0.115125
+  type: 'test'
+  ...
+# Subtest: agent config coverage maps MCP intake artifacts without secret values
+ok 36 - agent config coverage maps MCP intake artifacts without secret values
+  ---
+  duration_ms: 0.129417
+  type: 'test'
+  ...
+# Subtest: agent config coverage creates Substrate records, receipts, and review actions
+ok 37 - agent config coverage creates Substrate records, receipts, and review actions
+  ---
+  duration_ms: 0.134334
+  type: 'test'
+  ...
+# Subtest: agent wiki is generated from current Atlas/Substrate artifacts
+ok 38 - agent wiki is generated from current Atlas/Substrate artifacts
+  ---
+  duration_ms: 105.7835
+  type: 'test'
+  ...
+# Subtest: agent wiki freshness check fails on orphaned generated markdown
+ok 39 - agent wiki freshness check fails on orphaned generated markdown
+  ---
+  duration_ms: 104.675375
+  type: 'test'
+  ...
+# Subtest: atlas coverage maps every non-root topology node not covered by earlier waves
+ok 40 - atlas coverage maps every non-root topology node not covered by earlier waves
+  ---
+  duration_ms: 2.260833
+  type: 'test'
+  ...
+# Subtest: atlas coverage groups packages, automation, policy, guide, and docs separately
+ok 41 - atlas coverage groups packages, automation, policy, guide, and docs separately
+  ---
+  duration_ms: 0.174542
+  type: 'test'
+  ...
+# Subtest: atlas coverage creates proof receipts and local review actions
+ok 42 - atlas coverage creates proof receipts and local review actions
+  ---
+  duration_ms: 0.338833
+  type: 'test'
+  ...
+# Subtest: atlas coverage closes the current root topology gap queue
+ok 43 - atlas coverage closes the current root topology gap queue
+  ---
+  duration_ms: 0.312625
+  type: 'test'
+  ...
+# Subtest: internal topology exports an Atlas Studio session artifact
+ok 44 - internal topology exports an Atlas Studio session artifact
+  ---
+  duration_ms: 1.036292
+  type: 'test'
+  ...
+# Subtest: Atlas Studio session preserves topology node and edge parity
+ok 45 - Atlas Studio session preserves topology node and edge parity
+  ---
+  duration_ms: 0.513167
+  type: 'test'
+  ...
+# Subtest: Atlas Studio session exposes display-safe node owners
+ok 46 - Atlas Studio session exposes display-safe node owners
+  ---
+  duration_ms: 0.251542
+  type: 'test'
+  ...
+# Subtest: Atlas Studio session carries Substrate bindings, sync state, and governance receipts
+ok 47 - Atlas Studio session carries Substrate bindings, sync state, and governance receipts
+  ---
+  duration_ms: 0.438584
+  type: 'test'
+  ...
+# Subtest: Atlas Studio session includes a review story for topology completion
+ok 48 - Atlas Studio session includes a review story for topology completion
+  ---
+  duration_ms: 0.348875
+  type: 'test'
+  ...
+# Subtest: Atlas Studio session observes the API/MCP/agent management surface
+ok 49 - Atlas Studio session observes the API/MCP/agent management surface
+  ---
+  duration_ms: 0.116875
+  type: 'test'
+  ...
+# Subtest: Atlas Studio session surfaces topology diagnostics for business review
+ok 50 - Atlas Studio session surfaces topology diagnostics for business review
+  ---
+  duration_ms: 0.328042
+  type: 'test'
+  ...
+# Subtest: Atlas Studio session surfaces the Substrate performance contract for speed review
+ok 51 - Atlas Studio session surfaces the Substrate performance contract for speed review
+  ---
+  duration_ms: 0.085
+  type: 'test'
+  ...
+# Subtest: Atlas Studio session surfaces the organization review for business value review
+ok 52 - Atlas Studio session surfaces the organization review for business value review
+  ---
+  duration_ms: 0.300333
+  type: 'test'
+  ...
+# Subtest: Business Digital Thread v1 contract, red-team cases, and scale oracle stay frozen
+ok 53 - Business Digital Thread v1 contract, red-team cases, and scale oracle stay frozen
+  ---
+  duration_ms: 1038.725
+  type: 'test'
+  ...
+# Subtest: business operating recommendations complete every organization-review move
+ok 54 - business operating recommendations complete every organization-review move
+  ---
+  duration_ms: 0.817
+  type: 'test'
+  ...
+# Subtest: worker runtime recommendation is backed by runtime binding coverage without secret values
+ok 55 - worker runtime recommendation is backed by runtime binding coverage without secret values
+  ---
+  duration_ms: 0.132917
+  type: 'test'
+  ...
+# Subtest: client overlay recommendation becomes repeatable delivery packets
+ok 56 - client overlay recommendation becomes repeatable delivery packets
+  ---
+  duration_ms: 0.129084
+  type: 'test'
+  ...
+# Subtest: policy and guide recommendation attaches evidence to every operating slice
+ok 57 - policy and guide recommendation attaches evidence to every operating slice
+  ---
+  duration_ms: 0.080125
+  type: 'test'
+  ...
+# Subtest: Substrate product-surface recommendation is API, MCP, and agent addressable
+ok 58 - Substrate product-surface recommendation is API, MCP, and agent addressable
+  ---
+  duration_ms: 0.118667
+  type: 'test'
+  ...
+# Subtest: client overlay coverage covers every managed client package
+ok 59 - client overlay coverage covers every managed client package
+  ---
+  duration_ms: 0.477292
+  type: 'test'
+  ...
+# Subtest: client overlay coverage creates Atlas and Substrate objects for each package
+ok 60 - client overlay coverage creates Atlas and Substrate objects for each package
+  ---
+  duration_ms: 0.66275
+  type: 'test'
+  ...
+# Subtest: client overlay coverage preserves runtime and evidence paths
+ok 61 - client overlay coverage preserves runtime and evidence paths
+  ---
+  duration_ms: 0.320291
+  type: 'test'
+  ...
+# Subtest: internal topology has a stable Substrate root and Atlas canvas id
+ok 62 - internal topology has a stable Substrate root and Atlas canvas id
+  ---
+  duration_ms: 0.949708
+  type: 'test'
+  ...
+# Subtest: internal topology covers the current repo package and runtime surfaces
+ok 63 - internal topology covers the current repo package and runtime surfaces
+  ---
+  duration_ms: 0.219875
+  type: 'test'
+  ...
+# Subtest: internal topology includes the key Atlas and Substrate packages
+ok 64 - internal topology includes the key Atlas and Substrate packages
+  ---
+  duration_ms: 0.085542
+  type: 'test'
+  ...
+# Subtest: internal topology records the canonical workflow compiler package scope
+ok 65 - internal topology records the canonical workflow compiler package scope
+  ---
+  duration_ms: 0.068792
+  type: 'test'
+  ...
+# Subtest: internal topology maps managed client overlays when coverage exists
+ok 66 - internal topology maps managed client overlays when coverage exists
+  ---
+  duration_ms: 0.18625
+  type: 'test'
+  ...
+# Subtest: internal topology maps Cloudflare worker configs when runtime coverage exists
+ok 67 - internal topology maps Cloudflare worker configs when runtime coverage exists
+  ---
+  duration_ms: 0.362792
+  type: 'test'
+  ...
+# Subtest: internal topology maps Dify and MCP config files when agent coverage exists
+ok 68 - internal topology maps Dify and MCP config files when agent coverage exists
+  ---
+  duration_ms: 0.532791
+  type: 'test'
+  ...
+# Subtest: internal topology has no open coverage gaps after Atlas coverage exists
+ok 69 - internal topology has no open coverage gaps after Atlas coverage exists
+  ---
+  duration_ms: 0.126458
+  type: 'test'
+  ...
+# Subtest: internal topology has stable ids and connected root edges
+ok 70 - internal topology has stable ids and connected root edges
+  ---
+  duration_ms: 2.632917
+  type: 'test'
+  ...
+# Subtest: internal topology normalizes owners into displayable strings
+ok 71 - internal topology normalizes owners into displayable strings
+  ---
+  duration_ms: 1.383042
+  type: 'test'
+  ...
+# Subtest: internal topology includes direct repo truth paths for current proof surfaces
+ok 72 - internal topology includes direct repo truth paths for current proof surfaces
+  ---
+  duration_ms: 0.212958
+  type: 'test'
+  ...
+# Subtest: applicable predicates compose; irrelevant unknown does not block; receipt is advisory
+ok 73 - applicable predicates compose; irrelevant unknown does not block; receipt is advisory
+  ---
+  duration_ms: 5.133458
+  type: 'test'
+  ...
+# Subtest: tampered evidence and wrong input receipt are rejected
+ok 74 - tampered evidence and wrong input receipt are rejected
+  ---
+  duration_ms: 1.49325
+  type: 'test'
+  ...
+# Subtest: routes missing to human review
+ok 75 - routes missing to human review
+  ---
+  duration_ms: 0.356625
+  type: 'test'
+  ...
+# Subtest: routes unknown-applicability to human review
+ok 76 - routes unknown-applicability to human review
+  ---
+  duration_ms: 0.284083
+  type: 'test'
+  ...
+# Subtest: routes incomplete-scope to human review
+ok 77 - routes incomplete-scope to human review
+  ---
+  duration_ms: 0.150417
+  type: 'test'
+  ...
+# Subtest: routes mandatory to human review
+ok 78 - routes mandatory to human review
+  ---
+  duration_ms: 0.123792
+  type: 'test'
+  ...
+# Subtest: routes negative to human review
+ok 79 - routes negative to human review
+  ---
+  duration_ms: 0.139791
+  type: 'test'
+  ...
+# Subtest: routes uncertain to human review
+ok 80 - routes uncertain to human review
+  ---
+  duration_ms: 0.185083
+  type: 'test'
+  ...
+# Subtest: rejects malformed, omitted, duplicate or unsolicited answers
+ok 81 - rejects malformed, omitted, duplicate or unsolicited answers
+  ---
+  duration_ms: 0.4735
+  type: 'test'
+  ...
+# Subtest: provider failures remain separate from semantic negatives
+ok 82 - provider failures remain separate from semantic negatives
+  ---
+  duration_ms: 2.113708
+  type: 'test'
+  ...
+# Subtest: source identity conflicts, duplicate IDs and post-cutoff evidence fail closed
+ok 83 - source identity conflicts, duplicate IDs and post-cutoff evidence fail closed
+  ---
+  duration_ms: 1.541833
+  type: 'test'
+  ...
+# Subtest: evaluation refuses synthetic/proxy labels and creator/app leakage
+ok 84 - evaluation refuses synthetic/proxy labels and creator/app leakage
+  ---
+  duration_ms: 1.164125
+  type: 'test'
+  ...
+# Subtest: valid independent split is eligible without claiming effectiveness
+ok 85 - valid independent split is eligible without claiming effectiveness
+  ---
+  duration_ms: 0.899959
+  type: 'test'
+  ...
+# Subtest: request excludes unused evidence and threshold metadata
+ok 86 - request excludes unused evidence and threshold metadata
+  ---
+  duration_ms: 0.564916
+  type: 'test'
+  ...
+# Subtest: forged composed result is rejected even if attacker recomputes receipt hash
+ok 87 - forged composed result is rejected even if attacker recomputes receipt hash
+  ---
+  duration_ms: 0.545125
+  type: 'test'
+  ...
+# Subtest: fresh-process capture, record and replay preserve exact inputs and reject overwritten artifacts
+ok 88 - fresh-process capture, record and replay preserve exact inputs and reject overwritten artifacts
+  ---
+  duration_ms: 417.510125
+  type: 'test'
+  ...
+# Subtest: management API summarizes the generated control surface
+ok 89 - management API summarizes the generated control surface
+  ---
+  duration_ms: 0.805583
+  type: 'test'
+  ...
+# Subtest: management API exposes a compact capabilities index across API, MCP, and agents
+ok 90 - management API exposes a compact capabilities index across API, MCP, and agents
+  ---
+  duration_ms: 1.963666
+  type: 'test'
+  ...
+# Subtest: management API exposes an OpenAPI contract across API, MCP, and agents
+ok 91 - management API exposes an OpenAPI contract across API, MCP, and agents
+  ---
+  duration_ms: 2.878875
+  type: 'test'
+  ...
+# Subtest: management API exposes business recommendations across API, MCP, and agents
+ok 92 - management API exposes business recommendations across API, MCP, and agents
+  ---
+  duration_ms: 0.570792
+  type: 'test'
+  ...
+# Subtest: management API exposes a self-auditing contract report across API, MCP, and agents
+ok 93 - management API exposes a self-auditing contract report across API, MCP, and agents
+  ---
+  duration_ms: 14.892834
+  type: 'test'
+  ...
+# Subtest: management API exposes bounded Atlas viewport reads across API, MCP, and agents
+ok 94 - management API exposes bounded Atlas viewport reads across API, MCP, and agents
+  ---
+  duration_ms: 4.122208
+  type: 'test'
+  ...
+# Subtest: management API exposes shared canvas state across API, MCP, and agents
+ok 95 - management API exposes shared canvas state across API, MCP, and agents
+  ---
+  duration_ms: 28.183583
+  type: 'test'
+  ...
+# Subtest: management API exposes Substrate compute snapshot across API, MCP, and agents
+ok 96 - management API exposes Substrate compute snapshot across API, MCP, and agents
+  ---
+  duration_ms: 28.018
+  type: 'test'
+  ...
+# Subtest: management API exposes Substrate health across API, MCP, and agents
+ok 97 - management API exposes Substrate health across API, MCP, and agents
+  ---
+  duration_ms: 0.48275
+  type: 'test'
+  ...
+# Subtest: management API queries topology records across API, MCP, and agents
+ok 98 - management API queries topology records across API, MCP, and agents
+  ---
+  duration_ms: 1.171916
+  type: 'test'
+  ...
+# Subtest: management API exposes a fast topology workbench snapshot across API, MCP, and agents
+ok 99 - management API exposes a fast topology workbench snapshot across API, MCP, and agents
+  ---
+  duration_ms: 3.437291
+  type: 'test'
+  ...
+# Subtest: management API exposes workflow queue actions across API, MCP, and agents
+ok 100 - management API exposes workflow queue actions across API, MCP, and agents
+  ---
+  duration_ms: 17.303
+  type: 'test'
+  ...
+# Subtest: management API exposes receipt ledger proof across API, MCP, and agents
+ok 101 - management API exposes receipt ledger proof across API, MCP, and agents
+  ---
+  duration_ms: 14.054709
+  type: 'test'
+  ...
+# Subtest: management API lists operating slices through a Cloudflare-compatible request shape
+ok 102 - management API lists operating slices through a Cloudflare-compatible request shape
+  ---
+  duration_ms: 0.811459
+  type: 'test'
+  ...
+# Subtest: management API reads slice detail and readiness by stable slug
+ok 103 - management API reads slice detail and readiness by stable slug
+  ---
+  duration_ms: 0.383666
+  type: 'test'
+  ...
+# Subtest: management API serves Atlas session and runtime coverage resources as payloads
+ok 104 - management API serves Atlas session and runtime coverage resources as payloads
+  ---
+  duration_ms: 0.084541
+  type: 'test'
+  ...
+# Subtest: management API lazy-loads client overlay details across API, MCP, and agents
+ok 105 - management API lazy-loads client overlay details across API, MCP, and agents
+  ---
+  duration_ms: 0.929125
+  type: 'test'
+  ...
+# Subtest: management API lists and reads topology records by stable endpoint key
+ok 106 - management API lists and reads topology records by stable endpoint key
+  ---
+  duration_ms: 1.147292
+  type: 'test'
+  ...
+# Subtest: management API reads compact topology record context across API, MCP, and agents
+ok 107 - management API reads compact topology record context across API, MCP, and agents
+  ---
+  duration_ms: 1.830583
+  type: 'test'
+  ...
+# Subtest: management API exposes topology diagnostics as Atlas business health
+ok 108 - management API exposes topology diagnostics as Atlas business health
+  ---
+  duration_ms: 0.062042
+  type: 'test'
+  ...
+# Subtest: management API exposes the Substrate performance contract across API, MCP, and agents
+ok 109 - management API exposes the Substrate performance contract across API, MCP, and agents
+  ---
+  duration_ms: 0.077917
+  type: 'test'
+  ...
+# Subtest: management API exposes business organization review across API, MCP, and agents
+ok 110 - management API exposes business organization review across API, MCP, and agents
+  ---
+  duration_ms: 0.33975
+  type: 'test'
+  ...
+# Subtest: management API exposes MCP resources and tools from the same contract
+ok 111 - management API exposes MCP resources and tools from the same contract
+  ---
+  duration_ms: 0.388125
+  type: 'test'
+  ...
+# Subtest: management API reads MCP resources and calls read tools
+ok 112 - management API reads MCP resources and calls read tools
+  ---
+  duration_ms: 2.348125
+  type: 'test'
+  ...
+# Subtest: management API serves MCP-style HTTP resource and tool routes
+ok 113 - management API serves MCP-style HTTP resource and tool routes
+  ---
+  duration_ms: 0.975667
+  type: 'test'
+  ...
+# Subtest: management API handles MCP JSON-RPC resource and tool requests
+ok 114 - management API handles MCP JSON-RPC resource and tool requests
+  ---
+  duration_ms: 1.450625
+  type: 'test'
+  ...
+# Subtest: management API dispatches agent-native commands
+ok 115 - management API dispatches agent-native commands
+  ---
+  duration_ms: 0.877083
+  type: 'test'
+  ...
+# Subtest: management API refuses write-shaped operations until approval workflow exists
+ok 116 - management API refuses write-shaped operations until approval workflow exists
+  ---
+  duration_ms: 0.183292
+  type: 'test'
+  ...
+# Subtest: edge adapter serializes read responses with Cloudflare-compatible headers
+ok 117 - edge adapter serializes read responses with Cloudflare-compatible headers
+  ---
+  duration_ms: 0.267458
+  type: 'test'
+  ...
+# Subtest: edge adapter serializes MCP-style resource routes
+ok 118 - edge adapter serializes MCP-style resource routes
+  ---
+  duration_ms: 0.175333
+  type: 'test'
+  ...
+# Subtest: edge adapter serializes MCP JSON-RPC requests
+ok 119 - edge adapter serializes MCP JSON-RPC requests
+  ---
+  duration_ms: 0.163625
+  type: 'test'
+  ...
+# Subtest: edge adapter supports HEAD and OPTIONS without body churn
+ok 120 - edge adapter supports HEAD and OPTIONS without body churn
+  ---
+  duration_ms: 0.125042
+  type: 'test'
+  ...
+# Subtest: edge adapter serializes approval-gated write responses without caching
+ok 121 - edge adapter serializes approval-gated write responses without caching
+  ---
+  duration_ms: 0.132708
+  type: 'test'
+  ...
+# Subtest: Worker wrapper exposes a fetch handler over the same edge adapter
+ok 122 - Worker wrapper exposes a fetch handler over the same edge adapter
+  ---
+  duration_ms: 0.230875
+  type: 'test'
+  ...
+# Subtest: Worker wrapper keeps write-shaped requests approval-gated
+ok 123 - Worker wrapper keeps write-shaped requests approval-gated
+  ---
+  duration_ms: 0.18325
+  type: 'test'
+  ...
+# Subtest: management surface is tied to the current topology and readiness artifact
+ok 124 - management surface is tied to the current topology and readiness artifact
+  ---
+  duration_ms: 0.436542
+  type: 'test'
+  ...
+# Subtest: management surface exposes every operating slice through API, MCP, and agent resources
+ok 125 - management surface exposes every operating slice through API, MCP, and agent resources
+  ---
+  duration_ms: 2.879375
+  type: 'test'
+  ...
+# Subtest: management surface exposes every topology record as an API, MCP, and agent resource
+ok 126 - management surface exposes every topology record as an API, MCP, and agent resource
+  ---
+  duration_ms: 7.811666
+  type: 'test'
+  ...
+# Subtest: management surface exposes client overlays through API, MCP, and agent resources
+ok 127 - management surface exposes client overlays through API, MCP, and agent resources
+  ---
+  duration_ms: 0.140083
+  type: 'test'
+  ...
+# Subtest: management operations preserve approval boundaries for write-shaped actions
+ok 128 - management operations preserve approval boundaries for write-shaped actions
+  ---
+  duration_ms: 0.250041
+  type: 'test'
+  ...
+# Subtest: management surface includes topology, diagnostics, performance, organization review, Atlas session, and runtime coverage resources
+ok 129 - management surface includes topology, diagnostics, performance, organization review, Atlas session, and runtime coverage resources
+  ---
+  duration_ms: 0.210708
+  type: 'test'
+  ...
+# Subtest: operating slice readiness is derived from the current operating slice review
+ok 130 - operating slice readiness is derived from the current operating slice review
+  ---
+  duration_ms: 2.515417
+  type: 'test'
+  ...
+# Subtest: operating slice readiness keeps promotion approval-gated
+ok 131 - operating slice readiness keeps promotion approval-gated
+  ---
+  duration_ms: 0.158084
+  type: 'test'
+  ...
+# Subtest: worker operating slice joins topology records to Cloudflare runtime coverage
+ok 132 - worker operating slice joins topology records to Cloudflare runtime coverage
+  ---
+  duration_ms: 0.208667
+  type: 'test'
+  ...
+# Subtest: worker operating slice carries passing local readiness gates
+ok 133 - worker operating slice carries passing local readiness gates
+  ---
+  duration_ms: 0.075208
+  type: 'test'
+  ...
+# Subtest: operating slice review is derived from the current topology and Atlas coverage
+ok 134 - operating slice review is derived from the current topology and Atlas coverage
+  ---
+  duration_ms: 0.452083
+  type: 'test'
+  ...
+# Subtest: operating slice review creates one promotion slice per Atlas coverage group
+ok 135 - operating slice review creates one promotion slice per Atlas coverage group
+  ---
+  duration_ms: 0.105167
+  type: 'test'
+  ...
+# Subtest: operating slices carry validation commands and explicit promotion boundaries
+ok 136 - operating slices carry validation commands and explicit promotion boundaries
+  ---
+  duration_ms: 0.218625
+  type: 'test'
+  ...
+# Subtest: operating slices are sorted by largest review surface first
+ok 137 - operating slices are sorted by largest review surface first
+  ---
+  duration_ms: 0.064042
+  type: 'test'
+  ...
+# Subtest: organization review answers whether Atlas is showing CREATE SOMETHING operating value
+ok 138 - organization review answers whether Atlas is showing CREATE SOMETHING operating value
+  ---
+  duration_ms: 0.681125
+  type: 'test'
+  ...
+# Subtest: organization review exposes disconnect, overlap, and redundancy findings
+ok 139 - organization review exposes disconnect, overlap, and redundancy findings
+  ---
+  duration_ms: 0.111875
+  type: 'test'
+  ...
+# Subtest: organization review recommends product and operating moves with API or agent handoff points
+ok 140 - organization review recommends product and operating moves with API or agent handoff points
+  ---
+  duration_ms: 0.07425
+  type: 'test'
+  ...
+# Subtest: Substrate is the first-class database-layer runtime profile
+ok 141 - Substrate is the first-class database-layer runtime profile
+  ---
+  duration_ms: 0.496875
+  type: 'test'
+  ...
+# Subtest: database-layer demo state covers UI, API, MCP, and agent surfaces
+ok 142 - database-layer demo state covers UI, API, MCP, and agent surfaces
+  ---
+  duration_ms: 0.35375
+  type: 'test'
+  ...
+# Subtest: performance budgets define an Obsidian-like operator baseline without overclaiming
+ok 143 - performance budgets define an Obsidian-like operator baseline without overclaiming
+  ---
+  duration_ms: 1.041541
+  type: 'test'
+  ...
+# Subtest: system-design principles keep topology, execution, judgment, and UI explicit
+ok 144 - system-design principles keep topology, execution, judgment, and UI explicit
+  ---
+  duration_ms: 0.191375
+  type: 'test'
+  ...
+# Subtest: record helper reads records from the exported working set
+ok 145 - record helper reads records from the exported working set
+  ---
+  duration_ms: 0.305333
+  type: 'test'
+  ...
+# Subtest: runtime binding coverage maps Cloudflare Wrangler configs
+ok 146 - runtime binding coverage maps Cloudflare Wrangler configs
+  ---
+  duration_ms: 0.500541
+  type: 'test'
+  ...
+# Subtest: runtime binding coverage extracts D1, Durable Object, vars, and routes without secret values
+ok 147 - runtime binding coverage extracts D1, Durable Object, vars, and routes without secret values
+  ---
+  duration_ms: 0.210333
+  type: 'test'
+  ...
+# Subtest: runtime binding coverage includes JSONC Wrangler configs
+ok 148 - runtime binding coverage includes JSONC Wrangler configs
+  ---
+  duration_ms: 0.253125
+  type: 'test'
+  ...
+# Subtest: runtime binding coverage creates review actions and receipts for every config
+ok 149 - runtime binding coverage creates review actions and receipts for every config
+  ---
+  duration_ms: 0.307875
+  type: 'test'
+  ...
+# Subtest: mapped topology coverage does not imply verification, health, authority, or proof
+ok 150 - mapped topology coverage does not imply verification, health, authority, or proof
+  ---
+  duration_ms: 2.128833
+  type: 'test'
+  ...
+# Subtest: source records carry explicit semantics beside legacy compatibility fields
+ok 151 - source records carry explicit semantics beside legacy compatibility fields
+  ---
+  duration_ms: 6.527375
+  type: 'test'
+  ...
+# Subtest: Atlas presentation does not turn mapped coverage into run authority
+ok 152 - Atlas presentation does not turn mapped coverage into run authority
+  ---
+  duration_ms: 22.337042
+  type: 'test'
+  ...
+# Subtest: compute weights declare a derived non-telemetry provenance model
+ok 153 - compute weights declare a derived non-telemetry provenance model
+  ---
+  duration_ms: 13.540083
+  type: 'test'
+  ...
+# Subtest: client-safe projection preserves explicit authority and bounded lens state
+ok 154 - client-safe projection preserves explicit authority and bounded lens state
+  ---
+  duration_ms: 0.340041
+  type: 'test'
+  ...
+# Subtest: client-safe projection derives stale display state from the explicit review boundary
+ok 155 - client-safe projection derives stale display state from the explicit review boundary
+  ---
+  duration_ms: 0.159375
+  type: 'test'
+  ...
+# Subtest: public projection removes internal records and private implementation fields
+ok 156 - public projection removes internal records and private implementation fields
+  ---
+  duration_ms: 0.325375
+  type: 'test'
+  ...
+# Subtest: topology 3d MCP runtime exposes declared tools and resources
+ok 157 - topology 3d MCP runtime exposes declared tools and resources
+  ---
+  duration_ms: 21.322
+  type: 'test'
+  ...
+# Subtest: topology 3d MCP runtime can read insights and navigate context
+ok 158 - topology 3d MCP runtime can read insights and navigate context
+  ---
+  duration_ms: 24.159208
+  type: 'test'
+  ...
+# Subtest: topology 3d MCP runtime lazy-loads client overlay context for view switching
+ok 159 - topology 3d MCP runtime lazy-loads client overlay context for view switching
+  ---
+  duration_ms: 21.581958
+  type: 'test'
+  ...
+# Subtest: topology 3d MCP runtime composes topology and Atlas context
+ok 160 - topology 3d MCP runtime composes topology and Atlas context
+  ---
+  duration_ms: 21.398125
+  type: 'test'
+  ...
+# Subtest: topology 3d MCP runtime explains groups with directional context
+ok 161 - topology 3d MCP runtime explains groups with directional context
+  ---
+  duration_ms: 9.679792
+  type: 'test'
+  ...
+# Subtest: topology 3d MCP JSON-RPC handler returns structured tool content
+ok 162 - topology 3d MCP JSON-RPC handler returns structured tool content
+  ---
+  duration_ms: 10.065667
+  type: 'test'
+  ...
+# Subtest: topology 3d MCP frame parser accepts content-length frames and newline JSON
+ok 163 - topology 3d MCP frame parser accepts content-length frames and newline JSON
+  ---
+  duration_ms: 0.707166
+  type: 'test'
+  ...
+# Subtest: 3d topology artifact preserves canonical topology identity and parity
+ok 164 - 3d topology artifact preserves canonical topology identity and parity
+  ---
+  duration_ms: 0.479209
+  type: 'test'
+  ...
+# Subtest: 3d topology artifact has finite precomputed positions and compact click targets
+ok 165 - 3d topology artifact has finite precomputed positions and compact click targets
+  ---
+  duration_ms: 0.852667
+  type: 'test'
+  ...
+# Subtest: 3d topology artifact includes a parity-preserving inferred business lens
+ok 166 - 3d topology artifact includes a parity-preserving inferred business lens
+  ---
+  duration_ms: 0.301875
+  type: 'test'
+  ...
+# Subtest: 3d topology artifact includes a parity-preserving API and AI native lens
+ok 167 - 3d topology artifact includes a parity-preserving API and AI native lens
+  ---
+  duration_ms: 0.329208
+  type: 'test'
+  ...
+# Subtest: 3d topology artifact declares an agent-native context API contract
+ok 168 - 3d topology artifact declares an agent-native context API contract
+  ---
+  duration_ms: 0.39425
+  type: 'test'
+  ...
+# Subtest: 3d operational edge view attaches Knowledge groups to actionable surfaces
+ok 169 - 3d operational edge view attaches Knowledge groups to actionable surfaces
+  ---
+  duration_ms: 0.628916
+  type: 'test'
+  ...
+# Subtest: 3d topology artifact includes generated insights and improvement candidates
+ok 170 - 3d topology artifact includes generated insights and improvement candidates
+  ---
+  duration_ms: 0.147208
+  type: 'test'
+  ...
+# Subtest: 3d business lens carries readable meanings for every group
+ok 171 - 3d business lens carries readable meanings for every group
+  ---
+  duration_ms: 0.06075
+  type: 'test'
+  ...
+# Subtest: 3d topology edges use numeric indexes for fast renderer buffers
+ok 172 - 3d topology edges use numeric indexes for fast renderer buffers
+  ---
+  duration_ms: 0.725875
+  type: 'test'
+  ...
+# Subtest: completion report preserves topology totals and gap counts
+ok 173 - completion report preserves topology totals and gap counts
+  ---
+  duration_ms: 47.390916
+  type: 'test'
+  ...
+# Subtest: completion report makes managed client overlays first-class
+ok 174 - completion report makes managed client overlays first-class
+  ---
+  duration_ms: 0.117291
+  type: 'test'
+  ...
+# Subtest: completion report removes covered client, runtime, and agent config bindings from the first gap wave
+ok 175 - completion report removes covered client, runtime, and agent config bindings from the first gap wave
+  ---
+  duration_ms: 0.108958
+  type: 'test'
+  ...
+# Subtest: completion report separates operating lanes for Atlas, Substrate, agents, and judgment
+ok 176 - completion report separates operating lanes for Atlas, Substrate, agents, and judgment
+  ---
+  duration_ms: 0.0765
+  type: 'test'
+  ...
+# Subtest: topology diagnostics makes Atlas business value inspectable
+ok 177 - topology diagnostics makes Atlas business value inspectable
+  ---
+  duration_ms: 0.428625
+  type: 'test'
+  ...
+# Subtest: topology diagnostics separates hard gaps from overlap and balance review signals
+ok 178 - topology diagnostics separates hard gaps from overlap and balance review signals
+  ---
+  duration_ms: 0.177125
+  type: 'test'
+  ...
+# Subtest: topology projects every node into a Substrate source record
+ok 179 - topology projects every node into a Substrate source record
+  ---
+  duration_ms: 9.884
+  type: 'test'
+  ...
+# Subtest: topology projects into an Atlas canvas with node and edge parity
+ok 180 - topology projects into an Atlas canvas with node and edge parity
+  ---
+  duration_ms: 15.292708
+  type: 'test'
+  ...
+# Subtest: topology projection spreads the operating map into scan-friendly board sections
+ok 181 - topology projection spreads the operating map into scan-friendly board sections
+  ---
+  duration_ms: 5.865042
+  type: 'test'
+  ...
+# Subtest: topology projects into a shared CanvasKernel-compatible canvas state
+ok 182 - topology projects into a shared CanvasKernel-compatible canvas state
+  ---
+  duration_ms: 4.968584
+  type: 'test'
+  ...
+# Subtest: topology projects into a CPU Substrate compute snapshot for future GPU buffers
+ok 183 - topology projects into a CPU Substrate compute snapshot for future GPU buffers
+  ---
+  duration_ms: 8.2955
+  type: 'test'
+  ...
+# Subtest: topology projection marks covered clients and runtime bindings as bound
+ok 184 - topology projection marks covered clients and runtime bindings as bound
+  ---
+  duration_ms: 18.10375
+  type: 'test'
+  ...
+# Subtest: topology projection has no workflow gap actions after all coverage artifacts exist
+ok 185 - topology projection has no workflow gap actions after all coverage artifacts exist
+  ---
+  duration_ms: 0.17525
+  type: 'test'
+  ...
+# Subtest: full topology projection preserves action and receipt ownership boundaries
+ok 186 - full topology projection preserves action and receipt ownership boundaries
+  ---
+  duration_ms: 15.894167
+  type: 'test'
+  ...
+# Subtest: agent commercial readiness proves D1 while charging remains disabled
+ok 187 - agent commercial readiness proves D1 while charging remains disabled
+  ---
+  duration_ms: 13.25725
+  type: 'test'
+  ...
+# Subtest: agent commercial readiness fails closed without the production receipt schema
+ok 188 - agent commercial readiness fails closed without the production receipt schema
+  ---
+  duration_ms: 0.490917
+  type: 'test'
+  ...
+# Subtest: agent commercial readiness exposes no write method
+ok 189 - agent commercial readiness exposes no write method
+  ---
+  duration_ms: 0.281
+  type: 'test'
+  ...
+# Subtest: database-layer Worker host serves operating slices through fetch
+ok 190 - database-layer Worker host serves operating slices through fetch
+  ---
+  duration_ms: 1.764417
+  type: 'test'
+  ...
+# Subtest: database-layer Worker host keeps write-shaped requests approval-gated
+ok 191 - database-layer Worker host keeps write-shaped requests approval-gated
+  ---
+  duration_ms: 0.80275
+  type: 'test'
+  ...
+# Subtest: database-layer Worker host serves MCP-style resources and tool calls
+ok 192 - database-layer Worker host serves MCP-style resources and tool calls
+  ---
+  duration_ms: 2.447792
+  type: 'test'
+  ...
+# Subtest: database-layer Worker host lazy-loads client overlay detail
+ok 193 - database-layer Worker host lazy-loads client overlay detail
+  ---
+  duration_ms: 0.619208
+  type: 'test'
+  ...
+# Subtest: database-layer Worker host serves business operating recommendations
+ok 194 - database-layer Worker host serves business operating recommendations
+  ---
+  duration_ms: 0.475875
+  type: 'test'
+  ...
+# Subtest: database-layer Worker host serves MCP JSON-RPC read calls
+ok 195 - database-layer Worker host serves MCP JSON-RPC read calls
+  ---
+  duration_ms: 1.425042
+  type: 'test'
+  ...
+1..195
+# tests 195
+# suites 0
+# pass 195
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1298.450208

@@ -1,0 +1,122 @@
+
+> @create-something/database-layer@0.1.0 judgment:test /private/tmp/cre-2061-judgment-data/packages/database-layer
+> pnpm build && node --test test/judgment-data.test.mjs test/judgment-replay-cli.test.mjs
+
+
+> @create-something/database-layer@0.1.0 prebuild /private/tmp/cre-2061-judgment-data/packages/database-layer
+> pnpm --filter @create-something/canvas-kernel build
+
+
+> @create-something/canvas-kernel@0.1.0 build /private/tmp/cre-2061-judgment-data/packages/canvas-kernel
+> tsc
+
+
+> @create-something/database-layer@0.1.0 build /private/tmp/cre-2061-judgment-data/packages/database-layer
+> tsc
+
+TAP version 13
+# Subtest: applicable predicates compose; irrelevant unknown does not block; receipt is advisory
+ok 1 - applicable predicates compose; irrelevant unknown does not block; receipt is advisory
+  ---
+  duration_ms: 3.992958
+  type: 'test'
+  ...
+# Subtest: tampered evidence and wrong input receipt are rejected
+ok 2 - tampered evidence and wrong input receipt are rejected
+  ---
+  duration_ms: 0.954667
+  type: 'test'
+  ...
+# Subtest: routes missing to human review
+ok 3 - routes missing to human review
+  ---
+  duration_ms: 0.334375
+  type: 'test'
+  ...
+# Subtest: routes unknown-applicability to human review
+ok 4 - routes unknown-applicability to human review
+  ---
+  duration_ms: 0.263959
+  type: 'test'
+  ...
+# Subtest: routes incomplete-scope to human review
+ok 5 - routes incomplete-scope to human review
+  ---
+  duration_ms: 0.139042
+  type: 'test'
+  ...
+# Subtest: routes mandatory to human review
+ok 6 - routes mandatory to human review
+  ---
+  duration_ms: 0.108166
+  type: 'test'
+  ...
+# Subtest: routes negative to human review
+ok 7 - routes negative to human review
+  ---
+  duration_ms: 0.124708
+  type: 'test'
+  ...
+# Subtest: routes uncertain to human review
+ok 8 - routes uncertain to human review
+  ---
+  duration_ms: 0.172583
+  type: 'test'
+  ...
+# Subtest: rejects malformed, omitted, duplicate or unsolicited answers
+ok 9 - rejects malformed, omitted, duplicate or unsolicited answers
+  ---
+  duration_ms: 0.43225
+  type: 'test'
+  ...
+# Subtest: provider failures remain separate from semantic negatives
+ok 10 - provider failures remain separate from semantic negatives
+  ---
+  duration_ms: 0.494709
+  type: 'test'
+  ...
+# Subtest: source identity conflicts, duplicate IDs and post-cutoff evidence fail closed
+ok 11 - source identity conflicts, duplicate IDs and post-cutoff evidence fail closed
+  ---
+  duration_ms: 0.477708
+  type: 'test'
+  ...
+# Subtest: evaluation refuses synthetic/proxy labels and creator/app leakage
+ok 12 - evaluation refuses synthetic/proxy labels and creator/app leakage
+  ---
+  duration_ms: 0.745542
+  type: 'test'
+  ...
+# Subtest: valid independent split is eligible without claiming effectiveness
+ok 13 - valid independent split is eligible without claiming effectiveness
+  ---
+  duration_ms: 0.379083
+  type: 'test'
+  ...
+# Subtest: request excludes unused evidence and threshold metadata
+ok 14 - request excludes unused evidence and threshold metadata
+  ---
+  duration_ms: 0.188667
+  type: 'test'
+  ...
+# Subtest: forged composed result is rejected even if attacker recomputes receipt hash
+ok 15 - forged composed result is rejected even if attacker recomputes receipt hash
+  ---
+  duration_ms: 0.232166
+  type: 'test'
+  ...
+# Subtest: fresh-process capture, record and replay preserve exact inputs and reject overwritten artifacts
+ok 16 - fresh-process capture, record and replay preserve exact inputs and reject overwritten artifacts
+  ---
+  duration_ms: 302.169667
+  type: 'test'
+  ...
+1..16
+# tests 16
+# suites 0
+# pass 16
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 347.945584
