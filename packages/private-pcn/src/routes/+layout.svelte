@@ -1,6 +1,11 @@
 <script lang="ts">
   import Icon from '$lib/components/Icon.svelte';
   import '../app.css';
+  import { page } from '$app/state';
+  let adminOpen = $state(false);
+  function current(path: string) {
+    return page.url.pathname === path || page.url.pathname.startsWith(path + '/');
+  }
   import { afterNavigate } from '$app/navigation';
   import { trackImpact } from '$lib/impact';
   import { onMount } from 'svelte';
@@ -16,6 +21,7 @@
     }
   }
   afterNavigate(({ to }) => {
+    adminOpen = false;
     if (to) trackImpact('page_view', to.url.pathname);
   });
   onMount(() => {
@@ -63,15 +69,35 @@
     >CREATE SOMETHING<span>PRIVATE / .AGENCY</span></a
   >
   <nav aria-label="Primary">
-    <a href="/field-engineering">Field practice</a><a href="/library">Library</a>
-    {#if data.identity}<a href="/collection">Your collection</a><a href="/remote-sessions">Remote support</a><a href="/dashboard"
+    <a href="/field-engineering" aria-current={current('/field-engineering') ? 'page' : undefined}
+      >Field practice</a
+    ><a href="/library" aria-current={current('/library') ? 'page' : undefined}>Library</a>
+    {#if data.identity}<a
+        href="/collection"
+        aria-current={current('/collection') ? 'page' : undefined}>Your collection</a
+      ><a href="/remote-sessions" aria-current={current('/remote-sessions') ? 'page' : undefined}
+        >Remote support</a
+      ><a href="/dashboard" aria-current={current('/dashboard') ? 'page' : undefined}
         >Builder workspace</a
       >{:else}<a href="/login"
         >Sign in <span aria-hidden="true"><Icon name="arrow-right" /></span></a
       >{/if}
-    {#if data.reviewer}<a href="/review">Review queue</a>{#if data.supportEnabled}<a
-          href="/support-session">Act as a user</a
-        >{/if}<a href="/impact">Impact</a>{/if}
+    {#if data.reviewer}
+      <details class="admin-nav" bind:open={adminOpen}>
+        <summary
+          class:active={current('/review') || current('/support-session') || current('/impact')}
+          >Administration</summary
+        >
+        <div class="admin-links">
+          <a href="/review" aria-current={current('/review') ? 'page' : undefined}>Review queue</a>
+          {#if data.supportEnabled}<a
+              href="/support-session"
+              aria-current={current('/support-session') ? 'page' : undefined}>Act as a user</a
+            >{/if}
+          <a href="/impact" aria-current={current('/impact') ? 'page' : undefined}>Impact</a>
+        </div>
+      </details>
+    {/if}
   </nav>
 </header>
 {@render children()}
@@ -85,6 +111,50 @@
 </footer>
 
 <style>
+  .admin-nav {
+    position: relative;
+  }
+  .admin-nav summary {
+    cursor: pointer;
+    min-height: 32px;
+  }
+  .admin-links {
+    position: absolute;
+    right: 0;
+    top: 100%;
+    z-index: 20;
+    min-width: 180px;
+    display: grid;
+    padding: 12px;
+    gap: 4px;
+    background: var(--color-performance-ink);
+    border: 1px solid var(--line);
+  }
+  .admin-links a {
+    padding: 12px;
+  }
+  .masthead nav {
+    align-items: center;
+  }
+  .masthead nav a[aria-current='page'],
+  .admin-nav summary.active {
+    color: var(--signal);
+    text-decoration: underline;
+    text-underline-offset: 6px;
+  }
+  @media (max-width: 600px) {
+    .admin-links {
+      position: static;
+      margin-top: 8px;
+    }
+    .masthead nav a,
+    .admin-nav summary {
+      display: inline-flex;
+      align-items: center;
+      min-height: 44px;
+    }
+  }
+
   .support-banner {
     position: sticky;
     top: 0;
