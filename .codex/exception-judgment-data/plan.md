@@ -1,7 +1,7 @@
 # Exception judgment data plan
 
 Goal: [goal.md](goal.md). Linear: CRE-2061.
-Current phase: 1b in progress. User authorized technical corrections as a separately verifiable milestone; runtime goal active; implementation and local verification passed; PR publication remains. Original business goal is preserved in business-goal.md. No business-effectiveness claim. Root preserved; worktree /private/tmp/cre-2061-judgment-data.
+Current phase: 1b complete. Technical correction milestone verified and published; PR 1748 is ready for review. Runtime completion follows final remote checkpoint. Original business goal is preserved in business-goal.md. No business-effectiveness claim. Root preserved; worktree /private/tmp/cre-2061-judgment-data.
 
 ## Phase 1: Durable offline foundation
 Status: complete
@@ -17,7 +17,7 @@ Exit criteria
 - [x] Review-ready committed/pushed draft PR 1748; retained worktree. Linear checkpoint 804da159 recorded.
 
 ## Phase 1b: Align shared contracts with TypeSafe primitives
-Status: in progress
+Status: complete
 Implementation
 - [x] Preserve raw Noul/Choice/Score outputs separately from application decisions.
 - [x] Separate evidence/question/inference identity from decision-policy identity.
@@ -60,3 +60,5 @@ Historical foundation checkpoint: original business goal was not activated becau
 2026-09-22 execution steering: complete the documented shared-contract corrections. Completion of the activated technical milestone does not close phases 2/3 or CRE-2061 business effectiveness work.
 
 Technical checks: 218 package tests, 39 judgment tests, build/typecheck and frozen lockfile pass. Independent Python audit verifies seven sealed artifacts, raw response preservation and two policy outcomes sharing one inference. Evidence: [v2/independent-audit.json](evidence/v2/independent-audit.json). Next: commit/push this checkpoint to PR 1748, read back CI and mark PR ready for review. External target authorized: existing codex/cre-2061-judgment-data branch and PR 1748; no merge or deploy claim.
+
+Final technical checkpoint: implementation commit 0dd2eac59 pushed; PR body read back and draft=false confirmed. CI at that SHA is in progress (immutable-action check passed, publishing jobs skipped); no green-CI/merge/deploy claim. Phase 2 and Phase 3 belong to business-goal.md and remain outside the completed technical milestone. Worktree disposition: preserved at /private/tmp/cre-2061-judgment-data on codex/cre-2061-judgment-data through review.
