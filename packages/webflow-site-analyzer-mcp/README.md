@@ -1162,3 +1162,7 @@ replaceable.
 ## License
 
 MIT © CREATE SOMETHING
+
+## Jev path classification
+
+The production URL classifier can use bounded Jev decisions for ambiguous paths. Exact matches stay deterministic; every input URL is retained. See [evaluation, rollout and rollback](evaluation/jev/README.md). Labels are path hints, not review approvals.
