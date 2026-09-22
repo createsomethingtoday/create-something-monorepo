@@ -21,4 +21,4 @@ body:has(main.cc-top-internal-2-2) .sb-nav-wrapper{position:fixed;top:0;left:0;r
 .tmcard-wrapper h4{font-family:inherit;font-variation-settings:normal}
 
 /* The live sidebar is isolated from exported page list defaults. */
-.tmsidebar-list>li{margin-bottom:0;line-height:inherit}
+.tmsidebar-list>li:not(.tmsidebar-divider){margin-bottom:0;line-height:inherit}
