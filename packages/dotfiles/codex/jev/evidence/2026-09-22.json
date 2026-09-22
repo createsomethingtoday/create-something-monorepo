@@ -1,0 +1,362 @@
+{
+  "model_requested": "jev-1.13.0",
+  "fixture_sha256": "7bbb16b3a3542420bff65746238cd0984adcc4bf5af42ce24cc18f0d20b05248",
+  "scope": "synthetic candidate ranking; no Astra baseline or coding-speed claim",
+  "rows": [
+    {
+      "id": "session-expiry",
+      "ordering": "original",
+      "expected": "b",
+      "request_sha256": "57603a7abbe7269651f4b3b5f511d95dbf74297292586a253ce14c516cbac6a4",
+      "choice": "b",
+      "confidence": 1.0,
+      "probabilities": {
+        "b": 1.0,
+        "c": 0.0,
+        "no_match": 0.0,
+        "a": 0.0
+      },
+      "served_model": "jev-1.13.0",
+      "usage": {
+        "input_tokens": 527,
+        "output_tokens": 46
+      },
+      "correct": true,
+      "elapsed_ms": 437
+    },
+    {
+      "id": "session-expiry",
+      "ordering": "reversed",
+      "expected": "b",
+      "request_sha256": "69b9b4b0ed8f951ec42eed9024ae8019dd05348288e70f0d0fe6fb5bde0fd394",
+      "choice": "b",
+      "confidence": 1.0,
+      "probabilities": {
+        "c": 0.0,
+        "b": 1.0,
+        "no_match": 0.0,
+        "a": 0.0
+      },
+      "served_model": "jev-1.13.0",
+      "usage": {
+        "input_tokens": 527,
+        "output_tokens": 46
+      },
+      "correct": true,
+      "elapsed_ms": 139
+    },
+    {
+      "id": "duplicate-delivery",
+      "ordering": "original",
+      "expected": "a",
+      "request_sha256": "f6311f98611ca90dde72c293fdb9e3d69c3108cc9de130f2a1a5a9b352028466",
+      "choice": "a",
+      "confidence": 0.99,
+      "probabilities": {
+        "no_match": 0.0,
+        "a": 0.99,
+        "c": 0.01,
+        "b": 0.0
+      },
+      "served_model": "jev-1.13.0",
+      "usage": {
+        "input_tokens": 544,
+        "output_tokens": 46
+      },
+      "correct": true,
+      "elapsed_ms": 207
+    },
+    {
+      "id": "duplicate-delivery",
+      "ordering": "reversed",
+      "expected": "a",
+      "request_sha256": "ecd17037524cf41dd6267575814ac577f5fdee568c82f4253c22ce7b90d36947",
+      "choice": "a",
+      "confidence": 0.97,
+      "probabilities": {
+        "c": 0.01,
+        "no_match": 0.01,
+        "b": 0.0,
+        "a": 0.98
+      },
+      "served_model": "jev-1.13.0",
+      "usage": {
+        "input_tokens": 544,
+        "output_tokens": 46
+      },
+      "correct": true,
+      "elapsed_ms": 160
+    },
+    {
+      "id": "irrelevant-context",
+      "ordering": "original",
+      "expected": "no_match",
+      "request_sha256": "938540c6c7ce7a4c92ccf3c44e84c8816e08104c76ef1c6acff602dc4404bca8",
+      "choice": "no_match",
+      "confidence": 0.99,
+      "probabilities": {
+        "a": 0.0,
+        "no_match": 0.99,
+        "b": 0.01
+      },
+      "served_model": "jev-1.13.0",
+      "usage": {
+        "input_tokens": 461,
+        "output_tokens": 40
+      },
+      "correct": true,
+      "elapsed_ms": 234
+    },
+    {
+      "id": "irrelevant-context",
+      "ordering": "reversed",
+      "expected": "no_match",
+      "request_sha256": "dee4eb554de8cf784033a39ad87230a8d9ecd8091745c9a152f7ef76a2ed619b",
+      "choice": "no_match",
+      "confidence": 0.98,
+      "probabilities": {
+        "b": 0.01,
+        "a": 0.0,
+        "no_match": 0.99
+      },
+      "served_model": "jev-1.13.0",
+      "usage": {
+        "input_tokens": 461,
+        "output_tokens": 40
+      },
+      "correct": true,
+      "elapsed_ms": 283
+    },
+    {
+      "id": "embedded-instruction",
+      "ordering": "original",
+      "expected": "b",
+      "request_sha256": "f9664558d89977e5b6fe147f15d224985a5a673b644aaaea5037dc5e67f9d285",
+      "choice": "b",
+      "confidence": 1.0,
+      "probabilities": {
+        "a": 0.0,
+        "b": 1.0,
+        "no_match": 0.0
+      },
+      "served_model": "jev-1.13.0",
+      "usage": {
+        "input_tokens": 492,
+        "output_tokens": 39
+      },
+      "correct": true,
+      "elapsed_ms": 201
+    },
+    {
+      "id": "embedded-instruction",
+      "ordering": "reversed",
+      "expected": "b",
+      "request_sha256": "4e8e6648a088d2e5eb784794bb515eb66285ac8cf3947d835313d84f52fc7560",
+      "choice": "b",
+      "confidence": 1.0,
+      "probabilities": {
+        "no_match": 0.0,
+        "a": 0.0,
+        "b": 1.0
+      },
+      "served_model": "jev-1.13.0",
+      "usage": {
+        "input_tokens": 492,
+        "output_tokens": 39
+      },
+      "correct": true,
+      "elapsed_ms": 168
+    },
+    {
+      "id": "debug-skill",
+      "ordering": "original",
+      "expected": "a",
+      "request_sha256": "bfd9aef8093b4b02bc3a0ea113f59a34b71b63b281ba286b49a149fb8e265ca2",
+      "choice": "a",
+      "confidence": 1.0,
+      "probabilities": {
+        "b": 0.0,
+        "a": 1.0,
+        "no_match": 0.0,
+        "c": 0.0
+      },
+      "served_model": "jev-1.13.0",
+      "usage": {
+        "input_tokens": 557,
+        "output_tokens": 46
+      },
+      "correct": true,
+      "elapsed_ms": 181
+    },
+    {
+      "id": "debug-skill",
+      "ordering": "reversed",
+      "expected": "a",
+      "request_sha256": "4255b6ea4182dc4577bbd5029208d34b7a05e1a6284c0c89f271817d7866ce97",
+      "choice": "a",
+      "confidence": 1.0,
+      "probabilities": {
+        "a": 1.0,
+        "no_match": 0.0,
+        "b": 0.0,
+        "c": 0.0
+      },
+      "served_model": "jev-1.13.0",
+      "usage": {
+        "input_tokens": 557,
+        "output_tokens": 46
+      },
+      "correct": true,
+      "elapsed_ms": 146
+    },
+    {
+      "id": "skill-no-match",
+      "ordering": "original",
+      "expected": "no_match",
+      "request_sha256": "82eae399d0998f95349461a584f998ab94590b36f9f97d61f0f5448ba1269eb5",
+      "choice": "no_match",
+      "confidence": 1.0,
+      "probabilities": {
+        "a": 0.0,
+        "b": 0.0,
+        "no_match": 1.0
+      },
+      "served_model": "jev-1.13.0",
+      "usage": {
+        "input_tokens": 473,
+        "output_tokens": 40
+      },
+      "correct": true,
+      "elapsed_ms": 164
+    },
+    {
+      "id": "skill-no-match",
+      "ordering": "reversed",
+      "expected": "no_match",
+      "request_sha256": "1fa18f1a7130440e853259cb6e9727bcbd5c28db1027159cc9d69a5fc75613c9",
+      "choice": "no_match",
+      "confidence": 1.0,
+      "probabilities": {
+        "b": 0.0,
+        "a": 0.0,
+        "no_match": 1.0
+      },
+      "served_model": "jev-1.13.0",
+      "usage": {
+        "input_tokens": 473,
+        "output_tokens": 40
+      },
+      "correct": true,
+      "elapsed_ms": 187
+    },
+    {
+      "id": "retrieval-gap",
+      "ordering": "original",
+      "expected": "no_match",
+      "request_sha256": "842b6cfd11d3b39efc42f89a87d7cd2f5c62de6b8e83e6c43a8373deafc84eec",
+      "choice": "no_match",
+      "confidence": 0.68,
+      "probabilities": {
+        "no_match": 0.78,
+        "b": 0.12,
+        "a": 0.1
+      },
+      "served_model": "jev-1.13.0",
+      "usage": {
+        "input_tokens": 474,
+        "output_tokens": 40
+      },
+      "correct": true,
+      "elapsed_ms": 154
+    },
+    {
+      "id": "retrieval-gap",
+      "ordering": "reversed",
+      "expected": "no_match",
+      "request_sha256": "7df96493f50471512774e81b0757614c10272246a4db8fe2e8dcf344fbcbfb28",
+      "choice": "no_match",
+      "confidence": 0.48,
+      "probabilities": {
+        "b": 0.3,
+        "no_match": 0.65,
+        "a": 0.05
+      },
+      "served_model": "jev-1.13.0",
+      "usage": {
+        "input_tokens": 474,
+        "output_tokens": 40
+      },
+      "correct": true,
+      "elapsed_ms": 220
+    },
+    {
+      "id": "route-owner",
+      "ordering": "original",
+      "expected": "c",
+      "request_sha256": "70a3c2cc7988adeff2563b8152c99dad24f6f688a9d7acdecb2add8629ac82c1",
+      "choice": "c",
+      "confidence": 1.0,
+      "probabilities": {
+        "no_match": 0.0,
+        "c": 1.0,
+        "b": 0.0,
+        "a": 0.0
+      },
+      "served_model": "jev-1.13.0",
+      "usage": {
+        "input_tokens": 559,
+        "output_tokens": 46
+      },
+      "correct": true,
+      "elapsed_ms": 362
+    },
+    {
+      "id": "route-owner",
+      "ordering": "reversed",
+      "expected": "c",
+      "request_sha256": "8a2e86c5373a11db3eed452c4fb7540a85babfbcf2c32298096a638cae43d111",
+      "choice": "c",
+      "confidence": 1.0,
+      "probabilities": {
+        "c": 1.0,
+        "no_match": 0.0,
+        "a": 0.0,
+        "b": 0.0
+      },
+      "served_model": "jev-1.13.0",
+      "usage": {
+        "input_tokens": 559,
+        "output_tokens": 46
+      },
+      "correct": true,
+      "elapsed_ms": 183
+    }
+  ],
+  "startup_ms": 2731,
+  "server": {
+    "name": "evaluate",
+    "version": "v0.4.3"
+  },
+  "tool_read_only_hint": true,
+  "empty_questions_rejected": true,
+  "correct": 16,
+  "total": 16,
+  "median_ms_including_failures": 185.0,
+  "max_ms_including_failures": 437,
+  "verified_on": "2026-09-22",
+  "linear": "CRE-2058",
+  "upstream_commit": "e5e7d69cf14912de3b789a2140e2becdaf056022",
+  "archive_sha256": "9e1c25f88939f9e762f9e25baadc3e4dfa6232cd848c59246c01b1bb84ca668c",
+  "configuration_readback": {
+    "enabled": true,
+    "secret_in_config": false,
+    "existing_configuration_preserved": true,
+    "startup_timeout_sec": 20,
+    "tool_timeout_sec": 5
+  },
+  "limitations": [
+    "Eight synthetic fixtures, each evaluated twice with reversed candidate ordering; these are not sixteen independent tasks.",
+    "No Astra-only baseline, independent reviewer labels, code generation, or end-to-end coding speed measurement.",
+    "Installed runtime and Codex CLI configuration verified; an already-running desktop task may require MCP reload or restart."
+  ]
+}

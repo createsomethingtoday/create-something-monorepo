@@ -85,6 +85,19 @@ const skills = [
 
 const codexOnlySkills = [
   {
+    name: 'jev-coding-assist',
+    codex: 'packages/dotfiles/codex/skills/jev-coding-assist/SKILL.md',
+    expectations: [
+      /no_match/,
+      /retain every original candidate/i,
+      /normal Astra investigation/i,
+      /five-second Codex tool deadline/i,
+      /no calibrated threshold/i,
+      /Jev cannot authorize mutations/i,
+      /not coding-workflow effectiveness/i
+    ]
+  },
+  {
     name: 'canon-design-review',
     codex: 'packages/dotfiles/codex/skills/canon-design-review/SKILL.md',
     expectations: [
