@@ -1,4 +1,5 @@
 <script lang="ts">
+  import SerifPhrase from '$lib/components/SerifPhrase.svelte';
   import Icon from '$lib/components/Icon.svelte';
   import { onMount } from 'svelte';
   import { enrollment } from '$lib/enrollment';
@@ -58,7 +59,7 @@
 >
 <main id="main" class="form-page">
   <p class="eyebrow">PRIVATE / VERIFIED ACCESS</p>
-  <h1>Make it<br /><em>yours.</em></h1>
+  <h1>Make it<br /><SerifPhrase text="yours." /></h1>
   {#if !ready}<p>Reading your verification link…</p>
   {:else if verified}<p role="status">{error || 'Account verified. Opening your workspace…'}</p>
     <a class="button" href={`/login?next=${encodeURIComponent(next)}`}

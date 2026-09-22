@@ -1,4 +1,5 @@
 <script lang="ts">
+  import SerifPhrase from '$lib/components/SerifPhrase.svelte';
   import Icon from '$lib/components/Icon.svelte';
   import { onMount, onDestroy } from 'svelte';
   import { api } from '$lib/client';
@@ -110,7 +111,7 @@
 <main id="main" class="builder-workspace">
   <a href="/support"><Icon name="arrow-left" /> Company support</a>
   <p class="eyebrow">PRIVATE / APPROVED PARTNER</p>
-  <h1>Deliver the support.<br /><em>Receive your share.</em></h1>
+  <h1>Deliver the support.<br /><SerifPhrase text="Receive your share." /></h1>
   <p class="lede">
     This payout account is for CREATE SOMETHING’s $900/month support subscription. The partner share
     is 75% after Stripe’s actual transaction-processing fee; CREATE SOMETHING retains 25% of that

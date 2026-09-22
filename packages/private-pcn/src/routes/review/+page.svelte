@@ -1,4 +1,5 @@
 <script lang="ts">
+  import SerifPhrase from '$lib/components/SerifPhrase.svelte';
   import StateBadge from '$lib/components/StateBadge.svelte';
   import StatusNotice from '$lib/components/StatusNotice.svelte';
 
@@ -52,7 +53,7 @@
 >
 <main id="main" class="builder-workspace">
   <p class="eyebrow">PRIVATE / QUALITY REVIEW</p>
-  <h1>Review the practice.<br /><em>Protect the standard.</em></h1>
+  <h1>Review the practice.<br /><SerifPhrase text="Protect the standard." /></h1>
   <p class="lede">
     Review credentials and the teaching demonstration. Judge technical accuracy, clear explanation,
     evaluation and responsible handling of access. Creator approval does not confer support-partner
