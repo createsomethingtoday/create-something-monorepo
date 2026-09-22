@@ -1,3 +1,4 @@
+import { choose, type DecisionOptions } from '@create-something/jev-client/decisions';
 /**
  * App Categorizer using Cloudflare Workers AI (Llama 3.1)
  * 
@@ -84,8 +85,28 @@ Rules:
  */
 export async function categorizeApp(
   env: Env,
-  app: WebflowApp
+  app: WebflowApp,
+  jev?: DecisionOptions
 ): Promise<CategorizedApp> {
+  if (jev) {
+    const decision = await choose({
+      ...jev,
+      state: { name: app.name, slug: app.slug },
+      instructions:
+        'Classify this Webflow Marketplace app by its primary function. Names alone may be ambiguous.',
+      criteria: Object.fromEntries(
+        Object.entries(CATEGORY_DEFINITIONS).map(([key, value]) => [key, value.description])
+      ),
+      fallback: 'other'
+    });
+    return {
+      ...app,
+      category: decision.choice as AppCategory,
+      confidence:
+        decision.status === 'accepted' ? decision.answer!.probabilities[decision.choice] : 0,
+      reasoning: `TypeSafe recommendation: ${decision.reason}${decision.model ? ` (${decision.model})` : ''}`
+    };
+  }
   const systemPrompt = buildSystemPrompt();
   const userPrompt = `Categorize this Webflow app:
 Name: ${app.name}
@@ -101,7 +122,7 @@ Slug: ${app.slug}`;
       temperature: 0.1 // Low temperature for consistent categorization
     });
 
-    const text = response.response || '';
+    const text = typeof response.response === 'string' ? response.response : '';
     
     // Parse JSON from response
     const jsonMatch = text.match(/\{[\s\S]*\}/);

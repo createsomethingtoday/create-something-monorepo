@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "mode": "failure",
+  "sourceSha256": "3069ca725f7d258d5b49ac48698b1ed7fcf96715d96fb80d6046d5f48db2ee24",
+  "createdAt": "2026-09-17T05:42:31.873Z",
+  "recommendationOnly": true,
+  "decision": {
+    "runbook": "dependency",
+    "guidance": "Inspect package manifest and dependency installation; use owning bootstrap instructions.",
+    "canExecute": false,
+    "mayEditCode": false,
+    "requiresVerification": true,
+    "model": "jev-1.13.0"
+  }
+}
