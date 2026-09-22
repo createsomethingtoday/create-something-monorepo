@@ -6,11 +6,12 @@ interface Env {
 const UPLOAD_KINDS = new Set([
   'avatar',
   'thumbnail',
+  'library-thumbnail',
   'secondary-thumbnail',
   'gallery'
 ] as const);
 
-type UploadKind = 'avatar' | 'thumbnail' | 'secondary-thumbnail' | 'gallery';
+type UploadKind = 'avatar' | 'thumbnail' | 'library-thumbnail' | 'secondary-thumbnail' | 'gallery';
 
 function isUploadKind(value: string): value is UploadKind {
   return UPLOAD_KINDS.has(value as UploadKind);
