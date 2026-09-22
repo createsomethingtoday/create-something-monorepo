@@ -15,3 +15,10 @@ body:has(main.cc-top-internal-2-2) .sb-nav-wrapper{position:fixed;top:0;left:0;r
 @media (max-width:991px){html{font-size:15px}}
 @media (max-width:767px){html{font-size:14px}}
 @media (max-width:479px){html{font-size:13px}}
+
+/* Match the published filter/grid container gap and shadow-root heading inheritance. */
+.source-template-grid{margin-top:24px}
+.tmcard-wrapper h4{font-family:inherit;font-variation-settings:normal}
+
+/* The live sidebar is isolated from exported page list defaults. */
+.tmsidebar-list>li{margin-bottom:0;line-height:inherit}

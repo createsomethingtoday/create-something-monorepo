@@ -7,6 +7,6 @@ export default function Catalog({title,description='',path,creatorSlug}:{title:s
  return <div className="source-catalog"><aside><TemplateSearchSidebar {...common} searchAction="/templates/search" showCounts={true}/></aside><div className="source-results">
  {creatorSlug?<h1>{title}</h1>:<TemplateMarketplaceHeading apiBase="/templates-api" staticRoutePath={path} fallbackTitle={title} fallbackDescription={description} descriptionMode="preserve_static"/>}
  <TemplateFilterBar {...common} creatorSlug={creatorSlug} defaultSort="newest" showSearch={path.includes('search')} showFreeOnly={false}/>
- <TemplateGrid {...common} showEmptyState={true} creatorSlug={creatorSlug} initialSort="newest" showCategoryMeta={false} showTemplateType={false} showPreviewLink={false} showMcpCampaign={true}/>
+ <div className="source-template-grid"><TemplateGrid {...common} showEmptyState={true} creatorSlug={creatorSlug} initialSort="newest" showCategoryMeta={false} showTemplateType={false} showPreviewLink={false} showMcpCampaign={true} showFeaturedBadge={true} showMarketplaceSignals={true}/></div>
  </div></div>
 }
