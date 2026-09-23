@@ -59,26 +59,37 @@ def render(manifest_path, output):
     output = Path(output).resolve()
     if output.exists() or output.with_suffix('.receipt.json').exists():
         raise ValueError('Output or receipt exists; choose a new output')
-    plan = json.loads(manifest_path.read_text())
+    manifest_bytes = manifest_path.read_bytes()
+    manifest_hash = hashlib.sha256(manifest_bytes).hexdigest()
+    plan = json.loads(manifest_bytes)
     if plan.get('version') != 1: raise ValueError('Unsupported manifest version')
-    width = int(number(plan.get('width',1920),320,3840)); height = int(number(plan.get('height',1080),180,2160))
+    width = number(plan.get('width',1920),320,3840); height = number(plan.get('height',1080),180,2160)
+    if width != int(width) or height != int(height): raise ValueError('Integer output dimensions required')
+    width = int(width); height = int(height)
     fps = number(plan.get('fps',30),24,60)
     if fps != int(fps): raise ValueError('Integer fps required')
     fps = int(fps)
     if width % 2 or height % 2: raise ValueError('Even output dimensions required')
     shots = plan['shots']; narration = plan['narration']
     if not shots: raise ValueError('No shots')
-    sources = {}; total = 0
+    sources = {}; source_hashes = {}; total = 0
     def source(value):
         path = (base/value).resolve()
         if not path.is_file(): raise ValueError(f'Missing source: {path}')
-        if path not in sources: sources[path] = probe(path)
+        if path not in sources:
+            source_hashes[path] = digest(path)
+            sources[path] = probe(path)
         return path, sources[path]
     for shot in shots:
         path, media = source(shot['source']); duration = number(shot['duration'],0.1,120); start = number(shot.get('start',0),0,86400)
         video = next(s for s in media['streams'] if s['codec_type']=='video')
         if abs(video['width']/video['height']-width/height)>0.01: raise ValueError('Source aspect ratio must match output; prepare a deliberate crop first')
-        if start+duration > float(media['format']['duration'])+0.04: raise ValueError('Shot overruns real footage; record more or shorten it')
+        video_duration = video.get('duration')
+        if video_duration is None and 'duration_ts' in video:
+            numerator, denominator = map(int, video['time_base'].split('/'))
+            video_duration = video['duration_ts'] * numerator / denominator
+        if video_duration is None: raise ValueError('Video stream duration unavailable; prepare a measured source')
+        if start+duration > float(video_duration)+0.04: raise ValueError('Shot overruns real footage; record more or shorten it')
         for key in ['from','to']:
             camera=shot[key]
             number(camera['zoom'],1,3);number(camera['x'],0,1);number(camera['y'],0,1)
@@ -119,8 +130,11 @@ def render(manifest_path, output):
         run(['ffmpeg','-hide_banner','-loglevel','error','-n','-i',str(silent),'-i',str(audio),'-filter_complex',';'.join(filters),'-map','0:v','-map','[voice]','-c:v','copy','-c:a','aac','-b:a','192k','-ar','48000','-t',f'{total:.6f}','-movflags','+faststart',str(output)])
     run(['ffmpeg','-v','error','-xerror','-i',str(output),'-f','null','-'])
     result=probe(output)
-    if abs(float(result['format']['duration'])-total)>0.15:raise ValueError('Output duration mismatch')
-    receipt={'manifestSha256':digest(manifest_path),'outputSha256':digest(output),'sources':{str(p):digest(p) for p in sources},'duration':total,'probe':result,'fullDecode':'passed','ownerAudition':'pending','publication':'not_requested'}
+    picture = next(s for s in result['streams'] if s['codec_type']=='video')
+    if abs(float(result['format']['duration'])-total)>0.15 or abs(float(picture['duration'])-total)>0.15:raise ValueError('Output duration mismatch')
+    if digest(manifest_path) != manifest_hash or any(digest(p) != source_hashes[p] for p in sources):
+        raise ValueError('Inputs changed during render; output is unverified and no receipt was issued')
+    receipt={'manifestSha256':manifest_hash,'outputSha256':digest(output),'sources':{str(p):source_hashes[p] for p in sources},'duration':total,'probe':result,'fullDecode':'passed','ownerAudition':'pending','publication':'not_requested'}
     output.with_suffix('.receipt.json').write_text(json.dumps(receipt,indent=2))
     return {'output':str(output),'duration':total,'fullDecode':'passed'}
 

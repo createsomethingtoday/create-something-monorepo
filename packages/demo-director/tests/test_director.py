@@ -4,6 +4,7 @@ from pathlib import Path
 import subprocess
 import tempfile
 import unittest
+from unittest.mock import patch
 
 spec=importlib.util.spec_from_file_location('director',Path(__file__).parents[1]/'scripts/director.py');d=importlib.util.module_from_spec(spec);spec.loader.exec_module(d)
 class DirectorTests(unittest.TestCase):
@@ -44,6 +45,19 @@ class DirectorTests(unittest.TestCase):
         self.assertAlmostEqual(result['duration'],1.6)
         streams=d.probe(self.root/'final.mp4')['streams']
         self.assertTrue(all(float(s['duration'])<1.7 for s in streams))
+    def test_rejects_picture_overrun_with_long_audio_track(self):
+        subprocess.run(['ffmpeg','-v','error','-i',str(self.root/'source.mp4'),'-f','lavfi','-i','sine=frequency=440:duration=4','-c:v','copy','-c:a','aac',str(self.root/'long-audio.mp4')],check=True)
+        self.plan['shots'][0].update(source='long-audio.mp4',duration=3)
+        with self.assertRaisesRegex(ValueError,'overruns'):self.render()
+    def test_rejects_changed_input_without_receipt(self):
+        real_run=d.run
+        def mutate(args,cwd=None):
+            real_run(args,cwd)
+            if '-xerror' in args:
+                p=self.root/'edit.json';p.write_text(p.read_text()+' ')
+        with patch.object(d,'run',side_effect=mutate):
+            with self.assertRaisesRegex(ValueError,'Inputs changed'):self.render()
+        self.assertFalse((self.root/'final.receipt.json').exists())
     def test_refuses_fractional_fps(self):
         self.plan['fps']=29.97
         with self.assertRaisesRegex(ValueError,'Integer fps'):self.render()
