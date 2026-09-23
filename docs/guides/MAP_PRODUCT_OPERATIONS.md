@@ -39,7 +39,7 @@ For an isolation report, capture only map ID, requesting account/workspace IDs, 
 
 ## SLOs and production synthetic
 
-The machine-readable policy is `packages/agency/scripts/lib/map-monitor-policy.mjs`. The scheduled workflow `.github/workflows/agency-map-production-monitor.yml` runs every 15 minutes at desktop and mobile viewports.
+The machine-readable policy is `packages/agency/scripts/lib/map-monitor-policy.mjs`. The Cloudflare Worker at `packages/agency/workers/map-production-monitor` runs at `7,22,37,52 * * * *` (every 15 minutes) at desktop and mobile viewports. It is scheduled-only: its public `GET /health` endpoint reports only lane readiness and never runs a synthetic.
 
 | SLO | Target | Window | Measurement |
 | --- | ---: | ---: | --- |
@@ -47,12 +47,26 @@ The machine-readable policy is `packages/agency/scripts/lib/map-monitor-policy.m
 | Booking-context consistency | 100% | 30 days | visible redacted Map reference/readiness/score match the booking URL after starter, edit, restore, and reset |
 | Mapping-agent boundary | 100% | 30 days | GET remains non-mutating and malformed POST is rejected before execution/storage |
 
-The synthetic uses a labeled browser-local draft, never supplies an email, never asks the agent to mutate, never submits a booking, and never touches customer workspace data. Each run uploads desktop/mobile receipts for 30 days. The workflow failure is the first alert surface; two consecutive failures require CRE-1289 operator escalation. Booking-context mismatch is SEV-2; one isolated availability failure is SEV-3.
+The synthetic uses a labeled browser-local draft, never supplies an email, never asks the agent to mutate, never submits a booking, and never touches customer workspace data. Each scheduled run writes a complete, sanitized desktop/mobile receipt to the shared `create-something-db` D1 table `map_production_monitor_receipts` for 30 days. A receipt contains only the scheduled/completed times, exact deployed source SHA, Worker version, base URL, check codes, and durations. It never stores browser exception text, screenshots, canvas JSON, URLs containing booking context, or customer data.
+
+The Cloudflare receipt is the canonical burn-in evidence. A failed, incomplete, malformed, or wrong-SHA receipt invalidates its entire America/Chicago calendar day; a later green receipt on that day is diagnostic only and cannot revive the streak. The public-distribution terminal verifier reads D1 directly and independently requires the Worker health lane to report `ready`. It does not treat a GitHub Actions artifact as Map burn-in evidence.
+
+After the normal PR review and merge, deploy only from a clean `main` exactly equal to `origin/main`:
+
+1. Apply the reviewed remote D1 migration: `pnpm --filter @create-something/map-production-monitor db:migrate`.
+2. Compile and validate the exact-source deployment without upload: `pnpm --filter @create-something/map-production-monitor deploy:dry-run`.
+3. Deploy with the same guarded command: `pnpm --filter @create-something/map-production-monitor deploy`.
+4. Read `https://map-production-monitor.createsomething.workers.dev/health`; it must return a non-cacheable `ready` receipt lane. Do not add a manual execution route.
+5. Record the D1 receipt and Worker version in CRE-1289; only one complete green scheduled receipt per America/Chicago calendar day counts toward the seven-day GA streak.
+
+Run the guarded deploy through Infisical so the existing production `RESEND_API_KEY` is attached only to that Worker version; the command creates a mode-0600 temporary secrets file, passes it with Wrangler's version-scoped secret mechanism, verifies the installed secret name without reading its value, and removes the file. The deploy command refuses a dirty or stale checkout, an absent receipt or alert table, or a missing alert credential, and injects the exact final main SHA as `MAP_MONITOR_SOURCE_SHA`. It does not apply D1 migrations, use `--commit-dirty`, or spend money by changing a Cloudflare plan.
+
+Two consecutive scheduled failures create one D1-idempotent CRE-1289 operator escalation and send it through the Cloudflare Worker to the existing operator email destination. A pending delivery is retried on every later scheduled invocation, including a green synthetic receipt; a `delivering` claim has a ten-minute lease and is reclaimed after an interruption. A unique claim token fences completion or failure updates to the current owner, and undelivered records are retained until delivery succeeds. A pending or delivering record blocks terminal GA. The record has `pending`, `delivering`, or `delivered` state and never contains browser exception text, booking context, or customer data. Severity and sanitized failed-check codes aggregate the unbroken failure streak: any booking-context mismatch is SEV-2; availability-only failure is SEV-3. Receipt `completedAt` is captured after the browser work finishes.
 
 Incident response:
 
-1. Open the failed workflow receipt and identify the first failed transition.
-2. Re-run against the deployment URL and compare the deployment SHA with the intended merge SHA.
+1. Read the failed D1 receipt and identify the first sanitized failed check code; do not recover browser exception text from logs into a ticket.
+2. Re-run only through the scheduled production lane or a separately approved diagnostic environment, then compare the deployed Worker source SHA with the intended merge SHA.
 3. For booking mismatch, disable the public booking CTA or roll back the deployment; do not leave a stale-context handoff live.
 4. For customer workspace isolation or authorization failure, disable the workspace route at the edge and preserve D1/read logs. Do not mutate customer rows during diagnosis.
 5. For mapping-agent boundary failure, disable the agent endpoint/config while preserving the local canvas.

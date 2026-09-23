@@ -1,0 +1,27 @@
+name = "map-production-monitor"
+main = "src/index.ts"
+compatibility_date = "2026-08-24"
+compatibility_flags = ["nodejs_compat"]
+account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
+workers_dev = true
+
+[observability]
+enabled = true
+
+[triggers]
+crons = ["7,22,37,52 * * * *"]
+
+[version_metadata]
+binding = "CF_VERSION_METADATA"
+
+[browser]
+binding = "BROWSER"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "create-something-db"
+database_id = "a74e70ae-6a94-43da-905e-b90719c8dfd2"
+
+[vars]
+MAP_MONITOR_BASE_URL = "https://createsomething.agency"
+MAP_MONITOR_RECEIPT_RETENTION_DAYS = "30"
