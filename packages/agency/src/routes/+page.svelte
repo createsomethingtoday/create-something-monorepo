@@ -9,7 +9,7 @@
   import { PUBLIC_PRICING } from '$lib/data/publicPricing';
 
   const services = [
-    { name: 'Agent engineering membership', description: 'Skills, guided workflows, Slack support and weekly check-ins around one active workflow.', type: 'Membership', price: PUBLIC_PRICING.membership.label, priceDescription: PUBLIC_PRICING.membership.terms },
+    { name: 'Agent engineering membership', description: 'Hands-on delivery within an agreed scope, skills and operator support for one active workstream.', type: 'Membership', price: PUBLIC_PRICING.membership.label, priceDescription: PUBLIC_PRICING.membership.terms },
     {
       name: 'Map',
       description:
@@ -76,7 +76,7 @@
 
 <SEO
   title="Agent Engineering Membership | CREATE SOMETHING .agency"
-  description="Build with agents with CREATE SOMETHING. $900/month for reusable skills, workflow guidance, Slack support and weekly check-ins. Cancel anytime. Custom builds are separate."
+  description="Build with agents with CREATE SOMETHING. $900/month for delivery within an agreed scope, learning and operator support. Project-specific AI usage, hosting and third-party costs are separate."
   keywords="AI workflow systems, business task automation, client-owned AI agent, agent foundation"
   ogImage="/og-image.png"
   propertyName="agency"
@@ -90,7 +90,7 @@
     propertyRole="Agent engineering membership"
     expression="editorial"
     title="Keep building with agents."
-    lede="Bring a task your team repeats, an idea, or a project you started. Get reusable skills, practical guidance and operator support to keep improving one workflow at a time. $900/month. Cancel anytime."
+    lede="Bring a task your team repeats, an idea, or a project you started. We agree on a deliverable and build with you, one workstream at a time. $900/month. Cancel anytime. Project-specific AI usage and hosting are separate."
     media={playbookHomeHeroMedia}
     proof={[
       { label: 'Membership', value: PUBLIC_PRICING.membership.label },
@@ -191,7 +191,7 @@
     expression="editorial"
     eyebrow="Start with one workflow"
     title="Start with the task you want help with."
-    description="Tell us what you want to improve. We will confirm membership fit, support scope and onboarding availability before you pay. Custom implementation and going live are quoted separately."
+    description="Tell us what you want to improve. We agree on the deliverable, available capacity and any separate usage budget before you pay. Work beyond that scope gets its own quote."
     handoff={{ owner: 'Your project lead', authority: 'Agree on the task and limits', proof: 'One example of the work', state: 'ready' }}
     density="concise"
   >

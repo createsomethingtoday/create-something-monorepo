@@ -37,7 +37,7 @@
       These examples show our engineering range. Public source and evaluation reports are linked
       where available; private accounts and client data stay private.
     </p>
-    <p>Membership provides guidance and support. A custom system gets its own scope and price.</p>
+    <p>Membership includes delivery within an agreed scope. Larger systems get a separate quote; project-specific AI usage and hosting are budgeted separately.</p>
     <a href="/products">Explore the full tool catalog <span aria-hidden="true">→</span></a>
   </footer>
 </section>
