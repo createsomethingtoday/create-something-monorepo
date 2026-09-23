@@ -274,7 +274,7 @@ export function validateProject(value: unknown): asserts value is Project {
       !color(d.color) ||
       (d.fill !== undefined && !color(d.fill)) ||
       (d.hidden !== undefined && typeof d.hidden !== 'boolean') ||
-      (d.arrowheadScale !== undefined && (!finite(d.arrowheadScale, 0.000001, 1000) || d.kind !== 'stroke' || d.points.length !== 2)) ||
+      (d.arrowheadScale !== undefined && (!finite(d.arrowheadScale, Number.MIN_VALUE, 1000) || d.kind !== 'stroke' || d.points.length !== 2)) ||
       !finite(d.weight, 0.1, 100) ||
       !string(d.text, 2000) ||
       !finite(d.width, 1, 4096) ||

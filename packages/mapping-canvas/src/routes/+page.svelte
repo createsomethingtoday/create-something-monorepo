@@ -947,9 +947,9 @@
   }
 
   function fitDrawing() {
-    if (!document.objects.length) return;
+    if (!visibleLayers.length) return;
     stopAgentCamera();
-    updateViewport(fitViewportToBounds(viewport, visualBounds(visibleObjects(document)), { width: viewportWidth, height: viewportHeight }, { padding: Math.min(72, viewportWidth * .08), force: true }));
+    updateViewport(fitViewportToBounds(viewport, visualBounds(visibleLayers), { width: viewportWidth, height: viewportHeight }, { padding: Math.min(72, viewportWidth * .08), force: true }));
   }
 
   function resetView() {
@@ -1285,7 +1285,7 @@
         <button class="history-icon" aria-label="Zoom out" title="Zoom out (−)" aria-keyshortcuts="-" onclick={() => zoomCanvas(1 / 1.25)} disabled={viewport.zoom <= .25}>−</button>
         <button class="zoom-level" aria-label="Reset view" title="Reset view to 100% (0)" aria-keyshortcuts="0" onclick={resetView}>{Math.round(viewport.zoom * 100)}%</button>
         <button class="history-icon" aria-label="Zoom in" title="Zoom in (+)" aria-keyshortcuts="Plus =" onclick={() => zoomCanvas(1.25)} disabled={viewport.zoom >= 3}>+</button>
-        <button onclick={fitDrawing} disabled={!document.objects.length} title="Fit drawing (F)" aria-keyshortcuts="F">Fit drawing</button>
+        <button onclick={fitDrawing} disabled={!visibleLayers.length} title="Fit drawing (F)" aria-keyshortcuts="F">Fit drawing</button>
         {#if nativeRole === 'companion'}<button class:reset-confirm={companionResetArmed} aria-label={companionResetArmed ? 'Confirm reset' : 'Reset'} onclick={resetCanvas}>{companionResetArmed ? 'Confirm' : 'Reset'}</button>{/if}
       </div>
       {#if paletteVisible}<div class="palette" role="group" aria-label="Mark color" data-ui="true"><span>Mark color</span><div>{#each DRAWING_PALETTE as color}<button class:active={drawingColor === color.value} aria-pressed={drawingColor === color.value} aria-label={`${color.label} color`} data-testid={`color-${color.id}`} style={`--swatch:var(${color.token},${color.value})`} onclick={() => chooseColor(color.value, color.label)}><i aria-hidden="true"></i><small>{color.label}</small></button>{/each}</div></div>{/if}

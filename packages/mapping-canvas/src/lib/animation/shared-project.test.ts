@@ -62,6 +62,31 @@ function canvas(): CanvasDocument {
 }
 
 describe('shared Draw project contract', () => {
+  it('prioritizes visible Canvas artwork over hidden tracks at the drawing limit', () => {
+    const mark={id:'visible',kind:'rectangle' as const,createdAt:'2026-09-23',from:{x:0,y:0},to:{x:100,y:100},color:'#ffffff'};
+    const hidden=Array.from({length:LIMITS.drawings},(_,index)=>({...mark,id:`hidden-${index}`,hidden:true}));
+    const source={...createDocument(),objects:[...hidden,mark]};
+    const existing=syncMotionProject({...source,objects:hidden});
+    for(const result of [importMap(source),syncMotionProject(source),syncMotionProject(source,existing)]) {
+      expect(result.drawings).toHaveLength(LIMITS.drawings);
+      expect(result.drawings.some(drawing=>drawing.id==='visible' && !drawing.hidden)).toBe(true);
+    }
+  });
+  it('gives visible new artwork byte capacity before retained hidden Canvas tracks', () => {
+    const hidden={id:'hidden',kind:'note' as const,createdAt:'2026-09-23',x:0,y:0,width:240,height:120,text:'Hidden',hidden:true};
+    const source={...createDocument(),objects:[hidden]};
+    const existing=syncMotionProject(source),original=LIMITS.bytes;
+    LIMITS.bytes=JSON.stringify({...existing,revision:existing.revision+1}).length+100;
+    try {
+      const result=syncMotionProject({...source,objects:[hidden,{...hidden,id:'visible',hidden:false,text:'Visible'}]},existing);
+      expect(result.drawings.map(drawing=>drawing.id)).toEqual(['visible']);
+      expect(()=>validateProject(result)).not.toThrow();
+    } finally {LIMITS.bytes=original;}
+  });
+  it('keeps extremely large Canvas arrows valid after scene scaling', () => {
+    const source={...createDocument(),objects:[{id:'huge-arrow',kind:'arrow' as const,createdAt:'2026-09-23',from:{x:0,y:0},to:{x:Number.MAX_VALUE,y:0},color:'#ffffff'}]};
+    expect(()=>validateProject(syncMotionProject(source))).not.toThrow();
+  });
   it.each([2,24])('renders the same fixed arrowhead at shaft weight %s', (strokeWidth) => {
     const source={...createDocument(),objects:[{id:'arrow',kind:'arrow' as const,createdAt:'2026-09-23',from:{x:0,y:0},to:{x:100,y:0},color:'#ffffff',strokeWidth}]};
     const project=syncMotionProject(source),drawing=project.drawings[0];

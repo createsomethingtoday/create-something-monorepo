@@ -70,7 +70,7 @@ const drawing = {
     color: { type: 'string' },
     fill: { type: 'string', pattern: '^#[0-9a-fA-F]{6}$' },
     hidden: { type: 'boolean' },
-    arrowheadScale: { type: 'number', minimum: 0.000001, maximum: 1000 },
+    arrowheadScale: { type: 'number', exclusiveMinimum: 0, maximum: 1000 },
     weight: num,
     text: { type: 'string' },
     assetId: { type: 'string' },

@@ -116,6 +116,14 @@ try {
     await page.getByRole('button', { name: 'Undo', exact: true }).click();
     expect((await state()).document.objects.find((o) => o.id === id).hidden).toBe(true);
     await page.getByRole('button', { name: 'Redo', exact: true }).click();
+    const allIds=(await state()).document.objects.map(object=>object.id);
+    await edit([{type:'layer',ids:allIds,hidden:true}]);
+    await call('draw_select',{ids:[]});
+    const cameraBeforeHiddenFit=(await state()).document.viewport;
+    await expect(page.getByRole('button',{name:'Fit drawing',exact:true})).toBeDisabled();
+    await page.locator('body').press('f');
+    expect((await state()).document.viewport).toEqual(cameraBeforeHiddenFit);
+    await edit([{type:'layer',ids:allIds,hidden:false}]);
     await call('draw_select', { ids: [second, third] });
     await call('draw_apply_operations', {
       expectedRevision: (await inspect()).revision,

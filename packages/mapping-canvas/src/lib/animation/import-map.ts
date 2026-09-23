@@ -101,7 +101,7 @@ export function importMap(
   map: CanvasDocument,
   visible: ReadonlySet<string> = new Set(visibleObjects(map).map((object) => object.id))
 ): { drawings: Drawing[]; skipped: number } {
-  const objects = map.objects.filter(isImportableCanvasObject).slice(0, LIMITS.drawings);
+  const objects = map.objects.filter(isImportableCanvasObject).sort((a,b)=>Number(visible.has(b.id))-Number(visible.has(a.id))).slice(0, LIMITS.drawings);
   const retainedMap = { ...map, objects };
   const visibleFit = sceneFit({
     ...retainedMap,
@@ -285,10 +285,7 @@ export function syncMotionProject(map: CanvasDocument, existing?: Project): Proj
   const originalOrder = new Map(map.objects.map((object, index) => [object.id, index]));
   const prioritizedMap = {
     ...map,
-    objects: [
-      ...map.objects.filter((object) => priorCanvasIds.has(object.id)),
-      ...map.objects.filter((object) => !priorCanvasIds.has(object.id))
-    ]
+    objects: [...map.objects].sort((a,b) => Number(visible.has(b.id))-Number(visible.has(a.id)) || Number(priorCanvasIds.has(b.id))-Number(priorCanvasIds.has(a.id)))
   };
   const capacity = Math.max(0, LIMITS.drawings - priorMotionOnly.length);
   const template = existing
@@ -310,7 +307,7 @@ export function syncMotionProject(map: CanvasDocument, existing?: Project): Proj
   const importableObjects = prioritizedMap.objects
     .filter(isImportableCanvasObject)
     .slice(0, capacity);
-  const existingObjects = importableObjects.filter((object) => priorCanvasIds.has(object.id));
+  let existingObjects = importableObjects.filter((object) => priorCanvasIds.has(object.id));
   let updateableExistingObjects = existingObjects;
   let newObjects = importableObjects
     .filter((object) => !priorCanvasIds.has(object.id))
@@ -352,12 +349,23 @@ export function syncMotionProject(map: CanvasDocument, existing?: Project): Proj
     for (const object of newObjects) {
       const added = importedById.get(object.id);
       if (!added) continue;
-      const trial = [...selected, added];
-      const next = assemble(trial);
+      let trial = [...selected, added];
+      let next = assemble(trial);
+      const evicted = new Set<string>();
+      if (visible.has(object.id) && serializedBytes(next) > LIMITS.bytes) {
+        for (const hidden of [...selected].reverse().filter(drawing => !visible.has(drawing.id))) {
+          evicted.add(hidden.id);
+          trial = trial.filter(drawing => drawing.id !== hidden.id);
+          next = assemble(trial);
+          if (serializedBytes(next) <= LIMITS.bytes) break;
+        }
+      }
       if (serializedBytes(next) <= LIMITS.bytes) {
         selected = trial;
         current = next;
         retainedNewIds.add(object.id);
+        existingObjects = existingObjects.filter(object => !evicted.has(object.id));
+        updateableExistingObjects = updateableExistingObjects.filter(object => !evicted.has(object.id));
       }
     }
     if (retainedNewIds.size === newObjects.length) {
