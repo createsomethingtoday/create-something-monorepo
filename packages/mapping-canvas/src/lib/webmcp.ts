@@ -1549,7 +1549,7 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
     const known = new Set(controller.getState().document.objects.map(object => object.id));
     const requested = Array.isArray(input.ids) ? input.ids : typeof input.id === 'string' ? [input.id] : [];
     const actionLabel = ({ draw_inspect: 'Inspecting objects', draw_get_state: 'Reading canvas', draw_get_rendered_geometry: 'Checking geometry', draw_edit: 'Editing objects', draw_compose: 'Creating objects', draw_select: 'Selecting objects' } as Record<string, string>)[tool.name] ?? tool.title;
-    const token = activity.begin(actionLabel, requested.filter((id): id is string => typeof id === 'string' && known.has(id)));
+    const token = activity.begin(actionLabel, requested.filter((id): id is string => typeof id === 'string' && known.has(id)), tool.name);
     try {
       const result = await tool.execute(input);
       const output = result as { objects?: Array<{ id: string }>; document?: CanvasDocument; transition?: { affectedIds: string[] }; ids?: string[] };
@@ -1557,7 +1557,7 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
       activity.end(token, ids);
       // Following can change the camera. Return a fresh read so the revision and
       // visible-world projection describe the viewport the user now sees.
-      if (tool.name === 'draw_inspect' || tool.name === 'draw_get_state') return tool.execute(input);
+      if (tool.name === 'draw_inspect') return tool.execute(input);
       return result;
     } catch (error) { activity.end(token, undefined, true); throw error; }
   }}));

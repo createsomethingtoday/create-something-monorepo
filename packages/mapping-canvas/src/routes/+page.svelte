@@ -149,7 +149,7 @@
       redo: () => queueAgentMutation(() => browserLocalHistory('redo')),
       reset: () => queueAgentMutation(resetCanvasFromAgent),
       animate: showAgentTransition,
-      activity: value => { agentActivity = value; activityNow = Date.now(); if (followAgent && value.action?.state === 'completed' && ['Inspecting objects', 'Reading canvas'].includes(value.action.label) && value.action.ids.length) followAttention(value.action.ids); },
+      activity: value => { agentActivity = value; activityNow = Date.now(); if (followAgent && value.action?.state === 'completed' && value.action.tool === 'draw_inspect' && value.action.ids.length) followAttention(value.action.ids); },
       focus: (target) => queueAgentMutation(() => focusAgentCamera(target)),
       renderedGeometry: readRenderedGeometry,
       shareStatus: () => { const managed = currentManagedShare(); return managed ? { shareId: managed.shareId, url: new URL(managed.url, location.origin).href, revision: managed.revision, expiresAt: managed.expiresAt } : null; },

@@ -3,7 +3,7 @@
   let { activity, now, follow = $bindable(false), reduced = $bindable(false), stop }: { activity: AgentActivity; now: number; follow?: boolean; reduced?: boolean; stop: () => void } = $props();
   const task = $derived(activity.task);
   const action = $derived(activity.action);
-  const state = $derived(action?.state === 'running' ? 'running' : action?.state === 'failed' ? 'failed' : task?.state ?? action?.state ?? 'completed');
+  const state = $derived(activity.running > 0 ? 'running' : action?.state === 'failed' ? 'failed' : task?.state ?? action?.state ?? 'completed');
   const labels = { running: 'Acting', working: 'Working · reported by agent', waiting: 'Waiting for you', completed: 'Finished', failed: 'Needs attention' };
   const quiet = $derived(now - Math.max(action?.updatedAt ?? 0, task?.updatedAt ?? 0) > 30_000);
 </script>
@@ -15,6 +15,7 @@
     {#if action && action.label !== task?.label}<p class="action">{action.label}{action.state === 'failed' ? ' · failed' : action.state === 'completed' ? ' · done' : ''}</p>{/if}
   </div>
   {#if quiet && (state === 'working' || state === 'running')}<small>No recent activity · last update {Math.floor((now - Math.max(action?.updatedAt ?? 0, task?.updatedAt ?? 0)) / 1000)}s ago</small>{/if}
+  {#if activity.running > 1}<small>{activity.running} operations running</small>{/if}
   <div class="controls">
     <button aria-pressed={follow} onclick={() => { if (follow) stop(); else follow = true; }}>{follow ? 'Following agent' : 'Follow agent'}</button>
     <button aria-pressed={reduced} onclick={() => reduced = !reduced}>Reduce motion</button>

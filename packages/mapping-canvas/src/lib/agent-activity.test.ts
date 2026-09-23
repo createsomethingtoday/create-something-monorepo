@@ -18,12 +18,15 @@ describe('ephemeral agent activity', () => {
     const activity = createAgentActivity(() => doc, () => {});
     const first = activity.begin('First', ['a']);
     const second = activity.begin('Second', ['b']);
+    expect(activity.read().running).toBe(2);
     activity.end(first, ['a']);
+    expect(activity.read().running).toBe(1);
     expect(activity.read().action).toMatchObject({ label: 'Second', state: 'running', ids: ['b'] });
     activity.end(second, undefined, true);
     expect(activity.read().action?.state).toBe('failed');
+    expect(activity.read().running).toBe(0);
     doc = 'two'; activity.end(second, ['b']);
-    expect(activity.read()).toEqual({ documentId: 'two', task: null, action: null });
+    expect(activity.read()).toEqual({ documentId: 'two', running: 0, task: null, action: null });
   });
   it('bounds automatic attention and returns independent snapshots', () => {
     const activity = createAgentActivity(() => 'doc', () => {});
