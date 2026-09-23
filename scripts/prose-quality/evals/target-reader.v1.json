@@ -15,8 +15,8 @@
       "context": "Read the complete campaign opening with its visible actions and proof.",
       "source": {
         "file": "packages/agency/src/routes/+page.svelte",
-        "line": 246,
-        "anchor": "Make one workflow safe to delegate."
+        "line": 247,
+        "anchor": "Make one workflow safe to delegate—and easier to run."
       },
       "reason": "Names one operating problem, grounds the offer in run, wait, stop, and proof behavior, then presents a specific next action."
     },
@@ -115,8 +115,8 @@
       "context": "Read the supporting proof card with its Ground and Loom evidence labels.",
       "source": {
         "file": "packages/agency/src/routes/products/+page.svelte",
-        "line": 87,
-        "anchor": "Ground and the Loom archive show the same discipline"
+        "line": 214,
+        "anchor": "Ground and the Loom archive show the same operating discipline beneath the commercial path"
       },
       "reason": "Introduces two owned product names and an operating discipline before one concrete result a new practitioner can recognize."
     },
@@ -213,6 +213,44 @@
         "anchor": "This framework proposes a hierarchical ontology"
       },
       "reason": "Introduces the ontology, typed artifacts, four cross-cutting concerns, control models, sampling, and embodied cognition before one concrete debugging or design consequence."
+    },
+    {
+      "id": "agency-operating-story-local-clarity",
+      "pair": "agency-operating-story",
+      "property": "agency",
+      "artifactType": "public-copy",
+      "expected": "revise",
+      "reviewScope": "rendered-component",
+      "context": "Read the operating-story heading, description, three visible stage labels, and first Boundary scene as one mobile component.",
+      "source": {
+        "file": "scripts/prose-quality/evals/fixtures/agency-operating-story-original.md",
+        "line": 9,
+        "anchor": "The page now holds one argument: keep consequential judgment, make the workflow visible, then operate the first lane with proof attached.",
+        "provenance": {
+          "file": "packages/agency/src/routes/+page.svelte",
+          "revision": "dd81d8b905ab8ca79a1e3177fea85c81eb647941",
+          "line": 262
+        }
+      },
+      "fixture": {
+        "excerpt": "The page now holds one argument: keep consequential judgment, make the workflow visible, then operate the first lane with proof attached.",
+        "adjacentContext": "Boundary. Map. Operate. The first scene later explains that work may run, wait for approval, or stop and that each action leaves a record."
+      },
+      "reason": "The first encounter describes the artifact and stacks internal abstractions before a recognizable actor, action, or observable result. Later scene copy cannot retroactively make the opening clear."
+    },
+    {
+      "id": "agency-operating-story-actor-action-result",
+      "pair": "agency-operating-story",
+      "property": "agency",
+      "artifactType": "public-copy",
+      "expected": "pass",
+      "reviewScope": "rendered-component",
+      "context": "Read the operating-story heading, description, three visible stage labels, and first Boundary scene as one mobile component.",
+      "fixture": {
+        "excerpt": "Your team sets the limits before work moves. We map the handoff, test one workflow, and keep a record of every run.",
+        "adjacentContext": "Boundary. Map. Operate. The first scene shows what happens before and after controlled delegation and names run, wait, and stop decisions."
+      },
+      "reason": "The opening gives decisions to a recognizable actor, expresses the method as actions, and translates proof into a record the reader can observe without relying on later definitions."
     }
   ]
 }
