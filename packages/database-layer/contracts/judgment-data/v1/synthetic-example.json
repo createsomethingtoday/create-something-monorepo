@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "judgment-input.v1",
+  "caseId": "exception:synthetic-1",
+  "groupId": "synthetic-app-1",
+  "evidence": {
+    "cutoff": "2026-09-01T12:00:00Z",
+    "certification": "synthetic",
+    "sources": [
+      {
+        "id": "finding",
+        "entityId": "exception:synthetic-1",
+        "sourceRef": "fixture:finding",
+        "capturedAt": "2026-09-01T11:00:00Z",
+        "kind": "pre_decision",
+        "text": "Only the naming finding is in scope. The developer acknowledges it."
+      }
+    ]
+  },
+  "policy": {
+    "id": "exception-advisory",
+    "version": "1",
+    "scope": "complete",
+    "mandatoryHumanReview": false,
+    "constraints": [
+      {
+        "id": "acknowledgment",
+        "applicability": "applicable",
+        "evidenceIds": ["finding"],
+        "evaluator": "semantic",
+        "question": "Does the developer explicitly acknowledge the naming finding?",
+        "questionVersion": "1",
+        "minimumProbability": 0.8
+      },
+      {
+        "id": "cors",
+        "applicability": "not_applicable",
+        "evidenceIds": [],
+        "evaluator": "deterministic",
+        "result": "unknown"
+      }
+    ]
+  }
+}

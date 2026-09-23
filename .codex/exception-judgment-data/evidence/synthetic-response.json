@@ -1,0 +1,17 @@
+{
+  "answers": [
+    {
+      "constraintId": "acknowledgment",
+      "value": "yes",
+      "probability": 0.95
+    }
+  ],
+  "providerStatus": "ok",
+  "provider": {
+    "provider": "synthetic",
+    "model": "fixture",
+    "requestId": "fixture-only",
+    "completedAt": "2026-09-01T12:01:00Z",
+    "latencyMs": 0
+  }
+}

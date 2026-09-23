@@ -1,0 +1,9 @@
+{
+  "verifier": "Python hashlib/json independent of TypeScript library",
+  "sealedArtifactsVerified": 7,
+  "rawResponseUnchanged": true,
+  "repeatReplayEqual": true,
+  "sameInferenceChangedPolicy": true,
+  "providerCalls": 0,
+  "source": "synthetic fixtures only"
+}

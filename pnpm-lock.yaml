@@ -1853,6 +1853,9 @@ importers:
         specifier: workspace:*
         version: link:../canvas-kernel
     devDependencies:
+      '@types/node':
+        specifier: 24.10.9
+        version: 24.10.9
       '@x402/core':
         specifier: 2.22.0
         version: 2.22.0

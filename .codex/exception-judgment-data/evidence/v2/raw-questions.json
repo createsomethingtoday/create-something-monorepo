@@ -1,0 +1,51 @@
+{
+  "schemaVersion": "judgment-questions.v2",
+  "id": "exception-support",
+  "version": "1",
+  "questions": [
+    {
+      "id": "ack",
+      "version": "1",
+      "evidenceIds": [
+        "developer"
+      ],
+      "type": "noul",
+      "instructions": {
+        "task": "Does the developer explicitly acknowledge the naming finding?",
+        "boundary": "A promise to fix alone is not acknowledgment."
+      },
+      "criteria": {
+        "true": "Explicit acknowledgment",
+        "false": "No explicit acknowledgment"
+      }
+    },
+    {
+      "id": "route",
+      "version": "1",
+      "evidenceIds": [
+        "developer"
+      ],
+      "type": "choice",
+      "instructions": "Which finding does the response address?",
+      "criteria": {
+        "naming": "Naming finding",
+        "security": "Security finding",
+        "none": "No matching finding"
+      }
+    },
+    {
+      "id": "detail",
+      "version": "1",
+      "evidenceIds": [
+        "developer"
+      ],
+      "type": "score",
+      "instructions": "How specific is the proposed remediation?",
+      "criteria": [
+        "No remediation described",
+        "Action described without timing",
+        "Action and timing described"
+      ]
+    }
+  ]
+}

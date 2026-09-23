@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "judgment-policy.v2",
+  "id": "exception-advisory",
+  "version": "1",
+  "questionSetDigest": "53597686acb60f9f5c9bffb8c26b0f8c113d4715df507142839c5fa7eaa51f7b",
+  "rules": [
+    {
+      "id": "identity",
+      "applicability": "applicable",
+      "mode": "require",
+      "source": {
+        "kind": "fact",
+        "factId": "identityMatches"
+      },
+      "operator": "eq",
+      "threshold": 1
+    },
+    {
+      "id": "acknowledgment",
+      "applicability": "applicable",
+      "mode": "require",
+      "source": {
+        "kind": "answer",
+        "questionId": "ack",
+        "metric": "noul"
+      },
+      "operator": "gte",
+      "threshold": 0.8
+    },
+    {
+      "id": "security",
+      "applicability": "not_applicable",
+      "mode": "forbid",
+      "source": {
+        "kind": "answer",
+        "questionId": "route",
+        "metric": "choice_probability",
+        "option": "security"
+      },
+      "operator": "gte",
+      "threshold": 0.3
+    }
+  ]
+}

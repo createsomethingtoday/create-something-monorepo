@@ -1,0 +1,36 @@
+{
+  "evidence": {
+    "digest": "c80e8a51f5af42c02cfa0cd56aeb82168d9eae1820895ab21f9c13b355a8193d",
+    "path": "/private/tmp/cre-2061-judgment-data/.codex/exception-judgment-data/evidence/v2/c80e8a51f5af42c02cfa0cd56aeb82168d9eae1820895ab21f9c13b355a8193d.json"
+  },
+  "questions": {
+    "digest": "53597686acb60f9f5c9bffb8c26b0f8c113d4715df507142839c5fa7eaa51f7b",
+    "path": "/private/tmp/cre-2061-judgment-data/.codex/exception-judgment-data/evidence/v2/53597686acb60f9f5c9bffb8c26b0f8c113d4715df507142839c5fa7eaa51f7b.json"
+  },
+  "inference": {
+    "digest": "5ff1a57b1a6a01f4787b2abbac894e62100dd8fea11deb6a918bffddc1f12c11",
+    "path": "/private/tmp/cre-2061-judgment-data/.codex/exception-judgment-data/evidence/v2/5ff1a57b1a6a01f4787b2abbac894e62100dd8fea11deb6a918bffddc1f12c11.json"
+  },
+  "first": {
+    "decision": {
+      "digest": "58e74dddccddf0c666571c65d34555d8c80428ff2aa40ba771b5f60f6e600e06",
+      "path": "/private/tmp/cre-2061-judgment-data/.codex/exception-judgment-data/evidence/v2/58e74dddccddf0c666571c65d34555d8c80428ff2aa40ba771b5f60f6e600e06.json"
+    },
+    "policy": {
+      "digest": "22750bce359ee749e3e6035b18cc3981bedfa5b5f11a434049aa6f1335eb8da5",
+      "path": "/private/tmp/cre-2061-judgment-data/.codex/exception-judgment-data/evidence/v2/22750bce359ee749e3e6035b18cc3981bedfa5b5f11a434049aa6f1335eb8da5.json"
+    }
+  },
+  "second": {
+    "decision": {
+      "digest": "962474f1dd8a4af3f14cde5039b3d7d4af48e0c4ea5f6a6a054e3e6939054444",
+      "path": "/private/tmp/cre-2061-judgment-data/.codex/exception-judgment-data/evidence/v2/962474f1dd8a4af3f14cde5039b3d7d4af48e0c4ea5f6a6a054e3e6939054444.json"
+    },
+    "policy": {
+      "digest": "90e758744402b45a9facb29ac37977505d624a531a3c37c5e2a933ec5d99d287",
+      "path": "/private/tmp/cre-2061-judgment-data/.codex/exception-judgment-data/evidence/v2/90e758744402b45a9facb29ac37977505d624a531a3c37c5e2a933ec5d99d287.json"
+    }
+  },
+  "providerCalls": 0,
+  "source": "synthetic fixture"
+}

@@ -1,0 +1,4 @@
+
+> @create-something/database-layer@0.1.0 typecheck /private/tmp/cre-2061-judgment-data/packages/database-layer
+> tsc --noEmit
+
