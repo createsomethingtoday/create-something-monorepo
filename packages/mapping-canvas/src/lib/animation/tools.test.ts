@@ -19,6 +19,7 @@ it('returns cloneable compact receipts and rejects stale agent edits', async () 
   p.drawings = [
     {
       id: 'canvas-stroke',
+      arrowheadScale: 1,
       source: { space: 'canvas', objectId: 'canvas-stroke', origin: {x: 0, y: 0, scaleX: 1, scaleY: 1, rotation: 20} },
       name: 'Shared stroke',
       kind: 'stroke',
@@ -66,6 +67,8 @@ it('returns cloneable compact receipts and rejects stale agent edits', async () 
   const put = schema.properties.operations.items.oneOf.find((entry: any) => entry.properties.type.const === 'put_drawing');
   const origin = put.properties.drawing.properties.source.properties.origin;
   expect(origin.properties.rotation).toEqual({ type: 'number' });
+  expect(put.properties.drawing.properties.arrowheadScale).toMatchObject({type:'number'});
+  expect(Object.keys(p.drawings[0]).every(key => key in put.properties.drawing.properties)).toBe(true);
   expect(Object.keys(p.drawings[0].source!.origin!).every(key => key in origin.properties)).toBe(true);
   const exact = (await tools[1].execute({ id: 'canvas-stroke' })) as {
     drawing: Project['drawings'][number];

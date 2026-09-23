@@ -1,3 +1,4 @@
+import { arrowHeadPoints } from '../arrow-geometry';
 import { describe, expect, it } from 'vitest';
 import { createDocument, isDocument, normalizeDocument, type CanvasDocument } from '../document';
 import {
@@ -61,6 +62,17 @@ function canvas(): CanvasDocument {
 }
 
 describe('shared Draw project contract', () => {
+  it.each([2,24])('renders the same fixed arrowhead at shaft weight %s', (strokeWidth) => {
+    const source={...createDocument(),objects:[{id:'arrow',kind:'arrow' as const,createdAt:'2026-09-23',from:{x:0,y:0},to:{x:100,y:0},color:'#ffffff',strokeWidth}]};
+    const project=syncMotionProject(source),drawing=project.drawings[0];
+    expect(drawing.points).toHaveLength(2);
+    expect(drawing.arrowheadScale).toBe(1);
+    const fills: unknown[]=[];let path:unknown[]=[];
+    const ctx=new Proxy({canvas:{width:1280,height:720}}, {get(target,key) { if(key==='beginPath')return()=>{path=[];};if(key==='moveTo'||key==='lineTo')return(x:number,y:number)=>path.push({x,y});if(key==='fill')return()=>fills.push([...path]);return (target as any)[key]??(()=>{});}}) as unknown as CanvasRenderingContext2D;
+    new Renderer().paint(ctx,project,0);
+    expect(fills).toEqual([arrowHeadPoints(drawing.points[0],drawing.points[1])]);
+    expect(()=>validateProject(project)).not.toThrow();
+  });
   it('does not fill open Canvas arrows when importing to Motion', () => {
     const source={...createDocument(),objects:[{id:'arrow',kind:'arrow' as const,createdAt:'2026-09-23',from:{x:0,y:0},to:{x:100,y:100},color:'#ffffff',fill:'#0057b8'}]};
     expect(syncMotionProject(source).drawings[0].fill).toBeUndefined();

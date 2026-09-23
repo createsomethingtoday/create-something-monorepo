@@ -3,6 +3,7 @@
   import { browser } from '$app/environment';
   import ProjectModes from '$lib/ProjectModes.svelte';
   import { loadProjects, type ProjectSummary } from '$lib/animation/storage';
+  import { arrowHeadPoints } from '$lib/arrow-geometry';
   import WorkbenchPanel from '$lib/WorkbenchPanel.svelte';
   import { compileEdits, clipboardObjects, transformRoots, editBounds, visualBounds, assertLockedLayersPreserved, descendants, visibleObjects, isLayerLocked, type EditCommand } from '$lib/editing';
   import { onMount } from 'svelte';
@@ -240,14 +241,7 @@
       const rect = paintedRect(line), matrix = line.getScreenCTM();
       if (!line.hasAttribute('marker-end') || !matrix) return rect;
       const start = new DOMPoint(line.x1.baseVal.value, line.y1.baseVal.value).matrixTransform(matrix), end = new DOMPoint(line.x2.baseVal.value, line.y2.baseVal.value).matrixTransform(matrix);
-      const distance = Math.hypot(end.x - start.x, end.y - start.y);
-      const unit = distance ? { x: (end.x - start.x) / distance, y: (end.y - start.y) / distance } : { x: 1, y: 0 }, normal = { x: -unit.y, y: unit.x };
-      const scale = Math.hypot(matrix.a, matrix.b), stroke = Number.parseFloat(getComputedStyle(line).strokeWidth) * scale;
-      const points = [
-        { x: end.x + unit.x * stroke, y: end.y + unit.y * stroke },
-        { x: end.x - unit.x * 9 * stroke + normal.x * 3.5 * stroke, y: end.y - unit.y * 9 * stroke + normal.y * 3.5 * stroke },
-        { x: end.x - unit.x * 9 * stroke - normal.x * 3.5 * stroke, y: end.y - unit.y * 9 * stroke - normal.y * 3.5 * stroke }
-      ];
+      const points = arrowHeadPoints(start, end, Math.hypot(matrix.a, matrix.b));
       const left = Math.min(rect.left, ...points.map(({ x }) => x)), top = Math.min(rect.top, ...points.map(({ y }) => y));
       const right = Math.max(rect.right, ...points.map(({ x }) => x)), bottom = Math.max(rect.bottom, ...points.map(({ y }) => y));
       return new DOMRect(left, top, right - left, bottom - top);
@@ -322,10 +316,7 @@
       }
       return true;
     };
-    const markerPoints = (start: { x: number; y: number }, end: { x: number; y: number }) => {
-      const distance = Math.hypot(end.x - start.x, end.y - start.y), unit = distance ? { x: (end.x - start.x) / distance, y: (end.y - start.y) / distance } : { x: 1, y: 0 }, normal = { x: -unit.y, y: unit.x };
-      return [{ x: end.x + unit.x * 2, y: end.y + unit.y * 2 }, { x: end.x - unit.x * 18 + normal.x * 7, y: end.y - unit.y * 18 + normal.y * 7 }, { x: end.x - unit.x * 18 - normal.x * 7, y: end.y - unit.y * 18 - normal.y * 7 }];
-    };
+    const markerPoints = arrowHeadPoints;
     type PaintSegment = { start: { x: number; y: number }; end: { x: number; y: number }; padding: number };
     const paintGeometry = (object: CanvasObject, entry: typeof rendered[number]) => {
       const segments: PaintSegment[] = [], rects: Array<{ x: number; y: number; width: number; height: number }> = [], polygons: Array<Array<{ x: number; y: number }>> = [];
@@ -1168,7 +1159,7 @@
     for (let x = 0; x < viewportWidth; x += 32) { context.beginPath(); context.moveTo(x, 0); context.lineTo(x, viewportHeight); context.stroke(); }
     for (let y = 0; y < viewportHeight; y += 32) { context.beginPath(); context.moveTo(0, y); context.lineTo(viewportWidth, y); context.stroke(); }
     context.save(); context.translate(viewport.x, viewport.y); context.scale(viewport.zoom, viewport.zoom);
-    const arrow = (from: Point, to: Point, color: string, weight=2) => { context.strokeStyle = color; context.fillStyle = color; context.lineWidth = weight; context.beginPath(); context.moveTo(from.x, from.y); context.lineTo(to.x, to.y); context.stroke(); const angle = Math.atan2(to.y - from.y, to.x - from.x); context.beginPath(); context.moveTo(to.x, to.y); context.lineTo(to.x - 10 * Math.cos(angle - Math.PI / 6), to.y - 10 * Math.sin(angle - Math.PI / 6)); context.lineTo(to.x - 10 * Math.cos(angle + Math.PI / 6), to.y - 10 * Math.sin(angle + Math.PI / 6)); context.closePath(); context.fill(); };
+    const arrow = (from: Point, to: Point, color: string, weight=2) => { context.strokeStyle=color; context.fillStyle=color; context.lineWidth=weight; context.lineCap='butt'; context.beginPath(); context.moveTo(from.x,from.y); context.lineTo(to.x,to.y); context.stroke(); const head=arrowHeadPoints(from,to); context.beginPath(); context.moveTo(head[0].x,head[0].y); for(const point of head.slice(1)) context.lineTo(point.x,point.y); context.closePath(); context.fill(); };
     for (const object of renderObjects) {
       context.save();
       if(object.rotation) {const b=editBounds([object]);context.translate(b.x+b.width/2,b.y+b.height/2);context.rotate(object.rotation*Math.PI/180);context.translate(-b.x-b.width/2,-b.y-b.height/2);}
@@ -1263,7 +1254,7 @@
 
       <label class="paper" data-ui="true">Paper<input aria-label="Canvas background color" type="color" value={document.background} disabled={nativeRole === 'companion' && (!nativeSession.sessionId || nativeSession.requiresRepair)} onchange={(event) => updateBackground(event.currentTarget.value)} /></label>
       <svg bind:this={surface} class:crosshair={tool !== 'select' && tool !== 'pan'} role="group" aria-label="Canvas objects" viewBox={`0 0 ${viewportWidth} ${viewportHeight}`} onpointerdowncapture={trackTouchPointer} onpointerdown={pointerDown} onpointermove={pointerMove} onpointerup={pointerUp} onpointercancel={pointerUp} onwheel={wheel}>
-        <defs><pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse"><path d="M32 0L0 0 0 32" fill="none" stroke="rgba(255,255,255,.055)" /></pattern><marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="context-stroke" /></marker><filter id="selected"><feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="#fcaa2d" flood-opacity=".6" /></filter></defs>
+        <defs><pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse"><path d="M32 0L0 0 0 32" fill="none" stroke="rgba(255,255,255,.055)" /></pattern><marker id="arrowhead" markerUnits="userSpaceOnUse" markerWidth="20" markerHeight="14" refX="18" refY="7" orient="auto"><polygon points="0 0,20 7,0 14" fill="context-stroke" /></marker><filter id="selected"><feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="#fcaa2d" flood-opacity=".6" /></filter></defs>
         <rect data-testid="canvas-background" width="100%" height="100%" fill={document.background} /><rect width="100%" height="100%" fill="url(#grid)" />
         <g bind:this={canvasContent} class:agent-camera={agentCameraActive} data-agent-camera={agentCameraActive ? 'following' : 'idle'} transform={transform}>
           {#each renderObjects as object (object.id)}

@@ -39,6 +39,7 @@ export type Flipbook = {
   registration: 'cell' | 'alpha';
 };
 export type Drawing = {
+  arrowheadScale?: number;
   fill?: string;
   hidden?: boolean;
   source?: {
@@ -263,7 +264,7 @@ export function validateProject(value: unknown): asserts value is Project {
         'space',
         'boil',
         'flipbook',
-        'source', 'fill', 'hidden'
+        'source', 'fill', 'hidden', 'arrowheadScale'
       ]) ||
       !isMotionDrawingId(d.id) ||
       drawingIds.has(d.id) ||
@@ -273,6 +274,7 @@ export function validateProject(value: unknown): asserts value is Project {
       !color(d.color) ||
       (d.fill !== undefined && !color(d.fill)) ||
       (d.hidden !== undefined && typeof d.hidden !== 'boolean') ||
+      (d.arrowheadScale !== undefined && (!finite(d.arrowheadScale, 0.000001, 1000) || d.kind !== 'stroke' || d.points.length !== 2)) ||
       !finite(d.weight, 0.1, 100) ||
       !string(d.text, 2000) ||
       !finite(d.width, 1, 4096) ||

@@ -119,6 +119,7 @@ export function importMap(
       name: object.name || (object.kind === 'note' ? object.text.slice(0, 80) : object.kind),
       ...(object.kind !== 'arrow' && object.fill && object.fill !== 'none' ? { fill: object.fill } : {}),
       ...(!visible.has(object.id) ? { hidden: true } : {}),
+      ...(object.kind === 'arrow' ? { arrowheadScale: scale } : {}),
       kind: 'stroke' as const,
       color:
         'color' in object && /^#[\da-f]{6}$/i.test(object.color)
@@ -205,23 +206,7 @@ export function importMap(
                   y: center.y + Math.sin((i / 48) * Math.PI * 2) * radius.y
                 }));
               })()
-            : (() => {
-                const angle = Math.atan2(b.y - a.y, b.x - a.x);
-                const head = Math.min(18, Math.hypot(b.x - a.x, b.y - a.y) / 3);
-                return [
-                  a,
-                  b,
-                  {
-                    x: b.x - head * Math.cos(angle - Math.PI / 6),
-                    y: b.y - head * Math.sin(angle - Math.PI / 6)
-                  },
-                  b,
-                  {
-                    x: b.x - head * Math.cos(angle + Math.PI / 6),
-                    y: b.y - head * Math.sin(angle + Math.PI / 6)
-                  }
-                ];
-              })();
+            : [a, b];
       drawings.push(
         sourced({ ...common, points: object.kind === 'ellipse' ? points : points.map(toScene) })
       );

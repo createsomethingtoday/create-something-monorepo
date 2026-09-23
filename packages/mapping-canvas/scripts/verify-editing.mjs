@@ -238,6 +238,7 @@ try {
     const createdAt = new Date().toISOString();
     const probe = (id, x, y) => ({id,kind:'rectangle',createdAt,from:{x,y},to:{x:x+4,y:y+4},color:'#ffffff',fill:'#ffffff'});
     const geometryFixtures = [
+      {id:'weighted-arrow',kind:'arrow',createdAt,from:{x:10,y:400},to:{x:110,y:400},color:'#ffffff',strokeWidth:24},
       {id:'filled-path',kind:'stroke',createdAt,color:'#ffffff',fill:'#0057b8',width:2,points:[{x:600,y:300},{x:700,y:300},{x:700,y:330},{x:630,y:330},{x:630,y:400},{x:600,y:400}]},
       probe('inside-path',610,350), probe('outside-path',650,350),
       {id:'rotated-note',kind:'note',createdAt,x:600,y:100,width:100,height:100,text:'Note',rotation:45},
@@ -246,6 +247,10 @@ try {
       probe('group-corner',780,80), probe('group-center',848,148)
     ];
     await call('draw_apply_operations', {operations: geometryFixtures.map(object => ({type:'put_object',object}))});
+    await expect(page.locator('marker#arrowhead')).toHaveAttribute('markerUnits','userSpaceOnUse');
+    const weightedGeometry=await call('draw_get_rendered_geometry',{ids:['weighted-arrow']});
+    expect(weightedGeometry.objects[0].worldBounds.height).toBeGreaterThanOrEqual(24);
+    expect(weightedGeometry.objects[0].worldBounds.height).toBeLessThan(25);
     for(const [target, inside, outside] of [['filled-path','inside-path','outside-path'],['rotated-note','note-center','note-corner'],['rotated-group','group-center','group-corner']]) {
       expect((await call('draw_get_rendered_geometry', {ids:[target,inside]})).overlaps).toHaveLength(1);
       expect((await call('draw_get_rendered_geometry', {ids:[target,outside]})).overlaps).toHaveLength(0);
