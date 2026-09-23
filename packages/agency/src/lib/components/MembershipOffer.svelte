@@ -3,6 +3,8 @@
   import { PUBLIC_PRICING } from '$lib/data/publicPricing';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
+  let { compact = false }: { compact?: boolean } = $props();
+
   const questions = [
     {
       question: 'What does the membership cover?',
@@ -58,7 +60,7 @@
       <p class="eyebrow">CREATE SOMETHING membership</p>
       <h2 id="membership-title">A practice you can build on.</h2>
       <p>
-        Bring a website, form, AI workflow or another piece of work. We agree on a manageable
+        Bring a website, app, AI workflow or another piece of work. We agree on a manageable
         deliverable, build with you, and help your team use and maintain the result.
       </p>
       <ul>
@@ -74,11 +76,17 @@
       <Button href={agencyCoreMessaging.membershipInquiryHref}
         >{agencyCoreMessaging.membershipInquiryLabel}</Button
       >
+      {#if compact}
+        <p class="next-steps"><a href={agencyCoreMessaging.workflowMappingSessionHref}>Book a mapping session →</a></p>
+      {/if}
       <p class="availability">
         Agree on the deliverable, capacity and any usage budget before payment.
       </p>
     </div>
   </div>
+  {#if compact}
+    <p class="ownership-summary">You keep the code, tests and instructions. <a href="/services">See how delivery works →</a> <a href="/stack">What you keep →</a></p>
+  {/if}
   <div class="cost-boundary" aria-labelledby="cost-boundary-title">
     <p class="eyebrow">Delivery and usage are separate</p>
     <h3 id="cost-boundary-title">Know the cost before the work starts.</h3>
@@ -89,6 +97,7 @@
     </dl>
     <p class="availability">For substantial AI work, we arrange client-owned API access or agreed metered billing before starting. No API account is needed for work that does not use AI.</p>
   </div>
+  {#if !compact}
   <MeridianAccordion
     eyebrow="Membership boundaries"
     title="Know what is included."
@@ -96,9 +105,14 @@
     items={questions}
     openFirst={true}
   />
+  {/if}
 </section>
 
 <style>
+  .next-steps { margin-top: var(--space-performance-md); }
+  .ownership-summary { max-width: none; padding: 0 max(1.25rem, calc((100% - 80rem) / 2)) var(--space-performance-lg); }
+  a { color: inherit; text-underline-offset: .2em; display: inline-flex; align-items: center; min-height: 44px; margin-right: 1rem; }
+  a:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; }
   .membership {
     scroll-margin-top: 6rem;
     background: var(--color-performance-paper);

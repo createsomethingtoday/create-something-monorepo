@@ -59,6 +59,7 @@
     evaluation and responsible handling of access. Creator approval does not confer support-partner
     status.
   </p>
+  <p><a href="/review/intake">Review learner and creator invitation requests</a></p>
   {#if message}<StatusNotice tone={failed ? 'error' : 'success'} {message} />{/if}
   {#each data.applications as application}<article class="builder-panel review-application">
       <div class="state-row">

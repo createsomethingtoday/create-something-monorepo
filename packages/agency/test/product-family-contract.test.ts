@@ -235,7 +235,7 @@ test('primary public entry points route visitors through Map -> Build -> Control
   assert.match(services, /getPublicProduct\('build'\)/);
   assert.match(services, /getPublicProduct\('control'\)/);
   assert.match(services, /Control includes Map/);
-  assert.match(products, /Choose the help you need now\./);
+  assert.match(products, /How we work together\./);
   assert.match(products, /PUBLIC_PRODUCT_SEQUENCE\.map\(getPublicProduct\)/);
   assert.match(products, /Control includes Map/);
   assert.match(practice, /href: '\/map'/);

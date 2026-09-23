@@ -17,6 +17,7 @@
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
   import { PUBLIC_PRODUCT_SEQUENCE, getPublicProduct } from '$lib/data/productFamily';
   import { playbookHeroMedia } from '$lib/data/playbookHeroMedia';
+  import { filmStories } from '$lib/data/filmStories';
   import { PUBLIC_PRICING } from '$lib/data/publicPricing';
 
   type ProductSurfaceKind = 'signal' | 'decision' | 'proof';
@@ -136,7 +137,7 @@
 </script>
 
 <SEO
-  title="Map, Build, and Control | CREATE SOMETHING .agency"
+  title="Services & tools | CREATE SOMETHING .agency"
   description="Plan with Map, implement with Build, and support live work with Control. Compare the services and the tools included."
   keywords="workflow mapping subscription, AI workflow control, governed execution, workflow implementation service, operator surfaces"
   ogImage="/og-image.png"
@@ -145,10 +146,10 @@
 />
 
 <PerformanceCampaignOpening
-  eyebrow="Product system"
+  eyebrow="Services & tools"
   expression="editorial"
-  title="Plan, build, and support your AI workflow."
-  lede="Map helps you plan the work. Build turns the plan into a tested system. Control keeps it monitored and supported after launch. Your team keeps the code and operating instructions."
+  title="Find the work you want to make possible."
+  lede="Websites, forms, AI systems, algorithms, education and video. Explore what we can build with you, inspect the work, and agree on a useful next step."
   media={playbookHeroMedia.products}
   mediaMobilePlacement="background"
   density="compact"
@@ -159,14 +160,24 @@
   ]}
 >
   {#snippet actions()}
-    <Button href="#choose-product">Choose the right path</Button>
+    <Button href="#capabilities">Explore services & tools</Button>
   {/snippet}
 </PerformanceCampaignOpening>
 
+<section id="capabilities" class="capabilities" aria-labelledby="capabilities-title">
+  <p>Services & tools</p><h2 id="capabilities-title">Different work. The same care.</h2>
+  <p>Explore an outcome, see how we approach it, and inspect the work behind it. Membership covers one agreed workstream at a time; larger projects and usage are scoped separately.</p>
+  {#each filmStories as story}
+    <article><div><h3>{story.name}</h3><p>{story.desc}</p><p class="deliverable">What you keep: {story.deliver}</p></div>
+      <div class="capability-links"><a href={`/?film=${story.id}#work`}>Watch the story →</a><a href={story.source}>{story.sourceLabel} ↗</a><a href={agencyCoreMessaging.membershipInquiryHref}>Discuss this work →</a></div>
+    </article>
+  {/each}
+</section>
+
 <PerformanceNarrativeStage
   id="choose-product"
-  eyebrow="Product chooser"
-  title="Choose the help you need now."
+  eyebrow="Ways to work together"
+  title="How we work together."
   description="Map and Control are subscriptions. Build is quoted for the agreed project. Control includes Map and the views for incoming work, approvals, and results."
   scenes={productScenes}
   ariaLabel="Choose a CREATE SOMETHING product path"
@@ -266,6 +277,8 @@
 </PerformanceConversionHandoff>
 
 <style>
+.capabilities{padding:80px 7vw;color:var(--color-performance-ink);background:var(--color-performance-paper)}.capabilities>p{max-width:720px;line-height:1.65}.capabilities h2{font:400 clamp(38px,4vw,64px)/1.1 var(--font-performance-editorial)}.capabilities article{display:grid;grid-template-columns:2fr 1fr;gap:5vw;padding:32px 0;border-top:1px solid var(--color-performance-line);margin-top:24px}.capabilities h3{font-size:25px;margin:0 0 14px}.capabilities article p{max-width:650px;line-height:1.65}.capability-links{display:flex;flex-direction:column;justify-content:center;gap:20px}.capability-links a{color:inherit;text-underline-offset:5px}.deliverable{font-size:14px}@media(max-width:700px){.capabilities article{grid-template-columns:1fr;gap:16px}}
+
   .product-choice,
   .control-surfaces,
   .proof-chooser {
