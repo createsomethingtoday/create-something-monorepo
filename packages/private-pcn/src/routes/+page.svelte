@@ -31,8 +31,8 @@
           useful.
         </p>
         <div class="hero-actions">
-          <a class="button" href="/apply" data-impact="primary_action"
-            >Apply as a creator <Icon name="arrow-right" /></a
+          <a class="button" href="/join" data-impact="primary_action"
+            >Request an invitation <Icon name="arrow-right" /></a
           ><a class="inline-link" href="#network-preview"
             >Explore the possibilities <Icon name="arrow-down" /></a
           >
@@ -68,7 +68,7 @@
           <li>Your network address, membership controls, and record export</li>
         </ul>
         <p>No automatic overage charges. Cancel renewal through your billing portal.</p>
-        <a class="button" href="/apply">Apply to create a network <Icon name="arrow-right" /></a>
+        <a class="button" href="/join">Introduce your practice <Icon name="arrow-right" /></a>
         <p class="muted">
           Custom domains, migrations, and bespoke integrations are available through a separately
           scoped managed build.
@@ -137,8 +137,8 @@
         Show your credentials and teach one concrete agentic engineering technique. Once approved,
         build a network around the practice and assets you want to share.
       </p>
-      <a class="button" href="/apply" data-impact="primary_action"
-        >Apply as a creator <Icon name="arrow-right" /></a
+      <a class="button" href="/join" data-impact="primary_action"
+        >Request an invitation <Icon name="arrow-right" /></a
       >
       <p>
         <a href="/support">Company project? Explore private support <Icon name="arrow-right" /></a>
