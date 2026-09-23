@@ -1,3 +1,4 @@
+import { createConnectorResolver } from './connector-geometry';
 import { createAgentActivity, type AgentActivity } from './agent-activity';
 import { compileEdits, editCommandSchema, assertLockedLayersPreserved, visibleObjects, isLayerLocked } from './editing';
 import { createObjectCenterResolver, expandCompoundIds, objectBounds, type CanvasDocument, type CanvasObject, type Point, type Tool } from './document';
@@ -390,15 +391,16 @@ function stackedLabelY(index: Map<string, number>, x: number, baseY: number, wid
 }
 
 export function connectorLabelLayout(objects: CanvasObject[]) {
-  const byId = new Map(objects.map((object) => [object.id, object])), resolveCenter = createObjectCenterResolver(objects);
+  const resolveConnector = createConnectorResolver(objects);
   const occupiedSlots = new Map<string, number>(), result = new Map<string, { x: number; y: number; width: number; height: number }>();
   const connectors = objects.filter((object): object is Extract<CanvasObject, { kind: 'connector' }> => object.kind === 'connector').sort((a, b) => a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
-  const segments = connectors.flatMap((connector) => { const from = byId.get(connector.fromId), to = byId.get(connector.toId); return from && to ? [{ id: connector.id, start: resolveCenter(from), end: resolveCenter(to) }] : []; });
+  const segments = connectors.flatMap((connector) => { const route = resolveConnector(connector); return route ? [{ id: connector.id, start: route.a, end: route.b }] : []; });
   const routes = connectorRouteIndex(segments);
   for (const connector of connectors.filter(({ label }) => Boolean(label))) {
-    const from = byId.get(connector.fromId), to = byId.get(connector.toId);
-    if (!from || !to) continue;
-    const a = resolveCenter(from), b = resolveCenter(to), width = estimatedTextWidth(connector.label) + 5, x = (a.x + b.x) / 2;
+    const route = resolveConnector(connector);
+    if (!route) continue;
+    const { a, b } = route;
+    const width = estimatedTextWidth(connector.label) + 5, x = (a.x + b.x) / 2;
     const routeKey = routes.keyById.get(connector.id);
     const fallbackTop = routes.fallback.find(({ key }) => key !== routeKey)?.fallbackTop;
     const baseY = (a.y + b.y) / 2 - 10, y = stackedLabelY(occupiedSlots, x, baseY, width, (bounds) => routes.query(bounds).some((route) => route.key !== routeKey && route.segments.some((segment) => connectorPaintHitsBounds(segment.start, segment.end, bounds))), fallbackTop);
@@ -523,11 +525,13 @@ function graphLayoutTargets(document: CanvasDocument, rootIds: string[], mode: '
   const segmentIntersects = (start: Point, end: Point, bounds: { x: number; y: number; width: number; height: number }) => segmentHitsBounds(start, end, bounds, gap + 19);
   const connectors = document.objects.filter((object): object is Extract<CanvasObject, { kind: 'connector' }> => object.kind === 'connector').sort((a, b) => a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
   const positionedLabels = () => {
+    const positionedConnector = createConnectorResolver(document.objects, object => layoutCenter(object).center);
     const occupied = new Map<string, number>(), labels = new Map<string, { x: number; y: number; width: number; height: number }>();
     const segments = connectors.flatMap((connector) => {
       const fromObject = byId.get(connector.fromId), toObject = byId.get(connector.toId);
       if (!fromObject || !toObject) return [];
-      return [{ id: connector.id, start: layoutCenter(fromObject).center, end: layoutCenter(toObject).center }];
+      const route = positionedConnector(connector);
+      return route ? [{ id: connector.id, start: route.a, end: route.b }] : [];
     });
     const routes = connectorRouteIndex(segments);
     for (const connector of connectors) {
@@ -536,7 +540,9 @@ function graphLayoutTargets(document: CanvasDocument, rootIds: string[], mode: '
       if (!fromObject || !toObject) continue;
       const endpointRoots = new Set([...layoutRoots(fromObject), ...layoutRoots(toObject)]);
       if (!endpointRoots.size) continue;
-      const start = layoutCenter(fromObject).center, end = layoutCenter(toObject).center, width = estimatedTextWidth(connector.label) + 5, x = (start.x + end.x) / 2;
+      const route = positionedConnector(connector);
+      if (!route) continue;
+      const start = route.a, end = route.b, width = estimatedTextWidth(connector.label) + 5, x = (start.x + end.x) / 2;
       const routeKey = routes.keyById.get(connector.id), fallbackTop = routes.fallback.find(({ key }) => key !== routeKey)?.fallbackTop;
       const baseY = (start.y + end.y) / 2 - 10, y = stackedLabelY(occupied, x, baseY, width, (bounds) => routes.query(bounds).some((route) => route.key !== routeKey && route.segments.some((segment) => connectorPaintHitsBounds(segment.start, segment.end, bounds))), fallbackTop);
       labels.set(connector.id, { x: x - width / 2, y: y - 12, width, height: 16 });
