@@ -6,7 +6,7 @@ type Mutation = { revision: string; changeId?: string; transition?: { affectedId
 type Geometry = { revision: string; objects: Array<{ id: string }>; truncated?: boolean; summary: { unrenderedIdCount: number; missingIdCount: number } };
 
 /** One browser command owns execution, activity and readback; no model between steps. */
-export function fastExecutionTool(tools: DrawWebMcpTool[], controller: DrawController): DrawWebMcpTool {
+export function fastExecutionTool(tools: DrawWebMcpTool[], controller: DrawController, inspect: DrawWebMcpTool['execute']): DrawWebMcpTool {
   const edit = tools.find(tool => tool.name === 'draw_edit')!;
   const call = async <T>(name: string, args: Record<string, unknown> = {}) =>
     await tools.find(tool => tool.name === name)!.execute(args) as T;
@@ -35,13 +35,14 @@ export function fastExecutionTool(tools: DrawWebMcpTool[], controller: DrawContr
         } catch { /* Reload or a replaced task must not discard an applied receipt. */ }
       };
       try {
-        const before = await timed('inspectMs', () => call<Inspection>('draw_inspect', { limit: 1 }));
+        // Mechanical reads must not trigger Follow agent and invalidate their own revision.
+        const before = await timed('inspectMs', () => inspect({ limit: 1 }) as Promise<Inspection>);
         if (typeof input.expectedRevision !== 'string' || input.expectedRevision !== before.revision) throw new Error('Stale or missing expectedRevision. Inspect and replan; no edit applied.');
         phase = 'edit';
         mutation = await timed('editMs', () => call<Mutation>('draw_edit', input));
         ids = mutation.transition?.affectedIds ?? mutation.changedIds ?? mutation.selectedIds ?? [];
         phase = 'verify';
-        const after = await timed('readbackMs', () => call<Inspection>('draw_inspect', { ids, limit: 200 }));
+        const after = await timed('readbackMs', () => inspect({ ids, limit: 200 }) as Promise<Inspection>);
         // Verify the affected subgraph, not unrelated hidden/large document content.
         const document = controller.getState().document;
         const visibleIds = new Set(visibleObjects(document).map(object => object.id));

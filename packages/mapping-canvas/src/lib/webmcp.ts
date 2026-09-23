@@ -1575,7 +1575,7 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
     annotations: { readOnlyHint: false, openWorldHint: false },
     execute: async input => activity.task(input, new Set(controller.getState().document.objects.map(object => object.id)))
   });
-  wrapped.push(fastExecutionTool(wrapped, controller));
+  wrapped.push(fastExecutionTool(wrapped, controller, tools.find(tool => tool.name === 'draw_inspect')!.execute));
   return wrapped;
 }
 
