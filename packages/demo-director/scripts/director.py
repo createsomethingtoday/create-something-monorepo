@@ -36,13 +36,15 @@ def encode_capture(folder, output):
     data = json.loads((folder / 'capture.json').read_text()); frames = data['frames']
     if output.exists() or not frames:
         raise ValueError('Use a new output and a nonempty capture')
+    seconds = number(data['seconds'], 0.01, 120)
+    times = [min(seconds, number(f['receivedSeconds'], 0, 86400)) for f in frames]
     lines = []
     for i, frame in enumerate(frames):
         name = frame['file']
         if Path(name).name != name or not name.startswith('frame-') or not name.endswith('.jpg'):
             raise ValueError('Invalid capture frame name')
-        next_time = frames[i+1]['receivedSeconds'] if i+1 < len(frames) else data['seconds']
-        current = 0 if i == 0 else frame['receivedSeconds']
+        next_time = times[i+1] if i+1 < len(frames) else seconds
+        current = 0 if i == 0 else times[i]
         duration = number(next_time-current, 0, 120)
         if duration > 0:
             lines += [f"file '{name}'", f'duration {duration:.9f}']
@@ -60,7 +62,9 @@ def render(manifest_path, output):
     plan = json.loads(manifest_path.read_text())
     if plan.get('version') != 1: raise ValueError('Unsupported manifest version')
     width = int(number(plan.get('width',1920),320,3840)); height = int(number(plan.get('height',1080),180,2160))
-    fps = int(number(plan.get('fps',30),24,60))
+    fps = number(plan.get('fps',30),24,60)
+    if fps != int(fps): raise ValueError('Integer fps required')
+    fps = int(fps)
     if width % 2 or height % 2: raise ValueError('Even output dimensions required')
     shots = plan['shots']; narration = plan['narration']
     if not shots: raise ValueError('No shots')

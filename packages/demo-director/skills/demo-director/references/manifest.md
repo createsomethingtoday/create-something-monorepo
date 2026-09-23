@@ -16,3 +16,5 @@ Shots concatenate in order with hard cuts. The first/last picture fades in/out. 
 Output: H.264 yuv420p, AAC 48 kHz, fast-start MP4. Speech targets -16 LUFS / -1.5 dBTP; this is a finishing target, not proof of a good performance. The adjacent `.receipt.json` records hashes, FFprobe output and full-decode success. Owner audition remains pending.
 
 Capture folders retain `capture.json` and JPEG frames. `encode-capture` produces a 30 fps recording from observed frame-arrival times; browser rendering can produce sparse frames when the scene is static. Inspect transitions before accepting footage.
+
+Frame rate must be an integer from 24 through 60; fractional rates are rejected explicitly.

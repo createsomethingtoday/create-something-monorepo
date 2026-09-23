@@ -37,6 +37,15 @@ class DirectorTests(unittest.TestCase):
     def test_refuses_source_overrun(self):
         self.plan['shots'][0]['start']=1
         with self.assertRaisesRegex(ValueError,'overruns'):self.render()
+    def test_refuses_fractional_fps(self):
+        self.plan['fps']=29.97
+        with self.assertRaisesRegex(ValueError,'Integer fps'):self.render()
+    def test_encodes_capture_with_late_final_frame(self):
+        subprocess.run(['ffmpeg','-v','error','-i',str(self.root/'source.mp4'),'-frames:v','1',str(self.root/'frame-000000.jpg')],check=True)
+        (self.root/'frame-000001.jpg').write_bytes((self.root/'frame-000000.jpg').read_bytes())
+        (self.root/'capture.json').write_text(json.dumps({'seconds':1,'frames':[{'file':'frame-000000.jpg','receivedSeconds':.1},{'file':'frame-000001.jpg','receivedSeconds':1.05}]}))
+        result=d.encode_capture(self.root,self.root/'captured.mp4')
+        self.assertAlmostEqual(float(result['format']['duration']),1,places=1)
     def test_refuses_invalid_camera(self):
         self.plan['shots'][0]['to']['zoom']=float('nan')
         with self.assertRaises(ValueError):self.render()

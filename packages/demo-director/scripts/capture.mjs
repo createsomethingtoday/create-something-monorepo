@@ -12,9 +12,11 @@ export async function capture(page, directory, seconds, action = async () => {})
     while ((performance.now()-start)/1000 < seconds) {
       for(const event of await page.events()) if(event.method==='Page.screencastFrame') {
         const {data,metadata,sessionId}=event.params;
+        const receivedSeconds=(performance.now()-start)/1000;
+        if(receivedSeconds>=seconds){await page.cdp('Page.screencastFrameAck',{sessionId});continue;}
         const file=`frame-${String(frames.length).padStart(6,'0')}.jpg`;
         await fs.writeFile(path.join(directory,file),Buffer.from(data,'base64'));
-        frames.push({file,timestamp:metadata.timestamp,receivedSeconds:(performance.now()-start)/1000});
+        frames.push({file,timestamp:metadata.timestamp,receivedSeconds});
         await page.cdp('Page.screencastFrameAck',{sessionId});
       }
       await new Promise(r=>setTimeout(r,20));
