@@ -43,7 +43,7 @@ def route(snapshot, request, distance=32, evaluator=evaluate):
         return fallback('No visible unlocked objects are available.')
     targets = {f'object_{i}': [o] for i, o in enumerate(objects)}
     selected = set(snapshot.get('summary', {}).get('selectedIds', []))
-    if selected and selected <= {o['id'] for o in objects}:
+    if len(selected) > 1 and selected <= {o['id'] for o in objects}:
         targets['selection'] = [o for o in objects if o['id'] in selected]
     actions = {f'move_{direction}': f'Move a note or group {distance} canvas units {direction}; no resizing, rotation or other changes.' for direction in ['left', 'right', 'up', 'down']}
     actions.update({f'color_{name}': f'Change the stroke color of shapes, ink or free arrows to {name} ({color}). Not note text or background.' for name, color in PALETTE.items()})

@@ -16,6 +16,13 @@ class Routing(unittest.TestCase):
         def forbidden(*_): raise AssertionError('Must not call model')
         for snapshot in [{**SNAPSHOT, 'truncated': True}, {**SNAPSHOT, 'objects': [{**SNAPSHOT['objects'][0], 'locked': True}]}]:
             self.assertEqual(route(snapshot, 'Move it', evaluator=forbidden)['state'], 'needs_reasoning')
+    def test_single_selection_does_not_duplicate_target_choices(self):
+        def evaluator(state, questions):
+            self.assertNotIn('selection', questions['target']['criteria'])
+            self.assertEqual(state['selectedIds'], ['n1'])
+            return decision()
+        snapshot={**SNAPSHOT, 'summary': {'selectedIds': ['n1']}}
+        self.assertEqual(route(snapshot, 'Move the selected note right', evaluator=evaluator)['state'], 'routed')
     def test_no_model_generated_tools_or_fields(self):
         result=route(SNAPSHOT,'Color the note amber',evaluator=lambda *_: decision('color_amber'))
         self.assertEqual(result['state'],'needs_reasoning')
