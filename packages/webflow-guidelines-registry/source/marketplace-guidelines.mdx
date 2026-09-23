@@ -1,0 +1,325 @@
+---
+title: "Marketplace Guidelines"
+slug: "apps/docs/marketplace-guidelines"
+hidden: false
+
+og:title: "Webflow API Docs - Marketplace Guidelines"
+---
+<Note>
+Please note that these guidelines are subject to change. If you have any questions or concerns about our review process, visit <a href="https://support.webflow.com">support.webflow.com</a>.
+</Note>
+
+Before an App can be listed in the [Webflow Marketplace](https://webflow.com/apps), it must go through our thorough review process.
+
+## Guidelines
+
+The guidelines outlined below will be used by our review team to evaluate your submission.
+
+### Review scope
+
+App Review evaluates the surfaces Webflow is responsible for: code that runs in the Webflow Designer, your App's interactions with Webflow's APIs, and how your App handles Webflow credentials and Webflow user data. The runtime behavior of your App's code on a customer's published site is part of the service relationship between you and your customer — review verifies what your App registers, discloses, and removes through Webflow, not how your published-site runtime behaves.
+
+Review verifies the in-scope surface by observing it — exercising the Designer experience and probing live endpoints — and by written attestation for what cannot be observed. Approval is an endorsement of the reviewed, in-scope surface at the time of review; it is not a security audit of your systems.
+
+### Safety / Legal
+
+Ensuring the safety and security of our users and their projects is our utmost priority when it comes to Webflow Apps.
+
+#### Malicious, Damaging, or Objectionable Content
+
+1. We do not allow Apps that intend to harm or compromise the security of our users or their projects.
+2. Content that is offensive, insensitive, or intended to disgust is strictly prohibited.
+3. Ensure that your App fully adheres to our [Acceptable Use ](https://webflow.com/legal/aup)policy.
+
+#### Intellectual Property
+
+1. Ensure that your App only uses content for which you have the necessary rights, licenses, or permissions.
+2. Do not infringe upon the intellectual property rights of others, including trademarks, copyrights, or patents.
+
+#### Compliance
+
+1. Comply with all applicable laws, regulations, and legal requirements in the jurisdictions where your Marketplace App is available.
+2. Do not engage in any illegal activities or promote content that is prohibited or restricted by law.
+3. You may want to consult legal counsel if you have additional questions.
+
+#### Privacy and Data Protection
+
+1. It is imperative that your App respects user privacy and handles personal data in accordance with relevant privacy laws and regulations. Apps that infringe on individuals' privacy rights or misuse their data in any way will be removed from the marketplace.
+2. Provide clear and transparent information to users about the collection, storage, and use of their data within your Marketplace App.
+3. Implement appropriate security measures to protect user data from unauthorized access or breaches.
+
+### Authentication / Permissions
+
+Webflow requires [OAuth 2.0](https://developers.webflow.com/data/reference/oauth-app) for authenticating Apps. Do not collect Webflow credentials manually or implement workarounds that bypass the OAuth authorization flow.
+
+#### Scopes and least privilege
+
+1. Apply the Principle of Least Privilege when requesting [OAuth scopes](https://developers.webflow.com/data/reference/scopes). Every scope you request must be required for your App's declared functionality and invoked by a documented API endpoint your App calls.
+2. The OAuth scopes your App requests must match the functionality described in your listing. Reviewers will verify that requested scopes correspond to the functionality you advertise.
+3. If your App only displays Webflow data, request `:read` scopes only. If your App only pushes data to Webflow, request `:write` scopes only. Do not request both directions for a resource unless both are genuinely used.
+4. Do not request workspace-level scopes when site-level access is sufficient for your App's declared functionality.
+5. Use `authorized_user:read` or the [Get User Info](https://developers.webflow.com/data/reference/token/authorized-by) endpoint to confirm user identity. Do not request broader scopes such as `sites:read` or `workspace:read` solely for identity confirmation.
+6. `custom_code:read` and `custom_code:write` allow your App to inject site-wide JavaScript and are treated as elevated-risk scopes. Request them only when custom code injection is a disclosed, declared feature of your App — see the [App-delivered code and injected scripts](#app-delivered-code-and-injected-scripts) guidelines below.
+
+#### App configuration
+
+1. Your OAuth Client ID configuration must match your declared App type and architecture.
+2. The API type enabled in your Webflow Developer Workspace must align with your declared App type, permissions model, and intended functionality.
+3. The scopes requested in your install or OAuth URL must be equal to or a subset of the scopes configured in your App's settings. See [installation configuration](https://developers.webflow.com/apps/docs/marketplace/submitting-your-app#installation-configuration) for details.
+
+#### OAuth flow security
+
+1. Include a unique `state` parameter on every OAuth authorization request and verify the returned value before exchanging the authorization code. This protects users from cross-site request forgery attacks.
+2. The redirect URI used in your OAuth flow must exactly match the redirect URI registered in your App's settings.
+3. Authorization codes are valid for 15 minutes and may only be used once. Exchange them for an access token immediately. Do not retry, persist, or log authorization codes.
+
+#### Token security
+
+1. Store OAuth tokens in secure, server-side storage — an encrypted database or secrets manager. Tokens must never be stored in browser local storage or session storage, kept in plaintext server-side storage, exposed in client-side code, written to logs, or included in responses.
+2. Your `client_secret` is a private credential. Never include it in client-side code, public repositories, build artifacts, image layers, pipeline logs, or any other location accessible outside your secure server environment.
+3. Implement token refresh and expiry handling correctly. Refresh tokens must never appear in logs, expired tokens must not be used, and expiry errors must be handled — not silently ignored.
+4. Users must be able to fully revoke your App's access to their data. When a token is revoked, your App must stop making API calls with it and delete it from storage.
+5. API tokens, keys, passwords, and login credentials for the Webflow API are tied to you as the developer. Do not share them with third parties under any circumstances, in line with our [Developer Terms of Service](https://webflow.com/legal/developer-terms-of-service).
+
+#### Session behavior
+
+1. Complete the OAuth flow once at install or upon explicit re-authorization. Do not re-trigger the Webflow OAuth flow on login, session expiration, page refresh, or other routine events — users should be able to log back in to your App with standard authentication without redoing OAuth.
+2. Manage OAuth tokens so user sessions persist across logins. Signing out of your App must not invalidate the underlying Webflow authorization unless that is the explicit intent.
+
+### Performance / Technical
+
+All Webflow Apps must adhere to the following guidelines:
+
+#### Performance
+
+1. Optimize your App for efficient resource usage to provide a smooth and responsive experience to users.
+2. Avoid long-running background processes or tasks that may impact the overall performance of your App.
+3. Regularly monitor and address any performance issues or bottlenecks to maintain a high-quality user experience.
+4. Apps that have persistent performance issues may be subject to removal from the Marketplace.
+
+#### Technical
+
+1. Apps should only utilize official Webflow APIs — the [Data API](https://developers.webflow.com/data/reference/rest-introduction) and the [Designer API](https://developers.webflow.com/designer/reference/introduction) — and should not require users to install separate packages that manipulate Webflow.
+2. Ensure that your App’s source code is well-organized and adheres to industry standards and conventions. It should be easily readable, maintainable, and free from unnecessary complexity. For working examples of the patterns we expect, see the official starter and example apps in the [Webflow-Examples](https://github.com/Webflow-Examples) GitHub organization.
+3. Deliver any code that runs on customer sites through official mechanisms such as the [Custom Code API](https://developers.webflow.com/data/docs/working-with-custom-code). We recommend against asking users to copy and paste scripts into their site manually: manually pasted code sits outside your App’s lifecycle — your App can’t version, update, or remove it — and it can run twice when your App also applies the same script through the API.
+
+#### App-delivered code and injected scripts
+
+Code your App delivers to customer sites — such as scripts registered and applied through the [Custom Code API](https://developers.webflow.com/data/docs/working-with-custom-code) — runs under your responsibility, as part of the service relationship between you and your customer. In line with the [review scope](#review-scope), review verifies how that code is registered, disclosed, and removed through Webflow's APIs.
+
+1. Deliver code to customer sites through the [Custom Code API](https://developers.webflow.com/data/docs/working-with-custom-code), so users can see, manage, and remove what your App applies.
+2. Disclose what your App delivers. Your Marketplace listing must clearly state what code your App applies to customer sites, what it does, where it runs, and why — vague or buried disclosures are not permitted. Remotely loaded or externally controlled resources that affect App behavior must be disclosed at submission. Apps whose declared purpose is transforming page content (for example, translation or accessibility tools) must disclose that behavior at submission and in their listing. Third-party tag managers, ad networks, and affiliate tracking scripts may only be delivered if your App's declared purpose explicitly covers this functionality.
+3. Uninstall must clean up. When a user uninstalls your App, remove the Custom Code your App registered and applied through the API — at both the site and page level — while preserving unrelated customer scripts, and delete Webflow-side data your App applied. If an applied resource cannot be removed automatically, provide clear removal instructions.
+
+##### Recommended practices for published-site code
+
+The following are strongly recommended for code your App runs on customer published sites. They are not review gates — they are what separates a dependable integration from a support burden, and your customers will hold you to them:
+
+- Reference injected scripts at immutable, versioned HTTPS URLs with a subresource integrity (`integrity`) attribute and `crossorigin="anonymous"`, so the code serving your customers' visitors is verifiably the code you shipped. Avoid loaders that fetch and execute undisclosed remote code at runtime.
+- Keep inline `<script>` blocks to static configuration; keep functional logic in hosted files.
+- Scope script injection to the pages that need it.
+- Prefer adding self-contained functionality over modifying, restyling, or removing existing page content. When a change belongs in the user's site design, make it through the [Designer APIs](https://developers.webflow.com/designer/reference/introduction) so the user can see and own it.
+- Validate `message` event origins and navigation destinations, avoid overriding native browser functions or prototypes, and make initialization idempotent so double-loading is safe.
+- Handle payment and checkout surfaces with particular care: avoid reading, writing, or listening on payment form elements from injected code, and never collect visitor-entered data beyond what your listing discloses.
+
+#### Credential and authentication fields
+
+1. Apps must not read, collect, modify, transmit, or act on password fields, login fields, authentication fields, or other fields used to enter authentication credentials in a user's Webflow site.
+2. Apps that inspect forms, DOM content, or user input must exclude those fields from collection and rule actions.
+
+Additionally, Apps built using Designer APIs must adhere to the following additional guidelines:
+
+#### Technical (Designer Extensions)
+
+1. Strive for clarity and consistency in your codebase, utilizing meaningful variable and function names, proper indentation, and appropriate comments where necessary.
+2. Do not use statements or patterns that could introduce vulnerabilities in your App — for example, `eval()` statements, excessive use of global variables, or inserting untrusted data into your UI as raw HTML. Rendering and managing your extension's own UI inside its frame is expected; reading or modifying the user's site or the Designer itself must happen exclusively through the official [Designer APIs](https://developers.webflow.com/designer/reference/introduction), never by manipulating the Designer's interface directly.
+3. Use only DOM manipulation techniques supported by the Webflow Designer. Unsupported techniques put Designer stability and forward compatibility at risk.
+4. Externally hosted iframes may be used for authentication flows. Apps should not use an externally hosted iframe as the primary App UI or runtime surface when that surface can change independently of the reviewed App submission.
+5. Do not use dynamic code execution patterns such as `new Function()`, `setTimeout(string)`, or `setInterval(string)` — these introduce code injection risk. Use static, explicitly defined functions instead.
+6. Do not insert `<script>` tags at runtime through `innerHTML`, `document.write()`, `insertAdjacentHTML()`, or similar methods. Runtime script injection bypasses static review and introduces supply chain risk. Use static imports or bundled modules.
+7. Do not override, proxy, or reassign native browser functions, Webflow globals, or native prototypes. Overrides affect other code running in the Designer and can evade review.
+8. Ensure your App code is compatible with Webflow's enforced Content Security Policy. Inline event handler attributes, `javascript:` URIs, and unsafe-eval patterns will not pass review.
+9. Standard minification is fine, but do not obfuscate your code beyond it. Obfuscation — such as encoded string arrays, runtime `atob()`/`btoa()` decoding, or scrambled self-invoking functions — conceals App behavior from review and is not permitted.
+
+### Network / External services
+
+#### Transport security
+
+1. Every endpoint your App contacts or serves — outbound requests, OAuth redirect URIs, webhook receivers, embedded URLs, and backend APIs — must use HTTPS.
+2. Every URL embedded in your App must point to a production environment. Staging, development, localhost, loopback, private network, and cloud metadata references must be removed before submission.
+
+#### Credentials and secrets
+
+1. Never embed API keys, tokens, passwords, or other secrets as string literals in your App. Use environment variables and a secrets manager instead.
+2. Credential-bearing headers — `Authorization`, `Cookie`, or equivalent — must never be forwarded to non-Webflow domains. Webflow credentials must stay within Webflow.
+
+#### Request handling
+
+1. External redirects must be strictly necessary for OAuth or login, lead only to trusted domains you declare, and never expose sensitive data in URL query strings.
+2. Every `message` event handler in your App's Designer Extension or App UI surfaces must validate `event.origin` against an explicit allowlist before processing the payload. For published-site code, origin validation is a recommended practice — see [App-delivered code and injected scripts](#app-delivered-code-and-injected-scripts).
+3. When using user-supplied URLs to make server-side requests, validate them against an explicit allowlist before making the request. A blocklist alone is not sufficient.
+4. Configure Cross-Origin Resource Sharing (CORS) to allow requests only from origins you control. Wildcard (`*`) or untrusted origins are not permitted.
+
+#### Backend authentication
+
+1. Protect Webflow-authenticated endpoints from untrusted origins. A backend endpoint that carries Webflow authority — one that holds or uses your App's Webflow OAuth token, or acts on the authenticated user's Webflow site or data — must ensure an untrusted origin cannot read or mutate a Webflow-authenticated response or state. Satisfy this however your architecture requires: bearer credentials a cross-origin page cannot obtain or automatically send, or an explicit origin allowlist where sessions are ambient. Review verifies this by probing live endpoints — refusing a hostile origin and rejecting a forged identifier with no valid session — not by inspecting backend source.
+2. Backend endpoints must verify the identity of incoming requests using an authenticated session or signed token. Never trust client-supplied identifying parameters such as `siteId` without verification — they can be manipulated.
+3. Treat endpoints called by published-site code as untrusted. Do not rely on public Webflow IDs, DOM values, `Origin`, or `Referer` headers as authentication, and ensure unauthenticated runtime requests cannot mutate customer configuration or persisted App state.
+
+### Data access / Data integrity
+
+#### Data access
+
+1. Access Webflow data exclusively through official Webflow APIs (see the [Technical](#technical) guidelines above).
+2. Do not bulk copy, scrape, or otherwise bulk export Webflow Content for use on non-Webflow services unless provided for in a separate written agreement with Webflow, per our [Developer Terms of Service](https://webflow.com/legal/developer-terms-of-service).
+3. Respect [Webflow API rate limits](https://developers.webflow.com/data/reference/rate-limits). Implement exponential backoff and a maximum retry limit when receiving rate-limit responses.
+4. Sanitize API response data — particularly user-generated CMS content — before rendering, storing, or forwarding it. Unsanitized data introduces XSS and injection risk.
+5. Gate every write and delete operation behind authenticated, verified triggers, and apply schema validation to every input reaching server-side logic. Never interpolate raw input directly into a query, command, or file path.
+
+#### Webflow as the source of truth
+
+1. Webflow must remain the authoritative source for site data. Do not maintain versions of Webflow data that conflict with or operate independently of the current Webflow state.
+2. Persist every data modification made through your App back to Webflow using official APIs. Do not store editable copies of Webflow data that can diverge from the Webflow state.
+3. When displaying Webflow data, indicate when it was last fetched and provide a refresh mechanism so users never act on stale data unknowingly.
+4. Keep derived or supplemental data — analytics, AI suggestions, drafts — visually and contextually distinct from live Webflow data, and never silently overwrite Webflow data with derived values.
+5. When your App presents external data alongside Webflow data, clearly distinguish between the two so users always know which data came from their site and which came from outside.
+
+### Data Client Apps
+
+Data Client Apps operate server-side, hold OAuth tokens, and access the Webflow Data API through their own backend infrastructure. In addition to all guidelines above:
+
+1. Your OAuth Redirect URI must be a single, fully-qualified HTTPS URL on a production domain. Wildcards, localhost, HTTP, IP addresses, tunneling services (such as ngrok or localtunnel), and ports other than 443 are not permitted.
+2. Every domain serving your App — Install URL, Redirect URI, webhook receivers, backend APIs — must have a valid, current TLS certificate issued by a trusted certificate authority.
+3. Every URL you submit must resolve correctly via DNS and respond over HTTPS at the time of review.
+4. Scan server-side components for known CVEs and unmaintained dependencies before submission. Backends with known-vulnerable or deprecated dependencies put user data at risk.
+5. Maintain reasonable backend uptime and availability. Backends that are frequently unreachable — including during review — cannot deliver the functionality advertised in your listing.
+6. Provide three written attestations at submission, kept on file by the review team: your App's Webflow OAuth token is encrypted at rest, stored server-side only, and deleted on uninstall or revocation. Review accepts these as attestations and verifies the [Webflow-authenticated endpoint requirement](#backend-authentication) by probing live endpoints — it does not audit your backend source.
+
+### Localization
+
+If your App reads or writes content on sites that use [Webflow Localization](https://developers.webflow.com/data/docs/working-with-localization):
+
+1. Handle `localeId` and `cmsLocaleId` parameters correctly. Never overwrite localized content with primary-locale values without user awareness.
+2. Preserve `data-w-id` attributes and other Webflow-required identifiers when updating HTML content. These identifiers carry custom styling, animations, and links across locales.
+3. Specify the intended `localeId` on every write operation against locale-aware endpoints. Omitting it propagates changes to the wrong locale.
+
+### Design / Usability
+
+Webflow users gravitate towards products that are easy to use, polished, and designed with intentionality. The guidelines below represent the minimum expectations for a Webflow App, however, we strongly encourage you to design your App in a way that users find useful.
+
+All Marketplace Apps must adhere to the following guidelines:
+
+#### Consistency
+
+1. Ensure that your App's design and user interface are consistent throughout, providing a cohesive and familiar experience.
+
+#### Usability
+
+1. Provide comprehensive and user-friendly documentation or help resources to assist users in understanding and utilizing your App effectively. We recommend utilizing a Webflow site as your platform for hosting support docs.
+2. Ensure that end users are provided with a fully functional experience that is free of placeholder content and test data.
+
+#### Listing language
+
+1. All Marketplace listing content — App name, short and long descriptions, and feature list — must be written in English. Marketplace surfaces are English-first, and listings are reviewed in English.
+2. If your App's user interface or user-facing experience operates in a language other than English, your listing description must clearly state which language(s) your App operates in, so users know what to expect before installing.
+
+#### Accessibility
+
+1. Design your App with accessibility in mind, ensuring that it can be used by individuals with disabilities or different abilities.
+2. Follow [best practices for accessibility](https://www.w3.org/WAI/standards-guidelines/wcag/), such as providing alternative text for images, supporting keyboard navigation, and maintaining sufficient color contrast.
+
+#### User Feedback and Testing
+
+1. Gather user feedback and conduct usability testing to identify areas for improvement and refine your App's design.
+2. Incorporate user suggestions and address reported usability issues in a timely manner to enhance the overall user experience.
+3. Apps that are error prone, not actively maintained, or those that present users with persistent usability issues will be removed from the marketplace.
+
+#### User interaction
+
+1. Popups, pop-unders, and unsolicited windows must be triggered only by direct user interaction — never on load or on a timer.
+2. Calls to WebRTC, `getUserMedia`, and `getDisplayMedia` must be triggered by direct user interaction and preceded by a clear disclosure UI. Silent activation of camera, microphone, or screen capture is not permitted.
+3. Every state-changing action must be traceable to a direct user interaction event, not fired on load or on a timer.
+
+Additionally, Apps built using Designer APIs must adhere to the following additional guidelines:
+
+#### Consistency (Designer Extensions)
+
+1. Align the visual style, typography, and color palette of your App with our [App design guidelines](https://developers.webflow.com/apps/designer/docs/design-guidelines) to create a seamless integration.
+2. Maintain consistency with established Designer patterns and affordances. For example:
+   - Use component icons only to represent components
+   - Follow existing interaction patterns that users are familiar with
+   - Avoid creating new UI patterns that could confuse users or conflict with Designer functionality
+
+#### Usability (Designer Extensions)
+
+1. Design your App with a user-centric approach, considering intuitive navigation, clear labeling, and logical flow.
+2. Ensure that your App's interface is visually appealing, consistent, and accessible to a wide range of users.
+3. Minimize user input requirements and strive for simplicity in App interactions.
+4. Avoid implementing intrusive or disruptive features that may negatively impact the usability or overall user experience.
+5. Do not use keyboard shortcuts to invoke your app or any functionality within it.
+
+### Business / Branding
+
+#### Monetization
+
+1. Provide clear and transparent information regarding any fees, subscriptions, or in-App purchases associated with your Webflow App.
+2. Avoid deceptive or misleading practices related to monetization, such as hidden charges or misleading pricing information.
+
+#### Advertising
+
+1. Do not display ads to users to help maintain a focused and distraction-free experience.
+
+#### Branding
+
+1. Avoid unauthorized use of trademarks, logos, or copyrighted materials belonging to others.
+2. Clearly indicate any affiliations, partnerships, or endorsements in a truthful and transparent manner.
+3. Impersonating a company as an App author will result in rejection. Please provide accurate, reliable contact information for user inquiries, support issues, or feedback.
+
+#### One Developer Account Policy
+
+1. Developers listing apps in the Webflow App Marketplace are limited to using only one developer account for active marketplace listings. Submitting and/or listing apps using multiple developer accounts is strictly prohibited.
+2. Any developer found violating the one-account-per-developer policy, including attempts to circumvent app listing restrictions or marketplace rules, may face immediate enforcement actions. We encourage all developers to uphold integrity and transparency within our developer community.
+
+### Audit / Cooperation
+
+Webflow may audit records or activity related to your App's access to the Webflow API and the Marketplace to verify compliance, as set out in our [Developer Terms of Service](https://webflow.com/legal/developer-terms-of-service). Cooperate with these compliance audits, including providing requested records, logs, agreements, and written reports of your App's current deployment and API usage.
+
+## Submitting your App
+
+### **Submission Prep**
+
+Marketplace Apps should be complete, functional, and ready for their intended audience at submission. Apps that are beta, incomplete, or pre-release should not be published to the Marketplace.
+
+To expedite your App’s review, please make sure you have completed the following:
+
+1. **Test. Test. Test!** Thoroughly test your App to identify and resolve any crashes or bugs.
+2. **Grant Webflow Access to your App:** If your Webflow App includes account-based features or requires specific resources, you’ll need to provide us with full access. This can be achieved by offering an active demo account, fully-featured demo mode, or granting access to any necessary resources (e.g., login credentials, sample QR code) required for reviewing your App thoroughly.
+3. **Enable live backend services:** Ensure that any backend services or APIs utilized by your App are enabled and accessible during the review process. This will allow our reviewers to evaluate the functionality and integration of your marketplace App effectively.
+4. **Offer detailed explanations of non-obvious features and in-App purchases:** Include detailed explanations of any non-obvious features or in-app purchases within the review notes & demo video you submit alongside your submission. Clearly articulate the purpose, functionality, and value of these elements to provide a comprehensive understanding for the reviewers. Additionally, include any supporting documentation if necessary.
+
+By following these steps and providing the necessary information and access, you can ensure a smoother review process for your Webflow  App.
+
+### **How to submit**
+
+All prospective Apps must be submitted through our Webflow[ App submission form](https://developers.webflow.com/submit). To expedite the approval process, please provide all requested details about your App.
+
+Before submitting, you'll need to prepare the following items (see the [App listing guide](https://developers.webflow.com/apps/docs/marketplace/listing-your-app) for full asset specifications, and [Submitting your App](https://developers.webflow.com/apps/docs/marketplace/submitting-your-app) for the step-by-step walkthrough):
+
+1. **App Logo:** A logomark (not a text-based logotype), 900x900px with a 1:1 aspect ratio. Browse the Marketplace for examples.
+2. **App Detailed Description:** Avoid vagueness. Clearly explain your app's function and its benefits to users. Listings must be written in English; if your App's user experience operates in another language, your description must state which one (see [Listing language](#listing-language)).
+3. **App Screenshots:** Provide 3-5 images (1280x846, PNG or JPG, 2MB max each) that highlight the App features with clear visuals.
+4. **Demo Video:** Every submission must include a private demo video (2-5 minutes) that walks the review team through your App's installation, setup, and core functionality, in English or with English subtitles. If your App uses a Data Client, the video must also demonstrate a working OAuth flow for users approving and denying the request, and describe in detail your deep integration with Webflow. You may provide a private link to Loom, YouTube, or Google Drive.
+5. **Upload your Source Code (If Applicable):** Apps that use the Designer Extension capability must provide reviewable client-side source code, uploaded through the App version manager within the Webflow Designer. Webflow may request source maps or equivalent review artifacts when needed to evaluate the submitted App. Review artifacts are not required to be included in the public production bundle unless Webflow separately requires it. The review process for these Apps will commence once both components – form submission and App source code – are received.
+6. **Submission artifacts validated by the form:** The submission form also validates a published testing site on a `.webflow.io` staging domain with your App installed and, where applicable, source maps for review. See [Submission artifacts](https://developers.webflow.com/apps/docs/marketplace/submitting-your-app#submission-artifacts) for details.
+
+### **After submitting**
+
+Our goal is to provide a prompt decision, ideally within 10-15 business days. You will be notified of our decision via the email associated with your Webflow account.
+
+If your App submission is rejected, we will send you an email with a brief explanation. You will have the opportunity to address any feedback and resubmit your App for review.
+
+Important: Any attempts to exploit the Marketplace App APIs or review process, such as providing false information, engaging in plagiarism, deceitful manipulation of user files, or data theft, will result in immediate removal. Additionally, you will be banned from publishing future Apps in our community.
+
+Webflow may take appropriate action for Apps that violate the Marketplace Guidelines, Developer Terms, or review requirements, including limiting App availability or API access after approval where permitted by applicable terms.
+
+We look forward to reviewing what you’ve developed! For more context, please reference our [Developer Terms of Service](https://webflow.com/legal/developer-terms-of-service).
