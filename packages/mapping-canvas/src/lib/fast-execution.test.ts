@@ -1,12 +1,16 @@
 import { describe, it, expect, vi } from 'vitest';
-import { createDrawWebMcpTools } from './webmcp';
+import { createDrawWebMcpTools, type DrawController } from './webmcp';
 import { createDocument } from './document';
 import { applyCanvasOperations } from './paired-session';
 
-function harness(failReadback = false, concurrentChange = false, unrelated = false) {
+function harness(failReadback = false, concurrentChange = false, unrelated = false, follow = false) {
   let document = { ...createDocument(), objects: [{ id: 'note', kind: 'note' as const, createdAt: 'now', x: 0, y: 0, width: 100, height: 100, text: 'Hello' }] };
   if (unrelated) document.objects.push(...Array.from({ length: 220 }, (_, index) => ({ ...document.objects[0], id: `unrelated-${index}` })));
-  const activity = vi.fn();
+  const activity = vi.fn((value: Parameters<NonNullable<DrawController['activity']>>[0]) => {
+    if (follow && value.action?.state === 'completed' && value.action.tool === 'draw_inspect') {
+      document = { ...document, viewport: { ...document.viewport, x: document.viewport.x + 100 } };
+    }
+  });
   const apply = vi.fn(async (operations: Parameters<typeof applyCanvasOperations>[1]) => {
     const before = document;
     document = applyCanvasOperations(document, operations)! as typeof document;
@@ -14,7 +18,9 @@ function harness(failReadback = false, concurrentChange = false, unrelated = fal
   });
   const tools = createDrawWebMcpTools({
     getState: () => ({ document, selectedIds: [], tool: 'select', canUndo: true, canRedo: false }),
-    applyOperations: apply, select: vi.fn(), setTool: vi.fn(), undo: vi.fn(), redo: vi.fn(), reset: vi.fn(), animate: vi.fn(), activity,
+    applyOperations: apply, select: vi.fn(), setTool: vi.fn(), undo: vi.fn(), redo: vi.fn(), reset: vi.fn(), animate: vi.fn(() => {
+      if (follow) document = { ...document, viewport: { ...document.viewport, y: 200 } };
+    }), activity,
     renderedGeometry: (input) => {
       if (failReadback) throw new Error('Render interrupted');
       if (concurrentChange) document = { ...document, title: 'Human edited while measuring' };
@@ -32,10 +38,20 @@ describe('single-command execution', () => {
     const result = await h.call('draw_execute', { expectedRevision: before.revision, commands: [{ type: 'transform', ids: ['note'], x: 32 }] });
     expect(result).toMatchObject({ ok: true, applied: true, verification: { state: 'verified', stable: true } });
     expect(result.mutation.changeId).toBeTruthy(); expect(h.apply).toHaveBeenCalledTimes(1);
-    expect(h.read().objects[0].x).toBe(32); expect(h.activity.mock.lastCall?.[0].task.state).toBe('completed');
+    expect(h.read().objects[0].x).toBe(32); expect(h.activity.mock.lastCall?.[0].task?.state).toBe('completed');
     expect(result.timings.totalMs).toBeGreaterThanOrEqual(0);
     await h.call('draw_revert_change', { changeId: result.mutation.changeId });
     expect(h.read().objects[0].x).toBe(0);
+  });
+  it('keeps internal readback from moving the Follow agent camera', async () => {
+    const h = harness(false, false, false, true);
+    const before = await h.call('draw_inspect');
+    const viewport = h.read().viewport;
+    const result = await h.call('draw_execute', { expectedRevision: before.revision, commands: [{ type: 'transform', ids: ['note'], x: 32 }] });
+    expect(result).toMatchObject({ ok: true, applied: true, verification: { state: 'verified', stable: true } });
+    expect(h.read().viewport).toEqual({ ...viewport, y: 200 });
+    expect(h.apply).toHaveBeenCalledTimes(1);
+    expect(h.activity.mock.lastCall?.[0].task?.state).toBe('completed');
   });
   it('does not claim verification after a concurrent human edit', async () => {
     const h = harness(false, true); const before = await h.call('draw_inspect');
@@ -66,13 +82,13 @@ describe('single-command execution', () => {
     const h = harness();
     const result = await h.call('draw_execute', { expectedRevision: 'stale', commands: [{ type: 'transform', ids: ['note'], x: 32 }] });
     expect(result).toMatchObject({ ok: false, applied: false, phase: 'inspect' });
-    expect(h.apply).not.toHaveBeenCalled(); expect(h.activity.mock.lastCall?.[0].task.state).toBe('failed');
+    expect(h.apply).not.toHaveBeenCalled(); expect(h.activity.mock.lastCall?.[0].task?.state).toBe('failed');
   });
   it('retains an applied receipt if rendering fails and never repeats the mutation', async () => {
     const h = harness(true); const before = await h.call('draw_inspect');
     const result = await h.call('draw_execute', { expectedRevision: before.revision, commands: [{ type: 'transform', ids: ['note'], x: 32 }] });
     expect(result).toMatchObject({ ok: false, applied: true, phase: 'verify', error: 'Render interrupted' });
     expect(result.mutation.changeId).toBeTruthy(); expect(h.apply).toHaveBeenCalledTimes(1);
-    expect(h.activity.mock.lastCall?.[0].task.state).toBe('failed');
+    expect(h.activity.mock.lastCall?.[0].task?.state).toBe('failed');
   });
 });
