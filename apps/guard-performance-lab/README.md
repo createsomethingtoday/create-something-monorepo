@@ -52,6 +52,26 @@ pnpm --filter @create-something/guard-performance-lab film:bakeoff:tracking \
   --evidence-dir /private/path/tracking-bakeoff-evidence
 ```
 
+### Gemma 4 jersey-evidence bakeoff
+
+`film:bakeoff:gemma` is a private, local **judgment** evaluation for direct jersey-number evidence. It extracts only the locked, source-bound player crops from the identity fixture and asks Gemma 4 for one strictly constrained JSON review per independent decision. It does not emit person detections, boxes, track IDs, court coordinates, possession, or movement claims. Source crops, downloaded model files, and the resulting receipt belong in an operator-selected private directory, not version control.
+
+Use the official Gemma 4 Q4 GGUF plus its matching multimodal projector with a current `llama-cli`. The runner uses a hand-written GBNF grammar rather than `--json-schema` because the latter currently fails for Gemma 4 in llama.cpp; the Python parser separately rejects any output that violates the exact evidence contract. The full fixture has direct #13 positives, #5/#11/#15/unreadable/tracker-handoff hard negatives, and substitutions. The semantic gate requires at least 95% positive recall, 100% hard-negative precision, and 100% substitution accuracy.
+
+```bash
+pnpm --filter @create-something/guard-performance-lab film:test:gemma
+
+pnpm --filter @create-something/guard-performance-lab film:bakeoff:gemma -- \
+  --source /private/path/game.mp4 \
+  --source-sha256 <verified-source-sha256> \
+  --model /private/path/gemma-4-E4B_q4_0-it.gguf \
+  --projector /private/path/gemma-4-E4B-it-mmproj.gguf \
+  --output /private/path/gemma-4-bakeoff-receipt.json \
+  --evidence-dir /private/path/gemma-4-evidence
+```
+
+Even a passing semantic receipt is **assist-only**. It cannot replace the tracker without source-backed person tracks, court calibration, a calibrated continuous player trace, and 5fps movement observation. The script records those replacement blockers in every receipt so a model-quality improvement cannot silently promote itself into a trajectory claim.
+
 To evaluate another local provider without changing the verifier, supply its `guard-film-player-detections-v1` JSON with `--candidate-predictions`. A source-backed court report may be supplied with `--court-report`; it must contain the source SHA plus held-out `medianErrorFeet` and `p95ErrorFeet` values.
 
 With explicit approval to send bounded frames to Roboflow, generate that court report separately. Inject the private inference key from a secret manager; never pass it as an argument or commit it. This adapter sends only the comma-delimited timestamps (seven representative frames by default), records competing court-hypothesis ambiguity, and evaluates held-out canonical landmarks. Its output can then be passed to the provider-neutral verifier with `--court-report`.
