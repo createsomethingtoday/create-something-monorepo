@@ -1,0 +1,19 @@
+# Fast Draw execution
+
+Concept: execute a known edit and verify its result without returning to a reasoning model between mechanical steps.
+
+Database owns the document, revision, undo history and command/change receipts. Automation owns `draw_execute`: inspect the revision, compile one atomic `draw_edit` batch, read objects and rendered geometry, and finish actual activity. Judgment owns the optional bounded intent router and its conservative fallback policy. Existing pairing remains the authorization boundary. No new public AI endpoint or browser credential is introduced.
+
+`draw_agent_run` exposes that operation through the CLI/stdio adapter. Its arguments are `projectId`, `expectedRevision`, and `commands` from the discovered `draw_edit` schema. An optional `commandId` identifies exactly one operation. The existing relay claims commands once and retains receipts; no automatic retry is added. Explicit edits never call Jev.
+
+`draw_agent_intent` accepts `projectId`, `request`, and optional `distance` (1–1000 canvas units, default 32). It discovers the connected Canvas catalog, reads up to 50 objects, and asks Jev two questions together: permitted action and exact target. Code compiles the result into existing commands; model output cannot provide tools, arbitrary fields, IDs, or code. Supported operations are moving one note/group by the supplied distance, palette stroke colors for shapes/ink/arrows, and edge alignment of an existing multi-selection. Everything else returns `needs_reasoning` to the calling agent without submitting an edit. This is a caller handoff, not an embedded Astra API call.
+
+Jev receives task-relevant object text, names, coordinates and the request. Credentials never enter canvas state. Supply `TYPESAFE_API_KEY` in the adapter environment, or opt into the existing CREATE SOMETHING Infisical source with `DRAW_TYPESAFE_INFISICAL=1` (project e1532079-2f2b-46b5-8972-cf7a025eb803, dev, /). The installed plugin enables that existing source. The managed key is cached only in the adapter process; restart that process after rotating it. Credential lookup has a 12-second bound; inference has a 10-second timeout and no retries. Provider/credential failure returns to the caller. Explicit execution remains available.
+
+Both choice confidence and selected probability must meet 0.9. This is a conservative routing threshold, not a correctness guarantee. Truncated context, locked/hidden targets, unsupported actions, missing targets and uncertain decisions are rejected. Browser-side revision checks reject stale plans if the human edits during routing. The live pilot is integration evidence; do not generalize its accuracy to all requests.
+
+Results separate transport completion, whether an edit was applied, and verification. A renderer failure preserves the successful edit receipt and marks verification failed; callers can inspect or conflict-safely revert. Errors during mutation without a receipt report `applied: unknown`. Geometry overlaps are observations, not automatic failures: legitimate artwork may overlap. Incomplete geometry or concurrent edits prevent a verified result. A single explicit edit batch is one undo step.
+
+Browser phase timings (`inspectMs`, `editMs`, `readbackMs`, `geometryMs`, `totalMs`) and adapter/intent timings make transport and routing costs visible. They do not measure Astra thinking time. Compare the same commands via separate tool calls and the fast path before claiming measured savings.
+
+Validation: run the Canvas Vitest suite and `python3 -m unittest discover -s packages/mapping-canvas/scripts -p 'test_draw_*.py'`. Test live with an explicitly paired project and reversible edit. Keep the previous Pages deployment and plugin scripts for rollback; no database migration is needed. Older clients continue to use `draw_edit`; the intent router refuses an old catalog without `draw_execute`.

@@ -69,6 +69,13 @@ class DrawAgent:
             return {key: value for key, value in paired.items() if key != 'agentToken'}
         if name == 'draw_agent_connections':
             return {'connections': [{key: value for key, value in item.items() if key != 'agentToken'} for item in self.connections.values()]}
+        if name == 'draw_agent_intent':
+            from draw_intent import execute_intent
+            return execute_intent(self, args)
+        if name == 'draw_agent_run':
+            started = time.monotonic()
+            result = self.call('draw_agent_call', {'projectId': args['projectId'], 'tool': 'draw_execute', 'arguments': {'expectedRevision': args['expectedRevision'], 'commands': args['commands']}, **({'commandId': args['commandId']} if args.get('commandId') else {})})
+            return {**result, 'adapterTotalMs': (time.monotonic() - started) * 1000}
         connection = self.connection(args['projectId'])
         if name == 'draw_agent_status':
             return self.request('status', connection=connection)
@@ -115,6 +122,8 @@ TOOLS = [
     tool('draw_agent_status', 'Check the paired project’s mode, browser availability and expiry.', PROJECT, ['projectId'], True),
     tool('draw_agent_tools', 'Discover the real editing tools and exact input schemas for the paired project’s current Canvas or Motion mode.', PROJECT, ['projectId'], True),
     tool('draw_agent_call', 'Execute a discovered Draw tool in the paired browser. Real editing, undo and activity use the same path as WebMCP. Inspect before editing; never replay unknown/unconfirmed results automatically. Returns a command receipt.', {**PROJECT, 'tool': {'type': 'string'}, 'arguments': {'type': 'object'}, 'commandId': {'type': 'string', 'description': 'Optional stable ID for this exact operation; never reuse for a different operation.'}}, ['projectId', 'tool']),
+    tool('draw_agent_run', 'Fast path: execute revision-guarded edits and verify in one browser command. Returns activity, change receipt, geometry and timings. Never replay unknown, unconfirmed or applied results.', {**PROJECT, 'expectedRevision': {'type': 'string'}, 'commands': {'type': 'array', 'minItems': 1, 'maxItems': 100, 'items': {'type': 'object'}, 'description': 'draw_edit commands from the discovered Canvas schema.'}, 'commandId': {'type': 'string'}}, ['projectId', 'expectedRevision', 'commands']),
+    tool('draw_agent_intent', 'Route one bounded user request with Jev then execute and verify. Supports moving a note/group by distance (default 32), palette stroke colors, and edge alignment of the existing selection. Requires TYPESAFE_API_KEY in adapter environment. Sends bounded canvas context to TypeSafe. Unsupported, uncertain or unavailable routing returns needs_reasoning without editing; the calling agent owns fallback.', {**PROJECT, 'request': {'type': 'string', 'minLength': 1, 'maxLength': 2000}, 'distance': {'type': 'number', 'minimum': 1, 'maximum': 1000, 'default': 32}}, ['projectId', 'request']),
     tool('draw_agent_receipt', 'Read an existing command receipt without executing it again.', {**PROJECT, 'commandId': {'type': 'string'}}, ['projectId', 'commandId'], True),
     tool('draw_agent_disconnect', 'Revoke this project connection and forget its agent credential.', PROJECT, ['projectId'])
 ]
@@ -138,7 +147,7 @@ def serve(agent):
                 params = rpc['params']
                 try:
                     output = agent.call(params['name'], params.get('arguments', {}))
-                    result = {'content': [{'type': 'text', 'text': json.dumps(output)}], 'isError': output.get('state') in ('failed', 'unknown', 'unconfirmed')}
+                    result = {'content': [{'type': 'text', 'text': json.dumps(output)}], 'isError': output.get('state') in ('failed', 'unknown', 'unconfirmed') or output.get('result', {}).get('ok') is False}
                 except Exception as error:
                     result = {'content': [{'type': 'text', 'text': str(error)}], 'isError': True}
             else:

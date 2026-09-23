@@ -1,3 +1,4 @@
+import { fastExecutionTool } from './fast-execution';
 import { createConnectorResolver } from './connector-geometry';
 import { createAgentActivity, type AgentActivity } from './agent-activity';
 import { compileEdits, editCommandSchema, assertLockedLayersPreserved, visibleObjects, isLayerLocked } from './editing';
@@ -1574,6 +1575,7 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
     annotations: { readOnlyHint: false, openWorldHint: false },
     execute: async input => activity.task(input, new Set(controller.getState().document.objects.map(object => object.id)))
   });
+  wrapped.push(fastExecutionTool(wrapped, controller));
   return wrapped;
 }
 

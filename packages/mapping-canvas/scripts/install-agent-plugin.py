@@ -15,7 +15,8 @@ if manifest.get('name') != 'draw-motion-descript':
     raise SystemExit('Expected the existing draw-motion-descript plugin; nothing changed.')
 source = Path(__file__).resolve().parent.parent
 (root / 'scripts').mkdir(exist_ok=True)
-shutil.copy2(source / 'scripts/draw-agent.py', root / 'scripts/draw-agent.py')
+for script in ['draw-agent.py', 'draw_intent.py']:
+    shutil.copy2(source / 'scripts' / script, root / 'scripts' / script)
 shutil.copytree(source / 'agent-plugin/skills/draw-agent', root / 'skills/draw-agent', dirs_exist_ok=True)
 config_path = root / '.mcp.json'
 config = json.loads(config_path.read_text()) if config_path.exists() else {'mcpServers': {}}
