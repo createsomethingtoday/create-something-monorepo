@@ -42,7 +42,8 @@ it('uses the ellipse outline for diagonal connections', () => {
   const route = createConnectorResolver([a, note('b', 300, 300)])(edge)!;
   const dx = 350 - 100, dy = 350 - 50, length = Math.hypot(dx, dy);
   const boundary = { x: route.a.x - 4 * dx / length, y: route.a.y - 4 * dy / length };
-  expect(((boundary.x - 100) / 100) ** 2 + ((boundary.y - 50) / 50) ** 2).toBeCloseTo(1);
+  const normalized = ((boundary.x - 100) / 100) ** 2 + ((boundary.y - 50) / 50) ** 2;
+  expect(normalized).toBeGreaterThan(1); expect(normalized).toBeLessThan(1.1);
 });
 it('does not draw reversed or oversized arrowheads through overlapping nodes', () => {
   for (const y of [0, 50, 100]) expect(createConnectorResolver([note('a', 0, 0), note('b', 0, y)])(edge)).toBeUndefined();
@@ -57,4 +58,19 @@ it('shrinks the arrowhead to fit a narrow gap', () => {
 it('preserves short connections between ink strokes without node clearance', () => {
   const stroke = (id: string, x: number): CanvasObject => ({ id, kind: 'stroke', createdAt: 'now', color: '#ffffff', width: 1, points: [{ x, y: 0 }, { x, y: 1 }] });
   expect(createConnectorResolver([stroke('a', 0), stroke('b', 4)])(edge)).toEqual({ a: { x: 0, y: 1 }, b: { x: 4, y: 1 } });
+});
+
+it('clears the painted outline of thick rectangles and ellipses', () => {
+  for (const kind of ['rectangle', 'ellipse'] as const) {
+    const a: Shape = { id: 'a', kind, createdAt: 'now', from: { x: 0, y: 0 }, to: { x: 100, y: 100 }, color: '#ffffff', strokeWidth: 100 };
+    const route = createConnectorResolver([a, note('b', 0, 400)])(edge)!;
+    expect(route.a.y).toBeCloseTo(154);
+    expect(connectorHeadPoints(route.a, route.b).every(point => point.y < 400)).toBe(true);
+  }
+});
+it('clears thick borders at shallow angles and after rotation', () => {
+  const a: Shape = { id: 'a', kind: 'rectangle', createdAt: 'now', from: { x: 0, y: 0 }, to: { x: 20, y: 1000 }, color: '#ffffff', strokeWidth: 100, rotation: 90 };
+  const route = createConnectorResolver([a, note('b', 1000, 550)])(edge)!;
+  const localY = -(route.a.x - 10);
+  expect(Math.abs(localY)).toBeGreaterThan(550);
 });
