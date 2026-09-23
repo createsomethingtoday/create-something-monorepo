@@ -24,18 +24,20 @@ export function createConnectorResolver(objects: CanvasObject[], center = create
     const dx = toward.x - origin.x, dy = toward.y - origin.y;
     const localX = cos * dx + sin * dy, localY = -sin * dx + cos * dy;
     if (!dx && !dy) return { point: origin, clearance: 0, headLateral: 0 };
+    const strokeRadius = object.kind === 'rectangle' || object.kind === 'ellipse' ? (object.strokeWidth || 2) / 2 : 0;
+    const extentX = halfWidth + strokeRadius, extentY = halfHeight + strokeRadius;
     const scale = object.kind === 'ellipse'
       ? 1 / Math.hypot(localX / halfWidth, localY / halfHeight)
-      : Math.min(localX ? halfWidth / Math.abs(localX) : Infinity, localY ? halfHeight / Math.abs(localY) : Infinity);
+      : Math.min(localX ? extentX / Math.abs(localX) : Infinity, localY ? extentY / Math.abs(localY) : Infinity);
     const distance = Math.hypot(dx, dy);
     const normal = object.kind === 'ellipse'
       ? { x: localX * scale / (halfWidth * halfWidth), y: localY * scale / (halfHeight * halfHeight) }
-      : Math.abs(localX) / halfWidth >= Math.abs(localY) / halfHeight
+      : Math.abs(localX) / extentX >= Math.abs(localY) / extentY
         ? { x: Math.sign(localX), y: 0 } : { x: 0, y: Math.sign(localY) };
     const incidence = (normal.x * localX + normal.y * localY) / (Math.hypot(normal.x, normal.y) * distance);
-    const strokeRadius = object.kind === 'rectangle' || object.kind === 'ellipse' ? (object.strokeWidth || 2) / 2 : 0;
-    // Intersect the outward stroke support plane, including shallow-angle and rotated approaches.
-    return { point: { x: origin.x + dx * scale, y: origin.y + dy * scale }, clearance: 4 + strokeRadius / incidence, headLateral: 7 * Math.sqrt(Math.max(0, 1 - incidence * incidence)) / incidence - 18 };
+    // Rectangles use the first exit from their painted box, including adjacent corner faces.
+    // Ellipses use the outward stroke support plane.
+    return { point: { x: origin.x + dx * scale, y: origin.y + dy * scale }, clearance: 4 + (object.kind === 'ellipse' ? strokeRadius / incidence : 0), headLateral: 7 * Math.sqrt(Math.max(0, 1 - incidence * incidence)) / incidence - 18 };
   };
   const calculate = (connector: Connector): Route | undefined => {
     const from = index.get(connector.fromId), to = index.get(connector.toId);

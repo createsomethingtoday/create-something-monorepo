@@ -96,3 +96,14 @@ it('keeps arrowhead wings outside a node on a shallow approach', () => {
   const route = createConnectorResolver([note('a', 50, 1000), target])(edge)!;
   expect(connectorHeadPoints(route.a, route.b).every(point => point.x > 21)).toBe(true);
 });
+
+it('keeps a visible route when a ray exits a tall rectangle near its corner', () => {
+  const a: Shape = { id: 'a', kind: 'rectangle', createdAt: 'now', from: { x: -10, y: -500 }, to: { x: 10, y: 500 }, color: '#ffffff', strokeWidth: 2 };
+  const b: Shape = { ...a, id: 'b', from: { x: 10.4, y: 520 }, to: { x: 30.4, y: 1520 } };
+  const route = createConnectorResolver([a, b])(edge)!;
+  expect(route).toBeDefined();
+  expect(route.a.y).toBeGreaterThan(501);
+  expect(route.b.y).toBeLessThan(519);
+  expect(route.b.y).toBeGreaterThan(route.a.y);
+  expect(connectorHeadPoints(route.a, route.b).every(point => point.y > 501 && point.y < 519)).toBe(true);
+});
