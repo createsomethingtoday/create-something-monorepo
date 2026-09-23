@@ -1,4 +1,6 @@
 <script lang="ts">
+  import AgentConnection from '$lib/AgentConnection.svelte';
+  import type { DrawWebMcpTool } from '$lib/webmcp';
   import ProjectModes from '$lib/ProjectModes.svelte';
   import { onMount } from 'svelte';
   import MotionControls from '$lib/animation/MotionControls.svelte';
@@ -74,6 +76,7 @@
       ? { ...project, drawings: project.drawings.map((d) => (d.id === preview!.id ? preview! : d)) }
       : project
   );
+  let connectionTools = $state.raw<DrawWebMcpTool[]>([]);
   onMount(() => {
     previewMode = new URL(location.href).searchParams.get('mode') === 'preview';
     const loading = (async () => {
@@ -94,8 +97,7 @@
       }
     })();
     queue = loading.catch(() => {});
-    registerDrawWebMcpTools(
-      animationTools({
+    connectionTools = animationTools({
         get: () => {
           if (!ready) throw new Error('Animation is loading; retry when ready.');
           return project;
@@ -108,8 +110,8 @@
           if (id) selected = id;
         },
         history
-      })
-    );
+      });
+    registerDrawWebMcpTools(connectionTools);
     return () => {
       cancelAnimationFrame(raf);
       exportAbort?.abort();
@@ -564,6 +566,7 @@
         )}
       disabled={!ready}>Save project</button
     ><ProjectModes id={project.id} mode={previewMode?'preview':'motion'} navigate={(event,mode)=>{if(mode==='canvas')void openCanvas(event);else{event.preventDefault();previewMode=mode==='preview';window.history.replaceState(null,'',`/animate?project=${encodeURIComponent(project.id)}${previewMode?'&mode=preview':''}`);}}} />
+    <AgentConnection projectId={project.id} {ready} tools={connectionTools} mode="motion" />
   </header>
   {#if showHelp}<aside class="help">
       <strong>Create artwork in your Codex conversation.</strong> Ask Codex to generate an
