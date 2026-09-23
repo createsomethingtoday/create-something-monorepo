@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { createDocument, parse, serialize, type CanvasDocument } from './document';
-import { compileEdits, clipboardObjects, transformRoots, visibleObjects, isLayerLocked } from './editing';
+import { compileEdits, clipboardObjects, assertLockedLayersPreserved, transformRoots, visibleObjects, isLayerLocked } from './editing';
 import { createDrawWebMcpTools, drawRevision } from './webmcp';
 import { applyCanvasOperations } from './paired-session';
 
@@ -62,6 +62,14 @@ const identity = () => {
 };
 
 describe('Shared Draw editing commands', () => {
+  it('preserves locked stacking positions while allowing unrelated insertions and removals', () => {
+    const before = fixture();
+    before.objects[1].locked = true;
+    expect(() => assertLockedLayersPreserved(before, {...before, objects: [before.objects[1], before.objects[0], ...before.objects.slice(2)]})).toThrow('stacking order');
+    expect(() => assertLockedLayersPreserved(before, {...before, objects: before.objects.slice(1)})).not.toThrow();
+    expect(() => assertLockedLayersPreserved(before, {...before, objects: [{...before.objects[0], id:'added'}, ...before.objects]})).not.toThrow();
+  });
+
   it('uses the same geometry root for mixed connector and shape rotation', () => {
     const before = fixture();
     before.objects[0].rotation = 20;
@@ -245,5 +253,11 @@ describe('Shared Draw editing commands', () => {
       .find((t) => t.name === 'draw_revert_change')!
       .execute({ changeId: receipt.changeId });
     expect(document.objects).toEqual(original.objects);
+    await edit.execute({expectedRevision: drawRevision(document), commands: [{type: 'layer', ids: ['group'], locked: true, hidden: true}]});
+    const inspected = await tools.find(tool => tool.name === 'draw_inspect')!.execute({ids: ['a']});
+    expect(inspected).toMatchObject({objects: [{id: 'a', hidden: true, locked: true, ownHidden: false, ownLocked: false}]});
+    const locked = document;
+    await expect(tools.find(tool => tool.name === 'draw_replace_canvas')!.execute({objects: [...document.objects].reverse(), confirmation: 'REPLACE CANVAS'})).rejects.toThrow('stacking order');
+    expect(document).toBe(locked);
   });
 });

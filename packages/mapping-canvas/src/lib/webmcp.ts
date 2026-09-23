@@ -1,4 +1,4 @@
-import { compileEdits, editCommandSchema, assertLockedLayersPreserved } from './editing';
+import { compileEdits, editCommandSchema, assertLockedLayersPreserved, visibleObjects, isLayerLocked } from './editing';
 import { createObjectCenterResolver, expandCompoundIds, objectBounds, type CanvasDocument, type CanvasObject, type Point, type Tool } from './document';
 import { applyCanvasOperations, type CanvasOperation } from './paired-session';
 import { DRAWING_PALETTE } from './palette';
@@ -881,6 +881,7 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
       annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
       execute: async (input) => {
         const state = controller.getState();
+        const visibleIds = new Set(visibleObjects(state.document).map(object => object.id));
         const requestedIds = Array.isArray(input.ids) ? new Set(input.ids.map(String)) : undefined;
         const requestedKinds = Array.isArray(input.kinds) ? new Set(input.kinds.map(String)) : undefined;
         const needle = typeof input.text === 'string' ? input.text.trim().toLowerCase() : '';
@@ -906,7 +907,7 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
             const { sourceSnapshot, sourceIds } = object;
             const sources = sourceIds ? { sourceIds: sourceIds.slice(0, 50), sourceIdCount: sourceIds.length, ...(sourceIds.length > 50 ? { sourceIdsTruncated: true } : {}) } : {};
             const snapshots = sourceSnapshot ? { sourceSnapshotCount: sourceSnapshot.length } : {};
-            const base = { id: object.id, kind: object.kind, name: object.name, hidden: object.hidden ?? false, locked: object.locked ?? false, rotation: object.rotation ?? 0, fill: object.fill, strokeWidth: object.strokeWidth, createdAt: object.createdAt, ...sources, ...snapshots };
+            const base = { id: object.id, kind: object.kind, name: object.name, hidden: !visibleIds.has(object.id), locked: isLayerLocked(state.document, object.id), ownHidden: object.hidden ?? false, ownLocked: object.locked ?? false, rotation: object.rotation ?? 0, fill: object.fill, strokeWidth: object.strokeWidth, createdAt: object.createdAt, ...sources, ...snapshots };
             if (object.kind === 'stroke') {
               return { ...base, color: object.color, width: object.width, pointCount: object.points.length, bounds: objectBounds([object], state.document.objects) };
             }

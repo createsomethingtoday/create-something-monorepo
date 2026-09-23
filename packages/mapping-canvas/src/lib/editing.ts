@@ -537,10 +537,15 @@ export const editCommandSchema = {
 /** Lock is an editing contract shared by legacy and new operation callers. */
 export function assertLockedLayersPreserved(before: CanvasDocument, after: CanvasDocument) {
   const next = new Map(after.objects.map((object) => [object.id, object]));
+  const beforeIds = new Set(before.objects.map(object => object.id));
+  const beforeOrder = new Map(before.objects.filter(object => next.has(object.id)).map((object, index) => [object.id, index]));
+  const afterOrder = new Map(after.objects.filter(object => beforeIds.has(object.id)).map((object, index) => [object.id, index]));
   for (const object of before.objects) {
     if (!isLayerLocked(before, object.id)) continue;
     const updated = next.get(object.id);
     if (!updated) throw new Error(`Unlock layer ${object.name || object.id} before deleting it.`);
+    if (beforeOrder.get(object.id) !== afterOrder.get(object.id))
+      throw new Error(`Unlock layer ${object.name || object.id} before changing its stacking order.`);
     const editableMetadata = (value: CanvasObject) => {
       const { locked, hidden, name, ...rest } = value;
       return rest;

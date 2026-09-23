@@ -160,6 +160,8 @@ try {
     });
     await edit([{type: 'layer', ids: ['clipboard-edge'], locked: true}]);
     const lockedGraph = (await state()).document.objects;
+    await expect(call('draw_apply_operations', {confirmation: 'REPLACE CANVAS', operations: [{type: 'replace_objects', objects: [...lockedGraph].reverse()}]})).rejects.toThrow('stacking order');
+    expect((await state()).document.objects).toEqual(lockedGraph);
     await call('draw_select', {ids: [id]});
     await page.locator(`[data-object-id="${id}"]`).focus();
     await page.keyboard.press('Delete');
@@ -222,6 +224,8 @@ try {
       {type: 'put_object', object: {id: 'hidden-lasso-child', kind: 'rectangle', createdAt: new Date().toISOString(), from: {x: 20, y: 300}, to: {x: 60, y: 340}, color: '#ffffff'}},
       {type: 'put_object', object: {id: 'hidden-lasso-group', kind: 'group', createdAt: new Date().toISOString(), x: 10, y: 290, width: 70, height: 60, label: 'Invisible', childIds: ['hidden-lasso-child'], hidden: true}}
     ]});
+    const hiddenProjection = await call('draw_inspect', {ids: ['hidden-lasso-child']});
+    expect(hiddenProjection.objects[0]).toMatchObject({hidden: true, ownHidden: false});
     await call('draw_select', {ids: []});
     const lassoBox = await page.locator('svg[aria-label="Canvas objects"]').boundingBox();
     const camera = (await state()).document.viewport;
