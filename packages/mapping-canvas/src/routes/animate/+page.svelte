@@ -4,6 +4,8 @@
   import ProjectModes from '$lib/ProjectModes.svelte';
   import { onMount } from 'svelte';
   import MotionControls from '$lib/animation/MotionControls.svelte';
+  import MotionGenerator from '$lib/animation/MotionGenerator.svelte';
+  import { dev } from '$app/environment';
   import {
     evaluateCamera,
     screenToScene,
@@ -151,11 +153,12 @@
     importQueue = work.catch(() => {});
     return work;
   }
-  function commit(ops: Operation[], revision: number): Promise<void> {
+  function commit(ops: Operation[], revision: number, projectId = project.id): Promise<void> {
     if (previewMode) return Promise.reject(new Error('Preview is read-only. Open Motion to edit.'));
     const work = queue.then(async () => {
       if (previewMode) throw new Error('Preview is read-only. Open Motion to edit.');
       if (!ready || busy || exporting) throw new Error('Editor is busy; retry after it is ready.');
+      if (project.id !== projectId) throw new Error('The project changed. Generate a new preview.');
       stop();
       busy = true;
       try {
@@ -663,6 +666,10 @@
       </div>
     </section>
     <aside class="inspector">
+      {#if dev && !previewMode}
+        <MotionGenerator {project} selectedId={selected} disabled={!ready || busy || exporting}
+          apply={(proposal) => commit(proposal.operations, proposal.baseRevision, proposal.projectId)} />
+      {/if}
       <div class="section-label">{current ? 'SELECTED DRAWING' : 'SCENE'}</div>
       {#if current && pose}<input
           aria-label="Drawing name"
