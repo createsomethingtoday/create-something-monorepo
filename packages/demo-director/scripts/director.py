@@ -98,16 +98,18 @@ def render(manifest_path, output):
             if shot.get('caption'):
                 textfile=work/f'caption-{i}.txt';textfile.write_text(shot['caption'])
                 filters+=f",drawtext=textfile={textfile.name}:expansion=none:fontcolor=white:fontsize={round(height*.028)}:x=(w-text_w)/2:y=h*0.88:box=1:boxcolor=black@0.8:boxborderw=18"
-            if i==0:filters+=',fade=t=in:st=0:d=0.5'
-            if i==len(shots)-1:filters+=f",fade=t=out:st={frames/fps-0.7}:d=0.7"
+            if i==0:filters+=f',fade=t=in:st=0:d={min(0.5,frames/fps/3)}'
+            if i==len(shots)-1:
+                fade=min(0.7,frames/fps/3);filters+=f",fade=t=out:st={frames/fps-fade}:d={fade}"
             clip=work/f'shot-{i:03}.mp4';clips.append(clip)
             run(['ffmpeg','-hide_banner','-loglevel','error','-n','-ss',str(shot.get('start',0)),'-i',str((base/shot['source']).resolve()),'-an','-vf',filters,'-frames:v',str(frames),'-c:v','libx264','-preset','fast','-crf','18','-pix_fmt','yuv420p',str(clip)],cwd=work)
         listing=work/'shots.ffconcat';listing.write_text('\n'.join(f"file '{p.name}'" for p in clips)+'\n')
         silent=work/'picture.mp4'
         run(['ffmpeg','-hide_banner','-loglevel','error','-n','-f','concat','-safe','1','-i',str(listing),'-c','copy',str(silent)])
-        filters=[];labels=[]
+        count=len(narration['segments'])
+        filters=[f'[1:a]asplit={count}'+''.join(f'[voice{i}]' for i in range(count))];labels=[]
         for i,seg in enumerate(narration['segments']):
-            filters.append(f"[1:a]atrim=start={seg['sourceStart']}:duration={seg['duration']},asetpts=PTS-STARTPTS,adelay={round(seg['at']*1000)}:all=1[a{i}]");labels.append(f'[a{i}]')
+            filters.append(f"[voice{i}]atrim=start={seg['sourceStart']}:duration={seg['duration']},asetpts=PTS-STARTPTS,adelay={round(seg['at']*1000)}:all=1[a{i}]");labels.append(f'[a{i}]')
         filters.append(''.join(labels)+f"amix=inputs={len(labels)}:normalize=0,loudnorm=I=-16:TP=-1.5:LRA=11,apad,atrim=duration={total}[voice]")
         run(['ffmpeg','-hide_banner','-loglevel','error','-n','-i',str(silent),'-i',str(audio),'-filter_complex',';'.join(filters),'-map','0:v','-map','[voice]','-c:v','copy','-c:a','aac','-b:a','192k','-ar','48000','-movflags','+faststart',str(output)])
     run(['ffmpeg','-v','error','-xerror','-i',str(output),'-f','null','-'])
