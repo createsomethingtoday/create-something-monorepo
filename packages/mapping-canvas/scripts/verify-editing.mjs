@@ -241,6 +241,34 @@ try {
       true
     );
     expect(errors).toEqual([]);
+    await page.locator('.file-menu summary').click();
+    page.once('dialog', (dialog) => dialog.accept());
+    await page.getByRole('button', { name: 'New canvas', exact: true }).click();
+    await page.waitForFunction(async (id) => {
+      try {
+        return (await window.__tools.draw_get_state.execute({})).document.id !== id;
+      } catch {
+        return false;
+      }
+    }, original.id);
+    await expect(page.getByLabel('Open Draw project')).toBeVisible();
+    await Promise.all([
+      page.waitForURL(`**/?project=${original.id}`, { waitUntil: 'networkidle' }),
+      page.getByLabel('Open Draw project').selectOption(original.id)
+    ]);
+    await page.waitForFunction(async (id) => {
+      try {
+        return (await window.__tools.draw_get_state.execute({})).document.id === id;
+      } catch {
+        return false;
+      }
+    }, original.id);
+    expect((await state()).document.objects).toEqual(beforeReload.objects);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+      true
+    );
+    expect(errors).toEqual([]);
+    await page.screenshot({ path: new URL(`projects-${viewport.width}.png`, out).pathname });
     await writeFile(
       new URL(`receipt-${viewport.width}.json`, out),
       JSON.stringify(

@@ -603,7 +603,7 @@
   }
 
   async function refreshMirroredState() {
-    if (!ready || nativeRole === 'web' || drawing || wheelTimer || window.document.activeElement?.closest('input,textarea,select,[contenteditable="true"]')) return;
+    if (!ready || nativeRole === 'web' || drawing || transformGesture || wheelTimer || window.document.activeElement?.closest('input,textarea,select,[contenteditable="true"]')) return;
     if (nativeRole === 'companion' && (!nativeSession.sessionId || nativeSession.online === false || (nativeSession.queueDepth || 0) > 0)) return;
     const optimisticVersion = nativeOptimisticVersion;
     try {
@@ -756,6 +756,7 @@
     if (wheelTimer) { clearTimeout(wheelTimer); wheelTimer = undefined; sendNative([{ type: 'set_viewport', viewport }]); }
     if (nativeRole !== 'web') nativeOptimisticVersion += 1;
     pendingTouchAction = null;
+    if(transformGesture){history={...history,present:transformGesture.before};transformGesture=null;}
     const [a, b] = [...activeTouches.values()];
     const rect = surface.getBoundingClientRect();
     const center = { x: (a.x + b.x) / 2 - rect.left, y: (a.y + b.y) / 2 - rect.top };
@@ -1203,6 +1204,7 @@
   function beginTransform(event: PointerEvent, mode: 'resize' | 'rotate') {
     event.stopPropagation(); event.preventDefault();
     if (agentMutationActive || replacingDocument || !companionCanEdit() || selectedObjects.some(o => isLayerLocked(document,o.id))) return;
+    noteInput.flushAll();beginNativePointerGesture();
     transformGesture = {before: document, ids: [...selectedIds], start: point(event), bounds: selectionBounds, mode};
     surface.setPointerCapture(event.pointerId);
   }
@@ -1243,7 +1245,7 @@
   <header class="topbar">
     <div class="identity"><img src="/brand/create-something-agency-white.svg" alt="CREATE SOMETHING .agency" />{#if nativeRole === 'web'}<ProjectModes id={document.id} mode="canvas" navigate={(event,mode)=>{if(mode==='canvas')event.preventDefault();else void openMotion(event,mode==='preview');}} />{/if}<a class="source-link" href="/download" target="_blank" rel="noreferrer">Mac</a><a class="source-link" href="https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/mapping-canvas" target="_blank" rel="noreferrer">Source</a>{#if nativeRole !== 'web'}<button class="native-link" aria-label="Open device pairing" onclick={openPairing}>{nativeRole === 'host' ? 'Pair' : nativeSession.sessionId ? 'Linked' : 'Link'}</button>{/if}</div>
     <input class="title" aria-label="Canvas title" maxlength="240" value={document.title} oninput={(event) => updateTitle(event.currentTarget)} />
-    {#if nativeRole !== 'companion'}<div class="file-actions">{#if projects.length>1}<select aria-label="Open Draw project" value={document.id} onchange={async event=>{noteInput.flushAll();if(await persistCurrentDocument(document))location.href=`/?project=${encodeURIComponent(event.currentTarget.value)}`;}}>{#each projects as entry}<option value={entry.id}>{entry.title}</option>{/each}</select>{/if}<button aria-pressed={panelOpen} onclick={()=>panelOpen=!panelOpen}>Layers</button><details class="file-menu"><summary>File</summary><div><button onclick={() => fileInput?.click()} disabled={sharing || replacingDocument}>Import</button><button onclick={exportJson}>JSON</button><button onclick={exportSvg}>SVG</button><button onclick={exportPng}>PNG</button><button onclick={resetCanvas} disabled={sharing || replacingDocument}>New canvas</button></div></details>{#if nativeRole === 'web'}{#if share}<button onclick={copyShareLink}>Copy link</button><button onclick={updateSnapshot} disabled={sharing || replacingDocument}>Update link</button><button onclick={revokeSnapshot} disabled={sharing || replacingDocument}>Revoke</button>{:else}<button class="share-action" onclick={publishSnapshot} disabled={sharing || replacingDocument}>Publish view-only</button>{/if}{/if}<input bind:this={fileInput} class="visually-hidden" type="file" accept="application/json,.json" disabled={sharing || replacingDocument} onchange={importJson} /></div>{/if}
+    {#if nativeRole !== 'companion'}<div class="file-actions">{#if projects.length>1}<select aria-label="Open Draw project" value={document.id} onchange={async event=>{const id=event.currentTarget.value;noteInput.flushAll();if(await persistCurrentDocument(document))location.href=`/?project=${encodeURIComponent(id)}`;}}>{#each projects as entry}<option value={entry.id}>{entry.title}</option>{/each}</select>{/if}<button aria-pressed={panelOpen} onclick={()=>panelOpen=!panelOpen}>Layers</button><details class="file-menu"><summary>File</summary><div><button onclick={() => fileInput?.click()} disabled={sharing || replacingDocument}>Import</button><button onclick={exportJson}>JSON</button><button onclick={exportSvg}>SVG</button><button onclick={exportPng}>PNG</button><button onclick={resetCanvas} disabled={sharing || replacingDocument}>New canvas</button></div></details>{#if nativeRole === 'web'}{#if share}<button onclick={copyShareLink}>Copy link</button><button onclick={updateSnapshot} disabled={sharing || replacingDocument}>Update link</button><button onclick={revokeSnapshot} disabled={sharing || replacingDocument}>Revoke</button>{:else}<button class="share-action" onclick={publishSnapshot} disabled={sharing || replacingDocument}>Publish view-only</button>{/if}{/if}<input bind:this={fileInput} class="visually-hidden" type="file" accept="application/json,.json" disabled={sharing || replacingDocument} onchange={importJson} /></div>{/if}
   </header>
   <section class="workbench" class:tool-sidebar-collapsed={sidebarCollapsed} class:panel-open={panelOpen && nativeRole === 'web'} aria-label="Mapping canvas workbench">
     <nav class="toolbar" aria-label="Canvas tools"><button class="sidebar-toggle" aria-expanded={!sidebarCollapsed} aria-label={sidebarCollapsed ? 'Expand tool sidebar' : 'Collapse tool sidebar'} title={sidebarCollapsed ? 'Expand tools' : 'Collapse tools'} onclick={toggleSidebar}><i aria-hidden="true">{sidebarCollapsed ? '›' : '‹'}</i><span>{sidebarCollapsed ? 'Expand' : 'Collapse'}</span></button>{#each tools as entry}<button class:active={tool === entry.id} aria-pressed={tool === entry.id} aria-label={`${entry.label} tool (${entry.key})`} aria-keyshortcuts={entry.key} title={`${entry.label} · ${entry.key}`} onclick={() => tool = entry.id}><ToolIcon tool={entry.id} /><span class="tool-label">{entry.label}</span><kbd class="tool-key" aria-hidden="true">{entry.key}</kbd></button>{/each}</nav>
