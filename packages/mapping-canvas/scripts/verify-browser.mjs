@@ -172,8 +172,9 @@ try {
     const composedState = await tools.draw_get_state.execute({});
     const briefModelWidth = composedState.document.objects.find(({ id }) => id === composed.refs.brief)?.width;
     const connectorLabel = [...document.querySelectorAll('.connector-label')].find((node) => node.textContent === 'approved');
-    const rawConnectorLabelBounds = connectorLabel?.getBoundingClientRect().toJSON();
     const renderedGeometry = await tools.draw_get_rendered_geometry.execute({ ids: [composed.refs.brief, composed.refs.launch, composed.refs.approval, composed.refs.mission], limit: 10 });
+    // The geometry tool settles viewport transitions; compare the same settled frame.
+    const rawConnectorLabelBounds = connectorLabel?.getBoundingClientRect().toJSON();
     const formatted = await tools.draw_edit_note.execute({ id: composed.refs.brief, content: { blocks: [{ type: 'heading1', runs: [{ text: 'Mission', bold: true }] }, { type: 'bullet', runs: [{ text: 'Evidence link', link: 'https://example.com/proof' }] }] } });
     await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
     const formattedVisible = Boolean(document.querySelector(`[data-object-id="${composed.refs.brief}"] h1`) && document.querySelector(`[data-object-id="${composed.refs.brief}"] a[href="https://example.com/proof"]`));
@@ -403,9 +404,9 @@ try {
       staleError, deleteError, replaceError, focus, restoredCount: restored.document.objects.length, beforeCount: before.document.objects.length
     };
   });
-  const requiredSemanticTools = ['draw_auto_layout', 'draw_compose', 'draw_create_freehand_arrow', 'draw_delete', 'draw_edit_note', 'draw_focus', 'draw_get_rendered_geometry', 'draw_get_share_status', 'draw_inspect', 'draw_layout', 'draw_patch_objects', 'draw_path', 'draw_publish_snapshot', 'draw_replace_canvas', 'draw_revert_change', 'draw_revoke_snapshot', 'draw_update_snapshot'];
-  if (!requiredSemanticTools.every((name) => semantic.drawNames.includes(name)) || semantic.drawNames.length !== 24) throw new Error(`Semantic Draw tool inventory is incomplete: ${JSON.stringify(semantic.drawNames)} (all registered tools: ${JSON.stringify(semantic.names)})`);
-  if (semantic.version !== '2026-09-10.1' || !semantic.composed.changeId || !semantic.connectorVisible) throw new Error(`Semantic composition or visible connector label failed: ${JSON.stringify(semantic)}`);
+  const requiredSemanticTools = ['draw_edit', 'draw_auto_layout', 'draw_compose', 'draw_create_freehand_arrow', 'draw_delete', 'draw_edit_note', 'draw_focus', 'draw_get_rendered_geometry', 'draw_get_share_status', 'draw_inspect', 'draw_layout', 'draw_patch_objects', 'draw_path', 'draw_publish_snapshot', 'draw_replace_canvas', 'draw_revert_change', 'draw_revoke_snapshot', 'draw_update_snapshot'];
+  if (!requiredSemanticTools.every((name) => semantic.drawNames.includes(name)) || semantic.drawNames.length !== 25) throw new Error(`Semantic Draw tool inventory is incomplete: ${JSON.stringify(semantic.drawNames)} (all registered tools: ${JSON.stringify(semantic.names)})`);
+  if (semantic.version !== '2026-09-23.1' || !semantic.composed.changeId || !semantic.connectorVisible) throw new Error(`Semantic composition or visible connector label failed: ${JSON.stringify(semantic)}`);
   if (!semantic.formatted.receipt.formatted || !semantic.formatted.visible) throw new Error(`Formatted note did not render through its semantic WebMCP contract: ${JSON.stringify(semantic.formatted)}`);
   const unexpectedSemanticPeers = semantic.renderedGeometry.overlaps.filter(({ firstId, secondId, classification }) => classification === 'peer' && !([firstId, secondId].includes(semantic.composed.refs.approval) && [firstId, secondId].includes(semantic.composed.refs.mission)));
   if (semantic.renderedGeometry.objects.length !== 4 || semantic.renderedGeometry.connectors.length !== 1 || !semantic.renderedGeometry.connectors[0].labelBounds || unexpectedSemanticPeers.length || !semantic.renderedGeometry.overlaps.some(({ classification }) => classification === 'containment')) throw new Error(`Rendered geometry did not match the visible semantic graph: ${JSON.stringify(semantic.renderedGeometry)}`);
@@ -627,6 +628,7 @@ try {
   if (JSON.stringify(afterInvalidLink) !== JSON.stringify(retainedFormatting)) throw new Error('Malformed human link corrupted structured note content');
 
   const exports = {};
+  await page.locator('.file-menu summary').click();
   for (const extension of ['json', 'svg', 'png']) {
     const event = page.waitForEvent('download', { timeout: 15_000 });
     await page.getByRole('button', { name: extension.toUpperCase() }).click();
@@ -664,7 +666,8 @@ try {
   if (countAfterReload < countBeforeReload - 1) throw new Error('Reload lost canvas objects');
 
   page.once('dialog', (dialog) => dialog.accept());
-  await page.getByRole('button', { name: 'Reset', exact: true }).click();
+  if ((await page.locator('.file-menu').getAttribute('open')) === null) await page.locator('.file-menu summary').click();
+  await page.getByRole('button', { name: 'New canvas', exact: true }).click();
   await page.waitForFunction(() => document.querySelector('.statusbar')?.textContent?.includes('New local session'));
   await page.locator('input[type=file]').setInputFiles(`${outputRoot}canvas.json`);
   await page.waitForFunction(() => document.querySelector('.statusbar')?.textContent?.includes('Canvas imported'));
@@ -678,7 +681,8 @@ try {
   await page.getByRole('button', { name: /Note tool/ }).click();
   await page.mouse.click(box.x + 520, box.y + 210);
   page.once('dialog', (dialog) => dialog.accept());
-  await page.getByRole('button', { name: 'Reset', exact: true }).click();
+  if ((await page.locator('.file-menu').getAttribute('open')) === null) await page.locator('.file-menu summary').click();
+  await page.getByRole('button', { name: 'New canvas', exact: true }).click();
   await page.waitForFunction(() => document.querySelector('.statusbar')?.textContent?.includes('New local session'));
   await page.waitForTimeout(200);
   await page.reload({ waitUntil: 'networkidle' });
@@ -696,6 +700,7 @@ try {
   for (const width of [320, 390, 820]) {
     await mobile.page.setViewportSize({ width, height: 844 });
     const clippedControls = await mobile.page.locator('.toolbar button:not(.sidebar-toggle),.file-actions button,.history button,.shortcuts-trigger').evaluateAll((buttons) => buttons.filter((button) => {
+      if(!button.checkVisibility()) return false;
       const bounds = button.getBoundingClientRect();
       return bounds.left < 0 || bounds.right > innerWidth || bounds.top < 0 || bounds.bottom > innerHeight || bounds.width < 24 || bounds.height < 24;
     }).map((button) => button.getAttribute('aria-label') || button.textContent));

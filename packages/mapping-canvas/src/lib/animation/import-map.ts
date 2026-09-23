@@ -1,3 +1,4 @@
+import { visibleObjects, editBounds, visualBounds } from '../editing';
 import { type CanvasDocument } from '../document';
 import { DEFAULT_DRAWING_COLOR } from '../palette';
 import {
@@ -32,14 +33,21 @@ function isImportableCanvasObject(object: CanvasDocument['objects'][number]) {
 }
 
 function sceneFit(map: CanvasDocument) {
-  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-  let widest = 0, tallest = 0;
+  let minX = Infinity,
+    minY = Infinity,
+    maxX = -Infinity,
+    maxY = -Infinity;
+  let widest = 0,
+    tallest = 0;
   const include = ({ x, y }: Point) => {
-    minX = Math.min(minX, x); minY = Math.min(minY, y);
-    maxX = Math.max(maxX, x); maxY = Math.max(maxY, y);
+    minX = Math.min(minX, x);
+    minY = Math.min(minY, y);
+    maxX = Math.max(maxX, x);
+    maxY = Math.max(maxY, y);
   };
   const includeBox = (x: number, y: number, width: number, height: number) => {
-    widest = Math.max(widest, width); tallest = Math.max(tallest, height);
+    widest = Math.max(widest, width);
+    tallest = Math.max(tallest, height);
     include({ x, y });
     include({
       x: Number.isFinite(x + width) ? x + width : Number.MAX_VALUE,
@@ -47,15 +55,29 @@ function sceneFit(map: CanvasDocument) {
     });
   };
   for (const object of map.objects) {
+    if (object.rotation) {
+      const b = visualBounds([object]);
+      include({ x: b.x, y: b.y });
+      include({ x: b.x + b.width, y: b.y + b.height });
+      if (object.kind === 'note') {
+        widest = Math.max(widest, object.width);
+        tallest = Math.max(tallest, object.height);
+      }
+      continue;
+    }
     if (object.kind === 'stroke') object.points.forEach(include);
     else if (object.kind === 'note' || object.kind === 'group')
       includeBox(object.x, object.y, object.width, object.height);
     else if (object.kind === 'rectangle' || object.kind === 'ellipse' || object.kind === 'arrow') {
-      include(object.from); include(object.to);
+      include(object.from);
+      include(object.to);
     }
   }
   if (!Number.isFinite(minX)) {
-    minX = 100; minY = 100; maxX = 420; maxY = 280;
+    minX = 100;
+    minY = 100;
+    maxX = 420;
+    maxY = 280;
   }
   const unitsPerScene = Math.max(
     1,
@@ -75,34 +97,65 @@ function sceneFit(map: CanvasDocument) {
 }
 
 /** Materialize representable Canvas marks in Motion without changing their identity. */
-export function importMap(map: CanvasDocument): { drawings: Drawing[]; skipped: number } {
-  const objects = map.objects.filter(isImportableCanvasObject).slice(0, LIMITS.drawings);
+export function importMap(
+  map: CanvasDocument,
+  visible: ReadonlySet<string> = new Set(visibleObjects(map).map((object) => object.id))
+): { drawings: Drawing[]; skipped: number } {
+  const objects = map.objects.filter(isImportableCanvasObject).sort((a,b)=>Number(visible.has(b.id))-Number(visible.has(a.id))).slice(0, LIMITS.drawings);
   const retainedMap = { ...map, objects };
-  const { scale, toScene } = sceneFit(retainedMap);
+  const visibleFit = sceneFit({
+    ...retainedMap,
+    objects: objects.filter((o) => visible.has(o.id))
+  });
   const skipped = map.objects.length - objects.length;
   const drawings: Drawing[] = [];
   for (const object of objects) {
+    // Hidden tracks retain bounded editable geometry without shrinking visible artwork.
+    const { scale, toScene } = visible.has(object.id)
+      ? visibleFit
+      : sceneFit({ ...retainedMap, objects: [object] });
     const common = {
       id: object.id,
-      name: object.kind === 'note' ? object.text.slice(0, 80) : object.kind,
+      name: object.name || (object.kind === 'note' ? object.text.slice(0, 80) : object.kind),
+      ...(object.kind !== 'arrow' && object.fill && object.fill !== 'none' ? { fill: object.fill } : {}),
+      ...(!visible.has(object.id) ? { hidden: true } : {}),
+      ...(object.kind === 'arrow' ? { arrowheadScale: scale } : {}),
       kind: 'stroke' as const,
-      color: 'color' in object && /^#[\da-f]{6}$/i.test(object.color)
-        ? object.color
-        : DEFAULT_DRAWING_COLOR,
-      weight: Math.max(0.1, 3 * scale),
+      color:
+        'color' in object && /^#[\da-f]{6}$/i.test(object.color)
+          ? object.color
+          : DEFAULT_DRAWING_COLOR,
+      weight: Math.max(0.1, (object.strokeWidth || 2) * scale),
       text: '',
       width: 100,
       height: 100,
       poses: [basePose()]
     };
     const sourced = <T extends Drawing>(drawing: T): T => {
+      if (object.rotation) {
+        const b = editBounds([object]),
+          center = toScene({ x: b.x + b.width / 2, y: b.y + b.height / 2 });
+        const rad = (object.rotation * Math.PI) / 180,
+          c = Math.cos(rad),
+          s = Math.sin(rad);
+        const rotate = (p: Point) => ({
+          x: center.x + (p.x - center.x) * c - (p.y - center.y) * s,
+          y: center.y + (p.x - center.x) * s + (p.y - center.y) * c
+        });
+        if (drawing.kind === 'stroke') drawing = { ...drawing, points: drawing.points.map(rotate) };
+        else
+          drawing = {
+            ...drawing,
+            poses: drawing.poses.map((p) => ({ ...p, ...rotate(p), rotation: object.rotation! }))
+          };
+      }
       const { x, y } = drawing.poses[0];
       return {
         ...drawing,
         source: {
           space: 'canvas',
           objectId: object.id,
-          origin: { x, y, scaleX: scale, scaleY: scale }
+          origin: { x, y, scaleX: scale, scaleY: scale, rotation: drawing.poses[0].rotation }
         }
       };
     };
@@ -141,32 +194,22 @@ export function importMap(map: CanvasDocument): { drawings: Drawing[]; skipped: 
           ? [a, { x: b.x, y: a.y }, b, { x: a.x, y: b.y }, a]
           : object.kind === 'ellipse'
             ? (() => {
-                const sceneA = toScene(a), sceneB = toScene(b);
+                const sceneA = toScene(a),
+                  sceneB = toScene(b);
                 const center = { x: sceneA.x / 2 + sceneB.x / 2, y: sceneA.y / 2 + sceneB.y / 2 };
-                const radius = { x: Math.abs(sceneB.x - sceneA.x) / 2, y: Math.abs(sceneB.y - sceneA.y) / 2 };
+                const radius = {
+                  x: Math.abs(sceneB.x - sceneA.x) / 2,
+                  y: Math.abs(sceneB.y - sceneA.y) / 2
+                };
                 return Array.from({ length: 49 }, (_, i) => ({
                   x: center.x + Math.cos((i / 48) * Math.PI * 2) * radius.x,
                   y: center.y + Math.sin((i / 48) * Math.PI * 2) * radius.y
                 }));
               })()
-            : (() => {
-                const angle = Math.atan2(b.y - a.y, b.x - a.x);
-                const head = Math.min(18, Math.hypot(b.x - a.x, b.y - a.y) / 3);
-                return [
-                  a,
-                  b,
-                  {
-                    x: b.x - head * Math.cos(angle - Math.PI / 6),
-                    y: b.y - head * Math.sin(angle - Math.PI / 6)
-                  },
-                  b,
-                  {
-                    x: b.x - head * Math.cos(angle + Math.PI / 6),
-                    y: b.y - head * Math.sin(angle + Math.PI / 6)
-                  }
-                ];
-              })();
-      drawings.push(sourced({ ...common, points: object.kind === 'ellipse' ? points : points.map(toScene) }));
+            : [a, b];
+      drawings.push(
+        sourced({ ...common, points: object.kind === 'ellipse' ? points : points.map(toScene) })
+      );
     }
   }
   return { drawings, skipped };
@@ -187,6 +230,7 @@ function retainAnimation(source: Drawing, prior: Drawing | undefined): Drawing {
       ...pose,
       x: clamp(newOrigin.x + (pose.x - oldOrigin.x) * scaleX, -10_000, 10_000),
       y: clamp(newOrigin.y + (pose.y - oldOrigin.y) * scaleY, -10_000, 10_000),
+      rotation: pose.rotation + (newOrigin.rotation || 0) - (oldOrigin.rotation || 0),
       scaleX: pose.scaleX,
       scaleY: pose.scaleY,
       points:
@@ -229,6 +273,7 @@ function preserveMotionOnlyIds(drawings: Drawing[], canvasIds: Set<string>): Dra
 
 /** Reconcile the Canvas space into Motion while preserving poses and Motion-only artwork. */
 export function syncMotionProject(map: CanvasDocument, existing?: Project): Project {
+  const visible = new Set(visibleObjects(map).map((object) => object.id));
   const prior = new Map(existing?.drawings.map((drawing) => [drawing.id, drawing]));
   const priorMotionOnly =
     existing?.drawings.filter((drawing) => drawing.source?.space !== 'canvas') ?? [];
@@ -240,10 +285,7 @@ export function syncMotionProject(map: CanvasDocument, existing?: Project): Proj
   const originalOrder = new Map(map.objects.map((object, index) => [object.id, index]));
   const prioritizedMap = {
     ...map,
-    objects: [
-      ...map.objects.filter((object) => priorCanvasIds.has(object.id)),
-      ...map.objects.filter((object) => !priorCanvasIds.has(object.id))
-    ]
+    objects: [...map.objects].sort((a,b) => Number(visible.has(b.id))-Number(visible.has(a.id)) || Number(priorCanvasIds.has(b.id))-Number(priorCanvasIds.has(a.id)))
   };
   const capacity = Math.max(0, LIMITS.drawings - priorMotionOnly.length);
   const template = existing
@@ -265,7 +307,7 @@ export function syncMotionProject(map: CanvasDocument, existing?: Project): Proj
   const importableObjects = prioritizedMap.objects
     .filter(isImportableCanvasObject)
     .slice(0, capacity);
-  const existingObjects = importableObjects.filter((object) => priorCanvasIds.has(object.id));
+  let existingObjects = importableObjects.filter((object) => priorCanvasIds.has(object.id));
   let updateableExistingObjects = existingObjects;
   let newObjects = importableObjects
     .filter((object) => !priorCanvasIds.has(object.id))
@@ -273,7 +315,7 @@ export function syncMotionProject(map: CanvasDocument, existing?: Project): Proj
   let candidate = assemble([]);
   for (;;) {
     const selectedMap = { ...map, objects: [...updateableExistingObjects, ...newObjects] };
-    const imported = importMap(selectedMap).drawings;
+    const imported = importMap(selectedMap, visible).drawings;
     const importedById = new Map(imported.map((drawing) => [drawing.id, drawing]));
     let selected = existingObjects
       .map((object) => prior.get(object.id))
@@ -289,7 +331,7 @@ export function syncMotionProject(map: CanvasDocument, existing?: Project): Proj
       const updated = importedById.get(object.id);
       if (!updated) continue;
       const retained = retainAnimation(updated, prior.get(updated.id));
-      const trial = selected.map((drawing) => drawing.id === retained.id ? retained : drawing);
+      const trial = selected.map((drawing) => (drawing.id === retained.id ? retained : drawing));
       const next = assemble(trial);
       if (serializedBytes(next) <= LIMITS.bytes) {
         selected = trial;
@@ -307,12 +349,23 @@ export function syncMotionProject(map: CanvasDocument, existing?: Project): Proj
     for (const object of newObjects) {
       const added = importedById.get(object.id);
       if (!added) continue;
-      const trial = [...selected, added];
-      const next = assemble(trial);
+      let trial = [...selected, added];
+      let next = assemble(trial);
+      const evicted = new Set<string>();
+      if (visible.has(object.id) && serializedBytes(next) > LIMITS.bytes) {
+        for (const hidden of [...selected].reverse().filter(drawing => !visible.has(drawing.id))) {
+          evicted.add(hidden.id);
+          trial = trial.filter(drawing => drawing.id !== hidden.id);
+          next = assemble(trial);
+          if (serializedBytes(next) <= LIMITS.bytes) break;
+        }
+      }
       if (serializedBytes(next) <= LIMITS.bytes) {
         selected = trial;
         current = next;
         retainedNewIds.add(object.id);
+        existingObjects = existingObjects.filter(object => !evicted.has(object.id));
+        updateableExistingObjects = updateableExistingObjects.filter(object => !evicted.has(object.id));
       }
     }
     if (retainedNewIds.size === newObjects.length) {
@@ -323,7 +376,5 @@ export function syncMotionProject(map: CanvasDocument, existing?: Project): Proj
   }
   if (!existing) return candidate;
   const unchangedCandidate = { ...candidate, revision: existing.revision };
-  return JSON.stringify(unchangedCandidate) === JSON.stringify(existing)
-    ? existing
-    : candidate;
+  return JSON.stringify(unchangedCandidate) === JSON.stringify(existing) ? existing : candidate;
 }

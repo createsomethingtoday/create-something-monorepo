@@ -1,9 +1,10 @@
+import { compileEdits, editCommandSchema, assertLockedLayersPreserved, visibleObjects, isLayerLocked } from './editing';
 import { createObjectCenterResolver, expandCompoundIds, objectBounds, type CanvasDocument, type CanvasObject, type Point, type Tool } from './document';
-import type { CanvasOperation } from './paired-session';
+import { applyCanvasOperations, type CanvasOperation } from './paired-session';
 import { DRAWING_PALETTE } from './palette';
 import { normalizeNoteContent, noteContentText } from './note-content';
 
-export const DRAW_WEBMCP_VERSION = '2026-09-10.1';
+export const DRAW_WEBMCP_VERSION = '2026-09-23.1';
 export const REPLACE_CONFIRMATION = 'REPLACE CANVAS';
 export const RESET_CONFIRMATION = 'RESET CANVAS';
 export const DELETE_CONFIRMATION = 'DELETE OBJECTS';
@@ -812,6 +813,16 @@ function receipt(controller: DrawController, kind: DrawTransitionKind, ids: stri
 }
 
 export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpTool[] {
+  const originalController=controller;
+  controller={...controller,applyOperations:(operations,expectedRevision)=>{
+    const before=originalController.getState().document;
+    if(before.objects.some(o=>o.locked)) {
+      const candidate=applyCanvasOperations(before,operations);
+      if(!candidate) throw new Error('Invalid operation batch.');
+      assertLockedLayersPreserved(before,candidate);
+    }
+    return originalController.applyOperations(operations,expectedRevision);
+  }};
   const maxJournalBytes = 4 * 1024 * 1024;
   const changes = new Map<string, { before: CanvasDocument; after: CanvasDocument; ids: string[]; objectIds: string[]; orderIds: string[]; bytes: number }>();
   let journalBytes = 0;
@@ -842,6 +853,21 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
       execute: async () => controller.getState()
     },
     {
+      name: 'draw_edit', title: 'Edit Draw objects',
+      description: 'Apply the same typed editing commands used by the Draw inspector and layers: transform, style, rename, lock, hide, duplicate, paste, arrange, align and distribute. Atomic, revision guarded and undoable. Locked objects must be explicitly unlocked first. Returns selected IDs and a reversible change receipt.',
+      inputSchema: { type: 'object', additionalProperties: false, required: ['expectedRevision','commands'], properties: { expectedRevision: {type:'string'}, commands: {type:'array',minItems:1,maxItems:100,items:editCommandSchema} } },
+      annotations: {readOnlyHint:false,openWorldHint:false},
+      execute: async (input) => {
+        if (typeof input.expectedRevision !== 'string') throw new Error('expectedRevision is required. Inspect the canvas first.');
+        assertRevision(controller,input.expectedRevision);
+        const before = controller.getState().document;
+        const compiled = compileEdits(before,input.commands,{id:()=>`object-${crypto.randomUUID()}`,now:new Date().toISOString()});
+        if (!compiled.operations.length) return {ok:true,revision:drawRevision(before),selectedIds:compiled.selectedIds,changedIds:[]};
+        const result = await controller.applyOperations(compiled.operations,input.expectedRevision);
+        return {...finish('update',compiled.changedIds,result.before,result.after,true),selectedIds:compiled.selectedIds};
+      }
+    },
+    {
       name: 'draw_inspect', title: 'Inspect Draw efficiently',
       description: 'Read a compact, filterable projection with revision, palette, surface, visible-world geometry, selection, and matching objects. Variable-size geometry, text, references, and residual strings are bounded; stringsTruncated signals that draw_get_state is needed for exact oversized values or the complete portable document.',
       inputSchema: {
@@ -855,6 +881,7 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
       annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
       execute: async (input) => {
         const state = controller.getState();
+        const visibleIds = new Set(visibleObjects(state.document).map(object => object.id));
         const requestedIds = Array.isArray(input.ids) ? new Set(input.ids.map(String)) : undefined;
         const requestedKinds = Array.isArray(input.kinds) ? new Set(input.kinds.map(String)) : undefined;
         const needle = typeof input.text === 'string' ? input.text.trim().toLowerCase() : '';
@@ -864,7 +891,7 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
           if (requestedKinds && !requestedKinds.has(object.kind)) return false;
           if (!needle) return true;
           const searchable = object.kind === 'note' ? object.text : object.kind === 'connector' || object.kind === 'group' ? object.label : '';
-          return searchable.toLowerCase().includes(needle);
+          return `${object.name || ''} ${searchable}`.toLowerCase().includes(needle);
         });
         const surface = state.surface ?? { width: 1440, height: 900 };
         const { x, y, zoom } = state.document.viewport;
@@ -880,7 +907,7 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
             const { sourceSnapshot, sourceIds } = object;
             const sources = sourceIds ? { sourceIds: sourceIds.slice(0, 50), sourceIdCount: sourceIds.length, ...(sourceIds.length > 50 ? { sourceIdsTruncated: true } : {}) } : {};
             const snapshots = sourceSnapshot ? { sourceSnapshotCount: sourceSnapshot.length } : {};
-            const base = { id: object.id, kind: object.kind, createdAt: object.createdAt, ...sources, ...snapshots };
+            const base = { id: object.id, kind: object.kind, name: object.name, hidden: !visibleIds.has(object.id), locked: isLayerLocked(state.document, object.id), ownHidden: object.hidden ?? false, ownLocked: object.locked ?? false, rotation: object.rotation ?? 0, fill: object.fill, strokeWidth: object.strokeWidth, createdAt: object.createdAt, ...sources, ...snapshots };
             if (object.kind === 'stroke') {
               return { ...base, color: object.color, width: object.width, pointCount: object.points.length, bounds: objectBounds([object], state.document.objects) };
             }

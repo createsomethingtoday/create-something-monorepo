@@ -1,3 +1,4 @@
+import { arrowHeadPoints } from '../arrow-geometry';
 import { describe, expect, it } from 'vitest';
 import { createDocument, isDocument, normalizeDocument, type CanvasDocument } from '../document';
 import {
@@ -61,6 +62,85 @@ function canvas(): CanvasDocument {
 }
 
 describe('shared Draw project contract', () => {
+  it('prioritizes visible Canvas artwork over hidden tracks at the drawing limit', () => {
+    const mark={id:'visible',kind:'rectangle' as const,createdAt:'2026-09-23',from:{x:0,y:0},to:{x:100,y:100},color:'#ffffff'};
+    const hidden=Array.from({length:LIMITS.drawings},(_,index)=>({...mark,id:`hidden-${index}`,hidden:true}));
+    const source={...createDocument(),objects:[...hidden,mark]};
+    const existing=syncMotionProject({...source,objects:hidden});
+    for(const result of [importMap(source),syncMotionProject(source),syncMotionProject(source,existing)]) {
+      expect(result.drawings).toHaveLength(LIMITS.drawings);
+      expect(result.drawings.some(drawing=>drawing.id==='visible' && !drawing.hidden)).toBe(true);
+    }
+  });
+  it('gives visible new artwork byte capacity before retained hidden Canvas tracks', () => {
+    const hidden={id:'hidden',kind:'note' as const,createdAt:'2026-09-23',x:0,y:0,width:240,height:120,text:'Hidden',hidden:true};
+    const source={...createDocument(),objects:[hidden]};
+    const existing=syncMotionProject(source),original=LIMITS.bytes;
+    LIMITS.bytes=JSON.stringify({...existing,revision:existing.revision+1}).length+100;
+    try {
+      const result=syncMotionProject({...source,objects:[hidden,{...hidden,id:'visible',hidden:false,text:'Visible'}]},existing);
+      expect(result.drawings.map(drawing=>drawing.id)).toEqual(['visible']);
+      expect(()=>validateProject(result)).not.toThrow();
+    } finally {LIMITS.bytes=original;}
+  });
+  it('keeps extremely large Canvas arrows valid after scene scaling', () => {
+    const source={...createDocument(),objects:[{id:'huge-arrow',kind:'arrow' as const,createdAt:'2026-09-23',from:{x:0,y:0},to:{x:Number.MAX_VALUE,y:0},color:'#ffffff'}]};
+    expect(()=>validateProject(syncMotionProject(source))).not.toThrow();
+  });
+  it.each([2,24])('renders the same fixed arrowhead at shaft weight %s', (strokeWidth) => {
+    const source={...createDocument(),objects:[{id:'arrow',kind:'arrow' as const,createdAt:'2026-09-23',from:{x:0,y:0},to:{x:100,y:0},color:'#ffffff',strokeWidth}]};
+    const project=syncMotionProject(source),drawing=project.drawings[0];
+    expect(drawing.points).toHaveLength(2);
+    expect(drawing.arrowheadScale).toBe(1);
+    const fills: unknown[]=[];let path:unknown[]=[];
+    const ctx=new Proxy({canvas:{width:1280,height:720}}, {get(target,key) { if(key==='beginPath')return()=>{path=[];};if(key==='moveTo'||key==='lineTo')return(x:number,y:number)=>path.push({x,y});if(key==='fill')return()=>fills.push([...path]);return (target as any)[key]??(()=>{});}}) as unknown as CanvasRenderingContext2D;
+    new Renderer().paint(ctx,project,0);
+    expect(fills).toEqual([arrowHeadPoints(drawing.points[0],drawing.points[1])]);
+    expect(()=>validateProject(project)).not.toThrow();
+  });
+  it('does not fill open Canvas arrows when importing to Motion', () => {
+    const source={...createDocument(),objects:[{id:'arrow',kind:'arrow' as const,createdAt:'2026-09-23',from:{x:0,y:0},to:{x:100,y:100},color:'#ffffff',fill:'#0057b8'}]};
+    expect(syncMotionProject(source).drawings[0].fill).toBeUndefined();
+  });
+  it('preserves nested group visibility during initial import and Motion resync', () => {
+    const source = canvas();
+    source.objects.push({id:'outer',kind:'group',createdAt:source.objects[0].createdAt,x:0,y:0,width:420,height:240,label:'Hidden parent',childIds:['group-canvas-only'],hidden:true});
+    const initial = syncMotionProject(source);
+    expect(initial.drawings).toHaveLength(2);
+    expect(initial.drawings.every(drawing => drawing.hidden)).toBe(true);
+    source.objects[source.objects.length - 1].hidden = false;
+    const visible = syncMotionProject(source, initial);
+    expect(visible.drawings.every(drawing => !drawing.hidden)).toBe(true);
+    source.objects[source.objects.length - 1].hidden = true;
+    expect(syncMotionProject(source, visible).drawings.every(drawing => drawing.hidden)).toBe(true);
+  });
+  it('excludes distant hidden layers from visible scene fit while retaining their tracks',()=>{
+    const source={...createDocument(),objects:[{id:'visible',kind:'rectangle' as const,createdAt:'2026-09-23',from:{x:0,y:0},to:{x:100,y:100},color:'#ffffff'}]};
+    const expected=syncMotionProject(source).drawings[0].points;
+    const withHidden={...source,objects:[...source.objects,{...source.objects[0],id:'hidden',hidden:true,from:{x:1e6,y:0},to:{x:1e6+100,y:100}}]};
+    const result=syncMotionProject(withHidden);
+    expect(result.drawings[0].points).toEqual(expected);
+    expect(result.drawings[1]).toMatchObject({id:'hidden',hidden:true});
+    expect(()=>validateProject(result)).not.toThrow();
+  });
+  it('fits rotated anisotropic artwork inside the Motion stage',()=>{
+    const document={...createDocument(),objects:[{id:'tall',kind:'rectangle' as const,createdAt:'2026-09-23',from:{x:0,y:0},to:{x:1000,y:10},color:'#ffffff',rotation:90}]};
+    const motion=syncMotionProject(document),points=motion.drawings[0].points;
+    for(const point of points){expect(point.x).toBeGreaterThanOrEqual(0);expect(point.x).toBeLessThanOrEqual(motion.width);expect(point.y).toBeGreaterThanOrEqual(0);expect(point.y).toBeLessThanOrEqual(motion.height);}
+  });
+  it('retains visibility, fills and animation offsets when Canvas rotation changes',()=>{
+    const source=canvas();source.objects[0]={...source.objects[0],fill:'#0057b8',name:'Decision',hidden:true};
+    source.objects[1]={...source.objects[1],rotation:20};
+    const motion=syncMotionProject(source);
+    expect(motion.drawings[0]).toMatchObject({name:'Decision',fill:'#0057b8',hidden:true});
+    const note=motion.drawings.find(d=>d.id==='note-stable')!;
+    note.poses.push({...note.poses[0],time:1,rotation:35});
+    source.objects[1]={...source.objects[1],rotation:40};
+    const updated=syncMotionProject(source,motion);
+    expect(updated.drawings.find(d=>d.id==='note-stable')!.poses.map(p=>p.rotation)).toEqual([40,55]);
+    expect(()=>validateProject(updated)).not.toThrow();
+  });
+
   it.each(['#f3ebe4', '#f7f4ee'])('renders linked neutral ink %s against current paper before and after reload', (chalk) => {
     const source = { ...canvas(), background: '#eee5d4' };
     const stroke = source.objects[0];

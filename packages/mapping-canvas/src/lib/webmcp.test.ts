@@ -41,7 +41,7 @@ describe('Draw WebMCP tools', () => {
       applyOperations: async (operations) => { const before = document; document = { ...document, title: operations[0].type === 'set_title' ? operations[0].title : document.title }; return { before, after: document }; },
       select: vi.fn(), setTool: vi.fn(), undo: vi.fn(), redo: vi.fn(), reset: vi.fn(), animate
     });
-    expect(tools.map(({ name }) => name)).toEqual(['draw_get_state', 'draw_inspect', 'draw_get_rendered_geometry', 'draw_compose', 'draw_path', 'draw_create_freehand_arrow', 'draw_edit_note', 'draw_get_share_status', 'draw_publish_snapshot', 'draw_update_snapshot', 'draw_revoke_snapshot', 'draw_patch_objects', 'draw_layout', 'draw_auto_layout', 'draw_focus', 'draw_revert_change', 'draw_delete', 'draw_replace_canvas', 'draw_apply_operations', 'draw_select', 'draw_set_tool', 'draw_undo', 'draw_redo', 'draw_reset']);
+    expect(tools.map(({ name }) => name)).toEqual(['draw_get_state', 'draw_edit', 'draw_inspect', 'draw_get_rendered_geometry', 'draw_compose', 'draw_path', 'draw_create_freehand_arrow', 'draw_edit_note', 'draw_get_share_status', 'draw_publish_snapshot', 'draw_update_snapshot', 'draw_revoke_snapshot', 'draw_patch_objects', 'draw_layout', 'draw_auto_layout', 'draw_focus', 'draw_revert_change', 'draw_delete', 'draw_replace_canvas', 'draw_apply_operations', 'draw_select', 'draw_set_tool', 'draw_undo', 'draw_redo', 'draw_reset']);
     const applySchema = tools.find(({ name }) => name === 'draw_apply_operations')!.inputSchema;
     expect(JSON.stringify(applySchema)).toContain('x-maxUtf8Bytes');
     expect(JSON.stringify(applySchema)).toContain('"minItems":2');
@@ -89,7 +89,7 @@ describe('Draw WebMCP tools', () => {
     expect(inspect).toBeDefined();
     const projection = await inspect.execute({ kinds: ['note'], text: 'owner', limit: 10 });
     expect(projection).toMatchObject({
-      version: '2026-09-10.1',
+      version: '2026-09-23.1',
       revision: expect.any(String),
       palette: { chalk: '#f3ebe4', signal: '#0057b8' },
       surface: { width: 1200, height: 800 },
@@ -1419,7 +1419,7 @@ describe('Draw WebMCP tools', () => {
       getState: () => ({ document: createDocument(), selectedIds: [], tool: 'pen', canUndo: false, canRedo: false }),
       applyOperations: vi.fn(), select: vi.fn(), setTool: vi.fn(), undo: vi.fn(), redo: vi.fn(), reset: vi.fn(), animate: vi.fn()
     });
-    expect(registerDrawWebMcpTools(tools, { documentContext: modelContext })).toEqual({ api: 'registerTool', registered: 24 });
+    expect(registerDrawWebMcpTools(tools, { documentContext: modelContext })).toEqual({ api: 'registerTool', registered: 25 });
     const result = await (registered[0].execute as (input: unknown) => Promise<unknown>)({});
     expect(result).toMatchObject({ document: { title: 'Untitled mapping session' }, selectedIds: [] });
   });

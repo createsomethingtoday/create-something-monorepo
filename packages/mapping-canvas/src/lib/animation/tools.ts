@@ -52,7 +52,7 @@ const source = {
     origin: {
       type: 'object',
       required: ['x', 'y', 'scaleX', 'scaleY'],
-      properties: { x: num, y: num, scaleX: num, scaleY: num },
+      properties: { x: num, y: num, scaleX: num, scaleY: num, rotation: num },
       additionalProperties: false
     }
   },
@@ -68,6 +68,9 @@ const drawing = {
     kind: { enum: ['stroke', 'image', 'text'] },
     points: { type: 'array', items: point },
     color: { type: 'string' },
+    fill: { type: 'string', pattern: '^#[0-9a-fA-F]{6}$' },
+    hidden: { type: 'boolean' },
+    arrowheadScale: { type: 'number', exclusiveMinimum: 0, maximum: 1000 },
     weight: num,
     text: { type: 'string' },
     assetId: { type: 'string' },
@@ -122,6 +125,9 @@ export function animationTools(c: AnimationController): DrawWebMcpTool[] {
         id: d.id,
         source: d.source,
         name: d.name,
+        hidden: d.hidden ?? false,
+        fill: d.fill,
+        arrowheadScale: d.arrowheadScale,
         kind: d.kind,
         assetId: d.assetId,
         space: d.space ?? 'world',

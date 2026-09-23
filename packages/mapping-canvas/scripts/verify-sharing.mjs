@@ -12,12 +12,13 @@ const page = await context.newPage(), writes = [];
 page.on('request', (request) => { if (request.url().includes('/api/shares') && request.method() !== 'GET') writes.push(`${request.method()} ${new URL(request.url()).pathname}`); });
 await page.addInitScript(() => { window.__drawWebMcpTools = {}; Object.defineProperty(document, 'modelContext', { configurable: true, value: { registerTool(tool) { window.__drawWebMcpTools[tool.name] = tool; } } }); });
 await page.goto(baseUrl, { waitUntil: 'networkidle' });
-await page.waitForFunction(() => Object.keys(window.__drawWebMcpTools).filter((name) => name.startsWith('draw_')).length === 24);
+await page.waitForFunction(() => Object.keys(window.__drawWebMcpTools).filter((name) => name.startsWith('draw_')).length === 25);
 const result = await page.evaluate(async () => {
   const tools = window.__drawWebMcpTools;
   const before = await tools.draw_get_state.execute({});
   const composed = await tools.draw_compose.execute({ nodes: [{ ref: 'rich', text: 'Draft only' }], placement: 'visible-center' });
   const formatted = await tools.draw_edit_note.execute({ id: composed.refs.rich, content: { blocks: [{ type: 'heading1', runs: [{ text: 'Share proof', bold: true }] }, { type: 'bullet', runs: [{ text: 'Safe circulation', italic: true, link: 'https://example.com/proof' }] }] } });
+  await tools.draw_apply_operations.execute({operations:[{type:'put_object',object:{id:'shared-style-proof',kind:'rectangle',createdAt:new Date().toISOString(),from:{x:500,y:100},to:{x:650,y:200},color:'#ffffff',fill:'#0057b8',strokeWidth:4,rotation:30}},{type:'put_object',object:{id:'hidden-style-proof',kind:'rectangle',createdAt:new Date().toISOString(),from:{x:700,y:100},to:{x:800,y:200},color:'#ff0000',hidden:true}}]});
   await new Promise((resolve) => setTimeout(resolve, 250));
   return { beforeCount: before.document.objects.length, noteId: composed.refs.rich, formatted, state: await tools.draw_get_state.execute({}) };
 });
@@ -48,6 +49,7 @@ await view.addInitScript(() => { window.__registeredShareTools = []; Object.defi
 await view.goto(published.url, { waitUntil: 'networkidle' });
 if (!(await view.getByText('View-only snapshot').isVisible()) || !(await view.getByRole('heading', { name: 'Share proof' }).isVisible()) || !(await view.getByRole('link', { name: 'Safe circulation' }).isVisible())) throw new Error('Anonymous formatted rendering failed.');
 if (await view.locator('textarea,input.title,.toolbar,.file-actions').count() || (await view.evaluate(() => window.__registeredShareTools.some((name) => name.startsWith('draw_'))))) throw new Error('Anonymous snapshot exposed editing controls or Draw WebMCP tools.');
+if(await view.locator('rect[fill="#0057b8"][stroke-width="4"]').count()!==1 || await view.locator('g[transform="rotate(30 575 150)"]').count()!==1 || await view.locator('[stroke="#ff0000"]').count()) throw new Error('Shared view lost rotation/style or painted a hidden layer.');
 await view.screenshot({ path: `${output}/anonymous-share.png`, fullPage: true });
 
 const updated = await page.evaluate(async ({ noteId, revision }) => { const tools = window.__drawWebMcpTools; await tools.draw_edit_note.execute({ id: noteId, content: { blocks: [{ type: 'heading2', runs: [{ text: 'Updated proof', underline: true }] }, { type: 'quote', runs: [{ text: 'Stable link' }] }] } }); return tools.draw_update_snapshot.execute({ expectedShareRevision: revision }); }, { noteId: result.noteId, revision: refreshed.share.revision });
@@ -62,12 +64,12 @@ const beforeReset = await page.evaluate(() => window.__drawWebMcpTools.draw_get_
 const resetProjectId = await page.evaluate(async () => { await window.__drawWebMcpTools.draw_reset.execute({ confirmation: 'RESET CANVAS' }); return (await window.__drawWebMcpTools.draw_get_state.execute({})).document.id; });
 await page.waitForTimeout(300);
 await page.reload({ waitUntil: 'networkidle' });
-await page.waitForFunction(() => Object.keys(window.__drawWebMcpTools).filter((name) => name.startsWith('draw_')).length === 24);
+await page.waitForFunction(() => Object.keys(window.__drawWebMcpTools).filter((name) => name.startsWith('draw_')).length === 25);
 await page.waitForFunction(async (projectId) => { try { return (await window.__drawWebMcpTools.draw_get_state.execute({})).document.id === projectId; } catch { return false; } }, resetProjectId);
 const resetState = await page.evaluate(async () => ({ state: await window.__drawWebMcpTools.draw_get_state.execute({}), share: await window.__drawWebMcpTools.draw_get_share_status.execute({}), projectParam: new URL(location.href).searchParams.get('project') }));
 if (resetState.share.share || resetState.state.document.id === beforeReset.document.id || resetState.projectParam !== resetState.state.document.id) throw new Error('Reset transferred a retained project capability or left a stale project URL.');
 await page.goto(`${baseUrl}/?project=${encodeURIComponent(beforeReset.document.id)}`, { waitUntil: 'networkidle' });
-await page.waitForFunction(() => Object.keys(window.__drawWebMcpTools).filter((name) => name.startsWith('draw_')).length === 24);
+await page.waitForFunction(() => Object.keys(window.__drawWebMcpTools).filter((name) => name.startsWith('draw_')).length === 25);
 await page.waitForFunction(async (projectId) => { try { return (await window.__drawWebMcpTools.draw_get_state.execute({})).document.id === projectId; } catch { return false; } }, beforeReset.document.id);
 const retainedManagement = await page.evaluate(() => window.__drawWebMcpTools.draw_get_share_status.execute({}));
 if (retainedManagement.share?.shareId !== published.shareId || retainedManagement.share?.revision !== 3) throw new Error('Reset orphaned management of the retained published project.');
@@ -78,4 +80,4 @@ if (revokedApi.status() !== 404 || revokedView.status() !== 404) throw new Error
 const localAfter = await page.evaluate(() => window.__drawWebMcpTools.draw_get_state.execute({}));
 if (!localAfter.document.objects.some(({ id }) => id === result.noteId)) throw new Error('Sharing mutated the local source canvas.');
 await anonymous.close(); await context.close(); await browser.close();
-console.log(JSON.stringify({ baseUrl, runLabel, toolCount: 24, ambientWritesBeforePublish: 0, create: 201, anonymousRead: 200, duplicatePublishDenied, expiryTracked: true, conflictDenied, refreshedRevision: 2, stableRevision: 3, staleDenied, invalidCapability: 404, resetProjectIsolated: true, managementRetainedByOriginalProject: true, revoke: 204, postRevokeApi: 404, postRevokeView: 404, localSourceRetained: true, screenshot: `${output}/anonymous-share.png`, result: 'pass' }, null, 2));
+console.log(JSON.stringify({ baseUrl, runLabel, toolCount: 25, ambientWritesBeforePublish: 0, create: 201, anonymousRead: 200, duplicatePublishDenied, expiryTracked: true, conflictDenied, refreshedRevision: 2, stableRevision: 3, staleDenied, invalidCapability: 404, resetProjectIsolated: true, managementRetainedByOriginalProject: true, revoke: 204, postRevokeApi: 404, postRevokeView: 404, localSourceRetained: true, screenshot: `${output}/anonymous-share.png`, result: 'pass' }, null, 2));
