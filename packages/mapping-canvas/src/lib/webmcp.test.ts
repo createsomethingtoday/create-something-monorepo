@@ -21,6 +21,20 @@ describe('Draw WebMCP tools', () => {
     return controller;
   };
 
+  it('reports actual inspection targets and failed edits without changing the document', async () => {
+    const object = { id: 'attention', kind: 'rectangle' as const, createdAt: '2026-09-23', from: { x: 0, y: 0 }, to: { x: 100, y: 80 }, color: '#fcaa2d' };
+    const controller = harness({ ...createDocument(), objects: [object] });
+    const activity = vi.fn();
+    const tools = createDrawWebMcpTools({ ...controller, activity });
+    const before = structuredClone(controller.read());
+    await tools.find(t => t.name === 'draw_inspect')!.execute({ ids: [object.id] });
+    expect(activity.mock.lastCall?.[0].action).toMatchObject({ label: 'Inspecting objects', state: 'completed', ids: [object.id] });
+    await expect(tools.find(t => t.name === 'draw_edit')!.execute({ expectedRevision: 'stale', commands: [] })).rejects.toThrow();
+    expect(activity.mock.lastCall?.[0].action.state).toBe('failed');
+    expect(controller.read()).toEqual(before);
+    expect(controller.animate).not.toHaveBeenCalled();
+  });
+
   it('detects reordered layers in linear time without losing inversion participants', () => {
     const objects = Array.from({ length: 20_000 }, (_, index) => ({
       id: `large-${index}`, kind: 'note' as const, createdAt: '2026-09-04T00:00:00.000Z',
@@ -41,7 +55,7 @@ describe('Draw WebMCP tools', () => {
       applyOperations: async (operations) => { const before = document; document = { ...document, title: operations[0].type === 'set_title' ? operations[0].title : document.title }; return { before, after: document }; },
       select: vi.fn(), setTool: vi.fn(), undo: vi.fn(), redo: vi.fn(), reset: vi.fn(), animate
     });
-    expect(tools.map(({ name }) => name)).toEqual(['draw_get_state', 'draw_edit', 'draw_inspect', 'draw_get_rendered_geometry', 'draw_compose', 'draw_path', 'draw_create_freehand_arrow', 'draw_edit_note', 'draw_get_share_status', 'draw_publish_snapshot', 'draw_update_snapshot', 'draw_revoke_snapshot', 'draw_patch_objects', 'draw_layout', 'draw_auto_layout', 'draw_focus', 'draw_revert_change', 'draw_delete', 'draw_replace_canvas', 'draw_apply_operations', 'draw_select', 'draw_set_tool', 'draw_undo', 'draw_redo', 'draw_reset']);
+    expect(tools.map(({ name }) => name)).toEqual(['draw_get_state', 'draw_edit', 'draw_inspect', 'draw_get_rendered_geometry', 'draw_compose', 'draw_path', 'draw_create_freehand_arrow', 'draw_edit_note', 'draw_get_share_status', 'draw_publish_snapshot', 'draw_update_snapshot', 'draw_revoke_snapshot', 'draw_patch_objects', 'draw_layout', 'draw_auto_layout', 'draw_focus', 'draw_revert_change', 'draw_delete', 'draw_replace_canvas', 'draw_apply_operations', 'draw_select', 'draw_set_tool', 'draw_undo', 'draw_redo', 'draw_reset', 'draw_agent_activity']);
     const applySchema = tools.find(({ name }) => name === 'draw_apply_operations')!.inputSchema;
     expect(JSON.stringify(applySchema)).toContain('x-maxUtf8Bytes');
     expect(JSON.stringify(applySchema)).toContain('"minItems":2');
@@ -89,7 +103,7 @@ describe('Draw WebMCP tools', () => {
     expect(inspect).toBeDefined();
     const projection = await inspect.execute({ kinds: ['note'], text: 'owner', limit: 10 });
     expect(projection).toMatchObject({
-      version: '2026-09-23.1',
+      version: '2026-09-23.2',
       revision: expect.any(String),
       palette: { chalk: '#f3ebe4', signal: '#0057b8' },
       surface: { width: 1200, height: 800 },
@@ -1419,7 +1433,7 @@ describe('Draw WebMCP tools', () => {
       getState: () => ({ document: createDocument(), selectedIds: [], tool: 'pen', canUndo: false, canRedo: false }),
       applyOperations: vi.fn(), select: vi.fn(), setTool: vi.fn(), undo: vi.fn(), redo: vi.fn(), reset: vi.fn(), animate: vi.fn()
     });
-    expect(registerDrawWebMcpTools(tools, { documentContext: modelContext })).toEqual({ api: 'registerTool', registered: 25 });
+    expect(registerDrawWebMcpTools(tools, { documentContext: modelContext })).toEqual({ api: 'registerTool', registered: 26 });
     const result = await (registered[0].execute as (input: unknown) => Promise<unknown>)({});
     expect(result).toMatchObject({ document: { title: 'Untitled mapping session' }, selectedIds: [] });
   });

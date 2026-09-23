@@ -175,7 +175,8 @@ try {
     await page.keyboard.press('Delete');
     expect((await state()).document.objects).toEqual(lockedGraph);
     await page.getByRole('button', {name: 'Eraser tool (E)', exact: true}).click();
-    await page.locator(`[data-object-id="${id}"]`).click();
+    // The connector starts at the rectangle center. Hit its exposed interior instead.
+    await page.locator(`[data-object-id="${id}"]`).click({ position: { x: 30, y: 30 } });
     expect((await state()).document.objects).toEqual(lockedGraph);
     await page.getByRole('button', {name: 'Select tool (V)', exact: true}).click();
     await edit([{type: 'layer', ids: ['clipboard-edge'], locked: false}]);
