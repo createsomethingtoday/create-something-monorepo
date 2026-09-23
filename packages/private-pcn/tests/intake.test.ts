@@ -145,7 +145,10 @@ it('accepts enhanced multipart submissions', async () => {
 });
 it('protects reviewer PII and records a revision-checked decision without creating an invitation', async () => {
   await actions.default(event());
-  await expect(load(event())).rejects.toMatchObject({ status: 303 });
+  await expect(load(event())).rejects.toMatchObject({
+    status: 303,
+    location: '/login?next=/review'
+  });
   const other = event({}, true);
   other.locals.identity.email = 'other@example.com';
   await expect(load(other)).rejects.toMatchObject({ status: 403 });

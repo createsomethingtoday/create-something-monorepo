@@ -17,7 +17,7 @@ type Introduction = {
   created_at: string;
 };
 export const load: PageServerLoad = async ({ locals, platform, url, setHeaders }) => {
-  if (!locals.identity) redirect(303, '/login?next=/review/intake');
+  if (!locals.identity) redirect(303, '/login?next=/review');
   if (!platform?.env || locals.impersonation || !isReviewer(locals.identity, platform.env))
     error(403, 'Reviewer access required.');
   setHeaders({ 'Cache-Control': 'private, no-store' });
