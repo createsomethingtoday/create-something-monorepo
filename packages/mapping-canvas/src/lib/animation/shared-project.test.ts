@@ -61,6 +61,10 @@ function canvas(): CanvasDocument {
 }
 
 describe('shared Draw project contract', () => {
+  it('does not fill open Canvas arrows when importing to Motion', () => {
+    const source={...createDocument(),objects:[{id:'arrow',kind:'arrow' as const,createdAt:'2026-09-23',from:{x:0,y:0},to:{x:100,y:100},color:'#ffffff',fill:'#0057b8'}]};
+    expect(syncMotionProject(source).drawings[0].fill).toBeUndefined();
+  });
   it('preserves nested group visibility during initial import and Motion resync', () => {
     const source = canvas();
     source.objects.push({id:'outer',kind:'group',createdAt:source.objects[0].createdAt,x:0,y:0,width:420,height:240,label:'Hidden parent',childIds:['group-canvas-only'],hidden:true});

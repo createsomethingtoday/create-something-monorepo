@@ -117,7 +117,7 @@ export function importMap(
     const common = {
       id: object.id,
       name: object.name || (object.kind === 'note' ? object.text.slice(0, 80) : object.kind),
-      ...(object.fill && object.fill !== 'none' ? { fill: object.fill } : {}),
+      ...(object.kind !== 'arrow' && object.fill && object.fill !== 'none' ? { fill: object.fill } : {}),
       ...(!visible.has(object.id) ? { hidden: true } : {}),
       kind: 'stroke' as const,
       color:

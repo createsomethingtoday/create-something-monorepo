@@ -235,6 +235,22 @@ try {
     await page.mouse.up();
     await expect(page.getByRole('button', {name: 'Resize selection', exact: true})).toHaveCount(0);
     await call('draw_apply_operations', {expectedRevision: (await inspect()).revision, operations: [{type: 'remove_objects', ids: ['hidden-lasso-group', 'hidden-lasso-child']}]});
+    const createdAt = new Date().toISOString();
+    const probe = (id, x, y) => ({id,kind:'rectangle',createdAt,from:{x,y},to:{x:x+4,y:y+4},color:'#ffffff',fill:'#ffffff'});
+    const geometryFixtures = [
+      {id:'filled-path',kind:'stroke',createdAt,color:'#ffffff',fill:'#0057b8',width:2,points:[{x:600,y:300},{x:700,y:300},{x:700,y:330},{x:630,y:330},{x:630,y:400},{x:600,y:400}]},
+      probe('inside-path',610,350), probe('outside-path',650,350),
+      {id:'rotated-note',kind:'note',createdAt,x:600,y:100,width:100,height:100,text:'Note',rotation:45},
+      probe('note-corner',580,80), probe('note-center',648,148),
+      {id:'rotated-group',kind:'group',createdAt,x:800,y:100,width:100,height:100,label:'Group',childIds:[],rotation:45},
+      probe('group-corner',780,80), probe('group-center',848,148)
+    ];
+    await call('draw_apply_operations', {operations: geometryFixtures.map(object => ({type:'put_object',object}))});
+    for(const [target, inside, outside] of [['filled-path','inside-path','outside-path'],['rotated-note','note-center','note-corner'],['rotated-group','group-center','group-corner']]) {
+      expect((await call('draw_get_rendered_geometry', {ids:[target,inside]})).overlaps).toHaveLength(1);
+      expect((await call('draw_get_rendered_geometry', {ids:[target,outside]})).overlaps).toHaveLength(0);
+    }
+    await call('draw_apply_operations', {operations:[{type:'remove_objects',ids:geometryFixtures.map(object => object.id)}]});
     const beforeReload = (await state()).document;
     await expect(page.locator('.statusbar')).toContainText('Saved');
     await page.reload({ waitUntil: 'networkidle' });

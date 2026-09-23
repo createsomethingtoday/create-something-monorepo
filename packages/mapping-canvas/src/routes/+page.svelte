@@ -328,11 +328,15 @@
     };
     type PaintSegment = { start: { x: number; y: number }; end: { x: number; y: number }; padding: number };
     const paintGeometry = (object: CanvasObject, entry: typeof rendered[number]) => {
-      const segments: PaintSegment[] = [], rects: Array<{ x: number; y: number; width: number; height: number }> = [], triangles: Array<Array<{ x: number; y: number }>> = [];
+      const segments: PaintSegment[] = [], rects: Array<{ x: number; y: number; width: number; height: number }> = [], polygons: Array<Array<{ x: number; y: number }>> = [];
       const addLine = (start: { x: number; y: number }, end: { x: number; y: number }, padding = (object.strokeWidth || 2)/2) => segments.push({ start, end, padding });
-      if (object.kind === 'stroke') for (let index = 1; index < object.points.length; index += 1) addLine(object.points[index - 1], object.points[index], object.width / 2);
-      else if (object.kind === 'arrow') { addLine(object.from, object.to); triangles.push(markerPoints(object.from, object.to)); }
-      else if (object.kind === 'connector') { const connector = connectorById.get(object.id); if (connector) { addLine(connector.route[0], connector.route[1]); triangles.push(markerPoints(connector.route[0], connector.route[1])); if (connector.labelBounds) rects.push(connector.labelBounds.worldBounds); } }
+      const addBody = (x:number,y:number,width:number,height:number) => polygons.push([{x,y},{x:x+width,y},{x:x+width,y:y+height},{x,y:y+height}]);
+      if (object.kind === 'stroke') {
+        for (let index = 1; index < object.points.length; index += 1) addLine(object.points[index - 1], object.points[index], object.width / 2);
+        if(object.fill && object.fill !== 'none' && object.points.length >= 3) polygons.push([...object.points]);
+      }
+      else if (object.kind === 'arrow') { addLine(object.from, object.to); polygons.push(markerPoints(object.from, object.to)); }
+      else if (object.kind === 'connector') { const connector = connectorById.get(object.id); if (connector) { addLine(connector.route[0], connector.route[1]); polygons.push(markerPoints(connector.route[0], connector.route[1])); if (connector.labelBounds) rects.push(connector.labelBounds.worldBounds); } }
       else if (object.kind === 'rectangle') { const left = Math.min(object.from.x, object.to.x), right = Math.max(object.from.x, object.to.x), top = Math.min(object.from.y, object.to.y), bottom = Math.max(object.from.y, object.to.y); addLine({ x: left, y: top }, { x: right, y: top }); addLine({ x: right, y: top }, { x: right, y: bottom }); addLine({ x: right, y: bottom }, { x: left, y: bottom }); addLine({ x: left, y: bottom }, { x: left, y: top }); }
       else if (object.kind === 'ellipse') {
         const center = { x: (object.from.x + object.to.x) / 2, y: (object.from.y + object.to.y) / 2 }, radius = { x: Math.abs(object.to.x - object.from.x) / 2, y: Math.abs(object.to.y - object.from.y) / 2 };
@@ -344,27 +348,25 @@
           const middleAngle = (index - .5) / segmentCount * Math.PI * 2;
           const sagitta = (1 - Math.cos(Math.PI / segmentCount)) * Math.hypot(radius.x * Math.cos(middleAngle), radius.y * Math.sin(middleAngle));
           addLine(points[index - 1], points[index], (object.strokeWidth || 2)/2 + sagitta);
-          if(object.fill && object.fill!=='none') triangles.push([center,points[index-1],points[index]]);
+          if(object.fill && object.fill!=='none') polygons.push([center,points[index-1],points[index]]);
         }
       }
       else if (object.kind === 'group') {
-        rects.push({ x: object.x - 1, y: object.y - 1, width: object.width + 2, height: object.height + 2 });
+        addBody(object.x-1,object.y-1,object.width+2,object.height+2);
         const label = surface.querySelector<SVGGraphicsElement>(`[data-object-id="${CSS.escape(object.id)}"] .group-label`);
-        if (label) rects.push(worldBounds(paintedRect(label)));
+        if (label) { const box=label.getBBox(); const padding=Number.parseFloat(getComputedStyle(label).strokeWidth)||0; addBody(box.x-padding/2,box.y-padding/2,box.width+padding,box.height+padding); }
       }
-      else rects.push(entry.worldBounds);
+      else if (object.kind === 'note') addBody(object.x-1,object.y-1,object.width+2,object.height+2);
       if(object.kind==='rectangle' && object.fill && object.fill!=='none') {
-        const a=object.from,b=object.to,c={x:b.x,y:a.y},d={x:a.x,y:b.y};triangles.push([a,c,b],[a,b,d]);
+        const a=object.from,b=object.to,c={x:b.x,y:a.y},d={x:a.x,y:b.y};polygons.push([a,c,b],[a,b,d]);
       }
       if(object.rotation) {
         const b=editBounds([object]),cx=b.x+b.width/2,cy=b.y+b.height/2,r=object.rotation*Math.PI/180;
         const rotate=(p:Point)=>({x:cx+(p.x-cx)*Math.cos(r)-(p.y-cy)*Math.sin(r),y:cy+(p.x-cx)*Math.sin(r)+(p.y-cy)*Math.cos(r)});
         for(const segment of segments){segment.start=rotate(segment.start);segment.end=rotate(segment.end);}
-        for(let i=0;i<triangles.length;i++) triangles[i]=triangles[i].map(rotate);
-        // Text bounds are already measured from the transformed DOM.
-        if(object.kind==='group') rects[0]=entry.worldBounds;
+        for(let i=0;i<polygons.length;i++) polygons[i]=polygons[i].map(rotate);
       }
-      return { segments, rects, triangles };
+      return { segments, rects, polygons };
     };
     const pointSegmentDistance = (point: { x: number; y: number }, segment: PaintSegment) => { const dx = segment.end.x - segment.start.x, dy = segment.end.y - segment.start.y, lengthSquared = dx * dx + dy * dy, t = lengthSquared ? Math.max(0, Math.min(1, ((point.x - segment.start.x) * dx + (point.y - segment.start.y) * dy) / lengthSquared)) : 0; return Math.hypot(point.x - (segment.start.x + t * dx), point.y - (segment.start.y + t * dy)); };
     const segmentDistance = (first: PaintSegment, second: PaintSegment) => {
@@ -404,28 +406,35 @@
       }
       return false;
     };
-    const triangleEdges = (triangle: Array<{ x: number; y: number }>) => triangle.map((start, index) => ({ start, end: triangle[(index + 1) % triangle.length], padding: 0 }));
-    const pointInTriangle = (point: { x: number; y: number }, triangle: Array<{ x: number; y: number }>) => {
-      const cross = (a: { x: number; y: number }, b: { x: number; y: number }, c: { x: number; y: number }) => (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
-      const sides = triangle.map((vertex, index) => cross(vertex, triangle[(index + 1) % triangle.length], point));
-      return sides.every((side) => side >= 0) || sides.every((side) => side <= 0);
+    const polygonEdges = (polygon: Array<{ x: number; y: number }>) => polygon.map((start, index) => ({ start, end: polygon[(index + 1) % polygon.length], padding: 0 }));
+    // Match SVG/Canvas's default nonzero fill rule, including concave freehand paths.
+    const pointInPolygon = (point: Point, polygon: Point[]) => {
+      let winding=0;
+      for(let index=0;index<polygon.length;index++) {
+        const a=polygon[index],b=polygon[(index+1)%polygon.length];
+        const cross=(b.x-a.x)*(point.y-a.y)-(b.y-a.y)*(point.x-a.x);
+        if(Math.abs(cross)<1e-8 && point.x>=Math.min(a.x,b.x) && point.x<=Math.max(a.x,b.x) && point.y>=Math.min(a.y,b.y) && point.y<=Math.max(a.y,b.y)) return true;
+        if(a.y<=point.y && b.y>point.y && cross>0) winding++;
+        else if(a.y>point.y && b.y<=point.y && cross<0) winding--;
+      }
+      return winding!==0;
     };
-    const triangleHitsRect = (triangle: Array<{ x: number; y: number }>, rect: { x: number; y: number; width: number; height: number }) => {
+    const polygonHitsRect = (polygon: Array<{ x: number; y: number }>, rect: { x: number; y: number; width: number; height: number }) => {
       const corners = [{ x: rect.x, y: rect.y }, { x: rect.x + rect.width, y: rect.y }, { x: rect.x + rect.width, y: rect.y + rect.height }, { x: rect.x, y: rect.y + rect.height }];
-      return triangleEdges(triangle).some((edge) => segmentHitsBounds(edge.start, edge.end, rect, 0)) || corners.some((corner) => pointInTriangle(corner, triangle)) || triangle.some((point) => point.x >= rect.x && point.x <= rect.x + rect.width && point.y >= rect.y && point.y <= rect.y + rect.height);
+      return polygonEdges(polygon).some((edge) => segmentHitsBounds(edge.start, edge.end, rect, 0)) || corners.some((corner) => pointInPolygon(corner, polygon)) || polygon.some((point) => point.x >= rect.x && point.x <= rect.x + rect.width && point.y >= rect.y && point.y <= rect.y + rect.height);
     };
-    const triangleHitsSegment = (triangle: Array<{ x: number; y: number }>, segment: PaintSegment) => pointInTriangle(segment.start, triangle) || pointInTriangle(segment.end, triangle) || triangleEdges(triangle).some((edge) => segmentDistance(edge, segment) <= segment.padding);
-    const trianglesOverlap = (first: Array<{ x: number; y: number }>, second: Array<{ x: number; y: number }>) => first.some((point) => pointInTriangle(point, second)) || second.some((point) => pointInTriangle(point, first)) || triangleEdges(first).some((edge) => triangleEdges(second).some((candidate) => segmentDistance(edge, candidate) === 0));
-    const paintHitsRect = (paint: ReturnType<typeof paintGeometry>, rect: { x: number; y: number; width: number; height: number }) => paint.rects.some((candidate) => overlapBounds(candidate, rect)) || paint.segments.some((segment) => segmentHitsBounds(segment.start, segment.end, rect, segment.padding)) || paint.triangles.some((triangle) => triangleHitsRect(triangle, rect));
+    const polygonHitsSegment = (polygon: Array<{ x: number; y: number }>, segment: PaintSegment) => pointInPolygon(segment.start, polygon) || pointInPolygon(segment.end, polygon) || polygonEdges(polygon).some((edge) => segmentDistance(edge, segment) <= segment.padding);
+    const polygonsOverlap = (first: Array<{ x: number; y: number }>, second: Array<{ x: number; y: number }>) => first.some((point) => pointInPolygon(point, second)) || second.some((point) => pointInPolygon(point, first)) || polygonEdges(first).some((edge) => polygonEdges(second).some((candidate) => segmentDistance(edge, candidate) === 0));
+    const paintHitsRect = (paint: ReturnType<typeof paintGeometry>, rect: { x: number; y: number; width: number; height: number }) => paint.rects.some((candidate) => overlapBounds(candidate, rect)) || paint.segments.some((segment) => segmentHitsBounds(segment.start, segment.end, rect, segment.padding)) || paint.polygons.some((polygon) => polygonHitsRect(polygon, rect));
     const paintCache = new Map<string, ReturnType<typeof paintGeometry>>();
     const paintFor = (object: CanvasObject, entry: typeof rendered[number]) => { const cached = paintCache.get(object.id); if (cached) return cached; const paint = paintGeometry(object, entry); paintCache.set(object.id, paint); return paint; };
     const paintsOverlap = (a: ReturnType<typeof paintGeometry>, b: ReturnType<typeof paintGeometry>) => {
       if (a.rects.some((rect) => b.rects.some((candidate) => overlapBounds(rect, candidate)))) return true;
       if (a.segments.some((segment) => b.rects.some((rect) => segmentHitsBounds(segment.start, segment.end, rect, segment.padding))) || b.segments.some((segment) => a.rects.some((rect) => segmentHitsBounds(segment.start, segment.end, rect, segment.padding)))) return true;
       if (segmentsOverlap(a.segments, b.segments)) return true;
-      if (a.triangles.some((triangle) => b.rects.some((rect) => triangleHitsRect(triangle, rect))) || b.triangles.some((triangle) => a.rects.some((rect) => triangleHitsRect(triangle, rect)))) return true;
-      if (a.triangles.some((triangle) => b.segments.some((segment) => triangleHitsSegment(triangle, segment))) || b.triangles.some((triangle) => a.segments.some((segment) => triangleHitsSegment(triangle, segment)))) return true;
-      return a.triangles.some((triangle) => b.triangles.some((candidate) => trianglesOverlap(triangle, candidate)));
+      if (a.polygons.some((polygon) => b.rects.some((rect) => polygonHitsRect(polygon, rect))) || b.polygons.some((polygon) => a.rects.some((rect) => polygonHitsRect(polygon, rect)))) return true;
+      if (a.polygons.some((polygon) => b.segments.some((segment) => polygonHitsSegment(polygon, segment))) || b.polygons.some((polygon) => a.segments.some((segment) => polygonHitsSegment(polygon, segment)))) return true;
+      return a.polygons.some((polygon) => b.polygons.some((candidate) => polygonsOverlap(polygon, candidate)));
     };
     const paintedOverlap = (firstObject: CanvasObject, first: typeof rendered[number], secondObject: CanvasObject, second: typeof rendered[number]) => paintsOverlap(paintFor(firstObject, first), paintFor(secondObject, second));
     const connectorContactPoint = (id: string) => {
@@ -447,7 +456,7 @@
         return pieces;
       };
       const segments = contacts.reduce((pieces, contact) => pieces.flatMap((segment) => cut(segment, contact)), paint.segments);
-      return { ...paint, segments, triangles: paint.triangles.filter((triangle) => !contacts.some((contact) => pointInTriangle(contact, triangle))) };
+      return { ...paint, segments, polygons: paint.polygons.filter((polygon) => !contacts.some((contact) => pointInPolygon(contact, polygon))) };
     };
     const overlap = (first: typeof rendered[number], second: typeof rendered[number]) => overlapBounds(first.worldBounds, second.worldBounds);
     const overlaps: DrawRenderedGeometry['overlaps'] = [];
