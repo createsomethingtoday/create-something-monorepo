@@ -1,6 +1,9 @@
 <script lang="ts">
 	import { QuoteBlock, SEO } from '@create-something/canon';
+	import ExperimentOrientation from '$lib/components/ExperimentOrientation.svelte';
+	import ExperimentRecord from '$lib/components/ExperimentRecord.svelte';
 	import ExperimentVisualSummary from '$lib/components/ExperimentVisualSummary.svelte';
+	import { experimentGuides } from '$lib/config/experimentSharpness';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -28,8 +31,10 @@
 			<span class="reading-time">{experiment.reading_time_minutes} min read</span>
 		</div>
 		<h1>{experiment.title}</h1>
+		<ExperimentOrientation guide={experimentGuides['experiments/text-revelation']} />
 		<p class="subtitle">{experiment.description}</p>
 	</header>
+	<ExperimentRecord>
 
 	<!-- ASCII Art -->
 	{#if experiment.ascii_art}
@@ -281,6 +286,7 @@
 		</p>
 	</section>
 
+	</ExperimentRecord>
 	<!-- Tags -->
 	<footer class="experiment-footer">
 		<div class="tags">

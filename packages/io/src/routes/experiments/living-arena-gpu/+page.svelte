@@ -17,7 +17,10 @@
 	import { goto } from '$app/navigation';
 	import { browser } from '$app/environment';
 	import { SEO } from '@create-something/canon';
+	import ExperimentOrientation from '$lib/components/ExperimentOrientation.svelte';
+	import ProgressiveExperiment from '$lib/components/ProgressiveExperiment.svelte';
 	import ExperimentVisualSummary from '$lib/components/ExperimentVisualSummary.svelte';
+	import { experimentGuides } from '$lib/config/experimentSharpness';
 	import type { PageData } from './$types';
 	import {
 		Shield,
@@ -428,11 +431,13 @@
 		<div class="header-content">
 			<span class="experiment-label">Experiment</span>
 			<h1 class="experiment-title">Living Arena <span class="gpu-badge"><Cpu size={20} /> GPU</span></h1>
+			<ExperimentOrientation guide={experimentGuides['experiments/living-arena-gpu']} />
 			<p class="experiment-description">
 				WebGPU-accelerated crowd simulation with <strong>{agentCount.toLocaleString()} agents</strong> showing
 				emergent behaviors—bottleneck formation, wave propagation, and panic spreading.
 			</p>
 		</div>
+		<ProgressiveExperiment fallback="Enable JavaScript to control or share the crowd simulation.">
 		<div class="header-right">
 			<div class="header-controls">
 				<button class="live-toggle" class:active={liveMode} onclick={() => (liveMode = !liveMode)}>
@@ -452,7 +457,9 @@
 				>
 			</div>
 		</div>
+		</ProgressiveExperiment>
 	</header>
+	<ProgressiveExperiment fallback="This is a simulated crowd model. Enable JavaScript to choose scenarios and inspect live movement.">
 
 	<ExperimentVisualSummary visual={experiment.visual_summary} />
 
@@ -781,6 +788,7 @@
 			</div>
 		</div>
 	</footer>
+	</ProgressiveExperiment>
 </div>
 
 <style>
