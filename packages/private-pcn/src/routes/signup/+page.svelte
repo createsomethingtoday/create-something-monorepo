@@ -44,7 +44,9 @@
         : 'BUILDER ACCESS'}
   </p>
   <h1>
-    {recovery ? 'Find your' : 'Make it'}<br /><SerifPhrase text={recovery ? 'way back.' : 'yours.'} />
+    {recovery ? 'Find your' : 'Make it'}<br /><SerifPhrase
+      text={recovery ? 'way back.' : 'yours.'}
+    />
   </h1>
   {#if sent}
     <div role="status">
@@ -98,6 +100,9 @@
       >
     </form>
   {/if}
+  {#if !recovery}<p class="muted">
+      No invitation yet? <a href="/join">Introduce yourself</a>.
+    </p>{/if}
   <p class="muted">
     Already have an account? <a href={`/login?next=${encodeURIComponent(next)}`}
       >Sign in <Icon name="arrow-right" /></a
