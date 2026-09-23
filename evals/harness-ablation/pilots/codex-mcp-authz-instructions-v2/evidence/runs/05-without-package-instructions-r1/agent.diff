@@ -1,0 +1,160 @@
+diff --git a/packages/mcp-authz/src/hub.ts b/packages/mcp-authz/src/hub.ts
+index a5c8ce7..20bd65b 100644
+--- a/packages/mcp-authz/src/hub.ts
++++ b/packages/mcp-authz/src/hub.ts
+@@ -9,43 +9,50 @@ const WRITE_PATTERN = /\b(create|update|upsert|insert|append|send|post|publish|s
+ const AUTH_ADMIN_PATTERN = /\b(get_connect_link|oauth|authorize|auth|token|consent|credential|scope)\b/i;
+ const CONTROL_PLANE_PATTERN = /\b(policy|rollout|registry|state|quota|rate_limit|discovery|bundle|trace)\b/i;
+ 
+-function joinedRouteText(route: {
++function normalizedRouteIdentifiers(route: {
+   proxyToolName: string;
+   serverName: string;
+   downstreamToolName: string;
+-}, definition?: ToolLike): string {
++}): string {
+   return [
+     route.proxyToolName,
+     route.serverName,
+     route.downstreamToolName,
+-    definition?.description ?? '',
+   ]
+     .join(' ')
+     .replace(/[_:/.-]+/g, ' ')
+     .toLowerCase();
+ }
+ 
++function normalizedInvocationAction(invocationAction: string): string {
++  return invocationAction.replace(/[_:/.-]+/g, ' ').toLowerCase();
++}
++
++function classifyIntent(intent: string): AuthorizationAccessType {
++  if (DESTRUCTIVE_PATTERN.test(intent)) return 'destructive';
++  if (CONTROL_PLANE_PATTERN.test(intent)) return 'control_plane';
++  if (AUTH_ADMIN_PATTERN.test(intent)) return 'auth_admin';
++  if (WRITE_PATTERN.test(intent)) return 'write';
++  return 'read';
++}
++
+ export function classifyHubRoute(route: {
+   proxyToolName: string;
+   serverName: string;
+   downstreamToolName: string;
+   serverTags?: string[] | null;
++  invocationAction?: string | null;
+ }, definition?: ToolLike): {
+   accessType: AuthorizationAccessType;
+   oauthRequired: boolean;
+   tags: string[];
+ } {
+-  const text = joinedRouteText(route, definition);
+-  let accessType: AuthorizationAccessType = 'read';
+-  if (DESTRUCTIVE_PATTERN.test(text)) {
+-    accessType = 'destructive';
+-  } else if (CONTROL_PLANE_PATTERN.test(text)) {
+-    accessType = 'control_plane';
+-  } else if (AUTH_ADMIN_PATTERN.test(text)) {
+-    accessType = 'auth_admin';
+-  } else if (WRITE_PATTERN.test(text)) {
+-    accessType = 'write';
+-  }
++  // Descriptions are free-form operator-facing text. They are retained below,
++  // but must not alter a route's authorization intent. A concrete invocation
++  // action is more specific than a multiplexed route name when it is present.
++  const accessType = route.invocationAction
++    ? classifyIntent(normalizedInvocationAction(route.invocationAction))
++    : classifyIntent(normalizedRouteIdentifiers(route));
+ 
+   const oauthRequired =
+     route.serverName.startsWith('composio-toolkit-') ||
+@@ -76,6 +83,7 @@ export function buildHubAuthorizationRequest(input: {
+   serverName: string;
+   downstreamToolName: string;
+   serverTags?: string[] | null;
++  invocationAction?: string | null;
+   actionName: 'discover' | 'execute';
+   definition?: ToolLike;
+   context?: Record<string, unknown>;
+@@ -86,6 +94,7 @@ export function buildHubAuthorizationRequest(input: {
+       serverName: input.serverName,
+       downstreamToolName: input.downstreamToolName,
+       serverTags: input.serverTags ?? null,
++      invocationAction: input.invocationAction ?? null,
+     },
+     input.definition,
+   );
+@@ -118,6 +127,7 @@ export function buildHubAuthorizationRequest(input: {
+       tags: classification.tags,
+       metadata: {
+         description: input.definition?.description ?? null,
++        invocationAction: input.invocationAction ?? null,
+       },
+     },
+     context: input.context,
+diff --git a/packages/mcp-authz/test/authz.test.mjs b/packages/mcp-authz/test/authz.test.mjs
+index a6a1793..04c7aaa 100644
+--- a/packages/mcp-authz/test/authz.test.mjs
++++ b/packages/mcp-authz/test/authz.test.mjs
+@@ -62,6 +62,62 @@ test('hub route classification treats reviewer unassignment as write access', ()
+   assert.equal(classification.accessType, 'write');
+ });
+ 
++test('hub route classification ignores incidental destructive and control-plane description words', () => {
++  const classification = classifyHubRoute(
++    {
++      proxyToolName: 'workspace-tools__list_documents',
++      serverName: 'workspace-tools',
++      downstreamToolName: 'list_documents',
++    },
++    {
++      description: 'Lists documents, including their state and whether they are in the trash.',
++    },
++  );
++
++  assert.equal(classification.accessType, 'read');
++});
++
++test('hub route classification gives a concrete invocation action precedence over a multiplexed route', () => {
++  const route = {
++    proxyToolName: 'admin-tools__manage',
++    serverName: 'admin-tools',
++    downstreamToolName: 'manage_policy_state',
++  };
++
++  assert.equal(classifyHubRoute({ ...route, invocationAction: 'list' }).accessType, 'read');
++  assert.equal(classifyHubRoute({ ...route, invocationAction: 'update' }).accessType, 'write');
++  assert.equal(classifyHubRoute({ ...route, invocationAction: 'delete' }).accessType, 'destructive');
++  assert.equal(classifyHubRoute({ ...route, invocationAction: 'authorize' }).accessType, 'auth_admin');
++  assert.equal(classifyHubRoute({ ...route, invocationAction: 'get_policy_state' }).accessType, 'control_plane');
++});
++
++test('hub authorization requests retain and authorize against the invocation action', async () => {
++  const request = buildHubAuthorizationRequest({
++    accountId: 'acct_1',
++    sessionId: 'session_1',
++    toolMode: 'read_only',
++    identitySource: 'session',
++    proxyToolName: 'admin-tools__manage',
++    serverName: 'admin-tools',
++    downstreamToolName: 'manage_policy_state',
++    invocationAction: 'list',
++    actionName: 'execute',
++  });
++
++  assert.equal(request.resource.accessType, 'read');
++  assert.equal(request.action.writeIntent, false);
++  assert.equal(request.resource.metadata?.invocationAction, 'list');
++
++  const result = await evaluateAuthorizationRequest(
++    'policy.hub-route-authorization.v1',
++    request,
++    { mode: 'legacy_enforce', canaryPercent: 0 },
++    { mode: 'legacy' },
++  );
++
++  assert.equal(result.final.decision, 'allow');
++});
++
+ test('hub route auth blocks mutation discovery for read-only sessions', async () => {
+   const request = buildHubAuthorizationRequest({
+     accountId: 'acct_1',
