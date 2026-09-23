@@ -16,8 +16,8 @@ describe('Draw WebMCP page integration', () => {
   it('uses shared indexes for focus and connector rendering', () => {
     expect(page).toContain('const objectIndex = $derived(new Map(document.objects.map((object) => [object.id, object])))');
     expect(page).toContain('const objects = ids?.map((id) => objectIndex.get(id))');
-    expect(page).toContain('const from = objectIndex.get(object.fromId), to = objectIndex.get(object.toId)');
-    expect(page).toContain('{@const from = objectIndex.get(object.fromId)}{@const to = objectIndex.get(object.toId)}');
+    expect(page).toContain('const resolveConnector = $derived(createConnectorResolver(document.objects))');
+    expect(page).toContain('{@const route = resolveConnector(object)}');
   });
 
   it('keeps formatting changes undoable and makes imports a new history boundary', () => {

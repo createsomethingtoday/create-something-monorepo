@@ -2,17 +2,17 @@
   import type { PageData } from './$types';
   import { visibleObjects, editBounds, visualBounds } from '$lib/editing';
   import RichNote from '$lib/RichNote.svelte';
-  import { createObjectCenterResolver, objectBounds, uid } from '$lib/document';
+  import { createConnectorResolver, connectorHeadPoints } from '$lib/connector-geometry';
+  import { objectBounds, uid } from '$lib/document';
   import { saveDocument } from '$lib/persistence';
   import { connectorLabelLayout } from '$lib/webmcp';
   let { data }: { data: PageData } = $props();
   const DRAW_DOCUMENT_LOCK = 'draw-active-document';
   let copyStatus = $state('');
   const document = $derived(data.share.document);
-  const index = $derived(new Map(document.objects.map((object) => [object.id, object])));
   const visible = $derived(visibleObjects(document));
   const objects = $derived([...visible.filter(o=>o.kind==='group'),...visible.filter(o=>o.kind!=='group')]);
-  const center = $derived(createObjectCenterResolver(document.objects));
+  const resolveConnector = $derived(createConnectorResolver(document.objects));
   const connectorLabels = $derived(connectorLabelLayout(document.objects));
   const bounds = $derived(visualBounds(visible));
   const frame = $derived({ x: bounds.x - 60, y: bounds.y - 60, width: Math.max(320, bounds.width + 120), height: Math.max(240, bounds.height + 120) });
@@ -43,7 +43,7 @@
         {:else if object.kind === 'arrow'}<line x1={object.from.x} y1={object.from.y} x2={object.to.x} y2={object.to.y} stroke={object.color} stroke-width={object.strokeWidth || 2} marker-end="url(#head)" />
         {:else if object.kind === 'note'}<g><rect x={object.x} y={object.y} width={object.width} height={object.height} rx="4" fill="#111" stroke="rgba(255,255,255,.22)" /><foreignObject x={object.x+16} y={object.y+14} width={object.width-32} height={object.height-28}>{#if object.content}<RichNote content={object.content}/>{:else}<div xmlns="http://www.w3.org/1999/xhtml" class="plain">{object.text}</div>{/if}</foreignObject></g>
         {:else if object.kind === 'group'}<g><rect x={object.x} y={object.y} width={object.width} height={object.height} fill="rgba(252,170,45,.025)" stroke="#fcaa2d" stroke-dasharray="8 6"/><text x={object.x+12} y={object.y+24}>{object.label}</text></g>
-        {:else if object.kind === 'connector'}{@const from=index.get(object.fromId)}{@const to=index.get(object.toId)}{#if from&&to}{@const a=center(from)}{@const b=center(to)}{@const label=connectorLabels.get(object.id)}<line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#fcaa2d" marker-end="url(#head)" />{#if object.label&&label}<text class="connector-label" x={label.x} y={label.y} text-anchor="middle">{object.label}</text>{/if}{/if}{/if}
+        {:else if object.kind === 'connector'}{@const route=resolveConnector(object)}{#if route}{@const a=route.a}{@const b=route.b}{@const label=connectorLabels.get(object.id)}<line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#fcaa2d" /><polygon points={connectorHeadPoints(a,b).map(point=>`${point.x},${point.y}`).join(" ")} fill="#fcaa2d" />{#if object.label&&label}<text class="connector-label" x={label.x} y={label.y} text-anchor="middle">{object.label}</text>{/if}{/if}{/if}
         </g>
       {/each}
     </svg>
