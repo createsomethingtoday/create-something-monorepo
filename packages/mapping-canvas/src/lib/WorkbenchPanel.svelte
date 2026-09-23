@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { CanvasDocument, CanvasObject } from './document';
-  import { editBounds, isLayerLocked, type EditCommand } from './editing';
+  import { editBounds, transformRoots, isLayerLocked, type EditCommand } from './editing';
   let {
     document,
     selectedIds,
@@ -18,7 +18,8 @@
   const selected = $derived(
     document.objects.filter((o: CanvasObject) => selectedIds.includes(o.id))
   );
-  const bounds = $derived(editBounds(selected));
+  const roots = $derived(transformRoots(document, selectedIds));
+  const bounds = $derived(editBounds(roots));
   const first = $derived(selected[0]);
   const locked = $derived(selected.some((o: CanvasObject) => isLayerLocked(document, o.id)));
   const inheritedLock = $derived(selected.some((o:CanvasObject)=>!o.locked && isLayerLocked(document,o.id)));
@@ -76,7 +77,7 @@
             >Rotation<input
               type="number"
               aria-label="Selection rotation"
-              value={first.rotation || 0}
+              value={roots[0]?.rotation || 0}
               disabled={disabled || locked}
               onchange={(e) => geometry('rotation', e.currentTarget.value)}
             /></label

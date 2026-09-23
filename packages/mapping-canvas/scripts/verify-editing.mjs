@@ -158,6 +158,21 @@ try {
         }
       ]
     });
+    await edit([{type: 'layer', ids: ['clipboard-edge'], locked: true}]);
+    const lockedGraph = (await state()).document.objects;
+    await call('draw_select', {ids: [id]});
+    await page.locator(`[data-object-id="${id}"]`).focus();
+    await page.keyboard.press('Delete');
+    expect((await state()).document.objects).toEqual(lockedGraph);
+    await page.getByRole('button', {name: 'Eraser tool (E)', exact: true}).click();
+    await page.locator(`[data-object-id="${id}"]`).click();
+    expect((await state()).document.objects).toEqual(lockedGraph);
+    await page.getByRole('button', {name: 'Select tool (V)', exact: true}).click();
+    await edit([{type: 'layer', ids: ['clipboard-edge'], locked: false}]);
+    await edit([{type: 'transform', ids: ['clipboard-edge', id], rotation: 30}]);
+    expect((await state()).document.objects.find(object => object.id === id).rotation).toBe(30);
+    await page.getByRole('button', {name: 'Undo', exact: true}).click();
+    expect((await state()).document.objects.find(object => object.id === id).rotation).toBe(20);
     await call('draw_select', { ids: ['clipboard-edge'] });
     await page.locator('[data-object-id="clipboard-edge"]').focus();
     const beforeConnectorCopy = (await state()).document.objects.length;

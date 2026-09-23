@@ -99,17 +99,7 @@ export function compileEdits(
     if (command.type === 'transform') {
       const geometry = objects.filter((object) => object.kind !== 'connector');
       if (!geometry.length) throw new Error('Transform connector endpoints instead.');
-      const roots = geometry.filter(
-        (object) =>
-          command.ids.includes(object.id) &&
-          !geometry.some(
-            (parent) =>
-              parent.kind === 'group' &&
-              command.ids.includes(parent.id) &&
-              parent.id !== object.id &&
-              descendants(draft, [parent.id]).has(object.id)
-          )
-      );
+      const roots = transformRoots(draft, command.ids);
       const bounds = editBounds(roots);
       const x = command.x === undefined ? bounds.x : number(command.x, 'x');
       const y = command.y === undefined ? bounds.y : number(command.y, 'y');
@@ -125,7 +115,7 @@ export function compileEdits(
       const deltaRotation =
         rotation === undefined
           ? 0
-          : rotation - (draft.objects.find((o) => o.id === command.ids[0])?.rotation || 0);
+          : rotation - (roots[0]?.rotation || 0);
       const point = (p: Point) => ({ x: x + (p.x - bounds.x) * sx, y: y + (p.y - bounds.y) * sy });
       draft.objects = draft.objects.map((object) => {
         if (!ids.has(object.id) || object.kind === 'connector') return object;
@@ -389,6 +379,11 @@ export function visibleObjects(document: CanvasDocument) {
       !hidden.has(object.id) &&
       (object.kind !== 'connector' || (!hidden.has(object.fromId) && !hidden.has(object.toId)))
   );
+}
+/** Shared transform baseline: visible controls and commands use the same geometry roots. */
+export function transformRoots(document: CanvasDocument, ids: string[]): CanvasObject[] {
+  const selected = document.objects.filter(object => ids.includes(object.id) && object.kind !== 'connector');
+  return selected.filter(object => !selected.some(parent => parent.kind === 'group' && parent.id !== object.id && descendants(document, [parent.id]).has(object.id)));
 }
 export function editBounds(objects: CanvasObject[]): Bounds {
   const points: Point[] = [];

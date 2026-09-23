@@ -4,7 +4,7 @@
   import ProjectModes from '$lib/ProjectModes.svelte';
   import { loadProjects, type ProjectSummary } from '$lib/animation/storage';
   import WorkbenchPanel from '$lib/WorkbenchPanel.svelte';
-  import { compileEdits, clipboardObjects, editBounds, visualBounds, assertLockedLayersPreserved, descendants, visibleObjects, isLayerLocked, type EditCommand } from '$lib/editing';
+  import { compileEdits, clipboardObjects, transformRoots, editBounds, visualBounds, assertLockedLayersPreserved, descendants, visibleObjects, isLayerLocked, type EditCommand } from '$lib/editing';
   import { onMount } from 'svelte';
   import { loadDocument, saveDocument } from '$lib/persistence';
   import { activateCanvasProject } from '$lib/project-storage';
@@ -112,7 +112,8 @@
   const paletteVisible = $derived(['pen', 'rectangle', 'ellipse', 'arrow'].includes(tool) || selectedObjects.some(isColorableObject));
   const visibleLayers = $derived(visibleObjects(document));
   const renderObjects = $derived([...visibleLayers.filter(o=>o.kind==='group'),...visibleLayers.filter(o=>o.kind!=='group')]);
-  const selectionBounds = $derived(editBounds(selectedObjects));
+  const selectionRoots = $derived(transformRoots(document, selectedIds));
+  const selectionBounds = $derived(editBounds(selectionRoots));
   let panelOpen = $state(true);
   let projects = $state<ProjectSummary[]>([]);
   let emptyDismissed = $state(false);
@@ -1204,7 +1205,7 @@
     event.stopPropagation(); event.preventDefault();
     if (agentMutationActive || replacingDocument || !companionCanEdit() || selectedObjects.some(o => isLayerLocked(document,o.id))) return;
     noteInput.flushAll();beginNativePointerGesture();
-    transformGesture = {before: document, ids: [...selectedIds], start: point(event), bounds: selectionBounds, rotation: selectedObjects[0]?.rotation || 0, mode};
+    transformGesture = {before: document, ids: [...selectedIds], start: point(event), bounds: selectionBounds, rotation: selectionRoots[0]?.rotation || 0, mode};
     surface.setPointerCapture(event.pointerId);
   }
   function objectTransform(object: CanvasObject) {
@@ -1269,7 +1270,7 @@
           {#if selectedObjects.length && tool === 'select' && selectedObjects.some(o=>o.kind!=='connector')}
             <g data-ui="true" class="selection-box"><rect x={selectionBounds.x} y={selectionBounds.y} width={Math.max(1,selectionBounds.width)} height={Math.max(1,selectionBounds.height)} fill="none" stroke="var(--amber)" stroke-width={1/viewport.zoom} pointer-events="none" />
               <rect role="button" tabindex="0" aria-label="Resize selection" class="resize-handle" x={selectionBounds.x+selectionBounds.width-6/viewport.zoom} y={selectionBounds.y+selectionBounds.height-6/viewport.zoom} width={12/viewport.zoom} height={12/viewport.zoom} onpointerdown={e=>beginTransform(e,'resize')} onkeydown={e=>{if(e.key==='ArrowRight'||e.key==='ArrowDown'){e.preventDefault();e.stopPropagation();editSelection([{type:'transform',ids:selectedIds,width:selectionBounds.width+1,height:selectionBounds.height+1}]);}}} />
-              <circle role="button" tabindex="0" aria-label="Rotate selection" cx={selectionBounds.x+selectionBounds.width/2} cy={selectionBounds.y-24/viewport.zoom} r={6/viewport.zoom} fill="var(--amber)" onpointerdown={e=>beginTransform(e,'rotate')} onkeydown={e=>{if(e.key==='ArrowRight'||e.key==='ArrowLeft'){e.preventDefault();e.stopPropagation();editSelection([{type:'transform',ids:selectedIds,rotation:(selectedObjects[0].rotation||0)+(e.key==='ArrowRight'?15:-15)}]);}}} />
+              <circle role="button" tabindex="0" aria-label="Rotate selection" cx={selectionBounds.x+selectionBounds.width/2} cy={selectionBounds.y-24/viewport.zoom} r={6/viewport.zoom} fill="var(--amber)" onpointerdown={e=>beginTransform(e,'rotate')} onkeydown={e=>{if(e.key==='ArrowRight'||e.key==='ArrowLeft'){e.preventDefault();e.stopPropagation();editSelection([{type:'transform',ids:selectedIds,rotation:(selectionRoots[0]?.rotation||0)+(e.key==='ArrowRight'?15:-15)}]);}}} />
             </g>
           {/if}
           {#if draftPoints.length > 1}<path data-ui="true" d={path(draftPoints)} fill="none" stroke={drawingColor} stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />{/if}

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { createDocument, parse, serialize, type CanvasDocument } from './document';
-import { compileEdits, clipboardObjects, visibleObjects, isLayerLocked } from './editing';
+import { compileEdits, clipboardObjects, transformRoots, visibleObjects, isLayerLocked } from './editing';
 import { createDrawWebMcpTools, drawRevision } from './webmcp';
 import { applyCanvasOperations } from './paired-session';
 
@@ -62,6 +62,16 @@ const identity = () => {
 };
 
 describe('Shared Draw editing commands', () => {
+  it('uses the same geometry root for mixed connector and shape rotation', () => {
+    const before = fixture();
+    before.objects[0].rotation = 20;
+    before.objects = [before.objects[3], ...before.objects.filter(object => object.id !== 'edge')];
+    expect(transformRoots(before, ['edge', 'a']).map(object => object.id)).toEqual(['a']);
+    const result = compileEdits(before, [{type: 'transform', ids: ['edge', 'a'], rotation: 30}], identity());
+    expect(result.document.objects.find(object => object.id === 'a')?.rotation).toBe(30);
+    expect(result.document.objects.find(object => object.id === 'edge')).toEqual(before.objects[0]);
+  });
+
   it('copies a standalone connector as a closed portable graph', () => {
     const objects = clipboardObjects(fixture(), ['edge']);
     expect(objects.map((o) => o.id)).toEqual(['a', 'b', 'edge']);
