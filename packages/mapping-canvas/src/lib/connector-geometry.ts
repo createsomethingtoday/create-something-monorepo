@@ -32,8 +32,9 @@ export function createConnectorResolver(objects: CanvasObject[], center = create
     const unit = { x: dx / distance, y: dy / distance };
     const start = boundary(from, last), end = boundary(to, first);
     // Keep the marker tip (2 units beyond the endpoint) outside the node border.
-    const a = { x: start.x + unit.x * 4, y: start.y + unit.y * 4 };
-    const b = { x: end.x - unit.x * 4, y: end.y - unit.y * 4 };
+    const clearance = (object: CanvasObject) => ['note', 'group', 'rectangle', 'ellipse'].includes(object.kind) ? 4 : 0;
+    const a = { x: start.x + unit.x * clearance(from), y: start.y + unit.y * clearance(from) };
+    const b = { x: end.x - unit.x * clearance(to), y: end.y - unit.y * clearance(to) };
     // Overlapping/touching nodes have no exterior route; never draw a reversed arrow through them.
     if ((b.x - a.x) * unit.x + (b.y - a.y) * unit.y <= 0) return undefined;
     return { a, b };

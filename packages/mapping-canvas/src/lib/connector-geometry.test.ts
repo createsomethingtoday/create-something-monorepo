@@ -53,3 +53,8 @@ it('shrinks the arrowhead to fit a narrow gap', () => {
   const route = createConnectorResolver([note('a', 0, 0), note('b', 0, 110)])(edge)!;
   expect(connectorHeadPoints(route.a, route.b).every(point => point.y > 100 && point.y < 110)).toBe(true);
 });
+
+it('preserves short connections between ink strokes without node clearance', () => {
+  const stroke = (id: string, x: number): CanvasObject => ({ id, kind: 'stroke', createdAt: 'now', color: '#ffffff', width: 1, points: [{ x, y: 0 }, { x, y: 1 }] });
+  expect(createConnectorResolver([stroke('a', 0), stroke('b', 4)])(edge)).toEqual({ a: { x: 0, y: 1 }, b: { x: 4, y: 1 } });
+});
