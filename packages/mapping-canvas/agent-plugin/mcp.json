@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "draw-agent": {
+      "command": "python3",
+      "args": ["${PLUGIN_ROOT}/scripts/draw-agent.py"]
+    }
+  }
+}

@@ -1,5 +1,7 @@
 <script lang="ts">
   import './page.css';
+  import AgentConnection from '$lib/AgentConnection.svelte';
+  import type { DrawWebMcpTool } from '$lib/webmcp';
   import AgentActivityPanel from '$lib/AgentActivity.svelte';
   import type { AgentActivity } from '$lib/agent-activity';
   import { browser } from '$app/environment';
@@ -129,6 +131,8 @@
   let transformGesture = $state<{ before: CanvasDocument; ids: string[]; start: Point; bounds: ReturnType<typeof editBounds>; rotation: number; mode: 'resize' | 'rotate' } | null>(null);
   const transform = $derived(`translate(${viewport.x} ${viewport.y}) scale(${viewport.zoom})`);
 
+  let connectionTools = $state.raw<DrawWebMcpTool[]>([]);
+
   onMount(() => {
     nativeShell = hasNativeBridge();
     panelOpen = window.innerWidth > 820;
@@ -136,7 +140,7 @@
     try { sidebarCollapsed = localStorage.getItem(TOOL_SIDEBAR_PREFERENCE) === 'true'; } catch { /* Preference persistence is optional. */ }
     restoreManagedShare(history.present.id);
     void initializeSession().then(async()=>{projects=await loadProjects();});
-    const webMcp = registerDrawWebMcpTools(createDrawWebMcpTools({
+    connectionTools = createDrawWebMcpTools({
       getState: agentState,
       applyOperations: (operations, expectedRevision) => queueAgentMutation(() => {
         const currentRevision = drawRevision(document);
@@ -156,7 +160,8 @@
       publishSnapshot: publishSnapshotForAgent,
       updateSnapshot: updateSnapshotForAgent,
       revokeSnapshot: revokeSnapshotForAgent
-    }));
+    });
+    const webMcp = registerDrawWebMcpTools(connectionTools);
     if (webMcp.registered) status = `${webMcp.registered} agent tools ready · loading local canvas…`;
     const activityTimer = setInterval(() => activityNow = Date.now(), 1000);
     const resize = () => { viewportWidth = surface?.clientWidth || window.innerWidth; viewportHeight = surface?.clientHeight || window.innerHeight; };
@@ -1266,7 +1271,7 @@
 <main class="app-shell" class:native-shell={nativeShell} class:reduce-agent-motion={reduceAgentMotion}>
   <header class="topbar">
     <div class="identity"><img src="/brand/create-something-agency-white.svg" alt="CREATE SOMETHING .agency" />{#if nativeRole === 'web'}<ProjectModes id={document.id} mode="canvas" navigate={(event,mode)=>{if(mode==='canvas')event.preventDefault();else void openMotion(event,mode==='preview');}} />{/if}<a class="source-link" href="/download" target="_blank" rel="noreferrer">Mac</a><a class="source-link" href="https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/mapping-canvas" target="_blank" rel="noreferrer">Source</a>{#if nativeRole !== 'web'}<button class="native-link" aria-label="Open device pairing" onclick={openPairing}>{nativeRole === 'host' ? 'Pair' : nativeSession.sessionId ? 'Linked' : 'Link'}</button>{/if}</div>
-    <input class="title" aria-label="Canvas title" maxlength="240" value={document.title} oninput={(event) => updateTitle(event.currentTarget)} />
+    <div class="title-area"><input class="title" aria-label="Canvas title" maxlength="240" value={document.title} oninput={(event) => updateTitle(event.currentTarget)} />{#if nativeRole === 'web'}<AgentConnection projectId={document.id} {ready} tools={connectionTools} />{/if}</div>
     {#if nativeRole !== 'companion'}<div class="file-actions">{#if projects.length>1}<select aria-label="Open Draw project" value={document.id} onchange={async event=>{const id=event.currentTarget.value;noteInput.flushAll();if(await persistCurrentDocument(document))location.href=`/?project=${encodeURIComponent(id)}`;}}>{#each projects as entry}<option value={entry.id}>{entry.title}</option>{/each}</select>{/if}<button aria-pressed={panelOpen} onclick={()=>panelOpen=!panelOpen}>Layers</button><details class="file-menu"><summary>File</summary><div><button onclick={() => fileInput?.click()} disabled={sharing || replacingDocument}>Import</button><button onclick={exportJson}>JSON</button><button onclick={exportSvg}>SVG</button><button onclick={exportPng}>PNG</button><button onclick={resetCanvas} disabled={sharing || replacingDocument}>New canvas</button></div></details>{#if nativeRole === 'web'}{#if share}<button onclick={copyShareLink}>Copy link</button><button onclick={updateSnapshot} disabled={sharing || replacingDocument}>Update link</button><button onclick={revokeSnapshot} disabled={sharing || replacingDocument}>Revoke</button>{:else}<button class="share-action" onclick={publishSnapshot} disabled={sharing || replacingDocument}>Publish view-only</button>{/if}{/if}<input bind:this={fileInput} class="visually-hidden" type="file" accept="application/json,.json" disabled={sharing || replacingDocument} onchange={importJson} /></div>{/if}
   </header>
   <section class="workbench" class:tool-sidebar-collapsed={sidebarCollapsed} class:panel-open={panelOpen && nativeRole === 'web'} aria-label="Mapping canvas workbench">
