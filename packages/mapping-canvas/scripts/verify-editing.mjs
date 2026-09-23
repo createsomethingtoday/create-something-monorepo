@@ -190,6 +190,32 @@ try {
     ).rejects.toThrow(/gesture/);
     await page.mouse.move(handle.x + 20, handle.y + 20);
     await page.mouse.up();
+    // Rotation follows the pointer delta from the existing angle, with no first-move jump.
+    const rotateHandle = await page.getByRole('button', {name: 'Rotate selection', exact: true}).boundingBox();
+    const rotateStart = {x: rotateHandle.x + rotateHandle.width / 2, y: rotateHandle.y + rotateHandle.height / 2};
+    await page.mouse.move(rotateStart.x, rotateStart.y);
+    await page.mouse.down();
+    await page.mouse.move(rotateStart.x + 1, rotateStart.y);
+    await page.mouse.up();
+    expect((await state()).document.objects.find(o => o.id === id).rotation).toBeGreaterThanOrEqual(20);
+    expect((await state()).document.objects.find(o => o.id === id).rotation).toBeLessThanOrEqual(22);
+    await page.getByRole('button', {name: 'Undo', exact: true}).click();
+    expect((await state()).document.objects.find(o => o.id === id).rotation).toBe(20);
+
+    // Lasso through invisible artwork must leave no selection, including hidden group children.
+    await call('draw_apply_operations', {expectedRevision: (await inspect()).revision, operations: [
+      {type: 'put_object', object: {id: 'hidden-lasso-child', kind: 'rectangle', createdAt: new Date().toISOString(), from: {x: 20, y: 300}, to: {x: 60, y: 340}, color: '#ffffff'}},
+      {type: 'put_object', object: {id: 'hidden-lasso-group', kind: 'group', createdAt: new Date().toISOString(), x: 10, y: 290, width: 70, height: 60, label: 'Invisible', childIds: ['hidden-lasso-child'], hidden: true}}
+    ]});
+    await call('draw_select', {ids: []});
+    const lassoBox = await page.locator('svg[aria-label="Canvas objects"]').boundingBox();
+    const camera = (await state()).document.viewport;
+    await page.mouse.move(lassoBox.x + camera.x + 5 * camera.zoom, lassoBox.y + camera.y + 280 * camera.zoom);
+    await page.mouse.down();
+    await page.mouse.move(lassoBox.x + camera.x + 90 * camera.zoom, lassoBox.y + camera.y + 360 * camera.zoom, {steps: 5});
+    await page.mouse.up();
+    await expect(page.getByRole('button', {name: 'Resize selection', exact: true})).toHaveCount(0);
+    await call('draw_apply_operations', {expectedRevision: (await inspect()).revision, operations: [{type: 'remove_objects', ids: ['hidden-lasso-group', 'hidden-lasso-child']}]});
     const beforeReload = (await state()).document;
     await expect(page.locator('.statusbar')).toContainText('Saved');
     await page.reload({ waitUntil: 'networkidle' });

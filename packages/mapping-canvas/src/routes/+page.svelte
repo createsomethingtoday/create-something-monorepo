@@ -116,7 +116,7 @@
   let panelOpen = $state(true);
   let projects = $state<ProjectSummary[]>([]);
   let emptyDismissed = $state(false);
-  let transformGesture = $state<{ before: CanvasDocument; ids: string[]; start: Point; bounds: ReturnType<typeof editBounds>; mode: 'resize' | 'rotate' } | null>(null);
+  let transformGesture = $state<{ before: CanvasDocument; ids: string[]; start: Point; bounds: ReturnType<typeof editBounds>; rotation: number; mode: 'resize' | 'rotate' } | null>(null);
   const transform = $derived(`translate(${viewport.x} ${viewport.y}) scale(${viewport.zoom})`);
 
   onMount(() => {
@@ -791,7 +791,7 @@
       const gesture = transformGesture, here = point(event), b = gesture.bounds;
       const command: EditCommand = gesture.mode === 'resize'
         ? {type:'transform',ids:gesture.ids,width:Math.max(1,b.width+here.x-gesture.start.x),height:Math.max(1,b.height+here.y-gesture.start.y)}
-        : {type:'transform',ids:gesture.ids,rotation:Math.round(Math.atan2(here.y-(b.y+b.height/2),here.x-(b.x+b.width/2))*180/Math.PI+90)};
+        : {type:'transform',ids:gesture.ids,rotation:Math.round(gesture.rotation + ((Math.atan2(here.y-(b.y+b.height/2),here.x-(b.x+b.width/2))-Math.atan2(gesture.start.y-(b.y+b.height/2),gesture.start.x-(b.x+b.width/2)))*180/Math.PI+540)%360-180)};
       if(event.shiftKey) {if(command.rotation!==undefined) command.rotation=Math.round(command.rotation/15)*15;else {command.width=Math.max(8,Math.round(command.width!/8)*8);command.height=Math.max(8,Math.round(command.height!/8)*8);}}
       try { history = {...history,present:compileEdits(gesture.before,[command],{id:()=>uid('object'),now:new Date().toISOString()}).document}; } catch (error) { status=error instanceof Error?error.message:'Transform failed'; }
       return;
@@ -888,7 +888,7 @@
     if (tool === 'pen' && draftPoints.length > 1) { const item: Stroke = { id: uid('stroke'), kind: 'stroke', createdAt: new Date().toISOString(), points: draftPoints, color: drawingColor, width: 3 }; apply(withObjects(document, [...document.objects, item]), { type: 'put_object', object: item }); selectedIds = [item.id]; }
     if (draftShape && start && Math.hypot(here.x - start.x, here.y - start.y) > 4) { const item = { ...draftShape, id: uid(draftShape.kind), to: here }; apply(withObjects(document, [...document.objects, item]), { type: 'put_object', object: item }); selectedIds = [item.id]; }
     if (tool === 'pan') sendNative([{ type: 'set_viewport', viewport }]);
-    if (lasso) { const left = Math.min(lasso.from.x, lasso.to.x), right = Math.max(lasso.from.x, lasso.to.x), top = Math.min(lasso.from.y, lasso.to.y), bottom = Math.max(lasso.from.y, lasso.to.y); selectedIds = selectObjectIdsInBounds(document, { left, right, top, bottom }); }
+    if (lasso) { const left = Math.min(lasso.from.x, lasso.to.x), right = Math.max(lasso.from.x, lasso.to.x), top = Math.min(lasso.from.y, lasso.to.y), bottom = Math.max(lasso.from.y, lasso.to.y); selectedIds = selectObjectIdsInBounds({...document,objects:visibleLayers}, { left, right, top, bottom }); }
     drawing = false; start = null; draftPoints = []; draftShape = null; lasso = null;
     try { surface.releasePointerCapture(event.pointerId); } catch { /* Capture may not have been acquired. */ }
   }
@@ -1204,7 +1204,7 @@
     event.stopPropagation(); event.preventDefault();
     if (agentMutationActive || replacingDocument || !companionCanEdit() || selectedObjects.some(o => isLayerLocked(document,o.id))) return;
     noteInput.flushAll();beginNativePointerGesture();
-    transformGesture = {before: document, ids: [...selectedIds], start: point(event), bounds: selectionBounds, mode};
+    transformGesture = {before: document, ids: [...selectedIds], start: point(event), bounds: selectionBounds, rotation: selectedObjects[0]?.rotation || 0, mode};
     surface.setPointerCapture(event.pointerId);
   }
   function objectTransform(object: CanvasObject) {
