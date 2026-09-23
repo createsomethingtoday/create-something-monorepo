@@ -61,6 +61,15 @@ function canvas(): CanvasDocument {
 }
 
 describe('shared Draw project contract', () => {
+  it('excludes distant hidden layers from visible scene fit while retaining their tracks',()=>{
+    const source={...createDocument(),objects:[{id:'visible',kind:'rectangle' as const,createdAt:'2026-09-23',from:{x:0,y:0},to:{x:100,y:100},color:'#ffffff'}]};
+    const expected=syncMotionProject(source).drawings[0].points;
+    const withHidden={...source,objects:[...source.objects,{...source.objects[0],id:'hidden',hidden:true,from:{x:1e6,y:0},to:{x:1e6+100,y:100}}]};
+    const result=syncMotionProject(withHidden);
+    expect(result.drawings[0].points).toEqual(expected);
+    expect(result.drawings[1]).toMatchObject({id:'hidden',hidden:true});
+    expect(()=>validateProject(result)).not.toThrow();
+  });
   it('fits rotated anisotropic artwork inside the Motion stage',()=>{
     const document={...createDocument(),objects:[{id:'tall',kind:'rectangle' as const,createdAt:'2026-09-23',from:{x:0,y:0},to:{x:1000,y:10},color:'#ffffff',rotation:90}]};
     const motion=syncMotionProject(document),points=motion.drawings[0].points;

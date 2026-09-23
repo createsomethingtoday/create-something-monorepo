@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { createDocument, parse, serialize, type CanvasDocument } from './document';
-import { compileEdits, visibleObjects, isLayerLocked } from './editing';
+import { compileEdits, clipboardObjects, visibleObjects, isLayerLocked } from './editing';
 import { createDrawWebMcpTools, drawRevision } from './webmcp';
 import { applyCanvasOperations } from './paired-session';
 
@@ -62,6 +62,21 @@ const identity = () => {
 };
 
 describe('Shared Draw editing commands', () => {
+  it('copies a standalone connector as a closed portable graph', () => {
+    const objects = clipboardObjects(fixture(), ['edge']);
+    expect(objects.map((o) => o.id)).toEqual(['a', 'b', 'edge']);
+    const pasted = compileEdits(
+      createDocument(),
+      [{ type: 'paste', ids: objects.map((o) => o.id), objects }],
+      identity()
+    );
+    expect(pasted.document.objects.find((o) => o.kind === 'connector')).toMatchObject({
+      fromId: 'copy-1',
+      toId: 'copy-2'
+    });
+    expect(pasted.document.objects).toHaveLength(3);
+  });
+
   it('duplicates a graph with fresh IDs and remaps internal relationships', () => {
     const before = fixture();
     const result = compileEdits(before, [{ type: 'duplicate', ids: ['group'] }], identity());

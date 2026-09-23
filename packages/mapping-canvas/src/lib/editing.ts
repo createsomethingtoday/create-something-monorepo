@@ -353,6 +353,25 @@ export function descendants(document: CanvasDocument, ids: Iterable<string>) {
   }
   return result;
 }
+/** A portable clipboard graph includes connector endpoints and group descendants. */
+export function clipboardObjects(
+  document: CanvasDocument,
+  selected: Iterable<string>
+): CanvasObject[] {
+  const ids = descendants(document, selected),
+    byId = new Map(document.objects.map((o) => [o.id, o])),
+    queue = [...ids];
+  for (let i = 0; i < queue.length; i++) {
+    const object = byId.get(queue[i]);
+    if (object?.kind === 'connector')
+      for (const id of descendants(document, [object.fromId, object.toId]))
+        if (!ids.has(id)) {
+          ids.add(id);
+          queue.push(id);
+        }
+  }
+  return document.objects.filter((o) => ids.has(o.id));
+}
 export function isLayerLocked(document: CanvasDocument, id: string) {
   return document.objects.some(
     (object) =>

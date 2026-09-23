@@ -33,14 +33,21 @@ function isImportableCanvasObject(object: CanvasDocument['objects'][number]) {
 }
 
 function sceneFit(map: CanvasDocument) {
-  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-  let widest = 0, tallest = 0;
+  let minX = Infinity,
+    minY = Infinity,
+    maxX = -Infinity,
+    maxY = -Infinity;
+  let widest = 0,
+    tallest = 0;
   const include = ({ x, y }: Point) => {
-    minX = Math.min(minX, x); minY = Math.min(minY, y);
-    maxX = Math.max(maxX, x); maxY = Math.max(maxY, y);
+    minX = Math.min(minX, x);
+    minY = Math.min(minY, y);
+    maxX = Math.max(maxX, x);
+    maxY = Math.max(maxY, y);
   };
   const includeBox = (x: number, y: number, width: number, height: number) => {
-    widest = Math.max(widest, width); tallest = Math.max(tallest, height);
+    widest = Math.max(widest, width);
+    tallest = Math.max(tallest, height);
     include({ x, y });
     include({
       x: Number.isFinite(x + width) ? x + width : Number.MAX_VALUE,
@@ -48,20 +55,29 @@ function sceneFit(map: CanvasDocument) {
     });
   };
   for (const object of map.objects) {
-    if(object.rotation) {
-      const b=visualBounds([object]);include({x:b.x,y:b.y});include({x:b.x+b.width,y:b.y+b.height});
-      if(object.kind==='note'){widest=Math.max(widest,object.width);tallest=Math.max(tallest,object.height);}
+    if (object.rotation) {
+      const b = visualBounds([object]);
+      include({ x: b.x, y: b.y });
+      include({ x: b.x + b.width, y: b.y + b.height });
+      if (object.kind === 'note') {
+        widest = Math.max(widest, object.width);
+        tallest = Math.max(tallest, object.height);
+      }
       continue;
     }
     if (object.kind === 'stroke') object.points.forEach(include);
     else if (object.kind === 'note' || object.kind === 'group')
       includeBox(object.x, object.y, object.width, object.height);
     else if (object.kind === 'rectangle' || object.kind === 'ellipse' || object.kind === 'arrow') {
-      include(object.from); include(object.to);
+      include(object.from);
+      include(object.to);
     }
   }
   if (!Number.isFinite(minX)) {
-    minX = 100; minY = 100; maxX = 420; maxY = 280;
+    minX = 100;
+    minY = 100;
+    maxX = 420;
+    maxY = 280;
   }
   const unitsPerScene = Math.max(
     1,
@@ -84,20 +100,28 @@ function sceneFit(map: CanvasDocument) {
 export function importMap(map: CanvasDocument): { drawings: Drawing[]; skipped: number } {
   const objects = map.objects.filter(isImportableCanvasObject).slice(0, LIMITS.drawings);
   const retainedMap = { ...map, objects };
-  const { scale, toScene } = sceneFit(retainedMap);
+  const visible = new Set(visibleObjects(map).map((o) => o.id));
+  const visibleFit = sceneFit({
+    ...retainedMap,
+    objects: objects.filter((o) => visible.has(o.id))
+  });
   const skipped = map.objects.length - objects.length;
   const drawings: Drawing[] = [];
-  const visible=new Set(visibleObjects(map).map(o=>o.id));
   for (const object of objects) {
+    // Hidden tracks retain bounded editable geometry without shrinking visible artwork.
+    const { scale, toScene } = visible.has(object.id)
+      ? visibleFit
+      : sceneFit({ ...retainedMap, objects: [object] });
     const common = {
       id: object.id,
       name: object.name || (object.kind === 'note' ? object.text.slice(0, 80) : object.kind),
-      ...(object.fill && object.fill!=='none'?{fill:object.fill}:{}),
-      ...(!visible.has(object.id)?{hidden:true}:{}),
+      ...(object.fill && object.fill !== 'none' ? { fill: object.fill } : {}),
+      ...(!visible.has(object.id) ? { hidden: true } : {}),
       kind: 'stroke' as const,
-      color: 'color' in object && /^#[\da-f]{6}$/i.test(object.color)
-        ? object.color
-        : DEFAULT_DRAWING_COLOR,
+      color:
+        'color' in object && /^#[\da-f]{6}$/i.test(object.color)
+          ? object.color
+          : DEFAULT_DRAWING_COLOR,
       weight: Math.max(0.1, (object.strokeWidth || 2) * scale),
       text: '',
       width: 100,
@@ -105,12 +129,22 @@ export function importMap(map: CanvasDocument): { drawings: Drawing[]; skipped: 
       poses: [basePose()]
     };
     const sourced = <T extends Drawing>(drawing: T): T => {
-      if(object.rotation) {
-        const b=editBounds([object]), center=toScene({x:b.x+b.width/2,y:b.y+b.height/2});
-        const rad=object.rotation*Math.PI/180, c=Math.cos(rad), s=Math.sin(rad);
-        const rotate=(p:Point)=>({x:center.x+(p.x-center.x)*c-(p.y-center.y)*s,y:center.y+(p.x-center.x)*s+(p.y-center.y)*c});
-        if(drawing.kind==='stroke') drawing={...drawing,points:drawing.points.map(rotate)};
-        else drawing={...drawing,poses:drawing.poses.map(p=>({...p,...rotate(p),rotation:object.rotation!}))};
+      if (object.rotation) {
+        const b = editBounds([object]),
+          center = toScene({ x: b.x + b.width / 2, y: b.y + b.height / 2 });
+        const rad = (object.rotation * Math.PI) / 180,
+          c = Math.cos(rad),
+          s = Math.sin(rad);
+        const rotate = (p: Point) => ({
+          x: center.x + (p.x - center.x) * c - (p.y - center.y) * s,
+          y: center.y + (p.x - center.x) * s + (p.y - center.y) * c
+        });
+        if (drawing.kind === 'stroke') drawing = { ...drawing, points: drawing.points.map(rotate) };
+        else
+          drawing = {
+            ...drawing,
+            poses: drawing.poses.map((p) => ({ ...p, ...rotate(p), rotation: object.rotation! }))
+          };
       }
       const { x, y } = drawing.poses[0];
       return {
@@ -157,9 +191,13 @@ export function importMap(map: CanvasDocument): { drawings: Drawing[]; skipped: 
           ? [a, { x: b.x, y: a.y }, b, { x: a.x, y: b.y }, a]
           : object.kind === 'ellipse'
             ? (() => {
-                const sceneA = toScene(a), sceneB = toScene(b);
+                const sceneA = toScene(a),
+                  sceneB = toScene(b);
                 const center = { x: sceneA.x / 2 + sceneB.x / 2, y: sceneA.y / 2 + sceneB.y / 2 };
-                const radius = { x: Math.abs(sceneB.x - sceneA.x) / 2, y: Math.abs(sceneB.y - sceneA.y) / 2 };
+                const radius = {
+                  x: Math.abs(sceneB.x - sceneA.x) / 2,
+                  y: Math.abs(sceneB.y - sceneA.y) / 2
+                };
                 return Array.from({ length: 49 }, (_, i) => ({
                   x: center.x + Math.cos((i / 48) * Math.PI * 2) * radius.x,
                   y: center.y + Math.sin((i / 48) * Math.PI * 2) * radius.y
@@ -182,7 +220,9 @@ export function importMap(map: CanvasDocument): { drawings: Drawing[]; skipped: 
                   }
                 ];
               })();
-      drawings.push(sourced({ ...common, points: object.kind === 'ellipse' ? points : points.map(toScene) }));
+      drawings.push(
+        sourced({ ...common, points: object.kind === 'ellipse' ? points : points.map(toScene) })
+      );
     }
   }
   return { drawings, skipped };
@@ -306,7 +346,7 @@ export function syncMotionProject(map: CanvasDocument, existing?: Project): Proj
       const updated = importedById.get(object.id);
       if (!updated) continue;
       const retained = retainAnimation(updated, prior.get(updated.id));
-      const trial = selected.map((drawing) => drawing.id === retained.id ? retained : drawing);
+      const trial = selected.map((drawing) => (drawing.id === retained.id ? retained : drawing));
       const next = assemble(trial);
       if (serializedBytes(next) <= LIMITS.bytes) {
         selected = trial;
@@ -340,7 +380,5 @@ export function syncMotionProject(map: CanvasDocument, existing?: Project): Proj
   }
   if (!existing) return candidate;
   const unchangedCandidate = { ...candidate, revision: existing.revision };
-  return JSON.stringify(unchangedCandidate) === JSON.stringify(existing)
-    ? existing
-    : candidate;
+  return JSON.stringify(unchangedCandidate) === JSON.stringify(existing) ? existing : candidate;
 }

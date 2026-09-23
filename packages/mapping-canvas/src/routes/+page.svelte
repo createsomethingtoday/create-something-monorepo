@@ -4,7 +4,7 @@
   import ProjectModes from '$lib/ProjectModes.svelte';
   import { loadProjects, type ProjectSummary } from '$lib/animation/storage';
   import WorkbenchPanel from '$lib/WorkbenchPanel.svelte';
-  import { compileEdits, editBounds, visualBounds, assertLockedLayersPreserved, descendants, visibleObjects, isLayerLocked, type EditCommand } from '$lib/editing';
+  import { compileEdits, clipboardObjects, editBounds, visualBounds, assertLockedLayersPreserved, descendants, visibleObjects, isLayerLocked, type EditCommand } from '$lib/editing';
   import { onMount } from 'svelte';
   import { loadDocument, saveDocument } from '$lib/persistence';
   import { activateCanvasProject } from '$lib/project-storage';
@@ -959,8 +959,7 @@
   function clipboardIsEditing(event:ClipboardEvent) {return event.target instanceof Element && Boolean(event.target.closest('input,textarea,select,[contenteditable="true"]'));}
   function copySelection(event:ClipboardEvent) {
     if(clipboardIsEditing(event) || !selectedIds.length || !event.clipboardData) return;
-    const ids=descendants(document,selectedIds);
-    const objects=document.objects.filter(o=>ids.has(o.id) && (o.kind!=='connector' || (ids.has(o.fromId)&&ids.has(o.toId))));
+    const objects=clipboardObjects(document,selectedIds);
     event.clipboardData.setData('text/plain',JSON.stringify({...document,objects}));event.preventDefault();status='Artwork copied';
   }
   function pasteSelection(event:ClipboardEvent) {
@@ -1198,7 +1197,7 @@
       const next = applyCanvasOperations(document, result.operations);
       if (result.operations.length && next) apply(next, result.operations);
       selectedIds = result.selectedIds;
-      status = 'Edit saved · undo available';
+      status = 'Edit applied · undo available';
     } catch (error) { status = error instanceof Error ? error.message : 'Edit failed'; }
   }
   function beginTransform(event: PointerEvent, mode: 'resize' | 'rotate') {
@@ -1295,7 +1294,7 @@
     </div>
     {#if panelOpen && nativeRole === 'web'}<WorkbenchPanel {document} {selectedIds} select={(ids)=>{if(!drawing && !agentMutationActive){selectedIds=ids;tool='select';}}} edit={editSelection} disabled={drawing || agentMutationActive || replacingDocument || sharing} />{/if}
   </section>
-  <footer class="statusbar"><span><i aria-hidden="true"></i>{status}</span><button class="shortcuts-trigger" aria-haspopup="dialog" title="Keyboard shortcuts (?)" onclick={() => shortcutsDialog.showModal()}>Shortcuts <b aria-hidden="true">?</b></button><span>{nativeRole === 'host' ? 'MAC AUTHORITY' : nativeRole === 'companion' ? 'IPHONE COMPANION' : 'SAVED ON THIS DEVICE'}</span></footer>
+  <footer class="statusbar"><span><i aria-hidden="true"></i>{status}</span><button class="shortcuts-trigger" aria-haspopup="dialog" title="Keyboard shortcuts (?)" onclick={() => shortcutsDialog.showModal()}>Shortcuts <b aria-hidden="true">?</b></button><span>{nativeRole === 'host' ? 'MAC AUTHORITY' : nativeRole === 'companion' ? 'IPHONE COMPANION' : 'LOCAL CANVAS'}</span></footer>
   <dialog bind:this={shortcutsDialog} class="shortcuts-dialog" aria-labelledby="shortcuts-title" aria-describedby="shortcuts-description">
     <header><h2 id="shortcuts-title">Keyboard shortcuts</h2><button aria-label="Close keyboard shortcuts" onclick={() => shortcutsDialog.close()}>×</button></header>
     <p id="shortcuts-description">Use these when you’re not typing in a title, note, or form.</p>

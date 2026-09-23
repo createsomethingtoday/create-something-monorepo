@@ -143,6 +143,39 @@ try {
     await page.keyboard.press('ControlOrMeta+z');
     expect((await state()).document.objects.length).toBe(copiedCount);
     await call('draw_select', { ids: [id] });
+    await call('draw_apply_operations', {
+      operations: [
+        {
+          type: 'put_object',
+          object: {
+            id: 'clipboard-edge',
+            kind: 'connector',
+            createdAt: new Date().toISOString(),
+            fromId: id,
+            toId: second,
+            label: 'Copy relationship'
+          }
+        }
+      ]
+    });
+    await call('draw_select', { ids: ['clipboard-edge'] });
+    await page.locator('[data-object-id="clipboard-edge"]').focus();
+    const beforeConnectorCopy = (await state()).document.objects.length;
+    await page.keyboard.press('ControlOrMeta+c');
+    await page.keyboard.press('ControlOrMeta+v');
+    await expect
+      .poll(async () => (await state()).document.objects.length)
+      .toBe(beforeConnectorCopy + 3);
+    const pastedConnector = (await state()).document.objects.find(
+      (o) => o.kind === 'connector' && o.id !== 'clipboard-edge'
+    );
+    expect(pastedConnector.fromId).not.toBe(id);
+    expect(pastedConnector.toId).not.toBe(second);
+    await page.keyboard.press('ControlOrMeta+z');
+    await call('draw_apply_operations', {
+      operations: [{ type: 'remove_objects', ids: ['clipboard-edge'] }]
+    });
+    await call('draw_select', { ids: [id] });
     const revision = (await inspect()).revision;
     const handle = await page
       .getByRole('button', { name: 'Resize selection', exact: true })
@@ -254,6 +287,7 @@ try {
       .getByRole('link', { name: 'Preview', exact: true })
       .click();
     await expect(page.locator('main')).toHaveClass(/preview-mode/);
+    await expect(page.getByLabel('Animation title', { exact: true })).toBeDisabled();
     await page.screenshot({ path: new URL(`preview-${viewport.width}.png`, out).pathname });
     await Promise.all([
       page.waitForURL('**/?project=*', { waitUntil: 'networkidle' }),

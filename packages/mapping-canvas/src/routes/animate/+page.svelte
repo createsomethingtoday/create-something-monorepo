@@ -539,7 +539,7 @@
       aria-label="Animation title"
       value={project.title}
       onchange={(e) => changeSetting('title', e.currentTarget.value)}
-      disabled={!ready || busy || exporting}
+      disabled={previewMode || !ready || busy || exporting}
     /><button onclick={() => (showHelp = !showHelp)}>Codex assets</button><button
       onclick={() => run(() => fresh())}
       disabled={!ready || busy || exporting}>New</button
