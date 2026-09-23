@@ -52,4 +52,7 @@
 	// Optional vars/secrets:
 	// - ADMIN_EMAILS (comma-separated allowlist for admin-only API reads)
 	// - CSRF_TRUSTED_ORIGINS (comma-separated extra trusted origins for cookie-authenticated API mutations)
+	// - KNOCK_API_KEY (production Knock secret key; enables Knock delivery of login codes)
+	// - KNOCK_LOGIN_ENABLED ("true" to send login codes via Knock instead of the Airtable Gmail automation)
+	// - KNOCK_LOGIN_WORKFLOW_KEY (defaults to asset-dashboard-login-validation)
 }

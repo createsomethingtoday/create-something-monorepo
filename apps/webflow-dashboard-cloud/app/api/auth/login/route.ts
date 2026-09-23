@@ -62,7 +62,8 @@ export async function POST(request: NextRequest) {
         recipient: { id: user.id, email: validatedEmail },
         data: {
           verificationToken: token,
-          expiresAtIso: expirationTime.toISOString()
+          expiresAtIso: expirationTime.toISOString(),
+          verifyUrl: new URL('/verify', request.nextUrl.origin).toString()
         }
       });
     } else {
