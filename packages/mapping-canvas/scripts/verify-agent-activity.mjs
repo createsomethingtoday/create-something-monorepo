@@ -1,0 +1,75 @@
+import { chromium, expect } from '@playwright/test';
+import { mkdir, writeFile } from 'node:fs/promises';
+const base = process.env.CANVAS_URL || 'http://127.0.0.1:5214';
+const out = new URL(`../output/${process.env.CANVAS_RUN_LABEL || 'agent-activity'}/`, import.meta.url);
+await mkdir(out, { recursive: true });
+const browser = await chromium.launch();
+try {
+  for (const width of [1440, 390]) {
+    const context = await browser.newContext({ viewport: { width, height: 900 }, reducedMotion: 'no-preference' });
+    await context.addInitScript(() => {
+      window.__tools = {};
+      Object.defineProperty(document, 'modelContext', { configurable: true, value: { registerTool(t) { window.__tools[t.name] = t; } } });
+    });
+    const page = await context.newPage(), errors = [];
+    page.on('pageerror', e => errors.push(e.message));
+    const call = (name, input = {}) => page.evaluate(async ({name,input}) => window.__tools[name].execute(input), {name,input});
+    await page.goto(base, { waitUntil: 'networkidle' });
+    await page.waitForFunction(() => !!window.__tools.draw_agent_activity);
+    await page.getByRole('button', { name: 'Start sketching', exact: true }).click();
+    const original = await call('draw_get_state');
+    const object = { id: 'activity-card', kind: 'rectangle', createdAt: new Date().toISOString(), from: { x: 80, y: 150 }, to: { x: 230, y: 250 }, color: '#fcaa2d' };
+    await call('draw_apply_operations', { operations: [{ type: 'put_object', object }] });
+    const before = await call('draw_get_state');
+    const inspected = await call('draw_inspect', { ids: [object.id] });
+    const panel = page.getByRole('region', { name: 'Agent activity' });
+    await expect(panel).toContainText('Inspecting objects');
+    await expect(page.locator(`[data-agent-target="${object.id}"]`)).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Follow agent', exact: true })).toHaveAttribute('aria-pressed', 'false');
+    const afterRead = await call('draw_get_state');
+    expect(afterRead.document).toEqual(before.document);
+    expect(afterRead.selectedIds).toEqual(before.selectedIds);
+    const started = await call('draw_agent_activity', { state: 'begin', label: 'Arrange the decision cards', ids: [object.id] });
+    const taskId = started.task.id;
+    await expect(panel).toContainText('Working');
+    await call('draw_agent_activity', { state: 'waiting', taskId, label: 'Review the spacing', ids: [object.id] });
+    await expect(panel).toHaveAttribute('data-state', 'waiting');
+    await expect(call('draw_agent_activity', { state: 'working', taskId: 'wrong', label: 'Wrong task', ids: [] })).rejects.toThrow();
+    await expect(panel).toContainText('Review the spacing');
+    await page.getByRole('button', { name: 'Reduce motion', exact: true }).click();
+    await expect(page.locator('.app-shell')).toHaveClass(/reduce-agent-motion/);
+    await call('draw_edit', { expectedRevision: inspected.revision, commands: [{ type: 'transform', ids: [object.id], x: 2400, y: 1800 }] });
+    await expect(panel).toContainText('Editing objects');
+    expect(await page.locator(`[data-object-id="${object.id}"]`).evaluate(el => getComputedStyle(el).animationName)).toBe('none');
+    const moved = await call('draw_get_state');
+    expect(moved.document.viewport).toEqual(original.document.viewport);
+    await page.getByRole('button', { name: 'Follow agent', exact: true }).click();
+    const followed = await call('draw_inspect', { ids: [object.id] });
+    // The revision returned by a followed inspection must remain usable.
+    await call('draw_edit', { expectedRevision: followed.revision, commands: [{type:'layer', ids:[object.id], name:'Followed card'}] });
+    await expect.poll(async () => (await call('draw_get_state')).document.viewport.x).not.toBe(original.document.viewport.x);
+    const surface = await page.locator('svg[aria-label="Canvas objects"]').boundingBox();
+    await page.mouse.move(surface.x + 25, surface.y + surface.height - 70);
+    await page.mouse.wheel(0, 180);
+    await expect(page.getByRole('button', { name: 'Follow agent', exact: true })).toHaveAttribute('aria-pressed', 'false');
+    await call('draw_agent_activity', { state: 'failed', taskId, label: 'Spacing needs another pass', ids: [object.id] });
+    await expect(panel).toHaveAttribute('data-state', 'failed');
+    const retry = await call('draw_agent_activity', { state: 'begin', label: 'Verify the corrected layout', ids: [object.id] });
+    await call('draw_agent_activity', { state: 'completed', taskId: retry.task.id, label: 'Layout ready for review', ids: [object.id] });
+    await expect(panel).toHaveAttribute('data-state', 'completed');
+    await page.screenshot({ path: new URL(`activity-${width}.png`, out).pathname });
+    await expect(call('draw_edit', { expectedRevision: 'stale', commands: [] })).rejects.toThrow();
+    await expect(panel).toHaveAttribute('data-state', 'failed');
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    expect(await page.evaluate(() => matchMedia('(prefers-reduced-motion: reduce)').matches)).toBe(true);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    await expect(page.locator('.statusbar')).toContainText('Saved');
+    await page.reload({ waitUntil: 'networkidle' });
+    await expect(panel).toHaveCount(0);
+    await expect.poll(async () => (await call('draw_get_state')).document.objects.length).toBe(1);
+    expect(errors).toEqual([]);
+    await writeFile(new URL(`receipt-${width}.json`, out), JSON.stringify({ base, width, passed: true, errors }, null, 2));
+    await context.close();
+    console.log(`Agent activity ${width}: passed`);
+  }
+} finally { await browser.close(); }

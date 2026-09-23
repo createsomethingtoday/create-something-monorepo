@@ -95,3 +95,5 @@ svg .agent-camera{transition:transform 420ms cubic-bezier(.22,1,.36,1)}
 @media(max-width:820px){.file-actions{overflow:visible;flex-wrap:wrap}.identity .source-link{display:none}.topbar{grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto auto;padding-block:6px}.app-shell:not(.native-shell){grid-template-rows:136px minmax(0,1fr) 28px}.identity{justify-content:space-between;flex-wrap:nowrap}.title{height:30px}.file-actions{justify-content:flex-start}.native-shell .topbar{grid-template-columns:minmax(150px,auto) minmax(0,1fr);grid-template-rows:54px}}
 
 @media(max-width:820px){.app-shell:not(.native-shell){grid-template-rows:auto minmax(0,1fr) 28px}.app-shell:not(.native-shell) .topbar{min-height:136px}}
+
+.reduce-agent-motion .agent-change{animation:none!important}.reduce-agent-motion .agent-camera{transition:none!important}

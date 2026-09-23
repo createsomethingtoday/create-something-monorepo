@@ -1,10 +1,11 @@
+import { createAgentActivity, type AgentActivity } from './agent-activity';
 import { compileEdits, editCommandSchema, assertLockedLayersPreserved, visibleObjects, isLayerLocked } from './editing';
 import { createObjectCenterResolver, expandCompoundIds, objectBounds, type CanvasDocument, type CanvasObject, type Point, type Tool } from './document';
 import { applyCanvasOperations, type CanvasOperation } from './paired-session';
 import { DRAWING_PALETTE } from './palette';
 import { normalizeNoteContent, noteContentText } from './note-content';
 
-export const DRAW_WEBMCP_VERSION = '2026-09-23.1';
+export const DRAW_WEBMCP_VERSION = '2026-09-23.2';
 export const REPLACE_CONFIRMATION = 'REPLACE CANVAS';
 export const RESET_CONFIRMATION = 'RESET CANVAS';
 export const DELETE_CONFIRMATION = 'DELETE OBJECTS';
@@ -33,6 +34,7 @@ export type DrawRenderedGeometry = {
 
 export type DrawTransitionKind = 'create' | 'update' | 'remove' | 'convert' | 'restore' | 'history' | 'reset';
 export type DrawController = {
+  activity?: (value: AgentActivity) => void;
   getState: () => DrawState;
   applyOperations: (operations: CanvasOperation[], expectedRevision?: string) => Promise<{ before: CanvasDocument; after: CanvasDocument }> | { before: CanvasDocument; after: CanvasDocument };
   select: (ids: string[]) => void;
@@ -844,7 +846,8 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
     }
     return receipt(controller, kind, ids, preserveViewport);
   };
-  return [
+  const activity = createAgentActivity(() => controller.getState().document.id, value => controller.activity?.(value));
+  const tools: DrawWebMcpTool[] = [
     {
       name: 'draw_get_state', title: 'Inspect Draw canvas',
       description: 'Read the complete current Draw document, selected object IDs, active tool, and undo/redo availability.',
@@ -864,7 +867,7 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
         const compiled = compileEdits(before,input.commands,{id:()=>`object-${crypto.randomUUID()}`,now:new Date().toISOString()});
         if (!compiled.operations.length) return {ok:true,revision:drawRevision(before),selectedIds:compiled.selectedIds,changedIds:[]};
         const result = await controller.applyOperations(compiled.operations,input.expectedRevision);
-        return {...finish('update',compiled.changedIds,result.before,result.after,true),selectedIds:compiled.selectedIds};
+        return {...finish('update',compiled.changedIds,result.before,result.after),selectedIds:compiled.selectedIds};
       }
     },
     {
@@ -1541,6 +1544,31 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
       execute: async (input) => { if (input.confirmation !== RESET_CONFIRMATION) throw new Error(`Reset requires confirmation exactly "${RESET_CONFIRMATION}".`); await controller.reset(); return receipt(controller, 'reset', []); }
     }
   ];
+  const wrapped = tools.map(tool => ({ ...tool, execute: async (input: Record<string, unknown>) => {
+    if (!controller.activity) return tool.execute(input);
+    const known = new Set(controller.getState().document.objects.map(object => object.id));
+    const requested = Array.isArray(input.ids) ? input.ids : typeof input.id === 'string' ? [input.id] : [];
+    const actionLabel = ({ draw_inspect: 'Inspecting objects', draw_get_state: 'Reading canvas', draw_get_rendered_geometry: 'Checking geometry', draw_edit: 'Editing objects', draw_compose: 'Creating objects', draw_select: 'Selecting objects' } as Record<string, string>)[tool.name] ?? tool.title;
+    const token = activity.begin(actionLabel, requested.filter((id): id is string => typeof id === 'string' && known.has(id)));
+    try {
+      const result = await tool.execute(input);
+      const output = result as { objects?: Array<{ id: string }>; document?: CanvasDocument; transition?: { affectedIds: string[] }; ids?: string[] };
+      const ids = output?.transition?.affectedIds ?? output?.objects?.map(object => object.id) ?? output?.document?.objects.map(object => object.id) ?? output?.ids;
+      activity.end(token, ids);
+      // Following can change the camera. Return a fresh read so the revision and
+      // visible-world projection describe the viewport the user now sees.
+      if (tool.name === 'draw_inspect' || tool.name === 'draw_get_state') return tool.execute(input);
+      return result;
+    } catch (error) { activity.end(token, undefined, true); throw error; }
+  }}));
+  wrapped.push({
+    name: 'draw_agent_activity', title: 'Report agent task activity',
+    description: 'Report a real task lifecycle without modifying the document. One active task per canvas tool session. Begin returns a taskId required for subsequent working/waiting/completed/failed updates. Use concise user-facing labels and existing target IDs; never invent thinking or progress. Ordinary tools automatically report their own actions. Task state is agent-reported, ephemeral and cleared on reload.',
+    inputSchema: { type: 'object', additionalProperties: false, required: ['state', 'label', 'ids'], properties: { state: { type: 'string', enum: ['begin', 'working', 'waiting', 'completed', 'failed'] }, label: { type: 'string', minLength: 1, maxLength: 160 }, ids: { type: 'array', maxItems: 100, uniqueItems: true, items: { type: 'string' } }, taskId: { type: 'string' } } },
+    annotations: { readOnlyHint: false, openWorldHint: false },
+    execute: async input => activity.task(input, new Set(controller.getState().document.objects.map(object => object.id)))
+  });
+  return wrapped;
 }
 
 type ModelContextLike = { registerTool?: (tool: unknown) => unknown; provideContext?: (context: { tools: unknown[] }) => unknown };

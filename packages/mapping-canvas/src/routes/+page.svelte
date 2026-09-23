@@ -1,5 +1,7 @@
 <script lang="ts">
   import './page.css';
+  import AgentActivityPanel from '$lib/AgentActivity.svelte';
+  import type { AgentActivity } from '$lib/agent-activity';
   import { browser } from '$app/environment';
   import ProjectModes from '$lib/ProjectModes.svelte';
   import { loadProjects, type ProjectSummary } from '$lib/animation/storage';
@@ -96,6 +98,8 @@
   let nativeConflictEpoch = 0;
   let agentTransition = $state<{ id: string; kind: DrawTransitionKind; affectedIds: string[] } | null>(null);
   let agentTransitionTimer: ReturnType<typeof setTimeout> | undefined;
+  let agentActivity = $state<AgentActivity | null>(null);
+  let followAgent = $state(false), reduceAgentMotion = $state(false), activityNow = $state(Date.now());
   let agentCameraActive = $state(false);
   let agentCameraTimer: ReturnType<typeof setTimeout> | undefined;
   let wheelTimer: ReturnType<typeof setTimeout> | undefined;
@@ -112,6 +116,10 @@
   const selectedObjects = $derived(document.objects.filter(({ id }) => selectedIdSet.has(id)));
   const paletteVisible = $derived(['pen', 'rectangle', 'ellipse', 'arrow'].includes(tool) || selectedObjects.some(isColorableObject));
   const visibleLayers = $derived(visibleObjects(document));
+  const currentActivity = $derived(agentActivity?.documentId === document.id ? agentActivity : null);
+  const attentionIds = $derived(new Set(currentActivity?.action && (currentActivity.action.state === 'running' || activityNow - currentActivity.action.updatedAt < 4000) ? currentActivity.action.ids : []));
+  const attentionObjects = $derived(visibleLayers.filter(o => attentionIds.has(o.id)).slice(0, 20));
+
   const renderObjects = $derived([...visibleLayers.filter(o=>o.kind==='group'),...visibleLayers.filter(o=>o.kind!=='group')]);
   const selectionRoots = $derived(transformRoots(document, selectedIds));
   const selectionBounds = $derived(editBounds(selectionRoots));
@@ -141,6 +149,7 @@
       redo: () => queueAgentMutation(() => browserLocalHistory('redo')),
       reset: () => queueAgentMutation(resetCanvasFromAgent),
       animate: showAgentTransition,
+      activity: value => { agentActivity = value; activityNow = Date.now(); if (followAgent && value.action?.state === 'completed' && ['Inspecting objects', 'Reading canvas'].includes(value.action.label) && value.action.ids.length) followAttention(value.action.ids); },
       focus: (target) => queueAgentMutation(() => focusAgentCamera(target)),
       renderedGeometry: readRenderedGeometry,
       shareStatus: () => { const managed = currentManagedShare(); return managed ? { shareId: managed.shareId, url: new URL(managed.url, location.origin).href, revision: managed.revision, expiresAt: managed.expiresAt } : null; },
@@ -149,13 +158,14 @@
       revokeSnapshot: revokeSnapshotForAgent
     }));
     if (webMcp.registered) status = `${webMcp.registered} agent tools ready · loading local canvas…`;
+    const activityTimer = setInterval(() => activityNow = Date.now(), 1000);
     const resize = () => { viewportWidth = surface?.clientWidth || window.innerWidth; viewportHeight = surface?.clientHeight || window.innerHeight; };
     const surfaceObserver = new ResizeObserver(resize);
     const storage = (event: StorageEvent) => { if (event.key === `draw-share:${history.present.id}`) restoreManagedShare(history.present.id); };
     resize(); surfaceObserver.observe(surface); window.addEventListener('resize', resize); window.addEventListener('keydown', keydown); window.addEventListener('copy', copySelection); window.addEventListener('paste', pasteSelection); window.addEventListener('keyup', keyup); window.addEventListener('blur', releasePan); window.addEventListener('storage', storage);
     mirrorTimer = setInterval(() => void refreshMirroredState(), 750);
     if (import.meta.env.PROD) navigator.serviceWorker?.register('/service-worker.js').catch(() => undefined);
-    return () => { noteInput.flushAll(); surfaceObserver.disconnect(); clearInterval(mirrorTimer); clearTimeout(agentTransitionTimer); clearTimeout(agentCameraTimer); clearTimeout(wheelTimer); clearTimeout(shareExpiryTimer); window.removeEventListener('resize', resize); window.removeEventListener('keydown', keydown); window.removeEventListener('copy', copySelection); window.removeEventListener('paste', pasteSelection); window.removeEventListener('keyup', keyup); window.removeEventListener('blur', releasePan); window.removeEventListener('storage', storage); };
+    return () => { clearInterval(activityTimer); noteInput.flushAll(); surfaceObserver.disconnect(); clearInterval(mirrorTimer); clearTimeout(agentTransitionTimer); clearTimeout(agentCameraTimer); clearTimeout(wheelTimer); clearTimeout(shareExpiryTimer); window.removeEventListener('resize', resize); window.removeEventListener('keydown', keydown); window.removeEventListener('copy', copySelection); window.removeEventListener('paste', pasteSelection); window.removeEventListener('keyup', keyup); window.removeEventListener('blur', releasePan); window.removeEventListener('storage', storage); };
   });
 
   function queueAgentMutation<T>(action: () => Promise<T> | T): Promise<T> {
@@ -526,13 +536,24 @@
     await (direction === 'undo' ? doUndo() : doRedo());
   }
 
+  function followAttention(ids: string[]) {
+    if (drawing || agentMutationActive || replacingDocument) return;
+    const objects = visibleLayers.filter(o => ids.includes(o.id));
+    if (!objects.length) return;
+    const next = fitViewportToBounds(viewport, objectBounds(objects, document.objects), { width: viewportWidth, height: viewportHeight });
+    if (next === viewport) return;
+    clearTimeout(agentCameraTimer); agentCameraActive = true;
+    updateViewport(next, false);
+    agentCameraTimer = setTimeout(() => agentCameraActive = false, 520);
+  }
+
   function showAgentTransition(kind: DrawTransitionKind, affectedIds: string[], preserveViewport = false) {
     const id = `agent-${crypto.randomUUID()}`;
     agentTransition = { id, kind, affectedIds };
     clearTimeout(agentTransitionTimer);
     agentTransitionTimer = setTimeout(() => agentTransition = null, 700);
     const affectedIdSet = new Set(affectedIds), affected = document.objects.filter(({ id }) => affectedIdSet.has(id));
-    const followable = !preserveViewport && !['history', 'reset'].includes(kind) && affected.length > 0;
+    const followable = followAgent && !preserveViewport && !['history', 'reset'].includes(kind) && affected.length > 0;
     const nextViewport = followable ? fitViewportToBounds(viewport, objectBounds(affected, document.objects), { width: viewportWidth, height: viewportHeight }) : viewport;
     const framed = nextViewport !== viewport;
     if (framed) {
@@ -992,6 +1013,7 @@
     if (match) tool = match.id;
   }
   function stopAgentCamera() {
+    followAgent = false;
     if (agentCameraActive && canvasContent) {
       const renderedTransform = getComputedStyle(canvasContent).transform;
       if (renderedTransform && renderedTransform !== 'none') {
@@ -1241,7 +1263,7 @@
   {@html jsonLd(applicationSchema)}
 </svelte:head>
 
-<main class="app-shell" class:native-shell={nativeShell}>
+<main class="app-shell" class:native-shell={nativeShell} class:reduce-agent-motion={reduceAgentMotion}>
   <header class="topbar">
     <div class="identity"><img src="/brand/create-something-agency-white.svg" alt="CREATE SOMETHING .agency" />{#if nativeRole === 'web'}<ProjectModes id={document.id} mode="canvas" navigate={(event,mode)=>{if(mode==='canvas')event.preventDefault();else void openMotion(event,mode==='preview');}} />{/if}<a class="source-link" href="/download" target="_blank" rel="noreferrer">Mac</a><a class="source-link" href="https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/mapping-canvas" target="_blank" rel="noreferrer">Source</a>{#if nativeRole !== 'web'}<button class="native-link" aria-label="Open device pairing" onclick={openPairing}>{nativeRole === 'host' ? 'Pair' : nativeSession.sessionId ? 'Linked' : 'Link'}</button>{/if}</div>
     <input class="title" aria-label="Canvas title" maxlength="240" value={document.title} oninput={(event) => updateTitle(event.currentTarget)} />
@@ -1267,6 +1289,19 @@
             {:else if object.kind === 'group'}<g data-object-id={object.id} transform={objectTransform(object)} class:selected class:agent-change={agentAffectedIdSet.has(object.id)} role="button" tabindex="0" aria-label={`Group: ${object.label}`} onpointerdown={(event) => selectPointer(event, object.id)} onkeydown={(event) => selectKeyboard(event, object.id)}><rect x={object.x} y={object.y} width={object.width} height={object.height} rx="4" fill="rgba(252,170,45,.025)" stroke={selected ? '#fcaa2d' : 'rgba(252,170,45,.5)'} stroke-dasharray="8 6" /><text x={object.x + 12} y={object.y + 24} class="group-label">{object.label}</text>{#if selected && tool === 'select'}<rect data-ui="true" class="resize-handle" role="button" tabindex="0" aria-label="Resize group" x={object.x + object.width - 9} y={object.y + object.height - 9} width="18" height="18" rx="2" onpointerdown={(event) => resizePointer(event, object.id)} onkeydown={(event) => resizeKeyboard(event, object.id)} />{/if}</g>
             {:else if object.kind === 'connector'}{@const from = objectIndex.get(object.fromId)}{@const to = objectIndex.get(object.toId)}{#if from && to}{@const a = resolveObjectCenter(from)}{@const b = resolveObjectCenter(to)}{@const label = connectorLabels.get(object.id)}<g class:agent-change={agentAffectedIdSet.has(object.id)}><line data-object-id={object.id} transform={objectTransform(object)} class:selected role="button" tabindex="0" aria-label="Connector" x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#fcaa2d" stroke-width="2" marker-end="url(#arrowhead)" onpointerdown={(event) => selectPointer(event, object.id)} onkeydown={(event) => selectKeyboard(event, object.id)} />{#if object.label && label}<text class="connector-label" x={label.x} y={label.y} text-anchor="middle">{object.label}</text>{/if}</g>{/if}{/if}
           {/each}
+          <g class="agent-attention" data-ui="true" pointer-events="none" aria-hidden="true">
+            {#each attentionObjects as object}
+              {@const bounds = object.kind === 'connector' ? objectBounds([object], document.objects) : visualBounds([object])}
+              <rect data-agent-target={object.id} x={bounds.x-5/viewport.zoom} y={bounds.y-5/viewport.zoom} width={Math.max(1,bounds.width)+10/viewport.zoom} height={Math.max(1,bounds.height)+10/viewport.zoom} fill="none" stroke="var(--amber)" stroke-width={1.5/viewport.zoom} stroke-dasharray={`${4/viewport.zoom} ${3/viewport.zoom}`} />
+            {/each}
+            {#if attentionObjects.length && currentActivity?.action}
+              {@const anchor = attentionObjects[0].kind === 'connector' ? objectBounds([attentionObjects[0]], document.objects) : visualBounds([attentionObjects[0]])}
+              <g transform={`translate(${anchor.x},${anchor.y-12/viewport.zoom}) scale(${1/viewport.zoom})`}>
+                <rect x="-4" y="-15" width="220" height="22" rx="3" fill="var(--color-performance-bg-pure,#000)" />
+                <text x="2" y="0" fill="var(--amber)" font-size="10" font-family="var(--font-performance-mono,monospace)">Agent · {currentActivity.action.label.slice(0,28)}</text>
+              </g>
+            {/if}
+          </g>
           {#if selectedObjects.length && tool === 'select' && selectedObjects.some(o=>o.kind!=='connector')}
             <g data-ui="true" class="selection-box"><rect x={selectionBounds.x} y={selectionBounds.y} width={Math.max(1,selectionBounds.width)} height={Math.max(1,selectionBounds.height)} fill="none" stroke="var(--amber)" stroke-width={1/viewport.zoom} pointer-events="none" />
               <rect role="button" tabindex="0" aria-label="Resize selection" class="resize-handle" x={selectionBounds.x+selectionBounds.width-6/viewport.zoom} y={selectionBounds.y+selectionBounds.height-6/viewport.zoom} width={12/viewport.zoom} height={12/viewport.zoom} onpointerdown={e=>beginTransform(e,'resize')} onkeydown={e=>{if(e.key==='ArrowRight'||e.key==='ArrowDown'){e.preventDefault();e.stopPropagation();editSelection([{type:'transform',ids:selectedIds,width:selectionBounds.width+1,height:selectionBounds.height+1}]);}}} />
@@ -1290,7 +1325,7 @@
       </div>
       {#if paletteVisible}<div class="palette" role="group" aria-label="Mark color" data-ui="true"><span>Mark color</span><div>{#each DRAWING_PALETTE as color}<button class:active={drawingColor === color.value} aria-pressed={drawingColor === color.value} aria-label={`${color.label} color`} data-testid={`color-${color.id}`} style={`--swatch:var(${color.token},${color.value})`} onclick={() => chooseColor(color.value, color.label)}><i aria-hidden="true"></i><small>{color.label}</small></button>{/each}</div></div>{/if}
       {#if selectedIds.length}<div class="selection" data-ui="true"><span>{selectedIds.length} selected</span>{#if selectedObjects.length === 1 && selectedObjects[0].kind === 'note'}<div class="note-format" role="toolbar" aria-label="Note formatting"><button onclick={() => formatSelectedNote('heading1')}>H1</button><button onclick={() => formatSelectedNote(undefined,'bold')}>Bold</button><button onclick={() => formatSelectedNote(undefined,'italic')}>Italic</button><button onclick={() => formatSelectedNote('bullet')}>Bullet</button><button onclick={() => formatSelectedNote('quote')}>Quote</button><button onclick={() => formatSelectedNote(undefined,'code')}>Code</button><button onclick={() => formatSelectedNote(undefined,'link')}>Link</button><button onclick={clearSelectedNoteFormatting}>Plain</button></div>{/if}<button class="convert" data-testid="convert-menu" onclick={() => conversionOpen = !conversionOpen}>Convert to…</button>{#if selectedObjects.length === 1 && selectedObjects[0].sourceSnapshot}<button data-testid="restore-source" onclick={restoreSelected}>Restore source</button>{/if}{#if conversionOpen}<div class="conversion-menu"><button data-testid="convert-note" onclick={() => runConversion('note')}>Note<small>Retain as editable text</small></button><button data-testid="convert-connector" onclick={() => runConversion('connector')} disabled={selectedIds.length < 2}>Connector<small>Relate two selected objects</small></button><button data-testid="convert-group" onclick={() => runConversion('group')}>Group<small>Name a working boundary</small></button></div>{/if}</div>{/if}
-      {#if agentTransition}<output class="agent-transition" aria-live="polite"><i aria-hidden="true"></i><span>Agent {agentTransition.kind}</span><small>{agentTransition.affectedIds.length ? `${agentTransition.affectedIds.length} artifact${agentTransition.affectedIds.length === 1 ? '' : 's'}` : 'canvas'}</small></output>{/if}
+      {#if currentActivity}<AgentActivityPanel activity={currentActivity} now={activityNow} bind:follow={followAgent} bind:reduced={reduceAgentMotion} stop={stopAgentCamera} />{/if}
       {#if pairingOpen}<section class="pairing-panel" data-ui="true" aria-label="Device pairing"><header><strong>{nativeRole === 'host' ? 'Pair iPhone' : 'Connect to Mac'}</strong><button aria-label="Close pairing" onclick={() => pairingOpen = false}>×</button></header>{#if pairingBusy}<p>Looking for the secure session…</p>{:else if nativeRole === 'host'}<p>Enter this one-time code on the iPhone. Both devices must be on the same local network.</p><output class="pairing-code">{pairingOffer?.code || '—'}</output><small>Mac fingerprint {nativeSession.transport?.certificateFingerprint?.slice(0, 16) || 'unavailable'} · expires {pairingOffer ? new Date(pairingOffer.expiresAt).toLocaleTimeString() : 'soon'}</small>{#if nativeSession.pairedClients?.length}<div class="paired-list">{#each nativeSession.pairedClients as client}<span>{client.clientId}<button disabled={Boolean(client.revokedAt)} onclick={async () => { await revokeCompanion(client.clientId); nativeSession = await hostStatus(); }}>Revoke</button></span>{/each}</div>{/if}{:else if nativeSession.sessionId}<p>{nativeSession.requiresRepair ? 'This Mac rejected the pairing credentials. Export if needed, then forget and re-pair.' : 'Securely linked to the Mac session.'}</p><small>{nativeSession.certificateFingerprint?.slice(0, 16)} · revision {nativeSession.revision} · {nativeSession.queueDepth || 0} queued</small><button disabled={nativeSession.requiresRepair} onclick={async () => { const result = await setCompanionOnline(nativeSession.online === false); nativeSession = { ...nativeSession, ...result }; if (result.document) history = { past: [], present: result.document, future: [] }; }}> {nativeSession.online === false ? 'Reconnect' : 'Test offline'} </button><button onclick={async () => { nativeSession = await forgetCompanion(); discoveredHosts = []; selectedHost = null; pairingCode = ''; status = 'Pairing removed · choose Link to pair again'; pairingOpen = false; }}>Forget and re-pair</button>{:else}<p>{discoveredHosts.length ? 'Confirm the Mac fingerprint, then enter its six-digit code.' : 'No Mac session found. Open Draw on Mac and choose Pair.'}</p>{#if selectedHost}<label>Mac session<select bind:value={selectedHost}>{#each discoveredHosts as host}<option value={host}>{host.endpoint}</option>{/each}</select></label><small>Fingerprint {selectedHost.certificateFingerprint.slice(0, 16)}</small><label>Pairing code<input inputmode="numeric" maxlength="6" bind:value={pairingCode} placeholder="000000" /></label><button class="convert" disabled={!/^\d{6}$/.test(pairingCode)} onclick={confirmCompanionPairing}>Pair securely</button>{/if}{/if}</section>{/if}
     </div>
     {#if panelOpen && nativeRole === 'web'}<WorkbenchPanel {document} {selectedIds} select={(ids)=>{if(!drawing && !agentMutationActive){selectedIds=ids;tool='select';}}} edit={editSelection} disabled={drawing || agentMutationActive || replacingDocument || sharing} />{/if}

@@ -23,3 +23,11 @@ The additive `mapping-canvas.v1` fields preserve existing documents: name, hidde
 Keyboard: Command/Ctrl+D duplicates, Command/Ctrl+A selects unlocked visible objects, Command/Ctrl+C/V copies/pastes portable artwork, arrows nudge one unit (Shift: ten), Space temporarily pans, Escape clears selection, Command/Ctrl+Z and Shift+Z undo/redo. Text controls retain normal text shortcuts.
 
 Verification: `pnpm --filter @create-something/mapping-canvas test`, `check`, `build`, then `CANVAS_URL=<running build URL> pnpm --filter @create-something/mapping-canvas verify:editing`. The browser verifier drives real UI plus registered WebMCP on desktop/mobile and retains screenshots, exported files and state receipts under `output/`.
+
+## Agent attention and task activity
+
+Canvas tool execution reports ephemeral action labels, bounded target IDs, and running/completed/failed outcomes. Reads show attention too. These events do not enter the document, revision, exports, or undo history. They clear on reload/project change. Attention excludes hidden layers and shows up to 20 outlines for four seconds; event payloads retain up to 100 IDs. A late completion cannot replace a newer action.
+
+`draw_agent_activity({state, label, ids, taskId?})` reports longer tasks. `begin` returns `task.id`; subsequent `working`, `waiting`, `completed`, or `failed` updates require that ID. One active task per canvas tool session; finish it before beginning another. Labels are 1–160 characters, IDs must exist (maximum 100). These states are agent-reported, not evidence that the model is thinking. Working tasks with no recent events show the age of their last update. Automatic operation outcomes remain visible separately.
+
+Following is off by default. Users can opt into following targets, and manual canvas navigation disengages it immediately. The explicit `draw_focus` command remains an intentional camera operation. Reduce motion disables agent transitions; the OS reduced-motion setting is always honored. User selection remains distinct from agent attention. This is local Canvas presence, not remote multiplayer identity or a native companion task transport.
