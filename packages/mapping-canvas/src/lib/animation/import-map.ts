@@ -1,4 +1,4 @@
-import { visibleObjects, editBounds } from '../editing';
+import { visibleObjects, editBounds, visualBounds } from '../editing';
 import { type CanvasDocument } from '../document';
 import { DEFAULT_DRAWING_COLOR } from '../palette';
 import {
@@ -48,6 +48,11 @@ function sceneFit(map: CanvasDocument) {
     });
   };
   for (const object of map.objects) {
+    if(object.rotation) {
+      const b=visualBounds([object]);include({x:b.x,y:b.y});include({x:b.x+b.width,y:b.y+b.height});
+      if(object.kind==='note'){widest=Math.max(widest,object.width);tallest=Math.max(tallest,object.height);}
+      continue;
+    }
     if (object.kind === 'stroke') object.points.forEach(include);
     else if (object.kind === 'note' || object.kind === 'group')
       includeBox(object.x, object.y, object.width, object.height);

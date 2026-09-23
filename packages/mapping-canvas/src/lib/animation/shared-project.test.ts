@@ -61,6 +61,11 @@ function canvas(): CanvasDocument {
 }
 
 describe('shared Draw project contract', () => {
+  it('fits rotated anisotropic artwork inside the Motion stage',()=>{
+    const document={...createDocument(),objects:[{id:'tall',kind:'rectangle' as const,createdAt:'2026-09-23',from:{x:0,y:0},to:{x:1000,y:10},color:'#ffffff',rotation:90}]};
+    const motion=syncMotionProject(document),points=motion.drawings[0].points;
+    for(const point of points){expect(point.x).toBeGreaterThanOrEqual(0);expect(point.x).toBeLessThanOrEqual(motion.width);expect(point.y).toBeGreaterThanOrEqual(0);expect(point.y).toBeLessThanOrEqual(motion.height);}
+  });
   it('retains visibility, fills and animation offsets when Canvas rotation changes',()=>{
     const source=canvas();source.objects[0]={...source.objects[0],fill:'#0057b8',name:'Decision',hidden:true};
     source.objects[1]={...source.objects[1],rotation:20};

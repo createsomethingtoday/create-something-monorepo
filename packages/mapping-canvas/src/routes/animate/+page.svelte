@@ -411,7 +411,7 @@
       penPoints = [p];
       return;
     }
-    if (tool === 'points' && current?.kind === 'stroke' && pose) {
+    if (tool === 'points' && current?.kind === 'stroke' && !current.hidden && pose) {
       const i = pose.points.findIndex((pt) => {
         const w = toWorld(pt, pose);
         return Math.hypot(w.x - p.x, w.y - p.y) < 16;
@@ -425,6 +425,7 @@
     ]
       .reverse()
       .find((d) => {
+        if(d.hidden) return false;
         const k = evaluate(d, time),
           local = toLocal(point(e, d.space), k);
         if (k.opacity === 0) return false;

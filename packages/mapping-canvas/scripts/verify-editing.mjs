@@ -206,8 +206,42 @@ try {
     const motion = await call('draw_animation_inspect');
     const drawing = (await call('draw_animation_drawing', { id })).drawing;
     expect(drawing.fill).toBe('#0057b8');
+    const hiddenOverlay = {
+      ...drawing,
+      id: 'hidden-hit-proof',
+      name: 'Hidden overlay',
+      hidden: true
+    };
+    delete hiddenOverlay.source;
     await call('draw_animation_apply', {
       expectedRevision: motion.revision,
+      operations: [{ type: 'put_drawing', drawing: hiddenOverlay }]
+    });
+    const stage = await page
+      .locator('canvas[aria-label="Illustration animation canvas"]')
+      .boundingBox();
+    const center = {
+      x:
+        (Math.min(...drawing.points.map((p) => p.x)) +
+          Math.max(...drawing.points.map((p) => p.x))) /
+        2,
+      y:
+        (Math.min(...drawing.points.map((p) => p.y)) +
+          Math.max(...drawing.points.map((p) => p.y))) /
+        2
+    };
+    await page.mouse.click(
+      stage.x + (center.x / motion.width) * stage.width,
+      stage.y + (center.y / motion.height) * stage.height
+    );
+    await expect(page.getByLabel('Drawing name', { exact: true })).toHaveValue('Decision');
+    await call('draw_animation_apply', {
+      expectedRevision: (await call('draw_animation_inspect')).revision,
+      operations: [{ type: 'remove_drawing', id: 'hidden-hit-proof' }]
+    });
+
+    await call('draw_animation_apply', {
+      expectedRevision: (await call('draw_animation_inspect')).revision,
       operations: [
         { type: 'put_pose', id, pose: { ...drawing.poses[0], time: 1, x: drawing.poses[0].x + 80 } }
       ]
