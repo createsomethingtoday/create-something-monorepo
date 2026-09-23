@@ -172,8 +172,9 @@ try {
     const composedState = await tools.draw_get_state.execute({});
     const briefModelWidth = composedState.document.objects.find(({ id }) => id === composed.refs.brief)?.width;
     const connectorLabel = [...document.querySelectorAll('.connector-label')].find((node) => node.textContent === 'approved');
-    const rawConnectorLabelBounds = connectorLabel?.getBoundingClientRect().toJSON();
     const renderedGeometry = await tools.draw_get_rendered_geometry.execute({ ids: [composed.refs.brief, composed.refs.launch, composed.refs.approval, composed.refs.mission], limit: 10 });
+    // The geometry tool settles viewport transitions; compare the same settled frame.
+    const rawConnectorLabelBounds = connectorLabel?.getBoundingClientRect().toJSON();
     const formatted = await tools.draw_edit_note.execute({ id: composed.refs.brief, content: { blocks: [{ type: 'heading1', runs: [{ text: 'Mission', bold: true }] }, { type: 'bullet', runs: [{ text: 'Evidence link', link: 'https://example.com/proof' }] }] } });
     await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
     const formattedVisible = Boolean(document.querySelector(`[data-object-id="${composed.refs.brief}"] h1`) && document.querySelector(`[data-object-id="${composed.refs.brief}"] a[href="https://example.com/proof"]`));
