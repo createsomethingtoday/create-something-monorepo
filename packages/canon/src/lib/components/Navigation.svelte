@@ -36,6 +36,8 @@
      * so each property can opt in without changing another property's identity.
      */
     logoAsset?: NavigationLogoAsset;
+    /** Optional property label beside an asset lockup, such as `.learn`. */
+    logoAssetSuffix?: string;
     /**
      * Lets an owning property signal a deliberate internal-route transition through
      * its supplied SVG lockup. It never autoplays or responds to hover.
@@ -69,6 +71,7 @@
     showMobileLogoText = false,
     showDesktopLogoText = false,
     logoAsset,
+    logoAssetSuffix,
     enableRouteLogoMotion = false,
     logoHref = '/',
     links,
@@ -220,6 +223,7 @@
       <a
         href={logoHref}
         class="nav-logo"
+        class:nav-logo-has-asset-suffix={!!logoAssetSuffix}
         aria-label={`${logoAsset?.label ?? `${logo}${logoSuffix ?? ''}`} home`}
       >
         {#if logoAsset}
@@ -291,6 +295,9 @@
               </svg>
             {/if}
           </span>
+          {#if logoAssetSuffix}
+            <span class="nav-logo-asset-suffix">{logoAssetSuffix}</span>
+          {/if}
         {:else}
           {#if usesPerformanceStyle || usesEditorialStyle}
             <span class="nav-logo-mark" aria-hidden="true">
@@ -533,6 +540,20 @@
 
   .nav-logo-asset-picture {
     display: block;
+  }
+
+  .nav-logo-asset-suffix {
+    color: var(--color-performance-fg-muted);
+    font-family: var(--font-performance-mono);
+    font-size: 0.68rem;
+    font-weight: var(--font-performance-semibold);
+    letter-spacing: 0.04em;
+    line-height: 1;
+    text-transform: lowercase;
+  }
+
+  .nav-logo.nav-logo-has-asset-suffix {
+    gap: 0.35rem;
   }
 
   .nav-logo-route-motion {
@@ -893,6 +914,18 @@
     height: 1.65rem;
   }
 
+  .nav-clear .nav-logo.nav-logo-has-asset-suffix {
+    gap: 0.35rem;
+  }
+
+  .nav-clear .nav-logo-asset-suffix {
+    color: var(--color-performance-muted, #5e6268);
+    font-family: var(--font-performance-mono);
+    font-size: 0.68rem;
+    font-weight: var(--font-performance-semibold);
+    letter-spacing: 0.04em;
+  }
+
   .nav-clear .nav-logo-text,
   .nav-clear .nav-logo-suffix {
     position: absolute;
@@ -1087,6 +1120,10 @@
       width: 2.5rem;
       max-width: 2.5rem;
       height: 2.5rem;
+    }
+
+    .nav-clear .nav-logo.nav-logo-has-asset-suffix {
+      gap: 0.28rem;
     }
 
     .nav-clear.nav-show-mobile-logo-text .nav-logo {
