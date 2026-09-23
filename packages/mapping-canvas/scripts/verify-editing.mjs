@@ -288,6 +288,10 @@ try {
       .click();
     await expect(page.locator('main')).toHaveClass(/preview-mode/);
     await expect(page.getByLabel('Animation title', { exact: true })).toBeDisabled();
+    const previewState = await call('draw_animation_inspect');
+    await expect(call('draw_animation_apply', {expectedRevision: previewState.revision, operations: [{type: 'settings', title: 'Unexpected preview edit'}]})).rejects.toThrow('Preview is read-only');
+    await expect(call('draw_animation_history', {direction: 'undo'})).rejects.toThrow('Preview is read-only');
+    expect(await call('draw_animation_inspect')).toEqual(previewState);
     await page.screenshot({ path: new URL(`preview-${viewport.width}.png`, out).pathname });
     await Promise.all([
       page.waitForURL('**/?project=*', { waitUntil: 'networkidle' }),

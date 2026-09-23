@@ -52,7 +52,7 @@ const source = {
     origin: {
       type: 'object',
       required: ['x', 'y', 'scaleX', 'scaleY'],
-      properties: { x: num, y: num, scaleX: num, scaleY: num },
+      properties: { x: num, y: num, scaleX: num, scaleY: num, rotation: num },
       additionalProperties: false
     }
   },

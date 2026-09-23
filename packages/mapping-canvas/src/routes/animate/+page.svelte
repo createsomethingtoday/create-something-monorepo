@@ -150,7 +150,9 @@
     return work;
   }
   function commit(ops: Operation[], revision: number): Promise<void> {
+    if (previewMode) return Promise.reject(new Error('Preview is read-only. Open Motion to edit.'));
     const work = queue.then(async () => {
+      if (previewMode) throw new Error('Preview is read-only. Open Motion to edit.');
       if (!ready || busy || exporting) throw new Error('Editor is busy; retry after it is ready.');
       stop();
       busy = true;
@@ -158,6 +160,7 @@
         const next = applyOperations(project, ops, revision);
         const prepared = renderer.fork();
         await prepared.prepare(next.assets);
+        if (previewMode) throw new Error('Preview is read-only. Open Motion to edit.');
         await saveProject(next, project.revision);
         renderer = prepared;
         past = [...past.slice(-39), project];
@@ -177,7 +180,9 @@
     return work;
   }
   function history(direction: 'undo' | 'redo'): Promise<void> {
+    if (previewMode) return Promise.reject(new Error('Preview is read-only. Open Motion to edit.'));
     const work = queue.then(async () => {
+      if (previewMode) throw new Error('Preview is read-only. Open Motion to edit.');
       if (busy || exporting) throw new Error('Editor is busy.');
       const stack = direction === 'undo' ? past : future;
       const target = stack.at(-1);
@@ -188,6 +193,7 @@
         const next = { ...target, revision: project.revision + 1 };
         const prepared = renderer.fork();
         await prepared.prepare(next.assets);
+        if (previewMode) throw new Error('Preview is read-only. Open Motion to edit.');
         await saveProject(next, project.revision);
         renderer = prepared;
         if (direction === 'undo') {
@@ -226,6 +232,7 @@
   }
   function loadSelectedProject(id: string): Promise<void> {
     const work = queue.then(async () => {
+      if (previewMode) throw new Error('Preview is read-only. Open Motion to edit.');
       stop();
       busy = true;
       try {
@@ -287,6 +294,7 @@
   }
   function fresh(p = newProject()): Promise<void> {
     const work = queue.then(async () => {
+      if (previewMode) throw new Error('Preview is read-only. Open Motion to edit.');
       if (busy || exporting) throw new Error('Editor is busy.');
       stop();
       busy = true;

@@ -61,6 +61,18 @@ function canvas(): CanvasDocument {
 }
 
 describe('shared Draw project contract', () => {
+  it('preserves nested group visibility during initial import and Motion resync', () => {
+    const source = canvas();
+    source.objects.push({id:'outer',kind:'group',createdAt:source.objects[0].createdAt,x:0,y:0,width:420,height:240,label:'Hidden parent',childIds:['group-canvas-only'],hidden:true});
+    const initial = syncMotionProject(source);
+    expect(initial.drawings).toHaveLength(2);
+    expect(initial.drawings.every(drawing => drawing.hidden)).toBe(true);
+    source.objects[source.objects.length - 1].hidden = false;
+    const visible = syncMotionProject(source, initial);
+    expect(visible.drawings.every(drawing => !drawing.hidden)).toBe(true);
+    source.objects[source.objects.length - 1].hidden = true;
+    expect(syncMotionProject(source, visible).drawings.every(drawing => drawing.hidden)).toBe(true);
+  });
   it('excludes distant hidden layers from visible scene fit while retaining their tracks',()=>{
     const source={...createDocument(),objects:[{id:'visible',kind:'rectangle' as const,createdAt:'2026-09-23',from:{x:0,y:0},to:{x:100,y:100},color:'#ffffff'}]};
     const expected=syncMotionProject(source).drawings[0].points;

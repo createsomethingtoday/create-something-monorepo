@@ -97,10 +97,12 @@ function sceneFit(map: CanvasDocument) {
 }
 
 /** Materialize representable Canvas marks in Motion without changing their identity. */
-export function importMap(map: CanvasDocument): { drawings: Drawing[]; skipped: number } {
+export function importMap(
+  map: CanvasDocument,
+  visible: ReadonlySet<string> = new Set(visibleObjects(map).map((object) => object.id))
+): { drawings: Drawing[]; skipped: number } {
   const objects = map.objects.filter(isImportableCanvasObject).slice(0, LIMITS.drawings);
   const retainedMap = { ...map, objects };
-  const visible = new Set(visibleObjects(map).map((o) => o.id));
   const visibleFit = sceneFit({
     ...retainedMap,
     objects: objects.filter((o) => visible.has(o.id))
@@ -286,6 +288,7 @@ function preserveMotionOnlyIds(drawings: Drawing[], canvasIds: Set<string>): Dra
 
 /** Reconcile the Canvas space into Motion while preserving poses and Motion-only artwork. */
 export function syncMotionProject(map: CanvasDocument, existing?: Project): Project {
+  const visible = new Set(visibleObjects(map).map((object) => object.id));
   const prior = new Map(existing?.drawings.map((drawing) => [drawing.id, drawing]));
   const priorMotionOnly =
     existing?.drawings.filter((drawing) => drawing.source?.space !== 'canvas') ?? [];
@@ -330,7 +333,7 @@ export function syncMotionProject(map: CanvasDocument, existing?: Project): Proj
   let candidate = assemble([]);
   for (;;) {
     const selectedMap = { ...map, objects: [...updateableExistingObjects, ...newObjects] };
-    const imported = importMap(selectedMap).drawings;
+    const imported = importMap(selectedMap, visible).drawings;
     const importedById = new Map(imported.map((drawing) => [drawing.id, drawing]));
     let selected = existingObjects
       .map((object) => prior.get(object.id))
