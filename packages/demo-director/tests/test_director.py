@@ -37,6 +37,13 @@ class DirectorTests(unittest.TestCase):
     def test_refuses_source_overrun(self):
         self.plan['shots'][0]['start']=1
         with self.assertRaisesRegex(ValueError,'overruns'):self.render()
+    def test_fractional_shot_sum_has_bounded_audio(self):
+        shot=self.plan['shots'][0]
+        self.plan['shots']=[{**shot,'duration':duration} for duration in [.3,.6,.7]]
+        result=self.render()
+        self.assertAlmostEqual(result['duration'],1.6)
+        streams=d.probe(self.root/'final.mp4')['streams']
+        self.assertTrue(all(float(s['duration'])<1.7 for s in streams))
     def test_refuses_fractional_fps(self):
         self.plan['fps']=29.97
         with self.assertRaisesRegex(ValueError,'Integer fps'):self.render()

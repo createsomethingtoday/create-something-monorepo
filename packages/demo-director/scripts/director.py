@@ -83,6 +83,7 @@ def render(manifest_path, output):
             camera=shot[key]
             number(camera['zoom'],1,3);number(camera['x'],0,1);number(camera['y'],0,1)
         total += round(duration*fps)/fps
+    total = round(total, 6)
     audio, media = source(narration['source'])
     if not any(s['codec_type']=='audio' for s in media['streams']):raise ValueError('Narration has no audio')
     previous_end=0
@@ -114,8 +115,8 @@ def render(manifest_path, output):
         filters=[f'[1:a]asplit={count}'+''.join(f'[voice{i}]' for i in range(count))];labels=[]
         for i,seg in enumerate(narration['segments']):
             filters.append(f"[voice{i}]atrim=start={seg['sourceStart']}:duration={seg['duration']},asetpts=PTS-STARTPTS,adelay={round(seg['at']*1000)}:all=1[a{i}]");labels.append(f'[a{i}]')
-        filters.append(''.join(labels)+f"amix=inputs={len(labels)}:normalize=0,loudnorm=I=-16:TP=-1.5:LRA=11,apad,atrim=duration={total}[voice]")
-        run(['ffmpeg','-hide_banner','-loglevel','error','-n','-i',str(silent),'-i',str(audio),'-filter_complex',';'.join(filters),'-map','0:v','-map','[voice]','-c:v','copy','-c:a','aac','-b:a','192k','-ar','48000','-movflags','+faststart',str(output)])
+        filters.append(''.join(labels)+f"amix=inputs={len(labels)}:normalize=0,loudnorm=I=-16:TP=-1.5:LRA=11,apad=whole_dur={total:.6f},atrim=duration={total:.6f}[voice]")
+        run(['ffmpeg','-hide_banner','-loglevel','error','-n','-i',str(silent),'-i',str(audio),'-filter_complex',';'.join(filters),'-map','0:v','-map','[voice]','-c:v','copy','-c:a','aac','-b:a','192k','-ar','48000','-t',f'{total:.6f}','-movflags','+faststart',str(output)])
     run(['ffmpeg','-v','error','-xerror','-i',str(output),'-f','null','-'])
     result=probe(output)
     if abs(float(result['format']['duration'])-total)>0.15:raise ValueError('Output duration mismatch')
