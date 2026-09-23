@@ -1,6 +1,10 @@
 <script lang="ts">
   import './page.css';
   import { browser } from '$app/environment';
+  import ProjectModes from '$lib/ProjectModes.svelte';
+  import { loadProjects, type ProjectSummary } from '$lib/animation/storage';
+  import WorkbenchPanel from '$lib/WorkbenchPanel.svelte';
+  import { compileEdits, editBounds, visualBounds, assertLockedLayersPreserved, descendants, visibleObjects, isLayerLocked, type EditCommand } from '$lib/editing';
   import { onMount } from 'svelte';
   import { loadDocument, saveDocument } from '$lib/persistence';
   import { activateCanvasProject } from '$lib/project-storage';
@@ -61,6 +65,7 @@
   const jsonLd = (schema: unknown) => `<script type="application/ld+json">${JSON.stringify(schema).replace(/</g, '\\u003c')}</scr` + 'ipt>';
 
   let history = $state<History>({ past: [], present: createDocument(), future: [] });
+  let temporaryPan: Tool | null = null;
   let selectedIds = $state<string[]>([]), tool = $state<Tool>('pen'), drawing = $state(false);
   let nativeShell = $state(false);
   let nativeRole = $state<NativeRole>('web'), pairingOpen = $state(false), pairingBusy = $state(false);
@@ -105,15 +110,22 @@
   const resolveObjectCenter = $derived(createObjectCenterResolver(document.objects));
   const selectedObjects = $derived(document.objects.filter(({ id }) => selectedIdSet.has(id)));
   const paletteVisible = $derived(['pen', 'rectangle', 'ellipse', 'arrow'].includes(tool) || selectedObjects.some(isColorableObject));
-  const renderObjects = $derived([...document.objects.filter(({ kind }) => kind === 'group'), ...document.objects.filter(({ kind }) => kind !== 'group')]);
+  const visibleLayers = $derived(visibleObjects(document));
+  const renderObjects = $derived([...visibleLayers.filter(o=>o.kind==='group'),...visibleLayers.filter(o=>o.kind!=='group')]);
+  const selectionBounds = $derived(editBounds(selectedObjects));
+  let panelOpen = $state(true);
+  let projects = $state<ProjectSummary[]>([]);
+  let emptyDismissed = $state(false);
+  let transformGesture = $state<{ before: CanvasDocument; ids: string[]; start: Point; bounds: ReturnType<typeof editBounds>; mode: 'resize' | 'rotate' } | null>(null);
   const transform = $derived(`translate(${viewport.x} ${viewport.y}) scale(${viewport.zoom})`);
 
   onMount(() => {
     nativeShell = hasNativeBridge();
+    panelOpen = window.innerWidth > 820;
     try { const savedColor = localStorage.getItem(DRAWING_COLOR_PREFERENCE); if (isDrawingColor(savedColor)) drawingColor = savedColor; } catch { /* Preference persistence is optional. */ }
     try { sidebarCollapsed = localStorage.getItem(TOOL_SIDEBAR_PREFERENCE) === 'true'; } catch { /* Preference persistence is optional. */ }
     restoreManagedShare(history.present.id);
-    void initializeSession();
+    void initializeSession().then(async()=>{projects=await loadProjects();});
     const webMcp = registerDrawWebMcpTools(createDrawWebMcpTools({
       getState: agentState,
       applyOperations: (operations, expectedRevision) => queueAgentMutation(() => {
@@ -138,10 +150,10 @@
     const resize = () => { viewportWidth = surface?.clientWidth || window.innerWidth; viewportHeight = surface?.clientHeight || window.innerHeight; };
     const surfaceObserver = new ResizeObserver(resize);
     const storage = (event: StorageEvent) => { if (event.key === `draw-share:${history.present.id}`) restoreManagedShare(history.present.id); };
-    resize(); surfaceObserver.observe(surface); window.addEventListener('resize', resize); window.addEventListener('keydown', keydown); window.addEventListener('storage', storage);
+    resize(); surfaceObserver.observe(surface); window.addEventListener('resize', resize); window.addEventListener('keydown', keydown); window.addEventListener('copy', copySelection); window.addEventListener('paste', pasteSelection); window.addEventListener('keyup', keyup); window.addEventListener('blur', releasePan); window.addEventListener('storage', storage);
     mirrorTimer = setInterval(() => void refreshMirroredState(), 750);
     if (import.meta.env.PROD) navigator.serviceWorker?.register('/service-worker.js').catch(() => undefined);
-    return () => { noteInput.flushAll(); surfaceObserver.disconnect(); clearInterval(mirrorTimer); clearTimeout(agentTransitionTimer); clearTimeout(agentCameraTimer); clearTimeout(wheelTimer); clearTimeout(shareExpiryTimer); window.removeEventListener('resize', resize); window.removeEventListener('keydown', keydown); window.removeEventListener('storage', storage); };
+    return () => { noteInput.flushAll(); surfaceObserver.disconnect(); clearInterval(mirrorTimer); clearTimeout(agentTransitionTimer); clearTimeout(agentCameraTimer); clearTimeout(wheelTimer); clearTimeout(shareExpiryTimer); window.removeEventListener('resize', resize); window.removeEventListener('keydown', keydown); window.removeEventListener('copy', copySelection); window.removeEventListener('paste', pasteSelection); window.removeEventListener('keyup', keyup); window.removeEventListener('blur', releasePan); window.removeEventListener('storage', storage); };
   });
 
   function queueAgentMutation<T>(action: () => Promise<T> | T): Promise<T> {
@@ -158,7 +170,7 @@
   function assertAgentControlReady() {
     if (!ready) throw new Error('Draw is still loading. Try the tool again.');
     if (sharing || replacingDocument) throw new Error('Wait for the active snapshot or document replacement to finish.');
-    if (drawing || pinch || pendingTouchAction || resizingGroupId || resizeOrigin || movingObjectId || dragOrigin || noteInput.hasPending()) throw new Error('Finish the active human gesture before applying an agent control.');
+    if (transformGesture || drawing || pinch || pendingTouchAction || resizingGroupId || resizeOrigin || movingObjectId || dragOrigin || noteInput.hasPending()) throw new Error('Finish the active human gesture before applying an agent control.');
   }
 
   function agentState() {
@@ -316,7 +328,7 @@
     type PaintSegment = { start: { x: number; y: number }; end: { x: number; y: number }; padding: number };
     const paintGeometry = (object: CanvasObject, entry: typeof rendered[number]) => {
       const segments: PaintSegment[] = [], rects: Array<{ x: number; y: number; width: number; height: number }> = [], triangles: Array<Array<{ x: number; y: number }>> = [];
-      const addLine = (start: { x: number; y: number }, end: { x: number; y: number }, padding = 1) => segments.push({ start, end, padding });
+      const addLine = (start: { x: number; y: number }, end: { x: number; y: number }, padding = (object.strokeWidth || 2)/2) => segments.push({ start, end, padding });
       if (object.kind === 'stroke') for (let index = 1; index < object.points.length; index += 1) addLine(object.points[index - 1], object.points[index], object.width / 2);
       else if (object.kind === 'arrow') { addLine(object.from, object.to); triangles.push(markerPoints(object.from, object.to)); }
       else if (object.kind === 'connector') { const connector = connectorById.get(object.id); if (connector) { addLine(connector.route[0], connector.route[1]); triangles.push(markerPoints(connector.route[0], connector.route[1])); if (connector.labelBounds) rects.push(connector.labelBounds.worldBounds); } }
@@ -330,7 +342,8 @@
         for (let index = 1; index < points.length; index += 1) {
           const middleAngle = (index - .5) / segmentCount * Math.PI * 2;
           const sagitta = (1 - Math.cos(Math.PI / segmentCount)) * Math.hypot(radius.x * Math.cos(middleAngle), radius.y * Math.sin(middleAngle));
-          addLine(points[index - 1], points[index], 1 + sagitta);
+          addLine(points[index - 1], points[index], (object.strokeWidth || 2)/2 + sagitta);
+          if(object.fill && object.fill!=='none') triangles.push([center,points[index-1],points[index]]);
         }
       }
       else if (object.kind === 'group') {
@@ -339,6 +352,17 @@
         if (label) rects.push(worldBounds(paintedRect(label)));
       }
       else rects.push(entry.worldBounds);
+      if(object.kind==='rectangle' && object.fill && object.fill!=='none') {
+        const a=object.from,b=object.to,c={x:b.x,y:a.y},d={x:a.x,y:b.y};triangles.push([a,c,b],[a,b,d]);
+      }
+      if(object.rotation) {
+        const b=editBounds([object]),cx=b.x+b.width/2,cy=b.y+b.height/2,r=object.rotation*Math.PI/180;
+        const rotate=(p:Point)=>({x:cx+(p.x-cx)*Math.cos(r)-(p.y-cy)*Math.sin(r),y:cy+(p.x-cx)*Math.sin(r)+(p.y-cy)*Math.cos(r)});
+        for(const segment of segments){segment.start=rotate(segment.start);segment.end=rotate(segment.end);}
+        for(let i=0;i<triangles.length;i++) triangles[i]=triangles[i].map(rotate);
+        // Text bounds are already measured from the transformed DOM.
+        if(object.kind==='group') rects[0]=entry.worldBounds;
+      }
       return { segments, rects, triangles };
     };
     const pointSegmentDistance = (point: { x: number; y: number }, segment: PaintSegment) => { const dx = segment.end.x - segment.start.x, dy = segment.end.y - segment.start.y, lengthSquared = dx * dx + dy * dy, t = lengthSquared ? Math.max(0, Math.min(1, ((point.x - segment.start.x) * dx + (point.y - segment.start.y) * dy) / lengthSquared)) : 0; return Math.hypot(point.x - (segment.start.x + t * dx), point.y - (segment.start.y + t * dy)); };
@@ -527,6 +551,7 @@
     const before = JSON.parse(JSON.stringify(document)) as CanvasDocument;
     const next = applyCanvasOperations(before, operations);
     if (!next) throw new Error('One or more Draw operations are invalid for the current document. No changes were applied.');
+    assertLockedLayersPreserved(before,next);
     apply(next, operations);
     const existing = new Set(next.objects.map(({ id }) => id));
     selectedIds = selectedIds.filter((id) => existing.has(id));
@@ -658,7 +683,7 @@
     const run = () => writeCanvasDocument(next, persistedCanvasVersions.get(next.id) ?? null);
     return navigator.locks ? navigator.locks.request(`${DRAW_DOCUMENT_LOCK}:${next.id}`, run) : run();
   }
-  async function writeCanvasDocument(next: CanvasDocument, expectedCanvasUpdatedAt?: string | null) { const saved = await saveDocument(next, expectedCanvasUpdatedAt); if (saved) persistedCanvasVersions.set(next.id, next.updatedAt); return saved; }
+  async function writeCanvasDocument(next: CanvasDocument, expectedCanvasUpdatedAt?: string | null) { const saved = await saveDocument(next, expectedCanvasUpdatedAt); if (saved) {persistedCanvasVersions.set(next.id, next.updatedAt);if(!projects.some(p=>p.id===next.id && p.title===next.title)) projects=await loadProjects().catch(()=>projects);} return saved; }
   function persistedVersionMatches(id: string, persisted: CanvasDocument | null) { return (persisted?.updatedAt ?? null) === (persistedCanvasVersions.get(id) ?? null); }
   function mintReplacementTimestamp(reserved: string) {
     let milliseconds = Date.now(), candidate = new Date(milliseconds).toISOString();
@@ -671,8 +696,8 @@
       : { ...next, present: { ...next.present, updatedAt: mintReplacementTimestamp(document.updatedAt) } };
   }
   function queueSave(next: CanvasDocument) { if (!browser || nativeRole !== 'web') return; clearTimeout(saveTimer); status = 'Saving locally…'; saveTimer = setTimeout(() => void persistCurrentDocument(next).then((saved) => status = saved ? 'Saved on this device' : 'Another tab replaced this canvas · reload to continue').catch(() => status = 'Local save failed · export a copy'), 120); }
-  async function openMotion(event: MouseEvent) { event.preventDefault(); if (!ready) { status = 'Canvas is still loading'; return; } if (sharing || replacingDocument) { status = 'Wait for sharing or document replacement to finish before opening Motion'; return; } noteInput.flushAll(); clearTimeout(saveTimer); saveTimer = undefined; if (!await persistCurrentDocument(document)) { status = 'A newer Canvas is saved in another tab · reload before opening Motion'; return; } location.href = `/animate?project=${encodeURIComponent(document.id)}`; }
-  function commitNoteText(id: string, text: string) { if (!companionCanEdit()) return; const current = document.objects.find((entry) => entry.id === id); if (!current || current.kind !== 'note' || (current.text === text && !current.content)) return; const changed = { ...current, text, content: undefined }; const next = withObjects(document, document.objects.map((entry) => entry.id === id ? changed : entry)); history = { ...history, present: next }; queueSave(next); sendNative([{ type: 'put_object', object: changed }]); }
+  async function openMotion(event: MouseEvent, preview = false) { event.preventDefault(); if (!ready) { status = 'Canvas is still loading'; return; } if (sharing || replacingDocument) { status = 'Wait for sharing or document replacement to finish before opening Motion'; return; } noteInput.flushAll(); clearTimeout(saveTimer); saveTimer = undefined; if (!await persistCurrentDocument(document)) { status = 'A newer Canvas is saved in another tab · reload before opening Motion'; return; } location.href = `/animate?project=${encodeURIComponent(document.id)}${preview?'&mode=preview':''}`; }
+  function commitNoteText(id: string, text: string) { if (!companionCanEdit()) return; const current = document.objects.find((entry) => entry.id === id); if (!current || isLayerLocked(document,id) || current.kind !== 'note' || (current.text === text && !current.content)) return; const changed = { ...current, text, content: undefined }; const next = withObjects(document, document.objects.map((entry) => entry.id === id ? changed : entry)); history = { ...history, present: next }; queueSave(next); sendNative([{ type: 'put_object', object: changed }]); }
   function formatSelectedNote(blockType?: NoteBlockType, mark?: 'bold' | 'italic' | 'underline' | 'code' | 'link') {
     const note = selectedIds.length === 1 ? history.present.objects.find((entry) => entry.id === selectedIds[0]) : null;
     if (!note || note.kind !== 'note' || !companionCanEdit()) return;
@@ -694,7 +719,7 @@
     apply(withObjects(document, document.objects.map((entry) => entry.id === note.id ? changed : entry)), { type: 'put_object', object: changed });
     status = 'Note formatting cleared';
   }
-  function apply(next: CanvasDocument, operation?: CanvasOperation | CanvasOperation[]) { if (!companionCanEdit()) return; history = commit(history, next); queueSave(next); sendNative(operation ? (Array.isArray(operation) ? operation : [operation]) : [], true); }
+  function apply(next: CanvasDocument, operation?: CanvasOperation | CanvasOperation[]) { if (!companionCanEdit()) return; try {assertLockedLayersPreserved(document,next);} catch(error) {status=error instanceof Error?error.message:'Unlock layers before editing';return;} history = commit(history, next); queueSave(next); sendNative(operation ? (Array.isArray(operation) ? operation : [operation]) : [], true); }
   function operationsBetween(from: CanvasDocument, to: CanvasDocument): CanvasOperation[] {
     const operations: CanvasOperation[] = [];
     if (JSON.stringify(from.objects) !== JSON.stringify(to.objects)) {
@@ -761,6 +786,15 @@
     if (tool === 'note' || tool === 'group') createTapObject({ point: here, tool });
   }
   function pointerMove(event: PointerEvent) {
+    if (transformGesture) {
+      const gesture = transformGesture, here = point(event), b = gesture.bounds;
+      const command: EditCommand = gesture.mode === 'resize'
+        ? {type:'transform',ids:gesture.ids,width:Math.max(1,b.width+here.x-gesture.start.x),height:Math.max(1,b.height+here.y-gesture.start.y)}
+        : {type:'transform',ids:gesture.ids,rotation:Math.round(Math.atan2(here.y-(b.y+b.height/2),here.x-(b.x+b.width/2))*180/Math.PI+90)};
+      if(event.shiftKey) {if(command.rotation!==undefined) command.rotation=Math.round(command.rotation/15)*15;else {command.width=Math.max(8,Math.round(command.width!/8)*8);command.height=Math.max(8,Math.round(command.height!/8)*8);}}
+      try { history = {...history,present:compileEdits(gesture.before,[command],{id:()=>uid('object'),now:new Date().toISOString()}).document}; } catch (error) { status=error instanceof Error?error.message:'Transform failed'; }
+      return;
+    }
     if (event.pointerType === 'touch' && activeTouches.has(event.pointerId)) activeTouches.set(event.pointerId, { x: event.clientX, y: event.clientY });
     if (pinch && activeTouches.size >= 2) {
       const [a, b] = [...activeTouches.values()];
@@ -776,7 +810,7 @@
       const group = resizeOrigin.objects.find((object) => object.id === resizingGroupId && object.kind === 'group');
       if (group?.kind === 'group') {
         const width = Math.max(120, here.x - group.x), height = Math.max(80, here.y - group.y);
-        history = { ...history, present: resizeGroup(resizeOrigin, group.id, width, height) };
+        try { history = {...history,present:compileEdits(resizeOrigin,[{type:'transform',ids:[group.id],width,height}],{id:()=>uid('object'),now:new Date().toISOString()}).document}; } catch { return; }
         resizeMoved = width !== group.width || height !== group.height;
       }
       return;
@@ -784,9 +818,9 @@
     if (movingObjectId && dragLast) {
       const dx = here.x - dragLast.x, dy = here.y - dragLast.y;
       if (dx || dy) {
-        const movingIds = expandCompoundIds(document, [movingObjectId]);
-        const moved = document.objects.map((object) => movingIds.has(object.id) ? moveObject(object, dx, dy) : object);
-        history = { ...history, present: withObjects(document, moved) }; dragLast = here; dragMoved = true;
+        const movingIds = descendants(document, selectedIds.includes(movingObjectId) ? selectedIds : [movingObjectId]);
+        const bounds=editBounds(document.objects.filter(o=>movingIds.has(o.id)));
+        try { const result=compileEdits(document,[{type:'transform',ids:[...movingIds],x:bounds.x+dx,y:bounds.y+dy}],{id:()=>uid('object'),now:new Date().toISOString()}); history={...history,present:result.document}; } catch(error) { status=error instanceof Error?error.message:'Move failed'; return; } dragLast = here; dragMoved = true;
       }
       return;
     }
@@ -796,6 +830,13 @@
     if (tool === 'pan') updateViewport({ ...viewport, x: viewport.x + event.movementX, y: viewport.y + event.movementY }, false);
   }
   function pointerUp(event: PointerEvent) {
+    if (transformGesture) {
+      const before=transformGesture.before, next=document;
+      history={...history,present:before}; transformGesture=null;
+      if(event.type!=='pointercancel' && JSON.stringify(before.objects)!==JSON.stringify(next.objects)) apply(next,[{type:'replace_objects',objects:next.objects}]);
+      try {surface.releasePointerCapture(event.pointerId);} catch { /* Already released. */ }
+      return;
+    }
     if (event.pointerType === 'touch') activeTouches.delete(event.pointerId);
     if (pinch) {
       if (event.type === 'pointercancel') {
@@ -833,7 +874,7 @@
       return;
     }
     if (movingObjectId) {
-      const movingIds = expandCompoundIds(document, [movingObjectId]);
+      const movingIds = descendants(document, selectedIds.includes(movingObjectId) ? selectedIds : [movingObjectId]);
       const moved = document.objects.filter(({ id }) => movingIds.has(id));
       if (dragMoved && moved.length && dragOrigin) {
         history = { past: [...history.past, dragOrigin], present: document, future: [] };
@@ -861,11 +902,12 @@
     event.stopPropagation();
     stopAgentCamera();
     if (pinch || agentMutationActive || replacingDocument) return;
+    if (isLayerLocked(document,id)) { status='Layer is locked · unlock it in Layers'; return; }
     beginNativePointerGesture();
     if (tool === 'eraser') { apply(removeObjects(document, [id]), { type: 'remove_objects', ids: [id] }); selectedIds = []; return; }
     if (tool === 'connector') { selectedIds = selectedIds.includes(id) ? selectedIds : [...selectedIds.slice(-1), id]; if (selectedIds.length === 2) runConversion('connector'); return; }
     const compoundIds = [...expandCompoundIds(document, [id])];
-    selectedIds = event.shiftKey ? (selectedIds.includes(id) ? selectedIds.filter((value) => !compoundIds.includes(value)) : [...new Set([...selectedIds, ...compoundIds])]) : compoundIds;
+    selectedIds = event.shiftKey ? (selectedIds.includes(id) ? selectedIds.filter((value) => !compoundIds.includes(value)) : [...new Set([...selectedIds, ...compoundIds])]) : selectedIds.includes(id) ? selectedIds : compoundIds;
     if (tool === 'select' && !event.shiftKey) {
       const here = point(event); movingObjectId = id; dragLast = here; dragOrigin = document; dragMoved = false; drawing = true; start = here;
       try { surface.setPointerCapture(event.pointerId); } catch { /* SVG pointer capture is not supported in every browser. */ }
@@ -874,7 +916,7 @@
   function resizePointer(event: PointerEvent, id: string) {
     event.stopPropagation();
     stopAgentCamera();
-    if (pinch || agentMutationActive || tool !== 'select' || !companionCanEdit()) return;
+    if (pinch || agentMutationActive || isLayerLocked(document,id) || tool !== 'select' || !companionCanEdit()) return;
     beginNativePointerGesture();
     const here = point(event); selectedIds = [id]; resizingGroupId = id; resizeOrigin = document; resizeMoved = false; drawing = true; start = here;
     try { surface.setPointerCapture(event.pointerId); } catch { /* SVG pointer capture is not supported in every browser. */ }
@@ -887,11 +929,10 @@
     const step = event.shiftKey ? 10 : 1;
     const width = Math.max(120, group.width + (event.key === 'ArrowRight' ? step : event.key === 'ArrowLeft' ? -step : 0));
     const height = Math.max(80, group.height + (event.key === 'ArrowDown' ? step : event.key === 'ArrowUp' ? -step : 0));
-    const next = resizeGroup(document, id, width, height);
-    if (next !== document) apply(next, { type: 'replace_objects', objects: next.objects });
+    editSelection([{type:'transform',ids:[id],width,height}]);
   }
   function isTextEditingEvent(event: KeyboardEvent) { return event.target instanceof Element && Boolean(event.target.closest('input,textarea,select,[contenteditable="true"]')); }
-  function selectKeyboard(event: KeyboardEvent, id: string) { if (isTextEditingEvent(event) || (event.key !== 'Enter' && event.key !== ' ')) return; event.preventDefault(); const compoundIds = [...expandCompoundIds(document, [id])]; selectedIds = event.shiftKey ? [...new Set([...selectedIds, ...compoundIds])] : compoundIds; }
+  function selectKeyboard(event: KeyboardEvent, id: string) { if (isLayerLocked(document,id) || isTextEditingEvent(event) || (event.key !== 'Enter' && event.key !== ' ')) return; event.preventDefault(); const compoundIds = [...expandCompoundIds(document, [id])]; selectedIds = event.shiftKey ? [...new Set([...selectedIds, ...compoundIds])] : compoundIds; }
   function runConversion(target: 'note' | 'connector' | 'group') { const next = convert(document, selectedIds, target); if (next === document) { status = target === 'connector' ? 'Select two objects to make a connector' : 'Select source material first'; return; } const created = next.objects.at(-1)!; apply(next, { type: 'convert', selectedIds: [...selectedIds], target, resultId: created.id, createdAt: created.createdAt }); selectedIds = [created.id]; conversionOpen = false; status = `Converted to ${target}. Source preserved.`; }
   function restoreSelected() { const selected = selectedObjects[0]; if (!selected?.sourceSnapshot) return; const next = restoreConversion(document, selected.id); apply(next, { type: 'restore_conversion', id: selected.id }); selectedIds = selected.sourceIds || []; status = 'Conversion removed. Source restored.'; }
   function cancelPendingWheelSync() { clearTimeout(wheelTimer); wheelTimer = undefined; }
@@ -906,7 +947,7 @@
   function fitDrawing() {
     if (!document.objects.length) return;
     stopAgentCamera();
-    updateViewport(fitViewportToBounds(viewport, objectBounds(document.objects, document.objects), { width: viewportWidth, height: viewportHeight }, { padding: Math.min(72, viewportWidth * .08), force: true }));
+    updateViewport(fitViewportToBounds(viewport, visualBounds(visibleObjects(document)), { width: viewportWidth, height: viewportHeight }, { padding: Math.min(72, viewportWidth * .08), force: true }));
   }
 
   function resetView() {
@@ -914,16 +955,38 @@
     updateViewport({ x: 0, y: 0, zoom: 1 });
   }
 
+  function clipboardIsEditing(event:ClipboardEvent) {return event.target instanceof Element && Boolean(event.target.closest('input,textarea,select,[contenteditable="true"]'));}
+  function copySelection(event:ClipboardEvent) {
+    if(clipboardIsEditing(event) || !selectedIds.length || !event.clipboardData) return;
+    const ids=descendants(document,selectedIds);
+    const objects=document.objects.filter(o=>ids.has(o.id) && (o.kind!=='connector' || (ids.has(o.fromId)&&ids.has(o.toId))));
+    event.clipboardData.setData('text/plain',JSON.stringify({...document,objects}));event.preventDefault();status='Artwork copied';
+  }
+  function pasteSelection(event:ClipboardEvent) {
+    if(clipboardIsEditing(event) || !event.clipboardData) return;
+    try {
+      const source=parse(event.clipboardData.getData('text/plain'));
+      event.preventDefault();
+      editSelection([{type:'paste',ids:source.objects.map(o=>o.id),objects:source.objects,dx:24,dy:24}]);
+    } catch { /* Unrelated clipboard text belongs to the browser. */ }
+  }
+  function releasePan() { if(temporaryPan!==null) {tool=temporaryPan;temporaryPan=null;} }
+  function keyup(event:KeyboardEvent) {if(event.code==='Space') releasePan();}
   function keydown(event: KeyboardEvent) {
     if (event.defaultPrevented || event.isComposing || shortcutsDialog?.open || replacingDocument || isTextEditingEvent(event)) return;
+    if(event.code==='Space' && !event.metaKey && !event.ctrlKey) {event.preventDefault();if(temporaryPan===null){temporaryPan=tool;tool='pan';}return;}
     if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'z') { event.preventDefault(); void (event.shiftKey ? doRedo() : doUndo()); return; }
+    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'd') {event.preventDefault(); if(selectedIds.length) editSelection([{type:'duplicate',ids:selectedIds}]); return;}
+    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'a') {event.preventDefault(); selectedIds=renderObjects.filter(o=>!isLayerLocked(document,o.id)).map(o=>o.id);return;}
+    if (event.key === 'Escape') { if(transformGesture) {history={...history,present:transformGesture.before};transformGesture=null;} selectedIds=[];conversionOpen=false;return; }
+    if (event.key.startsWith('Arrow') && selectedIds.length) {event.preventDefault(); const step=event.shiftKey?10:1;editSelection([{type:'transform',ids:selectedIds,x:selectionBounds.x+(event.key==='ArrowLeft'?-step:event.key==='ArrowRight'?step:0),y:selectionBounds.y+(event.key==='ArrowUp'?-step:event.key==='ArrowDown'?step:0)}]);return;}
     if (event.metaKey || event.ctrlKey || event.altKey) return;
     if (event.key === '?') { event.preventDefault(); shortcutsDialog.showModal(); return; }
     if (event.key === '+' || event.key === '=') { event.preventDefault(); zoomCanvas(1.25); return; }
     if (event.key === '-') { event.preventDefault(); zoomCanvas(1 / 1.25); return; }
     if (event.key === '0') { event.preventDefault(); resetView(); return; }
     if (event.key.toLowerCase() === 'f') { event.preventDefault(); fitDrawing(); return; }
-    if ((event.key === 'Delete' || event.key === 'Backspace') && selectedIds.length) { event.preventDefault(); const ids = [...selectedIds]; apply(removeObjects(document, ids), { type: 'remove_objects', ids }); selectedIds = []; return; }
+    if ((event.key === 'Delete' || event.key === 'Backspace') && selectedIds.length) { event.preventDefault(); if(selectedIds.some(id=>isLayerLocked(document,id))) {status='Unlock layers before deleting';return;} const ids = [...selectedIds]; apply(removeObjects(document, ids), { type: 'remove_objects', ids }); selectedIds = []; return; }
     const match = tools.find(({ key }) => key.toLowerCase() === event.key.toLowerCase());
     if (match) tool = match.id;
   }
@@ -1095,15 +1158,18 @@
     for (let x = 0; x < viewportWidth; x += 32) { context.beginPath(); context.moveTo(x, 0); context.lineTo(x, viewportHeight); context.stroke(); }
     for (let y = 0; y < viewportHeight; y += 32) { context.beginPath(); context.moveTo(0, y); context.lineTo(viewportWidth, y); context.stroke(); }
     context.save(); context.translate(viewport.x, viewport.y); context.scale(viewport.zoom, viewport.zoom);
-    const arrow = (from: Point, to: Point, color: string) => { context.strokeStyle = color; context.fillStyle = color; context.lineWidth = 2; context.beginPath(); context.moveTo(from.x, from.y); context.lineTo(to.x, to.y); context.stroke(); const angle = Math.atan2(to.y - from.y, to.x - from.x); context.beginPath(); context.moveTo(to.x, to.y); context.lineTo(to.x - 10 * Math.cos(angle - Math.PI / 6), to.y - 10 * Math.sin(angle - Math.PI / 6)); context.lineTo(to.x - 10 * Math.cos(angle + Math.PI / 6), to.y - 10 * Math.sin(angle + Math.PI / 6)); context.closePath(); context.fill(); };
+    const arrow = (from: Point, to: Point, color: string, weight=2) => { context.strokeStyle = color; context.fillStyle = color; context.lineWidth = weight; context.beginPath(); context.moveTo(from.x, from.y); context.lineTo(to.x, to.y); context.stroke(); const angle = Math.atan2(to.y - from.y, to.x - from.x); context.beginPath(); context.moveTo(to.x, to.y); context.lineTo(to.x - 10 * Math.cos(angle - Math.PI / 6), to.y - 10 * Math.sin(angle - Math.PI / 6)); context.lineTo(to.x - 10 * Math.cos(angle + Math.PI / 6), to.y - 10 * Math.sin(angle + Math.PI / 6)); context.closePath(); context.fill(); };
     for (const object of renderObjects) {
-      if (object.kind === 'stroke') { context.strokeStyle = object.color; context.lineWidth = object.width; context.lineCap = 'round'; context.lineJoin = 'round'; context.beginPath(); object.points.forEach((value, index) => index ? context.lineTo(value.x, value.y) : context.moveTo(value.x, value.y)); context.stroke(); }
-      else if (object.kind === 'rectangle') { context.strokeStyle = object.color; context.lineWidth = 2; context.strokeRect(object.from.x, object.from.y, object.to.x - object.from.x, object.to.y - object.from.y); }
-      else if (object.kind === 'ellipse') { context.strokeStyle = object.color; context.lineWidth = 2; context.beginPath(); context.ellipse((object.from.x + object.to.x) / 2, (object.from.y + object.to.y) / 2, Math.abs(object.to.x - object.from.x) / 2, Math.abs(object.to.y - object.from.y) / 2, 0, 0, Math.PI * 2); context.stroke(); }
-      else if (object.kind === 'arrow') arrow(object.from, object.to, object.color);
+      context.save();
+      if(object.rotation) {const b=editBounds([object]);context.translate(b.x+b.width/2,b.y+b.height/2);context.rotate(object.rotation*Math.PI/180);context.translate(-b.x-b.width/2,-b.y-b.height/2);}
+      if (object.kind === 'stroke') { context.strokeStyle = object.color; context.lineWidth = object.width; context.lineCap = 'round'; context.lineJoin = 'round'; context.beginPath(); object.points.forEach((value, index) => index ? context.lineTo(value.x, value.y) : context.moveTo(value.x, value.y)); if(object.fill && object.fill!=='none'){context.fillStyle=object.fill;context.fill();} context.stroke(); }
+      else if (object.kind === 'rectangle') { context.strokeStyle = object.color; context.lineWidth = 2; if(object.fill && object.fill!=='none'){context.fillStyle=object.fill;context.fillRect(object.from.x,object.from.y,object.to.x-object.from.x,object.to.y-object.from.y);} context.lineWidth=object.strokeWidth || 2; context.strokeRect(object.from.x, object.from.y, object.to.x - object.from.x, object.to.y - object.from.y); }
+      else if (object.kind === 'ellipse') { context.strokeStyle = object.color; context.lineWidth = 2; context.beginPath(); context.ellipse((object.from.x + object.to.x) / 2, (object.from.y + object.to.y) / 2, Math.abs(object.to.x - object.from.x) / 2, Math.abs(object.to.y - object.from.y) / 2, 0, 0, Math.PI * 2); if(object.fill && object.fill!=='none'){context.fillStyle=object.fill;context.fill();} context.lineWidth=object.strokeWidth || 2; context.stroke(); }
+      else if (object.kind === 'arrow') arrow(object.from, object.to, object.color,object.strokeWidth || 2);
       else if (object.kind === 'connector') { const from = objectIndex.get(object.fromId), to = objectIndex.get(object.toId); if (from && to) { const a = resolveObjectCenter(from), b = resolveObjectCenter(to), label = connectorLabels.get(object.id); arrow(a, b, '#fcaa2d'); if (object.label && label) { context.save(); context.font = '700 11px monospace'; context.textAlign = 'center'; context.lineWidth = 5; context.strokeStyle = '#000'; context.strokeText(object.label, label.x, label.y); context.fillStyle = '#fcaa2d'; context.fillText(object.label, label.x, label.y); context.textAlign = 'start'; context.restore(); } } }
       else if (object.kind === 'note') { context.fillStyle = '#111'; context.strokeStyle = 'rgba(255,255,255,.18)'; context.fillRect(object.x, object.y, object.width, object.height); context.strokeRect(object.x, object.y, object.width, object.height); paintNoteContent(context, object); if (object.sourceIds?.length) { context.fillStyle = 'rgba(255,255,255,.45)'; context.font = '700 9px monospace'; context.fillText(`CONVERTED · ${object.sourceIds.length} SOURCE`, object.x + 16, object.y + object.height - 10); } }
       else if (object.kind === 'group') { context.strokeStyle = '#fcaa2d'; context.setLineDash([8, 6]); context.strokeRect(object.x, object.y, object.width, object.height); context.setLineDash([]); context.fillStyle = '#fcaa2d'; context.font = '700 11px monospace'; context.fillText(object.label.toUpperCase(), object.x + 12, object.y + 24); }
+      context.restore();
     }
     context.restore(); const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png')); if (!blob) throw new Error('PNG export failed'); download(blob, 'image/png', 'png'); status = 'PNG exported';
   }
@@ -1122,6 +1188,30 @@
     try { await coordinateDocumentReplacement(async () => { const previous = history.present, managed = currentManagedShare(), next = createDocument(); await commitHostReplacement(() => next, (value) => value, (value) => history = { past: [], present: value, future: [] }, 'reset'); selectedIds = []; if (nativeRole === 'web') await writeCanvasDocument(next); else queueSave(next); restoreManagedShareAfterReplacement(managed, previous, next); status = nativeRole === 'host' ? 'New Mac session document' : 'New local session'; }); }
     catch (error) { status = error instanceof Error ? error.message : 'Reset conflicted with an iPhone change'; }
   }
+
+  function editSelection(commands: EditCommand[]) {
+    if (!ready || drawing || transformGesture || agentMutationActive || sharing || replacingDocument || !companionCanEdit()) return;
+    try {
+      noteInput.flushAll();
+      const result = compileEdits(document, commands, { id: () => uid('object'), now: new Date().toISOString() });
+      const next = applyCanvasOperations(document, result.operations);
+      if (result.operations.length && next) apply(next, result.operations);
+      selectedIds = result.selectedIds;
+      status = 'Edit saved · undo available';
+    } catch (error) { status = error instanceof Error ? error.message : 'Edit failed'; }
+  }
+  function beginTransform(event: PointerEvent, mode: 'resize' | 'rotate') {
+    event.stopPropagation(); event.preventDefault();
+    if (agentMutationActive || replacingDocument || !companionCanEdit() || selectedObjects.some(o => isLayerLocked(document,o.id))) return;
+    transformGesture = {before: document, ids: [...selectedIds], start: point(event), bounds: selectionBounds, mode};
+    surface.setPointerCapture(event.pointerId);
+  }
+  function objectTransform(object: CanvasObject) {
+    if (!object.rotation) return undefined;
+    const b = editBounds([object]);
+    return `rotate(${object.rotation} ${b.x+b.width/2} ${b.y+b.height/2})`;
+  }
+
   function updateTitle(input: HTMLInputElement) { if (!companionCanEdit()) return; const title = input.value || 'Untitled mapping session'; if (!isValidCanvasTitle(title)) { input.value = document.title; status = 'Title must be 240 UTF-8 bytes or fewer'; return; } const next = { ...document, title, updatedAt: new Date().toISOString() }; history = { ...history, present: next }; queueSave(next); sendNative([{ type: 'set_title', title }]); }
 </script>
 
@@ -1151,13 +1241,15 @@
 
 <main class="app-shell" class:native-shell={nativeShell}>
   <header class="topbar">
-    <div class="identity"><img src="/brand/create-something-agency-white.svg" alt="CREATE SOMETHING .agency" /><span>Draw · Canvas</span>{#if nativeRole === 'web'}<a class="source-link" href={`/animate?project=${encodeURIComponent(document.id)}`} onclick={openMotion}>Motion</a>{/if}<a class="source-link" href="/download" target="_blank" rel="noreferrer">Mac</a><a class="source-link" href="https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/mapping-canvas" target="_blank" rel="noreferrer">Source</a>{#if nativeRole !== 'web'}<button class="native-link" aria-label="Open device pairing" onclick={openPairing}>{nativeRole === 'host' ? 'Pair' : nativeSession.sessionId ? 'Linked' : 'Link'}</button>{/if}</div>
+    <div class="identity"><img src="/brand/create-something-agency-white.svg" alt="CREATE SOMETHING .agency" />{#if nativeRole === 'web'}<ProjectModes id={document.id} mode="canvas" navigate={(event,mode)=>{if(mode==='canvas')event.preventDefault();else void openMotion(event,mode==='preview');}} />{/if}<a class="source-link" href="/download" target="_blank" rel="noreferrer">Mac</a><a class="source-link" href="https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/mapping-canvas" target="_blank" rel="noreferrer">Source</a>{#if nativeRole !== 'web'}<button class="native-link" aria-label="Open device pairing" onclick={openPairing}>{nativeRole === 'host' ? 'Pair' : nativeSession.sessionId ? 'Linked' : 'Link'}</button>{/if}</div>
     <input class="title" aria-label="Canvas title" maxlength="240" value={document.title} oninput={(event) => updateTitle(event.currentTarget)} />
-    {#if nativeRole !== 'companion'}<div class="file-actions"><button onclick={() => fileInput?.click()} disabled={sharing || replacingDocument}>Import</button><button onclick={exportJson}>JSON</button><button onclick={exportSvg}>SVG</button><button onclick={exportPng}>PNG</button>{#if nativeRole === 'web'}{#if share}<button onclick={copyShareLink}>Copy link</button><button onclick={updateSnapshot} disabled={sharing || replacingDocument}>Update link</button><button onclick={revokeSnapshot} disabled={sharing || replacingDocument}>Revoke</button>{:else}<button class="share-action" onclick={publishSnapshot} disabled={sharing || replacingDocument}>Publish view-only</button>{/if}{/if}<button onclick={resetCanvas} disabled={sharing || replacingDocument}>Reset</button><input bind:this={fileInput} class="visually-hidden" type="file" accept="application/json,.json" disabled={sharing || replacingDocument} onchange={importJson} /></div>{/if}
+    {#if nativeRole !== 'companion'}<div class="file-actions">{#if projects.length>1}<select aria-label="Open Draw project" value={document.id} onchange={async event=>{noteInput.flushAll();if(await persistCurrentDocument(document))location.href=`/?project=${encodeURIComponent(event.currentTarget.value)}`;}}>{#each projects as entry}<option value={entry.id}>{entry.title}</option>{/each}</select>{/if}<button aria-pressed={panelOpen} onclick={()=>panelOpen=!panelOpen}>Layers</button><details class="file-menu"><summary>File</summary><div><button onclick={() => fileInput?.click()} disabled={sharing || replacingDocument}>Import</button><button onclick={exportJson}>JSON</button><button onclick={exportSvg}>SVG</button><button onclick={exportPng}>PNG</button><button onclick={resetCanvas} disabled={sharing || replacingDocument}>New canvas</button></div></details>{#if nativeRole === 'web'}{#if share}<button onclick={copyShareLink}>Copy link</button><button onclick={updateSnapshot} disabled={sharing || replacingDocument}>Update link</button><button onclick={revokeSnapshot} disabled={sharing || replacingDocument}>Revoke</button>{:else}<button class="share-action" onclick={publishSnapshot} disabled={sharing || replacingDocument}>Publish view-only</button>{/if}{/if}<input bind:this={fileInput} class="visually-hidden" type="file" accept="application/json,.json" disabled={sharing || replacingDocument} onchange={importJson} /></div>{/if}
   </header>
-  <section class="workbench" class:tool-sidebar-collapsed={sidebarCollapsed} aria-label="Mapping canvas workbench">
+  <section class="workbench" class:tool-sidebar-collapsed={sidebarCollapsed} class:panel-open={panelOpen && nativeRole === 'web'} aria-label="Mapping canvas workbench">
     <nav class="toolbar" aria-label="Canvas tools"><button class="sidebar-toggle" aria-expanded={!sidebarCollapsed} aria-label={sidebarCollapsed ? 'Expand tool sidebar' : 'Collapse tool sidebar'} title={sidebarCollapsed ? 'Expand tools' : 'Collapse tools'} onclick={toggleSidebar}><i aria-hidden="true">{sidebarCollapsed ? '›' : '‹'}</i><span>{sidebarCollapsed ? 'Expand' : 'Collapse'}</span></button>{#each tools as entry}<button class:active={tool === entry.id} aria-pressed={tool === entry.id} aria-label={`${entry.label} tool (${entry.key})`} aria-keyshortcuts={entry.key} title={`${entry.label} · ${entry.key}`} onclick={() => tool = entry.id}><ToolIcon tool={entry.id} /><span class="tool-label">{entry.label}</span><kbd class="tool-key" aria-hidden="true">{entry.key}</kbd></button>{/each}</nav>
     <div class="canvas-frame">
+      {#if ready && nativeRole === 'web' && !document.objects.length && !emptyDismissed}<section class="empty-canvas" aria-label="Start drawing"><h1>Make an idea visible.</h1><p>Sketch freely, map a process, or build a scene with your agent.</p><div><button onclick={()=>{tool='pen';emptyDismissed=true;}}>Start sketching</button><button onclick={()=>{tool='note';emptyDismissed=true;}}>Add a note</button><button onclick={event=>openMotion(event)}>Open Motion</button></div><small>Your work saves on this device.</small></section>{/if}
+
       <label class="paper" data-ui="true">Paper<input aria-label="Canvas background color" type="color" value={document.background} disabled={nativeRole === 'companion' && (!nativeSession.sessionId || nativeSession.requiresRepair)} onchange={(event) => updateBackground(event.currentTarget.value)} /></label>
       <svg bind:this={surface} class:crosshair={tool !== 'select' && tool !== 'pan'} role="group" aria-label="Canvas objects" viewBox={`0 0 ${viewportWidth} ${viewportHeight}`} onpointerdowncapture={trackTouchPointer} onpointerdown={pointerDown} onpointermove={pointerMove} onpointerup={pointerUp} onpointercancel={pointerUp} onwheel={wheel}>
         <defs><pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse"><path d="M32 0L0 0 0 32" fill="none" stroke="rgba(255,255,255,.055)" /></pattern><marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="context-stroke" /></marker><filter id="selected"><feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="#fcaa2d" flood-opacity=".6" /></filter></defs>
@@ -1165,14 +1257,20 @@
         <g bind:this={canvasContent} class:agent-camera={agentCameraActive} data-agent-camera={agentCameraActive ? 'following' : 'idle'} transform={transform}>
           {#each renderObjects as object (object.id)}
             {@const selected = selectedIdSet.has(object.id)}
-            {#if object.kind === 'stroke'}<path data-object-id={object.id} class:selected class:agent-change={agentAffectedIdSet.has(object.id)} role="button" tabindex="0" aria-label="Ink stroke" d={path(object.points)} fill="none" stroke={object.color} stroke-width={object.width} stroke-linecap="round" stroke-linejoin="round" onpointerdown={(event) => selectPointer(event, object.id)} onkeydown={(event) => selectKeyboard(event, object.id)} />
-            {:else if object.kind === 'rectangle'}<rect data-object-id={object.id} class:selected class:agent-change={agentAffectedIdSet.has(object.id)} role="button" tabindex="0" aria-label="Rectangle" x={Math.min(object.from.x, object.to.x)} y={Math.min(object.from.y, object.to.y)} width={Math.abs(object.to.x - object.from.x)} height={Math.abs(object.to.y - object.from.y)} fill="transparent" stroke={object.color} stroke-width="2" onpointerdown={(event) => selectPointer(event, object.id)} onkeydown={(event) => selectKeyboard(event, object.id)} />
-            {:else if object.kind === 'ellipse'}<ellipse data-object-id={object.id} class:selected class:agent-change={agentAffectedIdSet.has(object.id)} role="button" tabindex="0" aria-label="Ellipse" cx={(object.from.x + object.to.x) / 2} cy={(object.from.y + object.to.y) / 2} rx={Math.abs(object.to.x - object.from.x) / 2} ry={Math.abs(object.to.y - object.from.y) / 2} fill="transparent" stroke={object.color} stroke-width="2" onpointerdown={(event) => selectPointer(event, object.id)} onkeydown={(event) => selectKeyboard(event, object.id)} />
-            {:else if object.kind === 'arrow'}<line data-object-id={object.id} class:selected class:agent-change={agentAffectedIdSet.has(object.id)} role="button" tabindex="0" aria-label="Arrow" x1={object.from.x} y1={object.from.y} x2={object.to.x} y2={object.to.y} stroke={object.color} stroke-width="2" marker-end="url(#arrowhead)" onpointerdown={(event) => selectPointer(event, object.id)} onkeydown={(event) => selectKeyboard(event, object.id)} />
-            {:else if object.kind === 'note'}<g data-object-id={object.id} class:selected class:agent-change={agentAffectedIdSet.has(object.id)} role="button" tabindex="0" aria-label={`Note: ${object.text}`} onpointerdown={(event) => selectPointer(event, object.id)} onkeydown={(event) => selectKeyboard(event, object.id)}><rect x={object.x} y={object.y} width={object.width} height={object.height} rx="4" fill="#111" stroke={selected ? '#fcaa2d' : 'rgba(255,255,255,.18)'} /><foreignObject x={object.x + 16} y={object.y + 14} width={object.width - 32} height={object.height - 28}>{#if object.content}<RichNote content={object.content} />{:else}<textarea xmlns="http://www.w3.org/1999/xhtml" aria-label="Edit note" value={object.text} disabled={nativeRole === 'companion' && (!nativeSession.sessionId || nativeSession.requiresRepair)} onpointerdown={(event) => event.stopPropagation()} oninput={(event) => { if (!companionCanEdit()) return; if (nativeRole !== 'web' && !noteInput.hasPending()) nativeOptimisticVersion += 1; noteInput.schedule(object.id, event.currentTarget.value); }} onblur={() => noteInput.flush(object.id)}></textarea>{/if}</foreignObject>{#if object.sourceIds?.length}<text x={object.x + 16} y={object.y + object.height - 10} class="provenance">CONVERTED · {object.sourceIds.length} SOURCE</text>{/if}</g>
-            {:else if object.kind === 'group'}<g data-object-id={object.id} class:selected class:agent-change={agentAffectedIdSet.has(object.id)} role="button" tabindex="0" aria-label={`Group: ${object.label}`} onpointerdown={(event) => selectPointer(event, object.id)} onkeydown={(event) => selectKeyboard(event, object.id)}><rect x={object.x} y={object.y} width={object.width} height={object.height} rx="4" fill="rgba(252,170,45,.025)" stroke={selected ? '#fcaa2d' : 'rgba(252,170,45,.5)'} stroke-dasharray="8 6" /><text x={object.x + 12} y={object.y + 24} class="group-label">{object.label}</text>{#if selected && tool === 'select'}<rect data-ui="true" class="resize-handle" role="button" tabindex="0" aria-label="Resize group" x={object.x + object.width - 9} y={object.y + object.height - 9} width="18" height="18" rx="2" onpointerdown={(event) => resizePointer(event, object.id)} onkeydown={(event) => resizeKeyboard(event, object.id)} />{/if}</g>
-            {:else if object.kind === 'connector'}{@const from = objectIndex.get(object.fromId)}{@const to = objectIndex.get(object.toId)}{#if from && to}{@const a = resolveObjectCenter(from)}{@const b = resolveObjectCenter(to)}{@const label = connectorLabels.get(object.id)}<g class:agent-change={agentAffectedIdSet.has(object.id)}><line data-object-id={object.id} class:selected role="button" tabindex="0" aria-label="Connector" x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#fcaa2d" stroke-width="2" marker-end="url(#arrowhead)" onpointerdown={(event) => selectPointer(event, object.id)} onkeydown={(event) => selectKeyboard(event, object.id)} />{#if object.label && label}<text class="connector-label" x={label.x} y={label.y} text-anchor="middle">{object.label}</text>{/if}</g>{/if}{/if}
+            {#if object.kind === 'stroke'}<path data-object-id={object.id} transform={objectTransform(object)} class:selected class:agent-change={agentAffectedIdSet.has(object.id)} role="button" tabindex="0" aria-label="Ink stroke" d={path(object.points)} fill={object.fill || "none"} stroke={object.color} stroke-width={object.width} stroke-linecap="round" stroke-linejoin="round" onpointerdown={(event) => selectPointer(event, object.id)} onkeydown={(event) => selectKeyboard(event, object.id)} />
+            {:else if object.kind === 'rectangle'}<rect data-object-id={object.id} transform={objectTransform(object)} class:selected class:agent-change={agentAffectedIdSet.has(object.id)} role="button" tabindex="0" aria-label="Rectangle" x={Math.min(object.from.x, object.to.x)} y={Math.min(object.from.y, object.to.y)} width={Math.abs(object.to.x - object.from.x)} height={Math.abs(object.to.y - object.from.y)} fill={object.fill || "transparent"} stroke={object.color} stroke-width={object.strokeWidth || 2} onpointerdown={(event) => selectPointer(event, object.id)} onkeydown={(event) => selectKeyboard(event, object.id)} />
+            {:else if object.kind === 'ellipse'}<ellipse data-object-id={object.id} transform={objectTransform(object)} class:selected class:agent-change={agentAffectedIdSet.has(object.id)} role="button" tabindex="0" aria-label="Ellipse" cx={(object.from.x + object.to.x) / 2} cy={(object.from.y + object.to.y) / 2} rx={Math.abs(object.to.x - object.from.x) / 2} ry={Math.abs(object.to.y - object.from.y) / 2} fill={object.fill || "transparent"} stroke={object.color} stroke-width={object.strokeWidth || 2} onpointerdown={(event) => selectPointer(event, object.id)} onkeydown={(event) => selectKeyboard(event, object.id)} />
+            {:else if object.kind === 'arrow'}<line data-object-id={object.id} transform={objectTransform(object)} class:selected class:agent-change={agentAffectedIdSet.has(object.id)} role="button" tabindex="0" aria-label="Arrow" x1={object.from.x} y1={object.from.y} x2={object.to.x} y2={object.to.y} stroke={object.color} stroke-width={object.strokeWidth || 2} marker-end="url(#arrowhead)" onpointerdown={(event) => selectPointer(event, object.id)} onkeydown={(event) => selectKeyboard(event, object.id)} />
+            {:else if object.kind === 'note'}<g data-object-id={object.id} transform={objectTransform(object)} class:selected class:agent-change={agentAffectedIdSet.has(object.id)} role="button" tabindex="0" aria-label={`Note: ${object.text}`} onpointerdown={(event) => selectPointer(event, object.id)} onkeydown={(event) => selectKeyboard(event, object.id)}><rect x={object.x} y={object.y} width={object.width} height={object.height} rx="4" fill="#111" stroke={selected ? '#fcaa2d' : 'rgba(255,255,255,.18)'} /><foreignObject x={object.x + 16} y={object.y + 14} width={object.width - 32} height={object.height - 28}>{#if object.content}<RichNote content={object.content} />{:else}<textarea xmlns="http://www.w3.org/1999/xhtml" aria-label="Edit note" value={object.text} disabled={isLayerLocked(document,object.id) || (nativeRole === 'companion' && (!nativeSession.sessionId || nativeSession.requiresRepair))} onpointerdown={(event) => event.stopPropagation()} oninput={(event) => { if (!companionCanEdit()) return; if (nativeRole !== 'web' && !noteInput.hasPending()) nativeOptimisticVersion += 1; noteInput.schedule(object.id, event.currentTarget.value); }} onblur={() => noteInput.flush(object.id)}></textarea>{/if}</foreignObject>{#if object.sourceIds?.length}<text x={object.x + 16} y={object.y + object.height - 10} class="provenance">CONVERTED · {object.sourceIds.length} SOURCE</text>{/if}</g>
+            {:else if object.kind === 'group'}<g data-object-id={object.id} transform={objectTransform(object)} class:selected class:agent-change={agentAffectedIdSet.has(object.id)} role="button" tabindex="0" aria-label={`Group: ${object.label}`} onpointerdown={(event) => selectPointer(event, object.id)} onkeydown={(event) => selectKeyboard(event, object.id)}><rect x={object.x} y={object.y} width={object.width} height={object.height} rx="4" fill="rgba(252,170,45,.025)" stroke={selected ? '#fcaa2d' : 'rgba(252,170,45,.5)'} stroke-dasharray="8 6" /><text x={object.x + 12} y={object.y + 24} class="group-label">{object.label}</text>{#if selected && tool === 'select'}<rect data-ui="true" class="resize-handle" role="button" tabindex="0" aria-label="Resize group" x={object.x + object.width - 9} y={object.y + object.height - 9} width="18" height="18" rx="2" onpointerdown={(event) => resizePointer(event, object.id)} onkeydown={(event) => resizeKeyboard(event, object.id)} />{/if}</g>
+            {:else if object.kind === 'connector'}{@const from = objectIndex.get(object.fromId)}{@const to = objectIndex.get(object.toId)}{#if from && to}{@const a = resolveObjectCenter(from)}{@const b = resolveObjectCenter(to)}{@const label = connectorLabels.get(object.id)}<g class:agent-change={agentAffectedIdSet.has(object.id)}><line data-object-id={object.id} transform={objectTransform(object)} class:selected role="button" tabindex="0" aria-label="Connector" x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#fcaa2d" stroke-width="2" marker-end="url(#arrowhead)" onpointerdown={(event) => selectPointer(event, object.id)} onkeydown={(event) => selectKeyboard(event, object.id)} />{#if object.label && label}<text class="connector-label" x={label.x} y={label.y} text-anchor="middle">{object.label}</text>{/if}</g>{/if}{/if}
           {/each}
+          {#if selectedObjects.length && tool === 'select' && selectedObjects.some(o=>o.kind!=='connector')}
+            <g data-ui="true" class="selection-box"><rect x={selectionBounds.x} y={selectionBounds.y} width={Math.max(1,selectionBounds.width)} height={Math.max(1,selectionBounds.height)} fill="none" stroke="var(--amber)" stroke-width={1/viewport.zoom} pointer-events="none" />
+              <rect role="button" tabindex="0" aria-label="Resize selection" class="resize-handle" x={selectionBounds.x+selectionBounds.width-6/viewport.zoom} y={selectionBounds.y+selectionBounds.height-6/viewport.zoom} width={12/viewport.zoom} height={12/viewport.zoom} onpointerdown={e=>beginTransform(e,'resize')} onkeydown={e=>{if(e.key==='ArrowRight'||e.key==='ArrowDown'){e.preventDefault();e.stopPropagation();editSelection([{type:'transform',ids:selectedIds,width:selectionBounds.width+1,height:selectionBounds.height+1}]);}}} />
+              <circle role="button" tabindex="0" aria-label="Rotate selection" cx={selectionBounds.x+selectionBounds.width/2} cy={selectionBounds.y-24/viewport.zoom} r={6/viewport.zoom} fill="var(--amber)" onpointerdown={e=>beginTransform(e,'rotate')} onkeydown={e=>{if(e.key==='ArrowRight'||e.key==='ArrowLeft'){e.preventDefault();e.stopPropagation();editSelection([{type:'transform',ids:selectedIds,rotation:(selectedObjects[0].rotation||0)+(e.key==='ArrowRight'?15:-15)}]);}}} />
+            </g>
+          {/if}
           {#if draftPoints.length > 1}<path data-ui="true" d={path(draftPoints)} fill="none" stroke={drawingColor} stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />{/if}
           {#if draftShape}{#if draftShape.kind === 'rectangle'}<rect data-ui="true" x={Math.min(draftShape.from.x, draftShape.to.x)} y={Math.min(draftShape.from.y, draftShape.to.y)} width={Math.abs(draftShape.to.x - draftShape.from.x)} height={Math.abs(draftShape.to.y - draftShape.from.y)} fill="transparent" stroke={draftShape.color} />{:else if draftShape.kind === 'ellipse'}<ellipse data-ui="true" cx={(draftShape.from.x + draftShape.to.x) / 2} cy={(draftShape.from.y + draftShape.to.y) / 2} rx={Math.abs(draftShape.to.x - draftShape.from.x) / 2} ry={Math.abs(draftShape.to.y - draftShape.from.y) / 2} fill="transparent" stroke={draftShape.color} />{:else}<line data-ui="true" x1={draftShape.from.x} y1={draftShape.from.y} x2={draftShape.to.x} y2={draftShape.to.y} stroke={draftShape.color} marker-end="url(#arrowhead)" />{/if}{/if}
           {#if lasso}<rect data-ui="true" x={Math.min(lasso.from.x, lasso.to.x)} y={Math.min(lasso.from.y, lasso.to.y)} width={Math.abs(lasso.to.x - lasso.from.x)} height={Math.abs(lasso.to.y - lasso.from.y)} fill="rgba(252,170,45,.08)" stroke="#fcaa2d" stroke-dasharray="5 5" />{/if}
@@ -1181,6 +1279,7 @@
       <div class="history" role="group" aria-label="Canvas navigation">
         <button class="history-icon" aria-label="Undo" title="Undo (⌘/Ctrl Z)" onclick={() => void doUndo()} disabled={!history.past.length}>↶</button>
         <button class="history-icon" aria-label="Redo" title="Redo (⌘/Ctrl Shift Z)" onclick={() => void doRedo()} disabled={!history.future.length}>↷</button>
+        {#if nativeRole === 'host'}<button onclick={resetCanvas}>Reset</button>{/if}
         <button class="history-icon" aria-label="Zoom out" title="Zoom out (−)" aria-keyshortcuts="-" onclick={() => zoomCanvas(1 / 1.25)} disabled={viewport.zoom <= .25}>−</button>
         <button class="zoom-level" aria-label="Reset view" title="Reset view to 100% (0)" aria-keyshortcuts="0" onclick={resetView}>{Math.round(viewport.zoom * 100)}%</button>
         <button class="history-icon" aria-label="Zoom in" title="Zoom in (+)" aria-keyshortcuts="Plus =" onclick={() => zoomCanvas(1.25)} disabled={viewport.zoom >= 3}>+</button>
@@ -1192,8 +1291,9 @@
       {#if agentTransition}<output class="agent-transition" aria-live="polite"><i aria-hidden="true"></i><span>Agent {agentTransition.kind}</span><small>{agentTransition.affectedIds.length ? `${agentTransition.affectedIds.length} artifact${agentTransition.affectedIds.length === 1 ? '' : 's'}` : 'canvas'}</small></output>{/if}
       {#if pairingOpen}<section class="pairing-panel" data-ui="true" aria-label="Device pairing"><header><strong>{nativeRole === 'host' ? 'Pair iPhone' : 'Connect to Mac'}</strong><button aria-label="Close pairing" onclick={() => pairingOpen = false}>×</button></header>{#if pairingBusy}<p>Looking for the secure session…</p>{:else if nativeRole === 'host'}<p>Enter this one-time code on the iPhone. Both devices must be on the same local network.</p><output class="pairing-code">{pairingOffer?.code || '—'}</output><small>Mac fingerprint {nativeSession.transport?.certificateFingerprint?.slice(0, 16) || 'unavailable'} · expires {pairingOffer ? new Date(pairingOffer.expiresAt).toLocaleTimeString() : 'soon'}</small>{#if nativeSession.pairedClients?.length}<div class="paired-list">{#each nativeSession.pairedClients as client}<span>{client.clientId}<button disabled={Boolean(client.revokedAt)} onclick={async () => { await revokeCompanion(client.clientId); nativeSession = await hostStatus(); }}>Revoke</button></span>{/each}</div>{/if}{:else if nativeSession.sessionId}<p>{nativeSession.requiresRepair ? 'This Mac rejected the pairing credentials. Export if needed, then forget and re-pair.' : 'Securely linked to the Mac session.'}</p><small>{nativeSession.certificateFingerprint?.slice(0, 16)} · revision {nativeSession.revision} · {nativeSession.queueDepth || 0} queued</small><button disabled={nativeSession.requiresRepair} onclick={async () => { const result = await setCompanionOnline(nativeSession.online === false); nativeSession = { ...nativeSession, ...result }; if (result.document) history = { past: [], present: result.document, future: [] }; }}> {nativeSession.online === false ? 'Reconnect' : 'Test offline'} </button><button onclick={async () => { nativeSession = await forgetCompanion(); discoveredHosts = []; selectedHost = null; pairingCode = ''; status = 'Pairing removed · choose Link to pair again'; pairingOpen = false; }}>Forget and re-pair</button>{:else}<p>{discoveredHosts.length ? 'Confirm the Mac fingerprint, then enter its six-digit code.' : 'No Mac session found. Open Draw on Mac and choose Pair.'}</p>{#if selectedHost}<label>Mac session<select bind:value={selectedHost}>{#each discoveredHosts as host}<option value={host}>{host.endpoint}</option>{/each}</select></label><small>Fingerprint {selectedHost.certificateFingerprint.slice(0, 16)}</small><label>Pairing code<input inputmode="numeric" maxlength="6" bind:value={pairingCode} placeholder="000000" /></label><button class="convert" disabled={!/^\d{6}$/.test(pairingCode)} onclick={confirmCompanionPairing}>Pair securely</button>{/if}{/if}</section>{/if}
     </div>
+    {#if panelOpen && nativeRole === 'web'}<WorkbenchPanel {document} {selectedIds} select={(ids)=>{if(!drawing && !agentMutationActive){selectedIds=ids;tool='select';}}} edit={editSelection} disabled={drawing || agentMutationActive || replacingDocument || sharing} />{/if}
   </section>
-  <footer class="statusbar"><span><i aria-hidden="true"></i>{status}</span><button class="shortcuts-trigger" aria-haspopup="dialog" title="Keyboard shortcuts (?)" onclick={() => shortcutsDialog.showModal()}>Shortcuts <b aria-hidden="true">?</b></button><span>{nativeRole === 'host' ? 'MAC AUTHORITY' : nativeRole === 'companion' ? 'IPHONE COMPANION' : 'LOCAL DRAFT'} · CONVERSION IS OPERATOR-APPROVED</span></footer>
+  <footer class="statusbar"><span><i aria-hidden="true"></i>{status}</span><button class="shortcuts-trigger" aria-haspopup="dialog" title="Keyboard shortcuts (?)" onclick={() => shortcutsDialog.showModal()}>Shortcuts <b aria-hidden="true">?</b></button><span>{nativeRole === 'host' ? 'MAC AUTHORITY' : nativeRole === 'companion' ? 'IPHONE COMPANION' : 'SAVED ON THIS DEVICE'}</span></footer>
   <dialog bind:this={shortcutsDialog} class="shortcuts-dialog" aria-labelledby="shortcuts-title" aria-describedby="shortcuts-description">
     <header><h2 id="shortcuts-title">Keyboard shortcuts</h2><button aria-label="Close keyboard shortcuts" onclick={() => shortcutsDialog.close()}>×</button></header>
     <p id="shortcuts-description">Use these when you’re not typing in a title, note, or form.</p>
@@ -1203,6 +1303,11 @@
     <dl class="shortcut-commands">
       <div><dt>Undo</dt><dd><kbd>⌘/Ctrl + Z</kbd></dd></div>
       <div><dt>Redo</dt><dd><kbd>⌘/Ctrl + Shift + Z</kbd></dd></div>
+      <div><dt>Copy / paste artwork</dt><dd><kbd>⌘/Ctrl + C / V</kbd></dd></div>
+      <div><dt>Duplicate selection</dt><dd><kbd>⌘/Ctrl + D</kbd></dd></div>
+      <div><dt>Select all</dt><dd><kbd>⌘/Ctrl + A</kbd></dd></div>
+      <div><dt>Nudge selection</dt><dd><kbd>Arrows</kbd> <span>Shift for 10px</span></dd></div>
+      <div><dt>Temporary pan</dt><dd><kbd>Hold Space</kbd></dd></div>
       <div><dt>Delete selection</dt><dd><kbd>Delete</kbd> <span>or</span> <kbd>Backspace</kbd></dd></div>
       <div><dt>Zoom in</dt><dd><kbd>+</kbd> <span>or</span> <kbd>=</kbd></dd></div>
       <div><dt>Zoom out</dt><dd><kbd>−</kbd></dd></div>

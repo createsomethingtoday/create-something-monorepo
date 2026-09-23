@@ -25,7 +25,8 @@
     "verify:shared-background": "node scripts/verify-shared-background.mjs",
     "verify:download": "node scripts/verify-download.mjs",
     "verify:native-ui": "node scripts/verify-native-ui.mjs",
-    "deploy": "pnpm build && CLOUDFLARE_ACCOUNT_ID=9645bd52e640b8a4f40a3a55ff1dd75a node ../../scripts/run-wrangler.mjs pages deploy .svelte-kit/cloudflare --project-name=create-something-mapping-canvas --branch=main --commit-dirty=true"
+    "deploy": "pnpm build && CLOUDFLARE_ACCOUNT_ID=9645bd52e640b8a4f40a3a55ff1dd75a node ../../scripts/run-wrangler.mjs pages deploy .svelte-kit/cloudflare --project-name=create-something-mapping-canvas --branch=main --commit-dirty=true",
+    "verify:editing": "node scripts/verify-editing.mjs"
   },
   "dependencies": {
     "@create-something/canon": "workspace:*"

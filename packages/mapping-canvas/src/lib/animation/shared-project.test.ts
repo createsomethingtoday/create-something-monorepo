@@ -61,6 +61,19 @@ function canvas(): CanvasDocument {
 }
 
 describe('shared Draw project contract', () => {
+  it('retains visibility, fills and animation offsets when Canvas rotation changes',()=>{
+    const source=canvas();source.objects[0]={...source.objects[0],fill:'#0057b8',name:'Decision',hidden:true};
+    source.objects[1]={...source.objects[1],rotation:20};
+    const motion=syncMotionProject(source);
+    expect(motion.drawings[0]).toMatchObject({name:'Decision',fill:'#0057b8',hidden:true});
+    const note=motion.drawings.find(d=>d.id==='note-stable')!;
+    note.poses.push({...note.poses[0],time:1,rotation:35});
+    source.objects[1]={...source.objects[1],rotation:40};
+    const updated=syncMotionProject(source,motion);
+    expect(updated.drawings.find(d=>d.id==='note-stable')!.poses.map(p=>p.rotation)).toEqual([40,55]);
+    expect(()=>validateProject(updated)).not.toThrow();
+  });
+
   it.each(['#f3ebe4', '#f7f4ee'])('renders linked neutral ink %s against current paper before and after reload', (chalk) => {
     const source = { ...canvas(), background: '#eee5d4' };
     const stroke = source.objects[0];

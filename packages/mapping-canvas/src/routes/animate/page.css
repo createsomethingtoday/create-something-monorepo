@@ -327,3 +327,9 @@ progress {
     font-size: 9px;
   }
 }
+
+.preview-mode .workspace{grid-template-columns:minmax(0,1fr)}
+.preview-mode .workspace>.layers,.preview-mode .workspace>.inspector{display:none}
+.preview-mode .stage canvas{cursor:default}
+
+.preview-mode header>button,.preview-mode .transport>button:not(.primary),.preview-mode .transport>label{display:none}

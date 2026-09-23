@@ -1,3 +1,4 @@
+import { visibleObjects, editBounds } from '../editing';
 import { type CanvasDocument } from '../document';
 import { DEFAULT_DRAWING_COLOR } from '../palette';
 import {
@@ -81,28 +82,38 @@ export function importMap(map: CanvasDocument): { drawings: Drawing[]; skipped: 
   const { scale, toScene } = sceneFit(retainedMap);
   const skipped = map.objects.length - objects.length;
   const drawings: Drawing[] = [];
+  const visible=new Set(visibleObjects(map).map(o=>o.id));
   for (const object of objects) {
     const common = {
       id: object.id,
-      name: object.kind === 'note' ? object.text.slice(0, 80) : object.kind,
+      name: object.name || (object.kind === 'note' ? object.text.slice(0, 80) : object.kind),
+      ...(object.fill && object.fill!=='none'?{fill:object.fill}:{}),
+      ...(!visible.has(object.id)?{hidden:true}:{}),
       kind: 'stroke' as const,
       color: 'color' in object && /^#[\da-f]{6}$/i.test(object.color)
         ? object.color
         : DEFAULT_DRAWING_COLOR,
-      weight: Math.max(0.1, 3 * scale),
+      weight: Math.max(0.1, (object.strokeWidth || 2) * scale),
       text: '',
       width: 100,
       height: 100,
       poses: [basePose()]
     };
     const sourced = <T extends Drawing>(drawing: T): T => {
+      if(object.rotation) {
+        const b=editBounds([object]), center=toScene({x:b.x+b.width/2,y:b.y+b.height/2});
+        const rad=object.rotation*Math.PI/180, c=Math.cos(rad), s=Math.sin(rad);
+        const rotate=(p:Point)=>({x:center.x+(p.x-center.x)*c-(p.y-center.y)*s,y:center.y+(p.x-center.x)*s+(p.y-center.y)*c});
+        if(drawing.kind==='stroke') drawing={...drawing,points:drawing.points.map(rotate)};
+        else drawing={...drawing,poses:drawing.poses.map(p=>({...p,...rotate(p),rotation:object.rotation!}))};
+      }
       const { x, y } = drawing.poses[0];
       return {
         ...drawing,
         source: {
           space: 'canvas',
           objectId: object.id,
-          origin: { x, y, scaleX: scale, scaleY: scale }
+          origin: { x, y, scaleX: scale, scaleY: scale, rotation: drawing.poses[0].rotation }
         }
       };
     };
@@ -187,6 +198,7 @@ function retainAnimation(source: Drawing, prior: Drawing | undefined): Drawing {
       ...pose,
       x: clamp(newOrigin.x + (pose.x - oldOrigin.x) * scaleX, -10_000, 10_000),
       y: clamp(newOrigin.y + (pose.y - oldOrigin.y) * scaleY, -10_000, 10_000),
+      rotation: pose.rotation + (newOrigin.rotation || 0) - (oldOrigin.rotation || 0),
       scaleX: pose.scaleX,
       scaleY: pose.scaleY,
       points:

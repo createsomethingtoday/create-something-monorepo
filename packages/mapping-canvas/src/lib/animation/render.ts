@@ -200,6 +200,7 @@ export class Renderer {
     ctx.translate(k.x, k.y);
     ctx.rotate((k.rotation * Math.PI) / 180);
     ctx.scale(k.scaleX, k.scaleY);
+    if(d.hidden) {ctx.restore();return;}
     const ink = drawingInk(d, project.background);
     ctx.strokeStyle = tint ?? ink;
     ctx.fillStyle = tint ?? ink;
@@ -222,6 +223,7 @@ export class Renderer {
         ctx.lineTo(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t);
         remaining -= length;
       }
+      if(d.fill && k.reveal===1) {ctx.fillStyle=tint ?? d.fill;ctx.fill();}
       ctx.stroke();
     } else if (d.kind === 'image') {
       const img = this.images.get(d.assetId ?? '')?.image;

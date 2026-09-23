@@ -1,4 +1,5 @@
 <script lang="ts">
+  import ProjectModes from '$lib/ProjectModes.svelte';
   import { onMount } from 'svelte';
   import MotionControls from '$lib/animation/MotionControls.svelte';
   import {
@@ -39,6 +40,7 @@
     projects = $state.raw<ProjectSummary[]>([]),
     past = $state.raw<Project[]>([]),
     future = $state.raw<Project[]>([]);
+  let previewMode = $state(false);
   let ready = $state(false),
     busy = $state(false),
     status = $state('Loading animation projects…'),
@@ -71,6 +73,7 @@
       : project
   );
   onMount(() => {
+    previewMode = new URL(location.href).searchParams.get('mode') === 'preview';
     const loading = (async () => {
       try {
         projects = await loadProjects();
@@ -130,9 +133,9 @@
     if (canvas && assetsReady) {
       const start = performance.now();
       renderer.paint(canvas.getContext('2d')!, shown, time, {
-        ghosts: playing ? 0 : ghosts,
-        selected: playing ? '' : selected,
-        points: tool === 'points' && !playing
+        ghosts: playing || previewMode ? 0 : ghosts,
+        selected: playing || previewMode ? '' : selected,
+        points: tool === 'points' && !playing && !previewMode
       });
       drawMilliseconds = performance.now() - start;
     }
@@ -400,7 +403,7 @@
     return space === 'screen' ? pt : screenToScene(pt, project, time);
   }
   function pointerDown(e: PointerEvent) {
-    if (busy || exporting || !ready || e.button !== 0) return;
+    if (previewMode || busy || exporting || !ready || e.button !== 0) return;
     stop();
     const p = point(e, tool === 'points' ? current?.space : 'world');
     canvas.setPointerCapture(e.pointerId);
@@ -527,7 +530,7 @@
     content="Draw, pose and animate illustrations with your agent. Editable drawings, onion skins and local video export."
   /></svelte:head
 >
-<main>
+<main class:preview-mode={previewMode}>
   <header>
     <a href={`/?project=${encodeURIComponent(project.id)}`} onclick={openCanvas} class="brand"
       >DRAW <span>MOTION</span></a
@@ -548,7 +551,7 @@
           'animation.draw.json'
         )}
       disabled={!ready}>Save project</button
-    ><a href={`/?project=${encodeURIComponent(project.id)}`} onclick={openCanvas}>Canvas</a>
+    ><ProjectModes id={project.id} mode={previewMode?'preview':'motion'} navigate={(event,mode)=>{if(mode==='canvas')void openCanvas(event);else{event.preventDefault();previewMode=mode==='preview';window.history.replaceState(null,'',`/animate?project=${encodeURIComponent(project.id)}${previewMode?'&mode=preview':''}`);}}} />
   </header>
   {#if showHelp}<aside class="help">
       <strong>Create artwork in your Codex conversation.</strong> Ask Codex to generate an
@@ -617,7 +620,7 @@
         <span>{project.width} × {project.height}</span><span
           >{playing
             ? 'Playing'
-            : tool === 'points'
+            : previewMode ? 'Preview' : tool === 'points'
               ? 'Drag a point to change this pose'
               : tool === 'pen'
                 ? 'Draw a stroke'
@@ -810,10 +813,10 @@
     <div class="transport">
       <button
         onclick={() => run(() => history('undo'))}
-        disabled={!past.length || busy || exporting}>Undo</button
+        disabled={previewMode || !past.length || busy || exporting}>Undo</button
       ><button
         onclick={() => run(() => history('redo'))}
-        disabled={!future.length || busy || exporting}>Redo</button
+        disabled={previewMode || !future.length || busy || exporting}>Redo</button
       ><button class="primary" onclick={play} disabled={!ready || !assetsReady || exporting}
         >{playing ? 'Pause' : 'Play'}</button
       ><input
