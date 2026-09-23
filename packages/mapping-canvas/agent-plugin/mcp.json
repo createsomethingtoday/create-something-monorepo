@@ -2,7 +2,12 @@
   "mcpServers": {
     "draw-agent": {
       "command": "python3",
-      "args": ["${PLUGIN_ROOT}/scripts/draw-agent.py"]
+      "args": [
+        "${PLUGIN_ROOT}/scripts/draw-agent.py"
+      ],
+      "env": {
+        "DRAW_TYPESAFE_INFISICAL": "1"
+      }
     }
   }
 }
