@@ -13,6 +13,8 @@ pnpm bootstrap:worktree
 pnpm --filter @create-something/mapping-canvas dev
 ```
 
+For the local Kimi preview/apply experiment, see the [motion generation prototype guide](docs/motion-generation-prototype.md).
+
 Quality gates:
 
 ```bash
