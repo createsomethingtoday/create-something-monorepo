@@ -51,6 +51,8 @@ Give the skill only findings the recipient is authorized to receive. Do not atta
 
 ## Scope
 
+OAuth `state` findings follow the 2026-09-17 Marketplace ruling: `state` is a pass/fail gate, the listing's Install URL must be partner-owned and mint a session-bound `state` per request, and the developer-Workspace Install button (which sends no `state`) is outside the customer path rather than a reason to loosen the callback.
+
 Covers issued-finding remediation through resubmission readiness. It does **not** perform first-time preflight (use `webflow-app-preflight`), submit on the developer's behalf, speak for reviewer acceptance, or handle internal reviewer/governance deliberation.
 
 Primary public sources:

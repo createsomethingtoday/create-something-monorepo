@@ -25,6 +25,7 @@ Use this checklist for each issued blocker — P1 or `unassigned` (treat `unassi
 - [ ] Responses omit reusable credentials and unnecessary tenant data.
 - [ ] Generated JavaScript, markup, and attributes use safe serialization and validation.
 - [ ] Custom Code lifecycle tests cover apply, update, site/page removal, and publish prompting when applicable.
+- [ ] OAuth `state` findings: the listing's Install URL is partner-owned and mints a fresh, single-use `state` per request; negative tests prove a stripped, mismatched, expired, replayed, or out-of-session `state` is rejected before the code exchange; the developer-Workspace Install button is recorded as outside the customer path, not accommodated.
 
 ## Production artifact
 
