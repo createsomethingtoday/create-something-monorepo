@@ -171,28 +171,28 @@ test('public agency surfaces explain ownership and provider roles', () => {
   const home = readFileSync(new URL('../src/routes/+page.svelte', import.meta.url), 'utf8');
   const stack = readFileSync(new URL('../src/routes/stack/+page.svelte', import.meta.url), 'utf8');
   const partners = readFileSync(new URL('../src/routes/partners/+page.svelte', import.meta.url), 'utf8');
-  assert.match(home, /Built with OpenAI and Cloudflare\. Designed to remain yours\./);
-  assert.match(home, /Your team owns the system\./);
-  assert.match(home, /OpenAI Codex, an AI coding tool/);
-  assert.match(home, /A new setup still needs testing/);
-  assert.match(home, /https:\/\/createsomething\.ltd\/canon\/concepts\/conviction-without-dependence/);
+  assert.match(home, /You keep the code, instructions, tests/);
+  assert.match(home, /ownership and provider details/);
   assert.match(stack, /Your project keeps its data, code, tool definitions, instructions, tests, and recovery guide/);
   assert.match(stack, /A different model must pass the relevant checks before you switch/);
   assert.match(partners, /open-weight and custom models/);
 });
 
-test('the homepage introduces a business task before developer and provider details', () => {
+test('the film-led homepage introduces useful work and retains commercial terms and direct evidence links', () => {
   const home = readFileSync(new URL('../src/routes/+page.svelte', import.meta.url), 'utf8');
-  const opening = home.slice(home.indexOf('<PerformanceCampaignOpening'), home.indexOf('</PerformanceCampaignOpening>'));
-  assert.match(opening, /title="Keep building with agents\."/);
-  assert.match(opening, /Bring a task your team repeats, an idea, or a project you started/);
-  assert.match(opening, /\$900\/month\. Cancel anytime/);
-  assert.match(opening, /media=\{playbookHomeHeroMedia\}/);
-  assert.match(opening, /expression="editorial"/);
-  assert.match(opening, /mediaMobilePlacement="background"/);
-  assert.doesNotMatch(opening, /Codex|GitHub|governed|authority|MCP/);
-  assert.match(opening, /agencyCoreMessaging.membershipHref/);
-  assert.ok(home.indexOf('An agent is software') < home.indexOf('<aside class="home-section ownership-callout"'));
+  const hero = readFileSync(new URL('../src/lib/components/films/AgencyHero.svelte', import.meta.url), 'utf8');
+  const registry = readFileSync(new URL('../src/lib/data/filmStories.ts', import.meta.url), 'utf8');
+  assert.match(home, /<AgencyHero/);
+  assert.match(home, /<MembershipOffer/);
+  assert.match(hero, /featuredHero.title/);
+  assert.match(registry, /Your next step, already prepared/);
+  assert.match(hero, /featuredHero.description/);
+  assert.match(registry, /tools and workflows that help agents do useful work/);
+  assert.match(hero, /featuredHero.poster/);
+  assert.match(hero, /reducedFilmMotion/);
+  assert.ok(home.indexOf('<FilmCollection') < home.indexOf('<MembershipOffer'));
+  assert.match(home, /<BuiltWork \/>\s*<\/div>/);
+  assert.match(home, /<MembershipOffer compact/);
 });
 
 test('commercial decision routes explain the task, delivery, ownership, and proof', () => {
@@ -201,10 +201,8 @@ test('commercial decision routes explain the task, delivery, ownership, and proo
   const layout = read('+layout.svelte');
   assert.match(layout, /label: 'How It Works', href: '\/services'/);
   assert.match(layout, /label: 'What You Keep', href: '\/stack'/);
-  assert.match(home, /Turn meeting notes into a draft action list\./);
-  assert.match(home, /Illustrative example, not a measured client result/);
-  assert.match(home, /Approve before saving to another tool/);
-  assert.match(home, /Code, tests, and instructions/);
+  assert.match(home, /We test an agreed example and a failure case/);
+  assert.match(home, /Your team reviews the result before launch/);
   assert.match(read('services/+page.svelte'), /Bring a task to automate or a product you have already built/);
   assert.match(read('products/+page.svelte'), /Map and Control are subscriptions/);
   assert.match(read('products/+page.svelte'), /Control includes Map/);
@@ -328,7 +326,18 @@ test('commercial conversion handoffs use editorial propositions while task surfa
     const source = readFileSync(new URL(`../src/routes/${routePath}`, import.meta.url), 'utf8');
     const openings = conversionHandoffOpenings(source);
 
-    assert.ok(openings.length > 0, `${route || 'home'} must render a conversion handoff`);
+    if (!route) {
+      assert.match(source, /<MembershipOffer compact/);
+      assert.equal(openings.length, 0, 'homepage uses its membership offer as the conversion section');
+      continue;
+    }
+    if (route === 'book') {
+      assert.match(source, /class="booking-entry"/);
+      assert.match(source, /id="first-party-scheduler"/);
+      assert.match(source, /onload=\{sendSchedulerContext\}/);
+      continue;
+    }
+    assert.ok(openings.length > 0, `${route} must render a conversion handoff`);
     for (const opening of openings) {
       assert.match(
         opening,
@@ -362,6 +371,12 @@ test('commercial conversion handoffs use editorial propositions while task surfa
     );
     const openings = conversionHandoffOpenings(source);
 
+    if (route === 'book') {
+      assert.match(source, /class="booking-entry"/);
+      assert.match(source, /id="first-party-scheduler"/);
+      assert.match(source, /onload=\{sendSchedulerContext\}/);
+      continue;
+    }
     assert.ok(openings.length > 0, `${route} must render a conversion handoff`);
     for (const opening of openings) {
       assert.doesNotMatch(
@@ -392,31 +407,25 @@ test('the Practice argument is editorial while its operating artifacts stay fiel
   );
 });
 
-test('the homepage service steps preserve approvals, testing, and separate launch', () => {
+test('the compact homepage preserves buying boundaries and detailed destinations', () => {
   const home = readFileSync(new URL('../src/routes/+page.svelte', import.meta.url), 'utf8');
-  const steps = home.slice(home.indexOf('const steps ='), home.indexOf('</script>'));
-  assert.match(steps, /what AI may do and what needs approval/);
-  assert.match(steps, /test environment/);
-  assert.match(steps, /Launch is a separate project, quoted before you commit/);
-  assert.match(steps, /monitoring, incident response, and regular reviews/);
-  for (const route of ['/map', '/agent-foundation', '/control']) assert.ok(steps.includes(route));
+  const offer = readFileSync(new URL('../src/lib/components/MembershipOffer.svelte', import.meta.url), 'utf8');
+  assert.match(home, /what AI may do and what needs approval/);
+  assert.match(home, /Launch and production incident response require a separate agreement/);
+  assert.match(home, /Development and production have separate budgets/);
+  assert.match(home, /pause new billable runs at the agreed limit/);
+  assert.match(home, /Cancel before your next renewal/);
+  assert.match(offer, /href="\/services"/);
+  assert.match(offer, /href="\/stack"/);
+  assert.match(offer, /workflowMappingSessionHref/);
+  assert.match(offer, /if !compact/);
 });
 
-test('the homepage defines unfamiliar terms beside the example', () => {
+test('the homepage has one FAQ and avoids redundant standalone explanations', () => {
   const home = readFileSync(new URL('../src/routes/+page.svelte', import.meta.url), 'utf8');
-  const exampleStart = home.indexOf('<section class="home-section foundation-example"');
-  const example = home.slice(exampleStart, home.indexOf('</section>', exampleStart));
-  assert.match(example, /An agent is software that uses AI and connected tools/);
-  assert.match(example, /Needs confirmation/);
-  assert.match(home, /OpenAI Codex, an AI coding tool/);
-  assert.doesNotMatch(home, /Offense|Defense|PerformanceWorkflowMiniArtifact|HeroTrustArtifact/);
-});
-
-test('the mobile homepage stacks the example and service steps for reading', () => {
-  const home = readFileSync(new URL('../src/routes/+page.svelte', import.meta.url), 'utf8');
-  assert.match(home, /@media \(max-width: 640px\)[\s\S]*?\.home-steps\s*\{\s*grid-template-columns: 1fr/);
-  assert.match(home, /@media \(max-width: 640px\)[\s\S]*?\.example-comparison\s*\{\s*grid-template-columns: 1fr/);
-  assert.doesNotMatch(home, /PublicSubstrateCanvas|MeridianEvidenceCarousel/);
+  assert.equal((home.match(/<MeridianAccordion/g) ?? []).length, 1);
+  assert.match(home, /software that uses AI and connected tools/);
+  assert.doesNotMatch(home, /<GroundFilm|<ProjectReviewEntry|<AgencyPerformanceReadback|<PerformanceConversionHandoff|foundation-example|ownership-callout/);
 });
 
 test('commercial decision routes use one primary and one conversational action', () => {

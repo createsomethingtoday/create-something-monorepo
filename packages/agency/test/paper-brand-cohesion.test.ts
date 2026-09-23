@@ -97,10 +97,10 @@ test('the Agency footer uses one linked lockup instead of repeating the brand in
   assert.match(footer, /\.footer-editorial-identity--link:focus-visible/);
 });
 
-test('the homepage service steps are readable without scene motion', () => {
+test('the homepage retains a readable listing independent of scene motion', () => {
   const home = read('src/routes/+page.svelte');
-  assert.match(home, /id="agency-operating-story"/);
-  assert.match(home, /class="home-steps"/);
+  assert.match(home, /<BuiltWork/);
+  assert.match(home, /<MembershipOffer compact/);
   assert.doesNotMatch(home, /PerformanceNarrativeStage|motionIntent|ScrollTrigger|Lenis|SmoothScroll/);
 });
 
@@ -111,9 +111,9 @@ test('the Agency hero makes the Playbook operating grammar visible without a pro
   );
   const field = read('src/lib/components/PlaybookField.svelte');
 
-  assert.match(home, /title="Keep building with agents\."/);
-  assert.match(home, /media=\{playbookHomeHeroMedia\}/);
-  assert.match(home, /mediaMobilePlacement="background"/);
+  assert.match(home, /<AgencyHero/);
+  assert.match(read('src/lib/components/films/AgencyHero.svelte'), /featuredHero.poster/);
+  assert.match(read('src/lib/components/films/AgencyHero.svelte'), /class="hero-still"/);
   assert.match(home, /You keep the code/);
   assert.match(home, /what AI may do/);
   assert.match(home, /what needs approval/);
