@@ -18,13 +18,16 @@
   onMount(() => {
     enhanced = true;
   });
+  function validateStep() {
+    const fields = formElement?.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>(
+      `fieldset[data-step="${step}"] input, fieldset[data-step="${step}"] textarea`
+    );
+    if (!fields) return false;
+    for (const field of fields) if (!field.reportValidity()) return false;
+    return true;
+  }
   async function go(next: number) {
-    if (next > step) {
-      const fields = formElement?.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>(
-        `fieldset[data-step="${step}"] input, fieldset[data-step="${step}"] textarea`
-      );
-      for (const field of fields || []) if (!field.reportValidity()) return;
-    }
+    if (next > step && !validateStep()) return;
     step = next;
     await tick();
     formElement?.querySelector<HTMLElement>(`fieldset[data-step="${step}"] legend`)?.focus();
@@ -122,6 +125,10 @@
             if (step < 2) {
               cancel();
               void go(step + 1);
+              return;
+            }
+            if (!validateStep()) {
+              cancel();
               return;
             }
             busy = true;
