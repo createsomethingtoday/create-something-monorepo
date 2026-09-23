@@ -1,0 +1,7 @@
+{
+  "private": true,
+  "scripts": {
+    "check": "npx --yes hyperframes@0.8.64 check",
+    "render": "npx --yes hyperframes@0.8.64 render"
+  }
+}

@@ -5,6 +5,7 @@
     SEO,
     type PerformanceCardItem
   } from '@create-something/canon';
+  import { page } from '$app/stores';
   import { getAnalytics } from '@create-something/canon/analytics';
   import { ScheduleButton } from '@create-something/canon/domains/agency';
   import FunnelLadder from '$lib/components/FunnelLadder.svelte';
@@ -191,6 +192,7 @@
   const selectedPath = $derived(
     contactPathOptions.find((option) => option.value === selectedIntent) ?? contactPathOptions[1]
   );
+  const hasChosenIntent = $derived(contactPathOptions.some(option => option.value === $page.url.searchParams.get('intent')));
   const selectedContent = $derived(contactIntentContent[selectedIntent]);
 
   $effect(() => {
@@ -268,9 +270,12 @@
   propertyName="agency"
 />
 
+{#if hasChosenIntent}
+<header class="inquiry-intro"><p>{selectedContent.eyebrow}</p><h1>{selectedContent.formTitle}</h1><p>{selectedContent.description}</p></header>
+{:else}
 <PerformancePageSection
   variant="hero"
-  layout="split"
+  layout={hasChosenIntent ? "stack" : "split"}
   titleLevel="h1"
   expression="editorial"
   eyebrow={selectedContent.eyebrow}
@@ -278,17 +283,19 @@
   description={selectedContent.description}
 >
   {#snippet aside()}
-    <PerformanceCardGrid items={contactPathCards} columns={1} ariaLabel="Contact path options" />
+    {#if !hasChosenIntent}<PerformanceCardGrid items={contactPathCards} columns={1} ariaLabel="Contact path options" />{/if}
   {/snippet}
 </PerformancePageSection>
+{/if}
 
 <section class="contact-section">
   <div class="contact-container">
     <div class="contact-option">
-      <h2>{selectedContent.formTitle}</h2>
+      <h2>{hasChosenIntent ? "Tell us about the work." : selectedContent.formTitle}</h2>
       <p>{selectedContent.formDescription}</p>
 
       <form class="contact-form" onsubmit={handleSubmit}>
+        <details open={!hasChosenIntent}><summary>Choose another way to start</summary>
         <fieldset class="form-field path-field">
           <legend class="form-label">What should happen next?</legend>
           <div class="path-options">
@@ -307,7 +314,7 @@
               </label>
             {/each}
           </div>
-        </fieldset>
+        </fieldset></details>
 
         <div class="form-field">
           <label for="name" class="form-label">Name</label>
@@ -421,8 +428,10 @@
 </section>
 
 <style>
+.inquiry-intro{padding:45px 7vw 0}.inquiry-intro h1{font:400 clamp(40px,5vw,64px)/1.1 var(--font-performance-editorial);margin:18px 0}.inquiry-intro p{max-width:760px;line-height:1.65}.contact-form summary{cursor:pointer;margin-bottom:18px;min-height:32px}.contact-form summary:focus-visible{outline:2px solid var(--color-performance-signal)}
+
   .section-container {
-    width: min(var(--content-width-performance, 85rem), calc(100% - 2.5rem));
+    width: min(var(--content-width-performance, 85rem), 86%);
     margin: 0 auto;
   }
 
@@ -433,7 +442,7 @@
   }
 
   .contact-container {
-    width: min(var(--content-width-performance, 85rem), calc(100% - 2.5rem));
+    width: min(var(--content-width-performance, 85rem), 86%);
     margin: 0 auto;
     display: grid;
     grid-template-columns: minmax(0, 1.1fr) minmax(18rem, 0.9fr);
@@ -688,7 +697,7 @@
   @media (max-width: 768px) {
     .contact-container,
     .section-container {
-      width: min(100% - 1.5rem, var(--content-width-performance, 85rem));
+      width: min(86%, var(--content-width-performance, 85rem));
     }
 
     .contact-container {
