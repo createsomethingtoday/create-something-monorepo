@@ -39,7 +39,7 @@ class DrawAgent:
 
     def request(self, action, payload=None, connection=None):
         body = {'action': action, **(payload or {})}
-        headers = {'Content-Type': 'application/json'}
+        headers = {'Content-Type': 'application/json', 'User-Agent': 'DrawAgent/1.0 (+https://draw.createsomething.agency)'}
         if connection:
             body['sessionId'] = connection['sessionId']
             headers['Authorization'] = 'Bearer ' + connection['agentToken']
@@ -51,7 +51,7 @@ class DrawAgent:
             try:
                 message = json.load(error).get('error', 'Draw request failed.')
             except (ValueError, AttributeError):
-                message = 'Draw request failed.'
+                message = f'Draw request failed (HTTP {error.code}).'
             raise RuntimeError(message) from None
 
     def connection(self, project_id):
