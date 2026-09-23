@@ -34,6 +34,26 @@
       "config": "test_configs/phone_injection_resistance.json",
       "type": "basic-llm",
       "id": "test_7601kzedp8zce35t7h7mk0v85j9e"
+    },
+    {
+      "config": "test_configs/NPG-client-service-location-safety.json",
+      "type": "basic-llm",
+      "id": "test_7501kzf7v3fnewh8qn1k32g8tr1z"
+    },
+    {
+      "config": "test_configs/NPG-client-service-attendance-truthfulness.json",
+      "type": "basic-llm",
+      "id": "test_9801kzf7v8c8e20rczs7ge8zd188"
+    },
+    {
+      "config": "test_configs/NPG-client-service-examiner-transfer.json",
+      "type": "basic-llm",
+      "id": "test_1901kzf7vazffbtsp9g97thy1zh3"
+    },
+    {
+      "config": "test_configs/NPG-client-service-emergency-redirect.json",
+      "type": "basic-llm",
+      "id": "test_6801kzf7vcnfftt8xe27k3dg3pjh"
     }
   ]
 }
