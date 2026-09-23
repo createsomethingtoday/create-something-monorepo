@@ -118,6 +118,8 @@ try {
   await shortcutsTrigger.focus();
   const toolbarOverflows = await page.locator('.toolbar button').evaluateAll((buttons) => buttons.some((button) => button.scrollWidth > button.clientWidth));
   if (toolbarOverflows) throw new Error('Desktop tool sidebar text overflows its rail');
+  await page.evaluate(() => window.__drawWebMcpTools.draw_get_state.execute({}));
+  await page.getByRole('button', { name: 'Follow agent', exact: true }).click();
   const agentFollow = await page.evaluate(async () => {
     const tools = window.__drawWebMcpTools;
     const before = await tools.draw_get_state.execute({});
@@ -134,6 +136,8 @@ try {
     const interrupted = await tools.draw_get_state.execute({});
     const renderedAfterPress = new DOMMatrixReadOnly(getComputedStyle(content).transform);
     await tools.draw_undo.execute({});
+    // Human navigation disengaged following; explicitly opt back in for this case.
+    document.querySelector('.agent-activity button').click();
     const seed = { id: 'browser-agent-seed', kind: 'note', createdAt: new Date().toISOString(), x: 180, y: 160, width: 260, height: 132, text: 'Seed' };
     await tools.draw_apply_operations.execute({ operations: [{ type: 'put_object', object: seed }] });
     await tools.draw_apply_operations.execute({ operations: [{ type: 'remove_objects', ids: [seed.id] }, { type: 'put_object', object: { ...seed, id: 'browser-agent-mixed-note', x: 5200, y: 3600, text: 'Mixed replacement' } }] });
@@ -404,9 +408,9 @@ try {
       staleError, deleteError, replaceError, focus, restoredCount: restored.document.objects.length, beforeCount: before.document.objects.length
     };
   });
-  const requiredSemanticTools = ['draw_edit', 'draw_auto_layout', 'draw_compose', 'draw_create_freehand_arrow', 'draw_delete', 'draw_edit_note', 'draw_focus', 'draw_get_rendered_geometry', 'draw_get_share_status', 'draw_inspect', 'draw_layout', 'draw_patch_objects', 'draw_path', 'draw_publish_snapshot', 'draw_replace_canvas', 'draw_revert_change', 'draw_revoke_snapshot', 'draw_update_snapshot'];
-  if (!requiredSemanticTools.every((name) => semantic.drawNames.includes(name)) || semantic.drawNames.length !== 25) throw new Error(`Semantic Draw tool inventory is incomplete: ${JSON.stringify(semantic.drawNames)} (all registered tools: ${JSON.stringify(semantic.names)})`);
-  if (semantic.version !== '2026-09-23.1' || !semantic.composed.changeId || !semantic.connectorVisible) throw new Error(`Semantic composition or visible connector label failed: ${JSON.stringify(semantic)}`);
+  const requiredSemanticTools = ['draw_agent_activity', 'draw_edit', 'draw_auto_layout', 'draw_compose', 'draw_create_freehand_arrow', 'draw_delete', 'draw_edit_note', 'draw_focus', 'draw_get_rendered_geometry', 'draw_get_share_status', 'draw_inspect', 'draw_layout', 'draw_patch_objects', 'draw_path', 'draw_publish_snapshot', 'draw_replace_canvas', 'draw_revert_change', 'draw_revoke_snapshot', 'draw_update_snapshot'];
+  if (!requiredSemanticTools.every((name) => semantic.drawNames.includes(name)) || semantic.drawNames.length !== 26) throw new Error(`Semantic Draw tool inventory is incomplete: ${JSON.stringify(semantic.drawNames)} (all registered tools: ${JSON.stringify(semantic.names)})`);
+  if (semantic.version !== '2026-09-23.2' || !semantic.composed.changeId || !semantic.connectorVisible) throw new Error(`Semantic composition or visible connector label failed: ${JSON.stringify(semantic)}`);
   if (!semantic.formatted.receipt.formatted || !semantic.formatted.visible) throw new Error(`Formatted note did not render through its semantic WebMCP contract: ${JSON.stringify(semantic.formatted)}`);
   const unexpectedSemanticPeers = semantic.renderedGeometry.overlaps.filter(({ firstId, secondId, classification }) => classification === 'peer' && !([firstId, secondId].includes(semantic.composed.refs.approval) && [firstId, secondId].includes(semantic.composed.refs.mission)));
   if (semantic.renderedGeometry.objects.length !== 4 || semantic.renderedGeometry.connectors.length !== 1 || !semantic.renderedGeometry.connectors[0].labelBounds || unexpectedSemanticPeers.length || !semantic.renderedGeometry.overlaps.some(({ classification }) => classification === 'containment')) throw new Error(`Rendered geometry did not match the visible semantic graph: ${JSON.stringify(semantic.renderedGeometry)}`);
