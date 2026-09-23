@@ -1,3 +1,4 @@
+import { visibleObjects } from './editing';
 import type { DrawController, DrawWebMcpTool } from './webmcp';
 
 type Inspection = { revision: string; objects: Array<{ id: string; hidden: boolean }>; truncated?: boolean; stringsTruncated?: boolean };
@@ -41,14 +42,28 @@ export function fastExecutionTool(tools: DrawWebMcpTool[], controller: DrawContr
         ids = mutation.transition?.affectedIds ?? mutation.changedIds ?? mutation.selectedIds ?? [];
         phase = 'verify';
         const after = await timed('readbackMs', () => call<Inspection>('draw_inspect', { ids, limit: 200 }));
-        const geometry = await timed('geometryMs', () => call<Geometry>('draw_get_rendered_geometry', { limit: 200 }));
+        // Verify the affected subgraph, not unrelated hidden/large document content.
+        const document = controller.getState().document;
+        const visibleIds = new Set(visibleObjects(document).map(object => object.id));
+        const dependents = new Map<string, string[]>();
+        for (const object of document.objects) if (object.kind === 'connector') {
+          for (const endpoint of [object.fromId, object.toId]) {
+            const linked = dependents.get(endpoint) ?? []; linked.push(object.id); dependents.set(endpoint, linked);
+          }
+        }
+        const affected = new Set(ids), queue = [...ids];
+        for (let index = 0; index < queue.length; index++) for (const id of dependents.get(queue[index]) ?? []) {
+          if (!affected.has(id)) { affected.add(id); queue.push(id); }
+        }
+        const geometryIds = [...affected].filter(id => visibleIds.has(id));
+        const geometry = await timed('geometryMs', () => call<Geometry>('draw_get_rendered_geometry', { ids: geometryIds.slice(0, 200), limit: 200 }));
         const stable = after.revision === mutation.revision && geometry.revision === mutation.revision;
         const rendered = new Set(geometry.objects.map(object => object.id));
         const visible = new Set(after.objects.filter(object => !object.hidden).map(object => object.id));
         const missing = ids.filter(id => visible.has(id) && !rendered.has(id));
-        const verified = stable && !mutation.transition?.affectedIdsTruncated && !after.truncated && !after.stringsTruncated && !geometry.truncated && missing.length === 0 && geometry.summary.unrenderedIdCount === 0 && geometry.summary.missingIdCount === 0;
+        const verified = stable && geometryIds.length <= 200 && !mutation.transition?.affectedIdsTruncated && !after.truncated && !after.stringsTruncated && !geometry.truncated && missing.length === 0 && geometry.summary.unrenderedIdCount === 0 && geometry.summary.missingIdCount === 0;
         await finish(verified ? 'completed' : 'failed', verified ? 'Edits verified' : 'Edit applied; verification needs attention');
-        return { ok: verified, applied: true, mutation, verification: { state: verified ? 'verified' : 'incomplete', stable, missingIds: missing, after, geometry }, timings: { ...timings, totalMs: performance.now() - started } };
+        return { ok: verified, applied: true, mutation, verification: { scope: 'visible-affected-subgraph', state: verified ? 'verified' : 'incomplete', stable, missingIds: missing, after, geometry }, timings: { ...timings, totalMs: performance.now() - started } };
       } catch (error) {
         // A failed readback is not a failed edit. Preserve the receipt for recovery.
         await finish('failed', mutation ? 'Edit applied; verification interrupted' : 'Edit stopped');
