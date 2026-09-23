@@ -19,7 +19,7 @@ keyring = { version = "3", features = ["apple-native"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tokio = { version = "1", features = ["macros", "time", "process"] }
-tokio-tungstenite = { version = "0.24", features = ["rustls-tls-native-roots"] }
+tokio-tungstenite = { version = "0.30", features = ["rustls-tls-native-roots"] }
 futures-util = { version = "0.3", default-features = false, features = ["sink", "std"] }
 
 # Disk is tight on this machine: keep debug artifacts minimal.
