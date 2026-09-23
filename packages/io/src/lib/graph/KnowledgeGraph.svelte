@@ -29,6 +29,7 @@
 		showLabels?: boolean;
 		showEdgeLabels?: boolean;
 		hideOrphans?: boolean;
+		selectedNodeId?: string;
 		onNodeClick?: (nodeId: string) => void;
 		onNodeHover?: (nodeId: string | null) => void;
 	}
@@ -46,6 +47,7 @@
 		showLabels = true,
 		showEdgeLabels = false,
 		hideOrphans = true,
+		selectedNodeId,
 		onNodeClick,
 		onNodeHover
 	}: Props = $props();
@@ -57,8 +59,17 @@
 	 * Convert graph data to Cytoscape elements
 	 */
 	function convertToElements() {
+		const focusedNodes =
+			focus.mode === 'package' && focus.packageName
+				? data.nodes.filter((node) => node.package === focus.packageName)
+				: focus.mode === 'concept' && focus.conceptName
+					? data.nodes.filter((node) => node.concepts.includes(focus.conceptName!))
+					: data.nodes;
+		const focusedNodeIds = new Set(focusedNodes.map((node) => node.id));
+
 		// First, filter edges based on edge type filters
 		const filteredEdges = data.edges.filter((edge) => {
+			if (!focusedNodeIds.has(edge.source) || !focusedNodeIds.has(edge.target)) return false;
 			switch (edge.type) {
 				case 'explicit':
 					return edgeFilters.explicit;
@@ -83,7 +94,7 @@
 		}
 
 		// Nodes (filter orphans if hideOrphans is true)
-		const nodes = data.nodes
+		const nodes = focusedNodes
 			.filter((node) => !hideOrphans || connectedNodeIds.has(node.id))
 			.map((node) => ({
 				data: {
@@ -120,17 +131,17 @@
 	function getEdgeColor(type: string): string {
 		switch (type) {
 			case 'explicit':
-				return 'rgba(255, 255, 255, 0.6)';
+				return 'rgba(27, 31, 35, 0.72)';
 			case 'cross-reference':
-				return 'rgba(255, 255, 255, 0.46)';
+				return 'rgba(27, 31, 35, 0.56)';
 			case 'concept':
-				return 'rgba(255, 255, 255, 0.2)';
+				return 'rgba(27, 31, 35, 0.34)';
 			case 'semantic':
-				return 'rgba(255, 255, 255, 0.1)';
+				return 'rgba(27, 31, 35, 0.22)';
 			case 'infrastructure':
 				return 'var(--color-performance-data-4, #fbbf24)'; // amber - high visibility for hidden coupling
 			default:
-				return 'rgba(255, 255, 255, 0.3)';
+				return 'rgba(27, 31, 35, 0.42)';
 		}
 	}
 
@@ -179,9 +190,9 @@
 			style: createStylesheet(),
 			layout: getLayoutConfig(focus.mode, focus.nodeId || focus.packageName || focus.conceptName),
 			minZoom: 0.1,
-			maxZoom: 3,
-			wheelSensitivity: 0.2
+			maxZoom: 3
 		});
+		if (selectedNodeId) cy.getElementById(selectedNodeId).select();
 
 		// Event handlers
 		cy.on('tap', 'node', (evt: EventObject) => {
@@ -238,9 +249,23 @@
 			updateGraph();
 		}
 	});
+
+	$effect(() => {
+		const nodeId = selectedNodeId;
+		if (!cy) return;
+		cy.nodes().unselect();
+		if (nodeId) cy.getElementById(nodeId).select();
+	});
 </script>
 
-<div bind:this={container} class="graph-container"></div>
+<div
+	bind:this={container}
+	class="graph-container"
+	role="img"
+	aria-label={selectedNodeId
+		? `Document connection map. Selected document: ${selectedNodeId}. Use the search before the map for keyboard access.`
+		: 'Document connection map. Use the search before the map to choose a document with a keyboard.'}
+></div>
 
 <style>
 	.graph-container {
