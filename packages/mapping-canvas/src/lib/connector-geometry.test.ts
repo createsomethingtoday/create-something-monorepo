@@ -74,3 +74,25 @@ it('clears thick borders at shallow angles and after rotation', () => {
   const localY = -(route.a.x - 10);
   expect(Math.abs(localY)).toBeGreaterThan(550);
 });
+
+it('attaches dependent connectors to the visible shaft midpoint', () => {
+  const dependency = { ...edge, id: 'dependent', fromId: edge.id, toId: 'c' };
+  const resolve = createConnectorResolver([note('a', 0, 0, 1000), note('b', 1200, 0), note('c', 1050, 300), edge, dependency]);
+  expect(resolve(dependency)?.a).toEqual({ x: 1100, y: 50 });
+});
+it('propagates missing and suppressed routes to dependent connectors', () => {
+  const dependency = { ...edge, id: 'dependent', fromId: edge.id, toId: 'c' };
+  expect(createConnectorResolver([note('a', 0, 0), note('b', 0, 0), note('c', 0, 300), edge])(dependency)).toBeUndefined();
+  expect(createConnectorResolver([note('a', 0, 0), note('c', 0, 300), edge])(dependency)).toBeUndefined();
+});
+it('resolves deep dependent connector graphs without recursive stack growth', () => {
+  const objects: CanvasObject[] = [note('a', 0, 0), note('b', 0, 400), edge];
+  for (let i = 0; i < 20000; i++) objects.push({ ...edge, id: `edge-${i}`, fromId: objects.at(-1)!.id });
+  expect(() => createConnectorResolver(objects)(objects.at(-1) as Connector)).not.toThrow();
+});
+
+it('keeps arrowhead wings outside a node on a shallow approach', () => {
+  const target: Shape = { id: 'b', kind: 'rectangle', createdAt: 'now', from: { x: 0, y: 0 }, to: { x: 20, y: 1000 }, color: '#ffffff', strokeWidth: 2 };
+  const route = createConnectorResolver([note('a', 50, 1000), target])(edge)!;
+  expect(connectorHeadPoints(route.a, route.b).every(point => point.x > 21)).toBe(true);
+});

@@ -4,20 +4,26 @@ import { createObjectCenterResolver, type CanvasObject, type Connector, type Poi
 /** Shared node attachment geometry for the canvas, snapshots, exports and tool labels. */
 export function createConnectorResolver(objects: CanvasObject[], center = createObjectCenterResolver(objects)) {
   const index = new Map(objects.map(object => [object.id, object]));
-  const boundary = (object: CanvasObject, toward: Point): { point: Point; clearance: number } => {
-    const origin = center(object);
+  type Route = { a: Point; b: Point };
+  const routes = new Map<string, Route | undefined>();
+  const endpointCenter = (object: CanvasObject): Point | undefined => {
+    if (object.kind !== 'connector') return center(object);
+    const route = routes.get(object.id);
+    return route ? { x: (route.a.x + route.b.x) / 2, y: (route.a.y + route.b.y) / 2 } : undefined;
+  };
+  const boundary = (object: CanvasObject, origin: Point, toward: Point): { point: Point; clearance: number; headLateral: number } => {
     let halfWidth: number, halfHeight: number;
     if (object.kind === 'note' || object.kind === 'group') {
       halfWidth = object.width / 2; halfHeight = object.height / 2;
     } else if (object.kind === 'rectangle' || object.kind === 'ellipse') {
       halfWidth = Math.abs(object.to.x - object.from.x) / 2;
       halfHeight = Math.abs(object.to.y - object.from.y) / 2;
-    } else return { point: origin, clearance: 0 }; // Point-like objects have no node body.
-    if (!halfWidth || !halfHeight) return { point: origin, clearance: 0 };
+    } else return { point: origin, clearance: 0, headLateral: 0 }; // Point-like objects have no node body.
+    if (!halfWidth || !halfHeight) return { point: origin, clearance: 0, headLateral: 0 };
     const angle = (object.rotation ?? 0) * Math.PI / 180, cos = Math.cos(angle), sin = Math.sin(angle);
     const dx = toward.x - origin.x, dy = toward.y - origin.y;
     const localX = cos * dx + sin * dy, localY = -sin * dx + cos * dy;
-    if (!dx && !dy) return { point: origin, clearance: 0 };
+    if (!dx && !dy) return { point: origin, clearance: 0, headLateral: 0 };
     const scale = object.kind === 'ellipse'
       ? 1 / Math.hypot(localX / halfWidth, localY / halfHeight)
       : Math.min(localX ? halfWidth / Math.abs(localX) : Infinity, localY ? halfHeight / Math.abs(localY) : Infinity);
@@ -29,22 +35,47 @@ export function createConnectorResolver(objects: CanvasObject[], center = create
     const incidence = (normal.x * localX + normal.y * localY) / (Math.hypot(normal.x, normal.y) * distance);
     const strokeRadius = object.kind === 'rectangle' || object.kind === 'ellipse' ? (object.strokeWidth || 2) / 2 : 0;
     // Intersect the outward stroke support plane, including shallow-angle and rotated approaches.
-    return { point: { x: origin.x + dx * scale, y: origin.y + dy * scale }, clearance: 4 + strokeRadius / incidence };
+    return { point: { x: origin.x + dx * scale, y: origin.y + dy * scale }, clearance: 4 + strokeRadius / incidence, headLateral: 7 * Math.sqrt(Math.max(0, 1 - incidence * incidence)) / incidence - 18 };
   };
-  return (connector: Connector): { a: Point; b: Point } | undefined => {
+  const calculate = (connector: Connector): Route | undefined => {
     const from = index.get(connector.fromId), to = index.get(connector.toId);
     if (!from || !to) return undefined;
-    const first = center(from), last = center(to), dx = last.x - first.x, dy = last.y - first.y;
+    const first = endpointCenter(from), last = endpointCenter(to);
+    if (!first || !last) return undefined;
+    const dx = last.x - first.x, dy = last.y - first.y;
     const distance = Math.hypot(dx, dy);
     if (!distance) return undefined;
     const unit = { x: dx / distance, y: dy / distance };
-    const start = boundary(from, last), end = boundary(to, first);
+    const start = boundary(from, first, last), end = boundary(to, last, first);
     // Keep the marker tip (2 units beyond the endpoint) outside the node border.
     const a = { x: start.point.x + unit.x * start.clearance, y: start.point.y + unit.y * start.clearance };
     const b = { x: end.point.x - unit.x * end.clearance, y: end.point.y - unit.y * end.clearance };
+    const gap = (b.x - a.x) * unit.x + (b.y - a.y) * unit.y;
+    // At shallow angles the triangle's wing can reach farther into a node than its tip.
+    // Solve clearance together with the scaled head length so short routes remain visible.
+    if (gap > 0 && end.headLateral > 3) {
+      const full = end.headLateral - 3;
+      const extra = gap - full >= 20 ? full : Math.max(0, (end.headLateral * gap - 60) / (20 + end.headLateral));
+      b.x -= unit.x * extra; b.y -= unit.y * extra;
+    }
     // Overlapping/touching nodes have no exterior route; never draw a reversed arrow through them.
     if ((b.x - a.x) * unit.x + (b.y - a.y) * unit.y <= 0) return undefined;
     return { a, b };
+  };
+  return (connector: Connector): Route | undefined => {
+    const pending = new Set<string>(), stack: Array<[Connector, boolean]> = [[connector, false]];
+    while (stack.length) {
+      const [current, expanded] = stack.pop()!;
+      if (routes.has(current.id)) continue;
+      if (expanded) { pending.delete(current.id); routes.set(current.id, calculate(current)); continue; }
+      if (pending.has(current.id)) { routes.set(current.id, undefined); continue; }
+      pending.add(current.id); stack.push([current, true]);
+      for (const id of [current.toId, current.fromId]) {
+        const dependency = index.get(id);
+        if (dependency?.kind === 'connector' && !routes.has(id)) stack.push([dependency, false]);
+      }
+    }
+    return routes.get(connector.id);
   };
 }
 

@@ -524,8 +524,8 @@ function graphLayoutTargets(document: CanvasDocument, rootIds: string[], mode: '
   const separatedByGap = (a: { x: number; y: number; width: number; height: number }, b: { x: number; y: number; width: number; height: number }) => a.x + a.width + gap <= b.x || b.x + b.width + gap <= a.x || a.y + a.height + gap <= b.y || b.y + b.height + gap <= a.y;
   const segmentIntersects = (start: Point, end: Point, bounds: { x: number; y: number; width: number; height: number }) => segmentHitsBounds(start, end, bounds, gap + 19);
   const connectors = document.objects.filter((object): object is Extract<CanvasObject, { kind: 'connector' }> => object.kind === 'connector').sort((a, b) => a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
-  const positionedConnector = createConnectorResolver(document.objects, object => layoutCenter(object).center);
   const positionedLabels = () => {
+    const positionedConnector = createConnectorResolver(document.objects, object => layoutCenter(object).center);
     const occupied = new Map<string, number>(), labels = new Map<string, { x: number; y: number; width: number; height: number }>();
     const segments = connectors.flatMap((connector) => {
       const fromObject = byId.get(connector.fromId), toObject = byId.get(connector.toId);
