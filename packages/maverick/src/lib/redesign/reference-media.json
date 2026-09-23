@@ -1,0 +1,38 @@
+{
+  "home": {
+    "referenceFile": "197985421-fuel-crude-oil-storage-port-us_H264HD720.mp4",
+    "path": "/redesign/reference-home.mp4",
+    "sha256": "1633b224cd732ce72cb392453644fbf7c110c01e9d167e7a7de53b11d57e8de0",
+    "bytes": 14275865
+  },
+  "oil": {
+    "referenceId": "79254173-d463-4526-bc8d-9959df69b99e",
+    "path": "/redesign/reference-oil.mp4",
+    "sha256": "aaecdd2ad0f9459e1a317d10df48d54fc82ba40efad12812d2f77aa03f6cfa55",
+    "bytes": 3158040
+  },
+  "mining": {
+    "referenceId": "e74ff370-4152-4679-84cb-72bc749a55fa",
+    "path": "/redesign/reference-mining.mp4",
+    "sha256": "7bf5e5588d10614fd49c37f338618989ebc7cfe0c789105fae90e2e1c4aca4c1",
+    "bytes": 6612954
+  },
+  "oilHero": {
+    "referenceId": "d8ed1062-f0e9-487e-b838-621063889301",
+    "path": "/redesign/reference-oilHero.mp4",
+    "sha256": "893a65371175de56f2a3cb2b5f33dd16c95fb87ea348a4fa757951b90b848247",
+    "bytes": 1394304
+  },
+  "miningHero": {
+    "referenceId": "f1fcb471-ec98-4706-8abc-e8bc0a13c680",
+    "path": "/redesign/reference-miningHero.mp4",
+    "sha256": "eca6b69300e3663d9c6ba6f7e33e54920d4be039f6fc7325f99bcc82b1a133d1",
+    "bytes": 8040174
+  },
+  "about": {
+    "referenceId": "977627e0-06ad-4cea-a59c-518ec664dd3c",
+    "path": "/redesign/reference-about.mp4",
+    "sha256": "e109cac60d754c9ffbd288765296f173758e9792917538a83322c6c601578734",
+    "bytes": 2095228
+  }
+}
