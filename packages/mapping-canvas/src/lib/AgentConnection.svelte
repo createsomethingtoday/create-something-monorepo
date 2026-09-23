@@ -3,6 +3,7 @@
   let { projectId, ready, tools, mode = 'canvas' }: { projectId: string; ready: boolean; tools: DrawWebMcpTool[]; mode?: 'canvas' | 'motion' } = $props();
   type Connection = { sessionId: string; browserToken: string; expires: number; pairingCode?: string };
   let connection = $state<Connection | null>(null);
+  let trigger: HTMLButtonElement;
   let open = $state(false), busy = $state(false), connected = $state(false);
   let name = $state(''), message = $state(''), running = $state('');
   let reconnect = $state(0);
@@ -78,8 +79,9 @@
   });
 </script>
 
+<svelte:window onkeydown={event => { if (open && event.key === 'Escape') { open = false; trigger?.focus(); } }} />
 <div class="agent-connection">
-  <button class="connection-toggle" aria-expanded={open} onclick={() => open = !open}>
+  <button bind:this={trigger} class="connection-toggle" aria-expanded={open} onclick={() => open = !open}>
     <span class:online={connected && !!name} class="dot"></span>{connection ? name ? connected ? 'Agent connected' : 'Reconnecting' : 'Pairing agent' : 'Connect agent'}
   </button>
   {#if open}
@@ -108,4 +110,5 @@
 
 <style>
   .agent-connection{position:relative;font-size:12px}.connection-toggle{display:flex;align-items:center;gap:7px;white-space:nowrap}.dot{width:6px;height:6px;border-radius:50%;background:#777}.dot.online{background:#9fbd99}.connection-panel{position:absolute;z-index:70;right:0;top:calc(100% + 10px);width:min(340px,calc(100vw - 32px));padding:18px;border:1px solid #444;border-radius:10px;background:#171717;color:#eee;box-shadow:0 12px 40px #0008;box-sizing:border-box}.connection-panel strong{font-size:14px}.connection-panel p{line-height:1.5;margin:10px 0}.connection-panel .detail{color:#aaa;font-size:11px}.connection-panel label{display:block;margin-bottom:5px}.connection-panel input{box-sizing:border-box;width:100%;padding:8px;border:1px solid #555;border-radius:4px;background:#090909;color:#eee;font:11px monospace}.connection-panel button{margin-top:6px;padding:7px 10px;border:1px solid #555;border-radius:5px;background:#252525;color:#eee;cursor:pointer}.connection-panel button:disabled{opacity:.5}
+  @media(max-width:820px){.connection-panel{position:fixed;left:16px;right:16px;top:110px;width:auto;max-height:calc(100dvh - 130px);overflow:auto}}
 </style>
