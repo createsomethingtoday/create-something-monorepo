@@ -613,14 +613,26 @@
   }
   @media (max-width: 760px) {
     .intake-page {
-      padding: 36px 24px 64px;
+      padding: 24px 24px 64px;
     }
     .intake-heading {
       display: block;
-      padding-bottom: 24px;
+      padding-bottom: 16px;
+    }
+    h1 {
+      margin: 12px 0;
+      font-size: 44px;
+    }
+    .lede {
+      margin: 16px 0;
+      font-size: 16px;
+      line-height: 1.5;
     }
     .entry-note {
-      margin-top: 24px;
+      margin: 16px 0 0;
+      padding: 0;
+      font-size: 10px;
+      line-height: 1.6;
     }
     .desktop-break {
       display: none;
@@ -658,7 +670,7 @@
     }
     .intake-form {
       border-left: 0;
-      padding: 28px 0 0;
+      padding: 20px 0 0;
     }
     .step-track {
       gap: 12px;
