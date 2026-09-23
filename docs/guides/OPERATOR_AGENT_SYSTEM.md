@@ -41,6 +41,7 @@ Use:
 pnpm operator-agent:doctor -- --json
 pnpm operator-agent:audit
 pnpm operator-agent:readiness
+pnpm operator-agent:capabilities -- --json
 pnpm operator-agent:policy -- --target create-something-internal-production --risk medium --reversible --rollback "revert PR or redeploy last known-good Worker"
 pnpm operator-agent:scout -- --surface docs/guides --limit 8
 pnpm operator-agent:patch -- --candidate-file .cache/operator-agent-system/<receipt>.json --candidate-id candidate-001
@@ -76,6 +77,7 @@ Adjust the timeout when measuring model behavior:
 pnpm operator-agent:doctor -- --json
 pnpm operator-agent:doctor -- --strict-public --json
 pnpm operator-agent:audit
+pnpm operator-agent:capabilities -- --json
 pnpm operator-agent:model-probe -- --timeout-ms 120000 --json
 pnpm operator-agent:model-benchmark -- --attempts 3 --timeout-ms 120000 --json
 pnpm operator-agent:scout -- --surface docs/guides --limit 3 --timeout-ms 300000
@@ -114,6 +116,42 @@ recent-history window for model probes and model-backed schedule receipts; use
 `--history-limit <1-20>` when comparing stability across more or fewer recent
 runs.
 
+Before any scheduled or model-backed run, inspect the declared local profile:
+
+```bash
+pnpm operator-agent:capabilities -- --json
+```
+
+The profile is versioned in
+[`config/operator-agent-capabilities.v1.json`](../../config/operator-agent-capabilities.v1.json).
+Its current `local-readonly` profile declares only repo-local read skills and
+read-only MCP tools. It declares no plugins and denies protected writes,
+credentials, destructive actions, client production, and external plugin
+activation. The manifest is an auditable constraint, not an authority grant:
+adding a skill, MCP, or plugin requires review and a separate promotion path.
+Every declared skill must reference an existing, repository-relative read source
+before the profile can pass.
+
+## Context Adapter
+
+Before a scheduled model-backed evaluation, the context adapter builds a bounded
+packet from the declared read-only skill sources plus up to three cited CTX
+history results:
+
+```bash
+pnpm operator-agent:context -- --surface docs/guides --task "review local operator-agent receipts" --workspace "$PWD"
+```
+
+The current profile supplies the repository agent contract, operator runbook,
+open-weight evaluator, production-lab policy, and generated Substrate agent
+wiki. Each is recorded with a content hash and a short sanitized excerpt. CTX
+contributes only sanitized cited highlights from prior local agent sessions. It
+is useful cross-agent context, never authority or weight-training data.
+
+The adapter fails closed for missing or out-of-repository declared sources. The
+wiki remains orientation only; current repo files, Linear, receipts, tests, and
+live verification remain the sources of truth for claims and actions.
+
 Use `model-benchmark` when deciding whether an installed local model can be
 promoted into bounded model-backed work. It runs repeated strict-JSON probes per
 candidate model and writes one aggregate receipt with pass rate and latency:
@@ -147,9 +185,10 @@ pnpm operator-agent:schedule:once -- --model-pattern-review --json
 
 The command runs:
 
-1. deterministic all-scope `pattern-review`
-2. `model-probe` when the heartbeat is model-backed
-3. bounded `batch-eval`, model-backed unless `--no-model` is supplied or the
+1. the `local-readonly` capability audit
+2. deterministic all-scope `pattern-review`
+3. `model-probe` when the heartbeat is model-backed
+4. bounded `batch-eval`, model-backed unless `--no-model` is supplied or the
    probe fails
 
 It writes one schedule receipt with each child receipt summarized under `runs`.
@@ -158,6 +197,9 @@ The scorecard records whether pattern review passed, which source was used
 the model probe behaved, how many batch-eval candidates were proposed,
 whether any writes were performed, whether batch-eval had to be forced
 deterministic, and whether model health was `ok`, `degraded`, or `disabled`.
+It also records the capability profile and manifest digest. A model probe that
+requires its one bounded contract-repair retry is recorded as `repaired` and
+keeps `modelHealth: degraded`; only a first-attempt strict result is `strict`.
 `writesPerformed` must remain `0` for the regular run. `modelHealth:
 degraded` means deterministic fallback or repair kept the heartbeat useful, but
 the local model should not receive broader authority.
@@ -193,7 +235,9 @@ pnpm operator-agent:model-probe -- --timeout-ms 120000 --json
 ```
 
 The probe is a small strict-JSON task against the configured OpenAI-compatible
-local endpoint. On this device, the lightweight previous executor was fast on
+local endpoint. It permits at most one repair attempt when the initial response
+breaks the contract, so a passing receipt distinguishes `strict` from
+`repaired`. On this device, the lightweight previous executor was fast on
 strict JSON probes but failed the deeper tool-policy suite, while `ornith:9b`
 passed the stronger local tool-policy and self-heal evidence needed for the
 operator-agent lane.
@@ -227,11 +271,11 @@ this device:
 pnpm operator-agent:mcp
 ```
 
-The MCP surface exposes readiness, completion audit, deterministic pattern
-review, model probe, model benchmark, bounded batch-eval, schedule once, runtime
-status, and Access preflight. It intentionally does not expose `patch` or
-`revise`; those remain local CLI-only until identity, approval, rollback, and
-audit behavior are reviewed.
+The MCP surface exposes readiness, completion audit, the active capability
+profile, deterministic pattern review, model probe, model benchmark, bounded
+batch-eval, schedule once, runtime status, and Access preflight. It intentionally
+does not expose `patch` or `revise`; those remain local CLI-only until identity,
+approval, rollback, and audit behavior are reviewed.
 
 ## Pattern Review Mode
 
