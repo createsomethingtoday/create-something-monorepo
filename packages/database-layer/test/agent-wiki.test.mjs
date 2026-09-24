@@ -2,6 +2,7 @@ import { execFileSync, spawnSync } from 'node:child_process';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import os from 'node:os';
 import test from 'node:test';
 
 const packageRoot = path.resolve(new URL('..', import.meta.url).pathname);
@@ -40,18 +41,37 @@ test('agent wiki is generated from current Atlas/Substrate artifacts', () => {
 });
 
 test('agent wiki freshness check fails on orphaned generated markdown', () => {
-  const orphanPath = path.join(wikiDir, 'orphaned-page.md');
+  const fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'agent-wiki-check-'));
+  const fixturePackage = path.join(fixture, 'packages/database-layer');
+  fs.mkdirSync(path.join(fixturePackage, 'scripts'), { recursive: true });
+  for (const name of ['generate-agent-wiki.mjs', 'agent-wiki-support.mjs']) {
+    fs.copyFileSync(path.join(packageRoot, 'scripts', name), path.join(fixturePackage, 'scripts', name));
+  }
+  fs.cpSync(wikiDir, path.join(fixturePackage, 'docs/agent-wiki'), { recursive: true });
+  fs.symlinkSync(path.join(packageRoot, 'data'), path.join(fixturePackage, 'data'));
+  fs.symlinkSync(path.resolve(packageRoot, '../../docs'), path.join(fixture, 'docs'));
+  const orphanPath = path.join(fixturePackage, 'docs/agent-wiki/orphaned-page.md');
   fs.writeFileSync(orphanPath, '# Old generated page\n');
 
   try {
     const result = spawnSync('node', ['scripts/generate-agent-wiki.mjs', '--check'], {
-      cwd: packageRoot,
+      cwd: fixturePackage,
       encoding: 'utf8'
     });
 
     assert.notEqual(result.status, 0);
     assert.match(result.stderr, /orphaned-page\.md/);
   } finally {
-    fs.rmSync(orphanPath, { force: true });
+    fs.rmSync(fixture, { force: true, recursive: true });
+  }
+});
+
+
+test('wiki prints source age and a caller can enforce an age limit', () => {
+  const checked = spawnSync(process.execPath, ['scripts/generate-agent-wiki.mjs', '--check', '--max-age-days', '0'], { cwd: packageRoot, encoding: 'utf8' });
+  assert.notEqual(checked.status, 0);
+  assert.match(checked.stderr, /source snapshot is .* days old/);
+  for (const name of fs.readdirSync(wikiDir).filter((name) => name.endsWith('.md'))) {
+    assert.match(fs.readFileSync(path.join(wikiDir, name), 'utf8'), /Source snapshot range \(UTC\): \d{4}-\d{2}-\d{2}T/);
   }
 });

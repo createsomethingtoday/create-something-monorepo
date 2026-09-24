@@ -119,6 +119,24 @@ Check freshness without writing files:
 pnpm --filter @create-something/database-layer agent-wiki:check
 ```
 
+The check validates generated content and local file-link targets and prints the
+oldest source age. To enforce a task-specific age limit, add `--max-age-days 7`.
+Refresh the underlying artifacts with `pnpm --filter @create-something/database-layer refresh`;
+regenerating Markdown alone does not refresh source data or verify live systems.
+Every wiki page includes the source snapshot range; the index dates each artifact.
+
+For advisory Jev routing, run `pnpm --filter @create-something/database-layer agent-wiki:route --query "your question"`.
+Pass the returned `request` to the configured Jev `evaluate` MCP when `needsJev`
+is true, then validate the saved packet/response with `agent-wiki:route --packet
+/tmp/wiki-route-request.json --response /tmp/wiki-route-response.json`. The generated
+[agent routes](docs/agent-wiki/agent-routes.md#jev-passage-routing) describe bounds,
+fallback, and evidence. The helper exports `prepareWikiRoute` and `resolveWikiRoute` for MCP packet
+handoff, and `routeWiki(query, evaluate)` for callers with a configured evaluate
+adapter. The adapter path records elapsed time, waits at most five seconds and
+falls back without retrying; its caller remains responsible for cancelling any
+underlying transport request. It does not create another API
+credential path or grant Jev filesystem or mutation access.
+
 ## Agent Legibility Contract
 
 <!-- prettier-ignore-start -->

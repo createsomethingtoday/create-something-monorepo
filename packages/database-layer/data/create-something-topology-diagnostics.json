@@ -2,33 +2,33 @@
   "id": "substrate:create-something:topology-diagnostics:internal",
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
-  "generatedAt": "2026-08-25T18:50:37.046Z",
+  "generatedAt": "2026-09-24T04:42:10.795Z",
   "summary": {
     "valueState": "connected_map_with_review_signals",
-    "nodes": 506,
-    "edges": 1055,
-    "mapped": 506,
+    "nodes": 534,
+    "edges": 1110,
+    "mapped": 534,
     "hardGapCount": 0,
     "reviewSignalCount": 6,
     "exactDuplicatePathCount": 0,
     "isolatedNodeCount": 0,
     "surfaceCounts": {
       "repo": 1,
-      "package": 60,
-      "app": 11,
-      "mcp": 74,
+      "package": 67,
+      "app": 12,
+      "agent": 35,
+      "mcp": 76,
       "client": 8,
-      "worker": 163,
-      "agent": 31,
+      "worker": 168,
       "doc": 6,
       "policy": 64,
-      "guide": 64,
+      "guide": 73,
       "config": 24
     },
     "tierCounts": {
-      "Mixed": 105,
-      "Judgment": 106,
-      "Automation": 268,
+      "Mixed": 122,
+      "Judgment": 108,
+      "Automation": 277,
       "Database": 27
     }
   },
@@ -60,11 +60,11 @@
       "classification": "review_signal",
       "severity": "review",
       "title": "Automation and Database balance",
-      "summary": "Automation has 268 record(s); Database has 27 record(s). This is a business-shape review signal, not a hard gap.",
+      "summary": "Automation has 277 record(s); Database has 27 record(s). This is a business-shape review signal, not a hard gap.",
       "evidence": [
-        "Automation=268",
+        "Automation=277",
         "Database=27",
-        "Total nodes=506"
+        "Total nodes=534"
       ],
       "nodeIds": [],
       "paths": [],
@@ -75,7 +75,7 @@
       "classification": "review_signal",
       "severity": "review",
       "title": "Worker surface concentration",
-      "summary": "163 worker record(s) carry runtime delivery context. This is where Substrate receipts and Cloudflare proof matter most.",
+      "summary": "168 worker record(s) carry runtime delivery context. This is where Substrate receipts and Cloudflare proof matter most.",
       "evidence": [
         "worker: packages/agency",
         "worker: packages/agency/workers/social-poster",
@@ -145,7 +145,7 @@
       "classification": "review_signal",
       "severity": "review",
       "title": "worker surface review",
-      "summary": "163 record(s) are classified as worker.",
+      "summary": "168 record(s) are classified as worker.",
       "evidence": [
         "@create-something/agency: packages/agency",
         "social-poster-worker: packages/agency/workers/social-poster",
@@ -188,15 +188,17 @@
       "classification": "review_signal",
       "severity": "review",
       "title": "mcp surface review",
-      "summary": "74 record(s) are classified as mcp.",
+      "summary": "76 record(s) are classified as mcp.",
       "evidence": [
+        "@create-something/abundance-healthcare-mcp: packages/abundance-healthcare-mcp",
+        "abundance-healthcare-mcp-worker: packages/abundance-healthcare-mcp/worker",
         "@create-something/abundance-jobs-mcp: packages/abundance-jobs-mcp",
         "abundance-jobs-mcp-worker: packages/abundance-jobs-mcp/worker",
-        "@createsomething/agent-kit: packages/agent-kit",
-        "@create-something/app-governance-db: packages/app-governance-db",
-        "@create-something/bettermode-creator-mcp: packages/bettermode-creator-mcp"
+        "@createsomething/agent-kit: packages/agent-kit"
       ],
       "nodeIds": [
+        "substrate:create-something:package:create-something-abundance-healthcare-mcp-packages-abundance-healthcare-mcp",
+        "substrate:create-something:package:abundance-healthcare-mcp-worker-packages-abundance-healthcare-mcp-worker",
         "substrate:create-something:package:create-something-abundance-jobs-mcp-packages-abundance-jobs-mcp",
         "substrate:create-something:package:abundance-jobs-mcp-worker-packages-abundance-jobs-mcp-worker",
         "substrate:create-something:package:createsomething-agent-kit-packages-agent-kit",
@@ -206,11 +208,11 @@
         "substrate:create-something:package:create-something-community-mcp-packages-community-mcp",
         "substrate:create-something:package:create-something-composio-bridge-packages-composio-bridge",
         "substrate:create-something:package:create-something-composio-toolkit-mcp-packages-composio-toolkit-mcp",
-        "substrate:create-something:package:create-something-mcp-packages-create-something-mcp",
-        "substrate:create-something:package:create-something-mcp-worker-packages-create-something-mcp-worker",
-        "substrate:create-something:package:create-something-cs-mcp-hub-notion-bridge-packages-cs-mcp-hub-notion-bridge"
+        "substrate:create-something:package:create-something-mcp-packages-create-something-mcp"
       ],
       "paths": [
+        "packages/abundance-healthcare-mcp",
+        "packages/abundance-healthcare-mcp/worker",
         "packages/abundance-jobs-mcp",
         "packages/abundance-jobs-mcp/worker",
         "packages/agent-kit",
@@ -220,52 +222,7 @@
         "packages/community-mcp",
         "packages/composio-bridge",
         "packages/composio-toolkit-mcp",
-        "packages/create-something-mcp",
-        "packages/create-something-mcp/worker",
-        "packages/cs-mcp-hub-notion-bridge"
-      ],
-      "nextAction": "Use group explanation before drawing product or business conclusions from this surface."
-    },
-    {
-      "id": "surface_review_policy",
-      "classification": "review_signal",
-      "severity": "review",
-      "title": "policy surface review",
-      "summary": "64 record(s) are classified as policy.",
-      "evidence": [
-        "policy.hub-route-authorization.v1.json: docs/policies/generated/fallback/policy.hub-route-authorization.v1.json",
-        "policy.judgment-baseline.v1.json: docs/policies/generated/fallback/policy.judgment-baseline.v1.json",
-        "policy.legacy-compat-sunset.v1.json: docs/policies/generated/fallback/policy.legacy-compat-sunset.v1.json",
-        "policy.mcp-credential-delivery.v1.json: docs/policies/generated/fallback/policy.mcp-credential-delivery.v1.json",
-        "policy.mcp-session-self-service.v1.json: docs/policies/generated/fallback/policy.mcp-session-self-service.v1.json"
-      ],
-      "nodeIds": [
-        "substrate:create-something:policy:docs-policies-generated-fallback-policy-hub-route-authorization-v1-json",
-        "substrate:create-something:policy:docs-policies-generated-fallback-policy-judgment-baseline-v1-json",
-        "substrate:create-something:policy:docs-policies-generated-fallback-policy-legacy-compat-sunset-v1-json",
-        "substrate:create-something:policy:docs-policies-generated-fallback-policy-mcp-credential-delivery-v1-json",
-        "substrate:create-something:policy:docs-policies-generated-fallback-policy-mcp-session-self-service-v1-json",
-        "substrate:create-something:policy:docs-policies-generated-fallback-policy-partner-auth-governance-v1-json",
-        "substrate:create-something:policy:docs-policies-generated-fallback-policy-service-tier-entitlement-v1-json",
-        "substrate:create-something:policy:docs-policies-generated-fallback-policy-user-bearer-token-governance-v1-json",
-        "substrate:create-something:policy:docs-policies-generated-mcp-authz-manifests-v1-json",
-        "substrate:create-something:policy:docs-policies-readme-md",
-        "substrate:create-something:policy:docs-policies-v1-policy-account-role-boundaries-v1-json",
-        "substrate:create-something:policy:docs-policies-v1-policy-account-role-boundaries-v1-md"
-      ],
-      "paths": [
-        "docs/policies/generated/fallback/policy.hub-route-authorization.v1.json",
-        "docs/policies/generated/fallback/policy.judgment-baseline.v1.json",
-        "docs/policies/generated/fallback/policy.legacy-compat-sunset.v1.json",
-        "docs/policies/generated/fallback/policy.mcp-credential-delivery.v1.json",
-        "docs/policies/generated/fallback/policy.mcp-session-self-service.v1.json",
-        "docs/policies/generated/fallback/policy.partner-auth-governance.v1.json",
-        "docs/policies/generated/fallback/policy.service-tier-entitlement.v1.json",
-        "docs/policies/generated/fallback/policy.user-bearer-token-governance.v1.json",
-        "docs/policies/generated/mcp-authz-manifests.v1.json",
-        "docs/policies/README.md",
-        "docs/policies/v1/policy.account-role-boundaries.v1.json",
-        "docs/policies/v1/policy.account-role-boundaries.v1.md"
+        "packages/create-something-mcp"
       ],
       "nextAction": "Use group explanation before drawing product or business conclusions from this surface."
     },
@@ -274,7 +231,7 @@
       "classification": "review_signal",
       "severity": "review",
       "title": "guide surface review",
-      "summary": "64 record(s) are classified as guide.",
+      "summary": "73 record(s) are classified as guide.",
       "evidence": [
         "AGENCY_ARTICLE_IMAGE_WORKFLOW.md: docs/guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md",
         "AGENCY_GOVERNANCE_PRODUCTS_OPERATIONS_RUNBOOK.md: docs/guides/AGENCY_GOVERNANCE_PRODUCTS_OPERATIONS_RUNBOOK.md",
@@ -309,6 +266,49 @@
         "docs/guides/ATLAS_LINEAR_INTEGRATION.md",
         "docs/guides/BOUNDED_RESEARCH_INTERRUPT_RUNBOOK.md",
         "docs/guides/BROWSER_PROOF_AND_CLOSEOUT_RUNBOOK.md"
+      ],
+      "nextAction": "Use group explanation before drawing product or business conclusions from this surface."
+    },
+    {
+      "id": "surface_review_package",
+      "classification": "review_signal",
+      "severity": "review",
+      "title": "package surface review",
+      "summary": "67 record(s) are classified as package.",
+      "evidence": [
+        "@create-something/components: .archive/components-deprecated",
+        "@create-something/monorepo: ",
+        "packages/agency/static/films/algorithms: packages/agency/static/films/algorithms",
+        "packages/agency/static/films/dashboard: packages/agency/static/films/dashboard",
+        "packages/agency/static/films/education: packages/agency/static/films/education"
+      ],
+      "nodeIds": [
+        "substrate:create-something:package:create-something-components-archive-components-deprecated",
+        "substrate:create-something:package:create-something-monorepo",
+        "substrate:create-something:package:algorithms-packages-agency-static-films-algorithms",
+        "substrate:create-something:package:dashboard-packages-agency-static-films-dashboard",
+        "substrate:create-something:package:education-packages-agency-static-films-education",
+        "substrate:create-something:package:forms-packages-agency-static-films-forms",
+        "substrate:create-something:package:video-packages-agency-static-films-video",
+        "substrate:create-something:package:webflow-packages-agency-static-films-webflow",
+        "substrate:create-something:package:websites-packages-agency-static-films-websites",
+        "substrate:create-something:package:create-something-airtable-system-architect-packages-airtable-system-architect",
+        "substrate:create-something:package:app-governance-desktop-packages-app-governance-desktop",
+        "substrate:create-something:package:create-something-arc-packages-arc"
+      ],
+      "paths": [
+        ".archive/components-deprecated",
+        "",
+        "packages/agency/static/films/algorithms",
+        "packages/agency/static/films/dashboard",
+        "packages/agency/static/films/education",
+        "packages/agency/static/films/forms",
+        "packages/agency/static/films/video",
+        "packages/agency/static/films/webflow",
+        "packages/agency/static/films/websites",
+        "packages/airtable-system-architect",
+        "packages/app-governance-desktop",
+        "packages/arc"
       ],
       "nextAction": "Use group explanation before drawing product or business conclusions from this surface."
     }
