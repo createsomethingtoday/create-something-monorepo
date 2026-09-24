@@ -1,8 +1,8 @@
-export const LIMITS = Object.freeze({ runs: 4, concurrency: 1, deadlineMs: 45000, cleanupAttempts: 3 });
+export const LIMITS = Object.freeze({ runs: 10, concurrency: 1, deadlineMs: 45000, cleanupAttempts: 3 });
 export function admit(state, request, now) {
   if (!request || Object.keys(request).sort().join(',') !== 'id,mode'
     || !/^run-[a-z0-9-]{1,64}$/.test(request.id)
-    || !['normal', 'abandon', 'cleanup-fault'].includes(request.mode)) {
+    || !['control', 'restricted', 'isolated', 'memory'].includes(request.mode)) {
     return { status: 400, error: 'invalid_owned_fixture_request' };
   }
   if (state.runs[request.id]) {

@@ -6,6 +6,13 @@ import { LIMITS, admit, authorized, stopped } from './policy.mjs';
 export class ValidationSandbox extends Sandbox {
   enableInternet = false;
   sleepAfter = '2m';
+  async qualifyOwned(mode) {
+    if (!['control', 'restricted', 'isolated', 'memory'].includes(mode)) throw new Error('Owned mode required');
+    this.enableInternet = mode === 'control' || mode === 'isolated';
+    if (mode === 'memory') return this.exec("sh -c 'timeout --signal=KILL 18s sh /opt/private-isolate.sh memory; status=$?; dmesg | tail -40; exit $status'", { timeout: 22000 });
+    if (mode === 'isolated') return this.exec('timeout --signal=KILL 18s sh /opt/private-isolate.sh', { timeout: 22000 });
+    return this.exec('timeout --signal=KILL 18s su -s /bin/sh nobody -c "node /opt/private-qualify.mjs"', { timeout: 22000 });
+  }
 }
 
 const bounded = async (operation, ms = 10000) => {
@@ -19,7 +26,7 @@ const json = (body, status = 200) => Response.json(body, { status, headers: { 'C
 
 export class Coordinator extends DurableObject {
   sandbox(id) {
-    return getSandbox(this.env.Sandbox, `private-validation-v2-${id}`, {
+    return getSandbox(this.env.Sandbox, `private-validation-v3-${id}`, {
       normalizeId: true, sleepAfter: '2m', keepAlive: false, enableDefaultSession: false,
     });
   }
@@ -67,7 +74,7 @@ export class Coordinator extends DurableObject {
         await this.update(run.id, { status: 'awaiting-deadline-reaper', dispatchPending: false });
         return;
       }
-      const result = await sandbox.exec('timeout --signal=KILL 6s su -s /bin/sh nobody -c "node /opt/private-probe.mjs"', { timeout: 10000 });
+      const result = ['control', 'restricted', 'isolated', 'memory'].includes(run.mode) ? await sandbox.qualifyOwned(run.mode) : await sandbox.exec('timeout --signal=KILL 6s su -s /bin/sh nobody -c "node /opt/private-probe.mjs"', { timeout: 10000 });
       const output = result.stdout.slice(0, 8192);
       await this.update(run.id, { dispatchPending: false, execution: { exitCode: result.exitCode, output, stderr: result.stderr.slice(0, 1024) } });
       if (run.mode === 'cleanup-fault') {
@@ -120,6 +127,7 @@ export class Coordinator extends DurableObject {
 
 export default {
   async fetch(request, env) {
+    if (request.method === 'GET' && new URL(request.url).pathname === '/qualification-canary') return new Response('private-owned-canary-v1', { headers: { 'Cache-Control': 'no-store' } });
     // Ephemeral operator-only acceptance credential, never a customer login or publication authorization.
     if (!await authorized(request.headers.get('Authorization'), env.OPERATOR_TOKEN)) {
       return json({ error: 'unauthorized' }, 401);
@@ -140,7 +148,7 @@ export default {
       }
       body = new TextDecoder().decode(Uint8Array.from(chunks.flatMap(c => [...c])));
     }
-    const coordinator = env.Coordinator.get(env.Coordinator.idFromName('cre-2092-repair-budget-v2'));
+    const coordinator = env.Coordinator.get(env.Coordinator.idFromName('cre-2094-qualification-v3'));
     return coordinator.fetch(new Request(`https://coordinator${url.pathname}`, {
       method: request.method, ...(request.method === 'POST' ? { body } : {}),
     }));

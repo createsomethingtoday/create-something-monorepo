@@ -1,3 +1,6 @@
 *
 !Dockerfile
 !probe.mjs
+!qualify.mjs
+!isolate.sh
+!memory.mjs

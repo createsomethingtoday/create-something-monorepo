@@ -1,0 +1,305 @@
+{
+  "checkedAt": "2026-09-24T05:01:45.944Z",
+  "status": 200,
+  "scope": "PRIVATE preview application only; provider usage estimate, not invoice",
+  "data": {
+    "data": {
+      "viewer": {
+        "accounts": [
+          {
+            "containersUsageAdaptiveGroups": [
+              {
+                "dimensions": {
+                  "applicationId": "a03a0de4-bc04-4f6b-a183-32287814648f",
+                  "date": "2026-09-24",
+                  "instanceId": "598d0e8bc5916349863747df159374e912dccf8e2317acbbec43cc83b43392be"
+                },
+                "sum": {
+                  "allocatedDisk": 80013661680,
+                  "allocatedMemory": 10739251879.650263,
+                  "cpuTimeSec": 4.920000000000001,
+                  "txBytes": 15514
+                }
+              },
+              {
+                "dimensions": {
+                  "applicationId": "a03a0de4-bc04-4f6b-a183-32287814648f",
+                  "date": "2026-09-24",
+                  "instanceId": "6d4fd8d8263ab161e9cc39a1cd8fdf196b56d8996a93d2f7989d88abcd988476"
+                },
+                "sum": {
+                  "allocatedDisk": 19997705084,
+                  "allocatedMemory": 2684046541.588529,
+                  "cpuTimeSec": 0.639999999999997,
+                  "txBytes": 132
+                }
+              },
+              {
+                "dimensions": {
+                  "applicationId": "a03a0de4-bc04-4f6b-a183-32287814648f",
+                  "date": "2026-09-24",
+                  "instanceId": "76bc831760fa293d1881bc4ea9e961beb2eaf5f6ccf6a9e926cfe1597948a967"
+                },
+                "sum": {
+                  "allocatedDisk": 39996873076,
+                  "allocatedMemory": 5368289431.365091,
+                  "cpuTimeSec": 0.5999999999999943,
+                  "txBytes": 1356
+                }
+              },
+              {
+                "dimensions": {
+                  "applicationId": "a03a0de4-bc04-4f6b-a183-32287814648f",
+                  "date": "2026-09-24",
+                  "instanceId": "7e7620966bef6d3be886797eda34ee89e46b3a389ba1e10a809178146e4a5e49"
+                },
+                "sum": {
+                  "allocatedDisk": 30000995034,
+                  "allocatedMemory": 4026665391.2027626,
+                  "cpuTimeSec": 3.0300000000000002,
+                  "txBytes": 612
+                }
+              },
+              {
+                "dimensions": {
+                  "applicationId": "a03a0de4-bc04-4f6b-a183-32287814648f",
+                  "date": "2026-09-24",
+                  "instanceId": "b4388275029c925d89a4e519877101353b4f8b7090dae5349661dde289b63cde"
+                },
+                "sum": {
+                  "allocatedDisk": 60002033688,
+                  "allocatedMemory": 8053336636.9828205,
+                  "cpuTimeSec": 0.6000000000000005,
+                  "txBytes": 2184
+                }
+              },
+              {
+                "dimensions": {
+                  "applicationId": "a03a0de4-bc04-4f6b-a183-32287814648f",
+                  "date": "2026-09-24",
+                  "instanceId": "9714c207397c7e974e7adc327b45cc6f4ee5dd9722b10e3a7247344e2dc69cab"
+                },
+                "sum": {
+                  "allocatedDisk": 109999253802,
+                  "allocatedMemory": 14763849926.999802,
+                  "cpuTimeSec": 5.240000000000007,
+                  "txBytes": 1442
+                }
+              },
+              {
+                "dimensions": {
+                  "applicationId": "a03a0de4-bc04-4f6b-a183-32287814648f",
+                  "date": "2026-09-24",
+                  "instanceId": "34a0cb7e564fcc18f6625b5bde53194044174591e092e69a9e64cb12012a9375"
+                },
+                "sum": {
+                  "allocatedDisk": 79997472768,
+                  "allocatedMemory": 10737079040.66283,
+                  "cpuTimeSec": 1.0399999999999991,
+                  "txBytes": 2912
+                }
+              },
+              {
+                "dimensions": {
+                  "applicationId": "a03a0de4-bc04-4f6b-a183-32287814648f",
+                  "date": "2026-09-24",
+                  "instanceId": "dc61330b3fe5b6fba56d3f8382d8db7f5ea86e6182cba0ecb8f7f9520a17f0a3"
+                },
+                "sum": {
+                  "allocatedDisk": 0,
+                  "allocatedMemory": 0,
+                  "cpuTimeSec": 9.24,
+                  "txBytes": 15822
+                }
+              },
+              {
+                "dimensions": {
+                  "applicationId": "a03a0de4-bc04-4f6b-a183-32287814648f",
+                  "date": "2026-09-24",
+                  "instanceId": "a02f839448c77cdbb159990f10d66a20a646670e0ff66b81280ce989a134988a"
+                },
+                "sum": {
+                  "allocatedDisk": 19999926436,
+                  "allocatedMemory": 2684344686.4070573,
+                  "cpuTimeSec": 0.7400000000000002,
+                  "txBytes": 792
+                }
+              },
+              {
+                "dimensions": {
+                  "applicationId": "a03a0de4-bc04-4f6b-a183-32287814648f",
+                  "date": "2026-09-24",
+                  "instanceId": "5d58df607460d2abfd1780f6aaecfb8b63d499c03aa868c19d8b0f9f3284debb"
+                },
+                "sum": {
+                  "allocatedDisk": 79998270372,
+                  "allocatedMemory": 10737186093.259554,
+                  "cpuTimeSec": 1.04,
+                  "txBytes": 396
+                }
+              },
+              {
+                "dimensions": {
+                  "applicationId": "a03a0de4-bc04-4f6b-a183-32287814648f",
+                  "date": "2026-09-24",
+                  "instanceId": "74a5e0aeafa01b847d07d609e31e12bd92fe3fde957fb9459584bff034b57822"
+                },
+                "sum": {
+                  "allocatedDisk": 139991447976,
+                  "allocatedMemory": 18789334086.768917,
+                  "cpuTimeSec": 2.979999999999998,
+                  "txBytes": 408
+                }
+              },
+              {
+                "dimensions": {
+                  "applicationId": "a03a0de4-bc04-4f6b-a183-32287814648f",
+                  "date": "2026-09-24",
+                  "instanceId": "f759b9e1476cdce4902981ba4150925f8307be79c5a7da5cfba317fdfa65cb20"
+                },
+                "sum": {
+                  "allocatedDisk": 80003436792,
+                  "allocatedMemory": 10737879518.413849,
+                  "cpuTimeSec": 4.449999999999999,
+                  "txBytes": 18213
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "errors": null
+  },
+  "inventory": {
+    "success": true,
+    "result": {
+      "instances": [],
+      "durable_objects": [
+        {
+          "assigned_at": "2026-09-24T04:46:42Z",
+          "id": "154d8155937dd695f7e44a35d1c5fe88a8034590111e4455e957f59ba6f520cf",
+          "name": "private-validation-v3-run-qualification-2"
+        },
+        {
+          "assigned_at": "2026-09-24T03:37:07Z",
+          "id": "34a0cb7e564fcc18f6625b5bde53194044174591e092e69a9e64cb12012a9375",
+          "name": "private-validation-run-acceptance-3"
+        },
+        {
+          "assigned_at": "2026-09-24T05:00:32Z",
+          "id": "4a683f24775358064513b1d3abd7ec11b5094f52c1d38d27c2e68b179eccd22f",
+          "name": "private-validation-v3-run-qualification-9"
+        },
+        {
+          "assigned_at": "2026-09-24T03:36:31Z",
+          "id": "598d0e8bc5916349863747df159374e912dccf8e2317acbbec43cc83b43392be",
+          "name": "private-validation-run-acceptance-2"
+        },
+        {
+          "assigned_at": "2026-09-24T04:25:17Z",
+          "id": "5d58df607460d2abfd1780f6aaecfb8b63d499c03aa868c19d8b0f9f3284debb",
+          "name": "private-validation-v2-run-acceptance-2"
+        },
+        {
+          "assigned_at": "2026-09-24T05:00:20Z",
+          "id": "6d4fd8d8263ab161e9cc39a1cd8fdf196b56d8996a93d2f7989d88abcd988476",
+          "name": "private-validation-v3-run-qualification-8"
+        },
+        {
+          "assigned_at": "2026-09-24T03:35:44Z",
+          "id": "74a5e0aeafa01b847d07d609e31e12bd92fe3fde957fb9459584bff034b57822",
+          "name": "private-validation-run-acceptance-1"
+        },
+        {
+          "assigned_at": "2026-09-24T04:23:43Z",
+          "id": "76bc831760fa293d1881bc4ea9e961beb2eaf5f6ccf6a9e926cfe1597948a967",
+          "name": "private-validation-v2-run-acceptance-0"
+        },
+        {
+          "assigned_at": "2026-09-24T04:39:38Z",
+          "id": "77c08ea6af2238c411fe1805ecc9acad6ff58bf5b307dd1ad1c15ae0f0fa211c",
+          "name": "private-validation-v3-run-qualification-0"
+        },
+        {
+          "assigned_at": "2026-09-24T04:55:32Z",
+          "id": "7e7620966bef6d3be886797eda34ee89e46b3a389ba1e10a809178146e4a5e49",
+          "name": "private-validation-v3-run-qualification-6"
+        },
+        {
+          "assigned_at": "2026-09-24T04:52:05Z",
+          "id": "9714c207397c7e974e7adc327b45cc6f4ee5dd9722b10e3a7247344e2dc69cab",
+          "name": "private-validation-v3-run-qualification-4"
+        },
+        {
+          "assigned_at": "2026-09-24T04:52:18Z",
+          "id": "9766e5bcf7970325f5a4c07531caee84a30ea1b67b77dfb98809ab9f45bffadd",
+          "name": "private-validation-v3-run-qualification-5"
+        },
+        {
+          "assigned_at": "2026-09-24T04:39:57Z",
+          "id": "a02f839448c77cdbb159990f10d66a20a646670e0ff66b81280ce989a134988a",
+          "name": "private-validation-v3-run-qualification-1"
+        },
+        {
+          "assigned_at": "2026-09-24T03:34:10Z",
+          "id": "b4388275029c925d89a4e519877101353b4f8b7090dae5349661dde289b63cde",
+          "name": "private-validation-run-acceptance-0"
+        },
+        {
+          "assigned_at": "2026-09-24T04:55:43Z",
+          "id": "d6204307b6f1eb111e64c67c843173df078a3cfd722f143e18e73c1fde3ef821",
+          "name": "private-validation-v3-run-qualification-7"
+        },
+        {
+          "assigned_at": "2026-09-24T04:46:56Z",
+          "id": "dc61330b3fe5b6fba56d3f8382d8db7f5ea86e6182cba0ecb8f7f9520a17f0a3",
+          "name": "private-validation-v3-run-qualification-3"
+        },
+        {
+          "assigned_at": "2026-09-24T04:24:29Z",
+          "id": "f759b9e1476cdce4902981ba4150925f8307be79c5a7da5cfba317fdfa65cb20",
+          "name": "private-validation-v2-run-acceptance-1"
+        },
+        {
+          "assigned_at": "2026-09-24T04:25:30Z",
+          "id": "f97565d047df468227265f3bbe90073ba5b94b553971694f817d9b16d2bdc123",
+          "name": "private-validation-v2-run-acceptance-3"
+        }
+      ]
+    },
+    "errors": [],
+    "messages": [],
+    "result_info": {
+      "per_page": 100
+    }
+  },
+  "missingInstanceIds": [
+    {
+      "id": "154d8155937dd695f7e44a35d1c5fe88a8034590111e4455e957f59ba6f520cf",
+      "name": "private-validation-v3-run-qualification-2"
+    },
+    {
+      "id": "4a683f24775358064513b1d3abd7ec11b5094f52c1d38d27c2e68b179eccd22f",
+      "name": "private-validation-v3-run-qualification-9"
+    },
+    {
+      "id": "77c08ea6af2238c411fe1805ecc9acad6ff58bf5b307dd1ad1c15ae0f0fa211c",
+      "name": "private-validation-v3-run-qualification-0"
+    },
+    {
+      "id": "9766e5bcf7970325f5a4c07531caee84a30ea1b67b77dfb98809ab9f45bffadd",
+      "name": "private-validation-v3-run-qualification-5"
+    },
+    {
+      "id": "d6204307b6f1eb111e64c67c843173df078a3cfd722f143e18e73c1fde3ef821",
+      "name": "private-validation-v3-run-qualification-7"
+    },
+    {
+      "id": "f97565d047df468227265f3bbe90073ba5b94b553971694f817d9b16d2bdc123",
+      "name": "private-validation-v2-run-acceptance-3"
+    }
+  ],
+  "reconciled": false,
+  "note": "Missing samples are unknown, never zero. Reconciled means every known instance has a sample, not invoice finality or complete ingestion."
+}

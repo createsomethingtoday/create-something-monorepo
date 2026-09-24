@@ -2,7 +2,7 @@
   "name": "private-validation-preview",
   "private": true,
   "type": "module",
-  "scripts": { "test": "node --test policy.test.mjs worker.test.mjs", "build": "wrangler deploy --dry-run --outdir .build" },
+  "scripts": { "test": "node --test policy.test.mjs worker.test.mjs qualification-policy.test.mjs", "build": "wrangler deploy --dry-run --outdir .build" },
   "dependencies": { "@cloudflare/sandbox": "0.12.10" },
   "devDependencies": { "wrangler": "4.137.0" }
 }
