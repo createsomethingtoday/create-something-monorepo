@@ -1,25 +1,18 @@
-// Owned provider probe only. No creator input or credentials.
+// Owned provider probe only. Each network operation runs in a bounded child.
 import fs from 'node:fs';
-import net from 'node:net';
-import dns from 'node:dns/promises';
+import { spawnSync } from 'node:child_process';
 const results = { node: process.versions.node, platform: process.platform, arch: process.arch,
   uid: process.getuid(), fresh: !fs.existsSync('/tmp/private-owned-marker'), probes: [] };
 fs.writeFileSync('/tmp/private-owned-marker', 'owned-fixture');
-for (const [host, port] of [['1.1.1.1', 443], ['1.1.1.1', 53], ['169.254.169.254', 80], ['10.0.0.1', 80]]) {
-  const result = await new Promise(resolve => {
-    const socket = net.connect({ host, port });
-    socket.setTimeout(600, () => { socket.destroy(); resolve('timeout-inconclusive'); });
-    socket.on('connect', () => { socket.destroy(); resolve('connected'); });
-    socket.on('error', error => resolve(error.code));
-  });
-  results.probes.push({ kind: 'tcp', host, port, result });
+const probes = [
+  ...[['1.1.1.1',443],['1.1.1.1',53],['169.254.169.254',80],['10.0.0.1',80]].map(([host,port]) => ({kind:'tcp',host,port,
+    code:`const s=require('node:net').connect({host:${JSON.stringify(host)},port:${port}});s.on('connect',()=>{s.destroy();console.log('connected')});s.on('error',e=>console.log(e.code));`})),
+  {kind:'https',code:"fetch('https://example.com',{redirect:'error'}).then(r=>{console.log('http-'+r.status);process.exit(0)},e=>{console.log(e.cause?.code??e.name);process.exit(0)})"},
+  {kind:'dns',code:"require('node:dns').lookup('example.com',(e,v)=>console.log(e?.code??'resolved'))"},
+];
+for (const {code,...probe} of probes) {
+  const child=spawnSync(process.execPath,['-e',code],{encoding:'utf8',timeout:600,killSignal:'SIGKILL',maxBuffer:4096});
+  const result=child.error?.code==='ETIMEDOUT'?'timeout-inconclusive':child.status===0?child.stdout.trim():`probe-error:${child.error?.code??child.status}`;
+  results.probes.push({...probe,result,childSignal:child.signal,childStatus:child.status});
 }
-try {
-  const response = await fetch('https://example.com', { redirect: 'error', signal: AbortSignal.timeout(1000) });
-  results.probes.push({ kind: 'https', result: `http-${response.status}` });
-} catch (error) { results.probes.push({ kind: 'https', result: error.cause?.code ?? error.name }); }
-try {
-  const value = await Promise.race([dns.lookup('example.com'), new Promise((_, reject) => setTimeout(() => reject(new Error('timeout-inconclusive')), 1000))]);
-  results.probes.push({ kind: 'dns', result: 'resolved', family: value.family });
-} catch (error) { results.probes.push({ kind: 'dns', result: error.code ?? error.message }); }
 console.log(JSON.stringify(results));

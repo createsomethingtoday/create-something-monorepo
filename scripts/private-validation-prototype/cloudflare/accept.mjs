@@ -1,16 +1,23 @@
 import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
 import { readFile, writeFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 const here = path.dirname(fileURLToPath(import.meta.url));
-const [url, outputPath] = process.argv.slice(2);
+const [url, outputPath, expectedImage] = process.argv.slice(2);
 if (!url || !outputPath || !/^https:\/\/private-validation-preview\.[a-z0-9-]+\.workers\.dev$/.test(url)) {
   throw new Error('Supply the exact deployed preview workers.dev URL and evidence path');
 }
+if (!/^sha256:[a-f0-9]{64}$/.test(expectedImage ?? '')) throw new Error('Supply the expected immutable image digest as the third argument');
+const key = execFileSync('infisical', ['secrets', 'get', 'CLOUDFLARE_WORKERS_API_TOKEN', '--env=prod', '--plain', '--projectId=e1532079-2f2b-46b5-8972-cf7a025eb803'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], timeout: 15000 }).trim();
+const providerResponse = await fetch('https://api.cloudflare.com/client/v4/accounts/9645bd52e640b8a4f40a3a55ff1dd75a/containers/applications/a03a0de4-bc04-4f6b-a183-32287814648f', { headers: { Authorization: `Bearer ${key}` }, signal: AbortSignal.timeout(15000) });
+const provider = await providerResponse.json();
+assert.equal(providerResponse.status, 200);
+assert.equal(provider.result?.configuration?.image?.split('@')[1], expectedImage, 'Provider rollout must match the intended image before spending runs');
 const token = (await readFile(path.join(here, '.operator/token'), 'utf8')).trim();
 const report = { schema: 'private-cloudflare-acceptance/v1', url, startedAt: new Date().toISOString(),
-  checks: [], observed: [], cloudflareBillingVerified: false, customerPackagesAccepted: false };
+  expectedImage, providerImage: provider.result.configuration.image, checks: [], observed: [], cloudflareBillingVerified: false, customerPackagesAccepted: false };
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');
 report.sourceSha256 = Object.fromEntries(await Promise.all(['worker.mjs', 'policy.mjs', 'probe.mjs', 'wrangler.jsonc', 'Dockerfile'].map(async f =>
   [f, sha(await readFile(path.join(here, f)))])));

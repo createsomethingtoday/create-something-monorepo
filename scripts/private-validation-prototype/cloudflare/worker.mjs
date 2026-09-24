@@ -8,12 +8,18 @@ export class ValidationSandbox extends Sandbox {
   sleepAfter = '2m';
 }
 
+const bounded = async (operation, ms = 10000) => {
+  let timer;
+  try { return await Promise.race([operation, new Promise((_, reject) => { timer = setTimeout(() => reject(new Error('Supervisor operation timed out; reservation retained')), ms); })]); }
+  finally { clearTimeout(timer); }
+};
+
 const initial = () => ({ issued: 0, active: null, runs: {} });
 const json = (body, status = 200) => Response.json(body, { status, headers: { 'Cache-Control': 'no-store' } });
 
 export class Coordinator extends DurableObject {
   sandbox(id) {
-    return getSandbox(this.env.Sandbox, `private-validation-${id}`, {
+    return getSandbox(this.env.Sandbox, `private-validation-v2-${id}`, {
       normalizeId: true, sleepAfter: '2m', keepAlive: false, enableDefaultSession: false,
     });
   }
@@ -55,21 +61,21 @@ export class Coordinator extends DurableObject {
   async execute(run) {
     const sandbox = this.sandbox(run.id);
     try {
-      await this.update(run.id, { status: 'running' });
+      await this.update(run.id, { status: 'running', dispatchPending: true });
       if (run.mode === 'abandon') {
         await sandbox.startProcess('sleep 300', { processId: 'owned-abandon-fixture' });
-        await this.update(run.id, { status: 'awaiting-deadline-reaper' });
+        await this.update(run.id, { status: 'awaiting-deadline-reaper', dispatchPending: false });
         return;
       }
       const result = await sandbox.exec('timeout --signal=KILL 6s su -s /bin/sh nobody -c "node /opt/private-probe.mjs"', { timeout: 10000 });
       const output = result.stdout.slice(0, 8192);
-      await this.update(run.id, { execution: { exitCode: result.exitCode, output, stderr: result.stderr.slice(0, 1024) } });
+      await this.update(run.id, { dispatchPending: false, execution: { exitCode: result.exitCode, output, stderr: result.stderr.slice(0, 1024) } });
       if (run.mode === 'cleanup-fault') {
         await this.update(run.id, { status: 'injected-cleanup-failure' });
         return; // Deliberately leave cleanup to the independent Durable Object alarm.
       }
     } catch (error) {
-      await this.update(run.id, { status: 'execution-error', error: String(error.message).slice(0, 512) });
+      await this.update(run.id, { status: 'execution-error', dispatchPending: false, error: String(error.message).slice(0, 512) });
     }
     await this.cleanup(run.id, 'normal');
   }
@@ -78,13 +84,14 @@ export class Coordinator extends DurableObject {
     // A new job cannot start until destruction has authoritative readback.
     try {
       const sandbox = this.sandbox(id);
-      const beforeDestroy = await sandbox.getState();
-      await sandbox.destroy();
-      const observed = await sandbox.getState();
+      const beforeDestroy = await bounded(sandbox.getState());
+      await bounded(sandbox.destroy());
+      const observed = await bounded(sandbox.getState());
       if (!stopped(observed)) throw new Error('Container stop not confirmed');
       await this.ctx.storage.transaction(async tx => {
         const state = await tx.get('ledger');
         if (state.active !== id) return;
+        if (state.runs[id].dispatchPending) throw new Error('Dispatch remains unresolved; reservation retained');
         Object.assign(state.runs[id], { status: 'cleaned', cleanupReason: reason, beforeDestroy, stoppedState: observed,
           endedAt: Date.now(), elapsedMs: Date.now() - state.runs[id].startedAt });
         state.active = null;
@@ -133,7 +140,7 @@ export default {
       }
       body = new TextDecoder().decode(Uint8Array.from(chunks.flatMap(c => [...c])));
     }
-    const coordinator = env.Coordinator.get(env.Coordinator.idFromName('cre-2092-fixed-budget-v1'));
+    const coordinator = env.Coordinator.get(env.Coordinator.idFromName('cre-2092-repair-budget-v2'));
     return coordinator.fetch(new Request(`https://coordinator${url.pathname}`, {
       method: request.method, ...(request.method === 'POST' ? { body } : {}),
     }));
