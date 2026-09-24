@@ -134,7 +134,11 @@ fallback, and evidence. The helper exports `prepareWikiRoute` and `resolveWikiRo
 handoff, and `routeWiki(query, evaluate)` for callers with a configured evaluate
 adapter. The adapter path records elapsed time, waits at most five seconds and
 falls back without retrying; its caller remains responsible for cancelling any
-underlying transport request. It does not create another API
+underlying transport request. Table passages repeat their column headers and group
+rows by the observed `Approval required` value. Each excerpt has `sourceLines`
+for exact provenance, including noncontiguous grouped rows; `line` identifies its
+first data row. Rows are never silently truncated, and the final request remains
+capped at 20 KB. It does not create another API
 credential path or grant Jev filesystem or mutation access.
 
 ## Agent Legibility Contract

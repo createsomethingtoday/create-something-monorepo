@@ -62,3 +62,17 @@ test('configured evaluate adapter is bounded and failures retain source inspecti
   assert.ok(timeout.candidates.length > 0);
   assert.equal((await routeWiki('zzzzabsentfromwikizzzz', () => { throw new Error('must not run'); })).reason, 'no_candidates');
 });
+
+// A real navigation question must expose the complete related operations, with
+// the column meanings intact, rather than three unrelated table fragments.
+test('approval routing keeps every required operation with its table header', () => {
+  const packet = prepareWikiRoute('Which write operations require approval?');
+  const passage = packet.request.state.candidates.find((candidate) =>
+    candidate.excerpt.includes('database_layer_record_operator_approval') &&
+    candidate.excerpt.includes('database_layer_propose_operating_slice_promotion') &&
+    candidate.excerpt.includes('database_layer_write_receipt'));
+  assert.ok(passage, 'one candidate must contain all three approval-required operations');
+  assert.match(passage.excerpt, /^\| Method \| API path \| MCP tool \| Agent command \| Approval required \|\n/);
+  assert.equal(passage.tableGroup.value, 'yes');
+  assert.ok(passage.sourceLines.length > 2);
+});

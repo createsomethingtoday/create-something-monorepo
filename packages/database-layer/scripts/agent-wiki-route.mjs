@@ -3,6 +3,7 @@ import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { wikiPassages } from './agent-wiki-passages.mjs';
 
 const packageRoot = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
 const wikiRoot = path.join(packageRoot, 'docs/agent-wiki');
@@ -22,18 +23,12 @@ export function prepareWikiRoute(query) {
   const candidates = [];
   for (const name of pages) {
     const text = fs.readFileSync(path.join(wikiRoot, name), 'utf8');
-    const lines = text.split('\n');
-    let heading = name;
-    for (let start = 0; start < lines.length;) {
-      if (/^#{1,3} /.test(lines[start])) heading = lines[start].replace(/^#+ /, '');
-      let end = start + 1;
-      // Bounded passages retain real line coordinates, even inside long tables.
-      while (end < lines.length && !/^#{1,3} /.test(lines[end]) && end - start < 12 && lines.slice(start, end + 1).join('\n').length <= 1600) end++;
-      const excerpt = lines.slice(start, end).join('\n').slice(0, 1600);
-      const haystack = `${heading}\n${excerpt}`.toLowerCase();
-      const score = terms.reduce((sum, term) => sum + (haystack.includes(term) ? 1 : 0) + (heading.toLowerCase().includes(term) ? 2 : 0), 0);
-      if (score > 0 && excerpt.trim()) candidates.push({ id: `${name}:${start + 1}`, path: `${wikiPrefix}${name}`, line: start + 1, heading, excerpt, contentHash: hash(excerpt), fileHash: hash(text), score });
-      start = end;
+    for (const passage of wikiPassages(text, name)) {
+      const { line, heading, excerpt, tableGroup } = passage;
+      const context = `${heading} ${tableGroup?.column ?? ''} ${tableGroup?.value ?? ''}`.toLowerCase();
+      const haystack = `${context}\n${excerpt}`.toLowerCase();
+      const score = terms.reduce((sum, term) => sum + (haystack.includes(term) ? 1 : 0) + (context.includes(term) ? 2 : 0), 0);
+      if (score > 0) candidates.push({ id: `${name}:${line}`, path: `${wikiPrefix}${name}`, ...passage, contentHash: hash(excerpt), fileHash: hash(text), score });
     }
   }
   const shortlist = candidates.sort((a, b) => b.score - a.score || a.id.localeCompare(b.id)).slice(0, 6).map(({ score, ...candidate }) => candidate);
