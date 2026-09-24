@@ -1,0 +1,16 @@
+import assert from 'node:assert/strict';
+import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+assert.equal(process.getuid(), 1000);
+assert.equal(process.platform, 'linux');
+assert.equal(process.versions.node.split('.')[0], '24');
+assert.match(readFileSync('/proc/self/status', 'utf8'), /CapEff:\s+0+\n/);
+assert.match(readFileSync('/proc/self/status', 'utf8'), /NoNewPrivs:\s+1\n/);
+assert.throws(() => writeFileSync('/usr/local/validator-write', 'no'), /EROFS|EACCES/);
+assert.equal(existsSync('/var/run/docker.sock'), false);
+assert.equal(existsSync('/Users'), false);
+assert.equal(existsSync('/root/.codex/auth.json'), false);
+assert.equal(existsSync('/tmp/private-validator-marker'), false);
+assert.equal(Object.keys(process.env).some(k => /SECRET|TOKEN|API_KEY|CANARY/.test(k)), false);
+writeFileSync('/tmp/private-validator-marker', 'disposable');
+assert.equal(readFileSync('/tmp/private-validator-marker', 'utf8'), 'disposable');
+console.log('isolation:passed');
