@@ -1,0 +1,93 @@
+{
+  "schema": "private-cloudflare-acceptance/v1",
+  "url": "https://private-validation-preview.createsomething.workers.dev",
+  "startedAt": "2026-09-24T03:33:34.024Z",
+  "checks": [
+    {
+      "name": "anonymous denied",
+      "actual": 401,
+      "expected": 401,
+      "passed": true
+    },
+    {
+      "name": "unknown caller authority denied",
+      "actual": 400,
+      "expected": 400,
+      "passed": true
+    },
+    {
+      "name": "admit 0",
+      "actual": true,
+      "expected": true,
+      "passed": true
+    },
+    {
+      "name": "duplicate 0",
+      "actual": true,
+      "expected": true,
+      "passed": true
+    },
+    {
+      "name": "conflicting duplicate 0",
+      "actual": 409,
+      "expected": 409,
+      "passed": true
+    },
+    {
+      "name": "cleanup 0",
+      "actual": "cleaned",
+      "expected": "cleaned",
+      "passed": true
+    },
+    {
+      "name": "no active reservation 0",
+      "actual": null,
+      "expected": null,
+      "passed": true
+    },
+    {
+      "name": "probe exit 0",
+      "actual": 137,
+      "expected": 0,
+      "passed": false
+    }
+  ],
+  "observed": [
+    {
+      "id": "run-acceptance-0",
+      "mode": "normal",
+      "startedAt": 1790220815126,
+      "deadline": 1790220860126,
+      "status": "cleaned",
+      "cleanupAttempts": 0,
+      "execution": {
+        "exitCode": 137,
+        "output": "{\"node\":\"24.21.0\",\"platform\":\"linux\",\"arch\":\"x64\",\"uid\":65534,\"fresh\":true,\"probes\":[{\"kind\":\"tcp\",\"host\":\"1.1.1.1\",\"port\":443,\"result\":\"timeout-inconclusive\"},{\"kind\":\"tcp\",\"host\":\"1.1.1.1\",\"port\":53,\"result\":\"timeout-inconclusive\"},{\"kind\":\"tcp\",\"host\":\"169.254.169.254\",\"port\":80,\"result\":\"timeout-inconclusive\"},{\"kind\":\"tcp\",\"host\":\"10.0.0.1\",\"port\":80,\"result\":\"ECONNREFUSED\"},{\"kind\":\"https\",\"result\":\"TimeoutError\"},{\"kind\":\"dns\",\"result\":\"timeout-inconclusive\"}]}\n",
+        "stderr": ""
+      },
+      "cleanupReason": "normal",
+      "beforeDestroy": {
+        "status": "healthy",
+        "lastChange": 1790220826152
+      },
+      "stoppedState": {
+        "status": "stopped",
+        "lastChange": 1790220849886
+      },
+      "endedAt": 1790220850188,
+      "elapsedMs": 35062
+    }
+  ],
+  "cloudflareBillingVerified": false,
+  "customerPackagesAccepted": false,
+  "sourceSha256": {
+    "worker.mjs": "5cbf976525bf8096ec8a7a6860fdf6505d720780e3bd87459222437f044a3b4d",
+    "policy.mjs": "c9bdac95ed25c28cd61d9ab8761a274a746b72f5c4ddb998b532c074c2851e7b",
+    "probe.mjs": "c1abfc04668af6eed6aba7e42ef290867a1aa14248674443717d63ad6cb25d63",
+    "wrangler.jsonc": "abb2dc9190460cfc1e527a776446efbf108de0b6d54f26f71e80fcc234abd09f",
+    "Dockerfile": "c183f1cd40c4f768b53598bf54f48f637f49c8709d9f4c0c56a41dc3b0566e8c"
+  },
+  "controlChecksPassed": false,
+  "error": "probe exit 0\n\n137 !== 0\n",
+  "endedAt": "2026-09-24T03:34:11.325Z"
+}
