@@ -1,16 +1,10 @@
 name: Agent Wiki
 on:
+  # Topology inputs span packages, apps, workers, Dify config and policy docs.
+  # Keep this unfiltered so new input locations cannot silently skip validation.
   pull_request:
-    paths:
-      - 'packages/database-layer/**'
-      - 'docs/**'
-      - '.github/workflows/agent-wiki.yml'
   push:
     branches: [main]
-    paths:
-      - 'packages/database-layer/**'
-      - 'docs/**'
-      - '.github/workflows/agent-wiki.yml'
 permissions:
   contents: read
 jobs:

@@ -688,7 +688,7 @@ if (check && stale.length > 0) {
 
 console.log(
   check
-    ? `Agent wiki is current (${files.size} files).`
+    ? `Agent wiki matches source artifacts (${files.size} files).`
     : `Generated Atlas/Substrate agent wiki (${files.size} files) in ${rel(outputDir)}.`
 );
 
