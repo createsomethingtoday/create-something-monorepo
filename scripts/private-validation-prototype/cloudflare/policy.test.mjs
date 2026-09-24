@@ -22,11 +22,11 @@ test('active and uncertain runs retain the capacity reservation', () => {
 });
 test('completed runs consume the fixed non-renewing experiment budget', () => {
   let state = initial();
-  for (let i = 0; i < 10; i++) {
+  for (let i = 0; i < 12; i++) {
     const result = admit(state, { id: `run-${i}`, mode: 'restricted' }, i);
     assert.equal(result.status, 202); state = { ...result.next, active: null };
   }
-  assert.equal(admit(state, { id: 'run-eleventh', mode: 'restricted' }, 5).status, 429);
+  assert.equal(admit(state, { id: 'run-thirteenth', mode: 'restricted' }, 5).status, 429);
 });
 test('only stopped provider states release capacity', () => {
   for (const status of ['running', 'healthy', 'stopping', undefined]) assert.equal(stopped({ status }), false);

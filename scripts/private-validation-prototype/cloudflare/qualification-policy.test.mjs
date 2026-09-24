@@ -18,3 +18,12 @@ test('a generic 137 exit or HTTP failure is not OOM proof',async()=>{
   assert.equal(result.checks.kernelOomEvidence,false);assert.equal(result.passed,false);
  }
 });
+
+test('output truncation alone does not establish termination or cleanup', async () => {
+  const { assessOutput } = await import('./qualification-policy.mjs');
+  const assessment = assessOutput({ execution: { exitCode: 0, output: '', stderr: '' } });
+  assert.equal(assessment.passed, false);
+  assert.equal(assessment.checks.terminatedForOutput, false);
+  assert.equal(assessment.checks.stopped, false);
+  assert.equal(assessment.productionReady, false);
+});

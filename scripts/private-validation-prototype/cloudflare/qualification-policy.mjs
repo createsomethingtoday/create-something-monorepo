@@ -34,3 +34,16 @@ export function assessMemory(run, recovery, control, providerLimits) {
   };
   return {passed:Object.values(checks).every(v=>v===true),checks,productionReady:false};
 }
+
+export function assessOutput(run, recovery, control) {
+  const checks = {
+    terminatedForOutput: run?.execution?.exitCode === 125 && run.execution.supervision?.reason === 'output-limit',
+    thresholdObserved: run?.execution?.supervision?.bytes > 65536,
+    retainedOutputBounded: typeof run?.execution?.output === 'string' && typeof run?.execution?.stderr === 'string'
+      && new TextEncoder().encode(run.execution.output).length <= 8192
+      && new TextEncoder().encode(run.execution.stderr).length <= 1024,
+    stopped: run?.status === 'cleaned' && run.stoppedState?.status === 'stopped',
+    recovery: assessIsolation(recovery, control).passed,
+  };
+  return { passed: Object.values(checks).every(v => v === true), checks, productionReady: false };
+}

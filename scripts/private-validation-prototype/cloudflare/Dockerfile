@@ -5,3 +5,5 @@ COPY probe.mjs /opt/private-probe.mjs
 COPY qualify.mjs /opt/private-qualify.mjs
 COPY isolate.sh /opt/private-isolate.sh
 COPY memory.mjs /opt/private-memory.mjs
+COPY supervise.mjs /opt/private-supervise.mjs
+COPY output.mjs /opt/private-output.mjs

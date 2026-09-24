@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-09-24T05:01:45.944Z",
+  "checkedAt": "2026-09-24T09:54:14.166Z",
   "status": 200,
   "scope": "PRIVATE preview application only; provider usage estimate, not invoice",
   "data": {
@@ -28,10 +28,10 @@
                   "instanceId": "6d4fd8d8263ab161e9cc39a1cd8fdf196b56d8996a93d2f7989d88abcd988476"
                 },
                 "sum": {
-                  "allocatedDisk": 19997705084,
-                  "allocatedMemory": 2684046541.588529,
-                  "cpuTimeSec": 0.639999999999997,
-                  "txBytes": 132
+                  "allocatedDisk": 49999622936,
+                  "allocatedMemory": 6710835791.326609,
+                  "cpuTimeSec": 1.5699999999999985,
+                  "txBytes": 330
                 }
               },
               {
@@ -177,6 +177,16 @@
       "instances": [],
       "durable_objects": [
         {
+          "assigned_at": "2026-09-24T09:53:37Z",
+          "id": "a8b448093495a2b2a0726772832029e402566fae617b39b3e5a7ba3cb89686fe",
+          "name": "private-validation-v3-run-qualification-11"
+        },
+        {
+          "assigned_at": "2026-09-24T09:53:22Z",
+          "id": "e5cdd9243f2eda6dfb5cb3914e75680bb53896aa17c467f4876b647a0c9b8def",
+          "name": "private-validation-v3-run-qualification-10"
+        },
+        {
           "assigned_at": "2026-09-24T04:46:42Z",
           "id": "154d8155937dd695f7e44a35d1c5fe88a8034590111e4455e957f59ba6f520cf",
           "name": "private-validation-v3-run-qualification-2"
@@ -275,6 +285,14 @@
     }
   },
   "missingInstanceIds": [
+    {
+      "id": "a8b448093495a2b2a0726772832029e402566fae617b39b3e5a7ba3cb89686fe",
+      "name": "private-validation-v3-run-qualification-11"
+    },
+    {
+      "id": "e5cdd9243f2eda6dfb5cb3914e75680bb53896aa17c467f4876b647a0c9b8def",
+      "name": "private-validation-v3-run-qualification-10"
+    },
     {
       "id": "154d8155937dd695f7e44a35d1c5fe88a8034590111e4455e957f59ba6f520cf",
       "name": "private-validation-v3-run-qualification-2"

@@ -7,10 +7,14 @@ export class ValidationSandbox extends Sandbox {
   enableInternet = false;
   sleepAfter = '2m';
   async qualifyOwned(mode) {
-    if (!['control', 'restricted', 'isolated', 'memory'].includes(mode)) throw new Error('Owned mode required');
+    if (!['control', 'restricted', 'isolated', 'memory', 'output'].includes(mode)) throw new Error('Owned mode required');
     this.enableInternet = mode === 'control' || mode === 'isolated';
-    if (mode === 'memory') return this.exec("sh -c 'timeout --signal=KILL 18s sh /opt/private-isolate.sh memory; status=$?; dmesg | tail -40; exit $status'", { timeout: 22000 });
-    if (mode === 'isolated') return this.exec('timeout --signal=KILL 18s sh /opt/private-isolate.sh', { timeout: 22000 });
+    if (['isolated', 'memory', 'output'].includes(mode)) {
+      const result = await this.exec(`node /opt/private-supervise.mjs ${mode === 'isolated' ? 'isolation' : mode}`, { timeout: 22000 });
+      const observation = JSON.parse(result.stdout);
+      return { ...result, exitCode: observation.exitCode, stdout: observation.stdout, stderr: observation.stderr,
+        supervision: { reason: observation.reason, bytes: observation.bytes } };
+    }
     return this.exec('timeout --signal=KILL 18s su -s /bin/sh nobody -c "node /opt/private-qualify.mjs"', { timeout: 22000 });
   }
 }
@@ -74,9 +78,9 @@ export class Coordinator extends DurableObject {
         await this.update(run.id, { status: 'awaiting-deadline-reaper', dispatchPending: false });
         return;
       }
-      const result = ['control', 'restricted', 'isolated', 'memory'].includes(run.mode) ? await sandbox.qualifyOwned(run.mode) : await sandbox.exec('timeout --signal=KILL 6s su -s /bin/sh nobody -c "node /opt/private-probe.mjs"', { timeout: 10000 });
+      const result = ['control', 'restricted', 'isolated', 'memory', 'output'].includes(run.mode) ? await sandbox.qualifyOwned(run.mode) : await sandbox.exec('timeout --signal=KILL 6s su -s /bin/sh nobody -c "node /opt/private-probe.mjs"', { timeout: 10000 });
       const output = result.stdout.slice(0, 8192);
-      await this.update(run.id, { dispatchPending: false, execution: { exitCode: result.exitCode, output, stderr: result.stderr.slice(0, 1024) } });
+      await this.update(run.id, { dispatchPending: false, execution: { exitCode: result.exitCode, output, stderr: result.stderr.slice(0, 1024), ...(result.supervision ? { supervision: result.supervision } : {}) } });
       if (run.mode === 'cleanup-fault') {
         await this.update(run.id, { status: 'injected-cleanup-failure' });
         return; // Deliberately leave cleanup to the independent Durable Object alarm.

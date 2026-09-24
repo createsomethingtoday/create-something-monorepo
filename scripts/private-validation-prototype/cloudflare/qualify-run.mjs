@@ -3,7 +3,7 @@ import {execFileSync} from 'node:child_process';
 import {readFile,writeFile} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 const [phase, expected, workerVersion] = process.argv.slice(2);
-assert.ok(['baseline','isolation','memory','cgroup','memory-wrapped'].includes(phase));
+assert.ok(['baseline','isolation','memory','cgroup','memory-wrapped','output'].includes(phase));
 assert.match(expected??'', /^sha256:[a-f0-9]{64}$/);
 assert.match(workerVersion??'', /^[a-f0-9-]{36}$/);
 const key=execFileSync('infisical',['secrets','get','CLOUDFLARE_WORKERS_API_TOKEN','--env=prod','--plain','--projectId=e1532079-2f2b-46b5-8972-cf7a025eb803'],{encoding:'utf8',stdio:['ignore','pipe','ignore'],timeout:15000}).trim();
@@ -20,12 +20,12 @@ const token=(await readFile('.operator/token','utf8')).trim();
 const url='https://private-validation-preview.createsomething.workers.dev';
 async function call(route,body){const r=await fetch(url+route,{method:body?'POST':'GET',headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},...(body?{body:JSON.stringify(body)}:{}),signal:AbortSignal.timeout(15000)});return {status:r.status,data:await r.json()};}
 const report={startedAt:new Date().toISOString(),expectedImage:expected,workerVersion,providerLimits:{memoryMiB:app.result.configuration.memory_mib,vcpu:app.result.configuration.vcpu},runs:[],authority:'owned-fixture-only',sourceSha256:{}};
-for(const name of ['worker.mjs','policy.mjs','qualify.mjs','Dockerfile','isolate.sh','memory.mjs'])report.sourceSha256[name]=createHash('sha256').update(await readFile(name)).digest('hex');
+for(const name of ['worker.mjs','policy.mjs','qualify.mjs','Dockerfile','isolate.sh','memory.mjs','supervise.mjs','output.mjs'])report.sourceSha256[name]=createHash('sha256').update(await readFile(name)).digest('hex');
 const output=`../evidence/cloudflare-qualification-${phase}-v3.json`;
 await writeFile(output,JSON.stringify(report,null,2)+'\n',{flag:'wx'});
 try{
- for(const [i,mode]of (phase==='baseline'?['control','restricted']:phase==='isolation'?['isolated','isolated']:['memory','isolated']).entries()){
-  const id=`run-qualification-${i+(phase==='isolation'?2:phase==='memory'?4:phase==='cgroup'?6:phase==='memory-wrapped'?8:0)}`;const r=await call('/run',{id,mode});assert.equal(r.status,202,'Existing runs must not be relabeled with current source hashes; inspect their original receipt instead');
+ for(const [i,mode]of (phase==='baseline'?['control','restricted']:phase==='isolation'?['isolated','isolated']:phase==='output'?['output','isolated']:['memory','isolated']).entries()){
+  const id=`run-qualification-${i+(phase==='isolation'?2:phase==='memory'?4:phase==='cgroup'?6:phase==='memory-wrapped'?8:phase==='output'?10:0)}`;const r=await call('/run',{id,mode});assert.equal(r.status,202,'Existing runs must not be relabeled with current source hashes; inspect their original receipt instead');
   let state;const deadline=Date.now()+110000;
   do{state=(await call('/status')).data;if(!state.active)break;await new Promise(r=>setTimeout(r,2000));}while(Date.now()<deadline);
   report.runs.push(state.runs[id]);await writeFile(output,JSON.stringify(report,null,2)+'\n');

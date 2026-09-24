@@ -4,3 +4,5 @@
 !qualify.mjs
 !isolate.sh
 !memory.mjs
+!supervise.mjs
+!output.mjs

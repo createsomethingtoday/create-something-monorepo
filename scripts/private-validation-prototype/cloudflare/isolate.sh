@@ -4,6 +4,7 @@ set -eu
 case "${1:-isolation}" in
   isolation) fixture=/opt/private-qualify.mjs ;;
   memory) fixture=/opt/private-memory.mjs ;;
+  output) fixture=/opt/private-output.mjs ;;
   *) exit 64 ;;
 esac
 exec unshare --mount --net --pid --fork --mount-proc /bin/sh -eu -c '
