@@ -6,7 +6,9 @@ Classify every credential and scope by issuer, audience, protected resource, App
 
 Do not infer Webflow authority from generic names such as `token`, `scope`, `OAuth`, `session`, `Authorization`, or a 401 response. For third-party credentials, check the provider's documented client architecture and evaluate scope, lifetime, storage, exposure, and revocation as security controls. If a provider's browser SDK explicitly requires a short-lived client token, do not declare a Marketplace violation or require a proxy without separate evidence. For inapplicable Webflow checks, report `N/A`, not failure.
 
-## OAuth flow (Data Clients)
+## OAuth flow (Data Clients and Hybrid Apps)
+
+The partner-owned Install URL, callback, and Webflow OAuth `state` checks in this section apply only to Data Client/Hybrid Apps. For Designer Extension-only Apps, mark them `N/A`; Webflow handles installation. Third-party OAuth flows remain subject to their own provider requirements.
 
 1. Send the user to your **Install URL** — an HTTPS endpoint on your domain that you submit in the Marketplace form. It mints a fresh `state` for this request, stores it server-side against the browser session with an expiry, and redirects to the **Authorization URL**:
    `https://webflow.com/oauth/authorize?response_type=code&client_id=YOUR_CLIENT_ID&scope=YOUR_SCOPES&state=YOUR_STATE`

@@ -137,3 +137,13 @@ evals:
         value: 'developer-only'
       - type: 'not_contains'
         value: 'accept code-only callbacks'
+  - id: 13
+    input: 'Our Designer Extension-only App uses only Designer APIs. We have no Webflow Data Client, OAuth scopes, Install URL, or callback. Does the session-bound state gate require us to build an install endpoint?'
+    expected_output: 'Marks the partner-owned Webflow Install URL, callback, and state checks N/A for Designer Extension-only Apps; they apply to Data Client/Hybrid Webflow OAuth installs. Does not require adding OAuth infrastructure. If an issued finding demands it, preserves the finding and requests reviewer clarification.'
+    assertions:
+      - type: contains
+        value: 'Designer Extension-only'
+      - type: contains
+        value: 'N/A'
+      - type: contains
+        value: 'Data Client/Hybrid'
