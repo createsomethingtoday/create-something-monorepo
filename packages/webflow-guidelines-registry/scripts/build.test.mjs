@@ -27,7 +27,8 @@ test('data island covers every page with baseline == working on a fresh build', 
 });
 
 test('a previous working copy is carried forward', () => {
-  const previous = { working: { pages: [{ slug: 'x', sections: [] }], registry: {}, changelog: [{ summary: 'kept' }] } };
+  const previous = buildData();
+  previous.working.changelog.push({summary:'kept'});
   const data = buildData({ previous });
   assert.equal(data.working.changelog[0].summary, 'kept');
   assert.equal(data.baseline.pages.length, 7, 'baseline still rebuilt from source');
@@ -56,4 +57,30 @@ test('data island escapes closing script tags in content', () => {
   const html = renderHtml(data, assets);
   const island = html.match(/<script id="wfgr-data" type="application\/json">([\s\S]*?)<\/script>/)[1];
   assert.ok(!island.includes('</script>'));
+});
+
+test('refresh overlays local edits without reverting upstream sections or additions', () => {
+ const current=buildData(); const previous=structuredClone(current);
+ const old=previous.baseline.pages[0].sections; const work=previous.working.pages[0].sections;
+ old[0].raw='old upstream'; work[0].raw='old upstream';
+ work[1].raw='local edit';
+ const added=current.baseline.pages[0].sections.at(-1).id;
+ old.pop(); work.pop();
+ const merged=buildData({previous});
+ assert.equal(merged.working.pages[0].sections[0].raw,current.baseline.pages[0].sections[0].raw);
+ assert.equal(merged.working.pages[0].sections[1].raw,'local edit');
+ assert.ok(merged.working.pages[0].sections.some(s=>s.id===added));
+});
+
+test('conflicting local and upstream edits fail before publishing',()=>{const previous=buildData();previous.baseline.pages[0].sections[0].raw='base';previous.working.pages[0].sections[0].raw='local';assert.throws(()=>buildData({previous}),/conflict/);});
+
+test('upstream deletion of a locally edited section fails closed',()=>{
+ const previous=buildData(); const extra={id:'removed',raw:'old'};
+ previous.baseline.pages[0].sections.push(extra);
+ previous.working.pages[0].sections.push({...extra,raw:'local'});
+ assert.throws(()=>buildData({previous}),/conflict/);
+});
+test('refresh retains no-op local sections from current upstream',()=>{
+ const previous=buildData();previous.baseline.pages[0].sections[0].raw='old';previous.working.pages[0].sections[0].raw='old';
+ assert.deepEqual(buildData({previous}).working.pages,buildData().baseline.pages);
 });

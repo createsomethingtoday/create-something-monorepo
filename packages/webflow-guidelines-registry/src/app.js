@@ -205,6 +205,14 @@ function attrs(str) {
   for (const m of (str || '').matchAll(/([A-Za-z:-]+)\s*=\s*(?:"([^"]*)"|'([^']*)'|\{([^}]*)\})/g)) out[m[1]] = m[2] ?? m[3] ?? m[4] ?? '';
   return out;
 }
+function safeUrl(value, image = false) {
+  const url = String(value || '');
+  // Do not decode ambiguous HTML entities or control characters into URLs.
+  if (!url || /[\u0000-\u0020\u007f-\u009f&<>"'\\]/.test(url)) return null;
+  if (/^https?:\/\//i.test(url)) return url;
+  if (!image && (/^mailto:[^:]+$/i.test(url) || /^#[^#]*$/.test(url) || /^\/(?!\/)/.test(url))) return url;
+  return null;
+}
 function inline(text) {
   const parts = text.split(/(<\/?(?:a|br|img|Button|sup|sub|kbd|b|i|strong|em)\b[^>]*>)/);
   let html = '';
@@ -215,11 +223,15 @@ function inline(text) {
       else if (/^<\/Button/i.test(part)) html += '</span>';
       else if (/^<img/i.test(part)) {
         const a = attrs(part);
-        html += /^https?:/.test(a.src || '') ? `<img src="${esc(a.src)}" alt="${esc(a.alt || '')}" style="max-height:24px;vertical-align:middle">` : `<span class="img-chip">🖼 ${esc(a.alt || a.src || 'image')}</span>`;
+        html += safeUrl(a.src, true) ? `<img src="${esc(a.src)}" alt="${esc(a.alt || '')}" style="max-height:24px;vertical-align:middle">` : `<span class="img-chip">🖼 ${esc(a.alt || a.src || 'image')}</span>`;
       } else if (/^<a\b/i.test(part)) {
         const a = attrs(part);
-        html += `<a href="${esc(a.href || '#')}" target="_blank" rel="noopener">`;
-      } else html += part.replace(/\s+style="[^"]*"/g, '');
+        html += `<a href="${esc(safeUrl(a.href) || '#')}" target="_blank" rel="noopener noreferrer">`;
+      } else {
+        const tag = /^<(\/)?([a-z]+)\b/i.exec(part);
+        // Reconstruct recognized tags; never retain original attributes.
+        html += tag ? `<${tag[1] || ''}${tag[2].toLowerCase()}>` : esc(part);
+      }
       continue;
     }
     let s = esc(part);
@@ -229,6 +241,7 @@ function inline(text) {
       return ` ${codes.length - 1} `;
     });
     s = s.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (_, t, url) => {
+      if (!safeUrl(url)) return t;
       if (url.startsWith('#')) return `<a class="anchor" href="${esc(url)}" data-anchor="${esc(url.slice(1))}">${t}</a>`;
       return `<a href="${esc(url)}" target="_blank" rel="noopener">${t}</a>`;
     });
@@ -366,7 +379,7 @@ function renderMdx(raw) {
       }
       if (/^\s*<img\b/i.test(line)) {
         const a = attrs(line);
-        html += /^https?:/.test(a.src || '') ? `<p><img src="${esc(a.src)}" alt="${esc(a.alt || '')}"></p>` : `<p><span class="img-chip">🖼 ${esc(a.alt || 'image')} <span style="opacity:.6">${esc(a.src || '')}</span></span></p>`;
+        html += safeUrl(a.src, true) ? `<p><img src="${esc(a.src)}" alt="${esc(a.alt || '')}"></p>` : `<p><span class="img-chip">🖼 ${esc(a.alt || 'image')} <span style="opacity:.6">${esc(a.src || '')}</span></span></p>`;
         i += 1;
         continue;
       }

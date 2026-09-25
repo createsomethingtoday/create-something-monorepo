@@ -13,6 +13,7 @@ import { readFileSync, writeFileSync, readdirSync, mkdirSync, existsSync } from 
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parsePage } from './mdx.mjs';
+import { mergeWorking } from './merge-working.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = join(here, '..');
@@ -57,7 +58,7 @@ export function buildData({ source = sourceDir, seedPath = join(root, 'data', 'r
   }
   // Carry forward anything a previous published version accumulated (working
   // copy edits, registry edits, changelog) when rebuilding from a newer source.
-  const working = previous?.working ?? null;
+  const working = mergeWorking(previous, pages, registry);
   return {
     meta: {
       app: 'Marketplace Guidelines Registry',
@@ -66,8 +67,8 @@ export function buildData({ source = sourceDir, seedPath = join(root, 'data', 'r
       wropTopic: WROP_TOPIC,
       source: sourceMeta,
     },
-    baseline: { pages },
-    working: working ?? { pages: JSON.parse(JSON.stringify(pages)), registry, changelog: [] },
+    baseline: { pages, registry },
+    working,
   };
 }
 
