@@ -1,6 +1,7 @@
 export const LIMITS = Object.freeze({ runs: 12, concurrency: 1, deadlineMs: 45000, cleanupAttempts: 3 });
 export function admit(state, request, now) {
   if (!request || Object.keys(request).sort().join(',') !== 'id,mode'
+    || typeof request.id !== 'string'
     || !/^run-[a-z0-9-]{1,64}$/.test(request.id)
     || !['control', 'restricted', 'isolated', 'memory', 'output'].includes(request.mode)) {
     return { status: 400, error: 'invalid_owned_fixture_request' };
