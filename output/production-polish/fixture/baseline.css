@@ -27,8 +27,6 @@
   --pcn-gap-action: var(--space-performance-sm);
   --pcn-section-space: var(--space-performance-2xl);
   --pcn-section-space-compact: var(--space-performance-xl);
-  --pcn-empty-space: var(--space-performance-lg);
-  --pcn-empty-space-compact: var(--space-performance-md);
   --pcn-page-gutter: max(24px, 4.5vw);
   --pcn-control-height: 44px;
 }

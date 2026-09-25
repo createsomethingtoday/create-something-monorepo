@@ -191,7 +191,7 @@
   .member-library {
     max-width: 1280px;
     margin: auto;
-    padding: var(--space-performance-lg) var(--pcn-page-gutter) var(--space-performance-xl);
+    padding: var(--space-performance-lg) 4.5vw var(--space-performance-xl);
   }
   .workspace-title {
     align-items: flex-start;
@@ -204,7 +204,6 @@
   }
   .member-library h1 {
     font-size: clamp(36px, 4vw, 56px);
-    line-height: var(--pcn-leading-heading);
     letter-spacing: -0.04em;
     overflow-wrap: anywhere;
   }
@@ -234,7 +233,7 @@
     color: var(--muted);
   }
   .empty-state {
-    padding: var(--pcn-empty-space);
+    padding: var(--space-performance-lg);
   }
   .empty-state p {
     max-width: 65ch;
@@ -259,7 +258,7 @@
       padding-top: var(--space-performance-md);
     }
     .empty-state {
-      padding: var(--pcn-empty-space-compact);
+      padding: var(--space-performance-md);
     }
   }
 </style>
