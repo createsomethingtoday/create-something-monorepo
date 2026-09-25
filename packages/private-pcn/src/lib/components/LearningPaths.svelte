@@ -209,11 +209,15 @@
   }
   .sequence a {
     display: grid;
-    grid-template-columns: auto 1fr auto;
+    grid-template-columns: auto minmax(0, 1fr) auto;
     align-items: center;
     gap: 20px;
     text-decoration: none;
     padding: 24px 0;
+  }
+  .sequence a > span:nth-child(2) {
+    min-width: 0;
+    overflow-wrap: anywhere;
   }
   .number {
     font: 14px monospace;
