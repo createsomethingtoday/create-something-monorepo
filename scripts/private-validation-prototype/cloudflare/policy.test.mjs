@@ -37,3 +37,13 @@ test('missing or incorrect operator credentials fail closed', async () => {
   assert.equal(await authorized('Bearer ' + 'a'.repeat(64), 'b'.repeat(64)), false);
   assert.equal(await authorized('Bearer ' + 'a'.repeat(64), 'a'.repeat(64)), true);
 });
+
+test('non-string IDs cannot consume admission or wedge reservation identity', () => {
+  for (const id of [['run-repro'], { toString: () => 'run-repro' }, 123, null, undefined]) {
+    const state = initial();
+    const result = admit(state, { id, mode: 'isolated' }, 0);
+    assert.equal(result.status, 400);
+    assert.equal(result.next, undefined);
+    assert.deepEqual(state, initial());
+  }
+});
