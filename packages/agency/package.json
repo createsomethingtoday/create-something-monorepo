@@ -46,7 +46,7 @@
     "map:synthetic:evaluate": "node ./scripts/evaluate-map-synthetic-receipts.mjs",
     "public:ga:browser": "node ./scripts/capture-public-ga-browser.mjs",
     "test:map-commercial-lifecycle": "node --import ./test/register-sveltekit-test-loader.mjs --import tsx --test test/map-commercial.test.ts test/map-stripe-webhook-lifecycle.test.ts",
-    "test:mcp-entitlement-authority": "node --import ./test/register-sveltekit-test-loader.mjs --import tsx --test test/mcp-entitlement-authority-loss.route.test.ts",
+    "test:mcp-entitlement-authority": "node --import ./test/register-sveltekit-test-loader.mjs --import tsx --test test/mcp-entitlement-authority-loss.route.test.ts test/identity-seed-repair-migration.test.ts",
     "test:control-activation": "node --import ./test/register-sveltekit-test-loader.mjs --import tsx --test test/control-activation-d1.test.ts test/control-activation-migration.test.ts test/control-activation.test.ts",
     "check:watch": "pnpm prepare:build-dir && pnpm prepare:local-deps && node ./scripts/run-pinned-bin.mjs @sveltejs/kit svelte-kit sync && node ./scripts/run-pinned-bin.mjs svelte-check svelte-check --tsconfig ./tsconfig.json --fail-on-warnings --watch",
     "test:inspection": "node --import tsx --test test/inspection-scene.test.ts",
