@@ -127,3 +127,14 @@ test('new tickets receive the configured Client relation', async (t) => {
   assert.equal(writes.length,1);
   assert.deepEqual(writes[0].properties.Client,{relation:[{id:clientId}]});
 });
+
+
+test('preflight rejects a client page whose parent cannot be verified', async (t) => {
+  t.mock.method(globalThis, 'fetch', async (input: string | URL | Request) => {
+    if (String(input).endsWith(`/pages/${clientId}`)) return response({id:clientId});
+    return response({properties: {'External Page ID':{type:'rich_text'},Client:{type:'relation',relation:{data_source_id:'clients'}}}});
+  });
+  const result = await preflight(env);
+  assert.equal(result.ok,false);
+  assert.match(JSON.stringify(result.errors), /client page.*related data source/i);
+});

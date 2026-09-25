@@ -383,7 +383,7 @@ export async function syncSourceTicketsToHalfDozen(
         if (existingTargetPage) {
           if (options.clientOnly) {
             const fresh = await retrievePage(env, 'halfdozen', existingTargetPage.id);
-            if (isTrashed(fresh) || !isPageInDataSource(fresh, config.targetDataSourceId) || readText(fresh, config.targetExtPageIdProperty) !== extPageId) {
+            if (isTrashed(fresh) || fresh.parent?.data_source_id !== config.targetDataSourceId || readText(fresh, config.targetExtPageIdProperty) !== extPageId) {
               throw new Error('Target match changed before Client repair.');
             }
             const patch = clientRelationPatch(config, fresh);
@@ -693,7 +693,7 @@ async function resolveSyncConfig(env: Env): Promise<SyncConfig> {
     const relation = targetSchema.Client.relation;
     const relatedId = isRecord(relation) ? relation.data_source_id : undefined;
     const clientPage = await retrievePage(env, 'halfdozen', runtime.clientPageId);
-    if (typeof relatedId !== 'string' || !isPageInDataSource(clientPage, relatedId) || isTrashed(clientPage)) {
+    if (typeof relatedId !== 'string' || clientPage.parent?.data_source_id !== relatedId || isTrashed(clientPage)) {
       throw new Error('Configured client page is not an active page in the Client related data source.');
     }
   }
