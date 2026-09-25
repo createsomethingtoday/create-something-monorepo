@@ -1,0 +1,16 @@
+name: Draw agent contracts
+on:
+  pull_request:
+    paths: ['packages/mapping-canvas/**', '.github/workflows/draw-agent.yml']
+  push:
+    branches: [main]
+    paths: ['packages/mapping-canvas/**', '.github/workflows/draw-agent.yml']
+permissions:
+  contents: read
+jobs:
+  adapter:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - run: python3 -m unittest discover -s packages/mapping-canvas/scripts -p 'test_draw_*.py' -v

@@ -280,3 +280,22 @@ async function progressWrite(db: D1Database, locals: App.Locals, body: Record<st
   } else return fail('Choose a progress action.');
   return json({ progress: await progressFor(db, locals, body.id) });
 }
+
+// Published foundation receipt: CRE-2042. Reuse the existing path; never create
+// content or grant membership as a side effect of choosing a starting point.
+const foundationPathId = '101f0d7f-25c0-433b-b41f-04ecc7e89b88';
+export async function foundationEntry(db: D1Database, locals: App.Locals) {
+  if (network(locals) !== 'default' || !admitted(locals)) return null;
+  const path = await db
+    .prepare('SELECT * FROM learning_paths WHERE id=? AND network_id=?')
+    .bind(foundationPathId, 'default')
+    .first<LearningPath>();
+  if (!path || path.visibility !== 'published') return null;
+  // Starting-point visibility follows member policy even for administrators.
+  const view = await pathView(
+    db,
+    { ...locals, identity: { ...locals.identity!, role: 'member' } },
+    path
+  );
+  return view?.lessons.length ? { id: view.id, title: view.title } : null;
+}

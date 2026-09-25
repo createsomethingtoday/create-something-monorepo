@@ -17,6 +17,20 @@
   --state-success: var(--color-performance-growth-soft);
   --state-warning: var(--color-performance-gold-soft);
   --state-error: var(--color-performance-risk-soft);
+  /* PRIVATE product roles: preserve its house type sizes and share Canon rhythm. */
+  --pcn-leading-heading: 1.08;
+  --pcn-leading-price: var(--leading-performance-editorial);
+  --pcn-leading-body: var(--leading-performance-relaxed);
+  --pcn-leading-control: var(--leading-performance-normal);
+  --pcn-text-metadata: var(--text-performance-caption);
+  --pcn-gap-heading: var(--space-performance-md);
+  --pcn-gap-action: var(--space-performance-sm);
+  --pcn-section-space: var(--space-performance-2xl);
+  --pcn-section-space-compact: var(--space-performance-xl);
+  --pcn-empty-space: var(--space-performance-lg);
+  --pcn-empty-space-compact: var(--space-performance-md);
+  --pcn-page-gutter: max(24px, 4.5vw);
+  --pcn-control-height: 44px;
 }
 * {
   box-sizing: border-box;
@@ -71,7 +85,7 @@ summary:focus-visible {
   top: 10px;
 }
 .masthead {
-  padding: 27px 4.5vw;
+  padding: var(--space-performance-md) var(--pcn-page-gutter);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -130,7 +144,7 @@ em {
 }
 p {
   font-size: 16px;
-  line-height: 1.65;
+  line-height: var(--pcn-leading-body);
 }
 .lede {
   max-width: 490px;
@@ -149,6 +163,8 @@ p {
   color: #162018;
   text-decoration: none;
   font-size: 14px;
+  line-height: var(--pcn-leading-control);
+  min-height: var(--pcn-control-height);
   font-weight: 600;
 }
 .button:hover {
@@ -171,14 +187,14 @@ p {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8vw;
-  padding: 110px 4.5vw;
+  padding: var(--pcn-section-space) var(--pcn-page-gutter);
 }
 .service-section h2 {
   font-size: clamp(36px, 4.3vw, 65px);
-  line-height: 1.08;
+  line-height: var(--pcn-leading-heading);
   font-weight: 400;
   letter-spacing: -2.4px;
-  margin-bottom: 26px;
+  margin-bottom: var(--pcn-gap-heading);
 }
 .section-intro {
   color: var(--muted);
@@ -215,9 +231,10 @@ footer {
   justify-content: space-between;
   gap: 25px;
   border-top: 1px solid var(--line);
-  padding: 30px 4.5vw;
+  padding: var(--space-performance-md) var(--pcn-page-gutter);
   color: var(--muted);
-  font-size: 11px;
+  font-size: var(--pcn-text-metadata);
+  line-height: var(--pcn-leading-control);
 }
 footer a {
   text-decoration: none;
@@ -451,7 +468,7 @@ input[type='file'] {
 }
 @media (max-width: 650px) {
   .masthead {
-    padding: 22px;
+    padding: 22px var(--pcn-page-gutter);
   }
   .wordmark {
     font-size: 12px;
@@ -465,14 +482,14 @@ input[type='file'] {
   }
   .service-section {
     grid-template-columns: 1fr;
-    padding: 65px 24px;
+    padding: var(--pcn-section-space-compact) var(--pcn-page-gutter);
     gap: 30px;
   }
   .service-section h2 {
     font-size: 42px;
   }
   footer {
-    padding: 25px;
+    padding: 25px var(--pcn-page-gutter);
     flex-wrap: wrap;
   }
   footer > span {
@@ -579,7 +596,7 @@ input[type='file'] {
   border-bottom: 1px solid var(--color-performance-line);
 }
 .network-builder {
-  padding: 100px 4.5vw;
+  padding: var(--pcn-section-space) var(--pcn-page-gutter);
   display: grid;
   grid-template-columns: 0.85fr 1.15fr;
   gap: 8vw;
@@ -588,9 +605,10 @@ input[type='file'] {
 .network-builder h2,
 .creator-handoff h2 {
   font-size: clamp(36px, 4vw, 60px);
-  line-height: 1.08;
+  line-height: var(--pcn-leading-heading);
   letter-spacing: -2px;
   font-weight: 400;
+  margin-bottom: var(--pcn-gap-heading);
 }
 .builder-intro > p {
   max-width: 430px;
@@ -683,7 +701,7 @@ input[type='file'] {
   flex-shrink: 0;
 }
 .network-heading .eyebrow {
-  font-size: 8px;
+  font-size: var(--pcn-text-metadata);
   letter-spacing: 1px;
   margin: 0 0 7px;
 }
@@ -728,7 +746,7 @@ input[type='file'] {
 .example-label {
   display: block;
   margin-top: 26px;
-  font: 8px monospace;
+  font: var(--pcn-text-metadata)/var(--pcn-leading-control) monospace;
   letter-spacing: 1px;
 }
 .lesson-list {
@@ -738,6 +756,7 @@ input[type='file'] {
 }
 .lesson-list li {
   display: flex;
+  flex-wrap: wrap;
   gap: 14px;
   align-items: center;
   padding: 18px 0;
@@ -749,7 +768,7 @@ input[type='file'] {
 }
 .lesson-list small {
   display: block;
-  font: 8px monospace;
+  font: var(--pcn-text-metadata)/var(--pcn-leading-control) monospace;
   letter-spacing: 1px;
   color: var(--muted);
   margin-bottom: 6px;
@@ -760,11 +779,11 @@ input[type='file'] {
 }
 .access-label {
   margin-left: auto;
-  font: 8px monospace;
+  font: var(--pcn-text-metadata)/var(--pcn-leading-control) monospace;
   padding: 5px 7px;
   border: 1px solid var(--line);
   color: var(--muted);
-  white-space: nowrap;
+  white-space: normal;
 }
 .network-window-footer {
   display: flex;
@@ -782,7 +801,7 @@ input[type='file'] {
   gap: 8vw;
   background: var(--paper);
   color: var(--color-performance-ink);
-  padding: 90px 4.5vw;
+  padding: var(--pcn-section-space) var(--pcn-page-gutter);
 }
 .creator-handoff .eyebrow {
   color: var(--color-performance-ink);
@@ -876,7 +895,7 @@ input[type='file'] {
   .network-builder,
   .creator-handoff {
     grid-template-columns: 1fr;
-    padding: 65px 24px;
+    padding: var(--pcn-section-space-compact) var(--pcn-page-gutter);
     gap: 30px;
   }
   .network-window-body {

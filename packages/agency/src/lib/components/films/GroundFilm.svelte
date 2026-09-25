@@ -1,0 +1,10 @@
+<script lang="ts">import { visibleFilm } from '$lib/motion/filmPlayback';</script>
+<section class="ground" aria-labelledby="ground-title">
+ <div class="heading"><p class="eyebrow">A closer look / Ground</p><h2 id="ground-title">Inside the task.<br />Follow the evidence.</h2><p>A person asks an agent to check two files. Follow the tool call to the source, then return with evidence. The camera stays with the work.</p></div>
+ <video src="/films/ground.mp4" poster="/films/ground-poster.png" controls muted playsinline preload="metadata" use:visibleFilm aria-label="Ground inside the agent session, a silent 38-second demonstration"><track kind="captions" src="/films/ground.vtt" srclang="en" label="English descriptions" /></video>
+ <div class="caption"><span>38 seconds / HyperFrames / silent</span><a href="/products/ground">Explore Ground ↗</a></div>
+ <p class="note">Illustrative agent conversation. Actual Ground MCP result on synthetic files. No source files were changed.</p>
+</section>
+<style>
+.ground{padding:100px 6vw;background:var(--color-performance-ink);color:var(--color-performance-paper)}.heading{display:grid;grid-template-columns:1fr 1.5fr 1fr;gap:40px;align-items:end;margin-bottom:60px}.eyebrow{font:11px var(--font-performance-mono);align-self:start;letter-spacing:.06em;text-transform:uppercase}h2{font:400 clamp(40px,4.6vw,72px)/1.04 var(--font-performance-editorial);letter-spacing:-.035em;margin:0}.heading>p:last-child{font-size:15px;line-height:1.65;margin:0}video{display:block;width:100%;height:auto;aspect-ratio:16/9}.caption{display:flex;justify-content:space-between;align-items:center;margin:20px 0;gap:20px;font:11px var(--font-performance-mono)}a{color:inherit;min-height:44px;display:inline-flex;align-items:center;text-underline-offset:5px}.note{font-size:12px;line-height:1.6}.caption a:focus-visible{outline:3px solid currentColor;outline-offset:5px}@media(max-width:700px){.ground{padding:60px 5vw}.heading{display:block;margin-bottom:30px}.heading h2{margin:22px 0}.heading>p:last-child{font-size:14px;max-width:440px}.caption{font-size:9px}}
+</style>

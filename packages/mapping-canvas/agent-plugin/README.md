@@ -11,3 +11,9 @@ Commands are claimed atomically once. A missing acknowledgement becomes `unknown
 Deployment: apply additive `0003_agent_connections.sql` to existing DRAW_DB before deploying the matching Pages build. Existing DRAW_SHARE_RATE_SECRET also gates connection creation. Rollback to the previous Pages build leaves unused tables without changing existing canvas/share data. No new secret, account provider or paid service is required.
 
 Verification must use the installed transport and actual in-app browser: pair; inspect; compose/edit; see activity; undo; reload; continue; change Canvas/Motion; revoke and require subsequent agent denial. Test target isolation, expiry, command duplication and uncertain outcomes independently. Do not substitute an injected WebMCP shim.
+
+## Fast execution and bounded intent
+
+The adapter exposes `draw_agent_run` for explicit edits and `draw_agent_intent` for bounded Jev routing. Both converge on the same browser `draw_execute` tool; see [contract and recovery](../docs/fast-execution.md). Explicit execution needs no model credential. Optional intent routing uses the existing Infisical development TypeSafe credential in the adapter process (or an explicitly supplied environment key), never the browser. The installer copies both Python modules and the updated skill. Reload the MCP connection to expose new tools; the installed CLI works immediately.
+
+The live routing diagnostic is opt-in because it uses TypeSafe API requests: `DRAW_TYPESAFE_INFISICAL=1 python3 packages/mapping-canvas/scripts/verify-draw-intent.py --output /tmp/draw-intent-pilot.json`. It reports safe outcomes separately from supported requests that executed; abstention is safe but does not count as successful fast-path coverage. Keep failed runs when changing prompts and use new held-out requests before drawing broader conclusions.

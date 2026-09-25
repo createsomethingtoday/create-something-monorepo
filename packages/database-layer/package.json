@@ -75,7 +75,8 @@
     "topology:report": "node scripts/report-internal-topology.mjs",
     "topology:atlas-session": "node scripts/export-internal-atlas-session.mjs",
     "topology:3d:mcp": "node scripts/topology-3d-mcp.mjs",
-    "test": "node --test test/*.test.mjs"
+    "test": "node --test test/*.test.mjs",
+    "agent-wiki:route": "node scripts/agent-wiki-route.mjs"
   },
   "dependencies": {
     "@create-something/canvas-kernel": "workspace:*"

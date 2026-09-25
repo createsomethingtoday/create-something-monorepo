@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { onMount, tick } from 'svelte';
-	import { Button, PerformanceConversionHandoff, SEO } from '@create-something/canon';
+	import { Button, SEO } from '@create-something/canon';
 	import { getAnalytics } from '@create-something/canon/analytics';
 	import { PUBLIC_ATLAS_STORAGE_KEYS } from '$lib/atlas/intake-policy';
 	import {
@@ -227,45 +227,9 @@
 			</section>
 		</section>
 	{:else}
-		<PerformanceConversionHandoff
-			eyebrow={bookingOffer.eyebrow}
-			title={bookingOffer.title}
-			description={bookingOffer.description}
-			handoff={{
-				owner: 'Micah Johnson',
-				authority: 'Conflict-checked scheduling policy',
-				proof: 'Calendar event and booking receipt',
-				state: 'ready'
-			}}
-			steps={[
-				{
-					label: 'Handoff',
-					title: 'Review what will be shared',
-					detail:
-						'Confirm the source, decision owner, and draft notes that will reach the scheduler.'
-				},
-				{
-					label: 'Time',
-					title: 'Choose 30 or 60 minutes',
-					detail: 'Every opening is checked against the live calendar before it is offered.'
-				},
-				{
-					label: 'Confirm',
-					title: 'Commit with explicit intent',
-					detail:
-						'Your name and email are used only when you explicitly create the calendar event and meeting receipt.'
-				}
-			]}
-			headingLevel="h1"
-			artifactPlacement="full-width"
-		>
-			{#snippet actions()}
-				<Button href="#first-party-scheduler">Choose a time</Button>
-				<Button href={bookingOffer.secondaryHref} variant="secondary">
-					{bookingOffer.secondaryLabel}
-				</Button>
-			{/snippet}
-			{#snippet aside()}
+<section class="booking-entry"><p>{bookingOffer.eyebrow}</p><h1>{bookingOffer.title}</h1><p>{bookingOffer.description}</p><p>Choose a 30- or 60-minute opening. Review the details before confirming your booking.</p><Button href="#first-party-scheduler">Choose a time</Button></section>
+<div class="booking-content">
+
 				<section
 					class="booking-handoff"
 					data-booking-handoff-state={handoffSheet.state}
@@ -323,12 +287,13 @@
 						a time.
 					</p>
 				</section>
-			{/snippet}
-		</PerformanceConversionHandoff>
+</div>
 	{/if}
 </main>
 
 <style>
+.booking-entry{padding:55px 7vw 40px;color:var(--color-performance-ink)}.booking-entry h1{font:400 clamp(44px,5vw,76px)/1.08 var(--font-performance-editorial);max-width:850px;letter-spacing:-.035em}.booking-entry p{max-width:700px;line-height:1.65}.booking-content{padding:0 7vw 70px}
+
 	.booking-page {
 		background: var(--color-performance-paper, #f3f3f0);
 		color: var(--color-performance-ink, #090909);

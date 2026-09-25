@@ -4,14 +4,14 @@
   "atlasCanvasId": "create-something-internal-operating-topology",
   "rootNodeId": "substrate:create-something:root",
   "coverage": {
-    "generatedAt": "2026-08-25T18:50:37.046Z",
+    "generatedAt": "2026-09-24T04:42:10.795Z",
     "rootPath": ".",
-    "packageCount": 220,
-    "appCount": 11,
-    "workerCount": 111,
+    "packageCount": 236,
+    "appCount": 12,
+    "workerCount": 114,
     "clientOverlayCount": 8,
     "policyCount": 64,
-    "guideCount": 64,
+    "guideCount": 73,
     "configCount": 40
   },
   "nodes": [
@@ -122,6 +122,23 @@
       ],
       "packageName": "@create-something/create-something-scheduler",
       "runtime": "cloudflare, node"
+    },
+    {
+      "id": "substrate:create-something:app:create-something-draw-native-apps-draw-native",
+      "atlasNodeId": "atlas_create-something_app_create-something-draw-native-apps-draw-native",
+      "title": "@create-something/draw-native",
+      "path": "apps/draw-native",
+      "tier": "Mixed",
+      "surface": "app",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Rust/Tauri host and iPhone companion for CREATE SOMETHING Draw",
+      "tags": [
+        "package",
+        "app"
+      ],
+      "packageName": "@create-something/draw-native",
+      "runtime": "tauri, node"
     },
     {
       "id": "substrate:create-something:app:create-something-even-codex-presence-apps-even-codex-presence",
@@ -244,6 +261,74 @@
       "runtime": "cloudflare, node"
     },
     {
+      "id": "substrate:create-something:package:agent-economy-trial-2-docs-internal-experiments-agent-economy-trial-2-fixture-base",
+      "atlasNodeId": "atlas_create-something_package_agent-economy-trial-2-docs-internal-experiments-agent-economy-trial-2-fixture-base",
+      "title": "agent-economy-trial-2",
+      "path": "docs/internal/experiments/agent-economy-trial-2-fixture/base",
+      "tier": "Automation",
+      "surface": "agent",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Workspace package at docs/internal/experiments/agent-economy-trial-2-fixture/base.",
+      "tags": [
+        "package",
+        "agent"
+      ],
+      "packageName": "agent-economy-trial-2",
+      "runtime": "node"
+    },
+    {
+      "id": "substrate:create-something:package:agent-economy-trial-2-docs-internal-experiments-agent-economy-trial-2-fixture-luna",
+      "atlasNodeId": "atlas_create-something_package_agent-economy-trial-2-docs-internal-experiments-agent-economy-trial-2-fixture-luna",
+      "title": "agent-economy-trial-2",
+      "path": "docs/internal/experiments/agent-economy-trial-2-fixture/luna",
+      "tier": "Automation",
+      "surface": "agent",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Workspace package at docs/internal/experiments/agent-economy-trial-2-fixture/luna.",
+      "tags": [
+        "package",
+        "agent"
+      ],
+      "packageName": "agent-economy-trial-2",
+      "runtime": "node"
+    },
+    {
+      "id": "substrate:create-something:package:agent-economy-trial-2-docs-internal-experiments-agent-economy-trial-2-fixture-sol-high",
+      "atlasNodeId": "atlas_create-something_package_agent-economy-trial-2-docs-internal-experiments-agent-economy-trial-2-fixture-sol-high",
+      "title": "agent-economy-trial-2",
+      "path": "docs/internal/experiments/agent-economy-trial-2-fixture/sol-high",
+      "tier": "Automation",
+      "surface": "agent",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Workspace package at docs/internal/experiments/agent-economy-trial-2-fixture/sol-high.",
+      "tags": [
+        "package",
+        "agent"
+      ],
+      "packageName": "agent-economy-trial-2",
+      "runtime": "node"
+    },
+    {
+      "id": "substrate:create-something:package:agent-economy-trial-2-docs-internal-experiments-agent-economy-trial-2-fixture-terra-high",
+      "atlasNodeId": "atlas_create-something_package_agent-economy-trial-2-docs-internal-experiments-agent-economy-trial-2-fixture-terra-high",
+      "title": "agent-economy-trial-2",
+      "path": "docs/internal/experiments/agent-economy-trial-2-fixture/terra-high",
+      "tier": "Automation",
+      "surface": "agent",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Workspace package at docs/internal/experiments/agent-economy-trial-2-fixture/terra-high.",
+      "tags": [
+        "package",
+        "agent"
+      ],
+      "packageName": "agent-economy-trial-2",
+      "runtime": "node"
+    },
+    {
       "id": "substrate:create-something:package:create-something-monorepo",
       "atlasNodeId": "atlas_create-something_package_create-something-monorepo",
       "title": "@create-something/monorepo",
@@ -259,6 +344,40 @@
       ],
       "packageName": "@create-something/monorepo",
       "runtime": "node"
+    },
+    {
+      "id": "substrate:create-something:package:create-something-abundance-healthcare-mcp-packages-abundance-healthcare-mcp",
+      "atlasNodeId": "atlas_create-something_package_create-something-abundance-healthcare-mcp-packages-abundance-healthcare-mcp",
+      "title": "@create-something/abundance-healthcare-mcp",
+      "path": "packages/abundance-healthcare-mcp",
+      "tier": "Automation",
+      "surface": "mcp",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Governed read-only MCP for NPG healthcare market coverage and practitioner discovery.",
+      "tags": [
+        "package",
+        "mcp"
+      ],
+      "packageName": "@create-something/abundance-healthcare-mcp",
+      "runtime": "cloudflare-worker, node"
+    },
+    {
+      "id": "substrate:create-something:package:abundance-healthcare-mcp-worker-packages-abundance-healthcare-mcp-worker",
+      "atlasNodeId": "atlas_create-something_package_abundance-healthcare-mcp-worker-packages-abundance-healthcare-mcp-worker",
+      "title": "abundance-healthcare-mcp-worker",
+      "path": "packages/abundance-healthcare-mcp/worker",
+      "tier": "Automation",
+      "surface": "mcp",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Workspace package at packages/abundance-healthcare-mcp/worker.",
+      "tags": [
+        "package",
+        "mcp"
+      ],
+      "packageName": "abundance-healthcare-mcp-worker",
+      "runtime": "cloudflare, node"
     },
     {
       "id": "substrate:create-something:package:create-something-abundance-jobs-mcp-packages-abundance-jobs-mcp",
@@ -453,6 +572,118 @@
       ],
       "packageName": "@create-something/agency",
       "runtime": "cloudflare, node"
+    },
+    {
+      "id": "substrate:create-something:package:algorithms-packages-agency-static-films-algorithms",
+      "atlasNodeId": "atlas_create-something_package_algorithms-packages-agency-static-films-algorithms",
+      "title": "packages/agency/static/films/algorithms",
+      "path": "packages/agency/static/films/algorithms",
+      "tier": "Mixed",
+      "surface": "package",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Workspace package at packages/agency/static/films/algorithms.",
+      "tags": [
+        "package",
+        "package"
+      ],
+      "runtime": "node"
+    },
+    {
+      "id": "substrate:create-something:package:dashboard-packages-agency-static-films-dashboard",
+      "atlasNodeId": "atlas_create-something_package_dashboard-packages-agency-static-films-dashboard",
+      "title": "packages/agency/static/films/dashboard",
+      "path": "packages/agency/static/films/dashboard",
+      "tier": "Mixed",
+      "surface": "package",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Workspace package at packages/agency/static/films/dashboard.",
+      "tags": [
+        "package",
+        "package"
+      ],
+      "runtime": "node"
+    },
+    {
+      "id": "substrate:create-something:package:education-packages-agency-static-films-education",
+      "atlasNodeId": "atlas_create-something_package_education-packages-agency-static-films-education",
+      "title": "packages/agency/static/films/education",
+      "path": "packages/agency/static/films/education",
+      "tier": "Mixed",
+      "surface": "package",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Workspace package at packages/agency/static/films/education.",
+      "tags": [
+        "package",
+        "package"
+      ],
+      "runtime": "node"
+    },
+    {
+      "id": "substrate:create-something:package:forms-packages-agency-static-films-forms",
+      "atlasNodeId": "atlas_create-something_package_forms-packages-agency-static-films-forms",
+      "title": "packages/agency/static/films/forms",
+      "path": "packages/agency/static/films/forms",
+      "tier": "Mixed",
+      "surface": "package",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Workspace package at packages/agency/static/films/forms.",
+      "tags": [
+        "package",
+        "package"
+      ],
+      "runtime": "node"
+    },
+    {
+      "id": "substrate:create-something:package:video-packages-agency-static-films-video",
+      "atlasNodeId": "atlas_create-something_package_video-packages-agency-static-films-video",
+      "title": "packages/agency/static/films/video",
+      "path": "packages/agency/static/films/video",
+      "tier": "Mixed",
+      "surface": "package",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Workspace package at packages/agency/static/films/video.",
+      "tags": [
+        "package",
+        "package"
+      ],
+      "runtime": "node"
+    },
+    {
+      "id": "substrate:create-something:package:webflow-packages-agency-static-films-webflow",
+      "atlasNodeId": "atlas_create-something_package_webflow-packages-agency-static-films-webflow",
+      "title": "packages/agency/static/films/webflow",
+      "path": "packages/agency/static/films/webflow",
+      "tier": "Mixed",
+      "surface": "package",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Workspace package at packages/agency/static/films/webflow.",
+      "tags": [
+        "package",
+        "package"
+      ],
+      "runtime": "node"
+    },
+    {
+      "id": "substrate:create-something:package:websites-packages-agency-static-films-websites",
+      "atlasNodeId": "atlas_create-something_package_websites-packages-agency-static-films-websites",
+      "title": "packages/agency/static/films/websites",
+      "path": "packages/agency/static/films/websites",
+      "tier": "Mixed",
+      "surface": "package",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Workspace package at packages/agency/static/films/websites.",
+      "tags": [
+        "package",
+        "package"
+      ],
+      "runtime": "node"
     },
     {
       "id": "substrate:create-something:package:create-something-dental-agent-router-packages-agency-workers-dental-agent-router",
@@ -2301,6 +2532,23 @@
       "runtime": "cloudflare, node"
     },
     {
+      "id": "substrate:create-something:package:create-something-mapping-canvas-packages-mapping-canvas",
+      "atlasNodeId": "atlas_create-something_package_create-something-mapping-canvas-packages-mapping-canvas",
+      "title": "@create-something/mapping-canvas",
+      "path": "packages/mapping-canvas",
+      "tier": "Judgment",
+      "surface": "worker",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Local-first free-form canvas for CREATE SOMETHING mapping meetings.",
+      "tags": [
+        "package",
+        "worker"
+      ],
+      "packageName": "@create-something/mapping-canvas",
+      "runtime": "cloudflare, node"
+    },
+    {
       "id": "substrate:create-something:package:create-something-maverick-admin-packages-maverick-admin",
       "atlasNodeId": "atlas_create-something_package_create-something-maverick-admin-packages-maverick-admin",
       "title": "@create-something/maverick-admin",
@@ -2682,7 +2930,8 @@
       "summary": "Workspace package at packages/owned-agent-runtime.",
       "tags": [
         "package",
-        "agent"
+        "agent",
+        "automation"
       ],
       "packageName": "@create-something/owned-agent-runtime",
       "runtime": "cloudflare, node"
@@ -2834,6 +3083,23 @@
       ],
       "packageName": "@create-something/policy-os-engine",
       "runtime": "node"
+    },
+    {
+      "id": "substrate:create-something:package:create-something-private-pcn-packages-private-pcn",
+      "atlasNodeId": "atlas_create-something_package_create-something-private-pcn-packages-private-pcn",
+      "title": "@create-something/private-pcn",
+      "path": "packages/private-pcn",
+      "tier": "Judgment",
+      "surface": "worker",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Workspace package at packages/private-pcn.",
+      "tags": [
+        "package",
+        "worker"
+      ],
+      "packageName": "@create-something/private-pcn",
+      "runtime": "cloudflare, node"
     },
     {
       "id": "substrate:create-something:package:create-something-quickbooks-notion-mcp-packages-quickbooks-notion-mcp",
@@ -3105,7 +3371,7 @@
       "surface": "worker",
       "owner": "CREATE SOMETHING",
       "status": "mapped",
-      "summary": "The Workbench — live tools for building, testing, and analyzing automation infrastructure",
+      "summary": "The public workshop — tools, workflows, skills, plugins, and reusable building blocks",
       "tags": [
         "package",
         "worker",
@@ -4417,6 +4683,23 @@
       "runtime": "cloudflare"
     },
     {
+      "id": "substrate:create-something:worker:packages-abundance-healthcare-mcp-worker-wrangler-toml",
+      "atlasNodeId": "atlas_create-something_worker_packages-abundance-healthcare-mcp-worker-wrangler-toml",
+      "title": "abundance-healthcare-mcp worker",
+      "path": "packages/abundance-healthcare-mcp/worker/wrangler.toml",
+      "tier": "Automation",
+      "surface": "worker",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Cloudflare runtime configuration at packages/abundance-healthcare-mcp/worker/wrangler.toml.",
+      "tags": [
+        "worker",
+        "cloudflare",
+        "runtime"
+      ],
+      "runtime": "cloudflare"
+    },
+    {
       "id": "substrate:create-something:worker:packages-abundance-jobs-mcp-worker-wrangler-toml",
       "atlasNodeId": "atlas_create-something_worker_packages-abundance-jobs-mcp-worker-wrangler-toml",
       "title": "abundance-jobs-mcp worker",
@@ -5352,6 +5635,23 @@
       "runtime": "cloudflare"
     },
     {
+      "id": "substrate:create-something:worker:packages-mapping-canvas-wrangler-jsonc",
+      "atlasNodeId": "atlas_create-something_worker_packages-mapping-canvas-wrangler-jsonc",
+      "title": "packages/mapping-canvas/wrangler.jsonc",
+      "path": "packages/mapping-canvas/wrangler.jsonc",
+      "tier": "Automation",
+      "surface": "worker",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Cloudflare runtime configuration at packages/mapping-canvas/wrangler.jsonc.",
+      "tags": [
+        "worker",
+        "cloudflare",
+        "runtime"
+      ],
+      "runtime": "cloudflare"
+    },
+    {
       "id": "substrate:create-something:worker:packages-maverick-admin-wrangler-toml",
       "atlasNodeId": "atlas_create-something_worker_packages-maverick-admin-wrangler-toml",
       "title": "packages/maverick-admin/wrangler.toml",
@@ -5548,6 +5848,23 @@
       "owner": "CREATE SOMETHING",
       "status": "mapped",
       "summary": "Cloudflare runtime configuration at packages/playbook-mcp/worker/wrangler.toml.",
+      "tags": [
+        "worker",
+        "cloudflare",
+        "runtime"
+      ],
+      "runtime": "cloudflare"
+    },
+    {
+      "id": "substrate:create-something:worker:packages-private-pcn-wrangler-jsonc",
+      "atlasNodeId": "atlas_create-something_worker_packages-private-pcn-wrangler-jsonc",
+      "title": "packages/private-pcn/wrangler.jsonc",
+      "path": "packages/private-pcn/wrangler.jsonc",
+      "tier": "Automation",
+      "surface": "worker",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Cloudflare runtime configuration at packages/private-pcn/wrangler.jsonc.",
       "tags": [
         "worker",
         "cloudflare",
@@ -7492,10 +7809,40 @@
       ]
     },
     {
+      "id": "substrate:create-something:guide:docs-guides-commit-driven-marketing-schedule-md",
+      "atlasNodeId": "atlas_create-something_guide_docs-guides-commit-driven-marketing-schedule-md",
+      "title": "COMMIT_DRIVEN_MARKETING_SCHEDULE.md",
+      "path": "docs/guides/COMMIT_DRIVEN_MARKETING_SCHEDULE.md",
+      "tier": "Mixed",
+      "surface": "guide",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "guide artifact in the CREATE SOMETHING operating topology.",
+      "tags": [
+        "guide",
+        "documentation"
+      ]
+    },
+    {
       "id": "substrate:create-something:guide:docs-guides-component-guide-md",
       "atlasNodeId": "atlas_create-something_guide_docs-guides-component-guide-md",
       "title": "COMPONENT_GUIDE.md",
       "path": "docs/guides/COMPONENT_GUIDE.md",
+      "tier": "Mixed",
+      "surface": "guide",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "guide artifact in the CREATE SOMETHING operating topology.",
+      "tags": [
+        "guide",
+        "documentation"
+      ]
+    },
+    {
+      "id": "substrate:create-something:guide:docs-guides-ctx-to-draw-storytelling-playbook-md",
+      "atlasNodeId": "atlas_create-something_guide_docs-guides-ctx-to-draw-storytelling-playbook-md",
+      "title": "CTX_TO_DRAW_STORYTELLING_PLAYBOOK.md",
+      "path": "docs/guides/CTX_TO_DRAW_STORYTELLING_PLAYBOOK.md",
       "tier": "Mixed",
       "surface": "guide",
       "owner": "CREATE SOMETHING",
@@ -7657,6 +8004,66 @@
       ]
     },
     {
+      "id": "substrate:create-something:guide:docs-guides-ground-incremental-md",
+      "atlasNodeId": "atlas_create-something_guide_docs-guides-ground-incremental-md",
+      "title": "GROUND_INCREMENTAL.md",
+      "path": "docs/guides/GROUND_INCREMENTAL.md",
+      "tier": "Mixed",
+      "surface": "guide",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "guide artifact in the CREATE SOMETHING operating topology.",
+      "tags": [
+        "guide",
+        "documentation"
+      ]
+    },
+    {
+      "id": "substrate:create-something:guide:docs-guides-ground-monorepo-adoption-md",
+      "atlasNodeId": "atlas_create-something_guide_docs-guides-ground-monorepo-adoption-md",
+      "title": "GROUND_MONOREPO_ADOPTION.md",
+      "path": "docs/guides/GROUND_MONOREPO_ADOPTION.md",
+      "tier": "Mixed",
+      "surface": "guide",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "guide artifact in the CREATE SOMETHING operating topology.",
+      "tags": [
+        "guide",
+        "documentation"
+      ]
+    },
+    {
+      "id": "substrate:create-something:guide:docs-guides-ground-performance-md",
+      "atlasNodeId": "atlas_create-something_guide_docs-guides-ground-performance-md",
+      "title": "GROUND_PERFORMANCE.md",
+      "path": "docs/guides/GROUND_PERFORMANCE.md",
+      "tier": "Mixed",
+      "surface": "guide",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "guide artifact in the CREATE SOMETHING operating topology.",
+      "tags": [
+        "guide",
+        "documentation"
+      ]
+    },
+    {
+      "id": "substrate:create-something:guide:docs-guides-ground-seeded-trial-md",
+      "atlasNodeId": "atlas_create-something_guide_docs-guides-ground-seeded-trial-md",
+      "title": "GROUND_SEEDED_TRIAL.md",
+      "path": "docs/guides/GROUND_SEEDED_TRIAL.md",
+      "tier": "Mixed",
+      "surface": "guide",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "guide artifact in the CREATE SOMETHING operating topology.",
+      "tags": [
+        "guide",
+        "documentation"
+      ]
+    },
+    {
       "id": "substrate:create-something:guide:docs-guides-harness-ablation-loop-md",
       "atlasNodeId": "atlas_create-something_guide_docs-guides-harness-ablation-loop-md",
       "title": "HARNESS_ABLATION_LOOP.md",
@@ -7721,6 +8128,21 @@
       "atlasNodeId": "atlas_create-something_guide_docs-guides-map-product-operations-md",
       "title": "MAP_PRODUCT_OPERATIONS.md",
       "path": "docs/guides/MAP_PRODUCT_OPERATIONS.md",
+      "tier": "Mixed",
+      "surface": "guide",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "guide artifact in the CREATE SOMETHING operating topology.",
+      "tags": [
+        "guide",
+        "documentation"
+      ]
+    },
+    {
+      "id": "substrate:create-something:guide:docs-guides-marketing-screenshot-image-workflow-md",
+      "atlasNodeId": "atlas_create-something_guide_docs-guides-marketing-screenshot-image-workflow-md",
+      "title": "MARKETING_SCREENSHOT_IMAGE_WORKFLOW.md",
+      "path": "docs/guides/MARKETING_SCREENSHOT_IMAGE_WORKFLOW.md",
       "tier": "Mixed",
       "surface": "guide",
       "owner": "CREATE SOMETHING",
@@ -7811,6 +8233,21 @@
       "atlasNodeId": "atlas_create-something_guide_docs-guides-monorepo-delivery-updates-md",
       "title": "MONOREPO_DELIVERY_UPDATES.md",
       "path": "docs/guides/MONOREPO_DELIVERY_UPDATES.md",
+      "tier": "Mixed",
+      "surface": "guide",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "guide artifact in the CREATE SOMETHING operating topology.",
+      "tags": [
+        "guide",
+        "documentation"
+      ]
+    },
+    {
+      "id": "substrate:create-something:guide:docs-guides-newsletter-engagement-runbook-md",
+      "atlasNodeId": "atlas_create-something_guide_docs-guides-newsletter-engagement-runbook-md",
+      "title": "NEWSLETTER_ENGAGEMENT_RUNBOOK.md",
+      "path": "docs/guides/NEWSLETTER_ENGAGEMENT_RUNBOOK.md",
       "tier": "Mixed",
       "surface": "guide",
       "owner": "CREATE SOMETHING",
@@ -8186,6 +8623,21 @@
       "atlasNodeId": "atlas_create-something_guide_docs-guides-webflow-template-review-dify-agent-manual-md",
       "title": "WEBFLOW_TEMPLATE_REVIEW_DIFY_AGENT_MANUAL.md",
       "path": "docs/guides/WEBFLOW_TEMPLATE_REVIEW_DIFY_AGENT_MANUAL.md",
+      "tier": "Mixed",
+      "surface": "guide",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "guide artifact in the CREATE SOMETHING operating topology.",
+      "tags": [
+        "guide",
+        "documentation"
+      ]
+    },
+    {
+      "id": "substrate:create-something:guide:docs-guides-webflow-template-search-image-refresh-runbook-md",
+      "atlasNodeId": "atlas_create-something_guide_docs-guides-webflow-template-search-image-refresh-runbook-md",
+      "title": "WEBFLOW_TEMPLATE_SEARCH_IMAGE_REFRESH_RUNBOOK.md",
+      "path": "docs/guides/WEBFLOW_TEMPLATE_SEARCH_IMAGE_REFRESH_RUNBOOK.md",
       "tier": "Mixed",
       "surface": "guide",
       "owner": "CREATE SOMETHING",
@@ -8889,6 +9341,13 @@
       "evidence": "apps/create-something-scheduler is present in the repo scan."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-app-create-something-draw-native-apps-draw-native",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:app:create-something-draw-native-apps-draw-native",
+      "relation": "contains",
+      "evidence": "apps/draw-native is present in the repo scan."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-app-create-something-even-codex-presence-apps-even-codex-presence",
       "source": "substrate:create-something:root",
       "target": "substrate:create-something:app:create-something-even-codex-presence-apps-even-codex-presence",
@@ -8938,11 +9397,53 @@
       "evidence": "apps/webflow-marketplace-category-cloud is present in the repo scan."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-agent-economy-trial-2-docs-internal-experiments-agent-economy-trial-2-fixture-base",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:package:agent-economy-trial-2-docs-internal-experiments-agent-economy-trial-2-fixture-base",
+      "relation": "contains",
+      "evidence": "docs/internal/experiments/agent-economy-trial-2-fixture/base is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-agent-economy-trial-2-docs-internal-experiments-agent-economy-trial-2-fixture-luna",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:package:agent-economy-trial-2-docs-internal-experiments-agent-economy-trial-2-fixture-luna",
+      "relation": "contains",
+      "evidence": "docs/internal/experiments/agent-economy-trial-2-fixture/luna is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-agent-economy-trial-2-docs-internal-experiments-agent-economy-trial-2-fixture-sol-high",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:package:agent-economy-trial-2-docs-internal-experiments-agent-economy-trial-2-fixture-sol-high",
+      "relation": "contains",
+      "evidence": "docs/internal/experiments/agent-economy-trial-2-fixture/sol-high is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-agent-economy-trial-2-docs-internal-experiments-agent-economy-trial-2-fixture-terra-high",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:package:agent-economy-trial-2-docs-internal-experiments-agent-economy-trial-2-fixture-terra-high",
+      "relation": "contains",
+      "evidence": "docs/internal/experiments/agent-economy-trial-2-fixture/terra-high is present in the repo scan."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-monorepo",
       "source": "substrate:create-something:root",
       "target": "substrate:create-something:package:create-something-monorepo",
       "relation": "contains",
       "evidence": " is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-abundance-healthcare-mcp-packages-abundance-healthcare-mcp",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:package:create-something-abundance-healthcare-mcp-packages-abundance-healthcare-mcp",
+      "relation": "contains",
+      "evidence": "packages/abundance-healthcare-mcp is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-abundance-healthcare-mcp-worker-packages-abundance-healthcare-mcp-worker",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:package:abundance-healthcare-mcp-worker-packages-abundance-healthcare-mcp-worker",
+      "relation": "contains",
+      "evidence": "packages/abundance-healthcare-mcp/worker is present in the repo scan."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-abundance-jobs-mcp-packages-abundance-jobs-mcp",
@@ -9013,6 +9514,55 @@
       "target": "substrate:create-something:package:create-something-agency-packages-agency",
       "relation": "contains",
       "evidence": "packages/agency is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-algorithms-packages-agency-static-films-algorithms",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:package:algorithms-packages-agency-static-films-algorithms",
+      "relation": "contains",
+      "evidence": "packages/agency/static/films/algorithms is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-dashboard-packages-agency-static-films-dashboard",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:package:dashboard-packages-agency-static-films-dashboard",
+      "relation": "contains",
+      "evidence": "packages/agency/static/films/dashboard is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-education-packages-agency-static-films-education",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:package:education-packages-agency-static-films-education",
+      "relation": "contains",
+      "evidence": "packages/agency/static/films/education is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-forms-packages-agency-static-films-forms",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:package:forms-packages-agency-static-films-forms",
+      "relation": "contains",
+      "evidence": "packages/agency/static/films/forms is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-video-packages-agency-static-films-video",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:package:video-packages-agency-static-films-video",
+      "relation": "contains",
+      "evidence": "packages/agency/static/films/video is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-webflow-packages-agency-static-films-webflow",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:package:webflow-packages-agency-static-films-webflow",
+      "relation": "contains",
+      "evidence": "packages/agency/static/films/webflow is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-websites-packages-agency-static-films-websites",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:package:websites-packages-agency-static-films-websites",
+      "relation": "contains",
+      "evidence": "packages/agency/static/films/websites is present in the repo scan."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-dental-agent-router-packages-agency-workers-dental-agent-router",
@@ -9666,6 +10216,13 @@
       "evidence": "packages/ltd/workers/arena-sync is present in the repo scan."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-mapping-canvas-packages-mapping-canvas",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:package:create-something-mapping-canvas-packages-mapping-canvas",
+      "relation": "contains",
+      "evidence": "packages/mapping-canvas is present in the repo scan."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-maverick-admin-packages-maverick-admin",
       "source": "substrate:create-something:root",
       "target": "substrate:create-something:package:create-something-maverick-admin-packages-maverick-admin",
@@ -9853,6 +10410,13 @@
       "target": "substrate:create-something:package:create-something-policy-os-engine-packages-policy-os-engine",
       "relation": "contains",
       "evidence": "packages/policy-os-engine is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-private-pcn-packages-private-pcn",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:package:create-something-private-pcn-packages-private-pcn",
+      "relation": "contains",
+      "evidence": "packages/private-pcn is present in the repo scan."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-quickbooks-notion-mcp-packages-quickbooks-notion-mcp",
@@ -10436,6 +11000,13 @@
       "evidence": "apps/webflow-marketplace-category-cloud/wrangler.json is present in the repo scan."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-worker-packages-abundance-healthcare-mcp-worker-wrangler-toml",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:worker:packages-abundance-healthcare-mcp-worker-wrangler-toml",
+      "relation": "contains",
+      "evidence": "packages/abundance-healthcare-mcp/worker/wrangler.toml is present in the repo scan."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-worker-packages-abundance-jobs-mcp-worker-wrangler-toml",
       "source": "substrate:create-something:root",
       "target": "substrate:create-something:worker:packages-abundance-jobs-mcp-worker-wrangler-toml",
@@ -10821,6 +11392,13 @@
       "evidence": "packages/ltd/wrangler.jsonc is present in the repo scan."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-worker-packages-mapping-canvas-wrangler-jsonc",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:worker:packages-mapping-canvas-wrangler-jsonc",
+      "relation": "contains",
+      "evidence": "packages/mapping-canvas/wrangler.jsonc is present in the repo scan."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-worker-packages-maverick-admin-wrangler-toml",
       "source": "substrate:create-something:root",
       "target": "substrate:create-something:worker:packages-maverick-admin-wrangler-toml",
@@ -10903,6 +11481,13 @@
       "target": "substrate:create-something:worker:packages-playbook-mcp-worker-wrangler-toml",
       "relation": "contains",
       "evidence": "packages/playbook-mcp/worker/wrangler.toml is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-worker-packages-private-pcn-wrangler-jsonc",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:worker:packages-private-pcn-wrangler-jsonc",
+      "relation": "contains",
+      "evidence": "packages/private-pcn/wrangler.jsonc is present in the repo scan."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-worker-packages-quickbooks-notion-mcp-wrangler-toml",
@@ -11773,11 +12358,25 @@
       "evidence": "docs/guides/CODING_AGENT_HARNESS_PATTERN.md is present in the repo scan."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-commit-driven-marketing-schedule-md",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:guide:docs-guides-commit-driven-marketing-schedule-md",
+      "relation": "contains",
+      "evidence": "docs/guides/COMMIT_DRIVEN_MARKETING_SCHEDULE.md is present in the repo scan."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-component-guide-md",
       "source": "substrate:create-something:root",
       "target": "substrate:create-something:guide:docs-guides-component-guide-md",
       "relation": "contains",
       "evidence": "docs/guides/COMPONENT_GUIDE.md is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-ctx-to-draw-storytelling-playbook-md",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:guide:docs-guides-ctx-to-draw-storytelling-playbook-md",
+      "relation": "contains",
+      "evidence": "docs/guides/CTX_TO_DRAW_STORYTELLING_PLAYBOOK.md is present in the repo scan."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-dify-bettermode-creator-agent-md",
@@ -11850,6 +12449,34 @@
       "evidence": "docs/guides/GIT_LIGHT_AGENT_DELIVERY_WORKFLOW.md is present in the repo scan."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-ground-incremental-md",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:guide:docs-guides-ground-incremental-md",
+      "relation": "contains",
+      "evidence": "docs/guides/GROUND_INCREMENTAL.md is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-ground-monorepo-adoption-md",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:guide:docs-guides-ground-monorepo-adoption-md",
+      "relation": "contains",
+      "evidence": "docs/guides/GROUND_MONOREPO_ADOPTION.md is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-ground-performance-md",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:guide:docs-guides-ground-performance-md",
+      "relation": "contains",
+      "evidence": "docs/guides/GROUND_PERFORMANCE.md is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-ground-seeded-trial-md",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:guide:docs-guides-ground-seeded-trial-md",
+      "relation": "contains",
+      "evidence": "docs/guides/GROUND_SEEDED_TRIAL.md is present in the repo scan."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-harness-ablation-loop-md",
       "source": "substrate:create-something:root",
       "target": "substrate:create-something:guide:docs-guides-harness-ablation-loop-md",
@@ -11883,6 +12510,13 @@
       "target": "substrate:create-something:guide:docs-guides-map-product-operations-md",
       "relation": "contains",
       "evidence": "docs/guides/MAP_PRODUCT_OPERATIONS.md is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-marketing-screenshot-image-workflow-md",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:guide:docs-guides-marketing-screenshot-image-workflow-md",
+      "relation": "contains",
+      "evidence": "docs/guides/MARKETING_SCREENSHOT_IMAGE_WORKFLOW.md is present in the repo scan."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-marketplace-submission-governance-playbook-md",
@@ -11925,6 +12559,13 @@
       "target": "substrate:create-something:guide:docs-guides-monorepo-delivery-updates-md",
       "relation": "contains",
       "evidence": "docs/guides/MONOREPO_DELIVERY_UPDATES.md is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-newsletter-engagement-runbook-md",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:guide:docs-guides-newsletter-engagement-runbook-md",
+      "relation": "contains",
+      "evidence": "docs/guides/NEWSLETTER_ENGAGEMENT_RUNBOOK.md is present in the repo scan."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-notion-api-compatibility-audit-2026-md",
@@ -12100,6 +12741,13 @@
       "target": "substrate:create-something:guide:docs-guides-webflow-template-review-dify-agent-manual-md",
       "relation": "contains",
       "evidence": "docs/guides/WEBFLOW_TEMPLATE_REVIEW_DIFY_AGENT_MANUAL.md is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-webflow-template-search-image-refresh-runbook-md",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:guide:docs-guides-webflow-template-search-image-refresh-runbook-md",
+      "relation": "contains",
+      "evidence": "docs/guides/WEBFLOW_TEMPLATE_SEARCH_IMAGE_REFRESH_RUNBOOK.md is present in the repo scan."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-zellij-agent-cockpit-md",
@@ -12464,6 +13112,41 @@
       "target": "substrate:create-something:package:create-something-observability-packages-observability",
       "relation": "depends_on",
       "evidence": "@create-something/monorepo declares @create-something/observability."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-abundance-healthcare-mcp-packages-abundance-healthcare-mcp-depends-on-substrate-create-something-package-create-something-mcp-core-packages-mcp-core",
+      "source": "substrate:create-something:package:create-something-abundance-healthcare-mcp-packages-abundance-healthcare-mcp",
+      "target": "substrate:create-something:package:create-something-mcp-core-packages-mcp-core",
+      "relation": "depends_on",
+      "evidence": "@create-something/abundance-healthcare-mcp declares @create-something/mcp-core."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-abundance-healthcare-mcp-packages-abundance-healthcare-mcp-runs-substrate-create-something-worker-packages-abundance-healthcare-mcp-worker-wrangler-toml",
+      "source": "substrate:create-something:package:create-something-abundance-healthcare-mcp-packages-abundance-healthcare-mcp",
+      "target": "substrate:create-something:worker:packages-abundance-healthcare-mcp-worker-wrangler-toml",
+      "relation": "runs",
+      "evidence": "worker/wrangler.toml configures runtime for packages/abundance-healthcare-mcp."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-package-abundance-healthcare-mcp-worker-packages-abundance-healthcare-mcp-worker-depends-on-substrate-create-something-package-create-something-abundance-healthcare-mcp-packages-abundance-healthcare-mcp",
+      "source": "substrate:create-something:package:abundance-healthcare-mcp-worker-packages-abundance-healthcare-mcp-worker",
+      "target": "substrate:create-something:package:create-something-abundance-healthcare-mcp-packages-abundance-healthcare-mcp",
+      "relation": "depends_on",
+      "evidence": "abundance-healthcare-mcp-worker declares @create-something/abundance-healthcare-mcp."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-package-abundance-healthcare-mcp-worker-packages-abundance-healthcare-mcp-worker-depends-on-substrate-create-something-package-create-something-mcp-core-packages-mcp-core",
+      "source": "substrate:create-something:package:abundance-healthcare-mcp-worker-packages-abundance-healthcare-mcp-worker",
+      "target": "substrate:create-something:package:create-something-mcp-core-packages-mcp-core",
+      "relation": "depends_on",
+      "evidence": "abundance-healthcare-mcp-worker declares @create-something/mcp-core."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-package-abundance-healthcare-mcp-worker-packages-abundance-healthcare-mcp-worker-runs-substrate-create-something-worker-packages-abundance-healthcare-mcp-worker-wrangler-toml",
+      "source": "substrate:create-something:package:abundance-healthcare-mcp-worker-packages-abundance-healthcare-mcp-worker",
+      "target": "substrate:create-something:worker:packages-abundance-healthcare-mcp-worker-wrangler-toml",
+      "relation": "runs",
+      "evidence": "wrangler.toml configures runtime for packages/abundance-healthcare-mcp/worker."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-package-create-something-abundance-jobs-mcp-packages-abundance-jobs-mcp-depends-on-substrate-create-something-package-create-something-mcp-core-packages-mcp-core",
@@ -13586,6 +14269,13 @@
       "evidence": "wrangler.toml configures runtime for packages/ltd/workers/arena-sync."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-mapping-canvas-packages-mapping-canvas-depends-on-substrate-create-something-package-create-something-canon-packages-canon",
+      "source": "substrate:create-something:package:create-something-mapping-canvas-packages-mapping-canvas",
+      "target": "substrate:create-something:package:create-something-canon-packages-canon",
+      "relation": "depends_on",
+      "evidence": "@create-something/mapping-canvas declares @create-something/canon."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-package-create-something-maverick-admin-packages-maverick-admin-runs-substrate-create-something-worker-packages-maverick-admin-wrangler-toml",
       "source": "substrate:create-something:package:create-something-maverick-admin-packages-maverick-admin",
       "target": "substrate:create-something:worker:packages-maverick-admin-wrangler-toml",
@@ -13754,6 +14444,20 @@
       "evidence": "@create-something/owned-agent-runtime declares @createsomething/workflow-runtime."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-owned-agent-runtime-packages-owned-agent-runtime-depends-on-substrate-create-something-package-createsomething-workflow-compiler-packages-workflow-compiler",
+      "source": "substrate:create-something:package:create-something-owned-agent-runtime-packages-owned-agent-runtime",
+      "target": "substrate:create-something:package:createsomething-workflow-compiler-packages-workflow-compiler",
+      "relation": "depends_on",
+      "evidence": "@create-something/owned-agent-runtime declares @createsomething/workflow-compiler."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-owned-agent-runtime-packages-owned-agent-runtime-depends-on-substrate-create-something-package-create-something-delivery-schema-packages-delivery-schema",
+      "source": "substrate:create-something:package:create-something-owned-agent-runtime-packages-owned-agent-runtime",
+      "target": "substrate:create-something:package:create-something-delivery-schema-packages-delivery-schema",
+      "relation": "depends_on",
+      "evidence": "@create-something/owned-agent-runtime declares @create-something/delivery-schema."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-package-create-something-playbook-mcp-packages-playbook-mcp-depends-on-substrate-create-something-package-create-something-atlas-composition-packages-atlas-composition",
       "source": "substrate:create-something:package:create-something-playbook-mcp-packages-playbook-mcp",
       "target": "substrate:create-something:package:create-something-atlas-composition-packages-atlas-composition",
@@ -13787,6 +14491,13 @@
       "target": "substrate:create-something:worker:packages-playbook-mcp-worker-wrangler-toml",
       "relation": "runs",
       "evidence": "wrangler.toml configures runtime for packages/playbook-mcp/worker."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-private-pcn-packages-private-pcn-depends-on-substrate-create-something-package-create-something-canon-packages-canon",
+      "source": "substrate:create-something:package:create-something-private-pcn-packages-private-pcn",
+      "target": "substrate:create-something:package:create-something-canon-packages-canon",
+      "relation": "depends_on",
+      "evidence": "@create-something/private-pcn declares @create-something/canon."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-package-create-something-quickbooks-notion-mcp-packages-quickbooks-notion-mcp-runs-substrate-create-something-worker-packages-quickbooks-notion-mcp-wrangler-toml",
@@ -14944,11 +15655,25 @@
       "evidence": "docs/guides/CODING_AGENT_HARNESS_PATTERN.md is an operating guide."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-commit-driven-marketing-schedule-md-documents-substrate-create-something-root",
+      "source": "substrate:create-something:guide:docs-guides-commit-driven-marketing-schedule-md",
+      "target": "substrate:create-something:root",
+      "relation": "documents",
+      "evidence": "docs/guides/COMMIT_DRIVEN_MARKETING_SCHEDULE.md is an operating guide."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-component-guide-md-documents-substrate-create-something-root",
       "source": "substrate:create-something:guide:docs-guides-component-guide-md",
       "target": "substrate:create-something:root",
       "relation": "documents",
       "evidence": "docs/guides/COMPONENT_GUIDE.md is an operating guide."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-ctx-to-draw-storytelling-playbook-md-documents-substrate-create-something-root",
+      "source": "substrate:create-something:guide:docs-guides-ctx-to-draw-storytelling-playbook-md",
+      "target": "substrate:create-something:root",
+      "relation": "documents",
+      "evidence": "docs/guides/CTX_TO_DRAW_STORYTELLING_PLAYBOOK.md is an operating guide."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-dify-bettermode-creator-agent-md-documents-substrate-create-something-root",
@@ -15021,6 +15746,34 @@
       "evidence": "docs/guides/GIT_LIGHT_AGENT_DELIVERY_WORKFLOW.md is an operating guide."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-ground-incremental-md-documents-substrate-create-something-root",
+      "source": "substrate:create-something:guide:docs-guides-ground-incremental-md",
+      "target": "substrate:create-something:root",
+      "relation": "documents",
+      "evidence": "docs/guides/GROUND_INCREMENTAL.md is an operating guide."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-ground-monorepo-adoption-md-documents-substrate-create-something-root",
+      "source": "substrate:create-something:guide:docs-guides-ground-monorepo-adoption-md",
+      "target": "substrate:create-something:root",
+      "relation": "documents",
+      "evidence": "docs/guides/GROUND_MONOREPO_ADOPTION.md is an operating guide."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-ground-performance-md-documents-substrate-create-something-root",
+      "source": "substrate:create-something:guide:docs-guides-ground-performance-md",
+      "target": "substrate:create-something:root",
+      "relation": "documents",
+      "evidence": "docs/guides/GROUND_PERFORMANCE.md is an operating guide."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-ground-seeded-trial-md-documents-substrate-create-something-root",
+      "source": "substrate:create-something:guide:docs-guides-ground-seeded-trial-md",
+      "target": "substrate:create-something:root",
+      "relation": "documents",
+      "evidence": "docs/guides/GROUND_SEEDED_TRIAL.md is an operating guide."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-harness-ablation-loop-md-documents-substrate-create-something-root",
       "source": "substrate:create-something:guide:docs-guides-harness-ablation-loop-md",
       "target": "substrate:create-something:root",
@@ -15054,6 +15807,13 @@
       "target": "substrate:create-something:root",
       "relation": "documents",
       "evidence": "docs/guides/MAP_PRODUCT_OPERATIONS.md is an operating guide."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-marketing-screenshot-image-workflow-md-documents-substrate-create-something-root",
+      "source": "substrate:create-something:guide:docs-guides-marketing-screenshot-image-workflow-md",
+      "target": "substrate:create-something:root",
+      "relation": "documents",
+      "evidence": "docs/guides/MARKETING_SCREENSHOT_IMAGE_WORKFLOW.md is an operating guide."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-marketplace-submission-governance-playbook-md-documents-substrate-create-something-root",
@@ -15096,6 +15856,13 @@
       "target": "substrate:create-something:root",
       "relation": "documents",
       "evidence": "docs/guides/MONOREPO_DELIVERY_UPDATES.md is an operating guide."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-newsletter-engagement-runbook-md-documents-substrate-create-something-root",
+      "source": "substrate:create-something:guide:docs-guides-newsletter-engagement-runbook-md",
+      "target": "substrate:create-something:root",
+      "relation": "documents",
+      "evidence": "docs/guides/NEWSLETTER_ENGAGEMENT_RUNBOOK.md is an operating guide."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-notion-api-compatibility-audit-2026-md-documents-substrate-create-something-root",
@@ -15271,6 +16038,13 @@
       "target": "substrate:create-something:root",
       "relation": "documents",
       "evidence": "docs/guides/WEBFLOW_TEMPLATE_REVIEW_DIFY_AGENT_MANUAL.md is an operating guide."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-webflow-template-search-image-refresh-runbook-md-documents-substrate-create-something-root",
+      "source": "substrate:create-something:guide:docs-guides-webflow-template-search-image-refresh-runbook-md",
+      "target": "substrate:create-something:root",
+      "relation": "documents",
+      "evidence": "docs/guides/WEBFLOW_TEMPLATE_SEARCH_IMAGE_REFRESH_RUNBOOK.md is an operating guide."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-zellij-agent-cockpit-md-documents-substrate-create-something-root",
@@ -15882,11 +16656,25 @@
       "evidence": "docs/guides/CODING_AGENT_HARNESS_PATTERN.md documents config/dify-agents/aaron-hub.json through matching topology terms."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-commit-driven-marketing-schedule-md-documents-substrate-create-something-mcp-config-config-dify-mcp-intake-schedule-json",
+      "source": "substrate:create-something:guide:docs-guides-commit-driven-marketing-schedule-md",
+      "target": "substrate:create-something:mcp-config:config-dify-mcp-intake-schedule-json",
+      "relation": "documents",
+      "evidence": "docs/guides/COMMIT_DRIVEN_MARKETING_SCHEDULE.md documents config/dify-mcp-intake/schedule.json through matching topology terms."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-component-guide-md-documents-substrate-create-something-package-create-something-spritz-packages-spritz",
       "source": "substrate:create-something:guide:docs-guides-component-guide-md",
       "target": "substrate:create-something:package:create-something-spritz-packages-spritz",
       "relation": "documents",
       "evidence": "docs/guides/COMPONENT_GUIDE.md documents packages/spritz through matching topology terms."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-ctx-to-draw-storytelling-playbook-md-documents-substrate-create-something-package-create-something-arc-packages-arc",
+      "source": "substrate:create-something:guide:docs-guides-ctx-to-draw-storytelling-playbook-md",
+      "target": "substrate:create-something:package:create-something-arc-packages-arc",
+      "relation": "documents",
+      "evidence": "docs/guides/CTX_TO_DRAW_STORYTELLING_PLAYBOOK.md documents packages/arc through matching topology terms."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-dify-bettermode-creator-agent-md-documents-substrate-create-something-agent-config-config-dify-agents-bettermode-marketplace-creator-agent-json",
@@ -15959,6 +16747,34 @@
       "evidence": "docs/guides/GIT_LIGHT_AGENT_DELIVERY_WORKFLOW.md documents config/dify-agents/aaron-hub.json through matching topology terms."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-ground-incremental-md-documents-substrate-create-something-package-create-something-database-layer-packages-database-layer",
+      "source": "substrate:create-something:guide:docs-guides-ground-incremental-md",
+      "target": "substrate:create-something:package:create-something-database-layer-packages-database-layer",
+      "relation": "documents",
+      "evidence": "docs/guides/GROUND_INCREMENTAL.md documents packages/database-layer through the stable guide platform anchor."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-ground-monorepo-adoption-md-documents-substrate-create-something-package-createsomething-ground-mcp-packages-ground-npm",
+      "source": "substrate:create-something:guide:docs-guides-ground-monorepo-adoption-md",
+      "target": "substrate:create-something:package:createsomething-ground-mcp-packages-ground-npm",
+      "relation": "documents",
+      "evidence": "docs/guides/GROUND_MONOREPO_ADOPTION.md documents packages/ground/npm through matching topology terms."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-ground-performance-md-documents-substrate-create-something-package-create-something-interaction-atlas-mcp-packages-interaction-atlas-mcp",
+      "source": "substrate:create-something:guide:docs-guides-ground-performance-md",
+      "target": "substrate:create-something:package:create-something-interaction-atlas-mcp-packages-interaction-atlas-mcp",
+      "relation": "documents",
+      "evidence": "docs/guides/GROUND_PERFORMANCE.md documents packages/interaction-atlas-mcp through the stable guide platform anchor."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-ground-seeded-trial-md-documents-substrate-create-something-package-create-something-interaction-atlas-mcp-packages-interaction-atlas-mcp",
+      "source": "substrate:create-something:guide:docs-guides-ground-seeded-trial-md",
+      "target": "substrate:create-something:package:create-something-interaction-atlas-mcp-packages-interaction-atlas-mcp",
+      "relation": "documents",
+      "evidence": "docs/guides/GROUND_SEEDED_TRIAL.md documents packages/interaction-atlas-mcp through the stable guide platform anchor."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-harness-ablation-loop-md-documents-substrate-create-something-package-create-something-substrate-mcp-packages-substrate-mcp",
       "source": "substrate:create-something:guide:docs-guides-harness-ablation-loop-md",
       "target": "substrate:create-something:package:create-something-substrate-mcp-packages-substrate-mcp",
@@ -15992,6 +16808,13 @@
       "target": "substrate:create-something:package:create-something-arc-packages-arc",
       "relation": "documents",
       "evidence": "docs/guides/MAP_PRODUCT_OPERATIONS.md documents packages/arc through matching topology terms."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-marketing-screenshot-image-workflow-md-documents-substrate-create-something-package-createsomething-workflow-compiler-packages-workflow-compiler",
+      "source": "substrate:create-something:guide:docs-guides-marketing-screenshot-image-workflow-md",
+      "target": "substrate:create-something:package:createsomething-workflow-compiler-packages-workflow-compiler",
+      "relation": "documents",
+      "evidence": "docs/guides/MARKETING_SCREENSHOT_IMAGE_WORKFLOW.md documents packages/workflow-compiler through matching topology terms."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-marketplace-submission-governance-playbook-md-documents-substrate-create-something-app-create-something-marketplace-template-submission-cloud-apps-marketplace-template-submission-cloud",
@@ -16034,6 +16857,13 @@
       "target": "substrate:create-something:package:create-something-interaction-atlas-mcp-packages-interaction-atlas-mcp",
       "relation": "documents",
       "evidence": "docs/guides/MONOREPO_DELIVERY_UPDATES.md documents packages/interaction-atlas-mcp through the stable guide platform anchor."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-newsletter-engagement-runbook-md-documents-substrate-create-something-package-create-something-arc-packages-arc",
+      "source": "substrate:create-something:guide:docs-guides-newsletter-engagement-runbook-md",
+      "target": "substrate:create-something:package:create-something-arc-packages-arc",
+      "relation": "documents",
+      "evidence": "docs/guides/NEWSLETTER_ENGAGEMENT_RUNBOOK.md documents packages/arc through matching topology terms."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-notion-api-compatibility-audit-2026-md-documents-substrate-create-something-package-create-something-substrate-mcp-packages-substrate-mcp",
@@ -16209,6 +17039,13 @@
       "target": "substrate:create-something:agent-config:config-dify-agents-template-review-hub-json",
       "relation": "documents",
       "evidence": "docs/guides/WEBFLOW_TEMPLATE_REVIEW_DIFY_AGENT_MANUAL.md documents config/dify-agents/template-review-hub.json through matching topology terms."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-webflow-template-search-image-refresh-runbook-md-documents-substrate-create-something-mcp-config-config-dify-mcp-intake-webflow-template-review-json",
+      "source": "substrate:create-something:guide:docs-guides-webflow-template-search-image-refresh-runbook-md",
+      "target": "substrate:create-something:mcp-config:config-dify-mcp-intake-webflow-template-review-json",
+      "relation": "documents",
+      "evidence": "docs/guides/WEBFLOW_TEMPLATE_SEARCH_IMAGE_REFRESH_RUNBOOK.md documents config/dify-mcp-intake/webflow-template-review.json through matching topology terms."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-zellij-agent-cockpit-md-documents-substrate-create-something-agent-config-config-dify-agents-aaron-hub-json",

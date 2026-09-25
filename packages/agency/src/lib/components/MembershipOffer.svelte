@@ -3,16 +3,18 @@
   import { PUBLIC_PRICING } from '$lib/data/publicPricing';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
+  let { compact = false }: { compact?: boolean } = $props();
+
   const questions = [
     {
       question: 'What does the membership cover?',
       answer:
-        'Reusable agent engineering skills, walkthroughs and learning resources, Slack guidance, weekly check-ins and scheduled attended remote help through RustDesk. We agree on one active workflow and the support boundaries during onboarding. It is not unlimited development or round-the-clock incident response.'
+        'Hands-on delivery within an agreed scope, reusable skills and learning resources, Slack support, weekly check-ins and scheduled remote help. Before work begins, we agree on one active workstream, the deliverable, available capacity, revisions and how we will check the result. Larger projects are divided into agreed milestones or quoted separately. Membership does not include unlimited development or production incident response.'
     },
     {
       question: 'Is this the same as managed Control?',
       answer:
-        'No. Membership is guidance and support while you develop your workflows. Managed Control is a separate agreement for monitoring and supporting an agreed live system after launch. Production incident response is not included in membership.'
+        'No. Membership covers agreed delivery work, learning and operator support. Managed Control is a separate agreement for monitoring and supporting an agreed live system after launch. Production incident response is not included in membership.'
     },
     {
       question: 'Who provides the support?',
@@ -27,7 +29,17 @@
     {
       question: 'What costs extra?',
       answer:
-        'Custom implementation, new integrations and production launches receive a separate scope and price before work starts. Your coding-agent accounts, AI usage, hosting and third-party subscriptions are separate. The membership does not include a token wallet or unlimited agent execution.'
+        'Work beyond the agreed delivery scope receives a separate quote. Project-specific AI development runs, evaluations and production usage, hosting and third-party services are separate costs. We agree on the budget and who pays before running billable work. Our everyday coding assistance and internal learning remain our operating expense.'
+    },
+    {
+      question: 'Do I need my own AI API account?',
+      answer:
+        'For substantial AI development, testing or production, we use a client-owned provider project with scoped access and separate development and production budgets. If direct billing is not practical, we agree on separately metered usage before work begins. A simple website or form that does not use AI does not require an API account. Never send API keys through the inquiry form.'
+    },
+    {
+      question: 'How do you control AI spending?',
+      answer:
+        'We agree on a dollar budget for the work, the models and services it can use, and limits for individual runs. We review usage before the budget is exhausted and pause new billable runs at the agreed limit until you approve more. Funding your application’s runtime does not automatically authorize spending on development agents; we agree on both explicitly.'
     },
     {
       question: 'Will a new AI model change my price?',
@@ -48,37 +60,59 @@
       <p class="eyebrow">CREATE SOMETHING membership</p>
       <h2 id="membership-title">A practice you can build on.</h2>
       <p>
-        Learn the methods. Apply them to your work. Get help when you get stuck. Keep the knowledge
-        in your business as your workflows improve.
+        Bring a website, app, AI workflow or another piece of work. We agree on a manageable
+        deliverable, build with you, and help your team use and maintain the result.
       </p>
       <ul>
-        <li>Agent skills, walkthroughs and practical learning resources</li>
-        <li>Slack support around one active workflow</li>
+        <li>Hands-on delivery for one agreed workstream at a time</li>
+        <li>Skills, learning resources and Slack support as you build</li>
         <li>Weekly check-ins and scheduled remote assistance</li>
       </ul>
     </div>
     <div class="commitment">
       <p class="eyebrow">One membership</p>
       <p class="price">{PUBLIC_PRICING.membership.label}</p>
-      <p>{PUBLIC_PRICING.membership.terms}. Custom builds and runtime costs are separate.</p>
+      <p>{PUBLIC_PRICING.membership.terms}. Delivery within an agreed scope. Project usage costs are separate.</p>
       <Button href={agencyCoreMessaging.membershipInquiryHref}
         >{agencyCoreMessaging.membershipInquiryLabel}</Button
       >
+      {#if compact}
+        <p class="next-steps"><a href={agencyCoreMessaging.workflowMappingSessionHref}>Book a mapping session →</a></p>
+      {/if}
       <p class="availability">
-        Confirm fit, support scope and onboarding availability before payment.
+        Agree on the deliverable, capacity and any usage budget before payment.
       </p>
     </div>
   </div>
+  {#if compact}
+    <p class="ownership-summary">You keep the code, tests and instructions. <a href="/services">See how delivery works →</a> <a href="/stack">What you keep →</a></p>
+  {/if}
+  <div class="cost-boundary" aria-labelledby="cost-boundary-title">
+    <p class="eyebrow">Delivery and usage are separate</p>
+    <h3 id="cost-boundary-title">Know the cost before the work starts.</h3>
+    <dl>
+      <div><dt>Included in membership</dt><dd>Agreed delivery work, guidance and support. Our everyday coding tools are our expense.</dd></div>
+      <div><dt>Budgeted separately</dt><dd>Project-specific AI development, testing and production usage, hosting and third-party services. You approve the budget first.</dd></div>
+      <div><dt>Quoted before we expand</dt><dd>Work beyond the agreed scope. More API credit does not add unlimited delivery capacity.</dd></div>
+    </dl>
+    <p class="availability">For substantial AI work, we arrange client-owned API access or agreed metered billing before starting. No API account is needed for work that does not use AI.</p>
+  </div>
+  {#if !compact}
   <MeridianAccordion
     eyebrow="Membership boundaries"
     title="Know what is included."
-    description="A shared support process, with clear ownership and limits."
+    description="Clear deliverables, separate usage budgets and no surprise expansion of scope."
     items={questions}
     openFirst={true}
   />
+  {/if}
 </section>
 
 <style>
+  .next-steps { margin-top: var(--space-performance-md); }
+  .ownership-summary { max-width: none; padding: 0 max(1.25rem, calc((100% - 80rem) / 2)) var(--space-performance-lg); }
+  a { color: inherit; text-underline-offset: .2em; display: inline-flex; align-items: center; min-height: 44px; margin-right: 1rem; }
+  a:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; }
   .membership {
     scroll-margin-top: 6rem;
     background: var(--color-performance-paper);
@@ -132,7 +166,16 @@
     margin-top: var(--space-performance-md);
     color: var(--color-performance-ink-soft);
   }
+  .cost-boundary {
+    padding: 0 max(1.25rem, calc((100% - 80rem) / 2)) var(--space-performance-xl);
+  }
+  h3 { font-family: var(--font-performance-editorial); font-size: clamp(1.5rem, 3vw, 2.25rem); font-weight: 400; line-height: 1.2; }
+  dl { margin-block: var(--space-performance-lg); border-top: 1px solid var(--color-performance-line-strong); }
+  dl > div { display: grid; grid-template-columns: 1fr 2fr; gap: var(--space-performance-lg); padding-block: var(--space-performance-md); border-bottom: 1px solid var(--color-performance-line); }
+  dt { font-weight: 600; }
+  dd { margin: 0; line-height: 1.65; max-width: 65ch; }
   @media (max-width: 640px) {
+    dl > div { grid-template-columns: 1fr; gap: var(--space-performance-sm); }
     .offer {
       grid-template-columns: 1fr;
     }

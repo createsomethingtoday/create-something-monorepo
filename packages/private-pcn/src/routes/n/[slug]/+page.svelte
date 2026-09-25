@@ -8,4 +8,4 @@
       href={`/n/${data.network?.slug}/field-notes`}>Field notes</a
     >
   </div>{/if}
-<Library {data} />
+<Library data={{ ...data, foundation: null }} />

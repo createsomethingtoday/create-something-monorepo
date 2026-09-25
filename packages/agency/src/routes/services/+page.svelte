@@ -16,7 +16,7 @@
   const controlProduct = getPublicProduct('control');
 
   const services = [
-    { name: 'Agent engineering membership', description: 'Skills, workflow guidance, Slack support and weekly check-ins.', type: 'Membership', price: PUBLIC_PRICING.membership.label, priceDescription: PUBLIC_PRICING.membership.terms },
+    { name: 'Agent engineering membership', description: 'Delivery within an agreed scope, skills and operator support.', type: 'Membership', price: PUBLIC_PRICING.membership.label, priceDescription: PUBLIC_PRICING.membership.terms },
     {
       name: mapProduct.name,
       description: mapProduct.customerJob,
@@ -52,7 +52,7 @@
     {
       question: 'What is your primary service?',
       answer:
-        'The membership provides skills, guidance and operator support for $900/month. Map, custom Build projects and managed Control remain separate paths for planning, implementation and live operations.'
+        'The membership provides delivery within an agreed scope, learning and operator support for $900/month. Larger Build projects and managed Control remain separate agreements. Project-specific AI usage, hosting and third-party services are budgeted separately.'
     },
     {
       question: 'Are agents part of the workforce?',
@@ -92,7 +92,7 @@
     eyebrow="How It Works"
     expression="editorial"
     title="Support for the work ahead."
-    lede="Bring a task to automate or a product you have already built. Our $900/month membership helps you learn, troubleshoot and improve one workflow at a time. Custom implementation is scoped separately."
+    lede="Bring a task to automate or a product you have already built. Our $900/month membership covers delivery within an agreed scope, one workstream at a time, with learning and support. Project-specific AI usage and hosting are separate."
     media={playbookHeroMedia.services}
     mediaMobilePlacement="background"
     density="compact"

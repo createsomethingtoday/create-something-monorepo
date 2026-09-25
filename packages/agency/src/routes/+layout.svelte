@@ -1,5 +1,7 @@
 <script lang="ts">
   import '../app.css';
+  import { initializeFilmMotion, filmNavigationOpen } from '$lib/motion/filmPlayback';
+  import { filmStories } from '$lib/data/filmStories';
   import { Navigation, Footer, LayoutSEO, ModeIndicator } from '@create-something/canon';
   import { UnifiedSearch } from '@create-something/canon/navigation';
   import PrivacyAnalytics from '$lib/components/PrivacyAnalytics.svelte';
@@ -89,6 +91,19 @@
     const product = getPublicProduct(id);
     return { label: product.shortName, href: product.route };
   });
+  // Public pages share one navigation; workspace and identity routes retain their existing shell.
+  const usesPublicNavigation = $derived(!/^\/(account|admin|dashboard|login|logout|auth|mcp-access|delivery)(?:\/|$)/.test($page.url.pathname) && !/^\/map\/(workspace|subscribe|share)(?:\/|$)/.test($page.url.pathname));
+  const filmNavLinks = [
+    { label: 'The work', href: '/#work' },
+    { label: 'How we work', href: '/services' },
+    { label: '$900/month', href: agencyCoreMessaging.membershipHref },
+    { label: 'Explore', href: '/products', children: [
+      { label: 'Services & tools', href: '/products', description: 'Explore the full catalog.' },
+      { label: 'Proof', href: '/field-reports', description: 'Inspect results and their limits.' },
+      { label: 'Try a workflow', href: '/practice', description: 'Try the method yourself.' },
+      { label: 'What you keep', href: '/stack', description: 'Code, instructions and ownership.' }
+    ] }
+  ];
   const primaryCtaHref = agencyCoreMessaging.membershipHref;
   const agencyFooterMacroMedia = {
     src: '/images/performance-lab/playbook-footer-decision-gate-macro.webp',
@@ -156,6 +171,24 @@
     }
   ];
 
+  const filmFooterGroups = [
+    { title: 'Work', ariaLabel: 'Explore capabilities', links: filmStories.map(story => ({label:story.name,href:`/?film=${story.id}#work`})) },
+    { title: 'Working together', ariaLabel: 'Working together', links: [
+      {label:'Membership',href:agencyCoreMessaging.membershipHref},
+      {label:agencyCoreMessaging.bookMappingSessionLabel,href:agencyCoreMessaging.workflowMappingSessionHref},
+      {label:'Contact',href:'/contact'},
+      ...footerQuickLinkGroups[0].links.filter(link => !['Products','Field Reports','Dispatch','About'].includes(link.label))
+    ] },
+    { title: 'Resources', ariaLabel: 'Resources', links: [
+      ...footerQuickLinkGroups[0].links.filter(link => ['Products','Field Reports','Dispatch','About'].includes(link.label)),
+      ...spineLinks, ...footerQuickLinkGroups[2].links, ...footerQuickLinkGroups[3].links
+    ] },
+    { title: 'Trust & access', ariaLabel: 'Trust and access', links: [
+      ...footerQuickLinkGroups[4].links,
+      {label:'Privacy',href:'/privacy'}, {label:'Terms',href:'/terms'}, {label:'Sign in',href:'/login'}
+    ] }
+  ];
+  onMount(initializeFilmMotion);
   function getAgencyGlobalAnalyticsMetadata(pathname: string): Record<string, unknown> | undefined {
     const experimentMetadata = getAgencyMarketingExperimentMetadata(pathname);
     const contentMetadata = getAgencyContentAssetAnalyticsMetadata(pathname);
@@ -361,9 +394,13 @@
   function scrollToHash(hash: string) {
     if (!hash) return;
 
-    const element = document.querySelector(hash);
+    let id: string;
+    try { id = decodeURIComponent(hash.slice(1)); } catch { return; }
+    const element = document.getElementById(id);
     if (element) {
-      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      const nav = document.querySelector('.nav-fixed');
+      const clearance = (nav?.getBoundingClientRect().bottom ?? 72) + 24;
+      window.scrollTo({ top: Math.max(0, window.scrollY + element.getBoundingClientRect().top - clearance), behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
     }
   }
 
@@ -437,7 +474,7 @@
 <!-- Unified Search - Cmd/Ctrl+K to open -->
 <UnifiedSearch currentProperty="agency" localItems={quickAccessItems} showMobileButton={false} />
 
-<div class="layout-root min-h-screen property-performance">
+<div class="layout-root min-h-screen property-performance" class:film-shell={usesPublicNavigation} class:film-home={isPublicMarketingRoute && $page.url.pathname === "/"}>
   <Navigation
     logo="CREATE SOMETHING"
     logoSuffix=".agency"
@@ -447,16 +484,16 @@
       label: 'CREATE SOMETHING .agency'
     }}
     enableRouteLogoMotion={true}
-    links={navLinks}
+    links={usesPublicNavigation ? filmNavLinks : navLinks}
     currentPath={$page.url.pathname}
     fixed={true}
-    ctaLabel={agencyCoreMessaging.membershipLabel}
-    ctaHref={primaryCtaHref}
+    ctaLabel={usesPublicNavigation ? agencyCoreMessaging.bookMappingSessionLabel : agencyCoreMessaging.membershipLabel}
+    ctaHref={usesPublicNavigation ? agencyCoreMessaging.workflowMappingSessionHref : primaryCtaHref}
     user={data.user}
     onLogout={handleLogout}
     accountHref="/account"
     visualStyle="editorial"
-    onMobileMenuChange={(open) => (mobileNavigationOpen = open)}
+    onMobileMenuChange={(open) => { mobileNavigationOpen = open; filmNavigationOpen.set(open); }}
   />
 
   <main id="main-content" class="pt-[72px]">
@@ -471,7 +508,7 @@
     mode="agency"
     showNewsletter={false}
     aboutText="We build AI agents for useful business tasks. You keep the code, instructions, and work history."
-    quickLinkGroups={footerQuickLinkGroups}
+    quickLinkGroups={usesPublicNavigation ? filmFooterGroups : footerQuickLinkGroups}
     footerCta={routeOwnsPerformanceEnding
       ? undefined
       : {
@@ -496,6 +533,18 @@
 </div>
 
 <style>
+  .film-shell :global(main#main-content) { padding-top: 112px; }
+  .film-home :global(main#main-content),
+  .film-shell :global(main#main-content:has(.performance-campaign-opening)) { padding-top: 0; }
+  .film-shell :global(.performance-campaign-opening__content) { padding-top: max(128px, 10svh); padding-inline: 7vw; }
+  .film-shell :global(main [id]) { scroll-margin-top: 112px; }
+  .film-shell :global(.nav-editorial.nav-fixed) { top: 18px; left: 3vw; right: 3vw; width: auto; border: 1px solid var(--color-performance-line); border-radius: 10px; background: var(--color-performance-paper); }
+  .film-shell :global(.nav-editorial .nav-inner) { width: 100%; padding-inline: 20px; }
+  .film-shell :global(.nav-editorial .nav-link-list) { border: 0; background: transparent; }
+  .film-shell :global(.footer-link-groups) { gap: 40px; }
+  .film-shell :global(.footer-editorial-identity) { padding-block: 50px; }
+  @media(max-width:700px) { .film-shell :global(.nav-editorial.nav-fixed) { top: 10px; left: 4vw; right: 4vw; } .film-shell :global(.nav-editorial .nav-inner) { padding-inline: 12px; } }
+
   .layout-root {
     background: var(--color-performance-paper, #f3f3f0);
   }
