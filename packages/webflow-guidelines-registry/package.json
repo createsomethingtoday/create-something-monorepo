@@ -1,0 +1,15 @@
+{
+  "name": "@create-something/webflow-guidelines-registry",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Marketplace Guidelines Registry — a self-contained wrop page where Webflow app reviewers read, edit, and annotate the developer-docs Marketplace pages (inline + WebMCP), with lossless export back to webflow/openapi-internal.",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "check": "pnpm run test && pnpm run build",
+    "test": "node --test scripts/mdx.test.mjs scripts/build.test.mjs scripts/proposal-codec.test.mjs scripts/publication.test.mjs scripts/render-safety.test.mjs",
+    "sync-source": "node scripts/sync-source.mjs",
+    "publish:wrop": "node scripts/publish.mjs",
+    "export": "node scripts/export.mjs"
+  }
+}
