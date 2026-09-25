@@ -8,6 +8,7 @@
     <array>
       <string>/bin/bash</string>
       <string>/Users/micahjohnson/.local/bin/worktree-prune.sh</string>
+      <string>--dry-run</string>
     </array>
     <key>EnvironmentVariables</key>
     <dict>
@@ -17,12 +18,20 @@
       <string>/Users/micahjohnson</string>
     </dict>
     <key>StartCalendarInterval</key>
-    <dict>
-      <key>Hour</key>
-      <integer>7</integer>
-      <key>Minute</key>
-      <integer>15</integer>
-    </dict>
+    <array>
+      <dict>
+        <key>Hour</key>
+        <integer>7</integer>
+        <key>Minute</key>
+        <integer>15</integer>
+      </dict>
+      <dict>
+        <key>Hour</key>
+        <integer>19</integer>
+        <key>Minute</key>
+        <integer>15</integer>
+      </dict>
+    </array>
     <key>RunAtLoad</key>
     <false/>
     <key>LowPriorityIO</key>
