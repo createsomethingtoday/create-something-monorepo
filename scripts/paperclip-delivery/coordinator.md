@@ -17,3 +17,35 @@ On changes requested, return concrete findings and exact source revision to the 
 On interruption, confirm predecessor process/provider stop, settled effects and released lease. Verify durable checkpoint and scoped files, then allow at most two evidence-backed resumes through supported native recovery. Config/auth failures need a corrected cause. Unknown deployment outcome requires provider readback before any retry. Do not force-clear uncertain outcome holds. If the native wake fails, preserve exact issue/run/timestamps and block this dependent stage; a manual agent wake is diagnostic and does not count as automatic qualification.
 
 Keep UI state and Linear truthful. Notify user only verified production ready for review, meaningful failure, completion or required human action. Do not mark complete before exact deployment and all packet live criteria pass.
+
+## Scoped configuration recovery
+
+For `configuration_incomplete`, the installed service's CEO
+`tasks:manage_active_checkouts` authority over the current issue assignee can
+satisfy `requireRecoveryActionAuthority` even when the action is labeled
+board-owned. That label alone is not a denial. This is a scoped native management
+grant, not authority for every role or permission to borrow the CEO's identity.
+Use only the caller's own `PAPERCLIP_API_KEY` and `PAPERCLIP_RUN_ID`, with Bearer
+authorization and `X-Paperclip-Run-Id`, against `PAPERCLIP_API_URL`.
+
+Before resolving, read the current issue, current recovery action and latest
+failed run. Confirm the actual login/configuration cause was corrected, no live
+predecessor remains, leases are settled and effects are known. Obtain a fresh
+successful native adapter probe after the correction; a user report or old
+successful run alone is insufficient. Missing human login or grants remain a
+hold requiring the actual owner to restore access.
+
+An authorized coordinator then uses `POST /api/issues/:issueId/recovery-actions/resolve`
+with the actual current `actionId`, `outcome: "restored"`,
+`sourceIssueStatus: "todo"` and a `resolutionNote` containing the concrete probe,
+predecessor and effects-reconciliation evidence. Omit `executionReconciliation`
+for `configuration_incomplete`. Re-read the issue/action/run after the mutation
+and let native lifecycle return execution to the original owner; do not manually
+wake a successor or create a second writer.
+
+Uncertain-execution reconciliation remains board-only in the installed service;
+this configuration path cannot clear that hold. Do not use `false_positive` or
+`cancelled` to bypass recovery. Honor actual HTTP 403 authority denials, re-read
+and reconcile HTTP 409 conflicts, and honor HTTP 429 limits, including the native
+cross-issue influence cap. An uncertain response requires readback before any
+retry. None of these responses permits changing identity or forcing release.

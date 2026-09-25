@@ -5,18 +5,18 @@
   "files": [
     {
       "path": "README.md",
-      "bytes": 6611,
-      "sha256": "1e2fd3b43220352e5f32c19e7b3dc605447f3a9754fe1c287b0655968637846b"
+      "bytes": 10711,
+      "sha256": "8b4b731cd1fdc1ea7c7fa876cfa5925b2e53b42e85251d5883ab1f9397eebb89"
     },
     {
       "path": "RELEASE.md",
-      "bytes": 9252,
-      "sha256": "fea29e33aeaf4ee40648aff10b12a6c8e68add53b310c2cb26360b42e6e4ea35"
+      "bytes": 9564,
+      "sha256": "91f55e8216aceb03c15d08347e09cea0df1925b5f6f45b3deaad1c3000260d69"
     },
     {
       "path": "SKILL.md",
       "bytes": 2136,
-      "sha256": "e3f42b5a3b7881db0fa8f8824a898562810095643875d18870e0a3cba3dd3acf"
+      "sha256": "d6b23b625b730b2411f833d1e9d91eff31832a439c5b4a34c54937b7e8bf233e"
     },
     {
       "path": "assignment-schema.mjs",
@@ -40,8 +40,8 @@
     },
     {
       "path": "coordinator.md",
-      "bytes": 3746,
-      "sha256": "113b4e15496dfa16ce22af6ccd5b8cf66c31d4bcab8ae99fba22962d4564e1d2"
+      "bytes": 5738,
+      "sha256": "f8025b2654bf3f2f5b2c514d0805b86e6e170038fcd6102fbd78edfac2732259"
     },
     {
       "path": "engineering.md",

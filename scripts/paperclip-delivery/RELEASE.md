@@ -75,8 +75,12 @@ predicate cannot replace any review, CI, native authority or provider readback.
 
 ## Qualification evidence
 
-Pending the first native independent review and evidence repair. The production
-README's "Qualification evidence" section is the canonical reviewed record of
-actual interruption, retry, request-changes event and repair successor IDs. Until
-those real records are populated and independently verified, this runbook does
-not establish acceptance or authorize a claim of qualified production delivery.
+The first native review requested changes and automatically created engineering
+repair issue CRE-63. [README's Qualification evidence](README.md#qualification-evidence)
+now records the actual interruption, failed retry, human login restoration,
+resumed implementation, review event and repair successor with native sources.
+This is the submitted repair record, still requiring fresh independent review
+and exact-revision CI. It does not establish production deployment, attachment,
+runtime acceptance or complete autonomous behavior qualification. In particular,
+the successful resumed implementation followed human login restoration; do not
+describe the failed retry itself as a completed autonomous recovery.

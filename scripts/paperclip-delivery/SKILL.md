@@ -23,8 +23,8 @@ review. Four baseline roles are not a delegate cap. Do not purchase, change iden
 expand to unrelated work, create schedules, send unauthorized external messages, or
 perform destructive actions.
 
-Read [README](README.md) for CLI inputs, evidence semantics and the qualification
-hold. [Release runbook](RELEASE.md) describes this pack's company-library target,
+Read [README](README.md) for CLI inputs, evidence semantics and qualification
+evidence. [Release runbook](RELEASE.md) describes this pack's company-library target,
 readback and rollback; it is not authority for other targets. Predicates only check
 supplied evidence. Fetch fresh native state and verify receipt sources yourself;
 never treat a passing CLI, local receipt or terminal exit as a native transition.

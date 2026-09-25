@@ -22,8 +22,14 @@ All roles retain scoped skill/agent creation and parallel delegation permissions
 Separate native ownership, isolated workspaces, nonoverlapping write paths and
 independent review remain mandatory. Unknown provider outcomes remain held until
 reconciled; library publication, agent attachment and behavior qualification are
-separate levels of evidence. The pack's pending qualification section is an explicit
-first-review hold, as required by the assigned native qualification experiment.
+separate levels of evidence. The initial qualification hold produced a native
+request-changes decision and automatic repair successor. The pack's
+[Qualification evidence](../../scripts/paperclip-delivery/README.md#qualification-evidence)
+records actual runs/events, the failed retry and human login restoration; the
+repaired revision still needs independent approval and fresh CI. Production,
+attachment and full behavior qualification remain pending. See the
+[scoped configuration recovery guidance](../../scripts/paperclip-delivery/coordinator.md#scoped-configuration-recovery)
+for native management authority and the uncertainty holds it cannot clear.
 
 Validate from the repository root with:
 

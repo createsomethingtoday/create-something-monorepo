@@ -67,10 +67,25 @@ provider operations and non-destructive rollback.
 
 ## Qualification evidence
 
-Pending first independent review, deliberately and transparently under the
-CRE-2128 qualification plan. Engineering must populate real interrupted predecessor,
-native retry successor, review request event and repair successor IDs after the
-native reviewer requests changes. No review request or repair successor exists at
-this first implementation handoff. This section is an acceptance hold, not a claim
-of completed qualification. Tests and library publication cannot prove automatic
-recovery, review routing, agent attachment, runtime use or website delivery.
+The first-review acceptance hold was exercised through native `request_changes`.
+The following records were re-read on 2026-09-25 during engineering repair round 1.
+Links beginning `/CRE/` or `/api/` are relative to the owning Paperclip instance.
+Stable case: `f9ee28a7-b1bb-469f-ac68-3a752a077d3f`; canonical scope:
+[Linear CRE-2128](https://linear.app/createsomething/issue/CRE-2128).
+
+| Checkpoint | Native evidence and observed outcome |
+| --- | --- |
+| Deliberate pre-write interruption | [CRE-50](/CRE/issues/CRE-50), issue `736aee38-a67a-41dd-bbf3-d62eb2de32a5`; [predecessor run `fbb6d28b-cd9a-4d55-b4c2-501e2e190922`](/CRE/agents/dc4b6a82-f78b-4917-bfea-b4b5c332c305/runs/fbb6d28b-cd9a-4d55-b4c2-501e2e190922) was cancelled at `2026-09-25T17:39:17.380Z`. The pre-write checkpoint SHA-256 is `120fec6d9074ab8214e20ddd1f06a7661d55459823b841530fa331f682d7ddb7`. Native issue execution is released; recorded predecessor PIDs were absent at repair preflight. |
+| Native current-stage retry | [Case events](/api/cases/f9ee28a7-b1bb-469f-ac68-3a752a077d3f/events): request `91f71d5c-29dc-45bb-9687-544bfb7989c2`, dispatch `3b0a2047-7c1c-4bd6-b59d-58b989af80aa`, attempt `d240070d-a5b4-4d81-b784-4eac358f714c`. Native automation created [CRE-52](/CRE/issues/CRE-52), issue `33404742-a70b-40d5-82cb-a331fb57767a`, via routine run `cdb20bcc-7a5d-4ae8-b4d3-afbc1d8434e2`. [Successor run `3a0e142a-61a7-4e3f-9dfe-86e6bdb2562a`](/CRE/agents/dc4b6a82-f78b-4917-bfea-b4b5c332c305/runs/3a0e142a-61a7-4e3f-9dfe-86e6bdb2562a) started automatically and failed with `provider_quota`; it did not complete implementation. |
+| Configuration failure and human restoration | [Later run `73d65736-fcd7-49f4-959f-aed01e1486e2`](/CRE/agents/dc4b6a82-f78b-4917-bfea-b4b5c332c305/runs/73d65736-fcd7-49f4-959f-aed01e1486e2) failed with `configuration_incomplete` before a process started. The [case fields](/api/cases/f9ee28a7-b1bb-469f-ac68-3a752a077d3f) record user-restored login, a passing native auth/hello probe at `2026-09-25T17:50:44.139Z`, and supported board restoration of action `37caf5f5-9ddb-4c3f-8d2f-1f466c8c8431`. The current recovery-actions endpoint returns no active action and no historical actions; this historical resolution is attributed to case fields and the [engineering recovery receipt](/CRE/issues/CRE-52#comment-30cea3ca-79e4-42e7-bd56-2baf48a8c2f7), not an independently retrieved action record. No autonomous account-restoration claim is made. |
+| Resumed implementation | [Run `9d35b96b-6f33-478c-9643-3264945d03ff`](/CRE/agents/dc4b6a82-f78b-4917-bfea-b4b5c332c305/runs/9d35b96b-6f33-478c-9643-3264945d03ff) succeeded after restoration, submitting `2f70b3576e7cc2c34c29459ef81f962e3d527e97` and native transition event `22d7ee12-5fa9-4126-b170-7463169f44e7`. [Implementation receipt](/CRE/issues/CRE-52#document-implementation-9d35b96b-6f33-478c-9643-3264945d03ff) records 57 passing tests on Node 22 and 24 and the deliberate first-review hold. |
+| Independent request changes | [CRE-61 review receipt](/CRE/issues/CRE-61#document-review-b81b1ad9-69f4-4872-b31f-9d683d23c54b), issue `b5f2450d-ef83-473c-941f-ee3d617b9762`, reviewer run `b81b1ad9-69f4-4872-b31f-9d683d23c54b`. Native `review_decided` event `3c642676-0ee5-4e91-ba15-a2fca0ed6f3b` records `request_changes`; transition `de6aece9-9ecc-4230-adb2-624538849268` returned the case to implementation. Findings: populate this evidence and document scoped configuration recovery authority. |
+| Automatic repair successor | Native `automation_executed` event `28dabda4-54bc-4f89-94dc-cf530c72e1f8` created [CRE-63](/CRE/issues/CRE-63), issue `c64d63a0-9efe-41c9-9f26-b8bf3a2721fd`, via routine run `231f1037-8aad-4658-9898-6b9d0e430075`. [Repair run `e23619fb-14ea-4f12-af5e-a9f81cd4d84f`](/CRE/agents/dc4b6a82-f78b-4917-bfea-b4b5c332c305/runs/e23619fb-14ea-4f12-af5e-a9f81cd4d84f) owns the checked-out issue and is running while preparing this record. Native automation dispatched it; engineering did not manually wake it. Fresh independent review and exact-revision CI are required for the repaired source. |
+
+These records establish interruption/retry dispatch and request-changes/repair
+routing. They do not establish uninterrupted autonomous recovery through the
+login failure, repair approval, merge, production deployment, agent attachment,
+runtime use or full behavior qualification. Production and live acceptance remain
+pending. Terminal success, tests and library publication are separate evidence
+from native stage completion. See [coordinator guidance](coordinator.md#scoped-configuration-recovery)
+for the supported configuration recovery path and its retained uncertainty holds.
