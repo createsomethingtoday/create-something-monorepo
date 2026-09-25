@@ -251,7 +251,7 @@ test('Products explains the product family and keeps operating surfaces inside C
     'utf8'
   );
 
-  assert.match(products, /Choose the help you need now\./);
+  assert.match(products, /How we work together\./);
   assert.match(products, /id: 'map'/);
   assert.match(products, /id: 'build'/);
   assert.match(products, /id: 'control'/);
@@ -268,13 +268,13 @@ test('booking carries the Field Report handoff into the owned mapping scheduler'
 
   assert.match(book, /Choose a time to talk through the task/);
   assert.match(book, /30- or 60-minute/);
-  assert.match(book, /Choose 30 or 60 minutes/);
+  assert.match(book, /Choose a 30- or 60-minute opening/);
   assert.match(book, /first-party scheduler/);
   assert.match(book, /createBookingHandoffState/);
   assert.match(book, /Details included with your booking/);
 });
 
-test('the homepage concentrates measured Field Report proof in one primary readback', () => {
+test('homepage links to evidence while Services retains the qualified readback', () => {
   const home = readFileSync(new URL('../src/routes/+page.svelte', import.meta.url), 'utf8');
   const readback = readFileSync(
     new URL('../src/lib/components/AgencyPerformanceReadback.svelte', import.meta.url),
@@ -282,10 +282,14 @@ test('the homepage concentrates measured Field Report proof in one primary readb
   );
 
   assert.doesNotMatch(home, /PerformanceEvidenceIndex/);
-  assert.match(home, /<AgencyPerformanceReadback \/>/);
+  assert.doesNotMatch(home, /<AgencyPerformanceReadback/);
+  const services = readFileSync(new URL('../src/routes/services/+page.svelte', import.meta.url), 'utf8');
+  const builtWork = readFileSync(new URL('../src/lib/data/builtWork.ts', import.meta.url), 'utf8');
+  assert.match(services, /<AgencyPerformanceReadback embedded/);
+  assert.match(builtWork, /\/field-reports\/template-review/);
   assert.doesNotMatch(home, /class="service-proof-row"/);
   assert.doesNotMatch(home, /class="field-report"/);
-  assert.match(home, /class="home-section ownership-callout"/);
+  assert.match(home, /<BuiltWork/);
   assert.match(readback, /import \{ templateReviewFieldReport \} from '\$lib\/data\/fieldReports'/);
   assert.match(readback, /templateReviewFieldReport\.id/);
   assert.match(readback, /evidence\.usableCases/);

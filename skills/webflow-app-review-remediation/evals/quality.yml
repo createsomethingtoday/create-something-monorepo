@@ -69,3 +69,27 @@ evals:
         value: 'production output'
       - type: contains
         value: 'needs reviewer clarification'
+  - id: 7
+    input: 'Finding WF-01 told us to reject any callback without a valid server-generated state. We did, and now installs started from the Install button on our Workspace Apps & Integrations page fail because they carry no state. Our listing Install URL already points at our own endpoint that mints state. A reviewer also completed an install in a second browser using a state minted with curl. What do we change?'
+    expected_output: 'Preserves WF-01, explains that the Workspace Install button is a developer-only shortcut outside the customer path and not the flow review tests, keeps the callback rejecting callbacks without a valid state, adds browser session binding so a state minted elsewhere fails, verifies and consumes state in one operation before the code exchange, and tests the customer flow from the listing Install URL.'
+    assertions:
+      - type: contains
+        value: 'WF-01'
+      - type: contains
+        value: 'developer-only'
+      - type: contains
+        value: 'browser session'
+      - type: contains
+        value: 'Install URL'
+      - type: not_contains
+        value: 'accept code-only callbacks'
+  - id: 8
+    input: 'Our Designer Extension-only App uses only Designer APIs. We have no Webflow Data Client, OAuth scopes, Install URL, or callback. Does the session-bound state gate require us to build an install endpoint?'
+    expected_output: 'Marks the partner-owned Webflow Install URL, callback, and state checks N/A for Designer Extension-only Apps; they apply to Data Client/Hybrid Webflow OAuth installs. Does not require adding OAuth infrastructure. If an issued finding demands it, preserves the finding and requests reviewer clarification.'
+    assertions:
+      - type: contains
+        value: 'Designer Extension-only'
+      - type: contains
+        value: 'N/A'
+      - type: contains
+        value: 'Data Client/Hybrid'

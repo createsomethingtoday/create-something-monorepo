@@ -70,7 +70,7 @@ Reviewers verify these by calling your endpoints and asking for evidence, not by
 - [ ] Actions are attributed to the authenticated user — no hardcoded owner or service identity standing in for real users.
 - [ ] `[control]` Dependency audit clean of High and Critical advisories, or a documented function-level reachability analysis. Production manifest and lockfile available on request.
 - [ ] No staging, localhost, or tunnel hostname is used as a request destination in the artifact, and the installation URL you declare is a production host. A `localhost` string in a hostname blocklist, in a library's URL-parsing fallback, or in a test fixture is not a development artifact — check what the string does, not that it exists.
-- [ ] `[control]` OAuth callback validates a single-use, server-stored `state` bound to the pending authorization — the CSRF control in Webflow's OAuth flow (PKCE is not part of Webflow's documented flow; use PKCE on third-party OAuth flows your app performs that support it).
+- [ ] `[control]` Data Client/Hybrid Webflow OAuth only (Designer Extension-only: `N/A`, no partner-owned Install URL or callback): Marketplace Install URL is an endpoint you own that mints a fresh, single-use `state` per request and binds it to the browser session — never a fixed `webflow.com/oauth/authorize` URL. The OAuth callback verifies and consumes that `state` in one operation before exchanging the code, rejecting any value that is missing, mismatched, expired, already used, or not bound to the session that started the request — the CSRF control in Webflow's OAuth flow (PKCE is not part of Webflow's documented flow; use PKCE on third-party OAuth flows your app performs that support it). The Workspace Install button under Apps & Integrations sends no `state`; it is developer-only and not the path review tests.
 - [ ] Client bundle contains client code only — no server handlers, database schema, JWT logic, or backend dependencies (check the source map, which will reveal whatever the bundle contains).
 - [ ] Production logs contain no personal data or credentials; sensitive fields redacted at the logging boundary.
 
@@ -170,6 +170,11 @@ Two more on the backend side:
 - ❌ "The endpoint is safe because CORS restricts which origins can call it." CORS is a browser policy, not authorization. A non-browser client ignores it entirely.
 - ❌ "Only our extension knows that site ID, so it's safe to key on." Site IDs appear in published page source.
 - ❌ "The source map points at `dist/development`, so rebuild for production." A path name is not a build mode. react-router 7.x publishes every consumer's code under `dist/development`, and its `localhost` URL fallback ships in production too. Prove a development build with a marker that differs from the package's production output, or drop the finding.
+
+Two more on OAuth installs:
+
+- ❌ "Use the Install link from Apps & Integrations as the Marketplace Install URL." For Data Client/Hybrid Webflow OAuth installs, that link is a fixed authorize URL with no `state`. Your Install URL must be an endpoint you own that mints a session-bound `state` per request.
+- ❌ "Accept code-only callbacks so the Workspace Install button keeps working." For Data Client/Hybrid Webflow OAuth installs, that button is a developer-only shortcut outside the customer install path. Keep rejecting any callback without a session-bound `state`; a callback that accepts a stripped `state` fails review.
 
 ---
 

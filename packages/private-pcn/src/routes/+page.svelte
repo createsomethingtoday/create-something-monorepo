@@ -31,8 +31,8 @@
           useful.
         </p>
         <div class="hero-actions">
-          <a class="button" href="/apply" data-impact="primary_action"
-            >Apply as a creator <Icon name="arrow-right" /></a
+          <a class="button" href="/join" data-impact="primary_action"
+            >Request an invitation <Icon name="arrow-right" /></a
           ><a class="inline-link" href="#network-preview"
             >Explore the possibilities <Icon name="arrow-down" /></a
           >
@@ -68,7 +68,7 @@
           <li>Your network address, membership controls, and record export</li>
         </ul>
         <p>No automatic overage charges. Cancel renewal through your billing portal.</p>
-        <a class="button" href="/apply">Apply to create a network <Icon name="arrow-right" /></a>
+        <a class="button" href="/join">Introduce your practice <Icon name="arrow-right" /></a>
         <p class="muted">
           Custom domains, migrations, and bespoke integrations are available through a separately
           scoped managed build.
@@ -137,8 +137,8 @@
         Show your credentials and teach one concrete agentic engineering technique. Once approved,
         build a network around the practice and assets you want to share.
       </p>
-      <a class="button" href="/apply" data-impact="primary_action"
-        >Apply as a creator <Icon name="arrow-right" /></a
+      <a class="button" href="/join" data-impact="primary_action"
+        >Request an invitation <Icon name="arrow-right" /></a
       >
       <p>
         <a href="/support">Company project? Explore private support <Icon name="arrow-right" /></a>
@@ -172,7 +172,7 @@
 
 <style>
   .launch-plan {
-    padding: 80px 4.5vw;
+    padding: 80px var(--pcn-page-gutter);
     border-top: 1px solid var(--line);
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -181,8 +181,11 @@
   .launch-plan h2 {
     font-size: clamp(36px, 4vw, 60px);
     letter-spacing: -2px;
+    line-height: var(--pcn-leading-heading);
+    margin-bottom: var(--pcn-gap-heading);
   }
   .plan-price {
+    line-height: var(--pcn-leading-price);
     font-size: 48px;
     letter-spacing: -2px;
   }
@@ -191,6 +194,8 @@
     font-size: 14px;
     letter-spacing: 0;
     color: var(--muted);
+    line-height: var(--pcn-leading-body);
+    margin-top: var(--pcn-gap-action);
   }
   .launch-plan li {
     line-height: 1.6;

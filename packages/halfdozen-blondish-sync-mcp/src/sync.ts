@@ -36,6 +36,7 @@ type SourceToHdOptions = {
   sourcePageIds?: string[];
   repairFields?: SourceToHdRepairField[];
   createMissing?: boolean;
+  clientOnly?: boolean;
 };
 
 type AttachmentFallback = {
@@ -94,6 +95,7 @@ export async function preflight(env: Env): Promise<SyncResult> {
       source_status_options: sourceStatusOptions,
       target_ext_page_id_property: config.targetExtPageIdProperty,
       target_client_property_present: Boolean(config.targetSchema.Client),
+      target_client_page_id: config.clientPageId ?? null,
       source_properties: Object.keys(config.sourceSchema).sort(),
       target_properties: Object.keys(config.targetSchema).sort(),
     };
@@ -352,13 +354,16 @@ export async function syncSourceTicketsToHalfDozen(
       resolveSourcePages(env, config.sourceDataSourceId, options.sourcePageIds),
       queryAllPages(env, 'halfdozen', config.targetDataSourceId),
     ]);
+    const duplicateExtIds = new Set<string>();
     const targetByExtPageId = new Map<string, NotionPage>();
     for (const page of targetPages) {
       const extPageId = readText(page, config.targetExtPageIdProperty);
+      if (extPageId && targetByExtPageId.has(extPageId)) duplicateExtIds.add(extPageId);
       if (extPageId && !targetByExtPageId.has(extPageId)) targetByExtPageId.set(extPageId, page);
     }
 
-    const ownerUserId = await findUserIdByEmail(env, 'halfdozen', config.ownerEmail);
+    if (options.clientOnly && !config.clientPageId) throw new Error('Client-only repair requires SYNC_CLIENT_PAGE_ID.');
+    const ownerUserId = options.clientOnly ? null : await findUserIdByEmail(env, 'halfdozen', config.ownerEmail);
     for (const sourcePage of sourcePages) {
       try {
         const sourceAttachmentFallbacks: AttachmentFallback[] = [];
@@ -373,8 +378,22 @@ export async function syncSourceTicketsToHalfDozen(
           continue;
         }
 
+        if (duplicateExtIds.has(extPageId)) throw new Error(`Ambiguous target match for ${extPageId}; no repair applied.`);
         const existingTargetPage = targetByExtPageId.get(extPageId);
         if (existingTargetPage) {
+          if (options.clientOnly) {
+            const fresh = await retrievePage(env, 'halfdozen', existingTargetPage.id);
+            if (isTrashed(fresh) || fresh.parent?.data_source_id !== config.targetDataSourceId || readText(fresh, config.targetExtPageIdProperty) !== extPageId) {
+              throw new Error('Target match changed before Client repair.');
+            }
+            const patch = clientRelationPatch(config, fresh);
+            if (Object.keys(patch).length) {
+              await updatePage(env, 'halfdozen', fresh.id, patch);
+              result.updated += 1;
+              propertyRepairs += 1;
+            } else result.skipped += 1;
+            continue;
+          }
           const existingTargetBlocks = await listAllBlockChildren(env, 'halfdozen', existingTargetPage.id);
           const knownAttachmentFallbacks = attachmentFallbacksFromTargetBlocks(existingTargetBlocks, sourcePage);
           const externalPatch = filterTargetPatch(
@@ -409,7 +428,7 @@ export async function syncSourceTicketsToHalfDozen(
           continue;
         }
 
-        if (options.createMissing === false) {
+        if (options.clientOnly || options.createMissing === false) {
           result.skipped += 1;
           continue;
         }
@@ -664,6 +683,21 @@ async function resolveSyncConfig(env: Env): Promise<SyncConfig> {
     throw new Error('Target property "External Page ID" or "Ext Page ID" is missing.');
   }
 
+  if (runtime.clientPageId || targetSchema.Client?.type === 'relation') {
+    if (!runtime.clientPageId || !looksLikeNotionPageId(runtime.clientPageId)) {
+      throw new Error('Client relation requires a valid SYNC_CLIENT_PAGE_ID.');
+    }
+    if (targetSchema.Client?.type !== 'relation') {
+      throw new Error('Client relation is missing or inaccessible. Share Clients [HD] with the Half Dozen sync integration.');
+    }
+    const relation = targetSchema.Client.relation;
+    const relatedId = isRecord(relation) ? relation.data_source_id : undefined;
+    const clientPage = await retrievePage(env, 'halfdozen', runtime.clientPageId);
+    if (typeof relatedId !== 'string' || clientPage.parent?.data_source_id !== relatedId || isTrashed(clientPage)) {
+      throw new Error('Configured client page is not an active page in the Client related data source.');
+    }
+  }
+
   return {
     sourceDataSourceId,
     targetDataSourceId,
@@ -678,6 +712,7 @@ async function resolveSyncConfig(env: Env): Promise<SyncConfig> {
     ownerEmail: runtime.ownerEmail,
     ownerLabel: runtime.ownerLabel,
     clientLabel: runtime.clientLabel,
+    clientPageId: runtime.clientPageId,
     sourceLabel: runtime.sourceLabel,
   };
 }
@@ -775,7 +810,8 @@ async function buildTargetCreateProperties(
   writeRequired(properties, config.targetSchema, 'Status', DEFAULT_HD_STATUS);
   writeRequired(properties, config.targetSchema, 'Source', config.sourceLabel);
   writeRequired(properties, config.targetSchema, 'Owner', config.ownerLabel, ownerUserId);
-  if (config.targetSchema.Client) writeRequired(properties, config.targetSchema, 'Client', config.clientLabel);
+  if (config.clientPageId) properties.Client = { relation: [{ id: config.clientPageId }] };
+  else if (config.targetSchema.Client) writeRequired(properties, config.targetSchema, 'Client', config.clientLabel);
   writeRequired(properties, config.targetSchema, config.targetExtPageIdProperty, readText(sourcePage, 'Page ID'));
   if (externalUrl) writeRequired(properties, config.targetSchema, 'External URL', externalUrl);
   if (sourceFiles.length > 0) {
@@ -807,7 +843,8 @@ async function buildExistingTargetPatch(
   if (currentTitle !== desiredTitle) writeRequired(properties, config.targetSchema, 'Ticket', desiredTitle);
   if (readText(targetPage, 'Source') !== config.sourceLabel) writeRequired(properties, config.targetSchema, 'Source', config.sourceLabel);
   if (config.targetSchema.Owner && readText(targetPage, 'Owner') !== config.ownerLabel) writeRequired(properties, config.targetSchema, 'Owner', config.ownerLabel, ownerUserId);
-  if (config.targetSchema.Client && readText(targetPage, 'Client') !== config.clientLabel) writeRequired(properties, config.targetSchema, 'Client', config.clientLabel);
+  if (config.clientPageId) Object.assign(properties, clientRelationPatch(config, targetPage));
+  else if (config.targetSchema.Client && readText(targetPage, 'Client') !== config.clientLabel) writeRequired(properties, config.targetSchema, 'Client', config.clientLabel);
   if (extPageId && readText(targetPage, config.targetExtPageIdProperty) !== extPageId) writeRequired(properties, config.targetSchema, config.targetExtPageIdProperty, extPageId);
   if (externalUrl && readText(targetPage, 'External URL') !== externalUrl) writeRequired(properties, config.targetSchema, 'External URL', externalUrl);
   if (sourceFiles.length > 0 && !externalFilesMatch(targetPage, config.targetSchema['External Files & Media']?.type, sourceFiles)) {
@@ -824,6 +861,24 @@ async function buildExistingTargetPatch(
   }
 
   return properties;
+}
+
+function clientRelationPatch(config: SyncConfig, page: NotionPage): Record<string, unknown> {
+  if (!config.clientPageId) throw new Error('Client relation requires SYNC_CLIENT_PAGE_ID.');
+  const property = page.properties?.Client;
+  if (property?.type !== 'relation' || !Array.isArray(property.relation) || property.has_more === true) {
+    throw new Error('Client relation is missing or incomplete; refusing to overwrite existing links.');
+  }
+  const ids = property.relation.map((entry: unknown) => {
+    if (!isRecord(entry) || typeof entry.id !== 'string' || !looksLikeNotionPageId(entry.id)) {
+      throw new Error('Client relation contains an invalid page ID.');
+    }
+    return entry.id;
+  });
+  const canonical = (id: string) => id.replace(/-/g, '').toLowerCase();
+  if (ids.some((id) => canonical(id) === canonical(config.clientPageId!))) return {};
+  if (ids.length >= 100) throw new Error('Client relation exceeds the safe append limit.');
+  return { Client: { relation: [...ids, config.clientPageId].map((id) => ({ id })) } };
 }
 
 function filterTargetPatch(

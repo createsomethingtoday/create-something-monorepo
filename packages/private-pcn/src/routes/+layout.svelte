@@ -3,13 +3,18 @@
   import '../app.css';
   import { page } from '$app/state';
   let adminOpen = $state(false);
+  let publicOpen = $state(false);
+  let publicDetails = $state<HTMLDetailsElement>();
   let menuOpen = $state(false);
   let enhanced = $state(false);
   let menuButton: HTMLButtonElement;
   let adminDetails = $state<HTMLDetailsElement>();
   function dismissMenu(event: KeyboardEvent) {
     if (event.key !== 'Escape') return;
-    if (adminOpen) {
+    if (publicOpen) {
+      publicOpen = false;
+      publicDetails?.querySelector('summary')?.focus();
+    } else if (adminOpen) {
       adminOpen = false;
       adminDetails?.querySelector('summary')?.focus();
     } else if (menuOpen) {
@@ -35,6 +40,7 @@
     }
   }
   afterNavigate(({ to }) => {
+    publicOpen = false;
     adminOpen = false;
     menuOpen = false;
     if (to) trackImpact('page_view', to.url.pathname);
@@ -92,15 +98,43 @@
     aria-controls="primary-navigation"
     onclick={() => {
       menuOpen = !menuOpen;
+      publicOpen = false;
       adminOpen = false;
     }}
     >{menuOpen ? 'Close menu' : 'Menu'}
     <span aria-hidden="true">{menuOpen ? '−' : '+'}</span></button
   >
   <nav id="primary-navigation" aria-label="Primary" class:menu-open={menuOpen}>
+    {#if !data.identity}<a href="/start" aria-current={current('/start') ? 'page' : undefined}
+        >Start here</a
+      >{/if}
     <a href="/field-engineering" aria-current={current('/field-engineering') ? 'page' : undefined}
       >Field practice</a
     ><a href="/library" aria-current={current('/library') ? 'page' : undefined}>Library</a>
+    {#if !data.identity}
+      <a href="/paths" aria-current={current('/paths') ? 'page' : undefined}>Learning paths</a>
+      <details class="public-nav" bind:this={publicDetails} bind:open={publicOpen}>
+        <summary class:active={['/join', '/support', '/signup', '/privacy', '/terms'].some(current)}
+          >More <Icon name="arrow-down" /></summary
+        >
+        <div class="public-links">
+          <div role="group" aria-label="Connect">
+            <p class="nav-group-label">Connect</p>
+            <a href="/join" aria-current={current('/join') ? 'page' : undefined}>Request invitation</a>
+            <a href="/support" aria-current={current('/support') ? 'page' : undefined}>Support</a>
+          </div>
+          <div role="group" aria-label="Account">
+            <p class="nav-group-label">Account</p>
+            <a href="/signup" aria-current={current('/signup') ? 'page' : undefined}>Create account</a>
+          </div>
+          <div role="group" aria-label="Legal">
+            <p class="nav-group-label">Legal</p>
+            <a href="/privacy" aria-current={current('/privacy') ? 'page' : undefined}>Privacy</a>
+            <a href="/terms" aria-current={current('/terms') ? 'page' : undefined}>Terms</a>
+          </div>
+        </div>
+      </details>
+    {/if}
     {#if data.identity}<a
         href="/collection"
         aria-current={current('/collection') ? 'page' : undefined}>Your collection</a
@@ -108,7 +142,7 @@
         >Remote support</a
       ><a href="/dashboard" aria-current={current('/dashboard') ? 'page' : undefined}
         >Builder workspace</a
-      >{:else}<a href="/login"
+      >{:else}<a href="/login" aria-current={current('/login') ? 'page' : undefined}
         >Sign in <span aria-hidden="true"><Icon name="arrow-right" /></span></a
       >{/if}
     {#if data.reviewer}
@@ -140,6 +174,47 @@
 </footer>
 
 <style>
+  .public-nav {
+    position: relative;
+  }
+  .public-nav summary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: var(--pcn-control-height);
+    cursor: pointer;
+    list-style: none;
+  }
+  .public-nav summary::-webkit-details-marker {
+    display: none;
+  }
+  .public-links {
+    position: absolute;
+    right: 0;
+    top: 100%;
+    z-index: 20;
+    width: 260px;
+    padding: var(--space-performance-sm);
+    background: var(--color-performance-ink);
+    border: 1px solid var(--line);
+  }
+  .public-links > div + div {
+    border-top: 1px solid var(--line);
+    margin-top: var(--space-performance-xs);
+    padding-top: var(--space-performance-sm);
+  }
+  .nav-group-label {
+    margin: 0;
+    padding: 0 12px;
+    color: var(--muted);
+    font: 11px/1.7 monospace;
+    letter-spacing: 1.8px;
+    text-transform: uppercase;
+  }
+  .public-links a {
+    padding: 12px;
+  }
+
   .admin-nav {
     position: relative;
   }
@@ -166,7 +241,8 @@
     align-items: center;
   }
   .masthead nav a[aria-current='page'],
-  .admin-nav summary.active {
+  .admin-nav summary.active,
+  .public-nav summary.active {
     color: var(--signal);
     text-decoration: underline;
     text-underline-offset: 6px;
@@ -182,7 +258,7 @@
   }
   .masthead nav a,
   .admin-nav summary {
-    min-height: 44px;
+    min-height: var(--pcn-control-height);
     display: flex;
     align-items: center;
   }
@@ -190,19 +266,36 @@
     gap: 8px;
   }
   @media (max-width: 1100px) {
+    .public-nav {
+      border-top: 1px solid var(--line);
+      margin-top: 12px;
+      padding-top: 12px;
+    }
+    .public-nav summary {
+      min-height: 48px;
+    }
+    .public-links {
+      position: static;
+      width: auto;
+      border: 0;
+      border-left: 1px solid var(--line);
+      margin: 4px 0 8px;
+      padding: 0 0 0 16px;
+    }
+
     .masthead {
       display: grid;
       grid-template-columns: 1fr auto;
       align-items: center;
       gap: 0;
-      padding: 20px 24px;
+      padding: 20px var(--pcn-page-gutter);
     }
     .enhanced .menu-toggle {
       display: inline-flex;
       align-items: center;
       justify-content: space-between;
       gap: 24px;
-      min-height: 44px;
+      min-height: var(--pcn-control-height);
       padding: 10px 14px;
       color: var(--paper);
       background: transparent;

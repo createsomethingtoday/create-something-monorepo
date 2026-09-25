@@ -107,6 +107,7 @@ For code changes:
 - Validate the final `bundle.zip`, manifest, source maps, dependency manifest, installation URL, and requested scopes—not only source files.
 - For backend changes, test authentication, object ownership, response minimization, and failure behavior independently.
 - For Custom Code changes, test registration, application, update, removal at site and page level, and the user-facing publish prompt.
+- For a Data Client/Hybrid Webflow OAuth `state` finding (Designer Extension-only: `N/A`, no partner-owned Install URL or callback): make the listing's Install URL an endpoint the partner owns that mints a fresh, single-use `state` per request, stores it server-side bound to the browser session with an expiry, and only then redirects to `webflow.com/oauth/authorize`. A fixed authorize URL cannot satisfy this. The callback verifies and consumes `state` in one operation before the code exchange and rejects any value that is missing, mismatched, expired, already used, or not bound to the session that started the request. Negative tests cover each of those, including a `state` minted by one client and completed in a different browser. The Install button under Apps & Integrations in the partner's own Workspace opens authorize with no `state`; it is a developer-only shortcut outside the customer install path and outside what review tests, so a broken developer-Workspace button is not a reason to loosen the callback. Test the customer flow from the listing's Install URL.
 
 Do not deploy, rotate credentials, change App visibility, or submit a new version unless the authorized owner explicitly places that action in scope.
 
@@ -162,6 +163,7 @@ Do not say that every security control is explicitly published Marketplace polic
 - Do not disclose how another App failed review.
 - Do not include internal reviewer names, relationship history, dashboard IDs, or enforcement deliberations in a partner packet.
 - Do not recommend bypassing, weakening, or gaming the review process.
+- Do not accept code-only callbacks or otherwise remove `state` validation so the developer-Workspace Install button keeps working; record that button as outside the customer path instead.
 - Do not retest a live exposure after sufficient non-secret evidence exists.
 - Do not call an uncommitted source fix deployed, an uploaded bundle installed, or a runtime observation accepted.
 

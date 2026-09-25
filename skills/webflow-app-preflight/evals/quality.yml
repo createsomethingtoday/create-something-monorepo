@@ -125,3 +125,25 @@ evals:
         value: 'production output'
       - type: 'not_contains'
         value: 'rebuild for production'
+  - id: 12
+    input: "Our Marketplace Install URL is https://webflow.com/oauth/authorize?response_type=code&client_id=abc&scope=sites:read. Review told us to reject callbacks without state, but the Install button on our Workspace's Apps & Integrations page sends none, so we plan to accept code-only callbacks. Separately, a state we minted with curl completed the install in a different browser."
+    expected_output: 'Explains that a fixed authorize URL cannot carry a per-request state and must be replaced by an Install URL the app owns; that the Workspace Install button is a developer-only shortcut outside the customer path and not a reason to weaken the check; and that state must be bound to the browser session that started the request and verified and consumed in one operation before the code exchange.'
+    assertions:
+      - type: 'contains'
+        value: 'Install URL'
+      - type: 'contains'
+        value: 'browser session'
+      - type: 'contains'
+        value: 'developer-only'
+      - type: 'not_contains'
+        value: 'accept code-only callbacks'
+  - id: 13
+    input: 'Our Designer Extension-only App uses only Designer APIs. We have no Webflow Data Client, OAuth scopes, Install URL, or callback. Does the session-bound state gate require us to build an install endpoint?'
+    expected_output: 'Marks the partner-owned Webflow Install URL, callback, and state checks N/A for Designer Extension-only Apps; they apply to Data Client/Hybrid Webflow OAuth installs. Does not require adding OAuth infrastructure. If an issued finding demands it, preserves the finding and requests reviewer clarification.'
+    assertions:
+      - type: contains
+        value: 'Designer Extension-only'
+      - type: contains
+        value: 'N/A'
+      - type: contains
+        value: 'Data Client/Hybrid'

@@ -82,11 +82,11 @@ export function createTicketSyncMcpServer(
     server.tool(
       tools.sourceToHd,
       `Directly create or repair Half Dozen ticket rows from ${runtime.clientDisplayName} source rows. Never overwrites HD Status.`,
-      optionalPageIdsSchema.shape,
+      optionalPageIdsSchema.extend({ client_only: z.boolean().optional().describe('Only append the configured Client relation to matched rows. Never creates rows or changes other fields.') }).shape,
       async (params) => tracedJsonToolResponse(
         env,
         tools.sourceToHd,
-        () => syncSourceTicketsToHalfDozen(env, { sourcePageIds: normalizePageIds(params) }),
+        () => syncSourceTicketsToHalfDozen(env, { sourcePageIds: normalizePageIds(params), clientOnly: params.client_only }),
       ),
     );
 

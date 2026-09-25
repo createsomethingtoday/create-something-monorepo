@@ -182,3 +182,24 @@ pnpm exec wrangler secret put LANGFUSE_PUBLIC_KEY
 pnpm exec wrangler secret put LANGFUSE_SECRET_KEY
 pnpm exec wrangler secret put LANGFUSE_BASE_URL # optional
 ```
+
+### Client relation mapping
+
+When `Tickets [HD].Client` is a relation, configure `SYNC_CLIENT_PAGE_ID` with the
+client page UUID and share the related `Clients [HD]` database with the same
+Half Dozen integration. Preflight validates that the page is active and belongs
+to the relation's data source. An inaccessible relation or missing/invalid page
+mapping stops the operation. Cracked Live's mapping is in `wrangler.cracked.toml`.
+
+New tickets include this relation. Existing tickets append the configured page
+without removing existing links. Audit includes missing Client links in
+`contract_field_drifts`. Truncated relation values and ambiguous target matches
+are rejected rather than overwritten.
+
+For a scoped backfill, call the existing `cracked_sync_source_to_hd` tool with
+`client_only: true` and audited `page_ids`. This mode does not create tickets,
+upload attachments, edit body content, or change any other property. It reads
+the target again before writing and is a no-op when the link already exists.
+Notion does not provide compare-and-swap for relation updates; avoid concurrent
+manual Client edits during backfill and independently compare before/after
+statuses and relation IDs. Do not use full reconciliation for a Client backfill.

@@ -6,10 +6,13 @@ Classify every credential and scope by issuer, audience, protected resource, App
 
 Do not infer Webflow authority from generic names such as `token`, `scope`, `OAuth`, `session`, `Authorization`, or a 401 response. For third-party credentials, check the provider's documented client architecture and evaluate scope, lifetime, storage, exposure, and revocation as security controls. If a provider's browser SDK explicitly requires a short-lived client token, do not declare a Marketplace violation or require a proxy without separate evidence. For inapplicable Webflow checks, report `N/A`, not failure.
 
-## OAuth flow (Data Clients)
+## OAuth flow (Data Clients and Hybrid Apps)
 
-1. Send the user to the **Install URL** (authorization URL). The recommended form initiates OAuth directly:
-   `https://webflow.com/oauth/authorize?response_type=code&client_id=YOUR_CLIENT_ID&scope=YOUR_SCOPES`
+The partner-owned Install URL, callback, and Webflow OAuth `state` checks in this section apply only to Data Client/Hybrid Apps. For Designer Extension-only Apps, mark them `N/A`; Webflow handles installation. Third-party OAuth flows remain subject to their own provider requirements.
+
+1. Send the user to your **Install URL** — an HTTPS endpoint on your domain that you submit in the Marketplace form. It mints a fresh `state` for this request, stores it server-side against the browser session with an expiry, and redirects to the **Authorization URL**:
+   `https://webflow.com/oauth/authorize?response_type=code&client_id=YOUR_CLIENT_ID&scope=YOUR_SCOPES&state=YOUR_STATE`
+   Do not submit a fixed `webflow.com/oauth/authorize` URL as your Install URL: it cannot carry a per-request `state`, so it fails the OAuth flow security gate. The Marketplace "Install App" button and the Designer's Apps panel open whatever Install URL your listing declares; the Install button under **Apps & Integrations → App Development** in your own Workspace opens authorize directly with no `state` and is a developer-only shortcut, not a customer path.
    `redirect_uri` is **optional** here — Webflow uses the Redirect URI configured in your app settings. Only pass it explicitly if you registered more than one and need to select between them.
 2. The user approves or denies. Your demo video must show **both** paths.
 3. On approval, Webflow redirects to your Redirect URI with an authorization code.
@@ -22,10 +25,10 @@ Designer Extension–only Apps need no install URL — Webflow handles the insta
 
 Steps 1→4 cross a trust boundary, and your callback endpoint is publicly reachable. Two controls, both engineering practice rather than a Webflow-specific rule:
 
-- **Carry a `state` value and validate it.** Generate a single-use, unguessable value before step 1, store it server-side against the pending authorization, and reject any callback whose `state` is missing, unknown, expired, or already consumed. Without it, an attacker can deliver their own authorization code to your callback and get it exchanged under someone else's session — the code-injection form of CSRF. Webflow's OAuth docs document `state` explicitly as the CSRF protection for this flow.
+- **Carry a `state` value bound to the browser session, and validate it.** Generate a single-use, cryptographically random value in step 1, store it server-side against the browser session that started the request with an expiry, and reject any callback whose `state` is missing, mismatched, expired, already consumed, or not bound to that session. Verify and mark the value used in one operation before exchanging the code, so two callbacks carrying the same `state` cannot both succeed. Session binding is what makes the check "is this ticket mine" rather than only "is this ticket real": a `state` minted by one client and completed in another browser must fail. Without all of this, an attacker can deliver their own authorization code to your callback and get it exchanged under someone else's session — the code-injection form of CSRF. Webflow's authorization server accepts requests without `state`; Marketplace review does not.
 - **PKCE is not part of Webflow's documented OAuth flow.** The parameters documented for Webflow's authorize and token-exchange endpoints do not include `code_challenge`/`code_verifier` (verified against the public OAuth reference, 2026-08-03) — so in the Webflow flow, the `state` check is your CSRF control. Do use PKCE (`code_verifier`/`code_challenge`) on any third-party OAuth flows your app performs that support it: it binds the exchange to the client that began the flow, so an intercepted code isn't independently redeemable.
 
-A reviewer reading your callback handler looks for the `state` check specifically. If your exchange function takes only an authorization code as input, that reads as the check being absent.
+A reviewer reading your callback handler looks for the `state` check specifically. If your exchange function takes only an authorization code as input, that reads as the check being absent. Review also exercises the live flow from your listing's Install URL: two requests must carry different `state` values, and a callback with `state` stripped, altered, replayed, or minted outside the browser session must be rejected before any code exchange. Do not weaken the check to keep the Workspace Install button working; that developer-only button is outside the customer path and outside review.
 
 Scopes in the Install URL must be **equal to or a subset of** the scopes configured in app settings, or the install fails with an error shown to the user. Scopes use `scope:action` format; encode the colon as `%3A` in the URL.
 
