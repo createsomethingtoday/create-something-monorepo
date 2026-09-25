@@ -1,4 +1,6 @@
 <script lang="ts">
+  import FoundationEntry from '$lib/components/FoundationEntry.svelte';
+  let { data } = $props();
   import SerifPhrase from '$lib/components/SerifPhrase.svelte';
   import { inkReveal } from '$lib/ink-motion';
   import Icon from '$lib/components/Icon.svelte';
@@ -11,6 +13,7 @@
   /></svelte:head
 >
 <main id="main" class="builder-workspace">
+  {#if data.foundation}<FoundationEntry foundation={data.foundation} />{/if}
   <div class="ink-onboarding">
     <div>
       <p class="eyebrow">PRIVATE / MAKE IT YOURS</p>

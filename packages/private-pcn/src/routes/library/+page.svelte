@@ -1,4 +1,5 @@
 <script lang="ts">
+  import FoundationEntry from '$lib/components/FoundationEntry.svelte';
   import LearningOverview from '$lib/components/LearningOverview.svelte';
   import Icon from '$lib/components/Icon.svelte';
   import { onMount, onDestroy } from 'svelte';
@@ -91,6 +92,7 @@
         >{/if}
     </div>
   </div>
+  {#if data.foundation}<FoundationEntry foundation={data.foundation} />{/if}
   {#if data.identity?.role === 'blocked'}<aside class="notice">
       <strong>Public previews only</strong>
       <p>
