@@ -62,6 +62,8 @@ Checks that the eval files parse and are internally consistent, that every `cont
 
 **False-flag note.** Quality case 11 and the matching Anti-advice item were added after re-checking issued findings against the packages they cited: a `dist/development` source-map path (react-router 7.x routes every consumer there), a `localhost` literal in a URL fallback or hostname blocklist, and the `telemetry.global` block the Webflow CLI writes into `webflow.json` all ship in production builds. The skill now asks for a marker that differs from the dependency's production output before calling anything a development build.
 
+**OAuth `state` gate (2026-09-23).** Quality case 12 and two Anti-advice items encode the 2026-09-17 ruling: `state` is a pass/fail gate for Data Client/Hybrid Webflow OAuth installs (Designer Extension-only: `N/A`, no partner-owned Install URL or callback), the Install URL must be an endpoint the developer owns that mints a session-bound `state` per request (never a fixed authorize URL), and the callback verifies and consumes it in one operation. The Workspace Install button under Apps & Integrations sends no `state` and is documented as a developer-only shortcut outside the customer path, so a developer must not weaken the check to keep it working.
+
 ## Using it
 
 **In an agent that supports skills** (e.g. Claude Code): drop the `webflow-app-preflight/` directory into your skills location (for Claude Code: `~/.claude/skills/`) and invoke it when building or preparing a Webflow App.
