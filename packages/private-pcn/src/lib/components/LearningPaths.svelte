@@ -32,7 +32,7 @@
     content="noindex"
   /></svelte:head
 >
-<main id="main" class="paths-workspace">
+<main id="main" class="paths-workspace" class:paths-list={!detail && !data.path}>
   <a class="back-link" href={detail ? base : slug ? `/n/${slug}` : '/library'}
     ><Icon name="arrow-left" /> {detail ? 'All learning paths' : 'Back to sessions'}</a
   >
@@ -123,13 +123,13 @@
   {:else}
     <header>
       <p class="eyebrow">PRIVATE / LEARN BY BUILDING</p>
-      <h1>Learning paths.</h1>
+      <h1 class="paths-list-heading">Learning paths.</h1>
       <p class="outcome">
         A deliberate sequence from a technique to something you can put into practice.
       </p>
     </header>
     {#if data.canEdit}<PathEditor videos={data.videos} {slug} />{/if}
-    {#if !data.paths.length}<section class="empty-state">
+    {#if !data.paths.length}<section class="empty-state paths-list-empty">
         <h2>No paths available yet.</h2>
         <p>
           {data.canEdit
@@ -162,6 +162,15 @@
     max-width: 1280px;
     margin: auto;
     padding: var(--space-performance-lg) 4.5vw var(--space-performance-xl);
+  }
+  .paths-list {
+    padding-inline: var(--pcn-page-gutter);
+  }
+  .paths-list-heading {
+    line-height: var(--pcn-leading-heading);
+  }
+  .paths-list-empty {
+    padding: var(--pcn-empty-space);
   }
   .back-link {
     display: inline-flex;
@@ -270,6 +279,9 @@
     min-height: 44px;
   }
   @media (max-width: 760px) {
+    .paths-list-empty {
+      padding: var(--pcn-empty-space-compact);
+    }
     .path-grid {
       grid-template-columns: 1fr;
       gap: 24px;

@@ -172,7 +172,7 @@
 
 <style>
   .launch-plan {
-    padding: 80px 4.5vw;
+    padding: 80px var(--pcn-page-gutter);
     border-top: 1px solid var(--line);
     display: grid;
     grid-template-columns: 1fr 1fr;
