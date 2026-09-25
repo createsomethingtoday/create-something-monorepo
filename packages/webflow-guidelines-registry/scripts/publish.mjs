@@ -10,6 +10,7 @@
  * and changelog entries made in the page (the `working` copy) survive a rebuild.
  * Pass --reset to discard them and republish the baseline.
  */
+import vm from 'node:vm';
 import { execFileSync } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
@@ -26,6 +27,7 @@ const DESCRIPTION =
 const args = new Set(process.argv.slice(2));
 const dryRun = args.has('--dry-run');
 const reset = args.has('--reset');
+if (!dryRun && !args.has('--single-publisher')) throw new Error('Publishing requires --single-publisher after coordinating exclusive publishing. wrop atomic version locking is unverified.');
 
 function token() {
   return execFileSync('cloudflared', ['access', 'token', `--app=${BASE}`], { encoding: 'utf8' }).trim();
@@ -47,11 +49,9 @@ async function api(path, init = {}) {
   return body;
 }
 
-function readDataIsland(html) {
-  const m = html.match(/<script id="wfgr-data" type="application\/json">([\s\S]*?)<\/script>/);
-  if (!m) return null;
-  return JSON.parse(m[1].replace(/<\\\/script/g, '</script'));
-}
+const guardContext = vm.createContext({});
+vm.runInContext(readFileSync(join(root, 'src/publication-guard.js'), 'utf8') + ';globalThis.guard=PublicationGuard;', guardContext);
+const guard = guardContext.guard;
 
 const me = await api('/api/wrops/whoami');
 const found = await api(`/api/wrops?metadata.topic=${encodeURIComponent(WROP_TOPIC)}`);
@@ -59,12 +59,10 @@ const existing = found.data?.[0] ?? null;
 
 let previous = null;
 if (existing && !reset) {
-  const raw = await fetch(`${BASE}/api/wrops/${existing.slug}/raw`, { headers: { 'cf-access-token': token() } }).then((r) => r.text());
-  previous = readDataIsland(raw);
-  if (previous?.working) {
-    const edits = previous.working.changelog?.length ?? 0;
-    console.log(`carrying forward working copy from v${existing.latest_version} (${edits} changelog entries)`);
-  }
+  const response = await fetch(`${BASE}/api/wrops/${existing.slug}/raw?v=${existing.latest_version}`, { headers: { 'cf-access-token': token() } });
+  if (!response.ok) throw new Error(`Live readback failed (HTTP ${response.status}); refusing publish`);
+  previous = guard.readData(await response.text());
+  console.log(`carrying forward working copy from v${existing.latest_version} (${previous.working.changelog.length} changelog entries)`);
 }
 
 const { html, data } = build({ previous });
@@ -86,6 +84,8 @@ if (existing) {
   if (existing.created_by && existing.created_by !== me.email) {
     throw new Error(`wrop ${existing.slug} is owned by ${existing.created_by}; you are ${me.email} (403 not_owner would follow)`);
   }
+  // This detects observed intervening updates; wrop has no attested CAS contract.
+  guard.assertVersion(await api(`/api/wrops/${existing.slug}`), existing.latest_version);
   result = await api(`/api/wrops/${existing.slug}`, { method: 'PUT', body: JSON.stringify({ html }) });
   await api(`/api/wrops/${existing.slug}`, { method: 'PATCH', body: JSON.stringify({ description: DESCRIPTION, metadata }) });
 } else {

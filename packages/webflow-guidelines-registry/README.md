@@ -22,7 +22,7 @@ Live: https://wrop.wf.app/w/marketplace-guidelines-registry-59mxch (Okta via Clo
 ```bash
 pnpm test          # mdx round-trip, build, proposal codec
 pnpm build         # dist/index.html
-pnpm publish:wrop  # needs `cloudflared access login https://wrop.wf.app` once
+pnpm publish:wrop -- --single-publisher  # needs `cloudflared access login https://wrop.wf.app` once
 pnpm export        # after publishing, for the openapi-internal PR
 ```
 
@@ -40,3 +40,7 @@ wrop caps every comment and reply at 2000 characters, so a proposal cannot ride 
 - The wrop viewer `/w/…` embeds the page in an iframe; automation drives `/api/wrops/<slug>/raw?v=N` and calls `window.__guidelineRegistry.call(tool, input)`.
 - Comment pins are percentages (0–100). The comments list is eventually consistent (seconds).
 - Metadata keys must be lowercase; passcode-protected wrops are invisible to metadata lookups.
+
+## Publication safety
+
+Publishing requires an explicitly coordinated single publisher. The browser and CLI reject observed stale versions; raw readback must succeed and contain valid working data before carry-forward. No supported server compare-and-swap contract has been verified, so the final read and PUT are not atomic: simultaneous publishers remain unsupported. CLI actual publication requires `--single-publisher`; WebMCP requires `singlePublisher: true` as well as human approval. Preserve drafts and reload/reconcile after a version conflict. An explicit `--reset` is the only CLI path that intentionally discards the prior working copy. No runtime publication is authorized by repository merge alone.

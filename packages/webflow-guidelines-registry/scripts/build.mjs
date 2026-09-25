@@ -87,7 +87,7 @@ export function build(opts = {}) {
     template: readFileSync(join(root, 'src', 'template.html'), 'utf8'),
     styles: readFileSync(join(root, 'src', 'styles.css'), 'utf8'),
     app: readFileSync(join(root, 'src', 'app.js'), 'utf8'),
-    codec: readFileSync(join(root, 'src', 'proposal-codec.js'), 'utf8'),
+    codec: readFileSync(join(root, 'src', 'publication-guard.js'), 'utf8') + '\n' + readFileSync(join(root, 'src', 'proposal-codec.js'), 'utf8'),
     mdx: readFileSync(join(here, 'mdx.mjs'), 'utf8'),
   });
   if (!existsSync(distDir)) mkdirSync(distDir, { recursive: true });

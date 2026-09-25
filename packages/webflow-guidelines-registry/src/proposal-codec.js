@@ -132,7 +132,7 @@ const ProposalCodec = (() => {
     baseVersion: env.baseVersion,
     baseSource: env.baseSource,
     note: env.note,
-    sections: (env.sections || []).map((s) => ({ ...s })),
+    sections: (Array.isArray(env.sections) ? env.sections : []).map((s) => ({ ...s })),
   });
 
   // Returns null when the thread is not a proposal. Otherwise
@@ -147,7 +147,7 @@ const ProposalCodec = (() => {
     const parts = new Map();
     for (const t of replyTexts || []) {
       const c = parseChunkReply(t);
-      if (c && c.id === env.id && c.n === env.chunks && !parts.has(c.i)) parts.set(c.i, c.data);
+      if (c && Number.isInteger(c.i) && c.i >= 1 && c.i <= env.chunks && c.id === env.id && c.n === env.chunks && !parts.has(c.i)) parts.set(c.i, c.data);
     }
     const need = Number(env.chunks) || 0;
     const have = parts.size;
@@ -155,7 +155,9 @@ const ProposalCodec = (() => {
     let data = '';
     for (let i = 1; i <= need; i += 1) data += parts.get(i);
     try {
-      const payload = JSON.parse(b64urlToUtf8(data));
+      const json = b64urlToUtf8(data);
+      const payload = JSON.parse(json);
+      if (payload.type !== type || !Array.isArray(payload.sections) || !payload.sections.every(s => s && typeof s.id === 'string') || json.length !== env.bytes || shortId(json + (payload.at || '')) !== env.id) throw new Error('Proposal content does not match envelope');
       return { payload, complete: true, have, need, legacy: false, corrupt: false };
     } catch {
       return { payload: stubFrom(env), complete: false, have, need, legacy: false, corrupt: true };

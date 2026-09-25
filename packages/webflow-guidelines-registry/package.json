@@ -7,7 +7,7 @@
   "scripts": {
     "build": "node scripts/build.mjs",
     "check": "pnpm run test && pnpm run build",
-    "test": "node --test scripts/mdx.test.mjs scripts/build.test.mjs scripts/proposal-codec.test.mjs",
+    "test": "node --test scripts/mdx.test.mjs scripts/build.test.mjs scripts/proposal-codec.test.mjs scripts/publication.test.mjs",
     "sync-source": "node scripts/sync-source.mjs",
     "publish:wrop": "node scripts/publish.mjs",
     "export": "node scripts/export.mjs"

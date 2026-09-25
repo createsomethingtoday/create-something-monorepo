@@ -94,3 +94,11 @@ test('a tiny proposal still fits in one reply and round-trips', () => {
   assert.equal(chunks.length, 1);
   assert.deepEqual(plain(Codec.assemble(rootText, chunks).payload), small);
 });
+
+test('mismatched payload content fails closed despite valid chunk header', () => {
+ const small={...payload,sections:[{id:'x',raw:'original'}]};
+ const encoded=Codec.encodeProposal(small);
+ const altered={...small,sections:[{id:'x',raw:'replaced'}]};
+ const replies=[encoded.chunks[0].split('\n')[0]+'\n'+Codec.encode(JSON.stringify(altered))];
+ assert.equal(Codec.assemble(encoded.rootText,replies).complete,false);
+});

@@ -833,6 +833,7 @@ async function proposeDrafts(ids, note) {
 }
 function applyProposal(p) {
   if (p.incomplete) throw new Error(`This proposal is incomplete (${p.incomplete.have}/${p.incomplete.need} parts) — refresh in a few seconds, or ask the author to propose again.`);
+  if (p.payload.baseVersion !== WROP?.version) throw new Error('Proposal targets another version. Review and reconcile its diff against the current version before applying.');
   let n = 0;
   for (const s of p.payload.sections) {
     if (!workingSection(s.id)) continue;
@@ -888,13 +889,18 @@ async function publishVersion() {
   if (!WROP || !state.isOwner) throw new Error('Only the wrop owner can publish');
   const ids = Object.keys(state.drafts);
   if (!ids.length) throw new Error('Nothing to publish');
-  const html = await fetch(`/api/wrops/${WROP.slug}/raw?v=${WROP.version}`).then((r) => r.text());
-  const next = mergedData();
-  const json = JSON.stringify(next).replace(/<\/(script)/gi, '<\\/$1').replace(/<!--/g, '<\\!--');
-  const re = /<script id="wfgr-data" type="application\/json">[\s\S]*?<\/script>/;
-  if (!re.test(html)) throw new Error('Could not find the data island in the current version');
-  const newHtml = html.replace(re, () => `<script id="wfgr-data" type="application/json">${json}</script>`);
-  const res = await api(`/api/wrops/${WROP.slug}`, { method: 'PUT', body: JSON.stringify({ html: newHtml }) });
+  // No attested server CAS: require a single human publisher; reject observed stale state.
+  const res = await PublicationGuard.publishExisting({
+    expectedVersion: WROP.version,
+    readLatest: () => api(`/api/wrops/${WROP.slug}`),
+    readRaw: (version) => fetch(`/api/wrops/${WROP.slug}/raw?v=${version}`),
+    transform: ({ html }) => {
+      const next = mergedData();
+      const json = JSON.stringify(next).replace(/<\/(script)/gi, '<\\/$1').replace(/<!--/g, '<\\!--');
+      return html.replace(/<script id="wfgr-data" type="application\/json">[\s\S]*?<\/script>/, () => `<script id="wfgr-data" type="application/json">${json}</script>`);
+    },
+    write: (html) => api(`/api/wrops/${WROP.slug}`, { method: 'PUT', body: JSON.stringify({ html }) }),
+  });
   const proposed = new Set(ids.map((id) => state.drafts[id].proposedThread).filter(Boolean));
   state.drafts = {};
   saveDrafts();
@@ -1164,7 +1170,7 @@ root.addEventListener('click', async (ev) => {
     }
     case 'publish': {
       const ids = Object.keys(state.drafts);
-      if (!confirm(`Publish a new wrop version with ${ids.length} section change${ids.length === 1 ? '' : 's'} merged into the working copy?\n\nThis does not touch developers.webflow.com — use Export to open the openapi-internal PR.`)) return;
+      if (!confirm(`Confirm you are the only active publisher; simultaneous publishing is unsupported.\n\nPublish a new wrop version with ${ids.length} section change${ids.length === 1 ? '' : 's'} merged into the working copy?\n\nThis does not touch developers.webflow.com — use Export to open the openapi-internal PR.`)) return;
       const r = await guarded(publishVersion);
       if (r) {
         toast(`Published v${r.version}. Reloading…`, 'ok');
@@ -1441,10 +1447,11 @@ const TOOLS = [
   },
   {
     name: 'publish_version',
-    description: 'OWNER ONLY. Merge the local drafts into the working copy and mint a new wrop version (the URL stays the same; the previous version stays at ?v=N). Does not touch developers.webflow.com. Requires confirm: true. Ask the user before calling.',
-    inputSchema: { type: 'object', properties: { confirm: { type: 'boolean', description: 'Must be true. The user has approved publishing these drafts.' } }, required: ['confirm'], additionalProperties: false },
+    description: 'OWNER ONLY. Merge the local drafts into the working copy and mint a new wrop version (the URL stays the same; the previous version stays at ?v=N). Does not touch developers.webflow.com. Requires confirm: true and singlePublisher: true after coordinating exclusive publishing. Atomic server version locking is not verified. Ask the user before calling.',
+    inputSchema: { type: 'object', properties: { confirm: { type: 'boolean', description: 'Must be true. The user has approved publishing these drafts.' }, singlePublisher: { type: 'boolean', description: 'Must be true after coordinating exclusive publishing; concurrent publication is unsupported.' } }, required: ['confirm', 'singlePublisher'], additionalProperties: false },
     readOnly: false,
-    execute: async ({ confirm }) => {
+    execute: async ({ confirm, singlePublisher }) => {
+      if (singlePublisher !== true) throw new Error('Coordinate exclusive publishing first; concurrent publication is unsupported');
       if (confirm !== true) throw new Error('Set confirm: true after the user approves publishing');
       if (!WROP) throw new Error('Publishing needs the page served from wrop.wf.app');
       if (!state.isOwner) throw new Error(`Only the wrop owner (${state.meta?.created_by || 'unknown'}) can publish; propose_drafts instead`);
