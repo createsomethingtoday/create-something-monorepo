@@ -182,7 +182,7 @@
   }
   .masthead nav a,
   .admin-nav summary {
-    min-height: 44px;
+    min-height: var(--pcn-control-height);
     display: flex;
     align-items: center;
   }
@@ -195,14 +195,14 @@
       grid-template-columns: 1fr auto;
       align-items: center;
       gap: 0;
-      padding: 20px 24px;
+      padding: 20px var(--pcn-page-gutter);
     }
     .enhanced .menu-toggle {
       display: inline-flex;
       align-items: center;
       justify-content: space-between;
       gap: 24px;
-      min-height: 44px;
+      min-height: var(--pcn-control-height);
       padding: 10px 14px;
       color: var(--paper);
       background: transparent;

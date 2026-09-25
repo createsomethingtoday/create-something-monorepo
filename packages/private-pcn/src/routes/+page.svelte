@@ -181,8 +181,11 @@
   .launch-plan h2 {
     font-size: clamp(36px, 4vw, 60px);
     letter-spacing: -2px;
+    line-height: var(--pcn-leading-heading);
+    margin-bottom: var(--pcn-gap-heading);
   }
   .plan-price {
+    line-height: var(--pcn-leading-price);
     font-size: 48px;
     letter-spacing: -2px;
   }
@@ -191,6 +194,8 @@
     font-size: 14px;
     letter-spacing: 0;
     color: var(--muted);
+    line-height: var(--pcn-leading-body);
+    margin-top: var(--pcn-gap-action);
   }
   .launch-plan li {
     line-height: 1.6;
