@@ -2079,6 +2079,9 @@
       flex: none;
       max-height: 45vh;
     }
+    .diff-panel {
+      max-height: 45vh;
+    }
     .preview-rail {
       min-height: 72vh;
       height: 78vh;
