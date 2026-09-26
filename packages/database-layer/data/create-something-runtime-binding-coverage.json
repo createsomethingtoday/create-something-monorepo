@@ -1,6 +1,6 @@
 {
   "id": "substrate:create-something:runtime-binding-coverage:cloudflare",
-  "generatedAt": "2026-09-24T04:42:09.883Z",
+  "generatedAt": "2026-09-26T14:03:21.824Z",
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
   "runtime": "cloudflare",
@@ -102,7 +102,7 @@
         "atlasNodeId": "atlas_create-something_worker_apps-bettermode-marketplace-creator-agent-wrangler-jsonc",
         "relationCount": 19,
         "receiptId": "receipt:substrate:create-something:worker:apps-bettermode-marketplace-creator-agent-wrangler-jsonc",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "apps/bettermode-marketplace-creator-agent/wrangler.jsonc is bound as a Cloudflare runtime config with 18 binding refs (d1, var)."
       },
       "receipt": {
@@ -110,8 +110,8 @@
         "recordId": "substrate:create-something:worker:apps-bettermode-marketplace-creator-agent-wrangler-jsonc",
         "type": "proof",
         "summary": "bettermode-marketplace-creator-agent has first-class Substrate runtime binding coverage.",
-        "evidence": "apps/bettermode-marketplace-creator-agent/wrangler.jsonc was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "apps/bettermode-marketplace-creator-agent/wrangler.jsonc was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:apps-bettermode-marketplace-creator-agent-wrangler-jsonc",
@@ -211,7 +211,7 @@
         "atlasNodeId": "atlas_create-something_worker_apps-create-something-scheduler-wrangler-jsonc",
         "relationCount": 17,
         "receiptId": "receipt:substrate:create-something:worker:apps-create-something-scheduler-wrangler-jsonc",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "apps/create-something-scheduler/wrangler.jsonc is bound as a Cloudflare runtime config with 15 binding refs (assets, durable_object, route, var)."
       },
       "receipt": {
@@ -219,8 +219,8 @@
         "recordId": "substrate:create-something:worker:apps-create-something-scheduler-wrangler-jsonc",
         "type": "proof",
         "summary": "create-something-scheduler has first-class Substrate runtime binding coverage.",
-        "evidence": "apps/create-something-scheduler/wrangler.jsonc was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "apps/create-something-scheduler/wrangler.jsonc was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:apps-create-something-scheduler-wrangler-jsonc",
@@ -273,7 +273,7 @@
         "atlasNodeId": "atlas_create-something_worker_apps-guard-performance-lab-wrangler-toml",
         "relationCount": 5,
         "receiptId": "receipt:substrate:create-something:worker:apps-guard-performance-lab-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "apps/guard-performance-lab/wrangler.toml is bound as a Cloudflare runtime config with 4 binding refs (d1, var)."
       },
       "receipt": {
@@ -281,8 +281,8 @@
         "recordId": "substrate:create-something:worker:apps-guard-performance-lab-wrangler-toml",
         "type": "proof",
         "summary": "guard-performance-lab has first-class Substrate runtime binding coverage.",
-        "evidence": "apps/guard-performance-lab/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "apps/guard-performance-lab/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:apps-guard-performance-lab-wrangler-toml",
@@ -327,7 +327,7 @@
         "atlasNodeId": "atlas_create-something_worker_apps-marketplace-template-submission-cloud-wrangler-json",
         "relationCount": 3,
         "receiptId": "receipt:substrate:create-something:worker:apps-marketplace-template-submission-cloud-wrangler-json",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "apps/marketplace-template-submission-cloud/wrangler.json is bound as a Cloudflare runtime config with 2 binding refs (assets, var)."
       },
       "receipt": {
@@ -335,8 +335,8 @@
         "recordId": "substrate:create-something:worker:apps-marketplace-template-submission-cloud-wrangler-json",
         "type": "proof",
         "summary": "marketplace-template-submission-cloud has first-class Substrate runtime binding coverage.",
-        "evidence": "apps/marketplace-template-submission-cloud/wrangler.json was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "apps/marketplace-template-submission-cloud/wrangler.json was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:apps-marketplace-template-submission-cloud-wrangler-json",
@@ -396,7 +396,7 @@
         "atlasNodeId": "atlas_create-something_worker_apps-webflow-dashboard-cloud-wrangler-json",
         "relationCount": 6,
         "receiptId": "receipt:substrate:create-something:worker:apps-webflow-dashboard-cloud-wrangler-json",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "apps/webflow-dashboard-cloud/wrangler.json is bound as a Cloudflare runtime config with 5 binding refs (assets, d1, kv, r2, var)."
       },
       "receipt": {
@@ -404,8 +404,8 @@
         "recordId": "substrate:create-something:worker:apps-webflow-dashboard-cloud-wrangler-json",
         "type": "proof",
         "summary": "webflow-dashboard-cloud has first-class Substrate runtime binding coverage.",
-        "evidence": "apps/webflow-dashboard-cloud/wrangler.json was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "apps/webflow-dashboard-cloud/wrangler.json was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:apps-webflow-dashboard-cloud-wrangler-json",
@@ -462,7 +462,7 @@
         "atlasNodeId": "atlas_create-something_worker_apps-webflow-marketplace-category-cloud-wrangler-json",
         "relationCount": 6,
         "receiptId": "receipt:substrate:create-something:worker:apps-webflow-marketplace-category-cloud-wrangler-json",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "apps/webflow-marketplace-category-cloud/wrangler.json is bound as a Cloudflare runtime config with 5 binding refs (assets, var)."
       },
       "receipt": {
@@ -470,8 +470,8 @@
         "recordId": "substrate:create-something:worker:apps-webflow-marketplace-category-cloud-wrangler-json",
         "type": "proof",
         "summary": "webflow-marketplace-category-cloud has first-class Substrate runtime binding coverage.",
-        "evidence": "apps/webflow-marketplace-category-cloud/wrangler.json was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "apps/webflow-marketplace-category-cloud/wrangler.json was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:apps-webflow-marketplace-category-cloud-wrangler-json",
@@ -538,7 +538,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-abundance-healthcare-mcp-worker-wrangler-toml",
         "relationCount": 8,
         "receiptId": "receipt:substrate:create-something:worker:packages-abundance-healthcare-mcp-worker-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/abundance-healthcare-mcp/worker/wrangler.toml is bound as a Cloudflare runtime config with 7 binding refs (d1, durable_object, var)."
       },
       "receipt": {
@@ -546,8 +546,8 @@
         "recordId": "substrate:create-something:worker:packages-abundance-healthcare-mcp-worker-wrangler-toml",
         "type": "proof",
         "summary": "abundance-healthcare-mcp has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/abundance-healthcare-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/abundance-healthcare-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-abundance-healthcare-mcp-worker-wrangler-toml",
@@ -610,7 +610,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-abundance-jobs-mcp-worker-wrangler-toml",
         "relationCount": 7,
         "receiptId": "receipt:substrate:create-something:worker:packages-abundance-jobs-mcp-worker-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/abundance-jobs-mcp/worker/wrangler.toml is bound as a Cloudflare runtime config with 6 binding refs (d1, durable_object, var)."
       },
       "receipt": {
@@ -618,8 +618,8 @@
         "recordId": "substrate:create-something:worker:packages-abundance-jobs-mcp-worker-wrangler-toml",
         "type": "proof",
         "summary": "abundance-jobs-mcp has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/abundance-jobs-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/abundance-jobs-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-abundance-jobs-mcp-worker-wrangler-toml",
@@ -675,7 +675,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-agency-clients-cato-supply-insights-cms-wrangler-toml",
         "relationCount": 6,
         "receiptId": "receipt:substrate:create-something:worker:packages-agency-clients-cato-supply-insights-cms-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/agency/clients/cato-supply-insights-cms/wrangler.toml is bound as a Cloudflare runtime config with 5 binding refs (var)."
       },
       "receipt": {
@@ -683,8 +683,8 @@
         "recordId": "substrate:create-something:worker:packages-agency-clients-cato-supply-insights-cms-wrangler-toml",
         "type": "proof",
         "summary": "cato-supply-insights-cms has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/agency/clients/cato-supply-insights-cms/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/agency/clients/cato-supply-insights-cms/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-agency-clients-cato-supply-insights-cms-wrangler-toml",
@@ -719,7 +719,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-agency-clients-cato-supply-insights-review-wrangler-toml",
         "relationCount": 1,
         "receiptId": "receipt:substrate:create-something:worker:packages-agency-clients-cato-supply-insights-review-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/agency/clients/cato-supply-insights-review/wrangler.toml is bound as a Cloudflare runtime config with 0 binding refs (no bindings)."
       },
       "receipt": {
@@ -727,8 +727,8 @@
         "recordId": "substrate:create-something:worker:packages-agency-clients-cato-supply-insights-review-wrangler-toml",
         "type": "proof",
         "summary": "cato-supply-insights-review has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/agency/clients/cato-supply-insights-review/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/agency/clients/cato-supply-insights-review/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-agency-clients-cato-supply-insights-review-wrangler-toml",
@@ -773,7 +773,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-agency-clients-jandjhomehealth-wrangler-toml",
         "relationCount": 3,
         "receiptId": "receipt:substrate:create-something:worker:packages-agency-clients-jandjhomehealth-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/agency/clients/jandjhomehealth/wrangler.toml is bound as a Cloudflare runtime config with 2 binding refs (d1, var)."
       },
       "receipt": {
@@ -781,8 +781,8 @@
         "recordId": "substrate:create-something:worker:packages-agency-clients-jandjhomehealth-wrangler-toml",
         "type": "proof",
         "summary": "jandjhomehealth has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/agency/clients/jandjhomehealth/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/agency/clients/jandjhomehealth/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-agency-clients-jandjhomehealth-wrangler-toml",
@@ -829,7 +829,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-agency-clients-outerfields-mcp-remote-wrangler-toml",
         "relationCount": 4,
         "receiptId": "receipt:substrate:create-something:worker:packages-agency-clients-outerfields-mcp-remote-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/agency/clients/outerfields/mcp-remote/wrangler.toml is bound as a Cloudflare runtime config with 2 binding refs (d1, route)."
       },
       "receipt": {
@@ -837,8 +837,8 @@
         "recordId": "substrate:create-something:worker:packages-agency-clients-outerfields-mcp-remote-wrangler-toml",
         "type": "proof",
         "summary": "outerfields-pcn-mcp has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/agency/clients/outerfields/mcp-remote/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/agency/clients/outerfields/mcp-remote/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-agency-clients-outerfields-mcp-remote-wrangler-toml",
@@ -898,7 +898,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-agency-clients-outerfields-wrangler-jsonc",
         "relationCount": 6,
         "receiptId": "receipt:substrate:create-something:worker:packages-agency-clients-outerfields-wrangler-jsonc",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/agency/clients/outerfields/wrangler.jsonc is bound as a Cloudflare runtime config with 5 binding refs (d1, kv, r2, var)."
       },
       "receipt": {
@@ -906,8 +906,8 @@
         "recordId": "substrate:create-something:worker:packages-agency-clients-outerfields-wrangler-jsonc",
         "type": "proof",
         "summary": "outerfields-pcn has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/agency/clients/outerfields/wrangler.jsonc was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/agency/clients/outerfields/wrangler.jsonc was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-agency-clients-outerfields-wrangler-jsonc",
@@ -967,7 +967,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-agency-clients-outerfields-wrangler-toml",
         "relationCount": 6,
         "receiptId": "receipt:substrate:create-something:worker:packages-agency-clients-outerfields-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/agency/clients/outerfields/wrangler.toml is bound as a Cloudflare runtime config with 5 binding refs (d1, kv, r2, var)."
       },
       "receipt": {
@@ -975,8 +975,8 @@
         "recordId": "substrate:create-something:worker:packages-agency-clients-outerfields-wrangler-toml",
         "type": "proof",
         "summary": "outerfields-pcn has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/agency/clients/outerfields/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/agency/clients/outerfields/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-agency-clients-outerfields-wrangler-toml",
@@ -1011,7 +1011,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-agency-clients-the-stack-wrangler-jsonc",
         "relationCount": 1,
         "receiptId": "receipt:substrate:create-something:worker:packages-agency-clients-the-stack-wrangler-jsonc",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/agency/clients/the-stack/wrangler.jsonc is bound as a Cloudflare runtime config with 0 binding refs (no bindings)."
       },
       "receipt": {
@@ -1019,8 +1019,8 @@
         "recordId": "substrate:create-something:worker:packages-agency-clients-the-stack-wrangler-jsonc",
         "type": "proof",
         "summary": "the-stack-client has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/agency/clients/the-stack/wrangler.jsonc was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/agency/clients/the-stack/wrangler.jsonc was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-agency-clients-the-stack-wrangler-jsonc",
@@ -1066,7 +1066,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-agency-workers-dental-agent-router-wrangler-toml",
         "relationCount": 3,
         "receiptId": "receipt:substrate:create-something:worker:packages-agency-workers-dental-agent-router-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/agency/workers/dental-agent-router/wrangler.toml is bound as a Cloudflare runtime config with 2 binding refs (d1, kv)."
       },
       "receipt": {
@@ -1074,8 +1074,8 @@
         "recordId": "substrate:create-something:worker:packages-agency-workers-dental-agent-router-wrangler-toml",
         "type": "proof",
         "summary": "dental-agent-router has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/agency/workers/dental-agent-router/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/agency/workers/dental-agent-router/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-agency-workers-dental-agent-router-wrangler-toml",
@@ -1135,7 +1135,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-agency-workers-social-poster-wrangler-toml",
         "relationCount": 6,
         "receiptId": "receipt:substrate:create-something:worker:packages-agency-workers-social-poster-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/agency/workers/social-poster/wrangler.toml is bound as a Cloudflare runtime config with 5 binding refs (d1, kv, queue, var)."
       },
       "receipt": {
@@ -1143,8 +1143,8 @@
         "recordId": "substrate:create-something:worker:packages-agency-workers-social-poster-wrangler-toml",
         "type": "proof",
         "summary": "social-poster has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/agency/workers/social-poster/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/agency/workers/social-poster/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-agency-workers-social-poster-wrangler-toml",
@@ -1240,7 +1240,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-agency-wrangler-jsonc",
         "relationCount": 15,
         "receiptId": "receipt:substrate:create-something:worker:packages-agency-wrangler-jsonc",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/agency/wrangler.jsonc is bound as a Cloudflare runtime config with 14 binding refs (d1, kv, r2, var)."
       },
       "receipt": {
@@ -1248,8 +1248,8 @@
         "recordId": "substrate:create-something:worker:packages-agency-wrangler-jsonc",
         "type": "proof",
         "summary": "create-something-agency has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/agency/wrangler.jsonc was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/agency/wrangler.jsonc was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-agency-wrangler-jsonc",
@@ -1313,7 +1313,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-airtable-primary-tags-worker-wrangler-jsonc",
         "relationCount": 8,
         "receiptId": "receipt:substrate:create-something:worker:packages-airtable-primary-tags-worker-wrangler-jsonc",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/airtable-primary-tags-worker/wrangler.jsonc is bound as a Cloudflare runtime config with 7 binding refs (var)."
       },
       "receipt": {
@@ -1321,8 +1321,8 @@
         "recordId": "substrate:create-something:worker:packages-airtable-primary-tags-worker-wrangler-jsonc",
         "type": "proof",
         "summary": "airtable-primary-tags has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/airtable-primary-tags-worker/wrangler.jsonc was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/airtable-primary-tags-worker/wrangler.jsonc was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-airtable-primary-tags-worker-wrangler-jsonc",
@@ -1374,7 +1374,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-app-governance-db-dashboard-wrangler-toml",
         "relationCount": 5,
         "receiptId": "receipt:substrate:create-something:worker:packages-app-governance-db-dashboard-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/app-governance-db/dashboard/wrangler.toml is bound as a Cloudflare runtime config with 3 binding refs (assets, d1, route)."
       },
       "receipt": {
@@ -1382,8 +1382,8 @@
         "recordId": "substrate:create-something:worker:packages-app-governance-db-dashboard-wrangler-toml",
         "type": "proof",
         "summary": "app-governance-dashboard has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/app-governance-db/dashboard/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/app-governance-db/dashboard/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-app-governance-db-dashboard-wrangler-toml",
@@ -1440,7 +1440,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-app-governance-db-worker-wrangler-toml",
         "relationCount": 6,
         "receiptId": "receipt:substrate:create-something:worker:packages-app-governance-db-worker-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/app-governance-db/worker/wrangler.toml is bound as a Cloudflare runtime config with 4 binding refs (d1, durable_object, route)."
       },
       "receipt": {
@@ -1448,8 +1448,8 @@
         "recordId": "substrate:create-something:worker:packages-app-governance-db-worker-wrangler-toml",
         "type": "proof",
         "summary": "app-governance-db has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/app-governance-db/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/app-governance-db/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-app-governance-db-worker-wrangler-toml",
@@ -1550,7 +1550,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-bettermode-creator-mcp-worker-wrangler-toml",
         "relationCount": 17,
         "receiptId": "receipt:substrate:create-something:worker:packages-bettermode-creator-mcp-worker-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/bettermode-creator-mcp/worker/wrangler.toml is bound as a Cloudflare runtime config with 15 binding refs (d1, durable_object, route, var)."
       },
       "receipt": {
@@ -1558,8 +1558,8 @@
         "recordId": "substrate:create-something:worker:packages-bettermode-creator-mcp-worker-wrangler-toml",
         "type": "proof",
         "summary": "bettermode-creator-mcp has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/bettermode-creator-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/bettermode-creator-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-bettermode-creator-mcp-worker-wrangler-toml",
@@ -1646,7 +1646,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-calm-operator-ink-bridge-wrangler-toml",
         "relationCount": 14,
         "receiptId": "receipt:substrate:create-something:worker:packages-calm-operator-ink-bridge-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/calm-operator-ink-bridge/wrangler.toml is bound as a Cloudflare runtime config with 12 binding refs (durable_object, route, var)."
       },
       "receipt": {
@@ -1654,8 +1654,8 @@
         "recordId": "substrate:create-something:worker:packages-calm-operator-ink-bridge-wrangler-toml",
         "type": "proof",
         "summary": "calm-operator-ink-bridge has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/calm-operator-ink-bridge/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/calm-operator-ink-bridge/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-calm-operator-ink-bridge-wrangler-toml",
@@ -1729,7 +1729,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-check-asset-name-worker-wrangler-toml",
         "relationCount": 11,
         "receiptId": "receipt:substrate:create-something:worker:packages-check-asset-name-worker-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/check-asset-name-worker/wrangler.toml is bound as a Cloudflare runtime config with 9 binding refs (route, var)."
       },
       "receipt": {
@@ -1737,8 +1737,8 @@
         "recordId": "substrate:create-something:worker:packages-check-asset-name-worker-wrangler-toml",
         "type": "proof",
         "summary": "check-asset-name has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/check-asset-name-worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/check-asset-name-worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-check-asset-name-worker-wrangler-toml",
@@ -1784,7 +1784,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-clearway-workers-notifier-wrangler-toml",
         "relationCount": 3,
         "receiptId": "receipt:substrate:create-something:worker:packages-clearway-workers-notifier-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/clearway/workers/notifier/wrangler.toml is bound as a Cloudflare runtime config with 2 binding refs (d1, queue)."
       },
       "receipt": {
@@ -1792,8 +1792,8 @@
         "recordId": "substrate:create-something:worker:packages-clearway-workers-notifier-wrangler-toml",
         "type": "proof",
         "summary": "court-reserve-notifier has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/clearway/workers/notifier/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/clearway/workers/notifier/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-clearway-workers-notifier-wrangler-toml",
@@ -1844,7 +1844,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-clearway-workers-realtime-wrangler-toml",
         "relationCount": 4,
         "receiptId": "receipt:substrate:create-something:worker:packages-clearway-workers-realtime-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/clearway/workers/realtime/wrangler.toml is bound as a Cloudflare runtime config with 3 binding refs (d1, durable_object, queue)."
       },
       "receipt": {
@@ -1852,8 +1852,8 @@
         "recordId": "substrate:create-something:worker:packages-clearway-workers-realtime-wrangler-toml",
         "type": "proof",
         "summary": "court-reserve-realtime has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/clearway/workers/realtime/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/clearway/workers/realtime/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-clearway-workers-realtime-wrangler-toml",
@@ -1904,7 +1904,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-clearway-workers-router-wrangler-toml",
         "relationCount": 4,
         "receiptId": "receipt:substrate:create-something:worker:packages-clearway-workers-router-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/clearway/workers/router/wrangler.toml is bound as a Cloudflare runtime config with 3 binding refs (d1, kv, r2)."
       },
       "receipt": {
@@ -1912,8 +1912,8 @@
         "recordId": "substrate:create-something:worker:packages-clearway-workers-router-wrangler-toml",
         "type": "proof",
         "summary": "court-reserve-router has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/clearway/workers/router/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/clearway/workers/router/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-clearway-workers-router-wrangler-toml",
@@ -1989,7 +1989,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-clearway-wrangler-toml",
         "relationCount": 10,
         "receiptId": "receipt:substrate:create-something:worker:packages-clearway-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/clearway/wrangler.toml is bound as a Cloudflare runtime config with 9 binding refs (d1, kv, r2, var)."
       },
       "receipt": {
@@ -1997,8 +1997,8 @@
         "recordId": "substrate:create-something:worker:packages-clearway-wrangler-toml",
         "type": "proof",
         "summary": "clearway has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/clearway/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/clearway/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-clearway-wrangler-toml",
@@ -2075,7 +2075,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-client-workspace-cloudflare-wrangler-jsonc",
         "relationCount": 11,
         "receiptId": "receipt:substrate:create-something:worker:packages-client-workspace-cloudflare-wrangler-jsonc",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/client-workspace/cloudflare/wrangler.jsonc is bound as a Cloudflare runtime config with 9 binding refs (d1, durable_object, r2, route, var)."
       },
       "receipt": {
@@ -2083,8 +2083,8 @@
         "recordId": "substrate:create-something:worker:packages-client-workspace-cloudflare-wrangler-jsonc",
         "type": "proof",
         "summary": "client-workspace has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/client-workspace/cloudflare/wrangler.jsonc was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/client-workspace/cloudflare/wrangler.jsonc was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-client-workspace-cloudflare-wrangler-jsonc",
@@ -2158,7 +2158,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-codebase-vector-database-wrangler-toml",
         "relationCount": 10,
         "receiptId": "receipt:substrate:create-something:worker:packages-codebase-vector-database-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/codebase-vector-database/wrangler.toml is bound as a Cloudflare runtime config with 9 binding refs (d1, var, vectorize)."
       },
       "receipt": {
@@ -2166,8 +2166,8 @@
         "recordId": "substrate:create-something:worker:packages-codebase-vector-database-wrangler-toml",
         "type": "proof",
         "summary": "codebase-vector-database has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/codebase-vector-database/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/codebase-vector-database/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-codebase-vector-database-wrangler-toml",
@@ -2202,7 +2202,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-composio-toolkit-mcp-wrangler-toml",
         "relationCount": 1,
         "receiptId": "receipt:substrate:create-something:worker:packages-composio-toolkit-mcp-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/composio-toolkit-mcp/wrangler.toml is bound as a Cloudflare runtime config with 0 binding refs (no bindings)."
       },
       "receipt": {
@@ -2210,8 +2210,8 @@
         "recordId": "substrate:create-something:worker:packages-composio-toolkit-mcp-wrangler-toml",
         "type": "proof",
         "summary": "composio-toolkit-mcp has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/composio-toolkit-mcp/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/composio-toolkit-mcp/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-composio-toolkit-mcp-wrangler-toml",
@@ -2286,7 +2286,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-concierge-chat-wrangler-toml",
         "relationCount": 10,
         "receiptId": "receipt:substrate:create-something:worker:packages-concierge-chat-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/concierge-chat/wrangler.toml is bound as a Cloudflare runtime config with 9 binding refs (d1, r2, var)."
       },
       "receipt": {
@@ -2294,8 +2294,8 @@
         "recordId": "substrate:create-something:worker:packages-concierge-chat-wrangler-toml",
         "type": "proof",
         "summary": "abundance-concierge-chat has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/concierge-chat/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/concierge-chat/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-concierge-chat-wrangler-toml",
@@ -2347,7 +2347,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-create-something-mcp-worker-wrangler-toml",
         "relationCount": 5,
         "receiptId": "receipt:substrate:create-something:worker:packages-create-something-mcp-worker-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/create-something-mcp/worker/wrangler.toml is bound as a Cloudflare runtime config with 3 binding refs (d1, durable_object, route)."
       },
       "receipt": {
@@ -2355,8 +2355,8 @@
         "recordId": "substrate:create-something:worker:packages-create-something-mcp-worker-wrangler-toml",
         "type": "proof",
         "summary": "create-something-mcp has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/create-something-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/create-something-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-create-something-mcp-worker-wrangler-toml",
@@ -2402,7 +2402,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-cs-mcp-hub-notion-bridge-wrangler-toml",
         "relationCount": 4,
         "receiptId": "receipt:substrate:create-something:worker:packages-cs-mcp-hub-notion-bridge-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/cs-mcp-hub-notion-bridge/wrangler.toml is bound as a Cloudflare runtime config with 2 binding refs (route, var)."
       },
       "receipt": {
@@ -2410,8 +2410,8 @@
         "recordId": "substrate:create-something:worker:packages-cs-mcp-hub-notion-bridge-wrangler-toml",
         "type": "proof",
         "summary": "cs-mcp-hub-notion-bridge has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/cs-mcp-hub-notion-bridge/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/cs-mcp-hub-notion-bridge/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-cs-mcp-hub-notion-bridge-wrangler-toml",
@@ -2497,7 +2497,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-cs-mcp-hub-remote-wrangler-toml",
         "relationCount": 13,
         "receiptId": "receipt:substrate:create-something:worker:packages-cs-mcp-hub-remote-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/cs-mcp-hub-remote/wrangler.toml is bound as a Cloudflare runtime config with 12 binding refs (d1, kv, var)."
       },
       "receipt": {
@@ -2505,8 +2505,8 @@
         "recordId": "substrate:create-something:worker:packages-cs-mcp-hub-remote-wrangler-toml",
         "type": "proof",
         "summary": "cs-mcp-hub-remote has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/cs-mcp-hub-remote/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/cs-mcp-hub-remote/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-cs-mcp-hub-remote-wrangler-toml",
@@ -2565,7 +2565,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-cs-telemetry-mcp-worker-wrangler-toml",
         "relationCount": 6,
         "receiptId": "receipt:substrate:create-something:worker:packages-cs-telemetry-mcp-worker-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/cs-telemetry-mcp/worker/wrangler.toml is bound as a Cloudflare runtime config with 5 binding refs (d1, durable_object, var)."
       },
       "receipt": {
@@ -2573,8 +2573,8 @@
         "recordId": "substrate:create-something:worker:packages-cs-telemetry-mcp-worker-wrangler-toml",
         "type": "proof",
         "summary": "cs-telemetry-mcp has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/cs-telemetry-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/cs-telemetry-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-cs-telemetry-mcp-worker-wrangler-toml",
@@ -2614,7 +2614,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-database-layer-contracts-agent-commercial-v1-d1-preview-wrangler-jsonc",
         "relationCount": 2,
         "receiptId": "receipt:substrate:create-something:worker:packages-database-layer-contracts-agent-commercial-v1-d1-preview-wrangler-jsonc",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/database-layer/contracts/agent-commercial/v1/d1-preview/wrangler.jsonc is bound as a Cloudflare runtime config with 1 binding refs (d1)."
       },
       "receipt": {
@@ -2622,8 +2622,8 @@
         "recordId": "substrate:create-something:worker:packages-database-layer-contracts-agent-commercial-v1-d1-preview-wrangler-jsonc",
         "type": "proof",
         "summary": "create-something-agent-commercial-preview has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/database-layer/contracts/agent-commercial/v1/d1-preview/wrangler.jsonc was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/database-layer/contracts/agent-commercial/v1/d1-preview/wrangler.jsonc was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-database-layer-contracts-agent-commercial-v1-d1-preview-wrangler-jsonc",
@@ -2668,7 +2668,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-database-layer-worker-wrangler-toml",
         "relationCount": 3,
         "receiptId": "receipt:substrate:create-something:worker:packages-database-layer-worker-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/database-layer/worker/wrangler.toml is bound as a Cloudflare runtime config with 2 binding refs (d1, var)."
       },
       "receipt": {
@@ -2676,8 +2676,8 @@
         "recordId": "substrate:create-something:worker:packages-database-layer-worker-wrangler-toml",
         "type": "proof",
         "summary": "create-something-database-layer has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/database-layer/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/database-layer/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-database-layer-worker-wrangler-toml",
@@ -2723,7 +2723,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-exception-decisions-mcp-wrangler-jsonc",
         "relationCount": 4,
         "receiptId": "receipt:substrate:create-something:worker:packages-exception-decisions-mcp-wrangler-jsonc",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/exception-decisions-mcp/wrangler.jsonc is bound as a Cloudflare runtime config with 2 binding refs (route, var)."
       },
       "receipt": {
@@ -2731,8 +2731,8 @@
         "recordId": "substrate:create-something:worker:packages-exception-decisions-mcp-wrangler-jsonc",
         "type": "proof",
         "summary": "exception-decisions-mcp has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/exception-decisions-mcp/wrangler.jsonc was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/exception-decisions-mcp/wrangler.jsonc was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-exception-decisions-mcp-wrangler-jsonc",
@@ -2782,7 +2782,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-github-actions-runner-broker-wrangler-jsonc",
         "relationCount": 4,
         "receiptId": "receipt:substrate:create-something:worker:packages-github-actions-runner-broker-wrangler-jsonc",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/github-actions-runner-broker/wrangler.jsonc is bound as a Cloudflare runtime config with 3 binding refs (d1, durable_object, var)."
       },
       "receipt": {
@@ -2790,8 +2790,8 @@
         "recordId": "substrate:create-something:worker:packages-github-actions-runner-broker-wrangler-jsonc",
         "type": "proof",
         "summary": "github-actions-runner-broker has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/github-actions-runner-broker/wrangler.jsonc was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/github-actions-runner-broker/wrangler.jsonc was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-github-actions-runner-broker-wrangler-jsonc",
@@ -2837,7 +2837,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-gmail-notion-mcp-worker-wrangler-toml",
         "relationCount": 3,
         "receiptId": "receipt:substrate:create-something:worker:packages-gmail-notion-mcp-worker-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/gmail-notion-mcp/worker/wrangler.toml is bound as a Cloudflare runtime config with 2 binding refs (d1, durable_object)."
       },
       "receipt": {
@@ -2845,8 +2845,8 @@
         "recordId": "substrate:create-something:worker:packages-gmail-notion-mcp-worker-wrangler-toml",
         "type": "proof",
         "summary": "gmail-notion-mcp has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/gmail-notion-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/gmail-notion-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-gmail-notion-mcp-worker-wrangler-toml",
@@ -2886,7 +2886,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-gsap-validation-worker-wrangler-toml",
         "relationCount": 2,
         "receiptId": "receipt:substrate:create-something:worker:packages-gsap-validation-worker-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/gsap-validation-worker/wrangler.toml is bound as a Cloudflare runtime config with 1 binding refs (var)."
       },
       "receipt": {
@@ -2894,8 +2894,8 @@
         "recordId": "substrate:create-something:worker:packages-gsap-validation-worker-wrangler-toml",
         "type": "proof",
         "summary": "gsap-validation-worker has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/gsap-validation-worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/gsap-validation-worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-gsap-validation-worker-wrangler-toml",
@@ -2947,7 +2947,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-half-dozen-youtube-sync-worker-wrangler-toml",
         "relationCount": 5,
         "receiptId": "receipt:substrate:create-something:worker:packages-half-dozen-youtube-sync-worker-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/half-dozen-youtube-sync/worker/wrangler.toml is bound as a Cloudflare runtime config with 3 binding refs (d1, durable_object, route)."
       },
       "receipt": {
@@ -2955,8 +2955,8 @@
         "recordId": "substrate:create-something:worker:packages-half-dozen-youtube-sync-worker-wrangler-toml",
         "type": "proof",
         "summary": "halfdozen-youtube-sync-mcp has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/half-dozen-youtube-sync/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/half-dozen-youtube-sync/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-half-dozen-youtube-sync-worker-wrangler-toml",
@@ -3002,7 +3002,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-halfdozen-agent-analyzer-telemetry-mcp-worker-wrangler-toml",
         "relationCount": 3,
         "receiptId": "receipt:substrate:create-something:worker:packages-halfdozen-agent-analyzer-telemetry-mcp-worker-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/halfdozen-agent-analyzer-telemetry-mcp/worker/wrangler.toml is bound as a Cloudflare runtime config with 2 binding refs (d1, durable_object)."
       },
       "receipt": {
@@ -3010,8 +3010,8 @@
         "recordId": "substrate:create-something:worker:packages-halfdozen-agent-analyzer-telemetry-mcp-worker-wrangler-toml",
         "type": "proof",
         "summary": "halfdozen-agent-analyzer-telemetry-mcp has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/halfdozen-agent-analyzer-telemetry-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/halfdozen-agent-analyzer-telemetry-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-halfdozen-agent-analyzer-telemetry-mcp-worker-wrangler-toml",
@@ -3092,7 +3092,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-halfdozen-blondish-sync-mcp-wrangler-toml",
         "relationCount": 12,
         "receiptId": "receipt:substrate:create-something:worker:packages-halfdozen-blondish-sync-mcp-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/halfdozen-blondish-sync-mcp/wrangler.toml is bound as a Cloudflare runtime config with 11 binding refs (durable_object, var)."
       },
       "receipt": {
@@ -3100,8 +3100,8 @@
         "recordId": "substrate:create-something:worker:packages-halfdozen-blondish-sync-mcp-wrangler-toml",
         "type": "proof",
         "summary": "halfdozen-blondish-sync-mcp has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/halfdozen-blondish-sync-mcp/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/halfdozen-blondish-sync-mcp/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-halfdozen-blondish-sync-mcp-wrangler-toml",
@@ -3201,7 +3201,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-halfdozen-dm-mcp-worker-wrangler-toml",
         "relationCount": 17,
         "receiptId": "receipt:substrate:create-something:worker:packages-halfdozen-dm-mcp-worker-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/halfdozen-dm-mcp/worker/wrangler.toml is bound as a Cloudflare runtime config with 15 binding refs (d1, durable_object, route, var)."
       },
       "receipt": {
@@ -3209,8 +3209,8 @@
         "recordId": "substrate:create-something:worker:packages-halfdozen-dm-mcp-worker-wrangler-toml",
         "type": "proof",
         "summary": "halfdozen-dm-mcp has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/halfdozen-dm-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/halfdozen-dm-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-halfdozen-dm-mcp-worker-wrangler-toml",
@@ -3279,7 +3279,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-halfdozen-gmail-sync-worker-wrangler-toml",
         "relationCount": 9,
         "receiptId": "receipt:substrate:create-something:worker:packages-halfdozen-gmail-sync-worker-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/halfdozen-gmail-sync/worker/wrangler.toml is bound as a Cloudflare runtime config with 7 binding refs (d1, durable_object, kv, route, var)."
       },
       "receipt": {
@@ -3287,8 +3287,8 @@
         "recordId": "substrate:create-something:worker:packages-halfdozen-gmail-sync-worker-wrangler-toml",
         "type": "proof",
         "summary": "halfdozen-gmail-sync-mcp has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/halfdozen-gmail-sync/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/halfdozen-gmail-sync/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-halfdozen-gmail-sync-worker-wrangler-toml",
@@ -3344,7 +3344,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-halfdozen-notion-mcp-worker-wrangler-toml",
         "relationCount": 6,
         "receiptId": "receipt:substrate:create-something:worker:packages-halfdozen-notion-mcp-worker-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/halfdozen-notion-mcp/worker/wrangler.toml is bound as a Cloudflare runtime config with 4 binding refs (d1, durable_object, route, var)."
       },
       "receipt": {
@@ -3352,8 +3352,8 @@
         "recordId": "substrate:create-something:worker:packages-halfdozen-notion-mcp-worker-wrangler-toml",
         "type": "proof",
         "summary": "halfdozen-notion-mcp has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/halfdozen-notion-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/halfdozen-notion-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-halfdozen-notion-mcp-worker-wrangler-toml",
@@ -3448,7 +3448,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-halfdozen-operator-notion-mcp-worker-wrangler-toml",
         "relationCount": 15,
         "receiptId": "receipt:substrate:create-something:worker:packages-halfdozen-operator-notion-mcp-worker-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/halfdozen-operator-notion-mcp/worker/wrangler.toml is bound as a Cloudflare runtime config with 14 binding refs (d1, durable_object, var)."
       },
       "receipt": {
@@ -3456,8 +3456,8 @@
         "recordId": "substrate:create-something:worker:packages-halfdozen-operator-notion-mcp-worker-wrangler-toml",
         "type": "proof",
         "summary": "halfdozen-operator-notion-mcp has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/halfdozen-operator-notion-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/halfdozen-operator-notion-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-halfdozen-operator-notion-mcp-worker-wrangler-toml",
@@ -3503,7 +3503,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-halfdozen-telemetry-mcp-worker-wrangler-toml",
         "relationCount": 3,
         "receiptId": "receipt:substrate:create-something:worker:packages-halfdozen-telemetry-mcp-worker-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/halfdozen-telemetry-mcp/worker/wrangler.toml is bound as a Cloudflare runtime config with 2 binding refs (d1, durable_object)."
       },
       "receipt": {
@@ -3511,8 +3511,8 @@
         "recordId": "substrate:create-something:worker:packages-halfdozen-telemetry-mcp-worker-wrangler-toml",
         "type": "proof",
         "summary": "halfdozen-telemetry-mcp has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/halfdozen-telemetry-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/halfdozen-telemetry-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-halfdozen-telemetry-mcp-worker-wrangler-toml",
@@ -3574,7 +3574,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-halfdozen-zoom-sync-worker-wrangler-toml",
         "relationCount": 7,
         "receiptId": "receipt:substrate:create-something:worker:packages-halfdozen-zoom-sync-worker-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/halfdozen-zoom-sync/worker/wrangler.toml is bound as a Cloudflare runtime config with 5 binding refs (d1, durable_object, kv, route)."
       },
       "receipt": {
@@ -3582,8 +3582,8 @@
         "recordId": "substrate:create-something:worker:packages-halfdozen-zoom-sync-worker-wrangler-toml",
         "type": "proof",
         "summary": "halfdozen-zoom-sync-mcp has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/halfdozen-zoom-sync/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/halfdozen-zoom-sync/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-halfdozen-zoom-sync-worker-wrangler-toml",
@@ -3666,7 +3666,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-halfdozen-zoom-transcript-sync-wrangler-toml",
         "relationCount": 12,
         "receiptId": "receipt:substrate:create-something:worker:packages-halfdozen-zoom-transcript-sync-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/halfdozen-zoom-transcript-sync/wrangler.toml is bound as a Cloudflare runtime config with 11 binding refs (d1, queue, var)."
       },
       "receipt": {
@@ -3674,8 +3674,8 @@
         "recordId": "substrate:create-something:worker:packages-halfdozen-zoom-transcript-sync-wrangler-toml",
         "type": "proof",
         "summary": "halfdozen-zoom-transcript-sync has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/halfdozen-zoom-transcript-sync/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/halfdozen-zoom-transcript-sync/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-halfdozen-zoom-transcript-sync-wrangler-toml",
@@ -3745,7 +3745,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-hydra-db-recall-mcp-worker-wrangler-toml",
         "relationCount": 9,
         "receiptId": "receipt:substrate:create-something:worker:packages-hydra-db-recall-mcp-worker-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/hydra-db-recall-mcp/worker/wrangler.toml is bound as a Cloudflare runtime config with 8 binding refs (d1, durable_object, var)."
       },
       "receipt": {
@@ -3753,8 +3753,8 @@
         "recordId": "substrate:create-something:worker:packages-hydra-db-recall-mcp-worker-wrangler-toml",
         "type": "proof",
         "summary": "hydra-db-recall-mcp has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/hydra-db-recall-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/hydra-db-recall-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-hydra-db-recall-mcp-worker-wrangler-toml",
@@ -3838,7 +3838,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-identity-worker-wrangler-toml",
         "relationCount": 12,
         "receiptId": "receipt:substrate:create-something:worker:packages-identity-worker-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/identity-worker/wrangler.toml is bound as a Cloudflare runtime config with 11 binding refs (d1, r2, var)."
       },
       "receipt": {
@@ -3846,8 +3846,8 @@
         "recordId": "substrate:create-something:worker:packages-identity-worker-wrangler-toml",
         "type": "proof",
         "summary": "identity-worker has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/identity-worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/identity-worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-identity-worker-wrangler-toml",
@@ -3888,7 +3888,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-interaction-atlas-mcp-worker-wrangler-toml",
         "relationCount": 2,
         "receiptId": "receipt:substrate:create-something:worker:packages-interaction-atlas-mcp-worker-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/interaction-atlas-mcp/worker/wrangler.toml is bound as a Cloudflare runtime config with 1 binding refs (d1)."
       },
       "receipt": {
@@ -3896,8 +3896,8 @@
         "recordId": "substrate:create-something:worker:packages-interaction-atlas-mcp-worker-wrangler-toml",
         "type": "proof",
         "summary": "interaction-atlas-mcp has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/interaction-atlas-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/interaction-atlas-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-interaction-atlas-mcp-worker-wrangler-toml",
@@ -3941,7 +3941,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-io-workers-bundle-scanner-api-wrangler-toml",
         "relationCount": 3,
         "receiptId": "receipt:substrate:create-something:worker:packages-io-workers-bundle-scanner-api-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/io/workers/bundle-scanner-api/wrangler.toml is bound as a Cloudflare runtime config with 2 binding refs (var)."
       },
       "receipt": {
@@ -3949,8 +3949,8 @@
         "recordId": "substrate:create-something:worker:packages-io-workers-bundle-scanner-api-wrangler-toml",
         "type": "proof",
         "summary": "bundle-scanner-api has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/io/workers/bundle-scanner-api/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/io/workers/bundle-scanner-api/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-io-workers-bundle-scanner-api-wrangler-toml",
@@ -4002,7 +4002,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-io-workers-webflow-validation-wrangler-toml",
         "relationCount": 5,
         "receiptId": "receipt:substrate:create-something:worker:packages-io-workers-webflow-validation-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/io/workers/webflow-validation/wrangler.toml is bound as a Cloudflare runtime config with 4 binding refs (var)."
       },
       "receipt": {
@@ -4010,8 +4010,8 @@
         "recordId": "substrate:create-something:worker:packages-io-workers-webflow-validation-wrangler-toml",
         "type": "proof",
         "summary": "webflow-validation has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/io/workers/webflow-validation/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/io/workers/webflow-validation/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-io-workers-webflow-validation-wrangler-toml",
@@ -4079,7 +4079,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-io-wrangler-jsonc",
         "relationCount": 8,
         "receiptId": "receipt:substrate:create-something:worker:packages-io-wrangler-jsonc",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/io/wrangler.jsonc is bound as a Cloudflare runtime config with 7 binding refs (d1, kv, r2, var)."
       },
       "receipt": {
@@ -4087,8 +4087,8 @@
         "recordId": "substrate:create-something:worker:packages-io-wrangler-jsonc",
         "type": "proof",
         "summary": "create-something-io has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/io/wrangler.jsonc was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/io/wrangler.jsonc was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-io-wrangler-jsonc",
@@ -4123,7 +4123,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-landing-page-filter-wrangler-toml",
         "relationCount": 1,
         "receiptId": "receipt:substrate:create-something:worker:packages-landing-page-filter-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/landing-page-filter/wrangler.toml is bound as a Cloudflare runtime config with 0 binding refs (no bindings)."
       },
       "receipt": {
@@ -4131,8 +4131,8 @@
         "recordId": "substrate:create-something:worker:packages-landing-page-filter-wrangler-toml",
         "type": "proof",
         "summary": "landing-page-filter has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/landing-page-filter/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/landing-page-filter/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-landing-page-filter-wrangler-toml",
@@ -4186,7 +4186,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-lms-wrangler-toml",
         "relationCount": 5,
         "receiptId": "receipt:substrate:create-something:worker:packages-lms-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/lms/wrangler.toml is bound as a Cloudflare runtime config with 4 binding refs (d1, kv, var)."
       },
       "receipt": {
@@ -4194,8 +4194,8 @@
         "recordId": "substrate:create-something:worker:packages-lms-wrangler-toml",
         "type": "proof",
         "summary": "createsomething-lms has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/lms/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/lms/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-lms-wrangler-toml",
@@ -4247,7 +4247,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-loom-mcp-remote-wrangler-toml",
         "relationCount": 5,
         "receiptId": "receipt:substrate:create-something:worker:packages-loom-mcp-remote-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/loom-mcp-remote/wrangler.toml is bound as a Cloudflare runtime config with 3 binding refs (d1, route)."
       },
       "receipt": {
@@ -4255,8 +4255,8 @@
         "recordId": "substrate:create-something:worker:packages-loom-mcp-remote-wrangler-toml",
         "type": "proof",
         "summary": "loom-mcp-remote has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/loom-mcp-remote/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/loom-mcp-remote/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-loom-mcp-remote-wrangler-toml",
@@ -4296,7 +4296,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-ltd-workers-arena-curator-wrangler-toml",
         "relationCount": 2,
         "receiptId": "receipt:substrate:create-something:worker:packages-ltd-workers-arena-curator-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/ltd/workers/arena-curator/wrangler.toml is bound as a Cloudflare runtime config with 1 binding refs (var)."
       },
       "receipt": {
@@ -4304,8 +4304,8 @@
         "recordId": "substrate:create-something:worker:packages-ltd-workers-arena-curator-wrangler-toml",
         "type": "proof",
         "summary": "arena-curator has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/ltd/workers/arena-curator/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/ltd/workers/arena-curator/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-ltd-workers-arena-curator-wrangler-toml",
@@ -4340,7 +4340,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-ltd-workers-arena-sync-wrangler-toml",
         "relationCount": 1,
         "receiptId": "receipt:substrate:create-something:worker:packages-ltd-workers-arena-sync-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/ltd/workers/arena-sync/wrangler.toml is bound as a Cloudflare runtime config with 0 binding refs (no bindings)."
       },
       "receipt": {
@@ -4348,8 +4348,8 @@
         "recordId": "substrate:create-something:worker:packages-ltd-workers-arena-sync-wrangler-toml",
         "type": "proof",
         "summary": "arena-sync has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/ltd/workers/arena-sync/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/ltd/workers/arena-sync/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-ltd-workers-arena-sync-wrangler-toml",
@@ -4404,7 +4404,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-ltd-wrangler-jsonc",
         "relationCount": 5,
         "receiptId": "receipt:substrate:create-something:worker:packages-ltd-wrangler-jsonc",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/ltd/wrangler.jsonc is bound as a Cloudflare runtime config with 4 binding refs (d1, kv, var)."
       },
       "receipt": {
@@ -4412,8 +4412,8 @@
         "recordId": "substrate:create-something:worker:packages-ltd-wrangler-jsonc",
         "type": "proof",
         "summary": "createsomething-ltd has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/ltd/wrangler.jsonc was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/ltd/wrangler.jsonc was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-ltd-wrangler-jsonc",
@@ -4454,7 +4454,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-mapping-canvas-wrangler-jsonc",
         "relationCount": 2,
         "receiptId": "receipt:substrate:create-something:worker:packages-mapping-canvas-wrangler-jsonc",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/mapping-canvas/wrangler.jsonc is bound as a Cloudflare runtime config with 1 binding refs (d1)."
       },
       "receipt": {
@@ -4462,8 +4462,8 @@
         "recordId": "substrate:create-something:worker:packages-mapping-canvas-wrangler-jsonc",
         "type": "proof",
         "summary": "create-something-mapping-canvas has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/mapping-canvas/wrangler.jsonc was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/mapping-canvas/wrangler.jsonc was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-mapping-canvas-wrangler-jsonc",
@@ -4513,7 +4513,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-maverick-admin-wrangler-toml",
         "relationCount": 4,
         "receiptId": "receipt:substrate:create-something:worker:packages-maverick-admin-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/maverick-admin/wrangler.toml is bound as a Cloudflare runtime config with 3 binding refs (d1, kv, r2)."
       },
       "receipt": {
@@ -4521,8 +4521,8 @@
         "recordId": "substrate:create-something:worker:packages-maverick-admin-wrangler-toml",
         "type": "proof",
         "summary": "maverick-admin has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/maverick-admin/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/maverick-admin/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-maverick-admin-wrangler-toml",
@@ -4582,7 +4582,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-maverick-wrangler-toml",
         "relationCount": 6,
         "receiptId": "receipt:substrate:create-something:worker:packages-maverick-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/maverick/wrangler.toml is bound as a Cloudflare runtime config with 5 binding refs (d1, kv, r2, var)."
       },
       "receipt": {
@@ -4590,8 +4590,8 @@
         "recordId": "substrate:create-something:worker:packages-maverick-wrangler-toml",
         "type": "proof",
         "summary": "maverick-x has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/maverick/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/maverick/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-maverick-wrangler-toml",
@@ -4637,7 +4637,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-meetings-mcp-worker-wrangler-toml",
         "relationCount": 3,
         "receiptId": "receipt:substrate:create-something:worker:packages-meetings-mcp-worker-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/meetings-mcp/worker/wrangler.toml is bound as a Cloudflare runtime config with 2 binding refs (d1, durable_object)."
       },
       "receipt": {
@@ -4645,8 +4645,8 @@
         "recordId": "substrate:create-something:worker:packages-meetings-mcp-worker-wrangler-toml",
         "type": "proof",
         "summary": "meetings-mcp has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/meetings-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/meetings-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-meetings-mcp-worker-wrangler-toml",
@@ -4706,7 +4706,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-meetings-wrangler-toml",
         "relationCount": 6,
         "receiptId": "receipt:substrate:create-something:worker:packages-meetings-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/meetings/wrangler.toml is bound as a Cloudflare runtime config with 5 binding refs (d1, queue, r2, var)."
       },
       "receipt": {
@@ -4714,8 +4714,8 @@
         "recordId": "substrate:create-something:worker:packages-meetings-wrangler-toml",
         "type": "proof",
         "summary": "create-something-meetings has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/meetings/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/meetings/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-meetings-wrangler-toml",
@@ -4765,7 +4765,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-notion-agent-workers-scheduler-wrangler-toml",
         "relationCount": 4,
         "receiptId": "receipt:substrate:create-something:worker:packages-notion-agent-workers-scheduler-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/notion-agent/workers/scheduler/wrangler.toml is bound as a Cloudflare runtime config with 3 binding refs (d1, kv, var)."
       },
       "receipt": {
@@ -4773,8 +4773,8 @@
         "recordId": "substrate:create-something:worker:packages-notion-agent-workers-scheduler-wrangler-toml",
         "type": "proof",
         "summary": "notion-agent-scheduler has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/notion-agent/workers/scheduler/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/notion-agent/workers/scheduler/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-notion-agent-workers-scheduler-wrangler-toml",
@@ -4828,7 +4828,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-notion-agent-wrangler-toml",
         "relationCount": 5,
         "receiptId": "receipt:substrate:create-something:worker:packages-notion-agent-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/notion-agent/wrangler.toml is bound as a Cloudflare runtime config with 4 binding refs (d1, kv, var)."
       },
       "receipt": {
@@ -4836,8 +4836,8 @@
         "recordId": "substrate:create-something:worker:packages-notion-agent-wrangler-toml",
         "type": "proof",
         "summary": "notion-agent has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/notion-agent/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/notion-agent/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-notion-agent-wrangler-toml",
@@ -4878,7 +4878,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-notion-sync-mcp-worker-wrangler-toml",
         "relationCount": 2,
         "receiptId": "receipt:substrate:create-something:worker:packages-notion-sync-mcp-worker-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/notion-sync-mcp/worker/wrangler.toml is bound as a Cloudflare runtime config with 1 binding refs (d1)."
       },
       "receipt": {
@@ -4886,8 +4886,8 @@
         "recordId": "substrate:create-something:worker:packages-notion-sync-mcp-worker-wrangler-toml",
         "type": "proof",
         "summary": "notion-sync-mcp-worker has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/notion-sync-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/notion-sync-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-notion-sync-mcp-worker-wrangler-toml",
@@ -4941,7 +4941,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-offer-savings-app-worker-wrangler-toml",
         "relationCount": 5,
         "receiptId": "receipt:substrate:create-something:worker:packages-offer-savings-app-worker-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/offer-savings-app/worker/wrangler.toml is bound as a Cloudflare runtime config with 4 binding refs (d1, durable_object, var)."
       },
       "receipt": {
@@ -4949,8 +4949,8 @@
         "recordId": "substrate:create-something:worker:packages-offer-savings-app-worker-wrangler-toml",
         "type": "proof",
         "summary": "offer-savings-agent has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/offer-savings-app/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/offer-savings-app/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-offer-savings-app-worker-wrangler-toml",
@@ -5022,7 +5022,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-ona-agents-wrangler-toml",
         "relationCount": 10,
         "receiptId": "receipt:substrate:create-something:worker:packages-ona-agents-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/ona-agents/wrangler.toml is bound as a Cloudflare runtime config with 9 binding refs (var)."
       },
       "receipt": {
@@ -5030,8 +5030,8 @@
         "recordId": "substrate:create-something:worker:packages-ona-agents-wrangler-toml",
         "type": "proof",
         "summary": "ona-agent-chat has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/ona-agents/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/ona-agents/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-ona-agents-wrangler-toml",
@@ -5088,7 +5088,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-operator-chat-agent-wrangler-jsonc",
         "relationCount": 6,
         "receiptId": "receipt:substrate:create-something:worker:packages-operator-chat-agent-wrangler-jsonc",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/operator-chat-agent/wrangler.jsonc is bound as a Cloudflare runtime config with 5 binding refs (durable_object, var)."
       },
       "receipt": {
@@ -5096,8 +5096,8 @@
         "recordId": "substrate:create-something:worker:packages-operator-chat-agent-wrangler-jsonc",
         "type": "proof",
         "summary": "create-something-operator-chat-agent has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/operator-chat-agent/wrangler.jsonc was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/operator-chat-agent/wrangler.jsonc was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-operator-chat-agent-wrangler-jsonc",
@@ -5143,7 +5143,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-owned-agent-runtime-wrangler-jsonc",
         "relationCount": 3,
         "receiptId": "receipt:substrate:create-something:worker:packages-owned-agent-runtime-wrangler-jsonc",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/owned-agent-runtime/wrangler.jsonc is bound as a Cloudflare runtime config with 2 binding refs (d1)."
       },
       "receipt": {
@@ -5151,8 +5151,8 @@
         "recordId": "substrate:create-something:worker:packages-owned-agent-runtime-wrangler-jsonc",
         "type": "proof",
         "summary": "create-something-agent-runtime has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/owned-agent-runtime/wrangler.jsonc was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/owned-agent-runtime/wrangler.jsonc was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-owned-agent-runtime-wrangler-jsonc",
@@ -5257,7 +5257,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-playbook-mcp-worker-wrangler-toml",
         "relationCount": 18,
         "receiptId": "receipt:substrate:create-something:worker:packages-playbook-mcp-worker-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/playbook-mcp/worker/wrangler.toml is bound as a Cloudflare runtime config with 16 binding refs (d1, durable_object, kv, route, var)."
       },
       "receipt": {
@@ -5265,8 +5265,8 @@
         "recordId": "substrate:create-something:worker:packages-playbook-mcp-worker-wrangler-toml",
         "type": "proof",
         "summary": "playbook-mcp has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/playbook-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/playbook-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-playbook-mcp-worker-wrangler-toml",
@@ -5384,7 +5384,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-private-pcn-wrangler-jsonc",
         "relationCount": 22,
         "receiptId": "receipt:substrate:create-something:worker:packages-private-pcn-wrangler-jsonc",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/private-pcn/wrangler.jsonc is bound as a Cloudflare runtime config with 19 binding refs (assets, d1, r2, route, var)."
       },
       "receipt": {
@@ -5392,8 +5392,8 @@
         "recordId": "substrate:create-something:worker:packages-private-pcn-wrangler-jsonc",
         "type": "proof",
         "summary": "cs-private-pcn has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/private-pcn/wrangler.jsonc was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/private-pcn/wrangler.jsonc was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-private-pcn-wrangler-jsonc",
@@ -5448,7 +5448,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-quickbooks-notion-mcp-wrangler-toml",
         "relationCount": 6,
         "receiptId": "receipt:substrate:create-something:worker:packages-quickbooks-notion-mcp-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/quickbooks-notion-mcp/wrangler.toml is bound as a Cloudflare runtime config with 4 binding refs (kv, route, var)."
       },
       "receipt": {
@@ -5456,8 +5456,8 @@
         "recordId": "substrate:create-something:worker:packages-quickbooks-notion-mcp-wrangler-toml",
         "type": "proof",
         "summary": "quickbooks-notion-mcp has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/quickbooks-notion-mcp/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/quickbooks-notion-mcp/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-quickbooks-notion-mcp-wrangler-toml",
@@ -5508,7 +5508,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-relay-wrangler-jsonc",
         "relationCount": 4,
         "receiptId": "receipt:substrate:create-something:worker:packages-relay-wrangler-jsonc",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/relay/wrangler.jsonc is bound as a Cloudflare runtime config with 3 binding refs (assets, durable_object, r2)."
       },
       "receipt": {
@@ -5516,8 +5516,8 @@
         "recordId": "substrate:create-something:worker:packages-relay-wrangler-jsonc",
         "type": "proof",
         "summary": "relay has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/relay/wrangler.jsonc was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/relay/wrangler.jsonc was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-relay-wrangler-jsonc",
@@ -5567,7 +5567,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-scanner-worker-wrangler-toml",
         "relationCount": 4,
         "receiptId": "receipt:substrate:create-something:worker:packages-scanner-worker-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/scanner-worker/wrangler.toml is bound as a Cloudflare runtime config with 3 binding refs (d1, kv, var)."
       },
       "receipt": {
@@ -5575,8 +5575,8 @@
         "recordId": "substrate:create-something:worker:packages-scanner-worker-wrangler-toml",
         "type": "proof",
         "summary": "scanner-worker has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/scanner-worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/scanner-worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-scanner-worker-wrangler-toml",
@@ -5633,7 +5633,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-schedule-mcp-worker-wrangler-toml",
         "relationCount": 6,
         "receiptId": "receipt:substrate:create-something:worker:packages-schedule-mcp-worker-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/schedule-mcp/worker/wrangler.toml is bound as a Cloudflare runtime config with 4 binding refs (d1, durable_object, route)."
       },
       "receipt": {
@@ -5641,8 +5641,8 @@
         "recordId": "substrate:create-something:worker:packages-schedule-mcp-worker-wrangler-toml",
         "type": "proof",
         "summary": "schedule-mcp has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/schedule-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/schedule-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-schedule-mcp-worker-wrangler-toml",
@@ -5693,7 +5693,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-schedule-mcp-workers-notifier-wrangler-toml",
         "relationCount": 4,
         "receiptId": "receipt:substrate:create-something:worker:packages-schedule-mcp-workers-notifier-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/schedule-mcp/workers/notifier/wrangler.toml is bound as a Cloudflare runtime config with 3 binding refs (d1, queue)."
       },
       "receipt": {
@@ -5701,8 +5701,8 @@
         "recordId": "substrate:create-something:worker:packages-schedule-mcp-workers-notifier-wrangler-toml",
         "type": "proof",
         "summary": "schedule-notifier has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/schedule-mcp/workers/notifier/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/schedule-mcp/workers/notifier/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-schedule-mcp-workers-notifier-wrangler-toml",
@@ -5772,7 +5772,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-search-wrangler-toml",
         "relationCount": 8,
         "receiptId": "receipt:substrate:create-something:worker:packages-search-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/search/wrangler.toml is bound as a Cloudflare runtime config with 7 binding refs (d1, kv, var, vectorize)."
       },
       "receipt": {
@@ -5780,8 +5780,8 @@
         "recordId": "substrate:create-something:worker:packages-search-wrangler-toml",
         "type": "proof",
         "summary": "unified-search has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/search/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/search/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-search-wrangler-toml",
@@ -5852,7 +5852,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-social-agent-wrangler-toml",
         "relationCount": 9,
         "receiptId": "receipt:substrate:create-something:worker:packages-social-agent-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/social-agent/wrangler.toml is bound as a Cloudflare runtime config with 8 binding refs (d1, kv, queue, var)."
       },
       "receipt": {
@@ -5860,8 +5860,8 @@
         "recordId": "substrate:create-something:worker:packages-social-agent-wrangler-toml",
         "type": "proof",
         "summary": "social-agent has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/social-agent/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/social-agent/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-social-agent-wrangler-toml",
@@ -5922,7 +5922,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-space-workers-agentic-executor-wrangler-toml",
         "relationCount": 6,
         "receiptId": "receipt:substrate:create-something:worker:packages-space-workers-agentic-executor-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/space/workers/agentic-executor/wrangler.toml is bound as a Cloudflare runtime config with 5 binding refs (d1, durable_object, queue, r2)."
       },
       "receipt": {
@@ -5930,8 +5930,8 @@
         "recordId": "substrate:create-something:worker:packages-space-workers-agentic-executor-wrangler-toml",
         "type": "proof",
         "summary": "agentic-executor has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/space/workers/agentic-executor/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/space/workers/agentic-executor/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-space-workers-agentic-executor-wrangler-toml",
@@ -5971,7 +5971,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-space-workers-motion-extractor-wrangler-toml",
         "relationCount": 2,
         "receiptId": "receipt:substrate:create-something:worker:packages-space-workers-motion-extractor-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/space/workers/motion-extractor/wrangler.toml is bound as a Cloudflare runtime config with 1 binding refs (var)."
       },
       "receipt": {
@@ -5979,8 +5979,8 @@
         "recordId": "substrate:create-something:worker:packages-space-workers-motion-extractor-wrangler-toml",
         "type": "proof",
         "summary": "motion-extractor has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/space/workers/motion-extractor/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/space/workers/motion-extractor/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-space-workers-motion-extractor-wrangler-toml",
@@ -6050,7 +6050,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-space-workers-nba-proxy-wrangler-toml",
         "relationCount": 9,
         "receiptId": "receipt:substrate:create-something:worker:packages-space-workers-nba-proxy-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/space/workers/nba-proxy/wrangler.toml is bound as a Cloudflare runtime config with 8 binding refs (d1, kv, var)."
       },
       "receipt": {
@@ -6058,8 +6058,8 @@
         "recordId": "substrate:create-something:worker:packages-space-workers-nba-proxy-wrangler-toml",
         "type": "proof",
         "summary": "nba-proxy has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/space/workers/nba-proxy/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/space/workers/nba-proxy/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-space-workers-nba-proxy-wrangler-toml",
@@ -6132,7 +6132,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-space-wrangler-jsonc",
         "relationCount": 9,
         "receiptId": "receipt:substrate:create-something:worker:packages-space-wrangler-jsonc",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/space/wrangler.jsonc is bound as a Cloudflare runtime config with 8 binding refs (d1, kv, r2, var)."
       },
       "receipt": {
@@ -6140,8 +6140,8 @@
         "recordId": "substrate:create-something:worker:packages-space-wrangler-jsonc",
         "type": "proof",
         "summary": "create-something-space has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/space/wrangler.jsonc was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/space/wrangler.jsonc was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-space-wrangler-jsonc",
@@ -6199,7 +6199,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-spotify-mcp-worker-wrangler-toml",
         "relationCount": 6,
         "receiptId": "receipt:substrate:create-something:worker:packages-spotify-mcp-worker-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/spotify-mcp/worker/wrangler.toml is bound as a Cloudflare runtime config with 5 binding refs (d1, durable_object, var)."
       },
       "receipt": {
@@ -6207,8 +6207,8 @@
         "recordId": "substrate:create-something:worker:packages-spotify-mcp-worker-wrangler-toml",
         "type": "proof",
         "summary": "spotify-mcp has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/spotify-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/spotify-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-spotify-mcp-worker-wrangler-toml",
@@ -6275,7 +6275,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-substrate-mcp-worker-wrangler-toml",
         "relationCount": 8,
         "receiptId": "receipt:substrate:create-something:worker:packages-substrate-mcp-worker-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/substrate-mcp/worker/wrangler.toml is bound as a Cloudflare runtime config with 6 binding refs (d1, durable_object, r2, route)."
       },
       "receipt": {
@@ -6283,8 +6283,8 @@
         "recordId": "substrate:create-something:worker:packages-substrate-mcp-worker-wrangler-toml",
         "type": "proof",
         "summary": "substrate-mcp has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/substrate-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/substrate-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-substrate-mcp-worker-wrangler-toml",
@@ -6331,7 +6331,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-template-form-uploads-worker-wrangler-toml",
         "relationCount": 4,
         "receiptId": "receipt:substrate:create-something:worker:packages-template-form-uploads-worker-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/template-form-uploads-worker/wrangler.toml is bound as a Cloudflare runtime config with 2 binding refs (r2, route)."
       },
       "receipt": {
@@ -6339,8 +6339,8 @@
         "recordId": "substrate:create-something:worker:packages-template-form-uploads-worker-wrangler-toml",
         "type": "proof",
         "summary": "template-form-uploads has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/template-form-uploads-worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/template-form-uploads-worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-template-form-uploads-worker-wrangler-toml",
@@ -6385,7 +6385,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-tend-wrangler-toml",
         "relationCount": 3,
         "receiptId": "receipt:substrate:create-something:worker:packages-tend-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/tend/wrangler.toml is bound as a Cloudflare runtime config with 2 binding refs (d1, var)."
       },
       "receipt": {
@@ -6393,8 +6393,8 @@
         "recordId": "substrate:create-something:worker:packages-tend-wrangler-toml",
         "type": "proof",
         "summary": "tend has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/tend/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/tend/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-tend-wrangler-toml",
@@ -6446,7 +6446,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-three-tier-framework-mcp-worker-wrangler-toml",
         "relationCount": 5,
         "receiptId": "receipt:substrate:create-something:worker:packages-three-tier-framework-mcp-worker-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/three-tier-framework-mcp/worker/wrangler.toml is bound as a Cloudflare runtime config with 3 binding refs (d1, durable_object, route)."
       },
       "receipt": {
@@ -6454,8 +6454,8 @@
         "recordId": "substrate:create-something:worker:packages-three-tier-framework-mcp-worker-wrangler-toml",
         "type": "proof",
         "summary": "three-tier-framework-mcp has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/three-tier-framework-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/three-tier-framework-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-three-tier-framework-mcp-worker-wrangler-toml",
@@ -6557,7 +6557,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-webflow-app-review-mcp-worker-wrangler-toml",
         "relationCount": 17,
         "receiptId": "receipt:substrate:create-something:worker:packages-webflow-app-review-mcp-worker-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/webflow-app-review-mcp/worker/wrangler.toml is bound as a Cloudflare runtime config with 16 binding refs (d1, durable_object, var)."
       },
       "receipt": {
@@ -6565,8 +6565,8 @@
         "recordId": "substrate:create-something:worker:packages-webflow-app-review-mcp-worker-wrangler-toml",
         "type": "proof",
         "summary": "webflow-app-review-mcp has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/webflow-app-review-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/webflow-app-review-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-webflow-app-review-mcp-worker-wrangler-toml",
@@ -6600,7 +6600,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-webflow-apps-admin-dashboard-wrangler-toml",
         "relationCount": 1,
         "receiptId": "receipt:substrate:create-something:worker:packages-webflow-apps-admin-dashboard-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/webflow-apps-admin/dashboard/wrangler.toml is bound as a Cloudflare runtime config with 0 binding refs (no bindings)."
       },
       "receipt": {
@@ -6608,8 +6608,8 @@
         "recordId": "substrate:create-something:worker:packages-webflow-apps-admin-dashboard-wrangler-toml",
         "type": "proof",
         "summary": "webflow-apps-audit has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/webflow-apps-admin/dashboard/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/webflow-apps-admin/dashboard/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-webflow-apps-admin-dashboard-wrangler-toml",
@@ -6649,7 +6649,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-webflow-apps-admin-workers-audit-agent-wrangler-toml",
         "relationCount": 2,
         "receiptId": "receipt:substrate:create-something:worker:packages-webflow-apps-admin-workers-audit-agent-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/webflow-apps-admin/workers/audit-agent/wrangler.toml is bound as a Cloudflare runtime config with 1 binding refs (var)."
       },
       "receipt": {
@@ -6657,8 +6657,8 @@
         "recordId": "substrate:create-something:worker:packages-webflow-apps-admin-workers-audit-agent-wrangler-toml",
         "type": "proof",
         "summary": "webflow-apps-audit-agent has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/webflow-apps-admin/workers/audit-agent/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/webflow-apps-admin/workers/audit-agent/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-webflow-apps-admin-workers-audit-agent-wrangler-toml",
@@ -6698,7 +6698,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-webflow-automation-worker-wrangler-toml",
         "relationCount": 2,
         "receiptId": "receipt:substrate:create-something:worker:packages-webflow-automation-worker-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/webflow-automation/worker/wrangler.toml is bound as a Cloudflare runtime config with 1 binding refs (var)."
       },
       "receipt": {
@@ -6706,8 +6706,8 @@
         "recordId": "substrate:create-something:worker:packages-webflow-automation-worker-wrangler-toml",
         "type": "proof",
         "summary": "webflow-onboarding-sync has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/webflow-automation/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/webflow-automation/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-webflow-automation-worker-wrangler-toml",
@@ -6766,7 +6766,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-webflow-dashboard-wrangler-jsonc",
         "relationCount": 6,
         "receiptId": "receipt:substrate:create-something:worker:packages-webflow-dashboard-wrangler-jsonc",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/webflow-dashboard/wrangler.jsonc is bound as a Cloudflare runtime config with 5 binding refs (d1, kv, r2, var)."
       },
       "receipt": {
@@ -6774,8 +6774,8 @@
         "recordId": "substrate:create-something:worker:packages-webflow-dashboard-wrangler-jsonc",
         "type": "proof",
         "summary": "webflow-dashboard has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/webflow-dashboard/wrangler.jsonc was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/webflow-dashboard/wrangler.jsonc was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-webflow-dashboard-wrangler-jsonc",
@@ -6848,7 +6848,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-webflow-marketplace-sync-wrangler-toml",
         "relationCount": 10,
         "receiptId": "receipt:substrate:create-something:worker:packages-webflow-marketplace-sync-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/webflow-marketplace-sync/wrangler.toml is bound as a Cloudflare runtime config with 9 binding refs (d1, var)."
       },
       "receipt": {
@@ -6856,8 +6856,8 @@
         "recordId": "substrate:create-something:worker:packages-webflow-marketplace-sync-wrangler-toml",
         "type": "proof",
         "summary": "webflow-marketplace-sync has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/webflow-marketplace-sync/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/webflow-marketplace-sync/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-webflow-marketplace-sync-wrangler-toml",
@@ -6897,7 +6897,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-webflow-mcp-worker-wrangler-toml",
         "relationCount": 2,
         "receiptId": "receipt:substrate:create-something:worker:packages-webflow-mcp-worker-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/webflow-mcp/worker/wrangler.toml is bound as a Cloudflare runtime config with 1 binding refs (var)."
       },
       "receipt": {
@@ -6905,8 +6905,8 @@
         "recordId": "substrate:create-something:worker:packages-webflow-mcp-worker-wrangler-toml",
         "type": "proof",
         "summary": "webflow-mcp has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/webflow-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/webflow-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-webflow-mcp-worker-wrangler-toml",
@@ -6967,7 +6967,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-webflow-review-workers-orchestrator-wrangler-toml",
         "relationCount": 6,
         "receiptId": "receipt:substrate:create-something:worker:packages-webflow-review-workers-orchestrator-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/webflow-review/workers/orchestrator/wrangler.toml is bound as a Cloudflare runtime config with 5 binding refs (d1, durable_object, kv, queue, r2)."
       },
       "receipt": {
@@ -6975,8 +6975,8 @@
         "recordId": "substrate:create-something:worker:packages-webflow-review-workers-orchestrator-wrangler-toml",
         "type": "proof",
         "summary": "webflow-review-orchestrator has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/webflow-review/workers/orchestrator/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/webflow-review/workers/orchestrator/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-webflow-review-workers-orchestrator-wrangler-toml",
@@ -7027,7 +7027,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-webflow-review-workers-queue-consumer-wrangler-toml",
         "relationCount": 4,
         "receiptId": "receipt:substrate:create-something:worker:packages-webflow-review-workers-queue-consumer-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/webflow-review/workers/queue-consumer/wrangler.toml is bound as a Cloudflare runtime config with 3 binding refs (d1, queue, r2)."
       },
       "receipt": {
@@ -7035,8 +7035,8 @@
         "recordId": "substrate:create-something:worker:packages-webflow-review-workers-queue-consumer-wrangler-toml",
         "type": "proof",
         "summary": "webflow-review-queue-consumer has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/webflow-review/workers/queue-consumer/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/webflow-review/workers/queue-consumer/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-webflow-review-workers-queue-consumer-wrangler-toml",
@@ -7094,7 +7094,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-webflow-reviewer-exceptions-mcp-worker-wrangler-toml",
         "relationCount": 6,
         "receiptId": "receipt:substrate:create-something:worker:packages-webflow-reviewer-exceptions-mcp-worker-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/webflow-reviewer-exceptions-mcp/worker/wrangler.toml is bound as a Cloudflare runtime config with 5 binding refs (d1, durable_object, var)."
       },
       "receipt": {
@@ -7102,8 +7102,8 @@
         "recordId": "substrate:create-something:worker:packages-webflow-reviewer-exceptions-mcp-worker-wrangler-toml",
         "type": "proof",
         "summary": "webflow-reviewer-exceptions-mcp has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/webflow-reviewer-exceptions-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/webflow-reviewer-exceptions-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-webflow-reviewer-exceptions-mcp-worker-wrangler-toml",
@@ -7164,7 +7164,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-webflow-scope-watcher-wrangler-toml",
         "relationCount": 7,
         "receiptId": "receipt:substrate:create-something:worker:packages-webflow-scope-watcher-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/webflow-scope-watcher/wrangler.toml is bound as a Cloudflare runtime config with 6 binding refs (kv, var)."
       },
       "receipt": {
@@ -7172,8 +7172,8 @@
         "recordId": "substrate:create-something:worker:packages-webflow-scope-watcher-wrangler-toml",
         "type": "proof",
         "summary": "webflow-scope-watcher has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/webflow-scope-watcher/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/webflow-scope-watcher/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-webflow-scope-watcher-wrangler-toml",
@@ -7230,7 +7230,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-webflow-site-analyzer-mcp-worker-wrangler-toml",
         "relationCount": 6,
         "receiptId": "receipt:substrate:create-something:worker:packages-webflow-site-analyzer-mcp-worker-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/webflow-site-analyzer-mcp/worker/wrangler.toml is bound as a Cloudflare runtime config with 5 binding refs (durable_object, var)."
       },
       "receipt": {
@@ -7238,8 +7238,8 @@
         "recordId": "substrate:create-something:worker:packages-webflow-site-analyzer-mcp-worker-wrangler-toml",
         "type": "proof",
         "summary": "webflow-site-analyzer-mcp has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/webflow-site-analyzer-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/webflow-site-analyzer-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-webflow-site-analyzer-mcp-worker-wrangler-toml",
@@ -7274,7 +7274,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-webflow-site-analyzer-mcp-workers-remote-wrangler-jsonc",
         "relationCount": 1,
         "receiptId": "receipt:substrate:create-something:worker:packages-webflow-site-analyzer-mcp-workers-remote-wrangler-jsonc",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/webflow-site-analyzer-mcp/workers/remote/wrangler.jsonc is bound as a Cloudflare runtime config with 0 binding refs (no bindings)."
       },
       "receipt": {
@@ -7282,8 +7282,8 @@
         "recordId": "substrate:create-something:worker:packages-webflow-site-analyzer-mcp-workers-remote-wrangler-jsonc",
         "type": "proof",
         "summary": "webflow-site-analyzer-mcp-remote has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/webflow-site-analyzer-mcp/workers/remote/wrangler.jsonc was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/webflow-site-analyzer-mcp/workers/remote/wrangler.jsonc was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-webflow-site-analyzer-mcp-workers-remote-wrangler-jsonc",
@@ -7346,7 +7346,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-webflow-site-analyzer-mcp-wrangler-toml",
         "relationCount": 8,
         "receiptId": "receipt:substrate:create-something:worker:packages-webflow-site-analyzer-mcp-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/webflow-site-analyzer-mcp/wrangler.toml is bound as a Cloudflare runtime config with 6 binding refs (durable_object, route, var)."
       },
       "receipt": {
@@ -7354,8 +7354,8 @@
         "recordId": "substrate:create-something:worker:packages-webflow-site-analyzer-mcp-wrangler-toml",
         "type": "proof",
         "summary": "webflow-site-analyzer-mcp has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/webflow-site-analyzer-mcp/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/webflow-site-analyzer-mcp/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-webflow-site-analyzer-mcp-wrangler-toml",
@@ -7453,7 +7453,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-webflow-template-agent-wrangler-toml",
         "relationCount": 16,
         "receiptId": "receipt:substrate:create-something:worker:packages-webflow-template-agent-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/webflow-template-agent/wrangler.toml is bound as a Cloudflare runtime config with 15 binding refs (durable_object, kv, var)."
       },
       "receipt": {
@@ -7461,8 +7461,8 @@
         "recordId": "substrate:create-something:worker:packages-webflow-template-agent-wrangler-toml",
         "type": "proof",
         "summary": "webflow-template-agent has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/webflow-template-agent/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/webflow-template-agent/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-webflow-template-agent-wrangler-toml",
@@ -7523,7 +7523,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-webflow-template-analyzer-cloudflare-wrangler-jsonc",
         "relationCount": 7,
         "receiptId": "receipt:substrate:create-something:worker:packages-webflow-template-analyzer-cloudflare-wrangler-jsonc",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/webflow-template-analyzer/cloudflare/wrangler.jsonc is bound as a Cloudflare runtime config with 6 binding refs (durable_object, var)."
       },
       "receipt": {
@@ -7531,8 +7531,8 @@
         "recordId": "substrate:create-something:worker:packages-webflow-template-analyzer-cloudflare-wrangler-jsonc",
         "type": "proof",
         "summary": "webflow-template-analyzer has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/webflow-template-analyzer/cloudflare/wrangler.jsonc was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/webflow-template-analyzer/cloudflare/wrangler.jsonc was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-webflow-template-analyzer-cloudflare-wrangler-jsonc",
@@ -7627,7 +7627,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-webflow-template-review-mcp-worker-wrangler-toml",
         "relationCount": 15,
         "receiptId": "receipt:substrate:create-something:worker:packages-webflow-template-review-mcp-worker-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/webflow-template-review-mcp/worker/wrangler.toml is bound as a Cloudflare runtime config with 14 binding refs (d1, durable_object, kv, var)."
       },
       "receipt": {
@@ -7635,8 +7635,8 @@
         "recordId": "substrate:create-something:worker:packages-webflow-template-review-mcp-worker-wrangler-toml",
         "type": "proof",
         "summary": "webflow-template-review-mcp has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/webflow-template-review-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/webflow-template-review-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-webflow-template-review-mcp-worker-wrangler-toml",
@@ -7721,7 +7721,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-webflow-template-search-wrangler-toml",
         "relationCount": 13,
         "receiptId": "receipt:substrate:create-something:worker:packages-webflow-template-search-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/webflow-template-search/wrangler.toml is bound as a Cloudflare runtime config with 12 binding refs (d1, var)."
       },
       "receipt": {
@@ -7729,8 +7729,8 @@
         "recordId": "substrate:create-something:worker:packages-webflow-template-search-wrangler-toml",
         "type": "proof",
         "summary": "webflow-template-search has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/webflow-template-search/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/webflow-template-search/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-webflow-template-search-wrangler-toml",
@@ -7781,7 +7781,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-webflow-template-validation-worker-wrangler-jsonc",
         "relationCount": 4,
         "receiptId": "receipt:substrate:create-something:worker:packages-webflow-template-validation-worker-wrangler-jsonc",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/webflow-template-validation/worker/wrangler.jsonc is bound as a Cloudflare runtime config with 3 binding refs (assets, durable_object, r2)."
       },
       "receipt": {
@@ -7789,8 +7789,8 @@
         "recordId": "substrate:create-something:worker:packages-webflow-template-validation-worker-wrangler-jsonc",
         "type": "proof",
         "summary": "validation-worker has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/webflow-template-validation/worker/wrangler.jsonc was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/webflow-template-validation/worker/wrangler.jsonc was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-webflow-template-validation-worker-wrangler-jsonc",
@@ -7835,7 +7835,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-webflow-template-views-wrangler-toml",
         "relationCount": 3,
         "receiptId": "receipt:substrate:create-something:worker:packages-webflow-template-views-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/webflow-template-views/wrangler.toml is bound as a Cloudflare runtime config with 2 binding refs (d1, var)."
       },
       "receipt": {
@@ -7843,8 +7843,8 @@
         "recordId": "substrate:create-something:worker:packages-webflow-template-views-wrangler-toml",
         "type": "proof",
         "summary": "webflow-template-views has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/webflow-template-views/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/webflow-template-views/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-webflow-template-views-wrangler-toml",
@@ -7879,7 +7879,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-wf-search-category-wrangler-toml",
         "relationCount": 1,
         "receiptId": "receipt:substrate:create-something:worker:packages-wf-search-category-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/wf-search-category/wrangler.toml is bound as a Cloudflare runtime config with 0 binding refs (no bindings)."
       },
       "receipt": {
@@ -7887,8 +7887,8 @@
         "recordId": "substrate:create-something:worker:packages-wf-search-category-wrangler-toml",
         "type": "proof",
         "summary": "wf-search-category has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/wf-search-category/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/wf-search-category/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-wf-search-category-wrangler-toml",
@@ -7942,7 +7942,7 @@
         "atlasNodeId": "atlas_create-something_worker_packages-zendesk-mcp-worker-wrangler-toml",
         "relationCount": 5,
         "receiptId": "receipt:substrate:create-something:worker:packages-zendesk-mcp-worker-wrangler-toml",
-        "updatedAt": "2026-09-24T04:42:09.883Z",
+        "updatedAt": "2026-09-26T14:03:21.824Z",
         "summary": "packages/zendesk-mcp/worker/wrangler.toml is bound as a Cloudflare runtime config with 4 binding refs (d1, durable_object, var)."
       },
       "receipt": {
@@ -7950,8 +7950,8 @@
         "recordId": "substrate:create-something:worker:packages-zendesk-mcp-worker-wrangler-toml",
         "type": "proof",
         "summary": "zendesk-mcp has first-class Substrate runtime binding coverage.",
-        "evidence": "packages/zendesk-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-24T04:42:09.883Z.",
-        "createdAt": "2026-09-24T04:42:09.883Z"
+        "evidence": "packages/zendesk-mcp/worker/wrangler.toml was parsed into Cloudflare runtime binding coverage at 2026-09-26T14:03:21.824Z.",
+        "createdAt": "2026-09-26T14:03:21.824Z"
       },
       "reviewAction": {
         "id": "action:runtime-binding-review:substrate:create-something:worker:packages-zendesk-mcp-worker-wrangler-toml",

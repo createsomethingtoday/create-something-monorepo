@@ -2,12 +2,12 @@
   "id": "substrate:create-something:topology-diagnostics:internal",
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
-  "generatedAt": "2026-09-24T04:42:10.795Z",
+  "generatedAt": "2026-09-26T14:03:22.582Z",
   "summary": {
     "valueState": "connected_map_with_review_signals",
-    "nodes": 534,
-    "edges": 1110,
-    "mapped": 534,
+    "nodes": 536,
+    "edges": 1114,
+    "mapped": 536,
     "hardGapCount": 0,
     "reviewSignalCount": 6,
     "exactDuplicatePathCount": 0,
@@ -17,19 +17,19 @@
       "package": 67,
       "app": 12,
       "agent": 35,
-      "mcp": 76,
+      "mcp": 77,
       "client": 8,
       "worker": 168,
       "doc": 6,
       "policy": 64,
-      "guide": 73,
+      "guide": 74,
       "config": 24
     },
     "tierCounts": {
-      "Mixed": 122,
+      "Mixed": 123,
       "Judgment": 108,
       "Automation": 277,
-      "Database": 27
+      "Database": 28
     }
   },
   "signals": [
@@ -60,11 +60,11 @@
       "classification": "review_signal",
       "severity": "review",
       "title": "Automation and Database balance",
-      "summary": "Automation has 277 record(s); Database has 27 record(s). This is a business-shape review signal, not a hard gap.",
+      "summary": "Automation has 277 record(s); Database has 28 record(s). This is a business-shape review signal, not a hard gap.",
       "evidence": [
         "Automation=277",
-        "Database=27",
-        "Total nodes=534"
+        "Database=28",
+        "Total nodes=536"
       ],
       "nodeIds": [],
       "paths": [],
@@ -188,7 +188,7 @@
       "classification": "review_signal",
       "severity": "review",
       "title": "mcp surface review",
-      "summary": "76 record(s) are classified as mcp.",
+      "summary": "77 record(s) are classified as mcp.",
       "evidence": [
         "@create-something/abundance-healthcare-mcp: packages/abundance-healthcare-mcp",
         "abundance-healthcare-mcp-worker: packages/abundance-healthcare-mcp/worker",
@@ -231,7 +231,7 @@
       "classification": "review_signal",
       "severity": "review",
       "title": "guide surface review",
-      "summary": "73 record(s) are classified as guide.",
+      "summary": "74 record(s) are classified as guide.",
       "evidence": [
         "AGENCY_ARTICLE_IMAGE_WORKFLOW.md: docs/guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md",
         "AGENCY_GOVERNANCE_PRODUCTS_OPERATIONS_RUNBOOK.md: docs/guides/AGENCY_GOVERNANCE_PRODUCTS_OPERATIONS_RUNBOOK.md",
