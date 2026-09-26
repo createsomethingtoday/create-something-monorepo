@@ -227,13 +227,15 @@ function asRecord(value: unknown): Record<string, unknown> {
     : {};
 }
 
-function sanitizedText(value: unknown, workspaceRoot: string): string {
+export function sanitizedText(value: unknown, workspaceRoot: string): string {
   if (typeof value !== 'string') return '';
   return value
     .split(workspaceRoot)
     .join('[workspace]')
+    .replace(/\bBearer\s+\S+/gi, 'Bearer [redacted]')
     .replace(/\bsk-[A-Za-z0-9_-]+\b/g, '[redacted]')
     .replace(/\b(?:api[_-]?key|token|secret)\s*[=:]\s*[^\s,;]+/gi, '$1=[redacted]')
+    .replace(/\b[A-Z][A-Z0-9_]*(?:TOKEN|KEY|SECRET|PASSWORD)\s*[=:]\s*[^\s,;]+/g, '[credential]=[redacted]')
     .replace(/\/(?:Users|home)\/[^/\s]+\/[^\s]+/g, '[local path]')
     .slice(0, 4_000);
 }

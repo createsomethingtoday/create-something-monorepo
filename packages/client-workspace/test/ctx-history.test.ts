@@ -4,7 +4,15 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
 
-import { searchCtxHistory } from '../src/lib/server/ctx-history.js';
+import { resolveCtxCommand, searchCtxHistory } from '../src/lib/server/ctx-history.js';
+
+test('history search resolves the launchd-safe CTX installation', () => {
+  assert.equal(resolveCtxCommand({
+    home: '/Users/operator',
+    configured: '',
+    exists: (path) => path === '/Users/operator/.local/bin/ctx'
+  }), '/Users/operator/.local/bin/ctx');
+});
 
 test('history search reports CTX absence without inventing sessions', async () => {
   const result = await searchCtxHistory({
@@ -34,6 +42,23 @@ console.log(JSON.stringify({results:[{ctx_session_id:'session-1',provider:'codex
       status: 'available',
       results: [{ sessionId: 'session-1', provider: 'codex', snippet: 'Earlier algorithm discussion' }]
     });
+  } finally {
+    await rm(directory, { recursive: true });
+  }
+});
+
+test('history search removes local paths and credential shapes from remote snippets', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'client-workspace-ctx-private-'));
+  const command = join(directory, 'ctx');
+  await writeFile(command, `#!/usr/bin/env node
+console.log(JSON.stringify({results:[{ctx_session_id:'session-1',provider:'codex',snippet:'Read /Users/operator/private/project and Bearer example-token API_KEY=secret-value sk-private-value'}]}));
+`);
+  await chmod(command, 0o700);
+  try {
+    const result = await searchCtxHistory({ workspaceRoot: '/verified/workspace', query: 'project', command });
+    assert.equal(result.status, 'available');
+    assert.match(result.results[0]?.snippet ?? '', /\[local path\]/);
+    assert.doesNotMatch(result.results[0]?.snippet ?? '', /operator|example-token|secret-value|sk-private-value/);
   } finally {
     await rm(directory, { recursive: true });
   }
