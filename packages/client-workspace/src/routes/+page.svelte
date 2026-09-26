@@ -2066,11 +2066,21 @@
       border-bottom: 1px solid var(--color-performance-line);
     }
     .chat-rail {
-      height: calc(100vh - 64px);
+      height: auto;
+    }
+    .conversation {
+      flex: none;
+      max-height: 50vh;
     }
     .activity-rail {
-      min-height: 78vh;
-      height: 88vh;
+      height: auto;
+    }
+    .activity-list {
+      flex: none;
+      max-height: 45vh;
+    }
+    .diff-panel {
+      max-height: 45vh;
     }
     .preview-rail {
       min-height: 72vh;
