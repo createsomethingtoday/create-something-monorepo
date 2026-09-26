@@ -1,0 +1,64 @@
+{
+  "startedAt": "2026-09-24T04:55:29.509Z",
+  "expectedImage": "sha256:bdf98716425792b45e1cc70236ac4fcca254e33be286163d40dab5d48a574cb7",
+  "workerVersion": "465d0305-daf4-4a37-8baf-f3dacd8d24f6",
+  "runs": [
+    {
+      "id": "run-qualification-6",
+      "mode": "memory",
+      "startedAt": 1790225729942,
+      "deadline": 1790225774942,
+      "status": "cleaned",
+      "cleanupAttempts": 0,
+      "dispatchPending": false,
+      "error": "Session 'sandbox-private-validation-v3-run-qualification-6' shell exited (exit code: 1)",
+      "cleanupReason": "normal",
+      "beforeDestroy": {
+        "status": "healthy",
+        "lastChange": 1790225731618
+      },
+      "stoppedState": {
+        "status": "stopped",
+        "lastChange": 1790225731993
+      },
+      "endedAt": 1790225732108,
+      "elapsedMs": 2166
+    },
+    {
+      "id": "run-qualification-7",
+      "mode": "isolated",
+      "startedAt": 1790225732486,
+      "deadline": 1790225777486,
+      "status": "cleaned",
+      "cleanupAttempts": 0,
+      "dispatchPending": false,
+      "execution": {
+        "exitCode": 1,
+        "output": "",
+        "stderr": "private-isolate: 5: echo: echo: I/O error"
+      },
+      "cleanupReason": "normal",
+      "beforeDestroy": {
+        "status": "healthy",
+        "lastChange": 1790225742269
+      },
+      "stoppedState": {
+        "status": "stopped",
+        "lastChange": 1790225742643
+      },
+      "endedAt": 1790225742736,
+      "elapsedMs": 10250
+    }
+  ],
+  "authority": "owned-fixture-only",
+  "sourceSha256": {
+    "worker.mjs": "42226f195111f6ce984e85536732727297b6db65c4e1007350930c09237765ab",
+    "policy.mjs": "09922ad3892d187bda9c3c3fc8efb637e2df6f2e9ff94111fa94ba15e9354a7f",
+    "qualify.mjs": "eb76fbee871a6241398d2e9fdd59a24432d54c4db333c54fb7c76e08ca3129dc",
+    "Dockerfile": "fecb17b96f79857ce64a85cfa5d27798212e42682de7a1a97cc40b1f140d3504",
+    "isolate.sh": "93ecd7bb58138c2987c80f1c0988f76eb065f2f575d6cdc87027a8d545a2135e",
+    "memory.mjs": "fb0df143ce3131b5e64b7da050316cb799b2c7708a2523aa5702f4ca68b6765c"
+  },
+  "completed": true,
+  "endedAt": "2026-09-24T04:55:43.065Z"
+}

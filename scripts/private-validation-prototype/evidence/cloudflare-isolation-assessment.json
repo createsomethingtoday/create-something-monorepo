@@ -1,0 +1,41 @@
+{
+  "assessments": [
+    {
+      "id": "run-qualification-2",
+      "passed": true,
+      "checks": {
+        "positiveControl": true,
+        "nonRoot": true,
+        "directNetworkDenied": true,
+        "localManagementDenied": true,
+        "rootReadOnly": true,
+        "sharedMemoryUnavailable": true,
+        "scratchBounded": true,
+        "processesBounded": true,
+        "privilegesDropped": true,
+        "namespaceEscapeDenied": true
+      },
+      "productionReady": false
+    },
+    {
+      "id": "run-qualification-3",
+      "passed": true,
+      "checks": {
+        "positiveControl": true,
+        "nonRoot": true,
+        "directNetworkDenied": true,
+        "localManagementDenied": true,
+        "rootReadOnly": true,
+        "sharedMemoryUnavailable": true,
+        "scratchBounded": true,
+        "processesBounded": true,
+        "privilegesDropped": true,
+        "namespaceEscapeDenied": true
+      },
+      "productionReady": false
+    }
+  ],
+  "productionReady": false,
+  "scope": "Owned Linux namespace fixture controls; not general adversarial or tenant qualification",
+  "sharedMemoryNote": "Cloudflare has no /dev/shm; ENOENT records absence, not a successful write."
+}
