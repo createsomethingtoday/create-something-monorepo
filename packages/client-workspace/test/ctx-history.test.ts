@@ -40,14 +40,14 @@ console.log(JSON.stringify({results:[{ctx_session_id:'session-1',provider:'codex
       command
     }), {
       status: 'available',
-      results: [{ sessionId: 'session-1', provider: 'codex', snippet: 'Earlier algorithm discussion' }]
+      results: [{ sessionId: 'session-1', provider: 'codex' }]
     });
   } finally {
     await rm(directory, { recursive: true });
   }
 });
 
-test('history search removes local paths and credential shapes from remote snippets', async () => {
+test('history search returns citation metadata without transcript content', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'client-workspace-ctx-private-'));
   const command = join(directory, 'ctx');
   await writeFile(command, `#!/usr/bin/env node
@@ -57,8 +57,7 @@ console.log(JSON.stringify({results:[{ctx_session_id:'session-1',provider:'codex
   try {
     const result = await searchCtxHistory({ workspaceRoot: '/verified/workspace', query: 'project', command });
     assert.equal(result.status, 'available');
-    assert.match(result.results[0]?.snippet ?? '', /\[local path\]/);
-    assert.doesNotMatch(result.results[0]?.snippet ?? '', /operator|example-token|secret-value|sk-private-value/);
+    assert.deepEqual(result.results, [{ sessionId: 'session-1', provider: 'codex' }]);
   } finally {
     await rm(directory, { recursive: true });
   }

@@ -75,7 +75,7 @@
   let checkpointId = $state<string | null>(null);
   let historyQuery = $state('');
   let historyStatus = $state<'idle' | 'available' | 'empty' | 'unavailable'>('idle');
-  let historyResults = $state<Array<{ sessionId: string; provider: string; snippet: string }>>([]);
+  let historyResults = $state<Array<{ sessionId: string; provider: string }>>([]);
   let searchingHistory = $state(false);
   let eventSource: EventSource | null = null;
 
@@ -151,7 +151,7 @@
       const response = await fetch(`/api/workspaces/${encodeURIComponent(workspace.id)}/history?${params}`);
       const history = await readJson<{
         status: 'available' | 'empty' | 'unavailable';
-        results: Array<{ sessionId: string; provider: string; snippet: string }>;
+        results: Array<{ sessionId: string; provider: string }>;
       }>(response);
       historyStatus = history.status;
       historyResults = history.results;
@@ -853,7 +853,7 @@
         {#each historyResults as item}
           <article class="history-result">
             <small>{item.provider} · {item.sessionId}</small>
-            <p>{item.snippet}</p>
+            <p>Matching session available on this device. Open CTX locally for transcript details.</p>
           </article>
         {/each}
       </form>

@@ -4,8 +4,6 @@ import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
 
-import { sanitizedText } from './sessions/workspace-session.js';
-
 const execFileAsync = promisify(execFile);
 
 export function resolveCtxCommand({
@@ -25,7 +23,6 @@ export function resolveCtxCommand({
 export type CtxHistoryResult = {
   sessionId: string;
   provider: string;
-  snippet: string;
 };
 
 export type CtxHistoryResponse = {
@@ -52,13 +49,12 @@ export async function searchCtxHistory(options: {
       if (!item || typeof item !== 'object') return [];
       const record = item as Record<string, unknown>;
       if (typeof record.ctx_session_id !== 'string' ||
-          typeof record.provider !== 'string' ||
-          typeof record.snippet !== 'string') return [];
+          typeof record.provider !== 'string') return [];
       const sessionId = record.ctx_session_id;
       const provider = record.provider;
       if (!/^[A-Za-z0-9_-]{1,100}$/.test(sessionId) ||
           !/^(?:codex|claude|pi|cursor|goose|warp|copilot-cli|opencode)$/.test(provider)) return [];
-      return [{ sessionId, provider, snippet: sanitizedText(record.snippet, options.workspaceRoot).slice(0, 500) }];
+      return [{ sessionId, provider }];
     });
     return { status: results.length > 0 ? 'available' : 'empty', results };
   } catch {

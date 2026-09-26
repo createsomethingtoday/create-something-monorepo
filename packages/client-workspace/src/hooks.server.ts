@@ -17,9 +17,19 @@ function logRejectedMutation(method: string, origin: string | null, stage: 'capa
   console.warn(`[client-workspace] ${stage} rejected ${method} from ${safeOrigin}`);
 }
 
+export function remoteMutationAllowed(method: string, origin: string | null, expectedOrigin: string): boolean {
+  if (!['POST', 'PUT', 'PATCH', 'DELETE'].includes(method.toUpperCase())) return true;
+  return Boolean(expectedOrigin) && origin === expectedOrigin;
+}
+
 export const handle: Handle = async ({ event, resolve }) => {
   if (process.env.CLIENT_WORKSPACE_REMOTE === '1') {
-    const authorized = process.env.CLIENT_WORKSPACE_DESKTOP !== '1' && await verifyRemoteAccess(
+    const allowedOrigin = remoteMutationAllowed(
+      event.request.method,
+      event.request.headers.get('origin'),
+      process.env.CLIENT_WORKSPACE_REMOTE_ORIGIN ?? ''
+    );
+    const authorized = allowedOrigin && process.env.CLIENT_WORKSPACE_DESKTOP !== '1' && await verifyRemoteAccess(
       event.request,
       {
         teamDomain: process.env.CLIENT_WORKSPACE_ACCESS_TEAM_DOMAIN ?? '',

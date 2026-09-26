@@ -1,7 +1,16 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { handle } from '../src/hooks.server.js';
+import { handle, remoteMutationAllowed } from '../src/hooks.server.js';
+
+test('remote mutations require the exact configured browser Origin', () => {
+  const expected = 'https://client-agent.example.test';
+  assert.equal(remoteMutationAllowed('GET', null, expected), true);
+  assert.equal(remoteMutationAllowed('POST', expected, expected), true);
+  assert.equal(remoteMutationAllowed('POST', null, expected), false);
+  assert.equal(remoteMutationAllowed('POST', 'https://attacker.example.test', expected), false);
+  assert.equal(remoteMutationAllowed('POST', expected, ''), false);
+});
 
 test('remote workspace rejects requests before route resolution without Access', async () => {
   const oldMode = process.env.CLIENT_WORKSPACE_REMOTE;
