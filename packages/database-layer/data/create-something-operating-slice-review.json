@@ -1,6 +1,6 @@
 {
   "id": "substrate:create-something:operating-slice-review:internal",
-  "generatedAt": "2026-09-24T04:42:11.192Z",
+  "generatedAt": "2026-09-26T14:03:22.797Z",
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
   "sourceCoverageId": "substrate:create-something:atlas-coverage:internal",
@@ -245,6 +245,7 @@
         "substrate:create-something:guide:docs-guides-operator-agent-public-access-md",
         "substrate:create-something:guide:docs-guides-operator-agent-system-md",
         "substrate:create-something:guide:docs-guides-package-source-archive-workflow-md",
+        "substrate:create-something:guide:docs-guides-paperclip-autonomous-delivery-md",
         "substrate:create-something:guide:docs-guides-playbook-library-research-2026-02-18-md",
         "substrate:create-something:guide:docs-guides-policy-os-gating-deploy-checklist-2026-03-09-md",
         "substrate:create-something:guide:docs-guides-policy-os-live-verification-runbook-2026-03-09-md",
@@ -266,7 +267,7 @@
       "owner": "CREATE SOMETHING",
       "tier": "Mixed",
       "surface": "guide",
-      "nodeCount": 73,
+      "nodeCount": 74,
       "evidence": [
         "docs/guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md",
         "docs/guides/AGENCY_GOVERNANCE_PRODUCTS_OPERATIONS_RUNBOOK.md",
@@ -859,6 +860,47 @@
       "nextAction": "Review tool risk, agent ownership, and MCP evidence before enabling production workflow use."
     },
     {
+      "id": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-mcp-surface-database-mcp",
+      "title": "Database MCP Atlas coverage",
+      "status": "review_ready",
+      "atlasCoverageGroupIds": [
+        "substrate:create-something:atlas-coverage-group:mcp-surface-database-mcp"
+      ],
+      "recordIds": [
+        "substrate:create-something:package:create-something-bettermode-creator-mcp-packages-bettermode-creator-mcp",
+        "substrate:create-something:package:create-something-composio-toolkit-mcp-packages-composio-toolkit-mcp",
+        "substrate:create-something:package:create-something-mcp-packages-create-something-mcp",
+        "substrate:create-something:package:create-something-hydra-db-recall-mcp-packages-hydra-db-recall-mcp",
+        "substrate:create-something:package:hydra-db-recall-mcp-worker-packages-hydra-db-recall-mcp-worker",
+        "substrate:create-something:package:create-something-quickbooks-notion-mcp-packages-quickbooks-notion-mcp",
+        "substrate:create-something:package:create-something-substrate-mcp-packages-substrate-mcp",
+        "substrate:create-something:package:substrate-mcp-worker-packages-substrate-mcp-worker",
+        "substrate:create-something:package:create-something-webflow-guidelines-registry-packages-webflow-guidelines-registry"
+      ],
+      "owner": "CREATE SOMETHING",
+      "tier": "Database",
+      "surface": "mcp",
+      "nodeCount": 9,
+      "evidence": [
+        "packages/bettermode-creator-mcp",
+        "packages/composio-toolkit-mcp",
+        "packages/create-something-mcp",
+        "packages/hydra-db-recall-mcp",
+        "packages/hydra-db-recall-mcp/worker",
+        "packages/quickbooks-notion-mcp",
+        "packages/substrate-mcp",
+        "packages/substrate-mcp/worker",
+        "packages/webflow-guidelines-registry"
+      ],
+      "validationCommands": [
+        "pnpm --filter @create-something/database-layer agent-configs:generate",
+        "pnpm --filter @create-something/database-layer test"
+      ],
+      "promotionBoundary": "Local coverage only. Production Atlas write-back, Cloudflare mutation, Dify Studio changes, client communication, and third-party writes require explicit operator approval and the owning promotion workflow.",
+      "rollbackNote": "Rollback is local-first: regenerate coverage artifacts from repo truth or revert the approved production write through its owning workflow. Do not delete external state from this artifact alone.",
+      "nextAction": "Review tool risk, agent ownership, and MCP evidence before enabling production workflow use."
+    },
+    {
       "id": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-database-surface-database-worker",
       "title": "Database worker Atlas coverage",
       "status": "review_ready",
@@ -898,45 +940,6 @@
       "promotionBoundary": "Local coverage only. Production Atlas write-back, Cloudflare mutation, Dify Studio changes, client communication, and third-party writes require explicit operator approval and the owning promotion workflow.",
       "rollbackNote": "Rollback is local-first: regenerate coverage artifacts from repo truth or revert the approved production write through its owning workflow. Do not delete external state from this artifact alone.",
       "nextAction": "Review runtime ownership and bind approved worker slices to production workflow checks before Cloudflare mutation."
-    },
-    {
-      "id": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-mcp-surface-database-mcp",
-      "title": "Database MCP Atlas coverage",
-      "status": "review_ready",
-      "atlasCoverageGroupIds": [
-        "substrate:create-something:atlas-coverage-group:mcp-surface-database-mcp"
-      ],
-      "recordIds": [
-        "substrate:create-something:package:create-something-bettermode-creator-mcp-packages-bettermode-creator-mcp",
-        "substrate:create-something:package:create-something-composio-toolkit-mcp-packages-composio-toolkit-mcp",
-        "substrate:create-something:package:create-something-mcp-packages-create-something-mcp",
-        "substrate:create-something:package:create-something-hydra-db-recall-mcp-packages-hydra-db-recall-mcp",
-        "substrate:create-something:package:hydra-db-recall-mcp-worker-packages-hydra-db-recall-mcp-worker",
-        "substrate:create-something:package:create-something-quickbooks-notion-mcp-packages-quickbooks-notion-mcp",
-        "substrate:create-something:package:create-something-substrate-mcp-packages-substrate-mcp",
-        "substrate:create-something:package:substrate-mcp-worker-packages-substrate-mcp-worker"
-      ],
-      "owner": "CREATE SOMETHING",
-      "tier": "Database",
-      "surface": "mcp",
-      "nodeCount": 8,
-      "evidence": [
-        "packages/bettermode-creator-mcp",
-        "packages/composio-toolkit-mcp",
-        "packages/create-something-mcp",
-        "packages/hydra-db-recall-mcp",
-        "packages/hydra-db-recall-mcp/worker",
-        "packages/quickbooks-notion-mcp",
-        "packages/substrate-mcp",
-        "packages/substrate-mcp/worker"
-      ],
-      "validationCommands": [
-        "pnpm --filter @create-something/database-layer agent-configs:generate",
-        "pnpm --filter @create-something/database-layer test"
-      ],
-      "promotionBoundary": "Local coverage only. Production Atlas write-back, Cloudflare mutation, Dify Studio changes, client communication, and third-party writes require explicit operator approval and the owning promotion workflow.",
-      "rollbackNote": "Rollback is local-first: regenerate coverage artifacts from repo truth or revert the approved production write through its owning workflow. Do not delete external state from this artifact alone.",
-      "nextAction": "Review tool risk, agent ownership, and MCP evidence before enabling production workflow use."
     },
     {
       "id": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-database-surface-database-package",

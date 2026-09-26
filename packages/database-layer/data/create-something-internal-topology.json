@@ -4,14 +4,14 @@
   "atlasCanvasId": "create-something-internal-operating-topology",
   "rootNodeId": "substrate:create-something:root",
   "coverage": {
-    "generatedAt": "2026-09-24T04:42:10.795Z",
+    "generatedAt": "2026-09-26T14:03:22.582Z",
     "rootPath": ".",
-    "packageCount": 236,
+    "packageCount": 237,
     "appCount": 12,
     "workerCount": 114,
     "clientOverlayCount": 8,
     "policyCount": 64,
-    "guideCount": 73,
+    "guideCount": 74,
     "configCount": 40
   },
   "nodes": [
@@ -3915,6 +3915,23 @@
       ],
       "packageName": "@create-something/webflow-dashboard",
       "runtime": "cloudflare, node"
+    },
+    {
+      "id": "substrate:create-something:package:create-something-webflow-guidelines-registry-packages-webflow-guidelines-registry",
+      "atlasNodeId": "atlas_create-something_package_create-something-webflow-guidelines-registry-packages-webflow-guidelines-registry",
+      "title": "@create-something/webflow-guidelines-registry",
+      "path": "packages/webflow-guidelines-registry",
+      "tier": "Database",
+      "surface": "mcp",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Marketplace Guidelines Registry — a self-contained wrop page where Webflow app reviewers read, edit, and annotate the developer-docs Marketplace pages (inline + WebMCP), with lossless export back to webflow/openapi-internal.",
+      "tags": [
+        "package",
+        "mcp"
+      ],
+      "packageName": "@create-something/webflow-guidelines-registry",
+      "runtime": "node"
     },
     {
       "id": "substrate:create-something:package:create-something-webflow-intake-packages-webflow-intake",
@@ -8409,6 +8426,21 @@
       ]
     },
     {
+      "id": "substrate:create-something:guide:docs-guides-paperclip-autonomous-delivery-md",
+      "atlasNodeId": "atlas_create-something_guide_docs-guides-paperclip-autonomous-delivery-md",
+      "title": "PAPERCLIP_AUTONOMOUS_DELIVERY.md",
+      "path": "docs/guides/PAPERCLIP_AUTONOMOUS_DELIVERY.md",
+      "tier": "Mixed",
+      "surface": "guide",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "guide artifact in the CREATE SOMETHING operating topology.",
+      "tags": [
+        "guide",
+        "documentation"
+      ]
+    },
+    {
       "id": "substrate:create-something:guide:docs-guides-playbook-library-research-2026-02-18-md",
       "atlasNodeId": "atlas_create-something_guide_docs-guides-playbook-library-research-2026-02-18-md",
       "title": "PLAYBOOK_LIBRARY_RESEARCH_2026-02-18.md",
@@ -10706,6 +10738,13 @@
       "evidence": "packages/webflow-dashboard is present in the repo scan."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-webflow-guidelines-registry-packages-webflow-guidelines-registry",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:package:create-something-webflow-guidelines-registry-packages-webflow-guidelines-registry",
+      "relation": "contains",
+      "evidence": "packages/webflow-guidelines-registry is present in the repo scan."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-webflow-intake-packages-webflow-intake",
       "source": "substrate:create-something:root",
       "target": "substrate:create-something:package:create-something-webflow-intake-packages-webflow-intake",
@@ -12636,6 +12675,13 @@
       "target": "substrate:create-something:guide:docs-guides-package-source-archive-workflow-md",
       "relation": "contains",
       "evidence": "docs/guides/PACKAGE_SOURCE_ARCHIVE_WORKFLOW.md is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-paperclip-autonomous-delivery-md",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:guide:docs-guides-paperclip-autonomous-delivery-md",
+      "relation": "contains",
+      "evidence": "docs/guides/PAPERCLIP_AUTONOMOUS_DELIVERY.md is present in the repo scan."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-playbook-library-research-2026-02-18-md",
@@ -15935,6 +15981,13 @@
       "evidence": "docs/guides/PACKAGE_SOURCE_ARCHIVE_WORKFLOW.md is an operating guide."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-paperclip-autonomous-delivery-md-documents-substrate-create-something-root",
+      "source": "substrate:create-something:guide:docs-guides-paperclip-autonomous-delivery-md",
+      "target": "substrate:create-something:root",
+      "relation": "documents",
+      "evidence": "docs/guides/PAPERCLIP_AUTONOMOUS_DELIVERY.md is an operating guide."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-playbook-library-research-2026-02-18-md-documents-substrate-create-something-root",
       "source": "substrate:create-something:guide:docs-guides-playbook-library-research-2026-02-18-md",
       "target": "substrate:create-something:root",
@@ -16934,6 +16987,13 @@
       "target": "substrate:create-something:agent-config:config-dify-agents-aaron-hub-json",
       "relation": "documents",
       "evidence": "docs/guides/PACKAGE_SOURCE_ARCHIVE_WORKFLOW.md documents config/dify-agents/aaron-hub.json through matching topology terms."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-paperclip-autonomous-delivery-md-documents-substrate-create-something-package-create-something-substrate-mcp-packages-substrate-mcp",
+      "source": "substrate:create-something:guide:docs-guides-paperclip-autonomous-delivery-md",
+      "target": "substrate:create-something:package:create-something-substrate-mcp-packages-substrate-mcp",
+      "relation": "documents",
+      "evidence": "docs/guides/PAPERCLIP_AUTONOMOUS_DELIVERY.md documents packages/substrate-mcp through the stable guide platform anchor."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-playbook-library-research-2026-02-18-md-documents-substrate-create-something-package-create-something-arc-packages-arc",
