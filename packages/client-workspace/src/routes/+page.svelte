@@ -73,6 +73,10 @@
   let updatePlan = $state<DeliveryUpdatePlan | null>(null);
   let lifecycleBusy = $state(false);
   let checkpointId = $state<string | null>(null);
+  let historyQuery = $state('');
+  let historyStatus = $state<'idle' | 'available' | 'empty' | 'unavailable'>('idle');
+  let historyResults = $state<Array<{ sessionId: string; provider: string; snippet: string }>>([]);
+  let searchingHistory = $state(false);
   let eventSource: EventSource | null = null;
 
   const sessionStorageKey = 'create-something.client-workspace.session';
@@ -137,6 +141,26 @@
     const code = error instanceof Error ? error.message : 'workspace_request_failed';
     errorMessage = safeErrors[code] ?? safeErrors.workspace_request_failed;
     notice = 'Action needs attention.';
+  }
+
+  async function searchHistory() {
+    if (!workspace || !historyQuery.trim() || searchingHistory) return;
+    searchingHistory = true;
+    try {
+      const params = new URLSearchParams({ q: historyQuery.trim() });
+      const response = await fetch(`/api/workspaces/${encodeURIComponent(workspace.id)}/history?${params}`);
+      const history = await readJson<{
+        status: 'available' | 'empty' | 'unavailable';
+        results: Array<{ sessionId: string; provider: string; snippet: string }>;
+      }>(response);
+      historyStatus = history.status;
+      historyResults = history.results;
+    } catch {
+      historyStatus = 'unavailable';
+      historyResults = [];
+    } finally {
+      searchingHistory = false;
+    }
   }
 
   async function openWorkspace(selected: Workspace) {
@@ -578,6 +602,11 @@
     <strong>{workspace?.label ?? 'No workspace open'}</strong>
   </div>
   <div class="top-actions">
+    {#if data.remote && data.paperclipIssueUrl}
+      <a class="quiet-button" href={data.paperclipIssueUrl} target="_blank" rel="noopener noreferrer">
+        Client assignment
+      </a>
+    {/if}
     <span
       class="session-state"
       data-work-state={sessionWorkState(
@@ -690,7 +719,8 @@
       {/each}
       {#if errorMessage}<p class="error-note" role="alert">{errorMessage}</p>{/if}
       <p class="trust-note">
-        Local authority only. No deploy, publish, credential, or third-party mutation access.
+        {data.remote ? 'Work runs on the controlled device.' : 'Local authority only.'}
+        No deploy, publish, credential, or third-party mutation access.
       </p>
     </section>
   </main>
@@ -809,6 +839,24 @@
         <span class="status-dot"></span>
         <p>{notice}</p>
       </div>
+
+      <form class="history-search" onsubmit={(event) => { event.preventDefault(); void searchHistory(); }}>
+        <label for="history-query">Prior agent history in this workspace</label>
+        <div class="history-search-controls">
+          <input id="history-query" bind:value={historyQuery} maxlength="200" placeholder="Search CTX history" />
+          <button type="submit" disabled={searchingHistory || !historyQuery.trim()}>
+            {searchingHistory ? 'Searching…' : 'Search'}
+          </button>
+        </div>
+        {#if historyStatus === 'empty'}<p>No matching history found for this workspace.</p>{/if}
+        {#if historyStatus === 'unavailable'}<p>CTX history is unavailable on this device.</p>{/if}
+        {#each historyResults as item}
+          <article class="history-result">
+            <small>{item.provider} · {item.sessionId}</small>
+            <p>{item.snippet}</p>
+          </article>
+        {/each}
+      </form>
 
       {#each sessionActive ? pendingWorkspaceApprovals(events) : [] as approval (approval.sequence)}
         <article class="approval-card" data-work-state="approval">
@@ -1612,6 +1660,45 @@
     color: var(--color-performance-muted);
     font-size: 0.67rem;
     line-height: 1.4;
+  }
+  .history-search {
+    padding: 0.8rem 1rem;
+    border-bottom: 1px solid var(--color-performance-line);
+    font-size: 0.68rem;
+  }
+  .history-search label {
+    display: block;
+    margin-bottom: 0.4rem;
+    font-weight: 600;
+  }
+  .history-search-controls {
+    display: flex;
+    gap: 0.4rem;
+  }
+  .history-search-controls input {
+    min-width: 0;
+    flex: 1;
+    padding: 0.45rem;
+    border: 1px solid var(--color-performance-line);
+    background: var(--color-performance-court);
+    color: inherit;
+  }
+  .history-search-controls button {
+    padding: 0.45rem 0.6rem;
+    border: 1px solid var(--color-performance-line);
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+  }
+  .history-search p {
+    margin: 0.45rem 0 0;
+    line-height: 1.4;
+  }
+  .history-result {
+    margin-top: 0.6rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--color-performance-line);
+    overflow-wrap: anywhere;
   }
   .status-dot {
     width: 7px;
