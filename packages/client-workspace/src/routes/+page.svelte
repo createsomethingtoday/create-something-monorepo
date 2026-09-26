@@ -1048,7 +1048,7 @@
           <iframe
             title={`${workspace.label} live preview`}
             src={`${preview.previewPath}?revision=${previewRevision}`}
-            sandbox={data.desktop ? 'allow-same-origin' : 'allow-scripts allow-same-origin'}
+            sandbox={data.desktop ? 'allow-same-origin' : data.remote ? 'allow-scripts' : 'allow-scripts allow-same-origin'}
           ></iframe>
         {:else}
           <div
