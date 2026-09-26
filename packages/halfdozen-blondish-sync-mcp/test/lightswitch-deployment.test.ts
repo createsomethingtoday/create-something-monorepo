@@ -4,15 +4,20 @@ import test from 'node:test';
 import { auditSync } from '../src/sync.js';
 import type { Env } from '../src/types.js';
 
-const config = readFileSync(new URL('../wrangler.lightswitch.toml', import.meta.url), 'utf8');
-const value = (key: string) => config.match(new RegExp(`^${key} = "([^"]+)"`, 'm'))?.[1];
-const clientId = '18e01918-7ac5-81f1-a1b9-c7c9cdc469c9';
+const deployments = [
+  { name: 'Lightswitch', config: 'wrangler.lightswitch.toml', clientId: '18e01918-7ac5-81f1-a1b9-c7c9cdc469c9' },
+  { name: 'C3 Management', config: 'wrangler.c3-management.toml', clientId: '17b01918-7ac5-81b6-8b9d-d9e0008388af' },
+];
 const relatedId = '3789a2d7-e7e7-454d-9ba3-78c522da27d9';
-const sourceId = value('CLIENT_SUPPORT_TICKETS_DATA_SOURCE_ID')!;
-const targetId = value('HALFDOZEN_TICKETS_DATA_SOURCE_ID')!;
 const response = (body: unknown) => new Response(JSON.stringify(body));
 
-test('Lightswitch deployment audits matched Client relations without writes or false drift', async (t) => {
+for (const deployment of deployments) test(`${deployment.name} deployment audits matched Client relations without writes or false drift`, async (t) => {
+  const config = readFileSync(new URL(`../${deployment.config}`, import.meta.url), 'utf8');
+  const value = (key: string) => config.match(new RegExp(`^${key} = "([^"]+)"`, 'm'))?.[1];
+  const clientId = deployment.clientId;
+  assert.equal(value('SYNC_CLIENT_PAGE_ID'), clientId);
+  const sourceId = value('CLIENT_SUPPORT_TICKETS_DATA_SOURCE_ID')!;
+  const targetId = value('HALFDOZEN_TICKETS_DATA_SOURCE_ID')!;
   const source = { id: 'source-ticket', properties: {
     Ticket: {type:'title',title:[{plain_text:'Example'}]},
     'Page ID': {type:'unique_id',unique_id:{prefix:'LS',number:1}},
@@ -39,7 +44,7 @@ test('Lightswitch deployment audits matched Client relations without writes or f
   const result = await auditSync({
     CLIENT_NOTION_API_KEY:'test', HALFDOZEN_NOTION_API_KEY:'test',
     CLIENT_SUPPORT_TICKETS_DATA_SOURCE_ID:sourceId, HALFDOZEN_TICKETS_DATA_SOURCE_ID:targetId,
-    SYNC_CLIENT_PAGE_ID:value('SYNC_CLIENT_PAGE_ID'), SYNC_CLIENT_SLUG:'lightswitch',
+    SYNC_CLIENT_PAGE_ID:value('SYNC_CLIENT_PAGE_ID'), SYNC_CLIENT_SLUG:value('SYNC_CLIENT_SLUG'),
     SYNC_CLIENT_LABEL:value('SYNC_CLIENT_LABEL'),
   } as Env);
   assert.equal(result.ok,true,JSON.stringify(result.errors));
