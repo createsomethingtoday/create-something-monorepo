@@ -1,5 +1,8 @@
 # Client Workspace
 
+The controlled-device, Codex-only remote pilot and its client Paperclip handoff
+are documented in [CLIENT_AGENT_CODEX_PILOT.md](../../docs/guides/CLIENT_AGENT_CODEX_PILOT.md).
+
 First-party CREATE SOMETHING workspace for governed, real-time frontend edits.
 
 The product gives an allowlisted client three connected rails:

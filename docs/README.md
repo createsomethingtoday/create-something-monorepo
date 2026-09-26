@@ -163,6 +163,7 @@ Read in this order when you need broad repo context:
 
 ### Guides and reference material
 
+- [guides/CLIENT_AGENT_CODEX_PILOT.md](./guides/CLIENT_AGENT_CODEX_PILOT.md)
 - [guides/EXAMPLES.md](./guides/EXAMPLES.md)
 - [guides/COMPONENT_GUIDE.md](./guides/COMPONENT_GUIDE.md)
 - [guides/SKILLS.md](./guides/SKILLS.md)
