@@ -8,7 +8,7 @@
   const quiet = $derived(now - Math.max(action?.updatedAt ?? 0, task?.updatedAt ?? 0) > 30_000);
 </script>
 
-<section class="agent-activity" aria-label="Agent activity" data-state={state} data-ui="true">
+<section class="agent-activity" aria-label="Agent activity" data-state={state} data-work-state={state === 'waiting' ? 'approval' : state === 'failed' ? 'failure' : state === 'completed' ? 'success' : 'running'} data-ui="true">
   <div role="status" aria-live="polite" aria-atomic="true">
     <strong><i aria-hidden="true"></i>Agent · {labels[state]}</strong>
     {#if task}<p>{task.label}</p>{/if}
@@ -23,14 +23,14 @@
 </section>
 
 <style>
-  .agent-activity { position:absolute;z-index:6;right:14px;top:68px;width:min(290px,calc(100% - 28px));padding:12px;border:1px solid var(--line);border-left:2px solid var(--amber);border-radius:4px;background:var(--color-performance-bg-pure,#000);color:var(--color-performance-fg-primary,#fff);font:12px var(--font-performance-sans,Arial,sans-serif); }
-  strong { display:flex;align-items:center;gap:7px;font:10px var(--font-performance-mono,monospace); }
-  i { width:6px;height:6px;border-radius:50%;background:var(--amber);flex:none; }
+  .agent-activity { position:absolute;z-index:6;right:14px;top:68px;width:min(290px,calc(100% - 28px));padding:12px;border:1px solid var(--line);border-left:2px solid var(--workspace-state-border);border-radius:4px;background:var(--workspace-state-background);color:var(--color-performance-fg-primary,#fff);font:12px var(--font-performance-sans,Arial,sans-serif); }
+  strong { display:flex;align-items:center;gap:7px;color:var(--workspace-state-text);font:var(--text-performance-operator-label) var(--font-performance-mono); }
+  i { width:6px;height:6px;border-radius:50%;background:var(--workspace-state-text);flex:none; }
   p { margin:8px 0 0;overflow-wrap:anywhere;line-height:1.4; }
   .action,small { color:var(--color-performance-fg-secondary,#aaa); }
   small { display:block;margin-top:8px; }
   .controls { display:flex;gap:6px;margin-top:10px; }
-  button { flex:1;min-height:36px;padding:6px;border:1px solid var(--line);border-radius:3px;background:transparent;color:inherit;font-size:11px;cursor:pointer; }
+  button { flex:1;min-height:36px;padding:6px;border:1px solid var(--line);border-radius:3px;background:transparent;color:inherit;font-size:var(--text-performance-caption);cursor:pointer; }
   button[aria-pressed=true] { border-color:var(--amber);color:var(--amber); }
   button:focus-visible { outline:2px solid var(--amber);outline-offset:2px; }
   @media(max-width:820px) { .agent-activity { top:auto;bottom:98px;right:8px;width:min(260px,calc(100% - 16px));padding:9px; } button { min-height:44px; } }

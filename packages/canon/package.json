@@ -64,6 +64,7 @@
 			"svelte": "./dist/index.js"
 		},
 		"./styles/tokens.css": "./dist/styles/tokens.css",
+		"./styles/workspace.css": "./dist/styles/workspace.css",
 		"./styles/canon.css": "./dist/styles/canon.css",
 		"./styles/components.css": "./dist/styles/components.css",
 		"./styles/editorial.css": "./dist/styles/editorial.css",

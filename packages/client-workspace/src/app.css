@@ -1,4 +1,5 @@
 @import '@create-something/canon/styles/tokens.css';
+@import '@create-something/canon/styles/workspace.css';
 
 :root {
   font-family: var(--font-performance-interface);
