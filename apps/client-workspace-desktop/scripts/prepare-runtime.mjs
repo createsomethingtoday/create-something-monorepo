@@ -40,6 +40,11 @@ mkdirSync(join(resourcesRoot, 'trust'), { recursive: true });
 cpSync(join(repoRoot, 'packages', 'client-workspace', 'build'), join(resourcesRoot, 'server'), {
   recursive: true
 });
+mkdirSync(join(resourcesRoot, 'server', 'scripts'), { recursive: true });
+cpSync(
+  join(repoRoot, 'packages', 'client-workspace', 'scripts', 'dual-origin-server.mjs'),
+  join(resourcesRoot, 'server', 'scripts', 'dual-origin-server.mjs')
+);
 const removeSourceMaps = (directory) => {
   for (const entry of readdirSync(directory, { withFileTypes: true })) {
     const path = join(directory, entry.name);

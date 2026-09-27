@@ -30,6 +30,7 @@
     "smoke:codex": "pnpm exec tsx scripts/codex-multimodal-smoke.ts",
     "smoke:resume": "pnpm exec tsx scripts/codex-resume-smoke.ts",
     "smoke:preview": "pnpm exec tsx scripts/preview-smoke.ts",
+    "smoke:dual-origin": "pnpm build && pnpm exec tsx scripts/smoke-dual-origin.ts",
     "demo:reset": "pnpm exec tsx scripts/reset-demo-fixture.ts",
     "smoke": "pnpm test && pnpm check && pnpm build"
   },
