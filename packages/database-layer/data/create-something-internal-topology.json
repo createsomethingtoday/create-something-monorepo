@@ -4,14 +4,14 @@
   "atlasCanvasId": "create-something-internal-operating-topology",
   "rootNodeId": "substrate:create-something:root",
   "coverage": {
-    "generatedAt": "2026-09-26T14:03:22.582Z",
+    "generatedAt": "2026-09-27T17:28:02.322Z",
     "rootPath": ".",
     "packageCount": 237,
     "appCount": 12,
     "workerCount": 114,
     "clientOverlayCount": 8,
     "policyCount": 64,
-    "guideCount": 74,
+    "guideCount": 75,
     "configCount": 40
   },
   "nodes": [
@@ -7781,6 +7781,21 @@
       ]
     },
     {
+      "id": "substrate:create-something:guide:docs-guides-client-agent-codex-pilot-md",
+      "atlasNodeId": "atlas_create-something_guide_docs-guides-client-agent-codex-pilot-md",
+      "title": "CLIENT_AGENT_CODEX_PILOT.md",
+      "path": "docs/guides/CLIENT_AGENT_CODEX_PILOT.md",
+      "tier": "Mixed",
+      "surface": "guide",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "guide artifact in the CREATE SOMETHING operating topology.",
+      "tags": [
+        "guide",
+        "documentation"
+      ]
+    },
+    {
       "id": "substrate:create-something:guide:docs-guides-cloudflare-bot-access-hardening-md",
       "atlasNodeId": "atlas_create-something_guide_docs-guides-cloudflare-bot-access-hardening-md",
       "title": "CLOUDFLARE_BOT_ACCESS_HARDENING.md",
@@ -12376,6 +12391,13 @@
       "evidence": "docs/guides/CHATGPT_MCP_OAUTH_MANAGED_BEARER.md is present in the repo scan."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-client-agent-codex-pilot-md",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:guide:docs-guides-client-agent-codex-pilot-md",
+      "relation": "contains",
+      "evidence": "docs/guides/CLIENT_AGENT_CODEX_PILOT.md is present in the repo scan."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-cloudflare-bot-access-hardening-md",
       "source": "substrate:create-something:root",
       "target": "substrate:create-something:guide:docs-guides-cloudflare-bot-access-hardening-md",
@@ -15680,6 +15702,13 @@
       "evidence": "docs/guides/CHATGPT_MCP_OAUTH_MANAGED_BEARER.md is an operating guide."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-client-agent-codex-pilot-md-documents-substrate-create-something-root",
+      "source": "substrate:create-something:guide:docs-guides-client-agent-codex-pilot-md",
+      "target": "substrate:create-something:root",
+      "relation": "documents",
+      "evidence": "docs/guides/CLIENT_AGENT_CODEX_PILOT.md is an operating guide."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-cloudflare-bot-access-hardening-md-documents-substrate-create-something-root",
       "source": "substrate:create-something:guide:docs-guides-cloudflare-bot-access-hardening-md",
       "target": "substrate:create-something:root",
@@ -16686,6 +16715,13 @@
       "target": "substrate:create-something:package:create-something-community-mcp-packages-community-mcp",
       "relation": "documents",
       "evidence": "docs/guides/CHATGPT_MCP_OAUTH_MANAGED_BEARER.md documents packages/community-mcp through matching topology terms."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-client-agent-codex-pilot-md-documents-substrate-create-something-agent-config-config-dify-agents-aaron-hub-json",
+      "source": "substrate:create-something:guide:docs-guides-client-agent-codex-pilot-md",
+      "target": "substrate:create-something:agent-config:config-dify-agents-aaron-hub-json",
+      "relation": "documents",
+      "evidence": "docs/guides/CLIENT_AGENT_CODEX_PILOT.md documents config/dify-agents/aaron-hub.json through matching topology terms."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-cloudflare-bot-access-hardening-md-documents-substrate-create-something-package-create-something-substrate-mcp-packages-substrate-mcp",

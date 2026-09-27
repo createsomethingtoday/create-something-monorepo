@@ -1,6 +1,6 @@
 {
   "id": "substrate:create-something:operating-slice-review:internal",
-  "generatedAt": "2026-09-26T14:03:22.797Z",
+  "generatedAt": "2026-09-27T17:28:02.556Z",
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
   "sourceCoverageId": "substrate:create-something:atlas-coverage:internal",
@@ -202,6 +202,7 @@
         "substrate:create-something:guide:docs-guides-bounded-research-interrupt-runbook-md",
         "substrate:create-something:guide:docs-guides-browser-proof-and-closeout-runbook-md",
         "substrate:create-something:guide:docs-guides-chatgpt-mcp-oauth-managed-bearer-md",
+        "substrate:create-something:guide:docs-guides-client-agent-codex-pilot-md",
         "substrate:create-something:guide:docs-guides-cloudflare-bot-access-hardening-md",
         "substrate:create-something:guide:docs-guides-codex-presence-even-g2-md",
         "substrate:create-something:guide:docs-guides-coding-agent-harness-pattern-md",
@@ -267,7 +268,7 @@
       "owner": "CREATE SOMETHING",
       "tier": "Mixed",
       "surface": "guide",
-      "nodeCount": 74,
+      "nodeCount": 75,
       "evidence": [
         "docs/guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md",
         "docs/guides/AGENCY_GOVERNANCE_PRODUCTS_OPERATIONS_RUNBOOK.md",
