@@ -8,21 +8,23 @@ must be read with the additional evidence below.
 
 ## Integrated candidate verification
 
-- Rust lifecycle/policy: 13 passing tests, including a new positive capability
-  challenge and regression that refuses an unrelated loopback server's 403.
+- Rust lifecycle/policy: 16 passing tests, including a positive capability
+  challenge, an unrelated-403 refusal, foreground SIGKILL guardian cleanup,
+  immediate revocation, stale-marker refusal and direct-guard denial.
 - Workspace: 119 passing tests; production adapter-node dual-origin smoke passes
   with local capability, remote signed Access JWT, exact Host and Origin, and
   multipart POST checks. The same smoke passed using packaged Bun/resources.
 - Svelte check: zero errors and warnings. Rust clippy and formatting pass.
-- This is still an unsigned, unenrolled source candidate. Crash containment,
-  installed-client packaging, client identity enrollment, live tunnel and browser
-  acceptance remain release gates.
+- This is still an unsigned, unenrolled source candidate. Guardian SIGKILL and
+  detached descendants remain uncontained; installed-client packaging, client
+  identity enrollment, live tunnel and browser acceptance remain release gates.
 - A synthetic unsigned candidate build with a development public keyring and the
-  installed cloudflared executable completed. All 96 included file hashes matched
-  its manifest, and no symlinks remained. It was moved out of delivery output;
+  installed cloudflared executable completed after the guardian change. All 96
+  included file hashes matched its manifest, no symlinks remained, and its
+  packaged Bun passed the dual-origin smoke. It was moved out of delivery output;
   this is packaging proof only, not a signed or enrolled release.
 
-## Passed
+## Original Paperclip engineer handoff
 
 From repository root:
 
@@ -77,8 +79,8 @@ sandbox; no historical proof is claimed.
 The [README](README.md) owns detailed production gates and rollback. No real
 credentials, signed client release, client device, live tunnel, browser acceptance,
 first-party client enrollment, deployment or merge were used or claimed. In
-particular, supervisor SIGKILL/abort and detached descendants require a separate
-crash-containment solution before unattended production promotion.
+particular, the original handoff did not contain foreground supervisor SIGKILL;
+the addendum below records the subsequent bounded fix and remaining limits.
 
 The orchestrator owns independent review, release assets/signing, identity and
 device acceptance, promotion, rollback verification and Linear CRE-2140 closeout.
@@ -102,4 +104,5 @@ acceptance remain open production gates.
 
 Worktree disposition: preserved at
 `/private/tmp/cre-2140-connector-implementation` on
-`codex/cre-2140-connector-implementation` for independent review. No push performed.
+`codex/cre-2140-connector-implementation` for source provenance. The integrated
+candidate is in draft PR #1790 on `codex/cre-2140-client-rust-connector`.
