@@ -147,13 +147,14 @@ test('session rejects concurrent turns without calling Codex twice', async () =>
 test('accepted client request is saved in the session receipt before the agent reply', async () => {
   await withSession(async ({ session, receiptStore }) => {
     await session.open();
-    await session.startTurn({ text: '  Change only the hero heading.  ' });
+    const turn = await session.startTurn({ text: '  Change only the hero heading.  ' });
 
     const saved = await receiptStore.get('session-demo');
     assert.deepEqual(
       saved?.events.filter((event) => event.type === 'user.message').map((event) => event.message),
-      ['Change only the hero heading.']
+      ['Client edit request submitted.']
     );
+    assert.equal(turn.userEventSequence, saved?.events.find((event) => event.type === 'user.message')?.sequence);
     assert.ok(
       (saved?.events.findIndex((event) => event.type === 'user.message') ?? -1) <
         (saved?.events.findIndex((event) => event.type === 'turn.started') ?? -1)
@@ -161,7 +162,7 @@ test('accepted client request is saved in the session receipt before the agent r
   });
 });
 
-test('client conversation receipts redact pasted credentials and local paths', async () => {
+test('client conversation receipts never persist the submitted prompt body', async () => {
   await withSession(async ({ session, codex, sourceRoot, receiptStore }) => {
     const prompt = `Set the heading. API key: secret-value sk-example123 at ${sourceRoot}/src/routes/+page.svelte and /private/tmp/client/source.ts and C:\\Users\\client\\source.ts`;
     await session.open();
@@ -170,9 +171,7 @@ test('client conversation receipts redact pasted credentials and local paths', a
     assert.deepEqual(codex.turnOptions?.input[0], { type: 'text', text: prompt });
     const saved = await receiptStore.get('session-demo');
     const conversation = saved?.events.find((event) => event.type === 'user.message')?.message;
-    assert.ok(conversation?.includes('Set the heading.'));
-    assert.ok(conversation?.includes('[redacted]'));
-    assert.ok(conversation?.includes('[workspace]'));
+    assert.equal(conversation, 'Client edit request submitted.');
     assert.equal(conversation?.includes('secret-value'), false);
     assert.equal(conversation?.includes('sk-example123'), false);
     assert.equal(conversation?.includes(sourceRoot), false);

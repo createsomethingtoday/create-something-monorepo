@@ -114,7 +114,7 @@ export function mergeWorkspaceEvents(
   return [...bySequence.values()].sort((left, right) => left.sequence - right.sequence);
 }
 
-export function conversationMessages(events: BrowserWorkspaceEvent[]): Array<{
+export function conversationMessages(events: BrowserWorkspaceEvent[], localPrompts: Record<number, string> = {}): Array<{
   sequence: number;
   author: 'user' | 'agent';
   text: string;
@@ -126,7 +126,7 @@ export function conversationMessages(events: BrowserWorkspaceEvent[]): Array<{
     .map((event) => ({
       sequence: event.sequence,
       author: event.type === 'user.message' ? 'user' as const : 'agent' as const,
-      text: event.message,
+      text: event.type === 'user.message' ? (localPrompts[event.sequence] ?? event.message) : event.message,
       ...(event.hasAttachment ? { hasAttachment: true } : {})
     }));
 }

@@ -26,6 +26,18 @@ test('conversation is reconstructed in order from persisted and live receipt eve
   ]);
 });
 
+test('browser-local wording overlays the receipt marker without changing event order', () => {
+  const events = [
+    { ...event(2, 'user.message'), message: 'Client edit request submitted.' },
+    { ...event(3, 'agent.message'), message: 'Done.' }
+  ];
+  assert.deepEqual(conversationMessages(events, { 2: 'Set the heading.' }), [
+    { sequence: 2, author: 'user', text: 'Set the heading.' },
+    { sequence: 3, author: 'agent', text: 'Done.' }
+  ]);
+  assert.equal(conversationMessages(events)[0]?.text, 'Client edit request submitted.');
+});
+
 const event = (
   sequence: number,
   type: BrowserWorkspaceEvent['type'],

@@ -257,11 +257,11 @@ export class ClientWorkspaceService {
     return this.#get(sessionId).session.subscribe(listener);
   }
 
-  async startTurn(sessionId: string, request: WorkspaceTurnRequest): Promise<{ turnId: string }> {
+  async startTurn(sessionId: string, request: WorkspaceTurnRequest): Promise<{ turnId: string; userEventSequence: number }> {
     return await this.#runSession(sessionId, () => this.#startTurn(sessionId, request));
   }
 
-  async #startTurn(sessionId: string, request: WorkspaceTurnRequest): Promise<{ turnId: string }> {
+  async #startTurn(sessionId: string, request: WorkspaceTurnRequest): Promise<{ turnId: string; userEventSequence: number }> {
     const active = this.#get(sessionId);
     await this.#assertWorkspaceIntegrity(active.workspaceId, active.baselineRoot);
     return await active.session.startTurn(request);

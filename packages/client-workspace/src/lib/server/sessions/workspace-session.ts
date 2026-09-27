@@ -272,14 +272,6 @@ export function sanitizedText(value: unknown, workspaceRoot: string): string {
     .slice(0, 4_000);
 }
 
-function sanitizedClientPrompt(text: string, workspaceRoot: string): string {
-  return sanitizedText(text, workspaceRoot)
-    .replace(/\b(api[\s_-]?key|token|secret|password|credential)\s*[=:]\s*(?:"[^"]*"|'[^']*'|[^\s,;]+)/gi, '$1=[redacted]')
-    .replace(/\b[A-Za-z]:\\[^\s,;]+/g, '[local path]')
-    .replace(/~\/[^\s,;]+/g, '[local path]')
-    .replace(/(?<![\w:])\/(?:[^/\s,;]+\/)+[^/\s,;]+/g, '[local path]');
-}
-
 function isWorkspaceSessionReceipt(value: unknown): value is WorkspaceSessionReceipt {
   const receipt = asRecord(value);
   return (
@@ -425,7 +417,7 @@ export class WorkspaceSession {
     return this.receipt();
   }
 
-  async startTurn(request: WorkspaceTurnRequest): Promise<{ turnId: string }> {
+  async startTurn(request: WorkspaceTurnRequest): Promise<{ turnId: string; userEventSequence: number }> {
     this.#assertOpen();
     if (this.#activeTurn) {
       throw new WorkspaceSessionError('turn_conflict', 'A workspace turn is already running.');
@@ -450,9 +442,9 @@ export class WorkspaceSession {
     this.#agentMessageBuffers.clear();
     this.#receipt.status = 'running';
     try {
-      this.#emit({
+      const userEvent = this.#emit({
         type: 'user.message',
-        message: sanitizedClientPrompt(text, this.#workspace.sourceRoot),
+        message: 'Client edit request submitted.',
         ...(request.attachment ? { hasAttachment: true } : {})
       });
       this.#emit({ type: 'turn.started', message: 'Agent turn started.', status: 'running' });
@@ -468,7 +460,7 @@ export class WorkspaceSession {
       });
       this.#receipt.turnId = turnId;
       await this.#persist();
-      return { turnId };
+      return { turnId, userEventSequence: userEvent.sequence };
     } catch {
       this.#activeTurn = false;
       this.#receipt.status = 'failed';
@@ -693,7 +685,7 @@ export class WorkspaceSession {
     void this.#persist();
   }
 
-  #emit(event: Omit<WorkspaceActivityEvent, 'sequence' | 'at'>): void {
+  #emit(event: Omit<WorkspaceActivityEvent, 'sequence' | 'at'>): WorkspaceActivityEvent {
     const normalized: WorkspaceActivityEvent = {
       ...event,
       sequence: ++this.#sequence,
@@ -703,6 +695,7 @@ export class WorkspaceSession {
     if (this.#receipt.events.length > 500) this.#receipt.events.shift();
     this.#receipt.updatedAt = normalized.at;
     for (const subscriber of this.#subscribers) subscriber(structuredClone(normalized));
+    return normalized;
   }
 
   #emitAgentMessage(value: unknown): void {
