@@ -166,7 +166,9 @@ test('session accepts bounded edits with explicit safety prohibitions', async ()
     'Update the headline. Do not deploy, publish, invite, or change credentials.',
     "Change the hero. Don't deploy or publish. Never rotate API keys.",
     'Edit the page. Do not deploy or publish.',
-    'Change the hero from “Build what clients can see.” to “Build what clients can verify.” Do not deploy or publish. Use the registered preview.'
+    'Change the hero from “Build what clients can see.” to “Build what clients can verify.” Do not deploy or publish. Use the registered preview.',
+    'Update the hero. “Do not deploy or publish.”',
+    'Update the hero. “Do not deploy or publish”'
   ]) {
     await withSession(async ({ session, codex }) => {
       await session.startTurn({ text });
@@ -199,6 +201,8 @@ test('qualified negative wording cannot authorize a restricted positive request'
     'Do not deploy only the frontend; include the backend too.',
     'Do not deploy without approval; approval is granted now.',
     'Do not publish only the draft.',
+    'Update the hero. “Do not deploy only the frontend.”',
+    'Update the hero. “Do not deploy” only the frontend.',
     'Never deploy unless approval is granted.',
     'Do not change credentials without asking; I approve.',
     'Do not skip this: do not deploy.',
