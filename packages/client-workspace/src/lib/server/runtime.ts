@@ -1,7 +1,7 @@
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 
-import { ClientWorkspaceService } from './client-workspace-service.js';
+import { ClientWorkspaceService, ClientWorkspaceServiceError } from './client-workspace-service.js';
 import {
   connectCodexAppServer,
   probeCodexInstallation,
@@ -41,8 +41,12 @@ export class ClientWorkspaceRuntime {
     connectCodex: () => connectCodexAppServer({ command: this.codexCommand })
   });
   readonly #previews = new Map<string, PreviewSession>();
+  readonly #resettingPreviews = new Set<string>();
 
   preview(workspaceId: string): PreviewSession {
+    if (this.#resettingPreviews.has(workspaceId)) {
+      throw new ClientWorkspaceServiceError('workspace_resetting', 'Workspace reset is in progress.');
+    }
     const existing = this.#previews.get(workspaceId);
     if (existing) return existing;
     const preview = new PreviewSession({ workspace: this.registry.resolve(workspaceId) });
@@ -96,10 +100,22 @@ export class ClientWorkspaceRuntime {
   }
 
   async reset(workspaceId: string): Promise<void> {
+    if (this.#resettingPreviews.has(workspaceId)) {
+      throw new ClientWorkspaceServiceError('workspace_resetting', 'Workspace reset is in progress.');
+    }
+    this.#resettingPreviews.add(workspaceId);
     const immutableSeedRoot = process.env.CLIENT_WORKSPACE_SEED_ROOT;
-    this.#previews.get(workspaceId)?.close();
-    this.#previews.delete(workspaceId);
-    await this.service.resetWorkspace(workspaceId, immutableSeedRoot);
+    try {
+      this.#previews.get(workspaceId)?.close();
+      this.#previews.delete(workspaceId);
+      await this.service.resetWorkspace(workspaceId, immutableSeedRoot);
+    } finally {
+      // A preview reference admitted immediately before reset may finish its
+      // start asynchronously; never retain it across the source swap.
+      this.#previews.get(workspaceId)?.close();
+      this.#previews.delete(workspaceId);
+      this.#resettingPreviews.delete(workspaceId);
+    }
   }
 
   async close(): Promise<void> {

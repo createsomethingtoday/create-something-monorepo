@@ -129,6 +129,21 @@ test('preview times out and cleans up a process that never becomes ready', async
   preview.close();
 });
 
+test('closed preview cannot restart after reset evicts its reference', async () => {
+  const preview = await previewFor('ready');
+  preview.close();
+  await assert.rejects(preview.start(),
+    (error: unknown) => error instanceof PreviewSessionError && error.code === 'preview_not_ready');
+  assert.equal(preview.status().state, 'stopped');
+
+  const starting = await previewFor('hang');
+  const pending = starting.start();
+  starting.close();
+  await assert.rejects(pending,
+    (error: unknown) => error instanceof PreviewSessionError && error.code === 'preview_not_ready');
+  assert.equal(starting.status().state, 'stopped');
+});
+
 test('static delivery preview serves only declared workspace files without a child process', async () => {
   const managedRoot = mkdtempSync(join(tmpdir(), 'client-workspace-static-preview-'));
   const sourceRoot = join(managedRoot, 'acme');

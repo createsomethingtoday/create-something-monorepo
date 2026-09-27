@@ -148,7 +148,14 @@ export class PreviewSession {
     };
   }
 
+  #assertNotClosed(): void {
+    if (this.#state === 'stopped') {
+      throw new PreviewSessionError('preview_not_ready', 'Preview was closed.');
+    }
+  }
+
   async start(): Promise<PublicPreviewStatus> {
+    this.#assertNotClosed();
     if (this.#state === 'ready') return this.status();
     this.#state = 'starting';
     this.#startedAt = this.#now().toISOString();
@@ -179,6 +186,7 @@ export class PreviewSession {
     const deadline = Date.now() + this.#readinessTimeoutMs;
     const healthPath = preview.healthPath ?? this.#previewPath;
     while (Date.now() < deadline) {
+      this.#assertNotClosed();
       if (this.#exited) {
         throw new PreviewSessionError('preview_crashed', 'The declared preview process exited.');
       }
@@ -188,6 +196,7 @@ export class PreviewSession {
         });
         if (response.ok) {
           await response.body?.cancel();
+          this.#assertNotClosed();
           this.#state = 'ready';
           return this.status();
         }
@@ -197,6 +206,7 @@ export class PreviewSession {
       await delay(25);
     }
 
+    this.#assertNotClosed();
     this.#state = 'blocked';
     child.kill('SIGTERM');
     throw new PreviewSessionError('preview_timeout', 'The declared preview did not become ready.');
