@@ -212,7 +212,7 @@ const FORBIDDEN_INTENT_PATTERNS = [
 // prefix with a qualifier ("only", "without approval", "unless", etc.).
 const RESTRICTED_ACTION = String.raw`(?:deploy(?:ed|ing|ment)?|publish(?:ed|ing)?|invit(?:e|ed|ing|ation)|(?:rotate|replace|revoke|delete|change)\s+(?:(?:the|any|api)\s+)*(?:api[ _-]?key|credential|password|secret|token)s?)\b`;
 const NEGATED_ACTION_LIST = new RegExp(
-  String.raw`(^|[.!?;\n])\s*(?:do not|don['’]t|never)\s+${RESTRICTED_ACTION}(?:(?:\s*,\s*(?:(?:or|and)\s+)?|\s+(?:or|and)\s+)${RESTRICTED_ACTION})*(?=\s*(?:[.!?;\n]|$))`,
+  String.raw`(^|[.!?;\n]["'”’)[\]]*)\s*(?:do not|don['’]t|never)\s+${RESTRICTED_ACTION}(?:(?:\s*,\s*(?:(?:or|and)\s+)?|\s+(?:or|and)\s+)${RESTRICTED_ACTION})*(?=\s*(?:[.!?;\n]|$))`,
   'gi'
 );
 

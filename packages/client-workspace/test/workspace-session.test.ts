@@ -165,7 +165,8 @@ test('session accepts bounded edits with explicit safety prohibitions', async ()
   for (const text of [
     'Update the headline. Do not deploy, publish, invite, or change credentials.',
     "Change the hero. Don't deploy or publish. Never rotate API keys.",
-    'Edit the page. Do not deploy or publish.'
+    'Edit the page. Do not deploy or publish.',
+    'Change the hero from “Build what clients can see.” to “Build what clients can verify.” Do not deploy or publish. Use the registered preview.'
   ]) {
     await withSession(async ({ session, codex }) => {
       await session.startTurn({ text });
