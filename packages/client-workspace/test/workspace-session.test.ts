@@ -159,6 +159,24 @@ test('accepted client request is saved in the session receipt before the agent r
   });
 });
 
+test('client conversation receipts redact pasted credentials and local paths', async () => {
+  await withSession(async ({ session, codex, sourceRoot, receiptStore }) => {
+    const prompt = `Set the heading. API_KEY=secret-value sk-example123 at ${sourceRoot}/src/routes/+page.svelte`;
+    await session.open();
+    await session.startTurn({ text: prompt });
+
+    assert.deepEqual(codex.turnOptions?.input[0], { type: 'text', text: prompt });
+    const saved = await receiptStore.get('session-demo');
+    const conversation = saved?.events.find((event) => event.type === 'user.message')?.message;
+    assert.ok(conversation?.includes('Set the heading.'));
+    assert.ok(conversation?.includes('[redacted]'));
+    assert.ok(conversation?.includes('[workspace]/src/routes/+page.svelte'));
+    assert.equal(conversation?.includes('secret-value'), false);
+    assert.equal(conversation?.includes('sk-example123'), false);
+    assert.equal(conversation?.includes(sourceRoot), false);
+  });
+});
+
 test('session rejects deploy, publish, invite, and credential intents before Codex', async () => {
   await withSession(async ({ session, codex }) => {
     await session.open();

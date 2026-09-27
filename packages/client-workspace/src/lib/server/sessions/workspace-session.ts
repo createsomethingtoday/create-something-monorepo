@@ -453,7 +453,7 @@ export class WorkspaceSession {
       this.#receipt.turnId = turnId;
       this.#emit({
         type: 'user.message',
-        message: text,
+        message: sanitizedText(text, this.#workspace.sourceRoot),
         ...(request.attachment ? { hasAttachment: true } : {})
       });
       this.#emit({ type: 'turn.started', message: 'Agent turn started.', status: 'running' });
