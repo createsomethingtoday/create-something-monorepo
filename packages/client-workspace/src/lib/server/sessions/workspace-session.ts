@@ -272,6 +272,14 @@ export function sanitizedText(value: unknown, workspaceRoot: string): string {
     .slice(0, 4_000);
 }
 
+function sanitizedClientPrompt(text: string, workspaceRoot: string): string {
+  return sanitizedText(text, workspaceRoot)
+    .replace(/\b(api[\s_-]?key|token|secret|password|credential)\s*[=:]\s*(?:"[^"]*"|'[^']*'|[^\s,;]+)/gi, '$1=[redacted]')
+    .replace(/\b[A-Za-z]:\\[^\s,;]+/g, '[local path]')
+    .replace(/~\/[^\s,;]+/g, '[local path]')
+    .replace(/(?<![\w:])\/(?:[^/\s,;]+\/)+[^/\s,;]+/g, '[local path]');
+}
+
 function isWorkspaceSessionReceipt(value: unknown): value is WorkspaceSessionReceipt {
   const receipt = asRecord(value);
   return (
@@ -442,6 +450,12 @@ export class WorkspaceSession {
     this.#agentMessageBuffers.clear();
     this.#receipt.status = 'running';
     try {
+      this.#emit({
+        type: 'user.message',
+        message: sanitizedClientPrompt(text, this.#workspace.sourceRoot),
+        ...(request.attachment ? { hasAttachment: true } : {})
+      });
+      this.#emit({ type: 'turn.started', message: 'Agent turn started.', status: 'running' });
       const { turnId } = await this.#codex.startTurn({
         threadId: this.#receipt.threadId!,
         input,
@@ -453,12 +467,6 @@ export class WorkspaceSession {
         }
       });
       this.#receipt.turnId = turnId;
-      this.#emit({
-        type: 'user.message',
-        message: sanitizedText(text, this.#workspace.sourceRoot),
-        ...(request.attachment ? { hasAttachment: true } : {})
-      });
-      this.#emit({ type: 'turn.started', message: 'Agent turn started.', status: 'running' });
       await this.#persist();
       return { turnId };
     } catch {

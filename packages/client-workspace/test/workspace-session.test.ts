@@ -23,6 +23,7 @@ class FakeCodexConnection implements CodexConnection {
   responses: Array<{ id: number | string; result: unknown }> = [];
   closed = false;
   resumeOptions: ResumeThreadOptions | undefined;
+  onStartTurn?: () => void;
   #listener: ((message: CodexServerMessage) => void) | undefined;
 
   onMessage(listener: (message: CodexServerMessage) => void): void {
@@ -41,6 +42,7 @@ class FakeCodexConnection implements CodexConnection {
 
   async startTurn(options: StartTurnOptions): Promise<{ turnId: string }> {
     this.turnOptions = options;
+    this.onStartTurn?.();
     return { turnId: 'turn-demo' };
   }
 
@@ -161,7 +163,7 @@ test('accepted client request is saved in the session receipt before the agent r
 
 test('client conversation receipts redact pasted credentials and local paths', async () => {
   await withSession(async ({ session, codex, sourceRoot, receiptStore }) => {
-    const prompt = `Set the heading. API_KEY=secret-value sk-example123 at ${sourceRoot}/src/routes/+page.svelte`;
+    const prompt = `Set the heading. API key: secret-value sk-example123 at ${sourceRoot}/src/routes/+page.svelte and /private/tmp/client/source.ts and C:\\Users\\client\\source.ts`;
     await session.open();
     await session.startTurn({ text: prompt });
 
@@ -170,10 +172,31 @@ test('client conversation receipts redact pasted credentials and local paths', a
     const conversation = saved?.events.find((event) => event.type === 'user.message')?.message;
     assert.ok(conversation?.includes('Set the heading.'));
     assert.ok(conversation?.includes('[redacted]'));
-    assert.ok(conversation?.includes('[workspace]/src/routes/+page.svelte'));
+    assert.ok(conversation?.includes('[workspace]'));
     assert.equal(conversation?.includes('secret-value'), false);
     assert.equal(conversation?.includes('sk-example123'), false);
     assert.equal(conversation?.includes(sourceRoot), false);
+    assert.equal(conversation?.includes('/private/tmp/client'), false);
+    assert.equal(conversation?.includes('C:\\Users\\client'), false);
+  });
+});
+
+test('client message precedes immediately streamed agent output in the saved receipt', async () => {
+  await withSession(async ({ session, codex, receiptStore }) => {
+    await session.open();
+    codex.onStartTurn = () => {
+      codex.emit({
+        method: 'item/completed',
+        params: { item: { id: 'instant-reply', type: 'agentMessage', text: 'Done.' } }
+      });
+    };
+    await session.startTurn({ text: 'Set the heading.' });
+
+    const saved = await receiptStore.get('session-demo');
+    const conversation = saved?.events.filter((event) =>
+      event.type === 'user.message' || event.type === 'agent.message'
+    );
+    assert.deepEqual(conversation?.map((event) => event.type), ['user.message', 'agent.message']);
   });
 });
 
