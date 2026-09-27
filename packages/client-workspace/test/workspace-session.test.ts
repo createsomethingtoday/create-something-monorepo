@@ -468,6 +468,7 @@ test('new and resumed Codex threads receive the registered protected preview and
         assert.ok(options);
         assert.match(options.developerInstructions, /\/api\/workspaces\/demo\/preview/);
         assert.match(options.developerInstructions, /Do not probe localhost/);
+        assert.match(options.developerInstructions, /Do not look up or launch native desktop apps/);
         assert.match(options.developerInstructions, /visual verification was not performed/);
         assert.match(options.developerInstructions, /Do not claim.*verified/i);
         assert.equal(options.approvalPolicy, 'untrusted');

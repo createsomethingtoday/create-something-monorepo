@@ -234,7 +234,9 @@ function workspaceDeveloperInstructions(workspace: Readonly<ResolvedWorkspaceDef
   const previewPath = `/api/workspaces/${encodeURIComponent(workspace.id)}/preview`;
   return `${WORKSPACE_DEVELOPER_INSTRUCTIONS}
 The application owns preview startup and its protected route: ${previewPath}.
-Use that registered app endpoint in the existing authenticated browser context for visual proof.
+Use that registered app endpoint for visual proof only when an authenticated browser tab is already available.
+Do not look up or launch native desktop apps for preview verification. If there is no accessible
+authenticated browser tab, leave visual inspection to the client in the app preview.
 Do not probe localhost, guess ports, start another preview server, or bypass authentication.
 The Codex turn has network disabled; the app preview can still be available to the client.
 If authenticated browser verification is unavailable, say visual verification was not performed
