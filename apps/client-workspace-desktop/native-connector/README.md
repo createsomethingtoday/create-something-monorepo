@@ -37,7 +37,7 @@ trust/client-workspace-trust-keyring.json (reviewed public production keyring)
 ```
 
 Desktop `prepare:runtime` copies Bun, the server and the dual-origin wrapper.
-For production it requires `CLIENT_WORKSPACE_TRUST_KEYRING_FILE` and
+For a connector candidate it requires `CLIENT_WORKSPACE_TRUST_KEYRING_FILE` and
 `CLIENT_WORKSPACE_CLOUDFLARED_PATH`; its runtime manifest records both binary
 hashes. The release owner must build and sign the connector executable and
 entire immutable resource directory. Never generate a

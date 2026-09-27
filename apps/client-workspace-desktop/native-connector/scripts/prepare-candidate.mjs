@@ -14,7 +14,11 @@ if (!process.env.CLIENT_WORKSPACE_TRUST_KEYRING_FILE || !process.env.CLIENT_WORK
 execFileSync('pnpm', ['--filter', '@create-something/client-workspace-desktop', 'prepare:runtime'], {
   cwd: repoRoot,
   stdio: 'inherit',
-  env: { ...process.env, CLIENT_WORKSPACE_RELEASE_MODE: 'production' }
+  env: {
+    ...process.env,
+    CLIENT_WORKSPACE_RELEASE_MODE: 'production',
+    CLIENT_WORKSPACE_CONNECTOR_RELEASE: '1'
+  }
 });
 execFileSync('cargo', ['build', '--locked', '--release', '--manifest-path', join(connectorRoot, 'Cargo.toml')], {
   cwd: repoRoot,

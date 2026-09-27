@@ -23,14 +23,15 @@ const generatedPublicKeyPath = join(trustRoot, 'local-signing-public.pem');
 const revokedPrivateKeyPath = join(trustRoot, 'local-revoked-private.pem');
 const revokedPublicKeyPath = join(trustRoot, 'local-revoked-public.pem');
 const releaseMode = process.env.CLIENT_WORKSPACE_RELEASE_MODE === 'production';
+const connectorRelease = process.env.CLIENT_WORKSPACE_CONNECTOR_RELEASE === '1';
 const managedKeyringPath = process.env.CLIENT_WORKSPACE_TRUST_KEYRING_FILE;
 const cloudflaredPath = process.env.CLIENT_WORKSPACE_CLOUDFLARED_PATH;
 
 if (releaseMode && !managedKeyringPath) {
   throw new Error('Production runtime preparation requires CLIENT_WORKSPACE_TRUST_KEYRING_FILE.');
 }
-if (releaseMode && !cloudflaredPath) {
-  throw new Error('Production runtime preparation requires CLIENT_WORKSPACE_CLOUDFLARED_PATH.');
+if (connectorRelease && (!releaseMode || !cloudflaredPath)) {
+  throw new Error('Connector release preparation requires production mode and CLIENT_WORKSPACE_CLOUDFLARED_PATH.');
 }
 if (cloudflaredPath && !existsSync(cloudflaredPath)) {
   throw new Error('Configured cloudflared executable does not exist.');
