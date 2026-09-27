@@ -117,14 +117,22 @@ enrollment migration. This digest is not a release signature. Config is trusted
 local operator input, never browser input. Same-user malicious mutation is outside
 this slice's security boundary.
 
-SIGINT/SIGTERM/SIGHUP, revocation, child failure or internal run error shuts down
-owned process groups, tunnel first. Children do not inherit the lock. No persisted
-PID, unrelated process lookup or existing launchd service is used. Normally Codex
-and preview descendants inherit the runtime group; detached descendants do not.
+The approved foreground CLI launches a private guardian process through an
+inherited Unix socket. The guardian alone starts Bun and cloudflared. Kernel EOF
+on that socket makes the guardian stop its owned process groups if the foreground
+CLI is killed with SIGKILL; SIGINT/SIGTERM/SIGHUP, revocation, child failure and
+ordinary errors also stop them, tunnel first. The guardian holds a separate lock
+until shutdown and removes an owner-only `active` marker only after its children
+have stopped. Revocation waits for both locks and the marker to clear. A later
+startup refuses an uncleared marker instead of claiming an orphaned tunnel is
+gone. No persisted PID is used as a kill target, no unrelated process is scanned,
+and no existing launchd service is touched. Normally Codex and preview descendants
+inherit the runtime group; detached descendants do not.
 
-Revocation syncs a persistent marker before audit. The supervisor checks every
+Revocation syncs a persistent marker before audit. The guardian checks every
 200 ms (startup probes have bounded socket timeouts). The revoke command waits
-up to five seconds for lock release; timeout is `revoked_disconnect_unconfirmed`.
+up to five seconds for both locks and the activity marker; timeout is
+`revoked_disconnect_unconfirmed`.
 Restarts stay denied. No un-revoke API exists. This does not rotate Cloudflare
 credentials, invalidate Access sessions or erase local Codex sign-in. Compromise
 rotation belongs to the credential owner's separate workflow.
@@ -153,11 +161,14 @@ Audit is not tamper-proof against its own OS user; retention/rotation is future 
    approval, preview, receipt, restart recovery and installed preview toolchain.
 6. Actual tunnel disconnect, revocation and independent rollback with authenticated
    browser readback; separate credential rotation ownership.
-7. Crash containment before an unattended managed release. SIGKILL, abort, power
-   loss, sleep/wake and detached descendants are not covered by Drop/signal cleanup.
-   A killed supervisor can leave children alive. Lock release alone is not
-   disconnect proof. There is no watchdog, startup orphan cleanup, launchd install
-   or auto-reconnection. Resolve and test this gate before unattended promotion.
+7. Installed-device crash and disconnect acceptance. A synthetic SIGKILL of the
+   foreground CLI now exercises guardian cleanup and immediate revocation, but
+   the guardian itself can still be killed with SIGKILL and leave children alive.
+   Its surviving activity marker blocks restart and disconnect confirmation;
+   it does not kill unknown or detached processes. A device operator must
+   independently inspect and clear such an incident before a new enrollment.
+   Sleep/wake, kernel aborts and power-loss recovery need installed-device proof.
+   There is no launchd install or auto-reconnection.
 
 ## Independent rollback
 
@@ -166,6 +177,7 @@ revocation, audit, signed deliveries, receipts and Codex home. Restore only the
 previous reviewed signed connector/resources at the same canonical resource path;
 starting requires new local approval. Never clear revocation for rollback. A path
 or config change requires reviewed enrollment migration. After abnormal termination,
-the release owner must prove orphan cleanup before rollback. Source rollback of
+the release owner must prove orphan cleanup before rollback; never delete an
+`active` marker merely to bypass that proof. Source rollback of
 this candidate changes no pilot service, Tauri install, credentials, workspace
 source or third-party route.

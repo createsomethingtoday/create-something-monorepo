@@ -83,6 +83,23 @@ crash-containment solution before unattended production promotion.
 The orchestrator owns independent review, release assets/signing, identity and
 device acceptance, promotion, rollback verification and Linear CRE-2140 closeout.
 
+## Foreground crash containment addendum
+
+This follow-up branch tests and contains **foreground CLI SIGKILL**. The process
+test first failed: synthetic Bun, a Bun descendant, and cloudflared remained
+alive after the approving CLI died. With an inherited-socket guardian owning
+both process groups, the same test now passes: immediate `revoke` waits for
+the guardian to terminate both groups, confirms their disappearance, and leaves
+an unrelated process running. A direct `guard` invocation without the inherited
+parent socket is denied. A simulated uncleared activity marker prevents a new
+run and makes revoke return `revoked_disconnect_unconfirmed`.
+
+The guardian itself can still be SIGKILLed, and detached descendants can escape
+the groups. In that case the marker is retained and does not establish actual
+disconnection; an operator must independently verify and resolve the orphan
+before any restart or rollback. Live tunnel, installed-device and browser
+acceptance remain open production gates.
+
 Worktree disposition: preserved at
 `/private/tmp/cre-2140-connector-implementation` on
 `codex/cre-2140-connector-implementation` for independent review. No push performed.

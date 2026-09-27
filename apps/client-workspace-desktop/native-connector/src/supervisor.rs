@@ -16,6 +16,7 @@ use std::{
 
 pub struct OwnedProcess {
     child: Child,
+    stopped: bool,
 }
 impl OwnedProcess {
     pub fn spawn(command: &mut Command) -> Result<Self> {
@@ -26,6 +27,7 @@ impl OwnedProcess {
             .stderr(Stdio::null());
         Ok(Self {
             child: command.spawn().map_err(|_| "child_start_failed")?,
+            stopped: false,
         })
     }
     pub fn running(&mut self) -> Result<bool> {
@@ -37,18 +39,39 @@ impl OwnedProcess {
     pub fn id(&self) -> u32 {
         self.child.id()
     }
+    pub fn stop(&mut self) -> Result<()> {
+        if self.stopped {
+            return Ok(());
+        }
+        let group = -(self.child.id() as i32);
+        unsafe {
+            libc::kill(group, libc::SIGTERM);
+        }
+        thread::sleep(Duration::from_millis(100));
+        unsafe {
+            libc::kill(group, libc::SIGKILL);
+        }
+        self.child.wait().map_err(|_| "disconnect_unconfirmed")?;
+        let deadline = Instant::now() + Duration::from_secs(2);
+        loop {
+            let remaining = unsafe { libc::kill(group, 0) };
+            if remaining == -1
+                && std::io::Error::last_os_error().raw_os_error() == Some(libc::ESRCH)
+            {
+                self.stopped = true;
+                return Ok(());
+            }
+            if Instant::now() >= deadline {
+                return Err("disconnect_unconfirmed");
+            }
+            thread::sleep(Duration::from_millis(25));
+        }
+    }
 }
 impl Drop for OwnedProcess {
     fn drop(&mut self) {
         // Never act on persisted PIDs or another application's launchd label.
-        unsafe {
-            libc::kill(-(self.child.id() as i32), libc::SIGTERM);
-        }
-        thread::sleep(Duration::from_millis(100));
-        unsafe {
-            libc::kill(-(self.child.id() as i32), libc::SIGKILL);
-        }
-        let _ = self.child.wait();
+        let _ = self.stop();
     }
 }
 fn resource(path: &Path, executable: bool) -> Result<()> {
@@ -188,61 +211,71 @@ pub fn run(c: &Config, state: &State, stop: &AtomicBool) -> Result<()> {
     let capability = fresh_capability()?;
     let tunnel_config = state.write_tunnel_config(c)?;
     state.audit(Event::Starting)?;
-    let mut server = Command::new(c.resources.join("runtime/bun"));
-    server
-        .env_clear()
-        .envs(c.runtime_env(&capability))
-        .arg(c.resources.join("server/scripts/dual-origin-server.mjs"))
-        .current_dir(c.resources.join("server"));
-    let mut runtime = OwnedProcess::spawn(&mut server)?;
-    let deadline = Instant::now() + Duration::from_secs(30);
-    loop {
+    let mut runtime: Option<OwnedProcess> = None;
+    let mut tunnel: Option<OwnedProcess> = None;
+    let outcome = (|| {
+        let mut server = Command::new(c.resources.join("runtime/bun"));
+        server
+            .env_clear()
+            .envs(c.runtime_env(&capability))
+            .arg(c.resources.join("server/scripts/dual-origin-server.mjs"))
+            .current_dir(c.resources.join("server"));
+        runtime = Some(OwnedProcess::spawn(&mut server)?);
+        let deadline = Instant::now() + Duration::from_secs(30);
+        loop {
+            enabled(state, stop)?;
+            if !runtime.as_mut().unwrap().running()? {
+                return Err("runtime_exited");
+            }
+            if owned_runtime_ready(c.port, &capability) && anonymous_denied(c.port, &c.hostname) {
+                break;
+            }
+            if Instant::now() >= deadline {
+                return Err("origin_not_ready");
+            }
+            thread::sleep(Duration::from_millis(100));
+        }
         enabled(state, stop)?;
-        if !runtime.running()? {
+        if !runtime.as_mut().unwrap().running()? {
             return Err("runtime_exited");
         }
-        if owned_runtime_ready(c.port, &capability) && anonymous_denied(c.port, &c.hostname) {
-            break;
+        if let Ok(mut tty) = OpenOptions::new().write(true).open("/dev/tty") {
+            writeln!(
+                tty,
+                "Local workspace: http://127.0.0.1:{}/?cap={capability}",
+                c.port
+            )
+            .map_err(|_| "local_terminal_unavailable")?;
         }
-        if Instant::now() >= deadline {
-            return Err("origin_not_ready");
+        let mut command = Command::new(c.resources.join("runtime/cloudflared"));
+        command
+            .env_clear()
+            .env("HOME", &c.client_home)
+            .env("PATH", "/usr/bin:/bin")
+            .args(["tunnel", "--no-autoupdate", "--config"])
+            .arg(tunnel_config)
+            .arg("run")
+            .arg(&c.tunnel_id);
+        tunnel = Some(OwnedProcess::spawn(&mut command)?);
+        state.audit(Event::ChildrenStarted)?;
+        loop {
+            if stop.load(Ordering::Relaxed) || state.revoked()? {
+                break;
+            }
+            if !runtime.as_mut().unwrap().running()? || !tunnel.as_mut().unwrap().running()? {
+                return Err("child_exited");
+            }
+            thread::sleep(Duration::from_millis(200));
         }
-        thread::sleep(Duration::from_millis(100));
+        Ok(())
+    })();
+    // Tunnel closes before origin/Codex. A failed teardown keeps the guardian's
+    // activity marker so revoke cannot report a verified disconnect.
+    let tunnel_stopped = tunnel.as_mut().map(OwnedProcess::stop).unwrap_or(Ok(()));
+    let runtime_stopped = runtime.as_mut().map(OwnedProcess::stop).unwrap_or(Ok(()));
+    if tunnel_stopped.is_err() || runtime_stopped.is_err() {
+        return Err("disconnect_unconfirmed");
     }
-    enabled(state, stop)?;
-    if !runtime.running()? {
-        return Err("runtime_exited");
-    }
-    if let Ok(mut tty) = OpenOptions::new().write(true).open("/dev/tty") {
-        writeln!(
-            tty,
-            "Local workspace: http://127.0.0.1:{}/?cap={capability}",
-            c.port
-        )
-        .map_err(|_| "local_terminal_unavailable")?;
-    }
-    let mut command = Command::new(c.resources.join("runtime/cloudflared"));
-    command
-        .env_clear()
-        .env("HOME", &c.client_home)
-        .env("PATH", "/usr/bin:/bin")
-        .args(["tunnel", "--no-autoupdate", "--config"])
-        .arg(tunnel_config)
-        .arg("run")
-        .arg(&c.tunnel_id);
-    let mut tunnel = OwnedProcess::spawn(&mut command)?;
-    state.audit(Event::ChildrenStarted)?;
-    loop {
-        if stop.load(Ordering::Relaxed) || state.revoked()? {
-            break;
-        }
-        if !runtime.running()? || !tunnel.running()? {
-            return Err("child_exited");
-        }
-        thread::sleep(Duration::from_millis(200));
-    }
-    // Tunnel closes before origin/Codex. Audit only after both owned groups stop.
-    drop(tunnel);
-    drop(runtime);
+    outcome?;
     state.audit(Event::Stopped)
 }

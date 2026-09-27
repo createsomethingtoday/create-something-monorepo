@@ -4,11 +4,14 @@ use client_workspace_connector::{
 };
 use serde_json::json;
 use std::{
-    fs,
+    fs::{self, File},
+    io::Write,
     net::TcpListener,
+    os::fd::FromRawFd,
     os::unix::fs::{symlink, PermissionsExt},
+    os::unix::process::CommandExt,
     path::PathBuf,
-    process::Command,
+    process::{Child, Command, Stdio},
     sync::atomic::{AtomicBool, AtomicU64, Ordering},
     thread,
     time::{Duration, Instant},
@@ -90,7 +93,7 @@ http.server.HTTPServer(('127.0.0.1', int(os.environ['PORT'])), Handler).serve_fo
         );
         f.write(
             "release/runtime/cloudflared",
-            "#!/bin/sh\nexec /bin/sleep 60\n",
+            "#!/bin/sh\necho $$ > \"$HOME/tunnel.pid\"\nexec /bin/sleep 60\n",
             0o700,
         );
         f
@@ -133,6 +136,165 @@ fn dead(pid: i32) -> bool {
         libc::kill(pid, 0) == -1
             && std::io::Error::last_os_error().raw_os_error() == Some(libc::ESRCH)
     }
+}
+
+fn pid(path: PathBuf) -> i32 {
+    fs::read_to_string(path).unwrap().trim().parse().unwrap()
+}
+
+struct CliProcess {
+    child: Child,
+    _pty_master: File,
+}
+impl Drop for CliProcess {
+    fn drop(&mut self) {
+        let _ = self.child.kill();
+        let _ = self.child.try_wait();
+    }
+}
+
+fn approved_cli(f: &Fixture) -> CliProcess {
+    f.write(
+        "enrollment.json",
+        &serde_json::to_string(&f.config).unwrap(),
+        0o600,
+    );
+    let mut master = -1;
+    let mut slave = -1;
+    assert_eq!(
+        unsafe {
+            libc::openpty(
+                &mut master,
+                &mut slave,
+                std::ptr::null_mut(),
+                std::ptr::null_mut(),
+                std::ptr::null_mut(),
+            )
+        },
+        0
+    );
+    let mut command = Command::new(env!("CARGO_BIN_EXE_client-workspace-connector"));
+    command
+        .args(["run", "--config"])
+        .arg(f.root.join("enrollment.json"));
+    let slave_for_child = slave;
+    unsafe {
+        command.pre_exec(move || {
+            if libc::setsid() < 0 || libc::ioctl(slave_for_child, libc::TIOCSCTTY.into(), 0) < 0 {
+                return Err(std::io::Error::last_os_error());
+            }
+            Ok(())
+        });
+        command.stdin(Stdio::from(File::from_raw_fd(libc::dup(slave))));
+        command.stdout(Stdio::from(File::from_raw_fd(libc::dup(slave))));
+        command.stderr(Stdio::from(File::from_raw_fd(libc::dup(slave))));
+    }
+    let child = command.spawn().unwrap();
+    unsafe { libc::close(slave) };
+    let mut master = unsafe { File::from_raw_fd(master) };
+    master.write_all(b"CONNECT synthetic\n").unwrap();
+    CliProcess {
+        child,
+        _pty_master: master,
+    }
+}
+
+#[test]
+fn sigkill_of_foreground_supervisor_disconnects_before_revocation_confirms() {
+    let f = Fixture::new();
+    let mut unrelated =
+        supervisor::OwnedProcess::spawn(Command::new("/bin/sleep").arg("60")).unwrap();
+    let supervisor = approved_cli(&f);
+    wait_for(|| {
+        f.config.state_dir.join("runtime.pid").exists() && f.root.join("home/tunnel.pid").exists()
+    });
+    let runtime = pid(f.config.state_dir.join("runtime.pid"));
+    let descendant = pid(f.config.state_dir.join("descendant.pid"));
+    let tunnel = pid(f.root.join("home/tunnel.pid"));
+    unsafe { libc::kill(supervisor.child.id() as i32, libc::SIGKILL) };
+    let revoke = Command::new(env!("CARGO_BIN_EXE_client-workspace-connector"))
+        .args(["revoke", "--config"])
+        .arg(f.root.join("enrollment.json"))
+        .output()
+        .unwrap();
+    let gone = || dead(runtime) && dead(descendant) && dead(tunnel);
+    let deadline = Instant::now() + Duration::from_secs(8);
+    while !gone() && Instant::now() < deadline {
+        thread::sleep(Duration::from_millis(25));
+    }
+    // Keep a red test from leaking synthetic process groups into the host.
+    if !gone() {
+        unsafe {
+            libc::kill(-runtime, libc::SIGKILL);
+            libc::kill(-tunnel, libc::SIGKILL);
+        }
+    }
+    assert!(gone(), "SIGKILL left the managed runtime or tunnel alive");
+    assert!(
+        revoke.status.success(),
+        "{}",
+        String::from_utf8_lossy(&revoke.stderr)
+    );
+    assert!(
+        unrelated.running().unwrap(),
+        "guardian stopped an unrelated process"
+    );
+}
+
+#[test]
+fn unclean_guardian_marker_blocks_restart_and_disconnect_confirmation() {
+    let f = Fixture::new();
+    let state = State::open(&f.config.state_dir).unwrap();
+    state.mark_active().unwrap();
+    assert_eq!(
+        state.ensure_quiescent(),
+        Err("previous_disconnect_unconfirmed")
+    );
+    f.write(
+        "enrollment.json",
+        &serde_json::to_string(&f.config).unwrap(),
+        0o600,
+    );
+    let run = Command::new(env!("CARGO_BIN_EXE_client-workspace-connector"))
+        .args(["run", "--config"])
+        .arg(f.root.join("enrollment.json"))
+        .output()
+        .unwrap();
+    assert_eq!(
+        String::from_utf8_lossy(&run.stderr).trim(),
+        "previous_disconnect_unconfirmed"
+    );
+    let revoke = Command::new(env!("CARGO_BIN_EXE_client-workspace-connector"))
+        .args(["revoke", "--config"])
+        .arg(f.root.join("enrollment.json"))
+        .output()
+        .unwrap();
+    assert!(!revoke.status.success());
+    assert_eq!(
+        String::from_utf8_lossy(&revoke.stderr).trim(),
+        "revoked_disconnect_unconfirmed"
+    );
+}
+
+#[test]
+fn guard_entry_without_inherited_parent_socket_cannot_start_children() {
+    let f = Fixture::new();
+    f.write(
+        "enrollment.json",
+        &serde_json::to_string(&f.config).unwrap(),
+        0o600,
+    );
+    let attempt = Command::new(env!("CARGO_BIN_EXE_client-workspace-connector"))
+        .args(["guard", "--config"])
+        .arg(f.root.join("enrollment.json"))
+        .output()
+        .unwrap();
+    assert!(!attempt.status.success());
+    assert_eq!(
+        String::from_utf8_lossy(&attempt.stderr).trim(),
+        "guardian_unavailable"
+    );
+    assert!(!f.config.state_dir.join("runtime.pid").exists());
 }
 
 #[test]

@@ -94,12 +94,38 @@ impl State {
         Ok(())
     }
     pub fn lock(&self) -> Result<File> {
+        self.lock_named("supervisor.lock")
+    }
+    pub fn guardian_lock(&self) -> Result<File> {
+        self.lock_named("guardian.lock")
+    }
+    fn lock_named(&self, name: &str) -> Result<File> {
         self.check_directory()?;
-        let file = private_file(&self.root.join("supervisor.lock"), true)?;
+        let file = private_file(&self.root.join(name), true)?;
         if unsafe { libc::flock(file.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) } != 0 {
             return Err("connector_already_running");
         }
         Ok(file)
+    }
+    pub fn ensure_quiescent(&self) -> Result<()> {
+        self.check_directory()?;
+        match fs::symlink_metadata(self.root.join("active")) {
+            Ok(_) => Err("previous_disconnect_unconfirmed"),
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(()),
+            Err(_) => Err("previous_disconnect_unconfirmed"),
+        }
+    }
+    pub fn mark_active(&self) -> Result<()> {
+        self.ensure_quiescent()?;
+        self.create("active", b"guardian-owned\n")
+    }
+    /// Call only after all owned children have stopped. A crash leaves the
+    /// marker in place so restart/revocation cannot assert a clean disconnect.
+    pub fn clear_active(&self) -> Result<()> {
+        self.check_directory()?;
+        require_private_file(&self.root.join("active"))?;
+        fs::remove_file(self.root.join("active")).map_err(|_| "state_write_failed")?;
+        self.directory.sync_all().map_err(|_| "state_write_failed")
     }
     pub fn bind(&self, config: &Config) -> Result<()> {
         let bytes = serde_json::to_vec(config).map_err(|_| "invalid_config")?;
