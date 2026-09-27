@@ -71,3 +71,25 @@ test('dual-mode workspace still bootstraps the native app on its exact loopback 
     }
   }
 });
+
+test('managed connector refuses requests when remote policy is disabled', async () => {
+  const prior = {
+    connector: process.env.CLIENT_WORKSPACE_MANAGED_CONNECTOR,
+    remote: process.env.CLIENT_WORKSPACE_REMOTE
+  };
+  process.env.CLIENT_WORKSPACE_MANAGED_CONNECTOR = '1';
+  delete process.env.CLIENT_WORKSPACE_REMOTE;
+  try {
+    const url = new URL('http://127.0.0.1:5290/');
+    const response = await handle({
+      event: { request: new Request(url), url } as never,
+      resolve: async () => new Response('workspace')
+    });
+    assert.equal(response.status, 403);
+  } finally {
+    if (prior.connector === undefined) delete process.env.CLIENT_WORKSPACE_MANAGED_CONNECTOR;
+    else process.env.CLIENT_WORKSPACE_MANAGED_CONNECTOR = prior.connector;
+    if (prior.remote === undefined) delete process.env.CLIENT_WORKSPACE_REMOTE;
+    else process.env.CLIENT_WORKSPACE_REMOTE = prior.remote;
+  }
+});

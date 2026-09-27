@@ -24,9 +24,16 @@ const revokedPrivateKeyPath = join(trustRoot, 'local-revoked-private.pem');
 const revokedPublicKeyPath = join(trustRoot, 'local-revoked-public.pem');
 const releaseMode = process.env.CLIENT_WORKSPACE_RELEASE_MODE === 'production';
 const managedKeyringPath = process.env.CLIENT_WORKSPACE_TRUST_KEYRING_FILE;
+const cloudflaredPath = process.env.CLIENT_WORKSPACE_CLOUDFLARED_PATH;
 
 if (releaseMode && !managedKeyringPath) {
   throw new Error('Production runtime preparation requires CLIENT_WORKSPACE_TRUST_KEYRING_FILE.');
+}
+if (releaseMode && !cloudflaredPath) {
+  throw new Error('Production runtime preparation requires CLIENT_WORKSPACE_CLOUDFLARED_PATH.');
+}
+if (cloudflaredPath && !existsSync(cloudflaredPath)) {
+  throw new Error('Configured cloudflared executable does not exist.');
 }
 
 execFileSync('pnpm', ['--filter', '@create-something/client-workspace', 'build'], {
@@ -63,6 +70,12 @@ if (!bunPath || !existsSync(bunPath)) {
 const bundledBun = join(resourcesRoot, 'runtime', 'bun');
 cpSync(bunPath, bundledBun);
 chmodSync(bundledBun, 0o755);
+let bundledCloudflared;
+if (cloudflaredPath) {
+  bundledCloudflared = join(resourcesRoot, 'runtime', 'cloudflared');
+  cpSync(cloudflaredPath, bundledCloudflared);
+  chmodSync(bundledCloudflared, 0o755);
+}
 
 mkdirSync(trustRoot, { recursive: true });
 if (!releaseMode && !existsSync(privateKeyPath)) {
@@ -130,6 +143,7 @@ writeFileSync(
     {
       schema: 'create-something/client-workspace-runtime@1',
       bunSha256: digest(bundledBun),
+      cloudflaredSha256: bundledCloudflared ? digest(bundledCloudflared) : null,
       trustKeyringSha256: digest(bundledKeyring),
       releaseMode
     },

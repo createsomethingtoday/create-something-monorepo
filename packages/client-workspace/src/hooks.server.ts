@@ -25,6 +25,12 @@ export function remoteMutationAllowed(method: string, origin: string | null, exp
 export const handle: Handle = async ({ event, resolve }) => {
   const remoteMode = process.env.CLIENT_WORKSPACE_REMOTE === '1';
   const desktopMode = process.env.CLIENT_WORKSPACE_DESKTOP === '1';
+  if (process.env.CLIENT_WORKSPACE_MANAGED_CONNECTOR === '1' && (!remoteMode || !desktopMode)) {
+    return new Response('Access required.', {
+      status: 403,
+      headers: { 'cache-control': 'no-store' }
+    });
+  }
   const remoteOrigin = process.env.CLIENT_WORKSPACE_REMOTE_ORIGIN ?? '';
   const loopbackOrigin = process.env.CLIENT_WORKSPACE_LOOPBACK_ORIGIN ?? '';
   if (remoteMode && desktopMode) {

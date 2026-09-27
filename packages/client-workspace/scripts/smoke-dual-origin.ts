@@ -77,6 +77,7 @@ const child = spawn(runtime, [entry], {
     NODE_ENV: 'production',
     CLIENT_WORKSPACE_DESKTOP: '1',
     CLIENT_WORKSPACE_REMOTE: '1',
+    CLIENT_WORKSPACE_MANAGED_CONNECTOR: '1',
     CLIENT_WORKSPACE_LOOPBACK_ORIGIN: localOrigin,
     CLIENT_WORKSPACE_REMOTE_ORIGIN: remoteOrigin,
     CLIENT_WORKSPACE_CAPABILITY_TOKEN: 'a'.repeat(64),
