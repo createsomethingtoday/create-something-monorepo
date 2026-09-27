@@ -483,11 +483,15 @@ test('reset rejects seed descendant links into mutable workspaces or outside the
 test('reset retains contained relative seed links within the replacement workspace', async () => {
   await withService(async ({ service, registry, seedRoot }) => {
     await symlink('page.svelte', join(seedRoot, 'demo', 'src', 'alias.svelte'));
+    await symlink('../demo/src/page.svelte', join(seedRoot, 'demo', 'outer-alias.svelte'));
     await service.resetWorkspace('demo', seedRoot);
     const sourceRoot = registry.resolve('demo').sourceRoot;
     assert.equal(await realpath(join(sourceRoot, 'src', 'alias.svelte')),
       await realpath(join(sourceRoot, 'src', 'page.svelte')));
     assert.equal(await readFile(join(sourceRoot, 'src', 'alias.svelte'), 'utf8'), '<h1>Seed</h1>\n');
+    assert.equal(await realpath(join(sourceRoot, 'outer-alias.svelte')),
+      await realpath(join(sourceRoot, 'src', 'page.svelte')));
+    assert.equal(await readFile(join(sourceRoot, 'outer-alias.svelte'), 'utf8'), '<h1>Seed</h1>\n');
   });
 });
 

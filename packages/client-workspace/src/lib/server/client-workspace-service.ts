@@ -1,4 +1,4 @@
-import { cp, lstat, mkdir, mkdtemp, readFile, readdir, readlink, realpath, rename, rm, stat, writeFile } from 'node:fs/promises';
+import { cp, lstat, mkdir, mkdtemp, readFile, readdir, readlink, realpath, rename, rm, stat, symlink, writeFile } from 'node:fs/promises';
 import { execFile } from 'node:child_process';
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { promisify } from 'node:util';
@@ -114,6 +114,26 @@ async function validateSeedDescendants(seed: string, directory = seed): Promise<
       await validateSeedDescendants(seed, path);
     } else if (!entry.isFile()) {
       throw new Error('invalid_seed_entry');
+    }
+  }
+}
+
+// A contained link may textually traverse the seed root (for example,
+// demo/alias -> ../demo/src/page). Rebase it to the staged tree before
+// validating or promoting the replacement.
+async function rebaseSeedLinks(seed: string, replacement: string, directory = seed): Promise<void> {
+  for (const name of await readdir(directory)) {
+    const path = join(directory, name);
+    const entry = await lstat(path);
+    if (entry.isSymbolicLink()) {
+      const target = await realpath(path);
+      if (!isWithin(seed, target)) throw new Error('seed_link_escape');
+      const stagedLink = join(replacement, relative(seed, path));
+      const stagedTarget = join(replacement, relative(seed, target));
+      await rm(stagedLink);
+      await symlink(relative(dirname(stagedLink), stagedTarget), stagedLink);
+    } else if (entry.isDirectory()) {
+      await rebaseSeedLinks(seed, replacement, path);
     }
   }
 }
@@ -409,6 +429,7 @@ export class ClientWorkspaceService {
         await cp(seed, replacement, {
           recursive: true, errorOnExist: true, verbatimSymlinks: true
         });
+        await rebaseSeedLinks(seed, replacement);
         // Validate the staged tree too: it must be contained at its final depth,
         // not merely point back into the external seed through copied links.
         await validateSeedDescendants(replacement);
