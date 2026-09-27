@@ -49,6 +49,16 @@ mkdirSync(join(resourcesRoot, 'trust'), { recursive: true });
 cpSync(join(repoRoot, 'packages', 'client-workspace', 'build'), join(resourcesRoot, 'server'), {
   recursive: true
 });
+// Adapter-node externalizes these runtime imports. Copy the lockfile-installed
+// packages into the release so the server boots outside the monorepo as well.
+for (const dependency of ['jose', 'svelte']) {
+  const installed = join(repoRoot, 'packages', 'client-workspace', 'node_modules', dependency);
+  if (!existsSync(installed)) throw new Error(`Missing client workspace runtime dependency: ${dependency}`);
+  cpSync(realpathSync(installed), join(resourcesRoot, 'server', 'node_modules', dependency), {
+    recursive: true,
+    dereference: true
+  });
+}
 mkdirSync(join(resourcesRoot, 'server', 'scripts'), { recursive: true });
 cpSync(
   join(repoRoot, 'packages', 'client-workspace', 'scripts', 'dual-origin-server.mjs'),

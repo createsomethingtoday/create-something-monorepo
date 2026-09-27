@@ -24,6 +24,8 @@ pub struct Config {
     pub credentials_file: PathBuf,
     pub resources: PathBuf,
     pub codex_bin: PathBuf,
+    #[serde(default)]
+    pub codex_node_bin: Option<PathBuf>,
     pub client_home: PathBuf,
     pub state_dir: PathBuf,
     pub port: u16,
@@ -96,6 +98,9 @@ impl Config {
             || c.resources.starts_with(&c.state_dir)
             || c.client_home.starts_with(&c.state_dir)
             || c.credentials_file.starts_with(&c.state_dir)
+            || c.codex_node_bin.as_ref().is_some_and(|path| {
+                !absolute(path) || path.file_name().is_none_or(|name| name != "node")
+            })
         {
             return Err("invalid_config");
         }
@@ -119,6 +124,12 @@ impl Config {
     }
     pub fn runtime_env(&self, capability: &str) -> BTreeMap<String, String> {
         let text = |p: PathBuf| p.to_string_lossy().into_owned();
+        let mut path_dirs = Vec::new();
+        if let Some(node) = &self.codex_node_bin {
+            path_dirs.push(node.parent().unwrap().display().to_string());
+        }
+        path_dirs.push(self.codex_bin.parent().unwrap().display().to_string());
+        path_dirs.extend(["/usr/bin", "/bin", "/usr/sbin", "/sbin"].map(str::to_string));
         [
             ("HOST", "127.0.0.1".into()),
             ("PORT", self.port.to_string()),
@@ -158,13 +169,7 @@ impl Config {
                 text(self.codex_bin.clone()),
             ),
             ("HOME", text(self.client_home.clone())),
-            (
-                "PATH",
-                format!(
-                    "{}:/usr/bin:/bin:/usr/sbin:/sbin",
-                    self.codex_bin.parent().unwrap().display()
-                ),
-            ),
+            ("PATH", path_dirs.join(":")),
         ]
         .into_iter()
         .map(|(k, v)| (k.into(), v))

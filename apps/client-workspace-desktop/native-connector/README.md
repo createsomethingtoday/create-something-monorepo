@@ -37,6 +37,10 @@ trust/client-workspace-trust-keyring.json (reviewed public production keyring)
 ```
 
 Desktop `prepare:runtime` copies Bun, the server and the dual-origin wrapper.
+It also copies the locked `jose` and `svelte` runtime packages externalized by
+adapter-node. Candidate preparation boots the copied release outside the
+monorepo and checks anonymous remote denial plus local capability bootstrap;
+an in-repo build alone does not prove the release can start.
 For a connector candidate it requires `CLIENT_WORKSPACE_TRUST_KEYRING_FILE` and
 `CLIENT_WORKSPACE_CLOUDFLARED_PATH`; its runtime manifest records both binary
 hashes. The release owner must build and sign the connector executable and
@@ -74,6 +78,11 @@ required; unknown fields fail. This synthetic example grants no access:
 
 Use canonical absolute paths; resolve installed Codex symlinks first. State's
 parent must exist; the connector creates only its own `0700` state directory.
+When Codex is installed as an npm JavaScript launcher (`#!/usr/bin/env node`),
+set optional `codex_node_bin` to the canonical absolute path of its `node`
+executable. The connector verifies that binary and adds only its directory to
+the child's search path. Native Codex installations omit this field. Changing
+it changes the enrollment binding and requires a new reviewed enrollment.
 Credentials must already exist as a private, single-link, owner-owned file.
 Only cloudflared reads their contents. Rust never logs or copies credentials;
 no token is passed in arguments. Child environments are cleared. Codex uses the

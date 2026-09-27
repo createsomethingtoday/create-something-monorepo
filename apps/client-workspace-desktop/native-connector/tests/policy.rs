@@ -121,6 +121,20 @@ fn runtime_environment_preserves_origin_auth_and_signed_delivery_boundary() {
 }
 
 #[test]
+fn configured_node_binary_is_available_to_npm_installed_codex() {
+    let mut value = fixture();
+    value["codex_node_bin"] = serde_json::json!("/synthetic/node/bin/node");
+    let config = Config::parse(&value.to_string()).unwrap();
+    let env = config.runtime_env("b".repeat(64).as_str());
+    assert_eq!(
+        env["PATH"],
+        "/synthetic/node/bin:/synthetic/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+    );
+    value["codex_node_bin"] = serde_json::json!("node");
+    assert!(Config::parse(&value.to_string()).is_err());
+}
+
+#[test]
 fn approval_is_exact_and_bound_to_client() {
     assert!(approval_matches(
         "synthetic-client",

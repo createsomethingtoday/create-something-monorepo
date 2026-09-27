@@ -102,6 +102,9 @@ pub fn preflight(c: &Config) -> Result<()> {
     ] {
         resource(&path, executable)?;
     }
+    if let Some(node) = &c.codex_node_bin {
+        resource(node, true)?;
+    }
     require_private_file(&c.credentials_file)?;
     if !c.client_home.is_dir()
         || fs::canonicalize(&c.client_home).map_err(|_| "home_unavailable")? != c.client_home
