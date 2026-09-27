@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import { encodeBrowserMultipart } from '$lib/client/browser-upload.js';
   import {
+    conversationMessages,
     eventWorkState,
     mergeWorkspaceEvents,
     pendingWorkspaceApprovals,
@@ -53,10 +54,10 @@
   let preview = $state<PreviewStatus | null>(null);
   let previewRevision = $state(0);
   let diff = $state('');
+  let localPrompts = $state<Record<number, string>>({});
   let promptText = $state('');
   let attachment = $state<File | null>(null);
   let deliveryPackage = $state<File | null>(null);
-  let userMessages = $state<Array<{ text: string; imageName?: string }>>([]);
   let restoring = $state(true);
   let opening = $state(false);
   let resetting = $state(false);
@@ -80,6 +81,21 @@
   let eventSource: EventSource | null = null;
 
   const sessionStorageKey = 'create-something.client-workspace.session';
+  const promptStorageKey = (sessionId: string) => `${sessionStorageKey}.prompts.${sessionId}`;
+
+  function loadLocalPrompts(sessionId: string): Record<number, string> {
+    try {
+      const saved = JSON.parse(sessionStorage.getItem(promptStorageKey(sessionId)) ?? '{}');
+      if (!saved || typeof saved !== 'object' || Array.isArray(saved)) return {};
+      return Object.fromEntries(
+        Object.entries(saved).filter(([sequence, text]) =>
+          /^\d+$/.test(sequence) && typeof text === 'string' && text.length <= 12_000
+        )
+      ) as Record<number, string>;
+    } catch {
+      return {};
+    }
+  }
 
   const safeErrors: Record<string, string> = {
     invalid_upload: 'Choose a PNG, JPEG, or WebP image no larger than 5 MB.',
@@ -268,6 +284,7 @@
     sessionActive = result.active;
     receipt = result.receipt;
     events = mergeWorkspaceEvents([], result.receipt.events);
+    localPrompts = loadLocalPrompts(result.receipt.sessionId);
     preview = result.preview;
     if (result.active) connectEvents(result.receipt.sessionId);
     else {
@@ -324,7 +341,6 @@
   async function submitTurn() {
     if (!receipt || !sessionActive || !promptText.trim() || sending) return;
     const submittedText = promptText.trim();
-    const submittedImage = attachment?.name;
     sending = true;
     errorMessage = '';
     notice = 'Sending the bounded edit request…';
@@ -333,14 +349,26 @@
         ['text', submittedText],
         ...(attachment ? ([['image', attachment]] as const) : [])
       ]);
-      await readJson<{ turnId: string }>(
+      const turn = await readJson<{ turnId: string; userEventSequence: number }>(
         await fetch(`/api/sessions/${encodeURIComponent(receipt.sessionId)}/turns`, {
           method: 'POST',
           headers: { 'content-type': upload.contentType },
           body: upload.body
         })
       );
-      userMessages = [...userMessages, { text: submittedText, imageName: submittedImage }];
+      localPrompts = { ...localPrompts, [turn.userEventSequence]: submittedText };
+      try {
+        sessionStorage.setItem(promptStorageKey(receipt.sessionId), JSON.stringify(localPrompts));
+      } catch {
+        // The live conversation still shows the prompt when browser storage is unavailable.
+      }
+      events = mergeWorkspaceEvents(events, [{
+        sequence: turn.userEventSequence,
+        at: new Date().toISOString(),
+        type: 'user.message',
+        message: 'Client edit request submitted.',
+        ...(attachment ? { hasAttachment: true } : {})
+      }]);
       promptText = '';
       attachment = null;
       if (fileInput) fileInput.value = '';
@@ -565,13 +593,20 @@
     eventSource?.close();
     eventSource = null;
     localStorage.removeItem(sessionStorageKey);
+    if (receipt) {
+      try {
+        sessionStorage.removeItem(promptStorageKey(receipt.sessionId));
+      } catch {
+        // Browser storage can be unavailable; the in-memory conversation is still cleared.
+      }
+    }
     workspace = null;
     sessionActive = false;
     receipt = null;
     events = [];
     preview = null;
     diff = '';
-    userMessages = [];
+    localPrompts = {};
     notice = 'Choose an allowlisted workspace to begin.';
     errorMessage = '';
   }
@@ -744,18 +779,11 @@
             reference image when visual context matters.
           </p>
         </div>
-        {#each userMessages as message}
-          <div class="message user-message">
-            <p class="message-author">You</p>
+        {#each conversationMessages(events, localPrompts) as message (message.sequence)}
+          <div class:agent-message={message.author === 'agent'} class:user-message={message.author === 'user'} class="message">
+            <p class="message-author">{message.author === 'user' ? 'You' : 'Workspace agent'}</p>
             <p>{message.text}</p>
-            {#if message.imageName}<span class="attachment-chip">Image · {message.imageName}</span
-              >{/if}
-          </div>
-        {/each}
-        {#each events.filter((event) => event.type === 'agent.message') as message (message.sequence)}
-          <div class="message agent-message">
-            <p class="message-author">Workspace agent</p>
-            <p>{message.message}</p>
+            {#if message.hasAttachment}<span class="attachment-chip">Reference image</span>{/if}
           </div>
         {/each}
         {#if sending}

@@ -52,6 +52,7 @@ export type WorkspaceActivityEventType =
   | 'session.ready'
   | 'session.resumed'
   | 'session.closed'
+  | 'user.message'
   | 'turn.started'
   | 'agent.message'
   | 'command.started'
@@ -69,6 +70,7 @@ export type WorkspaceActivityEvent = {
   at: string;
   type: WorkspaceActivityEventType;
   message: string;
+  hasAttachment?: boolean;
   status?: 'running' | 'completed' | 'failed' | 'pending' | 'declined' | 'accepted';
   approvalId?: string;
   approvalKind?: 'command' | 'file';
@@ -232,7 +234,9 @@ function workspaceDeveloperInstructions(workspace: Readonly<ResolvedWorkspaceDef
   const previewPath = `/api/workspaces/${encodeURIComponent(workspace.id)}/preview`;
   return `${WORKSPACE_DEVELOPER_INSTRUCTIONS}
 The application owns preview startup and its protected route: ${previewPath}.
-Use that registered app endpoint in the existing authenticated browser context for visual proof.
+Use that registered app endpoint for visual proof only when an authenticated browser tab is already available.
+Do not look up or launch native desktop apps for preview verification. If there is no accessible
+authenticated browser tab, leave visual inspection to the client in the app preview.
 Do not probe localhost, guess ports, start another preview server, or bypass authentication.
 The Codex turn has network disabled; the app preview can still be available to the client.
 If authenticated browser verification is unavailable, say visual verification was not performed
@@ -413,7 +417,7 @@ export class WorkspaceSession {
     return this.receipt();
   }
 
-  async startTurn(request: WorkspaceTurnRequest): Promise<{ turnId: string }> {
+  async startTurn(request: WorkspaceTurnRequest): Promise<{ turnId: string; userEventSequence: number }> {
     this.#assertOpen();
     if (this.#activeTurn) {
       throw new WorkspaceSessionError('turn_conflict', 'A workspace turn is already running.');
@@ -438,6 +442,12 @@ export class WorkspaceSession {
     this.#agentMessageBuffers.clear();
     this.#receipt.status = 'running';
     try {
+      const userEvent = this.#emit({
+        type: 'user.message',
+        message: 'Client edit request submitted.',
+        ...(request.attachment ? { hasAttachment: true } : {})
+      });
+      this.#emit({ type: 'turn.started', message: 'Agent turn started.', status: 'running' });
       const { turnId } = await this.#codex.startTurn({
         threadId: this.#receipt.threadId!,
         input,
@@ -449,9 +459,8 @@ export class WorkspaceSession {
         }
       });
       this.#receipt.turnId = turnId;
-      this.#emit({ type: 'turn.started', message: 'Agent turn started.', status: 'running' });
       await this.#persist();
-      return { turnId };
+      return { turnId, userEventSequence: userEvent.sequence };
     } catch {
       this.#activeTurn = false;
       this.#receipt.status = 'failed';
@@ -676,7 +685,7 @@ export class WorkspaceSession {
     void this.#persist();
   }
 
-  #emit(event: Omit<WorkspaceActivityEvent, 'sequence' | 'at'>): void {
+  #emit(event: Omit<WorkspaceActivityEvent, 'sequence' | 'at'>): WorkspaceActivityEvent {
     const normalized: WorkspaceActivityEvent = {
       ...event,
       sequence: ++this.#sequence,
@@ -686,6 +695,7 @@ export class WorkspaceSession {
     if (this.#receipt.events.length > 500) this.#receipt.events.shift();
     this.#receipt.updatedAt = normalized.at;
     for (const subscriber of this.#subscribers) subscriber(structuredClone(normalized));
+    return normalized;
   }
 
   #emitAgentMessage(value: unknown): void {

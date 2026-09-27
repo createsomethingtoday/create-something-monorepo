@@ -23,6 +23,7 @@ class FakeCodexConnection implements CodexConnection {
   responses: Array<{ id: number | string; result: unknown }> = [];
   closed = false;
   resumeOptions: ResumeThreadOptions | undefined;
+  onStartTurn?: () => void;
   #listener: ((message: CodexServerMessage) => void) | undefined;
 
   onMessage(listener: (message: CodexServerMessage) => void): void {
@@ -41,6 +42,7 @@ class FakeCodexConnection implements CodexConnection {
 
   async startTurn(options: StartTurnOptions): Promise<{ turnId: string }> {
     this.turnOptions = options;
+    this.onStartTurn?.();
     return { turnId: 'turn-demo' };
   }
 
@@ -139,6 +141,61 @@ test('session rejects concurrent turns without calling Codex twice', async () =>
       (error: unknown) => error instanceof WorkspaceSessionError && error.code === 'turn_conflict'
     );
     assert.equal(codex.turnOptions?.input[0]?.type, 'text');
+  });
+});
+
+test('accepted client request is saved in the session receipt before the agent reply', async () => {
+  await withSession(async ({ session, receiptStore }) => {
+    await session.open();
+    const turn = await session.startTurn({ text: '  Change only the hero heading.  ' });
+
+    const saved = await receiptStore.get('session-demo');
+    assert.deepEqual(
+      saved?.events.filter((event) => event.type === 'user.message').map((event) => event.message),
+      ['Client edit request submitted.']
+    );
+    assert.equal(turn.userEventSequence, saved?.events.find((event) => event.type === 'user.message')?.sequence);
+    assert.ok(
+      (saved?.events.findIndex((event) => event.type === 'user.message') ?? -1) <
+        (saved?.events.findIndex((event) => event.type === 'turn.started') ?? -1)
+    );
+  });
+});
+
+test('client conversation receipts never persist the submitted prompt body', async () => {
+  await withSession(async ({ session, codex, sourceRoot, receiptStore }) => {
+    const prompt = `Set the heading. API key: secret-value sk-example123 at ${sourceRoot}/src/routes/+page.svelte and /private/tmp/client/source.ts and C:\\Users\\client\\source.ts`;
+    await session.open();
+    await session.startTurn({ text: prompt });
+
+    assert.deepEqual(codex.turnOptions?.input[0], { type: 'text', text: prompt });
+    const saved = await receiptStore.get('session-demo');
+    const conversation = saved?.events.find((event) => event.type === 'user.message')?.message;
+    assert.equal(conversation, 'Client edit request submitted.');
+    assert.equal(conversation?.includes('secret-value'), false);
+    assert.equal(conversation?.includes('sk-example123'), false);
+    assert.equal(conversation?.includes(sourceRoot), false);
+    assert.equal(conversation?.includes('/private/tmp/client'), false);
+    assert.equal(conversation?.includes('C:\\Users\\client'), false);
+  });
+});
+
+test('client message precedes immediately streamed agent output in the saved receipt', async () => {
+  await withSession(async ({ session, codex, receiptStore }) => {
+    await session.open();
+    codex.onStartTurn = () => {
+      codex.emit({
+        method: 'item/completed',
+        params: { item: { id: 'instant-reply', type: 'agentMessage', text: 'Done.' } }
+      });
+    };
+    await session.startTurn({ text: 'Set the heading.' });
+
+    const saved = await receiptStore.get('session-demo');
+    const conversation = saved?.events.filter((event) =>
+      event.type === 'user.message' || event.type === 'agent.message'
+    );
+    assert.deepEqual(conversation?.map((event) => event.type), ['user.message', 'agent.message']);
   });
 });
 
@@ -433,6 +490,7 @@ test('new and resumed Codex threads receive the registered protected preview and
         assert.ok(options);
         assert.match(options.developerInstructions, /\/api\/workspaces\/demo\/preview/);
         assert.match(options.developerInstructions, /Do not probe localhost/);
+        assert.match(options.developerInstructions, /Do not look up or launch native desktop apps/);
         assert.match(options.developerInstructions, /visual verification was not performed/);
         assert.match(options.developerInstructions, /Do not claim.*verified/i);
         assert.equal(options.approvalPolicy, 'untrusted');
