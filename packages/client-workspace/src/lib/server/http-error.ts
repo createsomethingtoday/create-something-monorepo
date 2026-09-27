@@ -19,7 +19,7 @@ export function workspaceErrorResponse(error: unknown): Response {
             ? 404
             : error.code === 'session_resume_failed'
               ? 409
-              : error.code === 'workspace_integrity_failed'
+              : error.code === 'workspace_integrity_failed' || error.code === 'workspace_resetting'
                 ? 409
                 : 400
       }

@@ -31,3 +31,58 @@ Revocation for this controlled device is `launchctl bootout gui/503/agency.creat
 ## Promotion and rollback
 
 Source changes follow CRE-2133's branch/PR review gate. After merge, deploy the exact merged revision to the controlled Mac, rebuild, restart `agency.createsomething.client-agent-pilot`, and record the deployment SHA and browser readback in Linear. The launcher currently points at a preserved worktree rather than an immutable package; do not treat a passing candidate build as merged-release proof. Rollback is to the previous reviewed source revision followed by a rebuild and service restart; stop the tunnel if the origin's access behavior is uncertain.
+
+
+## CRE-2138 acceptance repair promotion handoff
+
+The client assignment for this repair is CRE-6 under current parent
+[CRE-2](https://client-paperclip.createsomething.agency/CRE/issues/CRE-2).
+During the owned release workflow, the orchestrator must update
+`CLIENT_WORKSPACE_PAPERCLIP_ISSUE_URL` to that CRE-2 URL. The board reported that
+the installed launchd value still links the completed prior CRE-1 pilot. This is
+a release configuration change; implementation worktrees must not edit launchd
+or restart the live service. After promotion, production review must click the
+Client Agent header link and confirm it opens CRE-2.
+
+For reset, the build now includes a hash-checked demo snapshot from Git revision
+`d0c73c75142008014a90ae7d466723882f28af4c`. With no external seed configured, the
+registered demo resets from that bundled snapshot while retaining installed
+operator-owned dependencies. Never point `CLIENT_WORKSPACE_SEED_ROOT` at mutable
+workspace source. An explicit invalid seed fails closed. Verify after promotion
+that reset restores the demo, invalidates its previous session authority, and
+preserves unrelated workspace/delivery state.
+
+For preview proof, use the existing authenticated app route
+`/api/workspaces/demo-frontend/preview`. Codex receives this route on both new and
+resumed threads; it must not infer preview failure from arbitrary localhost probes
+or claim visual verification without observed evidence. The turn remains network
+disabled. Review the protected preview in the browser and compare the agent's final
+report with the actual checks and visual evidence. These instructions and automated
+contract tests do not constitute live browser or phone acceptance.
+
+
+Independent-review reset recovery notes: authority is persisted as closed with
+provider IDs removed before replacement source becomes visible. If this write
+fails, replacement source is not exposed. If later cleanup fails, the reset
+reports failure, prior authority stays revoked, and the sibling `.reset-*`
+directory retains `original/` plus `reset.json` for operator recovery. A replacement
+rename failure attempts to restore the original source; if that restoration fails,
+the backup remains. Review the recorded phase and actual filesystem state before
+any separately authorized recovery; do not restore revoked thread authority.
+No automatic crash or power-loss recovery is claimed.
+
+The intent gate now exempts only complete standalone prohibitions such as
+“Do not deploy or publish.” Qualified requests (“Do not deploy only the frontend”
+or “Do not deploy without approval”) remain blocked. Inline “without deploying”
+phrases are deliberately not exempted; express the safety constraint in a separate
+unambiguous prohibition. Sandbox and approval rules remain the enforcement boundary.
+
+
+Reset concurrency verification: pause the original-source rename in an isolated
+test, attempt same-workspace creation/resumption, and verify HTTP 409
+`workspace_resetting`; an unrelated workspace must remain available. Already
+admitted creation/resumption must finish before reset captures and revokes their
+authority. After reset, a newly opened session must have the reset source baseline.
+The runtime owns one service instance for its state root; these queues do not
+coordinate independent processes sharing that root. Session close also drains
+pending receipt saves and ignores late provider events.

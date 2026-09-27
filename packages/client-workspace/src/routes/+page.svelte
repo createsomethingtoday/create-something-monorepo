@@ -88,6 +88,7 @@
     approval_not_found: 'That approval is no longer pending.',
     forbidden_intent: 'Deploy, publish, invite, and credential actions are unavailable here.',
     reset_unavailable: 'The immutable workspace seed is unavailable.',
+    workspace_resetting: 'The workspace is resetting. Try again when reset finishes.',
     session_not_found: 'The prior local session has ended. Open a new workspace.',
     session_resume_failed:
       'The prior Codex conversation could not resume safely. Open a new workspace to start a new conversation.',

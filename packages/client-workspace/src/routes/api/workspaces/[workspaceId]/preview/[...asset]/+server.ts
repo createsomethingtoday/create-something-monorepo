@@ -1,5 +1,6 @@
 import type { RequestHandler } from './$types';
 
+import { ClientWorkspaceServiceError } from '$lib/server/client-workspace-service.js';
 import { PreviewSessionError } from '$lib/server/preview/preview-session.js';
 import { clientWorkspaceRuntime } from '$lib/server/runtime.js';
 import { WorkspaceRegistryError } from '$lib/server/workspaces/registry.js';
@@ -12,6 +13,9 @@ async function proxyPreview(request: Request, workspaceId: string): Promise<Resp
   } catch (error) {
     if (error instanceof WorkspaceRegistryError) {
       return Response.json({ error: error.code }, { status: 404 });
+    }
+    if (error instanceof ClientWorkspaceServiceError && error.code === 'workspace_resetting') {
+      return Response.json({ error: error.code }, { status: 409 });
     }
     if (error instanceof PreviewSessionError) {
       const status = error.code === 'preview_method_not_allowed' ? 405 : 503;
