@@ -82,6 +82,31 @@ configuration; browser requests cannot replace its path or preview command.
 boundary; browser input cannot select another root, seed, command, storage key,
 or Sandbox ID.
 
+The in-product reset uses a release-bundled, SHA-256 checked demo snapshot when
+`CLIENT_WORKSPACE_SEED_ROOT` is unset. The snapshot records its Git source revision
+in `src/lib/server/workspaces/demo-seed.json`; it is never read from the editable
+workspace. Updating that baseline requires reviewing the snapshot and its pinned
+hash together. Installed demo dependencies are retained without network access.
+An explicitly configured seed must be separate from every registered mutable
+workspace. Missing or aliased seeds fail before source/session mutation. Reset
+stages the replacement, revokes persisted authority before the source swap, and removes only the selected workspace's session receipts,
+uploads, and baselines; other workspace and delivery state is preserved.
+External seed descendants must be regular files/directories or relative links
+whose canonical targets stay inside the seed and the staged replacement. Absolute,
+escaping, and dangling links fail before mutation. Cleanup failures after a source
+swap leave the old sessions closed with provider IDs removed, and preserve the
+original source plus a `reset.json` recovery record in the sibling `.reset-*`
+directory. The orchestrator owns recovery; a failed reset is not a successful reset,
+and recovering source must never restore revoked session authority.
+Within the single app runtime, reset closes admission for the selected workspace
+and waits for already-admitted session operations before capturing ownership.
+Creation, resumption, turn/approval operations, uploads, diffs, and session close
+share that workspace's queue. Requests arriving during reset receive
+`workspace_resetting` (HTTP 409) and may be retried after it finishes; other
+workspaces remain available. Session close drains ordered receipt writes and
+ignores late Codex events so stale completed receipts cannot revive authority.
+This is process-local coordination, not a multi-process lock for shared state.
+
 Open the printed local URL, choose **Demo frontend**, attach the declared PNG,
 and submit the Performance acceptance prompt from the durable goal: change only
 the hero eyebrow to `Governed product delivery`, the headline to `Move from intent

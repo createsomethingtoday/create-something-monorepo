@@ -1,7 +1,7 @@
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 
-import { ClientWorkspaceService, ClientWorkspaceServiceError } from './client-workspace-service.js';
+import { ClientWorkspaceService } from './client-workspace-service.js';
 import {
   connectCodexAppServer,
   probeCodexInstallation,
@@ -97,12 +97,6 @@ export class ClientWorkspaceRuntime {
 
   async reset(workspaceId: string): Promise<void> {
     const immutableSeedRoot = process.env.CLIENT_WORKSPACE_SEED_ROOT;
-    if (!immutableSeedRoot) {
-      throw new ClientWorkspaceServiceError(
-        'reset_unavailable',
-        'The immutable workspace seed is unavailable.'
-      );
-    }
     this.#previews.get(workspaceId)?.close();
     this.#previews.delete(workspaceId);
     await this.service.resetWorkspace(workspaceId, immutableSeedRoot);

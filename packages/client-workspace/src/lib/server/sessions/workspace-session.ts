@@ -208,10 +208,36 @@ const FORBIDDEN_INTENT_PATTERNS = [
   /\b(?:rotate|replace|revoke|delete|change)\b.{0,40}\b(?:api[ _-]?key|credential|password|secret|token)s?\b/i
 ];
 
+// Exempt only complete standalone prohibitions, never a negative-looking
+// prefix with a qualifier ("only", "without approval", "unless", etc.).
+const RESTRICTED_ACTION = String.raw`(?:deploy(?:ed|ing|ment)?|publish(?:ed|ing)?|invit(?:e|ed|ing|ation)|(?:rotate|replace|revoke|delete|change)\s+(?:(?:the|any|api)\s+)*(?:api[ _-]?key|credential|password|secret|token)s?)\b`;
+const NEGATED_ACTION_LIST = new RegExp(
+  String.raw`(^|[.!?;\n])\s*(?:do not|don['’]t|never)\s+${RESTRICTED_ACTION}(?:(?:\s*,\s*(?:(?:or|and)\s+)?|\s+(?:or|and)\s+)${RESTRICTED_ACTION})*(?=\s*(?:[.!?;\n]|$))`,
+  'gi'
+);
+
+function hasForbiddenIntent(text: string): boolean {
+  const remaining = text.replace(NEGATED_ACTION_LIST, '$1');
+  return FORBIDDEN_INTENT_PATTERNS.some((pattern) => pattern.test(remaining));
+}
+
 const WORKSPACE_DEVELOPER_INSTRUCTIONS = `You are editing one allowlisted client frontend workspace.
 Stay inside the current workspace root. Do not deploy, publish, change credentials, access secrets,
 or mutate third-party systems. Keep changes small and visible, run focused checks when useful, and
 stop for approval when a command or file change is outside the active policy.`;
+
+function workspaceDeveloperInstructions(workspace: Readonly<ResolvedWorkspaceDefinition>): string {
+  const previewPath = `/api/workspaces/${encodeURIComponent(workspace.id)}/preview`;
+  return `${WORKSPACE_DEVELOPER_INSTRUCTIONS}
+The application owns preview startup and its protected route: ${previewPath}.
+Use that registered app endpoint in the existing authenticated browser context for visual proof.
+Do not probe localhost, guess ports, start another preview server, or bypass authentication.
+The Codex turn has network disabled; the app preview can still be available to the client.
+If authenticated browser verification is unavailable, say visual verification was not performed
+and give the registered preview path for review. A failed local probe is not evidence that the app preview failed.
+In the final response, distinguish edits, checks actually run, and visual evidence actually observed.
+Do not claim the preview was verified or unavailable without evidence from the registered app endpoint.`;
+}
 
 function isWithin(root: string, candidate: string): boolean {
   const fromRoot = relative(root, candidate);
@@ -305,6 +331,7 @@ export class WorkspaceSession {
   #sequence = 0;
   #activeTurn = false;
   #closed = false;
+  #persistence: Promise<void> = Promise.resolve();
   #threadConnected = false;
 
   constructor(options: WorkspaceSessionOptions) {
@@ -353,7 +380,7 @@ export class WorkspaceSession {
         cwd: this.#workspace.sourceRoot,
         writableRoots: [...this.#workspace.editableRoots],
         approvalPolicy: 'untrusted',
-        developerInstructions: WORKSPACE_DEVELOPER_INSTRUCTIONS
+        developerInstructions: workspaceDeveloperInstructions(this.#workspace)
       });
       if (threadId !== expectedThreadId) throw new Error('codex_thread_identity_mismatch');
       this.#threadConnected = true;
@@ -370,7 +397,7 @@ export class WorkspaceSession {
     const { threadId } = await this.#codex.startThread({
       cwd: this.#workspace.sourceRoot,
       approvalPolicy: 'untrusted',
-      developerInstructions: WORKSPACE_DEVELOPER_INSTRUCTIONS
+      developerInstructions: workspaceDeveloperInstructions(this.#workspace)
     });
     this.#receipt.threadId = threadId;
     this.#threadConnected = true;
@@ -393,7 +420,7 @@ export class WorkspaceSession {
     if (text === '' || text.length > MAX_PROMPT_CHARACTERS) {
       throw new WorkspaceSessionError('invalid_turn', 'Turn text is missing or too long.');
     }
-    if (FORBIDDEN_INTENT_PATTERNS.some((pattern) => pattern.test(text))) {
+    if (hasForbiddenIntent(text)) {
       throw new WorkspaceSessionError(
         'forbidden_intent',
         'Deployment, publication, invitation, and credential intents are unavailable.'
@@ -508,6 +535,7 @@ export class WorkspaceSession {
   }
 
   #handleCodexMessage(message: CodexServerMessage): void {
+    if (this.#closed) return;
     const params = asRecord(message.params);
     if (message.id !== undefined && message.method?.endsWith('/requestApproval')) {
       const kind = message.method.includes('fileChange') ? 'file' : 'command';
@@ -663,7 +691,12 @@ export class WorkspaceSession {
     if (message) this.#emit({ type: 'agent.message', message, status: 'completed' });
   }
 
-  async #persist(): Promise<void> {
-    await this.#receiptStore.put(this.receipt());
+  #persist(): Promise<void> {
+    const receipt = this.receipt();
+    const pending = this.#persistence.then(() => this.#receiptStore.put(receipt));
+    // Preserve order even if an earlier save failed; callers still observe the
+    // current save's error. close() awaits its final save and thus drains writes.
+    this.#persistence = pending.catch(() => {});
+    return pending;
   }
 }
