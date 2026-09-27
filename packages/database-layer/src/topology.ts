@@ -64,7 +64,7 @@ const BOARD_SECTIONS: Record<TopologyBoardSectionKey, TopologyBoardSection> = {
   core: { columns: 3, key: 'core', rank: 0, x: 84, y: 168 },
   runtime: { columns: 5, key: 'runtime', rank: 1, x: 940, y: 168 },
   agent_plane: { columns: 4, key: 'agent_plane', rank: 2, x: 2308, y: 168 },
-  judgment: { columns: 4, key: 'judgment', rank: 3, x: 3402, y: 168 }
+  judgment: { columns: 5, key: 'judgment', rank: 3, x: 3402, y: 168 }
 };
 
 const SURFACE_RANK: Record<DatabaseLayerTopologyNode['surface'], number> = {

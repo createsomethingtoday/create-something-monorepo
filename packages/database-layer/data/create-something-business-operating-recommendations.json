@@ -1,6 +1,6 @@
 {
   "id": "substrate:create-something:business-operating-recommendations:internal",
-  "generatedAt": "2026-09-26T14:03:23.742Z",
+  "generatedAt": "2026-09-27T17:28:03.466Z",
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
   "sourceOrganizationReviewId": "substrate:create-something:organization-review:internal",
@@ -10,9 +10,9 @@
   "summary": {
     "recommendedMoves": 4,
     "operationalizedLanes": 4,
-    "topologyNodes": 536,
-    "topologyEdges": 1114,
-    "managementResources": 606,
+    "topologyNodes": 537,
+    "topologyEdges": 1117,
+    "managementResources": 607,
     "managementOperations": 29,
     "operatingSlices": 23,
     "workerSlices": 4,
@@ -86,7 +86,7 @@
       "metrics": {
         "databaseRecords": 28,
         "automationRecords": 277,
-        "resourceCount": 606,
+        "resourceCount": 607,
         "operationCount": 29,
         "readOperations": 26
       },
@@ -276,7 +276,7 @@
       "summary": "Policy is already present; the improvement is to make every critical workflow show its policy, guide, approval boundary, and receipt path in context.",
       "evidence": [
         "Policy records=64",
-        "Guide records=74",
+        "Guide records=75",
         "23 operating slices are review-ready"
       ],
       "sourceArtifacts": [
@@ -373,7 +373,7 @@
         "operatingSlices": 23,
         "attachedSlices": 23,
         "policyRecords": 64,
-        "guideRecords": 74,
+        "guideRecords": 75,
         "docRecords": 6
       },
       "relatedSliceIds": [
@@ -1962,32 +1962,32 @@
       "recordId": "business:promote_database_layer_as_product_surface",
       "type": "proof",
       "summary": "Promote Substrate as the CREATE SOMETHING database layer is represented as a CREATE SOMETHING business operating lane.",
-      "evidence": "packages/database-layer/data/create-something-business-operating-recommendations.json generated from packages/database-layer/data/create-something-organization-review.json at 2026-09-26T14:03:23.742Z.",
-      "createdAt": "2026-09-26T14:03:23.742Z"
+      "evidence": "packages/database-layer/data/create-something-business-operating-recommendations.json generated from packages/database-layer/data/create-something-organization-review.json at 2026-09-27T17:28:03.466Z.",
+      "createdAt": "2026-09-27T17:28:03.466Z"
     },
     {
       "id": "receipt:business:review_worker_runtime_slice_first",
       "recordId": "business:review_worker_runtime_slice_first",
       "type": "proof",
       "summary": "Review worker runtime slices before production claims is represented as a CREATE SOMETHING business operating lane.",
-      "evidence": "packages/database-layer/data/create-something-business-operating-recommendations.json generated from packages/database-layer/data/create-something-organization-review.json at 2026-09-26T14:03:23.742Z.",
-      "createdAt": "2026-09-26T14:03:23.742Z"
+      "evidence": "packages/database-layer/data/create-something-business-operating-recommendations.json generated from packages/database-layer/data/create-something-organization-review.json at 2026-09-27T17:28:03.466Z.",
+      "createdAt": "2026-09-27T17:28:03.466Z"
     },
     {
       "id": "receipt:business:turn_client_overlays_into_repeatable_delivery",
       "recordId": "business:turn_client_overlays_into_repeatable_delivery",
       "type": "proof",
       "summary": "Turn client overlays into repeatable delivery is represented as a CREATE SOMETHING business operating lane.",
-      "evidence": "packages/database-layer/data/create-something-business-operating-recommendations.json generated from packages/database-layer/data/create-something-organization-review.json at 2026-09-26T14:03:23.742Z.",
-      "createdAt": "2026-09-26T14:03:23.742Z"
+      "evidence": "packages/database-layer/data/create-something-business-operating-recommendations.json generated from packages/database-layer/data/create-something-organization-review.json at 2026-09-27T17:28:03.466Z.",
+      "createdAt": "2026-09-27T17:28:03.466Z"
     },
     {
       "id": "receipt:business:attach_policy_to_slices",
       "recordId": "business:attach_policy_to_slices",
       "type": "proof",
       "summary": "Attach policy and guides to operating slices is represented as a CREATE SOMETHING business operating lane.",
-      "evidence": "packages/database-layer/data/create-something-business-operating-recommendations.json generated from packages/database-layer/data/create-something-organization-review.json at 2026-09-26T14:03:23.742Z.",
-      "createdAt": "2026-09-26T14:03:23.742Z"
+      "evidence": "packages/database-layer/data/create-something-business-operating-recommendations.json generated from packages/database-layer/data/create-something-organization-review.json at 2026-09-27T17:28:03.466Z.",
+      "createdAt": "2026-09-27T17:28:03.466Z"
     }
   ],
   "approvalBoundary": "This artifact completes local business operating recommendations only. Production, third-party, client, Cloudflare, Dify, Slack, Airtable, Webflow, and external writes remain approval-gated."

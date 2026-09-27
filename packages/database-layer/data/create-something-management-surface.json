@@ -1,6 +1,6 @@
 {
   "id": "substrate:create-something:management-surface:internal",
-  "generatedAt": "2026-09-26T14:03:23.797Z",
+  "generatedAt": "2026-09-27T17:28:03.519Z",
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
   "sourceReadinessId": "substrate:create-something:operating-slice-readiness:internal",
@@ -6355,6 +6355,20 @@
       "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
       "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-guide-docs-guides-chatgpt-mcp-oauth-managed-bearer-md",
       "mcpUri": "substrate://topology/internal/records/substrate-create-something-guide-docs-guides-chatgpt-mcp-oauth-managed-bearer-md",
+      "agentCommand": "databaseLayer.topology.records.get",
+      "access": [
+        "read"
+      ],
+      "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
+    },
+    {
+      "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-guide-docs-guides-client-agent-codex-pilot-md",
+      "kind": "topology_record",
+      "title": "CLIENT_AGENT_CODEX_PILOT.md",
+      "recordId": "substrate:create-something:guide:docs-guides-client-agent-codex-pilot-md",
+      "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
+      "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-guide-docs-guides-client-agent-codex-pilot-md",
+      "mcpUri": "substrate://topology/internal/records/substrate-create-something-guide-docs-guides-client-agent-codex-pilot-md",
       "agentCommand": "databaseLayer.topology.records.get",
       "access": [
         "read"
