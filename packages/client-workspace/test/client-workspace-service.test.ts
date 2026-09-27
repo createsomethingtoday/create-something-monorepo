@@ -484,6 +484,7 @@ test('reset retains contained relative seed links within the replacement workspa
   await withService(async ({ service, registry, seedRoot }) => {
     await symlink('page.svelte', join(seedRoot, 'demo', 'src', 'alias.svelte'));
     await symlink('../demo/src/page.svelte', join(seedRoot, 'demo', 'outer-alias.svelte'));
+    await symlink('.', join(seedRoot, 'demo', 'src', 'self'));
     await service.resetWorkspace('demo', seedRoot);
     const sourceRoot = registry.resolve('demo').sourceRoot;
     assert.equal(await realpath(join(sourceRoot, 'src', 'alias.svelte')),
@@ -492,6 +493,8 @@ test('reset retains contained relative seed links within the replacement workspa
     assert.equal(await realpath(join(sourceRoot, 'outer-alias.svelte')),
       await realpath(join(sourceRoot, 'src', 'page.svelte')));
     assert.equal(await readFile(join(sourceRoot, 'outer-alias.svelte'), 'utf8'), '<h1>Seed</h1>\n');
+    assert.equal(await realpath(join(sourceRoot, 'src', 'self')),
+      await realpath(join(sourceRoot, 'src')));
   });
 });
 

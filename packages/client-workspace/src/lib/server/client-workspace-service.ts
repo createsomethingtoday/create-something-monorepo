@@ -131,7 +131,7 @@ async function rebaseSeedLinks(seed: string, replacement: string, directory = se
       const stagedLink = join(replacement, relative(seed, path));
       const stagedTarget = join(replacement, relative(seed, target));
       await rm(stagedLink);
-      await symlink(relative(dirname(stagedLink), stagedTarget), stagedLink);
+      await symlink(relative(dirname(stagedLink), stagedTarget) || '.', stagedLink);
     } else if (entry.isDirectory()) {
       await rebaseSeedLinks(seed, replacement, path);
     }
