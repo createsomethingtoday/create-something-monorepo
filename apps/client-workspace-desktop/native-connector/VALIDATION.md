@@ -23,6 +23,10 @@ must be read with the additional evidence below.
   included file hashes matched its manifest, no symlinks remained, and its
   packaged Bun passed the dual-origin smoke. It was moved out of delivery output;
   this is packaging proof only, not a signed or enrolled release.
+- The candidate used Bun 1.3.6 and this Mac's cloudflared 2026.6.1. The local
+  cloudflared CLI reports a newer release is available; select and review the
+  production binary before signing a client artifact. The runtime manifest now
+  records both versions and hashes.
 
 ## Original Paperclip engineer handoff
 

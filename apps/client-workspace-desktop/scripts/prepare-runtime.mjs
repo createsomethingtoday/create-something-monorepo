@@ -145,7 +145,11 @@ writeFileSync(
     {
       schema: 'create-something/client-workspace-runtime@1',
       bunSha256: digest(bundledBun),
+      bunVersion: execFileSync(bundledBun, ['--version'], { encoding: 'utf8' }).trim(),
       cloudflaredSha256: bundledCloudflared ? digest(bundledCloudflared) : null,
+      cloudflaredVersion: bundledCloudflared
+        ? execFileSync(bundledCloudflared, ['--version'], { encoding: 'utf8' }).trim()
+        : null,
       trustKeyringSha256: digest(bundledKeyring),
       releaseMode
     },
