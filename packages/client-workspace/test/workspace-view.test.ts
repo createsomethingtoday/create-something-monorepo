@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import {
+  conversationMessages,
   eventWorkState,
   mergeWorkspaceEvents,
   pendingWorkspaceApprovals,
@@ -9,6 +10,21 @@ import {
   sessionWorkState,
   type BrowserWorkspaceEvent
 } from '../src/lib/client/workspace-view.js';
+
+test('conversation is reconstructed in order from persisted and live receipt events', () => {
+  const events = [
+    event(1, 'session.ready'),
+    { ...event(2, 'user.message'), message: 'Change the heading.' },
+    { ...event(3, 'agent.message'), message: 'Changed the heading.' },
+    { ...event(4, 'user.message'), message: 'Check the diff.' }
+  ];
+
+  assert.deepEqual(conversationMessages(events), [
+    { sequence: 2, author: 'user', text: 'Change the heading.' },
+    { sequence: 3, author: 'agent', text: 'Changed the heading.' },
+    { sequence: 4, author: 'user', text: 'Check the diff.' }
+  ]);
+});
 
 const event = (
   sequence: number,

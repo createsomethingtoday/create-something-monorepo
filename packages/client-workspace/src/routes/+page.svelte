@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import { encodeBrowserMultipart } from '$lib/client/browser-upload.js';
   import {
+    conversationMessages,
     eventWorkState,
     mergeWorkspaceEvents,
     pendingWorkspaceApprovals,
@@ -56,7 +57,6 @@
   let promptText = $state('');
   let attachment = $state<File | null>(null);
   let deliveryPackage = $state<File | null>(null);
-  let userMessages = $state<Array<{ text: string; imageName?: string }>>([]);
   let restoring = $state(true);
   let opening = $state(false);
   let resetting = $state(false);
@@ -324,7 +324,6 @@
   async function submitTurn() {
     if (!receipt || !sessionActive || !promptText.trim() || sending) return;
     const submittedText = promptText.trim();
-    const submittedImage = attachment?.name;
     sending = true;
     errorMessage = '';
     notice = 'Sending the bounded edit request…';
@@ -340,7 +339,6 @@
           body: upload.body
         })
       );
-      userMessages = [...userMessages, { text: submittedText, imageName: submittedImage }];
       promptText = '';
       attachment = null;
       if (fileInput) fileInput.value = '';
@@ -571,7 +569,6 @@
     events = [];
     preview = null;
     diff = '';
-    userMessages = [];
     notice = 'Choose an allowlisted workspace to begin.';
     errorMessage = '';
   }
@@ -744,18 +741,11 @@
             reference image when visual context matters.
           </p>
         </div>
-        {#each userMessages as message}
-          <div class="message user-message">
-            <p class="message-author">You</p>
+        {#each conversationMessages(events) as message (message.sequence)}
+          <div class:agent-message={message.author === 'agent'} class:user-message={message.author === 'user'} class="message">
+            <p class="message-author">{message.author === 'user' ? 'You' : 'Workspace agent'}</p>
             <p>{message.text}</p>
-            {#if message.imageName}<span class="attachment-chip">Image · {message.imageName}</span
-              >{/if}
-          </div>
-        {/each}
-        {#each events.filter((event) => event.type === 'agent.message') as message (message.sequence)}
-          <div class="message agent-message">
-            <p class="message-author">Workspace agent</p>
-            <p>{message.message}</p>
+            {#if message.hasAttachment}<span class="attachment-chip">Reference image</span>{/if}
           </div>
         {/each}
         {#if sending}

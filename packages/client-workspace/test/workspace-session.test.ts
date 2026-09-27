@@ -142,6 +142,23 @@ test('session rejects concurrent turns without calling Codex twice', async () =>
   });
 });
 
+test('accepted client request is saved in the session receipt before the agent reply', async () => {
+  await withSession(async ({ session, receiptStore }) => {
+    await session.open();
+    await session.startTurn({ text: '  Change only the hero heading.  ' });
+
+    const saved = await receiptStore.get('session-demo');
+    assert.deepEqual(
+      saved?.events.filter((event) => event.type === 'user.message').map((event) => event.message),
+      ['Change only the hero heading.']
+    );
+    assert.ok(
+      (saved?.events.findIndex((event) => event.type === 'user.message') ?? -1) <
+        (saved?.events.findIndex((event) => event.type === 'turn.started') ?? -1)
+    );
+  });
+});
+
 test('session rejects deploy, publish, invite, and credential intents before Codex', async () => {
   await withSession(async ({ session, codex }) => {
     await session.open();

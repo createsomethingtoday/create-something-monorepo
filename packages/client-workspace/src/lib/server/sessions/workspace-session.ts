@@ -52,6 +52,7 @@ export type WorkspaceActivityEventType =
   | 'session.ready'
   | 'session.resumed'
   | 'session.closed'
+  | 'user.message'
   | 'turn.started'
   | 'agent.message'
   | 'command.started'
@@ -69,6 +70,7 @@ export type WorkspaceActivityEvent = {
   at: string;
   type: WorkspaceActivityEventType;
   message: string;
+  hasAttachment?: boolean;
   status?: 'running' | 'completed' | 'failed' | 'pending' | 'declined' | 'accepted';
   approvalId?: string;
   approvalKind?: 'command' | 'file';
@@ -449,6 +451,11 @@ export class WorkspaceSession {
         }
       });
       this.#receipt.turnId = turnId;
+      this.#emit({
+        type: 'user.message',
+        message: text,
+        ...(request.attachment ? { hasAttachment: true } : {})
+      });
       this.#emit({ type: 'turn.started', message: 'Agent turn started.', status: 'running' });
       await this.#persist();
       return { turnId };
