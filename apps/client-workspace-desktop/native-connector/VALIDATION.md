@@ -17,6 +17,10 @@ must be read with the additional evidence below.
 - This is still an unsigned, unenrolled source candidate. Crash containment,
   installed-client packaging, client identity enrollment, live tunnel and browser
   acceptance remain release gates.
+- A synthetic unsigned candidate build with a development public keyring and the
+  installed cloudflared executable completed. All 96 included file hashes matched
+  its manifest, and no symlinks remained. It was moved out of delivery output;
+  this is packaging proof only, not a signed or enrolled release.
 
 ## Passed
 

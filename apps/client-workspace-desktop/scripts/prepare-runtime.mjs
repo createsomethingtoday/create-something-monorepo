@@ -6,6 +6,7 @@ import {
   existsSync,
   mkdirSync,
   readFileSync,
+  realpathSync,
   readdirSync,
   rmSync,
   writeFileSync
@@ -69,12 +70,12 @@ if (!bunPath || !existsSync(bunPath)) {
   throw new Error('Bundled runtime preparation requires Bun. Set CLIENT_WORKSPACE_BUN_PATH.');
 }
 const bundledBun = join(resourcesRoot, 'runtime', 'bun');
-cpSync(bunPath, bundledBun);
+cpSync(realpathSync(bunPath), bundledBun);
 chmodSync(bundledBun, 0o755);
 let bundledCloudflared;
 if (cloudflaredPath) {
   bundledCloudflared = join(resourcesRoot, 'runtime', 'cloudflared');
-  cpSync(cloudflaredPath, bundledCloudflared);
+  cpSync(realpathSync(cloudflaredPath), bundledCloudflared);
   chmodSync(bundledCloudflared, 0o755);
 }
 
@@ -112,7 +113,7 @@ if (managedKeyringPath) {
   if (!existsSync(managedKeyringPath)) {
     throw new Error('Configured workspace trust keyring does not exist.');
   }
-  cpSync(managedKeyringPath, bundledKeyring);
+  cpSync(realpathSync(managedKeyringPath), bundledKeyring);
 } else {
   const publicKeyPem = readFileSync(generatedPublicKeyPath, 'utf8');
   const revokedPublicKeyPem = readFileSync(revokedPublicKeyPath, 'utf8');
@@ -154,4 +155,4 @@ writeFileSync(
 );
 
 console.log(`Prepared desktop runtime at ${resourcesRoot}`);
-console.log(`Local fixture private key: ${privateKeyPath}`);
+if (!releaseMode) console.log(`Local fixture private key: ${privateKeyPath}`);
