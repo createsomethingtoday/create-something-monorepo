@@ -9,7 +9,6 @@
     const context = canvas.getContext('2d');
     if (!context) return;
 
-    const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
     const glyphs = ['.', ':', '+', '/', '=', '#'];
     let width = 0;
     let height = 0;
@@ -32,7 +31,7 @@
       const cellHeight = 17;
       const columns = Math.ceil(width / cellWidth);
       const rows = Math.ceil(height / cellHeight);
-      const phase = motion.matches || userReduced ? 0.16 : (time / 11000) % 1;
+      const phase = userReduced ? 0.16 : (time / 11000) % 1;
 
       context.clearRect(0, 0, width, height);
       context.font = `11px ${styles.getPropertyValue('--font-performance-mono').trim() || 'monospace'}`;
@@ -67,15 +66,15 @@
     };
 
     const animate = () => {
-      if (!visible || motion.matches || userReduced || document.hidden) return;
+      if (!visible || userReduced || document.hidden) return;
       paint(performance.now());
       timer = window.setTimeout(animate, 140);
     };
 
     const syncMotion = () => {
       clearTimeout(timer);
-      paint(motion.matches || userReduced ? 0 : performance.now());
-      if (visible && !motion.matches && !userReduced && !document.hidden) timer = window.setTimeout(animate, 140);
+      paint(userReduced ? 0 : performance.now());
+      if (visible && !userReduced && !document.hidden) timer = window.setTimeout(animate, 140);
     };
 
     const observer = new IntersectionObserver(([entry]) => {
@@ -85,7 +84,6 @@
     const resizeObserver = new ResizeObserver(resize);
     observer.observe(field);
     resizeObserver.observe(canvas);
-    motion.addEventListener('change', syncMotion);
     document.addEventListener('visibilitychange', syncMotion);
     const unsubscribe = reducedFilmMotion.subscribe((value) => {
       userReduced = value;
@@ -97,7 +95,6 @@
       clearTimeout(timer);
       observer.disconnect();
       resizeObserver.disconnect();
-      motion.removeEventListener('change', syncMotion);
       document.removeEventListener('visibilitychange', syncMotion);
       unsubscribe();
     };
