@@ -3,11 +3,11 @@
   background: var(--color-performance-paper, #f3f3f0);
 }
 .workshop .wrap {
-  width: min(1280px, calc(100% - 5rem));
+  width: min(1280px, calc(100% - 2 * var(--space-performance-lg)));
   margin-inline: auto;
 }
 .workshop .eyebrow {
-  font-family: var(--font-mono);
+  font-family: var(--font-performance-mono);
   text-transform: uppercase;
   letter-spacing: 0.12em;
   font-size: 0.72rem;
@@ -19,14 +19,14 @@
   font-family: var(--font-performance-heading);
 }
 .workshop h1 {
-  font-size: clamp(3rem, 6.5vw, 6.5rem);
+  font-size: clamp(2.5rem, 5.5vw, 5.5rem);
   line-height: 0.97;
   letter-spacing: -0.065em;
   font-weight: 600;
   text-wrap: balance;
 }
 .workshop h2 {
-  font-size: clamp(2.1rem, 4vw, 4rem);
+  font-size: clamp(1.75rem, 3.5vw, 3.5rem);
   line-height: 1.04;
   letter-spacing: -0.055em;
   font-weight: 500;
@@ -49,7 +49,7 @@
 .workshop .primary {
   display: inline-flex;
   padding: 0.95rem 1.35rem;
-  border-radius: 2px;
+  border-radius: var(--radius-performance-md);
   background: var(--color-performance-ink, #090909);
   color: var(--color-performance-paper, #f3f3f0);
   text-decoration: none;
@@ -62,7 +62,7 @@
   font-size: 0.9rem;
 }
 .workshop .section {
-  padding-block: clamp(3.5rem, 7vw, 7rem);
+  padding-block: clamp(2.75rem, 5vw, var(--space-performance-xl));
 }
 .workshop .section-head {
   display: flex;
@@ -77,13 +77,13 @@
 .workshop .project-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 3.5rem 2rem;
+  gap: var(--space-performance-lg) var(--space-performance-md);
 }
 .workshop a:focus-visible,
 .workshop button:focus-visible,
 .workshop input:focus-visible,
 .workshop select:focus-visible {
-  outline: 3px solid var(--color-performance-signal-blue, #2458d3);
+  outline: 3px solid var(--color-performance-signal);
   outline-offset: 5px;
 }
 .workshop .muted {
@@ -91,7 +91,7 @@
 }
 @media (max-width: 640px) {
   .workshop .wrap {
-    width: calc(100% - 2.5rem);
+    width: calc(100% - 2 * var(--space-performance-sm));
   }
   .workshop .project-grid {
     grid-template-columns: 1fr;
@@ -104,4 +104,35 @@
     display: inline-block;
     margin-top: 1.25rem;
   }
+}
+
+/* Workshop-only hierarchy: campaign imagery above, quiet controls and rows below. */
+.workshop :is(h1, h2, h3, a, p) {
+  overflow-wrap: anywhere;
+}
+.workshop .primary {
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+}
+.workshop .text-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+.workshop .primary:hover {
+  box-shadow: inset 0 0 0 2px var(--color-performance-line-strong);
+}
+.workshop .text-link:hover {
+  text-decoration-thickness: 2px;
+}
+.workshop :is(section, header, footer)[id] {
+  scroll-margin-top: 6rem;
+}
+
+/* Canon's generic section padding must not separate controls from orientation. */
+.workshop .collection,
+.workshop .detail,
+.workshop .body {
+  padding-block: 0;
 }

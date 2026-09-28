@@ -62,7 +62,9 @@
           The playground, labs, and data tools are still here. Open a familiar tool or follow your
           curiosity somewhere new.
         </p>
-        <div class="actions"><a class="primary" href="/workbench">Open the Workbench ↗</a></div>
+        <div class="actions">
+          <a class="primary" href="/workbench">Open the Workbench ↗</a>
+        </div>
       </div>
       <div class="tool-list">
         {#each workbenchTools as tool}<a href={tool.href}
@@ -96,10 +98,10 @@
     grid-template-columns: 1fr 1.12fr;
     background: var(--color-performance-ink, #090909);
     color: var(--color-performance-paper, #f3f3f0);
-    min-height: 620px;
+    min-height: 540px;
   }
   .opening__copy {
-    padding: clamp(3rem, 6vw, 6rem) clamp(1.25rem, 4vw, 4rem);
+    padding: clamp(2.75rem, 5vw, 5rem) clamp(1rem, 4vw, 4rem);
     align-self: center;
   }
   .opening .eyebrow {
@@ -109,7 +111,7 @@
   }
   .opening .lead {
     margin-top: 2rem;
-    color: #d4d4ce;
+    color: var(--color-performance-paper);
     max-width: 31rem;
   }
   .opening .primary {
@@ -140,7 +142,7 @@
   .workbench__grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 5rem;
+    gap: var(--space-performance-xl);
   }
   .workbench h2,
   .closing h2 {
@@ -150,9 +152,15 @@
     display: flex;
     justify-content: space-between;
     gap: 1rem;
-    padding: 1.35rem 0;
-    border-bottom: 1px solid #b8b8b0;
+    padding: var(--space-performance-sm);
+    border-bottom: 1px solid var(--color-performance-line-strong);
     text-decoration: none;
+  }
+  .tool-list a:hover {
+    background: var(--color-performance-paper);
+  }
+  .tool-list a:first-child {
+    border-top: 1px solid var(--color-performance-line-strong);
   }
   .tool-list strong {
     font-size: 1.25rem;
@@ -173,7 +181,7 @@
       grid-template-columns: 1fr;
     }
     .opening__copy {
-      padding: 3.5rem 1.5rem;
+      padding: var(--space-performance-lg) var(--space-performance-sm);
     }
     figure {
       height: min(70vw, 520px);
