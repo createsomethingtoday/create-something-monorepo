@@ -21,6 +21,7 @@ VERIFICATION_FENCE = re.compile(r"```paperclip-verification-v1\s*\n(.*?)\n```", 
 ROUTE_FENCE = re.compile(r"```jev-routing-receipt\s*\n(.*?)\n```", re.DOTALL)
 DECISION_FENCE = re.compile(r"```paperclip-escalation-decision-v1\s*\n(.*?)\n```", re.DOTALL)
 LANE_BY_MODEL = {"gpt-6-luna": "luna", "gpt-6-sol": "sol", "gpt-6-astra": "astra"}
+MODEL_BY_LANE = {lane: model for model, lane in LANE_BY_MODEL.items()}
 NEXT_LANE = {"luna": "sol", "sol": "astra"}
 CANONICAL_COMPANY_ID = "1fb053c2-aa2a-4d88-8c45-0ef82ac8aef5"
 CANONICAL_COMPANY_NAME = "CREATE SOMETHING"
@@ -122,7 +123,7 @@ def validate_verification(receipt, policy, policy_hash):
         raise ValueError("failed receipt must identify unmet criteria")
     if not nonnegative_int(receipt["observedLandedCostCents"]):
         raise ValueError("observed landed cost required")
-    if not isinstance(receipt["costBasis"], str) or not receipt["costBasis"].strip() or len(receipt["costBasis"]) > 240:
+    if not isinstance(receipt["costBasis"], str) or not receipt["costBasis"].strip() or len(receipt["costBasis"]) > 500:
         raise ValueError("cost basis required")
     if not isinstance(receipt["evidence"], list) or not 1 <= len(receipt["evidence"]) <= 8 or any(not isinstance(item, str) or not item.strip() or len(item) > 500 for item in receipt["evidence"]):
         raise ValueError("verifier evidence required")
@@ -177,11 +178,12 @@ def evaluate(issue, policy, comments, runs, agents, source_events, now, *, board
     verifier = agents[policy["verifierAgentId"]]
     if any(agent.get("adapterType") != "codex_local" for agent in (selected, fallback, verifier)):
         raise ValueError("escalation agents must use the Codex adapter")
-    selected_model = selected.get("adapterConfig", {}).get("model")
-    fallback_model = fallback.get("adapterConfig", {}).get("model")
+    selected_model = run_model(source_events)
     selected_lane = LANE_BY_MODEL.get(selected_model)
-    if route_receipt.get("recommendation") != selected_lane or NEXT_LANE.get(selected_lane) != LANE_BY_MODEL.get(fallback_model):
+    fallback_lane = NEXT_LANE.get(selected_lane)
+    if route_receipt.get("recommendation") != selected_lane or fallback_lane is None:
         raise ValueError("Jev route and fallback model ladder disagree")
+    fallback_model = MODEL_BY_LANE[fallback_lane]
     if fallback.get("status") != "idle":
         raise ValueError("fallback agent is unavailable")
     for comment in comments:
@@ -206,8 +208,6 @@ def evaluate(issue, policy, comments, runs, agents, source_events, now, *, board
         raise ValueError("runs are not bound to this issue")
     if not (utc(source["finishedAt"]) <= utc(review["startedAt"]) <= utc(verifier_comment["createdAt"]) <= utc(review["finishedAt"])):
         raise ValueError("verifier timing is not independent")
-    if run_model(source_events) != selected_model:
-        raise ValueError("source run model does not match the approved model")
     approvals = []
     for comment in comments:
         if comment.get("authorUserId") != board_user_id or not APPROVAL_FENCE.search(comment.get("body") or ""):
@@ -219,6 +219,8 @@ def evaluate(issue, policy, comments, runs, agents, source_events, now, *, board
         raise ValueError("one pre-execution board approval required")
     if any(item.get("agentId") == selected["id"] and utc(item["startedAt"]) > utc(source["startedAt"]) for item in runs if item.get("startedAt")):
         raise ValueError("verifier receipt is stale after a newer executor run")
+    if any(item.get("agentId") == verifier["id"] and utc(item["startedAt"]) > utc(review["startedAt"]) for item in runs if item.get("startedAt")):
+        raise ValueError("verifier receipt is stale after a newer verifier run")
     if receipt["result"] == "passed":
         return None
     if receipt["failureKind"] != "quality":
@@ -250,14 +252,25 @@ class Paperclip:
         data = None if body is None else json.dumps(body).encode()
         headers = self.headers if body is None else {**self.headers, "Content-Type": "application/json"}
         request = urllib.request.Request(self.base + path, data=data, headers=headers, method=method)
-        with urllib.request.urlopen(request, timeout=8) as response:
-            return json.load(response)
+        try:
+            with urllib.request.urlopen(request, timeout=8) as response:
+                return json.load(response)
+        except urllib.error.HTTPError as error:
+            try:
+                payload = json.load(error)
+            except (ValueError, OSError):
+                payload = {}
+            reason = payload.get("error") if isinstance(payload, dict) else None
+            raise ValueError(f"Paperclip HTTP {error.code}: {reason or 'request rejected'}") from error
 
     def get(self, path):
         return self.request("GET", path)
 
     def patch(self, path, body):
         return self.request("PATCH", path, body)
+
+    def post(self, path, body):
+        return self.request("POST", path, body)
 
 
 def scan(api, *, company_id, board_user_id, jev_agent_id, controller_agent_id, now, apply, assignment_now=None):
@@ -274,16 +287,18 @@ def scan(api, *, company_id, board_user_id, jev_agent_id, controller_agent_id, n
         if not isinstance(issues, list):
             raise ValueError("issue list unavailable")
         for item in issues:
-            matches = POLICY_FENCE.findall(item.get("description") or "")
-            if not matches:
-                continue
-            summary["scanned"] += 1
             try:
+                # Company issue lists truncate descriptions; read the complete issue before
+                # looking for a policy fence or deciding the issue is out of scope.
+                issue_id = item["id"]
+                issue = api.get(f"/api/issues/{issue_id}")
+                matches = POLICY_FENCE.findall(issue.get("description") or "")
+                if not matches:
+                    continue
+                summary["scanned"] += 1
                 if len(matches) != 1:
                     raise ValueError("multiple escalation policies")
                 policy = json.loads(matches[0])
-                issue_id = item["id"]
-                issue = api.get(f"/api/issues/{issue_id}")
                 if api.get(f"/api/issues/{issue_id}/live-runs"):
                     raise ValueError("issue has a live run")
                 comments = api.get(f"/api/issues/{issue_id}/comments?limit=500")
@@ -313,12 +328,12 @@ def scan(api, *, company_id, board_user_id, jev_agent_id, controller_agent_id, n
                 # One assignment and its durable comment are written in the same Paperclip issue mutation.
                 body = "Approved A1 model fallback after independent verification. Production authority is unchanged.\n\n```paperclip-escalation-decision-v1\n" + json.dumps(decision, sort_keys=True) + "\n```"
                 request_id = str(uuid.uuid5(uuid.NAMESPACE_URL, decision["policyHash"] + ":" + decision["sourceRunId"]))
-                updated = api.patch(f"/api/issues/{issue_id}", {"assigneeAgentId": decision["toAgentId"], "status": "todo", "comment": body, "commentClientRequestId": request_id})
+                updated = api.patch(f"/api/issues/{issue_id}", {"assigneeAgentId": decision["toAgentId"], "assigneeAdapterOverrides": {"adapterConfig": {"model": decision["toModel"]}}, "status": "todo", "comment": body, "commentClientRequestId": request_id})
                 if updated.get("assigneeAgentId") != decision["toAgentId"]:
                     raise ValueError("fallback assignment readback mismatch")
                 summary["escalated"] += 1
                 return summary
-            except (KeyError, TypeError, ValueError, json.JSONDecodeError, urllib.error.URLError) as error:
+            except (KeyError, TypeError, ValueError, TimeoutError, json.JSONDecodeError, urllib.error.URLError) as error:
                 summary["held"] += 1
                 print(json.dumps({"taskId": item.get("id"), "status": "held", "reason": str(error)}))
         if len(issues) < 100:
@@ -347,14 +362,32 @@ def main():
     agent = os.environ.get("PAPERCLIP_AGENT_ID", "")
     jev = os.environ.get("JEV_ADVISOR_AGENT_ID", "")
     board = os.environ.get("ESCALATION_APPROVER_USER_ID", "")
-    if not all((base, key, run_id, company, agent, jev, board)):
+    control_issue_id = os.environ.get("ESCALATION_CONTROL_ISSUE_ID", "")
+    if not all((base, key, run_id, company, agent, jev, board, control_issue_id)):
         print(json.dumps({"status": "error", "reason": "Paperclip escalation context unavailable"}))
         return 1
     api = Paperclip(base, paperclip_headers())
     try:
+        run = api.get(f"/api/heartbeat-runs/{run_id}")
+        if run.get("agentId") != agent or run.get("companyId") != company:
+            raise ValueError("controller run identity mismatch")
+        source_issue_id = (run.get("contextSnapshot") or {}).get("issueId")
+        if not source_issue_id:
+            control = api.get(f"/api/issues/{control_issue_id}")
+            if control.get("companyId") != company or control.get("assigneeAgentId") != agent:
+                raise ValueError("controller control issue is unavailable")
+            queued = api.post(f"/api/agents/{agent}/wakeup", {
+                "source": "on_demand", "reason": "approved_A1_escalation_sweep",
+                "payload": {"issueId": control_issue_id},
+                "idempotencyKey": f"paperclip-escalation-sweep:{run_id}",
+            })
+            print(json.dumps({"status": "scoped_wake_queued", "runId": queued.get("id"), "controlIssueId": control_issue_id}))
+            return 0
+        if source_issue_id != control_issue_id:
+            raise ValueError("controller run has an unexpected source issue")
         result = scan(api, company_id=company, board_user_id=board, jev_agent_id=jev, controller_agent_id=agent, now=datetime.now(timezone.utc), apply=os.environ.get("ESCALATION_APPLY") == "true")
         print(json.dumps(result))
-    except (KeyError, TypeError, ValueError, json.JSONDecodeError, urllib.error.URLError) as error:
+    except (KeyError, TypeError, ValueError, TimeoutError, json.JSONDecodeError, urllib.error.URLError) as error:
         print(json.dumps({"status": "error", "reason": str(error)}))
         return 1
     return 0

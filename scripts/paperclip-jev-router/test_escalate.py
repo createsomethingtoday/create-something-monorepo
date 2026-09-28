@@ -1,6 +1,7 @@
 import hashlib
 import json
 import unittest
+import urllib.error
 import uuid
 from datetime import datetime, timezone
 
@@ -65,6 +66,8 @@ class EscalationTests(unittest.TestCase):
 
     def test_verified_quality_failure_promotes_one_lane_within_cap(self):
         data = fixture()
+        for agent in data["agents"].values():
+            agent.pop("adapterConfig")  # Paperclip redacts peers' config from agent tokens.
         decision = self.evaluate(data)
         self.assertEqual(decision["fromModel"], "gpt-6-sol")
         self.assertEqual(decision["toModel"], "gpt-6-astra")
@@ -85,6 +88,13 @@ class EscalationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "operator recovery"):
             self.evaluate(data)
 
+    def test_detailed_cost_basis_fits_receipt(self):
+        data = fixture()
+        receipt = escalate.fenced_json(data["comments"][2]["body"], escalate.VERIFICATION_FENCE)
+        receipt["costBasis"] = "Board-approved internal allocation. " * 10
+        data["comments"][2]["body"] = fence("paperclip-verification-v1", receipt)
+        self.assertIsNotNone(self.evaluate(data))
+
     def test_stale_route_and_missing_approval_fail_closed(self):
         data = fixture()
         data["issue"]["description"] = data["issue"]["description"].replace("routine bounded code update", "different work")
@@ -104,11 +114,11 @@ class EscalationTests(unittest.TestCase):
             self.evaluate(data)
         data = fixture()
         data["source_events"][0]["payload"]["commandArgs"][-1] = "gpt-6-luna"
-        with self.assertRaisesRegex(ValueError, "source run model"):
+        with self.assertRaisesRegex(ValueError, "Jev route"):
             self.evaluate(data)
         data = fixture()
         data["source_events"].append({"eventType": "adapter.invoke", "payload": {"commandArgs": ["exec", "--model", "gpt-6-astra"]}})
-        with self.assertRaisesRegex(ValueError, "source run model"):
+        with self.assertRaisesRegex(ValueError, "Jev route"):
             self.evaluate(data)
         data = fixture()
         data["comments"].append({"id": ident(12), "authorAgentId": data["controller_agent_id"], "body": fence("paperclip-escalation-decision-v1", {"policyHash": escalate.compact_hash(data["policy"])})})
@@ -137,6 +147,10 @@ class EscalationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "stale after"):
             self.evaluate(data)
         data = fixture()
+        data["runs"].append({"runId": ident(31), "agentId": data["policy"]["verifierAgentId"], "startedAt": "2026-09-28T10:06:00Z"})
+        with self.assertRaisesRegex(ValueError, "newer verifier run"):
+            self.evaluate(data)
+        data = fixture()
         data["agents"][data["policy"]["fallbackAgentId"]]["status"] = "running"
         with self.assertRaisesRegex(ValueError, "unavailable"):
             self.evaluate(data)
@@ -156,7 +170,7 @@ class EscalationTests(unittest.TestCase):
                 if path.endswith("/agents"):
                     return list(data["agents"].values())
                 if "/issues?" in path:
-                    return [data["issue"]]
+                    return [{**data["issue"], "description": data["issue"]["description"][:50]}]
                 if path.endswith("/live-runs"):
                     return []
                 if path.endswith("/comments?limit=500"):
@@ -176,6 +190,7 @@ class EscalationTests(unittest.TestCase):
         result = escalate.scan(api, apply=True, **kwargs)
         self.assertEqual(result["escalated"], 1)
         self.assertEqual(api.patches[0]["assigneeAgentId"], data["policy"]["fallbackAgentId"])
+        self.assertEqual(api.patches[0]["assigneeAdapterOverrides"], {"adapterConfig": {"model": "gpt-6-astra"}})
         uuid.UUID(api.patches[0]["commentClientRequestId"])
         with self.assertRaisesRegex(ValueError, "canonical company"):
             escalate.scan(api, apply=False, **{**kwargs, "company_id": ident(20)})
@@ -214,6 +229,35 @@ class EscalationTests(unittest.TestCase):
         self.assertEqual(result["escalated"], 0)
         self.assertEqual(result["held"], 1)
         self.assertEqual(api.patches, [])
+
+    def test_unavailable_unrelated_issue_does_not_stop_scan(self):
+        data = fixture()
+        missing_id = ident(50)
+        timed_out_id = ident(51)
+        class FlakyAPI:
+            def get(self, path):
+                if path == f"/api/companies/{escalate.CANONICAL_COMPANY_ID}":
+                    return {"id": escalate.CANONICAL_COMPANY_ID, "name": escalate.CANONICAL_COMPANY_NAME}
+                if path.endswith("/agents"):
+                    return list(data["agents"].values())
+                if "/issues?" in path:
+                    return [{"id": missing_id}, {"id": timed_out_id}, {"id": data["issue"]["id"]}]
+                if path == f"/api/issues/{missing_id}":
+                    raise urllib.error.URLError("temporary detail failure")
+                if path == f"/api/issues/{timed_out_id}":
+                    raise TimeoutError("detail request timed out")
+                if path.endswith("/live-runs"):
+                    return []
+                if path.endswith("/comments?limit=500"):
+                    return data["comments"]
+                if path.endswith("/runs"):
+                    return data["runs"]
+                if "/heartbeat-runs/" in path:
+                    return data["source_events"]
+                return data["issue"]
+        result = escalate.scan(FlakyAPI(), company_id=escalate.CANONICAL_COMPANY_ID, board_user_id=data["board_user_id"], jev_agent_id=data["jev_agent_id"], controller_agent_id=data["controller_agent_id"], now=data["now"], apply=False)
+        self.assertEqual(result["held"], 2)
+        self.assertEqual(result["eligible"], 1)
 
 
 if __name__ == "__main__":
