@@ -59,5 +59,18 @@
 | `/ai-workflow-recovery` | operator | supporting |
 | `/marketplace-review-automation` | operator | supporting |
 | `/map/workspace` | operator | supporting |
+| `/arcs` | operator | noindex public catalog |
+| `/arc/{slug}` | operator | noindex public detail; loader checks slug |
+| `/experiments` | operator | noindex public catalog |
+| `/experiments/{slug}` | operator | noindex public detail; loader checks publication |
+
+| `/arcs` | operator | public-noindex |
+| `/arc/app-review-governance` | operator | public-noindex |
+| `/arc/operator-inbound-triage` | operator | public-noindex representative dynamic route |
+| `/experiments` | operator | public-noindex |
 
 `/products/loom` redirects to `/products`. `/map/workspace` is the existing approved utility entry opt-in; it is covered by policy tests, not the public browser sweep.
+
+The Arc and Experiments catalogs and detail route families were added in a follow-up. `{slug}` denotes a route pattern; only existing/public records are served by their loaders.
+
+Dynamic `/arc/[slug]` and `/experiments/[slug]` inherit this policy; Arc serves registered presentations and Experiments serves published visible D1 papers. Unknown/private routes remain outside the public palette.

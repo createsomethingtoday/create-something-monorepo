@@ -283,5 +283,25 @@
     "path": "/map/workspace",
     "palette": true,
     "decision": "supporting"
+  },
+  {
+    "path": "/arcs",
+    "palette": true,
+    "decision": "public-noindex"
+  },
+  {
+    "path": "/arc/app-review-governance",
+    "palette": true,
+    "decision": "public-noindex"
+  },
+  {
+    "path": "/arc/operator-inbound-triage",
+    "palette": true,
+    "decision": "public-noindex"
+  },
+  {
+    "path": "/experiments",
+    "palette": true,
+    "decision": "public-noindex"
   }
 ]

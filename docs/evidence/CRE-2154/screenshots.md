@@ -36,6 +36,8 @@ Full interactive sections (Rehearse on Practice, Boundary on Stack):
 
 [Generated synthetic Practice Receipt](practice-receipt-390.png).
 
+Noindex public family follow-up at 390px: [Arcs catalog](arcs-390.png), [Arc prototype](arc-app-review-governance-390.png), [Arc detail](arc-operator-inbound-triage-390.png), [Experiments catalog](experiments-390.png).
+
 Final graph-label correction:
 
 - Map canvas: [1440](map-canvas-1440.png), [390](map-canvas-390.png), [320](map-canvas-320.png).
