@@ -290,6 +290,11 @@ body:has(.layout[data-canon-palette='operator'])::-webkit-scrollbar-thumb {
   --color-performance-fg-subtle: var(--color-operator-muted);
   --color-performance-hover: oklch(100% 0 0 / .06);
   --color-performance-active: oklch(100% 0 0 / .1);
+  /* Discover's glass cards need dark fills with the operator foreground. */
+  --glass-performance-bg-light: var(--color-operator-secondary);
+  --glass-performance-bg-medium: var(--color-operator-raised);
+  --glass-performance-border-light: var(--color-operator-border);
+  --glass-performance-border-medium: var(--color-operator-input-border);
   --color-performance-border-default: var(--color-operator-border);
   --color-performance-border-emphasis: var(--color-operator-input-border);
   --color-performance-shell-surface: var(--color-operator-secondary);
