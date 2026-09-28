@@ -63,13 +63,18 @@ test('Effect state machine on real SQL persists across repository recreation', a
 });
 test('route JSON contract, duplicate and legacy caller limit with fake provider', async () => {
   const f = await fixture(); const originalFetch = globalThis.fetch; let sends = 0;
-  globalThis.fetch = async () => { sends++; return new Response(JSON.stringify({ id: `receipt-${sends}` })); };
+  const senders: string[] = [];
+  globalThis.fetch = async (_url, init) => {
+    senders.push((JSON.parse(String(init?.body)) as { from: string }).from);
+    sends++; return new Response(JSON.stringify({ id: `receipt-${sends}` }));
+  };
   const invoke = (id?: string, message = input.message) => POST({ request: new Request('https://example.invalid/api/contact', {
     method: 'POST', headers: { 'Content-Type': 'application/json', ...(id ? { 'Idempotency-Key': id } : {}) }, body: JSON.stringify({ ...input, message })
   }), platform: { env: { DB: f.db, RESEND_API_KEY: 'fake' } } } as any);
   try {
     let response = await invoke('request-0000000001'); assert.equal(response.status, 200); assert.equal((await response.json() as { success: boolean }).success, true);
     response = await invoke('request-0000000001'); assert.equal(response.status, 200); assert.equal(sends, 2);
+    assert.deepEqual(senders, Array(2).fill('CREATE SOMETHING Agency <noreply@createsomething.io>'));
     assert.equal((await invoke('request-0000000001', 'changed')).status, 409);
     assert.equal((await invoke('bad')).status, 400);
     await invoke(); await invoke(); assert.equal(sends, 6); // Legacy IDs are generated per call, not universal deduplication.

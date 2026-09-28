@@ -1,0 +1,5 @@
+
+> @create-something/agency@1.0.0 preview /Users/micahjohnson/Code/csm-worktrees/cre-2154-agency-public/packages/agency
+> node ./scripts/run-pinned-bin.mjs vite vite preview "--host" "127.0.0.1" "--port" "5177"
+
+  ➜  Local:   http://127.0.0.1:5177/

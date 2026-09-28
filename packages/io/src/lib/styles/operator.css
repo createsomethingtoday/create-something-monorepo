@@ -1,0 +1,507 @@
+/* IO owns the aliases; Canon owns the opt-in neutral palette. */
+.layout-root.io-research-shell[data-canon-palette='operator'] {
+  color-scheme: dark;
+  --color-performance-paper: var(--color-operator-background);
+  --color-performance-panel: var(--color-operator-panel);
+  --color-performance-court: var(--color-operator-secondary);
+  --color-performance-ink: var(--color-operator-foreground);
+  --color-performance-ink-soft: var(--color-operator-muted);
+  --color-performance-muted: var(--color-operator-muted);
+  --color-performance-line: var(--color-operator-border);
+  --color-performance-line-strong: var(--color-operator-input-border);
+  --color-performance-editorial-light: var(--color-operator-background);
+  --color-performance-editorial-light-secondary: var(--color-operator-secondary);
+  --color-performance-editorial-dark: var(--color-operator-foreground);
+  --color-performance-editorial-dark-secondary: var(--color-operator-muted);
+  --color-performance-editorial-brand: var(--color-operator-secondary);
+  --color-performance-bg-pure: var(--color-operator-background);
+  --color-performance-bg-elevated: var(--color-operator-secondary);
+  --color-performance-bg-surface: var(--color-operator-secondary);
+  --color-performance-bg-subtle: var(--color-operator-raised);
+  --color-performance-fg-primary: var(--color-operator-foreground);
+  --color-performance-fg-secondary: var(--color-operator-muted);
+  --color-performance-fg-tertiary: var(--color-operator-muted);
+  --color-performance-fg-muted: var(--color-operator-muted);
+  --color-performance-fg-subtle: var(--color-operator-muted);
+  --color-performance-border-default: var(--color-operator-border);
+  --color-performance-border-emphasis: var(--color-operator-input-border);
+  --color-performance-border-strong: var(--color-operator-input-border);
+  --color-performance-shell-surface: var(--color-operator-background);
+  --color-performance-shell-surface-secondary: var(--color-operator-secondary);
+  --color-performance-shell-surface-tertiary: var(--color-operator-raised);
+  --color-performance-shell-surface-elevated: var(--color-operator-secondary);
+  --color-performance-shell-surface-hover: var(--color-operator-hover);
+  --color-performance-shell-border-subtle: var(--color-operator-border);
+  --color-performance-shell-border-default: var(--color-operator-border);
+  --color-performance-shell-border-strong: var(--color-operator-input-border);
+  --color-performance-hover: var(--color-operator-hover);
+  --color-performance-active: var(--color-operator-raised);
+  --glass-performance-bg-subtle: var(--color-operator-background);
+  --glass-performance-bg-light: var(--color-operator-secondary);
+  --glass-performance-bg-medium: var(--color-operator-secondary);
+  --glass-performance-bg-strong: var(--color-operator-raised);
+  --glass-performance-border-subtle: var(--color-operator-border);
+  --glass-performance-border-light: var(--color-operator-border);
+  --glass-performance-border-medium: var(--color-operator-input-border);
+  --glass-performance-border-strong: var(--color-operator-input-border);
+  --color-performance-signal: var(--color-operator-foreground);
+  --color-performance-pressure: var(--color-operator-muted);
+  --color-performance-focus: var(--color-operator-focus-ring-accessible);
+  --font-performance-editorial: var(--font-performance-sans);
+  --font-performance-serif: var(--font-performance-sans);
+  --font-performance-display: var(--font-performance-sans);
+  --font-performance-heading: var(--font-performance-sans);
+  --text-performance-display-xl: clamp(2.25rem, 3.5vw, 3.25rem);
+  --text-performance-display: clamp(2.25rem, 3.5vw, 3.25rem);
+  --text-performance-display-sm: 2rem;
+  --text-performance-h1: clamp(2.25rem, 3.5vw, 3.25rem);
+  --text-performance-h2: 1.75rem;
+  --text-performance-h3: 1.125rem;
+  --text-performance-h4: 1rem;
+  --space-performance-md: 16px;
+  --space-performance-lg: 24px;
+  --space-performance-xl: 32px;
+  --space-performance-2xl: 48px;
+  --space-performance-3xl: 64px;
+  --text-performance-body: 1rem;
+  --text-performance-body-lg: 1rem;
+  --height-performance-header: 64px;
+  --radius-performance-sm: 6px;
+  --radius-performance-md: 8px;
+  --radius-performance-lg: 10px;
+  background: var(--color-operator-background);
+  color: var(--color-operator-foreground);
+  font-family: var(--font-performance-sans);
+  font-size: 1rem;
+  line-height: 1.6;
+}
+.layout-root.io-research-shell[data-canon-palette='operator'] :is(h1, h2, h3, h4) {
+  font-family: var(--font-performance-sans);
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+.layout-root.io-research-shell[data-canon-palette='operator'] h1 {
+  font-size: clamp(2.25rem, 3.5vw, 3.25rem);
+  line-height: 1.12;
+}
+.layout-root.io-research-shell[data-canon-palette='operator'] h2 {
+  font-size: clamp(1.4rem, 2.2vw, 1.75rem);
+  line-height: 1.3;
+}
+.layout-root.io-research-shell[data-canon-palette='operator'] h3 {
+  font-size: 1.125rem;
+  line-height: 1.4;
+}
+.layout-root.io-research-shell[data-canon-palette='operator']
+  :is(.hero-subtitle, .page-subtitle, .paper-subtitle, .body-text) {
+  font-size: 1rem;
+}
+.layout-root.io-research-shell[data-canon-palette='operator']
+  :is(a, button, input, textarea, select, summary):focus-visible {
+  outline: 3px solid var(--color-operator-focus-ring-accessible);
+  outline-offset: 3px;
+}
+.layout-root.io-research-shell[data-canon-palette='operator'] .nav-editorial {
+  background: var(--color-operator-background);
+  border-bottom: 1px solid var(--color-operator-border);
+  backdrop-filter: none;
+}
+.layout-root.io-research-shell[data-canon-palette='operator'] .nav-inner {
+  min-height: 64px;
+  padding-block: 8px;
+}
+.layout-root.io-research-shell[data-canon-palette='operator'] .nav-logo-asset {
+  filter: invert(1);
+}
+.layout-root.io-research-shell[data-canon-palette='operator'] .nav-link {
+  font-size: 0.875rem;
+}
+.layout-root.io-research-shell[data-canon-palette='operator'] .nav-link.active {
+  background: var(--color-operator-secondary);
+  box-shadow: none;
+}
+.layout-root.io-research-shell[data-canon-palette='operator']
+  :is(.nav-cta, .nav-menu-button, .nav-link) {
+  border-radius: 6px;
+}
+.layout-root.io-research-shell[data-canon-palette='operator'] .nav-cta {
+  background: var(--color-operator-secondary);
+  border-color: var(--color-operator-input-border);
+  color: var(--color-operator-foreground);
+}
+.layout-root.io-research-shell[data-canon-palette='operator'] .nav-cta:hover {
+  background: var(--color-operator-hover);
+}
+.layout-root.io-research-shell[data-canon-palette='operator']
+  :is(.nav-mobile-menu, .nav-mobile-backdrop) {
+  background: var(--color-operator-background);
+}
+/* Footer components invert editorial light/dark; map them explicitly in this scope. */
+.layout-root.io-research-shell[data-canon-palette='operator'] .footer-editorial {
+  --color-performance-editorial-light: var(--color-operator-foreground);
+  --color-performance-editorial-light-secondary: var(--color-operator-secondary);
+  --color-performance-editorial-dark: var(--color-operator-background);
+  --color-performance-editorial-dark-secondary: var(--color-operator-secondary);
+  border-top: 1px solid var(--color-operator-border);
+  background: var(--color-operator-background);
+}
+.layout-root.io-research-shell[data-canon-palette='operator']
+  .footer-editorial
+  :is(#newsletter, .newsletter-input, .newsletter-button, .footer-cta) {
+  color: var(--color-operator-foreground);
+  background: var(--color-operator-secondary);
+  border-color: var(--color-operator-input-border);
+}
+.layout-root.io-research-shell[data-canon-palette='operator']
+  .footer-editorial
+  :is(
+    .newsletter-description,
+    .footer-cta-description,
+    .brand-description,
+    .link-description,
+    .copyright-text,
+    .legal-link,
+    .link-label
+  ) {
+  color: var(--color-operator-muted);
+}
+.layout-root.io-research-shell[data-canon-palette='operator']
+  .footer-editorial
+  :is(.newsletter-title, .footer-cta-title) {
+  font-size: 1.75rem;
+}
+.layout-root.io-research-shell[data-canon-palette='operator']
+  .footer-editorial
+  :is(.newsletter-container, .footer-links, .footer-editorial-identity) {
+  padding-block: 24px;
+}
+.layout-root.io-research-shell[data-canon-palette='operator'] .footer-editorial-identity__asset {
+  width: min(320px, 100%);
+}
+.layout-root.io-research-shell[data-canon-palette='operator'] .footer-editorial .brand-description {
+  font-size: 0.875rem;
+}
+.layout-root.io-research-shell[data-canon-palette='operator'] .footer-editorial .footer-links-grid {
+  border-radius: 8px;
+}
+/* Ordinary reading pages use the same compact type and rhythm. */
+.layout-root.io-research-shell[data-canon-palette='operator']
+  :is(.hero-section, .page-header, .research-index-header, .paper-header) {
+  padding-block: 32px 24px;
+}
+.layout-root.io-research-shell[data-canon-palette='operator']
+  :is(.research-artifact-page, .paper-container, article.paper)
+  :is(p, li) {
+  font-size: 1rem;
+  line-height: 1.75;
+}
+.layout-root.io-research-shell[data-canon-palette='operator']
+  :is(.research-artifact-page, .paper-container, article.paper)
+  :is(.paper-content, .prose, .body-text) {
+  max-width: 75ch;
+}
+.layout-root.io-research-shell[data-canon-palette='operator']
+  :is(.filter-chip, .sort-button, .search-input, .paper-card, .empty-state) {
+  background: var(--color-operator-panel);
+  color: var(--color-operator-foreground);
+}
+.layout-root.io-research-shell[data-canon-palette='operator']
+  :is(.filter-chip, .sort-button).active {
+  background: var(--color-operator-secondary);
+  border-color: var(--color-operator-muted);
+}
+.layout-root.io-research-shell[data-canon-palette='operator'] .paper-card:hover {
+  background: var(--color-operator-secondary);
+}
+.io-research-home {
+  width: min(1120px, calc(100% - 48px));
+  margin-inline: auto;
+}
+.io-research-home > section {
+  padding-block: 32px;
+  border-bottom: 1px solid var(--color-operator-border);
+}
+.io-research-home .research-eyebrow {
+  margin: 0 0 8px;
+  color: var(--color-operator-muted);
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+}
+.io-research-home .research-opening h1 {
+  max-width: 22ch;
+  margin: 0 0 16px;
+}
+.io-research-home .research-lede {
+  max-width: 72ch;
+  color: var(--color-operator-muted);
+  margin-bottom: 20px;
+}
+.io-research-home .research-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.875rem;
+}
+.io-research-home .research-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  min-height: 44px;
+  padding: 8px 16px;
+  border: 1px solid var(--color-operator-input-border);
+  border-radius: 6px;
+}
+.io-research-home .research-action-primary {
+  background: var(--color-operator-foreground);
+  color: var(--color-operator-background);
+}
+.io-research-home .research-action:hover {
+  background: var(--color-operator-secondary);
+  color: var(--color-operator-foreground);
+  opacity: 1;
+}
+.io-research-home .research-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--color-operator-border);
+}
+.io-research-home .research-metrics div {
+  display: flex;
+  flex-direction: column-reverse;
+  justify-content: end;
+  gap: 4px;
+}
+.io-research-home .research-metrics dt {
+  color: var(--color-operator-muted);
+  font-size: 0.75rem;
+}
+.io-research-home .research-metrics dd {
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+.io-research-home .research-section-heading {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+.io-research-home .research-section-heading > a {
+  font-size: 0.875rem;
+}
+.io-research-home .research-collection > p,
+.io-research-home .research-method > p {
+  color: var(--color-operator-muted);
+  font-size: 0.875rem;
+  max-width: 80ch;
+  margin-bottom: 20px;
+}
+.io-research-home .research-artifacts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+.io-research-home .research-artifact {
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+  gap: 10px;
+  padding: 20px;
+  border: 1px solid var(--color-operator-border);
+  border-radius: 8px;
+  background: var(--color-operator-panel);
+}
+.io-research-home .research-artifact:hover {
+  opacity: 1;
+  background: var(--color-operator-secondary);
+  border-color: var(--color-operator-input-border);
+}
+.io-research-home .research-artifact .research-eyebrow {
+  margin: 0;
+}
+.io-research-home .research-artifact p {
+  color: var(--color-operator-muted);
+  font-size: 0.875rem;
+}
+.io-research-home .research-artifact-link {
+  margin-top: auto;
+  padding-top: 8px;
+  font-size: 0.8125rem;
+}
+.io-research-home .research-decisions {
+  display: grid;
+  gap: 16px;
+}
+.io-research-home .research-decisions article {
+  padding: 20px;
+  border: 1px solid var(--color-operator-border);
+  border-radius: 8px;
+}
+.io-research-home .research-decisions :is(p:not(.research-eyebrow), li) {
+  font-size: 0.875rem;
+  color: var(--color-operator-muted);
+}
+.io-research-home .research-decisions h3 {
+  margin-bottom: 8px;
+}
+.io-research-home .research-decisions ul {
+  margin-block: 12px;
+  padding-left: 20px;
+  list-style: disc;
+}
+.io-research-home .research-receipts {
+  margin-bottom: 16px;
+}
+@media (max-width: 700px) {
+  .io-research-home {
+    width: calc(100% - 32px);
+  }
+  .io-research-home > section {
+    padding-block: 24px;
+  }
+  .io-research-home .research-artifacts {
+    grid-template-columns: 1fr;
+  }
+  .io-research-home .research-metrics {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+  .layout-root.io-research-shell[data-canon-palette='operator'] .nav-inner {
+    padding-inline: 16px;
+  }
+}
+
+.layout-root.io-research-shell[data-canon-palette='operator']
+  :is(.docs-index, .agents-page, .mcp-page)
+  .hero {
+  text-align: left;
+  margin-bottom: 24px;
+}
+.layout-root.io-research-shell[data-canon-palette='operator'] .docs-index .hero {
+  padding-block: 24px;
+}
+.layout-root.io-research-shell[data-canon-palette='operator']
+  .docs-index
+  :is(.tagline, .description) {
+  margin-inline: 0;
+  font-size: 1rem;
+}
+.layout-root.io-research-shell[data-canon-palette='operator'] .docs-index .tools-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
+}
+.layout-root.io-research-shell[data-canon-palette='operator'] .tool-card {
+  padding: 24px;
+  border: 1px solid var(--color-operator-border);
+  border-radius: 8px;
+}
+.layout-root.io-research-shell[data-canon-palette='operator'] .footer-editorial .footer-links-grid {
+  padding: 24px;
+}
+.layout-root.io-research-shell[data-canon-palette='operator'] .footer-editorial #newsletter {
+  padding: 24px;
+}
+.layout-root.io-research-shell[data-canon-palette='operator'] .property-funnel {
+  padding-block: 24px;
+}
+.layout-root.io-research-shell[data-canon-palette='operator'] .property-funnel__inner {
+  width: 100%;
+}
+.layout-root.io-research-shell[data-canon-palette='operator']
+  :is(.filter-chip, .sort-button).active {
+  color: var(--color-operator-foreground);
+}
+/* Keep article evidence visible, with diagrams secondary to the reading heading. */
+.layout-root.io-research-shell[data-canon-palette='operator'] .article-header {
+  display: flex;
+  flex-direction: column;
+  padding-block: 24px;
+}
+.layout-root.io-research-shell[data-canon-palette='operator'] .article-header .ascii-hero {
+  order: 1;
+  margin-block: 24px 0;
+}
+.layout-root.io-research-shell[data-canon-palette='operator'] .ascii-hero-frame {
+  aspect-ratio: auto;
+  min-height: 120px;
+  padding: 16px;
+  border: 1px solid var(--color-operator-border);
+  border-radius: 8px;
+  background: var(--color-operator-panel);
+}
+.layout-root.io-research-shell[data-canon-palette='operator'] .ascii-art {
+  color: var(--color-operator-muted);
+}
+.layout-root.io-research-shell[data-canon-palette='operator'] .docs-index > section {
+  padding-block: 24px;
+}
+.layout-root.io-research-shell[data-canon-palette='operator']
+  :is(.tagline, .subtitle, .lead, .intro) {
+  font-size: 1rem;
+}
+.layout-root.io-research-shell[data-canon-palette='operator']
+  :is(.animate-reveal, .animate-slide-in) {
+  animation: none;
+  opacity: 1;
+  transform: none;
+}
+/* Body owns the viewport scrollbar; release this scope on excluded routes. */
+:is(html, body):has(.io-research-shell[data-canon-palette='operator']) {
+  color-scheme: dark;
+  background-color: Canvas;
+}
+/* The public handoff is an action, not a second campaign opening. */
+.layout-root.io-research-shell[data-canon-palette='operator'] .meridian-offer-panel {
+  padding: 24px;
+  background: var(--color-operator-background);
+}
+.layout-root.io-research-shell[data-canon-palette='operator'] .meridian-offer-panel__inner {
+  display: block;
+  min-height: auto;
+  max-width: 1120px;
+  border: 1px solid var(--color-operator-border);
+  background: var(--color-operator-panel);
+}
+.layout-root.io-research-shell[data-canon-palette='operator'] .meridian-offer-panel__visual {
+  display: none;
+}
+.layout-root.io-research-shell[data-canon-palette='operator'] .meridian-offer-panel__content {
+  padding: 24px;
+  gap: 20px;
+}
+.layout-root.io-research-shell[data-canon-palette='operator'] .meridian-offer-panel__copy {
+  gap: 12px;
+}
+.layout-root.io-research-shell[data-canon-palette='operator'] .meridian-offer-panel h2 {
+  max-width: 40ch;
+}
+.layout-root.io-research-shell[data-canon-palette='operator'] .meridian-offer-panel__description {
+  font-size: 1rem;
+  color: var(--color-operator-muted);
+}
+.layout-root.io-research-shell[data-canon-palette='operator'] .meridian-offer-panel__action {
+  color: var(--color-operator-foreground);
+  background: var(--color-operator-secondary);
+  border-color: var(--color-operator-input-border);
+}
+.layout-root.io-research-shell[data-canon-palette='operator'] .meridian-offer-panel__action:hover {
+  background: var(--color-operator-hover);
+}
+.layout-root.io-research-shell[data-canon-palette='operator'] .meridian-offer-panel__action-icon {
+  background: transparent;
+  border-color: var(--color-operator-input-border);
+}
+/* Use the dark native scrollbar instead of the global editorial scrollbar. */
+:is(html, body):has(.io-research-shell[data-canon-palette='operator'])::-webkit-scrollbar,
+:is(html, body):has(.io-research-shell[data-canon-palette='operator'])::-webkit-scrollbar-track {
+  background-color: Canvas;
+}
+:is(html, body):has(.io-research-shell[data-canon-palette='operator'])::-webkit-scrollbar-thumb {
+  background-color: GrayText;
+}
