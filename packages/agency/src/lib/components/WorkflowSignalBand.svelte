@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { reducedFilmMotion } from '$lib/motion/filmPlayback';
 
   let canvas: HTMLCanvasElement;
   let field: HTMLElement;
@@ -13,6 +14,7 @@
     let width = 0;
     let height = 0;
     let visible = false;
+    let userReduced = false;
     let frame = 0;
     let lastPaint = 0;
 
@@ -31,7 +33,7 @@
       const cellHeight = 17;
       const columns = Math.ceil(width / cellWidth);
       const rows = Math.ceil(height / cellHeight);
-      const phase = motion.matches ? 0.16 : (time / 11000) % 1;
+      const phase = motion.matches || userReduced ? 0.16 : (time / 11000) % 1;
 
       context.clearRect(0, 0, width, height);
       context.font = `11px ${styles.getPropertyValue('--font-performance-mono').trim() || 'monospace'}`;
@@ -66,7 +68,7 @@
     };
 
     const animate = (time: number) => {
-      if (!visible || motion.matches || document.hidden) return;
+      if (!visible || motion.matches || userReduced || document.hidden) return;
       if (time - lastPaint > 140) {
         paint(time);
         lastPaint = time;
@@ -76,8 +78,8 @@
 
     const syncMotion = () => {
       cancelAnimationFrame(frame);
-      paint(motion.matches ? 0 : performance.now());
-      if (visible && !motion.matches && !document.hidden) frame = requestAnimationFrame(animate);
+      paint(motion.matches || userReduced ? 0 : performance.now());
+      if (visible && !motion.matches && !userReduced && !document.hidden) frame = requestAnimationFrame(animate);
     };
 
     const observer = new IntersectionObserver(([entry]) => {
@@ -89,6 +91,10 @@
     resizeObserver.observe(canvas);
     motion.addEventListener('change', syncMotion);
     document.addEventListener('visibilitychange', syncMotion);
+    const unsubscribe = reducedFilmMotion.subscribe((value) => {
+      userReduced = value;
+      syncMotion();
+    });
     resize();
 
     return () => {
@@ -97,6 +103,7 @@
       resizeObserver.disconnect();
       motion.removeEventListener('change', syncMotion);
       document.removeEventListener('visibilitychange', syncMotion);
+      unsubscribe();
     };
   });
 </script>
@@ -131,7 +138,7 @@
     canvas { height: 108px; }
     .stages { padding-inline: 0; }
     .stages li { padding: var(--space-performance-sm); }
-    .stages span { font-size: 10px; }
-    .stages small { font-size: 11px; }
+    .stages span { font-size: 11px; }
+    .stages small { font-size: 12px; }
   }
 </style>
