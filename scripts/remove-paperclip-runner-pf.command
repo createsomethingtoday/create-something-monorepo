@@ -52,14 +52,27 @@ if [[ -e "$token_file" ]]; then
   saved_boot=''; saved_token=''
   read -r saved_boot saved_token < "$token_file" || true
   current_boot="$(/usr/sbin/sysctl -n kern.bootsessionuuid)"
-  [[ "$saved_token" == <-> ]] || { print -u2 'Malformed PF token; anchor left in place.'; exit 1; }
-  if [[ "$saved_boot" == "$current_boot" ]]; then
-    /sbin/pfctl -X "$saved_token" || { print -u2 'PF token release failed; anchor left in place.'; exit 1; }
-  fi
+  [[ "$saved_boot" =~ '^[A-Fa-f0-9-]{36}$' && "$current_boot" =~ '^[A-Fa-f0-9-]{36}$' ]] || {
+    print -u2 'Malformed PF boot identity; anchor left in place.'; exit 1
+  }
+  [[ "$saved_token" == <-> || ( "$saved_boot" == "$current_boot" && "$saved_token" == 'released' ) ]] || {
+    print -u2 'Malformed PF token; anchor left in place.'; exit 1
+  }
 fi
 /sbin/pfctl -a "$anchor" -F rules
 [[ -z "$(/sbin/pfctl -a "$anchor" -sr)" ]] || { print -u2 'PF anchor did not clear; files retained.'; exit 1; }
-/bin/rm -f "$root_dir/pf-enable-token" "$root_dir/pf.rules" "$root_dir/pf-guard.zsh" "$plist"
+if [[ -e "$token_file" && "$saved_boot" == "$current_boot" && "$saved_token" != 'released' ]]; then
+  if ! /sbin/pfctl -X "$saved_token"; then
+    /sbin/pfctl -a "$anchor" -f "$root_dir/pf.rules" || true
+    print -u2 'PF token release failed; rule restoration attempted and files retained.'
+    exit 1
+  fi
+  token_tmp="$token_file.$$"
+  print -r -- "$current_boot released" > "$token_tmp"
+  /bin/chmod 600 "$token_tmp"
+  /bin/mv -f "$token_tmp" "$token_file"
+fi
+/bin/rm -f "$root_dir/pf-enable-token" "$root_dir/pf.rules" "$root_dir/pf-guard.zsh" "$root_dir/pf-remove.zsh" "$plist"
 /bin/rmdir "$root_dir"
 /bin/rmdir "$parent_dir" >/dev/null 2>&1 || true
 print 'Persistent Paperclip runner PF guard removed; anchor empty. Keep the agent environment unassigned.'
