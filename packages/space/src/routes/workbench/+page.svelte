@@ -127,62 +127,88 @@
   propertyName="space"
 />
 
-<PerformanceCampaignOpening
-  mobileSearchBoundary
-  eyebrow="CREATE SOMETHING .space"
-  propertyRole="Public systems workbench"
-  expression="editorial"
-  title="A public workbench for testing runtime ideas."
-  lede="CREATE SOMETHING .space is where tools, routes, and interaction patterns get tested against real execution surfaces before they become research, policy, or production workflows."
-  media={{
-    src: '/images/workshop/open-workshop.webp',
-    alt: 'Ivory reusable modules in a machined workshop rail.',
-    width: 1536,
-    height: 1024,
-    colorMode: 'natural'
-  }}
-  proof={proofMetrics.map((item) => ({ label: item.label, value: item.value }))}
-  mode="ink"
->
-  {#snippet actions()}
-    <Button href="/playground">Open The Playground</Button>
-    <Button href="/praxis" variant="secondary">Start Praxis</Button>
-  {/snippet}
-</PerformanceCampaignOpening>
+<div class="space-workbench">
+  <PerformanceCampaignOpening
+    mobileSearchBoundary
+    eyebrow="CREATE SOMETHING .space"
+    propertyRole="Public systems workbench"
+    expression="editorial"
+    title="A public workbench for testing runtime ideas."
+    lede="CREATE SOMETHING .space is where tools, routes, and interaction patterns get tested against real execution surfaces before they become research, policy, or production workflows."
+    media={{
+      src: '/images/workshop/open-workshop.webp',
+      alt: 'Ivory reusable modules in a machined workshop rail.',
+      width: 1536,
+      height: 1024,
+      colorMode: 'natural'
+    }}
+    proof={proofMetrics.map((item) => ({
+      label: item.label,
+      value: item.value
+    }))}
+    mode="ink"
+  >
+    {#snippet actions()}
+      <Button href="/playground">Open The Playground</Button>
+      <Button href="/praxis" variant="secondary">Start Praxis</Button>
+    {/snippet}
+  </PerformanceCampaignOpening>
 
-<PerformanceDecisionPanel
-  id="runtime-decision"
-  eyebrow="Runtime decision path"
-  title="Use interaction to show what can run, what needs inspection, and what should move."
-  description="The workbench should communicate through visible state changes: execute, inspect, then promote only what survives runtime contact."
-  items={decisionStates}
-  ariaLabel="Runtime decision path"
-/>
+  <PerformanceDecisionPanel
+    density="compact"
+    id="runtime-decision"
+    eyebrow="Runtime decision path"
+    title="Use interaction to show what can run, what needs inspection, and what should move."
+    description="The workbench should communicate through visible state changes: execute, inspect, then promote only what survives runtime contact."
+    items={decisionStates}
+    ariaLabel="Runtime decision path"
+  />
 
-<PerformancePageSection
-  variant="white"
-  eyebrow="Live surfaces"
-  title="Pick a route and work with the system directly."
-  description="Each route exposes execution, analysis, or learning as a working surface—not a static marketing panel."
->
-  {#snippet after()}
-    <PerformanceCardGrid items={tools} columns={3} ariaLabel="Live workbench surfaces" />
-  {/snippet}
-</PerformancePageSection>
+  <PerformancePageSection
+    variant="white"
+    eyebrow="Live surfaces"
+    title="Pick a route and work with the system directly."
+    description="Each route exposes execution, analysis, or learning as a working surface—not a static marketing panel."
+  >
+    {#snippet after()}
+      <PerformanceCardGrid items={tools} columns={3} ariaLabel="Live workbench surfaces" />
+    {/snippet}
+  </PerformancePageSection>
 
-<PerformanceConversionHandoff
-  eyebrow="Pick a surface"
-  title="Start with the runtime you want to inspect."
-  description="Open the playground if you want to execute code, motion if you want to inspect interaction systems, or data if you want to work against a live refresh loop."
-  handoff={{
-    owner: 'Workbench operator',
-    authority: 'Runtime evidence',
-    proof: 'Output + state + handoff',
-    state: 'ready'
-  }}
->
-  {#snippet actions()}
-    <Button href="/motion">Inspect Motion</Button>
-    <Button href="/data/nba" variant="secondary">Open Data Studio</Button>
-  {/snippet}
-</PerformanceConversionHandoff>
+  <PerformanceConversionHandoff
+    eyebrow="Pick a surface"
+    title="Start with the runtime you want to inspect."
+    description="Open the playground if you want to execute code, motion if you want to inspect interaction systems, or data if you want to work against a live refresh loop."
+    handoff={{
+      owner: 'Workbench operator',
+      authority: 'Runtime evidence',
+      proof: 'Output + state + handoff',
+      state: 'ready'
+    }}
+  >
+    {#snippet actions()}
+      <Button href="/motion">Inspect Motion</Button>
+      <Button href="/data/nba" variant="secondary">Open Data Studio</Button>
+    {/snippet}
+  </PerformanceConversionHandoff>
+</div>
+
+<style>
+  /* Scope shared-component refinements to the .space Workbench. */
+  .space-workbench :global(.clear-decision-panel__console),
+  .space-workbench :global(.clear-card-grid__card) {
+    box-shadow: none;
+    border-radius: var(--radius-performance-md);
+  }
+  .space-workbench :global(.clear-card-grid__card:hover) {
+    border-color: var(--color-performance-line-strong);
+  }
+  .space-workbench :global(a:focus-visible),
+  .space-workbench :global(button:focus-visible) {
+    outline: 3px solid var(--color-performance-signal);
+    outline-offset: 4px;
+  }
+  .space-workbench :global(.clear-decision-panel__tab) {
+    min-height: 44px;
+  }
+</style>
