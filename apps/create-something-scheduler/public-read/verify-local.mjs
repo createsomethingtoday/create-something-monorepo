@@ -1,10 +1,13 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { once } from 'node:events';
 import { createSchedulerReadClient, AvailabilityUnavailableError } from '@create-something/create-something-scheduler/public-read';
 import { BookingService } from '../src/application/booking-service.ts';
 import { handleApiRequest } from '../src/http/api.ts';
 import { smokePublicReads } from './smoke.mjs';
+
+const generatorLock = JSON.parse(readFileSync(new URL('./generator-lock.json', import.meta.url), 'utf8'));
 
 assert.throws(() => import.meta.resolve('@create-something/create-something-scheduler/public-read/generated/sdk/index.js'),
   { code: 'ERR_PACKAGE_PATH_NOT_EXPORTED' });
@@ -67,7 +70,10 @@ try {
   assert.equal(calendarReads, 2);
   assert.equal(calendarWrites, 0);
   console.log(JSON.stringify({ handler: 'handleApiRequest', service: 'BookingService',
-    provider: 'controlled CalendarPort', generatedSnapshot: 'patched pilot, not upstream release',
+    provider: 'controlled CalendarPort', declaredGeneratorLock: {
+      status: generatorLock.status, revision: generatorLock.revision,
+      snapshotProvenance: generatorLock.snapshotProvenance
+    },
     statuses: requests.map(({ status }) => status), calendarReads, calendarWrites,
     slotCount: result.availability.slots.length, credentials: 'none' }, null, 2));
 } finally {
