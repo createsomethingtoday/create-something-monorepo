@@ -76,7 +76,7 @@
       "credential_transport": "private_0600_session_file_to_bearer_header",
       "token_in_artifacts": false,
       "active_candidate_source_sha256": null,
-      "candidate_status": "v6_host_and_agent_qa_passed_independent_review_pending",
+      "candidate_status": "v7_code_review_passed_role_runtime_denial_pending",
       "historical_probe": {
         "broker_version": "v2",
         "source_sha256": "9ac5f48f4a1140e6a69da95977092b73f760cf031d93d8304c72f1b9b43e87e6",
