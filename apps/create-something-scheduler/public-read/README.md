@@ -80,8 +80,12 @@ pnpm --filter @create-something/create-something-scheduler verify:public-read
 pnpm --filter @create-something/create-something-scheduler check
 pnpm --filter @create-something/create-something-scheduler test
 pnpm --filter @create-something/create-something-scheduler build
-git diff --check
+git diff --check origin/main...HEAD
 ```
+
+The committed-range diff check currently reports the raw pilot snapshot's extra
+final blank line in `generated/sdk/sdk-operation-types.ts`. It must pass after
+official Forge regeneration; a clean working-tree check alone is insufficient.
 
 The typecheck includes every generated `.ts` file and negative consumer type
 checks. Tests cover unsupported durations/options, malformed success/503 bodies,
