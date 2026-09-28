@@ -1,6 +1,8 @@
 <script lang="ts">
   import '../app.css';
+  import '@create-something/canon/styles/operator.css';
   import '$lib/styles/research.css';
+  import '$lib/styles/operator.css';
   import { onMount } from 'svelte';
   import { afterNavigate, onNavigate, goto, invalidateAll } from '$app/navigation';
   import { Navigation, Footer, Analytics, ModeIndicator, LayoutSEO } from '@create-something/canon';
@@ -189,17 +191,21 @@
 {#if $page.url.pathname.startsWith('/admin')}
   {@render children()}
 {:else}
-  <!-- Unified Search - Cmd/Ctrl+K to open -->
-  <UnifiedSearch
-    currentProperty="io"
-    localItems={quickAccessItems}
-    showMobileButton={!$page.url.pathname.startsWith('/papers') &&
-      !$page.url.pathname.startsWith('/experiments') &&
-      !mobileNavigationOpen}
-    deferMobileButtonUntilCampaignExit={$page.url.pathname === '/'}
-  />
+  <div
+    class="layout-root property-performance"
+    class:io-research-shell={isResearchSurface}
+    data-canon-palette={isResearchSurface ? 'operator' : undefined}
+  >
+    <!-- Unified Search - Cmd/Ctrl+K to open -->
+    <UnifiedSearch
+      currentProperty="io"
+      localItems={quickAccessItems}
+      showMobileButton={!$page.url.pathname.startsWith('/papers') &&
+        !$page.url.pathname.startsWith('/experiments') &&
+        !mobileNavigationOpen}
+      deferMobileButtonUntilCampaignExit={false}
+    />
 
-  <div class="layout-root property-performance" class:io-research-shell={isResearchSurface}>
     {#if isResearchSurface}
       <a class="research-skip-link" href="#main-content">Skip to content</a>
     {/if}

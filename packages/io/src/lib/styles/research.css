@@ -34,30 +34,6 @@
   background: var(--color-performance-ink-soft);
 }
 
-/* Keep the editorial campaign and its evidence; tighten the reading hierarchy. */
-.layout-root.io-research-shell .io-research-home .performance-campaign-opening {
-  min-height: auto;
-}
-.layout-root.io-research-shell .io-research-home .performance-campaign-opening__content {
-  padding-block: clamp(3rem, 6vw, 6rem) var(--space-performance-md);
-  gap: var(--space-performance-lg);
-}
-.layout-root.io-research-shell .io-research-home .performance-campaign-opening h1 {
-  max-width: 13ch;
-  font-size: clamp(2.65rem, 6vw, 5.75rem);
-  line-height: 1.02;
-}
-.layout-root.io-research-shell .io-research-home .performance-campaign-opening__lede {
-  max-width: 54ch;
-  font-size: var(--text-performance-body);
-  line-height: var(--leading-performance-relaxed);
-}
-.layout-root.io-research-shell .io-research-home .performance-narrative-stage__index {
-  border: 1px solid var(--color-performance-line);
-  border-radius: var(--radius-performance-md);
-  background: var(--color-performance-panel);
-}
-
 /* Archive orientation, controls, and results share one reading measure. */
 .layout-root.io-research-shell .research-index-header {
   padding-block: var(--space-performance-lg) var(--space-performance-md);
