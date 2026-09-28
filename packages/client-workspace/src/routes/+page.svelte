@@ -688,44 +688,6 @@
       <p class="lede">
         Choose a project, describe an edit, and review the result. Agent activity, approvals, and source changes stay alongside your preview.
       </p>
-      <div class="setup-heading"><h2>Session readiness</h2><span class="cs-label">Before you start</span></div>
-      <div
-        class="runtime-card"
-        data-work-state={codexStatus.state === 'ready' ? 'success' : 'warning'}
-      >
-        <span class="status-dot"></span>
-        <div>
-          <p class="eyebrow">Your Codex</p>
-          <strong>{codexSummary(codexStatus)}</strong>
-          <small>The app never reads or copies Codex credentials.</small>
-        </div>
-        <button
-          class="quiet-button runtime-recheck"
-          type="button"
-          disabled={checkingCodex}
-          aria-busy={checkingCodex}
-          onclick={refreshCodexStatus}>Recheck Codex</button
-        >
-      </div>
-      <form
-        class="delivery-import"
-        onsubmit={(event) => {
-          event.preventDefault();
-          void importDelivery();
-        }}
-      >
-        <label for="delivery-package">Verified delivery</label>
-        <input
-          bind:this={deliveryInput}
-          id="delivery-package"
-          type="file"
-          accept=".csworkspace,application/json"
-          onchange={chooseDelivery}
-        />
-        <button class="primary-button" type="submit" disabled={importing || !deliveryPackage}>
-          {importing ? 'Verifying…' : 'Import .csworkspace'}
-        </button>
-      </form>
     </div>
     <section class="picker-panel" aria-labelledby="workspace-heading">
       <div class="panel-heading">
@@ -762,6 +724,52 @@
         {data.remote ? 'Work runs on the controlled device.' : 'Local authority only.'}
         No deploy, publish, credential, or third-party mutation access.
       </p>
+    </section>
+    <section class="workspace-setup" aria-label="Workspace setup">
+      <div class="setup-heading"><h2>Session readiness</h2><span class="cs-label">Before you start</span></div>
+      <div
+        class="runtime-card"
+        data-work-state={codexStatus.state === 'ready' ? 'success' : 'warning'}
+      >
+        <span class="status-dot"></span>
+        <div>
+          <p class="eyebrow">Your Codex</p>
+          <strong>{codexSummary(codexStatus)}</strong>
+          <small>The app never reads or copies Codex credentials.</small>
+        </div>
+        <button
+          class="quiet-button runtime-recheck"
+          type="button"
+          disabled={checkingCodex}
+          aria-busy={checkingCodex}
+          onclick={refreshCodexStatus}>Recheck Codex</button
+        >
+      </div>
+      <details class="delivery-disclosure">
+        <summary>Import a signed delivery</summary>
+        <form
+          class="delivery-import"
+          onsubmit={(event) => {
+            event.preventDefault();
+            void importDelivery();
+          }}
+        >
+          <label for="delivery-package">Delivery package</label>
+          <p id="delivery-help">Choose the .csworkspace file supplied by CREATE SOMETHING. Its signature is checked before import.</p>
+          <input
+            bind:this={deliveryInput}
+            id="delivery-package"
+            aria-describedby="delivery-help delivery-file-state"
+            type="file"
+            accept=".csworkspace,application/json"
+            onchange={chooseDelivery}
+          />
+          <p id="delivery-file-state" aria-live="polite">{deliveryPackage ? `Ready to verify: ${deliveryPackage.name}` : 'No delivery selected. Existing projects are ready above.'}</p>
+          <button class="quiet-button" type="submit" disabled={importing || !deliveryPackage}>
+            {importing ? 'Verifying…' : 'Import .csworkspace'}
+          </button>
+        </form>
+      </details>
     </section>
   </main>
 {:else}
@@ -1257,6 +1265,9 @@
     gap: var(--space-performance-lg);
     align-items: start;
   }
+  .intro { grid-column: 1; grid-row: 1; }
+  .workspace-setup { grid-column: 1; grid-row: 2; min-width: 0; }
+  .picker-panel { grid-column: 2; grid-row: 1 / span 2; }
   .intro h1 {
     margin: var(--workspace-gap) 0;
     font-size: var(--text-performance-h1);
@@ -1277,7 +1288,7 @@
     align-items: baseline;
     justify-content: space-between;
     gap: var(--workspace-gap-small);
-    margin-top: var(--space-performance-lg);
+    margin-top: 0;
   }
   .setup-heading h2 {
     margin: 0;
@@ -1312,6 +1323,35 @@
     grid-column: 2;
     justify-self: start;
   }
+  .delivery-disclosure {
+    margin-top: var(--workspace-gap);
+    border-top: 1px solid var(--workspace-line);
+    padding-top: var(--workspace-gap);
+  }
+  .delivery-disclosure summary {
+    cursor: pointer;
+    color: var(--workspace-muted);
+    font-size: var(--workspace-text);
+    padding-block: var(--workspace-gap-small);
+  }
+  .delivery-import p {
+    margin: 0;
+    color: var(--workspace-muted);
+    font-size: var(--workspace-meta);
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+  }
+  .delivery-import input::file-selector-button {
+    border: 1px solid var(--workspace-line);
+    border-radius: var(--workspace-radius);
+    background: var(--workspace-raised);
+    color: var(--workspace-fg);
+    padding: var(--workspace-gap-small) var(--workspace-gap);
+    margin-right: var(--workspace-gap-small);
+    font: inherit;
+    cursor: pointer;
+  }
+  .delivery-import input::file-selector-button:hover { border-color: var(--workspace-muted); }
   .delivery-import {
     display: grid;
     gap: var(--workspace-gap-small);
@@ -1931,12 +1971,11 @@
       grid-template-columns: minmax(0, 1fr);
       gap: var(--space-performance-md);
     }
+    .intro, .picker-panel, .workspace-setup { grid-column: auto; grid-row: auto; }
     .intro h1 {
       font-size: var(--text-performance-h1);
     }
-    .setup-heading {
-      margin-top: var(--space-performance-md);
-    }
+    .setup-heading { margin-top: 0; }
     .workspace-sections {
       gap: var(--workspace-gap-small);
       justify-content: space-between;

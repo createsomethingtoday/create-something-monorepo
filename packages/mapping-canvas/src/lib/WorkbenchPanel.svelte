@@ -43,7 +43,7 @@
   }
 </script>
 
-<aside class="workbench-panel" aria-label="Layers and properties">
+<aside id="draw-inspector" class="workbench-panel" aria-label="Layers and properties">
   <section class="properties">
     <header>
       <h2>Properties</h2>
