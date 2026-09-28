@@ -280,8 +280,9 @@ The production D1 console showed one submission and two email receipts, both
 `permanent_failure`; replaying the same request ID returned the same receipt
 without new claims. Read-only Resend domain inventory with the production key
 listed `createsomething.io` as verified and sending-enabled. The route still
-used `noreply@workway.co` for both messages, so the sender is now corrected to
-`noreply@createsomething.io`. The provider's original raw response was not
-captured, so the domain mismatch is the likely cause, not a proven response
-code. The first receipt is deliberately not retried or altered; a distinct
-controlled request is required after this change reaches production.
+used `noreply@workway.co` for both messages. Resend's read-only API logs for
+that request showed two HTTP 403 `validation_error` responses: “The workway.co
+domain is not verified.” The sender is now corrected to
+`noreply@createsomething.io`. The first receipt is deliberately not retried or
+altered; a distinct controlled request is required after this change reaches
+production.
