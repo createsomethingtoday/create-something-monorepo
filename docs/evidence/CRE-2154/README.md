@@ -19,7 +19,7 @@ The first-run candidate paired Practice workbench roles and made campaign openin
 
 ## Evidence limitations
 
-Linear CLI access failed because `LINEAR_API_KEY` is absent; Paperclip reports no granted secrets and no connection discovery tool is available. Scope is grounded in the user's recovery instructions and canonical Paperclip issue; coordinator must mirror this evidence into Linear. Local rendering does not prove production data, bookings, submissions, auth or live integrations. The first-run screenshots/checks are not counted as recovery verification.
+Linear CLI access failed because `LINEAR_API_KEY` is absent; Paperclip reports no granted secrets. During the follow-up, a callable Linear app connector was discovered but its `get_issue` call returned “requires reauthentication,” so no Linear read or write completed. Scope is grounded in the user's recovery instructions and canonical Paperclip issue; coordinator must mirror this evidence into Linear. Local rendering does not prove production data, bookings, submissions, auth or live integrations. The first-run screenshots/checks are not counted as recovery verification.
 
 Worktree disposition: preserved at `/Users/micahjohnson/Code/csm-worktrees/cre-2154-agency-public` / `codex/CRE-2154-recovery`. All other worktrees preserved.
 
