@@ -15,51 +15,55 @@
 
 <style>
   .hero {
-    padding: clamp(3rem, 7vw, 6rem) var(--space-md);
-    border-bottom: 1px solid var(--color-border-default);
+    padding: clamp(1rem, 3vw, 2rem) var(--space-md);
     background: var(--color-bg-pure);
   }
   .hero-content {
     max-width: 72rem;
     margin-inline: auto;
+    padding: clamp(1.5rem, 3vw, 2.5rem);
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-lg);
+    background: var(--color-bg-surface);
   }
   .hero-label {
-    margin: 0 0 var(--space-md);
-    font-family: var(--font-mono);
+    margin: 0 0 var(--space-sm);
+    font-family: var(--font-sans);
     font-size: var(--text-body-sm);
+    font-weight: 600;
     color: var(--color-fg-tertiary);
   }
   h1 {
-    font-size: clamp(2.5rem, 10vw, 7rem);
+    font-size: var(--text-h1);
     font-weight: 700;
-    letter-spacing: -0.04em;
-    line-height: 1;
-    margin: 0 0 var(--space-md);
+    letter-spacing: -0.035em;
+    line-height: 1.08;
+    margin: 0 0 var(--space-sm);
   }
   .hero-tagline {
-    max-width: 28ch;
-    font-size: clamp(1.5rem, 3vw, 2.5rem);
-    line-height: 1.2;
+    max-width: 44ch;
+    font-size: clamp(1.25rem, 2.2vw, 1.625rem);
+    line-height: 1.3;
     margin: 0 0 var(--space-sm);
   }
   .hero-subtitle {
-    max-width: 52ch;
-    font-size: var(--text-body-lg);
-    line-height: 1.6;
+    max-width: 65ch;
+    font-size: var(--text-body);
+    line-height: 1.55;
     color: var(--color-fg-secondary);
-    margin: 0 0 var(--space-lg);
+    margin: 0 0 var(--space-md);
   }
   .hero-cta {
     display: flex;
     flex-wrap: wrap;
-    gap: var(--space-sm);
+    gap: var(--space-xs);
   }
   .btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-height: 44px;
-    padding: 0.75rem 1.25rem;
+    min-height: 40px;
+    padding: 0.55rem 0.9rem;
     border: 1px solid var(--color-border-emphasis);
     border-radius: var(--radius-performance-sm);
     font-weight: 600;
@@ -71,10 +75,10 @@
   }
   .btn-secondary {
     color: var(--color-fg-primary);
+    background: var(--color-bg-subtle);
   }
   .btn:hover {
     border-color: var(--color-fg-primary);
-    text-decoration: underline;
-    text-underline-offset: 0.2em;
+    filter: brightness(1.12);
   }
 </style>

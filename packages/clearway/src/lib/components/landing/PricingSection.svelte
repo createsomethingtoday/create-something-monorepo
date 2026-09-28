@@ -66,21 +66,21 @@
 	.section-title {
 		font-size: var(--text-h2);
 		font-weight: 600;
-		text-align: center;
+		text-align: left;
 		margin: 0 0 var(--space-xs);
 		color: var(--color-fg-primary);
 	}
 
 	.section-subtitle {
 		font-size: var(--text-body-lg);
-		text-align: center;
+		text-align: left;
 		color: var(--color-fg-secondary);
 		margin: 0 0 var(--space-sm);
 	}
 
 	.section-philosophy {
 		font-size: var(--text-body);
-		text-align: center;
+		text-align: left;
 		color: var(--color-fg-tertiary);
 		margin: 0 0 var(--space-xl);
 	}
@@ -90,7 +90,7 @@
 	}
 
 	.example-card {
-		padding: var(--space-lg);
+		padding: var(--space-md);
 		border-radius: var(--radius-lg);
 		background: var(--color-bg-surface);
 		border: 1px solid var(--color-border-default);
@@ -154,7 +154,7 @@
 	}
 
 	.note {
-		text-align: center;
+		text-align: left;
 	}
 
 	.note strong {
@@ -170,7 +170,7 @@
 	}
 
 	.pricing-cta {
-		text-align: center;
+		text-align: left;
 		font-size: var(--text-body-lg);
 		color: var(--color-fg-secondary);
 		margin: 0;

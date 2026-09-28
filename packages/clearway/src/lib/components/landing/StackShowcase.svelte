@@ -103,7 +103,7 @@
 
 <style>
 	.showcase {
-		padding: var(--space-2xl) var(--space-md);
+		padding: var(--space-xl) var(--space-md);
 		background: var(--color-bg-pure);
 	}
 
@@ -115,23 +115,23 @@
 	.section-title {
 		font-size: var(--text-h2);
 		font-weight: 600;
-		text-align: center;
+		text-align: left;
 		margin: 0 0 var(--space-sm);
 		color: var(--color-fg-primary);
 	}
 
 	.section-subtitle {
 		font-size: var(--text-body-lg);
-		text-align: center;
+		text-align: left;
 		color: var(--color-fg-secondary);
 		margin: 0 0 var(--space-lg);
 	}
 
 	.view-toggle {
 		display: flex;
-		justify-content: center;
+		justify-content: flex-start;
 		gap: var(--space-xs);
-		margin-bottom: var(--space-lg);
+		margin-bottom: var(--space-md);
 	}
 
 	.toggle-btn {
@@ -221,7 +221,11 @@
 	.embed-container {
 		position: relative;
 		min-height: 320px;
-		margin-bottom: var(--space-lg);
+		margin-bottom: var(--space-md);
+		padding: var(--space-md);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+		background: var(--color-bg-surface);
 	}
 
 	.widget-wrapper {
@@ -233,8 +237,10 @@
 	}
 
 	.personalization-prompt {
-		text-align: center;
+		text-align: left;
 		padding: var(--space-md);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-md);
 	}
 
 	.prompt-text {
