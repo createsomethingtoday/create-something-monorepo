@@ -4,6 +4,7 @@
 import argparse
 import hashlib
 import json
+import math
 import os
 import re
 import sys
@@ -92,11 +93,11 @@ def validate_answer(data):
         raise ValueError("invalid choice")
     confidence = answer.get("confidence")
     probabilities = answer.get("probabilities")
-    if not isinstance(confidence, (int, float)) or not 0 <= confidence <= 1:
+    if isinstance(confidence, bool) or not isinstance(confidence, (int, float)) or not math.isfinite(confidence) or not 0 <= confidence <= 1:
         raise ValueError("invalid confidence")
     if not isinstance(probabilities, dict) or set(probabilities) != set(LANES):
         raise ValueError("invalid distribution")
-    if any(not isinstance(v, (int, float)) or not 0 <= v <= 1 for v in probabilities.values()):
+    if any(isinstance(v, bool) or not isinstance(v, (int, float)) or not math.isfinite(v) or not 0 <= v <= 1 for v in probabilities.values()):
         raise ValueError("invalid distribution values")
     if abs(sum(probabilities.values()) - 1) > 0.03 or probabilities[answer["choice"]] < max(probabilities.values()):
         raise ValueError("inconsistent distribution")
@@ -133,7 +134,7 @@ def route(packet, api_key, *, opener=urllib.request.urlopen):
             data = json.load(response)
         answer = validate_answer(data)
         usage = data.get("usage")
-        if not isinstance(usage, dict) or any(not isinstance(usage.get(key), int) or usage[key] < 0 for key in ("input_tokens", "output_tokens")):
+        if not isinstance(usage, dict) or any(isinstance(usage.get(key), bool) or not isinstance(usage.get(key), int) or usage[key] < 0 for key in ("input_tokens", "output_tokens")):
             usage = None
         receipt.update(
             servedModel=data["model"],

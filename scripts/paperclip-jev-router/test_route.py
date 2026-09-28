@@ -50,6 +50,13 @@ class RouterTests(unittest.TestCase):
         self.assertEqual(result["status"], "abstained")
         self.assertEqual(result["failure"], "ValueError")
 
+    def test_boolean_confidence_is_not_a_probability(self):
+        distribution = {name: (0.8 if name == "sol" else 0.05) for name in router.LANES}
+        data = {"model": router.MODEL, "answers": {"route": {"type": "choice", "choice": "sol", "confidence": True, "probabilities": distribution}}}
+        result = router.route(packet(), "test-key", opener=lambda *_args, **_kwargs: Response(json.dumps(data).encode()))
+        self.assertEqual(result["recommendation"], "no_match")
+        self.assertEqual(result["status"], "abstained")
+
     def test_missing_key_and_unsafe_packet_fail_closed(self):
         with self.assertRaisesRegex(ValueError, "TYPESAFE_API_KEY unavailable"):
             router.route(packet(), "")
