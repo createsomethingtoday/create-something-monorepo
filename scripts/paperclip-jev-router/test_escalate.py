@@ -1,6 +1,7 @@
 import hashlib
 import json
 import unittest
+import urllib.error
 import uuid
 from datetime import datetime, timezone
 
@@ -215,6 +216,32 @@ class EscalationTests(unittest.TestCase):
         self.assertEqual(result["escalated"], 0)
         self.assertEqual(result["held"], 1)
         self.assertEqual(api.patches, [])
+
+    def test_unavailable_unrelated_issue_does_not_stop_scan(self):
+        data = fixture()
+        missing_id = ident(50)
+        class FlakyAPI:
+            def get(self, path):
+                if path == f"/api/companies/{escalate.CANONICAL_COMPANY_ID}":
+                    return {"id": escalate.CANONICAL_COMPANY_ID, "name": escalate.CANONICAL_COMPANY_NAME}
+                if path.endswith("/agents"):
+                    return list(data["agents"].values())
+                if "/issues?" in path:
+                    return [{"id": missing_id}, {"id": data["issue"]["id"]}]
+                if path == f"/api/issues/{missing_id}":
+                    raise urllib.error.URLError("temporary detail failure")
+                if path.endswith("/live-runs"):
+                    return []
+                if path.endswith("/comments?limit=500"):
+                    return data["comments"]
+                if path.endswith("/runs"):
+                    return data["runs"]
+                if "/heartbeat-runs/" in path:
+                    return data["source_events"]
+                return data["issue"]
+        result = escalate.scan(FlakyAPI(), company_id=escalate.CANONICAL_COMPANY_ID, board_user_id=data["board_user_id"], jev_agent_id=data["jev_agent_id"], controller_agent_id=data["controller_agent_id"], now=data["now"], apply=False)
+        self.assertEqual(result["held"], 1)
+        self.assertEqual(result["eligible"], 1)
 
 
 if __name__ == "__main__":

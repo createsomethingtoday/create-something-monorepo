@@ -274,15 +274,15 @@ def scan(api, *, company_id, board_user_id, jev_agent_id, controller_agent_id, n
         if not isinstance(issues, list):
             raise ValueError("issue list unavailable")
         for item in issues:
-            # Company issue lists truncate descriptions; read the complete issue before
-            # looking for a policy fence or deciding the issue is out of scope.
-            issue_id = item["id"]
-            issue = api.get(f"/api/issues/{issue_id}")
-            matches = POLICY_FENCE.findall(issue.get("description") or "")
-            if not matches:
-                continue
-            summary["scanned"] += 1
             try:
+                # Company issue lists truncate descriptions; read the complete issue before
+                # looking for a policy fence or deciding the issue is out of scope.
+                issue_id = item["id"]
+                issue = api.get(f"/api/issues/{issue_id}")
+                matches = POLICY_FENCE.findall(issue.get("description") or "")
+                if not matches:
+                    continue
+                summary["scanned"] += 1
                 if len(matches) != 1:
                     raise ValueError("multiple escalation policies")
                 policy = json.loads(matches[0])
