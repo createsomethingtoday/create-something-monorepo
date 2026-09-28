@@ -80,7 +80,7 @@
   border-radius: var(--radius-performance-md);
 }
 
-.property-performance.ltd-public-library :is(.readiness-page__hero, .opposition, .playbook-note) :is(a, button):focus-visible {
+.property-performance.ltd-public-library:not(.ltd-operator-public) :is(.readiness-page__hero, .opposition, .playbook-note) :is(a, button):focus-visible {
   outline-color: var(--color-performance-panel);
 }
 
