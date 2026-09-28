@@ -68,6 +68,24 @@ jobs:
       - name: Build Draw
         run: pnpm --filter @create-something/mapping-canvas build
 
+      - name: Capture current Draw production deployments
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/run-wrangler.mjs --cwd packages/mapping-canvas pages deployment list \
+            --project-name=create-something-mapping-canvas --environment=production \
+            2>&1 | tee "$RUNNER_TEMP/draw-pages-before.log"
+          {
+            echo '## Draw production before release'
+            echo 'Retain these deployment identities for rollback.'
+            echo '```text'
+            cat "$RUNNER_TEMP/draw-pages-before.log"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Deploy exact commit to Draw production
         id: deploy
         env:
