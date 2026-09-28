@@ -228,3 +228,23 @@
   background: var(--color-operator-secondary);
   color: var(--color-operator-status-blocked-text);
 }
+
+/* Product-family openings share Canon's PageSection, whose light gradient and
+   literal button foreground also need an explicit operator pair. */
+.agency-surface[data-canon-palette='operator'] .clear-page-section--hero {
+  background: var(--color-operator-background);
+}
+.agency-surface[data-canon-palette='operator'] .clear-page-section--hero .clear-page-section__title {
+  font-size: clamp(2rem, 4.5vw, 4.5rem);
+  line-height: 1.08;
+}
+.agency-surface[data-canon-palette='operator'] .clear-page-section .btn-primary {
+  background: var(--color-operator-foreground);
+  color: var(--color-operator-background);
+  border-color: var(--color-operator-foreground);
+}
+.agency-surface[data-canon-palette='operator'] .clear-page-section :is(.btn-primary, .btn-secondary):hover {
+  background: var(--color-operator-raised);
+  color: var(--color-operator-foreground);
+  border-color: var(--color-operator-foreground);
+}
