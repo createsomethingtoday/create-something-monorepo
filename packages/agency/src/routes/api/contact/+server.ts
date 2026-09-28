@@ -1,6 +1,6 @@
 import { json } from '@sveltejs/kit';
 import { Effect } from 'effect';
-import { contactIntake, createD1ContactRepository, createResendContactMailer, CONTACT_UNKNOWN_MESSAGE } from '$lib/server/contact-intake';
+import { contactIntake, createD1ContactRepository, createResendContactMailer, runContactSecondaryEffects, CONTACT_UNKNOWN_MESSAGE } from '$lib/server/contact-intake';
 import type { RequestHandler } from './$types';
 import { renderContactResponse, renderContactNotification } from './email';
 import { contactSchema, parseBody, type ContactInput } from '@create-something/canon/validation';
@@ -75,11 +75,13 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		if (!env?.DB || !env.RESEND_API_KEY) {
 			return json({ success: false, message: CONTACT_UNKNOWN_MESSAGE, requestId }, { status: 503 });
 		}
-		const secondary = async () => {
-			if (assessment_id) {
-				await env.DB.prepare('UPDATE assessment_responses SET converted_to_contact = 1 WHERE session_id = ?').bind(assessment_id).run();
-			}
-			await recordServerConversion(
+		const secondary = () => runContactSecondaryEffects([
+			async () => {
+				if (assessment_id) {
+					await env.DB.prepare('UPDATE assessment_responses SET converted_to_contact = 1 WHERE session_id = ?').bind(assessment_id).run();
+				}
+			},
+			() => recordServerConversion(
 				env.DB,
 				{
 					property: 'agency',
@@ -104,9 +106,9 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 					userAgent: request.headers.get('user-agent') || undefined,
 					ipCountry: request.headers.get('cf-ipcountry') || undefined
 				}
-			);
+			),
 
-			await upsertWarmLead(env.DB, {
+			() => upsertWarmLead(env.DB, {
 				name,
 				email,
 				company,
@@ -117,8 +119,8 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 				serviceInterest: service || lane,
 				notes: message,
 				touchedAt: new Date().toISOString()
-			});
-		};
+			})
+		]);
 
 		// Send auto-response to the person who contacted us
 		const confirmation = {

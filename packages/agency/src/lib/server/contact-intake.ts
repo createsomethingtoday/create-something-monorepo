@@ -85,6 +85,16 @@ export function contactIntake(input: ContactInput, requestId: string, repository
   });
 }
 
+// A failed assessment update must not prevent analytics or warm-lead capture.
+// The caller still receives a failed secondary status after every step has run.
+export async function runContactSecondaryEffects(steps: readonly (() => Promise<unknown>)[]): Promise<void> {
+  let failed = false;
+  for (const step of steps) {
+    try { await step(); } catch { failed = true; }
+  }
+  if (failed) throw new Error('Contact secondary work incomplete');
+}
+
 export function createD1ContactRepository(db: D1Database): ContactRepository {
   const primary = () => db.withSession('first-primary');
   return {

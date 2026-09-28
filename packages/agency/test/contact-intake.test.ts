@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { Effect } from 'effect';
-import { contactIntake, createResendContactMailer, CONTACT_SAVED_MESSAGE, CONTACT_UNKNOWN_MESSAGE, type ContactRepository, type ContactReceipt, type EmailOutcome } from '../src/lib/server/contact-intake.ts';
+import { contactIntake, createResendContactMailer, runContactSecondaryEffects, CONTACT_SAVED_MESSAGE, CONTACT_UNKNOWN_MESSAGE, type ContactRepository, type ContactReceipt, type EmailOutcome } from '../src/lib/server/contact-intake.ts';
 import { createContactRequest } from '../src/lib/contact/request.ts';
 const input = { name: 'Fixture', email: 'fixture@example.invalid', message: 'Test inquiry' };
 const id = 'test-request-00000001';
@@ -110,6 +110,15 @@ test('secondary failures cannot erase accepted inquiry or authorize resend', asy
   const result = await Effect.runPromise(contactIntake(input, id, f.repository, f.mailer, async () => { throw new Error('analytics unavailable'); }));
   assert.equal(result.success, true); assert.equal(result.secondary, 'failed');
   await f.run(); assert.equal(f.counts().sends, 2);
+});
+test('secondary steps continue after an assessment update fails', async () => {
+  const calls: string[] = [];
+  await assert.rejects(runContactSecondaryEffects([
+    async () => { calls.push('assessment'); throw new Error('assessment unavailable'); },
+    async () => { calls.push('conversion'); },
+    async () => { calls.push('warm lead'); }
+  ]), /incomplete/);
+  assert.deepEqual(calls, ['assessment', 'conversion', 'warm lead']);
 });
 test('real database timeout reconciles without repeating the unacknowledged write', async () => {
   const f = fixture(); let attempts = 0;
