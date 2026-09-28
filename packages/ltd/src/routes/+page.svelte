@@ -1,23 +1,13 @@
 <script lang="ts">
 	import {
 		Button,
-		PerformanceCampaignOpening,
 		PerformanceCardGrid,
 		SEO,
 		NewsletterSignup,
 		PropertyFunnel,
-		type PerformanceCardItem,
-		type PerformanceCampaignProof
+		type PerformanceCardItem
 	} from '@create-something/canon';
-	import { ltdOperatingFieldMedia } from '$lib/operator-library/court-media';
 	import { playbooks } from '$lib/operator-library/playbooks';
-
-	const heroProofItems: PerformanceCampaignProof[] = [
-		{ label: 'Start', value: 'One workflow' },
-		{ label: 'Name', value: 'One owner' },
-		{ label: 'Set', value: 'One boundary' },
-		{ label: 'Keep', value: 'One receipt' }
-	];
 
 	const playbookCards: PerformanceCardItem[] = playbooks.map((playbook) => ({
 		eyebrow: playbook.label,
@@ -61,21 +51,23 @@
 	propertyName="ltd"
 />
 
-<PerformanceCampaignOpening
-	mobileSearchBoundary
-	eyebrow="CREATE SOMETHING .ltd · The operator library"
-	title="Run AI work people can trust."
-	lede="Start with one recurring workflow. Leave with a playbook that tells your team and its AI what can run, what waits for a person, and what proves the work happened."
-	media={ltdOperatingFieldMedia}
-	proof={heroProofItems}
-	mode="ink"
-	density="compact"
->
-	{#snippet actions()}
-		<Button href="/playbooks">Find your playbook</Button>
-		<Button href="/readiness" variant="secondary">Assess a workflow</Button>
-	{/snippet}
-</PerformanceCampaignOpening>
+<header class="ltd-operator-hero" aria-labelledby="library-title">
+	<div class="ltd-operator-hero__intro">
+		<p class="ltd-operator-hero__eyebrow">CREATE SOMETHING .ltd / The operating library</p>
+		<h1 id="library-title">Run AI work people can trust.</h1>
+		<p>Start with one recurring workflow. Leave with a playbook that tells your team and its AI what can run, what waits for a person, and what proves the work happened.</p>
+		<div class="ltd-operator-hero__actions">
+			<Button href="/playbooks">Find your playbook</Button>
+			<Button href="/readiness" variant="secondary">Assess a workflow</Button>
+		</div>
+	</div>
+	<ul class="ltd-operator-hero__proof" aria-label="The operating sequence">
+		<li><span>01 / Start</span><strong>One workflow</strong></li>
+		<li><span>02 / Name</span><strong>One owner</strong></li>
+		<li><span>03 / Set</span><strong>One boundary</strong></li>
+		<li><span>04 / Keep</span><strong>One receipt</strong></li>
+	</ul>
+</header>
 
 <section class="operator-library" aria-labelledby="start-title">
 	<div class="operator-library__heading">

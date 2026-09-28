@@ -1,0 +1,316 @@
+/* .ltd public reading surfaces opt in to Canon's measured operator palette.
+   Authentication, presentations and interactive experiments remain independent. */
+.ltd-operator-public {
+  color-scheme: dark;
+  --color-performance-paper: var(--color-operator-background);
+  --color-performance-panel: var(--color-operator-secondary);
+  --color-performance-court: var(--color-operator-raised);
+  --color-performance-ink: var(--color-operator-foreground);
+  --color-performance-muted: var(--color-operator-muted);
+  --color-performance-line: var(--color-operator-border);
+  --color-performance-line-strong: var(--color-operator-input-border);
+  --color-performance-focus: var(--color-operator-focus-ring-accessible);
+  --color-performance-signal: var(--color-operator-foreground);
+  --color-performance-bg-pure: var(--color-operator-background);
+  --color-performance-bg-elevated: var(--color-operator-secondary);
+  --color-performance-bg-surface: var(--color-operator-secondary);
+  --color-performance-bg-subtle: var(--color-operator-raised);
+  --color-performance-fg-primary: var(--color-operator-foreground);
+  --color-performance-fg-secondary: var(--color-operator-foreground);
+  --color-performance-fg-tertiary: var(--color-operator-muted);
+  --color-performance-fg-muted: var(--color-operator-muted);
+  --color-performance-fg-subtle: var(--color-operator-muted);
+  --color-performance-border-default: var(--color-operator-border);
+  --color-performance-border-emphasis: var(--color-operator-input-border);
+  --color-performance-border-strong: var(--color-operator-input-border);
+  --color-performance-shell-surface: var(--color-operator-background);
+  --color-performance-shell-surface-secondary: var(--color-operator-secondary);
+  --color-performance-shell-surface-tertiary: var(--color-operator-raised);
+  --color-performance-shell-surface-elevated: var(--color-operator-raised);
+  --color-performance-shell-surface-hover: var(--color-operator-hover);
+  --color-performance-shell-border-subtle: var(--color-operator-border);
+  --color-performance-shell-border-default: var(--color-operator-border);
+  --color-performance-shell-border-strong: var(--color-operator-input-border);
+  --color-performance-hover: var(--color-operator-hover);
+  --color-performance-active: var(--color-operator-raised);
+  --glass-performance-bg-subtle: var(--color-operator-background);
+  --glass-performance-bg-light: var(--color-operator-secondary);
+  --glass-performance-bg-medium: var(--color-operator-secondary);
+  --glass-performance-bg-strong: var(--color-operator-raised);
+  --glass-performance-border-subtle: var(--color-operator-border);
+  --glass-performance-border-light: var(--color-operator-border);
+  --glass-performance-border-medium: var(--color-operator-input-border);
+  --glass-performance-border-strong: var(--color-operator-input-border);
+  --font-performance-heading: var(--font-performance-sans);
+  --font-performance-display: var(--font-performance-sans);
+  --font-performance-serif: var(--font-performance-sans);
+  --text-performance-display: clamp(2.25rem, 3.6vw, 3.25rem);
+  --text-performance-h1: clamp(1.75rem, 2.4vw, 2.25rem);
+  --text-performance-h2: clamp(1.45rem, 2vw, 1.8rem);
+  --text-performance-h3: 1.2rem;
+  background: var(--color-operator-background);
+  color: var(--color-operator-foreground);
+  font-family: var(--font-performance-sans);
+}
+
+.ltd-operator-public :is(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--color-operator-focus-ring-accessible);
+  outline-offset: 3px;
+}
+
+.ltd-operator-public :is(.nav-clear, .nav-clear.nav-fixed) {
+  background: var(--color-operator-background);
+  border-bottom: 1px solid var(--color-operator-border);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+.ltd-operator-public .nav-clear :is(.nav-logo, .nav-link, .nav-menu-button) {
+  color: var(--color-operator-foreground);
+}
+.ltd-operator-public .nav-clear .nav-link-list,
+.ltd-operator-public .nav-clear .nav-mobile-menu {
+  background: var(--color-operator-secondary);
+  border-color: var(--color-operator-border);
+}
+.ltd-operator-public .nav-clear .nav-link.active,
+.ltd-operator-public .nav-clear .nav-link:hover,
+.ltd-operator-public .nav-clear .nav-menu-button {
+  background: var(--color-operator-raised);
+  color: var(--color-operator-foreground);
+}
+.ltd-operator-public .nav-clear .nav-link.active {
+  box-shadow: inset 0 -2px var(--color-operator-foreground);
+}
+.ltd-operator-public .nav-clear .nav-menu-button {
+  border-color: var(--color-operator-border);
+}
+
+.ltd-operator-public main { background: var(--color-operator-background); }
+.ltd-operator-public main :is(h1, h2, h3, h4) {
+  font-family: var(--font-performance-sans);
+  letter-spacing: -0.035em;
+  line-height: 1.16;
+}
+.ltd-operator-public main h1 { font-size: clamp(2.25rem, 3.6vw, 3.25rem); }
+.ltd-operator-public main h2 { font-size: clamp(1.55rem, 2.3vw, 2.25rem); }
+.ltd-operator-public main :is(p, li) { line-height: 1.6; }
+.ltd-operator-public main :is(.operator-library, .opposition, .library-loop, .playbook-index, .playbook-note, .readiness-page__hero, .readiness-page__assessment, .readiness-page__result, .readiness-page__next) {
+  padding-block: clamp(1.5rem, 3vw, 2.75rem);
+  background: var(--color-operator-background);
+  color: var(--color-operator-foreground);
+  border-color: var(--color-operator-border);
+}
+.ltd-operator-public main :is(.opposition, .playbook-note, .library-loop) {
+  background: var(--color-operator-secondary);
+}
+.ltd-operator-public main :is(.opposition, .playbook-note) :is(.opposition__eyebrow, .opposition__heading > p, .playbook-note > p) {
+  color: var(--color-operator-muted);
+}
+.ltd-operator-public main :is(.operator-library, .opposition, .library-loop, .playbook-index, .playbook-note) h2 {
+  max-width: 34ch;
+  font-size: clamp(1.55rem, 2.3vw, 2.25rem);
+  letter-spacing: -0.035em;
+  line-height: 1.16;
+}
+.ltd-operator-public main :is(.clear-card-grid__card, .product-surface, .readiness-page__questions button) {
+  background: var(--color-operator-secondary);
+  border: 1px solid var(--color-operator-border);
+  border-radius: 8px;
+  box-shadow: none;
+  color: var(--color-operator-foreground);
+}
+.ltd-operator-public main :is(.clear-card-grid__card, .product-surface) :is(p, span) {
+  color: var(--color-operator-muted);
+}
+.ltd-operator-public main .readiness-page__questions button[aria-pressed='true'] {
+  background: var(--color-operator-raised);
+  border-color: var(--color-operator-foreground);
+  color: var(--color-operator-foreground);
+}
+.ltd-operator-public main .readiness-page__hero > p:last-child { color: var(--color-operator-muted); }
+.ltd-operator-public main .readiness-page h1 { max-width: 24ch; }
+.ltd-operator-public main .readiness-page h2 { max-width: 34ch; }
+
+.ltd-operator-public .footer-clear,
+.ltd-operator-public .footer-clear .footer-links {
+  background: var(--color-operator-background);
+  color: var(--color-operator-foreground);
+  border-color: var(--color-operator-border);
+}
+.ltd-operator-public .footer-clear .footer-links-grid {
+  background: var(--color-operator-secondary);
+  border-color: var(--color-operator-border);
+  border-radius: 8px;
+  box-shadow: none;
+}
+.ltd-operator-public .footer-clear :is(.brand-description, .section-description, .footer-link) {
+  color: var(--color-operator-muted);
+}
+
+.ltd-operator-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(12rem, 18rem);
+  gap: clamp(1.5rem, 4vw, 4rem);
+  align-items: end;
+  width: min(82rem, calc(100% - 3rem));
+  margin: 0 auto;
+  padding: clamp(2rem, 4vw, 4rem) 0;
+  border-bottom: 1px solid var(--color-operator-border);
+}
+.ltd-operator-hero__intro { max-width: 46rem; }
+.ltd-operator-hero__eyebrow {
+  margin: 0 0 1rem;
+  color: var(--color-operator-muted);
+  font-size: .75rem;
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.ltd-operator-hero h1 { margin: 0; max-width: 20ch; }
+.ltd-operator-hero__intro > p:not(.ltd-operator-hero__eyebrow) {
+  max-width: 63ch;
+  margin: 1rem 0 0;
+  color: var(--color-operator-muted);
+  font-size: clamp(.9rem, 1.2vw, 1rem);
+}
+.ltd-operator-hero__actions { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 1.5rem; }
+.ltd-operator-hero__actions :is(a, button) { min-height: 2.75rem; border-radius: 8px; }
+.ltd-operator-hero__proof {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--color-operator-border);
+  border-radius: 8px;
+  background: var(--color-operator-secondary);
+}
+.ltd-operator-hero__proof li { display: grid; gap: .2rem; padding: .75rem 1rem; }
+.ltd-operator-hero__proof li + li { border-top: 1px solid var(--color-operator-border); }
+.ltd-operator-hero__proof span { color: var(--color-operator-muted); font-size: .7rem; letter-spacing: .06em; text-transform: uppercase; }
+.ltd-operator-hero__proof strong { color: var(--color-operator-foreground); font-size: .875rem; font-weight: 600; }
+
+@media (max-width: 47.99rem) {
+  .ltd-operator-hero { grid-template-columns: 1fr; width: calc(100% - 2rem); padding-block: 1.5rem; }
+  .ltd-operator-hero__proof { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ltd-operator-hero__proof li:nth-child(2) { border-top: 0; }
+  .ltd-operator-hero__proof li:nth-child(even) { border-left: 1px solid var(--color-operator-border); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ltd-operator-public :is(a, button, summary) { transition-duration: 0ms; }
+}
+
+/* Existing Canon reading widgets keep their behavior, with a compact public shell. */
+.ltd-operator-public main .clear-page-section,
+.ltd-operator-public main .clear-page-section--hero {
+  padding-block: clamp(1.5rem, 3vw, 2.75rem);
+  background: var(--color-operator-background);
+  border-color: var(--color-operator-border);
+  color: var(--color-operator-foreground);
+}
+.ltd-operator-public main .clear-page-section__title,
+.ltd-operator-public main .clear-page-section--hero .clear-page-section__title {
+  max-width: 26ch;
+  color: var(--color-operator-foreground);
+  font-family: var(--font-performance-sans);
+  font-size: clamp(2.25rem, 3.6vw, 3.25rem);
+  font-weight: 500;
+  line-height: 1.16;
+  letter-spacing: -.035em;
+}
+.ltd-operator-public main .clear-page-section__description {
+  max-width: 65ch;
+  color: var(--color-operator-muted);
+  font-size: clamp(.9rem, 1.2vw, 1rem);
+  line-height: 1.6;
+}
+.ltd-operator-public main .clear-kicker {
+  background: var(--color-operator-secondary);
+  border-color: var(--color-operator-border);
+  color: var(--color-operator-muted);
+  border-radius: 6px;
+}
+.ltd-operator-public main .performance-narrative-stage {
+  background: var(--color-operator-background);
+  border-color: var(--color-operator-border);
+  color: var(--color-operator-foreground);
+  padding-block: clamp(1.5rem, 3vw, 2.75rem);
+}
+.ltd-operator-public main .performance-narrative-stage__header h2 {
+  max-width: 32ch;
+  font-size: clamp(1.65rem, 2.5vw, 2.5rem);
+  line-height: 1.16;
+}
+.ltd-operator-public main .performance-narrative-stage__header > p {
+  color: var(--color-operator-muted);
+  font-size: clamp(.9rem, 1.2vw, 1rem);
+}
+.ltd-operator-public main :is(.performance-narrative-stage__index, .performance-narrative-stage__panel) {
+  background: var(--color-operator-secondary);
+  border-color: var(--color-operator-border);
+  color: var(--color-operator-foreground);
+}
+.ltd-operator-public main .performance-narrative-stage__index button[aria-selected='true'] {
+  background: var(--color-operator-raised);
+  color: var(--color-operator-foreground);
+}
+
+.ltd-operator-public main .playbook-detail,
+.ltd-operator-public main :is(.playbook-detail__hero, .playbook-detail__instruction, .playbook-detail__board, .playbook-detail__runbook, .playbook-detail__opposition) {
+  background: var(--color-operator-background);
+  border-color: var(--color-operator-border);
+  color: var(--color-operator-foreground);
+}
+.ltd-operator-public main .playbook-detail__hero {
+  min-height: 0;
+  display: block;
+  background: var(--color-operator-background);
+}
+.ltd-operator-public main .playbook-detail__instruction,
+.ltd-operator-public main .playbook-detail__opposition { background: var(--color-operator-secondary); }
+.ltd-operator-public main .playbook-detail__instruction .playbook-detail__eyebrow {
+  color: var(--color-operator-muted);
+}
+.ltd-operator-public main .playbook-detail__board dl > div,
+.ltd-operator-public main .playbook-detail__opposition article {
+  background: var(--color-operator-secondary);
+  border-color: var(--color-operator-border);
+  min-height: 0;
+}
+.ltd-operator-public main .readiness-page__result {
+  background: var(--color-operator-secondary);
+  border-color: var(--color-operator-border);
+  border-left-color: var(--color-operator-status-review-text);
+}
+.ltd-operator-public main .readiness-page__result[data-state='ready'] {
+  border-left-color: var(--color-operator-status-done-text);
+}
+.ltd-operator-public main .readiness-page__result[data-state='blocked'] {
+  border-left-color: var(--color-operator-status-blocked-text);
+}
+.ltd-operator-public main .readiness-page__result li {
+  border-color: var(--color-operator-border);
+}
+
+.property-performance.ltd-public-library.ltd-operator-public main :is(.playbook-detail, .readiness-page) h1 {
+  max-width: 26ch;
+  font-size: clamp(2.25rem, 3.6vw, 3.25rem);
+  line-height: 1.16;
+  letter-spacing: -.035em;
+}
+.property-performance.ltd-public-library.ltd-operator-public main :is(.playbook-detail, .readiness-page) h2 {
+  max-width: 34ch;
+  font-size: clamp(1.55rem, 2.3vw, 2.25rem);
+  line-height: 1.16;
+}
+.ltd-operator-public main .playbook-detail__summary {
+  max-width: 65ch;
+  font-size: clamp(.9rem, 1.2vw, 1rem);
+  line-height: 1.6;
+}
+.property-performance.ltd-public-library.ltd-operator-public main :is(.playbook-detail__hero, .playbook-detail__instruction, .playbook-detail__board, .playbook-detail__runbook, .playbook-detail__opposition) {
+  padding-block: clamp(1.5rem, 3vw, 2.75rem);
+}
+.ltd-operator-public main section.py-16 { padding-block: 2.5rem; }
+.ltd-operator-public main section.pt-24 { padding-top: 3rem; }
+.ltd-operator-public main section.pb-16 { padding-bottom: 2.5rem; }
