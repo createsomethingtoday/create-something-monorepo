@@ -1,5 +1,13 @@
 @import '@create-something/canon/styles/operator.css';
 
+/* Match the document chrome to operator pages, including overscroll and transitions.
+   Utility routes without the opt-in surface keep the default light chrome. */
+html:has(.agency-surface[data-canon-palette='operator']),
+body:has(.agency-surface[data-canon-palette='operator']) {
+  background: oklch(20.5% 0 0); /* --color-operator-background in Canon */
+  color-scheme: dark;
+}
+
 /* Agency opts in by route; Canon's defaults and other consumers stay intact. */
 .agency-surface[data-canon-palette='operator'] {
   color-scheme: dark;
@@ -55,6 +63,10 @@
   background: var(--color-operator-foreground);
   color: var(--color-operator-background);
   border-color: var(--color-operator-foreground);
+  border-radius: var(--radius-operator-control);
+}
+.agency-surface[data-canon-palette='operator'] .handoff {
+  border-radius: var(--radius-operator-panel);
 }
 .agency-surface[data-canon-palette='operator'] .hero-actions .primary:hover {
   background: var(--color-operator-hover);
