@@ -23,7 +23,8 @@
     "ego_profile_and_socket_denial": "passed_direct_ssh_probe_not_assigned_run",
     "paperclip_loopback_denial": "failed_tcp_connect_to_127_0_0_1_3101",
     "codex_adapter_probe": "passed_remote_hello_with_skip_git_repo_check",
-    "staged_codex_home_cleanup": "runner_wrapper_probe_passed_normal_assigned_run_unverified",
+    "staged_codex_home_cleanup": "python_launcher_normal_nonzero_signal_and_provider_probe_passed_assigned_run_unverified",
+    "codex_launcher_sha256": "59acdd4c2c6f87b926c7e8b5f8e333be171fe461f308ff184c275449ef14a299",
     "unsigned_browser": "offline_chromium_render_passed_broker_assigned_run_pending"
   },
   "roles": {
