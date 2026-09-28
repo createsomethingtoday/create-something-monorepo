@@ -65,7 +65,7 @@ body:has(.agency-surface[data-canon-palette='operator']) {
   border-color: var(--color-operator-foreground);
   border-radius: var(--radius-operator-control);
 }
-.agency-surface[data-canon-palette='operator'] .handoff {
+.agency-surface[data-canon-palette='operator'] .hero-track .handoff {
   border-radius: var(--radius-operator-panel);
 }
 .agency-surface[data-canon-palette='operator'] .hero-actions .primary:hover {
