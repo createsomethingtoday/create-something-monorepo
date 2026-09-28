@@ -36,7 +36,7 @@ The authorized negative Ego probe was only `await listTaskSpaces()` via the abso
 
 ## Unsigned setup and invocation
 
-**Current gate:** broker v3 and its final source hash are pending coordinator finalization. The v2 hash below is historical probe evidence only, not the current candidate. Do not reuse an old session or apply the invocation recipe to v3 until the coordinator assigns its exact reviewed hash and task-scoped session. The coordinator owns draft PR creation after v3 finalization; this engineer must not work around GitHub credential boundaries.
+**Current gate:** broker v6 is frozen at source SHA-256 `62a99a04017981e9b84023588e49ff3990f16f2613661b98b67980bd94f26743` and archive SHA-256 `14b3de8da453c1ec5e8bd2d8229fa7793ab14f619dd4ddc882464934ecb2c108`. Host and agent QA passed bounded readback; independent create-something CRE-139 review remains open. The v2 hash below is historical probe evidence only. Do not reuse an old session or apply the invocation recipe to a new task until the coordinator assigns an exact reviewed hash and task-scoped session. Draft PR #1801 remains unpromoted; this engineer must not work around GitHub credential boundaries.
 
 The coordinator owns starting/stopping the host broker and its executable/profile/process cleanup. The engineer must not launch Chromium or start the broker. The broker source worktree is the separately owned `/private/tmp/cre-2150-browser-broker`; read its `docs/guides/UNSIGNED_BROWSER_BROKER.md`. The historical v2 source `scripts/unsigned_browser_broker.py` was checked against SHA-256 `9ac5f48f4a1140e6a69da95977092b73f760cf031d93d8304c72f1b9b43e87e6`. Preserve that worktree. An expired or absent session is a capability stop, not permission to mint another token or broaden origins.
 
@@ -50,7 +50,7 @@ The request body must contain exactly:
 
 Use Python `urllib.request` with `ProxyHandler({})`, `Authorization: Bearer <token>` from the private file in memory, `Content-Type: application/json`, method POST, and a 30-second timeout. This POST addresses the broker API; it is not a POST to the public page. Save only the response receipt and decoded `screenshot_png_base64` into the current run's scratch directory, then register them as issue artifacts. Do not attach request headers or metadata containing the token. A response failure or `cleanup_failed_session_closed` stops execution and returns cleanup ownership to the coordinator. Do not silently fall back to host Ego.
 
-The v2 broker contract specifies that each read creates a new unsigned worker/browser/context and uses a minimal environment. It exposes no caller script, click, selector, form, upload, profile, arbitrary-header, or arbitrary executable operation. Public traffic is bounded GET-only to configured exact origins; the broker's documented 500 ms settling interval does not establish that every dynamic application is ready. POST-dependent apps, private sites, interactive flows and broader UI automation remain unsupported.
+The v6 broker contract specifies that each read creates a new unsigned worker/browser/context and uses a minimal environment. It exposes no caller script, click, selector, form, upload, profile, arbitrary-header, or arbitrary executable operation. Public traffic is bounded GET-only to configured exact origins; the broker's documented 500 ms settling interval does not establish that every dynamic application is ready. POST-dependent apps, private sites, interactive flows and broader UI automation remain unsupported.
 
 ## Teardown and evidence
 
