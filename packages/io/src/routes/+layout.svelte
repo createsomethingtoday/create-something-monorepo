@@ -1,5 +1,6 @@
 <script lang="ts">
   import '../app.css';
+  import '$lib/styles/research.css';
   import { onMount } from 'svelte';
   import { afterNavigate, onNavigate, goto, invalidateAll } from '$app/navigation';
   import { Navigation, Footer, Analytics, ModeIndicator, LayoutSEO } from '@create-something/canon';
@@ -50,6 +51,22 @@
 
   let { children, data } = $props();
   let mobileNavigationOpen = $state(false);
+  const isResearchSurface = $derived(
+    [
+      '/',
+      '/papers',
+      '/experiments',
+      '/plugins',
+      '/methodology',
+      '/about',
+      '/categories',
+      '/graph',
+      '/newsletters'
+    ].includes($page.url.pathname) ||
+      $page.url.pathname.startsWith('/papers/') ||
+      $page.url.pathname.startsWith('/plugins/') ||
+      $page.url.pathname.startsWith('/newsletters/')
+  );
   const footerHandoff = $derived(getIoFooterHandoff($page.url.pathname));
 
   // Handle logout
@@ -196,7 +213,10 @@
     deferMobileButtonUntilCampaignExit={$page.url.pathname === '/'}
   />
 
-  <div class="layout-root property-performance">
+  <div class="layout-root property-performance" class:io-research-shell={isResearchSurface}>
+    {#if isResearchSurface}
+      <a class="research-skip-link" href="#main-content">Skip to content</a>
+    {/if}
     <Navigation
       logo="CREATE SOMETHING"
       logoSuffix=".io"
@@ -220,7 +240,7 @@
     />
 
     <!-- Add top padding to account for fixed navigation -->
-    <main id="main-content" class="main-content">
+    <main id="main-content" class="main-content" tabindex="-1">
       {@render children()}
     </main>
 
