@@ -93,11 +93,11 @@ body {
 	--space-lg: 1.5rem;
 	--space-xl: 2rem;
 	--space-2xl: 3rem;
-	--radius-sm: 6px;
+	--radius-sm: var(--radius-operator-control);
 	--radius-md: 8px;
-	--radius-lg: 10px;
+	--radius-lg: var(--radius-operator-panel);
 	--radius-performance-sm: 8px;
-	--radius-performance-md: 10px;
+	--radius-performance-md: var(--radius-operator-panel);
 	color-scheme: dark;
 	min-height: 100vh;
 	background: var(--color-bg-pure);
