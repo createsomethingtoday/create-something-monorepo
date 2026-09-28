@@ -87,21 +87,22 @@
   },
   "named_operator_assignment": {
     "paperclip_issue": "CRE-124",
-    "agent_id": "3eb0a714-9796-4130-9fea-f58d556868b4",
-    "name": "Browser Environment QA Operator",
-    "scope": "explicitly assigned read-only TaskSpace qualification only",
+    "agent_id": null,
+    "user_id": "local-board",
+    "name": "Host Ego Operator",
+    "scope": "explicitly assigned host TaskSpace qualification only",
     "lease_verified": false,
     "signed_in_site_authorization": "separate_task_requirement",
     "self_approval": false,
     "broader_browser_qa_issue": "CRE-110",
     "agent_preflight_result": "bootstrap_failed",
-    "host_taskspace_proof": "partial_not_agent_runtime_acceptance"
+    "host_taskspace_proof": "public_page_create_finish_and_absence_passed_without_lease"
   },
   "acceptance": {
     "unsigned_example_page_render": "observed_v6_host_and_agent_qa",
-    "storage_mutation_separation": "not_verified_by_example_page",
+    "storage_mutation_separation": "v7_host_fixture_cookie_local_and_session_storage_passed",
     "host_ego_negative": "inconclusive_exit_4",
-    "operator_lifecycle": "agent_bootstrap_failed_host_taskspace_proof_partial",
+    "operator_lifecycle": "host_public_page_passed_exclusive_lease_and_signed_in_task_pending",
     "role_runtime_denial": "not_verified",
     "production_promotion": "not_authorized"
   }
