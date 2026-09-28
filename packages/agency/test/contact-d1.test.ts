@@ -115,3 +115,36 @@ test('HTTP cancellation interrupts provider and duplicate only reconciles', asyn
     assert.equal((await f.repository.read('aborted-request-0001'))!.emails.find(e => e.kind === 'confirmation')!.state, 'sending');
   } finally { globalThis.fetch = originalFetch; f.sql.close(); }
 });
+for (const changed of [false, true]) test(`lost response, reload, invalid correction retains identity (changed=${changed})`, async () => {
+  const { createContactRequest } = await import('../src/lib/contact/request.ts');
+  const f = fixture(); const originalFetch = globalThis.fetch; let sends = 0;
+  globalThis.fetch = async () => new Response(JSON.stringify({ id: `provider-${++sends}` }));
+  const values = new Map<string, string>();
+  const storage = { getItem: (key: string) => values.get(key) ?? null,
+    setItem: (key: string, value: string) => { values.set(key, value); },
+    removeItem: (key: string) => { values.delete(key); } };
+  const ids: string[] = []; const statuses: number[] = [];
+  const transport: typeof fetch = async (_url, init) => {
+    ids.push(new Headers(init!.headers).get('Idempotency-Key')!);
+    const response = await POST({ request: new Request('https://example.invalid/api/contact', init),
+      platform: { env: { DB: f.db, RESEND_API_KEY: 'fake' } } } as any);
+    statuses.push(response.status);
+    if (ids.length === 1) { assert.equal(response.status, 200); throw new Error('response lost'); }
+    return response;
+  };
+  try {
+    assert.equal((await createContactRequest(storage)(input, transport)).success, false);
+    assert.equal(sends, 2);
+    const reloaded = createContactRequest(storage);
+    assert.equal((await reloaded({ ...input, message: 'x'.repeat(5001) }, transport)).success, false);
+    assert.equal(statuses[1], 400);
+    assert.equal(values.size, 1); // Validation must not discard a potentially committed identity.
+    const result = await reloaded({ ...input, message: changed ? 'Changed valid inquiry' : input.message }, transport);
+    assert.equal(statuses[2], changed ? 409 : 200);
+    assert.equal(result.success, !changed);
+    assert.equal(new Set(ids).size, 1);
+    assert.equal(sends, 2);
+    assert.equal(f.sql.prepare('SELECT count(*) AS n FROM contact_submissions').get()!.n, 1);
+    assert.equal(values.size, changed ? 1 : 0);
+  } finally { globalThis.fetch = originalFetch; f.sql.close(); }
+});

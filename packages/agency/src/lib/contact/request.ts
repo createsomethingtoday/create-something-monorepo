@@ -19,11 +19,13 @@ export function createContactRequest(storage?: Pick<Storage, 'getItem' | 'setIte
         typeof result.success !== 'boolean' || typeof result.message !== 'string') throw new Error('Invalid contact response');
       const success = response.ok && result.success;
       const requestId = id;
-      // Only confirmed success or validation rejection permits a fresh logical submission.
-      if (success || response.status === 400) {
+      // Only confirmed success permits a fresh logical submission. A validation
+      // rejection may follow a lost response and reload of an already saved ID.
+      if (success) {
         id = undefined; body = undefined;
         try { storage?.removeItem(key); } catch { /* No sensitive payload is persisted. */ }
       }
+      if (response.status === 400) body = undefined; // Allow corrections under the same ID.
       return { success, message: result.message, requestId };
     } catch { return { success: false, message: CONTACT_TRANSPORT_MESSAGE, requestId: id }; }
   };

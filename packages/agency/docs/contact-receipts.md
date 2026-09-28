@@ -24,8 +24,11 @@ inquiry data. The hash covers the validated, defaulted input and is not authenti
 - 400 / false: validation failed before side effects.
 
 The browser helper freezes the first request body across in-page retries and stores
-only its ID in sessionStorage. It clears that ID only on confirmed success or 400.
-Non-2xx JSON and transport failures retain the ID. On reload, content is deliberately
+only its ID in sessionStorage. It clears that ID only on confirmed success. HTTP
+400 clears the frozen body so fields can be corrected, but preserves the ID in
+memory and sessionStorage: a validation rejection after reload does not prove
+that an earlier valid request was never saved. All non-success JSON and transport
+failures retain the ID. On reload, content is deliberately
 not restored; changed fields or attribution can produce a safe 409, requiring
 operator reconciliation. Blocked browser storage limits persistence to the current
 page. New tabs, cleared storage, and legacy clients can still create new logical IDs.
@@ -204,3 +207,25 @@ Svelte check reported zero errors and zero warnings. Agency build also exited 0
 and the Cloudflare adapter completed successfully. The coordinator must reconcile this schema revision
 with the initial Paperclip rollout plan before promotion. Preserve the unrelated
 0048–0054 backlog and the contact page's request helper during UI integration.
+
+## Validation-rejection identity correction — 2026-09-28
+
+Independent review found that clearing a retained request ID on HTTP 400 could
+create a second inquiry after a lost successful response and reload. The helper
+now clears only the frozen body on 400; the request ID remains in memory and
+sessionStorage. Only confirmed success clears that identity. This allows an
+invalid first submission to be corrected without treating validation as proof
+that all earlier requests under the ID failed.
+
+Two route-backed SQLite regression cases reproduce the exact sequence: valid
+submission committed, response lost, helper recreated using stored ID, invalid
+5001-character message rejected, then valid correction. The original payload
+must return 200 from its existing receipt; a changed valid payload must return
+409. Both assert one inquiry, one request ID and exactly the original two provider
+calls. Both failed before the correction because storage had been cleared.
+
+Post-correction verification: Agency check exited 0 with 163 tests / zero failures;
+contact output `tests 31 / pass 31 / fail 0 / skipped 0`; Svelte check zero errors
+and zero warnings. Agency build exited 0 and the Cloudflare adapter completed.
+No migration change, production query, live mail, deployment or promotion was
+performed for this correction. Independent reviewer owns final source approval.
