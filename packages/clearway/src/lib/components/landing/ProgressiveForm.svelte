@@ -184,7 +184,7 @@
 		padding: 0.875rem 1rem;
 		border-radius: var(--radius-md);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
+		border: 1px solid var(--color-operator-focus-ring-accessible, var(--color-border-default));
 		color: var(--color-fg-primary);
 		font-size: var(--text-body);
 		transition: border-color var(--duration-micro) var(--ease-standard);
