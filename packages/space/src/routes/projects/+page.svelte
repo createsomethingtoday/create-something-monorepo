@@ -94,10 +94,15 @@
   .filters {
     display: flex;
     align-items: end;
-    gap: 1rem;
+    gap: var(--space-performance-sm);
+    padding: var(--space-performance-sm);
+    border: 1px solid var(--color-performance-line);
+    border-radius: var(--radius-performance-md);
+    background: var(--color-performance-panel);
   }
   label {
     display: grid;
+    min-width: 0;
     gap: 0.6rem;
     font-size: 0.8rem;
   }
@@ -108,15 +113,15 @@
   select {
     width: 100%;
     min-height: 3.2rem;
-    border: 1px solid #a5a59f;
-    background: transparent;
+    border: 1px solid var(--color-performance-line-strong);
+    background: var(--color-performance-paper);
     padding: 0.85rem;
-    border-radius: 0;
+    border-radius: var(--radius-performance-md);
     font-size: 1rem;
     color: inherit;
   }
   select {
-    min-width: 12rem;
+    min-width: 0;
   }
   button {
     min-height: 3.2rem;
@@ -131,11 +136,11 @@
   }
   .result {
     display: grid;
-    grid-template-columns: 10rem 1fr 6rem;
+    grid-template-columns: 8rem minmax(0, 1fr) 6rem;
     align-items: baseline;
     gap: 2rem;
-    border-top: 1px solid #b8b8b0;
-    padding: 1.75rem 0;
+    border-top: 1px solid var(--color-performance-line);
+    padding: var(--space-performance-md) var(--space-performance-sm);
     text-decoration: none;
   }
   .result h2 {
@@ -145,6 +150,10 @@
   .result p {
     margin-top: 0.5rem;
     color: var(--color-performance-fg-secondary);
+  }
+  .result:hover,
+  .result:focus-visible {
+    background: var(--color-performance-panel);
   }
   .result:hover h2 {
     text-decoration: underline;
@@ -156,7 +165,9 @@
     white-space: nowrap;
   }
   .empty {
-    padding: 3rem 0;
+    padding: var(--space-performance-lg) var(--space-performance-sm);
+    border: 1px dashed var(--color-performance-line-strong);
+    border-radius: var(--radius-performance-md);
   }
   .empty p {
     margin: 1rem 0;
@@ -166,7 +177,7 @@
     margin-top: 2rem;
     max-width: 55rem;
   }
-  @media (max-width: 640px) {
+  @media (max-width: 760px) {
     .filters {
       flex-wrap: wrap;
     }
@@ -177,8 +188,11 @@
       flex: 1;
     }
     .result {
-      grid-template-columns: 1fr auto;
+      grid-template-columns: minmax(0, 1fr);
       gap: 0.7rem;
+    }
+    .distribution {
+      text-align: left;
     }
     .result > .eyebrow {
       grid-column: 1 / -1;

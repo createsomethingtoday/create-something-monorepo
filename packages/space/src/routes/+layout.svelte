@@ -173,6 +173,8 @@
     deferMobileButtonUntilCampaignExit={['/', '/workbench'].includes($page.url.pathname)}
   />
 
+  <a class="skip-link" href="#main-content">Skip to content</a>
+
   <div class="layout property-performance">
     <Navigation
       logo="CREATE SOMETHING"
@@ -192,7 +194,7 @@
       onMobileMenuChange={(open) => (mobileNavigationOpen = open)}
     />
 
-    <main id="main-content" class="content">
+    <main id="main-content" class="content" tabindex="-1">
       {@render children()}
     </main>
 
@@ -221,6 +223,21 @@
 {/if}
 
 <style>
+  .skip-link {
+    position: fixed;
+    top: 0.5rem;
+    left: 0.5rem;
+    z-index: 10000;
+    padding: 0.75rem 1rem;
+    background: var(--color-performance-panel);
+    color: var(--color-performance-ink);
+    border: 2px solid var(--color-performance-signal);
+    border-radius: var(--radius-performance-md);
+    transform: translateY(-200%);
+  }
+  .skip-link:focus {
+    transform: translateY(0);
+  }
   .layout {
     min-height: 100vh;
     background: var(--color-performance-paper, #f3f3f0);
