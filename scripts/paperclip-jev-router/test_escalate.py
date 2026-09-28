@@ -107,6 +107,10 @@ class EscalationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "source run model"):
             self.evaluate(data)
         data = fixture()
+        data["source_events"].append({"eventType": "adapter.invoke", "payload": {"commandArgs": ["exec", "--model", "gpt-6-astra"]}})
+        with self.assertRaisesRegex(ValueError, "source run model"):
+            self.evaluate(data)
+        data = fixture()
         data["comments"].append({"id": ident(12), "authorAgentId": data["controller_agent_id"], "body": fence("paperclip-escalation-decision-v1", {"policyHash": escalate.compact_hash(data["policy"])})})
         with self.assertRaisesRegex(ValueError, "already recorded"):
             self.evaluate(data)
@@ -114,10 +118,12 @@ class EscalationTests(unittest.TestCase):
     def test_high_authority_and_expired_packets_fail_closed(self):
         data = fixture()
         data["policy"]["riskFlags"] = ["production_release"]
+        data["issue"]["description"] = data["issue"]["description"].split("\n```paperclip-escalation-v1")[0] + "\n" + fence("paperclip-escalation-v1", data["policy"])
         with self.assertRaisesRegex(ValueError, "A1 only"):
             self.evaluate(data)
         data = fixture()
         data["policy"]["expiresAt"] = "2026-09-28T10:00:00Z"
+        data["issue"]["description"] = data["issue"]["description"].split("\n```paperclip-escalation-v1")[0] + "\n" + fence("paperclip-escalation-v1", data["policy"])
         with self.assertRaisesRegex(ValueError, "expiry"):
             self.evaluate(data)
 
@@ -134,6 +140,10 @@ class EscalationTests(unittest.TestCase):
         data["agents"][data["policy"]["fallbackAgentId"]]["status"] = "running"
         with self.assertRaisesRegex(ValueError, "unavailable"):
             self.evaluate(data)
+        data = fixture()
+        data["issue"]["description"] = data["issue"]["description"].split("\n```paperclip-escalation-v1")[0]
+        with self.assertRaisesRegex(ValueError, "policy changed"):
+            self.evaluate(data)
 
     def test_scan_writes_one_assignment_with_idempotent_comment(self):
         data = fixture()
@@ -141,6 +151,8 @@ class EscalationTests(unittest.TestCase):
             def __init__(self):
                 self.patches = []
             def get(self, path):
+                if path == "/api/companies":
+                    return [{"id": escalate.CANONICAL_COMPANY_ID, "name": escalate.CANONICAL_COMPANY_NAME}]
                 if path.endswith("/agents"):
                     return list(data["agents"].values())
                 if "/issues?" in path:
@@ -158,13 +170,15 @@ class EscalationTests(unittest.TestCase):
                 self.patches.append(body)
                 return {"assigneeAgentId": body["assigneeAgentId"]}
         api = FakeAPI()
-        kwargs = {"company_id": ident(20), "board_user_id": data["board_user_id"], "jev_agent_id": data["jev_agent_id"], "controller_agent_id": data["controller_agent_id"], "now": data["now"]}
+        kwargs = {"company_id": escalate.CANONICAL_COMPANY_ID, "board_user_id": data["board_user_id"], "jev_agent_id": data["jev_agent_id"], "controller_agent_id": data["controller_agent_id"], "now": data["now"]}
         self.assertEqual(escalate.scan(api, apply=False, **kwargs)["eligible"], 1)
         self.assertEqual(api.patches, [])
         result = escalate.scan(api, apply=True, **kwargs)
         self.assertEqual(result["escalated"], 1)
         self.assertEqual(api.patches[0]["assigneeAgentId"], data["policy"]["fallbackAgentId"])
         uuid.UUID(api.patches[0]["commentClientRequestId"])
+        with self.assertRaisesRegex(ValueError, "canonical company"):
+            escalate.scan(api, apply=False, **{**kwargs, "company_id": ident(20)})
 
 
 if __name__ == "__main__":

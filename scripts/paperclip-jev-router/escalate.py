@@ -22,6 +22,8 @@ ROUTE_FENCE = re.compile(r"```jev-routing-receipt\s*\n(.*?)\n```", re.DOTALL)
 DECISION_FENCE = re.compile(r"```paperclip-escalation-decision-v1\s*\n(.*?)\n```", re.DOTALL)
 LANE_BY_MODEL = {"gpt-6-luna": "luna", "gpt-6-sol": "sol", "gpt-6-astra": "astra"}
 NEXT_LANE = {"luna": "sol", "sol": "astra"}
+CANONICAL_COMPANY_ID = "1fb053c2-aa2a-4d88-8c45-0ef82ac8aef5"
+CANONICAL_COMPANY_NAME = "CREATE SOMETHING"
 POLICY_KEYS = {
     "schema", "taskId", "linearIssue", "productionGoal", "acceptanceCriteria",
     "autonomyLevel", "riskFlags", "routingReceiptCommentId", "selectedAgentId",
@@ -128,18 +130,29 @@ def validate_verification(receipt, policy, policy_hash):
 
 
 def run_model(events):
+    models = []
     for event in events:
         if event.get("eventType") != "adapter.invoke":
             continue
         args = (event.get("payload") or {}).get("commandArgs")
-        if isinstance(args, list) and "--model" in args:
-            index = args.index("--model")
-            if index + 1 < len(args) and isinstance(args[index + 1], str):
-                return args[index + 1]
-    return None
+        if not isinstance(args, list) or "--model" not in args:
+            return None
+        index = args.index("--model")
+        if index + 1 >= len(args) or not isinstance(args[index + 1], str):
+            return None
+        models.append(args[index + 1])
+    return models[0] if models and len(set(models)) == 1 else None
+
+
+def current_policy(issue, expected):
+    matches = POLICY_FENCE.findall(issue.get("description") or "")
+    if len(matches) != 1 or json.loads(matches[0]) != expected:
+        raise ValueError("escalation policy changed or was removed")
+    return expected
 
 
 def evaluate(issue, policy, comments, runs, agents, source_events, now, *, board_user_id, jev_agent_id, controller_agent_id):
+    current_policy(issue, policy)
     validate_policy(policy, issue["id"], now)
     policy_hash = compact_hash(policy)
     if issue.get("status") != "in_review" or issue.get("assigneeAgentId") != policy["verifierAgentId"]:
@@ -248,6 +261,11 @@ class Paperclip:
 
 
 def scan(api, *, company_id, board_user_id, jev_agent_id, controller_agent_id, now, apply):
+    if company_id != CANONICAL_COMPANY_ID:
+        raise ValueError("controller is not bound to the canonical company")
+    companies = api.get("/api/companies")
+    if not isinstance(companies, list) or not any(item.get("id") == CANONICAL_COMPANY_ID and item.get("name") == CANONICAL_COMPANY_NAME for item in companies):
+        raise ValueError("canonical Paperclip instance identity unavailable")
     summary = {"scanned": 0, "eligible": 0, "escalated": 0, "held": 0, "dryRun": not apply}
     agents = {item["id"]: item for item in api.get(f"/api/companies/{company_id}/agents")}
     for offset in range(0, 500, 100):
@@ -275,13 +293,17 @@ def scan(api, *, company_id, board_user_id, jev_agent_id, controller_agent_id, n
                     raise ValueError("verifier receipt unavailable")
                 claimed_receipt = fenced_json(verifier_receipts[0]["body"], VERIFICATION_FENCE)
                 source_run = claimed_receipt.get("sourceRunId")
-                source_events = api.get(f"/api/heartbeat-runs/{source_run}/events?limit=100") if source_run else []
+                source_events = api.get(f"/api/heartbeat-runs/{source_run}/events?limit=500") if source_run else []
                 decision = evaluate(issue, policy, comments, runs, agents, source_events, now, board_user_id=board_user_id, jev_agent_id=jev_agent_id, controller_agent_id=controller_agent_id)
                 if decision is None:
                     continue
                 summary["eligible"] += 1
                 if not apply:
                     continue
+                fresh_issue = api.get(f"/api/issues/{issue_id}")
+                current_policy(fresh_issue, policy)
+                if fresh_issue.get("status") != "in_review" or fresh_issue.get("assigneeAgentId") != policy["verifierAgentId"]:
+                    raise ValueError("issue changed before fallback assignment")
                 # One assignment and its durable comment are written in the same Paperclip issue mutation.
                 body = "Approved A1 model fallback after independent verification. Production authority is unchanged.\n\n```paperclip-escalation-decision-v1\n" + json.dumps(decision, sort_keys=True) + "\n```"
                 request_id = str(uuid.uuid5(uuid.NAMESPACE_URL, decision["policyHash"] + ":" + decision["sourceRunId"]))
