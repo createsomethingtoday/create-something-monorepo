@@ -152,9 +152,21 @@ and [SQLite last insert rowid](https://www.sqlite.org/c3ref/last_insert_rowid.ht
 ## Initial candidate verification — 2026-09-28 (superseded below)
 
 Preserved and completed the coordinator's uncommitted contact candidate without
-resetting or rebasing. The HTTP request abort signal now interrupts Effect;
-interrupted database writes may still commit, and receipts prevent dispatch on
-subsequent duplicate reconciliation.
+resetting or rebasing. This initial candidate passed the HTTP abort signal to
+Effect. That behavior was superseded after review because a browser disconnect
+could stop secondary work after the receipt was committed. Interrupted database
+writes may still commit, and receipts prevent dispatch on duplicate reconciliation.
+
+The final route no longer passes the HTTP abort signal to the intake Effect. Once
+the body is validated, it registers the intake promise with the Cloudflare
+request context's `waitUntil` before awaiting the same promise. This allows the
+receipt, both bounded provider calls, and independent secondary updates to
+continue after a client disconnect. Cloudflare limits this continuation to
+30 seconds after disconnect, so an interrupted or timed-out step can still
+leave an uncertain receipt; duplicates remain reconciliation-only and never
+replay email or secondary work. Provider calls retain their own ten-second
+deadline. A lost HTTP response is never evidence of failure or permission to
+resubmit with a new request ID.
 
 - Bootstrap completed with the pinned Node 22.21.1 / pnpm 9.15.0 runtime. The
   runner's Bash startup resets PATH; initialize the pinned runtime after startup

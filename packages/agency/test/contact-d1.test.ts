@@ -94,25 +94,30 @@ test('partial provider failure exposes saved message over HTTP and duplicate nev
     assert.equal((await f.repository.read('partial-request-0001'))!.emails.find(e => e.kind === 'notification')!.provider_id, 'owner-accepted');
   } finally { globalThis.fetch = originalFetch; await f.dispose(); }
 });
-test('HTTP cancellation interrupts provider and duplicate only reconciles', async () => {
+test('client disconnect leaves registered intake running through both receipts without replay', async () => {
   const f = await fixture(); const originalFetch = globalThis.fetch;
   const controller = new AbortController(); let sends = 0; let aborted = false;
   let started!: () => void;
   const ready = new Promise<void>(resolve => { started = resolve; });
+  let release!: () => void;
+  const barrier = new Promise<void>(resolve => { release = resolve; });
+  let background: Promise<unknown> | undefined;
   globalThis.fetch = async (_url, init) => {
-    sends++; started();
-    return new Promise<Response>((_resolve, reject) => {
-      init!.signal!.addEventListener('abort', () => { aborted = true; reject(new Error('aborted')); }, { once: true });
-    });
+    sends++;
+    init!.signal!.addEventListener('abort', () => { aborted = true; }, { once: true });
+    if (sends === 1) { started(); await barrier; }
+    return new Response(JSON.stringify({ id: `accepted-${sends}` }));
   };
   const invoke = (signal?: AbortSignal) => POST({ request: new Request('https://example.invalid/api/contact', {
     method: 'POST', signal, headers: { 'Content-Type': 'application/json', 'Idempotency-Key': 'aborted-request-0001' }, body: JSON.stringify(input)
-  }), platform: { env: { DB: f.db, RESEND_API_KEY: 'fake' } } } as any);
+  }), platform: { env: { DB: f.db, RESEND_API_KEY: 'fake' }, context: { waitUntil: (promise: Promise<unknown>) => { background = promise; } } } } as any);
   try {
     const running = invoke(controller.signal); await ready; controller.abort();
-    assert.equal((await running).status, 503); assert.equal(aborted, true);
-    assert.equal((await invoke()).status, 202); assert.equal(sends, 1);
-    assert.equal((await f.repository.read('aborted-request-0001'))!.emails.find(e => e.kind === 'confirmation')!.state, 'sending');
+    assert.ok(background); release();
+    assert.equal((await running).status, 200); await background;
+    assert.equal(aborted, false);
+    assert.equal((await invoke()).status, 200); assert.equal(sends, 2);
+    assert.deepEqual((await f.repository.read('aborted-request-0001'))!.emails.map(e => e.state), ['accepted', 'accepted']);
   } finally { globalThis.fetch = originalFetch; await f.dispose(); }
 });
 for (const changed of [false, true]) test(`lost response, reload, invalid correction retains identity (changed=${changed})`, async () => {

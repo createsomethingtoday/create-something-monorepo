@@ -139,11 +139,15 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 				html: renderContactNotification({ name, email, message, service, company, intent, lane, leadStage, campaign, submittedAt: new Date().toUTCString() })
 		};
 
-		const result = await Effect.runPromise(contactIntake(
+		// Once the body is validated, receipt and follow-up work must survive a client disconnect.
+		// Provider calls have their own deadlines; the browser's abort signal must not cancel this Effect.
+		const intake = Effect.runPromise(contactIntake(
 			{ ...parseResult.data, source, intent, lane }, requestId,
 			createD1ContactRepository(env.DB),
 			createResendContactMailer(env.RESEND_API_KEY, { confirmation, notification }), secondary
-		), { signal: request.signal });
+		));
+		platform?.context?.waitUntil(intake.then(() => undefined, () => undefined));
+		const result = await intake;
 		logger.info('Contact intake outcome', { requestId, receipt: result.receipt, secondary: result.secondary });
 		const { status, secondary: _secondary, ...body } = result;
 		return json(body, { status });
