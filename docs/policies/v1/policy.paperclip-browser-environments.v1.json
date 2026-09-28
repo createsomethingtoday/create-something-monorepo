@@ -103,7 +103,7 @@
     "storage_mutation_separation": "v7_host_fixture_cookie_local_and_session_storage_passed",
     "host_ego_negative": "inconclusive_exit_4",
     "operator_lifecycle": "host_public_page_passed_exclusive_lease_and_signed_in_task_pending",
-    "role_runtime_denial": "not_verified",
+    "role_runtime_denial": "failed_runner_uid_can_read_local_trusted_paperclip_control_plane",
     "production_promotion": "not_authorized"
   }
 }
