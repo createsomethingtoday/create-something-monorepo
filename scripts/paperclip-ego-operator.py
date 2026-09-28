@@ -17,7 +17,7 @@ import subprocess
 import sys
 import tempfile
 import urllib.request
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from uuid import UUID
 
@@ -86,27 +86,32 @@ def read_issue(issue_id: str) -> dict:
 
 
 def read_task_approval(host_uid: int, issue_id: str, space_name: str, script: bytes) -> dict:
-    """Require a private, time-bounded task binding created after owner approval."""
+    """Require a private, one-shot task binding with a maximum 15-minute life."""
     fd = os.open(APPROVAL_FILE, os.O_RDONLY | os.O_NOFOLLOW)
     try:
         info = os.fstat(fd)
         if not stat.S_ISREG(info.st_mode) or info.st_uid != host_uid or stat.S_IMODE(info.st_mode) != 0o600:
             raise RuntimeError("Ego task approval must be host-owned and mode 0600")
         with os.fdopen(fd, "r") as file:
+            fd = -1
             approval = json.load(file)
-        fd = -1
     finally:
         if fd >= 0:
             os.close(fd)
-    required = {"issueId", "spaceName", "scriptSha256", "egoCliSha256", "expiresAt", "approvedBy"}
+    required = {"approvalId", "issueId", "spaceName", "scriptSha256", "egoCliSha256",
+                "issuedAt", "expiresAt", "approvedBy"}
     if set(approval) != required:
         raise RuntimeError("Ego task approval has unexpected fields")
     try:
+        approval_id = str(UUID(approval["approvalId"]))
+        issued = datetime.fromisoformat(approval["issuedAt"])
         expires = datetime.fromisoformat(approval["expiresAt"])
-    except (TypeError, ValueError) as error:
-        raise RuntimeError("Ego task approval expiry is invalid") from error
-    if expires.tzinfo is None or not datetime.now(timezone.utc) < expires:
-        raise RuntimeError("Ego task approval has expired")
+    except (AttributeError, TypeError, ValueError) as error:
+        raise RuntimeError("Ego task approval ID or timestamp is invalid") from error
+    now = datetime.now(timezone.utc)
+    if (approval_id != approval["approvalId"] or issued.tzinfo is None or expires.tzinfo is None
+            or not issued <= now < expires or expires - issued > timedelta(minutes=15)):
+        raise RuntimeError("Ego task approval is outside its one-shot 15-minute window")
     if (
         approval["issueId"] != issue_id
         or approval["spaceName"] != space_name
@@ -116,6 +121,26 @@ def read_task_approval(host_uid: int, issue_id: str, space_name: str, script: by
     ):
         raise RuntimeError("Ego task approval does not match this run")
     return approval
+
+
+def consume_task_approval(host_uid: int, approval: dict) -> None:
+    """Link to a durable consumed ledger before removing the runnable approval."""
+    consumed_dir = LEASE_DIR / "consumed-approvals"
+    consumed_dir.mkdir(mode=0o700, exist_ok=True)
+    info = consumed_dir.stat()
+    if info.st_uid != host_uid or stat.S_IMODE(info.st_mode) != 0o700:
+        raise RuntimeError("Ego consumed approvals directory must be host-owned and mode 0700")
+    destination = consumed_dir / f"{approval['approvalId']}.json"
+    if destination.exists():
+        raise RuntimeError("Ego task approval was already consumed")
+    os.link(APPROVAL_FILE, destination, follow_symlinks=False)
+    APPROVAL_FILE.unlink()
+    for directory in (consumed_dir, LEASE_DIR):
+        fd = os.open(directory, os.O_RDONLY)
+        try:
+            os.fsync(fd)
+        finally:
+            os.close(fd)
 
 
 def require_host_script(path: Path, host_uid: int) -> bytes:
@@ -229,7 +254,7 @@ def main() -> int:
         state_path = LEASE_DIR / "active.json"
         if state_path.exists():
             raise RuntimeError("Previous Ego lease requires manual TaskSpace reconciliation")
-        read_task_approval(host_uid, args.issue_id, args.space_name, script)
+        approval = read_task_approval(host_uid, args.issue_id, args.space_name, script)
         issue = read_issue(args.issue_id)
         before = list_task_spaces()
         if args.space_name in before.values():
@@ -239,6 +264,7 @@ def main() -> int:
             "issue": issue["identifier"], "issueId": issue["id"],
             "spaceName": args.space_name,
             "scriptSha256": hashlib.sha256(script).hexdigest(),
+            "approvalId": approval["approvalId"],
             "hostUid": host_uid, "pid": os.getpid(),
             "startedAt": datetime.now(timezone.utc).isoformat(),
             "stage": "starting", "outcome": "unverified",
@@ -251,6 +277,9 @@ def main() -> int:
             os.fsync(file.fileno())
 
         try:
+            consume_task_approval(host_uid, approval)
+            receipt.update(stage="approved_once", approvalConsumedAt=datetime.now(timezone.utc).isoformat())
+            write_state(state_path, receipt)
             create_script = (
                 "const task = await taskSpace(" + json.dumps(args.space_name) + "); "
                 "console.log(\"PAPERCLIP_CREATED=\" + JSON.stringify({id:task.spaceId,name:task.name}));"
@@ -294,7 +323,9 @@ def main() -> int:
             print(json.dumps(receipt, sort_keys=True))
             return 0
         except BaseException as error:
-            receipt.update(stage="reconciliation_required", outcome="failed",
+            receipt.update(stage="reconciliation_required", failedStage=receipt["stage"],
+                           outcome="failed", failureMessage=(str(error)[:160] if isinstance(error, RuntimeError)
+                                                               else type(error).__name__),
                            failureType=type(error).__name__,
                            failedAt=datetime.now(timezone.utc).isoformat())
             try:
