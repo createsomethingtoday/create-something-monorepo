@@ -196,3 +196,17 @@
   width: min(100%, 48rem);
   max-width: 48rem;
 }
+
+/* These Canon chapters use literal white text on the ink role. Keep their
+   inverse pair local to Agency when ink is remapped to a light foreground. */
+.agency-surface[data-canon-palette='operator'] .performance-evidence-index__header > div:first-child,
+.agency-surface[data-canon-palette='operator'] .performance-field-sequence__header > div:first-child,
+.agency-surface[data-canon-palette='operator'] .performance-contrast-chapter__principle,
+.agency-surface[data-canon-palette='operator'] .performance-contrast-chapter[data-mode='paper-to-ink'] .performance-contrast-chapter__intervention {
+  background: var(--color-operator-secondary);
+  color: var(--color-operator-foreground);
+}
+.agency-surface[data-canon-palette='operator'] .performance-evidence-index__header small,
+.agency-surface[data-canon-palette='operator'] .performance-field-sequence__header small {
+  color: var(--color-operator-muted);
+}
