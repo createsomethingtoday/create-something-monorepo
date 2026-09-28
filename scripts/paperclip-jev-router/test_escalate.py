@@ -222,6 +222,7 @@ class EscalationTests(unittest.TestCase):
     def test_unavailable_unrelated_issue_does_not_stop_scan(self):
         data = fixture()
         missing_id = ident(50)
+        timed_out_id = ident(51)
         class FlakyAPI:
             def get(self, path):
                 if path == f"/api/companies/{escalate.CANONICAL_COMPANY_ID}":
@@ -229,9 +230,11 @@ class EscalationTests(unittest.TestCase):
                 if path.endswith("/agents"):
                     return list(data["agents"].values())
                 if "/issues?" in path:
-                    return [{"id": missing_id}, {"id": data["issue"]["id"]}]
+                    return [{"id": missing_id}, {"id": timed_out_id}, {"id": data["issue"]["id"]}]
                 if path == f"/api/issues/{missing_id}":
                     raise urllib.error.URLError("temporary detail failure")
+                if path == f"/api/issues/{timed_out_id}":
+                    raise TimeoutError("detail request timed out")
                 if path.endswith("/live-runs"):
                     return []
                 if path.endswith("/comments?limit=500"):
@@ -242,7 +245,7 @@ class EscalationTests(unittest.TestCase):
                     return data["source_events"]
                 return data["issue"]
         result = escalate.scan(FlakyAPI(), company_id=escalate.CANONICAL_COMPANY_ID, board_user_id=data["board_user_id"], jev_agent_id=data["jev_agent_id"], controller_agent_id=data["controller_agent_id"], now=data["now"], apply=False)
-        self.assertEqual(result["held"], 1)
+        self.assertEqual(result["held"], 2)
         self.assertEqual(result["eligible"], 1)
 
 

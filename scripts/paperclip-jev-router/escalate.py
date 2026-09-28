@@ -320,7 +320,7 @@ def scan(api, *, company_id, board_user_id, jev_agent_id, controller_agent_id, n
                     raise ValueError("fallback assignment readback mismatch")
                 summary["escalated"] += 1
                 return summary
-            except (KeyError, TypeError, ValueError, json.JSONDecodeError, urllib.error.URLError) as error:
+            except (KeyError, TypeError, ValueError, TimeoutError, json.JSONDecodeError, urllib.error.URLError) as error:
                 summary["held"] += 1
                 print(json.dumps({"taskId": item.get("id"), "status": "held", "reason": str(error)}))
         if len(issues) < 100:
@@ -356,7 +356,7 @@ def main():
     try:
         result = scan(api, company_id=company, board_user_id=board, jev_agent_id=jev, controller_agent_id=agent, now=datetime.now(timezone.utc), apply=os.environ.get("ESCALATION_APPLY") == "true")
         print(json.dumps(result))
-    except (KeyError, TypeError, ValueError, json.JSONDecodeError, urllib.error.URLError) as error:
+    except (KeyError, TypeError, ValueError, TimeoutError, json.JSONDecodeError, urllib.error.URLError) as error:
         print(json.dumps({"status": "error", "reason": str(error)}))
         return 1
     return 0
