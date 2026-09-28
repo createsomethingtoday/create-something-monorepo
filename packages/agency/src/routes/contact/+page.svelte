@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { createContactRequest } from '$lib/contact/request';
+  let contactRequest: ReturnType<typeof createContactRequest> | undefined;
   import {
     PerformancePageSection,
     SEO
@@ -197,12 +199,12 @@
 
     try {
       const analytics = getAnalytics();
-      const response = await fetch('/api/contact', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
+      if (!contactRequest) {
+        let storage: Storage | undefined;
+        try { storage = window.sessionStorage; } catch { /* Storage may be disabled. */ }
+        contactRequest = createContactRequest(storage);
+      }
+      const result = await contactRequest({
           name: formData.get('name'),
           email: formData.get('email'),
           company: formData.get('company') || undefined,
@@ -216,14 +218,11 @@
           source_property: analytics?.getSourceProperty() ?? undefined,
           landing_url: typeof window !== 'undefined' ? window.location.href : undefined,
           referrer: typeof document !== 'undefined' ? document.referrer : undefined
-        })
       });
 
-      const result = (await response.json()) as { success?: boolean; message?: string };
-
-      if (response.ok && result.success) {
+      if (result.success) {
         submitSuccess = true;
-        submitMessage = selectedPath.successMessage;
+        submitMessage = result.message;
         analytics?.conversion('contact_submitted', {
           source: contactSource,
           intent: selectedIntent,
@@ -241,7 +240,7 @@
       }
     } catch (error) {
       submitSuccess = false;
-      submitMessage = 'Something went wrong. Try again.';
+      submitMessage = 'We could not confirm receipt. Please keep this request open and do not start a new submission.';
     } finally {
       submitting = false;
     }

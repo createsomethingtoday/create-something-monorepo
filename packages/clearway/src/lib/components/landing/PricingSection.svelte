@@ -3,7 +3,7 @@
 	// Outcome-aligned pricing model
 </script>
 
-<section class="pricing">
+<section id="pricing" class="pricing">
 	<div class="container">
 		<h2 class="section-title">Pay When Courts Fill</h2>
 		<p class="section-subtitle">
@@ -123,7 +123,7 @@
 	.example-value {
 		font-weight: 500;
 		color: var(--color-fg-primary);
-		font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+		font-family: var(--font-mono);
 	}
 
 	.example-row.highlight {

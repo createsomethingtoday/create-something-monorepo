@@ -1,4 +1,6 @@
-import { json, error } from '@sveltejs/kit';
+import { json } from '@sveltejs/kit';
+import { Effect } from 'effect';
+import { contactIntake, createD1ContactRepository, createResendContactMailer, runContactSecondaryEffects, CONTACT_UNKNOWN_MESSAGE } from '$lib/server/contact-intake';
 import type { RequestHandler } from './$types';
 import { renderContactResponse, renderContactNotification } from './email';
 import { contactSchema, parseBody, type ContactInput } from '@create-something/canon/validation';
@@ -64,50 +66,22 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 			referrer
 		} = parseResult.data as ContactInput;
 		const leadStage = resolveLeadStage(intent);
-
-		// Access Cloudflare bindings via platform.env
-		if (!platform?.env) {
-			throw error(500, 'Platform environment not available');
+		const requestId = request.headers.get('Idempotency-Key') || crypto.randomUUID();
+		if (!/^[a-zA-Z0-9_-]{16,128}$/.test(requestId)) {
+			return json({ success: false, message: 'Invalid request ID' }, { status: 400 });
 		}
 
-		const env = platform.env;
-		const resendApiKey = env.RESEND_API_KEY;
-		if (!resendApiKey) {
-			logger.error('RESEND_API_KEY not configured for contact form');
-			return json(
-				{
-					success: false,
-					message: 'Email service is not configured'
-				},
-				{ status: 500 }
-			);
+		const env = platform?.env;
+		if (!env?.DB || !env.RESEND_API_KEY) {
+			return json({ success: false, message: CONTACT_UNKNOWN_MESSAGE, requestId }, { status: 503 });
 		}
-
-		// Store contact submission in D1 database (optional)
-		try {
-			await env.DB.prepare(
-				`
-        INSERT INTO contact_submissions (name, email, message, service, company, assessment_id, submitted_at)
-        VALUES (?, ?, ?, ?, ?, ?, datetime('now'))
-      `
-			)
-				.bind(name, email, message, service || null, company || null, assessment_id || null)
-				.run();
-
-			// Mark assessment as converted if present
-			if (assessment_id) {
-				await env.DB.prepare(
-					`UPDATE assessment_responses SET converted_to_contact = 1 WHERE session_id = ?`
-				)
-					.bind(assessment_id)
-					.run();
-			}
-		} catch (dbError) {
-			logger.warn('Contact submissions table not found - skipping DB insert', { error: dbError });
-		}
-
-		try {
-			await recordServerConversion(
+		const secondary = () => runContactSecondaryEffects([
+			async () => {
+				if (assessment_id) {
+					await env.DB.prepare('UPDATE assessment_responses SET converted_to_contact = 1 WHERE session_id = ?').bind(assessment_id).run();
+				}
+			},
+			() => recordServerConversion(
 				env.DB,
 				{
 					property: 'agency',
@@ -132,9 +106,9 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 					userAgent: request.headers.get('user-agent') || undefined,
 					ipCountry: request.headers.get('cf-ipcountry') || undefined
 				}
-			);
+			),
 
-			await upsertWarmLead(env.DB, {
+			() => upsertWarmLead(env.DB, {
 				name,
 				email,
 				company,
@@ -145,79 +119,41 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 				serviceInterest: service || lane,
 				notes: message,
 				touchedAt: new Date().toISOString()
-			});
-		} catch (conversionError) {
-			logger.warn('Contact conversion tracking failed', { error: conversionError });
-		}
+			})
+		]);
 
 		// Send auto-response to the person who contacted us
-		const autoResponsePromise = fetch('https://api.resend.com/emails', {
-			method: 'POST',
-			headers: {
-				Authorization: `Bearer ${resendApiKey}`,
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify({
+		const confirmation = {
 				from: 'CREATE SOMETHING Agency <noreply@workway.co>',
 				to: email,
 				subject: service ? `Re: ${service} Inquiry` : 'Thanks for reaching out',
 				html: renderContactResponse({ name, message, service, intent, lane })
-			})
-		});
+		};
 
 		// Send notification to site owner
-		const notificationPromise = fetch('https://api.resend.com/emails', {
-			method: 'POST',
-			headers: {
-				Authorization: `Bearer ${resendApiKey}`,
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify({
+		const notification = {
 				from: 'CREATE SOMETHING Agency <noreply@workway.co>',
 				to: 'micah@createsomething.io',
 				replyTo: email,
 				subject: service ? `Service Inquiry: ${service} from ${name}` : `New Contact Form Submission from ${name}`,
 				html: renderContactNotification({ name, email, message, service, company, intent, lane, leadStage, campaign, submittedAt: new Date().toUTCString() })
-			})
-		});
+		};
 
-		// Wait for both emails to send
-		const [autoResponse, notification] = await Promise.all([
-			autoResponsePromise,
-			notificationPromise
-		]);
-
-		if (!autoResponse.ok) {
-			const errorData = await autoResponse.json();
-			logger.error('Failed to send auto-response email', { email, error: errorData });
-			return json(
-				{
-					success: false,
-					message: 'Failed to send confirmation email'
-				},
-				{ status: 500 }
-			);
-		}
-
-		if (!notification.ok) {
-			const errorData = await notification.json();
-			logger.error('Failed to send notification email', { email, error: errorData });
-		}
-
-		logger.info('Contact form submitted successfully', { email, name, service });
-
-		return json({
-			success: true,
-			message: 'Message sent successfully! You should receive a confirmation email shortly.'
-		});
-	} catch (err) {
-		logger.error('Contact form error', { error: err });
-		return json(
-			{
-				success: false,
-				message: `Error processing contact form: ${err instanceof Error ? err.message : 'Unknown error'}`
-			},
-			{ status: 500 }
-		);
+		// Once the body is validated, receipt and follow-up work must survive a client disconnect.
+		// Provider calls have their own deadlines; the browser's abort signal must not cancel this Effect.
+		const intake = Effect.runPromise(contactIntake(
+			{ ...parseResult.data, source, intent, lane }, requestId,
+			createD1ContactRepository(env.DB),
+			createResendContactMailer(env.RESEND_API_KEY, { confirmation, notification }), secondary
+		));
+		platform?.context?.waitUntil(intake.then(() => undefined, () => undefined));
+		const result = await intake;
+		logger.info('Contact intake outcome', { requestId, receipt: result.receipt, secondary: result.secondary });
+		const { status, secondary: _secondary, ...body } = result;
+		return json(body, { status });
+	} catch {
+		// Do not expose provider responses, tokens, message content, or database errors.
+		logger.error('Contact intake interrupted');
+		return json({ success: false, message: CONTACT_UNKNOWN_MESSAGE }, { status: 503 });
 	}
 };
