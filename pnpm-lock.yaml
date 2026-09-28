@@ -641,6 +641,9 @@ importers:
       '@create-something/tufte':
         specifier: workspace:^
         version: link:../tufte
+      effect:
+        specifier: 3.22.2
+        version: 3.22.2
       lucide-svelte:
         specifier: ^0.562.0
         version: 0.562.0(svelte@5.56.9(@typescript-eslint/types@8.58.2))
