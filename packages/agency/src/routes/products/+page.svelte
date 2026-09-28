@@ -169,7 +169,7 @@
   <p>Review the linked implementations and clearly labeled scenarios below. For your Build, agree on the source, instructions, tests and handoff your team will own, plus what agents may do and what needs human approval. Production launch is agreed separately.</p>
   <p>Start with Map to define the workflow, scope Build for implementation, or use Control for ongoing operation. Membership covers one agreed workstream at a time; larger projects and usage are scoped separately.</p>
   {#each filmStories as story}
-    <article><div><h3>{story.name}</h3><p>{story.desc}</p><p class="deliverable">What you keep: {story.deliver}</p></div>
+    <article><div><h3>{story.name}</h3><p>{story.desc}</p><p class="deliverable">What you keep: {story.deliver}</p><p class="evidence-status">{story.status}</p><p class="evidence-proof">{story.proof}</p></div>
       <div class="capability-links"><a href={`/?film=${story.id}#work`}>Watch the story →</a><a href={story.source}>{story.sourceLabel} ↗</a><a href={agencyCoreMessaging.membershipInquiryHref}>Discuss this work →</a></div>
     </article>
   {/each}
@@ -278,7 +278,7 @@
 </PerformanceConversionHandoff>
 
 <style>
-.capabilities{padding:80px 7vw;color:var(--color-performance-ink);background:var(--color-performance-paper)}.capabilities>p{max-width:720px;line-height:1.65}.capabilities h2{font:400 clamp(38px,4vw,64px)/1.1 var(--font-performance-editorial)}.capabilities article{display:grid;grid-template-columns:2fr 1fr;gap:5vw;padding:32px 0;border-top:1px solid var(--color-performance-line);margin-top:24px}.capabilities h3{font-size:25px;margin:0 0 14px}.capabilities article p{max-width:650px;line-height:1.65}.capability-links{display:flex;flex-direction:column;justify-content:center;gap:20px}.capability-links a{color:inherit;text-underline-offset:5px}.deliverable{font-size:14px}@media(max-width:700px){.capabilities article{grid-template-columns:1fr;gap:16px}}
+.capabilities{padding:80px 7vw;color:var(--color-performance-ink);background:var(--color-performance-paper)}.capabilities>p{max-width:720px;line-height:1.65}.capabilities h2{font:400 clamp(38px,4vw,64px)/1.1 var(--font-performance-editorial)}.capabilities article{display:grid;grid-template-columns:2fr 1fr;gap:5vw;padding:32px 0;border-top:1px solid var(--color-performance-line);margin-top:24px}.capabilities h3{font-size:25px;margin:0 0 14px}.capabilities article p{max-width:650px;line-height:1.65}.capability-links{display:flex;flex-direction:column;justify-content:center;gap:20px}.capability-links a{color:inherit;text-underline-offset:5px}.deliverable{font-size:14px}.evidence-status{margin-top:20px;font:var(--text-performance-operator-label) var(--font-performance-mono);text-transform:uppercase;color:var(--color-performance-muted)}.evidence-proof{font-size:14px;color:var(--color-performance-muted)}@media(max-width:700px){.capabilities article{grid-template-columns:1fr;gap:16px}}
 
   .product-choice,
   .control-surfaces,

@@ -71,6 +71,10 @@ The temporary fixture route was removed. Worktree disposition: preserved on `cod
 
 An independent browser pass found the first-load privacy prompt's “Allow analytics” label was white on a near-white button after the route palette remap. The Agency-scoped primary privacy button now binds dark text to the operator foreground fill. Ego browser readback on the local preview returned foreground `oklch(0.205 0 0)` and background `oklch(0.985 0 0)` for that button; the contact submit button had the same legible pairing. Contact first viewport screenshots at 390×844 and 320×640 show no horizontal overflow. These are local preview checks, not deployed evidence.
 
+## Products evidence labels after final delta review
+
+The Products shelf now renders each existing `filmStories.status` and `filmStories.proof` beside its deliverable and source link. This resolves the mismatch between the first-screen promise of labeled scenarios and the shelf itself, so a visitor can distinguish recordings, storyboards and illustrative work without opening each film. A 390px browser recapture verified the status and proof note are readable with no horizontal overflow; the local screenshot is `products-evidence-label-390.png` in the coordinator goal directory. This remains local preview evidence until Pages promotion.
+
 
 ## Products opening follow-up
 
