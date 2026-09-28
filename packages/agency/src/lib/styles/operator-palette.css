@@ -210,3 +210,21 @@
 .agency-surface[data-canon-palette='operator'] .performance-field-sequence__header small {
   color: var(--color-operator-muted);
 }
+
+/* Route-owned artifacts with literal light copy retain dark neutral panels. */
+.agency-surface[data-canon-palette='operator'] :is(.continuation-record, .foundation-fit, .flagship-defense, .measurement-plan__formula, .guardrail-artifact pre) {
+  background: var(--color-operator-secondary);
+  color: var(--color-operator-foreground);
+}
+.agency-surface[data-canon-palette='operator'] .install-card button {
+  background: var(--color-operator-foreground);
+  color: var(--color-operator-background);
+}
+.agency-surface[data-canon-palette='operator'] .field-result > header > span {
+  background: var(--color-operator-secondary);
+  color: var(--color-operator-status-done-text);
+}
+.agency-surface[data-canon-palette='operator'] .failed-boundary__status {
+  background: var(--color-operator-secondary);
+  color: var(--color-operator-status-blocked-text);
+}
