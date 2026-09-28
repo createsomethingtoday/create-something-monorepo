@@ -21,6 +21,7 @@ VERIFICATION_FENCE = re.compile(r"```paperclip-verification-v1\s*\n(.*?)\n```", 
 ROUTE_FENCE = re.compile(r"```jev-routing-receipt\s*\n(.*?)\n```", re.DOTALL)
 DECISION_FENCE = re.compile(r"```paperclip-escalation-decision-v1\s*\n(.*?)\n```", re.DOTALL)
 LANE_BY_MODEL = {"gpt-6-luna": "luna", "gpt-6-sol": "sol", "gpt-6-astra": "astra"}
+MODEL_BY_LANE = {lane: model for model, lane in LANE_BY_MODEL.items()}
 NEXT_LANE = {"luna": "sol", "sol": "astra"}
 CANONICAL_COMPANY_ID = "1fb053c2-aa2a-4d88-8c45-0ef82ac8aef5"
 CANONICAL_COMPANY_NAME = "CREATE SOMETHING"
@@ -177,11 +178,12 @@ def evaluate(issue, policy, comments, runs, agents, source_events, now, *, board
     verifier = agents[policy["verifierAgentId"]]
     if any(agent.get("adapterType") != "codex_local" for agent in (selected, fallback, verifier)):
         raise ValueError("escalation agents must use the Codex adapter")
-    selected_model = selected.get("adapterConfig", {}).get("model")
-    fallback_model = fallback.get("adapterConfig", {}).get("model")
+    selected_model = run_model(source_events)
     selected_lane = LANE_BY_MODEL.get(selected_model)
-    if route_receipt.get("recommendation") != selected_lane or NEXT_LANE.get(selected_lane) != LANE_BY_MODEL.get(fallback_model):
+    fallback_lane = NEXT_LANE.get(selected_lane)
+    if route_receipt.get("recommendation") != selected_lane or fallback_lane is None:
         raise ValueError("Jev route and fallback model ladder disagree")
+    fallback_model = MODEL_BY_LANE[fallback_lane]
     if fallback.get("status") != "idle":
         raise ValueError("fallback agent is unavailable")
     for comment in comments:
@@ -206,8 +208,6 @@ def evaluate(issue, policy, comments, runs, agents, source_events, now, *, board
         raise ValueError("runs are not bound to this issue")
     if not (utc(source["finishedAt"]) <= utc(review["startedAt"]) <= utc(verifier_comment["createdAt"]) <= utc(review["finishedAt"])):
         raise ValueError("verifier timing is not independent")
-    if run_model(source_events) != selected_model:
-        raise ValueError("source run model does not match the approved model")
     approvals = []
     for comment in comments:
         if comment.get("authorUserId") != board_user_id or not APPROVAL_FENCE.search(comment.get("body") or ""):
@@ -315,7 +315,7 @@ def scan(api, *, company_id, board_user_id, jev_agent_id, controller_agent_id, n
                 # One assignment and its durable comment are written in the same Paperclip issue mutation.
                 body = "Approved A1 model fallback after independent verification. Production authority is unchanged.\n\n```paperclip-escalation-decision-v1\n" + json.dumps(decision, sort_keys=True) + "\n```"
                 request_id = str(uuid.uuid5(uuid.NAMESPACE_URL, decision["policyHash"] + ":" + decision["sourceRunId"]))
-                updated = api.patch(f"/api/issues/{issue_id}", {"assigneeAgentId": decision["toAgentId"], "status": "todo", "comment": body, "commentClientRequestId": request_id})
+                updated = api.patch(f"/api/issues/{issue_id}", {"assigneeAgentId": decision["toAgentId"], "assigneeAdapterOverrides": {"adapterConfig": {"model": decision["toModel"]}}, "status": "todo", "comment": body, "commentClientRequestId": request_id})
                 if updated.get("assigneeAgentId") != decision["toAgentId"]:
                     raise ValueError("fallback assignment readback mismatch")
                 summary["escalated"] += 1

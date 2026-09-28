@@ -104,11 +104,11 @@ class EscalationTests(unittest.TestCase):
             self.evaluate(data)
         data = fixture()
         data["source_events"][0]["payload"]["commandArgs"][-1] = "gpt-6-luna"
-        with self.assertRaisesRegex(ValueError, "source run model"):
+        with self.assertRaisesRegex(ValueError, "Jev route"):
             self.evaluate(data)
         data = fixture()
         data["source_events"].append({"eventType": "adapter.invoke", "payload": {"commandArgs": ["exec", "--model", "gpt-6-astra"]}})
-        with self.assertRaisesRegex(ValueError, "source run model"):
+        with self.assertRaisesRegex(ValueError, "Jev route"):
             self.evaluate(data)
         data = fixture()
         data["comments"].append({"id": ident(12), "authorAgentId": data["controller_agent_id"], "body": fence("paperclip-escalation-decision-v1", {"policyHash": escalate.compact_hash(data["policy"])})})
@@ -176,6 +176,7 @@ class EscalationTests(unittest.TestCase):
         result = escalate.scan(api, apply=True, **kwargs)
         self.assertEqual(result["escalated"], 1)
         self.assertEqual(api.patches[0]["assigneeAgentId"], data["policy"]["fallbackAgentId"])
+        self.assertEqual(api.patches[0]["assigneeAdapterOverrides"], {"adapterConfig": {"model": "gpt-6-astra"}})
         uuid.UUID(api.patches[0]["commentClientRequestId"])
         with self.assertRaisesRegex(ValueError, "canonical company"):
             escalate.scan(api, apply=False, **{**kwargs, "company_id": ident(20)})
