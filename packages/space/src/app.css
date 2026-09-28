@@ -273,6 +273,11 @@ body:has(.layout[data-canon-palette='operator'])::-webkit-scrollbar-thumb {
   --color-performance-paper: var(--color-operator-background);
   --color-performance-panel: var(--color-operator-secondary);
   --color-performance-court: var(--color-operator-raised);
+  /* These aliases resolve at their declaration site, so remap them here too. */
+  --color-performance-bg-pure: var(--color-operator-background);
+  --color-performance-bg-elevated: var(--color-operator-secondary);
+  --color-performance-bg-surface: var(--color-operator-raised);
+  --color-performance-bg-subtle: var(--color-operator-secondary);
   --color-performance-ink: var(--color-operator-foreground);
   --color-performance-ink-soft: var(--color-operator-muted);
   --color-performance-muted: var(--color-operator-muted);
@@ -283,6 +288,8 @@ body:has(.layout[data-canon-palette='operator'])::-webkit-scrollbar-thumb {
   --color-performance-fg-tertiary: var(--color-operator-muted);
   --color-performance-fg-muted: var(--color-operator-muted);
   --color-performance-fg-subtle: var(--color-operator-muted);
+  --color-performance-hover: oklch(100% 0 0 / .06);
+  --color-performance-active: oklch(100% 0 0 / .1);
   --color-performance-border-default: var(--color-operator-border);
   --color-performance-border-emphasis: var(--color-operator-input-border);
   --color-performance-shell-surface: var(--color-operator-secondary);
@@ -309,12 +316,6 @@ body:has(.layout[data-canon-palette='operator'])::-webkit-scrollbar-thumb {
 
 .layout[data-canon-palette='operator'] :is(input, select, textarea) {
   color-scheme: dark;
-}
-
-/* The Playground keeps a light code field inside the dark public shell. */
-.layout[data-canon-palette='operator'] .code-textarea::placeholder {
-  color: var(--color-operator-raised);
-  opacity: 1;
 }
 
 .layout[data-canon-palette='operator'] .nav-logo-asset {
