@@ -1,21 +1,11 @@
 <script lang="ts">
 	import {
 		Button,
-		PerformanceCampaignOpening,
 		PerformanceCardGrid,
 		SEO,
-		type PerformanceCardItem,
-		type PerformanceCampaignProof
+		type PerformanceCardItem
 	} from '@create-something/canon';
-	import { ltdPlaybookRouteMedia } from '$lib/operator-library/court-media';
 	import { playbooks } from '$lib/operator-library/playbooks';
-
-	const heroProof: PerformanceCampaignProof[] = [
-		{ label: 'Start', value: 'One workflow' },
-		{ label: 'Name', value: 'One owner' },
-		{ label: 'Set', value: 'One boundary' },
-		{ label: 'Keep', value: 'One receipt' }
-	];
 
 	const playbookCards: PerformanceCardItem[] = playbooks.map((playbook) => ({
 		eyebrow: playbook.label,
@@ -38,21 +28,23 @@
 	]}
 />
 
-<PerformanceCampaignOpening
-	mobileSearchBoundary
-	eyebrow="CREATE SOMETHING .ltd · Operator playbooks"
-	title="Start with the work that has to move."
-	lede="Each playbook gives a team and its AI the same operating picture: what can run, what needs a person, and what proves the work happened."
-	media={ltdPlaybookRouteMedia}
-	proof={heroProof}
-	mode="ink"
-	density="compact"
->
-	{#snippet actions()}
-		<Button href="/readiness">Assess a workflow</Button>
-		<Button href="/canon" variant="secondary">Why this works</Button>
-	{/snippet}
-</PerformanceCampaignOpening>
+<header class="ltd-operator-hero" aria-labelledby="playbooks-title">
+	<div class="ltd-operator-hero__intro">
+		<p class="ltd-operator-hero__eyebrow">CREATE SOMETHING .ltd / Operator playbooks</p>
+		<h1 id="playbooks-title">Start with the work that has to move.</h1>
+		<p>Each playbook gives a team and its AI the same operating picture: what can run, what needs a person, and what proves the work happened.</p>
+		<div class="ltd-operator-hero__actions">
+			<Button href="/readiness">Assess a workflow</Button>
+			<Button href="/canon" variant="secondary">Why this works</Button>
+		</div>
+	</div>
+	<ul class="ltd-operator-hero__proof" aria-label="The operating sequence">
+		<li><span>01 / Start</span><strong>One workflow</strong></li>
+		<li><span>02 / Name</span><strong>One owner</strong></li>
+		<li><span>03 / Set</span><strong>One boundary</strong></li>
+		<li><span>04 / Keep</span><strong>One receipt</strong></li>
+	</ul>
+</header>
 
 <section class="playbook-index" aria-labelledby="playbook-library-title">
 	<div class="playbook-index__heading">
