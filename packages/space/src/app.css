@@ -282,6 +282,7 @@ body:has(.layout[data-canon-palette='operator'])::-webkit-scrollbar-thumb {
   --color-performance-fg-secondary: var(--color-operator-muted);
   --color-performance-fg-tertiary: var(--color-operator-muted);
   --color-performance-fg-muted: var(--color-operator-muted);
+  --color-performance-fg-subtle: var(--color-operator-muted);
   --color-performance-border-default: var(--color-operator-border);
   --color-performance-border-emphasis: var(--color-operator-input-border);
   --color-performance-shell-surface: var(--color-operator-secondary);
@@ -310,6 +311,12 @@ body:has(.layout[data-canon-palette='operator'])::-webkit-scrollbar-thumb {
   color-scheme: dark;
 }
 
+/* The Playground keeps a light code field inside the dark public shell. */
+.layout[data-canon-palette='operator'] .code-textarea::placeholder {
+  color: var(--color-operator-raised);
+  opacity: 1;
+}
+
 .layout[data-canon-palette='operator'] .nav-logo-asset {
   filter: invert(1);
 }
@@ -326,6 +333,12 @@ body:has(.layout[data-canon-palette='operator'])::-webkit-scrollbar-thumb {
   background: var(--color-operator-foreground);
   color: var(--color-operator-background);
   border-color: var(--color-operator-foreground);
+}
+
+.layout[data-canon-palette='operator'] .nav-clear .nav-cta:hover {
+  background: var(--color-operator-raised);
+  border-color: var(--color-operator-raised);
+  color: var(--color-operator-foreground);
 }
 
 .layout[data-canon-palette='operator'] .nav-clear :is(.nav-cta, .nav-menu-button) {

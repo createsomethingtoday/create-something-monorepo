@@ -124,6 +124,12 @@ body:has(.layout[data-canon-palette='operator'])::-webkit-scrollbar-thumb {
   border-color: var(--color-operator-foreground);
 }
 
+.layout[data-canon-palette='operator'] .nav-clear .nav-cta:hover {
+  background: var(--color-operator-raised);
+  border-color: var(--color-operator-raised);
+  color: var(--color-operator-foreground);
+}
+
 .layout[data-canon-palette='operator'] .nav-clear :is(.nav-cta, .nav-menu-button) {
   border-radius: 8px;
 }
