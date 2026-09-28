@@ -19,6 +19,7 @@
 @import '@create-something/canon/styles/grid-patterns.css';
 @import '@create-something/canon/styles/interactions.css';
 @import '@create-something/canon/styles/performance.css';
+@import '@create-something/canon/styles/operator.css';
 
 /* Tailwind CSS directives */
 @tailwind base;
@@ -239,9 +240,118 @@ html {
 }
 
 body {
-  background: var(--color-performance-paper, #f3f3f0);
+  background: #171717;
   letter-spacing: 0;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* The viewport scrollbar belongs to html/body, outside the operator wrapper.
+   Keep the Canon light scrollbar on the excluded WorkWay local preview. */
+html:has(.layout[data-canon-palette='operator']),
+body:has(.layout[data-canon-palette='operator']) {
+  color-scheme: dark;
+  scrollbar-color: oklch(32% 0 0) oklch(20.5% 0 0);
+}
+
+html:has(.layout[data-canon-palette='operator'])::-webkit-scrollbar,
+body:has(.layout[data-canon-palette='operator'])::-webkit-scrollbar,
+html:has(.layout[data-canon-palette='operator'])::-webkit-scrollbar-track,
+body:has(.layout[data-canon-palette='operator'])::-webkit-scrollbar-track {
+  background-color: oklch(20.5% 0 0);
+}
+
+html:has(.layout[data-canon-palette='operator'])::-webkit-scrollbar-thumb,
+body:has(.layout[data-canon-palette='operator'])::-webkit-scrollbar-thumb {
+  background-color: oklch(32% 0 0);
+}
+
+/* Public workshop and reading routes opt into Canon's operator palette. Tool
+   canvases may use their own semantic data colors inside this shell. */
+.layout[data-canon-palette='operator'] {
+  --color-performance-paper: var(--color-operator-background);
+  --color-performance-panel: var(--color-operator-secondary);
+  --color-performance-court: var(--color-operator-raised);
+  /* These aliases resolve at their declaration site, so remap them here too. */
+  --color-performance-bg-pure: var(--color-operator-background);
+  --color-performance-bg-elevated: var(--color-operator-secondary);
+  --color-performance-bg-surface: var(--color-operator-raised);
+  --color-performance-bg-subtle: var(--color-operator-secondary);
+  --color-performance-ink: var(--color-operator-foreground);
+  --color-performance-ink-soft: var(--color-operator-muted);
+  --color-performance-muted: var(--color-operator-muted);
+  --color-performance-line: var(--color-operator-border);
+  --color-performance-line-strong: var(--color-operator-input-border);
+  --color-performance-fg-primary: var(--color-operator-foreground);
+  --color-performance-fg-secondary: var(--color-operator-muted);
+  --color-performance-fg-tertiary: var(--color-operator-muted);
+  --color-performance-fg-muted: var(--color-operator-muted);
+  --color-performance-fg-subtle: var(--color-operator-muted);
+  --color-performance-hover: oklch(100% 0 0 / .06);
+  --color-performance-active: oklch(100% 0 0 / .1);
+  /* Discover's glass cards need dark fills with the operator foreground. */
+  --glass-performance-bg-light: var(--color-operator-secondary);
+  --glass-performance-bg-medium: var(--color-operator-raised);
+  --glass-performance-border-light: var(--color-operator-border);
+  --glass-performance-border-medium: var(--color-operator-input-border);
+  --color-performance-border-default: var(--color-operator-border);
+  --color-performance-border-emphasis: var(--color-operator-input-border);
+  --color-performance-shell-surface: var(--color-operator-secondary);
+  --color-performance-shell-surface-secondary: var(--color-operator-secondary);
+  --color-performance-shell-surface-tertiary: var(--color-operator-raised);
+  --color-performance-shell-surface-hover: var(--color-operator-raised);
+  --color-performance-shell-border-default: var(--color-operator-border);
+  --color-performance-shell-border-strong: var(--color-operator-input-border);
+  --color-performance-signal: var(--color-operator-focus-ring-accessible);
+  --color-bg-pure: var(--color-operator-background);
+  --color-bg-elevated: var(--color-operator-secondary);
+  --color-bg-surface: var(--color-operator-secondary);
+  --color-fg-primary: var(--color-operator-foreground);
+  --color-fg-secondary: var(--color-operator-muted);
+  --color-fg-muted: var(--color-operator-muted);
+  --color-border-default: var(--color-operator-border);
+  color: var(--color-operator-foreground);
+  color-scheme: dark;
+}
+
+.layout[data-canon-palette='operator'] :is(h1, h2, h3) {
+  font-family: var(--font-performance-sans);
+}
+
+.layout[data-canon-palette='operator'] :is(input, select, textarea) {
+  color-scheme: dark;
+}
+
+.layout[data-canon-palette='operator'] .nav-logo-asset {
+  filter: invert(1);
+}
+
+.layout[data-canon-palette='operator'] .nav-clear,
+.layout[data-canon-palette='operator'] .nav-clear.nav-fixed {
+  background: var(--color-operator-secondary);
+  border-bottom: 1px solid var(--color-operator-border);
+  color: var(--color-operator-foreground);
+  backdrop-filter: none;
+}
+
+.layout[data-canon-palette='operator'] .nav-clear .nav-cta {
+  background: var(--color-operator-foreground);
+  color: var(--color-operator-background);
+  border-color: var(--color-operator-foreground);
+}
+
+.layout[data-canon-palette='operator'] .nav-clear .nav-cta:hover {
+  background: var(--color-operator-raised);
+  border-color: var(--color-operator-raised);
+  color: var(--color-operator-foreground);
+}
+
+.layout[data-canon-palette='operator'] .nav-clear :is(.nav-cta, .nav-menu-button) {
+  border-radius: 8px;
+}
+
+/* Keep the current-property marker legible on the operator surface. */
+.layout[data-canon-palette='operator'] .mode-indicator .mode-item.active {
+  background: var(--color-operator-raised);
 }
