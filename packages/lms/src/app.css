@@ -41,6 +41,25 @@
   --color-path-advanced: #ef4444;
 }
 
+/* The viewport scrollbar is owned by html/body, not the palette wrapper. */
+html:has(.layout[data-canon-palette='operator']),
+body:has(.layout[data-canon-palette='operator']) {
+  color-scheme: dark;
+  scrollbar-color: oklch(32% 0 0) oklch(20.5% 0 0);
+}
+
+html:has(.layout[data-canon-palette='operator'])::-webkit-scrollbar,
+body:has(.layout[data-canon-palette='operator'])::-webkit-scrollbar,
+html:has(.layout[data-canon-palette='operator'])::-webkit-scrollbar-track,
+body:has(.layout[data-canon-palette='operator'])::-webkit-scrollbar-track {
+  background-color: oklch(20.5% 0 0);
+}
+
+html:has(.layout[data-canon-palette='operator'])::-webkit-scrollbar-thumb,
+body:has(.layout[data-canon-palette='operator'])::-webkit-scrollbar-thumb {
+  background-color: oklch(32% 0 0);
+}
+
 /* Shared public reading palette. Protected workflow behavior is untouched. */
 .layout[data-canon-palette='operator'] {
   --color-performance-paper: var(--color-operator-background);
@@ -103,6 +122,10 @@
   background: var(--color-operator-foreground);
   color: var(--color-operator-background);
   border-color: var(--color-operator-foreground);
+}
+
+.layout[data-canon-palette='operator'] .nav-clear :is(.nav-cta, .nav-menu-button) {
+  border-radius: 8px;
 }
 
 .layout[data-canon-palette='operator'] .nav-menu-button {

@@ -247,6 +247,26 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* The viewport scrollbar belongs to html/body, outside the operator wrapper.
+   Keep the Canon light scrollbar on the excluded WorkWay local preview. */
+html:has(.layout[data-canon-palette='operator']),
+body:has(.layout[data-canon-palette='operator']) {
+  color-scheme: dark;
+  scrollbar-color: oklch(32% 0 0) oklch(20.5% 0 0);
+}
+
+html:has(.layout[data-canon-palette='operator'])::-webkit-scrollbar,
+body:has(.layout[data-canon-palette='operator'])::-webkit-scrollbar,
+html:has(.layout[data-canon-palette='operator'])::-webkit-scrollbar-track,
+body:has(.layout[data-canon-palette='operator'])::-webkit-scrollbar-track {
+  background-color: oklch(20.5% 0 0);
+}
+
+html:has(.layout[data-canon-palette='operator'])::-webkit-scrollbar-thumb,
+body:has(.layout[data-canon-palette='operator'])::-webkit-scrollbar-thumb {
+  background-color: oklch(32% 0 0);
+}
+
 /* Public workshop and reading routes opt into Canon's operator palette. Tool
    canvases may use their own semantic data colors inside this shell. */
 .layout[data-canon-palette='operator'] {
@@ -306,4 +326,8 @@ body {
   background: var(--color-operator-foreground);
   color: var(--color-operator-background);
   border-color: var(--color-operator-foreground);
+}
+
+.layout[data-canon-palette='operator'] .nav-clear :is(.nav-cta, .nav-menu-button) {
+  border-radius: 8px;
 }
