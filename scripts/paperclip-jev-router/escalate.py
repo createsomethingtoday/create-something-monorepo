@@ -219,6 +219,8 @@ def evaluate(issue, policy, comments, runs, agents, source_events, now, *, board
         raise ValueError("one pre-execution board approval required")
     if any(item.get("agentId") == selected["id"] and utc(item["startedAt"]) > utc(source["startedAt"]) for item in runs if item.get("startedAt")):
         raise ValueError("verifier receipt is stale after a newer executor run")
+    if any(item.get("agentId") == verifier["id"] and utc(item["startedAt"]) > utc(review["startedAt"]) for item in runs if item.get("startedAt")):
+        raise ValueError("verifier receipt is stale after a newer verifier run")
     if receipt["result"] == "passed":
         return None
     if receipt["failureKind"] != "quality":

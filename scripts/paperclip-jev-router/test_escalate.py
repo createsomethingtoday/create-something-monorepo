@@ -140,6 +140,10 @@ class EscalationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "stale after"):
             self.evaluate(data)
         data = fixture()
+        data["runs"].append({"runId": ident(31), "agentId": data["policy"]["verifierAgentId"], "startedAt": "2026-09-28T10:06:00Z"})
+        with self.assertRaisesRegex(ValueError, "newer verifier run"):
+            self.evaluate(data)
+        data = fixture()
         data["agents"][data["policy"]["fallbackAgentId"]]["status"] = "running"
         with self.assertRaisesRegex(ValueError, "unavailable"):
             self.evaluate(data)
