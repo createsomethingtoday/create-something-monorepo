@@ -16,6 +16,16 @@
     "host_ego_os_denial": "unverified",
     "assignment_alone_grants_access": false
   },
+  "restricted_runner_preflight": {
+    "environment_id": "8da4aa7c-eecc-4f39-a6fc-67368e209834",
+    "ssh_probe": "passed_as_papercliprunner_uid_504",
+    "host_home_acl_denial": "passed_direct_ssh_probe",
+    "ego_profile_and_socket_denial": "passed_direct_ssh_probe_not_assigned_run",
+    "paperclip_loopback_denial": "failed_tcp_connect_to_127_0_0_1_3101",
+    "codex_adapter_probe": "passed_remote_hello_with_skip_git_repo_check",
+    "staged_codex_home_cleanup": "runner_wrapper_probe_passed_normal_assigned_run_unverified",
+    "unsigned_browser": "offline_chromium_render_passed_broker_assigned_run_pending"
+  },
   "roles": {
     "nonbrowser_executor": {
       "repo": "assigned_worktree",
