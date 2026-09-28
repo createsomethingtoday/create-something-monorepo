@@ -2,6 +2,7 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import type { Tool } from '@modelcontextprotocol/sdk/types.js';
+import { Data, Effect, Either } from 'effect';
 
 import type { McpBundleRegistry, McpServerConfig } from './types.js';
 
@@ -21,6 +22,58 @@ export type DownstreamConnections = {
   connected: ConnectedDownstream[];
   failed: DownstreamFailure[];
 };
+
+export class DownstreamConnectionError extends Data.TaggedError('DownstreamConnectionError')<{
+  readonly server: string;
+  readonly phase: 'connect' | 'list-tools';
+  readonly message: string;
+  readonly cause: unknown;
+}> {}
+
+type ManagedClient = Pick<Client, 'listTools' | 'close'>;
+
+/** The hub owns a successful connection until shutdown; failed startup closes it here. */
+export async function connectClientAndListTools(
+  name: string,
+  client: ManagedClient,
+  connect: () => Promise<void>,
+): Promise<Tool[]> {
+  const attempt = Effect.gen(function* () {
+    yield* Effect.tryPromise({
+      try: connect,
+      catch: (cause) => connectionError(name, 'connect', cause),
+    });
+    return yield* Effect.tryPromise({
+      try: () => listAllTools(client),
+      catch: (cause) => connectionError(name, 'list-tools', cause),
+    });
+  }).pipe(
+    Effect.onError(() => Effect.promise(async () => {
+      try {
+        await client.close();
+      } catch {
+        // Preserve the startup failure when cleanup also fails.
+      }
+    })),
+  );
+
+  const result = await Effect.runPromise(Effect.either(attempt));
+  if (Either.isLeft(result)) throw result.left;
+  return result.right;
+}
+
+function connectionError(
+  server: string,
+  phase: DownstreamConnectionError['phase'],
+  cause: unknown,
+): DownstreamConnectionError {
+  return new DownstreamConnectionError({
+    server,
+    phase,
+    message: cause instanceof Error ? cause.message : String(cause),
+    cause,
+  });
+}
 
 export async function connectDownstreamServers(
   registry: McpBundleRegistry,
@@ -70,6 +123,7 @@ async function connectSingleServer(
   });
 
   try {
+    let connect: () => Promise<void>;
     if (config.transport === 'http') {
       const requestInit: RequestInit = {};
       const headers = resolveHttpHeaders(config);
@@ -77,7 +131,7 @@ async function connectSingleServer(
         requestInit.headers = headers;
       }
       const transport = new StreamableHTTPClientTransport(new URL(config.url), { requestInit });
-      await client.connect(transport);
+      connect = () => client.connect(transport);
     } else {
       const transport = new StdioClientTransport({
         command: config.command,
@@ -85,23 +139,22 @@ async function connectSingleServer(
         env: config.env,
         cwd: config.cwd,
       });
-      await client.connect(transport);
+      connect = () => client.connect(transport);
     }
 
-    const tools = await listAllTools(client);
+    const tools = await connectClientAndListTools(name, client, connect);
     return { name, config, client, tools };
   } catch (error: unknown) {
-    try {
-      await client.close();
-    } catch {
-      // ignore
+    // Construction errors occur before Effect owns the client.
+    if (!(error instanceof DownstreamConnectionError)) {
+      try { await client.close(); } catch { /* preserve the original failure */ }
     }
     const message = error instanceof Error ? error.message : String(error);
     return { name, error: message };
   }
 }
 
-async function listAllTools(client: Client): Promise<Tool[]> {
+async function listAllTools(client: ManagedClient): Promise<Tool[]> {
   const allTools: Tool[] = [];
   let cursor: string | undefined;
 
