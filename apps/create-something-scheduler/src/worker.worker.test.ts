@@ -61,7 +61,7 @@ describe('scheduler Worker transport', () => {
       'Workflow Compiler Integration Fit Call | CREATE SOMETHING'
     );
     expect(integrationPageHtml).toContain('Fit One Integration');
-    expect(integrationPageHtml).toContain('Compiler Integration / V1');
+    expect(integrationPageHtml).toContain('one repository, one consequential workflow');
 
     const foundationPage = await SELF.fetch(
       'https://scheduler.local/createsomething/together?intent=agent-foundation'
@@ -69,7 +69,7 @@ describe('scheduler Worker transport', () => {
     const foundationPageHtml = await foundationPage.text();
     expect(foundationPageHtml).toContain('Agent Foundation Fit Call | CREATE SOMETHING');
     expect(foundationPageHtml).toContain('Fit One Agent Foundation');
-    expect(foundationPageHtml).toContain('Agent Foundation / V1');
+    expect(foundationPageHtml).toContain('one agent project, one role, one job');
     expect(foundationPageHtml).toContain('const offerIntent="agent-foundation";');
 
     const legacyPage = await SELF.fetch(

@@ -156,8 +156,8 @@
 	/* Hero */
 	.hero {
 		text-align: center;
-		padding-bottom: var(--space-performance-xl);
-		margin-bottom: var(--space-performance-xl);
+		padding-block: var(--space-performance-md);
+		margin-bottom: var(--space-performance-md);
 	}
 
 	.eyebrow {
@@ -186,8 +186,9 @@
 
 	/* Philosophy Quote */
 	.philosophy-quote {
-		padding: var(--space-performance-xl) 0;
-		margin-bottom: var(--space-performance-xl);
+		padding: var(--space-performance-md) 0;
+		margin-bottom: var(--space-performance-lg);
+		border-block: 1px solid var(--color-performance-line);
 	}
 
 	.philosophy-quote blockquote {
