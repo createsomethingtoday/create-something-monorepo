@@ -1,3 +1,13 @@
+# Coordinator correction after CRE-96 review
+
+The independent review of candidate `d23bd1b157f226b45ee03612eed078889f507d4d` requested changes: the workbench minimum overflowed the outer `minmax(0,1fr)` track and the footer intercepted the first five drawing tools at 320px. The coordinator changed the narrow outer grid to `max-content minmax(388px,1fr) max-content`. The header and footer keep their natural height, and the workbench owns a full track rather than overflowing into the footer. This applies consistently to the narrow shell; native hardware acceptance remains outside scope.
+
+Built-preview verification at 320x640, 390x844 and 1440x900 passed 96 control observations before/after scroll and 30 actual drawing-tool activations. At 320px the imported-project selector is present, the rectangle is selected, and shell scrolling reaches104.5px; all ten tool centers, five color centers and Convert remain unobstructed. The file-action block stays above the canvas and the footer stays below the toolbar. At 390px and desktop no shell scroll is needed. Svelte check has zero errors/warnings and the rebuilt Cloudflare bundle passes. The earlier331 unit tests cover the unchanged logic; the final correction is one CSS declaration. Evidence: `footer-grid-proof.json`, `footer-grid-browser-proof.mjs`, and `footer-grid-{320,390,1440}-final.png` in the retained output directory and Paperclip review attachment.
+
+The preview server was restarted after the final build so its manifest refers to the current CSS (`3.DWB60DRR.css`). Earlier coordinator captures made before that restart are historical and are excluded from the final evidence archive. Independent re-review must name the new committed head before promotion. Coordinator owns this correction; the engineer handoff below remains attributed to its original candidate.
+
+---
+
 # Draw mobile control correction — current handoff
 
 Execution: [create-something Paperclip CRE-95](https://paperclip.createsomething.agency/CRE/issues/CRE-95). Canonical scope: [Linear CRE-2143](https://linear.app/create-something/issue/CRE-2143), which remains open for release QA.

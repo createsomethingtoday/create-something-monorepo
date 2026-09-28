@@ -156,7 +156,7 @@ svg .agent-camera{transition:transform 420ms cubic-bezier(.22,1,.36,1)}
   .cs-workspace .file-actions { justify-content: flex-start; }
 }
 @media (max-width: 820px) {
-  .app-shell.cs-workspace:not(.native-shell) { grid-template-rows: auto minmax(0,1fr) auto; }
+  .app-shell.cs-workspace { grid-template-rows: max-content minmax(388px,1fr) max-content; }
   .cs-workspace .topbar { gap: var(--workspace-gap-small); padding: var(--workspace-gap-small); }
   .cs-workspace .identity { justify-content: flex-start; }
   .cs-workspace .title-area { flex-wrap: wrap; gap: var(--workspace-gap-small); }
