@@ -127,6 +127,8 @@ Read in this order when you need broad repo context:
 
 ### MCP creation and integration patterns
 
+- [guides/EFFECT_INTEGRATION_ENGINEERING.md](./guides/EFFECT_INTEGRATION_ENGINEERING.md) — Effect pattern for failure-heavy TypeScript integrations and client delivery
+
 - [MCP_SCAFFOLD.md](./MCP_SCAFFOLD.md)
 - [examples/endpoint-construction-contract.template.yaml](./examples/endpoint-construction-contract.template.yaml)
 - [examples/living-research-transparency.template.yaml](./examples/living-research-transparency.template.yaml)
