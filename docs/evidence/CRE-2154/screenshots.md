@@ -38,6 +38,8 @@ Full interactive sections (Rehearse on Practice, Boundary on Stack):
 
 Noindex public family follow-up at 390px: [Arcs catalog](arcs-390.png), [Arc prototype](arc-app-review-governance-390.png), [Arc detail](arc-operator-inbound-triage-390.png), [Experiments catalog](experiments-390.png).
 
+Rebuilt preview follow-up: [Arcs desktop](arcs-1440.png), [Arcs 320px](arcs-320.png), [Arc prototype desktop](arc-app-review-governance-1440.png), [Arc prototype 320px](arc-app-review-governance-320.png), [Arc detail desktop](arc-operator-inbound-triage-1440.png), [Arc detail 320px](arc-operator-inbound-triage-320.png), [Experiments desktop](experiments-1440.png), [Experiments 320px](experiments-320.png). The [18-sample results](catalog-followup.json) include Stack and Practice at all three widths.
+
 Final graph-label correction:
 
 - Map canvas: [1440](map-canvas-1440.png), [390](map-canvas-390.png), [320](map-canvas-320.png).
