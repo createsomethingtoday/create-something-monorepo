@@ -35,7 +35,8 @@ for (const item of fixture.cases) {
     reason: result.reason,
     confidence: result.confidence,
     requestHash: result.requestHash,
-    correct: item.expected === 'needs_review'
+    rawLaneMatchesLabel: result.modelLane === item.expected,
+    toolOutcomeMatchesLabel: item.expected === 'needs_review'
       ? result.status === 'needs_review'
       : result.suggestedLane === item.expected
   });
@@ -46,7 +47,10 @@ console.log(JSON.stringify({
   policyVersion: fixture.policy_version,
   labelProvenance: fixture.label_provenance,
   total: results.length,
-  suggestedCorrect: results.filter((result) => result.correct).length,
+  rawLaneAgreements: results.filter((result) => result.rawLaneMatchesLabel).length,
+  toolOutcomeAgreements: results.filter((result) => result.toolOutcomeMatchesLabel).length,
+  suggestedCount: results.filter((result) => result.status === 'suggested').length,
   needsReview: results.filter((result) => result.status === 'needs_review').length,
+  decisiveDisagreements: results.filter((result) => result.status === 'suggested' && !result.toolOutcomeMatchesLabel).length,
   results
 }, null, 2));
