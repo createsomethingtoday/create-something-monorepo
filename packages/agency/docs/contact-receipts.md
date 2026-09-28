@@ -272,3 +272,16 @@ pnpm runtime before verification. Existing workflow-only merge at `10f4170a1`
 was preserved. Only the portable test fixture and these notes changed; no tests
 were skipped or weakened. The engineer committed locally without pushing, per
 the direct no-push instruction; coordinator owns CI rerun and promotion.
+
+## Production sender-domain correction — 2026-09-28
+
+After PR #1798 deployed, one controlled inquiry returned a saved `202` receipt.
+The production D1 console showed one submission and two email receipts, both
+`permanent_failure`; replaying the same request ID returned the same receipt
+without new claims. Read-only Resend domain inventory with the production key
+listed `createsomething.io` as verified and sending-enabled. The route still
+used `noreply@workway.co` for both messages, so the sender is now corrected to
+`noreply@createsomething.io`. The provider's original raw response was not
+captured, so the domain mismatch is the likely cause, not a proven response
+code. The first receipt is deliberately not retried or altered; a distinct
+controlled request is required after this change reaches production.
