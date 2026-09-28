@@ -2,7 +2,7 @@
 CREATE TABLE IF NOT EXISTS contact_request_receipts (
   request_id TEXT PRIMARY KEY NOT NULL,
   payload_sha256 TEXT NOT NULL,
-  submission_id TEXT NOT NULL UNIQUE,
+  submission_id INTEGER NOT NULL UNIQUE REFERENCES contact_submissions(id),
   owner_token TEXT NOT NULL,
   schema_version INTEGER NOT NULL DEFAULT 1 CHECK (schema_version = 1),
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP

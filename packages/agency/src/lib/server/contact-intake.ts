@@ -98,11 +98,14 @@ export function createD1ContactRepository(db: D1Database): ContactRepository {
     },
     async create(id, hash, owner, input) {
       const session = primary();
-      const submissionId = crypto.randomUUID();
+      // Production owns an INTEGER PRIMARY KEY AUTOINCREMENT. Capture that ID
+      // inside the same batch/transaction, before any other insert can change it.
+      // A duplicate request receipt rolls back this inquiry insert as well.
       const results = await session.batch([
-        session.prepare('INSERT INTO contact_request_receipts (request_id, payload_sha256, submission_id, owner_token) VALUES (?, ?, ?, ?)').bind(id, hash, submissionId, owner),
-        session.prepare(`INSERT INTO contact_submissions (id, name, email, message, service, company, assessment_id, submitted_at)
-          VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))`).bind(submissionId, input.name, input.email, input.message, input.service || null, input.company || null, input.assessment_id || null),
+        session.prepare(`INSERT INTO contact_submissions (name, email, message, service, company, assessment_id, submitted_at)
+          VALUES (?, ?, ?, ?, ?, ?, datetime('now'))`).bind(input.name, input.email, input.message, input.service || null, input.company || null, input.assessment_id || null),
+        session.prepare(`INSERT INTO contact_request_receipts (request_id, payload_sha256, submission_id, owner_token)
+          VALUES (?, ?, last_insert_rowid(), ?)`).bind(id, hash, owner),
         ...(['confirmation', 'notification'] as const).map(kind => session.prepare('INSERT INTO contact_email_receipts (request_id, kind) VALUES (?, ?)').bind(id, kind))
       ]);
       if (results.some(result => !result.success)) throw new Error('Contact batch not acknowledged');

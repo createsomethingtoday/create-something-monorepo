@@ -37,12 +37,20 @@ Database operations have a five-second acknowledgement deadline. Provider fetch 
 body decoding share a ten-second abort deadline. There are no automatic retries.
 A timed-out promise may still commit: a timeout is never evidence of rollback.
 
-The atomic D1 batch inserts the request receipt, inquiry and two email receipts.
+The atomic D1 batch inserts the inquiry first, omitting its database-owned integer
+`id`, then inserts the request receipt using `last_insert_rowid()` before the two
+email receipts. Production uses `INTEGER PRIMARY KEY AUTOINCREMENT`; the repository's
+older `db/admin-schema.sql` text-ID definition is not production-faithful. The
+receipt's `submission_id` is an integer foreign key to the generated inquiry ID.
+A uniqueness failure on the request receipt rolls back the inquiry too. Do not
+split these statements into separate calls or place another insert between the
+inquiry and request receipt. The coordinator must include triggers in schema
+preflight; the current fixture mirrors the supplied primary table definition.
 Only the execution owning the random token may claim pending email rows. Only an
 acknowledged single-row claim authorizes a send. Duplicates read state and do not
 claim or dispatch. Interrupted claims/sends are never reclaimed. Provider keys
 `contact/<requestId>/<kind>` add correlation/idempotency defense; database receipts
-remain the authority beyond provider key retention. A 429 is an explicit transient
+remain the authority beyond the provider's 24-hour key retention window. A 429 is an explicit transient
 rejection; selected validation/auth 4xx are permanent. Ambiguous errors, malformed
 success, response loss and 5xx remain unknown. No retry follows any class.
 
@@ -57,7 +65,8 @@ operations are not transactional or automatically reconciled by this slice.
 unapplied Abundance 0048–0054 backlog. Coordinator reports 0056/0057 already applied.
 Do not run the full package migration queue. The owning coordinator must first
 verify the final promotion tree has no filename collision, remote account/database,
-legacy contact schema (including assessment_id), exact receipt schema and ledger,
+legacy contact schema (including integer autoincrement id and assessment_id),
+exact receipt schema, triggers and ledger,
 and retain backup/Time Travel and deployment rollback evidence.
 
 Use the existing [reviewed rollout plan](http://127.0.0.1:3101/CRE/issues/CRE-105#document-plan)
@@ -72,7 +81,10 @@ then confirm the unrelated pending set is unchanged using the full config.
 Schema must precede app rollout. Missing receipt tables fail closed before email.
 `IF NOT EXISTS` does not validate an existing incompatible schema. Compare table
 SQL, table_info and foreign keys with the candidate. The accepted-state constraint
-also rejects an empty provider ID (stronger than the initial design document).
+also rejects an empty provider ID. This candidate supersedes the initial plan's
+TEXT submission_id with INTEGER plus a foreign key. Never apply over the prior
+candidate's TEXT receipt table merely because IF NOT EXISTS succeeds: stop and
+reconcile schema first. This migration has not been applied to production.
 
 Rollback preserves receipt tables. Do not drop receipts, restore the entire shared
 D1 database, or re-enable the legacy sender for unresolved submissions. Disable
@@ -121,10 +133,13 @@ or live UI acceptance.
 
 Primary references: [Effect v3 expected errors](https://effect.website/docs/v3/error-management/expected-errors),
 [D1 sessions](https://developers.cloudflare.com/d1/best-practices/read-replication/),
-[Resend send email](https://resend.com/docs/api-reference/emails/send-email).
+[Resend send email](https://resend.com/docs/api-reference/emails/send-email),
+[Resend 24-hour idempotency window](https://resend.com/changelog/idempotency-keys),
+[D1 atomic batch](https://developers.cloudflare.com/d1/worker-api/d1-database/),
+and [SQLite last insert rowid](https://www.sqlite.org/c3ref/last_insert_rowid.html).
 
 
-## Candidate verification — 2026-09-28
+## Initial candidate verification — 2026-09-28 (superseded below)
 
 Preserved and completed the coordinator's uncommitted contact candidate without
 resetting or rebasing. The HTTP request abort signal now interrupts Effect;
@@ -161,3 +176,31 @@ Review the contact-only schema gate above before any production application.
 Worktree disposition: preserved at
 `/private/var/folders/5v/bcpy60z558b1y2jctfx6108m0000gq/T/cre-2148-agent-worktree`
 on `codex/CRE-2148-agent-worktree` for independent review.
+
+
+## Production integer-ID correction — 2026-09-28
+
+The coordinator's primary schema preflight invalidated the initial candidate's
+UUID inquiry ID assumption. Do not promote `e8f21cad9d5c4d1294786a9ac0c3be4d3aa28a98`
+without this correction. The source now lets the production autoincrement column
+allocate the ID and captures it in the immediately following receipt insert within
+the same D1 batch. Migration 0058 uses an INTEGER foreign key for that association.
+No legacy table ALTER or backfill is required.
+
+Both SQLite and workerd fixtures now load `test/contact-production-schema.sql`,
+which mirrors the coordinator's schema-only readback including default status and
+timestamps. Tests prove existing legacy rows/inserts, generated integer receipt
+links, duplicate-batch rollback, same-ID ownership, and distinct concurrent batches
+linking each receipt to the correct inquiry. No production records were queried.
+
+Local Wrangler rehearsal initialized that production-schema fixture, applied only
+0058, inserted a legacy caller row, and read back `id: 1`, `id_type: integer`,
+`status: new`, the foreign key to `contact_submissions(id)`, and the exact 0058 ledger
+entry. A second apply reported `No migrations to apply!`. All four commands exited
+0 and used `--local` plus a run-scratch config/database; no remote migration ran.
+
+Agency check passed again: 161 tests, zero failures, including 29 contact tests;
+Svelte check reported zero errors and zero warnings. Agency build also exited 0
+and the Cloudflare adapter completed successfully. The coordinator must reconcile this schema revision
+with the initial Paperclip rollout plan before promotion. Preserve the unrelated
+0048–0054 backlog and the contact page's request helper during UI integration.

@@ -9,7 +9,8 @@ const migration = readFileSync(new URL('../migrations/0058_contact_request_recei
 const input = { name: 'Fixture', email: 'fixture@example.invalid', message: 'Fixture inquiry' };
 function fixture() {
   const sql = new DatabaseSync(':memory:');
-  sql.exec('PRAGMA foreign_keys=ON; CREATE TABLE contact_submissions (id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))), name TEXT NOT NULL, email TEXT NOT NULL, message TEXT NOT NULL, service TEXT, company TEXT, assessment_id TEXT, submitted_at TEXT);');
+  sql.exec('PRAGMA foreign_keys=ON;');
+  sql.exec(readFileSync(new URL('./contact-production-schema.sql', import.meta.url), 'utf8'));
   const original = sql.prepare("SELECT sql FROM sqlite_master WHERE name='contact_submissions'").get();
   sql.exec(migration); sql.exec(migration);
   assert.deepEqual(sql.prepare("SELECT sql FROM sqlite_master WHERE name='contact_submissions'").get(), original);
@@ -32,8 +33,12 @@ function fixture() {
 test('real SQLite batch, rollback, unique receipt and owner claims', async () => {
   const f = fixture();
   try {
-    f.sql.exec("INSERT INTO contact_submissions (name,email,message) VALUES ('Legacy','fixture@example.invalid','legacy');");
+    f.sql.exec("INSERT INTO contact_submissions (name,email,message,submitted_at) VALUES ('Legacy','fixture@example.invalid','legacy',datetime('now'));");
     await f.repository.create('request-1', 'hash', 'owner', input);
+    const linked = f.sql.prepare(`SELECT c.id, c.status, typeof(r.submission_id) AS id_type
+      FROM contact_request_receipts r JOIN contact_submissions c ON c.id = r.submission_id
+      WHERE r.request_id = 'request-1'`).get()!;
+    assert.equal(linked.id, 2); assert.equal(linked.id_type, 'integer'); assert.equal(linked.status, 'new');
     await assert.rejects(f.repository.create('request-1', 'hash', 'other', input));
     assert.equal(f.sql.prepare('SELECT count(*) n FROM contact_submissions').get()!.n, 2);
     assert.equal(await f.repository.claim('request-1', 'confirmation', 'other'), false);
