@@ -22,6 +22,7 @@ interface DevServer {
 
 interface NavSnapshot {
   path: string;
+  reducedMotion: boolean;
   totalLinks: number;
   visibleLinks: string[];
   groupLabels: string[];
@@ -212,6 +213,7 @@ async function collectNavSnapshot(page: Page): Promise<NavSnapshot> {
 
 		return {
 			path: window.location.pathname,
+			reducedMotion: window.matchMedia('(prefers-reduced-motion: reduce)').matches,
 			totalLinks: links.length,
 			visibleLinks,
 			groupLabels: groups.map((group) => text(group.querySelector('summary .nav-link-text')) ?? ''),
@@ -339,17 +341,32 @@ async function runSmoke(baseUrl: string): Promise<NavSnapshot[]> {
     snapshots.push(convictionDesktop);
 
     await page.setViewport({ width: 390, height: 844, deviceScaleFactor: 2, isMobile: true });
-    await page.goto(`${baseUrl}/canon/concepts/conviction-without-dependence`, {
-      waitUntil: 'domcontentloaded'
-    });
-    await page.waitForSelector('.menu-toggle');
-    await page.click('.menu-toggle');
-    await page.waitForSelector('.sidebar.sidebar-open');
-    await page.waitForSelector('.nav-link-active');
-    await sleep(150);
-    const convictionMobile = await collectNavSnapshot(page);
-    assertConvictionRoute(convictionMobile);
-    snapshots.push(convictionMobile);
+    for (const motion of ['no-preference', 'reduce']) {
+      await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: motion }]);
+      await page.goto(`${baseUrl}/canon/concepts/conviction-without-dependence`, {
+        waitUntil: 'domcontentloaded'
+      });
+      await page.waitForSelector('.menu-toggle');
+      await page.click('.menu-toggle');
+      await page.waitForSelector('.sidebar.sidebar-open');
+      await page.waitForSelector('.nav-link-active');
+      // The open class precedes the panel and inherited link-visibility transitions.
+      // Wait for the subtree to settle; a hidden link must still fail below.
+      await page.waitForFunction(
+        `(() => {
+          const sidebar = document.querySelector('.sidebar.sidebar-open');
+          if (!sidebar) return false;
+          const rect = sidebar.getBoundingClientRect();
+          return rect.width > 0 && Math.abs(rect.left) < 0.5 &&
+            sidebar.getAnimations({ subtree: true }).every((animation) => animation.playState === 'finished');
+        })()`,
+        { timeout: 5_000, polling: 'raf' }
+      );
+      const convictionMobile = await collectNavSnapshot(page);
+      assert.equal(convictionMobile.reducedMotion, motion === 'reduce');
+      assertConvictionRoute(convictionMobile);
+      snapshots.push(convictionMobile);
+    }
 
     return snapshots;
   } catch (error) {

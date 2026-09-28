@@ -239,18 +239,18 @@
 
 	.readiness-page__result {
 		border-top: 1px solid var(--color-performance-line, #d7d7d2);
-		border-left: 4px solid var(--color-performance-review);
-		background: var(--color-performance-review-soft);
+		border-left: 4px solid var(--color-operator-status-review-text);
+		background: var(--color-operator-secondary);
 	}
 
 	.readiness-page__result[data-state='ready'] {
-		border-left-color: var(--color-performance-ready);
-		background: var(--color-performance-ready-soft);
+		border-left-color: var(--color-operator-status-done-text);
+		background: var(--color-operator-secondary);
 	}
 
 	.readiness-page__result[data-state='blocked'] {
-		border-left-color: var(--color-performance-stop);
-		background: var(--color-performance-stop-soft);
+		border-left-color: var(--color-operator-status-blocked-text);
+		background: var(--color-operator-secondary);
 	}
 
 	.readiness-page__result > p:first-child {
@@ -273,7 +273,7 @@
 		max-width: 58rem;
 		margin: 2rem 0 0;
 		padding: 0;
-		border-top: 1px solid rgba(9, 9, 9, 0.2);
+		border-top: 1px solid var(--color-performance-line);
 		list-style: none;
 	}
 
@@ -282,7 +282,7 @@
 		grid-template-columns: minmax(0, 0.7fr) minmax(0, 1.3fr);
 		gap: 1.5rem;
 		padding: 1rem 0;
-		border-bottom: 1px solid rgba(9, 9, 9, 0.2);
+		border-bottom: 1px solid var(--color-performance-line);
 	}
 
 	.readiness-page__result li strong {
