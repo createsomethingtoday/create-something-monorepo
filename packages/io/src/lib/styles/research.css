@@ -1,0 +1,140 @@
+/* Public research surfaces only. Canon remains the token and component owner. */
+.layout-root.io-research-shell .research-skip-link {
+  position: fixed;
+  top: var(--space-performance-xs);
+  left: var(--space-performance-xs);
+  z-index: 10000;
+  padding: var(--space-performance-xs) var(--space-performance-sm);
+  border: 2px solid var(--color-performance-signal);
+  border-radius: var(--radius-performance-md);
+  background: var(--color-performance-panel);
+  color: var(--color-performance-ink);
+  transform: translateY(-200%);
+}
+.layout-root.io-research-shell .research-skip-link:focus {
+  transform: translateY(0);
+}
+.layout-root.io-research-shell :is(a, button, input, select):focus-visible {
+  outline: 3px solid var(--color-performance-signal);
+  outline-offset: 4px;
+}
+.layout-root.io-research-shell .nav-editorial .nav-link-list {
+  background: transparent;
+  border-color: transparent;
+}
+.layout-root.io-research-shell .nav-editorial .nav-link.active {
+  box-shadow: inset 0 -2px var(--color-performance-ink);
+}
+.layout-root.io-research-shell .nav-editorial .nav-cta {
+  background: var(--color-performance-ink);
+  border-color: var(--color-performance-ink);
+  color: var(--color-performance-paper);
+}
+.layout-root.io-research-shell .nav-editorial .nav-cta:hover {
+  background: var(--color-performance-ink-soft);
+}
+
+/* Archive orientation, controls, and results share one reading measure. */
+.layout-root.io-research-shell .research-index-header {
+  padding-block: var(--space-performance-lg) var(--space-performance-md);
+  border-bottom: 1px solid var(--color-performance-line);
+  margin-bottom: var(--space-performance-md);
+}
+.layout-root.io-research-shell .research-index-inner {
+  max-width: 800px;
+  margin-inline: auto;
+}
+.layout-root.io-research-shell .research-index-heading {
+  display: grid;
+  gap: var(--space-performance-xs);
+}
+.layout-root.io-research-shell .research-index-heading .hero-title {
+  font-size: clamp(2rem, 4vw, 3.25rem);
+  line-height: var(--leading-performance-tight);
+}
+.layout-root.io-research-shell .research-index-heading .hero-subtitle {
+  max-width: 60ch;
+  margin-inline: 0;
+  font-size: var(--text-performance-body);
+  line-height: var(--leading-performance-relaxed);
+}
+.layout-root.io-research-shell .research-control-row,
+.layout-root.io-research-shell .research-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-performance-xs);
+}
+.layout-root.io-research-shell .research-search {
+  width: 100%;
+}
+.layout-root.io-research-shell .search-input {
+  min-height: 44px;
+  padding-right: 3rem;
+  border: 1px solid var(--color-performance-line-strong);
+  background: var(--color-performance-panel);
+  border-radius: var(--radius-performance-md);
+}
+.layout-root.io-research-shell .search-clear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  right: 0;
+  width: 44px;
+  height: 44px;
+}
+.layout-root.io-research-shell
+  :is(.filter-chip, .sort-button, .clear-button, .pagination-button, .pagination-page) {
+  min-height: 44px;
+  border: 1px solid var(--color-performance-line);
+  border-radius: var(--radius-performance-md);
+}
+.layout-root.io-research-shell :is(.filter-chip, .sort-button).active {
+  border-color: var(--color-performance-ink);
+}
+.layout-root.io-research-shell .papers-grid {
+  gap: 0;
+}
+.layout-root.io-research-shell .paper-card {
+  border-bottom: 1px solid var(--color-performance-line);
+  border-radius: 0;
+}
+.layout-root.io-research-shell .paper-card:hover {
+  transform: none;
+}
+.layout-root.io-research-shell .paper-content {
+  padding: var(--space-performance-md) var(--space-performance-sm);
+}
+.layout-root.io-research-shell .empty-state {
+  max-width: 800px;
+  margin-inline: auto;
+  border: 1px dashed var(--color-performance-line-strong);
+  border-radius: var(--radius-performance-md);
+  background: var(--color-performance-panel);
+}
+.layout-root.io-research-shell .research-artifact-page .metadata-row {
+  padding-bottom: var(--space-performance-sm);
+  border-bottom: 1px solid var(--color-performance-line);
+  gap: var(--space-performance-sm) var(--space-performance-md);
+}
+.layout-root.io-research-shell .research-artifact-page .back-link {
+  min-height: 44px;
+  text-decoration: underline;
+  text-underline-offset: 0.25em;
+}
+.layout-root.io-research-shell :is(h1, h2, h3, p, a) {
+  overflow-wrap: anywhere;
+}
+.layout-root.io-research-shell :is(section, header, h2, h3)[id] {
+  scroll-margin-top: calc(var(--height-performance-header) + var(--space-performance-sm));
+}
+@media (max-width: 640px) {
+  .layout-root.io-research-shell .io-research-home .performance-campaign-opening__content {
+    padding-top: var(--space-performance-lg);
+  }
+  .layout-root.io-research-shell .research-index-header {
+    padding-inline: var(--space-performance-sm);
+  }
+  .layout-root.io-research-shell .paper-content {
+    padding-inline: 0;
+  }
+}

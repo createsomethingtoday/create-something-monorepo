@@ -1,0 +1,307 @@
+[
+  {
+    "path": "/dispatch",
+    "palette": true,
+    "decision": "index"
+  },
+  {
+    "path": "/",
+    "palette": true,
+    "decision": "index"
+  },
+  {
+    "path": "/technical-review",
+    "palette": true,
+    "decision": "index"
+  },
+  {
+    "path": "/agent-foundation",
+    "palette": true,
+    "decision": "index"
+  },
+  {
+    "path": "/services",
+    "palette": true,
+    "decision": "index"
+  },
+  {
+    "path": "/workflow-compiler-integration",
+    "palette": true,
+    "decision": "index"
+  },
+  {
+    "path": "/agent-readiness",
+    "palette": true,
+    "decision": "index"
+  },
+  {
+    "path": "/book",
+    "palette": true,
+    "decision": "index"
+  },
+  {
+    "path": "/contact",
+    "palette": true,
+    "decision": "index"
+  },
+  {
+    "path": "/map",
+    "palette": true,
+    "decision": "index"
+  },
+  {
+    "path": "/control",
+    "palette": true,
+    "decision": "index"
+  },
+  {
+    "path": "/basketball-systems-lab",
+    "palette": true,
+    "decision": "index"
+  },
+  {
+    "path": "/proof/marketplace-workflow",
+    "palette": true,
+    "decision": "index"
+  },
+  {
+    "path": "/stack",
+    "palette": true,
+    "decision": "index"
+  },
+  {
+    "path": "/partners",
+    "palette": true,
+    "decision": "index"
+  },
+  {
+    "path": "/for-service-providers",
+    "palette": true,
+    "decision": "index"
+  },
+  {
+    "path": "/methodology",
+    "palette": true,
+    "decision": "index"
+  },
+  {
+    "path": "/practice",
+    "palette": true,
+    "decision": "index"
+  },
+  {
+    "path": "/security",
+    "palette": true,
+    "decision": "index"
+  },
+  {
+    "path": "/bearer-token-policy",
+    "palette": true,
+    "decision": "index"
+  },
+  {
+    "path": "/cloudflare",
+    "palette": true,
+    "decision": "index"
+  },
+  {
+    "path": "/dify",
+    "palette": false,
+    "decision": "archive"
+  },
+  {
+    "path": "/dify/mcp-control-plane",
+    "palette": false,
+    "decision": "archive"
+  },
+  {
+    "path": "/dify/agent-eval-gates",
+    "palette": false,
+    "decision": "archive"
+  },
+  {
+    "path": "/dify/ship-dify-app-with-mcp-tools",
+    "palette": false,
+    "decision": "archive"
+  },
+  {
+    "path": "/dify/template-marketplace-proof",
+    "palette": false,
+    "decision": "archive"
+  },
+  {
+    "path": "/products",
+    "palette": true,
+    "decision": "index"
+  },
+  {
+    "path": "/products/ground",
+    "palette": true,
+    "decision": "index"
+  },
+  {
+    "path": "/products/signal",
+    "palette": true,
+    "decision": "index"
+  },
+  {
+    "path": "/products/decision",
+    "palette": true,
+    "decision": "index"
+  },
+  {
+    "path": "/products/proof",
+    "palette": true,
+    "decision": "index"
+  },
+  {
+    "path": "/products/loom",
+    "palette": true,
+    "decision": "route"
+  },
+  {
+    "path": "/field-reports",
+    "palette": true,
+    "decision": "index"
+  },
+  {
+    "path": "/field-reports/template-review",
+    "palette": true,
+    "decision": "index"
+  },
+  {
+    "path": "/field-reports/upstream-contributions",
+    "palette": true,
+    "decision": "index"
+  },
+  {
+    "path": "/use-cases/business",
+    "palette": true,
+    "decision": "index"
+  },
+  {
+    "path": "/use-cases/enterprise",
+    "palette": true,
+    "decision": "index"
+  },
+  {
+    "path": "/about",
+    "palette": true,
+    "decision": "index"
+  },
+  {
+    "path": "/workflows",
+    "palette": true,
+    "decision": "index"
+  },
+  {
+    "path": "/workflows/mcp-server-development",
+    "palette": true,
+    "decision": "index"
+  },
+  {
+    "path": "/workflows/ai-workflow-automation",
+    "palette": true,
+    "decision": "index"
+  },
+  {
+    "path": "/workflows/ai-workflow-governance",
+    "palette": true,
+    "decision": "index"
+  },
+  {
+    "path": "/workflows/human-in-the-loop-ai",
+    "palette": true,
+    "decision": "index"
+  },
+  {
+    "path": "/workflows/ai-agent-evaluation",
+    "palette": true,
+    "decision": "index"
+  },
+  {
+    "path": "/workflows/mcp-security-oauth",
+    "palette": true,
+    "decision": "index"
+  },
+  {
+    "path": "/workflows/mcp-vs-api",
+    "palette": true,
+    "decision": "index"
+  },
+  {
+    "path": "/workflows/webflow-marketplace-operations",
+    "palette": true,
+    "decision": "index"
+  },
+  {
+    "path": "/workflows/webflow-app-review",
+    "palette": true,
+    "decision": "index"
+  },
+  {
+    "path": "/workflows/webflow-template-review",
+    "palette": true,
+    "decision": "index"
+  },
+  {
+    "path": "/workflows/workflow-mapping",
+    "palette": true,
+    "decision": "index"
+  },
+  {
+    "path": "/workflows/ai-workflow-observability",
+    "palette": true,
+    "decision": "index"
+  },
+  {
+    "path": "/privacy",
+    "palette": true,
+    "decision": "supporting"
+  },
+  {
+    "path": "/terms",
+    "palette": true,
+    "decision": "supporting"
+  },
+  {
+    "path": "/ai-workflow-control",
+    "palette": true,
+    "decision": "supporting"
+  },
+  {
+    "path": "/ai-workflow-recovery",
+    "palette": true,
+    "decision": "supporting"
+  },
+  {
+    "path": "/marketplace-review-automation",
+    "palette": true,
+    "decision": "supporting"
+  },
+  {
+    "path": "/map/workspace",
+    "palette": true,
+    "decision": "supporting"
+  },
+  {
+    "path": "/arcs",
+    "palette": true,
+    "decision": "public-noindex"
+  },
+  {
+    "path": "/arc/app-review-governance",
+    "palette": true,
+    "decision": "public-noindex"
+  },
+  {
+    "path": "/arc/operator-inbound-triage",
+    "palette": true,
+    "decision": "public-noindex"
+  },
+  {
+    "path": "/experiments",
+    "palette": true,
+    "decision": "public-noindex"
+  }
+]

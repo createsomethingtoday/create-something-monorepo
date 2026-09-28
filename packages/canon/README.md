@@ -167,6 +167,17 @@ Canon uses CSS custom properties for all design decisions:
 | **Performance Lab** | `--color-performance-*`, `--radius-performance-*`, `--shadow-performance-*` |
 | **Legacy compatibility** | `--color-clear-*`, `Clear*` exports, and `component.clear-*` registry IDs resolve to Performance Lab but are not used by new surfaces. |
 
+### Opt-in operator dark neutrals
+
+Import `@create-something/canon/styles/operator.css` and add
+`data-canon-palette="operator"` to the owning surface to expose the namespaced
+`--color-operator-*` roles and `--radius-operator-*` geometry. Consumers
+explicitly bind those roles; existing
+global Performance values and workspace aliases stay unchanged. The separate
+`@create-something/canon/styles/operator.tokens.json` export supplies artifact
+parity. See [palette integration, contrast and accessible status usage](src/lib/styles/operator.md)
+before mapping controls or status badges. Validate with `pnpm tokens:operator:check`.
+
 ### Typography Roles
 
 Canon separates type by job, not only by size. Use the base families for brand
@@ -755,3 +766,23 @@ All exports are compatible—just change the package name.
 ## License
 
 MIT © Create Something
+
+### Email documents
+
+`@create-something/canon/performance/email` renders a 640px inline-table document
+with a compact sans heading, mono metadata and an Outlook conditional width wrapper.
+It uses literal Canon email tokens, including fallback font stacks, with no external
+stylesheet requirement. Plain-text title, status, preheader and media attributes are
+escaped. `contentHtml` and `footerHtml` are trusted HTML: each consuming surface must
+escape user fields before interpolation. Source contact renderers own their copy;
+subscription confirmation, welcome and check-in remain separate messages.
+
+For the focused source-email contract checks after worktree bootstrap and SvelteKit
+sync in Canon, IO and Agency:
+
+```bash
+node packages/canon/node_modules/vitest/vitest.mjs run --config scripts/email-review.vitest.config.mjs
+```
+
+This validates local rendering, not delivery or hosted Resend templates. See
+`docs/CRE_2151_EMAIL_SOURCE_HANDOFF.md` for the review and provider boundaries.

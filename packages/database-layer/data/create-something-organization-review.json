@@ -1,14 +1,14 @@
 {
   "id": "substrate:create-something:organization-review:internal",
-  "generatedAt": "2026-09-27T17:28:03.383Z",
+  "generatedAt": "2026-09-28T14:19:27.889Z",
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
   "valueState": "valuable_with_review_signals",
   "answer": "Atlas is showing value for CREATE SOMETHING: the business is mapped enough to reveal review signals, especially automation/database imbalance and worker/MCP concentration.",
   "summary": {
-    "nodes": 537,
-    "edges": 1117,
-    "mapped": 537,
+    "nodes": 539,
+    "edges": 1115,
+    "mapped": 539,
     "hardGaps": 0,
     "reviewSignals": 6,
     "operatingSlices": 23,
@@ -18,7 +18,7 @@
     "workerRecords": 168,
     "mcpRecords": 77,
     "policyRecords": 64,
-    "guideRecords": 75
+    "guideRecords": 77
   },
   "findings": [
     {
@@ -28,7 +28,7 @@
       "title": "Atlas is showing operating value",
       "summary": "CREATE SOMETHING now has a connected internal map with all current topology records mapped and no hard gaps.",
       "evidence": [
-        "537/537 topology records mapped",
+        "539/539 topology records mapped",
         "0 local Atlas/Substrate gaps",
         "0 exact duplicate paths",
         "0 isolated nodes"
@@ -82,9 +82,9 @@
       "summary": "Policy and guide records are well represented, but Atlas should keep pushing them onto the workflows they govern so docs do not become detached instructions.",
       "evidence": [
         "Policy records=64",
-        "Guide records=75",
+        "Guide records=77",
         "Judgment policy Atlas coverage: 64 records",
-        "Mixed guide Atlas coverage: 75 records"
+        "Mixed guide Atlas coverage: 77 records"
       ],
       "nextAction": "Attach policy and guide nodes to the operating slices they govern, then treat missing attachment as a review signal."
     }
@@ -134,7 +134,7 @@
       "summary": "Policy is already present; the improvement is to make every critical workflow show its policy, guide, approval boundary, and receipt path in context.",
       "evidence": [
         "Policy records=64",
-        "Guide records=75",
+        "Guide records=77",
         "23 operating slices are review-ready"
       ],
       "apiPath": "/api/substrate/operating-slices",

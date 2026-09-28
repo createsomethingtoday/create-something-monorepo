@@ -1,5 +1,6 @@
 <script lang="ts">
   import '../app.css';
+  import '$lib/styles/operator-palette.css';
   import { initializeFilmMotion, filmNavigationOpen } from '$lib/motion/filmPlayback';
   import { filmStories } from '$lib/data/filmStories';
   import { Navigation, Footer, LayoutSEO, ModeIndicator } from '@create-something/canon';
@@ -20,7 +21,12 @@
   } from '$lib/atlas/surface-policy';
   import { marketingPagePortfolio } from '$lib/data/marketingPages';
 
+  import { usesAgencyOperatorPalette } from '$lib/data/publicSurfacePolicy';
+
   let { children, data } = $props();
+  const usesOperatorPalette = $derived(
+    usesAgencyOperatorPalette($page.url.pathname)
+  );
   let mobileNavigationOpen = $state(false);
 
   function scrollToTop() {
@@ -461,6 +467,7 @@
 
 <LayoutSEO property="agency" />
 
+<div class="agency-surface" data-canon-palette={usesOperatorPalette ? "operator" : undefined}>
 <PrivacyAnalytics
   property="agency"
   userId={data.user?.id}
@@ -468,7 +475,7 @@
   globalMetadata={globalAnalyticsMetadata}
   compactPrompt={useCompactPrivacyPrompt}
   obscured={mobileNavigationOpen}
-  mobilePlacement="header-edge"
+  mobilePlacement={["/", "/services", "/contact", "/book"].includes($page.url.pathname) ? "safe-corner" : "header-edge"}
 />
 
 <!-- Unified Search - Cmd/Ctrl+K to open -->
@@ -530,6 +537,8 @@
   {#if !routeOwnsPerformanceEnding && $page.url.pathname !== '/basketball-systems-lab' && !isDifyArticleRoute}
     <ModeIndicator current="agency" />
   {/if}
+</div>
+
 </div>
 
 <style>

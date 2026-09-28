@@ -234,7 +234,7 @@
     display: grid;
     grid-template-columns: minmax(0, 1fr);
     gap: 0;
-    padding: 1rem;
+    padding: 0;
     border: 1px solid var(--color-performance-line, #d7d7d2);
     border-radius: var(--radius-performance-md, 4px);
     background: var(--color-performance-panel, #ffffff);
@@ -248,7 +248,7 @@
 
   .lesson-list {
     display: grid;
-    gap: 0.58rem;
+    gap: 0;
     margin: 0;
     padding: 0;
     list-style: none;
@@ -261,9 +261,12 @@
     align-items: start;
     min-height: 4.6rem;
     padding: 0.85rem;
-    border: 1px solid var(--color-performance-line, #d7d7d2);
-    border-radius: var(--radius-performance-sm, 4px);
-    background: rgba(255, 255, 255, 0.9);
+    border-bottom: 1px solid var(--color-performance-line);
+    background: var(--color-performance-panel);
+  }
+
+  .lesson-list li:last-child {
+    border-bottom: 0;
   }
 
   .lesson-list__index,
@@ -281,7 +284,7 @@
     min-height: 2.1rem;
     border-radius: var(--radius-performance-sm, 4px);
     background: var(--color-performance-ink, #090909);
-    color: #ffffff;
+    color: var(--color-performance-panel);
   }
 
   .lesson-list strong {
@@ -306,7 +309,7 @@
 
   @media (max-width: 640px) {
     .course-panel {
-      padding: 0.75rem;
+      padding: 0;
     }
 
     .learning-loop {

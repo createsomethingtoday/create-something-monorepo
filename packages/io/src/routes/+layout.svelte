@@ -1,10 +1,14 @@
 <script lang="ts">
   import '../app.css';
+  import '@create-something/canon/styles/operator.css';
+  import '$lib/styles/research.css';
+  import '$lib/styles/operator.css';
   import { onMount } from 'svelte';
   import { afterNavigate, onNavigate, goto, invalidateAll } from '$app/navigation';
   import { Navigation, Footer, Analytics, ModeIndicator, LayoutSEO } from '@create-something/canon';
   import { UnifiedSearch } from '@create-something/canon/navigation';
   import { getIoFooterHandoff } from '$lib/config/footerHandoff';
+  import { isIoResearchSurface } from '$lib/config/researchSurface';
   import { page } from '$app/stores';
   import { newsletterMetadata } from '$lib/newsletter/measurement';
 
@@ -50,6 +54,7 @@
 
   let { children, data } = $props();
   let mobileNavigationOpen = $state(false);
+  const isResearchSurface = $derived(isIoResearchSurface($page.url.pathname, $page.route.id));
   const footerHandoff = $derived(getIoFooterHandoff($page.url.pathname));
 
   // Handle logout
@@ -186,17 +191,24 @@
 {#if $page.url.pathname.startsWith('/admin')}
   {@render children()}
 {:else}
-  <!-- Unified Search - Cmd/Ctrl+K to open -->
-  <UnifiedSearch
-    currentProperty="io"
-    localItems={quickAccessItems}
-    showMobileButton={!$page.url.pathname.startsWith('/papers') &&
-      !$page.url.pathname.startsWith('/experiments') &&
-      !mobileNavigationOpen}
-    deferMobileButtonUntilCampaignExit={$page.url.pathname === '/'}
-  />
+  <div
+    class="layout-root property-performance"
+    class:io-research-shell={isResearchSurface}
+    data-canon-palette={isResearchSurface ? 'operator' : undefined}
+  >
+    <!-- Unified Search - Cmd/Ctrl+K to open -->
+    <UnifiedSearch
+      currentProperty="io"
+      localItems={quickAccessItems}
+      showMobileButton={!$page.url.pathname.startsWith('/papers') &&
+        !$page.url.pathname.startsWith('/experiments') &&
+        !mobileNavigationOpen}
+      deferMobileButtonUntilCampaignExit={false}
+    />
 
-  <div class="layout-root property-performance">
+    {#if isResearchSurface}
+      <a class="research-skip-link" href="#main-content">Skip to content</a>
+    {/if}
     <Navigation
       logo="CREATE SOMETHING"
       logoSuffix=".io"
@@ -220,7 +232,7 @@
     />
 
     <!-- Add top padding to account for fixed navigation -->
-    <main id="main-content" class="main-content">
+    <main id="main-content" class="main-content" tabindex="-1">
       {@render children()}
     </main>
 

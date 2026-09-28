@@ -4,6 +4,8 @@
 	import { onNavigate, goto, invalidateAll } from '$app/navigation';
 	import { onMount } from 'svelte';
 	import '../app.css';
+	import '$lib/public-surface.css';
+	import '$lib/operator-public.css';
 
 	let { children, data } = $props();
 	let mobileNavigationOpen = $state(false);
@@ -77,6 +79,9 @@
 	// The footer does not earn its existence there: the sidebar already
 	// provides navigation, and documentation is a dwelling for study,
 	// not marketing. Weniger, aber besser.
+	const isPublicLibraryRoute = $derived(
+		!/^\/(?:login|account|auth|api|experiments|presentations)(?:\/|$)/.test(data?.pathname || '/')
+	);
 	const isCanonRoute = $derived((data?.pathname || '/').startsWith('/canon'));
 </script>
 
@@ -92,14 +97,14 @@
 	deferMobileButtonUntilCampaignExit={data?.pathname === '/'}
 />
 
-<div class="min-h-screen flex flex-col ltd-clear-shell property-performance">
+<div class="min-h-screen flex flex-col ltd-clear-shell property-performance" class:ltd-public-library={isPublicLibraryRoute} class:ltd-operator-public={isPublicLibraryRoute} data-canon-palette={isPublicLibraryRoute ? 'operator' : undefined}>
 	{#if !isCanonRoute}
 		<Navigation
 			logo="CREATE SOMETHING"
 			logoSuffix=".ltd"
 			logoAsset={{
-				src: '/brand/create-something-horizontal-black.svg',
-				mobileSrc: '/brand/create-something-mark-black.svg',
+				src: isPublicLibraryRoute ? '/brand/create-something-horizontal-white.svg' : '/brand/create-something-horizontal-black.svg',
+				mobileSrc: isPublicLibraryRoute ? '/brand/create-something-mark-white.svg' : '/brand/create-something-mark-black.svg',
 				label: 'CREATE SOMETHING .ltd'
 			}}
 			links={navLinks}
@@ -128,7 +133,7 @@
 			isAuthenticated={!!data.user}
 			visualStyle="performance"
 			brandAsset={{
-				src: '/brand/create-something-horizontal-black.svg',
+				src: isPublicLibraryRoute ? '/brand/create-something-horizontal-white.svg' : '/brand/create-something-horizontal-black.svg',
 				label: 'CREATE SOMETHING .ltd'
 			}}
 		/>

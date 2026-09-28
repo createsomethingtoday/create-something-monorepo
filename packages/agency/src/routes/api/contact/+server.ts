@@ -1,5 +1,8 @@
-import { json, error } from '@sveltejs/kit';
+import { json } from '@sveltejs/kit';
+import { Effect } from 'effect';
+import { contactIntake, createD1ContactRepository, createResendContactMailer, runContactSecondaryEffects, CONTACT_UNKNOWN_MESSAGE } from '$lib/server/contact-intake';
 import type { RequestHandler } from './$types';
+import { renderContactResponse, renderContactNotification } from './email';
 import { contactSchema, parseBody, type ContactInput } from '@create-something/canon/validation';
 import {
 	recordServerConversion,
@@ -10,6 +13,7 @@ import {
 import { createLogger } from '@create-something/canon/utils';
 
 const logger = createLogger('ContactAPI');
+const contactSender = 'CREATE SOMETHING Agency <noreply@createsomething.io>';
 const validSourceProperties = new Set(['space', 'io', 'agency', 'ltd', 'lms']);
 type ContactLeadStage = NonNullable<WarmLeadInput['stage']>;
 
@@ -30,15 +34,6 @@ function resolveLeadStage(intent: string | undefined): ContactLeadStage {
 		default:
 			return 'consideration';
 	}
-}
-
-function escapeHtml(value: string | null | undefined): string {
-	return (value ?? '')
-		.replace(/&/g, '&amp;')
-		.replace(/</g, '&lt;')
-		.replace(/>/g, '&gt;')
-		.replace(/"/g, '&quot;')
-		.replace(/'/g, '&#39;');
 }
 
 export const POST: RequestHandler = async ({ request, platform }) => {
@@ -72,50 +67,22 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 			referrer
 		} = parseResult.data as ContactInput;
 		const leadStage = resolveLeadStage(intent);
-
-		// Access Cloudflare bindings via platform.env
-		if (!platform?.env) {
-			throw error(500, 'Platform environment not available');
+		const requestId = request.headers.get('Idempotency-Key') || crypto.randomUUID();
+		if (!/^[a-zA-Z0-9_-]{16,128}$/.test(requestId)) {
+			return json({ success: false, message: 'Invalid request ID' }, { status: 400 });
 		}
 
-		const env = platform.env;
-		const resendApiKey = env.RESEND_API_KEY;
-		if (!resendApiKey) {
-			logger.error('RESEND_API_KEY not configured for contact form');
-			return json(
-				{
-					success: false,
-					message: 'Email service is not configured'
-				},
-				{ status: 500 }
-			);
+		const env = platform?.env;
+		if (!env?.DB || !env.RESEND_API_KEY) {
+			return json({ success: false, message: CONTACT_UNKNOWN_MESSAGE, requestId }, { status: 503 });
 		}
-
-		// Store contact submission in D1 database (optional)
-		try {
-			await env.DB.prepare(
-				`
-        INSERT INTO contact_submissions (name, email, message, service, company, assessment_id, submitted_at)
-        VALUES (?, ?, ?, ?, ?, ?, datetime('now'))
-      `
-			)
-				.bind(name, email, message, service || null, company || null, assessment_id || null)
-				.run();
-
-			// Mark assessment as converted if present
-			if (assessment_id) {
-				await env.DB.prepare(
-					`UPDATE assessment_responses SET converted_to_contact = 1 WHERE session_id = ?`
-				)
-					.bind(assessment_id)
-					.run();
-			}
-		} catch (dbError) {
-			logger.warn('Contact submissions table not found - skipping DB insert', { error: dbError });
-		}
-
-		try {
-			await recordServerConversion(
+		const secondary = () => runContactSecondaryEffects([
+			async () => {
+				if (assessment_id) {
+					await env.DB.prepare('UPDATE assessment_responses SET converted_to_contact = 1 WHERE session_id = ?').bind(assessment_id).run();
+				}
+			},
+			() => recordServerConversion(
 				env.DB,
 				{
 					property: 'agency',
@@ -140,9 +107,9 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 					userAgent: request.headers.get('user-agent') || undefined,
 					ipCountry: request.headers.get('cf-ipcountry') || undefined
 				}
-			);
+			),
 
-			await upsertWarmLead(env.DB, {
+			() => upsertWarmLead(env.DB, {
 				name,
 				email,
 				company,
@@ -153,132 +120,41 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 				serviceInterest: service || lane,
 				notes: message,
 				touchedAt: new Date().toISOString()
-			});
-		} catch (conversionError) {
-			logger.warn('Contact conversion tracking failed', { error: conversionError });
-		}
+			})
+		]);
 
 		// Send auto-response to the person who contacted us
-		const autoResponsePromise = fetch('https://api.resend.com/emails', {
-			method: 'POST',
-			headers: {
-				Authorization: `Bearer ${resendApiKey}`,
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify({
-				from: 'CREATE SOMETHING Agency <noreply@workway.co>',
+		const confirmation = {
+				from: contactSender,
 				to: email,
 				subject: service ? `Re: ${service} Inquiry` : 'Thanks for reaching out',
-				html: `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <style>
-    body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #000000; color: #ffffff; }
-    .container { max-width: 600px; margin: 0 auto; padding: 40px 20px; }
-    .content { line-height: 1.8; }
-    .message-box { background-color: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 20px; margin: 30px 0; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="content">
-      <h1>Thanks for reaching out</h1>
-      <p>Hi ${name},</p>
-      <p>I've received your inquiry${service ? ` about ${escapeHtml(service)}` : ''} and will get back to you within 24 hours to scope your first outcome stack.</p>
-      <div class="message-box">
-        ${service ? `<p style="color: rgba(255, 255, 255, 0.4); font-size: 14px; margin-bottom: 10px;">Service: ${escapeHtml(service)}</p>` : ''}
-        <p style="color: rgba(255, 255, 255, 0.4); font-size: 14px; margin-bottom: 10px;">Next step: ${escapeHtml(intent)} / ${escapeHtml(lane)}</p>
-        <p style="color: rgba(255, 255, 255, 0.4); font-size: 14px; margin-bottom: 10px;">Your Message:</p>
-        <p style="color: rgba(255, 255, 255, 0.9);">${escapeHtml(message).replace(/\n/g, '<br>')}</p>
-      </div>
-      <p>— Micah Johnson<br>CREATE SOMETHING Agency</p>
-    </div>
-  </div>
-</body>
-</html>`
-			})
-		});
+				html: renderContactResponse({ name, message, service, intent, lane })
+		};
 
 		// Send notification to site owner
-		const notificationPromise = fetch('https://api.resend.com/emails', {
-			method: 'POST',
-			headers: {
-				Authorization: `Bearer ${resendApiKey}`,
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify({
-				from: 'CREATE SOMETHING Agency <noreply@workway.co>',
+		const notification = {
+				from: contactSender,
 				to: 'micah@createsomething.io',
 				replyTo: email,
 				subject: service ? `Service Inquiry: ${service} from ${name}` : `New Contact Form Submission from ${name}`,
-				html: `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <style>
-    body { font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; }
-    .header { background: #000; color: #fff; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
-    .content { background: #f5f5f5; padding: 20px; border-radius: 8px; }
-  </style>
-</head>
-<body>
-  <div class="header">
-    <h2>${service ? `Service Inquiry: ${service}` : 'New Contact Form Submission'}</h2>
-  </div>
-  <div class="content">
-    <p><strong>From:</strong> ${escapeHtml(name)} (${escapeHtml(email)})</p>
-    ${company ? `<p><strong>Company:</strong> ${escapeHtml(company)}</p>` : ''}
-    ${service ? `<p><strong>Service:</strong> ${escapeHtml(service)}</p>` : ''}
-    <p><strong>Intent:</strong> ${escapeHtml(intent)}</p>
-    <p><strong>Lane:</strong> ${escapeHtml(lane)}</p>
-    <p><strong>Lead stage:</strong> ${leadStage}</p>
-    ${campaign ? `<p><strong>Campaign:</strong> ${escapeHtml(campaign)}</p>` : ''}
-    <p><strong>Message:</strong><br>${escapeHtml(message).replace(/\n/g, '<br>')}</p>
-    <p><strong>Submitted:</strong> ${new Date().toUTCString()}</p>
-  </div>
-</body>
-</html>`
-			})
-		});
+				html: renderContactNotification({ name, email, message, service, company, intent, lane, leadStage, campaign, submittedAt: new Date().toUTCString() })
+		};
 
-		// Wait for both emails to send
-		const [autoResponse, notification] = await Promise.all([
-			autoResponsePromise,
-			notificationPromise
-		]);
-
-		if (!autoResponse.ok) {
-			const errorData = await autoResponse.json();
-			logger.error('Failed to send auto-response email', { email, error: errorData });
-			return json(
-				{
-					success: false,
-					message: 'Failed to send confirmation email'
-				},
-				{ status: 500 }
-			);
-		}
-
-		if (!notification.ok) {
-			const errorData = await notification.json();
-			logger.error('Failed to send notification email', { email, error: errorData });
-		}
-
-		logger.info('Contact form submitted successfully', { email, name, service });
-
-		return json({
-			success: true,
-			message: 'Message sent successfully! You should receive a confirmation email shortly.'
-		});
-	} catch (err) {
-		logger.error('Contact form error', { error: err });
-		return json(
-			{
-				success: false,
-				message: `Error processing contact form: ${err instanceof Error ? err.message : 'Unknown error'}`
-			},
-			{ status: 500 }
-		);
+		// Once the body is validated, receipt and follow-up work must survive a client disconnect.
+		// Provider calls have their own deadlines; the browser's abort signal must not cancel this Effect.
+		const intake = Effect.runPromise(contactIntake(
+			{ ...parseResult.data, source, intent, lane }, requestId,
+			createD1ContactRepository(env.DB),
+			createResendContactMailer(env.RESEND_API_KEY, { confirmation, notification }), secondary
+		));
+		platform?.context?.waitUntil(intake.then(() => undefined, () => undefined));
+		const result = await intake;
+		logger.info('Contact intake outcome', { requestId, receipt: result.receipt, secondary: result.secondary });
+		const { status, secondary: _secondary, ...body } = result;
+		return json(body, { status });
+	} catch {
+		// Do not expose provider responses, tokens, message content, or database errors.
+		logger.error('Contact intake interrupted');
+		return json({ success: false, message: CONTACT_UNKNOWN_MESSAGE }, { status: 503 });
 	}
 };

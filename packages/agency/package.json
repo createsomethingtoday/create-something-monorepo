@@ -29,9 +29,9 @@
     "marketing:heal": "node --import tsx ./scripts/check-marketing-pages.mjs --write",
     "integrations:generate": "node ./scripts/generate-integration-catalog.mjs",
     "integrations:check": "node ./scripts/generate-integration-catalog.mjs --check",
-    "canon:check": "node ./scripts/check-canon-debt.mjs && node --import tsx --test test/canon-debt.test.ts test/paper-brand-cohesion.test.ts",
+    "canon:check": "node ./scripts/check-canon-debt.mjs && node --import tsx --test test/canon-debt.test.ts test/paper-brand-cohesion.test.ts test/public-surface-policy.test.ts",
     "canon:debt:pilot": "node ./scripts/check-canon-debt.mjs --pilot --base origin/main",
-    "check": "pnpm prepare:build-dir && pnpm prepare:local-deps && pnpm integrations:check && pnpm search:campaign:check && node ./scripts/run-pinned-bin.mjs @sveltejs/kit svelte-kit sync && node ./scripts/run-pinned-bin.mjs svelte-check svelte-check --tsconfig ./tsconfig.json --fail-on-warnings && pnpm canon:check && pnpm copy:check && node --import tsx --test test/community-api-auth.test.ts test/identity-provider-retirement.test.ts test/public-html-cache.test.ts && pnpm test:mcp-entitlement-authority && pnpm test:map-commercial-lifecycle && pnpm test:control-activation && pnpm test:inspection",
+    "check": "pnpm prepare:build-dir && pnpm prepare:local-deps && pnpm integrations:check && pnpm search:campaign:check && node ./scripts/run-pinned-bin.mjs @sveltejs/kit svelte-kit sync && node ./scripts/run-pinned-bin.mjs svelte-check svelte-check --tsconfig ./tsconfig.json --fail-on-warnings && pnpm canon:check && pnpm copy:check && node --import tsx --test test/community-api-auth.test.ts test/identity-provider-retirement.test.ts test/public-html-cache.test.ts && pnpm test:mcp-entitlement-authority && pnpm test:map-commercial-lifecycle && pnpm test:control-activation && pnpm test:inspection && pnpm test:contact",
     "seo:check": "node ./scripts/check-seo-aeo.mjs && pnpm marketing:check",
     "analytics:commercial-funnel": "node ./scripts/report-commercial-funnel.mjs",
     "analytics:marketing-attribution": "node ./scripts/report-marketing-attribution.mjs",
@@ -59,7 +59,8 @@
     "db:migrate:local": "node ../../scripts/run-wrangler.mjs d1 migrations apply create-something-db --local",
     "deploy": "pnpm build && CLOUDFLARE_ACCOUNT_ID=9645bd52e640b8a4f40a3a55ff1dd75a node ../../scripts/run-wrangler.mjs pages deploy .svelte-kit/cloudflare --project-name=create-something-agency --commit-dirty=true",
     "deploy:preview": "pnpm build && CLOUDFLARE_ACCOUNT_ID=9645bd52e640b8a4f40a3a55ff1dd75a node ../../scripts/run-wrangler.mjs pages deploy .svelte-kit/cloudflare --project-name=create-something-agency --branch=preview --commit-dirty=true",
-    "cf-typegen": "node ../../scripts/run-wrangler.mjs types"
+    "cf-typegen": "node ../../scripts/run-wrangler.mjs types",
+    "test:contact": "node --import ./test/register-sveltekit-test-loader.mjs --import tsx --test test/contact-intake.test.ts test/contact-d1.test.ts test/contact-workerd.test.ts"
   },
   "dependencies": {
     "@composio/core": "^0.6.4",
@@ -72,6 +73,7 @@
     "@create-something/mcp-authz": "workspace:*",
     "@create-something/playbook-mcp": "workspace:*",
     "@create-something/tufte": "workspace:^",
+    "effect": "3.22.2",
     "lucide-svelte": "^0.562.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",

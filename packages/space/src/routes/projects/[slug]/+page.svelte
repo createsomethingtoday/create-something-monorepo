@@ -14,7 +14,9 @@
 <article class="workshop">
   <header class="wrap section">
     <a class="text-link" href="/projects">← All projects</a>
-    <p class="eyebrow category">{data.project.kind} / {data.project.distribution}</p>
+    <p class="eyebrow category">
+      {data.project.kind} / {data.project.distribution}
+    </p>
     <h1>{data.project.name}</h1>
     <p class="lead summary">{data.project.summary}</p>
   </header>
@@ -92,8 +94,11 @@
   }
   .limit {
     margin-top: 2.5rem;
-    border-top: 1px solid #b8b8b0;
-    padding-top: 1.5rem;
+    border-top: 1px solid var(--color-performance-line);
+    padding: var(--space-performance-md);
+    background: var(--color-performance-panel);
+    border: 1px solid var(--color-performance-line);
+    border-radius: var(--radius-performance-md);
   }
   .limit h3 {
     font-size: 1rem;
@@ -111,7 +116,7 @@
   .continuation a {
     display: block;
     padding: 1rem 0;
-    border-bottom: 1px solid #b8b8b0;
+    border-bottom: 1px solid var(--color-performance-line);
   }
   @media (max-width: 800px) {
     .detail,

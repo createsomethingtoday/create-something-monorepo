@@ -94,7 +94,26 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          # Record post-build state before any deploy. Untracked files are visible
+          # for diagnosis; they never excuse changes to tracked release source.
+          git status --short --untracked-files=normal > "$RUNNER_TEMP/draw-pages-source-status.log"
+          {
+            echo '## Draw source verification after build'
+            printf 'Expected checkout: `%s`\n\n' "$GITHUB_SHA"
+            echo 'Tracked files must match checkout (index and working tree).'
+            echo 'Build outputs such as Canon dist and Draw .svelte-kit are ignored; any untracked paths are listed below.'
+            echo 'Status (first 80 lines, each limited to 240 characters):'
+            echo '```text'
+            if [[ -s "$RUNNER_TEMP/draw-pages-source-status.log" ]]; then
+              LC_ALL=C cut -c 1-240 "$RUNNER_TEMP/draw-pages-source-status.log" | sed -n '1,80p'
+            else
+              echo '(clean)'
+            fi
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git diff --exit-code
+          git diff --cached --exit-code
           node scripts/run-wrangler.mjs --cwd packages/mapping-canvas pages deploy .svelte-kit/cloudflare \
             --project-name=create-something-mapping-canvas \
             --branch=main \

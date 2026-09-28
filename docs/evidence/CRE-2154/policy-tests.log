@@ -1,0 +1,11 @@
+✔ every current portfolio page owns the operator palette, including workflow details (0.646875ms)
+✔ utility, private, archive and unknown paths fail closed (0.093958ms)
+✔ approved Map entry and public supporting pages retain explicit ownership (0.072959ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 155.399541

@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import {
   marketingCadence,
   marketingEvidenceRules,
-  marketingSchedule
+  marketingEditorialStatus
 } from '../src/lib/data/marketingSchedule.ts';
 
 test('publishing cadence keeps LinkedIn primary and YouTube bounded', () => {
@@ -15,14 +15,10 @@ test('publishing cadence keeps LinkedIn primary and YouTube bounded', () => {
   );
 });
 
-test('the queue carries a reviewable source and evidence object', () => {
-  assert.equal(marketingSchedule.length, 4);
-  for (const item of marketingSchedule) {
-    assert.ok(item.readerQuestion.endsWith('?'));
-    assert.ok(item.source.length > 12);
-    assert.ok(item.evidence.length > 12);
-    assert.equal(item.state, 'evidence review');
-  }
+test('editorial status does not turn review dates into publication receipts', () => {
+  assert.match(marketingEditorialStatus.title, /not yet announced/);
+  assert.match(marketingEditorialStatus.detail, /not publication or email-send confirmations/);
+  assert.match(marketingEditorialStatus.detail, /awaits evidence review/);
 });
 
 test('publication rules separate repository history from current proof', () => {

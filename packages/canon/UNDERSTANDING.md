@@ -64,6 +64,7 @@ src/lib/
 | Concept | Definition | Where to Find |
 |---------|------------|---------------|
 | Canon registry | Agent-readable manifest of components, tokens, templates, adapters, policies, modalities, and extension lifecycle | `src/lib/registry/` |
+| Opt-in dark neutrals | Scoped `--color-operator-*` roles and a separate parity artifact; no global Performance retheme | `src/lib/styles/operator.md` |
 | Clear primitives | Canon-owned communication components for governed, proof-bearing work | `src/lib/components/clear/` |
 | Atlas artifact | Renderer-independent graph/story contract for workflow maps | `src/lib/atlas/headless.ts` |
 | Signal Decision Proof | Governance loop attached to Atlas nodes and UI templates | `src/lib/governance/products.ts` |

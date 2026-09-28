@@ -1,0 +1,68 @@
+[
+  {
+    "route": "/practice",
+    "width": 1440,
+    "focus": {
+      "tag": "BUTTON",
+      "text": "02 Claim Thesis conditions",
+      "outline": "rgb(147, 197, 253) solid 3px",
+      "visible": true
+    },
+    "overflow": false
+  },
+  {
+    "route": "/stack",
+    "width": 1440,
+    "focus": {
+      "tag": "BUTTON",
+      "text": "2 Run Clear rules move bounded work. Allowed system path",
+      "outline": "oklab(0.985 0 0) solid 3px",
+      "visible": true
+    },
+    "overflow": false
+  },
+  {
+    "route": "/practice",
+    "width": 390,
+    "focus": {
+      "tag": "BUTTON",
+      "text": "02 Claim Thesis conditions",
+      "outline": "rgb(147, 197, 253) solid 3px",
+      "visible": true
+    },
+    "overflow": false
+  },
+  {
+    "route": "/stack",
+    "width": 390,
+    "focus": {
+      "tag": "BUTTON",
+      "text": "2 Run Clear rules move bounded work. Allowed system path",
+      "outline": "oklab(0.985 0 0) solid 3px",
+      "visible": true
+    },
+    "overflow": false
+  },
+  {
+    "route": "/practice",
+    "width": 320,
+    "focus": {
+      "tag": "BUTTON",
+      "text": "02 Claim Thesis conditions",
+      "outline": "rgb(147, 197, 253) solid 3px",
+      "visible": true
+    },
+    "overflow": false
+  },
+  {
+    "route": "/stack",
+    "width": 320,
+    "focus": {
+      "tag": "BUTTON",
+      "text": "2 Run Clear rules move bounded work. Allowed system path",
+      "outline": "oklch(0.708 0 0) solid 2px",
+      "visible": true
+    },
+    "overflow": false
+  }
+]

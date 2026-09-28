@@ -1,6 +1,6 @@
 {
   "id": "substrate:create-something:management-surface:internal",
-  "generatedAt": "2026-09-27T17:28:03.519Z",
+  "generatedAt": "2026-09-28T14:19:28.007Z",
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
   "sourceReadinessId": "substrate:create-something:operating-slice-readiness:internal",
@@ -6544,6 +6544,20 @@
       "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
     },
     {
+      "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-guide-docs-guides-effect-integration-engineering-md",
+      "kind": "topology_record",
+      "title": "EFFECT_INTEGRATION_ENGINEERING.md",
+      "recordId": "substrate:create-something:guide:docs-guides-effect-integration-engineering-md",
+      "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
+      "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-guide-docs-guides-effect-integration-engineering-md",
+      "mcpUri": "substrate://topology/internal/records/substrate-create-something-guide-docs-guides-effect-integration-engineering-md",
+      "agentCommand": "databaseLayer.topology.records.get",
+      "access": [
+        "read"
+      ],
+      "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
+    },
+    {
       "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-guide-docs-guides-examples-md",
       "kind": "topology_record",
       "title": "EXAMPLES.md",
@@ -6985,6 +6999,20 @@
       "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
       "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-guide-docs-guides-paperclip-autonomous-delivery-md",
       "mcpUri": "substrate://topology/internal/records/substrate-create-something-guide-docs-guides-paperclip-autonomous-delivery-md",
+      "agentCommand": "databaseLayer.topology.records.get",
+      "access": [
+        "read"
+      ],
+      "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
+    },
+    {
+      "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-guide-docs-guides-paperclip-instance-operating-model-md",
+      "kind": "topology_record",
+      "title": "PAPERCLIP_INSTANCE_OPERATING_MODEL.md",
+      "recordId": "substrate:create-something:guide:docs-guides-paperclip-instance-operating-model-md",
+      "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
+      "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-guide-docs-guides-paperclip-instance-operating-model-md",
+      "mcpUri": "substrate://topology/internal/records/substrate-create-something-guide-docs-guides-paperclip-instance-operating-model-md",
       "agentCommand": "databaseLayer.topology.records.get",
       "access": [
         "read"
