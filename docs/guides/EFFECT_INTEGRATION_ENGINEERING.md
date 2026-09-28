@@ -16,7 +16,7 @@ Start with one boundary that has these signals. Pure transforms, simple UI compo
 
 ## Version and tooling
 
-The first repo slice uses `effect@3.22.2`, pinned in `@create-something/cs-mcp-hub`. As of 2026-09-27, Effect 4 is a release candidate; installing untagged `effect` resolves to stable v3. Do not introduce v4 into a production package until its version and migration have passed that package's checks. The v4 `@effect/tsgo` language service requires TypeScript 7, while this repo's current root TypeScript is 5.7. Keep any v4 or language-service experiment package scoped and explicit; do not silently replace the monorepo compiler.
+The first repo slice uses `effect@3.22.2`, pinned in `@create-something/cs-mcp-hub`. As of 2026-09-27, Effect 4 is a release candidate; installing untagged `effect` resolves to stable v3. Do not introduce v4 into a production package until its version and migration have passed that package's checks. The v4 `@effect/tsgo` language service requires TypeScript 7, while this repo's root declares `^5.7.2` and currently resolves to 5.9.3. Keep any v4 or language-service experiment package scoped and explicit; do not silently replace the monorepo compiler.
 
 Primary references: [Effect v3 retrying](https://effect.website/docs/v3/error-management/retrying), [tagged errors](https://effect.website/docs/v3/error-management/yieldable-errors), [scopes](https://effect.website/docs/v3/resource-management/scope), [v4 installation status](https://effect.website/docs/v4/getting-started/installation), [v4 devtools](https://effect.website/docs/v4/getting-started/devtools).
 
@@ -30,6 +30,8 @@ The package verifier is:
 pnpm --filter @create-something/cs-mcp-hub typecheck
 pnpm --filter @create-something/cs-mcp-hub test
 ```
+
+The MCP Quality Gate workflow runs these two hub checks on package changes.
 
 This proof is package behavior and type safety. It is not a deployed hub session or client acceptance receipt.
 
