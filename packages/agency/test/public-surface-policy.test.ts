@@ -16,7 +16,7 @@ test('utility, private, archive and unknown paths fail closed', () => {
 });
 
 test('approved Map entry and public supporting pages retain explicit ownership', () => {
-  for (const path of ['/map/workspace', '/privacy', '/terms', '/ai-workflow-control', '/ai-workflow-recovery', '/marketplace-review-automation', '/stack/?source=test', '/practice#practice-workbench', '/arcs', '/arc/example', '/arc/app-review-governance', '/experiments', '/experiments/example']) {
+  for (const path of ['/map/workspace', '/privacy', '/terms', '/ai-workflow-control', '/ai-workflow-recovery', '/marketplace-review-automation', '/stack/?source=test', '/practice#practice-workbench', '/arcs', '/arc/example', '/arc/app-review-governance', '/experiments', '/experiments/example', '/experiments/release_2026', '/experiments/CaseStudy']) {
     assert.equal(usesAgencyOperatorPalette(path), true, path);
   }
 });

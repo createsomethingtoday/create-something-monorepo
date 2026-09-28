@@ -15,7 +15,7 @@ const portfolioRoutes = new Set(
 );
 // These noindex catalogs and their served details are public Agency pages.
 // Their loaders still decide whether a requested slug exists and is published.
-const publicPreviewRoute = /^\/(?:arc|experiments)\/[a-z0-9-]+$/;
+const publicPreviewRoute = /^\/(?:arc|experiments)\/[^/]+$/;
 
 export function usesAgencyOperatorPalette(pathname: string): boolean {
   const path = pathname.split(/[?#]/)[0].replace(/\/+$/, '') || '/';
