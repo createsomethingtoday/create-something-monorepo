@@ -148,8 +148,8 @@
 <PerformanceCampaignOpening
   eyebrow="Services & tools"
   expression="editorial"
-  title="Find the work you want to make possible."
-  lede="Websites, forms, AI systems, algorithms, education and video. Explore what we can build with you, inspect the work, and agree on a useful next step."
+  title="Build systems your team can own."
+  lede="Map the workflow. Build the app or agent. Control what runs and what needs approval. Inspect the work, then agree on the scope and how to test it."
   media={playbookHeroMedia.products}
   mediaMobilePlacement="background"
   density="compact"
@@ -160,13 +160,14 @@
   ]}
 >
   {#snippet actions()}
-    <Button href="#capabilities">Explore services & tools</Button>
+    <Button href="#capabilities">Inspect the work</Button>
   {/snippet}
 </PerformanceCampaignOpening>
 
 <section id="capabilities" class="capabilities" aria-labelledby="capabilities-title">
-  <p>Services & tools</p><h2 id="capabilities-title">Different work. The same care.</h2>
-  <p>Explore an outcome, see how we approach it, and inspect the work behind it. Membership covers one agreed workstream at a time; larger projects and usage are scoped separately.</p>
+  <p>Apps, workflows & agents</p><h2 id="capabilities-title">Inspect what your team will keep.</h2>
+  <p>Review the linked implementations and clearly labeled scenarios below. For your Build, agree on the source, instructions, tests and handoff your team will own, plus what agents may do and what needs human approval. Production launch is agreed separately.</p>
+  <p>Start with Map to define the workflow, scope Build for implementation, or use Control for ongoing operation. Membership covers one agreed workstream at a time; larger projects and usage are scoped separately.</p>
   {#each filmStories as story}
     <article><div><h3>{story.name}</h3><p>{story.desc}</p><p class="deliverable">What you keep: {story.deliver}</p></div>
       <div class="capability-links"><a href={`/?film=${story.id}#work`}>Watch the story →</a><a href={story.source}>{story.sourceLabel} ↗</a><a href={agencyCoreMessaging.membershipInquiryHref}>Discuss this work →</a></div>

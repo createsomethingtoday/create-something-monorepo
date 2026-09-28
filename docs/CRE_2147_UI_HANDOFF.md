@@ -70,3 +70,14 @@ The temporary fixture route was removed. Worktree disposition: preserved on `cod
 ## Coordinator privacy contrast correction
 
 An independent browser pass found the first-load privacy prompt's “Allow analytics” label was white on a near-white button after the route palette remap. The Agency-scoped primary privacy button now binds dark text to the operator foreground fill. Ego browser readback on the local preview returned foreground `oklch(0.205 0 0)` and background `oklch(0.985 0 0)` for that button; the contact submit button had the same legible pairing. Contact first viewport screenshots at 390×844 and 320×640 show no horizontal overflow. These are local preview checks, not deployed evidence.
+
+
+## Products opening follow-up
+
+Coordinator requested a bounded copy revision after integrated review of `988bc2a6b`. Products now leads with “Build systems your team can own” and Map → Build → Control. The capabilities introduction names inspectable implementations/scenarios, owned source/instructions/tests/handoff, human approval and separately agreed production launch. Existing proof entries, media, SKU/pricing data, routes, and purchase actions remain unchanged. Only Products copy and this evidence document changed.
+
+Validation: `pnpm bootstrap:worktree`, full Agency `check`, Agency Cloudflare `build`, `pnpm performance:pages:check` (257/257), Canon operator-token gate, and `git diff --check` passed. Evidence is under `output/cre-2147/products-copy-*`: desktop 1440×900, mobile 390×844 and 320×640, reduced-motion keyboard focus/activation and a settled desktop handoff capture. No horizontal overflow; opening action visible at all sizes. Keyboard traversal produces a visible 3px focus outline on the opening action and Enter reaches `#capabilities`. Settled handoff shows no label overlap. No layout/runtime correction was necessary.
+
+Limitations: this run could not refresh canonical Linear CRE-2147 because `LINEAR_API_KEY` was absent and no Paperclip-granted secrets were available. Scope came from the explicit latest create-something CRE-104 coordinator request; coordinator must mirror the final evidence to Linear. The ctx search did not return before cancellation; current source and issue comments grounded this pass. Browser evidence is local development rendering, not production, authenticated Map, payment or submission acceptance. Previously documented broad Performance-test baseline failures remain outside this copy-only revision.
+
+Worktree disposition: preserved at `/private/var/folders/5v/bcpy60z558b1y2jctfx6108m0000gq/T/cre-2147-agent-worktree`, branch `codex/CRE-2147-agent-worktree`, for independent review/coordinator promotion. No push, merge, deploy or publish.
