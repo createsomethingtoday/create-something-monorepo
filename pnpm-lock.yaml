@@ -253,6 +253,9 @@ importers:
       '@cloudflare/workers-types':
         specifier: ^5.20260711.1
         version: 5.20260712.1
+      '@types/node':
+        specifier: 24.10.9
+        version: 24.10.9
       esbuild:
         specifier: 0.28.1
         version: 0.28.1

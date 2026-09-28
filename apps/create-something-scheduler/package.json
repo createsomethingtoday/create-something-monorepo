@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "exports": {
+    "./public-read": "./public-read/index.ts"
+  },
   "createSomething": {
     "agentLegibilityContract": true,
     "tier": "mixed",
@@ -17,6 +20,12 @@
     "build:room-client": "esbuild src/ui/room-client.ts --bundle --format=esm --platform=browser --target=es2022 --minify --outfile=public/assets/room-client.js",
     "build": "pnpm build:room-client && wrangler deploy --dry-run --outdir dist",
     "check": "tsc --noEmit",
+    "check:public-read": "tsc -p public-read/tsconfig.json",
+    "test:public-read": "vitest run --config public-read/vitest.config.ts",
+    "smoke:public-read": "node --import tsx public-read/smoke.mjs",
+    "verify:public-read": "node --import tsx public-read/verify-local.mjs",
+    "project:public-read": "node --import tsx forge-pilot/project-readonly.mjs public-read/openapi.readonly.json",
+    "generate:public-read": "node --import tsx public-read/generate.mjs",
     "dev": "pnpm build:room-client && wrangler dev",
     "sync:webflow-busy": "swift scripts/sync-webflow-busy-projection.swift",
     "test": "vitest run && vitest run --config vitest.worker.config.ts",
@@ -36,6 +45,7 @@
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "^0.18.4",
     "@cloudflare/workers-types": "^5.20260711.1",
+    "@types/node": "24.10.9",
     "esbuild": "0.28.1",
     "typescript": "^5.9.3",
     "vitest": "^4.1.8",
