@@ -165,7 +165,7 @@
 
 <style>
   .services-opening :global(.performance-campaign-opening[data-density='compact']) { min-height: 0; }
-  .services-opening :global(.performance-campaign-opening[data-expression='editorial'][data-density='compact'] .performance-campaign-opening__content) { padding-block: var(--space-performance-xl); }
+  .services-opening :global(.performance-campaign-opening[data-expression='editorial'][data-density='compact'] .performance-campaign-opening__content) { padding-top: max(128px, 10svh); padding-bottom: var(--space-performance-xl); }
   .services-opening :global(.performance-campaign-opening[data-expression='editorial'][data-density='compact'] h1) { max-width: 22ch; font-family: var(--font-performance-interface); font-size: clamp(2rem, 4vw, 3.5rem); line-height: 1.12; }
 
   .services-performance {
