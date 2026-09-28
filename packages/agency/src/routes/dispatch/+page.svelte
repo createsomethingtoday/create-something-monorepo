@@ -129,7 +129,7 @@
 <style>
   .dispatch {
     background: var(--color-performance-paper, #f3f3f0);
-    color: #111;
+    color: var(--color-performance-ink, #111);
   }
   main {
     max-width: 1180px;
@@ -138,7 +138,7 @@
   }
   .section {
     padding: clamp(4rem, 8vw, 7rem) 0;
-    border-top: 1px solid rgba(17, 17, 17, 0.16);
+    border-top: 1px solid var(--color-performance-line, rgba(17, 17, 17, 0.16));
   }
   .eyebrow,
   .week,
@@ -166,17 +166,17 @@
     grid-template-columns: repeat(5, 1fr);
     gap: 1px;
     margin-top: 3rem;
-    background: rgba(17, 17, 17, 0.16);
-    border: 1px solid rgba(17, 17, 17, 0.16);
+    background: var(--color-performance-line, rgba(17, 17, 17, 0.16));
+    border: 1px solid var(--color-performance-line, rgba(17, 17, 17, 0.16));
   }
   .cadence-grid article {
     min-height: 190px;
     padding: 1.25rem;
-    background: #f3f3f0;
+    background: var(--color-performance-panel, #f3f3f0);
   }
   .cadence-grid article > p {
     margin: 0 0 2rem;
-    color: #67675f;
+    color: var(--color-performance-muted, #67675f);
     font: 0.68rem var(--font-performance-mono, monospace);
     text-transform: uppercase;
   }
@@ -188,26 +188,26 @@
   .cadence-grid span {
     display: block;
     margin-top: 0.75rem;
-    color: #55554f;
+    color: var(--color-performance-muted, #55554f);
     line-height: 1.45;
   }
   .schedule-list {
     margin-top: 3rem;
-    border-top: 1px solid #111;
+    border-top: 1px solid var(--color-performance-ink, #111);
   }
   .schedule-list > article {
     display: grid;
     grid-template-columns: 90px 1fr;
     gap: 1.5rem;
     padding: 2rem 0;
-    border-bottom: 1px solid rgba(17, 17, 17, 0.25);
+    border-bottom: 1px solid var(--color-performance-line, rgba(17, 17, 17, 0.25));
   }
   .index {
     font: 1.4rem var(--font-performance-mono, monospace);
   }
   .week {
     margin-bottom: 0.5rem;
-    color: #67675f;
+    color: var(--color-performance-muted, #67675f);
   }
   .schedule-list h3 {
     max-width: 760px;
@@ -225,7 +225,7 @@
   }
   dt {
     margin: 0 0 0.35rem;
-    color: #67675f;
+    color: var(--color-performance-muted, #67675f);
   }
   dd {
     margin: 0;
