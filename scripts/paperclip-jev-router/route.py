@@ -41,17 +41,30 @@ def validate_packet(value):
     return value
 
 
+def paperclip_api_base():
+    base = os.environ.get("PAPERCLIP_API_URL", "").rstrip("/")
+    return base[:-4] if base.endswith("/api") else base
+
+
+def paperclip_headers():
+    headers = {"Authorization": f"Bearer {os.environ.get('PAPERCLIP_API_KEY', '')}"}
+    run_id = os.environ.get("PAPERCLIP_RUN_ID", "")
+    if run_id:
+        headers["X-Paperclip-Run-Id"] = run_id
+    return headers
+
+
 def load_packet(path=None):
     if path:
         with open(path, encoding="utf-8") as handle:
             return validate_packet(json.load(handle))
-    api_url = os.environ.get("PAPERCLIP_API_URL", "").rstrip("/")
+    api_url = paperclip_api_base()
     api_key = os.environ.get("PAPERCLIP_API_KEY", "")
     task_id = os.environ.get("PAPERCLIP_TASK_ID", "")
     run_id = os.environ.get("PAPERCLIP_RUN_ID", "")
     if not api_url or not api_key or (not task_id and not run_id):
         raise ValueError("Paperclip task context unavailable")
-    headers = {"Authorization": f"Bearer {api_key}"}
+    headers = paperclip_headers()
     if not task_id:
         request = urllib.request.Request(
             f"{api_url}/api/heartbeat-runs/{run_id}/issues", headers=headers
@@ -69,10 +82,10 @@ def load_packet(path=None):
     )
     with urllib.request.urlopen(request, timeout=5) as response:
         issue = json.load(response)
-    match = PACKET_PATTERN.search(issue.get("description") or "")
-    if not match:
-        raise ValueError("assigned issue has no jev-routing packet")
-    packet = validate_packet(json.loads(match.group(1)))
+    matches = PACKET_PATTERN.findall(issue.get("description") or "")
+    if len(matches) != 1:
+        raise ValueError("assigned issue must have exactly one jev-routing packet")
+    packet = validate_packet(json.loads(matches[0]))
     if packet["taskId"] != task_id:
         raise ValueError("routing packet taskId does not match assigned issue")
     return packet
@@ -97,6 +110,8 @@ def build_request(packet):
 
 
 def validate_answer(data):
+    if not isinstance(data, dict):
+        raise ValueError("invalid Jev response")
     if data.get("model") != MODEL:
         raise ValueError("served model mismatch")
     answers = data.get("answers")
@@ -164,13 +179,14 @@ def route(packet, api_key, *, opener=urllib.request.urlopen):
 
 
 def paperclip_receipt(packet):
-    api_url = os.environ.get("PAPERCLIP_API_URL", "").rstrip("/")
+    api_url = paperclip_api_base()
     api_key = os.environ.get("PAPERCLIP_API_KEY", "")
     agent_id = os.environ.get("PAPERCLIP_AGENT_ID", "")
-    if not api_url or not api_key or not agent_id:
+    run_id = os.environ.get("PAPERCLIP_RUN_ID", "")
+    if not api_url or not api_key or not agent_id or not run_id:
         raise ValueError("Paperclip receipt context unavailable")
     url = f"{api_url}/api/issues/{packet['taskId']}/comments"
-    headers = {"Authorization": f"Bearer {api_key}"}
+    headers = paperclip_headers()
     with urllib.request.urlopen(urllib.request.Request(url, headers=headers), timeout=5) as response:
         comments = json.load(response)
     if not isinstance(comments, list):
@@ -186,7 +202,7 @@ def paperclip_receipt(packet):
             receipt = json.loads(match.group(1))
         except json.JSONDecodeError:
             continue
-        if receipt.get("taskId") == packet["taskId"] and receipt.get("requestHash") == request_hash:
+        if isinstance(receipt, dict) and receipt.get("taskId") == packet["taskId"] and receipt.get("requestHash") == request_hash:
             return receipt
     receipt = route(packet, os.environ.get("TYPESAFE_API_KEY", ""))
     body = "Jev advisory model route. This does not assign work or approve completion.\n\n```jev-routing-receipt\n" + json.dumps(receipt, sort_keys=True) + "\n```"

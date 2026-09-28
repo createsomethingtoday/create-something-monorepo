@@ -51,6 +51,10 @@ class RouterTests(unittest.TestCase):
         self.assertEqual(result["status"], "abstained")
         self.assertEqual(result["failure"], "ValueError")
 
+    def test_non_object_answer_abstains(self):
+        result = router.route(packet(), "test-key", opener=lambda *_args, **_kwargs: Response(b"[]"))
+        self.assertEqual((result["status"], result["failure"]), ("abstained", "ValueError"))
+
     def test_boolean_confidence_is_not_a_probability(self):
         distribution = {name: (0.8 if name == "sol" else 0.05) for name in router.LANES}
         data = {"model": router.MODEL, "answers": {"route": {"type": "choice", "choice": "sol", "confidence": True, "probabilities": distribution}}}
@@ -72,18 +76,30 @@ class RouterTests(unittest.TestCase):
         urls = []
         def open_request(request, timeout):
             urls.append(request.full_url)
+            self.assertEqual(request.get_header("X-paperclip-run-id"), "run-1")
+            data = [{"issueId": "linked-issue"}] if request.full_url.endswith("/issues") else {"description": description}
+            return Response(json.dumps(data).encode())
+        env = {"PAPERCLIP_API_URL": "http://paperclip.test/api", "PAPERCLIP_API_KEY": "run-token", "PAPERCLIP_RUN_ID": "run-1"}
+        with patch.dict("os.environ", env, clear=True), patch.object(router.urllib.request, "urlopen", open_request):
+            self.assertEqual(router.load_packet(), issue)
+        self.assertEqual(urls, ["http://paperclip.test/api/heartbeat-runs/run-1/issues", "http://paperclip.test/api/issues/linked-issue"])
+
+    def test_multiple_packets_fail_closed(self):
+        issue = packet(taskId="linked-issue")
+        description = "\n".join("```jev-routing\n" + json.dumps(issue) + "\n```" for _ in range(2))
+        def open_request(request, timeout):
             data = [{"issueId": "linked-issue"}] if request.full_url.endswith("/issues") else {"description": description}
             return Response(json.dumps(data).encode())
         env = {"PAPERCLIP_API_URL": "http://paperclip.test", "PAPERCLIP_API_KEY": "run-token", "PAPERCLIP_RUN_ID": "run-1"}
         with patch.dict("os.environ", env, clear=True), patch.object(router.urllib.request, "urlopen", open_request):
-            self.assertEqual(router.load_packet(), issue)
-        self.assertEqual(urls, ["http://paperclip.test/api/heartbeat-runs/run-1/issues", "http://paperclip.test/api/issues/linked-issue"])
+            with self.assertRaisesRegex(ValueError, "exactly one"):
+                router.load_packet()
 
     def test_existing_agent_receipt_avoids_repeat_provider_call(self):
         issue = packet(taskId="linked-issue")
         receipt = {"taskId": issue["taskId"], "requestHash": router.hashlib.sha256(router.build_request(issue)).hexdigest(), "recommendation": "luna", "status": "advisory"}
         comments = [{"authorAgentId": "agent-1", "body": "```jev-routing-receipt\n" + json.dumps(receipt) + "\n```"}]
-        env = {"PAPERCLIP_API_URL": "http://paperclip.test", "PAPERCLIP_API_KEY": "run-token", "PAPERCLIP_AGENT_ID": "agent-1"}
+        env = {"PAPERCLIP_API_URL": "http://paperclip.test", "PAPERCLIP_API_KEY": "run-token", "PAPERCLIP_AGENT_ID": "agent-1", "PAPERCLIP_RUN_ID": "run-1"}
         with patch.dict("os.environ", env, clear=True), patch.object(router.urllib.request, "urlopen", return_value=Response(json.dumps(comments).encode())), patch.object(router, "route", side_effect=AssertionError("duplicate provider call")):
             self.assertEqual(router.paperclip_receipt(issue), receipt)
 
