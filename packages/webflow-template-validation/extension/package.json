@@ -14,7 +14,7 @@
   },
   "devDependencies": {
     "@types/node": "^25.3.3",
-    "@webflow/designer-extension-typings": "2.1.1",
+    "@webflow/designer-extension-typings": "2.2.2",
     "@webflow/webflow-cli": "^1.8.38",
     "esbuild": "^0.24.2",
     "typescript": "^5.0.0",

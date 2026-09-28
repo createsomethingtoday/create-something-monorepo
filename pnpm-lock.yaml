@@ -5254,8 +5254,8 @@ importers:
         specifier: 24.10.9
         version: 24.10.9
       '@webflow/designer-extension-typings':
-        specifier: 2.1.1
-        version: 2.1.1
+        specifier: 2.2.2
+        version: 2.2.2
       '@webflow/webflow-cli':
         specifier: ^1.8.38
         version: 1.11.1(@babel/core@8.0.1)(@rspack/core@1.7.4(@swc/helpers@0.5.18))(@types/node@24.10.9)(bufferutil@4.1.0)(esbuild@0.28.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.9.3)(utf-8-validate@6.0.6)
@@ -11112,8 +11112,8 @@ packages:
   '@webflow/data-types@1.2.0':
     resolution: {integrity: sha512-homMRDzhUyjjkH7ua5FNHB/XizYuaLYzj7sQ0IeYvfw0BuzuKICDD9uIh8z58jrz4v00RPW6BL5/92KjBTq6eQ==}
 
-  '@webflow/designer-extension-typings@2.1.1':
-    resolution: {integrity: sha512-Qw56VFZxHK/q9Tw+WXSntXYzRtc9lF2zsDXMwZsKy84xusICxH/ElI2FXXKlUGBOaH5GwxvQv1s3V+zUIxlnDA==}
+  '@webflow/designer-extension-typings@2.2.2':
+    resolution: {integrity: sha512-VoLXnVccpkKkF3M3feoyPV2cZY/qjYWLQnP5ntpc/HLiR+LwNFUHniCRQ1rx5L2katem6ySicNAjlMc240LIQA==}
 
   '@webflow/react@1.2.0':
     resolution: {integrity: sha512-v7bxlvlJ2bAqRdSZxoq9T88aqUL2FDC7UX/GTybn54QW1fRka6DE/nQdEyU9riXxWqoDoLTvcGmR/qPGipU5DQ==}
@@ -25457,7 +25457,7 @@ snapshots:
 
   '@webflow/data-types@1.2.0': {}
 
-  '@webflow/designer-extension-typings@2.1.1': {}
+  '@webflow/designer-extension-typings@2.2.2': {}
 
   '@webflow/react@1.2.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
