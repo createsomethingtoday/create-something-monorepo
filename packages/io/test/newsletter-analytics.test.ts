@@ -26,7 +26,7 @@ for (const link of SOCIAL_LINKS) {
       url.pathname = path;
       assert.deepEqual(newsletterMetadata(url), expected);
     }
-    for (const path of ['/admin', '/admin/newsletters', '/subscribe', '/newsletters-extra', '/newsletters/article/extra', '/papers/proof-surface']) {
+    for (const path of ['/admin', '/admin/newsletters', '/subscribe', '/newsletters-extra', '/newsletters/unpublished-edition', '/newsletters/article/extra', '/papers/proof-surface']) {
       url.pathname = path;
       assert.equal(newsletterMetadata(url), undefined, path);
     }

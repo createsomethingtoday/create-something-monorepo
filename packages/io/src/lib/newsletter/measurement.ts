@@ -5,6 +5,11 @@ export const NEWSLETTER_CAMPAIGNS = [
   '2026-09-08-test-the-checker'
 ] as const;
 
+const SOCIAL_CAMPAIGN_PATHS = new Set([
+  '/newsletters',
+  '/newsletters/2026-09-01-the-interface-is-becoming-executable'
+]);
+
 export function newsletterMetadata(url: URL): Record<string, string> | undefined {
   const campaign = url.searchParams.get('utm_campaign');
   const source = url.searchParams.get('utm_source');
@@ -18,8 +23,9 @@ export function newsletterMetadata(url: URL): Record<string, string> | undefined
     return { newsletterCampaign: campaign!.replaceAll('-', '_'), newsletterMeasurement: 'first-party-v1' };
   }
 
-  // Reviewed public distribution tags only; never copy arbitrary UTM content or identifiers.
-  if (!/^\/newsletters(?:\/[a-z0-9]+(?:-[a-z0-9]+)*)?\/?$/.test(url.pathname) ||
+  // Attribute only this campaign's published destinations, not unknown article slugs or 404s.
+  // Never copy arbitrary UTM content or identifiers.
+  if (!SOCIAL_CAMPAIGN_PATHS.has(url.pathname.replace(/\/$/, '')) ||
       (source !== 'linkedin' && source !== 'substack') || medium !== 'social' ||
       campaign !== 'field-notes-20260928' ||
       ['utm_source', 'utm_medium', 'utm_campaign'].some((key) => url.searchParams.getAll(key).length !== 1)) {
