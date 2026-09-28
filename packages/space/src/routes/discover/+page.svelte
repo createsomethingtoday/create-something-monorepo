@@ -93,7 +93,8 @@
 		transition: all var(--duration-performance-standard) var(--ease-performance-standard);
 	}
 
-	.card:hover {
+	.page a.card:hover {
+		opacity: 1;
 		border-color: var(--glass-performance-border-medium);
 		background: var(--glass-performance-bg-medium);
 		transform: translateY(-2px);
