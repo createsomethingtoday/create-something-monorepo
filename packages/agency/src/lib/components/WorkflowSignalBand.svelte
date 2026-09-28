@@ -15,8 +15,7 @@
     let height = 0;
     let visible = false;
     let userReduced = false;
-    let frame = 0;
-    let lastPaint = 0;
+    let timer = 0;
 
     const hash = (x: number, y: number) => {
       const value = Math.sin(x * 127.1 + y * 311.7) * 43758.5453;
@@ -67,19 +66,16 @@
       paint(performance.now());
     };
 
-    const animate = (time: number) => {
+    const animate = () => {
       if (!visible || motion.matches || userReduced || document.hidden) return;
-      if (time - lastPaint > 140) {
-        paint(time);
-        lastPaint = time;
-      }
-      frame = requestAnimationFrame(animate);
+      paint(performance.now());
+      timer = window.setTimeout(animate, 140);
     };
 
     const syncMotion = () => {
-      cancelAnimationFrame(frame);
+      clearTimeout(timer);
       paint(motion.matches || userReduced ? 0 : performance.now());
-      if (visible && !motion.matches && !userReduced && !document.hidden) frame = requestAnimationFrame(animate);
+      if (visible && !motion.matches && !userReduced && !document.hidden) timer = window.setTimeout(animate, 140);
     };
 
     const observer = new IntersectionObserver(([entry]) => {
@@ -98,7 +94,7 @@
     resize();
 
     return () => {
-      cancelAnimationFrame(frame);
+      clearTimeout(timer);
       observer.disconnect();
       resizeObserver.disconnect();
       motion.removeEventListener('change', syncMotion);
@@ -136,9 +132,9 @@
     .signal-heading { display: block; }
     h2 { margin-top: var(--space-performance-xs); }
     canvas { height: 108px; }
-    .stages { padding-inline: 0; }
-    .stages li { padding: var(--space-performance-sm); }
-    .stages span { font-size: 11px; }
-    .stages small { font-size: 12px; }
+    .stages { grid-template-columns: 1fr; padding-inline: 7vw; }
+    .stages li { display: grid; grid-template-columns: minmax(8rem, .85fr) minmax(0, 1.15fr); align-items: baseline; gap: var(--space-performance-sm); padding: var(--space-performance-sm) 0; border-left: 0; border-bottom: 1px solid var(--color-performance-shell-border-default); }
+    .stages li:last-child { border-right: 0; border-bottom: 0; }
+    .stages span, .stages small { font-size: var(--text-performance-caption); }
   }
 </style>
