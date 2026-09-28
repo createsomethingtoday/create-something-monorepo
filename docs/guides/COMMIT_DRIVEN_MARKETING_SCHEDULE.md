@@ -36,6 +36,9 @@ The public readback is at /dispatch. Update its queue when the editorial owner
 approves a new four-week cycle. Dates reserve review capacity; they do not
 authorize a post or subscriber send.
 
+For distribution across `.io`, `.agency`, LinkedIn, and Substack, use the
+[newsletter distribution playbook](./NEWSLETTER_DISTRIBUTION_PLAYBOOK.md).
+
 ## Publication gate
 
 1. Verify the source SHA and current behavior.
