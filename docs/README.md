@@ -153,6 +153,8 @@ Read in this order when you need broad repo context:
 - [guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md](./guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md)
 - [guides/MARKETING_SCREENSHOT_IMAGE_WORKFLOW.md](./guides/MARKETING_SCREENSHOT_IMAGE_WORKFLOW.md)
 - [guides/COMMIT_DRIVEN_MARKETING_SCHEDULE.md](./guides/COMMIT_DRIVEN_MARKETING_SCHEDULE.md)
+- [guides/NEWSLETTER_DISTRIBUTION_PLAYBOOK.md](./guides/NEWSLETTER_DISTRIBUTION_PLAYBOOK.md) — cross-channel field-note distribution, publication receipts, and outcome review
+- [guides/NEWSLETTER_ENGAGEMENT_RUNBOOK.md](./guides/NEWSLETTER_ENGAGEMENT_RUNBOOK.md) — first-party email delivery and engagement evidence
 - [IMAGE_LANGUAGE_FOUNDATION.md](./IMAGE_LANGUAGE_FOUNDATION.md)
 - [guides/CLOUDFLARE_BOT_ACCESS_HARDENING.md](./guides/CLOUDFLARE_BOT_ACCESS_HARDENING.md)
 - [LINEAR_COORDINATION.md](./LINEAR_COORDINATION.md)
