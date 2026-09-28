@@ -29,4 +29,6 @@
   --color-operator-status-paused: #f59e0b;
   --color-operator-status-paused-text: #fcd34d;
   --color-operator-status-paused-on: #171717;
+  --radius-operator-control: 6px;
+  --radius-operator-panel: 10px;
 }
