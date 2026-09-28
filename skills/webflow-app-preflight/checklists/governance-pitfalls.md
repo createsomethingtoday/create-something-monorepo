@@ -24,7 +24,7 @@ These are the recurring, real-world patterns that most often trigger a rejection
 
 - Deliver code through the **Custom Code API**, not manual paste (manual paste can't be versioned/removed and can double-run).
 - Script versions are **immutable** — to change code that runs on sites, register a **new version** and submit an **App update** for review. Never modify in place.
-- Loaders are only allowed if every remote resource is declared at submission **and pinned** (hosted scripts need `hostedLocation` + `integrityHash`/SRI on a fixed version).
+- Loaders are only allowed if every remote resource is declared at submission **and pinned** (hosted scripts need `hostedLocation` + `integrityHash`/SRI on a fixed version). Runtime behavior on customers' published sites is outside review scope — review verifies what the App registers, discloses, and removes through Webflow — so disclosure at submission is the gate, and pinning is how what runs stays equal to what was disclosed.
 - On uninstall, remove applied scripts at **both site and page level** — keep the `custom_code:write` + `sites:write`/`pages:write` scopes needed to do it — and prompt the user to publish (don't auto-publish). Injected code persists until removed; the platform does not clean it up for you. Where programmatic removal genuinely isn't possible, give the user explicit in-app removal instructions instead — but never just leave it running.
 
 ## 4. Calling the API after the user said no

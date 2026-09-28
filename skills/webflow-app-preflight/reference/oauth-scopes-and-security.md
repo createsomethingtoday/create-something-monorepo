@@ -77,7 +77,7 @@ If your App runs any code on a customer's site, deliver it through the **Custom 
 
 The rules that get apps removed if broken:
 
-- **The reviewed version is the approved version.** Any code, scripts, or runtime your App causes to run is part of the reviewed experience. The version evaluated at review is the version approved to run on customer sites.
+- **The reviewed version is the approved version.** Review covers code running in the Designer, your App's Webflow API interactions, credential and user-data handling, and the scripts you register, disclose, and remove through Webflow. Runtime behavior on customers' published sites is outside review scope and runs under your responsibility. The version evaluated at review is the version approved to run on customer sites.
 - **Script versions are immutable.** You cannot overwrite a registered script — each needs a unique `displayName` + `version`. To change code that runs on customer sites, **register a new version and submit an App update for review.** Scripts may not be modified in place.
 - **Loaders are not allowed** unless every remotely loaded resource is declared at submission **and** pinned. Hosted scripts require a `hostedLocation` plus an `integrityHash` (SRI, e.g. sha256) computed over the exact contents. A remote endpoint referenced by an approved script may not start serving different functional code after approval.
 - **No self-certified live updates.** Routing new functional code to sites through any path that bypasses review — swapping a hosted script's contents, a loader endpoint, or a dynamically imported module — results in Marketplace removal and may result in a ban.
