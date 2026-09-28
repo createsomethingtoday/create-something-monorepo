@@ -6,6 +6,7 @@
   import { Navigation, Footer, Analytics, ModeIndicator, LayoutSEO } from '@create-something/canon';
   import { UnifiedSearch } from '@create-something/canon/navigation';
   import { getIoFooterHandoff } from '$lib/config/footerHandoff';
+  import { isIoResearchSurface } from '$lib/config/researchSurface';
   import { page } from '$app/stores';
   import { newsletterMetadata } from '$lib/newsletter/measurement';
 
@@ -51,23 +52,7 @@
 
   let { children, data } = $props();
   let mobileNavigationOpen = $state(false);
-  const isResearchSurface = $derived(
-    [
-      '/',
-      '/papers',
-      '/experiments',
-      '/plugins',
-      '/methodology',
-      '/about',
-      '/categories',
-      '/graph',
-      '/newsletters'
-    ].includes($page.url.pathname) ||
-      $page.route.id === '/experiments/[slug]' ||
-      $page.url.pathname.startsWith('/papers/') ||
-      $page.url.pathname.startsWith('/plugins/') ||
-      $page.url.pathname.startsWith('/newsletters/')
-  );
+  const isResearchSurface = $derived(isIoResearchSurface($page.url.pathname, $page.route.id));
   const footerHandoff = $derived(getIoFooterHandoff($page.url.pathname));
 
   // Handle logout
