@@ -146,7 +146,7 @@
 
 <SkipToContent />
 
-<div class="layout theme-light property-performance">
+<div class="layout property-performance" data-canon-palette="operator">
   <Navigation
     logo="CREATE SOMETHING"
     logoSuffix=".learn"
@@ -188,7 +188,7 @@
 <style>
   .layout {
     min-height: 100vh;
-    background: var(--color-performance-paper, #f3f3f0);
+    background: var(--color-operator-background);
   }
 
   .content {
