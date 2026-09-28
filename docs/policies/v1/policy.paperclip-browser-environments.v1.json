@@ -75,23 +75,33 @@
       "fresh_context_per_request": true,
       "credential_transport": "private_0600_session_file_to_bearer_header",
       "token_in_artifacts": false,
-      "candidate_source_sha256": "9ac5f48f4a1140e6a69da95977092b73f760cf031d93d8304c72f1b9b43e87e6"
+      "active_candidate_source_sha256": null,
+      "candidate_status": "v3_pending_coordinator_finalization",
+      "historical_probe": {
+        "broker_version": "v2",
+        "source_sha256": "9ac5f48f4a1140e6a69da95977092b73f760cf031d93d8304c72f1b9b43e87e6",
+        "scope": "two_example_com_render_receipts_only",
+        "current_candidate": false
+      }
     }
   },
   "named_operator_assignment": {
-    "paperclip_issue": "CRE-110",
+    "paperclip_issue": "CRE-124",
     "agent_id": "3eb0a714-9796-4130-9fea-f58d556868b4",
     "name": "Browser Environment QA Operator",
     "scope": "explicitly assigned read-only TaskSpace qualification only",
     "lease_verified": false,
     "signed_in_site_authorization": "separate_task_requirement",
-    "self_approval": false
+    "self_approval": false,
+    "broader_browser_qa_issue": "CRE-110",
+    "agent_preflight_result": "bootstrap_failed",
+    "host_taskspace_proof": "partial_not_agent_runtime_acceptance"
   },
   "acceptance": {
-    "unsigned_example_page_render": "observed",
+    "unsigned_example_page_render": "observed_historical_v2_probe",
     "storage_mutation_separation": "not_verified_by_example_page",
     "host_ego_negative": "inconclusive_exit_4",
-    "operator_lifecycle": "pending_independent_qa",
+    "operator_lifecycle": "agent_bootstrap_failed_host_taskspace_proof_partial",
     "role_runtime_denial": "not_verified",
     "production_promotion": "not_authorized"
   }
