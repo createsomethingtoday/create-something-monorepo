@@ -54,3 +54,9 @@ jobs:
 
       - name: MCP test gate
         run: pnpm mcp:gate:test
+
+      - name: Local MCP hub typecheck
+        run: pnpm --filter @create-something/cs-mcp-hub typecheck
+
+      - name: Local MCP hub tests
+        run: pnpm --filter @create-something/cs-mcp-hub test
