@@ -123,12 +123,13 @@ unauthenticated repair endpoint or automatic reconciliation writer.
 
 `pnpm --filter @create-something/agency test:contact` covers state-machine failure
 classes, real timeout, interrupted provider cleanup, browser messages and retained
-IDs, HTTP contract/legacy limit, SQLite batch rollback/claims and workerd D1
-concurrent execution. All provider calls use fakes and `example.invalid` fixtures.
+IDs, HTTP contract/legacy limit, workerd D1 batch rollback/claims and concurrent
+execution. Route fixtures use the same pinned Miniflare D1 runtime on Node 20
+and Node 24; no node:sqlite import or version-based test skip is required. All provider calls use fakes and `example.invalid` fixtures.
 Wrangler's pinned Miniflare owns the workerd fixture and is disposed after testing.
 Tests run as part of Agency `check`.
 
-The SQLite fixture verifies legacy inserts still work and the legacy table definition
+The local D1 fixture verifies legacy inserts still work and the legacy table definition
 is unchanged. A separate local Wrangler rehearsal uses the same migration basename
 and ledger in an isolated database: the first apply succeeds and the second reports
 no migrations. These are local proofs, not production schema, provider delivery,
@@ -229,3 +230,27 @@ contact output `tests 31 / pass 31 / fail 0 / skipped 0`; Svelte check zero erro
 and zero warnings. Agency build exited 0 and the Cloudflare adapter completed.
 No migration change, production query, live mail, deployment or promotion was
 performed for this correction. Independent reviewer owns final source approval.
+
+
+## Node 20 CI compatibility correction — 2026-09-28
+
+Strict CI for PR #1798 used Node 20.20.2, where the earlier fixture's top-level
+`node:sqlite` import failed before its tests could run. `contact-d1.test.ts` now
+uses the Miniflare dependency owned by Agency's pinned Wrangler, matching the
+existing workerd fixture. All D1 assertions use awaited binding calls; constraint
+errors use rejected-promise assertions. Fixture setup and each test dispose the
+runtime on failure or completion. No dependency or application behavior changed.
+
+All 31 contact tests passed with zero skips on local Node 20.19.5 and Node 24.11.0.
+The suite retains production integer-ID and schema preservation checks, duplicate
+batch rollback, owner claims, interrupted requests, legacy caller behavior, and
+both lost-response/reload/400 correction regressions. This is local verification;
+the coordinator must re-run strict CI for the final SHA.
+
+Full Agency check on Node 20.19.5 exited 0: 163 tests, zero failures; Svelte zero
+errors and zero warnings. Agency build on that Node version also exited 0 with
+the Cloudflare adapter complete. Bootstrap used the repository-pinned Node 22 /
+pnpm runtime before verification. Existing workflow-only merge at `10f4170a1`
+was preserved. Only the portable test fixture and these notes changed; no tests
+were skipped or weakened. The engineer committed locally without pushing, per
+the direct no-push instruction; coordinator owns CI rerun and promotion.
