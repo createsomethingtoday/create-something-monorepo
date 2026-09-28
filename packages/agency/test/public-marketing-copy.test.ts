@@ -178,20 +178,20 @@ test('public agency surfaces explain ownership and provider roles', () => {
   assert.match(partners, /open-weight and custom models/);
 });
 
-test('the film-led homepage introduces useful work and retains commercial terms and direct evidence links', () => {
+test('the builder-facing homepage retains commercial terms, film evidence and direct inspection links', () => {
   const home = readFileSync(new URL('../src/routes/+page.svelte', import.meta.url), 'utf8');
   const hero = readFileSync(new URL('../src/lib/components/films/AgencyHero.svelte', import.meta.url), 'utf8');
   const registry = readFileSync(new URL('../src/lib/data/filmStories.ts', import.meta.url), 'utf8');
   assert.match(home, /<AgencyHero/);
   assert.match(home, /<MembershipOffer/);
-  assert.match(hero, /featuredHero.title/);
+  assert.match(hero, /Apps, workflows and agents your team owns/);
   assert.match(registry, /Your next step, already prepared/);
-  assert.match(hero, /featuredHero.description/);
+  assert.match(hero, /source, tests, approval rules and a clear handoff/);
   assert.match(registry, /tools and workflows that help agents do useful work/);
-  assert.match(hero, /featuredHero.poster/);
+  assert.match(hero, /href="\/agent-foundation"/);
   assert.match(hero, /reducedFilmMotion/);
   assert.ok(home.indexOf('<FilmCollection') < home.indexOf('<MembershipOffer'));
-  assert.match(home, /<BuiltWork \/>\s*<\/div>/);
+  assert.ok(home.indexOf('<BuiltWork') < home.indexOf('<FilmCollection'));
   assert.match(home, /<MembershipOffer compact/);
 });
 
@@ -230,7 +230,7 @@ test('public Agency commercial propositions declare the shared editorial express
   const sectionHeroRoutes = [
     'about',
     'cloudflare',
-    'contact',
+    // Contact is a task-led inquiry form, not an editorial campaign hero.
     'for-service-providers',
     'partners',
     'security',
