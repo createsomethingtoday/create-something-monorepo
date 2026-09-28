@@ -27,17 +27,16 @@ describe('scheduler public page', () => {
     expect(html).toContain(performanceDocumentCss);
     expect(html).toContain('--color-performance-grid:rgb(9 9 9 / .055)');
     expect(html).toContain('--font-performance-display-weight:500');
-    expect(html).toContain('class="system-bar"');
-    expect(html).toContain('class="hero-spec"');
-    expect(html).toContain('class="proof-footer"');
+    expect(html).toContain('CREATE SOMETHING / Schedule');
+    expect(html).not.toContain('Scheduler control state');
+    expect(html).not.toContain('PERFORMANCE LAB · SCHEDULER');
+    expect(html).not.toContain('Scheduler proof contract');
     expect(html).toContain('<title>Workflow Mapping Session | CREATE SOMETHING</title>');
     expect(html).toContain('<h1>Map One Workflow</h1>');
     expect(html).toContain('30- or 60-minute workflow mapping session with Micah Johnson');
     expect(html).toContain(
       'Bring one real handoff, its decision owner, and the proof your team needs next.'
     );
-    expect(html).toContain('<span>Policy</span><strong>Workflow Mapping / V2</strong>');
-    expect(html).toContain('<span>Calendar</span><strong>Google Calendar</strong>');
     expect(html).not.toContain('focused, 30- or 60-minute conversation');
     expect(html).not.toContain('Createsomething Together / V2');
     expect(html).toContain('class="steps"');
@@ -93,7 +92,6 @@ describe('scheduler public page', () => {
     );
     expect(integration).toContain('<h1>Fit One Integration</h1>');
     expect(integration).toContain('one repository, one consequential workflow');
-    expect(integration).toContain('<span>Policy</span><strong>Compiler Integration / V1</strong>');
     expect(integration).toContain('const offerIntent="compiler-integration";');
     expect(integration).toContain(
       "history.replaceState({},'',canonicalBookingUrl(state.booking.bookingId));"
@@ -113,7 +111,6 @@ describe('scheduler public page', () => {
     expect(foundation).toContain('<title>Agent Foundation Fit Call | CREATE SOMETHING</title>');
     expect(foundation).toContain('<h1>Fit One Agent Foundation</h1>');
     expect(foundation).toContain('one agent project, one role, one job');
-    expect(foundation).toContain('<span>Policy</span><strong>Agent Foundation / V1</strong>');
     expect(foundation).toContain('const offerIntent="agent-foundation";');
     expect(foundation).not.toContain('<h1>Map One Workflow</h1>');
   });

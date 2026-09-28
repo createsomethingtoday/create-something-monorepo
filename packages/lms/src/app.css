@@ -150,3 +150,45 @@
    Note: Common utilities (.text-shadow-soft, .bg-gradient-*, .border-gradient,
    .transition-smooth, .line-clamp-*) inherited from canon.css
    ========================================================================== */
+
+/* Public learning surfaces: one reading frame and explicit action states.
+   Scope excludes account, authentication, and the protected progress dashboard. */
+:where(.learn-home, .paths-shell, .path-shell, .lesson-shell) {
+  overflow-wrap: anywhere;
+}
+
+:where(.paths-shell, .path-shell, .lesson-shell) {
+  width: min(56rem, calc(100% - 2 * var(--space-md)));
+}
+
+:where(.learn-home, .paths-shell, .path-shell, .lesson-shell) :is(a, button):focus-visible {
+  outline: 2px solid var(--color-performance-signal);
+  outline-offset: 4px;
+}
+
+:where(.paths-shell, .path-shell, .lesson-shell) :is(.btn-primary, .btn-secondary) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  text-align: center;
+}
+
+.lesson-shell .prose {
+  min-width: 0;
+}
+
+.lesson-shell .prose table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :where(.learn-home, .paths-shell, .path-shell, .lesson-shell) *,
+  :where(.learn-home, .paths-shell, .path-shell, .lesson-shell) *::before,
+  :where(.learn-home, .paths-shell, .path-shell, .lesson-shell) *::after {
+    transition-duration: 0s !important;
+    animation-duration: 0s !important;
+  }
+}
