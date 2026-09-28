@@ -66,3 +66,7 @@ Validation: Canon package/publint and 26-token parity/contrast gate passed. Agen
 Map evidence is a labelled local component fixture with populated/archive states at all three sizes, not authenticated acceptance. The real workspace route still redirects to login. No real contact submission, scheduler booking, payment or authenticated Map mutation was performed. Third-party scheduler iframe internals are outside the palette scope. A nearest-solid-background contrast diagnostic helped find inverted colors but is not a complete accessibility audit. Earlier unrelated broad Performance test baseline failures remain documented above.
 
 The temporary fixture route was removed. Worktree disposition: preserved on `codex/CRE-2147-agent-worktree` at the assigned isolated path, with local evidence under `output/cre-2147/`; no push, merge, deploy or publish. Independent reviewer/coordinator owns promotion.
+
+## Coordinator privacy contrast correction
+
+An independent browser pass found the first-load privacy prompt's “Allow analytics” label was white on a near-white button after the route palette remap. The Agency-scoped primary privacy button now binds dark text to the operator foreground fill. Ego browser readback on the local preview returned foreground `oklch(0.205 0 0)` and background `oklch(0.985 0 0)` for that button; the contact submit button had the same legible pairing. Contact first viewport screenshots at 390×844 and 320×640 show no horizontal overflow. These are local preview checks, not deployed evidence.

@@ -94,6 +94,10 @@
   background: var(--color-operator-raised);
   color: var(--color-operator-foreground);
 }
+.agency-surface[data-canon-palette='operator'] .privacy-button:not(.privacy-button--ghost) {
+  background: var(--color-operator-foreground);
+  color: var(--color-operator-background);
+}
 .agency-surface[data-canon-palette='operator'] :is(.path-option.selected, .path-option:hover) {
   background: var(--color-operator-raised);
   border-color: var(--color-operator-focus-ring-accessible);
