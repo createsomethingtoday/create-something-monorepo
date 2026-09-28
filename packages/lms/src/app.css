@@ -310,3 +310,8 @@ body:has(.layout[data-canon-palette='operator'])::-webkit-scrollbar-thumb {
     animation-duration: 0s !important;
   }
 }
+
+/* Keep the current-property marker legible on the operator surface. */
+.layout[data-canon-palette='operator'] .mode-indicator .mode-item.active {
+  background: var(--color-operator-raised);
+}

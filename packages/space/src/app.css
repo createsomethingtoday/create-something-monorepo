@@ -350,3 +350,8 @@ body:has(.layout[data-canon-palette='operator'])::-webkit-scrollbar-thumb {
 .layout[data-canon-palette='operator'] .nav-clear :is(.nav-cta, .nav-menu-button) {
   border-radius: 8px;
 }
+
+/* Keep the current-property marker legible on the operator surface. */
+.layout[data-canon-palette='operator'] .mode-indicator .mode-item.active {
+  background: var(--color-operator-raised);
+}
