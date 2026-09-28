@@ -208,6 +208,7 @@ impl State {
 #[derive(Clone, Copy)]
 pub enum Event {
     Approved,
+    ApprovedDeviceRead,
     Declined,
     Starting,
     ChildrenStarted,
@@ -219,6 +220,7 @@ impl Event {
     fn name(self) -> &'static str {
         match self {
             Self::Approved => "approved",
+            Self::ApprovedDeviceRead => "approved_device_read",
             Self::Declined => "declined",
             Self::Starting => "starting",
             Self::ChildrenStarted => "children_started",

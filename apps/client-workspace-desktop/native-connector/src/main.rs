@@ -177,7 +177,7 @@ fn execute() -> Result<()> {
     )
     .map_err(|_| "approval_unavailable")?;
     if let Some(checkout) = &config.local_checkout {
-        writeln!(tty, "Local checkout: {}\nEditable roots: {}\nThe remote Codex can read this checkout while connected.",
+        writeln!(tty, "Local checkout: {}\nSandbox-writable roots: {}\nCodex can read any file this macOS account can read, including other projects and secrets. Only connect if this device-wide read access is authorized. Remote command escalation outside the listed roots is declined.",
             checkout.root.display(), checkout.editable_roots.join(", "))
             .map_err(|_| "approval_unavailable")?;
     }
@@ -192,7 +192,11 @@ fn execute() -> Result<()> {
         return Err("approval_declined");
     }
     state.ensure_enabled()?;
-    state.audit(Event::Approved)?;
+    state.audit(if config.local_checkout.is_some() {
+        Event::ApprovedDeviceRead
+    } else {
+        Event::Approved
+    })?;
     install_signals();
     let result = guarded_run(Path::new(&args[3]), &state);
     if result.is_err() {

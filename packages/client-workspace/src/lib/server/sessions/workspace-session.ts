@@ -11,19 +11,21 @@ export type WorkspaceSandboxPolicy = {
   type: 'workspaceWrite';
   writableRoots: string[];
   networkAccess: false;
+  excludeTmpdirEnvVar?: boolean;
+  excludeSlashTmp?: boolean;
 };
 
 export type StartThreadOptions = {
   cwd: string;
   model?: string;
-  approvalPolicy: 'untrusted';
+  approvalPolicy: 'untrusted' | 'on-request' | 'never';
   developerInstructions: string;
 };
 
 export type StartTurnOptions = {
   threadId: string;
   input: CodexUserInput[];
-  approvalPolicy: 'untrusted';
+  approvalPolicy: 'untrusted' | 'on-request' | 'never';
   sandboxPolicy: WorkspaceSandboxPolicy;
 };
 
@@ -233,6 +235,7 @@ stop for approval when a command or file change is outside the active policy.`;
 function workspaceDeveloperInstructions(workspace: Readonly<ResolvedWorkspaceDefinition>): string {
   if (workspace.preview.kind === 'none') {
     return `You are assisting with an explicitly enrolled client-owned checkout.
+The checkout is at ${workspace.sourceRoot}. Use this exact path for focused reads and checks.
 Read and edit only for the user's requested engineering task. Keep writes inside the declared editable roots.
 Do not deploy, publish, change credentials, access secrets, or mutate external systems.
 The Codex turn has network disabled. There is no browser preview for this checkout.
@@ -385,14 +388,18 @@ export class WorkspaceSession {
   async open(): Promise<WorkspaceSessionReceipt> {
     this.#assertOpen();
     if (this.#threadConnected) return this.receipt();
+    const cwd = this.#workspace.preview.kind === 'none'
+      ? this.#workspace.editableRoots[0]
+      : this.#workspace.sourceRoot;
+    const approvalPolicy = this.#workspace.preview.kind === 'none' ? 'on-request' : 'untrusted';
 
     if (this.#receipt.threadId) {
       const expectedThreadId = this.#receipt.threadId;
       const { threadId } = await this.#codex.resumeThread({
         threadId: expectedThreadId,
-        cwd: this.#workspace.sourceRoot,
+        cwd,
         writableRoots: [...this.#workspace.editableRoots],
-        approvalPolicy: 'untrusted',
+        approvalPolicy,
         developerInstructions: workspaceDeveloperInstructions(this.#workspace)
       });
       if (threadId !== expectedThreadId) throw new Error('codex_thread_identity_mismatch');
@@ -408,8 +415,8 @@ export class WorkspaceSession {
     }
 
     const { threadId } = await this.#codex.startThread({
-      cwd: this.#workspace.sourceRoot,
-      approvalPolicy: 'untrusted',
+      cwd,
+      approvalPolicy,
       developerInstructions: workspaceDeveloperInstructions(this.#workspace)
     });
     this.#receipt.threadId = threadId;
@@ -458,11 +465,14 @@ export class WorkspaceSession {
       const { turnId } = await this.#codex.startTurn({
         threadId: this.#receipt.threadId!,
         input,
-        approvalPolicy: 'untrusted',
+        approvalPolicy: this.#workspace.preview.kind === 'none' ? 'on-request' : 'untrusted',
         sandboxPolicy: {
           type: 'workspaceWrite',
           writableRoots: [...this.#workspace.editableRoots],
-          networkAccess: false
+          networkAccess: false,
+          ...(this.#workspace.preview.kind === 'none'
+            ? { excludeTmpdirEnvVar: true, excludeSlashTmp: true }
+            : {})
         }
       });
       this.#receipt.turnId = turnId;
@@ -557,13 +567,21 @@ export class WorkspaceSession {
     const params = asRecord(message.params);
     if (message.id !== undefined && message.method?.endsWith('/requestApproval')) {
       const kind = message.method.includes('fileChange') ? 'file' : 'command';
+      if (this.#workspace.preview.kind === 'none' && kind === 'command') {
+        this.#codex.respond(message.id, { decision: 'decline' });
+        this.#emit({ type: 'runtime.error', message: 'approval_scope_rejected', status: 'failed' });
+        void this.#persist();
+        return;
+      }
       const requestedPath = kind === 'file' ? params.grantRoot : params.cwd;
       const invalidScope =
-        requestedPath !== undefined &&
-        requestedPath !== null &&
-        (kind === 'file'
-          ? !pathWithinRoots(this.#workspace.editableRoots, requestedPath)
-          : !pathWithinRoots([this.#workspace.sourceRoot], requestedPath));
+        (this.#workspace.preview.kind === 'none' && kind === 'file' &&
+          (requestedPath === undefined || requestedPath === null)) ||
+        (requestedPath !== undefined &&
+          requestedPath !== null &&
+          (kind === 'file'
+            ? !pathWithinRoots(this.#workspace.editableRoots, requestedPath)
+            : !pathWithinRoots([this.#workspace.sourceRoot], requestedPath)));
       if (invalidScope) {
         this.#codex.respond(message.id, { decision: 'decline' });
         this.#emit({

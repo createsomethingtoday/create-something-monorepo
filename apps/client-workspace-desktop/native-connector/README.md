@@ -114,8 +114,19 @@ and nonempty relative `editable_roots` naming subdirectories. The connector
 checks the checkout and editable roots before starting children, then displays
 the path and roots during each local `CONNECT` approval. Browser input cannot
 choose or change those paths. The app has no browser preview for this checkout;
-it retains Codex sandbox, per-action approvals, focused diff, receipts and
-network-disabled turns. Managed-delivery reset/checkpoint/rollback endpoints
+it retains Codex sandbox, focused diff, receipts and
+network-disabled turns. Codex workspace-write permits reads anywhere the macOS
+user can read, including outside the checkout and secrets; the local approval
+discloses this device-wide read scope and the private audit records
+`approved_device_read`. The listed roots are sandbox-writable; command
+escalation requests are declined for this checkout. Session setup hashes noneditable files
+inside the checkout for integrity and copies editable roots into owner-only
+baseline state, so Grant must review the roots and available storage.
+Codex starts in the first listed editable root. That keeps its automatic
+writable cwd inside the approved scope while retaining repo-root AGENTS and
+project configuration discovery. Both default temporary-directory write grants
+are disabled for these turns.
+Managed-delivery reset/checkpoint/rollback endpoints
 reject this checkout so they cannot replace the client's source. A new root or
 editable scope changes the enrollment digest and requires reviewed migration.
 For Grantbot/GiGi, inspect Grant's actual canonical checkout and choose the
@@ -162,6 +173,7 @@ credentials, invalidate Access sessions or erase local Codex sign-in. Compromise
 rotation belongs to the credential owner's separate workflow.
 
 Owner-only `audit.jsonl` contains timestamps and fixed events: `approved`,
+`approved_device_read`,
 `declined`, `starting`, `children_started`, `stopped`, `failed`, `revoked`.
 `children_started` proves spawn, not Cloudflare connection. Audit failure prevents
 startup; run errors tear down owned children. Child stdout/stderr is discarded.
