@@ -1,3 +1,43 @@
+# Draw mobile control correction — current handoff
+
+Execution: [create-something Paperclip CRE-95](https://paperclip.createsomething.agency/CRE/issues/CRE-95). Canonical scope: [Linear CRE-2143](https://linear.app/create-something/issue/CRE-2143), which remains open for release QA.
+
+This is the bounded follow-up to [production QA CRE-94](https://paperclip.createsomething.agency/CRE/issues/CRE-94). Base: merged `80dc314b5a4163fc717735a02c7153043a7eaa31`. Branch: `codex/cre-2143-draw-mobile-controls`. Exact committed/pushed head and draft PR URL are recorded in the Paperclip handoff and PR work product. No engineer merge or deployment.
+
+## Correction and tradeoff
+
+- The selected toolbar and mark colors now share a mobile flex layout, with selected actions above the palette. The selected area can scroll when conversion or note-format controls expand; the palette retains its own space. Desktop absolute positioning and the existing inspector behavior are preserved.
+- At ≤820px the canvas keeps a 280px minimum height. On a short screen with the imported-project selector, the shell scrolls vertically rather than compressing the two control rows into each other. At 320×640 the lower drawing-tool row/footer may require scrolling. At 390×844 they fit. Selected buttons retain 44px touch height and the Canon focus ring; no new visual palette or motion.
+- The release workflow captures post-build/pre-deploy status, records the first 80 lines (240 characters each) in the job summary, asserts HEAD, and fails on either `git diff --exit-code` or `git diff --cached --exit-code` before invoking Wrangler. Untracked paths are reported and allowed. Manual main-only dispatch and credential handling remain unchanged.
+- Existing `.gitignore` already covers Canon `dist`, Draw `.svelte-kit`, and Canon's generated overlay-check declarations. Canon package and Draw build introduced no tracked changes in this worktree. This does not retrospectively establish the source of the previous CI dirty-worktree warning; the new gate will expose and reject tracked changes in future releases.
+
+Only Draw route markup/CSS, the deploy workflow, and this handoff changed. Client source/runtime, native connector, backend, security, credentials, and document/edit command logic were not edited. Prior `output/cre-2143/production-80dc/` evidence is preserved.
+
+## Verification for this correction
+
+| Check | Result |
+| --- | --- |
+| Worktree bootstrap | Completed with pinned Node22.21.1/pnpm9.15.0 before checks. The wrapper could not resolve tools because the managed Bash startup resets PATH; sourced the existing `.ona/scripts/bootstrap.sh` entrypoint after adding the pinned toolchain to PATH. No bootstrap or runtime-policy source changes. |
+| Draw `check` | 0 errors, 0 warnings. |
+| Draw `test` | 331/331 tests across29 files. |
+| Draw `build` | Passed with Cloudflare adapter. |
+| Canon `package` | Passed, including publint; no tracked generated delta. |
+| Workflow guard execution | Five disposable-repository cases passed: exact checkout and untracked output allowed; unstaged source change, staged source change, and wrong HEAD rejected. No deploy invoked. |
+| `git diff --check` | Passed. |
+| Actual browser | Ego Chromium152, built local preview `http://127.0.0.1:5196/`, 320×640,390×844,1440×900. Imported preserved disposable QA JSON through the real file input twice to expose the project selector; selected rectangle through Layers. No injected DOM/application state or mocked responses. |
+| Pointer matrix | 42 successful center hit-tests across three viewports, including all five swatches with conversion closed/open, Convert, and Note/Group conversion actions.15 actual swatch clicks updated pressed state. No horizontal overflow in measured shell widths. |
+| Keyboard/actions | Tab reached Amber from Chalk; Tab traversed Note/Group with visible2px Canon focus rings. All eight note-format buttons and Restore source were focusable and center-hit-testable at320. Actual Enter conversion to Note at320 and Group at390, then Restore source, passed. Desktop inspector rendered; resizing to320 closed it and returned focus to Layers. Escape from the mobile inspector did the same. Reduced-motion layout retained separate rows. |
+
+Rendered evidence and executable browser matrix are preserved under `output/cre-2143/mobile-controls-*`: selected/conversion screenshots for320/390/1440, fitted canvas screenshots, desktop inspector screenshot, hit-test JSON, action/focus JSON, bounded browser diagnostics, source-guard cases, and focused check/test/build/package logs. The browser space was closed after validation; the local preview is stopped at handoff.
+
+Console: the same empty CSS-color input warning reported by production QA remains. The bounded reload capture found no runtime exception/error-level console message or failed request; all observed immutable asset responses were200. This is local Chromium emulation evidence, not a deployment or physical-phone acceptance claim.
+
+Remaining: independent source/UI review, coordinator-owned merge and manual release, then exact-release production QA at320/390. Review should explicitly assess the short-screen vertical-scroll tradeoff. No unrelated monorepo or client tests rerun.
+
+Worktree disposition: retained at `/private/tmp/cre-2143-paperclip-ui` on `codex/cre-2143-draw-mobile-controls` for review/release. Existing evidence is retained untracked and must not be cleaned.
+
+---
+
 # CRE-2143 implementation handoff
 
 Canonical scope: [Linear CRE-2143](https://linear.app/create-something/issue/CRE-2143).

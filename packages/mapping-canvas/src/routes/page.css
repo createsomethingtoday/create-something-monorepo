@@ -173,7 +173,37 @@ svg .agent-camera{transition:transform 420ms cubic-bezier(.22,1,.36,1)}
   .cs-workspace .statusbar { gap: var(--workspace-gap-small); }
   .cs-workspace .statusbar .object-count { display: none; }
   .cs-workspace .shortcuts-trigger { min-height: 44px; }
-  .cs-workspace .selection { max-height: 40%; overflow-y: auto; }
+  /* Short screens scroll the shell instead of compressing controls over one another. */
+  .app-shell.cs-workspace { overflow-y: auto; }
+  .cs-workspace .workbench { min-height: 388px; }
+  .cs-workspace .canvas-frame { min-height: 280px; }
+  .cs-workspace .mark-controls {
+    position: absolute;
+    inset: 116px 8px 8px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    gap: var(--workspace-gap-small);
+    pointer-events: none;
+  }
+  .cs-workspace .mark-controls .selection,
+  .cs-workspace .mark-controls .palette {
+    position: static;
+    transform: none;
+    width: 100%;
+    max-width: none;
+    pointer-events: auto;
+  }
+  .cs-workspace .mark-controls .selection {
+    min-height: 0;
+    max-height: none;
+    flex: 0 1 auto;
+    overflow-y: auto;
+    /* Keep controls at their touch size when a conversion menu needs scrolling. */
+    align-content: flex-start;
+  }
+  .cs-workspace .mark-controls .selection button { min-height: 44px; flex-shrink: 0; }
+  .cs-workspace .mark-controls .palette { flex: 0 0 auto; }
   .cs-workspace.native-shell .topbar { grid-template-columns: minmax(0,1fr); grid-template-rows: auto auto; }
   .cs-workspace.native-shell .title-area { flex-wrap: nowrap; }
   .cs-workspace.native-shell .project-title { flex-basis: auto; }
