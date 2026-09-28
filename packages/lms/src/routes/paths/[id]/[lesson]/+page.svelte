@@ -507,8 +507,8 @@
   }
 
   .btn-primary:hover:not(:disabled) {
-    background: #1a2030;
-    border-color: #1a2030;
+    background: var(--color-performance-muted);
+    border-color: var(--color-performance-muted);
   }
 
   .btn-primary:disabled {
@@ -542,6 +542,27 @@
     color: var(--color-success);
     font-size: var(--text-body);
     margin-bottom: var(--space-md);
+  }
+
+  @media (max-width: 640px) {
+    .lesson-nav {
+      grid-template-columns: minmax(0, 1fr);
+      gap: var(--space-sm);
+    }
+
+    .lesson-nav > [aria-hidden] {
+      display: none;
+    }
+
+    .completion-section {
+      flex-direction: column;
+      align-items: stretch;
+      gap: var(--space-sm);
+    }
+
+    .btn-secondary {
+      margin-left: 0;
+    }
   }
 
   .text-right {
