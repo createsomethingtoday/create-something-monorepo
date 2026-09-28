@@ -195,6 +195,9 @@ body:has(.ltd-operator-public) {
 .ltd-operator-hero__actions { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 1.5rem; }
 .ltd-operator-hero__actions :is(a, button) { min-height: 2.75rem; }
 .property-performance.ltd-operator-public .btn { border-radius: 8px; }
+.property-performance.ltd-operator-public :is(a.btn-primary, a.property-funnel__button--primary):hover {
+  opacity: 1;
+}
 .property-performance.ltd-operator-public :is(.property-funnel__button, .newsletter-section .submit-button, .newsletter-section input[type='email']) {
   border-radius: 8px;
 }
