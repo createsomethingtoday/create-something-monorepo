@@ -41,7 +41,7 @@ fi
 }
 /sbin/pfctl -nf "$rule_file" >/dev/null
 boot_id="$(/usr/sbin/sysctl -n kern.bootsessionuuid)"
-[[ "$boot_id" =~ '^[A-Fa-f0-9-]{36}$' ]] || { print -u2 'Could not read boot identity.'; exit 1; }
+[[ "$boot_id" =~ '^[A-Fa-f0-9]{8}-[A-Fa-f0-9]{4}-[A-Fa-f0-9]{4}-[A-Fa-f0-9]{4}-[A-Fa-f0-9]{12}$' ]] || { print -u2 'Could not read boot identity.'; exit 1; }
 
 verify_rules() {
   local current

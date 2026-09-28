@@ -20,10 +20,10 @@ plist='/Library/LaunchDaemons/agency.createsomething.papercliprunner.pf.plist'
 anchor='com.apple/papercliprunner-browser-boundary'
 expected_tcp='block drop out quick on lo0 proto tcp all user = 504'
 expected_udp='block drop out quick on lo0 proto udp all user = 504'
-expected_guard_hash='f1ae9ccc0e5938ae03488cc9d6b48468ac8391df4773b613a39f4f89048225ad'
+expected_guard_hash='67efc4e30ea49caf9b4ab6b1384983f811b9eee6dca7f8e6a49cea3bfe9d044a'
 expected_rule_hash='9919aef0cca3bd274cae3db30159af8df46d1fbbf9354db373ad18ed1700b705'
 expected_plist_hash='27142a209b377f036e7a1171dc6a3e2ad534f8fdc8671678a618c5f8d2d15e45'
-expected_remove_hash='81a3bb6deabb2380ceea167cd8d044363eba0351bfa5fa8a7571feb88a8f78c6'
+expected_remove_hash='e078c3cc06cff2c19028f81c64a1e2e4dbc0567b9f348c6f147babb450a6c87d'
 
 hash_file() { /usr/bin/shasum -a 256 "$1" | /usr/bin/awk '{print $1}'; }
 [[ "$(hash_file "$source_dir/paperclip-runner-pf-guard.zsh")" == "$expected_guard_hash" ]] || { print -u2 'Reviewed PF guard hash mismatch.'; exit 1; }
@@ -44,6 +44,11 @@ fi
 zsh -n "$source_dir/paperclip-runner-pf-guard.zsh"
 /sbin/pfctl -nf "$source_dir/paperclip-runner-pf.rules" >/dev/null
 /usr/bin/plutil -lint "$source_dir/agency.createsomething.papercliprunner.pf.plist" >/dev/null
+runner_environment_status="$(/usr/bin/curl --noproxy '*' -fsS --max-time 3 http://127.0.0.1:3101/api/environments/8da4aa7c-eecc-4f39-a6fc-67368e209834 | /usr/bin/python3 -c 'import json,sys; d=json.load(sys.stdin); print(d.get("status") if d.get("id")=="8da4aa7c-eecc-4f39-a6fc-67368e209834" else "invalid")')"
+[[ "$runner_environment_status" == 'archived' ]] || {
+  print -u2 'Archive the restricted Paperclip environment before installing PF; this fences new runs during rollback.'
+  exit 1
+}
 [[ "$(/usr/bin/curl --noproxy '*' -fsS --max-time 3 --output /dev/null --write-out '%{http_code}' http://127.0.0.1:3101/api/companies)" == '200' ]] || {
   print -u2 'Host Paperclip positive control failed; stopping before PF install.'
   exit 1
