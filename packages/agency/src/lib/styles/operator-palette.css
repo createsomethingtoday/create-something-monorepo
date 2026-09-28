@@ -137,3 +137,62 @@
 @media (prefers-reduced-motion: reduce) {
   .agency-surface[data-canon-palette='operator'] .map-preview__rail span { animation: none; }
 }
+
+/* Public operator pages keep the existing page spine, proof and actions. The
+   opening presents the workflow first; campaign media is supporting material. */
+.agency-surface[data-canon-palette='operator'] .performance-campaign-opening {
+  background: var(--color-operator-background);
+  color: var(--color-operator-foreground);
+  min-height: auto;
+}
+.agency-surface[data-canon-palette='operator'] .performance-campaign-opening__media {
+  opacity: 0.12;
+  filter: grayscale(1);
+}
+.agency-surface[data-canon-palette='operator'] .performance-campaign-opening__grid { display: none; }
+.agency-surface[data-canon-palette='operator'] .performance-campaign-opening__content {
+  gap: var(--space-xl);
+  padding-block: clamp(7rem, 12vw, 9rem) var(--space-xl);
+}
+.agency-surface[data-canon-palette='operator'] .performance-campaign-opening h1 {
+  font-family: var(--font-performance-sans);
+  font-size: clamp(2rem, 4.5vw, 4.5rem);
+  line-height: 1.08;
+  max-width: 22ch;
+}
+.agency-surface[data-canon-palette='operator'] {
+  --font-performance-editorial: var(--font-performance-sans);
+  --color-performance-growth: var(--color-operator-status-done-text);
+  --color-performance-risk: var(--color-operator-status-blocked-text);
+}
+.agency-surface[data-canon-palette='operator'] .practice-preview-boundary {
+  background: var(--color-operator-secondary);
+  color: var(--color-operator-foreground);
+}
+.agency-surface[data-canon-palette='operator'] .practice-workbench h2,
+.agency-surface[data-canon-palette='operator'] .practice-workbench__chapter h3,
+.agency-surface[data-canon-palette='operator'] .practice-receipt h3 {
+  font-size: clamp(1.75rem, 3vw, 3rem);
+  line-height: 1.1;
+  max-width: 24ch;
+}
+.agency-surface[data-canon-palette='operator'] .practice-workbench {
+  overflow-wrap: anywhere;
+}
+@media (max-width: 720px) {
+  .agency-surface[data-canon-palette='operator'] .practice-workbench button { min-height: 44px; }
+}
+.agency-surface[data-canon-palette='operator'] .performance-campaign-opening[data-expression='editorial'] {
+  grid-template-rows: auto;
+  min-height: auto;
+}
+.agency-surface[data-canon-palette='operator'] .performance-campaign-opening[data-expression='editorial'] .performance-campaign-opening__content h1 {
+  font-family: var(--font-performance-sans);
+  font-size: clamp(2rem, 4.5vw, 4.5rem);
+  line-height: 1.08;
+  max-width: 22ch;
+}
+.agency-surface[data-canon-palette='operator'] .performance-campaign-opening[data-expression='editorial'] .performance-campaign-opening__content header {
+  width: min(100%, 48rem);
+  max-width: 48rem;
+}

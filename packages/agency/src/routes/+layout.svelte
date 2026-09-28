@@ -21,9 +21,11 @@
   } from '$lib/atlas/surface-policy';
   import { marketingPagePortfolio } from '$lib/data/marketingPages';
 
+  import { usesAgencyOperatorPalette } from '$lib/data/publicSurfacePolicy';
+
   let { children, data } = $props();
   const usesOperatorPalette = $derived(
-    ['/', '/products', '/services', '/contact', '/book', '/map/workspace'].includes($page.url.pathname)
+    usesAgencyOperatorPalette($page.url.pathname)
   );
   let mobileNavigationOpen = $state(false);
 
