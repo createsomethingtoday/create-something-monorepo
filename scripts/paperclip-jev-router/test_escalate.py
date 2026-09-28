@@ -151,8 +151,8 @@ class EscalationTests(unittest.TestCase):
             def __init__(self):
                 self.patches = []
             def get(self, path):
-                if path == "/api/companies":
-                    return [{"id": escalate.CANONICAL_COMPANY_ID, "name": escalate.CANONICAL_COMPANY_NAME}]
+                if path == f"/api/companies/{escalate.CANONICAL_COMPANY_ID}":
+                    return {"id": escalate.CANONICAL_COMPANY_ID, "name": escalate.CANONICAL_COMPANY_NAME}
                 if path.endswith("/agents"):
                     return list(data["agents"].values())
                 if "/issues?" in path:

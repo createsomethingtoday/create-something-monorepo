@@ -263,8 +263,8 @@ class Paperclip:
 def scan(api, *, company_id, board_user_id, jev_agent_id, controller_agent_id, now, apply):
     if company_id != CANONICAL_COMPANY_ID:
         raise ValueError("controller is not bound to the canonical company")
-    companies = api.get("/api/companies")
-    if not isinstance(companies, list) or not any(item.get("id") == CANONICAL_COMPANY_ID and item.get("name") == CANONICAL_COMPANY_NAME for item in companies):
+    company = api.get(f"/api/companies/{CANONICAL_COMPANY_ID}")
+    if not isinstance(company, dict) or company.get("id") != CANONICAL_COMPANY_ID or company.get("name") != CANONICAL_COMPANY_NAME:
         raise ValueError("canonical Paperclip instance identity unavailable")
     summary = {"scanned": 0, "eligible": 0, "escalated": 0, "held": 0, "dryRun": not apply}
     agents = {item["id"]: item for item in api.get(f"/api/companies/{company_id}/agents")}
