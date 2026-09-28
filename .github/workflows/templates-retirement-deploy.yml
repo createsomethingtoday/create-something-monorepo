@@ -35,6 +35,7 @@ jobs:
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
         with:
           node-version-file: .nvmrc
+          package-manager-cache: false
       - name: Build and verify dependency-free retirement surface
         run: |
           node packages/templates-retirement/build.mjs
