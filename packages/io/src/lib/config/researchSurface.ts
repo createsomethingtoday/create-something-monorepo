@@ -1,4 +1,4 @@
-/** Public reading/navigation shell; keep legal, transactions, auth and interactive tools separate. */
+/** Public reading/navigation shell; keep transactions, auth and interactive tools separate. */
 export function isIoResearchSurface(pathname: string, routeId: string | null): boolean {
 	return (
 		[
@@ -8,6 +8,10 @@ export function isIoResearchSurface(pathname: string, routeId: string | null): b
 			'/plugins',
 			'/methodology',
 			'/about',
+			'/contact',
+			'/subscribe',
+			'/privacy',
+			'/terms',
 			'/categories',
 			'/graph',
 			'/newsletters',
