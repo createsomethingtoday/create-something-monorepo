@@ -1,5 +1,6 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
+import { renderContactResponse, renderContactNotification } from './email';
 import { contactSchema, parseBody, type ContactInput } from '@create-something/canon/validation';
 import {
 	recordServerConversion,
@@ -30,15 +31,6 @@ function resolveLeadStage(intent: string | undefined): ContactLeadStage {
 		default:
 			return 'consideration';
 	}
-}
-
-function escapeHtml(value: string | null | undefined): string {
-	return (value ?? '')
-		.replace(/&/g, '&amp;')
-		.replace(/</g, '&lt;')
-		.replace(/>/g, '&gt;')
-		.replace(/"/g, '&quot;')
-		.replace(/'/g, '&#39;');
 }
 
 export const POST: RequestHandler = async ({ request, platform }) => {
@@ -169,34 +161,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 				from: 'CREATE SOMETHING Agency <noreply@workway.co>',
 				to: email,
 				subject: service ? `Re: ${service} Inquiry` : 'Thanks for reaching out',
-				html: `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <style>
-    body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #000000; color: #ffffff; }
-    .container { max-width: 600px; margin: 0 auto; padding: 40px 20px; }
-    .content { line-height: 1.8; }
-    .message-box { background-color: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 20px; margin: 30px 0; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="content">
-      <h1>Thanks for reaching out</h1>
-      <p>Hi ${name},</p>
-      <p>I've received your inquiry${service ? ` about ${escapeHtml(service)}` : ''} and will get back to you within 24 hours to scope your first outcome stack.</p>
-      <div class="message-box">
-        ${service ? `<p style="color: rgba(255, 255, 255, 0.4); font-size: 14px; margin-bottom: 10px;">Service: ${escapeHtml(service)}</p>` : ''}
-        <p style="color: rgba(255, 255, 255, 0.4); font-size: 14px; margin-bottom: 10px;">Next step: ${escapeHtml(intent)} / ${escapeHtml(lane)}</p>
-        <p style="color: rgba(255, 255, 255, 0.4); font-size: 14px; margin-bottom: 10px;">Your Message:</p>
-        <p style="color: rgba(255, 255, 255, 0.9);">${escapeHtml(message).replace(/\n/g, '<br>')}</p>
-      </div>
-      <p>— Micah Johnson<br>CREATE SOMETHING Agency</p>
-    </div>
-  </div>
-</body>
-</html>`
+				html: renderContactResponse({ name, message, service, intent, lane })
 			})
 		});
 
@@ -212,33 +177,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 				to: 'micah@createsomething.io',
 				replyTo: email,
 				subject: service ? `Service Inquiry: ${service} from ${name}` : `New Contact Form Submission from ${name}`,
-				html: `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <style>
-    body { font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; }
-    .header { background: #000; color: #fff; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
-    .content { background: #f5f5f5; padding: 20px; border-radius: 8px; }
-  </style>
-</head>
-<body>
-  <div class="header">
-    <h2>${service ? `Service Inquiry: ${service}` : 'New Contact Form Submission'}</h2>
-  </div>
-  <div class="content">
-    <p><strong>From:</strong> ${escapeHtml(name)} (${escapeHtml(email)})</p>
-    ${company ? `<p><strong>Company:</strong> ${escapeHtml(company)}</p>` : ''}
-    ${service ? `<p><strong>Service:</strong> ${escapeHtml(service)}</p>` : ''}
-    <p><strong>Intent:</strong> ${escapeHtml(intent)}</p>
-    <p><strong>Lane:</strong> ${escapeHtml(lane)}</p>
-    <p><strong>Lead stage:</strong> ${leadStage}</p>
-    ${campaign ? `<p><strong>Campaign:</strong> ${escapeHtml(campaign)}</p>` : ''}
-    <p><strong>Message:</strong><br>${escapeHtml(message).replace(/\n/g, '<br>')}</p>
-    <p><strong>Submitted:</strong> ${new Date().toUTCString()}</p>
-  </div>
-</body>
-</html>`
+				html: renderContactNotification({ name, email, message, service, company, intent, lane, leadStage, campaign, submittedAt: new Date().toUTCString() })
 			})
 		});
 
