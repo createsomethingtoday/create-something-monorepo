@@ -260,7 +260,7 @@ class Paperclip:
         return self.request("PATCH", path, body)
 
 
-def scan(api, *, company_id, board_user_id, jev_agent_id, controller_agent_id, now, apply):
+def scan(api, *, company_id, board_user_id, jev_agent_id, controller_agent_id, now, apply, assignment_now=None):
     if company_id != CANONICAL_COMPANY_ID:
         raise ValueError("controller is not bound to the canonical company")
     company = api.get(f"/api/companies/{CANONICAL_COMPANY_ID}")
@@ -301,9 +301,13 @@ def scan(api, *, company_id, board_user_id, jev_agent_id, controller_agent_id, n
                 if not apply:
                     continue
                 fresh_issue = api.get(f"/api/issues/{issue_id}")
-                current_policy(fresh_issue, policy)
-                if fresh_issue.get("status") != "in_review" or fresh_issue.get("assigneeAgentId") != policy["verifierAgentId"]:
-                    raise ValueError("issue changed before fallback assignment")
+                fresh_comments = api.get(f"/api/issues/{issue_id}/comments?limit=500")
+                fresh_runs = api.get(f"/api/issues/{issue_id}/runs")
+                fresh_agents = {agent["id"]: agent for agent in api.get(f"/api/companies/{company_id}/agents")}
+                fresh_source_events = api.get(f"/api/heartbeat-runs/{decision['sourceRunId']}/events?limit=500")
+                refreshed = evaluate(fresh_issue, policy, fresh_comments, fresh_runs, fresh_agents, fresh_source_events, assignment_now or datetime.now(timezone.utc), board_user_id=board_user_id, jev_agent_id=jev_agent_id, controller_agent_id=controller_agent_id)
+                if refreshed != decision:
+                    raise ValueError("escalation evidence changed before fallback assignment")
                 if api.get(f"/api/issues/{issue_id}/live-runs"):
                     raise ValueError("issue gained a live run before fallback assignment")
                 # One assignment and its durable comment are written in the same Paperclip issue mutation.

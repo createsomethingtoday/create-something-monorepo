@@ -170,7 +170,7 @@ class EscalationTests(unittest.TestCase):
                 self.patches.append(body)
                 return {"assigneeAgentId": body["assigneeAgentId"]}
         api = FakeAPI()
-        kwargs = {"company_id": escalate.CANONICAL_COMPANY_ID, "board_user_id": data["board_user_id"], "jev_agent_id": data["jev_agent_id"], "controller_agent_id": data["controller_agent_id"], "now": data["now"]}
+        kwargs = {"company_id": escalate.CANONICAL_COMPANY_ID, "board_user_id": data["board_user_id"], "jev_agent_id": data["jev_agent_id"], "controller_agent_id": data["controller_agent_id"], "now": data["now"], "assignment_now": data["now"]}
         self.assertEqual(escalate.scan(api, apply=False, **kwargs)["eligible"], 1)
         self.assertEqual(api.patches, [])
         result = escalate.scan(api, apply=True, **kwargs)
@@ -179,6 +179,9 @@ class EscalationTests(unittest.TestCase):
         uuid.UUID(api.patches[0]["commentClientRequestId"])
         with self.assertRaisesRegex(ValueError, "canonical company"):
             escalate.scan(api, apply=False, **{**kwargs, "company_id": ident(20)})
+        expired = escalate.scan(api, apply=True, **{**kwargs, "assignment_now": datetime(2026, 9, 30, tzinfo=timezone.utc)})
+        self.assertEqual(expired["held"], 1)
+        self.assertEqual(len(api.patches), 1)
 
     def test_scan_holds_if_live_run_starts_before_assignment(self):
         data = fixture()
@@ -207,7 +210,7 @@ class EscalationTests(unittest.TestCase):
                 self.patches.append(body)
                 return {"assigneeAgentId": body["assigneeAgentId"]}
         api = RacingAPI()
-        result = escalate.scan(api, company_id=escalate.CANONICAL_COMPANY_ID, board_user_id=data["board_user_id"], jev_agent_id=data["jev_agent_id"], controller_agent_id=data["controller_agent_id"], now=data["now"], apply=True)
+        result = escalate.scan(api, company_id=escalate.CANONICAL_COMPANY_ID, board_user_id=data["board_user_id"], jev_agent_id=data["jev_agent_id"], controller_agent_id=data["controller_agent_id"], now=data["now"], assignment_now=data["now"], apply=True)
         self.assertEqual(result["escalated"], 0)
         self.assertEqual(result["held"], 1)
         self.assertEqual(api.patches, [])
