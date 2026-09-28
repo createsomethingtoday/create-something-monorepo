@@ -47,7 +47,7 @@
   .paths-shell {
     width: min(56rem, calc(100% - 2.5rem));
     margin-inline: auto;
-    padding: clamp(3rem, 8vw, 5rem) 0;
+    padding: clamp(1.75rem, 4vw, 2.5rem) 0;
     color: var(--color-performance-ink, #090909);
   }
 
@@ -76,7 +76,7 @@
     max-width: 12ch;
     margin: 0;
     color: var(--color-performance-ink, #090909);
-    font-size: var(--text-h1);
+    font-size: clamp(2rem, 4vw, 3.25rem);
     font-weight: var(--font-medium);
     line-height: 1.02;
     letter-spacing: 0;

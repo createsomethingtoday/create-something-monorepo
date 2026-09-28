@@ -56,14 +56,14 @@
   .path-shell {
     width: min(56rem, calc(100% - 2.5rem));
     margin-inline: auto;
-    padding: clamp(3rem, 8vw, 5.25rem) 0 clamp(4rem, 8vw, 6rem);
+    padding: clamp(1.75rem, 4vw, 2.5rem) 0;
     color: var(--color-performance-ink, #090909);
   }
 
   .path-hero {
     display: grid;
     gap: var(--space-md);
-    margin-bottom: clamp(3rem, 7vw, 5rem);
+    margin-bottom: 2rem;
   }
 
   .path-kicker {
@@ -101,7 +101,7 @@
     max-width: 12ch;
     margin: 0;
     color: var(--color-performance-ink, #090909);
-    font-size: clamp(2rem, 6vw, 3.5rem);
+    font-size: clamp(2rem, 4vw, 3.25rem);
     font-weight: var(--font-medium);
     line-height: 0.98;
     letter-spacing: 0;
@@ -136,7 +136,7 @@
     border-radius: var(--radius-performance-sm, 4px);
     border: 1px solid var(--color-performance-ink, #090909);
     background: var(--color-performance-ink, #090909);
-    color: #ffffff;
+    color: var(--color-performance-paper);
     font-size: var(--text-body);
     font-weight: var(--font-medium);
   }
@@ -155,6 +155,10 @@
     font-size: var(--text-h2);
     font-weight: var(--font-medium);
     margin-bottom: var(--space-lg);
+  }
+
+  .path-shell section {
+    padding-block: 0 2rem;
   }
 
   .lesson-collection {

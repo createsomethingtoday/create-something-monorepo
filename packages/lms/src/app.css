@@ -15,6 +15,7 @@
 @import '@create-something/canon/styles/buttons.css';
 @import '@create-something/canon/styles/cards.css';
 @import '@create-something/canon/styles/interactions.css';
+@import '@create-something/canon/styles/operator.css';
 
 /* Tailwind CSS directives */
 @tailwind base;
@@ -38,6 +39,94 @@
   --color-path-systems: #6366f1;
   --color-path-partnership: #a855f7;
   --color-path-advanced: #ef4444;
+}
+
+/* Shared public reading palette. Protected workflow behavior is untouched. */
+.layout[data-canon-palette='operator'] {
+  --color-performance-paper: var(--color-operator-background);
+  --color-performance-panel: var(--color-operator-secondary);
+  --color-performance-court: var(--color-operator-raised);
+  --color-performance-ink: var(--color-operator-foreground);
+  --color-performance-ink-soft: var(--color-operator-muted);
+  --color-performance-muted: var(--color-operator-muted);
+  --color-performance-line: var(--color-operator-border);
+  --color-performance-line-strong: var(--color-operator-input-border);
+  --color-performance-fg-primary: var(--color-operator-foreground);
+  --color-performance-fg-secondary: var(--color-operator-muted);
+  --color-performance-fg-tertiary: var(--color-operator-muted);
+  --color-performance-fg-muted: var(--color-operator-muted);
+  --color-performance-border-default: var(--color-operator-border);
+  --color-performance-border-emphasis: var(--color-operator-input-border);
+  --color-performance-shell-surface: var(--color-operator-secondary);
+  --color-performance-shell-surface-secondary: var(--color-operator-secondary);
+  --color-performance-shell-surface-tertiary: var(--color-operator-raised);
+  --color-performance-shell-surface-hover: var(--color-operator-raised);
+  --color-performance-shell-border-default: var(--color-operator-border);
+  --color-performance-shell-border-strong: var(--color-operator-input-border);
+  --color-performance-signal: var(--color-operator-focus-ring-accessible);
+  --color-bg-pure: var(--color-operator-background);
+  --color-bg-elevated: var(--color-operator-secondary);
+  --color-bg-surface: var(--color-operator-secondary);
+  --color-fg-primary: var(--color-operator-foreground);
+  --color-fg-secondary: var(--color-operator-muted);
+  --color-fg-muted: var(--color-operator-muted);
+  --color-border-default: var(--color-operator-border);
+  color: var(--color-operator-foreground);
+  color-scheme: dark;
+}
+
+.layout[data-canon-palette='operator'] :is(h1, h2, h3) {
+  font-family: var(--font-performance-sans);
+}
+
+.layout[data-canon-palette='operator'] :is(input, select, textarea) {
+  color-scheme: dark;
+}
+
+.layout[data-canon-palette='operator'] .nav-logo-text {
+  color: var(--color-operator-foreground) !important;
+}
+
+.layout[data-canon-palette='operator'] .nav-logo-suffix {
+  color: var(--color-operator-muted) !important;
+}
+
+.layout[data-canon-palette='operator'] .nav-clear,
+.layout[data-canon-palette='operator'] .nav-clear.nav-fixed {
+  background: var(--color-operator-secondary);
+  border-bottom: 1px solid var(--color-operator-border);
+  color: var(--color-operator-foreground);
+  backdrop-filter: none;
+}
+
+.layout[data-canon-palette='operator'] .nav-clear .nav-cta {
+  background: var(--color-operator-foreground);
+  color: var(--color-operator-background);
+  border-color: var(--color-operator-foreground);
+}
+
+.layout[data-canon-palette='operator'] .nav-menu-button {
+  flex: 0 0 2.75rem;
+}
+
+.layout[data-canon-palette='operator'] .privacy-page section {
+  padding-block: 0;
+}
+
+.layout[data-canon-palette='operator'] .privacy-page .policy-section {
+  margin-bottom: 2rem;
+}
+
+@media (max-width: 360px) {
+  .layout[data-canon-palette='operator'] .nav-logo {
+    min-width: 0;
+  }
+  .layout[data-canon-palette='operator'] .nav-logo-text {
+    font-size: 0.75rem !important;
+  }
+  .layout[data-canon-palette='operator'] .nav-logo-suffix {
+    font-size: 0.58rem !important;
+  }
 }
 
 .skip-to-content {

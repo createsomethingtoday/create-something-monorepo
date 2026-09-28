@@ -27,16 +27,6 @@
         >
       </div>
     </div>
-    <figure>
-      <img
-        src="/images/workshop/open-workshop.webp"
-        alt="Ivory modules lift from a machined docking rail, a material study of tools made for reuse."
-        width="1536"
-        height="1024"
-        fetchpriority="high"
-      />
-      <figcaption class="eyebrow">Study 01 / Made to be taken apart</figcaption>
-    </figure>
   </section>
   <section class="section wrap" aria-labelledby="selected-title">
     <div class="section-head">
@@ -52,6 +42,10 @@
           {index}
         />{/each}
     </div>
+    <figure class="material-study">
+      <img src="/images/workshop/open-workshop.webp" alt="Ivory modules lift from a machined docking rail, a material study of tools made for reuse." width="1536" height="1024" loading="lazy" />
+      <figcaption class="eyebrow">Study 01 / Made to be taken apart</figcaption>
+    </figure>
   </section>
   <section class="workbench section" aria-labelledby="workbench-title">
     <div class="wrap workbench__grid">
@@ -93,46 +87,48 @@
 
 <style>
   .opening {
+    display: block;
     padding: 0;
-    display: grid;
-    grid-template-columns: 1fr 1.12fr;
-    background: var(--color-performance-ink, #090909);
-    color: var(--color-performance-paper, #f3f3f0);
-    min-height: 540px;
+    border-bottom: 1px solid var(--color-performance-line);
+    background: var(--color-performance-paper);
+    color: var(--color-performance-ink);
   }
   .opening__copy {
-    padding: clamp(2.75rem, 5vw, 5rem) clamp(1rem, 4vw, 4rem);
-    align-self: center;
+    width: min(1280px, calc(100% - 2 * var(--space-performance-lg)));
+    margin-inline: auto;
+    padding: clamp(1.75rem, 4vw, 3rem) 0;
   }
   .opening .eyebrow {
-    color: var(--color-performance-paper, #f3f3f0);
-    margin-bottom: 2.5rem;
-    opacity: 0.75;
+    color: var(--color-performance-muted);
+    margin-bottom: 0.75rem;
   }
   .opening .lead {
-    margin-top: 2rem;
-    color: var(--color-performance-paper);
-    max-width: 31rem;
+    margin-top: 1rem;
+    color: var(--color-performance-muted);
+    max-width: 42rem;
   }
   .opening .primary {
-    background: var(--color-performance-paper, #f3f3f0);
-    color: var(--color-performance-ink, #090909);
+    background: var(--color-performance-ink);
+    color: var(--color-performance-paper);
   }
-  figure {
+  .material-study {
     position: relative;
     min-width: 0;
-    margin: 0;
+    margin: 1.5rem 0 0;
+    max-width: 38rem;
   }
-  figure img {
+  .material-study img {
     width: 100%;
-    height: 100%;
+    height: auto;
+    max-height: 15rem;
     object-fit: cover;
+    border-radius: 8px;
   }
   figcaption {
     position: absolute;
     bottom: 1.5rem;
     left: 1.5rem;
-    background: rgba(9, 9, 9, 0.8);
+    background: var(--color-performance-paper);
     padding: 0.5rem 0.75rem;
     margin: 0 !important;
   }
@@ -176,15 +172,9 @@
     max-width: 1280px;
   }
   @media (max-width: 900px) {
-    .opening {
-      padding: 0;
-      grid-template-columns: 1fr;
-    }
     .opening__copy {
-      padding: var(--space-performance-lg) var(--space-performance-sm);
-    }
-    figure {
-      height: min(70vw, 520px);
+      width: calc(100% - 2 * var(--space-performance-sm));
+      padding: 1.5rem 0;
     }
     .workbench__grid {
       grid-template-columns: 1fr;

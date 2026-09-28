@@ -175,7 +175,7 @@
 
   <a class="skip-link" href="#main-content">Skip to content</a>
 
-  <div class="layout property-performance">
+  <div class="layout property-performance" data-canon-palette="operator">
     <Navigation
       logo="CREATE SOMETHING"
       logoSuffix=".space"
@@ -190,7 +190,7 @@
       ctaLabel="GitHub"
       ctaHref="https://github.com/createsomethingtoday"
       showLogin={false}
-      visualStyle="editorial"
+      visualStyle="performance"
       onMobileMenuChange={(open) => (mobileNavigationOpen = open)}
     />
 
@@ -209,7 +209,7 @@
         { label: 'Workbench', href: '/workbench' }
       ]}
       showSocial={true}
-      visualStyle="editorial"
+      visualStyle="performance"
       brandAsset={{
         src: '/brand/create-something-footer-white.svg',
         label: 'CREATE SOMETHING .space'
@@ -240,7 +240,7 @@
   }
   .layout {
     min-height: 100vh;
-    background: var(--color-performance-paper, #f3f3f0);
+    background: var(--color-operator-background);
   }
 
   .content {
