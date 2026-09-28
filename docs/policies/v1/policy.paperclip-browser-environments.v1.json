@@ -24,7 +24,7 @@
     "paperclip_loopback_denial": "failed_tcp_connect_to_127_0_0_1_3101",
     "codex_adapter_probe": "passed_remote_hello_with_skip_git_repo_check",
     "staged_codex_home_cleanup": "python_launcher_normal_nonzero_signal_and_provider_probe_passed_assigned_run_unverified",
-    "codex_launcher_sha256": "59acdd4c2c6f87b926c7e8b5f8e333be171fe461f308ff184c275449ef14a299",
+    "codex_launcher_sha256": "fea8dec8bf138c6311539f2ad3873fe50bfbf6cc379d7d578b68234204053c23",
     "unsigned_browser": "offline_chromium_render_passed_broker_assigned_run_pending"
   },
   "roles": {

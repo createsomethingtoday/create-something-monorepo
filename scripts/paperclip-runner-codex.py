@@ -110,14 +110,16 @@ def run(argv: list[str], *, root: Path = RUN_ROOT, node: Path = NODE_BIN, codex_
                         os.killpg(child.pid, signal.SIGKILL)
                     except ProcessLookupError:
                         pass
-        result = (128 + received_signal) if received_signal is not None else (
-            128 - child.returncode if child.returncode < 0 else child.returncode
-        )
+        result = 128 - child.returncode if child.returncode < 0 else child.returncode
     finally:
-        for sig, handler in previous.items():
-            signal.signal(sig, handler)
-        remove_staged_home(run_id, root)
-    return result
+        try:
+            # Keep the deferred signal handlers active until staged auth is gone.
+            # Another signal during rmtree must not terminate this process early.
+            remove_staged_home(run_id, root)
+        finally:
+            for sig, handler in previous.items():
+                signal.signal(sig, handler)
+    return 128 + received_signal if received_signal is not None else result
 
 
 if __name__ == "__main__":

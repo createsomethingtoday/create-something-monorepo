@@ -107,6 +107,30 @@ class RunnerCodexTest(unittest.TestCase):
                         process.kill()
                         process.wait()
 
+    def test_signal_at_cleanup_entry_still_removes_auth(self):
+        fake = Path(self.temporary.name) / "instant-codex.py"
+        fake.write_text("import sys; sys.exit(0)\n")
+        (self.home / "auth.json").write_text("test-only")
+        code = (
+            "import importlib.util,os,signal,sys; from pathlib import Path; "
+            f"s=importlib.util.spec_from_file_location('r',{repr(str(SOURCE))}); "
+            "m=importlib.util.module_from_spec(s);s.loader.exec_module(m); "
+            "m.RUNNER_UID=os.getuid(); original=m.remove_staged_home; "
+            "defn='def cleanup(run_id, root):\\n"
+            "    os.kill(os.getpid(), signal.SIGTERM)\\n"
+            "    original(run_id, root)\\n'; "
+            "exec(defn); m.remove_staged_home=cleanup; "
+            f"sys.exit(m.run([],root=Path({repr(str(self.root))}),"
+            f"node=Path(sys.executable),codex_js=Path({repr(str(fake))})))"
+        )
+        env = {**os.environ, "CODEX_HOME": str(self.home)}
+        process = subprocess.run([sys.executable, "-c", code], env=env,
+                                 stdout=subprocess.DEVNULL, stderr=subprocess.PIPE,
+                                 timeout=10)
+        self.assertEqual(process.returncode, 128 + signal.SIGTERM,
+                         process.stderr.decode())
+        self.assertFalse(self.home.exists())
+
 
 if __name__ == "__main__":
     unittest.main()
