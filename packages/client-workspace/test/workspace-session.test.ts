@@ -131,6 +131,44 @@ test('session maps text and a bounded local image into a workspace-confined Code
   });
 });
 
+test('local checkout never gives Codex a writable checkout-root cwd', async () => {
+  const root = join(tmpdir(), `client-local-session-${crypto.randomUUID()}`);
+  const sourceRoot = join(root, 'checkout');
+  const uploadRoot = join(root, 'state', 'uploads');
+  await mkdir(join(sourceRoot, 'src'), { recursive: true });
+  await mkdir(uploadRoot, { recursive: true });
+  const registry = new WorkspaceRegistry({
+    managedRoot: join(root, 'managed'), allowedLocalRoots: [sourceRoot],
+    definitions: [{ id: 'grantbot', label: 'GiGi engineering', sourceRoot,
+      editableRoots: ['src'], preview: { kind: 'none' } }]
+  });
+  const codex = new FakeCodexConnection();
+  const session = new WorkspaceSession({
+    id: 'session-local', workspace: registry.resolve('grantbot'), codex,
+    uploadRoot, receiptStore: new MemoryWorkspaceReceiptStore()
+  });
+  try {
+    await session.open();
+    assert.equal(codex.threadOptions?.cwd, join(sourceRoot, 'src'));
+    assert.equal(codex.threadOptions?.approvalPolicy, 'on-request');
+    assert.match(codex.threadOptions?.developerInstructions ?? '', /client-owned checkout/);
+    await session.startTurn({ text: 'Repair the parser in src.' });
+    assert.deepEqual(codex.turnOptions?.sandboxPolicy.writableRoots, [join(sourceRoot, 'src')]);
+    assert.equal(codex.turnOptions?.approvalPolicy, 'on-request');
+    assert.equal(codex.turnOptions?.sandboxPolicy.excludeSlashTmp, true);
+    assert.equal(codex.turnOptions?.sandboxPolicy.excludeTmpdirEnvVar, true);
+    codex.emit({ id: 99, method: 'item/commandExecution/requestApproval',
+      params: { cwd: join(sourceRoot, 'src'), command: 'printf bad > ../blocked.txt' } });
+    assert.deepEqual(codex.responses.at(-1), { id: 99, result: { decision: 'decline' } });
+    codex.emit({ id: 100, method: 'item/fileChange/requestApproval',
+      params: { reason: 'Grant an unspecified write root.' } });
+    assert.deepEqual(codex.responses.at(-1), { id: 100, result: { decision: 'decline' } });
+  } finally {
+    await session.close();
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
 test('session rejects concurrent turns without calling Codex twice', async () => {
   await withSession(async ({ session, codex }) => {
     await session.open();

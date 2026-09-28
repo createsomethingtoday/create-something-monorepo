@@ -9,9 +9,11 @@
 
 ## Safety Boundary
 
-- Browser requests may select only checked-in workspace IDs or IDs registered
+- Browser requests may select only checked-in workspace IDs, IDs registered
   from a delivery that passed the pinned signature, file hash, release,
-  resource-limit, and path-boundary verifier. Never accept a raw
+  resource-limit, and path-boundary verifier, or an exact checkout enrolled in
+  the owner's private connector config and approved at its local terminal.
+  Never accept a raw
   client-provided filesystem root, process command, port, environment, preview
   origin, or unverified workspace definition.
 - Keep Codex app-server, API credentials, local paths, process IDs, and raw

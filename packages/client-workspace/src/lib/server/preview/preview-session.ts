@@ -4,7 +4,7 @@ import { isAbsolute, relative, resolve, sep } from 'node:path';
 
 import type { ResolvedWorkspaceDefinition } from '../workspaces/registry.js';
 
-export type PreviewState = 'idle' | 'starting' | 'ready' | 'blocked' | 'crashed' | 'stopped';
+export type PreviewState = 'idle' | 'starting' | 'ready' | 'blocked' | 'crashed' | 'stopped' | 'not-applicable';
 
 export type PublicPreviewStatus = {
   state: PreviewState;
@@ -157,6 +157,10 @@ export class PreviewSession {
   async start(): Promise<PublicPreviewStatus> {
     this.#assertNotClosed();
     if (this.#state === 'ready') return this.status();
+    if (this.#workspace.preview.kind === 'none') {
+      this.#state = 'not-applicable';
+      return this.status();
+    }
     this.#state = 'starting';
     this.#startedAt = this.#now().toISOString();
     this.#exited = false;
@@ -213,6 +217,9 @@ export class PreviewSession {
   }
 
   async proxy(request: Request): Promise<Response> {
+    if (this.#workspace.preview.kind === 'none') {
+      throw new PreviewSessionError('preview_not_ready', 'This checkout has no browser preview.');
+    }
     if (this.#state !== 'ready') {
       throw new PreviewSessionError('preview_not_ready', 'Preview is not ready.');
     }
@@ -366,11 +373,11 @@ export class PreviewSession {
       .replaceAll(this.#workspace.sourceRoot, '[workspace]')
       .replaceAll(`/app/seed/${this.#workspace.id}`, '[workspace-dependency]')
       .replaceAll(
-        `127.0.0.1:${this.#workspace.preview.kind === 'static' ? 0 : this.#workspace.preview.port}`,
+        `127.0.0.1:${this.#workspace.preview.kind === 'static' || this.#workspace.preview.kind === 'none' ? 0 : this.#workspace.preview.port}`,
         'preview.internal'
       )
       .replaceAll(
-        `localhost:${this.#workspace.preview.kind === 'static' ? 0 : this.#workspace.preview.port}`,
+        `localhost:${this.#workspace.preview.kind === 'static' || this.#workspace.preview.kind === 'none' ? 0 : this.#workspace.preview.port}`,
         'preview.internal'
       );
   }

@@ -57,6 +57,28 @@ test('registry rejects unknown workspaces through the public lookup', async () =
   });
 });
 
+test('locally enrolled checkout is explicit and has no preview', async () => {
+  await withManagedRoot(async (managedRoot) => {
+    const checkout = join(managedRoot, '..', `grantbot-${crypto.randomUUID()}`);
+    await mkdir(join(checkout, 'src'), { recursive: true });
+    try {
+      const definition = {
+        id: 'grantbot', label: 'GiGi engineering', sourceRoot: checkout,
+        editableRoots: ['src'], preview: { kind: 'none' as const }
+      };
+      assert.throws(() => new WorkspaceRegistry({ managedRoot, definitions: [definition] }));
+      const registry = new WorkspaceRegistry({
+        managedRoot, definitions: [definition], allowedLocalRoots: [checkout]
+      });
+      assert.equal(registry.resolve('grantbot').sourceRoot, checkout);
+      assert.equal(registry.get('grantbot').previewPath, null);
+      assert.throws(() => registry.resolveEditablePath('grantbot', '../outside'));
+    } finally {
+      await rm(checkout, { recursive: true, force: true });
+    }
+  });
+});
+
 test('registry confines requested files to declared editable roots', async () => {
   await withManagedRoot(async (managedRoot) => {
     const registry = new WorkspaceRegistry({

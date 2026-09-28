@@ -18,9 +18,13 @@ import {
 import { loadClientWorkspaceTrustPolicy } from './deliveries/trust-policy.js';
 import { PreviewSession } from './preview/preview-session.js';
 import { createDefaultWorkspaceRegistry } from './workspaces/default-registry.js';
+import { loadLocalCheckout } from './workspaces/local-checkout.js';
 import type { PublicWorkspace } from './workspaces/registry.js';
 
 export class ClientWorkspaceRuntime {
+  readonly localCheckout = process.env.CLIENT_WORKSPACE_MANAGED_CONNECTOR === '1'
+    ? loadLocalCheckout(process.env.CLIENT_WORKSPACE_LOCAL_CHECKOUT)
+    : null;
   readonly stateRoot =
     process.env.CLIENT_WORKSPACE_STATE_ROOT ??
     join(homedir(), 'Library', 'Application Support', 'CREATE SOMETHING', 'Client Workspace');
@@ -29,12 +33,13 @@ export class ClientWorkspaceRuntime {
   readonly codexCommand = process.env.CLIENT_WORKSPACE_CODEX_COMMAND ?? 'codex';
   readonly registry = createDefaultWorkspaceRegistry({
     managedRoot: this.managedRoot,
+    allowedLocalRoots: this.localCheckout ? [this.localCheckout.sourceRoot] : [],
     includeDemo: process.env.CLIENT_WORKSPACE_DESKTOP !== '1' &&
       process.env.CLIENT_WORKSPACE_MANAGED_CONNECTOR !== '1',
-    additionalDefinitions: loadImportedWorkspaceDefinitions({
+    additionalDefinitions: [...loadImportedWorkspaceDefinitions({
       managedRoot: this.managedRoot,
       stateRoot: this.stateRoot
-    })
+    }), ...(this.localCheckout ? [this.localCheckout] : [])]
   });
   readonly service = new ClientWorkspaceService({
     registry: this.registry,
@@ -80,11 +85,13 @@ export class ClientWorkspaceRuntime {
   }
 
   async checkpoint(workspaceId: string): Promise<string> {
+    this.#assertManagedDelivery(workspaceId);
     this.registry.resolve(workspaceId);
     return await (await this.#managedDeliveries()).checkpoint(workspaceId);
   }
 
   async undo(workspaceId: string, checkpointId: string): Promise<void> {
+    this.#assertManagedDelivery(workspaceId);
     this.registry.resolve(workspaceId);
     await this.service.closeWorkspaceSessions(workspaceId);
     this.#previews.get(workspaceId)?.close();
@@ -93,6 +100,7 @@ export class ClientWorkspaceRuntime {
   }
 
   async rollback(workspaceId: string): Promise<void> {
+    this.#assertManagedDelivery(workspaceId);
     this.registry.resolve(workspaceId);
     await this.service.closeWorkspaceSessions(workspaceId);
     this.#previews.get(workspaceId)?.close();
@@ -101,6 +109,7 @@ export class ClientWorkspaceRuntime {
   }
 
   async reset(workspaceId: string): Promise<void> {
+    this.#assertManagedDelivery(workspaceId);
     if (this.#resettingPreviews.has(workspaceId)) {
       throw new ClientWorkspaceServiceError('workspace_resetting', 'Workspace reset is in progress.');
     }
@@ -123,6 +132,12 @@ export class ClientWorkspaceRuntime {
     await this.service.close();
     for (const preview of this.#previews.values()) preview.close();
     this.#previews.clear();
+  }
+
+  #assertManagedDelivery(workspaceId: string): void {
+    if (this.localCheckout?.id === workspaceId) {
+      throw new ClientWorkspaceServiceError('reset_unavailable', 'Local checkout source is client-owned.');
+    }
   }
 
   async #managedDeliveries(): Promise<ManagedDeliveryRuntime> {

@@ -29,6 +29,35 @@ pub struct Config {
     pub client_home: PathBuf,
     pub state_dir: PathBuf,
     pub port: u16,
+    #[serde(default)]
+    pub local_checkout: Option<LocalCheckout>,
+}
+
+#[derive(Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct LocalCheckout {
+    pub id: String,
+    pub label: String,
+    pub root: PathBuf,
+    pub editable_roots: Vec<String>,
+}
+
+impl LocalCheckout {
+    fn valid(&self) -> bool {
+        label(&self.id)
+            && !self.label.trim().is_empty()
+            && self.label.len() <= 100
+            && absolute(&self.root)
+            && !self.editable_roots.is_empty()
+            && self.editable_roots.iter().all(|part| {
+                !part.is_empty()
+                    && part != "."
+                    && !part.contains('\\')
+                    && Path::new(part)
+                        .components()
+                        .all(|component| matches!(component, Component::Normal(_)))
+            })
+    }
 }
 
 fn label(value: &str) -> bool {
@@ -101,6 +130,9 @@ impl Config {
             || c.codex_node_bin.as_ref().is_some_and(|path| {
                 !absolute(path) || path.file_name().is_none_or(|name| name != "node")
             })
+            || c.local_checkout
+                .as_ref()
+                .is_some_and(|checkout| !checkout.valid())
         {
             return Err("invalid_config");
         }
@@ -130,7 +162,7 @@ impl Config {
         }
         path_dirs.push(self.codex_bin.parent().unwrap().display().to_string());
         path_dirs.extend(["/usr/bin", "/bin", "/usr/sbin", "/sbin"].map(str::to_string));
-        [
+        let mut env: BTreeMap<String, String> = [
             ("HOST", "127.0.0.1".into()),
             ("PORT", self.port.to_string()),
             ("NODE_ENV", "production".into()),
@@ -173,7 +205,18 @@ impl Config {
         ]
         .into_iter()
         .map(|(k, v)| (k.into(), v))
-        .collect()
+        .collect();
+        if let Some(checkout) = &self.local_checkout {
+            env.insert(
+                "CLIENT_WORKSPACE_LOCAL_CHECKOUT".into(),
+                json!({
+                    "id": checkout.id, "label": checkout.label, "root": checkout.root,
+                    "editableRoots": checkout.editable_roots
+                })
+                .to_string(),
+            );
+        }
+        env
     }
 }
 
