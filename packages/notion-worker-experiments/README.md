@@ -7,6 +7,7 @@ This package is intentionally separate from the Cloudflare Worker MCP packages. 
 ## Current Scope
 
 - `summarizePage` - read-only page preview tool using `context.notion`.
+- `classifyMeetingFollowup` - disabled-by-default, read-only Jev suggestion for one already-extracted Half Dozen meeting follow-up. It returns an advisory lane or a review reason and never writes Notion.
 - `appendPolicyNote` - write-capable page note appender. In Notion Custom Agents this should require user confirmation.
 - `linearIssuesSync` - scheduled Worker Sync that mirrors Linear issues into a Notion-managed read-model database for PM review.
 - `blondishDeliveryTicketsSync` - scheduled Worker Sync that mirrors BLOND:ISH Support Tickets into a CREATE SOMETHING managed PM database for Half Dozen client-delivery progress.
@@ -38,6 +39,7 @@ Required env by capability:
 | Capability                                     | Env                |
 | ---------------------------------------------- | ------------------ |
 | `summarizePage`, `appendPolicyNote` local exec | `NOTION_API_TOKEN` |
+| `classifyMeetingFollowup` provider call | `TYPESAFE_API_KEY` and `JEV_FOLLOWUP_CLASSIFICATION_ENABLED=true` |
 | `linearIssuesSync`                             | `LINEAR_API_KEY`   |
 | `blondishDeliveryTicketsSync`                  | `BLONDISH_NOTION_API_TOKEN` |
 | `pushBlondishDeliveryTicketStatus*`            | `BLONDISH_NOTION_API_TOKEN` |
@@ -224,6 +226,14 @@ resolve pnpm workspace transitive dependency symlinks.
 - For Custom Agent calls, `context.notion` is authenticated by Notion with the
   Custom Agent's permissions. For local tests, syncs, webhooks, and CLI exec,
   supply `NOTION_API_TOKEN` explicitly.
+
+## Jev Follow-up Classification Pilot
+
+`classifyMeetingFollowup` accepts one atomic follow-up with a source page URL, requester kind, and output location. The calling agent must extract the follow-up from the transcript and supply only source-supported context. The tool never reads or writes Notion itself. Its `suggestedLane` is `ticket`, `task`, `agent_idea`, or `no_action`; uncertain, low-confidence, conflicting, invalid, and unavailable results return `needs_review` with a reason. It cannot authorize page creation, relation changes, or messaging. The existing Meeting Categorization and recap-agent rules remain authoritative.
+
+The feature is off unless `JEV_FOLLOWUP_CLASSIFICATION_ENABLED=true` and a server-side `TYPESAFE_API_KEY` are both present. Enabling it sends the supplied follow-up text and context to TypeSafe. Do not enable it for real Half Dozen transcripts until that data transfer and the agent's source scope are approved. The tool's Notion Worker `readOnlyHint` describes its lack of Notion mutations; the external Jev API call still occurs when enabled.
+
+Run the frozen policy-derived examples with `pnpm eval:jev-followup` from this package after supplying `TYPESAFE_API_KEY`. These examples check the rubric and provider behavior but are **not** independently reviewed production labels or evidence of workload savings. Before agent rollout, collect independently reviewed candidate-level labels, freeze the rubric and acceptance thresholds, compare Jev with the incumbent on held-out meetings, and inspect Ticket/Task errors and review volume. Keep raw transcripts out of the evaluation output.
 
 ## Related Docs
 
