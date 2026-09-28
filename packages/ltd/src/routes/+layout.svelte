@@ -4,6 +4,7 @@
 	import { onNavigate, goto, invalidateAll } from '$app/navigation';
 	import { onMount } from 'svelte';
 	import '../app.css';
+	import '$lib/public-surface.css';
 
 	let { children, data } = $props();
 	let mobileNavigationOpen = $state(false);
@@ -77,6 +78,9 @@
 	// The footer does not earn its existence there: the sidebar already
 	// provides navigation, and documentation is a dwelling for study,
 	// not marketing. Weniger, aber besser.
+	const isPublicLibraryRoute = $derived(
+		/^\/(?:$|playbooks(?:\/|$)|readiness(?:\/|$)|canon(?:\/|$)|principles(?:\/|$)|standards(?:\/|$))/.test(data?.pathname || '/')
+	);
 	const isCanonRoute = $derived((data?.pathname || '/').startsWith('/canon'));
 </script>
 
@@ -92,7 +96,7 @@
 	deferMobileButtonUntilCampaignExit={data?.pathname === '/'}
 />
 
-<div class="min-h-screen flex flex-col ltd-clear-shell property-performance">
+<div class="min-h-screen flex flex-col ltd-clear-shell property-performance" class:ltd-public-library={isPublicLibraryRoute}>
 	{#if !isCanonRoute}
 		<Navigation
 			logo="CREATE SOMETHING"
