@@ -281,6 +281,7 @@
   outline-offset: 3px;
 }
 .agency-surface[data-canon-palette='operator'] .svelte-flow__edge-label {
+  color: var(--color-operator-background);
   fill: var(--color-operator-background);
 }
 
