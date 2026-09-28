@@ -176,6 +176,7 @@
 	select,
 	textarea {
 		flex: 1;
+		min-width: 0;
 		padding: 0.875rem 1rem;
 		border-radius: var(--radius-md);
 		background: var(--color-bg-surface);
@@ -188,7 +189,8 @@
 	input:focus,
 	select:focus,
 	textarea:focus {
-		outline: none;
+		outline: 2px solid var(--color-focus);
+		outline-offset: 3px;
 		border-color: var(--color-border-strong);
 	}
 
@@ -278,5 +280,10 @@
 	.success-message p {
 		color: var(--color-fg-secondary);
 		margin: 0;
+	}
+	@media (max-width: 480px) {
+		.input-row {
+			flex-direction: column;
+		}
 	}
 </style>

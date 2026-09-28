@@ -83,12 +83,12 @@
 
 	.value-grid {
 		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
-		gap: var(--space-md);
+		grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+		gap: 0;
 	}
 
 	.value-card {
-		padding: var(--space-lg);
+		padding: var(--space-md);
 		border-radius: var(--radius-lg);
 		background: var(--color-bg-surface);
 		border: 1px solid var(--color-border-default);

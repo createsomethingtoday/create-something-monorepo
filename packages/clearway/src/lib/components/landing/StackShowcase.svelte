@@ -38,10 +38,11 @@
 			For members: preferences remembered. For admins: insights surfaced.
 		</p>
 
-		<div class="view-toggle">
+		<div class="view-toggle" role="group" aria-label="Product preview">
 			<button
 				class="toggle-btn"
 				class:active={activeView === 'member'}
+				aria-pressed={activeView === 'member'}
 				onclick={() => setView('member')}
 			>
 				Member View
@@ -49,6 +50,7 @@
 			<button
 				class="toggle-btn"
 				class:active={activeView === 'admin'}
+				aria-pressed={activeView === 'admin'}
 				onclick={() => setView('admin')}
 			>
 				Admin View
@@ -133,6 +135,7 @@
 	}
 
 	.toggle-btn {
+		min-height: 44px;
 		padding: var(--space-xs) var(--space-md);
 		font-size: var(--text-body-sm);
 		font-weight: 500;
@@ -260,6 +263,37 @@
 	.reveal-btn:hover {
 		background: var(--color-hover);
 		border-color: var(--color-border-strong);
+	}
+
+	/* Keep the public demonstration usable without changing the embedded product. */
+	@media (max-width: 480px) {
+		.widget-wrapper :global(.widget) {
+			padding: var(--space-sm);
+		}
+		.widget-wrapper :global(.week-nav) {
+			display: grid;
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+			gap: var(--space-xs);
+		}
+		.widget-wrapper :global(.nav-btn) {
+			width: 44px;
+			height: 44px;
+		}
+		.widget-wrapper :global(.nav-btn:last-child) {
+			grid-column: 2;
+			grid-row: 1;
+			justify-self: end;
+		}
+		.widget-wrapper :global(.week-days) {
+			grid-column: 1 / -1;
+			grid-row: 2;
+			display: grid;
+			grid-template-columns: repeat(4, minmax(0, 1fr));
+		}
+		.widget-wrapper :global(.day-btn) {
+			min-height: 44px;
+			min-width: 0;
+		}
 	}
 
 	@media (prefers-reduced-motion: reduce) {
