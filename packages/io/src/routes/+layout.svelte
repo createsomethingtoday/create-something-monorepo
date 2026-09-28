@@ -63,6 +63,7 @@
       '/graph',
       '/newsletters'
     ].includes($page.url.pathname) ||
+      $page.route.id === '/experiments/[slug]' ||
       $page.url.pathname.startsWith('/papers/') ||
       $page.url.pathname.startsWith('/plugins/') ||
       $page.url.pathname.startsWith('/newsletters/')
