@@ -39,6 +39,10 @@ describe('paper index accessibility before hydration', () => {
 describe('public research presentation boundary', () => {
 	it.each([
 		['/categories', '/categories'],
+		['/contact', '/contact'],
+		['/subscribe', '/subscribe'],
+		['/privacy', '/privacy'],
+		['/terms', '/terms'],
 		['/docs', '/docs'],
 		['/docs/ground', '/docs/ground'],
 		['/docs/loom', '/docs/loom'],
@@ -74,8 +78,8 @@ describe('public research presentation boundary', () => {
 
 	it.each([
 		'/login', '/account', '/admin', '/admin/experiments', '/auth/callback',
-		'/auth/cross-domain', '/check-in', '/confirm', '/subscribe', '/unsubscribe',
-		'/contact', '/privacy', '/terms', '/status',
+		'/auth/cross-domain', '/check-in', '/confirm', '/unsubscribe',
+		'/status',
 		'/insights/tool-betrayal', '/visualizations/arena-scale'
 	])('preserves the separate surface %s', (pathname) => {
 		expect(isIoResearchSurface(pathname, pathname)).toBe(false);
