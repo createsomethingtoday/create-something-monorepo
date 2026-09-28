@@ -453,7 +453,7 @@ function operationalKnowledgeEdges(docNodes, targetCandidates, fallbackTargets) 
     tokens: tokensForNode(node)
   }));
 
-  return docNodes.map((doc) => {
+  return docNodes.flatMap((doc) => {
     const docTokens = tokensForNode(doc);
     const scoredTargets = indexedTargets
       .map((target) => ({
@@ -466,11 +466,18 @@ function operationalKnowledgeEdges(docNodes, targetCandidates, fallbackTargets) 
       ? scoredTargets[0].node
       : fallbackKnowledgeTarget(doc, fallbackTargets, targetCandidates);
     const relation = doc.surface === 'policy' ? 'governs' : 'documents';
+    // Generic metadata terms (for example "model" and "topology") are not
+    // evidence that a document describes Substrate. The root documentation
+    // edge already preserves orientation when no substantive link exists.
+    if (target.packageName === '@create-something/substrate-mcp' &&
+        !/\bsubstrate\b/i.test(fs.readFileSync(path.join(repoRoot, doc.path), 'utf8'))) {
+      return [];
+    }
     const evidence = scoredTargets[0]?.score >= 2
       ? `${doc.path} ${relation} ${target.path} through matching topology terms.`
       : `${doc.path} ${relation} ${target.path} through the stable ${doc.surface} platform anchor.`;
 
-    return makeEdge(doc.id, target.id, relation, evidence);
+    return [makeEdge(doc.id, target.id, relation, evidence)];
   });
 }
 
