@@ -64,3 +64,13 @@ The noindex `/arcs`, `/arc/{slug}`, `/experiments`, and `/experiments/{slug}` pu
 Follow-up commit `5d64a599a28316c5cb76012d35cc1238e00ec5f0` preserved the policy change before verification. `pnpm bootstrap:worktree` passed with Homebrew `xz` on the runner path; the initial attempt failed because runner Bash omitted that path. `node --import tsx --test packages/agency/test/public-surface-policy.test.ts` passed 3/3. `pnpm --filter @create-something/agency check` passed with zero Svelte errors/warnings, and `pnpm --filter @create-something/agency build` passed with the Cloudflare adapter. Browserslist reported existing aging data.
 
 The rebuilt local preview passed an 18-sample browser follow-up: `/arcs`, `/arc/app-review-governance`, `/arc/operator-inbound-triage`, `/experiments`, `/practice`, and `/stack` at 1440, 390 and 320 CSS pixels. Every sample had the `operator` palette, no document overflow, visible keyboard focus and zero running animations under reduced motion. See `catalog-followup.json` and the source script. Desktop and 320px screenshots for the four newly covered routes supplement their 390px images. Experiments showed zero records in the local preview; a published experiment detail and live D1 behavior remain unverified. Earlier full workbench/canvas, interaction, and 51-route results remain in their separate artifacts.
+
+Coordinator re-ran the severe-contrast diagnostic after the route coverage list
+was expanded, against the candidate build after integrating main. It scanned all 55 listed
+operator routes, including the four public Arc/Experiments representatives,
+and returned no findings below its 2.5 ratio threshold. This is a diagnostic,
+not a WCAG certification. A read-only custom-domain inventory of
+`/experiments` showed `00` published experiments and no detail links
+(`live-experiments-inventory.json`); there is currently no published detail
+page to inspect. The dynamic route will inherit the operator palette when a
+published detail exists, while its loader continues to enforce publication.
