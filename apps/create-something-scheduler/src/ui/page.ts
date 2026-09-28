@@ -113,11 +113,11 @@ export function schedulerPage(input: {
     .duration-picker legend { margin:0 0 8px; padding:0; color:var(--color-operator-muted); font-size:14px; }
     #status { display:grid; grid-template-columns:auto 1fr; gap:12px; min-height:48px; margin:0 0 24px; padding:12px; border:1px solid var(--color-operator-border); border-left:3px solid var(--color-operator-status-running-text); border-radius:var(--radius-operator-control); background:var(--color-operator-panel); color:var(--color-operator-foreground); font-size:14px; }
     #status[data-kind="ready"] { border-left-color:var(--color-operator-status-done-text); }
-    #status[data-kind="review"] { border-left-color:var(--color-operator-status-paused-text); }
+    #status[data-kind="review"] { border-left-color:var(--color-operator-status-review-text); }
     #status[data-kind="stop"] { border-left-color:var(--color-operator-status-blocked-text); }
     #status-state { color:var(--color-operator-status-running-text); font-weight:600; }
     #status[data-kind="ready"] #status-state { color:var(--color-operator-status-done-text); }
-    #status[data-kind="review"] #status-state { color:var(--color-operator-status-paused-text); }
+    #status[data-kind="review"] #status-state { color:var(--color-operator-status-review-text); }
     #status[data-kind="stop"] #status-state { color:var(--color-operator-status-blocked-text); }
     #status-message { overflow-wrap:anywhere; }
     .days { display:grid; gap:24px; }
