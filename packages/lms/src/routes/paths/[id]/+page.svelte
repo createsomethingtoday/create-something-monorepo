@@ -119,7 +119,7 @@
   .path-description {
     max-width: 46rem;
     margin: 0;
-    font-size: var(--text-body-lg);
+    font-size: 1rem;
     color: var(--color-performance-muted, #5e6268);
     line-height: var(--leading-relaxed);
   }

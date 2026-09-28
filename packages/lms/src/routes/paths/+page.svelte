@@ -86,7 +86,7 @@
     max-width: 46rem;
     margin: 0;
     color: var(--color-performance-muted, #5e6268);
-    font-size: var(--text-body-lg);
+    font-size: 1rem;
     line-height: 1.55;
   }
 
