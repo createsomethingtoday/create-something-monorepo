@@ -14,11 +14,11 @@ assert.equal(stripped.split('{').length, 2, 'Only the opt-in selector may emit t
 assert.ok(stripped.startsWith(`${artifact.selector} {`));
 assert.ok(stripped.endsWith('}'));
 const declarations = [...stripped.matchAll(/(--[\w-]+):\s*([^;]+);/g)];
-assert.equal(declarations.length, 26);
-assert.equal(new Set(declarations.map((m) => m[1])).size, 26);
+assert.equal(declarations.length, 28);
+assert.equal(new Set(declarations.map((m) => m[1])).size, 28);
 assert.deepEqual(Object.fromEntries(declarations.map((m) => [m[1], m[2]])), artifact.tokens);
 assert.equal(stripped.slice(stripped.indexOf('{') + 1, -1).replace(/--[\w-]+:\s*[^;]+;/g, '').trim(), '');
-for (const name of Object.keys(artifact.tokens)) assert.ok(name.startsWith('--color-operator-'));
+for (const name of Object.keys(artifact.tokens)) assert.match(name, /^--(?:color|radius)-operator-/);
 for (const name of ['operator.css', 'operator.tokens.json']) {
   assert.equal(pkg.exports[`./styles/${name}`], `./dist/styles/${name}`);
 }
@@ -34,6 +34,8 @@ const expected = {
   'status-blocked': '#dc2626', 'status-paused': '#f59e0b'
 };
 for (const [name, value] of Object.entries(expected)) assert.equal(token(name), value);
+assert.equal(artifact.tokens['--radius-operator-control'], '6px');
+assert.equal(artifact.tokens['--radius-operator-panel'], '10px');
 
 // Neutral OKLCH has linear sRGB luminance L^3. Hex values use WCAG sRGB transfer.
 function luminance(value) {
@@ -61,4 +63,4 @@ for (const status of ['running', 'review', 'done', 'blocked', 'paused']) {
 }
 console.log(`Foreground / muted on raised: ${contrast('foreground', 'raised').toFixed(2)} / ${contrast('muted', 'raised').toFixed(2)}:1`);
 console.log(`Reference focus / accessible focus on raised: ${contrast('focus-ring', 'raised').toFixed(2)} / ${contrast('focus-ring-accessible', 'raised').toFixed(2)}:1`);
-console.log('PASS: 26 scoped tokens, CSS/JSON parity, exact references, exports and contrast');
+console.log('PASS: 28 scoped tokens, CSS/JSON parity, exact references, exports and contrast');
