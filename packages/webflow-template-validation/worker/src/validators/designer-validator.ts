@@ -42,7 +42,7 @@ export async function validateDesignerData(designerData: DesignerData): Promise<
     categories.push(validateVariableModes(variables));
   }
   categories.push(validateComponents(components));
-  categories.push(validateStyles(styles));
+  categories.push(validateStyles(styles, designerData.mediaQueries));
   categories.push(validateRequiredPages(pages));
   categories.push(validatePageStructure(pages));
   categories.push(validatePageSEO(pages));
@@ -353,16 +353,25 @@ function validateComponents(components: DesignerData['components']): CategoryRes
 }
 
 // --- Styles Validation ---
-function validateStyles(styles: DesignerData['styles']): CategoryResult {
+function validateStyles(
+  styles: DesignerData['styles'],
+  mediaQueries: DesignerData['mediaQueries']
+): CategoryResult {
   const issues: ValidationIssue[] = [];
   const totalClasses = styles.length;
   const inconsistentNaming: string[] = [];
+  const elementScoped: string[] = [];
   let hasTypographyClasses = false;
   let hasHtmlTagStyles = false;
 
   for (const style of styles) {
+    if (style.type === 'element') {
+      elementScoped.push(style.name || style.id);
+    }
+
     if (style.name) {
-      if (!isValidClassName(style.name)) {
+      // Library imports (Shared Library, AI Site Generation) were not named by the creator.
+      if (style.source !== 'library' && !isValidClassName(style.name)) {
         inconsistentNaming.push(style.name);
       }
 
@@ -387,6 +396,29 @@ function validateStyles(styles: DesignerData['styles']): CategoryResult {
       message: `${inconsistentNaming.length} classes don't follow consistent naming.`,
       details: { sample: inconsistentNaming.slice(0, 5) },
       howToFix: 'Use one consistent naming format (e.g., "section testimonials dark", "Hero Container Element", "component-element-modifier", or BEM). Avoid encoding literal units in class names (e.g., use "Max Width 30" not "Max Width 30px").'
+    });
+  }
+
+  if (elementScoped.length > 0) {
+    issues.push({
+      id: 'styles.element-scoped',
+      category: 'Styles',
+      severity: 'warning',
+      message: `${elementScoped.length} styles are scoped to a single element instead of a reusable class.`,
+      details: { count: elementScoped.length, sample: elementScoped.slice(0, 5) },
+      howToFix: 'Move element-level styling onto named classes so buyers can reuse and edit it from the Style panel.'
+    });
+  }
+
+  const overflowing = findFixedWidthOverflow(styles, mediaQueries);
+  if (overflowing.length > 0) {
+    issues.push({
+      id: 'styles.fixed-width-overflow',
+      category: 'Styles',
+      severity: 'warning',
+      message: `${overflowing.length} classes set a fixed pixel width wider than a breakpoint, so content will overflow.`,
+      details: { count: overflowing.length, sample: overflowing.slice(0, 5) },
+      howToFix: 'At smaller breakpoints, use relative widths (%, vw) or a max-width of 100% instead of fixed px widths larger than the viewport.'
     });
   }
 
@@ -425,6 +457,50 @@ function validateStyles(styles: DesignerData['styles']): CategoryResult {
     issues,
     stats: { totalClasses, hasTypographyClasses, hasHtmlTagStyles }
   };
+}
+
+const PX_VALUE = /^\s*(\d+(?:\.\d+)?)px\s*$/i;
+const OVERFLOW_PROPERTIES = ['width', 'min-width'] as const;
+
+/**
+ * Styles whose explicit width/min-width at a max-width-bounded breakpoint is a px
+ * value wider than that breakpoint. Only explicit breakpoint overrides are
+ * considered (not values inherited from the base breakpoint), and max-width
+ * clamping is not modelled, so this stays a warning.
+ */
+function findFixedWidthOverflow(
+  styles: DesignerData['styles'],
+  mediaQueries: DesignerData['mediaQueries']
+): Array<{ style: string; breakpoints: string[] }> {
+  if (!Array.isArray(mediaQueries) || mediaQueries.length === 0) return [];
+  const bounded = new Map(
+    mediaQueries
+      .filter((mq) => mq && !mq.isBase && typeof mq.maxWidth === 'number')
+      .map((mq) => [mq.id, mq] as const)
+  );
+  if (bounded.size === 0) return [];
+
+  const results: Array<{ style: string; breakpoints: string[] }> = [];
+  for (const style of styles) {
+    const byBreakpoint = style.breakpointProperties;
+    if (!byBreakpoint || typeof byBreakpoint !== 'object') continue;
+
+    const breakpoints: string[] = [];
+    for (const [breakpointId, mq] of bounded) {
+      const props = byBreakpoint[breakpointId];
+      if (!props) continue;
+      const overflows = OVERFLOW_PROPERTIES.some((prop) => {
+        const match = typeof props[prop] === 'string' ? props[prop].match(PX_VALUE) : null;
+        return match !== null && Number(match[1]) > (mq.maxWidth as number);
+      });
+      if (overflows) breakpoints.push(mq.name || mq.id);
+    }
+
+    if (breakpoints.length > 0) {
+      results.push({ style: style.name || style.id, breakpoints });
+    }
+  }
+  return results;
 }
 
 // --- Required Pages Validation ---

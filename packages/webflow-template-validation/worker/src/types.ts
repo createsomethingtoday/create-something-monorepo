@@ -220,6 +220,16 @@ export interface DesignerData {
 	pages: PageData[];
 	assets: AssetData[];
 	siteInfo?: SiteInfo;
+	/** Site breakpoints (Designer API 2.2+). Absent on older extensions/runtimes. */
+	mediaQueries?: MediaQueryData[];
+}
+
+export interface MediaQueryData {
+	id: string;
+	name: string;
+	minWidth: number | null;
+	maxWidth: number | null;
+	isBase: boolean;
 }
 
 export interface VariableData {
@@ -256,10 +266,18 @@ export interface ComponentData {
 export interface StyleData {
 	id: string;
 	name: string;
+	/**
+	 * 'global' | 'combo' | 'tag' | 'element' | 'descendant' from Designer API 2.2+.
+	 * Older extensions always send 'class'.
+	 */
 	type: string;
+	/** 'library' for Shared Library / AI Site Generation imports. Absent on older extensions. */
+	source?: 'site' | 'library';
 	isHtmlTag?: boolean;
 	hasVariables?: boolean;
 	properties?: Record<string, any>;
+	/** Whitelisted properties (width, min-width, font-size) keyed by breakpoint id. */
+	breakpointProperties?: Record<string, Record<string, string>>;
 }
 
 export interface PageData {

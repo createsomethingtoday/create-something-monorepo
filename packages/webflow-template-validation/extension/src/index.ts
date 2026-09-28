@@ -9,7 +9,6 @@ import {
   filterRetiredAccessibilityIssues,
   getSlugPathname,
   isInternalCmsTemplateSlug,
-  isHtmlTagStyleName,
   normalizeSiteInfo,
   selectValidationDomain,
   type SiteDomainInfo,
@@ -19,6 +18,16 @@ import { buildReportMarkdown as buildReportMarkdownPure, type ReportInput } from
 import { collectPageSeoData } from './page-seo';
 import { createPageMetadataDetailsHTML } from './page-metadata-details';
 import { buildValidationSubmitIssue } from './validation-submit-payload';
+import {
+  isTagStyle,
+  readBreakpointProperties,
+  readMediaQueries,
+  readStyleMetadata,
+  shouldReadBreakpoints,
+  toPayloadStyleType,
+  type BreakpointProperties,
+  type MediaQueryInfo,
+} from './style-metadata';
 
 // API Configuration
 const WORKER_API_BASE = 'https://validation-worker.createsomething.workers.dev';
@@ -183,7 +192,10 @@ interface ProjectData {
     properties?: Record<string, any>;
     isHtmlTag?: boolean;
     hasVariables?: boolean;
+    source?: 'site' | 'library';
+    breakpointProperties?: BreakpointProperties;
   }>;
+  mediaQueries?: MediaQueryInfo[];
   pages?: Array<{
     id: string;
     name: string;
@@ -2267,29 +2279,37 @@ async function collectProjectData(webflow: WebflowApi): Promise<ProjectData> {
     if (webflow.getAllStyles) {
       const styles = await webflow.getAllStyles() || [];
       const styleData: any[] = [];
+      const mediaQueries = await readMediaQueries(webflow);
+      if (mediaQueries.length > 0) {
+        data.mediaQueries = mediaQueries;
+      }
 
       for (const style of styles) {
         try {
           const name = (await style.getName()) || null;
           const id = style.id;
-          const styleType = 'class';
+          const meta = readStyleMetadata(style);
+          const styleType = toPayloadStyleType(meta);
 
           if (name && !name.startsWith('_')) {
             let properties: Record<string, any> = {};
             let isHtmlTag = false;
             let hasVariables = false;
+            let breakpointProperties: BreakpointProperties | undefined;
 
             // Check if this is an HTML tag style (required by Webflow Way).
-            // Exact tag names or Webflow's tag-selector display names only —
-            // substring matching ("a", "p") would match nearly every class.
-            if (isHtmlTagStyleName(name)) {
+            // Prefer the Designer's own taxonomy; otherwise exact tag names or
+            // Webflow's tag-selector display names only — substring matching
+            // ("a", "p") would match nearly every class.
+            if (isTagStyle(meta, name)) {
               isHtmlTag = true;
               data.enhancedValidation!.styleSystem.hasHtmlTagStyles = true;
             }
             
             try {
-              // Get style properties for enhanced validation
-              if (style.getProperties) {
+              // Get style properties for enhanced validation. Element-scoped
+              // styles reject most Style operations, so skip the round trip.
+              if (style.getProperties && meta.type !== 'element') {
                 properties = await style.getProperties() || {};
                 
                 // Check for variable usage in styles
@@ -2311,6 +2331,10 @@ async function collectProjectData(webflow: WebflowApi): Promise<ProjectData> {
             } catch (propertyError) {
               console.warn('Error getting style properties:', propertyError);
             }
+
+            if (mediaQueries.length > 0 && shouldReadBreakpoints(meta)) {
+              breakpointProperties = await readBreakpointProperties(style, mediaQueries);
+            }
             
             styleData.push({
               id: id,
@@ -2318,7 +2342,9 @@ async function collectProjectData(webflow: WebflowApi): Promise<ProjectData> {
               type: styleType,
               properties: properties,
               isHtmlTag: isHtmlTag,
-              hasVariables: hasVariables
+              hasVariables: hasVariables,
+              ...(meta.source ? { source: meta.source } : {}),
+              ...(breakpointProperties ? { breakpointProperties } : {})
             });
           }
         } catch (styleError) {
