@@ -66,6 +66,8 @@ class EscalationTests(unittest.TestCase):
 
     def test_verified_quality_failure_promotes_one_lane_within_cap(self):
         data = fixture()
+        for agent in data["agents"].values():
+            agent.pop("adapterConfig")  # Paperclip redacts peers' config from agent tokens.
         decision = self.evaluate(data)
         self.assertEqual(decision["fromModel"], "gpt-6-sol")
         self.assertEqual(decision["toModel"], "gpt-6-astra")
