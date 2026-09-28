@@ -252,14 +252,25 @@ class Paperclip:
         data = None if body is None else json.dumps(body).encode()
         headers = self.headers if body is None else {**self.headers, "Content-Type": "application/json"}
         request = urllib.request.Request(self.base + path, data=data, headers=headers, method=method)
-        with urllib.request.urlopen(request, timeout=8) as response:
-            return json.load(response)
+        try:
+            with urllib.request.urlopen(request, timeout=8) as response:
+                return json.load(response)
+        except urllib.error.HTTPError as error:
+            try:
+                payload = json.load(error)
+            except (ValueError, OSError):
+                payload = {}
+            reason = payload.get("error") if isinstance(payload, dict) else None
+            raise ValueError(f"Paperclip HTTP {error.code}: {reason or 'request rejected'}") from error
 
     def get(self, path):
         return self.request("GET", path)
 
     def patch(self, path, body):
         return self.request("PATCH", path, body)
+
+    def post(self, path, body):
+        return self.request("POST", path, body)
 
 
 def scan(api, *, company_id, board_user_id, jev_agent_id, controller_agent_id, now, apply, assignment_now=None):
@@ -351,11 +362,29 @@ def main():
     agent = os.environ.get("PAPERCLIP_AGENT_ID", "")
     jev = os.environ.get("JEV_ADVISOR_AGENT_ID", "")
     board = os.environ.get("ESCALATION_APPROVER_USER_ID", "")
-    if not all((base, key, run_id, company, agent, jev, board)):
+    control_issue_id = os.environ.get("ESCALATION_CONTROL_ISSUE_ID", "")
+    if not all((base, key, run_id, company, agent, jev, board, control_issue_id)):
         print(json.dumps({"status": "error", "reason": "Paperclip escalation context unavailable"}))
         return 1
     api = Paperclip(base, paperclip_headers())
     try:
+        run = api.get(f"/api/heartbeat-runs/{run_id}")
+        if run.get("agentId") != agent or run.get("companyId") != company:
+            raise ValueError("controller run identity mismatch")
+        source_issue_id = (run.get("contextSnapshot") or {}).get("issueId")
+        if not source_issue_id:
+            control = api.get(f"/api/issues/{control_issue_id}")
+            if control.get("companyId") != company or control.get("assigneeAgentId") != agent:
+                raise ValueError("controller control issue is unavailable")
+            queued = api.post(f"/api/agents/{agent}/wakeup", {
+                "source": "on_demand", "reason": "approved_A1_escalation_sweep",
+                "payload": {"issueId": control_issue_id},
+                "idempotencyKey": f"paperclip-escalation-sweep:{run_id}",
+            })
+            print(json.dumps({"status": "scoped_wake_queued", "runId": queued.get("id"), "controlIssueId": control_issue_id}))
+            return 0
+        if source_issue_id != control_issue_id:
+            raise ValueError("controller run has an unexpected source issue")
         result = scan(api, company_id=company, board_user_id=board, jev_agent_id=jev, controller_agent_id=agent, now=datetime.now(timezone.utc), apply=os.environ.get("ESCALATION_APPLY") == "true")
         print(json.dumps(result))
     except (KeyError, TypeError, ValueError, TimeoutError, json.JSONDecodeError, urllib.error.URLError) as error:
