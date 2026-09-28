@@ -1,5 +1,6 @@
 <script lang="ts">
 	// CLEARWAY Documentation
+	import { Footer, PublicHeader } from '$lib/components/landing';
 </script>
 
 <svelte:head>
@@ -7,7 +8,9 @@
 	<meta name="description" content="Learn how to integrate CLEARWAY into your facility. API reference, widget embedding, and configuration guides." />
 </svelte:head>
 
-<main class="docs">
+<div class="docs-public" data-canon-palette="operator">
+	<PublicHeader />
+<main id="main-content" class="docs" tabindex="-1">
 	<div class="container">
 		<h1>Documentation</h1>
 		<p class="lead">Everything you need to integrate CLEARWAY into your facility.</p>
@@ -32,7 +35,7 @@
 
 		<section class="doc-section">
 			<h2>Widget Options</h2>
-			<table class="options-table">
+			<div class="table-scroll"><table class="options-table">
 				<thead>
 					<tr>
 						<th>Attribute</th>
@@ -57,7 +60,7 @@
 						<td>Filter to specific court type (optional)</td>
 					</tr>
 				</tbody>
-			</table>
+			</table></div>
 		</section>
 
 		<section class="doc-section">
@@ -102,11 +105,12 @@
 		</section>
 	</div>
 </main>
+	<Footer />
+</div>
 
 <style>
 	.docs {
-		min-height: 100vh;
-		padding: var(--space-2xl, 6rem) var(--space-md, 1.5rem);
+		padding: var(--space-xl) var(--space-md);
 		background: var(--color-bg-pure, #000);
 	}
 
@@ -116,37 +120,39 @@
 	}
 
 	h1 {
-		font-size: clamp(2.5rem, 6vw, 4rem);
+		font-size: clamp(2.25rem, 3.6vw, 3.25rem);
 		font-weight: 700;
 		margin: 0 0 var(--space-sm, 1rem);
 		color: var(--color-fg-primary, #fff);
 	}
 
 	.lead {
-		font-size: var(--text-body-lg, 1.125rem);
+		font-size: var(--text-body, 1rem);
 		color: var(--color-fg-secondary, rgba(255,255,255,0.8));
-		margin: 0 0 var(--space-xl, 4rem);
+		margin: 0 0 var(--space-lg);
 	}
 
 	.doc-section {
-		margin-bottom: var(--space-xl, 4rem);
-		padding-bottom: var(--space-xl, 4rem);
-		border-bottom: 1px solid var(--color-border-default, rgba(255,255,255,0.1));
+		margin-bottom: var(--space-md);
+		padding: var(--space-lg);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+		background: var(--color-bg-surface);
 	}
 
 	.doc-section:last-child {
-		border-bottom: none;
+		margin-bottom: 0;
 	}
 
 	h2 {
-		font-size: var(--text-h2, 1.75rem);
+		font-size: clamp(1.25rem, 2vw, 1.5rem);
 		font-weight: 600;
 		margin: 0 0 var(--space-md, 1.5rem);
 		color: var(--color-fg-primary, #fff);
 	}
 
 	h3 {
-		font-size: var(--text-h3, 1.25rem);
+		font-size: var(--text-h3);
 		font-weight: 600;
 		margin: var(--space-lg, 2rem) 0 var(--space-sm, 1rem);
 		color: var(--color-fg-primary, #fff);
@@ -168,6 +174,8 @@
 		margin: var(--space-sm, 1rem) 0;
 	}
 
+	.table-scroll { overflow-x: auto; }
+
 	code {
 		font-family: var(--font-mono, 'ABC Diatype Mono', 'JetBrains Mono', monospace);
 		font-size: 0.9rem;
@@ -176,6 +184,7 @@
 
 	.options-table {
 		width: 100%;
+		min-width: 34rem;
 		border-collapse: collapse;
 		margin: var(--space-md, 1.5rem) 0;
 	}
@@ -243,6 +252,11 @@
 	}
 
 	a:hover {
-		opacity: 0.8;
+		color: var(--color-fg-secondary);
+	}
+
+	@media (max-width: 480px) {
+		.doc-section { padding: var(--space-md); }
+		pre { padding: var(--space-md); }
 	}
 </style>
