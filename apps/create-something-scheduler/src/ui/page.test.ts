@@ -2,6 +2,7 @@ import {
   PERFORMANCE_DOCUMENT_STYLE_VERSION,
   performanceDocumentCss
 } from '@create-something/canon/performance/scheduler-document';
+import { operatorDocumentCss } from '@create-something/canon/styles/operator-document';
 import { describe, expect, it } from 'vitest';
 import { renderBookingManagementActions, schedulerPage } from './page.js';
 
@@ -25,6 +26,7 @@ describe('scheduler public page', () => {
     expect(html).toContain('data-performance-surface="booking"');
     expect(html).toContain(`data-performance-contract="${PERFORMANCE_DOCUMENT_STYLE_VERSION}"`);
     expect(html).toContain(performanceDocumentCss);
+    expect(html).toContain(operatorDocumentCss);
     expect(html).toContain('--color-performance-grid:rgb(9 9 9 / .055)');
     expect(html).toContain('--font-performance-display-weight:500');
     expect(html).toContain('CREATE SOMETHING / Schedule');
