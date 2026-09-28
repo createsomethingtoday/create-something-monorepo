@@ -156,7 +156,7 @@ class EscalationTests(unittest.TestCase):
                 if path.endswith("/agents"):
                     return list(data["agents"].values())
                 if "/issues?" in path:
-                    return [data["issue"]]
+                    return [{**data["issue"], "description": data["issue"]["description"][:50]}]
                 if path.endswith("/live-runs"):
                     return []
                 if path.endswith("/comments?limit=500"):
