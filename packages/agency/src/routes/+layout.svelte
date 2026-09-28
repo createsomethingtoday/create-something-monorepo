@@ -1,5 +1,6 @@
 <script lang="ts">
   import '../app.css';
+  import '$lib/styles/operator-palette.css';
   import { initializeFilmMotion, filmNavigationOpen } from '$lib/motion/filmPlayback';
   import { filmStories } from '$lib/data/filmStories';
   import { Navigation, Footer, LayoutSEO, ModeIndicator } from '@create-something/canon';
@@ -21,6 +22,9 @@
   import { marketingPagePortfolio } from '$lib/data/marketingPages';
 
   let { children, data } = $props();
+  const usesOperatorPalette = $derived(
+    ['/', '/products', '/services', '/contact', '/book', '/map/workspace'].includes($page.url.pathname)
+  );
   let mobileNavigationOpen = $state(false);
 
   function scrollToTop() {
@@ -461,6 +465,7 @@
 
 <LayoutSEO property="agency" />
 
+<div class="agency-surface" data-canon-palette={usesOperatorPalette ? "operator" : undefined}>
 <PrivacyAnalytics
   property="agency"
   userId={data.user?.id}
@@ -530,6 +535,8 @@
   {#if !routeOwnsPerformanceEnding && $page.url.pathname !== '/basketball-systems-lab' && !isDifyArticleRoute}
     <ModeIndicator current="agency" />
   {/if}
+</div>
+
 </div>
 
 <style>
