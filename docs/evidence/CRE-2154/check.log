@@ -1,0 +1,309 @@
+
+> @create-something/agency@1.0.0 check /Users/micahjohnson/Code/csm-worktrees/cre-2154-agency-public/packages/agency
+> pnpm prepare:build-dir && pnpm prepare:local-deps && pnpm integrations:check && pnpm search:campaign:check && node ./scripts/run-pinned-bin.mjs @sveltejs/kit svelte-kit sync && node ./scripts/run-pinned-bin.mjs svelte-check svelte-check --tsconfig ./tsconfig.json --fail-on-warnings && pnpm canon:check && pnpm copy:check && node --import tsx --test test/community-api-auth.test.ts test/identity-provider-retirement.test.ts test/public-html-cache.test.ts && pnpm test:mcp-entitlement-authority && pnpm test:map-commercial-lifecycle && pnpm test:control-activation && pnpm test:inspection
+
+
+> @create-something/agency@1.0.0 prepare:build-dir /Users/micahjohnson/Code/csm-worktrees/cre-2154-agency-public/packages/agency
+> node ./scripts/prepare-build-dir.mjs
+
+
+> @create-something/agency@1.0.0 prepare:local-deps /Users/micahjohnson/Code/csm-worktrees/cre-2154-agency-public/packages/agency
+> node ./scripts/prepare-local-deps.mjs
+
+
+> @create-something/tufte@1.0.0 package /Users/micahjohnson/Code/csm-worktrees/cre-2154-agency-public/packages/tufte
+> svelte-kit sync && svelte-package && publint
+
+src/lib -> dist
+Running publint v0.3.17 for @create-something/tufte...
+Packing files with `pnpm pack`...
+Linting...
+All good!
+
+> @create-something/canon@0.1.0 package /Users/micahjohnson/Code/csm-worktrees/cre-2154-agency-public/packages/canon
+> pnpm clean:package-tmp && svelte-kit sync && svelte-package && publint
+
+
+> @create-something/canon@0.1.0 clean:package-tmp /Users/micahjohnson/Code/csm-worktrees/cre-2154-agency-public/packages/canon
+> node -e "const fs=require('fs'); fs.rmSync('.svelte-kit/__package__',{recursive:true,force:true}); fs.rmSync('.svelte-kit/__package_types_tmp__',{recursive:true,force:true});"
+
+src/lib -> dist
+Running publint v0.3.17 for @create-something/canon...
+Packing files with `pnpm pack`...
+Linting...
+All good!
+
+> @create-something/agency@1.0.0 integrations:check /Users/micahjohnson/Code/csm-worktrees/cre-2154-agency-public/packages/agency
+> node ./scripts/generate-integration-catalog.mjs --check
+
+Integration catalog is current (984 brokered connectors).
+
+> @create-something/agency@1.0.0 search:campaign:check /Users/micahjohnson/Code/csm-worktrees/cre-2154-agency-public/packages/agency
+> node ./scripts/check-high-intent-search.mjs && node --import tsx --test test/high-intent-search.test.ts test/high-intent-search-attribution.test.ts && node --test test/high-intent-search-campaign.test.mjs
+
+High-intent Search campaign check passed. Activation remains approval-required.
+✔ captures only the allowlisted Google CPC campaign as first-party session metadata (1.586375ms)
+✔ persists the bounded attribution across routes for 30 minutes and then removes it (0.195083ms)
+✔ rejects mismatched campaigns, media, intents, and landing paths (0.271084ms)
+✔ publishes three bounded paid-search destinations with route-owned proof and handoff (1.017709ms)
+✔ registers the paid-search pages as commercial Performance routes (0.085417ms)
+✔ keeps the shared landing surface focused on one proof stage and one handoff (0.516417ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 181.751
+✔ keeps the planning envelope bounded to Search, exact and phrase, and USD 50 per day (2.148916ms)
+✔ keeps generic demand clusters paused and the three proof-backed routes prioritized (0.26425ms)
+✔ produces a read-only first-party campaign report (1.191417ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 58.565208
+Loading svelte-check in workspace: /Users/micahjohnson/Code/csm-worktrees/cre-2154-agency-public/packages/agency
+Getting Svelte diagnostics...
+
+Browserslist: browsers data (caniuse-lite) is 8 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+svelte-check found 0 errors and 0 warnings
+
+> @create-something/agency@1.0.0 canon:check /Users/micahjohnson/Code/csm-worktrees/cre-2154-agency-public/packages/agency
+> node ./scripts/check-canon-debt.mjs && node --import tsx --test test/canon-debt.test.ts test/paper-brand-cohesion.test.ts test/public-surface-policy.test.ts
+
+Canon debt check passed across 7 file(s): src/routes/admin/security
+✔ canon debt guard discovers the managed admin security surface (9.622583ms)
+✔ canon debt guard catches raw color and motion values (2.089083ms)
+✔ canon debt pilot accepts tokenized color, shadow, and motion values (0.567709ms)
+✔ canon debt pilot reports changed-file findings without enforcing them (0.707334ms)
+✔ admin security canon debt stays tokenized (0.901084ms)
+✔ package check runs the canon debt guard (0.279625ms)
+✔ Agency uses its property-owned outlined logo assets without changing Canon defaults (3.970958ms)
+✔ Agency serves the approved V3 logo files byte-for-byte at its public asset paths (1.722041ms)
+✔ the Agency footer uses one linked lockup instead of repeating the brand inside its link panel (0.218792ms)
+✔ the homepage retains a readable listing independent of scene motion (0.313084ms)
+✔ the Agency opening exposes the owned handoff and inspection path without a provider logo lockup (1.430375ms)
+✔ shared campaign titles keep every period optically separated and attached to its word (0.324625ms)
+✔ the Agency footer handoff uses its own macro-real decision-gate image without replacing live CTA copy (1.062333ms)
+✔ Field Reports carries an attached-proof Playbook macro study with its authored mobile companion (0.278375ms)
+✔ Map and Template Review each carry a route-specific Playbook court hero with a mobile companion (1.162334ms)
+✔ Workflow library opens with a route-specific macro Playbook hero and authored mobile companion (0.606083ms)
+✔ the shared social preview is a current, served Paper operating-system artifact (0.495083ms)
+✔ every current portfolio page owns the operator palette, including workflow details (0.646042ms)
+✔ utility, private, archive and unknown paths fail closed (0.085958ms)
+✔ approved Map entry and public supporting pages retain explicit ownership (0.07075ms)
+ℹ tests 20
+ℹ suites 0
+ℹ pass 20
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 182.676291
+
+> @create-something/agency@1.0.0 copy:check /Users/micahjohnson/Code/csm-worktrees/cre-2154-agency-public/packages/agency
+> node ./scripts/check-public-copy.mjs && node --import tsx --test test/public-marketing-copy.test.ts test/field-report-evidence.test.ts test/product-family-contract.test.ts test/public-pricing-contract.test.ts test/membership-inquiry.test.ts test/integration-catalog.test.ts test/system-context-experience.test.ts test/playbook-hero-image-assets.test.ts test/public-ga-browser-policy.test.mjs
+
+Public copy check passed across 172 file(s).
+✔ upstream contribution report keeps acceptance evidence and relationship limits together (1.873458ms)
+✔ upstream contribution page exposes primary receipts without implying endorsement (0.396792ms)
+✔ template review Field Report separates packet completion, synthetic boundary checks, and business impact (0.179875ms)
+✔ public Field Report leads with the decision and keeps eval scope explicit (0.992959ms)
+✔ Result metrics preserve the evidence and scale from their Performance cells (0.352708ms)
+✔ public Field Report orders the evidence argument before one combined economics scene (0.261917ms)
+✔ public evidence records are inspectable and include the sanitized runtime audit (0.106916ms)
+✔ modeled capacity separates the supplied human baseline from measured agent runtime and savings (0.464708ms)
+✔ Field Reports are a browsable proof chapter in the agency journey (0.303208ms)
+✔ Products explains the product family and keeps operating surfaces inside Control (0.205166ms)
+✔ booking carries the Field Report handoff into the owned mapping scheduler (0.201917ms)
+✔ homepage links to evidence while Services retains the qualified readback (0.502666ms)
+✔ generated catalog exactly matches the public brokered registry boundary (0.966042ms)
+✔ curated compatibility marks use explicit roles, statuses, and destinations (0.247334ms)
+✔ public catalog does not expose registry transport or descriptive metadata (1.306166ms)
+✔ catalog connector context is bounded before it enters the public map (0.26175ms)
+✔ membership CTA preserves inquiry intent and attribution through the public loader (0.60175ms)
+✔ unknown inquiry intents retain the existing safe fallback (0.100208ms)
+✔ Playbook macro heroes keep distinct desktop and mobile source assets (13.748833ms)
+✔ the Home court candidate keeps its authored desktop and mobile studies distinct (1.146084ms)
+✔ the Map chapter keeps a distinct overhead desktop and mobile study (1.260958ms)
+✔ the Ground hero keeps its verification instrument and provenance intact (1.617167ms)
+✔ public product family separates Map, Build, and Control on one commercial path (1.0605ms)
+✔ standalone software supports monthly and yearly subscription shapes without fake prices (0.104125ms)
+✔ public names are projections over stable internal compatibility contracts (0.069042ms)
+✔ canonical product documentation preserves the public and internal naming boundary (1.349708ms)
+✔ canonical commercial interface sells managed Control operation instead of agent creation (0.651125ms)
+✔ sales and delivery enablement preserve the managed operations commercial boundary (4.480708ms)
+✔ Canon overlay projects Map publicly while keeping stable Atlas contracts (0.67025ms)
+✔ Map is the canonical public canvas route and Atlas redirects for compatibility (10.957125ms)
+✔ primary public entry points route visitors through Map -> Build -> Control (0.432042ms)
+✔ Control is a standalone public product that includes Map and its operator surfaces (0.298458ms)
+✔ Control and Services present the approved Managed AI Operations offer (0.608ms)
+✔ Map and Control checkout shapes stay inactive until approved Stripe prices exist (0.095709ms)
+✔ public manifest exposes Map, Build, and Control while retaining Policy OS as an alias (4.621875ms)
+✔ active public journey does not leak compatibility names as commercial copy or links (0.742292ms)
+✔ only the Cloudflare-managed RUM abort is excluded from product request failures (0.462292ms)
+✔ rendered CSS casing does not weaken the required pricing tokens (0.08525ms)
+✔ public agency copy guard discovers every visitor-facing route (31.253375ms)
+✔ public agency copy avoids internal strategy and unclear control language (81.301125ms)
+✔ public agency copy guard catches phrases split across markup whitespace (0.934792ms)
+✔ public agency copy guard permits the bounded AI Buyer Readiness category (0.743291ms)
+✔ public agency copy guard catches old lane and partner framing (0.582625ms)
+✔ public agency copy guard rejects unauthorized OpenAI relationship claims (0.522834ms)
+✔ public agency surfaces explain ownership and provider roles (0.402125ms)
+✔ the builder-facing homepage retains commercial terms, film evidence and direct inspection links (0.310334ms)
+✔ commercial decision routes explain the task, delivery, ownership, and proof (0.569125ms)
+✔ public Agency commercial propositions declare the shared editorial expression (1.717625ms)
+✔ commercial conversion handoffs use editorial propositions while task surfaces stay field-led (1.988708ms)
+✔ the Practice argument is editorial while its operating artifacts stay field-led (0.158958ms)
+✔ the compact homepage preserves buying boundaries and detailed destinations (0.174042ms)
+✔ the homepage has one FAQ and avoids redundant standalone explanations (0.1615ms)
+✔ commercial decision routes use one primary and one conversational action (0.822084ms)
+✔ public stack positioning names the owned Cloudflare and OpenAI boundary (0.589416ms)
+✔ the active product catalog leads with Substrate and keeps Notion only as client history (0.206584ms)
+✔ agency README documents the public copy contract (0.738166ms)
+✔ integration proof keeps compatibility distinct from partnership and delivery (0.440625ms)
+✔ public agency copy permits the documented Select tier and named individual credentials (0.58425ms)
+✔ public agency copy rejects tiers and organization specializations not documented for CREATE SOMETHING (1.404667ms)
+✔ public pricing separates free source, the Map starter, and managed Control (0.811042ms)
+✔ canonical buyer surfaces render the shared pricing contract without the old Map ambiguity (0.588ms)
+✔ the implemented public source stays aligned with the approved design artifact (1.358416ms)
+✔ all four lenses preserve explicit authority and deterministic public ordering (2.243541ms)
+✔ freshness becomes stale at the declared review boundary without changing coverage or authority (0.173375ms)
+✔ Control, Map, and the field report adapt one public contract without adding a product or second map (0.271292ms)
+✔ visitor-facing system-context markup excludes internal architecture vocabulary and diagnostic counts (0.369042ms)
+✔ the public Map booking summary hides compatibility vocabulary and identifiers (2.970458ms)
+✔ Map Fit View can include the complete workflow at the mobile verifier width (0.363625ms)
+ℹ tests 68
+ℹ suites 0
+ℹ pass 68
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 512.31775
+✔ Signal community APIs are internal-only protected routes (0.446084ms)
+✔ Control activation API requires the first-party authenticated account scope (0.062541ms)
+✔ public governance and marketing routes remain public (0.138125ms)
+✔ active Agency surfaces and operator commands use CREATE SOMETHING Identity (57.884209ms)
+✔ public HTML cache does not read query state while SvelteKit prerenders (0.446084ms)
+✔ public HTML cache policy allows anonymous canonical public GETs (10.924959ms)
+✔ public HTML cache policy skips personalized or high-variance requests (0.344875ms)
+✔ public HTML cache policy skips protected, API, and release-sensitive workflow routes (0.144542ms)
+✔ public HTML cache only stores successful public HTML responses (1.075959ms)
+✔ public HTML cache headers mark edge cache status and ttl (0.405791ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 207.980292
+
+> @create-something/agency@1.0.0 test:mcp-entitlement-authority /Users/micahjohnson/Code/csm-worktrees/cre-2154-agency-public/packages/agency
+> node --import ./test/register-sveltekit-test-loader.mjs --import tsx --test test/mcp-entitlement-authority-loss.route.test.ts
+
+Partner entitlement authority tables are unavailable; failing closed
+✔ internal entitlement check clears stale allow state when all authority disappears (138.350083ms)
+✔ internal entitlement check denies stale allow state when partner authority storage is unavailable (86.306542ms)
+✔ internal entitlement check preserves an explicitly identified manual authority (75.856666ms)
+✔ manual override flag without trusted manual authority provenance fails closed (99.67675ms)
+✔ identity canonicalization cannot create trusted manual authority (126.910667ms)
+✔ current contract authority cannot borrow a stale commercial allow flag (99.573917ms)
+✔ OAuth password maintenance denies a cached allow after authority disappears (133.3625ms)
+✔ Identity session and managed bearer resolution deny after Agency authority is removed (207.030375ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1760.4515
+
+> @create-something/agency@1.0.0 test:map-commercial-lifecycle /Users/micahjohnson/Code/csm-worktrees/cre-2154-agency-public/packages/agency
+> node --import ./test/register-sveltekit-test-loader.mjs --import tsx --test test/map-commercial.test.ts test/map-stripe-webhook-lifecycle.test.ts
+
+✔ Map identity scope does not inherit unrelated MCP service authorization (0.993125ms)
+✔ Map workspace explicitly opts into the shared operator contract (0.193917ms)
+✔ Map checkout stays fail-closed until configuration and explicit approval are both present (0.1105ms)
+✔ subscription lifecycle maps to account-scoped Map entitlement states (0.093084ms)
+✔ webhook metadata must carry the complete first-party workspace binding (0.106ms)
+✔ Map checkout route requires approval, first-party identity, and subscription metadata (0.136959ms)
+✔ signed Stripe events drive Map entitlement failure, recovery, cancellation, and durable receipts (10.976833ms)
+✔ Stripe webhook rejects a payload without a valid signature before writing state (3.238166ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 281.698333
+
+> @create-something/agency@1.0.0 test:control-activation /Users/micahjohnson/Code/csm-worktrees/cre-2154-agency-public/packages/agency
+> node --import ./test/register-sveltekit-test-loader.mjs --import tsx --test test/control-activation-d1.test.ts test/control-activation-migration.test.ts test/control-activation.test.ts
+
+Runtime error near line 7: Control projection must match activation scope and transition command (19)
+✔ D1 adapter atomically versions, suspends, rolls back, and replays tenant-scoped projections (439.912958ms)
+Runtime error near line 4: Control activation requires verified accepted Map and Build evidence in the same tenant scope (19)
+Runtime error near line 1: Verified Build evidence is immutable (19)
+Runtime error near line 4: Control activation lineage or current-version precondition failed (19)
+Runtime error near line 1: Control activation source, authority, and policy contract are immutable (19)
+Runtime error near line 1: UNIQUE constraint failed: customer_control_activation_outbox.account_id, customer_control_activation_outbox.tenant_id, customer_control_activation_outbox.workspace_account_id, customer_control_activation_outbox.command_id (19)
+Runtime error near line 1: Control projection payload is immutable (19)
+Runtime error near line 1: runtime_registration_activation_mismatch (19)
+Runtime error near line 1: runtime_registration_activation_mismatch (19)
+Runtime error near line 1: runtime_registration_activation_mismatch (19)
+Runtime error near line 1: runtime_registration_activation_mismatch (19)
+Runtime error near line 1: runtime_registration_activation_mismatch (19)
+Runtime error near line 1: runtime_registration_activation_mismatch (19)
+Runtime error near line 1: runtime_registration_activation_mismatch (19)
+Runtime error near line 1: runtime_registration_activation_mismatch (19)
+Runtime error near line 1: runtime_registration_activation_mismatch (19)
+Runtime error near line 1: runtime_registration_activation_mismatch (19)
+Runtime error near line 1: CHECK constraint failed: artifact_prefix = 'workflow-artifacts/' || substr(artifact_manifest_sha256,8) || '/' (19)
+Runtime error near line 1: CHECK constraint failed: registration_version = 2 (19)
+Runtime error near line 1: NOT NULL constraint failed: customer_control_runtime_registrations.registration_version (19)
+Runtime error near line 1: CHECK constraint failed: length(binding_sha256) = 71 AND substr(binding_sha256,1,7) = 'sha256:' AND substr(binding_sha256,8) NOT GLOB '*[^0-9a-f]*' (19)
+Runtime error near line 1: runtime_registration_immutable (19)
+Runtime error near line 1: runtime_registration_immutable (19)
+Runtime error near line 1: runtime_registration_immutable (19)
+✔ Control activation migration pins accepted sources and immutable projection evidence (266.883667ms)
+✔ Control activation contract keeps API and MCP operations in parity (0.859584ms)
+✔ Control transport derives roles from first-party state and maps client errors (0.225959ms)
+✔ legacy entitlements do not silently gain new Control credential authority (0.065833ms)
+✔ scheduler authority requires the run frozen activation in its exact scope (0.256708ms)
+✔ Control source is derived and registered only from a strict ready Build inspection (1.807625ms)
+✔ activation is tenant scoped, accepted-source only, and idempotent (14.057625ms)
+✔ supersession, suspension, rollback, change links, and projection replay preserve history (3.688667ms)
+✔ accepted Build v2 reaches Agency activation without a contract hash cycle (10.555208ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 593.122917
+
+> @create-something/agency@1.0.0 test:inspection /Users/micahjohnson/Code/csm-worktrees/cre-2154-agency-public/packages/agency
+> node --import tsx --test test/inspection-scene.test.ts
+
+✔ inspection opens and rewinds without retaining a finding (0.849875ms)
+✔ invalid scroll input cannot escape the closed-to-inspected range (0.249417ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 145.589375
