@@ -1,11 +1,20 @@
 /* .ltd public reading surfaces opt in to Canon's measured operator palette.
    Authentication, presentations and interactive experiments remain independent. */
+html:has(.ltd-operator-public),
+body:has(.ltd-operator-public) {
+  color-scheme: dark;
+  /* The Canon opt-in tokens live on the child shell and do not inherit upward. */
+  background: oklch(20.5% 0 0);
+  scrollbar-color: oklch(32% 0 0) oklch(20.5% 0 0);
+}
+
 .ltd-operator-public {
   color-scheme: dark;
   --color-performance-paper: var(--color-operator-background);
   --color-performance-panel: var(--color-operator-secondary);
   --color-performance-court: var(--color-operator-raised);
   --color-performance-ink: var(--color-operator-foreground);
+  --color-performance-ink-soft: var(--color-operator-muted);
   --color-performance-muted: var(--color-operator-muted);
   --color-performance-line: var(--color-operator-border);
   --color-performance-line-strong: var(--color-operator-input-border);
@@ -122,6 +131,16 @@
 .ltd-operator-public main :is(.clear-card-grid__card, .product-surface) :is(p, span) {
   color: var(--color-operator-muted);
 }
+.property-performance.ltd-operator-public main .opposition .clear-card-grid__card,
+.property-performance.ltd-operator-public main .opposition .clear-card-grid__card :is(strong, .clear-card-grid__icon) {
+  color: var(--color-operator-foreground);
+}
+.property-performance.ltd-operator-public main .opposition .clear-card-grid__card {
+  border-radius: 8px;
+}
+.property-performance.ltd-operator-public main .opposition .clear-card-grid__card :is(p, .clear-card-grid__eyebrow) {
+  color: var(--color-operator-muted);
+}
 .ltd-operator-public main .readiness-page__questions button[aria-pressed='true'] {
   background: var(--color-operator-raised);
   border-color: var(--color-operator-foreground);
@@ -174,7 +193,30 @@
   font-size: clamp(.9rem, 1.2vw, 1rem);
 }
 .ltd-operator-hero__actions { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 1.5rem; }
-.ltd-operator-hero__actions :is(a, button) { min-height: 2.75rem; border-radius: 8px; }
+.ltd-operator-hero__actions :is(a, button) { min-height: 2.75rem; }
+.property-performance.ltd-operator-public .btn { border-radius: 8px; }
+.property-performance.ltd-operator-public :is(.property-funnel__button, .newsletter-section .submit-button, .newsletter-section input[type='email']) {
+  border-radius: 8px;
+}
+.property-performance.ltd-operator-public .property-funnel__step--active .property-funnel__step {
+  background: var(--color-operator-raised);
+  border-color: var(--color-operator-input-border);
+}
+.property-performance.ltd-operator-public .property-funnel__button--primary,
+.property-performance.ltd-operator-public .property-funnel__button--secondary:hover {
+  color: var(--color-operator-secondary);
+}
+.property-performance.ltd-operator-public .property-funnel__button--primary:hover {
+  background: var(--color-operator-muted);
+  border-color: var(--color-operator-muted);
+}
+.property-performance.ltd-operator-public .newsletter-section {
+  background: var(--color-operator-background);
+  border-color: var(--color-operator-border);
+}
+.property-performance.ltd-operator-public .newsletter-section :is(input[type='email'], .submit-button) {
+  color: var(--color-operator-secondary);
+}
 .ltd-operator-hero__proof {
   display: grid;
   gap: 0;
