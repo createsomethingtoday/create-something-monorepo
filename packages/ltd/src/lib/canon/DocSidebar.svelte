@@ -43,6 +43,33 @@
 		onClose?.();
 	}
 
+	function handleSidebarKeydown(event: KeyboardEvent) {
+		if (!mobileOpen || window.matchMedia('(min-width: 1024px)').matches) return;
+		if (event.key === 'Escape') {
+			event.preventDefault();
+			onClose?.();
+		} else if (event.key === 'Tab') {
+			const controls = Array.from(document.querySelectorAll<HTMLElement>(
+				'#canon-sidebar a, #canon-sidebar button, #canon-sidebar summary'
+			)).filter((element) => element.getClientRects().length > 0);
+			const first = controls[0];
+			const last = controls[controls.length - 1];
+			if (event.shiftKey && document.activeElement === first) {
+				event.preventDefault();
+				last?.focus();
+			} else if (!event.shiftKey && document.activeElement === last) {
+				event.preventDefault();
+				first?.focus();
+			}
+		}
+	}
+
+	$effect(() => {
+		if (mobileOpen) void tick().then(() => {
+			if (mobileOpen) document.querySelector<HTMLButtonElement>('.sidebar-close')?.focus();
+		});
+	});
+
 	$effect(() => {
 		if (!browser || !activeHref) return;
 
@@ -53,6 +80,8 @@
 		});
 	});
 </script>
+
+<svelte:window onkeydown={handleSidebarKeydown} />
 
 <!-- Mobile overlay -->
 {#if mobileOpen}
@@ -66,7 +95,7 @@
 	></div>
 {/if}
 
-<aside class="sidebar" class:sidebar-open={mobileOpen}>
+<aside id="canon-sidebar" class="sidebar" class:sidebar-open={mobileOpen}>
 	<div class="sidebar-header">
 		<a href="/canon" class="sidebar-logo" onclick={handleLinkClick}>
 			<span class="logo-text">Canon</span>
@@ -155,7 +184,9 @@
 		top: 0;
 		left: 0;
 		width: 280px;
-		height: 100vh;
+		height: 100dvh;
+		background: var(--color-performance-paper);
+		visibility: hidden;
 		border-right: 1px solid var(--color-performance-border-default);
 		display: flex;
 		flex-direction: column;
@@ -165,12 +196,14 @@
 	}
 
 	.sidebar-open {
+		visibility: visible;
 		transform: translateX(0);
 	}
 
 	/* Desktop: always visible */
 	@media (min-width: 1024px) {
 		.sidebar {
+			visibility: visible;
 			transform: translateX(0);
 		}
 	}
@@ -221,11 +254,11 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		width: 40px;
-		height: 40px;
+		width: 44px;
+		height: 44px;
 		background: transparent;
 		border: none;
-		border-radius: var(--radius-performance-scale-md);
+		border-radius: var(--radius-performance-md);
 		color: var(--color-performance-fg-secondary);
 		cursor: pointer;
 		transition: background var(--duration-performance-micro) var(--ease-performance-standard);
@@ -267,7 +300,7 @@
 
 	.nav-section-summary {
 		padding: var(--space-performance-xs);
-		border-radius: var(--radius-performance-scale-md);
+		border-radius: var(--radius-performance-md);
 	}
 
 	.nav-section-summary:hover,
@@ -305,7 +338,7 @@
 
 	.nav-group-summary {
 		padding: var(--space-performance-xs);
-		border-radius: var(--radius-performance-scale-md);
+		border-radius: var(--radius-performance-md);
 		color: var(--color-performance-fg-secondary);
 		font-size: var(--text-performance-body-sm);
 		font-weight: var(--font-performance-medium);
@@ -327,7 +360,7 @@
 		align-items: center;
 		justify-content: space-between;
 		padding: var(--space-performance-xs) var(--space-performance-xs);
-		border-radius: var(--radius-performance-scale-md);
+		border-radius: var(--radius-performance-md);
 		text-decoration: none;
 		color: var(--color-performance-fg-secondary);
 		font-size: var(--text-performance-body-sm);
@@ -344,6 +377,7 @@
 	}
 
 	.nav-link-active {
+		box-shadow: inset 2px 0 var(--color-performance-signal);
 		background: var(--color-performance-active);
 		color: var(--color-performance-fg-primary);
 		font-weight: var(--font-performance-medium);
@@ -363,6 +397,7 @@
 
 	/* Footer */
 	.sidebar-footer {
+		border-top: 1px solid var(--color-performance-line);
 		padding: var(--space-performance-md);
 	}
 
@@ -378,5 +413,8 @@
 
 	.footer-link:hover {
 		color: var(--color-performance-fg-primary);
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.sidebar { transition: none; }
 	}
 </style>

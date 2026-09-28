@@ -8,7 +8,7 @@ on:
         description: Reviewed property to release
         required: true
         type: choice
-        options: [space, io, ltd]
+        options: [space, io, ltd, lms]
 
 permissions:
   contents: read
@@ -30,6 +30,7 @@ jobs:
             space) project=create-something-space ;;
             io) project=create-something-io ;;
             ltd) project=createsomething-ltd ;;
+            lms) project=createsomething-lms ;;
             *) exit 1 ;;
           esac
           echo "PAGES_PROJECT=$project" >> "$GITHUB_ENV"
@@ -76,6 +77,12 @@ jobs:
 
       - name: Build Canon package
         run: pnpm --filter @create-something/canon package
+
+      - name: Build LMS workspace libraries
+        if: inputs.property == 'lms'
+        run: |
+          pnpm --filter @create-something/tufte package
+          pnpm --filter @create-something/spritz package
 
       - name: Check Property
         run: pnpm --filter "@create-something/$PROPERTY" check
