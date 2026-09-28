@@ -1,0 +1,59 @@
+Docker version 29.1.5, build 0e6fee6
+Fern CLI already supports canonical IR capture
+reusing cached Cloudflare wrapper fernapi/fern-typescript-sdk:3.80.1
+==> Capturing Fern canonical TypeScript IR
+[api]: typescript-sdk Started.
+[api]: typescript-sdk fernapi/fern-typescript-sdk Started.
+[api]: typescript-sdk ✓ All checks passed
+[api]: typescript-sdk fernapi/fern-typescript-sdk Executing generator fernapi/fern-typescript-sdk using container image: fernapi/fern-typescript-sdk:3.80.1
+[api]: typescript-sdk fernapi/fern-typescript-sdk Forwarding CLOUDFLARE_FERN_CAPTURE_DIR=/var/folders/5v/bcpy60z558b1y2jctfx6108m0000gq/T/paperclip-run-cre-182-48560595-a41-s2YDGK/forge.vBO5vWBX/capture into the generator container
+[api]: typescript-sdk fernapi/fern-typescript-sdk Generator logs here: /private/var/folders/5v/bcpy60z558b1y2jctfx6108m0000gq/T/paperclip-run-cre-182-48560595-a41-s2YDGK/tmp-39300-tm9nR3sXtjEb
+[api]: typescript-sdk fernapi/fern-typescript-sdk Wrote files to /var/folders/5v/bcpy60z558b1y2jctfx6108m0000gq/T/paperclip-run-cre-182-48560595-a41-s2YDGK/forge-transformer-sdk-ts-T7VA9j/sdk
+[api]: typescript-sdk fernapi/fern-typescript-sdk Finished.
+[api]: typescript-sdk Finished.
+==> Canonical IR captured in 4s
+==> TypeScript shard 1/1
+[TIMING] code generation took 1511ms
+[TIMING] fixPackageJson took 448ms
+[TIMING] checkFix took 7736ms
+==> 1 TypeScript shards finished in 13s
+node:internal/fs/promises:642
+  return new FileHandle(await PromisePrototypeThen(
+                        ^
+
+Error: ENOENT: no such file or directory, open '/var/folders/5v/bcpy60z558b1y2jctfx6108m0000gq/T/paperclip-run-cre-182-48560595-a41-s2YDGK/forge-transformer-sdk-ts-T7VA9j/sdk/api/resources/index.ts'
+    at async open (node:internal/fs/promises:642:25)
+    at async writeFile (node:internal/fs/promises:1249:14)
+    at async file:///private/var/folders/5v/bcpy60z558b1y2jctfx6108m0000gq/T/paperclip-run-cre-182-48560595-a41-s2YDGK/forge-src/packages/cloudflare-forge-transformer-sdk-ts/dist/generator/merge-fern-typescript-shards.mjs:90:1 {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/var/folders/5v/bcpy60z558b1y2jctfx6108m0000gq/T/paperclip-run-cre-182-48560595-a41-s2YDGK/forge-transformer-sdk-ts-T7VA9j/sdk/api/resources/index.ts'
+}
+
+Node.js v24.11.0
+error: TypeScript shard generation failed; restored /var/folders/5v/bcpy60z558b1y2jctfx6108m0000gq/T/paperclip-run-cre-182-48560595-a41-s2YDGK/forge-transformer-sdk-ts-T7VA9j/sdk
+node:internal/errors:985
+  const err = new Error(message);
+              ^
+
+Error: Command failed: bash /private/var/folders/5v/bcpy60z558b1y2jctfx6108m0000gq/T/paperclip-run-cre-182-48560595-a41-s2YDGK/forge-src/packages/cloudflare-forge-transformer-sdk-ts/dist/generator/generate-fern-typescript-sharded.sh
+    at genericNodeError (node:internal/errors:985:15)
+    at wrappedFn (node:internal/errors:539:14)
+    at checkExecSyncError (node:child_process:925:11)
+    at execFileSync (node:child_process:961:15)
+    at run (file:///private/var/folders/5v/bcpy60z558b1y2jctfx6108m0000gq/T/paperclip-run-cre-182-48560595-a41-s2YDGK/forge-src/packages/cloudflare-forge-transformer-sdk-ts/dist/cli.js:371:3)
+    at main (file:///private/var/folders/5v/bcpy60z558b1y2jctfx6108m0000gq/T/paperclip-run-cre-182-48560595-a41-s2YDGK/forge-src/packages/cloudflare-forge-transformer-sdk-ts/dist/cli.js:467:5)
+    at file:///private/var/folders/5v/bcpy60z558b1y2jctfx6108m0000gq/T/paperclip-run-cre-182-48560595-a41-s2YDGK/forge-src/packages/cloudflare-forge-transformer-sdk-ts/dist/cli.js:493:1
+    at ModuleJob.run (node:internal/modules/esm/module_job:377:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:691:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
+  status: 1,
+  signal: null,
+  output: [ null, null, null ],
+  pid: 39285,
+  stdout: null,
+  stderr: null
+}
+
+Node.js v24.11.0
