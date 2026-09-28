@@ -121,6 +121,8 @@ svg .agent-camera{transition:transform 420ms cubic-bezier(.22,1,.36,1)}
 .cs-workspace .file-menu > div { top: calc(100% + var(--workspace-gap-small)); padding: var(--workspace-gap-small); background: var(--workspace-raised); border-color: var(--workspace-strong-line); }
 .cs-workspace .file-menu button { border-color: transparent; }
 .cs-workspace .file-actions .share-action { background: var(--workspace-fg); color: var(--workspace-bg); font-weight: var(--font-performance-semibold); }
+/* Keep the inverse primary pair above the generic button hover rule. */
+.cs-workspace .file-actions .share-action:is(:hover, :focus-visible):not(:disabled) { background: var(--workspace-fg); color: var(--workspace-bg); border-color: var(--workspace-focus); }
 .cs-workspace .toolbar { background: var(--workspace-panel); }
 .cs-workspace .toolbar button { background: transparent; }
 .cs-workspace .toolbar button.active { background: var(--workspace-raised); border-color: var(--workspace-strong-line); }

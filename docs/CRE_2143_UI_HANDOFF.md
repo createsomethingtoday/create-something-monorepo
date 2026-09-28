@@ -3,13 +3,15 @@
 Canonical scope: [Linear CRE-2143](https://linear.app/create-something/issue/CRE-2143).
 Execution: [create-something Paperclip CRE-90](https://paperclip.createsomething.agency/CRE/issues/CRE-90).
 
-Implementation is ready for independent review. This revision supersedes candidate `431fe75343180ece61f4d15934d4f48765d8d0b6` and addresses all eight coordinator wake comments. The exact revised SHA is recorded in the Paperclip final handoff and branch work product; resolve this document's commit with `git log -1 --format=%H -- docs/CRE_2143_UI_HANDOFF.md`. No merge, push, workflow dispatch, deployment, external sharing, or production acceptance was performed by the engineer.
+Implementation is ready for independent review. This revision supersedes candidate `593e4ecc9ec07e15911308730efd7589ab57be9d`, retains its eight coordinator fixes, and addresses the additional Publish hover and mobile keyboard-evidence findings from the [CRE-93 independent review](https://paperclip.createsomething.agency/CRE/issues/CRE-93#document-independent-review). The exact revised SHA is recorded in the Paperclip final handoff and branch work product; resolve this document's commit with `git log -1 --format=%H -- docs/CRE_2143_UI_HANDOFF.md`. No merge, push, workflow dispatch, deployment, external sharing, or production acceptance was performed by the engineer.
 
 ## Change
 
 Shared opt-in Canon operator chrome aligns Workspace and Draw through neutral surfaces, persistent project identity, compact typography, semantic status, and keyboard focus. Workspace retains conversation, approvals, activity, diff and embedded preview. Draw retains the canvas as its working surface, with grouped project/mode controls and a readable inspector.
 
 Review changes:
+
+- Final contrast correction: a scoped primary hover/focus rule wins over generic button hover, preserving the inverse foreground/background pair. Actual app normal, hover, keyboard focus, combined hover/focus, disabled hover and mobile focus were inspected without publishing. Enabled text remains `rgb(13,13,13)` on white (19.44:1); keyboard outline is `2px solid rgb(167,184,255)`. Disabled appearance retains opacity0.35. This last source delta is CSS only.
 
 - Workspace project selection precedes readiness in DOM and mobile reading order. Open workspace is fully visible at y=535 on 390×844 and y=559 on 320×640. The checked-in demo is labeled Demo frontend, with no signed-delivery claim. Project identity remains visible in an opened mobile session.
 - Signed import is a secondary native disclosure. The labeled file input keeps keyboard behavior, uses a styled file-selector button, explains verification, and announces the chosen filename. Import handlers are unchanged.
@@ -41,11 +43,14 @@ Changed files relative to base:
 | `pnpm --filter @create-something/mapping-canvas build` | Passed, adapter-cloudflare, including short-height refinement. |
 | `pnpm install --frozen-lockfile --ignore-scripts --offline` | Passed dependency/lockfile preflight; expected unrelated unbuilt workspace-bin warnings. No lockfile change retained. Lifecycle scripts were not rerun by this preflight. |
 | Workflow validation | YAML parsed; all action refs are full SHAs; exact checkout SHA asserted; all bash blocks pass `bash -n`; main/manual success and non-main/non-manual rejection exercised; missing token/account combinations fail. No deploy command invoked. |
+| Final CSS correction | Bootstrap, Draw check (0 errors/warnings), build and rendered state/contrast assertions passed. Existing 446 test results above are from candidate593e4ecc9; unchanged logic did not warrant rerunning them for two CSS lines. |
 | `git diff --check` | Passed. |
 
-Browser: Ego Chromium. Revised screenshots use the `-revised.png` suffix under `output/cre-2143/`. Earlier screenshots are retained as historical evidence and are not the revised visual baseline. Key revised screenshots and the evidence archive are attached to the Paperclip issue. Local evidence includes the scratch-only preview-port harness and verification notes. No browser response fixture was used for revised session captures.
+Browser: Ego Chromium. Final contrast/keyboard screenshots use `-final.png`; the previous revision's screenshots use `-revised.png` under `output/cre-2143/`. Earlier screenshots are retained as historical evidence and are not the revised visual baseline. Key revised screenshots and the evidence archive are attached to the Paperclip issue. Local evidence includes the scratch-only preview-port harness and verification notes. No browser response fixture was used for revised session captures.
 
 Revised browser checks:
+
+- Corrected `client-keyboard-mobile-final.png` and `draw-keyboard-mobile-final.png` are verified 390×844 PNGs, not desktop images. Workspace capture uses a real session and Tab navigation to the reference-image file input. The old mislabeled image is renamed `client-keyboard-desktop-historical.png` in the new archive. `draw-empty-mobile-final.png` is a clean fresh-server 390px empty state with File closed. Numeric control-state readback is retained in `publish-control-states.json`; disabled state was set temporarily in the browser DOM only, with no publish action.
 
 - 1440×900 desktop, 390×844 mobile, 320×640 small viewport, and 844×390 landscape. No horizontal document overflow observed. Project action is above the mobile fold.
 - File control keyboard focus is visible; label/described-by and selected filename feedback are retained; selecting a local fixture enables import. No delivery was imported.
