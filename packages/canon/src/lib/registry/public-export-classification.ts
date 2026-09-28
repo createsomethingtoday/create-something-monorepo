@@ -236,6 +236,30 @@ const PACKAGE_EXPORT_PATH_POLICIES: CanonPublicExportClassificationRule[] = [
     rationale: 'Canonical CSS token source is covered by token.performance-core.'
   },
   {
+    exportPath: './styles/workspace.css',
+    classification: 'style-artifact',
+    registryPolicy: 'classified-out',
+    rationale: 'Opt-in workspace chrome is a stylesheet consumption artifact governed by Canon tokens.'
+  },
+  {
+    exportPath: './styles/operator.css',
+    classification: 'token-artifact',
+    registryPolicy: 'classified-out',
+    rationale: 'Opt-in operator palette is governed by its CSS/JSON parity and contrast contract.'
+  },
+  {
+    exportPath: './styles/operator.tokens.json',
+    classification: 'token-artifact',
+    registryPolicy: 'classified-out',
+    rationale: 'Machine-readable operator tokens mirror the canonical operator stylesheet.'
+  },
+  {
+    exportPath: './styles/operator-document',
+    classification: 'style-artifact',
+    registryPolicy: 'classified-out',
+    rationale: 'Inline operator document CSS is a consumption artifact derived from canonical operator tokens.'
+  },
+  {
     exportPath: './styles/canon.css',
     classification: 'style-artifact',
     registryPolicy: 'classified-out',
@@ -650,6 +674,12 @@ const PACKAGE_EXPORT_PATH_POLICIES: CanonPublicExportClassificationRule[] = [
     classification: 'platform-surface',
     registryPolicy: 'classified-out',
     rationale: 'Newsletter helpers are product integration support, not foundation UI primitives.'
+  },
+  {
+    exportPath: './newsletter/subscribe',
+    classification: 'platform-surface',
+    registryPolicy: 'classified-out',
+    rationale: 'Server-side subscription processing is product integration support, not a UI primitive.'
   },
   {
     exportPath: './newsletter/audience',
