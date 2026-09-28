@@ -93,14 +93,14 @@
   .paths-list {
     display: flex;
     flex-direction: column;
-    gap: var(--space-md);
+    gap: 0;
+    border-top: 1px solid var(--color-performance-line);
   }
 
   .path-row {
     display: block;
-    padding: var(--space-lg);
-    border-radius: var(--radius-performance-md, 4px);
-    border: 1px solid var(--color-performance-line, #d7d7d2);
+    padding: var(--space-lg) var(--space-md);
+    border-bottom: 1px solid var(--color-performance-line);
     background: var(--color-performance-panel, #ffffff);
     color: var(--color-performance-ink, #090909);
     transition:
@@ -152,6 +152,10 @@
   }
 
   @media (max-width: 720px) {
+    .path-row {
+      padding: var(--space-md);
+    }
+
     .path-header {
       align-items: flex-start;
       flex-direction: column;

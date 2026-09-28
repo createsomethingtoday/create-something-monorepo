@@ -31,12 +31,12 @@
   <section>
     <h2 class="section-title">Lessons</h2>
 
-    <div class="flex flex-col gap-4">
+    <div class="lesson-collection">
       {#each path.lessons as lesson, index}
         <a href="/paths/{path.id}/{lesson.id}" class="lesson-card">
           <div class="lesson-number">{index + 1}</div>
 
-          <div class="flex-1">
+          <div class="lesson-summary">
             <h3 class="lesson-title">{lesson.title}</h3>
             <p class="lesson-description">{lesson.description}</p>
 
@@ -101,7 +101,7 @@
     max-width: 12ch;
     margin: 0;
     color: var(--color-performance-ink, #090909);
-    font-size: var(--text-display);
+    font-size: clamp(2rem, 6vw, 3.5rem);
     font-weight: var(--font-medium);
     line-height: 0.98;
     letter-spacing: 0;
@@ -157,13 +157,21 @@
     margin-bottom: var(--space-lg);
   }
 
+  .lesson-collection {
+    border-top: 1px solid var(--color-performance-line);
+  }
+
+  .lesson-summary {
+    flex: 1;
+    min-width: 0;
+  }
+
   .lesson-card {
     display: flex;
     align-items: center;
     gap: var(--space-md);
     padding: var(--space-md);
-    border-radius: var(--radius-performance-md, 4px);
-    border: 1px solid var(--color-performance-line, #d7d7d2);
+    border-bottom: 1px solid var(--color-performance-line);
     background: var(--color-performance-panel, #ffffff);
     color: var(--color-performance-ink, #090909);
     transition:
@@ -179,7 +187,9 @@
   .lesson-number {
     width: 2.5rem;
     height: 2.5rem;
-    border-radius: var(--radius-full);
+    flex: 0 0 auto;
+    font-family: var(--font-mono);
+    border-radius: var(--radius-performance-sm);
     background: var(--color-performance-court, #e6e6e0);
     display: flex;
     align-items: center;
