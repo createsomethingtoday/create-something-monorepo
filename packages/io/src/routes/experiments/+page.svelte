@@ -112,11 +112,11 @@
 />
 
 <!-- Hero Section -->
-<section class="hero-section">
-	<div class="max-w-7xl mx-auto">
-		<div class="text-center space-y-4">
+<section class="hero-section research-index-header">
+	<div class="research-index-inner">
+		<div class="research-index-heading">
 			<h1 class="hero-title">All Experiments</h1>
-			<p class="hero-subtitle">
+			<p class="hero-subtitle" role="status" aria-live="polite" aria-atomic="true">
 				{#if isFiltered}
 					{resultCount} of {papers.length} experiments
 				{:else}
@@ -128,8 +128,8 @@
 		<!-- Search & Filter Controls -->
 		<div class="controls-container">
 			<!-- Search Input -->
-			<div class="flex justify-center">
-				<div class="relative w-full max-w-md">
+			<div class="research-control-row">
+				<div class="relative research-search">
 					<label for="experiments-search" class="sr-only">Search experiments</label>
 					<input
 						id="experiments-search"
@@ -166,8 +166,8 @@
 			</div>
 
 			<!-- Filter by Design Methodology -->
-			<div class="flex justify-center">
-				<div class="flex flex-wrap justify-center gap-2">
+			<div class="research-control-row">
+				<div class="research-filters">
 					<button
 						onclick={() => masterFilter = 'all'}
 						class="filter-chip {masterFilter === 'all' ? 'active' : ''}"
@@ -213,7 +213,7 @@
 			</div>
 
 			<!-- Sort Control -->
-			<div class="flex justify-center">
+			<div class="research-control-row">
 				<div class="sort-control">
 					<button
 						onclick={() => sortBy = 'newest'}

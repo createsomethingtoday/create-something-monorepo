@@ -112,9 +112,9 @@
 />
 
 <!-- Hero Section -->
-<section class="hero-section">
-	<div class="max-w-7xl mx-auto">
-		<div class="text-center space-y-4">
+<section class="hero-section research-index-header">
+	<div class="research-index-inner">
+		<div class="research-index-heading">
 			<h1 class="hero-title">Research Papers</h1>
 			<p class="hero-subtitle" role="status" aria-live="polite" aria-atomic="true">
 				{#if isFiltered}
@@ -128,8 +128,8 @@
 		<!-- Search & Filter Controls -->
 		<div class="controls-container">
 			<!-- Search Input -->
-			<div class="flex justify-center">
-				<div class="relative w-full max-w-md">
+			<div class="research-control-row">
+				<div class="relative research-search">
 					<label for="papers-search" class="sr-only">Search papers</label>
 					<input
 						id="papers-search"
@@ -166,8 +166,8 @@
 			</div>
 
 			<!-- Category Filter Chips -->
-			<div class="flex justify-center">
-				<div class="flex flex-wrap justify-center gap-2" role="group" aria-label="Paper category">
+			<div class="research-control-row">
+				<div class="research-filters" role="group" aria-label="Paper category">
 					<button
 						onclick={() => categoryFilter = 'all'}
 						aria-pressed={categoryFilter === 'all'}
@@ -200,7 +200,7 @@
 			</div>
 
 			<!-- Sort Control -->
-			<div class="flex justify-center">
+			<div class="research-control-row">
 				<div class="sort-control" role="group" aria-label="Paper order">
 					<button
 						onclick={() => sortBy = 'newest'}
