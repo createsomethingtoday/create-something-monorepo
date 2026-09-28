@@ -137,3 +137,286 @@
 @media (prefers-reduced-motion: reduce) {
   .agency-surface[data-canon-palette='operator'] .map-preview__rail span { animation: none; }
 }
+
+/* Public operator pages keep the existing page spine, proof and actions. The
+   opening presents the workflow first; campaign media is supporting material. */
+.agency-surface[data-canon-palette='operator'] .performance-campaign-opening {
+  background: var(--color-operator-background);
+  color: var(--color-operator-foreground);
+  min-height: auto;
+}
+.agency-surface[data-canon-palette='operator'] .performance-campaign-opening__media {
+  opacity: 0.12;
+  filter: grayscale(1);
+}
+.agency-surface[data-canon-palette='operator'] .performance-campaign-opening__grid { display: none; }
+.agency-surface[data-canon-palette='operator'] .performance-campaign-opening__content {
+  gap: var(--space-xl);
+  padding-block: clamp(7rem, 12vw, 9rem) var(--space-xl);
+}
+.agency-surface[data-canon-palette='operator'] .performance-campaign-opening h1 {
+  font-family: var(--font-performance-sans);
+  font-size: clamp(2rem, 4.5vw, 4.5rem);
+  line-height: 1.08;
+  max-width: 22ch;
+}
+.agency-surface[data-canon-palette='operator'] {
+  --font-performance-editorial: var(--font-performance-sans);
+  --color-performance-growth: var(--color-operator-status-done-text);
+  --color-performance-risk: var(--color-operator-status-blocked-text);
+}
+.agency-surface[data-canon-palette='operator'] .practice-preview-boundary {
+  background: var(--color-operator-secondary);
+  color: var(--color-operator-foreground);
+}
+.agency-surface[data-canon-palette='operator'] .practice-workbench h2,
+.agency-surface[data-canon-palette='operator'] .practice-workbench__chapter h3,
+.agency-surface[data-canon-palette='operator'] .practice-receipt h3 {
+  font-size: clamp(1.75rem, 3vw, 3rem);
+  line-height: 1.1;
+  max-width: 24ch;
+}
+.agency-surface[data-canon-palette='operator'] .practice-workbench {
+  overflow-wrap: anywhere;
+}
+@media (max-width: 720px) {
+  .agency-surface[data-canon-palette='operator'] .practice-workbench button { min-height: 44px; }
+}
+.agency-surface[data-canon-palette='operator'] .performance-campaign-opening[data-expression='editorial'] {
+  grid-template-rows: auto;
+  min-height: auto;
+}
+.agency-surface[data-canon-palette='operator'] .performance-campaign-opening[data-expression='editorial'] .performance-campaign-opening__content h1 {
+  font-family: var(--font-performance-sans);
+  font-size: clamp(2rem, 4.5vw, 4.5rem);
+  line-height: 1.08;
+  max-width: 22ch;
+}
+.agency-surface[data-canon-palette='operator'] .performance-campaign-opening[data-expression='editorial'] .performance-campaign-opening__content header {
+  width: min(100%, 48rem);
+  max-width: 48rem;
+}
+
+/* These Canon chapters use literal white text on the ink role. Keep their
+   inverse pair local to Agency when ink is remapped to a light foreground. */
+.agency-surface[data-canon-palette='operator'] .performance-evidence-index__header > div:first-child,
+.agency-surface[data-canon-palette='operator'] .performance-field-sequence__header > div:first-child,
+.agency-surface[data-canon-palette='operator'] .performance-contrast-chapter__principle,
+.agency-surface[data-canon-palette='operator'] .performance-contrast-chapter[data-mode='paper-to-ink'] .performance-contrast-chapter__intervention {
+  background: var(--color-operator-secondary);
+  color: var(--color-operator-foreground);
+}
+.agency-surface[data-canon-palette='operator'] .performance-evidence-index__header small,
+.agency-surface[data-canon-palette='operator'] .performance-field-sequence__header small {
+  color: var(--color-operator-muted);
+}
+
+/* Route-owned artifacts with literal light copy retain dark neutral panels. */
+.agency-surface[data-canon-palette='operator'] :is(.continuation-record, .foundation-fit, .flagship-defense, .measurement-plan__formula, .guardrail-artifact pre) {
+  background: var(--color-operator-secondary);
+  color: var(--color-operator-foreground);
+}
+.agency-surface[data-canon-palette='operator'] .install-card button {
+  background: var(--color-operator-foreground);
+  color: var(--color-operator-background);
+}
+.agency-surface[data-canon-palette='operator'] .field-result > header > span {
+  background: var(--color-operator-secondary);
+  color: var(--color-operator-status-done-text);
+}
+.agency-surface[data-canon-palette='operator'] .failed-boundary__status {
+  background: var(--color-operator-secondary);
+  color: var(--color-operator-status-blocked-text);
+}
+
+/* Product-family openings share Canon's PageSection, whose light gradient and
+   literal button foreground also need an explicit operator pair. */
+.agency-surface[data-canon-palette='operator'] .clear-page-section--hero {
+  background: var(--color-operator-background);
+}
+.agency-surface[data-canon-palette='operator'] .clear-page-section--hero .clear-page-section__title {
+  font-size: clamp(2rem, 4.5vw, 4.5rem);
+  line-height: 1.08;
+}
+.agency-surface[data-canon-palette='operator'] .clear-page-section .btn-primary {
+  background: var(--color-operator-foreground);
+  color: var(--color-operator-background);
+  border-color: var(--color-operator-foreground);
+}
+.agency-surface[data-canon-palette='operator'] .clear-page-section :is(.btn-primary, .btn-secondary):hover {
+  background: var(--color-operator-raised);
+  color: var(--color-operator-foreground);
+  border-color: var(--color-operator-foreground);
+}
+
+/* Rebind derived aliases here: root-level aliases otherwise retain their light
+   resolved values when inherited into an operator-owned proof surface. */
+.agency-surface[data-canon-palette='operator'] {
+  --color-performance-mode-proof-surface: var(--color-operator-background);
+  --color-performance-mode-proof-ink: var(--color-operator-foreground);
+  --color-performance-mode-operator-surface: var(--color-operator-panel);
+  --color-performance-mode-operator-ink: var(--color-operator-foreground);
+}
+.agency-surface[data-canon-palette='operator'] .methodology-page {
+  --color-performance-fg-secondary: var(--color-operator-muted);
+}
+.agency-surface[data-canon-palette='operator'] :is(.performance-handoff, .performance-readback) {
+  --color-performance-accent: var(--color-operator-background);
+}
+.agency-surface[data-canon-palette='operator'] .playbook-field {
+  color: var(--color-operator-foreground);
+}
+.agency-surface[data-canon-palette='operator'] .playbook-field__footer strong {
+  color: var(--color-operator-foreground);
+}
+.agency-surface[data-canon-palette='operator'] :is(.dimension-strip span.mapped, .agent-meter, .chat-log article.visitor) {
+  background: var(--color-operator-secondary);
+}
+.agency-surface[data-canon-palette='operator'] .focus-strip button.active {
+  background: var(--color-operator-raised);
+  color: var(--color-operator-foreground);
+}
+.agency-surface[data-canon-palette='operator'] :is(.atlas-story__chapter, .atlas-story__ledger-row) button:focus-visible {
+  outline: 2px solid var(--color-operator-focus-ring-accessible);
+  outline-offset: 3px;
+}
+.agency-surface[data-canon-palette='operator'] .svelte-flow__edge-label {
+  color: var(--color-operator-background);
+  fill: var(--color-operator-background);
+}
+
+/* The public Basketball lab uses literal light panel fills in Canon. Scope
+   their neutral replacements to Agency; preserve its controls and state borders. */
+.agency-surface[data-canon-palette='operator'] :is(
+  .performance-system-court,
+  .performance-system-mode-note,
+  .performance-system-objective-brief,
+  .performance-system-environment-note,
+  .performance-system-steering-handoff,
+  .performance-system-versus-control button,
+  .performance-system-game-turn,
+  .performance-system-motion-sequence li,
+  .performance-system-motion-sequence li[data-status='active'],
+  .performance-system-first-run-flow article,
+  .performance-system-first-run-flow article[data-status='current'],
+  .performance-system-objective-brief-list article,
+  .performance-system-competition-setup,
+  .performance-system-competition-roster button,
+  .performance-system-competition-proof,
+  .performance-system-competition-actions button,
+  .performance-system-run-summary,
+  .performance-system-control-group select,
+  .performance-system-mode-control button,
+  .performance-system-option-row button,
+  .performance-system-policy-list button,
+  .performance-system-scouting-report,
+  .performance-system-scouting-list article,
+  .performance-system-advanced summary,
+  .performance-system-builder input:not([type='range']),
+  .performance-system-builder select,
+  .performance-system-builder textarea,
+  .performance-system-builder-weights article,
+  .performance-system-builder-status,
+  .performance-system-draft-import,
+  .performance-system-draft-import textarea,
+  .performance-system-upload textarea,
+  .performance-system-upload-actions label,
+  .performance-system-upload-actions button,
+  .performance-system-builder .performance-system-upload-actions button:nth-child(2),
+  .performance-system-upload-status,
+  .performance-system-kickoff,
+  .performance-system-live-standings,
+  .performance-system-live-callout > div,
+  .performance-system-rulebook article,
+  .performance-system-kickoff-grid article,
+  .performance-system-live-standings-list article,
+  .performance-system-challenge,
+  .performance-system-gate-impact,
+  .performance-system-score-explain,
+  .performance-system-scoreboard article,
+  .performance-system-challenge-list article,
+  .performance-system-playback,
+  .performance-system-playback-controls button,
+  .performance-system-playback-actions button,
+  .performance-system-turn-recap,
+  .performance-system-compounding-trail,
+  .performance-system-compounding-trail-list article,
+  .performance-system-final-outcome,
+  .performance-system-final-outcome-lanes article,
+  .performance-system-field-standings,
+  .performance-system-field-standings-list article,
+  .performance-system-steering-cockpit,
+  .performance-system-next-turn,
+  .performance-system-next-turn-gate,
+  .performance-system-next-turn-actions button,
+  .performance-system-decision-ledger,
+  .performance-system-decision-ledger-list article,
+  .performance-system-turn-disclosure,
+  .performance-system-steering-preview-grid button,
+  .performance-system-steering-comparison article,
+  .performance-system-steering-actions button,
+  .performance-system-steering-season button,
+  .performance-system-race-history,
+  .performance-system-race-history-list button,
+  .performance-system-race-momentum,
+  .performance-system-decision-moment-feature,
+  .performance-system-decision-moment-list button,
+  .performance-system-race-momentum-grid article,
+  .performance-system-race-year-strip button,
+  .performance-system-gate-impact > div:nth-child(2) article,
+  .performance-system-gate-impact-list article,
+  .performance-system-map-badge,
+  .performance-system-node,
+  .performance-system-projection-grid article,
+  .performance-system-validation-list article,
+  .performance-system-validation-list article[data-status='watch'],
+  .performance-system-validation-list article[data-status='fail'],
+  .performance-system-validation-list article[data-status='deferred']
+) {
+  background: var(--color-operator-panel);
+}
+.agency-surface[data-canon-palette='operator'] :is(
+  .performance-system-action--primary,
+  .performance-system-versus-control button.active,
+  .performance-system-game-turn-header button,
+  .performance-system-competition-actions button:first-child,
+  .performance-system-mode-control button.active,
+  .performance-system-option-row button.active,
+  .performance-system-draft-actions button,
+  .performance-system-upload-actions button:nth-child(2),
+  .performance-system-builder .performance-system-upload-actions button:first-child,
+  .performance-system-playback-actions button.active,
+  .performance-system-final-outcome-header button,
+  .performance-system-next-turn-actions button.primary,
+  .performance-system-steering-preview-grid button.active,
+  .performance-system-steering-actions button.active,
+  .performance-system-steering-season button.active,
+  .performance-system-decision-moment-list button.active,
+  .performance-system-race-year-strip button.active
+) {
+  background: var(--color-operator-raised);
+  color: var(--color-operator-foreground);
+}
+.agency-surface[data-canon-palette='operator'] :is(.performance-system-lede, .performance-system-report-intro p) {
+  color: var(--color-operator-muted);
+}
+
+/* Public Atlas chrome follows the host palette. Run/wait/stop words and their
+   existing colored badges/borders remain independent of the neutral canvas. */
+.agency-surface[data-canon-palette='operator'] :is(.context-rail, .atlas-story__ledger, .atlas-story__ledger-summary, .atlas-story__ledger-row, .atlas-story__chapter, .public-atlas-flow-node) {
+  background: var(--color-operator-panel);
+  color: var(--color-operator-foreground);
+}
+.agency-surface[data-canon-palette='operator'] :is(.public-atlas-flow, .public-atlas-flow .svelte-flow, .atlas-story__map) {
+  background: var(--color-operator-secondary);
+}
+.agency-surface[data-canon-palette='operator'] :is(.public-atlas-flow-node .kind, .public-atlas-flow-node .owner, .public-atlas-flow-node small, .atlas-story__ledger-row small) {
+  color: var(--color-operator-muted);
+}
+.agency-surface[data-canon-palette='operator'] .public-atlas-flow-node:is(.selected, .focused) {
+  border-color: var(--color-operator-focus-ring-accessible);
+}
+.agency-surface[data-canon-palette='operator'] .public-atlas-flow .svelte-flow__node:focus-visible {
+  outline: 2px solid var(--color-operator-focus-ring-accessible);
+  outline-offset: 3px;
+}

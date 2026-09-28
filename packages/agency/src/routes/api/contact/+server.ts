@@ -13,6 +13,7 @@ import {
 import { createLogger } from '@create-something/canon/utils';
 
 const logger = createLogger('ContactAPI');
+const contactSender = 'CREATE SOMETHING Agency <noreply@createsomething.io>';
 const validSourceProperties = new Set(['space', 'io', 'agency', 'ltd', 'lms']);
 type ContactLeadStage = NonNullable<WarmLeadInput['stage']>;
 
@@ -124,7 +125,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 
 		// Send auto-response to the person who contacted us
 		const confirmation = {
-				from: 'CREATE SOMETHING Agency <noreply@workway.co>',
+				from: contactSender,
 				to: email,
 				subject: service ? `Re: ${service} Inquiry` : 'Thanks for reaching out',
 				html: renderContactResponse({ name, message, service, intent, lane })
@@ -132,7 +133,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 
 		// Send notification to site owner
 		const notification = {
-				from: 'CREATE SOMETHING Agency <noreply@workway.co>',
+				from: contactSender,
 				to: 'micah@createsomething.io',
 				replyTo: email,
 				subject: service ? `Service Inquiry: ${service} from ${name}` : `New Contact Form Submission from ${name}`,
