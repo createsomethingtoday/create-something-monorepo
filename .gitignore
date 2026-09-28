@@ -175,3 +175,6 @@ config/mcp-hub/fleet-secrets.local.*
 
 # Local evidence and write receipts from Featured-template review runs
 packages/webflow-template-search/output/featured-template-feedback/
+
+# Task-scoped unsigned browser capability (never commit session tokens)
+/broker-session/

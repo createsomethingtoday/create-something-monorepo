@@ -1,0 +1,98 @@
+{
+  "policy_id": "policy.paperclip-browser-environments.v1",
+  "version": 1,
+  "status": "draft",
+  "tier": "Judgment",
+  "scope": {
+    "paperclip_instance": "create-something",
+    "company_id": "1fb053c2-aa2a-4d88-8c45-0ef82ac8aef5",
+    "linear_issue": "CRE-2150",
+    "excluded_instance": "client-agent-pilot"
+  },
+  "enforcement": {
+    "artifact": "declarative_role_policy",
+    "paperclip_role_runtime_installed": false,
+    "broker": "task_token_origin_method_expiry_limits_in_broker",
+    "host_ego_os_denial": "unverified",
+    "assignment_alone_grants_access": false
+  },
+  "roles": {
+    "nonbrowser_executor": {
+      "repo": "assigned_worktree",
+      "unsigned_browser": "deny",
+      "signed_in_ego": "deny",
+      "production": "deny",
+      "integrations": "explicit_task_scope_only",
+      "client_devices": "deny"
+    },
+    "browser_engineer": {
+      "repo": "assigned_worktree",
+      "unsigned_browser": "assigned_broker_read_only",
+      "signed_in_ego": "deny",
+      "production": "deny",
+      "integrations": "task_coordination_only",
+      "client_devices": "deny"
+    },
+    "unsigned_ui_qa": {
+      "repo": "assigned_candidate_read",
+      "unsigned_browser": "assigned_broker_read_only",
+      "signed_in_ego": "deny",
+      "production": "deny",
+      "integrations": "task_coordination_only",
+      "client_devices": "deny"
+    },
+    "named_ego_operator": {
+      "repo": "separate_assignment_required",
+      "unsigned_browser": "separate_broker_assignment_required",
+      "signed_in_ego": "explicit_named_task_with_exclusive_lease",
+      "production": "deny",
+      "integrations": "explicit_task_scope_only",
+      "client_devices": "deny"
+    },
+    "independent_reviewer": {
+      "repo": "candidate_read",
+      "unsigned_browser": "separate_broker_assignment_required",
+      "signed_in_ego": "deny",
+      "production": "deny",
+      "integrations": "evidence_read_only",
+      "client_devices": "deny"
+    }
+  },
+  "task_binding": {
+    "paperclip_issue": "CRE-109",
+    "agent_id": "d80267b5-6c6d-45b8-9357-441fda5614ac",
+    "role": "browser_engineer",
+    "unsigned_browser": {
+      "operation": "POST /read",
+      "page_methods": [
+        "GET"
+      ],
+      "allowed_page_origins": [
+        "https://example.com"
+      ],
+      "task_id": "CRE-109",
+      "max_session_seconds": 900,
+      "fresh_context_per_request": true,
+      "credential_transport": "private_0600_session_file_to_bearer_header",
+      "token_in_artifacts": false,
+      "candidate_source_sha256": "9ac5f48f4a1140e6a69da95977092b73f760cf031d93d8304c72f1b9b43e87e6"
+    }
+  },
+  "named_operator_assignment": {
+    "paperclip_issue": "CRE-110",
+    "agent_id": "3eb0a714-9796-4130-9fea-f58d556868b4",
+    "name": "Browser Environment QA Operator",
+    "scope": "explicitly assigned read-only TaskSpace qualification only",
+    "lease_verified": false,
+    "signed_in_site_authorization": "separate_task_requirement",
+    "self_approval": false
+  },
+  "acceptance": {
+    "unsigned_example_page_render": "observed",
+    "storage_mutation_separation": "not_verified_by_example_page",
+    "host_ego_negative": "inconclusive_exit_4",
+    "operator_lifecycle": "pending_independent_qa",
+    "role_runtime_denial": "not_verified",
+    "production_promotion": "not_authorized"
+  }
+}
