@@ -1,0 +1,122 @@
+[
+  {
+    "route": "/",
+    "reduced": true,
+    "overflow": false,
+    "runningAnimations": []
+  },
+  {
+    "route": "/services",
+    "reduced": true,
+    "overflow": false,
+    "runningAnimations": []
+  },
+  {
+    "route": "/technical-review",
+    "reduced": true,
+    "overflow": false,
+    "runningAnimations": []
+  },
+  {
+    "route": "/book",
+    "reduced": true,
+    "overflow": false,
+    "runningAnimations": []
+  },
+  {
+    "route": "/map",
+    "reduced": true,
+    "overflow": false,
+    "runningAnimations": []
+  },
+  {
+    "route": "/control",
+    "reduced": true,
+    "overflow": false,
+    "runningAnimations": []
+  },
+  {
+    "route": "/stack",
+    "reduced": true,
+    "overflow": false,
+    "runningAnimations": []
+  },
+  {
+    "route": "/practice",
+    "reduced": true,
+    "overflow": false,
+    "runningAnimations": []
+  },
+  {
+    "route": "/field-reports",
+    "reduced": true,
+    "overflow": false,
+    "runningAnimations": []
+  },
+  {
+    "route": "/field-reports/template-review",
+    "reduced": true,
+    "overflow": false,
+    "runningAnimations": []
+  },
+  {
+    "route": "/products/signal",
+    "reduced": true,
+    "overflow": false,
+    "runningAnimations": []
+  },
+  {
+    "route": "/workflows/mcp-server-development",
+    "reduced": true,
+    "overflow": false,
+    "runningAnimations": []
+  },
+  {
+    "route": "/security",
+    "reduced": true,
+    "overflow": false,
+    "runningAnimations": []
+  },
+  {
+    "route": "/about",
+    "reduced": true,
+    "overflow": false,
+    "runningAnimations": []
+  },
+  {
+    "route": "/dispatch",
+    "reduced": true,
+    "overflow": false,
+    "runningAnimations": []
+  },
+  {
+    "route": "/basketball-systems-lab",
+    "reduced": true,
+    "overflow": false,
+    "runningAnimations": []
+  },
+  {
+    "route": "/proof/marketplace-workflow",
+    "reduced": true,
+    "overflow": false,
+    "runningAnimations": []
+  },
+  {
+    "route": "/use-cases/enterprise",
+    "reduced": true,
+    "overflow": false,
+    "runningAnimations": []
+  },
+  {
+    "route": "/privacy",
+    "reduced": true,
+    "overflow": false,
+    "runningAnimations": []
+  },
+  {
+    "route": "/ai-workflow-control",
+    "reduced": true,
+    "overflow": false,
+    "runningAnimations": []
+  }
+]

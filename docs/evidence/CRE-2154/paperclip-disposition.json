@@ -1,0 +1,13 @@
+{
+  "http": 403,
+  "error": {
+    "error": "Cross-issue writes need a run to attribute them to (Heartbeat run context). Every agent comment and task update is attributed to a heartbeat run so the cross-issue cap can be counted and the audit trail can name who acted for whom. This request arrived without a valid run, so it could not be contained. Who can act: this agent, once the request carries its own run id. Try this: Send the `X-Paperclip-Run-Id` header with your current run (`$PAPERCLIP_RUN_ID`) and retry.",
+    "code": "cross_issue_influence_run_context_required",
+    "details": {
+      "code": "cross_issue_influence_run_context_required",
+      "boundary": "Heartbeat run context",
+      "whoCanAct": "this agent, once the request carries its own run id.",
+      "sanctionedPath": "Send the `X-Paperclip-Run-Id` header with your current run (`$PAPERCLIP_RUN_ID`) and retry."
+    }
+  }
+}
