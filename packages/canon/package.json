@@ -68,6 +68,10 @@
 		"./styles/workspace.css": "./dist/styles/workspace.css",
 		"./styles/operator.css": "./dist/styles/operator.css",
 		"./styles/operator.tokens.json": "./dist/styles/operator.tokens.json",
+		"./styles/operator-document": {
+			"types": "./dist/styles/operator-document.d.ts",
+			"default": "./dist/styles/operator-document.js"
+		},
 		"./styles/canon.css": "./dist/styles/canon.css",
 		"./styles/components.css": "./dist/styles/components.css",
 		"./styles/editorial.css": "./dist/styles/editorial.css",

@@ -3,6 +3,7 @@ import {
   performanceDocumentCss,
   performanceDocumentFontLinks
 } from '@create-something/canon/performance/scheduler-document';
+import { operatorDocumentCss } from '@create-something/canon/styles/operator-document';
 import { normalizeSchedulerOfferIntent } from '../offers/intent.js';
 
 export function renderBookingManagementActions(status: string): string {
@@ -87,8 +88,7 @@ export function schedulerPage(input: {
   ${turnstileScript}
   <style nonce="${input.nonce}">
     ${performanceDocumentCss}
-    /* Standalone document mapping of Canon's operator palette roles. */
-    :root { color-scheme:dark; --color-operator-background:oklch(20.5% 0 0); --color-operator-panel:oklch(20.5% 0 0); --color-operator-secondary:oklch(26.9% 0 0); --color-operator-raised:oklch(32% 0 0); --color-operator-foreground:oklch(98.5% 0 0); --color-operator-muted:oklch(70.8% 0 0); --color-operator-border:oklch(100% 0 0 / .1); --color-operator-focus-ring-accessible:oklch(70.8% 0 0); --color-operator-status-running-text:#93c5fd; --color-operator-status-done-text:#86efac; --color-operator-status-paused-text:#fcd34d; --color-operator-status-blocked-text:#fca5a5; --radius-operator-control:6px; --radius-operator-panel:10px; }
+    ${operatorDocumentCss}
     html { background:var(--color-operator-background); }
     * { box-sizing:border-box; }
     body { margin:0; min-width:320px; min-height:100vh; background:var(--color-operator-background); color:var(--color-operator-foreground); font-size:16px; line-height:1.5; }
