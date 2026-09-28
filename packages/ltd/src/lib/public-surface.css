@@ -1,0 +1,101 @@
+/* Package-local public library rhythm. Shared Canon and private routes retain their contracts. */
+.property-performance.ltd-public-library {
+  --ltd-page-gutter: clamp(var(--space-performance-sm), 4vw, var(--space-performance-xl));
+  --ltd-section-space: clamp(var(--space-performance-lg), 5vw, var(--space-performance-xl));
+}
+
+.property-performance.ltd-public-library :is(a, button, summary):focus-visible {
+  outline: 2px solid var(--color-performance-signal);
+  outline-offset: 4px;
+}
+
+.property-performance.ltd-public-library .nav-link-list {
+  border-color: var(--color-performance-line);
+  background: var(--color-performance-panel);
+}
+
+.property-performance.ltd-public-library .nav-link.active {
+  background: var(--color-performance-paper);
+  box-shadow: inset 0 -2px var(--color-performance-ink);
+}
+
+.property-performance.ltd-public-library :is(.operator-library, .opposition, .library-loop, .playbook-index, .playbook-note) {
+  padding: var(--ltd-section-space) var(--ltd-page-gutter);
+}
+
+.property-performance.ltd-public-library :is(.operator-library__heading, .opposition__heading, .playbook-index__heading) {
+  margin-bottom: var(--space-performance-lg);
+}
+
+.property-performance.ltd-public-library :is(.operator-library, .opposition, .library-loop, .playbook-index, .playbook-note) h2 {
+  max-width: 24ch;
+  font-size: var(--text-performance-h1);
+  line-height: 1.12;
+  letter-spacing: var(--tracking-performance-tight);
+}
+
+.property-performance.ltd-public-library .clear-card-grid__card {
+  border-radius: var(--radius-performance-md);
+  box-shadow: none;
+}
+
+.property-performance.ltd-public-library :is(.playbook-detail__hero, .playbook-detail__instruction, .playbook-detail__board, .playbook-detail__runbook, .playbook-detail__opposition, .readiness-page__hero, .readiness-page__assessment, .readiness-page__result, .readiness-page__next) {
+  padding: var(--ltd-section-space) var(--ltd-page-gutter);
+}
+
+.property-performance.ltd-public-library .playbook-detail__hero {
+  min-height: auto;
+  background: var(--color-performance-paper);
+}
+
+.property-performance.ltd-public-library .playbook-detail__back {
+  position: static;
+  width: fit-content;
+  margin-bottom: var(--space-performance-lg);
+}
+
+.property-performance.ltd-public-library :is(.playbook-detail, .readiness-page) h1 {
+  max-width: 22ch;
+  font-size: clamp(2rem, 4.5vw, 4.236rem);
+  line-height: 1.08;
+  letter-spacing: var(--tracking-performance-tight);
+}
+
+.property-performance.ltd-public-library :is(.playbook-detail, .readiness-page) h2 {
+  font-size: var(--text-performance-h1);
+  line-height: 1.15;
+  letter-spacing: var(--tracking-performance-tight);
+}
+
+.property-performance.ltd-public-library .readiness-page fieldset {
+  min-width: 0;
+}
+
+.property-performance.ltd-public-library .readiness-page legend {
+  float: left;
+  width: 100%;
+}
+
+.property-performance.ltd-public-library .readiness-page__questions button {
+  border-radius: var(--radius-performance-md);
+}
+
+.property-performance.ltd-public-library :is(.readiness-page__hero, .opposition, .playbook-note) :is(a, button):focus-visible {
+  outline-color: var(--color-performance-panel);
+}
+
+@media (max-width: 47.99rem) {
+  .property-performance.ltd-public-library .performance-campaign-opening__proof {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .property-performance.ltd-public-library .performance-campaign-opening__proof li {
+    min-width: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:has(.property-performance.ltd-public-library) {
+    scroll-behavior: auto;
+  }
+}

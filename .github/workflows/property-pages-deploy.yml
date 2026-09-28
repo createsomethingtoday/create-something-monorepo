@@ -1,0 +1,162 @@
+name: Property Pages Deploy
+
+# Coordinator dispatches only after independent review and merge.
+on:
+  workflow_dispatch:
+    inputs:
+      property:
+        description: Reviewed property to release
+        required: true
+        type: choice
+        options: [space, io, ltd, lms]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: property-pages-production-${{ inputs.property }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      PROPERTY: ${{ inputs.property }}
+    steps:
+      - name: Resolve allowlisted property
+        shell: bash
+        run: |
+          case "$PROPERTY" in
+            space) project=create-something-space ;;
+            io) project=create-something-io ;;
+            ltd) project=createsomething-ltd ;;
+            lms) project=createsomething-lms ;;
+            *) exit 1 ;;
+          esac
+          echo "PAGES_PROJECT=$project" >> "$GITHUB_ENV"
+      - name: Require a manual main branch release
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "$GITHUB_EVENT_NAME" != workflow_dispatch || "$GITHUB_REF" != refs/heads/main ]]; then
+            echo "::error::Property production releases must be manually dispatched from main."
+            exit 1
+          fi
+
+      - name: Check deployment credentials
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "$CLOUDFLARE_API_TOKEN" || -z "$CLOUDFLARE_ACCOUNT_ID" ]]; then
+            echo "::error::Configure CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID repository secrets before dispatch."
+            exit 1
+          fi
+
+      - name: Checkout exact release commit
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+        with:
+          version: 9.15.0
+
+      - name: Setup Node
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: '22'
+          cache: pnpm
+
+      - name: Install frozen dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Canon package
+        run: pnpm --filter @create-something/canon package
+
+      - name: Build LMS workspace libraries
+        if: inputs.property == 'lms'
+        run: |
+          pnpm --filter @create-something/tufte package
+          pnpm --filter @create-something/spritz package
+
+      - name: Check Property
+        run: pnpm --filter "@create-something/$PROPERTY" check
+
+      - name: Build Property
+        run: pnpm --filter "@create-something/$PROPERTY" build
+
+      - name: Capture current Property production deployments
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/run-wrangler.mjs --cwd "packages/$PROPERTY" pages deployment list \
+            --project-name=$PAGES_PROJECT --environment=production \
+            2>&1 | tee "$RUNNER_TEMP/property-pages-before.log"
+          {
+            echo '## Property production before release'
+            echo 'Retain these deployment identities for rollback.'
+            echo '```text'
+            cat "$RUNNER_TEMP/property-pages-before.log"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Deploy exact commit to Property production
+        id: deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Record post-build state before any deploy. Untracked files are visible
+          # for diagnosis; they never excuse changes to tracked release source.
+          git status --short --untracked-files=normal > "$RUNNER_TEMP/property-pages-source-status.log"
+          {
+            echo '## Property source verification after build'
+            printf 'Expected checkout: `%s`\n\n' "$GITHUB_SHA"
+            echo 'Tracked files must match checkout (index and working tree).'
+            echo 'Build outputs such as Canon dist and Property .svelte-kit are ignored; any untracked paths are listed below.'
+            echo 'Status (first 80 lines, each limited to 240 characters):'
+            echo '```text'
+            if [[ -s "$RUNNER_TEMP/property-pages-source-status.log" ]]; then
+              LC_ALL=C cut -c 1-240 "$RUNNER_TEMP/property-pages-source-status.log" | sed -n '1,80p'
+            else
+              echo '(clean)'
+            fi
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git diff --exit-code
+          git diff --cached --exit-code
+          node scripts/run-wrangler.mjs --cwd "packages/$PROPERTY" pages deploy .svelte-kit/cloudflare \
+            --project-name=$PAGES_PROJECT \
+            --branch=main \
+            --commit-hash="$GITHUB_SHA" 2>&1 | tee "$RUNNER_TEMP/property-pages-deployment.log"
+
+      - name: Record deployment receipt
+        if: always() && steps.deploy.outcome != 'skipped'
+        env:
+          DEPLOY_OUTCOME: ${{ steps.deploy.outcome }}
+        shell: bash
+        run: |
+          {
+            echo '## Property production deployment'
+            printf 'Source commit: `%s`\n\n' "$GITHUB_SHA"
+            printf 'Result: %s\n\n' "$DEPLOY_OUTCOME"
+            echo "Project: $PAGES_PROJECT · Branch: main"
+            echo '```text'
+            if [[ -f "$RUNNER_TEMP/property-pages-deployment.log" ]]; then
+              cat "$RUNNER_TEMP/property-pages-deployment.log"
+            else
+              echo 'Deployment did not produce output.'
+            fi
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
