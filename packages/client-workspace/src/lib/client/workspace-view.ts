@@ -53,7 +53,8 @@ export type BrowserPreviewStatus =
   | 'ready'
   | 'blocked'
   | 'crashed'
-  | 'stopped';
+  | 'stopped'
+  | 'not-applicable';
 
 export function sessionWorkState(
   status: BrowserSessionStatus | null,

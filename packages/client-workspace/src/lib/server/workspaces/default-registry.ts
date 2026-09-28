@@ -9,10 +9,12 @@ export function createDefaultWorkspaceRegistry(options?: {
   managedRoot?: string;
   includeDemo?: boolean;
   additionalDefinitions?: WorkspaceDefinition[];
+  allowedLocalRoots?: string[];
 }): WorkspaceRegistry {
   const managedRoot = options?.managedRoot ?? join(packageRoot, 'clients');
   return new WorkspaceRegistry({
     managedRoot,
+    allowedLocalRoots: options?.allowedLocalRoots,
     definitions: [
       ...(options?.includeDemo === false
         ? []

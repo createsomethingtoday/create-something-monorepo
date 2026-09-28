@@ -21,7 +21,7 @@
     events: BrowserWorkspaceEvent[];
   };
   type PreviewStatus = {
-    state: 'idle' | 'starting' | 'ready' | 'blocked' | 'crashed' | 'stopped';
+    state: 'idle' | 'starting' | 'ready' | 'blocked' | 'crashed' | 'stopped' | 'not-applicable';
     previewPath: string;
   };
   type SessionResponse = {
@@ -188,7 +188,7 @@
     }
     opening = true;
     errorMessage = '';
-    notice = 'Starting the governed workspace and preview…';
+    notice = selected.previewPath ? 'Starting the governed workspace and preview…' : 'Opening the enrolled checkout…';
     try {
       const result = await readJson<SessionResponse>(
         await fetch(`/api/workspaces/${encodeURIComponent(selected.id)}/sessions`, {
@@ -197,7 +197,7 @@
       );
       applySession(result);
       localStorage.setItem(sessionStorageKey, result.receipt.sessionId);
-      notice = 'Workspace ready. Describe a visible frontend change.';
+      notice = selected.previewPath ? 'Workspace ready. Describe a visible frontend change.' : 'Checkout ready. Describe the engineering task.';
     } catch (error) {
       showError(error);
     } finally {
@@ -775,7 +775,7 @@
         <div class="message agent-message">
           <p class="message-author">Workspace agent</p>
           <p>
-            I can inspect and edit this frontend, run focused checks, and explain each action. Add a
+            I can inspect and edit this {workspace.previewPath ? 'frontend' : 'checkout'}, run focused checks, and explain each action. Add a
             reference image when visual context matters.
           </p>
         </div>
@@ -814,13 +814,13 @@
             >
           </div>
         {/if}
-        <label class="sr-only" for="edit-request">Describe the frontend edit</label>
+        <label class="sr-only" for="edit-request">Describe the engineering task</label>
         <textarea
           id="edit-request"
           bind:value={promptText}
           rows="5"
           maxlength="12000"
-          placeholder="Describe the frontend change you want to see…"
+          placeholder={workspace?.previewPath ? 'Describe the frontend change you want to see…' : 'Describe the engineering task for this checkout…'}
           disabled={sending || !sessionActive}
         ></textarea>
         <div class="composer-actions">
@@ -1053,7 +1053,7 @@
       <div class="rail-heading preview-heading-row">
         <div>
           <p class="eyebrow">Result</p>
-          <h2 id="preview-heading">Live preview</h2>
+          <h2 id="preview-heading">{workspace.previewPath ? 'Live preview' : 'Checkout review'}</h2>
         </div>
         <div class="preview-actions">
           <span class="preview-state" data-work-state={previewWorkState(preview?.state ?? null)}
@@ -1073,7 +1073,12 @@
           <span></span><span></span><span></span>
           <p>{workspace.label.toLowerCase().replaceAll(' ', '-')}.preview</p>
         </div>
-        {#if preview?.state === 'ready'}
+        {#if preview?.state === 'not-applicable'}
+          <div class="preview-placeholder" role="status">
+            <h3>No browser preview</h3>
+            <p>Review the activity, focused diff, and local test results for this checkout.</p>
+          </div>
+        {:else if preview?.state === 'ready'}
           <iframe
             title={`${workspace.label} live preview`}
             src={`${preview.previewPath}?revision=${previewRevision}`}
@@ -1100,7 +1105,7 @@
         {/if}
       </div>
       <footer class="preview-footer">
-        <span>Auto-refreshes after source edits</span>
+        <span>{workspace.previewPath ? 'Auto-refreshes after source edits' : 'Client-owned checkout'}</span>
         <span>Network off · Local only</span>
       </footer>
     </section>

@@ -170,13 +170,19 @@ fn execute() -> Result<()> {
         .map_err(|_| "local_terminal_required")?;
     writeln!(
         tty,
-        "Allow remote workspace access for {} at {} to {}?\nType CONNECT {} to allow this run:",
+        "Allow remote workspace access for {} at {} to {}?",
         config.client_id,
         config.origin(),
-        config.allowed_email,
-        config.client_id
+        config.allowed_email
     )
     .map_err(|_| "approval_unavailable")?;
+    if let Some(checkout) = &config.local_checkout {
+        writeln!(tty, "Local checkout: {}\nEditable roots: {}\nThe remote Codex can read this checkout while connected.",
+            checkout.root.display(), checkout.editable_roots.join(", "))
+            .map_err(|_| "approval_unavailable")?;
+    }
+    writeln!(tty, "Type CONNECT {} to allow this run:", config.client_id)
+        .map_err(|_| "approval_unavailable")?;
     let mut answer = String::new();
     BufReader::new(tty)
         .read_line(&mut answer)

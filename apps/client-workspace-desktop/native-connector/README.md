@@ -107,6 +107,21 @@ Access-JWT host. The wrapper rejects any other Host and rewrites the forwarded
 scheme itself. Remote mutations require the exact configured Origin.
 Connector mode excludes the demo: workspace registration uses existing signed
 delivery import. Missing remote or desktop mode fails closed for managed requests.
+An optional `local_checkout` in the private connector enrollment can register
+an existing client-owned Git checkout without copying it into a delivery. It
+contains an exact canonical absolute `root`, a slug `id`, a display `label`,
+and nonempty relative `editable_roots` naming subdirectories. The connector
+checks the checkout and editable roots before starting children, then displays
+the path and roots during each local `CONNECT` approval. Browser input cannot
+choose or change those paths. The app has no browser preview for this checkout;
+it retains Codex sandbox, per-action approvals, focused diff, receipts and
+network-disabled turns. Managed-delivery reset/checkpoint/rollback endpoints
+reject this checkout so they cannot replace the client's source. A new root or
+editable scope changes the enrollment digest and requires reviewed migration.
+For Grantbot/GiGi, inspect Grant's actual canonical checkout and choose the
+editable roots with Grant during attended device setup. Do not paste a sample
+path or make this configuration on the operator Mac. Grant's own release lane
+continues to own PR review, merge and deployment.
 Only after a fresh local capability challenge succeeds, the owned runtime remains
 alive and an anonymous remote-host request receives 403 does the tunnel start.
 This proves the server answering on loopback knows the one-run capability; it is

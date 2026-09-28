@@ -231,6 +231,13 @@ or mutate third-party systems. Keep changes small and visible, run focused check
 stop for approval when a command or file change is outside the active policy.`;
 
 function workspaceDeveloperInstructions(workspace: Readonly<ResolvedWorkspaceDefinition>): string {
+  if (workspace.preview.kind === 'none') {
+    return `You are assisting with an explicitly enrolled client-owned checkout.
+Read and edit only for the user's requested engineering task. Keep writes inside the declared editable roots.
+Do not deploy, publish, change credentials, access secrets, or mutate external systems.
+The Codex turn has network disabled. There is no browser preview for this checkout.
+Use focused local checks and report exactly what ran. Client-owned release review and promotion remain separate.`;
+  }
   const previewPath = `/api/workspaces/${encodeURIComponent(workspace.id)}/preview`;
   return `${WORKSPACE_DEVELOPER_INSTRUCTIONS}
 The application owns preview startup and its protected route: ${previewPath}.

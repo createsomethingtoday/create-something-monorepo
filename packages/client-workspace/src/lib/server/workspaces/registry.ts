@@ -17,7 +17,8 @@ export type WorkspaceStaticPreviewDefinition = {
 
 export type WorkspacePreviewDefinition =
   | WorkspaceProcessPreviewDefinition
-  | WorkspaceStaticPreviewDefinition;
+  | WorkspaceStaticPreviewDefinition
+  | { kind: 'none' };
 
 export type WorkspaceDefinition = {
   id: string;
@@ -30,12 +31,13 @@ export type WorkspaceDefinition = {
 export type PublicWorkspace = {
   id: string;
   label: string;
-  previewPath: string;
+  previewPath: string | null;
 };
 
 export type WorkspaceRegistryOptions = {
   managedRoot: string;
   definitions: WorkspaceDefinition[];
+  allowedLocalRoots?: string[];
 };
 
 export type WorkspaceRegistryErrorCode =
@@ -93,10 +95,12 @@ function assertWorkspaceId(id: string): void {
 
 export class WorkspaceRegistry {
   readonly #managedRoot: string;
+  readonly #allowedLocalRoots: Set<string>;
   readonly #definitions: Map<string, ResolvedWorkspaceDefinition>;
 
   constructor(options: WorkspaceRegistryOptions) {
     this.#managedRoot = resolve(options.managedRoot);
+    this.#allowedLocalRoots = new Set((options.allowedLocalRoots ?? []).map(canonicalPath));
     this.#definitions = new Map();
 
     for (const definition of options.definitions) {
@@ -114,7 +118,8 @@ export class WorkspaceRegistry {
     }
 
     const sourceRoot = resolve(definition.sourceRoot);
-    if (!isWithin(canonicalPath(this.#managedRoot), canonicalPath(sourceRoot))) {
+    if (!isWithin(canonicalPath(this.#managedRoot), canonicalPath(sourceRoot)) &&
+        (!this.#allowedLocalRoots.has(canonicalPath(sourceRoot)) || definition.preview.kind !== 'none')) {
       throw new WorkspaceRegistryError(
         'workspace_root_escape',
         `Workspace ${definition.id} is outside the managed root.`
@@ -145,7 +150,7 @@ export class WorkspaceRegistry {
       );
     }
     if (
-      definition.preview.kind !== 'static' &&
+      definition.preview.kind !== 'static' && definition.preview.kind !== 'none' &&
       (!Number.isInteger(definition.preview.port) || definition.preview.port < 1024)
     ) {
       throw new WorkspaceRegistryError(
@@ -174,17 +179,17 @@ export class WorkspaceRegistry {
       sourceRoot,
       editableRoots,
       preview:
-        definition.preview.kind === 'static'
-          ? { ...definition.preview }
-          : { ...definition.preview, args: [...definition.preview.args] }
+        definition.preview.kind === 'process' || definition.preview.kind === undefined
+          ? { ...definition.preview, args: [...definition.preview.args] }
+          : { ...definition.preview }
     });
   }
 
   list(): PublicWorkspace[] {
-    return [...this.#definitions.values()].map(({ id, label }) => ({
+    return [...this.#definitions.values()].map(({ id, label, preview }) => ({
       id,
       label,
-      previewPath: `/api/workspaces/${encodeURIComponent(id)}/preview`
+      previewPath: preview.kind === 'none' ? null : `/api/workspaces/${encodeURIComponent(id)}/preview`
     }));
   }
 
@@ -193,7 +198,7 @@ export class WorkspaceRegistry {
     return {
       id: definition.id,
       label: definition.label,
-      previewPath: `/api/workspaces/${encodeURIComponent(definition.id)}/preview`
+      previewPath: definition.preview.kind === 'none' ? null : `/api/workspaces/${encodeURIComponent(definition.id)}/preview`
     };
   }
 

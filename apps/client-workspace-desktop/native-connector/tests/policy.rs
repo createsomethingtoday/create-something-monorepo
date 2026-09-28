@@ -14,6 +14,25 @@ fn fixture() -> Value {
 }
 
 #[test]
+fn local_checkout_requires_explicit_root_and_editable_paths() {
+    let mut value = fixture();
+    value["local_checkout"] = json!({
+        "id": "grantbot", "label": "GiGi engineering",
+        "root": "/Users/grant/Documents/Codex/gigi-canonical/trashcan-source-live",
+        "editable_roots": ["src", "tests"]
+    });
+    let config = Config::parse(&value.to_string()).unwrap();
+    assert!(config
+        .runtime_env("b".repeat(64).as_str())
+        .contains_key("CLIENT_WORKSPACE_LOCAL_CHECKOUT"));
+    value["local_checkout"]["root"] = json!("/");
+    assert!(Config::parse(&value.to_string()).is_err());
+    value["local_checkout"]["root"] = json!("/Users/grant/repo");
+    value["local_checkout"]["editable_roots"] = json!(["../private"]);
+    assert!(Config::parse(&value.to_string()).is_err());
+}
+
+#[test]
 fn explicit_config_is_required_and_unknown_authority_is_rejected() {
     let valid = fixture();
     for key in valid.as_object().unwrap().keys() {

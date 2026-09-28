@@ -111,6 +111,26 @@ pub fn preflight(c: &Config) -> Result<()> {
     {
         return Err("home_unavailable");
     }
+    if let Some(checkout) = &c.local_checkout {
+        let root = fs::canonicalize(&checkout.root).map_err(|_| "local_checkout_unavailable")?;
+        if root != checkout.root
+            || !root.is_dir()
+            || !root.join(".git").exists()
+            || fs::metadata(&root)
+                .map_err(|_| "local_checkout_unavailable")?
+                .uid()
+                != unsafe { libc::geteuid() }
+        {
+            return Err("local_checkout_unavailable");
+        }
+        for part in &checkout.editable_roots {
+            let path = root.join(part);
+            let actual = fs::canonicalize(&path).map_err(|_| "local_checkout_unavailable")?;
+            if !actual.starts_with(&root) || !actual.is_dir() {
+                return Err("local_checkout_unavailable");
+            }
+        }
+    }
     TcpListener::bind(("127.0.0.1", c.port)).map_err(|_| "origin_port_unavailable")?;
     Ok(())
 }
