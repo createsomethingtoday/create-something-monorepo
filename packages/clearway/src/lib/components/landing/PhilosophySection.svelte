@@ -66,13 +66,13 @@
 	.section-title {
 		font-size: var(--text-h2);
 		font-weight: 600;
-		text-align: center;
+		text-align: left;
 		margin: 0 0 var(--space-xl);
 		color: var(--color-fg-primary);
 	}
 
 	.philosophy-content {
-		text-align: center;
+		text-align: left;
 	}
 
 	.philosophy-lead {
@@ -83,7 +83,7 @@
 	}
 
 	.analogy {
-		padding: var(--space-lg);
+		padding: var(--space-md);
 		border-radius: var(--radius-lg);
 		background: var(--color-bg-surface);
 		border: 1px solid var(--color-border-default);
@@ -133,7 +133,7 @@
 	}
 
 	.philosophy-cta {
-		text-align: center;
+		text-align: left;
 	}
 
 	.cta-link {

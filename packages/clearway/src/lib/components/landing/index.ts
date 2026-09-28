@@ -10,4 +10,5 @@ export { default as PricingSection } from './PricingSection.svelte';
 export { default as PhilosophySection } from './PhilosophySection.svelte';
 export { default as ProgressiveForm } from './ProgressiveForm.svelte';
 export { default as Footer } from './Footer.svelte';
+export { default as PublicHeader } from './PublicHeader.svelte';
 export { default as ScrollReveal } from './ScrollReveal.svelte';
