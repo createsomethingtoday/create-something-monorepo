@@ -28,6 +28,8 @@ import {
   type BreakpointProperties,
   type MediaQueryInfo,
 } from './style-metadata';
+import { componentContainsComponentInstance, readComponentMetadata } from './component-metadata';
+import { readVariableModeBreakpoint } from './variable-mode-metadata';
 
 // API Configuration
 const WORKER_API_BASE = 'https://validation-worker.createsomething.workers.dev';
@@ -175,6 +177,8 @@ interface ProjectData {
       modes?: Array<{
         id: string;
         name: string;
+        // Present only when the runtime supports VariableMode.getBreakpoint().
+        breakpointId?: string | null;
       }>;
     }>;
   };
@@ -184,6 +188,10 @@ interface ProjectData {
     type: string;
     instances?: number;
     isNested?: boolean;
+    // Designer API 2.2+; null when the runtime does not report the field.
+    readOnly?: boolean | null;
+    codeComponent?: boolean | null;
+    library?: { id: string | null; name: string | null } | null;
   }>;
   styles?: Array<{
     id: string;
@@ -1991,30 +1999,6 @@ async function collectCanvasAccessibility(
 // "All Links", "Body (All Pages)"
 
 
-// Breadth-first walk of a component's element tree looking for a nested
-// component instance. Depth-capped: nesting evidence is always near the root,
-// and unbounded canvas traversal is expensive in the Designer.
-async function componentContainsComponentInstance(
-  component: Component,
-  maxDepth = 4
-): Promise<boolean> {
-  const root = await component.getRootElement();
-  if (!root) return false;
-
-  let frontier: AnyElement[] = [root];
-  for (let depth = 0; depth < maxDepth && frontier.length > 0; depth++) {
-    const next: AnyElement[] = [];
-    for (const element of frontier) {
-      if (element.type === 'ComponentInstance') return true;
-      if ('children' in element && element.children) {
-        next.push(...(await element.getChildren()));
-      }
-    }
-    frontier = next;
-  }
-  return false;
-}
-
 async function collectProjectData(webflow: WebflowApi): Promise<ProjectData> {
   const data: ProjectData = {
     variables: undefined,
@@ -2086,7 +2070,7 @@ async function collectProjectData(webflow: WebflowApi): Promise<ProjectData> {
           const collectionName = (await collection.getName()) || 'Unnamed Collection';
           const variables = await collection.getAllVariables();
           const variableList: any[] = [];
-          const modeList: Array<{ id: string; name: string }> = [];
+          const modeList: Array<{ id: string; name: string; breakpointId?: string | null }> = [];
           let modeDataAvailable = false;
 
           for (const variable of variables) {
@@ -2148,10 +2132,16 @@ async function collectProjectData(webflow: WebflowApi): Promise<ProjectData> {
                 try {
                   const modeName = (await mode.getName()) || mode.id || 'Unnamed Mode';
 
-                  modeList.push({
+                  const modeEntry: { id: string; name: string; breakpointId?: string | null } = {
                     id: String(mode.id),
                     name: String(modeName)
-                  });
+                  };
+                  // Automatic modes are bound to a breakpoint (Designer API 2.2+)
+                  const breakpoint = await readVariableModeBreakpoint(mode);
+                  if (breakpoint.available) {
+                    modeEntry.breakpointId = breakpoint.breakpointId;
+                  }
+                  modeList.push(modeEntry);
                 } catch (modeError) {
                   console.warn('Error processing variable mode:', modeError);
                 }
@@ -2221,6 +2211,7 @@ async function collectProjectData(webflow: WebflowApi): Promise<ProjectData> {
             const lowerName = name.toLowerCase();
             let instances = 0;
             let isNested = false;
+            const metadata = readComponentMetadata(component);
 
             // Detect component types for Webflow Way requirements
             if (lowerName.includes('nav') || lowerName.includes('header') || lowerName.includes('menu')) {
@@ -2239,7 +2230,8 @@ async function collectProjectData(webflow: WebflowApi): Promise<ProjectData> {
                 instances = await component.getInstanceCount();
               }
 
-              // A component is "nested" when its tree contains another component instance
+              // A component is "nested" when its tree contains another component instance.
+              // Read-only (library) components are skipped: their root element is unavailable.
               isNested = await componentContainsComponentInstance(component);
               if (isNested) {
                 data.enhancedValidation!.componentArchitecture.hasNestedComponents = true;
@@ -2253,7 +2245,10 @@ async function collectProjectData(webflow: WebflowApi): Promise<ProjectData> {
               name: name,
               type: 'component',
               instances: instances,
-              isNested: isNested
+              isNested: isNested,
+              readOnly: metadata.readOnly,
+              codeComponent: metadata.codeComponent,
+              library: metadata.library
             });
           }
         } catch (compError) {
@@ -4974,7 +4969,12 @@ function getDetailedStatItems(category: string, stats: Record<string, any>): Met
     case 'Variable Modes':
       addMetadataStat(details, 'Modes', stats.totalModes);
       addMetadataStat(details, 'Collections with modes', stats.collectionsWithModes);
-      if (stats.responsiveModeNamesDetected !== undefined) {
+      if (stats.responsiveModeSource === 'breakpoint') {
+        addMetadataStat(details, 'Breakpoint modes', formatBooleanStat(stats.hasResponsiveModes), { tone: booleanTone(stats.hasResponsiveModes) });
+        if (Array.isArray(stats.breakpointBoundModeNames) && stats.breakpointBoundModeNames.length > 0) {
+          addMetadataStat(details, 'Breakpoint-bound', stats.breakpointBoundModeNames.slice(0, 5).join(', '));
+        }
+      } else if (stats.responsiveModeNamesDetected !== undefined) {
         addMetadataStat(details, 'Responsive names', formatBooleanStat(stats.responsiveModeNamesDetected), { tone: booleanTone(stats.responsiveModeNamesDetected) });
       } else if (stats.hasResponsiveModes !== undefined) {
         addMetadataStat(details, 'Responsive names', formatBooleanStat(stats.hasResponsiveModes), { tone: booleanTone(stats.hasResponsiveModes) });
@@ -4991,6 +4991,8 @@ function getDetailedStatItems(category: string, stats: Record<string, any>): Met
       addMetadataStat(details, 'Navigation', stats.navComponents);
       addMetadataStat(details, 'Footer', stats.footerComponents);
       addMetadataStat(details, 'CTA', stats.ctaComponents);
+      addMetadataStat(details, 'Code components', stats.codeComponents);
+      addMetadataStat(details, 'Library components', stats.libraryComponents);
       break;
 
     case 'Styles':

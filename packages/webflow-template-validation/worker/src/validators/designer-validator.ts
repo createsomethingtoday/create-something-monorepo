@@ -183,6 +183,12 @@ function validateVariableModes(variables: DesignerData['variables']): CategoryRe
   const modeAwareCollections = collections.filter(collection => Array.isArray(collection.modes));
   const allCollectionsModeAware = collections.length > 0 && modeAwareCollections.length === collections.length;
   const modeNames: string[] = [];
+  const breakpointBoundModeNames: string[] = [];
+  // Designer API 2.2+ reports which modes are bound to a breakpoint. When any
+  // mode carries that data it is authoritative; mode names are only a fallback.
+  const breakpointDataAvailable = modeAwareCollections.some(collection =>
+    (collection.modes || []).some(mode => mode && 'breakpointId' in mode)
+  );
 
   if (collections.length > 0 && modeAwareCollections.length === 0) {
     issues.push({
@@ -221,6 +227,12 @@ function validateVariableModes(variables: DesignerData['variables']): CategoryRe
         for (const mode of modes) {
           const modeNameRaw = typeof mode.name === 'string' ? mode.name.trim() : '';
           if (modeNameRaw) modeNames.push(modeNameRaw);
+          if (breakpointDataAvailable) {
+            if (typeof mode.breakpointId === 'string' && mode.breakpointId !== '') {
+              breakpointBoundModeNames.push(modeNameRaw || String(mode.id));
+            }
+            continue;
+          }
           const modeName = modeNameRaw.toLowerCase();
           if (responsiveModeNames.some(keyword => modeName.includes(keyword))) {
             responsiveModeNamesDetected = true;
@@ -264,15 +276,26 @@ function validateVariableModes(variables: DesignerData['variables']): CategoryRe
     category: 'Variable Modes',
     passed: issues.filter(i => i.severity === 'error').length === 0,
     issues,
-    stats: {
-      totalModes,
-      collectionsWithModes,
-      hasResponsiveModes: responsiveModeNamesDetected,
-      responsiveModeNamesDetected,
-      modeNames: modeNames.slice(0, 10),
-      modeDataAvailable: true,
-      collectionsCheckedForModes: modeAwareCollections.length
-    }
+    stats: breakpointDataAvailable
+      ? {
+          totalModes,
+          collectionsWithModes,
+          hasResponsiveModes: breakpointBoundModeNames.length > 0,
+          responsiveModeSource: 'breakpoint',
+          breakpointBoundModeNames: breakpointBoundModeNames.slice(0, 10),
+          modeNames: modeNames.slice(0, 10),
+          modeDataAvailable: true,
+          collectionsCheckedForModes: modeAwareCollections.length
+        }
+      : {
+          totalModes,
+          collectionsWithModes,
+          hasResponsiveModes: responsiveModeNamesDetected,
+          responsiveModeNamesDetected,
+          modeNames: modeNames.slice(0, 10),
+          modeDataAvailable: true,
+          collectionsCheckedForModes: modeAwareCollections.length
+        }
   };
 }
 
@@ -284,10 +307,27 @@ function validateComponents(components: DesignerData['components']): CategoryRes
   let footerComponents = 0;
   let ctaComponents = 0;
   const invalidNames: string[] = [];
+  // Designer API 2.2+ metadata. Library components were authored by the library
+  // publisher, not the template creator. Policy on code/library components in
+  // templates is a reviewer decision, so they are disclosed as info only.
+  const codeComponentNames: string[] = [];
+  const libraryComponentNames: string[] = [];
+  const libraryNames = new Set<string>();
+  const componentMetadataReported = components.some(component =>
+    component && ('codeComponent' in component || 'library' in component)
+  );
 
   for (const component of components) {
+    const fromLibrary = component.library != null && typeof component.library === 'object';
+    const label = component.name || String(component.id);
+    if (component.codeComponent === true) codeComponentNames.push(label);
+    if (fromLibrary) {
+      libraryComponentNames.push(label);
+      if (component.library?.name) libraryNames.add(component.library.name);
+    }
+
     if (component.name) {
-      if (!isValidTitleCase(component.name)) {
+      if (!fromLibrary && !isValidTitleCase(component.name)) {
         invalidNames.push(component.name);
       }
 
@@ -344,11 +384,38 @@ function validateComponents(components: DesignerData['components']): CategoryRes
     });
   }
 
+  // Disclosure only — added after the "excellent" check so it never changes that outcome.
+  if (codeComponentNames.length > 0) {
+    issues.push({
+      id: 'components.code-components-present',
+      category: 'Components',
+      severity: 'info',
+      message: `${codeComponentNames.length} code component${codeComponentNames.length === 1 ? '' : 's'} found. Reviewers decide whether code components are acceptable in this template.`,
+      details: { names: codeComponentNames.slice(0, 10) }
+    });
+  }
+
+  if (libraryComponentNames.length > 0) {
+    issues.push({
+      id: 'components.library-components-present',
+      category: 'Components',
+      severity: 'info',
+      message: `${libraryComponentNames.length} component${libraryComponentNames.length === 1 ? '' : 's'} come from an installed library and were excluded from naming checks.`,
+      details: { names: libraryComponentNames.slice(0, 10), libraries: Array.from(libraryNames).slice(0, 10) }
+    });
+  }
+
+  const stats: Record<string, number> = { totalComponents, navComponents, footerComponents, ctaComponents };
+  if (componentMetadataReported) {
+    stats.codeComponents = codeComponentNames.length;
+    stats.libraryComponents = libraryComponentNames.length;
+  }
+
   return {
     category: 'Components',
     passed: issues.filter(i => i.severity === 'error').length === 0,
     issues,
-    stats: { totalComponents, navComponents, footerComponents, ctaComponents }
+    stats
   };
 }
 

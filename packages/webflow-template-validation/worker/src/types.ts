@@ -246,6 +246,9 @@ export interface VariableCollection {
 export interface VariableMode {
 	id: string;
 	name: string;
+	// Designer API 2.2+: breakpoint driving an automatic mode, null for a manual
+	// mode. Absent when the extension/runtime could not report it.
+	breakpointId?: string | null;
 }
 
 export interface Variable {
@@ -261,6 +264,15 @@ export interface ComponentData {
 	type: string;
 	instances?: number;
 	isNested?: boolean;
+	// Designer API 2.2+. Absent or null when the runtime did not report the field.
+	readOnly?: boolean | null;
+	codeComponent?: boolean | null;
+	library?: ComponentLibraryInfo | null;
+}
+
+export interface ComponentLibraryInfo {
+	id: string | null;
+	name: string | null;
 }
 
 export interface StyleData {
