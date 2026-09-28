@@ -171,7 +171,8 @@ Canon uses CSS custom properties for all design decisions:
 
 Import `@create-something/canon/styles/operator.css` and add
 `data-canon-palette="operator"` to the owning surface to expose the namespaced
-`--color-operator-*` roles. Consumers explicitly bind those roles; existing
+`--color-operator-*` roles and `--radius-operator-*` geometry. Consumers
+explicitly bind those roles; existing
 global Performance values and workspace aliases stay unchanged. The separate
 `@create-something/canon/styles/operator.tokens.json` export supplies artifact
 parity. See [palette integration, contrast and accessible status usage](src/lib/styles/operator.md)

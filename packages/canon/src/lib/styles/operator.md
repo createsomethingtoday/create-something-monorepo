@@ -99,6 +99,12 @@ blending, images, or gradients; recheck any changed pairing.
 }
 ```
 
+## Geometry
+
+The opt-in palette also provides `--radius-operator-control: 6px` and
+`--radius-operator-panel: 10px` for controls and contained panels. Consumers
+choose where to apply them; the palette does not round elements by itself.
+
 ## Artifacts and validation
 
 `operator.css` is the runtime source. The separate exported
@@ -114,7 +120,7 @@ node packages/canon/scripts/check-operator-palette.mjs
 ```
 
 The dependency-free gate checks exact measured references, namespace/selector
-containment, all 26 declarations, CSS/JSON parity, package export paths, no
+containment, all 28 declarations, CSS/JSON parity, package export paths, no
 automatic full-Canon import, and WCAG contrast for all documented text/focus
 pairings. It does not replace a package build or browser testing in each
 consumer. Rollback is removing the consumer bindings, attribute and import;

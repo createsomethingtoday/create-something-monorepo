@@ -77,7 +77,7 @@ test('registers the operator library routes with their intended page contracts',
 	}
 });
 
-test('gives each campaign opening a responsive court study and keeps proof in live HTML', async () => {
+test('keeps optional court media available while public openings expose actions and proof first', async () => {
 	assert.deepEqual(
 		[ltdOperatingFieldMedia.src, ltdOperatingFieldMedia.mobileSrc],
 		[
@@ -101,10 +101,12 @@ test('gives each campaign opening a responsive court study and keeps proof in li
 		'utf8'
 	);
 
-	assert.match(homeSource, /media={ltdOperatingFieldMedia}/);
-	assert.match(playbooksSource, /media={ltdPlaybookRouteMedia}/);
-	assert.match(homeSource, /mode="ink"/);
-	assert.match(playbooksSource, /mode="ink"/);
-	assert.doesNotMatch(homeSource, /paperCanonSheetMedia|mode="paper"/);
-	assert.doesNotMatch(playbooksSource, /paperPrototypeScoreMedia|mode="paper"/);
+	for (const source of [homeSource, playbooksSource]) {
+		assert.match(source, /class="ltd-operator-hero"/);
+		assert.match(source, /class="ltd-operator-hero__actions"/);
+		assert.match(source, /class="ltd-operator-hero__proof"/);
+		assert.doesNotMatch(source, /PerformanceCampaignOpening|media={ltd/);
+	}
+	assert.match(homeSource, /href="\/playbooks"/);
+	assert.match(playbooksSource, /href="\/readiness"/);
 });
