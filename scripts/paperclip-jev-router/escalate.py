@@ -123,7 +123,7 @@ def validate_verification(receipt, policy, policy_hash):
         raise ValueError("failed receipt must identify unmet criteria")
     if not nonnegative_int(receipt["observedLandedCostCents"]):
         raise ValueError("observed landed cost required")
-    if not isinstance(receipt["costBasis"], str) or not receipt["costBasis"].strip() or len(receipt["costBasis"]) > 240:
+    if not isinstance(receipt["costBasis"], str) or not receipt["costBasis"].strip() or len(receipt["costBasis"]) > 500:
         raise ValueError("cost basis required")
     if not isinstance(receipt["evidence"], list) or not 1 <= len(receipt["evidence"]) <= 8 or any(not isinstance(item, str) or not item.strip() or len(item) > 500 for item in receipt["evidence"]):
         raise ValueError("verifier evidence required")

@@ -88,6 +88,13 @@ class EscalationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "operator recovery"):
             self.evaluate(data)
 
+    def test_detailed_cost_basis_fits_receipt(self):
+        data = fixture()
+        receipt = escalate.fenced_json(data["comments"][2]["body"], escalate.VERIFICATION_FENCE)
+        receipt["costBasis"] = "Board-approved internal allocation. " * 10
+        data["comments"][2]["body"] = fence("paperclip-verification-v1", receipt)
+        self.assertIsNotNone(self.evaluate(data))
+
     def test_stale_route_and_missing_approval_fail_closed(self):
         data = fixture()
         data["issue"]["description"] = data["issue"]["description"].replace("routine bounded code update", "different work")
