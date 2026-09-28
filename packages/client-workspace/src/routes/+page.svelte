@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onMount, tick } from 'svelte';
   import { encodeBrowserMultipart } from '$lib/client/browser-upload.js';
   import {
     conversationMessages,
@@ -75,6 +75,24 @@
   let lifecycleBusy = $state(false);
   let checkpointId = $state<string | null>(null);
   let historyQuery = $state('');
+  let projectQuery = $state('');
+  let activeSection = $state('chat-heading');
+  let sessionMenu = $state<HTMLDetailsElement>();
+  let sessionMenuToggle = $state<HTMLElement>();
+  let visibleWorkspaces = $derived(availableWorkspaces.filter((item) => item.label.toLowerCase().includes(projectQuery.trim().toLowerCase())));
+  let approvals = $derived(sessionActive ? pendingWorkspaceApprovals(events) : []);
+
+  async function focusSection(id: string) {
+    activeSection = id;
+    await tick();
+    document.getElementById(id)?.focus();
+  }
+
+  function closeSessionMenu(event: KeyboardEvent) {
+    if (event.key !== 'Escape' || !sessionMenu?.open) return;
+    sessionMenu.open = false;
+    sessionMenuToggle?.focus();
+  }
   let historyStatus = $state<'idle' | 'available' | 'empty' | 'unavailable'>('idle');
   let historyResults = $state<Array<{ sessionId: string; provider: string }>>([]);
   let searchingHistory = $state(false);
@@ -198,6 +216,7 @@
       applySession(result);
       localStorage.setItem(sessionStorageKey, result.receipt.sessionId);
       notice = 'Workspace ready. Describe a visible frontend change.';
+      await focusSection('chat-heading');
     } catch (error) {
       showError(error);
     } finally {
@@ -600,6 +619,8 @@
         // Browser storage can be unavailable; the in-memory conversation is still cleared.
       }
     }
+    void focusSection('workspace-heading');
+    projectQuery = '';
     workspace = null;
     sessionActive = false;
     receipt = null;
@@ -616,6 +637,8 @@
   }
 </script>
 
+<svelte:window onkeydown={closeSessionMenu} />
+
 <svelte:head>
   <title>Client Workspace — CREATE SOMETHING</title>
   <link
@@ -630,13 +653,29 @@
 
 <div class="cs-workspace client-workspace">
 <a class="cs-skip-link" href="#workspace-main">Skip to workspace</a>
-<header class="topbar">
+<div class="app-layout">
+<aside class="app-navigation" aria-label="Workspace navigation">
   <a class="brand" href="/" aria-label="CREATE SOMETHING client workspace home">
     <span class="mark" aria-hidden="true"></span>
-    <span>CREATE SOMETHING</span><span class="brand-divider" aria-hidden="true">/</span><span class="cs-product-name">Workspace</span>
+    <span>CREATE SOMETHING</span><span class="cs-product-name">Workspace</span>
   </a>
+  {#if workspace}
+    <div class="nav-project"><span class="eyebrow">Current project</span><strong>{workspace.label}</strong></div>
+    <nav class="workspace-sections" aria-label="Workspace sections">
+      <a href="#chat-heading" aria-current={activeSection === 'chat-heading' ? 'location' : undefined} onclick={() => focusSection('chat-heading')}><span aria-hidden="true">↗</span> Conversation</a>
+      <a href="#activity-heading" aria-current={activeSection === 'activity-heading' ? 'location' : undefined} onclick={() => focusSection('activity-heading')}><span aria-hidden="true">≡</span> Review <span class="approval-count" aria-live="polite">{approvals.length ? `${approvals.length} pending` : ''}</span></a>
+      <a href="#preview-heading" aria-current={activeSection === 'preview-heading' ? 'location' : undefined} onclick={() => focusSection('preview-heading')}><span aria-hidden="true">◫</span> Preview</a>
+    </nav>
+    <button class="quiet-button switch-project" type="button" disabled={closing} onclick={closeWorkspace}>{closing ? 'Closing…' : 'Close & switch project'}</button>
+  {:else}
+    <nav class="workspace-sections" aria-label="Workspace sections"><a href="#workspace-heading" aria-current="page"><span aria-hidden="true">◫</span> Projects <span class="cs-label">{availableWorkspaces.length}</span></a></nav>
+  {/if}
+  <div class="navigation-footer"><span class="eyebrow">Client workspace</span><p>Describe. Review. Refine.</p></div>
+</aside>
+<div class="app-content">
+<header class="topbar">
   <div class="workspace-context">
-    <span class="eyebrow">Client workspace</span>
+    <span class="eyebrow">{workspace ? 'Projects / Session' : 'Workspace / Start'}</span>
     <strong>{workspace?.label ?? 'Projects'}</strong>
   </div>
   <div class="top-actions">
@@ -656,19 +695,20 @@
         ? 'Needs approval'
         : restoring
         ? 'Restoring'
+        : opening
+          ? 'Opening'
         : receipt && !sessionActive
           ? 'receipt'
           : (receipt?.status ?? codexStatus.state)}
     </span>
     {#if workspace}
-      {#if !data.desktop}
-        <button class="quiet-button" type="button" disabled={resetting} onclick={resetWorkspace}>
-          {resetting ? 'Resetting…' : 'Reset demo'}
-        </button>
-      {/if}
-      <button class="quiet-button" type="button" disabled={closing} onclick={closeWorkspace}>
-        {closing ? 'Closing…' : sessionActive ? 'Close' : 'Close receipt'}
-      </button>
+      <details class="session-menu" bind:this={sessionMenu}>
+        <summary bind:this={sessionMenuToggle}>Session</summary>
+        <div class="session-menu-items">
+          <button class="quiet-button" type="button" disabled={closing} onclick={closeWorkspace}>{closing ? 'Closing…' : sessionActive ? 'Close session' : 'Close receipt'}</button>
+          {#if !data.desktop}<button class="quiet-button" type="button" disabled={resetting} onclick={resetWorkspace}>{resetting ? 'Resetting…' : 'Reset demo'}</button>{/if}
+        </div>
+      </details>
     {/if}
   </div>
 </header>
@@ -683,24 +723,27 @@
 {:else if !workspace}
   <main id="workspace-main" tabindex="-1" class="workspace-picker">
     <div class="intro">
-      <p class="eyebrow">Projects / Overview</p>
-      <h1>Open your workspace.</h1>
+      <p class="eyebrow">Your work</p>
+      <h1>Projects</h1>
       <p class="lede">
-        Choose a project, describe an edit, and review the result. Agent activity, approvals, and source changes stay alongside your preview.
+        Open a project to work with your agent. Review each change alongside the live preview.
       </p>
     </div>
     <section class="picker-panel" aria-labelledby="workspace-heading">
       <div class="panel-heading">
         <div>
-          <p class="eyebrow" id="workspace-heading">Available workspaces</p>
-          <h2>Choose a project</h2>
+          <h2 id="workspace-heading" tabindex="-1">Available projects</h2>
         </div>
         <span class="cs-label">{availableWorkspaces.length} available</span>
       </div>
+      {#if availableWorkspaces.length > 1}
+        <label class="project-search">Find a project<input type="search" bind:value={projectQuery} placeholder="Search projects" /></label>
+      {/if}
       {#if availableWorkspaces.length === 0}
         <p class="empty-copy">Import the signed delivery supplied by CREATE SOMETHING to begin.</p>
       {/if}
-      {#each availableWorkspaces as availableWorkspace}
+      {#if availableWorkspaces.length && !visibleWorkspaces.length}<p class="empty-copy" role="status">No projects match “{projectQuery}”. Clear the search to see all projects.</p>{/if}
+      {#each visibleWorkspaces as availableWorkspace}
         <article class="workspace-card">
           <div class="workspace-monogram" aria-hidden="true">
             {availableWorkspace.label.slice(0, 1)}
@@ -713,6 +756,7 @@
             class="primary-button"
             type="button"
             disabled={opening || codexStatus.state !== 'ready'}
+            aria-label={`Open ${availableWorkspace.label}`}
             onclick={() => openWorkspace(availableWorkspace)}
           >
             {opening ? 'Opening…' : 'Open workspace'}
@@ -726,6 +770,7 @@
       </p>
     </section>
     <section class="workspace-setup" aria-label="Workspace setup">
+      <p class="start-feedback" role="status">{opening || importing || notice !== 'Choose an allowlisted workspace to begin.' ? notice : ''}</p>
       <div class="setup-heading"><h2>Session readiness</h2><span class="cs-label">Before you start</span></div>
       <div
         class="runtime-card"
@@ -773,20 +818,13 @@
     </section>
   </main>
 {:else}
-  <nav class="workspace-sections" aria-label="Workspace sections">
-    <a href="#chat-heading">Conversation</a>
-    <a href="#activity-heading">Activity{#if sessionActive && pendingWorkspaceApprovals(events).length}<span class="approval-count">{pendingWorkspaceApprovals(events).length} to review</span>{/if}</a>
-    <a href="#preview-heading">Preview</a>
-    <span class="cs-label">{sessionActive ? 'Governed session' : 'Saved receipt'}</span>
-  </nav>
   <main id="workspace-main" tabindex="-1" class="workspace-shell">
     <section class="rail chat-rail" aria-labelledby="chat-heading">
       <div class="rail-heading">
         <div>
-          <p class="eyebrow">Intent</p>
           <h1 id="chat-heading" tabindex="-1">Conversation</h1>
         </div>
-        <span class="rail-number">01</span>
+        <span class="cs-label">Workspace agent</span>
       </div>
 
       <div class="conversation" aria-live="polite">
@@ -836,7 +874,7 @@
         <textarea
           id="edit-request"
           bind:value={promptText}
-          rows="5"
+          rows="3"
           maxlength="12000"
           placeholder="Describe the frontend change you want to see…"
           disabled={sending || !sessionActive}
@@ -869,10 +907,9 @@
     <section class="rail activity-rail" aria-labelledby="activity-heading">
       <div class="rail-heading">
         <div>
-          <p class="eyebrow">Evidence</p>
-          <h2 id="activity-heading" tabindex="-1">Activity + diff</h2>
+          <h2 id="activity-heading" tabindex="-1">Review changes</h2>
         </div>
-        <span class="rail-number">02</span>
+        <span class="cs-label">{approvals.length ? `${approvals.length} awaiting your decision` : 'Activity + diff'}</span>
       </div>
 
       <div
@@ -888,7 +925,9 @@
       </div>
 
 
-      {#each sessionActive ? pendingWorkspaceApprovals(events) : [] as approval (approval.sequence)}
+      <div class="review-content">
+      <div class="review-decisions">
+      {#each approvals as approval (approval.sequence)}
         <article class="approval-card" data-work-state="approval">
           <p class="eyebrow">Approval required</p>
           <h3>
@@ -932,6 +971,9 @@
         </article>
       {/each}
 
+      {#if !approvals.length}<p class="review-empty">No decisions waiting. Agent actions and checks appear below.</p>{/if}
+      <details class="activity-disclosure" open={events.length > 0}>
+        <summary>Session activity <span class="cs-label">{events.length} events</span></summary>
       <div class="activity-list">
         {#if events.length === 0}
           <p class="empty-copy">
@@ -957,6 +999,7 @@
         {/each}
       </div>
 
+      </details>
       <details class="history-disclosure">
         <summary>Search prior activity</summary>
       <form class="history-search" onsubmit={(event) => { event.preventDefault(); void searchHistory(); }}>
@@ -979,6 +1022,8 @@
 
       </details>
 
+      </div>
+      <div class="review-artifacts">
       <details class="diff-panel" open={Boolean(diff)}>
         <summary>
           <span>Workspace diff</span>
@@ -1070,12 +1115,13 @@
           </article>
         {/if}
       </details>
+      </div>
+      </div>
     </section>
 
     <section class="rail preview-rail" aria-labelledby="preview-heading">
       <div class="rail-heading preview-heading-row">
         <div>
-          <p class="eyebrow">Result</p>
           <h2 id="preview-heading" tabindex="-1">Live preview</h2>
         </div>
         <div class="preview-actions">
@@ -1088,7 +1134,7 @@
             onclick={refreshArtifacts}
             aria-label="Refresh preview">↻</button
           >
-          <span class="rail-number">03</span>
+
         </div>
       </div>
       <div class="browser-frame">
@@ -1115,7 +1161,7 @@
             </h3>
             <p>
               {preview?.state === 'blocked' || preview?.state === 'crashed'
-                ? 'Review Activity + diff for details, then refresh the preview to check its status.'
+                ? 'Review changes for details, then refresh the preview to check its status.'
                 : preview?.state === 'stopped' || !sessionActive ? 'Open a new workspace session to see the live result.' : 'Your project is starting. The preview will appear here when it is ready.'}
             </p>
           </div>
@@ -1128,7 +1174,8 @@
     </section>
   </main>
 {/if}
-
+</div>
+</div>
 </div>
 
 <style>
@@ -1200,9 +1247,6 @@
     height: 10px;
     background: var(--workspace-fg);
   }
-  .brand-divider {
-    color: var(--workspace-quiet);
-  }
   .workspace-context {
     min-width: 0;
     padding-left: var(--workspace-gap);
@@ -1257,20 +1301,17 @@
     background: var(--workspace-focus);
   }
   .workspace-picker {
-    width: min(1120px, calc(100% - 2 * var(--space-performance-md)));
-    margin: 0 auto;
-    padding-block: var(--space-performance-xl);
+    width: min(100%, 1040px);
+    margin-inline: auto;
+    padding: var(--space-performance-lg);
     display: grid;
-    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
-    gap: var(--space-performance-lg);
-    align-items: start;
+    gap: var(--space-performance-md);
+    align-content: start;
   }
-  .intro { grid-column: 1; grid-row: 1; }
-  .workspace-setup { grid-column: 1; grid-row: 2; min-width: 0; }
-  .picker-panel { grid-column: 2; grid-row: 1 / span 2; }
+  .workspace-setup, .intro, .picker-panel { min-width: 0; }
   .intro h1 {
     margin: var(--workspace-gap) 0;
-    font-size: var(--text-performance-h1);
+    font-size: var(--text-performance-h2);
     font-weight: var(--font-performance-semibold);
     letter-spacing: var(--tracking-performance-tight);
     line-height: 1.15;
@@ -1441,43 +1482,22 @@
     background: var(--color-performance-paper);
     color: var(--workspace-bg);
   }
-  .workspace-sections {
-    min-height: 48px;
-    display: flex;
-    align-items: center;
-    gap: var(--workspace-gap);
-    padding: 0 var(--workspace-gap);
-    border-bottom: 1px solid var(--workspace-line);
-    background: var(--workspace-panel);
-  }
+  .workspace-sections { display: grid; gap: var(--workspace-gap-small); }
   .workspace-sections a {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--workspace-gap-small);
-    min-height: 44px;
-    color: var(--workspace-muted);
-    text-decoration: none;
+    display: flex; align-items: center; gap: var(--workspace-gap-small);
+    min-height: var(--workspace-control-height); padding: var(--workspace-gap-small);
+    border-radius: var(--workspace-radius); color: var(--workspace-muted); text-decoration: none;
   }
-  .workspace-sections a:hover {
-    color: var(--workspace-fg);
-  }
-  .workspace-sections > span {
-    margin-left: auto;
-  }
-  .approval-count {
-    color: var(--color-performance-review-soft);
-    font: var(--workspace-meta) var(--font-performance-mono);
-  }
+  .workspace-sections a[aria-current], .workspace-sections a:hover { background: var(--workspace-hover); color: var(--workspace-fg); }
+  .approval-count { margin-left: auto; color: var(--color-performance-review-soft); font: var(--workspace-meta) var(--font-performance-mono); }
   .workspace-shell {
-    width: 100%;
-    display: grid;
-    grid-template-columns: minmax(280px, 0.95fr) minmax(290px, 0.95fr) minmax(
-        360px,
-        1.3fr
-      );
-    min-width: 0;
-    height: calc(100dvh - 112px);
+    width: 100%; display: grid; min-width: 0;
+    grid-template-columns: minmax(320px, 0.9fr) minmax(0, 1.3fr);
+    align-items: start;
   }
+  .chat-rail { grid-column: 1; grid-row: 1; height: clamp(460px, calc(100dvh - 240px), 720px); }
+  .preview-rail { grid-column: 2; grid-row: 1; height: clamp(460px, calc(100dvh - 240px), 720px); }
+  .activity-rail { grid-column: 1 / -1; grid-row: 2; border-top: 1px solid var(--workspace-line); }
   .rail {
     min-width: 0;
     min-height: 0;
@@ -1493,21 +1513,17 @@
     align-items: center;
     justify-content: space-between;
     gap: var(--workspace-gap);
-    min-height: 72px;
+    min-height: 52px;
     padding: var(--workspace-gap);
     border-bottom: 1px solid var(--workspace-line);
     flex-shrink: 0;
   }
   .rail-heading h1,
   .rail-heading h2 {
-    margin: 0.4rem 0 0;
+    margin: 0;
     font-size: var(--text-performance-body-sm);
     font-weight: var(--font-performance-semibold);
     scroll-margin-top: 60px;
-  }
-  .rail-number {
-    color: var(--workspace-quiet);
-    font: var(--workspace-meta) var(--font-performance-mono);
   }
   .conversation {
     min-width: 0;
@@ -1918,110 +1934,82 @@
     color: var(--workspace-quiet);
     font: var(--workspace-meta) var(--font-performance-mono);
   }
+  .app-layout { display: grid; grid-template-columns: 208px minmax(0, 1fr); min-height: 100dvh; }
+  .app-navigation { position: sticky; top: 0; align-self: start; height: 100dvh; display: flex; flex-direction: column; gap: var(--space-performance-md); padding: var(--workspace-gap); border-right: 1px solid var(--workspace-line); background: var(--workspace-panel); }
+  .brand { flex-wrap: wrap; min-height: 40px; white-space: normal; }
+  .brand .cs-product-name { flex-basis: 100%; padding-left: calc(10px + var(--workspace-gap-small)); }
+  .nav-project { display: grid; gap: var(--workspace-gap-small); padding: var(--workspace-gap-small); }
+  .nav-project strong { overflow-wrap: anywhere; font-weight: var(--font-performance-medium); }
+  .navigation-footer { margin-top: auto; padding: var(--workspace-gap-small); color: var(--workspace-quiet); }
+  .navigation-footer p { margin-bottom: 0; font-size: var(--workspace-meta); }
+  .app-content { min-width: 0; }
+  .workspace-context { border: 0; padding: 0; }
+  .topbar { min-width: 0; min-height: 64px; background: var(--workspace-panel); }
+  .session-menu { position: relative; }
+  .session-menu summary { border: 1px solid var(--workspace-line); border-radius: var(--workspace-radius); }
+  .session-menu-items { position: absolute; right: 0; top: 100%; z-index: 20; width: 180px; display: grid; gap: var(--workspace-gap-small); padding: var(--workspace-gap-small); border: 1px solid var(--workspace-strong-line); background: var(--workspace-panel); }
+  .workspace-card { grid-template-columns: auto minmax(0, 1fr) auto; padding: var(--workspace-gap) var(--space-performance-md); }
+  .workspace-card button { grid-column: 3; grid-row: 1; }
+  .panel-heading { padding: var(--workspace-gap) var(--space-performance-md); }
+  .panel-heading h2 { margin: 0; font-size: var(--text-performance-body-sm); }
+  .runtime-card { grid-template-columns: auto minmax(0, 1fr) auto; background: transparent; border: 1px solid var(--workspace-line); }
+  .runtime-recheck { grid-column: 3; grid-row: 1; }
+  .project-search { display: grid; gap: var(--workspace-gap-small); padding: var(--workspace-gap); color: var(--workspace-muted); }
+  .project-search input { min-width: 0; width: 100%; padding: var(--workspace-gap-small); border: 1px solid var(--workspace-line); background: var(--workspace-bg); color: var(--workspace-fg); }
+  .start-feedback:empty { display: none; }
+  .start-feedback { color: var(--workspace-muted); }
+  .review-content { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .review-decisions, .review-artifacts { min-width: 0; }
+  .review-artifacts { border-left: 1px solid var(--workspace-line); }
+  .review-empty { margin: 0; padding: var(--workspace-gap); color: var(--workspace-muted); line-height: 1.6; }
+  .activity-list { max-height: 360px; overflow-y: auto; }
+  .activity-disclosure summary { display: flex; align-items: center; justify-content: space-between; }
+  .activity-disclosure summary::before { content: '▸'; margin-right: var(--workspace-gap-small); }
+  .activity-disclosure[open] summary::before { content: '▾'; }
+  .rail-heading h1, .rail-heading h2 { margin: 0; scroll-margin-top: var(--workspace-gap); }
   @media (max-width: 1100px) {
-    .workspace-shell {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      height: auto;
-    }
-    .chat-rail,
-    .activity-rail {
-      height: min(800px, calc(100dvh - 112px));
-      min-height: 520px;
-    }
-    .preview-rail {
-      grid-column: 1/-1;
-      height: 75dvh;
-      min-height: 440px;
-      border-top: 1px solid var(--workspace-line);
-    }
-    .workspace-context {
-      display: none;
-    }
-    .workspace-sections {
-      position: sticky;
-      top: 0;
-      z-index: 10;
-    }
+    .app-layout { grid-template-columns: 176px minmax(0, 1fr); }
+    .workspace-picker { padding: var(--space-performance-md); }
+    .workspace-shell { grid-template-columns: minmax(280px, 1fr) minmax(0, 1fr); }
+    .preview-actions { flex-wrap: wrap; justify-content: flex-end; }
+    .rail-heading > .cs-label { display: none; }
+  }
+  @media (max-width: 820px) {
+    .app-layout { display: block; }
+    .app-navigation { height: auto; z-index: 30; padding: var(--workspace-gap-small) var(--workspace-gap); gap: var(--workspace-gap-small); border-right: 0; border-bottom: 1px solid var(--workspace-line); }
+    .brand { min-height: 24px; font-size: var(--workspace-meta); }
+    .brand .cs-product-name { flex-basis: auto; padding-left: 0; margin-left: auto; }
+    .nav-project, .navigation-footer, .switch-project { display: none; }
+    .workspace-sections { display: flex; justify-content: space-between; gap: var(--workspace-gap-small); }
+    .workspace-sections a { min-height: 44px; padding-inline: var(--workspace-gap-small); flex-wrap: wrap; gap: 4px; }
+    .workspace-sections a > span[aria-hidden] { display: none; }
+    .approval-count { margin-left: 0; }
+    .rail-heading h1, .rail-heading h2, #workspace-heading { scroll-margin-top: 120px; }
   }
   @media (max-width: 720px) {
-    .topbar {
-      min-width: 0;
-      flex-wrap: wrap;
-    }
-    .brand {
-      flex: 1 0 100%;
-    }
-    .top-actions {
-      justify-content: flex-start;
-      margin-left: 0;
-    }
-    .workspace-context {
-      display: block;
-      width: 100%;
-      border-left: 0;
-      padding-left: 0;
-      order: 1;
-    }
-    .workspace-context .eyebrow {
-      display: none;
-    }
-    .workspace-picker {
-      width: calc(100% - 2 * var(--workspace-gap));
-      padding-block: var(--space-performance-md);
-      grid-template-columns: minmax(0, 1fr);
-      gap: var(--space-performance-md);
-    }
-    .intro, .picker-panel, .workspace-setup { grid-column: auto; grid-row: auto; }
-    .intro h1 {
-      font-size: var(--text-performance-h1);
-    }
-    .setup-heading { margin-top: 0; }
-    .workspace-sections {
-      gap: var(--workspace-gap-small);
-      justify-content: space-between;
-    }
-    .workspace-sections > span {
-      display: none;
-    }
-    .workspace-sections a {
-      flex-wrap: wrap;
-      gap: 0.25rem;
-      padding-block: 0.35rem;
-    }
-    .workspace-shell {
-      display: block;
-    }
-    .rail {
-      border-right: 0;
-      border-bottom: 1px solid var(--workspace-line);
-    }
-    .chat-rail {
-      height: auto;
-      min-height: 520px;
-    }
-    .conversation {
-      max-height: 50dvh;
-      flex: auto;
-    }
-    .activity-rail {
-      height: auto;
-      max-height: none;
-      min-height: 0;
-      overflow: visible;
-    }
-    .activity-list {
-      max-height: 55dvh;
-      overflow-y: auto;
-    }
-    .preview-rail {
-      height: 75dvh;
-    }
-    .rail-number {
-      display: none;
-    }
-    .composer textarea,
-    .history-search-controls input {
-      font-size: var(--text-performance-body);
-    }
+    .topbar { min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--workspace-gap-small); }
+    .top-actions { margin-left: auto; gap: var(--workspace-gap-small); }
+    .workspace-context { min-width: 0; }
+    .workspace-context strong { white-space: normal; overflow-wrap: anywhere; }
+    .workspace-picker { width: 100%; padding: var(--workspace-gap); gap: var(--space-performance-md); }
+    .intro h1 { font-size: var(--text-performance-h2); margin-block: var(--workspace-gap-small); }
+    .panel-heading, .workspace-card { padding: var(--workspace-gap); }
+    .workspace-card { grid-template-columns: auto minmax(0, 1fr); }
+    .workspace-card button { grid-column: 2; grid-row: 2; }
+    .runtime-card { grid-template-columns: auto minmax(0, 1fr); }
+    .runtime-recheck { grid-column: 2; grid-row: 2; }
+    .workspace-shell { display: flex; flex-direction: column; }
+    .rail { width: 100%; border-right: 0; border-bottom: 1px solid var(--workspace-line); }
+    .chat-rail { height: auto; min-height: 380px; }
+    .conversation { max-height: 45dvh; flex: auto; }
+    .composer textarea { min-height: 88px; }
+    .activity-rail { height: auto; overflow: visible; }
+    .review-content { display: block; }
+    .review-artifacts { border-left: 0; }
+    .activity-list { max-height: 45dvh; }
+    .preview-rail { height: 70dvh; min-height: 400px; }
+    .composer textarea, .history-search-controls input, .project-search input { font-size: var(--text-performance-body); }
+    .rail-heading > .cs-label { display: none; }
+    .setup-heading .cs-label { display: none; }
   }
 </style>
