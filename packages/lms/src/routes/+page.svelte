@@ -29,7 +29,7 @@
     </div>
   </header>
 
-  <main class="learn-content">
+  <div class="learn-content">
     <section aria-labelledby="paths-title">
       <div class="section-heading">
         <div><p class="eyebrow">Course outline</p><h2 id="paths-title">Choose a path</h2></div>
@@ -61,7 +61,7 @@
       <p>A tool contract, local configuration, workflow image, and a scoped next workflow.</p>
       <a href={firstLessonHref}>Begin the first lesson ↗</a>
     </section>
-  </main>
+  </div>
 </div>
 
 <style>
