@@ -230,7 +230,7 @@ test('public Agency commercial propositions declare the shared editorial express
   const sectionHeroRoutes = [
     'about',
     'cloudflare',
-    'contact',
+    // Contact is a task-led inquiry form, not an editorial campaign hero.
     'for-service-providers',
     'partners',
     'security',

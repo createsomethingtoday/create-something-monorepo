@@ -1,45 +1,44 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
   import { featuredHero } from '$lib/data/filmStories';
   import { reducedFilmMotion, visibleFilm } from '$lib/motion/filmPlayback';
-  let track: HTMLElement;
-  let progress = $state(0), wide = $state(false);
-  onMount(() => {
-    const width=matchMedia('(min-width:1100px)');
-    const resize=()=>{wide=width.matches;};
-    resize();width.addEventListener('change',resize);
-    const scroll = () => { const r = track.getBoundingClientRect(); progress = Math.max(0, Math.min(1, -r.top / Math.max(1, r.height - innerHeight))); };
-    scroll(); addEventListener('scroll', scroll, {passive:true});
-    return () => {width.removeEventListener('change',resize);removeEventListener('scroll', scroll);};
-  });
 </script>
-<section class="hero-track" class:calm={$reducedFilmMotion} bind:this={track} aria-labelledby="agency-hero-title">
+<section class="hero-track" class:calm={$reducedFilmMotion} aria-labelledby="agency-hero-title">
   <div class="hero-pin">
     <img class="hero-still" src={featuredHero.poster} alt="" fetchpriority="high" />
     <div class="hero-shade"></div>
     <div class="hero-layout">
     <div class="hero-copy">
-    <div class="hero-type" inert={wide && !$reducedFilmMotion && progress>.45} style:opacity={$reducedFilmMotion ? 1 : 1-Math.min(1,progress*2.2)} style:transform={`translateY(${$reducedFilmMotion?0:-progress*130}px)`}>
+    <div class="hero-type">
       <p class="eyebrow">An independent practice / Building with agents</p>
       <a class="partner" href="/stack#openai-qualifications">OpenAI Select Partner ↗</a>
       <h1 id="agency-hero-title">{featuredHero.title}</h1>
       <p class="lede">{featuredHero.description}</p>
       <a class="hero-story" href={featuredHero.destination}>{featuredHero.label} ↗</a>
     </div>
-    {#if !$reducedFilmMotion}<p class="hero-reveal" style:opacity={Math.max(0,(progress-.4)*2.5)}>Start with the person.<br />Follow the work.<br />Build what helps.</p>{/if}
+    <p class="hero-principle">Start with the person. Follow the work. Build what helps.</p>
     </div>
     <video class="hero-product" src={featuredHero.video} poster={featuredHero.productPoster} muted playsinline loop preload="metadata" aria-label={featuredHero.alt} use:visibleFilm={{threshold:.25}}></video>
     </div>
-    <div class="hero-bottom"><a href="#work">Explore the work ↓</a><button onclick={() => reducedFilmMotion.update(v=>!v)} aria-pressed={$reducedFilmMotion}>{$reducedFilmMotion?'Enable motion':'Reduce motion'}</button></div>
+    <div class="hero-bottom"><a href="#work">Explore the work ↓</a><a href="/stack">Ownership, tools &amp; handoff ↗</a><button onclick={() => reducedFilmMotion.update(v=>!v)} aria-pressed={$reducedFilmMotion}>{$reducedFilmMotion?'Enable motion':'Reduce motion'}</button></div>
   </div>
 </section>
 <style>
-.partner{font-size:12px;text-underline-offset:4px;}
-.hero-track.calm{height:100svh}.hero-track{padding:0;height:180svh;background:var(--color-performance-ink)}.hero-pin{height:100svh;min-height:640px;position:sticky;top:0;overflow:hidden;color:var(--color-performance-paper)}.hero-still,.hero-shade{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:right center}.hero-shade{background:linear-gradient(90deg,color-mix(in srgb,var(--color-performance-ink) 85%,transparent),transparent 68%)}.hero-type{position:absolute;left:7vw;width:43vw;bottom:17%}.eyebrow{font:11px/1.5 var(--font-performance-mono);letter-spacing:.07em;text-transform:uppercase}h1{max-width:550px;font:400 clamp(56px,5.7vw,92px)/1.04 var(--font-performance-editorial);letter-spacing:-.035em;margin:25px 0}.lede{font-size:18px;max-width:430px;line-height:1.6}.hero-story{display:inline-block;font-size:13px;margin-top:20px;min-height:44px}.hero-reveal{pointer-events:none;position:absolute;left:7vw;bottom:20%;max-width:43vw;font:clamp(38px,4.2vw,70px)/1.1 var(--font-performance-editorial)}.hero-bottom{position:absolute;left:7vw;right:7vw;bottom:5%;display:flex;align-items:center;justify-content:space-between;font-size:12px}a{color:inherit;text-underline-offset:5px}button{border:1px solid currentColor;background:var(--color-performance-ink);color:inherit;padding:10px 16px;min-height:44px;font-size:12px}a:focus-visible,button:focus-visible{outline:3px solid currentColor;outline-offset:5px}@media(max-width:899px){.hero-type{width:auto;right:7vw}.hero-type h1{font-size:clamp(52px,10vw,88px)}.hero-still{object-position:55% center}.hero-reveal{max-width:86vw}.lede{font-size:15px}.eyebrow{font-size:9px}.hero-track{height:150svh}.hero-shade{background:linear-gradient(0deg,var(--color-performance-ink),transparent)}}@media(prefers-reduced-motion:reduce){.hero-track{height:100svh}.hero-pin{position:relative}}
-
-/* The film owns its camera; the page owns its position beside the copy. */
-.hero-layout{position:relative;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:5vw;align-items:center;height:100%;padding:130px 7vw 110px;box-sizing:border-box}
-.hero-copy{position:relative;min-width:0}.hero-type{position:relative;left:auto;right:auto;bottom:auto;width:auto}.hero-reveal{left:0;bottom:auto;top:0;max-width:100%}.hero-product{display:block;width:100%;max-width:540px;max-height:calc(100svh - 240px);aspect-ratio:760/780;object-fit:contain;justify-self:end;border-radius:14px;background:#e4e7df}
-@media(max-width:1099px){.hero-track,.hero-track.calm{height:auto}.hero-pin{position:relative;height:auto;min-height:100svh}.hero-layout{grid-template-columns:1fr;height:auto;gap:40px;padding:140px 7vw 130px}.hero-type{opacity:1!important;transform:none!important}.hero-type h1{font-size:clamp(52px,7vw,80px)}.hero-copy{max-width:680px}.hero-product{justify-self:center;max-width:560px;max-height:none}.hero-reveal{display:none}.hero-bottom{bottom:30px}.hero-shade{background:linear-gradient(90deg,#141512dd,#14151244)}}
-@media(max-width:599px){.hero-layout{padding-top:120px;gap:28px}.hero-type h1{font-size:52px}.hero-bottom{left:7vw;right:7vw;font-size:11px}}
+  .hero-track { padding: 0; background: var(--color-performance-ink); }
+  .hero-pin { position: relative; overflow: hidden; color: var(--color-performance-paper); }
+  .hero-still, .hero-shade { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .hero-shade { background: color-mix(in srgb, var(--color-performance-ink) 88%, transparent); }
+  .hero-layout { position: relative; display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); gap: var(--space-performance-xl); align-items: center; padding: 7.5rem 7vw var(--space-performance-lg); }
+  .hero-copy { min-width: 0; }
+  .eyebrow, .partner, .hero-bottom { font: var(--text-performance-operator-label)/1.5 var(--font-performance-mono); }
+  h1 { max-width: 16ch; margin-block: var(--space-performance-md); font: var(--font-performance-medium) clamp(2.2rem, 4.5vw, 4rem)/1.08 var(--font-performance-interface); letter-spacing: var(--tracking-performance-tight); }
+  .lede { max-width: 48ch; font-size: var(--text-performance-body-sm); line-height: 1.6; }
+  .hero-story { display: inline-flex; align-items: center; min-height: 44px; margin-top: var(--space-performance-sm); }
+  .hero-principle { color: var(--color-performance-fg-secondary); font-size: var(--text-performance-caption); line-height: 1.5; }
+  .hero-product { display: block; width: 100%; max-width: 380px; max-height: 460px; aspect-ratio: 760/780; object-fit: contain; justify-self: end; border: 1px solid var(--color-performance-shell-border-default); border-radius: var(--radius-performance-sm); }
+  .hero-bottom { position: relative; display: flex; flex-wrap: wrap; gap: var(--space-performance-sm); justify-content: space-between; align-items: center; padding: var(--space-performance-sm) 7vw; border-top: 1px solid var(--color-performance-shell-border-default); }
+  a { color: inherit; text-underline-offset: .3em; }
+  .hero-bottom a, .partner { display: inline-flex; align-items: center; min-height: 44px; }
+  button { min-height: 44px; padding: var(--space-performance-xs) var(--space-performance-sm); border: 1px solid var(--color-performance-shell-border-strong); border-radius: var(--radius-performance-sm); background: var(--color-performance-ink); color: inherit; font: inherit; }
+  a:focus-visible, button:focus-visible { outline: 2px solid var(--color-performance-focus); outline-offset: 3px; }
+  @media (max-width: 720px) { .hero-layout { grid-template-columns: 1fr; gap: var(--space-performance-md); padding-block: 7.5rem var(--space-performance-lg); } .hero-product { justify-self: start; max-width: 300px; } }
 </style>

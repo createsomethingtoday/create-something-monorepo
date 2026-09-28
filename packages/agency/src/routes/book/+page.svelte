@@ -292,7 +292,12 @@
 </main>
 
 <style>
-.booking-entry{padding:55px 7vw 40px;color:var(--color-performance-ink)}.booking-entry h1{font:400 clamp(44px,5vw,76px)/1.08 var(--font-performance-editorial);max-width:850px;letter-spacing:-.035em}.booking-entry p{max-width:700px;line-height:1.65}.booking-content{padding:0 7vw 70px}
+  .booking-entry { padding: var(--space-performance-lg) 7vw var(--space-performance-md); color: var(--color-performance-ink); }
+  .booking-entry h1 { font: var(--font-performance-medium) clamp(1.8rem, 3vw, 2.75rem)/1.15 var(--font-performance-interface); max-width: 28ch; letter-spacing: var(--tracking-performance-tight); }
+  .booking-entry p { max-width: 70ch; line-height: 1.55; }
+  .booking-content { display: grid; align-items: start; gap: var(--space-performance-md); padding: 0 7vw var(--space-performance-xl); }
+  @media (min-width: 1000px) { .booking-content { grid-template-columns: minmax(0, .7fr) minmax(0, 1.3fr); } }
+
 
 	.booking-page {
 		background: var(--color-performance-paper, #f3f3f0);
@@ -305,7 +310,7 @@
 		gap: clamp(2rem, 6vw, 6rem);
 		width: min(85rem, 100%);
 		margin-inline: auto;
-		padding: clamp(4rem, 9vw, 8rem) clamp(1.25rem, 5vw, 4rem);
+		padding: var(--space-performance-lg) 7vw;
 	}
 
 	.agent-booking__intro {
@@ -326,10 +331,10 @@
 	.agent-booking h1 {
 		max-width: 12ch;
 		margin: 0.8rem 0 1.25rem;
-		font-size: clamp(2.75rem, 5.5vw, 5.7rem);
+		font-size: clamp(1.8rem, 3vw, 2.75rem);
 		font-weight: 400;
 		letter-spacing: -0.06em;
-		line-height: 0.94;
+		line-height: 1.15;
 	}
 
 	.agent-booking__intro > p:nth-child(3),
