@@ -45,16 +45,18 @@ export function renderPerformanceEmail(input: PerformanceEmailInput): string {
 <body style="margin:0;padding:0;background-color:${tokens.color.paper};color:${tokens.color.ink};font-family:${escapePerformanceEmailAttribute(tokens.font.display)};">
   <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">${escapePerformanceEmailHtml(input.preheader)}</div>
   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;background-color:${tokens.color.paper};">
-    <tr><td align="center" style="padding:${tokens.layout.spaceLg} ${tokens.layout.spaceMd};">
-      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;max-width:${tokens.layout.maxWidth};background-color:${tokens.color.panel};border:1px solid ${tokens.color.line};border-radius:${tokens.layout.radius};">
-        <tr><td style="padding:${tokens.layout.spaceMd} ${tokens.layout.spaceLg};border-bottom:1px solid ${tokens.color.line};font-family:${escapePerformanceEmailAttribute(tokens.font.mono)};font-size:12px;line-height:1.5;letter-spacing:.08em;color:${tokens.color.muted};">CREATE SOMETHING&nbsp;&nbsp;/&nbsp;&nbsp;PERFORMANCE LAB&nbsp;&nbsp;/&nbsp;&nbsp;${escapePerformanceEmailHtml(input.status)}</td></tr>
+    <tr><td align="center" style="padding:${tokens.layout.spaceMd} ${tokens.layout.spaceSm};">
+      <!--[if mso]><table role="presentation" width="640" align="center" cellpadding="0" cellspacing="0" border="0"><tr><td><![endif]-->
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;max-width:${tokens.layout.maxWidth};table-layout:fixed;background-color:${tokens.color.panel};border:1px solid ${tokens.color.line};">
+        <tr><td style="padding:${tokens.layout.spaceMd};border-bottom:1px solid ${tokens.color.line};font-family:${escapePerformanceEmailAttribute(tokens.font.mono)};font-size:12px;line-height:1.5;letter-spacing:.08em;color:${tokens.color.muted};">CREATE SOMETHING / PERFORMANCE LAB / ${escapePerformanceEmailHtml(input.status)}</td></tr>
         ${media}
-        <tr><td style="padding:${tokens.layout.spaceXl} ${tokens.layout.spaceLg} ${tokens.layout.spaceLg};">
-          <h1 style="margin:0 0 ${tokens.layout.spaceMd};font-family:${escapePerformanceEmailAttribute(tokens.font.display)};font-size:36px;line-height:1.08;letter-spacing:-.02em;color:${tokens.color.ink};">${escapePerformanceEmailHtml(input.title)}</h1>
+        <tr><td style="padding:${tokens.layout.spaceLg} ${tokens.layout.spaceMd};font-size:16px;line-height:1.65;overflow-wrap:anywhere;word-wrap:break-word;">
+          <h1 style="margin:0 0 ${tokens.layout.spaceMd};font-family:${escapePerformanceEmailAttribute(tokens.font.display)};font-size:28px;line-height:1.15;letter-spacing:-.02em;color:${tokens.color.ink};">${escapePerformanceEmailHtml(input.title)}</h1>
           ${input.contentHtml}
         </td></tr>
-        <tr><td style="padding:${tokens.layout.spaceMd} ${tokens.layout.spaceLg};border-top:1px solid ${tokens.color.line};font-family:${escapePerformanceEmailAttribute(tokens.font.mono)};font-size:11px;line-height:1.55;color:${tokens.color.muted};">${input.footerHtml}</td></tr>
+        <tr><td style="padding:${tokens.layout.spaceMd};border-top:1px solid ${tokens.color.line};font-family:${escapePerformanceEmailAttribute(tokens.font.mono)};font-size:12px;line-height:1.55;overflow-wrap:anywhere;word-wrap:break-word;color:${tokens.color.muted};">${input.footerHtml}</td></tr>
       </table>
+      <!--[if mso]></td></tr></table><![endif]-->
     </td></tr>
   </table>
 </body>
