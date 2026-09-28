@@ -141,6 +141,7 @@
   propertyName="io"
 />
 
+<div class="io-research-home">
 <PerformanceCampaignOpening
   mobileSearchBoundary
   eyebrow="CREATE SOMETHING .io"
@@ -217,3 +218,5 @@
     state: 'ready'
   }}
 />
+
+</div>
