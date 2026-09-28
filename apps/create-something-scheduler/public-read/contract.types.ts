@@ -16,4 +16,4 @@ client.listAvailability({ from: '2026-10-01', to: '2026-10-02', timezone: 'UTC',
 // @ts-expect-error No request options exposing header/query/method overrides.
 client.getLink({ headers: { authorization: 'Bearer forbidden' } });
 // @ts-expect-error Generated internals have no package export.
-import { CloudflareApiClient } from '@create-something/create-something-scheduler/forge-pilot/generated/sdk/index.js';
+import { CloudflareApiClient } from '@create-something/create-something-scheduler/public-read/generated/sdk/index.js';

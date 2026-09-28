@@ -6,7 +6,7 @@ import { BookingService } from '../src/application/booking-service.ts';
 import { handleApiRequest } from '../src/http/api.ts';
 import { smokePublicReads } from './smoke.mjs';
 
-assert.throws(() => import.meta.resolve('@create-something/create-something-scheduler/forge-pilot/generated/sdk/index.js'),
+assert.throws(() => import.meta.resolve('@create-something/create-something-scheduler/public-read/generated/sdk/index.js'),
   { code: 'ERR_PACKAGE_PATH_NOT_EXPORTED' });
 
 let calendarAvailable = true;

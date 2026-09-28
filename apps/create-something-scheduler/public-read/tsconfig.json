@@ -9,5 +9,5 @@
     "types": ["node"],
     "noEmit": true
   },
-  "include": ["index.ts", "contract.types.ts", "../forge-pilot/generated/sdk/**/*.ts"]
+  "include": ["index.ts", "contract.types.ts", "generated/sdk/**/*.ts"]
 }

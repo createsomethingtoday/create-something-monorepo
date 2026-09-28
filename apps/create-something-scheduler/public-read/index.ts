@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { Data, Effect, Either } from 'effect';
-import { CloudflareApiClient } from '../forge-pilot/generated/sdk/Client.js';
-import { CloudflareApiError } from '../forge-pilot/generated/sdk/errors/CloudflareApiError.js';
+import { CloudflareApiClient } from './generated/sdk/Client.js';
+import { CloudflareApiError } from './generated/sdk/errors/CloudflareApiError.js';
 
 const duration = z.union([z.literal(30), z.literal(60)]);
 const linkSchema = z.object({
@@ -87,7 +87,7 @@ const queryKeys = new Set(['from', 'to', 'timezone', 'durationMinutes']);
 
 /**
  * The generated SDK is deliberately private. Never forward caller options to it.
- * Its snapshot is still the patched pilot; see README.md and generator-lock.json.
+ * Its snapshot is still the patched pilot output; see README.md and generator-lock.json.
  */
 export function createSchedulerReadClient(options: SchedulerReadOptions = {}): SchedulerReadClient {
   const parsed = optionsSchema.parse(options);

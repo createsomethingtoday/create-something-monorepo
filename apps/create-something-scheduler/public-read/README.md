@@ -6,7 +6,7 @@ promotion gate implement the Judgment boundary. `BookingService` still owns all
 scheduling behavior.
 
 **Staged, not production-qualified.** The facade currently uses the unchanged,
-patched pilot snapshot in `../forge-pilot/generated`. Its generated 503 error
+patched pilot snapshot in `./generated`. Its generated 503 error
 annotation predates the corrected source contract. The facade decodes the actual
 body as `unknown` and validates it, rather than trusting that annotation. Nothing
 in generated output was edited to hide drift. The upstream Forge fix and fresh

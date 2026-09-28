@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createSchedulerReadClient, AvailabilityUnavailableError, SchedulerReadError } from '@create-something/create-something-scheduler/public-read';
-import { CloudflareApiClient } from '../forge-pilot/generated/sdk/Client.js';
+import { CloudflareApiClient } from './generated/sdk/Client.js';
 
 const query = { from: '2026-10-01', to: '2026-10-02', timezone: 'UTC', durationMinutes: 60 as const };
 const available = {

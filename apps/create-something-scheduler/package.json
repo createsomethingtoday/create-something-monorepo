@@ -24,7 +24,7 @@
     "test:public-read": "vitest run --config public-read/vitest.config.ts",
     "smoke:public-read": "node --import tsx public-read/smoke.mjs",
     "verify:public-read": "node --import tsx public-read/verify-local.mjs",
-    "project:public-read": "node --import tsx forge-pilot/project-readonly.mjs public-read/openapi.readonly.json",
+    "project:public-read": "node --import tsx public-read/project.mjs public-read/openapi.readonly.json",
     "generate:public-read": "node --import tsx public-read/generate.mjs",
     "dev": "pnpm build:room-client && wrangler dev",
     "sync:webflow-busy": "swift scripts/sync-webflow-busy-projection.swift",

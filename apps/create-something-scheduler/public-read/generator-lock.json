@@ -4,7 +4,7 @@
   "repository": "https://github.com/cloudflare/forge.git",
   "revision": null,
   "baselineRevision": "cfe397c296a5e6d9fce01eb335ed805821e5547c",
-  "snapshotProvenance": "forge-pilot/generated is unchanged patched-pilot output; not regenerated from the corrected source contract",
+  "snapshotProvenance": "public-read/generated is byte-identical to the patched CRE-2162 pilot output; not regenerated from the corrected source contract",
   "fernCli": "5.112.0",
   "fernGenerator": "3.80.1",
   "fernImageDigest": "sha256:e806e9ff27d619caf84f9d5e52c9bc1f89e355dfd76d75faf1260b1115e1e192",
