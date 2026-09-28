@@ -30,3 +30,9 @@ Repository authority: Canon Performance tokens and naming contract; Performance 
 ## Verification and promotion
 
 See `CRE_2143_UI_HANDOFF.md` for exact checks, rendered evidence, limitations and worktree disposition. UI fixtures are explicitly distinct from live agent or production acceptance. Independent source review and release QA must approve the candidate before merge or deployment.
+
+## Client Workspace refinement — CRE-2146
+
+The client-only follow-up keeps the shared tokens and Draw implementation intact. Projects use one compact list followed by readiness and signed import. A persistent desktop navigation rail becomes sticky section links on narrow screens. Session work is organized around conversation beside preview; review decisions and evidence occupy a full-width section below. On mobile the DOM order remains conversation, review, preview. All three sections stay mounted and reachable by native links; focus moves to each target heading. Pending decisions are counted in navigation, and approval cards precede disclosed activity history. Session close/reset move into a native disclosure with Escape focus return. Closing and switching projects uses the existing close workflow.
+
+Tradeoff: desktop review requires a short vertical move when the primary work area fills the screen. The persistent Review link and pending count keep the decision reachable without squeezing conversation or preview into three narrow columns. No new tab state hides conversation, approvals, or preview. See `CRE_2146_UI_HANDOFF.md` for rendered comparison and the explicit local-demo evidence boundary.

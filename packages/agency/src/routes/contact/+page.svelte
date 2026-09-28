@@ -2,10 +2,8 @@
   import { createContactRequest } from '$lib/contact/request';
   let contactRequest: ReturnType<typeof createContactRequest> | undefined;
   import {
-    PerformanceCardGrid,
     PerformancePageSection,
-    SEO,
-    type PerformanceCardItem
+    SEO
   } from '@create-something/canon';
   import { page } from '$app/stores';
   import { getAnalytics } from '@create-something/canon/analytics';
@@ -165,18 +163,6 @@
     }
   };
 
-  const contactPathCards: PerformanceCardItem[] = contactPathOptions.map((option) => ({
-    eyebrow: 'Get started',
-    icon:
-      option.funnelStage === 'awareness'
-        ? 'document'
-        : option.funnelStage === 'consideration'
-          ? 'search'
-          : 'check',
-    title: option.label,
-    detail: option.description
-  }));
-
   const contactSource = $derived(data.contactSource);
   const contactCampaign = $derived(data.contactCampaign);
   const initialIntent = $derived(data.contactIntent as ContactIntent);
@@ -269,23 +255,12 @@
   propertyName="agency"
 />
 
-{#if hasChosenIntent}
-<header class="inquiry-intro"><p>{selectedContent.eyebrow}</p><h1>{selectedContent.formTitle}</h1><p>{selectedContent.description}</p></header>
-{:else}
-<PerformancePageSection
-  variant="hero"
-  layout={hasChosenIntent ? "stack" : "split"}
-  titleLevel="h1"
-  expression="editorial"
-  eyebrow={selectedContent.eyebrow}
-  title={selectedContent.title}
-  description={selectedContent.description}
->
-  {#snippet aside()}
-    {#if !hasChosenIntent}<PerformanceCardGrid items={contactPathCards} columns={1} ariaLabel="Contact path options" />{/if}
-  {/snippet}
-</PerformancePageSection>
-{/if}
+<header class="inquiry-intro">
+  <p class="inquiry-eyebrow">{selectedContent.eyebrow}</p>
+  <h1>{selectedContent.title}</h1>
+  <p>{selectedContent.description}</p>
+  <a href="#inquiry-form">{selectedContent.formTitle} ↓</a>
+</header>
 
 <section class="contact-section">
   <div class="contact-container">
@@ -293,8 +268,8 @@
       <h2>{hasChosenIntent ? "Tell us about the work." : selectedContent.formTitle}</h2>
       <p>{selectedContent.formDescription}</p>
 
-      <form class="contact-form" onsubmit={handleSubmit}>
-        <details open={!hasChosenIntent}><summary>Choose another way to start</summary>
+      <form id="inquiry-form" class="contact-form" onsubmit={handleSubmit}>
+        <details class="path-choice"><summary>{selectedPath.label} · Change inquiry type</summary>
         <fieldset class="form-field path-field">
           <legend class="form-label">What should happen next?</legend>
           <div class="path-options">
@@ -359,7 +334,7 @@
           </select>
         </div>
 
-        <div class="form-field">
+        <div class="form-field form-field--message">
           <label for="message" class="form-label">{selectedContent.messageLabel}</label>
           <p class="form-helper">{selectedContent.messageHelper}</p>
           <textarea
@@ -373,7 +348,7 @@
         </div>
 
         {#if selectedIntent === 'membership'}
-          <p class="form-helper" role="note">
+          <p class="form-helper form-note" role="note">
             This is an inquiry, not a payment or permission to spend. We confirm delivery scope and
             separate AI usage costs before work begins. For substantial AI work, we arrange scoped
             access to your provider account or agree on metered billing. Do not send credentials here.
@@ -427,7 +402,22 @@
 </section>
 
 <style>
-.inquiry-intro{padding:45px 7vw 0}.inquiry-intro h1{font:400 clamp(40px,5vw,64px)/1.1 var(--font-performance-editorial);margin:18px 0}.inquiry-intro p{max-width:760px;line-height:1.65}.contact-form summary{cursor:pointer;margin-bottom:18px;min-height:32px}.contact-form summary:focus-visible{outline:2px solid var(--color-performance-signal)}
+  .inquiry-intro { width: min(var(--content-width-performance), 86%); margin: 0 auto; padding-block: var(--space-performance-lg) var(--space-performance-sm); }
+  .inquiry-intro h1 { max-width: 24ch; margin: var(--space-performance-sm) 0; font: var(--font-performance-medium) clamp(1.8rem, 3vw, 2.75rem)/1.15 var(--font-performance-interface); letter-spacing: var(--tracking-performance-tight); }
+  .inquiry-intro p { max-width: 70ch; line-height: 1.55; }
+  .inquiry-eyebrow { font: var(--text-performance-operator-label) var(--font-performance-mono); }
+  .inquiry-intro a { display: inline-flex; align-items: center; min-height: 44px; color: inherit; text-underline-offset: .2em; }
+  .contact-form summary { cursor: pointer; min-height: 44px; padding-block: var(--space-performance-xs); }
+  .contact-form summary:focus-visible, .inquiry-intro a:focus-visible, .form-submit:focus-visible, .calendar-link:focus-visible { outline: 2px solid var(--color-performance-focus); outline-offset: 3px; }
+  #inquiry-form { scroll-margin-top: 7rem; }
+  .path-choice, .form-field--message, .form-note, .form-submit, .form-message { grid-column: 1 / -1; }
+  .form-field { min-width: 0; }
+  .form-input, .form-submit { scroll-margin-block: 7rem; }
+  .form-input { width: 100%; box-sizing: border-box; }
+  .path-option:focus-within { outline: 2px solid var(--color-performance-focus); outline-offset: 2px; }
+  @media (min-width: 900px) { .contact-form { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (prefers-reduced-motion: reduce) { .path-option, .form-input, .form-submit, .email-link { transition: none; } }
+
 
   .section-container {
     width: min(var(--content-width-performance, 85rem), 86%);
@@ -435,7 +425,7 @@
   }
 
   .contact-section {
-    padding: 4.5rem 0;
+    padding: var(--space-performance-sm) 0 var(--space-performance-xl);
     background: var(--color-performance-paper, #f3f3f0);
     border-bottom: 1px solid var(--color-performance-line, #d7d7d2);
   }
@@ -444,7 +434,7 @@
     width: min(var(--content-width-performance, 85rem), 86%);
     margin: 0 auto;
     display: grid;
-    grid-template-columns: minmax(0, 1.1fr) minmax(18rem, 0.9fr);
+    grid-template-columns: minmax(0, 2fr) minmax(16rem, 1fr);
     gap: 1rem;
     align-items: start;
   }
@@ -459,15 +449,14 @@
 
   .contact-option--calendar {
     border-color: var(--color-performance-line-strong, #9c9c96);
-    background:
-      linear-gradient(90deg, rgba(10, 14, 25, 0.035) 1px, transparent 1px) 0 0 / 3rem 3rem,
-      color-mix(in srgb, var(--color-performance-signal-soft, #dce8f5) 18%, white);
+    background: var(--color-performance-paper);
   }
 
   .contact-option h2 {
+    font-family: var(--font-performance-interface);
     margin: 0 0 0.65rem;
     color: var(--color-performance-ink, #090909);
-    font-size: 1.75rem;
+    font-size: 1.35rem;
     font-weight: var(--font-performance-medium);
     line-height: 1.1;
   }
@@ -620,7 +609,7 @@
   }
 
   .form-textarea {
-    resize: none;
+    resize: vertical;
     min-height: 8.75rem;
   }
 
@@ -694,6 +683,7 @@
   }
 
   @media (max-width: 768px) {
+    .inquiry-intro { padding-top: var(--space-performance-sm); }
     .contact-container,
     .section-container {
       width: min(86%, var(--content-width-performance, 85rem));
@@ -704,7 +694,7 @@
     }
 
     .contact-section {
-      padding-block: 2.75rem;
+      padding-block: var(--space-performance-sm) var(--space-performance-lg);
     }
   }
 </style>

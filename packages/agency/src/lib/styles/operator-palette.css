@@ -1,0 +1,139 @@
+@import '@create-something/canon/styles/operator.css';
+
+/* Agency opts in by route; Canon's defaults and other consumers stay intact. */
+.agency-surface[data-canon-palette='operator'] {
+  color-scheme: dark;
+  background: var(--color-operator-background);
+  color: var(--color-operator-foreground);
+  --color-performance-paper: var(--color-operator-background);
+  --color-performance-panel: var(--color-operator-panel);
+  --color-performance-court: var(--color-operator-secondary);
+  --color-performance-ink: var(--color-operator-foreground);
+  --color-performance-ink-soft: var(--color-operator-foreground);
+  --color-performance-muted: var(--color-operator-muted);
+  --color-performance-line: var(--color-operator-border);
+  --color-performance-line-strong: var(--color-operator-focus-ring-accessible);
+  --color-performance-editorial-dark: var(--color-operator-foreground);
+  --color-performance-editorial-dark-secondary: var(--color-operator-muted);
+  --color-performance-editorial-light: var(--color-operator-background);
+  --color-performance-editorial-light-secondary: var(--color-operator-secondary);
+  --color-performance-editorial-brand: var(--color-operator-raised);
+  --color-performance-fg-primary: var(--color-operator-foreground);
+  --color-performance-fg-secondary: var(--color-operator-muted);
+  --color-performance-fg-tertiary: var(--color-operator-muted);
+  --color-performance-bg-pure: var(--color-operator-background);
+  --color-performance-bg-surface: var(--color-operator-panel);
+  --color-performance-bg-elevated: var(--color-operator-raised);
+  --color-performance-shell-surface: var(--color-operator-background);
+  --color-performance-shell-surface-secondary: var(--color-operator-secondary);
+  --color-performance-shell-surface-elevated: var(--color-operator-raised);
+  --color-performance-shell-surface-hover: var(--color-operator-hover);
+  --color-performance-shell-border-default: var(--color-operator-border);
+  --color-performance-shell-border-strong: var(--color-operator-focus-ring-accessible);
+  --color-performance-focus: var(--color-operator-focus-ring-accessible);
+  --color-performance-stop-soft: var(--color-operator-status-blocked-text);
+}
+
+.agency-surface[data-canon-palette='operator'] .cs-workspace {
+  --workspace-bg: var(--color-operator-background);
+  --workspace-panel: var(--color-operator-panel);
+  --workspace-raised: var(--color-operator-raised);
+  --workspace-hover: var(--color-operator-hover);
+  --workspace-line: var(--color-operator-border);
+  --workspace-strong-line: var(--color-operator-focus-ring-accessible);
+  --workspace-fg: var(--color-operator-foreground);
+  --workspace-muted: var(--color-operator-muted);
+  --workspace-quiet: var(--color-operator-muted);
+  --workspace-focus: var(--color-operator-focus-ring-accessible);
+}
+
+.agency-surface[data-canon-palette='operator'] .hero-track {
+  background: var(--color-operator-background);
+  color: var(--color-operator-foreground);
+}
+.agency-surface[data-canon-palette='operator'] .hero-actions .primary {
+  background: var(--color-operator-foreground);
+  color: var(--color-operator-background);
+  border-color: var(--color-operator-foreground);
+}
+.agency-surface[data-canon-palette='operator'] .hero-actions .primary:hover {
+  background: var(--color-operator-hover);
+  color: var(--color-operator-foreground);
+}
+.agency-surface[data-canon-palette='operator'] .nav-logo-asset { filter: invert(1); }
+.agency-surface[data-canon-palette='operator'] :is(input:not([type='hidden']), textarea, select) {
+  border-color: var(--color-operator-focus-ring-accessible);
+}
+.agency-surface[data-canon-palette='operator'] :focus-visible {
+  outline: 2px solid var(--color-operator-focus-ring-accessible);
+  outline-offset: 3px;
+}
+@media (forced-colors: active) {
+  .agency-surface[data-canon-palette='operator'] :focus-visible { outline-color: Highlight; }
+}
+.agency-surface[data-canon-palette='operator'] .hero-track button {
+  background: var(--color-operator-raised);
+  color: var(--color-operator-foreground);
+}
+/* Media-led openings retain light-on-dark text; navigation uses the inverse roles. */
+.agency-surface[data-canon-palette='operator'] .performance-campaign-opening,
+.agency-surface[data-canon-palette='operator'] .footer-editorial {
+  --color-performance-editorial-dark: var(--color-operator-background);
+  --color-performance-editorial-light: var(--color-operator-foreground);
+  --color-performance-editorial-light-secondary: var(--color-operator-muted);
+}
+.agency-surface[data-canon-palette='operator'] .performance-campaign-opening::before {
+  background: linear-gradient(90deg, var(--color-operator-background) 0%, color-mix(in srgb, var(--color-operator-background) 92%, transparent) 43%, transparent 100%);
+}
+.agency-surface[data-canon-palette='operator'] :is(.form-submit, .contact-option .booking-cta.primary) {
+  background: var(--color-operator-foreground);
+  color: var(--color-operator-background);
+  border-color: var(--color-operator-foreground);
+}
+.agency-surface[data-canon-palette='operator'] :is(.form-submit, .contact-option .booking-cta.primary):hover {
+  background: var(--color-operator-raised);
+  color: var(--color-operator-foreground);
+}
+.agency-surface[data-canon-palette='operator'] .privacy-button:not(.privacy-button--ghost) {
+  background: var(--color-operator-foreground);
+  color: var(--color-operator-background);
+}
+.agency-surface[data-canon-palette='operator'] :is(.path-option.selected, .path-option:hover) {
+  background: var(--color-operator-raised);
+  border-color: var(--color-operator-focus-ring-accessible);
+}
+
+.agency-surface[data-canon-palette='operator'] .path-option input { accent-color: var(--color-operator-foreground); }
+.agency-surface[data-canon-palette='operator'] .footer-editorial {
+  --color-performance-editorial-dark-secondary: var(--color-operator-secondary);
+  --color-performance-editorial-brand: var(--color-operator-foreground);
+}
+.agency-surface[data-canon-palette='operator'] .performance-campaign-opening {
+  --color-performance-editorial-brand: var(--color-operator-foreground);
+}
+@media (max-width: 720px) {
+  .agency-surface[data-canon-palette='operator'] .performance-campaign-opening::before {
+    background: color-mix(in srgb, var(--color-operator-background) 90%, transparent);
+  }
+}
+.agency-surface[data-canon-palette='operator'] {
+  --color-performance-signal: var(--color-operator-status-running-text);
+  --color-performance-pressure: var(--color-operator-status-paused-text);
+  --color-performance-success: var(--color-operator-status-done-text);
+  --color-performance-error: var(--color-operator-status-blocked-text);
+}
+.agency-surface[data-canon-palette='operator'] :is(.map-preview__diagram, .performance-conversion-handoff) {
+  --color-performance-ink: var(--color-operator-background);
+  --color-performance-panel: var(--color-operator-foreground);
+}
+.agency-surface[data-canon-palette='operator'] .funnel-card .btn-primary {
+  background: var(--color-operator-foreground);
+  color: var(--color-operator-background);
+}
+.agency-surface[data-canon-palette='operator'] .funnel-card .btn-primary:hover {
+  background: var(--color-operator-raised);
+  color: var(--color-operator-foreground);
+}
+@media (prefers-reduced-motion: reduce) {
+  .agency-surface[data-canon-palette='operator'] .map-preview__rail span { animation: none; }
+}
