@@ -23,7 +23,7 @@ expected_udp='block drop out quick on lo0 proto udp all user = 504'
 expected_guard_hash='f1ae9ccc0e5938ae03488cc9d6b48468ac8391df4773b613a39f4f89048225ad'
 expected_rule_hash='9919aef0cca3bd274cae3db30159af8df46d1fbbf9354db373ad18ed1700b705'
 expected_plist_hash='27142a209b377f036e7a1171dc6a3e2ad534f8fdc8671678a618c5f8d2d15e45'
-expected_remove_hash='e412ca90f75b5a9f37a374719fe90bb256e481444d00009fa462a375e8fc7ee3'
+expected_remove_hash='81a3bb6deabb2380ceea167cd8d044363eba0351bfa5fa8a7571feb88a8f78c6'
 
 hash_file() { /usr/bin/shasum -a 256 "$1" | /usr/bin/awk '{print $1}'; }
 [[ "$(hash_file "$source_dir/paperclip-runner-pf-guard.zsh")" == "$expected_guard_hash" ]] || { print -u2 'Reviewed PF guard hash mismatch.'; exit 1; }
@@ -57,9 +57,14 @@ prior_rules="$(/sbin/pfctl -a "$anchor" -sr)"
 installed=false
 success=false
 rollback_failed_install() {
-  [[ "$success" == true || "$installed" != true ]] && return
+  [[ "$success" == true || "$installed" == false ]] && return
   print -u2 'PF installation did not finish; reconciling only the files and reference created by this installer.'
   set +e
+  if [[ "$installed" == preparing ]]; then
+    /bin/rm -f "$root_dir/pf-remove.zsh.next" "$root_dir/pf-remove.zsh"
+    /bin/rmdir "$root_dir" >/dev/null 2>&1 || print -u2 'Partial PF directory remains; inspect before retrying.'
+    return
+  fi
   /bin/zsh "$root_dir/pf-remove.zsh" --locked
   removal_status=$?
   if [[ "$removal_status" == 0 && -n "$prior_rules" ]]; then
@@ -77,14 +82,13 @@ rollback_failed_install() {
 }
 trap rollback_failed_install EXIT
 
+installed=preparing
 /usr/bin/install -d -o root -g wheel -m 700 "$root_dir"
-/usr/bin/install -o root -g wheel -m 700 "$source_dir/remove-paperclip-runner-pf.command" "$root_dir/pf-remove.zsh"
-if [[ "$(hash_file "$root_dir/pf-remove.zsh")" != "$expected_remove_hash" ]]; then
-  /bin/rm -f "$root_dir/pf-remove.zsh"
-  /bin/rmdir "$root_dir"
-  print -u2 'Installed PF remover hash mismatch.'
-  exit 1
-fi
+/usr/bin/install -o root -g wheel -m 700 "$source_dir/remove-paperclip-runner-pf.command" "$root_dir/pf-remove.zsh.next"
+[[ "$(hash_file "$root_dir/pf-remove.zsh.next")" == "$expected_remove_hash" && "$(stat -f '%u:%Lp' "$root_dir/pf-remove.zsh.next")" == '0:700' ]] || {
+  print -u2 'Staged PF remover identity or mode mismatch.'; exit 1
+}
+/bin/mv "$root_dir/pf-remove.zsh.next" "$root_dir/pf-remove.zsh"
 installed=true
 /usr/bin/install -o root -g wheel -m 600 "$source_dir/paperclip-runner-pf.rules" "$root_dir/pf.rules"
 /usr/bin/install -o root -g wheel -m 700 "$source_dir/paperclip-runner-pf-guard.zsh" "$root_dir/pf-guard.zsh"
@@ -123,7 +127,7 @@ token_record="$(sudo /bin/cat "$root_dir/pf-enable-token")"
 }
 key_file='/Users/micahjohnson/Library/Application Support/CREATE SOMETHING/Paperclip Browser Runner/ssh/id_ed25519'
 known_hosts_file='/Users/micahjohnson/.ssh/paperclip_runner_known_hosts'
-runner_result="$(/usr/bin/ssh -i "$key_file" -o UserKnownHostsFile="$known_hosts_file" -o StrictHostKeyChecking=yes -o BatchMode=yes papercliprunner@127.0.0.1 'python3 -c '\''import socket,subprocess,sys; s=socket.socket(); s.settimeout(2); local=s.connect_ex(("127.0.0.1",3101)); public=subprocess.run(["/usr/bin/curl","--noproxy","*","-fsS","--max-time","8","--output","/dev/null","--write-out","%{http_code}","https://example.com/"],capture_output=True,text=True); print("local_denied="+str(local!=0)); print("public_200="+str(public.returncode==0 and public.stdout=="200")); sys.exit(0 if local!=0 and public.returncode==0 and public.stdout=="200" else 1)'\''')"
+runner_result="$(/usr/bin/ssh -F /dev/null -i "$key_file" -o IdentitiesOnly=yes -o ConnectionAttempts=1 -o ConnectTimeout=5 -o UserKnownHostsFile="$known_hosts_file" -o StrictHostKeyChecking=yes -o BatchMode=yes papercliprunner@127.0.0.1 'python3 -c '\''import socket,subprocess,sys; s=socket.socket(); s.settimeout(2); local=s.connect_ex(("127.0.0.1",3101)); public=subprocess.run(["/usr/bin/curl","--noproxy","*","-fsS","--max-time","8","--output","/dev/null","--write-out","%{http_code}","https://example.com/"],capture_output=True,text=True); print("local_denied="+str(local!=0)); print("public_200="+str(public.returncode==0 and public.stdout=="200")); sys.exit(0 if local!=0 and public.returncode==0 and public.stdout=="200" else 1)'\''')"
 print -r -- "$runner_result"
 [[ "$runner_result" == *'local_denied=True'* && "$runner_result" == *'public_200=True'* ]] || {
   print -u2 'Paired runner network proof failed.'
