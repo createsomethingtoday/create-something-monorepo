@@ -304,6 +304,8 @@ def scan(api, *, company_id, board_user_id, jev_agent_id, controller_agent_id, n
                 current_policy(fresh_issue, policy)
                 if fresh_issue.get("status") != "in_review" or fresh_issue.get("assigneeAgentId") != policy["verifierAgentId"]:
                     raise ValueError("issue changed before fallback assignment")
+                if api.get(f"/api/issues/{issue_id}/live-runs"):
+                    raise ValueError("issue gained a live run before fallback assignment")
                 # One assignment and its durable comment are written in the same Paperclip issue mutation.
                 body = "Approved A1 model fallback after independent verification. Production authority is unchanged.\n\n```paperclip-escalation-decision-v1\n" + json.dumps(decision, sort_keys=True) + "\n```"
                 request_id = str(uuid.uuid5(uuid.NAMESPACE_URL, decision["policyHash"] + ":" + decision["sourceRunId"]))

@@ -180,6 +180,38 @@ class EscalationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "canonical company"):
             escalate.scan(api, apply=False, **{**kwargs, "company_id": ident(20)})
 
+    def test_scan_holds_if_live_run_starts_before_assignment(self):
+        data = fixture()
+        class RacingAPI:
+            def __init__(self):
+                self.live_reads = 0
+                self.patches = []
+            def get(self, path):
+                if path == f"/api/companies/{escalate.CANONICAL_COMPANY_ID}":
+                    return {"id": escalate.CANONICAL_COMPANY_ID, "name": escalate.CANONICAL_COMPANY_NAME}
+                if path.endswith("/agents"):
+                    return list(data["agents"].values())
+                if "/issues?" in path:
+                    return [data["issue"]]
+                if path.endswith("/live-runs"):
+                    self.live_reads += 1
+                    return [] if self.live_reads == 1 else [{"runId": ident(40)}]
+                if path.endswith("/comments?limit=500"):
+                    return data["comments"]
+                if path.endswith("/runs"):
+                    return data["runs"]
+                if "/heartbeat-runs/" in path:
+                    return data["source_events"]
+                return data["issue"]
+            def patch(self, path, body):
+                self.patches.append(body)
+                return {"assigneeAgentId": body["assigneeAgentId"]}
+        api = RacingAPI()
+        result = escalate.scan(api, company_id=escalate.CANONICAL_COMPANY_ID, board_user_id=data["board_user_id"], jev_agent_id=data["jev_agent_id"], controller_agent_id=data["controller_agent_id"], now=data["now"], apply=True)
+        self.assertEqual(result["escalated"], 0)
+        self.assertEqual(result["held"], 1)
+        self.assertEqual(api.patches, [])
+
 
 if __name__ == "__main__":
     unittest.main()
