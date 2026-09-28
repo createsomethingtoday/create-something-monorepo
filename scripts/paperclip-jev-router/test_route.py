@@ -3,6 +3,7 @@ import io
 import json
 import pathlib
 import unittest
+from unittest.mock import patch
 
 
 SPEC = importlib.util.spec_from_file_location("jev_router", pathlib.Path(__file__).with_name("route.py"))
@@ -64,6 +65,27 @@ class RouterTests(unittest.TestCase):
             packet(summary="API key = abc")
         with self.assertRaisesRegex(ValueError, "invalid riskFlags"):
             packet(riskFlags=[["security_boundary"]])
+
+    def test_process_run_resolves_one_linked_issue(self):
+        issue = packet(taskId="linked-issue")
+        description = "```jev-routing\n" + json.dumps(issue) + "\n```"
+        urls = []
+        def open_request(request, timeout):
+            urls.append(request.full_url)
+            data = [{"issueId": "linked-issue"}] if request.full_url.endswith("/issues") else {"description": description}
+            return Response(json.dumps(data).encode())
+        env = {"PAPERCLIP_API_URL": "http://paperclip.test", "PAPERCLIP_API_KEY": "run-token", "PAPERCLIP_RUN_ID": "run-1"}
+        with patch.dict("os.environ", env, clear=True), patch.object(router.urllib.request, "urlopen", open_request):
+            self.assertEqual(router.load_packet(), issue)
+        self.assertEqual(urls, ["http://paperclip.test/api/heartbeat-runs/run-1/issues", "http://paperclip.test/api/issues/linked-issue"])
+
+    def test_existing_agent_receipt_avoids_repeat_provider_call(self):
+        issue = packet(taskId="linked-issue")
+        receipt = {"taskId": issue["taskId"], "requestHash": router.hashlib.sha256(router.build_request(issue)).hexdigest(), "recommendation": "luna", "status": "advisory"}
+        comments = [{"authorAgentId": "agent-1", "body": "```jev-routing-receipt\n" + json.dumps(receipt) + "\n```"}]
+        env = {"PAPERCLIP_API_URL": "http://paperclip.test", "PAPERCLIP_API_KEY": "run-token", "PAPERCLIP_AGENT_ID": "agent-1"}
+        with patch.dict("os.environ", env, clear=True), patch.object(router.urllib.request, "urlopen", return_value=Response(json.dumps(comments).encode())), patch.object(router, "route", side_effect=AssertionError("duplicate provider call")):
+            self.assertEqual(router.paperclip_receipt(issue), receipt)
 
 
 if __name__ == "__main__":

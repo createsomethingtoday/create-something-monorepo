@@ -15,6 +15,7 @@ import urllib.request
 MODEL = "jev-1.13.0"
 ENDPOINT = "https://api.typesafe.ai/v1/systemone"
 PACKET_PATTERN = re.compile(r"```jev-routing\s*\n(.*?)\n```", re.DOTALL)
+RECEIPT_PATTERN = re.compile(r"```jev-routing-receipt\s*\n(.*?)\n```", re.DOTALL)
 LANES = {
     "luna": "Bounded, low-risk reading, monitoring, formatting, or exact edits with a direct verifier.",
     "sol": "Routine coding, research, or UI work with clear acceptance criteria and review.",
@@ -44,14 +45,27 @@ def load_packet(path=None):
     if path:
         with open(path, encoding="utf-8") as handle:
             return validate_packet(json.load(handle))
-    task_id = os.environ.get("PAPERCLIP_TASK_ID", "")
     api_url = os.environ.get("PAPERCLIP_API_URL", "").rstrip("/")
     api_key = os.environ.get("PAPERCLIP_API_KEY", "")
-    if not task_id or not api_url or not api_key:
+    task_id = os.environ.get("PAPERCLIP_TASK_ID", "")
+    run_id = os.environ.get("PAPERCLIP_RUN_ID", "")
+    if not api_url or not api_key or (not task_id and not run_id):
         raise ValueError("Paperclip task context unavailable")
+    headers = {"Authorization": f"Bearer {api_key}"}
+    if not task_id:
+        request = urllib.request.Request(
+            f"{api_url}/api/heartbeat-runs/{run_id}/issues", headers=headers
+        )
+        with urllib.request.urlopen(request, timeout=5) as response:
+            issues = json.load(response)
+        if not isinstance(issues, list) or len(issues) != 1 or not isinstance(issues[0], dict):
+            raise ValueError("run must be linked to exactly one issue")
+        task_id = issues[0].get("issueId", "")
+        if not isinstance(task_id, str) or not task_id:
+            raise ValueError("run issue ID unavailable")
     request = urllib.request.Request(
         f"{api_url}/api/issues/{task_id}",
-        headers={"Authorization": f"Bearer {api_key}"},
+        headers=headers,
     )
     with urllib.request.urlopen(request, timeout=5) as response:
         issue = json.load(response)
@@ -149,6 +163,39 @@ def route(packet, api_key, *, opener=urllib.request.urlopen):
     return receipt
 
 
+def paperclip_receipt(packet):
+    api_url = os.environ.get("PAPERCLIP_API_URL", "").rstrip("/")
+    api_key = os.environ.get("PAPERCLIP_API_KEY", "")
+    agent_id = os.environ.get("PAPERCLIP_AGENT_ID", "")
+    if not api_url or not api_key or not agent_id:
+        raise ValueError("Paperclip receipt context unavailable")
+    url = f"{api_url}/api/issues/{packet['taskId']}/comments"
+    headers = {"Authorization": f"Bearer {api_key}"}
+    with urllib.request.urlopen(urllib.request.Request(url, headers=headers), timeout=5) as response:
+        comments = json.load(response)
+    if not isinstance(comments, list):
+        raise ValueError("Paperclip comment list unavailable")
+    request_hash = hashlib.sha256(build_request(packet)).hexdigest()
+    for comment in comments:
+        if not isinstance(comment, dict) or comment.get("authorAgentId") != agent_id:
+            continue
+        match = RECEIPT_PATTERN.search(comment.get("body") or "")
+        if not match:
+            continue
+        try:
+            receipt = json.loads(match.group(1))
+        except json.JSONDecodeError:
+            continue
+        if receipt.get("taskId") == packet["taskId"] and receipt.get("requestHash") == request_hash:
+            return receipt
+    receipt = route(packet, os.environ.get("TYPESAFE_API_KEY", ""))
+    body = "Jev advisory model route. This does not assign work or approve completion.\n\n```jev-routing-receipt\n" + json.dumps(receipt, sort_keys=True) + "\n```"
+    request = urllib.request.Request(url, data=json.dumps({"body": body}).encode(), headers={**headers, "Content-Type": "application/json"}, method="POST")
+    with urllib.request.urlopen(request, timeout=5) as response:
+        json.load(response)
+    return receipt
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--packet", help="offline routing packet JSON; omit inside Paperclip")
@@ -158,8 +205,10 @@ def main():
         packet = load_packet(args.packet)
         if args.dry_run:
             print(json.dumps({"taskId": packet["taskId"], "requestHash": hashlib.sha256(build_request(packet)).hexdigest(), "status": "dry_run"}))
-        else:
+        elif args.packet:
             print(json.dumps(route(packet, os.environ.get("TYPESAFE_API_KEY", ""))))
+        else:
+            print(json.dumps(paperclip_receipt(packet)))
     except (OSError, ValueError, urllib.error.URLError, json.JSONDecodeError) as error:
         print(json.dumps({"status": "error", "reason": str(error)}))
         return 1
