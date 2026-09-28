@@ -79,6 +79,7 @@
 
 <div class="home-pilot property-performance">
   <AgencyHero />
+  <BuiltWork />
   <FilmCollection />
   <SelectedClientWork />
   <MembershipOffer compact />
@@ -89,7 +90,6 @@
     items={faqItems}
     openFirst={false}
   />
-  <BuiltWork />
 </div>
 
 <style>
