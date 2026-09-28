@@ -1,21 +1,7 @@
 <script lang="ts">
   import type { PageData } from './$types';
-  import {
-    Button,
-    MeridianCardGrid,
-    MeridianFeatureSplit,
-    PerformanceCampaignOpening,
-    PerformanceNarrativeStage,
-    paperResearchTraceMedia,
-    PapersGrid,
-    PropertyFunnel,
-    SEO,
-    type MeridianCard,
-    type PerformanceDecisionItem,
-    type PerformanceNarrativeScene
-  } from '@create-something/canon';
+  import { PropertyFunnel, SEO, type PerformanceDecisionItem } from '@create-something/canon';
   import type { Paper } from '@create-something/canon/types';
-  import ResearchRouteArtifact from '$lib/components/home/ResearchRouteArtifact.svelte';
 
   let { data }: { data: PageData } = $props();
 
@@ -48,27 +34,6 @@
     { value: `${featuredExperiments.length}`, label: 'featured artifacts to inspect first' },
     { value: '3', label: 'database / automation / judgment layers' }
   ]);
-
-  const meridianResearchCards = $derived(
-    featuredExperiments.slice(0, 3).map(
-      (paper): MeridianCard => ({
-        eyebrow: paper.category || 'Research artifact',
-        title: paper.title,
-        description:
-          paper.excerpt_short ||
-          paper.excerpt ||
-          paper.description ||
-          'Open the research artifact and its supporting notes.',
-        href: `/papers/${paper.slug}`,
-        ctaLabel: 'Read artifact',
-        meta: paper.published_at
-          ? new Date(paper.published_at).getFullYear().toString()
-          : undefined,
-        kind: 'article',
-        tone: 'court'
-      })
-    )
-  );
 
   const decisionStates: PerformanceDecisionItem[] = [
     {
@@ -126,11 +91,6 @@
       ]
     }
   ];
-
-  const ioScenes: PerformanceNarrativeScene[] = decisionStates.map((item, index) => ({
-    id: ['read', 'validate', 'scope'][index],
-    ...item
-  }));
 </script>
 
 <SEO
@@ -142,81 +102,107 @@
 />
 
 <div class="io-research-home">
-<PerformanceCampaignOpening
-  mobileSearchBoundary
-  eyebrow="CREATE SOMETHING .io"
-  propertyRole="Research + field evidence"
-  expression="editorial"
-  title="Research for automation you can defend."
-  lede="CREATE SOMETHING .io turns experiments, papers, and field notes into a usable research layer for operators. The goal is evidence you can carry into the next build, review, or production decision."
-  media={paperResearchTraceMedia}
-  proof={proofMetrics.map((item) => ({ label: item.label, value: item.value }))}
-  mode="paper"
-  density="compact"
->
-  {#snippet actions()}
-    <Button href="/papers">Read The Papers</Button>
-    <Button href="/experiments" variant="secondary">Browse Experiments</Button>
-  {/snippet}
-</PerformanceCampaignOpening>
+  <section class="research-opening" aria-labelledby="research-title">
+    <p class="research-eyebrow">CREATE SOMETHING .io / Research + field evidence</p>
+    <h1 id="research-title">Research for automation you can defend.</h1>
+    <p class="research-lede">
+      CREATE SOMETHING .io turns experiments, papers, and field notes into a usable research layer
+      for operators. The goal is evidence you can carry into the next build, review, or production
+      decision.
+    </p>
+    <div class="research-actions">
+      <a class="research-action research-action-primary" href="/papers"
+        >Read The Papers <span aria-hidden="true">↗</span></a
+      >
+      <a class="research-action" href="/experiments">Browse Experiments</a>
+    </div>
+    <dl class="research-metrics">
+      {#each proofMetrics as metric}
+        <div>
+          <dt>{metric.label}</dt>
+          <dd>{metric.value}</dd>
+        </div>
+      {/each}
+    </dl>
+  </section>
 
-<MeridianFeatureSplit
-  eyebrow="Research field"
-  title="A claim earns its route through evidence."
-  description="The research layer collects the operator question, the working method, and the artifact trail before a pattern is allowed into delivery or policy."
-  primaryLabel="Read the methodology"
-  primaryHref="/methodology"
-  secondaryLabel="Browse experiments"
-  secondaryHref="/experiments"
-  tags={['Artifact first', 'Method named', 'Handoff visible']}
-  visualLabel="Research route from operator question through a named method and linked evidence to a human promotion gate"
->
-  {#snippet visual()}
-    <ResearchRouteArtifact />
-  {/snippet}
-</MeridianFeatureSplit>
+  <section class="research-collection" aria-labelledby="featured-title">
+    <div class="research-section-heading">
+      <div>
+        <p class="research-eyebrow">Research index</p>
+        <h2 id="featured-title">Featured artifacts</h2>
+      </div>
+      <a href="/papers">All papers <span aria-hidden="true">→</span></a>
+    </div>
+    <p>Experiments, field notes, and patterns to inspect first.</p>
+    <div class="research-artifacts">
+      {#each featuredExperiments as paper}
+        <a
+          class="research-artifact"
+          href={(paper as Paper & { route?: string }).route || `/experiments/${paper.slug}`}
+        >
+          <span class="research-eyebrow">{paper.category || 'Research artifact'}</span>
+          <h3>{paper.title}</h3>
+          <p>
+            {paper.excerpt_short ||
+              paper.excerpt ||
+              paper.description ||
+              'Open the research artifact and its supporting notes.'}
+          </p>
+          <span class="research-artifact-link">Read artifact <span aria-hidden="true">→</span></span
+          >
+        </a>
+      {:else}
+        <p class="research-empty">
+          Explore the <a href="/papers">paper archive</a> or
+          <a href="/experiments">experiment catalog</a>.
+        </p>
+      {/each}
+    </div>
+  </section>
 
-<PerformanceNarrativeStage
-  id="research-operating-story"
-  expression="editorial"
-  eyebrow="Research decision path"
-  title="Start from evidence. Decide whether to read, test, or scope."
-  description="The research decision and its artifacts now share one surface: trace the claim, inspect the relevant work, and name the receiving lane before handoff."
-  scenes={ioScenes}
-  ariaLabel="Research decision path"
->
-  {#snippet artifact(scene: PerformanceNarrativeScene, index: number)}
-    {#if featuredExperiments.slice(index * 2, index * 2 + 2).length > 0}
-      <PapersGrid
-        papers={featuredExperiments.slice(index * 2, index * 2 + 2)}
-        title={`${scene.label}: Featured Work`}
-        subtitle="Experiments, field notes, and patterns that support this decision."
-      />
-    {/if}
-  {/snippet}
-</PerformanceNarrativeStage>
+  <section class="research-method" aria-labelledby="method-title">
+    <div class="research-section-heading">
+      <div>
+        <p class="research-eyebrow">Research decision path</p>
+        <h2 id="method-title">A claim earns its route through evidence.</h2>
+      </div>
+      <a href="/methodology">Read the methodology <span aria-hidden="true">→</span></a>
+    </div>
+    <p>
+      The research layer collects the operator question, the working method, and the artifact trail
+      before a pattern is allowed into delivery or policy.
+    </p>
+    <div class="research-decisions">
+      {#each decisionStates as decision, index}
+        <article>
+          <p class="research-eyebrow">0{index + 1} / {decision.label} · {decision.summary}</p>
+          <h3>{decision.title}</h3>
+          <p>{decision.detail}</p>
+          <ul>
+            {#each decision.evidence ?? [] as item}<li>{item}</li>{/each}
+          </ul>
+          <p class="research-receipts">{decision.receipts?.join(' / ')}</p>
+          <div class="research-actions">
+            {#each decision.actions ?? [] as action}<a href={action.href}
+                >{action.label} <span aria-hidden="true">→</span></a
+              >{/each}
+          </div>
+        </article>
+      {/each}
+    </div>
+  </section>
 
-{#if meridianResearchCards.length > 0}
-  <MeridianCardGrid
-    eyebrow="Research index"
-    title="Recent artifacts, given a clear reading path."
-    description="The editorial card treatment gives each paper its category, context, and destination without turning the archive into a generic blog."
-    cards={meridianResearchCards}
-    ariaLabel="Featured research artifacts"
+  <PropertyFunnel
+    current="io"
+    heading="Move the evidence into its next operating surface."
+    description=".io does the reading so the rest of CREATE SOMETHING can move faster. Start with the methodology, inspect the papers and graph, use .space for runtime validation, .learn for guided practice, .ltd for the thesis, and .agency when a named workflow is ready to map."
+    density="compact"
+    handoff={{
+      owner: 'Research operator',
+      authority: 'Evidence before promotion',
+      proof: 'Paper + graph + method',
+      state: 'ready'
+    }}
   />
-{/if}
-
-<PropertyFunnel
-  current="io"
-  heading="Move the evidence into its next operating surface."
-  description=".io does the reading so the rest of CREATE SOMETHING can move faster. Start with the methodology, inspect the papers and graph, use .space for runtime validation, .learn for guided practice, .ltd for the thesis, and .agency when a named workflow is ready to map."
-  density="compact"
-  handoff={{
-    owner: 'Research operator',
-    authority: 'Evidence before promotion',
-    proof: 'Paper + graph + method',
-    state: 'ready'
-  }}
-/>
-
 </div>
