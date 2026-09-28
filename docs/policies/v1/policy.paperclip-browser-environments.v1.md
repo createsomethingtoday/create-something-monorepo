@@ -1,10 +1,14 @@
-# Paperclip browser environments v1
+# policy.paperclip-browser-environments.v1
+
+## Purpose
 
 Status: **draft**. Owning scope: Linear [CRE-2150](https://linear.app/createsomething/issue/CRE-2150/scope-paperclip-browser-environments-by-agent-role); create-something Paperclip [CRE-109](https://paperclip.createsomething.agency/CRE/issues/CRE-109). The companion JSON is a declarative configuration artifact, not a loaded Paperclip authorization module. No role-level OS denial is claimed.
 
 This policy serves Judgment. The separately owned unsigned broker supplies Automation; receipts and task bindings supply Database evidence. The client-agent-pilot instance is excluded.
 
-## Role matrix
+## Policy Statements
+
+### Role matrix
 
 Assignment alone grants no browser or credential access. Every temporary grant needs an instance, task, named owner, target, allowed actions, expiry, and evidence location.
 
@@ -18,7 +22,9 @@ Assignment alone grants no browser or credential access. Every temporary grant n
 
 These are required grants/denials, not proof that the host enforces them. Named operator assignment readback identifies **Browser Environment QA Operator**, agent `3eb0a714-9796-4130-9fea-f58d556868b4`, on create-something [CRE-124](https://paperclip.createsomething.agency/CRE/issues/CRE-124), the bounded read-only Ego operator preflight. [CRE-110](https://paperclip.createsomething.agency/CRE/issues/CRE-110) is the broader browser QA issue and remains blocked. The coordinator reports that the CRE-124 agent run failed bootstrap and host TaskSpace proof is partial; neither establishes agent-runtime lifecycle acceptance. This does not authorize the engineer to use that space, sign in, or visit private sites. Before execution the operator must obtain an exclusive lease, record ownership, create one TaskSpace, retain its ID and receipt, and finish/handoff and release the lease. Lease enforcement and lifecycle verification remain pending independent QA; prose serialization is insufficient.
 
-## Recorded effective access and historical v2 probe
+## Evidence
+
+### Recorded effective access and historical v2 probe
 
 Readback on 2026-09-28 confirmed CRE-109 belongs to Browser Environment Engineer `d80267b5-6c6d-45b8-9357-441fda5614ac`. Its adapter is `codex_local`, cwd is `/private/tmp/cre-2150-browser-environments`, and `dangerouslyBypassApprovalsAndSandbox` is false. The issue has no `executionPolicy` or `executionWorkspaceId`. No agent-wide settings were changed.
 
@@ -59,3 +65,10 @@ A shared macOS UID, PATH omission, separate cwd, fresh browser profile, this JSO
 A nonbrowser-role verifier must observe actual OS/runtime denial of the absolute executable, sensitive storage and control endpoints from the effective assigned runtime, without disclosing private data. Named-operator access is separately tested under its lease. Until both verifiers and independent review pass, this policy remains draft; do not label it installed, role-isolated, production-ready, or accepted. Do not self-approve, deploy, widen credentials, purchase resources, or mutate client-agent-pilot.
 
 Rollback: discard this draft configuration or revert its commit. Coordinator stops the task broker and verifies its cleanup. No persistent role configuration or service was installed by this policy change.
+
+## Source Anchors
+
+- [Repository agent workflow](../../../AGENTS.md)
+- [Paperclip instance operating model](../../guides/PAPERCLIP_INSTANCE_OPERATING_MODEL.md)
+- [Unsigned browser broker runbook](../../guides/UNSIGNED_BROWSER_BROKER.md)
+- [Owning Linear issue](https://linear.app/createsomething/issue/CRE-2150/scope-paperclip-browser-environments-by-agent-role)
