@@ -215,6 +215,152 @@
     };
   }
 
+  // src/style-metadata.ts
+  var STYLE_TYPES = /* @__PURE__ */ new Set(["global", "combo", "tag", "element", "descendant"]);
+  var BREAKPOINT_PROPERTY_WHITELIST = ["width", "min-width", "font-size"];
+  function safeRead(read) {
+    try {
+      return read();
+    } catch {
+      return void 0;
+    }
+  }
+  function readStyleMetadata(style) {
+    if (!style || typeof style !== "object") return { type: null, source: null };
+    const target = style;
+    let type = safeRead(() => target.type);
+    if (typeof type !== "string" && typeof target.getType === "function") {
+      type = safeRead(() => target.getType());
+    }
+    let source = safeRead(() => target.source);
+    if (typeof source !== "string" && typeof target.isFromLibrary === "function") {
+      const fromLibrary = safeRead(() => target.isFromLibrary());
+      if (typeof fromLibrary === "boolean") source = fromLibrary ? "library" : "site";
+    }
+    return {
+      type: typeof type === "string" && STYLE_TYPES.has(type) ? type : null,
+      source: source === "site" || source === "library" ? source : null
+    };
+  }
+  function isTagStyle(meta, name) {
+    if (meta.type !== null) return meta.type === "tag";
+    return isHtmlTagStyleName(name);
+  }
+  function toPayloadStyleType(meta) {
+    return meta.type ?? "class";
+  }
+  function shouldReadBreakpoints(meta) {
+    return meta.type === null || meta.type === "global" || meta.type === "combo";
+  }
+  async function readMediaQueries(webflow) {
+    const api = webflow;
+    if (!api || typeof api.getAllMediaQueries !== "function") return [];
+    try {
+      const result = await api.getAllMediaQueries();
+      if (!Array.isArray(result)) return [];
+      return result.filter((mq) => !!mq && typeof mq === "object" && typeof mq.id === "string").map((mq) => ({
+        id: mq.id,
+        name: typeof mq.name === "string" ? mq.name : String(mq.id),
+        minWidth: typeof mq.minWidth === "number" ? mq.minWidth : null,
+        maxWidth: typeof mq.maxWidth === "number" ? mq.maxWidth : null,
+        isBase: mq.isBase === true
+      }));
+    } catch {
+      return [];
+    }
+  }
+  async function readBreakpointProperties(style, mediaQueries) {
+    const target = style;
+    if (!target || typeof target.getProperties !== "function") return void 0;
+    const bounded = mediaQueries.filter((mq) => !mq.isBase && mq.maxWidth !== null);
+    if (bounded.length === 0) return void 0;
+    const entries = await Promise.all(
+      bounded.map(async (mq) => {
+        try {
+          const props = await target.getProperties({ breakpoint: mq.id });
+          if (!props || typeof props !== "object") return null;
+          const kept = {};
+          for (const key of BREAKPOINT_PROPERTY_WHITELIST) {
+            const value = props[key];
+            if (typeof value === "string" || typeof value === "number") kept[key] = String(value);
+          }
+          return Object.keys(kept).length > 0 ? [mq.id, kept] : null;
+        } catch {
+          return null;
+        }
+      })
+    );
+    const result = {};
+    for (const entry of entries) {
+      if (entry) result[entry[0]] = entry[1];
+    }
+    return Object.keys(result).length > 0 ? result : void 0;
+  }
+
+  // src/component-metadata.ts
+  function readField(source, key) {
+    if (!source || typeof source !== "object") return void 0;
+    try {
+      return source[key];
+    } catch {
+      return void 0;
+    }
+  }
+  function asBoolean(value) {
+    return typeof value === "boolean" ? value : null;
+  }
+  function asString(value) {
+    return typeof value === "string" ? value : null;
+  }
+  function readComponentMetadata(component) {
+    const library = readField(component, "library");
+    let libraryMetadata = null;
+    if (library && typeof library === "object") {
+      libraryMetadata = {
+        id: asString(readField(library, "id")),
+        name: asString(readField(library, "name"))
+      };
+    }
+    return {
+      readOnly: asBoolean(readField(component, "readOnly")),
+      codeComponent: asBoolean(readField(component, "codeComponent")),
+      library: libraryMetadata
+    };
+  }
+  async function componentContainsComponentInstance(component, maxDepth = 4) {
+    if (readComponentMetadata(component).readOnly === true) return false;
+    const root = await component.getRootElement();
+    if (!root) return false;
+    let frontier = [root];
+    for (let depth = 0; depth < maxDepth && frontier.length > 0; depth++) {
+      const next = [];
+      for (const element of frontier) {
+        if (element.type === "ComponentInstance") return true;
+        if ("children" in element && element.children && typeof element.getChildren === "function") {
+          next.push(...await element.getChildren());
+        }
+      }
+      frontier = next;
+    }
+    return false;
+  }
+
+  // src/variable-mode-metadata.ts
+  var UNAVAILABLE = { available: false, breakpointId: null };
+  async function readVariableModeBreakpoint(mode) {
+    if (!mode || typeof mode !== "object") return UNAVAILABLE;
+    try {
+      const getBreakpoint = mode.getBreakpoint;
+      if (typeof getBreakpoint !== "function") return UNAVAILABLE;
+      const breakpoint = await getBreakpoint.call(mode);
+      if (breakpoint === null) return { available: true, breakpointId: null };
+      if (typeof breakpoint === "string" && breakpoint !== "") return { available: true, breakpointId: breakpoint };
+      return UNAVAILABLE;
+    } catch {
+      return UNAVAILABLE;
+    }
+  }
+
   // src/index.ts
   var WORKER_API_BASE = "https://validation-worker.createsomething.workers.dev";
   var APP_VALIDATOR_BASE = "https://validation-worker.createsomething.workers.dev";
@@ -1566,22 +1712,6 @@
       return unavailable(error instanceof Error ? error.message : "Canvas analysis failed");
     }
   }
-  async function componentContainsComponentInstance(component, maxDepth = 4) {
-    const root = await component.getRootElement();
-    if (!root) return false;
-    let frontier = [root];
-    for (let depth = 0; depth < maxDepth && frontier.length > 0; depth++) {
-      const next = [];
-      for (const element of frontier) {
-        if (element.type === "ComponentInstance") return true;
-        if ("children" in element && element.children) {
-          next.push(...await element.getChildren());
-        }
-      }
-      frontier = next;
-    }
-    return false;
-  }
   async function collectProjectData(webflow) {
     const data = {
       variables: void 0,
@@ -1698,10 +1828,15 @@
                 for (const mode of modes) {
                   try {
                     const modeName = await mode.getName() || mode.id || "Unnamed Mode";
-                    modeList.push({
+                    const modeEntry = {
                       id: String(mode.id),
                       name: String(modeName)
-                    });
+                    };
+                    const breakpoint = await readVariableModeBreakpoint(mode);
+                    if (breakpoint.available) {
+                      modeEntry.breakpointId = breakpoint.breakpointId;
+                    }
+                    modeList.push(modeEntry);
                   } catch (modeError) {
                     console.warn("Error processing variable mode:", modeError);
                   }
@@ -1760,6 +1895,7 @@
               const lowerName = name.toLowerCase();
               let instances = 0;
               let isNested = false;
+              const metadata = readComponentMetadata(component);
               if (lowerName.includes("nav") || lowerName.includes("header") || lowerName.includes("menu")) {
                 data.enhancedValidation.componentArchitecture.hasNavbarComponent = true;
               }
@@ -1785,7 +1921,10 @@
                 name,
                 type: "component",
                 instances,
-                isNested
+                isNested,
+                readOnly: metadata.readOnly,
+                codeComponent: metadata.codeComponent,
+                library: metadata.library
               });
             }
           } catch (compError) {
@@ -1808,21 +1947,27 @@
       if (webflow.getAllStyles) {
         const styles = await webflow.getAllStyles() || [];
         const styleData = [];
+        const mediaQueries = await readMediaQueries(webflow);
+        if (mediaQueries.length > 0) {
+          data.mediaQueries = mediaQueries;
+        }
         for (const style of styles) {
           try {
             const name = await style.getName() || null;
             const id = style.id;
-            const styleType = "class";
+            const meta = readStyleMetadata(style);
+            const styleType = toPayloadStyleType(meta);
             if (name && !name.startsWith("_")) {
               let properties = {};
               let isHtmlTag = false;
               let hasVariables = false;
-              if (isHtmlTagStyleName(name)) {
+              let breakpointProperties;
+              if (isTagStyle(meta, name)) {
                 isHtmlTag = true;
                 data.enhancedValidation.styleSystem.hasHtmlTagStyles = true;
               }
               try {
-                if (style.getProperties) {
+                if (style.getProperties && meta.type !== "element") {
                   properties = await style.getProperties() || {};
                   Object.values(properties).forEach((value) => {
                     if (typeof value === "object" && value !== null && (value.type === "variable" || value.id)) {
@@ -1840,13 +1985,18 @@
               } catch (propertyError) {
                 console.warn("Error getting style properties:", propertyError);
               }
+              if (mediaQueries.length > 0 && shouldReadBreakpoints(meta)) {
+                breakpointProperties = await readBreakpointProperties(style, mediaQueries);
+              }
               styleData.push({
                 id,
                 name,
                 type: styleType,
                 properties,
                 isHtmlTag,
-                hasVariables
+                hasVariables,
+                ...meta.source ? { source: meta.source } : {},
+                ...breakpointProperties ? { breakpointProperties } : {}
               });
             }
           } catch (styleError) {
@@ -3744,7 +3894,12 @@
       case "Variable Modes":
         addMetadataStat(details, "Modes", stats.totalModes);
         addMetadataStat(details, "Collections with modes", stats.collectionsWithModes);
-        if (stats.responsiveModeNamesDetected !== void 0) {
+        if (stats.responsiveModeSource === "breakpoint") {
+          addMetadataStat(details, "Breakpoint modes", formatBooleanStat(stats.hasResponsiveModes), { tone: booleanTone(stats.hasResponsiveModes) });
+          if (Array.isArray(stats.breakpointBoundModeNames) && stats.breakpointBoundModeNames.length > 0) {
+            addMetadataStat(details, "Breakpoint-bound", stats.breakpointBoundModeNames.slice(0, 5).join(", "));
+          }
+        } else if (stats.responsiveModeNamesDetected !== void 0) {
           addMetadataStat(details, "Responsive names", formatBooleanStat(stats.responsiveModeNamesDetected), { tone: booleanTone(stats.responsiveModeNamesDetected) });
         } else if (stats.hasResponsiveModes !== void 0) {
           addMetadataStat(details, "Responsive names", formatBooleanStat(stats.hasResponsiveModes), { tone: booleanTone(stats.hasResponsiveModes) });
@@ -3760,6 +3915,8 @@
         addMetadataStat(details, "Navigation", stats.navComponents);
         addMetadataStat(details, "Footer", stats.footerComponents);
         addMetadataStat(details, "CTA", stats.ctaComponents);
+        addMetadataStat(details, "Code components", stats.codeComponents);
+        addMetadataStat(details, "Library components", stats.libraryComponents);
         break;
       case "Styles":
         addMetadataStat(details, "Classes", stats.totalClasses);
