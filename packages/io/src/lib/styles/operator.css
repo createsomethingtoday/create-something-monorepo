@@ -449,4 +449,55 @@
   transform: none;
 }
 /* The browser scrollbar belongs to the currently displayed public surface. */
-html:has(.io-research-shell[data-canon-palette='operator']) { color-scheme: dark; }
+html:has(.io-research-shell[data-canon-palette='operator']) {
+  color-scheme: dark;
+}
+/* The public handoff is an action, not a second campaign opening. */
+.layout-root.io-research-shell[data-canon-palette='operator'] .meridian-offer-panel {
+  padding: 24px;
+  background: var(--color-operator-background);
+}
+.layout-root.io-research-shell[data-canon-palette='operator'] .meridian-offer-panel__inner {
+  display: block;
+  min-height: auto;
+  max-width: 1120px;
+  border: 1px solid var(--color-operator-border);
+  background: var(--color-operator-panel);
+}
+.layout-root.io-research-shell[data-canon-palette='operator'] .meridian-offer-panel__visual {
+  display: none;
+}
+.layout-root.io-research-shell[data-canon-palette='operator'] .meridian-offer-panel__content {
+  padding: 24px;
+  gap: 20px;
+}
+.layout-root.io-research-shell[data-canon-palette='operator'] .meridian-offer-panel__copy {
+  gap: 12px;
+}
+.layout-root.io-research-shell[data-canon-palette='operator'] .meridian-offer-panel h2 {
+  max-width: 40ch;
+}
+.layout-root.io-research-shell[data-canon-palette='operator'] .meridian-offer-panel__description {
+  font-size: 1rem;
+  color: var(--color-operator-muted);
+}
+.layout-root.io-research-shell[data-canon-palette='operator'] .meridian-offer-panel__action {
+  color: var(--color-operator-foreground);
+  background: var(--color-operator-secondary);
+  border-color: var(--color-operator-input-border);
+}
+.layout-root.io-research-shell[data-canon-palette='operator'] .meridian-offer-panel__action:hover {
+  background: var(--color-operator-hover);
+}
+.layout-root.io-research-shell[data-canon-palette='operator'] .meridian-offer-panel__action-icon {
+  background: transparent;
+  border-color: var(--color-operator-input-border);
+}
+/* Use the dark native scrollbar instead of the global editorial scrollbar. */
+html:has(.io-research-shell[data-canon-palette='operator'])::-webkit-scrollbar,
+html:has(.io-research-shell[data-canon-palette='operator'])::-webkit-scrollbar-track {
+  background-color: Canvas;
+}
+html:has(.io-research-shell[data-canon-palette='operator'])::-webkit-scrollbar-thumb {
+  background-color: GrayText;
+}
