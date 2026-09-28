@@ -2,11 +2,11 @@
   "id": "substrate:create-something:topology-diagnostics:internal",
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
-  "generatedAt": "2026-09-28T14:05:50.951Z",
+  "generatedAt": "2026-09-28T14:19:26.887Z",
   "summary": {
     "valueState": "connected_map_with_review_signals",
     "nodes": 539,
-    "edges": 1123,
+    "edges": 1115,
     "mapped": 539,
     "hardGapCount": 0,
     "reviewSignalCount": 6,

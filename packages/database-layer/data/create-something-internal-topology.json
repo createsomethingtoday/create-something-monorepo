@@ -4,7 +4,7 @@
   "atlasCanvasId": "create-something-internal-operating-topology",
   "rootNodeId": "substrate:create-something:root",
   "coverage": {
-    "generatedAt": "2026-09-28T14:05:50.951Z",
+    "generatedAt": "2026-09-28T14:19:26.887Z",
     "rootPath": ".",
     "packageCount": 237,
     "appCount": 12,
@@ -16782,13 +16782,6 @@
       "evidence": "docs/guides/CLIENT_AGENT_CODEX_PILOT.md documents config/dify-agents/aaron-hub.json through matching topology terms."
     },
     {
-      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-cloudflare-bot-access-hardening-md-documents-substrate-create-something-package-create-something-substrate-mcp-packages-substrate-mcp",
-      "source": "substrate:create-something:guide:docs-guides-cloudflare-bot-access-hardening-md",
-      "target": "substrate:create-something:package:create-something-substrate-mcp-packages-substrate-mcp",
-      "relation": "documents",
-      "evidence": "docs/guides/CLOUDFLARE_BOT_ACCESS_HARDENING.md documents packages/substrate-mcp through matching topology terms."
-    },
-    {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-codex-presence-even-g2-md-documents-substrate-create-something-app-create-something-even-codex-presence-apps-even-codex-presence",
       "source": "substrate:create-something:guide:docs-guides-codex-presence-even-g2-md",
       "target": "substrate:create-something:app:create-something-even-codex-presence-apps-even-codex-presence",
@@ -16866,13 +16859,6 @@
       "evidence": "docs/guides/DIFY_YOUTUBE_TRANSCRIPT_NOTION_AGENT.md documents config/dify-agents/youtube-transcript-notion-agent.json through matching topology terms."
     },
     {
-      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-effect-integration-engineering-md-documents-substrate-create-something-package-create-something-substrate-mcp-packages-substrate-mcp",
-      "source": "substrate:create-something:guide:docs-guides-effect-integration-engineering-md",
-      "target": "substrate:create-something:package:create-something-substrate-mcp-packages-substrate-mcp",
-      "relation": "documents",
-      "evidence": "docs/guides/EFFECT_INTEGRATION_ENGINEERING.md documents packages/substrate-mcp through the stable guide platform anchor."
-    },
-    {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-examples-md-documents-substrate-create-something-package-create-something-interaction-atlas-mcp-packages-interaction-atlas-mcp",
       "source": "substrate:create-something:guide:docs-guides-examples-md",
       "target": "substrate:create-something:package:create-something-interaction-atlas-mcp-packages-interaction-atlas-mcp",
@@ -16885,13 +16871,6 @@
       "target": "substrate:create-something:package:create-something-mcp-authz-packages-mcp-authz",
       "relation": "documents",
       "evidence": "docs/guides/FIRST_PARTY_AUTH_PLATFORM.md documents packages/mcp-authz through matching topology terms."
-    },
-    {
-      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-g2-cloudflare-codex-access-md-documents-substrate-create-something-package-create-something-substrate-mcp-packages-substrate-mcp",
-      "source": "substrate:create-something:guide:docs-guides-g2-cloudflare-codex-access-md",
-      "target": "substrate:create-something:package:create-something-substrate-mcp-packages-substrate-mcp",
-      "relation": "documents",
-      "evidence": "docs/guides/G2_CLOUDFLARE_CODEX_ACCESS.md documents packages/substrate-mcp through matching topology terms."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-git-light-agent-delivery-workflow-md-documents-substrate-create-something-agent-config-config-dify-agents-aaron-hub-json",
@@ -16927,13 +16906,6 @@
       "target": "substrate:create-something:package:create-something-interaction-atlas-mcp-packages-interaction-atlas-mcp",
       "relation": "documents",
       "evidence": "docs/guides/GROUND_SEEDED_TRIAL.md documents packages/interaction-atlas-mcp through the stable guide platform anchor."
-    },
-    {
-      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-harness-ablation-loop-md-documents-substrate-create-something-package-create-something-substrate-mcp-packages-substrate-mcp",
-      "source": "substrate:create-something:guide:docs-guides-harness-ablation-loop-md",
-      "target": "substrate:create-something:package:create-something-substrate-mcp-packages-substrate-mcp",
-      "relation": "documents",
-      "evidence": "docs/guides/HARNESS_ABLATION_LOOP.md documents packages/substrate-mcp through the stable guide platform anchor."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-hydra-db-governed-recall-md-documents-substrate-create-something-package-create-something-hydra-db-recall-mcp-packages-hydra-db-recall-mcp",
@@ -16999,13 +16971,6 @@
       "evidence": "docs/guides/MCP_REGISTRY_WORKFLOW.md documents packages/composio-toolkit-mcp through matching topology terms."
     },
     {
-      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-migration-guide-md-documents-substrate-create-something-package-create-something-substrate-mcp-packages-substrate-mcp",
-      "source": "substrate:create-something:guide:docs-guides-migration-guide-md",
-      "target": "substrate:create-something:package:create-something-substrate-mcp-packages-substrate-mcp",
-      "relation": "documents",
-      "evidence": "docs/guides/MIGRATION_GUIDE.md documents packages/substrate-mcp through the stable guide platform anchor."
-    },
-    {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-monorepo-delivery-updates-md-documents-substrate-create-something-package-create-something-interaction-atlas-mcp-packages-interaction-atlas-mcp",
       "source": "substrate:create-something:guide:docs-guides-monorepo-delivery-updates-md",
       "target": "substrate:create-something:package:create-something-interaction-atlas-mcp-packages-interaction-atlas-mcp",
@@ -17018,13 +16983,6 @@
       "target": "substrate:create-something:package:create-something-arc-packages-arc",
       "relation": "documents",
       "evidence": "docs/guides/NEWSLETTER_ENGAGEMENT_RUNBOOK.md documents packages/arc through matching topology terms."
-    },
-    {
-      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-notion-api-compatibility-audit-2026-md-documents-substrate-create-something-package-create-something-substrate-mcp-packages-substrate-mcp",
-      "source": "substrate:create-something:guide:docs-guides-notion-api-compatibility-audit-2026-md",
-      "target": "substrate:create-something:package:create-something-substrate-mcp-packages-substrate-mcp",
-      "relation": "documents",
-      "evidence": "docs/guides/NOTION_API_COMPATIBILITY_AUDIT_2026.md documents packages/substrate-mcp through matching topology terms."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-notion-workers-and-cli-2026-md-documents-substrate-create-something-agent-config-config-dify-agents-youtube-transcript-notion-agent-json",
@@ -17088,20 +17046,6 @@
       "target": "substrate:create-something:agent-config:config-dify-agents-aaron-hub-json",
       "relation": "documents",
       "evidence": "docs/guides/PACKAGE_SOURCE_ARCHIVE_WORKFLOW.md documents config/dify-agents/aaron-hub.json through matching topology terms."
-    },
-    {
-      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-paperclip-autonomous-delivery-md-documents-substrate-create-something-package-create-something-substrate-mcp-packages-substrate-mcp",
-      "source": "substrate:create-something:guide:docs-guides-paperclip-autonomous-delivery-md",
-      "target": "substrate:create-something:package:create-something-substrate-mcp-packages-substrate-mcp",
-      "relation": "documents",
-      "evidence": "docs/guides/PAPERCLIP_AUTONOMOUS_DELIVERY.md documents packages/substrate-mcp through the stable guide platform anchor."
-    },
-    {
-      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-paperclip-instance-operating-model-md-documents-substrate-create-something-package-create-something-substrate-mcp-packages-substrate-mcp",
-      "source": "substrate:create-something:guide:docs-guides-paperclip-instance-operating-model-md",
-      "target": "substrate:create-something:package:create-something-substrate-mcp-packages-substrate-mcp",
-      "relation": "documents",
-      "evidence": "docs/guides/PAPERCLIP_INSTANCE_OPERATING_MODEL.md documents packages/substrate-mcp through matching topology terms."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-playbook-library-research-2026-02-18-md-documents-substrate-create-something-package-create-something-arc-packages-arc",

@@ -2,7 +2,7 @@
   "version": 1,
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
-  "generatedAt": "2026-09-28T14:05:50.951Z",
+  "generatedAt": "2026-09-28T14:19:26.887Z",
   "rendererBudget": {
     "initialUsableMs": 500,
     "interactionMs": 50,
@@ -11,7 +11,7 @@
   },
   "counts": {
     "nodes": 539,
-    "edges": 1123,
+    "edges": 1115,
     "clusters": 21,
     "businessGroups": 10,
     "apiAiGroups": 9
@@ -304,14 +304,14 @@
     }
   },
   "insights": {
-    "generatedAt": "2026-09-28T14:05:50.951Z",
+    "generatedAt": "2026-09-28T14:19:26.887Z",
     "relationCounts": {
       "contains": 538,
       "depends_on": 164,
       "runs": 123,
       "client_overlay": 8,
       "governs": 128,
-      "documents": 161,
+      "documents": 153,
       "renders": 1
     },
     "surfaceCounts": {
@@ -359,7 +359,7 @@
         "id": "contains-edges-dominate-raw-topology",
         "severity": "caveat",
         "title": "Raw topology is still dominated by containment edges.",
-        "evidence": "538 of 1123 edges are contains edges (47.9%).",
+        "evidence": "538 of 1115 edges are contains edges (48.3%).",
         "implication": "Operational and structural edge modes are necessary for reading business implications; raw edge count overstates root/substrate centrality."
       }
     ],
@@ -391,7 +391,7 @@
       {
         "id": "semantic-edge-weighting",
         "title": "Separate containment proof from semantic dependency proof.",
-        "evidence": "Contains edges represent 47.9% of the graph, so generated insights now compute top structural pairs and cross-group coupling with contains edges excluded.",
+        "evidence": "Contains edges represent 48.3% of the graph, so generated insights now compute top structural pairs and cross-group coupling with contains edges excluded.",
         "completedBy": "Added generated lens insights with structural cross edges, structural pairs, observations, improvement candidates, and topology3d_insights_read."
       },
       {
@@ -727,17 +727,17 @@
             "knowledgeCount": 3,
             "knowledgePct": 4.3,
             "internalEdges": 23,
-            "crossEdges": 107,
-            "structuralCrossEdges": 38,
+            "crossEdges": 105,
+            "structuralCrossEdges": 36,
             "inboundStructuralEdges": 16,
-            "outboundStructuralEdges": 22,
+            "outboundStructuralEdges": 20,
             "relationCounts": {
               "contains": 69,
               "runs": 34,
               "depends_on": 19,
-              "documents": 8
+              "documents": 6
             },
-            "structuralCrossEdgesPerNode": 0.55,
+            "structuralCrossEdgesPerNode": 0.52,
             "classificationEvidence": {
               "dominantSurfaces": [
                 {
@@ -795,11 +795,11 @@
                   "status": "mapped"
                 },
                 {
-                  "id": "substrate:create-something:guide:docs-guides-cloudflare-bot-access-hardening-md",
-                  "label": "CLOUDFLARE_BOT_ACCESS_HARDENING.md",
-                  "path": "docs/guides/CLOUDFLARE_BOT_ACCESS_HARDENING.md",
-                  "tier": "Mixed",
-                  "surface": "guide",
+                  "id": "substrate:create-something:worker:packages-half-dozen-youtube-sync-worker-wrangler-toml",
+                  "label": "half-dozen-youtube-sync worker",
+                  "path": "packages/half-dozen-youtube-sync/worker/wrangler.toml",
+                  "tier": "Automation",
+                  "surface": "worker",
                   "status": "mapped"
                 }
               ]
@@ -821,17 +821,17 @@
             "knowledgeCount": 40,
             "knowledgePct": 63.5,
             "internalEdges": 4,
-            "crossEdges": 158,
-            "structuralCrossEdges": 95,
+            "crossEdges": 153,
+            "structuralCrossEdges": 90,
             "inboundStructuralEdges": 11,
-            "outboundStructuralEdges": 84,
+            "outboundStructuralEdges": 79,
             "relationCounts": {
               "contains": 63,
               "depends_on": 21,
               "runs": 1,
-              "documents": 77
+              "documents": 72
             },
-            "structuralCrossEdgesPerNode": 1.51,
+            "structuralCrossEdgesPerNode": 1.43,
             "classificationEvidence": {
               "dominantSurfaces": [
                 {
@@ -916,17 +916,17 @@
             "knowledgeCount": 19,
             "knowledgePct": 41.3,
             "internalEdges": 7,
-            "crossEdges": 90,
-            "structuralCrossEdges": 44,
+            "crossEdges": 89,
+            "structuralCrossEdges": 43,
             "inboundStructuralEdges": 3,
-            "outboundStructuralEdges": 41,
+            "outboundStructuralEdges": 40,
             "relationCounts": {
               "contains": 46,
               "runs": 6,
               "depends_on": 6,
-              "documents": 39
+              "documents": 38
             },
-            "structuralCrossEdgesPerNode": 0.96,
+            "structuralCrossEdgesPerNode": 0.93,
             "classificationEvidence": {
               "dominantSurfaces": [
                 {
@@ -1012,9 +1012,9 @@
             "knowledgeCount": 1,
             "knowledgePct": 6.3,
             "internalEdges": 29,
-            "crossEdges": 694,
-            "structuralCrossEdges": 171,
-            "inboundStructuralEdges": 158,
+            "crossEdges": 686,
+            "structuralCrossEdges": 163,
+            "inboundStructuralEdges": 150,
             "outboundStructuralEdges": 13,
             "relationCounts": {
               "contains": 538,
@@ -1022,10 +1022,10 @@
               "depends_on": 13,
               "runs": 7,
               "governs": 64,
-              "documents": 92,
+              "documents": 84,
               "renders": 1
             },
-            "structuralCrossEdgesPerNode": 10.69,
+            "structuralCrossEdgesPerNode": 10.19,
             "classificationEvidence": {
               "dominantSurfaces": [
                 {
@@ -1051,19 +1051,19 @@
                   "status": "mapped"
                 },
                 {
-                  "id": "substrate:create-something:package:create-something-substrate-mcp-packages-substrate-mcp",
-                  "label": "@create-something/substrate-mcp",
-                  "path": "packages/substrate-mcp",
-                  "tier": "Database",
-                  "surface": "mcp",
-                  "status": "mapped"
-                },
-                {
                   "id": "substrate:create-something:package:create-something-database-layer-packages-database-layer",
                   "label": "@create-something/database-layer",
                   "path": "packages/database-layer",
                   "tier": "Database",
                   "surface": "package",
+                  "status": "mapped"
+                },
+                {
+                  "id": "substrate:create-something:package:create-something-substrate-mcp-packages-substrate-mcp",
+                  "label": "@create-something/substrate-mcp",
+                  "path": "packages/substrate-mcp",
+                  "tier": "Database",
+                  "surface": "mcp",
                   "status": "mapped"
                 },
                 {
@@ -1326,9 +1326,9 @@
           {
             "a": "public-learning-surface",
             "b": "database-substrate",
-            "count": 47,
+            "count": 42,
             "relations": {
-              "documents": 47
+              "documents": 42
             },
             "aLabel": "Public / Learning Surface",
             "bLabel": "Database Substrate"
@@ -1371,9 +1371,9 @@
           {
             "a": "agent-automation",
             "b": "database-substrate",
-            "count": 20,
+            "count": 19,
             "relations": {
-              "documents": 20
+              "documents": 19
             },
             "aLabel": "Agent Automation",
             "bLabel": "Database Substrate"
@@ -1504,9 +1504,9 @@
           {
             "source": "public-learning-surface",
             "target": "database-substrate",
-            "count": 47,
+            "count": 42,
             "relations": {
-              "documents": 47
+              "documents": 42
             },
             "examples": [
               {
@@ -1664,9 +1664,9 @@
           {
             "source": "agent-automation",
             "target": "database-substrate",
-            "count": 20,
+            "count": 19,
             "relations": {
-              "documents": 20
+              "documents": 19
             },
             "examples": [
               {
@@ -2187,59 +2187,6 @@
             "targetLabel": "Policy / Judgment OS"
           },
           {
-            "source": "cloudflare-delivery-spine",
-            "target": "database-substrate",
-            "count": 7,
-            "relations": {
-              "depends_on": 2,
-              "documents": 5
-            },
-            "examples": [
-              {
-                "relation": "depends_on",
-                "sourceId": "substrate:create-something:package:create-something-agency-packages-agency",
-                "sourceLabel": "@create-something/agency",
-                "targetId": "substrate:create-something:package:create-something-canvas-kernel-packages-canvas-kernel",
-                "targetLabel": "@create-something/canvas-kernel",
-                "evidence": "@create-something/agency declares @create-something/canvas-kernel."
-              },
-              {
-                "relation": "depends_on",
-                "sourceId": "substrate:create-something:package:create-something-agency-packages-agency",
-                "sourceLabel": "@create-something/agency",
-                "targetId": "substrate:create-something:package:create-something-database-layer-packages-database-layer",
-                "targetLabel": "@create-something/database-layer",
-                "evidence": "@create-something/agency declares @create-something/database-layer."
-              },
-              {
-                "relation": "documents",
-                "sourceId": "substrate:create-something:guide:docs-guides-cloudflare-bot-access-hardening-md",
-                "sourceLabel": "CLOUDFLARE_BOT_ACCESS_HARDENING.md",
-                "targetId": "substrate:create-something:root",
-                "targetLabel": "CREATE SOMETHING operating topology",
-                "evidence": "docs/guides/CLOUDFLARE_BOT_ACCESS_HARDENING.md is an operating guide."
-              },
-              {
-                "relation": "documents",
-                "sourceId": "substrate:create-something:guide:docs-guides-g2-cloudflare-codex-access-md",
-                "sourceLabel": "G2_CLOUDFLARE_CODEX_ACCESS.md",
-                "targetId": "substrate:create-something:root",
-                "targetLabel": "CREATE SOMETHING operating topology",
-                "evidence": "docs/guides/G2_CLOUDFLARE_CODEX_ACCESS.md is an operating guide."
-              },
-              {
-                "relation": "documents",
-                "sourceId": "substrate:create-something:guide:docs-guides-notion-workers-and-cli-2026-md",
-                "sourceLabel": "NOTION_WORKERS_AND_CLI_2026.md",
-                "targetId": "substrate:create-something:root",
-                "targetLabel": "CREATE SOMETHING operating topology",
-                "evidence": "docs/guides/NOTION_WORKERS_AND_CLI_2026.md is an operating guide."
-              }
-            ],
-            "sourceLabel": "Cloudflare Delivery Spine",
-            "targetLabel": "Database Substrate"
-          },
-          {
             "source": "policy-judgment-os",
             "target": "public-learning-surface",
             "count": 6,
@@ -2290,6 +2237,59 @@
             ],
             "sourceLabel": "Policy / Judgment OS",
             "targetLabel": "Public / Learning Surface"
+          },
+          {
+            "source": "cloudflare-delivery-spine",
+            "target": "database-substrate",
+            "count": 5,
+            "relations": {
+              "depends_on": 2,
+              "documents": 3
+            },
+            "examples": [
+              {
+                "relation": "depends_on",
+                "sourceId": "substrate:create-something:package:create-something-agency-packages-agency",
+                "sourceLabel": "@create-something/agency",
+                "targetId": "substrate:create-something:package:create-something-canvas-kernel-packages-canvas-kernel",
+                "targetLabel": "@create-something/canvas-kernel",
+                "evidence": "@create-something/agency declares @create-something/canvas-kernel."
+              },
+              {
+                "relation": "depends_on",
+                "sourceId": "substrate:create-something:package:create-something-agency-packages-agency",
+                "sourceLabel": "@create-something/agency",
+                "targetId": "substrate:create-something:package:create-something-database-layer-packages-database-layer",
+                "targetLabel": "@create-something/database-layer",
+                "evidence": "@create-something/agency declares @create-something/database-layer."
+              },
+              {
+                "relation": "documents",
+                "sourceId": "substrate:create-something:guide:docs-guides-cloudflare-bot-access-hardening-md",
+                "sourceLabel": "CLOUDFLARE_BOT_ACCESS_HARDENING.md",
+                "targetId": "substrate:create-something:root",
+                "targetLabel": "CREATE SOMETHING operating topology",
+                "evidence": "docs/guides/CLOUDFLARE_BOT_ACCESS_HARDENING.md is an operating guide."
+              },
+              {
+                "relation": "documents",
+                "sourceId": "substrate:create-something:guide:docs-guides-g2-cloudflare-codex-access-md",
+                "sourceLabel": "G2_CLOUDFLARE_CODEX_ACCESS.md",
+                "targetId": "substrate:create-something:root",
+                "targetLabel": "CREATE SOMETHING operating topology",
+                "evidence": "docs/guides/G2_CLOUDFLARE_CODEX_ACCESS.md is an operating guide."
+              },
+              {
+                "relation": "documents",
+                "sourceId": "substrate:create-something:guide:docs-guides-notion-workers-and-cli-2026-md",
+                "sourceLabel": "NOTION_WORKERS_AND_CLI_2026.md",
+                "targetId": "substrate:create-something:root",
+                "targetLabel": "CREATE SOMETHING operating topology",
+                "evidence": "docs/guides/NOTION_WORKERS_AND_CLI_2026.md is an operating guide."
+              }
+            ],
+            "sourceLabel": "Cloudflare Delivery Spine",
+            "targetLabel": "Database Substrate"
           },
           {
             "source": "cloudflare-delivery-spine",
@@ -2517,17 +2517,17 @@
             "knowledgeCount": 4,
             "knowledgePct": 3.8,
             "internalEdges": 36,
-            "crossEdges": 153,
-            "structuralCrossEdges": 47,
+            "crossEdges": 150,
+            "structuralCrossEdges": 44,
             "inboundStructuralEdges": 20,
-            "outboundStructuralEdges": 27,
+            "outboundStructuralEdges": 24,
             "relationCounts": {
               "contains": 106,
               "depends_on": 22,
               "runs": 49,
-              "documents": 12
+              "documents": 9
             },
-            "structuralCrossEdgesPerNode": 0.44,
+            "structuralCrossEdgesPerNode": 0.42,
             "classificationEvidence": {
               "dominantSurfaces": [
                 {
@@ -2710,18 +2710,18 @@
             "knowledgeCount": 22,
             "knowledgePct": 35.5,
             "internalEdges": 13,
-            "crossEdges": 127,
-            "structuralCrossEdges": 65,
+            "crossEdges": 126,
+            "structuralCrossEdges": 64,
             "inboundStructuralEdges": 8,
-            "outboundStructuralEdges": 57,
+            "outboundStructuralEdges": 56,
             "relationCounts": {
               "contains": 62,
               "depends_on": 17,
               "runs": 8,
               "governs": 8,
-              "documents": 45
+              "documents": 44
             },
-            "structuralCrossEdgesPerNode": 1.05,
+            "structuralCrossEdgesPerNode": 1.03,
             "classificationEvidence": {
               "dominantSurfaces": [
                 {
@@ -2886,15 +2886,15 @@
             "knowledgeCount": 35,
             "knowledgePct": 100,
             "internalEdges": 0,
-            "crossEdges": 102,
-            "structuralCrossEdges": 67,
+            "crossEdges": 98,
+            "structuralCrossEdges": 63,
             "inboundStructuralEdges": 0,
-            "outboundStructuralEdges": 67,
+            "outboundStructuralEdges": 63,
             "relationCounts": {
               "contains": 35,
-              "documents": 67
+              "documents": 63
             },
-            "structuralCrossEdgesPerNode": 1.91,
+            "structuralCrossEdgesPerNode": 1.8,
             "classificationEvidence": {
               "dominantSurfaces": [
                 {
@@ -2976,9 +2976,9 @@
             "knowledgeCount": 1,
             "knowledgePct": 6.3,
             "internalEdges": 29,
-            "crossEdges": 696,
-            "structuralCrossEdges": 173,
-            "inboundStructuralEdges": 158,
+            "crossEdges": 688,
+            "structuralCrossEdges": 165,
+            "inboundStructuralEdges": 150,
             "outboundStructuralEdges": 15,
             "relationCounts": {
               "contains": 538,
@@ -2986,10 +2986,10 @@
               "depends_on": 15,
               "runs": 7,
               "governs": 64,
-              "documents": 92,
+              "documents": 84,
               "renders": 1
             },
-            "structuralCrossEdgesPerNode": 10.81,
+            "structuralCrossEdgesPerNode": 10.31,
             "classificationEvidence": {
               "dominantSurfaces": [
                 {
@@ -3015,19 +3015,19 @@
                   "status": "mapped"
                 },
                 {
-                  "id": "substrate:create-something:package:create-something-substrate-mcp-packages-substrate-mcp",
-                  "label": "@create-something/substrate-mcp",
-                  "path": "packages/substrate-mcp",
-                  "tier": "Database",
-                  "surface": "mcp",
-                  "status": "mapped"
-                },
-                {
                   "id": "substrate:create-something:package:create-something-database-layer-packages-database-layer",
                   "label": "@create-something/database-layer",
                   "path": "packages/database-layer",
                   "tier": "Database",
                   "surface": "package",
+                  "status": "mapped"
+                },
+                {
+                  "id": "substrate:create-something:package:create-something-substrate-mcp-packages-substrate-mcp",
+                  "label": "@create-something/substrate-mcp",
+                  "path": "packages/substrate-mcp",
+                  "tier": "Database",
+                  "surface": "mcp",
                   "status": "mapped"
                 },
                 {
@@ -3242,9 +3242,9 @@
           {
             "a": "knowledge-to-tools",
             "b": "api-readable-substrate",
-            "count": 41,
+            "count": 37,
             "relations": {
-              "documents": 41
+              "documents": 37
             },
             "aLabel": "Knowledge To Tools",
             "bLabel": "API-Readable Substrate"
@@ -3278,10 +3278,10 @@
           {
             "a": "ai-orchestration",
             "b": "api-readable-substrate",
-            "count": 27,
+            "count": 26,
             "relations": {
               "governs": 4,
-              "documents": 23
+              "documents": 22
             },
             "aLabel": "AI Orchestration",
             "bLabel": "API-Readable Substrate"
@@ -3352,14 +3352,14 @@
           },
           {
             "a": "runtime-api-delivery",
-            "b": "api-readable-substrate",
+            "b": "agent-callable-interfaces",
             "count": 9,
             "relations": {
-              "depends_on": 2,
-              "documents": 7
+              "depends_on": 6,
+              "runs": 3
             },
             "aLabel": "Runtime API Delivery",
-            "bLabel": "API-Readable Substrate"
+            "bLabel": "Agent-Callable Interfaces"
           }
         ],
         "directionalStructuralLinks": [
@@ -3419,9 +3419,9 @@
           {
             "source": "knowledge-to-tools",
             "target": "api-readable-substrate",
-            "count": 41,
+            "count": 37,
             "relations": {
-              "documents": 41
+              "documents": 37
             },
             "examples": [
               {
@@ -3471,10 +3471,10 @@
           {
             "source": "ai-orchestration",
             "target": "api-readable-substrate",
-            "count": 27,
+            "count": 26,
             "relations": {
               "governs": 4,
-              "documents": 23
+              "documents": 22
             },
             "examples": [
               {
@@ -3844,59 +3844,6 @@
             "targetLabel": "Runtime API Delivery"
           },
           {
-            "source": "runtime-api-delivery",
-            "target": "api-readable-substrate",
-            "count": 9,
-            "relations": {
-              "depends_on": 2,
-              "documents": 7
-            },
-            "examples": [
-              {
-                "relation": "depends_on",
-                "sourceId": "substrate:create-something:package:create-something-agency-packages-agency",
-                "sourceLabel": "@create-something/agency",
-                "targetId": "substrate:create-something:package:create-something-canvas-kernel-packages-canvas-kernel",
-                "targetLabel": "@create-something/canvas-kernel",
-                "evidence": "@create-something/agency declares @create-something/canvas-kernel."
-              },
-              {
-                "relation": "depends_on",
-                "sourceId": "substrate:create-something:package:create-something-agency-packages-agency",
-                "sourceLabel": "@create-something/agency",
-                "targetId": "substrate:create-something:package:create-something-database-layer-packages-database-layer",
-                "targetLabel": "@create-something/database-layer",
-                "evidence": "@create-something/agency declares @create-something/database-layer."
-              },
-              {
-                "relation": "documents",
-                "sourceId": "substrate:create-something:guide:docs-guides-cloudflare-bot-access-hardening-md",
-                "sourceLabel": "CLOUDFLARE_BOT_ACCESS_HARDENING.md",
-                "targetId": "substrate:create-something:root",
-                "targetLabel": "CREATE SOMETHING operating topology",
-                "evidence": "docs/guides/CLOUDFLARE_BOT_ACCESS_HARDENING.md is an operating guide."
-              },
-              {
-                "relation": "documents",
-                "sourceId": "substrate:create-something:guide:docs-guides-g2-cloudflare-codex-access-md",
-                "sourceLabel": "G2_CLOUDFLARE_CODEX_ACCESS.md",
-                "targetId": "substrate:create-something:root",
-                "targetLabel": "CREATE SOMETHING operating topology",
-                "evidence": "docs/guides/G2_CLOUDFLARE_CODEX_ACCESS.md is an operating guide."
-              },
-              {
-                "relation": "documents",
-                "sourceId": "substrate:create-something:guide:docs-guides-notion-api-compatibility-audit-2026-md",
-                "sourceLabel": "NOTION_API_COMPATIBILITY_AUDIT_2026.md",
-                "targetId": "substrate:create-something:root",
-                "targetLabel": "CREATE SOMETHING operating topology",
-                "evidence": "docs/guides/NOTION_API_COMPATIBILITY_AUDIT_2026.md is an operating guide."
-              }
-            ],
-            "sourceLabel": "Runtime API Delivery",
-            "targetLabel": "API-Readable Substrate"
-          },
-          {
             "source": "api-readable-substrate",
             "target": "client-api-overlays",
             "count": 8,
@@ -4050,6 +3997,59 @@
               }
             ],
             "sourceLabel": "Public AI Distribution",
+            "targetLabel": "API-Readable Substrate"
+          },
+          {
+            "source": "runtime-api-delivery",
+            "target": "api-readable-substrate",
+            "count": 6,
+            "relations": {
+              "depends_on": 2,
+              "documents": 4
+            },
+            "examples": [
+              {
+                "relation": "depends_on",
+                "sourceId": "substrate:create-something:package:create-something-agency-packages-agency",
+                "sourceLabel": "@create-something/agency",
+                "targetId": "substrate:create-something:package:create-something-canvas-kernel-packages-canvas-kernel",
+                "targetLabel": "@create-something/canvas-kernel",
+                "evidence": "@create-something/agency declares @create-something/canvas-kernel."
+              },
+              {
+                "relation": "depends_on",
+                "sourceId": "substrate:create-something:package:create-something-agency-packages-agency",
+                "sourceLabel": "@create-something/agency",
+                "targetId": "substrate:create-something:package:create-something-database-layer-packages-database-layer",
+                "targetLabel": "@create-something/database-layer",
+                "evidence": "@create-something/agency declares @create-something/database-layer."
+              },
+              {
+                "relation": "documents",
+                "sourceId": "substrate:create-something:guide:docs-guides-cloudflare-bot-access-hardening-md",
+                "sourceLabel": "CLOUDFLARE_BOT_ACCESS_HARDENING.md",
+                "targetId": "substrate:create-something:root",
+                "targetLabel": "CREATE SOMETHING operating topology",
+                "evidence": "docs/guides/CLOUDFLARE_BOT_ACCESS_HARDENING.md is an operating guide."
+              },
+              {
+                "relation": "documents",
+                "sourceId": "substrate:create-something:guide:docs-guides-g2-cloudflare-codex-access-md",
+                "sourceLabel": "G2_CLOUDFLARE_CODEX_ACCESS.md",
+                "targetId": "substrate:create-something:root",
+                "targetLabel": "CREATE SOMETHING operating topology",
+                "evidence": "docs/guides/G2_CLOUDFLARE_CODEX_ACCESS.md is an operating guide."
+              },
+              {
+                "relation": "documents",
+                "sourceId": "substrate:create-something:guide:docs-guides-notion-api-compatibility-audit-2026-md",
+                "sourceLabel": "NOTION_API_COMPATIBILITY_AUDIT_2026.md",
+                "targetId": "substrate:create-something:root",
+                "targetLabel": "CREATE SOMETHING operating topology",
+                "evidence": "docs/guides/NOTION_API_COMPATIBILITY_AUDIT_2026.md is an operating guide."
+              }
+            ],
+            "sourceLabel": "Runtime API Delivery",
             "targetLabel": "API-Readable Substrate"
           },
           {
@@ -19045,11 +19045,11 @@
       "status": "mapped",
       "owner": "CREATE SOMETHING <hello@createsomething.agency>",
       "clusterId": "automation:mcp",
-      "relationCount": 14,
+      "relationCount": 6,
       "x": -108,
       "y": 101,
       "z": -244,
-      "size": 12.745966692414834,
+      "size": 10.291502622129181,
       "color": "#06b6d4",
       "targetPath": "packages/substrate-mcp"
     },
@@ -27493,11 +27493,11 @@
       "status": "mapped",
       "owner": "CREATE SOMETHING",
       "clusterId": "knowledge:guide",
-      "relationCount": 3,
+      "relationCount": 2,
       "x": -407,
       "y": -159,
       "z": 40,
-      "size": 9,
+      "size": 8.464101615137753,
       "color": "#ef4444",
       "targetPath": "docs/guides/CLOUDFLARE_BOT_ACCESS_HARDENING.md"
     },
@@ -27889,11 +27889,11 @@
       "status": "mapped",
       "owner": "CREATE SOMETHING",
       "clusterId": "knowledge:guide",
-      "relationCount": 3,
+      "relationCount": 2,
       "x": -465,
       "y": -126,
       "z": 130,
-      "size": 9,
+      "size": 8.464101615137753,
       "color": "#ef4444",
       "targetPath": "docs/guides/EFFECT_INTEGRATION_ENGINEERING.md"
     },
@@ -27988,11 +27988,11 @@
       "status": "mapped",
       "owner": "CREATE SOMETHING",
       "clusterId": "knowledge:guide",
-      "relationCount": 3,
+      "relationCount": 2,
       "x": -480,
       "y": -138,
       "z": 58,
-      "size": 9,
+      "size": 8.464101615137753,
       "color": "#ef4444",
       "targetPath": "docs/guides/G2_CLOUDFLARE_CODEX_ACCESS.md"
     },
@@ -28186,11 +28186,11 @@
       "status": "mapped",
       "owner": "CREATE SOMETHING",
       "clusterId": "knowledge:guide",
-      "relationCount": 3,
+      "relationCount": 2,
       "x": -500,
       "y": -171,
       "z": 40,
-      "size": 9,
+      "size": 8.464101615137753,
       "color": "#ef4444",
       "targetPath": "docs/guides/HARNESS_ABLATION_LOOP.md"
     },
@@ -28516,11 +28516,11 @@
       "status": "mapped",
       "owner": "CREATE SOMETHING",
       "clusterId": "knowledge:guide",
-      "relationCount": 3,
+      "relationCount": 2,
       "x": -492,
       "y": -234,
       "z": 94,
-      "size": 9,
+      "size": 8.464101615137753,
       "color": "#ef4444",
       "targetPath": "docs/guides/MIGRATION_GUIDE.md"
     },
@@ -28615,11 +28615,11 @@
       "status": "mapped",
       "owner": "CREATE SOMETHING",
       "clusterId": "knowledge:guide",
-      "relationCount": 3,
+      "relationCount": 2,
       "x": -510,
       "y": -279,
       "z": 148,
-      "size": 9,
+      "size": 8.464101615137753,
       "color": "#ef4444",
       "targetPath": "docs/guides/NOTION_API_COMPATIBILITY_AUDIT_2026.md"
     },
@@ -28945,11 +28945,11 @@
       "status": "mapped",
       "owner": "CREATE SOMETHING",
       "clusterId": "knowledge:guide",
-      "relationCount": 3,
+      "relationCount": 2,
       "x": -421,
       "y": -316,
       "z": 76,
-      "size": 9,
+      "size": 8.464101615137753,
       "color": "#ef4444",
       "targetPath": "docs/guides/PAPERCLIP_AUTONOMOUS_DELIVERY.md"
     },
@@ -28978,11 +28978,11 @@
       "status": "mapped",
       "owner": "CREATE SOMETHING",
       "clusterId": "knowledge:guide",
-      "relationCount": 3,
+      "relationCount": 2,
       "x": -411,
       "y": -315,
       "z": 94,
-      "size": 9,
+      "size": 8.464101615137753,
       "color": "#ef4444",
       "targetPath": "docs/guides/PAPERCLIP_INSTANCE_OPERATING_MODEL.md"
     },
@@ -40383,15 +40383,6 @@
       "alpha": 0.48
     },
     {
-      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-cloudflare-bot-access-hardening-md-documents-substrate-create-something-package-create-something-substrate-mcp-packages-substrate-mcp",
-      "source": 436,
-      "target": 180,
-      "relation": "documents",
-      "evidence": "docs/guides/CLOUDFLARE_BOT_ACCESS_HARDENING.md documents packages/substrate-mcp through matching topology terms.",
-      "color": "#f59e0b",
-      "alpha": 0.48
-    },
-    {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-codex-presence-even-g2-md-documents-substrate-create-something-app-create-something-even-codex-presence-apps-even-codex-presence",
       "source": 437,
       "target": 7,
@@ -40491,15 +40482,6 @@
       "alpha": 0.48
     },
     {
-      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-effect-integration-engineering-md-documents-substrate-create-something-package-create-something-substrate-mcp-packages-substrate-mcp",
-      "source": 448,
-      "target": 180,
-      "relation": "documents",
-      "evidence": "docs/guides/EFFECT_INTEGRATION_ENGINEERING.md documents packages/substrate-mcp through the stable guide platform anchor.",
-      "color": "#f59e0b",
-      "alpha": 0.48
-    },
-    {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-examples-md-documents-substrate-create-something-package-create-something-interaction-atlas-mcp-packages-interaction-atlas-mcp",
       "source": 449,
       "target": 118,
@@ -40514,15 +40496,6 @@
       "target": 134,
       "relation": "documents",
       "evidence": "docs/guides/FIRST_PARTY_AUTH_PLATFORM.md documents packages/mcp-authz through matching topology terms.",
-      "color": "#f59e0b",
-      "alpha": 0.48
-    },
-    {
-      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-g2-cloudflare-codex-access-md-documents-substrate-create-something-package-create-something-substrate-mcp-packages-substrate-mcp",
-      "source": 451,
-      "target": 180,
-      "relation": "documents",
-      "evidence": "docs/guides/G2_CLOUDFLARE_CODEX_ACCESS.md documents packages/substrate-mcp through matching topology terms.",
       "color": "#f59e0b",
       "alpha": 0.48
     },
@@ -40568,15 +40541,6 @@
       "target": 118,
       "relation": "documents",
       "evidence": "docs/guides/GROUND_SEEDED_TRIAL.md documents packages/interaction-atlas-mcp through the stable guide platform anchor.",
-      "color": "#f59e0b",
-      "alpha": 0.48
-    },
-    {
-      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-harness-ablation-loop-md-documents-substrate-create-something-package-create-something-substrate-mcp-packages-substrate-mcp",
-      "source": 457,
-      "target": 180,
-      "relation": "documents",
-      "evidence": "docs/guides/HARNESS_ABLATION_LOOP.md documents packages/substrate-mcp through the stable guide platform anchor.",
       "color": "#f59e0b",
       "alpha": 0.48
     },
@@ -40662,15 +40626,6 @@
       "alpha": 0.48
     },
     {
-      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-migration-guide-md-documents-substrate-create-something-package-create-something-substrate-mcp-packages-substrate-mcp",
-      "source": 467,
-      "target": 180,
-      "relation": "documents",
-      "evidence": "docs/guides/MIGRATION_GUIDE.md documents packages/substrate-mcp through the stable guide platform anchor.",
-      "color": "#f59e0b",
-      "alpha": 0.48
-    },
-    {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-monorepo-delivery-updates-md-documents-substrate-create-something-package-create-something-interaction-atlas-mcp-packages-interaction-atlas-mcp",
       "source": 468,
       "target": 118,
@@ -40685,15 +40640,6 @@
       "target": 48,
       "relation": "documents",
       "evidence": "docs/guides/NEWSLETTER_ENGAGEMENT_RUNBOOK.md documents packages/arc through matching topology terms.",
-      "color": "#f59e0b",
-      "alpha": 0.48
-    },
-    {
-      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-notion-api-compatibility-audit-2026-md-documents-substrate-create-something-package-create-something-substrate-mcp-packages-substrate-mcp",
-      "source": 470,
-      "target": 180,
-      "relation": "documents",
-      "evidence": "docs/guides/NOTION_API_COMPATIBILITY_AUDIT_2026.md documents packages/substrate-mcp through matching topology terms.",
       "color": "#f59e0b",
       "alpha": 0.48
     },
@@ -40775,24 +40721,6 @@
       "target": 499,
       "relation": "documents",
       "evidence": "docs/guides/PACKAGE_SOURCE_ARCHIVE_WORKFLOW.md documents config/dify-agents/aaron-hub.json through matching topology terms.",
-      "color": "#f59e0b",
-      "alpha": 0.48
-    },
-    {
-      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-paperclip-autonomous-delivery-md-documents-substrate-create-something-package-create-something-substrate-mcp-packages-substrate-mcp",
-      "source": 480,
-      "target": 180,
-      "relation": "documents",
-      "evidence": "docs/guides/PAPERCLIP_AUTONOMOUS_DELIVERY.md documents packages/substrate-mcp through the stable guide platform anchor.",
-      "color": "#f59e0b",
-      "alpha": 0.48
-    },
-    {
-      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-paperclip-instance-operating-model-md-documents-substrate-create-something-package-create-something-substrate-mcp-packages-substrate-mcp",
-      "source": 481,
-      "target": 180,
-      "relation": "documents",
-      "evidence": "docs/guides/PAPERCLIP_INSTANCE_OPERATING_MODEL.md documents packages/substrate-mcp through matching topology terms.",
       "color": "#f59e0b",
       "alpha": 0.48
     },
