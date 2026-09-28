@@ -165,4 +165,13 @@
 		margin: var(--space-md) 0 0;
 		font-style: italic;
 	}
+	@media (max-width: 480px) {
+		.insights-preview { padding: var(--space-sm); }
+		.insight-card {
+			display: grid;
+			grid-template-columns: auto minmax(0, 1fr);
+			gap: var(--space-xs);
+		}
+		.insight-action { grid-column: 1 / -1; min-height: 44px; }
+	}
 </style>

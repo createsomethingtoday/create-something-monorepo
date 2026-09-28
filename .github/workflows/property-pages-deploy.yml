@@ -8,7 +8,7 @@ on:
         description: Reviewed property to release
         required: true
         type: choice
-        options: [space, io, ltd, lms]
+        options: [space, io, ltd, lms, clearway]
 
 permissions:
   contents: read
@@ -31,6 +31,7 @@ jobs:
             io) project=create-something-io ;;
             ltd) project=createsomething-ltd ;;
             lms) project=createsomething-lms ;;
+            clearway) project=clearway ;;
             *) exit 1 ;;
           esac
           echo "PAGES_PROJECT=$project" >> "$GITHUB_ENV"
@@ -87,8 +88,23 @@ jobs:
       - name: Check Property
         run: pnpm --filter "@create-something/$PROPERTY" check
 
+      - name: Build CLEARWAY embed
+        if: inputs.property == 'clearway'
+        run: BUILD_EMBED=true pnpm --filter @create-something/clearway exec vite build --outDir "$RUNNER_TEMP/clearway-embed" --emptyOutDir
+
       - name: Build Property
         run: pnpm --filter "@create-something/$PROPERTY" build
+
+      - name: Include CLEARWAY embed in Pages output
+        if: inputs.property == 'clearway'
+        shell: bash
+        run: |
+          set -euo pipefail
+          for asset in embed.js clearway.css; do
+            test -s "$RUNNER_TEMP/clearway-embed/$asset"
+            install -m 644 "$RUNNER_TEMP/clearway-embed/$asset" "packages/clearway/.svelte-kit/cloudflare/$asset"
+            cmp "$RUNNER_TEMP/clearway-embed/$asset" "packages/clearway/.svelte-kit/cloudflare/$asset"
+          done
 
       - name: Capture current Property production deployments
         env:
