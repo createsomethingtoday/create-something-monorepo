@@ -3,7 +3,12 @@
 Canonical scope: [Linear CRE-2148](https://linear.app/createsomething/issue/CRE-2148).
 Execution/review: [create-something CRE-105](http://127.0.0.1:3101/CRE/issues/CRE-105).
 
-This candidate is source-only. Independent review and coordinator promotion are required.
+The contact-only D1 migration `0058_contact_request_receipts.sql` was applied to
+production on 2026-09-28 before the application release. The coordinator retained
+Time Travel bookmark `00013e67-00000018-000050f4-2662ced912c68c829e1bae3777545ad7`
+and verified both receipt tables, the migration ledger entry, and the unchanged
+unrelated Abundance migration backlog. Application deployment and live acceptance
+are separate release gates; see Linear CRE-2148 for their current state.
 
 ## Contract and uncertainty
 
@@ -87,7 +92,8 @@ SQL, table_info and foreign keys with the candidate. The accepted-state constrai
 also rejects an empty provider ID. This candidate supersedes the initial plan's
 TEXT submission_id with INTEGER plus a foreign key. Never apply over the prior
 candidate's TEXT receipt table merely because IF NOT EXISTS succeeds: stop and
-reconcile schema first. This migration has not been applied to production.
+reconcile schema first. The isolated production apply and readback completed on
+2026-09-28; never rerun the full package migration queue to repeat it.
 
 Rollback preserves receipt tables. Do not drop receipts, restore the entire shared
 D1 database, or re-enable the legacy sender for unresolved submissions. Disable
