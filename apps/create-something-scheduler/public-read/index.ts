@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { Data, Effect, Either } from 'effect';
 import { CloudflareApiClient } from '../forge-pilot/generated/sdk/Client.js';
 import { CloudflareApiError } from '../forge-pilot/generated/sdk/errors/CloudflareApiError.js';
 
@@ -37,11 +38,45 @@ export interface SchedulerReadClient {
   listAvailability(query: AvailabilityQuery): Promise<Availability>;
 }
 
+/** Expected failures retain their original cause without exposing the generated client. */
+export class SchedulerReadError extends Data.TaggedError('SchedulerReadError')<{
+  readonly operation: keyof SchedulerReadClient;
+  readonly kind: 'transport' | 'http' | 'decode';
+  readonly statusCode?: number;
+  readonly cause: unknown;
+  readonly message: string;
+}> {}
+
+function readFailure(operation: keyof SchedulerReadClient, cause: unknown): SchedulerReadError {
+  const statusCode = cause instanceof CloudflareApiError ? cause.statusCode : undefined;
+  return new SchedulerReadError({
+    operation, kind: statusCode === undefined ? 'transport' : 'http', statusCode, cause,
+    message: `Scheduler ${operation} request failed.`
+  });
+}
+
+function decode<A>(operation: keyof SchedulerReadClient, parse: () => A) {
+  return Effect.try({
+    try: parse,
+    catch: (cause) => new SchedulerReadError({
+      operation, kind: 'decode', cause, message: `Scheduler ${operation} response is invalid.`
+    })
+  });
+}
+
+// Preserve domain error identity at the public Promise boundary, not FiberFailure.
+async function runRead<A, E>(effect: Effect.Effect<A, E>): Promise<A> {
+  const result = await Effect.runPromise(Effect.either(effect));
+  if (Either.isLeft(result)) throw result.left;
+  return result.right;
+}
+
 /** No automatic retries: callers must treat this as unavailable, never as empty availability. */
 export class AvailabilityUnavailableError extends Error {
+  readonly _tag = 'AvailabilityUnavailableError';
   readonly statusCode = 503;
-  constructor(readonly body: RetryableAvailability) {
-    super('Scheduler availability is temporarily unavailable.');
+  constructor(readonly body: RetryableAvailability, cause?: unknown) {
+    super('Scheduler availability is temporarily unavailable.', { cause });
     this.name = 'AvailabilityUnavailableError';
   }
 }
@@ -84,22 +119,37 @@ export function createSchedulerReadClient(options: SchedulerReadOptions = {}): S
   });
   return Object.freeze({
     async getLink(): Promise<Link> {
-      return linkSchema.parse(await generated.getLink());
+      return runRead(Effect.tryPromise({
+        try: () => generated.getLink(),
+        catch: (cause) => readFailure('getLink', cause)
+      }).pipe(Effect.flatMap((body) => decode('getLink', () => linkSchema.parse(body)))));
     },
     async listAvailability(query: AvailabilityQuery): Promise<Availability> {
       const input = querySchema.parse(query);
-      try {
-        const body = availabilitySchema.parse(await generated.listAvailability(input));
-        if (body.status !== 'available') throw new TypeError('Expected available status for HTTP success.');
-        return { ...body, status: 'available' };
-      } catch (error) {
-        if (!(error instanceof CloudflareApiError) || error.statusCode !== 503) throw error;
-        const body = availabilitySchema.parse(error.body);
-        if (body.status !== 'retryable' || body.slots.length !== 0) {
-          throw new TypeError('Expected retryable availability with no slots for HTTP 503.');
-        }
-        throw new AvailabilityUnavailableError({ ...body, status: 'retryable' });
-      }
+      const request = Effect.tryPromise({
+        try: () => generated.listAvailability(input),
+        catch: (cause) => readFailure('listAvailability', cause)
+      });
+      return runRead(request.pipe(
+        Effect.flatMap((response) => decode('listAvailability', (): Availability => {
+          const body = availabilitySchema.parse(response);
+          if (body.status !== 'available') throw new TypeError('Expected available status for HTTP success.');
+          return { ...body, status: 'available' };
+        })),
+        Effect.catchTag('SchedulerReadError', (error) => {
+          if (error.kind !== 'http' || error.statusCode !== 503 || !(error.cause instanceof CloudflareApiError)) {
+            return Effect.fail(error);
+          }
+          const original = error.cause;
+          return decode('listAvailability', (): RetryableAvailability => {
+            const body = availabilitySchema.parse(original.body);
+            if (body.status !== 'retryable' || body.slots.length !== 0) {
+              throw new TypeError('Expected retryable availability with no slots for HTTP 503.');
+            }
+            return { ...body, status: 'retryable' };
+          }).pipe(Effect.flatMap((body) => Effect.fail(new AvailabilityUnavailableError(body, original))));
+        })
+      ));
     }
   });
 }

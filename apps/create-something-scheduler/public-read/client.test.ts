@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { createSchedulerReadClient, AvailabilityUnavailableError } from '@create-something/create-something-scheduler/public-read';
+import { createSchedulerReadClient, AvailabilityUnavailableError, SchedulerReadError } from '@create-something/create-something-scheduler/public-read';
 import { CloudflareApiClient } from '../forge-pilot/generated/sdk/Client.js';
 
 const query = { from: '2026-10-01', to: '2026-10-02', timezone: 'UTC', durationMinutes: 60 as const };
@@ -8,7 +8,7 @@ const available = {
   receiptId: 'test', policyVersion: 'test', occurredAt: '2026-09-28T00:00:00Z', nextActions: []
 };
 
-afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); });
+afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); vi.useRealTimers(); });
 
 describe('public read boundary', () => {
   it('exports only frozen named reads and emits credential-free GETs with bounded queries', async () => {
@@ -67,7 +67,9 @@ describe('public read boundary', () => {
       const internal = this as unknown as { _options: { fetch: typeof globalThis.fetch } };
       return internal._options.fetch(url, init) as never;
     });
-    await expect(createSchedulerReadClient().getLink()).rejects.toThrow('read boundary');
+    await expect(createSchedulerReadClient().getLink()).rejects.toMatchObject({
+      _tag: 'SchedulerReadError', kind: 'transport', cause: expect.objectContaining({ message: expect.stringContaining('read boundary') })
+    });
     expect(fetch).not.toHaveBeenCalled();
   });
 
@@ -76,7 +78,10 @@ describe('public read boundary', () => {
     const fetch = vi.fn(async () => Response.json(retryable, { status: 503 }));
     vi.stubGlobal('fetch', fetch);
     const client = createSchedulerReadClient();
-    await expect(client.listAvailability(query)).rejects.toMatchObject({ statusCode: 503, body: retryable });
+    await expect(client.listAvailability(query)).rejects.toMatchObject({
+      _tag: 'AvailabilityUnavailableError', statusCode: 503, body: retryable,
+      cause: expect.objectContaining({ statusCode: 503, body: retryable })
+    });
     expect(fetch).toHaveBeenCalledTimes(1);
     await expect(client.listAvailability(query)).rejects.toBeInstanceOf(AvailabilityUnavailableError);
   });
@@ -89,13 +94,59 @@ describe('public read boundary', () => {
     [503, { code: 'unavailable', message: 'old incorrect schema' }]
   ])('fails closed on invalid status/body %s', async (status, body) => {
     vi.stubGlobal('fetch', vi.fn(async () => Response.json(body, { status })));
-    await expect(createSchedulerReadClient().listAvailability(query)).rejects.toThrow();
+    await expect(createSchedulerReadClient().listAvailability(query)).rejects.toMatchObject({
+      _tag: 'SchedulerReadError', operation: 'listAvailability', kind: 'decode', cause: expect.any(Error)
+    });
   });
 
   it('does not promote a permanent HTTP failure to retryable availability', async () => {
     const fetch = vi.fn(async () => Response.json({ status: 'rejected' }, { status: 400 }));
     vi.stubGlobal('fetch', fetch);
-    await expect(createSchedulerReadClient().listAvailability(query)).rejects.toMatchObject({ statusCode: 400 });
+    await expect(createSchedulerReadClient().listAvailability(query)).rejects.toMatchObject({
+      _tag: 'SchedulerReadError', kind: 'http', statusCode: 400,
+      cause: expect.objectContaining({ statusCode: 400 })
+    });
     expect(fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('preserves transport causes without FiberFailure wrapping or hidden retries', async () => {
+    const cause = new TypeError('network disconnected');
+    const fetch = vi.fn(async () => { throw cause; });
+    vi.stubGlobal('fetch', fetch);
+    const failure = await createSchedulerReadClient().getLink().catch((error: unknown) => error);
+    expect(failure).toBeInstanceOf(SchedulerReadError);
+    expect(failure).toMatchObject({ _tag: 'SchedulerReadError', operation: 'getLink', kind: 'transport' });
+    expect(fetch).toHaveBeenCalledTimes(1);
+    // The generated SDK may wrap the network cause; retain that entire chain.
+    expect(((failure as SchedulerReadError).cause as Error).cause).toBe(cause);
+  });
+
+  it('retains the generated timeout and abort cleanup without retrying', async () => {
+    vi.useFakeTimers();
+    let signal: AbortSignal | undefined;
+    const fetch = vi.fn((request: Request) => {
+      signal = request.signal;
+      return new Promise<Response>((_resolve, reject) => {
+        request.signal.addEventListener('abort', () => reject(request.signal.reason), { once: true });
+      });
+    });
+    vi.stubGlobal('fetch', fetch);
+    const result = createSchedulerReadClient().getLink().catch((error: unknown) => error);
+    await vi.advanceTimersByTimeAsync(15_001);
+    expect(await result).toMatchObject({
+      _tag: 'SchedulerReadError', kind: 'transport',
+      cause: expect.any(Error)
+    });
+    expect(signal?.aborted).toBe(true);
+    expect(signal?.reason).toBe('timeout');
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it('tags invalid link responses as decoding failures with the original validation cause', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => Response.json({ durationMinutes: 90, durationOptionsMinutes: [90] })));
+    await expect(createSchedulerReadClient().getLink()).rejects.toMatchObject({
+      _tag: 'SchedulerReadError', operation: 'getLink', kind: 'decode', cause: expect.objectContaining({ name: 'ZodError' })
+    });
   });
 });

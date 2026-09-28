@@ -50,8 +50,22 @@ only constructor option is an HTTPS origin; loopback HTTP supports local tests.
 An internal transport rechecks method, origin, path, query keys and credential
 headers, emits only `Accept: application/json`, omits browser credentials, and
 rejects redirects. Requests use the generated client's 15-second timeout with
-zero retries. This small one-request facade adds no separate retry/resource
-runtime; it preserves the existing Promise interface and Zod dependency.
+zero retries. The recurring consumer boundary uses pinned `effect@3.22.2` for
+typed request and decoding failures, following the repo's Effect integration
+guide and [Effect v3 expected errors](https://effect.website/docs/v3/error-management/expected-errors).
+The public methods remain Promises, and Zod still validates inputs and outputs.
+`SchedulerReadError` distinguishes `transport`, `http`, and `decode` failures,
+names the operation, and retains the original cause (including the generated
+HTTP status/error chain). The validated 503 remains `AvailabilityUnavailableError`
+with its lifecycle body and original generated error as cause. Effect failures
+are unwrapped at the Promise boundary so callers receive these errors directly.
+
+This client owns no persistent resources. The generated SDK continues to own
+the 15-second request timer and abort signal; tests prove timeout abort and timer
+cleanup. No retry schedule is installed: the attempt budget is exactly one,
+including transient failures and Calendar's retryable 503. Retry exhaustion is
+therefore the original single failure, never a synthesized available result.
+The generator and generated snapshot do not depend on this runtime change.
 
 ## Local verification
 
@@ -71,7 +85,8 @@ git diff --check
 
 The typecheck includes every generated `.ts` file and negative consumer type
 checks. Tests cover unsupported durations/options, malformed success/503 bodies,
-permanent failure, no retry, and simulated generated transport escape attempts.
+permanent failure, cause preservation, timeout abort/cleanup, no retry, and
+simulated generated transport escape attempts.
 `verify:public-read` uses a real loopback HTTP server, `handleApiRequest`, and
 `BookingService` with a controlled Calendar adapter. It asserts 200/200/503,
 eleven safe 60-minute slots, exact lifecycle error bytes after JSON parsing,
