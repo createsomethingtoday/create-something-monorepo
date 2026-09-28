@@ -4,14 +4,14 @@
   "atlasCanvasId": "create-something-internal-operating-topology",
   "rootNodeId": "substrate:create-something:root",
   "coverage": {
-    "generatedAt": "2026-09-27T17:28:02.322Z",
+    "generatedAt": "2026-09-28T14:05:50.951Z",
     "rootPath": ".",
     "packageCount": 237,
     "appCount": 12,
     "workerCount": 114,
     "clientOverlayCount": 8,
     "policyCount": 64,
-    "guideCount": 75,
+    "guideCount": 77,
     "configCount": 40
   },
   "nodes": [
@@ -7976,6 +7976,21 @@
       ]
     },
     {
+      "id": "substrate:create-something:guide:docs-guides-effect-integration-engineering-md",
+      "atlasNodeId": "atlas_create-something_guide_docs-guides-effect-integration-engineering-md",
+      "title": "EFFECT_INTEGRATION_ENGINEERING.md",
+      "path": "docs/guides/EFFECT_INTEGRATION_ENGINEERING.md",
+      "tier": "Mixed",
+      "surface": "guide",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "guide artifact in the CREATE SOMETHING operating topology.",
+      "tags": [
+        "guide",
+        "documentation"
+      ]
+    },
+    {
       "id": "substrate:create-something:guide:docs-guides-examples-md",
       "atlasNodeId": "atlas_create-something_guide_docs-guides-examples-md",
       "title": "EXAMPLES.md",
@@ -8445,6 +8460,21 @@
       "atlasNodeId": "atlas_create-something_guide_docs-guides-paperclip-autonomous-delivery-md",
       "title": "PAPERCLIP_AUTONOMOUS_DELIVERY.md",
       "path": "docs/guides/PAPERCLIP_AUTONOMOUS_DELIVERY.md",
+      "tier": "Mixed",
+      "surface": "guide",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "guide artifact in the CREATE SOMETHING operating topology.",
+      "tags": [
+        "guide",
+        "documentation"
+      ]
+    },
+    {
+      "id": "substrate:create-something:guide:docs-guides-paperclip-instance-operating-model-md",
+      "atlasNodeId": "atlas_create-something_guide_docs-guides-paperclip-instance-operating-model-md",
+      "title": "PAPERCLIP_INSTANCE_OPERATING_MODEL.md",
+      "path": "docs/guides/PAPERCLIP_INSTANCE_OPERATING_MODEL.md",
       "tier": "Mixed",
       "surface": "guide",
       "owner": "CREATE SOMETHING",
@@ -12482,6 +12512,13 @@
       "evidence": "docs/guides/DIFY_YOUTUBE_TRANSCRIPT_NOTION_AGENT.md is present in the repo scan."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-effect-integration-engineering-md",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:guide:docs-guides-effect-integration-engineering-md",
+      "relation": "contains",
+      "evidence": "docs/guides/EFFECT_INTEGRATION_ENGINEERING.md is present in the repo scan."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-examples-md",
       "source": "substrate:create-something:root",
       "target": "substrate:create-something:guide:docs-guides-examples-md",
@@ -12704,6 +12741,13 @@
       "target": "substrate:create-something:guide:docs-guides-paperclip-autonomous-delivery-md",
       "relation": "contains",
       "evidence": "docs/guides/PAPERCLIP_AUTONOMOUS_DELIVERY.md is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-paperclip-instance-operating-model-md",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:guide:docs-guides-paperclip-instance-operating-model-md",
+      "relation": "contains",
+      "evidence": "docs/guides/PAPERCLIP_INSTANCE_OPERATING_MODEL.md is present in the repo scan."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-playbook-library-research-2026-02-18-md",
@@ -15793,6 +15837,13 @@
       "evidence": "docs/guides/DIFY_YOUTUBE_TRANSCRIPT_NOTION_AGENT.md is an operating guide."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-effect-integration-engineering-md-documents-substrate-create-something-root",
+      "source": "substrate:create-something:guide:docs-guides-effect-integration-engineering-md",
+      "target": "substrate:create-something:root",
+      "relation": "documents",
+      "evidence": "docs/guides/EFFECT_INTEGRATION_ENGINEERING.md is an operating guide."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-examples-md-documents-substrate-create-something-root",
       "source": "substrate:create-something:guide:docs-guides-examples-md",
       "target": "substrate:create-something:root",
@@ -16015,6 +16066,13 @@
       "target": "substrate:create-something:root",
       "relation": "documents",
       "evidence": "docs/guides/PAPERCLIP_AUTONOMOUS_DELIVERY.md is an operating guide."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-paperclip-instance-operating-model-md-documents-substrate-create-something-root",
+      "source": "substrate:create-something:guide:docs-guides-paperclip-instance-operating-model-md",
+      "target": "substrate:create-something:root",
+      "relation": "documents",
+      "evidence": "docs/guides/PAPERCLIP_INSTANCE_OPERATING_MODEL.md is an operating guide."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-playbook-library-research-2026-02-18-md-documents-substrate-create-something-root",
@@ -16808,6 +16866,13 @@
       "evidence": "docs/guides/DIFY_YOUTUBE_TRANSCRIPT_NOTION_AGENT.md documents config/dify-agents/youtube-transcript-notion-agent.json through matching topology terms."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-effect-integration-engineering-md-documents-substrate-create-something-package-create-something-substrate-mcp-packages-substrate-mcp",
+      "source": "substrate:create-something:guide:docs-guides-effect-integration-engineering-md",
+      "target": "substrate:create-something:package:create-something-substrate-mcp-packages-substrate-mcp",
+      "relation": "documents",
+      "evidence": "docs/guides/EFFECT_INTEGRATION_ENGINEERING.md documents packages/substrate-mcp through the stable guide platform anchor."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-examples-md-documents-substrate-create-something-package-create-something-interaction-atlas-mcp-packages-interaction-atlas-mcp",
       "source": "substrate:create-something:guide:docs-guides-examples-md",
       "target": "substrate:create-something:package:create-something-interaction-atlas-mcp-packages-interaction-atlas-mcp",
@@ -17030,6 +17095,13 @@
       "target": "substrate:create-something:package:create-something-substrate-mcp-packages-substrate-mcp",
       "relation": "documents",
       "evidence": "docs/guides/PAPERCLIP_AUTONOMOUS_DELIVERY.md documents packages/substrate-mcp through the stable guide platform anchor."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-paperclip-instance-operating-model-md-documents-substrate-create-something-package-create-something-substrate-mcp-packages-substrate-mcp",
+      "source": "substrate:create-something:guide:docs-guides-paperclip-instance-operating-model-md",
+      "target": "substrate:create-something:package:create-something-substrate-mcp-packages-substrate-mcp",
+      "relation": "documents",
+      "evidence": "docs/guides/PAPERCLIP_INSTANCE_OPERATING_MODEL.md documents packages/substrate-mcp through matching topology terms."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-playbook-library-research-2026-02-18-md-documents-substrate-create-something-package-create-something-arc-packages-arc",

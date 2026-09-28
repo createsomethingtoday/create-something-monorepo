@@ -1,14 +1,14 @@
 {
   "id": "substrate:create-something:performance-contract:internal",
-  "generatedAt": "2026-09-27T17:28:03.564Z",
+  "generatedAt": "2026-09-28T14:05:52.077Z",
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
   "runtime": "substrate",
   "baseline": "obsidian_like_operator_speed",
   "summary": {
-    "topologyRecords": 537,
-    "topologyEdges": 1117,
-    "managementResources": 607,
+    "topologyRecords": 539,
+    "topologyEdges": 1123,
+    "managementResources": 609,
     "managementOperations": 29,
     "workerCacheControl": "public, max-age=15",
     "generatedArtifactCount": 15

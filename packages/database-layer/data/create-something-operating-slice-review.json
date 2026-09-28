@@ -1,6 +1,6 @@
 {
   "id": "substrate:create-something:operating-slice-review:internal",
-  "generatedAt": "2026-09-27T17:28:02.556Z",
+  "generatedAt": "2026-09-28T14:05:51.152Z",
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
   "sourceCoverageId": "substrate:create-something:atlas-coverage:internal",
@@ -215,6 +215,7 @@
         "substrate:create-something:guide:docs-guides-dify-policy-os-template-pack-md",
         "substrate:create-something:guide:docs-guides-dify-workspace-inventory-md",
         "substrate:create-something:guide:docs-guides-dify-youtube-transcript-notion-agent-md",
+        "substrate:create-something:guide:docs-guides-effect-integration-engineering-md",
         "substrate:create-something:guide:docs-guides-examples-md",
         "substrate:create-something:guide:docs-guides-first-party-auth-platform-md",
         "substrate:create-something:guide:docs-guides-g2-cloudflare-codex-access-md",
@@ -247,6 +248,7 @@
         "substrate:create-something:guide:docs-guides-operator-agent-system-md",
         "substrate:create-something:guide:docs-guides-package-source-archive-workflow-md",
         "substrate:create-something:guide:docs-guides-paperclip-autonomous-delivery-md",
+        "substrate:create-something:guide:docs-guides-paperclip-instance-operating-model-md",
         "substrate:create-something:guide:docs-guides-playbook-library-research-2026-02-18-md",
         "substrate:create-something:guide:docs-guides-policy-os-gating-deploy-checklist-2026-03-09-md",
         "substrate:create-something:guide:docs-guides-policy-os-live-verification-runbook-2026-03-09-md",
@@ -268,7 +270,7 @@
       "owner": "CREATE SOMETHING",
       "tier": "Mixed",
       "surface": "guide",
-      "nodeCount": 75,
+      "nodeCount": 77,
       "evidence": [
         "docs/guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md",
         "docs/guides/AGENCY_GOVERNANCE_PRODUCTS_OPERATIONS_RUNBOOK.md",
