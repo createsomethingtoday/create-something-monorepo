@@ -43,7 +43,7 @@
   }
 </script>
 
-<aside class="workbench-panel" aria-label="Layers and properties">
+<aside id="draw-inspector" class="workbench-panel" aria-label="Layers and properties">
   <section class="properties">
     <header>
       <h2>Properties</h2>
@@ -171,6 +171,7 @@
       bind:value={search}
     />
     <div class="layer-list">
+      {#if !layers.length}<p>{search ? 'No layers match this search.' : 'Add a mark or note to see its layer here.'}</p>{/if}
       {#each layers as object (object.id)}<div
           class="layer"
           class:active={selectedIds.includes(object.id)}
@@ -213,7 +214,7 @@
     border-left: 1px solid var(--line);
     background: var(--color-performance-shell-surface, #0d0d0d);
     color: var(--color-performance-fg-primary, #fff);
-    font: 12px var(--font-performance-sans, Arial, sans-serif);
+    font: var(--text-performance-caption) var(--font-performance-interface);
   }
   section {
     padding: 14px;
@@ -232,10 +233,10 @@
   header span,
   small,
   p {
-    color: var(--color-performance-fg-muted, #999);
+    color: var(--color-performance-fg-tertiary);
   }
   header span {
-    font-size: 10px;
+    font-size: var(--text-performance-operator-label);
   }
   p {
     line-height: 1.6;
@@ -304,7 +305,7 @@
   }
   .align-actions button {
     text-transform: capitalize;
-    font-size: 10px;
+    font-size: var(--text-performance-operator-label);
   }
   .layer-list {
     margin-top: 10px;
@@ -338,7 +339,7 @@
     white-space: nowrap;
   }
   .layer-select small {
-    font-size: 9px;
+    font-size: var(--text-performance-operator-label);
   }
   .layer-toggle {
     width: 26px;
@@ -350,11 +351,11 @@
       width: min(280px, calc(100vw - 24px));
       max-height: calc(100dvh - 260px);
       border: 1px solid var(--line);
-      box-shadow: 0 12px 30px #0008;
+      box-shadow: none;
     }
     input,
     button {
-      min-height: 40px;
+      min-height: 44px;
     }
   }
 </style>
