@@ -80,7 +80,7 @@ Reviewers verify these by calling your endpoints and asking for evidence, not by
 - [ ] Data Client/Hybrid only: Webflow Install URL scopes are equal to or a subset of configured Webflow scopes. Otherwise `N/A`.
 - [ ] Webflow Data API only: App stops calling immediately on revoke or uninstall; third-party 401 behavior follows that provider's documented contract.
 - [ ] Code on customer sites is delivered via the Custom Code API, not manual copy-paste.
-- [ ] Injected scripts are version-pinned — hosted scripts use an SRI `integrityHash`. No runtime loaders unless every remote resource is declared and pinned at submission.
+- [ ] Injected scripts are version-pinned — hosted scripts registered through the Custom Code API carry an SRI `integrityHash`. Every remotely loaded resource is declared at submission; no undisclosed runtime loaders.
 - [ ] Any change to injected code ships as a new script version plus an App update — never edited in place.
 - [ ] App retains the scopes needed to clean up (`custom_code:write` plus `sites:write`/`pages:write`) and removes scripts at both site and page level on uninstall.
 - [ ] If programmatic removal isn't possible, the App gives clear in-app instructions telling the user exactly what to remove and where — injected code is never simply left behind.
