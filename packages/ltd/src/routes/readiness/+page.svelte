@@ -36,7 +36,7 @@
 	]}
 />
 
-<main class="readiness-page">
+<div class="readiness-page">
 	<header class="readiness-page__hero">
 		<p>CREATE SOMETHING .ltd · Workflow readiness</p>
 		<h1>Find the boundary before work crosses it.</h1>
@@ -79,7 +79,7 @@
 	</section>
 
 	{#if assessment}
-		<section class="readiness-page__result" class:readiness-page__result--ready={assessment.state === 'ready'} aria-live="polite">
+		<section class="readiness-page__result" data-state={assessment.state} aria-live="polite">
 			<p>State · {assessment.state}</p>
 			{#if assessment.state === 'ready'}
 				<h2>This workflow has a visible operating boundary.</h2>
@@ -110,7 +110,7 @@
 			<p>When all five answers are in, you will get a readiness state and the right first playbook.</p>
 		</section>
 	{/if}
-</main>
+</div>
 
 <style>
 	.readiness-page {
@@ -239,11 +239,18 @@
 
 	.readiness-page__result {
 		border-top: 1px solid var(--color-performance-line, #d7d7d2);
-		background: #fff7e5;
+		border-left: 4px solid var(--color-performance-review);
+		background: var(--color-performance-review-soft);
 	}
 
-	.readiness-page__result--ready {
-		background: #e7f4ea;
+	.readiness-page__result[data-state='ready'] {
+		border-left-color: var(--color-performance-ready);
+		background: var(--color-performance-ready-soft);
+	}
+
+	.readiness-page__result[data-state='blocked'] {
+		border-left-color: var(--color-performance-stop);
+		background: var(--color-performance-stop-soft);
 	}
 
 	.readiness-page__result > p:first-child {

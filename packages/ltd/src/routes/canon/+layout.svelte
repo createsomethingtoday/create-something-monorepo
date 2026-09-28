@@ -1,5 +1,6 @@
 <script lang="ts">
 	import DocSidebar from '$lib/canon/DocSidebar.svelte';
+	import { tick } from 'svelte';
 	import { page } from '$app/stores';
 
 	let { children } = $props();
@@ -10,8 +11,10 @@
 		mobileMenuOpen = !mobileMenuOpen;
 	}
 
-	function closeMobileMenu() {
+	async function closeMobileMenu() {
 		mobileMenuOpen = false;
+		await tick();
+		document.querySelector<HTMLButtonElement>('.menu-toggle')?.focus();
 	}
 
 	// Close mobile menu on route change
@@ -35,7 +38,7 @@
 
 	<!-- Mobile header -->
 	<header class="mobile-header">
-		<button class="menu-toggle" onclick={toggleMobileMenu} aria-label="Toggle navigation menu">
+		<button class="menu-toggle" onclick={toggleMobileMenu} aria-label="Toggle navigation menu" aria-expanded={mobileMenuOpen} aria-controls="canon-sidebar">
 			<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 				<path d="M3 12h18M3 6h18M3 18h18" />
 			</svg>
@@ -43,11 +46,11 @@
 		<a href="/canon" class="mobile-logo">Canon</a>
 	</header>
 
-	<main class="doc-main">
+	<div class="doc-main">
 		<article class="doc-content">
 			{@render children()}
 		</article>
-	</main>
+	</div>
 </div>
 
 <style>
@@ -63,6 +66,8 @@
 		left: 0;
 		right: 0;
 		height: 56px;
+		background: var(--color-performance-panel);
+		border-bottom: 1px solid var(--color-performance-line);
 		display: flex;
 		align-items: center;
 		gap: var(--space-performance-sm);
@@ -80,8 +85,8 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		width: 40px;
-		height: 40px;
+		width: 44px;
+		height: 44px;
 		background: transparent;
 		border: none;
 		border-radius: var(--radius-performance-scale-md);
