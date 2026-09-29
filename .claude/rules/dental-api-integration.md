@@ -1,3 +1,9 @@
+---
+paths:
+  - "packages/tend/src/lib/verticals/dental/**"
+  - "packages/agent-sdk/**"
+---
+
 # Dental API Integration Patterns
 
 ## Supported Practice Management Systems

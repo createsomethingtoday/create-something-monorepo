@@ -1,3 +1,9 @@
+---
+paths:
+  - "packages/tend/src/lib/verticals/dental/**"
+  - "packages/agent-sdk/**"
+---
+
 # Dental Appointment Scheduling Patterns
 
 Intelligent scheduling workflows for dental practices. Built for AI-native agents with HIPAA compliance by default.

@@ -1,3 +1,10 @@
+---
+paths:
+  - "packages/io/src/routes/papers/**"
+  - "packages/space/src/routes/experiments/**"
+  - "papers/**"
+---
+
 # Paper & Experiment Content Requirements
 
 Quality gate standards for CREATE SOMETHING research papers and experiments.
