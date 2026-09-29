@@ -16,9 +16,11 @@
   import AgencyPerformanceReadback from '$lib/components/AgencyPerformanceReadback.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
   import { PUBLIC_PRODUCT_SEQUENCE, getPublicProduct } from '$lib/data/productFamily';
-  import { playbookHeroMedia } from '$lib/data/playbookHeroMedia';
+  import AgencyProductJunction from '$lib/components/AgencyProductJunction.svelte';
   import { filmStories } from '$lib/data/filmStories';
   import { PUBLIC_PRICING } from '$lib/data/publicPricing';
+  import AgencyWayfindingSign from '$lib/components/AgencyWayfindingSign.svelte';
+  import AgencyPathChoices from '$lib/components/AgencyPathChoices.svelte';
 
   type ProductSurfaceKind = 'signal' | 'decision' | 'proof';
 
@@ -145,34 +147,32 @@
   {faqItems}
 />
 
+<div id="products-opening" class="products-opening">
 <PerformanceCampaignOpening
   eyebrow="Services & tools"
   expression="editorial"
-  title="Build systems your team can own."
-  lede="Map the workflow. Build the app or agent. Control what runs and what needs approval. Inspect the work, then agree on the scope and how to test it."
-  media={playbookHeroMedia.products}
-  mediaMobilePlacement="background"
+  title="Three ways to work together."
+  lede="Map defines the workflow. Build creates or improves agreed software. Control operates agreed live systems with approvals and records. You keep the delivered code and approval authority."
   density="compact"
-  proof={[
-    { label: 'Map', value: 'Define' },
-    { label: 'Build', value: 'Connect' },
-    { label: 'Control', value: 'Operate' }
-  ]}
 >
   {#snippet actions()}
     <Button href="#capabilities">Inspect the work</Button>
   {/snippet}
+  {#snippet artifact()}<AgencyProductJunction />{/snippet}
 </PerformanceCampaignOpening>
+<div class="products-paths"><AgencyPathChoices label="Choose a product path" /></div>
+</div>
 
 <section id="capabilities" class="capabilities" aria-labelledby="capabilities-title">
   <p>Apps, workflows & agents</p><h2 id="capabilities-title">Inspect what your team will keep.</h2>
   <p>Review the linked implementations and clearly labeled scenarios below. For your Build, agree on the source, instructions, tests and handoff your team will own, plus what agents may do and what needs human approval. Production launch is agreed separately.</p>
-  <p>Start with Map to define the workflow, scope Build for implementation, or use Control for ongoing operation. Membership covers one agreed workstream at a time; larger projects and usage are scoped separately.</p>
+  <p>The {PUBLIC_PRICING.membership.label} membership covers one agreed workstream, with delivery, learning and support. Larger Build projects and managed Control have separate agreements. Project-specific AI usage, hosting and third-party services are budgeted separately.</p>
   {#each filmStories as story}
     <article><div><h3>{story.name}</h3><p>{story.desc}</p><p class="deliverable">What you keep: {story.deliver}</p><p class="evidence-status">{story.status}</p><p class="evidence-proof">{story.proof}</p></div>
       <div class="capability-links"><a href={`/?film=${story.id}#work`}>Watch the story →</a><a href={story.source}>{story.sourceLabel} ↗</a><a href={agencyCoreMessaging.membershipInquiryHref}>Discuss this work →</a></div>
     </article>
   {/each}
+  <AgencyWayfindingSign kind="map" label="Compare ways to work together" href="#choose-product" direction="down" />
 </section>
 
 <PerformanceNarrativeStage
@@ -220,7 +220,7 @@
   {/snippet}
 </PerformanceNarrativeStage>
 
-<AgencyPerformanceReadback embedded={true} />
+<AgencyPerformanceReadback embedded={true} wayfinding />
 
 <section class="product-proof-shelf" aria-labelledby="product-proof-title">
   <div class="product-proof-shelf__heading">
@@ -278,6 +278,46 @@
 </PerformanceConversionHandoff>
 
 <style>
+  #capabilities { scroll-margin-top: 6rem; }
+  .products-opening { background: var(--color-performance-mode-campaign-surface); color: var(--color-performance-mode-campaign-ink); }
+  .products-paths { padding: 0 max(1.25rem, 5vw) var(--space-performance-sm); }
+  /* Route-local specificity keeps Canon's full-field artifact defaults from
+     placing this choice diagram behind the headline or reserving mobile space. */
+  #products-opening :global(.performance-campaign-opening) {
+    min-height: 0;
+    background: var(--color-performance-mode-campaign-surface);
+  }
+  #products-opening :global(.performance-campaign-opening::before) { display: none; }
+  #products-opening :global(.performance-campaign-opening__content) {
+    display: block;
+    width: 44%;
+    min-height: 0;
+    margin-inline: 5% auto;
+    padding-block: 8.5rem var(--space-performance-lg);
+  }
+  #products-opening :global(.performance-campaign-opening__content > header) {
+    width: 100%;
+    align-content: start;
+  }
+  #products-opening :global(.performance-campaign-opening__artifact) {
+    position: absolute;
+    inset: 8.5rem 5% auto auto;
+    width: 44%;
+    max-width: 40rem;
+    min-height: 0;
+    height: auto;
+    background: transparent;
+    pointer-events: none;
+  }
+  @media (max-width: 1000px) {
+    #products-opening :global(.performance-campaign-opening__content) {
+      width: 90%;
+      margin-inline: auto;
+      padding-top: 7rem;
+    }
+    #products-opening :global(.performance-campaign-opening__artifact) { display: none; }
+  }
+
 .capabilities{padding:80px 7vw;color:var(--color-performance-ink);background:var(--color-performance-paper)}.capabilities>p{max-width:720px;line-height:1.65}.capabilities h2{font:400 clamp(38px,4vw,64px)/1.1 var(--font-performance-editorial)}.capabilities article{display:grid;grid-template-columns:2fr 1fr;gap:5vw;padding:32px 0;border-top:1px solid var(--color-performance-line);margin-top:24px}.capabilities h3{font-size:25px;margin:0 0 14px}.capabilities article p{max-width:650px;line-height:1.65}.capability-links{display:flex;flex-direction:column;justify-content:center;gap:20px}.capability-links a{color:inherit;text-underline-offset:5px}.deliverable{font-size:14px}.evidence-status{margin-top:20px;font:var(--text-performance-operator-label) var(--font-performance-mono);text-transform:uppercase;color:var(--color-performance-muted)}.evidence-proof{font-size:14px;color:var(--color-performance-muted)}@media(max-width:700px){.capabilities article{grid-template-columns:1fr;gap:16px}}
 
   .product-choice,

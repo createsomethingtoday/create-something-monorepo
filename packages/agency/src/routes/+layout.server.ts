@@ -11,7 +11,8 @@ import type { LayoutServerLoad } from './$types';
 const loadAgencySession = createLayoutServerLoader({ property: 'agency' });
 
 export const load: LayoutServerLoad = async (event) => {
-  if (building) {
+  // Workflow guides are prerendered and cannot read Cloudflare's runtime env.
+  if (building || event.route.id === '/workflows/[slug]') {
     return { pathname: event.url.pathname, user: undefined };
   }
 

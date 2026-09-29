@@ -1,4 +1,5 @@
 <script lang="ts">
+  import AgencyWayfindingSign from '$lib/components/AgencyWayfindingSign.svelte';
   import {
     Button,
     PerformanceCampaignOpening,
@@ -319,6 +320,9 @@ ground compare utils.ts helpers.ts</code
       href="https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/ground"
       variant="secondary">Inspect the source</Button
     >
+  {/snippet}
+  {#snippet aside()}
+    <AgencyWayfindingSign kind="build" label="Explore Agent Foundation" detail="Build path · put verification tools into a scoped implementation." href="/agent-foundation" />
   {/snippet}
 </PerformanceConversionHandoff>
 

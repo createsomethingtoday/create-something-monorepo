@@ -1,4 +1,5 @@
 <script lang="ts">
+  import AgencyWayfindingSign from '$lib/components/AgencyWayfindingSign.svelte';
   import { Button, SEO } from '@create-something/canon';
   import InspectionScrollStory from '$lib/components/InspectionScrollStory.svelte';
   import TechnicalReviewVisual from '$lib/components/TechnicalReviewVisual.svelte';
@@ -68,6 +69,17 @@
     </div></div>
   </section>
 
+  <aside class="route-handoff" aria-label="Technical review next steps">
+    <div class="route-handoff__inner">
+      <p class="route-handoff__current">Current path · Technical review · existing project</p>
+      <p class="route-handoff__context">Next, discuss the project you already have. The review does not enroll you in implementation or ongoing support.</p>
+      <div class="route-handoff__links">
+        <AgencyWayfindingSign kind="map" label="Need to define the workflow?" href="/map" detail="Explore a plan before implementation." />
+        <AgencyWayfindingSign kind="build" label="Need something built?" href="/agent-foundation" detail="Explore a separately scoped Agent Foundation." />
+      </div>
+    </div>
+  </aside>
+
   <section class="review-section closing" aria-labelledby="next-title">
     <div>
     <h2 id="next-title">Bring the product and the question you need answered.</h2>
@@ -84,6 +96,18 @@
 </div>
 
 <style>
+  .route-handoff {
+    padding: var(--space-performance-lg) clamp(1.25rem, 5vw, 6rem);
+    color: var(--color-performance-ink);
+    background: var(--color-performance-paper);
+    border-block: 1px solid var(--color-performance-line);
+  }
+  .route-handoff__inner { max-width: var(--content-width-performance); margin-inline: auto; }
+  .route-handoff__current { margin: 0 0 var(--space-performance-sm); font-size: var(--text-performance-caption); font-family: var(--font-performance-mono); }
+  .route-handoff__context { max-width: 70ch; margin: 0 0 var(--space-performance-md); line-height: 1.6; }
+  .route-handoff__links { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-performance-sm); }
+  @media (max-width: 760px) { .route-handoff__links { grid-template-columns: 1fr; } }
+
   .technical-review { background: var(--color-performance-paper); color: var(--color-performance-ink); }
   .review-section { padding: clamp(2rem, 5vw, 5rem) max(1.25rem, calc((100% - 80rem) / 2)); border-bottom: 1px solid var(--color-performance-line); }
   .eyebrow { color: var(--color-performance-ink, var(--color-fg-primary)); font-family: var(--font-mono); font-size: var(--text-body-sm); }

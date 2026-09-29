@@ -82,6 +82,9 @@
       <p class="availability">
         Agree on the deliverable, capacity and any usage budget before payment.
       </p>
+      <p class="availability">
+        Support covers the agreed workstream. Sessions are scheduled, and response times follow your agreement. Managed Control and production incident response require a separate agreement.
+      </p>
     </div>
   </div>
   {#if compact}
