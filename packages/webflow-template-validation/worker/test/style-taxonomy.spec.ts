@@ -137,7 +137,7 @@ describe('styles.fixed-width-overflow', () => {
 		// The extension panel renders each sample with String(item), so samples must be strings.
 		expect(found?.details).toEqual({
 			count: 2,
-			sample: ['Hero Card (Tablet, Mobile landscape)', 'Promo Tile (Mobile portrait)']
+			sample: ['Hero Card (Tablet, Mobile landscape, Mobile portrait)', 'Promo Tile (Mobile portrait)']
 		});
 		expect(category.passed).toBe(true);
 	});
@@ -190,16 +190,60 @@ describe('styles.fixed-width-overflow', () => {
 			expect(issue(category, 'styles.fixed-width-overflow')).toBeUndefined();
 		});
 
-		it('does not flag a px width clamped by a px max-width within the breakpoint', async () => {
+		// 900px fits Tablet (991px) but is inherited by the phone breakpoints, where the
+		// clamp itself is wider than the viewport, so the width still overflows there.
+		it('clamps only where the px max-width fits the breakpoint', async () => {
 			const category = await stylesCategory(withMaxWidth('900px'));
-			expect(issue(category, 'styles.fixed-width-overflow')).toBeUndefined();
+			expect(issue(category, 'styles.fixed-width-overflow')).toMatchObject({
+				details: { count: 1, sample: ['Hero Card (Mobile landscape, Mobile portrait)'] }
+			});
 		});
 
 		it('still flags when the px max-width is itself wider than the breakpoint', async () => {
 			const category = await stylesCategory(withMaxWidth('1100px'));
 			expect(issue(category, 'styles.fixed-width-overflow')).toMatchObject({
 				severity: 'warning',
-				details: { count: 1, sample: ['Hero Card (Tablet)'] }
+				details: { count: 1, sample: ['Hero Card (Tablet, Mobile landscape, Mobile portrait)'] }
+			});
+		});
+
+		// Webflow's bounded breakpoints cascade downward: a value set on Tablet applies on
+		// Mobile landscape/portrait unless they override it, and base (Desktop) values
+		// apply everywhere. Effective values must be evaluated, not just local entries.
+		describe('inherited declarations', () => {
+			const one = (style: Partial<StyleData>) =>
+				designer(
+					[
+						{ id: 'a', name: 'Heading Large', type: 'global' },
+						{ id: 'b', name: 'Hero Card', type: 'global', properties: {}, ...style } as StyleData
+					],
+					{ mediaQueries: MEDIA_QUERIES }
+				);
+
+			it('flags narrower breakpoints that inherit an oversized Tablet width', async () => {
+				const category = await stylesCategory(one({ breakpointProperties: { medium: { width: '800px' } } }));
+				expect(issue(category, 'styles.fixed-width-overflow')).toMatchObject({
+					details: { count: 1, sample: ['Hero Card (Mobile landscape, Mobile portrait)'] }
+				});
+			});
+
+			it('flags every bounded breakpoint that inherits an oversized base width', async () => {
+				const category = await stylesCategory(one({ properties: { width: '1200px' } }));
+				expect(issue(category, 'styles.fixed-width-overflow')).toMatchObject({
+					details: { count: 1, sample: ['Hero Card (Tablet, Mobile landscape, Mobile portrait)'] }
+				});
+			});
+
+			it('inherits a base max-width clamp along with the base width', async () => {
+				const category = await stylesCategory(one({ properties: { width: '1200px', 'max-width': '100%' } }));
+				expect(issue(category, 'styles.fixed-width-overflow')).toBeUndefined();
+			});
+
+			it('stops inheriting once a narrower breakpoint overrides the width', async () => {
+				const category = await stylesCategory(
+					one({ breakpointProperties: { medium: { width: '800px' }, small: { width: '100%' } } })
+				);
+				expect(issue(category, 'styles.fixed-width-overflow')).toBeUndefined();
 			});
 		});
 
@@ -222,7 +266,7 @@ describe('styles.fixed-width-overflow', () => {
 			);
 			expect(issue(category, 'styles.fixed-width-overflow')).toMatchObject({
 				severity: 'warning',
-				details: { count: 1, sample: ['Sticky Rail (Tablet)'] }
+				details: { count: 1, sample: ['Sticky Rail (Tablet, Mobile landscape, Mobile portrait)'] }
 			});
 		});
 	});

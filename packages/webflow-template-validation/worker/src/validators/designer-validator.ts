@@ -559,6 +559,17 @@ function validateStyles(
 const PX_VALUE = /^\s*(\d+(?:\.\d+)?)px\s*$/i;
 const RELATIVE_WIDTH_VALUE = /^\s*\d+(?:\.\d+)?(?:%|vw)\s*$/i;
 const OVERFLOW_PROPERTIES = ['width', 'min-width'] as const;
+const CASCADE_PROPERTIES = ['width', 'min-width', 'max-width'] as const;
+
+/** The subset of a property map that takes part in the overflow cascade. */
+function pickCascadeProperties(source: unknown): Record<string, unknown> {
+  if (!source || typeof source !== 'object') return {};
+  const picked: Record<string, unknown> = {};
+  for (const key of CASCADE_PROPERTIES) {
+    if (key in (source as Record<string, unknown>)) picked[key] = (source as Record<string, unknown>)[key];
+  }
+  return picked;
+}
 
 function pxValue(value: unknown): number | null {
   const match = typeof value === 'string' ? value.match(PX_VALUE) : null;
@@ -567,12 +578,13 @@ function pxValue(value: unknown): number | null {
 
 /**
  * Styles whose explicit width/min-width at a max-width-bounded breakpoint is a px
- * value wider than that breakpoint. Only explicit breakpoint overrides are
- * considered (not values inherited from the base breakpoint). A max-width set at
- * the same breakpoint clamps `width` only: any %/vw max-width, or a px max-width that
- * fits the breakpoint, suppresses a width finding; min-width wins over max-width in
- * CSS, so it is evaluated on its own. Other layout effects (flex/grid
- * shrink, overflow: hidden) are not modelled, so this stays a warning.
+ * value wider than that breakpoint. Values cascade the way Webflow applies them:
+ * base (Desktop) declarations apply at every bounded breakpoint, and each bounded
+ * breakpoint inherits from the next wider one until it overrides the property.
+ * An effective max-width clamps `width` only: any %/vw max-width, or a px
+ * max-width that fits the breakpoint, suppresses a width finding; min-width wins
+ * over max-width in CSS, so it is evaluated on its own. Other layout effects
+ * (flex/grid shrink, overflow: hidden) are not modelled, so this stays a warning.
  *
  * Each entry is a plain string ("Hero Card (Tablet, Mobile landscape)") because
  * the extension panel renders `details.sample` items with String(item).
@@ -582,22 +594,26 @@ function findFixedWidthOverflow(
   mediaQueries: DesignerData['mediaQueries']
 ): string[] {
   if (!Array.isArray(mediaQueries) || mediaQueries.length === 0) return [];
-  const bounded = new Map(
-    mediaQueries
-      .filter((mq) => mq && !mq.isBase && typeof mq.maxWidth === 'number')
-      .map((mq) => [mq.id, mq] as const)
-  );
-  if (bounded.size === 0) return [];
+  // Widest first: on Webflow's max-width stack each bounded breakpoint inherits
+  // from the next wider one, and all of them inherit from the base breakpoint.
+  const bounded = mediaQueries
+    .filter((mq) => mq && !mq.isBase && typeof mq.maxWidth === 'number')
+    .sort((a, b) => (b.maxWidth as number) - (a.maxWidth as number));
+  if (bounded.length === 0) return [];
 
   const results: string[] = [];
   for (const style of styles) {
-    const byBreakpoint = style.breakpointProperties;
-    if (!byBreakpoint || typeof byBreakpoint !== 'object') continue;
+    const byBreakpoint =
+      style.breakpointProperties && typeof style.breakpointProperties === 'object'
+        ? style.breakpointProperties
+        : {};
+    const base = style.properties && typeof style.properties === 'object' ? style.properties : {};
+    if (Object.keys(byBreakpoint).length === 0 && !CASCADE_PROPERTIES.some((p) => p in base)) continue;
 
     const breakpoints: string[] = [];
-    for (const [breakpointId, mq] of bounded) {
-      const props = byBreakpoint[breakpointId];
-      if (!props) continue;
+    let props: Record<string, unknown> = pickCascadeProperties(base);
+    for (const mq of bounded) {
+      props = { ...props, ...pickCascadeProperties(byBreakpoint[mq.id]) };
       const limit = mq.maxWidth as number;
 
       const maxWidth = props['max-width'];
