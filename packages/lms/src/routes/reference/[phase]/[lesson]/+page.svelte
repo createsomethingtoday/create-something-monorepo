@@ -8,6 +8,8 @@
   const next = $derived(data.phaseLessons[index + 1]);
   let article: HTMLElement;
   let runtimeReady: Promise<void> | null = null;
+  let mermaidReady: Promise<typeof import('mermaid')['default']> | null = null;
+  let diagramSequence = 0;
 
   type FigureWindow = Window & {
     AIFS_loadFigureProviders?: (root: HTMLElement) => Promise<unknown>;
@@ -41,8 +43,49 @@
     }
   }
 
-  onMount(() => { void renderFigures(); });
-  afterNavigate(() => { void renderFigures(); });
+  async function renderMermaidDiagrams() {
+    await tick();
+    if (!article) return;
+    const codes = article.querySelectorAll<HTMLElement>('pre > code.language-mermaid');
+    if (!codes.length) return;
+    mermaidReady ??= import('mermaid').then(({ default: mermaid }) => {
+      mermaid.initialize({
+        startOnLoad: false,
+        securityLevel: 'strict',
+        theme: 'neutral',
+        fontFamily: 'ui-monospace, monospace',
+        flowchart: { useMaxWidth: true }
+      });
+      return mermaid;
+    });
+    try {
+      const mermaid = await mermaidReady;
+      for (const code of codes) {
+        const source = code.textContent?.trim();
+        const pre = code.parentElement;
+        if (!source || !pre || pre.dataset.mermaidRendered) continue;
+        pre.dataset.mermaidRendered = 'pending';
+        try {
+          const { svg } = await mermaid.render(`reference-diagram-${++diagramSequence}`, source);
+          if (!pre.isConnected) continue;
+          const container = document.createElement('div');
+          container.className = 'mermaid-diagram';
+          container.setAttribute('role', 'img');
+          container.setAttribute('aria-label', `Diagram in ${data.lesson.title}`);
+          container.innerHTML = svg;
+          pre.replaceWith(container);
+        } catch {
+          pre.dataset.mermaidRendered = 'failed';
+          pre.setAttribute('aria-label', 'Diagram source; interactive rendering unavailable');
+        }
+      }
+    } catch {
+      // The marked code blocks remain readable when the renderer cannot load.
+    }
+  }
+
+  onMount(() => { void renderFigures(); void renderMermaidDiagrams(); });
+  afterNavigate(() => { void renderFigures(); void renderMermaidDiagrams(); });
 </script>
 
 <svelte:head>
@@ -87,6 +130,8 @@
   .prose :global(pre) { overflow-x: auto; padding: 1rem; background: var(--color-performance-court); border: 1px solid var(--color-performance-line); }
   .prose :global(code) { font-size: .88em; }
   .prose :global(img) { max-width: 100%; }
+  .prose :global(.mermaid-diagram) { overflow-x: auto; margin: 1.5rem 0; }
+  .prose :global(.mermaid-diagram svg) { display: block; max-width: 100%; height: auto; margin: 0 auto; }
   .prose :global(table) { display: block; overflow-x: auto; border-collapse: collapse; }
   .prose :global(th), .prose :global(td) { border: 1px solid var(--color-performance-line); padding: .5rem; }
   .lesson-nav { display: flex; justify-content: space-between; gap: 1rem; border-top: 1px solid var(--color-performance-line); padding-top: 1.5rem; margin-top: 3rem; }

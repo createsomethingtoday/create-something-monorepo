@@ -16,7 +16,7 @@ Teaching the ethos through practice. The LMS combines original CREATE SOMETHING 
 
 ## Reference Library
 
-`/reference` contains 523 English lesson narratives imported from [AI Engineering from Scratch](https://github.com/rohitg00/ai-engineering-from-scratch) at the pinned revision in `src/lib/content/reference/catalog.generated.ts`. The upstream MIT license is preserved at `src/lib/content/reference/LICENSE.upstream`. Interactive figure scripts from the same revision live in `static/reference-figures/` and load only when a lesson uses them. Each page credits Rohit Ghumare and contributors and links to the exact upstream lesson and runnable code. This library is reference material; the original CREATE SOMETHING path is authored separately.
+`/reference` contains 523 English lesson narratives imported from [AI Engineering from Scratch](https://github.com/rohitg00/ai-engineering-from-scratch) at the pinned revision in `src/lib/content/reference/catalog.generated.ts`. The upstream MIT license is preserved at `src/lib/content/reference/LICENSE.upstream` and served at `/reference-license.txt`. Interactive figure scripts from the same revision live in `static/reference-figures/` and load only when a lesson uses them. Mermaid is bundled locally and loads only for diagram lessons. Each page credits Rohit Ghumare and contributors and links to the exact upstream lesson and runnable code. This library is reference material; the original CREATE SOMETHING path is authored separately.
 
 Refresh the snapshot from a checked-out upstream repository:
 
