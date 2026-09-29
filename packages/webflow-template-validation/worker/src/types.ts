@@ -288,7 +288,7 @@ export interface StyleData {
 	isHtmlTag?: boolean;
 	hasVariables?: boolean;
 	properties?: Record<string, any>;
-	/** Whitelisted properties (width, min-width, font-size) keyed by breakpoint id. */
+	/** Whitelisted properties (width, min-width, max-width) keyed by breakpoint id. */
 	breakpointProperties?: Record<string, Record<string, string>>;
 }
 

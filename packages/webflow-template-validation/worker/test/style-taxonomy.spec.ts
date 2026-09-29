@@ -134,12 +134,10 @@ describe('styles.fixed-width-overflow', () => {
 		);
 		const found = issue(category, 'styles.fixed-width-overflow');
 		expect(found).toMatchObject({ category: 'Styles', severity: 'warning' });
+		// The extension panel renders each sample with String(item), so samples must be strings.
 		expect(found?.details).toEqual({
 			count: 2,
-			sample: [
-				{ style: 'Hero Card', breakpoints: ['Tablet', 'Mobile landscape'] },
-				{ style: 'Promo Tile', breakpoints: ['Mobile portrait'] }
-			]
+			sample: ['Hero Card (Tablet, Mobile landscape)', 'Promo Tile (Mobile portrait)']
 		});
 		expect(category.passed).toBe(true);
 	});
@@ -154,7 +152,7 @@ describe('styles.fixed-width-overflow', () => {
 						name: 'Fits',
 						type: 'global',
 						breakpointProperties: {
-							medium: { width: '991px', 'font-size': '2000px' },
+							medium: { width: '991px' },
 							small: { width: '100%', 'min-width': '90vw' },
 							large: { width: '5000px' },
 							main: { width: '5000px' }
@@ -165,6 +163,84 @@ describe('styles.fixed-width-overflow', () => {
 			)
 		);
 		expect(issue(category, 'styles.fixed-width-overflow')).toBeUndefined();
+	});
+
+	describe('max-width clamping', () => {
+		const withMaxWidth = (maxWidth: string) =>
+			designer(
+				[
+					{ id: 'a', name: 'Heading Large', type: 'global' },
+					{
+						id: 'b',
+						name: 'Hero Card',
+						type: 'global',
+						breakpointProperties: { medium: { width: '1200px', 'max-width': maxWidth } }
+					}
+				],
+				{ mediaQueries: MEDIA_QUERIES }
+			);
+
+		it('does not flag a px width clamped by a percentage max-width', async () => {
+			const category = await stylesCategory(withMaxWidth('100%'));
+			expect(issue(category, 'styles.fixed-width-overflow')).toBeUndefined();
+		});
+
+		it('does not flag a px width clamped by a vw max-width', async () => {
+			const category = await stylesCategory(withMaxWidth('90vw'));
+			expect(issue(category, 'styles.fixed-width-overflow')).toBeUndefined();
+		});
+
+		it('does not flag a px width clamped by a px max-width within the breakpoint', async () => {
+			const category = await stylesCategory(withMaxWidth('900px'));
+			expect(issue(category, 'styles.fixed-width-overflow')).toBeUndefined();
+		});
+
+		it('still flags when the px max-width is itself wider than the breakpoint', async () => {
+			const category = await stylesCategory(withMaxWidth('1100px'));
+			expect(issue(category, 'styles.fixed-width-overflow')).toMatchObject({
+				severity: 'warning',
+				details: { count: 1, sample: ['Hero Card (Tablet)'] }
+			});
+		});
+	});
+});
+
+describe('styles.naming-inconsistent: taxonomy gating', () => {
+	it('only naming-checks global, combo, and legacy class styles', async () => {
+		const category = await stylesCategory(
+			designer([
+				{ id: 'a', name: 'Heading Large', type: 'global', source: 'site' },
+				{ id: 'e', name: 'Div Block 30px', type: 'element', source: 'site' },
+				{ id: 'd', name: 'Nav Link 2rem', type: 'descendant', source: 'site' },
+				{ id: 't', name: 'h1', type: 'tag', source: 'site', isHtmlTag: true }
+			])
+		);
+
+		expect(issue(category, 'styles.naming-inconsistent')).toBeUndefined();
+		expect(issue(category, 'styles.element-scoped')?.details).toEqual({ count: 1, sample: ['Div Block 30px'] });
+		// Unchanged: every style still counts toward totalClasses.
+		expect(category.stats?.totalClasses).toBe(4);
+	});
+
+	it('keeps checking styles with an unknown or missing type (legacy payloads)', async () => {
+		const category = await stylesCategory(
+			designer([
+				{ id: 'a', name: 'Heading Large', type: 'style' },
+				{ id: 'b', name: 'Padding 2rem', type: 'style' },
+				{ id: 'c', name: 'Max Width 30px' } as StyleData
+			])
+		);
+		expect(issue(category, 'styles.naming-inconsistent')?.details).toEqual({ sample: ['Padding 2rem', 'Max Width 30px'] });
+	});
+
+	it('still flags combo styles the creator named', async () => {
+		const category = await stylesCategory(
+			designer([
+				{ id: 'a', name: 'Heading Large', type: 'global', source: 'site' },
+				{ id: 'c', name: 'Hero Card 40px', type: 'combo', source: 'site' }
+			])
+		);
+		expect(issue(category, 'styles.naming-inconsistent')?.details).toEqual({ sample: ['Hero Card 40px'] });
 	});
 
 	it('skips the check when media queries are not in the payload', async () => {

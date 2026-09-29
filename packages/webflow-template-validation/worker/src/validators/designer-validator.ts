@@ -7,7 +7,7 @@
  * This replaces the Vercel /api/validate endpoint.
  */
 
-import { DesignerData, ValidationIssue } from '../types';
+import { DesignerData, ValidationIssue, VariableMode } from '../types';
 
 export interface DesignerValidationResult {
   categories: CategoryResult[];
@@ -184,11 +184,15 @@ function validateVariableModes(variables: DesignerData['variables']): CategoryRe
   const allCollectionsModeAware = collections.length > 0 && modeAwareCollections.length === collections.length;
   const modeNames: string[] = [];
   const breakpointBoundModeNames: string[] = [];
-  // Designer API 2.2+ reports which modes are bound to a breakpoint. When any
-  // mode carries that data it is authoritative; mode names are only a fallback.
-  const breakpointDataAvailable = modeAwareCollections.some(collection =>
-    (collection.modes || []).some(mode => mode && 'breakpointId' in mode)
-  );
+  const nameMatchedModeNames: string[] = [];
+  // Designer API 2.2+ reports which modes are bound to a breakpoint. The
+  // extension omits the key for a mode whose lookup failed, so the decision is
+  // made per mode: a present key is authoritative for that mode; an absent key
+  // falls back to the name heuristic for that mode only.
+  const hasBreakpointKey = (mode: unknown): mode is VariableMode & { breakpointId: unknown } =>
+    isRecord(mode) && 'breakpointId' in mode;
+  let modesWithBreakpointKey = 0;
+  let modesWithoutBreakpointKey = 0;
 
   if (collections.length > 0 && modeAwareCollections.length === 0) {
     issues.push({
@@ -225,17 +229,20 @@ function validateVariableModes(variables: DesignerData['variables']): CategoryRe
         // Mode names are user-defined. Track responsive-looking names for detail,
         // but do not fail the category on names alone.
         for (const mode of modes) {
-          const modeNameRaw = typeof mode.name === 'string' ? mode.name.trim() : '';
+          const modeNameRaw = typeof mode?.name === 'string' ? mode.name.trim() : '';
           if (modeNameRaw) modeNames.push(modeNameRaw);
-          if (breakpointDataAvailable) {
+          if (hasBreakpointKey(mode)) {
+            modesWithBreakpointKey++;
             if (typeof mode.breakpointId === 'string' && mode.breakpointId !== '') {
               breakpointBoundModeNames.push(modeNameRaw || String(mode.id));
             }
             continue;
           }
+          modesWithoutBreakpointKey++;
           const modeName = modeNameRaw.toLowerCase();
           if (responsiveModeNames.some(keyword => modeName.includes(keyword))) {
             responsiveModeNamesDetected = true;
+            nameMatchedModeNames.push(modeNameRaw);
           }
         }
       }
@@ -272,30 +279,42 @@ function validateVariableModes(variables: DesignerData['variables']): CategoryRe
     }
   }
 
+  // Stats shape follows the data source. Legacy (no breakpoint keys) keeps the
+  // pre-2.2 shape byte-for-byte. 'breakpoint' means every mode reported the key;
+  // 'mixed' means some modes fell back to the name heuristic, listed separately
+  // so a reviewer can see which credit came from names rather than bindings.
+  const sharedStats = {
+    totalModes,
+    collectionsWithModes,
+    modeNames: modeNames.slice(0, 10),
+    modeDataAvailable: true,
+    collectionsCheckedForModes: modeAwareCollections.length
+  };
+  let stats: Record<string, unknown>;
+  if (modesWithBreakpointKey === 0) {
+    stats = { ...sharedStats, hasResponsiveModes: responsiveModeNamesDetected, responsiveModeNamesDetected };
+  } else if (modesWithoutBreakpointKey === 0) {
+    stats = {
+      ...sharedStats,
+      hasResponsiveModes: breakpointBoundModeNames.length > 0,
+      responsiveModeSource: 'breakpoint',
+      breakpointBoundModeNames: breakpointBoundModeNames.slice(0, 10)
+    };
+  } else {
+    stats = {
+      ...sharedStats,
+      hasResponsiveModes: breakpointBoundModeNames.length > 0 || responsiveModeNamesDetected,
+      responsiveModeSource: 'mixed',
+      breakpointBoundModeNames: breakpointBoundModeNames.slice(0, 10),
+      nameMatchedModeNames: nameMatchedModeNames.slice(0, 10)
+    };
+  }
+
   return {
     category: 'Variable Modes',
     passed: issues.filter(i => i.severity === 'error').length === 0,
     issues,
-    stats: breakpointDataAvailable
-      ? {
-          totalModes,
-          collectionsWithModes,
-          hasResponsiveModes: breakpointBoundModeNames.length > 0,
-          responsiveModeSource: 'breakpoint',
-          breakpointBoundModeNames: breakpointBoundModeNames.slice(0, 10),
-          modeNames: modeNames.slice(0, 10),
-          modeDataAvailable: true,
-          collectionsCheckedForModes: modeAwareCollections.length
-        }
-      : {
-          totalModes,
-          collectionsWithModes,
-          hasResponsiveModes: responsiveModeNamesDetected,
-          responsiveModeNamesDetected,
-          modeNames: modeNames.slice(0, 10),
-          modeDataAvailable: true,
-          collectionsCheckedForModes: modeAwareCollections.length
-        }
+    stats
   };
 }
 
@@ -313,11 +332,15 @@ function validateComponents(components: DesignerData['components']): CategoryRes
   const codeComponentNames: string[] = [];
   const libraryComponentNames: string[] = [];
   const libraryNames = new Set<string>();
+  // The 2.2 extension sends `codeComponent: null, library: null` on runtimes that
+  // predate the getters. Only a measured value counts as reported; otherwise the
+  // UI would print "Code components: 0" for data that was never collected.
   const componentMetadataReported = components.some(component =>
-    component && ('codeComponent' in component || 'library' in component)
+    isRecord(component) && (typeof component.codeComponent === 'boolean' || component.library != null)
   );
 
   for (const component of components) {
+    if (!isRecord(component)) continue;
     const fromLibrary = component.library != null && typeof component.library === 'object';
     const label = component.name || String(component.id);
     if (component.codeComponent === true) codeComponentNames.push(label);
@@ -327,7 +350,9 @@ function validateComponents(components: DesignerData['components']): CategoryRes
     }
 
     if (component.name) {
-      if (!fromLibrary && !isValidTitleCase(component.name)) {
+      // Read-only components (including ReadOnlyCodeComponent, which has no
+      // library) cannot be renamed by the creator, so they are not naming-checked.
+      if (!fromLibrary && component.readOnly !== true && !isValidTitleCase(component.name)) {
         invalidNames.push(component.name);
       }
 
@@ -437,8 +462,13 @@ function validateStyles(
     }
 
     if (style.name) {
-      // Library imports (Shared Library, AI Site Generation) were not named by the creator.
-      if (style.source !== 'library' && !isValidClassName(style.name)) {
+      // Naming applies to creator-authored class selectors only. Library imports
+      // (Shared Library, AI Site Generation) were not named by the creator, and
+      // tag/element/descendant styles carry Designer-generated names. This is an
+      // exclusion, not an allow-list, so legacy payloads ('class', or any other
+      // value) keep the old behavior.
+      const generatedName = style.type === 'tag' || style.type === 'element' || style.type === 'descendant';
+      if (!generatedName && style.source !== 'library' && !isValidClassName(style.name)) {
         inconsistentNaming.push(style.name);
       }
 
@@ -527,18 +557,29 @@ function validateStyles(
 }
 
 const PX_VALUE = /^\s*(\d+(?:\.\d+)?)px\s*$/i;
+const RELATIVE_WIDTH_VALUE = /^\s*\d+(?:\.\d+)?(?:%|vw)\s*$/i;
 const OVERFLOW_PROPERTIES = ['width', 'min-width'] as const;
+
+function pxValue(value: unknown): number | null {
+  const match = typeof value === 'string' ? value.match(PX_VALUE) : null;
+  return match ? Number(match[1]) : null;
+}
 
 /**
  * Styles whose explicit width/min-width at a max-width-bounded breakpoint is a px
  * value wider than that breakpoint. Only explicit breakpoint overrides are
- * considered (not values inherited from the base breakpoint), and max-width
- * clamping is not modelled, so this stays a warning.
+ * considered (not values inherited from the base breakpoint). A max-width set at
+ * the same breakpoint clamps the box: any %/vw max-width, or a px max-width that
+ * fits the breakpoint, suppresses the finding. Other layout effects (flex/grid
+ * shrink, overflow: hidden) are not modelled, so this stays a warning.
+ *
+ * Each entry is a plain string ("Hero Card (Tablet, Mobile landscape)") because
+ * the extension panel renders `details.sample` items with String(item).
  */
 function findFixedWidthOverflow(
   styles: DesignerData['styles'],
   mediaQueries: DesignerData['mediaQueries']
-): Array<{ style: string; breakpoints: string[] }> {
+): string[] {
   if (!Array.isArray(mediaQueries) || mediaQueries.length === 0) return [];
   const bounded = new Map(
     mediaQueries
@@ -547,7 +588,7 @@ function findFixedWidthOverflow(
   );
   if (bounded.size === 0) return [];
 
-  const results: Array<{ style: string; breakpoints: string[] }> = [];
+  const results: string[] = [];
   for (const style of styles) {
     const byBreakpoint = style.breakpointProperties;
     if (!byBreakpoint || typeof byBreakpoint !== 'object') continue;
@@ -556,15 +597,24 @@ function findFixedWidthOverflow(
     for (const [breakpointId, mq] of bounded) {
       const props = byBreakpoint[breakpointId];
       if (!props) continue;
+      const limit = mq.maxWidth as number;
+
+      const maxWidth = props['max-width'];
+      const maxWidthPx = pxValue(maxWidth);
+      const clamped =
+        (typeof maxWidth === 'string' && RELATIVE_WIDTH_VALUE.test(maxWidth)) ||
+        (maxWidthPx !== null && maxWidthPx <= limit);
+      if (clamped) continue;
+
       const overflows = OVERFLOW_PROPERTIES.some((prop) => {
-        const match = typeof props[prop] === 'string' ? props[prop].match(PX_VALUE) : null;
-        return match !== null && Number(match[1]) > (mq.maxWidth as number);
+        const px = pxValue(props[prop]);
+        return px !== null && px > limit;
       });
       if (overflows) breakpoints.push(mq.name || mq.id);
     }
 
     if (breakpoints.length > 0) {
-      results.push({ style: style.name || style.id, breakpoints });
+      results.push(`${style.name || style.id} (${breakpoints.join(', ')})`);
     }
   }
   return results;
@@ -935,6 +985,15 @@ function validateDesignerAssets(assets: DesignerData['assets']): CategoryResult 
 }
 
 // --- Helper Functions ---
+
+/**
+ * POST /api/validate accepts arbitrary JSON, so array elements may be primitives.
+ * The `in` operator throws on non-objects; guard before using it.
+ */
+function isRecord(value: unknown): value is Record<string, any> {
+  return typeof value === 'object' && value !== null;
+}
+
 function isValidTitleCase(name: string): boolean {
   if (!name || /[_-]/.test(name)) return false;
   const parts = name.trim().split(/\s+/);

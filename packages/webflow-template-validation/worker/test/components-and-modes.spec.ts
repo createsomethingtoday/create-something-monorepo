@@ -97,6 +97,58 @@ describe('Variable modes: breakpoint-bound detection', () => {
 	});
 });
 
+describe('Variable modes: per-mode breakpoint decision', () => {
+	// The extension omits `breakpointId` for a mode whose getBreakpoint() rejected.
+	// That mode must fall back to the name heuristic instead of being read as manual.
+	it('credits a mode without a breakpointId key by name while a sibling is breakpoint-bound', async () => {
+		const modes = await category(
+			baseDesignerData({
+				variables: modeData([
+					{ id: 'm1', name: 'Tablet' },
+					{ id: 'm2', name: 'Compact', breakpointId: 'medium' }
+				])
+			}),
+			'Variable Modes'
+		);
+
+		expect(modes.issues.map((i) => [i.id, i.severity])).toEqual([['modes.good', 'info']]);
+		expect(modes.stats?.hasResponsiveModes).toBe(true);
+		expect(modes.stats?.responsiveModeSource).toBe('mixed');
+		expect(modes.stats?.breakpointBoundModeNames).toEqual(['Compact']);
+		expect(modes.stats?.nameMatchedModeNames).toEqual(['Tablet']);
+	});
+
+	it('still reports a pure breakpoint source when every mode carries the key', async () => {
+		const modes = await category(
+			baseDesignerData({
+				variables: modeData([
+					{ id: 'm1', name: 'Tablet', breakpointId: null },
+					{ id: 'm2', name: 'Compact', breakpointId: 'medium' }
+				])
+			}),
+			'Variable Modes'
+		);
+		expect(modes.stats?.responsiveModeSource).toBe('breakpoint');
+		expect(modes.stats?.nameMatchedModeNames).toBeUndefined();
+	});
+
+	it('does not credit a keyless mode whose name is not responsive-looking', async () => {
+		const modes = await category(
+			baseDesignerData({
+				variables: modeData([
+					{ id: 'm1', name: 'Brand Dark' },
+					{ id: 'm2', name: 'Studio', breakpointId: null }
+				])
+			}),
+			'Variable Modes'
+		);
+		expect(modes.stats?.hasResponsiveModes).toBe(false);
+		expect(modes.stats?.responsiveModeSource).toBe('mixed');
+		expect(modes.stats?.breakpointBoundModeNames).toEqual([]);
+		expect(modes.stats?.nameMatchedModeNames).toEqual([]);
+	});
+});
+
 describe('Components: library and code components', () => {
 	it('legacy payload without the new fields validates identically', async () => {
 		const components = await category(
@@ -154,6 +206,65 @@ describe('Components: library and code components', () => {
 		expect(components.issues.some((i) => i.id === 'components.excellent')).toBe(true);
 		expect(components.passed).toBe(true);
 		expect(components.stats).toMatchObject({ codeComponents: 2, libraryComponents: 1 });
+	});
+
+	// The 2.2 extension sends `codeComponent: null, library: null` when the Designer
+	// runtime predates those getters. Null means "not reported", not "zero".
+	it('treats all-null 2.2 metadata as not reported', async () => {
+		const components = await category(
+			baseDesignerData({
+				components: REQUIRED_COMPONENTS.map((c) => ({ ...c, readOnly: null, codeComponent: null, library: null }))
+			}),
+			'Components'
+		);
+
+		expect(components.stats).toEqual({ totalComponents: 3, navComponents: 1, footerComponents: 1, ctaComponents: 1 });
+		expect(components.issues.map((i) => i.id)).toEqual(['components.excellent']);
+	});
+
+	// ReadOnlyCodeComponent: read-only, no library. The creator cannot rename it.
+	it('does not naming-check read-only components even when they have no library', async () => {
+		const components = await category(
+			baseDesignerData({
+				components: [
+					...REQUIRED_COMPONENTS,
+					{ id: 'c_ro', name: 'vendor_map-embed', type: 'component', readOnly: true, codeComponent: true, library: null }
+				]
+			}),
+			'Components'
+		);
+
+		expect(components.issues.some((i) => i.id === 'components.naming')).toBe(false);
+		expect(components.issues.find((i) => i.id === 'components.code-components-present')?.details).toEqual({
+			names: ['vendor_map-embed']
+		});
+		expect(components.issues.filter((i) => i.severity === 'error')).toEqual([]);
+	});
+});
+
+describe('Malformed payloads: primitives inside arrays', () => {
+	// POST /api/validate accepts arbitrary JSON. Before the 2.2 metadata checks, a
+	// string element simply matched nothing; it must not become a 500.
+	it('does not throw when components contains a string', async () => {
+		const components = await category(baseDesignerData({ components: ['Navbar'] }), 'Components');
+
+		expect(components.stats).toEqual({ totalComponents: 1, navComponents: 0, footerComponents: 0, ctaComponents: 0 });
+		expect(components.issues.map((i) => [i.id, i.severity])).toEqual([['components.missing-required', 'warning']]);
+	});
+
+	it('does not throw when modes contains a string', async () => {
+		const modes = await category(baseDesignerData({ variables: modeData(['Tablet'] as any) }), 'Variable Modes');
+
+		expect(modes.issues.map((i) => [i.id, i.severity])).toEqual([['modes.good', 'info']]);
+		expect(modes.stats).toEqual({
+			totalModes: 1,
+			collectionsWithModes: 1,
+			hasResponsiveModes: false,
+			responsiveModeNamesDetected: false,
+			modeNames: [],
+			modeDataAvailable: true,
+			collectionsCheckedForModes: 1
+		});
 	});
 });
 
