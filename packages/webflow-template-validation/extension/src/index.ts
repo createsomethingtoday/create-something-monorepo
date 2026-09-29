@@ -20,10 +20,12 @@ import { createPageMetadataDetailsHTML } from './page-metadata-details';
 import { buildValidationSubmitIssue } from './validation-submit-payload';
 import {
   isTagStyle,
-  readBreakpointProperties,
   readMediaQueries,
   readStyleMetadata,
-  shouldReadBreakpoints,
+  readStyleName,
+  readStyleProperties,
+  shouldIncludeStyle,
+  summarizeBreakpointReadFailures,
   toPayloadStyleType,
   type BreakpointProperties,
   type MediaQueryInfo,
@@ -2274,20 +2276,34 @@ async function collectProjectData(webflow: WebflowApi): Promise<ProjectData> {
     if (webflow.getAllStyles) {
       const styles = await webflow.getAllStyles() || [];
       const styleData: any[] = [];
-      const mediaQueries = await readMediaQueries(webflow);
+      const mediaQueryResult = await readMediaQueries(webflow);
+      const mediaQueries = mediaQueryResult.mediaQueries;
       if (mediaQueries.length > 0) {
         data.mediaQueries = mediaQueries;
       }
+      if (mediaQueryResult.error !== undefined) {
+        console.warn('Could not fetch media queries:', mediaQueryResult.error);
+        data.collectionWarnings!.push({
+          source: 'Media Queries',
+          message: 'Failed to collect site breakpoints',
+          error: mediaQueryResult.error
+        });
+      }
+      // One representative message per style whose breakpoint reads failed;
+      // aggregated into a single warning after the loop.
+      const breakpointReadFailures: string[] = [];
 
       for (const style of styles) {
         try {
-          const name = (await style.getName()) || null;
           const id = style.id;
+          // Read the sync taxonomy BEFORE any async Style operation: element-
+          // scoped styles reject most operations (resourceMissing), and the
+          // include/skip decision depends on the type.
           const meta = readStyleMetadata(style);
+          const name = await readStyleName(style);
           const styleType = toPayloadStyleType(meta);
 
-          if (name && !name.startsWith('_')) {
-            let properties: Record<string, any> = {};
+          if (shouldIncludeStyle(meta, name)) {
             let isHtmlTag = false;
             let hasVariables = false;
             let breakpointProperties: BreakpointProperties | undefined;
@@ -2296,44 +2312,45 @@ async function collectProjectData(webflow: WebflowApi): Promise<ProjectData> {
             // Prefer the Designer's own taxonomy; otherwise exact tag names or
             // Webflow's tag-selector display names only — substring matching
             // ("a", "p") would match nearly every class.
-            if (isTagStyle(meta, name)) {
+            if (isTagStyle(meta, name ?? '')) {
               isHtmlTag = true;
               data.enhancedValidation!.styleSystem.hasHtmlTagStyles = true;
             }
-            
-            try {
-              // Get style properties for enhanced validation. Element-scoped
-              // styles reject most Style operations, so skip the round trip.
-              if (style.getProperties && meta.type !== 'element') {
-                properties = await style.getProperties() || {};
-                
-                // Check for variable usage in styles
-                Object.values(properties).forEach((value: any) => {
-                  if (typeof value === 'object' && value !== null && (value.type === 'variable' || value.id)) {
-                    hasVariables = true;
-                    data.enhancedValidation!.styleSystem.usesVariablesInStyles = true;
-                  }
-                });
-                
-                // Check for percentage-based line heights (Webflow Way requirement)
-                if (properties['line-height']) {
-                  const lineHeight = String(properties['line-height']);
-                  if (lineHeight.includes('%') || (!lineHeight.includes('px') && !lineHeight.includes('rem') && !isNaN(parseFloat(lineHeight)))) {
-                    data.enhancedValidation!.styleSystem.hasPercentageLineHeights = true;
-                  }
-                }
+
+            // Base properties and breakpoint overrides are independent reads;
+            // readStyleProperties issues them concurrently. Element-scoped
+            // styles issue no Style operations. A base read failure has
+            // already been logged and yields {}.
+            const { properties, breakpoints } = await readStyleProperties(style, meta, mediaQueries);
+
+            // Check for variable usage in styles
+            Object.values(properties).forEach((value: any) => {
+              if (typeof value === 'object' && value !== null && (value.type === 'variable' || value.id)) {
+                hasVariables = true;
+                data.enhancedValidation!.styleSystem.usesVariablesInStyles = true;
               }
-            } catch (propertyError) {
-              console.warn('Error getting style properties:', propertyError);
+            });
+
+            // Check for percentage-based line heights (Webflow Way requirement)
+            if (properties['line-height']) {
+              const lineHeight = String(properties['line-height']);
+              if (lineHeight.includes('%') || (!lineHeight.includes('px') && !lineHeight.includes('rem') && !isNaN(parseFloat(lineHeight)))) {
+                data.enhancedValidation!.styleSystem.hasPercentageLineHeights = true;
+              }
             }
 
-            if (mediaQueries.length > 0 && shouldReadBreakpoints(meta)) {
-              breakpointProperties = await readBreakpointProperties(style, mediaQueries);
+            if (breakpoints) {
+              breakpointProperties = breakpoints.properties;
+              if (breakpoints.errors.length > 0) {
+                breakpointReadFailures.push(breakpoints.errors[0]);
+              }
             }
-            
+
             styleData.push({
               id: id,
-              name: name,
+              // Element-scoped styles may have no usable name; the worker
+              // falls back to `style.name || style.id`.
+              name: name ?? '',
               type: styleType,
               properties: properties,
               isHtmlTag: isHtmlTag,
@@ -2345,6 +2362,12 @@ async function collectProjectData(webflow: WebflowApi): Promise<ProjectData> {
         } catch (styleError) {
           console.warn('Error processing style:', styleError);
         }
+      }
+
+      const breakpointWarning = summarizeBreakpointReadFailures(breakpointReadFailures);
+      if (breakpointWarning) {
+        console.warn('Breakpoint property reads failed:', breakpointWarning.message);
+        data.collectionWarnings!.push(breakpointWarning);
       }
 
       data.styles = styleData;
