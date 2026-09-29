@@ -251,3 +251,51 @@ test('updateTicketStatus surfaces a Zendesk safe_update rejection as ZENDESK_STA
     return true;
   });
 });
+
+test('getTicketThread pages past internal notes until the visible limit is filled', async () => {
+  const urls: string[] = [];
+  const page1 = {
+    comments: [
+      { id: 9, author_id: 22, public: false, plain_body: 'note c', created_at: '2026-09-29T18:00:00Z' },
+      { id: 8, author_id: 22, public: false, plain_body: 'note b', created_at: '2026-09-29T17:00:00Z' },
+    ],
+    users: [{ id: 22, name: 'Review Teammate', role: 'agent' }],
+    count: 5,
+    next_page: 'https://webflow2579.zendesk.com/api/v2/tickets/1199299/comments.json?page=2&per_page=2&sort_order=desc',
+  };
+  const page2 = {
+    comments: [
+      { id: 7, author_id: 22, public: false, plain_body: 'note a', created_at: '2026-09-29T16:00:00Z' },
+      { id: 6, author_id: 11, public: true, plain_body: 'Creator reply', created_at: '2026-09-29T15:00:00Z' },
+    ],
+    users: [{ id: 11, name: 'Creator Person', role: 'end-user' }],
+    count: 5,
+    next_page: 'https://webflow2579.zendesk.com/api/v2/tickets/1199299/comments.json?page=3&per_page=2&sort_order=desc',
+  };
+  const page3 = { comments: [{ id: 5, author_id: 22, public: true, body: 'Review feedback', created_at: '2026-09-29T14:00:00Z' }], users: [], count: 5, next_page: null };
+  const fetchFn: FetchFn = async (input) => {
+    const url = String(input);
+    urls.push(url);
+    if (!url.includes('/comments.json')) return jsonResponse(ticketJson);
+    if (url.includes('?page=3&')) return jsonResponse(page3);
+    if (url.includes('?page=2&')) return jsonResponse(page2);
+    return jsonResponse(page1);
+  };
+  const client = new ZendeskClient({ subdomain: 'webflow2579', email: 'a@b.c', apiToken: 't', fetchFn });
+
+  const thread = await client.getTicketThread('1199299', { limit: 2 });
+  assert.equal(urls.filter((u) => u.includes('/comments.json')).length, 3, 'keeps paging until two visible comments are found');
+  assert.deepEqual(thread.comments.map((c) => c.id), [5, 6]);
+  assert.equal(thread.comments[1]?.author.name, 'Creator Person');
+  assert.equal(thread.hasOlderComments, false);
+  assert.equal(thread.totalCommentsOnTicket, null);
+
+  const one = await client.getTicketThread('1199299', { limit: 1 });
+  assert.deepEqual(one.comments.map((c) => c.id), [6]);
+  assert.equal(one.hasOlderComments, true, 'a third page still exists');
+
+  const withNotes = await client.getTicketThread('1199299', { includeInternalNotes: true, limit: 2 });
+  assert.deepEqual(withNotes.comments.map((c) => c.id), [8, 9]);
+  assert.equal(withNotes.hasOlderComments, true);
+  assert.equal(withNotes.totalCommentsOnTicket, 5);
+});

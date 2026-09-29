@@ -7,7 +7,8 @@
 // the local FetchFn alias, `agentTicketUrl()` (subdomain-aware links),
 // `parseZendeskGroupId()`, renderer hardening (quotes escaped, only http(s)
 // link targets become anchors), safe_update/updated_stamp on status writes, and
-// hiding the raw comment count from public-only reads — port back per CRE-2176.
+// hiding the raw comment count from public-only reads, and paging until `limit`
+// visible comments are collected — port back per CRE-2176.
 
 type FetchFn = typeof fetch;
 
@@ -209,6 +210,8 @@ export interface TicketThread {
   assignee: TicketThreadAuthor | null;
   comments: TicketThreadComment[];
   totalCommentsOnTicket: number | null;
+  /** True when older visible comments exist beyond the returned window (raise `limit` to read further back). */
+  hasOlderComments: boolean;
   includesInternalNotes: boolean;
 }
 
@@ -452,29 +455,27 @@ export class ZendeskClient {
     const includeInternalNotes = options.includeInternalNotes === true;
     const headers = { Authorization: this.authHeader, Accept: 'application/json' };
 
-    const [ticketRes, commentsRes] = await Promise.all([
+    const firstCommentsUrl = `${this.baseUrl}/tickets/${ticketId}/comments.json?include=users&sort_order=desc&per_page=${limit}`;
+    const [ticketRes, firstCommentsRes] = await Promise.all([
       this.fetchFn(`${this.baseUrl}/tickets/${ticketId}.json?include=users`, { headers }),
-      this.fetchFn(
-        `${this.baseUrl}/tickets/${ticketId}/comments.json?include=users&sort_order=desc&per_page=${limit}`,
-        { headers },
-      ),
+      this.fetchFn(firstCommentsUrl, { headers }),
     ]);
-    for (const [label, res] of [['ticket', ticketRes], ['comments', commentsRes]] as const) {
-      if (!res.ok) {
-        let details: unknown;
-        try {
-          details = await res.json();
-        } catch {
-          details = await res.text().catch(() => undefined);
-        }
-        throw new ZendeskClientError(
-          res.status === 404 ? 'ZENDESK_TICKET_NOT_FOUND' : 'ZENDESK_REQUEST_FAILED',
-          `Zendesk ${label} read failed with status ${res.status}.`,
-          res.status,
-          { ticketId, details },
-        );
+    const failRead = async (label: string, res: Response): Promise<never> => {
+      let details: unknown;
+      try {
+        details = await res.json();
+      } catch {
+        details = await res.text().catch(() => undefined);
       }
-    }
+      throw new ZendeskClientError(
+        res.status === 404 ? 'ZENDESK_TICKET_NOT_FOUND' : 'ZENDESK_REQUEST_FAILED',
+        `Zendesk ${label} read failed with status ${res.status}.`,
+        res.status,
+        { ticketId, details },
+      );
+    };
+    if (!ticketRes.ok) await failRead('ticket', ticketRes);
+    if (!firstCommentsRes.ok) await failRead('comments', firstCommentsRes);
 
     type RawUser = { id?: number; name?: string; role?: string; email?: string };
     type RawTicket = {
@@ -502,21 +503,44 @@ export class ZendeskClient {
       }>;
       users?: RawUser[];
       count?: number;
+      next_page?: string | null;
     };
+    type RawComment = NonNullable<RawComments['comments']>[number];
     const ticketPayload = (await ticketRes.json()) as RawTicket;
-    const commentsPayload = (await commentsRes.json()) as RawComments;
 
+    // Zendesk cannot filter comments by visibility server-side. When private notes are
+    // excluded, the newest `limit` records may all be internal triage, so keep paging
+    // (newest → oldest) until `limit` visible comments are collected, a bounded number
+    // of pages have been read, or the history is exhausted.
+    const MAX_COMMENT_PAGES = 10;
     const users = new Map<number, RawUser>();
-    for (const u of [...(ticketPayload.users ?? []), ...(commentsPayload.users ?? [])]) {
-      if (typeof u.id === 'number') users.set(u.id, u);
+    for (const u of ticketPayload.users ?? []) if (typeof u.id === 'number') users.set(u.id, u);
+    const isVisible = (c: RawComment) => includeInternalNotes || c.public !== false;
+    const rawComments: RawComment[] = [];
+    let commentsPayload = (await firstCommentsRes.json()) as RawComments;
+    let totalCount = commentsPayload.count;
+    let pagesRead = 1;
+    let nextPage = commentsPayload.next_page ?? null;
+    for (;;) {
+      for (const u of commentsPayload.users ?? []) if (typeof u.id === 'number') users.set(u.id, u);
+      rawComments.push(...(commentsPayload.comments ?? []));
+      if (rawComments.filter(isVisible).length >= limit || !nextPage || pagesRead >= MAX_COMMENT_PAGES) break;
+      const res = await this.fetchFn(nextPage, { headers });
+      if (!res.ok) await failRead('comments', res);
+      commentsPayload = (await res.json()) as RawComments;
+      if (typeof commentsPayload.count === 'number') totalCount = commentsPayload.count;
+      nextPage = commentsPayload.next_page ?? null;
+      pagesRead += 1;
     }
+    const visibleNewestFirst = rawComments.filter(isVisible);
+    const hasOlderComments = visibleNewestFirst.length > limit || Boolean(nextPage);
     const author = (id: number | null | undefined): TicketThreadAuthor => {
       const u = typeof id === 'number' ? users.get(id) : undefined;
       return { id: id ?? null, name: u?.name ?? null, role: u?.role ?? null, email: u?.email ?? null };
     };
 
-    const comments = (commentsPayload.comments ?? [])
-      .filter((c) => includeInternalNotes || c.public !== false)
+    const comments = visibleNewestFirst
+      .slice(0, limit)
       .map<TicketThreadComment>((c) => ({
         id: c.id,
         createdAt: c.created_at ?? null,
@@ -544,7 +568,8 @@ export class ZendeskClient {
       assignee: typeof t.assignee_id === 'number' ? author(t.assignee_id) : null,
       comments,
       // The raw count includes private notes; only expose it when the caller was allowed to see them.
-      totalCommentsOnTicket: includeInternalNotes && typeof commentsPayload.count === 'number' ? commentsPayload.count : null,
+      totalCommentsOnTicket: includeInternalNotes && typeof totalCount === 'number' ? totalCount : null,
+      hasOlderComments,
       includesInternalNotes: includeInternalNotes,
     };
   }
