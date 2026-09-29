@@ -42,6 +42,10 @@ export const FIELD_IDS = {
     termsAndConditionsUrl: 'fldEmM7EFEPoMqHOa',
     websiteUrl: 'fld3OtovhDTyDO0uZ',
     supportEmailOrUrl: 'fldRq4MBDoxMhpiwH',
+    /** Linked 🎨Creator's email (rollup) and the 👀 Override that wins when set — requester for outbound tickets. */
+    creatorEmail: 'fldHhxmfSNMp117SP',
+    creatorEmailOverride: 'fldjCdCvHOy7dVwss',
+    creatorName: 'fldbkU8CKmDPtf83d',
     previewSiteUrl: 'fldROrXCnuZyKNCxW',
     promoVideoUrl: 'fldXlxAN7Afc8vUYS',
   },

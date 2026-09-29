@@ -1,5 +1,6 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
+import { createHash } from 'node:crypto';
 
 import type { AirtableClient, AppReviewVersion, CollaboratorRef } from './airtable.js';
 import { AirtableClientError, assertReviewerAssignmentReadOnly } from './airtable.js';
@@ -310,6 +311,16 @@ function ensureRequestChangesStatus(value: string | undefined) {
     },
   );
 }
+
+/** Idempotency key for an outbound ticket: same asset + requester + subject + message → same ticket. */
+export const OUTBOUND_EXTERNAL_ID_PREFIX = 'app-review-mcp:';
+function outboundTicketExternalId(assetId: string, requesterEmail: string, subject: string, message: string): string {
+  const digest = createHash('sha256').update(`${requesterEmail.toLowerCase()}\n${subject}\n${message}`).digest('hex').slice(0, 24);
+  return `${OUTBOUND_EXTERNAL_ID_PREFIX}${assetId}:${digest}`;
+}
+
+/** Zendesk tag values: letters, digits, underscore, hyphen, dot. */
+const ZENDESK_TAG_VALUE = /^[A-Za-z0-9_.-]+$/;
 
 function requireZendesk(getZendesk: ZendeskFactory, verb: 'reads' | 'writes'): ZendeskClient {
   const zendesk = getZendesk();
@@ -818,6 +829,119 @@ export function registerTools(
         return asSuccess({
           ...result,
           tickets: result.tickets.map((t) => ({ ...t, ticketUrl: `https://webflow2579.zendesk.com/agent/tickets/${t.ticketId}` })),
+        });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'app_review_create_ticket',
+    'Open a NEW Zendesk ticket to an app developer (outreach not tied to an existing submission thread — policy notices, clarifications, hold follow-ups). CREATOR-FACING: the message is emailed to the developer, so use only when the reviewer explicitly asks to send it and pass confirm_send=true. The requester is resolved from the asset\'s creator email (Override, else rollup); requester_email may override it. The ticket lands in the Marketplace Review Team group with a private provenance note first, then the public message as an agent update (that is what fires the email); the response reports whether Zendesk recorded the developer notification. Idempotent per asset+requester+subject+message (ZENDESK_OUTBOUND_TICKET_EXISTS on repeat). Does NOT touch the submission ticket linked on the version — use app_review_send_ticket_followup for that.',
+    {
+      asset_id: z.string().min(1).optional().describe('App asset record id. Provide exactly one of asset_id / version_id.'),
+      version_id: z.string().min(1).optional().describe('App version record id; its asset is used.'),
+      subject: z.string().min(1).max(150),
+      message: z.string().min(1).describe('Developer-facing Markdown, delivered verbatim (include greeting and sign-off).'),
+      internal_note: z.string().min(1).optional(),
+      tags: z.array(z.string().regex(ZENDESK_TAG_VALUE)).optional(),
+      requester_email: z.string().email().optional(),
+      confirm_send: z.boolean().default(false).describe('Must be true. Set it only after the reviewer has explicitly approved sending this exact message to this developer.'),
+    },
+    async ({ asset_id, version_id, subject, message, internal_note, tags, requester_email, confirm_send }) => {
+      try {
+        if (confirm_send !== true) {
+          throw new ZendeskClientError('SEND_CONFIRMATION_REQUIRED', 'Creating a ticket emails the developer. Pass confirm_send=true only after the reviewer has explicitly approved sending this exact message.', 400, { asset_id, version_id });
+        }
+        if ((asset_id ? 1 : 0) + (version_id ? 1 : 0) !== 1) {
+          throw new ZendeskClientError('ASSET_REFERENCE_REQUIRED', 'Provide exactly one of asset_id or version_id.', 400, { asset_id, version_id });
+        }
+        const zendesk = requireZendesk(getZendesk, 'writes');
+        let linkedTicketForHint: string | undefined;
+        let assetIdToLoad = asset_id!;
+        if (version_id) {
+          const version = await requireAppVersion(getClient(), version_id);
+          linkedTicketForHint = version.zendeskTicketId ?? undefined;
+          assetIdToLoad = version.assetId!;
+        }
+        const asset = await requireAppAsset(getClient(), assetIdToLoad);
+        const requesterEmail = requester_email ?? asset.creatorEmail;
+        if (!requesterEmail) {
+          throw new ZendeskClientError('NO_CREATOR_EMAIL', 'The asset has no creator email in Airtable (🎨📧 Creator Email / Override). Pass requester_email explicitly.', 404, { asset_id: asset.assetId });
+        }
+        const provenance = internal_note ?? `Outbound ticket opened via App Review MCP for app "${asset.appName}" (${asset.assetId}).`;
+        const publicHtml = renderCreatorFacingHtml(message);
+        const externalId = outboundTicketExternalId(asset.assetId, requesterEmail, subject, message);
+        const result = await zendesk.createOutboundTicket({
+          requesterEmail,
+          requesterName: asset.creatorName,
+          subject,
+          publicHtml,
+          internalNoteHtml: renderCreatorFacingHtml(provenance),
+          tags: ['app_review_mcp_outbound', ...(tags ?? [])],
+          externalId,
+        });
+        return asSuccess({
+          asset_id: asset.assetId,
+          app_name: asset.appName,
+          requester_email: requesterEmail,
+          requester_email_source: requester_email ? 'override' : 'airtable',
+          ticket_id: result.ticketId,
+          ticket_url: zendesk.agentTicketUrl(result.ticketId),
+          external_id: externalId,
+          status: result.status,
+          group_id: result.groupId,
+          brand_id: result.brandId,
+          requester_notified: result.requesterNotified,
+          steps: result.steps,
+          html_body: publicHtml,
+          next_step: version_id
+            ? `Ask the reviewer whether this new ticket should become the version's linked review ticket (🧘ZD ID), replacing ${linkedTicketForHint ?? 'the current empty link'}. If yes, call app_review_link_version_ticket with version_id, ticket_id=${result.ticketId}, expected_current_ticket_id=${linkedTicketForHint ? `"${linkedTicketForHint}"` : 'null'}, confirm_replace=true.`
+            : 'This ticket is not linked to any version. To make it a version\'s review ticket, call app_review_link_version_ticket after the reviewer confirms.',
+        });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'app_review_link_version_ticket',
+    'Make a Zendesk ticket the linked review ticket (🧘ZD ID) of an app version — typically after app_review_create_ticket, when the reviewer wants the new ticket to replace the submission ticket. Decision emails for the version are sent to the linked ticket, so this changes where the developer hears from us. The ticket is read from Zendesk first and must be in the Marketplace Review group and either carry this asset\'s outbound key or have the asset\'s creator as requester. Requires a fresh-read precondition (expected_current_ticket_id from app_review_get_version; null when empty) and confirm_replace=true after the reviewer has explicitly agreed.',
+    {
+      version_id: z.string().min(1),
+      ticket_id: z.string().regex(/^\d+$/),
+      expected_current_ticket_id: z.string().regex(/^\d+$/).nullable(),
+      confirm_replace: z.boolean().default(false),
+    },
+    async ({ version_id, ticket_id, expected_current_ticket_id, confirm_replace }) => {
+      try {
+        if (confirm_replace !== true) {
+          throw new ZendeskClientError('REPLACE_CONFIRMATION_REQUIRED', 'Relinking changes which Zendesk ticket receives this version\'s decision emails. Pass confirm_replace=true only after the reviewer has explicitly agreed.', 400, { version_id, ticket_id });
+        }
+        const zendesk = requireZendesk(getZendesk, 'reads');
+        const version = await requireAppVersion(getClient(), version_id);
+        const asset = await requireAppAsset(getClient(), version.assetId!);
+        const summary = await zendesk.getTicketSummary(ticket_id);
+        if (summary.groupId !== zendesk.marketplaceGroupId) {
+          throw new ZendeskClientError('ZENDESK_TICKET_OUT_OF_SCOPE', `Ticket ${ticket_id} is not in the Marketplace Review group.`, 403, { ticket_id, group_id: summary.groupId, marketplace_group_id: zendesk.marketplaceGroupId });
+        }
+        const createdForAsset = summary.externalId?.startsWith(`${OUTBOUND_EXTERNAL_ID_PREFIX}${asset.assetId}:`) === true;
+        const requesterMatches = Boolean(summary.requesterEmail && asset.creatorEmail) && summary.requesterEmail!.toLowerCase() === asset.creatorEmail!.toLowerCase();
+        if (!createdForAsset && !requesterMatches) {
+          throw new ZendeskClientError('TICKET_CREATOR_MISMATCH', `Ticket ${ticket_id} was not created for this asset and its requester does not match the asset's creator email; refusing to relink.`, 409, { ticket_id, asset_id: asset.assetId, ticket_requester_email: summary.requesterEmail, asset_creator_email: asset.creatorEmail ?? null, ticket_external_id: summary.externalId });
+        }
+        const result = await getClient().setVersionZendeskTicket(version_id, ticket_id, expected_current_ticket_id);
+        return asSuccess({
+          version_id,
+          asset_id: asset.assetId,
+          ticket_id,
+          ticket_url: zendesk.agentTicketUrl(ticket_id),
+          ticket_verified_by: createdForAsset ? 'external_id' : 'requester_email',
+          previous_ticket_id: result.previousTicketId,
+          changed: result.previousTicketId !== ticket_id,
+          version: result.version,
         });
       } catch (error) {
         return asError(error);
