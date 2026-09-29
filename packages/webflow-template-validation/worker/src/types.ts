@@ -220,6 +220,16 @@ export interface DesignerData {
 	pages: PageData[];
 	assets: AssetData[];
 	siteInfo?: SiteInfo;
+	/** Site breakpoints (Designer API 2.2+). Absent on older extensions/runtimes. */
+	mediaQueries?: MediaQueryData[];
+}
+
+export interface MediaQueryData {
+	id: string;
+	name: string;
+	minWidth: number | null;
+	maxWidth: number | null;
+	isBase: boolean;
 }
 
 export interface VariableData {
@@ -236,6 +246,9 @@ export interface VariableCollection {
 export interface VariableMode {
 	id: string;
 	name: string;
+	// Designer API 2.2+: breakpoint driving an automatic mode, null for a manual
+	// mode. Absent when the extension/runtime could not report it.
+	breakpointId?: string | null;
 }
 
 export interface Variable {
@@ -251,15 +264,32 @@ export interface ComponentData {
 	type: string;
 	instances?: number;
 	isNested?: boolean;
+	// Designer API 2.2+. Absent or null when the runtime did not report the field.
+	readOnly?: boolean | null;
+	codeComponent?: boolean | null;
+	library?: ComponentLibraryInfo | null;
+}
+
+export interface ComponentLibraryInfo {
+	id: string | null;
+	name: string | null;
 }
 
 export interface StyleData {
 	id: string;
 	name: string;
+	/**
+	 * 'global' | 'combo' | 'tag' | 'element' | 'descendant' from Designer API 2.2+.
+	 * Older extensions always send 'class'.
+	 */
 	type: string;
+	/** 'library' for Shared Library / AI Site Generation imports. Absent on older extensions. */
+	source?: 'site' | 'library';
 	isHtmlTag?: boolean;
 	hasVariables?: boolean;
 	properties?: Record<string, any>;
+	/** Whitelisted properties (width, min-width, max-width) keyed by breakpoint id. */
+	breakpointProperties?: Record<string, Record<string, string>>;
 }
 
 export interface PageData {

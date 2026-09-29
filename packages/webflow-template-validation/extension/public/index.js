@@ -1,7 +1,7 @@
 "use strict";
 (() => {
   // src/utils.ts
-  var EXTENSION_VERSION = "1.3.5";
+  var EXTENSION_VERSION = "1.3.7";
   function filterRetiredAccessibilityIssues(issues) {
     return issues.filter((issue) => issue.id !== "color-contrast-violations");
   }
@@ -213,6 +213,201 @@
       location: issue.location || issue.details?.location,
       details: pages || duplicates ? { pages, duplicates } : void 0
     };
+  }
+
+  // src/style-metadata.ts
+  var STYLE_TYPES = /* @__PURE__ */ new Set(["global", "combo", "tag", "element", "descendant"]);
+  var BREAKPOINT_PROPERTY_WHITELIST = ["width", "min-width", "max-width"];
+  function safeRead(read) {
+    try {
+      return read();
+    } catch {
+      return void 0;
+    }
+  }
+  function errorMessage(error) {
+    return error instanceof Error ? error.message : String(error);
+  }
+  function readStyleMetadata(style) {
+    if (!style || typeof style !== "object") return { type: null, source: null };
+    const target = style;
+    let type = safeRead(() => target.type);
+    if (typeof type !== "string" && typeof target.getType === "function") {
+      type = safeRead(() => target.getType());
+    }
+    let source = safeRead(() => target.source);
+    if (typeof source !== "string" && typeof target.isFromLibrary === "function") {
+      const fromLibrary = safeRead(() => target.isFromLibrary());
+      if (typeof fromLibrary === "boolean") source = fromLibrary ? "library" : "site";
+    }
+    return {
+      type: typeof type === "string" && STYLE_TYPES.has(type) ? type : null,
+      source: source === "site" || source === "library" ? source : null
+    };
+  }
+  async function readStyleName(style) {
+    if (!style || typeof style !== "object") return null;
+    const target = style;
+    const syncName = safeRead(() => target.name);
+    if (typeof syncName === "string") return syncName || null;
+    if (typeof target.getName !== "function") return null;
+    try {
+      const name = await target.getName();
+      return typeof name === "string" && name ? name : null;
+    } catch {
+      return null;
+    }
+  }
+  function shouldIncludeStyle(meta, name) {
+    if (meta.type === "element") return true;
+    return !!name && !name.startsWith("_");
+  }
+  function isTagStyle(meta, name) {
+    if (meta.type !== null) return meta.type === "tag";
+    return isHtmlTagStyleName(name);
+  }
+  function toPayloadStyleType(meta) {
+    return meta.type ?? "class";
+  }
+  function shouldReadBreakpoints(meta) {
+    return meta.type === null || meta.type === "global" || meta.type === "combo";
+  }
+  async function readMediaQueries(webflow) {
+    const api = webflow;
+    if (!api || typeof api.getAllMediaQueries !== "function") return { mediaQueries: [] };
+    try {
+      const result = await api.getAllMediaQueries();
+      if (!Array.isArray(result)) return { mediaQueries: [] };
+      const mediaQueries = result.filter((mq) => !!mq && typeof mq === "object" && typeof mq.id === "string").map((mq) => ({
+        id: mq.id,
+        name: typeof mq.name === "string" ? mq.name : String(mq.id),
+        minWidth: typeof mq.minWidth === "number" ? mq.minWidth : null,
+        maxWidth: typeof mq.maxWidth === "number" ? mq.maxWidth : null,
+        isBase: mq.isBase === true
+      }));
+      return { mediaQueries };
+    } catch (error) {
+      return { mediaQueries: [], error: errorMessage(error) };
+    }
+  }
+  async function readBreakpointProperties(style, mediaQueries) {
+    const target = style;
+    if (!target || typeof target.getProperties !== "function") return void 0;
+    const bounded = mediaQueries.filter((mq) => !mq.isBase && mq.maxWidth !== null);
+    if (bounded.length === 0) return void 0;
+    const errors = [];
+    const entries = await Promise.all(
+      bounded.map(async (mq) => {
+        try {
+          const props = await target.getProperties({ breakpoint: mq.id });
+          if (!props || typeof props !== "object") return null;
+          const kept = {};
+          for (const key of BREAKPOINT_PROPERTY_WHITELIST) {
+            const value = props[key];
+            if (typeof value === "string" || typeof value === "number") kept[key] = String(value);
+          }
+          return Object.keys(kept).length > 0 ? [mq.id, kept] : null;
+        } catch (error) {
+          errors.push(errorMessage(error));
+          return null;
+        }
+      })
+    );
+    const result = {};
+    for (const entry of entries) {
+      if (entry) result[entry[0]] = entry[1];
+    }
+    return { properties: Object.keys(result).length > 0 ? result : void 0, errors };
+  }
+  function summarizeBreakpointReadFailures(failures) {
+    if (failures.length === 0) return null;
+    const count = failures.length;
+    return {
+      source: "Style Breakpoints",
+      message: `Failed to read breakpoint properties for ${count} ${count === 1 ? "style" : "styles"}`,
+      error: failures[0]
+    };
+  }
+  async function readStyleProperties(style, meta, mediaQueries) {
+    const target = style;
+    const canReadBase = !!target && typeof target.getProperties === "function" && meta.type !== "element";
+    const basePromise = (async () => {
+      if (!canReadBase) return {};
+      try {
+        const props = await target.getProperties();
+        return props && typeof props === "object" ? props : {};
+      } catch (propertyError) {
+        console.warn("Error getting style properties:", propertyError);
+        return {};
+      }
+    })();
+    const breakpointPromise = mediaQueries.length > 0 && shouldReadBreakpoints(meta) ? readBreakpointProperties(style, mediaQueries) : Promise.resolve(void 0);
+    const [properties, breakpoints] = await Promise.all([basePromise, breakpointPromise]);
+    return { properties, breakpoints };
+  }
+
+  // src/component-metadata.ts
+  function readField(source, key) {
+    if (!source || typeof source !== "object") return void 0;
+    try {
+      return source[key];
+    } catch {
+      return void 0;
+    }
+  }
+  function asBoolean(value) {
+    return typeof value === "boolean" ? value : null;
+  }
+  function asString(value) {
+    return typeof value === "string" ? value : null;
+  }
+  function readComponentMetadata(component) {
+    const library = readField(component, "library");
+    let libraryMetadata = null;
+    if (library && typeof library === "object") {
+      libraryMetadata = {
+        id: asString(readField(library, "id")),
+        name: asString(readField(library, "name"))
+      };
+    }
+    return {
+      readOnly: asBoolean(readField(component, "readOnly")),
+      codeComponent: asBoolean(readField(component, "codeComponent")),
+      library: libraryMetadata
+    };
+  }
+  async function componentContainsComponentInstance(component, maxDepth = 4) {
+    if (readComponentMetadata(component).readOnly === true) return false;
+    const root = await component.getRootElement();
+    if (!root) return false;
+    let frontier = [root];
+    for (let depth = 0; depth < maxDepth && frontier.length > 0; depth++) {
+      const next = [];
+      for (const element of frontier) {
+        if (element.type === "ComponentInstance") return true;
+        if ("children" in element && element.children && typeof element.getChildren === "function") {
+          next.push(...await element.getChildren());
+        }
+      }
+      frontier = next;
+    }
+    return false;
+  }
+
+  // src/variable-mode-metadata.ts
+  var UNAVAILABLE = { available: false, breakpointId: null };
+  async function readVariableModeBreakpoint(mode) {
+    if (!mode || typeof mode !== "object") return UNAVAILABLE;
+    try {
+      const getBreakpoint = mode.getBreakpoint;
+      if (typeof getBreakpoint !== "function") return UNAVAILABLE;
+      const breakpoint = await getBreakpoint.call(mode);
+      if (breakpoint === null) return { available: true, breakpointId: null };
+      if (typeof breakpoint === "string" && breakpoint !== "") return { available: true, breakpointId: breakpoint };
+      return UNAVAILABLE;
+    } catch {
+      return UNAVAILABLE;
+    }
   }
 
   // src/index.ts
@@ -1566,22 +1761,6 @@
       return unavailable(error instanceof Error ? error.message : "Canvas analysis failed");
     }
   }
-  async function componentContainsComponentInstance(component, maxDepth = 4) {
-    const root = await component.getRootElement();
-    if (!root) return false;
-    let frontier = [root];
-    for (let depth = 0; depth < maxDepth && frontier.length > 0; depth++) {
-      const next = [];
-      for (const element of frontier) {
-        if (element.type === "ComponentInstance") return true;
-        if ("children" in element && element.children) {
-          next.push(...await element.getChildren());
-        }
-      }
-      frontier = next;
-    }
-    return false;
-  }
   async function collectProjectData(webflow) {
     const data = {
       variables: void 0,
@@ -1698,10 +1877,15 @@
                 for (const mode of modes) {
                   try {
                     const modeName = await mode.getName() || mode.id || "Unnamed Mode";
-                    modeList.push({
+                    const modeEntry = {
                       id: String(mode.id),
                       name: String(modeName)
-                    });
+                    };
+                    const breakpoint = await readVariableModeBreakpoint(mode);
+                    if (breakpoint.available) {
+                      modeEntry.breakpointId = breakpoint.breakpointId;
+                    }
+                    modeList.push(modeEntry);
                   } catch (modeError) {
                     console.warn("Error processing variable mode:", modeError);
                   }
@@ -1760,6 +1944,7 @@
               const lowerName = name.toLowerCase();
               let instances = 0;
               let isNested = false;
+              const metadata = readComponentMetadata(component);
               if (lowerName.includes("nav") || lowerName.includes("header") || lowerName.includes("menu")) {
                 data.enhancedValidation.componentArchitecture.hasNavbarComponent = true;
               }
@@ -1785,7 +1970,10 @@
                 name,
                 type: "component",
                 instances,
-                isNested
+                isNested,
+                readOnly: metadata.readOnly,
+                codeComponent: metadata.codeComponent,
+                library: metadata.library
               });
             }
           } catch (compError) {
@@ -1808,50 +1996,74 @@
       if (webflow.getAllStyles) {
         const styles = await webflow.getAllStyles() || [];
         const styleData = [];
+        const mediaQueryResult = await readMediaQueries(webflow);
+        const mediaQueries = mediaQueryResult.mediaQueries;
+        if (mediaQueries.length > 0) {
+          data.mediaQueries = mediaQueries;
+        }
+        if (mediaQueryResult.error !== void 0) {
+          console.warn("Could not fetch media queries:", mediaQueryResult.error);
+          data.collectionWarnings.push({
+            source: "Media Queries",
+            message: "Failed to collect site breakpoints",
+            error: mediaQueryResult.error
+          });
+        }
+        const breakpointReadFailures = [];
         for (const style of styles) {
           try {
-            const name = await style.getName() || null;
             const id = style.id;
-            const styleType = "class";
-            if (name && !name.startsWith("_")) {
-              let properties = {};
+            const meta = readStyleMetadata(style);
+            const name = await readStyleName(style);
+            const styleType = toPayloadStyleType(meta);
+            if (shouldIncludeStyle(meta, name)) {
               let isHtmlTag = false;
               let hasVariables = false;
-              if (isHtmlTagStyleName(name)) {
+              let breakpointProperties;
+              if (isTagStyle(meta, name ?? "")) {
                 isHtmlTag = true;
                 data.enhancedValidation.styleSystem.hasHtmlTagStyles = true;
               }
-              try {
-                if (style.getProperties) {
-                  properties = await style.getProperties() || {};
-                  Object.values(properties).forEach((value) => {
-                    if (typeof value === "object" && value !== null && (value.type === "variable" || value.id)) {
-                      hasVariables = true;
-                      data.enhancedValidation.styleSystem.usesVariablesInStyles = true;
-                    }
-                  });
-                  if (properties["line-height"]) {
-                    const lineHeight = String(properties["line-height"]);
-                    if (lineHeight.includes("%") || !lineHeight.includes("px") && !lineHeight.includes("rem") && !isNaN(parseFloat(lineHeight))) {
-                      data.enhancedValidation.styleSystem.hasPercentageLineHeights = true;
-                    }
-                  }
+              const { properties, breakpoints } = await readStyleProperties(style, meta, mediaQueries);
+              Object.values(properties).forEach((value) => {
+                if (typeof value === "object" && value !== null && (value.type === "variable" || value.id)) {
+                  hasVariables = true;
+                  data.enhancedValidation.styleSystem.usesVariablesInStyles = true;
                 }
-              } catch (propertyError) {
-                console.warn("Error getting style properties:", propertyError);
+              });
+              if (properties["line-height"]) {
+                const lineHeight = String(properties["line-height"]);
+                if (lineHeight.includes("%") || !lineHeight.includes("px") && !lineHeight.includes("rem") && !isNaN(parseFloat(lineHeight))) {
+                  data.enhancedValidation.styleSystem.hasPercentageLineHeights = true;
+                }
+              }
+              if (breakpoints) {
+                breakpointProperties = breakpoints.properties;
+                if (breakpoints.errors.length > 0) {
+                  breakpointReadFailures.push(breakpoints.errors[0]);
+                }
               }
               styleData.push({
                 id,
-                name,
+                // Element-scoped styles may have no usable name; the worker
+                // falls back to `style.name || style.id`.
+                name: name ?? "",
                 type: styleType,
                 properties,
                 isHtmlTag,
-                hasVariables
+                hasVariables,
+                ...meta.source ? { source: meta.source } : {},
+                ...breakpointProperties ? { breakpointProperties } : {}
               });
             }
           } catch (styleError) {
             console.warn("Error processing style:", styleError);
           }
+        }
+        const breakpointWarning = summarizeBreakpointReadFailures(breakpointReadFailures);
+        if (breakpointWarning) {
+          console.warn("Breakpoint property reads failed:", breakpointWarning.message);
+          data.collectionWarnings.push(breakpointWarning);
         }
         data.styles = styleData;
         data.collectionMetadata.totalStyles = styleData.length;
@@ -2472,8 +2684,8 @@
   }
   function showError(message) {
     const errorDisplay = document.getElementById("error-display");
-    const errorMessage = document.getElementById("error-message");
-    if (errorMessage) errorMessage.textContent = message;
+    const errorMessage2 = document.getElementById("error-message");
+    if (errorMessage2) errorMessage2.textContent = message;
     if (errorDisplay) {
       errorDisplay.style.display = "block";
       errorDisplay.classList.add("show");
@@ -3744,7 +3956,16 @@
       case "Variable Modes":
         addMetadataStat(details, "Modes", stats.totalModes);
         addMetadataStat(details, "Collections with modes", stats.collectionsWithModes);
-        if (stats.responsiveModeNamesDetected !== void 0) {
+        if (stats.responsiveModeSource === "breakpoint" || stats.responsiveModeSource === "mixed") {
+          const label = stats.responsiveModeSource === "mixed" ? "Responsive modes" : "Breakpoint modes";
+          addMetadataStat(details, label, formatBooleanStat(stats.hasResponsiveModes), { tone: booleanTone(stats.hasResponsiveModes) });
+          if (Array.isArray(stats.breakpointBoundModeNames) && stats.breakpointBoundModeNames.length > 0) {
+            addMetadataStat(details, "Breakpoint-bound", stats.breakpointBoundModeNames.slice(0, 5).join(", "));
+          }
+          if (Array.isArray(stats.nameMatchedModeNames) && stats.nameMatchedModeNames.length > 0) {
+            addMetadataStat(details, "Name-matched", stats.nameMatchedModeNames.slice(0, 5).join(", "));
+          }
+        } else if (stats.responsiveModeNamesDetected !== void 0) {
           addMetadataStat(details, "Responsive names", formatBooleanStat(stats.responsiveModeNamesDetected), { tone: booleanTone(stats.responsiveModeNamesDetected) });
         } else if (stats.hasResponsiveModes !== void 0) {
           addMetadataStat(details, "Responsive names", formatBooleanStat(stats.hasResponsiveModes), { tone: booleanTone(stats.hasResponsiveModes) });
@@ -3760,6 +3981,8 @@
         addMetadataStat(details, "Navigation", stats.navComponents);
         addMetadataStat(details, "Footer", stats.footerComponents);
         addMetadataStat(details, "CTA", stats.ctaComponents);
+        addMetadataStat(details, "Code components", stats.codeComponents);
+        addMetadataStat(details, "Library components", stats.libraryComponents);
         break;
       case "Styles":
         addMetadataStat(details, "Classes", stats.totalClasses);
