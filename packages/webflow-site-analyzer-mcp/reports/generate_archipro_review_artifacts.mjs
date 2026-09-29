@@ -286,7 +286,7 @@ mdLines.push(`- Express checklist: PASS ${expressCounts.pass}, FAIL ${expressCou
 mdLines.push(`- Designer strict score: ${output.summary.designerScore?.pass || 0} pass / ${output.summary.designerScore?.fail || 0} fail / ${output.summary.designerScore?.manual || 0} manual`);
 mdLines.push(`- Published crawl: ${output.summary.publishedCrawl?.auditedPages || 0} audited pages, ${output.summary.publishedCrawl?.failingPages || 0} pages with at least one fail`);
 mdLines.push(`- Snippet: v${output.summary.snippetInfo?.version || 'unknown'} with ${output.summary.snippetInfo?.toolCount || 0} tools`);
-mdLines.push(`- Sitemap: ${output.summary.sitemapStatus?.error ? `FAIL (${output.summary.sitemapStatus.error})` : 'PASS'}`);
+mdLines.push(`- Sitemap (discovery only, not a template requirement): ${output.summary.sitemapStatus?.error ? `not available (${output.summary.sitemapStatus.error})` : 'available'}`);
 mdLines.push('');
 mdLines.push('## Express Checklist Mapping');
 mdLines.push('');

@@ -389,6 +389,7 @@ export async function runPublishedSiteValidation(input: PublishedSiteValidationI
       'Accessibility coverage is limited to validator-detectable published-site signals; visual contrast and manual keyboard review still need reviewer judgment.',
       'Lorem/placeholder findings are review evidence, not automatic blockers; request changes only when the evidence points to authored customer-facing placeholder content.',
       'Alt-text findings should be treated as actionable only for editable content images/icons; generated Webflow video fallback/poster assets and intentionally decorative empty-alt images are not creator-fixable missing-alt failures.',
+      'A missing or 404 /sitemap.xml is not a template requirement: unhosted *.webflow.io demos have no Site plan, so Webflow does not serve the auto-generated sitemap. Do not cite it as a finding.',
       'GSAP/custom-code validation currently requires a public .webflow.io published URL.',
     ],
     results,

@@ -37,3 +37,9 @@ test('direct-Claude workflow exposes bounded E2B evidence without automating rev
   assert.doesNotMatch(REVIEW_WORKFLOW, /When in doubt, request changes/i);
   assert.doesNotMatch(REVIEW_WORKFLOW, /cite specific check IDs/i);
 });
+
+test('review workflow treats a missing sitemap as discovery context, not a template requirement', () => {
+  assert.match(REVIEW_WORKFLOW, /\/sitemap\.xml\\?`? is \*\*not\*\* a template requirement/);
+  assert.match(REVIEW_WORKFLOW, /never ask the creator to enable, fix, or republish a sitemap/);
+  assert.match(REVIEW_WORKFLOW, /withdraw that request explicitly/);
+});

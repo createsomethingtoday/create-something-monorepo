@@ -106,12 +106,15 @@ export const COMPREHENSIVE_REVIEW_CONTRACT = {
   ],
   utilityPagePolicy:
     'Required utility pages do not need root-only slugs. Treat a failed guessed path, such as /utility-pages/licenses, as a failed candidate path unless the site linked to it. Verify discoverable linked utility pages and required license text before calling a license page missing.',
+  sitemapPolicy:
+    'A /sitemap.xml file is not a template requirement. Webflow only serves the auto-generated sitemap for sites on a paid Site plan, and unhosted *.webflow.io template demos have no plan, so the Auto-generate sitemap setting cannot take effect there. Use a sitemap only for page discovery when one exists; if it is missing or returns 404, fall back to crawling links and never ask the creator to enable, fix, or republish a sitemap. If an earlier review round asked for one, withdraw that request explicitly in the next feedback.',
   decisionBoundary:
     'Do not emit approve, reject, quality rating, request changes, or creator-facing feedback unless the reviewer explicitly asks and the reviewer-owned write preconditions pass. Agent Review Feedback remains internal supplemental evidence and is not an official review decision.',
   findingRules: [
     'Every confirmed issue must cite a URL, validator category, visible evidence text, count, or current tool output.',
     'Every comprehensive report must state which URLs E2B fetched.',
     'Every comprehensive report must include manual checks remaining even when automated results are clean.',
+    'Do not cite a missing, empty, or 404 /sitemap.xml as a finding, blocker, or recommended fix; it is not a template requirement.',
     'Do not call visual quality, originality, similarity, category fit, or final quality band confirmed from published-site automation alone.',
   ],
 };
@@ -142,5 +145,7 @@ The rubric matrix must mention every dimension: overall user experience, graphic
 Manual checks remaining must include Designer/Admin review areas that published-site automation cannot prove: components, variables, unused styles/classes, interactions cleanup, Designer responsive QA, forms, CMS/dynamic page setup, site settings, custom fonts/licenses, asset thumbnail, template name/categories, pricing/page-count calculation, MRP/admin publishing prerequisites, visual quality, originality, similarity/flooding, and category fit.
 
 For utility pages, do not overstate guessed path failures. Required utility pages may be nested. If a sampled candidate path such as \`/utility-pages/licenses\` returns 404, say the candidate path failed and ask the reviewer to verify the actual linked license page unless the site itself linked to that broken URL.
+
+For sitemaps, apply the contract's sitemap policy: a missing, empty, or 404 \`/sitemap.xml\` is discovery context only, never a confirmed finding, blocker, or creator ask, and any earlier request for one must be withdrawn.
 
 Agent Review Feedback should be reviewer-skimable. Use the same section shape above, keep evidence concrete, and close with a decision boundary that says the note is internal supplemental evidence and not an official review decision.`;

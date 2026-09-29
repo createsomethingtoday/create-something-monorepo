@@ -528,6 +528,7 @@ test('published-site validation tool calls working validators without Airtable w
   assert.equal(validation.rubricCoverage, 'partial_published_site_validation');
   assert.ok(validation.caveats.some((caveat) => caveat.includes('Lorem/placeholder findings are review evidence')));
   assert.ok(validation.caveats.some((caveat) => caveat.includes('generated Webflow video fallback/poster assets')));
+  assert.ok(validation.caveats.some((caveat) => caveat.includes('/sitemap.xml is not a template requirement')));
   assert.equal(validation.results.webflow_way.ok, true);
   assert.deepEqual(
     validation.results.webflow_way.categories.map((category) => [category.key, category.issueCount]),
