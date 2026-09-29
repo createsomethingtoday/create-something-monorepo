@@ -9,7 +9,7 @@
     {
       question: 'What does the membership cover?',
       answer:
-        'Hands-on delivery within an agreed scope, reusable skills and learning resources, Slack support, weekly check-ins and scheduled remote help. Before work begins, we agree on one active workstream, the deliverable, available capacity, revisions and how we will check the result. Larger projects are divided into agreed milestones or quoted separately. Membership does not include unlimited development or production incident response.'
+        'Both plans include agreed delivery, reusable skills and learning resources, Slack support, and scheduled remote help. Focused covers one active workstream with weekly check-ins. Team covers up to two active workstreams and six scheduled working sessions each month, including weekly check-ins. Before payment, we agree on deliverables, capacity, revisions, response times and how to check the work. Neither plan includes unlimited development or production incident response.'
     },
     {
       question: 'Is this the same as managed Control?',
@@ -56,36 +56,42 @@
 
 <section id="membership" class="membership" aria-labelledby="membership-title">
   <div class="offer">
-    <div>
+    <div class="offer-intro">
       <p class="eyebrow">CREATE SOMETHING membership</p>
-      <h2 id="membership-title">A practice you can build on.</h2>
+      <h2 id="membership-title">Choose the support your work needs.</h2>
       <p>
-        Bring a website, app, AI workflow or another piece of work. We agree on a manageable
-        deliverable, build with you, and help your team use and maintain the result.
-      </p>
-      <ul>
-        <li>Hands-on delivery for one agreed workstream at a time</li>
-        <li>Skills, learning resources and Slack support as you build</li>
-        <li>Weekly check-ins and scheduled remote assistance</li>
-      </ul>
-    </div>
-    <div class="commitment">
-      <p class="eyebrow">One membership</p>
-      <p class="price">{PUBLIC_PRICING.membership.label}</p>
-      <p>{PUBLIC_PRICING.membership.terms}. Delivery within an agreed scope. Project usage costs are separate.</p>
-      <Button href={agencyCoreMessaging.membershipInquiryHref}
-        >{agencyCoreMessaging.membershipInquiryLabel}</Button
-      >
-      {#if compact}
-        <p class="next-steps"><a href={agencyCoreMessaging.workflowMappingSessionHref}>Book a mapping session →</a></p>
-      {/if}
-      <p class="availability">
-        Agree on the deliverable, capacity and any usage budget before payment.
-      </p>
-      <p class="availability">
-        Support covers the agreed workstream. Sessions are scheduled, and response times follow your agreement. Managed Control and production incident response require a separate agreement.
+        Bring a workflow, software problem or existing product. We agree on the work and help your
+        team build, learn and use the result.
       </p>
     </div>
+    <div class="plans">
+      <article class="plan" aria-labelledby="focused-plan-title">
+        <p class="eyebrow">One workstream</p>
+        <h3 id="focused-plan-title">Focused</h3>
+        <p class="price">{PUBLIC_PRICING.membership.focused.label}</p>
+        <p>For one agreed workstream at a time, with delivery, learning and operator support.</p>
+        <ul>
+          <li>Weekly check-ins and scheduled remote help</li>
+          <li>Skills, learning resources and Slack support</li>
+        </ul>
+        <Button href={agencyCoreMessaging.membershipInquiryHref}>Discuss Focused</Button>
+      </article>
+      <article class="plan" aria-labelledby="team-plan-title">
+        <p class="eyebrow">Up to two workstreams</p>
+        <h3 id="team-plan-title">Team</h3>
+        <p class="price">{PUBLIC_PRICING.membership.team.label}</p>
+        <p>For up to two agreed workstreams and more time working with your team.</p>
+        <ul>
+          <li>Six scheduled working sessions each month, including weekly check-ins</li>
+          <li>Skills, learning resources and Slack support</li>
+        </ul>
+        <Button href={agencyCoreMessaging.teamMembershipInquiryHref}>Discuss Team</Button>
+      </article>
+    </div>
+    <p class="availability">{PUBLIC_PRICING.membership.terms}. We agree on deliverables, capacity, revisions, session length, response times and any usage budget before payment. Sessions are scheduled. Larger Builds, managed Control and production incident response need separate agreements.</p>
+    {#if compact}
+      <p class="next-steps"><a href={agencyCoreMessaging.workflowMappingSessionHref}>Book a mapping session →</a></p>
+    {/if}
   </div>
   {#if compact}
     <p class="ownership-summary">You keep the code, tests and instructions. <a href="/services">See how delivery works →</a> <a href="/stack">What you keep →</a></p>
@@ -122,15 +128,13 @@
     color: var(--color-performance-ink);
     border-block: 1px solid var(--color-performance-line);
   }
-  .offer {
-    display: grid;
-    grid-template-columns: 1.5fr 1fr;
-    gap: var(--space-performance-xl);
-    padding: clamp(2rem, 5vw, 5rem) max(1.25rem, calc((100% - 80rem) / 2));
-  }
-  .offer > div {
-    min-width: 0;
-  }
+  .offer { padding: clamp(2rem, 5vw, 5rem) max(1.25rem, calc((100% - 80rem) / 2)); }
+  .offer-intro { max-width: 65ch; }
+  .plans { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-performance-md); margin-block: var(--space-performance-xl); }
+  .plan { display: flex; flex-direction: column; min-width: 0; border: 1px solid var(--color-performance-line-strong); padding: var(--space-performance-lg); }
+  .plan h3 { margin: var(--space-performance-sm) 0 0; }
+  .plan ul { flex: 1; }
+  .plan :global(a) { align-self: flex-start; }
   .membership .eyebrow {
     color: var(--color-performance-ink-soft);
     font-family: var(--font-performance-mono);
@@ -155,14 +159,10 @@
   li {
     margin-block: var(--space-performance-sm);
   }
-  .commitment {
-    border-left: 1px solid var(--color-performance-line-strong);
-    padding-left: var(--space-performance-xl);
-  }
   .price {
     font-family: var(--font-performance-editorial);
-    font-size: clamp(2.5rem, 4vw, 4rem);
-    margin-block: var(--space-performance-md);
+    font-size: clamp(2rem, 3.5vw, 3.5rem);
+    margin-block: var(--space-performance-sm);
   }
   .availability {
     font-size: 0.875rem;
@@ -179,14 +179,6 @@
   dd { margin: 0; line-height: 1.65; max-width: 65ch; }
   @media (max-width: 640px) {
     dl > div { grid-template-columns: 1fr; gap: var(--space-performance-sm); }
-    .offer {
-      grid-template-columns: 1fr;
-    }
-    .commitment {
-      border-left: 0;
-      border-top: 1px solid var(--color-performance-line-strong);
-      padding-left: 0;
-      padding-top: var(--space-performance-lg);
-    }
+    .plans { grid-template-columns: 1fr; }
   }
 </style>

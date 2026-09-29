@@ -15,7 +15,7 @@
         <a class="primary" href="#built-work">Inspect the work ↓</a>
         <a href="/services">Scope &amp; cost ↗</a>
       </div>
-      <p class="hero-terms">{PUBLIC_PRICING.membership.label} for one agreed workstream. Larger Build projects and managed Control have separate agreements. AI usage, hosting and third-party costs are separate.</p>
+      <p class="hero-terms">Support {PUBLIC_PRICING.membership.label.toLowerCase()} for one agreed workstream. Team support is {PUBLIC_PRICING.membership.team.label} for up to two. Larger Build projects and managed Control have separate agreements. Project costs are separate.</p>
       <a class="review-link" href="/technical-review">Have an existing product? Start with a technical review ↗</a>
     </div>
     <aside class="handoff" aria-labelledby="handoff-title">

@@ -166,7 +166,7 @@
 <section id="capabilities" class="capabilities" aria-labelledby="capabilities-title">
   <p>Apps, workflows & agents</p><h2 id="capabilities-title">Inspect what your team will keep.</h2>
   <p>Review the linked implementations and clearly labeled scenarios below. For your Build, agree on the source, instructions, tests and handoff your team will own, plus what agents may do and what needs human approval. Production launch is agreed separately.</p>
-  <p>The {PUBLIC_PRICING.membership.label} membership covers one agreed workstream, with delivery, learning and support. Larger Build projects and managed Control have separate agreements. Project-specific AI usage, hosting and third-party services are budgeted separately.</p>
+  <p>Membership starts at {PUBLIC_PRICING.membership.focused.label} for one agreed workstream. Team support is {PUBLIC_PRICING.membership.team.label} for up to two workstreams and six scheduled working sessions each month. Larger Builds and managed Control have separate agreements. Project costs are budgeted separately.</p>
   {#each filmStories as story}
     <article><div><h3>{story.name}</h3><p>{story.desc}</p><p class="deliverable">What you keep: {story.deliver}</p><p class="evidence-status">{story.status}</p><p class="evidence-proof">{story.proof}</p></div>
       <div class="capability-links"><a href={`/?film=${story.id}#work`}>Watch the story →</a><a href={story.source}>{story.sourceLabel} ↗</a><a href={agencyCoreMessaging.membershipInquiryHref}>Discuss this work →</a></div>

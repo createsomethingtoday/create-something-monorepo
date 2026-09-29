@@ -53,7 +53,7 @@
     {
       question: 'What is your primary service?',
       answer:
-        'The membership provides delivery within an agreed scope, learning and operator support for $900/month. Larger Build projects and managed Control remain separate agreements. Project-specific AI usage, hosting and third-party services are budgeted separately.'
+        'Focused support is $900/month for one agreed workstream. Team support is $2,500/month for up to two agreed workstreams and six scheduled working sessions. Larger Build projects and managed Control are separate. Project costs are budgeted separately.'
     },
     {
       question: 'Are agents part of the workforce?',
@@ -95,7 +95,7 @@
     eyebrow="How It Works"
     expression="editorial"
     title="Bring a workflow, software problem or existing product."
-    lede="Our $900/month membership covers delivery, learning and support for one agreed workstream. You keep the delivered code and approval authority. Larger Build projects and managed Control have separate agreements. Project-specific AI usage, hosting and third-party services are separate."
+    lede="Start with one agreed workstream for $900/month. Team support is $2,500/month for up to two workstreams and six scheduled working sessions. We agree on scope before payment. You keep the delivered code and approval authority. Larger Build projects and managed Control have separate agreements. Project costs are separate."
     density="compact"
     artifactMobilePlacement="flow"
     proof={[

@@ -1,5 +1,11 @@
 export const PUBLIC_PRICING = {
-  membership: { monthlyUsd: 900, label: '$900/month', terms: 'Cancel anytime' },
+  membership: {
+    monthlyUsd: 900,
+    label: 'From $900/month',
+    terms: 'Cancel anytime',
+    focused: { monthlyUsd: 900, label: '$900/month', workstreams: 1 },
+    team: { monthlyUsd: 2500, label: '$2,500/month', workstreams: 2, sessionsPerMonth: 6 }
+  },
   publicSource: {
     amountUsd: 0,
     label: '$0 / MIT',

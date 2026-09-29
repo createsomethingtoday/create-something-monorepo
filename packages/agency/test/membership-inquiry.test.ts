@@ -11,8 +11,21 @@ test('membership CTA preserves inquiry intent and attribution through the public
   assert.equal(result?.contactIntent, 'membership');
   assert.equal(result?.contactSource, 'membership');
   assert.equal(result?.contactLane, 'workflow_infrastructure');
+  assert.equal(result?.contactPlan, 'focused');
   assert.equal(PUBLIC_PRICING.membership.monthlyUsd, 900);
+  assert.equal(PUBLIC_PRICING.membership.team.monthlyUsd, 2500);
+  assert.equal(PUBLIC_PRICING.membership.team.workstreams, 2);
+  assert.equal(PUBLIC_PRICING.membership.team.sessionsPerMonth, 6);
   assert.equal(PUBLIC_PRICING.managedControl.startingMonthlyUsd, 900);
+});
+
+test('Team membership CTA selects the Team inquiry without changing the service lane', async () => {
+  const result = await load({
+    url: new URL(agencyCoreMessaging.teamMembershipInquiryHref, 'https://createsomething.agency')
+  } as Parameters<typeof load>[0]);
+  assert.equal(result?.contactIntent, 'membership');
+  assert.equal(result?.contactLane, 'workflow_infrastructure');
+  assert.equal(result?.contactPlan, 'team');
 });
 
 test('unknown inquiry intents retain the existing safe fallback', async () => {
