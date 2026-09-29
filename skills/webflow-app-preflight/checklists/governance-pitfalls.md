@@ -77,6 +77,14 @@ Note the actual objection, because it explains the carve-out: a Designer Extensi
 
 **Fix:** Deploy a documented production service, generate a production-only bundle, keep test and production data separate, and add a build rule that fails when development, staging, localhost, or tunnel endpoints appear as request destinations in a Marketplace artifact. Check the installation URL you declare, not just the code.
 
+## 11. Keying behavior on `element.type`
+
+**Pattern:** A Designer Extension recognises the elements it works with by comparing `element.type` to a string — `if (el.type === 'Section')` — including the elements it just created with `webflow.elementPresets.Section`.
+
+**Why it matters:** `type` is not the stable identity of a tag-bearing block. A section created through the preset reports `type: 'Block'` with tag `section`; the same section added by hand in the Designer reports `type: 'Section'`. Both are valid sections. An App keyed on `type` works in the developer's own testing, then silently stops recognising its own output for users, and the fix has to go back through review as an App update.
+
+**Fix:** Identify sections and other structural blocks by the tag they carry: `(await el.getTag()) === 'section'`. It returns the same value whichever way the element was created. Because a Div Block retagged to `section` also matches, add a guard on any path that removes or rewrites what it identifies. Preflight reports `element.type` comparisons against Section, Container, VFlex, HFlex, Row, Column, and the other tag-bearing block types as a Suggested update.
+
 ---
 
 If any pattern above applies, resolve it before submitting. These are not edge cases — they are the modal reasons a well-intentioned App gets bounced or pulled into a longer review.
