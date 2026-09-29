@@ -13,7 +13,7 @@
   "scripts": {
     "dev": "node ../../scripts/run-wrangler.mjs dev",
     "deploy": "node ../../scripts/run-wrangler.mjs deploy",
-    "test": "pnpm test:unicorn",
+    "test": "pnpm test:unicorn && node scripts/test-reviewed-keyboard.mjs",
     "test:unicorn": "node scripts/test-unicorn-detection.mjs",
     "test:live": "node scripts/repro-live-worker.mjs"
   }

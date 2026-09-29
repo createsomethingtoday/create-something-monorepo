@@ -7,6 +7,8 @@ var __require = /* @__PURE__ */ ((x) => typeof require !== "undefined" ? require
   throw Error('Dynamic require of "' + x + '" is not supported');
 });
 
+import { matchesReviewedKeyboardException } from "./reviewed-keyboard-exception.js";
+
 import { findProhibitedMarketplaceCustomCode } from "./font-custom-code-policy.js";
 
 // cloudflare-worker/lib/shared-validator.js
@@ -698,9 +700,13 @@ function validateGsapUsage(html, pageUrl, customPatterns = []) {
       });
       return;
     }
-    const hasSecurityRisks2 = securityRiskPatterns.some((pattern) => pattern.test(script));
+    const reviewedKeyboardException = matchesReviewedKeyboardException(script, html, pageUrl);
+    const applicableSecurityPatterns = securityRiskPatterns.filter((pattern) =>
+      !(reviewedKeyboardException && pattern.source === /addEventListener\s*\(\s*['"]keydown['"]/i.source)
+    );
+    const hasSecurityRisks2 = applicableSecurityPatterns.some((pattern) => pattern.test(script));
     if (hasSecurityRisks2) {
-      const riskPatterns = securityRiskPatterns.filter((pattern) => pattern.test(script)).map((pattern) => pattern.source);
+      const riskPatterns = applicableSecurityPatterns.filter((pattern) => pattern.test(script)).map((pattern) => pattern.source);
       results.securityRisks.push({
         scriptIndex: index,
         message: "Script contains security risk patterns",
