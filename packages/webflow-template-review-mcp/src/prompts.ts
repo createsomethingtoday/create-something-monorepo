@@ -103,6 +103,8 @@ The published-site validators cover:
 
 Required utility pages do **not** need root-only slugs. License, Instructions, Changelog, and Style Guide pages may be nested in folders when they are discoverable, return 200, and visible links point to the matching utility page. Intentional utility-page examples such as "Heading 1", "Button Text", or Lorem copy used as typography/component specimens are not placeholder failures by themselves and should not be included in creator feedback. Flag missing pages, broken pages, missing required license text, customer-facing placeholder copy on non-utility pages, or utility links that point to unrelated pages.
 
+A \`/sitemap.xml\` is **not** a template requirement. Webflow only serves the auto-generated sitemap for sites on a paid Site plan, and unhosted \`*.webflow.io\` template demos have no plan, so enabling Auto-generate sitemap and republishing does nothing there. Use a sitemap only to discover pages when one exists. If it is missing or returns 404, crawl links instead, and never ask the creator to enable, fix, or republish a sitemap. If an earlier round asked for one, withdraw that request explicitly in the next feedback. Publish-time proof is the \`<!-- Last Published: ... -->\` comment in the page head.
+
 ${COMPREHENSIVE_REVIEW_WORKFLOW_GUIDANCE}
 
 ### Interpreting Results
