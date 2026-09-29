@@ -9,6 +9,8 @@
     type PerformanceCtaItem
   } from '@create-something/canon';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
+  import AgencyWayfindingGroup from '$lib/components/AgencyWayfindingGroup.svelte';
+  import AgencyWayfindingSign from '$lib/components/AgencyWayfindingSign.svelte';
 
   const updatedDate = 'March 9, 2026';
 
@@ -129,6 +131,12 @@
 >
   {#snippet after()}
     <PerformanceCardGrid items={securityPath} columns={4} ariaLabel="Security control path" />
+    <div class="security-wayfinding">
+      <AgencyWayfindingGroup label="Apply the security boundary">
+        <AgencyWayfindingSign kind="map" label="Define the access boundary" detail="Set access, approval, and stop rules." href="/map" />
+        <AgencyWayfindingSign kind="control" label="Explore Control" detail="See the approval and record-keeping approach." href="/control" />
+      </AgencyWayfindingGroup>
+    </div>
   {/snippet}
 </PerformancePageSection>
 
@@ -147,3 +155,7 @@
     <Button href="mailto:legal@createsomething.io" variant="secondary">Security Contact</Button>
   {/snippet}
 </PerformanceConversionHandoff>
+
+<style>
+  .security-wayfinding { margin-top: var(--space-performance-lg); }
+</style>
