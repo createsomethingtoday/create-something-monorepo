@@ -638,6 +638,7 @@ creator-facing feedback.
 - `template_review_send_ticket_followup` (creator-facing when public; requires `confirm_public_reply: true` and reviewer ownership of the version)
 - `template_review_update_ticket_status` (status/tags + private note on the version's linked ticket; reviewer must own the version; never a public reply)
 - `template_review_create_ticket` (opens a NEW outbound ticket to a template creator and emails them; requires `confirm_send: true`)
+- `template_review_link_version_ticket` (make a ticket the version's 🧘ZD ID; fresh-read precondition + `confirm_replace: true`)
 
 ## Zendesk ticket leg
 
@@ -705,6 +706,12 @@ submission thread (policy notices, relist/delist questions, clarifications),
   instead of opening a duplicate.
 - Requires `confirm_send: true` and a resolved reviewer identity. Every ticket
   is tagged `template_review_mcp_outbound`.
+- When created for a version, the response ends with a `next_step` asking the
+  reviewer whether the new ticket should replace the version's linked review
+  ticket. `template_review_link_version_ticket` performs that write on
+  `🧘ZD ID` with a fresh-read precondition (`expected_current_ticket_id`) and
+  `confirm_replace: true`; decision emails for the version then go to the new
+  ticket. It is the only write path to that field in this MCP.
 
 ## Reviewer checklists
 

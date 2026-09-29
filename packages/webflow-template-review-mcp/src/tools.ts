@@ -301,6 +301,7 @@ export const WRITE_TOOL_NAMES: ReadonlySet<string> = new Set([
   'template_review_send_ticket_followup',
   'template_review_update_ticket_status',
   'template_review_create_ticket',
+  'template_review_link_version_ticket',
   // Featured-batch curation writes: pick star + reason, votes, and the batch
   // finalization flag that arms the creator-notification worker.
   'template_review_set_featured_pick',
@@ -1619,9 +1620,15 @@ export function registerTools(
         }
         const zendesk = requireZendesk(runtimeConfig, 'writes');
         const reviewer = requireResolvedReviewer(getReviewer);
-        const asset = version_id
-          ? (await getClient().getScopedVersion(version_id)).asset
-          : await getClient().getAssetById(asset_id!);
+        let linkedTicketForHint: string | undefined;
+        let asset: Awaited<ReturnType<AirtableClient['getAssetById']>>;
+        if (version_id) {
+          const scoped = await getClient().getScopedVersion(version_id);
+          asset = scoped.asset;
+          linkedTicketForHint = scoped.version.zendeskTicketId;
+        } else {
+          asset = await getClient().getAssetById(asset_id!);
+        }
         if (!asset) {
           throw new AirtableClientError('ASSET_NOT_FOUND_OR_OUT_OF_SCOPE', 'Template asset not found in template-review scope.', 404, { asset_id });
         }
@@ -1660,6 +1667,48 @@ export function registerTools(
           requester_notified: result.requesterNotified,
           steps: result.steps,
           html_body: publicHtml,
+          next_step: version_id
+            ? `Ask the reviewer whether this new ticket should become the version's linked review ticket (🧘ZD ID), replacing ${linkedTicketForHint ?? 'the current empty link'}. If yes, call template_review_link_version_ticket with version_id, ticket_id=${result.ticketId}, expected_current_ticket_id=${linkedTicketForHint ? `"${linkedTicketForHint}"` : 'null'}, confirm_replace=true. Decision emails for this version will then go to the new ticket.`
+            : 'This ticket is not linked to any version. To make it a version\'s review ticket, call template_review_link_version_ticket after the reviewer confirms.',
+        });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'template_review_link_version_ticket',
+    'Reviewer-safe write: make a Zendesk ticket the linked review ticket (🧘ZD ID) of a template version — typically after template_review_create_ticket, when the reviewer wants the new outbound ticket to replace the submission ticket. Decision emails (request changes / approve / reject) for the version are sent to the linked ticket, so this changes where the creator hears from us. Requires the reviewer to own the version, a fresh-read precondition (expected_current_ticket_id from template_review_get_version; null when empty), and confirm_replace=true after the reviewer has explicitly agreed to the replacement.',
+    {
+      version_id: z.string().min(1),
+      ticket_id: z.string().regex(/^\d+$/),
+      expected_current_ticket_id: z.string().regex(/^\d+$/).nullable().describe('The 🧘ZD ID currently on the version from a fresh read; null if empty. Mismatch fails with VERSION_TICKET_CONFLICT.'),
+      confirm_replace: z.boolean().default(false),
+    },
+    async ({ version_id, ticket_id, expected_current_ticket_id, confirm_replace }) => {
+      try {
+        if (confirm_replace !== true) {
+          throw new ZendeskClientError(
+            'REPLACE_CONFIRMATION_REQUIRED',
+            'Relinking changes which Zendesk ticket receives this version\'s decision emails. Pass confirm_replace=true only after the reviewer has explicitly agreed.',
+            400,
+            { version_id, ticket_id },
+          );
+        }
+        const reviewer = requireResolvedReviewer(getReviewer);
+        const actingReviewer = currentReviewerAsCollaborator(getReviewer);
+        await getClient().requireAssignedVersion(version_id, actingReviewer);
+        const result = await getClient().setVersionZendeskTicket(version_id, ticket_id, expected_current_ticket_id);
+        const zendesk = runtimeConfig.getZendeskClient?.() ?? null;
+        return asSuccess({
+          reviewer: reviewerPayload(reviewer),
+          version_id,
+          ticket_id,
+          ticket_url: zendesk?.agentTicketUrl(ticket_id) ?? null,
+          previous_ticket_id: result.previousTicketId,
+          changed: result.previousTicketId !== ticket_id,
+          version: result.version,
         });
       } catch (error) {
         return asError(error);

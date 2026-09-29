@@ -2463,3 +2463,49 @@ test('create_ticket fails closed before any Zendesk call when unconfirmed, uncon
 
   assert.equal(created.length, 0);
 });
+
+test('create_ticket for a version returns a next_step that asks before relinking', async () => {
+  const { zendesk } = outboundZendesk();
+  const client = { getScopedVersion: async () => ({ version: ticketVersion, asset: outboundAsset }) } as unknown as AirtableClient;
+  const { server, handlers } = createServerHarness();
+  registerTools(server, () => client, () => reviewer, { getZendeskClient: () => zendesk });
+  const result = parsePayload((await handlers.get('template_review_create_ticket')?.({ version_id: 'recVersionZD', subject: 'Hello', message: 'Hi', confirm_send: true }))!);
+  assert.equal(result.ok, true);
+  const hint = String(result.data?.next_step);
+  assert.ok(hint.includes('Ask the reviewer'));
+  assert.ok(hint.includes('template_review_link_version_ticket'));
+  assert.ok(hint.includes('expected_current_ticket_id="1199299"'));
+  assert.ok(hint.includes('ticket_id=1200001'));
+});
+
+test('link_version_ticket requires confirmation and ownership, then relinks with a fresh-read precondition', async () => {
+  const writes: unknown[] = [];
+  const client = {
+    requireAssignedVersion: async () => ticketVersion,
+    setVersionZendeskTicket: async (versionId: string, ticketId: string, expected: unknown) => {
+      writes.push([versionId, ticketId, expected]);
+      return { version: { ...ticketVersion, zendeskTicketId: ticketId }, previousTicketId: '1199299' };
+    },
+  } as unknown as AirtableClient;
+  const { zendesk } = outboundZendesk();
+  const { server, handlers } = createServerHarness();
+  registerTools(server, () => client, () => reviewer, { getZendeskClient: () => zendesk });
+  assert.ok(WRITE_TOOL_NAMES.has('template_review_link_version_ticket'));
+
+  const unconfirmed = parsePayload((await handlers.get('template_review_link_version_ticket')?.({ version_id: 'recVersionZD', ticket_id: '1200001', expected_current_ticket_id: '1199299', confirm_replace: false }))!);
+  assert.equal(unconfirmed.error?.code, 'REPLACE_CONFIRMATION_REQUIRED');
+  assert.equal(writes.length, 0);
+
+  const ok = parsePayload((await handlers.get('template_review_link_version_ticket')?.({ version_id: 'recVersionZD', ticket_id: '1200001', expected_current_ticket_id: '1199299', confirm_replace: true }))!);
+  assert.equal(ok.ok, true);
+  assert.equal(ok.data?.previous_ticket_id, '1199299');
+  assert.equal(ok.data?.changed, true);
+  assert.equal(ok.data?.ticket_url, 'https://webflow2579.zendesk.com/agent/tickets/1200001');
+  assert.deepEqual(writes, [['recVersionZD', '1200001', '1199299']]);
+
+  const anonymous = createServerHarness();
+  registerTools(anonymous.server, () => client, () => null, { getZendeskClient: () => zendesk });
+  const noReviewer = parsePayload((await anonymous.handlers.get('template_review_link_version_ticket')?.({ version_id: 'recVersionZD', ticket_id: '1200001', expected_current_ticket_id: null, confirm_replace: true }))!);
+  assert.equal(noReviewer.error?.code, 'REVIEWER_IDENTITY_UNAVAILABLE');
+  assert.equal(writes.length, 1);
+});

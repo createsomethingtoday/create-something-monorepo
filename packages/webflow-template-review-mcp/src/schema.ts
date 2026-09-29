@@ -174,6 +174,8 @@ export const CONFIRMED_WRITE_FIELD_IDS = {
     reviewFeedback: 'fldHxIGHMHn4xb9U4',
     agentReviewFeedback: 'fld6OITvSQPxfXJ0Z',
     release: 'fld3CQjSWa9lVBLgT',
+    /** 🧘ZD ID — the Zendesk ticket the review emails go to. Written only by template_review_link_version_ticket. */
+    zendeskTicketId: 'fldHKvyh55jJ0VK1u',
   },
 } as const;
 
