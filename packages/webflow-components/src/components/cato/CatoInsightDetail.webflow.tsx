@@ -160,6 +160,26 @@ export default declareComponent(CatoInsightDetail, {
       name: 'Categories JSON',
       defaultValue: ''
     }),
+    resiliencyCategoryLabel: props.Text({
+      name: 'Resiliency Category Label',
+      defaultValue: '',
+      tooltip: 'Optional per-instance rename for Resiliency Report Alerts.'
+    }),
+    researchCategoryLabel: props.Text({
+      name: 'Research Category Label',
+      defaultValue: '',
+      tooltip: 'Optional per-instance rename for Industry Research.'
+    }),
+    resourcesCategoryLabel: props.Text({
+      name: 'Resources Category Label',
+      defaultValue: '',
+      tooltip: 'Optional per-instance rename for Resource Library.'
+    }),
+    newsroomCategoryLabel: props.Text({
+      name: 'Newsroom Category Label',
+      defaultValue: '',
+      tooltip: 'Optional per-instance rename for Newsroom.'
+    }),
     itemsJson: props.Text({
       name: 'Items JSON',
       defaultValue: ''

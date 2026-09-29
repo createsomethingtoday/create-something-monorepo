@@ -5,7 +5,7 @@ import { CatoNavigation } from './CatoNavigation';
 export default declareComponent(CatoNavigation, {
   name: 'Cato Navigation',
   description:
-    'Cato primary navigation with About, Leadership, Insights mega menu, Case Studies, Risk Radar, and Product Search.',
+    'Cato primary navigation with About, Leadership, Board of Directors, Insights mega menu, Case Studies, Risk Radar, and Product Search.',
   group: 'Cato Supply',
   options: {
     applyTagSelectors: false
@@ -39,6 +39,15 @@ export default declareComponent(CatoNavigation, {
     }),
     leadershipHref: props.Text({
       name: 'Leadership URL Fallback',
+      defaultValue: ''
+    }),
+    boardLink: props.Link({
+      name: 'Board of Directors Link',
+      tooltip:
+        'Preferred: select the dedicated Board of Directors page. Board of Directors URL remains the fallback.'
+    }),
+    boardHref: props.Text({
+      name: 'Board of Directors URL Fallback',
       defaultValue: ''
     }),
     solutionsLink: props.Link({
@@ -182,6 +191,26 @@ export default declareComponent(CatoNavigation, {
       name: 'Categories JSON',
       defaultValue: '',
       tooltip: 'Optional JSON array overriding the default Cato Insights mega-menu categories.'
+    }),
+    resiliencyCategoryLabel: props.Text({
+      name: 'Resiliency Category Label',
+      defaultValue: '',
+      tooltip: 'Optional per-instance rename for Resiliency Report Alerts in the mega menu.'
+    }),
+    researchCategoryLabel: props.Text({
+      name: 'Research Category Label',
+      defaultValue: '',
+      tooltip: 'Optional per-instance rename for Industry Research in the mega menu.'
+    }),
+    resourcesCategoryLabel: props.Text({
+      name: 'Resources Category Label',
+      defaultValue: '',
+      tooltip: 'Optional per-instance rename for Resource Library in the mega menu.'
+    }),
+    newsroomCategoryLabel: props.Text({
+      name: 'Newsroom Category Label',
+      defaultValue: '',
+      tooltip: 'Optional per-instance rename for Newsroom in the mega menu.'
     }),
     itemsJson: props.Text({
       name: 'Items JSON',

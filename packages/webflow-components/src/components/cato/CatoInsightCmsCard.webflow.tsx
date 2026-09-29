@@ -52,6 +52,26 @@ export default declareComponent(CatoInsightCmsCard, {
       name: 'Featured Layout',
       defaultValue: false,
     }),
+    resiliencyCategoryLabel: props.Text({
+      name: 'Resiliency Category Label',
+      defaultValue: '',
+      tooltip: 'Optional per-instance rename for Resiliency Report Alerts.',
+    }),
+    researchCategoryLabel: props.Text({
+      name: 'Research Category Label',
+      defaultValue: '',
+      tooltip: 'Optional per-instance rename for Industry Research.',
+    }),
+    resourcesCategoryLabel: props.Text({
+      name: 'Resources Category Label',
+      defaultValue: '',
+      tooltip: 'Optional per-instance rename for Resource Library.',
+    }),
+    newsroomCategoryLabel: props.Text({
+      name: 'Newsroom Category Label',
+      defaultValue: '',
+      tooltip: 'Optional per-instance rename for Newsroom.',
+    }),
     linkMode: props.Variant({
       name: 'Link Mode',
       options: ['webflow', 'export'],

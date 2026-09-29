@@ -60,6 +60,10 @@ export interface CatoInsightsDataProps {
   fetchItems?: boolean;
   linkMode?: 'webflow' | 'export';
   pathPrefix?: string;
+  resiliencyCategoryLabel?: string;
+  researchCategoryLabel?: string;
+  resourcesCategoryLabel?: string;
+  newsroomCategoryLabel?: string;
 }
 
 export interface CatoInsightsHubProps extends CatoInsightsDataProps {
@@ -114,7 +118,12 @@ export interface CatoInsightRelatedItem {
 
 export interface CatoInsightCmsCardProps extends Pick<
   CatoInsightsDataProps,
-  'linkMode' | 'pathPrefix'
+  | 'linkMode'
+  | 'pathPrefix'
+  | 'resiliencyCategoryLabel'
+  | 'researchCategoryLabel'
+  | 'resourcesCategoryLabel'
+  | 'newsroomCategoryLabel'
 > {
   title?: string;
   summary?: string;
@@ -186,8 +195,8 @@ const DEFAULT_CATEGORIES: CatoInsightCategory[] = [
     id: 'resiliency',
     page: 'resiliency-reports.html',
     title: 'Resiliency Report Alerts',
-    filterLabel: 'Reports',
-    cardLabel: 'Resiliency Report',
+    filterLabel: 'Resiliency Report Alerts',
+    cardLabel: 'Resiliency Report Alerts',
     cardTitle: 'Supply volatility tracking.',
     cardSummary: 'Access market signals for active supply disruptions.',
     cardCta: 'Explore alerts',
@@ -207,7 +216,7 @@ const DEFAULT_CATEGORIES: CatoInsightCategory[] = [
     id: 'research',
     page: 'cato-research.html',
     title: 'Industry Research',
-    filterLabel: 'Research',
+    filterLabel: 'Industry Research',
     cardLabel: 'Industry Research',
     cardTitle: 'Procurement strategy unpacked.',
     cardSummary: 'Explore supply chain resilience best practices.',
@@ -227,8 +236,8 @@ const DEFAULT_CATEGORIES: CatoInsightCategory[] = [
     id: 'resources',
     page: 'resource-library.html',
     title: 'Resource Library',
-    filterLabel: 'Resources',
-    cardLabel: 'Whitepapers',
+    filterLabel: 'Resource Library',
+    cardLabel: 'Resource Library',
     cardTitle: 'Executive thought leadership.',
     cardSummary: 'Implement sourcing frameworks for operational continuity.',
     cardCta: 'Learn best practices',
@@ -247,7 +256,7 @@ const DEFAULT_CATEGORIES: CatoInsightCategory[] = [
     id: 'newsroom',
     page: 'newsroom.html',
     title: 'Newsroom',
-    filterLabel: 'News',
+    filterLabel: 'Newsroom',
     cardLabel: 'Newsroom',
     cardTitle: 'Newsroom',
     cardSummary: 'Follow Cato launches, events, press notes, and milestones.',
@@ -840,6 +849,33 @@ const PUBLISHED_CMS_ITEMS: CatoInsightItem[] = [
 const DEFAULT_ITEMS = PUBLISHED_CMS_ITEMS.length ? PUBLISHED_CMS_ITEMS : REVIEW_ITEMS;
 const DEFAULT_ITEMS_ENDPOINT_URL =
   'https://cato-supply-insights-cms.createsomething.workers.dev/api/cato/insights';
+const CATO_TECH_HERO_VECTOR_URL =
+  'https://cdn.prod.website-files.com/69241b6e09c89ae05c6116f8/69b2b36f6a6bbaed0660690a_e522a933696d6b8c18fa189b5fa25012_tech-ng-element.webp';
+
+export function resolveCatoItemsEndpointUrl(value?: string) {
+  const configuredValue = value?.trim() || '';
+  if (!configuredValue) return DEFAULT_ITEMS_ENDPOINT_URL;
+
+  try {
+    const defaultEndpoint = new URL(DEFAULT_ITEMS_ENDPOINT_URL);
+    const endpointUrl = configuredValue.startsWith('?')
+      ? new URL(`${DEFAULT_ITEMS_ENDPOINT_URL}${configuredValue}`)
+      : configuredValue.startsWith('http')
+        ? new URL(configuredValue)
+        : new URL(
+            configuredValue.startsWith('/') ? configuredValue : `/${configuredValue}`,
+            defaultEndpoint.origin
+          );
+
+    if (endpointUrl.hostname === 'cato-insights-cms.createsomething.workers.dev') {
+      endpointUrl.hostname = 'cato-supply-insights-cms.createsomething.workers.dev';
+    }
+
+    return endpointUrl.toString();
+  } catch {
+    return DEFAULT_ITEMS_ENDPOINT_URL;
+  }
+}
 
 const CATO_CSS = `
   .cato-cc {
@@ -850,8 +886,10 @@ const CATO_CSS = `
     --cato-border: var(--border-color--border-primary, rgba(40, 39, 35, 0.14));
     --cato-border-strong: var(--border-color--border-secondary, rgba(40, 39, 35, 0.24));
     --cato-green: var(--base-color-green--green-900, #0a452e);
-    --cato-green-mid: var(--base-color-green--green-800, #125a3b);
-    --cato-green-bright: var(--base-color-green--green-400, #18a56d);
+    --cato-green-mid: var(--base-color-green--green-800, #0d5b3c);
+    --cato-green-bright: var(--base-color-green--green-400, #46b78a);
+    --cato-action-green: var(--base-color-green--green-500, #23c98c);
+    --cato-action-green-light: #41eeaf;
     --cato-white: var(--base-color-charcoal--white, #ffffff);
     color: var(--cato-text);
     background: var(--cato-bg);
@@ -862,15 +900,21 @@ const CATO_CSS = `
   .cato-cc *, .cato-cc *::before, .cato-cc *::after { box-sizing: border-box; }
   .cato-cc a { color: inherit; }
   .cato-cc-card-component { background: transparent; }
-  .cato-cc-card-component .cato-cc-cms-card { height: 100%; min-height: 15rem; }
-  .cato-cc-section { background: var(--cato-bg); padding: 4rem 2.5rem; }
-  .cato-cc-section--compact { padding-top: 2.5rem; padding-bottom: 2.5rem; }
-  .cato-cc-hero { position: relative; overflow: hidden; background: linear-gradient(180deg, var(--cato-bg) 0 72%, var(--cato-bg-soft) 72% 100%); padding-top: 8rem; }
-  .cato-cc-hero[data-variant="detail"] { padding-top: 6.25rem; }
-  .cato-cc-container { width: min(100%, 80rem); margin: 0 auto; }
-  .cato-cc-hero-grid { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(20rem, .65fr); gap: 2rem; align-items: stretch; margin-bottom: 3rem; }
+  .cato-cc-card-component .cato-cc-cms-card { height: 100%; min-height: 14rem; }
+  .cato-cc-section { background: var(--cato-bg); padding: 1.5rem 2rem; }
+  .cato-cc-section--compact { padding-top: 1rem; padding-bottom: 1.25rem; }
+  .cato-cc-hero { position: relative; isolation: isolate; overflow: hidden; background: var(--cato-bg); padding-top: 3.25rem; padding-bottom: 1.25rem; }
+  .cato-cc-hero[data-variant="detail"] { padding-top: 3.25rem; padding-bottom: 1.5rem; }
+  .cato-cc-hero::after { content: ""; position: absolute; pointer-events: none; }
+  .cato-cc-hero::after { z-index: 1; inset: auto 0 0; width: 100%; height: 18rem; background: linear-gradient(180deg, rgba(251,249,244,0) 0%, var(--cato-bg-soft) 82%); }
+  .cato-cc-hero-art { position: absolute; z-index: 0; width: clamp(54rem, 82vw, 78rem); max-width: none; aspect-ratio: 1.14 / 1; top: 1.5rem; left: -30rem; right: auto; opacity: .4; pointer-events: none; user-select: none; object-fit: contain; }
+  .cato-cc-hero[data-variant="detail"] .cato-cc-hero-art { width: clamp(42rem, 62vw, 62.5rem); top: 2rem; right: -15rem; opacity: .24; }
+  .cato-cc-container { width: min(100%, 88rem); margin: 0 auto; }
+  .cato-cc-hero > .cato-cc-container { position: relative; z-index: 2; }
+  .cato-cc-hero-grid { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(20rem, .65fr); gap: 1.5rem; align-items: stretch; margin-bottom: 1.25rem; }
   .cato-cc-hero-grid[data-variant="detail"] { grid-template-columns: minmax(0, 1.45fr) minmax(18rem, .55fr); align-items: center; }
-  .cato-cc-copy { display: flex; flex-direction: column; gap: 1.25rem; justify-content: center; max-width: 58rem; }
+  .cato-cc-copy { display: flex; flex-direction: column; gap: 1rem; justify-content: center; max-width: 58rem; }
+  .cato-cc-hero-grid > .cato-cc-copy > .cato-cc-eyebrow { display: none; }
   .cato-cc-eyebrow { color: var(--cato-green); margin: 0; font-weight: 600; }
   .cato-cc h1, .cato-cc h2, .cato-cc h3 { margin: 0; color: var(--cato-text); font-family: Switzer, Arial, sans-serif; font-weight: 400; }
   .cato-cc h1 { max-width: 56rem; font-size: 3.5rem; line-height: 1.2; letter-spacing: -.14rem; }
@@ -883,73 +927,88 @@ const CATO_CSS = `
     letter-spacing: -.06rem;
   }
   .cato-cc-lede { color: var(--cato-muted); max-width: 54rem; margin: 0; font-size: 1.125rem; line-height: 1.55; }
-  .cato-cc-panel { display: flex; flex-direction: column; justify-content: space-between; gap: 1.5rem; min-height: 100%; padding: 2rem; overflow: hidden; border-radius: .75rem; color: var(--cato-white); background: var(--background-color--background-tertiary, var(--cato-green)); }
-  .cato-cc-hero-grid[data-variant="detail"] .cato-cc-panel { align-self: center; justify-content: flex-start; gap: 1.15rem; width: 100%; max-width: 25rem; min-height: auto; margin-left: auto; padding: 1.9rem; }
+  .cato-cc-panel { display: flex; flex-direction: column; justify-content: space-between; gap: 1rem; min-height: 100%; padding: 1.45rem; overflow: hidden; border-radius: .75rem; color: var(--cato-white); background: var(--background-color--background-tertiary, var(--cato-green)); }
+  .cato-cc-hero-grid[data-variant="detail"] .cato-cc-panel { align-self: center; justify-content: flex-start; gap: 1rem; width: 100%; max-width: 25rem; min-height: auto; margin-left: auto; padding: 1.5rem; }
   .cato-cc-panel h2, .cato-cc-panel h3, .cato-cc-panel p { color: var(--cato-white); margin: 0; }
   .cato-cc-panel h2, .cato-cc-panel h3 { font-size: 1.5rem; line-height: 1.4; letter-spacing: -.03rem; }
   .cato-cc-hero-grid[data-variant="detail"] .cato-cc-panel h2 { font-size: 1.35rem; line-height: 1.32; }
-  .cato-cc-panel p:not(.cato-cc-panel-label) { font-size: 1rem; line-height: 1.5; }
-  .cato-cc-hero-grid[data-variant="detail"] .cato-cc-panel p:not(.cato-cc-panel-label) { line-height: 1.45; opacity: .92; }
+  .cato-cc-panel p { font-size: 1rem; line-height: 1.5; }
+  .cato-cc-hero-grid[data-variant="detail"] .cato-cc-panel p { line-height: 1.45; opacity: .92; }
   .cato-cc-panel-link { display: inline-flex; align-items: center; width: fit-content; color: var(--cato-white); font-weight: 800; text-decoration: none; margin-top: auto; }
   .cato-cc-panel-link:hover { text-decoration: underline; }
-  .cato-cc-panel-label, .cato-cc-pill { display: inline-flex; align-items: center; width: fit-content; max-width: 100%; border-radius: 999rem; line-height: 1; }
-  .cato-cc-panel-label { text-transform: uppercase; border: 1px solid rgba(255,255,255,.18); background: rgba(255,255,255,.10); padding: .38rem .75rem; font-family: Switzer, Arial, sans-serif; font-size: .8125rem; font-weight: 600; }
+  .cato-cc-pill { display: inline-flex; align-items: center; width: fit-content; max-width: 100%; border-radius: 999rem; line-height: 1; }
   .cato-cc-pill { color: rgba(40,39,35,.72); background: rgba(10,69,46,.06); border: 1px solid rgba(10,69,46,.14); padding: .38rem .75rem; font-size: .8125rem; text-transform: uppercase; }
-  .cato-cc-card-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1rem; }
+  .cato-cc-card-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .9rem; }
   .cato-cc-card-grid[data-count="3"] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .cato-cc-card-grid[data-count="2"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .cato-cc-card, .cato-cc-cms-card, .cato-cc-detail-card, .cato-cc-sidebar-card { border: 1px solid var(--cato-border); background: var(--cato-bg); border-radius: .75rem; box-shadow: 0 1px 2px rgba(17,16,15,.04); }
-  .cato-cc-card, .cato-cc-cms-card { display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; gap: 1rem; color: var(--cato-text); text-decoration: none; transition: transform .18s, border-color .18s, box-shadow .18s; }
-  .cato-cc-card { align-items: center; justify-content: center; gap: .85rem; min-height: 11.75rem; padding: 1.45rem 1.5rem; text-align: center; }
-  .cato-cc-card[data-category="resiliency"] .cato-cc-pill { color: #0a452e; background: rgba(10,69,46,.07); border-color: rgba(10,69,46,.18); }
-  .cato-cc-card[data-category="research"] .cato-cc-pill { color: #245082; background: rgba(36,80,130,.08); border-color: rgba(36,80,130,.18); }
-  .cato-cc-card[data-category="resources"] .cato-cc-pill { color: #775321; background: rgba(119,83,33,.09); border-color: rgba(119,83,33,.18); }
-  .cato-cc-card[data-category="newsroom"] .cato-cc-pill { color: #61456d; background: rgba(97,69,109,.08); border-color: rgba(97,69,109,.18); }
-  .cato-cc-card[data-category="resiliency"] h3 { color: #0a452e; }
-  .cato-cc-card[data-category="research"] h3 { color: #245082; }
-  .cato-cc-card[data-category="resources"] h3 { color: #775321; }
-  .cato-cc-card[data-category="newsroom"] h3 { color: #61456d; }
+  .cato-cc-card, .cato-cc-cms-card { display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; gap: .85rem; color: var(--cato-text); text-decoration: none; transition: transform .18s, border-color .18s, box-shadow .18s; }
+  .cato-cc-card { gap: .75rem; min-height: 11rem; padding: 1.1rem 1.15rem; text-align: left; }
+  .cato-cc-card[data-category="resiliency"],
+  .cato-cc-cms-card[data-category="resiliency"] { --cato-card-accent: #0a452e; --cato-card-accent-bg: rgba(10,69,46,.07); --cato-card-border: rgba(10,69,46,.28); }
+  .cato-cc-card[data-category="research"],
+  .cato-cc-cms-card[data-category="research"] { --cato-card-accent: #245082; --cato-card-accent-bg: rgba(36,80,130,.08); --cato-card-border: rgba(36,80,130,.26); }
+  .cato-cc-card[data-category="resources"],
+  .cato-cc-cms-card[data-category="resources"] { --cato-card-accent: #775321; --cato-card-accent-bg: rgba(119,83,33,.09); --cato-card-border: rgba(119,83,33,.26); }
+  .cato-cc-card[data-category="newsroom"],
+  .cato-cc-cms-card[data-category="newsroom"] { --cato-card-accent: #61456d; --cato-card-accent-bg: rgba(97,69,109,.08); --cato-card-border: rgba(97,69,109,.26); }
+  .cato-cc-card[data-category] .cato-cc-pill,
+  .cato-cc-cms-card[data-category] .cato-cc-pill { color: var(--cato-card-accent); background: var(--cato-card-accent-bg); border-color: var(--cato-card-border); }
+  .cato-cc-card[data-category] h3,
+  .cato-cc-cms-card[data-category] h3 { color: var(--cato-card-accent); }
   .cato-cc-card h3 { max-width: 20rem; font-size: 1.35rem; line-height: 1.32; }
-  .cato-cc-card:hover, .cato-cc-cms-card:hover { border-color: var(--cato-border-strong); transform: translate3d(0, -.25rem, 0); box-shadow: 0 1rem 2rem rgba(17,16,15,.08); }
+  .cato-cc-cms-card h3 { display: -webkit-box; overflow: hidden; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+  .cato-cc-card:hover, .cato-cc-cms-card:hover { border-color: var(--cato-card-border, var(--cato-border-strong)); transform: translate3d(0, -.18rem, 0); box-shadow: 0 .8rem 1.5rem rgba(17,16,15,.07); }
   .cato-cc-card p, .cato-cc-cms-card p { color: var(--cato-muted); margin: 0; line-height: 1.5; }
+  .cato-cc-card p, .cato-cc-cms-card p { display: -webkit-box; overflow: hidden; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
+  .cato-cc-cms-card p { min-height: 4.5em; max-height: 4.5em; }
   .cato-cc-card p { max-width: 18rem; }
   .cato-cc-link { color: var(--cato-green); margin-top: auto; font-weight: 600; display: inline-block; transition: transform .18s, color .18s; }
   .cato-cc-card .cato-cc-link { margin-top: .45rem; }
   .cato-cc-card:hover .cato-cc-link, .cato-cc-cms-card:hover .cato-cc-link { transform: translate3d(.18rem, 0, 0); }
-  .cato-cc-preview-header { display: flex; flex-direction: column; align-items: center; gap: 1rem; max-width: 54rem; margin: 0 auto 2rem; text-align: center; }
-  .cato-cc-layout { display: grid; grid-template-columns: minmax(14rem, .34fr) minmax(0, 1fr); gap: 1.5rem; align-items: start; }
-  .cato-cc-filter-rail { display: flex; flex-direction: column; gap: 1rem; position: sticky; top: 7rem; border: 1px solid var(--cato-border); background: var(--cato-bg); border-radius: .75rem; padding: 1.25rem; }
-  .cato-cc-filter-title { font-weight: 800; }
+  .cato-cc-preview-header { display: flex; flex-direction: column; align-items: center; gap: .75rem; max-width: 54rem; margin: 0 auto 1.25rem; text-align: center; }
+  .cato-cc-layout { display: grid; grid-template-columns: minmax(13rem, .27fr) minmax(0, 1fr); gap: 1.25rem; align-items: start; }
+  .cato-cc-filter-rail { display: flex; flex-direction: column; gap: .85rem; position: sticky; top: 7rem; border: 1px solid var(--cato-border); background: var(--cato-bg); border-radius: .75rem; padding: 1rem; box-shadow: 0 .75rem 1.5rem rgba(17,16,15,.035); }
+  .cato-cc-filter-title { font-size: .95rem; font-weight: 800; }
   .cato-cc-filter-list { display: flex; flex-direction: column; gap: .5rem; }
-  .cato-cc-filter { display: flex; align-items: center; justify-content: space-between; gap: 1rem; border: 1px solid transparent; border-radius: .5rem; color: var(--cato-muted); padding: .65rem .75rem; font-weight: 700; text-decoration: none; transition: background-color .18s, border-color .18s, color .18s, transform .18s; }
-  .cato-cc-filter:hover, .cato-cc-filter[data-active="true"] { color: var(--cato-green); background: rgba(10,69,46,.05); border-color: rgba(10,69,46,.14); }
+  .cato-cc-filter { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: .75rem; width: 100%; border: 1px solid transparent; border-radius: .5rem; color: var(--cato-muted); background: transparent; padding: .62rem .7rem; font: inherit; font-weight: 700; text-align: left; text-decoration: none; cursor: pointer; transition: background-color .18s, border-color .18s, color .18s, transform .18s; }
+  .cato-cc-filter:hover, .cato-cc-filter[data-active="true"] { color: var(--cato-green); background: rgba(10,69,46,.055); border-color: rgba(10,69,46,.16); }
   .cato-cc-filter[data-category] { color: var(--cato-filter-accent); border-color: var(--cato-filter-border); background: var(--cato-filter-bg); }
   .cato-cc-filter[data-category="resiliency"] { --cato-filter-accent: #0a452e; --cato-filter-bg: rgba(10,69,46,.06); --cato-filter-border: rgba(10,69,46,.16); }
   .cato-cc-filter[data-category="research"] { --cato-filter-accent: #245082; --cato-filter-bg: rgba(36,80,130,.07); --cato-filter-border: rgba(36,80,130,.16); }
   .cato-cc-filter[data-category="resources"] { --cato-filter-accent: #775321; --cato-filter-bg: rgba(119,83,33,.08); --cato-filter-border: rgba(119,83,33,.16); }
   .cato-cc-filter[data-category="newsroom"] { --cato-filter-accent: #61456d; --cato-filter-bg: rgba(97,69,109,.07); --cato-filter-border: rgba(97,69,109,.16); }
-  .cato-cc-filter[data-category]:hover { border-color: var(--cato-filter-accent); background: var(--cato-filter-bg); }
+  .cato-cc-filter[data-category]:hover, .cato-cc-filter[data-category][data-active="true"] { border-color: var(--cato-filter-accent); background: var(--cato-filter-bg); }
+  .cato-cc-filter-label { display: inline-flex; align-items: center; gap: .55rem; min-width: 0; }
+  .cato-cc-filter-radio { position: relative; flex: 0 0 auto; width: .9rem; height: .9rem; border: 1px solid currentColor; border-radius: 999rem; opacity: .62; background: var(--cato-bg); transition: opacity .18s, box-shadow .18s, background-color .18s; }
+  .cato-cc-filter-radio::after { content: ""; position: absolute; inset: .2rem; border-radius: inherit; background: currentColor; opacity: 0; transform: scale(.55); transition: opacity .18s, transform .18s; }
+  .cato-cc-filter[data-active="true"] .cato-cc-filter-radio { opacity: 1; box-shadow: 0 0 0 .2rem rgba(10,69,46,.07); }
+  .cato-cc-filter[data-active="true"] .cato-cc-filter-radio::after { opacity: 1; transform: scale(1); }
   .cato-cc-filter[data-category] .cato-cc-filter-count { color: var(--cato-filter-accent); background: rgba(255,255,255,.72); }
   .cato-cc-filter-count { color: var(--cato-muted); background: rgba(10,69,46,.05); border-radius: 999rem; min-width: 1.65rem; padding: .16rem .48rem; text-align: center; font-size: .78rem; }
-  .cato-cc-filter-note { color: var(--cato-muted); margin: 0; font-size: .92rem; line-height: 1.45; }
-  .cato-cc-cms-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem; align-items: stretch; }
-  .cato-cc-cms-card { min-height: 18rem; padding: 1.5rem; }
-  .cato-cc-cms-card[data-featured="true"] { grid-column: 1 / -1; padding: 2rem; }
+  .cato-cc-cms-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; align-items: stretch; }
+  .cato-cc-cms-card { --cato-card-border: var(--cato-border); position: relative; min-height: 13rem; padding: 1.15rem; }
+  .cato-cc-cms-card > div { width: 100%; }
+  .cato-cc-cms-card[data-featured="true"] { grid-column: auto; padding: 1.15rem; }
   .cato-cc-card-top { display: flex; align-items: center; justify-content: space-between; gap: 1rem; width: 100%; }
-  .cato-cc-card-body { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 2rem; width: 100%; }
+  .cato-cc-card-body { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 1rem; width: 100%; }
   .cato-cc-meta { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem; color: var(--cato-muted); font-size: .875rem; line-height: 1.35; }
-  .cato-cc-system-band { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); align-items: center; gap: 3rem; border: 1px solid var(--cato-border); background: var(--cato-bg); border-radius: .75rem; padding: 3rem; }
+  .cato-cc-system-band { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); align-items: center; gap: 1.25rem; border: 1px solid var(--cato-border); background: var(--cato-bg); border-radius: .75rem; padding: 1.25rem; }
   .cato-cc-system-band[data-subscribe="true"] { grid-template-columns: minmax(0, .72fr) minmax(0, 1.28fr); align-items: center; gap: 1.25rem; padding: 1.25rem; }
-  .cato-cc-system-band[data-archive="true"] { align-items: start; }
-  .cato-cc-system-band[data-archive="true"] .cato-cc-system-copy { position: sticky; top: 7rem; }
+  .cato-cc-system-band[data-archive="true"], .cato-cc-archive-panel { grid-template-columns: 1fr; align-items: start; gap: 1.15rem; padding: 1.25rem; }
+  .cato-cc-system-band[data-archive="true"] .cato-cc-system-copy, .cato-cc-archive-panel .cato-cc-system-copy { max-width: 54rem; }
   .cato-cc-system-band[data-archive-shell="true"] { grid-template-columns: 1fr; }
   .cato-cc-system-band[data-archive-shell="true"] .cato-cc-system-copy { max-width: 56rem; }
-  .cato-cc-system-copy { display: flex; flex-direction: column; gap: 1rem; }
+  .cato-cc-archive-panel { display: grid; width: 100%; border: 1px solid var(--cato-border); background: linear-gradient(180deg, var(--cato-bg) 0%, rgba(251,249,244,.7) 100%); border-radius: .75rem; }
+  .cato-cc-system-copy { display: flex; flex-direction: column; gap: .75rem; }
   .cato-cc-system-list { display: flex; flex-direction: column; gap: .75rem; }
   .cato-cc-system-card { display: flex; flex-direction: column; gap: .35rem; background: rgba(10,69,46,.055); border: 0; border-radius: .625rem; box-shadow: none; padding: 1.25rem; }
   .cato-cc-system-card p { margin: 0; color: var(--cato-muted); line-height: 1.5; }
-  .cato-cc-archive-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; align-items: stretch; }
-  .cato-cc-archive-list .cato-cc-cms-card { min-height: 15rem; padding: 1.25rem; }
+  .cato-cc-archive-list { grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; }
+  .cato-cc-archive-list .cato-cc-cms-card { min-height: 13rem; padding: 1.15rem; background: var(--cato-bg); }
+  .cato-cc-archive-list .cato-cc-cms-card[data-category] { border-color: var(--cato-card-border); }
+  .cato-cc-archive-list .cato-cc-cms-card[data-category] .cato-cc-pill { color: var(--cato-card-accent); background: var(--cato-card-accent-bg); border-color: var(--cato-card-border); }
+  .cato-cc-archive-list .cato-cc-cms-card[data-category] h3 { color: var(--cato-card-accent); }
   .cato-cc-back-link { color: var(--cato-green); margin-top: .25rem; font-weight: 700; text-decoration: none; display: inline-block; }
   .cato-cc-hero-actions { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: .25rem; }
   .cato-cc-share-link { display: inline-flex; align-items: center; justify-content: center; min-height: 2.75rem; border: 1px solid rgba(10,69,46,.18); border-radius: .5rem; background: rgba(10,69,46,.055); color: var(--cato-green); padding: .7rem 1rem; font-weight: 800; line-height: 1.2; text-decoration: none; }
@@ -977,7 +1036,7 @@ const CATO_CSS = `
     min-height: 3.25rem;
     border: 1px solid var(--cato-green-mid);
     border-radius: .5rem;
-    background: linear-gradient(135deg, var(--cato-green-bright), var(--cato-green-mid) 68%, var(--cato-green));
+    background: linear-gradient(105deg, var(--cato-action-green-light), var(--cato-action-green));
     color: var(--cato-white) !important;
     -webkit-text-fill-color: var(--cato-white);
     padding: .85rem 1.15rem;
@@ -997,7 +1056,7 @@ const CATO_CSS = `
     color: var(--cato-white) !important;
     -webkit-text-fill-color: var(--cato-white);
   }
-  .cato-cc-button:hover, .cato-cc-cta:hover { background: var(--cato-green); border-color: var(--cato-green); transform: translate3d(0, -.1rem, 0); box-shadow: 0 .7rem 1.25rem rgba(10,69,46,.14); }
+  .cato-cc-button:hover, .cato-cc-cta:hover { background: var(--cato-green-mid); border-color: var(--cato-green-mid); transform: translate3d(0, -.1rem, 0); box-shadow: 0 .7rem 1.25rem rgba(10,69,46,.14); }
   .cato-cc-button:active, .cato-cc-cta:active { transform: translate3d(0, 0, 0); box-shadow: none; }
   .cato-cc-form-note { color: var(--cato-muted); margin: .65rem 0 0; font-size: .86rem; line-height: 1.4; }
   .cato-cc-form-status { border-radius: .5rem; margin: .75rem 0 0; padding: .8rem .95rem; font-weight: 700; line-height: 1.4; }
@@ -1086,10 +1145,10 @@ const CATO_CSS = `
   .cato-cc-takeaways-html ul, .cato-cc-takeaways-html ol { display: flex; flex-direction: column; gap: .65rem; margin: 0; padding-left: 1.25rem; }
   .cato-cc-takeaways-html p { margin: 0 0 .75rem; line-height: 1.5; }
   .cato-cc-mega { background: var(--cato-bg); color: var(--cato-text); border-top: 1px solid rgba(40,39,35,.08); border-bottom: 1px solid rgba(40,39,35,.12); box-shadow: 0 28px 70px rgba(46,34,27,.16); }
-  .cato-cc-mega-inner { display: grid; grid-template-columns: .78fr 1.32fr .82fr; gap: 2.25rem; align-items: stretch; width: min(100%, 80rem); min-height: 23rem; margin: 0 auto; padding: 2.5rem; }
-  .cato-cc-mega-intro { border-right: 1px solid rgba(40,39,35,.10); padding-right: 2rem; }
+  .cato-cc-mega-inner { display: grid; grid-template-columns: .78fr 1.32fr .82fr; gap: 1.75rem; align-items: stretch; width: min(100%, 80rem); min-height: 18.5rem; margin: 0 auto; padding: 1.75rem 2.5rem 2rem; }
+  .cato-cc-mega-intro { border-right: 1px solid rgba(40,39,35,.10); padding-right: 1.5rem; }
   .cato-cc-mega-kicker { color: var(--cato-muted); text-transform: uppercase; margin: 0 0 1rem; font-size: .76rem; font-weight: 800; }
-  .cato-cc-mega-title { max-width: 23rem; margin: 0 0 4rem; font-size: clamp(1.8rem, 2.5vw, 2.55rem); line-height: 1.06; font-weight: 800; }
+  .cato-cc-mega-title { max-width: 23rem; margin: 0 0 2rem; font-size: clamp(1.8rem, 2.5vw, 2.55rem); line-height: 1.06; font-weight: 800; }
   .cato-cc-mega-copy { color: var(--cato-muted); max-width: 18rem; margin: 0 0 1.6rem; font-size: .95rem; line-height: 1.5; }
   .cato-cc-mega-home { display: block; width: fit-content; font-weight: 800; text-decoration: none; }
   .cato-cc-mega-title + .cato-cc-mega-home { margin-top: 1.75rem; }
@@ -1098,13 +1157,12 @@ const CATO_CSS = `
   .cato-cc-mega-link:hover { background: var(--base-color-cream--cream-200, #f2eee8); }
   .cato-cc-mega-link strong { font-size: .98rem; line-height: 1.2; }
   .cato-cc-mega-link span { color: var(--cato-muted); font-size: .86rem; line-height: 1.4; }
-  .cato-cc-mega-feature { display: flex; flex-direction: column; gap: 1rem; min-height: 18rem; background: var(--cato-green-mid); color: var(--cato-white); border-radius: .5rem; padding: 1.5rem; text-decoration: none; }
+  .cato-cc-mega-feature { display: flex; flex-direction: column; gap: .55rem; min-height: 11.5rem; background: var(--cato-green-mid); color: var(--cato-white); border-radius: .5rem; padding: 1.05rem; text-decoration: none; }
   .cato-cc-mega-feature span, .cato-cc-mega-feature p, .cato-cc-mega-feature strong, .cato-cc-mega-feature h3 { color: var(--cato-white); }
-  .cato-cc-mega-feature h3 { font-size: 1.2rem; line-height: 1.3; }
-  .cato-cc-mega-feature p { font-size: .92rem; line-height: 1.42; }
-  .cato-cc-mega-feature .cato-cc-pill { color: var(--cato-white); border-color: rgba(255,255,255,.35); background: transparent; }
-  .cato-cc-mega-feature-list { display: flex; flex-direction: column; gap: .35rem; border-top: 1px solid rgba(255,255,255,.16); padding: .7rem 0; }
-  .cato-cc-mega-feature-list strong { display: block; font-size: .9rem; line-height: 1.16; }
+  .cato-cc-mega-feature h3 { font-size: 1.12rem; line-height: 1.28; }
+  .cato-cc-mega-feature p { font-size: .88rem; line-height: 1.4; }
+  .cato-cc-mega-feature-list { display: flex; flex-direction: column; gap: .28rem; padding: .15rem 0 0; border: 0; }
+  .cato-cc-mega-feature-list strong { display: block; font-size: .86rem; line-height: 1.15; }
   .cato-cc-mega-feature-list span { opacity: .72; text-transform: uppercase; font-size: .7rem; line-height: 1.2; }
   .cato-cc-mega-feature-cta { margin-top: .25rem; font-weight: 800; }
   .cato-cc a:focus-visible, .cato-cc button:focus-visible { outline: 2px solid var(--cato-green-bright); outline-offset: 3px; }
@@ -1114,17 +1172,24 @@ const CATO_CSS = `
   @media (max-width: 991px) {
     .cato-cc-hero-grid, .cato-cc-system-band, .cato-cc-layout, .cato-cc-detail-layout { grid-template-columns: 1fr; }
     .cato-cc-card-grid, .cato-cc-cms-grid, .cato-cc-archive-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .cato-cc-system-band[data-archive="true"] { grid-template-columns: 1fr; }
     .cato-cc-filter-rail, .cato-cc-sidebar { position: static; }
     .cato-cc-filter-list { flex-flow: row wrap; }
-    .cato-cc-hero { padding-top: 8rem; }
-    .cato-cc-hero[data-variant="detail"] { padding-top: 5.5rem; }
+    .cato-cc-hero { padding-top: 3rem; padding-bottom: 1.5rem; }
+    .cato-cc-hero[data-variant="detail"] { padding-top: 3rem; padding-bottom: 1.5rem; }
+    .cato-cc-hero-art { width: clamp(44rem, 110vw, 60rem); top: 4rem; left: -28rem; right: auto; opacity: .34; }
+    .cato-cc-hero[data-variant="detail"] .cato-cc-hero-art { width: clamp(38rem, 90vw, 50rem); top: 4rem; right: -19rem; opacity: .22; }
     .cato-cc-mega-inner { grid-template-columns: 1fr; min-height: auto; }
     .cato-cc-mega-intro { border-right: 0; padding-right: 0; }
   }
   @media (max-width: 767px) {
-    .cato-cc-section { padding: 4rem 1.25rem; }
-    .cato-cc-hero { padding-top: 7rem; }
-    .cato-cc-hero[data-variant="detail"] { padding-top: 4.75rem; }
+    .cato-cc-section { padding: 1.5rem 1rem; }
+    .cato-cc-section--compact { padding-top: .9rem; padding-bottom: 1rem; }
+    .cato-cc-hero { padding-top: 2.75rem; padding-bottom: 1.25rem; }
+    .cato-cc-hero[data-variant="detail"] { padding-top: 2.5rem; padding-bottom: 1.25rem; }
+    .cato-cc-hero-art { width: 38rem; top: 6rem; left: -25rem; right: auto; opacity: .28; }
+    .cato-cc-hero[data-variant="detail"] .cato-cc-hero-art { width: 34rem; top: 6rem; right: -23rem; opacity: .2; }
+    .cato-cc-hero::after { height: 12rem; }
     .cato-cc h1 { font-size: 3.5rem; line-height: 1.2; }
     .cato-cc h2 { font-size: 1.65rem; line-height: 1.25; }
     .cato-cc-preview-header h2,
@@ -1132,7 +1197,7 @@ const CATO_CSS = `
     .cato-cc h3 { font-size: 1.25rem; }
     .cato-cc-card-grid, .cato-cc-cms-grid, .cato-cc-card-body, .cato-cc-archive-list { grid-template-columns: 1fr; }
     .cato-cc-card, .cato-cc-cms-card, .cato-cc-cms-card[data-featured="true"], .cato-cc-panel, .cato-cc-detail-card, .cato-cc-sidebar-card { min-height: auto; padding: 1.25rem; }
-    .cato-cc-system-band { padding: 1.25rem; }
+    .cato-cc-system-band { padding: 1rem; }
     .cato-cc-form-row, .cato-cc-archive-cta { grid-template-columns: 1fr; flex-direction: column; align-items: stretch; }
     .cato-cc-button, .cato-cc-cta { width: 100%; }
     .cato-cc-filter-list { flex-direction: column; }
@@ -1308,6 +1373,40 @@ function displayText(value: unknown, fallback = ''): string {
   return text || fallback;
 }
 
+const CATEGORY_LABEL_PROP_BY_ID: Record<
+  string,
+  keyof Pick<
+    CatoInsightsDataProps,
+    | 'resiliencyCategoryLabel'
+    | 'researchCategoryLabel'
+    | 'resourcesCategoryLabel'
+    | 'newsroomCategoryLabel'
+  >
+> = {
+  resiliency: 'resiliencyCategoryLabel',
+  research: 'researchCategoryLabel',
+  resources: 'resourcesCategoryLabel',
+  newsroom: 'newsroomCategoryLabel'
+};
+
+function applyCategoryLabelOverrides(
+  categories: CatoInsightCategory[],
+  dataProps: CatoInsightsDataProps
+) {
+  return categories.map((category) => {
+    const overrideKey = CATEGORY_LABEL_PROP_BY_ID[category.id];
+    const override = overrideKey ? displayText(dataProps[overrideKey]) : '';
+    if (!override) return category;
+
+    return {
+      ...category,
+      title: override,
+      filterLabel: override,
+      cardLabel: override
+    };
+  });
+}
+
 function normalizeInsightImage(
   image?: CatoInsightImageValue | string | null
 ): Partial<CatoInsightImageValue> {
@@ -1356,9 +1455,12 @@ function RichHtml({ html, className }: { html?: unknown; className?: string }) {
   return <div className={className} dangerouslySetInnerHTML={{ __html: sanitized }} />;
 }
 
-function resolveData({ categoriesJson, itemsJson }: CatoInsightsDataProps) {
+function resolveData(dataProps: CatoInsightsDataProps) {
+  const { categoriesJson, itemsJson } = dataProps;
+  const categories = parseJsonArray<CatoInsightCategory>(categoriesJson, DEFAULT_CATEGORIES);
+
   return {
-    categories: parseJsonArray<CatoInsightCategory>(categoriesJson, DEFAULT_CATEGORIES),
+    categories: applyCategoryLabelOverrides(categories, dataProps),
     items: parseJsonArray<CatoInsightItem>(itemsJson, DEFAULT_ITEMS)
   };
 }
@@ -1439,11 +1541,19 @@ function normalizeEndpointItem(raw: unknown): CatoInsightItem | null {
     'pill',
     'Pill'
   ]);
+  const rawCategory = pickRecordString(record, [
+    'category',
+    'categoryId',
+    'category-id',
+    'archive',
+    'Archive'
+  ]);
   const label = contentLabel || resourceType || 'Insight';
   const displayResourceType = contentLabel || resourceType || label;
   const category =
-    pickRecordString(record, ['category', 'categoryId', 'category-id', 'archive', 'Archive']) ||
+    categoryKeyFromResourceType(rawCategory) ||
     categoryKeyFromResourceType(label) ||
+    slugifyCategoryTitle(rawCategory) ||
     'resources';
   const date = pickRecordString(record, [
     'date',
@@ -1491,10 +1601,9 @@ function useInsightItems(dataProps: CatoInsightsDataProps) {
   const { items } = resolveData(dataProps);
   const [remoteItems, setRemoteItems] = useState<CatoInsightItem[] | null>(null);
   const [status, setStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
-  const configuredEndpointUrl = dataProps.itemsEndpointUrl?.trim() || '';
   const hasConfiguredItems = Boolean(dataProps.itemsJson?.trim());
-  const endpointUrl =
-    configuredEndpointUrl || (hasConfiguredItems ? '' : DEFAULT_ITEMS_ENDPOINT_URL);
+  const shouldUseEndpoint = Boolean(dataProps.itemsEndpointUrl?.trim()) || !hasConfiguredItems;
+  const endpointUrl = shouldUseEndpoint ? resolveCatoItemsEndpointUrl(dataProps.itemsEndpointUrl) : '';
   const shouldFetch = dataProps.fetchItems !== false && Boolean(endpointUrl);
 
   useEffect(() => {
@@ -1614,6 +1723,20 @@ function categoryKeyFromResourceType(value?: string) {
   return '';
 }
 
+function categoryKeyForItem(item: Pick<CatoInsightItem, 'category' | 'resourceType' | 'pill'>) {
+  return (
+    categoryKeyFromResourceType(item.category) ||
+    categoryKeyFromResourceType(item.resourceType || item.pill) ||
+    slugifyCategoryTitle(item.category) ||
+    'resources'
+  );
+}
+
+function labelForInsightPill(item: CatoInsightItem, categories = DEFAULT_CATEGORIES) {
+  const categoryKey = categoryKeyForItem(item);
+  return categories.find((category) => category.id === categoryKey)?.title || item.pill;
+}
+
 function inferCategorySlugFromLocation() {
   if (typeof window === 'undefined') return '';
   const parts = window.location.pathname.split('/').filter(Boolean);
@@ -1650,7 +1773,6 @@ function categoryByKey(
 function Hero({
   title,
   summary,
-  panelLabel,
   panelTitle,
   panelSummary,
   panelCta,
@@ -1675,26 +1797,32 @@ function Hero({
   actions?: React.ReactNode;
   children?: React.ReactNode;
   variant?: 'default' | 'detail';
+  showPanelLabel?: boolean;
 }) {
   return (
     <section
       className="cato-cc-section cato-cc-hero"
       data-variant={variant === 'detail' ? 'detail' : undefined}
     >
+      <img
+        className="cato-cc-hero-art"
+        src={CATO_TECH_HERO_VECTOR_URL}
+        alt=""
+        aria-hidden="true"
+        loading="lazy"
+      />
       <div className="cato-cc-container">
         <div
           className="cato-cc-hero-grid"
           data-variant={variant === 'detail' ? 'detail' : undefined}
         >
           <div className="cato-cc-copy">
-            <p className="cato-cc-eyebrow">Insights</p>
             <h1>{title}</h1>
             <p className="cato-cc-lede">{summary}</p>
             {actions ? <div className="cato-cc-hero-actions">{actions}</div> : null}
             {backLink}
           </div>
           <div className="cato-cc-panel">
-            <p className="cato-cc-panel-label">{panelLabel}</p>
             <h2>{panelTitle}</h2>
             <p>{panelSummary}</p>
             {panelCta && panelHref ? (
@@ -1738,49 +1866,39 @@ function CategoryCard({
 function InsightCard({
   item,
   href,
+  categories = DEFAULT_CATEGORIES,
   featured = false,
+  pillLabelOverride = '',
   target,
   rel
 }: {
   item: CatoInsightItem;
   href: string;
+  categories?: CatoInsightCategory[];
   featured?: boolean;
+  pillLabelOverride?: string;
   target?: string;
   rel?: string;
 }) {
+  const category = categoryKeyForItem(item);
+  const pillLabel = displayText(pillLabelOverride, labelForInsightPill(item, categories));
+
   return (
     <a
       href={href}
       className="cato-cc-cms-card"
       data-featured={featured ? 'true' : undefined}
+      data-category={category}
       target={target}
       rel={rel}
     >
-      {featured ? (
-        <>
-          <div className="cato-cc-card-top">
-            <span className="cato-cc-pill">{item.pill}</span>
-            <span className="cato-cc-meta">{item.date}</span>
-          </div>
-          <div className="cato-cc-card-body">
-            <div>
-              <h3>{item.title}</h3>
-              <p>{item.summary}</p>
-            </div>
-            <span className="cato-cc-link">{item.ctaLabel}</span>
-          </div>
-        </>
-      ) : (
-        <>
-          <span className="cato-cc-pill">{item.pill}</span>
-          <div>
-            <div className="cato-cc-meta">{item.date}</div>
-            <h3>{item.title}</h3>
-            <p>{item.summary}</p>
-          </div>
-          <span className="cato-cc-link">{item.ctaLabel}</span>
-        </>
-      )}
+      <span className="cato-cc-pill">{pillLabel}</span>
+      <div>
+        <div className="cato-cc-meta">{item.date}</div>
+        <h3>{item.title}</h3>
+        <p>{item.summary}</p>
+      </div>
+      <span className="cato-cc-link">{item.ctaLabel}</span>
     </a>
   );
 }
@@ -1862,21 +1980,31 @@ function FeaturedImage({
 
 function ArchiveItemList({
   items,
+  category,
+  categories,
   status,
   linkMode,
   pathPrefix,
   shouldShowSubscribe
 }: {
   items: CatoInsightItem[];
+  category?: CatoInsightCategory;
+  categories: CatoInsightCategory[];
   status: 'idle' | 'loading' | 'ready' | 'error';
   linkMode: CatoInsightsDataProps['linkMode'];
   pathPrefix: string;
   shouldShowSubscribe: boolean | undefined;
 }) {
   return (
-    <div className="cato-cc-archive-list">
+    <div className="cato-cc-cms-grid cato-cc-archive-list">
       {items.map((item) => (
-        <InsightCard key={item.id} item={item} href={hrefForItem(item, linkMode, pathPrefix)} />
+        <InsightCard
+          key={item.id}
+          item={item}
+          categories={categories}
+          pillLabelOverride={category?.title}
+          href={hrefForItem(item, linkMode, pathPrefix)}
+        />
       ))}
       {status === 'loading' && items.length === 0 ? (
         <div className="cato-cc-system-card">Loading latest insights...</div>
@@ -1990,18 +2118,17 @@ function SubscribeBlock() {
 export const CatoInsightsHub: React.FC<CatoInsightsHubProps> = ({
   title = 'Supply Chain Insights for Outstanding Patient Care',
   summary = 'Stay ahead of disruptions with practical procurement intelligence.',
-  featuredPanelLabel = 'Featured now',
+  featuredPanelLabel: _featuredPanelLabel = 'Featured now',
   featuredPanelTitle = 'Relevant disruptions and strategic resources.',
   featuredPanelSummary = 'Use this area to feature the market signals, research, and company updates that matter most from a business perspective.',
   featuredPanelCta = 'Access these reports',
-  filterRailNote = 'Use these filters to scan current reports, research, and newsroom updates by content type.',
+  filterRailNote: _filterRailNote = '',
   insightsHomeLink,
   featuredPanelLink,
   resiliencyLink,
   researchLink,
   whitepapersLink,
   newsroomLink,
-  previewEyebrow = 'Insights hub',
   previewTitle = 'Actionable Supply Chain Insights for Healthcare Leaders',
   previewSummary = 'Browse by content type to access active supply disruptions, overcome market volatility, and apply sourcing strategies that increase supply chain resilience.',
   itemLimit = 4,
@@ -2012,19 +2139,16 @@ export const CatoInsightsHub: React.FC<CatoInsightsHubProps> = ({
   ...dataProps
 }) => {
   const { categories, items } = useInsightsData(dataProps);
+  const [activeCategory, setActiveCategory] = useState('all');
   const hubCategories = categories.filter((category) => category.id !== 'resources');
   const hubCategoryIds = new Set(hubCategories.map((category) => category.id));
-  const hubItems = items.filter((item) => hubCategoryIds.has(item.category));
+  const hubItems = items.filter((item) => hubCategoryIds.has(categoryKeyForItem(item)));
   const categoryLinkOverrides: Record<string, CatoInsightLinkProp | undefined> = {
     resiliency: resiliencyLink,
     research: researchLink,
     resources: whitepapersLink,
     newsroom: newsroomLink
   };
-  const insightsHomeHref = hrefFromLink(
-    insightsHomeLink,
-    hrefForPage('insights.html', linkMode, pathPrefix)
-  );
   const panelLink = featuredPanelLink || resiliencyLink;
   const panelHref = hrefFromLink(
     panelLink,
@@ -2033,10 +2157,12 @@ export const CatoInsightsHub: React.FC<CatoInsightsHubProps> = ({
   const linkForCategory = (category: CatoInsightCategory) => categoryLinkOverrides[category.id];
   const hrefForCategory = (category: CatoInsightCategory) =>
     hrefFromLink(linkForCategory(category), hrefForPage(category.page, linkMode, pathPrefix));
-  const featured = hubItems.find((item) => item.featured) || hubItems[0];
-  const rest = hubItems.filter((item) => item.id !== featured?.id);
+  const visibleHubItems =
+    activeCategory === 'all'
+      ? hubItems
+      : hubItems.filter((item) => categoryKeyForItem(item) === activeCategory);
   const previewItems = showFilterRail
-    ? [featured, ...rest].filter((item): item is CatoInsightItem => Boolean(item))
+    ? visibleHubItems
     : hubItems.slice(0, Math.max(1, itemLimit));
 
   return (
@@ -2045,15 +2171,19 @@ export const CatoInsightsHub: React.FC<CatoInsightsHubProps> = ({
       <Hero
         title={title}
         summary={summary}
-        panelLabel={featuredPanelLabel}
+        panelLabel={_featuredPanelLabel}
         panelTitle={featuredPanelTitle}
         panelSummary={featuredPanelSummary}
         panelCta={featuredPanelCta}
         panelHref={panelHref}
         panelTarget={panelLink?.target}
         panelRel={relForTarget(panelLink?.target)}
+        showPanelLabel={false}
       >
-        <div className="cato-cc-card-grid" data-count={hubCategories.length}>
+        <div
+          className={`cato-cc-card-grid cato-cc-card-grid--count-${hubCategories.length}`}
+          data-count={hubCategories.length}
+        >
           {hubCategories.map((category) => {
             const link = linkForCategory(category);
             return (
@@ -2071,7 +2201,6 @@ export const CatoInsightsHub: React.FC<CatoInsightsHubProps> = ({
       <section className="cato-cc-section">
         <div className="cato-cc-container">
           <div className="cato-cc-preview-header">
-            <p className="cato-cc-eyebrow">{previewEyebrow}</p>
             <h2>{previewTitle}</h2>
             <p className="cato-cc-lede">{previewSummary}</p>
           </div>
@@ -2079,49 +2208,65 @@ export const CatoInsightsHub: React.FC<CatoInsightsHubProps> = ({
             <div className="cato-cc-layout">
               <aside className="cato-cc-filter-rail" aria-label="Browse insights by content type">
                 <div className="cato-cc-filter-title">Browse by type</div>
-                <div className="cato-cc-filter-list">
-                  <a
-                    href={insightsHomeHref}
+                <div className="cato-cc-filter-list" role="radiogroup" aria-label="Filter insights">
+                  <button
+                    type="button"
+                    onClick={() => setActiveCategory('all')}
                     className="cato-cc-filter"
-                    data-active="true"
-                    target={insightsHomeLink?.target}
-                    rel={relForTarget(insightsHomeLink?.target)}
+                    data-active={activeCategory === 'all' ? 'true' : undefined}
+                    aria-pressed={activeCategory === 'all'}
+                    aria-checked={activeCategory === 'all'}
+                    role="radio"
                   >
-                    <span>All insights</span>
+                    <span className="cato-cc-filter-label">
+                      <span className="cato-cc-filter-radio" aria-hidden="true" />
+                      <span>All insights</span>
+                    </span>
                     <span className="cato-cc-filter-count">{hubItems.length}</span>
-                  </a>
+                  </button>
                   {hubCategories.map((category) => {
-                    const link = linkForCategory(category);
                     return (
-                      <a
+                      <button
                         key={category.id}
-                        href={hrefForCategory(category)}
+                        type="button"
+                        onClick={() => setActiveCategory(category.id)}
                         className="cato-cc-filter"
                         data-category={category.id}
-                        target={link?.target}
-                        rel={relForTarget(link?.target)}
+                        data-active={activeCategory === category.id ? 'true' : undefined}
+                        aria-pressed={activeCategory === category.id}
+                        aria-checked={activeCategory === category.id}
+                        role="radio"
                       >
-                        <span>{category.filterLabel}</span>
-                        <span className="cato-cc-filter-count">
-                          {items.filter((item) => item.category === category.id).length}
+                        <span className="cato-cc-filter-label">
+                          <span className="cato-cc-filter-radio" aria-hidden="true" />
+                          <span>{category.title}</span>
                         </span>
-                      </a>
+                        <span className="cato-cc-filter-count">
+                          {
+                            hubItems.filter((item) => categoryKeyForItem(item) === category.id)
+                              .length
+                          }
+                        </span>
+                      </button>
                     );
                   })}
                 </div>
-                {displayText(filterRailNote) ? (
-                  <p className="cato-cc-filter-note">{filterRailNote}</p>
-                ) : null}
               </aside>
               <div className="cato-cc-cms-grid">
-                {previewItems.map((item, index) => (
+                {previewItems.map((item) => (
                   <InsightCard
                     key={item.id}
                     item={item}
+                    categories={categories}
                     href={hrefForItem(item, linkMode, pathPrefix)}
-                    featured={index === 0}
                   />
                 ))}
+                {previewItems.length === 0 ? (
+                  <div className="cato-cc-system-card cato-cc-note-card">
+                    <strong>No insights available yet.</strong>
+                    <p>Published CMS entries for this content type will appear here.</p>
+                  </div>
+                ) : null}
               </div>
             </div>
           ) : (
@@ -2130,6 +2275,7 @@ export const CatoInsightsHub: React.FC<CatoInsightsHubProps> = ({
                 <InsightCard
                   key={item.id}
                   item={item}
+                  categories={categories}
                   href={hrefForItem(item, linkMode, pathPrefix)}
                 />
               ))}
@@ -2201,7 +2347,7 @@ export const CatoInsightsArchive: React.FC<CatoInsightsArchiveProps> = ({
     categorySlug || inferCategorySlugFromLocation(),
     categoryId
   );
-  const categoryItems = items.filter((item) => item.category === category.id);
+  const categoryItems = items.filter((item) => categoryKeyForItem(item) === category.id);
   const shouldShowSubscribe = showSubscribe && category.hasSubscribe;
 
   return (
@@ -2224,7 +2370,7 @@ export const CatoInsightsArchive: React.FC<CatoInsightsArchiveProps> = ({
       />
       <section className="cato-cc-section">
         <div className="cato-cc-container">
-          <div className="cato-cc-system-band" data-archive="true">
+          <div className="cato-cc-archive-panel" data-archive="true">
             <div className="cato-cc-system-copy">
               <p className="cato-cc-eyebrow">{category.archiveEyebrow}</p>
               <h2>{category.archiveTitle}</h2>
@@ -2232,6 +2378,8 @@ export const CatoInsightsArchive: React.FC<CatoInsightsArchiveProps> = ({
             </div>
             <ArchiveItemList
               items={categoryItems}
+              category={category}
+              categories={categories}
               status={status}
               linkMode={linkMode}
               pathPrefix={pathPrefix}
@@ -2262,7 +2410,7 @@ export const CatoInsightsArchiveShell: React.FC<CatoInsightsArchiveShellProps> =
     categorySlug || inferCategorySlugFromLocation(),
     categoryId
   );
-  const categoryItems = items.filter((item) => item.category === category.id);
+  const categoryItems = items.filter((item) => categoryKeyForItem(item) === category.id);
   const shouldShowSubscribe = showSubscribe && category.hasSubscribe;
   const shouldRenderItems = showItems && (categoryItems.length > 0 || status !== 'idle');
 
@@ -2290,7 +2438,7 @@ export const CatoInsightsArchiveShell: React.FC<CatoInsightsArchiveShellProps> =
         <section className="cato-cc-section">
           <div className="cato-cc-container">
             <div
-              className="cato-cc-system-band"
+              className="cato-cc-archive-panel"
               data-archive="true"
               data-archive-shell={shouldRenderItems ? undefined : 'true'}
             >
@@ -2302,6 +2450,8 @@ export const CatoInsightsArchiveShell: React.FC<CatoInsightsArchiveShellProps> =
               {showItems ? (
                 <ArchiveItemList
                   items={categoryItems}
+                  category={category}
+                  categories={categories}
                   status={status}
                   linkMode={linkMode}
                   pathPrefix={pathPrefix}
@@ -2328,8 +2478,18 @@ export const CatoInsightCmsCard: React.FC<CatoInsightCmsCardProps> = ({
   itemLink,
   featured = false,
   linkMode = 'webflow',
-  pathPrefix = '/insights'
+  pathPrefix = '/insights',
+  resiliencyCategoryLabel = '',
+  researchCategoryLabel = '',
+  resourcesCategoryLabel = '',
+  newsroomCategoryLabel = ''
 }) => {
+  const categories = applyCategoryLabelOverrides(DEFAULT_CATEGORIES, {
+    resiliencyCategoryLabel,
+    researchCategoryLabel,
+    resourcesCategoryLabel,
+    newsroomCategoryLabel
+  });
   const titleText = displayText(title, 'Insight title');
   const label = displayText(contentLabel) || displayText(resourceType) || 'Insight';
   const normalizedSlug = displayText(
@@ -2362,6 +2522,7 @@ export const CatoInsightCmsCard: React.FC<CatoInsightCmsCardProps> = ({
       <style>{CATO_CSS}</style>
       <InsightCard
         item={item}
+        categories={categories}
         href={href}
         featured={featured}
         target={itemLink?.target}
@@ -2423,7 +2584,7 @@ export const CatoInsightDetail: React.FC<CatoInsightDetailProps> = ({
   const inferredCategory = categoryKeyFromResourceType(resourceTypeText);
   const category = categoryByKey(
     categories,
-    inferredCategory || categoryId || fallbackItem.category
+    inferredCategory || categoryId || categoryKeyForItem(fallbackItem)
   );
   const body = parseJsonArray<CatoInsightBodySection>(bodyJson, fallbackItem.body);
   const takeaways = parseJsonArray<string>(takeawaysJson, fallbackItem.takeaways);
@@ -2431,6 +2592,7 @@ export const CatoInsightDetail: React.FC<CatoInsightDetailProps> = ({
     ...fallbackItem,
     title: displayText(title, fallbackItem.title),
     summary: displayText(summary, fallbackItem.summary),
+    category: category.id,
     resourceType: resourceTypeText,
     date: displayText(date, fallbackItem.date),
     pill: displayText(pill, fallbackItem.pill),
@@ -2467,7 +2629,9 @@ export const CatoInsightDetail: React.FC<CatoInsightDetailProps> = ({
   const shareLabel = displayText(shareCtaLabel);
   const shareHref = displayText(shareCtaHref, `mailto:?subject=${encodeURIComponent(item.title)}`);
   const fallbackRelatedItems: CatoInsightRelatedItem[] = items
-    .filter((candidate) => candidate.slug !== item.slug && candidate.category === item.category)
+    .filter(
+      (candidate) => candidate.slug !== item.slug && categoryKeyForItem(candidate) === item.category
+    )
     .slice(0, 4)
     .map((candidate) => ({
       title: candidate.title,
@@ -2521,7 +2685,7 @@ export const CatoInsightDetail: React.FC<CatoInsightDetailProps> = ({
           <div className="cato-cc-detail-layout">
             <article className="cato-cc-detail-card">
               <div className="cato-cc-detail-meta">
-                <span className="cato-cc-pill">{item.pill}</span>
+                <span className="cato-cc-pill">{labelForInsightPill(item, categories)}</span>
                 <span>{item.date}</span>
               </div>
               <FeaturedImage
@@ -2620,7 +2784,7 @@ export const CatoInsightsMegaMenu: React.FC<CatoInsightsMegaMenuProps> = ({
     featureItemsJson,
     []
   );
-  const fallbackFeatureItems = items.filter((item) => item.category === 'resiliency');
+  const fallbackFeatureItems = items.filter((item) => categoryKeyForItem(item) === 'resiliency');
   const featureItems = (
     configuredFeatureItems.length ? configuredFeatureItems : fallbackFeatureItems
   ).slice(0, Math.max(1, featureItemLimit));
@@ -2687,7 +2851,6 @@ export const CatoInsightsMegaMenu: React.FC<CatoInsightsMegaMenuProps> = ({
             rel={relForTarget(resiliencyLink?.target)}
             className="cato-cc-mega-feature"
           >
-            {featureLabel ? <span className="cato-cc-pill">{featureLabel}</span> : null}
             <div>
               <h3>{featureTitle}</h3>
               <p>{featureSummary}</p>
