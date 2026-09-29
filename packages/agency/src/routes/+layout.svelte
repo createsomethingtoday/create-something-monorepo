@@ -102,7 +102,7 @@
   const filmNavLinks = [
     { label: 'The work', href: '/#work' },
     { label: 'How we work', href: '/services' },
-    { label: '$900/month', href: agencyCoreMessaging.membershipHref },
+    { label: 'From $900/mo', href: agencyCoreMessaging.membershipHref },
     { label: 'Explore', href: '/products', children: [
       { label: 'Services & tools', href: '/products', description: 'Explore the full catalog.' },
       { label: 'Proof', href: '/field-reports', description: 'Inspect results and their limits.' },

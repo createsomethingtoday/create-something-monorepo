@@ -5,7 +5,7 @@
 **Visitor-facing category:** AI-native tech support\
 **Workflow delivery descriptor:** Production-safe workflow infrastructure
 
-AI-native tech support covers the tools and systems a team uses and owns. We map workflows, implement agreed changes, and operate agreed live systems through Map, Build and Control. The workflow delivery descriptor names the scoped engineering behind that support; it is not a safety or availability guarantee. Membership covers one agreed workstream. Larger Build projects and managed Control have separate agreements. Project-specific AI usage, hosting and third-party services are budgeted separately. Support scope and response times follow the agreement; no 24/7 or unlimited service is implied.
+AI-native tech support covers the tools and systems a team uses and owns. We map workflows, implement agreed changes, and operate agreed live systems through Map, Build and Control. The workflow delivery descriptor names the scoped engineering behind that support; it is not a safety or availability guarantee. Focused membership covers one agreed workstream for $900/month. Team membership covers up to two for $2,500/month and six scheduled working sessions each month. Larger Build projects and managed Control have separate agreements. Project-specific AI usage, hosting and third-party services are budgeted separately. Support scope and response times follow the agreement; no 24/7 or unlimited service is implied.
 
 ---
 

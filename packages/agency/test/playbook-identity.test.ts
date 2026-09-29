@@ -27,14 +27,6 @@ const macroRouteContracts = [
   }
 ] as const;
 
-const fieldRouteContracts = [
-  {
-    path: '../src/routes/control/+page.svelte',
-    variant: 'control',
-    title: 'Run offense and defense from one playbook.'
-  }
-] as const;
-
 test('Playbook field publishes one stable, accessible operating legend', () => {
   assert.match(playbookField, /export type PlaybookFieldVariant/);
   assert.match(playbookField, /role="img"/);
@@ -111,22 +103,18 @@ test('the commercial hero cohort uses responsive Playbook macro studies and no P
   }
 });
 
-test('Control retains a readable Playbook field where the field itself is the proof', () => {
-  for (const contract of fieldRouteContracts) {
-    const source = read(contract.path);
+test('Control uses the shared icon route with a scoped post-launch offer', () => {
+  const source = read('../src/routes/control/+page.svelte');
+  const hero = read('../src/lib/components/AgencyWayfindingHero.svelte');
 
-    assert.match(source, /import PlaybookField from '\$lib\/components\/PlaybookField\.svelte'/);
-    assert.match(
-      source,
-      new RegExp(`title="${contract.title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}"`)
-    );
-    assert.match(source, new RegExp(`<PlaybookField variant="${contract.variant}"`));
-    assert.match(source, /artifactOwnsMedia/);
-    assert.match(source, /artifactMobilePlacement="flow"/);
-    assert.doesNotMatch(source, /from '\$lib\/data\/performanceMedia'/);
-    assert.doesNotMatch(source, /mode="paper"/);
-  }
-
+  assert.match(source, /<AgencyWayfindingOpening>/);
+  assert.match(source, /<AgencyWayfindingHero route="control"/);
+  assert.match(source, /artifactMobilePlacement="flow"/);
+  assert.match(source, /Control includes Map/);
+  assert.match(source, /managedControl\.longLabel/);
+  assert.match(hero, /control: \{/);
+  assert.match(hero, /Record and recover/);
+  assert.doesNotMatch(source, /<PlaybookField variant="control"/);
   assert.doesNotMatch(playbookField, /bottom: 7rem/);
   assert.match(playbookField, /position: relative/);
 });

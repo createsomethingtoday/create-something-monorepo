@@ -70,7 +70,7 @@
 
 <SEO
   title="Agent Engineering Membership | CREATE SOMETHING .agency"
-  description="Build with agents with CREATE SOMETHING. $900/month for delivery within an agreed scope, learning and operator support. Project-specific AI usage, hosting and third-party costs are separate."
+  description="AI-native tech support from $900/month for one agreed workstream. Team support is $2,500/month for up to two workstreams and six scheduled sessions. Project costs are separate."
   keywords="AI workflow systems, business task automation, client-owned AI agent, agent foundation"
   ogImage="/og-image.png"
   propertyName="agency"

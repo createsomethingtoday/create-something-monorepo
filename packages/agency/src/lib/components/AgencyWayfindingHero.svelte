@@ -1,7 +1,7 @@
 <script lang="ts">
   import AgencyIsometricGlyph, { type AgencySignKind } from './AgencyIsometricGlyph.svelte';
 
-  type HeroRoute = 'practice' | 'fieldReports' | 'stack' | 'services';
+  type HeroRoute = 'practice' | 'fieldReports' | 'stack' | 'services' | 'control';
   type Step = { kind: AgencySignKind; label: string; detail: string };
   type Story = { eyebrow: string; steps: Step[]; note: string };
 
@@ -43,6 +43,15 @@
         { kind: 'proof', label: 'Your handoff', detail: 'Delivered code and records' }
       ],
       note: 'Larger Build and managed Control are scoped separately'
+    },
+    control: {
+      eyebrow: 'Operating route',
+      steps: [
+        { kind: 'control', label: 'Watch the system', detail: 'One agreed live environment' },
+        { kind: 'approval', label: 'Hold decisions', detail: 'Protected actions wait for a person' },
+        { kind: 'proof', label: 'Record and recover', detail: 'Outcome and next step' }
+      ],
+      note: 'Post-launch operation · Control includes Map'
     }
   };
 
