@@ -12,7 +12,7 @@
       eyebrow: 'Practice route',
       steps: [
         { kind: 'map', label: 'Sample task', detail: 'One workflow to rehearse' },
-        { kind: 'control', label: 'Human review', detail: 'Approval and stop rules' },
+        { kind: 'approval', label: 'Human review', detail: 'Approval and stop rules' },
         { kind: 'proof', label: 'Draft record', detail: 'Result and limits' }
       ],
       note: 'Practice only · no live access'
@@ -21,7 +21,7 @@
       eyebrow: 'Evidence route',
       steps: [
         { kind: 'map', label: 'Source record', detail: 'Named workflow' },
-        { kind: 'control', label: 'Review limits', detail: 'What remains blocked' },
+        { kind: 'approval', label: 'Review limits', detail: 'What remains blocked' },
         { kind: 'proof', label: 'Read report', detail: 'Result and unknowns' }
       ],
       note: 'Measured · blocked · unknown'
@@ -30,7 +30,7 @@
       eyebrow: 'Ownership route',
       steps: [
         { kind: 'map', label: 'Your accounts', detail: 'Systems and access' },
-        { kind: 'control', label: 'Your decisions', detail: 'Approval authority' },
+        { kind: 'approval', label: 'Your decisions', detail: 'Approval authority' },
         { kind: 'proof', label: 'Your records', detail: 'Work history and proof' }
       ],
       note: 'Your team keeps the durable assets'
@@ -39,7 +39,7 @@
       eyebrow: 'Service route',
       steps: [
         { kind: 'map', label: 'Agreed work', detail: 'One named workstream' },
-        { kind: 'control', label: 'Your approval', detail: 'Consequential decisions wait' },
+        { kind: 'approval', label: 'Your approval', detail: 'Consequential decisions wait' },
         { kind: 'proof', label: 'Your handoff', detail: 'Delivered code and records' }
       ],
       note: 'Larger Build and managed Control are scoped separately'
@@ -73,24 +73,10 @@
     gap: var(--space-performance-lg);
     width: 100%;
     height: 100%;
-    min-height: 28rem;
-    padding: clamp(2rem, 6vw, 5rem) clamp(1.25rem, 3vw, 3rem) clamp(2rem, 6vw, 5rem)
-      clamp(7rem, 19%, 16rem);
+    min-height: 20rem;
+    padding: 0;
     color: var(--color-performance-editorial-light, #f3ebe4);
-    background:
-      linear-gradient(
-        90deg,
-        transparent,
-        color-mix(in srgb, var(--color-performance-editorial-dark, #181312) 65%, transparent) 30%
-      ),
-      linear-gradient(var(--color-performance-grid, rgb(255 255 255 / 0.08)) 1px, transparent 1px) 0
-        0 / 100% 25%,
-      linear-gradient(
-          90deg,
-          var(--color-performance-grid, rgb(255 255 255 / 0.08)) 1px,
-          transparent 1px
-        )
-        0 0 / 25% 100%;
+    background: transparent;
   }
 
   .wayfinding-hero__head,
@@ -148,7 +134,7 @@
   @media (max-width: 63.99rem) {
     .wayfinding-hero {
       min-height: 24rem;
-      padding: clamp(1.25rem, 5vw, 2.5rem);
+      padding: clamp(1rem, 5vw, 2.5rem);
     }
   }
 
@@ -170,7 +156,7 @@
       text-align: center;
     }
     .wayfinding-hero__glyph {
-      width: 2rem;
+      width: 2.25rem;
       margin: 0;
     }
     .wayfinding-hero__step strong {
