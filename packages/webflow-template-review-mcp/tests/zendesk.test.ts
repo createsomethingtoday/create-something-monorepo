@@ -357,7 +357,7 @@ test('createOutboundTicket creates privately, pins the group, posts a public age
   assert.deepEqual(created.comment, { html_body: 'Outbound ticket opened via Template Review MCP.', public: false, author_id: 1507275866202 }, 'first comment is private and agent-authored');
   assert.equal(created.external_id, 'template-review-mcp:recAssetZD:0123456789abcdef01234567');
   assert.deepEqual(calls[3]!.body!.ticket, { group_id: 1500002744702 }, 'group pinned back after trigger re-route');
-  assert.deepEqual(calls[4]!.body!.ticket, { comment: { html_body: 'Hi Creator,<br>Please update your listing.', public: true, author_id: 1507275866202 } }, 'public message is an agent update');
+  assert.deepEqual(calls[4]!.body!.ticket, { status: 'open', comment: { html_body: 'Hi Creator,<br>Please update your listing.', public: true, author_id: 1507275866202 } }, 'public message is an agent update that also moves the ticket off new (trigger precondition)');
   assert.equal(result.ticketId, '1200001');
   assert.equal(result.groupId, 1500002744702);
   assert.equal(result.brandId, 35121420416531);
