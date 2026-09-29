@@ -569,8 +569,9 @@ function pxValue(value: unknown): number | null {
  * Styles whose explicit width/min-width at a max-width-bounded breakpoint is a px
  * value wider than that breakpoint. Only explicit breakpoint overrides are
  * considered (not values inherited from the base breakpoint). A max-width set at
- * the same breakpoint clamps the box: any %/vw max-width, or a px max-width that
- * fits the breakpoint, suppresses the finding. Other layout effects (flex/grid
+ * the same breakpoint clamps `width` only: any %/vw max-width, or a px max-width that
+ * fits the breakpoint, suppresses a width finding; min-width wins over max-width in
+ * CSS, so it is evaluated on its own. Other layout effects (flex/grid
  * shrink, overflow: hidden) are not modelled, so this stays a warning.
  *
  * Each entry is a plain string ("Hero Card (Tablet, Mobile landscape)") because
@@ -604,9 +605,11 @@ function findFixedWidthOverflow(
       const clamped =
         (typeof maxWidth === 'string' && RELATIVE_WIDTH_VALUE.test(maxWidth)) ||
         (maxWidthPx !== null && maxWidthPx <= limit);
-      if (clamped) continue;
 
+      // max-width only clamps `width`. CSS resolves min-width over a smaller
+      // max-width, so an oversized min-width overflows regardless of max-width.
       const overflows = OVERFLOW_PROPERTIES.some((prop) => {
+        if (prop === 'width' && clamped) return false;
         const px = pxValue(props[prop]);
         return px !== null && px > limit;
       });

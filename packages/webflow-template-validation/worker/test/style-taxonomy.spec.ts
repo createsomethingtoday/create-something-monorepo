@@ -202,6 +202,29 @@ describe('styles.fixed-width-overflow', () => {
 				details: { count: 1, sample: ['Hero Card (Tablet)'] }
 			});
 		});
+
+		// CSS resolves min-width over a smaller max-width, so max-width cannot clamp an
+		// oversized min-width: the box still requires 1200px and overflows Tablet.
+		it('still flags an oversized min-width even when max-width would clamp a width', async () => {
+			const category = await stylesCategory(
+				designer(
+					[
+						{ id: 'a', name: 'Heading Large', type: 'global' },
+						{
+							id: 'b',
+							name: 'Sticky Rail',
+							type: 'global',
+							breakpointProperties: { medium: { 'min-width': '1200px', 'max-width': '100%' } }
+						}
+					],
+					{ mediaQueries: MEDIA_QUERIES }
+				)
+			);
+			expect(issue(category, 'styles.fixed-width-overflow')).toMatchObject({
+				severity: 'warning',
+				details: { count: 1, sample: ['Sticky Rail (Tablet)'] }
+			});
+		});
 	});
 });
 
