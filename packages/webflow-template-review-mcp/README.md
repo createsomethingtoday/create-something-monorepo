@@ -635,7 +635,7 @@ creator-facing feedback.
 - `template_review_reject_version`
 - `template_review_get_ticket_thread` (read-only; the creator's Zendesk conversation for a version)
 - `template_review_search_tickets` (read-only; Marketplace Review group by default)
-- `template_review_send_ticket_followup` (creator-facing when public; reviewer must own the version)
+- `template_review_send_ticket_followup` (creator-facing when public; requires `confirm_public_reply: true` and reviewer ownership of the version)
 - `template_review_update_ticket_status` (status/tags + private note on the version's linked ticket; reviewer must own the version; never a public reply)
 
 ## Zendesk ticket leg
@@ -665,7 +665,8 @@ tracked as follow-up work.
   group boundary cannot be OR-widened from the query.
 - `template_review_send_ticket_followup` posts on the version's linked ticket.
   It is a write tool (hidden from read-only sessions), requires the reviewer to
-  own the version (`assign_self` first), and renders Markdown with HTML
+  own the version (`assign_self` first), refuses a public reply unless
+  `confirm_public_reply: true` is passed, and renders Markdown with HTML
   escaping so a literal `<script>` tag cannot truncate the delivered email
   (the failure the composer patch fixed; see
   `docs/airtable-email-composer/README.md`). It bypasses the composer wrapper,

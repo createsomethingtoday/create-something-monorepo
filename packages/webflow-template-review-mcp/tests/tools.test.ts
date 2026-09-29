@@ -2166,10 +2166,21 @@ test('send_ticket_followup requires reviewer ownership, then posts an escaped co
   } as unknown as AirtableClient;
   registerTools(server, () => client, () => reviewer, { getZendeskClient: () => zendesk });
 
+  const unconfirmed = parsePayload((await handlers.get('template_review_send_ticket_followup')?.({
+    version_id: 'recVersionZD',
+    message: 'Hi Studio',
+    visibility: 'public',
+    confirm_public_reply: false,
+  }))!);
+  assert.equal(unconfirmed.error?.code, 'PUBLIC_REPLY_CONFIRMATION_REQUIRED');
+  assert.equal(comments.length, 0);
+  assert.equal(assigned.length, 0);
+
   const result = parsePayload((await handlers.get('template_review_send_ticket_followup')?.({
     version_id: 'recVersionZD',
     message: 'Hi Studio,\n\nThe `<script>` line was cut off — full text below.\n\nCheers',
     visibility: 'public',
+    confirm_public_reply: true,
   }))!);
   assert.equal(result.ok, true);
   assert.equal(result.data?.ticket_id, '1199299');
@@ -2190,17 +2201,17 @@ test('send_ticket_followup fails closed when the version is unowned, unlinked, o
   registerTools(unowned.server, () => ({
     requireAssignedVersion: async () => { throw new AirtableClientErrorForTest('REVIEWER_ASSIGNMENT_CONFLICT'); },
   }) as unknown as AirtableClient, () => reviewer, { getZendeskClient: () => zendesk });
-  const conflict = parsePayload((await unowned.handlers.get('template_review_send_ticket_followup')?.({ version_id: 'recVersionZD', message: 'Hello', visibility: 'public' }))!);
+  const conflict = parsePayload((await unowned.handlers.get('template_review_send_ticket_followup')?.({ version_id: 'recVersionZD', message: 'Hello', visibility: 'public', confirm_public_reply: true }))!);
   assert.equal(conflict.ok, false);
 
   const unlinked = createServerHarness();
   registerTools(unlinked.server, () => ({ requireAssignedVersion: async () => ({ ...ticketVersion, zendeskTicketId: undefined }) }) as unknown as AirtableClient, () => reviewer, { getZendeskClient: () => zendesk });
-  const noTicket = parsePayload((await unlinked.handlers.get('template_review_send_ticket_followup')?.({ version_id: 'recVersionZD', message: 'Hello', visibility: 'public' }))!);
+  const noTicket = parsePayload((await unlinked.handlers.get('template_review_send_ticket_followup')?.({ version_id: 'recVersionZD', message: 'Hello', visibility: 'public', confirm_public_reply: true }))!);
   assert.equal(noTicket.error?.code, 'NO_ZENDESK_TICKET');
 
   const unconfigured = createServerHarness();
   registerTools(unconfigured.server, () => ({ requireAssignedVersion: async () => ticketVersion }) as unknown as AirtableClient, () => reviewer);
-  const missing = parsePayload((await unconfigured.handlers.get('template_review_send_ticket_followup')?.({ version_id: 'recVersionZD', message: 'Hello', visibility: 'public' }))!);
+  const missing = parsePayload((await unconfigured.handlers.get('template_review_send_ticket_followup')?.({ version_id: 'recVersionZD', message: 'Hello', visibility: 'public', confirm_public_reply: true }))!);
   assert.equal(missing.error?.code, 'ZENDESK_NOT_CONFIGURED');
 
   assert.equal(posts, 0);
@@ -2342,4 +2353,17 @@ test('search_tickets rejects a group: term in free text unless scope is all', as
   const plain = parsePayload((await handlers.get('template_review_search_tickets')?.({ query: 'workgroup: launch', limit: 25, scope: 'marketplace_review' }))!);
   assert.equal(plain.ok, true);
   assert.deepEqual(queries, [undefined, 'refund group:46157931219347', 'workgroup: launch']);
+});
+
+test('send_ticket_followup internal notes need no public confirmation', async () => {
+  const comments: unknown[] = [];
+  const zendesk = {
+    agentTicketUrl: (id: string) => id,
+    addTicketComment: async (ticketId: string, input: unknown) => { comments.push([ticketId, input]); return { ticketId, isPublic: false, auditId: 1 }; },
+  } as unknown as ZendeskClient;
+  const { server, handlers } = createServerHarness();
+  registerTools(server, () => ({ requireAssignedVersion: async () => ticketVersion }) as unknown as AirtableClient, () => reviewer, { getZendeskClient: () => zendesk });
+  const note = parsePayload((await handlers.get('template_review_send_ticket_followup')?.({ version_id: 'recVersionZD', message: 'Internal: waiting on creator.', visibility: 'internal', confirm_public_reply: false }))!);
+  assert.equal(note.ok, true);
+  assert.deepEqual((comments[0] as [string, { isPublic: boolean }])[1].isPublic, false);
 });

@@ -1539,14 +1539,26 @@ export function registerTools(
 
   server.tool(
     'template_review_send_ticket_followup',
-    'Reviewer-safe write: post a follow-up comment on the Zendesk ticket linked to a template version. CREATOR-FACING when visibility is "public" — use only when the reviewer explicitly asks to send it (correcting a truncated review email, answering a creator question). Requires the reviewer to own the version (assign_self first). The message is delivered verbatim, rendered from Markdown with HTML escaping; the Airtable composer wrapper does NOT apply on this path, so include a greeting and sign-off. Decisions still go through request_changes / approve_version / reject_version, which send the composed review email.',
+    'Reviewer-safe write: post a follow-up comment on the Zendesk ticket linked to a template version. CREATOR-FACING when visibility is "public" — use only when the reviewer explicitly asks to send it (correcting a truncated review email, answering a creator question), and pass confirm_public_reply=true to acknowledge that. Requires the reviewer to own the version (assign_self first). The message is delivered verbatim, rendered from Markdown with HTML escaping; the Airtable composer wrapper does NOT apply on this path, so include a greeting and sign-off. Decisions still go through request_changes / approve_version / reject_version, which send the composed review email.',
     {
       version_id: z.string().min(1),
       message: z.string().min(1),
       visibility: z.enum(['public', 'internal']).default('public'),
+      confirm_public_reply: z
+        .boolean()
+        .default(false)
+        .describe('Must be true for visibility="public". Set it only after the reviewer has explicitly approved sending this exact message to the creator.'),
     },
-    async ({ version_id, message, visibility }) => {
+    async ({ version_id, message, visibility, confirm_public_reply }) => {
       try {
+        if (visibility === 'public' && confirm_public_reply !== true) {
+          throw new ZendeskClientError(
+            'PUBLIC_REPLY_CONFIRMATION_REQUIRED',
+            'A public follow-up reaches the creator. Pass confirm_public_reply=true only after the reviewer has explicitly approved sending this exact message, or use visibility="internal" for a private note.',
+            400,
+            { version_id, visibility },
+          );
+        }
         const zendesk = requireZendesk(runtimeConfig, 'writes');
         const reviewer = requireResolvedReviewer(getReviewer);
         const actingReviewer = currentReviewerAsCollaborator(getReviewer);
