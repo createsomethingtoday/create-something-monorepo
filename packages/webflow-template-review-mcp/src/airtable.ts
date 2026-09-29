@@ -265,6 +265,9 @@ export interface TemplateReviewVersion {
   versionNumber?: number;
   createdAt?: string;
   createdBy?: string;
+  /** Linked Zendesk ticket (creator-facing review thread), when the intake automation set one. */
+  zendeskTicketId?: string;
+  zendeskSubject?: string;
   rawFields: Record<string, unknown>;
 }
 
@@ -1054,6 +1057,8 @@ function mapVersion(record: AirtableRecord): TemplateReviewVersion {
     versionNumber: numberValue(record.fields[CONFIRMED_VERSION_FIELDS.versionNumber]),
     createdAt: firstString(record.fields[CONFIRMED_VERSION_FIELDS.submissionDatetime]) ?? record.createdTime,
     createdBy: collaboratorLabel(record.fields[CONFIRMED_VERSION_FIELDS.createdBy]),
+    zendeskTicketId: firstString(record.fields[CONFIRMED_VERSION_FIELDS.zendeskTicketId]),
+    zendeskSubject: firstString(record.fields[CONFIRMED_VERSION_FIELDS.zendeskSubject]),
     rawFields: record.fields,
   };
 }

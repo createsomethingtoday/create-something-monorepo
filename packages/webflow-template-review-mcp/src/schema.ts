@@ -155,6 +155,10 @@ export const CONFIRMED_VERSION_FIELDS = {
   rejectReason: '🚩Rejection Reason',
   rejectionFeedback: '🚩Rejection Feedback',
   mrpIdOverwrite: '❗ℹ️MRP ID',
+  /** Zendesk ticket the submission-form automation opened for this version (fldHKvyh55jJ0VK1u). */
+  zendeskTicketId: '🧘ZD ID',
+  /** Formula: "Your Webflow Marketplace Template submission" (fldit9ZTSm7non29Z). */
+  zendeskSubject: '🧘ZD Msg Subject',
 } as const;
 
 export const CONFIRMED_WRITE_FIELD_IDS = {

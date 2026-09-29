@@ -25,6 +25,7 @@ import {
   getReviewerProfileForEmail,
 } from '../src/reviewer-directory.js';
 import { registerTools } from '../src/tools.js';
+import { ZendeskClient } from '../src/zendesk.js';
 import { handleThumbnailProxyRequest, THUMBNAIL_PROXY_PATH } from '../src/thumbnail-proxy.js';
 import {
   buildScreenshotViewUrl,
@@ -66,6 +67,12 @@ interface Env {
   TEMPLATE_REVIEW_FORCE_READ_ONLY?: string;
   WORKER_PUBLIC_ORIGIN?: string;
   MARKETPLACE_ADMIN_API_KEY?: string;
+  /** Zendesk API token (secret via `wrangler secret put`) — enables the ticket thread/search/status/follow-up tools. */
+  ZENDESK_API_TOKEN?: string;
+  ZENDESK_API_EMAIL?: string;
+  ZENDESK_SUBDOMAIN?: string;
+  /** Zendesk group that owns Marketplace review tickets; search default + status-write boundary. */
+  MARKETPLACE_ZENDESK_GROUP_ID?: string;
 }
 
 type RequestProps = {
@@ -141,6 +148,7 @@ export class WebflowTemplateReviewMCP extends McpAgent<Env, unknown, RequestProp
         marketplaceAdmin: {
           apiKey: this.env.MARKETPLACE_ADMIN_API_KEY,
         },
+        getZendeskClient: () => buildZendesk(this.env),
         ...(this.env.BROWSER
           ? {
               screenshotCapture: {
@@ -160,6 +168,16 @@ export class WebflowTemplateReviewMCP extends McpAgent<Env, unknown, RequestProp
     );
     registerPrompts(this.server);
   }
+}
+
+function buildZendesk(env: Env): ZendeskClient | null {
+  if (!env.ZENDESK_API_TOKEN || !env.ZENDESK_API_EMAIL) return null;
+  return new ZendeskClient({
+    subdomain: env.ZENDESK_SUBDOMAIN ?? 'webflow2579',
+    email: env.ZENDESK_API_EMAIL,
+    apiToken: env.ZENDESK_API_TOKEN,
+    marketplaceGroupId: env.MARKETPLACE_ZENDESK_GROUP_ID ? Number(env.MARKETPLACE_ZENDESK_GROUP_ID) : undefined,
+  });
 }
 
 const CORS_HEADERS: Record<string, string> = {
