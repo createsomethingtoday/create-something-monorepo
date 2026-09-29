@@ -636,7 +636,7 @@ creator-facing feedback.
 - `template_review_get_ticket_thread` (read-only; the creator's Zendesk conversation for a version)
 - `template_review_search_tickets` (read-only; Marketplace Review group by default)
 - `template_review_send_ticket_followup` (creator-facing when public; reviewer must own the version)
-- `template_review_update_ticket_status` (status/tags + private note; never a public reply)
+- `template_review_update_ticket_status` (status/tags + private note on the version's linked ticket; reviewer must own the version; never a public reply)
 
 ## Zendesk ticket leg
 
@@ -654,11 +654,15 @@ tracked as follow-up work.
 - `template_review_get_ticket_thread` resolves the ticket from the version
   record (never an arbitrary ticket ID) and returns subject, status,
   requester/assignee, and the conversation oldest → newest. Public comments
-  only by default; `include_internal_notes: true` adds private agent notes.
-  Read this before drafting any creator-facing message.
+  only by default; `include_internal_notes: true` adds private agent notes and
+  requires a resolved reviewer identity (admitted-but-unmapped read sessions
+  get public comments only). Read this before drafting any creator-facing
+  message.
 - `template_review_search_tickets` is read-only cross-ticket search, scoped by
   default to the Marketplace Review Team group; `scope: "all"` widens to the
-  whole account only on explicit request.
+  whole account only on explicit request and requires a resolved reviewer
+  identity. Free-text `group:` terms are rejected in the default scope so the
+  group boundary cannot be OR-widened from the query.
 - `template_review_send_ticket_followup` posts on the version's linked ticket.
   It is a write tool (hidden from read-only sessions), requires the reviewer to
   own the version (`assign_self` first), and renders Markdown with HTML
@@ -667,9 +671,12 @@ tracked as follow-up work.
   `docs/airtable-email-composer/README.md`). It bypasses the composer wrapper,
   so messages carry their own greeting and sign-off. Use only on explicit
   reviewer request; decisions still go through the Airtable decision tools.
-- `template_review_update_ticket_status` changes status
+- `template_review_update_ticket_status` changes the linked ticket's status
   (new/open/pending/hold/solved) and tags, optionally with a private note. It
-  refuses tickets outside the Marketplace Review group
+  takes a `version_id`, not a ticket ID: the ticket is resolved from the
+  version record and the reviewer must own the version, so one reviewer
+  cannot solve another reviewer's (or an app's) ticket. It also refuses
+  tickets outside the Marketplace Review group
   (`ZENDESK_TICKET_OUT_OF_SCOPE`), requires
   `status_change: { confirmed: true, expected_status }` from a fresh read, and
   fails with `ZENDESK_STATUS_CONFLICT` if the ticket moved. It never posts a

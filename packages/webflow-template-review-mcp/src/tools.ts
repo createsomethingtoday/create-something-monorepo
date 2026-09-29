@@ -1450,7 +1450,7 @@ export function registerTools(
 
   server.tool(
     'template_review_get_ticket_thread',
-    'Read-only: the Zendesk ticket linked to a template version — subject, status, requester, and the conversation (creator replies and review-team messages), oldest to newest. Resolves the ticket from the version record (🧘ZD ID), never from an arbitrary ticket ID, and only for versions whose asset is a template. Public comments only by default; set include_internal_notes=true to also return private agent notes. Call this before drafting any creator-facing message to see what the creator said and what was already sent.',
+    'Read-only: the Zendesk ticket linked to a template version — subject, status, requester, and the conversation (creator replies and review-team messages), oldest to newest. Resolves the ticket from the version record (🧘ZD ID), never from an arbitrary ticket ID, and only for versions whose asset is a template. Public comments only by default; set include_internal_notes=true to also return private agent notes (requires a resolved reviewer identity). Call this before drafting any creator-facing message to see what the creator said and what was already sent.',
     {
       version_id: z.string().min(1),
       include_internal_notes: z.boolean().default(false),
@@ -1459,6 +1459,8 @@ export function registerTools(
     async ({ version_id, include_internal_notes, limit }) => {
       try {
         const zendesk = requireZendesk(runtimeConfig, 'reads');
+        // Private agent notes are reviewer-only: admitted-but-unmapped read sessions get public comments.
+        if (include_internal_notes) requireResolvedReviewer(getReviewer);
         const { version } = await getClient().getScopedVersion(version_id);
         const ticketId = requireLinkedTicket(version);
         const thread = await zendesk.getTicketThread(ticketId, { includeInternalNotes: include_internal_notes, limit });
@@ -1477,7 +1479,7 @@ export function registerTools(
 
   server.tool(
     'template_review_search_tickets',
-    'Read-only Zendesk ticket search. Scoped by default to the Marketplace Review Team group (template and app submission tickets); pass scope="all" only when the reviewer explicitly asks to look outside review tickets. Combine free text with status, tags, requester email, assignee, and created-date filters. Returns ticket IDs and agent URLs; use template_review_get_ticket_thread (via the version) to read a conversation.',
+    'Read-only Zendesk ticket search. Scoped by default to the Marketplace Review Team group (template and app submission tickets); pass scope="all" only when the reviewer explicitly asks to look outside review tickets (requires a resolved reviewer identity). Combine free text with status, tags, requester email, assignee, and created-date filters. Returns ticket IDs and agent URLs; use template_review_get_ticket_thread (via the version) to read a conversation.',
     {
       query: z.string().optional().describe('Free text or Zendesk search syntax, e.g. a template name or subject:"Template submission".'),
       status: z.enum(['new', 'open', 'pending', 'hold', 'solved', 'closed']).optional(),
@@ -1494,7 +1496,10 @@ export function registerTools(
     async (params) => {
       try {
         const zendesk = requireZendesk(runtimeConfig, 'reads');
-        rejectScopeOverride(params.query, params.scope ?? 'marketplace_review');
+        const scope = params.scope ?? 'marketplace_review';
+        // Account-wide search is reviewer-only; admitted-but-unmapped read sessions stay in the review group.
+        if (scope === 'all') requireResolvedReviewer(getReviewer);
+        rejectScopeOverride(params.query, scope);
         const result = await zendesk.searchTickets({
           query: params.query,
           status: params.status,
@@ -1506,7 +1511,7 @@ export function registerTools(
           sortBy: params.sort_by,
           sortOrder: params.sort_order,
           limit: params.limit ?? 25,
-          scope: params.scope ?? 'marketplace_review',
+          scope,
         });
         return asSuccess({
           ...result,
@@ -1554,28 +1559,31 @@ export function registerTools(
 
   server.tool(
     'template_review_update_ticket_status',
-    'Reviewer-safe write: change a Zendesk ticket status and tags, optionally with a PRIVATE internal note. Only on explicit reviewer request. Confined to tickets in the Marketplace Review Team group. Requires status_change: { confirmed: true, expected_status: "<status from a fresh read>" }; a changed status fails with ZENDESK_STATUS_CONFLICT. Never posts a public reply — use template_review_send_ticket_followup for creator-facing messages. Setting "solved" triggers Zendesk\'s solved-notification email to the creator.',
+    'Reviewer-safe write: change the status and tags of the Zendesk ticket linked to a template version, optionally with a PRIVATE internal note. Only on explicit reviewer request. The ticket is resolved from the version record (never an arbitrary ticket ID) and the reviewer must own the version (assign_self first). Requires status_change: { confirmed: true, expected_status: "<status from a fresh template_review_get_ticket_thread read>" }; a changed status fails with ZENDESK_STATUS_CONFLICT. Never posts a public reply — use template_review_send_ticket_followup for creator-facing messages. Setting "solved" triggers Zendesk\'s solved-notification email to the creator.',
     {
-      ticket_id: z.string().regex(/^\d+$/),
+      version_id: z.string().min(1),
       status: z.enum(ZENDESK_WRITABLE_STATUSES),
       private_note: z.string().min(1).optional(),
       additional_tags: z.array(z.string().min(1)).optional(),
       remove_tags: z.array(z.string().min(1)).optional(),
       status_change: z.object({ confirmed: z.boolean(), expected_status: z.string().min(1) }).optional(),
     },
-    async ({ ticket_id, status, private_note, additional_tags, remove_tags, status_change }) => {
+    async ({ version_id, status, private_note, additional_tags, remove_tags, status_change }) => {
       try {
         if (!status_change || status_change.confirmed !== true) {
           throw new ZendeskClientError(
             'TICKET_STATUS_CONFIRMATION_REQUIRED',
-            'Supply status_change.confirmed=true and status_change.expected_status from a fresh read (template_review_search_tickets or template_review_get_ticket_thread) after an explicit reviewer request to change the ticket status.',
+            'Supply status_change.confirmed=true and status_change.expected_status from a fresh template_review_get_ticket_thread read after an explicit reviewer request to change the ticket status.',
             400,
-            { ticket_id },
+            { version_id },
           );
         }
         const zendesk = requireZendesk(runtimeConfig, 'writes');
         const reviewer = requireResolvedReviewer(getReviewer);
-        const result = await zendesk.updateTicketStatus(ticket_id, {
+        const actingReviewer = currentReviewerAsCollaborator(getReviewer);
+        const version = await getClient().requireAssignedVersion(version_id, actingReviewer);
+        const ticketId = requireLinkedTicket(version);
+        const result = await zendesk.updateTicketStatus(ticketId, {
           status,
           expectedStatus: status_change.expected_status,
           privateNote: private_note,
@@ -1584,6 +1592,7 @@ export function registerTools(
         });
         return asSuccess({
           reviewer: reviewerPayload(reviewer),
+          version_id,
           ticket_id: result.ticketId,
           ticket_url: zendesk.agentTicketUrl(result.ticketId),
           previous_status: result.previousStatus,

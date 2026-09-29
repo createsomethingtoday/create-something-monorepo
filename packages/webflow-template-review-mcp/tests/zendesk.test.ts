@@ -11,7 +11,7 @@ function jsonResponse(json: unknown, status = 200): Response {
 
 test('renderCreatorFacingHtml escapes raw HTML tags so they render as visible text', () => {
   const html = renderCreatorFacingHtml('Remove the <script type="application/ld+json"> block.');
-  assert.ok(html.includes('&lt;script type="application/ld+json"&gt;'));
+  assert.ok(html.includes('&lt;script type=&quot;application/ld+json&quot;&gt;'));
   assert.doesNotMatch(html, /<script/);
 });
 
@@ -222,4 +222,15 @@ test('parseZendeskGroupId accepts a positive integer and falls back on anything 
 test('agentTicketUrl follows the configured subdomain', () => {
   const client = new ZendeskClient({ subdomain: 'webflow2579-sandbox', email: 'a@b.c', apiToken: 't' });
   assert.equal(client.agentTicketUrl('123'), 'https://webflow2579-sandbox.zendesk.com/agent/tickets/123');
+});
+
+test('renderCreatorFacingHtml escapes quotes in link targets and leaves non-http links as text', () => {
+  const injected = renderCreatorFacingHtml('see [review](https://example.test" title="unexpected)');
+  assert.doesNotMatch(injected, /title="unexpected"/);
+  assert.ok(injected.includes('&quot;'));
+  const js = renderCreatorFacingHtml('click [here](javascript:alert(1))');
+  assert.doesNotMatch(js, /<a /);
+  assert.ok(js.includes('javascript:alert(1)'));
+  const plain = renderCreatorFacingHtml('see [the guidelines](https://example.com/docs?x=1&y=2)');
+  assert.ok(plain.includes('<a href="https://example.com/docs?x=1&amp;y=2">the guidelines</a>'));
 });

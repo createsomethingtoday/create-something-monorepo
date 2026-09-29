@@ -2206,7 +2206,7 @@ test('send_ticket_followup fails closed when the version is unowned, unlinked, o
   assert.equal(posts, 0);
 });
 
-test('update_ticket_status requires fresh-read confirmation and a resolved reviewer before writing', async () => {
+test('update_ticket_status resolves the ticket from an owned version and requires fresh-read confirmation', async () => {
   const writes: unknown[] = [];
   const zendesk = {
     agentTicketUrl: (id: string) => `https://webflow2579.zendesk.com/agent/tickets/${id}`,
@@ -2215,29 +2215,80 @@ test('update_ticket_status requires fresh-read confirmation and a resolved revie
       return { ticketId, previousStatus: 'pending', status: 'solved', tags: ['marketplace'], auditId: 99 };
     },
   } as unknown as ZendeskClient;
+  const assigned: unknown[] = [];
+  const client = {
+    requireAssignedVersion: async (versionId: string, current: unknown) => { assigned.push([versionId, current]); return ticketVersion; },
+  } as unknown as AirtableClient;
   const { server, handlers } = createServerHarness();
-  registerTools(server, () => ({}) as AirtableClient, () => reviewer, { getZendeskClient: () => zendesk });
+  registerTools(server, () => client, () => reviewer, { getZendeskClient: () => zendesk });
 
-  const missing = parsePayload((await handlers.get('template_review_update_ticket_status')?.({ ticket_id: '1199299', status: 'solved' }))!);
+  const missing = parsePayload((await handlers.get('template_review_update_ticket_status')?.({ version_id: 'recVersionZD', status: 'solved' }))!);
   assert.equal(missing.error?.code, 'TICKET_STATUS_CONFIRMATION_REQUIRED');
-  const unconfirmed = parsePayload((await handlers.get('template_review_update_ticket_status')?.({ ticket_id: '1199299', status: 'solved', status_change: { confirmed: false, expected_status: 'pending' } }))!);
+  const unconfirmed = parsePayload((await handlers.get('template_review_update_ticket_status')?.({ version_id: 'recVersionZD', status: 'solved', status_change: { confirmed: false, expected_status: 'pending' } }))!);
   assert.equal(unconfirmed.error?.code, 'TICKET_STATUS_CONFIRMATION_REQUIRED');
   assert.equal(writes.length, 0);
+  assert.equal(assigned.length, 0);
 
   const ok = parsePayload((await handlers.get('template_review_update_ticket_status')?.({
-    ticket_id: '1199299', status: 'solved', private_note: 'Closing after approval.', additional_tags: ['resolved'],
+    version_id: 'recVersionZD', status: 'solved', private_note: 'Closing after approval.', additional_tags: ['resolved'],
     status_change: { confirmed: true, expected_status: 'pending' },
   }))!);
   assert.equal(ok.ok, true);
+  assert.equal(ok.data?.version_id, 'recVersionZD');
+  assert.equal(ok.data?.ticket_id, '1199299');
   assert.equal(ok.data?.previous_status, 'pending');
   assert.equal(ok.data?.private_note_added, true);
+  assert.deepEqual(assigned[0], ['recVersionZD', { id: reviewer.airtableCollaboratorId, email: reviewer.email, name: reviewer.name }]);
   assert.deepEqual(writes[0], ['1199299', { status: 'solved', expectedStatus: 'pending', privateNote: 'Closing after approval.', additionalTags: ['resolved'], removeTags: undefined }]);
+});
+
+test('update_ticket_status fails closed for unowned, unlinked, or reviewer-less sessions without touching Zendesk', async () => {
+  let writes = 0;
+  const zendesk = { agentTicketUrl: (id: string) => id, updateTicketStatus: async () => { writes += 1; return {}; } } as unknown as ZendeskClient;
+  const args = { version_id: 'recVersionZD', status: 'solved', status_change: { confirmed: true, expected_status: 'pending' } };
 
   const anonymous = createServerHarness();
-  registerTools(anonymous.server, () => ({}) as AirtableClient, () => null, { getZendeskClient: () => zendesk });
-  const noReviewer = parsePayload((await anonymous.handlers.get('template_review_update_ticket_status')?.({ ticket_id: '1199299', status: 'solved', status_change: { confirmed: true, expected_status: 'pending' } }))!);
-  assert.equal(noReviewer.error?.code, 'REVIEWER_IDENTITY_UNAVAILABLE');
-  assert.equal(writes.length, 1);
+  registerTools(anonymous.server, () => ({ requireAssignedVersion: async () => ticketVersion }) as unknown as AirtableClient, () => null, { getZendeskClient: () => zendesk });
+  assert.equal(parsePayload((await anonymous.handlers.get('template_review_update_ticket_status')?.(args))!).error?.code, 'REVIEWER_IDENTITY_UNAVAILABLE');
+
+  const unowned = createServerHarness();
+  registerTools(unowned.server, () => ({
+    requireAssignedVersion: async () => { throw new AirtableClientError('REVIEWER_ASSIGNMENT_CONFLICT', 'Version is assigned to a different reviewer.', 409); },
+  }) as unknown as AirtableClient, () => reviewer, { getZendeskClient: () => zendesk });
+  assert.equal(parsePayload((await unowned.handlers.get('template_review_update_ticket_status')?.(args))!).error?.code, 'REVIEWER_ASSIGNMENT_CONFLICT');
+
+  const unlinked = createServerHarness();
+  registerTools(unlinked.server, () => ({ requireAssignedVersion: async () => ({ ...ticketVersion, zendeskTicketId: undefined }) }) as unknown as AirtableClient, () => reviewer, { getZendeskClient: () => zendesk });
+  assert.equal(parsePayload((await unlinked.handlers.get('template_review_update_ticket_status')?.(args))!).error?.code, 'NO_ZENDESK_TICKET');
+
+  assert.equal(writes, 0);
+});
+
+test('internal notes and scope=all are reviewer-only for read sessions', async () => {
+  let threadReads = 0;
+  let searches = 0;
+  const zendesk = {
+    agentTicketUrl: (id: string) => id,
+    getTicketThread: async () => { threadReads += 1; return { ticketId: '1199299', comments: [] }; },
+    searchTickets: async () => { searches += 1; return { scope: 'marketplace_review', query: '', count: 0, hasMore: false, tickets: [] }; },
+  } as unknown as ZendeskClient;
+  const client = { getScopedVersion: async () => ({ version: ticketVersion, asset: { assetId: 'recAssetZD' } }) } as unknown as AirtableClient;
+  const { server, handlers } = createServerHarness();
+  registerTools(server, () => client, () => null, { getZendeskClient: () => zendesk }, { allowWrites: false });
+
+  const notes = parsePayload((await handlers.get('template_review_get_ticket_thread')?.({ version_id: 'recVersionZD', include_internal_notes: true, limit: 20 }))!);
+  assert.equal(notes.error?.code, 'REVIEWER_IDENTITY_UNAVAILABLE');
+  const wide = parsePayload((await handlers.get('template_review_search_tickets')?.({ query: 'invoice', limit: 25, scope: 'all' }))!);
+  assert.equal(wide.error?.code, 'REVIEWER_IDENTITY_UNAVAILABLE');
+  assert.equal(threadReads, 0);
+  assert.equal(searches, 0);
+
+  const publicOnly = parsePayload((await handlers.get('template_review_get_ticket_thread')?.({ version_id: 'recVersionZD', include_internal_notes: false, limit: 20 }))!);
+  assert.equal(publicOnly.ok, true);
+  const scoped = parsePayload((await handlers.get('template_review_search_tickets')?.({ query: 'invoice', limit: 25, scope: 'marketplace_review' }))!);
+  assert.equal(scoped.ok, true);
+  assert.equal(threadReads, 1);
+  assert.equal(searches, 1);
 });
 
 class AirtableClientErrorForTest extends Error {

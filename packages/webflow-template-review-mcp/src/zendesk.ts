@@ -4,8 +4,9 @@
 // safety properties (escape-first HTML, group-scoped status writes, fresh-read
 // preconditions) are identical. Keep the two files in sync until the client is
 // consolidated into a shared package. Deliberate divergences from the source:
-// the local FetchFn alias, `agentTicketUrl()` (subdomain-aware links), and
-// `parseZendeskGroupId()`.
+// the local FetchFn alias, `agentTicketUrl()` (subdomain-aware links),
+// `parseZendeskGroupId()`, and renderer hardening (quotes escaped, only http(s)
+// link targets become anchors) — port the last one back, see CRE-2176.
 
 type FetchFn = typeof fetch;
 
@@ -30,7 +31,7 @@ export class ZendeskClientError extends Error {
 }
 
 function escapeHtml(text: string): string {
-  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
 // Escape-first markdown-to-HTML, matching the patched composer's dialect so
@@ -43,7 +44,9 @@ export function renderCreatorFacingHtml(markdown: string): string {
   html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
   html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
   html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
-  html = html.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2">$1</a>');
+  // Only http(s) targets become anchors; anything else stays literal text. Quotes
+  // are already &quot; from escapeHtml, so the href attribute cannot be broken out of.
+  html = html.replace(/\[([^\]]*?)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2">$1</a>');
   html = html.replace(/&lt;(https?:\/\/[^\s]+?)&gt;/g, '<a href="$1">$1</a>');
 
   const lines = html.split('\n');
