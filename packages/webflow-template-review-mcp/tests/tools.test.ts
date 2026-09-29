@@ -2334,7 +2334,7 @@ test('search_tickets rejects a group: term in free text unless scope is all', as
   } as unknown as ZendeskClient;
   registerTools(server, () => ({}) as AirtableClient, () => reviewer, { getZendeskClient: () => zendesk });
 
-  for (const query of ['refund group:46157931219347', '-group:1500002744702 refund', 'GROUP:1']) {
+  for (const query of ['refund group:46157931219347', '-group:1500002744702 refund', 'GROUP:1', 'refund OR status:open', 'or type:ticket', 'launch OR']) {
     const rejected = parsePayload((await handlers.get('template_review_search_tickets')?.({ query, limit: 25, scope: 'marketplace_review' }))!);
     assert.equal(rejected.error?.code, 'ZENDESK_SCOPE_OVERRIDE_REJECTED', query);
   }
@@ -2350,9 +2350,9 @@ test('search_tickets rejects a group: term in free text unless scope is all', as
 
   const allowed = parsePayload((await handlers.get('template_review_search_tickets')?.({ query: 'refund group:46157931219347', limit: 25, scope: 'all' }))!);
   assert.equal(allowed.ok, true);
-  const plain = parsePayload((await handlers.get('template_review_search_tickets')?.({ query: 'workgroup: launch', limit: 25, scope: 'marketplace_review' }))!);
+  const plain = parsePayload((await handlers.get('template_review_search_tickets')?.({ query: 'workgroup: launch ordering portfolio', limit: 25, scope: 'marketplace_review' }))!);
   assert.equal(plain.ok, true);
-  assert.deepEqual(queries, [undefined, 'refund group:46157931219347', 'workgroup: launch']);
+  assert.deepEqual(queries, [undefined, 'refund group:46157931219347', 'workgroup: launch ordering portfolio']);
 });
 
 test('send_ticket_followup internal notes need no public confirmation', async () => {

@@ -152,8 +152,12 @@ function requireResolvedReviewer(getReviewer: ReviewerFactory) {
   return reviewer;
 }
 
-/** Free-text search terms that would OR-widen or negate the group scope the tool promises. */
-const ZENDESK_SCOPE_OVERRIDE_TERM = /(^|\s)-?group:/i;
+/**
+ * Free-text search syntax that would widen or negate the group scope the tool promises:
+ * a `group:` / `-group:` term, or a standalone Boolean `OR` (its right-hand branch is not
+ * constrained by the leading group clause).
+ */
+const ZENDESK_SCOPE_OVERRIDE_TERM = /(^|\s)(-?group:|OR(?=\s|$))/i;
 
 /** Zendesk tag values: letters, digits, underscore, hyphen, dot. Anything else (spaces, colons, OR) is search syntax, not a tag. */
 const ZENDESK_TAG_VALUE = /^[A-Za-z0-9_.-]+$/;
@@ -163,7 +167,7 @@ function rejectScopeOverride(params: { query?: string; tags?: string[] }, scope:
   if (params.query && ZENDESK_SCOPE_OVERRIDE_TERM.test(params.query)) {
     throw new ZendeskClientError(
       'ZENDESK_SCOPE_OVERRIDE_REJECTED',
-      'query must not contain a group: term; the Marketplace Review group scope is applied by the tool. Pass scope="all" to search outside it.',
+      'query must not contain a group: term or a Boolean OR; the Marketplace Review group scope is applied by the tool. Pass scope="all" to search outside it.',
       400,
       { query: params.query },
     );
