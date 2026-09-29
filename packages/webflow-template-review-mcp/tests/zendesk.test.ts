@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { renderCreatorFacingHtml, ZendeskClient, ZendeskClientError } from '../src/zendesk.js';
+import { DEFAULT_MARKETPLACE_GROUP_ID, parseZendeskGroupId, renderCreatorFacingHtml, ZendeskClient, ZendeskClientError } from '../src/zendesk.js';
 
 type FetchFn = typeof fetch;
 
@@ -198,4 +198,28 @@ test('updateTicketStatus refuses stale reads, out-of-scope groups, and "closed" 
   await assert.rejects(clientFor({ group_id: 46157931219347 }).updateTicketStatus('1199299', { status: 'solved', expectedStatus: 'pending' }), (e: unknown) => (e as ZendeskClientError).code === 'ZENDESK_TICKET_OUT_OF_SCOPE');
   await assert.rejects(clientFor({}).updateTicketStatus('1199299', { status: 'closed' as never, expectedStatus: 'pending' }), (e: unknown) => (e as ZendeskClientError).code === 'INVALID_TICKET_STATUS');
   assert.equal(puts.length, 0);
+});
+
+test('parseZendeskGroupId accepts a positive integer and falls back on anything else', () => {
+  assert.equal(parseZendeskGroupId('1500002744702'), 1500002744702);
+  assert.equal(parseZendeskGroupId(' 1500002744702 '), 1500002744702);
+  assert.equal(parseZendeskGroupId(undefined), undefined);
+  assert.equal(parseZendeskGroupId(''), undefined);
+  const warn = console.warn;
+  const warnings: unknown[] = [];
+  console.warn = (...args: unknown[]) => { warnings.push(args); };
+  try {
+    assert.equal(parseZendeskGroupId('15000O2744702'), undefined);
+    assert.equal(parseZendeskGroupId('1500002744702abc'), undefined);
+    assert.equal(parseZendeskGroupId('-5'), undefined);
+  } finally {
+    console.warn = warn;
+  }
+  assert.equal(warnings.length, 3);
+  assert.equal(new ZendeskClient({ subdomain: 's', email: 'a@b.c', apiToken: 't', marketplaceGroupId: parseZendeskGroupId('nope') }).marketplaceGroupId, DEFAULT_MARKETPLACE_GROUP_ID);
+});
+
+test('agentTicketUrl follows the configured subdomain', () => {
+  const client = new ZendeskClient({ subdomain: 'webflow2579-sandbox', email: 'a@b.c', apiToken: 't' });
+  assert.equal(client.agentTicketUrl('123'), 'https://webflow2579-sandbox.zendesk.com/agent/tickets/123');
 });

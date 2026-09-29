@@ -646,7 +646,10 @@ row (`🧘ZD ID`, `fldHKvyh55jJ0VK1u`; subject formula `🧘ZD Msg Subject`). Th
 Airtable email composer delivers decision emails (request changes / approve /
 reject) on that ticket. These tools give reviewers the rest of the thread
 without leaving the MCP. They mirror the App Review MCP's Zendesk tools
-one-for-one and share `src/zendesk.ts` verbatim with that package.
+one-for-one; `src/zendesk.ts` is a copy of that package's client with three
+deliberate divergences listed in its header (subdomain-aware agent links and
+safe group-ID parsing). Consolidating the client into a shared package is
+tracked as follow-up work.
 
 - `template_review_get_ticket_thread` resolves the ticket from the version
   record (never an arbitrary ticket ID) and returns subject, status,

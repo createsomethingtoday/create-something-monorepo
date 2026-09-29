@@ -152,7 +152,18 @@ function requireResolvedReviewer(getReviewer: ReviewerFactory) {
   return reviewer;
 }
 
-const ZENDESK_AGENT_TICKET_URL = 'https://webflow2579.zendesk.com/agent/tickets';
+/** Free-text search terms that would OR-widen or negate the group scope the tool promises. */
+const ZENDESK_SCOPE_OVERRIDE_TERM = /(^|\s)-?group:/i;
+
+function rejectScopeOverride(query: string | undefined, scope: 'marketplace_review' | 'all'): void {
+  if (scope === 'all' || !query || !ZENDESK_SCOPE_OVERRIDE_TERM.test(query)) return;
+  throw new ZendeskClientError(
+    'ZENDESK_SCOPE_OVERRIDE_REJECTED',
+    'query must not contain a group: term; the Marketplace Review group scope is applied by the tool. Pass scope="all" to search outside it.',
+    400,
+    { query },
+  );
+}
 
 function requireZendesk(runtimeConfig: ToolRuntimeConfig, verb: 'reads' | 'writes'): ZendeskClient {
   const zendesk = runtimeConfig.getZendeskClient?.() ?? null;
@@ -1439,7 +1450,7 @@ export function registerTools(
 
   server.tool(
     'template_review_get_ticket_thread',
-    'Read-only: the Zendesk ticket linked to a template version — subject, status, requester, and the conversation (creator replies and review-team messages), oldest to newest. Resolves the ticket from the version record (🧘ZD ID), never from an arbitrary ticket ID. Public comments only by default; set include_internal_notes=true to also return private agent notes. Call this before drafting any creator-facing message to see what the creator said and what was already sent.',
+    'Read-only: the Zendesk ticket linked to a template version — subject, status, requester, and the conversation (creator replies and review-team messages), oldest to newest. Resolves the ticket from the version record (🧘ZD ID), never from an arbitrary ticket ID, and only for versions whose asset is a template. Public comments only by default; set include_internal_notes=true to also return private agent notes. Call this before drafting any creator-facing message to see what the creator said and what was already sent.',
     {
       version_id: z.string().min(1),
       include_internal_notes: z.boolean().default(false),
@@ -1448,17 +1459,14 @@ export function registerTools(
     async ({ version_id, include_internal_notes, limit }) => {
       try {
         const zendesk = requireZendesk(runtimeConfig, 'reads');
-        const version = await getClient().getVersionById(version_id);
-        if (!version) {
-          throw new AirtableClientError('VERSION_NOT_FOUND', 'Template version not found.', 404, { version_id });
-        }
+        const { version } = await getClient().getScopedVersion(version_id);
         const ticketId = requireLinkedTicket(version);
         const thread = await zendesk.getTicketThread(ticketId, { includeInternalNotes: include_internal_notes, limit });
         return asSuccess({
           version_id,
           asset_id: version.assetId,
           version_number: version.versionNumber,
-          ticket_url: `${ZENDESK_AGENT_TICKET_URL}/${ticketId}`,
+          ticket_url: zendesk.agentTicketUrl(ticketId),
           thread,
         });
       } catch (error) {
@@ -1486,6 +1494,7 @@ export function registerTools(
     async (params) => {
       try {
         const zendesk = requireZendesk(runtimeConfig, 'reads');
+        rejectScopeOverride(params.query, params.scope ?? 'marketplace_review');
         const result = await zendesk.searchTickets({
           query: params.query,
           status: params.status,
@@ -1501,7 +1510,7 @@ export function registerTools(
         });
         return asSuccess({
           ...result,
-          tickets: result.tickets.map((ticket) => ({ ...ticket, ticketUrl: `${ZENDESK_AGENT_TICKET_URL}/${ticket.ticketId}` })),
+          tickets: result.tickets.map((ticket) => ({ ...ticket, ticketUrl: zendesk.agentTicketUrl(ticket.ticketId) })),
         });
       } catch (error) {
         return asError(error);
@@ -1530,7 +1539,7 @@ export function registerTools(
           reviewer: reviewerPayload(reviewer),
           version_id,
           ticket_id: ticketId,
-          ticket_url: `${ZENDESK_AGENT_TICKET_URL}/${ticketId}`,
+          ticket_url: zendesk.agentTicketUrl(ticketId),
           ticket_subject: version.zendeskSubject,
           visibility,
           audit_id: result.auditId,
@@ -1576,7 +1585,7 @@ export function registerTools(
         return asSuccess({
           reviewer: reviewerPayload(reviewer),
           ticket_id: result.ticketId,
-          ticket_url: `${ZENDESK_AGENT_TICKET_URL}/${result.ticketId}`,
+          ticket_url: zendesk.agentTicketUrl(result.ticketId),
           previous_status: result.previousStatus,
           status: result.status,
           tags: result.tags,

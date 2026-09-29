@@ -3,7 +3,9 @@
 // share the Marketplace Review Team group and the Asset Versions table, so the
 // safety properties (escape-first HTML, group-scoped status writes, fresh-read
 // preconditions) are identical. Keep the two files in sync until the client is
-// consolidated into a shared package.
+// consolidated into a shared package. Deliberate divergences from the source:
+// the local FetchFn alias, `agentTicketUrl()` (subdomain-aware links), and
+// `parseZendeskGroupId()`.
 
 type FetchFn = typeof fetch;
 
@@ -96,6 +98,22 @@ export interface ZendeskClientOptions {
 
 /** Marketplace Review Team group in webflow2579. Programs Support (46157931219347) is NOT in scope. */
 export const DEFAULT_MARKETPLACE_GROUP_ID = 1500002744702;
+
+/**
+ * Parse MARKETPLACE_ZENDESK_GROUP_ID. A malformed value would otherwise become NaN,
+ * which scopes every search to `group:NaN` and refuses every status write; fall
+ * back to the default group and warn instead.
+ */
+export function parseZendeskGroupId(raw: string | undefined): number | undefined {
+  if (raw === undefined || raw.trim() === '') return undefined;
+  const trimmed = raw.trim();
+  const parsed = Number.parseInt(trimmed, 10);
+  if (!Number.isFinite(parsed) || parsed <= 0 || String(parsed) !== trimmed) {
+    console.warn(`[zendesk] MARKETPLACE_ZENDESK_GROUP_ID "${raw}" is not a positive integer; using default ${DEFAULT_MARKETPLACE_GROUP_ID}.`);
+    return undefined;
+  }
+  return parsed;
+}
 
 export const ZENDESK_WRITABLE_STATUSES = ['new', 'open', 'pending', 'hold', 'solved'] as const;
 export type ZendeskWritableStatus = (typeof ZENDESK_WRITABLE_STATUSES)[number];
@@ -194,13 +212,20 @@ export class ZendeskClient {
   private readonly baseUrl: string;
   private readonly authHeader: string;
   private readonly fetchFn: FetchFn;
+  readonly subdomain: string;
   readonly marketplaceGroupId: number;
 
   constructor(options: ZendeskClientOptions) {
+    this.subdomain = options.subdomain;
     this.baseUrl = `https://${options.subdomain}.zendesk.com/api/v2`;
     this.authHeader = `Basic ${btoa(`${options.email}/token:${options.apiToken}`)}`;
     this.fetchFn = options.fetchFn ?? ((input, init) => fetch(input, init));
     this.marketplaceGroupId = options.marketplaceGroupId ?? DEFAULT_MARKETPLACE_GROUP_ID;
+  }
+
+  /** Agent-UI link for a ticket on the configured Zendesk instance. */
+  agentTicketUrl(ticketId: string): string {
+    return `https://${this.subdomain}.zendesk.com/agent/tickets/${ticketId}`;
   }
 
   private async failFrom(res: Response, label: string, ticketId?: string): Promise<never> {

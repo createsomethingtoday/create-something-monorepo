@@ -2047,6 +2047,7 @@ test('template_review_fetch_published_site_stylesheet returns compiled CSS throu
 // --- Zendesk ticket leg -----------------------------------------------------
 
 import type { ZendeskClient } from '../src/zendesk.js';
+import { AirtableClientError } from '../src/airtable.js';
 
 const ticketVersion = {
   versionId: 'recVersionZD',
@@ -2087,12 +2088,13 @@ test('get_ticket_thread resolves the ticket through the version record', async (
   const { server, handlers } = createServerHarness();
   const calls: unknown[] = [];
   const zendesk = {
+    agentTicketUrl: (id: string) => `https://webflow2579.zendesk.com/agent/tickets/${id}`,
     getTicketThread: async (ticketId: string, options: unknown) => {
       calls.push([ticketId, options]);
       return { ticketId, subject: ticketVersion.zendeskSubject, status: 'pending', comments: [{ id: 1, isPublic: true, body: 'Fixed.' }] };
     },
   } as unknown as ZendeskClient;
-  const client = { getVersionById: async () => ticketVersion } as unknown as AirtableClient;
+  const client = { getScopedVersion: async () => ({ version: ticketVersion, asset: { assetId: 'recAssetZD' } }) } as unknown as AirtableClient;
 
   registerTools(server, () => client, () => reviewer, { getZendeskClient: () => zendesk });
   const result = await handlers.get('template_review_get_ticket_thread')?.({ version_id: 'recVersionZD', include_internal_notes: true, limit: 5 });
@@ -2108,7 +2110,7 @@ test('get_ticket_thread and search_tickets fail closed without a ticket link or 
   const { server, handlers } = createServerHarness();
   let threadCalls = 0;
   const zendesk = { getTicketThread: async () => { threadCalls += 1; return {}; } } as unknown as ZendeskClient;
-  const client = { getVersionById: async () => ({ ...ticketVersion, zendeskTicketId: undefined }) } as unknown as AirtableClient;
+  const client = { getScopedVersion: async () => ({ version: { ...ticketVersion, zendeskTicketId: undefined }, asset: { assetId: 'recAssetZD' } }) } as unknown as AirtableClient;
   registerTools(server, () => client, () => reviewer, { getZendeskClient: () => zendesk });
 
   const noTicket = parsePayload((await handlers.get('template_review_get_ticket_thread')?.({ version_id: 'recVersionZD', include_internal_notes: false, limit: 20 }))!);
@@ -2128,6 +2130,7 @@ test('search_tickets scopes to the Marketplace Review group by default and passe
   const { server, handlers } = createServerHarness();
   const received: unknown[] = [];
   const zendesk = {
+    agentTicketUrl: (id: string) => `https://webflow2579.zendesk.com/agent/tickets/${id}`,
     searchTickets: async (params: unknown) => {
       received.push(params);
       return { scope: 'marketplace_review', query: 'q', count: 1, hasMore: false, tickets: [{ ticketId: '1199299' }] };
@@ -2148,6 +2151,7 @@ test('send_ticket_followup requires reviewer ownership, then posts an escaped co
   const { server, handlers } = createServerHarness();
   const comments: unknown[] = [];
   const zendesk = {
+    agentTicketUrl: (id: string) => `https://webflow2579.zendesk.com/agent/tickets/${id}`,
     addTicketComment: async (ticketId: string, input: unknown) => {
       comments.push([ticketId, input]);
       return { ticketId, isPublic: true, auditId: 7, ticketStatus: 'open' };
@@ -2205,6 +2209,7 @@ test('send_ticket_followup fails closed when the version is unowned, unlinked, o
 test('update_ticket_status requires fresh-read confirmation and a resolved reviewer before writing', async () => {
   const writes: unknown[] = [];
   const zendesk = {
+    agentTicketUrl: (id: string) => `https://webflow2579.zendesk.com/agent/tickets/${id}`,
     updateTicketStatus: async (ticketId: string, update: unknown) => {
       writes.push([ticketId, update]);
       return { ticketId, previousStatus: 'pending', status: 'solved', tags: ['marketplace'], auditId: 99 };
@@ -2243,3 +2248,39 @@ class AirtableClientErrorForTest extends Error {
     this.code = code;
   }
 }
+
+test('get_ticket_thread refuses versions outside template scope through the scoped lookup', async () => {
+  const { server, handlers } = createServerHarness();
+  let reads = 0;
+  const zendesk = { agentTicketUrl: (id: string) => id, getTicketThread: async () => { reads += 1; return {}; } } as unknown as ZendeskClient;
+  const client = {
+    getScopedVersion: async () => { throw new AirtableClientError('ASSET_NOT_FOUND_OR_OUT_OF_SCOPE', 'Template asset not found in template-review scope.', 404); },
+  } as unknown as AirtableClient;
+  registerTools(server, () => client, () => reviewer, { getZendeskClient: () => zendesk });
+  const payload = parsePayload((await handlers.get('template_review_get_ticket_thread')?.({ version_id: 'recAppVersion', include_internal_notes: true, limit: 20 }))!);
+  assert.equal(payload.ok, false);
+  assert.equal(payload.error?.code, 'ASSET_NOT_FOUND_OR_OUT_OF_SCOPE');
+  assert.equal(reads, 0);
+});
+
+test('search_tickets rejects a group: term in free text unless scope is all', async () => {
+  const { server, handlers } = createServerHarness();
+  const queries: unknown[] = [];
+  const zendesk = {
+    agentTicketUrl: (id: string) => id,
+    searchTickets: async (params: { query?: string }) => { queries.push(params.query); return { scope: 'all', query: '', count: 0, hasMore: false, tickets: [] }; },
+  } as unknown as ZendeskClient;
+  registerTools(server, () => ({}) as AirtableClient, () => reviewer, { getZendeskClient: () => zendesk });
+
+  for (const query of ['refund group:46157931219347', '-group:1500002744702 refund', 'GROUP:1']) {
+    const rejected = parsePayload((await handlers.get('template_review_search_tickets')?.({ query, limit: 25, scope: 'marketplace_review' }))!);
+    assert.equal(rejected.error?.code, 'ZENDESK_SCOPE_OVERRIDE_REJECTED', query);
+  }
+  assert.equal(queries.length, 0);
+
+  const allowed = parsePayload((await handlers.get('template_review_search_tickets')?.({ query: 'refund group:46157931219347', limit: 25, scope: 'all' }))!);
+  assert.equal(allowed.ok, true);
+  const plain = parsePayload((await handlers.get('template_review_search_tickets')?.({ query: 'workgroup: launch', limit: 25, scope: 'marketplace_review' }))!);
+  assert.equal(plain.ok, true);
+  assert.deepEqual(queries, ['refund group:46157931219347', 'workgroup: launch']);
+});

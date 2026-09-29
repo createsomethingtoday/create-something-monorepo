@@ -8,7 +8,7 @@ import { DEFAULT_AIRTABLE_BASE_ID } from './schema.js';
 import { registerPrompts } from './prompts.js';
 import { registerResources } from './resources.js';
 import { registerTools } from './tools.js';
-import { ZendeskClient } from './zendesk.js';
+import { parseZendeskGroupId, ZendeskClient } from './zendesk.js';
 
 function requireEnv(name: string): string {
   const value = process.env[name];
@@ -33,7 +33,7 @@ async function main() {
           subdomain: process.env.ZENDESK_SUBDOMAIN ?? 'webflow2579',
           email: process.env.ZENDESK_API_EMAIL,
           apiToken: process.env.ZENDESK_API_TOKEN,
-          marketplaceGroupId: process.env.MARKETPLACE_ZENDESK_GROUP_ID ? Number(process.env.MARKETPLACE_ZENDESK_GROUP_ID) : undefined,
+          marketplaceGroupId: parseZendeskGroupId(process.env.MARKETPLACE_ZENDESK_GROUP_ID),
         })
       : null;
 

@@ -2008,7 +2008,8 @@ export class AirtableClient {
     return record ? mapVersion(record) : null;
   }
 
-  private async getScopedVersion(versionId: string): Promise<{ version: TemplateReviewVersion; asset: TemplateReviewAsset }> {
+  /** Version + its asset, refusing versions whose asset is not a template (shared Asset Versions table also holds apps). */
+  async getScopedVersion(versionId: string): Promise<{ version: TemplateReviewVersion; asset: TemplateReviewAsset }> {
     const version = await this.getVersionById(versionId);
     if (!version) {
       throw new AirtableClientError('VERSION_NOT_FOUND', 'Template version not found.', 404, {

@@ -25,7 +25,7 @@ import {
   getReviewerProfileForEmail,
 } from '../src/reviewer-directory.js';
 import { registerTools } from '../src/tools.js';
-import { ZendeskClient } from '../src/zendesk.js';
+import { parseZendeskGroupId, ZendeskClient } from '../src/zendesk.js';
 import { handleThumbnailProxyRequest, THUMBNAIL_PROXY_PATH } from '../src/thumbnail-proxy.js';
 import {
   buildScreenshotViewUrl,
@@ -120,6 +120,8 @@ export class WebflowTemplateReviewMCP extends McpAgent<Env, unknown, RequestProp
       return getReviewerProfileForAccount(reviewerDirectory, this.props?.accountId ?? null);
     };
 
+    const zendesk = buildZendesk(this.env);
+
     const runtimePolicy = resolveRuntimePolicy({
       authMode: this.props?.authMode,
       scopes: this.props?.scopes,
@@ -148,7 +150,7 @@ export class WebflowTemplateReviewMCP extends McpAgent<Env, unknown, RequestProp
         marketplaceAdmin: {
           apiKey: this.env.MARKETPLACE_ADMIN_API_KEY,
         },
-        getZendeskClient: () => buildZendesk(this.env),
+        getZendeskClient: () => zendesk,
         ...(this.env.BROWSER
           ? {
               screenshotCapture: {
@@ -176,7 +178,7 @@ function buildZendesk(env: Env): ZendeskClient | null {
     subdomain: env.ZENDESK_SUBDOMAIN ?? 'webflow2579',
     email: env.ZENDESK_API_EMAIL,
     apiToken: env.ZENDESK_API_TOKEN,
-    marketplaceGroupId: env.MARKETPLACE_ZENDESK_GROUP_ID ? Number(env.MARKETPLACE_ZENDESK_GROUP_ID) : undefined,
+    marketplaceGroupId: parseZendeskGroupId(env.MARKETPLACE_ZENDESK_GROUP_ID),
   });
 }
 
