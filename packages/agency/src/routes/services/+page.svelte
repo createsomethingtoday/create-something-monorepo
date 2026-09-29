@@ -1,4 +1,6 @@
 <script lang="ts">
+  import AgencyWayfindingHero from '$lib/components/AgencyWayfindingHero.svelte';
+  import AgencyWayfindingOpening from '$lib/components/AgencyWayfindingOpening.svelte';
   import BuiltWork from '$lib/components/BuiltWork.svelte';
   import MembershipOffer from '$lib/components/MembershipOffer.svelte';
   import ProjectReviewEntry from '$lib/components/ProjectReviewEntry.svelte';
@@ -8,7 +10,6 @@
   import ServicesProductPath from '$lib/components/ServicesProductPath.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
   import { getPublicProduct } from '$lib/data/productFamily';
-  import { playbookHeroMedia } from '$lib/data/playbookHeroMedia';
   import { PUBLIC_PRICING } from '$lib/data/publicPricing';
 
   const mapProduct = getPublicProduct('map');
@@ -89,14 +90,14 @@
 
 <div class="services-performance property-performance">
   <div class="services-opening">
+  <AgencyWayfindingOpening>
   <PerformanceCampaignOpening
     eyebrow="How It Works"
     expression="editorial"
     title="Bring a workflow, software problem or existing product."
     lede="Our $900/month membership covers delivery, learning and support for one agreed workstream. You keep the delivered code and approval authority. Larger Build projects and managed Control have separate agreements. Project-specific AI usage, hosting and third-party services are separate."
-    media={playbookHeroMedia.services}
-    mediaMobilePlacement="background"
     density="compact"
+    artifactMobilePlacement="flow"
     proof={[
       { label: 'Owner', value: 'Named' },
       { label: 'Protected action', value: 'Held' },
@@ -111,7 +112,9 @@
         {agencyCoreMessaging.bookMappingSessionLabel}
       </Button>
     {/snippet}
+    {#snippet artifact()}<AgencyWayfindingHero route="services" />{/snippet}
   </PerformanceCampaignOpening>
+  </AgencyWayfindingOpening>
   </div>
 
   <BuiltWork />
@@ -166,7 +169,6 @@
 <style>
   .services-opening :global(.performance-campaign-opening[data-density='compact']) { min-height: 0; }
   .services-opening :global(.performance-campaign-opening[data-expression='editorial'][data-density='compact'] .performance-campaign-opening__content) { padding-top: max(128px, 10svh); padding-bottom: var(--space-performance-xl); }
-  .services-opening :global(.performance-campaign-opening[data-expression='editorial'][data-density='compact'] h1) { max-width: 22ch; font-family: var(--font-performance-interface); font-size: clamp(2rem, 4vw, 3.5rem); line-height: 1.12; }
 
   .services-performance {
     background: var(--color-performance-paper, #f3f3f0);
