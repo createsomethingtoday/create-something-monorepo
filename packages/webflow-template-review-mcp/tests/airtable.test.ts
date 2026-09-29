@@ -2000,3 +2000,38 @@ test('setFeaturedFlag rejects unmet selection state unless deliberately overridd
   assert.equal(result.isFeatured, true);
   assert.equal(result.overriddenChecks?.length, 3);
 });
+
+test('setVersionZendeskTicket enforces a fresh-read precondition and writes only 🧘ZD ID', async () => {
+  const { AirtableClient } = await import('../src/airtable.js');
+  const calls: Array<{ method: string; url: string; body?: unknown }> = [];
+  const versionRecord = (zd: string | undefined) => ({
+    id: 'recVersionZD',
+    createdTime: '2026-09-29T00:00:00.000Z',
+    fields: { '⚙️👛Asset Record ID': 'recAssetZD', '📝Review Status': '🏃🏾In Review', ...(zd ? { '🧘ZD ID': zd } : {}) },
+  });
+  const assetRecord = { id: 'recAssetZD', createdTime: '2026-09-29T00:00:00.000Z', fields: { '⚙️🆎Type (Text)': 'Template🏗️', Name: 'Studio Portfolio' } };
+  const client = new AirtableClient({
+    apiKey: 'k',
+    baseId: 'appTest',
+    fetchFn: (async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      const method = init?.method ?? 'GET';
+      calls.push({ method, url, body: init?.body ? JSON.parse(String(init.body)) : undefined });
+      if (method === 'PATCH') return new Response(JSON.stringify(versionRecord('1200001')), { status: 200 });
+      if (url.includes('/tblHxZ2hgSFLZxsZu/recVersionZD')) return new Response(JSON.stringify(versionRecord('1199299')), { status: 200 });
+      if (url.includes('/tblRwzpWoLgE9MrUm/recAssetZD')) return new Response(JSON.stringify(assetRecord), { status: 200 });
+      return new Response('{}', { status: 404 });
+    }) as typeof fetch,
+  } as never);
+
+  await assert.rejects(client.setVersionZendeskTicket('recVersionZD', '1200001', null), (e: unknown) => (e as { code: string }).code === 'VERSION_TICKET_CONFLICT');
+  await assert.rejects(client.setVersionZendeskTicket('recVersionZD', 'abc', '1199299'), (e: unknown) => (e as { code: string }).code === 'INVALID_TICKET_ID');
+  assert.equal(calls.filter((c) => c.method === 'PATCH').length, 0);
+
+  const result = await client.setVersionZendeskTicket('recVersionZD', '1200001', '1199299');
+  const patch = calls.find((c) => c.method === 'PATCH');
+  assert.ok(patch);
+  assert.deepEqual(patch!.body, { fields: { fldHKvyh55jJ0VK1u: '1200001' } });
+  assert.equal(result.previousTicketId, '1199299');
+  assert.equal(result.version.zendeskTicketId, '1200001');
+});
