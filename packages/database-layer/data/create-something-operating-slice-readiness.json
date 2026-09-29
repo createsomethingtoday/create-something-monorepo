@@ -1,6 +1,6 @@
 {
   "id": "substrate:create-something:operating-slice-readiness:internal",
-  "generatedAt": "2026-09-28T14:19:27.127Z",
+  "generatedAt": "2026-09-29T14:05:59.620Z",
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
   "sourceReviewId": "substrate:create-something:operating-slice-review:internal",
@@ -99,20 +99,20 @@
       "tier": "Mixed",
       "surface": "guide",
       "owner": "CREATE SOMETHING",
-      "recordCount": 77,
-      "mappedRecordCount": 77,
+      "recordCount": 78,
+      "mappedRecordCount": 78,
       "missingRecordIds": [],
       "gates": [
         {
           "id": "topology_records_exist",
           "status": "pass",
-          "summary": "77/77 slice records exist in the internal topology.",
+          "summary": "78/78 slice records exist in the internal topology.",
           "evidence": "packages/database-layer/data/create-something-internal-topology.json"
         },
         {
           "id": "topology_records_mapped",
           "status": "pass",
-          "summary": "77/77 slice records are mapped.",
+          "summary": "78/78 slice records are mapped.",
           "evidence": "packages/database-layer/data/create-something-internal-topology.json"
         },
         {

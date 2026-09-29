@@ -1,6 +1,6 @@
 {
   "id": "substrate:create-something:operating-slice-review:internal",
-  "generatedAt": "2026-09-28T14:19:27.079Z",
+  "generatedAt": "2026-09-29T14:05:59.564Z",
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
   "sourceCoverageId": "substrate:create-something:atlas-coverage:internal",
@@ -236,6 +236,7 @@
         "substrate:create-something:guide:docs-guides-mcp-registry-workflow-md",
         "substrate:create-something:guide:docs-guides-migration-guide-md",
         "substrate:create-something:guide:docs-guides-monorepo-delivery-updates-md",
+        "substrate:create-something:guide:docs-guides-newsletter-distribution-playbook-md",
         "substrate:create-something:guide:docs-guides-newsletter-engagement-runbook-md",
         "substrate:create-something:guide:docs-guides-notion-api-compatibility-audit-2026-md",
         "substrate:create-something:guide:docs-guides-notion-workers-and-cli-2026-md",
@@ -270,7 +271,7 @@
       "owner": "CREATE SOMETHING",
       "tier": "Mixed",
       "surface": "guide",
-      "nodeCount": 77,
+      "nodeCount": 78,
       "evidence": [
         "docs/guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md",
         "docs/guides/AGENCY_GOVERNANCE_PRODUCTS_OPERATIONS_RUNBOOK.md",

@@ -2,12 +2,12 @@
   "id": "substrate:create-something:topology-diagnostics:internal",
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
-  "generatedAt": "2026-09-28T14:19:26.887Z",
+  "generatedAt": "2026-09-29T14:05:59.334Z",
   "summary": {
     "valueState": "connected_map_with_review_signals",
-    "nodes": 539,
-    "edges": 1115,
-    "mapped": 539,
+    "nodes": 540,
+    "edges": 1118,
+    "mapped": 540,
     "hardGapCount": 0,
     "reviewSignalCount": 6,
     "exactDuplicatePathCount": 0,
@@ -22,11 +22,11 @@
       "worker": 168,
       "doc": 6,
       "policy": 64,
-      "guide": 77,
+      "guide": 78,
       "config": 24
     },
     "tierCounts": {
-      "Mixed": 126,
+      "Mixed": 127,
       "Judgment": 108,
       "Automation": 277,
       "Database": 28
@@ -64,7 +64,7 @@
       "evidence": [
         "Automation=277",
         "Database=28",
-        "Total nodes=539"
+        "Total nodes=540"
       ],
       "nodeIds": [],
       "paths": [],
@@ -184,6 +184,49 @@
       "nextAction": "Use group explanation before drawing product or business conclusions from this surface."
     },
     {
+      "id": "surface_review_guide",
+      "classification": "review_signal",
+      "severity": "review",
+      "title": "guide surface review",
+      "summary": "78 record(s) are classified as guide.",
+      "evidence": [
+        "AGENCY_ARTICLE_IMAGE_WORKFLOW.md: docs/guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md",
+        "AGENCY_GOVERNANCE_PRODUCTS_OPERATIONS_RUNBOOK.md: docs/guides/AGENCY_GOVERNANCE_PRODUCTS_OPERATIONS_RUNBOOK.md",
+        "AGENCY_MARKETING_PAGE_PORTFOLIO_RDOC.md: docs/guides/AGENCY_MARKETING_PAGE_PORTFOLIO_RDOC.md",
+        "AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md: docs/guides/AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md",
+        "AGENCY_SERVICE_TIER_MIGRATION_RUNBOOK_2026-03-09.md: docs/guides/AGENCY_SERVICE_TIER_MIGRATION_RUNBOOK_2026-03-09.md"
+      ],
+      "nodeIds": [
+        "substrate:create-something:guide:docs-guides-agency-article-image-workflow-md",
+        "substrate:create-something:guide:docs-guides-agency-governance-products-operations-runbook-md",
+        "substrate:create-something:guide:docs-guides-agency-marketing-page-portfolio-rdoc-md",
+        "substrate:create-something:guide:docs-guides-agency-ops-pm-agent-notion-review-2026-md",
+        "substrate:create-something:guide:docs-guides-agency-service-tier-migration-runbook-2026-03-09-md",
+        "substrate:create-something:guide:docs-guides-agency-workflow-intent-article-workflow-md",
+        "substrate:create-something:guide:docs-guides-agent-legibility-contract-md",
+        "substrate:create-something:guide:docs-guides-antigravity-mcp-enablement-md",
+        "substrate:create-something:guide:docs-guides-arena-taste-integration-md",
+        "substrate:create-something:guide:docs-guides-atlas-linear-integration-md",
+        "substrate:create-something:guide:docs-guides-bounded-research-interrupt-runbook-md",
+        "substrate:create-something:guide:docs-guides-browser-proof-and-closeout-runbook-md"
+      ],
+      "paths": [
+        "docs/guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md",
+        "docs/guides/AGENCY_GOVERNANCE_PRODUCTS_OPERATIONS_RUNBOOK.md",
+        "docs/guides/AGENCY_MARKETING_PAGE_PORTFOLIO_RDOC.md",
+        "docs/guides/AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md",
+        "docs/guides/AGENCY_SERVICE_TIER_MIGRATION_RUNBOOK_2026-03-09.md",
+        "docs/guides/AGENCY_WORKFLOW_INTENT_ARTICLE_WORKFLOW.md",
+        "docs/guides/AGENT_LEGIBILITY_CONTRACT.md",
+        "docs/guides/ANTIGRAVITY_MCP_ENABLEMENT.md",
+        "docs/guides/ARENA_TASTE_INTEGRATION.md",
+        "docs/guides/ATLAS_LINEAR_INTEGRATION.md",
+        "docs/guides/BOUNDED_RESEARCH_INTERRUPT_RUNBOOK.md",
+        "docs/guides/BROWSER_PROOF_AND_CLOSEOUT_RUNBOOK.md"
+      ],
+      "nextAction": "Use group explanation before drawing product or business conclusions from this surface."
+    },
+    {
       "id": "surface_review_mcp",
       "classification": "review_signal",
       "severity": "review",
@@ -223,49 +266,6 @@
         "packages/composio-bridge",
         "packages/composio-toolkit-mcp",
         "packages/create-something-mcp"
-      ],
-      "nextAction": "Use group explanation before drawing product or business conclusions from this surface."
-    },
-    {
-      "id": "surface_review_guide",
-      "classification": "review_signal",
-      "severity": "review",
-      "title": "guide surface review",
-      "summary": "77 record(s) are classified as guide.",
-      "evidence": [
-        "AGENCY_ARTICLE_IMAGE_WORKFLOW.md: docs/guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md",
-        "AGENCY_GOVERNANCE_PRODUCTS_OPERATIONS_RUNBOOK.md: docs/guides/AGENCY_GOVERNANCE_PRODUCTS_OPERATIONS_RUNBOOK.md",
-        "AGENCY_MARKETING_PAGE_PORTFOLIO_RDOC.md: docs/guides/AGENCY_MARKETING_PAGE_PORTFOLIO_RDOC.md",
-        "AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md: docs/guides/AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md",
-        "AGENCY_SERVICE_TIER_MIGRATION_RUNBOOK_2026-03-09.md: docs/guides/AGENCY_SERVICE_TIER_MIGRATION_RUNBOOK_2026-03-09.md"
-      ],
-      "nodeIds": [
-        "substrate:create-something:guide:docs-guides-agency-article-image-workflow-md",
-        "substrate:create-something:guide:docs-guides-agency-governance-products-operations-runbook-md",
-        "substrate:create-something:guide:docs-guides-agency-marketing-page-portfolio-rdoc-md",
-        "substrate:create-something:guide:docs-guides-agency-ops-pm-agent-notion-review-2026-md",
-        "substrate:create-something:guide:docs-guides-agency-service-tier-migration-runbook-2026-03-09-md",
-        "substrate:create-something:guide:docs-guides-agency-workflow-intent-article-workflow-md",
-        "substrate:create-something:guide:docs-guides-agent-legibility-contract-md",
-        "substrate:create-something:guide:docs-guides-antigravity-mcp-enablement-md",
-        "substrate:create-something:guide:docs-guides-arena-taste-integration-md",
-        "substrate:create-something:guide:docs-guides-atlas-linear-integration-md",
-        "substrate:create-something:guide:docs-guides-bounded-research-interrupt-runbook-md",
-        "substrate:create-something:guide:docs-guides-browser-proof-and-closeout-runbook-md"
-      ],
-      "paths": [
-        "docs/guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md",
-        "docs/guides/AGENCY_GOVERNANCE_PRODUCTS_OPERATIONS_RUNBOOK.md",
-        "docs/guides/AGENCY_MARKETING_PAGE_PORTFOLIO_RDOC.md",
-        "docs/guides/AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md",
-        "docs/guides/AGENCY_SERVICE_TIER_MIGRATION_RUNBOOK_2026-03-09.md",
-        "docs/guides/AGENCY_WORKFLOW_INTENT_ARTICLE_WORKFLOW.md",
-        "docs/guides/AGENT_LEGIBILITY_CONTRACT.md",
-        "docs/guides/ANTIGRAVITY_MCP_ENABLEMENT.md",
-        "docs/guides/ARENA_TASTE_INTEGRATION.md",
-        "docs/guides/ATLAS_LINEAR_INTEGRATION.md",
-        "docs/guides/BOUNDED_RESEARCH_INTERRUPT_RUNBOOK.md",
-        "docs/guides/BROWSER_PROOF_AND_CLOSEOUT_RUNBOOK.md"
       ],
       "nextAction": "Use group explanation before drawing product or business conclusions from this surface."
     },
