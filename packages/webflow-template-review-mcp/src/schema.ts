@@ -44,6 +44,10 @@ export const CONFIRMED_ASSET_FIELDS = {
   priceString: '🥞💲Template Price String (🏗️ only)',
   mrpId: 'ℹ️MRP ID',
   mrpIdOverride: '👀ℹ️MRP ID (Override)',
+  /** Rollup of the linked 🎨Creator's email (fldHhxmfSNMp117SP); the Override wins when set. */
+  creatorEmail: '🎨📧 Creator Email',
+  creatorEmailOverride: '👀🎨📧 Creator Email (Override)',
+  creatorName: '🎨Creator Name',
 } as const;
 
 export const ASSET_COMPATIBILITY_ALIASES = {

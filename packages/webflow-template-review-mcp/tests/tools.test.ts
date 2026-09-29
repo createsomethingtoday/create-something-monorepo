@@ -2367,3 +2367,99 @@ test('send_ticket_followup internal notes need no public confirmation', async ()
   assert.equal(note.ok, true);
   assert.deepEqual((comments[0] as [string, { isPublic: boolean }])[1].isPublic, false);
 });
+
+// --- Outbound ticket creation --------------------------------------------------
+
+const outboundAsset = { assetId: 'recAssetZD', templateName: 'Studio Portfolio', creatorEmail: 'creator@example.com', creatorName: 'Creator Person' };
+
+function outboundZendesk() {
+  const created: unknown[] = [];
+  const zendesk = {
+    agentTicketUrl: (id: string) => `https://webflow2579.zendesk.com/agent/tickets/${id}`,
+    createOutboundTicket: async (input: unknown) => {
+      created.push(input);
+      return { ticketId: '1200001', status: 'open', groupId: 1500002744702, brandId: 35121420416531, requesterId: 555, agentId: 1, publicCommentAuditId: 7, requesterNotified: true, steps: ['created'] };
+    },
+  } as unknown as ZendeskClient;
+  return { created, zendesk };
+}
+
+test('create_ticket is a write tool hidden from read-only sessions', () => {
+  assert.ok(WRITE_TOOL_NAMES.has('template_review_create_ticket'));
+  const readOnly = createServerHarness();
+  registerTools(readOnly.server, () => ({}) as AirtableClient, () => reviewer, {}, { allowWrites: false });
+  assert.equal(readOnly.names.indexOf('template_review_create_ticket'), -1);
+  const full = createServerHarness();
+  registerTools(full.server, () => ({}) as AirtableClient, () => reviewer);
+  assert.notEqual(full.names.indexOf('template_review_create_ticket'), -1);
+});
+
+test('create_ticket resolves the creator email from the template asset and sends through the outbound flow', async () => {
+  const { created, zendesk } = outboundZendesk();
+  const client = { getAssetById: async (id: string) => (id === 'recAssetZD' ? outboundAsset : null) } as unknown as AirtableClient;
+  const { server, handlers } = createServerHarness();
+  registerTools(server, () => client, () => reviewer, { getZendeskClient: () => zendesk });
+
+  const result = parsePayload((await handlers.get('template_review_create_ticket')?.({
+    asset_id: 'recAssetZD',
+    subject: 'About your Marketplace template',
+    message: 'Hi Creator,\n\nPlease update the `<title>` on your listing.\n\nThanks',
+    tags: ['relist'],
+    confirm_send: true,
+  }))!);
+  assert.equal(result.ok, true);
+  assert.equal(result.data?.ticket_id, '1200001');
+  assert.equal(result.data?.requester_email, 'creator@example.com');
+  assert.equal(result.data?.requester_email_source, 'airtable');
+  assert.equal(result.data?.requester_notified, true);
+  const input = created[0] as { requesterEmail: string; requesterName: string; subject: string; publicHtml: string; internalNoteHtml: string; tags: string[] };
+  assert.equal(input.requesterEmail, 'creator@example.com');
+  assert.equal(input.requesterName, 'Creator Person');
+  assert.ok(input.publicHtml.includes('<code>&lt;title&gt;</code>'));
+  assert.doesNotMatch(input.publicHtml, /<title/);
+  assert.ok(input.internalNoteHtml.includes('Studio Portfolio'));
+  assert.deepEqual(input.tags, ['template_review_mcp_outbound', 'relist']);
+});
+
+test('create_ticket accepts a version_id through the template-scoped lookup and an explicit requester override', async () => {
+  const { created, zendesk } = outboundZendesk();
+  const client = { getScopedVersion: async () => ({ version: ticketVersion, asset: outboundAsset }) } as unknown as AirtableClient;
+  const { server, handlers } = createServerHarness();
+  registerTools(server, () => client, () => reviewer, { getZendeskClient: () => zendesk });
+  const result = parsePayload((await handlers.get('template_review_create_ticket')?.({
+    version_id: 'recVersionZD', subject: 'Hello', message: 'Hi', requester_email: 'other@example.com', confirm_send: true,
+  }))!);
+  assert.equal(result.ok, true);
+  assert.equal(result.data?.requester_email, 'other@example.com');
+  assert.equal(result.data?.requester_email_source, 'override');
+  assert.equal((created[0] as { requesterEmail: string }).requesterEmail, 'other@example.com');
+});
+
+test('create_ticket fails closed before any Zendesk call when unconfirmed, unconfigured, reviewer-less, out of scope, or without an email', async () => {
+  const { created, zendesk } = outboundZendesk();
+  const base = { asset_id: 'recAssetZD', subject: 'Hello', message: 'Hi', confirm_send: true };
+  const client = { getAssetById: async () => outboundAsset } as unknown as AirtableClient;
+
+  const h = createServerHarness();
+  registerTools(h.server, () => client, () => reviewer, { getZendeskClient: () => zendesk });
+  assert.equal(parsePayload((await h.handlers.get('template_review_create_ticket')?.({ ...base, confirm_send: false }))!).error?.code, 'SEND_CONFIRMATION_REQUIRED');
+  assert.equal(parsePayload((await h.handlers.get('template_review_create_ticket')?.({ subject: 'Hello', message: 'Hi', confirm_send: true }))!).error?.code, 'ASSET_REFERENCE_REQUIRED');
+
+  const unconfigured = createServerHarness();
+  registerTools(unconfigured.server, () => client, () => reviewer);
+  assert.equal(parsePayload((await unconfigured.handlers.get('template_review_create_ticket')?.(base))!).error?.code, 'ZENDESK_NOT_CONFIGURED');
+
+  const anonymous = createServerHarness();
+  registerTools(anonymous.server, () => client, () => null, { getZendeskClient: () => zendesk });
+  assert.equal(parsePayload((await anonymous.handlers.get('template_review_create_ticket')?.(base))!).error?.code, 'REVIEWER_IDENTITY_UNAVAILABLE');
+
+  const outOfScope = createServerHarness();
+  registerTools(outOfScope.server, () => ({ getAssetById: async () => null }) as unknown as AirtableClient, () => reviewer, { getZendeskClient: () => zendesk });
+  assert.equal(parsePayload((await outOfScope.handlers.get('template_review_create_ticket')?.(base))!).error?.code, 'ASSET_NOT_FOUND_OR_OUT_OF_SCOPE');
+
+  const noEmail = createServerHarness();
+  registerTools(noEmail.server, () => ({ getAssetById: async () => ({ ...outboundAsset, creatorEmail: undefined }) }) as unknown as AirtableClient, () => reviewer, { getZendeskClient: () => zendesk });
+  assert.equal(parsePayload((await noEmail.handlers.get('template_review_create_ticket')?.(base))!).error?.code, 'NO_CREATOR_EMAIL');
+
+  assert.equal(created.length, 0);
+});

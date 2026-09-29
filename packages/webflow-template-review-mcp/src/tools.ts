@@ -300,6 +300,7 @@ export const WRITE_TOOL_NAMES: ReadonlySet<string> = new Set([
   // fire Zendesk's solved-notification email. Read-only sessions never see them.
   'template_review_send_ticket_followup',
   'template_review_update_ticket_status',
+  'template_review_create_ticket',
   // Featured-batch curation writes: pick star + reason, votes, and the batch
   // finalization flag that arms the creator-notification worker.
   'template_review_set_featured_pick',
@@ -1580,6 +1581,85 @@ export function registerTools(
           audit_id: result.auditId,
           ticket_status: result.ticketStatus,
           html_body: htmlBody,
+        });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'template_review_create_ticket',
+    'Reviewer-safe write: open a NEW Zendesk ticket to a template creator (outreach not tied to an existing submission thread — policy notices, relist/delist questions, clarifications). CREATOR-FACING: the message is emailed to the creator, so use only when the reviewer explicitly asks to send it and pass confirm_send=true. The requester is resolved from the template asset\'s creator email (Override, else rollup); requester_email may override it. Ticket lands in the Marketplace Review Team group with a private audit note first, then the public message as an agent update (that is what fires the email); the response reports whether Zendesk recorded the creator notification. This does NOT touch the submission ticket linked on the version — use template_review_send_ticket_followup for that.',
+    {
+      asset_id: z.string().min(1).optional().describe('Template asset record id. Provide this or version_id.'),
+      version_id: z.string().min(1).optional().describe('Template version record id; its asset is used. Provide this or asset_id.'),
+      subject: z.string().min(1).max(150),
+      message: z.string().min(1).describe('Creator-facing Markdown, delivered verbatim (include greeting and sign-off).'),
+      internal_note: z.string().min(1).optional().describe('Private first comment for the team; defaults to a provenance note.'),
+      tags: z.array(z.string().regex(ZENDESK_TAG_VALUE)).optional(),
+      requester_email: z.string().email().optional().describe('Override the creator email resolved from Airtable.'),
+      confirm_send: z
+        .boolean()
+        .default(false)
+        .describe('Must be true. Set it only after the reviewer has explicitly approved sending this exact message to this creator.'),
+    },
+    async ({ asset_id, version_id, subject, message, internal_note, tags, requester_email, confirm_send }) => {
+      try {
+        if (confirm_send !== true) {
+          throw new ZendeskClientError(
+            'SEND_CONFIRMATION_REQUIRED',
+            'Creating a ticket emails the creator. Pass confirm_send=true only after the reviewer has explicitly approved sending this exact message to this creator.',
+            400,
+            { asset_id, version_id },
+          );
+        }
+        if (!asset_id && !version_id) {
+          throw new ZendeskClientError('ASSET_REFERENCE_REQUIRED', 'Provide asset_id or version_id.', 400);
+        }
+        const zendesk = requireZendesk(runtimeConfig, 'writes');
+        const reviewer = requireResolvedReviewer(getReviewer);
+        const asset = version_id
+          ? (await getClient().getScopedVersion(version_id)).asset
+          : await getClient().getAssetById(asset_id!);
+        if (!asset) {
+          throw new AirtableClientError('ASSET_NOT_FOUND_OR_OUT_OF_SCOPE', 'Template asset not found in template-review scope.', 404, { asset_id });
+        }
+        const requesterEmail = requester_email ?? asset.creatorEmail;
+        if (!requesterEmail) {
+          throw new ZendeskClientError(
+            'NO_CREATOR_EMAIL',
+            'The template asset has no creator email in Airtable (🎨📧 Creator Email / Override). Pass requester_email explicitly.',
+            404,
+            { asset_id: asset.assetId },
+          );
+        }
+        const provenance =
+          internal_note ??
+          `Outbound ticket opened via Template Review MCP by ${reviewer.name ?? reviewer.email ?? reviewer.accountId} for template "${asset.templateName}" (${asset.assetId}).`;
+        const publicHtml = renderCreatorFacingHtml(message);
+        const result = await zendesk.createOutboundTicket({
+          requesterEmail,
+          requesterName: asset.creatorName,
+          subject,
+          publicHtml,
+          internalNoteHtml: renderCreatorFacingHtml(provenance),
+          tags: ['template_review_mcp_outbound', ...(tags ?? [])],
+        });
+        return asSuccess({
+          reviewer: reviewerPayload(reviewer),
+          asset_id: asset.assetId,
+          template_name: asset.templateName,
+          requester_email: requesterEmail,
+          requester_email_source: requester_email ? 'override' : 'airtable',
+          ticket_id: result.ticketId,
+          ticket_url: zendesk.agentTicketUrl(result.ticketId),
+          status: result.status,
+          group_id: result.groupId,
+          brand_id: result.brandId,
+          requester_notified: result.requesterNotified,
+          steps: result.steps,
+          html_body: publicHtml,
         });
       } catch (error) {
         return asError(error);

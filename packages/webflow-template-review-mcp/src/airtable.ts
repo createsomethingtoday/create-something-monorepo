@@ -203,6 +203,9 @@ export interface TemplateFeaturedFlagResult {
 }
 
 export interface TemplateReviewAsset extends TemplateReviewQueueItem {
+  /** Creator contact for outbound Zendesk tickets: 👀 Override when set, else the 🎨Creator rollup. */
+  creatorEmail?: string;
+  creatorName?: string;
   uid?: string;
   description?: string;
   descriptionShort?: string;
@@ -811,6 +814,8 @@ function mapAsset(record: AirtableRecord): TemplateReviewAsset {
     decisionDate: firstString(fields[CONFIRMED_ASSET_FIELDS.decisionDate]),
     templatePriceFilter: numberValue(fields[CONFIRMED_ASSET_FIELDS.templatePriceFilter]),
     priceString: firstString(fields[CONFIRMED_ASSET_FIELDS.priceString]),
+    creatorEmail: firstString(fields[CONFIRMED_ASSET_FIELDS.creatorEmailOverride]) ?? firstString(fields[CONFIRMED_ASSET_FIELDS.creatorEmail]),
+    creatorName: firstString(fields[CONFIRMED_ASSET_FIELDS.creatorName]),
   };
 }
 

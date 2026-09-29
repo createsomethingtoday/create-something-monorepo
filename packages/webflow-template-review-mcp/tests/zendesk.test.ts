@@ -299,3 +299,103 @@ test('getTicketThread pages past internal notes until the visible limit is fille
   assert.equal(withNotes.hasOlderComments, true);
   assert.equal(withNotes.totalCommentsOnTicket, 5);
 });
+
+function outboundFetch(overrides: { groupOnCreate?: number; publicStatus?: number; auditsStatus?: number; notify?: boolean } = {}) {
+  const calls: Array<{ method: string; url: string; body?: Record<string, unknown> }> = [];
+  const fetchFn: FetchFn = async (input, init) => {
+    const url = String(input);
+    const method = init?.method ?? 'GET';
+    const body = init?.body ? (JSON.parse(String(init.body)) as Record<string, unknown>) : undefined;
+    calls.push({ method, url, body });
+    if (url.endsWith('/users/me.json')) return jsonResponse({ user: { id: 1507275866202 } });
+    if (url.endsWith('/tickets.json') && method === 'POST') {
+      return jsonResponse({ ticket: { id: 1200001, status: 'new', group_id: overrides.groupOnCreate ?? 46157931219347, brand_id: 1, requester_id: 555 } }, 201);
+    }
+    if (url.endsWith('/tickets/1200001.json') && method === 'PUT') {
+      const ticket = body?.ticket as Record<string, unknown>;
+      if (ticket.group_id !== undefined) return jsonResponse({ ticket: { id: 1200001, status: 'new', group_id: 1500002744702, brand_id: 35121420416531, requester_id: 555 } });
+      if (overrides.publicStatus && overrides.publicStatus >= 400) return jsonResponse({ error: 'RecordInvalid' }, overrides.publicStatus);
+      return jsonResponse({ ticket: { id: 1200001, status: 'open', group_id: 1500002744702, brand_id: 35121420416531, requester_id: 555 }, audit: { id: 777 } });
+    }
+    if (url.endsWith('/tickets/1200001/audits.json')) {
+      if (overrides.auditsStatus && overrides.auditsStatus >= 400) return jsonResponse({}, overrides.auditsStatus);
+      return jsonResponse({ audits: [{ events: [{ type: 'Comment' }, ...(overrides.notify === false ? [] : [{ type: 'Notification', recipients: [555] }])] }] });
+    }
+    return jsonResponse({ error: 'unexpected ' + method + ' ' + url }, 500);
+  };
+  return { calls, fetchFn };
+}
+const outboundInput = {
+  requesterEmail: 'creator@example.com',
+  requesterName: 'Creator Person',
+  subject: 'About your Marketplace template',
+  publicHtml: 'Hi Creator,<br>Please update your listing.',
+  internalNoteHtml: 'Outbound ticket opened via Template Review MCP.',
+  tags: ['template_review_mcp_outbound'],
+};
+
+test('createOutboundTicket creates privately, pins the group, posts a public agent update, and verifies the notification', async () => {
+  const { calls, fetchFn } = outboundFetch();
+  const client = new ZendeskClient({ subdomain: 'webflow2579', email: 'support-admin@webflow.com', apiToken: 't', marketplaceGroupId: 1500002744702, fetchFn });
+  const result = await client.createOutboundTicket(outboundInput);
+
+  assert.deepEqual(calls.map((c) => c.method + ' ' + c.url.replace('https://webflow2579.zendesk.com/api/v2', '')), [
+    'GET /users/me.json',
+    'POST /tickets.json',
+    'PUT /tickets/1200001.json',
+    'PUT /tickets/1200001.json',
+    'GET /tickets/1200001/audits.json',
+  ]);
+  const created = calls[1]!.body!.ticket as Record<string, unknown>;
+  assert.deepEqual(created.requester, { email: 'creator@example.com', name: 'Creator Person' });
+  assert.equal(created.group_id, 1500002744702);
+  assert.deepEqual(created.tags, ['template_review_mcp_outbound']);
+  assert.deepEqual(created.comment, { html_body: 'Outbound ticket opened via Template Review MCP.', public: false, author_id: 1507275866202 }, 'first comment is private and agent-authored');
+  assert.deepEqual(calls[2]!.body!.ticket, { group_id: 1500002744702 }, 'group pinned back after trigger re-route');
+  assert.deepEqual(calls[3]!.body!.ticket, { comment: { html_body: 'Hi Creator,<br>Please update your listing.', public: true, author_id: 1507275866202 } }, 'public message is an agent update');
+  assert.equal(result.ticketId, '1200001');
+  assert.equal(result.groupId, 1500002744702);
+  assert.equal(result.brandId, 35121420416531);
+  assert.equal(result.publicCommentAuditId, 777);
+  assert.equal(result.requesterNotified, true);
+  assert.deepEqual(result.steps, ['agent:1507275866202', 'created', 'group_fixed:1500002744702', 'public_comment_posted', 'notification_verified']);
+});
+
+test('createOutboundTicket skips the group fix when the ticket already landed in the review group and reports missing notifications', async () => {
+  const { calls, fetchFn } = outboundFetch({ groupOnCreate: 1500002744702, notify: false });
+  const client = new ZendeskClient({ subdomain: 'webflow2579', email: 'a@b.c', apiToken: 't', marketplaceGroupId: 1500002744702, fetchFn });
+  const result = await client.createOutboundTicket(outboundInput);
+  assert.equal(calls.filter((c) => c.method === 'PUT').length, 1);
+  assert.equal(result.requesterNotified, false);
+  assert.ok(result.steps.includes('notification_not_found'));
+
+  const { fetchFn: noAudit } = outboundFetch({ groupOnCreate: 1500002744702, auditsStatus: 500 });
+  const client2 = new ZendeskClient({ subdomain: 'webflow2579', email: 'a@b.c', apiToken: 't', marketplaceGroupId: 1500002744702, fetchFn: noAudit });
+  const result2 = await client2.createOutboundTicket(outboundInput);
+  assert.equal(result2.requesterNotified, null);
+  assert.ok(result2.steps.includes('audit_read_failed'));
+});
+
+test('createOutboundTicket surfaces a post-create failure with the ticket id instead of a generic error', async () => {
+  const { fetchFn } = outboundFetch({ publicStatus: 422 });
+  const client = new ZendeskClient({ subdomain: 'webflow2579', email: 'a@b.c', apiToken: 't', marketplaceGroupId: 1500002744702, fetchFn });
+  await assert.rejects(client.createOutboundTicket(outboundInput), (e: unknown) => {
+    assert.ok(e instanceof ZendeskClientError);
+    assert.equal(e.code, 'ZENDESK_OUTBOUND_TICKET_INCOMPLETE');
+    assert.equal((e.details as { ticketId: string }).ticketId, '1200001');
+    assert.equal((e.details as { failedStep: string }).failedStep, 'public_comment');
+    return true;
+  });
+
+  let posts = 0;
+  const failing = new ZendeskClient({
+    subdomain: 'webflow2579', email: 'a@b.c', apiToken: 't',
+    fetchFn: async (input, init) => {
+      if (String(input).endsWith('/users/me.json')) return jsonResponse({ user: { id: 1 } });
+      posts += 1;
+      return jsonResponse({ error: 'RecordInvalid' }, 422);
+    },
+  });
+  await assert.rejects(failing.createOutboundTicket(outboundInput), (e: unknown) => (e as ZendeskClientError).code === 'ZENDESK_REQUEST_FAILED');
+  assert.equal(posts, 1, 'a failed create makes no further writes');
+});

@@ -8,7 +8,7 @@
 // `parseZendeskGroupId()`, renderer hardening (quotes escaped, only http(s)
 // link targets become anchors), safe_update/updated_stamp on status writes, and
 // hiding the raw comment count from public-only reads, and paging until `limit`
-// visible comments are collected — port back per CRE-2176.
+// visible comments are collected, and `createOutboundTicket()` — port back per CRE-2176.
 
 type FetchFn = typeof fetch;
 
@@ -182,6 +182,30 @@ export interface TicketCommentResult {
   ticketStatus?: string;
 }
 
+export interface OutboundTicketInput {
+  requesterEmail: string;
+  requesterName?: string;
+  subject: string;
+  /** Creator-facing message, already rendered to HTML (renderCreatorFacingHtml). Posted as a public agent update. */
+  publicHtml: string;
+  /** Private first comment (audit trail for the team); never emailed. */
+  internalNoteHtml: string;
+  tags?: string[];
+}
+
+export interface OutboundTicketResult {
+  ticketId: string;
+  status: string | null;
+  groupId: number | null;
+  brandId: number | null;
+  requesterId: number | null;
+  agentId: number;
+  publicCommentAuditId?: number;
+  /** true = a Notification event to the requester was found in the audit trail; null = could not verify. */
+  requesterNotified: boolean | null;
+  steps: string[];
+}
+
 export interface TicketThreadAuthor {
   id: number | null;
   name: string | null;
@@ -228,6 +252,129 @@ export class ZendeskClient {
     this.authHeader = `Basic ${btoa(`${options.email}/token:${options.apiToken}`)}`;
     this.fetchFn = options.fetchFn ?? ((input, init) => fetch(input, init));
     this.marketplaceGroupId = options.marketplaceGroupId ?? DEFAULT_MARKETPLACE_GROUP_ID;
+  }
+
+  private agentIdCache: number | null = null;
+
+  /** The Zendesk user the API token authenticates as (ZENDESK_API_EMAIL). Cached per client. */
+  async getAuthenticatedAgentId(): Promise<number> {
+    if (this.agentIdCache !== null) return this.agentIdCache;
+    const res = await this.fetchFn(`${this.baseUrl}/users/me.json`, {
+      headers: { Authorization: this.authHeader, Accept: 'application/json' },
+    });
+    if (!res.ok) await this.failFrom(res, 'users/me read');
+    const payload = (await res.json()) as { user?: { id?: number } };
+    if (typeof payload.user?.id !== 'number') {
+      throw new ZendeskClientError('ZENDESK_AGENT_UNRESOLVED', 'Zendesk did not return an authenticated user id.', 502);
+    }
+    this.agentIdCache = payload.user.id;
+    return this.agentIdCache;
+  }
+
+  /**
+   * Open a NEW outbound ticket to a creator and actually notify them. Zendesk's create
+   * event does not email Marketplace-brand requesters and attributes an author-less
+   * comment to the requester, and triggers re-route new tickets out of the Marketplace
+   * Review group. So: (1) create with a PRIVATE agent-authored note, (2) pin the group
+   * back to Marketplace Review, (3) post the public message as an agent UPDATE, which
+   * fires the requester email, (4) confirm a Notification event in the audit trail.
+   * If a step after creation fails, the error carries the ticket id so the operator can
+   * finish by hand instead of creating a duplicate.
+   */
+  async createOutboundTicket(input: OutboundTicketInput): Promise<OutboundTicketResult> {
+    const headers = { Authorization: this.authHeader, Accept: 'application/json', 'Content-Type': 'application/json' };
+    const steps: string[] = [];
+    const agentId = await this.getAuthenticatedAgentId();
+    steps.push(`agent:${agentId}`);
+
+    const createRes = await this.fetchFn(`${this.baseUrl}/tickets.json`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        ticket: {
+          subject: input.subject,
+          requester: { email: input.requesterEmail, ...(input.requesterName ? { name: input.requesterName } : {}) },
+          group_id: this.marketplaceGroupId,
+          ...(input.tags?.length ? { tags: input.tags } : {}),
+          comment: { html_body: input.internalNoteHtml, public: false, author_id: agentId },
+        },
+      }),
+    });
+    if (!createRes.ok) await this.failFrom(createRes, 'ticket create');
+    type RawTicket = { id?: number; status?: string; group_id?: number | null; brand_id?: number | null; requester_id?: number | null };
+    const created = ((await createRes.json()) as { ticket?: RawTicket }).ticket ?? {};
+    if (typeof created.id !== 'number') {
+      throw new ZendeskClientError('ZENDESK_REQUEST_FAILED', 'Zendesk ticket create returned no ticket id.', 502, { steps });
+    }
+    const ticketId = String(created.id);
+    steps.push('created');
+    let ticket: RawTicket = created;
+
+    const incomplete = (step: string, res: Response | null, extra?: unknown): never => {
+      throw new ZendeskClientError(
+        'ZENDESK_OUTBOUND_TICKET_INCOMPLETE',
+        `Ticket ${ticketId} was created but step "${step}" failed${res ? ` with status ${res.status}` : ''}. Finish it in Zendesk instead of creating another ticket.`,
+        res?.status ?? 502,
+        { ticketId, ticketUrl: this.agentTicketUrl(ticketId), failedStep: step, steps, extra },
+      );
+    };
+
+    try {
+      if (ticket.group_id !== this.marketplaceGroupId) {
+        const groupRes = await this.fetchFn(`${this.baseUrl}/tickets/${ticketId}.json`, {
+          method: 'PUT',
+          headers,
+          body: JSON.stringify({ ticket: { group_id: this.marketplaceGroupId } }),
+        });
+        if (!groupRes.ok) incomplete('group_fix', groupRes);
+        ticket = ((await groupRes.json()) as { ticket?: RawTicket }).ticket ?? ticket;
+        steps.push(`group_fixed:${ticket.group_id ?? 'unknown'}`);
+      }
+
+      const publicRes = await this.fetchFn(`${this.baseUrl}/tickets/${ticketId}.json`, {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify({ ticket: { comment: { html_body: input.publicHtml, public: true, author_id: agentId } } }),
+      });
+      if (!publicRes.ok) incomplete('public_comment', publicRes);
+      const publicPayload = (await publicRes.json()) as { ticket?: RawTicket; audit?: { id?: number } };
+      ticket = publicPayload.ticket ?? ticket;
+      steps.push('public_comment_posted');
+
+      let requesterNotified: boolean | null = null;
+      const auditsRes = await this.fetchFn(`${this.baseUrl}/tickets/${ticketId}/audits.json`, {
+        headers: { Authorization: this.authHeader, Accept: 'application/json' },
+      });
+      if (auditsRes.ok) {
+        const audits = (await auditsRes.json()) as {
+          audits?: Array<{ events?: Array<{ type?: string; recipients?: number[] }> }>;
+        };
+        const requesterId = ticket.requester_id ?? null;
+        requesterNotified =
+          requesterId !== null &&
+          (audits.audits ?? []).some((a) =>
+            (a.events ?? []).some((e) => e.type === 'Notification' && (e.recipients ?? []).includes(requesterId)),
+          );
+        steps.push(requesterNotified ? 'notification_verified' : 'notification_not_found');
+      } else {
+        steps.push('audit_read_failed');
+      }
+
+      return {
+        ticketId,
+        status: ticket.status ?? null,
+        groupId: ticket.group_id ?? null,
+        brandId: ticket.brand_id ?? null,
+        requesterId: ticket.requester_id ?? null,
+        agentId,
+        publicCommentAuditId: publicPayload.audit?.id,
+        requesterNotified,
+        steps,
+      };
+    } catch (error) {
+      if (error instanceof ZendeskClientError) throw error;
+      return incomplete('unexpected', null, error instanceof Error ? error.message : String(error));
+    }
   }
 
   /** Agent-UI link for a ticket on the configured Zendesk instance. */

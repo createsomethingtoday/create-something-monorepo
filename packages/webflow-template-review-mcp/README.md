@@ -637,6 +637,7 @@ creator-facing feedback.
 - `template_review_search_tickets` (read-only; Marketplace Review group by default)
 - `template_review_send_ticket_followup` (creator-facing when public; requires `confirm_public_reply: true` and reviewer ownership of the version)
 - `template_review_update_ticket_status` (status/tags + private note on the version's linked ticket; reviewer must own the version; never a public reply)
+- `template_review_create_ticket` (opens a NEW outbound ticket to a template creator and emails them; requires `confirm_send: true`)
 
 ## Zendesk ticket leg
 
@@ -684,8 +685,26 @@ tracked as follow-up work.
   public comment. `solved` fires Zendesk's solved-notification email to the
   creator, so use it only on explicit reviewer request.
 
-Neither MCP creates tickets: ticket creation stays with the submission-form
-intake automation so every ticket has a version row behind it.
+Submission tickets are still created by the submission-form intake automation,
+so every version row has a ticket behind it. For outreach that is *not* a
+submission thread (policy notices, relist/delist questions, clarifications),
+`template_review_create_ticket` opens a new ticket to the creator:
+
+- The requester is the asset's creator email (`👀🎨📧 Creator Email (Override)`,
+  else the `🎨📧 Creator Email` rollup); `requester_email` may override it.
+- It follows the sequence Zendesk needs before a Marketplace-brand requester is
+  actually emailed: create with a private, agent-authored provenance note
+  (an author-less create comment is attributed to the requester and sends
+  nothing), pin the group back to Marketplace Review (triggers re-route new
+  tickets to Programs Support), then post the public message as an agent
+  update, which fires the requester notification. The response reports
+  `requester_notified` from the audit trail; treat `false`/`null` as "check the
+  ticket" rather than "sent".
+- If any step after creation fails, the error carries the ticket id
+  (`ZENDESK_OUTBOUND_TICKET_INCOMPLETE`) so the operator finishes that ticket
+  instead of opening a duplicate.
+- Requires `confirm_send: true` and a resolved reviewer identity. Every ticket
+  is tagged `template_review_mcp_outbound`.
 
 ## Reviewer checklists
 
