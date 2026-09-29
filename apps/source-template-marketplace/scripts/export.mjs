@@ -1,0 +1,13 @@
+import {mkdtemp,cp} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import path from 'node:path';
+import {fileURLToPath} from 'node:url';
+import {execFileSync} from 'node:child_process';
+const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
+const target=path.resolve(process.argv[2]||path.join(root,'..','template-marketplace-source.tar.gz'));
+const temp=await mkdtemp(path.join(tmpdir(),'marketplace-export-'));
+const staging=path.join(temp,'template-marketplace-source');
+const entries=['app','components','lib','public','scripts','tests','marketplace.config.ts','next.config.ts','next-env.d.ts','tsconfig.json','package.json','package-lock.json','README.md','AGENTS.md','PRODUCT.md','DESIGN.md','VERIFICATION.md','.gitignore'];
+for(const entry of entries)await cp(path.join(root,entry),path.join(staging,entry),{recursive:true});
+execFileSync('tar',['-czf',target,'-C',temp,'template-marketplace-source'],{env:{...process.env,COPYFILE_DISABLE:'1'}});
+console.log(target);

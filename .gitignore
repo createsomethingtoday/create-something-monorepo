@@ -175,3 +175,6 @@ config/mcp-hub/fleet-secrets.local.*
 
 # Local evidence and write receipts from Featured-template review runs
 packages/webflow-template-search/output/featured-template-feedback/
+
+# Standalone Marketplace project for Source development
+!apps/source-template-marketplace/
