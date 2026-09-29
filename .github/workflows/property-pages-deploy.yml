@@ -106,6 +106,21 @@ jobs:
             cmp "$RUNNER_TEMP/clearway-embed/$asset" "packages/clearway/.svelte-kit/cloudflare/$asset"
           done
 
+      - name: Prepare LMS foundation quota storage
+        if: inputs.property == 'lms'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Add only the idempotent public quota table; do not replay learner migrations.
+          # Any D1 permission/schema failure stops the release before Pages deployment.
+          node scripts/run-wrangler.mjs --cwd packages/lms d1 execute lms-db --remote \
+            --file migrations/0007_foundation_rate_limits.sql
+          node scripts/run-wrangler.mjs --cwd packages/lms d1 execute lms-db --remote \
+            --command "SELECT bucket, window, hits FROM foundation_rate_limits LIMIT 0"
+
       - name: Capture current Property production deployments
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
