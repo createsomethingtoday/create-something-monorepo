@@ -2,7 +2,7 @@
   "version": 1,
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
-  "generatedAt": "2026-09-28T14:19:26.887Z",
+  "generatedAt": "2026-09-29T14:05:59.334Z",
   "rendererBudget": {
     "initialUsableMs": 500,
     "interactionMs": 50,
@@ -10,8 +10,8 @@
     "layout": "precomputed"
   },
   "counts": {
-    "nodes": 539,
-    "edges": 1115,
+    "nodes": 540,
+    "edges": 1118,
     "clusters": 21,
     "businessGroups": 10,
     "apiAiGroups": 9
@@ -304,14 +304,14 @@
     }
   },
   "insights": {
-    "generatedAt": "2026-09-28T14:19:26.887Z",
+    "generatedAt": "2026-09-29T14:05:59.334Z",
     "relationCounts": {
-      "contains": 538,
+      "contains": 539,
       "depends_on": 164,
       "runs": 123,
       "client_overlay": 8,
       "governs": 128,
-      "documents": 153,
+      "documents": 155,
       "renders": 1
     },
     "surfaceCounts": {
@@ -324,11 +324,11 @@
       "worker": 168,
       "doc": 6,
       "policy": 64,
-      "guide": 77,
+      "guide": 78,
       "config": 24
     },
     "tierCounts": {
-      "Mixed": 126,
+      "Mixed": 127,
       "Judgment": 108,
       "Automation": 277,
       "Database": 28
@@ -338,7 +338,7 @@
         "id": "api-surface-is-largest-interface",
         "severity": "signal",
         "title": "Agent-callable interfaces are the largest API / AI group.",
-        "evidence": "177 of 539 records are grouped as agent-callable interfaces, led by MCP/tool surfaces, workers, configs, and policy attachments.",
+        "evidence": "177 of 540 records are grouped as agent-callable interfaces, led by MCP/tool surfaces, workers, configs, and policy attachments.",
         "implication": "The repo is already shaped around MCP/API capability creation more than a single application surface."
       },
       {
@@ -352,14 +352,14 @@
         "id": "governance-is-cross-cutting",
         "severity": "signal",
         "title": "Governance is cross-cutting infrastructure.",
-        "evidence": "Machine-Readable Governance has 124 structural cross-group edges and 1.51 structural cross edges per node.",
+        "evidence": "Machine-Readable Governance has 125 structural cross-group edges and 1.52 structural cross edges per node.",
         "implication": "Policy/Judgment is not isolated content; it binds runtime, agents, and MCP capability."
       },
       {
         "id": "contains-edges-dominate-raw-topology",
         "severity": "caveat",
         "title": "Raw topology is still dominated by containment edges.",
-        "evidence": "538 of 1115 edges are contains edges (48.3%).",
+        "evidence": "539 of 1118 edges are contains edges (48.2%).",
         "implication": "Operational and structural edge modes are necessary for reading business implications; raw edge count overstates root/substrate centrality."
       }
     ],
@@ -391,7 +391,7 @@
       {
         "id": "semantic-edge-weighting",
         "title": "Separate containment proof from semantic dependency proof.",
-        "evidence": "Contains edges represent 48.3% of the graph, so generated insights now compute top structural pairs and cross-group coupling with contains edges excluded.",
+        "evidence": "Contains edges represent 48.2% of the graph, so generated insights now compute top structural pairs and cross-group coupling with contains edges excluded.",
         "completedBy": "Added generated lens insights with structural cross edges, structural pairs, observations, improvement candidates, and topology3d_insights_read."
       },
       {
@@ -419,34 +419,34 @@
           {
             "id": "mcp-capability-platform",
             "label": "MCP Capability Platform",
-            "count": 121,
+            "count": 122,
             "surfaceCounts": {
               "mcp": 46,
               "package": 3,
               "worker": 29,
               "agent": 14,
               "doc": 2,
-              "guide": 9,
+              "guide": 10,
               "config": 18
             },
             "statusCounts": {
-              "mapped": 121
+              "mapped": 122
             },
-            "knowledgeCount": 11,
-            "knowledgePct": 9.1,
+            "knowledgeCount": 12,
+            "knowledgePct": 9.8,
             "internalEdges": 74,
-            "crossEdges": 218,
-            "structuralCrossEdges": 97,
+            "crossEdges": 221,
+            "structuralCrossEdges": 99,
             "inboundStructuralEdges": 74,
-            "outboundStructuralEdges": 23,
+            "outboundStructuralEdges": 25,
             "relationCounts": {
-              "contains": 121,
+              "contains": 122,
               "depends_on": 76,
               "runs": 41,
-              "documents": 45,
+              "documents": 47,
               "governs": 9
             },
-            "structuralCrossEdgesPerNode": 0.8,
+            "structuralCrossEdgesPerNode": 0.81,
             "classificationEvidence": {
               "dominantSurfaces": [
                 {
@@ -633,18 +633,18 @@
             "knowledgeCount": 4,
             "knowledgePct": 4.7,
             "internalEdges": 38,
-            "crossEdges": 124,
-            "structuralCrossEdges": 38,
-            "inboundStructuralEdges": 17,
+            "crossEdges": 125,
+            "structuralCrossEdges": 39,
+            "inboundStructuralEdges": 18,
             "outboundStructuralEdges": 21,
             "relationCounts": {
               "contains": 86,
               "depends_on": 18,
               "runs": 34,
-              "documents": 9,
+              "documents": 10,
               "governs": 15
             },
-            "structuralCrossEdgesPerNode": 0.44,
+            "structuralCrossEdgesPerNode": 0.45,
             "classificationEvidence": {
               "dominantSurfaces": [
                 {
@@ -1012,20 +1012,20 @@
             "knowledgeCount": 1,
             "knowledgePct": 6.3,
             "internalEdges": 29,
-            "crossEdges": 686,
-            "structuralCrossEdges": 163,
-            "inboundStructuralEdges": 150,
+            "crossEdges": 688,
+            "structuralCrossEdges": 164,
+            "inboundStructuralEdges": 151,
             "outboundStructuralEdges": 13,
             "relationCounts": {
-              "contains": 538,
+              "contains": 539,
               "client_overlay": 8,
               "depends_on": 13,
               "runs": 7,
               "governs": 64,
-              "documents": 84,
+              "documents": 85,
               "renders": 1
             },
-            "structuralCrossEdgesPerNode": 10.19,
+            "structuralCrossEdgesPerNode": 10.25,
             "classificationEvidence": {
               "dominantSurfaces": [
                 {
@@ -1336,11 +1336,11 @@
           {
             "a": "policy-judgment-os",
             "b": "mcp-capability-platform",
-            "count": 34,
+            "count": 35,
             "relations": {
               "depends_on": 12,
               "runs": 5,
-              "documents": 8,
+              "documents": 9,
               "governs": 9
             },
             "aLabel": "Policy / Judgment OS",
@@ -1349,10 +1349,10 @@
           {
             "a": "policy-judgment-os",
             "b": "public-learning-surface",
-            "count": 27,
+            "count": 26,
             "relations": {
               "depends_on": 8,
-              "documents": 19
+              "documents": 18
             },
             "aLabel": "Policy / Judgment OS",
             "bLabel": "Public / Learning Surface"
@@ -1414,10 +1414,10 @@
           {
             "a": "database-substrate",
             "b": "mcp-capability-platform",
-            "count": 13,
+            "count": 14,
             "relations": {
               "depends_on": 4,
-              "documents": 9
+              "documents": 10
             },
             "aLabel": "Database Substrate",
             "bLabel": "MCP Capability Platform"
@@ -1611,10 +1611,10 @@
           {
             "source": "public-learning-surface",
             "target": "policy-judgment-os",
-            "count": 21,
+            "count": 20,
             "relations": {
               "depends_on": 2,
-              "documents": 19
+              "documents": 18
             },
             "examples": [
               {
@@ -1635,14 +1635,6 @@
               },
               {
                 "relation": "documents",
-                "sourceId": "substrate:create-something:doc:docs-readme-md",
-                "sourceLabel": "README.md",
-                "targetId": "substrate:create-something:package:create-something-interaction-atlas-mcp-packages-interaction-atlas-mcp",
-                "targetLabel": "@create-something/interaction-atlas-mcp",
-                "evidence": "docs/README.md documents packages/interaction-atlas-mcp through the stable doc platform anchor."
-              },
-              {
-                "relation": "documents",
                 "sourceId": "substrate:create-something:guide:docs-guides-agency-governance-products-operations-runbook-md",
                 "sourceLabel": "AGENCY_GOVERNANCE_PRODUCTS_OPERATIONS_RUNBOOK.md",
                 "targetId": "substrate:create-something:package:create-something-arc-packages-arc",
@@ -1656,6 +1648,14 @@
                 "targetId": "substrate:create-something:package:create-something-arc-packages-arc",
                 "targetLabel": "@create-something/arc",
                 "evidence": "docs/guides/AGENCY_SERVICE_TIER_MIGRATION_RUNBOOK_2026-03-09.md documents packages/arc through matching topology terms."
+              },
+              {
+                "relation": "documents",
+                "sourceId": "substrate:create-something:guide:docs-guides-atlas-linear-integration-md",
+                "sourceLabel": "ATLAS_LINEAR_INTEGRATION.md",
+                "targetId": "substrate:create-something:package:create-something-interaction-atlas-mcp-packages-interaction-atlas-mcp",
+                "targetLabel": "@create-something/interaction-atlas-mcp",
+                "evidence": "docs/guides/ATLAS_LINEAR_INTEGRATION.md documents packages/interaction-atlas-mcp through matching topology terms."
               }
             ],
             "sourceLabel": "Public / Learning Surface",
@@ -1928,10 +1928,10 @@
           {
             "source": "mcp-capability-platform",
             "target": "policy-judgment-os",
-            "count": 9,
+            "count": 10,
             "relations": {
               "depends_on": 2,
-              "documents": 7
+              "documents": 8
             },
             "examples": [
               {
@@ -1981,9 +1981,9 @@
           {
             "source": "mcp-capability-platform",
             "target": "database-substrate",
-            "count": 9,
+            "count": 10,
             "relations": {
-              "documents": 9
+              "documents": 10
             },
             "examples": [
               {
@@ -2475,17 +2475,17 @@
                   "status": "mapped"
                 },
                 {
-                  "id": "substrate:create-something:package:create-something-app-governance-db-packages-app-governance-db",
-                  "label": "@create-something/app-governance-db",
-                  "path": "packages/app-governance-db",
+                  "id": "substrate:create-something:package:create-something-io-packages-io",
+                  "label": "@create-something/io",
+                  "path": "packages/io",
                   "tier": "Judgment",
                   "surface": "mcp",
                   "status": "mapped"
                 },
                 {
-                  "id": "substrate:create-something:package:create-something-io-packages-io",
-                  "label": "@create-something/io",
-                  "path": "packages/io",
+                  "id": "substrate:create-something:package:create-something-app-governance-db-packages-app-governance-db",
+                  "label": "@create-something/app-governance-db",
+                  "path": "packages/app-governance-db",
                   "tier": "Judgment",
                   "surface": "mcp",
                   "status": "mapped"
@@ -2613,18 +2613,18 @@
             "knowledgeCount": 6,
             "knowledgePct": 7.3,
             "internalEdges": 54,
-            "crossEdges": 206,
-            "structuralCrossEdges": 124,
-            "inboundStructuralEdges": 35,
+            "crossEdges": 207,
+            "structuralCrossEdges": 125,
+            "inboundStructuralEdges": 36,
             "outboundStructuralEdges": 89,
             "relationCounts": {
               "contains": 82,
               "depends_on": 60,
               "runs": 13,
               "governs": 86,
-              "documents": 19
+              "documents": 20
             },
-            "structuralCrossEdgesPerNode": 1.51,
+            "structuralCrossEdgesPerNode": 1.52,
             "classificationEvidence": {
               "dominantSurfaces": [
                 {
@@ -2875,31 +2875,31 @@
           {
             "id": "knowledge-to-tools",
             "label": "Knowledge To Tools",
-            "count": 35,
+            "count": 36,
             "surfaceCounts": {
               "doc": 3,
-              "guide": 32
+              "guide": 33
             },
             "statusCounts": {
-              "mapped": 35
+              "mapped": 36
             },
-            "knowledgeCount": 35,
+            "knowledgeCount": 36,
             "knowledgePct": 100,
             "internalEdges": 0,
-            "crossEdges": 98,
-            "structuralCrossEdges": 63,
+            "crossEdges": 101,
+            "structuralCrossEdges": 65,
             "inboundStructuralEdges": 0,
-            "outboundStructuralEdges": 63,
+            "outboundStructuralEdges": 65,
             "relationCounts": {
-              "contains": 35,
-              "documents": 63
+              "contains": 36,
+              "documents": 65
             },
-            "structuralCrossEdgesPerNode": 1.8,
+            "structuralCrossEdgesPerNode": 1.81,
             "classificationEvidence": {
               "dominantSurfaces": [
                 {
                   "surface": "guide",
-                  "count": 32
+                  "count": 33
                 },
                 {
                   "surface": "doc",
@@ -2976,20 +2976,20 @@
             "knowledgeCount": 1,
             "knowledgePct": 6.3,
             "internalEdges": 29,
-            "crossEdges": 688,
-            "structuralCrossEdges": 165,
-            "inboundStructuralEdges": 150,
+            "crossEdges": 690,
+            "structuralCrossEdges": 166,
+            "inboundStructuralEdges": 151,
             "outboundStructuralEdges": 15,
             "relationCounts": {
-              "contains": 538,
+              "contains": 539,
               "client_overlay": 8,
               "depends_on": 15,
               "runs": 7,
               "governs": 64,
-              "documents": 84,
+              "documents": 85,
               "renders": 1
             },
-            "structuralCrossEdgesPerNode": 10.31,
+            "structuralCrossEdgesPerNode": 10.38,
             "classificationEvidence": {
               "dominantSurfaces": [
                 {
@@ -3242,9 +3242,9 @@
           {
             "a": "knowledge-to-tools",
             "b": "api-readable-substrate",
-            "count": 37,
+            "count": 38,
             "relations": {
-              "documents": 37
+              "documents": 38
             },
             "aLabel": "Knowledge To Tools",
             "bLabel": "API-Readable Substrate"
@@ -3419,9 +3419,9 @@
           {
             "source": "knowledge-to-tools",
             "target": "api-readable-substrate",
-            "count": 37,
+            "count": 38,
             "relations": {
-              "documents": 37
+              "documents": 38
             },
             "examples": [
               {
@@ -3694,14 +3694,6 @@
             "examples": [
               {
                 "relation": "documents",
-                "sourceId": "substrate:create-something:doc:docs-readme-md",
-                "sourceLabel": "README.md",
-                "targetId": "substrate:create-something:package:create-something-interaction-atlas-mcp-packages-interaction-atlas-mcp",
-                "targetLabel": "@create-something/interaction-atlas-mcp",
-                "evidence": "docs/README.md documents packages/interaction-atlas-mcp through the stable doc platform anchor."
-              },
-              {
-                "relation": "documents",
                 "sourceId": "substrate:create-something:guide:docs-guides-atlas-linear-integration-md",
                 "sourceLabel": "ATLAS_LINEAR_INTEGRATION.md",
                 "targetId": "substrate:create-something:package:create-something-interaction-atlas-mcp-packages-interaction-atlas-mcp",
@@ -3731,6 +3723,14 @@
                 "targetId": "substrate:create-something:package:createsomething-ground-mcp-packages-ground-npm",
                 "targetLabel": "@createsomething/ground-mcp",
                 "evidence": "docs/guides/GROUND_MONOREPO_ADOPTION.md documents packages/ground/npm through matching topology terms."
+              },
+              {
+                "relation": "documents",
+                "sourceId": "substrate:create-something:guide:docs-guides-ground-performance-md",
+                "sourceLabel": "GROUND_PERFORMANCE.md",
+                "targetId": "substrate:create-something:package:create-something-interaction-atlas-mcp-packages-interaction-atlas-mcp",
+                "targetLabel": "@create-something/interaction-atlas-mcp",
+                "evidence": "docs/guides/GROUND_PERFORMANCE.md documents packages/interaction-atlas-mcp through the stable guide platform anchor."
               }
             ],
             "sourceLabel": "Knowledge To Tools",
@@ -4000,6 +4000,58 @@
             "targetLabel": "API-Readable Substrate"
           },
           {
+            "source": "knowledge-to-tools",
+            "target": "machine-readable-governance",
+            "count": 7,
+            "relations": {
+              "documents": 7
+            },
+            "examples": [
+              {
+                "relation": "documents",
+                "sourceId": "substrate:create-something:doc:docs-readme-md",
+                "sourceLabel": "README.md",
+                "targetId": "substrate:create-something:package:create-something-webflow-components-packages-webflow-components",
+                "targetLabel": "@create-something/webflow-components",
+                "evidence": "docs/README.md documents packages/webflow-components through an explicit repository link."
+              },
+              {
+                "relation": "documents",
+                "sourceId": "substrate:create-something:guide:docs-guides-bounded-research-interrupt-runbook-md",
+                "sourceLabel": "BOUNDED_RESEARCH_INTERRUPT_RUNBOOK.md",
+                "targetId": "substrate:create-something:package:create-something-arc-packages-arc",
+                "targetLabel": "@create-something/arc",
+                "evidence": "docs/guides/BOUNDED_RESEARCH_INTERRUPT_RUNBOOK.md documents packages/arc through matching topology terms."
+              },
+              {
+                "relation": "documents",
+                "sourceId": "substrate:create-something:guide:docs-guides-ctx-to-draw-storytelling-playbook-md",
+                "sourceLabel": "CTX_TO_DRAW_STORYTELLING_PLAYBOOK.md",
+                "targetId": "substrate:create-something:package:create-something-arc-packages-arc",
+                "targetLabel": "@create-something/arc",
+                "evidence": "docs/guides/CTX_TO_DRAW_STORYTELLING_PLAYBOOK.md documents packages/arc through matching topology terms."
+              },
+              {
+                "relation": "documents",
+                "sourceId": "substrate:create-something:guide:docs-guides-map-product-operations-md",
+                "sourceLabel": "MAP_PRODUCT_OPERATIONS.md",
+                "targetId": "substrate:create-something:package:create-something-arc-packages-arc",
+                "targetLabel": "@create-something/arc",
+                "evidence": "docs/guides/MAP_PRODUCT_OPERATIONS.md documents packages/arc through matching topology terms."
+              },
+              {
+                "relation": "documents",
+                "sourceId": "substrate:create-something:guide:docs-guides-newsletter-engagement-runbook-md",
+                "sourceLabel": "NEWSLETTER_ENGAGEMENT_RUNBOOK.md",
+                "targetId": "substrate:create-something:package:create-something-arc-packages-arc",
+                "targetLabel": "@create-something/arc",
+                "evidence": "docs/guides/NEWSLETTER_ENGAGEMENT_RUNBOOK.md documents packages/arc through matching topology terms."
+              }
+            ],
+            "sourceLabel": "Knowledge To Tools",
+            "targetLabel": "Machine-Readable Governance"
+          },
+          {
             "source": "runtime-api-delivery",
             "target": "api-readable-substrate",
             "count": 6,
@@ -4103,58 +4155,6 @@
             ],
             "sourceLabel": "Runtime API Delivery",
             "targetLabel": "Agent-Callable Interfaces"
-          },
-          {
-            "source": "knowledge-to-tools",
-            "target": "machine-readable-governance",
-            "count": 6,
-            "relations": {
-              "documents": 6
-            },
-            "examples": [
-              {
-                "relation": "documents",
-                "sourceId": "substrate:create-something:guide:docs-guides-bounded-research-interrupt-runbook-md",
-                "sourceLabel": "BOUNDED_RESEARCH_INTERRUPT_RUNBOOK.md",
-                "targetId": "substrate:create-something:package:create-something-arc-packages-arc",
-                "targetLabel": "@create-something/arc",
-                "evidence": "docs/guides/BOUNDED_RESEARCH_INTERRUPT_RUNBOOK.md documents packages/arc through matching topology terms."
-              },
-              {
-                "relation": "documents",
-                "sourceId": "substrate:create-something:guide:docs-guides-ctx-to-draw-storytelling-playbook-md",
-                "sourceLabel": "CTX_TO_DRAW_STORYTELLING_PLAYBOOK.md",
-                "targetId": "substrate:create-something:package:create-something-arc-packages-arc",
-                "targetLabel": "@create-something/arc",
-                "evidence": "docs/guides/CTX_TO_DRAW_STORYTELLING_PLAYBOOK.md documents packages/arc through matching topology terms."
-              },
-              {
-                "relation": "documents",
-                "sourceId": "substrate:create-something:guide:docs-guides-map-product-operations-md",
-                "sourceLabel": "MAP_PRODUCT_OPERATIONS.md",
-                "targetId": "substrate:create-something:package:create-something-arc-packages-arc",
-                "targetLabel": "@create-something/arc",
-                "evidence": "docs/guides/MAP_PRODUCT_OPERATIONS.md documents packages/arc through matching topology terms."
-              },
-              {
-                "relation": "documents",
-                "sourceId": "substrate:create-something:guide:docs-guides-newsletter-engagement-runbook-md",
-                "sourceLabel": "NEWSLETTER_ENGAGEMENT_RUNBOOK.md",
-                "targetId": "substrate:create-something:package:create-something-arc-packages-arc",
-                "targetLabel": "@create-something/arc",
-                "evidence": "docs/guides/NEWSLETTER_ENGAGEMENT_RUNBOOK.md documents packages/arc through matching topology terms."
-              },
-              {
-                "relation": "documents",
-                "sourceId": "substrate:create-something:guide:docs-guides-playbook-library-research-2026-02-18-md",
-                "sourceLabel": "PLAYBOOK_LIBRARY_RESEARCH_2026-02-18.md",
-                "targetId": "substrate:create-something:package:create-something-arc-packages-arc",
-                "targetLabel": "@create-something/arc",
-                "evidence": "docs/guides/PLAYBOOK_LIBRARY_RESEARCH_2026-02-18.md documents packages/arc through matching topology terms."
-              }
-            ],
-            "sourceLabel": "Knowledge To Tools",
-            "targetLabel": "Machine-Readable Governance"
           },
           {
             "source": "runtime-api-delivery",
@@ -4609,12 +4609,12 @@
           "label": "Knowledge / guide",
           "meaning": "Operating playbook layer. Guides here turn repeated delivery decisions into reusable practice.",
           "color": "#ef4444",
-          "count": 77,
+          "count": 78,
           "surfaceCounts": {
-            "guide": 77
+            "guide": 78
           },
           "statusCounts": {
-            "mapped": 77
+            "mapped": 78
           },
           "x": -350,
           "y": -606,
@@ -4730,9 +4730,9 @@
           "label": "MCP Capability Platform",
           "color": "#8b5cf6",
           "meaning": "Reusable MCP capability creation: core servers, hub surfaces, auth, tool wrappers, and agent-callable product leverage.",
-          "count": 121,
+          "count": 122,
           "statusCounts": {
-            "mapped": 121
+            "mapped": 122
           },
           "surfaceCounts": {
             "mcp": 46,
@@ -4740,7 +4740,7 @@
             "worker": 29,
             "agent": 14,
             "doc": 2,
-            "guide": 9,
+            "guide": 10,
             "config": 18
           },
           "x": 0,
@@ -5456,14 +5456,14 @@
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": 37,
+          "x": 38,
           "y": -166,
           "z": -128,
           "color": "#8b5cf6"
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": 36,
+          "x": 37,
           "y": -164,
           "z": -106,
           "color": "#8b5cf6"
@@ -5533,7 +5533,7 @@
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": 31,
+          "x": 32,
           "y": -157,
           "z": -150,
           "color": "#8b5cf6"
@@ -5561,7 +5561,7 @@
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": 28,
+          "x": 29,
           "y": -154,
           "z": -106,
           "color": "#8b5cf6"
@@ -5569,7 +5569,7 @@
         {
           "groupId": "mcp-capability-platform",
           "x": 27,
-          "y": -152,
+          "y": -153,
           "z": -84,
           "color": "#8b5cf6"
         },
@@ -5603,14 +5603,14 @@
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": 21,
+          "x": 22,
           "y": -149,
           "z": -150,
           "color": "#8b5cf6"
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": 19,
+          "x": 20,
           "y": -148,
           "z": -128,
           "color": "#8b5cf6"
@@ -5645,35 +5645,35 @@
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": 32,
+          "x": 33,
           "y": -103,
           "z": -84,
           "color": "#8b5cf6"
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": 28,
-          "y": -101,
+          "x": 29,
+          "y": -102,
           "z": -194,
           "color": "#8b5cf6"
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": 24,
+          "x": 25,
           "y": -100,
           "z": -172,
           "color": "#8b5cf6"
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": 19,
+          "x": 20,
           "y": -99,
           "z": -150,
           "color": "#8b5cf6"
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": 15,
+          "x": 16,
           "y": -98,
           "z": -128,
           "color": "#8b5cf6"
@@ -5701,8 +5701,8 @@
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": 10,
-          "y": -97,
+          "x": 11,
+          "y": -98,
           "z": -106,
           "color": "#8b5cf6"
         },
@@ -5792,7 +5792,7 @@
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": 6,
+          "x": 7,
           "y": -97,
           "z": -84,
           "color": "#8b5cf6"
@@ -5806,14 +5806,14 @@
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": 1,
+          "x": 2,
           "y": -97,
           "z": -194,
           "color": "#8b5cf6"
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": -3,
+          "x": -2,
           "y": -97,
           "z": -172,
           "color": "#8b5cf6"
@@ -5869,14 +5869,14 @@
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": -8,
+          "x": -7,
           "y": -97,
           "z": -150,
           "color": "#8b5cf6"
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": -13,
+          "x": -11,
           "y": -98,
           "z": -128,
           "color": "#8b5cf6"
@@ -5932,7 +5932,7 @@
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": -17,
+          "x": -16,
           "y": -98,
           "z": -106,
           "color": "#8b5cf6"
@@ -5946,7 +5946,7 @@
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": -21,
+          "x": -20,
           "y": -99,
           "z": -84,
           "color": "#8b5cf6"
@@ -5988,8 +5988,8 @@
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": -26,
-          "y": -101,
+          "x": -25,
+          "y": -100,
           "z": -194,
           "color": "#8b5cf6"
         },
@@ -6016,15 +6016,15 @@
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": -30,
+          "x": -29,
           "y": -102,
           "z": -172,
           "color": "#8b5cf6"
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": -34,
-          "y": -104,
+          "x": -33,
+          "y": -103,
           "z": -150,
           "color": "#8b5cf6"
         },
@@ -6044,8 +6044,8 @@
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": -39,
-          "y": -106,
+          "x": -37,
+          "y": -105,
           "z": -128,
           "color": "#8b5cf6"
         },
@@ -6072,22 +6072,22 @@
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": -43,
-          "y": -108,
+          "x": -41,
+          "y": -107,
           "z": -106,
           "color": "#8b5cf6"
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": -47,
-          "y": -110,
+          "x": -45,
+          "y": -109,
           "z": -84,
           "color": "#8b5cf6"
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": -50,
-          "y": -113,
+          "x": -49,
+          "y": -112,
           "z": -194,
           "color": "#8b5cf6"
         },
@@ -6107,8 +6107,8 @@
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": -54,
-          "y": -115,
+          "x": -53,
+          "y": -114,
           "z": -172,
           "color": "#8b5cf6"
         },
@@ -6128,8 +6128,8 @@
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": -88,
-          "y": -84,
+          "x": -86,
+          "y": -82,
           "z": -150,
           "color": "#8b5cf6"
         },
@@ -6163,15 +6163,15 @@
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": -93,
-          "y": -88,
+          "x": -91,
+          "y": -86,
           "z": -128,
           "color": "#8b5cf6"
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": -98,
-          "y": -93,
+          "x": -96,
+          "y": -91,
           "z": -106,
           "color": "#8b5cf6"
         },
@@ -6226,8 +6226,8 @@
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": -102,
-          "y": -98,
+          "x": -101,
+          "y": -96,
           "z": -84,
           "color": "#8b5cf6"
         },
@@ -6254,8 +6254,8 @@
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": -107,
-          "y": -104,
+          "x": -105,
+          "y": -102,
           "z": -194,
           "color": "#8b5cf6"
         },
@@ -6513,8 +6513,8 @@
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": -111,
-          "y": -109,
+          "x": -109,
+          "y": -107,
           "z": -172,
           "color": "#8b5cf6"
         },
@@ -6583,8 +6583,8 @@
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": -115,
-          "y": -115,
+          "x": -113,
+          "y": -113,
           "z": -150,
           "color": "#8b5cf6"
         },
@@ -6632,15 +6632,15 @@
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": -118,
-          "y": -121,
+          "x": -117,
+          "y": -119,
           "z": -128,
           "color": "#8b5cf6"
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": -121,
-          "y": -128,
+          "x": -120,
+          "y": -125,
           "z": -106,
           "color": "#8b5cf6"
         },
@@ -6737,8 +6737,8 @@
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": -124,
-          "y": -134,
+          "x": -123,
+          "y": -131,
           "z": -84,
           "color": "#8b5cf6"
         },
@@ -6793,8 +6793,8 @@
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": -126,
-          "y": -140,
+          "x": -125,
+          "y": -138,
           "z": -194,
           "color": "#8b5cf6"
         },
@@ -6807,29 +6807,29 @@
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": -129,
-          "y": -147,
+          "x": -128,
+          "y": -144,
           "z": -172,
           "color": "#8b5cf6"
         },
         {
           "groupId": "mcp-capability-platform",
           "x": -130,
-          "y": -154,
+          "y": -151,
           "z": -150,
           "color": "#8b5cf6"
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": -132,
-          "y": -161,
+          "x": -131,
+          "y": -157,
           "z": -128,
           "color": "#8b5cf6"
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": -133,
-          "y": -167,
+          "x": -132,
+          "y": -164,
           "z": -106,
           "color": "#8b5cf6"
         },
@@ -6842,22 +6842,22 @@
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": -134,
-          "y": -174,
+          "x": -133,
+          "y": -171,
           "z": -84,
           "color": "#8b5cf6"
         },
         {
           "groupId": "mcp-capability-platform",
           "x": -134,
-          "y": -181,
+          "y": -178,
           "z": -194,
           "color": "#8b5cf6"
         },
         {
           "groupId": "mcp-capability-platform",
           "x": -134,
-          "y": -188,
+          "y": -185,
           "z": -172,
           "color": "#8b5cf6"
         },
@@ -6878,21 +6878,21 @@
         {
           "groupId": "mcp-capability-platform",
           "x": -134,
-          "y": -195,
+          "y": -192,
           "z": -150,
           "color": "#8b5cf6"
         },
         {
           "groupId": "mcp-capability-platform",
           "x": -133,
-          "y": -202,
+          "y": -199,
           "z": -128,
           "color": "#8b5cf6"
         },
         {
           "groupId": "mcp-capability-platform",
           "x": -132,
-          "y": -209,
+          "y": -205,
           "z": -106,
           "color": "#8b5cf6"
         },
@@ -6905,22 +6905,22 @@
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": -130,
-          "y": -216,
+          "x": -131,
+          "y": -212,
           "z": -84,
           "color": "#8b5cf6"
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": -173,
-          "y": -236,
+          "x": -174,
+          "y": -231,
           "z": -194,
           "color": "#8b5cf6"
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": -170,
-          "y": -244,
+          "x": -171,
+          "y": -240,
           "z": -172,
           "color": "#8b5cf6"
         },
@@ -6954,8 +6954,8 @@
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": -167,
-          "y": -253,
+          "x": -168,
+          "y": -248,
           "z": -150,
           "color": "#8b5cf6"
         },
@@ -6996,8 +6996,8 @@
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": -163,
-          "y": -262,
+          "x": -165,
+          "y": -257,
           "z": -128,
           "color": "#8b5cf6"
         },
@@ -7045,8 +7045,8 @@
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": -159,
-          "y": -270,
+          "x": -161,
+          "y": -265,
           "z": -106,
           "color": "#8b5cf6"
         },
@@ -7073,8 +7073,8 @@
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": -154,
-          "y": -278,
+          "x": -157,
+          "y": -273,
           "z": -84,
           "color": "#8b5cf6"
         },
@@ -7108,8 +7108,8 @@
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": -149,
-          "y": -286,
+          "x": -152,
+          "y": -281,
           "z": -194,
           "color": "#8b5cf6"
         },
@@ -7122,8 +7122,8 @@
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": -143,
-          "y": -294,
+          "x": -147,
+          "y": -289,
           "z": -172,
           "color": "#8b5cf6"
         },
@@ -7143,15 +7143,15 @@
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": -138,
-          "y": -301,
+          "x": -141,
+          "y": -297,
           "z": -150,
           "color": "#8b5cf6"
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": -131,
-          "y": -308,
+          "x": -135,
+          "y": -304,
           "z": -128,
           "color": "#8b5cf6"
         },
@@ -7199,8 +7199,8 @@
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": -125,
-          "y": -315,
+          "x": -129,
+          "y": -310,
           "z": -106,
           "color": "#8b5cf6"
         },
@@ -7227,8 +7227,8 @@
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": -118,
-          "y": -321,
+          "x": -122,
+          "y": -317,
           "z": -84,
           "color": "#8b5cf6"
         },
@@ -7381,8 +7381,8 @@
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": -111,
-          "y": -327,
+          "x": -115,
+          "y": -323,
           "z": -194,
           "color": "#8b5cf6"
         },
@@ -7416,15 +7416,15 @@
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": -103,
-          "y": -332,
+          "x": -108,
+          "y": -329,
           "z": -172,
           "color": "#8b5cf6"
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": -95,
-          "y": -337,
+          "x": -100,
+          "y": -334,
           "z": -150,
           "color": "#8b5cf6"
         },
@@ -7927,8 +7927,8 @@
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": -87,
-          "y": -342,
+          "x": -93,
+          "y": -339,
           "z": -128,
           "color": "#8b5cf6"
         },
@@ -7962,8 +7962,8 @@
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": -79,
-          "y": -347,
+          "x": -85,
+          "y": -344,
           "z": -106,
           "color": "#8b5cf6"
         },
@@ -8011,8 +8011,8 @@
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": -70,
-          "y": -350,
+          "x": -76,
+          "y": -348,
           "z": -84,
           "color": "#8b5cf6"
         },
@@ -8165,29 +8165,29 @@
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": -62,
-          "y": -354,
+          "x": -68,
+          "y": -352,
           "z": -194,
           "color": "#8b5cf6"
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": -53,
-          "y": -357,
+          "x": -59,
+          "y": -355,
           "z": -172,
           "color": "#8b5cf6"
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": -44,
-          "y": -359,
+          "x": -50,
+          "y": -358,
           "z": -150,
           "color": "#8b5cf6"
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": -35,
-          "y": -361,
+          "x": -41,
+          "y": -360,
           "z": -128,
           "color": "#8b5cf6"
         },
@@ -8204,6 +8204,13 @@
           "y": -67,
           "z": 113,
           "color": "#3b82f6"
+        },
+        {
+          "groupId": "mcp-capability-platform",
+          "x": -41,
+          "y": -407,
+          "z": -106,
+          "color": "#8b5cf6"
         },
         {
           "groupId": "public-learning-surface",
@@ -8298,9 +8305,9 @@
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": -32,
-          "y": -408,
-          "z": -106,
+          "x": -29,
+          "y": -409,
+          "z": -84,
           "color": "#8b5cf6"
         },
         {
@@ -8347,9 +8354,9 @@
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": -21,
+          "x": -17,
           "y": -410,
-          "z": -84,
+          "z": -194,
           "color": "#8b5cf6"
         },
         {
@@ -8417,16 +8424,16 @@
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": -9,
+          "x": -6,
           "y": -411,
-          "z": -194,
+          "z": -172,
           "color": "#8b5cf6"
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": 3,
+          "x": 6,
           "y": -411,
-          "z": -172,
+          "z": -150,
           "color": "#8b5cf6"
         },
         {
@@ -8438,16 +8445,16 @@
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": 15,
+          "x": 17,
           "y": -410,
-          "z": -150,
+          "z": -128,
           "color": "#8b5cf6"
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": 26,
+          "x": 29,
           "y": -409,
-          "z": -128,
+          "z": -106,
           "color": "#8b5cf6"
         },
         {
@@ -8459,65 +8466,65 @@
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": 38,
-          "y": -408,
-          "z": -106,
-          "color": "#8b5cf6"
-        },
-        {
-          "groupId": "mcp-capability-platform",
-          "x": 49,
-          "y": -405,
+          "x": 41,
+          "y": -407,
           "z": -84,
           "color": "#8b5cf6"
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": 61,
-          "y": -402,
+          "x": 52,
+          "y": -405,
           "z": -194,
           "color": "#8b5cf6"
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": 72,
-          "y": -399,
+          "x": 63,
+          "y": -402,
           "z": -172,
           "color": "#8b5cf6"
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": 83,
-          "y": -395,
+          "x": 74,
+          "y": -398,
           "z": -150,
           "color": "#8b5cf6"
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": 94,
-          "y": -390,
+          "x": 85,
+          "y": -394,
           "z": -128,
           "color": "#8b5cf6"
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": 104,
-          "y": -385,
+          "x": 96,
+          "y": -389,
           "z": -106,
           "color": "#8b5cf6"
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": 115,
-          "y": -380,
+          "x": 106,
+          "y": -384,
           "z": -84,
           "color": "#8b5cf6"
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": 125,
-          "y": -373,
+          "x": 116,
+          "y": -379,
           "z": -194,
+          "color": "#8b5cf6"
+        },
+        {
+          "groupId": "mcp-capability-platform",
+          "x": 126,
+          "y": -372,
+          "z": -172,
           "color": "#8b5cf6"
         },
         {
@@ -8529,114 +8536,114 @@
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": 134,
-          "y": -367,
-          "z": -172,
-          "color": "#8b5cf6"
-        },
-        {
-          "groupId": "mcp-capability-platform",
-          "x": 144,
-          "y": -359,
+          "x": 136,
+          "y": -366,
           "z": -150,
           "color": "#8b5cf6"
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": 152,
-          "y": -352,
+          "x": 145,
+          "y": -358,
           "z": -128,
           "color": "#8b5cf6"
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": 161,
-          "y": -344,
+          "x": 154,
+          "y": -351,
           "z": -106,
           "color": "#8b5cf6"
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": 169,
-          "y": -335,
+          "x": 162,
+          "y": -343,
           "z": -84,
           "color": "#8b5cf6"
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": 176,
-          "y": -326,
+          "x": 170,
+          "y": -334,
           "z": -194,
           "color": "#8b5cf6"
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": 184,
-          "y": -317,
+          "x": 177,
+          "y": -325,
           "z": -172,
           "color": "#8b5cf6"
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": 229,
-          "y": -332,
+          "x": 222,
+          "y": -342,
           "z": -150,
           "color": "#8b5cf6"
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": 236,
-          "y": -320,
+          "x": 230,
+          "y": -331,
           "z": -128,
+          "color": "#8b5cf6"
+        },
+        {
+          "groupId": "mcp-capability-platform",
+          "x": 237,
+          "y": -319,
+          "z": -106,
           "color": "#8b5cf6"
         },
         {
           "groupId": "mcp-capability-platform",
           "x": 243,
-          "y": -307,
-          "z": -106,
-          "color": "#8b5cf6"
-        },
-        {
-          "groupId": "mcp-capability-platform",
-          "x": 249,
-          "y": -295,
+          "y": -306,
           "z": -84,
           "color": "#8b5cf6"
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": 254,
-          "y": -282,
+          "x": 249,
+          "y": -294,
           "z": -194,
+          "color": "#8b5cf6"
+        },
+        {
+          "groupId": "mcp-capability-platform",
+          "x": 255,
+          "y": -281,
+          "z": -172,
           "color": "#8b5cf6"
         },
         {
           "groupId": "mcp-capability-platform",
           "x": 259,
           "y": -268,
-          "z": -172,
-          "color": "#8b5cf6"
-        },
-        {
-          "groupId": "mcp-capability-platform",
-          "x": 263,
-          "y": -255,
           "z": -150,
           "color": "#8b5cf6"
         },
         {
           "groupId": "mcp-capability-platform",
-          "x": 266,
-          "y": -241,
+          "x": 263,
+          "y": -254,
           "z": -128,
+          "color": "#8b5cf6"
+        },
+        {
+          "groupId": "mcp-capability-platform",
+          "x": 266,
+          "y": -240,
+          "z": -106,
           "color": "#8b5cf6"
         },
         {
           "groupId": "mcp-capability-platform",
           "x": 269,
           "y": -227,
-          "z": -106,
+          "z": -84,
           "color": "#8b5cf6"
         },
         {
@@ -8685,14 +8692,14 @@
           "groupId": "mcp-capability-platform",
           "x": 271,
           "y": -213,
-          "z": -84,
+          "z": -194,
           "color": "#8b5cf6"
         },
         {
           "groupId": "mcp-capability-platform",
           "x": 272,
           "y": -199,
-          "z": -194,
+          "z": -172,
           "color": "#8b5cf6"
         }
       ]
@@ -8814,13 +8821,13 @@
           "label": "Knowledge To Tools",
           "color": "#f59e0b",
           "meaning": "Guides, playbooks, and documentation that should be convertible into prompts, tools, policy checks, or repeatable workflows.",
-          "count": 35,
+          "count": 36,
           "statusCounts": {
-            "mapped": 35
+            "mapped": 36
           },
           "surfaceCounts": {
             "doc": 3,
-            "guide": 32
+            "guide": 33
           },
           "x": -267,
           "y": 733,
@@ -11896,14 +11903,14 @@
         },
         {
           "groupId": "knowledge-to-tools",
-          "x": -31,
-          "y": 227,
+          "x": -30,
+          "y": 226,
           "z": -124,
           "color": "#f59e0b"
         },
         {
           "groupId": "knowledge-to-tools",
-          "x": -37,
+          "x": -36,
           "y": 232,
           "z": -104,
           "color": "#f59e0b"
@@ -11938,8 +11945,8 @@
         },
         {
           "groupId": "knowledge-to-tools",
-          "x": -43,
-          "y": 237,
+          "x": -42,
+          "y": 236,
           "z": -84,
           "color": "#f59e0b"
         },
@@ -11959,15 +11966,15 @@
         },
         {
           "groupId": "knowledge-to-tools",
-          "x": -50,
-          "y": 240,
+          "x": -49,
+          "y": 239,
           "z": -204,
           "color": "#f59e0b"
         },
         {
           "groupId": "knowledge-to-tools",
-          "x": -58,
-          "y": 242,
+          "x": -56,
+          "y": 241,
           "z": -184,
           "color": "#f59e0b"
         },
@@ -12015,22 +12022,22 @@
         },
         {
           "groupId": "knowledge-to-tools",
-          "x": -66,
+          "x": -64,
           "y": 242,
           "z": -164,
           "color": "#f59e0b"
         },
         {
           "groupId": "knowledge-to-tools",
-          "x": -74,
+          "x": -72,
           "y": 241,
           "z": -144,
           "color": "#f59e0b"
         },
         {
           "groupId": "knowledge-to-tools",
-          "x": -81,
-          "y": 238,
+          "x": -79,
+          "y": 239,
           "z": -124,
           "color": "#f59e0b"
         },
@@ -12050,29 +12057,29 @@
         },
         {
           "groupId": "knowledge-to-tools",
-          "x": -88,
-          "y": 235,
+          "x": -86,
+          "y": 236,
           "z": -104,
           "color": "#f59e0b"
         },
         {
           "groupId": "knowledge-to-tools",
-          "x": -94,
-          "y": 230,
+          "x": -92,
+          "y": 232,
           "z": -84,
           "color": "#f59e0b"
         },
         {
           "groupId": "knowledge-to-tools",
-          "x": -100,
-          "y": 224,
+          "x": -98,
+          "y": 226,
           "z": -204,
           "color": "#f59e0b"
         },
         {
           "groupId": "knowledge-to-tools",
-          "x": -104,
-          "y": 217,
+          "x": -102,
+          "y": 220,
           "z": -184,
           "color": "#f59e0b"
         },
@@ -12085,8 +12092,8 @@
         },
         {
           "groupId": "knowledge-to-tools",
-          "x": -106,
-          "y": 210,
+          "x": -105,
+          "y": 213,
           "z": -164,
           "color": "#f59e0b"
         },
@@ -12106,8 +12113,8 @@
         },
         {
           "groupId": "knowledge-to-tools",
-          "x": -108,
-          "y": 202,
+          "x": -107,
+          "y": 206,
           "z": -144,
           "color": "#f59e0b"
         },
@@ -12149,22 +12156,29 @@
         {
           "groupId": "knowledge-to-tools",
           "x": -108,
-          "y": 194,
+          "y": 198,
           "z": -124,
           "color": "#f59e0b"
         },
         {
           "groupId": "knowledge-to-tools",
-          "x": -106,
-          "y": 186,
+          "x": -107,
+          "y": 190,
           "z": -104,
           "color": "#f59e0b"
         },
         {
           "groupId": "knowledge-to-tools",
-          "x": -147,
-          "y": 158,
+          "x": -151,
+          "y": 166,
           "z": -84,
+          "color": "#f59e0b"
+        },
+        {
+          "groupId": "knowledge-to-tools",
+          "x": -144,
+          "y": 152,
+          "z": -204,
           "color": "#f59e0b"
         },
         {
@@ -12183,9 +12197,9 @@
         },
         {
           "groupId": "knowledge-to-tools",
-          "x": -139,
-          "y": 144,
-          "z": -204,
+          "x": -135,
+          "y": 139,
+          "z": -184,
           "color": "#f59e0b"
         },
         {
@@ -12197,9 +12211,9 @@
         },
         {
           "groupId": "knowledge-to-tools",
-          "x": -128,
-          "y": 131,
-          "z": -184,
+          "x": -123,
+          "y": 127,
+          "z": -164,
           "color": "#f59e0b"
         },
         {
@@ -12232,30 +12246,30 @@
         },
         {
           "groupId": "knowledge-to-tools",
-          "x": -115,
-          "y": 121,
-          "z": -164,
-          "color": "#f59e0b"
-        },
-        {
-          "groupId": "knowledge-to-tools",
-          "x": -100,
-          "y": 113,
+          "x": -110,
+          "y": 118,
           "z": -144,
           "color": "#f59e0b"
         },
         {
           "groupId": "knowledge-to-tools",
-          "x": -85,
-          "y": 108,
+          "x": -96,
+          "y": 111,
           "z": -124,
           "color": "#f59e0b"
         },
         {
           "groupId": "knowledge-to-tools",
-          "x": -68,
-          "y": 106,
+          "x": -80,
+          "y": 107,
           "z": -104,
+          "color": "#f59e0b"
+        },
+        {
+          "groupId": "knowledge-to-tools",
+          "x": -64,
+          "y": 106,
+          "z": -84,
           "color": "#f59e0b"
         },
         {
@@ -12274,9 +12288,9 @@
         },
         {
           "groupId": "knowledge-to-tools",
-          "x": -52,
+          "x": -48,
           "y": 107,
-          "z": -84,
+          "z": -204,
           "color": "#f59e0b"
         },
         {
@@ -12288,9 +12302,9 @@
         },
         {
           "groupId": "knowledge-to-tools",
-          "x": -36,
-          "y": 110,
-          "z": -204,
+          "x": -33,
+          "y": 111,
+          "z": -184,
           "color": "#f59e0b"
         },
         {
@@ -12302,16 +12316,16 @@
         },
         {
           "groupId": "knowledge-to-tools",
-          "x": -20,
-          "y": 117,
-          "z": -184,
+          "x": -18,
+          "y": 118,
+          "z": -164,
           "color": "#f59e0b"
         },
         {
           "groupId": "knowledge-to-tools",
-          "x": -7,
-          "y": 126,
-          "z": -164,
+          "x": -5,
+          "y": 127,
+          "z": -144,
           "color": "#f59e0b"
         },
         {
@@ -12323,23 +12337,23 @@
         },
         {
           "groupId": "knowledge-to-tools",
-          "x": 5,
-          "y": 137,
-          "z": -144,
+          "x": 6,
+          "y": 139,
+          "z": -124,
           "color": "#f59e0b"
         },
         {
           "groupId": "knowledge-to-tools",
-          "x": 15,
-          "y": 151,
-          "z": -124,
+          "x": 16,
+          "y": 152,
+          "z": -104,
           "color": "#f59e0b"
         },
         {
           "groupId": "knowledge-to-tools",
           "x": 22,
           "y": 166,
-          "z": -104,
+          "z": -84,
           "color": "#f59e0b"
         },
         {
@@ -12358,9 +12372,9 @@
         },
         {
           "groupId": "knowledge-to-tools",
-          "x": 26,
-          "y": 181,
-          "z": -84,
+          "x": 27,
+          "y": 182,
+          "z": -204,
           "color": "#f59e0b"
         },
         {
@@ -12883,12 +12897,12 @@
       "label": "Knowledge / guide",
       "meaning": "Operating playbook layer. Guides here turn repeated delivery decisions into reusable practice.",
       "color": "#ef4444",
-      "count": 77,
+      "count": 78,
       "surfaceCounts": {
-        "guide": 77
+        "guide": 78
       },
       "statusCounts": {
-        "mapped": 77
+        "mapped": 78
       },
       "x": -350,
       "y": -606,
@@ -13017,7 +13031,7 @@
       "status": "mapped",
       "owner": "CREATE SOMETHING",
       "clusterId": "repo:mixed",
-      "relationCount": 688,
+      "relationCount": 690,
       "x": 0,
       "y": 0,
       "z": -60,
@@ -16999,11 +17013,11 @@
       "status": "mapped",
       "owner": "CREATE SOMETHING <hello@createsomething.agency>",
       "clusterId": "automation:mcp",
-      "relationCount": 22,
+      "relationCount": 21,
       "x": 315,
       "y": 252,
       "z": -172,
-      "size": 14.591663046625438,
+      "size": 14.38083151964686,
       "color": "#06b6d4",
       "targetPath": "packages/interaction-atlas-mcp"
     },
@@ -17032,11 +17046,11 @@
       "status": "mapped",
       "owner": "CREATE SOMETHING",
       "clusterId": "automation:mcp",
-      "relationCount": 18,
+      "relationCount": 19,
       "x": 313,
       "y": 246,
       "z": -280,
-      "size": 13.717797887081348,
+      "size": 13.94427190999916,
       "color": "#06b6d4",
       "targetPath": "packages/io"
     },
@@ -19639,11 +19653,11 @@
       "status": "mapped",
       "owner": "CREATE SOMETHING",
       "clusterId": "package:judgment",
-      "relationCount": 2,
+      "relationCount": 3,
       "x": 452,
       "y": -237,
       "z": -12,
-      "size": 8.464101615137753,
+      "size": 9,
       "color": "#84cc16",
       "targetPath": "packages/webflow-components"
     },
@@ -27098,7 +27112,7 @@
       "owner": "CREATE SOMETHING",
       "clusterId": "knowledge:guide",
       "relationCount": 3,
-      "x": -386,
+      "x": -385,
       "y": -188,
       "z": 76,
       "size": 9,
@@ -27264,7 +27278,7 @@
       "clusterId": "knowledge:guide",
       "relationCount": 3,
       "x": -391,
-      "y": -173,
+      "y": -174,
       "z": 40,
       "size": 9,
       "color": "#ef4444",
@@ -27330,7 +27344,7 @@
       "clusterId": "knowledge:guide",
       "relationCount": 3,
       "x": -395,
-      "y": -168,
+      "y": -169,
       "z": 76,
       "size": 9,
       "color": "#ef4444",
@@ -27363,7 +27377,7 @@
       "clusterId": "knowledge:guide",
       "relationCount": 3,
       "x": -397,
-      "y": -166,
+      "y": -167,
       "z": 94,
       "size": 9,
       "color": "#ef4444",
@@ -27428,8 +27442,8 @@
       "owner": "CREATE SOMETHING",
       "clusterId": "knowledge:guide",
       "relationCount": 3,
-      "x": -402,
-      "y": -162,
+      "x": -401,
+      "y": -163,
       "z": 130,
       "size": 9,
       "color": "#ef4444",
@@ -27495,7 +27509,7 @@
       "clusterId": "knowledge:guide",
       "relationCount": 2,
       "x": -407,
-      "y": -159,
+      "y": -160,
       "z": 40,
       "size": 8.464101615137753,
       "color": "#ef4444",
@@ -27560,7 +27574,7 @@
       "owner": "CREATE SOMETHING",
       "clusterId": "knowledge:guide",
       "relationCount": 3,
-      "x": -413,
+      "x": -412,
       "y": -157,
       "z": 76,
       "size": 9,
@@ -27593,7 +27607,7 @@
       "owner": "CREATE SOMETHING",
       "clusterId": "knowledge:guide",
       "relationCount": 3,
-      "x": -416,
+      "x": -415,
       "y": -157,
       "z": 94,
       "size": 9,
@@ -27626,7 +27640,7 @@
       "owner": "CREATE SOMETHING",
       "clusterId": "knowledge:guide",
       "relationCount": 3,
-      "x": -419,
+      "x": -418,
       "y": -156,
       "z": 112,
       "size": 9,
@@ -27659,7 +27673,7 @@
       "owner": "CREATE SOMETHING",
       "clusterId": "knowledge:guide",
       "relationCount": 3,
-      "x": -422,
+      "x": -421,
       "y": -156,
       "z": 130,
       "size": 9,
@@ -27792,7 +27806,7 @@
       "clusterId": "knowledge:guide",
       "relationCount": 3,
       "x": -434,
-      "y": -158,
+      "y": -157,
       "z": 76,
       "size": 9,
       "color": "#ef4444",
@@ -27824,8 +27838,8 @@
       "owner": "CREATE SOMETHING",
       "clusterId": "knowledge:guide",
       "relationCount": 3,
-      "x": -453,
-      "y": -120,
+      "x": -451,
+      "y": -119,
       "z": 94,
       "size": 9,
       "color": "#ef4444",
@@ -27857,8 +27871,8 @@
       "owner": "CREATE SOMETHING",
       "clusterId": "knowledge:guide",
       "relationCount": 3,
-      "x": -459,
-      "y": -123,
+      "x": -457,
+      "y": -122,
       "z": 112,
       "size": 9,
       "color": "#ef4444",
@@ -27890,8 +27904,8 @@
       "owner": "CREATE SOMETHING",
       "clusterId": "knowledge:guide",
       "relationCount": 2,
-      "x": -465,
-      "y": -126,
+      "x": -463,
+      "y": -125,
       "z": 130,
       "size": 8.464101615137753,
       "color": "#ef4444",
@@ -27923,8 +27937,8 @@
       "owner": "CREATE SOMETHING",
       "clusterId": "knowledge:guide",
       "relationCount": 3,
-      "x": -470,
-      "y": -129,
+      "x": -468,
+      "y": -128,
       "z": 148,
       "size": 9,
       "color": "#ef4444",
@@ -27956,8 +27970,8 @@
       "owner": "CREATE SOMETHING",
       "clusterId": "knowledge:guide",
       "relationCount": 3,
-      "x": -475,
-      "y": -133,
+      "x": -474,
+      "y": -132,
       "z": 40,
       "size": 9,
       "color": "#ef4444",
@@ -27989,8 +28003,8 @@
       "owner": "CREATE SOMETHING",
       "clusterId": "knowledge:guide",
       "relationCount": 2,
-      "x": -480,
-      "y": -138,
+      "x": -478,
+      "y": -136,
       "z": 58,
       "size": 8.464101615137753,
       "color": "#ef4444",
@@ -28022,8 +28036,8 @@
       "owner": "CREATE SOMETHING",
       "clusterId": "knowledge:guide",
       "relationCount": 3,
-      "x": -485,
-      "y": -143,
+      "x": -483,
+      "y": -141,
       "z": 76,
       "size": 9,
       "color": "#ef4444",
@@ -28055,8 +28069,8 @@
       "owner": "CREATE SOMETHING",
       "clusterId": "knowledge:guide",
       "relationCount": 3,
-      "x": -488,
-      "y": -148,
+      "x": -487,
+      "y": -146,
       "z": 94,
       "size": 9,
       "color": "#ef4444",
@@ -28088,8 +28102,8 @@
       "owner": "CREATE SOMETHING",
       "clusterId": "knowledge:guide",
       "relationCount": 3,
-      "x": -492,
-      "y": -153,
+      "x": -491,
+      "y": -151,
       "z": 112,
       "size": 9,
       "color": "#ef4444",
@@ -28121,8 +28135,8 @@
       "owner": "CREATE SOMETHING",
       "clusterId": "knowledge:guide",
       "relationCount": 3,
-      "x": -495,
-      "y": -159,
+      "x": -494,
+      "y": -157,
       "z": 130,
       "size": 9,
       "color": "#ef4444",
@@ -28154,8 +28168,8 @@
       "owner": "CREATE SOMETHING",
       "clusterId": "knowledge:guide",
       "relationCount": 3,
-      "x": -498,
-      "y": -165,
+      "x": -497,
+      "y": -163,
       "z": 148,
       "size": 9,
       "color": "#ef4444",
@@ -28187,8 +28201,8 @@
       "owner": "CREATE SOMETHING",
       "clusterId": "knowledge:guide",
       "relationCount": 2,
-      "x": -500,
-      "y": -171,
+      "x": -499,
+      "y": -169,
       "z": 40,
       "size": 8.464101615137753,
       "color": "#ef4444",
@@ -28221,7 +28235,7 @@
       "clusterId": "knowledge:guide",
       "relationCount": 3,
       "x": -501,
-      "y": -178,
+      "y": -175,
       "z": 58,
       "size": 9,
       "color": "#ef4444",
@@ -28254,7 +28268,7 @@
       "clusterId": "knowledge:guide",
       "relationCount": 3,
       "x": -502,
-      "y": -184,
+      "y": -181,
       "z": 76,
       "size": 9,
       "color": "#ef4444",
@@ -28287,7 +28301,7 @@
       "clusterId": "knowledge:guide",
       "relationCount": 3,
       "x": -503,
-      "y": -191,
+      "y": -187,
       "z": 94,
       "size": 9,
       "color": "#ef4444",
@@ -28320,7 +28334,7 @@
       "clusterId": "knowledge:guide",
       "relationCount": 3,
       "x": -503,
-      "y": -197,
+      "y": -194,
       "z": 112,
       "size": 9,
       "color": "#ef4444",
@@ -28352,8 +28366,8 @@
       "owner": "CREATE SOMETHING",
       "clusterId": "knowledge:guide",
       "relationCount": 3,
-      "x": -502,
-      "y": -204,
+      "x": -503,
+      "y": -200,
       "z": 130,
       "size": 9,
       "color": "#ef4444",
@@ -28385,8 +28399,8 @@
       "owner": "CREATE SOMETHING",
       "clusterId": "knowledge:guide",
       "relationCount": 3,
-      "x": -501,
-      "y": -210,
+      "x": -502,
+      "y": -207,
       "z": 148,
       "size": 9,
       "color": "#ef4444",
@@ -28418,8 +28432,8 @@
       "owner": "CREATE SOMETHING",
       "clusterId": "knowledge:guide",
       "relationCount": 3,
-      "x": -500,
-      "y": -216,
+      "x": -501,
+      "y": -213,
       "z": 40,
       "size": 9,
       "color": "#ef4444",
@@ -28451,8 +28465,8 @@
       "owner": "CREATE SOMETHING",
       "clusterId": "knowledge:guide",
       "relationCount": 3,
-      "x": -498,
-      "y": -223,
+      "x": -499,
+      "y": -219,
       "z": 58,
       "size": 9,
       "color": "#ef4444",
@@ -28484,8 +28498,8 @@
       "owner": "CREATE SOMETHING",
       "clusterId": "knowledge:guide",
       "relationCount": 3,
-      "x": -495,
-      "y": -229,
+      "x": -497,
+      "y": -225,
       "z": 76,
       "size": 9,
       "color": "#ef4444",
@@ -28517,8 +28531,8 @@
       "owner": "CREATE SOMETHING",
       "clusterId": "knowledge:guide",
       "relationCount": 2,
-      "x": -492,
-      "y": -234,
+      "x": -494,
+      "y": -231,
       "z": 94,
       "size": 8.464101615137753,
       "color": "#ef4444",
@@ -28550,12 +28564,45 @@
       "owner": "CREATE SOMETHING",
       "clusterId": "knowledge:guide",
       "relationCount": 3,
-      "x": -488,
-      "y": -240,
+      "x": -491,
+      "y": -237,
       "z": 112,
       "size": 9,
       "color": "#ef4444",
       "targetPath": "docs/guides/MONOREPO_DELIVERY_UPDATES.md"
+    },
+    {
+      "id": "substrate:create-something:guide:docs-guides-newsletter-distribution-playbook-md",
+      "atlasNodeId": "atlas_create-something_guide_docs-guides-newsletter-distribution-playbook-md",
+      "substrate": {
+        "recordId": "substrate:create-something:guide:docs-guides-newsletter-distribution-playbook-md",
+        "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-guide-docs-guides-newsletter-distribution-playbook-md",
+        "mcpUri": "substrate://topology/internal/records/substrate-create-something-guide-docs-guides-newsletter-distribution-playbook-md",
+        "agentCommand": "databaseLayer.topology.records.get",
+        "receiptId": "receipt:substrate:create-something:guide:docs-guides-newsletter-distribution-playbook-md",
+        "actionId": null,
+        "operatingSliceId": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-knowledge-surface-mixed-guide",
+        "operatingSliceApiPath": "/api/substrate/operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-knowledge-surface-mixed-guide",
+        "readinessApiPath": "/api/substrate/operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-knowledge-surface-mixed-guide/readiness",
+        "readinessStatus": "approval_required",
+        "atlasCanvasId": "create-something-internal-operating-topology",
+        "atlasNodeId": "atlas_create-something_guide_docs-guides-newsletter-distribution-playbook-md"
+      },
+      "clientOverlay": null,
+      "label": "NEWSLETTER_DISTRIBUTION_PLAYBOOK.md",
+      "path": "docs/guides/NEWSLETTER_DISTRIBUTION_PLAYBOOK.md",
+      "tier": "Mixed",
+      "surface": "guide",
+      "status": "mapped",
+      "owner": "CREATE SOMETHING",
+      "clusterId": "knowledge:guide",
+      "relationCount": 3,
+      "x": -487,
+      "y": -242,
+      "z": 130,
+      "size": 9,
+      "color": "#ef4444",
+      "targetPath": "docs/guides/NEWSLETTER_DISTRIBUTION_PLAYBOOK.md"
     },
     {
       "id": "substrate:create-something:guide:docs-guides-newsletter-engagement-runbook-md",
@@ -28583,9 +28630,9 @@
       "owner": "CREATE SOMETHING",
       "clusterId": "knowledge:guide",
       "relationCount": 3,
-      "x": -485,
-      "y": -245,
-      "z": 130,
+      "x": -514,
+      "y": -275,
+      "z": 148,
       "size": 9,
       "color": "#ef4444",
       "targetPath": "docs/guides/NEWSLETTER_ENGAGEMENT_RUNBOOK.md"
@@ -28616,9 +28663,9 @@
       "owner": "CREATE SOMETHING",
       "clusterId": "knowledge:guide",
       "relationCount": 2,
-      "x": -510,
-      "y": -279,
-      "z": 148,
+      "x": -508,
+      "y": -282,
+      "z": 40,
       "size": 8.464101615137753,
       "color": "#ef4444",
       "targetPath": "docs/guides/NOTION_API_COMPATIBILITY_AUDIT_2026.md"
@@ -28649,9 +28696,9 @@
       "owner": "CREATE SOMETHING",
       "clusterId": "knowledge:guide",
       "relationCount": 3,
-      "x": -503,
-      "y": -286,
-      "z": 40,
+      "x": -500,
+      "y": -288,
+      "z": 58,
       "size": 9,
       "color": "#ef4444",
       "targetPath": "docs/guides/NOTION_WORKERS_AND_CLI_2026.md"
@@ -28682,9 +28729,9 @@
       "owner": "CREATE SOMETHING",
       "clusterId": "knowledge:guide",
       "relationCount": 3,
-      "x": -495,
-      "y": -292,
-      "z": 58,
+      "x": -492,
+      "y": -294,
+      "z": 76,
       "size": 9,
       "color": "#ef4444",
       "targetPath": "docs/guides/NPM_SAVED_AUTH_AND_RELEASE_PROMOTION_RUNBOOK.md"
@@ -28715,9 +28762,9 @@
       "owner": "CREATE SOMETHING",
       "clusterId": "knowledge:guide",
       "relationCount": 3,
-      "x": -487,
-      "y": -298,
-      "z": 76,
+      "x": -484,
+      "y": -300,
+      "z": 94,
       "size": 9,
       "color": "#ef4444",
       "targetPath": "docs/guides/OBSERVABILITY_SETUP.md"
@@ -28748,9 +28795,9 @@
       "owner": "CREATE SOMETHING",
       "clusterId": "knowledge:guide",
       "relationCount": 3,
-      "x": -478,
-      "y": -303,
-      "z": 94,
+      "x": -475,
+      "y": -304,
+      "z": 112,
       "size": 9,
       "color": "#ef4444",
       "targetPath": "docs/guides/ONA_CORE_ROLLOUT.md"
@@ -28781,9 +28828,9 @@
       "owner": "CREATE SOMETHING",
       "clusterId": "knowledge:guide",
       "relationCount": 3,
-      "x": -469,
-      "y": -307,
-      "z": 112,
+      "x": -466,
+      "y": -308,
+      "z": 130,
       "size": 9,
       "color": "#ef4444",
       "targetPath": "docs/guides/OPEN_WEIGHT_AGENT_EXECUTOR_EVAL.md"
@@ -28814,9 +28861,9 @@
       "owner": "CREATE SOMETHING",
       "clusterId": "knowledge:guide",
       "relationCount": 3,
-      "x": -460,
-      "y": -310,
-      "z": 130,
+      "x": -457,
+      "y": -311,
+      "z": 148,
       "size": 9,
       "color": "#ef4444",
       "targetPath": "docs/guides/OPERATOR_AGENT_EXTERNAL_PATTERN_MATRIX.md"
@@ -28847,9 +28894,9 @@
       "owner": "CREATE SOMETHING",
       "clusterId": "knowledge:guide",
       "relationCount": 3,
-      "x": -450,
+      "x": -447,
       "y": -313,
-      "z": 148,
+      "z": 40,
       "size": 9,
       "color": "#ef4444",
       "targetPath": "docs/guides/OPERATOR_AGENT_PUBLIC_ACCESS.md"
@@ -28880,9 +28927,9 @@
       "owner": "CREATE SOMETHING",
       "clusterId": "knowledge:guide",
       "relationCount": 3,
-      "x": -440,
+      "x": -438,
       "y": -315,
-      "z": 40,
+      "z": 58,
       "size": 9,
       "color": "#ef4444",
       "targetPath": "docs/guides/OPERATOR_AGENT_SYSTEM.md"
@@ -28913,9 +28960,9 @@
       "owner": "CREATE SOMETHING",
       "clusterId": "knowledge:guide",
       "relationCount": 3,
-      "x": -430,
+      "x": -428,
       "y": -316,
-      "z": 58,
+      "z": 76,
       "size": 9,
       "color": "#ef4444",
       "targetPath": "docs/guides/PACKAGE_SOURCE_ARCHIVE_WORKFLOW.md"
@@ -28946,9 +28993,9 @@
       "owner": "CREATE SOMETHING",
       "clusterId": "knowledge:guide",
       "relationCount": 2,
-      "x": -421,
+      "x": -418,
       "y": -316,
-      "z": 76,
+      "z": 94,
       "size": 8.464101615137753,
       "color": "#ef4444",
       "targetPath": "docs/guides/PAPERCLIP_AUTONOMOUS_DELIVERY.md"
@@ -28979,9 +29026,9 @@
       "owner": "CREATE SOMETHING",
       "clusterId": "knowledge:guide",
       "relationCount": 2,
-      "x": -411,
+      "x": -408,
       "y": -315,
-      "z": 94,
+      "z": 112,
       "size": 8.464101615137753,
       "color": "#ef4444",
       "targetPath": "docs/guides/PAPERCLIP_INSTANCE_OPERATING_MODEL.md"
@@ -29012,9 +29059,9 @@
       "owner": "CREATE SOMETHING",
       "clusterId": "knowledge:guide",
       "relationCount": 3,
-      "x": -401,
-      "y": -314,
-      "z": 112,
+      "x": -399,
+      "y": -313,
+      "z": 130,
       "size": 9,
       "color": "#ef4444",
       "targetPath": "docs/guides/PLAYBOOK_LIBRARY_RESEARCH_2026-02-18.md"
@@ -29045,9 +29092,9 @@
       "owner": "CREATE SOMETHING",
       "clusterId": "knowledge:guide",
       "relationCount": 3,
-      "x": -391,
-      "y": -312,
-      "z": 130,
+      "x": -389,
+      "y": -311,
+      "z": 148,
       "size": 9,
       "color": "#ef4444",
       "targetPath": "docs/guides/POLICY_OS_GATING_DEPLOY_CHECKLIST_2026-03-09.md"
@@ -29078,9 +29125,9 @@
       "owner": "CREATE SOMETHING",
       "clusterId": "knowledge:guide",
       "relationCount": 3,
-      "x": -382,
-      "y": -309,
-      "z": 148,
+      "x": -380,
+      "y": -308,
+      "z": 40,
       "size": 9,
       "color": "#ef4444",
       "targetPath": "docs/guides/POLICY_OS_LIVE_VERIFICATION_RUNBOOK_2026-03-09.md"
@@ -29111,9 +29158,9 @@
       "owner": "CREATE SOMETHING",
       "clusterId": "knowledge:guide",
       "relationCount": 3,
-      "x": -372,
-      "y": -305,
-      "z": 40,
+      "x": -371,
+      "y": -304,
+      "z": 58,
       "size": 9,
       "color": "#ef4444",
       "targetPath": "docs/guides/RECURRING_CLEANUP_LOOPS.md"
@@ -29144,9 +29191,9 @@
       "owner": "CREATE SOMETHING",
       "clusterId": "knowledge:guide",
       "relationCount": 3,
-      "x": -363,
+      "x": -362,
       "y": -300,
-      "z": 58,
+      "z": 76,
       "size": 9,
       "color": "#ef4444",
       "targetPath": "docs/guides/seo.md"
@@ -29177,9 +29224,9 @@
       "owner": "CREATE SOMETHING",
       "clusterId": "knowledge:guide",
       "relationCount": 3,
-      "x": -355,
-      "y": -295,
-      "z": 76,
+      "x": -354,
+      "y": -294,
+      "z": 94,
       "size": 9,
       "color": "#ef4444",
       "targetPath": "docs/guides/SKILLS.md"
@@ -29210,9 +29257,9 @@
       "owner": "CREATE SOMETHING",
       "clusterId": "knowledge:guide",
       "relationCount": 3,
-      "x": -347,
-      "y": -289,
-      "z": 94,
+      "x": -346,
+      "y": -288,
+      "z": 112,
       "size": 9,
       "color": "#ef4444",
       "targetPath": "docs/guides/SOLO_OPERATOR_AGENT_LOOP.md"
@@ -29243,9 +29290,9 @@
       "owner": "CREATE SOMETHING",
       "clusterId": "knowledge:guide",
       "relationCount": 3,
-      "x": -339,
-      "y": -283,
-      "z": 112,
+      "x": -338,
+      "y": -282,
+      "z": 130,
       "size": 9,
       "color": "#ef4444",
       "targetPath": "docs/guides/SOLO_OPERATOR_CONTROL_TOWER_PLAYBOOK.md"
@@ -29277,8 +29324,8 @@
       "clusterId": "knowledge:guide",
       "relationCount": 3,
       "x": -332,
-      "y": -276,
-      "z": 130,
+      "y": -275,
+      "z": 148,
       "size": 9,
       "color": "#ef4444",
       "targetPath": "docs/guides/STEEL_CLI.md"
@@ -29309,9 +29356,9 @@
       "owner": "CREATE SOMETHING",
       "clusterId": "knowledge:guide",
       "relationCount": 3,
-      "x": -326,
-      "y": -268,
-      "z": 148,
+      "x": -325,
+      "y": -267,
+      "z": 40,
       "size": 9,
       "color": "#ef4444",
       "targetPath": "docs/guides/SUBSTRATE_TOPOLOGY_OPERATOR_CONTRACT.md"
@@ -29343,8 +29390,8 @@
       "clusterId": "knowledge:guide",
       "relationCount": 3,
       "x": -320,
-      "y": -260,
-      "z": 40,
+      "y": -259,
+      "z": 58,
       "size": 9,
       "color": "#ef4444",
       "targetPath": "docs/guides/UI_PREVIEW_SYSTEM.md"
@@ -29375,9 +29422,9 @@
       "owner": "CREATE SOMETHING",
       "clusterId": "knowledge:guide",
       "relationCount": 3,
-      "x": -315,
-      "y": -251,
-      "z": 58,
+      "x": -278,
+      "y": -270,
+      "z": 76,
       "size": 9,
       "color": "#ef4444",
       "targetPath": "docs/guides/UNDERSTANDING_TEMPLATE.md"
@@ -29409,8 +29456,8 @@
       "clusterId": "knowledge:guide",
       "relationCount": 3,
       "x": -272,
-      "y": -259,
-      "z": 76,
+      "y": -258,
+      "z": 94,
       "size": 9,
       "color": "#ef4444",
       "targetPath": "docs/guides/WEBFLOW_CODE_COMPONENTS_CONTROL_PLANE.md"
@@ -29441,9 +29488,9 @@
       "owner": "CREATE SOMETHING",
       "clusterId": "knowledge:guide",
       "relationCount": 3,
-      "x": -268,
-      "y": -247,
-      "z": 94,
+      "x": -267,
+      "y": -246,
+      "z": 112,
       "size": 9,
       "color": "#ef4444",
       "targetPath": "docs/guides/WEBFLOW_EXPORT_FIRST_AGENT_WORKFLOW.md"
@@ -29475,8 +29522,8 @@
       "clusterId": "knowledge:guide",
       "relationCount": 3,
       "x": -264,
-      "y": -234,
-      "z": 112,
+      "y": -233,
+      "z": 130,
       "size": 9,
       "color": "#ef4444",
       "targetPath": "docs/guides/WEBFLOW_TEMPLATE_REVIEW_DIFY_AGENT_MANUAL.md"
@@ -29508,8 +29555,8 @@
       "clusterId": "knowledge:guide",
       "relationCount": 3,
       "x": -261,
-      "y": -221,
-      "z": 130,
+      "y": -220,
+      "z": 148,
       "size": 9,
       "color": "#ef4444",
       "targetPath": "docs/guides/WEBFLOW_TEMPLATE_SEARCH_IMAGE_REFRESH_RUNBOOK.md"
@@ -29542,7 +29589,7 @@
       "relationCount": 3,
       "x": -260,
       "y": -207,
-      "z": 148,
+      "z": 40,
       "size": 9,
       "color": "#ef4444",
       "targetPath": "docs/guides/ZELLIJ_AGENT_COCKPIT.md"
@@ -35082,9 +35129,18 @@
       "alpha": 0.16
     },
     {
-      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-newsletter-engagement-runbook-md",
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-newsletter-distribution-playbook-md",
       "source": 0,
       "target": 469,
+      "relation": "contains",
+      "evidence": "docs/guides/NEWSLETTER_DISTRIBUTION_PLAYBOOK.md is present in the repo scan.",
+      "color": "#64748b",
+      "alpha": 0.16
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-newsletter-engagement-runbook-md",
+      "source": 0,
+      "target": 470,
       "relation": "contains",
       "evidence": "docs/guides/NEWSLETTER_ENGAGEMENT_RUNBOOK.md is present in the repo scan.",
       "color": "#64748b",
@@ -35093,7 +35149,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-notion-api-compatibility-audit-2026-md",
       "source": 0,
-      "target": 470,
+      "target": 471,
       "relation": "contains",
       "evidence": "docs/guides/NOTION_API_COMPATIBILITY_AUDIT_2026.md is present in the repo scan.",
       "color": "#64748b",
@@ -35102,7 +35158,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-notion-workers-and-cli-2026-md",
       "source": 0,
-      "target": 471,
+      "target": 472,
       "relation": "contains",
       "evidence": "docs/guides/NOTION_WORKERS_AND_CLI_2026.md is present in the repo scan.",
       "color": "#64748b",
@@ -35111,7 +35167,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-npm-saved-auth-and-release-promotion-runbook-md",
       "source": 0,
-      "target": 472,
+      "target": 473,
       "relation": "contains",
       "evidence": "docs/guides/NPM_SAVED_AUTH_AND_RELEASE_PROMOTION_RUNBOOK.md is present in the repo scan.",
       "color": "#64748b",
@@ -35120,7 +35176,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-observability-setup-md",
       "source": 0,
-      "target": 473,
+      "target": 474,
       "relation": "contains",
       "evidence": "docs/guides/OBSERVABILITY_SETUP.md is present in the repo scan.",
       "color": "#64748b",
@@ -35129,7 +35185,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-ona-core-rollout-md",
       "source": 0,
-      "target": 474,
+      "target": 475,
       "relation": "contains",
       "evidence": "docs/guides/ONA_CORE_ROLLOUT.md is present in the repo scan.",
       "color": "#64748b",
@@ -35138,7 +35194,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-open-weight-agent-executor-eval-md",
       "source": 0,
-      "target": 475,
+      "target": 476,
       "relation": "contains",
       "evidence": "docs/guides/OPEN_WEIGHT_AGENT_EXECUTOR_EVAL.md is present in the repo scan.",
       "color": "#64748b",
@@ -35147,7 +35203,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-operator-agent-external-pattern-matrix-md",
       "source": 0,
-      "target": 476,
+      "target": 477,
       "relation": "contains",
       "evidence": "docs/guides/OPERATOR_AGENT_EXTERNAL_PATTERN_MATRIX.md is present in the repo scan.",
       "color": "#64748b",
@@ -35156,7 +35212,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-operator-agent-public-access-md",
       "source": 0,
-      "target": 477,
+      "target": 478,
       "relation": "contains",
       "evidence": "docs/guides/OPERATOR_AGENT_PUBLIC_ACCESS.md is present in the repo scan.",
       "color": "#64748b",
@@ -35165,7 +35221,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-operator-agent-system-md",
       "source": 0,
-      "target": 478,
+      "target": 479,
       "relation": "contains",
       "evidence": "docs/guides/OPERATOR_AGENT_SYSTEM.md is present in the repo scan.",
       "color": "#64748b",
@@ -35174,7 +35230,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-package-source-archive-workflow-md",
       "source": 0,
-      "target": 479,
+      "target": 480,
       "relation": "contains",
       "evidence": "docs/guides/PACKAGE_SOURCE_ARCHIVE_WORKFLOW.md is present in the repo scan.",
       "color": "#64748b",
@@ -35183,7 +35239,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-paperclip-autonomous-delivery-md",
       "source": 0,
-      "target": 480,
+      "target": 481,
       "relation": "contains",
       "evidence": "docs/guides/PAPERCLIP_AUTONOMOUS_DELIVERY.md is present in the repo scan.",
       "color": "#64748b",
@@ -35192,7 +35248,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-paperclip-instance-operating-model-md",
       "source": 0,
-      "target": 481,
+      "target": 482,
       "relation": "contains",
       "evidence": "docs/guides/PAPERCLIP_INSTANCE_OPERATING_MODEL.md is present in the repo scan.",
       "color": "#64748b",
@@ -35201,7 +35257,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-playbook-library-research-2026-02-18-md",
       "source": 0,
-      "target": 482,
+      "target": 483,
       "relation": "contains",
       "evidence": "docs/guides/PLAYBOOK_LIBRARY_RESEARCH_2026-02-18.md is present in the repo scan.",
       "color": "#64748b",
@@ -35210,7 +35266,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-policy-os-gating-deploy-checklist-2026-03-09-md",
       "source": 0,
-      "target": 483,
+      "target": 484,
       "relation": "contains",
       "evidence": "docs/guides/POLICY_OS_GATING_DEPLOY_CHECKLIST_2026-03-09.md is present in the repo scan.",
       "color": "#64748b",
@@ -35219,7 +35275,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-policy-os-live-verification-runbook-2026-03-09-md",
       "source": 0,
-      "target": 484,
+      "target": 485,
       "relation": "contains",
       "evidence": "docs/guides/POLICY_OS_LIVE_VERIFICATION_RUNBOOK_2026-03-09.md is present in the repo scan.",
       "color": "#64748b",
@@ -35228,7 +35284,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-recurring-cleanup-loops-md",
       "source": 0,
-      "target": 485,
+      "target": 486,
       "relation": "contains",
       "evidence": "docs/guides/RECURRING_CLEANUP_LOOPS.md is present in the repo scan.",
       "color": "#64748b",
@@ -35237,7 +35293,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-seo-md",
       "source": 0,
-      "target": 486,
+      "target": 487,
       "relation": "contains",
       "evidence": "docs/guides/seo.md is present in the repo scan.",
       "color": "#64748b",
@@ -35246,7 +35302,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-skills-md",
       "source": 0,
-      "target": 487,
+      "target": 488,
       "relation": "contains",
       "evidence": "docs/guides/SKILLS.md is present in the repo scan.",
       "color": "#64748b",
@@ -35255,7 +35311,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-solo-operator-agent-loop-md",
       "source": 0,
-      "target": 488,
+      "target": 489,
       "relation": "contains",
       "evidence": "docs/guides/SOLO_OPERATOR_AGENT_LOOP.md is present in the repo scan.",
       "color": "#64748b",
@@ -35264,7 +35320,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-solo-operator-control-tower-playbook-md",
       "source": 0,
-      "target": 489,
+      "target": 490,
       "relation": "contains",
       "evidence": "docs/guides/SOLO_OPERATOR_CONTROL_TOWER_PLAYBOOK.md is present in the repo scan.",
       "color": "#64748b",
@@ -35273,7 +35329,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-steel-cli-md",
       "source": 0,
-      "target": 490,
+      "target": 491,
       "relation": "contains",
       "evidence": "docs/guides/STEEL_CLI.md is present in the repo scan.",
       "color": "#64748b",
@@ -35282,7 +35338,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-substrate-topology-operator-contract-md",
       "source": 0,
-      "target": 491,
+      "target": 492,
       "relation": "contains",
       "evidence": "docs/guides/SUBSTRATE_TOPOLOGY_OPERATOR_CONTRACT.md is present in the repo scan.",
       "color": "#64748b",
@@ -35291,7 +35347,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-ui-preview-system-md",
       "source": 0,
-      "target": 492,
+      "target": 493,
       "relation": "contains",
       "evidence": "docs/guides/UI_PREVIEW_SYSTEM.md is present in the repo scan.",
       "color": "#64748b",
@@ -35300,7 +35356,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-understanding-template-md",
       "source": 0,
-      "target": 493,
+      "target": 494,
       "relation": "contains",
       "evidence": "docs/guides/UNDERSTANDING_TEMPLATE.md is present in the repo scan.",
       "color": "#64748b",
@@ -35309,7 +35365,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-webflow-code-components-control-plane-md",
       "source": 0,
-      "target": 494,
+      "target": 495,
       "relation": "contains",
       "evidence": "docs/guides/WEBFLOW_CODE_COMPONENTS_CONTROL_PLANE.md is present in the repo scan.",
       "color": "#64748b",
@@ -35318,7 +35374,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-webflow-export-first-agent-workflow-md",
       "source": 0,
-      "target": 495,
+      "target": 496,
       "relation": "contains",
       "evidence": "docs/guides/WEBFLOW_EXPORT_FIRST_AGENT_WORKFLOW.md is present in the repo scan.",
       "color": "#64748b",
@@ -35327,7 +35383,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-webflow-template-review-dify-agent-manual-md",
       "source": 0,
-      "target": 496,
+      "target": 497,
       "relation": "contains",
       "evidence": "docs/guides/WEBFLOW_TEMPLATE_REVIEW_DIFY_AGENT_MANUAL.md is present in the repo scan.",
       "color": "#64748b",
@@ -35336,7 +35392,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-webflow-template-search-image-refresh-runbook-md",
       "source": 0,
-      "target": 497,
+      "target": 498,
       "relation": "contains",
       "evidence": "docs/guides/WEBFLOW_TEMPLATE_SEARCH_IMAGE_REFRESH_RUNBOOK.md is present in the repo scan.",
       "color": "#64748b",
@@ -35345,7 +35401,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-zellij-agent-cockpit-md",
       "source": 0,
-      "target": 498,
+      "target": 499,
       "relation": "contains",
       "evidence": "docs/guides/ZELLIJ_AGENT_COCKPIT.md is present in the repo scan.",
       "color": "#64748b",
@@ -35354,7 +35410,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-agent-config-config-dify-agents-aaron-hub-json",
       "source": 0,
-      "target": 499,
+      "target": 500,
       "relation": "contains",
       "evidence": "config/dify-agents/aaron-hub.json is present in the repo scan.",
       "color": "#64748b",
@@ -35363,7 +35419,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-agent-config-config-dify-agents-abundance-hub-json",
       "source": 0,
-      "target": 500,
+      "target": 501,
       "relation": "contains",
       "evidence": "config/dify-agents/abundance-hub.json is present in the repo scan.",
       "color": "#64748b",
@@ -35372,7 +35428,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-agent-config-config-dify-agents-bettermode-marketplace-creator-agent-json",
       "source": 0,
-      "target": 501,
+      "target": 502,
       "relation": "contains",
       "evidence": "config/dify-agents/bettermode-marketplace-creator-agent.json is present in the repo scan.",
       "color": "#64748b",
@@ -35381,7 +35437,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-agent-config-config-dify-agents-blondish-hub-json",
       "source": 0,
-      "target": 502,
+      "target": 503,
       "relation": "contains",
       "evidence": "config/dify-agents/blondish-hub.json is present in the repo scan.",
       "color": "#64748b",
@@ -35390,7 +35446,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-agent-config-config-dify-agents-c3-hub-json",
       "source": 0,
-      "target": 503,
+      "target": 504,
       "relation": "contains",
       "evidence": "config/dify-agents/c3-hub.json is present in the repo scan.",
       "color": "#64748b",
@@ -35399,7 +35455,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-agent-config-config-dify-agents-create-something-guide-agent-json",
       "source": 0,
-      "target": 504,
+      "target": 505,
       "relation": "contains",
       "evidence": "config/dify-agents/create-something-guide-agent.json is present in the repo scan.",
       "color": "#64748b",
@@ -35408,7 +35464,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-agent-config-config-dify-agents-eric-hub-json",
       "source": 0,
-      "target": 505,
+      "target": 506,
       "relation": "contains",
       "evidence": "config/dify-agents/eric-hub.json is present in the repo scan.",
       "color": "#64748b",
@@ -35417,7 +35473,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-agent-config-config-dify-agents-mariana-hub-json",
       "source": 0,
-      "target": 506,
+      "target": 507,
       "relation": "contains",
       "evidence": "config/dify-agents/mariana-hub.json is present in the repo scan.",
       "color": "#64748b",
@@ -35426,7 +35482,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-agent-config-config-dify-agents-morgan-hub-json",
       "source": 0,
-      "target": 507,
+      "target": 508,
       "relation": "contains",
       "evidence": "config/dify-agents/morgan-hub.json is present in the repo scan.",
       "color": "#64748b",
@@ -35435,7 +35491,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-agent-config-config-dify-agents-natalia-hub-json",
       "source": 0,
-      "target": 508,
+      "target": 509,
       "relation": "contains",
       "evidence": "config/dify-agents/natalia-hub.json is present in the repo scan.",
       "color": "#64748b",
@@ -35444,7 +35500,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-agent-config-config-dify-agents-pablo-hub-json",
       "source": 0,
-      "target": 509,
+      "target": 510,
       "relation": "contains",
       "evidence": "config/dify-agents/pablo-hub.json is present in the repo scan.",
       "color": "#64748b",
@@ -35453,7 +35509,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-agent-config-config-dify-agents-shea-hub-json",
       "source": 0,
-      "target": 510,
+      "target": 511,
       "relation": "contains",
       "evidence": "config/dify-agents/shea-hub.json is present in the repo scan.",
       "color": "#64748b",
@@ -35462,7 +35518,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-agent-config-config-dify-agents-template-review-hub-json",
       "source": 0,
-      "target": 511,
+      "target": 512,
       "relation": "contains",
       "evidence": "config/dify-agents/template-review-hub.json is present in the repo scan.",
       "color": "#64748b",
@@ -35471,7 +35527,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-agent-config-config-dify-agents-vicki-hub-json",
       "source": 0,
-      "target": 512,
+      "target": 513,
       "relation": "contains",
       "evidence": "config/dify-agents/vicki-hub.json is present in the repo scan.",
       "color": "#64748b",
@@ -35480,7 +35536,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-agent-config-config-dify-agents-viv-hub-json",
       "source": 0,
-      "target": 513,
+      "target": 514,
       "relation": "contains",
       "evidence": "config/dify-agents/viv-hub.json is present in the repo scan.",
       "color": "#64748b",
@@ -35489,7 +35545,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-agent-config-config-dify-agents-youtube-transcript-notion-agent-json",
       "source": 0,
-      "target": 514,
+      "target": 515,
       "relation": "contains",
       "evidence": "config/dify-agents/youtube-transcript-notion-agent.json is present in the repo scan.",
       "color": "#64748b",
@@ -35498,7 +35554,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-mcp-config-config-dify-mcp-intake-cs-telemetry-json",
       "source": 0,
-      "target": 515,
+      "target": 516,
       "relation": "contains",
       "evidence": "config/dify-mcp-intake/cs-telemetry.json is present in the repo scan.",
       "color": "#64748b",
@@ -35507,7 +35563,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-mcp-config-config-dify-mcp-intake-gmail-notion-mcp-json",
       "source": 0,
-      "target": 516,
+      "target": 517,
       "relation": "contains",
       "evidence": "config/dify-mcp-intake/gmail-notion-mcp.json is present in the repo scan.",
       "color": "#64748b",
@@ -35516,7 +35572,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-mcp-config-config-dify-mcp-intake-gmail-sync-json",
       "source": 0,
-      "target": 517,
+      "target": 518,
       "relation": "contains",
       "evidence": "config/dify-mcp-intake/gmail-sync.json is present in the repo scan.",
       "color": "#64748b",
@@ -35525,7 +35581,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-mcp-config-config-dify-mcp-intake-halfdozen-gmail-sync-fillip-json",
       "source": 0,
-      "target": 518,
+      "target": 519,
       "relation": "contains",
       "evidence": "config/dify-mcp-intake/halfdozen-gmail-sync-fillip.json is present in the repo scan.",
       "color": "#64748b",
@@ -35534,7 +35590,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-mcp-config-config-dify-mcp-intake-halfdozen-gmail-sync-leah-json",
       "source": 0,
-      "target": 519,
+      "target": 520,
       "relation": "contains",
       "evidence": "config/dify-mcp-intake/halfdozen-gmail-sync-leah.json is present in the repo scan.",
       "color": "#64748b",
@@ -35543,7 +35599,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-mcp-config-config-dify-mcp-intake-halfdozen-telemetry-json",
       "source": 0,
-      "target": 520,
+      "target": 521,
       "relation": "contains",
       "evidence": "config/dify-mcp-intake/halfdozen-telemetry.json is present in the repo scan.",
       "color": "#64748b",
@@ -35552,7 +35608,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-mcp-config-config-dify-mcp-intake-meetings-json",
       "source": 0,
-      "target": 521,
+      "target": 522,
       "relation": "contains",
       "evidence": "config/dify-mcp-intake/meetings.json is present in the repo scan.",
       "color": "#64748b",
@@ -35561,7 +35617,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-mcp-config-config-dify-mcp-intake-notion-halfdozen-blondish-json",
       "source": 0,
-      "target": 522,
+      "target": 523,
       "relation": "contains",
       "evidence": "config/dify-mcp-intake/notion-halfdozen-blondish.json is present in the repo scan.",
       "color": "#64748b",
@@ -35570,7 +35626,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-mcp-config-config-dify-mcp-intake-notion-halfdozen-c3-management-json",
       "source": 0,
-      "target": 523,
+      "target": 524,
       "relation": "contains",
       "evidence": "config/dify-mcp-intake/notion-halfdozen-c3-management.json is present in the repo scan.",
       "color": "#64748b",
@@ -35579,7 +35635,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-mcp-config-config-dify-mcp-intake-notion-halfdozen-create-something-json",
       "source": 0,
-      "target": 524,
+      "target": 525,
       "relation": "contains",
       "evidence": "config/dify-mcp-intake/notion-halfdozen-create-something.json is present in the repo scan.",
       "color": "#64748b",
@@ -35588,7 +35644,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-mcp-config-config-dify-mcp-intake-notion-sync-mcp-json",
       "source": 0,
-      "target": 525,
+      "target": 526,
       "relation": "contains",
       "evidence": "config/dify-mcp-intake/notion-sync-mcp.json is present in the repo scan.",
       "color": "#64748b",
@@ -35597,7 +35653,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-mcp-config-config-dify-mcp-intake-outerfields-json",
       "source": 0,
-      "target": 526,
+      "target": 527,
       "relation": "contains",
       "evidence": "config/dify-mcp-intake/outerfields.json is present in the repo scan.",
       "color": "#64748b",
@@ -35606,7 +35662,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-mcp-config-config-dify-mcp-intake-quickbooks-notion-json",
       "source": 0,
-      "target": 527,
+      "target": 528,
       "relation": "contains",
       "evidence": "config/dify-mcp-intake/quickbooks-notion.json is present in the repo scan.",
       "color": "#64748b",
@@ -35615,7 +35671,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-mcp-config-config-dify-mcp-intake-schedule-json",
       "source": 0,
-      "target": 528,
+      "target": 529,
       "relation": "contains",
       "evidence": "config/dify-mcp-intake/schedule.json is present in the repo scan.",
       "color": "#64748b",
@@ -35624,7 +35680,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-mcp-config-config-dify-mcp-intake-slack-create-something-json",
       "source": 0,
-      "target": 529,
+      "target": 530,
       "relation": "contains",
       "evidence": "config/dify-mcp-intake/slack-create-something.json is present in the repo scan.",
       "color": "#64748b",
@@ -35633,7 +35689,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-mcp-config-config-dify-mcp-intake-spotify-json",
       "source": 0,
-      "target": 530,
+      "target": 531,
       "relation": "contains",
       "evidence": "config/dify-mcp-intake/spotify.json is present in the repo scan.",
       "color": "#64748b",
@@ -35642,7 +35698,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-mcp-config-config-dify-mcp-intake-substrate-json",
       "source": 0,
-      "target": 531,
+      "target": 532,
       "relation": "contains",
       "evidence": "config/dify-mcp-intake/substrate.json is present in the repo scan.",
       "color": "#64748b",
@@ -35651,7 +35707,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-mcp-config-config-dify-mcp-intake-webflow-app-review-json",
       "source": 0,
-      "target": 532,
+      "target": 533,
       "relation": "contains",
       "evidence": "config/dify-mcp-intake/webflow-app-review.json is present in the repo scan.",
       "color": "#64748b",
@@ -35660,7 +35716,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-mcp-config-config-dify-mcp-intake-webflow-local-json",
       "source": 0,
-      "target": 533,
+      "target": 534,
       "relation": "contains",
       "evidence": "config/dify-mcp-intake/webflow-local.json is present in the repo scan.",
       "color": "#64748b",
@@ -35669,7 +35725,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-mcp-config-config-dify-mcp-intake-webflow-reviewer-exceptions-json",
       "source": 0,
-      "target": 534,
+      "target": 535,
       "relation": "contains",
       "evidence": "config/dify-mcp-intake/webflow-reviewer-exceptions.json is present in the repo scan.",
       "color": "#64748b",
@@ -35678,7 +35734,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-mcp-config-config-dify-mcp-intake-webflow-template-review-json",
       "source": 0,
-      "target": 535,
+      "target": 536,
       "relation": "contains",
       "evidence": "config/dify-mcp-intake/webflow-template-review.json is present in the repo scan.",
       "color": "#64748b",
@@ -35687,7 +35743,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-mcp-config-config-dify-mcp-intake-webflow-zendesk-json",
       "source": 0,
-      "target": 536,
+      "target": 537,
       "relation": "contains",
       "evidence": "config/dify-mcp-intake/webflow-zendesk.json is present in the repo scan.",
       "color": "#64748b",
@@ -35696,7 +35752,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-mcp-config-config-dify-mcp-intake-youtube-sync-json",
       "source": 0,
-      "target": 537,
+      "target": 538,
       "relation": "contains",
       "evidence": "config/dify-mcp-intake/youtube-sync.json is present in the repo scan.",
       "color": "#64748b",
@@ -35705,7 +35761,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-mcp-config-config-dify-mcp-intake-zoom-sync-json",
       "source": 0,
-      "target": 538,
+      "target": 539,
       "relation": "contains",
       "evidence": "config/dify-mcp-intake/zoom-sync.json is present in the repo scan.",
       "color": "#64748b",
@@ -39357,8 +39413,17 @@
       "alpha": 0.48
     },
     {
-      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-newsletter-engagement-runbook-md-documents-substrate-create-something-root",
+      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-newsletter-distribution-playbook-md-documents-substrate-create-something-root",
       "source": 469,
+      "target": 0,
+      "relation": "documents",
+      "evidence": "docs/guides/NEWSLETTER_DISTRIBUTION_PLAYBOOK.md is an operating guide.",
+      "color": "#f59e0b",
+      "alpha": 0.48
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-newsletter-engagement-runbook-md-documents-substrate-create-something-root",
+      "source": 470,
       "target": 0,
       "relation": "documents",
       "evidence": "docs/guides/NEWSLETTER_ENGAGEMENT_RUNBOOK.md is an operating guide.",
@@ -39367,7 +39432,7 @@
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-notion-api-compatibility-audit-2026-md-documents-substrate-create-something-root",
-      "source": 470,
+      "source": 471,
       "target": 0,
       "relation": "documents",
       "evidence": "docs/guides/NOTION_API_COMPATIBILITY_AUDIT_2026.md is an operating guide.",
@@ -39376,7 +39441,7 @@
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-notion-workers-and-cli-2026-md-documents-substrate-create-something-root",
-      "source": 471,
+      "source": 472,
       "target": 0,
       "relation": "documents",
       "evidence": "docs/guides/NOTION_WORKERS_AND_CLI_2026.md is an operating guide.",
@@ -39385,7 +39450,7 @@
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-npm-saved-auth-and-release-promotion-runbook-md-documents-substrate-create-something-root",
-      "source": 472,
+      "source": 473,
       "target": 0,
       "relation": "documents",
       "evidence": "docs/guides/NPM_SAVED_AUTH_AND_RELEASE_PROMOTION_RUNBOOK.md is an operating guide.",
@@ -39394,7 +39459,7 @@
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-observability-setup-md-documents-substrate-create-something-root",
-      "source": 473,
+      "source": 474,
       "target": 0,
       "relation": "documents",
       "evidence": "docs/guides/OBSERVABILITY_SETUP.md is an operating guide.",
@@ -39403,7 +39468,7 @@
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-ona-core-rollout-md-documents-substrate-create-something-root",
-      "source": 474,
+      "source": 475,
       "target": 0,
       "relation": "documents",
       "evidence": "docs/guides/ONA_CORE_ROLLOUT.md is an operating guide.",
@@ -39412,7 +39477,7 @@
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-open-weight-agent-executor-eval-md-documents-substrate-create-something-root",
-      "source": 475,
+      "source": 476,
       "target": 0,
       "relation": "documents",
       "evidence": "docs/guides/OPEN_WEIGHT_AGENT_EXECUTOR_EVAL.md is an operating guide.",
@@ -39421,7 +39486,7 @@
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-operator-agent-external-pattern-matrix-md-documents-substrate-create-something-root",
-      "source": 476,
+      "source": 477,
       "target": 0,
       "relation": "documents",
       "evidence": "docs/guides/OPERATOR_AGENT_EXTERNAL_PATTERN_MATRIX.md is an operating guide.",
@@ -39430,7 +39495,7 @@
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-operator-agent-public-access-md-documents-substrate-create-something-root",
-      "source": 477,
+      "source": 478,
       "target": 0,
       "relation": "documents",
       "evidence": "docs/guides/OPERATOR_AGENT_PUBLIC_ACCESS.md is an operating guide.",
@@ -39439,7 +39504,7 @@
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-operator-agent-system-md-documents-substrate-create-something-root",
-      "source": 478,
+      "source": 479,
       "target": 0,
       "relation": "documents",
       "evidence": "docs/guides/OPERATOR_AGENT_SYSTEM.md is an operating guide.",
@@ -39448,7 +39513,7 @@
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-package-source-archive-workflow-md-documents-substrate-create-something-root",
-      "source": 479,
+      "source": 480,
       "target": 0,
       "relation": "documents",
       "evidence": "docs/guides/PACKAGE_SOURCE_ARCHIVE_WORKFLOW.md is an operating guide.",
@@ -39457,7 +39522,7 @@
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-paperclip-autonomous-delivery-md-documents-substrate-create-something-root",
-      "source": 480,
+      "source": 481,
       "target": 0,
       "relation": "documents",
       "evidence": "docs/guides/PAPERCLIP_AUTONOMOUS_DELIVERY.md is an operating guide.",
@@ -39466,7 +39531,7 @@
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-paperclip-instance-operating-model-md-documents-substrate-create-something-root",
-      "source": 481,
+      "source": 482,
       "target": 0,
       "relation": "documents",
       "evidence": "docs/guides/PAPERCLIP_INSTANCE_OPERATING_MODEL.md is an operating guide.",
@@ -39475,7 +39540,7 @@
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-playbook-library-research-2026-02-18-md-documents-substrate-create-something-root",
-      "source": 482,
+      "source": 483,
       "target": 0,
       "relation": "documents",
       "evidence": "docs/guides/PLAYBOOK_LIBRARY_RESEARCH_2026-02-18.md is an operating guide.",
@@ -39484,7 +39549,7 @@
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-policy-os-gating-deploy-checklist-2026-03-09-md-documents-substrate-create-something-root",
-      "source": 483,
+      "source": 484,
       "target": 0,
       "relation": "documents",
       "evidence": "docs/guides/POLICY_OS_GATING_DEPLOY_CHECKLIST_2026-03-09.md is an operating guide.",
@@ -39493,7 +39558,7 @@
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-policy-os-live-verification-runbook-2026-03-09-md-documents-substrate-create-something-root",
-      "source": 484,
+      "source": 485,
       "target": 0,
       "relation": "documents",
       "evidence": "docs/guides/POLICY_OS_LIVE_VERIFICATION_RUNBOOK_2026-03-09.md is an operating guide.",
@@ -39502,7 +39567,7 @@
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-recurring-cleanup-loops-md-documents-substrate-create-something-root",
-      "source": 485,
+      "source": 486,
       "target": 0,
       "relation": "documents",
       "evidence": "docs/guides/RECURRING_CLEANUP_LOOPS.md is an operating guide.",
@@ -39511,7 +39576,7 @@
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-seo-md-documents-substrate-create-something-root",
-      "source": 486,
+      "source": 487,
       "target": 0,
       "relation": "documents",
       "evidence": "docs/guides/seo.md is an operating guide.",
@@ -39520,7 +39585,7 @@
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-skills-md-documents-substrate-create-something-root",
-      "source": 487,
+      "source": 488,
       "target": 0,
       "relation": "documents",
       "evidence": "docs/guides/SKILLS.md is an operating guide.",
@@ -39529,7 +39594,7 @@
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-solo-operator-agent-loop-md-documents-substrate-create-something-root",
-      "source": 488,
+      "source": 489,
       "target": 0,
       "relation": "documents",
       "evidence": "docs/guides/SOLO_OPERATOR_AGENT_LOOP.md is an operating guide.",
@@ -39538,7 +39603,7 @@
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-solo-operator-control-tower-playbook-md-documents-substrate-create-something-root",
-      "source": 489,
+      "source": 490,
       "target": 0,
       "relation": "documents",
       "evidence": "docs/guides/SOLO_OPERATOR_CONTROL_TOWER_PLAYBOOK.md is an operating guide.",
@@ -39547,7 +39612,7 @@
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-steel-cli-md-documents-substrate-create-something-root",
-      "source": 490,
+      "source": 491,
       "target": 0,
       "relation": "documents",
       "evidence": "docs/guides/STEEL_CLI.md is an operating guide.",
@@ -39556,7 +39621,7 @@
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-substrate-topology-operator-contract-md-documents-substrate-create-something-root",
-      "source": 491,
+      "source": 492,
       "target": 0,
       "relation": "documents",
       "evidence": "docs/guides/SUBSTRATE_TOPOLOGY_OPERATOR_CONTRACT.md is an operating guide.",
@@ -39565,7 +39630,7 @@
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-ui-preview-system-md-documents-substrate-create-something-root",
-      "source": 492,
+      "source": 493,
       "target": 0,
       "relation": "documents",
       "evidence": "docs/guides/UI_PREVIEW_SYSTEM.md is an operating guide.",
@@ -39574,7 +39639,7 @@
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-understanding-template-md-documents-substrate-create-something-root",
-      "source": 493,
+      "source": 494,
       "target": 0,
       "relation": "documents",
       "evidence": "docs/guides/UNDERSTANDING_TEMPLATE.md is an operating guide.",
@@ -39583,7 +39648,7 @@
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-webflow-code-components-control-plane-md-documents-substrate-create-something-root",
-      "source": 494,
+      "source": 495,
       "target": 0,
       "relation": "documents",
       "evidence": "docs/guides/WEBFLOW_CODE_COMPONENTS_CONTROL_PLANE.md is an operating guide.",
@@ -39592,7 +39657,7 @@
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-webflow-export-first-agent-workflow-md-documents-substrate-create-something-root",
-      "source": 495,
+      "source": 496,
       "target": 0,
       "relation": "documents",
       "evidence": "docs/guides/WEBFLOW_EXPORT_FIRST_AGENT_WORKFLOW.md is an operating guide.",
@@ -39601,7 +39666,7 @@
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-webflow-template-review-dify-agent-manual-md-documents-substrate-create-something-root",
-      "source": 496,
+      "source": 497,
       "target": 0,
       "relation": "documents",
       "evidence": "docs/guides/WEBFLOW_TEMPLATE_REVIEW_DIFY_AGENT_MANUAL.md is an operating guide.",
@@ -39610,7 +39675,7 @@
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-webflow-template-search-image-refresh-runbook-md-documents-substrate-create-something-root",
-      "source": 497,
+      "source": 498,
       "target": 0,
       "relation": "documents",
       "evidence": "docs/guides/WEBFLOW_TEMPLATE_SEARCH_IMAGE_REFRESH_RUNBOOK.md is an operating guide.",
@@ -39619,7 +39684,7 @@
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-zellij-agent-cockpit-md-documents-substrate-create-something-root",
-      "source": 498,
+      "source": 499,
       "target": 0,
       "relation": "documents",
       "evidence": "docs/guides/ZELLIJ_AGENT_COCKPIT.md is an operating guide.",
@@ -39627,11 +39692,11 @@
       "alpha": 0.48
     },
     {
-      "id": "substrate:create-something:edge:substrate-create-something-doc-docs-readme-md-documents-substrate-create-something-package-create-something-interaction-atlas-mcp-packages-interaction-atlas-mcp",
+      "id": "substrate:create-something:edge:substrate-create-something-doc-docs-readme-md-documents-substrate-create-something-package-create-something-webflow-components-packages-webflow-components",
       "source": 352,
-      "target": 118,
+      "target": 198,
       "relation": "documents",
-      "evidence": "docs/README.md documents packages/interaction-atlas-mcp through the stable doc platform anchor.",
+      "evidence": "docs/README.md documents packages/webflow-components through an explicit repository link.",
       "color": "#f59e0b",
       "alpha": 0.48
     },
@@ -39683,7 +39748,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-generated-fallback-policy-hub-route-authorization-v1-json-governs-substrate-create-something-agent-config-config-dify-agents-aaron-hub-json",
       "source": 358,
-      "target": 499,
+      "target": 500,
       "relation": "governs",
       "evidence": "docs/policies/generated/fallback/policy.hub-route-authorization.v1.json governs config/dify-agents/aaron-hub.json through matching topology terms.",
       "color": "#ef4444",
@@ -39809,7 +39874,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-client-hub-user-experience-v1-json-governs-substrate-create-something-agent-config-config-dify-agents-aaron-hub-json",
       "source": 372,
-      "target": 499,
+      "target": 500,
       "relation": "governs",
       "evidence": "docs/policies/v1/policy.client-hub-user-experience.v1.json governs config/dify-agents/aaron-hub.json through matching topology terms.",
       "color": "#ef4444",
@@ -39818,7 +39883,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-client-hub-user-experience-v1-md-governs-substrate-create-something-agent-config-config-dify-agents-aaron-hub-json",
       "source": 373,
-      "target": 499,
+      "target": 500,
       "relation": "governs",
       "evidence": "docs/policies/v1/policy.client-hub-user-experience.v1.md governs config/dify-agents/aaron-hub.json through matching topology terms.",
       "color": "#ef4444",
@@ -39881,7 +39946,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-git-light-agent-delivery-v1-json-governs-substrate-create-something-agent-config-config-dify-agents-aaron-hub-json",
       "source": 380,
-      "target": 499,
+      "target": 500,
       "relation": "governs",
       "evidence": "docs/policies/v1/policy.git-light-agent-delivery.v1.json governs config/dify-agents/aaron-hub.json through matching topology terms.",
       "color": "#ef4444",
@@ -39890,7 +39955,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-git-light-agent-delivery-v1-md-governs-substrate-create-something-agent-config-config-dify-agents-aaron-hub-json",
       "source": 381,
-      "target": 499,
+      "target": 500,
       "relation": "governs",
       "evidence": "docs/policies/v1/policy.git-light-agent-delivery.v1.md governs config/dify-agents/aaron-hub.json through matching topology terms.",
       "color": "#ef4444",
@@ -39917,7 +39982,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-hub-route-authorization-v1-json-governs-substrate-create-something-agent-config-config-dify-agents-aaron-hub-json",
       "source": 384,
-      "target": 499,
+      "target": 500,
       "relation": "governs",
       "evidence": "docs/policies/v1/policy.hub-route-authorization.v1.json governs config/dify-agents/aaron-hub.json through matching topology terms.",
       "color": "#ef4444",
@@ -39926,7 +39991,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-hub-route-authorization-v1-md-governs-substrate-create-something-agent-config-config-dify-agents-aaron-hub-json",
       "source": 385,
-      "target": 499,
+      "target": 500,
       "relation": "governs",
       "evidence": "docs/policies/v1/policy.hub-route-authorization.v1.md governs config/dify-agents/aaron-hub.json through matching topology terms.",
       "color": "#ef4444",
@@ -40169,7 +40234,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-prospect-hub-onboarding-v1-json-governs-substrate-create-something-agent-config-config-dify-agents-aaron-hub-json",
       "source": 412,
-      "target": 499,
+      "target": 500,
       "relation": "governs",
       "evidence": "docs/policies/v1/policy.prospect-hub-onboarding.v1.json governs config/dify-agents/aaron-hub.json through matching topology terms.",
       "color": "#ef4444",
@@ -40178,7 +40243,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-prospect-hub-onboarding-v1-md-governs-substrate-create-something-agent-config-config-dify-agents-aaron-hub-json",
       "source": 413,
-      "target": 499,
+      "target": 500,
       "relation": "governs",
       "evidence": "docs/policies/v1/policy.prospect-hub-onboarding.v1.md governs config/dify-agents/aaron-hub.json through matching topology terms.",
       "color": "#ef4444",
@@ -40286,7 +40351,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-agency-ops-pm-agent-notion-review-2026-md-documents-substrate-create-something-agent-config-config-dify-agents-template-review-hub-json",
       "source": 425,
-      "target": 511,
+      "target": 512,
       "relation": "documents",
       "evidence": "docs/guides/AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md documents config/dify-agents/template-review-hub.json through matching topology terms.",
       "color": "#f59e0b",
@@ -40313,7 +40378,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-agent-legibility-contract-md-documents-substrate-create-something-agent-config-config-dify-agents-aaron-hub-json",
       "source": 428,
-      "target": 499,
+      "target": 500,
       "relation": "documents",
       "evidence": "docs/guides/AGENT_LEGIBILITY_CONTRACT.md documents config/dify-agents/aaron-hub.json through matching topology terms.",
       "color": "#f59e0b",
@@ -40376,7 +40441,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-client-agent-codex-pilot-md-documents-substrate-create-something-agent-config-config-dify-agents-aaron-hub-json",
       "source": 435,
-      "target": 499,
+      "target": 500,
       "relation": "documents",
       "evidence": "docs/guides/CLIENT_AGENT_CODEX_PILOT.md documents config/dify-agents/aaron-hub.json through matching topology terms.",
       "color": "#f59e0b",
@@ -40394,7 +40459,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-coding-agent-harness-pattern-md-documents-substrate-create-something-agent-config-config-dify-agents-aaron-hub-json",
       "source": 438,
-      "target": 499,
+      "target": 500,
       "relation": "documents",
       "evidence": "docs/guides/CODING_AGENT_HARNESS_PATTERN.md documents config/dify-agents/aaron-hub.json through matching topology terms.",
       "color": "#f59e0b",
@@ -40403,7 +40468,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-commit-driven-marketing-schedule-md-documents-substrate-create-something-mcp-config-config-dify-mcp-intake-schedule-json",
       "source": 439,
-      "target": 528,
+      "target": 529,
       "relation": "documents",
       "evidence": "docs/guides/COMMIT_DRIVEN_MARKETING_SCHEDULE.md documents config/dify-mcp-intake/schedule.json through matching topology terms.",
       "color": "#f59e0b",
@@ -40430,7 +40495,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-dify-bettermode-creator-agent-md-documents-substrate-create-something-agent-config-config-dify-agents-bettermode-marketplace-creator-agent-json",
       "source": 442,
-      "target": 501,
+      "target": 502,
       "relation": "documents",
       "evidence": "docs/guides/DIFY_BETTERMODE_CREATOR_AGENT.md documents config/dify-agents/bettermode-marketplace-creator-agent.json through matching topology terms.",
       "color": "#f59e0b",
@@ -40439,7 +40504,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-dify-first-agent-control-plane-md-documents-substrate-create-something-agent-config-config-dify-agents-aaron-hub-json",
       "source": 443,
-      "target": 499,
+      "target": 500,
       "relation": "documents",
       "evidence": "docs/guides/DIFY_FIRST_AGENT_CONTROL_PLANE.md documents config/dify-agents/aaron-hub.json through matching topology terms.",
       "color": "#f59e0b",
@@ -40448,7 +40513,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-dify-partner-affiliate-operating-runbook-md-documents-substrate-create-something-agent-config-config-dify-agents-aaron-hub-json",
       "source": 444,
-      "target": 499,
+      "target": 500,
       "relation": "documents",
       "evidence": "docs/guides/DIFY_PARTNER_AFFILIATE_OPERATING_RUNBOOK.md documents config/dify-agents/aaron-hub.json through matching topology terms.",
       "color": "#f59e0b",
@@ -40457,7 +40522,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-dify-policy-os-template-pack-md-documents-substrate-create-something-agent-config-config-dify-agents-template-review-hub-json",
       "source": 445,
-      "target": 511,
+      "target": 512,
       "relation": "documents",
       "evidence": "docs/guides/DIFY_POLICY_OS_TEMPLATE_PACK.md documents config/dify-agents/template-review-hub.json through matching topology terms.",
       "color": "#f59e0b",
@@ -40466,7 +40531,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-dify-workspace-inventory-md-documents-substrate-create-something-agent-config-config-dify-agents-aaron-hub-json",
       "source": 446,
-      "target": 499,
+      "target": 500,
       "relation": "documents",
       "evidence": "docs/guides/DIFY_WORKSPACE_INVENTORY.md documents config/dify-agents/aaron-hub.json through matching topology terms.",
       "color": "#f59e0b",
@@ -40475,7 +40540,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-dify-youtube-transcript-notion-agent-md-documents-substrate-create-something-agent-config-config-dify-agents-youtube-transcript-notion-agent-json",
       "source": 447,
-      "target": 514,
+      "target": 515,
       "relation": "documents",
       "evidence": "docs/guides/DIFY_YOUTUBE_TRANSCRIPT_NOTION_AGENT.md documents config/dify-agents/youtube-transcript-notion-agent.json through matching topology terms.",
       "color": "#f59e0b",
@@ -40502,7 +40567,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-git-light-agent-delivery-workflow-md-documents-substrate-create-something-agent-config-config-dify-agents-aaron-hub-json",
       "source": 452,
-      "target": 499,
+      "target": 500,
       "relation": "documents",
       "evidence": "docs/guides/GIT_LIGHT_AGENT_DELIVERY_WORKFLOW.md documents config/dify-agents/aaron-hub.json through matching topology terms.",
       "color": "#f59e0b",
@@ -40565,7 +40630,7 @@
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-loops-above-agents-md-documents-substrate-create-something-agent-config-config-dify-agents-aaron-hub-json",
       "source": 460,
-      "target": 499,
+      "target": 500,
       "relation": "documents",
       "evidence": "docs/guides/LOOPS_ABOVE_AGENTS.md documents config/dify-agents/aaron-hub.json through matching topology terms.",
       "color": "#f59e0b",
@@ -40635,8 +40700,17 @@
       "alpha": 0.48
     },
     {
-      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-newsletter-engagement-runbook-md-documents-substrate-create-something-package-create-something-arc-packages-arc",
+      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-newsletter-distribution-playbook-md-documents-substrate-create-something-package-create-something-io-packages-io",
       "source": 469,
+      "target": 119,
+      "relation": "documents",
+      "evidence": "docs/guides/NEWSLETTER_DISTRIBUTION_PLAYBOOK.md documents packages/io through an explicit repository link.",
+      "color": "#f59e0b",
+      "alpha": 0.48
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-newsletter-engagement-runbook-md-documents-substrate-create-something-package-create-something-arc-packages-arc",
+      "source": 470,
       "target": 48,
       "relation": "documents",
       "evidence": "docs/guides/NEWSLETTER_ENGAGEMENT_RUNBOOK.md documents packages/arc through matching topology terms.",
@@ -40645,8 +40719,8 @@
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-notion-workers-and-cli-2026-md-documents-substrate-create-something-agent-config-config-dify-agents-youtube-transcript-notion-agent-json",
-      "source": 471,
-      "target": 514,
+      "source": 472,
+      "target": 515,
       "relation": "documents",
       "evidence": "docs/guides/NOTION_WORKERS_AND_CLI_2026.md documents config/dify-agents/youtube-transcript-notion-agent.json through matching topology terms.",
       "color": "#f59e0b",
@@ -40654,7 +40728,7 @@
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-npm-saved-auth-and-release-promotion-runbook-md-documents-substrate-create-something-package-create-something-mcp-authz-packages-mcp-authz",
-      "source": 472,
+      "source": 473,
       "target": 134,
       "relation": "documents",
       "evidence": "docs/guides/NPM_SAVED_AUTH_AND_RELEASE_PROMOTION_RUNBOOK.md documents packages/mcp-authz through matching topology terms.",
@@ -40663,7 +40737,7 @@
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-observability-setup-md-documents-substrate-create-something-package-create-something-interaction-atlas-mcp-packages-interaction-atlas-mcp",
-      "source": 473,
+      "source": 474,
       "target": 118,
       "relation": "documents",
       "evidence": "docs/guides/OBSERVABILITY_SETUP.md documents packages/interaction-atlas-mcp through the stable guide platform anchor.",
@@ -40672,7 +40746,7 @@
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-ona-core-rollout-md-documents-substrate-create-something-package-create-something-interaction-atlas-mcp-packages-interaction-atlas-mcp",
-      "source": 474,
+      "source": 475,
       "target": 118,
       "relation": "documents",
       "evidence": "docs/guides/ONA_CORE_ROLLOUT.md documents packages/interaction-atlas-mcp through the stable guide platform anchor.",
@@ -40681,8 +40755,8 @@
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-open-weight-agent-executor-eval-md-documents-substrate-create-something-agent-config-config-dify-agents-aaron-hub-json",
-      "source": 475,
-      "target": 499,
+      "source": 476,
+      "target": 500,
       "relation": "documents",
       "evidence": "docs/guides/OPEN_WEIGHT_AGENT_EXECUTOR_EVAL.md documents config/dify-agents/aaron-hub.json through matching topology terms.",
       "color": "#f59e0b",
@@ -40690,8 +40764,8 @@
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-operator-agent-external-pattern-matrix-md-documents-substrate-create-something-agent-config-config-dify-agents-aaron-hub-json",
-      "source": 476,
-      "target": 499,
+      "source": 477,
+      "target": 500,
       "relation": "documents",
       "evidence": "docs/guides/OPERATOR_AGENT_EXTERNAL_PATTERN_MATRIX.md documents config/dify-agents/aaron-hub.json through matching topology terms.",
       "color": "#f59e0b",
@@ -40699,8 +40773,8 @@
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-operator-agent-public-access-md-documents-substrate-create-something-agent-config-config-dify-agents-aaron-hub-json",
-      "source": 477,
-      "target": 499,
+      "source": 478,
+      "target": 500,
       "relation": "documents",
       "evidence": "docs/guides/OPERATOR_AGENT_PUBLIC_ACCESS.md documents config/dify-agents/aaron-hub.json through matching topology terms.",
       "color": "#f59e0b",
@@ -40708,8 +40782,8 @@
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-operator-agent-system-md-documents-substrate-create-something-agent-config-config-dify-agents-aaron-hub-json",
-      "source": 478,
-      "target": 499,
+      "source": 479,
+      "target": 500,
       "relation": "documents",
       "evidence": "docs/guides/OPERATOR_AGENT_SYSTEM.md documents config/dify-agents/aaron-hub.json through matching topology terms.",
       "color": "#f59e0b",
@@ -40717,8 +40791,8 @@
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-package-source-archive-workflow-md-documents-substrate-create-something-agent-config-config-dify-agents-aaron-hub-json",
-      "source": 479,
-      "target": 499,
+      "source": 480,
+      "target": 500,
       "relation": "documents",
       "evidence": "docs/guides/PACKAGE_SOURCE_ARCHIVE_WORKFLOW.md documents config/dify-agents/aaron-hub.json through matching topology terms.",
       "color": "#f59e0b",
@@ -40726,7 +40800,7 @@
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-playbook-library-research-2026-02-18-md-documents-substrate-create-something-package-create-something-arc-packages-arc",
-      "source": 482,
+      "source": 483,
       "target": 48,
       "relation": "documents",
       "evidence": "docs/guides/PLAYBOOK_LIBRARY_RESEARCH_2026-02-18.md documents packages/arc through matching topology terms.",
@@ -40735,7 +40809,7 @@
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-policy-os-gating-deploy-checklist-2026-03-09-md-documents-substrate-create-something-package-create-something-io-packages-io",
-      "source": 483,
+      "source": 484,
       "target": 119,
       "relation": "documents",
       "evidence": "docs/guides/POLICY_OS_GATING_DEPLOY_CHECKLIST_2026-03-09.md documents packages/io through the stable guide platform anchor.",
@@ -40744,7 +40818,7 @@
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-policy-os-live-verification-runbook-2026-03-09-md-documents-substrate-create-something-package-create-something-arc-packages-arc",
-      "source": 484,
+      "source": 485,
       "target": 48,
       "relation": "documents",
       "evidence": "docs/guides/POLICY_OS_LIVE_VERIFICATION_RUNBOOK_2026-03-09.md documents packages/arc through matching topology terms.",
@@ -40753,7 +40827,7 @@
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-recurring-cleanup-loops-md-documents-substrate-create-something-package-create-something-io-packages-io",
-      "source": 485,
+      "source": 486,
       "target": 119,
       "relation": "documents",
       "evidence": "docs/guides/RECURRING_CLEANUP_LOOPS.md documents packages/io through the stable guide platform anchor.",
@@ -40762,7 +40836,7 @@
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-seo-md-documents-substrate-create-something-package-create-something-interaction-atlas-mcp-packages-interaction-atlas-mcp",
-      "source": 486,
+      "source": 487,
       "target": 118,
       "relation": "documents",
       "evidence": "docs/guides/seo.md documents packages/interaction-atlas-mcp through the stable guide platform anchor.",
@@ -40771,7 +40845,7 @@
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-skills-md-documents-substrate-create-something-package-create-something-io-packages-io",
-      "source": 487,
+      "source": 488,
       "target": 119,
       "relation": "documents",
       "evidence": "docs/guides/SKILLS.md documents packages/io through the stable guide platform anchor.",
@@ -40780,8 +40854,8 @@
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-solo-operator-agent-loop-md-documents-substrate-create-something-agent-config-config-dify-agents-aaron-hub-json",
-      "source": 488,
-      "target": 499,
+      "source": 489,
+      "target": 500,
       "relation": "documents",
       "evidence": "docs/guides/SOLO_OPERATOR_AGENT_LOOP.md documents config/dify-agents/aaron-hub.json through matching topology terms.",
       "color": "#f59e0b",
@@ -40789,7 +40863,7 @@
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-solo-operator-control-tower-playbook-md-documents-substrate-create-something-package-create-something-arc-packages-arc",
-      "source": 489,
+      "source": 490,
       "target": 48,
       "relation": "documents",
       "evidence": "docs/guides/SOLO_OPERATOR_CONTROL_TOWER_PLAYBOOK.md documents packages/arc through matching topology terms.",
@@ -40798,7 +40872,7 @@
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-steel-cli-md-documents-substrate-create-something-package-create-something-agency-packages-agency",
-      "source": 490,
+      "source": 491,
       "target": 30,
       "relation": "documents",
       "evidence": "docs/guides/STEEL_CLI.md documents packages/agency through the stable guide platform anchor.",
@@ -40807,7 +40881,7 @@
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-substrate-topology-operator-contract-md-documents-substrate-create-something-package-create-something-substrate-mcp-packages-substrate-mcp",
-      "source": 491,
+      "source": 492,
       "target": 180,
       "relation": "documents",
       "evidence": "docs/guides/SUBSTRATE_TOPOLOGY_OPERATOR_CONTRACT.md documents packages/substrate-mcp through matching topology terms.",
@@ -40816,7 +40890,7 @@
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-ui-preview-system-md-documents-substrate-create-something-package-create-something-interaction-atlas-mcp-packages-interaction-atlas-mcp",
-      "source": 492,
+      "source": 493,
       "target": 118,
       "relation": "documents",
       "evidence": "docs/guides/UI_PREVIEW_SYSTEM.md documents packages/interaction-atlas-mcp through the stable guide platform anchor.",
@@ -40825,8 +40899,8 @@
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-understanding-template-md-documents-substrate-create-something-agent-config-config-dify-agents-template-review-hub-json",
-      "source": 493,
-      "target": 511,
+      "source": 494,
+      "target": 512,
       "relation": "documents",
       "evidence": "docs/guides/UNDERSTANDING_TEMPLATE.md documents config/dify-agents/template-review-hub.json through matching topology terms.",
       "color": "#f59e0b",
@@ -40834,7 +40908,7 @@
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-webflow-code-components-control-plane-md-documents-substrate-create-something-package-create-something-bundle-scanner-packages-bundle-scanner",
-      "source": 494,
+      "source": 495,
       "target": 55,
       "relation": "documents",
       "evidence": "docs/guides/WEBFLOW_CODE_COMPONENTS_CONTROL_PLANE.md documents packages/bundle-scanner through matching topology terms.",
@@ -40843,8 +40917,8 @@
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-webflow-export-first-agent-workflow-md-documents-substrate-create-something-agent-config-config-dify-agents-aaron-hub-json",
-      "source": 495,
-      "target": 499,
+      "source": 496,
+      "target": 500,
       "relation": "documents",
       "evidence": "docs/guides/WEBFLOW_EXPORT_FIRST_AGENT_WORKFLOW.md documents config/dify-agents/aaron-hub.json through matching topology terms.",
       "color": "#f59e0b",
@@ -40852,8 +40926,8 @@
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-webflow-template-review-dify-agent-manual-md-documents-substrate-create-something-agent-config-config-dify-agents-template-review-hub-json",
-      "source": 496,
-      "target": 511,
+      "source": 497,
+      "target": 512,
       "relation": "documents",
       "evidence": "docs/guides/WEBFLOW_TEMPLATE_REVIEW_DIFY_AGENT_MANUAL.md documents config/dify-agents/template-review-hub.json through matching topology terms.",
       "color": "#f59e0b",
@@ -40861,8 +40935,8 @@
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-webflow-template-search-image-refresh-runbook-md-documents-substrate-create-something-mcp-config-config-dify-mcp-intake-webflow-template-review-json",
-      "source": 497,
-      "target": 535,
+      "source": 498,
+      "target": 536,
       "relation": "documents",
       "evidence": "docs/guides/WEBFLOW_TEMPLATE_SEARCH_IMAGE_REFRESH_RUNBOOK.md documents config/dify-mcp-intake/webflow-template-review.json through matching topology terms.",
       "color": "#f59e0b",
@@ -40870,8 +40944,8 @@
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-zellij-agent-cockpit-md-documents-substrate-create-something-agent-config-config-dify-agents-aaron-hub-json",
-      "source": 498,
-      "target": 499,
+      "source": 499,
+      "target": 500,
       "relation": "documents",
       "evidence": "docs/guides/ZELLIJ_AGENT_COCKPIT.md documents config/dify-agents/aaron-hub.json through matching topology terms.",
       "color": "#f59e0b",
