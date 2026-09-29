@@ -2419,6 +2419,8 @@ test('create_ticket resolves the creator email from the template asset and sends
   assert.doesNotMatch(input.publicHtml, /<title/);
   assert.ok(input.internalNoteHtml.includes('Studio Portfolio'));
   assert.deepEqual(input.tags, ['template_review_mcp_outbound', 'relist']);
+  assert.match(String((created[0] as { externalId: string }).externalId), /^template-review-mcp:recAssetZD:[0-9a-f]{24}$/);
+  assert.equal(result.data?.external_id, (created[0] as { externalId: string }).externalId);
 });
 
 test('create_ticket accepts a version_id through the template-scoped lookup and an explicit requester override', async () => {
@@ -2444,6 +2446,7 @@ test('create_ticket fails closed before any Zendesk call when unconfirmed, uncon
   registerTools(h.server, () => client, () => reviewer, { getZendeskClient: () => zendesk });
   assert.equal(parsePayload((await h.handlers.get('template_review_create_ticket')?.({ ...base, confirm_send: false }))!).error?.code, 'SEND_CONFIRMATION_REQUIRED');
   assert.equal(parsePayload((await h.handlers.get('template_review_create_ticket')?.({ subject: 'Hello', message: 'Hi', confirm_send: true }))!).error?.code, 'ASSET_REFERENCE_REQUIRED');
+  assert.equal(parsePayload((await h.handlers.get('template_review_create_ticket')?.({ ...base, version_id: 'recVersionZD' }))!).error?.code, 'ASSET_REFERENCE_REQUIRED');
 
   const unconfigured = createServerHarness();
   registerTools(unconfigured.server, () => client, () => reviewer);
@@ -2478,34 +2481,54 @@ test('create_ticket for a version returns a next_step that asks before relinking
   assert.ok(hint.includes('ticket_id=1200001'));
 });
 
-test('link_version_ticket requires confirmation and ownership, then relinks with a fresh-read precondition', async () => {
+test('link_version_ticket verifies the ticket belongs to this creator before relinking', async () => {
   const writes: unknown[] = [];
   const client = {
     requireAssignedVersion: async () => ticketVersion,
+    getScopedVersion: async () => ({ version: ticketVersion, asset: outboundAsset }),
     setVersionZendeskTicket: async (versionId: string, ticketId: string, expected: unknown) => {
       writes.push([versionId, ticketId, expected]);
       return { version: { ...ticketVersion, zendeskTicketId: ticketId }, previousTicketId: '1199299' };
     },
   } as unknown as AirtableClient;
-  const { zendesk } = outboundZendesk();
+  const summaries: Record<string, unknown> = {
+    '1200001': { ticketId: '1200001', groupId: 1500002744702, externalId: 'template-review-mcp:recAssetZD:abc', requesterEmail: 'someone-else@example.com' },
+    '1200002': { ticketId: '1200002', groupId: 1500002744702, externalId: null, requesterEmail: 'Creator@Example.com' },
+    '1200003': { ticketId: '1200003', groupId: 46157931219347, externalId: 'template-review-mcp:recAssetZD:abc', requesterEmail: 'creator@example.com' },
+    '1200004': { ticketId: '1200004', groupId: 1500002744702, externalId: 'template-review-mcp:recOTHER:abc', requesterEmail: 'other@example.com' },
+  };
+  const zendesk = {
+    marketplaceGroupId: 1500002744702,
+    agentTicketUrl: (id: string) => `https://webflow2579.zendesk.com/agent/tickets/${id}`,
+    getTicketSummary: async (id: string) => summaries[id],
+  } as unknown as ZendeskClient;
   const { server, handlers } = createServerHarness();
   registerTools(server, () => client, () => reviewer, { getZendeskClient: () => zendesk });
   assert.ok(WRITE_TOOL_NAMES.has('template_review_link_version_ticket'));
+  const call = (ticket_id: string, confirm = true) =>
+    handlers.get('template_review_link_version_ticket')!({ version_id: 'recVersionZD', ticket_id, expected_current_ticket_id: '1199299', confirm_replace: confirm }).then(parsePayload);
 
-  const unconfirmed = parsePayload((await handlers.get('template_review_link_version_ticket')?.({ version_id: 'recVersionZD', ticket_id: '1200001', expected_current_ticket_id: '1199299', confirm_replace: false }))!);
-  assert.equal(unconfirmed.error?.code, 'REPLACE_CONFIRMATION_REQUIRED');
+  assert.equal((await call('1200001', false)).error?.code, 'REPLACE_CONFIRMATION_REQUIRED');
+  assert.equal((await call('1200003')).error?.code, 'ZENDESK_TICKET_OUT_OF_SCOPE');
+  assert.equal((await call('1200004')).error?.code, 'TICKET_CREATOR_MISMATCH');
   assert.equal(writes.length, 0);
 
-  const ok = parsePayload((await handlers.get('template_review_link_version_ticket')?.({ version_id: 'recVersionZD', ticket_id: '1200001', expected_current_ticket_id: '1199299', confirm_replace: true }))!);
-  assert.equal(ok.ok, true);
-  assert.equal(ok.data?.previous_ticket_id, '1199299');
-  assert.equal(ok.data?.changed, true);
-  assert.equal(ok.data?.ticket_url, 'https://webflow2579.zendesk.com/agent/tickets/1200001');
-  assert.deepEqual(writes, [['recVersionZD', '1200001', '1199299']]);
+  const byKey = await call('1200001');
+  assert.equal(byKey.ok, true);
+  assert.equal(byKey.data?.ticket_verified_by, 'external_id');
+  assert.equal(byKey.data?.previous_ticket_id, '1199299');
+  assert.equal(byKey.data?.changed, true);
+  const byEmail = await call('1200002');
+  assert.equal(byEmail.ok, true);
+  assert.equal(byEmail.data?.ticket_verified_by, 'requester_email');
+  assert.deepEqual(writes, [['recVersionZD', '1200001', '1199299'], ['recVersionZD', '1200002', '1199299']]);
 
   const anonymous = createServerHarness();
   registerTools(anonymous.server, () => client, () => null, { getZendeskClient: () => zendesk });
   const noReviewer = parsePayload((await anonymous.handlers.get('template_review_link_version_ticket')?.({ version_id: 'recVersionZD', ticket_id: '1200001', expected_current_ticket_id: null, confirm_replace: true }))!);
   assert.equal(noReviewer.error?.code, 'REVIEWER_IDENTITY_UNAVAILABLE');
-  assert.equal(writes.length, 1);
+  const unconfigured = createServerHarness();
+  registerTools(unconfigured.server, () => client, () => reviewer);
+  assert.equal(parsePayload((await unconfigured.handlers.get('template_review_link_version_ticket')?.({ version_id: 'recVersionZD', ticket_id: '1200001', expected_current_ticket_id: null, confirm_replace: true }))!).error?.code, 'ZENDESK_NOT_CONFIGURED');
+  assert.equal(writes.length, 2);
 });

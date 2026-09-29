@@ -191,6 +191,23 @@ export interface OutboundTicketInput {
   /** Private first comment (audit trail for the team); never emailed. */
   internalNoteHtml: string;
   tags?: string[];
+  /**
+   * Idempotency key stored as the ticket's external_id. Before creating, the client searches
+   * for an existing ticket with this external_id and refuses to create a second one
+   * (ZENDESK_OUTBOUND_TICKET_EXISTS), so a lost create response cannot become a duplicate.
+   */
+  externalId?: string;
+}
+
+export interface TicketSummary {
+  ticketId: string;
+  status: string | null;
+  groupId: number | null;
+  brandId: number | null;
+  tags: string[];
+  externalId: string | null;
+  requesterId: number | null;
+  requesterEmail: string | null;
 }
 
 export interface OutboundTicketResult {
@@ -287,6 +304,19 @@ export class ZendeskClient {
     const agentId = await this.getAuthenticatedAgentId();
     steps.push(`agent:${agentId}`);
 
+    if (input.externalId) {
+      const existing = await this.findTicketByExternalId(input.externalId);
+      if (existing) {
+        throw new ZendeskClientError(
+          'ZENDESK_OUTBOUND_TICKET_EXISTS',
+          `A ticket with this idempotency key already exists (${existing}). Read it before sending anything else; do not create a duplicate.`,
+          409,
+          { ticketId: existing, ticketUrl: this.agentTicketUrl(existing), externalId: input.externalId },
+        );
+      }
+      steps.push('idempotency_checked');
+    }
+
     const createRes = await this.fetchFn(`${this.baseUrl}/tickets.json`, {
       method: 'POST',
       headers,
@@ -295,6 +325,7 @@ export class ZendeskClient {
           subject: input.subject,
           requester: { email: input.requesterEmail, ...(input.requesterName ? { name: input.requesterName } : {}) },
           group_id: this.marketplaceGroupId,
+          ...(input.externalId ? { external_id: input.externalId } : {}),
           ...(input.tags?.length ? { tags: input.tags } : {}),
           comment: { html_body: input.internalNoteHtml, public: false, author_id: agentId },
         },
@@ -375,6 +406,45 @@ export class ZendeskClient {
       if (error instanceof ZendeskClientError) throw error;
       return incomplete('unexpected', null, error instanceof Error ? error.message : String(error));
     }
+  }
+
+  /** Read one ticket's routing and requester identity (no comments). Used to verify a ticket before trusting it. */
+  async getTicketSummary(ticketId: string): Promise<TicketSummary> {
+    if (!/^\d+$/.test(ticketId)) {
+      throw new ZendeskClientError('INVALID_TICKET_ID', 'Zendesk ticket ID must be numeric.', 400, { ticketId });
+    }
+    const res = await this.fetchFn(`${this.baseUrl}/tickets/${ticketId}.json?include=users`, {
+      headers: { Authorization: this.authHeader, Accept: 'application/json' },
+    });
+    if (!res.ok) await this.failFrom(res, 'ticket read', ticketId);
+    const payload = (await res.json()) as {
+      ticket?: { status?: string; group_id?: number | null; brand_id?: number | null; tags?: string[]; external_id?: string | null; requester_id?: number | null };
+      users?: Array<{ id?: number; email?: string }>;
+    };
+    const t = payload.ticket ?? {};
+    const requester = (payload.users ?? []).find((u) => u.id === t.requester_id);
+    return {
+      ticketId,
+      status: t.status ?? null,
+      groupId: t.group_id ?? null,
+      brandId: t.brand_id ?? null,
+      tags: t.tags ?? [],
+      externalId: t.external_id ?? null,
+      requesterId: t.requester_id ?? null,
+      requesterEmail: requester?.email ?? null,
+    };
+  }
+
+  /** Find a ticket previously created with this external_id (idempotency key), if any. */
+  async findTicketByExternalId(externalId: string): Promise<string | null> {
+    const search = new URLSearchParams({ query: `type:ticket external_id:${externalId}`, per_page: '1' });
+    const res = await this.fetchFn(`${this.baseUrl}/search.json?${search.toString()}`, {
+      headers: { Authorization: this.authHeader, Accept: 'application/json' },
+    });
+    if (!res.ok) await this.failFrom(res, 'external_id search');
+    const payload = (await res.json()) as { results?: Array<{ id?: number; result_type?: string }> };
+    const hit = (payload.results ?? []).find((r) => typeof r.id === 'number' && (!r.result_type || r.result_type === 'ticket'));
+    return hit ? String(hit.id) : null;
   }
 
   /** Agent-UI link for a ticket on the configured Zendesk instance. */

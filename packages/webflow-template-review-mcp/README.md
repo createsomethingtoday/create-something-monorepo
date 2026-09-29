@@ -711,7 +711,15 @@ submission thread (policy notices, relist/delist questions, clarifications),
   ticket. `template_review_link_version_ticket` performs that write on
   `🧘ZD ID` with a fresh-read precondition (`expected_current_ticket_id`) and
   `confirm_replace: true`; decision emails for the version then go to the new
-  ticket. It is the only write path to that field in this MCP.
+  ticket. Before writing it reads the ticket from Zendesk and refuses unless it
+  is in the Marketplace Review group and either carries this asset's outbound
+  idempotency key (`external_id`) or has the asset's creator as requester
+  (`TICKET_CREATOR_MISMATCH`). It is the only write path to that field in
+  this MCP.
+- Creation is idempotent: the ticket's `external_id` is
+  `template-review-mcp:<asset>:<hash of requester+subject+message>`, and a
+  second call with the same inputs fails with `ZENDESK_OUTBOUND_TICKET_EXISTS`
+  carrying the existing ticket id instead of creating a duplicate.
 
 ## Reviewer checklists
 

@@ -1,5 +1,6 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
+import { createHash } from 'node:crypto';
 
 import { prepareAdminTemplateFill, prepareAdminTemplateFillBatch } from './admin-template-fill.js';
 import { MRP_VISIBILITY_VALUES, setMrpVisibility, type MarketplaceAdminConfig } from './admin-mrp.js';
@@ -193,6 +194,13 @@ function requireZendesk(runtimeConfig: ToolRuntimeConfig, verb: 'reads' | 'write
     );
   }
   return zendesk;
+}
+
+/** Idempotency key for an outbound ticket: same asset + requester + subject + message → same ticket. */
+export const OUTBOUND_EXTERNAL_ID_PREFIX = 'template-review-mcp:';
+function outboundTicketExternalId(assetId: string, requesterEmail: string, subject: string, message: string): string {
+  const digest = createHash('sha256').update(`${requesterEmail.toLowerCase()}\n${subject}\n${message}`).digest('hex').slice(0, 24);
+  return `${OUTBOUND_EXTERNAL_ID_PREFIX}${assetId}:${digest}`;
 }
 
 function requireLinkedTicket(version: { versionId: string; zendeskTicketId?: string }): string {
@@ -1615,8 +1623,8 @@ export function registerTools(
             { asset_id, version_id },
           );
         }
-        if (!asset_id && !version_id) {
-          throw new ZendeskClientError('ASSET_REFERENCE_REQUIRED', 'Provide asset_id or version_id.', 400);
+        if ((asset_id ? 1 : 0) + (version_id ? 1 : 0) !== 1) {
+          throw new ZendeskClientError('ASSET_REFERENCE_REQUIRED', 'Provide exactly one of asset_id or version_id.', 400, { asset_id, version_id });
         }
         const zendesk = requireZendesk(runtimeConfig, 'writes');
         const reviewer = requireResolvedReviewer(getReviewer);
@@ -1645,6 +1653,7 @@ export function registerTools(
           internal_note ??
           `Outbound ticket opened via Template Review MCP by ${reviewer.name ?? reviewer.email ?? reviewer.accountId} for template "${asset.templateName}" (${asset.assetId}).`;
         const publicHtml = renderCreatorFacingHtml(message);
+        const externalId = outboundTicketExternalId(asset.assetId, requesterEmail, subject, message);
         const result = await zendesk.createOutboundTicket({
           requesterEmail,
           requesterName: asset.creatorName,
@@ -1652,6 +1661,7 @@ export function registerTools(
           publicHtml,
           internalNoteHtml: renderCreatorFacingHtml(provenance),
           tags: ['template_review_mcp_outbound', ...(tags ?? [])],
+          externalId,
         });
         return asSuccess({
           reviewer: reviewerPayload(reviewer),
@@ -1661,6 +1671,7 @@ export function registerTools(
           requester_email_source: requester_email ? 'override' : 'airtable',
           ticket_id: result.ticketId,
           ticket_url: zendesk.agentTicketUrl(result.ticketId),
+          external_id: externalId,
           status: result.status,
           group_id: result.groupId,
           brand_id: result.brandId,
@@ -1696,16 +1707,39 @@ export function registerTools(
             { version_id, ticket_id },
           );
         }
+        const zendesk = requireZendesk(runtimeConfig, 'reads');
         const reviewer = requireResolvedReviewer(getReviewer);
         const actingReviewer = currentReviewerAsCollaborator(getReviewer);
         await getClient().requireAssignedVersion(version_id, actingReviewer);
+        const { asset } = await getClient().getScopedVersion(version_id);
+        // Never repoint decision emails at a ticket we cannot tie to this creator: it must sit in
+        // the Marketplace Review group AND either carry this asset's outbound idempotency key or
+        // have the asset's creator as requester.
+        const summary = await zendesk.getTicketSummary(ticket_id);
+        if (summary.groupId !== zendesk.marketplaceGroupId) {
+          throw new ZendeskClientError('ZENDESK_TICKET_OUT_OF_SCOPE', `Ticket ${ticket_id} is not in the Marketplace Review group.`, 403, {
+            ticket_id, group_id: summary.groupId, marketplace_group_id: zendesk.marketplaceGroupId,
+          });
+        }
+        const createdForAsset = summary.externalId?.startsWith(`${OUTBOUND_EXTERNAL_ID_PREFIX}${asset.assetId}:`) === true;
+        const requesterMatches =
+          Boolean(summary.requesterEmail && asset.creatorEmail) && summary.requesterEmail!.toLowerCase() === asset.creatorEmail!.toLowerCase();
+        if (!createdForAsset && !requesterMatches) {
+          throw new ZendeskClientError(
+            'TICKET_CREATOR_MISMATCH',
+            `Ticket ${ticket_id} was not created for this asset and its requester does not match the asset's creator email; refusing to relink.`,
+            409,
+            { ticket_id, asset_id: asset.assetId, ticket_requester_email: summary.requesterEmail, asset_creator_email: asset.creatorEmail ?? null, ticket_external_id: summary.externalId },
+          );
+        }
         const result = await getClient().setVersionZendeskTicket(version_id, ticket_id, expected_current_ticket_id);
-        const zendesk = runtimeConfig.getZendeskClient?.() ?? null;
         return asSuccess({
           reviewer: reviewerPayload(reviewer),
           version_id,
+          asset_id: asset.assetId,
           ticket_id,
-          ticket_url: zendesk?.agentTicketUrl(ticket_id) ?? null,
+          ticket_url: zendesk.agentTicketUrl(ticket_id),
+          ticket_verified_by: createdForAsset ? 'external_id' : 'requester_email',
           previous_ticket_id: result.previousTicketId,
           changed: result.previousTicketId !== ticket_id,
           version: result.version,
