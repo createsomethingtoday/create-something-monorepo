@@ -1019,3 +1019,26 @@ describe('reviewer assignment is read-only at the writer', () => {
     expect(fetchFn).not.toHaveBeenCalled();
   });
 });
+
+describe('setVersionZendeskTicket', () => {
+  it('enforces a fresh-read precondition and patches only 🧘ZD ID', async () => {
+    const calls: Array<{ method: string; url: string; body?: unknown }> = [];
+    const versionRecord = (zd?: string) => ({ id: 'recAppVersion', createdTime: '2026-09-29T00:00:00.000Z', fields: { [FIELD_IDS.versions.assetLink]: ['recAppAsset'], ...(zd ? { [FIELD_IDS.versions.zendeskTicketId]: zd } : {}) } });
+    const fetchFn = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      const method = init?.method ?? 'GET';
+      calls.push({ method, url, body: init?.body ? JSON.parse(String(init.body)) : undefined });
+      if (method === 'PATCH') return new Response(JSON.stringify({ records: [versionRecord('1200001')] }), { status: 200 });
+      return new Response(JSON.stringify(versionRecord('1188879')), { status: 200 });
+    });
+    const client = new AirtableClient({ apiKey: 'k', baseId: 'appTest', fetchFn: fetchFn as unknown as typeof fetch });
+    await expect(client.setVersionZendeskTicket('recAppVersion', '1200001', null)).rejects.toMatchObject({ code: 'VERSION_TICKET_CONFLICT' });
+    await expect(client.setVersionZendeskTicket('recAppVersion', 'abc', '1188879')).rejects.toMatchObject({ code: 'INVALID_TICKET_ID' });
+    expect(calls.filter((c) => c.method === 'PATCH')).toHaveLength(0);
+    const result = await client.setVersionZendeskTicket('recAppVersion', '1200001', '1188879');
+    const patch = calls.find((c) => c.method === 'PATCH');
+    expect(patch?.body).toEqual({ records: [{ id: 'recAppVersion', fields: { [FIELD_IDS.versions.zendeskTicketId]: '1200001' } }] });
+    expect(patch?.url).toContain('returnFieldsByFieldId=true');
+    expect(result.previousTicketId).toBe('1188879');
+  });
+});

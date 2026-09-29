@@ -1,4 +1,10 @@
-import type { FetchFn } from './airtable.js';
+// Twin of packages/webflow-template-review-mcp/src/zendesk.ts. Both review MCPs share
+// the Marketplace Review Team group and the Asset Versions table, so the client and its
+// safety properties (escape-first HTML, group-scoped status writes, safe_update
+// preconditions, paged public reads, idempotent outbound-ticket recipe) must stay
+// byte-identical below this header. Consolidation into a shared package: CRE-2176.
+
+type FetchFn = typeof fetch;
 
 // Creator-facing Zendesk follow-ups bypass the Airtable email composer, so this
 // module owns the same safety property the patched composer has: input is
@@ -21,7 +27,7 @@ export class ZendeskClientError extends Error {
 }
 
 function escapeHtml(text: string): string {
-  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
 // Escape-first markdown-to-HTML, matching the patched composer's dialect so
@@ -34,7 +40,9 @@ export function renderCreatorFacingHtml(markdown: string): string {
   html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
   html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
   html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
-  html = html.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2">$1</a>');
+  // Only http(s) targets become anchors; anything else stays literal text. Quotes
+  // are already &quot; from escapeHtml, so the href attribute cannot be broken out of.
+  html = html.replace(/\[([^\]]*?)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2">$1</a>');
   html = html.replace(/&lt;(https?:\/\/[^\s]+?)&gt;/g, '<a href="$1">$1</a>');
 
   const lines = html.split('\n');
@@ -89,6 +97,22 @@ export interface ZendeskClientOptions {
 
 /** Marketplace Review Team group in webflow2579. Programs Support (46157931219347) is NOT in scope. */
 export const DEFAULT_MARKETPLACE_GROUP_ID = 1500002744702;
+
+/**
+ * Parse MARKETPLACE_ZENDESK_GROUP_ID. A malformed value would otherwise become NaN,
+ * which scopes every search to `group:NaN` and refuses every status write; fall
+ * back to the default group and warn instead.
+ */
+export function parseZendeskGroupId(raw: string | undefined): number | undefined {
+  if (raw === undefined || raw.trim() === '') return undefined;
+  const trimmed = raw.trim();
+  const parsed = Number.parseInt(trimmed, 10);
+  if (!Number.isFinite(parsed) || parsed <= 0 || String(parsed) !== trimmed) {
+    console.warn(`[zendesk] MARKETPLACE_ZENDESK_GROUP_ID "${raw}" is not a positive integer; using default ${DEFAULT_MARKETPLACE_GROUP_ID}.`);
+    return undefined;
+  }
+  return parsed;
+}
 
 export const ZENDESK_WRITABLE_STATUSES = ['new', 'open', 'pending', 'hold', 'solved'] as const;
 export type ZendeskWritableStatus = (typeof ZENDESK_WRITABLE_STATUSES)[number];
@@ -152,6 +176,47 @@ export interface TicketCommentResult {
   ticketStatus?: string;
 }
 
+export interface OutboundTicketInput {
+  requesterEmail: string;
+  requesterName?: string;
+  subject: string;
+  /** Creator-facing message, already rendered to HTML (renderCreatorFacingHtml). Posted as a public agent update. */
+  publicHtml: string;
+  /** Private first comment (audit trail for the team); never emailed. */
+  internalNoteHtml: string;
+  tags?: string[];
+  /**
+   * Idempotency key stored as the ticket's external_id. Before creating, the client searches
+   * for an existing ticket with this external_id and refuses to create a second one
+   * (ZENDESK_OUTBOUND_TICKET_EXISTS), so a lost create response cannot become a duplicate.
+   */
+  externalId?: string;
+}
+
+export interface TicketSummary {
+  ticketId: string;
+  status: string | null;
+  groupId: number | null;
+  brandId: number | null;
+  tags: string[];
+  externalId: string | null;
+  requesterId: number | null;
+  requesterEmail: string | null;
+}
+
+export interface OutboundTicketResult {
+  ticketId: string;
+  status: string | null;
+  groupId: number | null;
+  brandId: number | null;
+  requesterId: number | null;
+  agentId: number;
+  publicCommentAuditId?: number;
+  /** true = a Notification event to the requester was found in the audit trail; null = could not verify. */
+  requesterNotified: boolean | null;
+  steps: string[];
+}
+
 export interface TicketThreadAuthor {
   id: number | null;
   name: string | null;
@@ -180,6 +245,8 @@ export interface TicketThread {
   assignee: TicketThreadAuthor | null;
   comments: TicketThreadComment[];
   totalCommentsOnTicket: number | null;
+  /** True when older visible comments exist beyond the returned window (raise `limit` to read further back). */
+  hasOlderComments: boolean;
   includesInternalNotes: boolean;
 }
 
@@ -187,13 +254,196 @@ export class ZendeskClient {
   private readonly baseUrl: string;
   private readonly authHeader: string;
   private readonly fetchFn: FetchFn;
+  readonly subdomain: string;
   readonly marketplaceGroupId: number;
 
   constructor(options: ZendeskClientOptions) {
+    this.subdomain = options.subdomain;
     this.baseUrl = `https://${options.subdomain}.zendesk.com/api/v2`;
     this.authHeader = `Basic ${btoa(`${options.email}/token:${options.apiToken}`)}`;
     this.fetchFn = options.fetchFn ?? ((input, init) => fetch(input, init));
     this.marketplaceGroupId = options.marketplaceGroupId ?? DEFAULT_MARKETPLACE_GROUP_ID;
+  }
+
+  private agentIdCache: number | null = null;
+
+  /** The Zendesk user the API token authenticates as (ZENDESK_API_EMAIL). Cached per client. */
+  async getAuthenticatedAgentId(): Promise<number> {
+    if (this.agentIdCache !== null) return this.agentIdCache;
+    const res = await this.fetchFn(`${this.baseUrl}/users/me.json`, {
+      headers: { Authorization: this.authHeader, Accept: 'application/json' },
+    });
+    if (!res.ok) await this.failFrom(res, 'users/me read');
+    const payload = (await res.json()) as { user?: { id?: number } };
+    if (typeof payload.user?.id !== 'number') {
+      throw new ZendeskClientError('ZENDESK_AGENT_UNRESOLVED', 'Zendesk did not return an authenticated user id.', 502);
+    }
+    this.agentIdCache = payload.user.id;
+    return this.agentIdCache;
+  }
+
+  /**
+   * Open a NEW outbound ticket to a creator and actually notify them. Zendesk's create
+   * event does not email Marketplace-brand requesters and attributes an author-less
+   * comment to the requester, and triggers re-route new tickets out of the Marketplace
+   * Review group. So: (1) create with a PRIVATE agent-authored note, (2) pin the group
+   * back to Marketplace Review, (3) post the public message as an agent UPDATE, which
+   * fires the requester email, (4) confirm a Notification event in the audit trail.
+   * If a step after creation fails, the error carries the ticket id so the operator can
+   * finish by hand instead of creating a duplicate.
+   */
+  async createOutboundTicket(input: OutboundTicketInput): Promise<OutboundTicketResult> {
+    const headers = { Authorization: this.authHeader, Accept: 'application/json', 'Content-Type': 'application/json' };
+    const steps: string[] = [];
+    const agentId = await this.getAuthenticatedAgentId();
+    steps.push(`agent:${agentId}`);
+
+    if (input.externalId) {
+      const existing = await this.findTicketByExternalId(input.externalId);
+      if (existing) {
+        throw new ZendeskClientError(
+          'ZENDESK_OUTBOUND_TICKET_EXISTS',
+          `A ticket with this idempotency key already exists (${existing}). Read it before sending anything else; do not create a duplicate.`,
+          409,
+          { ticketId: existing, ticketUrl: this.agentTicketUrl(existing), externalId: input.externalId },
+        );
+      }
+      steps.push('idempotency_checked');
+    }
+
+    const createRes = await this.fetchFn(`${this.baseUrl}/tickets.json`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        ticket: {
+          subject: input.subject,
+          requester: { email: input.requesterEmail, ...(input.requesterName ? { name: input.requesterName } : {}) },
+          group_id: this.marketplaceGroupId,
+          ...(input.externalId ? { external_id: input.externalId } : {}),
+          ...(input.tags?.length ? { tags: input.tags } : {}),
+          comment: { html_body: input.internalNoteHtml, public: false, author_id: agentId },
+        },
+      }),
+    });
+    if (!createRes.ok) await this.failFrom(createRes, 'ticket create');
+    type RawTicket = { id?: number; status?: string; group_id?: number | null; brand_id?: number | null; requester_id?: number | null };
+    const created = ((await createRes.json()) as { ticket?: RawTicket }).ticket ?? {};
+    if (typeof created.id !== 'number') {
+      throw new ZendeskClientError('ZENDESK_REQUEST_FAILED', 'Zendesk ticket create returned no ticket id.', 502, { steps });
+    }
+    const ticketId = String(created.id);
+    steps.push('created');
+    let ticket: RawTicket = created;
+
+    const incomplete = (step: string, res: Response | null, extra?: unknown): never => {
+      throw new ZendeskClientError(
+        'ZENDESK_OUTBOUND_TICKET_INCOMPLETE',
+        `Ticket ${ticketId} was created but step "${step}" failed${res ? ` with status ${res.status}` : ''}. Finish it in Zendesk instead of creating another ticket.`,
+        res?.status ?? 502,
+        { ticketId, ticketUrl: this.agentTicketUrl(ticketId), failedStep: step, steps, extra },
+      );
+    };
+
+    try {
+      if (ticket.group_id !== this.marketplaceGroupId) {
+        const groupRes = await this.fetchFn(`${this.baseUrl}/tickets/${ticketId}.json`, {
+          method: 'PUT',
+          headers,
+          body: JSON.stringify({ ticket: { group_id: this.marketplaceGroupId } }),
+        });
+        if (!groupRes.ok) incomplete('group_fix', groupRes);
+        ticket = ((await groupRes.json()) as { ticket?: RawTicket }).ticket ?? ticket;
+        steps.push(`group_fixed:${ticket.group_id ?? 'unknown'}`);
+      }
+
+      const publicRes = await this.fetchFn(`${this.baseUrl}/tickets/${ticketId}.json`, {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify({ ticket: { comment: { html_body: input.publicHtml, public: true, author_id: agentId } } }),
+      });
+      if (!publicRes.ok) incomplete('public_comment', publicRes);
+      const publicPayload = (await publicRes.json()) as { ticket?: RawTicket; audit?: { id?: number } };
+      ticket = publicPayload.ticket ?? ticket;
+      steps.push('public_comment_posted');
+
+      let requesterNotified: boolean | null = null;
+      const auditsRes = await this.fetchFn(`${this.baseUrl}/tickets/${ticketId}/audits.json`, {
+        headers: { Authorization: this.authHeader, Accept: 'application/json' },
+      });
+      if (auditsRes.ok) {
+        const audits = (await auditsRes.json()) as {
+          audits?: Array<{ events?: Array<{ type?: string; recipients?: number[] }> }>;
+        };
+        const requesterId = ticket.requester_id ?? null;
+        requesterNotified =
+          requesterId !== null &&
+          (audits.audits ?? []).some((a) =>
+            (a.events ?? []).some((e) => e.type === 'Notification' && (e.recipients ?? []).includes(requesterId)),
+          );
+        steps.push(requesterNotified ? 'notification_verified' : 'notification_not_found');
+      } else {
+        steps.push('audit_read_failed');
+      }
+
+      return {
+        ticketId,
+        status: ticket.status ?? null,
+        groupId: ticket.group_id ?? null,
+        brandId: ticket.brand_id ?? null,
+        requesterId: ticket.requester_id ?? null,
+        agentId,
+        publicCommentAuditId: publicPayload.audit?.id,
+        requesterNotified,
+        steps,
+      };
+    } catch (error) {
+      if (error instanceof ZendeskClientError) throw error;
+      return incomplete('unexpected', null, error instanceof Error ? error.message : String(error));
+    }
+  }
+
+  /** Read one ticket's routing and requester identity (no comments). Used to verify a ticket before trusting it. */
+  async getTicketSummary(ticketId: string): Promise<TicketSummary> {
+    if (!/^\d+$/.test(ticketId)) {
+      throw new ZendeskClientError('INVALID_TICKET_ID', 'Zendesk ticket ID must be numeric.', 400, { ticketId });
+    }
+    const res = await this.fetchFn(`${this.baseUrl}/tickets/${ticketId}.json?include=users`, {
+      headers: { Authorization: this.authHeader, Accept: 'application/json' },
+    });
+    if (!res.ok) await this.failFrom(res, 'ticket read', ticketId);
+    const payload = (await res.json()) as {
+      ticket?: { status?: string; group_id?: number | null; brand_id?: number | null; tags?: string[]; external_id?: string | null; requester_id?: number | null };
+      users?: Array<{ id?: number; email?: string }>;
+    };
+    const t = payload.ticket ?? {};
+    const requester = (payload.users ?? []).find((u) => u.id === t.requester_id);
+    return {
+      ticketId,
+      status: t.status ?? null,
+      groupId: t.group_id ?? null,
+      brandId: t.brand_id ?? null,
+      tags: t.tags ?? [],
+      externalId: t.external_id ?? null,
+      requesterId: t.requester_id ?? null,
+      requesterEmail: requester?.email ?? null,
+    };
+  }
+
+  /** Find a ticket previously created with this external_id (idempotency key), if any. */
+  async findTicketByExternalId(externalId: string): Promise<string | null> {
+    const search = new URLSearchParams({ query: `type:ticket external_id:${externalId}`, per_page: '1' });
+    const res = await this.fetchFn(`${this.baseUrl}/search.json?${search.toString()}`, {
+      headers: { Authorization: this.authHeader, Accept: 'application/json' },
+    });
+    if (!res.ok) await this.failFrom(res, 'external_id search');
+    const payload = (await res.json()) as { results?: Array<{ id?: number; result_type?: string }> };
+    const hit = (payload.results ?? []).find((r) => typeof r.id === 'number' && (!r.result_type || r.result_type === 'ticket'));
+    return hit ? String(hit.id) : null;
+  }
+
+  /** Agent-UI link for a ticket on the configured Zendesk instance. */
+  agentTicketUrl(ticketId: string): string {
+    return `https://${this.subdomain}.zendesk.com/agent/tickets/${ticketId}`;
   }
 
   private async failFrom(res: Response, label: string, ticketId?: string): Promise<never> {
@@ -295,7 +545,9 @@ export class ZendeskClient {
     const headers = { Authorization: this.authHeader, Accept: 'application/json' };
     const current = await this.fetchFn(`${this.baseUrl}/tickets/${ticketId}.json`, { headers });
     if (!current.ok) await this.failFrom(current, 'ticket read', ticketId);
-    const { ticket } = (await current.json()) as { ticket?: { status?: string; group_id?: number | null; tags?: string[] } };
+    const { ticket } = (await current.json()) as {
+      ticket?: { status?: string; group_id?: number | null; tags?: string[]; updated_at?: string };
+    };
     const previousStatus = ticket?.status ?? 'unknown';
     if (ticket?.group_id !== this.marketplaceGroupId) {
       throw new ZendeskClientError(
@@ -314,6 +566,12 @@ export class ZendeskClient {
       );
     }
     const body: Record<string, unknown> = { status: update.status };
+    // Zendesk's provider-side precondition: the PUT is rejected with 409 if the ticket
+    // changed after the read above, so the expected-status check holds under concurrency.
+    if (ticket?.updated_at) {
+      body.safe_update = true;
+      body.updated_stamp = ticket.updated_at;
+    }
     if (update.additionalTags?.length) body.additional_tags = update.additionalTags;
     if (update.removeTags?.length) body.remove_tags = update.removeTags;
     if (update.privateNote?.trim()) body.comment = { body: update.privateNote.trim(), public: false };
@@ -322,6 +580,14 @@ export class ZendeskClient {
       headers: { ...headers, 'Content-Type': 'application/json' },
       body: JSON.stringify({ ticket: body }),
     });
+    if (res.status === 409) {
+      throw new ZendeskClientError(
+        'ZENDESK_STATUS_CONFLICT',
+        `Ticket ${ticketId} changed after it was read (Zendesk safe_update rejected the write). Re-read and confirm again.`,
+        409,
+        { ticketId, expectedStatus: update.expectedStatus, updatedStamp: ticket?.updated_at ?? null },
+      );
+    }
     if (!res.ok) await this.failFrom(res, 'ticket status update', ticketId);
     const payload = (await res.json()) as { ticket?: { status?: string; tags?: string[] }; audit?: { id?: number } };
     return {
@@ -400,29 +666,27 @@ export class ZendeskClient {
     const includeInternalNotes = options.includeInternalNotes === true;
     const headers = { Authorization: this.authHeader, Accept: 'application/json' };
 
-    const [ticketRes, commentsRes] = await Promise.all([
+    const firstCommentsUrl = `${this.baseUrl}/tickets/${ticketId}/comments.json?include=users&sort_order=desc&per_page=${limit}`;
+    const [ticketRes, firstCommentsRes] = await Promise.all([
       this.fetchFn(`${this.baseUrl}/tickets/${ticketId}.json?include=users`, { headers }),
-      this.fetchFn(
-        `${this.baseUrl}/tickets/${ticketId}/comments.json?include=users&sort_order=desc&per_page=${limit}`,
-        { headers },
-      ),
+      this.fetchFn(firstCommentsUrl, { headers }),
     ]);
-    for (const [label, res] of [['ticket', ticketRes], ['comments', commentsRes]] as const) {
-      if (!res.ok) {
-        let details: unknown;
-        try {
-          details = await res.json();
-        } catch {
-          details = await res.text().catch(() => undefined);
-        }
-        throw new ZendeskClientError(
-          res.status === 404 ? 'ZENDESK_TICKET_NOT_FOUND' : 'ZENDESK_REQUEST_FAILED',
-          `Zendesk ${label} read failed with status ${res.status}.`,
-          res.status,
-          { ticketId, details },
-        );
+    const failRead = async (label: string, res: Response): Promise<never> => {
+      let details: unknown;
+      try {
+        details = await res.json();
+      } catch {
+        details = await res.text().catch(() => undefined);
       }
-    }
+      throw new ZendeskClientError(
+        res.status === 404 ? 'ZENDESK_TICKET_NOT_FOUND' : 'ZENDESK_REQUEST_FAILED',
+        `Zendesk ${label} read failed with status ${res.status}.`,
+        res.status,
+        { ticketId, details },
+      );
+    };
+    if (!ticketRes.ok) await failRead('ticket', ticketRes);
+    if (!firstCommentsRes.ok) await failRead('comments', firstCommentsRes);
 
     type RawUser = { id?: number; name?: string; role?: string; email?: string };
     type RawTicket = {
@@ -450,21 +714,44 @@ export class ZendeskClient {
       }>;
       users?: RawUser[];
       count?: number;
+      next_page?: string | null;
     };
+    type RawComment = NonNullable<RawComments['comments']>[number];
     const ticketPayload = (await ticketRes.json()) as RawTicket;
-    const commentsPayload = (await commentsRes.json()) as RawComments;
 
+    // Zendesk cannot filter comments by visibility server-side. When private notes are
+    // excluded, the newest `limit` records may all be internal triage, so keep paging
+    // (newest → oldest) until `limit` visible comments are collected, a bounded number
+    // of pages have been read, or the history is exhausted.
+    const MAX_COMMENT_PAGES = 10;
     const users = new Map<number, RawUser>();
-    for (const u of [...(ticketPayload.users ?? []), ...(commentsPayload.users ?? [])]) {
-      if (typeof u.id === 'number') users.set(u.id, u);
+    for (const u of ticketPayload.users ?? []) if (typeof u.id === 'number') users.set(u.id, u);
+    const isVisible = (c: RawComment) => includeInternalNotes || c.public !== false;
+    const rawComments: RawComment[] = [];
+    let commentsPayload = (await firstCommentsRes.json()) as RawComments;
+    let totalCount = commentsPayload.count;
+    let pagesRead = 1;
+    let nextPage = commentsPayload.next_page ?? null;
+    for (;;) {
+      for (const u of commentsPayload.users ?? []) if (typeof u.id === 'number') users.set(u.id, u);
+      rawComments.push(...(commentsPayload.comments ?? []));
+      if (rawComments.filter(isVisible).length >= limit || !nextPage || pagesRead >= MAX_COMMENT_PAGES) break;
+      const res = await this.fetchFn(nextPage, { headers });
+      if (!res.ok) await failRead('comments', res);
+      commentsPayload = (await res.json()) as RawComments;
+      if (typeof commentsPayload.count === 'number') totalCount = commentsPayload.count;
+      nextPage = commentsPayload.next_page ?? null;
+      pagesRead += 1;
     }
+    const visibleNewestFirst = rawComments.filter(isVisible);
+    const hasOlderComments = visibleNewestFirst.length > limit || Boolean(nextPage);
     const author = (id: number | null | undefined): TicketThreadAuthor => {
       const u = typeof id === 'number' ? users.get(id) : undefined;
       return { id: id ?? null, name: u?.name ?? null, role: u?.role ?? null, email: u?.email ?? null };
     };
 
-    const comments = (commentsPayload.comments ?? [])
-      .filter((c) => includeInternalNotes || c.public !== false)
+    const comments = visibleNewestFirst
+      .slice(0, limit)
       .map<TicketThreadComment>((c) => ({
         id: c.id,
         createdAt: c.created_at ?? null,
@@ -491,7 +778,9 @@ export class ZendeskClient {
       requester: typeof t.requester_id === 'number' ? author(t.requester_id) : null,
       assignee: typeof t.assignee_id === 'number' ? author(t.assignee_id) : null,
       comments,
-      totalCommentsOnTicket: typeof commentsPayload.count === 'number' ? commentsPayload.count : null,
+      // The raw count includes private notes; only expose it when the caller was allowed to see them.
+      totalCommentsOnTicket: includeInternalNotes && typeof totalCount === 'number' ? totalCount : null,
+      hasOlderComments,
       includesInternalNotes: includeInternalNotes,
     };
   }
