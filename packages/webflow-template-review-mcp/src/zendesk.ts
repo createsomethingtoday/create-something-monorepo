@@ -365,7 +365,10 @@ export class ZendeskClient {
       const publicRes = await this.fetchFn(`${this.baseUrl}/tickets/${ticketId}.json`, {
         method: 'PUT',
         headers,
-        body: JSON.stringify({ ticket: { comment: { html_body: input.publicHtml, public: true, author_id: agentId } } }),
+        // status:'open' is required, not cosmetic — every "Email > Public reply" trigger in
+        // webflow2579 has `status is_not new`, so a public update on a `new` ticket emails nobody
+        // (observed on ticket 1199586, 2026-09-29).
+        body: JSON.stringify({ ticket: { status: 'open', comment: { html_body: input.publicHtml, public: true, author_id: agentId } } }),
       });
       if (!publicRes.ok) incomplete('public_comment', publicRes);
       const publicPayload = (await publicRes.json()) as { ticket?: RawTicket; audit?: { id?: number } };

@@ -698,7 +698,9 @@ submission thread (policy notices, relist/delist questions, clarifications),
   (an author-less create comment is attributed to the requester and sends
   nothing), pin the group back to Marketplace Review (triggers re-route new
   tickets to Programs Support), then post the public message as an agent
-  update, which fires the requester notification. The response reports
+  update that also sets `status: open` — the "Email > Public reply" triggers
+  all require the status to be something other than `new`, so without that
+  the requester notification never fires. The response reports
   `requester_notified` from the audit trail; treat `false`/`null` as "check the
   ticket" rather than "sent".
 - If any step after creation fails, the error carries the ticket id
