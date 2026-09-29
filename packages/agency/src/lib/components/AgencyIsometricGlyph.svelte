@@ -1,5 +1,5 @@
 <script lang="ts">
-  export type AgencySignKind = 'map' | 'build' | 'control' | 'proof';
+  export type AgencySignKind = 'map' | 'build' | 'control' | 'approval' | 'proof';
 
   let { kind }: { kind: AgencySignKind } = $props();
 </script>
@@ -9,7 +9,7 @@
   viewBox="0 0 32 32"
   fill="none"
   stroke="currentColor"
-  stroke-width="1.75"
+  stroke-width="2"
   stroke-linejoin="round"
   stroke-linecap="round"
   aria-hidden="true"
@@ -26,6 +26,9 @@
     <path
       d="M4 12 16 6l12 6v10l-8 4 M12 26l-8-4V12 M4 22l12-6 12 6 M16 6v10 M12 28v-7 M20 28v-7 M12 23h8"
     />
+  {:else if kind === 'approval'}
+    <path d="M4 14 16 7l12 7-12 7Z M4 14v6l12 7 12-7v-6 M16 21v6" />
+    <path d="m10.5 14.5 4 2.5 7-5" />
   {:else}
     <path
       d="m8 8 12-5 5 4v17l-12 5-5-4Z M8 8l5 4 12-5 M13 12v17 M17 15l5-2 M17 20l5-2 M17 25l5-2"
@@ -38,5 +41,9 @@
     display: block;
     width: 100%;
     height: auto;
+  }
+
+  path {
+    vector-effect: non-scaling-stroke;
   }
 </style>

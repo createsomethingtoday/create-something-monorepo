@@ -19,10 +19,31 @@
       :global(
         .performance-campaign-opening[data-expression='editorial']
           .performance-campaign-opening__content
+      ) {
+      width: 90%;
+      padding-top: 8.5rem;
+    }
+
+    .agency-wayfinding-opening
+      :global(
+        .performance-campaign-opening[data-expression='editorial']
+          .performance-campaign-opening__content
           header
       ) {
-      width: min(42%, 37rem);
-      max-width: 37rem;
+      width: 49%;
+      max-width: none;
+    }
+
+    .agency-wayfinding-opening
+      :global(
+        .performance-campaign-opening[data-expression='editorial']
+          .performance-campaign-opening__artifact
+      ) {
+      inset: 8.5rem 5% auto auto;
+      width: 44%;
+      min-height: 0;
+      height: auto;
+      background: transparent;
     }
   }
 
@@ -53,7 +74,7 @@
       position: relative;
       z-index: 2;
       grid-row: 1;
-      width: min(calc(100% - 1.5rem), 46rem);
+      width: min(90%, 46rem);
       max-width: 46rem;
       margin-inline: auto;
       padding-block: 6.5rem 2rem;
@@ -79,7 +100,7 @@
       position: relative;
       z-index: 2;
       grid-row: 3;
-      width: min(calc(100% - 1.5rem), 46rem);
+      width: min(90%, 46rem);
       margin: 0 auto 1rem;
     }
   }
