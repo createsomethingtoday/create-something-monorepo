@@ -1,4 +1,5 @@
 <script lang="ts">
+  import AgencyWayfindingSign from '$lib/components/AgencyWayfindingSign.svelte';
   import { Button, SEO } from '@create-something/canon';
   import type { PageData } from './$types';
 
@@ -133,6 +134,11 @@
     </div>
   </section>
 
+  <nav class="guide-continuation" aria-label="Continue after this workflow guide">
+    <AgencyWayfindingSign kind="map" label="Explore Map" detail="Define one workflow, its owner, and the checks it needs." href="/map" />
+    <AgencyWayfindingSign kind="proof" label="Return to workflow guides" detail="Choose another question to explore." href="/workflows#guides" direction="back" />
+  </nav>
+
   <footer class="guide-related">
     <p class="section-label">Related guides</p>
     <div>
@@ -147,6 +153,13 @@
 </article>
 
 <style>
+  .guide-continuation {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+    gap: var(--space-performance-sm);
+    margin-block: var(--space-performance-xl);
+  }
+
   .guide-shell {
     --guide-line: var(--color-performance-line);
     width: min(

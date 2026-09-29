@@ -1,4 +1,5 @@
 <script lang="ts">
+  import AgencyWayfindingSign from '$lib/components/AgencyWayfindingSign.svelte';
   import {
     Button,
     PerformanceCampaignOpening,
@@ -92,5 +93,8 @@
     >
       {agencyCoreMessaging.bookMappingSessionLabel}
     </Button>
+  {/snippet}
+  {#snippet aside()}
+    <AgencyWayfindingSign kind="map" label="Explore Map" detail="Define the workflow and the evidence your team needs." href="/map" />
   {/snippet}
 </PerformanceConversionHandoff>

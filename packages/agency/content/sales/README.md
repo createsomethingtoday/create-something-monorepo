@@ -2,7 +2,10 @@
 
 **Primary buyer:** Ops/RevOps  
 **Primary channel:** Live discovery and mapping calls  
-**Core phrase:** Production-safe workflow infrastructure
+**Visitor-facing category:** AI-native tech support\
+**Workflow delivery descriptor:** Production-safe workflow infrastructure
+
+AI-native tech support covers the tools and systems a team uses and owns. We map workflows, implement agreed changes, and operate agreed live systems through Map, Build and Control. The workflow delivery descriptor names the scoped engineering behind that support; it is not a safety or availability guarantee. Membership covers one agreed workstream. Larger Build projects and managed Control have separate agreements. Project-specific AI usage, hosting and third-party services are budgeted separately. Support scope and response times follow the agreement; no 24/7 or unlimited service is implied.
 
 ---
 
@@ -118,7 +121,8 @@ Use [the remote support brief](remote-support.md) when a client needs help on th
 
 ## Message taxonomy
 
-- Core phrase: "Production-safe workflow infrastructure."
+- Visitor-facing category: "AI-native tech support."
+- Workflow delivery descriptor: "Production-safe workflow infrastructure."
 - Client-facing delivery vector: `Skills + MCP`
 - Technical proof vector: `MCP + Skills`
 

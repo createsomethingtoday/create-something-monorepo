@@ -92,8 +92,8 @@
   <PerformanceCampaignOpening
     eyebrow="How It Works"
     expression="editorial"
-    title="Support for the work ahead."
-    lede="Bring a task to automate or a product you have already built. Our $900/month membership covers delivery within an agreed scope, one workstream at a time, with learning and support. Project-specific AI usage and hosting are separate."
+    title="Bring a workflow, software problem or existing product."
+    lede="Our $900/month membership covers delivery, learning and support for one agreed workstream. You keep the delivered code and approval authority. Larger Build projects and managed Control have separate agreements. Project-specific AI usage, hosting and third-party services are separate."
     media={playbookHeroMedia.services}
     mediaMobilePlacement="background"
     density="compact"
@@ -158,7 +158,7 @@
     {/snippet}
   </PerformancePageSection>
 
-  <AgencyPerformanceReadback embedded={true} />
+  <AgencyPerformanceReadback embedded={true} wayfinding />
 
   <ServicesMapPreview />
 </div>

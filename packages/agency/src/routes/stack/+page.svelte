@@ -1,4 +1,5 @@
 <script lang="ts">
+  import AgencyWayfindingSign from '$lib/components/AgencyWayfindingSign.svelte';
   import {
     Button,
     PerformanceCardGrid,
@@ -321,6 +322,9 @@
     <Button href={agencyCoreMessaging.workflowMappingSessionHref} variant="secondary">
       {agencyCoreMessaging.bookMappingSessionLabel}
     </Button>
+  {/snippet}
+  {#snippet aside()}
+    <AgencyWayfindingSign kind="proof" label="Inspect a field test" detail="Template Review · measured collection, blocked judgment, unmeasured time savings." href="/field-reports/template-review" />
   {/snippet}
 </PerformanceConversionHandoff>
 

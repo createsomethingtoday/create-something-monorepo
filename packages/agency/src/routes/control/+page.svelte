@@ -1,4 +1,5 @@
 <script lang="ts">
+  import AgencyWayfindingSign from '$lib/components/AgencyWayfindingSign.svelte';
   import {
     Button,
     PerformanceCampaignOpening,
@@ -220,6 +221,18 @@
     {/snippet}
   </PerformanceNarrativeStage>
 
+  <aside class="route-handoff" aria-label="Control next steps">
+    <div class="route-handoff__inner">
+      <p class="route-handoff__current">Current path · Control · post-launch operations</p>
+      <p class="route-handoff__context">Next, bring the running workflow to a mapping session. Control includes Map; new workflows and integrations need a separate Build scope.</p>
+      <a class="route-handoff__return" href="/products#choose-product"><span aria-hidden="true">←</span> Compare paths</a>
+      <div class="route-handoff__links">
+        <AgencyWayfindingSign kind="map" label="See the included Map" href="/map" detail="Keep the plan connected to the work." />
+        <AgencyWayfindingSign kind="build" label="Explore Agent Foundation" href="/agent-foundation" detail="Explore a separately scoped Build." />
+      </div>
+    </div>
+  </aside>
+
   <PerformanceConversionHandoff
     expression="editorial"
     eyebrow="Choose the next boundary"
@@ -242,6 +255,20 @@
 </main>
 
 <style>
+  .route-handoff {
+    padding: var(--space-performance-lg) clamp(1.25rem, 5vw, 6rem);
+    color: var(--color-performance-ink);
+    background: var(--color-performance-paper);
+    border-block: 1px solid var(--color-performance-line);
+  }
+  .route-handoff__inner { max-width: var(--content-width-performance); margin-inline: auto; }
+  .route-handoff__current { margin: 0 0 var(--space-performance-sm); font-size: var(--text-performance-caption); font-family: var(--font-performance-mono); }
+  .route-handoff__context { max-width: 70ch; margin: 0 0 var(--space-performance-md); line-height: 1.6; }
+  .route-handoff__return { display: inline-flex; align-items: center; gap: var(--space-performance-sm); min-height: 44px; margin-bottom: var(--space-performance-sm); color: inherit; text-underline-offset: .25em; }
+  .route-handoff__return:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; }
+  .route-handoff__links { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-performance-sm); }
+  @media (max-width: 760px) { .route-handoff__links { grid-template-columns: 1fr; } }
+
   .review-boundary { padding: 2rem max(1.25rem, calc((100% - 80rem) / 2)); color: var(--color-performance-ink); background: var(--color-performance-paper); }
   .review-boundary p { max-width: 70ch; line-height: 1.65; }
   .review-boundary a { color: inherit; text-decoration: underline; }

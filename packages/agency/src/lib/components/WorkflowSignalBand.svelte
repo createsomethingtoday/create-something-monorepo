@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { reducedFilmMotion } from '$lib/motion/filmPlayback';
+  import AgencyWayfindingSign from './AgencyWayfindingSign.svelte';
 
   let canvas: HTMLCanvasElement;
   let field: HTMLElement;
@@ -112,9 +113,15 @@
     <li><span>02 / Decision</span><small>Apply the rule or ask a person.</small></li>
     <li><span>03 / Proof</span><small>Keep the result and how it was checked.</small></li>
   </ol>
+  <div class="signal-continuation">
+    <AgencyWayfindingSign kind="proof" label="Inspect the work" detail="See the examples and their source records." href="#built-work" direction="down" />
+    <AgencyWayfindingSign kind="map" label="Choose a path" detail="Compare Map, Build, and Control." href="/products#choose-product" />
+  </div>
 </section>
 
 <style>
+  .signal-continuation { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-performance-sm); padding: var(--space-performance-sm) 7vw var(--space-performance-md); }
+  @media (max-width: 640px) { .signal-continuation { grid-template-columns: 1fr; } }
   .signal-band { padding: 0; background: var(--color-performance-mode-campaign-surface); color: var(--color-performance-mode-campaign-ink); border-block: 1px solid var(--color-performance-shell-border-default); overflow: hidden; }
   .signal-heading { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--space-performance-sm); padding: var(--space-performance-md) 7vw 0; }
   .eyebrow, .stages span { font: var(--text-performance-operator-label)/1.5 var(--font-performance-mono); letter-spacing: .04em; text-transform: uppercase; }

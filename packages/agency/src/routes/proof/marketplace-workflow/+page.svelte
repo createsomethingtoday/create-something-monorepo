@@ -1,4 +1,5 @@
 <script lang="ts">
+  import AgencyWayfindingSign from '$lib/components/AgencyWayfindingSign.svelte';
   import {
     Button,
     PerformanceCampaignOpening,
@@ -272,12 +273,20 @@
         The workflow library turns this example into practical guidance for mapping, evaluation,
         human review, governance, security, and operating evidence.
       </p>
-      <Button href="/workflows" variant="secondary">Browse workflow guides</Button>
+      <nav class="proof-continuation" aria-label="Continue from the Marketplace proof">
+        <AgencyWayfindingSign kind="map" label="Return to Practice" detail="Rehearse a workflow before connecting live tools." href="/practice#practice-workbench" direction="back" />
+        <AgencyWayfindingSign kind="proof" label="Browse workflow guides" detail="Apply the method to your task." href="/workflows" />
+      </nav>
     </div>
   </aside>
 </div>
 
 <style>
+  .proof-continuation {
+    display: grid;
+    gap: var(--space-performance-sm);
+  }
+
   .workflow-library-link {
     display: grid;
     grid-template-columns: minmax(150px, 0.35fr) minmax(0, 1fr);

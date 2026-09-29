@@ -1,4 +1,5 @@
 <script lang="ts">
+  import AgencyWayfindingSign from '$lib/components/AgencyWayfindingSign.svelte';
   import { page } from '$app/stores';
   import {
     Button,
@@ -112,6 +113,18 @@
     {/snippet}
   </PerformancePageSection>
 
+  <aside class="route-handoff" aria-label="Map next steps">
+    <div class="route-handoff__inner">
+      <p class="route-handoff__current">Current path · Map · public draft</p>
+      <p class="route-handoff__context">When the plan is ready, agree on the work to build. Build and Control are separate options; Control includes Map.</p>
+      <a class="route-handoff__return" href="/products#choose-product"><span aria-hidden="true">←</span> Compare paths</a>
+      <div class="route-handoff__links">
+        <AgencyWayfindingSign kind="build" label="Explore Agent Foundation" href="/agent-foundation" detail="Implementation is scoped separately." />
+        <AgencyWayfindingSign kind="control" label="Explore Control" href="/control" detail="Optional operations after launch." />
+      </div>
+    </div>
+  </aside>
+
   <PerformanceConversionHandoff
     expression="editorial"
     eyebrow="Continue the definition"
@@ -135,6 +148,20 @@
 </main>
 
 <style>
+  .route-handoff {
+    padding: var(--space-performance-lg) clamp(1.25rem, 5vw, 6rem);
+    color: var(--color-performance-ink);
+    background: var(--color-performance-paper);
+    border-block: 1px solid var(--color-performance-line);
+  }
+  .route-handoff__inner { max-width: var(--content-width-performance); margin-inline: auto; }
+  .route-handoff__current { margin: 0 0 var(--space-performance-sm); font-size: var(--text-performance-caption); font-family: var(--font-performance-mono); }
+  .route-handoff__context { max-width: 70ch; margin: 0 0 var(--space-performance-md); line-height: 1.6; }
+  .route-handoff__return { display: inline-flex; align-items: center; gap: var(--space-performance-sm); min-height: 44px; margin-bottom: var(--space-performance-sm); color: inherit; text-underline-offset: .25em; }
+  .route-handoff__return:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; }
+  .route-handoff__links { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-performance-sm); }
+  @media (max-width: 760px) { .route-handoff__links { grid-template-columns: 1fr; } }
+
   .map-overhead-study {
     margin: 0;
     overflow: hidden;

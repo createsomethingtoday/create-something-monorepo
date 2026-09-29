@@ -184,9 +184,11 @@ test('the builder-facing homepage retains commercial terms, film evidence and di
   const registry = readFileSync(new URL('../src/lib/data/filmStories.ts', import.meta.url), 'utf8');
   assert.match(home, /<AgencyHero/);
   assert.match(home, /<MembershipOffer/);
-  assert.match(hero, /Apps, workflows and agents your team owns/);
+  assert.match(hero, /Tech support for your team’s tools and systems/);
   assert.match(registry, /Your next step, already prepared/);
-  assert.match(hero, /source, tests, approval rules and a clear handoff/);
+  assert.match(hero, /You keep the delivered code, records and approval authority/);
+  assert.match(hero, /one agreed workstream/);
+  assert.match(hero, /managed Control have separate agreements/);
   assert.match(registry, /tools and workflows that help agents do useful work/);
   assert.match(hero, /href="\/agent-foundation"/);
   assert.match(hero, /reducedFilmMotion/);
@@ -203,7 +205,10 @@ test('commercial decision routes explain the task, delivery, ownership, and proo
   assert.match(layout, /label: 'What You Keep', href: '\/stack'/);
   assert.match(home, /We test an agreed example and a failure case/);
   assert.match(home, /Your team reviews the result before launch/);
-  assert.match(read('services/+page.svelte'), /Bring a task to automate or a product you have already built/);
+  assert.match(read('services/+page.svelte'), /Bring a workflow, software problem or existing product/);
+  assert.match(read('services/+page.svelte'), /You keep the delivered code and approval authority/);
+  assert.match(read('services/+page.svelte'), /one agreed workstream/);
+  assert.match(read('services/+page.svelte'), /managed Control have separate agreements/);
   assert.match(read('products/+page.svelte'), /Map and Control are subscriptions/);
   assert.match(read('products/+page.svelte'), /Control includes Map/);
   assert.match(read('stack/+page.svelte'), /You keep the accounts, data, approval rights, and operating history/);

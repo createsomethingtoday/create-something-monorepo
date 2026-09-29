@@ -1,7 +1,8 @@
 <script lang="ts">
   import { templateReviewFieldReport } from '$lib/data/fieldReports';
+  import AgencyWayfindingSign from './AgencyWayfindingSign.svelte';
 
-  let { compact = false, embedded = false }: { compact?: boolean; embedded?: boolean } = $props();
+  let { compact = false, embedded = false, wayfinding = false }: { compact?: boolean; embedded?: boolean; wayfinding?: boolean } = $props();
 
   const evidence = templateReviewFieldReport.evidence;
 </script>
@@ -62,9 +63,13 @@
           <strong>The system cannot approve or reject submissions.</strong>
           <p>Reviewer time savings remain unmeasured.</p>
         </div>
-        <a href={`/field-reports/${templateReviewFieldReport.slug}`}>
-          Read the full field report <span aria-hidden="true">↗</span>
-        </a>
+        {#if wayfinding}
+          <AgencyWayfindingSign kind="proof" label="Read the full field report" detail="Template review · published evaluation" href={`/field-reports/${templateReviewFieldReport.slug}`} />
+        {:else}
+          <a href={`/field-reports/${templateReviewFieldReport.slug}`}>
+            Read the full field report <span aria-hidden="true">↗</span>
+          </a>
+        {/if}
       </aside>
     </div>
   </div>
