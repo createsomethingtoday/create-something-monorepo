@@ -79,11 +79,28 @@
 
   const navLinks = [
     { label: 'Course', href: '/paths' },
+    { label: 'Reference', href: '/reference' },
     { label: 'Progress', href: '/progress' }
   ];
 
   // Quick access items for unified search
   const quickAccessItems = [
+    {
+      id: 'nav-governed-agents',
+      label: 'Engineer a Governed Agent',
+      description: 'Build a bounded loop with policy, evidence, and handoff',
+      href: '/paths/governed-agent-engineering',
+      icon: '◎',
+      keywords: ['agents', 'governance', 'grantbot', 'gigi', 'policy', 'evidence']
+    },
+    {
+      id: 'nav-reference',
+      label: 'AI Engineering Reference Library',
+      description: 'Explore 523 open source lessons from math to production agents',
+      href: '/reference',
+      icon: '◫',
+      keywords: ['reference', 'curriculum', 'math', 'llm', 'agents', 'safety']
+    },
     {
       id: 'nav-course',
       label: 'Build Your First Business MCP',
@@ -120,12 +137,12 @@
 
   // DRY: Centralized copy for meta tags and components
   const SITE_COPY = {
-    tagline: 'Operator Workflow Learning Paths',
+    tagline: 'Governed Agent Learning',
     descriptionFull:
-      'Practical paths for business owners learning Codex, MCP creation, and Canon workflow images.',
-    descriptionShort: 'Learn Codex and Canon by creating operator workflows.',
+      'Practical paths for building governed agents, MCP workflows, and visible evidence.',
+    descriptionShort: 'Build governed agents and prove their work.',
     descriptionFooter:
-      'Practical paths for business owners learning to build MCP workflows and make them visible with Canon.'
+      'Learn to build agents, govern their actions, and prove their work.'
   } as const;
 </script>
 
@@ -154,7 +171,7 @@
     currentPath={$page.url.pathname}
     fixed={true}
     ctaLabel="Get Started"
-    ctaHref="/paths/codex-mcp/what-is-codex-and-mcp"
+    ctaHref="/paths/governed-agent-engineering/choose-a-real-job"
     user={data.user}
     onLogout={handleLogout}
     showLogin={true}
@@ -173,7 +190,8 @@
     aboutText={SITE_COPY.descriptionFooter}
     quickLinks={[
       { label: 'Course', href: '/paths' },
-      { label: 'Start', href: '/paths/codex-mcp/what-is-codex-and-mcp' },
+      { label: 'Start', href: '/paths/governed-agent-engineering/choose-a-real-job' },
+      { label: 'Reference', href: '/reference' },
       { label: 'Progress', href: '/progress' },
       { label: 'Privacy', href: '/privacy' }
     ]}

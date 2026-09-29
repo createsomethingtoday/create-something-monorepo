@@ -30,7 +30,8 @@
     "@create-something/spritz": "workspace:*",
     "@create-something/tufte": "workspace:^",
     "lucide-svelte": "^0.554.0",
-    "marked": "^15.0.4"
+    "marked": "^15.0.4",
+    "mermaid": "11"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260621.1",
