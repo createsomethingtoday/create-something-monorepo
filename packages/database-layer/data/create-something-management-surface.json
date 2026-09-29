@@ -1,6 +1,6 @@
 {
   "id": "substrate:create-something:management-surface:internal",
-  "generatedAt": "2026-09-28T14:19:28.007Z",
+  "generatedAt": "2026-09-29T14:06:00.574Z",
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
   "sourceReadinessId": "substrate:create-something:operating-slice-readiness:internal",
@@ -6831,6 +6831,20 @@
       "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
       "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-guide-docs-guides-monorepo-delivery-updates-md",
       "mcpUri": "substrate://topology/internal/records/substrate-create-something-guide-docs-guides-monorepo-delivery-updates-md",
+      "agentCommand": "databaseLayer.topology.records.get",
+      "access": [
+        "read"
+      ],
+      "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
+    },
+    {
+      "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-guide-docs-guides-newsletter-distribution-playbook-md",
+      "kind": "topology_record",
+      "title": "NEWSLETTER_DISTRIBUTION_PLAYBOOK.md",
+      "recordId": "substrate:create-something:guide:docs-guides-newsletter-distribution-playbook-md",
+      "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
+      "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-guide-docs-guides-newsletter-distribution-playbook-md",
+      "mcpUri": "substrate://topology/internal/records/substrate-create-something-guide-docs-guides-newsletter-distribution-playbook-md",
       "agentCommand": "databaseLayer.topology.records.get",
       "access": [
         "read"

@@ -454,6 +454,14 @@ function operationalKnowledgeEdges(docNodes, targetCandidates, fallbackTargets) 
   }));
 
   return docNodes.flatMap((doc) => {
+    const docText = fs.readFileSync(path.join(repoRoot, doc.path), 'utf8');
+    const linkedPaths = [...docText.matchAll(/\]\(([^)#]+)(?:#[^)]*)?\)/g)]
+      .map((match) => match[1])
+      .filter((link) => !/^[a-z][a-z\d+.-]*:/i.test(link))
+      .map((link) => relative(path.resolve(repoRoot, path.dirname(doc.path), link)));
+    const explicitTarget = targetCandidates
+      .filter((node) => linkedPaths.some((link) => link === node.path || link.startsWith(`${node.path}/`)))
+      .sort((a, b) => b.path.length - a.path.length || a.path.localeCompare(b.path))[0];
     const docTokens = tokensForNode(doc);
     const scoredTargets = indexedTargets
       .map((target) => ({
@@ -462,9 +470,9 @@ function operationalKnowledgeEdges(docNodes, targetCandidates, fallbackTargets) 
       }))
       .filter((target) => target.score > 0)
       .sort((a, b) => b.score - a.score || a.node.path.localeCompare(b.node.path));
-    const target = scoredTargets[0]?.score >= 2
+    const target = explicitTarget ?? (scoredTargets[0]?.score >= 2
       ? scoredTargets[0].node
-      : fallbackKnowledgeTarget(doc, fallbackTargets, targetCandidates);
+      : fallbackKnowledgeTarget(doc, fallbackTargets, targetCandidates));
     const relation = doc.surface === 'policy' ? 'governs' : 'documents';
     // Generic metadata terms (for example "model" and "topology") are not
     // evidence that a document describes Substrate. The root documentation
@@ -473,7 +481,9 @@ function operationalKnowledgeEdges(docNodes, targetCandidates, fallbackTargets) 
         !/\bsubstrate\b/i.test(fs.readFileSync(path.join(repoRoot, doc.path), 'utf8'))) {
       return [];
     }
-    const evidence = scoredTargets[0]?.score >= 2
+    const evidence = explicitTarget
+      ? `${doc.path} ${relation} ${target.path} through an explicit repository link.`
+      : scoredTargets[0]?.score >= 2
       ? `${doc.path} ${relation} ${target.path} through matching topology terms.`
       : `${doc.path} ${relation} ${target.path} through the stable ${doc.surface} platform anchor.`;
 

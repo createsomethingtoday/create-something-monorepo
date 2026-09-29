@@ -15,3 +15,11 @@ test('Substrate documentation edges require a mention in the owning document', (
   assert.ok(guide);
   assert.ok(!topology.edges.some((edge) => edge.source === guide.id && edge.target === substrate.id));
 });
+
+test('newsletter guide resolves its explicit io strategy link before generic metadata matches', () => {
+  const topology = JSON.parse(fs.readFileSync(new URL('../data/create-something-internal-topology.json', import.meta.url), 'utf8'));
+  const guide = topology.nodes.find((node) => node.path === 'docs/guides/NEWSLETTER_DISTRIBUTION_PLAYBOOK.md');
+  const io = topology.nodes.find((node) => node.path === 'packages/io');
+  assert.ok(topology.edges.some((edge) => edge.source === guide.id && edge.target === io.id && edge.evidence.includes('explicit repository link')));
+  assert.ok(!topology.edges.some((edge) => edge.source === guide.id && topology.nodes.find((node) => node.id === edge.target)?.path === 'packages/arc'));
+});
