@@ -83,7 +83,7 @@ Note the actual objection, because it explains the carve-out: a Designer Extensi
 
 **Why it matters:** `type` is not the stable identity of a tag-bearing block. A section created through the preset reports `type: 'Block'` with tag `section`; the same section added by hand in the Designer reports `type: 'Section'`. Both are valid sections. An App keyed on `type` works in the developer's own testing, then silently stops recognising its own output for users, and the fix has to go back through review as an App update.
 
-**Fix:** Identify sections and other structural blocks by the tag they carry: `(await el.getTag()) === 'section'`. It returns the same value whichever way the element was created. Because a Div Block retagged to `section` also matches, add a guard on any path that removes or rewrites what it identifies. Preflight reports `element.type` comparisons against Section, Container, VFlex, HFlex, Row, Column, and the other tag-bearing block types as a Suggested update.
+**Fix:** Identify sections by the tag they carry: `(await el.getTag()) === 'section'`. It returns the same value whichever way the element was created. This is a section-only fix: the `section` tag is unique, while Container, VFlex, HFlex, Row, Column and plain Div Blocks all return `div`, so for those `element.type` remains the only discriminator. Because a Div Block retagged to `section` also matches, add a guard on any path that removes or rewrites what it identifies. Preflight reports `element.type` comparisons against `'Section'` as a Suggested update.
 
 ---
 
