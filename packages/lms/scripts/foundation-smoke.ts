@@ -53,7 +53,7 @@ try {
   await http('/api/foundation/search?query=memory', 405, { method: 'POST' });
   await http('/api/foundation/mcp', 405, { method: 'DELETE' });
   await http('/api/foundation/mcp', 403, { method: 'POST', headers: { Origin: 'https://untrusted.example', 'Content-Type': 'application/json' }, body: '{}' });
-  await http('/api/foundation/mcp', 415, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: '{}' });
+  await http('/api/foundation/mcp', 415, { method: 'POST', headers: { 'Content-Type': 'text/plain', Origin: new URL(base).origin }, body: '{}' });
   await http('/api/foundation/mcp', 400, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: 'invalid' });
   await http('/api/foundation/mcp', 413, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: 'x'.repeat(8193) });
   await http('/api/foundation/mcp', 400, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify([{ jsonrpc: '2.0', id: 1, method: 'tools/list' }]) });
