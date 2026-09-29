@@ -1,4 +1,7 @@
 <script lang="ts">
+  import AgencyWayfindingGroup from '$lib/components/AgencyWayfindingGroup.svelte';
+  import AgencyWayfindingHero from '$lib/components/AgencyWayfindingHero.svelte';
+  import AgencyWayfindingOpening from '$lib/components/AgencyWayfindingOpening.svelte';
   import AgencyWayfindingSign from '$lib/components/AgencyWayfindingSign.svelte';
   import {
     Button,
@@ -14,7 +17,6 @@
   } from '@create-something/canon';
   import DelegationPracticeWorkbench from '$lib/components/DelegationPracticeWorkbench.svelte';
   import PublicAtlasStoryCanvas from '$lib/components/PublicAtlasStoryCanvas.svelte';
-  import { playbookHeroMedia } from '$lib/data/playbookHeroMedia';
 
   const systemConditions: PerformanceCondition[] = [
     {
@@ -132,14 +134,14 @@
 />
 
 <main class="delegation-practice-page">
+  <AgencyWayfindingOpening>
   <PerformanceCampaignOpening
     eyebrow="The Delegation Practice"
     title="Try an AI workflow before connecting your tools."
     lede="Use a practice workflow to decide what AI can do, when it needs approval, and how to check its work."
-    media={playbookHeroMedia.practice}
-    mediaMobilePlacement="background"
     density="compact"
     expression="editorial"
+    artifactMobilePlacement="flow"
     proof={[
       { label: 'Owner', value: 'Accountable operator' },
       { label: 'Authority', value: 'Observe one workflow' },
@@ -150,7 +152,9 @@
       <Button href="#practice-workbench">Map one workflow</Button>
       <Button href="#evidence" variant="secondary">Examine the evidence</Button>
     {/snippet}
+    {#snippet artifact()}<AgencyWayfindingHero route="practice" />{/snippet}
   </PerformanceCampaignOpening>
+  </AgencyWayfindingOpening>
 
   <PerformanceNarrativeStage
     id="delegation-practice-argument"
@@ -209,6 +213,13 @@
     </article>
   </section>
 
+  <section class="practice-wayfinding" aria-label="Continue from practice">
+    <p>Continue from the practice</p>
+    <AgencyWayfindingGroup label="Inspect the practice prototype">
+      <AgencyWayfindingSign kind="proof" label="Read the prototype results" detail="Representative fixtures; no production writes." href="/proof/marketplace-workflow" />
+    </AgencyWayfindingGroup>
+  </section>
+
   <PerformanceConversionHandoff
     expression="editorial"
     eyebrow="Review your practice"
@@ -228,7 +239,6 @@
           variant="secondary"
           fullWidth>Request a mapping session</Button
         >
-        <AgencyWayfindingSign kind="proof" label="Read the test results" detail="Prototype proof · representative fixtures, no production writes." href="/proof/marketplace-workflow" />
         <a class="practice-handoff-audience" href="/for-service-providers">
           <span>For service providers</span>
           <strong>Use the Practice with clients <span aria-hidden="true">→</span></strong>
@@ -253,6 +263,23 @@
     display: grid;
     gap: 1rem;
   }
+
+  .practice-wayfinding {
+    display: grid;
+    gap: var(--space-performance-md);
+    padding: clamp(2rem, 5vw, 4rem) max(1.25rem, calc((100% - var(--content-width-performance, 85rem)) / 2));
+    background: var(--color-performance-ink, #090909);
+    color: var(--color-performance-panel, #fff);
+  }
+
+  .practice-wayfinding > p {
+    margin: 0;
+    font-family: var(--font-performance-mono);
+    font-size: var(--text-performance-label, 0.72rem);
+    text-transform: uppercase;
+  }
+
+  .practice-wayfinding :global(.agency-wayfinding-group) { max-width: 42rem; }
 
   .flagship-defense {
     display: grid;

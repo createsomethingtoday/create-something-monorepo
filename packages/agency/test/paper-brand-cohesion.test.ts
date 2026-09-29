@@ -181,11 +181,12 @@ test('the Agency footer handoff uses its own macro-real decision-gate image with
   assert.match(metadata, /text, logos, people/i);
 });
 
-test('Field Reports carries an attached-proof Playbook macro study with its authored mobile companion', () => {
+test('Field Reports uses the original isometric evidence route in place of campaign media', () => {
   const reports = read('src/routes/field-reports/+page.svelte');
 
-  assert.match(reports, /media=\{playbookHeroMedia\.fieldReports\}/);
-  assert.match(reports, /mediaMobilePlacement="background"/);
+  assert.match(reports, /<AgencyWayfindingHero route="fieldReports"/);
+  assert.match(reports, /artifactMobilePlacement="flow"/);
+  assert.doesNotMatch(reports, /media=\{playbookHeroMedia\.fieldReports\}/);
   assert.match(reports, /Read the results, including the limits\./);
   assert.doesNotMatch(reports, /<PlaybookField variant="proof"/);
 });

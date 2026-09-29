@@ -1,4 +1,6 @@
 <script lang="ts">
+  import AgencyWayfindingHero from '$lib/components/AgencyWayfindingHero.svelte';
+  import AgencyWayfindingOpening from '$lib/components/AgencyWayfindingOpening.svelte';
   import AgencyWayfindingSign from '$lib/components/AgencyWayfindingSign.svelte';
   import {
     Button,
@@ -14,7 +16,6 @@
   import OpenAIQualifications from '$lib/components/OpenAIQualifications.svelte';
   import PublicAtlasStoryCanvas from '$lib/components/PublicAtlasStoryCanvas.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
-  import { playbookHeroMedia } from '$lib/data/playbookHeroMedia';
 
   const journey: PerformanceCardItem[] = [
     {
@@ -227,14 +228,14 @@
   {faqItems}
 />
 
+<AgencyWayfindingOpening>
 <PerformanceCampaignOpening
   expression="editorial"
   eyebrow="What You Keep"
   title="Your system should stay yours."
   lede="You keep the accounts, data, approval rights, and operating history. We document the system so your team can understand it, change it, and evaluate other tools."
-  media={playbookHeroMedia.stack}
-  mediaMobilePlacement="background"
   density="compact"
+  artifactMobilePlacement="flow"
   proof={[
     { label: 'Your team keeps', value: 'Accounts + decisions' },
     { label: 'Substrate records', value: 'State + evidence' },
@@ -249,7 +250,9 @@
       {agencyCoreMessaging.bookMappingSessionLabel}
     </Button>
   {/snippet}
+  {#snippet artifact()}<AgencyWayfindingHero route="stack" />{/snippet}
 </PerformanceCampaignOpening>
+</AgencyWayfindingOpening>
 
 <PerformanceNarrativeStage
   id="stack-ownership-story"
@@ -324,7 +327,7 @@
     </Button>
   {/snippet}
   {#snippet aside()}
-    <AgencyWayfindingSign kind="proof" label="Inspect a field test" detail="Template Review · measured collection, blocked judgment, unmeasured time savings." href="/field-reports/template-review" />
+    <AgencyWayfindingSign kind="proof" label="Read the Template Review report" detail="Measured collection, blocked judgment, unmeasured time savings." href="/field-reports/template-review" />
   {/snippet}
 </PerformanceConversionHandoff>
 
