@@ -122,3 +122,5 @@ wrangler pages deploy packages/lms/.svelte-kit/cloudflare --project-name=creates
 - `packages/identity-worker` - Authentication
 - `packages/components` - Shared UI components
 - `.claude/rules/css-canon.md` - Design tokens
+
+The controlled `Property Pages Deploy` workflow applies and checks only migration `0007_foundation_rate_limits.sql` for LMS before publishing handlers. Its Cloudflare repository credential requires D1 Edit as well as Pages deployment access. A missing permission or schema failure stops the release.
