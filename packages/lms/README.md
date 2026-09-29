@@ -24,7 +24,7 @@ Refresh the snapshot from a checked-out upstream repository:
 node packages/lms/scripts/import-reference-curriculum.mjs /absolute/path/to/ai-engineering-from-scratch
 ```
 
-The importer runs the upstream `site/build.js` to derive figure routing, then fails if the source lacks any of the 523 English lesson documents expected by this snapshot. It may update generated files in the local upstream checkout. Review the diff and source license before updating the public library.
+The importer stages all lessons and figure providers before replacing the checked-in snapshot. It runs the upstream `site/build.js` to derive figure routing, and an incomplete checkout fails without changing the current library. It may update generated files in the local upstream checkout. Review the diff and source license before updating the public library.
 
 ## Stack
 
