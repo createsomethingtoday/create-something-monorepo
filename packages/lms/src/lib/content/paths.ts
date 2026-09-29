@@ -23,6 +23,52 @@ export interface Path {
 
 export const PATHS: Path[] = [
   {
+    id: 'governed-agent-engineering',
+    title: 'Engineer a Governed Agent',
+    subtitle: 'Build a useful loop, prove its work, and keep human control',
+    description:
+      'A CREATE SOMETHING field course from first principles to a bounded agent workflow. Build a small working system, then use Grantbot and GiGi as real cases for memory, permissions, receipts, and delivery gates.',
+    color: 'path-advanced',
+    lessons: [
+      {
+        id: 'choose-a-real-job',
+        title: 'Choose a Real Job',
+        description: 'Define one operator outcome, its owner, inputs, exclusions, and acceptance evidence before choosing a model.',
+        duration: '25 min'
+      },
+      {
+        id: 'build-the-loop',
+        title: 'Build the Agent Loop',
+        description: 'Implement observation, decision, action, and stop conditions with a deterministic local exercise.',
+        duration: '35 min'
+      },
+      {
+        id: 'give-it-memory-and-tools',
+        title: 'Give It Memory and Tools',
+        description: 'Separate source data, retrieved context, tool contracts, and a bounded write surface.',
+        duration: '35 min'
+      },
+      {
+        id: 'govern-the-boundary',
+        title: 'Govern the Boundary',
+        description: 'Turn permissions, consent, approvals, and escalation into an inspectable policy artifact.',
+        duration: '35 min'
+      },
+      {
+        id: 'prove-the-run',
+        title: 'Prove the Run',
+        description: 'Capture a trace, test a failure, and distinguish working code from live acceptance.',
+        duration: '30 min'
+      },
+      {
+        id: 'ship-the-handoff',
+        title: 'Ship the Handoff',
+        description: 'Package source, runbook, rollback, and a truthful handoff using Grantbot and GiGi lessons.',
+        duration: '30 min'
+      }
+    ]
+  },
+  {
     id: 'codex-mcp',
     title: 'Build Your First Business MCP',
     subtitle: 'Learn Codex by Creating an MCP for Business Data',

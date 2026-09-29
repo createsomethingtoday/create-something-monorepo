@@ -1,5 +1,6 @@
 <script lang="ts">
   import { PATHS } from '$content/paths';
+  import { REFERENCE_CATALOG } from '$lib/content/reference';
 
   const featuredCourse = PATHS[0] ?? null;
   const firstLessonHref = featuredCourse?.lessons[0]
@@ -9,23 +10,23 @@
 </script>
 
 <svelte:head>
-  <title>Operator Workflow Learning Paths | CREATE SOMETHING Learn</title>
-  <meta name="description" content="Practical learning paths for business owners using the Codex app, MCP creation, RapidAPI, and Canon workflow images." />
+  <title>Learn to Engineer Governed Agents | CREATE SOMETHING Learn</title>
+  <meta name="description" content="Build agents from first principles, govern their actions, and prove their work. Original CREATE SOMETHING field courses and a 523-lesson open reference library." />
 </svelte:head>
 
 <div class="learn-home">
   <header class="learn-opening">
     <p class="eyebrow">CREATE SOMETHING / Learn</p>
-    <h1>Build workflows operators can run and explain.</h1>
-    <p class="intro">Start in the Codex app, create a RapidAPI-backed MCP, then use Canon image rules to make boundaries, policy, proof, and handoff visible.</p>
+    <h1>Build agents whose work you can explain.</h1>
+    <p class="intro">Learn the mechanics, build a bounded workflow, and keep evidence. Start with our governed agent field course, follow the operator MCP and Canon paths, or explore 523 open reference lessons from first principles through production.</p>
     <div class="actions">
-      <a class="primary" href={firstLessonHref}>Start lesson 1 ↗</a>
-      <a class="secondary" href="/paths">Review all paths</a>
+      <a class="primary" href={firstLessonHref}>Start the field course ↗</a>
+      <a class="secondary" href="/reference">Explore the reference library</a>
     </div>
     <div class="summary" aria-label="Course summary">
       <span><strong>{PATHS.length}</strong> learning paths</span>
       <span><strong>{totalLessons}</strong> lessons</span>
-      <span><strong>4</strong> practical artifacts</span>
+      <span><strong>{REFERENCE_CATALOG.length}</strong> reference lessons</span>
     </div>
   </header>
 
@@ -47,18 +48,19 @@
     </section>
 
     <section class="method" aria-labelledby="method-title">
-      <div><p class="eyebrow">The learning loop</p><h2 id="method-title">Prompt. Create. Prove.</h2></div>
+      <div><p class="eyebrow">The learning loop</p><h2 id="method-title">Understand. Build. Govern. Prove.</h2></div>
       <ol>
-        <li><span>01 / Prompt</span><strong>Start in the Codex app</strong><p>Turn one operator question into a narrow tool contract.</p></li>
-        <li><span>02 / Create</span><strong>Wrap the data source</strong><p>Connect one RapidAPI endpoint and keep its schema inspectable.</p></li>
-        <li><span>03 / Prove</span><strong>Make the work visible</strong><p>Show the boundary, policy gate, receipt, owner, and next action.</p></li>
+        <li><span>01 / Understand</span><strong>Name the real job</strong><p>Trace the source, owner, outcome, and underlying mechanism.</p></li>
+        <li><span>02 / Build</span><strong>Run the smallest loop</strong><p>Make a tool call, observe the result, and stop at a clear boundary.</p></li>
+        <li><span>03 / Govern</span><strong>Keep humans in control</strong><p>Make permissions, approvals, and revocation explicit.</p></li>
+        <li><span>04 / Prove</span><strong>Keep a receipt</strong><p>Record the command, trace, artifact, proof level, and next gate.</p></li>
       </ol>
     </section>
 
     <section class="artifacts" aria-labelledby="artifacts-title">
       <p class="eyebrow">What you leave with</p>
-      <h2 id="artifacts-title">Proof another operator can use.</h2>
-      <p>A tool contract, local configuration, workflow image, and a scoped next workflow.</p>
+      <h2 id="artifacts-title">A system another operator can use.</h2>
+      <p>Leave with a work contract, runnable loop, source ledger, policy, evaluation traces, and a handoff.</p>
       <a href={firstLessonHref}>Begin the first lesson ↗</a>
     </section>
   </div>
