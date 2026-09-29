@@ -2,7 +2,10 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
-import { DatabaseSync } from 'node:sqlite';
+import { createRequire } from 'node:module';
+// Reuse the repository's Wrangler runtime on Node 20 and 22.
+const require = createRequire(import.meta.url);
+const { Miniflare } = createRequire(require.resolve('wrangler/package.json'))('miniflare');
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import generated from '../src/lib/server/foundation/catalog.generated.json';
@@ -105,17 +108,20 @@ test('foundation routes do not process bearer tokens or refresh cookies', async 
     assert.equal(response.headers.get('set-cookie'), null);
   }
 });
-test('quota SQL increments atomically, saturates, resets per window, and removes expired counters', async () => {
-  const db = new DatabaseSync(':memory:');
-  db.exec(await readFile(new URL('../migrations/0007_foundation_rate_limits.sql', import.meta.url), 'utf8'));
-  const increment = db.prepare(RATE_SQL);
-  const hits = Array.from({ length: 100 }, () => (increment.get('test', 10) as { hits: number }).hits);
-  assert.equal(hits.filter(x => x <= 60).length, 60);
-  assert.equal(hits[99], 61);
-  assert.equal((increment.get('test', 11) as { hits: number }).hits, 1);
-  db.prepare(EXPIRE_SQL).run(11);
-  assert.equal((db.prepare('SELECT COUNT(*) AS count FROM foundation_rate_limits').get() as { count: number }).count, 1);
-  db.close();
+test('D1 quota increments concurrently, saturates, resets per window, and removes expired counters', async () => {
+  const mf = new Miniflare({ modules: true, script: 'export default { fetch() { return new Response("fixture"); } }', compatibilityDate: '2024-12-01', d1Databases: ['DB'] });
+  try {
+    const db: D1Database = await mf.getD1Database('DB');
+    const migration = await readFile(new URL('../migrations/0007_foundation_rate_limits.sql', import.meta.url), 'utf8');
+    for (const statement of migration.replace(/--[^\n]*/g, '').split(';').filter(s => s.trim())) await db.prepare(statement).run();
+    const results = await Promise.all(Array.from({ length: 100 }, () => db.prepare(RATE_SQL).bind('test', 10).first<{ hits: number }>()));
+    const hits = results.map(x => x!.hits);
+    assert.equal(hits.filter(x => x <= 60).length, 60);
+    assert.equal(Math.max(...hits), 61);
+    assert.equal((await db.prepare(RATE_SQL).bind('test', 11).first<{ hits: number }>())!.hits, 1);
+    await db.prepare(EXPIRE_SQL).bind(11).run();
+    assert.equal((await db.prepare('SELECT COUNT(*) AS count FROM foundation_rate_limits').first<{ count: number }>())!.count, 1);
+  } finally { await mf.dispose(); }
 });
 test('real MCP SDK negotiates stateless transport and exposes exactly two read-only tools', async () => {
   const client = new Client({ name: 'foundation-contract-test', version: '1.0.0' });
