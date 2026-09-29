@@ -24,6 +24,7 @@
     <h1>Study the mechanics. Build the system.</h1>
     <p class="intro">Explore the full English lesson sequence from <a href="https://github.com/rohitg00/ai-engineering-from-scratch">AI Engineering from Scratch</a>, alongside our <a href="/paths/governed-agent-engineering">governed agent field course</a>. The original curriculum spans mathematics, machine learning, language models, tools, agents, infrastructure, safety, and capstones.</p>
     <p class="source-note">Reference material by Rohit Ghumare and contributors, <a href="/reference-license.txt">MIT licensed</a>. Imported at revision <a href={`https://github.com/rohitg00/ai-engineering-from-scratch/commit/${REFERENCE_REVISION}`}>{REFERENCE_REVISION.slice(0, 12)}</a>. Runnable code and outputs remain linked to the source repository.</p>
+    <p class="source-note"><a href="/foundation">Connect your agent to this foundation ↗</a> — public search and lesson retrieval, with a reusable onboarding guide.</p>
   </header>
 
   <div class="controls">

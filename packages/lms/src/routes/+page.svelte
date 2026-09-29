@@ -22,6 +22,7 @@
     <div class="actions">
       <a class="primary" href={firstLessonHref}>Start the field course ↗</a>
       <a class="secondary" href="/reference">Explore the reference library</a>
+      <a class="secondary" href="/foundation">For clients and agents</a>
     </div>
     <div class="summary" aria-label="Course summary">
       <span><strong>{PATHS.length}</strong> learning paths</span>
