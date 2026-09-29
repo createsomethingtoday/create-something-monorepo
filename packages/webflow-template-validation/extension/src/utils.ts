@@ -1,7 +1,7 @@
 // Pure helpers shared across the extension. No DOM, no Designer API —
 // everything here is unit-testable in isolation.
 
-export const EXTENSION_VERSION = '1.3.5';
+export const EXTENSION_VERSION = '1.3.7';
 
 export function filterRetiredAccessibilityIssues<T extends { id: string }>(issues: readonly T[]): T[] {
   return issues.filter((issue) => issue.id !== 'color-contrast-violations');

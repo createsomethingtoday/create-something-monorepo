@@ -9,7 +9,6 @@ import {
   filterRetiredAccessibilityIssues,
   getSlugPathname,
   isInternalCmsTemplateSlug,
-  isHtmlTagStyleName,
   normalizeSiteInfo,
   selectValidationDomain,
   type SiteDomainInfo,
@@ -19,6 +18,20 @@ import { buildReportMarkdown as buildReportMarkdownPure, type ReportInput } from
 import { collectPageSeoData } from './page-seo';
 import { createPageMetadataDetailsHTML } from './page-metadata-details';
 import { buildValidationSubmitIssue } from './validation-submit-payload';
+import {
+  isTagStyle,
+  readMediaQueries,
+  readStyleMetadata,
+  readStyleName,
+  readStyleProperties,
+  shouldIncludeStyle,
+  summarizeBreakpointReadFailures,
+  toPayloadStyleType,
+  type BreakpointProperties,
+  type MediaQueryInfo,
+} from './style-metadata';
+import { componentContainsComponentInstance, readComponentMetadata } from './component-metadata';
+import { readVariableModeBreakpoint } from './variable-mode-metadata';
 
 // API Configuration
 const WORKER_API_BASE = 'https://validation-worker.createsomething.workers.dev';
@@ -166,6 +179,8 @@ interface ProjectData {
       modes?: Array<{
         id: string;
         name: string;
+        // Present only when the runtime supports VariableMode.getBreakpoint().
+        breakpointId?: string | null;
       }>;
     }>;
   };
@@ -175,6 +190,10 @@ interface ProjectData {
     type: string;
     instances?: number;
     isNested?: boolean;
+    // Designer API 2.2+; null when the runtime does not report the field.
+    readOnly?: boolean | null;
+    codeComponent?: boolean | null;
+    library?: { id: string | null; name: string | null } | null;
   }>;
   styles?: Array<{
     id: string;
@@ -183,7 +202,10 @@ interface ProjectData {
     properties?: Record<string, any>;
     isHtmlTag?: boolean;
     hasVariables?: boolean;
+    source?: 'site' | 'library';
+    breakpointProperties?: BreakpointProperties;
   }>;
+  mediaQueries?: MediaQueryInfo[];
   pages?: Array<{
     id: string;
     name: string;
@@ -1979,30 +2001,6 @@ async function collectCanvasAccessibility(
 // "All Links", "Body (All Pages)"
 
 
-// Breadth-first walk of a component's element tree looking for a nested
-// component instance. Depth-capped: nesting evidence is always near the root,
-// and unbounded canvas traversal is expensive in the Designer.
-async function componentContainsComponentInstance(
-  component: Component,
-  maxDepth = 4
-): Promise<boolean> {
-  const root = await component.getRootElement();
-  if (!root) return false;
-
-  let frontier: AnyElement[] = [root];
-  for (let depth = 0; depth < maxDepth && frontier.length > 0; depth++) {
-    const next: AnyElement[] = [];
-    for (const element of frontier) {
-      if (element.type === 'ComponentInstance') return true;
-      if ('children' in element && element.children) {
-        next.push(...(await element.getChildren()));
-      }
-    }
-    frontier = next;
-  }
-  return false;
-}
-
 async function collectProjectData(webflow: WebflowApi): Promise<ProjectData> {
   const data: ProjectData = {
     variables: undefined,
@@ -2074,7 +2072,7 @@ async function collectProjectData(webflow: WebflowApi): Promise<ProjectData> {
           const collectionName = (await collection.getName()) || 'Unnamed Collection';
           const variables = await collection.getAllVariables();
           const variableList: any[] = [];
-          const modeList: Array<{ id: string; name: string }> = [];
+          const modeList: Array<{ id: string; name: string; breakpointId?: string | null }> = [];
           let modeDataAvailable = false;
 
           for (const variable of variables) {
@@ -2136,10 +2134,16 @@ async function collectProjectData(webflow: WebflowApi): Promise<ProjectData> {
                 try {
                   const modeName = (await mode.getName()) || mode.id || 'Unnamed Mode';
 
-                  modeList.push({
+                  const modeEntry: { id: string; name: string; breakpointId?: string | null } = {
                     id: String(mode.id),
                     name: String(modeName)
-                  });
+                  };
+                  // Automatic modes are bound to a breakpoint (Designer API 2.2+)
+                  const breakpoint = await readVariableModeBreakpoint(mode);
+                  if (breakpoint.available) {
+                    modeEntry.breakpointId = breakpoint.breakpointId;
+                  }
+                  modeList.push(modeEntry);
                 } catch (modeError) {
                   console.warn('Error processing variable mode:', modeError);
                 }
@@ -2209,6 +2213,7 @@ async function collectProjectData(webflow: WebflowApi): Promise<ProjectData> {
             const lowerName = name.toLowerCase();
             let instances = 0;
             let isNested = false;
+            const metadata = readComponentMetadata(component);
 
             // Detect component types for Webflow Way requirements
             if (lowerName.includes('nav') || lowerName.includes('header') || lowerName.includes('menu')) {
@@ -2227,7 +2232,8 @@ async function collectProjectData(webflow: WebflowApi): Promise<ProjectData> {
                 instances = await component.getInstanceCount();
               }
 
-              // A component is "nested" when its tree contains another component instance
+              // A component is "nested" when its tree contains another component instance.
+              // Read-only (library) components are skipped: their root element is unavailable.
               isNested = await componentContainsComponentInstance(component);
               if (isNested) {
                 data.enhancedValidation!.componentArchitecture.hasNestedComponents = true;
@@ -2241,7 +2247,10 @@ async function collectProjectData(webflow: WebflowApi): Promise<ProjectData> {
               name: name,
               type: 'component',
               instances: instances,
-              isNested: isNested
+              isNested: isNested,
+              readOnly: metadata.readOnly,
+              codeComponent: metadata.codeComponent,
+              library: metadata.library
             });
           }
         } catch (compError) {
@@ -2267,63 +2276,98 @@ async function collectProjectData(webflow: WebflowApi): Promise<ProjectData> {
     if (webflow.getAllStyles) {
       const styles = await webflow.getAllStyles() || [];
       const styleData: any[] = [];
+      const mediaQueryResult = await readMediaQueries(webflow);
+      const mediaQueries = mediaQueryResult.mediaQueries;
+      if (mediaQueries.length > 0) {
+        data.mediaQueries = mediaQueries;
+      }
+      if (mediaQueryResult.error !== undefined) {
+        console.warn('Could not fetch media queries:', mediaQueryResult.error);
+        data.collectionWarnings!.push({
+          source: 'Media Queries',
+          message: 'Failed to collect site breakpoints',
+          error: mediaQueryResult.error
+        });
+      }
+      // One representative message per style whose breakpoint reads failed;
+      // aggregated into a single warning after the loop.
+      const breakpointReadFailures: string[] = [];
 
       for (const style of styles) {
         try {
-          const name = (await style.getName()) || null;
           const id = style.id;
-          const styleType = 'class';
+          // Read the sync taxonomy BEFORE any async Style operation: element-
+          // scoped styles reject most operations (resourceMissing), and the
+          // include/skip decision depends on the type.
+          const meta = readStyleMetadata(style);
+          const name = await readStyleName(style);
+          const styleType = toPayloadStyleType(meta);
 
-          if (name && !name.startsWith('_')) {
-            let properties: Record<string, any> = {};
+          if (shouldIncludeStyle(meta, name)) {
             let isHtmlTag = false;
             let hasVariables = false;
+            let breakpointProperties: BreakpointProperties | undefined;
 
             // Check if this is an HTML tag style (required by Webflow Way).
-            // Exact tag names or Webflow's tag-selector display names only —
-            // substring matching ("a", "p") would match nearly every class.
-            if (isHtmlTagStyleName(name)) {
+            // Prefer the Designer's own taxonomy; otherwise exact tag names or
+            // Webflow's tag-selector display names only — substring matching
+            // ("a", "p") would match nearly every class.
+            if (isTagStyle(meta, name ?? '')) {
               isHtmlTag = true;
               data.enhancedValidation!.styleSystem.hasHtmlTagStyles = true;
             }
-            
-            try {
-              // Get style properties for enhanced validation
-              if (style.getProperties) {
-                properties = await style.getProperties() || {};
-                
-                // Check for variable usage in styles
-                Object.values(properties).forEach((value: any) => {
-                  if (typeof value === 'object' && value !== null && (value.type === 'variable' || value.id)) {
-                    hasVariables = true;
-                    data.enhancedValidation!.styleSystem.usesVariablesInStyles = true;
-                  }
-                });
-                
-                // Check for percentage-based line heights (Webflow Way requirement)
-                if (properties['line-height']) {
-                  const lineHeight = String(properties['line-height']);
-                  if (lineHeight.includes('%') || (!lineHeight.includes('px') && !lineHeight.includes('rem') && !isNaN(parseFloat(lineHeight)))) {
-                    data.enhancedValidation!.styleSystem.hasPercentageLineHeights = true;
-                  }
-                }
+
+            // Base properties and breakpoint overrides are independent reads;
+            // readStyleProperties issues them concurrently. Element-scoped
+            // styles issue no Style operations. A base read failure has
+            // already been logged and yields {}.
+            const { properties, breakpoints } = await readStyleProperties(style, meta, mediaQueries);
+
+            // Check for variable usage in styles
+            Object.values(properties).forEach((value: any) => {
+              if (typeof value === 'object' && value !== null && (value.type === 'variable' || value.id)) {
+                hasVariables = true;
+                data.enhancedValidation!.styleSystem.usesVariablesInStyles = true;
               }
-            } catch (propertyError) {
-              console.warn('Error getting style properties:', propertyError);
+            });
+
+            // Check for percentage-based line heights (Webflow Way requirement)
+            if (properties['line-height']) {
+              const lineHeight = String(properties['line-height']);
+              if (lineHeight.includes('%') || (!lineHeight.includes('px') && !lineHeight.includes('rem') && !isNaN(parseFloat(lineHeight)))) {
+                data.enhancedValidation!.styleSystem.hasPercentageLineHeights = true;
+              }
             }
-            
+
+            if (breakpoints) {
+              breakpointProperties = breakpoints.properties;
+              if (breakpoints.errors.length > 0) {
+                breakpointReadFailures.push(breakpoints.errors[0]);
+              }
+            }
+
             styleData.push({
               id: id,
-              name: name,
+              // Element-scoped styles may have no usable name; the worker
+              // falls back to `style.name || style.id`.
+              name: name ?? '',
               type: styleType,
               properties: properties,
               isHtmlTag: isHtmlTag,
-              hasVariables: hasVariables
+              hasVariables: hasVariables,
+              ...(meta.source ? { source: meta.source } : {}),
+              ...(breakpointProperties ? { breakpointProperties } : {})
             });
           }
         } catch (styleError) {
           console.warn('Error processing style:', styleError);
         }
+      }
+
+      const breakpointWarning = summarizeBreakpointReadFailures(breakpointReadFailures);
+      if (breakpointWarning) {
+        console.warn('Breakpoint property reads failed:', breakpointWarning.message);
+        data.collectionWarnings!.push(breakpointWarning);
       }
 
       data.styles = styleData;
@@ -4948,7 +4992,18 @@ function getDetailedStatItems(category: string, stats: Record<string, any>): Met
     case 'Variable Modes':
       addMetadataStat(details, 'Modes', stats.totalModes);
       addMetadataStat(details, 'Collections with modes', stats.collectionsWithModes);
-      if (stats.responsiveModeNamesDetected !== undefined) {
+      if (stats.responsiveModeSource === 'breakpoint' || stats.responsiveModeSource === 'mixed') {
+        // 'mixed' = some modes reported a breakpoint binding, others fell back to the
+        // name heuristic. Show both evidence lists so the result is not read as name-based.
+        const label = stats.responsiveModeSource === 'mixed' ? 'Responsive modes' : 'Breakpoint modes';
+        addMetadataStat(details, label, formatBooleanStat(stats.hasResponsiveModes), { tone: booleanTone(stats.hasResponsiveModes) });
+        if (Array.isArray(stats.breakpointBoundModeNames) && stats.breakpointBoundModeNames.length > 0) {
+          addMetadataStat(details, 'Breakpoint-bound', stats.breakpointBoundModeNames.slice(0, 5).join(', '));
+        }
+        if (Array.isArray(stats.nameMatchedModeNames) && stats.nameMatchedModeNames.length > 0) {
+          addMetadataStat(details, 'Name-matched', stats.nameMatchedModeNames.slice(0, 5).join(', '));
+        }
+      } else if (stats.responsiveModeNamesDetected !== undefined) {
         addMetadataStat(details, 'Responsive names', formatBooleanStat(stats.responsiveModeNamesDetected), { tone: booleanTone(stats.responsiveModeNamesDetected) });
       } else if (stats.hasResponsiveModes !== undefined) {
         addMetadataStat(details, 'Responsive names', formatBooleanStat(stats.hasResponsiveModes), { tone: booleanTone(stats.hasResponsiveModes) });
@@ -4965,6 +5020,8 @@ function getDetailedStatItems(category: string, stats: Record<string, any>): Met
       addMetadataStat(details, 'Navigation', stats.navComponents);
       addMetadataStat(details, 'Footer', stats.footerComponents);
       addMetadataStat(details, 'CTA', stats.ctaComponents);
+      addMetadataStat(details, 'Code components', stats.codeComponents);
+      addMetadataStat(details, 'Library components', stats.libraryComponents);
       break;
 
     case 'Styles':

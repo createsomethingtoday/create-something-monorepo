@@ -1,5 +1,22 @@
 # Webflow Way Validator - Release Notes
 
+## Version 1.3.7 - Mixed variable-mode evidence
+
+- Stats panel renders `responsiveModeSource: 'mixed'` results with both the breakpoint-bound and name-matched mode lists, instead of falling back to a name-based "Responsive names" boolean.
+
+---
+
+## Version 1.3.6 - Designer API 2.2 metadata
+
+- Reads each class's real type (global, combo, tag, element, descendant) and origin (site or library) from the Designer instead of guessing from names; older Designer runtimes keep the previous behavior.
+- Reads width, min-width, and max-width at every bounded breakpoint for responsive layout checks.
+- Reports which variable modes are bound to a breakpoint instead of guessing from mode names.
+- Reports library, code, and read-only components; skips nesting analysis for read-only components instead of failing on them.
+- Surfaces breakpoint-collection failures as collection warnings instead of silently omitting the data.
+- Pairs with the Worker update that excludes library-imported classes and components from naming checks, adds the `styles.element-scoped` and `styles.fixed-width-overflow` warnings, adds info notes for code and library components, and identifies responsive variable modes from breakpoint bindings. No new check blocks submission.
+
+---
+
 ## Version 1.3.5 - Complete page diagnostics
 
 - Includes issue IDs, fixes, locations, affected pages, and duplicate groups in submitted validation artifacts.
