@@ -156,6 +156,8 @@ These are the recurring reasons a well-intentioned App gets bounced or pulled in
 
 **10 · Listing and behavior mismatch.** A listing that oversells or misdescribes the App; undisclosed fees or data collection. _Make the description, screenshots, and demo video match exactly what the App does, and disclose every fee and category of data you collect._
 
+**11 · Keying behavior on `element.type`.** A Designer Extension that recognises sections with `el.type === 'Section'`, including ones it just created with `webflow.elementPresets.Section`. Preset-created sections report `type: 'Block'` with tag `section`; hand-added ones report `type: 'Section'`. The check passes in your own testing and silently fails for users. _Identify sections with `(await el.getTag()) === 'section'`. This is section-only: Container, VFlex, HFlex, Row, Column and plain Div Blocks all return `div`, so `element.type` remains the discriminator there. A Div Block retagged to `section` also matches, so guard any path that removes or rewrites what it identifies._
+
 ---
 
 ## Three things that sound reasonable and are wrong
