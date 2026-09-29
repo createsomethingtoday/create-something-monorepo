@@ -18,6 +18,7 @@ First complete the authority classification in `SKILL.md`. Mark conditional item
 
 - [ ] Production build shipped — no `eval()`, no dev-mode bundle, no framework error-decoder URLs.
 - [ ] No direct DOM manipulation of the Designer; Designer APIs used instead.
+- [ ] Sections identified with `getTag()`, not `element.type` (preset-created sections report `type: 'Block'`; `div`-tagged types still need `type`).
 - [ ] No externally hosted iframe as the primary App UI or runtime surface — that surface can change after approval, so review can't cover it. Iframes are fine for authentication flows.
 - [ ] No excessive global variables.
 - [ ] Third-party dependencies are known and nameable; no dead/unused external connection URLs.

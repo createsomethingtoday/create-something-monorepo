@@ -18,20 +18,25 @@
   },
   "scripts": {
     "dev": "vite dev",
-    "build": "vite build",
+    "build": "pnpm foundation:index && vite build",
     "preview": "vite preview",
-    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings",
+    "check": "pnpm foundation:test && svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings --watch",
     "deploy": "pnpm build && node ../../scripts/run-wrangler.mjs pages deploy .svelte-kit/cloudflare --project-name=createsomething-lms --branch=main",
-    "deploy:preview": "pnpm build && node ../../scripts/run-wrangler.mjs pages deploy .svelte-kit/cloudflare --project-name=createsomething-lms --branch=preview"
+    "deploy:preview": "pnpm build && node ../../scripts/run-wrangler.mjs pages deploy .svelte-kit/cloudflare --project-name=createsomething-lms --branch=preview",
+    "foundation:index": "tsx scripts/build-foundation-index.ts",
+    "foundation:test": "tsx scripts/build-foundation-index.ts --check && tsx --test tests/foundation.test.ts",
+    "foundation:smoke": "tsx scripts/foundation-smoke.ts"
   },
   "dependencies": {
     "@create-something/canon": "workspace:*",
     "@create-something/spritz": "workspace:*",
     "@create-something/tufte": "workspace:^",
+    "@modelcontextprotocol/sdk": "1.26.0",
     "lucide-svelte": "^0.554.0",
     "marked": "^15.0.4",
-    "mermaid": "11"
+    "mermaid": "11",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260621.1",
@@ -44,6 +49,7 @@
     "svelte-check": "^4.3.3",
     "tailwindcss": "^3.4.18",
     "typescript": "^5.9.3",
-    "vite": "^7.3.6"
+    "vite": "^7.3.6",
+    "wrangler": "^4.110.0"
   }
 }
