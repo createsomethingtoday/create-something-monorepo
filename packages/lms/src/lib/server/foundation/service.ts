@@ -1,6 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
 import { z } from 'zod';
+import { apiJson } from './guard';
 import { FoundationError, getFoundationLesson, LIMITS, REFERENCE_POLICY, searchFoundation, type FoundationCatalog, type FoundationEntry } from './core';
 
 export const searchSchema = z.object({
@@ -40,6 +41,7 @@ export function createFoundationServer(catalog: FoundationCatalog, load: (entry:
 }
 
 export async function handleMcp(request: Request, parsedBody: unknown, catalog: FoundationCatalog, load: (entry: FoundationEntry) => Promise<string>) {
+  if (Array.isArray(parsedBody)) return apiJson({ error: 'MCP batches are not supported. Send one operation per request.' }, 400);
   const server = createFoundationServer(catalog, load);
   const transport = new WebStandardStreamableHTTPServerTransport({ sessionIdGenerator: undefined, enableJsonResponse: true });
   await server.connect(transport);

@@ -32,7 +32,7 @@
     "@create-something/canon": "workspace:*",
     "@create-something/spritz": "workspace:*",
     "@create-something/tufte": "workspace:^",
-    "@modelcontextprotocol/sdk": "^1.26.0",
+    "@modelcontextprotocol/sdk": "1.26.0",
     "lucide-svelte": "^0.554.0",
     "marked": "^15.0.4",
     "mermaid": "11",

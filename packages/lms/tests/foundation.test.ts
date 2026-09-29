@@ -138,3 +138,17 @@ test('real MCP SDK negotiates stateless transport and exposes exactly two read-o
     assert.equal(invalid.isError, true);
   } finally { await client.close(); }
 });
+
+ test('MCP rejects batches before content loading', async () => {
+  const body = Array.from({ length: 46 }, (_, id) => ({ jsonrpc: '2.0', id, method: 'tools/call', params: { name: 'get_foundation_lesson', arguments: { id: 'reference/11-llm-engineering/09-function-calling', maxChars: 12000 } } }));
+  const request = new Request('https://learn.createsomething.space/api/foundation/mcp', { method: 'POST', headers: { 'content-type': 'application/json', accept: 'application/json, text/event-stream' }, body: JSON.stringify(body) });
+  const response = await handleMcp(request, await readBoundedJson(request), catalog, async () => { assert.fail('Batch must never load content'); });
+  assert.equal(response.status, 400);
+  assert.match(await response.text(), /batches are not supported/);
+});
+test('section IDs reserve emitted numeric suffixes in both orders', () => {
+  for (const markdown of ['# Lesson\n## Same\nA\n## Same\nB\n## Same-2\nC', '# Lesson\n## Same-2\nA\n## Same\nB\n## Same\nC']) {
+    const ids = sections(markdown).map(x => x.id);
+    assert.equal(new Set(ids).size, 4);
+  }
+});

@@ -2967,7 +2967,7 @@ importers:
         specifier: workspace:^
         version: link:../tufte
       '@modelcontextprotocol/sdk':
-        specifier: ^1.26.0
+        specifier: 1.26.0
         version: 1.26.0(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(zod@4.3.6)
       lucide-svelte:
         specifier: ^0.554.0

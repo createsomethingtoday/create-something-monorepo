@@ -76,7 +76,7 @@ export function searchFoundation(catalog: FoundationCatalog, query: string, limi
 /** Ignore headings in fenced examples; duplicate heading names get stable suffixes. */
 export function sections(markdown: string) {
   const result: { id: string; title: string; start: number; end: number; level: number }[] = [];
-  const counts = new Map<string, number>();
+  const ids = new Set<string>();
   let fence: { char: string; length: number } | undefined;
   let offset = 0;
   for (const line of markdown.split(/(?<=\n)/)) {
@@ -89,9 +89,11 @@ export function sections(markdown: string) {
       if (match) {
         const title = match[2].trim();
         const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'section';
-        const count = (counts.get(slug) ?? 0) + 1;
-        counts.set(slug, count);
-        result.push({ id: count === 1 ? slug : `${slug}-${count}`, title, start: offset, end: markdown.length, level: match[1].length });
+        let id = slug;
+        let suffix = 2;
+        while (ids.has(id)) id = `${slug}-${suffix++}`;
+        ids.add(id);
+        result.push({ id, title, start: offset, end: markdown.length, level: match[1].length });
       }
     }
     offset += line.length;
