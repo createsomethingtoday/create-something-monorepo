@@ -5,8 +5,9 @@
 // preconditions) are identical. Keep the two files in sync until the client is
 // consolidated into a shared package. Deliberate divergences from the source:
 // the local FetchFn alias, `agentTicketUrl()` (subdomain-aware links),
-// `parseZendeskGroupId()`, and renderer hardening (quotes escaped, only http(s)
-// link targets become anchors) — port the last one back, see CRE-2176.
+// `parseZendeskGroupId()`, renderer hardening (quotes escaped, only http(s)
+// link targets become anchors), safe_update/updated_stamp on status writes, and
+// hiding the raw comment count from public-only reads — port back per CRE-2176.
 
 type FetchFn = typeof fetch;
 
@@ -330,7 +331,9 @@ export class ZendeskClient {
     const headers = { Authorization: this.authHeader, Accept: 'application/json' };
     const current = await this.fetchFn(`${this.baseUrl}/tickets/${ticketId}.json`, { headers });
     if (!current.ok) await this.failFrom(current, 'ticket read', ticketId);
-    const { ticket } = (await current.json()) as { ticket?: { status?: string; group_id?: number | null; tags?: string[] } };
+    const { ticket } = (await current.json()) as {
+      ticket?: { status?: string; group_id?: number | null; tags?: string[]; updated_at?: string };
+    };
     const previousStatus = ticket?.status ?? 'unknown';
     if (ticket?.group_id !== this.marketplaceGroupId) {
       throw new ZendeskClientError(
@@ -349,6 +352,12 @@ export class ZendeskClient {
       );
     }
     const body: Record<string, unknown> = { status: update.status };
+    // Zendesk's provider-side precondition: the PUT is rejected with 409 if the ticket
+    // changed after the read above, so the expected-status check holds under concurrency.
+    if (ticket?.updated_at) {
+      body.safe_update = true;
+      body.updated_stamp = ticket.updated_at;
+    }
     if (update.additionalTags?.length) body.additional_tags = update.additionalTags;
     if (update.removeTags?.length) body.remove_tags = update.removeTags;
     if (update.privateNote?.trim()) body.comment = { body: update.privateNote.trim(), public: false };
@@ -357,6 +366,14 @@ export class ZendeskClient {
       headers: { ...headers, 'Content-Type': 'application/json' },
       body: JSON.stringify({ ticket: body }),
     });
+    if (res.status === 409) {
+      throw new ZendeskClientError(
+        'ZENDESK_STATUS_CONFLICT',
+        `Ticket ${ticketId} changed after it was read (Zendesk safe_update rejected the write). Re-read and confirm again.`,
+        409,
+        { ticketId, expectedStatus: update.expectedStatus, updatedStamp: ticket?.updated_at ?? null },
+      );
+    }
     if (!res.ok) await this.failFrom(res, 'ticket status update', ticketId);
     const payload = (await res.json()) as { ticket?: { status?: string; tags?: string[] }; audit?: { id?: number } };
     return {
@@ -526,7 +543,8 @@ export class ZendeskClient {
       requester: typeof t.requester_id === 'number' ? author(t.requester_id) : null,
       assignee: typeof t.assignee_id === 'number' ? author(t.assignee_id) : null,
       comments,
-      totalCommentsOnTicket: typeof commentsPayload.count === 'number' ? commentsPayload.count : null,
+      // The raw count includes private notes; only expose it when the caller was allowed to see them.
+      totalCommentsOnTicket: includeInternalNotes && typeof commentsPayload.count === 'number' ? commentsPayload.count : null,
       includesInternalNotes: includeInternalNotes,
     };
   }

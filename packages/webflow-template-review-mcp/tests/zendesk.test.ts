@@ -111,11 +111,12 @@ test('getTicketThread returns metadata and public comments oldest-first, interna
   assert.equal(thread.requester?.name, 'Creator Person');
   assert.equal(thread.assignee?.role, 'agent');
   assert.deepEqual(thread.comments.map((c) => c.id), [1, 2]);
-  assert.equal(thread.totalCommentsOnTicket, 3);
+  assert.equal(thread.totalCommentsOnTicket, null, 'raw count would reveal how many private notes exist');
   assert.equal(thread.includesInternalNotes, false);
 
   const withNotes = await client.getTicketThread('1199299', { includeInternalNotes: true });
   assert.deepEqual(withNotes.comments.map((c) => c.id), [1, 2, 3]);
+  assert.equal(withNotes.totalCommentsOnTicket, 3);
   assert.equal(withNotes.comments[2]?.isPublic, false);
 });
 
@@ -161,7 +162,7 @@ test('updateTicketStatus re-reads, checks expected status and group, then writes
     calls.push({ method, body: init?.body ? JSON.parse(String(init.body)) : undefined });
     return method === 'PUT'
       ? jsonResponse({ ticket: { status: 'solved', tags: ['marketplace', 'resolved'] }, audit: { id: 99 } })
-      : jsonResponse({ ticket: { status: 'pending', group_id: 1500002744702, tags: ['marketplace'] } });
+      : jsonResponse({ ticket: { status: 'pending', group_id: 1500002744702, tags: ['marketplace'], updated_at: '2026-09-29T16:00:00Z' } });
   };
   const client = new ZendeskClient({ subdomain: 'webflow2579', email: 'a@b.c', apiToken: 't', marketplaceGroupId: 1500002744702, fetchFn });
   const result = await client.updateTicketStatus('1199299', {
@@ -173,7 +174,7 @@ test('updateTicketStatus re-reads, checks expected status and group, then writes
   assert.equal(calls[0]?.method, 'GET');
   assert.deepEqual(calls[1], {
     method: 'PUT',
-    body: { ticket: { status: 'solved', additional_tags: ['resolved'], comment: { body: 'Closing after approval.', public: false } } },
+    body: { ticket: { status: 'solved', safe_update: true, updated_stamp: '2026-09-29T16:00:00Z', additional_tags: ['resolved'], comment: { body: 'Closing after approval.', public: false } } },
   });
   assert.equal(result.previousStatus, 'pending');
   assert.equal(result.status, 'solved');
@@ -233,4 +234,20 @@ test('renderCreatorFacingHtml escapes quotes in link targets and leaves non-http
   assert.ok(js.includes('javascript:alert(1)'));
   const plain = renderCreatorFacingHtml('see [the guidelines](https://example.com/docs?x=1&y=2)');
   assert.ok(plain.includes('<a href="https://example.com/docs?x=1&amp;y=2">the guidelines</a>'));
+});
+
+test('updateTicketStatus surfaces a Zendesk safe_update rejection as ZENDESK_STATUS_CONFLICT', async () => {
+  const client = new ZendeskClient({
+    subdomain: 'webflow2579', email: 'a@b.c', apiToken: 't', marketplaceGroupId: 1500002744702,
+    fetchFn: async (_input, init) =>
+      init?.method === 'PUT'
+        ? jsonResponse({ error: 'UpdateConflict' }, 409)
+        : jsonResponse({ ticket: { status: 'pending', group_id: 1500002744702, tags: [], updated_at: '2026-09-29T16:00:00Z' } }),
+  });
+  await assert.rejects(client.updateTicketStatus('1199299', { status: 'solved', expectedStatus: 'pending' }), (e: unknown) => {
+    assert.ok(e instanceof ZendeskClientError);
+    assert.equal(e.code, 'ZENDESK_STATUS_CONFLICT');
+    assert.equal(e.status, 409);
+    return true;
+  });
 });
