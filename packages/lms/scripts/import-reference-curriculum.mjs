@@ -8,6 +8,7 @@
 import { readFile, readdir, mkdir, copyFile, writeFile, rm, stat } from 'node:fs/promises';
 import { join, resolve, relative } from 'node:path';
 import { execFileSync } from 'node:child_process';
+import { runInNewContext } from 'node:vm';
 
 const upstream = resolve(process.argv[2] ?? '');
 if (!process.argv[2]) throw new Error('Pass the local upstream checkout path.');
@@ -56,4 +57,27 @@ await writeFile(
     `export const REFERENCE_REVISION = ${JSON.stringify(revision)};\n` +
     `export const REFERENCE_CATALOG = ${JSON.stringify(catalog, null, 2)} as const;\n`
 );
-console.log(`Imported ${catalog.length} lessons from ${relative(root, upstream)} at ${revision}.`);
+
+// The lesson narratives use `figure` fences for 531 interactive diagrams.
+// Rebuild the upstream figure manifest, then copy its dependency-free runtime
+// and providers with URLs scoped to Learn's static reference directory.
+execFileSync('node', ['site/build.js'], { cwd: upstream, stdio: 'pipe' });
+const figureRoot = join(root, 'static/reference-figures');
+await rm(figureRoot, { recursive: true, force: true });
+await mkdir(figureRoot, { recursive: true });
+const siteRoot = join(upstream, 'site');
+const sandbox = { window: {} };
+runInNewContext(await readFile(join(siteRoot, 'figure-manifest.js'), 'utf8'), sandbox);
+const prefix = '/reference-figures/';
+const order = Array.from(sandbox.window.AIFS_FIGURE_PROVIDER_ORDER);
+const routes = Object.fromEntries(Object.entries(sandbox.window.AIFS_FIGURE_PROVIDERS).map(([id, providers]) => [id, Array.from(providers, (provider) => prefix + provider)]));
+const versions = Object.fromEntries(Object.entries(sandbox.window.AIFS_FIGURE_PROVIDER_VERSIONS).map(([provider, version]) => [prefix + provider, version]));
+await copyFile(join(siteRoot, 'lesson-figures.js'), join(figureRoot, 'lesson-figures.js'));
+for (const provider of order) await copyFile(join(siteRoot, provider), join(figureRoot, provider));
+await writeFile(join(figureRoot, 'figure-manifest.js'),
+  `// AI Engineering from Scratch figure routing at ${revision}.\n` +
+  `window.AIFS_FIGURE_PROVIDER_ORDER = ${JSON.stringify(order.map((provider) => prefix + provider))};\n` +
+  `window.AIFS_FIGURE_PROVIDER_VERSIONS = ${JSON.stringify(versions)};\n` +
+  `window.AIFS_FIGURE_PROVIDERS = ${JSON.stringify(routes)};\n`
+);
+console.log(`Imported ${catalog.length} lessons and ${order.length} figure providers from ${relative(root, upstream)} at ${revision}.`);

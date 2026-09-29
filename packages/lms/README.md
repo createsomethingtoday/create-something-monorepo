@@ -16,7 +16,7 @@ Teaching the ethos through practice. The LMS combines original CREATE SOMETHING 
 
 ## Reference Library
 
-`/reference` contains 523 English lesson narratives imported from [AI Engineering from Scratch](https://github.com/rohitg00/ai-engineering-from-scratch) at the pinned revision in `src/lib/content/reference/catalog.generated.ts`. The upstream MIT license is preserved at `src/lib/content/reference/LICENSE.upstream`. Each page credits Rohit Ghumare and contributors and links to the exact upstream lesson and runnable code. This library is reference material; the original CREATE SOMETHING path is authored separately.
+`/reference` contains 523 English lesson narratives imported from [AI Engineering from Scratch](https://github.com/rohitg00/ai-engineering-from-scratch) at the pinned revision in `src/lib/content/reference/catalog.generated.ts`. The upstream MIT license is preserved at `src/lib/content/reference/LICENSE.upstream`. Interactive figure scripts from the same revision live in `static/reference-figures/` and load only when a lesson uses them. Each page credits Rohit Ghumare and contributors and links to the exact upstream lesson and runnable code. This library is reference material; the original CREATE SOMETHING path is authored separately.
 
 Refresh the snapshot from a checked-out upstream repository:
 
@@ -24,7 +24,7 @@ Refresh the snapshot from a checked-out upstream repository:
 node packages/lms/scripts/import-reference-curriculum.mjs /absolute/path/to/ai-engineering-from-scratch
 ```
 
-The importer fails if the source lacks any of the 523 English lesson documents expected by this snapshot. Review the diff and source license before updating the public library.
+The importer runs the upstream `site/build.js` to derive figure routing, then fails if the source lacks any of the 523 English lesson documents expected by this snapshot. It may update generated files in the local upstream checkout. Review the diff and source license before updating the public library.
 
 ## Stack
 

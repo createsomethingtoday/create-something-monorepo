@@ -1,9 +1,48 @@
 <script lang="ts">
+  import { afterNavigate } from '$app/navigation';
+  import { onMount, tick } from 'svelte';
   import type { PageData } from './$types';
   let { data }: { data: PageData } = $props();
   const index = $derived(data.phaseLessons.findIndex((item) => item.lesson === data.lesson.lesson));
   const previous = $derived(data.phaseLessons[index - 1]);
   const next = $derived(data.phaseLessons[index + 1]);
+  let article: HTMLElement;
+  let runtimeReady: Promise<void> | null = null;
+
+  type FigureWindow = Window & {
+    AIFS_loadFigureProviders?: (root: HTMLElement) => Promise<unknown>;
+    mountLessonFigures?: (root: HTMLElement) => void;
+  };
+
+  function loadScript(src: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = src;
+      script.onload = () => resolve();
+      script.onerror = () => reject(new Error(`Could not load reference figure runtime: ${src}`));
+      document.head.appendChild(script);
+    });
+  }
+
+  async function renderFigures() {
+    await tick();
+    if (!article?.querySelector('.lesson-figure[data-figure]')) return;
+    try {
+      runtimeReady ??= loadScript('/reference-figures/lesson-figures.js')
+        .then(() => loadScript('/reference-figures/figure-manifest.js'));
+      await runtimeReady;
+      const figureWindow = window as FigureWindow;
+      await figureWindow.AIFS_loadFigureProviders?.(article);
+      if (article.isConnected) figureWindow.mountLessonFigures?.(article);
+    } catch {
+      for (const host of article.querySelectorAll('.lesson-figure[data-figure]')) {
+        host.textContent = 'Interactive figure unavailable. The original lesson remains linked above.';
+      }
+    }
+  }
+
+  onMount(() => { void renderFigures(); });
+  afterNavigate(() => { void renderFigures(); });
 </script>
 
 <svelte:head>
@@ -23,7 +62,7 @@
     <p>As you work through this reference lesson, record the command, working directory, output, and artifact. Then ask which part belongs to Database, Automation, or Judgment. For a production system, name the human decision and the evidence required before promotion.</p>
     <a href="/paths/governed-agent-engineering">Apply it in the governed agent course ↗</a>
   </aside>
-  <article class="prose">{@html data.content}</article>
+  <article class="prose" bind:this={article}>{@html data.content}</article>
   <nav class="lesson-nav" aria-label="Reference lesson navigation">
     {#if previous}<a href={`/reference/${previous.phase}/${previous.lesson}`}>← {previous.title}</a>{:else}<span></span>{/if}
     {#if next}<a href={`/reference/${next.phase}/${next.lesson}`}>{next.title} →</a>{/if}

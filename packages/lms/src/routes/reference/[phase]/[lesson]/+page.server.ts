@@ -20,10 +20,15 @@ export const load: PageServerLoad = async ({ params }) => {
     try { return `${open}${new URL(href, open.startsWith('!') ? rawBase : base).toString()}${close}`; }
     catch { return `${open}${href}${close}`; }
   });
+  const withFigures = linked.replace(/```figure\s*\r?\n([\s\S]*?)```/g, (_match, body) => {
+    const id = body.trim().split(/\s+/)[0];
+    if (!/^[a-z0-9-]+$/.test(id)) return '';
+    return `<div class="lesson-figure" data-figure="${id}" aria-label="Interactive figure: ${id}"></div>`;
+  });
 
   return {
     lesson,
-    content: await marked.parse(linked),
+    content: await marked.parse(withFigures),
     source,
     code: lesson.hasCode ? referenceSourceUrl(params.phase, params.lesson, 'code') : null,
     phaseLessons: (await import('$lib/content/reference')).REFERENCE_CATALOG.filter((item) => item.phase === params.phase)
