@@ -82,6 +82,8 @@ Optional:
 - `app_review_search_tickets`
 - `app_review_update_ticket_status`
 - `app_review_send_ticket_followup`
+- `app_review_create_ticket` (opens a NEW outbound ticket to an app developer and emails them; `confirm_send: true`)
+- `app_review_link_version_ticket` (make a ticket the version's 🧘ZD ID; verified against Zendesk; `confirm_replace: true`)
 - `app_review_approve_version`
 - `app_review_reject_version`
 - `app_review_update_version_review`
@@ -148,6 +150,26 @@ Write posture:
   own greeting/sign-off. Requires `ZENDESK_API_TOKEN` (secret) +
   `ZENDESK_API_EMAIL`; the tool fails closed when unconfigured. Use only on
   explicit reviewer request.
+- `app_review_create_ticket` opens a NEW ticket to the app's creator email
+  (`👀🎨📧 Creator Email (Override)`, else the `🎨📧 Creator Email` rollup;
+  `requester_email` may override). It follows the sequence Zendesk needs before
+  a Marketplace-brand requester is emailed: create with a private,
+  agent-authored provenance note, pin the group back to Marketplace Review,
+  post the public message as an agent update, then read the audit trail and
+  report `requester_notified`. Idempotent via `external_id`
+  (`app-review-mcp:<asset>:<hash>`); a repeat fails with
+  `ZENDESK_OUTBOUND_TICKET_EXISTS`. A post-create failure carries the ticket id
+  (`ZENDESK_OUTBOUND_TICKET_INCOMPLETE`). Requires `confirm_send: true`.
+- `app_review_link_version_ticket` makes a ticket the version's `🧘ZD ID`
+  (where decision emails go). It reads the ticket first and refuses unless it
+  is in the Marketplace Review group and either carries this asset's outbound
+  key or has the asset's creator as requester; fresh-read precondition via
+  `expected_current_ticket_id`; requires `confirm_replace: true`.
+- The Zendesk client (`src/zendesk.ts`) is a byte-identical twin of the
+  Template Review MCP's below its header (CRE-2176 tracks consolidation). It
+  now escapes quotes in link targets, sends `safe_update` on status writes,
+  hides the raw comment count from public-only reads, and pages past internal
+  notes until `limit` visible comments are collected.
 
 Exception read paths:
 
