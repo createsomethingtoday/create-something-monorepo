@@ -155,14 +155,28 @@ function requireResolvedReviewer(getReviewer: ReviewerFactory) {
 /** Free-text search terms that would OR-widen or negate the group scope the tool promises. */
 const ZENDESK_SCOPE_OVERRIDE_TERM = /(^|\s)-?group:/i;
 
-function rejectScopeOverride(query: string | undefined, scope: 'marketplace_review' | 'all'): void {
-  if (scope === 'all' || !query || !ZENDESK_SCOPE_OVERRIDE_TERM.test(query)) return;
-  throw new ZendeskClientError(
-    'ZENDESK_SCOPE_OVERRIDE_REJECTED',
-    'query must not contain a group: term; the Marketplace Review group scope is applied by the tool. Pass scope="all" to search outside it.',
-    400,
-    { query },
-  );
+/** Zendesk tag values: letters, digits, underscore, hyphen, dot. Anything else (spaces, colons, OR) is search syntax, not a tag. */
+const ZENDESK_TAG_VALUE = /^[A-Za-z0-9_.-]+$/;
+
+function rejectScopeOverride(params: { query?: string; tags?: string[] }, scope: 'marketplace_review' | 'all'): void {
+  if (scope === 'all') return;
+  if (params.query && ZENDESK_SCOPE_OVERRIDE_TERM.test(params.query)) {
+    throw new ZendeskClientError(
+      'ZENDESK_SCOPE_OVERRIDE_REJECTED',
+      'query must not contain a group: term; the Marketplace Review group scope is applied by the tool. Pass scope="all" to search outside it.',
+      400,
+      { query: params.query },
+    );
+  }
+  const badTag = (params.tags ?? []).find((tag) => !ZENDESK_TAG_VALUE.test(tag));
+  if (badTag !== undefined) {
+    throw new ZendeskClientError(
+      'ZENDESK_SCOPE_OVERRIDE_REJECTED',
+      'tags must be plain Zendesk tag values (letters, digits, underscore, hyphen, dot); search syntax is not accepted inside a tag filter.',
+      400,
+      { tag: badTag },
+    );
+  }
 }
 
 function requireZendesk(runtimeConfig: ToolRuntimeConfig, verb: 'reads' | 'writes'): ZendeskClient {
@@ -1483,7 +1497,7 @@ export function registerTools(
     {
       query: z.string().optional().describe('Free text or Zendesk search syntax, e.g. a template name or subject:"Template submission".'),
       status: z.enum(['new', 'open', 'pending', 'hold', 'solved', 'closed']).optional(),
-      tags: z.array(z.string().min(1)).optional(),
+      tags: z.array(z.string().regex(ZENDESK_TAG_VALUE)).optional().describe('Plain tag values only, e.g. template_review.'),
       requester_email: z.string().email().optional(),
       assignee_id: z.number().int().positive().optional(),
       created_after: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().describe('YYYY-MM-DD'),
@@ -1499,7 +1513,7 @@ export function registerTools(
         const scope = params.scope ?? 'marketplace_review';
         // Account-wide search is reviewer-only; admitted-but-unmapped read sessions stay in the review group.
         if (scope === 'all') requireResolvedReviewer(getReviewer);
-        rejectScopeOverride(params.query, scope);
+        rejectScopeOverride(params, scope);
         const result = await zendesk.searchTickets({
           query: params.query,
           status: params.status,

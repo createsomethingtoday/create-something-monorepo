@@ -2329,9 +2329,17 @@ test('search_tickets rejects a group: term in free text unless scope is all', as
   }
   assert.equal(queries.length, 0);
 
+  for (const tags of [['foo OR group:46157931219347'], ['ok', 'bad tag'], ['group:1']]) {
+    const rejected = parsePayload((await handlers.get('template_review_search_tickets')?.({ tags, limit: 25, scope: 'marketplace_review' }))!);
+    assert.equal(rejected.error?.code, 'ZENDESK_SCOPE_OVERRIDE_REJECTED', JSON.stringify(tags));
+  }
+  assert.equal(queries.length, 0);
+  const tagged = parsePayload((await handlers.get('template_review_search_tickets')?.({ tags: ['template_review', 'v-2.0'], limit: 25, scope: 'marketplace_review' }))!);
+  assert.equal(tagged.ok, true);
+
   const allowed = parsePayload((await handlers.get('template_review_search_tickets')?.({ query: 'refund group:46157931219347', limit: 25, scope: 'all' }))!);
   assert.equal(allowed.ok, true);
   const plain = parsePayload((await handlers.get('template_review_search_tickets')?.({ query: 'workgroup: launch', limit: 25, scope: 'marketplace_review' }))!);
   assert.equal(plain.ok, true);
-  assert.deepEqual(queries, ['refund group:46157931219347', 'workgroup: launch']);
+  assert.deepEqual(queries, [undefined, 'refund group:46157931219347', 'workgroup: launch']);
 });
