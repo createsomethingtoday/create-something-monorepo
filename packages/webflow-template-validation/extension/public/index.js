@@ -1,7 +1,7 @@
 "use strict";
 (() => {
   // src/utils.ts
-  var EXTENSION_VERSION = "1.3.6";
+  var EXTENSION_VERSION = "1.3.7";
   function filterRetiredAccessibilityIssues(issues) {
     return issues.filter((issue) => issue.id !== "color-contrast-violations");
   }
@@ -3956,10 +3956,14 @@
       case "Variable Modes":
         addMetadataStat(details, "Modes", stats.totalModes);
         addMetadataStat(details, "Collections with modes", stats.collectionsWithModes);
-        if (stats.responsiveModeSource === "breakpoint") {
-          addMetadataStat(details, "Breakpoint modes", formatBooleanStat(stats.hasResponsiveModes), { tone: booleanTone(stats.hasResponsiveModes) });
+        if (stats.responsiveModeSource === "breakpoint" || stats.responsiveModeSource === "mixed") {
+          const label = stats.responsiveModeSource === "mixed" ? "Responsive modes" : "Breakpoint modes";
+          addMetadataStat(details, label, formatBooleanStat(stats.hasResponsiveModes), { tone: booleanTone(stats.hasResponsiveModes) });
           if (Array.isArray(stats.breakpointBoundModeNames) && stats.breakpointBoundModeNames.length > 0) {
             addMetadataStat(details, "Breakpoint-bound", stats.breakpointBoundModeNames.slice(0, 5).join(", "));
+          }
+          if (Array.isArray(stats.nameMatchedModeNames) && stats.nameMatchedModeNames.length > 0) {
+            addMetadataStat(details, "Name-matched", stats.nameMatchedModeNames.slice(0, 5).join(", "));
           }
         } else if (stats.responsiveModeNamesDetected !== void 0) {
           addMetadataStat(details, "Responsive names", formatBooleanStat(stats.responsiveModeNamesDetected), { tone: booleanTone(stats.responsiveModeNamesDetected) });

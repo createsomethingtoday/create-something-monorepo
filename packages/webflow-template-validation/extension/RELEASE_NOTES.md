@@ -1,5 +1,11 @@
 # Webflow Way Validator - Release Notes
 
+## Version 1.3.7 - Mixed variable-mode evidence
+
+- Stats panel renders `responsiveModeSource: 'mixed'` results with both the breakpoint-bound and name-matched mode lists, instead of falling back to a name-based "Responsive names" boolean.
+
+---
+
 ## Version 1.3.6 - Designer API 2.2 metadata
 
 - Reads each class's real type (global, combo, tag, element, descendant) and origin (site or library) from the Designer instead of guessing from names; older Designer runtimes keep the previous behavior.

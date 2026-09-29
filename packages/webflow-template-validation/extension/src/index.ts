@@ -4992,10 +4992,16 @@ function getDetailedStatItems(category: string, stats: Record<string, any>): Met
     case 'Variable Modes':
       addMetadataStat(details, 'Modes', stats.totalModes);
       addMetadataStat(details, 'Collections with modes', stats.collectionsWithModes);
-      if (stats.responsiveModeSource === 'breakpoint') {
-        addMetadataStat(details, 'Breakpoint modes', formatBooleanStat(stats.hasResponsiveModes), { tone: booleanTone(stats.hasResponsiveModes) });
+      if (stats.responsiveModeSource === 'breakpoint' || stats.responsiveModeSource === 'mixed') {
+        // 'mixed' = some modes reported a breakpoint binding, others fell back to the
+        // name heuristic. Show both evidence lists so the result is not read as name-based.
+        const label = stats.responsiveModeSource === 'mixed' ? 'Responsive modes' : 'Breakpoint modes';
+        addMetadataStat(details, label, formatBooleanStat(stats.hasResponsiveModes), { tone: booleanTone(stats.hasResponsiveModes) });
         if (Array.isArray(stats.breakpointBoundModeNames) && stats.breakpointBoundModeNames.length > 0) {
           addMetadataStat(details, 'Breakpoint-bound', stats.breakpointBoundModeNames.slice(0, 5).join(', '));
+        }
+        if (Array.isArray(stats.nameMatchedModeNames) && stats.nameMatchedModeNames.length > 0) {
+          addMetadataStat(details, 'Name-matched', stats.nameMatchedModeNames.slice(0, 5).join(', '));
         }
       } else if (stats.responsiveModeNamesDetected !== undefined) {
         addMetadataStat(details, 'Responsive names', formatBooleanStat(stats.responsiveModeNamesDetected), { tone: booleanTone(stats.responsiveModeNamesDetected) });
