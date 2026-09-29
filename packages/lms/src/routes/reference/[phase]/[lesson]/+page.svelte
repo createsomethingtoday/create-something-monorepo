@@ -55,7 +55,7 @@
   <header>
     <p class="eyebrow">Reference lesson / {data.lesson.phase.replace(/^\d+-/, '').replaceAll('-', ' ')}</p>
     <h1>{data.lesson.title}</h1>
-    <p class="license">By Rohit Ghumare and contributors · MIT licensed · <a href={data.source}>Original lesson</a>{#if data.code} · <a href={data.code}>Runnable code</a>{/if}</p>
+    <p class="license">By Rohit Ghumare and contributors · <a href="/reference-license.txt">MIT licensed</a> · <a href={data.source}>Original lesson</a>{#if data.code} · <a href={data.code}>Runnable code</a>{/if}</p>
   </header>
   <aside class="field-note">
     <strong>CREATE SOMETHING field practice</strong>
