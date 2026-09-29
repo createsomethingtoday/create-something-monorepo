@@ -147,6 +147,19 @@ Optional:
 - `E2B_API_KEY` (coordinator-only Worker secret that enables bounded published-site evidence execution; never sent into the sandbox)
 - `E2B_BROWSER_TEMPLATE` (defaults to `webflow-template-review-browser-v1`)
 
+Zendesk leg (optional; the four ticket tools fail closed with
+`ZENDESK_NOT_CONFIGURED` until the secret is provisioned):
+
+- `ZENDESK_API_TOKEN` (Worker secret via `wrangler secret put`; value lives in
+  Infisical at `/webflow/zendesk` key `wfm` — the same token the App Review MCP
+  and the Zendesk MCP use)
+- `ZENDESK_API_EMAIL` (defaults in `wrangler.toml` to `support-admin@webflow.com`,
+  the support-admin integration user; writes are attributed to it)
+- `ZENDESK_SUBDOMAIN` (defaults to `webflow2579`)
+- `MARKETPLACE_ZENDESK_GROUP_ID` (defaults to `1500002744702`, the Marketplace
+  Review Team group; ticket search defaults to it and status writes refuse
+  tickets outside it)
+
 ## Published Site Sandbox Bundle
 
 Claude Chat and Cowork can call `template_review_run_published_site_sandbox`
@@ -620,6 +633,59 @@ creator-facing feedback.
 - `template_review_save_agent_feedback`
 - `template_review_approve_version`
 - `template_review_reject_version`
+- `template_review_get_ticket_thread` (read-only; the creator's Zendesk conversation for a version)
+- `template_review_search_tickets` (read-only; Marketplace Review group by default)
+- `template_review_send_ticket_followup` (creator-facing when public; requires `confirm_public_reply: true` and reviewer ownership of the version)
+- `template_review_update_ticket_status` (status/tags + private note on the version's linked ticket; reviewer must own the version; never a public reply)
+
+## Zendesk ticket leg
+
+Template submissions open a Zendesk ticket in the Marketplace Review Team group
+(`webflow2579`), and the intake automation stamps its ID on the Asset Versions
+row (`🧘ZD ID`, `fldHKvyh55jJ0VK1u`; subject formula `🧘ZD Msg Subject`). The
+Airtable email composer delivers decision emails (request changes / approve /
+reject) on that ticket. These tools give reviewers the rest of the thread
+without leaving the MCP. They mirror the App Review MCP's Zendesk tools
+one-for-one; `src/zendesk.ts` is a copy of that package's client with three
+deliberate divergences listed in its header (subdomain-aware agent links and
+safe group-ID parsing). Consolidating the client into a shared package is
+tracked as follow-up work.
+
+- `template_review_get_ticket_thread` resolves the ticket from the version
+  record (never an arbitrary ticket ID) and returns subject, status,
+  requester/assignee, and the conversation oldest → newest. Public comments
+  only by default; `include_internal_notes: true` adds private agent notes and
+  requires a resolved reviewer identity (admitted-but-unmapped read sessions
+  get public comments only). Read this before drafting any creator-facing
+  message.
+- `template_review_search_tickets` is read-only cross-ticket search, scoped by
+  default to the Marketplace Review Team group; `scope: "all"` widens to the
+  whole account only on explicit request and requires a resolved reviewer
+  identity. Free-text `group:` terms are rejected in the default scope so the
+  group boundary cannot be OR-widened from the query.
+- `template_review_send_ticket_followup` posts on the version's linked ticket.
+  It is a write tool (hidden from read-only sessions), requires the reviewer to
+  own the version (`assign_self` first), refuses a public reply unless
+  `confirm_public_reply: true` is passed, and renders Markdown with HTML
+  escaping so a literal `<script>` tag cannot truncate the delivered email
+  (the failure the composer patch fixed; see
+  `docs/airtable-email-composer/README.md`). It bypasses the composer wrapper,
+  so messages carry their own greeting and sign-off. Use only on explicit
+  reviewer request; decisions still go through the Airtable decision tools.
+- `template_review_update_ticket_status` changes the linked ticket's status
+  (new/open/pending/hold/solved) and tags, optionally with a private note. It
+  takes a `version_id`, not a ticket ID: the ticket is resolved from the
+  version record and the reviewer must own the version, so one reviewer
+  cannot solve another reviewer's (or an app's) ticket. It also refuses
+  tickets outside the Marketplace Review group
+  (`ZENDESK_TICKET_OUT_OF_SCOPE`), requires
+  `status_change: { confirmed: true, expected_status }` from a fresh read, and
+  fails with `ZENDESK_STATUS_CONFLICT` if the ticket moved. It never posts a
+  public comment. `solved` fires Zendesk's solved-notification email to the
+  creator, so use it only on explicit reviewer request.
+
+Neither MCP creates tickets: ticket creation stays with the submission-form
+intake automation so every ticket has a version row behind it.
 
 ## Reviewer checklists
 

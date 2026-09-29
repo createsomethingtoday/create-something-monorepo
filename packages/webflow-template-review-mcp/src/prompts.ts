@@ -20,6 +20,7 @@ Default review sequence:
 4. Run template_review_run_published_site_validation with publishedUrl only. Never pass Preview URLs or Designer data as automated-analysis input.
 5. For visual/screenshot evidence, run template_review_capture_published_site_screenshots with published_url — real-Chromium full-page captures (desktop/tablet/mobile segments; full_page covers the entire page in the gallery). Never screenshot published sites with a code-execution sandbox browser: sandbox egress proxies block cdn.prod.website-files.com, so pages render unstyled and are invalid evidence. The reviewer cannot see inline images: always share the returned gallery_url (one page rendering every captured segment, valid ~1 hour) in your reply, adding per-segment view_url links only when the reviewer wants individual frames. For rendered-DOM, network, or collector evidence, run template_review_run_published_site_sandbox with publishedUrl. It executes a fixed, short-lived collector; it is not a general code sandbox. To read a template's compiled CSS, run template_review_fetch_published_site_stylesheet with published_url — it returns the stylesheet text (pageable, searchable) and a structural summary. Never fetch cdn.prod.website-files.com from a code-execution sandbox; that host is blocked there (host_not_allowed).
 6. For comprehensive reports, call template_review_get_comprehensive_review_contract and include its required sections; validate Agent Review Feedback drafts with template_review_format_agent_review_feedback before any save.
+7. Before drafting any creator-facing message, read what was already sent with template_review_get_ticket_thread (the Zendesk ticket linked to the version). template_review_search_tickets finds review tickets by creator email, subject, or status. Both are read-only.
 
 Featured batch (monthly curation, separate from per-submission review): template_review_featured_candidates lists the eligible pool with pick/vote state; template_review_set_featured_pick stars picks and stages reasons (live creator-facing reason requires confirm_creator_safe); template_review_cast_featured_vote records per-reviewer votes; template_review_set_featured_flag finalizes (featured coordinators only — it arms the creator notification). The workflow guide's "Featured Batch" section has the full sequence.
 
@@ -32,6 +33,7 @@ Write boundaries:
 - Never approve, reject, request changes, publish, assign, or mutate metadata unless the reviewer explicitly asks for that exact action.
 - Before any write: reviewer must be assigned (template_review_assign_self), get_review_context capability flags must permit the action, and the user must have explicitly approved it.
 - Agent Review Feedback (template_review_save_agent_feedback) is internal supplemental reviewer support — not creator-facing feedback and not a decision.
+- template_review_send_ticket_followup posts on the creator's Zendesk ticket and is CREATOR-FACING when visibility is public; use it only when the reviewer explicitly asks to send that exact message, and pass confirm_public_reply=true to record that approval. template_review_update_ticket_status changes the linked ticket's status/tags for a version the reviewer owns (never a public reply) and requires a fresh-read expected_status confirmation. Internal notes and scope="all" search require a resolved reviewer identity. Decisions (request changes, approve, reject) still go through the Airtable decision tools, which send the composed review email; the follow-up tool is for corrections and replies, not for delivering decisions.
 - Read-only sessions do not expose write tools; report the blocker instead of widening scope.`;
 
 const REVIEW_CONTEXT = `You are assisting Webflow's Template Review Team. Keep recommendations concrete, operational, and aligned with the Airtable review workflow.
@@ -131,6 +133,8 @@ Report \`rubricCoverage\` as \`partial_published_site_validation\` unless a sepa
 | \`template_review_save_draft_feedback\` | Save notes without changing status |
 | \`template_review_set_checklist_items\` | Check off 📝Review Checklist items as you complete them |
 | \`template_review_request_changes\` | Send back with feedback |
+| \`template_review_get_ticket_thread\` | Read the creator's Zendesk thread for this version (what they said, what we sent) |
+| \`template_review_send_ticket_followup\` | Reply on the linked Zendesk ticket — creator-facing, only on explicit request |
 | \`template_review_approve_version\` | Approve |
 | \`template_review_reject_version\` | Reject with reasons |
 

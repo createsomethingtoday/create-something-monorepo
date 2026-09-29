@@ -20,6 +20,7 @@ import {
 } from './thumbnail-proxy.js';
 import type { AirtableClient, TemplateReviewAssetThumbnails, TemplateReviewQueueItem } from './airtable.js';
 import { AirtableClientError } from './airtable.js';
+import { renderCreatorFacingHtml, ZENDESK_WRITABLE_STATUSES, ZendeskClientError, type ZendeskClient } from './zendesk.js';
 import { observeTemplateHandoff, templateHandoffRequestSchema } from './handoff-observation.js';
 import { CHECKLIST_KIND_VALUES, parseChecklist } from './checklist.js';
 import { COMPREHENSIVE_REVIEW_LANE_IDS, EVIDENCE_LABELS, formatComprehensiveAgentReviewFeedback } from './comprehensive-review-feedback.js';
@@ -93,7 +94,7 @@ function asSuccess(data: unknown) {
 }
 
 function asError(error: unknown) {
-  if (error instanceof AirtableClientError) {
+  if (error instanceof AirtableClientError || error instanceof ZendeskClientError) {
     return jsonContent(
       {
         ok: false,
@@ -149,6 +150,58 @@ function requireResolvedReviewer(getReviewer: ReviewerFactory) {
     throw new AirtableClientError('REVIEWER_IDENTITY_UNAVAILABLE', 'Current reviewer identity is not configured for this MCP runtime.', 503);
   }
   return reviewer;
+}
+
+/**
+ * Free-text search syntax that would widen or negate the group scope the tool promises:
+ * a `group:` / `-group:` term, or a standalone Boolean `OR` (its right-hand branch is not
+ * constrained by the leading group clause).
+ */
+const ZENDESK_SCOPE_OVERRIDE_TERM = /(^|\s)(-?group:|OR(?=\s|$))/i;
+
+/** Zendesk tag values: letters, digits, underscore, hyphen, dot. Anything else (spaces, colons, OR) is search syntax, not a tag. */
+const ZENDESK_TAG_VALUE = /^[A-Za-z0-9_.-]+$/;
+
+function rejectScopeOverride(params: { query?: string; tags?: string[] }, scope: 'marketplace_review' | 'all'): void {
+  if (scope === 'all') return;
+  if (params.query && ZENDESK_SCOPE_OVERRIDE_TERM.test(params.query)) {
+    throw new ZendeskClientError(
+      'ZENDESK_SCOPE_OVERRIDE_REJECTED',
+      'query must not contain a group: term or a Boolean OR; the Marketplace Review group scope is applied by the tool. Pass scope="all" to search outside it.',
+      400,
+      { query: params.query },
+    );
+  }
+  const badTag = (params.tags ?? []).find((tag) => !ZENDESK_TAG_VALUE.test(tag));
+  if (badTag !== undefined) {
+    throw new ZendeskClientError(
+      'ZENDESK_SCOPE_OVERRIDE_REJECTED',
+      'tags must be plain Zendesk tag values (letters, digits, underscore, hyphen, dot); search syntax is not accepted inside a tag filter.',
+      400,
+      { tag: badTag },
+    );
+  }
+}
+
+function requireZendesk(runtimeConfig: ToolRuntimeConfig, verb: 'reads' | 'writes'): ZendeskClient {
+  const zendesk = runtimeConfig.getZendeskClient?.() ?? null;
+  if (!zendesk) {
+    throw new ZendeskClientError(
+      'ZENDESK_NOT_CONFIGURED',
+      `Zendesk ${verb} are not configured on this deployment (ZENDESK_API_TOKEN / ZENDESK_API_EMAIL missing).`,
+      503,
+    );
+  }
+  return zendesk;
+}
+
+function requireLinkedTicket(version: { versionId: string; zendeskTicketId?: string }): string {
+  if (!version.zendeskTicketId) {
+    throw new ZendeskClientError('NO_ZENDESK_TICKET', 'This template version has no linked Zendesk ticket (🧘ZD ID is empty).', 404, {
+      version_id: version.versionId,
+    });
+  }
+  return version.zendeskTicketId;
 }
 
 function reviewerPayload(reviewer: ReviewerProfile) {
@@ -216,6 +269,12 @@ export interface ToolRuntimeConfig extends ValidationToolConfig {
   screenshotCapture?: ScreenshotCaptureConfig;
   /** Timeout for published-site stylesheet fetches (defaults to 20s). */
   stylesheetTimeoutMs?: number;
+  /**
+   * Zendesk client for the ticket leg (thread read, search, status, follow-up).
+   * Returns null when ZENDESK_API_TOKEN / ZENDESK_API_EMAIL are not provisioned;
+   * the tools then fail closed with ZENDESK_NOT_CONFIGURED.
+   */
+  getZendeskClient?: () => ZendeskClient | null;
 }
 
 /**
@@ -237,6 +296,10 @@ export const WRITE_TOOL_NAMES: ReadonlySet<string> = new Set([
   'template_review_update_version_review',
   'template_review_approve_version',
   'template_review_reject_version',
+  // Zendesk writes: a public follow-up reaches the creator; a status change can
+  // fire Zendesk's solved-notification email. Read-only sessions never see them.
+  'template_review_send_ticket_followup',
+  'template_review_update_ticket_status',
   // Featured-batch curation writes: pick star + reason, votes, and the batch
   // finalization flag that arms the creator-notification worker.
   'template_review_set_featured_pick',
@@ -1396,6 +1459,177 @@ export function registerTools(
             review_feedback,
             improvement_areas,
           }),
+        });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'template_review_get_ticket_thread',
+    'Read-only: the Zendesk ticket linked to a template version — subject, status, requester, and the conversation (creator replies and review-team messages), oldest to newest. Resolves the ticket from the version record (🧘ZD ID), never from an arbitrary ticket ID, and only for versions whose asset is a template. Public comments only by default; set include_internal_notes=true to also return private agent notes (requires a resolved reviewer identity). Call this before drafting any creator-facing message to see what the creator said and what was already sent.',
+    {
+      version_id: z.string().min(1),
+      include_internal_notes: z.boolean().default(false),
+      limit: z.number().int().min(1).max(100).default(20),
+    },
+    async ({ version_id, include_internal_notes, limit }) => {
+      try {
+        const zendesk = requireZendesk(runtimeConfig, 'reads');
+        // Private agent notes are reviewer-only: admitted-but-unmapped read sessions get public comments.
+        if (include_internal_notes) requireResolvedReviewer(getReviewer);
+        const { version } = await getClient().getScopedVersion(version_id);
+        const ticketId = requireLinkedTicket(version);
+        const thread = await zendesk.getTicketThread(ticketId, { includeInternalNotes: include_internal_notes, limit });
+        return asSuccess({
+          version_id,
+          asset_id: version.assetId,
+          version_number: version.versionNumber,
+          ticket_url: zendesk.agentTicketUrl(ticketId),
+          thread,
+        });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'template_review_search_tickets',
+    'Read-only Zendesk ticket search. Scoped by default to the Marketplace Review Team group (template and app submission tickets); pass scope="all" only when the reviewer explicitly asks to look outside review tickets (requires a resolved reviewer identity). Combine free text with status, tags, requester email, assignee, and created-date filters. Returns ticket IDs and agent URLs; use template_review_get_ticket_thread (via the version) to read a conversation.',
+    {
+      query: z.string().optional().describe('Free text or Zendesk search syntax, e.g. a template name or subject:"Template submission".'),
+      status: z.enum(['new', 'open', 'pending', 'hold', 'solved', 'closed']).optional(),
+      tags: z.array(z.string().regex(ZENDESK_TAG_VALUE)).optional().describe('Plain tag values only, e.g. template_review.'),
+      requester_email: z.string().email().optional(),
+      assignee_id: z.number().int().positive().optional(),
+      created_after: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().describe('YYYY-MM-DD'),
+      created_before: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().describe('YYYY-MM-DD'),
+      sort_by: z.enum(['updated_at', 'created_at', 'priority', 'status']).optional(),
+      sort_order: z.enum(['asc', 'desc']).optional(),
+      limit: z.number().int().min(1).max(100).default(25),
+      scope: z.enum(['marketplace_review', 'all']).default('marketplace_review'),
+    },
+    async (params) => {
+      try {
+        const zendesk = requireZendesk(runtimeConfig, 'reads');
+        const scope = params.scope ?? 'marketplace_review';
+        // Account-wide search is reviewer-only; admitted-but-unmapped read sessions stay in the review group.
+        if (scope === 'all') requireResolvedReviewer(getReviewer);
+        rejectScopeOverride(params, scope);
+        const result = await zendesk.searchTickets({
+          query: params.query,
+          status: params.status,
+          tags: params.tags,
+          requesterEmail: params.requester_email,
+          assigneeId: params.assignee_id,
+          createdAfter: params.created_after,
+          createdBefore: params.created_before,
+          sortBy: params.sort_by,
+          sortOrder: params.sort_order,
+          limit: params.limit ?? 25,
+          scope,
+        });
+        return asSuccess({
+          ...result,
+          tickets: result.tickets.map((ticket) => ({ ...ticket, ticketUrl: zendesk.agentTicketUrl(ticket.ticketId) })),
+        });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'template_review_send_ticket_followup',
+    'Reviewer-safe write: post a follow-up comment on the Zendesk ticket linked to a template version. CREATOR-FACING when visibility is "public" — use only when the reviewer explicitly asks to send it (correcting a truncated review email, answering a creator question), and pass confirm_public_reply=true to acknowledge that. Requires the reviewer to own the version (assign_self first). The message is delivered verbatim, rendered from Markdown with HTML escaping; the Airtable composer wrapper does NOT apply on this path, so include a greeting and sign-off. Decisions still go through request_changes / approve_version / reject_version, which send the composed review email.',
+    {
+      version_id: z.string().min(1),
+      message: z.string().min(1),
+      visibility: z.enum(['public', 'internal']).default('public'),
+      confirm_public_reply: z
+        .boolean()
+        .default(false)
+        .describe('Must be true for visibility="public". Set it only after the reviewer has explicitly approved sending this exact message to the creator.'),
+    },
+    async ({ version_id, message, visibility, confirm_public_reply }) => {
+      try {
+        if (visibility === 'public' && confirm_public_reply !== true) {
+          throw new ZendeskClientError(
+            'PUBLIC_REPLY_CONFIRMATION_REQUIRED',
+            'A public follow-up reaches the creator. Pass confirm_public_reply=true only after the reviewer has explicitly approved sending this exact message, or use visibility="internal" for a private note.',
+            400,
+            { version_id, visibility },
+          );
+        }
+        const zendesk = requireZendesk(runtimeConfig, 'writes');
+        const reviewer = requireResolvedReviewer(getReviewer);
+        const actingReviewer = currentReviewerAsCollaborator(getReviewer);
+        const version = await getClient().requireAssignedVersion(version_id, actingReviewer);
+        const ticketId = requireLinkedTicket(version);
+        const htmlBody = renderCreatorFacingHtml(message);
+        const result = await zendesk.addTicketComment(ticketId, { htmlBody, isPublic: visibility === 'public' });
+        return asSuccess({
+          reviewer: reviewerPayload(reviewer),
+          version_id,
+          ticket_id: ticketId,
+          ticket_url: zendesk.agentTicketUrl(ticketId),
+          ticket_subject: version.zendeskSubject,
+          visibility,
+          audit_id: result.auditId,
+          ticket_status: result.ticketStatus,
+          html_body: htmlBody,
+        });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'template_review_update_ticket_status',
+    'Reviewer-safe write: change the status and tags of the Zendesk ticket linked to a template version, optionally with a PRIVATE internal note. Only on explicit reviewer request. The ticket is resolved from the version record (never an arbitrary ticket ID) and the reviewer must own the version (assign_self first). Requires status_change: { confirmed: true, expected_status: "<status from a fresh template_review_get_ticket_thread read>" }; a changed status fails with ZENDESK_STATUS_CONFLICT. Never posts a public reply — use template_review_send_ticket_followup for creator-facing messages. Setting "solved" triggers Zendesk\'s solved-notification email to the creator.',
+    {
+      version_id: z.string().min(1),
+      status: z.enum(ZENDESK_WRITABLE_STATUSES),
+      private_note: z.string().min(1).optional(),
+      additional_tags: z.array(z.string().min(1)).optional(),
+      remove_tags: z.array(z.string().min(1)).optional(),
+      status_change: z.object({ confirmed: z.boolean(), expected_status: z.string().min(1) }).optional(),
+    },
+    async ({ version_id, status, private_note, additional_tags, remove_tags, status_change }) => {
+      try {
+        if (!status_change || status_change.confirmed !== true) {
+          throw new ZendeskClientError(
+            'TICKET_STATUS_CONFIRMATION_REQUIRED',
+            'Supply status_change.confirmed=true and status_change.expected_status from a fresh template_review_get_ticket_thread read after an explicit reviewer request to change the ticket status.',
+            400,
+            { version_id },
+          );
+        }
+        const zendesk = requireZendesk(runtimeConfig, 'writes');
+        const reviewer = requireResolvedReviewer(getReviewer);
+        const actingReviewer = currentReviewerAsCollaborator(getReviewer);
+        const version = await getClient().requireAssignedVersion(version_id, actingReviewer);
+        const ticketId = requireLinkedTicket(version);
+        const result = await zendesk.updateTicketStatus(ticketId, {
+          status,
+          expectedStatus: status_change.expected_status,
+          privateNote: private_note,
+          additionalTags: additional_tags,
+          removeTags: remove_tags,
+        });
+        return asSuccess({
+          reviewer: reviewerPayload(reviewer),
+          version_id,
+          ticket_id: result.ticketId,
+          ticket_url: zendesk.agentTicketUrl(result.ticketId),
+          previous_status: result.previousStatus,
+          status: result.status,
+          tags: result.tags,
+          audit_id: result.auditId,
+          private_note_added: Boolean(private_note?.trim()),
         });
       } catch (error) {
         return asError(error);
