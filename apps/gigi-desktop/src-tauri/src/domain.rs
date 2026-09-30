@@ -786,6 +786,23 @@ mod tests {
         let _ = fs::remove_dir_all(root);
     }
     #[test]
+    fn restore_removes_task_created_after_snapshot_and_survives_reopen(){
+        let root=temp();
+        let w=dispatch(&root,"workspace.create",json!({"name":"Solo"})).unwrap();
+        let wid=&w["id"];
+        dispatch(&root,"records.save",json!({"workspaceId":wid,"entity":"profile","title":"Operator","fields":{"Currency":"USD"}})).unwrap();
+        dispatch(&root,"records.save",json!({"workspaceId":wid,"entity":"gigs","title":"Acceptance gig","fields":{"Fee":12500}})).unwrap();
+        dispatch(&root,"records.save",json!({"workspaceId":wid,"entity":"contacts","title":"Acceptance contact"})).unwrap();
+        let backup=dispatch(&root,"backup.create",json!({"workspaceId":wid})).unwrap();
+        dispatch(&root,"records.save",json!({"workspaceId":wid,"entity":"tasks","title":"Acceptance: restore should remove this task"})).unwrap();
+        assert_eq!(dispatch(&root,"records.list",json!({"workspaceId":wid,"entity":"tasks"})).unwrap()["count"],1);
+        let restored=dispatch(&root,"backup.restore",json!({"backupId":backup["backupId"]})).unwrap();
+        assert_eq!(restored["restored"],true);
+        assert_eq!(dispatch(&root,"records.list",json!({"workspaceId":wid,"entity":"tasks"})).unwrap()["count"],0);
+        assert_eq!(dispatch(&root,"records.list",json!({"workspaceId":wid,"entity":"gigs"})).unwrap()["count"],1);
+        let _=fs::remove_dir_all(root);
+    }
+    #[test]
     fn schema_rejects_cross_workspace_missing_and_ambiguous_links() {
         let root = temp();
         let w = dispatch(&root, "workspace.create", json!({"name":"Solo"})).unwrap();

@@ -201,7 +201,7 @@ async function proxyRead(
   const response = await providerFetch(new Request('https://backend.composio.dev/api/v3.1/tools/execute/proxy', {
     method: 'POST', headers: { 'x-api-key': env.COMPOSIO_API_KEY!, 'content-type': 'application/json', accept: 'application/json' },
     body: JSON.stringify({ connected_account_id: accountId, endpoint, method: 'GET', parameters }),
-    redirect: 'error', signal: AbortSignal.timeout(8_000),
+    redirect: 'manual', signal: AbortSignal.timeout(8_000),
   }));
   if (!response.ok) throw new Error('composio_proxy_unavailable');
   const outer = await boundedJson(response);
@@ -224,7 +224,7 @@ async function readAccountState(
   try {
     const response = await providerFetch(new Request(`https://backend.composio.dev/api/v3.1/connected_accounts/${encodeURIComponent(accountId)}`, {
       method: 'GET', headers: { 'x-api-key': env.COMPOSIO_API_KEY!, accept: 'application/json' },
-      redirect: 'error', signal: AbortSignal.timeout(8_000),
+      redirect: 'manual', signal: AbortSignal.timeout(8_000),
     }));
     if (!response.ok) return 'unavailable';
     data = await boundedJson(response);
@@ -255,7 +255,7 @@ async function recoverDispatchedAccount(env: ConnectorEnv, providerFetch: typeof
   try {
     const response = await providerFetch(new Request(url, { method: 'GET',
       headers: { 'x-api-key': env.COMPOSIO_API_KEY!, accept: 'application/json' },
-      redirect: 'error', signal: AbortSignal.timeout(8_000) }));
+      redirect: 'manual', signal: AbortSignal.timeout(8_000) }));
     if (!response.ok) return null;
     listing = await boundedJson(response);
   } catch { return null; }
@@ -337,7 +337,7 @@ async function beginLink(
       headers: { 'x-api-key': env.COMPOSIO_API_KEY!, accept: 'application/json', 'content-type': 'application/json' },
       body: JSON.stringify({ auth_config_id: authConfigId, user_id: userId, alias: requestId,
         callback_url: `${GIGI_RESOURCE}/v1/gigi/connection-callback`, experimental: { account_type: 'PRIVATE' } }),
-      redirect: 'error', signal: AbortSignal.timeout(10_000),
+      redirect: 'manual', signal: AbortSignal.timeout(10_000),
     }));
     if (!response.ok) return json({ provider, status: 'readback_required', attemptId: requestId }, 503);
     data = await boundedJson(response);
@@ -389,7 +389,7 @@ async function authenticate(request: Request, env: ConnectorEnv, providerFetch: 
     const response = await providerFetch(new Request(IDENTITY_USERINFO, {
       method: 'GET',
       headers: { authorization: `Bearer ${token}`, accept: 'application/json' },
-      redirect: 'error',
+      redirect: 'manual',
       signal: AbortSignal.timeout(8_000),
     }));
     if (!response.ok) return null;

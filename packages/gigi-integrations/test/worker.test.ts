@@ -62,6 +62,7 @@ test('broker derives owner from Identity and reports disconnected without provid
     DB: { prepare() { return { bind() { return { async first() { return null; }, async run() {}, async all() { return { results: [] }; } }; } }; } },
   }, async (request) => {
     const url = request instanceof Request ? request.url : String(request);
+    assert.equal((request as Request).redirect, 'manual', 'Worker outbound requests must use the edge-supported manual redirect mode');
     calls.push(url);
     return Response.json({ sub: 'actual-subject', resource: 'https://gigi-connector.createsomething.workers.dev', email_verified: true });
   });
@@ -86,6 +87,7 @@ test('status recovers only the authenticated owner’s unexpired pending consent
   let mismatchedProviderOwner = false;
   const fetcher: typeof fetch = async (request) => {
     const req = request as Request;
+    assert.equal(req.redirect, 'manual');
     if (new URL(req.url).pathname === '/oauth/userinfo') return Response.json({
       sub: req.headers.get('authorization') === 'Bearer other-token' ? 'other-subject' : 'actual-subject',
       resource: 'https://gigi-connector.createsomething.workers.dev', email_verified: true,
@@ -229,6 +231,51 @@ test('unknown provider result blocks a second link with a different request ID',
   assert.equal(providerCalls, 1);
 });
 
+test('Composio link redirect leaves the attempt pending without accepting its response body', async () => {
+  let pending: Record<string, unknown> | null = null;
+  const db = { prepare(sql: string) { return { bind(...values: unknown[]) { return {
+    async first() {
+      if (sql.includes('request_id = ?')) return pending?.request_id === values[2] ? pending : null;
+      return pending;
+    },
+    async run() {
+      if (sql.startsWith('INSERT') && !pending) {
+        pending = { subject: values[0], provider: values[1], request_id: values[2], status: 'dispatched', connected_account_id: null };
+        return { meta: { changes: 1 } };
+      }
+      if (sql.startsWith('UPDATE')) throw new Error('redirect response must not link an account');
+      return { meta: { changes: 0 } };
+    }, async all() { return { results: [] }; },
+  }; } }; } };
+  let linkCalls = 0;
+  const fetcher: typeof fetch = async (request) => {
+    const req = request as Request;
+    assert.equal(req.redirect, 'manual');
+    if (new URL(req.url).pathname === '/oauth/userinfo') return Response.json({
+      sub: 'actual-subject', resource: 'https://gigi-connector.createsomething.workers.dev', email_verified: true,
+    });
+    assert.equal(new URL(req.url).pathname, '/api/v3.1/connected_accounts/link');
+    linkCalls++;
+    return new Response(JSON.stringify({ connected_account_id: 'ca_redirected',
+      redirect_url: 'https://connect.composio.dev/session', expires_at: '2030-01-01T00:00:00Z' }), {
+      status: 302, headers: { location: 'https://other.example/redirect', 'content-type': 'application/json' },
+    });
+  };
+  const env = { GIGI_ALLOWED_SUBJECTS: 'actual-subject', COMPOSIO_API_KEY: 'ak_test',
+    GIGI_GMAIL_AUTH_CONFIG_ID: 'ac_gmail', GIGI_GMAIL_APPROVED_SCOPES: 'https://www.googleapis.com/auth/gmail.readonly', DB: db };
+  const begin = (requestId: string) => handleConnectorRequest(new Request('https://gigi-connector.createsomething.workers.dev/v1/gigi/connections/gmail/link', {
+    method: 'POST', headers: { authorization: 'Bearer test-token', 'content-type': 'application/json' }, body: JSON.stringify({ requestId }),
+  }), env, fetcher);
+  const first = await begin('request-redirect');
+  assert.equal(first.status, 503);
+  assert.deepEqual(await first.json(), { provider: 'gmail', status: 'readback_required', attemptId: 'request-redirect' });
+  assert.deepEqual(pending, { subject: 'actual-subject', provider: 'gmail', request_id: 'request-redirect',
+    status: 'dispatched', connected_account_id: null });
+  const replay = await begin('request-new');
+  assert.deepEqual(await replay.json(), { provider: 'gmail', status: 'readback_required', attemptId: 'request-redirect' });
+  assert.equal(linkCalls, 1);
+});
+
 test('verified revoked account releases the guard for a new consent attempt', async () => {
   const hash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('actual-subject'));
   const owner = 'gigi_' + [...new Uint8Array(hash)].map((byte) => byte.toString(16).padStart(2, '0')).join('').slice(0, 32);
@@ -289,6 +336,7 @@ test('unknown link outcome recovers only a unique exact-owner Composio alias wit
   }; } }; } };
   const calls: string[] = [];
   const fetcher: typeof fetch = async (request) => {
+    assert.equal((request as Request).redirect, 'manual');
     const url = new URL((request as Request).url); calls.push(url.pathname);
     if (url.pathname === '/oauth/userinfo') return Response.json({ sub: 'actual-subject', resource: 'https://gigi-connector.createsomething.workers.dev', email_verified: true });
     if (url.pathname === '/api/v3.1/connected_accounts') {
@@ -366,6 +414,7 @@ test('Gmail source page returns projected read-only message metadata for the ver
   }), { GIGI_ALLOWED_SUBJECTS: 'actual-subject', COMPOSIO_API_KEY: 'ak_test', GIGI_GMAIL_AUTH_CONFIG_ID: 'ac_gmail',
     GIGI_GMAIL_APPROVED_SCOPES: 'https://www.googleapis.com/auth/gmail.readonly', DB: db }, async (request) => {
     const req = request as Request;
+    assert.equal(req.redirect, 'manual');
     const url = new URL(req.url);
     if (url.pathname === '/oauth/userinfo') return Response.json({ sub: 'actual-subject', resource: 'https://gigi-connector.createsomething.workers.dev', email_verified: true });
     if (url.pathname.endsWith('/connected_accounts/ca_account1')) return Response.json({ id: 'ca_account1', user_id: userId,
