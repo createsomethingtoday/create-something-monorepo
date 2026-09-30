@@ -1,3 +1,8 @@
+---
+paths:
+  - "packages/dotfiles/neomutt/**"
+---
+
 # Neomutt Patterns
 
 Configuration for the CREATE SOMETHING email environment. Lives at `packages/dotfiles/neomutt/`, symlinked to `~/.config/neomutt/`.

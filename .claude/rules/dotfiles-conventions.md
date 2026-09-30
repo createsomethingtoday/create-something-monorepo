@@ -1,3 +1,8 @@
+---
+paths:
+  - "packages/dotfiles/**"
+---
+
 # Dotfiles Conventions
 
 ## Philosophy
@@ -306,7 +311,7 @@ tmux list-sessions
 tmux kill-session -t session-name
 ```
 
-See [Gastown Patterns](./gastown-patterns.md) for full multi-agent documentation.
+See [Gastown Patterns](../../docs/archive/claude-rules/gastown-patterns.md) for full multi-agent documentation.
 
 ## Stripe CLI Patterns
 
