@@ -132,6 +132,9 @@
     color: var(--color-performance-ink);
     border-block: 1px solid var(--color-performance-line);
   }
+  .membership :global(.meridian-accordion) {
+    padding-inline: max(1.25rem, calc((100% - 80rem) / 2));
+  }
   .offer { padding: clamp(2rem, 5vw, 5rem) max(1.25rem, calc((100% - 80rem) / 2)); }
   .offer-intro { max-width: 65ch; }
   .plans { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-performance-md); margin-block: var(--space-performance-xl); }
