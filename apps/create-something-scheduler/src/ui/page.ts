@@ -55,8 +55,17 @@ const technicalReviewOffer: SchedulerPageOffer = {
   policy: 'Technical Review / V1'
 };
 
+const systemSupportOffer: SchedulerPageOffer = {
+  metaDescription: 'Discuss remote software and workflow support with Micah Johnson.',
+  title: 'Remote Software Support Discussion | CREATE SOMETHING',
+  heading: 'Discuss One Support Problem',
+  lede: 'Choose a 30- or 60-minute conversation with Micah Johnson. Bring the tools involved, the last working state and the person who can approve a change. We agree on fit, scope and price before work begins. This is not emergency coverage.',
+  policy: 'Remote Software Support / V1'
+};
+
 export function resolveSchedulerPageOffer(intent: string | null | undefined): SchedulerPageOffer {
   const offerIntent = normalizeSchedulerOfferIntent(intent);
+  if (offerIntent === 'system-support') return systemSupportOffer;
   if (offerIntent === 'technical-review') return technicalReviewOffer;
   if (offerIntent === 'agent-foundation') return agentFoundationOffer;
   if (offerIntent === 'compiler-integration') return compilerIntegrationOffer;

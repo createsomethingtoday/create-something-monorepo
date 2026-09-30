@@ -252,7 +252,7 @@ export function createSchedulerMcpServer(
         {
           uri: uri.href,
           mimeType: 'application/json',
-          text: JSON.stringify(service.getLink(), null, 2)
+          text: JSON.stringify(await service.getLink(), null, 2)
         }
       ]
     })
@@ -270,7 +270,7 @@ export function createSchedulerMcpServer(
       contents: [{
         uri: uri.href,
         mimeType: 'application/json',
-        text: JSON.stringify(service.getLink(), null, 2)
+        text: JSON.stringify(await service.getLink(), null, 2)
       }]
     })
   );
@@ -313,7 +313,7 @@ export function createSchedulerMcpServer(
         openWorldHint: false
       }
     },
-    async () => textResult(service.getLink())
+    async () => textResult(await service.getLink())
   );
 
   server.registerTool(

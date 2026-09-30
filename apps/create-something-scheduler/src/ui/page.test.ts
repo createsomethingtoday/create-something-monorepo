@@ -125,6 +125,14 @@ describe('scheduler public page', () => {
     expect(html).not.toContain('<h1>Map One Workflow</h1>');
   });
 
+  it('renders the support offer and preserves its allowlisted intent for booking', () => {
+    const html = schedulerPage({ nonce: 'test-nonce', intent: 'system-support' });
+    expect(html).toContain('Remote Software Support Discussion | CREATE SOMETHING');
+    expect(html).toContain('Discuss One Support Problem');
+    expect(html).toContain('const offerIntent="system-support";');
+    expect(html).toContain('This is not emergency coverage.');
+  });
+
   it('does not offer booking management actions after cancellation', () => {
     const cancelledActions = renderBookingManagementActions('cancelled');
     const committedActions = renderBookingManagementActions('committed');

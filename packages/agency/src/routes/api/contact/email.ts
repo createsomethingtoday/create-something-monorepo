@@ -27,12 +27,15 @@ interface ContactNotificationInput extends ContactResponseInput {
 /** HTML only: recipient, sender, subject and delivery remain in the route. */
 export function renderContactResponse(input: ContactResponseInput): string {
   const { name, message, service, intent, lane } = input;
+  const nextStep = intent === 'system-support'
+    ? 'We will review the problem and reply about fit, scope and next steps. Work begins after we agree on scope, price and access.'
+    : 'I will get back to you within 24 hours to scope your first outcome stack.';
   return renderPerformanceEmail({
     preheader: 'Thanks for reaching out',
     status: 'CONTACT',
     title: 'Thanks for reaching out',
     contentHtml: `<p style="${paragraph}">Hi ${escapeHtml(name)},</p>
-      <p style="${paragraph}">I've received your inquiry${service ? ` about ${escapeHtml(service)}` : ''} and will get back to you within 24 hours to scope your first outcome stack.</p>
+      <p style="${paragraph}">I've received your inquiry${service ? ` about ${escapeHtml(service)}` : ''}. ${nextStep}</p>
       <div style="${messageBox}">
         ${service ? `<p style="${label}">Service: ${escapeHtml(service)}</p>` : ''}
         <p style="${label}">Next step: ${escapeHtml(intent)} / ${escapeHtml(lane)}</p>
