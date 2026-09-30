@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { listFrom, recordFields, editedFields, summaryMoney, gigBalance, fieldOptions, relatedEndpoint, sourcePreview, sourceCanBegin, sourceNeedsOperatorReview, importRunForAccount, nextImportCursor, pendingConsentForProvider, pendingAccountForProvider, fields, booleanFields, moneyFields, numericFields } from './model.mjs';
+import { listFrom, recordFields, editedFields, summaryMoney, gigBalance, fieldOptions, relatedEndpoint, sourcePreview, sourceCanBegin, sourceNeedsOperatorReview, importRunForAccount, nextImportCursor, pendingConsentForProvider, pendingAccountForProvider, linkInput, fields, booleanFields, moneyFields, numericFields } from './model.mjs';
 
 test('every editable detail belongs to the reviewed relational field catalog', () => {
   const catalog = JSON.parse(readFileSync(new URL('../src-tauri/migrations/notion_fields.json', import.meta.url), 'utf8'));
@@ -40,8 +40,17 @@ test('finance editor exposes domain accepted enums and partial gig balance stays
 test('linked detail navigates to the other endpoint in either direction', () => {
   const relation = { fromEntity: 'gigs', fromId: 'g1', fromTitle: 'Friday set', role: 'Contacts', toEntity: 'contacts', toId: 'c1', toTitle: 'Alex' };
   assert.deepEqual(relatedEndpoint(relation, 'gigs', 'g1'), { entity: 'contacts', id: 'c1', title: 'Alex', role: 'Contacts' });
-  assert.deepEqual(relatedEndpoint(relation, 'contacts', 'c1'), { entity: 'gigs', id: 'g1', title: 'Friday set', role: 'Contacts' });
+  assert.deepEqual(relatedEndpoint(relation, 'contacts', 'c1'), { entity: 'gigs', id: 'g1', title: 'Friday set', role: null });
+  assert.deepEqual(relatedEndpoint({ fromEntity: 'contacts', fromId: 'c1', fromTitle: 'Alex', role: 'Gigs', toEntity: 'gigs', toId: 'g1', toTitle: 'Friday set' }, 'gigs', 'g1'), { entity: 'contacts', id: 'c1', title: 'Alex', role: null });
   assert.equal(relatedEndpoint(relation, 'tasks', 't1'), null);
+});
+
+test('People to Gigs link captures selected values before UI rerender and rejects incomplete forms explicitly', () => {
+  assert.deepEqual(linkInput({ entity: 'gigs', role: 'Gigs', id: 'gig-1' }, 'contacts', 'contact-1'), {
+    fromEntity: 'contacts', fromId: 'contact-1', toEntity: 'gigs', toId: 'gig-1', role: 'Gigs'
+  });
+  assert.throws(() => linkInput({ entity: 'gigs', role: 'Gigs', id: '' }, 'contacts', 'contact-1'), /Choose a record/);
+  assert.throws(() => linkInput({ entity: 'gigs', role: '', id: 'gig-1' }, 'contacts', 'contact-1'), /relationship/);
 });
 
 test('import source text has human labels and stays separate from record facts', () => {

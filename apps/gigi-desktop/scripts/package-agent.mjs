@@ -6,7 +6,7 @@ const source=resolve(dirname(fileURLToPath(import.meta.url)),'../agent/gigi');
 export async function packageAgent({bundle,output}) {
  const binary=join(resolve(bundle),'Contents','Resources','gigi-mcp');
  try {await access(binary,constants.X_OK);} catch {throw new Error('Installed GiGi MCP companion is missing or not executable. Build and install GiGi before packaging the connector.');}
- await mkdir(output,{recursive:true});
+ await mkdir(dirname(resolve(output)),{recursive:true});
  await cp(source,output,{recursive:true,errorOnExist:true,force:false});
  const manifest=JSON.parse(await readFile(join(output,'.codex-plugin','plugin.json'),'utf8'));
  manifest.mcpServers='./.mcp.json';

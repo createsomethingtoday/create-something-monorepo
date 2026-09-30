@@ -97,8 +97,18 @@ export function gigBalance(summary) {
 
 export function relatedEndpoint(relation, currentEntity, currentId) {
   if (relation.fromEntity === currentEntity && relation.fromId === currentId) return { entity: relation.toEntity, id: relation.toId, title: relation.toTitle || null, role: relation.role };
-  if (relation.toEntity === currentEntity && relation.toId === currentId) return { entity: relation.fromEntity, id: relation.fromId, title: relation.fromTitle || null, role: relation.role };
+  if (relation.toEntity === currentEntity && relation.toId === currentId) return { entity: relation.fromEntity, id: relation.fromId, title: relation.fromTitle || null, role: null };
   return null;
+}
+
+export function linkInput(values, fromEntity, fromId) {
+  const toEntity = String(values.entity ?? '').trim();
+  const toId = String(values.id ?? '').trim();
+  const role = String(values.role ?? '').trim();
+  if (!toEntity) throw new Error('Choose a record type to link.');
+  if (!role) throw new Error('Choose a relationship to link.');
+  if (!toId) throw new Error('Choose a record to link.');
+  return { fromEntity, fromId, toEntity, toId, role };
 }
 
 export function sourcePreview(source) {

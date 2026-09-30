@@ -1,9 +1,9 @@
 import { tauriBridge } from './bridge.mjs';
-import { sections, fields, moneyFields, booleanFields, fieldOptions, listFrom, recordFields, editedFields, formatMoney, gigBalance, relatedEndpoint, sourcePreview, sourceCanBegin, sourceNeedsOperatorReview, importRunForAccount, nextImportCursor, pendingConsentForProvider, pendingAccountForProvider } from './model.mjs';
+import { sections, fields, moneyFields, booleanFields, fieldOptions, listFrom, recordFields, editedFields, formatMoney, gigBalance, relatedEndpoint, sourcePreview, sourceCanBegin, sourceNeedsOperatorReview, importRunForAccount, nextImportCursor, pendingConsentForProvider, pendingAccountForProvider, linkInput } from './model.mjs';
 
 const root = document.querySelector('#app');
 const bridge = tauriBridge();
-const state = { workspace: null, setupProfile: false, currency: null, page: 'overview', records: [], recordCount: 0, nextCursor: null, selected: null, editing: false, sourceExpanded: false, busy: false, signingIn: false, toast: null, summary: null, history: [], backupId: null, agent: null, agentReceipt: null, relationSchema: null, linkChoices: null, sources: {}, sourceAttempts: {}, connectionRequests: {}, imports: {}, contextHits: [], contextQueried: false };
+const state = { workspace: null, setupProfile: false, currency: null, page: 'overview', records: [], recordCount: 0, nextCursor: null, selected: null, editing: false, sourceExpanded: false, busy: false, signingIn: false, toast: null, summary: null, history: [], backupId: null, pendingRestoreId: null, agent: null, agentReceipt: null, relationSchema: null, linkChoices: null, sources: {}, sourceAttempts: {}, connectionRequests: {}, imports: {}, contextHits: [], contextQueried: false };
 const safe = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
 const label = (name) => sections.find((item) => item.id === name)?.label || name;
 const entityName = (name) => ({ schedule: 'schedule', finances: 'financial record', contacts: 'contact', companies: 'company', gigs: 'gig or shift', locations: 'place' })[name] || name.replace(/s$/, '');
@@ -41,6 +41,7 @@ async function load() {
 
 async function openPage(page) {
   state.page = page; state.selected = null; state.editing = false; state.sourceExpanded = false; state.summary = null;
+  if (page !== 'settings') state.pendingRestoreId = null;
   if (page === 'overview') {
     const names = ['gigs', 'tasks', 'contacts', 'finances'];
     const results = await Promise.all(names.map((name) => bridge.listRecords(workspaceId(), name)));
@@ -126,7 +127,7 @@ function linkEditor() {
   const selected = state.linkChoices?.entity || candidates[0];
   const roles = (state.relationSchema?.relationFields || []).filter((field) => field.targetEntity === selected);
   const choices = state.linkChoices?.items || [];
-  return `<button class="btn text" data-link-cancel="1">← Record</button>${heading('Relationship', 'Link this record', 'Choose an existing record in your private workspace.')}<form id="link-form" class="panel">${candidates.length ? `<div class="field"><label for="link-entity">Record type</label><select id="link-entity" name="entity">${candidates.map((name) => `<option value="${name}" ${name === selected ? 'selected' : ''}>${safe(label(name))}</option>`).join('')}</select></div><div class="field"><label for="link-role">Relationship</label><select id="link-role" name="role" required>${roles.map((field) => `<option value="${safe(field.name)}">${safe(field.name)}</option>`).join('')}</select></div><div class="field"><label for="link-record">Record</label><select id="link-record" name="id" required><option value="">Choose a record</option>${choices.map((record) => `<option value="${safe(record.id)}">${safe(record.title)}</option>`).join('')}</select></div>${state.linkChoices?.nextCursor ? '<button class="btn" type="button" data-link-more="1">Load more records</button>' : ''}<div class="form-actions"><button class="btn primary" type="submit">Link records</button></div>` : '<p class="muted">No available relationship types for this record.</p>'}</form>`;
+  return `<button class="btn text" data-link-cancel="1">← Record</button>${heading('Relationship', 'Link this record', 'Choose an existing record in your private workspace.')}<form id="link-form" class="panel" novalidate>${candidates.length ? `<div class="field"><label for="link-entity">Record type</label><select id="link-entity" name="entity">${candidates.map((name) => `<option value="${name}" ${name === selected ? 'selected' : ''}>${safe(label(name))}</option>`).join('')}</select></div><div class="field"><label for="link-role">Relationship</label><select id="link-role" name="role" required>${roles.map((field) => `<option value="${safe(field.name)}">${safe(field.name)}</option>`).join('')}</select></div><div class="field"><label for="link-record">Record</label><select id="link-record" name="id" required><option value="">Choose a record</option>${choices.map((record) => `<option value="${safe(record.id)}">${safe(record.title)}</option>`).join('')}</select></div>${state.linkChoices?.nextCursor ? '<button class="btn" type="button" data-link-more="1">Load more records</button>' : ''}<div class="form-actions"><button class="btn primary" type="button" data-link-submit="1">Link records</button></div>` : '<p class="muted">No available relationship types for this record.</p>'}</form>`;
 }
 
 function history() {
@@ -153,7 +154,7 @@ function settings() {
     `<div class="steps"><div class="step"><span class="number">1</span><div><h3>Private workspace</h3><p>${safe(state.workspace?.name || 'Your workspace')} is stored on this desktop. Your records are independent of other GiGi users.</p></div><span class="tag">Ready</span></div><div class="step"><span class="number">2</span><div><h3>Sources</h3><p>${sourceConnected} of 2 source accounts verified. Connecting an account and importing records are separate steps.</p></div><span class="tag off">${sourceConnected}/2 verified</span></div><div class="step"><span class="number">3</span><div><h3>Codex or Claude Code</h3><p>Install GiGi’s local MCP companion in your subscribed desktop agent, then verify its tools from that agent.</p></div><span class="tag off">${state.agentReceipt?.lastCall ? 'Local tool used · Phone unverified' : state.agentReceipt?.prepared || state.agent ? 'Prepared · Not verified' : 'Not verified'}</span></div><div class="step"><span class="number">4</span><div><h3>Phone access</h3><p>Keep this desktop awake, online and signed in. Start a provider remote session and test from your phone on cellular data.</p></div><span class="tag off">Needs device test</span></div></div>
     <section class="panel"><div class="panel-head"><h2>Source connections</h2><small>Separate consent required</small></div><p class="muted">Sign in to your GiGi connector account, then authorize each source separately.</p><button class="btn" data-sign-in="1" ${state.signingIn ? 'disabled' : ''}>${state.signingIn ? 'Waiting for browser sign-in…' : 'Sign in to connector'}</button><div class="steps section-gap">${sourceCard('gmail', 'Gmail')}${sourceCard('googlecalendar', 'Google Calendar')}</div></section>
     <section class="panel"><div class="panel-head"><h2>Agent setup</h2></div><p class="muted">Prepare the GiGi companion package and install it in the subscribed agent you use on this desktop. Preparing files does not verify the agent connection.</p><button class="btn" data-prepare-agent="1">Prepare agent plugin</button>${state.agentReceipt?.lastCall ? `<p class="muted">Last local GiGi tool: ${safe(state.agentReceipt.lastCall.tool)} at ${safe(new Date(state.agentReceipt.lastCall.lastToolAt * 1000).toLocaleString())}. Confirm the result in your agent; phone access still needs its own test.</p>` : ''}${state.agent ? `<p class="backup-code">Package: ${safe(state.agent.packagePath)}</p><p class="muted">${safe(state.agent.nextStep || 'Install the package in your agent and verify a GiGi tool call.')}</p>${state.agent.codexCommand ? `<h3 class="section-gap">Codex</h3><pre class="config">${safe(state.agent.codexCommand)}</pre>` : ''}${state.agent.claudeCommand ? `<h3 class="section-gap">Claude Code</h3><pre class="config">${safe(state.agent.claudeCommand)}</pre>` : ''}${state.agent.skillPath ? `<p class="muted">Skill: ${safe(state.agent.skillPath)}</p>` : ''}${state.agent.starterPrompt ? `<p class="muted">Try in your agent: ${safe(state.agent.starterPrompt)}</p>` : ''}<details><summary>MCP configuration</summary><pre class="config">${safe(typeof state.agent.mcpConfig === 'string' ? state.agent.mcpConfig : JSON.stringify(state.agent.mcpConfig, null, 2))}</pre></details>` : ''}</section>
-    <section class="panel"><div class="panel-head"><h2>Backup & restore</h2></div><p class="muted">Create a local recovery point before major changes. Restore replaces the active workspace with a chosen backup.</p><div class="inline-actions"><button class="btn" data-backup="1">Create backup</button><button class="btn" data-restore-toggle="1">Restore backup</button></div>${state.backupId ? `<span class="backup-code">Backup ID: ${safe(state.backupId)}</span>` : ''}<form id="restore-form" class="section-gap" hidden><div class="field"><label for="backup-id">Backup ID</label><input id="backup-id" name="backupId" required autocomplete="off"></div><button class="btn danger" type="submit">Restore this backup</button></form></section>
+    <section class="panel"><div class="panel-head"><h2>Backup & restore</h2></div><p class="muted">Create a local recovery point before major changes. Restore replaces the active workspace with a chosen backup.</p><div class="inline-actions"><button class="btn" data-backup="1">Create backup</button><button class="btn" data-restore-toggle="1" ${state.busy ? 'disabled' : ''}>Restore backup</button></div>${state.backupId ? `<span class="backup-code">Backup ID: ${safe(state.backupId)}</span>` : ''}${state.pendingRestoreId ? `<div class="callout section-gap" role="group" aria-label="Confirm restore"><strong>Confirm restore</strong><p>The current workspace will be replaced with backup ${safe(state.pendingRestoreId)}. GiGi will save a safety backup first.</p><div class="inline-actions"><button type="button" class="btn danger" data-confirm-restore="1" ${state.busy ? 'disabled' : ''}>Restore this backup</button><button type="button" class="btn" data-cancel-restore="1" ${state.busy ? 'disabled' : ''}>Cancel</button></div></div>` : '<form id="restore-form" class="section-gap" hidden><div class="field"><label for="backup-id">Backup ID</label><input id="backup-id" name="backupId" required autocomplete="off"></div><button class="btn danger" type="submit">Continue to confirmation</button></form>'}</section>
     <section class="panel"><div class="panel-head"><h2>Source context</h2><button class="btn" data-context-sync="1">Sync local history</button></div><p class="muted">Search supporting CTX history from this workspace. Current records and calculations remain in the local database. Each result shows its source session.</p><form id="context-form" class="inline-actions section-gap"><input class="compact-input" name="query" aria-label="Search history" placeholder="Search local history" required maxlength="160"><button class="btn" type="submit">Search</button></form>${state.contextQueried ? state.contextHits.length ? `<div class="rows section-gap">${state.contextHits.map((hit) => `<div class="row"><span><strong>${safe(hit.snippet)}</strong><small>Source: ${safe(hit.provider)} · session ${safe(hit.sessionId)}</small></span></div>`).join('')}</div>` : '<p class="muted section-gap">No matching history in this workspace.</p>' : ''}</section>`;
 }
 function onboarding() {
@@ -173,6 +174,16 @@ function render() {
   else body = collection();
   root.innerHTML = shell(body);
   root.classList.toggle('loading', state.busy);
+  const linkButton = root.querySelector?.('[data-link-submit]');
+  linkButton?.addEventListener('click', (event) => {
+    event.preventDefault();
+    event.stopPropagation?.();
+    const entity = root.querySelector('#link-entity');
+    const role = root.querySelector('#link-role');
+    const record = root.querySelector('#link-record');
+    if (!entity || !role || !record) { notice('Link fields are unavailable. Reopen the record and retry.', true); return; }
+    submitLink({ entity: entity.value, role: role.value, id: record.value });
+  });
 
 }
 
@@ -181,6 +192,20 @@ async function loadLinkChoices(entity, cursor) {
   const old = cursor && state.linkChoices?.entity === entity ? state.linkChoices.items : [];
   state.linkChoices = { entity, items: [...old, ...listFrom(result)], nextCursor: result?.nextCursor || null };
   render();
+}
+
+function submitLink(data) {
+  if (state.busy) { notice('Please wait for the current action to finish.', true); return; }
+  if (state.editing !== 'link' || !state.selected?.id) { notice('Link view changed. Reopen the record and retry.', true); return; }
+  let input;
+  try { input = linkInput(data, state.page, state.selected.id); }
+  catch (error) { notice(explain(error), true); return; }
+  void run(async () => {
+    await bridge.linkRecords(workspaceId(), input.fromEntity, input.fromId, input.toEntity, input.toId, input.role);
+    state.editing = false;
+    await selectRecord(input.fromId);
+    notice('Records linked.');
+  });
 }
 
 root.addEventListener('click', (event) => {
@@ -206,7 +231,9 @@ root.addEventListener('click', (event) => {
   else if (button.dataset.contextSync) void run(async () => { await bridge.syncContext(); notice('Local history synced. Search to see cited context.'); });
   else if (button.dataset.openConsent) void run(async () => { const provider = button.dataset.openConsent; const url = pendingConsentForProvider(state.sources[provider], state.sourceAttempts, provider); if (!url) throw new Error('Consent link is unavailable or expired. Check source status.'); await bridge.openConsent(url); notice('Consent page opened in your browser. Return here to verify the account.'); });
   else if (button.dataset.sourceBegin) void run(async () => { const provider = button.dataset.sourceBegin; const source = state.sources[provider]; if (!sourceCanBegin(source)) throw new Error('Check source status before starting consent.'); const requestId = source.reconnectable === true ? crypto.randomUUID() : state.connectionRequests[provider] || crypto.randomUUID(); state.connectionRequests[provider] = requestId; delete state.sourceAttempts[provider]; state.sources[provider] = { provider, state: 'pending' }; const result = await bridge.beginConnection(provider, requestId); state.sourceAttempts[provider] = result; state.sources[provider] = { provider, state: 'pending', connectedAccountId: result.connectedAccountId }; render(); });
-  else if (button.dataset.restoreToggle) { const form = document.querySelector('#restore-form'); form.hidden = !form.hidden; }
+  else if (button.dataset.restoreToggle && !state.busy) { if (state.pendingRestoreId) { state.pendingRestoreId = null; render(); } else { const form = document.querySelector('#restore-form'); if (form) form.hidden = !form.hidden; } }
+  else if (button.dataset.cancelRestore) { state.pendingRestoreId = null; render(); }
+  else if (button.dataset.confirmRestore && !state.busy && state.pendingRestoreId) { const backupId = state.pendingRestoreId; void run(async () => { const restored = await bridge.restoreBackup(backupId); state.pendingRestoreId = null; state.imports = {}; state.contextHits = []; state.contextQueried = false; state.sourceAttempts = {}; state.backupId = restored.safetyBackupId || null; await load(); notice('Backup restored. A safety backup was created; sync local history before relying on CTX results.'); }); }
 });
 
 root.addEventListener('change', (event) => { if (event.target.id === 'link-entity') void run(() => loadLinkChoices(event.target.value)); });
@@ -216,8 +243,8 @@ root.addEventListener('submit', (event) => {
   const form = event.target;
   if (form.id === 'workspace-form') void run(async () => { const data = Object.fromEntries(new FormData(form)); if (!state.workspace) state.workspace = await bridge.createWorkspace(data.name); state.setupProfile = true; await bridge.saveRecord(workspaceId(), 'profile', { title: String(data.ownerName).trim(), fields: { Currency: String(data.currency) } }); state.currency = String(data.currency); state.setupProfile = false; await openPage('overview'); notice('Your private workspace is ready.'); });
   else if (form.id === 'record-form') void run(async () => { const data = Object.fromEntries(new FormData(form)); const title = String(data.title).trim(); delete data.title; const saved = await bridge.saveRecord(workspaceId(), state.page, { ...(state.selected?.id ? { id: state.selected.id } : {}), title, fields: state.selected?.id ? editedFields(state.selected.fields, data, state.page) : recordFields(data, state.page) }); if (state.page === 'profile') state.currency = saved.fields?.Currency || null; state.editing = false; await openPage(state.page); await selectRecord(saved.id || saved.record?.id); notice(`${entityName(state.page)} saved.`); });
-  else if (form.id === 'link-form') void run(async () => { const data = Object.fromEntries(new FormData(form)); await bridge.linkRecords(workspaceId(), state.page, state.selected.id, data.entity, data.id, data.role); state.editing = false; await selectRecord(state.selected.id); notice('Records linked.'); });
-  else if (form.id === 'restore-form') void run(async () => { const backupId = String(new FormData(form).get('backupId')).trim(); if (!confirm('Restore this backup? Current workspace data will be replaced.')) return; const restored = await bridge.restoreBackup(backupId); state.imports = {}; state.contextHits = []; state.contextQueried = false; state.sourceAttempts = {}; state.backupId = restored.safetyBackupId || null; await load(); notice('Backup restored. A safety backup was created; sync local history before relying on CTX results.'); });
+  else if (form.id === 'link-form') submitLink(Object.fromEntries(new FormData(form)));
+  else if (form.id === 'restore-form') { const backupId = String(new FormData(form).get('backupId')).trim(); if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(backupId)) { notice('Enter a valid backup ID.', true); return; } state.pendingRestoreId = backupId; render(); }
   else if (form.id === 'context-form') void run(async () => { const query = String(new FormData(form).get('query')).trim(); state.contextHits = await bridge.searchContext(query, 5); state.contextQueried = true; });
 
 });
