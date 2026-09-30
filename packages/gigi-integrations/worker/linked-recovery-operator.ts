@@ -8,6 +8,8 @@ import { Data, Effect } from 'effect';
 import { recoverStaleLinked, type LinkedAttempt, type RecoveryPorts, type RecoveryEvidence,
   type AccountRecord, type AccountScan, type ScanKind, type DeploymentReceipt } from './linked-recovery.ts';
 
+import { readRecoveryFenceDefinitions, readInsertFenceDefinitions, canonicalizeRecoveryFenceSql } from './linked-recovery-fence.ts';
+
 const execFile = promisify(execFileCallback);
 const workerDirectory = dirname(fileURLToPath(import.meta.url));
 const config = resolve(workerDirectory, 'wrangler.toml');
@@ -182,6 +184,33 @@ export function makeOperatorPorts(apiKey: string): RecoveryPorts {
     },
     scanAccounts: (kind, owner, oldConfig) => scanAccounts(kind, owner, oldConfig, headers),
     readDeployment,
+    async readRecoveryFence() {
+      const expected = readRecoveryFenceDefinitions();
+      const rows = (await d1("SELECT name, sql FROM sqlite_master WHERE type = 'trigger' AND name IN (" +
+        expected.map((entry) => quote(entry.name)).join(',') + ')')).results;
+      return rows.length === expected.length && expected.every((entry) => {
+        const matches = rows.filter((row) => row.name === entry.name);
+        return matches.length === 1 && typeof matches[0]?.sql === 'string' &&
+          canonicalizeRecoveryFenceSql(matches[0].sql) === entry.sql;
+      });
+    },
+    async readInsertFence() {
+      const expected = readInsertFenceDefinitions();
+      const columns = (await d1('PRAGMA table_info(gigi_connection_attempts)')).results;
+      const column = columns.filter((entry) => entry.name === 'auth_config_id');
+      if (column.length !== 1 || column[0]?.type !== 'TEXT' || column[0]?.dflt_value !== null ||
+        column[0]?.notnull !== 0 || column[0]?.pk !== 0) return false;
+      const rows = (await d1("SELECT name, sql FROM sqlite_master WHERE type = 'trigger' AND name IN (" + expected.map((entry) => quote(entry.name)).join(',') + ')')).results;
+      return rows.length === expected.length && expected.every((entry) => {
+        const matches = rows.filter((row) => row.name === entry.name);
+        return matches.length === 1 && typeof matches[0]?.sql === 'string' && canonicalizeRecoveryFenceSql(matches[0].sql) === entry.sql;
+      });
+    },
+    async readAttemptHistory(subject, provider) {
+      const rows = (await d1('SELECT subject, provider, request_id, status, connected_account_id, reconnectable, redirect_url, expires_at, created_at FROM gigi_connection_attempts WHERE subject = ' +
+        quote(subject) + ' AND provider = ' + quote(provider) + ' LIMIT 1001')).results;
+      return rows.map(exactRow);
+    },
     async conditionalUpdate(sql, values) {
       let offset = 0;
       const rendered = sql.replaceAll('?', () => quote(values[offset++]!));
@@ -220,7 +249,7 @@ export async function runOperatorCommand(argv: string[], injectedPorts?: Recover
     operator: input.operator as string,
     reason: input.reason as string, apply: input.apply === true,
   };
-  const documentBase = { procedure: 'gigi-removed-gmail-config-recovery-v2',
+  const documentBase = { procedure: 'gigi-removed-gmail-config-recovery-v3',
     mode: input.apply === true ? 'apply' : 'preview',
     input: { subject: recoveryInput.subject, provider: recoveryInput.provider, requestId: recoveryInput.requestId,
       accountId: recoveryInput.accountId, oldAuthConfigId: recoveryInput.oldAuthConfigId,

@@ -19,6 +19,9 @@ export interface AccountScan { status: number; items: AccountRecord[]; complete:
 export type ScanKind = 'owner' | 'old_config' | 'combined' | 'project';
 export interface RecoveryPorts {
   now(): number; wait(milliseconds: number): Promise<void>;
+  readRecoveryFence?(): Promise<boolean>;
+  readInsertFence?(): Promise<boolean>;
+  readAttemptHistory?(subject: string, provider: LinkedAttempt['provider']): Promise<LinkedAttempt[]>;
   /** Operator CLI convenience: discover only the single hard-pinned target row. */
   readReviewedTarget?(accountId: string): Promise<LinkedAttempt | null>;
   readAttempt(subject: string, provider: LinkedAttempt['provider'], requestId: string): Promise<LinkedAttempt | null>;
@@ -34,17 +37,16 @@ export interface RecoveryInput {
   oldAuthConfigId: string; operator: string; reason: string; apply?: boolean;
 }
 export interface RecoveryEvidence {
-  procedure: 'gigi-removed-gmail-config-recovery-v2'; operator: string; reason: string;
+  procedure: 'gigi-removed-gmail-config-recovery-v3'; operator: string; reason: string;
   observedAt: string; subject: string; provider: 'gmail'; requestId: string; accountId: string;
   ownerUserId: string; oldAuthConfigId: string; oldAuthConfigStatus: 404;
   currentAuthConfigId: string; positiveControlAccountId: string; sourceCommit: string;
-  deployment: DeploymentReceipt; createdAt: string; consentExpiredAt: string;
+  deployment: DeploymentReceipt; ownerAttemptCount: number; createdAt: string; consentExpiredAt: string;
   checks: { at: string; exactGetStatus: 404; scans: Record<ScanKind, { pages: number; count: number; complete: true }> }[];
-  preWriteReadback: 'exact_match'; writeChanges?: number;
+  preWriteReadback: 'exact_match'; recoveryFence: 'exact_definitions_verified'; insertFence: 'selected_gmail_verified'; writeChanges?: number;
 }
 export type RecoveryResult = { outcome: 'blocked' | 'eligible_preview' | 'released'; reason?: string; evidence?: RecoveryEvidence };
 const TEN_MINUTES = 600_000;
-const DAY = 86_400_000;
 const ID = /^[A-Za-z0-9][A-Za-z0-9._:-]{2,127}$/u;
 const ACCOUNT_ID = /^ca_[A-Za-z0-9_-]{1,128}$/u;
 const OLD = 'ac_s2YEkh21bMT8';
@@ -122,7 +124,7 @@ export async function recoverStaleLinked(input: RecoveryInput, ports: RecoveryPo
   const now = ports.now();
   const created = Date.parse(first.created_at);
   const expires = Date.parse(first.expires_at ?? '');
-  if (!Number.isFinite(created) || created > now || now - created < DAY) return blocked('attempt_too_recent');
+  if (!Number.isFinite(created) || created > now) return blocked('attempt_time_invalid');
   if (!first.redirect_url || !Number.isFinite(expires) || expires > now) return blocked('consent_not_expired');
   let consent: URL;
   try { consent = new URL(first.redirect_url); } catch { return blocked('invalid_consent_url'); }
@@ -130,6 +132,17 @@ export async function recoverStaleLinked(input: RecoveryInput, ports: RecoveryPo
     consent.username || consent.password || consent.hash) return blocked('invalid_consent_url');
   const deployment = await ports.readDeployment(first.created_at);
   if (!validDeployment(deployment, created)) return blocked('historical_deployment_unverified');
+  if (!ports.readRecoveryFence || !(await ports.readRecoveryFence())) return blocked('recovery_fence_unverified');
+  if (!ports.readInsertFence || !(await ports.readInsertFence())) return blocked('legacy_insert_fence_unverified');
+  if (!ports.readAttemptHistory) return blocked('owner_attempt_history_unverified');
+  const history = await ports.readAttemptHistory(input.subject, input.provider);
+  const validHistory = (rows: LinkedAttempt[]) => rows.length > 0 && rows.length <= 1000 &&
+    rows.filter((entry) => sameRow(entry, first)).length === 1 &&
+    new Set(rows.map((entry) => entry.request_id)).size === rows.length &&
+    rows.every((entry) => entry.subject === input.subject && entry.provider === 'gmail' &&
+      (sameRow(entry, first) || (entry.status === 'attention' && entry.reconnectable === 1 &&
+        typeof entry.connected_account_id === 'string' && ACCOUNT_ID.test(entry.connected_account_id))));
+  if (!validHistory(history)) return blocked('owner_attempt_history_ambiguous');
   const oldConfig = await ports.getAuthConfig(OLD);
   if (oldConfig.status !== 404) return blocked('old_config_not_removed');
   if (!validCurrent(await ports.getAuthConfig(CURRENT))) return blocked('current_project_control_invalid');
@@ -156,14 +169,18 @@ export async function recoverStaleLinked(input: RecoveryInput, ports: RecoveryPo
   if (!current || !sameRow(first, current)) return blocked('d1_changed');
   if (input.apply === true && !validDeployment(await ports.readDeployment(first.created_at), created))
     return blocked('historical_deployment_changed');
+  if (input.apply === true && !(await ports.readRecoveryFence())) return blocked('recovery_fence_changed');
+  if (input.apply === true && !(await ports.readInsertFence())) return blocked('legacy_insert_fence_changed');
+  if (input.apply === true && !validHistory(await ports.readAttemptHistory(input.subject, input.provider)))
+    return blocked('owner_attempt_history_changed');
   const evidence: RecoveryEvidence = {
-    procedure: 'gigi-removed-gmail-config-recovery-v2', operator: input.operator.trim(),
+    procedure: 'gigi-removed-gmail-config-recovery-v3', operator: input.operator.trim(),
     reason: input.reason.trim(), observedAt: new Date(ports.now()).toISOString(),
     subject: input.subject, provider: 'gmail', requestId: input.requestId, accountId: input.accountId,
     ownerUserId, oldAuthConfigId: OLD, oldAuthConfigStatus: 404,
     currentAuthConfigId: CURRENT, positiveControlAccountId: CONTROL, sourceCommit: SOURCE_COMMIT,
-    deployment, createdAt: first.created_at, consentExpiredAt: first.expires_at!,
-    checks, preWriteReadback: 'exact_match',
+    deployment, ownerAttemptCount: history.length, createdAt: first.created_at, consentExpiredAt: first.expires_at!,
+    checks, preWriteReadback: 'exact_match', recoveryFence: 'exact_definitions_verified', insertFence: 'selected_gmail_verified',
   };
   if (input.apply !== true) return { outcome: 'eligible_preview', evidence };
   if (!ports.beforeWrite) return blocked('prewrite_receipt_required');
