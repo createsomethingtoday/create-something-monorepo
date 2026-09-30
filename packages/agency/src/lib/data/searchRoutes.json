@@ -268,5 +268,11 @@
     "changefreq": "weekly",
     "priority": "0.72",
     "lastmod": "2026-09-04"
+  },
+  {
+    "path": "/airtable-workflow-consulting",
+    "changefreq": "monthly",
+    "priority": "0.85",
+    "lastmod": "2026-09-30"
   }
 ]
