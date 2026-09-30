@@ -38,8 +38,8 @@ pub fn prepare(resources: &Path, data: &Path) -> Result<Value,String> {
  let claude_command=format!("claude --plugin-dir {}",shell_quote(&output.to_string_lossy()));
  Ok(serde_json::json!({"packagePath":output,"mcpConfig":config,"installed":false,"state":"prepared",
   "codexCommand":codex_command,"claudeCommand":claude_command,"skillPath":skill_output.join("SKILL.md"),
-  "starterPrompt":format!("Read {} and use GiGi tools to retrieve my workspace. Use bounded lists and ask before changing records.",skill_output.join("SKILL.md").display()),
-  "nextStep":"Run the command for your signed-in subscribed agent, then start a new session and verify a GiGi tool call."}))
+  "starterPrompt":format!("Read the GiGi skill at \"{}\". Actually call gigi_workspace_get and return my workspace name and ID. Use bounded lists. Do not change any records.",skill_output.join("SKILL.md").display()),
+  "nextStep":"Follow the selected Codex or Claude Code setup steps, then verify a real GiGi tool call."}))
 }
 
 #[cfg(test)]
@@ -72,6 +72,8 @@ mod tests {
   assert_eq!(config["mcpServers"]["gigi"]["command"],resources.join("gigi-mcp").to_string_lossy().as_ref());
   assert_eq!(config["mcpServers"]["gigi"]["env"]["GIGI_DATA_DIR"],data.to_string_lossy().as_ref());
   assert_eq!(value["installed"],false);
+  assert!(value["starterPrompt"].as_str().unwrap().contains("gigi_workspace_get"));
+  assert!(value["starterPrompt"].as_str().unwrap().contains("Do not change any records"));
   assert!(value["codexCommand"].as_str().unwrap().starts_with("codex mcp add gigi --env "));
   assert!(value["claudeCommand"].as_str().unwrap().contains("--plugin-dir"));
   assert!(data.join("agent/gigi/skills/gigi/SKILL.md").exists());

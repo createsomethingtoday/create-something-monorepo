@@ -26,3 +26,21 @@ h1,.row strong,.row small,.panel p,.step p{overflow-wrap:anywhere}
 .field input:focus-visible,.field select:focus-visible,.field textarea:focus-visible{outline:2px solid var(--signal);outline-offset:3px}
 @media(max-width:900px){.step{grid-template-columns:32px minmax(0,1fr)}.step > .tag{grid-column:2;justify-self:start}}
 @media(max-width:700px){.sidebar{height:auto;overflow-y:visible}.relation-grid{grid-template-columns:1fr}.toast{left:18px;right:18px;max-width:none}}
+
+/* Onboarding is optional, sequenced and uses actual connection evidence. */
+.setup-welcome{margin-bottom:18px}.setup-welcome p{margin:8px 0 14px}
+.welcome-plan{padding:0;list-style:none;counter-reset:welcome;margin:24px 0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.welcome-plan li{counter-increment:welcome;display:grid;grid-template-columns:26px minmax(0,1fr);column-gap:12px;font-size:12px;line-height:1.5}
+.welcome-plan li::before{content:counter(welcome);grid-row:1/3;color:var(--signal);padding-top:1px}
+.welcome-plan span{grid-column:2;color:var(--muted);margin-top:3px}
+.provider-choice{border:0;padding:0;margin:22px 0}.provider-choice legend{font-size:12px;color:var(--muted);margin-bottom:10px}
+.provider-choice [aria-pressed=true]{border-color:var(--signal);color:var(--signal);background:var(--panel)}
+.setup-instructions{font-size:13px;line-height:1.65;color:var(--muted);padding-left:22px;margin:18px 0}
+.setup-instructions li{padding-left:4px;margin:0 0 16px;overflow-wrap:anywhere}
+.setup-instructions strong{color:var(--text)}.setup-instructions li > p{margin:8px 0}.setup-instructions .inline-actions{margin-top:12px}
+.setup-instructions code{color:var(--text)}.setup-instructions .btn.text{padding:6px 0;display:block;text-align:left;white-space:normal}
+.prompt{white-space:pre-wrap;overflow-wrap:anywhere}.tool-receipt{font-size:12px!important;line-height:1.6}
+.setup-link{display:inline-block;font-size:12px;margin-top:10px;text-underline-offset:3px}
+#source-connections,#agent-setup,#phone-access{scroll-margin-top:24px}
+
+@media(max-width:700px){.welcome-plan{grid-template-columns:1fr}}
