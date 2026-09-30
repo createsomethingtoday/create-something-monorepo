@@ -35,6 +35,7 @@ function fixture(overrides: Partial<RecoveryPorts> = {}) {
   const calls: string[] = [];
   const ports: RecoveryPorts = {
     now: () => now,
+    readRecoveryFence: async () => true,
     wait: async (ms) => { now += ms; calls.push('wait'); },
     readAttempt: async () => { calls.push('d1'); return { ...row }; },
     readDeployment: async () => { calls.push('deployment'); return { ...deployment }; },
@@ -130,4 +131,16 @@ test('age, expiry, provider resurrection, spacing and receipt availability are h
   const noReceipt = fixture({ beforeWrite: undefined });
   assert.equal((await recoverStaleLinked({ ...input, apply: true }, noReceipt.ports)).reason,
     'prewrite_receipt_required');
+});
+
+test('recovery requires durable exact-row fence and rechecks it before release', async () => {
+  const missing = fixture({ readRecoveryFence: undefined });
+  assert.equal((await recoverStaleLinked(input, missing.ports)).reason, 'recovery_fence_unverified');
+  assert.equal(missing.calls.includes('write'), false);
+  const wrong = fixture({ readRecoveryFence: async () => false });
+  assert.equal((await recoverStaleLinked(input, wrong.ports)).reason, 'recovery_fence_unverified');
+  let checks = 0;
+  const removed = fixture({ readRecoveryFence: async () => ++checks === 1 });
+  assert.equal((await recoverStaleLinked({ ...input, apply: true }, removed.ports)).reason, 'recovery_fence_changed');
+  assert.equal(removed.calls.includes('write'), false);
 });
