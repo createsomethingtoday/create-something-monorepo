@@ -4,10 +4,10 @@
 
   const inquiryHref = '/contact?intent=system-support&lane=reliability_and_control&source=dfw-tech-support&campaign=dfw-remote-support';
   function trackInquiry() {
-    getAnalytics()?.track('conversion', 'booking_cta_click', {
+    getAnalytics()?.track('conversion', 'funnel_handoff', {
       target: 'dfw-support-inquiry',
       metadata: { source: 'dfw-tech-support', campaign: 'dfw-remote-support',
-        intent: 'system-support', lane: 'reliability_and_control' }
+        intent: 'system-support', lane: 'reliability_and_control', stage: 'decision', href: '/contact' }
     });
   }
 </script>

@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { load } from '../src/routes/contact/+page.server.ts';
 import { agencyCoreMessaging } from '../src/lib/data/marketingCopy.ts';
+import { createBookingHandoffState } from '../src/lib/scheduling/first-party.ts';
 import { PUBLIC_PRICING } from '../src/lib/data/publicPricing.ts';
 
 test('membership CTA preserves inquiry intent and attribution through the public loader', async () => {
@@ -44,4 +45,18 @@ test('DFW support intent preserves its reliability lane and campaign attribution
   assert.equal(result?.contactSource, 'dfw-tech-support');
   assert.equal(result?.contactLane, 'reliability_and_control');
   assert.equal(result?.contactCampaign, 'dfw-remote-support');
+});
+
+
+test('support booking suppresses a previously stored Map draft after intent normalization', () => {
+  for (const intent of ['system-support', 'System%20Support', '%00system-support']) {
+    const state = createBookingHandoffState(`?source=dfw-tech-support&intent=${intent}&lane=reliability_and_control`, 'Unrelated private Map draft.');
+    assert.equal(state.handoffContext.intent, 'system-support');
+    assert.equal(state.handoffContext.warmupNotes, undefined);
+    assert.equal(state.handoffSheet.warmupNotes, undefined);
+    assert.equal(state.handoffSheet.fields.find(field => field.label === 'Operating lane')?.value, 'Reliability And Control');
+    assert.equal(new URL(state.schedulerHref).searchParams.get('intent'), 'system-support');
+  }
+  const mapping = createBookingHandoffState('?intent=workflow-map', 'Current Map draft.');
+  assert.equal(mapping.handoffContext.warmupNotes, 'Current Map draft.');
 });
