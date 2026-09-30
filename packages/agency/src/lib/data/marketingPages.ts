@@ -171,6 +171,16 @@ const workflowMarketingDefinitions: Array<{
 
 export const marketingPagePortfolio: MarketingPageEntry[] = [
   {
+    path: '/airtable-workflow-consulting', cluster: 'core-services', role: 'implementation', decision: 'index',
+    audience: 'Operations owners with an active Airtable workflow and a substantial integration or reliability problem.',
+    funnelStage: 'implement', intent: 'Assess fit for a separately quoted Airtable operational workflow Build.',
+    primaryAction: 'Discuss your Airtable workflow', requiredTerms: ['Airtable', 'Notion', 'MCP', 'approval', 'quoted'],
+    requiredLinks: ['/field-reports/template-review', '/stack', '/services'], schema: 'page',
+    search: { changefreq: 'monthly', priority: '0.85', lastmod: '2026-09-30' },
+    selfHealing: ['copy:heal', 'search-route:sync']
+  },
+
+  {
     path: '/dispatch',
     cluster: 'dispatch',
     role: 'pillar',

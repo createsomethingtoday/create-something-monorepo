@@ -13,7 +13,8 @@ test('workerd D1 atomic batch/concurrency and reconciliation', async () => {
     const db: D1Database = await mf.getD1Database('DB');
     await db.prepare(readFileSync(new URL('./contact-production-schema.sql', import.meta.url), 'utf8')).run();
     await db.prepare("INSERT INTO contact_submissions (name,email,message,submitted_at) VALUES ('Legacy','fixture@example.invalid','legacy',datetime('now'))").run();
-    const migration = readFileSync(new URL('../migrations/0058_contact_request_receipts.sql', import.meta.url), 'utf8');
+    const migration = ['0058_contact_request_receipts.sql', '0059_contact_request_attribution.sql'].map(name =>
+      readFileSync(new URL(`../migrations/${name}`, import.meta.url), 'utf8')).join('\n');
     for (const statement of migration.replace(/--[^\n]*/g, '').split(';').filter(s => s.trim())) await db.prepare(statement).run();
     const repository = createD1ContactRepository(db);
     const input = { name: 'Fixture', email: 'fixture@example.invalid', message: 'Local only' };
