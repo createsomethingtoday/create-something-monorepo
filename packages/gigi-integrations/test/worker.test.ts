@@ -208,6 +208,10 @@ test('link consent is journaled before provider call and replay does not create 
       return rows.get(values.slice(0, 3).join(':')) ?? null;
     },
     async run() {
+      if (sql.startsWith('INSERT')) {
+        assert.match(sql, /auth_config_id/u);
+        assert.equal(values[4], 'ac_qXoEQURadG-h');
+      }
       if (sql.startsWith('INSERT') && [...rows.values()].some((row) => row.subject === values[0] && row.provider === values[1] &&
         ['dispatched', 'linked', 'active'].includes(String(row.status)))) return { meta: { changes: 0 } };
       if (sql.startsWith('INSERT') && !rows.has(values.slice(0, 3).join(':'))) { rows.set(values.slice(0, 3).join(':'), {

@@ -22,3 +22,13 @@ export function readRecoveryFenceDefinitions(): RecoveryFenceDefinition[] {
   }
   return definitions;
 }
+
+export function readInsertFenceDefinitions(): RecoveryFenceDefinition[] {
+  const source = readFileSync(new URL('./migrations/0003_selected_gmail_insert_guard.sql', import.meta.url), 'utf8');
+  const names = ['gigi_selected_gmail_insert_guard', 'gigi_retired_legacy_gmail_update_guard'];
+  const definitions = [...source.matchAll(/CREATE TRIGGER\s+([a-z_]+)\b[\s\S]*?END;/gu)]
+    .map((match) => ({ name: match[1]!, sql: canonicalizeRecoveryFenceSql(match[0]) }));
+  if (definitions.length !== names.length || names.some((name, index) => definitions[index]?.name !== name))
+    throw new Error('insert_fence_migration_invalid');
+  return definitions;
+}

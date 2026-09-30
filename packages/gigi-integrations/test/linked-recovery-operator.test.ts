@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import test from 'node:test';
 import { makeOperatorPorts, runOperatorCommand } from '../worker/linked-recovery-operator.ts';
 import type { RecoveryPorts } from '../worker/linked-recovery.ts';
-import { readRecoveryFenceDefinitions } from '../worker/linked-recovery-fence.ts';
+import { readRecoveryFenceDefinitions, readInsertFenceDefinitions } from '../worker/linked-recovery-fence.ts';
 
 test('adapter strips injected token and verifies ambient OAuth account before remote D1', async () => {
   const dir = await mkdtemp(join(tmpdir(), 'gigi-linked-adapter-'));
@@ -99,6 +99,10 @@ test('apply keeps a synced prewrite sidecar before conditional D1 write', async 
   const ports: RecoveryPorts = {
     now: () => time,
     readRecoveryFence: async () => true,
+    readInsertFence: async () => true,
+    readAttemptHistory: async () => [{ subject: 'owner', provider: 'gmail', request_id: 'request-old', status: 'linked',
+      connected_account_id: 'ca_lb1WbyU07_b-', reconnectable: 0, redirect_url: 'https://connect.composio.dev/session/old',
+      expires_at: '2026-09-30T15:01:57.505Z', created_at: '2026-09-30T14:51:57.225Z' }],
     wait: async (ms) => { time += ms; },
     readReviewedTarget: async (accountId) => {
       assert.equal(accountId, 'ca_lb1WbyU07_b-');
@@ -169,6 +173,39 @@ if (process.argv[2] === 'whoami') {
 `);
       await chmod(bin, 0o700);
       assert.equal(await makeOperatorPorts('test-only-key').readRecoveryFence!(), valid);
+    }
+  } finally {
+    if (prior === undefined) delete process.env.GIGI_WRANGLER_BIN;
+    else process.env.GIGI_WRANGLER_BIN = prior;
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test('operator admission adapter requires live column and both exact guards', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'gigi-admission-adapter-'));
+  const bin = join(dir, 'wrangler');
+  const prior = process.env.GIGI_WRANGLER_BIN;
+  const definitions = readInsertFenceDefinitions();
+  try {
+    process.env.GIGI_WRANGLER_BIN = bin;
+    for (const [columns, rows, valid] of [
+      [[{ name: 'auth_config_id', type: 'TEXT', dflt_value: null, notnull: 0, pk: 0 }], definitions, true],
+      [[], definitions, false],
+      [[{ name: 'auth_config_id', type: 'TEXT', dflt_value: "'ac_qXoEQURadG-h'", notnull: 0, pk: 0 }], definitions, false],
+      [[{ name: 'auth_config_id', type: 'INTEGER' }], definitions, false],
+      [[{ name: 'auth_config_id', type: 'TEXT', dflt_value: null, notnull: 0, pk: 0 }], definitions.slice(0, 1), false],
+      [[{ name: 'auth_config_id', type: 'TEXT', dflt_value: null, notnull: 0, pk: 0 }], definitions.map((entry) => ({ ...entry, sql: entry.sql.replace('ac_qXoEQURadG-h', 'ac_wrong') })), false],
+    ] as const) {
+      await writeFile(bin, `#!/usr/bin/env node
+if (process.argv[2] === 'whoami') {
+ console.log(JSON.stringify({loggedIn:true,authType:'OAuth Token',accounts:[{id:'9645bd52e640b8a4f40a3a55ff1dd75a'}]}));
+} else {
+ const results = process.argv.at(-1).startsWith('PRAGMA') ? ${JSON.stringify(columns)} : ${JSON.stringify(rows)};
+ console.log(JSON.stringify([{success:true,results,meta:{changes:0}}]));
+}
+`);
+      await chmod(bin, 0o700);
+      assert.equal(await makeOperatorPorts('test-only-key').readInsertFence!(), valid);
     }
   } finally {
     if (prior === undefined) delete process.env.GIGI_WRANGLER_BIN;
