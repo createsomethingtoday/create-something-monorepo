@@ -20,7 +20,7 @@ The local build uses a separate ad-hoc signing configuration, requires macOS 13 
 
 The default macOS state directory is `~/Library/Application Support/agency.createsomething.gigi`. `GIGI_DATA_DIR` selects an isolated test profile for both the desktop and MCP companion. Never point acceptance tests at an existing person's database.
 
-The app's `gigi-mcp` companion exposes bounded typed tools over stdio. The bundled `agent/gigi` skill teaches domain relationships and progressive retrieval. Generate install-specific connector configuration with `scripts/package-agent.mjs`, passing the installed app bundle and a new output directory; it checks the executable exists and emits exact paths. Provider connection acceptance is separate from generating configuration.
+The app's `gigi-mcp` companion exposes bounded typed tools over stdio. The bundled `agent/gigi` skill teaches domain relationships and progressive retrieval. Generate install-specific connector configuration with `scripts/package-agent.mjs`, passing the installed app bundle, a new output directory, and the absolute data root for the reviewed GiGi workspace. The workspace must already exist with its `gigi.sqlite` database. The generated MCP configuration binds that exact profile; an omitted or invalid data root fails before packaging. Provider connection acceptance is separate from generating configuration.
 
 Use an existing subscribed Codex or Claude Code session. Phone access uses that provider's remote connection to the running desktop session. There is no automatic model API fallback. Manual database use remains available when the agent cannot run.
 
