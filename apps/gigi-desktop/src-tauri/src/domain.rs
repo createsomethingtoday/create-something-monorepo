@@ -369,16 +369,8 @@ pub fn dispatch(root: &Path, op: &str, input: Value) -> Result<Value, String> {
             if title.len() > 500 {
                 return Err("title too long".into());
             }
-            let fields = fields_for(entity, &input)?;
+            let mut fields = fields_for(entity, &input)?;
             workspace(&db, wid)?;
-            if entity=="profile" {
-                let current:Option<String>=db.query_row("SELECT json_extract(fields_json,'$.Currency') FROM profile WHERE workspace_id=?1 ORDER BY updated_at DESC LIMIT 1",[wid],|r|r.get(0)).optional().map_err(|e|e.to_string())?.flatten();
-                let next=fields.get("Currency").and_then(Value::as_str);
-                if current.is_some() && current.as_deref()!=next {
-                    let has_money:i64=db.query_row("SELECT (SELECT count(*) FROM gigs WHERE workspace_id=?1 AND money_cents IS NOT NULL)+(SELECT count(*) FROM finances WHERE workspace_id=?1 AND money_cents IS NOT NULL)+(SELECT count(*) FROM profile WHERE workspace_id=?1 AND money_cents IS NOT NULL)",[wid],|r|r.get(0)).map_err(|e|e.to_string())?;
-                    if has_money>0{return Err("currency cannot change after monetary records exist; export and convert values explicitly before changing currency".into())}
-                }
-            }
             if let Some(previous) = replay(&db, wid, op, &input)? {
                 return Ok(previous);
             }
@@ -390,7 +382,21 @@ pub fn dispatch(root: &Path, op: &str, input: Value) -> Result<Value, String> {
             if id.is_empty() || id.len() > 200 {
                 return Err("invalid id".into());
             }
-            let prior:Option<(String,Option<String>)>=db.query_row(&format!("SELECT source_json,source_key FROM {entity} WHERE workspace_id=?1 AND id=?2"),params![wid,id],|r|Ok((r.get(0)?,r.get(1)?))).optional().map_err(|e|e.to_string())?;
+            let prior:Option<(String,Option<String>,String)>=db.query_row(&format!("SELECT source_json,source_key,fields_json FROM {entity} WHERE workspace_id=?1 AND id=?2"),params![wid,id],|r|Ok((r.get(0)?,r.get(1)?,r.get(2)?))).optional().map_err(|e|e.to_string())?;
+            if let Some((_, _, prior_fields)) = &prior {
+                let mut merged: Value = serde_json::from_str(prior_fields).map_err(|e|e.to_string())?;
+                let saved = merged.as_object_mut().ok_or("stored fields must be an object")?;
+                saved.extend(fields.as_object().ok_or("fields must be an object")?.clone());
+                fields = merged;
+            }
+            if entity=="profile" {
+                let current:Option<String>=db.query_row("SELECT json_extract(fields_json,'$.Currency') FROM profile WHERE workspace_id=?1 ORDER BY updated_at DESC LIMIT 1",[wid],|r|r.get(0)).optional().map_err(|e|e.to_string())?.flatten();
+                let next=fields.get("Currency").and_then(Value::as_str);
+                if current.is_some() && current.as_deref()!=next {
+                    let has_money:i64=db.query_row("SELECT (SELECT count(*) FROM gigs WHERE workspace_id=?1 AND money_cents IS NOT NULL)+(SELECT count(*) FROM finances WHERE workspace_id=?1 AND money_cents IS NOT NULL)+(SELECT count(*) FROM profile WHERE workspace_id=?1 AND money_cents IS NOT NULL)",[wid],|r|r.get(0)).map_err(|e|e.to_string())?;
+                    if has_money>0{return Err("currency cannot change after monetary records exist; export and convert values explicitly before changing currency".into())}
+                }
+            }
             let prior_source = prior
                 .as_ref()
                 .and_then(|p| serde_json::from_str::<Value>(&p.0).ok());
@@ -747,6 +753,36 @@ mod tests {
         .unwrap();
         assert_eq!(got["fields"]["Fee"], 12500);
         let _ = std::fs::remove_dir_all(root);
+    }
+    #[test]
+    fn title_only_save_preserves_gig_details_source_and_links() {
+        let root = temp();
+        let workspace = dispatch(&root, "workspace.create", json!({"name":"Solo"})).unwrap();
+        let wid = &workspace["id"];
+        let source = json!({"kind":"import","provider":"gmail","externalId":"booking-thread-1"});
+        let gig = dispatch(&root, "records.save", json!({"workspaceId":wid,"entity":"gigs","title":"Friday set","fields":{"Fee":12500,"Status":"Confirmed","Date":"2026-10-02","Requirements":"Bring a mic"},"source":source})).unwrap();
+        let contact = dispatch(&root, "records.save", json!({"workspaceId":wid,"entity":"contacts","title":"Booking contact"})).unwrap();
+        dispatch(&root, "relations.link", json!({"workspaceId":wid,"fromEntity":"gigs","fromId":gig["id"],"toEntity":"contacts","toId":contact["id"],"role":"Booked Through"})).unwrap();
+
+        let saved = dispatch(&root, "records.save", json!({"workspaceId":wid,"entity":"gigs","id":gig["id"],"title":"Friday evening set"})).unwrap();
+        assert_eq!(saved["title"], "Friday evening set");
+        assert_eq!(saved["fields"], gig["fields"]);
+        assert_eq!(saved["source"], source);
+        assert_eq!(saved["relationCount"], 1);
+        let listed = dispatch(&root, "records.list", json!({"workspaceId":wid,"entity":"gigs"})).unwrap();
+        assert_eq!(listed["items"][0]["status"], "Confirmed");
+        assert_eq!(listed["items"][0]["moneyCents"], 12500);
+        assert_eq!(listed["items"][0]["date"], "2026-10-02");
+        let fee_changed = dispatch(&root, "records.save", json!({"workspaceId":wid,"entity":"gigs","id":gig["id"],"title":"Friday evening set","fields":{"Fee":14000,"Requirements":null}})).unwrap();
+        assert_eq!(fee_changed["fields"]["Fee"], 14000);
+        assert!(fee_changed["fields"]["Requirements"].is_null());
+        assert_eq!(fee_changed["fields"]["Status"], "Confirmed");
+        assert_eq!(fee_changed["source"], source);
+        assert_eq!(fee_changed["relationCount"], 1);
+        let listed = dispatch(&root, "records.list", json!({"workspaceId":wid,"entity":"gigs"})).unwrap();
+        assert_eq!(listed["items"][0]["moneyCents"], 14000);
+        assert_eq!(listed["items"][0]["status"], "Confirmed");
+        let _ = fs::remove_dir_all(root);
     }
     #[test]
     fn typed_relations_money_and_restore() {

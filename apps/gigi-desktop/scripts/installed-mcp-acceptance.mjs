@@ -74,6 +74,14 @@ try{
   assert.equal(summary.balanceDueCents,14000);
   assert.equal(summary.financialsComplete,true);
 
+  const renamed=await call('gigi_records_save',{workspaceId,entity:'gigs',id:gig.id,title:'Friday saxophone set — confirmed',idempotencyKey:'gig-title-only'});
+  assert.equal(renamed.fields.Fee,14000,'title-only update must preserve the fee');
+  assert.equal(renamed.fields.Status,'Confirmed','title-only update must preserve status');
+  assert.equal(renamed.relationCount,2,'title-only update must preserve links');
+  const renamedSummary=await call('gigi_gigs_summary',{workspaceId,gigId:gig.id});
+  assert.equal(renamedSummary.feeCents,14000);
+  assert.equal(renamedSummary.balanceDueCents,14000);
+
   const backup=await call('gigi_backup_create',{workspaceId});
   assert.match(backup.backupId,/^[a-f0-9-]{36}$/);
   const backupPath=join(data,'backups',`${backup.backupId}.sqlite`);

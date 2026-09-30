@@ -75,9 +75,14 @@ fn schema(operation: &str) -> Value {
 
 fn tool_catalog() -> Value {
     let tools: Vec<_> = TOOLS.iter().map(|(name, operation, read_only)| {
+        let description = if *operation == "records.save" {
+            "GiGi records.save. For an existing id, omitted fields and source are preserved; supplied field keys update that record. Local private workspace only; results are bounded.".to_string()
+        } else {
+            format!("GiGi {}. Local private workspace only; results are bounded.", operation)
+        };
         json!({
             "name":name,
-            "description":format!("GiGi {}. Local private workspace only; results are bounded.", operation),
+            "description":description,
             "inputSchema":schema(operation),
             "annotations":{"readOnlyHint":read_only,"destructiveHint":operation == &"backup.restore"}
         })
@@ -251,6 +256,21 @@ mod tests {
         let response=reply(&root,&json!({"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"gigi_context_search","arguments":{"workspaceId":"foreign","query":"music"}}})).unwrap();
         assert_eq!(response["result"]["isError"],true);
         assert!(response["result"]["content"][0]["text"].as_str().unwrap().contains("workspace"));
+        fs::remove_dir_all(root).unwrap();
+    }
+    #[test]
+    fn records_save_tool_preserves_details_on_title_only_update() {
+        let root = std::env::temp_dir().join(format!("gigi-mcp-partial-{}", uuid::Uuid::new_v4()));
+        let workspace = domain::dispatch(&root, "workspace.create", json!({"name":"Owner"})).unwrap();
+        let wid = &workspace["id"];
+        let create = reply(&root, &json!({"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"gigi_records_save","arguments":{"workspaceId":wid,"entity":"tasks","title":"Confirm Friday shift","fields":{"Status":"In Progress","Priority":"High"}}}})).unwrap();
+        assert_eq!(create["result"]["isError"], false);
+        let saved = &create["result"]["structuredContent"];
+        let update = reply(&root, &json!({"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"gigi_records_save","arguments":{"workspaceId":wid,"entity":"tasks","id":saved["id"],"title":"Confirm Saturday shift"}}})).unwrap();
+        assert_eq!(update["result"]["isError"], false);
+        let revised = &update["result"]["structuredContent"];
+        assert_eq!(revised["title"], "Confirm Saturday shift");
+        assert_eq!(revised["fields"], saved["fields"]);
         fs::remove_dir_all(root).unwrap();
     }
     #[test]
