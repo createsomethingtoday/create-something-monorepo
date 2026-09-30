@@ -10,7 +10,9 @@ import {Client} from '@modelcontextprotocol/sdk/client/index.js';
 import {StdioClientTransport} from '@modelcontextprotocol/sdk/client/stdio.js';
 
 const run=promisify(execFile);
-const binary=process.argv[2] ? resolve(process.argv[2]) : '/Users/micahjohnson/Applications/GiGi.app/Contents/MacOS/gigi-mcp';
+const binaryInput=process.argv[2] || process.env.GIGI_INSTALLED_MCP;
+if(!binaryInput)throw new Error('Pass the installed gigi-mcp path or set GIGI_INSTALLED_MCP.');
+const binary=resolve(binaryInput);
 const data=await mkdtemp(join(tmpdir(),'gigi-installed-mcp-'));
 const otherData=await mkdtemp(join(tmpdir(),'gigi-installed-other-'));
 const hash=createHash('sha256');
