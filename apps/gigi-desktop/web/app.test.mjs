@@ -182,7 +182,7 @@ test('source card explains an in-progress session refresh and keeps manual statu
     click({ page: 'settings' }); await settle();
     assert.match(root.innerHTML, /Connector session is refreshing\. Check status again shortly\./);
     assert.doesNotMatch(root.innerHTML, /refresh_in_progress/);
-    assert.match(root.innerHTML, /data-source-refresh="gmail">Check status/);
+    assert.match(root.innerHTML, /data-source-refresh="gmail"><svg[^>]*aria-hidden="true"[^>]*>[\s\S]*?<\/svg>Check status<\/button>/);
     assert.doesNotMatch(root.innerHTML, /data-source-begin="gmail"/);
     assert.match(root.innerHTML, /1 of 2 source accounts verified/);
 
