@@ -14,10 +14,11 @@ const canonFlow = read('../../canon/src/lib/atlas/AtlasFlow.svelte');
 test('Map owns a truthful conversion ending instead of the shared self-linking fallback', () => {
   assert.equal(usesRouteOwnedAgencyPerformanceEnding('/map'), true);
   assert.match(mapRoute, /<PerformanceConversionHandoff/);
-  assert.match(mapRoute, /Carry the starter sheet forward/);
+  assert.match(mapRoute, /Bring the workflow. Decide the next step./);
   assert.match(mapRoute, /href="\/map\/workspace"/);
-  assert.match(mapRoute, /map\.publicStarterLabel/);
-  assert.match(mapRoute, /map\.workspaceLabel/);
+  assert.match(mapRoute, /src="https:\/\/draw\.createsomething\.agency\/\?embed=agency"/);
+  assert.match(mapRoute, /title="Draw — CREATE SOMETHING workflow mapping canvas"/);
+  assert.doesNotMatch(mapRoute, /<PublicAtlasCanvas/);
 });
 
 test('the editable Map fits its complete workflow on first render and starter reset', () => {

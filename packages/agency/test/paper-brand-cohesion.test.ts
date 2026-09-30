@@ -191,7 +191,7 @@ test('Field Reports uses the original isometric evidence route in place of campa
   assert.doesNotMatch(reports, /<PlaybookField variant="proof"/);
 });
 
-test('Map and Template Review each carry a route-specific Playbook court hero with a mobile companion', () => {
+test('Map leads with its Draw workbench while Template Review retains its campaign media', () => {
   const map = read('src/routes/map/+page.svelte');
   const templateReview = read('src/routes/field-reports/template-review/+page.svelte');
   const heroMedia = read('src/lib/data/playbookHeroMedia.ts');
@@ -212,13 +212,8 @@ test('Map and Template Review each carry a route-specific Playbook court hero wi
     'static/images/performance-lab/playbook-template-review-human-gate-mobile.webp'
   );
 
-  assert.match(map, /media=\{playbookHeroMedia\.map\}/);
-  assert.match(map, /mediaMobilePlacement="background"/);
-  assert.doesNotMatch(map, /artifactOwnsMedia|artifactMobilePlacement/);
-  assert.match(map, /src=\{playbookMapSectionMedia\.src\}/);
-  assert.match(map, /srcset=\{playbookMapSectionMedia\.mobileSrc\}/);
-  assert.match(map, /data-campaign-media="map-overhead-study"/);
-  assert.doesNotMatch(map, /<PlaybookField variant="map"/);
+  assert.match(map, /<iframe src="https:\/\/draw\.createsomething\.agency\/\?embed=agency"/);
+  assert.doesNotMatch(map, /playbookMapSectionMedia|playbookHeroMedia/);
   assert.match(templateReview, /media=\{playbookHeroMedia\.templateReview\}/);
   assert.match(templateReview, /mediaMobilePlacement="background"/);
   assert.doesNotMatch(templateReview, /paperAttachedReceiptMedia/);
