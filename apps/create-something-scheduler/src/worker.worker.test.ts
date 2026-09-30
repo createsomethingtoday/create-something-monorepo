@@ -72,6 +72,12 @@ describe('scheduler Worker transport', () => {
     expect(foundationPageHtml).toContain('one agent project, one role, one job');
     expect(foundationPageHtml).toContain('const offerIntent="agent-foundation";');
 
+    const supportPage = await SELF.fetch('https://scheduler.local/createsomething/together?intent=system-support');
+    expect(supportPage.status).toBe(200);
+    const supportHtml = await supportPage.text();
+    expect(supportHtml).toContain('Remote Software Support Discussion | CREATE SOMETHING');
+    expect(supportHtml).toContain('const offerIntent="system-support";');
+
     const legacyPage = await SELF.fetch(
       'https://create-something-scheduler.createsomething.workers.dev/createsomething/together?intent=compiler-integration',
       { redirect: 'manual' }
