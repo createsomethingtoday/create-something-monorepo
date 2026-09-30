@@ -560,8 +560,8 @@ test('integration proof keeps compatibility distinct from partnership and delive
   assert.match(catalog, /Available to connect\. Account access still needs approval/);
   assert.match(catalog, /does not mean an account is connected/);
   assert.match(catalog, /integration_name=/);
-  assert.match(map, /initialIntegration=/);
-  assert.match(map, /initialIntegrationName=/);
+  assert.match(map, /Mapping context:/);
+  assert.match(map, /initialIntegrationName/);
   assert.match(mapCanvas, /seedIntegrationContext\(\)/);
   assert.match(mapCanvas, /Connector context added/);
   assert.doesNotMatch(`${rail}\n${catalog}`, /certified integration|official partner|1,041/gi);

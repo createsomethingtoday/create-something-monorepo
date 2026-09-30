@@ -1,8 +1,11 @@
 <script lang="ts">
   import { ArrowUpRight, PencilLine, Workflow, ShieldCheck } from 'lucide-svelte';
   import { Button, PerformanceCampaignOpening, PerformanceConversionHandoff, PerformancePageSection, SEO } from '@create-something/canon';
+  import { page } from '$app/stores';
+  import { PUBLIC_PRICING } from '$lib/data/publicPricing';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
+  const initialIntegrationName = $derived($page.url.searchParams.get('source') === 'integration-catalog' ? $page.url.searchParams.get('integration_name') : null);
   const drawHref = 'https://draw.createsomething.agency/';
   const mappingSteps = [
     { icon: PencilLine, label: '01 / Sketch', title: 'Start with the work.', detail: 'Name the task, the people involved, and the result you need.' },
@@ -20,7 +23,7 @@
 
 <main class="map-page">
   <PerformanceCampaignOpening
-    eyebrow="Map / CREATE SOMETHING"
+    eyebrow="CREATE SOMETHING Map / Draw"
     expression="editorial"
     title="See the work before you automate it."
     lede="We use Draw to complete workflow mapping: sketch the steps, connect the tools, and agree on where people make decisions. Try the canvas we built, then bring your map to a mapping session."
@@ -44,6 +47,10 @@
     description="Draw is a freeform canvas developed by CREATE SOMETHING. Use notes, shapes, and connectors to make a workflow visible. You can work by hand or connect an agent through Draw."
   >
     {#snippet after()}
+      {#if initialIntegrationName}
+        <p class="mapping-boundary">Mapping context: {initialIntegrationName}. Add its role and handoffs to your drawing. Account access is agreed separately.</p>
+      {/if}
+      <p class="mapping-boundary">{PUBLIC_PRICING.map.publicStarterLabel} · Use Draw below to explore the workflow.</p>
       <ol class="mapping-steps" aria-label="How we map a workflow">
         {#each mappingSteps as step}
           <li>
@@ -69,7 +76,7 @@
     expression="editorial"
     eyebrow="From map to build"
     title="Bring the workflow. Decide the next step."
-    description="A drawing makes the conversation concrete. Bring an export or a view-only Draw link to a mapping session. Together, we review the handoffs, approvals, and scope before agreeing on what to build."
+    description={`Bring an export or a view-only Draw link to a mapping session. Together, we review the handoffs, approvals, and scope before agreeing on what to build. The separate saved Map workspace offers version history and review: ${PUBLIC_PRICING.map.workspaceLabel}.`}
     density="compact"
     handoff={{ owner: 'Workflow owner', authority: 'Human approval', proof: 'Workflow map', state: 'review' }}
   >
