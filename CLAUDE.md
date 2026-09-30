@@ -329,24 +329,9 @@ Loom *the task tracker* is historical in this repository. Do not create new Loom
 
 ## Agent Orchestration
 
-Three patterns for different work scopes:
+**Harness** is the live pattern: single-session autonomous work with quality gates and peer review (Security: Haiku, Architecture: Opus, Quality: Sonnet). Use Linear issues for single-issue work or Harness spec-driven features with checkpoints. See `.claude/rules/harness-patterns.md`.
 
-| Pattern | Scope | Use When |
-|---------|-------|----------|
-| **Ralph** | Single session iteration | Tests failing, refinement loops, fix-until-green |
-| **Harness** | Single session workflow | Sequential multi-step features, spec-driven work |
-| **Gastown** | Multi-session parallel | 3+ independent features, background work |
-
-**Ralph**: Iterative refinement through self-referential feedback loops. The prompt never changes—your work does. Use `/ralph-loop` for test-fix loops and refinement until criteria met.
-
-**Harness**: Autonomous work sessions with quality gates and peer review. Uses Anthropic prompt engineering best practices (prefilled responses, quote-based findings, chain-of-thought) for 99% parsing accuracy and <5% false positive rate. Reviewers: Security (Haiku), Architecture (Opus), Quality (Sonnet). Use Linear issues for single-issue work or Harness spec-driven features with checkpoints.
-
-**Gastown**: Multi-agent orchestration via tmux. Use `gt convoy create` to batch work, `gt sling` to assign to workers, parallel execution at scale.
-
-See pattern files for detailed usage:
-- `.claude/rules/ralph-patterns.md` - Iterative refinement
-- `.claude/rules/harness-patterns.md` - Workflow orchestration
-- `.claude/rules/gastown-patterns.md` - Multi-agent coordination
+For parallel independent work, use Claude Code subagents (Agent tool) or a Workflow when the user opts in. **Ralph** and **Gastown** are retired; their pattern files live in `docs/archive/claude-rules/` for reference only.
 
 ## Development Commands
 
@@ -493,24 +478,9 @@ Use direct tool calls (Read, Write, Edit, Grep, Glob) when:
 - **Claude Code's specialized tools are better**: Edit tool's surgical replacement
 - **Visibility is needed**: User sees tool invocations in the UI
 
-### LSP MCP for Code Navigation
+### Code Navigation
 
-For TypeScript code navigation, prefer LSP over Grep when precision matters:
-
-**Use LSP (via MCP) when:**
-- Finding actual usages vs string matches (`lsp_find_references`)
-- Getting type information (`lsp_hover`)
-- Renaming symbols across packages (`lsp_rename_symbol`)
-- Checking TypeScript errors (`lsp_diagnostics`)
-
-**Use Grep when:**
-- Searching CSS, HTML, Markdown (non-TypeScript)
-- Pattern matching string literals
-- Quick filename searches
-
-**The win**: 77% noise reduction, 60% faster exploration.
-
-See `.claude/rules/lsp-mcp-patterns.md` for full integration guide.
+Use Grep/Glob for search. The TypeScript LSP MCP server (lsmcp) was removed from this repo's MCP config in September 2026; its integration notes are archived at `docs/archive/claude-rules/lsp-mcp-patterns.md`.
 
 ### Cloudflare SDK
 

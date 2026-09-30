@@ -25,7 +25,7 @@ Record checkpoints and completion evidence as Linear comments.
 | New feature idea | `pnpm linear:create -- --title "Add dark mode toggle"` |
 | Spec file ready | `bd work --spec specs/auth.yaml` |
 | Complex work (architecture, refactors) | `run harness in the background: ultrathink` |
-| Multi-file parallel work | Use [Gastown](./gastown-patterns.md) instead |
+| Multi-file parallel work | Use [Gastown](../../docs/archive/claude-rules/gastown-patterns.md) instead |
 
 ---
 
@@ -94,7 +94,7 @@ Opus provides deep analysis for critical paths:
 - Architecture audits
 - Performance optimization
 
-**See [Model Routing Optimization](./model-routing-optimization.md) for detailed routing strategies.**
+**See [Model Routing Optimization](../../docs/archive/claude-rules/model-routing-optimization.md) for detailed routing strategies.**
 
 ### Code Exploration with LSP
 
@@ -112,7 +112,7 @@ Harness sessions benefit from TypeScript LSP integration for code navigation:
 
 LSP is available automatically via MCP. No workflow changes needed—just faster, more precise exploration.
 
-**See [LSP MCP Patterns](./lsp-mcp-patterns.md) for full integration details.**
+**See [LSP MCP Patterns](../../docs/archive/claude-rules/lsp-mcp-patterns.md) for full integration details.**
 
 ---
 
@@ -433,7 +433,7 @@ gt convoy create "Feature" cs-xxx cs-yyy
 gt sling cs-xxx csm
 ```
 
-See [Gastown Patterns](./gastown-patterns.md) for distributed work.
+See [Gastown Patterns](../../docs/archive/claude-rules/gastown-patterns.md) for distributed work.
 
 ---
 
@@ -476,7 +476,7 @@ This taxonomy comes from the Atlas's operationalization of [Gelassenheit](/canon
 
 ## Related
 
-- [Ralph Patterns](./ralph-patterns.md) - Iterative refinement loops (complements harness for test-fix scenarios)
+- [Ralph Patterns](../../docs/archive/claude-rules/ralph-patterns.md) - Iterative refinement loops (complements harness for test-fix scenarios)
 - [Agent Orchestration](/learn/lessons/advanced/agent-orchestration)
 - [Agent Philosophy](/learn/lessons/agents/agent-philosophy)
-- [Gastown Patterns](./gastown-patterns.md)
+- [Gastown Patterns](../../docs/archive/claude-rules/gastown-patterns.md)
