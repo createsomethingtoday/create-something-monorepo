@@ -5,6 +5,11 @@ import type {
 } from '../../packages/canon/src/lib/components/performance/page-contract.ts';
 
 export const performancePageRegistry: PerformancePageRegistryGroup[] = [
+  group('agency-airtable-workflow-consulting', 'agency', ['airtable-workflow-consulting'], 'pending',
+    contract('commercial', 'Decide whether an Airtable operational workflow needs a scoped implementation.',
+      'The published review evaluation demonstrates bounded evidence preparation and human decision ownership.',
+      'Discuss the Airtable workflow')),
+
   group(
     'agency-dispatch',
     'agency',

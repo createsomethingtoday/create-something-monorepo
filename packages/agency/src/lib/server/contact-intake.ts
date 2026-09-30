@@ -116,7 +116,10 @@ export function createD1ContactRepository(db: D1Database): ContactRepository {
           VALUES (?, ?, ?, ?, ?, ?, datetime('now'))`).bind(input.name, input.email, input.message, input.service || null, input.company || null, input.assessment_id || null),
         session.prepare(`INSERT INTO contact_request_receipts (request_id, payload_sha256, submission_id, owner_token)
           VALUES (?, ?, last_insert_rowid(), ?)`).bind(id, hash, owner),
-        ...(['confirmation', 'notification'] as const).map(kind => session.prepare('INSERT INTO contact_email_receipts (request_id, kind) VALUES (?, ?)').bind(id, kind))
+        ...(['confirmation', 'notification'] as const).map(kind => session.prepare('INSERT INTO contact_email_receipts (request_id, kind) VALUES (?, ?)').bind(id, kind)),
+        session.prepare(`INSERT INTO contact_request_attribution (request_id, source, campaign, intent, lane)
+          VALUES (?, ?, ?, ?, ?)`).bind(id, input.source || 'contact', input.campaign || null,
+            input.intent || 'workflow-teardown', input.lane || 'not_sure')
       ]);
       if (results.some(result => !result.success)) throw new Error('Contact batch not acknowledged');
     },

@@ -5,7 +5,8 @@ import test from 'node:test';
 import { Effect } from 'effect';
 import { createD1ContactRepository, contactIntake } from '../src/lib/server/contact-intake.ts';
 import { POST } from '../src/routes/api/contact/+server.ts';
-const migration = readFileSync(new URL('../migrations/0058_contact_request_receipts.sql', import.meta.url), 'utf8');
+const migration = ['0058_contact_request_receipts.sql', '0059_contact_request_attribution.sql'].map(name =>
+      readFileSync(new URL(`../migrations/${name}`, import.meta.url), 'utf8')).join('\n');
 const input = { name: 'Fixture', email: 'fixture@example.invalid', message: 'Fixture inquiry' };
 // Use Agency's pinned Wrangler runtime on every supported Node version.
 const require = createRequire(import.meta.url);
@@ -157,4 +158,25 @@ for (const changed of [false, true]) test(`lost response, reload, invalid correc
     assert.equal((await f.db.prepare('SELECT count(*) AS n FROM contact_submissions').first<{ n: number }>())!.n, 1);
     assert.equal(values.size, changed ? 1 : 0);
   } finally { globalThis.fetch = originalFetch; await f.dispose(); }
+});
+
+test('attribution survives recreation, replay and rejects changed campaign without reassigning inquiry', async () => {
+  const f = await fixture(); let sends = 0;
+  const mailer = { async send() { return { state: 'accepted' as const, providerId: `provider-${++sends}` }; } };
+  const attributed = { ...input, source: 'airtable-workflow', campaign: 'semrush-workflow-pilot',
+    intent: 'workflow-mapping', lane: 'enterprise_extension' };
+  const read = () => f.db.prepare('SELECT source, campaign, intent, lane FROM contact_request_attribution WHERE request_id = ?')
+    .bind('attributed-request').first();
+  try {
+    assert.equal((await Effect.runPromise(contactIntake(attributed, 'attributed-request', f.repository, mailer))).success, true);
+    assert.deepEqual(await read(), { source: attributed.source, campaign: attributed.campaign, intent: attributed.intent, lane: attributed.lane });
+    assert.equal((await Effect.runPromise(contactIntake(attributed, 'attributed-request', createD1ContactRepository(f.db), mailer))).success, true);
+    assert.equal(sends, 2);
+    assert.equal((await Effect.runPromise(contactIntake({ ...attributed, campaign: 'changed' }, 'attributed-request', f.repository, mailer))).status, 409);
+    assert.equal((await read() as { campaign: string }).campaign, attributed.campaign);
+    await f.db.prepare("CREATE TRIGGER fail_attribution BEFORE INSERT ON contact_request_attribution BEGIN SELECT RAISE(ABORT, 'fixture attribution failure'); END").run();
+    await assert.rejects(f.repository.create('attribution-failure', 'hash', 'owner', attributed));
+    assert.equal(await f.repository.read('attribution-failure'), null);
+    assert.equal((await f.db.prepare('SELECT count(*) n FROM contact_submissions').first<{ n: number }>())!.n, 1);
+  } finally { await f.dispose(); }
 });
