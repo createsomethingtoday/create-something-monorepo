@@ -9,7 +9,7 @@
     {
       question: 'What does the membership cover?',
       answer:
-        'Both plans include agreed delivery, reusable skills and learning resources, Slack support, and scheduled remote help. Focused covers one active workstream with weekly check-ins. Team covers up to two active workstreams and six scheduled working sessions each month, including weekly check-ins. Before payment, we agree on deliverables, capacity, revisions, response times and how to check the work. Neither plan includes unlimited development or production incident response.'
+        'Focused covers one workstream, two 30-minute check-ins, two 60-minute remote work sessions and one agreed milestone each billing month. Team covers up to two workstreams, two check-ins, four remote sessions and two milestones. Both plans include one feedback and revision round per milestone, learning resources and Slack support. We agree on the work, response times and acceptance checks before payment. Neither plan includes unlimited development or production incident response.'
     },
     {
       question: 'Is this the same as managed Control?',
@@ -24,7 +24,7 @@
     {
       question: 'Is the member portal available now?',
       answer:
-        'The dedicated portal is in development. Resource access, Slack setup, weekly check-ins and remote-session arrangements are confirmed during onboarding. We confirm availability before accepting payment.'
+        'The dedicated portal is in development. Resource access, Slack setup and session times are confirmed during onboarding. We confirm availability before accepting payment.'
     },
     {
       question: 'What costs extra?',
@@ -71,7 +71,9 @@
         <p class="price">{PUBLIC_PRICING.membership.focused.label}</p>
         <p>For one agreed workstream at a time, with delivery, learning and operator support.</p>
         <ul>
-          <li>Weekly check-ins and scheduled remote help</li>
+          <li>{PUBLIC_PRICING.membership.focused.checkInsPerMonth} × {PUBLIC_PRICING.membership.focused.checkInMinutes}-minute check-ins each billing month</li>
+          <li>{PUBLIC_PRICING.membership.focused.remoteSessionsPerMonth} × {PUBLIC_PRICING.membership.focused.remoteSessionMinutes}-minute attended remote work sessions</li>
+          <li>{PUBLIC_PRICING.membership.focused.milestonesPerMonth} agreed milestone with {PUBLIC_PRICING.membership.focused.revisionRoundsPerMilestone} feedback and revision round</li>
           <li>Skills, learning resources and Slack support</li>
         </ul>
         <Button href={agencyCoreMessaging.membershipInquiryHref}>Discuss Focused</Button>
@@ -82,13 +84,15 @@
         <p class="price">{PUBLIC_PRICING.membership.team.label}</p>
         <p>For up to two agreed workstreams and more time working with your team.</p>
         <ul>
-          <li>Six scheduled working sessions each month, including weekly check-ins</li>
+          <li>{PUBLIC_PRICING.membership.team.checkInsPerMonth} × {PUBLIC_PRICING.membership.team.checkInMinutes}-minute check-ins each billing month</li>
+          <li>{PUBLIC_PRICING.membership.team.remoteSessionsPerMonth} × {PUBLIC_PRICING.membership.team.remoteSessionMinutes}-minute attended remote work sessions</li>
+          <li>{PUBLIC_PRICING.membership.team.milestonesPerMonth} agreed milestones across up to two workstreams, each with {PUBLIC_PRICING.membership.team.revisionRoundsPerMilestone} feedback and revision round</li>
           <li>Skills, learning resources and Slack support</li>
         </ul>
         <Button href={agencyCoreMessaging.teamMembershipInquiryHref}>Discuss Team</Button>
       </article>
     </div>
-    <p class="availability">{PUBLIC_PRICING.membership.terms}. We agree on deliverables, capacity, revisions, session length, response times and any usage budget before payment. Sessions are scheduled. Larger Builds, managed Control and production incident response need separate agreements.</p>
+    <p class="availability">A milestone is one agreed workflow map or one scoped improvement to an existing workflow. It includes an acceptance check, verification and a handoff you keep. We agree on scope, session times, response times and any usage budget before payment. {PUBLIC_PRICING.membership.terms}. Larger Builds, managed Control and production incident response need separate agreements.</p>
     {#if compact}
       <p class="next-steps"><a href={agencyCoreMessaging.workflowMappingSessionHref}>Book a mapping session →</a></p>
     {/if}

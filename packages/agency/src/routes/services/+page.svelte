@@ -53,7 +53,7 @@
     {
       question: 'What is your primary service?',
       answer:
-        'Focused support is $900/month for one agreed workstream. Team support is $2,500/month for up to two agreed workstreams and six scheduled working sessions. Larger Build projects and managed Control are separate. Project costs are budgeted separately.'
+        'Focused is $900/month for one workstream and one milestone, with two check-ins and two remote work sessions. Team is $2,500/month for up to two workstreams and two milestones, with two check-ins and four remote sessions. Larger Builds, managed Control and project costs are separate.'
     },
     {
       question: 'Are agents part of the workforce?',
@@ -95,7 +95,7 @@
     eyebrow="How It Works"
     expression="editorial"
     title="Bring a workflow, software problem or existing product."
-    lede="Start with one agreed workstream for $900/month. Team support is $2,500/month for up to two workstreams and six scheduled working sessions. We agree on scope before payment. You keep the delivered code and approval authority. Larger Build projects and managed Control have separate agreements. Project costs are separate."
+    lede="Focused is $900/month for one agreed workstream and one milestone. Team is $2,500/month for up to two workstreams and two milestones. Both include two check-ins; Focused has two remote work sessions and Team has four. You keep the delivered code and approval authority. Larger Builds and managed Control have separate agreements. Project costs are separate."
     density="compact"
     artifactMobilePlacement="flow"
     proof={[
