@@ -114,3 +114,13 @@ export function sourceCanBegin(source) {
 export function sourceNeedsOperatorReview(source) {
   return source?.state === 'attention' && source.recovery === 'operator_review';
 }
+
+export function importRunForAccount(run, accountId) {
+  return accountId && run?.accountId === accountId ? run : null;
+}
+
+export function nextImportCursor(run, accountId) {
+  const current = importRunForAccount(run, accountId);
+  if (!current) return undefined;
+  return current.result?.complete ? current.result.nextCursor || undefined : current.result?.retryCursor || current.cursor;
+}

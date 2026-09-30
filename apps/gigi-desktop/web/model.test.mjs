@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { listFrom, recordFields, editedFields, summaryMoney, gigBalance, fieldOptions, relatedEndpoint, sourcePreview, sourceCanBegin, sourceNeedsOperatorReview, fields, booleanFields, moneyFields, numericFields } from './model.mjs';
+import { listFrom, recordFields, editedFields, summaryMoney, gigBalance, fieldOptions, relatedEndpoint, sourcePreview, sourceCanBegin, sourceNeedsOperatorReview, importRunForAccount, nextImportCursor, fields, booleanFields, moneyFields, numericFields } from './model.mjs';
 
 test('every editable detail belongs to the reviewed relational field catalog', () => {
   const catalog = JSON.parse(readFileSync(new URL('../src-tauri/migrations/notion_fields.json', import.meta.url), 'utf8'));
@@ -65,4 +65,13 @@ test('uncertain consent recovery asks for operator review and never offers a new
   assert.equal(sourceCanBegin({ ...unknown, reconnectable: true }), false);
   assert.equal(sourceNeedsOperatorReview({ state: 'attention', reconnectable: true }), false);
   assert.equal(sourceNeedsOperatorReview({ state: 'pending', recovery: 'operator_review' }), false);
+});
+
+test('source import cursor never crosses connected accounts', () => {
+  const run = { accountId: 'ca_old', cursor: 'page-1', result: { complete: true, nextCursor: 'page-2' } };
+  assert.equal(importRunForAccount(run, 'ca_old'), run);
+  assert.equal(nextImportCursor(run, 'ca_old'), 'page-2');
+  assert.equal(importRunForAccount(run, 'ca_new'), null);
+  assert.equal(nextImportCursor(run, 'ca_new'), undefined);
+  assert.equal(nextImportCursor({ accountId: 'ca_old', cursor: 'page-1', result: { complete: false, retryCursor: 'page-1' } }, 'ca_old'), 'page-1');
 });
