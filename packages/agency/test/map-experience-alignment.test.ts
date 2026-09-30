@@ -18,6 +18,7 @@ test('Map owns a truthful conversion ending instead of the shared self-linking f
   assert.match(mapRoute, /href="\/map\/workspace"/);
   assert.match(mapRoute, /src="https:\/\/draw\.createsomething\.agency\/\?embed=agency"/);
   assert.match(mapRoute, /title="Draw — CREATE SOMETHING workflow mapping canvas"/);
+  assert.match(mapRoute, /allow="clipboard-write"/);
   assert.doesNotMatch(mapRoute, /<PublicAtlasCanvas/);
 });
 
