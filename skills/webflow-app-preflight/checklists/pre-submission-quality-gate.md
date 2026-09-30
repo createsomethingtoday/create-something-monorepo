@@ -17,15 +17,16 @@ First complete the authority classification in `SKILL.md`. Mark conditional item
 ## Is it safe and inspectable?
 
 - [ ] Production build shipped — no `eval()`, no dev-mode bundle, no framework error-decoder URLs.
-- [ ] No direct DOM manipulation of the Designer; Designer APIs used instead.
+- [ ] No direct DOM manipulation of the Designer; Designer APIs used instead. Self-check — Preflight does not detect this.
 - [ ] Sections identified with `getTag()`, not `element.type` (preset-created sections report `type: 'Block'`; `div`-tagged types still need `type`).
 - [ ] No externally hosted iframe as the primary App UI or runtime surface — that surface can change after approval, so review can't cover it. Iframes are fine for authentication flows.
-- [ ] No excessive global variables.
+- [ ] No excessive global variables. Self-check — Preflight does not detect this.
 - [ ] Third-party dependencies are known and nameable; no dead/unused external connection URLs.
 - [ ] No credential fields (password/login) read from any published DOM.
 - [ ] Data comes from official APIs (e.g. Forms API), not DOM scraping.
 - [ ] Client Secret is server-side only — not in the bundle, client JS, or repo.
 - [ ] Designer Extension source code is readable and uploaded through the version manager.
+- [ ] No `.map` files or inline `data:` source maps inside `bundle.zip` — Preflight reports them as a Required update; source maps go in the submission form's private upload, not in the artifact that ships to customers.
 - [ ] Archive contains exactly one canonical `webflow.json`, and the app title is the real product name — no scaffold defaults like "My React App".
 - [ ] The **bundled** `webflow.json` carries no CLI telemetry block (`telemetry.global.allowTelemetry`). Webflow CLI 2.3.0 and earlier write that block into the project's `webflow.json` when you answer the telemetry prompt (2.7.x moved the global preference out of the project file), so it appears without you adding it. Strip it or upgrade the CLI. It is packaging hygiene, not a security finding, and not evidence of a development build.
 - [ ] The artifact you verify is the artifact you upload — run production checks against the contents of `bundle.zip`, not a working-directory build output that a dev server can overwrite.
@@ -48,7 +49,7 @@ Reviewers verify these by calling your endpoints and asking for evidence, not by
 - [ ] Uploads validated server-side for type, size, count, and file signature; archive contents inspected.
 - [ ] Actions are attributed to the authenticated user — no hardcoded owner or service identity standing in for real users.
 - [ ] `[control]` Dependency audit clean of High/Critical advisories, or a documented function-level reachability analysis; production manifest and lockfile available on request.
-- [ ] No staging, localhost, or tunnel hostname is used as a request destination in the artifact, and the declared installation URL is a production host. A `localhost` string in a hostname blocklist, in a library's URL-parsing fallback, or in a test fixture is not a development artifact — check what the string does, not that it exists.
+- [ ] No staging, localhost, or tunnel hostname is used as a request destination in the artifact, and the declared installation URL is a production host. A bare `localhost` string in a hostname blocklist, in a library's URL-parsing fallback, or in a test fixture is not a development artifact — Preflight reports it as a Suggested update to confirm, and a localhost URL with a port or a path, or any tunnel host, as a Required update — check what the string does, not that it exists.
 - [ ] `[control]` Data Client/Hybrid Webflow OAuth only (Designer Extension-only: `N/A`, no partner-owned Install URL or callback): Marketplace Install URL is an endpoint you own that mints a fresh, single-use `state` per request and binds it to the browser session — never a fixed `webflow.com/oauth/authorize` URL. The OAuth callback verifies and consumes that `state` in one operation before exchanging the code, rejecting any value that is missing, mismatched, expired, already used, or not bound to the session that started the request — the CSRF control in Webflow's OAuth flow (PKCE is not part of Webflow's documented flow; use PKCE on third-party OAuth flows your app performs that support it). The Workspace Install button under Apps & Integrations sends no `state`; it is developer-only and not the path review tests.
 - [ ] Client bundle contains client code only — no server handlers, database schema, JWT logic, or backend dependencies (check the source map, which will reveal whatever the bundle contains).
 - [ ] Production logs contain no personal data or credentials; sensitive fields redacted at the logging boundary.
@@ -59,7 +60,7 @@ Reviewers verify these by calling your endpoints and asking for evidence, not by
 - [ ] Data Client/Hybrid only: Webflow Install URL scopes are equal to or a subset of configured Webflow scopes. Designer Extension-only with no Webflow Install URL: `N/A`.
 - [ ] Webflow Data API only: App stops calling immediately on revoke/uninstall — a persistent 401 on a previously valid token is revocation, not an error to retry past. This sentence applies to the previously classified Webflow token; third-party 401 behavior follows that provider's documented contract.
 - [ ] Code on customer sites is delivered via the Custom Code API, not manual paste.
-- [ ] Injected scripts are version-pinned (hosted scripts registered through the Custom Code API carry an SRI `integrityHash`); every remotely loaded resource is declared at submission; no undisclosed runtime loaders. `[control]` SRI `integrity` + `crossorigin="anonymous"` on `<script>` tags in published-site code is a recommended practice, not a review gate.
+- [ ] Injected scripts are version-pinned (hosted scripts registered through the Custom Code API carry an SRI `integrityHash`); every remotely loaded resource is declared at submission; no undisclosed runtime loaders. `[control]` SRI `integrity` + `crossorigin="anonymous"` on `<script>` tags in published-site code is a recommended practice in the Marketplace Guidelines, not a review gate; Preflight's production-runtime validation still reports a missing or mismatched pin as a blocker for non-partner apps and as an exception item for partner apps.
 - [ ] Any change to injected code ships as a new script version + App update — never edited in place.
 - [ ] App retains the scopes needed to clean up (`custom_code:write` + `sites:write`/`pages:write`) and removes scripts at both site and page level on uninstall.
 - [ ] If programmatic removal isn't possible, the App gives clear in-app instructions telling the user exactly what to remove and where — injected code is never simply left behind.
