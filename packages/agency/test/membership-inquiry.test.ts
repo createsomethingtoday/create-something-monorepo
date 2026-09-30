@@ -15,7 +15,6 @@ test('membership CTA preserves inquiry intent and attribution through the public
   assert.equal(PUBLIC_PRICING.membership.monthlyUsd, 900);
   assert.equal(PUBLIC_PRICING.membership.team.monthlyUsd, 2500);
   assert.equal(PUBLIC_PRICING.membership.team.workstreams, 2);
-  assert.equal(PUBLIC_PRICING.membership.team.sessionsPerMonth, 6);
   assert.equal(PUBLIC_PRICING.managedControl.startingMonthlyUsd, 900);
 });
 

@@ -39,7 +39,7 @@
       value: 'membership',
       label: 'Discuss membership',
       description:
-        'Focused is $900/month for one workstream. Team is $2,500/month for up to two workstreams and six scheduled working sessions.',
+        'Focused is $900/month for one milestone, two check-ins and two remote work sessions. Team is $2,500/month for two milestones, two check-ins and four remote sessions.',
       funnelStage: 'decision',
       serviceInterest: 'Agent engineering membership',
       submitLabel: 'Send membership inquiry',
@@ -104,7 +104,7 @@
       eyebrow: 'AI-native tech support',
       title: 'Start with the workflow you want to improve.',
       description:
-        'Focused is $900/month for one agreed workstream. Team is $2,500/month for up to two and six scheduled working sessions each month. We agree on scope before payment. Project costs are separate.',
+        'Focused is $900/month for one workstream and one milestone, with two check-ins and two remote work sessions. Team is $2,500/month for up to two workstreams and two milestones, with two check-ins and four remote sessions. We agree on scope before payment. Project costs are separate.',
       formTitle: 'Discuss membership',
       formDescription: 'Tell us where you are starting and what is getting in the way.',
       messageLabel: 'What would you like help with?',
@@ -346,8 +346,8 @@
           <div class="form-field">
             <label for="membership-plan" class="form-label">Support plan</label>
             <select id="membership-plan" name="membership-plan" class="form-input" bind:value={selectedPlan}>
-              <option value="focused">Focused · $900/month · one workstream</option>
-              <option value="team">Team · $2,500/month · up to two workstreams, six sessions/month</option>
+              <option value="focused">Focused · $900/month · 2 check-ins + 2 remote sessions</option>
+              <option value="team">Team · $2,500/month · 2 check-ins + 4 remote sessions</option>
             </select>
           </div>
         {/if}
