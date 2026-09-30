@@ -49,7 +49,7 @@
     {
       question: 'How does cancellation work?',
       answer:
-        'Cancel before your next renewal to stop future membership charges. Support continues through the paid period. You keep your own code and delivered project documentation. Separately scoped projects follow their agreed terms.'
+        'Cancel before your next renewal by emailing micah@createsomething.agency to stop future membership charges. Support continues through your paid period while we hand over your code and documentation, document open work, and plan the transition. If you need more help afterward, we’ll agree on the scope and price before extending support. Separately scoped projects follow their agreed terms.'
     }
   ];
 </script>
@@ -131,6 +131,9 @@
     background: var(--color-performance-paper);
     color: var(--color-performance-ink);
     border-block: 1px solid var(--color-performance-line);
+  }
+  .membership :global(.meridian-accordion) {
+    padding-inline: max(1.25rem, calc((100% - 80rem) / 2));
   }
   .offer { padding: clamp(2rem, 5vw, 5rem) max(1.25rem, calc((100% - 80rem) / 2)); }
   .offer-intro { max-width: 65ch; }
