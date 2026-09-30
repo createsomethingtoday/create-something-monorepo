@@ -157,3 +157,40 @@ test('connector sign-in explains provider outages and timeouts without exposing 
     globalThis.__TAURI__ = previous.tauri;
   }
 });
+
+test('source card explains an in-progress session refresh and keeps manual status recovery available', async () => {
+  const listeners = new Map();
+  const root = { innerHTML: '', classList: { toggle() {} }, addEventListener(name, handler) { listeners.set(name, handler); }, querySelector() { return null; } };
+  const previous = { document: globalThis.document, tauri: globalThis.__TAURI__ };
+  let gmailDetail = 'refresh_in_progress';
+  globalThis.document = { querySelector: (selector) => selector === '#app' ? root : null };
+  globalThis.__TAURI__ = { core: { invoke: async (_command, { operation, input }) => {
+    if (operation === 'workspace.get') return { id: 'w1', name: 'Test' };
+    if (operation === 'records.list') return { items: input.entity === 'profile' ? [{ id: 'p1' }] : [], count: 0 };
+    if (operation === 'records.get') return { id: 'p1', title: 'Owner', fields: { Currency: 'USD' } };
+    if (operation === 'connections.status') return input.provider === 'gmail'
+      ? { provider: 'gmail', state: 'unavailable', detail: gmailDetail }
+      : { provider: 'googlecalendar', state: 'connected', connectedAccountId: 'ca_calendar' };
+    if (operation === 'agent.status') return {};
+    return {};
+  } } };
+  const settle = () => new Promise((resolve) => setImmediate(resolve));
+  const click = (dataset) => listeners.get('click')({ target: { closest: () => ({ dataset }) } });
+  try {
+    await import(`./app.mjs?source-refresh-test=${Date.now()}`);
+    await settle();
+    click({ page: 'settings' }); await settle();
+    assert.match(root.innerHTML, /Connector session is refreshing\. Check status again shortly\./);
+    assert.doesNotMatch(root.innerHTML, /refresh_in_progress/);
+    assert.match(root.innerHTML, /data-source-refresh="gmail">Check status/);
+    assert.doesNotMatch(root.innerHTML, /data-source-begin="gmail"/);
+    assert.match(root.innerHTML, /1 of 2 source accounts verified/);
+
+    gmailDetail = 'Unusual <source> outage';
+    click({ sourceRefresh: 'gmail' }); await settle();
+    assert.match(root.innerHTML, /Unusual &lt;source&gt; outage/);
+  } finally {
+    globalThis.document = previous.document;
+    globalThis.__TAURI__ = previous.tauri;
+  }
+});
