@@ -5,6 +5,7 @@ import { join } from 'node:path';
 import test from 'node:test';
 import { makeOperatorPorts, runOperatorCommand } from '../worker/linked-recovery-operator.ts';
 import type { RecoveryPorts } from '../worker/linked-recovery.ts';
+import { readRecoveryFenceDefinitions } from '../worker/linked-recovery-fence.ts';
 
 test('adapter strips injected token and verifies ambient OAuth account before remote D1', async () => {
   const dir = await mkdtemp(join(tmpdir(), 'gigi-linked-adapter-'));
@@ -97,6 +98,7 @@ test('apply keeps a synced prewrite sidecar before conditional D1 write', async 
   ].map((item) => 'https://www.googleapis.com/auth/' + item).concat('https://mail.google.com/');
   const ports: RecoveryPorts = {
     now: () => time,
+    readRecoveryFence: async () => true,
     wait: async (ms) => { time += ms; },
     readReviewedTarget: async (accountId) => {
       assert.equal(accountId, 'ca_lb1WbyU07_b-');
@@ -143,4 +145,34 @@ test('apply keeps a synced prewrite sidecar before conditional D1 write', async 
     assert.equal(writes, 1);
     assert.equal(JSON.parse(await readFile(output, 'utf8')).result.evidence.writeChanges, 1);
   } finally { process.exitCode = 0; await rm(dir, { recursive: true, force: true }); }
+});
+
+test('operator schema adapter rejects missing and altered live protection definitions', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'gigi-fence-adapter-'));
+  const bin = join(dir, 'wrangler');
+  const prior = process.env.GIGI_WRANGLER_BIN;
+  const definitions = readRecoveryFenceDefinitions();
+  try {
+    process.env.GIGI_WRANGLER_BIN = bin;
+    for (const [rows, valid] of [
+      [definitions, true],
+      [definitions.slice(0, 1), false],
+      [definitions.map((entry) => ({ ...entry, sql: entry.sql.replace("OLD.status = 'attention'", "OLD.status = 'active'") })), false],
+      [[definitions[0], definitions[0]], false],
+    ] as const) {
+      await writeFile(bin, `#!/usr/bin/env node
+if (process.argv[2] === 'whoami') {
+  console.log(JSON.stringify({loggedIn:true, authType:'OAuth Token', accounts:[{id:'9645bd52e640b8a4f40a3a55ff1dd75a'}]}));
+} else {
+  console.log(JSON.stringify([{success:true, results:${JSON.stringify(rows)}, meta:{changes:0}}]));
+}
+`);
+      await chmod(bin, 0o700);
+      assert.equal(await makeOperatorPorts('test-only-key').readRecoveryFence!(), valid);
+    }
+  } finally {
+    if (prior === undefined) delete process.env.GIGI_WRANGLER_BIN;
+    else process.env.GIGI_WRANGLER_BIN = prior;
+    await rm(dir, { recursive: true, force: true });
+  }
 });
