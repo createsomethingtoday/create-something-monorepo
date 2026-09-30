@@ -3,6 +3,8 @@
   import { reducedFilmMotion } from '$lib/motion/filmPlayback';
   import AgencyWayfindingSign from './AgencyWayfindingSign.svelte';
 
+  export let showContinuation = true;
+
   let canvas: HTMLCanvasElement;
   let field: HTMLElement;
 
@@ -113,10 +115,12 @@
     <li><span>02 / Decision</span><small>Apply the rule or ask a person.</small></li>
     <li><span>03 / Proof</span><small>Keep the result and how it was checked.</small></li>
   </ol>
+  {#if showContinuation}
   <div class="signal-continuation">
     <AgencyWayfindingSign kind="proof" label="Inspect the work" detail="See the examples and their source records." href="#built-work" direction="down" />
     <AgencyWayfindingSign kind="map" label="Choose a path" detail="Compare Map, Build, and Control." href="/products#choose-product" />
   </div>
+  {/if}
 </section>
 
 <style>

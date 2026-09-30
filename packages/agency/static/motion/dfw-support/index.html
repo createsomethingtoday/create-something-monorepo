@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CREATE SOMETHING · A scoped support repair</title>
+<script src="assets/gsap.min.js"></script>
+<style>
+:root { --ink:#171715; --paper:#f3f3f0; --panel:#252522; --rule:#65655f; --signal:#89bfff; --boundary:#e1a778; --proof:#b3ddbd; }
+* { box-sizing:border-box; } html,body { margin:0; width:100%; height:100%; background:var(--ink); color:var(--paper); }
+#root { position:relative; width:100%; height:100%; overflow:hidden; }
+.clip { position:absolute; inset:0; } svg { width:100%; height:100%; display:block; }
+text { fill:var(--paper); font-family:sans-serif; } .notation { font-family:monospace; font-size:26px; } .label { font-size:38px; font-weight:600; }
+.route { fill:none; stroke-width:4; stroke-linecap:round; stroke-linejoin:round; } .track { stroke:var(--rule); stroke-width:2; fill:none; } .signal { stroke:var(--signal); } .boundary { stroke:var(--boundary); } .proof { stroke:var(--proof); }
+</style>
+</head>
+<body>
+<div data-hf-id="hf-ireq" id="root" data-composition-id="dfw-support" data-start="0" data-width="960" data-height="720" data-duration="12">
+<div data-hf-id="hf-tqr4" id="recovery-study" class="clip" data-start="0" data-duration="12" data-track-index="0">
+<svg data-hf-id="hf-mzbw" viewBox="0 0 960 720" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="study-title study-description">
+<title data-hf-id="hf-gzh0" id="study-title">A scoped software recovery path</title><desc data-hf-id="hf-sgwp" id="study-description">A form handoff stops at a failure. An owner approves the scoped change. The repair reaches the CRM and leaves an acceptance receipt.</desc>
+<path data-hf-id="hf-nmzg" d="M48 116H912 M48 660H912" class="track" />
+<circle data-hf-id="hf-ct17" cx="68" cy="68" r="18" fill="none" stroke="var(--paper)" stroke-width="3" /><path data-hf-id="hf-1ylm" d="M63 53 A18 18 0 0 1 63 83" fill="none" stroke="var(--paper)" stroke-width="3" />
+<text data-hf-id="hf-03hx" x="105" y="82" font-size="36" font-weight="700">CREATE SOMETHING</text>
+<text data-hf-id="hf-h20u" x="48" y="175" font-size="44">A failed handoff. A clear owner.</text>
+<path data-hf-id="hf-w64o" d="M180 290H455 M455 290H740 M455 290V465 M740 290V585" class="track" />
+<path data-hf-id="hf-usy7" id="read-route" d="M180 290H455" class="route signal" />
+<path data-hf-id="hf-yb0u" id="owner-route" d="M455 290V465" class="route boundary" />
+<path data-hf-id="hf-6h3u" id="repair-route" d="M455 290H740" class="route signal" />
+<path data-hf-id="hf-tih7" id="receipt-route" d="M740 290V585" class="route proof" />
+<g data-hf-id="hf-why6" id="form-node"><rect data-hf-id="hf-q1eo" x="84" y="244" width="192" height="92" fill="var(--panel)" stroke="var(--rule)" stroke-width="2" /><text data-hf-id="hf-5ef1" x="180" y="305" text-anchor="middle" class="label">Form</text></g>
+<g data-hf-id="hf-qmie" id="crm-node"><rect data-hf-id="hf-zw6u" x="644" y="244" width="192" height="92" fill="var(--panel)" stroke="var(--rule)" stroke-width="2" /><text data-hf-id="hf-sw9v" x="740" y="305" text-anchor="middle" class="label">CRM</text></g>
+<g data-hf-id="hf-e01z" id="failure-mark"><path data-hf-id="hf-dgoo" d="M434 269L476 311 M476 269L434 311" stroke="var(--boundary)" stroke-width="7" /><text data-hf-id="hf-gs0a" x="455" y="235" text-anchor="middle" class="notation">FAILURE</text></g>
+<g data-hf-id="hf-celt" id="owner-node"><circle data-hf-id="hf-ihso" cx="455" cy="465" r="76" fill="var(--ink)" stroke="var(--boundary)" stroke-width="3" /><text data-hf-id="hf-scvt" x="455" y="479" text-anchor="middle" class="label">Owner</text><text data-hf-id="hf-b0ys" x="455" y="580" text-anchor="middle" class="notation">APPROVE SCOPE</text></g>
+<g data-hf-id="hf-an1u" id="receipt-node"><rect data-hf-id="hf-xyaz" x="630" y="558" width="220" height="80" fill="var(--panel)" stroke="var(--proof)" stroke-width="3" /><text data-hf-id="hf-e6ba" x="740" y="610" text-anchor="middle" class="label">Receipt</text></g>
+<circle data-hf-id="hf-g7h2" id="packet" cx="180" cy="290" r="11" fill="var(--signal)" />
+<text data-hf-id="hf-nms0" x="48" y="701" class="notation">ILLUSTRATIVE · NO CLIENT DATA</text>
+</svg>
+</div>
+</div>
+<script>
+// The measured-stroke mechanism adapts Hyperframes svg-stroke-trace.
+const tl = gsap.timeline({paused:true});
+tl.set('#packet', {x:0,y:0,opacity:0}, 0);
+for (const [id,start,duration] of [['read-route',0.6,1.6],['owner-route',2.6,1.2],['repair-route',5.1,1.7],['receipt-route',7.3,1.5]]) {
+ const path=document.getElementById(id); const length=path.getTotalLength();
+ tl.fromTo(path,{strokeDasharray:length,strokeDashoffset:length},{strokeDashoffset:0,duration,ease:'power2.out'},start);
+}
+tl.fromTo('#packet',{x:0,y:0,opacity:0},{opacity:1,duration:.35,ease:'power1.out'},.3);
+tl.fromTo('#packet',{x:0,y:0},{x:275,y:0,duration:1.6,ease:'power2.inOut'},.6);
+tl.fromTo('#packet',{x:275,y:0},{x:275,y:175,duration:1.2,ease:'power2.inOut',immediateRender:false},2.6);
+tl.fromTo('#owner-node',{scale:1},{scale:1.08,transformOrigin:'50% 50%',duration:.4,yoyo:true,repeat:1,ease:'sine.inOut'},4);
+tl.fromTo('#failure-mark',{opacity:1},{opacity:0,duration:.45,ease:'power1.out'},4.8);
+tl.fromTo('#packet',{x:275,y:175},{x:275,y:0,duration:.6,ease:'power2.inOut',immediateRender:false},4.5);
+tl.fromTo('#packet',{x:275,y:0},{x:560,y:0,duration:1.7,ease:'power2.inOut',immediateRender:false},5.1);
+tl.fromTo('#packet',{x:560,y:0},{x:560,y:295,duration:1.5,ease:'power2.inOut',immediateRender:false},7.3);
+tl.fromTo('#packet',{opacity:1},{opacity:0,duration:.3,ease:'power1.out'},8.8);
+tl.fromTo('#receipt-node',{opacity:.4},{opacity:1,duration:.6,ease:'power1.out'},8.6);
+// Hold the final receipt so the declared sequence lasts exactly 12 seconds.
+tl.set('#packet',{opacity:0},12);
+window.__timelines=window.__timelines||{};
+window.__timelines['dfw-support']=tl;
+</script>
+</body>
+</html>
