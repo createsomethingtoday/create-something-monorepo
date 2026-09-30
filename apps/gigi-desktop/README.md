@@ -45,3 +45,11 @@ First launch explains the local workspace, optional Google sources and optional 
 Choose Codex or Claude Code, prepare the workspace-specific connector, and copy its exact command. Codex registration applies to future local sessions; Claude's launch flag loads GiGi for that session and must be used for future sessions too. A copyable read-only prompt asks for an actual `gigi_workspace_get` call. Prepared files, a recorded local tool call and physical phone acceptance remain separate states. Limits or provider outages leave manual GiGi work available.
 
 The in-app setup buttons open fixed official guides in the system browser: [Codex CLI](https://learn.chatgpt.com/docs/codex/cli), [Claude Code](https://code.claude.com/docs/en/quickstart), [Codex remote connections](https://learn.chatgpt.com/docs/remote-connections), and [Claude Remote Control](https://code.claude.com/docs/en/remote-control). Choose provider subscription sign-in. Remote access depends on account eligibility and a running, awake, online host; normal phone chat does not supply a local connection.
+
+### Icons
+
+GiGi bundles a Lucide 0.562.0 SVG subset from the same installed library used by `packages/agency`. These assets work offline, inherit the app's foreground colors and remain decorative alongside visible labels. The desktop frontend needs no Svelte runtime. Lucide's ISC/Feather MIT notices ship in `web/lucide-LICENSE.txt`.
+
+After bootstrapping the worktree, verify exact upstream geometry and license with `node apps/gigi-desktop/scripts/sync-icons.mjs --check`; regenerate with the same command without `--check`. Version changes require review.
+
+CTX provenance: Codex session `5cd548a5`, event `26b16ef1` records Agency's Lucide dependency; current `packages/agency/package.json` and installed package version independently confirm 0.562.0. Isocons was visually reviewed at https://www.isocons.app/; Lucide was selected for readability in compact navigation/actions.

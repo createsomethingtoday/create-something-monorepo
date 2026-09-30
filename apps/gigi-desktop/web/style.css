@@ -44,3 +44,20 @@ h1,.row strong,.row small,.panel p,.step p{overflow-wrap:anywhere}
 #source-connections,#agent-setup,#phone-access{scroll-margin-top:24px}
 
 @media(max-width:700px){.welcome-plan{grid-template-columns:1fr}}
+
+/* Lucide 0.562.0: shared Agency geometry, readable labels, no icon-only controls. */
+.ui-icon{width:16px;height:16px;display:inline-block;vertical-align:middle;flex:0 0 16px;pointer-events:none}
+.ui-icon *{pointer-events:none}
+.nav button{display:flex;align-items:center;gap:10px}
+.nav .ui-icon{color:var(--muted)}
+.nav button[aria-current=page] .ui-icon,.nav button:hover .ui-icon{color:var(--signal)}
+h1{display:flex;align-items:baseline;gap:14px}
+h1 .ui-icon{width:26px;height:26px;flex-basis:26px;color:var(--signal);align-self:center}
+h1 span{min-width:0}
+.panel-head h2{display:flex;align-items:center;gap:10px;min-width:0}
+.panel-head h2 .ui-icon{width:20px;height:20px;flex-basis:20px;color:var(--muted)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.card .label{display:flex;align-items:center;gap:8px}
+.relation > .ui-icon{margin-top:2px;color:var(--muted)}
+.number .ui-icon{width:14px;height:14px;flex-basis:14px}
+@media(max-width:700px){h1{gap:10px}.nav button{flex-shrink:0}}
