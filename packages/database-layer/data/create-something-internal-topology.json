@@ -4,11 +4,11 @@
   "atlasCanvasId": "create-something-internal-operating-topology",
   "rootNodeId": "substrate:create-something:root",
   "coverage": {
-    "generatedAt": "2026-09-29T14:05:59.334Z",
+    "generatedAt": "2026-09-30T14:04:28.546Z",
     "rootPath": ".",
-    "packageCount": 237,
-    "appCount": 12,
-    "workerCount": 114,
+    "packageCount": 239,
+    "appCount": 13,
+    "workerCount": 115,
     "clientOverlayCount": 8,
     "policyCount": 64,
     "guideCount": 78,
@@ -173,6 +173,23 @@
       ],
       "packageName": "@create-something/even-operator-brief",
       "runtime": "node"
+    },
+    {
+      "id": "substrate:create-something:app:create-something-gigi-desktop-apps-gigi-desktop",
+      "atlasNodeId": "atlas_create-something_app_create-something-gigi-desktop-apps-gigi-desktop",
+      "title": "@create-something/gigi-desktop",
+      "path": "apps/gigi-desktop",
+      "tier": "Mixed",
+      "surface": "app",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Workspace package at apps/gigi-desktop.",
+      "tags": [
+        "package",
+        "app"
+      ],
+      "packageName": "@create-something/gigi-desktop",
+      "runtime": "tauri, node"
     },
     {
       "id": "substrate:create-something:app:create-something-guard-performance-lab-apps-guard-performance-lab",
@@ -1680,6 +1697,23 @@
       ],
       "packageName": "@create-something/exception-flow-video",
       "runtime": "node"
+    },
+    {
+      "id": "substrate:create-something:package:create-something-gigi-integrations-packages-gigi-integrations",
+      "atlasNodeId": "atlas_create-something_package_create-something-gigi-integrations-packages-gigi-integrations",
+      "title": "@create-something/gigi-integrations",
+      "path": "packages/gigi-integrations",
+      "tier": "Mixed",
+      "surface": "package",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Workspace package at packages/gigi-integrations.",
+      "tags": [
+        "package",
+        "package"
+      ],
+      "packageName": "@create-something/gigi-integrations",
+      "runtime": "cloudflare-worker, node"
     },
     {
       "id": "substrate:create-something:package:create-something-github-actions-runner-broker-packages-github-actions-runner-broker",
@@ -5219,6 +5253,23 @@
       "owner": "CREATE SOMETHING",
       "status": "mapped",
       "summary": "Cloudflare runtime configuration at packages/exception-decisions-mcp/wrangler.jsonc.",
+      "tags": [
+        "worker",
+        "cloudflare",
+        "runtime"
+      ],
+      "runtime": "cloudflare"
+    },
+    {
+      "id": "substrate:create-something:worker:packages-gigi-integrations-worker-wrangler-toml",
+      "atlasNodeId": "atlas_create-something_worker_packages-gigi-integrations-worker-wrangler-toml",
+      "title": "gigi-integrations worker",
+      "path": "packages/gigi-integrations/worker/wrangler.toml",
+      "tier": "Automation",
+      "surface": "worker",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Cloudflare runtime configuration at packages/gigi-integrations/worker/wrangler.toml.",
       "tags": [
         "worker",
         "cloudflare",
@@ -9454,6 +9505,13 @@
       "evidence": "apps/even-operator-brief is present in the repo scan."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-app-create-something-gigi-desktop-apps-gigi-desktop",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:app:create-something-gigi-desktop-apps-gigi-desktop",
+      "relation": "contains",
+      "evidence": "apps/gigi-desktop is present in the repo scan."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-app-create-something-guard-performance-lab-apps-guard-performance-lab",
       "source": "substrate:create-something:root",
       "target": "substrate:create-something:app:create-something-guard-performance-lab-apps-guard-performance-lab",
@@ -10012,6 +10070,13 @@
       "target": "substrate:create-something:package:create-something-exception-flow-video-packages-exception-flow-video",
       "relation": "contains",
       "evidence": "packages/exception-flow-video is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-gigi-integrations-packages-gigi-integrations",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:package:create-something-gigi-integrations-packages-gigi-integrations",
+      "relation": "contains",
+      "evidence": "packages/gigi-integrations is present in the repo scan."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-github-actions-runner-broker-packages-github-actions-runner-broker",
@@ -11314,6 +11379,13 @@
       "target": "substrate:create-something:worker:packages-exception-decisions-mcp-wrangler-jsonc",
       "relation": "contains",
       "evidence": "packages/exception-decisions-mcp/wrangler.jsonc is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-worker-packages-gigi-integrations-worker-wrangler-toml",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:worker:packages-gigi-integrations-worker-wrangler-toml",
+      "relation": "contains",
+      "evidence": "packages/gigi-integrations/worker/wrangler.toml is present in the repo scan."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-worker-packages-github-actions-runner-broker-wrangler-jsonc",
@@ -13813,6 +13885,13 @@
       "target": "substrate:create-something:package:create-something-canon-packages-canon",
       "relation": "depends_on",
       "evidence": "@create-something/eslint-plugin-canon declares @create-something/canon."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-gigi-integrations-packages-gigi-integrations-runs-substrate-create-something-worker-packages-gigi-integrations-worker-wrangler-toml",
+      "source": "substrate:create-something:package:create-something-gigi-integrations-packages-gigi-integrations",
+      "target": "substrate:create-something:worker:packages-gigi-integrations-worker-wrangler-toml",
+      "relation": "runs",
+      "evidence": "worker/wrangler.toml configures runtime for packages/gigi-integrations."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-package-create-something-gmail-notion-mcp-packages-gmail-notion-mcp-runs-substrate-create-something-worker-packages-gmail-notion-mcp-worker-wrangler-toml",

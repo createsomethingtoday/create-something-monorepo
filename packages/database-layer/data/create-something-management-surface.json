@@ -1,6 +1,6 @@
 {
   "id": "substrate:create-something:management-surface:internal",
-  "generatedAt": "2026-09-29T14:06:00.574Z",
+  "generatedAt": "2026-09-30T14:04:29.540Z",
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
   "sourceReadinessId": "substrate:create-something:operating-slice-readiness:internal",
@@ -391,6 +391,20 @@
       "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
       "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-app-create-something-even-operator-brief-apps-even-operator-brief",
       "mcpUri": "substrate://topology/internal/records/substrate-create-something-app-create-something-even-operator-brief-apps-even-operator-brief",
+      "agentCommand": "databaseLayer.topology.records.get",
+      "access": [
+        "read"
+      ],
+      "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
+    },
+    {
+      "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-app-create-something-gigi-desktop-apps-gigi-desktop",
+      "kind": "topology_record",
+      "title": "@create-something/gigi-desktop",
+      "recordId": "substrate:create-something:app:create-something-gigi-desktop-apps-gigi-desktop",
+      "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
+      "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-app-create-something-gigi-desktop-apps-gigi-desktop",
+      "mcpUri": "substrate://topology/internal/records/substrate-create-something-app-create-something-gigi-desktop-apps-gigi-desktop",
       "agentCommand": "databaseLayer.topology.records.get",
       "access": [
         "read"
@@ -1511,6 +1525,20 @@
       "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
       "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-package-create-something-exception-flow-video-packages-exception-flow-video",
       "mcpUri": "substrate://topology/internal/records/substrate-create-something-package-create-something-exception-flow-video-packages-exception-flow-video",
+      "agentCommand": "databaseLayer.topology.records.get",
+      "access": [
+        "read"
+      ],
+      "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
+    },
+    {
+      "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-package-create-something-gigi-integrations-packages-gigi-integrations",
+      "kind": "topology_record",
+      "title": "@create-something/gigi-integrations",
+      "recordId": "substrate:create-something:package:create-something-gigi-integrations-packages-gigi-integrations",
+      "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
+      "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-package-create-something-gigi-integrations-packages-gigi-integrations",
+      "mcpUri": "substrate://topology/internal/records/substrate-create-something-package-create-something-gigi-integrations-packages-gigi-integrations",
       "agentCommand": "databaseLayer.topology.records.get",
       "access": [
         "read"
@@ -4115,6 +4143,20 @@
       "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
       "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-worker-packages-exception-decisions-mcp-wrangler-jsonc",
       "mcpUri": "substrate://topology/internal/records/substrate-create-something-worker-packages-exception-decisions-mcp-wrangler-jsonc",
+      "agentCommand": "databaseLayer.topology.records.get",
+      "access": [
+        "read"
+      ],
+      "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
+    },
+    {
+      "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-worker-packages-gigi-integrations-worker-wrangler-toml",
+      "kind": "topology_record",
+      "title": "gigi-integrations worker",
+      "recordId": "substrate:create-something:worker:packages-gigi-integrations-worker-wrangler-toml",
+      "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
+      "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-worker-packages-gigi-integrations-worker-wrangler-toml",
+      "mcpUri": "substrate://topology/internal/records/substrate-create-something-worker-packages-gigi-integrations-worker-wrangler-toml",
       "agentCommand": "databaseLayer.topology.records.get",
       "access": [
         "read"
