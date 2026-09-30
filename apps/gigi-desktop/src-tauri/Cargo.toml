@@ -1,0 +1,28 @@
+[package]
+name = "gigi_desktop"
+version = "0.1.0"
+edition = "2021"
+default-run = "gigi"
+
+[lib]
+name = "gigi_desktop_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[[bin]]
+name = "gigi"
+path = "src/main.rs"
+
+[[bin]]
+name = "gigi-mcp"
+path = "src/bin/gigi-mcp.rs"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+libc = "0.2"
+rusqlite = { version = "0.37", features = ["bundled", "backup"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tauri = { version = "2", features = [] }
+uuid = { version = "1", features = ["v4"] }

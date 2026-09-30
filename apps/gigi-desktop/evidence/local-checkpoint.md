@@ -1,0 +1,11 @@
+# Local beta checkpoint
+
+The user approved local completion and testing while Grant's Developer ID/notarization credentials are unavailable. The app is installed at `~/Applications/GiGi.app` and uses independent private SQLite. Local ad-hoc signing is explicit in the `build:local` command; production signing settings remain separate.
+
+Verified: 15 desktop Node tests; 24 Rust library tests and four MCP binary tests; 34 integration tests (one optional CTX test skipped in the ordinary suite); TypeScript typecheck; Clippy all targets with warnings denied; SDK protocol read/write/retry; synthetic Gmail and Calendar projection through actual TypeScript runner into Rust/SQLite; installed official CTX import, bounded search and repeat sync; strict local code-signature validation; DMG integrity. The real CTX test ran separately and passed. Exact candidate hashes live in the ignored local install receipt and must be refreshed after rebuilding.
+
+The shared source schema is preserved as 13 entities and 286 catalog fields. Full Notion formula/rollup parity and binary attachment management are outside this implemented beta. Native acceptance has not passed: the first run found an onboarding contract error, now repaired; subsequent testing awaits manual macOS unlock. Live Identity consent, source import, subscribed agent approved write, physical phone-on-cellular acceptance and production distribution remain open.
+
+Dedicated Composio managed OAuth configurations were created and independently read back with exact read-only scopes. The dedicated D1 consent journal was provisioned and migration 0001 applied; a subsequent schema read confirms the reconnectable column, and the journal contains no account attempts. Independent broker re-review cleared the guarded recovery and fail-page import fixes for a limited deployment. The first Wrangler secret bindings created Worker versions automatically, but public health readback has not yet succeeded; the exact reviewed source still needs promotion. The Identity change has not been deployed. Live consent and native acceptance remain unverified.
+
+Worktree disposition: preserved on `codex/CRE-2186-agent-worktree` for continuing implementation and acceptance. Linear: CRE-2186. This checkpoint is not a production-release or user-acceptance receipt.

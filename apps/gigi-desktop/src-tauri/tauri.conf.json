@@ -1,0 +1,43 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "GiGi",
+  "version": "0.1.0",
+  "identifier": "agency.createsomething.gigi",
+  "build": {
+    "frontendDist": "../web",
+    "beforeBuildCommand": "pnpm prepare:companions"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [
+      {
+        "label": "main",
+        "title": "GiGi",
+        "width": 1280,
+        "height": 840,
+        "minWidth": 880,
+        "minHeight": 620
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src ipc: http://ipc.localhost; object-src 'none'; base-uri 'none'"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": [
+      "app",
+      "dmg"
+    ],
+    "macOS": {
+      "minimumSystemVersion": "13.0"
+    },
+    "icon": [
+      "icons/icon.png",
+      "icons/icon.icns"
+    ],
+    "resources": {
+      "resources/": ""
+    }
+  }
+}
