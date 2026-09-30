@@ -13,7 +13,8 @@
     "prepare:companions": "node scripts/prepare-companions.mjs",
     "build:local": "GIGI_BUILD_PROFILE=debug tauri build --debug --config src-tauri/tauri.local.conf.json --bundles app,dmg",
     "test:mcp": "node scripts/mcp-smoke.mjs",
-    "test:companions": "cargo run --manifest-path src-tauri/Cargo.toml --example verify_companions -- src-tauri/resources"
+    "test:companions": "cargo run --manifest-path src-tauri/Cargo.toml --example verify_companions -- src-tauri/resources",
+    "verify:release": "node scripts/verify-release.mjs"
   },
   "devDependencies": {
     "@tauri-apps/cli": "2.11.2",
