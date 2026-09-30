@@ -28,7 +28,7 @@ test('fresh workspace leads to optional setup without automatically signing in, 
     assert.match(root.innerHTML, /data-new="gigs"/);
     assert.match(root.innerHTML, /data-sign-in="1"/);
     assert.match(root.innerHTML, /data-prepare-agent="1"/);
-    assert.equal(calls.filter(({ operation }) => ['auth.login', 'connections.begin', 'agent.prepare', 'sources.import'].includes(operation)).length, 0);
+    assert.equal(calls.filter(({ operation }) => ['auth.login', 'connections.begin', 'agent.prepare', 'connections.import'].includes(operation)).length, 0);
     assert.equal(calls.filter(({ operation }) => operation === 'workspace.create').length, 1);
     assert.equal(calls.filter(({ operation }) => operation === 'records.save').length, 1);
   } finally { globalThis.document = prior.document; globalThis.__TAURI__ = prior.tauri; globalThis.FormData = prior.FormData; }
