@@ -2,7 +2,7 @@ export const PUBLIC_PRICING = {
   membership: {
     monthlyUsd: 900,
     label: 'From $900/month',
-    terms: 'Cancel anytime',
+    terms: 'Cancel before renewal',
     focused: {
       monthlyUsd: 900,
       label: '$900/month',
