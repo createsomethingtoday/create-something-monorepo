@@ -14,10 +14,10 @@ test('Map monitoring policy names its owner, SLOs, synthetic boundary, and reten
 	assert.equal(MAP_MONITOR_POLICY.synthetic.agentMutationAllowed, false);
 	assert.equal(MAP_MONITOR_POLICY.synthetic.receiptRetentionDays, 30);
 	assert.equal(MAP_MONITOR_POLICY.slos.availability.target, 0.999);
-	assert.equal(MAP_MONITOR_POLICY.slos.bookingContextConsistency.target, 1);
+	assert.equal(MAP_MONITOR_POLICY.slos.mapHandoffConsistency.target, 1);
 	assert.match(
-		MAP_MONITOR_POLICY.slos.bookingContextConsistency.definition,
-		/visible redacted Map reference/
+		MAP_MONITOR_POLICY.slos.mapHandoffConsistency.definition,
+		/embedded Draw canvas/
 	);
 });
 

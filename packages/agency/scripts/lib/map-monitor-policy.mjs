@@ -12,10 +12,10 @@ export const MAP_MONITOR_POLICY = Object.freeze({
 			windowDays: 30,
 			definition: 'Production /map returns 200 and renders the public canvas at desktop and mobile viewports.'
 		},
-		bookingContextConsistency: {
+		mapHandoffConsistency: {
 			target: 1,
 			windowDays: 30,
-			definition: 'The visible redacted Map reference, readiness, and score match the booking URL after starter load, edit, restore, and reset.'
+			definition: 'The embedded Draw canvas loads, persists a synthetic draft title across reload, and offers the workflow-mapping booking path.'
 		},
 		mappingAgentBoundary: {
 			target: 1,
@@ -33,7 +33,7 @@ export const MAP_MONITOR_POLICY = Object.freeze({
 	alert: {
 		consecutiveFailures: 2,
 		route: 'GitHub Actions failed scheduled run, then CRE-1289 operator escalation',
-		severity: 'SEV-2 when booking context mismatches; SEV-3 for a single availability failure'
+		severity: 'SEV-2 when Draw persistence or mapping handoff fails; SEV-3 for a single availability failure'
 	}
 });
 
