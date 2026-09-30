@@ -36,6 +36,8 @@ function fixture(overrides: Partial<RecoveryPorts> = {}) {
   const ports: RecoveryPorts = {
     now: () => now,
     readRecoveryFence: async () => true,
+    readInsertFence: async () => true,
+    readAttemptHistory: async () => [{ ...row }],
     wait: async (ms) => { now += ms; calls.push('wait'); },
     readAttempt: async () => { calls.push('d1'); return { ...row }; },
     readDeployment: async () => { calls.push('deployment'); return { ...deployment }; },
@@ -116,9 +118,9 @@ test('every owner/old/combined/project scan must be complete and must exclude ta
     assert.equal((await recoverStaleLinked(input, target.ports)).outcome, 'blocked');
   }
 });
-test('age, expiry, provider resurrection, spacing and receipt availability are hard gates', async () => {
-  const young = fixture({ now: () => Date.parse('2026-10-01T10:00:00Z') });
-  assert.equal((await recoverStaleLinked(input, young.ports)).reason, 'attempt_too_recent');
+test('creation time, expiry, provider resurrection, spacing and receipt availability are hard gates', async () => {
+  const young = fixture({ now: () => Date.parse('2026-09-30T14:00:00Z') });
+  assert.equal((await recoverStaleLinked(input, young.ports)).reason, 'attempt_time_invalid');
   const unexpired = fixture({ readAttempt: async () => ({ ...row, expires_at: '2026-10-03T00:00:00Z' }) });
   assert.equal((await recoverStaleLinked(input, unexpired.ports)).reason, 'consent_not_expired');
   let gets = 0;
@@ -143,4 +145,27 @@ test('recovery requires durable exact-row fence and rechecks it before release',
   const removed = fixture({ readRecoveryFence: async () => ++checks === 1 });
   assert.equal((await recoverStaleLinked({ ...input, apply: true }, removed.ports)).reason, 'recovery_fence_changed');
   assert.equal(removed.calls.includes('write'), false);
+});
+
+test('expired recovery can proceed before 24 hours only with verified legacy-insert protection', async () => {
+  let earlyNow = Date.parse('2026-09-30T20:00:00Z');
+  const early = fixture({ now: () => earlyNow, wait: async (ms) => { earlyNow += ms; }, readInsertFence: async () => true });
+  assert.equal((await recoverStaleLinked(input, early.ports)).outcome, 'eligible_preview');
+  const absent = fixture({ readInsertFence: undefined });
+  assert.equal((await recoverStaleLinked(input, absent.ports)).reason, 'legacy_insert_fence_unverified');
+  assert.equal(absent.calls.includes('write'), false);
+});
+
+test('changed legacy insertion protection blocks release without a write', async () => {
+  let checks = 0;
+  const changed = fixture({ readInsertFence: async () => ++checks === 1 });
+  assert.equal((await recoverStaleLinked({ ...input, apply: true }, changed.ports)).reason, 'legacy_insert_fence_changed');
+  assert.equal(changed.calls.includes('write'), false);
+});
+
+test('an ambiguous earlier provider POST keeps recovery guarded despite schema protection', async () => {
+  const uncertain = fixture({ readAttemptHistory: async () => [{ ...row }, { ...row,
+    request_id: 'earlier-uncertain', status: 'attention', reconnectable: 1, connected_account_id: null }] });
+  assert.equal((await recoverStaleLinked(input, uncertain.ports)).reason, 'owner_attempt_history_ambiguous');
+  assert.equal(uncertain.calls.includes('write'), false);
 });

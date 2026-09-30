@@ -332,8 +332,8 @@ async function beginLink(
   }
   const requestId = input.requestId;
   const insertion = await env.DB!.prepare(
-    "INSERT OR IGNORE INTO gigi_connection_attempts (subject, provider, request_id, status, created_at) VALUES (?, ?, ?, 'dispatched', ?)",
-  ).bind(subject, provider, requestId, new Date().toISOString()).run() as { meta?: { changes?: number } };
+    "INSERT OR IGNORE INTO gigi_connection_attempts (subject, provider, request_id, status, created_at, auth_config_id) VALUES (?, ?, ?, 'dispatched', ?, ?)",
+  ).bind(subject, provider, requestId, new Date().toISOString(), authConfigId).run() as { meta?: { changes?: number } };
   let prior = await env.DB!.prepare(
     'SELECT status, connected_account_id, redirect_url, expires_at FROM gigi_connection_attempts WHERE subject = ? AND provider = ? AND request_id = ?',
   ).bind(subject, provider, requestId).first() as { status: string; connected_account_id: string | null; redirect_url?: string; expires_at?: string; request_id?: string } | null;
