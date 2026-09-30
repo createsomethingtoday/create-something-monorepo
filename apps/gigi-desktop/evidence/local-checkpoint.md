@@ -8,6 +8,12 @@ Bounded live imports are verified: Calendar saved 20 records in the original wor
 
 The guarded Gmail recovery v3 performed exactly one conditional one-row release after owner/provider checks and two spaced complete absence observations; PR #1873 merged at `d644bbb`. Fresh owning Gmail consent and the bounded imports above passed without expanding selected provider scopes. PR #1874 remains pending for promotion. Actual provider denial, cancellation and quota edge cases remain supported by indirect checks; they were not provoked as live provider errors. Developer ID signing/notarization remains the production-distribution gate.
 
+## Release qualification verifier
+
+`verify:release` checks the supplied absolute app/DMG pair using macOS signing, Gatekeeper, stapler and disk-image tools. It binds the DMG-contained app to the standalone app by bytes and permissions and rejects missing or non-executable companions. Seven focused policy tests passed; the installed-enabled desktop suite passed 34/34 with no skips. Independent review repairs covered the signed app identifier, the distinct DMG signature requirements, safe mount cleanup and executable mode binding.
+
+The real installed local candidate returned exit 1 with `qualified:false` and `reason:app_identity`, matching its ad-hoc signature. Private receipt: `output/gigi-local-acceptance/release-qualification-negative.json`. Positive test fixtures establish verifier behavior only. A real Developer ID/notarized artifact and its fresh native install acceptance are still unavailable. Optional source SHA input is explicitly an assertion, not build provenance.
+
 ## Save-contract repair and live-source checkpoint — September 30, 2026 (historical)
 
 Live Calendar acceptance passed on the GiGi-owned selected config: two pages saved 20 source records, zero failures, correct provider/account provenance, restart persistence and first-page replay without duplicate IDs. More Calendar pages remain; full historical import is not claimed. User-owned iPhone 14 Pro / iOS 26.6.2 cellular read and title-only edit made real local MCP calls, preserved task fields/source/link on readback, and survived native restart. User confirmed pending while the Mac was offline and success after reconnect; fresh workspace tool calls confirm the online readback.
