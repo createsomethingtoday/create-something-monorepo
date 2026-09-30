@@ -43,11 +43,7 @@ test('credential-free Map production workflow remains coherent', async ({ page, 
 		await title.fill('Synthetic workflow map');
 		await title.blur();
 		await expect(title).toHaveValue('Synthetic workflow map');
-		// Poll the app's persistence instead of racing its local save debounce.
-		await expect.poll(async () => {
-			const frame = page.frames().find((candidate) => candidate.url().includes('draw.createsomething.agency'));
-			return frame?.evaluate(() => Object.values(localStorage).some((value) => value.includes('Synthetic workflow map')));
-		}).toBe(true);
+		await expect(draw.getByRole('status')).toHaveText('Saved on this device');
 		await page.reload({ waitUntil: 'domcontentloaded' });
 		await page.locator('iframe').scrollIntoViewIfNeeded();
 		await expect(draw.getByRole('textbox', { name: 'Canvas title' })).toHaveValue('Synthetic workflow map');
