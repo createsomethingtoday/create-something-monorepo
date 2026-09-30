@@ -2,7 +2,7 @@
 
 A Rust/Tauri desktop workspace for music-related work. Each installation owns a private SQLite database. The UI and local MCP companion use the same validated domain operations. CTX supplies supporting history; current records and calculations remain in SQLite.
 
-This is an in-progress local beta. Production signing/notarization and full connected-device acceptance remain required before a production release. See `evidence/tdd.md` for checks and failures; do not infer acceptance from a successful build.
+The local functional beta passed connected desktop and physical cellular-phone acceptance; current receipts and artifact hashes are in `evidence/local-checkpoint.md`. Developer ID signing, notarization and installation of the qualified release remain required before production distribution. See `evidence/tdd.md` for checks and failures; a successful build alone does not prove acceptance.
 
 ## Development
 
@@ -14,7 +14,7 @@ From the monorepo root, run `pnpm bootstrap:worktree` first.
 - `pnpm --filter @create-something/gigi-integrations typecheck`
 - `pnpm --filter @create-something/gigi-desktop build:local`
 
-The local build uses a separate ad-hoc signing configuration, requires macOS 13 or later, and currently targets Apple Silicon. It does not require Grant’s Apple credentials. Production packaging uses `pnpm --filter @create-something/gigi-desktop build` after release signing is configured. An app bundle alone does not establish a signed/notarized production release.
+The local build uses a separate ad-hoc signing configuration, requires macOS 13 or later, and currently targets Apple Silicon. It does not require Grant’s Apple credentials. Production packaging uses `pnpm --filter @create-something/gigi-desktop build` after release signing is configured. An app bundle alone does not establish a signed/notarized production release. Run `verify:release` with the absolute app and DMG paths after production packaging; it exits nonzero for an unqualified pair. Qualification is separate from installing that exact release and repeating the native workflow. The verifier is read-only and must reject the local ad-hoc build. It checks the signed GiGi identifier, Developer ID executable signatures, Gatekeeper and stapled notarization, DMG integrity, and the byte/mode identity of the app mounted read-only from that DMG. An optional `--source-sha` is recorded as a caller assertion, not verified build provenance.
 
 ## Local state and agent access
 
