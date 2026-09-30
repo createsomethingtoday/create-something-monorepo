@@ -57,6 +57,7 @@ fn schema(operation: &str) -> Value {
             ("id", "string"),
             ("fields", "object"),
             ("source", "object"),
+            ("expectedRecord", "object"),
             ("idempotencyKey", "string"),
         ],
         "relations.link" => &[("role", "string"), ("idempotencyKey", "string")],
@@ -72,6 +73,7 @@ fn schema(operation: &str) -> Value {
     }
     if operation == "records.save" {
         properties.insert("fieldsMode".into(), json!({"type":"string","enum":["merge","replace"],"description":"Defaults to merge. Replace requires fields and removes omitted field keys."}));
+        properties.insert("expectedRecord".into(), json!({"type":"object","properties":{"title":{"type":"string"},"fields":{"type":"object"},"source":{"type":"object"}},"required":["title","fields","source"],"description":"Optional full snapshot from records.get detail=full. If title, fields, or source changed before this save, the save fails without overwriting the newer record."}));
     }
     json!({"type":"object","properties":properties,"required":required,"additionalProperties":false})
 }
@@ -79,7 +81,7 @@ fn schema(operation: &str) -> Value {
 fn tool_catalog() -> Value {
     let tools: Vec<_> = TOOLS.iter().map(|(name, operation, read_only)| {
         let description = if *operation == "records.save" {
-            "GiGi records.save. For an existing id, omitted fields are preserved by default; supplied field keys merge into the record. Set fieldsMode to replace with a fields object to remove omitted field keys. Omitted source and links are preserved. Local private workspace only; results are bounded.".to_string()
+            "GiGi records.save. For an existing id, omitted fields are preserved by default; supplied field keys merge into the record. Set fieldsMode to replace with a fields object to remove omitted field keys. Pass expectedRecord from a full records.get to reject a stale save. Omitted source and links are preserved. Local private workspace only; results are bounded.".to_string()
         } else {
             format!("GiGi {}. Local private workspace only; results are bounded.", operation)
         };
@@ -279,6 +281,7 @@ mod tests {
     #[test]
     fn records_save_schema_exposes_replace_and_rejects_missing_fields() {
         assert_eq!(schema("records.save")["properties"]["fieldsMode"]["enum"], json!(["merge", "replace"]));
+        assert_eq!(schema("records.save")["properties"]["expectedRecord"]["required"], json!(["title", "fields", "source"]));
         let root = std::env::temp_dir().join(format!("gigi-mcp-replace-{}", uuid::Uuid::new_v4()));
         let workspace = domain::dispatch(&root, "workspace.create", json!({"name":"Owner"})).unwrap();
         let wid = &workspace["id"];

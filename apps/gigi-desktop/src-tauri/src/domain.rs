@@ -392,9 +392,25 @@ pub fn dispatch(root: &Path, op: &str, input: Value) -> Result<Value, String> {
             if id.is_empty() || id.len() > 200 {
                 return Err("invalid id".into());
             }
-            let prior:Option<(String,Option<String>,String)>=tx.query_row(&format!("SELECT source_json,source_key,fields_json FROM {entity} WHERE workspace_id=?1 AND id=?2"),params![wid,id],|r|Ok((r.get(0)?,r.get(1)?,r.get(2)?))).optional().map_err(|e|e.to_string())?;
+            let prior:Option<(String,String,Option<String>,String)>=tx.query_row(&format!("SELECT title,source_json,source_key,fields_json FROM {entity} WHERE workspace_id=?1 AND id=?2"),params![wid,id],|r|Ok((r.get(0)?,r.get(1)?,r.get(2)?,r.get(3)?))).optional().map_err(|e|e.to_string())?;
+            if let Some(expected) = input.get("expectedRecord") {
+                let expected_title = expected.get("title").and_then(Value::as_str).ok_or("expectedRecord requires title, fields, and source")?;
+                let expected_fields = expected.get("fields").filter(|v| v.is_object()).ok_or("expectedRecord requires title, fields, and source")?;
+                let expected_source = expected.get("source").filter(|v| v.is_object()).ok_or("expectedRecord requires title, fields, and source")?;
+                let matches = match &prior {
+                    Some((prior_title, prior_source, _, prior_fields)) => {
+                        prior_title == expected_title
+                            && serde_json::from_str::<Value>(prior_fields).map_err(|e|e.to_string())? == *expected_fields
+                            && serde_json::from_str::<Value>(prior_source).map_err(|e|e.to_string())? == *expected_source
+                    }
+                    None => false,
+                };
+                if !matches {
+                    return Err("record changed since it was opened. Your edits are still here; copy them, then reopen the record and try again".into());
+                }
+            }
             if !replace_fields {
-                if let Some((_, _, prior_fields)) = &prior {
+                if let Some((_, _, _, prior_fields)) = &prior {
                     let mut merged: Value = serde_json::from_str(prior_fields).map_err(|e|e.to_string())?;
                     let saved = merged.as_object_mut().ok_or("stored fields must be an object")?;
                     saved.extend(fields.as_object().ok_or("fields must be an object")?.clone());
@@ -411,7 +427,7 @@ pub fn dispatch(root: &Path, op: &str, input: Value) -> Result<Value, String> {
             }
             let prior_source = prior
                 .as_ref()
-                .and_then(|p| serde_json::from_str::<Value>(&p.0).ok());
+                .and_then(|p| serde_json::from_str::<Value>(&p.1).ok());
             let mut source = input
                 .get("source")
                 .cloned()
@@ -429,7 +445,7 @@ pub fn dispatch(root: &Path, op: &str, input: Value) -> Result<Value, String> {
                 return Err("record detail exceeds local limit".into());
             }
             let source_key = if source["kind"] == "manual" {
-                prior.as_ref().and_then(|p| p.1.clone())
+                prior.as_ref().and_then(|p| p.2.clone())
             } else {
                 let provider = source
                     .get("provider")
@@ -815,6 +831,24 @@ mod tests {
         assert!(listed["items"][0]["status"].is_null());
         assert!(listed["items"][0]["date"].is_null());
         assert!(dispatch(&root, "records.save", json!({"workspaceId":wid,"entity":"gigs","id":gig["id"],"title":"Show","fieldsMode":"replace"})).is_err());
+        let _ = fs::remove_dir_all(root);
+    }
+    #[test]
+    fn stale_editor_replace_rejects_newer_record_without_losing_it_and_replays_receipt() {
+        let root = temp();
+        let wid = dispatch(&root, "workspace.create", json!({"name":"Solo"})).unwrap()["id"].clone();
+        let original = dispatch(&root, "records.save", json!({"workspaceId":wid,"entity":"gigs","title":"Show","fields":{"Status":"Open","Fee":1200}})).unwrap();
+        let expected = json!({"title":original["title"],"fields":original["fields"],"source":original["source"]});
+        let editor_save = json!({"workspaceId":wid,"entity":"gigs","id":original["id"],"title":"Show","fieldsMode":"replace","fields":{"Status":"Confirmed"},"expectedRecord":expected,"idempotencyKey":"editor-save"});
+        dispatch(&root, "records.save", json!({"workspaceId":wid,"entity":"gigs","id":original["id"],"title":"Show","fields":{"Fee":1400}})).unwrap();
+        assert!(dispatch(&root, "records.save", editor_save.clone()).unwrap_err().contains("record changed"));
+        let current = dispatch(&root, "records.get", json!({"workspaceId":wid,"entity":"gigs","id":original["id"],"detail":"full"})).unwrap();
+        assert_eq!(current["fields"], json!({"Status":"Open","Fee":1400}));
+        let fresh = json!({"title":current["title"],"fields":current["fields"],"source":current["source"]});
+        let fresh_save = json!({"workspaceId":wid,"entity":"gigs","id":original["id"],"title":"Show","fieldsMode":"replace","fields":{"Status":"Confirmed"},"expectedRecord":fresh,"idempotencyKey":"editor-fresh"});
+        let saved = dispatch(&root, "records.save", fresh_save.clone()).unwrap();
+        dispatch(&root, "records.save", json!({"workspaceId":wid,"entity":"gigs","id":original["id"],"title":"Another edit","fields":{"Fee":2000}})).unwrap();
+        assert_eq!(dispatch(&root, "records.save", fresh_save).unwrap(), saved);
         let _ = fs::remove_dir_all(root);
     }
     #[test]

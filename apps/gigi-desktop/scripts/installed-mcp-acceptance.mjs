@@ -82,7 +82,14 @@ try{
   assert.equal(renamedSummary.feeCents,14000);
   assert.equal(renamedSummary.balanceDueCents,14000);
 
-  const cleared=await call('gigi_records_save',{workspaceId,entity:'gigs',id:gig.id,title:renamed.title,fields:{},fieldsMode:'replace',idempotencyKey:'gig-clear-fields'});
+  const expectedRecord={title:renamed.title,fields:renamed.fields,source:renamed.source};
+  await call('gigi_records_save',{workspaceId,entity:'gigs',id:gig.id,title:renamed.title,fields:{Fee:16000},idempotencyKey:'gig-concurrent-edit'});
+  const stale=await client.callTool({name:'gigi_records_save',arguments:{workspaceId,entity:'gigs',id:gig.id,title:renamed.title,fields:{},fieldsMode:'replace',expectedRecord,idempotencyKey:'gig-stale-editor'}});
+  assert.equal(stale.isError,true,'stale editor must reject instead of overwriting newer agent fields');
+  assert.match(stale.content.find(item=>item.type==='text')?.text??'',/record changed since it was opened/);
+  const current=await call('gigi_records_get',{workspaceId,entity:'gigs',id:gig.id,detail:'full'});
+  assert.equal(current.fields.Fee,16000,'rejected editor must preserve newer agent fee');
+  const cleared=await call('gigi_records_save',{workspaceId,entity:'gigs',id:gig.id,title:current.title,fields:{},fieldsMode:'replace',expectedRecord:{title:current.title,fields:current.fields,source:current.source},idempotencyKey:'gig-clear-fields'});
   assert.deepEqual(cleared.fields,{},'explicit editor replacement must clear omitted fields');
   assert.equal(cleared.relationCount,2);
   const clearedSummary=await call('gigi_gigs_summary',{workspaceId,gigId:gig.id});
