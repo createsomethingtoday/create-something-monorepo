@@ -37,3 +37,11 @@ The reviewed catalog preserves all 13 entity types and named relationship roles.
 Imports read bounded Gmail metadata and Calendar event pages. Each saved record is transactional; a failed page returns an explicit retry cursor and preserves completed records. Repeating the page deduplicates by provider, connected account, collection, and external ID and preserves local corrections. It does not send email or modify calendars.
 
 Agent setup generates exact Codex MCP registration and Claude plugin launch commands. Preparing files is not installing a plugin or verifying a session. The user must approve writes in their provider's session; read-only automation cannot supply that acceptance. Use the compact bundled skill and retrieve full details only for selected records.
+
+## Guided onboarding
+
+First launch explains the local workspace, optional Google sources and optional subscribed agent. Creating a workspace leads to Setup & safety, with a manual-work action and links to the source, agent and phone steps. Local records need no sign-in. Connecting sources uses the GiGi connector account and separate Google consent; verification and page imports stay separate.
+
+Choose Codex or Claude Code, prepare the workspace-specific connector, and copy its exact command. Codex registration applies to future local sessions; Claude's launch flag loads GiGi for that session and must be used for future sessions too. A copyable read-only prompt asks for an actual `gigi_workspace_get` call. Prepared files, a recorded local tool call and physical phone acceptance remain separate states. Limits or provider outages leave manual GiGi work available.
+
+The in-app setup buttons open fixed official guides in the system browser: [Codex CLI](https://learn.chatgpt.com/docs/codex/cli), [Claude Code](https://code.claude.com/docs/en/quickstart), [Codex remote connections](https://learn.chatgpt.com/docs/remote-connections), and [Claude Remote Control](https://code.claude.com/docs/en/remote-control). Choose provider subscription sign-in. Remote access depends on account eligibility and a running, awake, online host; normal phone chat does not supply a local connection.
