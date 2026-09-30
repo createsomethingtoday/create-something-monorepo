@@ -4,7 +4,6 @@
     PerformanceCampaignOpening,
     PerformanceConversionHandoff,
     PerformanceNarrativeStage,
-    PerformanceWorkflowMiniArtifact,
     SEO,
     type PerformanceNarrativeScene
   } from '@create-something/canon';
@@ -20,6 +19,7 @@
   import { filmStories } from '$lib/data/filmStories';
   import { PUBLIC_PRICING } from '$lib/data/publicPricing';
   import AgencyWayfindingSign from '$lib/components/AgencyWayfindingSign.svelte';
+  import AgencyIsometricGlyph from '$lib/components/AgencyIsometricGlyph.svelte';
   import AgencyPathChoices from '$lib/components/AgencyPathChoices.svelte';
 
   type ProductSurfaceKind = 'signal' | 'decision' | 'proof';
@@ -209,7 +209,9 @@
           <a href={item.href}>
             <span>{item.label}</span>
             {#if item.kind}
-              <PerformanceWorkflowMiniArtifact kind={item.kind} />
+              <div class="control-surface-icon" data-icon={item.kind}>
+                <AgencyIsometricGlyph kind={item.kind === 'decision' ? 'approval' : item.kind} />
+              </div>
             {/if}
             <strong>{item.title}</strong>
             <p>{item.detail}</p>
@@ -522,9 +524,12 @@
     font-weight: var(--font-performance-semibold);
   }
 
-  .control-surfaces :global(.performance-workflow-mini-artifact) {
-    max-height: 7rem;
-    overflow: hidden;
+  .control-surface-icon {
+    display: grid;
+    align-items: center;
+    width: 4.5rem;
+    height: 7rem;
+    color: var(--color-performance-ink);
   }
 
   @media (max-width: 48rem) {
