@@ -70,13 +70,16 @@ fn schema(operation: &str) -> Value {
     if operation == "records.get" {
         properties.insert("detail".into(), json!({"type":"string","enum":["summary","full"]}));
     }
+    if operation == "records.save" {
+        properties.insert("fieldsMode".into(), json!({"type":"string","enum":["merge","replace"],"description":"Defaults to merge. Replace requires fields and removes omitted field keys."}));
+    }
     json!({"type":"object","properties":properties,"required":required,"additionalProperties":false})
 }
 
 fn tool_catalog() -> Value {
     let tools: Vec<_> = TOOLS.iter().map(|(name, operation, read_only)| {
         let description = if *operation == "records.save" {
-            "GiGi records.save. For an existing id, omitted fields and source are preserved; supplied field keys update that record. Local private workspace only; results are bounded.".to_string()
+            "GiGi records.save. For an existing id, omitted fields are preserved by default; supplied field keys merge into the record. Set fieldsMode to replace with a fields object to remove omitted field keys. Omitted source and links are preserved. Local private workspace only; results are bounded.".to_string()
         } else {
             format!("GiGi {}. Local private workspace only; results are bounded.", operation)
         };
@@ -271,6 +274,21 @@ mod tests {
         let revised = &update["result"]["structuredContent"];
         assert_eq!(revised["title"], "Confirm Saturday shift");
         assert_eq!(revised["fields"], saved["fields"]);
+        fs::remove_dir_all(root).unwrap();
+    }
+    #[test]
+    fn records_save_schema_exposes_replace_and_rejects_missing_fields() {
+        assert_eq!(schema("records.save")["properties"]["fieldsMode"]["enum"], json!(["merge", "replace"]));
+        let root = std::env::temp_dir().join(format!("gigi-mcp-replace-{}", uuid::Uuid::new_v4()));
+        let workspace = domain::dispatch(&root, "workspace.create", json!({"name":"Owner"})).unwrap();
+        let wid = &workspace["id"];
+        let create = reply(&root, &json!({"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"gigi_records_save","arguments":{"workspaceId":wid,"entity":"tasks","title":"Task","fields":{"Status":"In Progress","Priority":"High"}}}})).unwrap();
+        let id = &create["result"]["structuredContent"]["id"];
+        let missing = reply(&root, &json!({"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"gigi_records_save","arguments":{"workspaceId":wid,"entity":"tasks","id":id,"title":"Task","fieldsMode":"replace"}}})).unwrap();
+        assert_eq!(missing["result"]["isError"], true);
+        let replaced = reply(&root, &json!({"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"gigi_records_save","arguments":{"workspaceId":wid,"entity":"tasks","id":id,"title":"Task","fieldsMode":"replace","fields":{"Priority":"Low"}}}})).unwrap();
+        assert_eq!(replaced["result"]["isError"], false);
+        assert_eq!(replaced["result"]["structuredContent"]["fields"], json!({"Priority":"Low"}));
         fs::remove_dir_all(root).unwrap();
     }
     #[test]

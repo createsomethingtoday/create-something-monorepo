@@ -82,6 +82,13 @@ try{
   assert.equal(renamedSummary.feeCents,14000);
   assert.equal(renamedSummary.balanceDueCents,14000);
 
+  const cleared=await call('gigi_records_save',{workspaceId,entity:'gigs',id:gig.id,title:renamed.title,fields:{},fieldsMode:'replace',idempotencyKey:'gig-clear-fields'});
+  assert.deepEqual(cleared.fields,{},'explicit editor replacement must clear omitted fields');
+  assert.equal(cleared.relationCount,2);
+  const clearedSummary=await call('gigi_gigs_summary',{workspaceId,gigId:gig.id});
+  assert.equal(clearedSummary.feeCents,null,'cleared fee must remain unknown');
+  await call('gigi_records_save',{workspaceId,entity:'gigs',id:gig.id,title:renamed.title,fields:{Fee:14000,Status:'Confirmed'},fieldsMode:'replace',idempotencyKey:'gig-restore-fields'});
+
   const backup=await call('gigi_backup_create',{workspaceId});
   assert.match(backup.backupId,/^[a-f0-9-]{36}$/);
   const backupPath=join(data,'backups',`${backup.backupId}.sqlite`);

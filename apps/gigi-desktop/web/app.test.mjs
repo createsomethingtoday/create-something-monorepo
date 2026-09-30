@@ -48,3 +48,43 @@ test('Link records reads visible controls when WebView form lookup fails and bub
     globalThis.FormData = previous.formData;
   }
 });
+
+test('editing a gig replaces its fields so cleared fee, status, and date are removed', async () => {
+  const listeners = new Map();
+  const calls = [];
+  const root = { innerHTML: '', classList: { toggle() {} }, addEventListener(name, handler) { listeners.set(name, handler); }, querySelector() { return null; } };
+  const previous = { document: globalThis.document, tauri: globalThis.__TAURI__, formData: globalThis.FormData };
+  globalThis.document = { querySelector: (selector) => selector === '#app' ? root : null };
+  globalThis.__TAURI__ = { core: { invoke: async (_command, { operation, input }) => {
+    calls.push({ operation, input });
+    if (operation === 'workspace.get') return { id: 'w1', name: 'Test' };
+    if (operation === 'records.list') return { items: input.entity === 'profile' ? [{ id: 'p1' }] : input.entity === 'gigs' ? [{ id: 'g1', title: 'Friday show' }] : [], count: 1 };
+    if (operation === 'records.get') return input.entity === 'profile'
+      ? { id: 'p1', title: 'Owner', fields: { Currency: 'USD' } }
+      : { id: 'g1', title: 'Friday show', fields: { Source: 'manual', Status: 'Open', Date: '2026-10-02', Fee: 1200, Requirements: 'Bring keys' }, relations: [] };
+    if (operation === 'records.save') return { id: 'g1', title: input.title, fields: input.fields };
+    return {};
+  } } };
+  globalThis.FormData = class {
+    constructor(form) { this.entries = Object.entries(form.values); }
+    [Symbol.iterator]() { return this.entries[Symbol.iterator](); }
+  };
+  const settle = () => new Promise((resolve) => setImmediate(resolve));
+  const click = (dataset) => listeners.get('click')({ target: { closest: () => ({ dataset }) } });
+  try {
+    await import(`./app.mjs?edit-clear-test=${Date.now()}`);
+    await settle();
+    click({ page: 'gigs' }); await settle();
+    click({ open: 'g1', entity: 'gigs' }); await settle();
+    click({ edit: '1' }); await settle();
+    assert.match(root.innerHTML, /id="record-form"/);
+    listeners.get('submit')({ preventDefault() {}, target: { id: 'record-form', values: { title: 'Friday show', Status: '', Date: '', Fee: '', Requirements: 'Bring keys' } } });
+    await settle();
+    const save = calls.find(({ operation }) => operation === 'records.save');
+    assert.deepEqual(save?.input, { workspaceId: 'w1', entity: 'gigs', id: 'g1', title: 'Friday show', fieldsMode: 'replace', fields: { Source: 'manual', Requirements: 'Bring keys' } });
+  } finally {
+    globalThis.document = previous.document;
+    globalThis.__TAURI__ = previous.tauri;
+    globalThis.FormData = previous.formData;
+  }
+});
