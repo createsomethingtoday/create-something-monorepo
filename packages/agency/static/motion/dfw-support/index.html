@@ -10,6 +10,7 @@
 #root { position:relative; width:100%; height:100%; overflow:hidden; }
 .clip { position:absolute; inset:0; } svg { width:100%; height:100%; display:block; }
 text { fill:var(--paper); font-family:sans-serif; } .notation { font-family:monospace; font-size:26px; } .label { font-size:38px; font-weight:600; }
+#packet { opacity:0; }
 .route { fill:none; stroke-width:4; stroke-linecap:round; stroke-linejoin:round; } .track { stroke:var(--rule); stroke-width:2; fill:none; } .signal { stroke:var(--signal); } .boundary { stroke:var(--boundary); } .proof { stroke:var(--proof); }
 </style>
 </head>
@@ -40,7 +41,7 @@ text { fill:var(--paper); font-family:sans-serif; } .notation { font-family:mono
 <script>
 // The measured-stroke mechanism adapts Hyperframes svg-stroke-trace.
 const tl = gsap.timeline({paused:true});
-tl.set('#packet', {x:0,y:0,opacity:0}, 0);
+tl.set('#packet', {x:0,y:0}, 0);
 for (const [id,start,duration] of [['read-route',0.6,1.6],['owner-route',2.6,1.2],['repair-route',5.1,1.7],['receipt-route',7.3,1.5]]) {
  const path=document.getElementById(id); const length=path.getTotalLength();
  tl.fromTo(path,{strokeDasharray:length,strokeDashoffset:length},{strokeDashoffset:0,duration,ease:'power2.out'},start);
