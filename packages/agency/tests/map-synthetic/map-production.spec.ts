@@ -39,6 +39,7 @@ test('credential-free Map production workflow remains coherent', async ({ page, 
 	});
 
 	await check('draw_edit_and_restore', async () => {
+		await expect(draw.getByRole('status')).toHaveText(/New local session|Restored from this device/);
 		const title = draw.getByRole('textbox', { name: 'Canvas title' });
 		await title.fill('Synthetic workflow map');
 		await title.blur();
@@ -46,6 +47,7 @@ test('credential-free Map production workflow remains coherent', async ({ page, 
 		await expect(draw.getByRole('status')).toHaveText('Saved on this device');
 		await page.reload({ waitUntil: 'domcontentloaded' });
 		await page.locator('iframe').scrollIntoViewIfNeeded();
+		await expect(draw.getByRole('status')).toHaveText('Restored from this device');
 		await expect(draw.getByRole('textbox', { name: 'Canvas title' })).toHaveValue('Synthetic workflow map');
 	});
 
