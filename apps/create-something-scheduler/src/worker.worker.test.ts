@@ -72,6 +72,12 @@ describe('scheduler Worker transport', () => {
     expect(foundationPageHtml).toContain('one agent project, one role, one job');
     expect(foundationPageHtml).toContain('const offerIntent="agent-foundation";');
 
+    const supportPage = await SELF.fetch('https://scheduler.local/createsomething/together?intent=system-support');
+    expect(supportPage.status).toBe(200);
+    const supportHtml = await supportPage.text();
+    expect(supportHtml).toContain('Remote Software Support Discussion | CREATE SOMETHING');
+    expect(supportHtml).toContain('const offerIntent="system-support";');
+
     const legacyPage = await SELF.fetch(
       'https://create-something-scheduler.createsomething.workers.dev/createsomething/together?intent=compiler-integration',
       { redirect: 'manual' }
@@ -708,6 +714,17 @@ describe('scheduler Worker transport', () => {
     expect(publicBody.result.tools.map((tool) => tool.name)).not.toContain(
       'scheduler_commit_booking'
     );
+
+    const policyTool = await mcpRequest('tools/call', { name: 'scheduler_get_link', arguments: {} }, 4);
+    const policyResult = await policyTool.json() as { result: { isError?: boolean; structuredContent: { slug: string; durationOptionsMinutes: number[] } } };
+    expect(policyResult.result.isError).not.toBe(true);
+    expect(policyResult.result.structuredContent.slug).toBe('createsomething/together');
+    expect(policyResult.result.structuredContent.durationOptionsMinutes).toEqual([30, 60]);
+    for (const uri of ['scheduler://links/createsomething/together', 'scheduler://policy/createsomething/together']) {
+      const policyResource = await mcpRequest('resources/read', { uri }, 5);
+      const resourceResult = await policyResource.json() as { result: { contents: Array<{ text: string }> } };
+      expect(JSON.parse(resourceResult.result.contents[0]!.text).slug).toBe('createsomething/together');
+    }
 
     const operatorTools = await mcpRequest('tools/list', {}, 3, {
       authorization: 'Bearer controlled-operator-token'

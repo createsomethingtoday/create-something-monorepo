@@ -2,6 +2,7 @@
   import { createContactRequest } from '$lib/contact/request';
   let contactRequest: ReturnType<typeof createContactRequest> | undefined;
   import {
+    Button,
     PerformancePageSection,
     SEO
   } from '@create-something/canon';
@@ -14,6 +15,7 @@
   let { data }: { data: PageData } = $props();
 
   type ContactIntent =
+    | 'system-support'
     | 'membership'
     | 'governance-checklist'
     | 'workflow-teardown'
@@ -35,6 +37,15 @@
     submitLabel: string;
     successMessage: string;
   }> = [
+    {
+      value: 'system-support',
+      label: 'Get software support',
+      description: 'Get remote help with a failing automation, integration, form or AI-built project.',
+      funnelStage: 'decision',
+      serviceInterest: 'Remote software and workflow support',
+      submitLabel: 'Send support inquiry',
+      successMessage: 'Received. We will review the problem and reply about fit and scope.'
+    },
     {
       value: 'membership',
       label: 'Discuss membership',
@@ -98,6 +109,18 @@
       messagePlaceholder: string;
     }
   > = {
+    'system-support': {
+      seoTitle: 'Remote Software Support Inquiry | CREATE SOMETHING',
+      seoDescription: 'Request remote help with a failing automation, integration, form or AI-built project. Agree on scope before work begins.',
+      eyebrow: 'Remote software support',
+      title: 'Tell us what stopped working.',
+      description: 'Bring one software or workflow problem. We review fit, then agree on scope, price and access before work begins.',
+      formTitle: 'Send a support inquiry',
+      formDescription: 'A short description is enough to start. This form does not book emergency support.',
+      messageLabel: 'What is failing, and what should happen instead?',
+      messageHelper: 'Name the tools, the last working state and who owns the system. Do not include passwords, API keys or private customer records.',
+      messagePlaceholder: 'Our form stopped sending leads to Airtable. It last worked on… The system owner is…'
+    },
     membership: {
       seoTitle: 'Discuss Membership | CREATE SOMETHING',
       seoDescription: 'Discuss Focused support at $900/month or Team support at $2,500/month before payment.',
@@ -396,8 +419,14 @@
         decision, and what needs to be decided.
       </p>
       <div class="cal-button">
-        <ScheduleButton variant="primary" size="lg" />
-        <a href="/book" class="calendar-link">Review scheduling details</a>
+        {#if selectedIntent === 'system-support'}
+          <Button href={`/book?${new URLSearchParams({ source: contactSource, intent: selectedIntent, lane: selectedLane })}`}>Review scheduling details</Button>
+        {:else}
+          <ScheduleButton variant="primary" size="lg" />
+        {/if}
+        {#if selectedIntent !== 'system-support'}
+          <a href="/book" class="calendar-link">Review scheduling details</a>
+        {/if}
       </div>
     </div>
   </div>

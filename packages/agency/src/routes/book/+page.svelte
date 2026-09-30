@@ -74,11 +74,24 @@
 		fallbackHref: '/technical-review',
 		fallbackLabel: 'the technical review service'
 	} as const;
+	const supportBookingOffer = {
+		seoTitle: 'Discuss a Software Support Problem | CREATE SOMETHING',
+		seoDescription: 'Choose a time to discuss remote software or workflow support. Agree on fit, scope and price before work begins.',
+		eyebrow: 'Remote software support discussion',
+		title: 'Choose a time to discuss the failure.',
+		description: 'Bring the tools involved, the last working state and the person who can approve a change. We will discuss fit and scope. Keep credentials and private customer records out of booking notes.',
+		secondaryHref: '/dfw-tech-support',
+		secondaryLabel: 'Review remote software support',
+		iframeTitle: 'Schedule a remote software support discussion',
+		fallbackHref: '/dfw-tech-support',
+		fallbackLabel: 'the remote software support service'
+	} as const;
 	type BookingOffer =
 		| typeof mappingBookingOffer
 		| typeof compilerIntegrationBookingOffer
 		| typeof agentFoundationBookingOffer
-		| typeof technicalReviewBookingOffer;
+		| typeof technicalReviewBookingOffer
+		| typeof supportBookingOffer;
 
 	let schedulerHref = data.schedulerHref;
 	let schedulerFrame: HTMLIFrameElement;
@@ -91,7 +104,9 @@
 
 	$: intent = schedulerHandoffContext($page.url.search).intent ?? null;
 	$: bookingOffer =
-		intent === 'technical-review'
+		intent === 'system-support'
+			? supportBookingOffer
+			: intent === 'technical-review'
 			? technicalReviewBookingOffer
 			: intent === 'agent-foundation'
 			? agentFoundationBookingOffer
