@@ -91,12 +91,12 @@ Two different surfaces, two different limits (verified 2026-08-03):
 
 ## Designer Extension security patterns
 
-Prohibited / flagged in Designer Extension code:
+Prohibited in Designer Extension code by the Marketplace Guidelines:
 
-- `eval()` and other dynamic code execution.
-- Direct DOM manipulation of the Designer instead of the Designer APIs.
-- Excessive global variables.
-- **Externally hosted iframes used as the primary App UI or runtime surface** when that surface can change independently of the reviewed submission. Iframes are fine **for authentication flows**.
+- `eval()` and other dynamic code execution. App Review Preflight reports this as a Blocker.
+- Direct DOM manipulation of the Designer instead of the Designer APIs. Self-check — Preflight does not detect it (it detects only parent/top document access).
+- Excessive global variables. Self-check — Preflight does not detect them (it detects only reassignment of native or Webflow globals).
+- **Externally hosted iframes used as the primary App UI or runtime surface** when that surface can change independently of the reviewed submission. Iframes are fine **for authentication flows**. Preflight reports an external iframe `src` as a Required update, and a reviewer judges its purpose.
 
 Ship-clean rules:
 
