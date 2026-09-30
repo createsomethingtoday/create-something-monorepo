@@ -63,14 +63,14 @@
     },
     {
       question: 'Can we cancel?',
-      answer: 'Cancel before your next renewal to stop future membership charges. Support continues through the paid period. You keep delivered code and documentation. Separately scoped projects follow their agreed terms.'
+      answer: 'Cancel before your next renewal by emailing micah@createsomething.agency to stop future membership charges. Support continues through your paid period while we hand over your code and documentation, document open work, and plan the transition. If you need more help afterward, we’ll agree on the scope and price before extending support. Separately scoped projects follow their agreed terms.'
     }
   ];
 </script>
 
 <SEO
   title="Agent Engineering Membership | CREATE SOMETHING .agency"
-  description="Build with agents with CREATE SOMETHING. $900/month for delivery within an agreed scope, learning and operator support. Project-specific AI usage, hosting and third-party costs are separate."
+  description="AI-native tech support from $900/month. Focused includes one workstream, one milestone and four scheduled sessions. Team is $2,500/month for up to two workstreams, two milestones and six sessions. Project costs are separate."
   keywords="AI workflow systems, business task automation, client-owned AI agent, agent foundation"
   ogImage="/og-image.png"
   propertyName="agency"

@@ -1,5 +1,7 @@
 <script lang="ts">
   import AgencyWayfindingSign from '$lib/components/AgencyWayfindingSign.svelte';
+  import AgencyWayfindingHero from '$lib/components/AgencyWayfindingHero.svelte';
+  import AgencyWayfindingOpening from '$lib/components/AgencyWayfindingOpening.svelte';
   import {
     Button,
     PerformanceCampaignOpening,
@@ -12,7 +14,6 @@
     type PerformanceCondition,
     type PerformanceNarrativeScene
   } from '@create-something/canon';
-  import PlaybookField from '$lib/components/PlaybookField.svelte';
   import SystemContextArtifact from '$lib/components/SystemContextArtifact.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
   import { getPublicProduct } from '$lib/data/productFamily';
@@ -142,13 +143,13 @@
 />
 
 <main class="control-page">
+  <AgencyWayfindingOpening>
   <PerformanceCampaignOpening
     eyebrow="CREATE SOMETHING Control"
     expression="editorial"
     title="Keep your AI systems working after launch."
-    lede={`Control operates one standard-risk environment. ${PUBLIC_PRICING.managedControl.longLabel}. Supported public source stays ${PUBLIC_PRICING.publicSource.label}. We monitor the system, respond to incidents, and review its performance with you. Work that needs approval waits for a person.`}
+    lede={`Control monitors one agreed live environment, responds to incidents, and keeps approvals and recovery records. ${PUBLIC_PRICING.managedControl.longLabel}. Control includes Map. It is separate from our delivery membership; new Builds and AI usage are separate.`}
     density="compact"
-    artifactOwnsMedia
     artifactMobilePlacement="flow"
     proof={[
       { label: 'Signal', value: 'Watch' },
@@ -157,17 +158,21 @@
     ]}
   >
     {#snippet actions()}
-      <Button href={mapProduct.route}>See Map</Button>
-      <Button href={agencyCoreMessaging.workflowMappingSessionHref} variant="secondary">
+      <Button href={agencyCoreMessaging.workflowMappingSessionHref}>
         {agencyCoreMessaging.bookMappingSessionLabel}
       </Button>
+      <Button href={mapProduct.route} variant="secondary">See included Map</Button>
     {/snippet}
     {#snippet artifact()}
-      <PlaybookField variant="control" />
+      <AgencyWayfindingHero route="control" />
     {/snippet}
   </PerformanceCampaignOpening>
+  </AgencyWayfindingOpening>
   <aside class="review-boundary">
-    <p><strong>Need help before launch?</strong> A <a href="/technical-review">technical review</a> checks an existing project and identifies what to fix before a pilot. Reviews and implementation are quoted separately. The $900/month starting price for Control covers agreed post-launch operations, not open-ended product development.</p>
+    <div class="review-boundary__inner">
+      <p><strong>Need help before launch?</strong> A <a href="/technical-review">technical review</a> checks an existing project and identifies what to fix before a pilot. Reviews and implementation are quoted separately. The $900/month starting price for Control covers agreed post-launch operations, not open-ended product development. <a href="/services#membership">Focused and Team support</a> are separate memberships for delivery and learning.</p>
+      <AgencyWayfindingSign kind="control" label="See how Control operates" detail="Watch, hold, record and recover." href="#control-operating-story" direction="down" />
+    </div>
   </aside>
 
   <PerformanceThesisConditions
@@ -246,22 +251,22 @@
     }}
   >
     {#snippet actions()}
-      <Button href="/products">Compare Map and Control</Button>
-      <Button href={agencyCoreMessaging.workflowMappingSessionHref} variant="secondary">
+      <Button href={agencyCoreMessaging.workflowMappingSessionHref}>
         {agencyCoreMessaging.bookMappingSessionLabel}
       </Button>
+      <Button href="/products" variant="secondary">Compare Map and Control</Button>
     {/snippet}
   </PerformanceConversionHandoff>
 </main>
 
 <style>
   .route-handoff {
-    padding: var(--space-performance-lg) clamp(1.25rem, 5vw, 6rem);
+    padding: var(--space-performance-lg) 0;
     color: var(--color-performance-ink);
     background: var(--color-performance-paper);
     border-block: 1px solid var(--color-performance-line);
   }
-  .route-handoff__inner { max-width: var(--content-width-performance); margin-inline: auto; }
+  .route-handoff__inner { width: 90%; margin-inline: auto; }
   .route-handoff__current { margin: 0 0 var(--space-performance-sm); font-size: var(--text-performance-caption); font-family: var(--font-performance-mono); }
   .route-handoff__context { max-width: 70ch; margin: 0 0 var(--space-performance-md); line-height: 1.6; }
   .route-handoff__return { display: inline-flex; align-items: center; gap: var(--space-performance-sm); min-height: 44px; margin-bottom: var(--space-performance-sm); color: inherit; text-underline-offset: .25em; }
@@ -269,7 +274,8 @@
   .route-handoff__links { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-performance-sm); }
   @media (max-width: 760px) { .route-handoff__links { grid-template-columns: 1fr; } }
 
-  .review-boundary { padding: 2rem max(1.25rem, calc((100% - 80rem) / 2)); color: var(--color-performance-ink); background: var(--color-performance-paper); }
+  .review-boundary { padding-block: 2rem; color: var(--color-performance-ink); background: var(--color-performance-paper); }
+  .review-boundary__inner { width: 90%; margin-inline: auto; }
   .review-boundary p { max-width: 70ch; line-height: 1.65; }
   .review-boundary a { color: inherit; text-decoration: underline; }
   .control-loop {

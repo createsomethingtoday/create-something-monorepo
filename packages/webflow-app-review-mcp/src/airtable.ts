@@ -86,6 +86,9 @@ const ASSET_DETAIL_FIELD_IDS = [
   FIELD_IDS.assets.termsAndConditionsUrl,
   FIELD_IDS.assets.websiteUrl,
   FIELD_IDS.assets.supportEmailOrUrl,
+  FIELD_IDS.assets.creatorEmail,
+  FIELD_IDS.assets.creatorEmailOverride,
+  FIELD_IDS.assets.creatorName,
   FIELD_IDS.assets.previewSiteUrl,
   FIELD_IDS.assets.promoVideoUrl,
 ] as const;
@@ -229,6 +232,9 @@ export interface AppReviewQueueItem {
 }
 
 export interface AppReviewAsset extends AppReviewQueueItem {
+  /** Creator contact for outbound Zendesk tickets: 👀 Override when set, else the 🎨Creator rollup. */
+  creatorEmail?: string;
+  creatorName?: string;
   relationshipOwner?: CollaboratorRef | null;
   featuresText?: string;
   notes?: string;
@@ -698,6 +704,8 @@ function mapAssetRecord(record: AirtableRecord): AppReviewAsset {
     termsAndConditionsUrl: firstString(fields[FIELD_IDS.assets.termsAndConditionsUrl]),
     websiteUrl: firstString(fields[FIELD_IDS.assets.websiteUrl]),
     supportEmailOrUrl: firstString(fields[FIELD_IDS.assets.supportEmailOrUrl]),
+    creatorEmail: firstString(fields[FIELD_IDS.assets.creatorEmailOverride]) ?? firstString(fields[FIELD_IDS.assets.creatorEmail]),
+    creatorName: firstString(fields[FIELD_IDS.assets.creatorName]),
     previewSiteUrl: firstString(fields[FIELD_IDS.assets.previewSiteUrl]),
     promoVideoUrl: firstString(fields[FIELD_IDS.assets.promoVideoUrl]),
   };
@@ -1724,6 +1732,35 @@ export class AirtableClient {
       asset,
       version,
     };
+  }
+
+  /**
+   * Point an app version at a different Zendesk ticket (🧘ZD ID). Decision emails go to
+   * this ticket, so the write is guarded by a fresh-read precondition:
+   * `expectedCurrentTicketId` must equal what is stored now (null for empty).
+   */
+  async setVersionZendeskTicket(
+    versionId: string,
+    ticketId: string,
+    expectedCurrentTicketId: string | null | undefined,
+  ): Promise<{ version: AppReviewVersion; previousTicketId: string | null }> {
+    if (!/^\d+$/.test(ticketId)) {
+      throw new AirtableClientError('INVALID_TICKET_ID', 'Zendesk ticket ID must be numeric.', 400, { ticketId });
+    }
+    const version = await this.getVersionById(versionId);
+    if (!version) throw new AirtableClientError('VERSION_NOT_FOUND', 'Version not found.', 404, { versionId });
+    const current = version.zendeskTicketId ?? null;
+    if ((expectedCurrentTicketId ?? null) !== current) {
+      throw new AirtableClientError(
+        'VERSION_TICKET_CONFLICT',
+        `Version ${versionId} is linked to ticket ${current ?? '(none)'}, not ${expectedCurrentTicketId ?? '(none)'}. Re-read and confirm again.`,
+        409,
+        { versionId, currentTicketId: current, expectedCurrentTicketId: expectedCurrentTicketId ?? null },
+      );
+    }
+    if (current === ticketId) return { version, previousTicketId: current };
+    const record = await this.updateRecord(TABLE_IDS.assetVersions, versionId, { [FIELD_IDS.versions.zendeskTicketId]: ticketId });
+    return { version: mapVersionRecord(record), previousTicketId: current };
   }
 
   async updateVersionReview(versionId: string, input: VersionReviewUpdateInput): Promise<AppReviewVersion> {

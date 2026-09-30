@@ -27,6 +27,17 @@ GSAP_VALIDATION_WORKER_URL = "https://gsap-validation-worker.createsomething.wor
 E2B_BROWSER_TEMPLATE = "webflow-template-review-browser-v1"
 WORKER_PUBLIC_ORIGIN = "https://webflow-template-review-mcp.createsomething.workers.dev"
 
+# Zendesk leg (get_ticket_thread, search_tickets, update_ticket_status,
+# send_ticket_followup). Same integration identity and group boundary as the
+# App Review MCP. The token is a secret (wrangler secret put ZENDESK_API_TOKEN —
+# value lives in Infisical at /webflow/zendesk key `wfm`); the tools fail closed
+# with ZENDESK_NOT_CONFIGURED until it is provisioned.
+ZENDESK_API_EMAIL = "support-admin@webflow.com"
+ZENDESK_SUBDOMAIN = "webflow2579"
+# Marketplace Review Team group. Ticket search defaults to it; status writes
+# refuse tickets outside it. Programs Support (46157931219347) is out of scope.
+MARKETPLACE_ZENDESK_GROUP_ID = "1500002744702"
+
 [browser]
 binding = "BROWSER"
 
@@ -67,6 +78,9 @@ WEBFLOW_TEMPLATE_VALIDATION_WORKER_URL = "https://validation-worker.createsometh
 GSAP_VALIDATION_WORKER_URL = "https://gsap-validation-worker.createsomething.workers.dev/validateGsap"
 E2B_BROWSER_TEMPLATE = "webflow-template-review-browser-v1"
 WORKER_PUBLIC_ORIGIN = "https://webflow-template-review-mcp-dev.createsomething.workers.dev"
+ZENDESK_API_EMAIL = "support-admin@webflow.com"
+ZENDESK_SUBDOMAIN = "webflow2579"
+MARKETPLACE_ZENDESK_GROUP_ID = "1500002744702"
 
 [env.dev.browser]
 binding = "BROWSER"

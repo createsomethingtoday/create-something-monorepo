@@ -44,6 +44,10 @@ export const CONFIRMED_ASSET_FIELDS = {
   priceString: '🥞💲Template Price String (🏗️ only)',
   mrpId: 'ℹ️MRP ID',
   mrpIdOverride: '👀ℹ️MRP ID (Override)',
+  /** Rollup of the linked 🎨Creator's email (fldHhxmfSNMp117SP); the Override wins when set. */
+  creatorEmail: '🎨📧 Creator Email',
+  creatorEmailOverride: '👀🎨📧 Creator Email (Override)',
+  creatorName: '🎨Creator Name',
 } as const;
 
 export const ASSET_COMPATIBILITY_ALIASES = {
@@ -155,6 +159,10 @@ export const CONFIRMED_VERSION_FIELDS = {
   rejectReason: '🚩Rejection Reason',
   rejectionFeedback: '🚩Rejection Feedback',
   mrpIdOverwrite: '❗ℹ️MRP ID',
+  /** Zendesk ticket the submission-form automation opened for this version (fldHKvyh55jJ0VK1u). */
+  zendeskTicketId: '🧘ZD ID',
+  /** Formula: "Your Webflow Marketplace Template submission" (fldit9ZTSm7non29Z). */
+  zendeskSubject: '🧘ZD Msg Subject',
 } as const;
 
 export const CONFIRMED_WRITE_FIELD_IDS = {
@@ -166,6 +174,8 @@ export const CONFIRMED_WRITE_FIELD_IDS = {
     reviewFeedback: 'fldHxIGHMHn4xb9U4',
     agentReviewFeedback: 'fld6OITvSQPxfXJ0Z',
     release: 'fld3CQjSWa9lVBLgT',
+    /** 🧘ZD ID — the Zendesk ticket the review emails go to. Written only by template_review_link_version_ticket. */
+    zendeskTicketId: 'fldHKvyh55jJ0VK1u',
   },
 } as const;
 

@@ -1,0 +1,21 @@
+name = "gigi-connector"
+main = "index.ts"
+compatibility_date = "2026-09-30"
+account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
+workers_dev = true
+
+[[d1_databases]]
+binding = "DB"
+database_name = "gigi-connector-consent"
+database_id = "bcefe77e-d4b7-4d70-9002-1f969eef3457"
+migrations_dir = "migrations"
+
+[vars]
+GIGI_GMAIL_AUTH_CONFIG_ID = "ac_s2YEkh21bMT8"
+GIGI_GOOGLECALENDAR_AUTH_CONFIG_ID = "ac_zHJSY3Mbuv-q"
+GIGI_GMAIL_APPROVED_SCOPES = "https://www.googleapis.com/auth/gmail.readonly"
+GIGI_GOOGLECALENDAR_APPROVED_SCOPES = "https://www.googleapis.com/auth/calendar.events.readonly,https://www.googleapis.com/auth/calendar.calendars.readonly"
+
+# Server-only secrets set through Wrangler before deployment:
+# COMPOSIO_API_KEY
+# GIGI_ALLOWED_SUBJECTS (comma-separated exact Identity subjects)

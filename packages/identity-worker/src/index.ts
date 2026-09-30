@@ -929,6 +929,14 @@ const OAUTH_APPLICATION_ACCESS_POLICIES = new Map<string, {
 	controlAccess?: true;
 }>([
 	[
+		'https://gigi-connector.createsomething.workers.dev',
+		{
+			applicationId: 'gigi-connector',
+			resource: 'https://gigi-connector.createsomething.workers.dev',
+			expiresIn: OAUTH_APPLICATION_ACCESS_TOKEN_EXPIRES_IN,
+		},
+	],
+	[
 		'https://offer-savings-agent.createsomething.workers.dev/mcp',
 		{
 			applicationId: 'offer-savings-agent',

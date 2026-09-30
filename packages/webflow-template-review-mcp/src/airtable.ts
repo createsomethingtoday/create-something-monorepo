@@ -203,6 +203,9 @@ export interface TemplateFeaturedFlagResult {
 }
 
 export interface TemplateReviewAsset extends TemplateReviewQueueItem {
+  /** Creator contact for outbound Zendesk tickets: 👀 Override when set, else the 🎨Creator rollup. */
+  creatorEmail?: string;
+  creatorName?: string;
   uid?: string;
   description?: string;
   descriptionShort?: string;
@@ -265,6 +268,9 @@ export interface TemplateReviewVersion {
   versionNumber?: number;
   createdAt?: string;
   createdBy?: string;
+  /** Linked Zendesk ticket (creator-facing review thread), when the intake automation set one. */
+  zendeskTicketId?: string;
+  zendeskSubject?: string;
   rawFields: Record<string, unknown>;
 }
 
@@ -808,6 +814,8 @@ function mapAsset(record: AirtableRecord): TemplateReviewAsset {
     decisionDate: firstString(fields[CONFIRMED_ASSET_FIELDS.decisionDate]),
     templatePriceFilter: numberValue(fields[CONFIRMED_ASSET_FIELDS.templatePriceFilter]),
     priceString: firstString(fields[CONFIRMED_ASSET_FIELDS.priceString]),
+    creatorEmail: firstString(fields[CONFIRMED_ASSET_FIELDS.creatorEmailOverride]) ?? firstString(fields[CONFIRMED_ASSET_FIELDS.creatorEmail]),
+    creatorName: firstString(fields[CONFIRMED_ASSET_FIELDS.creatorName]),
   };
 }
 
@@ -1054,6 +1062,8 @@ function mapVersion(record: AirtableRecord): TemplateReviewVersion {
     versionNumber: numberValue(record.fields[CONFIRMED_VERSION_FIELDS.versionNumber]),
     createdAt: firstString(record.fields[CONFIRMED_VERSION_FIELDS.submissionDatetime]) ?? record.createdTime,
     createdBy: collaboratorLabel(record.fields[CONFIRMED_VERSION_FIELDS.createdBy]),
+    zendeskTicketId: firstString(record.fields[CONFIRMED_VERSION_FIELDS.zendeskTicketId]),
+    zendeskSubject: firstString(record.fields[CONFIRMED_VERSION_FIELDS.zendeskSubject]),
     rawFields: record.fields,
   };
 }
@@ -1229,6 +1239,39 @@ export class AirtableClient {
       });
     }
     return (await response.json()) as AirtableRecord;
+  }
+
+  /**
+   * Point a template version at a different Zendesk ticket (🧘ZD ID). The Airtable
+   * email composer sends decision emails to this ticket, so the write is guarded by a
+   * fresh-read precondition: `expectedCurrentTicketId` must match what is stored now
+   * (null/undefined for "currently empty"), otherwise nothing is written.
+   */
+  async setVersionZendeskTicket(
+    versionId: string,
+    ticketId: string,
+    expectedCurrentTicketId: string | null | undefined,
+  ): Promise<{ version: TemplateReviewVersion; previousTicketId: string | null }> {
+    if (!/^\d+$/.test(ticketId)) {
+      throw new AirtableClientError('INVALID_TICKET_ID', 'Zendesk ticket ID must be numeric.', 400, { ticket_id: ticketId });
+    }
+    const { version } = await this.getScopedVersion(versionId);
+    const current = version.zendeskTicketId ?? null;
+    if ((expectedCurrentTicketId ?? null) !== current) {
+      throw new AirtableClientError(
+        'VERSION_TICKET_CONFLICT',
+        `Version ${versionId} is linked to ticket ${current ?? '(none)'}, not ${expectedCurrentTicketId ?? '(none)'}. Re-read and confirm again.`,
+        409,
+        { version_id: versionId, current_ticket_id: current, expected_current_ticket_id: expectedCurrentTicketId ?? null },
+      );
+    }
+    if (current === ticketId) {
+      return { version, previousTicketId: current };
+    }
+    const record = await this.updateRecord(TABLE_IDS.assetVersions, versionId, {
+      [CONFIRMED_WRITE_FIELD_IDS.versions.zendeskTicketId]: ticketId,
+    });
+    return { version: mapVersion(record), previousTicketId: current };
   }
 
   async healthCheck() {
@@ -2003,7 +2046,8 @@ export class AirtableClient {
     return record ? mapVersion(record) : null;
   }
 
-  private async getScopedVersion(versionId: string): Promise<{ version: TemplateReviewVersion; asset: TemplateReviewAsset }> {
+  /** Version + its asset, refusing versions whose asset is not a template (shared Asset Versions table also holds apps). */
+  async getScopedVersion(versionId: string): Promise<{ version: TemplateReviewVersion; asset: TemplateReviewAsset }> {
     const version = await this.getVersionById(versionId);
     if (!version) {
       throw new AirtableClientError('VERSION_NOT_FOUND', 'Template version not found.', 404, {

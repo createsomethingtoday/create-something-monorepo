@@ -24,6 +24,7 @@
     | 'enterprise_extension'
     | 'system_development_referral'
     | 'not_sure';
+  type MembershipPlan = 'focused' | 'team';
 
   const contactPathOptions: Array<{
     value: ContactIntent;
@@ -38,7 +39,7 @@
       value: 'membership',
       label: 'Discuss membership',
       description:
-        '$900/month for agreed delivery work and operator support. Project usage is budgeted separately.',
+        'Focused is $900/month for one milestone, two check-ins and two remote work sessions. Team is $2,500/month for two milestones, two check-ins and four remote sessions.',
       funnelStage: 'decision',
       serviceInterest: 'Agent engineering membership',
       submitLabel: 'Send membership inquiry',
@@ -99,11 +100,11 @@
   > = {
     membership: {
       seoTitle: 'Discuss Membership | CREATE SOMETHING',
-      seoDescription: 'Discuss the $900/month agent engineering membership before payment.',
-      eyebrow: 'Agent engineering membership',
+      seoDescription: 'Discuss Focused support at $900/month or Team support at $2,500/month before payment.',
+      eyebrow: 'AI-native tech support',
       title: 'Start with the workflow you want to improve.',
       description:
-        '$900/month. Cancel anytime. We agree on the deliverable, capacity and revisions before you pay. Project-specific AI usage, hosting and third-party costs are separate and agreed upfront.',
+        'Focused is $900/month for one workstream and one milestone, with two check-ins and two remote work sessions. Team is $2,500/month for up to two workstreams and two milestones, with two check-ins and four remote sessions. We agree on scope before payment. Project costs are separate.',
       formTitle: 'Discuss membership',
       formDescription: 'Tell us where you are starting and what is getting in the way.',
       messageLabel: 'What would you like help with?',
@@ -167,6 +168,7 @@
   const contactCampaign = $derived(data.contactCampaign);
   const initialIntent = $derived(data.contactIntent as ContactIntent);
   const initialLane = $derived(data.contactLane as ServiceLane);
+  const initialPlan = $derived(data.contactPlan as MembershipPlan);
 
   function initial<T>(read: () => T): T {
     return read();
@@ -174,6 +176,7 @@
 
   let selectedIntent = $state<ContactIntent>(initial(() => data.contactIntent as ContactIntent));
   let selectedLane = $state<ServiceLane>(initial(() => data.contactLane as ServiceLane));
+  let selectedPlan = $state<MembershipPlan>(initial(() => data.contactPlan as MembershipPlan));
   let submitting = $state(false);
   let submitMessage = $state('');
   let submitSuccess = $state(false);
@@ -186,6 +189,7 @@
   $effect(() => {
     selectedIntent = initialIntent;
     selectedLane = initialLane;
+    selectedPlan = initialPlan;
     submitMessage = '';
   });
 
@@ -209,7 +213,9 @@
           email: formData.get('email'),
           company: formData.get('company') || undefined,
           message: formData.get('message'),
-          service: selectedPath.serviceInterest,
+          service: selectedIntent === 'membership'
+            ? `${selectedPath.serviceInterest}: ${selectedPlan === 'team' ? 'Team' : 'Focused'}`
+            : selectedPath.serviceInterest,
           source: contactSource,
           intent: selectedIntent,
           lane: selectedLane,
@@ -229,11 +235,13 @@
           lane: selectedLane,
           funnelStage: selectedPath.funnelStage,
           serviceInterest: selectedPath.serviceInterest,
+          ...(selectedIntent === 'membership' ? { membershipPlan: selectedPlan } : {}),
           surface: 'contact_form'
         });
         form.reset();
         selectedIntent = initialIntent;
         selectedLane = initialLane;
+        selectedPlan = initialPlan;
       } else {
         submitSuccess = false;
         submitMessage = result.message || 'Something went wrong. Try again.';
@@ -333,6 +341,16 @@
             {/each}
           </select>
         </div>
+
+        {#if selectedIntent === 'membership'}
+          <div class="form-field">
+            <label for="membership-plan" class="form-label">Support plan</label>
+            <select id="membership-plan" name="membership-plan" class="form-input" bind:value={selectedPlan}>
+              <option value="focused">Focused · $900/month · 2 check-ins + 2 remote sessions</option>
+              <option value="team">Team · $2,500/month · 2 check-ins + 4 remote sessions</option>
+            </select>
+          </div>
+        {/if}
 
         <div class="form-field form-field--message">
           <label for="message" class="form-label">{selectedContent.messageLabel}</label>

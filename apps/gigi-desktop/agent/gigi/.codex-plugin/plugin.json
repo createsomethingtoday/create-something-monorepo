@@ -1,0 +1,18 @@
+{
+  "name": "gigi",
+  "version": "0.1.0",
+  "description": "Work with your private GiGi music-work database through local MCP.",
+  "author": {
+    "name": "CREATE SOMETHING"
+  },
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "GiGi",
+    "shortDescription": "Manage gigs, people, tasks and money.",
+    "longDescription": "Use bounded local tools to inspect linked music-work records and make requested changes in your private GiGi workspace.",
+    "developerName": "CREATE SOMETHING",
+    "category": "Productivity",
+    "capabilities": [],
+    "defaultPrompt": "Help me review my upcoming gigs and outstanding tasks in GiGi."
+  }
+}

@@ -53,7 +53,7 @@
     {
       question: 'What is your primary service?',
       answer:
-        'The membership provides delivery within an agreed scope, learning and operator support for $900/month. Larger Build projects and managed Control remain separate agreements. Project-specific AI usage, hosting and third-party services are budgeted separately.'
+        'Focused is $900/month for one workstream and one milestone, with two check-ins and two remote work sessions. Team is $2,500/month for up to two workstreams and two milestones, with two check-ins and four remote sessions. Larger Builds, managed Control and project costs are separate.'
     },
     {
       question: 'Are agents part of the workforce?',
@@ -95,7 +95,7 @@
     eyebrow="How It Works"
     expression="editorial"
     title="Bring a workflow, software problem or existing product."
-    lede="Our $900/month membership covers delivery, learning and support for one agreed workstream. You keep the delivered code and approval authority. Larger Build projects and managed Control have separate agreements. Project-specific AI usage, hosting and third-party services are separate."
+    lede="Focused is $900/month for one agreed workstream and one milestone. Team is $2,500/month for up to two workstreams and two milestones. Both include two check-ins; Focused has two remote work sessions and Team has four. You keep the delivered code and approval authority. Larger Builds and managed Control have separate agreements. Project costs are separate."
     density="compact"
     artifactMobilePlacement="flow"
     proof={[
