@@ -6,7 +6,7 @@
 /* Keep record text, secondary labels and controls legible in compact windows. */
 .sidebar > *{flex-shrink:0}
 .page-head > div,.row > span,.step > div{min-width:0}
-h1,.row strong,.row small,.panel p{overflow-wrap:anywhere}
+h1,.row strong,.row small,.panel p,.step p{overflow-wrap:anywhere}
 .page-head{flex-wrap:wrap}
 .page-head > div{flex:1 1 320px}
 .panel-head{gap:12px;flex-wrap:wrap}
