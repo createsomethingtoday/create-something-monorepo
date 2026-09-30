@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { listFrom, recordFields, editedFields, summaryMoney, gigBalance, fieldOptions, relatedEndpoint, sourcePreview, sourceCanBegin, sourceNeedsOperatorReview, fields, booleanFields, moneyFields, numericFields } from './model.mjs';
+import { listFrom, recordFields, editedFields, summaryMoney, gigBalance, fieldOptions, relatedEndpoint, sourcePreview, sourceCanBegin, sourceNeedsOperatorReview, importRunForAccount, nextImportCursor, pendingConsentForProvider, pendingAccountForProvider, fields, booleanFields, moneyFields, numericFields } from './model.mjs';
 
 test('every editable detail belongs to the reviewed relational field catalog', () => {
   const catalog = JSON.parse(readFileSync(new URL('../src-tauri/migrations/notion_fields.json', import.meta.url), 'utf8'));
@@ -65,4 +65,37 @@ test('uncertain consent recovery asks for operator review and never offers a new
   assert.equal(sourceCanBegin({ ...unknown, reconnectable: true }), false);
   assert.equal(sourceNeedsOperatorReview({ state: 'attention', reconnectable: true }), false);
   assert.equal(sourceNeedsOperatorReview({ state: 'pending', recovery: 'operator_review' }), false);
+});
+
+test('source import cursor never crosses connected accounts', () => {
+  const run = { accountId: 'ca_old', cursor: 'page-1', result: { complete: true, nextCursor: 'page-2' } };
+  assert.equal(importRunForAccount(run, 'ca_old'), run);
+  assert.equal(nextImportCursor(run, 'ca_old'), 'page-2');
+  assert.equal(importRunForAccount(run, 'ca_new'), null);
+  assert.equal(nextImportCursor(run, 'ca_new'), undefined);
+  assert.equal(nextImportCursor({ accountId: 'ca_old', cursor: 'page-1', result: { complete: false, retryCursor: 'page-1' } }, 'ca_old'), 'page-1');
+});
+
+test('pending consent resumes from exact provider status after restart without exposing other provider attempts', () => {
+  const now = Date.parse('2026-09-30T12:00:00Z');
+  const gmail = { provider: 'gmail', state: 'pending', connectedAccountId: 'ca_gmail', url: 'https://connect.composio.dev/gmail', expiresAt: '2026-09-30T12:05:00Z' };
+  const calendar = { provider: 'googlecalendar', state: 'pending', connectedAccountId: 'ca_calendar' };
+  const attempts = { googlecalendar: { connectedAccountId: 'ca_calendar', status: 'awaiting_consent', url: 'https://connect.composio.dev/calendar', expiresAt: '2026-09-30T12:05:00Z' } };
+  assert.equal(pendingConsentForProvider(gmail, {}, 'gmail', now), gmail.url);
+  assert.equal(pendingConsentForProvider(calendar, attempts, 'googlecalendar', now), attempts.googlecalendar.url);
+  assert.equal(pendingConsentForProvider(calendar, attempts, 'gmail', now), null);
+  assert.equal(pendingAccountForProvider(gmail, 'gmail'), 'ca_gmail');
+  assert.equal(pendingAccountForProvider(calendar, 'gmail'), null);
+  assert.equal(pendingAccountForProvider({ provider: 'googlecalendar', state: 'pending' }, 'googlecalendar'), null);
+  assert.equal(pendingConsentForProvider({ provider: 'googlecalendar', state: 'pending' }, attempts, 'googlecalendar', now), null);
+});
+
+test('expired, mismatched, or unsafe consent URLs never show a resume action', () => {
+  const now = Date.parse('2026-09-30T12:00:00Z');
+  const pending = { provider: 'gmail', state: 'pending', connectedAccountId: 'ca_new' };
+  const attempt = { connectedAccountId: 'ca_old', status: 'awaiting_consent', url: 'https://connect.composio.dev/old', expiresAt: '2026-09-30T12:05:00Z' };
+  assert.equal(pendingConsentForProvider(pending, { gmail: attempt }, 'gmail', now), null);
+  assert.equal(pendingConsentForProvider({ ...pending, url: 'https://connect.composio.dev:8443/x', expiresAt: '2026-09-30T12:05:00Z' }, {}, 'gmail', now), null);
+  assert.equal(pendingConsentForProvider({ ...pending, url: 'https://connect.composio.dev/x', expiresAt: '2026-09-30T11:59:59Z' }, {}, 'gmail', now), null);
+  assert.equal(pendingConsentForProvider({ provider: 'gmail', state: 'attention', url: 'https://connect.composio.dev/x', expiresAt: '2026-09-30T12:05:00Z' }, {}, 'gmail', now), null);
 });
