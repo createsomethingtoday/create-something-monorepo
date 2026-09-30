@@ -34,3 +34,14 @@ test('unknown inquiry intents retain the existing safe fallback', async () => {
   assert.equal(result?.contactIntent, 'workflow-teardown');
   assert.equal(result?.contactLane, 'not_sure');
 });
+
+
+test('DFW support intent preserves its reliability lane and campaign attribution', async () => {
+  const result = await load({
+    url: new URL('https://createsomething.agency/contact?intent=system-support&lane=reliability_and_control&source=dfw-tech-support&campaign=dfw-remote-support')
+  } as Parameters<typeof load>[0]);
+  assert.equal(result?.contactIntent, 'system-support');
+  assert.equal(result?.contactSource, 'dfw-tech-support');
+  assert.equal(result?.contactLane, 'reliability_and_control');
+  assert.equal(result?.contactCampaign, 'dfw-remote-support');
+});

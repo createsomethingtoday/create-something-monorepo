@@ -19,6 +19,7 @@ export const AGENCY_ATLAS_PROOF_PATHS = [
 
 export const AGENCY_COMPACT_PRIVACY_PATHS = [
   '/airtable-workflow-consulting',
+  '/dfw-tech-support',
   '/',
   '/ai-workflow-control',
   '/ai-workflow-recovery',
@@ -37,6 +38,7 @@ export const AGENCY_COMPACT_PRIVACY_PATHS = [
 
 export const AGENCY_ROUTE_OWNED_PERFORMANCE_ENDING_PATHS = [
   '/airtable-workflow-consulting',
+  '/dfw-tech-support',
   '/',
   '/ai-workflow-control',
   '/ai-workflow-recovery',

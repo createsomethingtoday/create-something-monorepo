@@ -2,6 +2,7 @@ import type { PageServerLoad } from './$types';
 
 const contactIntents = new Set([
   'membership',
+  'system-support',
   'governance-checklist',
   'workflow-teardown',
   'workflow-mapping'

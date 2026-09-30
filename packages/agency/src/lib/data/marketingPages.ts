@@ -171,6 +171,15 @@ const workflowMarketingDefinitions: Array<{
 
 export const marketingPagePortfolio: MarketingPageEntry[] = [
   {
+    path: '/dfw-tech-support', cluster: 'core-services', role: 'support', decision: 'index',
+    audience: 'DFW business owners with a failing software system or operational workflow.',
+    funnelStage: 'implement', intent: 'Assess fit for scoped remote software and workflow support.',
+    primaryAction: 'Describe the support problem', requiredTerms: ['DFW', 'remote', 'software', 'scope', 'approval'],
+    requiredLinks: ['/field-reports/template-review', '/services', '/contact'], schema: 'page',
+    search: { changefreq: 'monthly', priority: '0.85', lastmod: '2026-09-30' },
+    selfHealing: ['copy:heal', 'search-route:sync']
+  },
+  {
     path: '/airtable-workflow-consulting', cluster: 'core-services', role: 'implementation', decision: 'index',
     audience: 'Operations owners with an active Airtable workflow and a substantial integration or reliability problem.',
     funnelStage: 'implement', intent: 'Assess fit for a separately quoted Airtable operational workflow Build.',
