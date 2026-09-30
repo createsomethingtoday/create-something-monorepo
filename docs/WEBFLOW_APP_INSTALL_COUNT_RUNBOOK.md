@@ -156,3 +156,63 @@ app-site-pair model reports 148 because it freezes workspace expansion at instal
   changed install path, not that the pipeline broke.
 - **`DIM_SITE` is a daily snapshot** — always pin `RECORD_DATE = max(RECORD_DATE)` or you multiply rows.
 - Deleted/archived sites are still counted by the product's own total. State which treatment you used.
+
+---
+
+## 7. Enterprise cut (added 2026-09-29, EU Data Residency ask)
+
+"Which public apps do Enterprise customers use?" — rank apps by **distinct enterprise workspaces reached**
+(workspace-level install, or a site-level install on any live site in the workspace). Query + CSV in
+`output/enterprise-app-popularity-2026-09-29/`.
+
+Enterprise flags on `DIM_WORKSPACE` (latest `RECORD_DATE`) are inconsistent, so two definitions:
+
+| Definition | Predicate | Count 2026-09-29 |
+|---|---|---|
+| broad | `IS_ENTERPRISE OR IS_ENTERPRISE_PRO OR IS_ENTERPRISE_BILLING OR HAS_ENTERPRISE_BILLING_ENABLED OR PLAN_OBJECT_TIER LIKE 'workspace-enterprise%' OR PLAN_OBJECT_TIER IN ('workspace_plan_scale','team_account_plan')` | 1,850 workspaces (1,352 with ≥1 public app) |
+| strict | `IS_ENTERPRISE_BILLING OR PLAN_OBJECT_TIER LIKE 'workspace-enterprise%'` | 1,561 workspaces (1,117 with ≥1 public app) |
+
+`IS_ENTERPRISE_PARTNER` is excluded (agency partners, not enterprise customers). `LOCATION` is null for
+essentially every enterprise workspace, so an EU filter needs `SALESFORCE_ACCOUNT_ID` → Salesforce billing
+country; not available in `ANALYTICS.WEBFLOW` directly.
+
+`REPORT__APP_SITE_PAIRS` carries one row per (app, app_type) when an app changed type (Zapier, Optibase) —
+group by `APP_ID` only and pick `APP_TYPE` via `QUALIFY ... order by DATE_DAY desc`.
+
+**Live-app filter (re-review 2026-09-29):** `MARKETPLACE_RESOURCE_PROFILES.STATUS/VISIBILITY` is stale
+(see memory `reference_marketplace_app_live_count`): it returned 455 "approved public" apps vs 401 actually
+PUBLIC+APPROVED in the Admin snapshot `~/.config/webflow-admin-sync/admin-apps-snapshot-2026-09-28.json`.
+Recipe: pull the ranking for every app with any profile row (707), then filter locally on the snapshot's
+`client_id` list → `enterprise_app_popularity_LIVE_2026-09-29.csv`. App type from `APPS.RESOURCES`
+(DESIGNER_EXTENSION / OAUTH_APPLICATION / both), which agreed with `REPORT__APP_SITE_PAIRS` for the top 60.
+Dropped by the live filter: Optily (61 ent ws), Semflow (52), HubSpot v2 beta (36) — all non-public in Admin.
+
+**Snowflake-only live filter (2026-09-29):** `query_snowflake_only.sql` in the same folder. Proxy = profile
+APPROVED+PUBLIC **and** ≥1 `Listing View` event in the last 30 days. Tested against the Admin snapshot: picks 415
+vs 401 admin-live (397 overlap, top 28 identical). Leaks private-but-still-viewed apps (Semflow 52 ent ws,
+HubSpot v2 beta 36); drops live apps whose profile row is stale-PRIVATE (Adaptify SEO 6). Root cause: ~50
+`MARKETPLACE_RESOURCE_PROFILES` INTEGRATION rows have `TS_UPDATED_ON` frozen at 2025-10-08 while the table as a
+whole updates daily — worth a ticket to Data Eng. `STG_MONGO_SOCIAL__*` is templates only; `MARKETPLACE_APPS`
+mirrors the same stale visibility. The Admin snapshot also misses 9 live apps its parser could not classify
+(North Embedded Checkout, wxrks, Algolia, Orshot, Awesome Popups, YoDon, Connectfic, Massic, Far & Wide), so true
+live ≈ 410.
+
+**Deployed view (2026-09-29):** `SNOWFLAKE_LEARNING_DB.DTQ.MARKETPLACE_APP_ENTERPRISE_USAGE` = `query_snowflake_only.sql`
+(owner `SNOWFLAKE_REPORTER`). `"USER$MICAH@WEBFLOW.COM"` rejects views ("Views cannot currently be created in a
+personal database"); `DTQ` is a schema SNOWFLAKE_REPORTER owns. Created via Snowsight in ego-browser (the MCP
+connector is SELECT-only). Re-deploy: paste `create or replace view … as` + the query into a workspace SQL file.
+
+**v2 — governed table + EU cut (2026-09-29, from Aaron Resnick's Hex simplification):** `query_v2_governed_eu.sql`.
+`PROD.CORE.DIM_WORKSPACE` is current-state (no `RECORD_DATE`) and carries governed `IS_ENTERPRISE` (1,576 ws) +
+`WORKSPACE_TIER` (legacy_enterprise, enterprise_3_2, enterprise_team, enterprise_scale_4_1, …). Prefer it over the legacy
+snapshot flags: v1 "broad" over-counted by ~284 agency/growth workspaces that only carry the enterprise-billing bit.
+It also has `IS_EU_RESIDENCY_IN_SCOPE` + `EU_RESIDENCY_COUNTRY_CODE` (populated for ~all workspaces; `ADDRESS_COUNTRY`
+and `LOCATION` are useless). EU-in-scope enterprise = 231 ws (GB 82 · DE 38 · FR 31 · CH 12 · NL 10 …), 207 use ≥1 app,
+avg 5.8. Top EU-enterprise apps: Figma to Webflow 98 · SVG Import 93 · Finsweet Extension 65 · HubSpot 62 · Finsweet
+Components 62 · Zapier 54 · Google Site Tools 36 · Make 29 · Slater 27 · Clarity 25 · Jetboost 25. Note 6 US-coded
+workspaces are flagged in scope — the flag is governed, leave it.
+
+**View is now v2 (2026-09-29 ~17:40 CT):** `SNOWFLAKE_LEARNING_DB.DTQ.MARKETPLACE_APP_ENTERPRISE_USAGE` = `query_v2_governed_eu.sql`
+(governed `PROD.CORE.DIM_WORKSPACE.IS_ENTERPRISE`, EU columns `ENT_WS_EU / EU_GB / EU_DE / EU_FR / EU_OTHER`). Deployed
+from the Growth Pillar › Marketplace workspace file; that workspace is version-controlled, so the file edit is local until
+**Publish changes** is clicked. Numbers posted to Jordan on 9/29 were v1 (slightly higher; legacy enterprise flags).
