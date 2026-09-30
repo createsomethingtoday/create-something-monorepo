@@ -124,3 +124,26 @@ export function nextImportCursor(run, accountId) {
   if (!current) return undefined;
   return current.result?.complete ? current.result.nextCursor || undefined : current.result?.retryCursor || current.cursor;
 }
+
+export function pendingAccountForProvider(source, provider) {
+  if (source?.provider !== provider || source.state !== 'pending') return null;
+  const account = source.connectedAccountId;
+  return typeof account === 'string' && account ? account : null;
+}
+
+function validConsentUrl(url, expiresAt, now) {
+  if (typeof url !== 'string' || typeof expiresAt !== 'string' || Date.parse(expiresAt) <= now || !Number.isFinite(Date.parse(expiresAt))) return false;
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === 'https:' && parsed.hostname === 'connect.composio.dev' && !parsed.port && !parsed.username && !parsed.password && !parsed.hash;
+  } catch { return false; }
+}
+
+export function pendingConsentForProvider(source, attempts, provider, now = Date.now()) {
+  const account = pendingAccountForProvider(source, provider);
+  if (!account) return null;
+  if (validConsentUrl(source.url, source.expiresAt, now)) return source.url;
+  const attempt = attempts?.[provider];
+  if (attempt?.status !== 'awaiting_consent' || attempt.connectedAccountId !== account) return null;
+  return validConsentUrl(attempt.url, attempt.expiresAt, now) ? attempt.url : null;
+}

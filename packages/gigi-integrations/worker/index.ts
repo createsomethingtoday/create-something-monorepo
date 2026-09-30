@@ -54,8 +54,8 @@ export async function handleConnectorRequest(
   if (status && request.method === 'GET') {
     const provider = status[1] as 'gmail' | 'googlecalendar';
     const row = await env.DB.prepare(
-      'SELECT connected_account_id, status, request_id, reconnectable, created_at, redirect_url FROM gigi_connection_attempts WHERE subject = ? AND provider = ? ORDER BY created_at DESC LIMIT 1',
-    ).bind(subject, provider).first() as { connected_account_id: string | null; status: string; request_id: string; reconnectable?: number; created_at?: string; redirect_url?: string | null } | null;
+      'SELECT connected_account_id, status, request_id, reconnectable, created_at, redirect_url, expires_at FROM gigi_connection_attempts WHERE subject = ? AND provider = ? ORDER BY created_at DESC LIMIT 1',
+    ).bind(subject, provider).first() as { connected_account_id: string | null; status: string; request_id: string; reconnectable?: number; created_at?: string; redirect_url?: string | null; expires_at?: string | null } | null;
     if (!row) return json({ provider, state: 'disconnected' });
     if (row.status === 'dispatched' && !row.connected_account_id) {
       const recovered = await recoverDispatchedAccount(env, providerFetch, subject, provider, row);
@@ -75,8 +75,16 @@ export async function handleConnectorRequest(
       if (row.status === 'active') return state === 'active'
         ? json({ provider, state: 'connected', connectedAccountId: row.connected_account_id })
         : json({ provider, state: 'attention', connectedAccountId: row.connected_account_id });
-      if (row.status === 'linked' && state === 'pending' && !row.redirect_url) {
+      if (row.status === 'linked' && state === 'pending') {
+        if (validConsentLink(row.redirect_url, row.expires_at)) {
+          return json({ provider, state: 'pending', connectedAccountId: row.connected_account_id,
+            url: row.redirect_url, expiresAt: row.expires_at });
+        }
         return json({ provider, state: 'attention', connectedAccountId: row.connected_account_id, recovery: 'operator_review' });
+      }
+      if (row.status === 'linked' && (state === 'invalid' || state === 'unavailable')) {
+        return json({ provider, state: 'attention', connectedAccountId: row.connected_account_id,
+          ...(state === 'invalid' ? { recovery: 'operator_review' } : {}) });
       }
     }
     return json({ provider, state: row.status === 'dispatched' || row.status === 'linked' ? 'pending' : 'attention',
@@ -316,7 +324,7 @@ async function beginLink(
   // The insert is authoritative. An existing dispatched row can be the result of
   // an uncertain provider POST, so never send another link mutation for that ID.
   const attemptId = prior.request_id ?? requestId;
-  if (prior.status === 'linked' && prior.redirect_url && prior.expires_at) {
+  if (prior.status === 'linked' && validConsentLink(prior.redirect_url, prior.expires_at)) {
     return json({ provider, status: 'awaiting_consent', attemptId,
       connectedAccountId: prior.connected_account_id, url: prior.redirect_url, expiresAt: prior.expires_at });
   }
@@ -336,9 +344,7 @@ async function beginLink(
   } catch { return json({ provider, status: 'readback_required', attemptId: requestId }, 503); }
   if (!isRecord(data) || typeof data.connected_account_id !== 'string' || typeof data.redirect_url !== 'string' ||
     typeof data.expires_at !== 'string' || !Number.isFinite(Date.parse(data.expires_at))) return json({ error: 'provider_readback_invalid' }, 502);
-  let redirect: URL;
-  try { redirect = new URL(data.redirect_url); } catch { return json({ error: 'provider_readback_invalid' }, 502); }
-  if (redirect.protocol !== 'https:' || redirect.hostname !== 'connect.composio.dev' || redirect.username || redirect.password || redirect.hash) {
+  if (!validConsentLink(data.redirect_url, data.expires_at)) {
     return json({ error: 'provider_readback_invalid' }, 502);
   }
   await env.DB!.prepare(
@@ -346,6 +352,16 @@ async function beginLink(
   ).bind(data.connected_account_id, data.redirect_url, data.expires_at, subject, provider, requestId).run();
   return json({ provider, status: 'awaiting_consent', attemptId: requestId, connectedAccountId: data.connected_account_id,
     url: data.redirect_url, expiresAt: data.expires_at });
+}
+
+function validConsentLink(url: unknown, expiresAt: unknown): url is string {
+  if (typeof url !== 'string' || typeof expiresAt !== 'string' || url.length > 2048 ||
+    !Number.isFinite(Date.parse(expiresAt)) || Date.parse(expiresAt) <= Date.now()) return false;
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === 'https:' && parsed.hostname === 'connect.composio.dev' &&
+      !parsed.port && !parsed.username && !parsed.password && !parsed.hash;
+  } catch { return false; }
 }
 
 function readOnlyScopes(provider: 'gmail' | 'googlecalendar', raw: string | undefined): boolean {

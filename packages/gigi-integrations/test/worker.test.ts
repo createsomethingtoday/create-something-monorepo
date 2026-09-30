@@ -70,6 +70,74 @@ test('broker derives owner from Identity and reports disconnected without provid
   assert.equal(calls.length, 1);
 });
 
+test('status recovers only the authenticated owner’s unexpired pending consent link without another POST', async () => {
+  const rows: Record<string, Record<string, unknown>> = {
+    gmail: { subject: 'actual-subject', provider: 'gmail', request_id: 'gmail-attempt', status: 'linked',
+      connected_account_id: 'ca_gmail1', redirect_url: 'https://connect.composio.dev/session/gmail', expires_at: '2030-01-01T00:00:00Z' },
+    googlecalendar: { subject: 'actual-subject', provider: 'googlecalendar', request_id: 'calendar-attempt', status: 'linked',
+      connected_account_id: 'ca_calendar1', redirect_url: 'https://connect.composio.dev/session/calendar', expires_at: '2030-01-01T00:00:00Z' },
+  };
+  const queries: unknown[][] = [];
+  const db = { prepare() { return { bind(...values: unknown[]) { queries.push(values); return {
+    async first() { return values[0] === 'actual-subject' ? rows[String(values[1])] ?? null : null; },
+    async run() { throw new Error('status must not mutate'); }, async all() { return { results: [] }; },
+  }; } }; } };
+  let providerGets = 0;
+  let mismatchedProviderOwner = false;
+  const fetcher: typeof fetch = async (request) => {
+    const req = request as Request;
+    if (new URL(req.url).pathname === '/oauth/userinfo') return Response.json({
+      sub: req.headers.get('authorization') === 'Bearer other-token' ? 'other-subject' : 'actual-subject',
+      resource: 'https://gigi-connector.createsomething.workers.dev', email_verified: true,
+    });
+    assert.equal(req.method, 'GET');
+    providerGets++;
+    const accountId = new URL(req.url).pathname.split('/').at(-1);
+    const provider = accountId === 'ca_gmail1' ? 'gmail' : 'googlecalendar';
+    const hash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('actual-subject'));
+    const userId = 'gigi_' + [...new Uint8Array(hash)].map((byte) => byte.toString(16).padStart(2, '0')).join('').slice(0, 32);
+    return Response.json({ id: accountId, user_id: mismatchedProviderOwner ? 'gigi_otherowner' : userId,
+      auth_config: { id: provider === 'gmail' ? 'ac_gmail' : 'ac_calendar' },
+      toolkit: { slug: provider }, experimental: { account_type: 'PRIVATE' },
+      requested_scopes: provider === 'gmail' ? ['https://www.googleapis.com/auth/gmail.readonly'] :
+        ['https://www.googleapis.com/auth/calendar.events.readonly', 'https://www.googleapis.com/auth/calendar.calendars.readonly'],
+      status: 'INITIATED', is_disabled: false });
+  };
+  const env = { GIGI_ALLOWED_SUBJECTS: 'actual-subject,other-subject', COMPOSIO_API_KEY: 'ak_test',
+    GIGI_GMAIL_AUTH_CONFIG_ID: 'ac_gmail', GIGI_GOOGLECALENDAR_AUTH_CONFIG_ID: 'ac_calendar',
+    GIGI_GMAIL_APPROVED_SCOPES: 'https://www.googleapis.com/auth/gmail.readonly',
+    GIGI_GOOGLECALENDAR_APPROVED_SCOPES: 'https://www.googleapis.com/auth/calendar.events.readonly,https://www.googleapis.com/auth/calendar.calendars.readonly', DB: db };
+  const status = (provider: string, token = 'test-token') => handleConnectorRequest(new Request(
+    `https://gigi-connector.createsomething.workers.dev/v1/gigi/connections/${provider}`, {
+      headers: { authorization: `Bearer ${token}` },
+    }), env, fetcher);
+  const gmail = await (await status('gmail')).json();
+  assert.deepEqual(gmail, { provider: 'gmail', state: 'pending', connectedAccountId: 'ca_gmail1',
+    url: 'https://connect.composio.dev/session/gmail', expiresAt: '2030-01-01T00:00:00Z' });
+  const calendar = await (await status('googlecalendar')).json();
+  assert.deepEqual(calendar, { provider: 'googlecalendar', state: 'pending', connectedAccountId: 'ca_calendar1',
+    url: 'https://connect.composio.dev/session/calendar', expiresAt: '2030-01-01T00:00:00Z' });
+  assert.deepEqual(await (await status('gmail', 'other-token')).json(), { provider: 'gmail', state: 'disconnected' });
+  assert.equal(providerGets, 2);
+  assert.deepEqual(queries.map((values) => values.slice(0, 2)), [
+    ['actual-subject', 'gmail'], ['actual-subject', 'googlecalendar'], ['other-subject', 'gmail'],
+  ]);
+  rows.gmail!.expires_at = '2020-01-01T00:00:00Z';
+  assert.deepEqual(await (await status('gmail')).json(), {
+    provider: 'gmail', state: 'attention', connectedAccountId: 'ca_gmail1', recovery: 'operator_review',
+  });
+  rows.gmail!.expires_at = '2030-01-01T00:00:00Z';
+  rows.gmail!.redirect_url = 'https://evil.example/claim';
+  const unsafe = await (await status('gmail')).json() as Record<string, unknown>;
+  assert.equal(unsafe.url, undefined);
+  assert.equal(unsafe.state, 'attention');
+  rows.gmail!.redirect_url = 'https://connect.composio.dev/session/gmail';
+  mismatchedProviderOwner = true;
+  const mismatched = await (await status('gmail')).json() as Record<string, unknown>;
+  assert.equal(mismatched.url, undefined);
+  assert.equal(mismatched.state, 'attention');
+});
+
 test('link consent is journaled before provider call and replay does not create another link', async () => {
   const rows = new Map<string, Record<string, unknown>>();
   const db = { prepare(sql: string) { return { bind(...values: unknown[]) { return {
