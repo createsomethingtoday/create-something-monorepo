@@ -1,4 +1,4 @@
-use rusqlite::{params, Connection, OptionalExtension};
+use rusqlite::{params, Connection, OptionalExtension, TransactionBehavior};
 use serde_json::{json, Value};
 use std::{fs, path::Path};
 use std::os::unix::fs::{OpenOptionsExt, PermissionsExt};
@@ -90,7 +90,7 @@ fn open(root: &Path) -> Result<Connection, String> {
     let path=root.join("gigi.sqlite");
     private_file(&path)?;
     let db = Connection::open(path).map_err(|e| e.to_string())?;
-    db.execute_batch("PRAGMA foreign_keys=ON; PRAGMA journal_mode=WAL; PRAGMA busy_timeout=5000;")
+    db.execute_batch("PRAGMA busy_timeout=5000; PRAGMA foreign_keys=ON; PRAGMA journal_mode=WAL;")
         .map_err(|e| e.to_string())?;
     let version: i64 = db
         .query_row("PRAGMA user_version", [], |r| r.get(0))
@@ -369,17 +369,19 @@ pub fn dispatch(root: &Path, op: &str, input: Value) -> Result<Value, String> {
             if title.len() > 500 {
                 return Err("title too long".into());
             }
-            let fields = fields_for(entity, &input)?;
-            workspace(&db, wid)?;
-            if entity=="profile" {
-                let current:Option<String>=db.query_row("SELECT json_extract(fields_json,'$.Currency') FROM profile WHERE workspace_id=?1 ORDER BY updated_at DESC LIMIT 1",[wid],|r|r.get(0)).optional().map_err(|e|e.to_string())?.flatten();
-                let next=fields.get("Currency").and_then(Value::as_str);
-                if current.is_some() && current.as_deref()!=next {
-                    let has_money:i64=db.query_row("SELECT (SELECT count(*) FROM gigs WHERE workspace_id=?1 AND money_cents IS NOT NULL)+(SELECT count(*) FROM finances WHERE workspace_id=?1 AND money_cents IS NOT NULL)+(SELECT count(*) FROM profile WHERE workspace_id=?1 AND money_cents IS NOT NULL)",[wid],|r|r.get(0)).map_err(|e|e.to_string())?;
-                    if has_money>0{return Err("currency cannot change after monetary records exist; export and convert values explicitly before changing currency".into())}
-                }
+            let replace_fields = match input.get("fieldsMode") {
+                None => false,
+                Some(Value::String(mode)) if mode == "merge" => false,
+                Some(Value::String(mode)) if mode == "replace" => true,
+                _ => return Err("fieldsMode must be merge or replace".into()),
+            };
+            if replace_fields && input.get("fields").and_then(Value::as_object).is_none() {
+                return Err("fieldsMode replace requires an object fields".into());
             }
-            if let Some(previous) = replay(&db, wid, op, &input)? {
+            let mut fields = fields_for(entity, &input)?;
+            let tx = db.transaction_with_behavior(TransactionBehavior::Immediate).map_err(|e| e.to_string())?;
+            workspace(&tx, wid)?;
+            if let Some(previous) = replay(&tx, wid, op, &input)? {
                 return Ok(previous);
             }
             let id = input
@@ -390,10 +392,42 @@ pub fn dispatch(root: &Path, op: &str, input: Value) -> Result<Value, String> {
             if id.is_empty() || id.len() > 200 {
                 return Err("invalid id".into());
             }
-            let prior:Option<(String,Option<String>)>=db.query_row(&format!("SELECT source_json,source_key FROM {entity} WHERE workspace_id=?1 AND id=?2"),params![wid,id],|r|Ok((r.get(0)?,r.get(1)?))).optional().map_err(|e|e.to_string())?;
+            let prior:Option<(String,String,Option<String>,String)>=tx.query_row(&format!("SELECT title,source_json,source_key,fields_json FROM {entity} WHERE workspace_id=?1 AND id=?2"),params![wid,id],|r|Ok((r.get(0)?,r.get(1)?,r.get(2)?,r.get(3)?))).optional().map_err(|e|e.to_string())?;
+            if let Some(expected) = input.get("expectedRecord") {
+                let expected_title = expected.get("title").and_then(Value::as_str).ok_or("expectedRecord requires title, fields, and source")?;
+                let expected_fields = expected.get("fields").filter(|v| v.is_object()).ok_or("expectedRecord requires title, fields, and source")?;
+                let expected_source = expected.get("source").filter(|v| v.is_object()).ok_or("expectedRecord requires title, fields, and source")?;
+                let matches = match &prior {
+                    Some((prior_title, prior_source, _, prior_fields)) => {
+                        prior_title == expected_title
+                            && serde_json::from_str::<Value>(prior_fields).map_err(|e|e.to_string())? == *expected_fields
+                            && serde_json::from_str::<Value>(prior_source).map_err(|e|e.to_string())? == *expected_source
+                    }
+                    None => false,
+                };
+                if !matches {
+                    return Err("record changed since it was opened. Your edits are still here; copy them, then reopen the record and try again".into());
+                }
+            }
+            if !replace_fields {
+                if let Some((_, _, _, prior_fields)) = &prior {
+                    let mut merged: Value = serde_json::from_str(prior_fields).map_err(|e|e.to_string())?;
+                    let saved = merged.as_object_mut().ok_or("stored fields must be an object")?;
+                    saved.extend(fields.as_object().ok_or("fields must be an object")?.clone());
+                    fields = merged;
+                }
+            }
+            if entity=="profile" {
+                let current:Option<String>=tx.query_row("SELECT json_extract(fields_json,'$.Currency') FROM profile WHERE workspace_id=?1 ORDER BY updated_at DESC LIMIT 1",[wid],|r|r.get(0)).optional().map_err(|e|e.to_string())?.flatten();
+                let next=fields.get("Currency").and_then(Value::as_str);
+                if current.is_some() && current.as_deref()!=next {
+                    let has_money:i64=tx.query_row("SELECT (SELECT count(*) FROM gigs WHERE workspace_id=?1 AND money_cents IS NOT NULL)+(SELECT count(*) FROM finances WHERE workspace_id=?1 AND money_cents IS NOT NULL)+(SELECT count(*) FROM profile WHERE workspace_id=?1 AND money_cents IS NOT NULL)",[wid],|r|r.get(0)).map_err(|e|e.to_string())?;
+                    if has_money>0{return Err("currency cannot change after monetary records exist; export and convert values explicitly before changing currency".into())}
+                }
+            }
             let prior_source = prior
                 .as_ref()
-                .and_then(|p| serde_json::from_str::<Value>(&p.0).ok());
+                .and_then(|p| serde_json::from_str::<Value>(&p.1).ok());
             let mut source = input
                 .get("source")
                 .cloned()
@@ -411,7 +445,7 @@ pub fn dispatch(root: &Path, op: &str, input: Value) -> Result<Value, String> {
                 return Err("record detail exceeds local limit".into());
             }
             let source_key = if source["kind"] == "manual" {
-                prior.as_ref().and_then(|p| p.1.clone())
+                prior.as_ref().and_then(|p| p.2.clone())
             } else {
                 let provider = source
                     .get("provider")
@@ -426,7 +460,7 @@ pub fn dispatch(root: &Path, op: &str, input: Value) -> Result<Value, String> {
                 Some(json!([provider,connected_account,collection,external_id]).to_string())
             };
             if let Some(ref key) = source_key {
-                let prior: Option<String> = db
+                let prior: Option<String> = tx
                     .query_row(
                         &format!("SELECT id FROM {entity} WHERE workspace_id=?1 AND source_key=?2"),
                         params![wid, key],
@@ -436,7 +470,10 @@ pub fn dispatch(root: &Path, op: &str, input: Value) -> Result<Value, String> {
                     .map_err(|e| e.to_string())?;
                 if let Some(prior_id) = prior {
                     if prior_id != id && input.get("id").is_none() {
-                        return get(&db, wid, entity, &prior_id);
+                        let result = get(&tx, wid, entity, &prior_id)?;
+                        receipt(&tx, wid, op, &input, &result)?;
+                        tx.commit().map_err(|e| e.to_string())?;
+                        return Ok(result);
                     }
                 }
             }
@@ -453,7 +490,6 @@ pub fn dispatch(root: &Path, op: &str, input: Value) -> Result<Value, String> {
             let occurred = fields.get("Date").and_then(Value::as_str);
             let rate = fields.get("Rate Type").and_then(Value::as_str);
             let hours = fields.get("Hours").and_then(Value::as_f64);
-            let tx = db.transaction().map_err(|e| e.to_string())?;
             tx.execute(
                 "INSERT OR IGNORE INTO record_index(workspace_id,entity,id) VALUES(?1,?2,?3)",
                 params![wid, entity, id],
@@ -749,6 +785,102 @@ mod tests {
         let _ = std::fs::remove_dir_all(root);
     }
     #[test]
+    fn title_only_save_preserves_gig_details_source_and_links() {
+        let root = temp();
+        let workspace = dispatch(&root, "workspace.create", json!({"name":"Solo"})).unwrap();
+        let wid = &workspace["id"];
+        let source = json!({"kind":"import","provider":"gmail","externalId":"booking-thread-1"});
+        let gig = dispatch(&root, "records.save", json!({"workspaceId":wid,"entity":"gigs","title":"Friday set","fields":{"Fee":12500,"Status":"Confirmed","Date":"2026-10-02","Requirements":"Bring a mic"},"source":source})).unwrap();
+        let contact = dispatch(&root, "records.save", json!({"workspaceId":wid,"entity":"contacts","title":"Booking contact"})).unwrap();
+        dispatch(&root, "relations.link", json!({"workspaceId":wid,"fromEntity":"gigs","fromId":gig["id"],"toEntity":"contacts","toId":contact["id"],"role":"Booked Through"})).unwrap();
+
+        let saved = dispatch(&root, "records.save", json!({"workspaceId":wid,"entity":"gigs","id":gig["id"],"title":"Friday evening set"})).unwrap();
+        assert_eq!(saved["title"], "Friday evening set");
+        assert_eq!(saved["fields"], gig["fields"]);
+        assert_eq!(saved["source"], source);
+        assert_eq!(saved["relationCount"], 1);
+        let listed = dispatch(&root, "records.list", json!({"workspaceId":wid,"entity":"gigs"})).unwrap();
+        assert_eq!(listed["items"][0]["status"], "Confirmed");
+        assert_eq!(listed["items"][0]["moneyCents"], 12500);
+        assert_eq!(listed["items"][0]["date"], "2026-10-02");
+        let fee_changed = dispatch(&root, "records.save", json!({"workspaceId":wid,"entity":"gigs","id":gig["id"],"title":"Friday evening set","fields":{"Fee":14000,"Requirements":null}})).unwrap();
+        assert_eq!(fee_changed["fields"]["Fee"], 14000);
+        assert!(fee_changed["fields"]["Requirements"].is_null());
+        assert_eq!(fee_changed["fields"]["Status"], "Confirmed");
+        assert_eq!(fee_changed["source"], source);
+        assert_eq!(fee_changed["relationCount"], 1);
+        let listed = dispatch(&root, "records.list", json!({"workspaceId":wid,"entity":"gigs"})).unwrap();
+        assert_eq!(listed["items"][0]["moneyCents"], 14000);
+        assert_eq!(listed["items"][0]["status"], "Confirmed");
+        let _ = fs::remove_dir_all(root);
+    }
+    #[test]
+    fn replace_fields_clears_omitted_details_but_keeps_source_and_links() {
+        let root = temp();
+        let wid = dispatch(&root, "workspace.create", json!({"name":"Solo"})).unwrap()["id"].clone();
+        let source = json!({"kind":"import","provider":"gmail","externalId":"booking-1"});
+        let gig = dispatch(&root, "records.save", json!({"workspaceId":wid,"entity":"gigs","title":"Show","fields":{"Fee":12500,"Status":"Confirmed","Date":"2026-10-02","Requirements":"Bring a mic"},"source":source})).unwrap();
+        let contact = dispatch(&root, "records.save", json!({"workspaceId":wid,"entity":"contacts","title":"Booker"})).unwrap();
+        dispatch(&root, "relations.link", json!({"workspaceId":wid,"fromEntity":"gigs","fromId":gig["id"],"toEntity":"contacts","toId":contact["id"],"role":"Booked Through"})).unwrap();
+        let saved = dispatch(&root, "records.save", json!({"workspaceId":wid,"entity":"gigs","id":gig["id"],"title":"Show","fieldsMode":"replace","fields":{"Requirements":"Bring stands"}})).unwrap();
+        assert_eq!(saved["fields"], json!({"Requirements":"Bring stands"}));
+        assert_eq!(saved["source"], source);
+        assert_eq!(saved["relationCount"], 1);
+        let listed = dispatch(&root, "records.list", json!({"workspaceId":wid,"entity":"gigs"})).unwrap();
+        assert!(listed["items"][0]["moneyCents"].is_null());
+        assert!(listed["items"][0]["status"].is_null());
+        assert!(listed["items"][0]["date"].is_null());
+        assert!(dispatch(&root, "records.save", json!({"workspaceId":wid,"entity":"gigs","id":gig["id"],"title":"Show","fieldsMode":"replace"})).is_err());
+        let _ = fs::remove_dir_all(root);
+    }
+    #[test]
+    fn stale_editor_replace_rejects_newer_record_without_losing_it_and_replays_receipt() {
+        let root = temp();
+        let wid = dispatch(&root, "workspace.create", json!({"name":"Solo"})).unwrap()["id"].clone();
+        let original = dispatch(&root, "records.save", json!({"workspaceId":wid,"entity":"gigs","title":"Show","fields":{"Status":"Open","Fee":1200}})).unwrap();
+        let expected = json!({"title":original["title"],"fields":original["fields"],"source":original["source"]});
+        let editor_save = json!({"workspaceId":wid,"entity":"gigs","id":original["id"],"title":"Show","fieldsMode":"replace","fields":{"Status":"Confirmed"},"expectedRecord":expected,"idempotencyKey":"editor-save"});
+        dispatch(&root, "records.save", json!({"workspaceId":wid,"entity":"gigs","id":original["id"],"title":"Show","fields":{"Fee":1400}})).unwrap();
+        assert!(dispatch(&root, "records.save", editor_save.clone()).unwrap_err().contains("record changed"));
+        let current = dispatch(&root, "records.get", json!({"workspaceId":wid,"entity":"gigs","id":original["id"],"detail":"full"})).unwrap();
+        assert_eq!(current["fields"], json!({"Status":"Open","Fee":1400}));
+        let fresh = json!({"title":current["title"],"fields":current["fields"],"source":current["source"]});
+        let fresh_save = json!({"workspaceId":wid,"entity":"gigs","id":original["id"],"title":"Show","fieldsMode":"replace","fields":{"Status":"Confirmed"},"expectedRecord":fresh,"idempotencyKey":"editor-fresh"});
+        let saved = dispatch(&root, "records.save", fresh_save.clone()).unwrap();
+        dispatch(&root, "records.save", json!({"workspaceId":wid,"entity":"gigs","id":original["id"],"title":"Another edit","fields":{"Fee":2000}})).unwrap();
+        assert_eq!(dispatch(&root, "records.save", fresh_save).unwrap(), saved);
+        let _ = fs::remove_dir_all(root);
+    }
+    #[test]
+    fn concurrent_disjoint_patches_keep_both_fields() {
+        use std::sync::{Arc, Barrier};
+        let root = temp();
+        let wid = dispatch(&root, "workspace.create", json!({"name":"Solo"})).unwrap()["id"].clone();
+        let gig = dispatch(&root, "records.save", json!({"workspaceId":wid,"entity":"gigs","title":"Show"})).unwrap();
+        for iteration in 0..20 {
+            let barrier = Arc::new(Barrier::new(3));
+            let handles: Vec<_> = [("Fee", json!(10000 + iteration)), ("Status", json!(format!("Status {iteration}")))]
+                .into_iter()
+                .map(|(key, value)| {
+                    let root = root.clone();
+                    let wid = wid.clone();
+                    let id = gig["id"].clone();
+                    let barrier = Arc::clone(&barrier);
+                    std::thread::spawn(move || {
+                        barrier.wait();
+                        dispatch(&root, "records.save", json!({"workspaceId":wid,"entity":"gigs","id":id,"title":"Show","fields":{key:value}})).unwrap();
+                    })
+                })
+                .collect();
+            barrier.wait();
+            for handle in handles { handle.join().unwrap(); }
+            let saved = dispatch(&root, "records.get", json!({"workspaceId":wid,"entity":"gigs","id":gig["id"],"detail":"full"})).unwrap();
+            assert_eq!(saved["fields"]["Fee"], json!(10000 + iteration));
+            assert_eq!(saved["fields"]["Status"], json!(format!("Status {iteration}")));
+        }
+        let _ = fs::remove_dir_all(root);
+    }
+    #[test]
     fn typed_relations_money_and_restore() {
         let root = temp();
         let w = dispatch(&root, "workspace.create", json!({"name":"Solo"})).unwrap();
@@ -855,6 +987,24 @@ mod tests {
         let duplicate=dispatch(&root,"records.save",json!({"workspaceId":wid,"entity":"gigs","title":"Stale import","fields":{"Fee":10000},"source":source})).unwrap();
         assert_eq!(duplicate["title"], "Manual correction");
         assert_eq!(duplicate["source"]["origin"]["externalId"], "thread-1");
+        let _ = fs::remove_dir_all(root);
+    }
+    #[test]
+    fn duplicate_source_save_records_receipt_for_later_replay() {
+        let root = temp();
+        let wid = dispatch(&root, "workspace.create", json!({"name":"Solo"})).unwrap()["id"].clone();
+        let source = json!({"kind":"import","provider":"gmail","externalId":"thread-2"});
+        let original = dispatch(&root, "records.save", json!({"workspaceId":wid,"entity":"gigs","title":"Imported","source":source})).unwrap();
+        let duplicate_request = json!({"workspaceId":wid,"entity":"gigs","title":"Stale import","source":source,"idempotencyKey":"duplicate-1"});
+        let duplicate = dispatch(&root, "records.save", duplicate_request.clone()).unwrap();
+        assert_eq!(duplicate["id"], original["id"]);
+        let history = dispatch(&root, "history.list", json!({"workspaceId":wid})).unwrap();
+        assert_eq!(history["items"].as_array().unwrap().iter().filter(|item| item["operation"] == "records.save").count(), 1);
+        dispatch(&root, "records.save", json!({"workspaceId":wid,"entity":"gigs","id":original["id"],"title":"Corrected"})).unwrap();
+        let replayed = dispatch(&root, "records.save", duplicate_request).unwrap();
+        assert_eq!(replayed["id"], original["id"]);
+        assert_eq!(replayed["title"], "Imported");
+        assert!(dispatch(&root, "records.save", json!({"workspaceId":wid,"entity":"gigs","title":"Different request","source":source,"idempotencyKey":"duplicate-1"})).unwrap_err().contains("idempotency key reused"));
         let _ = fs::remove_dir_all(root);
     }
 
