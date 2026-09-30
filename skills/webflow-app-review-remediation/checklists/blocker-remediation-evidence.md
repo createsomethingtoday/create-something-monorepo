@@ -44,7 +44,7 @@ Use this checklist for each issued blocker — P1 or `unassigned` (treat `unassi
 - [ ] GET and write-path authorization are tested separately when both exist.
 - [ ] Runtime URL, version, child resources, integrity behavior, and readiness signal are recorded when applicable.
 - [ ] App Review Preflight observations are labeled as evidence from the Webflow-controlled run, not reviewer acceptance — and any partner-supplied runtime test package is recorded as test input only, never as evidence.
-- [ ] Preflight results are reported in Preflight's own labels (Blocker, Required update, Manual review, Suggested update) and readiness (`ready`, `changes_required`, `needs_review`); a `needs_review` run and any Manual review item are recorded as evidence still owed, and a failed production-runtime check as a blocker (non-partner) or exception item (partner), never as advisory.
+- [ ] Preflight results are reported in Preflight's own labels (Blocker, Required update, Manual review, Suggested update) and readiness (`ready`, `changes_required`, `needs_review`); a `needs_review` run and any Manual review item are recorded as evidence still owed, and a failed production-runtime check as a Preflight blocker (routed by the review team to the exceptions queue for Partner Program apps), never as advisory.
 
 ## Resubmission
 
