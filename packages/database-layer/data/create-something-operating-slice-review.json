@@ -1,6 +1,6 @@
 {
   "id": "substrate:create-something:operating-slice-review:internal",
-  "generatedAt": "2026-09-29T14:05:59.564Z",
+  "generatedAt": "2026-09-30T14:04:28.750Z",
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
   "sourceCoverageId": "substrate:create-something:atlas-coverage:internal",
@@ -57,6 +57,7 @@
         "substrate:create-something:worker:packages-cs-telemetry-mcp-worker-wrangler-toml",
         "substrate:create-something:worker:packages-database-layer-worker-wrangler-toml",
         "substrate:create-something:worker:packages-exception-decisions-mcp-wrangler-jsonc",
+        "substrate:create-something:worker:packages-gigi-integrations-worker-wrangler-toml",
         "substrate:create-something:package:create-something-github-actions-runner-broker-packages-github-actions-runner-broker",
         "substrate:create-something:worker:packages-github-actions-runner-broker-wrangler-jsonc",
         "substrate:create-something:worker:packages-gmail-notion-mcp-worker-wrangler-toml",
@@ -158,7 +159,7 @@
       "owner": "CREATE SOMETHING",
       "tier": "Automation",
       "surface": "worker",
-      "nodeCount": 141,
+      "nodeCount": 142,
       "evidence": [
         "apps/bettermode-marketplace-creator-agent/wrangler.jsonc",
         "apps/create-something-scheduler/wrangler.jsonc",
@@ -573,6 +574,7 @@
         "substrate:create-something:package:create-something-calm-operator-stopwatch-firmware-packages-calm-operator-stopwatch-firmware",
         "substrate:create-something:package:create-something-cloudflare-sdk-packages-cloudflare-sdk",
         "substrate:create-something:package:create-something-codex-presence-packages-codex-presence",
+        "substrate:create-something:package:create-something-gigi-integrations-packages-gigi-integrations",
         "substrate:create-something:package:createsomething-motion-ontology-space-packages-huggingface-spaces-motion-ontology",
         "substrate:create-something:package:createsomething-seeing-packages-seeing",
         "substrate:create-something:package:create-something-simulation-packages-simulation",
@@ -589,7 +591,7 @@
       "owner": "CREATE SOMETHING",
       "tier": "Mixed",
       "surface": "package",
-      "nodeCount": 27,
+      "nodeCount": 28,
       "evidence": [
         "packages/agency/static/films/algorithms",
         "packages/agency/static/films/dashboard",
@@ -993,6 +995,7 @@
         "substrate:create-something:app:create-something-atlas-studio-desktop-apps-atlas-studio-desktop",
         "substrate:create-something:app:create-something-client-workspace-desktop-apps-client-workspace-desktop",
         "substrate:create-something:app:create-something-draw-native-apps-draw-native",
+        "substrate:create-something:app:create-something-gigi-desktop-apps-gigi-desktop",
         "substrate:create-something:app:princess-pet-palace-apps-princess-pet-palace",
         "substrate:create-something:app:create-something-webflow-dashboard-cloud-apps-webflow-dashboard-cloud",
         "substrate:create-something:app:create-something-webflow-marketplace-category-cloud-apps-webflow-marketplace-category-cloud"
@@ -1000,11 +1003,12 @@
       "owner": "CREATE SOMETHING",
       "tier": "Mixed",
       "surface": "app",
-      "nodeCount": 6,
+      "nodeCount": 7,
       "evidence": [
         "apps/atlas-studio-desktop",
         "apps/client-workspace-desktop",
         "apps/draw-native",
+        "apps/gigi-desktop",
         "apps/princess-pet-palace",
         "apps/webflow-dashboard-cloud",
         "apps/webflow-marketplace-category-cloud"
