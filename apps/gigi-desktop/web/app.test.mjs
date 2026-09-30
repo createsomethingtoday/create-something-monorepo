@@ -122,3 +122,38 @@ test('stale editor save keeps typed values and explains how to reload', async ()
     globalThis.FormData = previous.formData;
   }
 });
+
+test('connector sign-in explains provider outages and timeouts without exposing error codes', async () => {
+  const listeners = new Map();
+  const root = { innerHTML: '', classList: { toggle() {} }, addEventListener(name, handler) { listeners.set(name, handler); }, querySelector() { return null; } };
+  const previous = { document: globalThis.document, tauri: globalThis.__TAURI__ };
+  let failure = 'provider_unavailable';
+  globalThis.document = { querySelector: (selector) => selector === '#app' ? root : null };
+  globalThis.__TAURI__ = { core: { invoke: async (_command, { operation, input }) => {
+    if (operation === 'workspace.get') return { id: 'w1', name: 'Test' };
+    if (operation === 'records.list') return { items: input.entity === 'profile' ? [{ id: 'p1' }] : [], count: 0 };
+    if (operation === 'records.get') return { id: 'p1', title: 'Owner', fields: { Currency: 'USD' } };
+    if (operation === 'connections.status') return { provider: input.provider, state: 'disconnected' };
+    if (operation === 'agent.status') return {};
+    if (operation === 'auth.login') throw new Error(failure);
+    return {};
+  } } };
+  const settle = () => new Promise((resolve) => setImmediate(resolve));
+  const click = (dataset) => listeners.get('click')({ target: { closest: () => ({ dataset }) } });
+  try {
+    await import(`./app.mjs?signin-error-test=${Date.now()}`);
+    await settle();
+    click({ page: 'settings' }); await settle();
+    click({ signIn: '1' }); await settle();
+    assert.match(root.innerHTML, /temporarily unavailable.*try again/i);
+    assert.doesNotMatch(root.innerHTML, /provider_unavailable/);
+
+    failure = 'timeout';
+    click({ signIn: '1' }); await settle();
+    assert.match(root.innerHTML, /timed out.*try again/i);
+    assert.doesNotMatch(root.innerHTML, /\btimeout\b/i);
+  } finally {
+    globalThis.document = previous.document;
+    globalThis.__TAURI__ = previous.tauri;
+  }
+});
