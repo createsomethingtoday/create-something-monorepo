@@ -10,3 +10,9 @@ Owner: Micah. Run only after the exact installed build passes native desktop acc
 6. Briefly disconnect the desktop from the network. Confirm the phone reports unavailable/reconnecting and does not invent success. Reconnect, retrieve the task, and confirm there is one updated record with no duplicate mutation.
 
 Receipt: exact build, provider, physical phone model/OS, cellular confirmed, read match, approved edit match, restart match, disconnect behavior, reconnect match, pass/fail and any error. Desktop screenshots or emulated phone dimensions do not supply this evidence.
+
+## In-progress receipt — 2026-09-30
+
+Installed executable SHA-256: `1687ccb5ebf27d91e1ae0205463acade8c1abb2d7e5b693a5701f133aa81c4cd`. The native desktop detail currently shows `Acceptance: Second showcase`, a USD 90 flat fee, and links to `Acceptance: Second venue contact` and `Acceptance: Confirm second showcase crew`. After being asked to connect from the physical phone with Wi-Fi off through the same ChatGPT/Codex host, the user reported those same three values. This is a reported read match; phone model/OS, explicit cellular confirmation and exact record IDs are still pending.
+
+The next requested phone action is a single approved title change on the existing linked task to `Acceptance: Crew confirmed by phone`, preserving its status and relationships, followed by tool readback. Native confirmation, full restart, offline/reconnect behavior and the final pass/fail receipt remain pending. No completed physical-device acceptance is claimed.

@@ -11,10 +11,10 @@ database_id = "bcefe77e-d4b7-4d70-9002-1f969eef3457"
 migrations_dir = "migrations"
 
 [vars]
-GIGI_GMAIL_AUTH_CONFIG_ID = "ac_s2YEkh21bMT8"
-GIGI_GOOGLECALENDAR_AUTH_CONFIG_ID = "ac_zHJSY3Mbuv-q"
-GIGI_GMAIL_APPROVED_SCOPES = "https://www.googleapis.com/auth/gmail.readonly"
-GIGI_GOOGLECALENDAR_APPROVED_SCOPES = "https://www.googleapis.com/auth/calendar.events.readonly,https://www.googleapis.com/auth/calendar.calendars.readonly"
+GIGI_GMAIL_AUTH_CONFIG_ID = "ac_qXoEQURadG-h"
+GIGI_GOOGLECALENDAR_AUTH_CONFIG_ID = "ac_F0JVbnFvV3DQ"
+GIGI_GMAIL_APPROVED_SCOPES = "https://www.googleapis.com/auth/userinfo.profile,https://www.googleapis.com/auth/userinfo.email,https://www.googleapis.com/auth/contacts.readonly,https://www.googleapis.com/auth/contacts.other.readonly,https://www.googleapis.com/auth/profile.language.read,https://www.googleapis.com/auth/user.addresses.read,https://www.googleapis.com/auth/user.birthday.read,https://www.googleapis.com/auth/user.emails.read,https://www.googleapis.com/auth/user.phonenumbers.read,https://www.googleapis.com/auth/profile.emails.read,https://mail.google.com/"
+GIGI_GOOGLECALENDAR_APPROVED_SCOPES = "https://www.googleapis.com/auth/calendar,https://www.googleapis.com/auth/calendar.events"
 
 # Server-only secrets set through Wrangler before deployment:
 # COMPOSIO_API_KEY

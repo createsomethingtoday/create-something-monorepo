@@ -3,6 +3,24 @@ import { test } from 'node:test';
 
 import { handleConnectorRequest, readSourcePage } from '../worker/index.ts';
 
+const selectedGmailScopes = [
+  'https://www.googleapis.com/auth/userinfo.profile',
+  'https://www.googleapis.com/auth/userinfo.email',
+  'https://www.googleapis.com/auth/contacts.readonly',
+  'https://www.googleapis.com/auth/contacts.other.readonly',
+  'https://www.googleapis.com/auth/profile.language.read',
+  'https://www.googleapis.com/auth/user.addresses.read',
+  'https://www.googleapis.com/auth/user.birthday.read',
+  'https://www.googleapis.com/auth/user.emails.read',
+  'https://www.googleapis.com/auth/user.phonenumbers.read',
+  'https://www.googleapis.com/auth/profile.emails.read',
+  'https://mail.google.com/',
+];
+const selectedCalendarScopes = [
+  'https://www.googleapis.com/auth/calendar',
+  'https://www.googleapis.com/auth/calendar.events',
+];
+
 test('Gmail malformed message aborts page before exposing next cursor', async () => {
   await assert.rejects(readSourcePage({ COMPOSIO_API_KEY: 'ak_test' }, async (request) => {
     const payload = await (request as Request).json() as { endpoint: string };
@@ -35,6 +53,48 @@ test('health is loud when D1 or server-only beta allowlist is missing', async ()
   const response = await handleConnectorRequest(new Request('https://gigi-connector.createsomething.workers.dev/health'), {});
   assert.equal(response.status, 503);
   assert.deepEqual(await response.json(), { service: 'gigi-connector', status: 'unconfigured' });
+});
+
+test('health rejects legacy Composio auth configs even with their formerly approved scopes', async () => {
+  const db = { prepare() { throw new Error('health must not query D1'); } };
+  const selected = {
+    GIGI_ALLOWED_SUBJECTS: 'actual-subject', COMPOSIO_API_KEY: 'ak_test', DB: db,
+    GIGI_GMAIL_AUTH_CONFIG_ID: 'ac_qXoEQURadG-h', GIGI_GMAIL_APPROVED_SCOPES: selectedGmailScopes.join(','),
+    GIGI_GOOGLECALENDAR_AUTH_CONFIG_ID: 'ac_F0JVbnFvV3DQ', GIGI_GOOGLECALENDAR_APPROVED_SCOPES: selectedCalendarScopes.join(','),
+  };
+  for (const legacy of [
+    { GIGI_GMAIL_AUTH_CONFIG_ID: 'ac_s2YEkh21bMT8', GIGI_GMAIL_APPROVED_SCOPES: 'https://www.googleapis.com/auth/gmail.readonly' },
+    { GIGI_GOOGLECALENDAR_AUTH_CONFIG_ID: 'ac_oldcalendar', GIGI_GOOGLECALENDAR_APPROVED_SCOPES: 'https://www.googleapis.com/auth/calendar.readonly' },
+  ]) {
+    const response = await handleConnectorRequest(new Request('https://gigi-connector.createsomething.workers.dev/health'), { ...selected, ...legacy });
+    assert.equal(response.status, 503);
+    assert.deepEqual(await response.json(), { service: 'gigi-connector', status: 'unconfigured' });
+  }
+});
+
+test('link rejects legacy Composio auth configs before journaling or provider mutation', async () => {
+  let dbCalls = 0;
+  let providerCalls = 0;
+  const db = { prepare() { dbCalls++; throw new Error('legacy config must not journal'); } };
+  for (const [provider, env] of [
+    ['gmail', { GIGI_GMAIL_AUTH_CONFIG_ID: 'ac_s2YEkh21bMT8', GIGI_GMAIL_APPROVED_SCOPES: 'https://www.googleapis.com/auth/gmail.readonly' }],
+    ['googlecalendar', { GIGI_GOOGLECALENDAR_AUTH_CONFIG_ID: 'ac_oldcalendar', GIGI_GOOGLECALENDAR_APPROVED_SCOPES: 'https://www.googleapis.com/auth/calendar.readonly' }],
+  ] as const) {
+    const response = await handleConnectorRequest(new Request(`https://gigi-connector.createsomething.workers.dev/v1/gigi/connections/${provider}/link`, {
+      method: 'POST', headers: { authorization: 'Bearer test-token', 'content-type': 'application/json' },
+      body: JSON.stringify({ requestId: 'request-123' }),
+    }), { GIGI_ALLOWED_SUBJECTS: 'actual-subject', COMPOSIO_API_KEY: 'ak_test', DB: db, ...env }, async (request) => {
+      if (new URL((request as Request).url).pathname === '/oauth/userinfo') return Response.json({
+        sub: 'actual-subject', resource: 'https://gigi-connector.createsomething.workers.dev', email_verified: true,
+      });
+      providerCalls++;
+      throw new Error('legacy config must not call Composio');
+    });
+    assert.equal(response.status, 503);
+    assert.deepEqual(await response.json(), { error: 'unconfigured' });
+  }
+  assert.equal(dbCalls, 0);
+  assert.equal(providerCalls, 0);
 });
 
 test('broker denies a caller whose online Identity userinfo is not for GiGi', async () => {
@@ -99,16 +159,15 @@ test('status recovers only the authenticated owner’s unexpired pending consent
     const hash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('actual-subject'));
     const userId = 'gigi_' + [...new Uint8Array(hash)].map((byte) => byte.toString(16).padStart(2, '0')).join('').slice(0, 32);
     return Response.json({ id: accountId, user_id: mismatchedProviderOwner ? 'gigi_otherowner' : userId,
-      auth_config: { id: provider === 'gmail' ? 'ac_gmail' : 'ac_calendar' },
+      auth_config: { id: provider === 'gmail' ? 'ac_qXoEQURadG-h' : 'ac_F0JVbnFvV3DQ' },
       toolkit: { slug: provider }, experimental: { account_type: 'PRIVATE' },
-      requested_scopes: provider === 'gmail' ? ['https://www.googleapis.com/auth/gmail.readonly'] :
-        ['https://www.googleapis.com/auth/calendar.events.readonly', 'https://www.googleapis.com/auth/calendar.calendars.readonly'],
+      requested_scopes: provider === 'gmail' ? selectedGmailScopes : selectedCalendarScopes,
       status: 'INITIATED', is_disabled: false });
   };
   const env = { GIGI_ALLOWED_SUBJECTS: 'actual-subject,other-subject', COMPOSIO_API_KEY: 'ak_test',
-    GIGI_GMAIL_AUTH_CONFIG_ID: 'ac_gmail', GIGI_GOOGLECALENDAR_AUTH_CONFIG_ID: 'ac_calendar',
-    GIGI_GMAIL_APPROVED_SCOPES: 'https://www.googleapis.com/auth/gmail.readonly',
-    GIGI_GOOGLECALENDAR_APPROVED_SCOPES: 'https://www.googleapis.com/auth/calendar.events.readonly,https://www.googleapis.com/auth/calendar.calendars.readonly', DB: db };
+    GIGI_GMAIL_AUTH_CONFIG_ID: 'ac_qXoEQURadG-h', GIGI_GOOGLECALENDAR_AUTH_CONFIG_ID: 'ac_F0JVbnFvV3DQ',
+    GIGI_GMAIL_APPROVED_SCOPES: selectedGmailScopes.join(','),
+    GIGI_GOOGLECALENDAR_APPROVED_SCOPES: selectedCalendarScopes.join(','), DB: db };
   const status = (provider: string, token = 'test-token') => handleConnectorRequest(new Request(
     `https://gigi-connector.createsomething.workers.dev/v1/gigi/connections/${provider}`, {
       headers: { authorization: `Bearer ${token}` },
@@ -172,12 +231,12 @@ test('link consent is journaled before provider call and replay does not create 
     linkCalls++;
     const body = await req.json() as Record<string, unknown>;
     assert.match(String(body.user_id), /^gigi_[0-9a-f]{32}$/u);
-    assert.equal(body.auth_config_id, 'ac_gmail');
+    assert.equal(body.auth_config_id, 'ac_qXoEQURadG-h');
     return Response.json({ connected_account_id: 'ca_account1', redirect_url: 'https://connect.composio.dev/session', expires_at: '2030-01-01T00:00:00Z' });
   };
   const env = {
-    GIGI_ALLOWED_SUBJECTS: 'actual-subject', COMPOSIO_API_KEY: 'ak_test', GIGI_GMAIL_AUTH_CONFIG_ID: 'ac_gmail',
-    GIGI_GMAIL_APPROVED_SCOPES: 'https://www.googleapis.com/auth/gmail.readonly', DB: db,
+    GIGI_ALLOWED_SUBJECTS: 'actual-subject', COMPOSIO_API_KEY: 'ak_test', GIGI_GMAIL_AUTH_CONFIG_ID: 'ac_qXoEQURadG-h',
+    GIGI_GMAIL_APPROVED_SCOPES: selectedGmailScopes.join(','), DB: db,
   };
   const request = () => new Request('https://gigi-connector.createsomething.workers.dev/v1/gigi/connections/gmail/link', {
     method: 'POST', headers: { authorization: 'Bearer test-token', 'content-type': 'application/json' },
@@ -195,6 +254,65 @@ test('link consent is journaled before provider call and replay does not create 
   assert.equal(another.status, 200);
   assert.equal((await another.json() as { attemptId: string }).attemptId, 'request-123');
   assert.equal(linkCalls, 1);
+});
+
+test('new Gmail pin never replays an old-config consent URL', async () => {
+  const db = { prepare() { return { bind() { return {
+    async first() { return { status: 'linked', request_id: 'old-request', connected_account_id: 'ca_old',
+      redirect_url: 'https://connect.composio.dev/session/old', expires_at: '2030-01-01T00:00:00Z' }; },
+    async run() { return { meta: { changes: 0 } }; }, async all() { return { results: [] }; },
+  }; } }; } };
+  const hash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('actual-subject'));
+  const userId = 'gigi_' + [...new Uint8Array(hash)].map((byte) => byte.toString(16).padStart(2, '0')).join('').slice(0, 32);
+  let linkPosts = 0;
+  const response = await handleConnectorRequest(new Request('https://gigi-connector.createsomething.workers.dev/v1/gigi/connections/gmail/link', {
+    method: 'POST', headers: { authorization: 'Bearer test-token', 'content-type': 'application/json' },
+    body: JSON.stringify({ requestId: 'new-request' }),
+  }), { GIGI_ALLOWED_SUBJECTS: 'actual-subject', COMPOSIO_API_KEY: 'ak_test',
+    GIGI_GMAIL_AUTH_CONFIG_ID: 'ac_qXoEQURadG-h', GIGI_GMAIL_APPROVED_SCOPES: selectedGmailScopes.join(','), DB: db,
+  }, async (request) => {
+    const req = request as Request;
+    const path = new URL(req.url).pathname;
+    if (path === '/oauth/userinfo') return Response.json({ sub: 'actual-subject', resource: 'https://gigi-connector.createsomething.workers.dev', email_verified: true });
+    if (path === '/api/v3.1/connected_accounts/ca_old') return Response.json({ id: 'ca_old', user_id: userId,
+      auth_config: { id: 'ac_s2YEkh21bMT8' }, toolkit: { slug: 'gmail' }, status: 'INITIATED', is_disabled: false,
+      experimental: { account_type: 'PRIVATE' }, requested_scopes: ['https://www.googleapis.com/auth/gmail.readonly'] });
+    linkPosts++;
+    throw new Error('old attempt must stay guarded');
+  });
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), { provider: 'gmail', status: 'readback_required', attemptId: 'old-request' });
+  assert.equal(linkPosts, 0);
+});
+
+test('late link response cannot overwrite an attempt changed during provider POST', async () => {
+  let updateSql = '';
+  let updateValues: unknown[] = [];
+  const db = { prepare(sql: string) { return { bind(...values: unknown[]) { return {
+    async first() { return { status: 'dispatched', request_id: 'request-1', connected_account_id: null }; },
+    async run() {
+      if (sql.startsWith('INSERT')) return { meta: { changes: 1 } };
+      updateSql = sql;
+      updateValues = values;
+      return { meta: { changes: 0 } };
+    }, async all() { return { results: [] }; },
+  }; } }; } };
+  const response = await handleConnectorRequest(new Request('https://gigi-connector.createsomething.workers.dev/v1/gigi/connections/gmail/link', {
+    method: 'POST', headers: { authorization: 'Bearer test-token', 'content-type': 'application/json' },
+    body: JSON.stringify({ requestId: 'request-1' }),
+  }), { GIGI_ALLOWED_SUBJECTS: 'actual-subject', COMPOSIO_API_KEY: 'ak_test',
+    GIGI_GMAIL_AUTH_CONFIG_ID: 'ac_qXoEQURadG-h', GIGI_GMAIL_APPROVED_SCOPES: selectedGmailScopes.join(','), DB: db,
+  }, async (request) => {
+    const req = request as Request;
+    if (new URL(req.url).pathname === '/oauth/userinfo') return Response.json({ sub: 'actual-subject', resource: 'https://gigi-connector.createsomething.workers.dev', email_verified: true });
+    assert.equal(new URL(req.url).pathname, '/api/v3.1/connected_accounts/link');
+    assert.equal((await req.json() as { auth_config_id: string }).auth_config_id, 'ac_qXoEQURadG-h');
+    return Response.json({ connected_account_id: 'ca_new', redirect_url: 'https://connect.composio.dev/session/new', expires_at: '2030-01-01T00:00:00Z' });
+  });
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), { provider: 'gmail', status: 'readback_required', attemptId: 'request-1' });
+  assert.match(updateSql, /status = 'dispatched' AND connected_account_id IS NULL/u);
+  assert.deepEqual(updateValues.slice(-3), ['actual-subject', 'gmail', 'request-1']);
 });
 
 test('unknown provider result blocks a second link with a different request ID', async () => {
@@ -221,7 +339,7 @@ test('unknown provider result blocks a second link with a different request ID',
     return new Response('provider uncertain', { status: 503 });
   };
   const env = { GIGI_ALLOWED_SUBJECTS: 'actual-subject', COMPOSIO_API_KEY: 'ak_test',
-    GIGI_GMAIL_AUTH_CONFIG_ID: 'ac_gmail', GIGI_GMAIL_APPROVED_SCOPES: 'https://www.googleapis.com/auth/gmail.readonly', DB: db };
+    GIGI_GMAIL_AUTH_CONFIG_ID: 'ac_qXoEQURadG-h', GIGI_GMAIL_APPROVED_SCOPES: selectedGmailScopes.join(','), DB: db };
   const begin = (requestId: string) => handleConnectorRequest(new Request('https://gigi-connector.createsomething.workers.dev/v1/gigi/connections/gmail/link', {
     method: 'POST', headers: { authorization: 'Bearer test-token', 'content-type': 'application/json' }, body: JSON.stringify({ requestId }),
   }), env, fetcher);
@@ -262,7 +380,7 @@ test('Composio link redirect leaves the attempt pending without accepting its re
     });
   };
   const env = { GIGI_ALLOWED_SUBJECTS: 'actual-subject', COMPOSIO_API_KEY: 'ak_test',
-    GIGI_GMAIL_AUTH_CONFIG_ID: 'ac_gmail', GIGI_GMAIL_APPROVED_SCOPES: 'https://www.googleapis.com/auth/gmail.readonly', DB: db };
+    GIGI_GMAIL_AUTH_CONFIG_ID: 'ac_qXoEQURadG-h', GIGI_GMAIL_APPROVED_SCOPES: selectedGmailScopes.join(','), DB: db };
   const begin = (requestId: string) => handleConnectorRequest(new Request('https://gigi-connector.createsomething.workers.dev/v1/gigi/connections/gmail/link', {
     method: 'POST', headers: { authorization: 'Bearer test-token', 'content-type': 'application/json' }, body: JSON.stringify({ requestId }),
   }), env, fetcher);
@@ -301,13 +419,13 @@ test('verified revoked account releases the guard for a new consent attempt', as
     const path = new URL((request as Request).url).pathname;
     if (path === '/oauth/userinfo') return Response.json({ sub: 'actual-subject', resource: 'https://gigi-connector.createsomething.workers.dev', email_verified: true });
     if (path.includes('/connected_accounts/ca_old')) return Response.json({ id: 'ca_old', user_id: owner,
-      auth_config: { id: 'ac_gmail' }, toolkit: { slug: 'gmail' }, status: 'REVOKED', is_disabled: true,
-      experimental: { account_type: 'PRIVATE' }, requested_scopes: ['https://www.googleapis.com/auth/gmail.readonly'] });
+      auth_config: { id: 'ac_qXoEQURadG-h' }, toolkit: { slug: 'gmail' }, status: 'REVOKED', is_disabled: true,
+      experimental: { account_type: 'PRIVATE' }, requested_scopes: selectedGmailScopes });
     linkCalls++;
     return new Response('pending', { status: 503 });
   };
   const env = { GIGI_ALLOWED_SUBJECTS: 'actual-subject', COMPOSIO_API_KEY: 'ak_test',
-    GIGI_GMAIL_AUTH_CONFIG_ID: 'ac_gmail', GIGI_GMAIL_APPROVED_SCOPES: 'https://www.googleapis.com/auth/gmail.readonly', DB: db };
+    GIGI_GMAIL_AUTH_CONFIG_ID: 'ac_qXoEQURadG-h', GIGI_GMAIL_APPROVED_SCOPES: selectedGmailScopes.join(','), DB: db };
   const status = await handleConnectorRequest(new Request('https://gigi-connector.createsomething.workers.dev/v1/gigi/connections/gmail', {
     headers: { authorization: 'Bearer test-token' },
   }), env, fetcher);
@@ -341,17 +459,17 @@ test('unknown link outcome recovers only a unique exact-owner Composio alias wit
     if (url.pathname === '/oauth/userinfo') return Response.json({ sub: 'actual-subject', resource: 'https://gigi-connector.createsomething.workers.dev', email_verified: true });
     if (url.pathname === '/api/v3.1/connected_accounts') {
       assert.equal(url.searchParams.get('user_ids'), owner);
-      assert.equal(url.searchParams.get('auth_config_ids'), 'ac_gmail');
+      assert.equal(url.searchParams.get('auth_config_ids'), 'ac_qXoEQURadG-h');
       return Response.json({ items: [{ id: 'ca_recovered', alias: 'request-1', user_id: owner, created_at: '2026-09-30T12:00:01Z',
-        auth_config: { id: 'ac_gmail' }, toolkit: { slug: 'gmail' }, experimental: { account_type: 'PRIVATE' } }], next_cursor: null });
+        auth_config: { id: 'ac_qXoEQURadG-h' }, toolkit: { slug: 'gmail' }, experimental: { account_type: 'PRIVATE' } }], next_cursor: null });
     }
     if (url.pathname === '/api/v3.1/connected_accounts/ca_recovered') return Response.json({ id: 'ca_recovered', user_id: owner,
-      auth_config: { id: 'ac_gmail' }, toolkit: { slug: 'gmail' }, status: 'ACTIVE', is_disabled: false,
-      experimental: { account_type: 'PRIVATE' }, requested_scopes: ['https://www.googleapis.com/auth/gmail.readonly'] });
+      auth_config: { id: 'ac_qXoEQURadG-h' }, toolkit: { slug: 'gmail' }, status: 'ACTIVE', is_disabled: false,
+      experimental: { account_type: 'PRIVATE' }, requested_scopes: selectedGmailScopes });
     throw new Error('unexpected provider route');
   };
   const env = { GIGI_ALLOWED_SUBJECTS: 'actual-subject', COMPOSIO_API_KEY: 'ak_test',
-    GIGI_GMAIL_AUTH_CONFIG_ID: 'ac_gmail', GIGI_GMAIL_APPROVED_SCOPES: 'https://www.googleapis.com/auth/gmail.readonly', DB: db };
+    GIGI_GMAIL_AUTH_CONFIG_ID: 'ac_qXoEQURadG-h', GIGI_GMAIL_APPROVED_SCOPES: selectedGmailScopes.join(','), DB: db };
   const response = await handleConnectorRequest(new Request('https://gigi-connector.createsomething.workers.dev/v1/gigi/connections/gmail', {
     headers: { authorization: 'Bearer test-token' },
   }), env, fetcher);
@@ -369,8 +487,8 @@ test('old dispatched attempt with zero alias matches requires operator review an
   const calls: string[] = [];
   const response = await handleConnectorRequest(new Request('https://gigi-connector.createsomething.workers.dev/v1/gigi/connections/gmail', {
     headers: { authorization: 'Bearer test-token' },
-  }), { GIGI_ALLOWED_SUBJECTS: 'actual-subject', COMPOSIO_API_KEY: 'ak_test', GIGI_GMAIL_AUTH_CONFIG_ID: 'ac_gmail',
-    GIGI_GMAIL_APPROVED_SCOPES: 'https://www.googleapis.com/auth/gmail.readonly', DB: db }, async (request) => {
+  }), { GIGI_ALLOWED_SUBJECTS: 'actual-subject', COMPOSIO_API_KEY: 'ak_test', GIGI_GMAIL_AUTH_CONFIG_ID: 'ac_qXoEQURadG-h',
+    GIGI_GMAIL_APPROVED_SCOPES: selectedGmailScopes.join(','), DB: db }, async (request) => {
     const path = new URL((request as Request).url).pathname; calls.push(path);
     if (path === '/oauth/userinfo') return Response.json({ sub: 'actual-subject', resource: 'https://gigi-connector.createsomething.workers.dev', email_verified: true });
     if (path === '/api/v3.1/connected_accounts') return Response.json({ items: [], next_cursor: null });
@@ -383,22 +501,63 @@ test('old dispatched attempt with zero alias matches requires operator review an
 
 test('reconcile rejects a connected account whose Composio owner differs from Identity owner', async () => {
   const db = { prepare() { return { bind() { return {
-    async first() { return { status: 'linked', connected_account_id: 'ca_account1', auth_config_id: 'ac_gmail' }; },
+    async first() { return { status: 'linked', connected_account_id: 'ca_account1', auth_config_id: 'ac_qXoEQURadG-h' }; },
     async run() { return { meta: { changes: 1 } }; }, async all() { return { results: [] }; },
   }; } }; } };
   const response = await handleConnectorRequest(new Request('https://gigi-connector.createsomething.workers.dev/v1/gigi/connections/gmail/ca_account1', {
     headers: { authorization: 'Bearer test-token' },
-  }), { GIGI_ALLOWED_SUBJECTS: 'actual-subject', COMPOSIO_API_KEY: 'ak_test', GIGI_GMAIL_AUTH_CONFIG_ID: 'ac_gmail',
-    GIGI_GMAIL_APPROVED_SCOPES: 'https://www.googleapis.com/auth/gmail.readonly', DB: db }, async (request) => {
+  }), { GIGI_ALLOWED_SUBJECTS: 'actual-subject', COMPOSIO_API_KEY: 'ak_test', GIGI_GMAIL_AUTH_CONFIG_ID: 'ac_qXoEQURadG-h',
+    GIGI_GMAIL_APPROVED_SCOPES: selectedGmailScopes.join(','), DB: db }, async (request) => {
     const url = new URL((request as Request).url);
     if (url.pathname === '/oauth/userinfo') return Response.json({
       sub: 'actual-subject', resource: 'https://gigi-connector.createsomething.workers.dev', email_verified: true,
     });
-    return Response.json({ id: 'ca_account1', user_id: 'gigi_wrong_owner', auth_config: { id: 'ac_gmail' },
+    return Response.json({ id: 'ca_account1', user_id: 'gigi_wrong_owner', auth_config: { id: 'ac_qXoEQURadG-h' },
       toolkit: { slug: 'gmail' }, status: 'ACTIVE', is_disabled: false,
-      experimental: { account_type: 'PRIVATE' }, requested_scopes: ['https://www.googleapis.com/auth/gmail.readonly'] });
+      experimental: { account_type: 'PRIVATE' }, requested_scopes: selectedGmailScopes });
   });
   assert.equal(response.status, 502);
+});
+
+test('reconcile cannot reactivate an attention row or win a concurrent release', async () => {
+  const hash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('actual-subject'));
+  const userId = 'gigi_' + [...new Uint8Array(hash)].map((byte) => byte.toString(16).padStart(2, '0')).join('').slice(0, 32);
+  let rowStatus = 'attention';
+  let updateChanges = 1;
+  let providerGets = 0;
+  let updateSql = '';
+  const db = { prepare(sql: string) { return { bind() { return {
+    async first() { return { status: rowStatus, connected_account_id: 'ca_account1' }; },
+    async run() { updateSql = sql; return { meta: { changes: updateChanges } }; },
+    async all() { return { results: [] }; },
+  }; } }; } };
+  const fetcher: typeof fetch = async (request) => {
+    const path = new URL((request as Request).url).pathname;
+    if (path === '/oauth/userinfo') return Response.json({ sub: 'actual-subject', resource: 'https://gigi-connector.createsomething.workers.dev', email_verified: true });
+    providerGets++;
+    assert.equal(path, '/api/v3.1/connected_accounts/ca_account1');
+    return Response.json({ id: 'ca_account1', user_id: userId, auth_config: { id: 'ac_qXoEQURadG-h' },
+      toolkit: { slug: 'gmail' }, status: 'ACTIVE', is_disabled: false,
+      experimental: { account_type: 'PRIVATE' }, requested_scopes: selectedGmailScopes });
+  };
+  const request = () => new Request('https://gigi-connector.createsomething.workers.dev/v1/gigi/connections/gmail/ca_account1', {
+    headers: { authorization: 'Bearer test-token' },
+  });
+  const env = { GIGI_ALLOWED_SUBJECTS: 'actual-subject', COMPOSIO_API_KEY: 'ak_test', GIGI_GMAIL_AUTH_CONFIG_ID: 'ac_qXoEQURadG-h',
+    GIGI_GMAIL_APPROVED_SCOPES: selectedGmailScopes.join(','), DB: db };
+  assert.equal((await handleConnectorRequest(request(), env, fetcher)).status, 404);
+  assert.equal(providerGets, 0);
+  assert.equal(updateSql, '');
+  rowStatus = 'linked';
+  updateChanges = 0;
+  assert.equal((await handleConnectorRequest(request(), env, fetcher)).status, 409);
+  assert.match(updateSql, /status IN \('linked', 'active'\)/u);
+  rowStatus = 'linked';
+  updateChanges = 1;
+  const connected = await handleConnectorRequest(request(), env, fetcher);
+  assert.equal(connected.status, 200);
+  assert.deepEqual(await connected.json(), { provider: 'gmail', state: 'connected', connectedAccountId: 'ca_account1' });
+  assert.equal(providerGets, 2);
 });
 
 test('Gmail source page returns projected read-only message metadata for the verified owner', async () => {
@@ -411,15 +570,15 @@ test('Gmail source page returns projected read-only message metadata for the ver
   }; } }; } };
   const response = await handleConnectorRequest(new Request('https://gigi-connector.createsomething.workers.dev/v1/gigi/sources/gmail/ca_account1/page', {
     headers: { authorization: 'Bearer test-token' },
-  }), { GIGI_ALLOWED_SUBJECTS: 'actual-subject', COMPOSIO_API_KEY: 'ak_test', GIGI_GMAIL_AUTH_CONFIG_ID: 'ac_gmail',
-    GIGI_GMAIL_APPROVED_SCOPES: 'https://www.googleapis.com/auth/gmail.readonly', DB: db }, async (request) => {
+  }), { GIGI_ALLOWED_SUBJECTS: 'actual-subject', COMPOSIO_API_KEY: 'ak_test', GIGI_GMAIL_AUTH_CONFIG_ID: 'ac_qXoEQURadG-h',
+    GIGI_GMAIL_APPROVED_SCOPES: selectedGmailScopes.join(','), DB: db }, async (request) => {
     const req = request as Request;
     assert.equal(req.redirect, 'manual');
     const url = new URL(req.url);
     if (url.pathname === '/oauth/userinfo') return Response.json({ sub: 'actual-subject', resource: 'https://gigi-connector.createsomething.workers.dev', email_verified: true });
     if (url.pathname.endsWith('/connected_accounts/ca_account1')) return Response.json({ id: 'ca_account1', user_id: userId,
-      auth_config: { id: 'ac_gmail' }, toolkit: { slug: 'gmail' }, status: 'ACTIVE', is_disabled: false,
-      experimental: { account_type: 'PRIVATE' }, requested_scopes: ['https://www.googleapis.com/auth/gmail.readonly'] });
+      auth_config: { id: 'ac_qXoEQURadG-h' }, toolkit: { slug: 'gmail' }, status: 'ACTIVE', is_disabled: false,
+      experimental: { account_type: 'PRIVATE' }, requested_scopes: selectedGmailScopes });
     const payload = await req.json() as { endpoint: string; method: string };
     assert.equal(payload.method, 'GET');
     endpoints.push(payload.endpoint);
@@ -436,6 +595,52 @@ test('Gmail source page returns projected read-only message metadata for the ver
   assert.equal(endpoints.length, 2);
 });
 
+test('selected Gmail config accepts only its exact provider grant while proxying bounded GETs', async () => {
+  const scopes = selectedGmailScopes;
+  const hash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('actual-subject'));
+  const userId = 'gigi_' + [...new Uint8Array(hash)].map((byte) => byte.toString(16).padStart(2, '0')).join('').slice(0, 32);
+  const db = { prepare() { return { bind() { return {
+    async first() { return { status: 'active', connected_account_id: 'ca_account1' }; },
+    async run() { throw new Error('source must not mutate'); }, async all() { return { results: [] }; },
+  }; } }; } };
+  const baseEnv = { GIGI_ALLOWED_SUBJECTS: 'actual-subject', COMPOSIO_API_KEY: 'ak_test',
+    GIGI_GMAIL_AUTH_CONFIG_ID: 'ac_qXoEQURadG-h', GIGI_GMAIL_APPROVED_SCOPES: scopes.join(','), DB: db };
+  let actualScopes = [...scopes];
+  let actualConfig = 'ac_qXoEQURadG-h';
+  let proxyCalls = 0;
+  const fetcher: typeof fetch = async (request) => {
+    const req = request as Request;
+    const path = new URL(req.url).pathname;
+    if (path === '/oauth/userinfo') return Response.json({ sub: 'actual-subject', resource: 'https://gigi-connector.createsomething.workers.dev', email_verified: true });
+    if (path.endsWith('/connected_accounts/ca_account1')) return Response.json({ id: 'ca_account1', user_id: userId,
+      auth_config: { id: actualConfig }, toolkit: { slug: 'gmail' }, status: 'ACTIVE', is_disabled: false,
+      experimental: { account_type: 'PRIVATE' }, requested_scopes: actualScopes });
+    assert.equal(path, '/api/v3.1/tools/execute/proxy');
+    const payload = await req.json() as { connected_account_id: string; method: string; endpoint: string };
+    assert.equal(payload.connected_account_id, 'ca_account1');
+    assert.equal(payload.method, 'GET');
+    assert.equal(payload.endpoint, 'https://gmail.googleapis.com/gmail/v1/users/me/messages');
+    proxyCalls++;
+    return Response.json({ status: 200, data: { messages: [] } });
+  };
+  const request = () => new Request('https://gigi-connector.createsomething.workers.dev/v1/gigi/sources/gmail/ca_account1/page', {
+    headers: { authorization: 'Bearer test-token' },
+  });
+  assert.equal((await handleConnectorRequest(request(), baseEnv, fetcher)).status, 200);
+  assert.equal(proxyCalls, 1);
+  actualScopes = scopes.slice(0, -1);
+  assert.equal((await handleConnectorRequest(request(), baseEnv, fetcher)).status, 502);
+  actualScopes = [...scopes, 'https://www.googleapis.com/auth/gmail.send'];
+  assert.equal((await handleConnectorRequest(request(), baseEnv, fetcher)).status, 502);
+  actualScopes = [...scopes];
+  actualConfig = 'ac_other';
+  assert.equal((await handleConnectorRequest(request(), baseEnv, fetcher)).status, 502);
+  assert.equal((await handleConnectorRequest(request(), { ...baseEnv, GIGI_GMAIL_AUTH_CONFIG_ID: 'ac_other' }, fetcher)).status, 502);
+  actualConfig = 'ac_qXoEQURadG-h';
+  assert.equal((await handleConnectorRequest(request(), { ...baseEnv, GIGI_GMAIL_APPROVED_SCOPES: scopes.slice(0, -1).join(',') }, fetcher)).status, 502);
+  assert.equal(proxyCalls, 1);
+});
+
 test('Calendar page derives primary calendar and projects events without provider writes', async () => {
   const hash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('actual-subject'));
   const userId = 'gigi_' + [...new Uint8Array(hash)].map((byte) => byte.toString(16).padStart(2, '0')).join('').slice(0, 32);
@@ -447,14 +652,14 @@ test('Calendar page derives primary calendar and projects events without provide
   const response = await handleConnectorRequest(new Request('https://gigi-connector.createsomething.workers.dev/v1/gigi/sources/googlecalendar/ca_calendar1/page', {
     headers: { authorization: 'Bearer test-token' },
   }), { GIGI_ALLOWED_SUBJECTS: 'actual-subject', COMPOSIO_API_KEY: 'ak_test',
-    GIGI_GOOGLECALENDAR_AUTH_CONFIG_ID: 'ac_calendar', GIGI_GOOGLECALENDAR_APPROVED_SCOPES: 'https://www.googleapis.com/auth/calendar.readonly', DB: db,
+    GIGI_GOOGLECALENDAR_AUTH_CONFIG_ID: 'ac_F0JVbnFvV3DQ', GIGI_GOOGLECALENDAR_APPROVED_SCOPES: selectedCalendarScopes.join(','), DB: db,
   }, async (request) => {
     const req = request as Request;
     const url = new URL(req.url);
     if (url.pathname === '/oauth/userinfo') return Response.json({ sub: 'actual-subject', resource: 'https://gigi-connector.createsomething.workers.dev', email_verified: true });
     if (url.pathname.endsWith('/connected_accounts/ca_calendar1')) return Response.json({ id: 'ca_calendar1', user_id: userId,
-      auth_config: { id: 'ac_calendar' }, toolkit: { slug: 'googlecalendar' }, status: 'ACTIVE', is_disabled: false,
-      experimental: { account_type: 'PRIVATE' }, requested_scopes: ['https://www.googleapis.com/auth/calendar.readonly'] });
+      auth_config: { id: 'ac_F0JVbnFvV3DQ' }, toolkit: { slug: 'googlecalendar' }, status: 'ACTIVE', is_disabled: false,
+      experimental: { account_type: 'PRIVATE' }, requested_scopes: selectedCalendarScopes });
     const payload = await req.json() as { endpoint: string; method: string };
     assert.equal(payload.method, 'GET');
     endpoints.push(payload.endpoint);
@@ -468,5 +673,50 @@ test('Calendar page derives primary calendar and projects events without provide
   assert.equal(page.records[0]?.kind, 'event');
   assert.equal(page.records[0]?.data.summary, 'Friday show');
   assert.equal(page.records[0]?.data.calendarId, 'artist@example.com');
+  assert.equal(endpoints.length, 2);
+});
+
+test('selected Calendar config accepts only its exact grant while proxying bounded GETs', async () => {
+  const hash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('actual-subject'));
+  const userId = 'gigi_' + [...new Uint8Array(hash)].map((byte) => byte.toString(16).padStart(2, '0')).join('').slice(0, 32);
+  const db = { prepare() { return { bind() { return {
+    async first() { return { status: 'active', connected_account_id: 'ca_calendar1' }; },
+    async run() { throw new Error('source must not mutate'); }, async all() { return { results: [] }; },
+  }; } }; } };
+  const env = { GIGI_ALLOWED_SUBJECTS: 'actual-subject', COMPOSIO_API_KEY: 'ak_test',
+    GIGI_GOOGLECALENDAR_AUTH_CONFIG_ID: 'ac_F0JVbnFvV3DQ',
+    GIGI_GOOGLECALENDAR_APPROVED_SCOPES: selectedCalendarScopes.join(','), DB: db };
+  let actualScopes = [...selectedCalendarScopes];
+  let actualConfig = 'ac_F0JVbnFvV3DQ';
+  const endpoints: string[] = [];
+  const fetcher: typeof fetch = async (request) => {
+    const req = request as Request;
+    const path = new URL(req.url).pathname;
+    if (path === '/oauth/userinfo') return Response.json({ sub: 'actual-subject', resource: 'https://gigi-connector.createsomething.workers.dev', email_verified: true });
+    if (path.endsWith('/connected_accounts/ca_calendar1')) return Response.json({ id: 'ca_calendar1', user_id: userId,
+      auth_config: { id: actualConfig }, toolkit: { slug: 'googlecalendar' }, status: 'ACTIVE', is_disabled: false,
+      experimental: { account_type: 'PRIVATE' }, requested_scopes: actualScopes });
+    assert.equal(path, '/api/v3.1/tools/execute/proxy');
+    const payload = await req.json() as { connected_account_id: string; method: string; endpoint: string };
+    assert.equal(payload.connected_account_id, 'ca_calendar1');
+    assert.equal(payload.method, 'GET');
+    endpoints.push(payload.endpoint);
+    if (payload.endpoint.endsWith('/calendars/primary')) return Response.json({ status: 200, data: { id: 'primary@example.test' } });
+    if (payload.endpoint.endsWith('/events')) return Response.json({ status: 200, data: { items: [] } });
+    throw new Error('unexpected proxy endpoint');
+  };
+  const request = () => new Request('https://gigi-connector.createsomething.workers.dev/v1/gigi/sources/googlecalendar/ca_calendar1/page', {
+    headers: { authorization: 'Bearer test-token' },
+  });
+  assert.equal((await handleConnectorRequest(request(), env, fetcher)).status, 200);
+  assert.equal(endpoints.length, 2);
+  actualScopes = selectedCalendarScopes.slice(0, -1);
+  assert.equal((await handleConnectorRequest(request(), env, fetcher)).status, 502);
+  actualScopes = [...selectedCalendarScopes, 'https://www.googleapis.com/auth/calendar.readonly'];
+  assert.equal((await handleConnectorRequest(request(), env, fetcher)).status, 502);
+  actualScopes = [...selectedCalendarScopes];
+  actualConfig = 'ac_other';
+  assert.equal((await handleConnectorRequest(request(), env, fetcher)).status, 502);
+  assert.equal((await handleConnectorRequest(request(), { ...env, GIGI_GOOGLECALENDAR_AUTH_CONFIG_ID: 'ac_other' }, fetcher)).status, 502);
   assert.equal(endpoints.length, 2);
 });

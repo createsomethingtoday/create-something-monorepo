@@ -1,5 +1,24 @@
 export const GIGI_RESOURCE = 'https://gigi-connector.createsomething.workers.dev';
 const IDENTITY_USERINFO = 'https://id.createsomething.space/oauth/userinfo';
+const SELECTED_GMAIL_AUTH_CONFIG_ID = 'ac_qXoEQURadG-h';
+const SELECTED_GMAIL_SCOPES = [
+  'https://www.googleapis.com/auth/userinfo.profile',
+  'https://www.googleapis.com/auth/userinfo.email',
+  'https://www.googleapis.com/auth/contacts.readonly',
+  'https://www.googleapis.com/auth/contacts.other.readonly',
+  'https://www.googleapis.com/auth/profile.language.read',
+  'https://www.googleapis.com/auth/user.addresses.read',
+  'https://www.googleapis.com/auth/user.birthday.read',
+  'https://www.googleapis.com/auth/user.emails.read',
+  'https://www.googleapis.com/auth/user.phonenumbers.read',
+  'https://www.googleapis.com/auth/profile.emails.read',
+  'https://mail.google.com/',
+] as const;
+const SELECTED_CALENDAR_AUTH_CONFIG_ID = 'ac_F0JVbnFvV3DQ';
+const SELECTED_CALENDAR_SCOPES = [
+  'https://www.googleapis.com/auth/calendar',
+  'https://www.googleapis.com/auth/calendar.events',
+] as const;
 
 export interface ConnectorEnv {
   COMPOSIO_API_KEY?: string;
@@ -37,8 +56,8 @@ export async function handleConnectorRequest(
   if (url.pathname === '/health' && request.method === 'GET') {
     const configured = Boolean(env.DB && env.COMPOSIO_API_KEY && env.GIGI_ALLOWED_SUBJECTS?.trim() &&
       env.GIGI_GMAIL_AUTH_CONFIG_ID && env.GIGI_GOOGLECALENDAR_AUTH_CONFIG_ID &&
-      readOnlyScopes('gmail', env.GIGI_GMAIL_APPROVED_SCOPES) &&
-      readOnlyScopes('googlecalendar', env.GIGI_GOOGLECALENDAR_APPROVED_SCOPES));
+      approvedScopes('gmail', env.GIGI_GMAIL_AUTH_CONFIG_ID, env.GIGI_GMAIL_APPROVED_SCOPES) &&
+      approvedScopes('googlecalendar', env.GIGI_GOOGLECALENDAR_AUTH_CONFIG_ID, env.GIGI_GOOGLECALENDAR_APPROVED_SCOPES));
     return json({ service: 'gigi-connector', status: configured ? 'available' : 'unconfigured' }, configured ? 200 : 503);
   }
   if (url.pathname === '/v1/gigi/connection-callback' && request.method === 'GET') {
@@ -102,12 +121,15 @@ export async function handleConnectorRequest(
     const row = await env.DB.prepare(
       'SELECT status, connected_account_id FROM gigi_connection_attempts WHERE subject = ? AND provider = ? AND connected_account_id = ? ORDER BY created_at DESC LIMIT 1',
     ).bind(subject, provider, accountId).first();
-    if (!row || row.connected_account_id !== accountId) return json({ error: 'not_found' }, 404);
+    if (!row || row.connected_account_id !== accountId || !['linked', 'active'].includes(String(row.status))) {
+      return json({ error: 'not_found' }, 404);
+    }
     const valid = await verifyComposioAccount(env, providerFetch, subject, provider, accountId);
     if (!valid) return json({ error: 'provider_readback_invalid' }, 502);
-    await env.DB.prepare(
-      "UPDATE gigi_connection_attempts SET status = 'active' WHERE subject = ? AND provider = ? AND connected_account_id = ?",
-    ).bind(subject, provider, accountId).run();
+    const activation = await env.DB.prepare(
+      "UPDATE gigi_connection_attempts SET status = 'active' WHERE subject = ? AND provider = ? AND connected_account_id = ? AND status IN ('linked', 'active')",
+    ).bind(subject, provider, accountId).run() as { meta?: { changes?: number } };
+    if (activation.meta?.changes !== 1) return json({ error: 'connection_changed' }, 409);
     return json({ provider, state: 'connected', connectedAccountId: accountId });
   }
   const source = /^\/v1\/gigi\/sources\/(gmail|googlecalendar)\/([A-Za-z0-9._:-]+)\/page$/u.exec(url.pathname);
@@ -219,7 +241,7 @@ async function readAccountState(
   if (!/^ca_[A-Za-z0-9_-]{1,128}$/u.test(accountId)) return 'invalid';
   const authConfigId = provider === 'gmail' ? env.GIGI_GMAIL_AUTH_CONFIG_ID : env.GIGI_GOOGLECALENDAR_AUTH_CONFIG_ID;
   const scopesRaw = provider === 'gmail' ? env.GIGI_GMAIL_APPROVED_SCOPES : env.GIGI_GOOGLECALENDAR_APPROVED_SCOPES;
-  if (!authConfigId || !readOnlyScopes(provider, scopesRaw)) return 'invalid';
+  if (!authConfigId || !approvedScopes(provider, authConfigId, scopesRaw)) return 'invalid';
   let data: unknown;
   try {
     const response = await providerFetch(new Request(`https://backend.composio.dev/api/v3.1/connected_accounts/${encodeURIComponent(accountId)}`, {
@@ -300,7 +322,7 @@ async function beginLink(
 ): Promise<Response> {
   const authConfigId = provider === 'gmail' ? env.GIGI_GMAIL_AUTH_CONFIG_ID : env.GIGI_GOOGLECALENDAR_AUTH_CONFIG_ID;
   const scopes = provider === 'gmail' ? env.GIGI_GMAIL_APPROVED_SCOPES : env.GIGI_GOOGLECALENDAR_APPROVED_SCOPES;
-  if (!authConfigId || !/^[A-Za-z0-9][A-Za-z0-9._:-]{2,127}$/u.test(authConfigId) || !readOnlyScopes(provider, scopes)) {
+  if (!authConfigId || !/^[A-Za-z0-9][A-Za-z0-9._:-]{2,127}$/u.test(authConfigId) || !approvedScopes(provider, authConfigId, scopes)) {
     return json({ error: 'unconfigured' }, 503);
   }
   let input: unknown;
@@ -325,8 +347,12 @@ async function beginLink(
   // an uncertain provider POST, so never send another link mutation for that ID.
   const attemptId = prior.request_id ?? requestId;
   if (prior.status === 'linked' && validConsentLink(prior.redirect_url, prior.expires_at)) {
-    return json({ provider, status: 'awaiting_consent', attemptId,
-      connectedAccountId: prior.connected_account_id, url: prior.redirect_url, expiresAt: prior.expires_at });
+    if (prior.connected_account_id &&
+      await readAccountState(env, providerFetch, subject, provider, prior.connected_account_id) === 'pending') {
+      return json({ provider, status: 'awaiting_consent', attemptId,
+        connectedAccountId: prior.connected_account_id, url: prior.redirect_url, expiresAt: prior.expires_at });
+    }
+    return json({ provider, status: 'readback_required', attemptId });
   }
   if (insertion.meta?.changes !== 1) return json({ provider, status: 'readback_required', attemptId });
   const userId = await composioUserId(subject);
@@ -347,9 +373,10 @@ async function beginLink(
   if (!validConsentLink(data.redirect_url, data.expires_at)) {
     return json({ error: 'provider_readback_invalid' }, 502);
   }
-  await env.DB!.prepare(
-    "UPDATE gigi_connection_attempts SET connected_account_id = ?, redirect_url = ?, expires_at = ?, status = 'linked' WHERE subject = ? AND provider = ? AND request_id = ?",
-  ).bind(data.connected_account_id, data.redirect_url, data.expires_at, subject, provider, requestId).run();
+  const linked = await env.DB!.prepare(
+    "UPDATE gigi_connection_attempts SET connected_account_id = ?, redirect_url = ?, expires_at = ?, status = 'linked' WHERE subject = ? AND provider = ? AND request_id = ? AND status = 'dispatched' AND connected_account_id IS NULL",
+  ).bind(data.connected_account_id, data.redirect_url, data.expires_at, subject, provider, requestId).run() as { meta?: { changes?: number } };
+  if (linked.meta?.changes !== 1) return json({ provider, status: 'readback_required', attemptId: requestId });
   return json({ provider, status: 'awaiting_consent', attemptId: requestId, connectedAccountId: data.connected_account_id,
     url: data.redirect_url, expiresAt: data.expires_at });
 }
@@ -364,20 +391,17 @@ function validConsentLink(url: unknown, expiresAt: unknown): url is string {
   } catch { return false; }
 }
 
-function readOnlyScopes(provider: 'gmail' | 'googlecalendar', raw: string | undefined): boolean {
+function approvedScopes(provider: 'gmail' | 'googlecalendar', authConfigId: string | undefined, raw: string | undefined): boolean {
   if (!raw) return false;
   const scopes = raw.split(',').map((scope) => scope.trim()).filter(Boolean);
   if (scopes.length === 0 || scopes.length > 16 || new Set(scopes).size !== scopes.length) return false;
-  const identity = new Set(['openid', 'email', 'profile', 'https://www.googleapis.com/auth/userinfo.email', 'https://www.googleapis.com/auth/userinfo.profile']);
-  const source = provider === 'gmail'
-    ? new Set(['https://www.googleapis.com/auth/gmail.readonly'])
-    : new Set(['https://www.googleapis.com/auth/calendar.readonly', 'https://www.googleapis.com/auth/calendar.events.readonly', 'https://www.googleapis.com/auth/calendar.calendars.readonly']);
-  const sufficient = provider === 'gmail'
-    ? scopes.includes('https://www.googleapis.com/auth/gmail.readonly')
-    : scopes.includes('https://www.googleapis.com/auth/calendar.readonly') ||
-      (scopes.includes('https://www.googleapis.com/auth/calendar.events.readonly') &&
-       scopes.includes('https://www.googleapis.com/auth/calendar.calendars.readonly'));
-  return sufficient && scopes.every((scope) => identity.has(scope) || source.has(scope));
+  if (provider === 'gmail' && authConfigId === SELECTED_GMAIL_AUTH_CONFIG_ID) {
+    return scopes.length === SELECTED_GMAIL_SCOPES.length && SELECTED_GMAIL_SCOPES.every((scope) => scopes.includes(scope));
+  }
+  if (provider === 'googlecalendar' && authConfigId === SELECTED_CALENDAR_AUTH_CONFIG_ID) {
+    return scopes.length === SELECTED_CALENDAR_SCOPES.length && SELECTED_CALENDAR_SCOPES.every((scope) => scopes.includes(scope));
+  }
+  return false;
 }
 
 async function authenticate(request: Request, env: ConnectorEnv, providerFetch: typeof fetch): Promise<string | null> {
