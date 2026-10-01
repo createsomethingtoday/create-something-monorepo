@@ -198,7 +198,8 @@ test('source card explains an in-progress session refresh and keeps manual statu
 test('Overview shows actionable workspace data, opens its records, and keeps library navigation available', async () => {
   const listeners = new Map(); const calls = [];
   const root = { innerHTML: '', classList: { toggle() {} }, addEventListener(name, handler) { listeners.set(name, handler); }, querySelector() { return null; } };
-  const previous = { document: globalThis.document, tauri: globalThis.__TAURI__ };
+  const previous = { document: globalThis.document, tauri: globalThis.__TAURI__, scrollTo: globalThis.scrollTo };
+  const scrolls = []; globalThis.scrollTo = (...args) => scrolls.push(args);
   globalThis.document = { querySelector: () => root };
   globalThis.__TAURI__ = { core: { invoke: async (_command, { operation, input }) => {
     calls.push({ operation, input });
@@ -218,7 +219,10 @@ test('Overview shows actionable workspace data, opens its records, and keeps lib
     assert.match(root.innerHTML, /Showing 1 of 6 matching records · 2 without a usable date/);
     assert.match(root.innerHTML, /<details class="nav-library" data-library-nav="1" >/);
     assert.equal(calls.filter(({operation}) => operation === 'workspace.overview').length, 1);
+    const beforeNavigation = scrolls.length;
     click({ open: 'f1', entity: 'finances' }); await settle();
+    assert.ok(scrolls.length > beforeNavigation);
+    assert.deepEqual(scrolls.at(-1), [0, 0]);
     assert.match(root.innerHTML, /Venue expense/); assert.match(root.innerHTML, /Fri, Oct 2, 2026/);
     assert.match(root.innerHTML, /More details \(1\)/); assert.match(root.innerHTML, /Retained/);
     listeners.get('toggle')({target:{dataset:{libraryNav:'1'},open:true}});
@@ -227,5 +231,5 @@ test('Overview shows actionable workspace data, opens its records, and keeps lib
     assert.match(root.innerHTML, /Add your first service/);
     click({ new: 'services' });
     assert.match(root.innerHTML, /id="record-form"/);
-  } finally { globalThis.document = previous.document; globalThis.__TAURI__ = previous.tauri; }
+  } finally { globalThis.document = previous.document; globalThis.__TAURI__ = previous.tauri; globalThis.scrollTo = previous.scrollTo; }
 });

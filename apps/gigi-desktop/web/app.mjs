@@ -42,7 +42,7 @@ async function load() {
   render();
 }
 
-async function openPage(page) {
+async function openPage(page, resetScroll = false) {
   if (page !== 'settings') state.justCreated = false;
   state.page = page; state.selected = null; state.editing = false; state.editorDraft = null; state.sourceExpanded = false; state.summary = null;
   if (page !== 'settings') state.pendingRestoreId = null;
@@ -62,6 +62,7 @@ async function openPage(page) {
     state.nextCursor = result?.nextCursor || null;
   }
   render();
+  if (resetScroll) globalThis.scrollTo?.(0, 0);
 }
 
 async function selectRecord(id) {
@@ -71,6 +72,7 @@ async function selectRecord(id) {
   state.sourceExpanded = false;
   if (state.page === 'gigs') state.summary = await bridge.gigSummary(workspaceId(), id);
   render();
+  globalThis.scrollTo?.(0, 0);
 }
 
 function sidebar() {
@@ -227,10 +229,10 @@ function submitLink(data) {
 
 root.addEventListener('click', (event) => {
   const button = event.target.closest('button'); if (!button) return;
-  if (button.dataset.page) void run(() => openPage(button.dataset.page));
-  else if (button.dataset.new) { state.justCreated = false; state.page = button.dataset.new; state.selected = null; state.editorDraft = null; state.editing = true; render(); }
+  if (button.dataset.page) void run(() => openPage(button.dataset.page, true));
+  else if (button.dataset.new) { state.justCreated = false; state.page = button.dataset.new; state.selected = null; state.editorDraft = null; state.editing = true; render(); globalThis.scrollTo?.(0, 0); }
   else if (button.dataset.open) void run(async () => { if (state.page !== button.dataset.entity) await openPage(button.dataset.entity); await selectRecord(button.dataset.open); });
-  else if (button.dataset.back || button.dataset.cancel) { state.selected = null; state.editing = false; state.editorDraft = null; render(); }
+  else if (button.dataset.back || button.dataset.cancel) { state.selected = null; state.editing = false; state.editorDraft = null; render(); globalThis.scrollTo?.(0, 0); }
   else if (button.dataset.edit) void run(async () => { state.selected = await bridge.getRecord(workspaceId(), state.page, state.selected.id, 'full'); state.editorDraft = null; state.editing = true; });
   else if (button.dataset.full) void run(async () => { state.selected = await bridge.getRecord(workspaceId(), state.page, state.selected.id, 'full'); });
   else if (button.dataset.sourceDetail) void run(async () => { state.selected = await bridge.getRecord(workspaceId(), state.page, state.selected.id, 'full'); state.sourceExpanded = true; });
