@@ -2,6 +2,7 @@
   import { ArrowUpRight, PencilLine, Workflow, ShieldCheck } from 'lucide-svelte';
   import { Button, PerformanceConversionHandoff, PerformancePageSection, SEO } from '@create-something/canon';
   import AgencyMapHero from '$lib/components/AgencyMapHero.svelte';
+  import WorkflowSignalBand from '$lib/components/WorkflowSignalBand.svelte';
   import { page } from '$app/stores';
   import { PUBLIC_PRICING } from '$lib/data/publicPricing';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
@@ -24,6 +25,7 @@
 
 <main class="map-page">
   <AgencyMapHero />
+  <WorkflowSignalBand proofHref="/#built-work" />
 
   <PerformancePageSection
     id="canvas"
