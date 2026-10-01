@@ -11,10 +11,12 @@
   let mounted = false, visible = false, osReduced = true, lastTrigger = trigger;
   let timer: ReturnType<typeof setTimeout> | undefined;
   let generation = 0;
+  let pendingAction = false;
   function settle() { generation++; clearTimeout(timer); src = `/canon/${pose}/00.png`; }
   async function play() {
     settle();
     if (!mounted || !visible || osReduced || $reducedFilmMotion || document.hidden) return;
+    pendingAction = false;
     const current = generation;
     const frames = Array.from({ length: counts[action] }, (_, i) => `/canon/${action}/${String(i).padStart(2, '0')}.png`);
     try {
@@ -25,17 +27,17 @@
     const advance = () => { if (index >= frames.length) { settle(); return; } src = frames[index++]; timer = setTimeout(advance, 125); };
     advance();
   }
-  $: if (pose) settle();
-  $: if (mounted && trigger !== lastTrigger) { lastTrigger = trigger; void play(); }
-  $: if ($reducedFilmMotion || osReduced) settle();
+  $: if (pose) { pendingAction = false; settle(); }
+  $: if (mounted && trigger !== lastTrigger) { lastTrigger = trigger; pendingAction = !osReduced && !$reducedFilmMotion && !document.hidden; void play(); }
+  $: if ($reducedFilmMotion || osReduced) { pendingAction = false; settle(); }
   onMount(() => {
     mounted = true;
     const preference = matchMedia('(prefers-reduced-motion: reduce)');
     const change = () => { osReduced = preference.matches; if (osReduced) settle(); };
     change(); preference.addEventListener('change', change);
-    const observer = new IntersectionObserver(([entry]) => { visible = entry.isIntersecting; if (!visible) settle(); });
+    const observer = new IntersectionObserver(([entry]) => { visible = entry.isIntersecting; if (!visible) settle(); else if (pendingAction) void play(); });
     observer.observe(image);
-    const visibility = () => { if (document.hidden) settle(); };
+    const visibility = () => { if (document.hidden) { pendingAction = false; settle(); } };
     document.addEventListener('visibilitychange', visibility);
     return () => { mounted = false; settle(); observer.disconnect(); preference.removeEventListener('change', change); document.removeEventListener('visibilitychange', visibility); };
   });
