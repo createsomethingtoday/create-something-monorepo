@@ -61,3 +61,15 @@ h1 span{min-width:0}
 .relation > .ui-icon{margin-top:2px;color:var(--muted)}
 .number .ui-icon{width:14px;height:14px;flex-basis:14px}
 @media(max-width:700px){h1{gap:10px}.nav button{flex-shrink:0}}
+
+/* Daily work is visible; supporting records and setup detail stay within reach. */
+.nav-library summary{color:var(--muted);font-size:11px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;padding:8px 10px;line-height:1.5}
+.nav-library[open] summary{color:var(--text);margin-bottom:8px}
+.nav-library .nav{margin-top:4px}
+.empty p{margin:8px auto 18px;max-width:38ch}
+.overview-empty{font-size:13px;line-height:1.6;padding:14px 0}
+.overview-guide summary{color:var(--text);font-size:14px}
+.setup-checklist{margin:24px 0 32px}
+.setup-checklist > p{font-size:14px;line-height:1.6;max-width:65ch}
+.setup-checklist > .steps{margin-top:18px}
+@media(max-width:700px){.nav-library summary{padding-left:0}.nav-library .nav{margin-bottom:10px}}

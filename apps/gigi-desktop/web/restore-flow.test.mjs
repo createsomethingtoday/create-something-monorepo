@@ -13,6 +13,7 @@ test('restore requires visible in-app confirmation before native mutation',async
   globalThis.confirm=()=>{throw new Error('native confirm must not be used');};
   globalThis.__TAURI__={core:{invoke:async(_command,{operation,input})=>{
     calls.push({operation,input});
+    if(operation==='workspace.overview')return {counts:{gigs:0,tasks:0,contacts:0,finances:0},gigs:{items:[],count:0},tasks:{items:[],count:0},finances:{items:[],count:0}};
     if(operation==='workspace.get')return {id:'w1',name:'Acceptance'};
     if(operation==='records.list')return input.entity==='profile'?{items:[{id:'p1'}],count:1}:{items:[],count:0};
     if(operation==='records.get')return {id:'p1',fields:{Currency:'USD'}};
@@ -23,7 +24,7 @@ test('restore requires visible in-app confirmation before native mutation',async
   }}};
   try{
     await import('./app.mjs?restore-flow-test');
-    await until(()=>root.innerHTML.includes('Make room for the work'));
+    await until(()=>root.innerHTML.includes('Your work at a glance'));
     handlers.click({target:{closest:()=>({dataset:{page:'settings'}})}});
     await until(()=>root.innerHTML.includes('Backup & restore'));
     handlers.submit({preventDefault(){},target:{id:'restore-form',backupId:'64cad020-db32-49e9-8e85-581ed3172dbb'}});
