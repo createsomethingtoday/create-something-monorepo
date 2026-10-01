@@ -220,7 +220,6 @@ test('public Agency commercial propositions declare the shared editorial express
     'services',
     'practice',
     'stack',
-    'map',
     'control',
     'products',
     'products/ground',
@@ -258,6 +257,9 @@ test('public Agency commercial propositions declare the shared editorial express
       `${route} must opt into editorial campaign type`
     );
   }
+
+  const map = readFileSync(new URL('../src/routes/map/+page.svelte', import.meta.url), 'utf8');
+  assert.match(map, /<AgencyMapHero \/>/);
 
   for (const route of sectionHeroRoutes) {
     const source = readFileSync(
