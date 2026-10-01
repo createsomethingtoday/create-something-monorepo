@@ -131,7 +131,7 @@ function buildPublicSearchCacheRequest(requestUrl: URL, params: SearchParams, ca
   if (cacheQuery.length > 64) return null;
 
   const cacheUrl = new URL(requestUrl.pathname, requestUrl.origin);
-  cacheUrl.searchParams.set('cache_version', `${cacheVersion}:cms-v1`);
+  cacheUrl.searchParams.set('cache_version', `${cacheVersion}:cms-v1:signals-v1`);
   if (cacheQuery) cacheUrl.searchParams.set('q', cacheQuery);
   for (const key of PUBLIC_SEARCH_CACHE_PARAM_ORDER) {
     switch (key) {
