@@ -53,3 +53,9 @@ GiGi bundles a Lucide 0.562.0 SVG subset from the same installed library used by
 After bootstrapping the worktree, verify exact upstream geometry and license with `node apps/gigi-desktop/scripts/sync-icons.mjs --check`; regenerate with the same command without `--check`. Version changes require review.
 
 CTX provenance: Codex session `5cd548a5`, event `26b16ef1` records Agency's Lucide dependency; current `packages/agency/package.json` and installed package version independently confirm 0.562.0. Isocons was visually reviewed at https://www.isocons.app/; Lucide was selected for readability in compact navigation/actions.
+
+### Daily-work experience
+
+Overview queries the whole private workspace through the read-only `workspace.overview` operation. It shows up to five upcoming active gigs, five unfinished tasks (due date, then planned date), and five Expected/Invoiced/Overdue financial records. Counts describe all matching records; income and expenses remain distinct rather than being netted into a balance. Missing or invalid gig dates are called out. The desktop supplies today's local calendar date; invalid date candidates fall back to a valid alternate, otherwise sort last.
+
+Daily navigation remains visible; Library expands for supporting records. Record details prioritize actionable fields without removing supporting data. Dates retain their original calendar day, booleans use Yes/No, and empty sections explain their purpose with a first action. Settings uses connection receipts to explain the next step. Preparing an agent connector, using a local tool, and verifying phone access remain separate evidence levels. Technical source details and completed-agent setup steps are available through disclosures.

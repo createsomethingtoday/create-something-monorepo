@@ -184,7 +184,7 @@ test('source card explains an in-progress session refresh and keeps manual statu
     assert.doesNotMatch(root.innerHTML, /refresh_in_progress/);
     assert.match(root.innerHTML, /data-source-refresh="gmail"><svg[^>]*aria-hidden="true"[^>]*>[\s\S]*?<\/svg>Check status<\/button>/);
     assert.doesNotMatch(root.innerHTML, /data-source-begin="gmail"/);
-    assert.match(root.innerHTML, /1 of 2 source accounts verified/);
+    assert.match(root.innerHTML, /1 of 2 verified/);
 
     gmailDetail = 'Unusual <source> outage';
     click({ sourceRefresh: 'gmail' }); await settle();
@@ -193,4 +193,43 @@ test('source card explains an in-progress session refresh and keeps manual statu
     globalThis.document = previous.document;
     globalThis.__TAURI__ = previous.tauri;
   }
+});
+
+test('Overview shows actionable workspace data, opens its records, and keeps library navigation available', async () => {
+  const listeners = new Map(); const calls = [];
+  const root = { innerHTML: '', classList: { toggle() {} }, addEventListener(name, handler) { listeners.set(name, handler); }, querySelector() { return null; } };
+  const previous = { document: globalThis.document, tauri: globalThis.__TAURI__, scrollTo: globalThis.scrollTo };
+  const scrolls = []; globalThis.scrollTo = (...args) => scrolls.push(args);
+  globalThis.document = { querySelector: () => root };
+  globalThis.__TAURI__ = { core: { invoke: async (_command, { operation, input }) => {
+    calls.push({ operation, input });
+    if (operation === 'workspace.get') return { id: 'w1', name: 'Private' };
+    if (operation === 'workspace.overview') return { counts: { gigs: 28, tasks: 7, contacts: 2, finances: 3 }, undatedGigsCount: 2, gigs: { items: [{ id: 'g1', title: 'Upcoming show', date: '2026-10-02', status: 'Confirmed' }], count: 6 }, tasks: { items: [{ id: 't1', title: 'Follow up', date: '2026-09-29', status: 'Open' }], count: 4 }, finances: { items: [{ id: 'f1', title: 'Venue expense', status: 'Expected', moneyCents: 9000, fields: { Direction: 'Expense' } }], count: 2 } };
+    if (operation === 'records.list') return { items: input.entity === 'profile' ? [{ id: 'p1' }] : [], count: input.entity === 'profile' ? 1 : 0 };
+    if (operation === 'records.get') return { id: input.id, title: input.entity === 'profile' ? 'Owner' : 'Venue expense', fields: input.entity === 'profile' ? { Currency: 'USD' } : { Amount: 9000, Direction: 'Expense', 'Due Date': '2026-10-02', Custom: 'Retained' }, relations: [] };
+    return {};
+  } } };
+  const settle = () => new Promise((resolve) => setImmediate(resolve));
+  const click = (dataset) => listeners.get('click')({ target: { closest: () => ({ dataset }) } });
+  try {
+    await import(`./app.mjs?overview-test=${Date.now()}`); await settle();
+    assert.match(root.innerHTML, /Upcoming work/); assert.match(root.innerHTML, /Upcoming show/);
+    assert.match(root.innerHTML, /Open tasks/); assert.match(root.innerHTML, /Follow up/);
+    assert.match(root.innerHTML, /Expense · \$90\.00/);
+    assert.match(root.innerHTML, /Showing 1 of 6 matching records · 2 without a usable date/);
+    assert.match(root.innerHTML, /<details class="nav-library" data-library-nav="1" >/);
+    assert.equal(calls.filter(({operation}) => operation === 'workspace.overview').length, 1);
+    const beforeNavigation = scrolls.length;
+    click({ open: 'f1', entity: 'finances' }); await settle();
+    assert.ok(scrolls.length > beforeNavigation);
+    assert.deepEqual(scrolls.at(-1), [0, 0]);
+    assert.match(root.innerHTML, /Venue expense/); assert.match(root.innerHTML, /Fri, Oct 2, 2026/);
+    assert.match(root.innerHTML, /More details \(1\)/); assert.match(root.innerHTML, /Retained/);
+    listeners.get('toggle')({target:{dataset:{libraryNav:'1'},open:true}});
+    click({ page: 'services' }); await settle();
+    assert.match(root.innerHTML, /data-library-nav="1" open/);
+    assert.match(root.innerHTML, /Add your first service/);
+    click({ new: 'services' });
+    assert.match(root.innerHTML, /id="record-form"/);
+  } finally { globalThis.document = previous.document; globalThis.__TAURI__ = previous.tauri; globalThis.scrollTo = previous.scrollTo; }
 });
