@@ -420,7 +420,7 @@
           {/if}
 
           {#if brandContent}
-            {@render brandContent()}
+            <div class="footer-brand-content">{@render brandContent()}</div>
           {:else if aboutText}
             {#if !brandAsset && !usesEditorialStyle}
               <div class="brand-title mb-4">CREATE SOMETHING</div>
@@ -1283,6 +1283,10 @@
     border-radius: var(--radius-performance-editorial, 0.375rem);
     background: var(--color-performance-editorial-dark-secondary, #2e2927);
     box-shadow: none;
+  }
+
+  .footer-editorial .footer-brand-content {
+    color: var(--color-performance-editorial-light, #f3ebe4);
   }
 
   .footer-editorial .brand-title {
