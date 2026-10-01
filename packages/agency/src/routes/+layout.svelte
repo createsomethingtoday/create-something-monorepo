@@ -482,7 +482,7 @@
 <!-- Unified Search - Cmd/Ctrl+K to open -->
 <UnifiedSearch currentProperty="agency" localItems={quickAccessItems} showMobileButton={false} />
 
-<div class="layout-root min-h-screen property-performance" class:film-shell={usesPublicNavigation} class:film-home={isPublicMarketingRoute && $page.url.pathname === "/"}>
+<div class="layout-root min-h-screen property-performance" class:film-shell={usesPublicNavigation} class:film-home={isPublicMarketingRoute && $page.url.pathname === "/"} class:canon-footer={$page.url.pathname === '/' || $page.url.pathname === '/practice'}>
   <Navigation
     logo="CREATE SOMETHING"
     logoSuffix=".agency"
@@ -555,6 +555,8 @@
   .film-shell :global(.nav-editorial .nav-link-list) { border: 0; background: transparent; }
   .film-shell :global(.footer-link-groups) { gap: 40px; }
   .film-shell :global(.footer-editorial-identity) { padding-block: 50px; }
+  .canon-footer :global(.footer-editorial-identity) { align-items: center; padding-top: var(--space-performance-lg); padding-bottom: var(--space-performance-md); }
+  .canon-footer :global(.footer-editorial-identity__asset) { width: min(100%, 20rem); }
   @media(max-width:700px) { .film-shell :global(.nav-editorial.nav-fixed) { top: 10px; left: 4vw; right: 4vw; } .film-shell :global(.nav-editorial .nav-inner) { padding-inline: 12px; } }
 
   .layout-root {
