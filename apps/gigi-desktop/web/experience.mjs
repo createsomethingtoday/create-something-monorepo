@@ -41,7 +41,7 @@ const emptyDescriptions = {
 };
 export function emptyCopy(entity) {
   const [name, description] = emptyDescriptions[entity] || ['record', 'Add a record to start building your workspace.'];
-  return { title: `No ${name === 'company' ? 'companies' : name === 'financial record' ? 'financial records' : name + 's'} yet.`, description, action: `Add your first ${name}` };
+  return { title: `No ${({ gigs: 'gigs or shifts', schedule: 'schedule entries', companies: 'companies' })[entity] || name + 's'} yet.`, description, action: `Add your first ${name}` };
 }
 export function localToday(date = new Date()) {
   return [date.getFullYear(), String(date.getMonth() + 1).padStart(2, '0'), String(date.getDate()).padStart(2, '0')].join('-');

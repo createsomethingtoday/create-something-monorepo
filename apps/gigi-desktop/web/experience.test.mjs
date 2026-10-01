@@ -21,4 +21,6 @@ test('empty sections explain their purpose and suggest a first action', () => {
   assert.match(emptyCopy('contacts').description, /people.*link/i);
   assert.match(emptyCopy('finances').description, /income.*expense/i);
   assert.equal(emptyCopy('tasks').action, 'Add your first task');
+  assert.equal(emptyCopy('schedule').title, 'No schedule entries yet.');
+  assert.equal(emptyCopy('gigs').title, 'No gigs or shifts yet.');
 });
