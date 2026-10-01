@@ -73,3 +73,7 @@ h1 span{min-width:0}
 .setup-checklist > p{font-size:14px;line-height:1.6;max-width:65ch}
 .setup-checklist > .steps{margin-top:18px}
 @media(max-width:700px){.nav-library summary{padding-left:0}.nav-library .nav{margin-bottom:10px}}
+
+.overview-metrics .card{min-height:94px;padding:16px}
+.overview-metrics .value{font-size:26px;margin-top:12px}
+@media(max-width:900px){.overview-metrics{grid-template-columns:repeat(3,minmax(0,1fr))}.overview-metrics .label{font-size:10px;letter-spacing:.06em}}
