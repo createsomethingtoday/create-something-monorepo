@@ -36,7 +36,7 @@
   </ol>
   <footer>
     {#if showCanonContinuation}
-      <div class="canon-continuation"><CanonCompanion size="large" /><div><strong>See how the work works.</strong><p>Explore the process, what you receive, and how we check it.</p><a href="/services">How it works <span aria-hidden="true">→</span></a></div></div>
+      <div class="canon-continuation"><div class="canon-guide"><CanonCompanion size="guide" pose="look-up-right" /></div><div><strong>See how the work works.</strong><p>Explore the process, what you receive, and how we check it.</p><a href="/services">How it works <span aria-hidden="true">→</span></a></div></div>
     {/if}
     <p>
       These examples show our engineering range. Public source and evaluation reports are linked
@@ -48,8 +48,9 @@
 </section>
 
 <style>
-  .canon-continuation { display: flex; align-items: center; gap: 1.5rem; padding: 1.5rem 0; border-bottom: 1px solid var(--color-performance-line-strong); margin-bottom: 1.5rem; }
-  .canon-continuation strong { font-size: 1.125rem; }
+  .canon-continuation { display: grid; grid-template-columns: 1fr 2fr 1fr; align-items: center; gap: var(--space-performance-lg); padding-bottom: var(--space-performance-lg); border-bottom: 1px solid var(--color-performance-line-strong); margin-bottom: var(--space-performance-lg); }
+  .canon-guide { justify-self: end; }
+  .canon-continuation strong { font-size: 1.25rem; font-weight: 500; }
   .canon-continuation p { margin: .5rem 0; }
   .built-work {
     scroll-margin-top: 6rem;
@@ -153,6 +154,7 @@
     font-size: 0.9rem;
   }
   @media (max-width: 760px) {
+    .canon-continuation { grid-template-columns: auto minmax(0, 1fr); gap: var(--space-performance-md); }
     li {
       grid-template-columns: 1fr;
       gap: var(--space-performance-sm);

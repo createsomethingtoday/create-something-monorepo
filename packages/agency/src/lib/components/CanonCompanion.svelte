@@ -1,10 +1,10 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { reducedFilmMotion } from '$lib/motion/filmPlayback';
-  export let pose: 'idle' | 'review' = 'idle';
+  export let pose: 'idle' | 'review' | 'look-up-right' = 'idle';
   export let action: 'jumping' | 'waving' = 'waving';
   export let trigger = 0;
-  export let size: 'small' | 'large' = 'small';
+  export let size: 'small' | 'large' | 'guide' = 'small';
   const counts = { jumping: 5, waving: 4 };
   let image: HTMLImageElement;
   let src = '/canon/idle/00.png';
@@ -42,11 +42,12 @@
     return () => { mounted = false; settle(); observer.disconnect(); preference.removeEventListener('change', change); document.removeEventListener('visibilitychange', visibility); };
   });
 </script>
-<span class="canon" class:large={size === 'large'} aria-hidden="true"><img bind:this={image} {src} alt="" width="192" height="208" loading="lazy" decoding="async" /></span>
+<span class="canon" class:large={size === 'large'} class:guide={size === 'guide'} aria-hidden="true"><img bind:this={image} {src} alt="" width="192" height="208" loading="lazy" decoding="async" /></span>
 <style>
   .canon { display: inline-block; width: 96px; flex: 0 0 auto; position: relative; vertical-align: bottom; }
   .canon::after { content: ''; position: absolute; bottom: 7%; left: 24%; right: 16%; height: 4px; background: rgba(0,0,0,.45); filter: blur(4px); }
   img { display: block; position: relative; z-index: 1; width: 100%; height: auto; filter: drop-shadow(0 0 1px rgba(210,208,199,.45)); }
   .large { width: 152px; }
-  @media (max-width: 640px) { .canon { width: 72px; } .large { width: 96px; } }
+  .guide { width: 128px; }
+  @media (max-width: 640px) { .canon { width: 72px; } .large { width: 96px; } .guide { width: 80px; } }
 </style>
