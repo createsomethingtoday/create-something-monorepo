@@ -124,7 +124,7 @@ function formatMonth(period: string): string {
  * excludes the current month's picks and every historical feature. Without that
  * gate this would notify ~620 creators about features going back to 2025.
  */
-function buildFormula(): string {
+function buildFormula(currentPeriod?: string): string {
   // Deliberately NOT gated on ⭐Reviewer pick: measured 2026-07-31, that checkbox
   // is unset on 13 of the 25 currently-featured templates even though all 25 have
   // a Pick Reason. Requiring it would silently skip ~half of every batch.
@@ -134,7 +134,9 @@ function buildFormula(): string {
     `{${F.isFeatured}},`,
     `{${F.assetType}}="${TEMPLATE_ASSET_TYPE_ID}",`,
     `NOT({${F.pickReason}}=BLANK()),`,
-    `IS_AFTER({${F.featuredPeriod}},TODAY()),`,
+    currentPeriod
+      ? `IS_SAME({${F.featuredPeriod}},'${currentPeriod}','month'),`
+      : `IS_AFTER({${F.featuredPeriod}},TODAY()),`,
     `OR(`,
     `{${F.notifiedForPeriod}}=BLANK(),`,
     `NOT(IS_SAME({${F.notifiedForPeriod}},{${F.featuredPeriod}},'month'))`,
@@ -143,7 +145,11 @@ function buildFormula(): string {
   ].join('');
 }
 
-async function fetchCandidateRecords(env: Env, apiKey: string): Promise<AirtableRecord[]> {
+async function fetchCandidateRecords(
+  env: Env,
+  apiKey: string,
+  currentPeriod?: string
+): Promise<AirtableRecord[]> {
   const baseId = env.AIRTABLE_BASE_ID || DEFAULT_BASE_ID;
   const tableId = env.AIRTABLE_ASSETS_TABLE_ID || DEFAULT_ASSETS_TABLE_ID;
   const delay = Number(env.AIRTABLE_REQUEST_DELAY_MS || '250');
@@ -153,7 +159,7 @@ async function fetchCandidateRecords(env: Env, apiKey: string): Promise<Airtable
 
   for (let page = 0; page < 50; page += 1) {
     const params = new URLSearchParams();
-    params.set('filterByFormula', buildFormula());
+    params.set('filterByFormula', buildFormula(currentPeriod));
     params.set('pageSize', '100');
     // Without this, Airtable keys the response by field NAME and every field-ID
     // lookup silently returns undefined — producing blank notifications.
@@ -275,7 +281,23 @@ async function stampNotified(env: Env, apiKey: string, c: Candidate): Promise<vo
   }
 }
 
-async function run(env: Env, forceDryRun?: boolean): Promise<RunResult> {
+/**
+ * A batch selected mid-month for the current month (period = the 1st of this
+ * month) never passes the default IS_AFTER gate. `?period=YYYY-MM-01` lets an
+ * admin run the same send for that batch. Only the current UTC month is
+ * accepted, so this cannot reach historical batches; the per-period stamp and
+ * Knock idempotency key still prevent duplicates.
+ */
+function parseCurrentPeriod(url: URL): { period?: string; error?: string } {
+  const raw = url.searchParams.get('period');
+  if (raw === null) return {};
+  const now = new Date();
+  const current = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}-01`;
+  if (raw !== current) return { error: `period must be the current month (${current})` };
+  return { period: current };
+}
+
+async function run(env: Env, forceDryRun?: boolean, currentPeriod?: string): Promise<RunResult> {
   const apiKey = env.AIRTABLE_API_KEY;
   if (!apiKey) throw new Error('AIRTABLE_API_KEY is not configured');
 
@@ -283,7 +305,7 @@ async function run(env: Env, forceDryRun?: boolean): Promise<RunResult> {
   // so a half-configured deploy cannot email creators.
   const dryRun = forceDryRun ?? (env.DRY_RUN !== 'false' || !env.KNOCK_API_KEY);
 
-  const records = await fetchCandidateRecords(env, apiKey);
+  const records = await fetchCandidateRecords(env, apiKey, currentPeriod);
   const result: RunResult = {
     dryRun,
     scanned: records.length,
@@ -384,8 +406,10 @@ export default {
       if (!authorized(request, env)) {
         return Response.json({ error: 'unauthorized' }, { status: 401 });
       }
+      const { period, error } = parseCurrentPeriod(url);
+      if (error) return Response.json({ error }, { status: 400 });
       try {
-        return Response.json(await run(env, true));
+        return Response.json(await run(env, true, period));
       } catch (error) {
         return Response.json(
           { error: error instanceof Error ? error.message : String(error) },
@@ -399,8 +423,10 @@ export default {
       if (!authorized(request, env)) {
         return Response.json({ error: 'unauthorized' }, { status: 401 });
       }
+      const { period, error } = parseCurrentPeriod(url);
+      if (error) return Response.json({ error }, { status: 400 });
       try {
-        return Response.json(await run(env));
+        return Response.json(await run(env, undefined, period));
       } catch (error) {
         return Response.json(
           { error: error instanceof Error ? error.message : String(error) },
