@@ -2,6 +2,7 @@
 	import type { PageData } from './$types';
 	import { PapersGrid, SEO } from '@create-something/canon';
 	import type { Paper } from '@create-something/canon/types';
+	import { isMotionExperiment } from '$lib/config/experimentFilters';
 
 	let { data }: { data: PageData } = $props();
 	const papers = $derived(data.papers);
@@ -35,6 +36,7 @@
 	// Check if an experiment matches the current master filter
 	function matchesMasterFilter(experiment: typeof papers[0]): boolean {
 		if (masterFilter === 'all') return true;
+		if (masterFilter === 'ive' && isMotionExperiment(experiment)) return true;
 
 		const principles = getTestsPrinciples(experiment);
 		const prefixes = masterPrefixes[masterFilter];

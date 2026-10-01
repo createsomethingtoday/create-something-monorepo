@@ -20,6 +20,7 @@ export interface ExperimentMeta {
 	tags: string[];
 	featured?: number;
 	route?: string;
+	tests_principles?: string[];
 }
 
 export const LEGACY_EXPERIMENT_REDIRECT_SLUGS = new Set([
@@ -91,6 +92,7 @@ function experimentToMeta(experiment: FileBasedExperimentPaper): ExperimentMeta 
 				: 'intermediate',
 		tags: (experiment.tags || []).map((tag) => (typeof tag === 'string' ? tag : tag.name)),
 		featured: experiment.featured,
+		tests_principles: experiment.tests_principles,
 		route: experiment.route
 	};
 }
@@ -113,6 +115,7 @@ function metaToPaper(meta: ExperimentMeta): Paper {
 		is_hidden: 0,
 		archived: 0,
 		featured: meta.featured || 0,
+		tests_principles: meta.tests_principles,
 		route: meta.route || `/experiments/${meta.slug}`,
 		tags: meta.tags.map((tag) => ({
 			id: tag.toLowerCase().replace(/\s+/g, '-'),
