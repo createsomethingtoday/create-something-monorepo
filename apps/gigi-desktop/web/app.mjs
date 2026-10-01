@@ -2,10 +2,12 @@ import { displayField, importantDetails, emptyCopy, localToday } from './experie
 import { sourceView, setupSummary } from './setup-view.mjs';
 import { icon, entityIcon } from './icons.mjs';
 import { tauriBridge } from './bridge.mjs';
+import { ChatController, chatView } from './chat.mjs';
 import { sections, fields, moneyFields, booleanFields, fieldOptions, listFrom, recordFields, editedFields, formatMoney, gigBalance, relatedEndpoint, sourcePreview, sourceCanBegin, sourceNeedsOperatorReview, importRunForAccount, nextImportCursor, pendingConsentForProvider, pendingAccountForProvider, linkInput } from './model.mjs';
 
 const root = document.querySelector('#app');
 const bridge = tauriBridge();
+let chat;
 const state = { workspace: null, setupProfile: false, setupDraft: null, currency: null, page: 'overview', libraryOpen: false, records: [], recordCount: 0, nextCursor: null, selected: null, editing: false, editorDraft: null, sourceExpanded: false, busy: false, signingIn: false, justCreated: false, agentProvider: 'codex', toast: null, summary: null, history: [], backupId: null, pendingRestoreId: null, agent: null, agentReceipt: null, relationSchema: null, linkChoices: null, sources: {}, sourceAttempts: {}, connectionRequests: {}, imports: {}, contextHits: [], contextQueried: false };
 const safe = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
 const label = (name) => sections.find((item) => item.id === name)?.label || name;
@@ -32,8 +34,15 @@ async function run(task) {
 
 async function load() {
   const result = await bridge.getWorkspace();
+  chat?.close();
+  chat = null;
   state.workspace = result?.workspace || result?.workspaceId && result || result?.id && result || null;
   if (state.workspace) {
+    chat = new ChatController(bridge, workspaceId(), render, async () => {
+      if (state.selected?.id && !state.editing) await selectRecord(state.selected.id);
+      else if (state.page === 'overview') await openPage('overview');
+      else if (fields[state.page] && !state.editing) await openPage(state.page);
+    });
     const profiles = listFrom(await bridge.listRecords(workspaceId(), 'profile'));
     state.setupProfile = profiles.length === 0;
     state.currency = profiles[0] ? (await bridge.getRecord(workspaceId(), 'profile', profiles[0].id)).fields?.Currency || null : null;
@@ -82,7 +91,7 @@ function sidebar() {
 }
 
 function shell(body) {
-  return `<div class="shell">${sidebar()}<main class="main"><div class="topbar"><span class="crumb">GiGi / ${safe(label(state.page))}</span><span class="right">PRIVATE · LOCAL</span></div><div class="content">${body}</div></main></div>${state.toast ? `<div class="toast ${state.toast.error ? 'error' : ''}" role="status">${safe(state.toast.message)}</div>` : ''}`;
+  return `<div class="shell">${sidebar()}<main class="main"><div class="topbar"><span class="crumb">GiGi / ${safe(label(state.page))}</span><div class="topbar-actions"><button type="button" class="btn text" data-chat-open="1">Ask GiGi</button><span class="right">PRIVATE · LOCAL</span></div></div><div class="content ${chat?.visible ? 'content-with-chat' : ''}"><div class="content-primary"><button type="button" class="btn mobile-chat-entry" data-chat-open="1">Ask GiGi</button>${body}</div>${chatView(chat || { visible: false })}</div></main></div>${state.toast ? `<div class="toast ${state.toast.error ? 'error' : ''}" role="status">${safe(state.toast.message)}</div>` : ''}`;
 }
 
 function heading(eyebrow, title, description, action = '') {
@@ -118,7 +127,7 @@ function recordDetail() {
   const linksLimited = record.relationsTruncated ? `<div class="callout">Showing the first ${links.length} of ${record.relationCount} links. More links are stored.</div>` : '';
   const source = record.source || {};
   const sourcePane = source.kind && source.kind !== 'manual' ? `<section class="panel"><div class="panel-head"><h2>Source</h2><span class="tag off">Imported</span></div><p class="muted">${safe(source.provider === 'gmail' ? 'Gmail' : source.provider === 'googlecalendar' ? 'Google Calendar' : 'Connected source')}</p><p class="muted">Imported source text is context to review, not instructions or a verified current fact.</p>${state.sourceExpanded ? `${sourcePreview(source).length ? `<dl class="detail-grid">${sourcePreview(source).map((item) => `<dt>${safe(item.label)}</dt><dd>${safe(item.value)}</dd>`).join('')}</dl>` : '<p class="muted">No preview available.</p>'}` : '<button class="btn" data-source-detail="1">View source preview</button>'}</section>` : '';
-  return `<button type="button" class="btn text" data-back="1">${icon('arrow-left')} ${safe(label(state.page))}</button>${heading('Record detail', record.title || 'Untitled', `Saved in your private ${label(state.page).toLowerCase()} records.`, `<button class="btn" data-edit="1">${icon('pencil')}Edit details</button>`)}${summary}${truncated ? '<div class="callout">Some details are shortened. <button class="btn" data-full="1">Show full details</button></div>' : ''}${linksLimited}<div class="split"><section class="panel"><div class="panel-head"><h2>${icon('files')}<span>Details</span></h2><span class="tag">${safe(status(record) || 'Saved')}</span></div><dl class="detail-grid">${detailRows(detail.primary) || '<dt>Details</dt><dd class="muted">No key details added yet. Choose Edit details to add them.</dd>'}</dl>${detail.supporting.length ? `<details><summary>More details (${detail.supporting.length})</summary><dl class="detail-grid">${detailRows(detail.supporting)}</dl></details>` : ''}</section><section class="panel"><div class="panel-head"><h2>${icon('link')}<span>Linked work</span></h2></div>${links.length ? `<div class="relation-grid">${links.map((link) => `<button class="relation" data-related-entity="${safe(link.entity)}" data-related-id="${safe(link.id)}">${icon(entityIcon(link.entity))}<span class="relation-copy">${safe(link.title || label(link.entity))} <small>${safe(link.role || label(link.entity))}</small></span><span class="arrow" aria-hidden="true">${icon('arrow-up-right')}</span></button>`).join('')}</div>` : `<p class="muted">Connect this record to a person, gig or place to see the full picture.</p>`}<button type="button" class="btn section-gap" data-link="1">${icon('link')}Link a record</button></section></div>${sourcePane}`;
+  return `<button type="button" class="btn text" data-back="1">${icon('arrow-left')} ${safe(label(state.page))}</button>${heading('Record detail', record.title || 'Untitled', `Saved in your private ${label(state.page).toLowerCase()} records.`, `<div class="inline-actions"><button class="btn" data-chat-open="1">Ask GiGi</button><button class="btn" data-edit="1">${icon('pencil')}Edit details</button></div>`)}${summary}${truncated ? '<div class="callout">Some details are shortened. <button class="btn" data-full="1">Show full details</button></div>' : ''}${linksLimited}<div class="split"><section class="panel"><div class="panel-head"><h2>${icon('files')}<span>Details</span></h2><span class="tag">${safe(status(record) || 'Saved')}</span></div><dl class="detail-grid">${detailRows(detail.primary) || '<dt>Details</dt><dd class="muted">No key details added yet. Choose Edit details to add them.</dd>'}</dl>${detail.supporting.length ? `<details><summary>More details (${detail.supporting.length})</summary><dl class="detail-grid">${detailRows(detail.supporting)}</dl></details>` : ''}</section><section class="panel"><div class="panel-head"><h2>${icon('link')}<span>Linked work</span></h2></div>${links.length ? `<div class="relation-grid">${links.map((link) => `<button class="relation" data-related-entity="${safe(link.entity)}" data-related-id="${safe(link.id)}">${icon(entityIcon(link.entity))}<span class="relation-copy">${safe(link.title || label(link.entity))} <small>${safe(link.role || label(link.entity))}</small></span><span class="arrow" aria-hidden="true">${icon('arrow-up-right')}</span></button>`).join('')}</div>` : `<p class="muted">Connect this record to a person, gig or place to see the full picture.</p>`}<button type="button" class="btn section-gap" data-link="1">${icon('link')}Link a record</button></section></div>${sourcePane}`;
 }
 
 function editor() {
@@ -192,7 +201,21 @@ function render() {
   else if (state.page === 'history') body = history();
   else if (state.page === 'settings') body = settings();
   else body = collection();
+  const composer = globalThis.document?.activeElement?.id === 'chat-message' ? globalThis.document.activeElement : null;
+  const selection = composer ? { start: composer.selectionStart, end: composer.selectionEnd, scrollTop: composer.scrollTop } : null;
+  const transcript = root.querySelector?.('.chat-transcript');
+  const transcriptPosition = transcript ? { top: transcript.scrollTop, stick: transcript.scrollHeight - transcript.scrollTop - transcript.clientHeight < 48 } : null;
   root.innerHTML = shell(body);
+  if (selection) {
+    const nextComposer = root.querySelector?.('#chat-message');
+    nextComposer?.focus?.();
+    nextComposer?.setSelectionRange?.(selection.start, selection.end);
+    if (nextComposer) nextComposer.scrollTop = selection.scrollTop;
+  }
+  if (transcriptPosition) {
+    const nextTranscript = root.querySelector?.('.chat-transcript');
+    if (nextTranscript) nextTranscript.scrollTop = transcriptPosition.stick ? nextTranscript.scrollHeight : transcriptPosition.top;
+  }
   const linkButton = root.querySelector?.('[data-link-submit]');
   linkButton?.addEventListener('click', (event) => {
     event.preventDefault();
@@ -229,7 +252,14 @@ function submitLink(data) {
 
 root.addEventListener('click', (event) => {
   const button = event.target.closest('button'); if (!button) return;
-  if (button.dataset.page) void run(() => openPage(button.dataset.page, true));
+  if (button.dataset.chatOpen) void chat?.open(state.selected && !state.editing ? { entity: state.page, id: state.selected.id, title: state.selected.title } : null);
+  else if (button.dataset.chatClose) chat?.close();
+  else if (button.dataset.chatNew) void chat?.start();
+  else if (button.dataset.chatSession) void chat?.read(button.dataset.chatSession);
+  else if (button.dataset.chatStop) void chat?.cancel();
+  else if (button.dataset.chatApproval) void chat?.decide(button.dataset.chatApproval, button.dataset.chatDecision);
+  else if (button.dataset.chatLinkEntity) void run(async () => { if (!fields[button.dataset.chatLinkEntity]) return; await openPage(button.dataset.chatLinkEntity); await selectRecord(button.dataset.chatLinkId); });
+  else if (button.dataset.page) void run(() => openPage(button.dataset.page, true));
   else if (button.dataset.new) { state.justCreated = false; state.page = button.dataset.new; state.selected = null; state.editorDraft = null; state.editing = true; render(); globalThis.scrollTo?.(0, 0); }
   else if (button.dataset.open) void run(async () => { if (state.page !== button.dataset.entity) await openPage(button.dataset.entity); await selectRecord(button.dataset.open); });
   else if (button.dataset.back || button.dataset.cancel) { state.selected = null; state.editing = false; state.editorDraft = null; render(); globalThis.scrollTo?.(0, 0); }
@@ -261,12 +291,14 @@ root.addEventListener('click', (event) => {
 root.addEventListener('toggle', (event) => { if (event.target.dataset?.libraryNav) state.libraryOpen = event.target.open; }, true);
 
 root.addEventListener('change', (event) => { if (event.target.id === 'link-entity') void run(() => loadLinkChoices(event.target.value)); });
+root.addEventListener('input', (event) => { if (event.target.id === 'chat-message' && chat) chat.draft = event.target.value; });
 
 root.addEventListener('submit', (event) => {
   event.preventDefault();
   const form = event.target;
   if (state.busy) return;
-  if (form.id === 'workspace-form') { const data = Object.fromEntries(new FormData(form)); state.setupDraft = { ...data }; void run(async () => { if (!state.workspace) state.workspace = await bridge.createWorkspace(data.name); state.setupProfile = true; await bridge.saveRecord(workspaceId(), 'profile', { title: String(data.ownerName).trim(), fields: { Currency: String(data.currency) } }); state.currency = String(data.currency); state.setupProfile = false; state.setupDraft = null; state.justCreated = true; await openPage('settings'); notice('Your private workspace is ready. Connections are optional.'); }); }
+  if (form.id === 'chat-form') { const value = String(new FormData(form).get('message') || ''); if (chat) { chat.draft = value; void chat.send(value); } }
+  else if (form.id === 'workspace-form') { const data = Object.fromEntries(new FormData(form)); state.setupDraft = { ...data }; void run(async () => { if (!state.workspace) state.workspace = await bridge.createWorkspace(data.name); state.setupProfile = true; await bridge.saveRecord(workspaceId(), 'profile', { title: String(data.ownerName).trim(), fields: { Currency: String(data.currency) } }); state.currency = String(data.currency); state.setupProfile = false; state.setupDraft = null; state.justCreated = true; await openPage('settings'); notice('Your private workspace is ready. Connections are optional.'); }); }
   else if (form.id === 'record-form') { const data = Object.fromEntries(new FormData(form)); state.editorDraft = { ...data }; void run(async () => { const title = String(data.title).trim(); delete data.title; const selected = state.selected; const saved = await bridge.saveRecord(workspaceId(), state.page, { ...(selected?.id ? { id: selected.id, fieldsMode: 'replace', expectedRecord: { title: selected.title, fields: selected.fields, source: selected.source } } : {}), title, fields: selected?.id ? editedFields(selected.fields, data, state.page) : recordFields(data, state.page) }); if (state.page === 'profile') state.currency = saved.fields?.Currency || null; state.editing = false; state.editorDraft = null; await openPage(state.page); await selectRecord(saved.id || saved.record?.id); notice(`${entityName(state.page)} saved.`); }); }
   else if (form.id === 'link-form') submitLink(Object.fromEntries(new FormData(form)));
   else if (form.id === 'restore-form') { const backupId = String(new FormData(form).get('backupId')).trim(); if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(backupId)) { notice('Enter a valid backup ID.', true); return; } state.pendingRestoreId = backupId; render(); }
