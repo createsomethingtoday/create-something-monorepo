@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onMount, type Snippet } from 'svelte';
   import { RingMark } from '../brand/marks/index.js';
   import { getAnalytics } from '../analytics/client.js';
   import MeridianOfferPanel from './meridian/MeridianOfferPanel.svelte';
@@ -37,6 +37,8 @@
   interface Props {
     mode?: 'ltd' | 'io' | 'space' | 'agency' | 'learn';
     aboutText?: string;
+    /** Optional property-owned content in the brand-description slot. */
+    brandContent?: Snippet;
     showNewsletter?: boolean;
     newsletterTitle?: string;
     newsletterDescription?: string;
@@ -64,6 +66,7 @@
   let {
     mode = 'ltd',
     aboutText,
+    brandContent,
     showNewsletter = false,
     newsletterTitle = 'Stay updated with new experiments',
     newsletterDescription = 'Get notified when new research is published. Real metrics, tracked experiments, honest learnings.',
@@ -416,7 +419,9 @@
             </a>
           {/if}
 
-          {#if aboutText}
+          {#if brandContent}
+            <div class="footer-brand-content">{@render brandContent()}</div>
+          {:else if aboutText}
             {#if !brandAsset && !usesEditorialStyle}
               <div class="brand-title mb-4">CREATE SOMETHING</div>
             {/if}
@@ -1278,6 +1283,10 @@
     border-radius: var(--radius-performance-editorial, 0.375rem);
     background: var(--color-performance-editorial-dark-secondary, #2e2927);
     box-shadow: none;
+  }
+
+  .footer-editorial .footer-brand-content {
+    color: var(--color-performance-editorial-light, #f3ebe4);
   }
 
   .footer-editorial .brand-title {

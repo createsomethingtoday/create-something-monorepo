@@ -466,6 +466,8 @@
   }
 </script>
 
+{#snippet canonFooterBrand()}<CanonBrandSignature />{/snippet}
+
 <LayoutSEO property="agency" />
 
 <div class="agency-surface" data-canon-palette={usesOperatorPalette ? "operator" : undefined}>
@@ -512,9 +514,9 @@
     <AgencyPerformanceHandoff />
   {/if}
 
-  {#if $page.url.pathname === '/' || $page.url.pathname === '/practice'}<CanonBrandSignature />{/if}
   <Footer
     mode="agency"
+    brandContent={usesPublicNavigation ? canonFooterBrand : undefined}
     showNewsletter={false}
     aboutText="We build AI agents for useful business tasks. You keep the code, instructions, and work history."
     quickLinkGroups={usesPublicNavigation ? filmFooterGroups : footerQuickLinkGroups}

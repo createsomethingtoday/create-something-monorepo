@@ -34,23 +34,27 @@
       </li>
     {/each}
   </ol>
-  <footer>
-    {#if showCanonContinuation}
-      <div class="canon-continuation"><CanonCompanion size="large" /><div><strong>See how the work works.</strong><p>Explore the process, what you receive, and how we check it.</p><a href="/services">How it works <span aria-hidden="true">→</span></a></div></div>
-    {/if}
-    <p>
-      These examples show our engineering range. Public source and evaluation reports are linked
-      where available; private accounts and client data stay private.
-    </p>
-    <p>Membership includes delivery within an agreed scope. Larger systems get a separate quote; project-specific AI usage and hosting are budgeted separately.</p>
-    <a href="/products">Explore the full tool catalog <span aria-hidden="true">→</span></a>
+  <footer class:with-guide={showCanonContinuation}>
+    {#if showCanonContinuation}<div class="canon-guide"><CanonCompanion /></div>{/if}
+    <div class="handoff-copy">
+      {#if showCanonContinuation}<div class="mobile-guide"><CanonCompanion /></div><strong>From examples to your workflow.</strong>{/if}
+      <p>These examples show our engineering range. Public source and evaluation reports are linked where available; private accounts and client data stay private.</p>
+      <p>Membership includes delivery within an agreed scope. Larger systems get a separate quote; project-specific AI usage and hosting are budgeted separately.</p>
+      <div class="handoff-links">
+        {#if showCanonContinuation}<a href="/services">See the delivery process <span aria-hidden="true">→</span></a>{/if}
+        <a href="/products">Explore the full tool catalog <span aria-hidden="true">→</span></a>
+      </div>
+    </div>
   </footer>
 </section>
 
 <style>
-  .canon-continuation { display: flex; align-items: center; gap: 1.5rem; padding: 1.5rem 0; border-bottom: 1px solid var(--color-performance-line-strong); margin-bottom: 1.5rem; }
-  .canon-continuation strong { font-size: 1.125rem; }
-  .canon-continuation p { margin: .5rem 0; }
+  footer.with-guide { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: var(--space-performance-md); align-items: start; }
+  .mobile-guide { display: none; }
+  .handoff-copy strong { display: block; font-size: 1.25rem; font-weight: 550; margin-bottom: var(--space-performance-sm); }
+  .handoff-links { display: flex; flex-wrap: wrap; gap: var(--space-performance-sm) var(--space-performance-lg); }
+  @media (max-width: 640px) { footer.with-guide { display: block; } .canon-guide { display: none; } .mobile-guide { display: block; float: left; margin: 0 var(--space-performance-sm) var(--space-performance-sm) 0; } .handoff-copy strong { min-height: 78px; display: flex; align-items: center; } .handoff-copy p { clear: both; } }
+
   .built-work {
     scroll-margin-top: 6rem;
     padding: clamp(2.5rem, 6vw, 6rem) max(1.25rem, calc((100% - 80rem) / 2));
