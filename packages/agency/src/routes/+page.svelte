@@ -81,7 +81,7 @@
 <div class="home-pilot property-performance">
   <AgencyHero />
   <WorkflowSignalBand />
-  <BuiltWork />
+  <BuiltWork showCanonContinuation />
   <FilmCollection />
   <SelectedClientWork />
   <MembershipOffer compact />

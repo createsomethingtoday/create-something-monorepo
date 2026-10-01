@@ -1,6 +1,7 @@
 <script lang="ts">
   import CanonCompanion from './CanonCompanion.svelte';
   import { builtWork } from '$lib/data/builtWork';
+  export let showCanonContinuation = false;
 </script>
 
 <section id="built-work" class="built-work" aria-labelledby="built-work-title">
@@ -34,7 +35,9 @@
     {/each}
   </ol>
   <footer>
-    <div class="canon-continuation"><CanonCompanion size="large" /><div><strong>See how the work works.</strong><p>Explore the process, what you receive, and how we check it.</p><a href="/services">How it works <span aria-hidden="true">→</span></a></div></div>
+    {#if showCanonContinuation}
+      <div class="canon-continuation"><CanonCompanion size="large" /><div><strong>See how the work works.</strong><p>Explore the process, what you receive, and how we check it.</p><a href="/services">How it works <span aria-hidden="true">→</span></a></div></div>
+    {/if}
     <p>
       These examples show our engineering range. Public source and evaluation reports are linked
       where available; private accounts and client data stay private.
