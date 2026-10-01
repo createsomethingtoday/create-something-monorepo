@@ -219,14 +219,17 @@
 		</ol>
 	</nav>
 
-	<div class="canon-practice"><CanonCompanion pose={receipt ? 'idle' : 'review'} action="jumping" trigger={canonCompletion} /><p>{#if receipt}<strong>Your practice receipt is ready.</strong>{:else if missingActiveFields.length}<strong>Add {missingActiveFields[0].label.toLowerCase()} before continuing.</strong>{:else}<strong>This stage is ready for review.</strong>{/if}<span> {activeStage.label} · {activeStageIndex + 1} of {delegationPracticeStages.length}</span></p></div>
+
 	<div class="practice-workbench__body">
 		<article id={`stage-${activeStage.id}`} class="practice-workbench__chapter" aria-live="polite">
 			<div class="practice-workbench__chapter-meta">
 				<span>Stage {String(activeStageIndex + 1).padStart(2, '0')}</span>
 				<small>{activeStage.artifact}</small>
 			</div>
-			<h3>{activeStage.label}</h3>
+            <div class="canon-practice">
+              <CanonCompanion pose="review" />
+              <div><h3>{activeStage.label}</h3><p>{#if missingActiveFields.length}Add {missingActiveFields[0].label.toLowerCase()} before continuing.{:else}This stage is ready for review.{/if}</p></div>
+            </div>
 			<p class="practice-workbench__question">{activeStage.question}</p>
 			<p>{activeStage.outcome}</p>
 			<form class="practice-artifact-form" aria-label={`${activeStage.label} artifact`} onsubmit={(event) => event.preventDefault()}>
@@ -332,6 +335,7 @@
 			<p>Generate only after every artifact and governance binding is inspectable.</p>
 		</header>
 
+        {#if receipt}<div class="canon-receipt" role="status"><CanonCompanion action="jumping" trigger={canonCompletion} /><strong>Your practice receipt is ready.</strong></div>{/if}
 		<div class="practice-receipt__actions">
 			<button data-testid="generate-practice-receipt" type="button" onclick={generatePracticeReceipt} onkeydown={(event) => activateOnKeyboard(event, generatePracticeReceipt)}>
 				Generate Practice Receipt
@@ -405,9 +409,10 @@
 </section>
 
 <style>
-  .canon-practice { display: flex; gap: 1rem; align-items: center; padding: 1rem 0; border-bottom: 1px solid currentColor; margin-bottom: 1.5rem; }
+  .canon-practice, .canon-receipt { display: flex; gap: var(--space-performance-sm); align-items: center; margin-block: var(--space-performance-sm); }
+  .canon-practice :global(.canon), .canon-receipt :global(.canon) { width: 72px; }
+  .canon-practice h3 { margin: 0; }
   .canon-practice p { margin: 0; }
-  .canon-practice span { display: block; font-size: .875rem; margin-top: .5rem; }
 	.practice-workbench {
 		width: min(var(--content-width-performance, 85rem), calc(100% - 2.5rem));
 		margin: clamp(3rem, 7vw, 7rem) auto;
