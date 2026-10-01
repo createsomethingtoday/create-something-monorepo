@@ -2808,9 +2808,10 @@ describe('webflow-template-search worker', () => {
       };
       expect(bestSellingPayload.sort).toBe('best_selling');
       expect(bestSellingPayload.items.map((item) => ({ name: item.name, purchases: item.cumulative_purchases }))).toEqual([
-        { name: 'Agentflow', purchases: 21 },
-        { name: 'Setrex', purchases: 18 },
-        { name: 'Catalis', purchases: 9 },
+        // Ranked by exact counts (21, 18, 9); published as floored buckets.
+        { name: 'Agentflow', purchases: 20 },
+        { name: 'Setrex', purchases: 10 },
+        { name: 'Catalis', purchases: 1 },
       ]);
 
       for (const sortAlias of ['best_sellers', 'best-sellers']) {
