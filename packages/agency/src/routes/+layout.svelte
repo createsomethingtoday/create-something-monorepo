@@ -1,5 +1,6 @@
 <script lang="ts">
   import '../app.css';
+  import CanonBrandSignature from '$lib/components/CanonBrandSignature.svelte';
   import '$lib/styles/operator-palette.css';
   import { initializeFilmMotion, filmNavigationOpen } from '$lib/motion/filmPlayback';
   import { filmStories } from '$lib/data/filmStories';
@@ -511,6 +512,7 @@
     <AgencyPerformanceHandoff />
   {/if}
 
+  {#if $page.url.pathname === '/' || $page.url.pathname === '/practice'}<CanonBrandSignature />{/if}
   <Footer
     mode="agency"
     showNewsletter={false}

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import CanonCompanion from './CanonCompanion.svelte';
   import { builtWork } from '$lib/data/builtWork';
 </script>
 
@@ -33,6 +34,7 @@
     {/each}
   </ol>
   <footer>
+    <div class="canon-continuation"><CanonCompanion size="large" /><div><strong>See how the work works.</strong><p>Explore the process, what you receive, and how we check it.</p><a href="/services">How it works <span aria-hidden="true">→</span></a></div></div>
     <p>
       These examples show our engineering range. Public source and evaluation reports are linked
       where available; private accounts and client data stay private.
@@ -43,6 +45,9 @@
 </section>
 
 <style>
+  .canon-continuation { display: flex; align-items: center; gap: 1.5rem; padding: 1.5rem 0; border-bottom: 1px solid var(--color-performance-line-strong); margin-bottom: 1.5rem; }
+  .canon-continuation strong { font-size: 1.125rem; }
+  .canon-continuation p { margin: .5rem 0; }
   .built-work {
     scroll-margin-top: 6rem;
     padding: clamp(2.5rem, 6vw, 6rem) max(1.25rem, calc((100% - 80rem) / 2));

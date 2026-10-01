@@ -1,4 +1,6 @@
 <script lang="ts">
+	import CanonCompanion from './CanonCompanion.svelte';
+	let canonCompletion = 0;
 	import { browser } from '$app/environment';
 	import { onMount } from 'svelte';
 	import {
@@ -162,6 +164,7 @@
 		receiptMissingFields = [];
 		receiptIssuedAt = issuedAt;
 		receipt = result.receipt;
+		canonCompletion++;
 	}
 
 	function resetPracticeSession() {
@@ -216,6 +219,7 @@
 		</ol>
 	</nav>
 
+	<div class="canon-practice"><CanonCompanion pose={receipt ? 'idle' : 'review'} action="jumping" trigger={canonCompletion} /><p>{#if receipt}<strong>Your practice receipt is ready.</strong>{:else if missingActiveFields.length}<strong>Add {missingActiveFields[0].label.toLowerCase()} before continuing.</strong>{:else}<strong>This stage is ready for review.</strong>{/if}<span> {activeStage.label} · {activeStageIndex + 1} of {delegationPracticeStages.length}</span></p></div>
 	<div class="practice-workbench__body">
 		<article id={`stage-${activeStage.id}`} class="practice-workbench__chapter" aria-live="polite">
 			<div class="practice-workbench__chapter-meta">
@@ -401,6 +405,9 @@
 </section>
 
 <style>
+  .canon-practice { display: flex; gap: 1rem; align-items: center; padding: 1rem 0; border-bottom: 1px solid currentColor; margin-bottom: 1.5rem; }
+  .canon-practice p { margin: 0; }
+  .canon-practice span { display: block; font-size: .875rem; margin-top: .5rem; }
 	.practice-workbench {
 		width: min(var(--content-width-performance, 85rem), calc(100% - 2.5rem));
 		margin: clamp(3rem, 7vw, 7rem) auto;
