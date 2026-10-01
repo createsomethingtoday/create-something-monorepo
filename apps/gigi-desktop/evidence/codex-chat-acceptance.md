@@ -5,7 +5,7 @@ Local macOS beta, 2026-10-01. Installed Codex CLI 0.159.2 uses its existing Chat
 ## Verification
 
 - Integrations: 81 passed, 1 optional real-CTX test skipped; TypeScript typecheck passed.
-- Desktop web/scripts: 56 passed, 2 optional installed-companion tests skipped.
+- Desktop web/scripts: 56 passed in the regular run. The two installed-companion gates were then enabled against the installed app and passed, including linked-record/backup/restart and profile isolation checks (58 unique desktop tests).
 - Rust: 43 library tests and 6 MCP tests passed.
 - Clippy all targets with warnings denied passed; retired-provider check and diff check passed.
 - Local ad-hoc app and DMG built. Developer ID signing/notarization remains deferred.
