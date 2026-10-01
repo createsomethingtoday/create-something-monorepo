@@ -81,7 +81,26 @@
   .map-page :global(.performance-conversion-handoff .performance-conversion-handoff__copy),
   .map-page :global(.performance-conversion-handoff .performance-conversion-handoff__boundary) { padding: 0; min-height: auto; }
   .map-page :global(.performance-conversion-handoff h2) { font: var(--font-performance-medium) clamp(1.8rem, 3vw, 3rem)/1.1 var(--font-performance-interface); max-width: 24ch; }
-  .map-page :global(.performance-conversion-handoff__boundary) { border: 0; }
+  .map-page :global(.performance-conversion-handoff .performance-conversion-handoff__boundary) {
+    align-self: start;
+    align-content: start;
+    padding: var(--space-performance-md);
+    gap: 0;
+    border: 1px solid var(--color-performance-shell-border-strong);
+    border-radius: var(--radius-operator-panel);
+    background: var(--color-performance-shell-surface);
+    color: var(--color-performance-fg-primary);
+  }
+  .map-page :global(.performance-conversion-handoff__boundary dl) { border-top: 0; }
+  .map-page :global(.performance-conversion-handoff__boundary dl > div) {
+    padding-block: var(--space-performance-md);
+    border-color: var(--color-performance-shell-border-default);
+  }
+  .map-page :global(.performance-conversion-handoff__boundary dl > div:first-child) { padding-top: 0; }
+  .map-page :global(.performance-conversion-handoff__boundary dl > div:last-child) { padding-bottom: 0; border-bottom: 0; }
+  .map-page :global(.performance-conversion-handoff__boundary dt) { color: var(--color-performance-fg-secondary); }
+  .map-page :global(.performance-conversion-handoff__boundary dd) { color: var(--color-performance-fg-primary); }
+
   @media (max-width: 720px) { .map-page :global(.performance-conversion-handoff) { grid-template-columns: 1fr; gap: var(--space-performance-lg); } }
 
   .mapping-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); list-style: none; padding: 0; margin: 0 0 var(--space-performance-lg); border-block: 1px solid var(--color-performance-line); }
