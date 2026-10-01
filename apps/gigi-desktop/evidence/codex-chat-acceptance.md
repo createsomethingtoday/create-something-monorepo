@@ -4,8 +4,8 @@ Local macOS beta, 2026-10-01. Installed Codex CLI 0.159.2 uses its existing Chat
 
 ## Verification
 
-- Integrations: 82 passed, 1 optional real-CTX test skipped; TypeScript typecheck passed.
-- Desktop web/scripts: 59 passed with installed-companion gates enabled, including linked-record/backup/restart, profile isolation and drawer preservation checks.
+- Integrations: 83 passed, 1 optional real-CTX test skipped; TypeScript typecheck passed.
+- Desktop web/scripts: 60 passed with installed-companion gates enabled, including linked-record/backup/restart, profile isolation and drawer preservation checks.
 - Rust: 43 library tests and 6 MCP tests passed.
 - Clippy all targets with warnings denied passed; retired-provider check and diff check passed.
 - Local ad-hoc app and DMG built. Developer ID signing/notarization remains deferred.
@@ -28,6 +28,14 @@ The chat is a fixed right-side overlay with a short slide-in animation, reduced-
 
 ## Installed binary SHA-256
 
-- `MacOS/gigi`: `b046d6b88b6c7c17936157e298ee1c424e6b53ca33e86646801b914eb97e9501`
-- `Resources/gigi-codex`: `ce0050ed1331b6b0be56e5ef886ec21dcc4cf05d32559d5bc77d0768fa3f47a5`
-- `Resources/gigi-mcp`: `eee5879850c52d1719b716a0caef14e283b5183227d267c7249d832f95bbb123`
+- `MacOS/gigi`: `54e0973e497de37e9dc1b4a42ab8a025633375f61ca3c40730a6014d258f65b8`
+- `Resources/gigi-codex`: `4296234d7772cf2e033e2e7c03b630314010f608a10fa7e676d1922936d97f09`
+- `Resources/gigi-mcp`: `167d11e05205e0042237cfcc1f83de7eb622add286df4547800fffb1da4023a5`
+
+## Walkthrough filming follow-up
+
+The native walkthrough rehearsal exposed a WebKit timer receiver failure: raw setTimeout/clearTimeout were invoked as ChatController methods, so the UI could stop polling while Codex completed successfully. A red/green default-timer receiver regression now covers the arrow-wrapper fix. The completed-notification handler also keeps polling until thread/read provides terminal state and transcript together.
+
+The rebuilt installed app was filmed in a new, separate synthetic Music Workspace. Without reopening the conversation, it polled to the correct $450.00 USD / Casey Booker / Confirm Saturday load-in answer, held the exact task rename for approval, and after approval displayed Confirm Saturday crew with Priority=High, Status=Open and its original gig link. Close dismissed the overlay without page reflow. The normal GiGi Beta Acceptance profile was restored afterward. Failed filming takes were retained.
+
+Local media: /Users/micahjohnson/Documents/GiGi Chat Walkthrough/gigi-codex-chat-walkthrough.mp4; editable camera/caption manifest and motion source are beside it in edit/. Public publication was not requested.

@@ -37,7 +37,7 @@ function approvalCopy(item) {
 }
 
 export class ChatController {
-  constructor(bridge, workspaceId, changed, completed, schedule = setTimeout, clear = clearTimeout) {
+  constructor(bridge, workspaceId, changed, completed, schedule = (callback, delay) => globalThis.setTimeout(callback, delay), clear = (timer) => globalThis.clearTimeout(timer)) {
     this.bridge = bridge; this.workspaceId = workspaceId; this.changed = changed; this.completed = completed;
     this.schedule = schedule; this.clear = clear; this.visible = false; this.status = null;
     this.sessions = []; this.current = null; this.record = null; this.draft = ''; this.error = null;

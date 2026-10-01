@@ -292,3 +292,18 @@ test('turn completion keeps a held GiGi approval visible while provider read is 
   assert.equal(poll.state, 'approval');
   assert.equal(poll.approvals.length, 1);
 });
+
+test('completed turn notification does not settle before its transcript is readable', async () => {
+  const { adapter, server } = await setup();
+  const { sessionId } = await adapter.start({ workspaceId: 'w', message: 'Read the gig' });
+  await Promise.all(server.events.map(fn => fn({ method: 'turn/completed', params: { threadId: 'thread-1', turn: { id: 'turn-1', status: 'completed' } } }) as unknown as Promise<void>));
+  assert.equal((await adapter.list({ workspaceId: 'w' })).sessions[0].state, 'running');
+  const original = server.request.bind(server);
+  server.request = async (method, params) => method === 'thread/read' ? Promise.reject(new Error('rollout not materialized')) : original(method, params);
+  assert.equal((await adapter.poll({ workspaceId: 'w', sessionId })).state, 'running');
+  server.request = original;
+  server.thread.turns = [{ id: 'turn-1', status: 'completed', items: [{ id: 'a1', type: 'agentMessage', text: 'Fee: $450.00 USD' }] }];
+  const settled = await adapter.poll({ workspaceId: 'w', sessionId });
+  assert.equal(settled.state, 'idle');
+  assert.equal(settled.messages.find(x => x.id === 'a1')?.text, 'Fee: $450.00 USD');
+});

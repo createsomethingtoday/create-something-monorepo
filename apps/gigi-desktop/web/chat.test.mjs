@@ -170,3 +170,31 @@ test('empty running snapshots retain confirmed transcript until provider readbac
   assert.equal((chatView(chat).match(/New question/g) || []).length, 1);
   assert.equal((chatView(chat).match(/Earlier answer/g) || []).length, 1);
 });
+
+test('default timers keep the Window receiver when scheduling and clearing a poll', () => {
+  const originalSet = globalThis.setTimeout, originalClear = globalThis.clearTimeout;
+  let scheduled = false, cleared = false;
+  globalThis.setTimeout = function (_callback, delay) {
+    assert.equal(this, globalThis, 'WebKit requires Window as the timer receiver');
+    assert.equal(delay, 1000);
+    scheduled = true;
+    return 37;
+  };
+  globalThis.clearTimeout = function (id) {
+    assert.equal(this, globalThis, 'WebKit requires Window as the timer receiver');
+    assert.equal(id, 37);
+    cleared = true;
+  };
+  try {
+    const chat = new ChatController({}, 'w1', () => {});
+    chat.visible = true;
+    chat.current = session('idle');
+    chat.accept(session('running'));
+    assert.equal(scheduled, true);
+    chat.stopPolling();
+    assert.equal(cleared, true);
+  } finally {
+    globalThis.setTimeout = originalSet;
+    globalThis.clearTimeout = originalClear;
+  }
+});
