@@ -335,7 +335,7 @@
 			<p>Generate only after every artifact and governance binding is inspectable.</p>
 		</header>
 
-        {#if receipt}<div class="canon-receipt" role="status"><CanonCompanion action="jumping" trigger={canonCompletion} /><strong>Your practice receipt is ready.</strong></div>{/if}
+        <div class="canon-receipt" hidden={!receipt} role="status"><CanonCompanion action="jumping" trigger={canonCompletion} />{#if receipt}<strong>Your practice receipt is ready.</strong>{/if}</div>
 		<div class="practice-receipt__actions">
 			<button data-testid="generate-practice-receipt" type="button" onclick={generatePracticeReceipt} onkeydown={(event) => activateOnKeyboard(event, generatePracticeReceipt)}>
 				Generate Practice Receipt
@@ -411,6 +411,7 @@
 <style>
   .canon-practice, .canon-receipt { display: flex; gap: var(--space-performance-sm); align-items: center; margin-block: var(--space-performance-sm); }
   .canon-practice :global(.canon), .canon-receipt :global(.canon) { width: 72px; }
+  .canon-receipt[hidden] { display: none; }
   .canon-practice h3 { margin: 0; }
   .canon-practice p { margin: 0; }
 	.practice-workbench {
