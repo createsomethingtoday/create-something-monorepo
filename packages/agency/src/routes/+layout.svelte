@@ -544,7 +544,8 @@
 <style>
   .film-shell :global(main#main-content) { padding-top: 112px; }
   .film-home :global(main#main-content),
-  .film-shell :global(main#main-content:has(.performance-campaign-opening)) { padding-top: 0; }
+  .film-shell :global(main#main-content:has(.performance-campaign-opening)),
+  .film-shell :global(main#main-content:has(.hero-track)) { padding-top: 0; }
   .film-shell :global(.performance-campaign-opening__content) { padding-top: max(128px, 10svh); padding-inline: 7vw; }
   .film-shell :global(main [id]) { scroll-margin-top: 112px; }
   .film-shell :global(.nav-editorial.nav-fixed) { top: 18px; left: 3vw; right: 3vw; width: auto; border: 1px solid var(--color-performance-line); border-radius: 10px; background: var(--color-performance-paper); }

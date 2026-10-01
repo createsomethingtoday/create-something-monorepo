@@ -1,6 +1,7 @@
 <script lang="ts">
   import { ArrowUpRight, PencilLine, Workflow, ShieldCheck } from 'lucide-svelte';
-  import { Button, PerformanceCampaignOpening, PerformanceConversionHandoff, PerformancePageSection, SEO } from '@create-something/canon';
+  import { Button, PerformanceConversionHandoff, PerformancePageSection, SEO } from '@create-something/canon';
+  import AgencyMapHero from '$lib/components/AgencyMapHero.svelte';
   import { page } from '$app/stores';
   import { PUBLIC_PRICING } from '$lib/data/publicPricing';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
@@ -15,29 +16,14 @@
 </script>
 
 <SEO
-  title="Workflow Mapping with Draw | CREATE SOMETHING"
+  title="CREATE SOMETHING Map | Workflow Mapping with Draw"
   description="Map the work before you automate it. Use Draw, the canvas built by CREATE SOMETHING, to sketch steps, tools, people, and approvals."
   keywords="workflow mapping, CREATE SOMETHING Draw, mapping session, workflow design"
   propertyName="agency"
 />
 
 <main class="map-page">
-  <PerformanceCampaignOpening
-    eyebrow="CREATE SOMETHING Map / Draw"
-    expression="editorial"
-    title="See the work before you automate it."
-    lede="We use Draw to complete workflow mapping: sketch the steps, connect the tools, and agree on where people make decisions. Try the canvas we built, then bring your map to a mapping session."
-    density="compact"
-    proof={[
-      { label: 'Tool', value: 'Draw / built by CREATE SOMETHING' },
-      { label: 'Method', value: 'Sketch → connect → review' },
-      { label: 'Output', value: 'A workflow ready to discuss' }
-    ]}
-  >
-    {#snippet actions()}
-      <Button href="#canvas">Map in Draw <PencilLine size={18} aria-hidden="true" /></Button>
-    {/snippet}
-  </PerformanceCampaignOpening>
+  <AgencyMapHero />
 
   <PerformancePageSection
     id="canvas"
@@ -88,6 +74,16 @@
 </main>
 
 <style>
+  .map-page :global(.clear-page-section) { padding-block: clamp(2.5rem, 6vw, 6rem); }
+  .map-page :global(.clear-page-section__inner) { width: 86%; max-width: none; }
+  .map-page :global(.clear-page-section h2) { font: var(--font-performance-medium) clamp(1.8rem, 3vw, 3rem)/1.1 var(--font-performance-interface); max-width: 24ch; }
+  .map-page :global(.performance-conversion-handoff) { padding: clamp(2.5rem, 6vw, 6rem) 7vw; gap: var(--space-performance-xl); grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); }
+  .map-page :global(.performance-conversion-handoff .performance-conversion-handoff__copy),
+  .map-page :global(.performance-conversion-handoff .performance-conversion-handoff__boundary) { padding: 0; min-height: auto; }
+  .map-page :global(.performance-conversion-handoff h2) { font: var(--font-performance-medium) clamp(1.8rem, 3vw, 3rem)/1.1 var(--font-performance-interface); max-width: 24ch; }
+  .map-page :global(.performance-conversion-handoff__boundary) { border: 0; }
+  @media (max-width: 720px) { .map-page :global(.performance-conversion-handoff) { grid-template-columns: 1fr; gap: var(--space-performance-lg); } }
+
   .mapping-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); list-style: none; padding: 0; margin: 0 0 var(--space-performance-lg); border-block: 1px solid var(--color-performance-line); }
   .mapping-steps li { padding: var(--space-performance-md); }
   .mapping-steps li + li { border-left: 1px solid var(--color-performance-line); }
@@ -100,7 +96,7 @@
   .draw-toolbar a { display: inline-flex; align-items: center; gap: var(--space-performance-sm); min-height: 44px; }
   .draw-workbench iframe { display: block; width: 100%; height: clamp(600px, 78vh, 900px); border: 0; background: var(--color-performance-ink); }
   .draw-note { margin: 0; padding: var(--space-performance-md); font-size: var(--text-performance-caption); line-height: 1.6; color: var(--color-performance-ink); border-top: 1px solid var(--color-performance-line); }
-  .mapping-boundary { max-width: 70ch; margin: var(--space-performance-md) 0 0; font-size: var(--text-performance-caption); line-height: 1.6; }
+  .mapping-boundary { max-width: 70ch; margin: var(--space-performance-md) 0; font-size: var(--text-performance-caption); line-height: 1.6; }
   a { color: inherit; text-underline-offset: .25em; }
   a:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; }
   @media (max-width: 760px) {
