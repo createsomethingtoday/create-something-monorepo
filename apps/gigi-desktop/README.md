@@ -62,7 +62,7 @@ Daily navigation remains visible; Library expands for supporting records. Record
 
 ## Embedded Codex chat
 
-Ask GiGi opens a conversation beside a selected record or the workspace. This beta uses a locally installed Codex CLI signed in with ChatGPT; it does not offer a separate GiGi ChatGPT sign-in or a paid model API fallback. The app locates the executable and checks the provider account. Account presence is distinct from a successful model turn, and subscription limits still apply.
+Ask GiGi slides out as a right-side overlay for a selected record or the workspace. It preserves the underlying page and scroll position; Escape closes the drawer. The opening motion respects reduced-motion settings and does not replay during conversation polling. This beta uses a locally installed Codex CLI signed in with ChatGPT; it does not offer a separate GiGi ChatGPT sign-in or a paid model API fallback. The app locates the executable and checks the provider account. Account presence is distinct from a successful model turn, and subscription limits still apply.
 
 The bundled `gigi-codex` companion drives Codex app-server. It verifies a restricted configuration, presents only GiGi reads and existing-record saves, and routes them through the existing local MCP/domain boundary. Saves require an explicit in-app approval, a fresh expected record and a verified readback. Record creation, relation changes and backups remain available through the manual or external-agent workflows. A completed reply triggers a fresh record read; cancelling or restarting must not silently replay a mutation. Other provider tools, shell execution, permission expansion and external MCP connections are outside this embedded workflow.
 

@@ -78,12 +78,13 @@ h1 span{min-width:0}
 .overview-metrics .value{font-size:26px;margin-top:12px}
 @media(max-width:900px){.overview-metrics{grid-template-columns:repeat(3,minmax(0,1fr))}.overview-metrics .label{font-size:10px;letter-spacing:.06em}}
 
-/* Embedded Codex conversation beside the active workspace or record. */
+/* Ask GiGi overlays the workspace without changing its layout. */
 .topbar-actions{display:flex;align-items:center;gap:15px}
 .mobile-chat-entry{display:none}
-.content-with-chat{max-width:1500px;display:grid;grid-template-columns:minmax(0,1fr) minmax(320px,390px);gap:22px;align-items:start}
 .content-primary{min-width:0}
-.chat-panel{position:sticky;top:18px;display:flex;flex-direction:column;min-width:0;max-height:calc(100vh - 36px);background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:0 14px 42px #0003}
+.chat-panel{position:fixed;z-index:20;top:69px;right:0;bottom:0;width:min(420px,calc(100vw - 12px));display:flex;flex-direction:column;min-width:0;background:var(--panel);border:1px solid var(--line);border-right:0;border-radius:14px 0 0 0;overflow:hidden;box-shadow:-14px 0 42px #0007}
+.chat-entering{animation:chat-slide-in .24s cubic-bezier(.2,.8,.2,1) both}
+@keyframes chat-slide-in{from{transform:translateX(105%);opacity:.6}to{transform:translateX(0);opacity:1}}
 .chat-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:20px 20px 12px}
 .chat-head h2{font-size:26px}.chat-head .eyebrow{margin-bottom:6px}
 .chat-context-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:0 20px 16px;border-bottom:1px solid var(--line);font-size:11px}
@@ -117,5 +118,5 @@ h1 span{min-width:0}
 .chat-composer label{display:block;font-size:11px;color:var(--muted);margin-bottom:8px}
 .chat-composer textarea{width:100%;resize:vertical;min-height:74px;max-height:180px;border:1px solid #50564e;border-radius:8px;background:#171917;color:var(--text);padding:10px 12px;font-size:13px;line-height:1.5}
 .chat-actions{display:flex;justify-content:flex-end;margin-top:10px}
-@media(max-width:1180px){.content-with-chat{grid-template-columns:1fr}.chat-panel{position:relative;top:auto;max-height:650px;grid-row:1}}
-@media(max-width:700px){.mobile-chat-entry{display:inline-flex;margin-bottom:18px}.chat-panel{max-height:75vh}.content-with-chat{gap:14px}.chat-head,.chat-context-row,.chat-sessions,.chat-transcript,.chat-composer{padding-left:16px;padding-right:16px}}
+@media(max-width:700px){.mobile-chat-entry{display:inline-flex;margin-bottom:18px}.chat-panel{top:0;width:100vw;max-height:none;border:0;border-radius:0}.chat-head,.chat-context-row,.chat-sessions,.chat-transcript,.chat-composer{padding-left:16px;padding-right:16px}}
+@media(prefers-reduced-motion:reduce){.chat-entering{animation:none}}

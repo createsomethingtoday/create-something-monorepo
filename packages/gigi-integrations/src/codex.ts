@@ -241,7 +241,11 @@ export function createCodexAdapter(options: CodexOptions) {
         stream.set(id, (stream.get(id) ?? '').concat(part).slice(0, MAX_TEXT));
         liveMessages.set(session.sessionId, stream);
       }
-      if (session && message.method === 'turn/completed' && message.params?.turn?.id === session.turnId) { session.state = message.params?.turn?.status === 'completed' ? 'idle' : message.params?.turn?.status === 'interrupted' ? 'interrupted' : 'failed'; session.cancelPending = false; await persist(); }
+      if (session && message.method === 'turn/completed' && message.params?.turn?.id === session.turnId) {
+        session.state = [...approvals.values()].some(x => x.sessionId === session.sessionId) ? 'approval' : message.params?.turn?.status === 'completed' ? 'idle' : message.params?.turn?.status === 'interrupted' ? 'interrupted' : 'failed';
+        session.cancelPending = false;
+        await persist();
+      }
       return;
     }
     const threadId = message?.params?.threadId;

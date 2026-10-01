@@ -38,7 +38,7 @@ async function load() {
   chat = null;
   state.workspace = result?.workspace || result?.workspaceId && result || result?.id && result || null;
   if (state.workspace) {
-    chat = new ChatController(bridge, workspaceId(), render, async () => {
+    chat = new ChatController(bridge, workspaceId(), renderChat, async () => {
       if (state.selected?.id && !state.editing) await selectRecord(state.selected.id);
       else if (state.page === 'overview') await openPage('overview');
       else if (fields[state.page] && !state.editing) await openPage(state.page);
@@ -91,7 +91,7 @@ function sidebar() {
 }
 
 function shell(body) {
-  return `<div class="shell">${sidebar()}<main class="main"><div class="topbar"><span class="crumb">GiGi / ${safe(label(state.page))}</span><div class="topbar-actions"><button type="button" class="btn text" data-chat-open="1">Ask GiGi</button><span class="right">PRIVATE · LOCAL</span></div></div><div class="content ${chat?.visible ? 'content-with-chat' : ''}"><div class="content-primary"><button type="button" class="btn mobile-chat-entry" data-chat-open="1">Ask GiGi</button>${body}</div>${chatView(chat || { visible: false })}</div></main></div>${state.toast ? `<div class="toast ${state.toast.error ? 'error' : ''}" role="status">${safe(state.toast.message)}</div>` : ''}`;
+  return `<div class="shell">${sidebar()}<main class="main"><div class="topbar"><span class="crumb">GiGi / ${safe(label(state.page))}</span><div class="topbar-actions"><button type="button" class="btn text" data-chat-open="1">Ask GiGi</button><span class="right">PRIVATE · LOCAL</span></div></div><div class="content"><div class="content-primary"><button type="button" class="btn mobile-chat-entry" data-chat-open="1">Ask GiGi</button>${body}</div></div></main>${chatView(chat || { visible: false })}</div>${state.toast ? `<div class="toast ${state.toast.error ? 'error' : ''}" role="status">${safe(state.toast.message)}</div>` : ''}`;
 }
 
 function heading(eyebrow, title, description, action = '') {
@@ -206,6 +206,7 @@ function render() {
   const transcript = root.querySelector?.('.chat-transcript');
   const transcriptPosition = transcript ? { top: transcript.scrollTop, stick: transcript.scrollHeight - transcript.scrollTop - transcript.clientHeight < 48 } : null;
   root.innerHTML = shell(body);
+  if (chat) chat.opening = false;
   if (selection) {
     const nextComposer = root.querySelector?.('#chat-message');
     nextComposer?.focus?.();
@@ -227,6 +228,42 @@ function render() {
     submitLink({ entity: entity.value, role: role.value, id: record.value });
   });
 
+}
+
+function renderChat() {
+  const panel = root.querySelector?.('.chat-panel');
+  if (!chat?.visible) {
+    if (panel?.remove) { panel.remove(); return; }
+    render(); return;
+  }
+  if (!panel) {
+    const shellNode = root.querySelector?.('.shell');
+    if (shellNode?.insertAdjacentHTML) {
+      shellNode.insertAdjacentHTML('beforeend', chatView(chat));
+      chat.opening = false;
+      return;
+    }
+    render(); return;
+  }
+  const composer = globalThis.document?.activeElement?.id === 'chat-message' ? globalThis.document.activeElement : null;
+  const selection = composer ? { start: composer.selectionStart, end: composer.selectionEnd, scrollTop: composer.scrollTop } : null;
+  const transcript = panel.querySelector?.('.chat-transcript');
+  const transcriptPosition = transcript ? { top: transcript.scrollTop, stick: transcript.scrollHeight - transcript.scrollTop - transcript.clientHeight < 48 } : null;
+  panel.innerHTML = chatView(chat, true);
+  if (selection) {
+    const nextComposer = panel.querySelector?.('#chat-message');
+    nextComposer?.focus?.(); nextComposer?.setSelectionRange?.(selection.start, selection.end);
+    if (nextComposer) nextComposer.scrollTop = selection.scrollTop;
+  }
+  if (transcriptPosition) {
+    const nextTranscript = panel.querySelector?.('.chat-transcript');
+    if (nextTranscript) nextTranscript.scrollTop = transcriptPosition.stick ? nextTranscript.scrollHeight : transcriptPosition.top;
+  }
+}
+
+function focusChatTrigger() {
+  const mobile = globalThis.matchMedia?.('(max-width: 700px)')?.matches;
+  root.querySelector?.(mobile ? '.mobile-chat-entry' : '[data-chat-open]')?.focus?.();
 }
 
 async function loadLinkChoices(entity, cursor) {
@@ -253,7 +290,7 @@ function submitLink(data) {
 root.addEventListener('click', (event) => {
   const button = event.target.closest('button'); if (!button) return;
   if (button.dataset.chatOpen) void chat?.open(state.selected && !state.editing ? { entity: state.page, id: state.selected.id, title: state.selected.title } : null);
-  else if (button.dataset.chatClose) chat?.close();
+  else if (button.dataset.chatClose) { chat?.close(); focusChatTrigger(); }
   else if (button.dataset.chatNew) void chat?.start();
   else if (button.dataset.chatSession) void chat?.read(button.dataset.chatSession);
   else if (button.dataset.chatStop) void chat?.cancel();
@@ -286,6 +323,13 @@ root.addEventListener('click', (event) => {
   else if (button.dataset.restoreToggle && !state.busy) { if (state.pendingRestoreId) { state.pendingRestoreId = null; render(); } else { const form = document.querySelector('#restore-form'); if (form) form.hidden = !form.hidden; } }
   else if (button.dataset.cancelRestore) { state.pendingRestoreId = null; render(); }
   else if (button.dataset.confirmRestore && !state.busy && state.pendingRestoreId) { const backupId = state.pendingRestoreId; void run(async () => { const restored = await bridge.restoreBackup(backupId); state.pendingRestoreId = null; state.imports = {}; state.contextHits = []; state.contextQueried = false; state.sourceAttempts = {}; state.backupId = restored.safetyBackupId || null; await load(); notice('Backup restored. A safety backup was created; sync local history before relying on CTX results.'); }); }
+});
+
+root.addEventListener('keydown', (event) => {
+  if (event.key !== 'Escape' || !chat?.visible) return;
+  event.preventDefault?.();
+  chat.close();
+  focusChatTrigger();
 });
 
 root.addEventListener('toggle', (event) => { if (event.target.dataset?.libraryNav) state.libraryOpen = event.target.open; }, true);

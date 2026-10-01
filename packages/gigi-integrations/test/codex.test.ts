@@ -278,3 +278,17 @@ test('longer streamed message fills partial saved item after turn completes', as
   assert.equal(read.state, 'idle');
   assert.equal(read.messages.find(x => x.id === 'a1')?.text, 'The fee is $450.00.');
 });
+
+test('turn completion keeps a held GiGi approval visible while provider read is transiently unavailable', async () => {
+  const { adapter, server } = await setup();
+  const { sessionId } = await adapter.start({ workspaceId: 'w', message: 'Propose a task edit' });
+  await Promise.all(server.events.map(fn => fn({ id: 91, method: 'item/tool/call', params: { threadId: 'thread-1', tool: 'gigi_records_save', arguments: { workspaceId: 'w', entity: 'tasks', id: 'r', title: 'Proposed' } } }) as unknown as Promise<void>));
+  assert.equal((await adapter.list({ workspaceId: 'w' })).sessions[0].state, 'approval');
+  await Promise.all(server.events.map(fn => fn({ method: 'turn/completed', params: { threadId: 'thread-1', turn: { id: 'turn-1', status: 'completed' } } }) as unknown as Promise<void>));
+  assert.equal((await adapter.list({ workspaceId: 'w' })).sessions[0].state, 'approval');
+  const original = server.request.bind(server);
+  server.request = async (method, params) => method === 'thread/read' ? Promise.reject(new Error('rollout not materialized')) : original(method, params);
+  const poll = await adapter.poll({ workspaceId: 'w', sessionId });
+  assert.equal(poll.state, 'approval');
+  assert.equal(poll.approvals.length, 1);
+});
