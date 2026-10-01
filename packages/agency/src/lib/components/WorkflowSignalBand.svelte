@@ -5,7 +5,7 @@
 
   export let showContinuation = true;
 
-  let { proofHref = '#built-work' }: { proofHref?: string } = $props();
+  export let proofHref = '#built-work';
 
   let canvas: HTMLCanvasElement;
   let field: HTMLElement;
