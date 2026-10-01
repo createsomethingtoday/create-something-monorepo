@@ -44,7 +44,7 @@
 
 <style>
   /* Match AgencyHero's Home composition and responsive dimensions. */
-  .hero-track { background: var(--color-performance-shell-surface); color: var(--color-performance-fg-primary); }
+  .hero-track { padding: 0; background: var(--color-performance-shell-surface); color: var(--color-performance-fg-primary); }
   .hero-layout { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); gap: var(--space-performance-xl); align-items: center; padding: 7.5rem 7vw var(--space-performance-lg); }
   .hero-copy { min-width: 0; }
   .eyebrow, .hero-bottom { font: var(--text-performance-operator-label)/1.5 var(--font-performance-mono); }
