@@ -5,6 +5,8 @@
 
   export let showContinuation = true;
 
+  let { proofHref = '#built-work' }: { proofHref?: string } = $props();
+
   let canvas: HTMLCanvasElement;
   let field: HTMLElement;
 
@@ -117,7 +119,7 @@
   </ol>
   {#if showContinuation}
   <div class="signal-continuation">
-    <AgencyWayfindingSign kind="proof" label="Inspect the work" detail="See the examples and their source records." href="#built-work" direction="down" />
+    <AgencyWayfindingSign kind="proof" label="Inspect the work" detail="See the examples and their source records." href={proofHref} direction="down" />
     <AgencyWayfindingSign kind="map" label="Choose a path" detail="Compare Map, Build, and Control." href="/products#choose-product" />
   </div>
   {/if}

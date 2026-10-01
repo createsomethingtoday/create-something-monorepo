@@ -25,7 +25,7 @@
 
 <main class="map-page">
   <AgencyMapHero />
-  <WorkflowSignalBand />
+  <WorkflowSignalBand proofHref="/#built-work" />
 
   <PerformancePageSection
     id="canvas"
