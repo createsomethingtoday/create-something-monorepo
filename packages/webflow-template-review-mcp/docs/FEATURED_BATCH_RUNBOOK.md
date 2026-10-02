@@ -58,9 +58,16 @@ The tool does **not** check marketplace status. Confirm every pick is
 eligible candidates were still in Response to Review, and one September
 member (Vrieo) was featured while unpublished.
 
-When the pool has fewer distinct creators than the batch needs, top up from
-the previous batch (`include_already_featured: true`, `months_back: 2`). Their
-reasons are already live; re-read them before reuse.
+**A template is featured once.** Never top up from a previous batch. When
+the pool has fewer distinct creators than the batch needs, widen the window
+instead: Airtable query on 👛Assets with `ℹ️Is Featured?` unchecked,
+`🚀Marketplace Status` = Published, quality lookup = 🥇Exceptional, Type =
+Template, published within ~180 days. The eligibility formula also prefers
+recent submissions, so `set_featured_pick` will warn `not_currently_eligible`
+on older picks; that warning is expected for a deliberate wider pull. Each
+older pick still needs a full site review — in October 2026 the wider pool
+had a higher defect rate (dead CTAs, wrong buy links, leftover identities
+from other templates, off-marketplace store links) than the recent one.
 
 Prioritize `monthsSinceSubmission: 0`; the past month is the fallback pool.
 Each candidate carries pick/reason/draft state, template `categories`,
@@ -196,3 +203,8 @@ way when building on these tools.
   from August to September that way).
 - The style check catches "Main quality signal:" but not its variants
   ("Its strongest signal is…", "Its strongest feature is…"). Read for those.
+- October 2026 initially re-featured seven September templates (misread of
+  "previously selected"). Reverting took an override clear, a live CMS PATCH
+  back to the September date, and a correction email to seven creators via
+  Zendesk. The emails are the part you cannot undo: confirm the never-featured
+  rule on every pick before `set_featured_flag` or the notifier run.
