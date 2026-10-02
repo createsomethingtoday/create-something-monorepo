@@ -1443,6 +1443,56 @@ describe('Asset Validator', () => {
 			message: '1 assets exceed the 4MB maximum file size'
 		}));
 	});
+
+	it('does not ask creators to compress Webflow-generated video posters', () => {
+		// Real filename from a creator report (community.webflow.com, Sep 2026): a 177KB poster frame
+		// Webflow extracted from a background video. Creators cannot replace or compress it.
+		const posterName = '6aa109925d5dbc5060f776eb%2F6aa273caf7b2994b8b92b968_counter-bg-video_poster.0000000.jpg';
+		const issues = generateAssetIssues([
+			{
+				name: posterName,
+				url: `https://cdn.prod.website-files.com/6aa109925d5dbc5060f776eb/${posterName}`,
+				size: 177 * 1024,
+				format: 'image/jpeg',
+				isOptimized: false,
+				usageCount: 1,
+				hasLicensingIssues: false
+			},
+			{
+				name: 'hero.jpg',
+				url: 'https://cdn.prod.website-files.com/6aa109925d5dbc5060f776eb/hero.jpg',
+				size: 200 * 1024,
+				format: 'image/jpeg',
+				isOptimized: false,
+				usageCount: 1,
+				hasLicensingIssues: false
+			}
+		]);
+
+		const compressionIssue = issues.find((issue) => issue.id === 'assets-above-compression-target');
+		expect(compressionIssue?.message).toBe('1 assets are above the 150KB compression target');
+		expect(compressionIssue?.details?.oversizedAssets).toEqual([expect.objectContaining({ name: 'hero.jpg' })]);
+
+		const optimizationIssue = issues.find((issue) => issue.id === 'assets-not-optimized');
+		expect(optimizationIssue?.details?.unoptimizedAssets).toEqual([expect.objectContaining({ name: 'hero.jpg' })]);
+	});
+
+	it('still blocks Webflow-generated video posters above the 4MB maximum', () => {
+		const issues = generateAssetIssues([
+			{
+				name: 'hero-video_poster.0000000.jpg',
+				url: 'https://cdn.prod.website-files.com/site/hero-video_poster.0000000.jpg',
+				size: 5 * 1024 * 1024,
+				format: 'image/jpeg',
+				isOptimized: false,
+				usageCount: 1,
+				hasLicensingIssues: false
+			}
+		]);
+
+		expect(issues.find((issue) => issue.id === 'assets-above-compression-target')).toBeUndefined();
+		expect(issues.find((issue) => issue.id === 'assets-extremely-large')?.message).toBe('1 assets exceed the 4MB maximum file size');
+	});
 });
 
 describe('Interactions Validator', () => {

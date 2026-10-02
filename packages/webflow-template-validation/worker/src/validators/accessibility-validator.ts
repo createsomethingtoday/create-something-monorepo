@@ -16,6 +16,7 @@ import {
 } from '../types';
 import { fetchHTML, isPlatformManagedHeading, parseHTML } from '../utils/fetch-utils';
 import { analyzeHeadingSequence, extractDocumentOutline, visibleOutlineHeadings } from '../utils/document-outline';
+import { isWebflowGeneratedVideoPosterSource } from '../utils/asset-utils';
 
 export async function validateAccessibility(siteUrl: string): Promise<AccessibilityAnalysisResult> {
 	console.log(`Starting accessibility validation for ${siteUrl}`);
@@ -430,10 +431,6 @@ function isLikelyPlatformVideoFallbackImage(img: any): boolean {
 		isWebflowGeneratedVideoPosterSource(src) ||
 		attrs.length > 0
 	);
-}
-
-function isWebflowGeneratedVideoPosterSource(src: string): boolean {
-	return /(?:^|[/_-])[^/?#]*(?:[_-]poster|poster)\.\d+\.(?:jpe?g|png|webp|avif)(?:$|[?#])/.test(src);
 }
 
 function determineImageContext(img: any, index: number): string {
