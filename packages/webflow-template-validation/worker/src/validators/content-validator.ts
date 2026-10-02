@@ -21,6 +21,7 @@ import {
 } from '../types';
 import { fetchHTML, isPlatformManagedHeading, parseHTML } from '../utils/fetch-utils';
 import { analyzeHeadingSequence, extractDocumentOutline, visibleOutlineHeadings } from '../utils/document-outline';
+import { isWebflowGeneratedVideoPosterSource } from '../utils/asset-utils';
 
 const LOREM_IPSUM_PATTERNS = [
 	/lorem\s+ipsum/i,
@@ -454,10 +455,6 @@ function isLikelyPlatformVideoFallbackImage(img: HTMLImageElement | any): boolea
 		isWebflowGeneratedVideoPosterSource(src) ||
 		attrs.length > 0
 	);
-}
-
-function isWebflowGeneratedVideoPosterSource(src: string): boolean {
-	return /(?:^|[/_-])[^/?#]*(?:[_-]poster|poster)\.\d+\.(?:jpe?g|png|webp|avif)(?:$|[?#])/.test(src);
 }
 
 function getImageSource(img: HTMLImageElement | any): string {
