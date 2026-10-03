@@ -96,7 +96,7 @@
     eyebrow="AI-native technical support"
     expression="editorial"
     title="Bring a workflow, software problem or existing product."
-    lede="We diagnose problems, implement improvements and help your team use what we deliver. Focused is $900/month for one agreed workstream and one milestone. Team is $2,500/month for up to two workstreams and two milestones. Both include two check-ins; Focused has two remote work sessions and Team has four. Delivered code follows your agreement; reusable provider tools are licensed for continued use. Your team keeps approval authority. Managed Control starts at $900/month for agreed live operations under a separate agreement. Larger Builds and project costs are separate."
+    lede="Bring us a workflow, software problem, or existing product. We’ll diagnose the issue, agree on the next step, and help your team use what we build."
     density="compact"
     artifactMobilePlacement="flow"
     proof={[
@@ -117,6 +117,32 @@
   </PerformanceCampaignOpening>
   </AgencyWayfindingOpening>
   </div>
+
+  <PerformancePageSection
+    id="support-scope"
+    eyebrow="Membership and scope"
+    title="Agree on the work before it begins."
+    variant="white"
+    layout="split"
+    density="compact"
+    ariaLabel="Technical support pricing, scope and ownership"
+  >
+    <p>
+      Focused is $900/month for one agreed workstream and one milestone.
+      Team is $2,500/month for up to two workstreams and two milestones.
+      Both include two check-ins; Focused has two remote work sessions and Team has four.
+    </p>
+    <p>
+      Delivered code follows your agreement; reusable provider tools are licensed for continued use.
+      Your team keeps approval authority.
+    </p>
+    {#snippet aside()}
+      <p>
+        Managed Control starts at $900/month for agreed live operations under a separate agreement.
+        Larger Builds and project costs are separate.
+      </p>
+    {/snippet}
+  </PerformancePageSection>
 
   <WorkflowSignalBand motionOnly quiet tall showMotionControl />
 
@@ -172,6 +198,39 @@
 <style>
   .services-opening :global(.performance-campaign-opening[data-density='compact']) { min-height: 0; }
   .services-opening :global(.performance-campaign-opening[data-expression='editorial'][data-density='compact'] .performance-campaign-opening__content) { padding-bottom: var(--space-performance-xl); }
+
+  @media (min-width: 64rem) {
+    .services-opening :global(.performance-campaign-opening[data-expression='editorial'][data-density='compact']) {
+      grid-template-columns: minmax(0, 49fr) minmax(0, 44fr);
+      grid-template-rows: auto auto;
+      column-gap: 7%;
+      padding: 8.5rem 5% var(--space-performance-xl);
+    }
+    .services-opening :global(.performance-campaign-opening[data-expression='editorial'][data-density='compact'] .performance-campaign-opening__content) {
+      display: contents;
+    }
+    .services-opening :global(.performance-campaign-opening[data-expression='editorial'][data-density='compact'] .performance-campaign-opening__content header) {
+      grid-column: 1;
+      grid-row: 1;
+      width: 100%;
+      align-self: center;
+    }
+    .services-opening :global(.performance-campaign-opening[data-expression='editorial'][data-density='compact'] .performance-campaign-opening__artifact) {
+      position: relative;
+      inset: auto;
+      grid-column: 2;
+      grid-row: 1;
+      width: 100%;
+      height: auto;
+      min-height: 0;
+      align-self: center;
+    }
+    .services-opening :global(.performance-campaign-opening[data-expression='editorial'][data-density='compact'] .performance-campaign-opening__proof) {
+      grid-column: 1 / -1;
+      grid-row: 2;
+      margin-top: var(--space-performance-xl);
+    }
+  }
 
   .services-performance {
     background: var(--color-performance-paper, #f3f3f0);
