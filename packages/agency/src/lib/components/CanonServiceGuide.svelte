@@ -4,7 +4,15 @@
   import { canonServiceQuestions, canonServiceAnswers, type ServiceQuestion } from '$lib/data/canonServiceGuide';
   let { showSuggestions = false }: { showSuggestions?: boolean } = $props();
   let ready = $state(false);
-  onMount(() => { ready = true; });
+  let mobile = $state(true);
+  let characterTrigger = $state(0);
+  onMount(() => {
+    ready = true;
+    const narrow = matchMedia('(max-width: 900px)');
+    const sync = () => { mobile = narrow.matches; };
+    sync(); narrow.addEventListener('change', sync);
+    return () => narrow.removeEventListener('change', sync);
+  });
   let open = $state(false);
   let selected = $state<ServiceQuestion | null>(null);
   let scoping = $state(false);
@@ -14,11 +22,11 @@
   const answer = $derived(selected ? canonServiceAnswers[selected] : null);
   async function toggle() {
     if (open) { close(); return; }
-    open = true; selected = null; scoping = false;
+    open = true; selected = null; scoping = false; characterTrigger++;
     await tick(); heading?.focus();
   }
   function close() { open = false; selected = null; scoping = false; trigger?.focus(); }
-  async function choose(id: ServiceQuestion) { open = true; selected = id; scoping = false; await tick(); heading?.focus(); }
+  async function choose(id: ServiceQuestion) { if (!open) characterTrigger++; open = true; selected = id; scoping = false; await tick(); heading?.focus(); }
   async function back() { selected = null; scoping = false; await tick(); heading?.focus(); }
   async function scope() { scoping = true; await tick(); heading?.focus(); }
 </script>
@@ -26,15 +34,17 @@
 <svelte:window onkeydown={(event) => { if (open && event.key === 'Escape' && panel?.contains(event.target as Node)) { event.preventDefault(); close(); } }} />
 
 <div class="canon-guide">
-  <button class="guide-trigger" bind:this={trigger} onclick={toggle} disabled={!ready} aria-expanded={open} aria-controls="canon-service-guide">Ask canon <span aria-hidden="true">{open ? '−' : '+'}</span></button>
-  <span class="guide-label">Canon service guide · local prototype / scripted answers</span>
+  <div class="guide-introduction">
+    <CanonCompanion action="waving" trigger={characterTrigger} staticOnly={mobile} />
+    <div><button class="guide-trigger" bind:this={trigger} onclick={toggle} disabled={!ready} aria-expanded={open} aria-controls="canon-service-guide">Ask canon <span aria-hidden="true">{open ? '−' : '+'}</span></button>
+    <span class="guide-label">Canon service guide · local prototype / scripted answers</span></div>
+  </div>
   {#if showSuggestions && !open}
     <ul class="questions suggested" aria-label="Suggested questions for Canon">{#each canonServiceQuestions as question}<li><button disabled={!ready} onclick={() => choose(question.id)} aria-controls="canon-service-guide">{question.label}<span aria-hidden="true">↗</span></button></li>{/each}</ul>
   {/if}
   {#if open}
     <section id="canon-service-guide" class="guide-panel" bind:this={panel} aria-labelledby="canon-guide-title">
       <header>
-        <CanonCompanion />
         <div><p class="prototype-label">Local prototype / scripted service guide</p><p>Answers from our published service pages. No live AI or message submission.</p></div>
         <button class="close" onclick={close} aria-label="Close Canon guide">Close <span aria-hidden="true">×</span></button>
       </header>
@@ -59,11 +69,13 @@
   .canon-guide { margin-top: var(--space-performance-sm); }
   button, a { min-height: 44px; }
   button { font: inherit; color: inherit; cursor: pointer; background: transparent; }
-  div.canon-guide > button.guide-trigger { background: transparent; border: 0; padding: 0; text-decoration: underline; text-underline-offset: .3em; }
+  .guide-introduction { display: flex; align-items: center; gap: var(--space-performance-sm); }
+  .guide-introduction :global(.canon) { width: 56px; }
+  .guide-introduction > div { min-width: 0; }
+  div.canon-guide .guide-introduction button.guide-trigger { background: transparent; border: 0; padding: 0; text-decoration: underline; text-underline-offset: .3em; }
   .guide-label { display: block; color: var(--color-performance-fg-tertiary); font-size: var(--text-performance-caption); line-height: 1.6; }
   .guide-panel { margin-top: var(--space-performance-md); padding: var(--space-performance-md); border: 1px solid var(--color-performance-shell-border-strong); max-width: 65ch; }
   header { display: flex; align-items: start; gap: var(--space-performance-sm); }
-  header :global(.canon) { width: 48px; }
   header > div { flex: 1; }
   header p { margin-top: 0; font-size: var(--text-performance-caption); }
   .prototype-label { font-family: var(--font-performance-mono); text-transform: uppercase; }

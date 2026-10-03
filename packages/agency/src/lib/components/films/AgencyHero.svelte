@@ -15,7 +15,8 @@
     <div class="hero-actions"><a class="primary" href={agencyCoreMessaging.workflowMappingSessionHref}>Talk through your workflow ↗</a></div>
     <p class="starting-point">Support {PUBLIC_PRICING.membership.label.toLowerCase()} · Agreed scope. <a href="/services#membership">See membership and costs ↗</a></p>
   </div>
-  <div class="hero-story"><WorkflowStory /><CanonServiceGuide showSuggestions /></div>
+  <div class="hero-story"><WorkflowStory /></div>
+  <div class="hero-guide"><CanonServiceGuide showSuggestions /></div>
   </div>
   <div class="hero-bottom">
     <a href="#built-work">Inspect the work ↓</a>
@@ -27,8 +28,9 @@
 
 <style>
   .hero-track { padding: 0; background: var(--color-performance-ink); color: var(--color-performance-paper); }
-  .hero-composition { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); align-items: start; gap: clamp(2rem, 5vw, 6rem); padding: 8rem 7vw var(--space-performance-lg); }
-  .hero-copy, .hero-story { min-width: 0; }
+  .hero-composition { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); align-items: center; column-gap: clamp(2rem, 5vw, 6rem); row-gap: var(--space-performance-sm); padding: 8rem 7vw var(--space-performance-lg); }
+  .hero-copy, .hero-story, .hero-guide { min-width: 0; }
+  .hero-guide { grid-column: 2; }
   .hero-story { padding-top: var(--space-performance-sm); }
   .eyebrow, .hero-bottom { font: var(--text-performance-operator-label)/1.5 var(--font-performance-mono); }
   .eyebrow { margin: 0; }
@@ -43,6 +45,6 @@
   .hero-bottom a { display: inline-flex; align-items: center; min-height: 44px; }
   button { min-height: 44px; padding: var(--space-performance-xs) var(--space-performance-sm); border: 1px solid var(--color-performance-shell-border-strong); border-radius: var(--radius-performance-sm); background: var(--color-performance-ink); color: inherit; font: inherit; }
   a:focus-visible, button:focus-visible { outline: 2px solid var(--color-performance-focus); outline-offset: 3px; }
-  @media(max-width:900px) { .hero-composition { grid-template-columns: 1fr; padding-top: 7rem; gap: var(--space-performance-md); } .hero-story { max-width: 42rem; } }
+  @media(max-width:900px) { .hero-composition { grid-template-columns: 1fr; padding-top: 7rem; gap: var(--space-performance-md); } .hero-story, .hero-guide { grid-column: 1; max-width: 42rem; } }
   @media(max-width:720px) { h1 { font-size: clamp(2.75rem, 11vw, 4.5rem); } .lede { font-size: var(--text-performance-body-sm); } .hero-bottom { justify-content: start; column-gap: var(--space-performance-md); } }
 </style>

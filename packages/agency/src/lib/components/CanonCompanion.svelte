@@ -5,6 +5,7 @@
   export let action: 'jumping' | 'waving' = 'waving';
   export let trigger = 0;
   export let size: 'small' | 'large' = 'small';
+  export let staticOnly = false;
   const counts = { jumping: 5, waving: 4 };
   let image: HTMLImageElement;
   let src = '/canon/idle/00.png';
@@ -15,21 +16,21 @@
   function settle() { generation++; clearTimeout(timer); src = `/canon/${pose}/00.png`; }
   async function play() {
     settle();
-    if (!mounted || !visible || osReduced || $reducedFilmMotion || document.hidden) return;
+    if (!mounted || !visible || staticOnly || osReduced || $reducedFilmMotion || document.hidden) return;
     pendingAction = false;
     const current = generation;
     const frames = Array.from({ length: counts[action] }, (_, i) => `/canon/${action}/${String(i).padStart(2, '0')}.png`);
     try {
       await Promise.all(frames.map(async url => { const frame = new Image(); frame.src = url; await frame.decode(); }));
     } catch { return; }
-    if (current !== generation || !visible || osReduced || $reducedFilmMotion || document.hidden) return;
+    if (current !== generation || !visible || staticOnly || osReduced || $reducedFilmMotion || document.hidden) return;
     let index = 0;
     const advance = () => { if (index >= frames.length) { settle(); return; } src = frames[index++]; timer = setTimeout(advance, 125); };
     advance();
   }
   $: if (pose) { pendingAction = false; settle(); }
-  $: if (mounted && trigger !== lastTrigger) { lastTrigger = trigger; pendingAction = !osReduced && !$reducedFilmMotion && !document.hidden; void play(); }
-  $: if ($reducedFilmMotion || osReduced) { pendingAction = false; settle(); }
+  $: if (mounted && trigger !== lastTrigger) { lastTrigger = trigger; pendingAction = !staticOnly && !osReduced && !$reducedFilmMotion && !document.hidden; void play(); }
+  $: if (staticOnly || $reducedFilmMotion || osReduced) { pendingAction = false; settle(); }
   onMount(() => {
     mounted = true;
     const preference = matchMedia('(prefers-reduced-motion: reduce)');
