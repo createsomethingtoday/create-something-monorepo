@@ -27,7 +27,8 @@ const contentFiles = import.meta.glob('/content/papers/*.md', {
 const LEGACY_EXPERIMENT_REDIRECTS: Record<string, string> = {
 	'ascii-renderer': '/experiments/ascii-renderer',
 	'ai-native-filtering': '/experiments/ai-native-filtering',
-	'webflow-analyzer-lineage': '/experiments/webflow-analyzer-lineage'
+	'webflow-analyzer-lineage': '/experiments/webflow-analyzer-lineage',
+	'governed-codex-model-routing': '/experiments/governed-codex-model-routing'
 };
 
 /**
