@@ -30,6 +30,7 @@ First-wave policies scaffolded here:
 22. `policy.prose-quality.v1`
 23. `policy.simplified-technical-english.v1`
 24. `policy.executor-routing.v1`
+25. `policy.paperclip-browser-environments.v1`
 
 Each policy has:
 
