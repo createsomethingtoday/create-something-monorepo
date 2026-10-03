@@ -1,0 +1,11 @@
+{
+  "passed": true,
+  "checks": {
+    "terminatedForOutput": true,
+    "thresholdObserved": true,
+    "retainedOutputBounded": true,
+    "stopped": true,
+    "recovery": true
+  },
+  "productionReady": false
+}

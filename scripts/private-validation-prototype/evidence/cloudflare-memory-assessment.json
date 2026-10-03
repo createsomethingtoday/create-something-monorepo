@@ -1,0 +1,11 @@
+{
+  "passed": false,
+  "checks": {
+    "vmMemoryDeclared": true,
+    "killed": false,
+    "kernelOomEvidence": false,
+    "stopped": true,
+    "recovery": true
+  },
+  "productionReady": false
+}

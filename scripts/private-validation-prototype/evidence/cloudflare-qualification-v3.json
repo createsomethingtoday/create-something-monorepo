@@ -1,0 +1,66 @@
+{
+  "startedAt": "2026-09-24T04:39:33.506Z",
+  "expectedImage": "sha256:aac3677688c4861ad72a3b10077d1406c5a3ece91bd9dd79b557b94aca2c7b2e",
+  "workerVersion": "96f71902-f0b5-4ed2-a0ca-16f80d775c0b",
+  "runs": [
+    {
+      "id": "run-qualification-0",
+      "mode": "control",
+      "startedAt": 1790224774147,
+      "deadline": 1790224819147,
+      "status": "cleaned",
+      "cleanupAttempts": 0,
+      "dispatchPending": false,
+      "execution": {
+        "exitCode": 0,
+        "output": "{\"uid\":65534,\"node\":\"24.21.0\",\"arch\":\"x64\",\"limits\":{\"memoryMax\":null,\"pidsMax\":null,\"cpuMax\":null,\"process\":\"Limit                     Soft Limit           Hard Limit           Units     \\nMax cpu time              unlimited            unlimited            seconds   \\nMax file size             unlimited            unlimited            bytes     \\nMax data size             unlimited            unlimited            bytes     \\nMax stack size            8388608              unlimited            bytes     \\nMax core file size        0                    unlimited            bytes     \\nMax resident set          unlimited            unlimited            bytes     \\nMax processes             1841                 1841                 processes \\nMax open files            1048576              1048576              files     \\nMax locked memory         8388608              8388608              bytes     \\nMax address space         unlimited            unlimited            bytes     \\nMax file locks            unlimited            unlimited            locks     \\nMax pending signals       1841                 1841                 signals   \\nMax msgqueue size         819200               819200               bytes     \\nMax nice priority         0                    0                    \\nMax realtime priority     0                    0                    \\nMax realtime timeout      unlimited            unlimited            us\"},\"probes\":[{\"name\":\"owned-canary\",\"status\":0,\"signal\":null,\"result\":\"{\\\"status\\\":200,\\\"body\\\":\\\"private-owned-canary-v1\\\"}\"},{\"name\":\"public-tcp\",\"status\":0,\"signal\":null,\"result\":\"connected\"},{\"name\":\"dns\",\"status\":0,\"signal\":null,\"result\":\"resolved\"},{\"name\":\"local-management\",\"status\":0,\"signal\":null,\"result\":\"{\\\"status\\\":200,\\\"body\\\":\\\"{\\\\\\\"success\\\\\\\":true,\\\\\\\"status\\\\\\\":\\\\\\\"healthy\\\\\\\",\\\\\\\"timestamp\\\\\\\":\\\\\\\"2026-09-24T04:39:37.262Z\\\\\\\"}\\\"}\"},{\"name\":\"local-root-execution\",\"status\":0,\"signal\":null,\"result\":\"{\\\"status\\\":200,\\\"body\\\":\\\"{\\\\\\\"success\\\\\\\":true,\\\\\\\"exitCode\\\\\\\":0,\\\\\\\"stdout\\\\\\\":\\\\\\\"0\\\\\\\",\\\\\\\"stderr\\\\\\\":\\\\\\\"\\\\\\\",\\\\\\\"command\\\\\\\":\\\\\\\"id -u\\\\\\\",\\\\\\\"duration\\\\\\\":0,\\\\\\\"timestamp\\\\\\\":\\\\\\\"2026-09-24T04:39:37.373Z\\\\\\\"}\\\"}\"}],\"unprivilegedNetworkNamespace\":{\"status\":0,\"stderr\":\"\"}}",
+        "stderr": ""
+      },
+      "cleanupReason": "normal",
+      "beforeDestroy": {
+        "status": "healthy",
+        "lastChange": 1790224776590
+      },
+      "stoppedState": {
+        "status": "stopped",
+        "lastChange": 1790224777651
+      },
+      "endedAt": 1790224777718,
+      "elapsedMs": 3571
+    },
+    {
+      "id": "run-qualification-1",
+      "mode": "restricted",
+      "startedAt": 1790224779008,
+      "deadline": 1790224824008,
+      "status": "cleaned",
+      "cleanupAttempts": 0,
+      "dispatchPending": false,
+      "execution": {
+        "exitCode": 0,
+        "output": "{\"uid\":65534,\"node\":\"24.21.0\",\"arch\":\"x64\",\"limits\":{\"memoryMax\":null,\"pidsMax\":null,\"cpuMax\":null,\"process\":\"Limit                     Soft Limit           Hard Limit           Units     \\nMax cpu time              unlimited            unlimited            seconds   \\nMax file size             unlimited            unlimited            bytes     \\nMax data size             unlimited            unlimited            bytes     \\nMax stack size            8388608              unlimited            bytes     \\nMax core file size        0                    unlimited            bytes     \\nMax resident set          unlimited            unlimited            bytes     \\nMax processes             1841                 1841                 processes \\nMax open files            1048576              1048576              files     \\nMax locked memory         8388608              8388608              bytes     \\nMax address space         unlimited            unlimited            bytes     \\nMax file locks            unlimited            unlimited            locks     \\nMax pending signals       1841                 1841                 signals   \\nMax msgqueue size         819200               819200               bytes     \\nMax nice priority         0                    0                    \\nMax realtime priority     0                    0                    \\nMax realtime timeout      unlimited            unlimited            us\"},\"probes\":[{\"name\":\"owned-canary\",\"status\":null,\"signal\":\"SIGKILL\",\"result\":\"timeout-inconclusive\",\"error\":\"ETIMEDOUT\"},{\"name\":\"public-tcp\",\"status\":null,\"signal\":\"SIGKILL\",\"result\":\"timeout-inconclusive\",\"error\":\"ETIMEDOUT\"},{\"name\":\"dns\",\"status\":null,\"signal\":\"SIGKILL\",\"result\":\"timeout-inconclusive\",\"error\":\"ETIMEDOUT\"},{\"name\":\"local-management\",\"status\":0,\"signal\":null,\"result\":\"{\\\"status\\\":200,\\\"body\\\":\\\"{\\\\\\\"success\\\\\\\":true,\\\\\\\"status\\\\\\\":\\\\\\\"healthy\\\\\\\",\\\\\\\"timestamp\\\\\\\":\\\\\\\"2026-09-24T04:39:56.471Z\\\\\\\"}\\\"}\"},{\"name\":\"local-root-execution\",\"status\":0,\"signal\":null,\"result\":\"{\\\"status\\\":200,\\\"body\\\":\\\"{\\\\\\\"success\\\\\\\":true,\\\\\\\"exitCode\\\\\\\":0,\\\\\\\"stdout\\\\\\\":\\\\\\\"0\\\\\\\",\\\\\\\"stderr\\\\\\\":\\\\\\\"\\\\\\\",\\\\\\\"command\\\\\\\":\\\\\\\"id -u\\\\\\\",\\\\\\\"duration\\\\\\\":0,\\\\\\\"timestamp\\\\\\\":\\\\\\\"2026-09-24T04:39:56.615Z\\\\\\\"}\\\"}\"}],\"unprivilegedNetworkNamespace\":{\"status\":0,\"stderr\":\"\"}}",
+        "stderr": ""
+      },
+      "cleanupReason": "normal",
+      "beforeDestroy": {
+        "status": "healthy",
+        "lastChange": 1790224788438
+      },
+      "stoppedState": {
+        "status": "stopped",
+        "lastChange": 1790224796965
+      },
+      "endedAt": 1790224797041,
+      "elapsedMs": 18033
+    }
+  ],
+  "authority": "owned-fixture-only",
+  "sourceSha256": {
+    "worker.mjs": "925177e496ec98224b473e587ce942db8cae8d7f2b6c3e4b86f3522bd56660bf",
+    "policy.mjs": "433a0020cf9888ad62f9243b1be351690640c35cde1a2a9d108f2d40f02033ac",
+    "qualify.mjs": "4c46ba619ec3bd73f5fa2875958b4b61a3d751c2f5cd0082490174c037ebc05f",
+    "Dockerfile": "f953793b714b98d5e112dbadf4cc1b98f2a81bc4e36d1f8a65fc0aa164e89aef"
+  },
+  "completed": true,
+  "endedAt": "2026-09-24T04:39:58.283Z"
+}
