@@ -6,7 +6,7 @@
 <div class="signature">
   <CanonCompanion trigger={hello} />
   <div class="signature-copy">
-    <p>We build AI agents for useful business tasks. You keep the code, instructions, and work history.</p>
+    <p>AI-native technical support for your team’s tools and workflows. We diagnose problems, implement improvements, and help your team use what we deliver.</p>
     <button type="button" aria-expanded={open} aria-controls="canon-origin" onclick={() => { open = !open; if (open) hello++; }}>Meet Canon <span aria-hidden="true">{open ? '−' : '+'}</span></button>
     {#if open}<p id="canon-origin">Canon is our quietly capable companion. He accompanies workflow guidance, review and completion.</p>{/if}
   </div>
