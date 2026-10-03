@@ -4,6 +4,8 @@
   import AgencyWayfindingSign from './AgencyWayfindingSign.svelte';
 
   export let showContinuation = true;
+  export let motionOnly = false;
+  export let quiet = false;
 
   export let proofHref = '#built-work';
 
@@ -91,7 +93,7 @@
     resizeObserver.observe(canvas);
     document.addEventListener('visibilitychange', syncMotion);
     const unsubscribe = reducedFilmMotion.subscribe((value) => {
-      userReduced = value;
+      userReduced = value || quiet;
       syncMotion();
     });
     resize();
@@ -106,12 +108,15 @@
   });
 </script>
 
-<section class="signal-band" bind:this={field} aria-labelledby="signal-band-title">
+<section class="signal-band" class:quiet bind:this={field} aria-labelledby={motionOnly ? undefined : 'signal-band-title'} aria-label={motionOnly ? quiet ? 'Illustrative workflow trace' : 'Illustrative workflow motion' : undefined}>
+  {#if !motionOnly}
   <div class="signal-heading">
     <p class="eyebrow">THE SUPPORT RELATIONSHIP / 01—03</p>
     <h2 id="signal-band-title">Diagnose, improve, and help your team use the result.</h2>
   </div>
+  {/if}
   <canvas bind:this={canvas} aria-hidden="true"></canvas>
+  {#if !motionOnly}
   <ol class="stages">
     <li><span>01 / Diagnose</span><small>Use Draw to map the problem and agree on the change.</small></li>
     <li><span>02 / Engineer</span><small>Implement and test the agreed improvement.</small></li>
@@ -123,6 +128,7 @@
     <AgencyWayfindingSign kind="proof" label="Inspect the work" detail="See the examples and their source records." href={proofHref} direction="down" />
     <AgencyWayfindingSign kind="map" label="Choose a path" detail="Compare Map, Build, and Control." href="/products#choose-product" />
   </div>
+  {/if}
   {/if}
 </section>
 
@@ -136,6 +142,7 @@
   .eyebrow { color: var(--color-performance-fg-tertiary); margin: 0; }
   h2 { font: var(--font-performance-medium) var(--text-performance-body)/1.3 var(--font-performance-interface); margin: 0; }
   canvas { display: block; width: 100%; height: 145px; }
+  .quiet canvas { height: 56px; opacity: .5; }
   .stages { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); list-style: none; margin: 0; padding: 0 7vw; border-top: 1px solid var(--color-performance-shell-border-default); }
   .stages li { display: flex; flex-direction: column; gap: var(--space-performance-xs); min-width: 0; padding: var(--space-performance-sm) var(--space-performance-md); border-left: 1px solid var(--color-performance-shell-border-default); }
   .stages li:last-child { border-right: 1px solid var(--color-performance-shell-border-default); }

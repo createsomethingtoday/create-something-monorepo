@@ -215,7 +215,7 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     funnelStage: 'discover',
     intent:
       'Explain recurring AI-native technical support, its engineering capability, ownership and agreed capacity.',
-    primaryAction: 'Inspect the work',
+    primaryAction: 'Talk through your workflow',
     requiredTerms: ['technical support', 'diagnose', 'improvements', 'workstream', 'code'],
     requiredLinks: ['/agent-foundation', '/services', '/stack'],
     schema: 'page',
