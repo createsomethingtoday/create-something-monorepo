@@ -4,6 +4,7 @@
   import AgencyWayfindingSign from './AgencyWayfindingSign.svelte';
 
   export let showContinuation = true;
+  export let motionOnly = false;
 
   export let proofHref = '#built-work';
 
@@ -106,12 +107,15 @@
   });
 </script>
 
-<section class="signal-band" bind:this={field} aria-labelledby="signal-band-title">
+<section class="signal-band" bind:this={field} aria-labelledby={motionOnly ? undefined : 'signal-band-title'} aria-label={motionOnly ? 'Illustrative workflow motion' : undefined}>
+  {#if !motionOnly}
   <div class="signal-heading">
     <p class="eyebrow">THE SUPPORT RELATIONSHIP / 01—03</p>
     <h2 id="signal-band-title">Diagnose, improve, and help your team use the result.</h2>
   </div>
+  {/if}
   <canvas bind:this={canvas} aria-hidden="true"></canvas>
+  {#if !motionOnly}
   <ol class="stages">
     <li><span>01 / Diagnose</span><small>Use Draw to map the problem and agree on the change.</small></li>
     <li><span>02 / Engineer</span><small>Implement and test the agreed improvement.</small></li>
@@ -123,6 +127,7 @@
     <AgencyWayfindingSign kind="proof" label="Inspect the work" detail="See the examples and their source records." href={proofHref} direction="down" />
     <AgencyWayfindingSign kind="map" label="Choose a path" detail="Compare Map, Build, and Control." href="/products#choose-product" />
   </div>
+  {/if}
   {/if}
 </section>
 

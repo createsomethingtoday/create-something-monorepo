@@ -4,6 +4,8 @@ Review only. Branch `codex/agency-hero-guide-prototype`, based on published main
 
 ## Buyer experience
 
+Follow-up: the existing canvas motion strip is restored directly below the hero in a compact visual-only mode. The service journey follows it; the strip does not repeat the journey copy. Other uses of the component keep their original heading, stages, and continuation. Existing reduced-motion and visibility pause behavior remain intact.
+
 The opening now leads with “Keep your tools working.”, one explanatory sentence, and the existing workflow booking flow. A restrained, illustrative Diagnose → Engineer → Learn journey replaces the homepage signal band. It includes an explicit customer agreement gate and a checked handoff with instructions. The journey is real text, stacks vertically on mobile, and requires no motion or hover.
 
 Existing proof and membership details remain lower on the page. Prices, contractual terms, ownership boundaries, separate Control scope, and incident exclusions are preserved at the existing purchase surfaces. No pricing, contracts, credentials, runtime endpoints, or external accounts were changed.
@@ -28,4 +30,6 @@ Before a live AI guide, approve a public-only provider/runtime and visitor messa
 
 Screenshots and browser receipts are retained in `output/playwright/hero-guide/` (ignored evidence): `Agency-hero-and-service-journey-desktop.png`, `Agency-lighter-hero-mobile.png`, `Agency-service-journey-mobile.png`, `Canon-local-service-guide-desktop.png`, `Canon-local-service-guide-mobile.png`, and `flow-checks.json`. Screenshot copies are also saved to ChatGPT Library.
 
-Worktree disposition: retained at `agency-hero-guide` until user review. The published release and unrelated dirty source work remain untouched. Local preview: `http://127.0.0.1:4174/` while the review server is running.
+Worktree disposition: retained at `agency-hero-guide` until user review. The published release and unrelated dirty source work remain untouched. Local preview: `http://127.0.0.1:4175/?review=motion-final` while the review server is running.
+
+Motion follow-up validation: Svelte check reports zero errors/warnings; existing check suites passed after rerunning the 33 contact tests with local-server permission; Cloudflare build passed. Browser verification confirms animated canvas changes, a static canvas with reduced motion, no repeated strip copy, no mobile overflow, and no page errors. Updated screenshots: `Agency-restored-motion-desktop.png` and `Agency-restored-motion-mobile.png`, also saved to Library.
