@@ -255,7 +255,7 @@
 </PerformanceCampaignOpening>
 </AgencyWayfindingOpening>
 
-<WorkflowSignalBand motionOnly quiet tall />
+<WorkflowSignalBand motionOnly quiet tall showMotionControl />
 
 <PerformanceNarrativeStage
   id="stack-ownership-story"

@@ -1,12 +1,13 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { reducedFilmMotion } from '$lib/motion/filmPlayback';
+  import { reducedFilmMotion, toggleFilmMotion } from '$lib/motion/filmPlayback';
   import AgencyWayfindingSign from './AgencyWayfindingSign.svelte';
 
   export let showContinuation = true;
   export let motionOnly = false;
   export let quiet = false;
   export let tall = false;
+  export let showMotionControl = false;
 
   export let proofHref = '#built-work';
 
@@ -94,7 +95,7 @@
     resizeObserver.observe(canvas);
     document.addEventListener('visibilitychange', syncMotion);
     const unsubscribe = reducedFilmMotion.subscribe((value) => {
-      userReduced = value || quiet;
+      userReduced = value;
       syncMotion();
     });
     resize();
@@ -117,6 +118,9 @@
   </div>
   {/if}
   <canvas bind:this={canvas} aria-hidden="true"></canvas>
+  {#if showMotionControl}
+    <button class="motion-control" onclick={toggleFilmMotion} aria-pressed={$reducedFilmMotion}>{$reducedFilmMotion ? 'Enable motion' : 'Reduce motion'}</button>
+  {/if}
   {#if !motionOnly}
   <ol class="stages">
     <li><span>01 / Diagnose</span><small>Use Draw to map the problem and agree on the change.</small></li>
@@ -134,6 +138,9 @@
 </section>
 
 <style>
+  .signal-band { position: relative; }
+  .motion-control { position: absolute; right: 7vw; bottom: 12px; min-height: 44px; padding: 8px 12px; background: var(--color-performance-mode-campaign-surface); color: inherit; border: 1px solid var(--color-performance-shell-border-strong); border-radius: var(--radius-performance-sm); font: var(--text-performance-operator-label)/1.5 var(--font-performance-mono); }
+  .motion-control:focus-visible { outline: 2px solid var(--color-performance-focus); outline-offset: 3px; }
   .support-context { padding: var(--space-performance-md) 7vw 0; margin: 0; max-width: 75ch; font-size: var(--text-performance-caption); line-height: 1.6; }
   .signal-continuation { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-performance-sm); padding: var(--space-performance-sm) 7vw var(--space-performance-md); }
   @media (max-width: 640px) { .signal-continuation { grid-template-columns: 1fr; } }

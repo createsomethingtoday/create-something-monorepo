@@ -2,11 +2,24 @@ import { derived, writable } from 'svelte/store';
 export const reducedFilmMotion = writable(true);
 export const filmOverlayOpen = writable(false);
 export const filmNavigationOpen = writable(false);
+const motionPreferenceKey = 'agency-reduced-motion';
+let explicitMotionPreference: boolean | null = null;
+export function toggleFilmMotion() {
+  reducedFilmMotion.update(value => {
+    explicitMotionPreference = !value;
+    try { sessionStorage.setItem(motionPreferenceKey, String(!value)); } catch { /* Motion still works without storage. */ }
+    return !value;
+  });
+}
 const blocked = derived([reducedFilmMotion, filmOverlayOpen, filmNavigationOpen], (values) => values.some(Boolean));
 export function initializeFilmMotion() {
   const preference = matchMedia('(prefers-reduced-motion: reduce)');
-  reducedFilmMotion.set(preference.matches);
-  const change = () => reducedFilmMotion.set(preference.matches);
+  try {
+    const saved = sessionStorage.getItem(motionPreferenceKey);
+    explicitMotionPreference = saved === 'true' ? true : saved === 'false' ? false : null;
+  } catch { /* Use the system preference when storage is unavailable. */ }
+  reducedFilmMotion.set(explicitMotionPreference ?? preference.matches);
+  const change = () => reducedFilmMotion.set(explicitMotionPreference ?? preference.matches);
   preference.addEventListener('change', change);
   return () => preference.removeEventListener('change', change);
 }
