@@ -8,12 +8,15 @@
   "scripts": {
     "build": "tsc && node scripts/build-worker.mjs",
     "reconcile:agency-ops": "tsx src/reconcile-agency-ops.ts",
-    "test": "node --import tsx --test src/reconciliation.test.ts",
+    "eval:jev-followup": "tsx evaluation/jev-followup/run.ts",
+    "eval:jev-followup:history": "tsx evaluation/jev-followup/audit-history.ts",
+    "test": "node --import tsx --test src/*.test.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@notionhq/client": "^2.2.15",
-    "@notionhq/workers": "^0.3.0"
+    "@notionhq/workers": "^0.3.0",
+    "effect": "3.22.2"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
