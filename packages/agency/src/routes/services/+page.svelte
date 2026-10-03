@@ -118,7 +118,7 @@
   </AgencyWayfindingOpening>
   </div>
 
-  <WorkflowSignalBand motionOnly quiet />
+  <WorkflowSignalBand motionOnly quiet tall />
 
   <BuiltWork />
 

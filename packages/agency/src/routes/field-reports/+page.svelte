@@ -68,7 +68,7 @@
 </PerformanceCampaignOpening>
 </AgencyWayfindingOpening>
 
-<WorkflowSignalBand motionOnly quiet />
+<WorkflowSignalBand motionOnly quiet tall />
 
 <PerformanceEvidenceIndex
   id="reports"
