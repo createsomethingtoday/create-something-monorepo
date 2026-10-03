@@ -6,6 +6,7 @@
   "description": "Self-contained macOS delivery for client-owned Codex workspaces",
   "scripts": {
     "prepare:runtime": "node scripts/prepare-runtime.mjs",
+    "prepare:connector-candidate": "node native-connector/scripts/prepare-candidate.mjs",
     "fixture": "node scripts/create-synthetic-delivery.mjs",
     "dev": "tauri dev",
     "check": "tauri build --debug --no-bundle",

@@ -29,7 +29,8 @@ export class ClientWorkspaceRuntime {
   readonly codexCommand = process.env.CLIENT_WORKSPACE_CODEX_COMMAND ?? 'codex';
   readonly registry = createDefaultWorkspaceRegistry({
     managedRoot: this.managedRoot,
-    includeDemo: process.env.CLIENT_WORKSPACE_DESKTOP !== '1',
+    includeDemo: process.env.CLIENT_WORKSPACE_DESKTOP !== '1' &&
+      process.env.CLIENT_WORKSPACE_MANAGED_CONNECTOR !== '1',
     additionalDefinitions: loadImportedWorkspaceDefinitions({
       managedRoot: this.managedRoot,
       stateRoot: this.stateRoot
