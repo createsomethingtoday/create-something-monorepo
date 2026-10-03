@@ -74,6 +74,7 @@ test('operator-agent MCP exposes read-only local tools and runs readiness', asyn
     assert.ok(toolNames.includes('operator_agent_readiness'));
     assert.ok(toolNames.includes('operator_agent_doctor'));
     assert.ok(toolNames.includes('operator_agent_completion_audit'));
+    assert.ok(toolNames.includes('operator_agent_capabilities'));
     assert.ok(toolNames.includes('operator_agent_model_probe'));
     assert.ok(toolNames.includes('operator_agent_model_benchmark'));
     assert.ok(toolNames.includes('operator_agent_memory_proposal'));
@@ -89,6 +90,9 @@ test('operator-agent MCP exposes read-only local tools and runs readiness', asyn
     const auditTool = listed.result.tools.find((tool) => tool.name === 'operator_agent_completion_audit');
     assert.equal(auditTool.annotations.readOnlyHint, true);
     assert.equal(auditTool.annotations.destructiveHint, false);
+    const capabilitiesTool = listed.result.tools.find((tool) => tool.name === 'operator_agent_capabilities');
+    assert.equal(capabilitiesTool.annotations.readOnlyHint, true);
+    assert.equal(capabilitiesTool.annotations.destructiveHint, false);
     const memoryTool = listed.result.tools.find((tool) => tool.name === 'operator_agent_memory_proposal');
     assert.equal(memoryTool.annotations.readOnlyHint, true);
     assert.equal(memoryTool.annotations.destructiveHint, false);
@@ -111,6 +115,17 @@ test('operator-agent MCP exposes read-only local tools and runs readiness', asyn
     assert.equal(auditPayload.mode, 'doctor');
     assert.ok(auditPayload.evidence.completionAudit);
     assert.ok(['blocked-external', 'incomplete', 'complete', 'local-deterministic-ready'].includes(auditPayload.summary.completionVerdict));
+
+    const capabilities = await call(5, 'tools/call', {
+      name: 'operator_agent_capabilities',
+      arguments: {},
+    });
+    assert.equal(capabilities.error, undefined);
+    const capabilitiesPayload = JSON.parse(capabilities.result.content[0].text);
+    assert.equal(capabilitiesPayload.mode, 'capabilities');
+    assert.equal(capabilitiesPayload.passed, true);
+    assert.equal(capabilitiesPayload.profile.id, 'local-readonly');
+    assert.equal(capabilitiesPayload.mutation.writesPerformed, 0);
   } finally {
     child.kill('SIGTERM');
   }
