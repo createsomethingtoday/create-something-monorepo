@@ -4,7 +4,7 @@
   "atlasCanvasId": "create-something-internal-operating-topology",
   "rootNodeId": "substrate:create-something:root",
   "coverage": {
-    "generatedAt": "2026-09-30T14:04:28.546Z",
+    "generatedAt": "2026-10-03T14:04:27.347Z",
     "rootPath": ".",
     "packageCount": 239,
     "appCount": 13,
@@ -581,7 +581,7 @@
       "surface": "worker",
       "owner": "CREATE SOMETHING",
       "status": "mapped",
-      "summary": "Automation Design Firm — we apply the Subtractive Triad to design automation architectures that work",
+      "summary": "AI-native technical support — diagnosis, engineering improvements and help using the result",
       "tags": [
         "package",
         "worker",

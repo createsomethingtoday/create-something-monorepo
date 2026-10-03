@@ -2,7 +2,7 @@
   "version": 1,
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
-  "generatedAt": "2026-09-30T14:04:28.546Z",
+  "generatedAt": "2026-10-03T14:04:27.347Z",
   "rendererBudget": {
     "initialUsableMs": 500,
     "interactionMs": 50,
@@ -304,7 +304,7 @@
     }
   },
   "insights": {
-    "generatedAt": "2026-09-30T14:04:28.546Z",
+    "generatedAt": "2026-10-03T14:04:27.347Z",
     "relationCounts": {
       "contains": 542,
       "depends_on": 164,
