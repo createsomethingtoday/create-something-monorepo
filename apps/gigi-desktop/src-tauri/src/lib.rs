@@ -3,6 +3,7 @@ pub mod source_import;
 pub mod integrations;
 mod agent_setup;
 mod navigation;
+pub mod chat;
 
 use tauri::Manager;
 
@@ -19,6 +20,7 @@ async fn dispatch(app: tauri::AppHandle, operation: String, input: serde_json::V
         if operation=="help.open" {return navigation::open_help(input);}
         if operation=="connections.openConsent" {return navigation::open_consent(input);}
         if operation=="context.sync" {return integrations::sync_history(&resources,&data_dir);}
+        if operation.starts_with("agent.chat.") {return chat::dispatch(&resources,&data_dir,&operation,input);}
         if operation=="connections.import" {
             let page=integrations::dispatch(&resources,&data_dir,&operation,input.clone())?;
             return source_import::persist_page(&data_dir,&input,page);
@@ -39,6 +41,7 @@ pub fn run() {
         .run(|_app, event| {
             if matches!(event, tauri::RunEvent::Exit) {
                 integrations::cancel_all();
+                chat::cancel_all();
             }
         });
 }

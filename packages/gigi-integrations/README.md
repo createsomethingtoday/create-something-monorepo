@@ -35,3 +35,11 @@ The companion expects authenticated `GET /v1/gigi/connections/:provider`, `POST 
 ## Verification
 
 `pnpm --filter @create-something/gigi-integrations test`, `typecheck`, and `build:companion` verify the package. `GIGI_CTX_REAL_BINARY=<absolute bundled ctx path> pnpm --filter @create-something/gigi-integrations exec node --import tsx --test test/ctx-real.test.ts` verifies the official CTX binary against synthetic GiGi history with no developer context. Live acceptance additionally requires a real Identity token, Composio consent/readback, isolated source import, and the phone-to-desktop session.
+
+## Codex chat companion
+
+`src/codex-main.ts` is the persistent JSON-line desktop companion, built with `pnpm build:codex-companion`. It requires the profile data directory, exact GiGi MCP binary and GiGi skill path supplied by the native application. The native application owns the companion process; Effect scopes the child runtime resources. Each request returns one correlated result while provider events are collected separately for bounded chat polling.
+
+This adapter uses the installed, ChatGPT-signed-in Codex runtime. It must not extract provider credentials or silently fall back to API billing. Session metadata is profile-scoped; provider transcripts and SQLite record backups remain separate. Restart and uncertain writes require reconciliation rather than automatic replay.
+
+The embedded tool surface contains GiGi reads and saves of existing records only. Every save captures a fresh expected record, receives an explicit approval, uses an idempotency key and checks readback. The adapter rejects record creation and oversized approval payloads. A workspace with an uncertain save cannot make more embedded writes until a matching full record read reconciles it. A conversation with an unidentified turn remains blocked; it never automatically resends. Profiles are capped at 100 conversations so unresolved fences cannot disappear through history eviction.
