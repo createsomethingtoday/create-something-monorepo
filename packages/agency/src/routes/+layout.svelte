@@ -62,7 +62,7 @@
   // Primary nav tells a first-time visitor what each destination contains.
   // Owned product names remain available in the footer and on the system page.
   const navLinks = [
-    { label: 'How It Works', href: '/services' },
+    { label: 'Technical Support', href: '/services' },
     {
       label: 'Try a Workflow',
       href: '/practice',
@@ -80,7 +80,7 @@
         {
           label: 'How it works',
           href: '/services',
-          description: 'See how we plan, build, and support your project.'
+          description: 'See how we diagnose problems, engineer improvements, and help your team use them.'
         },
         {
           label: 'Marketplace field report',
@@ -102,7 +102,7 @@
   const usesPublicNavigation = $derived(!/^\/(account|admin|dashboard|login|logout|auth|mcp-access|delivery)(?:\/|$)/.test($page.url.pathname) && !/^\/map\/(workspace|subscribe|share)(?:\/|$)/.test($page.url.pathname));
   const filmNavLinks = [
     { label: 'The work', href: '/#work' },
-    { label: 'How we work', href: '/services' },
+    { label: 'Technical support', href: '/services' },
     { label: 'From $900/mo', href: agencyCoreMessaging.membershipHref },
     { label: 'Explore', href: '/products', children: [
       { label: 'Services & tools', href: '/products', description: 'Explore the full catalog.' },
@@ -132,7 +132,7 @@
       title: 'Services',
       ariaLabel: 'Commercial paths',
       links: [
-        { label: 'How It Works', href: '/services' },
+        { label: 'Technical Support', href: '/services' },
         { label: 'Agent Foundation', href: agencyCoreMessaging.agentFoundationHref },
         { label: 'Technical Review', href: '/technical-review' },
         { label: 'AI Buyer Readiness Audit', href: '/agent-readiness' },
@@ -181,7 +181,7 @@
   const filmFooterGroups = [
     { title: 'Work', ariaLabel: 'Explore capabilities', links: filmStories.map(story => ({label:story.name,href:`/?film=${story.id}#work`})) },
     { title: 'Working together', ariaLabel: 'Working together', links: [
-      {label:'Membership',href:agencyCoreMessaging.membershipHref},
+      {label:'Support membership',href:agencyCoreMessaging.membershipHref},
       {label:agencyCoreMessaging.bookMappingSessionLabel,href:agencyCoreMessaging.workflowMappingSessionHref},
       {label:'Contact',href:'/contact'},
       ...footerQuickLinkGroups[0].links.filter(link => !['Products','Field Reports','Dispatch','About'].includes(link.label))
@@ -215,7 +215,7 @@
     {
       id: 'nav-services',
       label: 'How It Works',
-      description: 'Planning, building, and supporting AI tasks',
+      description: 'AI-native technical support: diagnosis, engineering improvements, and team learning',
       href: '/services',
       icon: '🔨',
       keywords: [
@@ -518,7 +518,7 @@
     mode="agency"
     brandContent={usesPublicNavigation ? canonFooterBrand : undefined}
     showNewsletter={false}
-    aboutText="We build AI agents for useful business tasks. You keep the code, instructions, and work history."
+    aboutText="AI-native technical support for your tools and workflows. We diagnose problems, engineer improvements, and help your team use what we deliver."
     quickLinkGroups={usesPublicNavigation ? filmFooterGroups : footerQuickLinkGroups}
     footerCta={routeOwnsPerformanceEnding
       ? undefined

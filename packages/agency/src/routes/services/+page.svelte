@@ -17,7 +17,7 @@
   const controlProduct = getPublicProduct('control');
 
   const services = [
-    { name: 'Agent engineering membership', description: 'Delivery within an agreed scope, skills and operator support.', type: 'Membership', price: PUBLIC_PRICING.membership.label, priceDescription: PUBLIC_PRICING.membership.terms },
+    { name: 'AI-native technical support membership', description: 'Recurring diagnosis, engineering improvements and learning support within an agreed scope.', type: 'Membership', price: PUBLIC_PRICING.membership.label, priceDescription: PUBLIC_PRICING.membership.terms },
     {
       name: mapProduct.name,
       description: mapProduct.customerJob,
@@ -53,7 +53,7 @@
     {
       question: 'What is your primary service?',
       answer:
-        'Focused is $900/month for one workstream and one milestone, with two check-ins and two remote work sessions. Team is $2,500/month for up to two workstreams and two milestones, with two check-ins and four remote sessions. Larger Builds, managed Control and project costs are separate.'
+        'We provide AI-native technical support: diagnosis, engineering improvements and help using what we deliver. Focused is $900/month for one workstream and one milestone, with two check-ins and two remote work sessions. Team is $2,500/month for up to two workstreams and two milestones, with two check-ins and four remote sessions. Larger Builds, managed Control and project costs are separate.'
     },
     {
       question: 'Are agents part of the workforce?',
@@ -73,14 +73,14 @@
     {
       question: 'Do clients own the implementation?',
       answer:
-        'Yes. Clients retain ownership of code, workflows, operating documentation, and approval authority.'
+        'You retain your materials and approval authority. After full payment, you own commissioned code, workflows and documentation, except reusable provider tools licensed for continued use.'
     }
   ];
 </script>
 
 <SEO
-  title="AI Workflow Systems | How It Works"
-  description="How CREATE SOMETHING turns one messy business handoff into a reliable AI-assisted workflow with connected tools, approvals, stop conditions, and an audit trail."
+  title="AI-native Technical Support | How It Works"
+  description="Recurring technical support for your tools and workflows. We diagnose problems, engineer improvements and help your team use the result within an agreed scope."
   keywords="AI workflow systems, workflow mapping, AI interaction design, governed AI workflow, workflow pilot, production automation, agent reliability"
   ogImage="/og-image.png"
   propertyName="agency"
@@ -92,10 +92,10 @@
   <div class="services-opening">
   <AgencyWayfindingOpening>
   <PerformanceCampaignOpening
-    eyebrow="How It Works"
+    eyebrow="AI-native technical support"
     expression="editorial"
     title="Bring a workflow, software problem or existing product."
-    lede="Focused is $900/month for one agreed workstream and one milestone. Team is $2,500/month for up to two workstreams and two milestones. Both include two check-ins; Focused has two remote work sessions and Team has four. You keep the delivered code and approval authority. Larger Builds and managed Control have separate agreements. Project costs are separate."
+    lede="We diagnose problems, implement improvements and help your team use what we deliver. Focused is $900/month for one agreed workstream and one milestone. Team is $2,500/month for up to two workstreams and two milestones. Both include two check-ins; Focused has two remote work sessions and Team has four. Delivered code follows your agreement; reusable provider tools are licensed for continued use. Your team keeps approval authority. Managed Control starts at $900/month for agreed live operations under a separate agreement. Larger Builds and project costs are separate."
     density="compact"
     artifactMobilePlacement="flow"
     proof={[

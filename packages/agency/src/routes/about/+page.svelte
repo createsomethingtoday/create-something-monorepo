@@ -100,7 +100,7 @@
       label: 'Client contract',
       title: 'Bring the workflow and owner',
       detail:
-        'Clients bring the task and the person responsible for it. I help diagnose the problem, build the software, and leave instructions and test results.'
+        'Clients bring the task and the person responsible. I diagnose problems, implement improvements, and help the team use the delivered software.'
     }
   ];
 
@@ -137,7 +137,7 @@
       summary: 'Offense + defense',
       title: 'Advance approved work. Protect operator authority.',
       detail:
-        'We test one task before expanding. The client keeps the workflow plan, rules, results, and software.',
+        'We test one task before expanding. Support preserves the context. The client keeps the agreed deliverables, with ownership recorded before work begins.',
       tone: 'review',
       receipts: ['cleanup loop', 'Subtractive Triad', 'client-owned path']
     },
@@ -195,7 +195,7 @@
 
 <SEO
   title="Micah Johnson | CREATE SOMETHING .agency"
-  description="Micah Johnson helps teams build AI workflows they can understand and own, with clear responsibilities, tested results, and human review."
+  description="Micah Johnson provides AI-native technical support: diagnosing problems, engineering improvements, and helping teams use the tools and workflows they own."
   keywords="Micah Johnson, workflow control layer, production automation, systems architecture, automation reliability, controlled workflows"
   ogImage="/og-image.png"
   propertyName="agency"
@@ -207,8 +207,8 @@
   titleLevel="h1"
   expression="editorial"
   eyebrow="About CREATE SOMETHING"
-  title="I help teams make sense of the work before automating it."
-  description="Playing Division III basketball taught me to pay attention to the whole team. Who is doing what? Where is the pressure? What happens next? I bring that habit to building AI systems."
+  title="I help teams fix, improve, and use their tools."
+  description="Playing Division III basketball taught me to pay attention to the whole team. Who is doing what? Where is the pressure? What happens next? I bring that habit to technical support and engineering."
 >
   {#snippet aside()}
     <PlaybookField variant="about" embedded />

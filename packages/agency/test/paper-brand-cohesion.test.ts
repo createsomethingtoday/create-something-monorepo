@@ -119,7 +119,7 @@ test('the Agency opening exposes the owned handoff and inspection path without a
   assert.match(hero, /PUBLIC_PRICING.membership.label/);
   assert.match(hero, /href="#built-work"/);
   assert.ok(home.indexOf('<BuiltWork') < home.indexOf('<FilmCollection'));
-  assert.match(home, /You keep the code/);
+  assert.match(home, /you own commissioned deliverables under your agreement/);
   assert.match(home, /what AI may do/);
   assert.match(home, /what needs approval/);
   assert.doesNotMatch(home, /OpenAI[^\n]{0,80}<img|Cloudflare[^\n]{0,80}<img/);

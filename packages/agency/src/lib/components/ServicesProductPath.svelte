@@ -43,13 +43,13 @@
       <h2 id="services-product-path-title">Choose the help you need.</h2>
     </div>
     <p class="product-path__description">
-      Map helps you plan the work. Build creates a system your team owns. After launch, Control provides Managed AI Operations {PUBLIC_PRICING.managedControl.label.toLowerCase()} for a
+      Map supports diagnosis and agreement. Build supplies the engineering to deliver the agreed system with documented ownership and reusable-tool licenses. After launch, Control provides Managed AI Operations {PUBLIC_PRICING.managedControl.label.toLowerCase()} for a
       standard-risk environment. Control includes Map. New workflows and integrations are quoted separately through Build.
       The supported public source distribution is {PUBLIC_PRICING.publicSource.label}.
     </p>
   </div>
 
-  <p class="product-path__choice-note">Choose the support you need. These are separate options; Control includes Map.</p>
+  <p class="product-path__choice-note">Membership supports scoped improvements and learning from $900/month. Managed Control separately supports agreed live operations from $900/month and includes Map.</p>
   <ul class="product-path__stages" aria-label="Map, Build, and Control options">
     {#each stages as stage}
       <li data-product-stage={stage.id}>

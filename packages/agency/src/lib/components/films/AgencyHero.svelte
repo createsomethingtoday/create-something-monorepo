@@ -7,15 +7,15 @@
 <section class="hero-track" aria-labelledby="agency-hero-title">
   <div class="hero-layout">
     <div class="hero-copy">
-      <p class="eyebrow">CREATE SOMETHING / AI-native tech support</p>
+      <p class="eyebrow">CREATE SOMETHING / AI-native technical support</p>
       <a class="partner" href="/stack#openai-qualifications">OpenAI Select Partner ↗</a>
-      <h1 id="agency-hero-title">Tech support for your team’s tools and systems.</h1>
-      <p class="lede">We use AI to map workflows, build or improve software, and operate agreed systems. You keep the delivered code, records and approval authority.</p>
+      <h1 id="agency-hero-title">Technical support for your team’s tools and workflows.</h1>
+      <p class="lede">CREATE SOMETHING provides AI-native technical support for your team’s tools and workflows. We diagnose problems, implement improvements, and help your team use what we deliver.</p>
       <div class="hero-actions">
         <a class="primary" href="#built-work">Inspect the work ↓</a>
         <a href="/services">Scope &amp; cost ↗</a>
       </div>
-      <p class="hero-terms">Support {PUBLIC_PRICING.membership.label.toLowerCase()} for one agreed workstream. Team support is {PUBLIC_PRICING.membership.team.label} for up to two. Larger Build projects and managed Control have separate agreements. Project costs are separate.</p>
+      <p class="hero-terms">Support {PUBLIC_PRICING.membership.label.toLowerCase()} for one agreed workstream. Team support is {PUBLIC_PRICING.membership.team.label} for up to two. You keep the delivered code and records under your agreement, with reusable tools licensed for continued use. Your team retains approval authority. Managed Control starts at $900/month for agreed live operations under a separate agreement. Larger Build projects are quoted separately. Project costs are separate.</p>
       <a class="review-link" href="/technical-review">Have an existing product? Start with a technical review ↗</a>
     </div>
     <aside class="handoff" aria-labelledby="handoff-title">

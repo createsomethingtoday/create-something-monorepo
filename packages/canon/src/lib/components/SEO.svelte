@@ -57,7 +57,7 @@
     agency: {
       domain: 'https://createsomething.agency',
       name: 'CREATE SOMETHING Agency',
-      tagline: 'Calm, transparent AI workflow systems with MCP connectivity, operating boundaries, and evidence-backed delivery',
+      tagline: 'AI-native technical support for your team’s tools and workflows: diagnosis, engineering improvements and help using what we deliver',
       color: '#000000',
     },
     ltd: {

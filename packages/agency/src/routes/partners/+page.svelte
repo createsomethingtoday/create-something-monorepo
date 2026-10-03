@@ -88,7 +88,7 @@
     {
       question: 'What is the workflow tool stack?',
       answer:
-        'CREATE SOMETHING owns the system. Cloudflare provides infrastructure. OpenAI provides intelligence. Substrate keeps workflow state, policy, review, and receipts in the owned operating layer.'
+        'CREATE SOMETHING maintains the system layer for agreed support. Cloudflare provides infrastructure and OpenAI provides intelligence. Substrate keeps workflow records, approvals, and results together. Ownership follows the agreed service scope.'
     },
     {
       question: 'Why not lead with vendor badges?',
@@ -105,7 +105,7 @@
 
 <SEO
   title="Connected Tools | CREATE SOMETHING .agency"
-  description="Find connections for the tools your team uses, and see what provides the AI, hosting, and work records."
+  description="AI-native technical support for the tools your team uses. See available connections and how we support AI, hosting, and work records."
   keywords="workflow tool stack, AI workflow systems, Substrate database, OpenAI agents, Cloudflare workflow runtime, MCP tool boundary"
   ogImage="/og-image.png"
   propertyName="agency"
@@ -117,9 +117,9 @@
   layout="stack"
   titleLevel="h1"
   expression="editorial"
-  eyebrow="Workflow Tool Stack"
+  eyebrow="Tools we support"
   title="Connect the tools your task needs."
-  description="Bring the task and the tools your team uses. We check which connections are available and agree on access before connecting your accounts."
+  description="Bring the task and the tools your team uses. We diagnose the problem, check available connections, and agree on access before making changes."
 >
   {#snippet actions()}
     <Button href={agencyCoreMessaging.selfMapHref}>
@@ -135,7 +135,7 @@
   variant="white"
   eyebrow="Tool fit"
   title="What each part of the system does."
-  description="CREATE SOMETHING owns the system. Cloudflare provides infrastructure. OpenAI provides intelligence. Substrate keeps workflow state, operator review, decisions, and evidence under CREATE SOMETHING control."
+  description="CREATE SOMETHING maintains the system layer for agreed support. Cloudflare provides infrastructure and OpenAI provides intelligence. Your materials and agreed deliverables remain distinct from our reusable tools."
 >
   {#snippet after()}
     <PerformanceCardGrid items={fitCards} columns={3} ariaLabel="Workflow tool fit" />
@@ -163,7 +163,7 @@
   expression="editorial"
   eyebrow="Map the workflow"
   title="Choose the task before choosing the tools."
-  description="Plan the task with the person responsible. Agree on what the system can do and when it must stop. If you deliver client work, read the service-provider guide."
+  description="Diagnose the task with the person responsible. Agree on the improvement, then build and test it. If you deliver client work, read the service-provider guide."
   steps={ctaItems}
   handoff={{
     owner: 'Workflow owner',

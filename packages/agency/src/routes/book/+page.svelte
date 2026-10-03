@@ -19,13 +19,13 @@
 	export let data: PageData;
 
 	const mappingBookingOffer = {
-		seoTitle: 'Book a CREATE SOMETHING Mapping Session',
+		seoTitle: 'Discuss AI-native Technical Support | CREATE SOMETHING',
 		seoDescription:
-			'Choose a 30- or 60-minute time to discuss one workflow.',
+			'Choose a 30- or 60-minute time to discuss technical support for your tools and workflows.',
 		eyebrow: 'Workflow mapping session',
 		title: 'Choose a time to talk through the task.',
 		description:
-			'Bring one task and the person responsible for it. If you made a draft in Map, review the summary below before choosing a time.',
+			'Bring one problem or improvement and the person responsible. We discuss diagnosis, engineering work, and learning needs. Review any Map summary before choosing a time.',
 		secondaryHref: '/map',
 		secondaryLabel: 'Map your workflow',
 		iframeTitle: 'Schedule a CREATE SOMETHING mapping session',

@@ -57,8 +57,8 @@ const SERVICES: ContentItem[] = [
 	},
 	{
 		slug: 'workflow-infrastructure',
-		title: 'Workflow System',
-		description: 'CREATE SOMETHING builds production-safe workflow systems for business-critical operations with clear operating boundaries.',
+		title: 'AI-native Technical Support',
+		description: 'Recurring diagnosis, engineering improvements and help using your tools and workflows within an agreed support scope.',
 		category: 'service'
 	},
 	{
