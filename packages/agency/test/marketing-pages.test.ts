@@ -20,7 +20,7 @@ function pageFileForRoute(route: string): string {
 function sourceForEntry(entry: (typeof marketingPagePortfolio)[number]): string {
   const routeSource = readFileSync(pageFileForRoute(entry.sourceRoute ?? entry.path), 'utf8');
   if (entry.path === '/') {
-    const components = ['films/AgencyHero.svelte', 'WorkflowSignalBand.svelte', 'BuiltWork.svelte', 'MembershipOffer.svelte'];
+    const components = ['films/AgencyHero.svelte', 'ServiceJourney.svelte', 'BuiltWork.svelte', 'MembershipOffer.svelte'];
     return [routeSource, ...components.map((file) => readFileSync(path.join(packageRoot, 'src/lib/components', file), 'utf8'))].join('\n');
   }
   if (entry.sourceRoute !== '/workflows/[slug]') return routeSource;

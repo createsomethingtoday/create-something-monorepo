@@ -1,7 +1,7 @@
 <script lang="ts">
   import SelectedClientWork from '$lib/components/SelectedClientWork.svelte';
   import AgencyHero from '$lib/components/films/AgencyHero.svelte';
-  import WorkflowSignalBand from '$lib/components/WorkflowSignalBand.svelte';
+  import ServiceJourney from '$lib/components/ServiceJourney.svelte';
   import FilmCollection from '$lib/components/films/FilmCollection.svelte';
   import BuiltWork from '$lib/components/BuiltWork.svelte';
   import MembershipOffer from '$lib/components/MembershipOffer.svelte';
@@ -84,7 +84,7 @@
 
 <div class="home-pilot property-performance">
   <AgencyHero />
-  <WorkflowSignalBand />
+  <ServiceJourney />
   <BuiltWork showCanonContinuation />
   <FilmCollection />
   <SelectedClientWork />
