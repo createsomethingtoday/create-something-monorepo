@@ -247,7 +247,7 @@ test('Workflow library opens with a route-specific macro Playbook hero and autho
   }
 });
 
-test('the shared social preview is a current, served Paper operating-system artifact', () => {
+test('the shared social preview states the current technical support positioning', () => {
   const svgPath = resolve(agencyRoot, 'static/og-image.svg');
   const pngPath = resolve(agencyRoot, 'static/og-image.png');
   const svg = read('static/og-image.svg');
@@ -259,15 +259,15 @@ test('the shared social preview is a current, served Paper operating-system arti
     'served raster social card should not be a placeholder'
   );
   for (const label of [
-    'OPERATING SYSTEMS',
-    'FOR AI WORK',
-    'MAP',
-    'BUILD',
-    'CONTROL',
-    'SOURCE SHEET',
-    'DECISION BOUNDARY',
-    'ATTACHED RECEIPT',
-    'SIGNAL → DECISION → PROOF'
+    'AI-NATIVE',
+    'TECHNICAL SUPPORT',
+    'For your team’s tools and workflows.',
+    'DIAGNOSE',
+    'ENGINEER',
+    'LEARN',
+    'AGREED SCOPE',
+    'PROJECT CONTEXT',
+    'createsomething.agency'
   ]) {
     assert.ok(svg.includes(label), `social preview must include ${label}`);
   }

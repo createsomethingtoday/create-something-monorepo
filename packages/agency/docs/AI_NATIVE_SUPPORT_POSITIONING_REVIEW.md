@@ -25,3 +25,13 @@ Agency has no dedicated lint script. The repository's scoped workspace lint comm
 ## Delivery boundary
 
 Worktree disposition: preserved at `/Users/micahjohnson/Documents/Codex/2026-10-02/task-4/agency-positioning`, branch `codex/agency-ai-native-support`. The original checkout's unrelated dirty work is preserved. This is local review work only: no push, PR, merge, deployment, credential changes, access grants, social profiles, or social posts.
+
+## Open Graph follow-up
+
+Updated the editable `static/og-image.svg` and its served `static/og-image.png` export to AI-native technical support. Retained the paper grid, brand mark, procedural illustration and established palette. The process strip now reads Diagnose / Engineer / Learn; agreed scope and project context support the recurring relationship. Other route-specific, historical and project images were preserved.
+
+The shared URL remains `/og-image.png`; Canon SEO supplies both OG and Twitter references, absolute Agency URLs, PNG type, and 1200×630 metadata. The PNG is 1200×630. Reviewed the full export and a 600×315 thumbnail for readable headings, safe margins and no illustration overlap. The SVG is the editable master; the existing render-pipeline dependency `@resvg/resvg-js` regenerates the PNG with system fonts.
+
+Affected tests passed: 14 brand/identity asset tests, 71 copy tests and 13 SEO/marketing tests. Production build passed. Local rendered OG and Twitter metadata both resolve to `https://createsomething.agency/og-image.png`; the local served PNG loaded completely at 1200×630. The optional cross-property identity suite has two failures also reproduced unchanged in the original checkout: V3 shell assets and route override contracts. These concern other public-property source, not the Agency share-image change. Evidence logs are retained with the earlier review evidence.
+
+The updated PNG was successfully saved as a new Library image preview (`/og-image.png`). This save is a private deliverable, not publication of the website or a social post.
