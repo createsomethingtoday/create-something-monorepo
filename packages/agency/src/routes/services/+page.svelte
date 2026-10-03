@@ -1,4 +1,5 @@
 <script lang="ts">
+  import WorkflowSignalBand from '$lib/components/WorkflowSignalBand.svelte';
   import AgencyWayfindingHero from '$lib/components/AgencyWayfindingHero.svelte';
   import AgencyWayfindingOpening from '$lib/components/AgencyWayfindingOpening.svelte';
   import BuiltWork from '$lib/components/BuiltWork.svelte';
@@ -116,6 +117,8 @@
   </PerformanceCampaignOpening>
   </AgencyWayfindingOpening>
   </div>
+
+  <WorkflowSignalBand motionOnly quiet tall />
 
   <BuiltWork />
 

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import WorkflowSignalBand from '$lib/components/WorkflowSignalBand.svelte';
   import AgencyWayfindingGroup from '$lib/components/AgencyWayfindingGroup.svelte';
   import AgencyWayfindingHero from '$lib/components/AgencyWayfindingHero.svelte';
   import AgencyWayfindingOpening from '$lib/components/AgencyWayfindingOpening.svelte';
@@ -155,6 +156,8 @@
     {#snippet artifact()}<AgencyWayfindingHero route="practice" />{/snippet}
   </PerformanceCampaignOpening>
   </AgencyWayfindingOpening>
+
+  <WorkflowSignalBand motionOnly quiet tall />
 
   <PerformanceNarrativeStage
     id="delegation-practice-argument"
