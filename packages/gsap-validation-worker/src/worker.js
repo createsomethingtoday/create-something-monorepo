@@ -701,9 +701,12 @@ function validateGsapUsage(html, pageUrl, customPatterns = []) {
       });
       return;
     }
-    const hasSecurityRisks2 = securityRiskPatterns.some((pattern) => pattern.test(script));
+    // Keyboard listeners that only react to specific navigation keys are
+    // accessibility handlers, not keyloggers; see isKeyboardAccessibilityScript.
+    const applicableSecurityPatterns = isKeyboardAccessibilityScript(script) ? securityRiskPatterns.filter((pattern) => !isKeyboardListenerRiskPattern(pattern)) : securityRiskPatterns;
+    const hasSecurityRisks2 = applicableSecurityPatterns.some((pattern) => pattern.test(script));
     if (hasSecurityRisks2) {
-      const riskPatterns = securityRiskPatterns.filter((pattern) => pattern.test(script)).map((pattern) => pattern.source);
+      const riskPatterns = applicableSecurityPatterns.filter((pattern) => pattern.test(script)).map((pattern) => pattern.source);
       results.securityRisks.push({
         scriptIndex: index,
         message: "Script contains security risk patterns",
@@ -1048,6 +1051,32 @@ function isCommonStylingCSS(css) {
   return false;
 }
 __name(isCommonStylingCSS, "isCommonStylingCSS");
+// Keyboard listeners are listed under "Keylogging" in securityRiskPatterns, but a
+// keylogger reads whatever key was pressed and stores or transmits it. Handlers
+// that only dispatch on specific navigation keys (Escape closes a menu, Enter or
+// Space activates a custom control, arrows move a slider) are accessibility code
+// the Marketplace asks for. Every keyboard listener in the script must qualify:
+// the handler window has to compare against a named key and must not capture or
+// send key values. Anything else stays flagged.
+var KEYBOARD_LISTENER_PATTERN = /addEventListener\s*\(\s*['"]key(?:down|up|press)['"]/gi;
+var KEYBOARD_HANDLER_WINDOW_CHARS = 320;
+var KEYBOARD_NAMED_KEY_CHECK_PATTERN = /(?:\.key|\.code)\s*(?:===?|!==?)\s*['"](?:Escape|Esc|Enter|Tab|Space|Spacebar| |Arrow(?:Up|Down|Left|Right)|Home|End|Page(?:Up|Down))['"]|(?:keyCode|which)\s*(?:===?|!==?)\s*(?:9|13|27|32|3[3-9]|40)\b/;
+var KEYBOARD_KEY_CAPTURE_PATTERN = /\+=\s*[\w$.]*\.(?:key|code|keyCode|which)\b|\.push\s*\(\s*[\w$.]*\.(?:key|code|keyCode|which)\b|fromCharCode|fetch\s*\(|XMLHttpRequest|sendBeacon|WebSocket|new\s+Image|document\.cookie|localStorage|sessionStorage|\.src\s*=/i;
+function isKeyboardListenerRiskPattern(pattern) {
+  return /key\(\?:down\|up\|press\)|keydown|keyup|keypress/.test(pattern.source);
+}
+__name(isKeyboardListenerRiskPattern, "isKeyboardListenerRiskPattern");
+function isKeyboardAccessibilityScript(script) {
+  const listeners = [...script.matchAll(KEYBOARD_LISTENER_PATTERN)];
+  if (listeners.length === 0) {
+    return false;
+  }
+  return listeners.every((listener) => {
+    const handlerWindow = script.slice(listener.index, listener.index + KEYBOARD_HANDLER_WINDOW_CHARS);
+    return KEYBOARD_NAMED_KEY_CHECK_PATTERN.test(handlerWindow) && !KEYBOARD_KEY_CAPTURE_PATTERN.test(handlerWindow);
+  });
+}
+__name(isKeyboardAccessibilityScript, "isKeyboardAccessibilityScript");
 function containsPotentiallyHarmfulCode(script) {
   const harmfulPatterns = [
     /eval\s*\(/,

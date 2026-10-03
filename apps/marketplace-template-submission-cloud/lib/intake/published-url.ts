@@ -45,6 +45,10 @@ export interface PublishedUrlValidationSummary {
         message?: string;
         policy?: string;
       }>;
+      securityRisks?: Array<{
+        message?: string;
+        flaggedCode?: string[];
+      }>;
     };
   }>;
   siteResults: {
@@ -185,6 +189,63 @@ function buildRequestFailureMessage(
   }
 
   return 'Some published pages could not be fetched during the published-site crawl.';
+}
+
+// The crawler reports security risks as the regex sources that matched
+// ("Contains security risk patterns: addEventListener\\s*\\(\\s*['"]keydown['"]").
+// Creators need to know which code tripped the check, not the regex.
+const SECURITY_RISK_PREFIX = /^contains security risk patterns:\s*/i;
+
+function describeSecurityRiskPattern(source: string) {
+  const keyboard = source.match(/key(?:down|up|press)/i);
+  if (keyboard) {
+    return `registers a ${keyboard[0].toLowerCase()} keyboard listener`;
+  }
+  if (/submit/i.test(source)) {
+    return 'attaches a listener to form submission';
+  }
+  if (/cookie/i.test(source)) {
+    return 'sends document.cookie to another origin';
+  }
+  if (/Image/.test(source)) {
+    return 'sends data through an image request';
+  }
+  if (/fetch/.test(source)) {
+    return 'sends page data to another origin with fetch';
+  }
+  if (/open/.test(source)) {
+    return 'opens a new window with window.open';
+  }
+  return `matches the pattern ${source}`;
+}
+
+function getSecurityRiskDescriptions(
+  page: PublishedUrlValidationSummary['pageResults'][number]
+): string[] {
+  const descriptions: string[] = [];
+
+  for (const risk of page.details?.securityRisks || []) {
+    const sources = (risk.flaggedCode || [])
+      .flatMap((entry) => entry.replace(SECURITY_RISK_PREFIX, '').split(/,\s+/))
+      .map((source) => source.trim())
+      .filter(Boolean);
+
+    if (sources.length === 0 && risk.message) {
+      descriptions.push(risk.message);
+      continue;
+    }
+
+    for (const source of sources) {
+      descriptions.push(describeSecurityRiskPattern(source));
+    }
+  }
+
+  return descriptions;
+}
+
+function buildSecurityRiskMessage(description: string, pageUrl: string | undefined) {
+  const location = pageUrl ? ` on ${toDisplayPath(pageUrl)}` : '';
+  return `Custom code${location} was flagged as a security risk: it ${description}. Remove or rework that code, publish, and validate again.`;
 }
 
 function addUniqueIssue(issues: string[], message: string | undefined) {
@@ -344,6 +405,10 @@ export function getPublishedUrlValidationIssues(summary: PublishedUrlValidationS
     addUniqueIssue(issues, LEGACY_IX2_VALIDATION_MESSAGE);
   }
 
+  // The same custom-code script usually appears on every page, so report each
+  // security-risk description once, anchored to the first page that showed it.
+  const securityRiskPages = new Map<string, string | undefined>();
+
   for (const page of summary.pageResults) {
     if (page.success === false || page.passed !== false) {
       continue;
@@ -352,6 +417,16 @@ export function getPublishedUrlValidationIssues(summary: PublishedUrlValidationS
     for (const flagged of page.details?.flaggedCode || []) {
       addUniqueIssue(issues, flagged.message);
     }
+
+    for (const description of getSecurityRiskDescriptions(page)) {
+      if (!securityRiskPages.has(description)) {
+        securityRiskPages.set(description, page.url);
+      }
+    }
+  }
+
+  for (const [description, pageUrl] of securityRiskPages) {
+    addUniqueIssue(issues, buildSecurityRiskMessage(description, pageUrl));
   }
 
   const failedPage = summary.pageResults.find(
