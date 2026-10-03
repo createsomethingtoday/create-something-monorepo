@@ -17,30 +17,32 @@
   let selected = $state<ServiceQuestion | null>(null);
   let scoping = $state(false);
   let trigger = $state<HTMLButtonElement>();
+  let guideRoot = $state<HTMLDivElement>();
+  let suggestedList = $state<HTMLUListElement>();
   let panel = $state<HTMLElement>();
   let heading = $state<HTMLHeadingElement>();
   const answer = $derived(selected ? canonServiceAnswers[selected] : null);
   async function toggle() {
     if (open) { close(); return; }
     open = true; selected = null; scoping = false; characterTrigger++;
-    await tick(); heading?.focus();
+    await tick(); if (showSuggestions) suggestedList?.querySelector('button')?.focus(); else heading?.focus();
   }
   function close() { open = false; selected = null; scoping = false; trigger?.focus(); }
   async function choose(id: ServiceQuestion) { if (!open) characterTrigger++; open = true; selected = id; scoping = false; await tick(); heading?.focus(); }
-  async function back() { selected = null; scoping = false; await tick(); heading?.focus(); }
+  async function back() { selected = null; scoping = false; await tick(); if (showSuggestions) suggestedList?.querySelector('button')?.focus(); else heading?.focus(); }
   async function scope() { scoping = true; await tick(); heading?.focus(); }
 </script>
 
-<svelte:window onkeydown={(event) => { if (open && event.key === 'Escape' && panel?.contains(event.target as Node)) { event.preventDefault(); close(); } }} />
+<svelte:window onkeydown={(event) => { if (open && event.key === 'Escape' && guideRoot?.contains(event.target as Node)) { event.preventDefault(); close(); } }} />
 
-<div class="canon-guide">
+<div class="canon-guide" bind:this={guideRoot}>
   <div class="guide-introduction">
     <CanonCompanion action="waving" trigger={characterTrigger} staticOnly={mobile} />
     <div><button class="guide-trigger" bind:this={trigger} onclick={toggle} disabled={!ready} aria-expanded={open} aria-controls="canon-service-guide">Ask canon <span aria-hidden="true">{open ? '−' : '+'}</span></button>
     <span class="guide-label">Canon service guide · local prototype / scripted answers</span></div>
   </div>
-  {#if showSuggestions && !open}
-    <ul class="questions suggested" aria-label="Suggested questions for Canon">{#each canonServiceQuestions as question}<li><button disabled={!ready} onclick={() => choose(question.id)} aria-controls="canon-service-guide">{question.label}<span aria-hidden="true">↗</span></button></li>{/each}</ul>
+  {#if showSuggestions}
+    <ul class="questions suggested" bind:this={suggestedList} aria-label="Suggested questions for Canon">{#each canonServiceQuestions as question}<li><button disabled={!ready} onclick={() => choose(question.id)} aria-controls="canon-service-guide">{question.label}<span aria-hidden="true">↗</span></button></li>{/each}</ul>
   {/if}
   {#if open}
     <section id="canon-service-guide" class="guide-panel" bind:this={panel} aria-labelledby="canon-guide-title">
@@ -59,7 +61,8 @@
         <nav class="sources" aria-label="Published sources for this answer">{#each answer.links as link}<a href={link.href}>{link.label} ↗</a>{/each}</nav>
         <div class="answer-actions"><button onclick={scope}>Help me scope an inquiry</button><button class="back" onclick={back}>Back to questions</button></div>
       {:else}
-        <ul class="questions">{#each canonServiceQuestions as question}<li><button onclick={() => choose(question.id)}>{question.label}<span aria-hidden="true">↗</span></button></li>{/each}</ul>
+        {#if showSuggestions}<p>Choose one of the questions above to see an answer and its published sources.</p>
+        {:else}<ul class="questions">{#each canonServiceQuestions as question}<li><button onclick={() => choose(question.id)}>{question.label}<span aria-hidden="true">↗</span></button></li>{/each}</ul>{/if}
       {/if}
     </section>
   {/if}
