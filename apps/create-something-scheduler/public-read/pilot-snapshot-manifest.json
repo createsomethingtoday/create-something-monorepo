@@ -1,0 +1,312 @@
+[
+  {
+    "path": "openapi.json",
+    "bytes": 6034,
+    "sha256": "0c372cd605552a21acc6b64613a96cfa6135ccda749b5f213db08e08be651a43"
+  },
+  {
+    "path": "sdk/.fernignore",
+    "bytes": 456,
+    "sha256": "0c93defd3efa1a5d6479ac6899c405cae4d3ae2da72fb7b968e7de742f8292fd"
+  },
+  {
+    "path": "sdk/BaseClient.ts",
+    "bytes": 2836,
+    "sha256": "3f55572423a8f25c08ce5f1f46218603c0cb269c2b5dd7a46f4107ee2f96423a"
+  },
+  {
+    "path": "sdk/Client.ts",
+    "bytes": 8192,
+    "sha256": "7993131d4a2339885136b901c486087228165df2c19a6db3792cfdd4e7cfd6fd"
+  },
+  {
+    "path": "sdk/api/client/index.ts",
+    "bytes": 37,
+    "sha256": "a656aabb44efa59dc2c362708cb0b215134baf5015b44002874221198b0b5ca4"
+  },
+  {
+    "path": "sdk/api/client/requests/ListAvailabilityRequest.ts",
+    "bytes": 313,
+    "sha256": "8f30ffbf183c5d7f0f9ad706672bf4b3134be17cf2be2764d413149cf8332139"
+  },
+  {
+    "path": "sdk/api/client/requests/index.ts",
+    "bytes": 77,
+    "sha256": "97e46000915dfa4c005be3d833499da2f515f8f762baeb9aa499c8cf811817e5"
+  },
+  {
+    "path": "sdk/api/errors/ServiceUnavailableError.ts",
+    "bytes": 750,
+    "sha256": "8bd15960d7b976b852356f395544c0bda434b3fc0d110bad5018ed0bb2dcf3f8"
+  },
+  {
+    "path": "sdk/api/errors/index.ts",
+    "bytes": 46,
+    "sha256": "21b456d2bc03f9896f955a7e49ab77e5dadbdeee42fc8557dfec61b5b3a41d02"
+  },
+  {
+    "path": "sdk/api/index.ts",
+    "bytes": 104,
+    "sha256": "0dd143ce30f8f36a60e85aee65f3bbcb49a54f190bb9460f2aab800d2819b55e"
+  },
+  {
+    "path": "sdk/api/resources/index.ts",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "sdk/api/types/Availability.ts",
+    "bytes": 686,
+    "sha256": "e883766a9de81e47af92ee8034e5d1458582fc279bc092e8c29913bf57846a2d"
+  },
+  {
+    "path": "sdk/api/types/Error_.ts",
+    "bytes": 202,
+    "sha256": "4e53026b69953edc760c934fad460e508e7fa7108814f18d43fbb99de021c040"
+  },
+  {
+    "path": "sdk/api/types/Link.ts",
+    "bytes": 228,
+    "sha256": "653794770fc3ea4f9112bef69b9556a4b623beaa73a30bca31a077864a7df2b8"
+  },
+  {
+    "path": "sdk/api/types/Slot.ts",
+    "bytes": 197,
+    "sha256": "d2c2eaea4b1929d56a47c011c0460a61b9a2fe6739dc7e9a9d273ae1e08fc03f"
+  },
+  {
+    "path": "sdk/api/types/index.ts",
+    "bytes": 118,
+    "sha256": "466f46b9e4eef45e16762949a2dce11bc8389bf4c96f1221e856c6e354ca5f0e"
+  },
+  {
+    "path": "sdk/core/exports.ts",
+    "bytes": 38,
+    "sha256": "8cf1f0e2aa2e00012a6f708e88270aee2933343891daa416dc6f3b436d849693"
+  },
+  {
+    "path": "sdk/core/fetcher/APIResponse.ts",
+    "bytes": 542,
+    "sha256": "4229943bb6f25bf294937c9a9edc664ea1924ae3b38fd00186151a6226bd04ae"
+  },
+  {
+    "path": "sdk/core/fetcher/BinaryResponse.ts",
+    "bytes": 1331,
+    "sha256": "b993c1938b9d8efaa72429d366cee68f69227fb9d3f3327bb4fa77b820441d32"
+  },
+  {
+    "path": "sdk/core/fetcher/EndpointMetadata.ts",
+    "bytes": 601,
+    "sha256": "ecdc15de1f6e419f31c09d53332f6aebeba3f7198fddd6f1482206d5cb44d4f7"
+  },
+  {
+    "path": "sdk/core/fetcher/EndpointSupplier.ts",
+    "bytes": 597,
+    "sha256": "5d1dcf7dcc5bb3cc4e9215726ab337a7bfa7a77f8a981c95e3127714064a70ff"
+  },
+  {
+    "path": "sdk/core/fetcher/Fetcher.ts",
+    "bytes": 13344,
+    "sha256": "5decf250330e3a2e4bb1747c11038e0ea596b83e2860cfea24612699da0353d9"
+  },
+  {
+    "path": "sdk/core/fetcher/Headers.ts",
+    "bytes": 3133,
+    "sha256": "a73bd103d7d78f9ebe5f0c7e69df2e9d84307af7f87f014de47664467d5e0b17"
+  },
+  {
+    "path": "sdk/core/fetcher/HttpResponsePromise.ts",
+    "bytes": 4304,
+    "sha256": "da295a4980248b49daea8e1ef5a95fdc5dd2d387168d8ae8fd3ab6b8c26f3c39"
+  },
+  {
+    "path": "sdk/core/fetcher/RawResponse.ts",
+    "bytes": 1610,
+    "sha256": "ce225efd75125dd47853d82d3c758eafd807fc0bb58ae16779fa05e25a022069"
+  },
+  {
+    "path": "sdk/core/fetcher/Supplier.ts",
+    "bytes": 309,
+    "sha256": "810005d967503b21bd906d61329499b22c06db57ab2ce42ff3f0527432d87ace"
+  },
+  {
+    "path": "sdk/core/fetcher/createRequestUrl.ts",
+    "bytes": 299,
+    "sha256": "8ee05ce961c454f459898e7ed5e120d75b0a93ed485f5e31a290397aade193a7"
+  },
+  {
+    "path": "sdk/core/fetcher/getErrorResponseBody.ts",
+    "bytes": 1290,
+    "sha256": "50e7926fad8960ec65f0c2d679de208029cc3a845cbf2d77a50771e233ef67ff"
+  },
+  {
+    "path": "sdk/core/fetcher/getFetchFn.ts",
+    "bytes": 80,
+    "sha256": "be3742150de3d17d9d60833b31e025bc5bcf46baa039c9376fbdcc85f4b5b05e"
+  },
+  {
+    "path": "sdk/core/fetcher/getHeader.ts",
+    "bytes": 300,
+    "sha256": "6f061f8e418405915abcf0f4732ac59e5c0f307baf3d326c3068c7b6d644a7d1"
+  },
+  {
+    "path": "sdk/core/fetcher/getRequestBody.ts",
+    "bytes": 572,
+    "sha256": "58b172b6b02ad713f0b9c3e9c978cd6f110ad45190f72ff7fd445be059c13f5f"
+  },
+  {
+    "path": "sdk/core/fetcher/getResponseBody.ts",
+    "bytes": 1879,
+    "sha256": "bd9aa4bbea0f8e1c8bbd2a95c5b2666b5ba88aa64dfb45ef6f89215d9fbc4585"
+  },
+  {
+    "path": "sdk/core/fetcher/index.ts",
+    "bytes": 782,
+    "sha256": "47bfb394a5cb2edd511df23b9ac189590aaf35185e28b80a384b04c91beaf85a"
+  },
+  {
+    "path": "sdk/core/fetcher/makePassthroughRequest.ts",
+    "bytes": 7157,
+    "sha256": "d2eb8384cf8b2082d1bc43da6543da87e51cce1ad91756497cfd26c513d960ad"
+  },
+  {
+    "path": "sdk/core/fetcher/makeRequest.ts",
+    "bytes": 2070,
+    "sha256": "5eb3a584b6f9e81bea4aad032c01115c4a883afda26d21c9ddd8b4f7f2b31c42"
+  },
+  {
+    "path": "sdk/core/fetcher/requestWithRetries.ts",
+    "bytes": 2355,
+    "sha256": "2a2acd3963dc3211a389008ce4d9046d1df6f08fb246c0aa680c359eb143d1ad"
+  },
+  {
+    "path": "sdk/core/fetcher/signals.ts",
+    "bytes": 1338,
+    "sha256": "af09a948cb1067a85cdfffdae61acca03a7e6c9ce001dc5dfeba8c4dd84a9eea"
+  },
+  {
+    "path": "sdk/core/fetcher/unwrapCloudflareEnvelope.ts",
+    "bytes": 2129,
+    "sha256": "12e5fe508e3277271934b2461047c86650ccb5a57aa087f83dee53f463defcf9"
+  },
+  {
+    "path": "sdk/core/headers.ts",
+    "bytes": 1066,
+    "sha256": "38b4db5a8dc86a1290a8154cb7ce8dbed68226f75727f02281cec7923506e1f0"
+  },
+  {
+    "path": "sdk/core/index.ts",
+    "bytes": 158,
+    "sha256": "5cd3600ab845698c57393680aac02bdb05d9cbf5d7ac2e05cad199eabdf5c078"
+  },
+  {
+    "path": "sdk/core/json.ts",
+    "bytes": 1080,
+    "sha256": "f87e228776a69b70036658b3113fb874c620530aac5a982fada1fac01ebc48da"
+  },
+  {
+    "path": "sdk/core/logging/exports.ts",
+    "bytes": 631,
+    "sha256": "58fd95fa6d228a09649a4e0a421ea3180a4eb5dba10349cd85422701928d9d23"
+  },
+  {
+    "path": "sdk/core/logging/index.ts",
+    "bytes": 29,
+    "sha256": "d8156def641afb8a02086a8ee6c81887bff47a92ac941bf29e52d90f645f8833"
+  },
+  {
+    "path": "sdk/core/logging/logger.ts",
+    "bytes": 5409,
+    "sha256": "3c42abc51e0cf0b42c52b48084a34ace5fa9a7913f37175c29f81177ea6838f6"
+  },
+  {
+    "path": "sdk/core/requestBody.ts",
+    "bytes": 1139,
+    "sha256": "009956c00aa5a6836a0c29774524788aa86c8bdd030a3fc301cbc8b3cd49450a"
+  },
+  {
+    "path": "sdk/core/runtime/index.ts",
+    "bytes": 54,
+    "sha256": "01695787213b264e68b61fa4333b34e2d90691c7c7d0657987891b465a23ced1"
+  },
+  {
+    "path": "sdk/core/runtime/runtime.ts",
+    "bytes": 7916,
+    "sha256": "0a9436a39410a2a0fd8c70464ee997455946d176024274dedf9e1ff471fdae2f"
+  },
+  {
+    "path": "sdk/core/url/QueryStringBuilder.ts",
+    "bytes": 2848,
+    "sha256": "1c2ae834c8bc94b7725a5decab1d1530440e1092def3f8e5cc4bab42b04f2623"
+  },
+  {
+    "path": "sdk/core/url/encodePathParam.ts",
+    "bytes": 471,
+    "sha256": "9f707ab37ae9e6b5ecc4d5b663c7e00f868ce2911a9ecaef6b0b2bb3c2f24826"
+  },
+  {
+    "path": "sdk/core/url/index.ts",
+    "bytes": 187,
+    "sha256": "c7d83852289a755d97169a6f78fe36e9f32dcd9cee12fd9afbbc6ddd4215b2db"
+  },
+  {
+    "path": "sdk/core/url/join.ts",
+    "bytes": 1946,
+    "sha256": "c59baac53089ba5a457a525a1afa3e209450e9260a252a2ca45129a6479f177e"
+  },
+  {
+    "path": "sdk/core/url/qs.ts",
+    "bytes": 3235,
+    "sha256": "72f678f235a44a9df46b325a0c069093e599294177972fa49a658b804f42b641"
+  },
+  {
+    "path": "sdk/environments.ts",
+    "bytes": 218,
+    "sha256": "d3b0b513e5295c6e136fd94c228df80ce81f0c0c7490c09178f7e83d93a6017c"
+  },
+  {
+    "path": "sdk/errors/CloudflareApiError.ts",
+    "bytes": 1714,
+    "sha256": "17754aaddfd882db57a583f961afa2cc561ed6d25d009b64981d502d7f68d342"
+  },
+  {
+    "path": "sdk/errors/CloudflareApiTimeoutError.ts",
+    "bytes": 560,
+    "sha256": "932f1b66531a5981025fd3fa3f8812a7b80b2e8e93db0831b0b93d1c2d4ee158"
+  },
+  {
+    "path": "sdk/errors/handleNonStatusCodeError.ts",
+    "bytes": 1304,
+    "sha256": "f33d23ed045a7ff26118a15b76410d306a08384dc474a6315a3fb5de6f972002"
+  },
+  {
+    "path": "sdk/errors/index.ts",
+    "bytes": 138,
+    "sha256": "1fb934e96448cae44b75a271d516b35db35e212efe96581c9c022073f5756591"
+  },
+  {
+    "path": "sdk/exports.ts",
+    "bytes": 35,
+    "sha256": "76b2ae96fb93455dc590e47e952f4132627808075eed484f023712511e253631"
+  },
+  {
+    "path": "sdk/index.ts",
+    "bytes": 602,
+    "sha256": "cadd9c3594715cb783b91c452c61cdb3a9d9a38a1b7a88fa86084d3123994cab"
+  },
+  {
+    "path": "sdk/sdk-map.json",
+    "bytes": 484,
+    "sha256": "c5e18d027a50bb043777af5018532b37b9f808dcf5e39bb9bee7961ba8f10680"
+  },
+  {
+    "path": "sdk/sdk-map.ts",
+    "bytes": 2325,
+    "sha256": "22cb4ff8197e8e332bf23bc425146c4faa976081848ef86588e271982b09e138"
+  },
+  {
+    "path": "sdk/sdk-operation-types.ts",
+    "bytes": 832,
+    "sha256": "0099363f382f52ce41d020c2f18dd7850ac1ddd7a488f8816023fec981d5c968"
+  }
+]
