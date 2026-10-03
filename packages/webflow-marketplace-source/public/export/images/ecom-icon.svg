@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="14px" height="14px" viewBox="0 0 14 14" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 63.1 (92452) - https://sketch.com -->
+    <title>ecom-icon</title>
+    <desc>Created with Sketch.</desc>
+    <g id="Home" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="Homepage-(1560px)" transform="translate(-140.000000, -1165.000000)" fill="#A6A6A6">
+            <g id="Templates" transform="translate(140.000000, 608.000000)">
+                <g id="Template-Copy-31" transform="translate(0.000000, 94.000000)">
+                    <g id="Template">
+                        <path d="M12.5,474 C13.3286,474 14,474.6716 14,475.5 C14,476.3284 13.3286,477 12.5,477 C11.6714,477 11,476.3284 11,475.5 C11,474.6716 11.6714,474 12.5,474 Z M4.5,474 C5.32861,474 6,474.6716 6,475.5 C6,476.3284 5.32861,477 4.5,477 C3.67139,477 3,476.3284 3,475.5 C3,474.6716 3.67139,474 4.5,474 Z M3.86719,463 L4.29541,466 L14,466 L14.0039,471.04956 L3.27393,472.9976 L2.13281,465 L1.52233781e-12,465 L1.52233781e-12,463 L3.86719,463 Z" id="ecom-icon"></path>
+                    </g>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

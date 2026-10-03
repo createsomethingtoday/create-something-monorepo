@@ -1,0 +1,24 @@
+html {background:#fff;scroll-behavior:smooth}body{margin:0}*{box-sizing:border-box}a:focus-visible,button:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px solid #146ef5!important;outline-offset:3px}.source-skip{position:fixed;top:-100px;left:20px;z-index:10000;background:#fff;padding:12px}.source-skip:focus{top:10px}.source-home-cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:32px 24px}.source-catalog{display:grid;grid-template-columns:minmax(264px,.3fr) minmax(0,1fr);gap:20px 34px}.source-results{min-width:0}.source-taxonomy{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px;margin-top:48px}.source-taxonomy-card{padding:32px;border:1px solid #ddd;border-radius:8px;text-decoration:none}.source-taxonomy-card h2{font-size:24px}.source-taxonomy-card:hover{border-color:#146ef5}.long-description{max-height:none!important;height:auto!important}.w-dyn-bind-empty{display:none}.sb-nav-wrapper .g-nav-modal_wrap{display:none}.source-results .tmheading{margin-bottom:24px}
+@media(max-width:991px){.source-catalog{grid-template-columns:1fr;gap:1rem}.source-home-cards{grid-template-columns:repeat(3,minmax(0,1fr))}.source-taxonomy{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:767px){.source-home-cards{grid-template-columns:repeat(2,minmax(0,1fr))}.source-taxonomy{grid-template-columns:1fr}}
+@media(max-width:479px){.source-home-cards{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+/* Published catalog uses fixed navigation and a six-rem top offset. */
+body:has(main.cc-top-internal-2-2) .sb-nav-wrapper{position:fixed;top:0;left:0;right:0}
+.section.cc-top-internal-2-2{padding-top:6rem}
+
+.source-preview-fallback{margin-top:40px}.source-preview-fallback img{width:100%;border:1px solid #ddd;border-radius:8px;display:block}.source-preview-fallback p{font-size:13px;color:#666;margin-top:12px}
+
+/* Published Marketplace head rules are absent from the downloaded export.
+   Keep its responsive rem scale so navigation, headings and spacing match. */
+@media (min-width:992px){html{font-size:16px}}
+@media (max-width:991px){html{font-size:15px}}
+@media (max-width:767px){html{font-size:14px}}
+@media (max-width:479px){html{font-size:13px}}
+
+/* Match the published filter/grid container gap and shadow-root heading inheritance. */
+.source-template-grid{margin-top:24px}
+.tmcard-wrapper h4{font-family:inherit;font-variation-settings:normal}
+
+/* The live sidebar is isolated from exported page list defaults. */
+.tmsidebar-list>li:not(.tmsidebar-divider){margin-bottom:0;line-height:inherit}

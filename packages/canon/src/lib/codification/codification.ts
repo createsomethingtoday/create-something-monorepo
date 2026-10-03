@@ -79,6 +79,12 @@ const SKIP_DIRS = new Set([
 
 export const CANON_CODIFICATION_EXEMPTIONS: CanonCodificationExemption[] = [
 	{
+		path: 'packages/webflow-marketplace-source',
+		reason: 'webflow-code-component-library',
+		justification:
+			'Webflow Marketplace Source retains the existing Webflow-owned design and consumes a provenance-tracked snapshot of webflow-components. Its React adapters preserve that brand contract rather than migrating the buyer surface to Canon.'
+	},
+	{
 		path: 'packages/webflow-components',
 		reason: 'webflow-code-component-library',
 		justification:

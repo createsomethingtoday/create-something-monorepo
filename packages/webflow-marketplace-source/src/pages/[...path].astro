@@ -1,0 +1,44 @@
+---
+import {pageFor} from '../lib/pages';
+import Catalog from '../components/Catalog';
+import Cards from '../components/Cards';
+import Detail from '../components/Detail';
+import CmsWidget from '../components/CmsWidget';
+const page=await pageFor(Astro.url);
+Astro.response.status=page.status;
+Astro.response.headers.set('X-Robots-Tag','noindex, nofollow');
+---
+<!doctype html>
+<html lang="en" data-wf-site="5e593fb060cf87bbaf75dd20" data-wf-page={page.pageId}>
+<head>
+ <Fragment set:html={page.head}/>
+ <meta name="viewport" content="width=device-width, initial-scale=1"/>
+ <meta name="robots" content="noindex,nofollow"/>
+ <link rel="canonical" href={page.canonical}/>
+ <link rel="stylesheet" href="/export/css/normalize.css"/>
+ <link rel="stylesheet" href="/export/css/webflow.css"/>
+ <link rel="stylesheet" href="/export/css/template-marketplace.webflow.css"/>
+ <link rel="stylesheet" href="/source.css"/>
+</head>
+<body>
+ <a class="source-skip" href="#main">Skip to main content</a>
+ {page.parts.map((part,i)=><>
+  <Fragment set:html={part}/>
+  {page.islands[i]?.kind==='cards' && <Cards items={page.islands[i].items!} client:load/>}
+  {page.islands[i]?.kind==='catalog' && <Catalog title={page.islands[i].title!} path={Astro.url.pathname} creatorSlug={page.islands[i].creatorSlug} client:only="react"><div slot="fallback"><h1>{page.islands[i].title}</h1><Cards items={page.islands[i].items!}/></div></Catalog>}
+  {page.islands[i]?.kind==='widget' && <CmsWidget widget={page.islands[i].widget!} props={page.islands[i].props!} client:load/>}
+  {page.islands[i]?.kind==='detail' && <Detail item={page.islands[i].item!} heroProps={page.islands[i].heroProps} allowEmbed={Astro.url.hostname==='webflow.com'||Astro.url.hostname.endsWith('.webflow.com')} client:load/>}
+ </>)}
+ <script is:inline src="https://d3e54v103j8qbb.cloudfront.net/js/jquery-3.5.1.min.dc5e7f18c8.js"></script>
+ <script is:inline src="/export/js/webflow.js"></script>
+ <script>
+  document.documentElement.classList.add('w-mod-js');
+  // Exported FAQ interactions are click-only divs; provide native keyboard control.
+  document.querySelectorAll<HTMLElement>('.faq-section_title-wrapper,.feature_accordion_button').forEach(el=>{
+   el.tabIndex=0;el.setAttribute('role','button');el.setAttribute('aria-expanded','false');
+   el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();el.click()}});
+   el.addEventListener('click',()=>el.setAttribute('aria-expanded',String(el.getAttribute('aria-expanded')!=='true')));
+  });
+ </script>
+</body>
+</html>

@@ -2,6 +2,8 @@ packages:
   - 'apps/*'
   - '!apps/princess-pet-palace'
   - 'packages/*'
+  # Source uploads this independently; its npm lockfile is authoritative.
+  - '!packages/webflow-marketplace-source'
   - '!packages/loom'
   - '!packages/loom/npm'
   - '!packages/loom-mcp-remote'
