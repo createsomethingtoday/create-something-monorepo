@@ -85,7 +85,7 @@
 
 <div class="home-pilot property-performance">
   <AgencyHero />
-  <WorkflowSignalBand motionOnly />
+  <WorkflowSignalBand motionOnly quiet />
   <ServiceJourney />
   <BuiltWork showCanonContinuation />
   <FilmCollection />

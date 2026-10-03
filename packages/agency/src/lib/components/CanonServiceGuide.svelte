@@ -2,6 +2,7 @@
   import { tick, onMount } from 'svelte';
   import CanonCompanion from './CanonCompanion.svelte';
   import { canonServiceQuestions, canonServiceAnswers, type ServiceQuestion } from '$lib/data/canonServiceGuide';
+  let { showSuggestions = false }: { showSuggestions?: boolean } = $props();
   let ready = $state(false);
   onMount(() => { ready = true; });
   let open = $state(false);
@@ -17,7 +18,7 @@
     await tick(); heading?.focus();
   }
   function close() { open = false; selected = null; scoping = false; trigger?.focus(); }
-  async function choose(id: ServiceQuestion) { selected = id; scoping = false; await tick(); heading?.focus(); }
+  async function choose(id: ServiceQuestion) { open = true; selected = id; scoping = false; await tick(); heading?.focus(); }
   async function back() { selected = null; scoping = false; await tick(); heading?.focus(); }
   async function scope() { scoping = true; await tick(); heading?.focus(); }
 </script>
@@ -26,7 +27,10 @@
 
 <div class="canon-guide">
   <button class="guide-trigger" bind:this={trigger} onclick={toggle} disabled={!ready} aria-expanded={open} aria-controls="canon-service-guide">Ask canon <span aria-hidden="true">{open ? '−' : '+'}</span></button>
-  <span class="guide-label">AI guide to CREATE SOMETHING · local prototype</span>
+  <span class="guide-label">Canon service guide · local prototype / scripted answers</span>
+  {#if showSuggestions && !open}
+    <ul class="questions suggested" aria-label="Suggested questions for Canon">{#each canonServiceQuestions as question}<li><button disabled={!ready} onclick={() => choose(question.id)} aria-controls="canon-service-guide">{question.label}<span aria-hidden="true">↗</span></button></li>{/each}</ul>
+  {/if}
   {#if open}
     <section id="canon-service-guide" class="guide-panel" bind:this={panel} aria-labelledby="canon-guide-title">
       <header>
@@ -67,7 +71,8 @@
   h2 { font: var(--font-performance-medium) var(--text-performance-body)/1.3 var(--font-performance-interface); margin-block: var(--space-performance-md); }
   p, li { font-size: var(--text-performance-caption); line-height: 1.65; }
   .questions { list-style: none; margin: 0; padding: 0; }
-  .questions button { width: 100%; display: flex; justify-content: space-between; text-align: left; gap: var(--space-performance-sm); border: 0; border-top: 1px solid var(--color-performance-shell-border-default); padding: var(--space-performance-sm) 0; }
+  .suggested { margin-top: var(--space-performance-sm); }
+  div.canon-guide .questions button { width: 100%; display: flex; justify-content: space-between; text-align: left; gap: var(--space-performance-sm); background: transparent; border: 0; border-top: 1px solid var(--color-performance-shell-border-default); padding: var(--space-performance-sm) 0; }
   .sources, .answer-actions { display: flex; flex-wrap: wrap; gap: var(--space-performance-sm) var(--space-performance-md); margin-top: var(--space-performance-md); }
   .sources a, .guide-panel > a { display: inline-flex; align-items: center; }
   .answer-actions button, .back { border: 0; padding: 0; text-decoration: underline; text-underline-offset: .3em; }
