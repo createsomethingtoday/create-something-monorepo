@@ -108,15 +108,16 @@
 
 <section class="signal-band" bind:this={field} aria-labelledby="signal-band-title">
   <div class="signal-heading">
-    <p class="eyebrow">THE OPERATING LOOP / 01—03</p>
-    <h2 id="signal-band-title">Work moves with a receipt.</h2>
+    <p class="eyebrow">THE SUPPORT RELATIONSHIP / 01—03</p>
+    <h2 id="signal-band-title">Diagnose, improve, and help your team use the result.</h2>
   </div>
   <canvas bind:this={canvas} aria-hidden="true"></canvas>
   <ol class="stages">
-    <li><span>01 / Signal</span><small>Read the work and its source.</small></li>
-    <li><span>02 / Decision</span><small>Apply the rule or ask a person.</small></li>
-    <li><span>03 / Proof</span><small>Keep the result and how it was checked.</small></li>
+    <li><span>01 / Diagnose</span><small>Use Draw to map the problem and agree on the change.</small></li>
+    <li><span>02 / Engineer</span><small>Implement and test the agreed improvement.</small></li>
+    <li><span>03 / Learn</span><small>Learn with agreed resources; keep the checks and project context.</small></li>
   </ol>
+  <p class="support-context">Draw helps us diagnose and agree on the work. Engineering delivers the change. PCN, our private learning network, supports learning. Resource access is confirmed during onboarding.</p>
   {#if showContinuation}
   <div class="signal-continuation">
     <AgencyWayfindingSign kind="proof" label="Inspect the work" detail="See the examples and their source records." href={proofHref} direction="down" />
@@ -126,6 +127,7 @@
 </section>
 
 <style>
+  .support-context { padding: var(--space-performance-md) 7vw 0; margin: 0; max-width: 75ch; font-size: var(--text-performance-caption); line-height: 1.6; }
   .signal-continuation { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-performance-sm); padding: var(--space-performance-sm) 7vw var(--space-performance-md); }
   @media (max-width: 640px) { .signal-continuation { grid-template-columns: 1fr; } }
   .signal-band { padding: 0; background: var(--color-performance-mode-campaign-surface); color: var(--color-performance-mode-campaign-ink); border-block: 1px solid var(--color-performance-shell-border-default); overflow: hidden; }

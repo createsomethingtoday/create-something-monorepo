@@ -36,11 +36,11 @@
       note: 'Your team keeps the durable assets'
     },
     services: {
-      eyebrow: 'Service route',
+      eyebrow: 'Technical support',
       steps: [
-        { kind: 'map', label: 'Agreed work', detail: 'One named workstream' },
-        { kind: 'approval', label: 'Your approval', detail: 'Consequential decisions wait' },
-        { kind: 'proof', label: 'Your handoff', detail: 'Delivered code and records' }
+        { kind: 'map', label: 'Diagnose', detail: 'Agree on the problem and scope' },
+        { kind: 'approval', label: 'Engineer', detail: 'Implement and test approved changes' },
+        { kind: 'proof', label: 'Learn', detail: 'Use the result and keep project context' }
       ],
       note: 'Larger Build and managed Control are scoped separately'
     },

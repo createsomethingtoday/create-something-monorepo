@@ -9,7 +9,7 @@
   import { PUBLIC_PRICING } from '$lib/data/publicPricing';
 
   const services = [
-    { name: 'Agent engineering membership', description: 'Hands-on delivery within an agreed scope, skills and operator support for one active workstream.', type: 'Membership', price: PUBLIC_PRICING.membership.label, priceDescription: PUBLIC_PRICING.membership.terms },
+    { name: 'AI-native technical support membership', description: 'Recurring diagnosis, engineering improvements and learning support within an agreed scope.', type: 'Membership', price: PUBLIC_PRICING.membership.label, priceDescription: PUBLIC_PRICING.membership.terms },
     {
       name: 'Map',
       description:
@@ -46,6 +46,10 @@
 
   const faqItems = [
     {
+      question: 'What does ongoing support mean?',
+      answer: 'We keep project context across agreed work: the diagnosis, decisions, changes, checks and open questions. Scheduled sessions and Slack support follow your plan. Scope and response times are agreed before payment; production incident response requires a separate managed Control agreement.'
+    },
+    {
       question: 'Where do we start?',
       answer: 'Bring one task and an example of a good result. We agree on the deliverable, capacity, revisions and how to check the work before payment. If the task is unclear, start with a mapping session.'
     },
@@ -55,7 +59,7 @@
     },
     {
       question: 'What do we keep?',
-      answer: 'You keep the code, instructions, tests, project history and recovery guide. We help your team use and maintain what we deliver. See Services for the delivery process and What You Keep for ownership and provider details.'
+      answer: 'After full payment, you own commissioned deliverables under your agreement, except reusable provider tools. You keep the instructions, tests, project history and recovery guide. We help your team use and maintain what we deliver. See Services for the delivery process and What You Keep for ownership and provider details.'
     },
     {
       question: 'How is AI spending controlled?',
@@ -69,9 +73,9 @@
 </script>
 
 <SEO
-  title="Agent Engineering Membership | CREATE SOMETHING .agency"
-  description="AI-native tech support from $900/month. Focused includes one workstream, one milestone and four scheduled sessions. Team is $2,500/month for up to two workstreams, two milestones and six sessions. Project costs are separate."
-  keywords="AI workflow systems, business task automation, client-owned AI agent, agent foundation"
+  title="AI-native Technical Support | CREATE SOMETHING .agency"
+  description="AI-native technical support from $900/month. Diagnose problems, implement improvements and learn to use what we deliver. Focused includes one workstream, one milestone and four scheduled sessions. Team is $2,500/month for up to two workstreams, two milestones and six sessions. Project costs are separate."
+  keywords="AI-native technical support, workflow support, software engineering, client-owned AI agent, agent foundation"
   ogImage="/og-image.png"
   propertyName="agency"
   {services}
