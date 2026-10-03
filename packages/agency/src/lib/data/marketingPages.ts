@@ -362,7 +362,7 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     audience: 'Teams that need diagnosis, engineering improvements, or help using their tools.',
     funnelStage: 'book',
     intent: 'Collect support context and route the reader to an agreed scope.',
-    primaryAction: 'Discuss membership',
+    primaryAction: 'Request a workflow map',
     requiredTerms: ['workflow', 'control path', 'commitment', 'operating lane', 'decision'],
     requiredLinks: ['/book'],
     schema: 'page',
