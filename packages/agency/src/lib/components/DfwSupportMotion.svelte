@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { reducedFilmMotion } from '$lib/motion/filmPlayback';
+  import { reducedFilmMotion, setFilmMotion } from '$lib/motion/filmPlayback';
 
   type MotionTimeline = {
     pause: (at?: number) => MotionTimeline;
@@ -24,14 +24,14 @@
   function togglePlayback() {
     if (!timeline) return;
     if (playing) { timeline.pause(); playing = false; return; }
-    if ($reducedFilmMotion) reducedFilmMotion.set(false);
+    if ($reducedFilmMotion) setFilmMotion(false);
     timeline.play(!started || finished ? 0 : undefined);
     started = true;
     finished = false;
     playing = true;
   }
   function reduceMotion() {
-    reducedFilmMotion.set(true);
+    setFilmMotion(true);
     timeline?.pause(12);
     playing = false;
     started = false;

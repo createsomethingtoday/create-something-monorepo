@@ -161,7 +161,7 @@
   {/snippet}
   {#snippet artifact()}<AgencyProductJunction />{/snippet}
 </PerformanceCampaignOpening>
-<WorkflowSignalBand motionOnly quiet tall />
+<WorkflowSignalBand motionOnly quiet tall showMotionControl />
 <div class="products-paths"><AgencyPathChoices label="Choose a product path" /></div>
 </div>
 

@@ -2,7 +2,7 @@
   import { onMount } from 'svelte';
   import { PUBLIC_PRICING } from '$lib/data/publicPricing';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
-  import { reducedFilmMotion } from '$lib/motion/filmPlayback';
+  import { reducedFilmMotion, toggleFilmMotion } from '$lib/motion/filmPlayback';
   import CanonServiceGuide from '../CanonServiceGuide.svelte';
   import WorkflowStory from '../WorkflowStory.svelte';
   let copy = $state<HTMLElement>();
@@ -48,7 +48,7 @@
     <a href="#built-work">Inspect the work ↓</a>
     <a href="/agent-foundation">Engineering handoff ↗</a>
     <a href="/stack#openai-qualifications">OpenAI Select Partner ↗</a>
-    <button onclick={() => reducedFilmMotion.update(v => !v)} aria-pressed={$reducedFilmMotion}>{$reducedFilmMotion ? 'Enable motion' : 'Reduce motion'}</button>
+    <button onclick={toggleFilmMotion} aria-pressed={$reducedFilmMotion}>{$reducedFilmMotion ? 'Enable motion' : 'Reduce motion'}</button>
   </div>
 </section>
 

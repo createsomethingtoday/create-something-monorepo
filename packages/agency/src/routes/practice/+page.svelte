@@ -157,7 +157,7 @@
   </PerformanceCampaignOpening>
   </AgencyWayfindingOpening>
 
-  <WorkflowSignalBand motionOnly quiet tall />
+  <WorkflowSignalBand motionOnly quiet tall showMotionControl />
 
   <PerformanceNarrativeStage
     id="delegation-practice-argument"
