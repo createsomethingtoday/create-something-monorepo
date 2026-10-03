@@ -1,4 +1,5 @@
 <script lang="ts">
+  import WorkflowSignalBand from '$lib/components/WorkflowSignalBand.svelte';
   import {
     Button,
     PerformanceCampaignOpening,
@@ -160,6 +161,7 @@
   {/snippet}
   {#snippet artifact()}<AgencyProductJunction />{/snippet}
 </PerformanceCampaignOpening>
+<WorkflowSignalBand motionOnly quiet />
 <div class="products-paths"><AgencyPathChoices label="Choose a product path" /></div>
 </div>
 

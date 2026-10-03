@@ -1,4 +1,5 @@
 <script lang="ts">
+  import WorkflowSignalBand from '$lib/components/WorkflowSignalBand.svelte';
   import AgencyWayfindingHero from '$lib/components/AgencyWayfindingHero.svelte';
   import AgencyWayfindingOpening from '$lib/components/AgencyWayfindingOpening.svelte';
   import AgencyWayfindingSign from '$lib/components/AgencyWayfindingSign.svelte';
@@ -253,6 +254,8 @@
   {#snippet artifact()}<AgencyWayfindingHero route="stack" />{/snippet}
 </PerformanceCampaignOpening>
 </AgencyWayfindingOpening>
+
+<WorkflowSignalBand motionOnly quiet />
 
 <PerformanceNarrativeStage
   id="stack-ownership-story"
