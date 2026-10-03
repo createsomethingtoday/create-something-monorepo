@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { get } from 'svelte/store';
-import { initializeFilmMotion, reducedFilmMotion, toggleFilmMotion } from '../src/lib/motion/filmPlayback';
+import { initializeFilmMotion, reducedFilmMotion, setFilmMotion, toggleFilmMotion } from '../src/lib/motion/filmPlayback';
 
 test('motion follows OS until explicitly changed, and remembers the choice on reload', () => {
   const values = new Map<string, string>();
@@ -18,6 +18,10 @@ test('motion follows OS until explicitly changed, and remembers the choice on re
   cleanup(); cleanup = initializeFilmMotion();
   assert.equal(get(reducedFilmMotion), false);
   toggleFilmMotion(); cleanup(); cleanup = initializeFilmMotion();
+  assert.equal(get(reducedFilmMotion), true);
+  setFilmMotion(false); cleanup(); cleanup = initializeFilmMotion();
+  assert.equal(get(reducedFilmMotion), false);
+  setFilmMotion(true); cleanup(); cleanup = initializeFilmMotion();
   assert.equal(get(reducedFilmMotion), true);
   cleanup();
 });
