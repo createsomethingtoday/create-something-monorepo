@@ -141,11 +141,42 @@ mutate the map. Changed-map collisions and wrong-scope bundle imports left
 existing records unchanged. No UI layout was changed and no native release
 application was opened.
 
-Evidence is synthetic provider references plus actual browser/IndexedDB behavior,
-not real Claude/Codex handoff or native acceptance. CTX 1.3.1 on this host reported
-generation verification failure; search failed on lock permissions. No repair,
-bypass or configuration change was attempted. Real supported-interface CTX
-retrieval remains untested and is not needed by this implementation.
+The original verifier uses synthetic provider references with actual browser and
+IndexedDB behavior. A separate live verifier subsequently passed two genuine,
+ephemeral Codex 0.159.2 turns using the existing signed-in ChatGPT account:
+`scripts/verify-session-registry-live-codex.mjs`. Actual provider session IDs were
+`01a1093e-993e-7f81-8c9f-57d8110cd1ff` and
+`01a1093e-c8f0-7bd3-baf1-371739daa3f1`. The first proposed a guarded synthetic
+rectangle move; the second received the freshly resolved canonical map and
+proposed the next move. Both produced committed receipts. Duplicate/stale and
+wrong-scope checks, two synthetic client scopes, browser restart, fresh-profile
+bundle restoration and imported receipt replay passed.
+
+This establishes **orchestrated live Codex-to-Codex synthetic acceptance**. The
+harness retrieves, links and executes; provider turns do not discover or call
+Draw tools themselves. It rejects reported tool actions, bounds final JSON,
+discards private runtime stderr, uses `--ephemeral`, and removes its temporary
+browser profiles. It neither saves nor indexes provider transcripts. It does not
+establish autonomous integration, real client value, native acceptance or
+Claude-to-Codex handoff. Claude 2.1.289 reports `loggedIn:false`; no authentication
+or configuration change was attempted.
+
+CTX 1.3.1 remains a separate acceptance blocker. Normal-sandbox status and
+`doctor --format json` report history/lexical `generation_verification_failed`
+with catalog/refresh pending; status records a lock `PermissionDenied` /
+`Operation not permitted`. The local CTX source maps nearly every verified-index
+opening error to that marker (`crates/ctx-daemon-cli/src/source_status.rs:505`
+in `/Users/micahjohnson/Code/ctx-refresh-repair`), so corruption is not established.
+No CTX repair, bypass, import or configuration change was attempted.
+
+Next bounded diagnostic: Micah runs status and doctor in his normal Terminal on
+the existing root and returns only sanitized readiness/error fields. Do not
+delete locks, change ownership or run `ctx import --all`/setup/rebuild based on
+this marker. Any subsequent import needs a separate concrete approval naming
+only synthetic provider paths and an isolated pilot root; it must not ingest
+personal histories or enable semantic work. Claude requires Micah's interactive
+login before cross-provider acceptance. Supported-interface CTX retrieval is
+still untested and is not required by the implemented registry.
 
 ## Value test
 
