@@ -213,6 +213,80 @@ positive synthetic indexing test needs separate concrete approval naming only
 synthetic provider paths and an isolated target root; no personal histories or
 semantic work. CTX retrieval is not required by the implemented registry.
 
+## Supported CTX projection bridge: staged, publication blocked
+
+Micah approved a synthetic bridge to the remaining CTX gap. The phased verifier
+is `scripts/verify-session-registry-ctx-bridge.mjs`:
+
+- `--stage` uses a private Draw browser profile only, creates two synthetic
+  scoped maps, explicitly links the previously verified Claude/Codex IDs, saves
+  a guarded edit with a committed receipt, and exports two canonical bundles.
+- `--ctx` launches CTX only, with the supported explicit history-source manifest
+  import, source-scoped lexical search with refresh off, bounded show-event,
+  payload validation and repeat-import identity checks. Never escalate this
+  phase or use it against the operator root.
+- `--verify` uses a new private Draw profile only. It requires actual successful
+  CTX evidence before restoring bundles, resolving current maps, rejecting the
+  indexed historical revision, and applying a guarded edit with a new receipt.
+  It does not launch CTX or provider models.
+
+Owned fixture root:
+`/Users/micahjohnson/Documents/Codex/2026-10-04/task-4/ctx-draw-bridge-fixture`.
+Exact authored inputs are `client-a.jsonl`, `client-b.jsonl`,
+`history-sources.json`, `client-a-bundle.json`, `client-b-bundle.json` and
+`data/config.toml`. Directory mode is 0700 and authored file mode 0600. The
+retained fixture was approximately 36 KB after the first blocked import; it
+also contains CTX-created finite-worker state below `data/daemon`. That attempt
+produced a bounded `bridge-blocked.json`; subsequent staging invalidates old
+blocked/result files. No `bridge-result.json` exists from a successful import.
+
+The only CTX acquisition routes are `draw-pilot/client-a` and
+`draw-pilot/client-b`. The durable v2 projection owns stable source/event/session
+IDs; actual Claude/Codex IDs appear only as explicit Draw-link provenance in a
+versioned event payload. The source is an imported synthetic summary, with no
+provider-native lineage contract. This does not claim native provider transcript
+discovery. No transcript, command body, credentials, file-reference facts or
+Canvas content are copied into CTX. Map IDs, scope, provider references and
+historical revision live in retained payload rather than discarded metadata.
+
+Pilot config disables automatic source discovery, selects manual indexing and
+source-refresh-only daemon work, and disables semantic search, analytics,
+automatic upgrades and local usage. The CTX subprocess removes inherited CTX
+overrides and supplies matching process controls, keeping HOME/CODEX_HOME
+unchanged. Manual explicit import may start a finite Core worker; no persistent
+supervisor installation, native discovery, setup or import-all is requested.
+
+**Observed boundary:** browser-only staging passed. The first normal-sandbox
+CTX import failed with `sandbox-permission-or-worker-endpoint-denied`; pilot
+daemon status reports failed. No positive publication/search result is claimed,
+and final `--verify` has not run. No CTX escalation, permission/lock repair or
+alternate execution was attempted. The operator root/index/config were not
+targeted.
+
+The final `--self-test` passed nine offline rejection checks with zero CTX,
+provider or browser calls: closed results, wrong scopes/maps, unknown fields,
+empty revisions, invalid event references, changed stable event IDs, wrong
+source identity and extra records. This verifies validation behavior only,
+not publication. Source review checks complete selected event content,
+matching search/show session identities, exact selected-source publication,
+passive lexical freshness and rejection of stale result files.
+
+CTX startup can additionally attempt refresh of its existing managed agent
+skills and receipt-owned man pages outside the selected root. The pilot's
+upgrade/analytics controls do not suppress those paths; normal sandbox
+restrictions remain the boundary. Any normal-Terminal handoff must disclose
+these incidental maintenance effects rather than promise that --data-root
+isolates every write. The CTX-only phase is the smallest resumable command:
+
+```sh
+node /Users/micahjohnson/Documents/Codex/2026-10-04/task-4/draw-registry-pilot/packages/mapping-canvas/scripts/verify-session-registry-ctx-bridge.mjs --ctx
+```
+
+It emits a bounded success/blocked summary and retains result bytes locally;
+share only that summary. The browser verification can resume only after actual
+successful publication and retrieval. It must not fabricate a result file or
+promote the earlier reference-only/browser tests into CTX acceptance.
+
 ## Value test
 
 Compared with attaching a file, this pilot removes manual selection of the map
