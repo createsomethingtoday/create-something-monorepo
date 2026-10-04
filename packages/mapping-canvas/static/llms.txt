@@ -22,11 +22,11 @@ Canvas content is saved only on the current device in browser storage. CREATE SO
 
 https://draw.createsomething.agency/
 
-## Mac preview
+## Mac pilot 0.1.1
 
 https://draw.createsomething.agency/download
 
-The Mac and iPhone companion is an individually delivered preview. The current candidate is unsigned and not notarized, so no general-public binary is linked. The landing page records the exact source revision, SHA-256 checksum, and candidate workflow receipt. A public DMG download remains held until Developer ID signing, Apple notarization, Gatekeeper verification, and clean install acceptance pass.
+Draw 0.1.1 for Apple Silicon, macOS 13 or later, is Developer ID signed, Apple notarized, stapled and Gatekeeper accepted. Pilot delivery is by request; no public binary is hosted yet. The landing page records the exact application source revision and DMG checksum. Physical iPhone pairing and Intel compatibility are not qualified for this pilot. Notes support block hierarchy, lists, quotes and selected emphasis. JSON is the editable backup and handoff format; SVG and PNG are presentation exports. Browser agent mutations remain browser-local and are unavailable in paired native shells.
 
 ## Publisher
 

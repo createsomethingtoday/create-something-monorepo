@@ -1,0 +1,23 @@
+{
+  "status": "passed",
+  "source": "Files exported by the completed isolated packaged native GUI walkthrough",
+  "checks": [
+    "JSON contains synthetic Native acceptance note with structured content",
+    "SVG contains title and bold weight",
+    "PNG visually inspected and matches the synthetic note"
+  ],
+  "artifacts": {
+    "Draw-native-export.json": {
+      "bytes": 1152,
+      "sha256": "f8c3cec3730cc84199f49a41550dd583e821d7e4b42e291f54a3c5ee429ec739"
+    },
+    "Draw-native-export.svg": {
+      "bytes": 2481,
+      "sha256": "54d0640bb17f6f42abc5e13ceb71c1435202bdcba0e782a068cc83c7539ce55a"
+    },
+    "Draw-native-export.png": {
+      "bytes": 106993,
+      "sha256": "5e7ef1ccbdedd67f2bf0f10982bb88f6b4d42019446335a08ff7c111fcd89df1"
+    }
+  }
+}

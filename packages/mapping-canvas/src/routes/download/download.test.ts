@@ -6,35 +6,39 @@ const canvasPage = readFileSync(new URL('../+page.svelte', import.meta.url), 'ut
 const sitemap = readFileSync(new URL('../../../static/sitemap.xml', import.meta.url), 'utf8');
 const llms = readFileSync(new URL('../../../static/llms.txt', import.meta.url), 'utf8');
 
-describe('Mac preview landing', () => {
+describe('Mac pilot landing', () => {
   it('keeps the web canvas primary and the native build individually delivered', () => {
     expect(page).toContain('Open Draw');
-    expect(page).toContain('Request Mac preview');
-    expect(page).toContain('unsigned, not notarized');
+    expect(page).toContain('Request pilot build');
+    expect(page).toContain('Developer ID signed, Apple notarized, Gatekeeper accepted.');
+    expect(page).toContain('Apple Silicon');
+    expect(page).toContain('macOS 13');
+    expect(page).not.toContain('They are unsigned');
     expect(page).not.toContain('href=".dmg');
   });
 
   it('publishes the exact candidate evidence and canonical metadata', () => {
-    expect(page).toContain('7c74dc1485377e316efa7173796dda883cb21eee');
-    expect(page).toContain('0c82b266fa7df6d7078bdc93d7ff2f02186da4168e7b3567f97a376f5843f0bd');
-    expect(page).toContain('33711866576');
+    expect(page).toContain('659ca02c3300f70f6bc549f4896df989debf9ff2');
+    expect(page).toContain('25c4394b1ab71ab7e71ec28b0711f084bf6a5dace321cc212c9e30a57153e141');
+    expect(page).toContain('0.1.1');
+    expect(page).toContain('public hosting is pending');
     expect(page).toContain("'@type': 'SoftwareApplication'");
     expect(page).toContain('https://draw.createsomething.agency/download');
   });
 
   it('adds the route to crawler and answer-engine discovery', () => {
     expect(sitemap).toContain('<loc>https://draw.createsomething.agency/download</loc>');
-    expect(llms).toContain('## Mac preview');
-    expect(llms).toContain('Developer ID signing');
+    expect(llms).toContain('## Mac pilot');
+    expect(llms).toContain('Developer ID signed');
   });
 
   it('opens the landing separately so the active canvas history stays mounted', () => {
     expect(canvasPage).toContain('href="/download" target="_blank" rel="noreferrer"');
   });
 
-  it('uses the provenance-tracked Draw communication image without baking claims into it', () => {
-    expect(page).toContain('/images/draw/draw-together-mapping-instrument.webp');
-    expect(page).toContain('alt="A tactile desktop mapping plane linked to a smaller handheld companion plane"');
+  it('uses actual synthetic workflow evidence with a clear caption', () => {
+    expect(page).toContain('/images/draw/workflow-pilot.png');
+    expect(page).toContain('alt="Synthetic request-to-handoff workflow in Draw, with formatted notes and connected steps"');
     expect(page).toContain('<figcaption>');
   });
 });
