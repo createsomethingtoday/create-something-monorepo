@@ -1,0 +1,66 @@
+{
+  "schema": "create-something/draw-installed-acceptance@1",
+  "ok": true,
+  "runId": "2026-10-04T20-44-31-250Z",
+  "artifact": {
+    "name": "CREATE SOMETHING Draw_0.1.1_aarch64.dmg",
+    "sha256": "39a67f31b5ccb8d1ec9e1638c6fade856f5d91fb28a443da911aa5a163af88b5",
+    "appSha256": "3fb7847a8f8838cc77961c415ac1c437908685e6e78559097f858216f04b6724"
+  },
+  "bundle": {
+    "identifier": "agency.createsomething.draw",
+    "version": "0.1.1",
+    "binary": "/private/var/folders/5v/bcpy60z558b1y2jctfx6108m0000gq/T/draw-installed-acceptance-qCclRk/installed/CREATE SOMETHING Draw.app/Contents/MacOS/create_something_draw_native",
+    "selfContained": true
+  },
+  "state": {
+    "sessionId": "session-42bd9c0a-dde4-442d-9a02-03100ebfaccb",
+    "revision": 0,
+    "documentHash": "fca5c0ef2242a24d051d173f97d2817f2997d25893bf62204c3a9c9cda195a42",
+    "relaunchExact": true,
+    "existingDocument": {
+      "sessionId": "session-42bd9c0a-dde4-442d-9a02-03100ebfaccb",
+      "revision": 17,
+      "documentHash": "274f4cad1704e327ca3dd96067d1ad012e9e86abc1d7ec96132ee0bca360725c",
+      "relaunchExact": true,
+      "objectCount": 5,
+      "fixtureVersion": "create-something.mapping-canvas.v1"
+    }
+  },
+  "evidence": {
+    "hdiutilVerify": true,
+    "readonlyMount": true,
+    "isolatedCopy": true,
+    "processIds": [
+      19767,
+      20285
+    ],
+    "existingDocumentProcessIds": [
+      20847,
+      21333
+    ],
+    "termination": "exact spawned child processes only",
+    "externalDylibCheck": true
+  },
+  "gates": {
+    "installedLaunch": "performed",
+    "persistenceRelaunch": "performed",
+    "existingDocumentUpgrade": "performed",
+    "signing": {
+      "status": "performed",
+      "authority": "Developer ID Application: Create Something LLC (PRP5VQQPPB)",
+      "teamIdentifier": "PRP5VQQPPB",
+      "verification": ""
+    },
+    "notarization": {
+      "status": "unperformed",
+      "app": "Processing: /private/var/folders/5v/bcpy60z558b1y2jctfx6108m0000gq/T/draw-installed-acceptance-qCclRk/installed/CREATE SOMETHING Draw.app\nCREATE SOMETHING Draw.app does not have a ticket stapled to it.",
+      "dmg": "Processing: /Users/micahjohnson/Documents/Codex/2026-10-04/task/draw-worktree/apps/draw-native/src-tauri/target/release/bundle/dmg/CREATE SOMETHING Draw_0.1.1_aarch64.dmg\nCREATE SOMETHING Draw_0.1.1_aarch64.dmg does not have a ticket stapled to it."
+    },
+    "gatekeeper": {
+      "status": "unperformed",
+      "assessment": "/Users/micahjohnson/Documents/Codex/2026-10-04/task/draw-worktree/apps/draw-native/src-tauri/target/release/bundle/dmg/CREATE SOMETHING Draw_0.1.1_aarch64.dmg: rejected\nsource=Unnotarized Developer ID"
+    },
+    "physicalIPhoneAcceptance": "unperformed"
+  }
+}
