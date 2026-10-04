@@ -13,6 +13,7 @@
   import { compileEdits, clipboardObjects, transformRoots, editBounds, visualBounds, assertLockedLayersPreserved, descendants, visibleObjects, isLayerLocked, type EditCommand } from '$lib/editing';
   import { onMount } from 'svelte';
   import { loadDocument, saveDocument } from '$lib/persistence';
+  import { createRegistryPilotTools } from '$lib/session-registry-tools';
   import { activateCanvasProject } from '$lib/project-storage';
   import { commit, convert, createDocument, createObjectCenterResolver, expandCompoundIds, objectBounds, parse, redo, removeObjects, resizeGroup, restoreConversion, selectObjectIdsInBounds, serialize, uid, undo, withObjects, type CanvasDocument, type CanvasObject, type History, type Point, type Shape, type Stroke, type Tool } from '$lib/document';
   import { DEFAULT_DRAWING_COLOR, DRAWING_COLOR_PREFERENCE, DRAWING_PALETTE, isColorableObject, isDrawingColor, recolorObjects, type DrawingColor } from '$lib/palette';
@@ -180,6 +181,9 @@
       updateSnapshot: updateSnapshotForAgent,
       revokeSnapshot: revokeSnapshotForAgent
     });
+    if (!nativeShell && new URLSearchParams(window.location.search).get('registryPilot') === '1') {
+      connectionTools = [...connectionTools, ...createRegistryPilotTools(connectionTools, () => document, persistCurrentDocument)];
+    }
     const webMcp = registerDrawWebMcpTools(connectionTools);
     if (webMcp.registered) status = `${webMcp.registered} agent tools ready · loading local canvas…`;
     const activityTimer = setInterval(() => activityNow = Date.now(), 1000);

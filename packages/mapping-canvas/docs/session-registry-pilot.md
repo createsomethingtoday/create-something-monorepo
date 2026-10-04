@@ -1,0 +1,127 @@
+# Local session registry pilot
+
+Approved bounded experiment, separate from Draw 0.1.1 / PR1908. Base:
+`origin/main` at `62d7a20d4787fe54589a3a3fdc2a19b5d67fd18f`.
+No canonical storage migration, native changes, CTX writes, transcript copying,
+cloud/team sharing, deployment or release changes.
+
+## Ownership and activation
+
+Open the local browser Draw URL with `?registryPilot=1`. Without that query the
+existing catalog is unchanged. Native shells do not enable these tools.
+
+Draw's existing project IndexedDB owns map content. A separate browser-local
+IndexedDB (`create-something-draw-session-registry-pilot`) stores the closed
+`draw.session-registry.v1` reference/receipt envelope. It does not store commands,
+map snapshots, transcripts, file paths, capabilities or tokens. Caller-supplied
+IDs must be opaque labels: schema validation cannot recognize a secret disguised
+as an otherwise valid ID. Origin storage/browser profile remains the actual
+access boundary; client/workspace IDs are selection labels, not authentication.
+This is suitable only for one consenting operator's bounded local pilot.
+
+## Tools
+
+| Tool | Purpose |
+| --- | --- |
+| `draw_registry_register` | Assign a canonical map ID to one explicit client/workspace scope |
+| `draw_registry_link` | Opt in to linking a Claude/Codex provider/source/session ID |
+| `draw_registry_resolve` | Read linked maps from current canonical Draw state |
+| `draw_registry_edit` | Guarded edit with operation ID, expected revision and linked session provenance |
+| `draw_registry_export` | Export one scope's references and receipt hashes |
+| `draw_registry_import` | Explicit opt-in merge of a validated scoped reference export |
+
+Minimal logical reference: `{provider:"codex",sourceId:"fixture-local",providerSessionId:"codex-fixture"}`.
+Source authority is part of identity. A provider session ID is never a file path
+or a CTX-derived ID. References are caller assertions; this pilot does not verify
+that a live provider session exists or infer the current session automatically.
+
+Session linking and import require `optIn:true`. Registered canonical map IDs
+cannot be assigned to another scope, because existing canonical storage is keyed
+globally by map ID. Missing canonical maps remain unresolved references, not
+transcript-reconstructed maps. A later session can discover its linked current
+map even after the browser process restarts. Editing requires that map to be open.
+
+## Receipts and recovery
+
+An atomic IndexedDB transaction reserves an operation ID as `unknown` before
+calling Draw. Repeated identical requests return the existing receipt; different
+requests reusing the ID reject. The request hash includes revision, commands and
+session provenance, but commands themselves are not stored. Unknown outcomes
+must be inspected/reconciled by the operator, never automatically retried.
+
+`committed` means the existing Draw edit boundary returned the matching map and
+revision and canonical persistence succeeded. It does not mean renderer
+verification. `failed` means the service detected absent/stale canonical state
+before invoking Draw. A thrown mutation, switched map, changed returned revision
+or failed persistence stays `unknown`, conservatively even when no mutation may
+have occurred. Replan with a new operation ID after a stale rejection.
+
+Core receipt validation distinguishes `verified` and permits an unchanged
+committed receipt to be promoted only with matching content hash/revision. The
+browser adapter does not perform or claim that promotion. Imported receipt states
+are historical assertions from the selected file, not freshly verified edits or
+cryptographically authenticated provenance. Import can reserve operation IDs and
+must therefore be restricted to reviewed local exports.
+
+Draw map save and registry receipt save are separate transactions. A crash after
+map mutation preserves the prior `unknown` reservation. This is deliberate
+at-most-once submission protection, not a claim of distributed exactly-once
+execution. No automatic retry, reconciliation or receipt compaction is included.
+
+## Export, retention and portability limits
+
+Exports preserve registry IDs, linked session provenance and SHA-256 hashes;
+they omit map content. Imports are atomic, reject cross-scope records and merge
+without replacing current maps. No CTX availability is required.
+
+Canonical map JSON still uses Draw's existing export/import. Its UI import
+remints IDs when importing a different map and updates timestamps, so this pilot
+does **not** establish cross-device map restoration or stable canonical content
+hashes across that UI import. Registry-only round trips preserve reference IDs
+and receipt hashes. A future reviewed portable-bundle resolver is a separate step.
+
+Caps: 200 maps, 2000 links, 10000 receipts, 8 MB registry export/import and 4 MiB
+hash input. Capacity rejects explicitly rather than silently evicting receipts.
+No automatic retention or schema upgrade is implemented. Export before removing
+the pilot's separate IndexedDB through browser site-storage controls; doing so
+leaves canonical maps intact, but removes receipt replay protection. Disabling
+the query only hides tools and does not delete data. Browser storage remains
+subject to profile deletion/eviction, so this is not a backup system.
+
+## Evidence and remaining acceptance
+
+`pnpm --dir packages/mapping-canvas test`: **358 tests pass across 32 files**.
+`pnpm --dir packages/mapping-canvas check`: **0 errors, 0 warnings**.
+Twenty-one new unit tests cover service and adapter behavior, including duplicate
+races, storage failures, session provenance and import boundaries.
+
+Run the real-browser verifier against a local dev server:
+
+```sh
+pnpm --dir packages/mapping-canvas dev --host 127.0.0.1 --port 5197
+node packages/mapping-canvas/scripts/verify-session-registry.mjs
+```
+
+`DRAW_CHROMIUM_PATH` optionally selects an already installed executable. This host
+used cached Chromium headless shell 1228 with Playwright 1.58.2, avoiding a new
+browser download. The verifier creates and removes a private synthetic profile.
+It passed default-off activation, logical Claude/Codex linking, guarded editing,
+durable committed receipts, duplicate replay, stale rejection, two-client scope
+isolation, scoped export/import and a full browser-process restart. No UI layout
+was changed and no native release application was opened.
+
+Evidence is synthetic provider references plus actual browser/IndexedDB behavior,
+not real Claude/Codex handoff or native acceptance. CTX 1.3.1 on this host reported
+generation verification failure; search failed on lock permissions. No repair,
+bypass or configuration change was attempted. Real supported-interface CTX
+retrieval remains untested and is not needed by this implementation.
+
+## Value test
+
+Compared with attaching a file, this pilot removes manual selection of the map
+associated with a session and makes current-state retrieval/replay outcomes
+explicit. It adds one registration, explicit links and scope labels. It offers
+no semantic transcript search or automatic session detection. Run a consenting
+operator's repeated mapping task and compare time-to-correct-map, stale-file
+mistakes and setup effort against the same task with a `.draw.json` attachment.
+No timing savings or client outcome improvements have yet been measured.
