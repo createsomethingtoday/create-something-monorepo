@@ -104,15 +104,22 @@ async function quit(child) {
   }
   launchedProcesses.delete(child);
 }
-const documentHash = (state) => createHash('sha256').update(JSON.stringify(state.document)).digest('hex');
+function canonical(value) {
+  if (Array.isArray(value)) return value.map(canonical);
+  if (value && typeof value === 'object') return Object.fromEntries(Object.keys(value).sort().map((key) => [key, canonical(value[key])]));
+  return value;
+}
+// Rust serializes object keys in sorted order; key order is not document data.
+const documentHash = (state) => createHash('sha256').update(JSON.stringify(canonical(state.document))).digest('hex');
 async function persistenceRun(appPath, executable, profile, expected) {
   const statePath = join(profile, 'paired-session.json');
   const first = launch(appPath, executable, profile);
   let firstState;
   try {
-    firstState = await waitForFile(statePath);
+    await waitForFile(statePath);
     await delay(1200);
     if (first.exitCode !== null || first.signalCode !== null || !first.pid) throw new Error('Packaged app exited during launch');
+    firstState = await waitForFile(statePath);
     if (expected && (firstState.sessionId !== expected.sessionId || firstState.revision !== expected.revision || documentHash(firstState) !== documentHash(expected))) throw new Error('Existing document changed during first launch');
   } finally { await quit(first); }
   const second = launch(appPath, executable, profile);
