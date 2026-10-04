@@ -10,7 +10,7 @@
   "bundle": {
     "identifier": "agency.createsomething.draw",
     "version": "0.1.1",
-    "binary": "/private/var/folders/5v/bcpy60z558b1y2jctfx6108m0000gq/T/draw-installed-acceptance-Yy6oz7/installed/CREATE SOMETHING Draw.app/Contents/MacOS/create_something_draw_native",
+    "binary": "<disposable-profile>/installed/CREATE SOMETHING Draw.app/Contents/MacOS/create_something_draw_native",
     "selfContained": true
   },
   "state": {
@@ -54,12 +54,12 @@
     },
     "notarization": {
       "status": "performed",
-      "app": "Processing: /private/var/folders/5v/bcpy60z558b1y2jctfx6108m0000gq/T/draw-installed-acceptance-Yy6oz7/installed/CREATE SOMETHING Draw.app\nThe validate action worked!",
-      "dmg": "Processing: /Users/micahjohnson/Documents/Codex/2026-10-04/task/draw-worktree/apps/draw-native/src-tauri/target/release/bundle/dmg/CREATE SOMETHING Draw_0.1.1_aarch64.dmg\nThe validate action worked!"
+      "app": "Processing: <disposable-profile>/installed/CREATE SOMETHING Draw.app\nThe validate action worked!",
+      "dmg": "Processing: <workspace>/apps/draw-native/src-tauri/target/release/bundle/dmg/CREATE SOMETHING Draw_0.1.1_aarch64.dmg\nThe validate action worked!"
     },
     "gatekeeper": {
       "status": "performed",
-      "assessment": "/Users/micahjohnson/Documents/Codex/2026-10-04/task/draw-worktree/apps/draw-native/src-tauri/target/release/bundle/dmg/CREATE SOMETHING Draw_0.1.1_aarch64.dmg: accepted\nsource=Notarized Developer ID"
+      "assessment": "<workspace>/apps/draw-native/src-tauri/target/release/bundle/dmg/CREATE SOMETHING Draw_0.1.1_aarch64.dmg: accepted\nsource=Notarized Developer ID"
     },
     "physicalIPhoneAcceptance": "unperformed"
   }

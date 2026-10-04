@@ -20,7 +20,7 @@
     "cancel title edit preserves committed revision 6"
   ],
   "limitations": [
-    "Native export success status observed; exported bytes were validated separately in browser suite",
+    "Native JSON/SVG/PNG exported bytes verified separately in macos-0.1.1-export-bytes.json",
     "Physical iPhone acceptance not performed"
   ],
   "installedAppReplaced": false,

@@ -37,17 +37,14 @@ screenshots and numeric browser acceptance evidence.
 
 ## Remaining acceptance and scope
 
-The exact candidate's native GUI walkthrough remains unperformed: the native
-computer-use transport closed after the Mac reconnect. Packaged process
-launch and persistent-state acceptance do not substitute for native GUI
-editing/export acceptance. Resume with native controls reconnected, use a
-disposable CREATE_SOMETHING_DRAW_HOME, and verify formatted note editing,
-keyboard save/cancel/undo, JSON/SVG/PNG export and restart in the packaged app.
-Do not replace the operator's installed app or use existing business data.
+The exact signed candidate passed native GUI acceptance after transport recovery.
+A disposable profile covered formatted editing, keyboard selection/emphasis,
+save/re-edit, undo/redo, Fit, cancel and quit/relaunch persistence. Native JSON,
+SVG and PNG export bytes were inspected and verified separately; see the native
+GUI and export-bytes receipts. No installed app or business document was replaced.
 
 Physical iPhone release acceptance is outside this macOS task. No installed
-app replacement, website deployment, merge, push, App Store publication or
-announcement occurred. Linear creation was skipped following automatic
+app replacement, App Store publication or announcement occurred during acceptance. Linear creation was skipped following automatic
 approval review's rejection of private path disclosure. Evidence and ownership
 remain on the isolated review branch.
 
