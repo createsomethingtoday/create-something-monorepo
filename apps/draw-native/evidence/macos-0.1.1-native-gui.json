@@ -1,0 +1,32 @@
+{
+  "status": "passed",
+  "application": "CREATE SOMETHING Draw",
+  "version": "0.1.1",
+  "bundle": "agency.createsomething.draw",
+  "dmgBytes": 9152911,
+  "dmgSha256": "25c4394b1ab71ab7e71ec28b0711f084bf6a5dace321cc212c9e30a57153e141",
+  "profile": "disposable native-gui-profile",
+  "checks": [
+    "native launch at tauri://localhost",
+    "empty initial canvas",
+    "create note",
+    "title/body style",
+    "keyboard select word and inline bold",
+    "save and re-edit rich note",
+    "keyboard undo/redo",
+    "Fit drawing",
+    "JSON/SVG/PNG success status",
+    "quit and relaunch persisted formatted note",
+    "cancel title edit preserves committed revision 6"
+  ],
+  "limitations": [
+    "Native export success status observed; exported bytes were validated separately in browser suite",
+    "Physical iPhone acceptance not performed"
+  ],
+  "installedAppReplaced": false,
+  "nativeUiReleased": true,
+  "screenshots": [
+    "Draw-native-editor.png",
+    "Draw-native-packaged.png"
+  ]
+}
