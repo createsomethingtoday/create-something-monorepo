@@ -56,6 +56,12 @@ is written under `apps/draw-native/output/installed-acceptance/`.
 
 ## Production release gates
 
+For local Mac notarization, use the user-managed Keychain profile
+`Create Something` with team `PRP5VQQPPB`. Verify access with
+`xcrun notarytool history --keychain-profile "Create Something"` before submitting.
+The older `GiGi-PRP5VQQPPB` profile remains available for existing release scripts.
+Profile credentials stay in Keychain; do not extract them or add them to this repository.
+
 An unsigned DMG or simulator archive is development evidence only. Production
 requires all of the following against the exact candidate bytes:
 
