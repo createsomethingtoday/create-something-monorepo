@@ -92,6 +92,22 @@ try {
     await expect(page.locator(`[data-object-id="${id}"] .rich-note`)).toBeVisible();
     expect(reloaded.height).toBeGreaterThan(500);
     await page.getByRole('button', { name: 'Fit drawing', exact: true }).click();
+    const fittedBounds = () => page.evaluate(id => {
+      const canvas = document.querySelector('svg[aria-label="Canvas objects"]').getBoundingClientRect();
+      const note = document.querySelector(`g[data-object-id="${id}"] > rect`).getBoundingClientRect();
+      let top = canvas.top, bottom = canvas.bottom;
+      const overlays = [];
+      for (const element of document.querySelectorAll('.canvas-frame .history,.canvas-frame .paper,.canvas-frame .selection,.canvas-frame .palette,.canvas-frame .agent-activity')) {
+        const rect = element.getBoundingClientRect();
+        if (!rect.width || !rect.height) continue;
+        overlays.push({ className: element.className, top: rect.top, bottom: rect.bottom });
+        if (rect.top + rect.height / 2 > canvas.top + canvas.height / 2) bottom = Math.min(bottom, rect.top);
+        else top = Math.max(top, rect.bottom);
+      }
+      return { noteTop: note.top, noteBottom: note.bottom, usableTop: top, usableBottom: bottom, overlays };
+    }, id);
+    await expect.poll(async () => { const bounds = await fittedBounds(); return bounds.noteTop >= bounds.usableTop - 1 && bounds.noteBottom <= bounds.usableBottom + 1; }).toBe(true);
+    const fitEvidence = await fittedBounds();
     await page.screenshot({ path: new URL(`long-canvas-${width}.png`, output).pathname });
     await page.locator('.file-menu summary').click();
     for (const extension of ['json', 'svg', 'png']) {
@@ -113,7 +129,7 @@ try {
     await exported.screenshot({ path: new URL(`export-png-${width}.png`, output).pathname });
     await exported.close();
     expect(errors).toEqual([]);
-    results.push({ width, passed: true, checks: ['mixed blocks', 'selected emphasis', 'edit existing rich note', 'sequential typing', 'undo/redo', 'cancel', 'long text', 'reload', 'JSON/SVG/PNG exports'], errors });
+    results.push({ width, passed: true, checks: ['mixed blocks', 'selected emphasis', 'edit existing rich note', 'sequential typing', 'undo/redo', 'cancel', 'long text', 'fit clear of controls', 'reload', 'JSON/SVG/PNG exports'], fitEvidence, errors });
     await context.close();
   }
   await writeFile(new URL('report.json', output), JSON.stringify(results, null, 2));
