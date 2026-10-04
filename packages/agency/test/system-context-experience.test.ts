@@ -76,8 +76,9 @@ test('freshness becomes stale at the declared review boundary without changing c
 test('Control, Map, and the field report adapt one public contract without adding a product or second map', () => {
   assert.match(controlRoute, /<SystemContextArtifact/);
   assert.match(controlRoute, /System context/);
-  assert.match(mapRoute, /<SystemContextRail/);
-  assert.equal(mapRoute.match(/<PublicAtlasCanvas/g)?.length, 1);
+  assert.match(mapRoute, /draw\.createsomething\.agency\/\?embed=agency/);
+  assert.equal(mapRoute.match(/<iframe/g)?.length, 1);
+  assert.doesNotMatch(mapRoute, /<PublicAtlasCanvas/);
   assert.doesNotMatch(mapRoute, /<PublicAtlasStoryCanvas/);
   assert.match(fieldReportRoute, /<SystemContextArtifact[\s\S]*defaultLens="change"[\s\S]*readOnly=\{true\}/);
   assert.match(artifactComponent, /Dependencies/);

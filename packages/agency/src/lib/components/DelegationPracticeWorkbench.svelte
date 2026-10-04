@@ -1,4 +1,6 @@
 <script lang="ts">
+	import CanonCompanion from './CanonCompanion.svelte';
+	let canonCompletion = 0;
 	import { browser } from '$app/environment';
 	import { onMount } from 'svelte';
 	import {
@@ -162,6 +164,7 @@
 		receiptMissingFields = [];
 		receiptIssuedAt = issuedAt;
 		receipt = result.receipt;
+		canonCompletion++;
 	}
 
 	function resetPracticeSession() {
@@ -216,13 +219,17 @@
 		</ol>
 	</nav>
 
+
 	<div class="practice-workbench__body">
 		<article id={`stage-${activeStage.id}`} class="practice-workbench__chapter" aria-live="polite">
 			<div class="practice-workbench__chapter-meta">
 				<span>Stage {String(activeStageIndex + 1).padStart(2, '0')}</span>
 				<small>{activeStage.artifact}</small>
 			</div>
-			<h3>{activeStage.label}</h3>
+            <div class="canon-practice">
+              <CanonCompanion pose="review" />
+              <div><h3>{activeStage.label}</h3><p>{#if missingActiveFields.length}Add {missingActiveFields[0].label.toLowerCase()} before continuing.{:else}This stage is ready for review.{/if}</p></div>
+            </div>
 			<p class="practice-workbench__question">{activeStage.question}</p>
 			<p>{activeStage.outcome}</p>
 			<form class="practice-artifact-form" aria-label={`${activeStage.label} artifact`} onsubmit={(event) => event.preventDefault()}>
@@ -328,6 +335,7 @@
 			<p>Generate only after every artifact and governance binding is inspectable.</p>
 		</header>
 
+        <div class="canon-receipt" hidden={!receipt} role="status"><CanonCompanion action="jumping" trigger={canonCompletion} />{#if receipt}<strong>Your practice receipt is ready.</strong>{/if}</div>
 		<div class="practice-receipt__actions">
 			<button data-testid="generate-practice-receipt" type="button" onclick={generatePracticeReceipt} onkeydown={(event) => activateOnKeyboard(event, generatePracticeReceipt)}>
 				Generate Practice Receipt
@@ -401,6 +409,11 @@
 </section>
 
 <style>
+  .canon-practice, .canon-receipt { display: flex; gap: var(--space-performance-sm); align-items: center; margin-block: var(--space-performance-sm); }
+  .canon-practice :global(.canon), .canon-receipt :global(.canon) { width: 72px; }
+  .canon-receipt[hidden] { display: none; }
+  .canon-practice h3 { margin: 0; }
+  .canon-practice p { margin: 0; }
 	.practice-workbench {
 		width: min(var(--content-width-performance, 85rem), calc(100% - 2.5rem));
 		margin: clamp(3rem, 7vw, 7rem) auto;

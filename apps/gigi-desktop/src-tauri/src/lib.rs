@@ -16,6 +16,7 @@ async fn dispatch(app: tauri::AppHandle, operation: String, input: serde_json::V
     tauri::async_runtime::spawn_blocking(move || {
         if operation=="agent.status" {return agent_setup::status(&data_dir);}
         if operation=="agent.prepare" {return agent_setup::prepare(&resources,&data_dir);}
+        if operation=="help.open" {return navigation::open_help(input);}
         if operation=="connections.openConsent" {return navigation::open_consent(input);}
         if operation=="context.sync" {return integrations::sync_history(&resources,&data_dir);}
         if operation=="connections.import" {

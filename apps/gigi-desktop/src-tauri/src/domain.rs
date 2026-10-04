@@ -147,6 +147,61 @@ fn audit_summary(entity:&str,id:&str,title:&str,fields:&Value)->String{
     parts.join("; ")
 }
 
+fn valid_iso_day(day: &str) -> bool {
+    let bytes = day.as_bytes();
+    if bytes.len() != 10 || bytes[4] != b'-' || bytes[7] != b'-'
+        || !bytes.iter().enumerate().all(|(i, b)| i == 4 || i == 7 || b.is_ascii_digit()) {
+        return false;
+    }
+    let year = day[0..4].parse::<u32>().unwrap_or(0);
+    let month = day[5..7].parse::<usize>().unwrap_or(0);
+    let date = day[8..10].parse::<u32>().unwrap_or(0);
+    if year == 0 || !(1..=12).contains(&month) { return false; }
+    let leap = year % 4 == 0 && (year % 100 != 0 || year % 400 == 0);
+    let days = [31, if leap {29} else {28}, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+    date >= 1 && date <= days[month - 1]
+}
+
+fn overview_section(db: &Connection, wid: &str, entity: &str, cte: &str, order: &str, field_names: &[&str]) -> Result<Value, String> {
+    let count: i64 = db.query_row(&format!("{cte} SELECT count(*) FROM eligible"), [wid], |r| r.get(0)).map_err(|e| e.to_string())?;
+    let sql = format!("{cte} SELECT id,title,status,day,money_cents,fields_json FROM eligible ORDER BY {order} LIMIT 5");
+    let mut stmt = db.prepare(&sql).map_err(|e| e.to_string())?;
+    let rows = stmt.query_map([wid], |r| {
+        Ok((r.get::<_,String>(0)?, r.get::<_,String>(1)?, r.get::<_,Option<String>>(2)?, r.get::<_,Option<String>>(3)?, r.get::<_,Option<i64>>(4)?, r.get::<_,String>(5)?))
+    }).map_err(|e| e.to_string())?;
+    let mut items = Vec::new();
+    for row in rows {
+        let (id, title, status, day, money, stored_fields) = row.map_err(|e| e.to_string())?;
+        let fields: Value = serde_json::from_str(&stored_fields).map_err(|e| e.to_string())?;
+        let selected = field_names.iter().filter_map(|key| match fields.get(*key) {
+            Some(Value::String(value)) => Some(((*key).to_string(), json!(value.chars().take(160).collect::<String>()))),
+            Some(Value::Null) => Some(((*key).to_string(), Value::Null)),
+            _ => None,
+        }).collect::<serde_json::Map<String, Value>>();
+        let truncated = title.chars().count() > 120;
+        items.push(json!({"id":id,"workspaceId":wid,"entity":entity,"title":title.chars().take(120).collect::<String>(),"titleTruncated":truncated,"status":status.map(|s|s.chars().take(160).collect::<String>()),"date":day,"moneyCents":money,"fields":selected}));
+    }
+    Ok(json!({"items":items,"count":count}))
+}
+
+fn overview(db: &Connection, wid: &str, today: &str) -> Result<Value, String> {
+    workspace(db, wid)?;
+    // SQLite's julianday conversion normalizes impossible calendar days, so the
+    // round trip excludes malformed dates without treating text order as proof.
+    let is_valid = |column: &str| format!("{column} GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]' AND date(julianday({column}))={column}");
+    let valid_day = is_valid("day");
+    let active = "lower(trim(coalesce(status,''))) NOT IN ('done','complete','completed','cancelled','canceled')";
+    let gigs_cte = format!("WITH source AS (SELECT id,title,status,substr(occurred_at,1,10) AS day,money_cents,fields_json FROM gigs WHERE workspace_id=?1), eligible AS (SELECT * FROM source WHERE {active} AND {valid_day} AND day>='{today}')");
+    let tasks_cte = format!("WITH source AS (SELECT id,title,status,substr(json_extract(fields_json,'$.\"Due Date\"'),1,10) AS due_day,substr(json_extract(fields_json,'$.\"Do Date\"'),1,10) AS do_day,money_cents,fields_json FROM tasks WHERE workspace_id=?1), resolved AS (SELECT *,CASE WHEN {due_valid} THEN due_day WHEN {do_valid} THEN do_day ELSE NULL END AS day FROM source), eligible AS (SELECT * FROM resolved WHERE {active})",due_valid=is_valid("due_day"),do_valid=is_valid("do_day"));
+    let finances_cte = format!("WITH source AS (SELECT id,title,status,substr(json_extract(fields_json,'$.\"Due Date\"'),1,10) AS due_day,substr(occurred_at,1,10) AS occurred_day,money_cents,fields_json FROM finances WHERE workspace_id=?1), resolved AS (SELECT *,CASE WHEN {due_valid} THEN due_day WHEN {occurred_valid} THEN occurred_day ELSE NULL END AS day FROM source), eligible AS (SELECT * FROM resolved WHERE lower(trim(coalesce(status,''))) IN ('expected','invoiced','overdue'))",due_valid=is_valid("due_day"),occurred_valid=is_valid("occurred_day"));
+    let gigs = overview_section(db,wid,"gigs",&gigs_cte,"day ASC,id ASC", &["Date"])?;
+    let tasks = overview_section(db,wid,"tasks",&tasks_cte,"day IS NULL,day ASC,id ASC", &["Due Date","Do Date","Priority"])?;
+    let finances = overview_section(db,wid,"finances",&finances_cte,"day IS NULL,day ASC,id ASC", &["Date","Due Date","Direction"])?;
+    let counts: (i64,i64,i64,i64) = db.query_row("SELECT (SELECT count(*) FROM gigs WHERE workspace_id=?1),(SELECT count(*) FROM tasks WHERE workspace_id=?1),(SELECT count(*) FROM contacts WHERE workspace_id=?1),(SELECT count(*) FROM finances WHERE workspace_id=?1)",[wid],|r|Ok((r.get(0)?,r.get(1)?,r.get(2)?,r.get(3)?))).map_err(|e|e.to_string())?;
+    let undated_count: i64 = db.query_row(&format!("WITH source AS (SELECT status,substr(occurred_at,1,10) AS day FROM gigs WHERE workspace_id=?1) SELECT count(*) FROM source WHERE {active} AND coalesce(({valid_day}),0)=0"),[wid],|r|r.get(0)).map_err(|e|e.to_string())?;
+    Ok(json!({"gigs":gigs,"tasks":tasks,"finances":finances,"counts":{"gigs":counts.0,"tasks":counts.1,"contacts":counts.2,"finances":counts.3},"undatedGigsCount":undated_count}))
+}
+
 /// Stage this app's private workspace history as CTX Custom History JSONL v2.
 pub fn export_history(root:&Path)->Result<Value,String>{
     let db=open(root)?;
@@ -361,6 +416,12 @@ pub fn dispatch(root: &Path, op: &str, input: Value) -> Result<Value, String> {
             Ok(row
                 .map(|(id, name, created)| json!({"id":id,"name":name,"createdAt":created}))
                 .unwrap_or(Value::Null))
+        }
+        "workspace.overview" => {
+            let wid = need(&input, "workspaceId")?;
+            let today = need(&input, "today")?;
+            if !valid_iso_day(today) { return Err("today must be a valid YYYY-MM-DD date".into()); }
+            overview(&db, wid, today)
         }
         "records.save" => {
             let wid = need(&input, "workspaceId")?;
@@ -761,6 +822,111 @@ mod tests {
     use super::*;
     fn temp() -> std::path::PathBuf {
         std::env::temp_dir().join(format!("gigi-domain-test-{}", Uuid::new_v4()))
+    }
+
+    #[test]
+    fn overview_finds_eligible_records_beyond_recent_page_and_sorts_by_real_dates() {
+        let root = temp();
+        let wid = dispatch(&root,"workspace.create",json!({"name":"Solo"})).unwrap()["id"].clone();
+        let save = |entity: &str, title: &str, fields: Value| {
+            dispatch(&root,"records.save",json!({"workspaceId":wid,"entity":entity,"title":title,"fields":fields})).unwrap();
+        };
+        save("gigs","Next show",json!({"Date":"2026-10-01","Status":"Confirmed","Fee":25000,"Requirements":"private detail"}));
+        save("gigs","Later show",json!({"Date":"2026-10-05T18:00:00","Status":"Open"}));
+        for day in 6..=9 { save("gigs",&format!("October {day}"),json!({"Date":format!("2026-10-{day:02}"),"Status":"Open"})); }
+        save("gigs","Past show",json!({"Date":"2026-09-29","Status":"Confirmed"}));
+        save("gigs","Completed show",json!({"Date":"2026-10-02","Status":" Completed "}));
+        save("gigs","Invalid show",json!({"Date":"2026-02-30","Status":"Open"}));
+        save("gigs","Undated show",json!({"Status":"Open"}));
+        save("tasks","Overdue task",json!({"Due Date":"2026-09-28","Do Date":"2026-10-04","Priority":"High","Status":"Open"}));
+        save("tasks","Today task",json!({"Due Date":"2026-09-30","Status":"In progress"}));
+        save("tasks","Do date task",json!({"Do Date":"2026-10-02"}));
+        save("tasks","Undated task",json!({"Priority":"Low"}));
+        save("tasks","Done task",json!({"Due Date":"2026-09-20","Status":"Done"}));
+        for status in ["Done","Complete","Completed","Cancelled","Canceled"] {
+            save("tasks",&format!("Closed task {status}"),json!({"Due Date":"2026-09-21","Status":status}));
+            save("gigs",&format!("Closed gig {status}"),json!({"Date":"2026-10-02","Status":status}));
+        }
+        save("finances","Income invoice",json!({"Date":"2026-09-15","Due Date":"2026-09-29","Amount":12000,"Direction":"Income","Status":"Invoiced"}));
+        save("finances","Expense expected",json!({"Date":"2026-10-03","Amount":3000,"Direction":"Expense","Status":"Expected"}));
+        save("finances","Past due",json!({"Due Date":"2026-09-27","Amount":5000,"Direction":"Income","Status":"Overdue"}));
+        save("finances","Paid item",json!({"Amount":2000,"Direction":"Income","Status":"Paid"}));
+        for i in 0..25 { save("gigs",&format!("No date {i}"),json!({})); }
+        let overview = dispatch(&root,"workspace.overview",json!({"workspaceId":wid,"today":"2026-09-30"})).unwrap();
+        let titles = |section: &str| overview[section]["items"].as_array().unwrap().iter().map(|item|item["title"].as_str().unwrap().to_string()).collect::<Vec<_>>();
+        assert_eq!(titles("gigs"),["Next show","Later show","October 6","October 7","October 8"]);
+        assert_eq!(overview["gigs"]["count"],6);
+        assert_eq!(overview["undatedGigsCount"],27);
+        assert_eq!(titles("tasks"),["Overdue task","Today task","Do date task","Undated task"]);
+        assert_eq!(overview["tasks"]["items"][0]["date"],"2026-09-28");
+        assert_eq!(overview["tasks"]["items"][2]["date"],"2026-10-02");
+        assert_eq!(overview["tasks"]["count"],4);
+        assert_eq!(titles("finances"),["Past due","Income invoice","Expense expected"]);
+        assert_eq!(overview["finances"]["items"][1]["moneyCents"],12000);
+        assert_eq!(overview["finances"]["items"][1]["fields"]["Direction"],"Income");
+        assert_eq!(overview["finances"]["items"][2]["fields"]["Direction"],"Expense");
+        assert_eq!(overview["finances"]["count"],3);
+        assert_eq!(overview["counts"],json!({"gigs":40,"tasks":10,"contacts":0,"finances":4}));
+        assert!(overview["gigs"]["items"][0]["fields"].get("Requirements").is_none());
+        assert!(overview["tasks"]["items"][0]["fields"].get("Priority").is_some());
+        let _=fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn overview_validates_today_scopes_workspace_and_does_not_record_mutation() {
+        let root=temp();
+        let wid=dispatch(&root,"workspace.create",json!({"name":"Solo"})).unwrap()["id"].clone();
+        let other=Uuid::new_v4().to_string();
+        open(&root).unwrap().execute("INSERT INTO workspaces(id,name) VALUES(?1,'Other')",[&other]).unwrap();
+        dispatch(&root,"records.save",json!({"workspaceId":wid,"entity":"gigs","title":"Mine","fields":{"Date":"2028-02-29"}})).unwrap();
+        dispatch(&root,"records.save",json!({"workspaceId":other,"entity":"gigs","title":"Other gig","fields":{"Date":"2028-03-01"}})).unwrap();
+        for invalid in ["2026-02-29","2026-13-01","2026-01-00","2026-1-01","2026-10-01' OR 1=1"] {
+            assert!(dispatch(&root,"workspace.overview",json!({"workspaceId":wid,"today":invalid})).is_err());
+        }
+        assert!(dispatch(&root,"workspace.overview",json!({"workspaceId":"absent","today":"2028-02-29"})).is_err());
+        let before:i64=open(&root).unwrap().query_row("SELECT count(*) FROM history",[],|r|r.get(0)).unwrap();
+        let result=dispatch(&root,"workspace.overview",json!({"workspaceId":wid,"today":"2028-02-29"})).unwrap();
+        let after:i64=open(&root).unwrap().query_row("SELECT count(*) FROM history",[],|r|r.get(0)).unwrap();
+        assert_eq!(before,after);
+        assert_eq!(result["gigs"]["count"],1);
+        assert_eq!(result["gigs"]["items"][0]["title"],"Mine");
+        assert_eq!(result["counts"]["gigs"],1);
+        let _=fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn overview_date_fallback_uses_first_valid_candidate_and_bounds_field_strings() {
+        let root=temp();
+        let wid=dispatch(&root,"workspace.create",json!({"name":"Solo"})).unwrap()["id"].clone();
+        let long="x".repeat(900);
+        for (entity,title,fields) in [
+            ("tasks","Invalid due",json!({"Due Date":long,"Do Date":"2026-10-01","Priority":long})),
+            ("tasks","Valid due wins",json!({"Due Date":"2026-10-04","Do Date":"2026-09-28"})),
+            ("tasks","No valid date",json!({"Due Date":"2026-02-30","Do Date":"not-a-date"})),
+            ("finances","Invalid due finance",json!({"Due Date":"2026-02-30","Date":"2026-09-29","Direction":"Income","Amount":4100,"Status":"Expected"})),
+            ("finances","Valid due finance",json!({"Due Date":"2026-10-06","Date":"2026-09-20","Direction":"Expense","Amount":1200,"Status":"Invoiced"})),
+            ("finances","No valid finance date",json!({"Due Date":"bad","Date":"2026-02-30","Direction":"Income","Status":"Overdue"})),
+        ] {
+            dispatch(&root,"records.save",json!({"workspaceId":wid,"entity":entity,"title":title,"fields":fields})).unwrap();
+        }
+        let result=dispatch(&root,"workspace.overview",json!({"workspaceId":wid,"today":"2026-09-30"})).unwrap();
+        let tasks=&result["tasks"]["items"];
+        assert_eq!(tasks[0]["title"],"Invalid due");
+        assert_eq!(tasks[0]["date"],"2026-10-01");
+        assert_eq!(tasks[1]["title"],"Valid due wins");
+        assert_eq!(tasks[1]["date"],"2026-10-04");
+        assert_eq!(tasks[2]["title"],"No valid date");
+        assert!(tasks[2]["date"].is_null());
+        assert!(tasks[0]["fields"]["Due Date"].as_str().unwrap().chars().count()<=160);
+        assert!(tasks[0]["fields"]["Priority"].as_str().unwrap().chars().count()<=160);
+        let finances=&result["finances"]["items"];
+        assert_eq!(finances[0]["title"],"Invalid due finance");
+        assert_eq!(finances[0]["date"],"2026-09-29");
+        assert_eq!(finances[1]["title"],"Valid due finance");
+        assert_eq!(finances[1]["date"],"2026-10-06");
+        assert_eq!(finances[2]["title"],"No valid finance date");
+        assert!(finances[2]["date"].is_null());
+        let _=fs::remove_dir_all(root);
     }
 
     #[test]

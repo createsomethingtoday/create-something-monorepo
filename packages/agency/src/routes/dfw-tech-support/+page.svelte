@@ -1,5 +1,7 @@
 <script lang="ts">
   import { Button, SEO } from '@create-something/canon';
+  import DfwSupportMotion from '$lib/components/DfwSupportMotion.svelte';
+  import WorkflowSignalBand from '$lib/components/WorkflowSignalBand.svelte';
   import { getAnalytics } from '@create-something/canon/analytics';
 
   const inquiryHref = '/contact?intent=system-support&lane=reliability_and_control&source=dfw-tech-support&campaign=dfw-remote-support';
@@ -13,7 +15,7 @@
 </script>
 
 <SEO title="Remote Software & Workflow Support for DFW | CREATE SOMETHING"
-  description="Remote AI-native tech support for DFW businesses’ software and workflows. Get help with automations, integrations, forms and AI-built projects."
+  description="Remote AI-native technical support for DFW businesses’ software and workflows. Get help with automations, integrations, forms and AI-built projects."
   canonical="https://createsomething.agency/dfw-tech-support" propertyName="agency" />
 
 <div class="dfw-support property-performance" data-performance-mode="proof">
@@ -21,24 +23,16 @@
     <div>
       <p class="eyebrow">DFW · Remote software support</p>
       <h1 id="support-title">Keep the software your business depends on working.</h1>
-      <p class="lede">Remote AI-native tech support for DFW businesses’ software and workflows.</p>
+      <p class="lede">Remote AI-native technical support for DFW businesses’ software and workflows.</p>
       <p>Bring a broken automation, a failing integration, a form that loses leads, or an AI-built project you need help maintaining.</p>
       <Button href={inquiryHref} onclick={trackInquiry}>Describe the support problem</Button>
       <p class="boundary">We agree on scope, price and access before work begins. Support is remote; hardware repair and on-site visits are outside this service.</p>
     </div>
-    <figure class="recovery-map">
-      <figcaption>Illustrative recovery process · no client data</figcaption>
-      <ol aria-label="A scoped software recovery process">
-        <li><span aria-hidden="true">01</span><div><strong>Find the failure</strong><p>Compare the expected result with the last working state.</p></div></li>
-        <li><span aria-hidden="true">02</span><div><strong>Agree on the boundary</strong><p>Name the owner, access limits and changes that need approval.</p></div></li>
-        <li><span aria-hidden="true">03</span><div><strong>Repair and verify</strong><p>Test the agreed change against the actual workflow.</p></div></li>
-        <li><span aria-hidden="true">04</span><div><strong>Leave a recovery path</strong><p>Keep the evidence, instructions and next owner clear.</p></div></li>
-      </ol>
-      <p class="map-note">Failure → scoped change → verified result → handoff</p>
-    </figure>
+    <DfwSupportMotion />
   </section>
 
   <section class="chapter fit" aria-labelledby="fit-title">
+    <div class="support-signal"><WorkflowSignalBand showContinuation={false} /></div>
     <div><p class="eyebrow">Start with one problem</p><h2 id="fit-title">Software help with a clear owner.</h2>
       <p>You do not need another tool before you understand the failure. Bring the systems involved, their owner and the result you need.</p>
       <p>AI can help investigate and prepare a change. Your team keeps approval authority over production changes and access.</p>
@@ -82,21 +76,17 @@
 <style>
   .dfw-support { color: var(--color-performance-ink); background: var(--color-performance-paper); }
   .chapter { max-width: 1440px; margin: 0 auto; padding: clamp(3rem, 7vw, 7rem) clamp(1.25rem, 5vw, 6rem); border-bottom: 1px solid var(--color-performance-line); display: grid; grid-template-columns: 1.2fr 1fr; gap: clamp(2rem, 5vw, 5rem); }
-  .eyebrow, figcaption, .map-note { font-family: var(--font-mono); font-size: .75rem; letter-spacing: .08em; }
+  .eyebrow { font-family: var(--font-mono); font-size: .75rem; letter-spacing: .08em; }
   .eyebrow { text-transform: uppercase; margin: 0 0 1.5rem; }
-  h1 { font-size: clamp(2.7rem, 5.4vw, 5.8rem); line-height: 1.02; letter-spacing: -.045em; max-width: 13ch; margin: 0 0 1.75rem; }
+  h1 { font-size: clamp(2.5rem, 4.8vw, 4.5rem); line-height: 1.02; letter-spacing: -.045em; max-width: 16ch; margin: 0 0 1.75rem; }
   h2 { font-size: clamp(2rem, 3.5vw, 3.75rem); line-height: 1.08; letter-spacing: -.035em; margin: 0 0 1.5rem; max-width: 17ch; }
   h3 { font-size: 1.5rem; margin: 0 0 1rem; }
   p { line-height: 1.65; max-width: 65ch; margin: 0 0 1.5rem; }
   .lede { font-size: clamp(1.125rem, 1.6vw, 1.4rem); }
   a { text-underline-offset: .22em; }
   .boundary { font-size: .875rem; margin-top: 1.25rem; }
-  .recovery-map { margin: 0; align-self: center; border: 1px solid var(--color-performance-line); padding: clamp(1.25rem, 3vw, 2.5rem); background: var(--color-performance-panel); }
-  .recovery-map ol { list-style: none; padding: 0; margin: 1.5rem 0; }
-  .recovery-map li { display: flex; gap: 1.25rem; padding: 1rem 0; border-top: 1px solid var(--color-performance-line); }
-  .recovery-map li p { margin: .5rem 0 0; font-size: .875rem; }
-  .recovery-map li > span { font-family: var(--font-mono); font-size: 1.5rem; flex: 0 0 2rem; }
-  .map-note { margin: 0; letter-spacing: 0; }
+  .support-signal { grid-column: 1 / -1; min-width: 0; }
+  .opening { align-items: center; padding-top: clamp(2.5rem, 5vw, 5rem); }
   .failure-list { margin: 0; }
   .failure-list div, details { padding: 1.25rem 0; border-top: 1px solid var(--color-performance-line); }
   .failure-list dt { font-size: 1rem; font-weight: 600; }

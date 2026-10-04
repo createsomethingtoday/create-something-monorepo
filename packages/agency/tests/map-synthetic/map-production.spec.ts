@@ -26,81 +26,40 @@ test('credential-free Map production workflow remains coherent', async ({ page, 
 		}
 	}
 
-	async function bookingSnapshot() {
-		const details = page.locator('.summary-panel details');
-		if (!(await details.evaluate((element) => element.hasAttribute('open')))) {
-			await details.locator('summary').click();
-		}
-		const summary = await details.locator('pre').innerText();
-		const href = await details.getByRole('link', { name: 'Use this in booking' }).getAttribute('href');
-		if (!href) throw new Error('Booking URL is missing');
-		const publicReference = summary.match(/^Map reference: (map_[a-zA-Z0-9]+)$/m)?.[1];
-		const readiness = summary.match(/^Readiness: (.+) \((\d+)\/100\)$/m);
-		if (!publicReference || !readiness) throw new Error('Visible booking summary is incomplete');
-		const url = new URL(href, page.url());
-		const session = url.searchParams.get('atlas_session_id');
-		if (!session) throw new Error('Booking URL session is missing');
-		const expectedPublicReference = `map_${
-			session.replace(/[^a-zA-Z0-9]/g, '').slice(-16) || 'anonymous'
-		}`;
-		const expectedSlug = readiness[1]!.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-		expect(publicReference).toBe(expectedPublicReference);
-		expect(url.searchParams.get('score')).toBe(readiness[2]);
-		expect(url.searchParams.get('readiness')).toBe(expectedSlug);
-		return { summary, session, score: readiness[2], href };
-	}
+	const draw = page.frameLocator('iframe[title="Draw — CREATE SOMETHING workflow mapping canvas"]');
 
 	await check('route_and_responsive_render', async () => {
-		let response = await page.goto('/map', { waitUntil: 'domcontentloaded' });
+		const response = await page.goto('/map', { waitUntil: 'domcontentloaded' });
 		expect(response?.status()).toBe(200);
-		await page.evaluate(() => localStorage.clear());
-		response = await page.reload({ waitUntil: 'domcontentloaded' });
-		expect(response?.status()).toBe(200);
-		await expect(page.getByRole('region', { name: 'Public Map workflow canvas' })).toBeVisible();
-		await page.waitForTimeout(1_000);
+		await expect(page.getByRole('heading', { name: 'The canvas we use for mapping.' })).toBeVisible();
+		await page.locator('iframe').scrollIntoViewIfNeeded();
+		await expect(draw.getByRole('region', { name: 'Mapping canvas workbench' })).toBeVisible();
 		const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
 		expect(overflow).toBeLessThanOrEqual(1);
 	});
 
-	let starterSession = '';
-	await check('starter_booking_context', async () => {
-		await page.locator('.starter-grid button').filter({ hasText: 'RevOps lead handoff' }).click();
-		await expect(page.locator('.starter-panel .panel-title strong')).toHaveText('RevOps lead handoff loaded');
-		const snapshot = await bookingSnapshot();
-		starterSession = snapshot.session;
-		expect(snapshot.summary).toContain('Readiness: Pilot candidate (100/100)');
-	});
-
-	await check('edit_booking_context', async () => {
-		await page.getByLabel('Label').fill('Synthetic workflow record');
-		const snapshot = await bookingSnapshot();
-		expect(snapshot.summary).toContain('Synthetic workflow record');
-		expect(snapshot.session).toBe(starterSession);
-		const storedSummary = await page.evaluate(() => localStorage.getItem('create-something:workflow-mapping-warmup'));
-		expect(storedSummary).toContain('Synthetic workflow record');
-	});
-
-	await check('restore_booking_context', async () => {
+	await check('draw_edit_and_restore', async () => {
+		await expect(draw.getByRole('status')).toHaveText(/New local session|Restored from this device/);
+		const title = draw.getByRole('textbox', { name: 'Canvas title' });
+		await title.fill('Synthetic workflow map');
+		await title.blur();
+		await expect(title).toHaveValue('Synthetic workflow map');
+		await expect(draw.getByRole('status')).toHaveText('Saved on this device');
 		await page.reload({ waitUntil: 'domcontentloaded' });
-		await page.waitForFunction(() => {
-			const raw = localStorage.getItem('create-something:public-atlas-canvas');
-			if (!raw) return false;
-			try {
-				return JSON.parse(raw).nodes?.some((node: { label?: string }) => node.label === 'Synthetic workflow record');
-			} catch {
-				return false;
-			}
-		});
-		const snapshot = await bookingSnapshot();
-		expect(snapshot.summary).toContain('Synthetic workflow record');
-		expect(snapshot.session).toBe(starterSession);
+		await page.locator('iframe').scrollIntoViewIfNeeded();
+		await expect(draw.getByRole('status')).toHaveText('Restored from this device');
+		await expect(draw.getByRole('textbox', { name: 'Canvas title' })).toHaveValue('Synthetic workflow map');
 	});
 
-	await check('reset_booking_context', async () => {
-		await page.getByRole('button', { name: 'Reset' }).click();
-		const snapshot = await bookingSnapshot();
-		expect(snapshot.session).not.toBe(starterSession);
-		expect(snapshot.summary).not.toContain('Synthetic workflow record');
+	await check('mapping_session_handoff', async () => {
+		const booking = page.locator('main').getByRole('link', { name: 'Book a mapping session', exact: true });
+		const href = await booking.getAttribute('href');
+		expect(href).toBeTruthy();
+		const url = new URL(href!, page.url());
+		expect(url.pathname).toBe('/book');
+		expect(url.searchParams.get('intent')).toBe('workflow-mapping');
+		await expect(page.getByRole('link', { name: 'Open full canvas' })).toHaveAttribute('href', 'https://draw.createsomething.agency/');
+		await expect(page.getByRole('link', { name: 'Open saved Map workspace' })).toHaveAttribute('href', '/map/workspace');
 	});
 
 	await check('mapping_agent_non_mutating_boundary', async () => {

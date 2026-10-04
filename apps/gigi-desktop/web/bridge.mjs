@@ -11,6 +11,7 @@ export function createBridge(invoke) {
     return name;
   };
   return {
+    overview: (workspaceId, today) => call('workspace.overview', { workspaceId: owned(workspaceId), today }),
     getWorkspace: (workspaceId) => call('workspace.get', workspaceId ? { workspaceId } : {}),
     createWorkspace: (name) => call('workspace.create', { name: name.trim() }),
     listRecords: (workspaceId, name, cursor) => call('records.list', { workspaceId: owned(workspaceId), entity: entity(name), ...(cursor ? { cursor } : {}) }),

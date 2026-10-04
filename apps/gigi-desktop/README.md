@@ -2,7 +2,7 @@
 
 A Rust/Tauri desktop workspace for music-related work. Each installation owns a private SQLite database. The UI and local MCP companion use the same validated domain operations. CTX supplies supporting history; current records and calculations remain in SQLite.
 
-This is an in-progress local beta. Production signing/notarization and full connected-device acceptance remain required before a production release. See `evidence/tdd.md` for checks and failures; do not infer acceptance from a successful build.
+The local functional beta passed connected desktop and physical cellular-phone acceptance; current receipts and artifact hashes are in `evidence/local-checkpoint.md`. Developer ID signing, notarization and installation of the qualified release remain required before production distribution. See `evidence/tdd.md` for checks and failures; a successful build alone does not prove acceptance.
 
 ## Development
 
@@ -14,13 +14,13 @@ From the monorepo root, run `pnpm bootstrap:worktree` first.
 - `pnpm --filter @create-something/gigi-integrations typecheck`
 - `pnpm --filter @create-something/gigi-desktop build:local`
 
-The local build uses a separate ad-hoc signing configuration, requires macOS 13 or later, and currently targets Apple Silicon. It does not require Grant’s Apple credentials. Production packaging uses `pnpm --filter @create-something/gigi-desktop build` after release signing is configured. An app bundle alone does not establish a signed/notarized production release.
+The local build uses a separate ad-hoc signing configuration, requires macOS 13 or later, and currently targets Apple Silicon. It does not require Grant’s Apple credentials. Production packaging uses `pnpm --filter @create-something/gigi-desktop build` after release signing is configured. An app bundle alone does not establish a signed/notarized production release. Run `verify:release` with the absolute app and DMG paths after production packaging; it exits nonzero for an unqualified pair. Qualification is separate from installing that exact release and repeating the native workflow. The verifier is read-only and must reject the local ad-hoc build. It checks the signed GiGi identifier, Developer ID executable signatures, Gatekeeper and stapled notarization, DMG integrity, and the byte/mode identity of the app mounted read-only from that DMG. An optional `--source-sha` is recorded as a caller assertion, not verified build provenance.
 
 ## Local state and agent access
 
 The default macOS state directory is `~/Library/Application Support/agency.createsomething.gigi`. `GIGI_DATA_DIR` selects an isolated test profile for both the desktop and MCP companion. Never point acceptance tests at an existing person's database.
 
-The app's `gigi-mcp` companion exposes bounded typed tools over stdio. The bundled `agent/gigi` skill teaches domain relationships and progressive retrieval. Generate install-specific connector configuration with `scripts/package-agent.mjs`, passing the installed app bundle and a new output directory; it checks the executable exists and emits exact paths. Provider connection acceptance is separate from generating configuration.
+The app's `gigi-mcp` companion exposes bounded typed tools over stdio. The bundled `agent/gigi` skill teaches domain relationships and progressive retrieval. Generate install-specific connector configuration with `scripts/package-agent.mjs`, passing the installed app bundle, a new output directory, and the absolute data root for the reviewed GiGi workspace. The workspace must already exist with its `gigi.sqlite` database. The generated MCP configuration binds that exact profile; an omitted or invalid data root fails before packaging. Provider connection acceptance is separate from generating configuration.
 
 Use an existing subscribed Codex or Claude Code session. Phone access uses that provider's remote connection to the running desktop session. There is no automatic model API fallback. Manual database use remains available when the agent cannot run.
 
@@ -37,3 +37,25 @@ The reviewed catalog preserves all 13 entity types and named relationship roles.
 Imports read bounded Gmail metadata and Calendar event pages. Each saved record is transactional; a failed page returns an explicit retry cursor and preserves completed records. Repeating the page deduplicates by provider, connected account, collection, and external ID and preserves local corrections. It does not send email or modify calendars.
 
 Agent setup generates exact Codex MCP registration and Claude plugin launch commands. Preparing files is not installing a plugin or verifying a session. The user must approve writes in their provider's session; read-only automation cannot supply that acceptance. Use the compact bundled skill and retrieve full details only for selected records.
+
+## Guided onboarding
+
+First launch explains the local workspace, optional Google sources and optional subscribed agent. Creating a workspace leads to Setup & safety, with a manual-work action and links to the source, agent and phone steps. Local records need no sign-in. Connecting sources uses the GiGi connector account and separate Google consent; verification and page imports stay separate.
+
+Choose Codex or Claude Code, prepare the workspace-specific connector, and copy its exact command. Codex registration applies to future local sessions; Claude's launch flag loads GiGi for that session and must be used for future sessions too. A copyable read-only prompt asks for an actual `gigi_workspace_get` call. Prepared files, a recorded local tool call and physical phone acceptance remain separate states. Limits or provider outages leave manual GiGi work available.
+
+The in-app setup buttons open fixed official guides in the system browser: [Codex CLI](https://learn.chatgpt.com/docs/codex/cli), [Claude Code](https://code.claude.com/docs/en/quickstart), [Codex remote connections](https://learn.chatgpt.com/docs/remote-connections), and [Claude Remote Control](https://code.claude.com/docs/en/remote-control). Choose provider subscription sign-in. Remote access depends on account eligibility and a running, awake, online host; normal phone chat does not supply a local connection.
+
+### Icons
+
+GiGi bundles a Lucide 0.562.0 SVG subset from the same installed library used by `packages/agency`. These assets work offline, inherit the app's foreground colors and remain decorative alongside visible labels. The desktop frontend needs no Svelte runtime. Lucide's ISC/Feather MIT notices ship in `web/lucide-LICENSE.txt`.
+
+After bootstrapping the worktree, verify exact upstream geometry and license with `node apps/gigi-desktop/scripts/sync-icons.mjs --check`; regenerate with the same command without `--check`. Version changes require review.
+
+CTX provenance: Codex session `5cd548a5`, event `26b16ef1` records Agency's Lucide dependency; current `packages/agency/package.json` and installed package version independently confirm 0.562.0. Isocons was visually reviewed at https://www.isocons.app/; Lucide was selected for readability in compact navigation/actions.
+
+### Daily-work experience
+
+Overview queries the whole private workspace through the read-only `workspace.overview` operation. It shows up to five upcoming active gigs, five unfinished tasks (due date, then planned date), and five Expected/Invoiced/Overdue financial records. Counts describe all matching records; income and expenses remain distinct rather than being netted into a balance. Missing or invalid gig dates are called out. The desktop supplies today's local calendar date; invalid date candidates fall back to a valid alternate, otherwise sort last.
+
+Daily navigation remains visible; Library expands for supporting records. Record details prioritize actionable fields without removing supporting data. Dates retain their original calendar day, booleans use Yes/No, and empty sections explain their purpose with a first action. Settings uses connection receipts to explain the next step. Preparing an agent connector, using a local tool, and verifying phone access remain separate evidence levels. Technical source details and completed-agent setup steps are available through disclosures.

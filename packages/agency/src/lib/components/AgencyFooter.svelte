@@ -19,7 +19,7 @@
 				<div class="footer-column">
 					<h6 class="footer-heading">Start Here</h6>
 					<ul class="footer-links">
-						<li><a href="/services">How It Works</a></li>
+						<li><a href="/services">Technical Support</a></li>
 						<li><a href="/stack">What You Keep</a></li>
 						<li><a href="/products">Products</a></li>
 						<li><a href="/field-reports">Field Reports</a></li>
@@ -60,7 +60,7 @@
 		<!-- Bottom Bar -->
 			<div class="footer-bottom">
 			<p class="footer-copyright">
-				© 2026 CREATE SOMETHING. Calm, transparent, reliable workflow systems.
+				© 2026 CREATE SOMETHING. AI-native technical support for your tools and workflows.
 			</p>
 			<div class="footer-social">
 				<a href="https://github.com/create-something" target="_blank" rel="noopener">GitHub</a>

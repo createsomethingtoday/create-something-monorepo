@@ -1,5 +1,13 @@
 # Installed GiGi MCP acceptance — 2026-09-30
 
+## Current installed checkpoint
+
+The latest installed local debug build is from `1bda3f2c8fab52713b91e4d71407356d0f1aa13c`. Its configured MCP companion SHA-256 is `0e52255e562d664e9f9bc8f5fc57739644dbafa47c23dfce8df984f534d1e798`; executable SHA-256 is `85e156cde08a13f3a6e6299bb03f07d063ec091401102c6edc0a6599c0bbd7a5`. The installed-enabled desktop suite passed 27/27 tests with no skips. Strict local ad-hoc signature and DMG integrity passed. The private `output/gigi-local-acceptance/refresh-guidance-install-receipt.json` now marks `sdkVerified` and `nativeVerified` true after Profile D restart/replay and original-profile native reopen/readback. This checkpoint does not establish Developer ID signing or notarized distribution.
+
+The physical cellular phone workflow passed live GiGi MCP task read, authorized title-only edit with preserved fields, fresh gig/contact/fee read, and Mac offline/reconnect recovery. That phone workflow used an earlier installed MCP version and is separate from exact-byte acceptance of the current `0e52255e` companion. Original and Profile D native workspaces passed bounded Calendar imports of 20 and 10 records. Gmail imported four in the original workspace and two initial records in Profile D; restore preserved the two Profile D IDs. A full Profile D restart and first-page replay processed two records with zero failures and no duplicates; one newly arrived external message brought Profile D to three unique Gmail rows. The original workspace reopened with its four Gmail and 20 Calendar rows intact. Those provider and native receipts are detailed in [local checkpoint](local-checkpoint.md) and [phone acceptance](phone-acceptance.md). Selected provider scopes were unchanged.
+
+## Earlier isolated SDK acceptance — historical
+
 Binary: `/Users/micahjohnson/Applications/GiGi.app/Contents/MacOS/gigi-mcp` (SHA-256 `e67b396579341daba404b54e20599b3ae53f9805db621a800446d83e4889b6d5`). The script connected through `@modelcontextprotocol/sdk` stdio with a newly created isolated `GIGI_DATA_DIR` and isolated `HOME`; it removed that directory afterward. No customer or production workspace was read or changed.
 
 Run: `GIGI_INSTALLED_MCP=/Users/micahjohnson/Applications/GiGi.app/Contents/MacOS/gigi-mcp node --test scripts/installed-mcp-acceptance.test.mjs` from `apps/gigi-desktop` — 1/1 passed. Direct `node scripts/installed-mcp-acceptance.mjs /Users/micahjohnson/Applications/GiGi.app/Contents/MacOS/gigi-mcp` returned `passed:true` with one workspace, four records, three typed links, USD currency, edited fee of 14,000 cents, backup integrity `ok`, restart readback `true`, and isolation readback `true`.

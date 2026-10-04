@@ -1,5 +1,6 @@
 import { extractDescriptionList } from './html.js';
 import { lookupPublicSlugMap, resolveAlias } from './db.js';
+import { publicPurchaseBucket, publicViewerBucket } from './public-signals.js';
 import type {
   DocumentCountRow,
   DocumentRow,
@@ -794,8 +795,8 @@ export async function searchTemplates(env: Env, rawParams: SearchParams, cacheVe
       template_type: row.template_type,
       has_cms: row.has_cms === null ? null : row.has_cms === 1,
       popularity_score: row.popularity_score,
-      unique_viewers: row.unique_viewers,
-      cumulative_purchases: row.cumulative_purchases,
+      unique_viewers: publicViewerBucket(row.unique_viewers),
+      cumulative_purchases: publicPurchaseBucket(row.cumulative_purchases),
       published_date: row.published_date,
       category_groups: buildCategoryGroups(categoryGroups, categoryGroupSlugs),
       child_categories: buildChildCategories(childCategories, childCategorySlugs, childSlugMap),

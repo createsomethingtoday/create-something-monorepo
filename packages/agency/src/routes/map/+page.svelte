@@ -1,188 +1,128 @@
 <script lang="ts">
-  import AgencyWayfindingSign from '$lib/components/AgencyWayfindingSign.svelte';
+  import { ArrowUpRight, PencilLine, Workflow, ShieldCheck } from 'lucide-svelte';
+  import { Button, PerformanceConversionHandoff, PerformancePageSection, SEO } from '@create-something/canon';
+  import AgencyMapHero from '$lib/components/AgencyMapHero.svelte';
+  import WorkflowSignalBand from '$lib/components/WorkflowSignalBand.svelte';
   import { page } from '$app/stores';
-  import {
-    Button,
-    PerformanceCampaignOpening,
-    PerformanceConversionHandoff,
-    PerformancePageSection,
-    PerformanceThesisConditions,
-    SEO,
-    type PerformanceCondition
-  } from '@create-something/canon';
-  import PublicAtlasCanvas from '$lib/components/PublicAtlasCanvas.svelte';
-  import SystemContextRail from '$lib/components/SystemContextRail.svelte';
-  import { agencyCoreMessaging } from '$lib/data/marketingCopy';
-  import { playbookHeroMedia, playbookMapSectionMedia } from '$lib/data/playbookHeroMedia';
   import { PUBLIC_PRICING } from '$lib/data/publicPricing';
+  import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
-  const mapProtocol: PerformanceCondition[] = [
-    {
-      label: 'Input',
-      title: 'Prospect map only',
-      detail: 'The public canvas receives workflow context, never credentials or private records.',
-      tone: 'signal'
-    },
-    {
-      label: 'Boundary',
-      title: 'No production tools',
-      detail: 'The agent can edit the prospect map and nothing beyond it.',
-      tone: 'pressure'
-    },
-    {
-      label: 'Handoff',
-      title: 'Summary + context',
-      detail: 'A named map and readiness state travel into the booking path.',
-      tone: 'growth'
-    }
+  const initialIntegrationName = $derived($page.url.searchParams.get('source') === 'integration-catalog' ? $page.url.searchParams.get('integration_name') : null);
+  const drawHref = 'https://draw.createsomething.agency/';
+  const mappingSteps = [
+    { icon: PencilLine, label: '01 / Sketch', title: 'Start with the work.', detail: 'Name the task, the people involved, and the result you need.' },
+    { icon: Workflow, label: '02 / Connect', title: 'Make the handoffs visible.', detail: 'Connect the steps and tools. Mark where information moves or work gets stuck.' },
+    { icon: ShieldCheck, label: '03 / Review', title: 'Decide who does what.', detail: 'Mark what AI may do, where a person approves, and how you will check the result.' }
   ];
 </script>
 
 <SEO
-  title="CREATE SOMETHING Map | Workflow Mapping"
-  description="Plan one task before you automate it. Map the steps, tools, people, and approvals, then use the plan to guide a build."
-  keywords="workflow mapping product, human agent workflow, workflow definition, AI workflow map"
+  title="CREATE SOMETHING Map | Workflow Mapping with Draw"
+  description="Map the work before you automate it. Use Draw, the canvas built by CREATE SOMETHING, to sketch steps, tools, people, and approvals."
+  keywords="workflow mapping, CREATE SOMETHING Draw, mapping session, workflow design"
   propertyName="agency"
 />
 
 <main class="map-page">
-  <PerformanceCampaignOpening
-    eyebrow="CREATE SOMETHING Map"
-    expression="editorial"
-    title="Plan the task before you automate it."
-    lede={`Map shows how work moves between people and tools. Use it to decide where AI can help and where a person needs to approve. Start with the ${PUBLIC_PRICING.map.publicStarterLabel} without touching production. A short summary can travel to a mapping session.`}
-    density="compact"
-    media={playbookHeroMedia.map}
-    mediaMobilePlacement="background"
-    proof={[
-      { label: 'Input', value: 'Prospect map' },
-      { label: 'Boundary', value: 'No production tools' },
-      { label: 'Handoff', value: 'Build or Control' }
-    ]}
-  >
-    {#snippet actions()}
-      <Button href="#canvas">Open private draft</Button>
-      <Button href={agencyCoreMessaging.workflowMappingSessionHref} variant="secondary">
-        {agencyCoreMessaging.bookMappingSessionLabel}
-      </Button>
-    {/snippet}
-  </PerformanceCampaignOpening>
-
-  <PerformanceThesisConditions
-    eyebrow="Mapping protocol"
-    title="Decide who does what."
-    description="Record the person responsible, what AI may do, when it should stop, and how you will check the result."
-    conditions={mapProtocol}
-    ariaLabel="Public workflow mapping protocol"
-  />
+  <AgencyMapHero />
+  <WorkflowSignalBand proofHref="/#built-work" />
 
   <PerformancePageSection
     id="canvas"
     variant="white"
-    eyebrow="Private workflow draft"
-    title="Map one real workflow before you connect AI to it."
-    description="Start with a blank canvas or an industry example. Add the steps, tools, and people involved. The draft stays in this browser and never connects to live systems. You can choose to bring a summary to a mapping session."
+    eyebrow="Draw / Working canvas"
+    title="The canvas we use for mapping."
+    description="Draw is a freeform canvas developed by CREATE SOMETHING. Use notes, shapes, and connectors to make a workflow visible. You can work by hand or connect an agent through Draw."
   >
     {#snippet after()}
-      <figure class="map-overhead-study">
-        <picture>
-          {#if playbookMapSectionMedia.mobileSrc}
-            <source media="(max-width: 47.99rem)" srcset={playbookMapSectionMedia.mobileSrc} />
-          {/if}
-          <img
-            src={playbookMapSectionMedia.src}
-            alt={playbookMapSectionMedia.alt}
-            width={playbookMapSectionMedia.width}
-            height={playbookMapSectionMedia.height}
-            loading="lazy"
-            decoding="async"
-            data-campaign-media="map-overhead-study"
-          />
-        </picture>
-      </figure>
-      <SystemContextRail />
-      <PublicAtlasCanvas
-        bookingHref="/book"
-        initialIntegration={$page.url.searchParams.get('source') === 'integration-catalog'
-          ? ($page.url.searchParams.get('integration') ?? '')
-          : ''}
-        initialIntegrationName={$page.url.searchParams.get('source') === 'integration-catalog'
-          ? ($page.url.searchParams.get('integration_name') ?? '')
-          : ''}
-      />
+      {#if initialIntegrationName}
+        <p class="mapping-boundary">Mapping context: {initialIntegrationName}. Add its role and handoffs to your drawing. Account access is agreed separately.</p>
+      {/if}
+      <p class="mapping-boundary">{PUBLIC_PRICING.map.publicStarterLabel} · Use Draw below to explore the workflow.</p>
+      <ol class="mapping-steps" aria-label="How we map a workflow">
+        {#each mappingSteps as step}
+          <li>
+            <div class="step-label"><step.icon size={20} strokeWidth={1.5} aria-hidden="true" /><span>{step.label}</span></div>
+            <h3>{step.title}</h3>
+            <p>{step.detail}</p>
+          </li>
+        {/each}
+      </ol>
+      <div class="draw-workbench">
+        <div class="draw-toolbar">
+          <span class="draw-label"><PencilLine size={18} aria-hidden="true" /> CREATE SOMETHING / DRAW</span>
+          <a href={drawHref} target="_blank" rel="noreferrer">Open full canvas <ArrowUpRight size={18} aria-hidden="true" /></a>
+        </div>
+        <iframe src="https://draw.createsomething.agency/?embed=agency" title="Draw — CREATE SOMETHING workflow mapping canvas" loading="lazy" allow="clipboard-write"></iframe>
+        <p class="draw-note">Draw saves drafts in this browser. Export a copy to keep it; publishing a view-only link is a separate action in Draw. If the embedded canvas cannot load or save, use <a href={drawHref} target="_blank" rel="noreferrer">Draw in its own tab</a>.</p>
+      </div>
+      <p class="mapping-boundary">Start with workflow context: name the systems, workflow owner, and approvals. Bring the drawing as booking context when you <a href="/book">book a mapping session</a>. We use it to diagnose the problem and agree on the next improvement. Keep credentials and private customer records out of a public mapping exercise.</p>
     {/snippet}
   </PerformancePageSection>
 
-  <aside class="route-handoff" aria-label="Map next steps">
-    <div class="route-handoff__inner">
-      <p class="route-handoff__current">Current path · Map · public draft</p>
-      <p class="route-handoff__context">When the plan is ready, agree on the work to build. Build and Control are separate options; Control includes Map.</p>
-      <a class="route-handoff__return" href="/products#choose-product"><span aria-hidden="true">←</span> Compare paths</a>
-      <div class="route-handoff__links">
-        <AgencyWayfindingSign kind="build" label="Explore Agent Foundation" href="/agent-foundation" detail="Implementation is scoped separately." />
-        <AgencyWayfindingSign kind="control" label="Explore Control" href="/control" detail="Optional operations after launch." />
-      </div>
-    </div>
-  </aside>
-
   <PerformanceConversionHandoff
     expression="editorial"
-    eyebrow="Continue the definition"
-    title="Save the plan or talk it through."
-    description={`The browser draft is a starting point. It is separate from a saved Map workspace. The separate workspace is ${PUBLIC_PRICING.map.workspaceLabel}. The workspace adds version history, review, sharing, export, and a handover for Build. You can also bring your draft summary to a mapping session first.`}
+    eyebrow="From map to build"
+    title="Bring the workflow. Decide the next step."
+    description={`Bring an export or a view-only Draw link to a mapping session. Together, we review the handoffs, approvals, and scope before agreeing on what to build. The separate saved Map workspace offers version history and review: ${PUBLIC_PRICING.map.workspaceLabel}.`}
     density="compact"
-    handoff={{
-      owner: 'Workflow owner',
-      authority: 'Human approval',
-      proof: 'Map + versions + review record',
-      state: 'review'
-    }}
+    handoff={{ owner: 'Workflow owner', authority: 'Human approval', proof: 'Workflow map', state: 'review' }}
   >
     {#snippet actions()}
-      <Button href="/map/workspace">Open CREATE SOMETHING Map</Button>
-      <Button href={agencyCoreMessaging.workflowMappingSessionHref} variant="secondary">
-        {agencyCoreMessaging.bookMappingSessionLabel}
-      </Button>
+      <Button href={agencyCoreMessaging.workflowMappingSessionHref}>{agencyCoreMessaging.bookMappingSessionLabel}</Button>
+      <Button href="/map/workspace" variant="secondary">Open saved Map workspace</Button>
     {/snippet}
   </PerformanceConversionHandoff>
 </main>
 
 <style>
-  .route-handoff {
-    padding: var(--space-performance-lg) clamp(1.25rem, 5vw, 6rem);
-    color: var(--color-performance-ink);
-    background: var(--color-performance-paper);
-    border-block: 1px solid var(--color-performance-line);
+  .map-page :global(.clear-page-section) { padding-block: clamp(2.5rem, 6vw, 6rem); }
+  .map-page :global(.clear-page-section__inner) { width: 86%; max-width: none; }
+  .map-page :global(.clear-page-section h2) { font: var(--font-performance-medium) clamp(1.8rem, 3vw, 3rem)/1.1 var(--font-performance-interface); max-width: 24ch; }
+  .map-page :global(.performance-conversion-handoff) { padding: clamp(2.5rem, 6vw, 6rem) 7vw; gap: var(--space-performance-xl); grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); }
+  .map-page :global(.performance-conversion-handoff .performance-conversion-handoff__copy),
+  .map-page :global(.performance-conversion-handoff .performance-conversion-handoff__boundary) { padding: 0; min-height: auto; }
+  .map-page :global(.performance-conversion-handoff h2) { font: var(--font-performance-medium) clamp(1.8rem, 3vw, 3rem)/1.1 var(--font-performance-interface); max-width: 24ch; }
+  .map-page :global(.performance-conversion-handoff .performance-conversion-handoff__boundary) {
+    align-self: start;
+    align-content: start;
+    padding: var(--space-performance-md);
+    gap: 0;
+    border: 1px solid var(--color-performance-shell-border-strong);
+    border-radius: var(--radius-operator-panel);
+    background: var(--color-performance-shell-surface);
+    color: var(--color-performance-fg-primary);
   }
-  .route-handoff__inner { max-width: var(--content-width-performance); margin-inline: auto; }
-  .route-handoff__current { margin: 0 0 var(--space-performance-sm); font-size: var(--text-performance-caption); font-family: var(--font-performance-mono); }
-  .route-handoff__context { max-width: 70ch; margin: 0 0 var(--space-performance-md); line-height: 1.6; }
-  .route-handoff__return { display: inline-flex; align-items: center; gap: var(--space-performance-sm); min-height: 44px; margin-bottom: var(--space-performance-sm); color: inherit; text-underline-offset: .25em; }
-  .route-handoff__return:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; }
-  .route-handoff__links { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-performance-sm); }
-  @media (max-width: 760px) { .route-handoff__links { grid-template-columns: 1fr; } }
-
-  .map-overhead-study {
-    margin: 0;
-    overflow: hidden;
-    border: 1px solid color-mix(in srgb, var(--color-performance-paper, #f4efe7) 18%, transparent);
-    background: #121310;
+  .map-page :global(.performance-conversion-handoff__boundary dl) { border-top: 0; }
+  .map-page :global(.performance-conversion-handoff__boundary dl > div) {
+    padding-block: var(--space-performance-md);
+    border-color: var(--color-performance-shell-border-default);
   }
+  .map-page :global(.performance-conversion-handoff__boundary dl > div:first-child) { padding-top: 0; }
+  .map-page :global(.performance-conversion-handoff__boundary dl > div:last-child) { padding-bottom: 0; border-bottom: 0; }
+  .map-page :global(.performance-conversion-handoff__boundary dt) { color: var(--color-performance-fg-secondary); }
+  .map-page :global(.performance-conversion-handoff__boundary dd) { color: var(--color-performance-fg-primary); }
 
-  .map-overhead-study picture,
-  .map-overhead-study img {
-    display: block;
-    width: 100%;
-  }
+  @media (max-width: 720px) { .map-page :global(.performance-conversion-handoff) { grid-template-columns: 1fr; gap: var(--space-performance-lg); } }
 
-  .map-overhead-study img {
-    aspect-ratio: 3 / 2;
-    object-fit: cover;
-  }
-
-  @media (max-width: 47.99rem) {
-    .map-overhead-study img {
-      aspect-ratio: 2 / 3;
-    }
+  .mapping-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); list-style: none; padding: 0; margin: 0 0 var(--space-performance-lg); border-block: 1px solid var(--color-performance-line); }
+  .mapping-steps li { padding: var(--space-performance-md); }
+  .mapping-steps li + li { border-left: 1px solid var(--color-performance-line); }
+  .step-label { display: flex; align-items: center; gap: var(--space-performance-sm); font: var(--text-performance-caption) var(--font-performance-mono); text-transform: uppercase; }
+  .mapping-steps h3 { margin: var(--space-performance-md) 0 var(--space-performance-sm); font-size: var(--text-performance-body); }
+  .mapping-steps p { margin: 0; line-height: 1.6; }
+  .draw-workbench { border: 1px solid var(--color-performance-line); background: var(--color-performance-paper); }
+  .draw-toolbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--space-performance-sm); padding: var(--space-performance-sm) var(--space-performance-md); color: var(--color-performance-ink); border-bottom: 1px solid var(--color-performance-line); }
+  .draw-label { display: inline-flex; align-items: center; gap: var(--space-performance-sm); font: var(--text-performance-caption) var(--font-performance-mono); }
+  .draw-toolbar a { display: inline-flex; align-items: center; gap: var(--space-performance-sm); min-height: 44px; }
+  .draw-workbench iframe { display: block; width: 100%; height: clamp(600px, 78vh, 900px); border: 0; background: var(--color-performance-ink); }
+  .draw-note { margin: 0; padding: var(--space-performance-md); font-size: var(--text-performance-caption); line-height: 1.6; color: var(--color-performance-ink); border-top: 1px solid var(--color-performance-line); }
+  .mapping-boundary { max-width: 70ch; margin: var(--space-performance-md) 0; font-size: var(--text-performance-caption); line-height: 1.6; }
+  a { color: inherit; text-underline-offset: .25em; }
+  a:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; }
+  @media (max-width: 760px) {
+    .mapping-steps { grid-template-columns: 1fr; }
+    .mapping-steps li + li { border-left: 0; border-top: 1px solid var(--color-performance-line); }
+    .draw-workbench iframe { height: 680px; }
   }
 </style>

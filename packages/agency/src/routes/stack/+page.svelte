@@ -1,4 +1,5 @@
 <script lang="ts">
+  import WorkflowSignalBand from '$lib/components/WorkflowSignalBand.svelte';
   import AgencyWayfindingHero from '$lib/components/AgencyWayfindingHero.svelte';
   import AgencyWayfindingOpening from '$lib/components/AgencyWayfindingOpening.svelte';
   import AgencyWayfindingSign from '$lib/components/AgencyWayfindingSign.svelte';
@@ -52,7 +53,7 @@
       eyebrow: 'Boundary',
       icon: 'check',
       title: 'Who owns what',
-      detail: 'What your team owns, what CREATE SOMETHING owns, and what vendors provide.'
+      detail: 'Your materials and commissioned deliverables, our reusable tools, and the services vendors provide.'
     },
     {
       eyebrow: 'Contract',
@@ -108,7 +109,7 @@
     {
       question: 'Who owns the system?',
       answer:
-        'We agree on ownership before building: what your team keeps, what we deliver, and which services outside vendors provide.'
+        'We record ownership in the agreement. You retain your materials. After full payment, you own specifically commissioned deliverables, except our reusable tools. Incorporated provider tools are licensed for continued use.'
     },
     {
       question: 'Why does vendor ownership matter?',
@@ -155,7 +156,7 @@
       summary: 'Map → pilot → control',
       title: 'Know what happens at each stage.',
       detail:
-        'Plan the task, test a first version, then add ongoing support when the system is ready for live work.',
+        'Diagnose the problem, agree on the change, then build and test it. Ongoing support preserves context and helps your team use the result.',
       tone: 'allow',
       receipts: ['workflow map', 'controlled pilot', 'operating control']
     },
@@ -175,7 +176,7 @@
       summary: 'Keep the durable assets',
       title: 'Keep the instructions and work history.',
       detail:
-        'Your team keeps the account details, access rules, approvals, instructions, and work history. The handover also explains how to remove access.',
+        'Your team keeps its account details, access rules, approvals, instructions, and work history. We document deliverables and reusable tools under the agreement. The handover explains how to remove access.',
       tone: 'review',
       receipts: ['workflow map', 'tool contract', 'policy rules', 'runbook', 'operator brief']
     },
@@ -206,7 +207,7 @@
       label: 'Boundary',
       icon: 'user',
       title: 'Vendor and ownership boundary',
-      detail: 'What your team owns, what I deliver, and what vendors provide.',
+      detail: 'What your team owns, what we deliver, and what vendors provide.',
       state: 'controlled'
     },
     {
@@ -221,7 +222,7 @@
 
 <SEO
   title="What You Keep | CREATE SOMETHING .agency"
-  description="See what your team keeps after delivery: code, accounts, data, instructions, tests, and work history. Understand what outside vendors provide."
+  description="AI-native technical support with clear ownership. See what your team keeps, what we maintain, and what outside vendors provide."
   keywords="delegated work control, workflow control layer, Substrate database, transparent AI stack, MCP stack, vendor boundaries, Cloudflare, OpenAI"
   ogImage="/og-image.png"
   propertyName="agency"
@@ -233,7 +234,7 @@
   expression="editorial"
   eyebrow="What You Keep"
   title="Your system should stay yours."
-  lede="You keep the accounts, data, approval rights, and operating history. We document the system so your team can understand it, change it, and evaluate other tools."
+  lede="Your accounts, data, and decisions stay with your team. We document the work so you can use it, change it, and evaluate other tools. Deliverable ownership follows your agreement."
   density="compact"
   artifactMobilePlacement="flow"
   proof={[
@@ -254,10 +255,12 @@
 </PerformanceCampaignOpening>
 </AgencyWayfindingOpening>
 
+<WorkflowSignalBand motionOnly quiet tall showMotionControl />
+
 <PerformanceNarrativeStage
   id="stack-ownership-story"
   eyebrow="One ownership story"
-  title="You should be able to leave with everything that matters."
+  title="Know what your team keeps and what we maintain."
   description="See what we deliver, what your team controls, and which services come from outside vendors."
   scenes={stackScenes}
   ariaLabel="Stack ownership story"
@@ -309,7 +312,7 @@
   expression="editorial"
   eyebrow="Start with the workflow"
   title="Bring the workflow, the accounts, and the decision owner."
-  description="We’ll agree on the task, the tools it needs, and who can approve its actions before implementation starts."
+  description="We’ll diagnose the problem and agree on scope, ownership, and approvals before implementation. Support helps your team use the delivered changes."
   steps={ctaItems}
   handoff={{
     owner: 'Workflow owner',

@@ -1,5 +1,5 @@
 <script lang="ts">
-  export type AgencySignKind = 'map' | 'build' | 'control' | 'approval' | 'proof';
+  export type AgencySignKind = 'signal' | 'map' | 'build' | 'control' | 'approval' | 'proof';
 
   let { kind }: { kind: AgencySignKind } = $props();
 </script>
@@ -15,7 +15,9 @@
   aria-hidden="true"
   focusable="false"
 >
-  {#if kind === 'map'}
+  {#if kind === 'signal'}
+    <path d="m4 8 12-5 12 5-12 5Z M4 8v4l12 5 12-5V8 M16 13v4 M4 18l12 5 12-5 M4 23l12 5 12-5 M16 23v5" />
+  {:else if kind === 'map'}
     <path d="M3 12 16 5 29 12 16 19Z M3 12v7l13 7 13-7v-7 M16 19v7 M10 12l6-3 6 3-6 3Z" />
     <path d="M10 12v3 M22 12v3 M16 15v3" />
   {:else if kind === 'build'}

@@ -192,9 +192,9 @@ test('Map is the canonical public canvas route and Atlas redirects for compatibi
   const mapRoute = readFileSync(new URL('../src/routes/map/+page.svelte', import.meta.url), 'utf8');
 
   assert.match(mapRoute, /CREATE SOMETHING Map/);
-  assert.match(mapRoute, /<SystemContextRail/);
+  assert.match(mapRoute, /Draw is a freeform canvas developed by CREATE SOMETHING/);
   assert.doesNotMatch(mapRoute, /<PublicAtlasStoryCanvas/);
-  assert.match(mapRoute, /<PublicAtlasCanvas\s+bookingHref="\/book"/);
+  assert.match(mapRoute, /<iframe src="https:\/\/draw\.createsomething\.agency\/\?embed=agency"/);
   assert.doesNotMatch(mapRoute, /Public Atlas Canvas|eyebrow="Atlas/);
 
   const { load } = await import('../src/routes/atlas/+page.server.ts');
@@ -281,7 +281,7 @@ test('Control and Services present the approved Managed AI Operations offer', ()
     'utf8'
   );
 
-  assert.match(controlRoute, /Managed AI Operations/);
+  assert.match(controlRoute, /Managed Live Operations/);
   assert.equal(PUBLIC_PRICING.managedControl.startingMonthlyUsd, 900);
   assert.match(controlRoute, /PUBLIC_PRICING\.managedControl\.longLabel/);
   assert.match(controlRoute, /No per-agent fees/);

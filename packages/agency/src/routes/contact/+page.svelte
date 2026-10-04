@@ -52,7 +52,7 @@
       description:
         'Focused is $900/month for one milestone, two check-ins and two remote work sessions. Team is $2,500/month for two milestones, two check-ins and four remote sessions.',
       funnelStage: 'decision',
-      serviceInterest: 'Agent engineering membership',
+      serviceInterest: 'AI-native technical support membership',
       submitLabel: 'Send membership inquiry',
       successMessage:
         'Received. We will review your workflow and reply with fit and onboarding details.'
@@ -122,14 +122,14 @@
       messagePlaceholder: 'Our form stopped sending leads to Airtable. It last worked on… The system owner is…'
     },
     membership: {
-      seoTitle: 'Discuss Membership | CREATE SOMETHING',
-      seoDescription: 'Discuss Focused support at $900/month or Team support at $2,500/month before payment.',
-      eyebrow: 'AI-native tech support',
+      seoTitle: 'Discuss Technical Support | CREATE SOMETHING',
+      seoDescription: 'Discuss AI-native technical support: Focused at $900/month or Team at $2,500/month. Agree on diagnosis, engineering work, and scope before payment.',
+      eyebrow: 'AI-native technical support',
       title: 'Start with the workflow you want to improve.',
       description:
         'Focused is $900/month for one workstream and one milestone, with two check-ins and two remote work sessions. Team is $2,500/month for up to two workstreams and two milestones, with two check-ins and four remote sessions. We agree on scope before payment. Project costs are separate.',
       formTitle: 'Discuss membership',
-      formDescription: 'Tell us where you are starting and what is getting in the way.',
+      formDescription: 'Tell us what needs diagnosis or improvement, and what your team needs help learning.',
       messageLabel: 'What would you like help with?',
       messageHelper:
         'Include your tools, the result you want and whether AI usage is involved. We will agree on any development and runtime budgets before billable work. Do not include API keys, passwords or client secrets.',
@@ -261,10 +261,14 @@
           ...(selectedIntent === 'membership' ? { membershipPlan: selectedPlan } : {}),
           surface: 'contact_form'
         });
-        form.reset();
-        selectedIntent = initialIntent;
-        selectedLane = initialLane;
-        selectedPlan = initialPlan;
+        // Keep the submitted routing choices for the scheduling handoff.
+        // Native form reset also resets Svelte-bound radios and selects.
+        for (const name of ['name', 'email', 'company', 'message']) {
+          const field = form.elements.namedItem(name);
+          if (field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement) {
+            field.value = '';
+          }
+        }
       } else {
         submitSuccess = false;
         submitMessage = result.message || 'Something went wrong. Try again.';

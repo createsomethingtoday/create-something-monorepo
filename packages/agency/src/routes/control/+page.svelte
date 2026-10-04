@@ -76,11 +76,11 @@
   const cadenceCards: PerformanceCardItem[] = [
     {
       eyebrow: 'Monthly',
-      title: `Managed AI Operations. ${PUBLIC_PRICING.managedControl.longLabel}`,
+      title: `Managed live operations. ${PUBLIC_PRICING.managedControl.longLabel}`,
       detail:
         'For one standard-risk managed production environment. No per-agent fees. Control includes Map.',
       href: agencyCoreMessaging.workflowMappingSessionHref,
-      points: ['Runtime oversight', 'Incident response', 'Monthly operating review']
+      points: ['Agreed runtime oversight', 'Agreed incident response', 'Monthly operating review']
     },
     {
       eyebrow: 'Yearly',
@@ -136,8 +136,8 @@
 </script>
 
 <SEO
-  title="CREATE SOMETHING Control | Managed AI Operations"
-  description={`Managed AI Operations. ${PUBLIC_PRICING.managedControl.longLabel}, with no per-agent fees, transparent AI usage, approvals, evidence, and recovery. Supported public source stays ${PUBLIC_PRICING.publicSource.label}; Control includes Map.`}
+  title="CREATE SOMETHING Control | Managed Live Operations"
+  description={`Managed live operations. ${PUBLIC_PRICING.managedControl.longLabel}, with no per-agent fees, transparent AI usage, approvals, evidence, and recovery. Supported public source stays ${PUBLIC_PRICING.publicSource.label}; Control includes Map.`}
   keywords="AI workflow control, governed execution, human approval workflow, agent audit trail, workflow recovery"
   propertyName="agency"
 />
@@ -148,7 +148,7 @@
     eyebrow="CREATE SOMETHING Control"
     expression="editorial"
     title="Keep your AI systems working after launch."
-    lede={`Control monitors one agreed live environment, responds to incidents, and keeps approvals and recovery records. ${PUBLIC_PRICING.managedControl.longLabel}. Control includes Map. It is separate from our delivery membership; new Builds and AI usage are separate.`}
+    lede={`Control provides ongoing technical support for one agreed live environment. We monitor it, respond to incidents, and keep approvals and recovery records. ${PUBLIC_PRICING.managedControl.longLabel}. Control includes Map. It is separate from Focused technical support at $900/month; new Builds and AI usage are separate.`}
     density="compact"
     artifactMobilePlacement="flow"
     proof={[
@@ -170,7 +170,7 @@
   </AgencyWayfindingOpening>
   <aside class="review-boundary">
     <div class="review-boundary__inner">
-      <p><strong>Need help before launch?</strong> A <a href="/technical-review">technical review</a> checks an existing project and identifies what to fix before a pilot. Reviews and implementation are quoted separately. The $900/month starting price for Control covers agreed post-launch operations, not open-ended product development. <a href="/services#membership">Focused and Team support</a> are separate memberships for delivery and learning.</p>
+      <p><strong>Need help before launch?</strong> A <a href="/technical-review">technical review</a> checks an existing project and identifies what to fix before a pilot. Reviews and implementation are quoted separately. The $900/month starting price for Control covers agreed post-launch operations, not open-ended product development. <a href="/services#membership">Focused and Team support</a> are separate technical support memberships for diagnosis, engineering improvements, and learning.</p>
       <AgencyWayfindingSign kind="control" label="See how Control operates" detail="Watch, hold, record and recover." href="#control-operating-story" direction="down" />
     </div>
   </aside>
@@ -187,7 +187,7 @@
     id="control-operating-story"
     eyebrow="One governed product"
     title="See what needs attention and what happened."
-    description="Review incoming work, approve actions, and check results in one system. Agree on a regular review schedule as the workload changes."
+    description="Support keeps the operating context between reviews. Review incoming work, approve actions, and check results within the agreed response and scope boundaries."
     scenes={controlScenes}
     ariaLabel="Control operating story"
   >
