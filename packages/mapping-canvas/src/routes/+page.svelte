@@ -993,7 +993,17 @@
   function fitDrawing() {
     if (!visibleLayers.length) return;
     stopAgentCamera();
-    updateViewport(fitViewportToBounds(viewport, visualBounds(visibleLayers), { width: viewportWidth, height: viewportHeight }, { padding: Math.min(72, viewportWidth * .08), force: true }));
+    const surfaceRect = surface.getBoundingClientRect();
+    let top = 0, bottom = 0;
+    // Fit artwork into the visible canvas, clear of the current operator controls.
+    for (const overlay of surface.parentElement!.querySelectorAll<HTMLElement>('.history, .paper, .selection, .palette, .agent-activity')) {
+      const rect = overlay.getBoundingClientRect();
+      if (!rect.width || !rect.height) continue;
+      const bottomAnchored = rect.top + rect.height / 2 > surfaceRect.top + surfaceRect.height / 2;
+      if (bottomAnchored) bottom = Math.max(bottom, surfaceRect.bottom - rect.top);
+      else top = Math.max(top, rect.bottom - surfaceRect.top);
+    }
+    updateViewport(fitViewportToBounds(viewport, visualBounds(visibleLayers), { width: viewportWidth, height: viewportHeight }, { padding: Math.min(72, viewportWidth * .08), force: true, insets: { top, bottom }, allowOverview: true }));
   }
 
   function resetView() {

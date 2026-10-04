@@ -28,19 +28,24 @@ export function zoomViewportAt(viewport: Viewport, pointer: Point, scale: number
   return { x: pointer.x - world.x * zoom, y: pointer.y - world.y * zoom, zoom };
 }
 
-export function fitViewportToBounds(viewport: Viewport, bounds: Bounds, surface: ViewportSize, options: { padding?: number; force?: boolean } = {}): Viewport {
+export function fitViewportToBounds(viewport: Viewport, bounds: Bounds, surface: ViewportSize, options: { padding?: number; force?: boolean; insets?: { top?: number; bottom?: number }; allowOverview?: boolean } = {}): Viewport {
   if (![...Object.values(bounds), ...Object.values(surface)].every(Number.isFinite) || bounds.width < 0 || bounds.height < 0 || surface.width <= 0 || surface.height <= 0) return viewport;
   const padding = Number.isFinite(options.padding) ? Math.max(0, options.padding!) : FOLLOW_PADDING;
+  const inset = (value: number | undefined) => Number.isFinite(value) ? Math.max(0, value!) : 0;
+  const topInset = inset(options.insets?.top), bottomInset = inset(options.insets?.bottom);
+  const visibleHeight = surface.height - topInset - bottomInset;
+  if (visibleHeight <= padding * 2) return viewport;
   const left = bounds.x * viewport.zoom + viewport.x;
   const top = bounds.y * viewport.zoom + viewport.y;
   const right = (bounds.x + bounds.width) * viewport.zoom + viewport.x;
   const bottom = (bounds.y + bounds.height) * viewport.zoom + viewport.y;
-  if (!options.force && left >= padding && top >= padding && right <= surface.width - padding && bottom <= surface.height - padding) return viewport;
+  if (!options.force && left >= padding && top >= topInset + padding && right <= surface.width - padding && bottom <= surface.height - bottomInset - padding) return viewport;
 
   const availableWidth = Math.max(1, surface.width - padding * 2);
-  const availableHeight = Math.max(1, surface.height - padding * 2);
-  const zoom = clampZoom(Math.min(MAX_FOLLOW_ZOOM, availableWidth / Math.max(1, bounds.width), availableHeight / Math.max(1, bounds.height)));
+  const availableHeight = Math.max(1, visibleHeight - padding * 2);
+  const fittedZoom = Math.min(MAX_FOLLOW_ZOOM, availableWidth / Math.max(1, bounds.width), availableHeight / Math.max(1, bounds.height));
+  const zoom = options.allowOverview ? fittedZoom : clampZoom(fittedZoom);
   const center = { x: bounds.x + bounds.width / 2, y: bounds.y + bounds.height / 2 };
-  const next = { x: surface.width / 2 - center.x * zoom, y: surface.height / 2 - center.y * zoom, zoom };
+  const next = { x: surface.width / 2 - center.x * zoom, y: topInset + visibleHeight / 2 - center.y * zoom, zoom };
   return Object.values(next).every(Number.isFinite) ? next : viewport;
 }
