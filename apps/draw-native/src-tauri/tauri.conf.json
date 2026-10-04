@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "CREATE SOMETHING Draw",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "identifier": "agency.createsomething.draw",
   "build": {
     "beforeDevCommand": "pnpm prepare:canvas",
@@ -35,7 +35,8 @@
       "infoPlist": "Info.ios.plist"
     },
     "macOS": {
-      "minimumSystemVersion": "13.0"
+      "minimumSystemVersion": "13.0",
+      "hardenedRuntime": true
     }
   }
 }
