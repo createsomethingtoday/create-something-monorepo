@@ -29,6 +29,8 @@ This is suitable only for one consenting operator's bounded local pilot.
 | `draw_registry_edit` | Guarded edit with operation ID, expected revision and linked session provenance |
 | `draw_registry_export` | Export one scope's references and receipt hashes |
 | `draw_registry_import` | Explicit opt-in merge of a validated scoped reference export |
+| `draw_registry_export_bundle` | Explicit opt-in export of persisted Canvas maps plus their scoped registry |
+| `draw_registry_import_bundle` | Explicit opt-in create-only restore preserving map IDs and hashes |
 
 Minimal logical reference: `{provider:"codex",sourceId:"fixture-local",providerSessionId:"codex-fixture"}`.
 Source authority is part of identity. A provider session ID is never a file path
@@ -74,11 +76,34 @@ Exports preserve registry IDs, linked session provenance and SHA-256 hashes;
 they omit map content. Imports are atomic, reject cross-scope records and merge
 without replacing current maps. No CTX availability is required.
 
-Canonical map JSON still uses Draw's existing export/import. Its UI import
-remints IDs when importing a different map and updates timestamps, so this pilot
-does **not** establish cross-device map restoration or stable canonical content
-hashes across that UI import. Registry-only round trips preserve reference IDs
-and receipt hashes. A future reviewed portable-bundle resolver is a separate step.
+The separate `draw.session-bundle.v1` path closes Canvas-map portability without
+changing normal Draw UI import (which still remints IDs for a different map).
+Bundle export requires `optIn:true` to copy authored Canvas content, including
+notes and conversion snapshots, plus scoped references and historical receipts.
+Authored text is not redacted and can itself contain sensitive material; no
+provider transcript, credential or arbitrary metadata field is added by the
+integration. Bundle import independently requires explicit consent. Motion
+projects, browser settings, live provider session files and credentials are not
+part of this Canvas mapping bundle.
+
+Bundle validation rejects unknown envelope/document fields, invalid membership,
+non-JSON values, normalization changes and SHA-256 mismatches before writes.
+Export refuses unsaved/current-versus-stored differences. Import rejects all
+known other-scope, unregistered occupied-ID, Motion-only and changed-content
+collisions before writes. An exact existing map may be reused only when already
+registered to the same scope. Restore uses an atomic create-if-absent transaction
+in the existing project store and never overwrites, merges or activates a map.
+ID, object references, timestamps and canonical content hash are preserved.
+
+Registry ownership is reserved first, missing maps copied next, and session links
+and receipts published last. These are separate databases, so interruption can
+leave ownership reservations and a partial map copy. An `incomplete` result
+reports accepted map IDs and requires inspection; resume with the identical
+reviewed bundle rather than assuming rollback. A repeated complete restore does
+not recopy maps or duplicate links/receipts. Changed canonical content remains a
+collision, never an automatic overwrite. Open the restored ID using Draw's
+existing `?project=<mapId>&registryPilot=1` route. Scope labels describe one
+operator's organization of client work; they provide no multiuser authorization.
 
 Caps: 200 maps, 2000 links, 10000 receipts, 8 MB registry export/import and 4 MiB
 hash input. Capacity rejects explicitly rather than silently evicting receipts.
@@ -90,10 +115,11 @@ subject to profile deletion/eviction, so this is not a backup system.
 
 ## Evidence and remaining acceptance
 
-`pnpm --dir packages/mapping-canvas test`: **358 tests pass across 32 files**.
+`pnpm --dir packages/mapping-canvas test`: **373 tests pass across 33 files**.
 `pnpm --dir packages/mapping-canvas check`: **0 errors, 0 warnings**.
-Twenty-one new unit tests cover service and adapter behavior, including duplicate
-races, storage failures, session provenance and import boundaries.
+Thirty-six new unit tests cover service, adapter and bundle behavior, including
+duplicate races, storage failures, session provenance, rich Canvas content,
+occupied-ID collisions and recoverable partial copies.
 
 Run the real-browser verifier against a local dev server:
 
@@ -107,8 +133,13 @@ used cached Chromium headless shell 1228 with Playwright 1.58.2, avoiding a new
 browser download. The verifier creates and removes a private synthetic profile.
 It passed default-off activation, logical Claude/Codex linking, guarded editing,
 durable committed receipts, duplicate replay, stale rejection, two-client scope
-isolation, scoped export/import and a full browser-process restart. No UI layout
-was changed and no native release application was opened.
+isolation, scoped export/import and a full browser-process restart. The extended
+verifier restored a bundle into a second fresh profile and verified the exact
+document, map ID, content hash, references and receipts after reopening and a
+second browser-process restart. Replaying the imported edit receipt did not
+mutate the map. Changed-map collisions and wrong-scope bundle imports left
+existing records unchanged. No UI layout was changed and no native release
+application was opened.
 
 Evidence is synthetic provider references plus actual browser/IndexedDB behavior,
 not real Claude/Codex handoff or native acceptance. CTX 1.3.1 on this host reported

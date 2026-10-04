@@ -6,14 +6,15 @@ import { join } from 'node:path';
 // Synthetic references only. Real browser + IndexedDB, no provider or CTX calls.
 const base = process.env.CANVAS_URL || 'http://127.0.0.1:5197';
 const profile = await mkdtemp(join(tmpdir(), 'draw-registry-fixture-'));
+const restoredProfile = await mkdtemp(join(tmpdir(), 'draw-registry-bundle-'));
 const scope = { clientId: 'synthetic-a', workspaceId: 'workspace-a' };
 const otherScope = { clientId: 'synthetic-b', workspaceId: 'workspace-b' };
 const claude = { provider: 'claude', sourceId: 'fixture-local', providerSessionId: 'claude-fixture' };
 const codex = { provider: 'codex', sourceId: 'fixture-local', providerSessionId: 'codex-fixture' };
 let context;
 const errors = [];
-async function open(url) {
-  context = await chromium.launchPersistentContext(profile, { headless: true, ...(process.env.DRAW_CHROMIUM_PATH ? { executablePath: process.env.DRAW_CHROMIUM_PATH } : {}), viewport: { width: 1200, height: 800 }, reducedMotion: 'reduce' });
+async function open(url, activeProfile = profile) {
+  context = await chromium.launchPersistentContext(activeProfile, { headless: true, ...(process.env.DRAW_CHROMIUM_PATH ? { executablePath: process.env.DRAW_CHROMIUM_PATH } : {}), viewport: { width: 1200, height: 800 }, reducedMotion: 'reduce' });
   await context.addInitScript(() => {
     window.__tools = {};
     Object.defineProperty(document, 'modelContext', { configurable: true, value: { registerTool(tool) { window.__tools[tool.name] = tool; } } });
@@ -79,9 +80,50 @@ try {
   expect(recovered).toEqual(beforeRestart);
   expect((await call('draw_registry_edit', editInput)).receipt).toEqual(first.receipt);
   expect((await call('draw_registry_resolve', { scope, session: claude }))[0].mapId).toBe(mapId);
+  const bundle = await call('draw_registry_export_bundle', { scope, optIn: true });
+  const sourceDocument = (await call('draw_get_state')).document;
+  const sourceRegistry = await call('draw_registry_export', { scope });
+  // Existing canonical identity with different content must never be overwritten.
+  await page.evaluate(async (mapId) => {
+    const { loadCanvasProject, saveCanvasProject } = await import('/src/lib/project-storage.ts');
+    const stored = await loadCanvasProject(mapId);
+    const conflicting = { ...stored, title: 'Synthetic conflicting map', updatedAt: '2026-10-05T00:00:00.000Z' };
+    if (!await saveCanvasProject(conflicting, stored.updatedAt)) throw new Error('Conflict fixture save failed');
+  }, mapId);
+  const conflictBefore = await page.evaluate(async mapId => (await import('/src/lib/project-storage.ts')).loadCanvasProject(mapId), mapId);
+  await expect(call('draw_registry_import_bundle', { scope, bundle, optIn: true })).rejects.toThrow();
+  expect(await page.evaluate(async mapId => (await import('/src/lib/project-storage.ts')).loadCanvasProject(mapId), mapId)).toEqual(conflictBefore);
+  expect(await call('draw_registry_export', { scope })).toEqual(sourceRegistry);
+
+  await context.close();
+  ({ page, call } = await open(`${base}/?registryPilot=1`, restoredProfile));
+  const freshRegistry = await call('draw_registry_export', { scope });
+  await expect(call('draw_registry_import_bundle', { scope: otherScope, bundle, optIn: true })).rejects.toThrow();
+  expect(await call('draw_registry_export', { scope })).toEqual(freshRegistry);
+  expect(await call('draw_registry_resolve', { scope, session: codex })).toEqual([]);
+  const restored = await call('draw_registry_import_bundle', { scope, bundle, optIn: true });
+  expect(restored.status).toBe('complete');
+  expect(restored.importedMapIds).toContain(mapId);
+  await page.goto(`${base}/?project=${encodeURIComponent(mapId)}&registryPilot=1`, { waitUntil: 'networkidle' });
+  await page.waitForFunction(async () => { try { await window.__tools.draw_get_state.execute({}); return true; } catch { return false; } });
+  expect((await call('draw_get_state')).document).toEqual(sourceDocument);
+  expect(await call('draw_registry_resolve', { scope, session: codex })).toEqual(beforeRestart);
+  expect(await call('draw_registry_export', { scope })).toEqual(sourceRegistry);
+  const replay = await call('draw_registry_edit', editInput);
+  expect(replay.duplicate).toBe(true);
+  expect(replay.receipt).toEqual(first.receipt);
+  expect((await call('draw_get_state')).document).toEqual(sourceDocument);
+
+  await context.close();
+  ({ page, call } = await open(`${base}/?project=${encodeURIComponent(mapId)}&registryPilot=1`, restoredProfile));
+  expect((await call('draw_get_state')).document).toEqual(sourceDocument);
+  expect(await call('draw_registry_resolve', { scope, session: codex })).toEqual(beforeRestart);
+  expect((await call('draw_registry_resolve', { scope, session: claude }))[0].contentHash).toBe(first.receipt.contentHash);
+  expect((await call('draw_registry_edit', editInput)).duplicate).toBe(true);
   expect(errors).toEqual([]);
-  console.log(JSON.stringify({ evidence: 'synthetic-browser-fixture', providerSessions: 'references-only', ctxCalls: 0, checks: ['default-off', 'opt-in-links', 'current-canonical-resolution', 'guarded-edit', 'durable-committed-receipt', 'duplicate-once', 'stale-rejection', 'two-client-isolation', 'scoped-export-import', 'browser-process-restart'], result: 'passed' }));
+  console.log(JSON.stringify({ evidence: 'synthetic-browser-fixture', providerSessions: 'references-only', ctxCalls: 0, checks: ['default-off', 'opt-in-links', 'current-canonical-resolution', 'guarded-edit', 'durable-committed-receipt', 'duplicate-once', 'stale-rejection', 'two-client-isolation', 'scoped-export-import', 'browser-process-restart', 'portable-map-bundle-fresh-profile', 'bundle-restart-id-hash-document', 'imported-receipt-replay-once', 'bundle-collision-no-overwrite', 'bundle-wrong-scope-no-change'], result: 'passed' }));
 } finally {
   await context?.close();
   await rm(profile, { recursive: true, force: true });
+  await rm(restoredProfile, { recursive: true, force: true });
 }

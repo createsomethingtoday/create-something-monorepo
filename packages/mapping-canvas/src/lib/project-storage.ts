@@ -1,4 +1,4 @@
-import { createDocument, normalizeDocument, type CanvasDocument } from './document';
+import { createDocument, isDocument, normalizeDocument, type CanvasDocument } from './document';
 import { validateProject, type Project } from './animation/model';
 
 export const DRAW_PROJECT_VERSION = 'draw.project.v1' as const;
@@ -142,6 +142,38 @@ export async function loadProjectRecord(id: string): Promise<DrawProjectRecord |
     request.onsuccess = () => resolve(normalizeProjectRecord(request.result));
     request.onerror = () => reject(request.error);
     transaction.oncomplete = () => db.close();
+  });
+}
+
+/** Pilot restore preflight: even Motion-only/invalid existing records occupy an ID. */
+export async function inspectCanvasRestoreSlot(id: string): Promise<{ occupied: boolean; document: CanvasDocument | null }> {
+  const db = await open();
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(STORE);
+    const request = transaction.objectStore(STORE).get(id);
+    let slot: { occupied: boolean; document: CanvasDocument | null };
+    request.onsuccess = () => { slot = { occupied: request.result !== undefined, document: normalizeProjectRecord(request.result)?.canvas ?? null }; };
+    transaction.oncomplete = () => { db.close(); resolve(slot); };
+    transaction.onabort = transaction.onerror = () => { db.close(); reject(transaction.error ?? new Error('Could not inspect restore slot.')); };
+  });
+}
+
+/** Add a pilot Canvas with exact identity; never merge/replace or change the active map. */
+export async function createCanvasProjectIfAbsent(canvas: CanvasDocument): Promise<boolean> {
+  if (!isDocument(canvas)) throw new Error('Pilot restore requires a valid Canvas document.');
+  const record: DrawProjectRecord = { version: DRAW_PROJECT_VERSION, id: canvas.id, canvas: clone(canvas) };
+  const db = await open();
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(STORE, 'readwrite');
+    const records = transaction.objectStore(STORE), request = records.get(canvas.id);
+    let created = false;
+    request.onsuccess = () => {
+      if (request.result !== undefined) return;
+      records.add(record);
+      created = true;
+    };
+    transaction.oncomplete = () => { db.close(); resolve(created); };
+    transaction.onabort = transaction.onerror = () => { db.close(); reject(transaction.error ?? new Error('Could not restore Canvas.')); };
   });
 }
 

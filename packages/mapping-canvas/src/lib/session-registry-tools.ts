@@ -1,6 +1,6 @@
 import type { CanvasDocument } from './document';
 import { editCommandSchema } from './editing';
-import { loadCanvasProject } from './project-storage';
+import { loadCanvasProject, inspectCanvasRestoreSlot, createCanvasProjectIfAbsent } from './project-storage';
 import type { Scope, SessionReference } from './session-registry';
 import { createSessionRegistryPilot, indexedDbRegistryStore, digest } from './session-registry-pilot';
 import { drawRevision, type DrawWebMcpTool } from './webmcp';
@@ -18,6 +18,10 @@ const registrySchema = { type: 'object', additionalProperties: false, required: 
   links: { type: 'array', maxItems: 2000, items: { type: 'object', additionalProperties: false, required: [...Object.keys(mapProperties), 'session'], properties: { ...mapProperties, session: sessionSchema } } },
   receipts: { type: 'array', maxItems: 10000, items: { type: 'object', additionalProperties: false, required: [...Object.keys(mapProperties), 'operationId', 'requestHash', 'expectedRevision', 'status'], properties: { ...mapProperties, operationId: idSchema, requestHash: hashSchema, expectedRevision: idSchema, status: { type: 'string', enum: ['committed', 'verified', 'unknown', 'failed'] }, resultingRevision: idSchema, contentHash: hashSchema, session: sessionSchema } } }
 } };
+const bundleSchema = { type: 'object', additionalProperties: false, required: ['version', 'scope', 'registry', 'maps'], properties: {
+  version: { const: 'draw.session-bundle.v1' }, scope: scopeSchema, registry: registrySchema,
+  maps: { type: 'array', maxItems: 200, items: { type: 'object', additionalProperties: false, required: ['mapId', 'contentHash', 'document'], properties: { mapId: idSchema, contentHash: hashSchema, document: { type: 'object', description: 'Exact Canvas document; strict closed schema and SHA256 checked at runtime.' } } } }
+} };
 
 /** Opt-in local browser tools. Scope IDs label data; they are not authentication. */
 export function createRegistryPilotTools(
@@ -30,6 +34,13 @@ export function createRegistryPilotTools(
   const pilot = createSessionRegistryPilot(indexedDbRegistryStore(), {
     readMap: async id => getDocument().id === id ? getDocument() : loadCanvasProject(id),
     revision: drawRevision,
+    inspectRestoreSlot: async mapId => {
+      const slot = await inspectCanvasRestoreSlot(mapId);
+      // Unsaved/open content also occupies its ID; never silently replace it.
+      if (getDocument().id === mapId && (!slot.document || drawRevision(slot.document) !== drawRevision(getDocument()))) return { occupied: true, document: null };
+      return slot;
+    },
+    restoreMap: document => getDocument().id === document.id ? Promise.resolve(false) : createCanvasProjectIfAbsent(document),
     edit: async (mapId, expectedRevision, commands) => {
       if (getDocument().id !== mapId) throw new Error('Open this registered map before editing it.');
       const mutation = await editTool.execute({ expectedRevision, commands }) as { revision?: string };
@@ -58,6 +69,8 @@ export function createRegistryPilotTools(
     tool('draw_registry_resolve', 'Resolve mapping session', 'Find scoped registered maps and read their current canonical documents, revisions and hashes. Missing maps remain unresolved references.', { scope: scopeSchema, session: sessionSchema }, input => pilot.resolve(input.scope as Scope, input.session as SessionReference), true),
     tool('draw_registry_edit', 'Edit registered map', 'Edit the active registered map through draw_edit. Reuse operationId only for identical requests. Stale revisions reject; inspect and replan. Committed means saved locally, not renderer verified. Unknown must not be blindly retried.', { scope: scopeSchema, mapId: idSchema, session: sessionSchema, operationId: idSchema, expectedRevision: idSchema, commands: { type: 'array', minItems: 1, maxItems: 100, items: editCommandSchema } }, input => pilot.edit(input.scope as Scope, input.mapId as string, input.operationId as string, input.expectedRevision as string, input.commands, input.session as SessionReference)),
     tool('draw_registry_export', 'Export local references', 'Export only scoped map/session references and receipts. Export canonical map JSON separately using Draw existing export.', { scope: scopeSchema }, async input => JSON.parse(await pilot.exportScope(input.scope as Scope)), true),
-    tool('draw_registry_import', 'Import local references', 'Validate and merge a scoped registry export with explicit consent optIn=true to restore session links. Imported receipts are historical assertions, not newly verified live edits. Does not import map content or provider transcripts.', { scope: scopeSchema, registry: registrySchema, optIn: { type: 'boolean', const: true } }, input => { if (input.optIn !== true) throw new Error('Explicit import consent is required.'); return pilot.importScope(input.scope as Scope, JSON.stringify(input.registry), true); })
+    tool('draw_registry_import', 'Import local references', 'Validate and merge a scoped registry export with explicit consent optIn=true to restore session links. Imported receipts are historical assertions, not newly verified live edits. Does not import map content or provider transcripts.', { scope: scopeSchema, registry: registrySchema, optIn: { type: 'boolean', const: true } }, input => { if (input.optIn !== true) throw new Error('Explicit import consent is required.'); return pilot.importScope(input.scope as Scope, JSON.stringify(input.registry), true); }),
+    tool('draw_registry_export_bundle', 'Export portable mapping bundle', 'Explicitly copy one scope of persisted Canvas maps, logical session references and historical receipts. Authored map text may be sensitive and is not redacted. Requires optIn=true. Preserves map IDs/content hashes; excludes Motion projects and provider transcripts.', { scope: scopeSchema, optIn: { type: 'boolean', const: true } }, input => { if (input.optIn !== true) throw new Error('Explicit bundle export consent is required.'); return pilot.exportBundle(input.scope as Scope, true); }, true),
+    tool('draw_registry_import_bundle', 'Restore portable mapping bundle', 'Explicitly restore reviewed authored Canvas maps and session references with optIn=true. Creates empty map slots only; rejects other-client, unregistered or changed-map collisions. Incomplete results retain partial reservations/maps and require inspection before resuming the identical bundle. Normal Draw file import stays unchanged.', { scope: scopeSchema, bundle: bundleSchema, optIn: { type: 'boolean', const: true } }, input => { if (input.optIn !== true) throw new Error('Explicit bundle import consent is required.'); return pilot.importBundle(input.scope as Scope, input.bundle, true); })
   ];
 }
