@@ -45,7 +45,13 @@ DRAW_INSTALLED_SKIP_BUILD=1 pnpm --dir apps/draw-native verify:installed
 
 The installed verifier mounts the DMG read-only, copies the app into an isolated
 temporary location, launches with isolated application data, checks packaged
-dependencies, and verifies canonical persistence across relaunch. Its receipt
+dependencies, and verifies canonical persistence across relaunch for both a fresh
+profile and a seeded existing mapping-canvas.v1 document containing legacy plain
+notes, formatted notes, shapes, connectors, and groups. The seeded session, revision,
+and complete document hash must remain exact on first launch and relaunch. The
+verifier terminates only its own spawned packaged executable processes, never an
+application selected by bundle ID. Both profiles and the app copy are temporary;
+the installed app and personal documents are untouched. Its receipt
 is written under `apps/draw-native/output/installed-acceptance/`.
 
 ## Production release gates
