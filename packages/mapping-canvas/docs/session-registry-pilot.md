@@ -157,9 +157,27 @@ harness retrieves, links and executes; provider turns do not discover or call
 Draw tools themselves. It rejects reported tool actions, bounds final JSON,
 discards private runtime stderr, uses `--ephemeral`, and removes its temporary
 browser profiles. It neither saves nor indexes provider transcripts. It does not
-establish autonomous integration, real client value, native acceptance or
-Claude-to-Codex handoff. Claude 2.1.289 reports `loggedIn:false`; no authentication
-or configuration change was attempted.
+establish autonomous integration, real client value or native acceptance.
+
+After Micah verified host authentication, a separate live cross-provider run
+passed: `scripts/verify-session-registry-live-cross-provider.mjs`. Claude 2.1.289
+session `07886052-f963-4c78-9220-4a4f8d695ec4` proposed the first move; Codex
+0.159.2 session `01a10948-04f0-72e1-8232-d902be2fd4e5` received the actual freshly
+resolved map and proposed the next move. Receipt provenance matched both actual
+provider/session references. Independent readback checked rectangle from/to
+positions and recomputed current document hashes after each edit. Final revision
+was `draw-1y8jr4l2eraym-bv`, with content hash
+`c182ecc937918bf8e72a547d2c64ae6fd60f90418d38b9195a594910a2571d75`.
+Replay/stale/wrong-scope checks, two synthetic client scopes, process restart and
+fresh-profile bundle restoration all passed. This is **orchestrated live
+Claude-to-Codex synthetic acceptance**, not autonomous provider tool discovery.
+
+Claude ran with safe mode, all tools disabled, slash commands disabled and no
+session persistence. Codex used the prior ephemeral read-only invocation. Output
+parsers reject reported tool actions and expose only bounded evidence; provider
+runtime stderr is discarded. No new authentication, grants or configuration
+were introduced. Claude auth is true in the authorized host context but false
+inside the restricted sandbox; the host check matched Micah's Terminal result.
 
 CTX 1.3.1 remains a separate acceptance blocker. Normal-sandbox status and
 `doctor --format json` report history/lexical `generation_verification_failed`
@@ -169,14 +187,31 @@ opening error to that marker (`crates/ctx-daemon-cli/src/source_status.rs:505`
 in `/Users/micahjohnson/Code/ctx-refresh-repair`), so corruption is not established.
 No CTX repair, bypass, import or configuration change was attempted.
 
-Next bounded diagnostic: Micah runs status and doctor in his normal Terminal on
-the existing root and returns only sanitized readiness/error fields. Do not
-delete locks, change ownership or run `ctx import --all`/setup/rebuild based on
-this marker. Any subsequent import needs a separate concrete approval naming
-only synthetic provider paths and an isolated pilot root; it must not ingest
-personal histories or enable semantic work. Claude requires Micah's interactive
-login before cross-provider acceptance. Supported-interface CTX retrieval is
-still untested and is not required by the implemented registry.
+Micah's subsequent normal-Terminal results show history/lexical/catalog ready
+without permission/lock errors; refresh remains pending and doctor ok is false.
+This supports an execution-sandbox limitation, not a repair/rebuild requirement.
+The sandbox search still fails; no alternate execution or UI bypass was used.
+
+Small user-run retrieval health check on the existing committed lexical index:
+
+```sh
+ctx search 'DRAW_PILOT_EPHEMERAL_7d2c9f84' --backend lexical --refresh off --limit 1 --format json 2>/dev/null |
+  jq '{schema_version,payload_type,result_count:(.results|length),freshness:{mode:.freshness.mode,status:.freshness.status},effective_mode:.retrieval.effective_mode}'
+```
+
+Expected successful contract: schema version 2, payload type search_results,
+effective mode lexical, freshness mode off, normally zero matches for the unique
+synthetic marker. Share only this filtered output; it omits snippets, records,
+paths, source identities, credentials and raw errors. No output is not success.
+A later indexed diagnostic conversation may produce a match; counts alone never
+prove indexed handoff. This health check sends no refresh wake. The actual pilot
+turns are intentionally ephemeral and were not ingested into CTX, so a positive
+CTX-indexed session handoff remains untested. Refresh completion is not assumed.
+
+Do not delete locks, change ownership or run import-all/setup/rebuild. Any future
+positive synthetic indexing test needs separate concrete approval naming only
+synthetic provider paths and an isolated target root; no personal histories or
+semantic work. CTX retrieval is not required by the implemented registry.
 
 ## Value test
 
