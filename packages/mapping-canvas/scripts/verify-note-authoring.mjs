@@ -65,9 +65,20 @@ try {
     const amended = (await state()).document.objects.find(object => object.id === id);
     expect(amended.content.blocks[1].runs.find(run => run.bold)?.text).toBe('the desktop app');
     await page.getByRole('button', { name: 'Edit & format', exact: true }).click();
+    const typed = ' Sequential typing stays bounded.'.repeat(8);
+    const typingField = page.getByLabel('Block 2 text', { exact: true });
+    await typingField.focus();
+    await typingField.evaluate(field => field.setSelectionRange(field.value.length, field.value.length));
+    await typingField.pressSequentially(typed);
+    await page.getByRole('button', { name: 'Save note', exact: true }).click();
+    const sequential = (await state()).document.objects.find(object => object.id === id);
+    expect(sequential.content.blocks[1].runs).toHaveLength(3);
+    expect(sequential.content.blocks[1].runs.find(run => run.bold)?.text).toBe('the desktop app');
+    expect(sequential.text).toContain(typed);
+    await page.getByRole('button', { name: 'Edit & format', exact: true }).click();
     await page.getByLabel('Block 1 text', { exact: true }).fill('Discard this draft');
     await page.keyboard.press('Escape');
-    expect((await state()).document.objects.find(object => object.id === id)).toEqual(amended);
+    expect((await state()).document.objects.find(object => object.id === id)).toEqual(sequential);
     await page.getByRole('button', { name: 'Edit & format', exact: true }).click();
     await page.getByLabel('Block 2 text', { exact: true }).fill('Long note '.repeat(80) + 'averylongunbrokenword'.repeat(10));
     await page.screenshot({ path: new URL(`long-editor-${width}.png`, output).pathname });
@@ -102,7 +113,7 @@ try {
     await exported.screenshot({ path: new URL(`export-png-${width}.png`, output).pathname });
     await exported.close();
     expect(errors).toEqual([]);
-    results.push({ width, passed: true, checks: ['mixed blocks', 'selected emphasis', 'edit existing rich note', 'undo/redo', 'cancel', 'long text', 'reload', 'JSON/SVG/PNG exports'], errors });
+    results.push({ width, passed: true, checks: ['mixed blocks', 'selected emphasis', 'edit existing rich note', 'sequential typing', 'undo/redo', 'cancel', 'long text', 'reload', 'JSON/SVG/PNG exports'], errors });
     await context.close();
   }
   await writeFile(new URL('report.json', output), JSON.stringify(results, null, 2));
