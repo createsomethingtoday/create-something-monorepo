@@ -622,12 +622,16 @@ try {
   if (JSON.stringify(numberedStarts) !== JSON.stringify(['1', '2'])) throw new Error(`Formatted numbered list sequence restarted: ${JSON.stringify(numberedStarts)}`);
   await page.evaluate((id) => window.__drawWebMcpTools.draw_select.execute({ ids: [id] }), exportFormatted.id);
   await page.waitForFunction((id) => window.__drawWebMcpTools.draw_inspect.execute({ limit: 1 }).then((result) => result.selectedIds?.includes(id)), exportFormatted.id);
+  await page.getByRole('button', { name: 'Edit & format', exact: true }).click();
   await page.getByRole('button', { name: 'Bold', exact: true }).click();
   await page.getByRole('button', { name: 'Italic', exact: true }).click();
+  await page.getByRole('button', { name: 'Save note', exact: true }).click();
   const retainedFormatting = await page.evaluate(async (id) => (await window.__drawWebMcpTools.draw_get_state.execute({})).document.objects.find((object) => object.id === id)?.content, exportFormatted.id);
-  if (retainedFormatting?.blocks.length !== 2 || !retainedFormatting.blocks.every((block) => block.type === 'numbered' && block.runs.every((run) => run.bold && run.italic)) || retainedFormatting.blocks[1].runs[0].link !== 'https://example.com/export') throw new Error('Human formatting flattened or replaced existing structured note content');
+  if (retainedFormatting?.blocks.length !== 2 || !retainedFormatting.blocks.every((block) => block.type === 'numbered') || retainedFormatting.blocks[0].runs[0].bold || !retainedFormatting.blocks[0].runs[0].italic || !retainedFormatting.blocks[1].runs[0].italic || retainedFormatting.blocks[1].runs[0].link !== 'https://example.com/export') throw new Error('Human formatting flattened or replaced existing structured note content');
+  await page.getByRole('button', { name: 'Edit & format', exact: true }).click();
   page.once('dialog', (dialog) => dialog.accept('https://'));
   await page.getByRole('button', { name: 'Link', exact: true }).click();
+  await page.getByRole('button', { name: 'Cancel', exact: true }).click();
   const afterInvalidLink = await page.evaluate(async (id) => (await window.__drawWebMcpTools.draw_get_state.execute({})).document.objects.find((object) => object.id === id)?.content, exportFormatted.id);
   if (JSON.stringify(afterInvalidLink) !== JSON.stringify(retainedFormatting)) throw new Error('Malformed human link corrupted structured note content');
 
