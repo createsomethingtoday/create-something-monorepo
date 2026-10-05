@@ -192,7 +192,11 @@ export async function startEnrollment(request: Request, env: Env): Promise<Respo
     )
       ? input.next_path
       : '/start';
-  const link = `${origin}/verify?mode=${purpose}&next=${encodeURIComponent(next)}#token=${encodeURIComponent(token)}`;
+  // Explicit UI choice changes only the proof presentation, never admission or grants.
+  const identityExperience = input.experience === 'identity' && purpose === 'recovery';
+  const link = identityExperience
+    ? `https://id.createsomething.space/verify?mode=recovery${input.app === 'gigi' ? '&app=gigi' : ''}#token=${encodeURIComponent(token)}`
+    : `${origin}/verify?mode=${purpose}&next=${encodeURIComponent(next)}#token=${encodeURIComponent(token)}`;
   const action = purpose === 'recovery' ? 'reset your password' : 'create your account';
   try {
     const response = await fetch('https://api.resend.com/emails', {
