@@ -3,7 +3,14 @@ import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { setupSteps, initialSetup, restoreSetup, applySetup, starterGuide, healthResponse } from '../../src/lib/workshop/walkthrough';
+import {
+  setupSteps,
+  initialSetup,
+  restoreSetup,
+  applySetup,
+  starterGuide,
+  healthResponse
+} from '../../src/lib/workshop/walkthrough';
 import worker from '../../starter/pcn-workshop/worker';
 
 const starter = fileURLToPath(new URL('../../starter/pcn-workshop/', import.meta.url));
@@ -20,7 +27,8 @@ test('interrupted navigation and self-reports resume without implying provider v
 
 test('fresh-state check intentions merge distinct tabs, repeat idempotently, and uncheck', () => {
   let state = initialSetup();
-  for (const step of ['starter', 'repository', 'starter']) state = applySetup(state, { type: 'check', step, checked: true });
+  for (const step of ['starter', 'repository', 'starter'])
+    state = applySetup(state, { type: 'check', step, checked: true });
   assert.deepEqual(state.checked, ['starter', 'repository']);
   state = applySetup(state, { type: 'check', step: 'starter', checked: false });
   state = applySetup(state, { type: 'check', step: 'starter', checked: false });
@@ -28,19 +36,33 @@ test('fresh-state check intentions merge distinct tabs, repeat idempotently, and
 });
 
 test('malformed saved state cannot inject steps, duplicate checks, or arbitrary data', () => {
-  for (const raw of [null, 'broken', '{}', 'null', '{"step":"unknown","checked":[]}']) assert.deepEqual(restoreSetup(raw), initialSetup());
-  assert.deepEqual(restoreSetup('{"step":"deploy","checked":["starter","starter",null,{},"secret"]}'), { step: 'deploy', checked: ['starter'] });
+  for (const raw of [null, 'broken', '{}', 'null', '{"step":"unknown","checked":[]}'])
+    assert.deepEqual(restoreSetup(raw), initialSetup());
+  assert.deepEqual(
+    restoreSetup('{"step":"deploy","checked":["starter","starter",null,{},"secret"]}'),
+    { step: 'deploy', checked: ['starter'] }
+  );
   assert.deepEqual(applySetup(initialSetup(), { type: 'select', step: 'unknown' }), initialSetup());
 });
 
 test('downloadable README and every archived file match the actual starter', () => {
   assert.equal(readFileSync(starter + 'README.md', 'utf8'), starterGuide());
   const files = readdirSync(starter).sort();
-  const entries = execFileSync('unzip', ['-Z1', archive], { encoding: 'utf8' }).trim().split('\n').map(s => s.replace('pcn-workshop-starter/', '')).sort();
+  const entries = execFileSync('unzip', ['-Z1', archive], { encoding: 'utf8' })
+    .trim()
+    .split('\n')
+    .map((s) => s.replace('pcn-workshop-starter/', ''))
+    .sort();
   assert.deepEqual(entries, files);
-  for (const file of files) assert.deepEqual(execFileSync('unzip', ['-p', archive, 'pcn-workshop-starter/' + file]), readFileSync(starter + file), file);
+  for (const file of files)
+    assert.deepEqual(
+      execFileSync('unzip', ['-p', archive, 'pcn-workshop-starter/' + file]),
+      readFileSync(starter + file),
+      file
+    );
   const ignored = readFileSync(starter + '.gitignore', 'utf8');
-  for (const item of ['node_modules/', '.wrangler/', '.env', '.dev.vars']) assert.ok(ignored.includes(item));
+  for (const item of ['node_modules/', '.wrangler/', '.env', '.dev.vars'])
+    assert.ok(ignored.includes(item));
 });
 
 test('walkthrough health contract matches Worker and shipped test/deploy commands', async () => {
@@ -57,7 +79,10 @@ test('walkthrough health contract matches Worker and shipped test/deploy command
 });
 
 test('all five steps have success, recovery and evidence without credential collection', () => {
-  assert.deepEqual(setupSteps.map(s => s.id), ['starter', 'repository', 'account', 'deploy', 'confirm']);
+  assert.deepEqual(
+    setupSteps.map((s) => s.id),
+    ['starter', 'repository', 'account', 'deploy', 'confirm']
+  );
   for (const step of setupSteps) {
     assert.ok(step.success.length > 40);
     assert.ok(step.evidence.length > 40);

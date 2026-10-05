@@ -244,7 +244,7 @@
       >
         <h2 id="station-heading" tabindex="-1">{station.label}</h2>
         <p>{station.purpose}</p>
-        <fieldset disabled={!loaded || !!saveError}>
+        <fieldset disabled={!loaded || (!!saveError && selected !== 'graduate')}>
           {#if selected === 'intake'}
             <p>
               Request <code>{model.requestId}</code> · input revision {model.revision}. The
@@ -435,6 +435,7 @@
                 <label
                   ><input
                     type="checkbox"
+                    disabled={!!saveError}
                     checked={manual.includes(provider.name)}
                     onchange={(e) => mutate(undefined, false, { name: provider.name, checked: e.currentTarget.checked })}
                   /> Manual self-report: I reviewed this setup</label

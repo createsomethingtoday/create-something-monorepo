@@ -42,9 +42,16 @@ Record the local test command and passing result in DECISIONS.md. The game does 
 
 1. Sign in to GitHub or create your own account. Open New repository, choose your owner, enter a new name, and select Private. Leave README, .gitignore, and license initialization unchecked so the repository starts empty.
 
-2. Copy the empty repository’s HTTPS URL. Replace YOUR_OWNER and YOUR_REPO in the commands with your own owner and name; never put a password or token in the URL. Use Git’s supported browser or credential-manager sign-in if prompted.
+2. Copy the empty repository’s HTTPS URL. Replace YOUR_OWNER and YOUR_REPO in the commands with your own owner and name; never put a password or token in the URL. If Git already has working HTTPS authentication, keep it. Otherwise install GitHub CLI from the official link and use the browser sign-in commands below before pushing. Review the access request yourself; enter login codes only on GitHub’s sign-in page, never in this game.
 
 3. In the extracted starter folder, initialize Git and add only the listed files. npm install created package-lock.json. Review git status before committing: no credentials, .env files, node_modules, or .wrangler output should be included.
+
+### Configure GitHub HTTPS sign-in if needed
+
+```
+gh auth login --hostname github.com --git-protocol https --web
+gh auth setup-git --hostname github.com
+```
 
 ### Commit and push the starter
 
@@ -73,6 +80,9 @@ Your GitHub repository page shows Private, the main branch, and the starter file
 
 Record repository URL, Private visibility, and pushed commit in DECISIONS.md. Keep private evidence in your own repository; no URL or credentials are collected by this game.
 
+- [Install GitHub CLI](https://cli.github.com/)
+- [GitHub browser sign-in guide](https://cli.github.com/manual/gh_auth_login)
+- [Configure Git authentication](https://cli.github.com/manual/gh_auth_setup-git)
 - [Create a private repository](https://github.com/new)
 - [Git commit identity](https://docs.github.com/en/get-started/git-basics/setting-your-username-in-git)
 - [GitHub HTTPS authentication](https://docs.github.com/en/get-started/git-basics/about-remote-repositories)
