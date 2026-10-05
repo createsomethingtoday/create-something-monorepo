@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount, tick } from 'svelte';
   import World from '$lib/workshop/World.svelte';
+  import SetupWalkthrough from '$lib/workshop/SetupWalkthrough.svelte';
   import { initial, reduce, restore, validate, type Action } from '$lib/workshop/state';
   import { context, isCurrent, setProvider } from '$lib/workshop/intents';
   import { stations, missions, providers } from '$lib/workshop/content';
@@ -243,7 +244,7 @@
       >
         <h2 id="station-heading" tabindex="-1">{station.label}</h2>
         <p>{station.purpose}</p>
-        <fieldset disabled={!loaded || !!saveError}>
+        <fieldset disabled={!loaded || (!!saveError && selected !== 'graduate')}>
           {#if selected === 'intake'}
             <p>
               Request <code>{model.requestId}</code> · input revision {model.revision}. The
@@ -422,7 +423,10 @@
               human approval → execute → receipt. Capture decisions and receipts from the first
               session.
             </p>
-            {#each providers as provider}<article>
+            <SetupWalkthrough />
+            <h3>Other provider setup resources</h3>
+            <p>These links are optional follow-up guidance, not a connected or verified stack.</p>
+            {#each providers.filter(provider => !['GitHub', 'Cloudflare'].includes(provider.name)) as provider}<article>
                 <h3>
                   <a href={provider.url} target="_blank" rel="noreferrer">{provider.name} setup ↗</a
                   >
@@ -431,6 +435,7 @@
                 <label
                   ><input
                     type="checkbox"
+                    disabled={!!saveError}
                     checked={manual.includes(provider.name)}
                     onchange={(e) => mutate(undefined, false, { name: provider.name, checked: e.currentTarget.checked })}
                   /> Manual self-report: I reviewed this setup</label
