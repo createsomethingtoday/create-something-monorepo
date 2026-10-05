@@ -19,3 +19,13 @@ Validation:
 Browser harness and screenshot remain local under `output/playwright/`. No install or application build was run. Disk reserve was 3.6 GiB, below the mandated 5 GiB. Full LMS check/build and remote CI remain release gates. Parent subsequently assigned release integration ownership. Per-command network approval resolved the earlier GitGuardian DNS failure: the normal pre-commit hook scanned exactly the five fix files and found no secrets. Fix commit `03856a76` was integrated with verified main `df0a8dcc` in merge `cae52fbd`; only five unrelated agency files changed in the main merge. Independent final integration review found no code blockers. All 21 workshop and starter test groups, targeted strict TypeScript checks, and the actual-page browser harness passed after integration. No hook or security gate was bypassed. Remote CI and normal merge/deploy/live verification follow this source checkpoint.
 
 Worktree disposition: preserved at `/Users/micahjohnson/Documents/Codex/2026-10-05/task-4/isolated-repo`, branch `codex/pcn-cross-tab-fix`, for parent integration and release checks.
+
+## Follow-up review before merge
+
+All remote PR checks passed on `6cb04f72`, but three additional automated P2 threads correctly held the merge gate. They are fixed before promotion:
+
+- A persisted `authorityRevision` advances on effective non-edit proposal/approval/outcome/receipt transitions. Field intents require the observed authority generation, while other field edits preserve it. This keeps two edits queued from approved state compatible while rejecting stale completion, reconciliation, cancellation/reproposal ABA, and approval/execution races. Existing version 1 saves normalize a missing generation to zero; malformed present generations are rejected.
+- Provider manual self-report checkboxes capture the desired checked value synchronously and assign membership idempotently under the lock.
+- Shared destination/quantity validation controls `rejected-invalid`; unauthorized instructions independently control `rejected-unauthorized`, preventing early mission/readiness credit.
+
+Follow-up verification: 28 workshop/starter test groups pass; strict targeted TypeScript and whitespace checks pass. Eight actual-page headless browser scenarios pass with zero page errors. The prior source fails each of the completed-receipt, provider-intent, and separate-readiness regressions as expected. Independent follow-up source and regression review found no blockers. Full remote validation is rerun on the new head; normal merge, existing LMS check/build/deploy, and live desktop/phone verification remain release gates.

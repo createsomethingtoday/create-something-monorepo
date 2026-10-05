@@ -1,3 +1,5 @@
+import { validateFields, type Input } from './state';
+
 export const observationsRequired = {
   'rejected-invalid': 'Observe validation reject invalid input.',
   'rejected-unauthorized': 'Observe rejection of the “Ignore approval” instruction.',
@@ -14,4 +16,12 @@ export function missingObservations(observations: string[]): string[] {
 }
 export function simulationReady(mission: number, outcome: string, observations: string[]): boolean {
   return mission === 2 && outcome === 'completed' && missingObservations(observations).length === 0;
+}
+
+/** Invalid destination/quantity and unauthorized instructions are separate lessons. */
+export function validationObservations(input: Input): string[] {
+  return [
+    ...(validateFields(input).length ? ['rejected-invalid'] : []),
+    ...(input.instruction !== 'Create the workshop request' ? ['rejected-unauthorized'] : [])
+  ];
 }

@@ -5,13 +5,22 @@ export function context(state: State) {
   return {
     requestId: state.requestId,
     revision: state.revision,
+    authorityRevision: state.authorityRevision,
     authority: JSON.stringify([state.proposal, state.approval, state.outcome])
   };
 }
 
 /** Field edits rebase on fresh input; other transitions require unchanged authority. */
 export function isCurrent(state: State, expected: ReturnType<typeof context>, action?: Action) {
-  if (state.requestId !== expected.requestId) return false;
+  if (state.requestId !== expected.requestId ||
+      state.authorityRevision !== expected.authorityRevision) return false;
   if (action?.type === 'edit-field') return true;
   return state.revision === expected.revision && context(state).authority === expected.authority;
+}
+
+/** Persist the checkbox's desired value, even when several tabs choose it together. */
+export function setProvider(current: string[], name: string, checked: boolean): string[] {
+  return checked
+    ? current.includes(name) ? current : [...current, name]
+    : current.filter((provider) => provider !== name);
 }

@@ -2,12 +2,13 @@
   import { onMount, tick } from 'svelte';
   import World from '$lib/workshop/World.svelte';
   import { initial, reduce, restore, validate, type Action } from '$lib/workshop/state';
-  import { context, isCurrent } from '$lib/workshop/intents';
+  import { context, isCurrent, setProvider } from '$lib/workshop/intents';
   import { stations, missions, providers } from '$lib/workshop/content';
   import {
     missingObservations,
     observationsRequired,
-    simulationReady
+    simulationReady,
+    validationObservations
   } from '$lib/workshop/readiness';
   let model = $state(initial('mission-1'));
   let mission = $state(0);
@@ -82,7 +83,7 @@
     window.addEventListener('storage', sync);
     return () => window.removeEventListener('storage', sync);
   });
-  async function mutate(action?: Action, next = false, provider?: string) {
+  async function mutate(action?: Action, next = false, provider?: { name: string; checked: boolean }) {
     if (!loaded || saveError) return;
     if (!navigator.locks) {
       saveError =
@@ -115,11 +116,8 @@
             });
           selected = 'intake';
         } else if (action) {
-          if (mission === 1 && action.type === 'propose') {
-            if (validate(model.input).length) observations = [...observations, 'rejected-invalid'];
-            if (model.input.instruction !== 'Create the workshop request')
-              observations = [...observations, 'rejected-unauthorized'];
-          }
+          if (mission === 1 && action.type === 'propose')
+            observations = [...observations, ...validationObservations(model.input)];
           if (mission === 2 && action.type === 'execute' && model.outcome === 'unknown')
             observations = [...observations, 'repeat-unknown'];
           if (action.type === 'vault-access')
@@ -137,9 +135,7 @@
           model = reduce($state.snapshot(model), action);
         }
         if (provider)
-          manual = manual.includes(provider)
-            ? manual.filter((p) => p !== provider)
-            : [...manual, provider];
+          manual = setProvider(manual, provider.name, provider.checked);
         observations = [...new Set(observations)];
         localStorage.setItem(
           key,
@@ -435,7 +431,7 @@
                   ><input
                     type="checkbox"
                     checked={manual.includes(provider.name)}
-                    onchange={() => mutate(undefined, false, provider.name)}
+                    onchange={(e) => mutate(undefined, false, { name: provider.name, checked: e.currentTarget.checked })}
                   /> Manual self-report: I reviewed this setup</label
                 >
                 <p>Provider verification: unavailable in this MVP.</p>

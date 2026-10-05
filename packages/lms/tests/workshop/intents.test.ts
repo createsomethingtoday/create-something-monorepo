@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { context, isCurrent } from '../../src/lib/workshop/intents';
+import { context, isCurrent, setProvider } from '../../src/lib/workshop/intents';
 import { initial, reduce, restore, type Action, type State } from '../../src/lib/workshop/state';
 
 const input = { destination: 'Intake desk', quantity: 2, instruction: 'Create the workshop request' };
@@ -82,4 +82,54 @@ test('unknown attempts remain immutable and reconcile once after reload', () => 
   assert.equal(completed.outcome, 'completed');
   assert.equal(completed.attempt, 1);
   assert.deepEqual(apply(completed, queue(seen, { type: 'execute' })), completed);
+});
+
+test('field intents queued before completion cannot erase its receipt or permit another record', () => {
+  const seen = reduce(ready(), { type: 'approve' });
+  const completed = reduce(seen, { type: 'execute' });
+  const stale = queue(seen, { type: 'edit-field', field: 'quantity', value: 5 });
+  assert.deepEqual(apply(completed, stale), completed);
+  assert.equal(completed.authorityRevision, seen.authorityRevision + 1);
+  assert.deepEqual(reduce(apply(completed, stale), { type: 'execute' }), completed);
+  // A new edit consciously made against observed completion keeps the existing behavior.
+  assert.equal(apply(completed, queue(completed, stale.action)).input.quantity, 5);
+});
+
+test('distinct edits from approved state rebase together without reusing approval', () => {
+  const seen = reduce(ready(), { type: 'approve' });
+  const fresh = apply(apply(seen, queue(seen, { type: 'edit-field', field: 'quantity', value: 4 })),
+    queue(seen, { type: 'edit-field', field: 'destination', value: 'Receipt shelf' }));
+  assert.deepEqual(fresh.input, { ...input, destination: 'Receipt shelf', quantity: 4 });
+  assert.equal(fresh.authorityRevision, seen.authorityRevision);
+  assert.equal(fresh.approval, null);
+  assert.equal(fresh.proposal, null);
+});
+
+test('authority generations reject proposal/cancel ABA and unknown reconciliation races', () => {
+  const seen = ready();
+  const reproposed = reduce(reduce(seen, { type: 'cancel' }), { type: 'propose' });
+  assert.deepEqual(reproposed.proposal, seen.proposal);
+  const stale = queue(seen, { type: 'edit-field', field: 'quantity', value: 5 });
+  assert.deepEqual(apply(reproposed, stale), reproposed);
+  assert.deepEqual(apply(reproposed, queue(seen, { type: 'approve' })), reproposed);
+  const unknown = reduce(reduce(seen, { type: 'approve' }), { type: 'execute', timeout: true });
+  const reconciled = reduce(unknown, { type: 'check-receipt' });
+  assert.deepEqual(apply(reconciled, queue(unknown, stale.action)), reconciled);
+  assert.deepEqual(reduce(reconciled, { type: 'execute' }), reconciled);
+  assert.deepEqual(reduce(initial('empty'), { type: 'approve' }), initial('empty'));
+});
+
+test('legacy compatible saves normalize missing authority generation; malformed counters rejected', () => {
+  const legacy = ready();
+  const { authorityRevision, ...old } = legacy;
+  assert.deepEqual(restore(JSON.stringify(old)), { ...legacy, authorityRevision: 0 });
+  for (const value of [-1, 0.5, '0', null, Number.MAX_SAFE_INTEGER + 1])
+    assert.equal(restore(JSON.stringify({ ...legacy, authorityRevision: value })), null);
+});
+
+
+test('concurrent identical provider checkbox intents persist desired membership idempotently', () => {
+  assert.deepEqual(setProvider(setProvider([], 'GitHub', true), 'GitHub', true), ['GitHub']);
+  assert.deepEqual(setProvider(setProvider(['GitHub', 'Cloudflare'], 'GitHub', false), 'GitHub', false), ['Cloudflare']);
+  assert.deepEqual(setProvider(setProvider([], 'GitHub', true), 'GitHub', false), []);
 });
