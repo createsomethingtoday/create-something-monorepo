@@ -97,6 +97,21 @@ function fixture(t: any) {
   return { db, env, mails, request, token };
 }
 
+test('standalone recovery uses fixed Identity links while legacy PCN links remain unchanged', async (t) => {
+  const f = fixture(t);
+  f.env.PUBLIC_ENROLLMENT_ENABLED = 'false';
+  f.env.VERIFIED_RECOVERY_ENABLED = 'true';
+  f.db.exec("INSERT INTO users(id,email,password_hash,source,email_verified) VALUES('identity-ui','ui@example.com','original','io',1)");
+  await startEnrollment(f.request({ email: 'ui@example.com', purpose: 'recovery', experience: 'identity', app: 'gigi', return_url: 'https://evil.example' }), f.env);
+  assert.match(f.mails[0].text, /https:\/\/id\.createsomething\.space\/verify\?mode=recovery&app=gigi#token=/);
+  assert.doesNotMatch(f.mails[0].text, /evil\.example/);
+  await startEnrollment(f.request({ email: 'ui@example.com', purpose: 'recovery', experience: 'identity', app: 'https://evil.example' }), f.env);
+  assert.match(f.mails[1].text, /https:\/\/id\.createsomething\.space\/verify\?mode=recovery#token=/);
+  await startEnrollment(f.request({ email: 'ui@example.com', purpose: 'recovery', next_path: '/collection' }), f.env);
+  assert.match(f.mails[2].text, /https:\/\/private\.createsomething\.agency\/verify\?mode=recovery&next=%2Fcollection#token=/);
+  assert.equal(f.db.prepare('SELECT password_hash FROM users').get()?.password_hash, 'original');
+});
+
 test('signup proves mailbox, hashes the password and grants no session or membership', async (t) => {
   const f = fixture(t);
   assert.equal(

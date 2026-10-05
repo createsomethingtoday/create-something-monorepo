@@ -8,6 +8,7 @@
  */
 
 import type { Env, ErrorResponse, TokenResponse, UserResponse, JWTPayload, CrossDomainToken, User } from './types';
+import { accountPage } from './services/account-page';
 import { hashPassword, verifyPassword, generateUUID, hashToken, generateSecureToken } from './services/crypto';
 import { createSignedToken, generateTokens, refreshTokens, getJWKS, validateJWT, importPublicKey } from './services/tokens';
 import {
@@ -116,6 +117,13 @@ export default {
 
 // Router
 async function route(request: Request, env: Env, method: string, path: string): Promise<Response> {
+  if (method === 'GET') {
+    // Registered OAuth clients retain their existing validation and code/PKCE flow.
+    if (path === '/login' && new URL(request.url).searchParams.has('client_id'))
+      return handleOAuthAuthorizePage(request, env);
+    const page = accountPage(path);
+    if (page) return page;
+  }
 	// Health check
 	if (path === '/' && method === 'GET') {
 		return json({ service: 'identity-worker', version: '0.1.0', status: 'healthy' });
