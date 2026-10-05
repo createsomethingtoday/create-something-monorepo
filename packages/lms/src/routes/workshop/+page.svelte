@@ -73,7 +73,10 @@
       void mutate();
     }
     const sync = (event: StorageEvent) => {
-      if (event.key === key) load();
+      if (event.key === key) {
+        load();
+        message = '';
+      }
     };
     window.addEventListener('storage', sync);
     return () => window.removeEventListener('storage', sync);
@@ -89,6 +92,7 @@
       await navigator.locks.request('pcn-workshop', () => {
         load();
         if (saveError) return;
+        const previousEvidence = JSON.stringify(model.evidence);
         if (reloadUnknown) {
           observations = [...observations, 'reload-unknown'];
           reloadUnknown = false;
@@ -135,7 +139,10 @@
           key,
           JSON.stringify({ state: model, mission, manual, history, receipts, observations })
         );
-        message = model.evidence.at(-1) ?? 'Progress saved on this browser.';
+        message =
+          JSON.stringify(model.evidence) !== previousEvidence
+            ? model.evidence.at(-1) ?? ''
+            : '';
       });
     } catch {
       saveError = 'Progress could not be saved. Execution paused; do not assume it completed.';
@@ -155,6 +162,7 @@
       localStorage.removeItem(key);
       saveError = '';
       load();
+      message = '';
     });
   }
   const station = $derived(stations.find((s) => s.id === selected)!);
