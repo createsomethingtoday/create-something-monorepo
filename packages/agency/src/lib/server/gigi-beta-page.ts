@@ -6,6 +6,8 @@ export const gigiBetaHtml = `<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
+  <!-- Keep the page script-free even when production middleware augments the response CSP. -->
+  <meta http-equiv="Content-Security-Policy" content="script-src 'none'">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
   <meta name="description" content="Try GiGi, a local Mac workspace for gigs, contacts, tasks and money. An early beta for Apple Silicon Macs.">

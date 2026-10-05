@@ -22,6 +22,7 @@ test('download contract pins exact qualified installer, platform and checksum', 
 
 test('beta stays unlisted and has no active content or tracking shell', () => {
   assert.equal(gigiBetaHeaders['X-Robots-Tag'], 'noindex, nofollow');
+  assert.match(gigiBetaHtml, /<meta http-equiv="Content-Security-Policy" content="script-src 'none'">/);
   assert.match(gigiBetaHeaders['Content-Security-Policy'], /default-src 'none'/);
   assert.match(gigiBetaHeaders['Content-Security-Policy'], /form-action 'none'/);
   assert.doesNotMatch(gigiBetaHtml, /<script|<iframe|<form|<img|@import|url\(|on(click|load)=/i);
