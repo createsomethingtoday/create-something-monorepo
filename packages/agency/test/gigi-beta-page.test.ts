@@ -4,6 +4,14 @@ import { gigiBeta } from '../src/lib/data/gigiBeta';
 import { gigiBetaHtml, gigiBetaHeaders } from '../src/lib/server/gigi-beta-page';
 import searchRoutes from '../src/lib/data/searchRoutes.json' with { type: 'json' };
 import { isCacheablePublicHtmlResponse } from '../src/lib/server/public-html-cache';
+import { readFileSync } from 'node:fs';
+
+test('standalone page retains the owning Agency Canon operator palette', () => {
+  const canonical = readFileSync(new URL('../../canon/src/lib/styles/operator.css', import.meta.url), 'utf8');
+  const tokens = [...gigiBetaHtml.matchAll(/(--(?:color|radius)-operator-[\w-]+): ([^;]+);/g)];
+  assert.ok(tokens.length >= 10);
+  for (const [, name, value] of tokens) assert.ok(canonical.includes(`${name}: ${value};`), name);
+});
 
 test('download contract pins exact qualified installer, platform and checksum', () => {
   assert.equal(gigiBeta.bytes, 75369025);
