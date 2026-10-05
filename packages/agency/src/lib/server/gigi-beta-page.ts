@@ -1,4 +1,4 @@
-import { gigiBeta } from '../data/gigiBeta';
+import { gigiBeta, gigiWalkthroughs } from '../data/gigiBeta';
 
 // Standalone HTML intentionally avoids the marketing layout, client scripts,
 // analytics, cookies and third-party fonts. All substitutions are fixed constants.
@@ -56,6 +56,10 @@ export const gigiBetaHtml = `<!doctype html>
     .steps { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; }
     .step { color: var(--color-operator-focus-ring-accessible); display: block; margin-bottom: 20px; font-size: 13px; }
     .columns { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; }
+    .walkthroughs { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
+    figure { margin: 0; min-width: 0; }
+    video { display: block; width: 100%; aspect-ratio: 16 / 9; background: var(--color-operator-secondary); border: 1px solid var(--color-operator-border); border-radius: var(--radius-operator-panel); }
+    figcaption { margin-top: 18px; }
     .columns p { margin-top: 0; }
     details { margin-top: 20px; }
     summary { cursor: pointer; padding: 10px 0; font-size: 15px; }
@@ -65,7 +69,7 @@ export const gigiBetaHtml = `<!doctype html>
     code { font-family: 'IBM Plex Mono', 'SFMono-Regular', 'SF Mono', Menlo, Monaco, Consolas, monospace; font-size: 12px; overflow-wrap: anywhere; }
     .checksum { padding: 16px; background: var(--color-operator-secondary); border: 1px solid var(--color-operator-border); border-radius: var(--radius-operator-control); }
     footer { padding: 34px 0 42px; display: flex; justify-content: space-between; gap: 20px; border-top: 1px solid var(--color-operator-border); color: var(--color-operator-muted); font-size: 12px; }
-    @media (max-width: 700px) { .wrap { padding: 0 22px; } .hero { grid-template-columns: 1fr; gap: 40px; padding: 52px 0 40px; } .steps, .columns { grid-template-columns: 1fr; gap: 24px; } .steps li { border-bottom: 1px solid var(--color-operator-border); padding-bottom: 24px; } .step { margin-bottom: 12px; } header { font-size: 10px; } footer { flex-direction: column; } dl { grid-template-columns: 90px minmax(0, 1fr); } }
+    @media (max-width: 700px) { .wrap { padding: 0 22px; } .hero { grid-template-columns: 1fr; gap: 40px; padding: 52px 0 40px; } .steps, .columns, .walkthroughs { grid-template-columns: 1fr; gap: 24px; } .steps li { border-bottom: 1px solid var(--color-operator-border); padding-bottom: 24px; } .step { margin-bottom: 12px; } header { font-size: 10px; } footer { flex-direction: column; } dl { grid-template-columns: 90px minmax(0, 1fr); } }
   </style>
 </head>
 <body>
@@ -88,6 +92,13 @@ export const gigiBetaHtml = `<!doctype html>
         </div>
       </div>
       <div class="note"><p><strong>Early beta.</strong> First-time Mac setup is still being tested. Start with a few non-sensitive records and keep backups. This is a Mac app; automatic cloud sync and an iOS app are not included.</p></div>
+      <section aria-labelledby="walkthroughs"><h2 id="walkthroughs">See the flow.</h2>
+        <p>Silent walkthroughs with on-screen guidance and synthetic records, recorded September 30–October 1, 2026 on earlier beta builds. These show the workflow, not acceptance of a fresh installation of this download.</p>
+        <div class="walkthroughs">${gigiWalkthroughs.map((video) => `<figure>
+          <video controls playsinline preload="none" aria-label="${video.title}"><source src="${video.url}" type="video/mp4">Your browser cannot play this video. <a href="${video.url}">Open the walkthrough</a>.</video>
+          <figcaption><h3>${video.title}</h3><p>${video.seconds} seconds · Silent<br>${video.description}</p><a href="${video.url}">Open video separately ↗</a></figcaption>
+        </figure>`).join('')}</div>
+      </section>
       <section aria-labelledby="start"><h2 id="start">Start with one gig.</h2>
         <ol class="steps">
           <li><span class="step">01 / INSTALL</span><h3>Make room on your Mac.</h3><p>Open the disk image, drag GiGi to Applications, eject the image, then launch GiGi from Finder. Keep macOS security controls enabled. If launch is blocked, stop and report the message.</p></li>
@@ -122,7 +133,7 @@ export const gigiBetaHeaders = {
   'Content-Type': 'text/html; charset=utf-8',
   'X-Robots-Tag': 'noindex, nofollow',
   'Cache-Control': 'no-store',
-  'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
+  'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'; media-src https://media.createsomething.io; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
   'Referrer-Policy': 'no-referrer',
   'X-Content-Type-Options': 'nosniff'
 };
