@@ -171,250 +171,265 @@
 >
 <div class="workshop">
   <p class="eyebrow">PCN / OPERATOR PRACTICE / SIMULATION</p>
-  <h1>One request. A reliable operator.</h1>
-  <p>
-    Canon’s workshop is a safe practice space. Three missions prepare you for PCN; provider setup
-    happens in your own accounts. No real services execute here. Plan about 15–20 minutes including
-    the secrets lesson and setup review.
+  <h1>Canon’s workshop.</h1>
+  <p class="intro">
+    Guide one request from missing information to a reliable receipt. Three missions, one secrets
+    lesson, then your own stack setup.
   </p>
-  <label class="toggle"
-    ><input type="checkbox" bind:checked={listOnly} /> Use station list only</label
-  >
-  {#if !listOnly}<World {selected} paused={reading} onselect={select} />{/if}
-  <div class="toolbar">
-    <button onclick={() => (reading = !reading)}
-      >{reading ? 'Resume travel' : 'Pause for reading'}</button
-    >
-  </div>
-  <nav aria-label="Workshop stations">
-    {#each stations as s}<button
-        disabled={!loaded}
-        aria-current={selected === s.id ? 'step' : undefined}
-        onclick={() => select(s.id)}>{s.label}</button
-      >{/each}
-  </nav>
-  <p role="status" aria-live="polite">
-    {saveError ||
-      message ||
-      `Mission ${mission + 1}: ${model.outcome === 'unknown' ? 'Outcome unknown. Check the receipt before retrying.' : errors.length ? 'Request blocked. Gather valid input at Intake.' : !model.approval ? 'Approval required for this exact request.' : 'Approved request ready for controlled execution.'}`}
+  <p class="simulation-note">
+    Safe simulation · no real services execute · provider setup stays in your accounts
   </p>
-  <button disabled={!loaded} onclick={restart}>Restart local simulation</button>
-  <p>
-    Next: {model.outcome === 'unknown'
-      ? 'Reload, try repeated submit, then check the receipt.'
-      : errors.length
-        ? 'Gather valid input at Intake, then validate.'
-        : model.outcome === 'completed'
-          ? 'Review the receipt and continue to the next lesson.'
-          : model.approval
-            ? 'Submit this exact approved request.'
-            : model.proposal
-              ? 'Review and approve the proposal.'
-              : 'Validate and propose at the Validation bench.'}
-  </p>
-  <section aria-labelledby="mission-heading">
-    <h2 id="mission-heading">Mission {mission + 1} / 3</h2>
-    <p>{missions[mission]}</p>
-  </section>
-  <section
-    aria-labelledby="station-heading"
-    onfocusin={(e) => {
-      if ((e.target as HTMLElement).matches('input,select,textarea,button')) reading = true;
-    }}
-  >
-    <h2 id="station-heading" tabindex="-1">{station.label}</h2>
-    <p>{station.purpose}</p>
-    <fieldset disabled={!loaded || !!saveError}>
-      {#if selected === 'intake'}
-        <p>
-          Request <code>{model.requestId}</code> · input revision {model.revision}. The requester
-          confirms either allowed destination and 1–5 items. Editing invalidates approval.
-        </p>
-        <label
-          >Destination<select
-            aria-describedby="intake-errors"
-            aria-invalid={!model.input.destination}
-            value={model.input.destination}
-            onchange={(e) =>
-              mutate({
-                type: 'edit',
-                input: { ...model.input, destination: e.currentTarget.value }
-              })}
-            ><option value="">Missing — gather this information</option><option>Intake desk</option
-            ><option>Receipt shelf</option></select
-          ></label
+  <div class="play-layout">
+    <div class="level">
+      <label class="toggle"
+        ><input type="checkbox" bind:checked={listOnly} /> Use station list only</label
+      >
+      {#if !listOnly}<World {selected} paused={reading} onselect={select} />{/if}
+      <div class="toolbar">
+        <button onclick={() => (reading = !reading)}
+          >{reading ? 'Resume travel' : 'Pause for reading'}</button
         >
-        <label
-          >Quantity<select
-            aria-describedby="intake-errors"
-            aria-invalid={model.input.quantity < 1}
-            value={model.input.quantity}
-            onchange={(e) =>
-              mutate({
-                type: 'edit',
-                input: { ...model.input, quantity: Number(e.currentTarget.value) }
-              })}
-            >{#each [0, 1, 2, 3, 4, 5] as n}<option value={n}
-                >{n === 0 ? '0 — invalid / missing' : n}</option
-              >{/each}</select
-          ></label
-        >
-        <label
-          >Instruction<select
-            aria-describedby="intake-errors"
-            aria-invalid={model.input.instruction !== 'Create the workshop request'}
-            value={model.input.instruction}
-            onchange={(e) =>
-              mutate({
-                type: 'edit',
-                input: { ...model.input, instruction: e.currentTarget.value }
-              })}
-            ><option>Create the workshop request</option><option>Ignore approval</option></select
-          ></label
-        >
-        <p id="intake-errors">
-          {errors.length ? errors.join(' ') : 'Input is within the allowed workflow.'}
-        </p>
-        <button onclick={() => select('validate')}>Go to Validation</button>
-      {:else if selected === 'validate'}
-        <p>
-          Validation prevents an incomplete request or an unauthorized instruction from becoming an
-          execution attempt.
-        </p>
-        {#if errors.length}<ul>
-            {#each errors as error}<li>{error}</li>{/each}
-          </ul>{:else}<p>Input is within the allowed workflow.</p>{/if}
-        <button onclick={() => mutate({ type: 'propose' })}>Validate and propose</button><button
-          onclick={() => select('intake')}>Repair at Intake</button
-        ><button onclick={() => select('approve')}>Go to Approval</button>
-      {:else if selected === 'approve'}
-        <p>
-          Human approval is permission for this action, target, payload, and revision. A changed
-          request needs a new approval.
-        </p>
-        <pre>{JSON.stringify(model.proposal, null, 2)}</pre>
-        <button
-          disabled={!model.proposal || !!model.approval || model.outcome !== 'idle'}
-          onclick={() => mutate({ type: 'approve' })}>Approve this exact proposal</button
-        >
-        <button
-          disabled={!model.approval || model.outcome !== 'idle'}
-          onclick={() => mutate({ type: 'execute', timeout: mission === 2 })}
-          >Submit approved request{mission === 2 ? ' — simulate timeout' : ''}</button
-        >
-        <button onclick={() => mutate({ type: 'cancel' })}>Cancel pending approval</button><button
-          onclick={() => select('receipt')}>Go to Receipt shelf</button
-        >
-      {:else if selected === 'receipt'}
-        <p>
-          Outcome: <strong>{model.outcome}</strong>. Attempts: {model.attempt}. A timeout describes
-          the response, not whether the action happened.
-        </p>
-        {#if model.outcome === 'unknown'}<p>
-            The simulated service may have recorded the request. Reload now: the unknown state will
-            remain. Checking the receipt is safer than submitting again.
-          </p>{/if}
-        <button
-          disabled={model.outcome !== 'unknown' ||
-            !observations.includes('reload-unknown') ||
-            !observations.includes('repeat-unknown')}
-          onclick={() => mutate({ type: 'check-receipt' })}>Check receipt</button
-        >
-        {#if model.outcome === 'unknown'}<p>
-            Before checking: reload this page while unknown, then try repeated submit. The attempt
-            count must remain one.
-          </p>{/if}
-        <button onclick={() => mutate({ type: 'execute', timeout: mission === 2 })}
-          >Try repeated submit</button
-        >
-        {#if model.outcome === 'completed'}<pre>{JSON.stringify(model.receipt, null, 2)}</pre>
-          {#if mission < 2}<button
-              disabled={mission === 1 &&
-                (!observations.includes('rejected-invalid') ||
-                  !observations.includes('rejected-unauthorized'))}
-              onclick={() => mutate(undefined, true)}>Start next mission</button
-            >{#if mission === 1 && !observations.includes('rejected-unauthorized')}<p>
-                Return to Intake, choose an unauthorized instruction, and observe rejection at
-                Validation before continuing.
-              </p>{/if}{:else}<button onclick={() => select('vault')}
-              >Practice the secrets foundation</button
-            >{/if}{/if}
-      {:else if selected === 'vault'}
-        <p>
-          Infisical foundation: a vault holds secrets and limits who can use them. This cabinet uses
-          dummy generation {model.vault.generation}, currently {model.vault.active
-            ? 'active'
-            : 'revoked'}. A vault does not provide complete application security.
-        </p>
-        <button
-          onclick={() =>
-            mutate({
-              type: 'vault-access',
-              workflow: 'workshop',
-              generation: model.vault.generation
-            })}>Try allowed workflow</button
-        >
-        <button
-          onclick={() =>
-            mutate({ type: 'vault-access', workflow: 'other', generation: model.vault.generation })}
-          >Try unauthorized workflow</button
-        >
-        <button onclick={() => mutate({ type: 'rotate' })}>Rotate dummy credential</button>
-        <button
-          disabled={model.vault.generation < 2}
-          onclick={() =>
-            mutate({
-              type: 'vault-access',
-              workflow: 'workshop',
-              generation: model.vault.generation - 1
-            })}>Try old credential</button
-        >
-        <button onclick={() => mutate({ type: 'revoke' })}>Revoke dummy credential</button>
-        <button onclick={() => select('graduate')}>Go to setup handoff</button>
-      {:else}
-        <p>
-          <strong
-            >{graduated
-              ? 'Request and security simulations completed.'
-              : 'Practice is still incomplete.'}</strong
-          > Actual accounts and deployments have not been verified by this game.
-        </p>
-        {#if missing.length}<p>Remaining practice:</p>
-          <ul>
-            {#each missing as key}<li>
-                {observationsRequired[key as keyof typeof observationsRequired]}
-              </li>{/each}
-          </ul>{/if}
-        <p>
-          <a href="/workshop/pcn-starter.zip" download
-            >Download the thin workflow starter, tests, and deployment guide</a
-          >
-        </p>
-        <p>
-          Use the starter workflow: intake → gather missing information → validate → propose → human
-          approval → execute → receipt. Capture decisions and receipts from the first session.
-        </p>
-        {#each providers as provider}<article>
-            <h3>
-              <a href={provider.url} target="_blank" rel="noreferrer">{provider.name} setup ↗</a>
-            </h3>
-            <p>{provider.task}</p>
+      </div>
+      <nav aria-label="Workshop stations">
+        {#each stations as s}<button
+            disabled={!loaded}
+            aria-current={selected === s.id ? 'step' : undefined}
+            onclick={() => select(s.id)}>{s.label}</button
+          >{/each}
+      </nav>
+    </div>
+    <div class="task">
+      <p role="status" aria-live="polite">
+        {saveError ||
+          message ||
+          `Mission ${mission + 1}: ${model.outcome === 'unknown' ? 'Outcome unknown. Check the receipt before retrying.' : model.outcome === 'completed' ? 'Request completed. Continue security practice or setup handoff.' : errors.length ? 'Request blocked. Gather valid input at Intake.' : !model.approval ? 'Approval required for this exact request.' : 'Approved request ready for controlled execution.'}`}
+      </p>
+      <button disabled={!loaded} onclick={restart}>Restart local simulation</button>
+      <p>
+        Next: {model.outcome === 'unknown'
+          ? 'Reload, try repeated submit, then check the receipt.'
+          : errors.length
+            ? 'Gather valid input at Intake, then validate.'
+            : model.outcome === 'completed'
+              ? 'Review the receipt and continue to the next lesson.'
+              : model.approval
+                ? 'Submit this exact approved request.'
+                : model.proposal
+                  ? 'Review and approve the proposal.'
+                  : 'Validate and propose at the Validation bench.'}
+      </p>
+      <section aria-labelledby="mission-heading">
+        <h2 id="mission-heading">Mission {mission + 1} / 3</h2>
+        <p>{missions[mission]}</p>
+      </section>
+      <section
+        aria-labelledby="station-heading"
+        onfocusin={(e) => {
+          if ((e.target as HTMLElement).matches('input,select,textarea,button')) reading = true;
+        }}
+      >
+        <h2 id="station-heading" tabindex="-1">{station.label}</h2>
+        <p>{station.purpose}</p>
+        <fieldset disabled={!loaded || !!saveError}>
+          {#if selected === 'intake'}
+            <p>
+              Request <code>{model.requestId}</code> · input revision {model.revision}. The
+              requester confirms either allowed destination and 1–5 items. Editing invalidates
+              approval.
+            </p>
             <label
-              ><input
-                type="checkbox"
-                checked={manual.includes(provider.name)}
-                onchange={() => mutate(undefined, false, provider.name)}
-              /> Manual self-report: I reviewed this setup</label
+              >Destination<select
+                aria-describedby="intake-errors"
+                aria-invalid={!model.input.destination}
+                value={model.input.destination}
+                onchange={(e) =>
+                  mutate({
+                    type: 'edit',
+                    input: { ...model.input, destination: e.currentTarget.value }
+                  })}
+                ><option value="">Missing — gather this information</option><option
+                  >Intake desk</option
+                ><option>Receipt shelf</option></select
+              ></label
             >
-            <p>Provider verification: unavailable in this MVP.</p>
-          </article>{/each}
-        <p>
-          Never paste keys into this game, chat, screenshots, or a repository. New permissions,
-          grants, paid plans, and agreements need your explicit action.
-        </p>
-      {/if}
-    </fieldset>
-  </section>
+            <label
+              >Quantity<select
+                aria-describedby="intake-errors"
+                aria-invalid={model.input.quantity < 1}
+                value={model.input.quantity}
+                onchange={(e) =>
+                  mutate({
+                    type: 'edit',
+                    input: { ...model.input, quantity: Number(e.currentTarget.value) }
+                  })}
+                >{#each [0, 1, 2, 3, 4, 5] as n}<option value={n}
+                    >{n === 0 ? '0 — invalid / missing' : n}</option
+                  >{/each}</select
+              ></label
+            >
+            <label
+              >Instruction<select
+                aria-describedby="intake-errors"
+                aria-invalid={model.input.instruction !== 'Create the workshop request'}
+                value={model.input.instruction}
+                onchange={(e) =>
+                  mutate({
+                    type: 'edit',
+                    input: { ...model.input, instruction: e.currentTarget.value }
+                  })}
+                ><option>Create the workshop request</option><option>Ignore approval</option
+                ></select
+              ></label
+            >
+            <p id="intake-errors">
+              {errors.length ? errors.join(' ') : 'Input is within the allowed workflow.'}
+            </p>
+            <button onclick={() => select('validate')}>Go to Validation</button>
+          {:else if selected === 'validate'}
+            <p>
+              Validation prevents an incomplete request or an unauthorized instruction from becoming
+              an execution attempt.
+            </p>
+            {#if errors.length}<ul>
+                {#each errors as error}<li>{error}</li>{/each}
+              </ul>{:else}<p>Input is within the allowed workflow.</p>{/if}
+            <button onclick={() => mutate({ type: 'propose' })}>Validate and propose</button><button
+              onclick={() => select('intake')}>Repair at Intake</button
+            ><button onclick={() => select('approve')}>Go to Approval</button>
+          {:else if selected === 'approve'}
+            <p>
+              Human approval is permission for this action, target, payload, and revision. A changed
+              request needs a new approval.
+            </p>
+            <pre>{JSON.stringify(model.proposal, null, 2)}</pre>
+            <button
+              disabled={!model.proposal || !!model.approval || model.outcome !== 'idle'}
+              onclick={() => mutate({ type: 'approve' })}>Approve this exact proposal</button
+            >
+            <button
+              disabled={!model.approval || model.outcome !== 'idle'}
+              onclick={() => mutate({ type: 'execute', timeout: mission === 2 })}
+              >Submit approved request{mission === 2 ? ' — simulate timeout' : ''}</button
+            >
+            <button onclick={() => mutate({ type: 'cancel' })}>Cancel pending approval</button
+            ><button onclick={() => select('receipt')}>Go to Receipt shelf</button>
+          {:else if selected === 'receipt'}
+            <p>
+              Outcome: <strong>{model.outcome}</strong>. Attempts: {model.attempt}. A timeout
+              describes the response, not whether the action happened.
+            </p>
+            {#if model.outcome === 'unknown'}<p>
+                The simulated service may have recorded the request. Reload now: the unknown state
+                will remain. Checking the receipt is safer than submitting again.
+              </p>{/if}
+            <button
+              disabled={model.outcome !== 'unknown' ||
+                !observations.includes('reload-unknown') ||
+                !observations.includes('repeat-unknown')}
+              onclick={() => mutate({ type: 'check-receipt' })}>Check receipt</button
+            >
+            {#if model.outcome === 'unknown'}<p>
+                Before checking: reload this page while unknown, then try repeated submit. The
+                attempt count must remain one.
+              </p>{/if}
+            <button onclick={() => mutate({ type: 'execute', timeout: mission === 2 })}
+              >Try repeated submit</button
+            >
+            {#if model.outcome === 'completed'}<pre>{JSON.stringify(model.receipt, null, 2)}</pre>
+              {#if mission < 2}<button
+                  disabled={mission === 1 &&
+                    (!observations.includes('rejected-invalid') ||
+                      !observations.includes('rejected-unauthorized'))}
+                  onclick={() => mutate(undefined, true)}>Start next mission</button
+                >{#if mission === 1 && !observations.includes('rejected-unauthorized')}<p>
+                    Return to Intake, choose an unauthorized instruction, and observe rejection at
+                    Validation before continuing.
+                  </p>{/if}{:else}<button onclick={() => select('vault')}
+                  >Practice the secrets foundation</button
+                >{/if}{/if}
+          {:else if selected === 'vault'}
+            <p>
+              Infisical foundation: a vault holds secrets and limits who can use them. This cabinet
+              uses dummy generation {model.vault.generation}, currently {model.vault.active
+                ? 'active'
+                : 'revoked'}. A vault does not provide complete application security.
+            </p>
+            <button
+              onclick={() =>
+                mutate({
+                  type: 'vault-access',
+                  workflow: 'workshop',
+                  generation: model.vault.generation
+                })}>Try allowed workflow</button
+            >
+            <button
+              onclick={() =>
+                mutate({
+                  type: 'vault-access',
+                  workflow: 'other',
+                  generation: model.vault.generation
+                })}>Try unauthorized workflow</button
+            >
+            <button onclick={() => mutate({ type: 'rotate' })}>Rotate dummy credential</button>
+            <button
+              disabled={model.vault.generation < 2}
+              onclick={() =>
+                mutate({
+                  type: 'vault-access',
+                  workflow: 'workshop',
+                  generation: model.vault.generation - 1
+                })}>Try old credential</button
+            >
+            <button onclick={() => mutate({ type: 'revoke' })}>Revoke dummy credential</button>
+            <button onclick={() => select('graduate')}>Go to setup handoff</button>
+          {:else}
+            <p>
+              <strong
+                >{graduated
+                  ? 'Request and security simulations completed.'
+                  : 'Practice is still incomplete.'}</strong
+              > Actual accounts and deployments have not been verified by this game.
+            </p>
+            {#if missing.length}<p>Remaining practice:</p>
+              <ul>
+                {#each missing as key}<li>
+                    {observationsRequired[key as keyof typeof observationsRequired]}
+                  </li>{/each}
+              </ul>{/if}
+            <p>
+              <a href="/workshop/pcn-starter.zip" download
+                >Download the thin workflow starter, tests, and deployment guide</a
+              >
+            </p>
+            <p>
+              Use the starter workflow: intake → gather missing information → validate → propose →
+              human approval → execute → receipt. Capture decisions and receipts from the first
+              session.
+            </p>
+            {#each providers as provider}<article>
+                <h3>
+                  <a href={provider.url} target="_blank" rel="noreferrer">{provider.name} setup ↗</a
+                  >
+                </h3>
+                <p>{provider.task}</p>
+                <label
+                  ><input
+                    type="checkbox"
+                    checked={manual.includes(provider.name)}
+                    onchange={() => mutate(undefined, false, provider.name)}
+                  /> Manual self-report: I reviewed this setup</label
+                >
+                <p>Provider verification: unavailable in this MVP.</p>
+              </article>{/each}
+            <p>
+              Never paste keys into this game, chat, screenshots, or a repository. New permissions,
+              grants, paid plans, and agreements need your explicit action.
+            </p>
+          {/if}
+        </fieldset>
+      </section>
+    </div>
+  </div>
   <details>
     <summary>Decision and receipt history</summary>
     <ul>
@@ -433,8 +448,38 @@
   .workshop {
     max-width: 72rem;
     margin: 0 auto;
-    padding: 8rem 1rem 4rem;
+    padding: 2.5rem 1rem 4rem;
     color: var(--color-fg-primary);
+  }
+  .intro {
+    max-width: 56ch;
+  }
+  .simulation-note {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--color-fg-secondary);
+  }
+  .play-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+    gap: 2rem;
+    align-items: start;
+    margin-top: 1.5rem;
+  }
+  .level {
+    position: sticky;
+    top: 5.5rem;
+  }
+  .task {
+    min-width: 0;
+  }
+  @media (max-width: 900px) {
+    .play-layout {
+      display: block;
+    }
+    .level {
+      position: static;
+    }
   }
   fieldset {
     border: 0;
@@ -442,7 +487,7 @@
     min-width: 0;
   }
   h1 {
-    font-size: clamp(2rem, 6vw, 3.5rem);
+    font-size: clamp(2rem, 5vw, 3rem);
     line-height: 1.08;
     max-width: 18ch;
   }
