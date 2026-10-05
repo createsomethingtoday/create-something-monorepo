@@ -38,7 +38,7 @@
           const camera = new T.OrthographicCamera(-8, 8, 7, -7, 0.1, 60);
           camera.position.set(12, 13, 12);
           camera.lookAt(0, 0, 0);
-          const player = new T.Vector3(0, 0, 1.4);
+          const player = new T.Vector3(0, 0, -1);
           const goal = player.clone();
           let rendered = false;
           scene.add(new T.HemisphereLight(0xfff7e8, 0x454541, 2.2));
@@ -143,10 +143,13 @@
               box(group, 1.35, 0.08, 0.9, 0, 0.04, 0.12, stone);
             }
           });
-          const texture = new T.TextureLoader().load('/workshop/canon.png');
+          const texture = new T.TextureLoader().load('/workshop/canon.png', () => {
+            rendered = false;
+          });
           texture.colorSpace = T.SRGBColorSpace;
-          const sprite = new T.Sprite(new T.SpriteMaterial({ map: texture, transparent: true }));
+          const sprite = new T.Sprite(new T.SpriteMaterial({ map: texture, transparent: true, depthTest: false }));
           sprite.scale.set(1.5, 1.5, 1);
+          sprite.renderOrder = 10;
           scene.add(sprite);
           const shadow = new T.Mesh(
             new T.CircleGeometry(0.32, 24),
