@@ -33,6 +33,7 @@ form.addEventListener('submit', async event => {
   const fields = new FormData(form);
   const password = fields.get('password');
   if (mode === 'verify' && password !== fields.get('confirmation')) {
+    form.querySelectorAll('input[type="password"]').forEach(field => { field.value = ''; });
     error.textContent = 'The passwords do not match.'; button.disabled = false; return;
   }
   const endpoint = 'enrollment/' + (mode === 'verify' ? 'complete' : 'start');

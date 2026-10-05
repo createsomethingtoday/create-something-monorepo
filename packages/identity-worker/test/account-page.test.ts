@@ -46,3 +46,25 @@ test('generic account entry has no credential form, auth request or token issuan
 test('each request gets a fresh CSP nonce', () => {
   assert.notEqual(accountPage('/login')!.headers.get('Content-Security-Policy'), accountPage('/login')!.headers.get('Content-Security-Policy'));
 });
+
+test('verification mismatch clears both fields and never sends credentials', async () => {
+  const html = await accountPage('/verify')!.text();
+  const script = html.match(/<script nonce="[^"]+">([\s\S]*?)<\/script>/)![1];
+  const fields = [{ value: 'different-password-a' }, { value: 'different-password-b' }];
+  const button = { disabled: false };
+  const error = { textContent: '' };
+  let submit: (event: unknown) => Promise<void>;
+  const link = { href: '', hidden: true };
+  const form = { hidden: false, querySelector: () => button, querySelectorAll: () => fields, addEventListener: (_: string, handler: typeof submit) => { submit = handler; } };
+  runInNewContext(script, {
+    URLSearchParams, location: { search: '', hash: '#token=' + 'a'.repeat(64), pathname: '/verify' },
+    history: { replaceState() {} },
+    document: { querySelector: (selector: string) => selector === 'form' ? form : selector === '[role="alert"]' ? error : link, getElementById: () => link },
+    FormData: class { get(name: string) { return name === 'password' ? fields[0].value : fields[1].value; } },
+    fetch() { throw new Error('Mismatch must not send credentials'); }
+  });
+  await submit!({ preventDefault() {} });
+  assert.deepEqual(fields.map(field => field.value), ['', '']);
+  assert.equal(error.textContent, 'The passwords do not match.');
+  assert.equal(button.disabled, false);
+});
