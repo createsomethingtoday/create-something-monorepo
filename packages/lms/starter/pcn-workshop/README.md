@@ -141,11 +141,15 @@ Record the intended account name/ID and Worker name in your private DECISIONS.md
 
 3. Run npm run deploy only when you intend to create or update that Worker in your account. Review any workers.dev subdomain setup or account prompts yourself; stop at unexpected grants, plans, or agreements. Record the returned URL and version.
 
-### Test, preflight, then deploy when ready
+### Test and preflight; stop if either fails
 
 ```
-npm test
-npx wrangler deploy --dry-run
+npm test && npx wrangler deploy --dry-run
+```
+
+### Deploy after reviewing the successful preflight and target
+
+```
 npm run deploy
 ```
 

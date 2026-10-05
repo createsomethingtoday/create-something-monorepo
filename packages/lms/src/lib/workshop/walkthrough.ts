@@ -175,8 +175,12 @@ export const setupSteps: SetupStep[] = [
     ],
     commands: [
       {
-        label: 'Test, preflight, then deploy when ready',
-        text: 'npm test\nnpx wrangler deploy --dry-run\nnpm run deploy'
+        label: 'Test and preflight; stop if either fails',
+        text: 'npm test && npx wrangler deploy --dry-run'
+      },
+      {
+        label: 'Deploy after reviewing the successful preflight and target',
+        text: 'npm run deploy'
       }
     ],
     success:

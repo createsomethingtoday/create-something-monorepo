@@ -76,6 +76,11 @@ test('walkthrough health contract matches Worker and shipped test/deploy command
   assert.equal(config.main, 'worker.ts');
   assert.equal(config.compatibility_date, '2026-10-05');
   assert.equal(config.account_id, undefined); // Each learner supplies their own ID, never ours.
+  const deploy = setupSteps.find((step) => step.id === 'deploy')!;
+  assert.deepEqual(deploy.commands.map((command) => command.text), [
+    'npm test && npx wrangler deploy --dry-run',
+    'npm run deploy'
+  ]);
 });
 
 test('all five steps have success, recovery and evidence without credential collection', () => {
