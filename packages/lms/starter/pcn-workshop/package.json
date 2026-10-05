@@ -1,0 +1,14 @@
+{
+  "name": "pcn-workshop-starter",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --import tsx --test workflow.test.ts",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3",
+    "wrangler": "^4.110.0"
+  }
+}
