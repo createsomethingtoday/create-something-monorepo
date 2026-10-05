@@ -8,10 +8,11 @@ const invalid = () =>
   reply({ error: 'This verification link is invalid or expired. Request a new link.' }, 400);
 export const enrollmentOpen = (env: Env) =>
   env.PUBLIC_ENROLLMENT_ENABLED === 'true' ||
+  env.ENROLLMENT_INVITATIONS_ENABLED === 'true' ||
   !!env.ENROLLMENT_ALLOWED_EMAILS?.trim() ||
   ((env.PCN_ENROLLMENT_ENABLED === 'true' || !!env.PCN_ENROLLMENT_CANARY_EMAILS?.trim()) &&
     !!env.PCN_DB);
-async function emailAllowed(env: Env, email: string, now: number, purpose: string) {
+async function legacyEmailAllowed(env: Env, email: string, now: number, purpose: string) {
   if (
     env.PUBLIC_ENROLLMENT_ENABLED === 'true' ||
     (env.ENROLLMENT_ALLOWED_EMAILS || '')
@@ -45,6 +46,48 @@ async function emailAllowed(env: Env, email: string, now: number, purpose: strin
     .bind(email, email, now)
     .first();
   return !!eligible;
+}
+async function eligibility(
+  env: Env,
+  email: string,
+  now: number,
+  purpose: string,
+  boundInvitation?: string | null
+): Promise<{ allowed: boolean; invitationId: string | null }> {
+  if (purpose === 'recovery' && env.VERIFIED_RECOVERY_ENABLED === 'true')
+    return {
+      allowed: !!(await env.DB.prepare(
+        'SELECT 1 FROM users WHERE email=? AND deleted_at IS NULL AND email_verified=1'
+      )
+        .bind(email)
+        .first()),
+      invitationId: null
+    };
+  if (boundInvitation) {
+    if (purpose !== 'signup' || env.ENROLLMENT_INVITATIONS_ENABLED !== 'true')
+      return { allowed: false, invitationId: null };
+    const row = await env.DB.prepare(
+      "SELECT id FROM enrollment_invitations WHERE id=? AND email=? AND scope='identity:signup' AND revoked_at IS NULL AND redeemed_at IS NULL AND expires_at>?"
+    )
+      .bind(boundInvitation, email, now)
+      .first<{ id: string }>();
+    return { allowed: !!row, invitationId: row?.id ?? null };
+  }
+  if (await legacyEmailAllowed(env, email, now, purpose))
+    return { allowed: true, invitationId: null };
+  if (
+    boundInvitation === undefined &&
+    purpose === 'signup' &&
+    env.ENROLLMENT_INVITATIONS_ENABLED === 'true'
+  ) {
+    const row = await env.DB.prepare(
+      "SELECT id FROM enrollment_invitations WHERE email=? AND scope='identity:signup' AND revoked_at IS NULL AND redeemed_at IS NULL AND expires_at>? ORDER BY created_at,id LIMIT 1"
+    )
+      .bind(email, now)
+      .first<{ id: string }>();
+    return { allowed: !!row, invitationId: row?.id ?? null };
+  }
+  return { allowed: false, invitationId: null };
 }
 const origin = 'https://private.createsomething.agency';
 async function body(request: Request): Promise<Record<string, unknown>> {
@@ -91,7 +134,8 @@ async function allowed(env: Env, key: string, max: number, now: number) {
 // Called directly by the browser so CF-Connecting-IP is the actual client.
 // No forwarded IP headers or caller-supplied return URLs are trusted.
 export async function startEnrollment(request: Request, env: Env): Promise<Response> {
-  if (!enrollmentOpen(env) || !env.RESEND_API_KEY) return unavailable();
+  if ((!enrollmentOpen(env) && env.VERIFIED_RECOVERY_ENABLED !== 'true') || !env.RESEND_API_KEY)
+    return unavailable();
   const now = Math.floor(Date.now() / 1000);
   const ip = request.headers.get('CF-Connecting-IP');
   if (!ip) return unavailable();
@@ -116,8 +160,11 @@ export async function startEnrollment(request: Request, env: Env): Promise<Respo
       success: true,
       message: 'If this address can receive account verification, a link will arrive shortly.'
     });
+  if (purpose === 'signup' && !enrollmentOpen(env)) return unavailable();
+  let admission: { allowed: boolean; invitationId: string | null };
   try {
-    if (!(await emailAllowed(env, email, now, String(purpose)))) return accepted();
+    admission = await eligibility(env, email, now, String(purpose));
+    if (!admission.allowed) return accepted();
   } catch {
     return unavailable();
   }
@@ -134,9 +181,9 @@ export async function startEnrollment(request: Request, env: Env): Promise<Respo
   const token = generateSecureToken(32);
   const digest = await hashToken(token);
   await env.DB.prepare(
-    'INSERT INTO enrollment_challenges(token_hash,email,purpose,expires_at,created_at) VALUES(?,?,?,?,?)'
+    'INSERT INTO enrollment_challenges(token_hash,email,purpose,expires_at,created_at,invitation_id) VALUES(?,?,?,?,?,?)'
   )
-    .bind(digest, email, purpose, now + 900, now)
+    .bind(digest, email, purpose, now + 900, now, admission.invitationId)
     .run();
   const next =
     typeof input.next_path === 'string' &&
@@ -166,13 +213,15 @@ export async function startEnrollment(request: Request, env: Env): Promise<Respo
     if (!response.ok) throw new Error('Mail delivery rejected');
   } catch {
     await env.DB.prepare('DELETE FROM enrollment_challenges WHERE token_hash=?').bind(digest).run();
-    return unavailable();
+    return purpose === 'recovery' && env.VERIFIED_RECOVERY_ENABLED === 'true'
+      ? accepted()
+      : unavailable();
   }
   return accepted();
 }
 
 export async function completeEnrollment(request: Request, env: Env): Promise<Response> {
-  if (!enrollmentOpen(env)) return unavailable();
+  if (!enrollmentOpen(env) && env.VERIFIED_RECOVERY_ENABLED !== 'true') return unavailable();
   const now = Math.floor(Date.now() / 1000);
   const ip = request.headers.get('CF-Connecting-IP');
   if (!ip) return unavailable();
@@ -194,13 +243,14 @@ export async function completeEnrollment(request: Request, env: Env): Promise<Re
     return reply({ error: 'Use a password between 12 and 256 characters.' }, 400);
   const digest = await hashToken(input.token);
   const proof = await env.DB.prepare(
-    'SELECT email,purpose FROM enrollment_challenges WHERE token_hash=? AND claimed_at IS NULL AND expires_at>?'
+    'SELECT email,purpose,invitation_id FROM enrollment_challenges WHERE token_hash=? AND claimed_at IS NULL AND expires_at>?'
   )
     .bind(digest, now)
-    .first<{ email: string; purpose: 'signup' | 'recovery' }>();
+    .first<{ email: string; purpose: 'signup' | 'recovery'; invitation_id: string | null }>();
   if (!proof) return invalid();
   try {
-    if (!(await emailAllowed(env, proof.email, now, proof.purpose))) return unavailable();
+    if (!(await eligibility(env, proof.email, now, proof.purpose, proof.invitation_id)).allowed)
+      return unavailable();
   } catch {
     return unavailable();
   }
@@ -212,9 +262,11 @@ export async function completeEnrollment(request: Request, env: Env): Promise<Re
     .bind(now, digest, now)
     .first<{ email: string; purpose: 'signup' | 'recovery' }>();
   if (!claimed) return invalid();
-  const existing = await env.DB.prepare('SELECT id,deleted_at FROM users WHERE email=?')
+  const existing = await env.DB.prepare(
+    'SELECT id,deleted_at,email_verified FROM users WHERE email=?'
+  )
     .bind(claimed.email)
-    .first<{ id: string; deleted_at: string | null }>();
+    .first<{ id: string; deleted_at: string | null; email_verified: number }>();
   if (claimed.purpose === 'signup') {
     if (existing)
       return reply(
@@ -222,11 +274,33 @@ export async function completeEnrollment(request: Request, env: Env): Promise<Re
         409
       );
     try {
-      await env.DB.prepare(
-        "INSERT INTO users(id,email,email_verified,password_hash,source) VALUES(?,?,1,?,'io')"
-      )
-        .bind(generateUUID(), claimed.email, password)
-        .run();
+      if (proof.invitation_id) {
+        const newId = generateUUID();
+        const changed = await env.DB.batch([
+          env.DB.prepare(
+            "INSERT INTO users(id,email,email_verified,password_hash,source) SELECT ?,?,1,?,'io' WHERE EXISTS (SELECT 1 FROM enrollment_invitations WHERE id=? AND email=? AND scope='identity:signup' AND revoked_at IS NULL AND redeemed_at IS NULL AND expires_at>unixepoch())"
+          ).bind(newId, claimed.email, password, proof.invitation_id, claimed.email),
+          env.DB.prepare(
+            'UPDATE enrollment_invitations SET redeemed_at=? WHERE id=? AND EXISTS (SELECT 1 FROM users WHERE id=? AND email=?)'
+          ).bind(now, proof.invitation_id, newId, claimed.email),
+          env.DB.prepare(
+            "INSERT INTO enrollment_invitation_events(id,invitation_id,action,actor,created_at) SELECT ?,?,'redeemed',?,? WHERE EXISTS (SELECT 1 FROM users WHERE id=? AND email=?)"
+          ).bind(
+            generateUUID(),
+            proof.invitation_id,
+            `identity:${newId}`,
+            now,
+            newId,
+            claimed.email
+          )
+        ]);
+        if (changed[0]?.meta.changes !== 1) return invalid();
+      } else
+        await env.DB.prepare(
+          "INSERT INTO users(id,email,email_verified,password_hash,source) VALUES(?,?,1,?,'io')"
+        )
+          .bind(generateUUID(), claimed.email, password)
+          .run();
     } catch {
       return reply(
         { error: 'Account creation could not finish. Sign in or request a new verification link.' },
@@ -234,19 +308,38 @@ export async function completeEnrollment(request: Request, env: Env): Promise<Re
       );
     }
   } else {
-    if (!existing || existing.deleted_at)
+    if (
+      !existing ||
+      existing.deleted_at ||
+      (env.VERIFIED_RECOVERY_ENABLED === 'true' && existing.email_verified !== 1)
+    )
       return reply(
         { error: 'This account cannot be recovered. Contact CREATE SOMETHING for help.' },
         409
       );
-    await env.DB.batch([
+    const additionalRevocations =
+      env.VERIFIED_RECOVERY_ENABLED === 'true'
+        ? [
+            ['oauth_refresh_families', 'user_id', false],
+            ['mcp_sessions', 'user_id', true],
+            ['mcp_long_lived_tokens', 'auth_subject', true],
+            ['mcp_legacy_keys', 'user_id', true]
+          ].map(([table, subject, timestamp]) =>
+            env.DB.prepare(
+              `UPDATE ${table} SET revoked_at=CURRENT_TIMESTAMP${timestamp ? ',updated_at=CURRENT_TIMESTAMP' : ''} WHERE ${subject}=? AND revoked_at IS NULL AND EXISTS (SELECT 1 FROM users WHERE id=? AND password_hash=? AND deleted_at IS NULL AND email_verified=1)`
+            ).bind(existing.id, existing.id, password)
+          )
+        : [];
+    const changed = await env.DB.batch([
       env.DB.prepare(
-        'UPDATE users SET password_hash=?,email_verified=1,updated_at=CURRENT_TIMESTAMP WHERE id=? AND deleted_at IS NULL'
-      ).bind(password, existing.id),
+        'UPDATE users SET password_hash=?,email_verified=1,updated_at=CURRENT_TIMESTAMP WHERE id=? AND deleted_at IS NULL AND (?=0 OR email_verified=1)'
+      ).bind(password, existing.id, env.VERIFIED_RECOVERY_ENABLED === 'true' ? 1 : 0),
       env.DB.prepare(
-        'UPDATE refresh_tokens SET revoked_at=CURRENT_TIMESTAMP WHERE user_id=? AND revoked_at IS NULL'
-      ).bind(existing.id)
+        'UPDATE refresh_tokens SET revoked_at=CURRENT_TIMESTAMP WHERE user_id=? AND revoked_at IS NULL AND EXISTS (SELECT 1 FROM users WHERE id=? AND password_hash=?)'
+      ).bind(existing.id, existing.id, password),
+      ...additionalRevocations
     ]);
+    if (changed[0]?.meta.changes !== 1) return invalid();
   }
   // Mailbox proof creates no session and grants no network membership.
   return reply({ success: true, email: claimed.email });

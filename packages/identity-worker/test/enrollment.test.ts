@@ -5,7 +5,9 @@ import { execFileSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { startEnrollment, completeEnrollment } from '../src/services/enrollment.ts';
-import { verifyPassword } from '../src/services/crypto.ts';
+import { manageEnrollmentInvitation } from '../src/services/enrollment-invitations.ts';
+import identityWorker from '../src/index.ts';
+import { verifyPassword, hashToken } from '../src/services/crypto.ts';
 
 function fixture(t: any) {
   // Match the owning Identity CI's Node20-compatible SQLite fixture boundary.
@@ -51,11 +53,15 @@ function fixture(t: any) {
   db.exec(
     readFileSync(new URL('../migrations/0016_verified_enrollment.sql', import.meta.url), 'utf8')
   );
+  db.exec(
+    readFileSync(new URL('../migrations/0017_enrollment_invitations.sql', import.meta.url), 'utf8')
+  );
   function statement(sql: string, values: any[] = []): any {
     return {
       bind: (...args: any[]) => statement(sql, args),
       toSql: () => bind(sql, values),
       first: async () => db.prepare(sql).get(...values) || null,
+      all: async () => ({ results: JSON.parse(execute(bind(sql, values)) || '[]') }),
       run: async () => ({ meta: { changes: db.prepare(sql).run(...values).changes } })
     };
   }
@@ -65,8 +71,12 @@ function fixture(t: any) {
     DB: {
       prepare: statement,
       batch: async (statements: any[]) => {
-        db.exec(`BEGIN; ${statements.map((s) => s.toSql()).join('; ')}; COMMIT;`);
-        return statements.map(() => ({ meta: { changes: 1 } }));
+        const output = execute(
+          `BEGIN; ${statements.map((s) => `${s.toSql()}; SELECT changes() AS changes;`).join(' ')} COMMIT;`
+        );
+        return [...output.matchAll(/\[\{\"changes\":(\d+)\}\]/g)].map((match) => ({
+          meta: { changes: Number(match[1]) }
+        }));
       }
     }
   } as any;
@@ -442,4 +452,314 @@ test('PCN canary rollout still requires a live invitation and rechecks the canar
     ).status,
     200
   );
+});
+
+const secureMode = (f: ReturnType<typeof fixture>) =>
+  Object.assign(f.env, {
+    PUBLIC_ENROLLMENT_ENABLED: 'false',
+    VERIFIED_RECOVERY_ENABLED: 'true',
+    ENROLLMENT_INVITATIONS_ENABLED: 'true'
+  });
+const issue = (f: ReturnType<typeof fixture>, extra = {}) =>
+  manageEnrollmentInvitation(
+    f.request({
+      email: 'invite@example.com',
+      request_id: 'fixture-request',
+      expires_at: Math.floor(Date.now() / 1000) + 3600,
+      reason: 'Synthetic admission',
+      ...extra
+    }),
+    f.env,
+    'service:fixture-owner',
+    'issue'
+  );
+const credentials = (f: ReturnType<typeof fixture>) =>
+  f.db.exec(
+    `CREATE TABLE oauth_refresh_families(user_id TEXT,revoked_at TEXT); CREATE TABLE mcp_sessions(user_id TEXT,revoked_at TEXT,updated_at TEXT); CREATE TABLE mcp_long_lived_tokens(auth_subject TEXT,revoked_at TEXT,updated_at TEXT); CREATE TABLE mcp_legacy_keys(user_id TEXT,revoked_at TEXT,updated_at TEXT); INSERT INTO oauth_refresh_families VALUES('u',NULL); INSERT INTO mcp_sessions VALUES('u',NULL,NULL); INSERT INTO mcp_long_lived_tokens VALUES('u',NULL,NULL); INSERT INTO mcp_legacy_keys VALUES('u',NULL,NULL);`
+  );
+const verified = (f: ReturnType<typeof fixture>) =>
+  f.db.exec(
+    "INSERT INTO users(id,email,password_hash,source,email_verified) VALUES('u','verified@example.com','original','io',1)"
+  );
+
+test('closed enrollment permits verified recovery and revokes all credential families without granting a session', async (t) => {
+  const f = fixture(t);
+  secureMode(f);
+  credentials(f);
+  verified(f);
+  await startEnrollment(f.request({ email: 'verified@example.com', purpose: 'recovery' }), f.env);
+  const response = await completeEnrollment(
+    f.request({ token: f.token(), password: 'recovered fixture password' }),
+    f.env
+  );
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.has('Set-Cookie'), false);
+  for (const table of [
+    'oauth_refresh_families',
+    'mcp_sessions',
+    'mcp_long_lived_tokens',
+    'mcp_legacy_keys'
+  ])
+    assert.ok(f.db.prepare(`SELECT revoked_at FROM ${table}`).get()?.revoked_at, table);
+  assert.equal(
+    (
+      await completeEnrollment(
+        f.request({ token: f.token(), password: 'replayed fixture password' }),
+        f.env
+      )
+    ).status,
+    400
+  );
+});
+test('unknown, unverified and deleted recovery accounts get identical responses with no mail', async (t) => {
+  const f = fixture(t);
+  secureMode(f);
+  f.db.exec(
+    "INSERT INTO users(id,email,password_hash,source,email_verified,deleted_at) VALUES('u','unverified@example.com','original','io',0,NULL),('d','deleted@example.com','original','io',1,'2026-01-01')"
+  );
+  const bodies = [];
+  for (const email of ['unknown@example.com', 'unverified@example.com', 'deleted@example.com']) {
+    const r = await startEnrollment(f.request({ email, purpose: 'recovery' }), f.env);
+    assert.equal(r.status, 200);
+    bodies.push(await r.text());
+  }
+  assert.equal(new Set(bodies).size, 1);
+  assert.equal(f.mails.length, 0);
+});
+test('a deletion race blocks recovery and all credential revocations atomically', async (t) => {
+  const f = fixture(t);
+  secureMode(f);
+  credentials(f);
+  verified(f);
+  await startEnrollment(f.request({ email: 'verified@example.com', purpose: 'recovery' }), f.env);
+  const batch = f.env.DB.batch;
+  f.env.DB.batch = async (s: any[]) => {
+    f.db.exec("UPDATE users SET deleted_at='2026-01-01'");
+    return batch(s);
+  };
+  assert.equal(
+    (
+      await completeEnrollment(
+        f.request({ token: f.token(), password: 'blocked fixture password' }),
+        f.env
+      )
+    ).status,
+    400
+  );
+  assert.equal(f.db.prepare('SELECT password_hash FROM users').get()?.password_hash, 'original');
+  assert.equal(f.db.prepare('SELECT revoked_at FROM mcp_sessions').get()?.revoked_at, null);
+});
+test('verified recovery masks provider rejection and deletes undelivered proof', async (t) => {
+  const f = fixture(t);
+  secureMode(f);
+  verified(f);
+  t.mock.method(globalThis, 'fetch', async () => new Response('', { status: 503 }));
+  assert.equal(
+    (
+      await startEnrollment(
+        f.request({ email: 'verified@example.com', purpose: 'recovery' }),
+        f.env
+      )
+    ).status,
+    200
+  );
+  assert.equal(f.db.prepare('SELECT COUNT(*) AS count FROM enrollment_challenges').get()?.count, 0);
+});
+test('invitations default off, reject access claims, and audit idempotent metadata only', async (t) => {
+  const f = fixture(t);
+  assert.equal((await issue(f)).status, 404);
+  secureMode(f);
+  assert.equal((await issue(f, { role: 'admin' })).status, 400);
+  const expires_at = Math.floor(Date.now() / 1000) + 3600;
+  const first = await issue(f, { expires_at });
+  assert.equal(first.status, 201);
+  assert.equal(((await first.json()) as any).invitation.scope, 'identity:signup');
+  assert.equal((await issue(f, { expires_at })).status, 200);
+  assert.equal((await issue(f, { expires_at, email: 'other@example.com' })).status, 409);
+  assert.equal(
+    f.db.prepare('SELECT COUNT(*) AS count FROM enrollment_invitation_events').get()?.count,
+    1
+  );
+  assert.equal(f.db.prepare('SELECT COUNT(*) AS count FROM users').get()?.count, 0);
+  assert.equal(f.mails.length, 0);
+});
+test('invited proof binds and redeems exactly once', async (t) => {
+  const f = fixture(t);
+  secureMode(f);
+  const id = ((await (await issue(f)).json()) as any).invitation.id;
+  await startEnrollment(f.request({ email: 'invite@example.com', purpose: 'signup' }), f.env);
+  assert.equal(
+    f.db.prepare('SELECT invitation_id FROM enrollment_challenges').get()?.invitation_id,
+    id
+  );
+  assert.equal(
+    (
+      await completeEnrollment(
+        f.request({ token: f.token(), password: 'invited fixture password' }),
+        f.env
+      )
+    ).status,
+    200
+  );
+  assert.ok(f.db.prepare('SELECT redeemed_at FROM enrollment_invitations').get()?.redeemed_at);
+  assert.equal(
+    f.db
+      .prepare("SELECT COUNT(*) AS count FROM enrollment_invitation_events WHERE action='redeemed'")
+      .get()?.count,
+    1
+  );
+});
+test('invitation revoked during redemption creates no user or redemption audit', async (t) => {
+  const f = fixture(t);
+  secureMode(f);
+  await issue(f);
+  await startEnrollment(f.request({ email: 'invite@example.com', purpose: 'signup' }), f.env);
+  const batch = f.env.DB.batch;
+  f.env.DB.batch = async (s: any[]) => {
+    f.db.exec('UPDATE enrollment_invitations SET revoked_at=unixepoch()');
+    return batch(s);
+  };
+  assert.equal(
+    (
+      await completeEnrollment(
+        f.request({ token: f.token(), password: 'blocked fixture password' }),
+        f.env
+      )
+    ).status,
+    400
+  );
+  assert.equal(f.db.prepare('SELECT COUNT(*) AS count FROM users').get()?.count, 0);
+  assert.equal(
+    f.db
+      .prepare("SELECT COUNT(*) AS count FROM enrollment_invitation_events WHERE action='redeemed'")
+      .get()?.count,
+    0
+  );
+});
+test('unbound legacy proof cannot borrow a newly issued invitation', async (t) => {
+  const f = fixture(t);
+  await startEnrollment(f.request({ email: 'invite@example.com', purpose: 'signup' }), f.env);
+  const token = f.token();
+  secureMode(f);
+  await issue(f);
+  assert.equal(
+    (await completeEnrollment(f.request({ token, password: 'untracked fixture password' }), f.env))
+      .status,
+    503
+  );
+  assert.equal(f.db.prepare('SELECT COUNT(*) AS count FROM users').get()?.count, 0);
+  assert.equal(
+    f.db.prepare('SELECT redeemed_at FROM enrollment_invitations').get()?.redeemed_at,
+    null
+  );
+});
+
+test('invitation router enforces dedicated permission, rejects revoked keys and fixes service actor', async (t) => {
+  const f = fixture(t);
+  secureMode(f);
+  const send = (key?: string) =>
+    identityWorker.fetch(
+      new Request('https://id.createsomething.space/v1/auth/enrollment/invitations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(key ? { 'X-API-Key': key } : {}) },
+        body: JSON.stringify({
+          email: 'invite@example.com',
+          request_id: 'router-request',
+          expires_at: Math.floor(Date.now() / 1000) + 3600,
+          reason: 'Synthetic router test'
+        })
+      }),
+      f.env
+    );
+  assert.equal((await send()).status, 401);
+  const publicKey = 'public synthetic fixture API key';
+  const digest = await hashToken(publicKey);
+  f.db
+    .prepare('INSERT INTO api_keys(id,service,key_hash,permissions) VALUES(?,?,?,?)')
+    .run('k', 'fixture-owner', digest, '["validate_identity_session"]');
+  assert.equal((await send(publicKey)).status, 403);
+  f.db.prepare('UPDATE api_keys SET permissions=?').run('["enrollment_invitation_manage"]');
+  assert.equal((await send(publicKey)).status, 201);
+  assert.equal(
+    f.db.prepare('SELECT created_by FROM enrollment_invitations').get()?.created_by,
+    'service:fixture-owner'
+  );
+  f.db.exec('UPDATE api_keys SET revoked_at=CURRENT_TIMESTAMP');
+  assert.equal((await send(publicKey)).status, 401);
+  f.env.ENROLLMENT_INVITATIONS_ENABLED = 'false';
+  assert.equal((await send(publicKey)).status, 404);
+  assert.equal(
+    f.db.prepare('SELECT COUNT(*) AS count FROM enrollment_invitation_events').get()?.count,
+    1
+  );
+});
+test('revoked invitation proofs remain unusable and revocation is idempotently audited', async (t) => {
+  const f = fixture(t);
+  secureMode(f);
+  const id = ((await (await issue(f)).json()) as any).invitation.id;
+  await startEnrollment(f.request({ email: 'invite@example.com', purpose: 'signup' }), f.env);
+  const token = f.token();
+  for (let i = 0; i < 2; i++)
+    assert.equal(
+      (
+        await manageEnrollmentInvitation(
+          f.request({}),
+          f.env,
+          'service:fixture-owner',
+          'revoke',
+          id
+        )
+      ).status,
+      200
+    );
+  assert.equal(
+    f.db
+      .prepare("SELECT COUNT(*) AS count FROM enrollment_invitation_events WHERE action='revoked'")
+      .get()?.count,
+    1
+  );
+  assert.equal(
+    (await completeEnrollment(f.request({ token, password: 'revoked fixture password' }), f.env))
+      .status,
+    503
+  );
+  assert.equal(f.db.prepare('SELECT COUNT(*) AS count FROM users').get()?.count, 0);
+});
+test('expired invitation rejects a previously issued proof', async (t) => {
+  const f = fixture(t);
+  secureMode(f);
+  await issue(f);
+  await startEnrollment(f.request({ email: 'invite@example.com', purpose: 'signup' }), f.env);
+  f.db.exec('UPDATE enrollment_invitations SET expires_at=2,created_at=0');
+  assert.equal(
+    (
+      await completeEnrollment(
+        f.request({ token: f.token(), password: 'expired fixture password' }),
+        f.env
+      )
+    ).status,
+    503
+  );
+  assert.equal(f.db.prepare('SELECT COUNT(*) AS count FROM users').get()?.count, 0);
+});
+test('verified recovery can remain enabled while all signup admission is closed', async (t) => {
+  const f = fixture(t);
+  secureMode(f);
+  f.env.ENROLLMENT_INVITATIONS_ENABLED = 'false';
+  verified(f);
+  assert.equal(
+    (await startEnrollment(f.request({ email: 'new@example.com', purpose: 'signup' }), f.env))
+      .status,
+    503
+  );
+  assert.equal(
+    (
+      await startEnrollment(
+        f.request({ email: 'verified@example.com', purpose: 'recovery' }),
+        f.env
+      )
+    ).status,
+    200
+  );
+  assert.equal(f.mails.length, 1);
 });
