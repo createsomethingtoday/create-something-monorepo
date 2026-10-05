@@ -1,9 +1,15 @@
 # Local session registry pilot
 
+Current acceptance: live orchestrated Claude-to-Codex handoff and supported
+CTX custom-projection discovery through current Draw map resolution, guarded
+updates and committed receipts have passed with synthetic data. Native provider
+transcript discovery and real client value remain outside this acceptance.
+
 Approved bounded experiment, separate from Draw 0.1.1 / PR1908. Base:
 `origin/main` at `62d7a20d4787fe54589a3a3fdc2a19b5d67fd18f`.
-No canonical storage migration, native changes, CTX writes, transcript copying,
+No canonical storage migration, native changes, operator-root CTX writes, transcript copying,
 cloud/team sharing, deployment or release changes.
+Only the separately approved synthetic CTX pilot root receives projection imports.
 
 ## Ownership and activation
 
@@ -206,7 +212,9 @@ paths, source identities, credentials and raw errors. No output is not success.
 A later indexed diagnostic conversation may produce a match; counts alone never
 prove indexed handoff. This health check sends no refresh wake. The actual pilot
 turns are intentionally ephemeral and were not ingested into CTX, so a positive
-CTX-indexed session handoff remains untested. Refresh completion is not assumed.
+native-provider transcript discovery remains untested. The supported custom
+projection bridge below subsequently passed. Operator-root refresh completion
+is not assumed.
 
 Do not delete locks, change ownership or run import-all/setup/rebuild. Any future
 positive synthetic indexing test needs separate concrete approval naming only
@@ -238,7 +246,8 @@ Exact authored inputs are `client-a.jsonl`, `client-b.jsonl`,
 retained fixture was approximately 36 KB after the first blocked import; it
 also contains CTX-created finite-worker state below `data/daemon`. That attempt
 produced a bounded `bridge-blocked.json`; subsequent staging invalidates old
-blocked/result files. No `bridge-result.json` exists from a successful import.
+blocked/result files. The final successful run produced `bridge-result.json`
+with validated source/event/session identities and bounded synthetic payloads.
 
 The CTX acquisition path is the validated 2,267-byte `combined.jsonl` corpus,
 with query routes `draw-pilot/client-a` and `draw-pilot/client-b`.
@@ -260,7 +269,7 @@ supervisor installation, native discovery, setup or import-all is requested.
 **Observed boundary:** browser-only staging passed. The first normal-sandbox
 CTX import failed with `sandbox-permission-or-worker-endpoint-denied`; pilot
 daemon status reports failed. No positive publication/search result is claimed,
-and final `--verify` has not run. No CTX escalation, permission/lock repair or
+and final `--verify` was initially paused. No CTX escalation, permission/lock repair or
 alternate execution was attempted. The operator root/index/config were not
 targeted.
 
@@ -281,7 +290,26 @@ file; `--stage` also prepares it for fresh fixtures. The public v2 contract
 supports multiple unique source_id records in one file. The harness imports
 the same combined file twice, then requires both scoped searches and stable
 event/session IDs in the resulting generation. No index repair or CTX code
-change is included. Corrected positive acceptance is pending actual execution.
+change is included.
+
+**Completed acceptance:** Micah's corrected normal-Terminal phase passed eight
+CTX calls, including exact combined-file publication, coexistence of both
+sources, source-scoped lexical search, bounded show-event, complete selected
+payload validation and repeat-import stable identities without duplicates.
+Stable CTX event IDs were `651429e8-65ed-84f7-b34a-377bc0d6f579` (client A)
+and `2bd84dd2-3bd1-8703-9636-a32f52b25581` (client B).
+
+The browser-only `--verify` phase then passed using that actual result. It
+restored both original canonical bundles into a fresh private profile, resolved
+their current Draw maps through the retrieved logical references, rejected each
+indexed historical revision and wrong-scope edit, committed a guarded update
+for each linked provider session, verified duplicate receipt replay, and checked
+actual rectangle geometry plus independently computed current content hashes.
+Browser verification launched zero CTX processes and zero provider turns; its
+private profile was removed afterward. Evidence is **actual CTX custom-source
+projection to Draw synthetic acceptance**, not native transcript discovery.
+No operator-root refresh state, cryptographic provenance or multiuser client
+authorization is inferred from these checks.
 
 The final `--self-test` passed twelve offline rejection checks with zero CTX,
 provider or browser calls: closed results, wrong scopes/maps, unknown fields,
