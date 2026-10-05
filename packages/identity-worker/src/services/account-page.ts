@@ -47,7 +47,7 @@ form.addEventListener('submit', async event => {
     status.textContent = mode === 'recovery' ? 'If your address can receive account verification, a link will arrive shortly. It expires in 15 minutes. Check your spam folder too.' : 'Your password has been updated. Sign in again in the app you want to use.';
     status.focus();
   } catch { error.textContent = 'We could not connect. Check your connection and try again.'; }
-  finally { button.disabled = false; const field = form.querySelector('[name="password"]'); if (field) field.value = ''; }
+  finally { button.disabled = false; form.querySelectorAll('input[type="password"]').forEach(field => { field.value = ''; }); }
 });`;
   // Nonce scopes the only executable code on this sensitive document.
   const nonce = crypto.randomUUID();
