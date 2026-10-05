@@ -77,7 +77,9 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build Canon package
-        run: pnpm --filter @create-something/canon package
+        run: |
+          pnpm --filter @create-something/auth-platform build
+          pnpm --filter @create-something/canon package
 
       - name: Build LMS workspace libraries
         if: inputs.property == 'lms'

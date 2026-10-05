@@ -3003,6 +3003,9 @@ importers:
       mermaid:
         specifier: '11'
         version: 11.17.2
+      three:
+        specifier: ^0.170.0
+        version: 0.170.0
       zod:
         specifier: ^4.3.6
         version: 4.3.6
@@ -3019,6 +3022,9 @@ importers:
       '@sveltejs/vite-plugin-svelte':
         specifier: ^6.2.1
         version: 6.2.4(svelte@5.56.9(@typescript-eslint/types@8.58.2))(vite@7.3.6(@types/node@24.10.9)(jiti@2.7.0)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
+      '@types/three':
+        specifier: ^0.170.0
+        version: 0.170.0
       autoprefixer:
         specifier: ^10.4.22
         version: 10.4.22(postcss@8.5.26)
