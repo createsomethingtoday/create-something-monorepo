@@ -95,7 +95,8 @@
       await navigator.locks.request('pcn-workshop', () => {
         load();
         if (saveError) return;
-        if ((action || next || provider) && !isCurrent($state.snapshot(model), expected, action)) {
+        if (!isCurrent($state.snapshot(model), expected, action)) {
+          reloadUnknown = false;
           message = 'Progress changed in another tab. Review the current request and try again.';
           return;
         }

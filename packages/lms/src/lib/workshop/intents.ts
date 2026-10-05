@@ -6,6 +6,7 @@ export function context(state: State) {
     requestId: state.requestId,
     revision: state.revision,
     authorityRevision: state.authorityRevision,
+    vault: JSON.stringify(state.vault),
     authority: JSON.stringify([state.proposal, state.approval, state.outcome])
   };
 }
@@ -14,6 +15,8 @@ export function context(state: State) {
 export function isCurrent(state: State, expected: ReturnType<typeof context>, action?: Action) {
   if (state.requestId !== expected.requestId ||
       state.authorityRevision !== expected.authorityRevision) return false;
+  if (action && ['rotate', 'revoke', 'vault-access'].includes(action.type) &&
+      JSON.stringify(state.vault) !== expected.vault) return false;
   if (action?.type === 'edit-field') return true;
   return state.revision === expected.revision && context(state).authority === expected.authority;
 }

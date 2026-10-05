@@ -29,3 +29,9 @@ All remote PR checks passed on `6cb04f72`, but three additional automated P2 thr
 - Shared destination/quantity validation controls `rejected-invalid`; unauthorized instructions independently control `rejected-unauthorized`, preventing early mission/readiness credit.
 
 Follow-up verification: 28 workshop/starter test groups pass; strict targeted TypeScript and whitespace checks pass. Eight actual-page headless browser scenarios pass with zero page errors. The prior source fails each of the completed-receipt, provider-intent, and separate-readiness regressions as expected. Independent follow-up source and regression review found no blockers. Full remote validation is rerun on the new head; normal merge, existing LMS check/build/deploy, and live desktop/phone verification remain release gates.
+
+## Final vault and lifecycle freshness
+
+A later automated review correctly required vault intent freshness. The context now captures generation and active state, and rotate/revoke/access actions require that observed vault state while preserving unrelated concurrent field edits and request approvals. Lifecycle mutations also require request freshness; rejecting an unknown-reload mutation clears its pending local observation so old evidence cannot cross a restart.
+
+Thirty workshop/starter groups, strict targeted TypeScript, ten actual-page WebLock browser races, and whitespace checks pass. Both new browser regressions fail on prior source: an unseen rotated credential was revoked, and unknown-reload credit crossed restart. The fixes preserve generation/active authority and keep the new run's observations empty. Independent final source/regression review found no blockers. A normal current-main merge `712531d1` preserves all LMS and release-workflow source from the reviewed fix, with only nine expected identity/docs changes from reviewed main `8a75dcef`.

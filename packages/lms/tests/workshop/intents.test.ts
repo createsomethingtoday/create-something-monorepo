@@ -133,3 +133,28 @@ test('concurrent identical provider checkbox intents persist desired membership 
   assert.deepEqual(setProvider(setProvider(['GitHub', 'Cloudflare'], 'GitHub', false), 'GitHub', false), ['Cloudflare']);
   assert.deepEqual(setProvider(setProvider([], 'GitHub', true), 'GitHub', false), []);
 });
+
+
+test('vault intents reject unseen generations and revocation changes under the lock', () => {
+  const seen = initial('vault-request');
+  const rotated = reduce(seen, { type: 'rotate' });
+  for (const action of [
+    { type: 'rotate' }, { type: 'revoke' },
+    { type: 'vault-access', workflow: 'workshop', generation: 1 }
+  ] as const) assert.deepEqual(apply(rotated, queue(seen, action)), rotated);
+  const revoked = reduce(rotated, { type: 'revoke' });
+  for (const action of [
+    { type: 'rotate' }, { type: 'revoke' },
+    { type: 'vault-access', workflow: 'workshop', generation: 2 },
+    { type: 'vault-access', workflow: 'workshop', generation: 1 }
+  ] as const) assert.deepEqual(apply(revoked, queue(rotated, action)), revoked);
+  // An explicit access after observing revocation still teaches denial.
+  assert.equal(apply(revoked, queue(revoked, { type: 'vault-access', workflow: 'workshop', generation: 2 })).evidence.at(-1), 'Dummy vault denied access.');
+});
+
+test('vault transitions preserve unrelated concurrent field and request-authority intents', () => {
+  const seen = ready();
+  const rotated = reduce(seen, { type: 'rotate' });
+  assert.equal(apply(rotated, queue(seen, { type: 'edit-field', field: 'quantity', value: 5 })).input.quantity, 5);
+  assert.ok(apply(rotated, queue(seen, { type: 'approve' })).approval);
+});
