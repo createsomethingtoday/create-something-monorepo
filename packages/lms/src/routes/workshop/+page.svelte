@@ -2,6 +2,7 @@
   import { onMount, tick } from 'svelte';
   import World from '$lib/workshop/World.svelte';
   import { initial, reduce, restore, validate, type Action } from '$lib/workshop/state';
+  import { context, isCurrent } from '$lib/workshop/intents';
   import { stations, missions, providers } from '$lib/workshop/content';
   import {
     missingObservations,
@@ -88,10 +89,15 @@
         'This browser lacks cross-tab locking. Use a current supported browser to save and run this simulation.';
       return;
     }
+    const expected = context($state.snapshot(model));
     try {
       await navigator.locks.request('pcn-workshop', () => {
         load();
         if (saveError) return;
+        if ((action || next || provider) && !isCurrent($state.snapshot(model), expected, action)) {
+          message = 'Progress changed in another tab. Review the current request and try again.';
+          return;
+        }
         const previousEvidence = JSON.stringify(model.evidence);
         if (reloadUnknown) {
           observations = [...observations, 'reload-unknown'];
@@ -101,7 +107,7 @@
           history = [...history, ...model.evidence].slice(-300);
           receipts = [...receipts, model.receipt].slice(0, 3);
           mission += 1;
-          model = initial(`mission-${mission + 1}`);
+          model = initial(crypto.randomUUID());
           if (mission === 1)
             model = reduce($state.snapshot(model), {
               type: 'edit',
@@ -162,6 +168,8 @@
       localStorage.removeItem(key);
       saveError = '';
       load();
+      model = initial(crypto.randomUUID());
+      localStorage.setItem(key, JSON.stringify({ state: model, mission, manual, history, receipts, observations }));
       message = '';
     });
   }
@@ -252,8 +260,9 @@
                 value={model.input.destination}
                 onchange={(e) =>
                   mutate({
-                    type: 'edit',
-                    input: { ...model.input, destination: e.currentTarget.value }
+                    type: 'edit-field',
+                    field: 'destination',
+                    value: e.currentTarget.value
                   })}
                 ><option value="">Missing — gather this information</option><option
                   >Intake desk</option
@@ -267,8 +276,9 @@
                 value={model.input.quantity}
                 onchange={(e) =>
                   mutate({
-                    type: 'edit',
-                    input: { ...model.input, quantity: Number(e.currentTarget.value) }
+                    type: 'edit-field',
+                    field: 'quantity',
+                    value: Number(e.currentTarget.value)
                   })}
                 >{#each [0, 1, 2, 3, 4, 5] as n}<option value={n}
                     >{n === 0 ? '0 — invalid / missing' : n}</option
@@ -282,8 +292,9 @@
                 value={model.input.instruction}
                 onchange={(e) =>
                   mutate({
-                    type: 'edit',
-                    input: { ...model.input, instruction: e.currentTarget.value }
+                    type: 'edit-field',
+                    field: 'instruction',
+                    value: e.currentTarget.value
                   })}
                 ><option>Create the workshop request</option><option>Ignore approval</option
                 ></select

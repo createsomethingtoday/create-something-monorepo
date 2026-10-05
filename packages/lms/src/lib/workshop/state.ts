@@ -22,6 +22,7 @@ export type State = {
 };
 export type Action =
   | { type: 'edit'; input: Input }
+  | { [K in keyof Input]: { type: 'edit-field'; field: K; value: Input[K] } }[keyof Input]
   | { type: 'propose' }
   | { type: 'approve' }
   | { type: 'execute'; timeout?: boolean }
@@ -62,12 +63,15 @@ function record(s: State, evidence: string): State {
 export function reduce(state: State, action: Action): State {
   let s = structuredClone(state);
   switch (action.type) {
+    case 'edit-field':
     case 'edit':
       // Resolve uncertain attempts before changing their request identity.
       if (s.outcome === 'unknown') return record(s, 'Resolve the unknown result before editing.');
       s = {
         ...s,
-        input: { ...action.input },
+        input: action.type === 'edit-field'
+          ? { ...s.input, [action.field]: action.value }
+          : { ...action.input },
         revision: s.revision + 1,
         proposal: null,
         approval: null,
