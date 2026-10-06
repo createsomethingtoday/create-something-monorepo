@@ -552,7 +552,7 @@ function buildTopology() {
       );
     }
 
-    for (const candidate of ['wrangler.toml', 'wrangler.json', 'worker/wrangler.toml', 'worker/wrangler.json', 'dashboard/wrangler.toml']) {
+    for (const candidate of ['wrangler.toml', 'wrangler.json', 'wrangler.jsonc', 'worker/wrangler.toml', 'worker/wrangler.json', 'dashboard/wrangler.toml']) {
       const worker = nodeByPath.get(`${node.path}/${candidate}`);
       if (worker) edges.push(makeEdge(node.id, worker.id, 'runs', `${candidate} configures runtime for ${node.path}.`));
     }

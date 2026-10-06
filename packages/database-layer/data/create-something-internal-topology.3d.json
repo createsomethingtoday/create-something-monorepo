@@ -2,7 +2,7 @@
   "version": 1,
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
-  "generatedAt": "2026-10-06T14:08:47.127Z",
+  "generatedAt": "2026-10-06T14:17:55.778Z",
   "rendererBudget": {
     "initialUsableMs": 500,
     "interactionMs": 50,
@@ -11,7 +11,7 @@
   },
   "counts": {
     "nodes": 546,
-    "edges": 1127,
+    "edges": 1148,
     "clusters": 21,
     "businessGroups": 10,
     "apiAiGroups": 9
@@ -304,11 +304,11 @@
     }
   },
   "insights": {
-    "generatedAt": "2026-10-06T14:08:47.127Z",
+    "generatedAt": "2026-10-06T14:17:55.778Z",
     "relationCounts": {
       "contains": 545,
       "depends_on": 164,
-      "runs": 124,
+      "runs": 145,
       "client_overlay": 8,
       "governs": 128,
       "documents": 157,
@@ -352,14 +352,14 @@
         "id": "governance-is-cross-cutting",
         "severity": "signal",
         "title": "Governance is cross-cutting infrastructure.",
-        "evidence": "Machine-Readable Governance has 126 structural cross-group edges and 1.54 structural cross edges per node.",
+        "evidence": "Machine-Readable Governance has 130 structural cross-group edges and 1.59 structural cross edges per node.",
         "implication": "Policy/Judgment is not isolated content; it binds runtime, agents, and MCP capability."
       },
       {
         "id": "contains-edges-dominate-raw-topology",
         "severity": "caveat",
         "title": "Raw topology is still dominated by containment edges.",
-        "evidence": "545 of 1127 edges are contains edges (48.4%).",
+        "evidence": "545 of 1148 edges are contains edges (47.5%).",
         "implication": "Operational and structural edge modes are necessary for reading business implications; raw edge count overstates root/substrate centrality."
       }
     ],
@@ -391,7 +391,7 @@
       {
         "id": "semantic-edge-weighting",
         "title": "Separate containment proof from semantic dependency proof.",
-        "evidence": "Contains edges represent 48.4% of the graph, so generated insights now compute top structural pairs and cross-group coupling with contains edges excluded.",
+        "evidence": "Contains edges represent 47.5% of the graph, so generated insights now compute top structural pairs and cross-group coupling with contains edges excluded.",
         "completedBy": "Added generated lens insights with structural cross edges, structural pairs, observations, improvement candidates, and topology3d_insights_read."
       },
       {
@@ -434,7 +434,7 @@
             },
             "knowledgeCount": 12,
             "knowledgePct": 9.8,
-            "internalEdges": 74,
+            "internalEdges": 76,
             "crossEdges": 221,
             "structuralCrossEdges": 99,
             "inboundStructuralEdges": 74,
@@ -442,7 +442,7 @@
             "relationCounts": {
               "contains": 122,
               "depends_on": 76,
-              "runs": 41,
+              "runs": 43,
               "documents": 47,
               "governs": 9
             },
@@ -534,19 +534,19 @@
             "knowledgeCount": 5,
             "knowledgePct": 4.5,
             "internalEdges": 80,
-            "crossEdges": 290,
-            "structuralCrossEdges": 179,
+            "crossEdges": 296,
+            "structuralCrossEdges": 185,
             "inboundStructuralEdges": 48,
-            "outboundStructuralEdges": 131,
+            "outboundStructuralEdges": 137,
             "relationCounts": {
               "contains": 111,
               "depends_on": 78,
-              "runs": 15,
+              "runs": 21,
               "governs": 128,
               "documents": 37,
               "renders": 1
             },
-            "structuralCrossEdgesPerNode": 1.61,
+            "structuralCrossEdgesPerNode": 1.67,
             "classificationEvidence": {
               "dominantSurfaces": [
                 {
@@ -632,7 +632,7 @@
             },
             "knowledgeCount": 4,
             "knowledgePct": 4.7,
-            "internalEdges": 38,
+            "internalEdges": 42,
             "crossEdges": 125,
             "structuralCrossEdges": 39,
             "inboundStructuralEdges": 18,
@@ -640,7 +640,7 @@
             "relationCounts": {
               "contains": 86,
               "depends_on": 18,
-              "runs": 34,
+              "runs": 38,
               "documents": 10,
               "governs": 15
             },
@@ -686,6 +686,14 @@
                   "status": "mapped"
                 },
                 {
+                  "id": "substrate:create-something:package:create-something-webflow-dashboard-packages-webflow-dashboard",
+                  "label": "@create-something/webflow-dashboard",
+                  "path": "packages/webflow-dashboard",
+                  "tier": "Judgment",
+                  "surface": "worker",
+                  "status": "mapped"
+                },
+                {
                   "id": "substrate:create-something:package:create-something-webflow-mcp-packages-webflow-mcp",
                   "label": "@create-something/webflow-mcp",
                   "path": "packages/webflow-mcp",
@@ -699,14 +707,6 @@
                   "path": "packages/io/workers/bundle-scanner-api",
                   "tier": "Automation",
                   "surface": "worker",
-                  "status": "mapped"
-                },
-                {
-                  "id": "substrate:create-something:package:create-something-bundle-scanner-core-packages-bundle-scanner-core",
-                  "label": "@create-something/bundle-scanner-core",
-                  "path": "packages/bundle-scanner-core",
-                  "tier": "Mixed",
-                  "surface": "package",
                   "status": "mapped"
                 }
               ]
@@ -726,18 +726,18 @@
             },
             "knowledgeCount": 3,
             "knowledgePct": 4.2,
-            "internalEdges": 23,
-            "crossEdges": 109,
-            "structuralCrossEdges": 37,
-            "inboundStructuralEdges": 17,
+            "internalEdges": 28,
+            "crossEdges": 113,
+            "structuralCrossEdges": 41,
+            "inboundStructuralEdges": 21,
             "outboundStructuralEdges": 20,
             "relationCounts": {
               "contains": 72,
-              "runs": 35,
+              "runs": 44,
               "depends_on": 19,
               "documents": 6
             },
-            "structuralCrossEdgesPerNode": 0.51,
+            "structuralCrossEdgesPerNode": 0.57,
             "classificationEvidence": {
               "dominantSurfaces": [
                 {
@@ -779,17 +779,17 @@
                   "status": "mapped"
                 },
                 {
-                  "id": "substrate:create-something:package:halfdozen-zoom-sync-worker-packages-halfdozen-zoom-sync-worker",
-                  "label": "halfdozen-zoom-sync-worker",
-                  "path": "packages/halfdozen-zoom-sync/worker",
+                  "id": "substrate:create-something:package:create-something-space-packages-space",
+                  "label": "@create-something/space",
+                  "path": "packages/space",
                   "tier": "Automation",
                   "surface": "worker",
                   "status": "mapped"
                 },
                 {
-                  "id": "substrate:create-something:package:create-something-space-packages-space",
-                  "label": "@create-something/space",
-                  "path": "packages/space",
+                  "id": "substrate:create-something:package:halfdozen-zoom-sync-worker-packages-halfdozen-zoom-sync-worker",
+                  "label": "halfdozen-zoom-sync-worker",
+                  "path": "packages/halfdozen-zoom-sync/worker",
                   "tier": "Automation",
                   "surface": "worker",
                   "status": "mapped"
@@ -915,18 +915,18 @@
             },
             "knowledgeCount": 19,
             "knowledgePct": 41.3,
-            "internalEdges": 7,
-            "crossEdges": 89,
-            "structuralCrossEdges": 43,
-            "inboundStructuralEdges": 3,
+            "internalEdges": 9,
+            "crossEdges": 91,
+            "structuralCrossEdges": 45,
+            "inboundStructuralEdges": 5,
             "outboundStructuralEdges": 40,
             "relationCounts": {
               "contains": 46,
-              "runs": 6,
+              "runs": 10,
               "depends_on": 6,
               "documents": 38
             },
-            "structuralCrossEdgesPerNode": 0.93,
+            "structuralCrossEdgesPerNode": 0.98,
             "classificationEvidence": {
               "dominantSurfaces": [
                 {
@@ -1106,7 +1106,7 @@
             },
             "knowledgeCount": 0,
             "knowledgePct": 0,
-            "internalEdges": 5,
+            "internalEdges": 7,
             "crossEdges": 25,
             "structuralCrossEdges": 10,
             "inboundStructuralEdges": 8,
@@ -1114,7 +1114,7 @@
             "relationCounts": {
               "contains": 15,
               "client_overlay": 8,
-              "runs": 5,
+              "runs": 7,
               "depends_on": 2
             },
             "structuralCrossEdgesPerNode": 0.67,
@@ -1139,6 +1139,14 @@
                   "status": "mapped"
                 },
                 {
+                  "id": "substrate:create-something:package:create-something-outerfields-packages-agency-clients-outerfields",
+                  "label": "@create-something/outerfields",
+                  "path": "packages/agency/clients/outerfields",
+                  "tier": "Mixed",
+                  "surface": "client",
+                  "status": "mapped"
+                },
+                {
                   "id": "substrate:create-something:package:create-something-cato-supply-insights-cms-packages-agency-clients-cato-supply-insights-cms",
                   "label": "@create-something/cato-supply-insights-cms",
                   "path": "packages/agency/clients/cato-supply-insights-cms",
@@ -1155,9 +1163,9 @@
                   "status": "mapped"
                 },
                 {
-                  "id": "substrate:create-something:package:create-something-outerfields-packages-agency-clients-outerfields",
-                  "label": "@create-something/outerfields",
-                  "path": "packages/agency/clients/outerfields",
+                  "id": "substrate:create-something:package:create-something-the-stack-packages-agency-clients-the-stack",
+                  "label": "@create-something/the-stack",
+                  "path": "packages/agency/clients/the-stack",
                   "tier": "Mixed",
                   "surface": "client",
                   "status": "mapped"
@@ -1167,14 +1175,6 @@
                   "label": "@outerfields/pcn-mcp-remote",
                   "path": "packages/agency/clients/outerfields/mcp-remote",
                   "tier": "Automation",
-                  "surface": "client",
-                  "status": "mapped"
-                },
-                {
-                  "id": "substrate:create-something:package:create-something-client-workspace-demo-packages-client-workspace-clients-demo-frontend",
-                  "label": "@create-something/client-workspace-demo",
-                  "path": "packages/client-workspace/clients/demo-frontend",
-                  "tier": "Mixed",
                   "surface": "client",
                   "status": "mapped"
                 }
@@ -1369,6 +1369,17 @@
             "bLabel": "Policy / Judgment OS"
           },
           {
+            "a": "policy-judgment-os",
+            "b": "cloudflare-delivery-spine",
+            "count": 19,
+            "relations": {
+              "runs": 12,
+              "depends_on": 7
+            },
+            "aLabel": "Policy / Judgment OS",
+            "bLabel": "Cloudflare Delivery Spine"
+          },
+          {
             "a": "agent-automation",
             "b": "database-substrate",
             "count": 19,
@@ -1388,17 +1399,6 @@
             },
             "aLabel": "Agent Automation",
             "bLabel": "MCP Capability Platform"
-          },
-          {
-            "a": "policy-judgment-os",
-            "b": "cloudflare-delivery-spine",
-            "count": 15,
-            "relations": {
-              "runs": 8,
-              "depends_on": 7
-            },
-            "aLabel": "Policy / Judgment OS",
-            "bLabel": "Cloudflare Delivery Spine"
           },
           {
             "a": "public-learning-surface",
@@ -1819,6 +1819,58 @@
             "targetLabel": "Webflow Marketplace Ops"
           },
           {
+            "source": "policy-judgment-os",
+            "target": "cloudflare-delivery-spine",
+            "count": 12,
+            "relations": {
+              "runs": 12
+            },
+            "examples": [
+              {
+                "relation": "runs",
+                "sourceId": "substrate:create-something:app:create-something-guard-performance-lab-apps-guard-performance-lab",
+                "sourceLabel": "@create-something/guard-performance-lab",
+                "targetId": "substrate:create-something:worker:apps-guard-performance-lab-wrangler-toml",
+                "targetLabel": "apps/guard-performance-lab/wrangler.toml",
+                "evidence": "wrangler.toml configures runtime for apps/guard-performance-lab."
+              },
+              {
+                "relation": "runs",
+                "sourceId": "substrate:create-something:package:create-something-clearway-packages-clearway",
+                "sourceLabel": "@create-something/clearway",
+                "targetId": "substrate:create-something:worker:packages-clearway-wrangler-toml",
+                "targetLabel": "packages/clearway/wrangler.toml",
+                "evidence": "wrangler.toml configures runtime for packages/clearway."
+              },
+              {
+                "relation": "runs",
+                "sourceId": "substrate:create-something:package:create-something-concierge-chat-packages-concierge-chat",
+                "sourceLabel": "@create-something/concierge-chat",
+                "targetId": "substrate:create-something:worker:packages-concierge-chat-wrangler-toml",
+                "targetLabel": "packages/concierge-chat/wrangler.toml",
+                "evidence": "wrangler.toml configures runtime for packages/concierge-chat."
+              },
+              {
+                "relation": "runs",
+                "sourceId": "substrate:create-something:package:create-something-halfdozen-zoom-sync-packages-halfdozen-zoom-sync",
+                "sourceLabel": "@create-something/halfdozen-zoom-sync",
+                "targetId": "substrate:create-something:worker:packages-halfdozen-zoom-sync-worker-wrangler-toml",
+                "targetLabel": "halfdozen-zoom-sync worker",
+                "evidence": "worker/wrangler.toml configures runtime for packages/halfdozen-zoom-sync."
+              },
+              {
+                "relation": "runs",
+                "sourceId": "substrate:create-something:package:create-something-identity-worker-packages-identity-worker",
+                "sourceLabel": "@create-something/identity-worker",
+                "targetId": "substrate:create-something:worker:packages-identity-worker-wrangler-toml",
+                "targetLabel": "packages/identity-worker/wrangler.toml",
+                "evidence": "wrangler.toml configures runtime for packages/identity-worker."
+              }
+            ],
+            "sourceLabel": "Policy / Judgment OS",
+            "targetLabel": "Cloudflare Delivery Spine"
+          },
+          {
             "source": "public-learning-surface",
             "target": "mcp-capability-platform",
             "count": 12,
@@ -2029,58 +2081,6 @@
             ],
             "sourceLabel": "MCP Capability Platform",
             "targetLabel": "Database Substrate"
-          },
-          {
-            "source": "policy-judgment-os",
-            "target": "cloudflare-delivery-spine",
-            "count": 8,
-            "relations": {
-              "runs": 8
-            },
-            "examples": [
-              {
-                "relation": "runs",
-                "sourceId": "substrate:create-something:app:create-something-guard-performance-lab-apps-guard-performance-lab",
-                "sourceLabel": "@create-something/guard-performance-lab",
-                "targetId": "substrate:create-something:worker:apps-guard-performance-lab-wrangler-toml",
-                "targetLabel": "apps/guard-performance-lab/wrangler.toml",
-                "evidence": "wrangler.toml configures runtime for apps/guard-performance-lab."
-              },
-              {
-                "relation": "runs",
-                "sourceId": "substrate:create-something:package:create-something-clearway-packages-clearway",
-                "sourceLabel": "@create-something/clearway",
-                "targetId": "substrate:create-something:worker:packages-clearway-wrangler-toml",
-                "targetLabel": "packages/clearway/wrangler.toml",
-                "evidence": "wrangler.toml configures runtime for packages/clearway."
-              },
-              {
-                "relation": "runs",
-                "sourceId": "substrate:create-something:package:create-something-concierge-chat-packages-concierge-chat",
-                "sourceLabel": "@create-something/concierge-chat",
-                "targetId": "substrate:create-something:worker:packages-concierge-chat-wrangler-toml",
-                "targetLabel": "packages/concierge-chat/wrangler.toml",
-                "evidence": "wrangler.toml configures runtime for packages/concierge-chat."
-              },
-              {
-                "relation": "runs",
-                "sourceId": "substrate:create-something:package:create-something-halfdozen-zoom-sync-packages-halfdozen-zoom-sync",
-                "sourceLabel": "@create-something/halfdozen-zoom-sync",
-                "targetId": "substrate:create-something:worker:packages-halfdozen-zoom-sync-worker-wrangler-toml",
-                "targetLabel": "halfdozen-zoom-sync worker",
-                "evidence": "worker/wrangler.toml configures runtime for packages/halfdozen-zoom-sync."
-              },
-              {
-                "relation": "runs",
-                "sourceId": "substrate:create-something:package:create-something-identity-worker-packages-identity-worker",
-                "sourceLabel": "@create-something/identity-worker",
-                "targetId": "substrate:create-something:worker:packages-identity-worker-wrangler-toml",
-                "targetLabel": "packages/identity-worker/wrangler.toml",
-                "evidence": "wrangler.toml configures runtime for packages/identity-worker."
-              }
-            ],
-            "sourceLabel": "Policy / Judgment OS",
-            "targetLabel": "Cloudflare Delivery Spine"
           },
           {
             "source": "database-substrate",
@@ -2420,15 +2420,15 @@
             },
             "knowledgeCount": 7,
             "knowledgePct": 4,
-            "internalEdges": 130,
-            "crossEdges": 306,
-            "structuralCrossEdges": 129,
+            "internalEdges": 133,
+            "crossEdges": 307,
+            "structuralCrossEdges": 130,
             "inboundStructuralEdges": 81,
-            "outboundStructuralEdges": 48,
+            "outboundStructuralEdges": 49,
             "relationCounts": {
               "contains": 177,
               "depends_on": 96,
-              "runs": 55,
+              "runs": 59,
               "governs": 54,
               "documents": 53,
               "renders": 1
@@ -2516,18 +2516,18 @@
             },
             "knowledgeCount": 4,
             "knowledgePct": 3.6,
-            "internalEdges": 36,
-            "crossEdges": 155,
-            "structuralCrossEdges": 45,
-            "inboundStructuralEdges": 21,
+            "internalEdges": 43,
+            "crossEdges": 160,
+            "structuralCrossEdges": 50,
+            "inboundStructuralEdges": 26,
             "outboundStructuralEdges": 24,
             "relationCounts": {
               "contains": 110,
               "depends_on": 22,
-              "runs": 50,
+              "runs": 62,
               "documents": 9
             },
-            "structuralCrossEdgesPerNode": 0.41,
+            "structuralCrossEdgesPerNode": 0.45,
             "classificationEvidence": {
               "dominantSurfaces": [
                 {
@@ -2577,17 +2577,17 @@
                   "status": "mapped"
                 },
                 {
-                  "id": "substrate:create-something:package:halfdozen-zoom-sync-worker-packages-halfdozen-zoom-sync-worker",
-                  "label": "halfdozen-zoom-sync-worker",
-                  "path": "packages/halfdozen-zoom-sync/worker",
+                  "id": "substrate:create-something:package:create-something-space-packages-space",
+                  "label": "@create-something/space",
+                  "path": "packages/space",
                   "tier": "Automation",
                   "surface": "worker",
                   "status": "mapped"
                 },
                 {
-                  "id": "substrate:create-something:package:create-something-bundle-scanner-api-packages-io-workers-bundle-scanner-api",
-                  "label": "@create-something/bundle-scanner-api",
-                  "path": "packages/io/workers/bundle-scanner-api",
+                  "id": "substrate:create-something:package:halfdozen-zoom-sync-worker-packages-halfdozen-zoom-sync-worker",
+                  "label": "halfdozen-zoom-sync-worker",
+                  "path": "packages/halfdozen-zoom-sync/worker",
                   "tier": "Automation",
                   "surface": "worker",
                   "status": "mapped"
@@ -2613,18 +2613,18 @@
             "knowledgeCount": 6,
             "knowledgePct": 7.3,
             "internalEdges": 54,
-            "crossEdges": 208,
-            "structuralCrossEdges": 126,
+            "crossEdges": 212,
+            "structuralCrossEdges": 130,
             "inboundStructuralEdges": 37,
-            "outboundStructuralEdges": 89,
+            "outboundStructuralEdges": 93,
             "relationCounts": {
               "contains": 82,
               "depends_on": 60,
-              "runs": 13,
+              "runs": 17,
               "governs": 86,
               "documents": 21
             },
-            "structuralCrossEdgesPerNode": 1.54,
+            "structuralCrossEdgesPerNode": 1.59,
             "classificationEvidence": {
               "dominantSurfaces": [
                 {
@@ -2674,17 +2674,17 @@
                   "status": "mapped"
                 },
                 {
-                  "id": "substrate:create-something:package:create-something-lms-packages-lms",
-                  "label": "@create-something/lms",
-                  "path": "packages/lms",
+                  "id": "substrate:create-something:package:create-something-ltd-packages-ltd",
+                  "label": "@create-something/ltd",
+                  "path": "packages/ltd",
                   "tier": "Judgment",
                   "surface": "worker",
                   "status": "mapped"
                 },
                 {
-                  "id": "substrate:create-something:package:create-something-ltd-packages-ltd",
-                  "label": "@create-something/ltd",
-                  "path": "packages/ltd",
+                  "id": "substrate:create-something:package:create-something-lms-packages-lms",
+                  "label": "@create-something/lms",
+                  "path": "packages/lms",
                   "tier": "Judgment",
                   "surface": "worker",
                   "status": "mapped"
@@ -2709,7 +2709,7 @@
             },
             "knowledgeCount": 22,
             "knowledgePct": 35.5,
-            "internalEdges": 13,
+            "internalEdges": 17,
             "crossEdges": 126,
             "structuralCrossEdges": 64,
             "inboundStructuralEdges": 8,
@@ -2717,7 +2717,7 @@
             "relationCounts": {
               "contains": 62,
               "depends_on": 17,
-              "runs": 8,
+              "runs": 12,
               "governs": 8,
               "documents": 44
             },
@@ -2755,18 +2755,18 @@
                   "status": "mapped"
                 },
                 {
-                  "id": "substrate:create-something:package:create-something-notion-agent-packages-notion-agent",
-                  "label": "@create-something/notion-agent",
-                  "path": "packages/notion-agent",
-                  "tier": "Judgment",
-                  "surface": "agent",
-                  "status": "mapped"
-                },
-                {
                   "id": "substrate:create-something:package:create-something-owned-agent-runtime-packages-owned-agent-runtime",
                   "label": "@create-something/owned-agent-runtime",
                   "path": "packages/owned-agent-runtime",
                   "tier": "Automation",
+                  "surface": "agent",
+                  "status": "mapped"
+                },
+                {
+                  "id": "substrate:create-something:package:create-something-notion-agent-packages-notion-agent",
+                  "label": "@create-something/notion-agent",
+                  "path": "packages/notion-agent",
+                  "tier": "Judgment",
                   "surface": "agent",
                   "status": "mapped"
                 },
@@ -2779,11 +2779,11 @@
                   "status": "mapped"
                 },
                 {
-                  "id": "substrate:create-something:package:create-something-harness-packages-harness",
-                  "label": "@create-something/harness",
-                  "path": "packages/harness",
-                  "tier": "Automation",
-                  "surface": "agent",
+                  "id": "substrate:create-something:app:create-something-create-something-scheduler-apps-create-something-scheduler",
+                  "label": "@create-something/create-something-scheduler",
+                  "path": "apps/create-something-scheduler",
+                  "tier": "Judgment",
+                  "surface": "app",
                   "status": "mapped"
                 }
               ]
@@ -3070,7 +3070,7 @@
             },
             "knowledgeCount": 0,
             "knowledgePct": 0,
-            "internalEdges": 5,
+            "internalEdges": 7,
             "crossEdges": 25,
             "structuralCrossEdges": 10,
             "inboundStructuralEdges": 8,
@@ -3078,7 +3078,7 @@
             "relationCounts": {
               "contains": 15,
               "client_overlay": 8,
-              "runs": 5,
+              "runs": 7,
               "depends_on": 2
             },
             "structuralCrossEdgesPerNode": 0.67,
@@ -3103,6 +3103,14 @@
                   "status": "mapped"
                 },
                 {
+                  "id": "substrate:create-something:package:create-something-outerfields-packages-agency-clients-outerfields",
+                  "label": "@create-something/outerfields",
+                  "path": "packages/agency/clients/outerfields",
+                  "tier": "Mixed",
+                  "surface": "client",
+                  "status": "mapped"
+                },
+                {
                   "id": "substrate:create-something:package:create-something-cato-supply-insights-cms-packages-agency-clients-cato-supply-insights-cms",
                   "label": "@create-something/cato-supply-insights-cms",
                   "path": "packages/agency/clients/cato-supply-insights-cms",
@@ -3119,9 +3127,9 @@
                   "status": "mapped"
                 },
                 {
-                  "id": "substrate:create-something:package:create-something-outerfields-packages-agency-clients-outerfields",
-                  "label": "@create-something/outerfields",
-                  "path": "packages/agency/clients/outerfields",
+                  "id": "substrate:create-something:package:create-something-the-stack-packages-agency-clients-the-stack",
+                  "label": "@create-something/the-stack",
+                  "path": "packages/agency/clients/the-stack",
                   "tier": "Mixed",
                   "surface": "client",
                   "status": "mapped"
@@ -3131,14 +3139,6 @@
                   "label": "@outerfields/pcn-mcp-remote",
                   "path": "packages/agency/clients/outerfields/mcp-remote",
                   "tier": "Automation",
-                  "surface": "client",
-                  "status": "mapped"
-                },
-                {
-                  "id": "substrate:create-something:package:create-something-client-workspace-demo-packages-client-workspace-clients-demo-frontend",
-                  "label": "@create-something/client-workspace-demo",
-                  "path": "packages/client-workspace/clients/demo-frontend",
-                  "tier": "Mixed",
                   "surface": "client",
                   "status": "mapped"
                 }
@@ -3299,6 +3299,18 @@
             "bLabel": "AI Orchestration"
           },
           {
+            "a": "runtime-api-delivery",
+            "b": "machine-readable-governance",
+            "count": 19,
+            "relations": {
+              "depends_on": 5,
+              "runs": 13,
+              "documents": 1
+            },
+            "aLabel": "Runtime API Delivery",
+            "bLabel": "Machine-Readable Governance"
+          },
+          {
             "a": "knowledge-to-tools",
             "b": "agent-callable-interfaces",
             "count": 16,
@@ -3309,18 +3321,6 @@
             "bLabel": "Agent-Callable Interfaces"
           },
           {
-            "a": "runtime-api-delivery",
-            "b": "machine-readable-governance",
-            "count": 15,
-            "relations": {
-              "depends_on": 5,
-              "runs": 9,
-              "documents": 1
-            },
-            "aLabel": "Runtime API Delivery",
-            "bLabel": "Machine-Readable Governance"
-          },
-          {
             "a": "capability-packages",
             "b": "agent-callable-interfaces",
             "count": 10,
@@ -3328,6 +3328,17 @@
               "depends_on": 10
             },
             "aLabel": "Capability Packages",
+            "bLabel": "Agent-Callable Interfaces"
+          },
+          {
+            "a": "runtime-api-delivery",
+            "b": "agent-callable-interfaces",
+            "count": 10,
+            "relations": {
+              "depends_on": 6,
+              "runs": 4
+            },
+            "aLabel": "Runtime API Delivery",
             "bLabel": "Agent-Callable Interfaces"
           },
           {
@@ -3349,17 +3360,6 @@
             },
             "aLabel": "Machine-Readable Governance",
             "bLabel": "AI Orchestration"
-          },
-          {
-            "a": "runtime-api-delivery",
-            "b": "agent-callable-interfaces",
-            "count": 9,
-            "relations": {
-              "depends_on": 6,
-              "runs": 3
-            },
-            "aLabel": "Runtime API Delivery",
-            "bLabel": "Agent-Callable Interfaces"
           }
         ],
         "directionalStructuralLinks": [
@@ -3737,6 +3737,59 @@
             "targetLabel": "Agent-Callable Interfaces"
           },
           {
+            "source": "machine-readable-governance",
+            "target": "runtime-api-delivery",
+            "count": 14,
+            "relations": {
+              "runs": 13,
+              "documents": 1
+            },
+            "examples": [
+              {
+                "relation": "runs",
+                "sourceId": "substrate:create-something:app:create-something-guard-performance-lab-apps-guard-performance-lab",
+                "sourceLabel": "@create-something/guard-performance-lab",
+                "targetId": "substrate:create-something:worker:apps-guard-performance-lab-wrangler-toml",
+                "targetLabel": "apps/guard-performance-lab/wrangler.toml",
+                "evidence": "wrangler.toml configures runtime for apps/guard-performance-lab."
+              },
+              {
+                "relation": "runs",
+                "sourceId": "substrate:create-something:package:create-something-clearway-packages-clearway",
+                "sourceLabel": "@create-something/clearway",
+                "targetId": "substrate:create-something:worker:packages-clearway-wrangler-toml",
+                "targetLabel": "packages/clearway/wrangler.toml",
+                "evidence": "wrangler.toml configures runtime for packages/clearway."
+              },
+              {
+                "relation": "runs",
+                "sourceId": "substrate:create-something:package:create-something-concierge-chat-packages-concierge-chat",
+                "sourceLabel": "@create-something/concierge-chat",
+                "targetId": "substrate:create-something:worker:packages-concierge-chat-wrangler-toml",
+                "targetLabel": "packages/concierge-chat/wrangler.toml",
+                "evidence": "wrangler.toml configures runtime for packages/concierge-chat."
+              },
+              {
+                "relation": "runs",
+                "sourceId": "substrate:create-something:package:create-something-identity-worker-packages-identity-worker",
+                "sourceLabel": "@create-something/identity-worker",
+                "targetId": "substrate:create-something:worker:packages-identity-worker-wrangler-toml",
+                "targetLabel": "packages/identity-worker/wrangler.toml",
+                "evidence": "wrangler.toml configures runtime for packages/identity-worker."
+              },
+              {
+                "relation": "runs",
+                "sourceId": "substrate:create-something:package:create-something-webflow-validation-packages-io-workers-webflow-validation",
+                "sourceLabel": "@create-something/webflow-validation",
+                "targetId": "substrate:create-something:worker:packages-io-workers-webflow-validation-wrangler-toml",
+                "targetLabel": "packages/io/workers/webflow-validation/wrangler.toml",
+                "evidence": "wrangler.toml configures runtime for packages/io/workers/webflow-validation."
+              }
+            ],
+            "sourceLabel": "Machine-Readable Governance",
+            "targetLabel": "Runtime API Delivery"
+          },
+          {
             "source": "agent-callable-interfaces",
             "target": "machine-readable-governance",
             "count": 14,
@@ -3789,59 +3842,6 @@
             ],
             "sourceLabel": "Agent-Callable Interfaces",
             "targetLabel": "Machine-Readable Governance"
-          },
-          {
-            "source": "machine-readable-governance",
-            "target": "runtime-api-delivery",
-            "count": 10,
-            "relations": {
-              "runs": 9,
-              "documents": 1
-            },
-            "examples": [
-              {
-                "relation": "runs",
-                "sourceId": "substrate:create-something:app:create-something-guard-performance-lab-apps-guard-performance-lab",
-                "sourceLabel": "@create-something/guard-performance-lab",
-                "targetId": "substrate:create-something:worker:apps-guard-performance-lab-wrangler-toml",
-                "targetLabel": "apps/guard-performance-lab/wrangler.toml",
-                "evidence": "wrangler.toml configures runtime for apps/guard-performance-lab."
-              },
-              {
-                "relation": "runs",
-                "sourceId": "substrate:create-something:package:create-something-clearway-packages-clearway",
-                "sourceLabel": "@create-something/clearway",
-                "targetId": "substrate:create-something:worker:packages-clearway-wrangler-toml",
-                "targetLabel": "packages/clearway/wrangler.toml",
-                "evidence": "wrangler.toml configures runtime for packages/clearway."
-              },
-              {
-                "relation": "runs",
-                "sourceId": "substrate:create-something:package:create-something-concierge-chat-packages-concierge-chat",
-                "sourceLabel": "@create-something/concierge-chat",
-                "targetId": "substrate:create-something:worker:packages-concierge-chat-wrangler-toml",
-                "targetLabel": "packages/concierge-chat/wrangler.toml",
-                "evidence": "wrangler.toml configures runtime for packages/concierge-chat."
-              },
-              {
-                "relation": "runs",
-                "sourceId": "substrate:create-something:package:create-something-identity-worker-packages-identity-worker",
-                "sourceLabel": "@create-something/identity-worker",
-                "targetId": "substrate:create-something:worker:packages-identity-worker-wrangler-toml",
-                "targetLabel": "packages/identity-worker/wrangler.toml",
-                "evidence": "wrangler.toml configures runtime for packages/identity-worker."
-              },
-              {
-                "relation": "runs",
-                "sourceId": "substrate:create-something:package:create-something-webflow-validation-packages-io-workers-webflow-validation",
-                "sourceLabel": "@create-something/webflow-validation",
-                "targetId": "substrate:create-something:worker:packages-io-workers-webflow-validation-wrangler-toml",
-                "targetLabel": "packages/io/workers/webflow-validation/wrangler.toml",
-                "evidence": "wrangler.toml configures runtime for packages/io/workers/webflow-validation."
-              }
-            ],
-            "sourceLabel": "Machine-Readable Governance",
-            "targetLabel": "Runtime API Delivery"
           },
           {
             "source": "api-readable-substrate",
@@ -13214,11 +13214,11 @@
       "status": "mapped",
       "owner": "CREATE SOMETHING",
       "clusterId": "app:automation",
-      "relationCount": 1,
+      "relationCount": 2,
       "x": 272,
       "y": 0,
       "z": -280,
-      "size": 7.82842712474619,
+      "size": 8.464101615137753,
       "color": "#3b82f6",
       "targetPath": "apps/bettermode-marketplace-creator-agent"
     },
@@ -13280,11 +13280,11 @@
       "status": "mapped",
       "owner": "CREATE SOMETHING",
       "clusterId": "app:judgment",
-      "relationCount": 2,
+      "relationCount": 3,
       "x": 523,
       "y": 58,
       "z": -200,
-      "size": 8.464101615137753,
+      "size": 9,
       "color": "#10b981",
       "targetPath": "apps/create-something-scheduler"
     },
@@ -14138,11 +14138,11 @@
       "owner": "CREATE SOMETHING",
       "clientSlug": "outerfields",
       "clusterId": "client:outerfields",
-      "relationCount": 3,
+      "relationCount": 4,
       "x": -504,
       "y": -66,
       "z": -164,
-      "size": 9,
+      "size": 9.47213595499958,
       "color": "#3b82f6",
       "targetPath": "packages/agency/clients/outerfields"
     },
@@ -14182,11 +14182,11 @@
       "owner": "CREATE SOMETHING",
       "clientSlug": "the-stack",
       "clusterId": "client:the-stack",
-      "relationCount": 2,
+      "relationCount": 3,
       "x": -406,
       "y": -72,
       "z": -120,
-      "size": 8.464101615137753,
+      "size": 9,
       "color": "#10b981",
       "targetPath": "packages/agency/clients/the-stack"
     },
@@ -14215,11 +14215,11 @@
       "status": "mapped",
       "owner": "CREATE SOMETHING",
       "clusterId": "automation:worker",
-      "relationCount": 12,
+      "relationCount": 13,
       "x": 157,
       "y": 162,
       "z": -200,
-      "size": 12.21110255092798,
+      "size": 12.483314773547882,
       "color": "#84cc16",
       "targetPath": "packages/agency"
     },
@@ -14611,11 +14611,11 @@
       "status": "mapped",
       "owner": "CREATE SOMETHING",
       "clusterId": "automation:worker",
-      "relationCount": 1,
+      "relationCount": 2,
       "x": 157,
       "y": 165,
       "z": -164,
-      "size": 7.82842712474619,
+      "size": 8.464101615137753,
       "color": "#84cc16",
       "targetPath": "packages/airtable-primary-tags-worker"
     },
@@ -16107,11 +16107,11 @@
       "status": "mapped",
       "owner": "CREATE SOMETHING",
       "clusterId": "automation:mcp",
-      "relationCount": 1,
+      "relationCount": 2,
       "x": 156,
       "y": 261,
       "z": -226,
-      "size": 7.82842712474619,
+      "size": 8.464101615137753,
       "color": "#06b6d4",
       "targetPath": "packages/exception-decisions-mcp"
     },
@@ -16206,11 +16206,11 @@
       "status": "mapped",
       "owner": "CREATE SOMETHING",
       "clusterId": "automation:worker",
-      "relationCount": 1,
+      "relationCount": 2,
       "x": 152,
       "y": 181,
       "z": -200,
-      "size": 7.82842712474619,
+      "size": 8.464101615137753,
       "color": "#84cc16",
       "targetPath": "packages/github-actions-runner-broker"
     },
@@ -17196,11 +17196,11 @@
       "status": "mapped",
       "owner": "CREATE SOMETHING",
       "clusterId": "automation:mcp",
-      "relationCount": 19,
+      "relationCount": 20,
       "x": 313,
       "y": 246,
       "z": -280,
-      "size": 13.94427190999916,
+      "size": 14.16515138991168,
       "color": "#06b6d4",
       "targetPath": "packages/io"
     },
@@ -17427,11 +17427,11 @@
       "status": "mapped",
       "owner": "CREATE SOMETHING",
       "clusterId": "automation:worker",
-      "relationCount": 1,
+      "relationCount": 2,
       "x": -332,
       "y": 226,
       "z": -128,
-      "size": 7.82842712474619,
+      "size": 8.464101615137753,
       "color": "#84cc16",
       "targetPath": "packages/lms/starter/pcn-workshop"
     },
@@ -17526,11 +17526,11 @@
       "status": "mapped",
       "owner": "CREATE SOMETHING",
       "clusterId": "automation:worker",
-      "relationCount": 5,
+      "relationCount": 6,
       "x": 405,
       "y": 228,
       "z": -110,
-      "size": 9.898979485566356,
+      "size": 10.291502622129181,
       "color": "#84cc16",
       "targetPath": "packages/ltd"
     },
@@ -17625,11 +17625,11 @@
       "status": "mapped",
       "owner": "CREATE SOMETHING",
       "clusterId": "automation:worker",
-      "relationCount": 2,
+      "relationCount": 3,
       "x": 398,
       "y": 232,
       "z": -182,
-      "size": 8.464101615137753,
+      "size": 9,
       "color": "#84cc16",
       "targetPath": "packages/mapping-canvas"
     },
@@ -18219,11 +18219,11 @@
       "status": "mapped",
       "owner": "CREATE SOMETHING",
       "clusterId": "automation:agent",
-      "relationCount": 1,
+      "relationCount": 2,
       "x": 177,
       "y": 162,
       "z": 50,
-      "size": 7.82842712474619,
+      "size": 8.464101615137753,
       "color": "#ef4444",
       "targetPath": "packages/operator-chat-agent"
     },
@@ -18285,11 +18285,11 @@
       "status": "mapped",
       "owner": "CREATE SOMETHING",
       "clusterId": "automation:agent",
-      "relationCount": 4,
+      "relationCount": 5,
       "x": 172,
       "y": 158,
       "z": 68,
-      "size": 9.47213595499958,
+      "size": 9.898979485566356,
       "color": "#ef4444",
       "targetPath": "packages/owned-agent-runtime"
     },
@@ -18549,11 +18549,11 @@
       "status": "mapped",
       "owner": "CREATE SOMETHING",
       "clusterId": "automation:worker",
-      "relationCount": 2,
+      "relationCount": 3,
       "x": 384,
       "y": 238,
       "z": -92,
-      "size": 8.464101615137753,
+      "size": 9,
       "color": "#84cc16",
       "targetPath": "packages/private-pcn"
     },
@@ -18615,11 +18615,11 @@
       "status": "mapped",
       "owner": "CREATE SOMETHING",
       "clusterId": "automation:worker",
-      "relationCount": 1,
+      "relationCount": 2,
       "x": -118,
       "y": 239,
       "z": -200,
-      "size": 7.82842712474619,
+      "size": 8.464101615137753,
       "color": "#84cc16",
       "targetPath": "packages/relay"
     },
@@ -19011,11 +19011,11 @@
       "status": "mapped",
       "owner": "CREATE SOMETHING",
       "clusterId": "automation:worker",
-      "relationCount": 3,
+      "relationCount": 4,
       "x": 133,
       "y": 241,
       "z": -146,
-      "size": 9,
+      "size": 9.47213595499958,
       "color": "#84cc16",
       "targetPath": "packages/space"
     },
@@ -19902,11 +19902,11 @@
       "status": "mapped",
       "owner": "CREATE SOMETHING",
       "clusterId": "automation:worker",
-      "relationCount": 3,
+      "relationCount": 4,
       "x": 353,
       "y": 242,
       "z": -146,
-      "size": 9,
+      "size": 9.47213595499958,
       "color": "#84cc16",
       "targetPath": "packages/webflow-dashboard"
     },
@@ -20397,11 +20397,11 @@
       "status": "mapped",
       "owner": "CREATE SOMETHING",
       "clusterId": "automation:mcp",
-      "relationCount": 1,
+      "relationCount": 2,
       "x": 300,
       "y": 158,
       "z": -244,
-      "size": 7.82842712474619,
+      "size": 8.464101615137753,
       "color": "#06b6d4",
       "targetPath": "packages/webflow-site-analyzer-mcp/workers/remote"
     },
@@ -20463,11 +20463,11 @@
       "status": "mapped",
       "owner": "CREATE SOMETHING",
       "clusterId": "automation:worker",
-      "relationCount": 1,
+      "relationCount": 2,
       "x": -413,
       "y": 280,
       "z": -182,
-      "size": 7.82842712474619,
+      "size": 8.464101615137753,
       "color": "#84cc16",
       "targetPath": "packages/webflow-template-analyzer/cloudflare"
     },
@@ -20694,11 +20694,11 @@
       "status": "mapped",
       "owner": "CREATE SOMETHING",
       "clusterId": "automation:worker",
-      "relationCount": 2,
+      "relationCount": 3,
       "x": 78,
       "y": 277,
       "z": -146,
-      "size": 8.464101615137753,
+      "size": 9,
       "color": "#84cc16",
       "targetPath": "packages/webflow-template-validation/worker"
     },
@@ -21156,11 +21156,11 @@
       "status": "mapped",
       "owner": "CREATE SOMETHING",
       "clusterId": "automation:worker",
-      "relationCount": 1,
+      "relationCount": 2,
       "x": 66,
       "y": 272,
       "z": -92,
-      "size": 7.82842712474619,
+      "size": 8.464101615137753,
       "color": "#84cc16",
       "targetPath": "apps/bettermode-marketplace-creator-agent/wrangler.jsonc"
     },
@@ -21189,11 +21189,11 @@
       "status": "mapped",
       "owner": "CREATE SOMETHING",
       "clusterId": "automation:worker",
-      "relationCount": 1,
+      "relationCount": 2,
       "x": 62,
       "y": 270,
       "z": -200,
-      "size": 7.82842712474619,
+      "size": 8.464101615137753,
       "color": "#84cc16",
       "targetPath": "apps/create-something-scheduler/wrangler.jsonc"
     },
@@ -21552,11 +21552,11 @@
       "status": "mapped",
       "owner": "CREATE SOMETHING",
       "clusterId": "automation:worker",
-      "relationCount": 1,
+      "relationCount": 2,
       "x": 24,
       "y": 239,
       "z": -128,
-      "size": 7.82842712474619,
+      "size": 8.464101615137753,
       "color": "#84cc16",
       "targetPath": "packages/agency/clients/outerfields/wrangler.jsonc"
     },
@@ -21618,11 +21618,11 @@
       "status": "mapped",
       "owner": "CREATE SOMETHING",
       "clusterId": "automation:worker",
-      "relationCount": 1,
+      "relationCount": 2,
       "x": 19,
       "y": 232,
       "z": -92,
-      "size": 7.82842712474619,
+      "size": 8.464101615137753,
       "color": "#84cc16",
       "targetPath": "packages/agency/clients/the-stack/wrangler.jsonc"
     },
@@ -21717,11 +21717,11 @@
       "status": "mapped",
       "owner": "CREATE SOMETHING",
       "clusterId": "automation:worker",
-      "relationCount": 1,
+      "relationCount": 2,
       "x": -25,
       "y": 240,
       "z": -164,
-      "size": 7.82842712474619,
+      "size": 8.464101615137753,
       "color": "#84cc16",
       "targetPath": "packages/agency/wrangler.jsonc"
     },
@@ -21750,11 +21750,11 @@
       "status": "mapped",
       "owner": "CREATE SOMETHING",
       "clusterId": "automation:worker",
-      "relationCount": 1,
+      "relationCount": 2,
       "x": -28,
       "y": 235,
       "z": -146,
-      "size": 7.82842712474619,
+      "size": 8.464101615137753,
       "color": "#84cc16",
       "targetPath": "packages/airtable-primary-tags-worker/wrangler.jsonc"
     },
@@ -22344,11 +22344,11 @@
       "status": "mapped",
       "owner": "CREATE SOMETHING",
       "clusterId": "automation:worker",
-      "relationCount": 1,
+      "relationCount": 2,
       "x": -42,
       "y": 129,
       "z": -200,
-      "size": 7.82842712474619,
+      "size": 8.464101615137753,
       "color": "#84cc16",
       "targetPath": "packages/exception-decisions-mcp/wrangler.jsonc"
     },
@@ -22410,11 +22410,11 @@
       "status": "mapped",
       "owner": "CREATE SOMETHING",
       "clusterId": "automation:worker",
-      "relationCount": 1,
+      "relationCount": 2,
       "x": -39,
       "y": 118,
       "z": -164,
-      "size": 7.82842712474619,
+      "size": 8.464101615137753,
       "color": "#84cc16",
       "targetPath": "packages/github-actions-runner-broker/wrangler.jsonc"
     },
@@ -23004,11 +23004,11 @@
       "status": "mapped",
       "owner": "CREATE SOMETHING",
       "clusterId": "automation:worker",
-      "relationCount": 1,
+      "relationCount": 2,
       "x": -3,
       "y": -4,
       "z": -92,
-      "size": 7.82842712474619,
+      "size": 8.464101615137753,
       "color": "#84cc16",
       "targetPath": "packages/io/wrangler.jsonc"
     },
@@ -23070,11 +23070,11 @@
       "status": "mapped",
       "owner": "CREATE SOMETHING",
       "clusterId": "automation:worker",
-      "relationCount": 1,
+      "relationCount": 2,
       "x": 10,
       "y": -12,
       "z": -182,
-      "size": 7.82842712474619,
+      "size": 8.464101615137753,
       "color": "#84cc16",
       "targetPath": "packages/lms/starter/pcn-workshop/wrangler.jsonc"
     },
@@ -23235,11 +23235,11 @@
       "status": "mapped",
       "owner": "CREATE SOMETHING",
       "clusterId": "automation:worker",
-      "relationCount": 1,
+      "relationCount": 2,
       "x": 43,
       "y": -29,
       "z": -92,
-      "size": 7.82842712474619,
+      "size": 8.464101615137753,
       "color": "#84cc16",
       "targetPath": "packages/ltd/wrangler.jsonc"
     },
@@ -23268,11 +23268,11 @@
       "status": "mapped",
       "owner": "CREATE SOMETHING",
       "clusterId": "automation:worker",
-      "relationCount": 1,
+      "relationCount": 2,
       "x": 50,
       "y": -32,
       "z": -200,
-      "size": 7.82842712474619,
+      "size": 8.464101615137753,
       "color": "#84cc16",
       "targetPath": "packages/mapping-canvas/wrangler.jsonc"
     },
@@ -23598,11 +23598,11 @@
       "status": "mapped",
       "owner": "CREATE SOMETHING",
       "clusterId": "automation:worker",
-      "relationCount": 1,
+      "relationCount": 2,
       "x": 126,
       "y": -86,
       "z": -146,
-      "size": 7.82842712474619,
+      "size": 8.464101615137753,
       "color": "#84cc16",
       "targetPath": "packages/operator-chat-agent/wrangler.jsonc"
     },
@@ -23631,11 +23631,11 @@
       "status": "mapped",
       "owner": "CREATE SOMETHING",
       "clusterId": "automation:worker",
-      "relationCount": 1,
+      "relationCount": 2,
       "x": 135,
       "y": -85,
       "z": -128,
-      "size": 7.82842712474619,
+      "size": 8.464101615137753,
       "color": "#84cc16",
       "targetPath": "packages/owned-agent-runtime/wrangler.jsonc"
     },
@@ -23697,11 +23697,11 @@
       "status": "mapped",
       "owner": "CREATE SOMETHING",
       "clusterId": "automation:worker",
-      "relationCount": 1,
+      "relationCount": 2,
       "x": 153,
       "y": -83,
       "z": -92,
-      "size": 7.82842712474619,
+      "size": 8.464101615137753,
       "color": "#84cc16",
       "targetPath": "packages/private-pcn/wrangler.jsonc"
     },
@@ -23763,11 +23763,11 @@
       "status": "mapped",
       "owner": "CREATE SOMETHING",
       "clusterId": "automation:worker",
-      "relationCount": 1,
+      "relationCount": 2,
       "x": 171,
       "y": -80,
       "z": -182,
-      "size": 7.82842712474619,
+      "size": 8.464101615137753,
       "color": "#84cc16",
       "targetPath": "packages/relay/wrangler.jsonc"
     },
@@ -24060,11 +24060,11 @@
       "status": "mapped",
       "owner": "CREATE SOMETHING",
       "clusterId": "automation:worker",
-      "relationCount": 1,
+      "relationCount": 2,
       "x": 247,
       "y": -50,
       "z": -146,
-      "size": 7.82842712474619,
+      "size": 8.464101615137753,
       "color": "#84cc16",
       "targetPath": "packages/space/wrangler.jsonc"
     },
@@ -24390,11 +24390,11 @@
       "status": "mapped",
       "owner": "CREATE SOMETHING",
       "clusterId": "automation:worker",
-      "relationCount": 1,
+      "relationCount": 2,
       "x": 348,
       "y": -16,
       "z": -92,
-      "size": 7.82842712474619,
+      "size": 8.464101615137753,
       "color": "#84cc16",
       "targetPath": "packages/webflow-dashboard/wrangler.jsonc"
     },
@@ -24654,11 +24654,11 @@
       "status": "mapped",
       "owner": "CREATE SOMETHING",
       "clusterId": "automation:worker",
-      "relationCount": 1,
+      "relationCount": 2,
       "x": 390,
       "y": 58,
       "z": -200,
-      "size": 7.82842712474619,
+      "size": 8.464101615137753,
       "color": "#84cc16",
       "targetPath": "packages/webflow-site-analyzer-mcp/workers/remote/wrangler.jsonc"
     },
@@ -24753,11 +24753,11 @@
       "status": "mapped",
       "owner": "CREATE SOMETHING",
       "clusterId": "automation:worker",
-      "relationCount": 1,
+      "relationCount": 2,
       "x": 400,
       "y": 88,
       "z": -146,
-      "size": 7.82842712474619,
+      "size": 8.464101615137753,
       "color": "#84cc16",
       "targetPath": "packages/webflow-template-analyzer/cloudflare/wrangler.jsonc"
     },
@@ -24852,11 +24852,11 @@
       "status": "mapped",
       "owner": "CREATE SOMETHING",
       "clusterId": "automation:worker",
-      "relationCount": 1,
+      "relationCount": 2,
       "x": 406,
       "y": 120,
       "z": -92,
-      "size": 7.82842712474619,
+      "size": 8.464101615137753,
       "color": "#84cc16",
       "targetPath": "packages/webflow-template-validation/worker/wrangler.jsonc"
     },
@@ -36113,6 +36113,15 @@
       "alpha": 0.48
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-app-create-something-bettermode-marketplace-creator-agent-apps-bettermode-marketplace-creator-agent-runs-substrate-create-something-worker-apps-bettermode-marketplace-creator-agent-wrangler-jsonc",
+      "source": 3,
+      "target": 241,
+      "relation": "runs",
+      "evidence": "wrangler.jsonc configures runtime for apps/bettermode-marketplace-creator-agent.",
+      "color": "#10b981",
+      "alpha": 0.48
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-app-create-something-client-workspace-desktop-apps-client-workspace-desktop-depends-on-substrate-create-something-package-create-something-delivery-schema-packages-delivery-schema",
       "source": 4,
       "target": 84,
@@ -36128,6 +36137,15 @@
       "relation": "depends_on",
       "evidence": "@create-something/create-something-scheduler declares @create-something/canon.",
       "color": "#3b82f6",
+      "alpha": 0.48
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-app-create-something-create-something-scheduler-apps-create-something-scheduler-runs-substrate-create-something-worker-apps-create-something-scheduler-wrangler-jsonc",
+      "source": 5,
+      "target": 242,
+      "relation": "runs",
+      "evidence": "wrangler.jsonc configures runtime for apps/create-something-scheduler.",
+      "color": "#10b981",
       "alpha": 0.48
     },
     {
@@ -36410,12 +36428,30 @@
       "alpha": 0.48
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-outerfields-packages-agency-clients-outerfields-runs-substrate-create-something-worker-packages-agency-clients-outerfields-wrangler-jsonc",
+      "source": 29,
+      "target": 253,
+      "relation": "runs",
+      "evidence": "wrangler.jsonc configures runtime for packages/agency/clients/outerfields.",
+      "color": "#10b981",
+      "alpha": 0.48
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-root-client-overlay-substrate-create-something-package-create-something-the-stack-packages-agency-clients-the-stack",
       "source": 0,
       "target": 30,
       "relation": "client_overlay",
       "evidence": "packages/agency/clients/the-stack is a managed client overlay under packages/agency/clients.",
       "color": "#ec4899",
+      "alpha": 0.48
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-the-stack-packages-agency-clients-the-stack-runs-substrate-create-something-worker-packages-agency-clients-the-stack-wrangler-jsonc",
+      "source": 30,
+      "target": 255,
+      "relation": "runs",
+      "evidence": "wrangler.jsonc configures runtime for packages/agency/clients/the-stack.",
+      "color": "#10b981",
       "alpha": 0.48
     },
     {
@@ -36500,6 +36536,15 @@
       "alpha": 0.48
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-agency-packages-agency-runs-substrate-create-something-worker-packages-agency-wrangler-jsonc",
+      "source": 31,
+      "target": 258,
+      "relation": "runs",
+      "evidence": "wrangler.jsonc configures runtime for packages/agency.",
+      "color": "#10b981",
+      "alpha": 0.48
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-package-create-something-dental-agent-router-packages-agency-workers-dental-agent-router-runs-substrate-create-something-worker-packages-agency-workers-dental-agent-router-wrangler-toml",
       "source": 39,
       "target": 256,
@@ -36514,6 +36559,15 @@
       "target": 257,
       "relation": "runs",
       "evidence": "wrangler.toml configures runtime for packages/agency/workers/social-poster.",
+      "color": "#10b981",
+      "alpha": 0.48
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-airtable-primary-tags-worker-packages-airtable-primary-tags-worker-runs-substrate-create-something-worker-packages-airtable-primary-tags-worker-wrangler-jsonc",
+      "source": 43,
+      "target": 259,
+      "relation": "runs",
+      "evidence": "wrangler.jsonc configures runtime for packages/airtable-primary-tags-worker.",
       "color": "#10b981",
       "alpha": 0.48
     },
@@ -36932,11 +36986,29 @@
       "alpha": 0.48
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-exception-decisions-mcp-packages-exception-decisions-mcp-runs-substrate-create-something-worker-packages-exception-decisions-mcp-wrangler-jsonc",
+      "source": 88,
+      "target": 277,
+      "relation": "runs",
+      "evidence": "wrangler.jsonc configures runtime for packages/exception-decisions-mcp.",
+      "color": "#10b981",
+      "alpha": 0.48
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-package-create-something-gigi-integrations-packages-gigi-integrations-runs-substrate-create-something-worker-packages-gigi-integrations-worker-wrangler-toml",
       "source": 90,
       "target": 278,
       "relation": "runs",
       "evidence": "worker/wrangler.toml configures runtime for packages/gigi-integrations.",
+      "color": "#10b981",
+      "alpha": 0.48
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-github-actions-runner-broker-packages-github-actions-runner-broker-runs-substrate-create-something-worker-packages-github-actions-runner-broker-wrangler-jsonc",
+      "source": 91,
+      "target": 279,
+      "relation": "runs",
+      "evidence": "wrangler.jsonc configures runtime for packages/github-actions-runner-broker.",
       "color": "#10b981",
       "alpha": 0.48
     },
@@ -37535,6 +37607,15 @@
       "alpha": 0.48
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-io-packages-io-runs-substrate-create-something-worker-packages-io-wrangler-jsonc",
+      "source": 121,
+      "target": 297,
+      "relation": "runs",
+      "evidence": "wrangler.jsonc configures runtime for packages/io.",
+      "color": "#10b981",
+      "alpha": 0.48
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-package-create-something-bundle-scanner-api-packages-io-workers-bundle-scanner-api-depends-on-substrate-create-something-package-create-something-bundle-scanner-core-packages-bundle-scanner-core",
       "source": 122,
       "target": 55,
@@ -37625,6 +37706,15 @@
       "alpha": 0.48
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-package-pcn-workshop-starter-packages-lms-starter-pcn-workshop-runs-substrate-create-something-worker-packages-lms-starter-pcn-workshop-wrangler-jsonc",
+      "source": 128,
+      "target": 299,
+      "relation": "runs",
+      "evidence": "wrangler.jsonc configures runtime for packages/lms/starter/pcn-workshop.",
+      "color": "#10b981",
+      "alpha": 0.48
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-package-create-something-loom-mcp-remote-packages-loom-mcp-remote-depends-on-substrate-create-something-package-create-something-mcp-core-packages-mcp-core",
       "source": 129,
       "target": 138,
@@ -37679,6 +37769,15 @@
       "alpha": 0.48
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-ltd-packages-ltd-runs-substrate-create-something-worker-packages-ltd-wrangler-jsonc",
+      "source": 131,
+      "target": 304,
+      "relation": "runs",
+      "evidence": "wrangler.jsonc configures runtime for packages/ltd.",
+      "color": "#10b981",
+      "alpha": 0.48
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-package-arena-curator-packages-ltd-workers-arena-curator-runs-substrate-create-something-worker-packages-ltd-workers-arena-curator-wrangler-toml",
       "source": 132,
       "target": 302,
@@ -37703,6 +37802,15 @@
       "relation": "depends_on",
       "evidence": "@create-something/mapping-canvas declares @create-something/canon.",
       "color": "#3b82f6",
+      "alpha": 0.48
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-mapping-canvas-packages-mapping-canvas-runs-substrate-create-something-worker-packages-mapping-canvas-wrangler-jsonc",
+      "source": 134,
+      "target": 305,
+      "relation": "runs",
+      "evidence": "wrangler.jsonc configures runtime for packages/mapping-canvas.",
+      "color": "#10b981",
       "alpha": 0.48
     },
     {
@@ -37904,6 +38012,15 @@
       "alpha": 0.48
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-operator-chat-agent-packages-operator-chat-agent-runs-substrate-create-something-worker-packages-operator-chat-agent-wrangler-jsonc",
+      "source": 152,
+      "target": 315,
+      "relation": "runs",
+      "evidence": "wrangler.jsonc configures runtime for packages/operator-chat-agent.",
+      "color": "#10b981",
+      "alpha": 0.48
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-package-create-something-orchestration-packages-orchestration-depends-on-substrate-create-something-package-create-something-harness-packages-harness",
       "source": 153,
       "target": 114,
@@ -37937,6 +38054,15 @@
       "relation": "depends_on",
       "evidence": "@create-something/owned-agent-runtime declares @create-something/delivery-schema.",
       "color": "#3b82f6",
+      "alpha": 0.48
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-owned-agent-runtime-packages-owned-agent-runtime-runs-substrate-create-something-worker-packages-owned-agent-runtime-wrangler-jsonc",
+      "source": 154,
+      "target": 316,
+      "relation": "runs",
+      "evidence": "wrangler.jsonc configures runtime for packages/owned-agent-runtime.",
+      "color": "#10b981",
       "alpha": 0.48
     },
     {
@@ -37994,11 +38120,29 @@
       "alpha": 0.48
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-private-pcn-packages-private-pcn-runs-substrate-create-something-worker-packages-private-pcn-wrangler-jsonc",
+      "source": 162,
+      "target": 318,
+      "relation": "runs",
+      "evidence": "wrangler.jsonc configures runtime for packages/private-pcn.",
+      "color": "#10b981",
+      "alpha": 0.48
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-package-create-something-quickbooks-notion-mcp-packages-quickbooks-notion-mcp-runs-substrate-create-something-worker-packages-quickbooks-notion-mcp-wrangler-toml",
       "source": 163,
       "target": 319,
       "relation": "runs",
       "evidence": "wrangler.toml configures runtime for packages/quickbooks-notion-mcp.",
+      "color": "#10b981",
+      "alpha": 0.48
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-relay-packages-relay-runs-substrate-create-something-worker-packages-relay-wrangler-jsonc",
+      "source": 164,
+      "target": 320,
+      "relation": "runs",
+      "evidence": "wrangler.jsonc configures runtime for packages/relay.",
       "color": "#10b981",
       "alpha": 0.48
     },
@@ -38099,6 +38243,15 @@
       "relation": "depends_on",
       "evidence": "@create-something/space declares @create-something/tufte.",
       "color": "#3b82f6",
+      "alpha": 0.48
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-space-packages-space-runs-substrate-create-something-worker-packages-space-wrangler-jsonc",
+      "source": 176,
+      "target": 329,
+      "relation": "runs",
+      "evidence": "wrangler.jsonc configures runtime for packages/space.",
+      "color": "#10b981",
       "alpha": 0.48
     },
     {
@@ -38417,6 +38570,15 @@
       "alpha": 0.48
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-webflow-dashboard-packages-webflow-dashboard-runs-substrate-create-something-worker-packages-webflow-dashboard-wrangler-jsonc",
+      "source": 203,
+      "target": 339,
+      "relation": "runs",
+      "evidence": "wrangler.jsonc configures runtime for packages/webflow-dashboard.",
+      "color": "#10b981",
+      "alpha": 0.48
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-package-create-something-webflow-marketplace-sync-packages-webflow-marketplace-sync-runs-substrate-create-something-worker-packages-webflow-marketplace-sync-wrangler-toml",
       "source": 206,
       "target": 340,
@@ -38561,11 +38723,29 @@
       "alpha": 0.48
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-package-webflow-site-analyzer-mcp-remote-packages-webflow-site-analyzer-mcp-workers-remote-runs-substrate-create-something-worker-packages-webflow-site-analyzer-mcp-workers-remote-wrangler-jsonc",
+      "source": 218,
+      "target": 347,
+      "relation": "runs",
+      "evidence": "wrangler.jsonc configures runtime for packages/webflow-site-analyzer-mcp/workers/remote.",
+      "color": "#10b981",
+      "alpha": 0.48
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-package-create-something-webflow-template-agent-packages-webflow-template-agent-runs-substrate-create-something-worker-packages-webflow-template-agent-wrangler-toml",
       "source": 219,
       "target": 349,
       "relation": "runs",
       "evidence": "wrangler.toml configures runtime for packages/webflow-template-agent.",
+      "color": "#10b981",
+      "alpha": 0.48
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-package-webflow-template-analyzer-cloudflare-packages-webflow-template-analyzer-cloudflare-runs-substrate-create-something-worker-packages-webflow-template-analyzer-cloudflare-wrangler-jsonc",
+      "source": 220,
+      "target": 350,
+      "relation": "runs",
+      "evidence": "wrangler.jsonc configures runtime for packages/webflow-template-analyzer/cloudflare.",
       "color": "#10b981",
       "alpha": 0.48
     },
@@ -38612,6 +38792,15 @@
       "relation": "depends_on",
       "evidence": "@create-something/webflow-template-validation-worker declares @create-something/gsap-validation-worker.",
       "color": "#3b82f6",
+      "alpha": 0.48
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-webflow-template-validation-worker-packages-webflow-template-validation-worker-runs-substrate-create-something-worker-packages-webflow-template-validation-worker-wrangler-jsonc",
+      "source": 227,
+      "target": 353,
+      "relation": "runs",
+      "evidence": "wrangler.jsonc configures runtime for packages/webflow-template-validation/worker.",
+      "color": "#10b981",
       "alpha": 0.48
     },
     {

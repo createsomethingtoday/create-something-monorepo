@@ -33,3 +33,12 @@ test('identity recovery guide resolves to the owning Identity Worker', () => {
   const targets = topology.edges.filter((edge) => edge.source === guide.id && edge.relation === 'documents' && edge.target !== topology.rootNodeId);
   assert.deepEqual(targets.map((edge) => edge.target), [owner.id]);
 });
+
+test('workshop starter connects to its JSONC runtime', () => {
+  const topology = JSON.parse(fs.readFileSync(new URL('../data/create-something-internal-topology.json', import.meta.url), 'utf8'));
+  const owner = topology.nodes.find((node) => node.path === 'packages/lms/starter/pcn-workshop');
+  const runtime = topology.nodes.find((node) => node.path === 'packages/lms/starter/pcn-workshop/wrangler.jsonc');
+  assert.ok(owner);
+  assert.ok(runtime);
+  assert.ok(topology.edges.some((edge) => edge.source === owner.id && edge.target === runtime.id && edge.relation === 'runs'));
+});

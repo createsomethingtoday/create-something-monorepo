@@ -1,13 +1,13 @@
 {
   "id": "substrate:create-something:organization-review:internal",
-  "generatedAt": "2026-10-06T14:08:48.180Z",
+  "generatedAt": "2026-10-06T14:17:56.722Z",
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
   "valueState": "valuable_with_review_signals",
   "answer": "Atlas is showing value for CREATE SOMETHING: the business is mapped enough to reveal review signals, especially automation/database imbalance and worker/MCP concentration.",
   "summary": {
     "nodes": 546,
-    "edges": 1127,
+    "edges": 1148,
     "mapped": 546,
     "hardGaps": 0,
     "reviewSignals": 6,
