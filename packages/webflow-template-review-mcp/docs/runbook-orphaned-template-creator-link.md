@@ -118,7 +118,11 @@ the validation automation flips the status straight back to the error.
 ```
 Step 1 — 📧Emails (tbldQNGszIyOjt9a1)
   <email row>.fldDqzJQbU1PRhZHp = [<creator>]
-  <email row>.flde85upOCodXsivs = ["WF Account"]        # 🌟Email Type(s) — always set a type
+  <email row>.flde85upOCodXsivs = [...existing types, "WF Account"]   # 🌟Email Type(s)
+  The multi-select write REPLACES the field. Read the current types first and add
+  "WF Account"; never drop "Primary". Writing ["WF Account"] to the creator's only
+  Primary row leaves them with no Primary, and Step 3 then opens the review thread with
+  no recipient. An untyped row is invisible to the Creator rollups, so always set a type.
 Step 2 — 👛Assets (tblRwzpWoLgE9MrUm)
   <asset>.fldGDWo2VfnTbSUiL = [<creator>]
   Verify: #️⃣🎨Creators = 1 and 🎨📧 Creator Email is populated.
