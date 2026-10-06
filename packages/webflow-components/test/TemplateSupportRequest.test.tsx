@@ -76,3 +76,14 @@ test('describes retry windows and creates server-valid idempotency keys', () => 
   assert.match(key, /^[A-Za-z0-9_-]{16,64}$/);
   assert.notEqual(key, createIdempotencyKey());
 });
+
+test('gives up on a stalled request after the timeout so the dialog cannot trap the buyer', async () => {
+  const stalled = ((_url: RequestInfo | URL, init?: RequestInit) =>
+    new Promise<Response>((_resolve, reject) => {
+      init?.signal?.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')));
+    })) as typeof fetch;
+  const started = Date.now();
+  const result = await submitSupportRequest(payload, stalled, SUPPORT_REQUEST_ENDPOINT, 50);
+  assert.deepEqual(result, { ok: false, error: 'network_error' });
+  assert.ok(Date.now() - started < 2_000);
+});

@@ -81,20 +81,31 @@ function isKnownError(value: unknown): value is SupportRequestError {
   return typeof value === 'string' && value in SUPPORT_REQUEST_ERROR_MESSAGES;
 }
 
+/** The dialog can't be dismissed mid-submit, so the wait must be bounded. */
+export const SUPPORT_REQUEST_TIMEOUT_MS = 20_000;
+
 export async function submitSupportRequest(
   payload: SupportRequestPayload,
   fetchImpl: typeof fetch = fetch,
   endpoint = SUPPORT_REQUEST_ENDPOINT,
+  timeoutMs = SUPPORT_REQUEST_TIMEOUT_MS,
 ): Promise<SupportRequestResult> {
+  const controller = typeof AbortController === 'undefined' ? null : new AbortController();
+  const timer = controller ? setTimeout(() => controller.abort(), timeoutMs) : null;
   let response: Response;
   try {
     response = await fetchImpl(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
+      ...(controller ? { signal: controller.signal } : {}),
     });
   } catch {
+    // Includes the timeout abort. The caller keeps the same idempotency key,
+    // so a retry is deduplicated if the first attempt did reach the creator.
     return { ok: false, error: 'network_error' };
+  } finally {
+    if (timer) clearTimeout(timer);
   }
 
   const json = (await response.json().catch(() => null)) as {

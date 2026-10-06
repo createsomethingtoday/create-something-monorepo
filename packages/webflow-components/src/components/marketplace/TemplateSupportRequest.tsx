@@ -57,6 +57,7 @@ const SUPPORT_STYLES = `
 .tmsupport-title { margin: 0; font-size: 20px; font-weight: 600; line-height: 1.3; }
 .tmsupport-subtitle { margin: 4px 0 0; color: #5a5a5a; font-size: 14px; line-height: 1.5; }
 .tmsupport-form { display: flex; flex-direction: column; gap: 14px; }
+.tmsupport-fieldset { display: flex; flex-direction: column; gap: 14px; min-width: 0; margin: 0; padding: 0; border: 0; }
 .tmsupport-field { display: flex; flex-direction: column; gap: 6px; }
 .tmsupport-label { font-size: 13px; font-weight: 600; }
 .tmsupport-input {
@@ -94,6 +95,7 @@ textarea.tmsupport-input { min-height: 132px; resize: vertical; line-height: 1.5
 .tmsupport-button-primary { border-color: #146ef5; background: #146ef5; color: #fff; }
 .tmsupport-button-primary:hover { border-color: #0f55d9; background: #0f55d9; }
 .tmsupport-button[disabled] { opacity: 0.6; cursor: progress; }
+.tmsupport-input:disabled { background: #f7f7f7; cursor: progress; }
 .tmsupport-close { min-height: 32px; padding: 0 10px; }
 .tmsupport-button:focus-visible, .tmsupport-input:focus-visible { outline: 2px solid #146ef5; outline-offset: 2px; }
 `;
@@ -267,6 +269,8 @@ const SupportRequestDialog: React.FC<SupportRequestDialogProps> = ({
           </div>
         ) : (
           <form className="tmsupport-form" onSubmit={handleSubmit} noValidate>
+            {/* Fields stay fixed while a write is in flight so its idempotency key can't rotate. */}
+            <fieldset className="tmsupport-fieldset" disabled={status === 'submitting'}>
             <div className="tmsupport-field">
               <label className="tmsupport-label" htmlFor={`${fieldId}-type`}>What do you need help with?</label>
               <select
@@ -330,6 +334,7 @@ const SupportRequestDialog: React.FC<SupportRequestDialogProps> = ({
                 onChange={(event) => setWebsite(event.target.value)}
               />
             </div>
+            </fieldset>
             <p className="tmsupport-note">
               Webflow sends your message and email address to {recipient} so they can reply to you directly.
             </p>
