@@ -186,15 +186,47 @@ describe('POST /api/templates/support-request', () => {
     }
   });
 
+  it('lets the earliest reservations through even when every insert lands before any count', async () => {
+    const { env, close } = await setup();
+    try {
+      const at = '2026-10-06T12:00:00.000Z';
+      // Four reservations for the same buyer + template, all inserted before any count.
+      for (const id of ['a', 'b', 'c', 'd']) {
+        await env.DB.prepare(
+          `INSERT INTO support_requests (id, created_at, template_document_id, template_slug, request_type, status, ip_hash, buyer_email_hash, message_chars)
+           VALUES (?, ?, 'recAsset1', 'meridian', 'other', 'pending', ?, 'buyer', 20)`,
+        )
+          .bind(id, at, `ip-${id}`)
+          .run();
+      }
+      const counts = [];
+      for (const id of ['a', 'b', 'c', 'd']) {
+        const row = await env.DB.prepare(
+          `SELECT COUNT(*) AS n FROM support_requests WHERE buyer_email_hash = 'buyer' AND template_slug = 'meridian'
+             AND status != 'rate_limited' AND (created_at < ? OR (created_at = ? AND id <= ?))`,
+        )
+          .bind(at, at, id)
+          .first<{ n: number }>();
+        counts.push(row?.n);
+      }
+      // Ranks 1..4: the first three are within the cap of 3, only the fourth is over.
+      expect(counts).toEqual([1, 2, 3, 4]);
+    } finally {
+      close();
+    }
+  });
+
   it('counts concurrent requests against the cap', async () => {
     const { env, close, calls } = await setup();
     try {
       const responses = await Promise.all(
         Array.from({ length: 6 }, (_, index) => callWorker(post(body(), `198.51.100.${index}`), env)),
       );
+      // Exactly the cap goes through: the burst can neither exceed it nor starve itself.
       const sent = responses.filter((response) => response.status === 200).length;
-      expect(sent).toBeLessThanOrEqual(3);
-      expect(calls.filter((call) => call.url.startsWith('https://api.knock.app/')).length).toBe(sent);
+      expect(sent).toBe(3);
+      expect(responses.filter((response) => response.status === 429)).toHaveLength(3);
+      expect(calls.filter((call) => call.url.startsWith('https://api.knock.app/')).length).toBe(3);
       const limited = responses.find((response) => response.status === 429);
       expect(Number(limited?.headers.get('Retry-After'))).toBeGreaterThan(3600);
     } finally {
