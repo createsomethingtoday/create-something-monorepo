@@ -1969,12 +1969,11 @@ test('create_admin_template POSTs the template payload, records the MRP ID, and 
 
   assert.deepEqual(publishingWrites, [{ assetId: 'rec_asset_komanica', input: { mrp_id_overwrite: '6ac54eddbb8a7def85e05871' } }]);
 
-  const data = payload.data as { template_id: string; admin_url: string; mrp_id_recorded: boolean; remaining_in_admin: string[] };
+  const data = payload.data as { template_id: string; admin_url: string; mrp_id_recorded: boolean; next_steps: string[] };
   assert.equal(data.template_id, '6ac54eddbb8a7def85e05871');
   assert.equal(data.admin_url, 'https://webflow.com/admin/templates/6ac54eddbb8a7def85e05871');
   assert.equal(data.mrp_id_recorded, true);
-  assert.equal(data.remaining_in_admin.length, 4);
-  assert.match(data.remaining_in_admin[0] ?? '', /thumbnail/i);
+  assert.match(data.next_steps[0] ?? '', /complete_admin_template/);
 });
 
 test('create_admin_template fails closed without the marketplace admin key and stays write-gated', async () => {
@@ -2032,6 +2031,93 @@ test('create_admin_template refuses without a support contact', async () => {
   assert.equal(payload.ok, false);
   assert.equal((payload.error as { code?: string })?.code, 'SUPPORT_CONTACT_MISSING');
   assert.equal(fetched, false);
+});
+
+function mrpRouteStub(stored: Record<string, unknown>) {
+  const calls: Array<Record<string, any>> = [];
+  const fetchFn = (async (_url: string | URL | Request, init?: RequestInit) => {
+    const body = JSON.parse(String(init?.body)) as Record<string, any>;
+    calls.push({ method: init?.method, body });
+    return new Response(JSON.stringify(stored), { status: 200, headers: { 'content-type': 'application/json' } });
+  }) as typeof fetch;
+  return { calls, fetchFn };
+}
+
+test('complete_admin_template PUTs the Admin fields to the recorded Template ID and reads them back', async () => {
+  const { server, handlers, names } = createServerHarness();
+  const stored = {
+    _id: '6ac54eddbb8a7def85e05871',
+    name: 'Komanica',
+    price: { value: 9900, unit: 'USD' },
+    templateMetadata: { type: 'CMS', extDetailPageUrl: '/templates/html/komanica-website-template' },
+    thumbnailImage: { url: 'https://cdn.prod.website-files.com/template-assets/6ac54eddbb8a7def85e05871/thumbnails/1_thumb.png' },
+  };
+  const { calls, fetchFn } = mrpRouteStub(stored);
+  const client = {
+    getReviewContext: async () => adminCreateContext({ mrpIdOverride: '6ac54eddbb8a7def85e05871' }),
+  } as unknown as AirtableClient;
+  registerTools(server, () => client, () => reviewer, { marketplaceAdmin: { apiKey: 'k'.repeat(128), fetchFn } });
+
+  const result = await handlers.get('template_review_complete_admin_template')?.({ version_id: 'rec_version_komanica' });
+  assert.ok(result);
+  const payload = parsePayload(result);
+  assert.equal(payload.ok, true, JSON.stringify(payload.error));
+
+  assert.equal(calls.length, 2);
+  assert.equal(calls[0]?.method, 'PUT');
+  assert.equal(calls[0]?.body.mrpId, '6ac54eddbb8a7def85e05871');
+  assert.deepEqual(calls[0]?.body.price, { value: 9900, unit: 'USD' });
+  assert.equal(calls[0]?.body.templateMetadata.extCategory, 'Design');
+  assert.equal(calls[0]?.body.thumbnailImage.url, 'https://example.com/thumb.png');
+  assert.deepEqual(calls[1]?.body, { mrpId: '6ac54eddbb8a7def85e05871' });
+
+  const data = payload.data as { fields: Array<{ field: string; status: string }>; all_stored: boolean; warnings: string[] };
+  const status = Object.fromEntries(data.fields.map((check) => [check.field, check.status]));
+  assert.equal(status['price.value'], 'stored');
+  assert.equal(status['templateMetadata.type'], 'stored');
+  assert.equal(status['thumbnailImage.url'], 'stored');
+  assert.equal(status['templateMetadata.extCategory'], 'unverifiable');
+  assert.equal(data.all_stored, false);
+  assert.ok(data.warnings.some((warning) => /123284/.test(warning)));
+
+  assert.ok(WRITE_TOOL_NAMES.has('template_review_complete_admin_template'));
+  assert.notEqual(names.indexOf('template_review_complete_admin_template'), -1);
+  const readOnly = createServerHarness();
+  registerTools(readOnly.server, () => ({}) as AirtableClient, () => reviewer, {}, { allowWrites: false });
+  assert.equal(readOnly.names.indexOf('template_review_complete_admin_template'), -1);
+});
+
+test('complete_admin_template reports a mismatch and flags an Airtable thumbnail', async () => {
+  const { server, handlers } = createServerHarness();
+  const { fetchFn } = mrpRouteStub({
+    _id: '6ac54eddbb8a7def85e05871',
+    price: { value: 4900, unit: 'USD' },
+    thumbnailImage: { url: 'https://v5.airtableusercontent.com/old.png' },
+  });
+  const client = {
+    getReviewContext: async () => adminCreateContext({ mrpIdOverride: '6ac54eddbb8a7def85e05871' }),
+  } as unknown as AirtableClient;
+  registerTools(server, () => client, () => reviewer, { marketplaceAdmin: { apiKey: 'k'.repeat(128), fetchFn } });
+
+  const payload = parsePayload((await handlers.get('template_review_complete_admin_template')?.({ version_id: 'rec_version_komanica' }))!);
+  assert.equal(payload.ok, true, JSON.stringify(payload.error));
+  const data = payload.data as { fields: Array<{ field: string; status: string }>; warnings: string[] };
+  const status = Object.fromEntries(data.fields.map((check) => [check.field, check.status]));
+  assert.equal(status['price.value'], 'mismatch');
+  assert.equal(status['thumbnailImage.url'], 'mismatch');
+  assert.ok(data.warnings.some((warning) => /Airtable link/.test(warning)));
+});
+
+test('complete_admin_template refuses when no Template ID is recorded', async () => {
+  const { server, handlers } = createServerHarness();
+  const { calls, fetchFn } = mrpRouteStub({});
+  const client = { getReviewContext: async () => adminCreateContext() } as unknown as AirtableClient;
+  registerTools(server, () => client, () => reviewer, { marketplaceAdmin: { apiKey: 'k'.repeat(128), fetchFn } });
+
+  const payload = parsePayload((await handlers.get('template_review_complete_admin_template')?.({ version_id: 'rec_version_komanica' }))!);
+  assert.equal(payload.ok, false);
+  assert.equal((payload.error as { code?: string })?.code, 'TEMPLATE_ID_MISSING');
+  assert.equal(calls.length, 0);
 });
 
 test('set_featured_flag is restricted to featured-batch coordinators', async () => {

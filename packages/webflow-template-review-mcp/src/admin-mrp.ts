@@ -172,3 +172,41 @@ export async function createMrpTemplate(
   }
   return { templateId, adminUrl: `https://webflow.com/admin/templates/${templateId}`, response };
 }
+
+/**
+ * Body for PUT /admin/api/mrp/airtable when finishing a template's Admin
+ * fields (updateMRPViaAirtable). Partial update: only present fields are $set.
+ * templateMetadata.extCategory/extMainTag land on the legacy Template; until
+ * webflow/webflow#123284 ships the route accepts them but does not store them.
+ */
+export interface MrpTemplateUpdateFields {
+  name?: string;
+  displayName?: string;
+  description?: string;
+  price?: { value: number; unit: 'USD' };
+  support?: { email?: string; url?: string };
+  templateMetadata?: {
+    type?: string;
+    extDetailPageUrl?: string;
+    extCategory?: string;
+    extMainTag?: string;
+  };
+  thumbnailImage?: { url: string; altText: string };
+}
+
+export async function updateMrpTemplate(
+  config: MarketplaceAdminConfig,
+  mrpId: string,
+  fields: MrpTemplateUpdateFields,
+): Promise<unknown> {
+  return callMrpRoute(config, 'PUT', { mrpId, ...fields }, { mrpId }, 'MRP_UPDATE_FAILED');
+}
+
+/**
+ * Reads the stored MRP document back. The route has no GET; a PUT carrying
+ * only mrpId changes nothing and returns the current document.
+ */
+export async function readMrp(config: MarketplaceAdminConfig, mrpId: string): Promise<Record<string, unknown> | null> {
+  const response = await callMrpRoute(config, 'PUT', { mrpId }, { mrpId, readback: true }, 'MRP_READBACK_FAILED');
+  return typeof response === 'object' && response !== null ? (response as Record<string, unknown>) : null;
+}

@@ -6,7 +6,10 @@ import { prepareAdminTemplateFill, prepareAdminTemplateFillBatch } from './admin
 import {
   MRP_VISIBILITY_VALUES,
   createMrpTemplate,
+  readMrp,
   setMrpVisibility,
+  updateMrpTemplate,
+  type MrpTemplateUpdateFields,
   type MarketplaceAdminConfig,
   type MrpTemplateCreatePayload,
 } from './admin-mrp.js';
@@ -329,20 +332,59 @@ export const WRITE_TOOL_NAMES: ReadonlySet<string> = new Set([
   'template_review_prepare_admin_template_thumbnail_execute',
   // Server-side Webflow writes: create the MRP + Template, flip MRP visibility.
   'template_review_create_admin_template',
+  'template_review_complete_admin_template',
   'template_review_set_mrp_visibility',
 ]);
 
 /**
- * What the reviewer still finishes on /admin/templates/<id> after the
- * server-side create. The first two go away once webflow/webflow#123284 ships
- * (thumbnail copied to the CDN, extCategory/extMainTag accepted by the route).
+ * Next steps after the server-side create. All run through the MCP; nobody
+ * needs to open /admin/templates/<id>.
  */
-const REMAINING_IN_ADMIN_AFTER_CREATE = [
-  'Upload the tall thumbnail (560 × 720) with "Upload Tall Thumbnail" — the route currently stores the Airtable link verbatim, which expires and is blocked by Admin\'s CSP (get_template_thumbnail gives a fresh download link).',
-  'Set Category and Primary Tag, then click Update Template — the route cannot write them yet.',
-  'Check Site Slug, Detail Page Path, Type and Cost against Airtable (prepare_admin_template_verify prints the match table).',
-  'Work the 🚀Publishing Checklist with set_checklist_items, then approve the version.',
+const NEXT_STEPS_AFTER_CREATE = [
+  'Run template_review_complete_admin_template to push the thumbnail, Category, Primary Tag, Type, Cost and Detail Page Path and read them back.',
+  'Work the 🚀Publishing Checklist with template_review_set_checklist_items.',
+  'Approve the version with template_review_approve_version.',
 ] as const;
+
+/**
+ * Fields the route accepts but stores only on the legacy Template, which the
+ * key-authenticated route cannot read back. webflow/webflow#123284 makes the
+ * route store them; until it ships they are sent but unverified.
+ */
+const LEGACY_TEMPLATE_ONLY_FIELDS = ['templateMetadata.extCategory', 'templateMetadata.extMainTag'] as const;
+
+type AdminFieldCheck = { field: string; sent: unknown; stored: unknown; status: 'stored' | 'mismatch' | 'unverifiable' };
+
+function readPath(doc: Record<string, unknown> | null, path: string): unknown {
+  return path.split('.').reduce<unknown>((value, key) => (value && typeof value === 'object' ? (value as Record<string, unknown>)[key] : undefined), doc);
+}
+
+function compareAdminFields(sent: MrpTemplateUpdateFields, stored: Record<string, unknown> | null): AdminFieldCheck[] {
+  const paths: Array<[string, unknown]> = [
+    ['name', sent.name],
+    ['description', sent.description],
+    ['price.value', sent.price?.value],
+    ['templateMetadata.type', sent.templateMetadata?.type],
+    ['templateMetadata.extDetailPageUrl', sent.templateMetadata?.extDetailPageUrl],
+    ['templateMetadata.extCategory', sent.templateMetadata?.extCategory],
+    ['templateMetadata.extMainTag', sent.templateMetadata?.extMainTag],
+    ['thumbnailImage.url', sent.thumbnailImage?.url],
+  ];
+  return paths
+    .filter(([, value]) => value !== undefined)
+    .map(([field, value]) => {
+      const storedValue = readPath(stored, field);
+      if (stored === null || ((LEGACY_TEMPLATE_ONLY_FIELDS as readonly string[]).includes(field) && storedValue === undefined)) {
+        return { field, sent: value, stored: storedValue ?? null, status: 'unverifiable' as const };
+      }
+      if (field === 'thumbnailImage.url') {
+        // The route copies the image to the template's CDN path once #123284 ships; any stored URL there counts.
+        const ok = storedValue === value || (typeof storedValue === 'string' && /\/template-assets\/[0-9a-f]{24}\/thumbnails\//.test(storedValue));
+        return { field, sent: value, stored: storedValue ?? null, status: ok ? ('stored' as const) : ('mismatch' as const) };
+      }
+      return { field, sent: value, stored: storedValue ?? null, status: storedValue === value ? ('stored' as const) : ('mismatch' as const) };
+    });
+}
 
 export function registerTools(
   mcpServer: McpServer,
@@ -1385,9 +1427,79 @@ export function registerTools(
           visibility: payload.visibility,
           source: fillBundle.source,
           payload,
-          remaining_in_admin: REMAINING_IN_ADMIN_AFTER_CREATE,
+          next_steps: NEXT_STEPS_AFTER_CREATE,
           warnings,
-          note: `Open ${result.adminUrl} and finish the remaining_in_admin items there before approving.`,
+          note: 'Next, run template_review_complete_admin_template for this version. The Admin URL is for reference only.',
+        });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'template_review_complete_admin_template',
+    'Server-side Webflow write: finish a created template\'s Admin fields without opening Admin. Sends the Airtable-derived thumbnail (fresh link), Category, Primary Tag, Type, Cost, Description and Detail Page Path through the key-authenticated PUT /admin/api/mrp/airtable route, then reads the record back and reports each field as stored, mismatch or unverifiable. Uses the Template ID in 👀ℹ️MRP ID (Override) unless mrp_id is passed. Requires the marketplace admin key and an explicit reviewer request.',
+    {
+      version_id: z.string().min(1),
+      mrp_id: MONGO_TEMPLATE_ID.optional().describe('Template ID; defaults to the one recorded on the asset.'),
+    },
+    async ({ version_id, mrp_id }) => {
+      try {
+        const reviewer = requireResolvedReviewer(getReviewer);
+        const context = await getClient().getReviewContext(version_id, currentReviewerAsCollaborator(getReviewer));
+        const recorded = context.asset?.mrpIdOverride ?? context.asset?.mrpId;
+        const templateId = mrp_id ?? (recorded && /^[0-9a-f]{24}$/i.test(recorded) ? recorded : undefined);
+        if (!templateId) {
+          throw new AirtableClientError(
+            'TEMPLATE_ID_MISSING',
+            'No Template ID is recorded on the asset. Run template_review_create_admin_template first, or pass mrp_id.',
+            422,
+          );
+        }
+
+        const fillBundle = prepareAdminTemplateFill(context, { includeScript: false, includeBookmarklet: false });
+        const form = fillBundle.form_data.admin_form;
+        const thumbnailUrl = fillBundle.form_data.thumbnail_image_url;
+        const cost = Number(form.cost);
+        const fields: MrpTemplateUpdateFields = {
+          ...(form.name ? { name: form.name, displayName: form.name } : {}),
+          ...(form.description ? { description: form.description } : {}),
+          ...(Number.isFinite(cost) && form.cost !== undefined && form.cost !== '' ? { price: { value: cost, unit: 'USD' as const } } : {}),
+          templateMetadata: {
+            ...(form.type ? { type: form.type } : {}),
+            ...(form.extDetailPageUrl ? { extDetailPageUrl: form.extDetailPageUrl } : {}),
+            ...(form.extCategory ? { extCategory: form.extCategory } : {}),
+            ...(form.extMainTag ? { extMainTag: form.extMainTag } : {}),
+          },
+          ...(thumbnailUrl ? { thumbnailImage: { url: thumbnailUrl, altText: form.name ?? 'Template thumbnail' } } : {}),
+        };
+
+        const adminConfig = runtimeConfig.marketplaceAdmin ?? {};
+        await updateMrpTemplate(adminConfig, templateId, fields);
+        const stored = await readMrp(adminConfig, templateId);
+        const checks = compareAdminFields(fields, stored);
+
+        const warnings: string[] = [...(fillBundle.form_data.admin_form_warnings ?? [])];
+        if (fillBundle.missing_fields.length > 0) {
+          warnings.push(`Not sent because Airtable has no value: ${fillBundle.missing_fields.join(', ')}.`);
+        }
+        const storedThumb = readPath(stored, 'thumbnailImage.url');
+        if (typeof storedThumb === 'string' && /airtable/i.test(storedThumb)) {
+          warnings.push('The stored thumbnail is an Airtable link. It expires and Admin cannot display it. The route copies it to the CDN once webflow/webflow#123284 ships; rerun this tool then.');
+        }
+        if (checks.some((check) => check.status === 'unverifiable')) {
+          warnings.push('Category and Primary Tag live on the legacy Template, which this route cannot read back. They are stored only after webflow/webflow#123284 ships.');
+        }
+
+        return asSuccess({
+          reviewer: reviewerPayload(reviewer),
+          template_id: templateId,
+          admin_url: `https://webflow.com/admin/templates/${templateId}`,
+          fields: checks,
+          all_stored: checks.every((check) => check.status === 'stored'),
+          warnings,
+          next_steps: NEXT_STEPS_AFTER_CREATE.slice(1),
         });
       } catch (error) {
         return asError(error);
