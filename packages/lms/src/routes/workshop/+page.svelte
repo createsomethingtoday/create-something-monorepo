@@ -208,7 +208,7 @@
       <label class="toggle"
         ><input type="checkbox" bind:checked={listOnly} /> Use station list only</label
       >
-      {#if !listOnly}<World {selected} paused={reading} onselect={select} />{/if}
+      {#if lessonsOpen && !listOnly}<World {selected} paused={reading} onselect={select} />{/if}
       <div class="toolbar">
         <button onclick={() => (reading = !reading)}
           >{reading ? 'Resume travel' : 'Pause for reading'}</button
