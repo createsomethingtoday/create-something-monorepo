@@ -247,21 +247,45 @@ describe('POST /api/templates/support-request', () => {
     }
   });
 
-  it('puts a retry back through the quota once its original slot has aged out', async () => {
+  it('re-reserves an aged-out retry as the same submission, without counting it twice', async () => {
     const { env, close, calls } = await setup(undefined, [500]);
     try {
       const key = 'form-aged-out-000001';
       expect((await callWorker(post(body({ idempotency_key: key })), env)).status).toBe(502);
-      // Age the failed attempt past the hourly window, then fill today's buyer quota.
       await env.DB.prepare('UPDATE support_requests SET created_at = ? WHERE idempotency_key = ?')
         .bind(new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), key)
         .run();
       for (let index = 0; index < 2; index += 1) {
         expect((await callWorker(post(body(), `198.51.100.${index}`), env)).status).toBe(200);
       }
-      // The aged-out retry needs a fresh slot and the buyer's daily quota (3) is now full.
-      expect((await callWorker(post(body({ idempotency_key: key }), '198.51.100.9'), env)).status).toBe(429);
-      expect(calls.filter((call) => call.url.startsWith('https://api.knock.app/'))).toHaveLength(3);
+      // Failed attempt + 2 sends = 3 today. The retry replaces the failed
+      // attempt's slot instead of becoming a fourth request.
+      expect((await callWorker(post(body({ idempotency_key: key }), '198.51.100.9'), env)).status).toBe(200);
+      const statuses = (await rows(env)).map((row) => row.status).sort();
+      expect(statuses).toEqual(['sent', 'sent', 'sent', 'superseded']);
+      expect(calls.filter((call) => call.url.startsWith('https://api.knock.app/'))).toHaveLength(4);
+    } finally {
+      close();
+    }
+  });
+
+  it('still applies the current quota to an aged-out retry', async () => {
+    const { env, close, calls } = await setup(undefined, [500]);
+    try {
+      const key = 'form-aged-out-000002';
+      expect((await callWorker(post(body({ idempotency_key: key })), env)).status).toBe(502);
+      await env.DB.prepare('UPDATE support_requests SET created_at = ? WHERE idempotency_key = ?')
+        .bind(new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), key)
+        .run();
+      // Fill this hour's IP quota (5) with other buyers. The aged attempt is
+      // outside the hourly window, so it doesn't count there.
+      for (let index = 0; index < 5; index += 1) {
+        const other = body({ buyer_email: `buyer${index}@example.com` });
+        expect((await callWorker(post(other, '203.0.113.50'), env)).status).toBe(200);
+      }
+      // The retry needs a slot in the current hour, which is full.
+      expect((await callWorker(post(body({ idempotency_key: key }), '203.0.113.50'), env)).status).toBe(429);
+      expect(calls.filter((call) => call.url.startsWith('https://api.knock.app/'))).toHaveLength(6);
     } finally {
       close();
     }

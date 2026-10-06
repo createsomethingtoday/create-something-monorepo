@@ -177,7 +177,14 @@ async function triggerKnock(
   return result.workflow_run_id ?? null;
 }
 
-type SupportRequestStatus = 'pending' | 'sent' | 'send_failed' | 'creator_unreachable' | 'rate_limited';
+type SupportRequestStatus =
+  | 'pending'
+  | 'sent'
+  | 'send_failed'
+  | 'creator_unreachable'
+  | 'rate_limited'
+  // Replaced by a fresh reservation for the same submission; excluded from quotas.
+  | 'superseded';
 
 /** Reads at most `maxBytes` of the body; null when it is (or declares itself) larger. */
 export async function readBodyCapped(request: Request, maxBytes: number): Promise<string | null> {
@@ -338,7 +345,16 @@ export async function handleSupportRequest(request: Request, env: Env): Promise<
   let carriedSnapshot: string | null = null;
   const releaseAndReserveAfresh = async (prior: PriorAttempt) => {
     carriedSnapshot = prior.delivery_snapshot;
-    await env.DB.prepare('UPDATE support_requests SET idempotency_key = NULL WHERE id = ?').bind(prior.id).run();
+    // The old row stops counting toward any quota, so the submission holds
+    // exactly one slot: the fresh reservation.
+    await env.DB.prepare(
+      `UPDATE support_requests
+       SET idempotency_key = NULL,
+           status = CASE WHEN status = 'rate_limited' THEN status ELSE 'superseded' END
+       WHERE id = ?`,
+    )
+      .bind(prior.id)
+      .run();
   };
   const resolvePrior = async (prior: PriorAttempt): Promise<Response | null> => {
     if (prior.buyer_email_hash !== buyerEmailHash || prior.template_slug !== input.template_slug) {
@@ -410,7 +426,7 @@ export async function handleSupportRequest(request: Request, env: Env): Promise<
 
     const hourAgo = new Date(now - HOUR_MS).toISOString();
     const dayAgo = new Date(now - DAY_MS).toISOString();
-    const rankedAtOrBefore = `AND status != 'rate_limited' AND rowid <= ?`;
+    const rankedAtOrBefore = `AND status NOT IN ('rate_limited', 'superseded') AND rowid <= ?`;
     const [ipWindow, buyerWindow] = await Promise.all([
       env.DB.prepare(
         `SELECT COUNT(*) AS n, MIN(created_at) AS oldest FROM support_requests
