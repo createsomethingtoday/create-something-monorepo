@@ -317,16 +317,20 @@ export async function handleSupportRequest(request: Request, env: Env): Promise<
       return respond({ success: false, error: 'creator_unreachable', request_id: requestId }, 422);
     }
 
+    // Knock replays a retry only when its parameters match the original, so
+    // everything sent must be derived from the client's submission, not from
+    // this attempt's row id.
+    const reference = input.idempotency_key ?? requestId;
     const knockRunId = await triggerKnock(
       env,
-      `support-request:${input.idempotency_key ?? requestId}`,
+      `support-request:${reference}`,
       {
         id: `marketplace-creator-${template.creator_record_id ?? template.id}`,
         email: creatorEmail,
         ...(template.creator_name ? { name: template.creator_name } : {}),
       },
       {
-        request_id: requestId,
+        request_id: reference,
         template_name: template.name,
         listing_url: cleanListingUrl(template.listing_url) ?? '',
         request_type: input.request_type,

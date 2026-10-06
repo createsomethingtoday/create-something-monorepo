@@ -87,3 +87,21 @@ test('gives up on a stalled request after the timeout so the dialog cannot trap 
   assert.deepEqual(result, { ok: false, error: 'network_error' });
   assert.ok(Date.now() - started < 2_000);
 });
+
+test('keeps the timeout armed while the response body is decoding', async () => {
+  const stalledBody = ((_url: RequestInfo | URL, init?: RequestInit) =>
+    Promise.resolve(
+      new Response(
+        new ReadableStream({
+          start(controller) {
+            init?.signal?.addEventListener('abort', () => controller.error(new DOMException('Aborted', 'AbortError')));
+          },
+        }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } },
+      ),
+    )) as typeof fetch;
+  const started = Date.now();
+  const result = await submitSupportRequest(payload, stalledBody, SUPPORT_REQUEST_ENDPOINT, 50);
+  assert.equal(result.ok, false);
+  assert.ok(Date.now() - started < 2_000);
+});

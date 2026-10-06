@@ -168,6 +168,12 @@ describe('POST /api/templates/support-request', () => {
         .filter((call) => call.url.startsWith('https://api.knock.app/'))
         .map((call) => new Headers(call.init?.headers).get('Idempotency-Key'));
       expect(keys).toEqual([`support-request:${key}`, `support-request:${key}`]);
+      // Knock only replays a retry whose parameters match the original.
+      const bodies = calls
+        .filter((call) => call.url.startsWith('https://api.knock.app/'))
+        .map((call) => String(call.init?.body));
+      expect(bodies[0]).toBe(bodies[1]);
+      expect(JSON.parse(bodies[0]).data.request_id).toBe(key);
     } finally {
       close();
     }

@@ -103,12 +103,13 @@ export async function submitSupportRequest(
   } catch {
     // Includes the timeout abort. The caller keeps the same idempotency key,
     // so a retry is deduplicated if the first attempt did reach the creator.
-    return { ok: false, error: 'network_error' };
-  } finally {
     if (timer) clearTimeout(timer);
+    return { ok: false, error: 'network_error' };
   }
 
-  const json = (await response.json().catch(() => null)) as {
+  // The timer stays armed through body decoding: headers can arrive and the
+  // body still stall. An abort here rejects json(), which reads as send_failed.
+  const json = (await response.json().catch(() => null).finally(() => timer && clearTimeout(timer))) as {
     success?: boolean;
     data?: { request_id?: string };
     error?: unknown;
