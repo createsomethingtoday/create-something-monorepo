@@ -1,0 +1,45 @@
+{
+  "status": "draft_source_capacity_paused",
+  "observedAt": "2026-10-06T21:33:01.768742+00:00",
+  "baseRef": "33fcc0fd2335b04dfca6d860372db46cd4c43030",
+  "branch": "codex/site-improvement-first-slice-20261006",
+  "mode": "fixture-only; live mode is refused independently of configuration",
+  "capacity": {
+    "availableKiB": 5277264,
+    "requiredReserveKiB": 5242880,
+    "headroomKiB": 34384
+  },
+  "validation": {
+    "initialTypecheck": {
+      "command": "node /Users/micahjohnson/Code/create-something-monorepo/node_modules/typescript/bin/tsc -p packages/site-improvement/tsconfig.json",
+      "exitCode": 0,
+      "limitation": "Initial core/Agency snapshot only; subsequent refinements and regression source have not been rerun."
+    },
+    "currentTypecheck": "pending due to reserve headroom",
+    "runtimeRegressions": "not run; test source is not passing evidence",
+    "browserOrBuild": "not run; no public route changed",
+    "baselineAndStatistics": "not measured"
+  },
+  "publicActions": [],
+  "installations": [],
+  "cleanup": [],
+  "files": [
+    {
+      "path": "packages/site-improvement/src/index.ts",
+      "bytes": 21202,
+      "sha256": "e389aca05b7843e88a5aa6218d7697128d366f8c244bea867ceec1e477e578ff"
+    },
+    {
+      "path": "packages/site-improvement/test/site-improvement.test.ts",
+      "bytes": 17903,
+      "sha256": "df9a233529fcf5f0b8afdf05576fdb01a7dddfb9d17539069563f5b7bc8ee15c"
+    },
+    {
+      "path": "packages/agency/src/lib/site-improvement/fixture.ts",
+      "bytes": 2696,
+      "sha256": "3d56fcb7fd140359e5ebd7f7a4031b036faa9e50fceec1605fd1e8c08fcb2f51"
+    }
+  ],
+  "worktreeDisposition": "preserved at /Users/micahjohnson/Documents/Codex/2026-10-06/task-4/site-improvement-worktree on codex/site-improvement-first-slice-20261006",
+  "remaining": "After reserve headroom is restored, run the focused native Node tests and final source-only type check; correct failures before treating the draft as a validated first slice. No production promotion is authorized."
+}
