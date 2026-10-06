@@ -269,6 +269,40 @@ describe('POST /api/templates/support-request', () => {
     }
   });
 
+  it('keeps the prior attempt and its snapshot when the re-reservation batch fails', async () => {
+    const fields: Record<string, unknown> = { fldTestRollup: ['creator@example.com'] };
+    const { env, close, calls } = await setup(fields, [500]);
+    try {
+      const key = 'form-batch-fail-0001';
+      expect((await callWorker(post(body({ idempotency_key: key })), env)).status).toBe(502);
+      await env.DB.prepare('UPDATE support_requests SET created_at = ? WHERE idempotency_key = ?')
+        .bind(new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), key)
+        .run();
+      // D1 rolls a failed batch back; the mock models that by never applying it.
+      const realBatch = env.DB.batch.bind(env.DB);
+      let failNext = true;
+      env.DB.batch = (async (statements: D1PreparedStatement[]) => {
+        if (failNext) {
+          failNext = false;
+          throw new Error('D1_ERROR: transient');
+        }
+        return realBatch(statements);
+      }) as typeof env.DB.batch;
+      expect((await callWorker(post(body({ idempotency_key: key })), env)).status).toBe(502);
+      const [prior] = await rows(env);
+      expect(prior).toMatchObject({ idempotency_key: key, status: 'send_failed' });
+      expect(prior.delivery_snapshot).not.toBeNull();
+
+      // The next retry still finds it and sends the frozen recipient, even after an Airtable change.
+      fields.fldTestRollup = ['renamed@example.com'];
+      expect((await callWorker(post(body({ idempotency_key: key })), env)).status).toBe(200);
+      const knock = calls.filter((call) => call.url.startsWith('https://api.knock.app/'));
+      expect(String(knock[0].init?.body)).toBe(String(knock[knock.length - 1].init?.body));
+    } finally {
+      close();
+    }
+  });
+
   it('still applies the current quota to an aged-out retry', async () => {
     const { env, close, calls } = await setup(undefined, [500]);
     try {

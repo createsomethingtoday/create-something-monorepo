@@ -343,18 +343,22 @@ export async function handleSupportRequest(request: Request, env: Env): Promise<
   // Carried into a fresh reservation so a re-reserved retry still sends what
   // the original attempt would have.
   let carriedSnapshot: string | null = null;
+  // Releasing the old row runs in the same D1 batch (one transaction) as the
+  // replacement insert, so a failed insert leaves the prior attempt and its
+  // snapshot intact for the next retry.
+  let releasePrior: D1PreparedStatement | null = null;
+  let releasedPriorId: string | null = null;
   const releaseAndReserveAfresh = async (prior: PriorAttempt) => {
     carriedSnapshot = prior.delivery_snapshot;
+    releasedPriorId = prior.id;
     // The old row stops counting toward any quota, so the submission holds
     // exactly one slot: the fresh reservation.
-    await env.DB.prepare(
+    releasePrior = env.DB.prepare(
       `UPDATE support_requests
        SET idempotency_key = NULL,
            status = CASE WHEN status = 'rate_limited' THEN status ELSE 'superseded' END
        WHERE id = ?`,
-    )
-      .bind(prior.id)
-      .run();
+    ).bind(prior.id);
   };
   const resolvePrior = async (prior: PriorAttempt): Promise<Response | null> => {
     if (prior.buyer_email_hash !== buyerEmailHash || prior.template_slug !== input.template_slug) {
@@ -395,31 +399,39 @@ export async function handleSupportRequest(request: Request, env: Env): Promise<
     const newId = crypto.randomUUID();
     let seq: number;
     try {
-      const reservation = await env.DB.prepare(
+      const insert = env.DB.prepare(
         `INSERT INTO support_requests
            (id, created_at, template_document_id, template_slug, creator_record_id, request_type,
             status, ip_hash, buyer_email_hash, message_chars, idempotency_key, delivery_snapshot)
-         VALUES (?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?, ?)
-         RETURNING rowid AS seq`,
-      )
-        .bind(
-          newId,
-          new Date(now).toISOString(),
-          template.id,
-          input.template_slug,
-          template.creator_record_id,
-          input.request_type,
-          ipHash,
-          buyerEmailHash,
-          input.message.length,
-          idempotencyKey,
-          carriedSnapshot,
-        )
+         VALUES (?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?, ?)`,
+      ).bind(
+        newId,
+        new Date(now).toISOString(),
+        template.id,
+        input.template_slug,
+        template.creator_record_id,
+        input.request_type,
+        ipHash,
+        buyerEmailHash,
+        input.message.length,
+        idempotencyKey,
+        carriedSnapshot,
+      );
+      const release: D1PreparedStatement | null = releasePrior;
+      await env.DB.batch(release ? [release, insert] : [insert]);
+      const reservation = await env.DB.prepare('SELECT rowid AS seq FROM support_requests WHERE id = ?')
+        .bind(newId)
         .first<{ seq: number }>();
       seq = reservation?.seq ?? Number.MAX_SAFE_INTEGER;
     } catch (error) {
-      // A concurrent retry with the same key won the unique index.
       const prior = idempotencyKey ? await findPrior(idempotencyKey) : null;
+      // The batch rolled back, so the attempt we tried to release still holds
+      // its key and snapshot: report a retryable failure, not an in-flight one.
+      if (prior && prior.id === releasedPriorId) {
+        console.error(JSON.stringify({ event: 'support_request_reserve_failed', request_id: prior.id }));
+        return respond({ success: false, error: 'send_failed', request_id: prior.id }, 502);
+      }
+      // A concurrent retry with the same key won the unique index.
       if (!prior) throw error;
       return respond({ success: false, error: 'request_in_progress', request_id: prior.id }, 409);
     }
