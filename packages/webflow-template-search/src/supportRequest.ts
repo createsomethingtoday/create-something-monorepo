@@ -213,6 +213,24 @@ interface PriorAttempt {
   status: SupportRequestStatus;
   template_slug: string;
   buyer_email_hash: string;
+  delivery_snapshot: string | null;
+}
+
+/** Server-derived trigger fields, frozen on the row so retries send identical parameters. */
+interface DeliverySnapshot {
+  recipient: { id: string; email: string; name?: string };
+  template_name: string;
+  listing_url: string;
+}
+
+function readSnapshot(value: string | null | undefined): DeliverySnapshot | null {
+  if (!value) return null;
+  try {
+    const parsed = JSON.parse(value) as DeliverySnapshot;
+    return parsed?.recipient?.email ? parsed : null;
+  } catch {
+    return null;
+  }
 }
 
 async function finishRow(
@@ -222,7 +240,10 @@ async function finishRow(
   extra: { knockRunId?: string | null; error?: string | null } = {},
 ): Promise<void> {
   await env.DB.prepare(
-    'UPDATE support_requests SET status = ?, knock_workflow_run_id = ?, error = ? WHERE id = ?',
+    `UPDATE support_requests
+     SET status = ?1, knock_workflow_run_id = ?2, error = ?3,
+         delivery_snapshot = CASE WHEN ?1 = 'sent' THEN NULL ELSE delivery_snapshot END
+     WHERE id = ?4`,
   )
     .bind(status, extra.knockRunId ?? null, extra.error?.slice(0, 300) ?? null, requestId)
     .run();
@@ -303,7 +324,7 @@ export async function handleSupportRequest(request: Request, env: Env): Promise<
   const now = Date.now();
   const findPrior = (key: string) =>
     env.DB.prepare(
-      'SELECT id, created_at, status, template_slug, buyer_email_hash FROM support_requests WHERE idempotency_key = ?',
+      'SELECT id, created_at, status, template_slug, buyer_email_hash, delivery_snapshot FROM support_requests WHERE idempotency_key = ?',
     )
       .bind(key)
       .first<PriorAttempt>();
@@ -312,6 +333,13 @@ export async function handleSupportRequest(request: Request, env: Env): Promise<
   // than taking another slot, so a lost response at the cap can't turn into a
   // false rate-limit failure for an email that was already sent.
   let requestId: string | null = null;
+  // Carried into a fresh reservation so a re-reserved retry still sends what
+  // the original attempt would have.
+  let carriedSnapshot: string | null = null;
+  const releaseAndReserveAfresh = async (prior: PriorAttempt) => {
+    carriedSnapshot = prior.delivery_snapshot;
+    await env.DB.prepare('UPDATE support_requests SET idempotency_key = NULL WHERE id = ?').bind(prior.id).run();
+  };
   const resolvePrior = async (prior: PriorAttempt): Promise<Response | null> => {
     if (prior.buyer_email_hash !== buyerEmailHash || prior.template_slug !== input.template_slug) {
       return respond({ success: false, error: 'invalid_fields', fields: ['idempotency_key'] }, 400);
@@ -320,9 +348,11 @@ export async function handleSupportRequest(request: Request, env: Env): Promise<
     if (prior.status === 'pending' && now - Date.parse(prior.created_at) < PENDING_IN_FLIGHT_MS) {
       return respond({ success: false, error: 'request_in_progress', request_id: prior.id }, 409);
     }
-    if (prior.status === 'rate_limited') {
-      // That attempt never held a slot; release its key and reserve afresh.
-      await env.DB.prepare('UPDATE support_requests SET idempotency_key = NULL WHERE id = ?').bind(prior.id).run();
+    // A rate-limited attempt never held a slot, and an attempt older than the
+    // shortest window no longer holds one: release the key and go through the
+    // quota again, so old failures can't send alongside a full current quota.
+    if (prior.status === 'rate_limited' || now - Date.parse(prior.created_at) >= HOUR_MS) {
+      await releaseAndReserveAfresh(prior);
       return null;
     }
     // send_failed, creator_unreachable, or a stale pending attempt: deliver again
@@ -352,8 +382,8 @@ export async function handleSupportRequest(request: Request, env: Env): Promise<
       const reservation = await env.DB.prepare(
         `INSERT INTO support_requests
            (id, created_at, template_document_id, template_slug, creator_record_id, request_type,
-            status, ip_hash, buyer_email_hash, message_chars, idempotency_key)
-         VALUES (?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?)
+            status, ip_hash, buyer_email_hash, message_chars, idempotency_key, delivery_snapshot)
+         VALUES (?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?, ?)
          RETURNING rowid AS seq`,
       )
         .bind(
@@ -367,6 +397,7 @@ export async function handleSupportRequest(request: Request, env: Env): Promise<
           buyerEmailHash,
           input.message.length,
           idempotencyKey,
+          carriedSnapshot,
         )
         .first<{ seq: number }>();
       seq = reservation?.seq ?? Number.MAX_SAFE_INTEGER;
@@ -413,29 +444,43 @@ export async function handleSupportRequest(request: Request, env: Env): Promise<
 
   const attemptId: string = requestId;
   try {
-    const fields = await fetchAssetFields(env, template.id);
-    const creatorEmail = fields ? resolveCreatorEmail(fields, creatorEmailFieldIds) : null;
-    if (!creatorEmail) {
-      await finishRow(env, attemptId, 'creator_unreachable');
-      return respond({ success: false, error: 'creator_unreachable', request_id: attemptId }, 422);
+    // Knock replays a retry only when its parameters match the original, so the
+    // server-derived fields are frozen on the row before the first send and
+    // reused on every retry; the rest comes from the client's submission.
+    const row = await env.DB.prepare('SELECT delivery_snapshot FROM support_requests WHERE id = ?')
+      .bind(attemptId)
+      .first<{ delivery_snapshot: string | null }>();
+    let snapshot = readSnapshot(row?.delivery_snapshot);
+    if (!snapshot) {
+      const fields = await fetchAssetFields(env, template.id);
+      const creatorEmail = fields ? resolveCreatorEmail(fields, creatorEmailFieldIds) : null;
+      if (!creatorEmail) {
+        await finishRow(env, attemptId, 'creator_unreachable');
+        return respond({ success: false, error: 'creator_unreachable', request_id: attemptId }, 422);
+      }
+      snapshot = {
+        recipient: {
+          id: `marketplace-creator-${template.creator_record_id ?? template.id}`,
+          email: creatorEmail,
+          ...(template.creator_name ? { name: template.creator_name } : {}),
+        },
+        template_name: template.name,
+        listing_url: cleanListingUrl(template.listing_url) ?? '',
+      };
+      await env.DB.prepare('UPDATE support_requests SET delivery_snapshot = ? WHERE id = ?')
+        .bind(JSON.stringify(snapshot), attemptId)
+        .run();
     }
 
-    // Knock replays a retry only when its parameters match the original, so
-    // everything sent must be derived from the client's submission, not from
-    // this attempt's row id.
     const reference = idempotencyKey ?? attemptId;
     const knockRunId = await triggerKnock(
       env,
       `support-request:${reference}`,
-      {
-        id: `marketplace-creator-${template.creator_record_id ?? template.id}`,
-        email: creatorEmail,
-        ...(template.creator_name ? { name: template.creator_name } : {}),
-      },
+      snapshot.recipient,
       {
         request_id: reference,
-        template_name: template.name,
-        listing_url: cleanListingUrl(template.listing_url) ?? '',
+        template_name: snapshot.template_name,
+        listing_url: snapshot.listing_url,
         request_type: input.request_type,
         request_type_label: SUPPORT_REQUEST_TYPE_LABELS[input.request_type],
         buyer_name: input.buyer_name,

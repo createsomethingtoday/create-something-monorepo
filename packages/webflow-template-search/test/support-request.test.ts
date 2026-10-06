@@ -225,6 +225,48 @@ describe('POST /api/templates/support-request', () => {
     }
   });
 
+  it('reuses the frozen recipient on retry even if the creator email changed in Airtable', async () => {
+    const fields: Record<string, unknown> = { fldTestRollup: ['creator@example.com'] };
+    const { env, close, calls } = await setup(fields, [500]);
+    try {
+      const key = 'form-snapshot-000001';
+      expect((await callWorker(post(body({ idempotency_key: key })), env)).status).toBe(502);
+      fields.fldTestRollup = ['renamed@example.com'];
+      expect((await callWorker(post(body({ idempotency_key: key })), env)).status).toBe(200);
+      const knock = calls.filter((call) => call.url.startsWith('https://api.knock.app/'));
+      expect(knock.map((call) => JSON.parse(String(call.init?.body)).recipients[0].email)).toEqual([
+        'creator@example.com',
+        'creator@example.com',
+      ]);
+      expect(String(knock[0].init?.body)).toBe(String(knock[1].init?.body));
+      // One Airtable lookup for both attempts, and the snapshot is cleared once sent.
+      expect(calls.filter((call) => call.url.startsWith('https://api.airtable.com/'))).toHaveLength(1);
+      expect((await rows(env))[0].delivery_snapshot).toBeNull();
+    } finally {
+      close();
+    }
+  });
+
+  it('puts a retry back through the quota once its original slot has aged out', async () => {
+    const { env, close, calls } = await setup(undefined, [500]);
+    try {
+      const key = 'form-aged-out-000001';
+      expect((await callWorker(post(body({ idempotency_key: key })), env)).status).toBe(502);
+      // Age the failed attempt past the hourly window, then fill today's buyer quota.
+      await env.DB.prepare('UPDATE support_requests SET created_at = ? WHERE idempotency_key = ?')
+        .bind(new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), key)
+        .run();
+      for (let index = 0; index < 2; index += 1) {
+        expect((await callWorker(post(body(), `198.51.100.${index}`), env)).status).toBe(200);
+      }
+      // The aged-out retry needs a fresh slot and the buyer's daily quota (3) is now full.
+      expect((await callWorker(post(body({ idempotency_key: key }), '198.51.100.9'), env)).status).toBe(429);
+      expect(calls.filter((call) => call.url.startsWith('https://api.knock.app/'))).toHaveLength(3);
+    } finally {
+      close();
+    }
+  });
+
   it('reports a retry of a recent pending attempt as in progress', async () => {
     const { env, close, calls } = await setup();
     try {
