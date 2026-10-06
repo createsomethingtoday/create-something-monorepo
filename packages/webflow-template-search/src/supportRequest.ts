@@ -249,18 +249,19 @@ export async function handleSupportRequest(request: Request, env: Env): Promise<
     .first<TemplateRow>();
   if (!template) return respond({ success: false, error: 'template_not_found' }, 404);
 
-  // Reserve the slot first, then count only the reservations ranked at or
-  // before this one (created_at, then id). However a burst interleaves, the
-  // first requests up to each cap proceed and the rest are limited: the check
-  // can't be raced past, and it can't reject everyone either. The row also
+  // Reserve the slot first, then count only the reservations inserted at or
+  // before this one. Order comes from the rowid SQLite assigns atomically at
+  // insert, not from a timestamp taken earlier, so however a burst interleaves
+  // or stalls, exactly the first requests up to each cap proceed. The row also
   // records attempts that later fail to send.
   const now = Date.now();
   const createdAt = new Date(now).toISOString();
-  await env.DB.prepare(
+  const reservation = await env.DB.prepare(
     `INSERT INTO support_requests
        (id, created_at, template_document_id, template_slug, creator_record_id, request_type,
         status, ip_hash, buyer_email_hash, message_chars)
-     VALUES (?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?)`,
+     VALUES (?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?)
+     RETURNING rowid AS seq`,
   )
     .bind(
       requestId,
@@ -273,23 +274,24 @@ export async function handleSupportRequest(request: Request, env: Env): Promise<
       buyerEmailHash,
       input.message.length,
     )
-    .run();
+    .first<{ seq: number }>();
+  const seq = reservation?.seq ?? Number.MAX_SAFE_INTEGER;
 
   const hourAgo = new Date(now - HOUR_MS).toISOString();
   const dayAgo = new Date(now - DAY_MS).toISOString();
-  const rankedAtOrBefore = `AND status != 'rate_limited' AND (created_at < ? OR (created_at = ? AND id <= ?))`;
+  const rankedAtOrBefore = `AND status != 'rate_limited' AND rowid <= ?`;
   const [ipWindow, buyerWindow] = await Promise.all([
     env.DB.prepare(
       `SELECT COUNT(*) AS n, MIN(created_at) AS oldest FROM support_requests
        WHERE ip_hash = ? AND created_at >= ? ${rankedAtOrBefore}`,
     )
-      .bind(ipHash, hourAgo, createdAt, createdAt, requestId)
+      .bind(ipHash, hourAgo, seq)
       .first<{ n: number; oldest: string | null }>(),
     env.DB.prepare(
       `SELECT COUNT(*) AS n, MIN(created_at) AS oldest FROM support_requests
        WHERE buyer_email_hash = ? AND template_slug = ? AND created_at >= ? ${rankedAtOrBefore}`,
     )
-      .bind(buyerEmailHash, input.template_slug, dayAgo, createdAt, createdAt, requestId)
+      .bind(buyerEmailHash, input.template_slug, dayAgo, seq)
       .first<{ n: number; oldest: string | null }>(),
   ]);
   const retryAfterSeconds = rateLimitRetrySeconds(now, [

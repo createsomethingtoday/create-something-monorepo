@@ -136,7 +136,7 @@ const SupportRequestDialog: React.FC<SupportRequestDialogProps> = ({
   const [invalidFields, setInvalidFields] = useState<string[]>([]);
   const [retryAfterSeconds, setRetryAfterSeconds] = useState<number | null>(null);
   // One key per submission. Retries after a failure reuse it so the creator is
-  // never emailed twice; editing the request starts a new one.
+  // never emailed twice; editing any delivered field starts a new one.
   const idempotencyKeyRef = useRef(createIdempotencyKey());
   const edited = <T,>(setter: (value: T) => void) => (value: T) => {
     idempotencyKeyRef.current = createIdempotencyKey();
@@ -278,7 +278,7 @@ const SupportRequestDialog: React.FC<SupportRequestDialogProps> = ({
                 autoComplete="name"
                 maxLength={120}
                 value={buyerName}
-                onChange={(event) => setBuyerName(event.target.value)}
+                onChange={(event) => edited(setBuyerName)(event.target.value)}
               />
             </div>
             <div className="tmsupport-field">

@@ -186,31 +186,37 @@ describe('POST /api/templates/support-request', () => {
     }
   });
 
-  it('lets the earliest reservations through even when every insert lands before any count', async () => {
+  it('ranks by insert order, so a request that took an earlier timestamp but inserted last is limited', async () => {
     const { env, close } = await setup();
     try {
-      const at = '2026-10-06T12:00:00.000Z';
-      // Four reservations for the same buyer + template, all inserted before any count.
-      for (const id of ['a', 'b', 'c', 'd']) {
-        await env.DB.prepare(
+      // Three later-timestamped requests insert first; a stalled request with
+      // the earliest timestamp inserts fourth.
+      const rows = [
+        ['b', '2026-10-06T12:00:02.000Z'],
+        ['c', '2026-10-06T12:00:03.000Z'],
+        ['d', '2026-10-06T12:00:04.000Z'],
+        ['a', '2026-10-06T12:00:01.000Z'],
+      ];
+      const seqs: Record<string, number> = {};
+      for (const [id, at] of rows) {
+        const row = await env.DB.prepare(
           `INSERT INTO support_requests (id, created_at, template_document_id, template_slug, request_type, status, ip_hash, buyer_email_hash, message_chars)
-           VALUES (?, ?, 'recAsset1', 'meridian', 'other', 'pending', ?, 'buyer', 20)`,
+           VALUES (?, ?, 'recAsset1', 'meridian', 'other', 'pending', ?, 'buyer', 20) RETURNING rowid AS seq`,
         )
           .bind(id, at, `ip-${id}`)
-          .run();
+          .first<{ seq: number }>();
+        seqs[id] = row?.seq ?? 0;
       }
-      const counts = [];
-      for (const id of ['a', 'b', 'c', 'd']) {
-        const row = await env.DB.prepare(
-          `SELECT COUNT(*) AS n FROM support_requests WHERE buyer_email_hash = 'buyer' AND template_slug = 'meridian'
-             AND status != 'rate_limited' AND (created_at < ? OR (created_at = ? AND id <= ?))`,
-        )
-          .bind(at, at, id)
-          .first<{ n: number }>();
-        counts.push(row?.n);
-      }
-      // Ranks 1..4: the first three are within the cap of 3, only the fourth is over.
-      expect(counts).toEqual([1, 2, 3, 4]);
+      const rank = async (id: string) =>
+        (
+          await env.DB.prepare(
+            `SELECT COUNT(*) AS n FROM support_requests WHERE buyer_email_hash = 'buyer' AND template_slug = 'meridian'
+               AND status != 'rate_limited' AND rowid <= ?`,
+          )
+            .bind(seqs[id])
+            .first<{ n: number }>()
+        )?.n;
+      expect([await rank('b'), await rank('c'), await rank('d'), await rank('a')]).toEqual([1, 2, 3, 4]);
     } finally {
       close();
     }
