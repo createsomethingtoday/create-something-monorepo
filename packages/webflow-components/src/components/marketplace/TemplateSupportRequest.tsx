@@ -9,6 +9,8 @@ import {
   SUPPORT_REQUEST_TYPES,
   SupportRequestError,
   SupportRequestType,
+  createIdempotencyKey,
+  describeRetryAfter,
   submitSupportRequest,
 } from './supportRequest';
 import { inferTemplateSlug, templateDetailAnalyticsBase } from './templateDetailOffer';
@@ -132,6 +134,14 @@ const SupportRequestDialog: React.FC<SupportRequestDialogProps> = ({
   const [status, setStatus] = useState<Status>('editing');
   const [error, setError] = useState<SupportRequestError | null>(null);
   const [invalidFields, setInvalidFields] = useState<string[]>([]);
+  const [retryAfterSeconds, setRetryAfterSeconds] = useState<number | null>(null);
+  // One key per submission. Retries after a failure reuse it so the creator is
+  // never emailed twice; editing the request starts a new one.
+  const idempotencyKeyRef = useRef(createIdempotencyKey());
+  const edited = <T,>(setter: (value: T) => void) => (value: T) => {
+    idempotencyKeyRef.current = createIdempotencyKey();
+    setter(value);
+  };
 
   useEffect(() => {
     if (typeof document === 'undefined') return undefined;
@@ -188,6 +198,7 @@ const SupportRequestDialog: React.FC<SupportRequestDialogProps> = ({
     setStatus('submitting');
     setError(null);
     setInvalidFields([]);
+    setRetryAfterSeconds(null);
     const analytics = { ...templateDetailAnalyticsBase(COMPONENT, templateSlug), request_type: requestType };
     const result = await submitSupportRequest({
       template_slug: templateSlug,
@@ -196,6 +207,7 @@ const SupportRequestDialog: React.FC<SupportRequestDialogProps> = ({
       buyer_email: buyerEmail.trim(),
       message: message.trim(),
       website,
+      idempotency_key: idempotencyKeyRef.current,
     });
 
     if (result.ok) {
@@ -206,6 +218,7 @@ const SupportRequestDialog: React.FC<SupportRequestDialogProps> = ({
     setStatus('failed');
     setError(result.error);
     setInvalidFields(result.fields ?? []);
+    setRetryAfterSeconds(result.retryAfterSeconds ?? null);
     trackMarketplaceEvent('Support Request Failed', { ...analytics, error: result.error }, enableAnalytics);
   };
 
@@ -249,7 +262,7 @@ const SupportRequestDialog: React.FC<SupportRequestDialogProps> = ({
                 className="tmsupport-input"
                 value={requestType}
                 aria-invalid={invalid('request_type')}
-                onChange={(event) => setRequestType(event.target.value as SupportRequestType)}
+                onChange={(event) => edited(setRequestType)(event.target.value as SupportRequestType)}
               >
                 <option value="" disabled>Choose a topic</option>
                 {SUPPORT_REQUEST_TYPES.map((type) => (
@@ -279,7 +292,7 @@ const SupportRequestDialog: React.FC<SupportRequestDialogProps> = ({
                 required
                 value={buyerEmail}
                 aria-invalid={invalid('buyer_email')}
-                onChange={(event) => setBuyerEmail(event.target.value)}
+                onChange={(event) => edited(setBuyerEmail)(event.target.value)}
               />
             </div>
             <div className="tmsupport-field">
@@ -291,7 +304,7 @@ const SupportRequestDialog: React.FC<SupportRequestDialogProps> = ({
                 required
                 value={message}
                 aria-invalid={invalid('message')}
-                onChange={(event) => setMessage(event.target.value)}
+                onChange={(event) => edited(setMessage)(event.target.value)}
               />
             </div>
             <div className="tmsupport-honeypot" aria-hidden="true">
@@ -307,7 +320,13 @@ const SupportRequestDialog: React.FC<SupportRequestDialogProps> = ({
             <p className="tmsupport-note">
               Webflow sends your message and email address to {recipient} so they can reply to you directly.
             </p>
-            {error ? <p className="tmsupport-error" role="alert">{SUPPORT_REQUEST_ERROR_MESSAGES[error]}</p> : null}
+            {error ? (
+              <p className="tmsupport-error" role="alert">
+                {error === 'rate_limited' && retryAfterSeconds
+                  ? `You've sent several requests recently. ${describeRetryAfter(retryAfterSeconds)}`
+                  : SUPPORT_REQUEST_ERROR_MESSAGES[error]}
+              </p>
+            ) : null}
             <div className="tmsupport-actions">
               <button type="button" className="tmsupport-button" onClick={onClose}>Cancel</button>
               <button type="submit" className="tmsupport-button tmsupport-button-primary" disabled={status === 'submitting'}>

@@ -13,7 +13,7 @@
 
 import { z } from 'zod';
 
-import { jsonResponse } from './http.js';
+import { isOriginAllowed, jsonResponse } from './http.js';
 import type { Env } from './types.js';
 
 // Keep in sync with packages/webflow-components/src/components/marketplace/supportRequest.ts.
@@ -43,6 +43,8 @@ const KNOCK_WORKFLOWS_URL = 'https://api.knock.app/v1/workflows';
 const MAX_BODY_CHARS = 16_000;
 const MAX_PER_IP_PER_HOUR = 5;
 const MAX_PER_BUYER_TEMPLATE_PER_DAY = 3;
+const HOUR_MS = 60 * 60 * 1000;
+const DAY_MS = 24 * HOUR_MS;
 
 
 const supportRequestSchema = z
@@ -54,6 +56,8 @@ const supportRequestSchema = z
     message: z.string().trim().min(10).max(4_000),
     // Honeypot: real buyers never see or fill this field.
     website: z.string().max(500).default(''),
+    // One key per form submission, reused on retries, so Knock never emails twice.
+    idempotency_key: z.string().regex(/^[A-Za-z0-9_-]{16,64}$/).optional(),
   })
   .strict();
 
@@ -148,7 +152,7 @@ async function fetchAssetFields(env: Env, recordId: string): Promise<Record<stri
 
 async function triggerKnock(
   env: Env,
-  requestId: string,
+  idempotencyKey: string,
   recipient: { id: string; email: string; name?: string },
   data: Record<string, string>,
 ): Promise<string | null> {
@@ -158,8 +162,8 @@ async function triggerKnock(
     headers: {
       Authorization: `Bearer ${env.KNOCK_API_KEY}`,
       'Content-Type': 'application/json',
-      // A retried request must not email the creator twice.
-      'Idempotency-Key': requestId,
+      // A retried submission must not email the creator twice.
+      'Idempotency-Key': idempotencyKey,
     },
     body: JSON.stringify({ recipients: [recipient], data }),
   });
@@ -168,7 +172,7 @@ async function triggerKnock(
   return result.workflow_run_id ?? null;
 }
 
-type SupportRequestStatus = 'sent' | 'send_failed' | 'creator_unreachable';
+type SupportRequestStatus = 'sent' | 'send_failed' | 'creator_unreachable' | 'rate_limited';
 
 async function finishRow(
   env: Env,
@@ -183,8 +187,36 @@ async function finishRow(
     .run();
 }
 
+interface RateWindow {
+  count: number;
+  max: number;
+  oldest: string | null;
+  windowMs: number;
+}
+
+/**
+ * Seconds until every exceeded window has room again, or null when none is
+ * exceeded. Counts include the current request. Exported for tests.
+ */
+export function rateLimitRetrySeconds(now: number, windows: readonly RateWindow[]): number | null {
+  let retry: number | null = null;
+  for (const window of windows) {
+    if (window.count <= window.max) continue;
+    const oldest = window.oldest ? Date.parse(window.oldest) : now;
+    const seconds = Math.max(1, Math.ceil((oldest + window.windowMs - now) / 1000));
+    retry = Math.max(retry ?? 0, seconds);
+  }
+  return retry;
+}
+
 export async function handleSupportRequest(request: Request, env: Env): Promise<Response> {
   const respond = (data: unknown, status: number) => jsonResponse(request, env, data, status);
+
+  // A browser on another site must not spend its visitors' quotas emailing creators.
+  const origin = request.headers.get('Origin');
+  if (origin && !isOriginAllowed(origin, env)) {
+    return respond({ success: false, error: 'origin_not_allowed' }, 403);
+  }
 
   if (env.SUPPORT_REQUESTS_ENABLED !== '1') {
     return respond({ success: false, error: 'support_requests_disabled' }, 503);
@@ -210,23 +242,6 @@ export async function handleSupportRequest(request: Request, env: Env): Promise<
     sha256Hex(`${salt}:email:${input.buyer_email.toLowerCase()}`),
   ]);
 
-  const now = Date.now();
-  const hourAgo = new Date(now - 60 * 60 * 1000).toISOString();
-  const dayAgo = new Date(now - 24 * 60 * 60 * 1000).toISOString();
-  const [ipCount, buyerCount] = await Promise.all([
-    env.DB.prepare('SELECT COUNT(*) AS n FROM support_requests WHERE ip_hash = ? AND created_at >= ?')
-      .bind(ipHash, hourAgo)
-      .first<{ n: number }>(),
-    env.DB.prepare(
-      'SELECT COUNT(*) AS n FROM support_requests WHERE buyer_email_hash = ? AND template_slug = ? AND created_at >= ?',
-    )
-      .bind(buyerEmailHash, input.template_slug, dayAgo)
-      .first<{ n: number }>(),
-  ]);
-  if ((ipCount?.n ?? 0) >= MAX_PER_IP_PER_HOUR || (buyerCount?.n ?? 0) >= MAX_PER_BUYER_TEMPLATE_PER_DAY) {
-    return jsonResponse(request, env, { success: false, error: 'rate_limited' }, 429, { 'Retry-After': '3600' });
-  }
-
   const template = await env.DB.prepare(
     'SELECT id, name, listing_url, creator_name, creator_record_id FROM template_documents WHERE template_slug = ?',
   )
@@ -234,8 +249,11 @@ export async function handleSupportRequest(request: Request, env: Env): Promise<
     .first<TemplateRow>();
   if (!template) return respond({ success: false, error: 'template_not_found' }, 404);
 
-  // The row is written before delivery so every attempt is counted, including
-  // ones that fail to send.
+  // Reserve the slot first, then count rows including this one. Concurrent
+  // requests each see every row inserted before their count, so a burst cannot
+  // all pass a check that ran before anyone inserted. The row also records
+  // attempts that later fail to send.
+  const now = Date.now();
   await env.DB.prepare(
     `INSERT INTO support_requests
        (id, created_at, template_document_id, template_slug, creator_record_id, request_type,
@@ -255,6 +273,37 @@ export async function handleSupportRequest(request: Request, env: Env): Promise<
     )
     .run();
 
+  const hourAgo = new Date(now - HOUR_MS).toISOString();
+  const dayAgo = new Date(now - DAY_MS).toISOString();
+  const [ipWindow, buyerWindow] = await Promise.all([
+    env.DB.prepare(
+      `SELECT COUNT(*) AS n, MIN(created_at) AS oldest FROM support_requests
+       WHERE ip_hash = ? AND created_at >= ? AND status != 'rate_limited'`,
+    )
+      .bind(ipHash, hourAgo)
+      .first<{ n: number; oldest: string | null }>(),
+    env.DB.prepare(
+      `SELECT COUNT(*) AS n, MIN(created_at) AS oldest FROM support_requests
+       WHERE buyer_email_hash = ? AND template_slug = ? AND created_at >= ? AND status != 'rate_limited'`,
+    )
+      .bind(buyerEmailHash, input.template_slug, dayAgo)
+      .first<{ n: number; oldest: string | null }>(),
+  ]);
+  const retryAfterSeconds = rateLimitRetrySeconds(now, [
+    { count: ipWindow?.n ?? 0, max: MAX_PER_IP_PER_HOUR, oldest: ipWindow?.oldest ?? null, windowMs: HOUR_MS },
+    { count: buyerWindow?.n ?? 0, max: MAX_PER_BUYER_TEMPLATE_PER_DAY, oldest: buyerWindow?.oldest ?? null, windowMs: DAY_MS },
+  ]);
+  if (retryAfterSeconds !== null) {
+    await finishRow(env, requestId, 'rate_limited');
+    return jsonResponse(
+      request,
+      env,
+      { success: false, error: 'rate_limited', retry_after_seconds: retryAfterSeconds },
+      429,
+      { 'Retry-After': String(retryAfterSeconds) },
+    );
+  }
+
   try {
     const fields = await fetchAssetFields(env, template.id);
     const creatorEmail = fields ? resolveCreatorEmail(fields, creatorEmailFieldIds) : null;
@@ -265,7 +314,7 @@ export async function handleSupportRequest(request: Request, env: Env): Promise<
 
     const knockRunId = await triggerKnock(
       env,
-      requestId,
+      `support-request:${input.idempotency_key ?? requestId}`,
       {
         id: `marketplace-creator-${template.creator_record_id ?? template.id}`,
         email: creatorEmail,

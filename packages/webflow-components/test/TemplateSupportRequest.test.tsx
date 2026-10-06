@@ -3,7 +3,12 @@ import { test } from 'node:test';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { TemplateSupportRequest } from '../src/components/marketplace/TemplateSupportRequest';
-import { SUPPORT_REQUEST_ENDPOINT, submitSupportRequest } from '../src/components/marketplace/supportRequest';
+import {
+  SUPPORT_REQUEST_ENDPOINT,
+  createIdempotencyKey,
+  describeRetryAfter,
+  submitSupportRequest,
+} from '../src/components/marketplace/supportRequest';
 
 const payload = {
   template_slug: 'meridian',
@@ -12,6 +17,7 @@ const payload = {
   buyer_email: 'ada@example.com',
   message: 'Where can I get the Figma file?',
   website: '',
+  idempotency_key: 'tsr-test-key-0001',
 };
 
 function fetchReturning(status: number, body: unknown, calls: Array<{ url: string; init?: RequestInit }> = []) {
@@ -48,8 +54,8 @@ test('maps server errors and keeps invalid field names', async () => {
     { ok: false, error: 'invalid_fields', fields: ['buyer_email'] },
   );
   assert.deepEqual(
-    await submitSupportRequest(payload, fetchReturning(429, { success: false, error: 'rate_limited' })),
-    { ok: false, error: 'rate_limited' },
+    await submitSupportRequest(payload, fetchReturning(429, { success: false, error: 'rate_limited', retry_after_seconds: 7200 })),
+    { ok: false, error: 'rate_limited', retryAfterSeconds: 7200 },
   );
   assert.deepEqual(
     await submitSupportRequest(payload, fetchReturning(500, { error: 'something_new' })),
@@ -57,4 +63,16 @@ test('maps server errors and keeps invalid field names', async () => {
   );
   const offline = (async () => { throw new TypeError('offline'); }) as typeof fetch;
   assert.deepEqual(await submitSupportRequest(payload, offline), { ok: false, error: 'network_error' });
+});
+
+test('targets the CSP-allowed templates.webflow.com proxy', () => {
+  assert.match(SUPPORT_REQUEST_ENDPOINT, /^https:\/\/templates\.webflow\.com\//);
+});
+
+test('describes retry windows and creates server-valid idempotency keys', () => {
+  assert.equal(describeRetryAfter(90), 'Try again in about 2 minutes.');
+  assert.equal(describeRetryAfter(23 * 3600), 'Try again in about 23 hours.');
+  const key = createIdempotencyKey();
+  assert.match(key, /^[A-Za-z0-9_-]{16,64}$/);
+  assert.notEqual(key, createIdempotencyKey());
 });

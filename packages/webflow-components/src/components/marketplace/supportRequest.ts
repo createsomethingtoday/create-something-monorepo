@@ -19,10 +19,10 @@ export const SUPPORT_REQUEST_TYPE_LABELS: Readonly<Record<SupportRequestType, st
   other: 'Other',
 };
 
-// workers.dev, not the templates.webflow.com proxy: the proxy only forwards
-// known paths (see telemetryFallback.ts).
+// The templates.webflow.com proxy, not workers.dev: webflow.com's CSP limits
+// connect-src to https://*.webflow.com (see agentTools.ts).
 export const SUPPORT_REQUEST_ENDPOINT =
-  'https://webflow-template-search.webflow-inc.workers.dev/api/templates/support-request';
+  'https://templates.webflow.com/templates-api/api/templates/support-request';
 
 export interface SupportRequestPayload {
   template_slug: string;
@@ -31,6 +31,8 @@ export interface SupportRequestPayload {
   buyer_email: string;
   message: string;
   website: string;
+  /** Stable for one form submission, including its retries. */
+  idempotency_key: string;
 }
 
 export type SupportRequestError =
@@ -40,23 +42,40 @@ export type SupportRequestError =
   | 'creator_unreachable'
   | 'support_requests_disabled'
   | 'support_requests_unavailable'
+  | 'origin_not_allowed'
   | 'send_failed'
   | 'network_error';
 
 export type SupportRequestResult =
   | { ok: true; requestId: string }
-  | { ok: false; error: SupportRequestError; fields?: string[] };
+  | { ok: false; error: SupportRequestError; fields?: string[]; retryAfterSeconds?: number };
 
 export const SUPPORT_REQUEST_ERROR_MESSAGES: Readonly<Record<SupportRequestError, string>> = {
   invalid_fields: 'Check the highlighted fields and try again.',
-  rate_limited: "You've sent several requests recently. Try again in an hour.",
+  rate_limited: "You've sent several requests recently. Try again later.",
   template_not_found: "We couldn't find this template. Refresh the page and try again.",
   creator_unreachable: "We couldn't reach this creator. Contact Webflow support and we'll help.",
   support_requests_disabled: "Support requests aren't available yet. Contact Webflow support instead.",
   support_requests_unavailable: "Support requests aren't available right now. Try again later.",
+  origin_not_allowed: "Support requests can only be sent from webflow.com.",
   send_failed: "Your request didn't send. Try again in a few minutes.",
   network_error: "Your request didn't send. Check your connection and try again.",
 };
+
+/** "Try again in about 3 hours." style wording for a Retry-After value. */
+export function describeRetryAfter(seconds: number): string {
+  const minutes = Math.ceil(seconds / 60);
+  if (minutes < 60) return `Try again in about ${minutes} minute${minutes === 1 ? '' : 's'}.`;
+  const hours = Math.ceil(minutes / 60);
+  return `Try again in about ${hours} hour${hours === 1 ? '' : 's'}.`;
+}
+
+export function createIdempotencyKey(): string {
+  const random = typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+    ? crypto.randomUUID()
+    : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 14)}`;
+  return `tsr-${random}`;
+}
 
 function isKnownError(value: unknown): value is SupportRequestError {
   return typeof value === 'string' && value in SUPPORT_REQUEST_ERROR_MESSAGES;
@@ -83,11 +102,18 @@ export async function submitSupportRequest(
     data?: { request_id?: string };
     error?: unknown;
     fields?: unknown;
+    retry_after_seconds?: unknown;
   } | null;
 
   if (response.ok && json?.success && json.data?.request_id) {
     return { ok: true, requestId: json.data.request_id };
   }
   const fields = Array.isArray(json?.fields) ? json.fields.filter((field): field is string => typeof field === 'string') : undefined;
-  return { ok: false, error: isKnownError(json?.error) ? json.error : 'send_failed', ...(fields ? { fields } : {}) };
+  const retryAfterSeconds = typeof json?.retry_after_seconds === 'number' ? json.retry_after_seconds : undefined;
+  return {
+    ok: false,
+    error: isKnownError(json?.error) ? json.error : 'send_failed',
+    ...(fields ? { fields } : {}),
+    ...(retryAfterSeconds ? { retryAfterSeconds } : {}),
+  };
 }

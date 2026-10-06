@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { cleanListingUrl, parseFieldIds, parseSupportRequestBody, resolveCreatorEmail } from '../src/supportRequest';
+import { cleanListingUrl, parseFieldIds, parseSupportRequestBody, rateLimitRetrySeconds, resolveCreatorEmail } from '../src/supportRequest';
 import { callWorker, createTestEnv } from './support/worker';
 
 const ENDPOINT = 'https://search.test/api/templates/support-request';
@@ -16,10 +16,10 @@ function body(overrides: Record<string, unknown> = {}): Record<string, unknown> 
   };
 }
 
-function post(payload: unknown, ip = '203.0.113.7'): Request {
+function post(payload: unknown, ip = '203.0.113.7', origin = 'https://webflow.com'): Request {
   return new Request(ENDPOINT, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'CF-Connecting-IP': ip, Origin: 'https://webflow.com' },
+    headers: { 'Content-Type': 'application/json', 'CF-Connecting-IP': ip, Origin: origin },
     body: JSON.stringify(payload),
   });
 }
@@ -30,6 +30,7 @@ async function setup(fields: Record<string, unknown> = { fldTestRollup: ['creato
     SUPPORT_REQUESTS_ENABLED: '1',
     KNOCK_API_KEY: 'sk_test_knock',
     SUPPORT_REQUEST_HASH_SALT: 'test-salt',
+    ALLOWED_ORIGINS: 'https://webflow.com,*.webflow.com',
     AIRTABLE_CREATOR_EMAIL_FIELD_IDS: 'fldTestOverride, fldTestRollup',
   });
   await harness.env.DB.prepare(
@@ -88,6 +89,18 @@ describe('support request parsing', () => {
     expect(resolveCreatorEmail({ fldTestRollup: [] }, ids)).toBeNull();
   });
 
+  it('reports the longest wait among exceeded windows', () => {
+    const now = Date.parse('2026-10-06T12:00:00Z');
+    expect(rateLimitRetrySeconds(now, [{ count: 3, max: 3, oldest: null, windowMs: 3_600_000 }])).toBeNull();
+    // Daily buyer cap exceeded; the oldest row ages out in 23 hours.
+    expect(
+      rateLimitRetrySeconds(now, [
+        { count: 2, max: 5, oldest: '2026-10-06T11:30:00Z', windowMs: 3_600_000 },
+        { count: 4, max: 3, oldest: '2026-10-06T11:00:00Z', windowMs: 86_400_000 },
+      ]),
+    ).toBe(23 * 3600);
+  });
+
   it('strips campaign parameters from listing URLs', () => {
     expect(cleanListingUrl('https://webflow.com/templates/html/meridian?utm_source=youtube#x'))
       .toBe('https://webflow.com/templates/html/meridian');
@@ -117,7 +130,7 @@ describe('POST /api/templates/support-request', () => {
       const knock = calls.find((call) => call.url.startsWith('https://api.knock.app/'));
       expect(knock?.url).toBe('https://api.knock.app/v1/workflows/marketplace-template-support-request/trigger');
       const headers = new Headers(knock?.init?.headers);
-      expect(headers.get('Idempotency-Key')).toBe(json.data.request_id);
+      expect(headers.get('Idempotency-Key')).toBe(`support-request:${json.data.request_id}`);
       const payload = JSON.parse(String(knock?.init?.body));
       expect(payload.recipients).toEqual([{ id: 'marketplace-creator-recCreator1', email: 'creator@example.com', name: 'Kevin' }]);
       expect(payload.data).toMatchObject({
@@ -140,6 +153,50 @@ describe('POST /api/templates/support-request', () => {
       // Neither the buyer email nor the message body is stored.
       expect(JSON.stringify(row)).not.toContain('ada@example.com');
       expect(JSON.stringify(row)).not.toContain('Figma file');
+    } finally {
+      close();
+    }
+  });
+
+  it('reuses the client idempotency key for Knock so retries cannot double-send', async () => {
+    const { env, close, calls } = await setup();
+    try {
+      const key = 'form-7f3c2a9e-1b4d-4e8a';
+      expect((await callWorker(post(body({ idempotency_key: key })), env)).status).toBe(200);
+      expect((await callWorker(post(body({ idempotency_key: key })), env)).status).toBe(200);
+      const keys = calls
+        .filter((call) => call.url.startsWith('https://api.knock.app/'))
+        .map((call) => new Headers(call.init?.headers).get('Idempotency-Key'));
+      expect(keys).toEqual([`support-request:${key}`, `support-request:${key}`]);
+    } finally {
+      close();
+    }
+  });
+
+  it('rejects browser requests from origins outside ALLOWED_ORIGINS', async () => {
+    const { env, close, calls } = await setup();
+    try {
+      const response = await callWorker(post(body(), '203.0.113.7', 'https://evil.example'), env);
+      expect(response.status).toBe(403);
+      expect(calls).toHaveLength(0);
+      expect(await rows(env)).toHaveLength(0);
+      expect((await callWorker(post(body(), '203.0.113.7', 'https://template-marketplace.design.webflow.com'), env)).status).toBe(200);
+    } finally {
+      close();
+    }
+  });
+
+  it('counts concurrent requests against the cap', async () => {
+    const { env, close, calls } = await setup();
+    try {
+      const responses = await Promise.all(
+        Array.from({ length: 6 }, (_, index) => callWorker(post(body(), `198.51.100.${index}`), env)),
+      );
+      const sent = responses.filter((response) => response.status === 200).length;
+      expect(sent).toBeLessThanOrEqual(3);
+      expect(calls.filter((call) => call.url.startsWith('https://api.knock.app/')).length).toBe(sent);
+      const limited = responses.find((response) => response.status === 429);
+      expect(Number(limited?.headers.get('Retry-After'))).toBeGreaterThan(3600);
     } finally {
       close();
     }
