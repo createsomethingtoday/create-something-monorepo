@@ -2,6 +2,7 @@
   import { onMount, tick } from 'svelte';
   import World from '$lib/workshop/World.svelte';
   import SetupWalkthrough from '$lib/workshop/SetupWalkthrough.svelte';
+  import ArtifactRoom from '$lib/workshop/ArtifactRoom.svelte';
   import { initial, reduce, restore, validate, type Action } from '$lib/workshop/state';
   import { context, isCurrent, setProvider } from '$lib/workshop/intents';
   import { stations, missions, providers } from '$lib/workshop/content';
@@ -23,6 +24,7 @@
   let history = $state<string[]>([]);
   let receipts = $state<unknown[]>([]);
   let observations = $state<string[]>([]);
+  let lessonsOpen = $state(false);
   let reloadUnknown = false;
   const key = 'pcn-workshop-v1';
   function load() {
@@ -187,18 +189,26 @@
   <p class="eyebrow">PCN / OPERATOR PRACTICE / SIMULATION</p>
   <h1>Canon’s workshop.</h1>
   <p class="intro">
-    Guide one request from missing information to a reliable receipt. Three missions, one secrets
-    lesson, then your own stack setup.
+    Build a practice stack by moving objects through Canon’s room. Then follow the setup walkthrough
+    in your own accounts, or practice a request through three safety lessons.
   </p>
   <p class="simulation-note">
     Safe simulation · no real services execute · provider setup stays in your accounts
   </p>
+  <ArtifactRoom onhandoff={async () => {
+    lessonsOpen = true;
+    await select('graduate');
+    await tick();
+    document.getElementById('station-heading')?.scrollIntoView({ block: 'start' });
+  }} />
+  <details class="request-lessons" bind:open={lessonsOpen}>
+    <summary>Request safety lessons and actual setup walkthrough</summary>
   <div class="play-layout">
     <div class="level">
       <label class="toggle"
         ><input type="checkbox" bind:checked={listOnly} /> Use station list only</label
       >
-      {#if !listOnly}<World {selected} paused={reading} onselect={select} />{/if}
+      {#if lessonsOpen && !listOnly}<World {selected} paused={reading} onselect={select} />{/if}
       <div class="toolbar">
         <button onclick={() => (reading = !reading)}
           >{reading ? 'Resume travel' : 'Pause for reading'}</button
@@ -457,6 +467,7 @@
       {#each [...history, ...model.evidence] as item}<li>{item}</li>{/each}
     </ul>
     <pre>{JSON.stringify([...receipts, ...(model.receipt ? [model.receipt] : [])], null, 2)}</pre>
+  </details>
   </details>
   <p class="limits">
     Educational MVP. Progress stays on this browser; clearing site data removes it. Cross-tab

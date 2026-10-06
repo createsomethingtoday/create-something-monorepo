@@ -1,19 +1,44 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { stations } from './content';
+  import { stations as requestStations } from './content';
   let {
     selected,
     paused,
-    onselect
-  }: { selected: string; paused: boolean; onselect: (id: string) => void } = $props();
+    onselect,
+    objects,
+    interactive = false,
+    statuses = {},
+    destination = ''
+  }: {
+    selected: string;
+    paused: boolean;
+    onselect: (id: string) => void;
+    objects?: readonly {
+      id: string;
+      label: string;
+      short?: string;
+      kind?: string;
+      x: number;
+      z: number;
+    }[];
+    interactive?: boolean;
+    statuses?: Record<string, string>;
+    destination?: string;
+  } = $props();
+  const stations = $derived(objects ?? requestStations);
   let host: HTMLDivElement;
   let unavailable = $state(false);
   let labels = $state<{ id: string; label: string; number: string; left: number; top: number }[]>(
     []
   );
   let travel: ((id: string) => void) | undefined;
+  let refresh: (() => void) | undefined;
   $effect(() => {
     travel?.(selected);
+    // Status and carry changes redraw even with reduced motion or paused travel.
+    statuses;
+    destination;
+    refresh?.();
   });
 
   onMount(() => {
@@ -30,6 +55,7 @@
           renderer.shadowMap.enabled = true;
           renderer.shadowMap.type = T.PCFSoftShadowMap;
           host.appendChild(renderer.domElement);
+          renderer.domElement.setAttribute('aria-hidden', 'true');
           cleanup = () => {
             renderer.setAnimationLoop(null);
             renderer.dispose();
@@ -104,7 +130,29 @@
               new T.MeshStandardMaterial({ color: '#a69f90', roughness: 1 })
             );
             pads.push(pad);
-            if (s.id === 'intake') {
+            if ('kind' in s && s.kind === 'crate') {
+              box(group, 1.2, 0.8, 0.9, 0, 0.4, 0, timber);
+              box(group, 1.25, 0.12, 0.95, 0, 0.86, 0, paper);
+              box(group, 0.12, 0.82, 0.94, 0, 0.42, 0, stone);
+            } else if ('kind' in s && s.kind === 'repository') {
+              for (const x of [-0.42, 0, 0.42]) {
+                box(group, 0.3, 0.95, 0.65, x, 0.5, 0, paper);
+                box(group, 0.18, 0.07, 0.03, x, 0.76, 0.34, ink);
+              }
+              box(group, 1.5, 0.12, 0.85, 0, 0.05, 0, ink);
+            } else if ('kind' in s && s.kind === 'launch') {
+              const ring = new T.Mesh(new T.CylinderGeometry(0.76, 0.86, 0.18, 24), paper);
+              ring.position.y = 0.1;
+              group.add(ring);
+              box(group, 0.8, 0.1, 0.65, 0, 0.28, 0, ink);
+              box(group, 0.12, 0.7, 0.12, 0, 0.7, 0, stone);
+              box(group, 0.5, 0.1, 0.3, 0, 1.06, 0, paper);
+            } else if ('kind' in s && s.kind === 'beacon') {
+              box(group, 1, 0.15, 0.85, 0, 0.08, 0, ink);
+              box(group, 0.24, 1.1, 0.24, 0, 0.65, 0, stone);
+              box(group, 0.65, 0.42, 0.55, 0, 1.34, 0, paper);
+              box(group, 0.4, 0.12, 0.02, 0, 1.34, 0.29, ink);
+            } else if (s.id === 'intake' || ('kind' in s && s.kind === 'workbench')) {
               box(group, 1.35, 0.12, 0.85, 0, 0.75, 0, paper);
               for (const x of [-0.5, 0.5]) box(group, 0.09, 0.75, 0.6, x, 0.35, 0, ink);
               const sheet = box(group, 0.45, 0.02, 0.46, -0.22, 0.83, 0.02, stone);
@@ -129,7 +177,7 @@
                 box(group, 1.2, 0.075, 0.66, 0, y, 0, stone);
                 box(group, 0.64, 0.08, 0.4, -0.08, y + 0.08, 0, paper);
               }
-            } else if (s.id === 'vault') {
+            } else if (s.id === 'vault' || ('kind' in s && s.kind === 'vault')) {
               box(group, 0.9, 1.4, 0.8, 0, 0.7, 0, ink);
               box(group, 0.78, 1.23, 0.04, 0, 0.7, 0.42, stone);
               box(group, 0.04, 1.04, 0.04, -0.27, 0.7, 0.45, ink);
@@ -147,7 +195,9 @@
             rendered = false;
           });
           texture.colorSpace = T.SRGBColorSpace;
-          const sprite = new T.Sprite(new T.SpriteMaterial({ map: texture, transparent: true, depthTest: false }));
+          const sprite = new T.Sprite(
+            new T.SpriteMaterial({ map: texture, transparent: true, depthTest: false })
+          );
           sprite.scale.set(1.5, 1.5, 1);
           sprite.renderOrder = 10;
           scene.add(sprite);
@@ -173,11 +223,26 @@
             );
             rendered = false;
           };
+          refresh = () => {
+            pads.forEach((pad, i) =>
+              (pad.material as import('three').MeshStandardMaterial).color.set(
+                stations[i].id === destination
+                  ? '#f6edd9'
+                  : statuses[stations[i].id] === 'Stale'
+                    ? '#766d5d'
+                    : stations[i].id === selected
+                      ? '#eee8dc'
+                      : '#a69f90'
+              )
+            );
+            rendered = false;
+          };
           travel(selected);
+          refresh();
           const ray = new T.Raycaster();
           const pointer = new T.Vector2();
           const click = (event: PointerEvent) => {
-            if (paused) return;
+            if (paused && !interactive) return;
             const rect = renderer.domElement.getBoundingClientRect();
             pointer.set(
               ((event.clientX - rect.left) / rect.width) * 2 - 1,
@@ -231,7 +296,7 @@
               const p = new T.Vector3(s.x, 1.8, s.z).project(camera);
               return {
                 id: s.id,
-                label: short[i],
+                label: 'short' in s ? (s.short ?? s.label) : short[i],
                 number: String(i + 1).padStart(2, '0'),
                 left: (p.x + 1) * 50,
                 top: (1 - p.y) * 50
@@ -253,6 +318,7 @@
             renderer.dispose();
             renderer.domElement.remove();
             travel = undefined;
+            refresh = undefined;
           };
         } catch {
           cleanup();
@@ -267,16 +333,43 @@
   });
 </script>
 
-<div class="world" bind:this={host} aria-hidden="true">
-  <div class="world-caption">WORKSHOP / 01 <span>ONE CONTROLLED REQUEST</span></div>
-  {#each labels as label}<span
-      class:active={selected === label.id}
-      class="station-label"
-      style:left={`${label.left}%`}
-      style:top={`${label.top}%`}><b>{label.number}</b> {label.label}</span
-    >{/each}
+<div
+  class="world"
+  bind:this={host}
+  aria-hidden={interactive ? undefined : 'true'}
+  role={interactive ? 'group' : undefined}
+  aria-label={interactive ? 'Practice stack objects in the isometric room' : undefined}
+>
+  <div class="world-caption">
+    WORKSHOP / {interactive ? 'STACK' : '01'}
+    <span>{interactive ? 'PREPARE · REVIEW · CHECK' : 'ONE CONTROLLED REQUEST'}</span>
+  </div>
+  {#each labels as label}{#if interactive}<button
+        type="button"
+        class="object-label"
+        class:active={selected === label.id}
+        class:receiving={destination === label.id}
+        style:left={`${label.left}%`}
+        style:top={`${label.top}%`}
+        aria-label={`${stations.find((s) => s.id === label.id)?.label}: ${statuses[label.id] ?? 'Empty'}`}
+        aria-pressed={selected === label.id}
+        onclick={() => onselect(label.id)}
+        ><span>{label.label}</span><small
+          >{destination === label.id ? 'Place here' : (statuses[label.id] ?? 'Empty')}</small
+        ></button
+      >
+    {:else}<span
+        class:active={selected === label.id}
+        class="station-label"
+        style:left={`${label.left}%`}
+        style:top={`${label.top}%`}><b>{label.number}</b> {label.label}</span
+      >{/if}{/each}
   <div class="world-help">
-    {paused ? 'Paused for reading' : 'Tap a station or the floor to travel'}
+    {interactive
+      ? 'Tap an object, then its next destination. Keyboard: Tab and Enter.'
+      : paused
+        ? 'Paused for reading'
+        : 'Tap a station or the floor to travel'}
   </div>
 </div>
 {#if unavailable}<p>
@@ -323,6 +416,37 @@
     color: var(--color-fg-primary);
     border-bottom: 2px solid currentColor;
   }
+  .object-label {
+    position: absolute;
+    z-index: 2;
+    transform: translate(-50%, -100%);
+    padding: 0.4rem 0.55rem;
+    min-height: 44px;
+    min-width: 68px;
+    max-width: 125px;
+    color: var(--color-fg-primary, #eee);
+    background: var(--color-bg-surface, #171716);
+    border: 1px solid var(--color-border-default, #444);
+    font: inherit;
+    font-size: 0.75rem;
+    cursor: pointer;
+  }
+  .object-label small {
+    display: block;
+    font-size: 0.62rem;
+    margin-top: 0.2rem;
+  }
+  .object-label.active {
+    border-color: currentColor;
+  }
+  .object-label.receiving {
+    outline: 2px dashed var(--color-fg-primary, #eee);
+    outline-offset: 3px;
+  }
+  .object-label:focus-visible {
+    outline: 3px solid var(--color-fg-primary, #eee);
+    outline-offset: 3px;
+  }
   b {
     font: inherit;
     font-family: var(--font-mono);
@@ -347,6 +471,11 @@
     }
     .world {
       height: 370px;
+    }
+    .object-label {
+      font-size: 0.65rem;
+      padding: 0.25rem;
+      max-width: 95px;
     }
   }
 </style>
