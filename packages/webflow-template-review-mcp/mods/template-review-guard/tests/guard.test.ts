@@ -9,6 +9,8 @@ const CTX = 'mcp__claude_ai_Template_Review_MCP__template_review_get_review_cont
 const FOLLOWUP = 'mcp__claude_ai_Template_Review_MCP__template_review_send_ticket_followup'
 const VALIDATE = 'mcp__claude_ai_Template_Review_MCP__template_review_run_published_site_validation'
 const SHOTS = 'mcp__claude_ai_Template_Review_MCP__template_review_capture_published_site_screenshots'
+const UPDATE = 'mcp__claude_ai_Template_Review_MCP__template_review_update_version_review'
+const HUB = 'mcp__reviewer__hub_execute_proxy_tool'
 const CLEAN = 'Thanks for submitting. Below are the items to address.\n\nBLOCKING\n1. Add /licenses at the root slug.\n2. Link Powered by Webflow in the footer.'
 const SITE = 'https://savoria.webflow.io/'
 /** An in-memory store the test serves and watches; mock.store cannot be combined with store.* hooks. */
@@ -33,6 +35,108 @@ function fakeStore(on: On, seed: Record<string, unknown> = {}) {
 const CR_DATE = '2026-10-05T19:32:46.000Z'
 const CR_MS = Date.parse(CR_DATE)
 const HOUR = 60 * 60 * 1000
+
+for (const via of ['direct', 'bridge', 'Hub'] as const) {
+  for (const status of ['Approved', 'Rejected', 'Changes Requested', '✅Approved', '❌Rejected', '📤Changes Requested']) {
+    test(`${via}: update_version_review ${status} requires context and both evidence kinds before Send`, async ($, on) => {
+      mock.clock(on)
+      fakeStore(on)
+      let reached = 0
+      let asked = 0
+      const tool = via === 'Hub' ? HUB : via === 'bridge' ? 'mcp__wf-template-review-micah-bridge__template_review_update_version_review' : UPDATE
+      on('tool.call', { tool: CTX }, () => ({ result: { templateName: 'Savoria' } }))
+      on('tool.call', { tool: VALIDATE }, () => ({ result: { findings: [] } }))
+      on('tool.call', { tool: SHOTS }, () => ({ result: { gallery_url: 'https://shots.example/g/1' } }))
+      on('tool.call', { tool: 'AskUserQuestion' }, () => {
+        asked += 1
+        return { deny: 'nobody here' }
+      })
+      on('tool.call', { tool }, () => {
+        reached += 1
+        return { result: { ok: true } }
+      })
+      const args = { version_id: 'recDecision', review_status: status, review_feedback: CLEAN }
+      const input = via === 'Hub' ? { tool, proxyToolName: 'template_review_update_version_review', args } : { tool, ...args }
+      expect((await $.tool.call(input)).deny).toMatch(/get_review_context/)
+      await $.tool.call({ tool: CTX, version_id: args.version_id })
+      expect((await $.tool.call(input)).deny).toMatch(/missing evidence.*validated, screenshots/)
+      await $.tool.call({ tool: VALIDATE, published_url: SITE })
+      expect((await $.tool.call(input)).deny).toMatch(/missing evidence.*screenshots/)
+      expect(asked).toBe(0)
+      await $.tool.call({ tool: SHOTS, published_url: SITE })
+      expect((await $.tool.call(input)).deny).toMatch(/declined|nobody answered/)
+      expect(asked).toBe(1)
+      expect(reached).toBe(0)
+    })
+  }
+}
+
+test('update_version_review non-decision statuses and feedback-only edits still ask for Send without an evidence gate', async ($, on) => {
+  let asked = 0
+  on('tool.call', { tool: 'AskUserQuestion' }, () => {
+    asked += 1
+    return { deny: 'nobody here' }
+  })
+  for (const args of [{ review_status: '🏃🏾In Review' }, { review_feedback: CLEAN }]) {
+    const ran = await $.tool.call({ tool: UPDATE, version_id: 'recInternal', ...args })
+    expect(ran.deny).toMatch(/declined|nobody answered/)
+  }
+  expect(asked).toBe(2)
+})
+
+test('a decision update without version_id fails closed before confirmation', async ($, on) => {
+  let asked = 0
+  on('tool.call', { tool: 'AskUserQuestion' }, () => {
+    asked += 1
+    return { deny: 'nobody here' }
+  })
+  const ran = await $.tool.call({ tool: UPDATE, review_status: '✅Approved' })
+  expect(ran.deny).toMatch(/requires version_id/)
+  expect(asked).toBe(0)
+})
+
+test('Hub decision status keeps the Phase 0 fast-exit and still asks for Send', async ($, on) => {
+  mock.clock(on)
+  fakeStore(on)
+  let asked = 0
+  on('tool.call', { tool: CTX }, () => ({ result: { phase0: { kind: 'NOT_A_TEMPLATE' } } }))
+  on('tool.call', { tool: 'AskUserQuestion' }, () => {
+    asked += 1
+    return { deny: 'nobody here' }
+  })
+  await $.tool.call({ tool: CTX, version_id: 'recFast' })
+  const ran = await $.tool.call({ tool: HUB, proxyToolName: 'template_review_update_version_review', args: { version_id: 'recFast', review_status: '❌Rejected' } })
+  expect(ran.deny).toMatch(/declined|nobody answered/)
+  expect(asked).toBe(1)
+})
+
+for (const via of ['direct', 'Hub'] as const) {
+  test(`${via}: full evidence and Send allow the decision update unchanged`, async ($, on) => {
+    mock.clock(on)
+    fakeStore(on)
+    let reached = 0
+    const tool = via === 'Hub' ? HUB : UPDATE
+    on('tool.call', { tool: CTX }, () => ({ result: { templateName: 'Savoria' } }))
+    on('tool.call', { tool: VALIDATE }, () => ({ result: { findings: [] } }))
+    on('tool.call', { tool: SHOTS }, () => ({ result: { gallery_url: 'https://shots.example/g/1' } }))
+    on('tool.call', { tool: 'AskUserQuestion' }, (_$, e) => {
+      const questions = (e as unknown as { questions: { question: string }[] }).questions
+      return { result: { questions, answers: { [questions[0]!.question]: 'Send' } } }
+    })
+    const args = { version_id: 'recSend', review_status: '✅Approved' }
+    on('tool.call', { tool }, (_$, e) => {
+      reached += 1
+      expect(via === 'Hub' ? e.args : { version_id: e.version_id, review_status: e.review_status }).toEqual(args)
+      return { result: { ok: true } }
+    })
+    await $.tool.call({ tool: CTX, version_id: args.version_id })
+    await $.tool.call({ tool: VALIDATE, published_url: SITE })
+    await $.tool.call({ tool: SHOTS, published_url: SITE })
+    const ran = await $.tool.call(via === 'Hub' ? { tool, proxyToolName: 'template_review_update_version_review', args } : { tool, ...args })
+    expect(ran.deny).toBeUndefined()
+    expect(reached).toBe(1)
+  })
+}
 
 test('lint: backticks, greetings and sign-offs are refused on the composed path', () => {
   expect(lintComposed('Fix the `hero` class').deny).toMatch(/backtick/)

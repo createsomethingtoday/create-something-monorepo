@@ -1,7 +1,93 @@
 import { expect, mock, test } from 'claude-code/testing'
+import type { On, RenderElement } from 'claude-code'
+import type { VizScorecard } from '../types'
 
 import { captureOf, contextSummary, jsonOf, maxSegments, queueRows, textOf, validationSummary } from '../hooks/parse'
-import { fromStructured, fromText, meetsBar } from '../hooks/scorecard'
+import { DIMENSIONS, fromStructured, fromText, meetsBar } from '../hooks/scorecard'
+
+const HUB = 'mcp__reviewer__hub_execute_proxy_tool'
+const CAPTURE = 'mcp__claude_ai_Template_Review_MCP__template_review_capture_published_site_screenshots'
+const FORMAT = 'mcp__claude_ai_Template_Review_MCP__template_review_format_agent_review_feedback'
+const SAVE = 'mcp__claude_ai_Template_Review_MCP__template_review_save_agent_feedback'
+
+function watch(on: On) {
+  const last: Record<string, unknown> = {}
+  on('state.set', { plugin: 'template-review-viz' }, (_$, e, next) => {
+    last[e.key] = e.value
+    return next(e)
+  })
+  return last
+}
+
+function drawingText(tree: RenderElement): string {
+  return JSON.stringify(tree)
+}
+
+const PANE_PROPS = { title: 'Screenshots', isFocused: true, bodyColumns: 140, placement: 'dock' as const, scroll: { offset: 0, bodyRows: 44 }, view: {} }
+
+const PASS_REPORT = `# Template Review: Version A\n\n## Verdict\n**Pass**\n\n## Hard requirement failures\nNone.\n\n${DIMENSIONS.map(d => `| ${d.name} | Good | evidence for A |`).join('\n')}\n\nBLOCKING\n\nRECOMMENDED\n1. Polish A`
+
+test('text scorecard keeps same-version progress and clears all prior fields on a different version', () => {
+  const a = fromText(PASS_REPORT, null, 1, 'save_agent_feedback', 'recA')
+  expect(meetsBar(a)).toBe('yes')
+  const same = fromText('Additional internal note.', a, 2, 'save_agent_feedback', 'recA')
+  expect(same.versionId).toBe('recA')
+  expect(same.name).toBe('Version A')
+  expect(meetsBar(same)).toBe('yes')
+  const enriched = fromStructured({ intake: { version_id: 'recA' }, confirmed_findings: [{ severity: 'critical' }], human_follow_up: ['A'], manual_checks_remaining: ['A'], rubric_dimension_matrix: [{ dimension: 'typography', label: 'Auto', evidence_or_reason: 'A' }] }, same, 2)
+  const b = fromText('Initial draft for B.', enriched, 3, 'save_agent_feedback', 'recB')
+  expect(b.versionId).toBe('recB')
+  expect(b.name).toBeNull()
+  expect(b.verdict).toBeNull()
+  expect(b.blocking).toBeNull()
+  expect(b.recommended).toBeNull()
+  expect(b.hardFailures).toBeNull()
+  expect(b.findings).toEqual({ critical: 0, warning: 0, info: 0 })
+  expect(b.followUps).toBeNull()
+  expect(b.manual).toBeNull()
+  expect(b.dims.typography).toEqual({ tier: null, label: null, note: null })
+  expect(meetsBar(b)).toBe('unknown')
+  expect(a.name).toBe('Version A')
+})
+
+test('structured scorecard clears prior tiers, verdict, counts and labels when intake changes version', () => {
+  const a = fromStructured({ intake: { version_id: 'recA' }, confirmed_findings: [{ severity: 'critical' }], human_follow_up: ['A'], manual_checks_remaining: ['A'], rubric_dimension_matrix: [{ dimension: 'typography', label: 'Auto', evidence_or_reason: 'A' }] }, fromText(PASS_REPORT, null, 1, 'save_agent_feedback', 'recA'), 2)
+  const same = fromStructured({ intake: { version_id: 'recA' } }, a, 3)
+  expect(same.findings.critical).toBe(1)
+  expect(same.dims.typography?.tier).toBe('Good')
+  const b = fromStructured({ intake: { version_id: 'recB' }, rubric_dimension_matrix: [{ dimension: 'responsive_design', label: 'Manual', evidence_or_reason: 'B' }] }, same, 4)
+  expect(b.versionId).toBe('recB')
+  expect(b.name).toBeNull()
+  expect(b.verdict).toBeNull()
+  expect(b.blocking).toBeNull()
+  expect(b.recommended).toBeNull()
+  expect(b.hardFailures).toBeNull()
+  expect(b.findings).toEqual({ critical: 0, warning: 0, info: 0 })
+  expect(b.followUps).toBeNull()
+  expect(b.manual).toBeNull()
+  expect(b.dims.typography).toEqual({ tier: null, label: null, note: null })
+  expect(b.dims.responsive_design).toEqual({ tier: null, label: 'Manual', note: 'B' })
+  expect(meetsBar(b)).toBe('unknown')
+})
+
+for (const via of ['direct', 'Hub'] as const) {
+  test(`${via} scorecard dispatch isolates both text and structured versions`, async ($, on) => {
+    mock.clock(on)
+    const last = watch(on)
+    on('tool.call', { tool: via === 'Hub' ? HUB : /template_review_/ }, () => ({ result: { ok: true } }))
+    const send = (tool: string, args: Record<string, unknown>) => $.tool.call(via === 'Hub' ? { tool: HUB, proxyToolName: tool, args } : { tool, ...args })
+    await send(SAVE, { version_id: 'recA', agent_review_feedback: PASS_REPORT })
+    expect(meetsBar(last.scorecard as VizScorecard)).toBe('yes')
+    await send(SAVE, { version_id: 'recB', agent_review_feedback: 'Initial draft.' })
+    expect(last.scorecard).toMatchObject({ versionId: 'recB', name: null, verdict: null, blocking: null })
+    expect(meetsBar(last.scorecard as VizScorecard)).toBe('unknown')
+    await send(SAVE, { version_id: 'recA', agent_review_feedback: PASS_REPORT })
+    await send(FORMAT, { intake: { version_id: 'recC' }, rubric_dimension_matrix: [{ dimension: 'typography', label: 'Partial', evidence_or_reason: 'C' }] })
+    expect(last.scorecard).toMatchObject({ versionId: 'recC', name: null, verdict: null, blocking: null })
+    expect((last.scorecard as VizScorecard).dims.typography).toEqual({ tier: null, label: 'Partial', note: 'C' })
+    expect(meetsBar(last.scorecard as VizScorecard)).toBe('unknown')
+  })
+}
 
 const VALIDATION = {
   ok: true,
@@ -36,6 +122,80 @@ const SHOTS = {
     ],
   },
 }
+
+test('Hub capture tracks screenshots and compacts both transcript row types', async ($, on) => {
+  mock.clock(on, { now: 1000 })
+  const last = watch(on)
+  const ran: string[][] = []
+  on('process.run', (_$, e) => {
+    ran.push([...e.argv])
+    return { value: { exitCode: 0, stdout: '', stderr: '', isStdoutTruncated: false, isStderrTruncated: false } }
+  })
+  on('tool.call', { tool: HUB }, () => ({ result: SHOTS }))
+  const input = { proxyToolName: 'template_review_capture_published_site_screenshots', args: { published_url: 'https://verity-template.webflow.io/' } }
+  await $.tool.call({ tool: HUB, tool_use_id: 'hub-capture', ...input })
+  expect((last.captures as { id: string }[])[0]?.id).toBe('hub-capture')
+  expect(ran.filter(a => a[0] === 'curl').length).toBe(2)
+  const props = { tool_use_id: 'hub-capture', tool: HUB, input, isRunning: false, isInterrupted: false, isErrored: false, output: SHOTS }
+  const use = await $.ui.render({ component: 'ToolUse', surface: 'terminal', requestId: 'hub-capture', props })
+  const result = await $.ui.render({ component: 'ToolResult', surface: 'terminal', requestId: 'hub-capture', props })
+  for (const tree of [use, result]) {
+    expect(drawingText(tree)).toContain('screenshots: Verity')
+    expect(drawingText(tree)).toContain('Show strip')
+  }
+})
+
+test('Hub compact rows use the matching call identity and leave unrelated Hub tools to the engine', async ($, on) => {
+  mock.clock(on)
+  on('tool.call', { tool: HUB }, () => ({ result: VALIDATION }))
+  on('ui.render', { component: 'ToolResult' }, () => ({ type: 'Text', props: {}, children: ['original row'] }))
+  await $.tool.call({ tool: HUB, tool_use_id: 'hub-validator', proxyToolName: 'template_review_run_published_site_validation', args: {} })
+  const tree = await $.ui.render({ component: 'ToolResult', surface: 'terminal', requestId: 'hub-validator', props: { tool_use_id: 'hub-validator', tool: HUB, isErrored: false, output: VALIDATION } })
+  expect(drawingText(tree)).toContain('4 issues')
+  await $.tool.call({ tool: HUB, tool_use_id: 'hub-other', proxyToolName: 'other_tool', args: {} })
+  const other = await $.ui.render({ component: 'ToolResult', surface: 'terminal', requestId: 'hub-other', props: { tool_use_id: 'hub-other', tool: HUB, isErrored: false, output: VALIDATION } })
+  expect(drawingText(other)).toContain('original row')
+})
+
+for (const failure of ['mkdir', 'curl', 'sips', 'throw'] as const) {
+  test(`screenshot ${failure} failure renders segment links after preparation settles`, async ($, on) => {
+    mock.clock(on)
+    const last = watch(on)
+    let attempts = 0
+    on('ui.open', () => ({ value: { isPlaced: true } }))
+    on('process.run', (_$, e) => {
+      attempts += 1
+      if (failure === 'throw') throw new Error('process unavailable')
+      return { value: { exitCode: e.argv[0] === failure ? 1 : 0, stdout: '', stderr: '', isStdoutTruncated: false, isStderrTruncated: false } }
+    })
+    on('tool.call', { tool: CAPTURE }, () => ({ result: SHOTS }))
+    await $.tool.call({ tool: CAPTURE, tool_use_id: 'failed-capture', published_url: 'https://verity-template.webflow.io/' })
+    expect(last.ready).toMatchObject({ 'failed-capture/desktop/0': null, 'failed-capture/mobile/0': null })
+    for (const surface of ['terminal', 'desktop'] as const) {
+      const tree = await $.ui.render({ component: 'Pane', surface, requestId: 'tr-shots', viewport: { columns: 160, rows: 48 }, props: PANE_PROPS })
+      expect(drawingText(tree)).toContain('https://x.example/v?id=d0')
+      expect(drawingText(tree)).toContain('https://x.example/v?id=m0')
+      expect(drawingText(tree)).toContain('gallery: https://x.example/gallery?id=1')
+      expect(drawingText(tree)).not.toContain('fetching segment')
+    }
+    const before = attempts
+    await $.command.run({ command: 'trs', args: '', origin: { kind: 'composer' }, presentation: { isFullscreen: true, columns: 160 } })
+    expect(attempts).toBe(before)
+  })
+}
+
+test('successful screenshot preparation still renders PNGs in the terminal and links on desktop', async ($, on) => {
+  mock.clock(on)
+  on('process.run', () => ({ value: { exitCode: 0, stdout: '', stderr: '', isStdoutTruncated: false, isStderrTruncated: false } }))
+  on('tool.call', { tool: CAPTURE }, () => ({ result: SHOTS }))
+  await $.tool.call({ tool: CAPTURE, tool_use_id: 'good-capture', published_url: 'https://verity-template.webflow.io/' })
+  const terminal = await $.ui.render({ component: 'Pane', surface: 'terminal', requestId: 'tr-shots', props: PANE_PROPS })
+  expect(drawingText(terminal)).toContain('"type":"Image"')
+  expect(drawingText(terminal)).toContain('/tmp/claude-tr-shots/good-capture/desktop-0.png')
+  const desktop = await $.ui.render({ component: 'Pane', surface: 'desktop', requestId: 'tr-shots', props: PANE_PROPS })
+  expect(drawingText(desktop)).toContain('https://x.example/v?id=d0')
+  expect(drawingText(desktop)).not.toContain('"type":"Image"')
+})
 
 test('parse: text and json come out of every result shape', () => {
   expect(textOf('{"ok":true}')).toBe('{"ok":true}')

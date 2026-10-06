@@ -18,6 +18,11 @@ export const DIMENSIONS: readonly { id: string; name: string; match: RegExp }[] 
 
 const TIER_RANK: Record<VizTier, number> = { Unverifiable: 0, Satisfactory: 1, Good: 2, Exceptional: 3 }
 
+/** Partial drafts may extend one version, but must never relabel another version's evidence. */
+function previousForVersion(prev: VizScorecard | null, versionId: string | null): VizScorecard | null {
+  return versionId === null || prev?.versionId === versionId ? prev : null
+}
+
 export function emptyScorecard(now: number, source: string): VizScorecard {
   const dims: Record<string, VizDimension> = {}
   for (const d of DIMENSIONS) dims[d.id] = { tier: null, label: null, note: null }
@@ -51,13 +56,13 @@ function lower(a: VizTier | null, b: VizTier): VizTier {
 
 /** From `template_review_format_agent_review_feedback`'s structured input. */
 export function fromStructured(args: Record<string, unknown>, prev: VizScorecard | null, now: number): VizScorecard {
-  const card: VizScorecard = { ...(prev ?? emptyScorecard(now, 'structured')), dims: { ...(prev?.dims ?? emptyScorecard(now, 'structured').dims) }, source: 'format_agent_review_feedback', updatedAt: now }
   const intake = args.intake
-  if (intake !== null && typeof intake === 'object') {
-    const i = intake as Record<string, unknown>
-    card.versionId = str(i.version_id) ?? card.versionId
-    card.name = str(i.template_name) ?? card.name
-  }
+  const i = intake !== null && typeof intake === 'object' ? intake as Record<string, unknown> : {}
+  const versionId = str(i.version_id) ?? str(args.version_id)
+  prev = previousForVersion(prev, versionId)
+  const card: VizScorecard = { ...(prev ?? emptyScorecard(now, 'structured')), dims: { ...(prev?.dims ?? emptyScorecard(now, 'structured').dims) }, source: 'format_agent_review_feedback', updatedAt: now }
+  card.versionId = versionId ?? card.versionId
+  card.name = str(i.template_name) ?? card.name
   const matrix = args.rubric_dimension_matrix
   if (Array.isArray(matrix)) {
     for (const row of matrix) {
@@ -99,8 +104,10 @@ function sectionAfter(text: string, heading: RegExp): string | null {
 }
 
 /** From draft feedback or a report in the review template's shape. */
-export function fromText(text: string, prev: VizScorecard | null, now: number, source: string): VizScorecard {
+export function fromText(text: string, prev: VizScorecard | null, now: number, source: string, versionId: string | null = null): VizScorecard {
+  prev = previousForVersion(prev, versionId)
   const card: VizScorecard = { ...(prev ?? emptyScorecard(now, source)), dims: { ...(prev?.dims ?? emptyScorecard(now, source).dims) }, source, updatedAt: now }
+  card.versionId = versionId ?? card.versionId
   const seen = new Set<string>()
   for (const m of text.matchAll(/^\|\s*([^|\n]+?)\s*\|\s*([^|\n]+?)\s*\|(?:\s*([^|\n]*?)\s*\|)?/gm)) {
     const [, head = '', cell = '', evidence = ''] = m

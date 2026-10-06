@@ -48,8 +48,10 @@ declare module 'claude-code' {
     'template-review-viz': {
       captures: VizCapture[]
       strip: { captureId: string; index: number } | null
-      /** `${captureId}/${viewport}/${segment}` to the PNG path the terminal can read. */
-      ready: Record<string, string>
+      /** PNG path, or null after preparation failed; absent while pending. */
+      ready: Record<string, string | null>
+      /** Hub result rows have no input, so remember the resolved name by tool_use_id. */
+      callNames: Record<string, string>
       scorecard: VizScorecard | null
     }
   }

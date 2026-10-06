@@ -7,6 +7,18 @@ export function suffixOf(tool: string): string | null {
   return /template_review_([a-z_]+)$/.exec(tool)?.[1] ?? null
 }
 
+/** Hub tool identity and arguments live inside the proxy envelope. */
+export function resolveCall(tool: string, input: unknown): { name: string; args: Json } | null {
+  const args = input !== null && typeof input === 'object' && !Array.isArray(input) ? input as Json : {}
+  const direct = suffixOf(tool)
+  if (direct !== null) return { name: direct, args }
+  if (!/hub_execute_proxy_tool$/.test(tool)) return null
+  const name = suffixOf(str(args.proxyToolName) ?? '')
+  if (name === null) return null
+  const raw = args.arguments ?? args.args ?? args.input ?? args.params
+  return { name, args: raw !== null && typeof raw === 'object' && !Array.isArray(raw) ? raw as Json : {} }
+}
+
 /** The text of a tool result however the row carries it: a string, MCP content blocks, or an object. */
 export function textOf(output: unknown): string | null {
   if (typeof output === 'string') return output

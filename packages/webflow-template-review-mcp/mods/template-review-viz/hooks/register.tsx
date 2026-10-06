@@ -10,6 +10,7 @@ import {
   jsonOf,
   maxSegments,
   queueRows,
+  resolveCall,
   segmentsOf,
   shortDate,
   str,
@@ -28,8 +29,7 @@ const captures = atom({ plugin: 'template-review-viz', key: 'captures' } as cons
 const strip = atom({ plugin: 'template-review-viz', key: 'strip' } as const, null)
 const ready = atom({ plugin: 'template-review-viz', key: 'ready' } as const, {})
 const scorecard = atom({ plugin: 'template-review-viz', key: 'scorecard' } as const, null)
-
-type Args = Record<string, unknown>
+const callNames = atom({ plugin: 'template-review-viz', key: 'callNames' } as const, {})
 
 function readyKey(captureId: string, seg: VizSegment): string {
   return `${captureId}/${seg.viewport}/${seg.segment}`
@@ -42,21 +42,25 @@ function readyKey(captureId: string, seg: VizSegment): string {
  * step failed; the pane then shows the link instead.
  */
 async function ensurePng($: EngineInterface, captureId: string, seg: VizSegment): Promise<string | null> {
-  const known = (await read($, ready))[readyKey(captureId, seg)]
+  const key = readyKey(captureId, seg)
+  const known = (await read($, ready))[key]
   if (known !== undefined) return known
   const dir = `${SHOT_DIR}/${captureId.replace(/[^A-Za-z0-9_-]/g, '_')}`
   const base = `${dir}/${seg.viewport}-${seg.segment}`
+  let path: string | null = null
   try {
-    await $.process.run(['mkdir', '-p', dir])
-    const dl = await $.process.run(['curl', '-sSL', '--max-time', '25', '-o', `${base}.jpg`, seg.viewUrl], { timeoutMs: 30_000 })
-    if (dl.exitCode !== 0) return null
-    const conv = await $.process.run(['sips', '-s', 'format', 'png', `${base}.jpg`, '--out', `${base}.png`], { timeoutMs: 30_000 })
-    if (conv.exitCode !== 0) return null
+    const mkdir = await $.process.run(['mkdir', '-p', dir])
+    if (mkdir.exitCode === 0) {
+      const dl = await $.process.run(['curl', '-fsSL', '--max-time', '25', '-o', `${base}.jpg`, seg.viewUrl], { timeoutMs: 30_000 })
+      if (dl.exitCode === 0) {
+        const conv = await $.process.run(['sips', '-s', 'format', 'png', `${base}.jpg`, '--out', `${base}.png`], { timeoutMs: 30_000 })
+        if (conv.exitCode === 0) path = `${base}.png`
+      }
+    }
   } catch {
-    return null
+    // A completed failure is distinct from a segment still being fetched.
   }
-  const path = `${base}.png`
-  await update($, ready, all => ({ ...all, [readyKey(captureId, seg)]: path }))
+  await update($, ready, all => ({ ...all, [key]: path }))
   return path
 }
 
@@ -88,9 +92,7 @@ function sevGlyph(sev: string): string {
 type Ui = Pick<Elements[RenderSurface], 'Box' | 'Button' | 'Text'>
 
 /** A compact drawing of a Template Review result, or null to let the engine draw its own row. */
-function compact($: EngineInterface, ui: Ui, tool: string, output: unknown): RenderElement | null {
-  const name = suffixOf(tool)
-  if (name === null) return null
+function compact($: EngineInterface, ui: Ui, name: string, output: unknown): RenderElement | null {
   const json = jsonOf(output)
   if (json === null) return null
   const { Box, Button, Text } = ui
@@ -233,9 +235,11 @@ export const register: Register = on => {
 
   // Captures and scorecard sources are read off the tool calls themselves.
   on('tool.call', async ($, e, next) => {
-    const name = suffixOf(String(e.tool))
-    if (name === null) return next(e)
-    const args = e as unknown as Args
+    const call = resolveCall(String(e.tool), e)
+    if (call === null) return next(e)
+    const { name, args } = call
+    const callId = e.tool_use_id
+    if (callId !== undefined) await update($, callNames, all => ({ ...all, [callId]: name }))
     const now = await $.clock.now()
 
     if (name === 'format_agent_review_feedback') {
@@ -247,8 +251,7 @@ export const register: Register = on => {
     const draft = str(args.agent_review_feedback) ?? str(args.review_feedback)
     if (draft !== null && (name === 'save_agent_feedback' || name === 'save_draft_feedback' || name === 'request_changes' || name === 'update_version_review')) {
       const prev = await read($, scorecard)
-      const card = fromText(draft, prev, now, name)
-      if (str(args.version_id) !== null) card.versionId = str(args.version_id)
+      const card = fromText(draft, prev, now, name, str(args.version_id))
       await update($, scorecard, () => card)
       $.ui.toast(`scorecard updated from ${name} (/trc)`)
       return next(e)
@@ -267,13 +270,15 @@ export const register: Register = on => {
   })
 
   // Compact transcript rows for Template Review results.
-  on('ui.render', { component: 'ToolResult', props: { tool: /template_review_/ } }, ($, e, next) => {
+  on('ui.render', { component: 'ToolResult', props: { tool: /template_review_|hub_execute_proxy_tool$/ } }, async ($, e, next) => {
     if (e.props.isErrored || e.props.output === undefined) return next(e)
-    return compact($, $.ui.resolve(e), e.props.tool, e.props.output) ?? next(e)
+    const name = suffixOf(e.props.tool) ?? (await read($, callNames))[e.props.tool_use_id]
+    return name === undefined ? next(e) : compact($, $.ui.resolve(e), name, e.props.output) ?? next(e)
   })
-  on('ui.render', { component: 'ToolUse', props: { tool: /template_review_/ } }, ($, e, next) => {
+  on('ui.render', { component: 'ToolUse', props: { tool: /template_review_|hub_execute_proxy_tool$/ } }, ($, e, next) => {
     if (e.props.isRunning || e.props.isErrored || e.props.output === undefined) return next(e)
-    return compact($, $.ui.resolve(e), e.props.tool, e.props.output) ?? next(e)
+    const call = resolveCall(e.props.tool, e.props.input)
+    return call === null ? next(e) : compact($, $.ui.resolve(e), call.name, e.props.output) ?? next(e)
   })
 
   on('ui.render', { component: 'Pane', requestId: STRIP }, async ($, e) => {
@@ -331,7 +336,7 @@ export const register: Register = on => {
                 <Text dimColor>{`${viewport} ${seg.width}x${seg.height} at ${Math.round((seg.segment * seg.height) / seg.pageHeight * 100)}% of ${seg.pageHeight}px${seg.segment !== index ? ' (last)' : ''}`}</Text>
                 {path === undefined ? (
                   <Text dimColor>{`fetching segment ${seg.segment + 1}...`}</Text>
-                ) : Image === null ? (
+                ) : path === null || Image === null ? (
                   <Text dimColor wrap="truncate-end">{seg.viewUrl}</Text>
                 ) : (
                   <Image key={`${viewport}-${seg.segment}`} source={{ file: path, format: 'png' }} columns={width} rows={rows} alt={`${viewport} segment ${seg.segment + 1}: ${seg.viewUrl}`} />

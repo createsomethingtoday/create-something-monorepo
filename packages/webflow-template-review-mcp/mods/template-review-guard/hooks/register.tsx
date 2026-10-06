@@ -144,6 +144,12 @@ const EVIDENCE_OF: Record<string, GuardEvidence> = {
 const DECISIONS = new Set(['request_changes', 'approve_version', 'reject_version', 'complete_publishing'])
 const REQUIRED: readonly GuardEvidence[] = ['validated', 'screenshots']
 
+function isDecision({ name, args }: Call): boolean {
+  if (DECISIONS.has(name)) return true
+  // Airtable uses emoji-prefixed labels; plain labels must receive the same gate.
+  return name === 'update_version_review' && /^(?:✅|❌|📤)?\s*(?:Approved|Rejected|Changes Requested)$/i.test(str(args.review_status)?.trim() ?? '')
+}
+
 /**
  * Returns what the call does to the creator or the marketplace, or null when
  * the call is a reviewer-internal write that needs no confirmation.
@@ -314,7 +320,8 @@ export const register: Register = on => {
     const summary = describe(call, await read($, names))
     if (summary === null) return next(input)
 
-    if (DECISIONS.has(call.name) && versionId !== null) {
+    if (isDecision(call)) {
+      if (versionId === null) return { deny: `${PLUGIN}: ${call.name} refused: a decision requires version_id and evidence for that version.` }
       const loaded = await read($, contextLoaded)
       if (!loaded.includes(versionId)) {
         return {
