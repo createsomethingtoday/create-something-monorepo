@@ -67,13 +67,14 @@
     busy = true;
     try {
       await navigator.locks.request(artifactKey, () => {
-        model = applyStoredArtifact(
+        const candidate = applyStoredArtifact(
           localStorage.getItem(artifactKey),
           $state.snapshot(model),
           intent,
           expected
         );
-        localStorage.setItem(artifactKey, JSON.stringify(model));
+        localStorage.setItem(artifactKey, JSON.stringify(candidate));
+        model = candidate;
         error = '';
       });
     } catch {

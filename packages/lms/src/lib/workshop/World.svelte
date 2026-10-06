@@ -238,6 +238,7 @@
             rendered = false;
           };
           travel(selected);
+          refresh();
           const ray = new T.Raycaster();
           const pointer = new T.Vector2();
           const click = (event: PointerEvent) => {

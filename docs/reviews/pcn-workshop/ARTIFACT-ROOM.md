@@ -2,7 +2,7 @@
 
 Tracked work: [CRE-2227](https://linear.app/createsomething/issue/CRE-2227/canon-workshop-build-a-practice-stack-through-inspectable-world).
 Branch: `codex/pcn-artifact-room`. Base: verified remote main `cc7f043cf0c2b422054db61f19ddcc752e3891f5`.
-Publication is held until Micah reviews this interaction.
+Micah approved publication on 2026-10-05 at 23:58 UTC. Normal PR review and final-head release gates apply.
 
 The room now leads the setup experience. Tap the starter crate and unpack a project, carry it to GitHub to prepare a private repository plan, carry that to Codex, approve the exact practice change, carry it to the Infisical vault, review a Cloudflare destination, and bring it to the deployment beacon for a simulated health receipt. Six physical objects expose their status, source revision, next action and recovery. The destination pad is highlighted while carrying. Native world buttons support keyboard activation; a semantic object list and explicit Pick up / Place actions support the same graph without 3D. Motion is paused while reading; reduced-motion rendering remains available. Optional dragging was not added.
 
@@ -22,4 +22,11 @@ Full-app preview: http://127.0.0.1:4175/workshop. Actual component preview: http
 
 Evidence: ignored `output/playwright/artifact-result.json`, `artifact-tests.tap`, `artifact-svelte-check.log`, desktop/phone complete/stale screenshots, keyboard screenshot and preserved walkthrough results. Screenshots are delivered through Library.
 
-Worktree disposition: preserved at /Users/micahjohnson/Documents/Codex/2026-10-05/task-4/isolated-repo on codex/pcn-artifact-room until interaction review. Original checkout untouched. Published walkthrough remains at its prior released commit.
+Worktree disposition: preserved at /Users/micahjohnson/Documents/Codex/2026-10-05/task-4/isolated-repo on codex/pcn-artifact-room until interaction review. Original checkout untouched. The published walkthrough is the rollback target until the artifact release passes its gates.
+
+PR review corrections:
+
+- A candidate state is persisted under the lock before being published to the UI. A denied/full storage write retains the previous visible state and exposes the recovery error; it cannot show a new prepared object or completion.
+- Renderer initialization explicitly refreshes restored statuses and the carry destination after assigning its callbacks. This covers hydration while the Three.js dynamic import is pending.
+- Headless Chrome regressions deny `Storage.prototype.setItem` after hydration, first with empty storage and then with five prepared objects and a carried destination. They assert no new prepared count/completion and unchanged persistence. Restored destination and stale canvas pixels are compared with a later equivalent reactive refresh, hiding overlay labels to exclude keyboard focus outlines. Evidence: `output/playwright/artifact-p2-result.json`.
+- Independent correction review is clear. The 44 workshop/starter test groups, zero-error/warning Svelte check, desktop/phone, keyboard, interrupted carry, source invalidation, delayed cross-tab intents and recovery-reset checks were rerun.
