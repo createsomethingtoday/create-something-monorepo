@@ -58,6 +58,10 @@ test('maps server errors and keeps invalid field names', async () => {
     { ok: false, error: 'rate_limited', retryAfterSeconds: 7200 },
   );
   assert.deepEqual(
+    await submitSupportRequest(payload, fetchReturning(409, { success: false, error: 'request_in_progress' })),
+    { ok: false, error: 'request_in_progress' },
+  );
+  assert.deepEqual(
     await submitSupportRequest(payload, fetchReturning(500, { error: 'something_new' })),
     { ok: false, error: 'send_failed' },
   );

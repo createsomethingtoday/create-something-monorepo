@@ -41,6 +41,11 @@ export const DEFAULT_SUPPORT_WORKFLOW_KEY = 'marketplace-template-support-reques
 const KNOCK_WORKFLOWS_URL = 'https://api.knock.app/v1/workflows';
 
 const MAX_BODY_CHARS = 16_000;
+// Read cap in bytes, enforced while streaming so an oversized body is never
+// materialized in the isolate the search API shares.
+const MAX_BODY_BYTES = 32_000;
+// A retry within this window of a still-pending attempt is treated as in progress.
+const PENDING_IN_FLIGHT_MS = 60_000;
 const MAX_PER_IP_PER_HOUR = 5;
 const MAX_PER_BUYER_TEMPLATE_PER_DAY = 3;
 const HOUR_MS = 60 * 60 * 1000;
@@ -172,7 +177,43 @@ async function triggerKnock(
   return result.workflow_run_id ?? null;
 }
 
-type SupportRequestStatus = 'sent' | 'send_failed' | 'creator_unreachable' | 'rate_limited';
+type SupportRequestStatus = 'pending' | 'sent' | 'send_failed' | 'creator_unreachable' | 'rate_limited';
+
+/** Reads at most `maxBytes` of the body; null when it is (or declares itself) larger. */
+export async function readBodyCapped(request: Request, maxBytes: number): Promise<string | null> {
+  const declared = Number(request.headers.get('Content-Length') ?? '0');
+  if (Number.isFinite(declared) && declared > maxBytes) return null;
+  if (!request.body) return '';
+
+  const reader = request.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.byteLength;
+    if (total > maxBytes) {
+      await reader.cancel().catch(() => undefined);
+      return null;
+    }
+    chunks.push(value);
+  }
+  const merged = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    merged.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return new TextDecoder().decode(merged);
+}
+
+interface PriorAttempt {
+  id: string;
+  created_at: string;
+  status: SupportRequestStatus;
+  template_slug: string;
+  buyer_email_hash: string;
+}
 
 async function finishRow(
   env: Env,
@@ -222,18 +263,28 @@ export async function handleSupportRequest(request: Request, env: Env): Promise<
     return respond({ success: false, error: 'support_requests_disabled' }, 503);
   }
   const creatorEmailFieldIds = parseFieldIds(env.AIRTABLE_CREATOR_EMAIL_FIELD_IDS);
-  if (!env.KNOCK_API_KEY || !env.SUPPORT_REQUEST_HASH_SALT || creatorEmailFieldIds.length === 0) {
+  if (
+    !env.KNOCK_API_KEY ||
+    !env.SUPPORT_REQUEST_HASH_SALT ||
+    !env.AIRTABLE_API_KEY ||
+    !env.AIRTABLE_ASSETS_TABLE_ID ||
+    creatorEmailFieldIds.length === 0
+  ) {
+    // Fail before reserving anything: a missing credential is a service fault,
+    // not an unreachable creator, and must not spend anyone's quota.
     console.error(JSON.stringify({ event: 'support_request_misconfigured' }));
     return respond({ success: false, error: 'support_requests_unavailable' }, 503);
   }
 
-  const parsed = parseSupportRequestBody(await request.text().catch(() => ''));
+  const body = await readBodyCapped(request, MAX_BODY_BYTES).catch(() => '');
+  if (body === null) return respond({ success: false, error: 'payload_too_large' }, 413);
+  const parsed = parseSupportRequestBody(body);
   if (!parsed.ok) return respond({ success: false, error: parsed.error, fields: parsed.fields }, 400);
   const input = parsed.value;
+  const idempotencyKey = input.idempotency_key ?? null;
 
-  const requestId = crypto.randomUUID();
   // Bots that fill the honeypot get a normal-looking success and no email.
-  if (input.website) return respond({ success: true, data: { request_id: requestId } }, 200);
+  if (input.website) return respond({ success: true, data: { request_id: crypto.randomUUID() } }, 200);
 
   const salt = env.SUPPORT_REQUEST_HASH_SALT;
   const ip = request.headers.get('CF-Connecting-IP') ?? 'unknown';
@@ -249,78 +300,130 @@ export async function handleSupportRequest(request: Request, env: Env): Promise<
     .first<TemplateRow>();
   if (!template) return respond({ success: false, error: 'template_not_found' }, 404);
 
-  // Reserve the slot first, then count only the reservations inserted at or
-  // before this one. Order comes from the rowid SQLite assigns atomically at
-  // insert, not from a timestamp taken earlier, so however a burst interleaves
-  // or stalls, exactly the first requests up to each cap proceed. The row also
-  // records attempts that later fail to send.
   const now = Date.now();
-  const createdAt = new Date(now).toISOString();
-  const reservation = await env.DB.prepare(
-    `INSERT INTO support_requests
-       (id, created_at, template_document_id, template_slug, creator_record_id, request_type,
-        status, ip_hash, buyer_email_hash, message_chars)
-     VALUES (?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?)
-     RETURNING rowid AS seq`,
-  )
-    .bind(
-      requestId,
-      createdAt,
-      template.id,
-      input.template_slug,
-      template.creator_record_id,
-      input.request_type,
-      ipHash,
-      buyerEmailHash,
-      input.message.length,
+  const findPrior = (key: string) =>
+    env.DB.prepare(
+      'SELECT id, created_at, status, template_slug, buyer_email_hash FROM support_requests WHERE idempotency_key = ?',
     )
-    .first<{ seq: number }>();
-  const seq = reservation?.seq ?? Number.MAX_SAFE_INTEGER;
+      .bind(key)
+      .first<PriorAttempt>();
 
-  const hourAgo = new Date(now - HOUR_MS).toISOString();
-  const dayAgo = new Date(now - DAY_MS).toISOString();
-  const rankedAtOrBefore = `AND status != 'rate_limited' AND rowid <= ?`;
-  const [ipWindow, buyerWindow] = await Promise.all([
-    env.DB.prepare(
-      `SELECT COUNT(*) AS n, MIN(created_at) AS oldest FROM support_requests
-       WHERE ip_hash = ? AND created_at >= ? ${rankedAtOrBefore}`,
-    )
-      .bind(ipHash, hourAgo, seq)
-      .first<{ n: number; oldest: string | null }>(),
-    env.DB.prepare(
-      `SELECT COUNT(*) AS n, MIN(created_at) AS oldest FROM support_requests
-       WHERE buyer_email_hash = ? AND template_slug = ? AND created_at >= ? ${rankedAtOrBefore}`,
-    )
-      .bind(buyerEmailHash, input.template_slug, dayAgo, seq)
-      .first<{ n: number; oldest: string | null }>(),
-  ]);
-  const retryAfterSeconds = rateLimitRetrySeconds(now, [
-    { count: ipWindow?.n ?? 0, max: MAX_PER_IP_PER_HOUR, oldest: ipWindow?.oldest ?? null, windowMs: HOUR_MS },
-    { count: buyerWindow?.n ?? 0, max: MAX_PER_BUYER_TEMPLATE_PER_DAY, oldest: buyerWindow?.oldest ?? null, windowMs: DAY_MS },
-  ]);
-  if (retryAfterSeconds !== null) {
-    await finishRow(env, requestId, 'rate_limited');
-    return jsonResponse(
-      request,
-      env,
-      { success: false, error: 'rate_limited', retry_after_seconds: retryAfterSeconds },
-      429,
-      { 'Retry-After': String(retryAfterSeconds) },
-    );
+  // A retry of an earlier submission reuses that attempt's reservation rather
+  // than taking another slot, so a lost response at the cap can't turn into a
+  // false rate-limit failure for an email that was already sent.
+  let requestId: string | null = null;
+  const resolvePrior = async (prior: PriorAttempt): Promise<Response | null> => {
+    if (prior.buyer_email_hash !== buyerEmailHash || prior.template_slug !== input.template_slug) {
+      return respond({ success: false, error: 'invalid_fields', fields: ['idempotency_key'] }, 400);
+    }
+    if (prior.status === 'sent') return respond({ success: true, data: { request_id: prior.id } }, 200);
+    if (prior.status === 'pending' && now - Date.parse(prior.created_at) < PENDING_IN_FLIGHT_MS) {
+      return respond({ success: false, error: 'request_in_progress', request_id: prior.id }, 409);
+    }
+    if (prior.status === 'rate_limited') {
+      // That attempt never held a slot; release its key and reserve afresh.
+      await env.DB.prepare('UPDATE support_requests SET idempotency_key = NULL WHERE id = ?').bind(prior.id).run();
+      return null;
+    }
+    // send_failed, creator_unreachable, or a stale pending attempt: deliver again
+    // under the same Knock key, which dedupes if the first attempt did land.
+    requestId = prior.id;
+    await finishRow(env, prior.id, 'pending');
+    return null;
+  };
+
+  if (idempotencyKey) {
+    const prior = await findPrior(idempotencyKey);
+    if (prior) {
+      const early = await resolvePrior(prior);
+      if (early) return early;
+    }
   }
 
+  if (!requestId) {
+    // Reserve the slot first, then count only the reservations inserted at or
+    // before this one. Order comes from the rowid SQLite assigns atomically at
+    // insert, not from a timestamp taken earlier, so however a burst interleaves
+    // or stalls, exactly the first requests up to each cap proceed. The row also
+    // records attempts that later fail to send.
+    const newId = crypto.randomUUID();
+    let seq: number;
+    try {
+      const reservation = await env.DB.prepare(
+        `INSERT INTO support_requests
+           (id, created_at, template_document_id, template_slug, creator_record_id, request_type,
+            status, ip_hash, buyer_email_hash, message_chars, idempotency_key)
+         VALUES (?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?)
+         RETURNING rowid AS seq`,
+      )
+        .bind(
+          newId,
+          new Date(now).toISOString(),
+          template.id,
+          input.template_slug,
+          template.creator_record_id,
+          input.request_type,
+          ipHash,
+          buyerEmailHash,
+          input.message.length,
+          idempotencyKey,
+        )
+        .first<{ seq: number }>();
+      seq = reservation?.seq ?? Number.MAX_SAFE_INTEGER;
+    } catch (error) {
+      // A concurrent retry with the same key won the unique index.
+      const prior = idempotencyKey ? await findPrior(idempotencyKey) : null;
+      if (!prior) throw error;
+      return respond({ success: false, error: 'request_in_progress', request_id: prior.id }, 409);
+    }
+
+    const hourAgo = new Date(now - HOUR_MS).toISOString();
+    const dayAgo = new Date(now - DAY_MS).toISOString();
+    const rankedAtOrBefore = `AND status != 'rate_limited' AND rowid <= ?`;
+    const [ipWindow, buyerWindow] = await Promise.all([
+      env.DB.prepare(
+        `SELECT COUNT(*) AS n, MIN(created_at) AS oldest FROM support_requests
+         WHERE ip_hash = ? AND created_at >= ? ${rankedAtOrBefore}`,
+      )
+        .bind(ipHash, hourAgo, seq)
+        .first<{ n: number; oldest: string | null }>(),
+      env.DB.prepare(
+        `SELECT COUNT(*) AS n, MIN(created_at) AS oldest FROM support_requests
+         WHERE buyer_email_hash = ? AND template_slug = ? AND created_at >= ? ${rankedAtOrBefore}`,
+      )
+        .bind(buyerEmailHash, input.template_slug, dayAgo, seq)
+        .first<{ n: number; oldest: string | null }>(),
+    ]);
+    const retryAfterSeconds = rateLimitRetrySeconds(now, [
+      { count: ipWindow?.n ?? 0, max: MAX_PER_IP_PER_HOUR, oldest: ipWindow?.oldest ?? null, windowMs: HOUR_MS },
+      { count: buyerWindow?.n ?? 0, max: MAX_PER_BUYER_TEMPLATE_PER_DAY, oldest: buyerWindow?.oldest ?? null, windowMs: DAY_MS },
+    ]);
+    if (retryAfterSeconds !== null) {
+      await finishRow(env, newId, 'rate_limited');
+      return jsonResponse(
+        request,
+        env,
+        { success: false, error: 'rate_limited', retry_after_seconds: retryAfterSeconds },
+        429,
+        { 'Retry-After': String(retryAfterSeconds) },
+      );
+    }
+    requestId = newId;
+  }
+
+  const attemptId: string = requestId;
   try {
     const fields = await fetchAssetFields(env, template.id);
     const creatorEmail = fields ? resolveCreatorEmail(fields, creatorEmailFieldIds) : null;
     if (!creatorEmail) {
-      await finishRow(env, requestId, 'creator_unreachable');
-      return respond({ success: false, error: 'creator_unreachable', request_id: requestId }, 422);
+      await finishRow(env, attemptId, 'creator_unreachable');
+      return respond({ success: false, error: 'creator_unreachable', request_id: attemptId }, 422);
     }
 
     // Knock replays a retry only when its parameters match the original, so
     // everything sent must be derived from the client's submission, not from
     // this attempt's row id.
-    const reference = input.idempotency_key ?? requestId;
+    const reference = idempotencyKey ?? attemptId;
     const knockRunId = await triggerKnock(
       env,
       `support-request:${reference}`,
@@ -340,12 +443,12 @@ export async function handleSupportRequest(request: Request, env: Env): Promise<
         message: input.message,
       },
     );
-    await finishRow(env, requestId, 'sent', { knockRunId });
-    return respond({ success: true, data: { request_id: requestId } }, 200);
+    await finishRow(env, attemptId, 'sent', { knockRunId });
+    return respond({ success: true, data: { request_id: attemptId } }, 200);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    console.error(JSON.stringify({ event: 'support_request_failed', request_id: requestId, error: message }));
-    await finishRow(env, requestId, 'send_failed', { error: message }).catch(() => undefined);
-    return respond({ success: false, error: 'send_failed', request_id: requestId }, 502);
+    console.error(JSON.stringify({ event: 'support_request_failed', request_id: attemptId, error: message }));
+    await finishRow(env, attemptId, 'send_failed', { error: message }).catch(() => undefined);
+    return respond({ success: false, error: 'send_failed', request_id: attemptId }, 502);
   }
 }

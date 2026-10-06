@@ -1,6 +1,13 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { cleanListingUrl, parseFieldIds, parseSupportRequestBody, rateLimitRetrySeconds, resolveCreatorEmail } from '../src/supportRequest';
+import {
+  cleanListingUrl,
+  parseFieldIds,
+  parseSupportRequestBody,
+  rateLimitRetrySeconds,
+  readBodyCapped,
+  resolveCreatorEmail,
+} from '../src/supportRequest';
 import { callWorker, createTestEnv } from './support/worker';
 
 const ENDPOINT = 'https://search.test/api/templates/support-request';
@@ -24,7 +31,10 @@ function post(payload: unknown, ip = '203.0.113.7', origin = 'https://webflow.co
   });
 }
 
-async function setup(fields: Record<string, unknown> = { fldTestRollup: ['creator@example.com'] }) {
+async function setup(
+  fields: Record<string, unknown> = { fldTestRollup: ['creator@example.com'] },
+  knockStatuses: number[] = [],
+) {
   const harness = createTestEnv();
   Object.assign(harness.env, {
     SUPPORT_REQUESTS_ENABLED: '1',
@@ -47,7 +57,10 @@ async function setup(fields: Record<string, unknown> = { fldTestRollup: ['creato
       const url = String(input);
       calls.push({ url, init });
       if (url.startsWith('https://api.airtable.com/')) return Response.json({ id: 'recAsset1', fields });
-      if (url.startsWith('https://api.knock.app/')) return Response.json({ workflow_run_id: 'run-1' });
+      if (url.startsWith('https://api.knock.app/')) {
+        const status = knockStatuses.shift() ?? 200;
+        return status === 200 ? Response.json({ workflow_run_id: 'run-1' }) : new Response('upstream error', { status });
+      }
       throw new Error(`unexpected fetch ${url}`);
     }),
   );
@@ -158,22 +171,111 @@ describe('POST /api/templates/support-request', () => {
     }
   });
 
-  it('reuses the client idempotency key for Knock so retries cannot double-send', async () => {
+  it('answers a retry of a sent submission from its row, with no second email or reservation', async () => {
     const { env, close, calls } = await setup();
     try {
       const key = 'form-7f3c2a9e-1b4d-4e8a';
+      const first = (await (await callWorker(post(body({ idempotency_key: key })), env)).json()) as {
+        data: { request_id: string };
+      };
+      const retry = await callWorker(post(body({ idempotency_key: key })), env);
+      expect(retry.status).toBe(200);
+      expect(((await retry.json()) as { data: { request_id: string } }).data.request_id).toBe(first.data.request_id);
+      expect(calls.filter((call) => call.url.startsWith('https://api.knock.app/'))).toHaveLength(1);
+      expect(await rows(env)).toHaveLength(1);
+    } finally {
+      close();
+    }
+  });
+
+  it('retries a failed send on the same row with an identical Knock payload and key', async () => {
+    const { env, close, calls } = await setup(undefined, [500]);
+    try {
+      const key = 'form-0c1d2e3f-4a5b-6c7d';
+      expect((await callWorker(post(body({ idempotency_key: key })), env)).status).toBe(502);
       expect((await callWorker(post(body({ idempotency_key: key })), env)).status).toBe(200);
+      const knock = calls.filter((call) => call.url.startsWith('https://api.knock.app/'));
+      expect(knock).toHaveLength(2);
+      expect(knock.map((call) => new Headers(call.init?.headers).get('Idempotency-Key'))).toEqual([
+        `support-request:${key}`,
+        `support-request:${key}`,
+      ]);
+      expect(String(knock[0].init?.body)).toBe(String(knock[1].init?.body));
+      expect(JSON.parse(String(knock[0].init?.body)).data.request_id).toBe(key);
+      const all = await rows(env);
+      expect(all).toHaveLength(1);
+      expect(all[0].status).toBe('sent');
+    } finally {
+      close();
+    }
+  });
+
+  it('lets a retry at the cap through when its first attempt already holds the slot', async () => {
+    const { env, close, calls } = await setup(undefined, [200, 200, 500]);
+    try {
+      expect((await callWorker(post(body()), env)).status).toBe(200);
+      expect((await callWorker(post(body()), env)).status).toBe(200);
+      const key = 'form-third-slot-0001';
+      // Third (last) daily slot fails to send; its retry must not be rate limited.
+      expect((await callWorker(post(body({ idempotency_key: key })), env)).status).toBe(502);
       expect((await callWorker(post(body({ idempotency_key: key })), env)).status).toBe(200);
-      const keys = calls
-        .filter((call) => call.url.startsWith('https://api.knock.app/'))
-        .map((call) => new Headers(call.init?.headers).get('Idempotency-Key'));
-      expect(keys).toEqual([`support-request:${key}`, `support-request:${key}`]);
-      // Knock only replays a retry whose parameters match the original.
-      const bodies = calls
-        .filter((call) => call.url.startsWith('https://api.knock.app/'))
-        .map((call) => String(call.init?.body));
-      expect(bodies[0]).toBe(bodies[1]);
-      expect(JSON.parse(bodies[0]).data.request_id).toBe(key);
+      expect(calls.filter((call) => call.url.startsWith('https://api.knock.app/'))).toHaveLength(4);
+    } finally {
+      close();
+    }
+  });
+
+  it('reports a retry of a recent pending attempt as in progress', async () => {
+    const { env, close, calls } = await setup();
+    try {
+      await env.DB.prepare(
+        `INSERT INTO support_requests (id, created_at, template_document_id, template_slug, request_type, status, ip_hash, buyer_email_hash, message_chars, idempotency_key)
+         SELECT 'inflight', ?, 'recAsset1', 'meridian', 'other', 'pending', 'ip', buyer_email_hash, 20, 'form-inflight-000001'
+         FROM (SELECT 'unused' AS buyer_email_hash)`,
+      )
+        .bind(new Date().toISOString())
+        .run();
+      // Same key but a different buyer hash is rejected rather than replayed.
+      expect((await callWorker(post(body({ idempotency_key: 'form-inflight-000001' })), env)).status).toBe(400);
+      await env.DB.prepare('DELETE FROM support_requests').run();
+      const key = 'form-inflight-000002';
+      expect((await callWorker(post(body({ idempotency_key: key })), env)).status).toBe(200);
+      await env.DB.prepare("UPDATE support_requests SET status = 'pending', created_at = ? WHERE idempotency_key = ?")
+        .bind(new Date().toISOString(), key)
+        .run();
+      expect((await callWorker(post(body({ idempotency_key: key })), env)).status).toBe(409);
+      expect(calls.filter((call) => call.url.startsWith('https://api.knock.app/'))).toHaveLength(1);
+    } finally {
+      close();
+    }
+  });
+
+  it('rejects oversized bodies before reading them whole', async () => {
+    const { env, close, calls } = await setup();
+    try {
+      const huge = new Request(ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Origin: 'https://webflow.com' },
+        body: JSON.stringify(body({ message: 'x'.repeat(40_000) })),
+      });
+      expect((await callWorker(huge, env)).status).toBe(413);
+      expect(calls).toHaveLength(0);
+      expect(await rows(env)).toHaveLength(0);
+      // A body under the cap streams through intact.
+      expect(await readBodyCapped(new Request(ENDPOINT, { method: 'POST', body: 'hello' }), 10)).toBe('hello');
+      expect(await readBodyCapped(new Request(ENDPOINT, { method: 'POST', body: 'x'.repeat(11) }), 10)).toBeNull();
+    } finally {
+      close();
+    }
+  });
+
+  it('treats missing Airtable credentials as misconfiguration and reserves nothing', async () => {
+    const { env, close, calls } = await setup();
+    try {
+      delete env.AIRTABLE_API_KEY;
+      expect((await callWorker(post(body()), env)).status).toBe(503);
+      expect(calls).toHaveLength(0);
+      expect(await rows(env)).toHaveLength(0);
     } finally {
       close();
     }

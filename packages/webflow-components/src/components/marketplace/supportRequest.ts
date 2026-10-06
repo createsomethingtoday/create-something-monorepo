@@ -43,6 +43,8 @@ export type SupportRequestError =
   | 'support_requests_disabled'
   | 'support_requests_unavailable'
   | 'origin_not_allowed'
+  | 'request_in_progress'
+  | 'payload_too_large'
   | 'send_failed'
   | 'network_error';
 
@@ -58,6 +60,8 @@ export const SUPPORT_REQUEST_ERROR_MESSAGES: Readonly<Record<SupportRequestError
   support_requests_disabled: "Support requests aren't available yet. Contact Webflow support instead.",
   support_requests_unavailable: "Support requests aren't available right now. Try again later.",
   origin_not_allowed: "Support requests can only be sent from webflow.com.",
+  request_in_progress: 'Your request is still sending. Wait a moment, then try again.',
+  payload_too_large: 'Your message is too long. Shorten it and try again.',
   send_failed: "Your request didn't send. Try again in a few minutes.",
   network_error: "Your request didn't send. Check your connection and try again.",
 };
