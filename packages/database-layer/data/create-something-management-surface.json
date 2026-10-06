@@ -1,6 +1,6 @@
 {
   "id": "substrate:create-something:management-surface:internal",
-  "generatedAt": "2026-10-03T14:04:28.469Z",
+  "generatedAt": "2026-10-06T14:17:56.845Z",
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
   "sourceReadinessId": "substrate:create-something:operating-slice-readiness:internal",
@@ -2057,6 +2057,20 @@
       "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
       "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-package-create-something-lms-packages-lms",
       "mcpUri": "substrate://topology/internal/records/substrate-create-something-package-create-something-lms-packages-lms",
+      "agentCommand": "databaseLayer.topology.records.get",
+      "access": [
+        "read"
+      ],
+      "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
+    },
+    {
+      "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-package-pcn-workshop-starter-packages-lms-starter-pcn-workshop",
+      "kind": "topology_record",
+      "title": "pcn-workshop-starter",
+      "recordId": "substrate:create-something:package:pcn-workshop-starter-packages-lms-starter-pcn-workshop",
+      "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
+      "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-package-pcn-workshop-starter-packages-lms-starter-pcn-workshop",
+      "mcpUri": "substrate://topology/internal/records/substrate-create-something-package-pcn-workshop-starter-packages-lms-starter-pcn-workshop",
       "agentCommand": "databaseLayer.topology.records.get",
       "access": [
         "read"
@@ -4444,6 +4458,20 @@
       "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
     },
     {
+      "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-worker-packages-lms-starter-pcn-workshop-wrangler-jsonc",
+      "kind": "topology_record",
+      "title": "packages/lms/starter/pcn-workshop/wrangler.jsonc",
+      "recordId": "substrate:create-something:worker:packages-lms-starter-pcn-workshop-wrangler-jsonc",
+      "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
+      "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-worker-packages-lms-starter-pcn-workshop-wrangler-jsonc",
+      "mcpUri": "substrate://topology/internal/records/substrate-create-something-worker-packages-lms-starter-pcn-workshop-wrangler-jsonc",
+      "agentCommand": "databaseLayer.topology.records.get",
+      "access": [
+        "read"
+      ],
+      "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
+    },
+    {
       "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-worker-packages-lms-wrangler-toml",
       "kind": "topology_record",
       "title": "packages/lms/wrangler.toml",
@@ -6733,6 +6761,20 @@
       "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
       "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-guide-docs-guides-hydra-db-governed-recall-md",
       "mcpUri": "substrate://topology/internal/records/substrate-create-something-guide-docs-guides-hydra-db-governed-recall-md",
+      "agentCommand": "databaseLayer.topology.records.get",
+      "access": [
+        "read"
+      ],
+      "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
+    },
+    {
+      "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-guide-docs-guides-identity-recovery-repair-md",
+      "kind": "topology_record",
+      "title": "identity-recovery-repair.md",
+      "recordId": "substrate:create-something:guide:docs-guides-identity-recovery-repair-md",
+      "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
+      "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-guide-docs-guides-identity-recovery-repair-md",
+      "mcpUri": "substrate://topology/internal/records/substrate-create-something-guide-docs-guides-identity-recovery-repair-md",
       "agentCommand": "databaseLayer.topology.records.get",
       "access": [
         "read"

@@ -1,6 +1,6 @@
 {
   "id": "substrate:create-something:operating-slice-review:internal",
-  "generatedAt": "2026-10-03T14:04:27.559Z",
+  "generatedAt": "2026-10-06T14:17:55.986Z",
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
   "sourceCoverageId": "substrate:create-something:atlas-coverage:internal",
@@ -84,6 +84,7 @@
         "substrate:create-something:worker:packages-io-workers-webflow-validation-wrangler-toml",
         "substrate:create-something:worker:packages-io-wrangler-jsonc",
         "substrate:create-something:worker:packages-landing-page-filter-wrangler-toml",
+        "substrate:create-something:worker:packages-lms-starter-pcn-workshop-wrangler-jsonc",
         "substrate:create-something:worker:packages-lms-wrangler-toml",
         "substrate:create-something:worker:packages-loom-mcp-remote-wrangler-toml",
         "substrate:create-something:package:arena-curator-packages-ltd-workers-arena-curator",
@@ -159,7 +160,7 @@
       "owner": "CREATE SOMETHING",
       "tier": "Automation",
       "surface": "worker",
-      "nodeCount": 142,
+      "nodeCount": 143,
       "evidence": [
         "apps/bettermode-marketplace-creator-agent/wrangler.jsonc",
         "apps/create-something-scheduler/wrangler.jsonc",
@@ -227,6 +228,7 @@
         "substrate:create-something:guide:docs-guides-ground-seeded-trial-md",
         "substrate:create-something:guide:docs-guides-harness-ablation-loop-md",
         "substrate:create-something:guide:docs-guides-hydra-db-governed-recall-md",
+        "substrate:create-something:guide:docs-guides-identity-recovery-repair-md",
         "substrate:create-something:guide:docs-guides-judgment-layer-dogfood-playbook-md",
         "substrate:create-something:guide:docs-guides-loops-above-agents-md",
         "substrate:create-something:guide:docs-guides-map-product-operations-md",
@@ -272,7 +274,7 @@
       "owner": "CREATE SOMETHING",
       "tier": "Mixed",
       "surface": "guide",
-      "nodeCount": 78,
+      "nodeCount": 79,
       "evidence": [
         "docs/guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md",
         "docs/guides/AGENCY_GOVERNANCE_PRODUCTS_OPERATIONS_RUNBOOK.md",
@@ -1065,6 +1067,7 @@
       "recordIds": [
         "substrate:create-something:package:create-something-calm-operator-ink-bridge-packages-calm-operator-ink-bridge",
         "substrate:create-something:package:create-something-landing-page-filter-packages-landing-page-filter",
+        "substrate:create-something:package:pcn-workshop-starter-packages-lms-starter-pcn-workshop",
         "substrate:create-something:package:create-something-meetings-packages-meetings",
         "substrate:create-something:package:webflow-template-analyzer-cloudflare-packages-webflow-template-analyzer-cloudflare",
         "substrate:create-something:package:create-something-webflow-template-views-packages-webflow-template-views"
@@ -1072,10 +1075,11 @@
       "owner": "CREATE SOMETHING",
       "tier": "Mixed",
       "surface": "worker",
-      "nodeCount": 5,
+      "nodeCount": 6,
       "evidence": [
         "packages/calm-operator-ink-bridge",
         "packages/landing-page-filter",
+        "packages/lms/starter/pcn-workshop",
         "packages/meetings",
         "packages/webflow-template-analyzer/cloudflare",
         "packages/webflow-template-views"

@@ -1,6 +1,6 @@
 {
   "id": "substrate:create-something:business-operating-recommendations:internal",
-  "generatedAt": "2026-10-03T14:04:28.423Z",
+  "generatedAt": "2026-10-06T14:17:56.798Z",
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
   "sourceOrganizationReviewId": "substrate:create-something:organization-review:internal",
@@ -10,9 +10,9 @@
   "summary": {
     "recommendedMoves": 4,
     "operationalizedLanes": 4,
-    "topologyNodes": 543,
-    "topologyEdges": 1122,
-    "managementResources": 613,
+    "topologyNodes": 546,
+    "topologyEdges": 1148,
+    "managementResources": 616,
     "managementOperations": 29,
     "operatingSlices": 23,
     "workerSlices": 4,
@@ -30,7 +30,7 @@
       "operatingLane": "substrate_product_surface",
       "summary": "The healthiest next move is to make the database layer a first-class product surface rather than a hidden app-governance implementation detail.",
       "evidence": [
-        "28 Database records currently support 278 Automation records",
+        "28 Database records currently support 279 Automation records",
         "Management surface exposes stable API/MCP/agent access",
         "Atlas UI projects the same records instead of becoming a separate source of truth"
       ],
@@ -85,8 +85,8 @@
       ],
       "metrics": {
         "databaseRecords": 28,
-        "automationRecords": 278,
-        "resourceCount": 613,
+        "automationRecords": 279,
+        "resourceCount": 616,
         "operationCount": 29,
         "readOperations": 26
       },
@@ -114,8 +114,8 @@
       "operatingLane": "worker_runtime_review",
       "summary": "The worker surface is the largest concentration of operational risk and should be the first ongoing review lane.",
       "evidence": [
-        "Worker records=169",
-        "142 records in the primary worker slice"
+        "Worker records=171",
+        "143 records in the primary worker slice"
       ],
       "sourceArtifacts": [
         "packages/database-layer/data/create-something-operating-slice-readiness.json",
@@ -129,8 +129,8 @@
           "surface": "worker",
           "status": "review_ready",
           "productionStatus": "approval_required",
-          "recordCount": 142,
-          "mappedRecordCount": 142,
+          "recordCount": 143,
+          "mappedRecordCount": 143,
           "apiPath": "/api/substrate/operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-automation-surface-automation-worker",
           "readinessApiPath": "/api/substrate/operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-automation-surface-automation-worker/readiness",
           "validationCommands": [
@@ -142,9 +142,9 @@
       ],
       "metrics": {
         "workerSlices": 4,
-        "primaryWorkerSliceRecords": 142,
-        "runtimeConfigRecords": 117,
-        "bindingRefs": 626,
+        "primaryWorkerSliceRecords": 143,
+        "runtimeConfigRecords": 118,
+        "bindingRefs": 628,
         "routeRefs": 26,
         "bindingKinds": {
           "assets": 8,
@@ -154,7 +154,7 @@
           "queue": 16,
           "r2": 23,
           "route": 52,
-          "var": 372,
+          "var": 374,
           "vectorize": 2
         },
         "secretValuesCaptured": false
@@ -276,7 +276,7 @@
       "summary": "Policy is already present; the improvement is to make every critical workflow show its policy, guide, approval boundary, and receipt path in context.",
       "evidence": [
         "Policy records=64",
-        "Guide records=78",
+        "Guide records=79",
         "23 operating slices are review-ready"
       ],
       "sourceArtifacts": [
@@ -373,7 +373,7 @@
         "operatingSlices": 23,
         "attachedSlices": 23,
         "policyRecords": 64,
-        "guideRecords": 78,
+        "guideRecords": 79,
         "docRecords": 6
       },
       "relatedSliceIds": [
@@ -424,8 +424,8 @@
       "surface": "worker",
       "status": "review_ready",
       "productionStatus": "approval_required",
-      "recordCount": 142,
-      "mappedRecordCount": 142,
+      "recordCount": 143,
+      "mappedRecordCount": 143,
       "apiPath": "/api/substrate/operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-automation-surface-automation-worker",
       "readinessApiPath": "/api/substrate/operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-automation-surface-automation-worker/readiness",
       "validationCommands": [
@@ -442,8 +442,8 @@
         "surface": "worker",
         "status": "review_ready",
         "productionStatus": "approval_required",
-        "recordCount": 142,
-        "mappedRecordCount": 142,
+        "recordCount": 143,
+        "mappedRecordCount": 143,
         "apiPath": "/api/substrate/operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-automation-surface-automation-worker",
         "readinessApiPath": "/api/substrate/operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-automation-surface-automation-worker/readiness",
         "validationCommands": [
@@ -493,8 +493,8 @@
         "surface": "worker",
         "status": "review_ready",
         "productionStatus": "approval_required",
-        "recordCount": 5,
-        "mappedRecordCount": 5,
+        "recordCount": 6,
+        "mappedRecordCount": 6,
         "apiPath": "/api/substrate/operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-automation-surface-mixed-worker",
         "readinessApiPath": "/api/substrate/operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-automation-surface-mixed-worker/readiness",
         "validationCommands": [
@@ -506,8 +506,8 @@
     ],
     "runtime": {
       "runtime": "cloudflare",
-      "runtimeConfigRecords": 117,
-      "bindingRefs": 626,
+      "runtimeConfigRecords": 118,
+      "bindingRefs": 628,
       "routeRefs": 26,
       "bindingKinds": {
         "assets": 8,
@@ -517,7 +517,7 @@
         "queue": 16,
         "r2": 23,
         "route": 52,
-        "var": 372,
+        "var": 374,
         "vectorize": 2
       },
       "secretHandling": "Runtime recommendation uses binding names, route refs, and environment variable keys from repo config. It does not capture secret values."
@@ -1962,32 +1962,32 @@
       "recordId": "business:promote_database_layer_as_product_surface",
       "type": "proof",
       "summary": "Promote Substrate as the CREATE SOMETHING database layer is represented as a CREATE SOMETHING business operating lane.",
-      "evidence": "packages/database-layer/data/create-something-business-operating-recommendations.json generated from packages/database-layer/data/create-something-organization-review.json at 2026-10-03T14:04:28.423Z.",
-      "createdAt": "2026-10-03T14:04:28.423Z"
+      "evidence": "packages/database-layer/data/create-something-business-operating-recommendations.json generated from packages/database-layer/data/create-something-organization-review.json at 2026-10-06T14:17:56.798Z.",
+      "createdAt": "2026-10-06T14:17:56.798Z"
     },
     {
       "id": "receipt:business:review_worker_runtime_slice_first",
       "recordId": "business:review_worker_runtime_slice_first",
       "type": "proof",
       "summary": "Review worker runtime slices before production claims is represented as a CREATE SOMETHING business operating lane.",
-      "evidence": "packages/database-layer/data/create-something-business-operating-recommendations.json generated from packages/database-layer/data/create-something-organization-review.json at 2026-10-03T14:04:28.423Z.",
-      "createdAt": "2026-10-03T14:04:28.423Z"
+      "evidence": "packages/database-layer/data/create-something-business-operating-recommendations.json generated from packages/database-layer/data/create-something-organization-review.json at 2026-10-06T14:17:56.798Z.",
+      "createdAt": "2026-10-06T14:17:56.798Z"
     },
     {
       "id": "receipt:business:turn_client_overlays_into_repeatable_delivery",
       "recordId": "business:turn_client_overlays_into_repeatable_delivery",
       "type": "proof",
       "summary": "Turn client overlays into repeatable delivery is represented as a CREATE SOMETHING business operating lane.",
-      "evidence": "packages/database-layer/data/create-something-business-operating-recommendations.json generated from packages/database-layer/data/create-something-organization-review.json at 2026-10-03T14:04:28.423Z.",
-      "createdAt": "2026-10-03T14:04:28.423Z"
+      "evidence": "packages/database-layer/data/create-something-business-operating-recommendations.json generated from packages/database-layer/data/create-something-organization-review.json at 2026-10-06T14:17:56.798Z.",
+      "createdAt": "2026-10-06T14:17:56.798Z"
     },
     {
       "id": "receipt:business:attach_policy_to_slices",
       "recordId": "business:attach_policy_to_slices",
       "type": "proof",
       "summary": "Attach policy and guides to operating slices is represented as a CREATE SOMETHING business operating lane.",
-      "evidence": "packages/database-layer/data/create-something-business-operating-recommendations.json generated from packages/database-layer/data/create-something-organization-review.json at 2026-10-03T14:04:28.423Z.",
-      "createdAt": "2026-10-03T14:04:28.423Z"
+      "evidence": "packages/database-layer/data/create-something-business-operating-recommendations.json generated from packages/database-layer/data/create-something-organization-review.json at 2026-10-06T14:17:56.798Z.",
+      "createdAt": "2026-10-06T14:17:56.798Z"
     }
   ],
   "approvalBoundary": "This artifact completes local business operating recommendations only. Production, third-party, client, Cloudflare, Dify, Slack, Airtable, Webflow, and external writes remain approval-gated."
