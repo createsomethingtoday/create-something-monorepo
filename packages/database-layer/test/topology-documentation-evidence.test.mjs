@@ -23,3 +23,13 @@ test('newsletter guide resolves its explicit io strategy link before generic met
   assert.ok(topology.edges.some((edge) => edge.source === guide.id && edge.target === io.id && edge.evidence.includes('explicit repository link')));
   assert.ok(!topology.edges.some((edge) => edge.source === guide.id && topology.nodes.find((node) => node.id === edge.target)?.path === 'packages/arc'));
 });
+
+test('identity recovery guide resolves to the owning Identity Worker', () => {
+  const topology = JSON.parse(fs.readFileSync(new URL('../data/create-something-internal-topology.json', import.meta.url), 'utf8'));
+  const guide = topology.nodes.find((node) => node.path === 'docs/guides/identity-recovery-repair.md');
+  const owner = topology.nodes.find((node) => node.path === 'packages/identity-worker');
+  assert.ok(guide);
+  assert.ok(owner);
+  const targets = topology.edges.filter((edge) => edge.source === guide.id && edge.relation === 'documents' && edge.target !== topology.rootNodeId);
+  assert.deepEqual(targets.map((edge) => edge.target), [owner.id]);
+});

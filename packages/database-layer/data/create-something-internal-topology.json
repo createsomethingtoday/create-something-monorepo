@@ -4,14 +4,14 @@
   "atlasCanvasId": "create-something-internal-operating-topology",
   "rootNodeId": "substrate:create-something:root",
   "coverage": {
-    "generatedAt": "2026-10-03T14:04:27.347Z",
+    "generatedAt": "2026-10-06T14:08:47.127Z",
     "rootPath": ".",
-    "packageCount": 239,
+    "packageCount": 240,
     "appCount": 13,
-    "workerCount": 115,
+    "workerCount": 116,
     "clientOverlayCount": 8,
     "policyCount": 64,
-    "guideCount": 78,
+    "guideCount": 79,
     "configCount": 40
   },
   "nodes": [
@@ -2441,6 +2441,23 @@
         "judgment"
       ],
       "packageName": "@create-something/lms",
+      "runtime": "cloudflare, node"
+    },
+    {
+      "id": "substrate:create-something:package:pcn-workshop-starter-packages-lms-starter-pcn-workshop",
+      "atlasNodeId": "atlas_create-something_package_pcn-workshop-starter-packages-lms-starter-pcn-workshop",
+      "title": "pcn-workshop-starter",
+      "path": "packages/lms/starter/pcn-workshop",
+      "tier": "Mixed",
+      "surface": "worker",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Workspace package at packages/lms/starter/pcn-workshop.",
+      "tags": [
+        "package",
+        "worker"
+      ],
+      "packageName": "pcn-workshop-starter",
       "runtime": "cloudflare, node"
     },
     {
@@ -5618,6 +5635,23 @@
       "runtime": "cloudflare"
     },
     {
+      "id": "substrate:create-something:worker:packages-lms-starter-pcn-workshop-wrangler-jsonc",
+      "atlasNodeId": "atlas_create-something_worker_packages-lms-starter-pcn-workshop-wrangler-jsonc",
+      "title": "packages/lms/starter/pcn-workshop/wrangler.jsonc",
+      "path": "packages/lms/starter/pcn-workshop/wrangler.jsonc",
+      "tier": "Automation",
+      "surface": "worker",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Cloudflare runtime configuration at packages/lms/starter/pcn-workshop/wrangler.jsonc.",
+      "tags": [
+        "worker",
+        "cloudflare",
+        "runtime"
+      ],
+      "runtime": "cloudflare"
+    },
+    {
       "id": "substrate:create-something:worker:packages-lms-wrangler-toml",
       "atlasNodeId": "atlas_create-something_worker_packages-lms-wrangler-toml",
       "title": "packages/lms/wrangler.toml",
@@ -8192,6 +8226,21 @@
       ]
     },
     {
+      "id": "substrate:create-something:guide:docs-guides-identity-recovery-repair-md",
+      "atlasNodeId": "atlas_create-something_guide_docs-guides-identity-recovery-repair-md",
+      "title": "identity-recovery-repair.md",
+      "path": "docs/guides/identity-recovery-repair.md",
+      "tier": "Mixed",
+      "surface": "guide",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "guide artifact in the CREATE SOMETHING operating topology.",
+      "tags": [
+        "guide",
+        "documentation"
+      ]
+    },
+    {
       "id": "substrate:create-something:guide:docs-guides-judgment-layer-dogfood-playbook-md",
       "atlasNodeId": "atlas_create-something_guide_docs-guides-judgment-layer-dogfood-playbook-md",
       "title": "JUDGMENT_LAYER_DOGFOOD_PLAYBOOK.md",
@@ -10338,6 +10387,13 @@
       "evidence": "packages/lms is present in the repo scan."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-pcn-workshop-starter-packages-lms-starter-pcn-workshop",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:package:pcn-workshop-starter-packages-lms-starter-pcn-workshop",
+      "relation": "contains",
+      "evidence": "packages/lms/starter/pcn-workshop is present in the repo scan."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-loom-mcp-remote-packages-loom-mcp-remote",
       "source": "substrate:create-something:root",
       "target": "substrate:create-something:package:create-something-loom-mcp-remote-packages-loom-mcp-remote",
@@ -11528,6 +11584,13 @@
       "evidence": "packages/landing-page-filter/wrangler.toml is present in the repo scan."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-worker-packages-lms-starter-pcn-workshop-wrangler-jsonc",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:worker:packages-lms-starter-pcn-workshop-wrangler-jsonc",
+      "relation": "contains",
+      "evidence": "packages/lms/starter/pcn-workshop/wrangler.jsonc is present in the repo scan."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-worker-packages-lms-wrangler-toml",
       "source": "substrate:create-something:root",
       "target": "substrate:create-something:worker:packages-lms-wrangler-toml",
@@ -12674,6 +12737,13 @@
       "target": "substrate:create-something:guide:docs-guides-hydra-db-governed-recall-md",
       "relation": "contains",
       "evidence": "docs/guides/HYDRA_DB_GOVERNED_RECALL.md is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-identity-recovery-repair-md",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:guide:docs-guides-identity-recovery-repair-md",
+      "relation": "contains",
+      "evidence": "docs/guides/identity-recovery-repair.md is present in the repo scan."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-judgment-layer-dogfood-playbook-md",
@@ -16015,6 +16085,13 @@
       "evidence": "docs/guides/HYDRA_DB_GOVERNED_RECALL.md is an operating guide."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-identity-recovery-repair-md-documents-substrate-create-something-root",
+      "source": "substrate:create-something:guide:docs-guides-identity-recovery-repair-md",
+      "target": "substrate:create-something:root",
+      "relation": "documents",
+      "evidence": "docs/guides/identity-recovery-repair.md is an operating guide."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-judgment-layer-dogfood-playbook-md-documents-substrate-create-something-root",
       "source": "substrate:create-something:guide:docs-guides-judgment-layer-dogfood-playbook-md",
       "target": "substrate:create-something:root",
@@ -17021,6 +17098,13 @@
       "target": "substrate:create-something:package:create-something-hydra-db-recall-mcp-packages-hydra-db-recall-mcp",
       "relation": "documents",
       "evidence": "docs/guides/HYDRA_DB_GOVERNED_RECALL.md documents packages/hydra-db-recall-mcp through matching topology terms."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-identity-recovery-repair-md-documents-substrate-create-something-package-create-something-identity-worker-packages-identity-worker",
+      "source": "substrate:create-something:guide:docs-guides-identity-recovery-repair-md",
+      "target": "substrate:create-something:package:create-something-identity-worker-packages-identity-worker",
+      "relation": "documents",
+      "evidence": "docs/guides/identity-recovery-repair.md documents packages/identity-worker through matching topology terms."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-judgment-layer-dogfood-playbook-md-documents-substrate-create-something-package-create-something-arc-packages-arc",

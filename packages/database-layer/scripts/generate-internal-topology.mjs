@@ -435,6 +435,7 @@ function scoreKnowledgeTarget(knowledgeTokens, target, targetTokens) {
   if (knowledgeTokens.has('substrate') && target.packageName === '@create-something/substrate-mcp') score += 4;
   if (knowledgeTokens.has('database') && target.packageName === '@create-something/database-layer') score += 4;
   if (knowledgeTokens.has('canon') && target.packageName === '@create-something/canon') score += 4;
+  if (knowledgeTokens.has('identity') && knowledgeTokens.has('recovery') && target.path === 'packages/identity-worker') score += 4;
   if (knowledgeTokens.has('auth') && target.packageName === '@create-something/mcp-authz') score += 3;
   return score;
 }
