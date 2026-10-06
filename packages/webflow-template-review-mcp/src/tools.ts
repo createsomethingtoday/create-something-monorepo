@@ -3,7 +3,13 @@ import { z } from 'zod';
 import { createHash } from 'node:crypto';
 
 import { prepareAdminTemplateFill, prepareAdminTemplateFillBatch } from './admin-template-fill.js';
-import { MRP_VISIBILITY_VALUES, setMrpVisibility, type MarketplaceAdminConfig } from './admin-mrp.js';
+import {
+  MRP_VISIBILITY_VALUES,
+  createMrpTemplate,
+  setMrpVisibility,
+  type MarketplaceAdminConfig,
+  type MrpTemplateCreatePayload,
+} from './admin-mrp.js';
 import {
   buildAdminExecuteBundle,
   buildAdminTemplateCreateExecuteScript,
@@ -321,9 +327,22 @@ export const WRITE_TOOL_NAMES: ReadonlySet<string> = new Set([
   'template_review_prepare_admin_template_create_execute',
   'template_review_prepare_admin_template_update_execute',
   'template_review_prepare_admin_template_thumbnail_execute',
-  // Server-side Webflow write: flips MarketplaceResourceProfile visibility.
+  // Server-side Webflow writes: create the MRP + Template, flip MRP visibility.
+  'template_review_create_admin_template',
   'template_review_set_mrp_visibility',
 ]);
+
+/**
+ * What the reviewer still finishes on /admin/templates/<id> after the
+ * server-side create. The first two go away once webflow/webflow#123284 ships
+ * (thumbnail copied to the CDN, extCategory/extMainTag accepted by the route).
+ */
+const REMAINING_IN_ADMIN_AFTER_CREATE = [
+  'Upload the tall thumbnail (560 × 720) with "Upload Tall Thumbnail" — the route currently stores the Airtable link verbatim, which expires and is blocked by Admin\'s CSP (get_template_thumbnail gives a fresh download link).',
+  'Set Category and Primary Tag, then click Update Template — the route cannot write them yet.',
+  'Check Site Slug, Detail Page Path, Type and Cost against Airtable (prepare_admin_template_verify prints the match table).',
+  'Work the 🚀Publishing Checklist with set_checklist_items, then approve the version.',
+] as const;
 
 export function registerTools(
   mcpServer: McpServer,
@@ -1265,6 +1284,110 @@ export function registerTools(
           reviewer: reviewerPayload(reviewer),
           ...result,
           note: 'Partial update: only visibility was sent. Verify the listing state in Admin or on the marketplace before announcing the change.',
+        });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'template_review_create_admin_template',
+    'Server-side Webflow write: create the marketplace template (MRP + Admin record) for a version via the key-authenticated POST /admin/api/mrp/airtable route — no browser session, no console script. Uses the same Airtable-derived fields as prepare_admin_template_fill, records the new Template ID in 👀ℹ️MRP ID (Override), and returns the Admin URL with the items still to finish on that page. Requires the marketplace admin key and an explicit reviewer request; refuses when required fields are missing or the asset already has a Template ID.',
+    {
+      version_id: z.string().min(1),
+      visibility: z.enum(MRP_VISIBILITY_VALUES).optional().describe('MRP visibility at creation. Defaults to PRIVATE.'),
+      support_email: z.string().email().optional().describe('Support contact; defaults to the creator email on the asset.'),
+      support_url: z.string().url().optional(),
+      record_mrp_id: z.boolean().optional().describe('Write the new Template ID to 👀ℹ️MRP ID (Override). Defaults to true.'),
+    },
+    async ({ version_id, visibility, support_email, support_url, record_mrp_id }) => {
+      try {
+        const reviewer = requireResolvedReviewer(getReviewer);
+        const context = await getClient().getReviewContext(version_id, currentReviewerAsCollaborator(getReviewer));
+        const fillBundle = prepareAdminTemplateFill(context, { includeScript: false, includeBookmarklet: false });
+        if (fillBundle.missing_fields.length > 0) {
+          throw new AirtableClientError(
+            'ADMIN_FORM_INCOMPLETE',
+            'Cannot create the template while required Admin form fields are missing.',
+            422,
+            { missing_fields: fillBundle.missing_fields },
+          );
+        }
+
+        const existingTemplateId = context.asset?.mrpIdOverride ?? context.asset?.mrpId;
+        if (existingTemplateId && /^[0-9a-f]{24}$/i.test(existingTemplateId)) {
+          throw new AirtableClientError(
+            'TEMPLATE_ID_ALREADY_RECORDED',
+            'The asset already has a Template ID recorded; creating again would duplicate it. Use the Admin page or clear the override first.',
+            409,
+            { template_id: existingTemplateId, admin_url: `https://webflow.com/admin/templates/${existingTemplateId}` },
+          );
+        }
+
+        const supportEmail = support_email ?? context.asset?.creatorEmail;
+        if (!supportEmail && !support_url) {
+          throw new AirtableClientError(
+            'SUPPORT_CONTACT_MISSING',
+            'The route requires a support email or URL for templates and the asset has no creator email. Pass support_email or support_url.',
+            422,
+          );
+        }
+
+        const warnings: string[] = [...(fillBundle.form_data.admin_form_warnings ?? [])];
+        if (!fillBundle.readiness.can_publish) {
+          warnings.push('This version is not currently publish-ready according to MCP capability flags. Confirm approval state before relying on the created template.');
+        }
+
+        const form = fillBundle.form_data.admin_form;
+        const thumbnailUrl = fillBundle.form_data.thumbnail_image_url;
+        const payload: MrpTemplateCreatePayload = {
+          name: form.name ?? '',
+          displayName: form.name ?? '',
+          description: form.description ?? '',
+          resourceType: 'TEMPLATE',
+          siteSlug: form.shortName ?? '',
+          visibility: visibility ?? 'PRIVATE',
+          // Admin's cost field and the route's price.value are both cents.
+          price: { value: Number(form.cost), unit: 'USD' },
+          support: {
+            ...(supportEmail ? { email: supportEmail } : {}),
+            ...(support_url ? { url: support_url } : {}),
+          },
+          templateMetadata: {
+            type: form.type ?? 'basic',
+            ...(form.extDetailPageUrl ? { extDetailPageUrl: form.extDetailPageUrl } : {}),
+            ...(form.extCategory ? { extCategory: form.extCategory } : {}),
+            ...(form.extMainTag ? { extMainTag: form.extMainTag } : {}),
+          },
+          ...(thumbnailUrl ? { thumbnailImage: { url: thumbnailUrl, altText: form.name ?? 'Template thumbnail' } } : {}),
+        };
+
+        const result = await createMrpTemplate(runtimeConfig.marketplaceAdmin ?? {}, payload);
+
+        let mrpIdRecorded = false;
+        if (record_mrp_id !== false && context.assetId) {
+          try {
+            await getClient().updateAssetPublishing(context.assetId, { mrp_id_overwrite: result.templateId });
+            mrpIdRecorded = true;
+          } catch (error) {
+            warnings.push(
+              `The template was created but writing the MRP ID override failed (${error instanceof Error ? error.message : String(error)}). Record ${result.templateId} via template_review_update_asset_publishing.`,
+            );
+          }
+        }
+
+        return asSuccess({
+          reviewer: reviewerPayload(reviewer),
+          template_id: result.templateId,
+          admin_url: result.adminUrl,
+          mrp_id_recorded: mrpIdRecorded,
+          visibility: payload.visibility,
+          source: fillBundle.source,
+          payload,
+          remaining_in_admin: REMAINING_IN_ADMIN_AFTER_CREATE,
+          warnings,
+          note: `Open ${result.adminUrl} and finish the remaining_in_admin items there before approving.`,
         });
       } catch (error) {
         return asError(error);
