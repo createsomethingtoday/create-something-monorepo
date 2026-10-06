@@ -178,7 +178,10 @@ async function triggerKnock(
 }
 
 type SupportRequestStatus =
+  // Reserved, quota not yet decided.
   | 'pending'
+  // Passed both quotas; delivery may have started.
+  | 'admitted'
   | 'sent'
   | 'send_failed'
   | 'creator_unreachable'
@@ -368,20 +371,27 @@ export async function handleSupportRequest(request: Request, env: Env): Promise<
       return respond({ success: false, error: 'invalid_fields', fields: ['idempotency_key'] }, 400);
     }
     if (prior.status === 'sent') return respond({ success: true, data: { request_id: prior.id } }, 200);
-    if (prior.status === 'pending' && now - Date.parse(prior.created_at) < PENDING_IN_FLIGHT_MS) {
+    const inFlight = prior.status === 'pending' || prior.status === 'admitted';
+    if (inFlight && now - Date.parse(prior.created_at) < PENDING_IN_FLIGHT_MS) {
       return respond({ success: false, error: 'request_in_progress', request_id: prior.id }, 409);
     }
-    // A rate-limited attempt never held a slot, and an attempt older than the
-    // shortest window no longer holds one: release the key and go through the
-    // quota again, so old failures can't send alongside a full current quota.
-    if (prior.status === 'rate_limited' || now - Date.parse(prior.created_at) >= HOUR_MS) {
+    // A rate-limited attempt never held a slot, a stale pending one never
+    // finished its quota check, and an attempt older than the shortest window
+    // no longer holds a slot: release the key and go through the quota again,
+    // so nothing reaches Knock without having been admitted.
+    if (
+      prior.status === 'rate_limited' ||
+      prior.status === 'pending' ||
+      now - Date.parse(prior.created_at) >= HOUR_MS
+    ) {
       await releaseAndReserveAfresh(prior);
       return null;
     }
-    // send_failed, creator_unreachable, or a stale pending attempt: deliver again
-    // under the same Knock key, which dedupes if the first attempt did land.
+    // send_failed, creator_unreachable, or a stale admitted attempt: it was
+    // admitted within the current window, so deliver again under the same
+    // Knock key, which dedupes if the first attempt did land.
     requestId = prior.id;
-    await finishRow(env, prior.id, 'pending');
+    await finishRow(env, prior.id, 'admitted');
     return null;
   };
 
@@ -470,6 +480,8 @@ export async function handleSupportRequest(request: Request, env: Env): Promise<
         { 'Retry-After': String(retryAfterSeconds) },
       );
     }
+    // Only now may delivery start; a retry of a row that never got here re-runs the quota.
+    await finishRow(env, newId, 'admitted');
     requestId = newId;
   }
 

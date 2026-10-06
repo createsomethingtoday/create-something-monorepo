@@ -338,6 +338,31 @@ describe('POST /api/templates/support-request', () => {
     }
   });
 
+  it('re-runs the quota for a stale reservation that never finished admission', async () => {
+    const { env, close, calls } = await setup();
+    try {
+      // Fill the buyer's daily quota.
+      for (let index = 0; index < 3; index += 1) {
+        expect((await callWorker(post(body(), `198.51.100.${index}`), env)).status).toBe(200);
+      }
+      // A fourth reservation crashed before its quota check finished: still pending, 2 minutes old.
+      await env.DB.prepare(
+        `INSERT INTO support_requests (id, created_at, template_document_id, template_slug, request_type, status, ip_hash, buyer_email_hash, message_chars, idempotency_key)
+         SELECT 'crashed', ?, 'recAsset1', 'meridian', 'other', 'pending', 'ip-crashed', buyer_email_hash, 20, 'form-crashed-0000001'
+         FROM support_requests LIMIT 1`,
+      )
+        .bind(new Date(Date.now() - 2 * 60 * 1000).toISOString())
+        .run();
+      // Its retry must face the quota (full), not resume straight to Knock.
+      expect((await callWorker(post(body({ idempotency_key: 'form-crashed-0000001' }), '198.51.100.9'), env)).status).toBe(429);
+      expect(calls.filter((call) => call.url.startsWith('https://api.knock.app/'))).toHaveLength(3);
+      const statuses = (await rows(env)).map((row) => row.status).sort();
+      expect(statuses).toEqual(['rate_limited', 'sent', 'sent', 'sent', 'superseded']);
+    } finally {
+      close();
+    }
+  });
+
   it('still applies the current quota to an aged-out retry', async () => {
     const { env, close, calls } = await setup(undefined, [500]);
     try {
