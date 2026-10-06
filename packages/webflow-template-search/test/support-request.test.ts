@@ -303,6 +303,41 @@ describe('POST /api/templates/support-request', () => {
     }
   });
 
+  it('never downgrades a sent row when the sent write commits but its response is lost', async () => {
+    const { env, close, calls } = await setup();
+    try {
+      const realPrepare = env.DB.prepare.bind(env.DB);
+      let loseNextSentWrite = true;
+      env.DB.prepare = ((sql: string) => {
+        const statement = realPrepare(sql);
+        if (!sql.includes('UPDATE support_requests') || !sql.includes('knock_workflow_run_id')) return statement;
+        const realBind = statement.bind.bind(statement);
+        statement.bind = ((...values: unknown[]) => {
+          const bound = realBind(...values);
+          if (values[0] === 'sent' && loseNextSentWrite) {
+            loseNextSentWrite = false;
+            const realRun = bound.run.bind(bound);
+            bound.run = (async () => {
+              await realRun();
+              throw new Error('D1_ERROR: network connection lost');
+            }) as typeof bound.run;
+          }
+          return bound;
+        }) as typeof statement.bind;
+        return statement;
+      }) as typeof env.DB.prepare;
+
+      const key = 'form-lost-sent-00001';
+      expect((await callWorker(post(body({ idempotency_key: key })), env)).status).toBe(502);
+      expect((await rows(env))[0].status).toBe('sent');
+      // The retry sees the sent row and answers from it, with no second email.
+      expect((await callWorker(post(body({ idempotency_key: key })), env)).status).toBe(200);
+      expect(calls.filter((call) => call.url.startsWith('https://api.knock.app/'))).toHaveLength(1);
+    } finally {
+      close();
+    }
+  });
+
   it('still applies the current quota to an aged-out retry', async () => {
     const { env, close, calls } = await setup(undefined, [500]);
     try {

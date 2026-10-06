@@ -250,7 +250,10 @@ async function finishRow(
     `UPDATE support_requests
      SET status = ?1, knock_workflow_run_id = ?2, error = ?3,
          delivery_snapshot = CASE WHEN ?1 = 'sent' THEN NULL ELSE delivery_snapshot END
-     WHERE id = ?4`,
+     WHERE id = ?4
+       -- sent is terminal: if the sent write committed but its response was
+       -- lost, the failure path must not overwrite it.
+       AND (status != 'sent' OR ?1 = 'sent')`,
   )
     .bind(status, extra.knockRunId ?? null, extra.error?.slice(0, 300) ?? null, requestId)
     .run();
