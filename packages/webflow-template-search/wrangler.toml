@@ -32,6 +32,8 @@ WEBFLOW_TEMPLATE_COLLECTION_ID = "641b464e78789f611a5d4496"
 ALLOWED_ORIGINS = "https://webflow.com,https://www.webflow.com,https://templates.webflow.com,https://template-marketplace.webflow.io,*.webflow.com"
 DEFAULT_PAGE_SIZE = "24"
 DEFAULT_CLIENT_MODE = "shadow"
+# Buyer → creator support requests stay off until Security + Enterprise AI Ops review.
+SUPPORT_REQUESTS_ENABLED = "0"
 
 [triggers]
 crons = ["*/5 * * * *", "17 * * * *", "47 3 * * *"]

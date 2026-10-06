@@ -1,0 +1,185 @@
+import { afterEach, describe, expect, it, vi } from 'vitest';
+
+import { cleanListingUrl, parseFieldIds, parseSupportRequestBody, resolveCreatorEmail } from '../src/supportRequest';
+import { callWorker, createTestEnv } from './support/worker';
+
+const ENDPOINT = 'https://search.test/api/templates/support-request';
+
+function body(overrides: Record<string, unknown> = {}): Record<string, unknown> {
+  return {
+    template_slug: 'meridian',
+    request_type: 'file_request',
+    buyer_name: 'Ada',
+    buyer_email: 'ada@example.com',
+    message: 'Where can I get the Figma file for this template?',
+    ...overrides,
+  };
+}
+
+function post(payload: unknown, ip = '203.0.113.7'): Request {
+  return new Request(ENDPOINT, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'CF-Connecting-IP': ip, Origin: 'https://webflow.com' },
+    body: JSON.stringify(payload),
+  });
+}
+
+async function setup(fields: Record<string, unknown> = { fldTestRollup: ['creator@example.com'] }) {
+  const harness = createTestEnv();
+  Object.assign(harness.env, {
+    SUPPORT_REQUESTS_ENABLED: '1',
+    KNOCK_API_KEY: 'sk_test_knock',
+    SUPPORT_REQUEST_HASH_SALT: 'test-salt',
+    AIRTABLE_CREATOR_EMAIL_FIELD_IDS: 'fldTestOverride, fldTestRollup',
+  });
+  await harness.env.DB.prepare(
+    `INSERT INTO template_documents (id, template_slug, name, listing_url, creator_name, creator_record_id, synced_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+  )
+    .bind('recAsset1', 'meridian', 'Meridian', 'https://webflow.com/templates/html/meridian?utm_source=youtube', 'Kevin', 'recCreator1', '2026-10-06')
+    .run();
+
+  const calls: Array<{ url: string; init?: RequestInit }> = [];
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      calls.push({ url, init });
+      if (url.startsWith('https://api.airtable.com/')) return Response.json({ id: 'recAsset1', fields });
+      if (url.startsWith('https://api.knock.app/')) return Response.json({ workflow_run_id: 'run-1' });
+      throw new Error(`unexpected fetch ${url}`);
+    }),
+  );
+  return { ...harness, calls };
+}
+
+async function rows(env: { DB: D1Database }) {
+  const { results } = await env.DB.prepare('SELECT * FROM support_requests').all<Record<string, unknown>>();
+  return results;
+}
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
+
+describe('support request parsing', () => {
+  it('accepts a well-formed request and defaults optional fields', () => {
+    const result = parseSupportRequestBody(JSON.stringify(body({ buyer_name: undefined })));
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.buyer_name).toBe('');
+      expect(result.value.website).toBe('');
+    }
+  });
+
+  it('names the invalid fields and rejects unknown ones', () => {
+    const result = parseSupportRequestBody(JSON.stringify(body({ buyer_email: 'nope', request_type: 'refund' })));
+    expect(result).toEqual({ ok: false, error: 'invalid_fields', fields: ['request_type', 'buyer_email'] });
+    expect(parseSupportRequestBody(JSON.stringify(body({ creator_email: 'x@y.z' }))).ok).toBe(false);
+    expect(parseSupportRequestBody('not json')).toEqual({ ok: false, error: 'invalid_json' });
+  });
+
+  it('prefers the per-asset override email over the creator rollup', () => {
+    const ids = parseFieldIds(' fldTestOverride, fldTestRollup ,');
+    expect(ids).toEqual(['fldTestOverride', 'fldTestRollup']);
+    expect(resolveCreatorEmail({ fldTestOverride: 'override@example.com', fldTestRollup: ['rollup@example.com'] }, ids))
+      .toBe('override@example.com');
+    expect(resolveCreatorEmail({ fldTestRollup: ['rollup@example.com, other@example.com'] }, ids)).toBe('rollup@example.com');
+    expect(resolveCreatorEmail({ fldTestRollup: [] }, ids)).toBeNull();
+  });
+
+  it('strips campaign parameters from listing URLs', () => {
+    expect(cleanListingUrl('https://webflow.com/templates/html/meridian?utm_source=youtube#x'))
+      .toBe('https://webflow.com/templates/html/meridian');
+  });
+});
+
+describe('POST /api/templates/support-request', () => {
+  it('is off unless SUPPORT_REQUESTS_ENABLED is 1', async () => {
+    const { env, close } = createTestEnv();
+    try {
+      const response = await callWorker(post(body()), env);
+      expect(response.status).toBe(503);
+    } finally {
+      close();
+    }
+  });
+
+  it('logs the request, emails the creator via Knock, and never returns the creator email', async () => {
+    const { env, close, calls } = await setup();
+    try {
+      const response = await callWorker(post(body()), env);
+      expect(response.status).toBe(200);
+      const json = (await response.json()) as { success: boolean; data: { request_id: string } };
+      expect(json.success).toBe(true);
+      expect(JSON.stringify(json)).not.toContain('creator@example.com');
+
+      const knock = calls.find((call) => call.url.startsWith('https://api.knock.app/'));
+      expect(knock?.url).toBe('https://api.knock.app/v1/workflows/marketplace-template-support-request/trigger');
+      const headers = new Headers(knock?.init?.headers);
+      expect(headers.get('Idempotency-Key')).toBe(json.data.request_id);
+      const payload = JSON.parse(String(knock?.init?.body));
+      expect(payload.recipients).toEqual([{ id: 'marketplace-creator-recCreator1', email: 'creator@example.com', name: 'Kevin' }]);
+      expect(payload.data).toMatchObject({
+        template_name: 'Meridian',
+        listing_url: 'https://webflow.com/templates/html/meridian',
+        request_type: 'file_request',
+        request_type_label: 'File request (Figma, assets)',
+        buyer_email: 'ada@example.com',
+      });
+
+      const [row] = await rows(env);
+      expect(row).toMatchObject({
+        id: json.data.request_id,
+        template_slug: 'meridian',
+        creator_record_id: 'recCreator1',
+        request_type: 'file_request',
+        status: 'sent',
+        knock_workflow_run_id: 'run-1',
+      });
+      // Neither the buyer email nor the message body is stored.
+      expect(JSON.stringify(row)).not.toContain('ada@example.com');
+      expect(JSON.stringify(row)).not.toContain('Figma file');
+    } finally {
+      close();
+    }
+  });
+
+  it('records creator_unreachable without calling Knock when no creator email exists', async () => {
+    const { env, close, calls } = await setup({});
+    try {
+      const response = await callWorker(post(body()), env);
+      expect(response.status).toBe(422);
+      expect(calls.some((call) => call.url.startsWith('https://api.knock.app/'))).toBe(false);
+      expect((await rows(env))[0]?.status).toBe('creator_unreachable');
+    } finally {
+      close();
+    }
+  });
+
+  it('silently drops honeypot submissions', async () => {
+    const { env, close, calls } = await setup();
+    try {
+      const response = await callWorker(post(body({ website: 'https://spam.example' })), env);
+      expect(response.status).toBe(200);
+      expect(calls).toHaveLength(0);
+      expect(await rows(env)).toHaveLength(0);
+    } finally {
+      close();
+    }
+  });
+
+  it('returns 404 for unknown templates and 429 after repeated submissions', async () => {
+    const { env, close } = await setup();
+    try {
+      expect((await callWorker(post(body({ template_slug: 'missing' })), env)).status).toBe(404);
+      for (let attempt = 0; attempt < 3; attempt += 1) {
+        expect((await callWorker(post(body(), `198.51.100.${attempt}`), env)).status).toBe(200);
+      }
+      // Fourth request from the same buyer for the same template in 24 hours.
+      expect((await callWorker(post(body(), '198.51.100.99'), env)).status).toBe(429);
+    } finally {
+      close();
+    }
+  });
+});
