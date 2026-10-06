@@ -123,8 +123,14 @@ const SupportRequestDialog: React.FC<SupportRequestDialogProps> = ({
   const fieldId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
   const firstFieldRef = useRef<HTMLSelectElement>(null);
-  const onCloseRef = useRef(onClose);
-  onCloseRef.current = onClose;
+  // While a write is in flight its outcome is unknown, so dismissal is blocked:
+  // reopening would mint a new idempotency key and could email the creator twice.
+  const submittingRef = useRef(false);
+  const requestClose = () => {
+    if (!submittingRef.current) onClose();
+  };
+  const onCloseRef = useRef(requestClose);
+  onCloseRef.current = requestClose;
 
   const [requestType, setRequestType] = useState<SupportRequestType | ''>('');
   const [buyerName, setBuyerName] = useState('');
@@ -195,6 +201,7 @@ const SupportRequestDialog: React.FC<SupportRequestDialogProps> = ({
       return;
     }
 
+    submittingRef.current = true;
     setStatus('submitting');
     setError(null);
     setInvalidFields([]);
@@ -209,6 +216,7 @@ const SupportRequestDialog: React.FC<SupportRequestDialogProps> = ({
       website,
       idempotency_key: idempotencyKeyRef.current,
     });
+    submittingRef.current = false;
 
     if (result.ok) {
       setStatus('sent');
@@ -226,7 +234,7 @@ const SupportRequestDialog: React.FC<SupportRequestDialogProps> = ({
   const recipient = creatorName || 'the creator';
 
   const content = (
-    <div className="tmsupport-overlay" onClick={(event) => event.target === event.currentTarget && onClose()}>
+    <div className="tmsupport-overlay" onClick={(event) => event.target === event.currentTarget && requestClose()}>
       <style dangerouslySetInnerHTML={{ __html: SUPPORT_STYLES }} />
       <div ref={dialogRef} className="tmsupport-dialog" role="dialog" aria-modal="true" aria-labelledby={titleId}>
         <div className="tmsupport-header">
@@ -236,7 +244,12 @@ const SupportRequestDialog: React.FC<SupportRequestDialogProps> = ({
             </h2>
             {templateName ? <p className="tmsupport-subtitle">About {templateName}</p> : null}
           </div>
-          <button type="button" className="tmsupport-button tmsupport-close" onClick={onClose}>
+          <button
+            type="button"
+            className="tmsupport-button tmsupport-close"
+            onClick={requestClose}
+            disabled={status === 'submitting'}
+          >
             Close
           </button>
         </div>
@@ -328,7 +341,9 @@ const SupportRequestDialog: React.FC<SupportRequestDialogProps> = ({
               </p>
             ) : null}
             <div className="tmsupport-actions">
-              <button type="button" className="tmsupport-button" onClick={onClose}>Cancel</button>
+              <button type="button" className="tmsupport-button" onClick={requestClose} disabled={status === 'submitting'}>
+                Cancel
+              </button>
               <button type="submit" className="tmsupport-button tmsupport-button-primary" disabled={status === 'submitting'}>
                 {status === 'submitting' ? 'Sending…' : 'Send request'}
               </button>
