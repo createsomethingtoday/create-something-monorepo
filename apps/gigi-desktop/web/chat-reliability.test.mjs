@@ -150,3 +150,17 @@ for (const reason of ['chatgpt_auth_required', 'codex_unavailable', 'provider_tu
   assert.equal(sends, 1); assert.equal(chat.draft, 'Synthetic question');
   await chat.send(chat.draft); assert.equal(sends, 2); assert.equal(chat.draft, '');
 });
+
+
+test('pending cancellation retains transcript, fences further actions and polls terminal state', async () => {
+  let stops = 0;
+  const messages = [{ id: 'u1', role: 'user', text: 'Synthetic question' }];
+  const { chat, timers } = fixture({ chatRead: async () => snapshot('s1', 'running', { messages }), chatCancel: async () => { stops++; return snapshot('s1', 'running', { cancelPending: true }); }, chatPoll: async () => snapshot('s1', 'interrupted', { messages }) });
+  await chat.open(); await chat.read('s1'); await chat.cancel();
+  assert.deepEqual(chat.current.messages, messages); assert.equal(chat.current.cancelPending, true);
+  assert.match(chatView(chat), /Stopping response/);
+  await chat.cancel(); await chat.send('Duplicate'); assert.equal(stops, 1);
+  assert.match(chatView(chat), /data-chat-stop="1" disabled/);
+  const poll = [...timers.values()][0]; assert.ok(poll); await poll();
+  assert.equal(chat.current.state, 'interrupted'); assert.equal(Boolean(chat.current.cancelPending), false);
+});

@@ -1,7 +1,8 @@
 use serde_json::{json, Value};
 use std::collections::HashMap;
 use std::io::{BufRead, BufReader, Read, Write};
-use std::os::unix::fs::PermissionsExt;
+use std::os::unix::fs::{DirBuilderExt, PermissionsExt};
+use std::os::unix::net::UnixStream;
 use std::os::unix::process::CommandExt;
 use std::path::{Path, PathBuf};
 use std::process::{Child, Command, Stdio};
@@ -20,11 +21,31 @@ struct Companion {
     writer: mpsc::Sender<WriteRequest>,
     replies: mpsc::Receiver<Result<Value, ()>>,
     next_id: u64,
+    control_root: PathBuf,
 }
 
 fn companions() -> &'static Mutex<HashMap<PathBuf, Companion>> {
     static COMPANIONS: OnceLock<Mutex<HashMap<PathBuf, Companion>>> = OnceLock::new();
     COMPANIONS.get_or_init(|| Mutex::new(HashMap::new()))
+}
+
+fn control_channels() -> &'static Mutex<HashMap<PathBuf, PathBuf>> {
+    static CHANNELS: OnceLock<Mutex<HashMap<PathBuf, PathBuf>>> = OnceLock::new();
+    CHANNELS.get_or_init(|| Mutex::new(HashMap::new()))
+}
+
+fn control_cancel(path: &Path, input: Value) -> Result<Value, String> {
+    let mut stream = UnixStream::connect(path).map_err(|_| "Cancellation channel unavailable")?;
+    stream.set_read_timeout(Some(Duration::from_secs(5))).map_err(|_| "Cancellation channel unavailable")?;
+    stream.set_write_timeout(Some(Duration::from_secs(5))).map_err(|_| "Cancellation channel unavailable")?;
+    let mut request = serde_json::to_vec(&json!({"id":0,"operation":"agent.chat.cancel","input":input})).map_err(|_| "Invalid cancellation request")?;
+    request.push(b'\n');
+    stream.write_all(&request).map_err(|_| "Cancellation could not be delivered")?;
+    let response = read_reply(&mut BufReader::new(stream)).map_err(|_| "Cancellation outcome unavailable; read the session")?;
+    if response.get("id").and_then(Value::as_u64) != Some(0) { return Err("Cancellation reply ID mismatch".into()); }
+    if response.get("ok").and_then(Value::as_bool) == Some(true) {
+        Ok(response.get("value").cloned().unwrap_or(Value::Null))
+    } else { Err(response["error"]["reason"].as_str().unwrap_or("Cancellation failed").chars().take(500).collect()) }
 }
 
 // Independent of the protocol mutex: shutdown can interrupt pipe waits.
@@ -210,9 +231,15 @@ fn spawn(
         .stdout(Stdio::piped())
         .stderr(Stdio::null())
         .process_group(0);
+    let control_root = PathBuf::from("/tmp").join(format!("gigi-control-{}", uuid::Uuid::new_v4()));
+    std::fs::DirBuilder::new().mode(0o700).create(&control_root).map_err(|_| "Cancellation directory unavailable")?;
+    command.env("GIGI_CHAT_CONTROL_SOCKET", control_root.join("control.sock"));
     let mut child = command
         .spawn()
-        .map_err(|_| "Chat companion unavailable. Reinstall the complete GiGi app.".to_string())?;
+        .map_err(|_| {
+            let _ = std::fs::remove_dir_all(&control_root);
+            "Chat companion unavailable. Reinstall the complete GiGi app.".to_string()
+        })?;
     let mut stdin = child
         .stdin
         .take()
@@ -250,10 +277,13 @@ fn spawn(
         writer,
         replies,
         next_id: 1,
+        control_root,
     })
 }
 
 fn terminate(mut companion: Companion) {
+    let control_root = companion.control_root.clone();
+    control_channels().lock().unwrap_or_else(|e| e.into_inner()).retain(|_, path| !path.starts_with(&control_root));
     let group = companion.child.id() as i32;
     unsafe {
         libc::kill(-group, libc::SIGTERM);
@@ -270,6 +300,7 @@ fn terminate(mut companion: Companion) {
     }
     let _ = companion.child.kill();
     let _ = companion.child.wait();
+    let _ = std::fs::remove_dir_all(control_root);
 }
 
 pub fn cancel_all() {
@@ -324,6 +355,10 @@ fn dispatch_with_timeout(
     {
         return Err("Chat request exceeds limit".into());
     }
+    if operation == "agent.chat.cancel" {
+        let path = control_channels().lock().unwrap_or_else(|e| e.into_inner()).get(data_dir).cloned();
+        if let Some(path) = path { return control_cancel(&path, input); }
+    }
     let mut guard = companions().lock().unwrap_or_else(|e| e.into_inner());
     if CLOSING.load(Ordering::SeqCst) {
         return Err("Chat companion is shutting down".into());
@@ -343,6 +378,7 @@ fn dispatch_with_timeout(
             return Err("Chat companion is shutting down".into());
         }
         groups.insert(data_dir.to_path_buf(), companion.child.id());
+        control_channels().lock().unwrap_or_else(|e| e.into_inner()).insert(data_dir.to_path_buf(), companion.control_root.join("control.sock"));
         guard.insert(data_dir.to_path_buf(), companion);
     }
     let result: Result<Result<Value, String>, String> = (|| {
@@ -418,7 +454,8 @@ fn dispatch_with_timeout(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::os::unix::fs::PermissionsExt;
+    use std::os::unix::fs::{DirBuilderExt, PermissionsExt};
+use std::os::unix::net::UnixStream;
     fn test_lock() -> std::sync::MutexGuard<'static, ()> {
         static LOCK: OnceLock<Mutex<()>> = OnceLock::new();
         let guard = LOCK.get_or_init(|| Mutex::new(())).lock().unwrap();
@@ -545,6 +582,37 @@ mod tests {
             Some(codex.canonicalize().unwrap())
         );
         std::fs::remove_dir_all(root).unwrap();
+    }
+    #[test]
+    fn cancel_uses_control_channel_while_protocol_mutex_is_held() {
+        let _guard = test_lock();
+        let root = PathBuf::from("/tmp").join(format!("gigi-control-test-{}", uuid::Uuid::new_v4()));
+        std::fs::DirBuilder::new().mode(0o700).create(&root).unwrap();
+        let path = root.join("control.sock");
+        let listener = std::os::unix::net::UnixListener::bind(&path).unwrap();
+        listener.set_nonblocking(true).unwrap();
+        control_channels().lock().unwrap().insert(root.clone(), path);
+        let protocol_guard = companions().lock().unwrap();
+        let profile = root.clone();
+        let worker = std::thread::spawn(move || dispatch(Path::new("/unused"), &profile, "agent.chat.cancel", json!({"workspaceId":"w","sessionId":"s"})));
+        let deadline = Instant::now() + Duration::from_secs(1);
+        let connection = loop {
+            if let Ok((stream, _)) = listener.accept() { break Some(stream); }
+            if Instant::now() >= deadline { break None; }
+            std::thread::sleep(Duration::from_millis(5));
+        };
+        let connected = connection.is_some();
+        if let Some(mut stream) = connection {
+            let request = read_reply(&mut BufReader::new(stream.try_clone().unwrap())).unwrap();
+            assert_eq!(request["operation"], "agent.chat.cancel");
+            stream.write_all(b"{\"id\":0,\"ok\":true,\"value\":{\"cancelPending\":true}}\n").unwrap();
+        }
+        drop(protocol_guard);
+        let result = worker.join().unwrap();
+        control_channels().lock().unwrap().remove(&root);
+        std::fs::remove_dir_all(root).unwrap();
+        assert!(connected, "Stop queued behind the held poll mutex");
+        assert_eq!(result.unwrap()["cancelPending"], true);
     }
     #[test]
     fn missing_codex_fails_before_companion_launch() {

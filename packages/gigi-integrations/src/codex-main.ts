@@ -1,3 +1,4 @@
+import { cancellationControl } from './codex-control.ts';
 import { Effect } from 'effect';
 import { isAbsolute } from 'node:path';
 import { createCodexAdapter, JsonLineProcess } from './codex.ts';
@@ -57,6 +58,8 @@ async function serve(server: JsonLineProcess, mcp: JsonLineProcess): Promise<voi
   await mcp.request('initialize', { protocolVersion: '2025-06-18', capabilities: {}, clientInfo: { name: 'gigi-codex', version: '0.1.0' } });
   mcp.notify('notifications/initialized');
   const adapter = createCodexAdapter({ dataDir: dataDir!, mcpBinary: mcpBinary!, skillPath: skillPath!, server, mcp });
+  const control = process.env.GIGI_CHAT_CONTROL_SOCKET ? await cancellationControl(process.env.GIGI_CHAT_CONTROL_SOCKET, input => adapter.cancel(input, true)) : undefined;
+  try {
   let buffer = '';
   process.stdin.setEncoding('utf8');
   for await (const chunk of process.stdin) {
@@ -81,6 +84,7 @@ async function serve(server: JsonLineProcess, mcp: JsonLineProcess): Promise<voi
       }
     }
   }
+  } finally { control?.close(); }
 }
 
 const environment: NodeJS.ProcessEnv = { ...process.env, GIGI_DATA_DIR: dataDir };

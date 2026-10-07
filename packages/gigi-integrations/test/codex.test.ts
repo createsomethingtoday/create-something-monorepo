@@ -616,3 +616,28 @@ for (const actual of [
   assert.equal((await adapter.read({ workspaceId: 'w', sessionId })).approvals.length, 0);
   assert.equal(writes, 1);
 });
+
+
+test('failed rejection delivery cannot leave a rejected proposal approvable', async () => {
+  const { adapter, server, mcp } = await setup();
+  const { sessionId } = await adapter.start({ workspaceId: 'w', message: 'edit' });
+  await Promise.all(server.events.map(fn => fn({ id: 1005, method: 'item/tool/call', params: { threadId: 'thread-1', tool: 'gigi_records_save', arguments: { entity: 'tasks', id: 'r', title: 'Denied edit' } } })));
+  const approval = (await adapter.read({ workspaceId: 'w', sessionId })).approvals[0];
+  server.reply = async () => { throw new Error('broken pipe'); };
+  const result = await adapter.approve({ workspaceId: 'w', sessionId, approvalId: approval.id, decision: 'reject' });
+  assert.equal(result.decisionReceipt?.outcome, 'rejected'); assert.equal(result.approvals.length, 0);
+  await assert.rejects(adapter.approve({ workspaceId: 'w', sessionId, approvalId: approval.id, decision: 'approve' }), /approval_not_found/);
+  assert.equal(mcp.calls.some(call => call.params.name === 'gigi_records_save'), false);
+});
+
+test('authoritative failed turns can retire at the cap while uncertainty remains protected', async () => {
+  const { adapter, server, mcp, dataDir } = await setup();
+  for (let i = 0; i < 100; i++) await adapter.start({ workspaceId: 'w' });
+  const ledger = join(dataDir, 'codex-chat', 'sessions.jsonl');
+  const entries = (await readFile(ledger, 'utf8')).trim().split('\n').map(line => ({ ...JSON.parse(line), state: 'failed', error: 'Provider usage limit reached' }));
+  await writeFile(ledger, entries.map(entry => JSON.stringify(entry)).join('\n') + '\n');
+  const restarted = createCodexAdapter({ dataDir, mcpBinary: '/fixture/gigi-mcp', skillPath: '/fixture/skill/SKILL.md', server, mcp });
+  await restarted.start({ workspaceId: 'w' });
+  assert.equal((await restarted.list({ workspaceId: 'w' })).sessions.length, 100);
+  assert.equal(JSON.parse((await readFile(join(dataDir, 'codex-chat', 'retired-sessions.jsonl'), 'utf8')).trim()).session.error, 'Provider usage limit reached');
+});

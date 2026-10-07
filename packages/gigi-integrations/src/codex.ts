@@ -14,7 +14,7 @@ type RecordRef = { entity: string; id: string; title?: string };
 type DecisionReceipt = { approvalId: string; outcome: 'verified' | 'rejected' | 'failed' | 'unknown' };
 type Session = { sessionId: string; threadId: string; workspaceId: string; title: string; record?: RecordRef; state: State; turnId?: string; pendingMessageId?: string; cancelPending?: boolean; decisionReceipt?: DecisionReceipt; error?: string; uncertainWrite?: { tool: string; arguments: Json }; createdAt: number };
 type Approval = { id: string; title: string; detail: string; requestId: string | number; sessionId: string; kind: 'server' | 'tool'; tool?: string; arguments?: Json };
-export type ChatRead = { sessionId: string; messages: Array<{ id: string; role: 'user' | 'assistant'; text: string }>; state: State; approvals: Array<{ id: string; title: string; detail: string }>; recordLinks: RecordRef[]; decisionReceipt?: DecisionReceipt; error?: string };
+export type ChatRead = { sessionId: string; messages: Array<{ id: string; role: 'user' | 'assistant'; text: string }>; state: State; approvals: Array<{ id: string; title: string; detail: string }>; recordLinks: RecordRef[]; decisionReceipt?: DecisionReceipt; error?: string; cancelPending?: boolean };
 export interface AppServer { request(method: string, params: Json): Promise<any>; onMessage(handler: (message: Json) => void): () => void; reply(id: string | number, result: unknown): Promise<void> | void; close?(): Promise<void> | void }
 export type CodexOptions = { dataDir: string; mcpBinary: string; skillPath: string; server: AppServer; mcp?: AppServer };
 
@@ -124,7 +124,7 @@ export function createCodexAdapter(options: CodexOptions) {
     const settled = (session: Session) =>
       !['running', 'approval'].includes(session.state) && !session.pendingMessageId &&
       !session.cancelPending && !session.uncertainWrite &&
-      (!session.error || session.error === 'provider_turn_rejected') &&
+      !['turn_outcome_unknown', 'write_outcome_unknown', 'approval_delivery_unknown', 'reconciliation_required'].includes(session.error ?? '') &&
       session.decisionReceipt?.outcome !== 'unknown' &&
       ![...approvals.values()].some(approval => approval.sessionId === session.sessionId);
     const retiring = sessions.size >= MAX_SESSIONS
@@ -230,7 +230,7 @@ export function createCodexAdapter(options: CodexOptions) {
     try { response = await options.server.request('thread/read', { threadId: session.threadId, includeTurns: true }); }
     catch (error) {
       if (session.state !== 'running' && session.state !== 'approval') throw error;
-      const pending: ChatRead = { sessionId: session.sessionId, messages: [...(liveMessages.get(session.sessionId) ?? [])].filter(([, entry]) => entry.turnId === session.turnId).slice(-50).map(([id, entry]) => ({ id, role: 'assistant' as const, text: entry.text })), state: session.state, approvals: [...approvals.values()].filter(x => x.sessionId === session.sessionId).map(({ id, title, detail }) => ({ id, title, detail })), recordLinks: session.record ? [session.record] : [], ...(session.decisionReceipt ? { decisionReceipt: session.decisionReceipt } : {}), ...(session.error ? { error: session.error } : {}) };
+      const pending: ChatRead = { sessionId: session.sessionId, messages: [...(liveMessages.get(session.sessionId) ?? [])].filter(([, entry]) => entry.turnId === session.turnId).slice(-50).map(([id, entry]) => ({ id, role: 'assistant' as const, text: entry.text })), state: session.state, approvals: [...approvals.values()].filter(x => x.sessionId === session.sessionId).map(({ id, title, detail }) => ({ id, title, detail })), recordLinks: session.record ? [session.record] : [], ...(session.decisionReceipt ? { decisionReceipt: session.decisionReceipt } : {}), ...(session.error ? { error: session.error } : {}), ...(session.cancelPending ? { cancelPending: true } : {}) };
       while (pending.messages.length && Buffer.byteLength(JSON.stringify(pending)) > 500_000) pending.messages.shift();
       return pending;
     }
@@ -259,16 +259,18 @@ export function createCodexAdapter(options: CodexOptions) {
     const pending = [...approvals.values()].filter(x => x.sessionId === session.sessionId);
     if (pending.length) session.state = 'approval';
     await persist();
-    const output: ChatRead = { sessionId: session.sessionId, messages: messages.slice(-50), state: session.state, approvals: pending.map(({ id, title, detail }) => ({ id, title, detail })), recordLinks: session.record ? [session.record] : [], ...(session.decisionReceipt ? { decisionReceipt: session.decisionReceipt } : {}), ...(session.error ? { error: session.error } : {}) };
+    const output: ChatRead = { sessionId: session.sessionId, messages: messages.slice(-50), state: session.state, approvals: pending.map(({ id, title, detail }) => ({ id, title, detail })), recordLinks: session.record ? [session.record] : [], ...(session.decisionReceipt ? { decisionReceipt: session.decisionReceipt } : {}), ...(session.error ? { error: session.error } : {}), ...(session.cancelPending ? { cancelPending: true } : {}) };
     while (output.messages.length && Buffer.byteLength(JSON.stringify(output)) > 500_000) output.messages.shift();
     return output;
   }
   async function poll(input: Json) { return read(input); }
-  async function cancel(input: Json) {
+  async function cancel(input: Json, immediate = false) {
     const session = await owner(input);
     if (session.turnId && (session.state === 'running' || session.state === 'approval')) { session.cancelPending = true; await persist(); await options.server.request('turn/interrupt', { threadId: session.threadId, turnId: session.turnId }); }
     for (const [id, approval] of approvals) if (approval.sessionId === session.sessionId) { try { await options.server.reply(approval.requestId, { contentItems: [{ type: 'inputText', text: 'Turn cancelled.' }], success: false }); } catch { session.error = 'approval_delivery_unknown'; } approvals.delete(id); }
-    session.state = 'interrupted'; await persist(); return read(input);
+    session.state = immediate && session.cancelPending ? 'running' : 'interrupted'; await persist();
+    if (immediate) return { sessionId: session.sessionId, state: session.state, messages: [], approvals: [], recordLinks: session.record ? [session.record] : [], ...(session.decisionReceipt ? { decisionReceipt: session.decisionReceipt } : {}), ...(session.error ? { error: session.error } : {}), ...(session.cancelPending ? { cancelPending: true } : {}) };
+    return read(input);
   }
   async function approve(input: Json) {
     const session = await owner(input); const approval = approvals.get(required(input.approvalId));
@@ -277,8 +279,10 @@ export function createCodexAdapter(options: CodexOptions) {
     if (decision !== 'approve' && decision !== 'reject') throw new Error('invalid_request');
     if (approval.kind === 'tool') {
       if (decision === 'reject') {
+        approvals.delete(approval.id);
         session.decisionReceipt = { approvalId: approval.id, outcome: 'rejected' }; await persist();
-        await options.server.reply(approval.requestId, { contentItems: [{ type: 'inputText', text: 'User denied this GiGi write.' }], success: false });
+        try { await options.server.reply(approval.requestId, { contentItems: [{ type: 'inputText', text: 'User denied this GiGi write.' }], success: false }); }
+        catch { session.error = 'approval_delivery_unknown'; await persist(); }
       }
       else {
         if ([...sessions.values()].some(x => x.workspaceId === session.workspaceId && x.uncertainWrite)) throw new Error('reconciliation_required');
