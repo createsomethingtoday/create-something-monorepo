@@ -230,12 +230,21 @@ fn run(resources: &Path, profile: &Path) -> Result<Value, String> {
     }
 
     chat::cancel_all();
-    let resumed = call(
-        resources,
-        profile,
-        "agent.chat.read",
-        json!({"workspaceId":workspace_id,"sessionId":session_id}),
-    )?;
+    let output = std::process::Command::new(std::env::current_exe().map_err(|e| e.to_string())?)
+        .arg("--resume")
+        .arg(resources)
+        .arg(profile)
+        .arg(workspace_id.as_str().ok_or("Workspace id invalid")?)
+        .arg(session_id.as_str().ok_or("Session id invalid")?)
+        .output()
+        .map_err(|e| e.to_string())?;
+    if !output.status.success() {
+        return Err(format!(
+            "Fresh-process resume failed: {}",
+            String::from_utf8_lossy(&output.stderr)
+        ));
+    }
+    let resumed: Value = serde_json::from_slice(&output.stdout).map_err(|e| e.to_string())?;
     if resumed["messages"]
         .as_array()
         .is_none_or(|messages| messages.len() < 3)
@@ -252,12 +261,40 @@ fn run(resources: &Path, profile: &Path) -> Result<Value, String> {
 
 fn main() -> Result<(), String> {
     let mut args = std::env::args_os().skip(1);
-    let resources = PathBuf::from(
-        args.next()
-            .ok_or("Pass bundled Resources directory and a new absolute profile path")?,
-    )
-    .canonicalize()
-    .map_err(|e| format!("Resources directory unavailable: {e}"))?;
+    let first = args.next().ok_or("Pass resources directory or --resume")?;
+    if first == "--resume" {
+        let resources = PathBuf::from(args.next().ok_or("Resume resources missing")?);
+        let profile = PathBuf::from(args.next().ok_or("Resume profile missing")?);
+        let workspace = args
+            .next()
+            .ok_or("Resume workspace missing")?
+            .into_string()
+            .map_err(|_| "Workspace invalid")?;
+        let session = args
+            .next()
+            .ok_or("Resume session missing")?
+            .into_string()
+            .map_err(|_| "Session invalid")?;
+        if args.next().is_some()
+            || !resources.is_absolute()
+            || !profile.is_absolute()
+            || !profile.is_dir()
+        {
+            return Err("Invalid resume invocation".into());
+        }
+        let result = call(
+            &resources,
+            &profile,
+            "agent.chat.read",
+            json!({"workspaceId":workspace,"sessionId":session}),
+        );
+        chat::cancel_all();
+        println!("{}", result?);
+        return Ok(());
+    }
+    let resources = PathBuf::from(first)
+        .canonicalize()
+        .map_err(|e| format!("Resources directory unavailable: {e}"))?;
     let profile = PathBuf::from(
         args.next()
             .ok_or("Pass a new absolute acceptance profile path")?,

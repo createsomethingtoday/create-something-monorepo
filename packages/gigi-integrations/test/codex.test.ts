@@ -473,3 +473,24 @@ for (const loseReply of [false, true]) test(`imported record manual source prese
   }
   assert.equal(writes, 1, 'fresh read must not replay the save');
 });
+
+test('matching uncertain running turn restores cancellation without a duplicate send', async () => {
+  const { adapter, server } = await setup();
+  const { sessionId } = await adapter.start({ workspaceId: 'w', message: 'first' });
+  server.thread.turns = [{ id: 'turn-1', status: 'completed', items: [] }];
+  await adapter.read({ workspaceId: 'w', sessionId });
+  const original = server.request.bind(server);
+  let clientId = '';
+  server.request = async (method, params) => {
+    if (method === 'turn/start') { clientId = params.clientUserMessageId; throw new Error('lost reply'); }
+    return original(method, params);
+  };
+  await assert.rejects(adapter.send({ workspaceId: 'w', sessionId, message: 'second' }));
+  server.thread.turns = [{ id: 'turn-2', status: 'inProgress', items: [{ type: 'userMessage', id: 'u2', clientId, content: [{ type: 'text', text: 'second' }] }] }];
+  const read = await adapter.read({ workspaceId: 'w', sessionId });
+  assert.equal(read.state, 'running');
+  assert.equal(read.error, undefined);
+  await assert.rejects(adapter.send({ workspaceId: 'w', sessionId, message: 'repeat' }), /turn_in_progress/);
+  await adapter.cancel({ workspaceId: 'w', sessionId });
+  assert.equal([...server.calls].reverse().find(x => x.method === 'turn/interrupt')?.params.turnId, 'turn-2');
+});

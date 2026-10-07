@@ -187,7 +187,10 @@ export function createCodexAdapter(options: CodexOptions) {
     }
     const messages: ChatRead['messages'] = [];
     for (const turn of Array.isArray(response?.thread?.turns) ? response.thread.turns.slice(-20) : []) {
-      if (session.pendingMessageId && Array.isArray(turn?.items) && turn.items.some((x: Json) => x.type === 'userMessage' && x.clientId === session.pendingMessageId)) session.turnId = turn.id;
+      if (session.pendingMessageId && Array.isArray(turn?.items) && turn.items.some((x: Json) => x.type === 'userMessage' && x.clientId === session.pendingMessageId)) {
+        session.turnId = turn.id; session.pendingMessageId = undefined;
+        if (session.error === 'turn_outcome_unknown') session.error = undefined;
+      }
       for (const item of Array.isArray(turn?.items) ? turn.items : []) {
         if (item.type === 'userMessage') messages.push({ id: String(item.id), role: 'user', text: textContent(item.content).slice(0, MAX_TEXT) });
         if (item.type === 'agentMessage') messages.push({ id: String(item.id), role: 'assistant', text: String(item.text ?? '').slice(0, MAX_TEXT) });
@@ -346,8 +349,9 @@ export class JsonLineProcess implements AppServer {
   private nextId = 1;
   private buffer = '';
   private exited = false;
+  private closing = false;
   private stderr = '';
-  constructor(command: string, args: string[], env: NodeJS.ProcessEnv) {
+  constructor(command: string, args: string[], env: NodeJS.ProcessEnv, onFailure?: (error: Error) => void) {
     this.child = spawn(command, args, { env, stdio: ['pipe', 'pipe', 'pipe'] });
     this.child.stderr.setEncoding('utf8');
     this.child.stdout.setEncoding('utf8');
@@ -366,7 +370,7 @@ export class JsonLineProcess implements AppServer {
         catch { /* malformed provider output is ignored; pending request times out */ }
       }
     });
-    const fail = (error: Error) => { this.exited = true; for (const p of this.pending.values()) p.reject(error); this.pending.clear(); };
+    const fail = (error: Error) => { const first = !this.exited; this.exited = true; for (const p of this.pending.values()) p.reject(error); this.pending.clear(); if (first && !this.closing) onFailure?.(error); };
     this.child.on('error', fail);
     this.child.stdin.on('error', fail);
     this.child.on('exit', () => fail(new Error(`provider_exited: ${this.stderr}`)));
@@ -384,7 +388,8 @@ export class JsonLineProcess implements AppServer {
   reply(id: string | number, result: unknown): Promise<void> { return new Promise((resolve, reject) => this.child.stdin.write(JSON.stringify({ jsonrpc: '2.0', id, result }) + '\n', error => error ? reject(error) : resolve())); }
   notify(method: string, params?: Json) { this.child.stdin.write(JSON.stringify({ jsonrpc: '2.0', method, ...(params ? { params } : {}) }) + '\n'); }
   async close() {
-    if (this.exited) return;
+    this.closing = true;
+    if (this.child.exitCode !== null || this.child.signalCode !== null) return;
     await new Promise<void>(resolve => {
       const timeout = setTimeout(() => { this.child.kill('SIGKILL'); resolve(); }, 2_000);
       this.child.once('exit', () => { clearTimeout(timeout); resolve(); });

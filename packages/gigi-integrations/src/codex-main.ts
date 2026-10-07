@@ -86,8 +86,12 @@ async function serve(server: JsonLineProcess, mcp: JsonLineProcess): Promise<voi
 const environment: NodeJS.ProcessEnv = { ...process.env, GIGI_DATA_DIR: dataDir };
 for (const key of Object.keys(environment)) if (/^(OPENAI|CODEX)_(API_KEY|BASE_URL|API_BASE|ENDPOINT|AUTH_TOKEN|ACCESS_TOKEN)$/i.test(key)) delete environment[key];
 const safeFlags = await isolatedFlags(environment);
+let childFailed!: (error: Error) => void;
+const childFailure = new Promise<never>((_resolve, reject) => { childFailed = reject; });
+// Attach before launching children; serve races this failure through owned cleanup.
+void childFailure.catch(() => {});
 const program = Effect.acquireRelease(
-  Effect.sync(() => ({ server: new JsonLineProcess(codexBinary, safeFlags, environment), mcp: new JsonLineProcess(mcpBinary, [], environment) })),
+  Effect.sync(() => ({ server: new JsonLineProcess(codexBinary, safeFlags, environment, childFailed), mcp: new JsonLineProcess(mcpBinary, [], environment, childFailed) })),
   ({ server, mcp }) => Effect.promise(async () => { await Promise.all([server.close(), mcp.close()]); }),
-).pipe(Effect.flatMap(({ server, mcp }) => Effect.promise(() => serve(server, mcp))));
+).pipe(Effect.flatMap(({ server, mcp }) => Effect.promise(() => Promise.race([serve(server, mcp), childFailure]))));
 await Effect.runPromise(Effect.scoped(program));
