@@ -307,3 +307,66 @@ test('completed turn notification does not settle before its transcript is reada
   assert.equal(settled.state, 'idle');
   assert.equal(settled.messages.find(x => x.id === 'a1')?.text, 'Fee: $450.00 USD');
 });
+
+
+test('verified approval receipt survives completed provider prose and adapter restart', async () => {
+  const { adapter, server, mcp, dataDir } = await setup();
+  const { sessionId } = await adapter.start({ workspaceId: 'w', message: 'edit' });
+  const original = mcp.request.bind(mcp);
+  mcp.request = async (method, params) => {
+    if (method === 'tools/call' && ['gigi_records_save', 'gigi_records_get'].includes(params.name)) return { structuredContent: { id: 'r', title: 'Task', fields: { Status: 'Done' }, source: { kind: 'manual' } }, content: [] };
+    return original(method, params);
+  };
+  await Promise.all(server.events.map(fn => fn({ id: 90, method: 'item/tool/call', params: { threadId: 'thread-1', tool: 'gigi_records_save', arguments: { workspaceId: 'w', entity: 'tasks', id: 'r', title: 'Task', fields: { Status: 'Done' } } } })));
+  server.thread.turns = [{ id: 'turn-1', status: 'completed', items: [{ type: 'agentMessage', id: 'stale', text: 'Awaiting approval.' }] }];
+  const approval = (await adapter.read({ workspaceId: 'w', sessionId })).approvals[0];
+  const result = await adapter.approve({ workspaceId: 'w', sessionId, approvalId: approval.id, decision: 'approve' });
+  assert.equal(result.decisionReceipt?.outcome, 'verified');
+  assert.equal(result.messages[0].text, 'Awaiting approval.');
+  const restarted = createCodexAdapter({ dataDir, mcpBinary: '/fixture/gigi-mcp', skillPath: '/fixture/skill/SKILL.md', server, mcp });
+  assert.deepEqual((await restarted.read({ workspaceId: 'w', sessionId })).decisionReceipt, result.decisionReceipt);
+});
+
+for (const outcome of ['rejected', 'failed', 'unknown'] as const) test(`${outcome} approval never produces a verified receipt`, async () => {
+  const { adapter, server, mcp } = await setup();
+  const { sessionId } = await adapter.start({ workspaceId: 'w', message: 'edit' });
+  await Promise.all(server.events.map(fn => fn({ id: 91, method: 'item/tool/call', params: { threadId: 'thread-1', tool: 'gigi_records_save', arguments: { workspaceId: 'w', entity: 'tasks', id: 'r', title: 'Task' } } })));
+  const approval = (await adapter.read({ workspaceId: 'w', sessionId })).approvals[0];
+  const original = mcp.request.bind(mcp); let writes = 0;
+  mcp.request = async (method, params) => {
+    if (method === 'tools/call' && params.name === 'gigi_records_save') { writes++; if (outcome === 'unknown') throw new Error('lost'); return { isError: true, content: [] }; }
+    return original(method, params);
+  };
+  const result = await adapter.approve({ workspaceId: 'w', sessionId, approvalId: approval.id, decision: outcome === 'rejected' ? 'reject' : 'approve' });
+  assert.equal(result.decisionReceipt?.outcome, outcome);
+  assert.equal(writes, outcome === 'rejected' ? 0 : 1);
+});
+
+
+test('a different saved record cannot verify an approved edit', async () => {
+  const { adapter, server, mcp } = await setup();
+  const { sessionId } = await adapter.start({ workspaceId: 'w', message: 'edit' });
+  await Promise.all(server.events.map(fn => fn({ id: 92, method: 'item/tool/call', params: { threadId: 'thread-1', tool: 'gigi_records_save', arguments: { workspaceId: 'w', entity: 'tasks', id: 'r', title: 'Task' } } })));
+  const approval = (await adapter.read({ workspaceId: 'w', sessionId })).approvals[0];
+  mcp.request = async () => ({ structuredContent: { id: 'foreign', title: 'Task', fields: {} }, content: [] });
+  const result = await adapter.approve({ workspaceId: 'w', sessionId, approvalId: approval.id, decision: 'approve' });
+  assert.equal(result.decisionReceipt?.outcome, 'unknown');
+  assert.equal(result.error, 'write_outcome_unknown');
+});
+
+test('full record reconciliation updates an unknown receipt without replaying the write', async () => {
+  const { adapter, server, mcp } = await setup();
+  const { sessionId } = await adapter.start({ workspaceId: 'w', message: 'edit' });
+  await Promise.all(server.events.map(fn => fn({ id: 93, method: 'item/tool/call', params: { threadId: 'thread-1', tool: 'gigi_records_save', arguments: { workspaceId: 'w', entity: 'tasks', id: 'r', title: 'Task', fields: { Status: 'Done' } } } })));
+  const approval = (await adapter.read({ workspaceId: 'w', sessionId })).approvals[0];
+  const original = mcp.request.bind(mcp); let writes = 0;
+  mcp.request = async (method, params) => {
+    if (params.name === 'gigi_records_save') { writes++; throw new Error('lost'); }
+    if (params.name === 'gigi_records_get') return { structuredContent: { id: 'r', title: 'Task', fields: { Status: 'Done' } }, content: [] };
+    return original(method, params);
+  };
+  await adapter.approve({ workspaceId: 'w', sessionId, approvalId: approval.id, decision: 'approve' });
+  await Promise.all(server.events.map(fn => fn({ id: 94, method: 'item/tool/call', params: { threadId: 'thread-1', tool: 'gigi_records_get', arguments: { workspaceId: 'w', entity: 'tasks', id: 'r', detail: 'full' } } })));
+  assert.equal((await adapter.read({ workspaceId: 'w', sessionId })).decisionReceipt?.outcome, 'verified');
+  assert.equal(writes, 1);
+});

@@ -198,3 +198,16 @@ test('default timers keep the Window receiver when scheduling and clearing a pol
     globalThis.clearTimeout = originalClear;
   }
 });
+
+
+test('authoritative edit receipt is separate from stale provider prose', () => {
+  const chat = { visible: true, status: { available: true, authenticated: true }, sessions: [], current: session('idle', { messages: [{ role: 'assistant', text: 'Awaiting approval.' }], decisionReceipt: { approvalId: 'a1', outcome: 'verified' } }) };
+  const html = chatView(chat);
+  assert.match(html, /Awaiting approval/);
+  assert.match(html, /Last reviewed edit/);
+  assert.match(html, /Changes saved and verified in GiGi/);
+  for (const outcome of ['rejected', 'failed', 'unknown']) {
+    chat.current.decisionReceipt.outcome = outcome;
+    assert.doesNotMatch(chatView(chat), /Changes saved and verified/);
+  }
+});
