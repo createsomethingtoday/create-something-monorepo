@@ -10,16 +10,12 @@ import { AirtableClientError } from './airtable.js';
  *   calls, so it is safe to call from this worker's egress.
  * - Prod also requires `X-Requested-With: XMLHttpRequest`; without it the
  *   route returns the public HTML shell instead of JSON.
- * - Partial-update semantics: only fields present in the body are $set. This
- *   client deliberately sends visibility only.
+ * - Partial-update semantics: only fields present in the body are $set.
  * - `mrpId` is the MarketplaceResourceProfile _id; for TEMPLATE resources it
  *   equals the legacy Template _id shown at /admin/templates/<id>.
  * - Rate limit: 30 requests / 60s / IP. runValidators is on, so enum values
  *   must be exact.
  */
-
-export const MRP_VISIBILITY_VALUES = ['PUBLIC', 'PRIVATE'] as const;
-export type MrpVisibility = (typeof MRP_VISIBILITY_VALUES)[number];
 
 export interface MarketplaceAdminConfig {
   /** 128-char marketplace Airtable API key (worker secret). */
@@ -27,13 +23,6 @@ export interface MarketplaceAdminConfig {
   /** Override for tests; defaults to https://webflow.com. */
   baseUrl?: string;
   fetchFn?: typeof fetch;
-}
-
-export interface SetMrpVisibilityResult {
-  mrpId: string;
-  requestedVisibility: MrpVisibility;
-  /** Raw route response (the updated MRP document when the route returns one). */
-  response: unknown;
 }
 
 /**
@@ -49,7 +38,6 @@ export interface MrpTemplateCreatePayload {
   resourceType: 'TEMPLATE';
   /** Site short name (the `<shortName>.webflow.io` slug). */
   siteSlug: string;
-  visibility: MrpVisibility;
   price: { value: number; unit: 'USD' };
   support: { email?: string; url?: string };
   templateMetadata: {
@@ -136,15 +124,6 @@ async function callMrpRoute(
   return parsed;
 }
 
-export async function setMrpVisibility(
-  config: MarketplaceAdminConfig,
-  mrpId: string,
-  visibility: MrpVisibility,
-): Promise<SetMrpVisibilityResult> {
-  const response = await callMrpRoute(config, 'PUT', { mrpId, visibility }, { mrpId, visibility }, 'MRP_UPDATE_FAILED');
-  return { mrpId, requestedVisibility: visibility, response };
-}
-
 /**
  * Creates the MRP + legacy Template for a site in one server-side call. The
  * route rejects a site that already has a Template ("already exists") and a
@@ -157,7 +136,10 @@ export async function createMrpTemplate(
   const response = await callMrpRoute(
     config,
     'POST',
-    payload as unknown as Record<string, unknown>,
+    // The route requires visibility. It does not control template listings
+    // (those come from the legacy Template + Marketplace CMS), so it is fixed
+    // here and never surfaced to reviewers.
+    { ...payload, visibility: 'PRIVATE' },
     { siteSlug: payload.siteSlug, name: payload.name },
     'MRP_CREATE_FAILED',
   );

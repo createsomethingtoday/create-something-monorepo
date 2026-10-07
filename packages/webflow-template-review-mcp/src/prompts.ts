@@ -173,7 +173,6 @@ Automated validation and sandbox evidence do not approve, reject, request change
 | \`template_review_prepare_admin_template_verify\` | Read-only: console script that GETs the Admin template record and prints a field-by-field match table against Airtable (writes nothing) |
 | \`template_review_create_admin_template\` | Server-side Webflow write: create the marketplace template (MRP + Admin record) from the Airtable version via the key-authenticated route, record the Template ID in the MRP ID override, and return the Admin URL plus what is left to finish there |
 | \`template_review_complete_admin_template\` | Server-side Webflow write: push the remaining Admin fields for a created template and read them back — only on an explicit reviewer request |
-| \`template_review_set_mrp_visibility\` | Server-side Webflow write: flip MRP visibility PUBLIC/PRIVATE via the key-authenticated Airtable write-back route — only on an explicit reviewer request |
 | \`template_review_list_releases\` | Available releases to attach |
 | \`template_review_update_asset_metadata\` | Update name, description, thumbnails |
 | \`template_review_update_asset_publishing\` | Update MRP ID override |
@@ -194,10 +193,6 @@ asks for it:
    webflow/webflow#123284 ships; rerun the tool after that.
 3. \`set_checklist_items\` for the 🚀Publishing Checklist, then
    \`approve_version\`.
-The template is created PRIVATE, and that is expected: MRP visibility does not
-control template listings today. Approval and the release publish the template,
-so never flip visibility or tell the reviewer a PRIVATE to PUBLIC flip is
-pending. To hide a live template, tick Archived on its Admin page.
 The reviewer does not need to open the Admin page. Share the Admin URL only as
 a reference.
 
@@ -219,9 +214,7 @@ preserves untouched checkbox booleans); for thumbnail replacement use
 \`prepare_admin_template_thumbnail_execute\`. Always finish by recording the
 Template ID in the MRP ID override via \`update_asset_publishing\`, then run
 \`prepare_admin_template_verify\` to confirm the Admin record matches Airtable
-field-for-field before approving. \`set_mrp_visibility\` changes what buyers can
-see on the marketplace — never call it without the reviewer naming the MRP and
-the target visibility in the same request.
+field-for-field before approving.
 
 Work the publishing checklist per item with \`set_checklist_items\`. Only pass
 \`mark_all_publishing_items: true\` to \`complete_publishing\` when every publishing

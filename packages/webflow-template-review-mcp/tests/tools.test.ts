@@ -1840,80 +1840,6 @@ test('prepare_admin_template_verify fails cleanly when no MRP id is resolvable',
   assert.equal((payload.error as { code?: string })?.code, 'TEMPLATE_ID_UNRESOLVED');
 });
 
-test('set_mrp_visibility PUTs the airtable MRP route with bearer key and XHR header', async () => {
-  const { server, handlers } = createServerHarness();
-  const calls: Array<{ url: string; init: RequestInit }> = [];
-  const fetchStub = (async (url: string | URL | Request, init?: RequestInit) => {
-    calls.push({ url: String(url), init: init ?? {} });
-    return new Response(JSON.stringify({ _id: 'abcdef012345abcdef012345', visibility: 'PRIVATE' }), {
-      status: 200,
-      headers: { 'content-type': 'application/json' },
-    });
-  }) as typeof fetch;
-
-  registerTools(
-    server,
-    () => ({}) as AirtableClient,
-    () => reviewer,
-    { marketplaceAdmin: { apiKey: 'k'.repeat(128), fetchFn: fetchStub } },
-  );
-
-  const result = await handlers.get('template_review_set_mrp_visibility')?.({
-    mrp_id: 'abcdef012345abcdef012345',
-    visibility: 'PRIVATE',
-  });
-
-  assert.ok(result);
-  const payload = parsePayload(result);
-  assert.equal(payload.ok, true);
-
-  assert.equal(calls.length, 1);
-  assert.equal(calls[0]?.url, 'https://webflow.com/admin/api/mrp/airtable');
-  assert.equal(calls[0]?.init.method, 'PUT');
-  const headers = calls[0]?.init.headers as Record<string, string>;
-  assert.equal(headers['X-Requested-With'], 'XMLHttpRequest');
-  assert.match(headers.Authorization ?? '', /^Bearer k+$/);
-  assert.deepEqual(JSON.parse(String(calls[0]?.init.body)), { mrpId: 'abcdef012345abcdef012345', visibility: 'PRIVATE' });
-
-  const data = payload.data as { requestedVisibility: string; response: { visibility?: string } };
-  assert.equal(data.requestedVisibility, 'PRIVATE');
-  assert.equal(data.response.visibility, 'PRIVATE');
-});
-
-test('set_mrp_visibility fails closed without the marketplace admin key and stays write-gated', async () => {
-  const { server, handlers, names } = createServerHarness();
-
-  registerTools(
-    server,
-    () => ({}) as AirtableClient,
-    () => reviewer,
-    {},
-  );
-
-  const result = await handlers.get('template_review_set_mrp_visibility')?.({
-    mrp_id: 'abcdef012345abcdef012345',
-    visibility: 'PUBLIC',
-  });
-
-  assert.ok(result);
-  const payload = parsePayload(result);
-  assert.equal(payload.ok, false);
-  assert.equal((payload.error as { code?: string })?.code, 'MARKETPLACE_ADMIN_KEY_UNAVAILABLE');
-  assert.ok(WRITE_TOOL_NAMES.has('template_review_set_mrp_visibility'));
-  assert.notEqual(names.indexOf('template_review_prepare_admin_template_verify'), -1);
-
-  const readOnly = createServerHarness();
-  registerTools(
-    readOnly.server,
-    () => ({}) as AirtableClient,
-    () => reviewer,
-    {},
-    { allowWrites: false },
-  );
-  assert.equal(readOnly.names.indexOf('template_review_set_mrp_visibility'), -1);
-  assert.notEqual(readOnly.names.indexOf('template_review_prepare_admin_template_verify'), -1);
-});
-
 function adminCreateContext(overrides: Record<string, unknown> = {}) {
   const base = adminFillContext();
   return { ...base, canPublish: true, asset: { ...base.asset, creatorEmail: 'hello@komanica.co', ...overrides } };
@@ -1974,7 +1900,8 @@ test('create_admin_template POSTs the template payload, records the MRP ID, and 
   assert.equal(data.admin_url, 'https://webflow.com/admin/templates/6ac54eddbb8a7def85e05871');
   assert.equal(data.mrp_id_recorded, true);
   assert.match(data.next_steps[0] ?? '', /complete_admin_template/);
-  assert.match((payload.data as { visibility_note: string }).visibility_note, /does not control template listings/);
+  assert.equal('visibility' in (payload.data as Record<string, unknown>), false);
+  assert.ok(!JSON.stringify(payload.data).includes('visibility'));
 });
 
 test('create_admin_template fails closed without the marketplace admin key and stays write-gated', async () => {
