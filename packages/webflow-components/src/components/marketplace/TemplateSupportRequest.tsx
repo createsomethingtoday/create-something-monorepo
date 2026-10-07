@@ -1,4 +1,4 @@
-import React, { FormEvent, useEffect, useId, useRef, useState } from 'react';
+import React, { FormEvent, useCallback, useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { trackMarketplaceEvent } from './analytics';
 import { MarketplaceComponentErrorBoundary, useMarketplaceComponentErrorTracking } from './MarketplaceComponentErrorBoundary';
@@ -106,11 +106,30 @@ function focusableElements(root: HTMLElement): HTMLElement[] {
   );
 }
 
+/**
+ * The submission being written, held by the button so it survives the dialog
+ * closing. Reopening after an uncertain failure restores the same fields and
+ * idempotency key, so a retry can't email the creator twice.
+ */
+interface SupportRequestDraft {
+  requestType: SupportRequestType | '';
+  buyerName: string;
+  buyerEmail: string;
+  message: string;
+  idempotencyKey: string;
+}
+
+function emptyDraft(): SupportRequestDraft {
+  return { requestType: '', buyerName: '', buyerEmail: '', message: '', idempotencyKey: createIdempotencyKey() };
+}
+
 interface SupportRequestDialogProps {
   templateSlug: string;
   templateName: string;
   creatorName: string;
   enableAnalytics: boolean;
+  draft: SupportRequestDraft;
+  onDraftChange: (draft: SupportRequestDraft | null) => void;
   onClose: () => void;
 }
 
@@ -119,6 +138,8 @@ const SupportRequestDialog: React.FC<SupportRequestDialogProps> = ({
   templateName,
   creatorName,
   enableAnalytics,
+  draft,
+  onDraftChange,
   onClose,
 }) => {
   const titleId = useId();
@@ -134,10 +155,10 @@ const SupportRequestDialog: React.FC<SupportRequestDialogProps> = ({
   const onCloseRef = useRef(requestClose);
   onCloseRef.current = requestClose;
 
-  const [requestType, setRequestType] = useState<SupportRequestType | ''>('');
-  const [buyerName, setBuyerName] = useState('');
-  const [buyerEmail, setBuyerEmail] = useState('');
-  const [message, setMessage] = useState('');
+  const [requestType, setRequestType] = useState<SupportRequestType | ''>(draft.requestType);
+  const [buyerName, setBuyerName] = useState(draft.buyerName);
+  const [buyerEmail, setBuyerEmail] = useState(draft.buyerEmail);
+  const [message, setMessage] = useState(draft.message);
   const [website, setWebsite] = useState('');
   const [status, setStatus] = useState<Status>('editing');
   const [error, setError] = useState<SupportRequestError | null>(null);
@@ -145,11 +166,16 @@ const SupportRequestDialog: React.FC<SupportRequestDialogProps> = ({
   const [retryAfterSeconds, setRetryAfterSeconds] = useState<number | null>(null);
   // One key per submission. Retries after a failure reuse it so the creator is
   // never emailed twice; editing any delivered field starts a new one.
-  const idempotencyKeyRef = useRef(createIdempotencyKey());
+  const idempotencyKeyRef = useRef(draft.idempotencyKey);
   const edited = <T,>(setter: (value: T) => void) => (value: T) => {
     idempotencyKeyRef.current = createIdempotencyKey();
     setter(value);
   };
+  const sentRef = useRef(false);
+  useEffect(() => {
+    if (sentRef.current) return;
+    onDraftChange({ requestType, buyerName, buyerEmail, message, idempotencyKey: idempotencyKeyRef.current });
+  }, [requestType, buyerName, buyerEmail, message, onDraftChange]);
 
   useEffect(() => {
     if (typeof document === 'undefined') return undefined;
@@ -221,6 +247,9 @@ const SupportRequestDialog: React.FC<SupportRequestDialogProps> = ({
     submittingRef.current = false;
 
     if (result.ok) {
+      // Delivered: the next time the dialog opens it starts a new submission.
+      sentRef.current = true;
+      onDraftChange(null);
       setStatus('sent');
       trackMarketplaceEvent('Support Request Submitted', { ...analytics, request_id: result.requestId }, enableAnalytics);
       return;
@@ -371,6 +400,10 @@ const TemplateSupportRequestInner: React.FC<TemplateSupportRequestProps> = ({
 }) => {
   useMarketplaceComponentErrorTracking(COMPONENT, enableAnalytics);
   const [open, setOpen] = useState(false);
+  const draftRef = useRef<SupportRequestDraft | null>(null);
+  const handleDraftChange = useCallback((next: SupportRequestDraft | null) => {
+    draftRef.current = next;
+  }, []);
   const slug = inferTemplateSlug(templateSlug);
   const label = buttonLabel.trim() || (creatorName ? `Contact ${creatorName}` : 'Contact creator');
 
@@ -391,6 +424,8 @@ const TemplateSupportRequestInner: React.FC<TemplateSupportRequestProps> = ({
           templateName={templateName}
           creatorName={creatorName}
           enableAnalytics={enableAnalytics}
+          draft={draftRef.current ?? emptyDraft()}
+          onDraftChange={handleDraftChange}
           onClose={() => setOpen(false)}
         />
       ) : null}
