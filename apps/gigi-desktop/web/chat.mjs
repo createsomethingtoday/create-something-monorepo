@@ -137,8 +137,12 @@ export class ChatController {
         if (submittedText !== null) { this.unconfirmedSends.set(sessionId, { sessionId, text: submittedText, messageIds }); this.error = 'turn_outcome_unknown'; }
       }
     } catch (error) {
-      this.refreshRequired = true; this.error = String(error?.message || error);
-      if (submittedText !== null) this.unconfirmedSends.set(sessionId, { sessionId, text: submittedText, messageIds });
+      this.error = String(error?.message || error);
+      // These exact adapter errors prove turn/start was not delivered or was rejected.
+      // Transport failures remain uncertain and must never permit automatic replay.
+      const definitive = submittedText !== null && ['chatgpt_auth_required', 'provider_turn_rejected', 'session_not_found', 'plugin_inventory_unavailable'].includes(this.error);
+      this.refreshRequired = !definitive;
+      if (submittedText !== null && !definitive) this.unconfirmedSends.set(sessionId, { sessionId, text: submittedText, messageIds });
     }
     finally {
       this.pending = false; this.emit();

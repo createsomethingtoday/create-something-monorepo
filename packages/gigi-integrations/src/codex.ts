@@ -1,6 +1,6 @@
 import { spawn, type ChildProcessWithoutNullStreams } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
-import { mkdir, readFile, writeFile, rename } from 'node:fs/promises';
+import { mkdir, readFile, writeFile, rename, appendFile } from 'node:fs/promises';
 import { isAbsolute, join } from 'node:path';
 import { Effect } from 'effect';
 import { isDeepStrictEqual } from 'node:util';
@@ -50,6 +50,7 @@ export function createCodexAdapter(options: CodexOptions) {
   const ledger = join(root, 'sessions.jsonl');
   const sessions = new Map<string, Session>();
   const approvals = new Map<string, Approval>();
+  const retiringSessions = new Set<string>();
   const loadedThreads = new Set<string>();
   const liveMessages = new Map<string, Map<string, { text: string; turnId?: string }>>();
   let loaded = false;
@@ -86,7 +87,7 @@ export function createCodexAdapter(options: CodexOptions) {
   async function owner(input: Json): Promise<Session> {
     await load();
     const session = sessions.get(required(input.sessionId));
-    if (!session || session.workspaceId !== required(input.workspaceId)) throw new Error('session_not_found');
+    if (!session || retiringSessions.has(session.sessionId) || session.workspaceId !== required(input.workspaceId)) throw new Error('session_not_found');
     return session;
   }
   async function status() {
@@ -112,9 +113,24 @@ export function createCodexAdapter(options: CodexOptions) {
       developerInstructions: 'Only GiGi dynamic tools are authorized. Do not use inherited plugins, skills, shell, files, browser, or other external tools. A gigi_records_save call is only an approval proposal until GiGi returns a tool result after user approval.',
     };
   }
-  async function start(input: Json): Promise<{ sessionId: string }> {
+  let starts = Promise.resolve();
+  function start(input: Json): Promise<{ sessionId: string }> {
+    const result = starts.then(() => startSerial(input));
+    starts = result.then(() => undefined, () => undefined);
+    return result;
+  }
+  async function startSerial(input: Json): Promise<{ sessionId: string }> {
     await load(); await requireAuth();
-    if (sessions.size >= MAX_SESSIONS) throw new Error('session_limit');
+    const settled = (session: Session) =>
+      !['running', 'approval'].includes(session.state) && !session.pendingMessageId &&
+      !session.cancelPending && !session.uncertainWrite &&
+      (!session.error || session.error === 'provider_turn_rejected') &&
+      session.decisionReceipt?.outcome !== 'unknown' &&
+      ![...approvals.values()].some(approval => approval.sessionId === session.sessionId);
+    const retiring = sessions.size >= MAX_SESSIONS
+      ? [...sessions.values()].filter(settled).sort((a, b) => a.createdAt - b.createdAt)[0]
+      : undefined;
+    if (sessions.size >= MAX_SESSIONS && !retiring) throw new Error('session_limit');
     const workspaceId = required(input.workspaceId); const message = input.message === undefined ? undefined : required(input.message, MAX_TEXT); const record = validRecord(input.record);
     if (!options.mcp) throw new Error('gigi_tools_unavailable');
     const workspace = await options.mcp.request('tools/call', { name: 'gigi_workspace_get', arguments: { workspaceId } });
@@ -131,6 +147,17 @@ export function createCodexAdapter(options: CodexOptions) {
     const threadId = message ? required((await options.server.request('thread/start', profile(tools, { workspaceId, record })))?.thread?.id) : '';
     if (threadId) loadedThreads.add(threadId);
     const session: Session = { sessionId: randomUUID(), threadId, workspaceId, title: record?.title ?? (message?.slice(0, 80) || 'New conversation'), record, state: 'idle', createdAt: Date.now() };
+    // Recheck after asynchronous preflight: another operation may have started a turn.
+    if (retiring) {
+      if (!settled(retiring)) throw new Error('session_limit');
+      retiringSessions.add(retiring.sessionId);
+      try {
+        await appendFile(join(root, 'retired-sessions.jsonl'), JSON.stringify({ retiredAt: Date.now(), session: retiring }) + '\n', { mode: 0o600 });
+        sessions.delete(retiring.sessionId);
+      } finally { retiringSessions.delete(retiring.sessionId); }
+      liveMessages.delete(retiring.sessionId);
+      if (![...sessions.values()].some(item => item.threadId === retiring.threadId)) loadedThreads.delete(retiring.threadId);
+    }
     sessions.set(session.sessionId, session); await persist();
     if (message) await send({ workspaceId, sessionId: session.sessionId, message });
     return { sessionId: session.sessionId };

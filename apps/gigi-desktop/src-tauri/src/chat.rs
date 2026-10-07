@@ -68,7 +68,11 @@ fn resolved_executable(path: &Path) -> Option<PathBuf> {
         return None;
     }
     let resolved = path.canonicalize().ok()?;
-    executable(&resolved).then_some(resolved)
+    if !executable(&resolved) {
+        return None;
+    }
+    // Validate the target, but retain the launcher prefix containing its Node runtime.
+    Some(path.parent()?.canonicalize().ok()?.join(path.file_name()?))
 }
 
 fn find_codex_in_path(folders: impl IntoIterator<Item = PathBuf>) -> Option<PathBuf> {
@@ -586,6 +590,27 @@ mod tests {
         assert!(output.status.success());
         assert_eq!(output.stdout, b"synthetic-node");
         assert!(find_codex_in_nvm(Path::new("relative")).is_none());
+        std::fs::remove_dir_all(root).unwrap();
+    }
+    #[test]
+    fn npm_symlink_keeps_its_node_prefix_with_finder_path() {
+        let _guard = test_lock();
+        let root = fixture("#!/bin/sh\nexit 0\n");
+        let bin = root.join("npm-prefix/bin");
+        let target = root.join("npm-prefix/lib/node_modules/codex/codex.js");
+        std::fs::create_dir_all(&bin).unwrap();
+        std::fs::create_dir_all(target.parent().unwrap()).unwrap();
+        std::fs::write(&target, "#!/usr/bin/env node\n").unwrap();
+        std::fs::set_permissions(&target, std::fs::Permissions::from_mode(0o700)).unwrap();
+        std::os::unix::fs::symlink(&target, bin.join("codex")).unwrap();
+        std::fs::write(bin.join("node"), "#!/bin/sh\nprintf 'npm-prefix-node'\n").unwrap();
+        std::fs::set_permissions(bin.join("node"), std::fs::Permissions::from_mode(0o700)).unwrap();
+        let codex = find_codex_in_path([bin]).unwrap();
+        let output = Command::new(&codex)
+            .env("PATH", companion_path(&codex, Some("/usr/bin:/bin".into())).unwrap())
+            .output().unwrap();
+        assert!(output.status.success());
+        assert_eq!(output.stdout, b"npm-prefix-node");
         std::fs::remove_dir_all(root).unwrap();
     }
     #[test]

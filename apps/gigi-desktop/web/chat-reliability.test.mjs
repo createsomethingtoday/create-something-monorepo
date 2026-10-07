@@ -138,3 +138,15 @@ for (const receipt of [null, { sessionId: 'other', state: 'idle' }, { sessionId:
   chat.bridge.chatRead = async () => snapshot('s1', 'idle', { messages: [...old, { id: 'new', role: 'user', text: 'Same question' }] });
   await chat.read('s1'); assert.equal(chat.draft, ''); assert.equal(chat.error, null);
 });
+
+for (const reason of ['chatgpt_auth_required', 'provider_turn_rejected']) test(`${reason} retains the draft without fencing a later explicit retry`, async () => {
+  let sends = 0;
+  const { chat } = fixture({ chatSend: async () => { if (++sends === 1) throw new Error(reason); return snapshot(); } });
+  await chat.open(); await chat.read('s1'); chat.draft = 'Synthetic question';
+  await chat.send(chat.draft);
+  assert.equal(chat.error, reason); assert.equal(chat.draft, 'Synthetic question');
+  assert.equal(chat.unconfirmedSends.size, 0); assert.equal(chat.refreshRequired, false);
+  chat.close(); await chat.open();
+  assert.equal(sends, 1); assert.equal(chat.draft, 'Synthetic question');
+  await chat.send(chat.draft); assert.equal(sends, 2); assert.equal(chat.draft, '');
+});

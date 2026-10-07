@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdtemp, readFile } from 'node:fs/promises';
+import { mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
@@ -516,4 +516,37 @@ test('JSON-line correlated errors retain response identity distinct from pipe fa
   const client = new JsonLineProcess(process.execPath, ['-e', `process.stdin.once('data',()=>process.stdout.write(JSON.stringify({jsonrpc:'2.0',id:1,error:{code:-32000,message:'rate limit'}})+'\\n'));`], process.env);
   try { await assert.rejects(client.request('turn/start', {}), error => error instanceof ProviderResponseError); }
   finally { await client.close(); }
+});
+
+
+test('the conversation cap archives the oldest settled session and permits another explicit chat', async () => {
+  const { adapter, server, dataDir } = await setup();
+  const first = await adapter.start({ workspaceId: 'w' });
+  for (let i = 1; i < 100; i++) await adapter.start({ workspaceId: 'w' });
+  await assert.rejects(adapter.start({ workspaceId: '' }), /invalid_request/);
+  assert.equal((await adapter.list({ workspaceId: 'w' })).sessions.length, 100);
+  const next = await adapter.start({ workspaceId: 'w' });
+  const listed = (await adapter.list({ workspaceId: 'w' })).sessions;
+  assert.equal(listed.length, 100);
+  assert.ok(listed.some(item => item.sessionId === next.sessionId));
+  assert.ok(!listed.some(item => item.sessionId === first.sessionId));
+  const archived = JSON.parse((await readFile(join(dataDir, 'codex-chat', 'retired-sessions.jsonl'), 'utf8')).trim());
+  assert.equal(archived.session.sessionId, first.sessionId);
+  assert.equal(server.calls.filter(call => call.method === 'turn/start').length, 0);
+});
+
+test('the conversation cap never retires an unresolved send or approval receipt', async () => {
+  const { adapter, server, mcp, dataDir } = await setup();
+  for (let i = 0; i < 100; i++) await adapter.start({ workspaceId: 'w' });
+  const ledger = join(dataDir, 'codex-chat', 'sessions.jsonl');
+  const entries = (await readFile(ledger, 'utf8')).trim().split('\n').map(line => JSON.parse(line));
+  for (const [index, entry] of entries.entries()) {
+    if (index % 2) { entry.error = 'turn_outcome_unknown'; entry.pendingMessageId = 'pending'; }
+    else entry.decisionReceipt = { approvalId: 'held', outcome: 'unknown' };
+  }
+  await writeFile(ledger, entries.map(entry => JSON.stringify(entry)).join('\n') + '\n');
+  const restarted = createCodexAdapter({ dataDir, mcpBinary: '/fixture/gigi-mcp', skillPath: '/fixture/skill/SKILL.md', server, mcp });
+  await assert.rejects(restarted.start({ workspaceId: 'w' }), /session_limit/);
+  assert.equal((await restarted.list({ workspaceId: 'w' })).sessions.length, 100);
+  await assert.rejects(readFile(join(dataDir, 'codex-chat', 'retired-sessions.jsonl')), { code: 'ENOENT' });
 });
