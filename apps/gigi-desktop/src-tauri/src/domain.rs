@@ -605,11 +605,11 @@ pub fn dispatch(root: &Path, op: &str, input: Value) -> Result<Value, String> {
                 .or_else(|| input.get("offset").and_then(Value::as_u64))
                 .unwrap_or(0)
                 .min(100_000) as i64;
-            let sql=format!("SELECT id,title,status,occurred_at,money_cents,updated_at FROM {entity} WHERE workspace_id=?1 ORDER BY updated_at DESC,id LIMIT ?2 OFFSET ?3");
+            let sql=format!("SELECT id,title,status,occurred_at,money_cents,updated_at,json_extract(fields_json,'$.\"All Day\"') FROM {entity} WHERE workspace_id=?1 ORDER BY updated_at DESC,id LIMIT ?2 OFFSET ?3");
             let mut stmt = db.prepare(&sql).map_err(|e| e.to_string())?;
             let items=stmt.query_map(params![wid,limit,offset],|r|{
                 let title:String=r.get(1)?;let truncated=title.chars().count()>120;let display:String=title.chars().take(120).collect();
-                Ok(json!({"id":r.get::<_,String>(0)?,"workspaceId":wid,"entity":entity,"title":display,"titleTruncated":truncated,"status":r.get::<_,Option<String>>(2)?,"date":r.get::<_,Option<String>>(3)?,"moneyCents":r.get::<_,Option<i64>>(4)?,"updatedAt":r.get::<_,String>(5)?}))
+                Ok(json!({"id":r.get::<_,String>(0)?,"workspaceId":wid,"entity":entity,"title":display,"titleTruncated":truncated,"status":r.get::<_,Option<String>>(2)?,"date":r.get::<_,Option<String>>(3)?,"moneyCents":r.get::<_,Option<i64>>(4)?,"updatedAt":r.get::<_,String>(5)?,"allDay":entity == "schedule" && r.get::<_,Option<i64>>(6)?.unwrap_or(0) == 1}))
             }).map_err(|e|e.to_string())?.collect::<Result<Vec<_>,_>>().map_err(|e|e.to_string())?;
             let count: i64 = db
                 .query_row(

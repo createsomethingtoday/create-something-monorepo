@@ -1,3 +1,4 @@
+import { scheduleAgenda, scheduleEntry, readSchedulePages } from './schedule.mjs';
 import { displayField, importantDetails, emptyCopy, localToday, fieldHelp, collectionCount } from './experience.mjs';
 import { sourceView, setupSummary } from './setup-view.mjs';
 import { icon, entityIcon } from './icons.mjs';
@@ -11,7 +12,7 @@ let chat;
 let routeVersion = 0;
 let operationVersion = 0;
 let currencyVersion = 0;
-const state = { workspace: null, setupProfile: false, setupDraft: null, currency: null, currencyKnown: false, page: 'overview', libraryOpen: false, records: [], recordCount: 0, nextCursor: null, selected: null, editing: false, editorDraft: null, editorOrigin: null, sourceExpanded: false, busy: false, signingIn: false, justCreated: false, agentProvider: 'codex', toast: null, summary: null, summaryUnavailable: false, history: [], backupId: null, pendingRestoreId: null, agent: null, agentReceipt: null, relationSchema: null, linkChoices: null, sources: {}, sourceAttempts: {}, connectionRequests: {}, imports: {}, contextHits: [], contextQueried: false };
+const state = { workspace: null, setupProfile: false, setupDraft: null, currency: null, currencyKnown: false, page: 'overview', scheduleView: 'upcoming', libraryOpen: false, records: [], recordCount: 0, nextCursor: null, selected: null, editing: false, editorDraft: null, editorOrigin: null, sourceExpanded: false, busy: false, signingIn: false, justCreated: false, agentProvider: 'codex', toast: null, summary: null, summaryUnavailable: false, history: [], backupId: null, pendingRestoreId: null, agent: null, agentReceipt: null, relationSchema: null, linkChoices: null, sources: {}, sourceAttempts: {}, connectionRequests: {}, imports: {}, contextHits: [], contextQueried: false };
 const safe = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
 const label = (name) => sections.find((item) => item.id === name)?.label || name;
 const entityName = (name) => ({ schedule: 'schedule', finances: 'financial record', contacts: 'contact', companies: 'company', gigs: 'gig or shift', locations: 'place' })[name] || name.replace(/s$/, '');
@@ -105,7 +106,7 @@ async function openPage(page, resetScroll = false) {
     state.agentReceipt = results[2].status === 'fulfilled' ? results[2].value : null;
   } else if (fields[page]) {
     state.records = []; state.recordCount = 0; state.nextCursor = null;
-    const result = await bridge.listRecords(route.workspace, page);
+    const result = page === 'schedule' ? await readSchedulePages(cursor => bridge.listRecords(route.workspace, page, cursor), () => currentRoute(route)).then(items => items && ({ items, count: items.length })) : await bridge.listRecords(route.workspace, page);
     if (!currentRoute(route)) return false;
     state.records = listFrom(result);
     state.recordCount = result?.count ?? state.records.length;
@@ -206,7 +207,15 @@ function overview() {
   return heading('Your workspace', 'Your work at a glance.', 'See what is coming up, what needs attention and which payments are still open.', `<button class="btn primary" data-new="gigs">${icon('plus')}New gig</button>`) + `<div class="cards overview-metrics"><div class="card"><div class="label">${icon('music')} Gigs & shifts</div><div class="value">${counts.gigs || 0}</div></div><div class="card"><div class="label">${icon('list-checks')} Tasks</div><div class="value">${counts.tasks || 0}</div></div><div class="card"><div class="label">${icon('users')} People</div><div class="value">${counts.contacts || 0}</div></div></div>${counts.gigs || counts.tasks || counts.finances ? '' : `<div class="callout section-gap"><strong>Start with the work you know.</strong><p>Add a gig or shift, then link its people, place and tasks. Sources and an agent are optional.</p><button class="btn" data-new="gigs">${icon('plus')}Add your first gig or shift</button></div>`}<div class="split section-gap">${group('gigs', 'Upcoming work', 'Today and future dates, ordered by date. Completed and cancelled work is excluded.')}${group('tasks', 'Open tasks', 'Unfinished tasks, with the earliest due dates first.')}</div>${group('finances', 'Unpaid income & expenses', 'Expected, invoiced and overdue records. Income and expenses are shown separately on each record; this is not a net balance.')}<details class="panel overview-guide"><summary>Connections and getting started</summary><p class="muted">You can work directly in GiGi. Connect Gmail, Calendar or your subscribed agent when useful.</p><button class="btn" data-page="settings">Open setup guide ${icon('arrow-up-right')}</button></details>`;
 }
 
+function scheduleView() {
+  const agenda = scheduleAgenda(state.records, state.scheduleView);
+  const zone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const controls = ['upcoming', 'past', 'all'].map(view => `<button class="btn" data-schedule-view="${view}" aria-pressed="${state.scheduleView === view}">${view === 'all' ? 'All entries' : view === 'past' ? 'Past' : 'Upcoming'} (${agenda.counts[view]})</button>`).join('');
+  return heading('Daily work', 'Schedule', 'See what is happening and when. Open an event for details.', `<button class="btn primary" data-new="schedule">${icon('plus')}Add event</button>`) + `<section class="panel"><div class="panel-head"><h2>Agenda</h2><button class="btn" data-schedule-today="1">Today</button></div><div class="inline-actions schedule-controls" aria-label="Schedule views">${controls}</div><p class="muted">Times in ${safe(zone)} · ${safe(collectionCount('schedule', state.records.length))}</p>${agenda.undated ? `<p class="muted">${agenda.undated} ${agenda.undated === 1 ? 'entry needs' : 'entries need'} a usable date. Find ${agenda.undated === 1 ? 'it' : 'them'} in All entries.</p>` : ''}${agenda.groups.length ? agenda.groups.map(group => `<section class="agenda-day" ${group.key === localToday() ? 'id="schedule-today"' : ''}><h3>${safe(group.title)}</h3>${group.entries.map(entry => `<button class="row agenda-event" type="button" data-open="${safe(entry.record.id)}" data-entity="schedule"><span class="agenda-time">${safe(entry.time)}</span><span><strong>${safe(entry.record.title || 'Untitled event')}</strong><small>Open event details</small></span><span class="arrow" aria-hidden="true">${icon('arrow-up-right')}</span></button>`).join('')}</section>`).join('') : state.records.length ? `<div class="empty"><strong>${state.scheduleView === 'past' ? 'No past events.' : 'Nothing scheduled for today or later.'}</strong><p>View All entries to find earlier events, or add an event.</p><button class="btn" data-schedule-view="all">View all entries</button></div>` : rows('schedule', [])}</section>`;
+}
+
 function collection() {
+  if (state.page === 'schedule') return scheduleView();
   const name = state.page;
   const action = name === 'profile' && state.records.length ? `<button class="btn" data-open="${safe(state.records[0].id)}" data-entity="profile">Open profile</button>` : `<button class="btn primary" data-new="${name}">${icon('plus')}Add ${safe(entityName(name))}</button>`;
   return heading('Your records', label(name), `A private view of your ${name === 'finances' ? 'financial records' : label(name).toLowerCase()}. Open any record to inspect its details and links.`, action) + `<section class="panel"><div class="panel-head"><h2>${safe(collectionCount(name, state.recordCount))}</h2><small>Showing ${state.records.length} of ${state.recordCount}</small></div>${rows(name, state.records)}${state.nextCursor ? '<button class="btn section-gap" data-more="1">Load more</button>' : ''}</section>`;
@@ -216,7 +225,7 @@ function recordDetail() {
   const record = state.selected;
   const values = record.fields || {};
   const detail = importantDetails(state.page, values);
-  const detailRows = (items) => items.map(([key, value]) => `<dt>${safe(key === 'Do Date' ? 'Planned date' : key === 'Venue Intel' ? 'Venue notes' : key === 'Note Details' ? 'Note' : key)}</dt><dd>${safe(displayField(key, value, state.currency))}</dd>`).join('');
+  const detailRows = (items) => items.map(([key, value]) => `<dt>${safe(key === 'Do Date' ? 'Planned date' : key === 'Venue Intel' ? 'Venue notes' : key === 'Note Details' ? 'Note' : key)}</dt><dd>${safe(state.page === 'schedule' && key === 'Date' ? (() => { const entry = scheduleEntry(record); return entry.key ? `${new Intl.DateTimeFormat('en-US', { dateStyle: 'full' }).format(new Date(`${entry.key}T12:00:00`))} · ${entry.time} · ${Intl.DateTimeFormat().resolvedOptions().timeZone}` : displayField(key, value, state.currency); })() : displayField(key, value, state.currency))}</dd>`).join('');
   const links = Array.isArray(record.relations) ? record.relations.map((link) => relatedEndpoint(link, state.page, record.id)).filter(Boolean) : [];
   const summary = state.page === 'gigs' ? `<div class="cards summary-cards section-gap"><div class="card"><div class="label">${icon('wallet')} Balance due</div><div class="value">${state.summaryUnavailable ? 'Unavailable' : safe(gigBalance(state.summary))}</div>${state.summaryUnavailable ? '<small class="muted">Financial summary unavailable. Reopen the record to check again.</small>' : ''}${state.summary && !state.summary.financialsComplete ? '<small class="muted">Financial details incomplete</small>' : ''}</div><div class="card"><div class="label">${icon('link')} Linked records</div><div class="value">${record.relationCount ?? links.length}</div></div></div>` : '';
   const truncated = (record.truncatedFields || []).length > 0;
@@ -426,7 +435,9 @@ function submitLink(data) {
 
 root.addEventListener('click', (event) => {
   const button = event.target.closest('button'); if (!button) return;
-  if (button.dataset.chatOpen) void chat?.open(state.selected && !state.editing ? { entity: state.page, id: state.selected.id, title: state.selected.title } : null);
+  if (button.dataset.scheduleView) { state.scheduleView = button.dataset.scheduleView; render(); }
+  else if (button.dataset.scheduleToday) { state.scheduleView = 'upcoming'; render(); root.querySelector('#schedule-today')?.scrollIntoView?.({ block: 'start' }); }
+  else if (button.dataset.chatOpen) void chat?.open(state.selected && !state.editing ? { entity: state.page, id: state.selected.id, title: state.selected.title } : null);
   else if (button.dataset.chatClose) { chat?.close(); focusChatTrigger(); }
   else if (button.dataset.chatNew) void chat?.start();
   else if (button.dataset.chatSession) void chat?.read(button.dataset.chatSession);
