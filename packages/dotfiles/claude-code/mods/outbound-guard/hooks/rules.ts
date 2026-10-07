@@ -37,7 +37,8 @@ function split(name: string): { server: string; tool: string } | null {
 }
 
 /** Statsig reads; everything else on that server changes production config. */
-const STATSIG_READ = /^(Get_|GetExperiment|Query_|Search_|Cluster_|search$|fetch$|Get_Tool_Schema)/
+/** V2 names (Get_…) and V3 names (get_context, *_read, discover_tools, api_read). */
+const STATSIG_READ = /^(Get_|GetExperiment|Query_|Search_|Cluster_|search$|fetch$|Get_Tool_Schema|get_context$|discover_tools$|api_read$)|_read$/
 const CALENDAR_SENDS = new Set(['create_event', 'update_event', 'delete_event', 'respond_to_event'])
 const PARTNERSTACK_SENDS = new Set([
   'approve_or_decline_an_application',
@@ -142,6 +143,14 @@ export function resolve(name: string, args: Args): Outbound | null {
     const who = to.length > 0 ? ` (${labelled})` : tool === 'reply' ? ' to the thread participants' : ''
     const subject = str(args.subject)
     const out: Outbound = { ...base, summary: `${what}${who}${subject === null ? '' : `, subject "${subject}"`}`, text: body, literal: html === null }
+    const attachments = Array.isArray(args.attachments) ? args.attachments : []
+    if (attachments.length > 0) {
+      const names = attachments.map(item => {
+        const a = (item ?? {}) as Record<string, unknown>
+        return `${str(a.filename) ?? str(a.name) ?? '(unnamed)'}${str(a.mimeType) !== null ? ` [${str(a.mimeType)}]` : ''}`
+      })
+      out.summary = `${out.summary}, with ${attachments.length} attachment${attachments.length === 1 ? '' : 's'}: ${names.join(', ')}`
+    }
     if (html !== null && str(args.body) !== null) {
       out.warnings.push('showing htmlBody (what recipients see); the plain-text body is only the fallback')
     }

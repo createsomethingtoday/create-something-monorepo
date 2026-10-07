@@ -172,3 +172,12 @@ test('rules: W-prefixed Enterprise mentions are checked; application failures ar
   expect(reportsFailure({ content: [{ type: 'text', text: '{"ok": true}' }] })).toBe(false)
   expect(reportsFailure({ ok: true })).toBe(false)
 })
+
+test('rules: Gmail attachments are named in the dialog; Statsig V3 reads pass through', () => {
+  const out = resolve(GMAIL, { to: ['a@example.com'], body: 'see attached', attachments: [{ filename: 'payouts.csv', mimeType: 'text/csv', content: 'x' }] })
+  expect(out?.summary).toMatch(/with 1 attachment: payouts.csv \[text\/csv\]/)
+  for (const tool of ['get_context', 'gate_read', 'experiment_read', 'discover_tools', 'api_read']) {
+    expect(resolve(`mcp__claude_ai_Statsig__${tool}`, {})).toBeNull()
+  }
+  expect(resolve('mcp__claude_ai_Statsig__Update_Gate_Entirely', {})?.summary).toMatch(/Statsig \(production\)/)
+})
