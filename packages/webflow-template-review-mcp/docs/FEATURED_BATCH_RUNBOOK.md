@@ -122,9 +122,12 @@ tell you how big a batch is. Count membership in Airtable:
    `⭐Reviewer Pick Reason` (no MCP read returns it for items outside the
    candidate list) and the item's votes in 🗳️Reviewer Votes. If
    `set_featured_pick` warned `not_currently_eligible` on it, resolve that
-   first; do not override it. Only then finalize in step 3 with
-   `override_selection_checks: true`, after the coordinator confirms, to clear
-   the vote/recency checks. The result records which checks were overridden.
+   first; do not override it. Then finalize in step 3 **without** the
+   override: `set_featured_flag` does not check recency, so an older pick that
+   still has its star, passes the eligibility formula and has qualified votes
+   goes through as is. Use `override_selection_checks: true` only for a
+   specific unmet check that the coordinator has reviewed and accepted. The
+   result records which checks were overridden.
 2. Preflight the whole batch **before any flag is written or any notification
    can fire**:
    - **One template per creator.** List every winner's creator and remove
@@ -148,8 +151,15 @@ tell you how big a batch is. Count membership in Airtable:
    featured *next* month. `set_featured_flag` cannot write the override, so
    write **only the override** directly in Airtable, then tick through
    `set_featured_flag` as usual so its coordinator check, live-reason check
-   and selection checks still run. Carry-overs that are already ticked only
-   need the override. Selection checks
+   and selection checks still run. A winner that is **already ticked** may
+   already have been emailed for next month by the hourly worker. Before
+   writing its override, read `🔔Featured Notified For Period`. If it is
+   empty, write the override and continue. If it holds next month, that
+   wrong email has gone out: the override cannot retract it, and the current-
+   month `/run` would send a second one. Follow the correction path (a
+   correction email to the creator, as in the October 2026 entry under History)
+   and decide with the coordinator whether to send the current-month
+   notification at all. Selection checks
    (star set, eligibility formula, qualified votes) run before the write and
    reject with `SELECTION_CHECKS_UNMET`; if featuring an item that fails them
    is a deliberate decision, resubmit with `override_selection_checks: true`

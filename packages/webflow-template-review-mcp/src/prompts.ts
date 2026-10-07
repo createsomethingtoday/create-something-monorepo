@@ -228,8 +228,10 @@ Hard rules for featured copy: the live Pick Reason is quoted VERBATIM in the
 creator's email and rendered publicly on the listing — third-person marketplace
 prose, ~350–450 chars, no internal shorthand ("Main quality signal: …", "made by
 a newer creator"). Vote notes are the place for candid internal rationale and
-must never be quoted to creators. Whalesync does not sync featured fields to the
-marketplace CMS — the CMS backfill after finalization is a separate manual step.
+must never be quoted to creators. Whalesync pushes the finalized batch to the
+marketplace CMS on its own — verify it, do not backfill by hand (any CMS write
+resets the listing's visible publish date). Switching the previous batch off in
+the CMS is still manual.
 
 ## Quick Reference Checklist
 
