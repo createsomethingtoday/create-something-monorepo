@@ -6,6 +6,10 @@ export function sourceView(source) {
     label: 'Account verified',
     description: 'Account verified. Import records when you are ready.',
   };
+  if (source?.state === 'checking') return {
+    label: 'Checking status',
+    description: 'Checking the source account. Your local records are ready to use.',
+  };
   if (sourceNeedsOperatorReview(source)) return {
     label: 'Review needed',
     description: 'The connection outcome is uncertain. Ask the GiGi operator to review this attempt before connecting again.',
@@ -56,6 +60,8 @@ export function sourceView(source) {
 export function setupSummary({ workspace, sources = {}, agentReceipt, agent } = {}) {
   const providers = ['gmail', 'googlecalendar'];
   const verifiedCount = providers.filter((provider) => sources?.[provider]?.state === 'connected').length;
+  const checkingCount = providers.filter((provider) => sources?.[provider]?.state === 'checking' || sources?.[provider]?.state !== 'connected' && sources?.[provider]?.detail === 'refresh_in_progress').length;
+  const uncertainRefresh = providers.some((provider) => sources?.[provider]?.state !== 'connected' && sources?.[provider]?.detail === 'refresh_outcome_unknown');
   const prepared = agentReceipt?.prepared === true || Boolean(agent);
   const localToolUsed = Boolean(agentReceipt?.lastCall);
   const phoneVerified = agentReceipt?.phoneVerified === true;
@@ -66,7 +72,7 @@ export function setupSummary({ workspace, sources = {}, agentReceipt, agent } = 
     },
     {
       id: 'sources', title: 'Sources', label: `${verifiedCount} of 2 verified`, href: '#source-connections',
-      description: 'Each account needs its own consent. Import records after verification.',
+      description: checkingCount ? `Checking ${checkingCount} ${checkingCount === 1 ? 'source' : 'sources'}. Your local records are ready to use.` : uncertainRefresh ? 'The session refresh outcome is uncertain. Check source status before trying to connect again.' : 'Each account needs its own consent. Import records after verification.',
     },
     {
       id: 'agent', title: 'Codex or Claude Code',
@@ -83,6 +89,8 @@ export function setupSummary({ workspace, sources = {}, agentReceipt, agent } = 
   let nextStep = 'Start with a record or choose an optional connection below.';
   if (!workspace) nextStep = 'Create your private workspace.';
   else if (providers.some((provider) => sourceNeedsOperatorReview(sources?.[provider]))) nextStep = 'Ask the GiGi operator to review the uncertain source connection.';
+  else if (uncertainRefresh) nextStep = 'Check source status before trying to connect again.';
+  else if (checkingCount) nextStep = 'Wait for the source check, then check status again if needed.';
   else if (sources?.googlecalendar?.state === 'pending') nextStep = 'Finish Google Calendar consent, then verify the account.';
   else if (sources?.gmail?.state === 'pending') nextStep = 'Finish Gmail consent, then verify the account.';
   else if (prepared && !localToolUsed) nextStep = 'Run the agent setup command, then verify a real local tool call.';

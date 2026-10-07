@@ -120,3 +120,7 @@ h1 span{min-width:0}
 .chat-actions{display:flex;justify-content:flex-end;margin-top:10px}
 @media(max-width:700px){.mobile-chat-entry{display:inline-flex;margin-bottom:18px}.chat-panel{top:0;width:100vw;max-height:none;border:0;border-radius:0}.chat-head,.chat-context-row,.chat-sessions,.chat-transcript,.chat-composer{padding-left:16px;padding-right:16px}}
 @media(prefers-reduced-motion:reduce){.chat-entering{animation:none}}
+
+/* Match the existing input's 13px line plus 11px padding and borders. Keep native select behavior. */
+.field input,.field select{min-block-size:42px;line-height:18px}
+.field-help{color:var(--muted);font-size:11px;line-height:1.5}

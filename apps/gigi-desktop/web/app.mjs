@@ -1,4 +1,4 @@
-import { displayField, importantDetails, emptyCopy, localToday } from './experience.mjs';
+import { displayField, importantDetails, emptyCopy, localToday, fieldHelp, collectionCount } from './experience.mjs';
 import { sourceView, setupSummary } from './setup-view.mjs';
 import { icon, entityIcon } from './icons.mjs';
 import { tauriBridge } from './bridge.mjs';
@@ -8,7 +8,7 @@ import { sections, fields, moneyFields, booleanFields, fieldOptions, listFrom, r
 const root = document.querySelector('#app');
 const bridge = tauriBridge();
 let chat;
-const state = { workspace: null, setupProfile: false, setupDraft: null, currency: null, page: 'overview', libraryOpen: false, records: [], recordCount: 0, nextCursor: null, selected: null, editing: false, editorDraft: null, sourceExpanded: false, busy: false, signingIn: false, justCreated: false, agentProvider: 'codex', toast: null, summary: null, history: [], backupId: null, pendingRestoreId: null, agent: null, agentReceipt: null, relationSchema: null, linkChoices: null, sources: {}, sourceAttempts: {}, connectionRequests: {}, imports: {}, contextHits: [], contextQueried: false };
+const state = { workspace: null, setupProfile: false, setupDraft: null, currency: null, page: 'overview', libraryOpen: false, records: [], recordCount: 0, nextCursor: null, selected: null, editing: false, editorDraft: null, editorOrigin: null, sourceExpanded: false, busy: false, signingIn: false, justCreated: false, agentProvider: 'codex', toast: null, summary: null, history: [], backupId: null, pendingRestoreId: null, agent: null, agentReceipt: null, relationSchema: null, linkChoices: null, sources: {}, sourceAttempts: {}, connectionRequests: {}, imports: {}, contextHits: [], contextQueried: false };
 const safe = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
 const label = (name) => sections.find((item) => item.id === name)?.label || name;
 const entityName = (name) => ({ schedule: 'schedule', finances: 'financial record', contacts: 'contact', companies: 'company', gigs: 'gig or shift', locations: 'place' })[name] || name.replace(/s$/, '');
@@ -53,7 +53,7 @@ async function load() {
 
 async function openPage(page, resetScroll = false) {
   if (page !== 'settings') state.justCreated = false;
-  state.page = page; state.selected = null; state.editing = false; state.editorDraft = null; state.sourceExpanded = false; state.summary = null;
+  state.page = page; state.selected = null; state.editing = false; state.editorDraft = null; state.editorOrigin = null; state.sourceExpanded = false; state.summary = null;
   if (page !== 'settings') state.pendingRestoreId = null;
   if (page === 'overview') {
     state.overview = await bridge.overview(workspaceId(), localToday());
@@ -61,8 +61,10 @@ async function openPage(page, resetScroll = false) {
     state.history = listFrom(await bridge.listHistory(workspaceId(), 40));
   } else if (page === 'settings') {
     const providers = ['gmail', 'googlecalendar'];
+    state.sources = Object.fromEntries(providers.map((provider) => [provider, { provider, state: 'checking' }]));
+    render();
     const results = await Promise.allSettled([...providers.map((provider) => bridge.connectionStatus(provider)), bridge.agentStatus()]);
-    state.sources = Object.fromEntries(providers.map((provider, index) => [provider, results[index].status === 'fulfilled' ? results[index].value : { state: 'unavailable', detail: explain(results[index].reason) }]));
+    state.sources = Object.fromEntries(providers.map((provider, index) => [provider, results[index].status === 'fulfilled' ? results[index].value : { provider, state: 'unavailable', detail: results[index].reason instanceof Error ? results[index].reason.message : String(results[index].reason) }]));
     state.agentReceipt = results[2].status === 'fulfilled' ? results[2].value : null;
   } else if (fields[page]) {
     const result = await bridge.listRecords(workspaceId(), page);
@@ -82,6 +84,28 @@ async function selectRecord(id) {
   if (state.page === 'gigs') state.summary = await bridge.gigSummary(workspaceId(), id);
   render();
   globalThis.scrollTo?.(0, 0);
+}
+
+function editorOrigin(selected, focus, keepPosition = true) {
+  return { selected, focus, reloadCollection: !selected && !keepPosition, x: keepPosition ? globalThis.scrollX || 0 : 0, y: keepPosition ? globalThis.scrollY || 0 : 0,
+    openDetails: [...(root.querySelectorAll?.('.content-primary details') || [])].map((detail) => detail.open) };
+}
+
+async function cancelEditor() {
+  const origin = state.editorOrigin;
+  if (origin?.reloadCollection) {
+    state.records = []; state.recordCount = 0; state.nextCursor = null;
+    await run(() => openPage(state.page));
+  } else {
+    state.selected = origin?.selected || null;
+    state.editing = false; state.editorDraft = null; state.editorOrigin = null;
+    render();
+  }
+  if (origin) {
+    [...(root.querySelectorAll?.('.content-primary details') || [])].forEach((detail, index) => { detail.open = origin.openDetails[index] || false; });
+    root.querySelector?.(origin.focus)?.focus?.({ preventScroll: true });
+  }
+  globalThis.scrollTo?.(origin?.x || 0, origin?.y || 0);
 }
 
 function sidebar() {
@@ -113,7 +137,7 @@ function overview() {
 function collection() {
   const name = state.page;
   const action = name === 'profile' && state.records.length ? `<button class="btn" data-open="${safe(state.records[0].id)}" data-entity="profile">Open profile</button>` : `<button class="btn primary" data-new="${name}">${icon('plus')}Add ${safe(entityName(name))}</button>`;
-  return heading('Your records', label(name), `A private view of your ${label(name).toLowerCase()}. Open any record to inspect its details and links.`, action) + `<section class="panel"><div class="panel-head"><h2>${state.recordCount} ${safe(label(name).toLowerCase())}</h2><small>Showing ${state.records.length} of ${state.recordCount}</small></div>${rows(name, state.records)}${state.nextCursor ? '<button class="btn section-gap" data-more="1">Load more</button>' : ''}</section>`;
+  return heading('Your records', label(name), `A private view of your ${name === 'finances' ? 'financial records' : label(name).toLowerCase()}. Open any record to inspect its details and links.`, action) + `<section class="panel"><div class="panel-head"><h2>${safe(collectionCount(name, state.recordCount))}</h2><small>Showing ${state.records.length} of ${state.recordCount}</small></div>${rows(name, state.records)}${state.nextCursor ? '<button class="btn section-gap" data-more="1">Load more</button>' : ''}</section>`;
 }
 
 function recordDetail() {
@@ -135,7 +159,7 @@ function editor() {
   const current = state.selected || {};
   const currentFields = current.fields || {};
   return `<button type="button" class="btn text" data-cancel="1">${icon('arrow-left')} Back</button>${heading(current.id ? 'Edit record' : 'New record', current.id ? `Edit ${entityName(name)}` : `Add ${entityName(name)}`, name === 'profile' ? 'Set your defaults. Currency cannot change after monetary records are saved.' : 'Save the details you know. Leave uncertain fields empty.')}
-  <form id="record-form" class="panel" data-entity="${name}"><div class="form-grid"><div class="field wide"><label for="title">Title <span aria-hidden="true">*</span></label><input id="title" name="title" required maxlength="200" value="${safe(state.editorDraft?.title ?? current.title ?? '')}" autocomplete="off"></div>${(fields[name] || []).map((field) => { const value = currentFields[field] ?? ''; const display = state.editorDraft?.[field] ?? (moneyFields.has(field) && value !== '' ? Number(value) / 100 : value); const selectedValue = state.editorDraft?.[field] ?? value; const id = `field-${field.replace(/\s+/g, '-').toLowerCase()}`; return `<div class="field ${['Description', 'Details', 'Note Details', 'Requirements', 'Venue Intel', 'Summary'].includes(field) ? 'wide' : ''}"><label for="${id}">${safe(field)}${moneyFields.has(field) ? ' (in your currency)' : ''}</label>${fieldOptions(name, field) ? `<select id="${id}" name="${safe(field)}" required><option value="">Choose ${safe(field.toLowerCase())}</option>${fieldOptions(name, field).map((choice) => `<option value="${safe(choice)}" ${selectedValue === choice ? 'selected' : ''}>${safe(choice)}</option>`).join('')}</select>` : name === 'profile' && field === 'Currency' ? `<select id="${id}" name="Currency" required><option value="">Choose currency</option>${['USD','CAD','EUR','GBP'].map((code) => `<option value="${code}" ${selectedValue === code ? 'selected' : ''}>${code}</option>`).join('')}</select>` : booleanFields.has(`${name}.${field}`) ? `<select id="${id}" name="${safe(field)}"><option value="">Not set</option><option value="true" ${selectedValue === true || selectedValue === 'true' ? 'selected' : ''}>Yes</option><option value="false" ${selectedValue === false || selectedValue === 'false' ? 'selected' : ''}>No</option></select>` : ['Description', 'Details', 'Note Details', 'Requirements', 'Venue Intel', 'Summary'].includes(field) ? `<textarea id="${id}" name="${safe(field)}">${safe(display)}</textarea>` : `<input id="${id}" name="${safe(field)}" value="${safe(display)}" ${moneyFields.has(field) ? 'inputmode="decimal"' : ''} autocomplete="off">`}</div>`; }).join('')}</div><div class="form-actions"><button type="button" class="btn" data-cancel="1">Cancel</button><button class="btn primary" type="submit">Save ${safe(entityName(name))}</button></div></form>`;
+  <form id="record-form" class="panel" data-entity="${name}"><div class="form-grid"><div class="field wide"><label for="title">${name === 'contacts' ? 'Name' : 'Title'} <span aria-hidden="true">*</span></label><input id="title" name="title" required maxlength="200" value="${safe(state.editorDraft?.title ?? current.title ?? '')}" autocomplete="off"></div>${(fields[name] || []).map((field) => { const value = currentFields[field] ?? ''; const display = state.editorDraft?.[field] ?? (moneyFields.has(field) && value !== '' ? Number(value) / 100 : value); const selectedValue = state.editorDraft?.[field] ?? value; const id = `field-${field.replace(/\s+/g, '-').toLowerCase()}`; const help = fieldHelp(field, state.currency); const description = help ? `aria-describedby="${id}-help"` : ''; return `<div class="field ${['Description', 'Details', 'Note Details', 'Requirements', 'Venue Intel', 'Summary'].includes(field) ? 'wide' : ''}"><label for="${id}">${safe(field)}</label>${fieldOptions(name, field) ? `<select id="${id}" ${description} name="${safe(field)}" required><option value="">Choose ${safe(field.toLowerCase())}</option>${fieldOptions(name, field).map((choice) => `<option value="${safe(choice)}" ${selectedValue === choice ? 'selected' : ''}>${safe(choice)}</option>`).join('')}</select>` : name === 'profile' && field === 'Currency' ? `<select id="${id}" ${description} name="Currency" required><option value="">Choose currency</option>${['USD','CAD','EUR','GBP'].map((code) => `<option value="${code}" ${selectedValue === code ? 'selected' : ''}>${code}</option>`).join('')}</select>` : booleanFields.has(`${name}.${field}`) ? `<select id="${id}" ${description} name="${safe(field)}"><option value="">Not set</option><option value="true" ${selectedValue === true || selectedValue === 'true' ? 'selected' : ''}>Yes</option><option value="false" ${selectedValue === false || selectedValue === 'false' ? 'selected' : ''}>No</option></select>` : ['Description', 'Details', 'Note Details', 'Requirements', 'Venue Intel', 'Summary'].includes(field) ? `<textarea id="${id}" ${description} name="${safe(field)}">${safe(display)}</textarea>` : `<input id="${id}" ${description} name="${safe(field)}" value="${safe(display)}" ${moneyFields.has(field) ? 'inputmode="decimal"' : ''} autocomplete="off">`}${help ? `<small id="${id}-help" class="field-help">${safe(help)}</small>` : ''}</div>`; }).join('')}</div><div class="form-actions"><button type="button" class="btn" data-cancel="1">Cancel</button><button class="btn primary" type="submit">Save ${safe(entityName(name))}</button></div></form>`;
 }
 
 function linkEditor() {
@@ -297,10 +321,11 @@ root.addEventListener('click', (event) => {
   else if (button.dataset.chatApproval) void chat?.decide(button.dataset.chatApproval, button.dataset.chatDecision);
   else if (button.dataset.chatLinkEntity) void run(async () => { if (!fields[button.dataset.chatLinkEntity]) return; await openPage(button.dataset.chatLinkEntity); await selectRecord(button.dataset.chatLinkId); });
   else if (button.dataset.page) void run(() => openPage(button.dataset.page, true));
-  else if (button.dataset.new) { state.justCreated = false; state.page = button.dataset.new; state.selected = null; state.editorDraft = null; state.editing = true; render(); globalThis.scrollTo?.(0, 0); }
+  else if (button.dataset.new) { state.editorOrigin = editorOrigin(null, `[data-new="${button.dataset.new}"]`, state.page === button.dataset.new); state.justCreated = false; state.page = button.dataset.new; state.selected = null; state.editorDraft = null; state.editing = true; render(); globalThis.scrollTo?.(0, 0); }
   else if (button.dataset.open) void run(async () => { if (state.page !== button.dataset.entity) await openPage(button.dataset.entity); await selectRecord(button.dataset.open); });
-  else if (button.dataset.back || button.dataset.cancel) { state.selected = null; state.editing = false; state.editorDraft = null; render(); globalThis.scrollTo?.(0, 0); }
-  else if (button.dataset.edit) void run(async () => { state.selected = await bridge.getRecord(workspaceId(), state.page, state.selected.id, 'full'); state.editorDraft = null; state.editing = true; });
+  else if (button.dataset.cancel) void cancelEditor();
+  else if (button.dataset.back) { state.selected = null; state.editing = false; state.editorDraft = null; state.editorOrigin = null; render(); globalThis.scrollTo?.(0, 0); }
+  else if (button.dataset.edit) { state.editorOrigin = editorOrigin(state.selected, '[data-edit]'); void run(async () => { state.selected = await bridge.getRecord(workspaceId(), state.page, state.selected.id, 'full'); state.editorDraft = null; state.editing = true; }).then(() => { if (state.editing === true) globalThis.scrollTo?.(0, 0); }); }
   else if (button.dataset.full) void run(async () => { state.selected = await bridge.getRecord(workspaceId(), state.page, state.selected.id, 'full'); });
   else if (button.dataset.sourceDetail) void run(async () => { state.selected = await bridge.getRecord(workspaceId(), state.page, state.selected.id, 'full'); state.sourceExpanded = true; });
   else if (button.dataset.link) void run(async () => { state.relationSchema = await bridge.describeSchema(state.page); const first = state.relationSchema.relationFields?.[0]?.targetEntity; state.linkChoices = null; if (first) await loadLinkChoices(first); state.editing = 'link'; render(); });
