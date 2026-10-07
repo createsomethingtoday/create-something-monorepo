@@ -292,7 +292,7 @@ function captureEditorDraft() {
   state.editorDraft = Object.fromEntries(new FormData(form));
   const active = globalThis.document?.activeElement;
   return { x: globalThis.scrollX || 0, y: globalThis.scrollY || 0,
-    focus: active?.form === form ? { id: active.id, start: active.selectionStart, end: active.selectionEnd, direction: active.selectionDirection, scrollTop: active.scrollTop } : null };
+    focus: active?.form === form && active.id ? { id: active.id, start: active.selectionStart, end: active.selectionEnd, direction: active.selectionDirection, scrollTop: active.scrollTop } : null };
 }
 
 function render() {
