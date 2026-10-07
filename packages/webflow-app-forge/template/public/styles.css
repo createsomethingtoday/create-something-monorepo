@@ -1,0 +1,177 @@
+/*
+ * Webflow App colors and typography, from the published Designer Extension
+ * design guidelines (developers.webflow.com/designer/docs/design-guidelines).
+ * Keep styles here. Runtime style injection reads as inline styles under CSP.
+ */
+:root {
+  --background1: #1e1e1e;
+  --background2: #2e2e2e;
+  --background3: #383838;
+  --background4: #373737;
+  --background5: #444444;
+  --backgroundInactive: #2e2e2e;
+  --backgroundInverse: #ebebeb;
+  --backgroundInput: rgba(0, 0, 0, 0.15);
+
+  --actionPrimaryBackground: #006acc;
+  --actionPrimaryBackgroundHover: #187cd9;
+  --actionSecondaryBackground: linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.1) 100%);
+  --actionSecondaryBackgroundHover: linear-gradient(180deg, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0.16) 100%);
+  --actionPrimaryText: #ffffff;
+  --actionSecondaryText: #e0e0e0;
+
+  --border1: rgba(255, 255, 255, 0.13);
+  --border2: rgba(255, 255, 255, 0.14);
+  --border3: rgba(255, 255, 255, 0.19);
+
+  --text1: #f5f5f5;
+  --text2: #bdbdbd;
+  --text3: #a3a3a3;
+  --textInactive: #757575;
+  --textInverse: #1e1e1e;
+
+  --blueText: #8ac2ff;
+  --blueBorder: #007df0;
+  --greenText: #63d489;
+  --greenBackground: #007a41;
+  --yellowText: #f3c831;
+  --yellowBackground: #946b00;
+  --redText: #ff8a8a;
+  --redBackground: #cf313b;
+
+  /* 4px rhythm, per the design guidelines. */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+
+  --radius: 4px;
+  --font-size-small: 11.5px;
+  --font-size-large: 12.5px;
+  --font-weight-normal: 400;
+  --font-weight-medium: 600;
+  --font-ui: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  background: var(--background1);
+  color: var(--text1);
+  font-family: var(--font-ui);
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-normal);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+h1 {
+  margin: 0;
+  font-size: var(--font-size-large);
+  font-weight: var(--font-weight-medium);
+  color: var(--text1);
+}
+
+p {
+  margin: 0;
+  color: var(--text2);
+}
+
+.panel {
+  background: var(--background2);
+  border: 1px solid var(--border1);
+  border-radius: var(--radius);
+  padding: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.label {
+  color: var(--text3);
+  font-size: var(--font-size-small);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.value {
+  font-family: var(--font-mono);
+  color: var(--text1);
+  word-break: break-all;
+}
+
+.actions {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+button {
+  font: inherit;
+  cursor: pointer;
+  border-radius: var(--radius);
+  padding: var(--space-1) var(--space-3);
+  min-height: 24px;
+  border: 1px solid transparent;
+}
+
+button.primary {
+  background: var(--actionPrimaryBackground);
+  color: var(--actionPrimaryText);
+}
+
+button.primary:hover {
+  background: var(--actionPrimaryBackgroundHover);
+}
+
+button.secondary {
+  background: var(--actionSecondaryBackground);
+  color: var(--actionSecondaryText);
+  border-color: var(--border2);
+}
+
+button.secondary:hover {
+  background: var(--actionSecondaryBackgroundHover);
+}
+
+button:disabled {
+  background: var(--backgroundInactive);
+  color: var(--textInactive);
+  cursor: not-allowed;
+}
+
+/* Visible focus for keyboard users. Review checks accessibility. */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible {
+  outline: 2px solid var(--blueBorder);
+  outline-offset: 2px;
+}
+
+.muted {
+  color: var(--text3);
+}
+
+.error {
+  color: var(--redText);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
