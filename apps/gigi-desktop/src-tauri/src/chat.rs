@@ -1,16 +1,18 @@
 use serde_json::{json, Value};
 use std::collections::HashMap;
-use std::io::{Read, Write};
+use std::io::{BufRead, BufReader, Read, Write};
 use std::os::unix::fs::PermissionsExt;
 use std::os::unix::process::CommandExt;
 use std::path::{Path, PathBuf};
 use std::process::{Child, Command, Stdio};
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{mpsc, Mutex, OnceLock};
 use std::time::{Duration, Instant};
 
 const MAX_REQUEST: usize = 65_536;
 const MAX_RESPONSE: usize = 1_048_576;
 const REPLY_TIMEOUT: Duration = Duration::from_secs(60);
+static CLOSING: AtomicBool = AtomicBool::new(false);
 type WriteRequest = (Vec<u8>, mpsc::SyncSender<Result<(), ()>>);
 
 struct Companion {
@@ -23,6 +25,24 @@ struct Companion {
 fn companions() -> &'static Mutex<HashMap<PathBuf, Companion>> {
     static COMPANIONS: OnceLock<Mutex<HashMap<PathBuf, Companion>>> = OnceLock::new();
     COMPANIONS.get_or_init(|| Mutex::new(HashMap::new()))
+}
+
+// Independent of the protocol mutex: shutdown can interrupt pipe waits.
+fn cancellation_groups() -> &'static Mutex<HashMap<PathBuf, u32>> {
+    static GROUPS: OnceLock<Mutex<HashMap<PathBuf, u32>>> = OnceLock::new();
+    GROUPS.get_or_init(|| Mutex::new(HashMap::new()))
+}
+
+fn read_reply(reader: &mut impl BufRead) -> Result<Value, ()> {
+    let mut line = Vec::new();
+    reader
+        .take((MAX_RESPONSE + 2) as u64)
+        .read_until(b'\n', &mut line)
+        .map_err(|_| ())?;
+    if line.last() != Some(&b'\n') || line.len() > MAX_RESPONSE + 1 {
+        return Err(());
+    }
+    serde_json::from_slice(&line).map_err(|_| ())
 }
 
 fn permitted(operation: &str) -> bool {
@@ -60,6 +80,53 @@ fn find_codex_in_path(folders: impl IntoIterator<Item = PathBuf>) -> Option<Path
     })
 }
 
+fn find_codex_in_nvm(home: &Path) -> Option<PathBuf> {
+    if !home.is_absolute() {
+        return None;
+    }
+    let versions = home.join(".nvm/versions/node");
+    let mut folders: Vec<_> = std::fs::read_dir(versions)
+        .ok()?
+        .filter_map(Result::ok)
+        .filter_map(|entry| {
+            let name = entry.file_name().to_string_lossy().into_owned();
+            let version = name
+                .strip_prefix('v')?
+                .split('.')
+                .map(str::parse::<u32>)
+                .collect::<Result<Vec<_>, _>>()
+                .ok()?;
+            (version.len() == 3 && entry.path().is_dir())
+                .then_some((version, entry.path().join("bin")))
+        })
+        .collect();
+    folders.sort_by(|left, right| right.0.cmp(&left.0));
+    find_codex_in_path(folders.into_iter().map(|(_, folder)| folder))
+}
+
+fn companion_path(
+    codex: &Path,
+    inherited: Option<std::ffi::OsString>,
+) -> Result<std::ffi::OsString, String> {
+    let mut folders = Vec::new();
+    for ancestor in codex.ancestors() {
+        if ancestor
+            .parent()
+            .is_some_and(|parent| parent.ends_with(".nvm/versions/node"))
+        {
+            folders.push(ancestor.join("bin"));
+            break;
+        }
+    }
+    if let Some(parent) = codex.parent() {
+        folders.push(parent.to_path_buf());
+    }
+    if let Some(path) = inherited {
+        folders.extend(std::env::split_paths(&path));
+    }
+    std::env::join_paths(folders).map_err(|_| "Codex executable path unavailable".into())
+}
+
 fn find_codex() -> Option<PathBuf> {
     if let Some(value) = std::env::var_os("GIGI_CODEX_BINARY") {
         if let Some(path) = resolved_executable(&PathBuf::from(value)) {
@@ -81,6 +148,9 @@ fn find_codex() -> Option<PathBuf> {
             if let Some(path) = resolved_executable(&home.join(relative)) {
                 return Some(path);
             }
+        }
+        if let Some(path) = find_codex_in_nvm(&home) {
+            return Some(path);
         }
     }
     for candidate in ["/opt/homebrew/bin/codex", "/usr/local/bin/codex"] {
@@ -125,6 +195,7 @@ fn spawn(
     }
     command
         .env("GIGI_DATA_DIR", data_dir)
+        .env("PATH", companion_path(&codex, std::env::var_os("PATH"))?)
         .env("GIGI_CODEX_BINARY", codex)
         .env("GIGI_MCP_BINARY", resource_dir.join("gigi-mcp"))
         .env(
@@ -142,10 +213,12 @@ fn spawn(
         .stdin
         .take()
         .ok_or("Chat companion input unavailable")?;
-    let mut stdout = child
-        .stdout
-        .take()
-        .ok_or("Chat companion output unavailable")?;
+    let mut stdout = BufReader::new(
+        child
+            .stdout
+            .take()
+            .ok_or("Chat companion output unavailable")?,
+    );
     let (writer, write_jobs) = mpsc::channel::<(Vec<u8>, mpsc::SyncSender<Result<(), ()>>)>();
     std::thread::spawn(move || {
         for (request, answer) in write_jobs {
@@ -162,23 +235,7 @@ fn spawn(
     });
     let (reply_sender, replies) = mpsc::channel();
     std::thread::spawn(move || loop {
-        let mut line = Vec::new();
-        let mut one = [0_u8; 1];
-        let result = loop {
-            match stdout.read(&mut one) {
-                Ok(0) => break Err(()),
-                Ok(_) if one[0] == b'\n' => {
-                    break serde_json::from_slice::<Value>(&line).map_err(|_| ())
-                }
-                Ok(_) => {
-                    if line.len() >= MAX_RESPONSE {
-                        break Err(());
-                    }
-                    line.push(one[0]);
-                }
-                Err(_) => break Err(()),
-            }
-        };
+        let result = read_reply(&mut stdout);
         let failed = result.is_err();
         if reply_sender.send(result).is_err() || failed {
             break;
@@ -212,6 +269,21 @@ fn terminate(mut companion: Companion) {
 }
 
 pub fn cancel_all() {
+    CLOSING.store(true, Ordering::SeqCst);
+    let groups: Vec<_> = cancellation_groups()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .drain()
+        .map(|(_, group)| group)
+        .collect();
+    for group in groups {
+        // These are only process groups created by spawn above. Kill descendants
+        // too, so inherited pipe descriptors cannot keep the request blocked.
+        unsafe {
+            libc::kill(-(group as i32), libc::SIGTERM);
+            libc::kill(-(group as i32), libc::SIGKILL);
+        }
+    }
     let mut guard = companions().lock().unwrap_or_else(|e| e.into_inner());
     for (_, companion) in guard.drain() {
         terminate(companion);
@@ -249,15 +321,25 @@ fn dispatch_with_timeout(
         return Err("Chat request exceeds limit".into());
     }
     let mut guard = companions().lock().unwrap_or_else(|e| e.into_inner());
+    if CLOSING.load(Ordering::SeqCst) {
+        return Err("Chat companion is shutting down".into());
+    }
     if !guard.contains_key(data_dir) {
         #[cfg(test)]
         let codex = resolved_executable(&resource_dir.join("codex")).or_else(find_codex);
         #[cfg(not(test))]
         let codex = find_codex();
-        guard.insert(
-            data_dir.to_path_buf(),
-            spawn(resource_dir, data_dir, codex)?,
-        );
+        let companion = spawn(resource_dir, data_dir, codex)?;
+        let mut groups = cancellation_groups()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
+        if CLOSING.load(Ordering::SeqCst) {
+            drop(groups);
+            terminate(companion);
+            return Err("Chat companion is shutting down".into());
+        }
+        groups.insert(data_dir.to_path_buf(), companion.child.id());
+        guard.insert(data_dir.to_path_buf(), companion);
     }
     let result: Result<Result<Value, String>, String> = (|| {
         let companion = guard
@@ -319,6 +401,10 @@ fn dispatch_with_timeout(
     if result.is_err() {
         // Protocol, delivery, and timeout failures leave the stream in uncertain state.
         if let Some(companion) = guard.remove(data_dir) {
+            cancellation_groups()
+                .lock()
+                .unwrap_or_else(|e| e.into_inner())
+                .remove(data_dir);
             terminate(companion);
         }
     }
@@ -331,7 +417,9 @@ mod tests {
     use std::os::unix::fs::PermissionsExt;
     fn test_lock() -> std::sync::MutexGuard<'static, ()> {
         static LOCK: OnceLock<Mutex<()>> = OnceLock::new();
-        LOCK.get_or_init(|| Mutex::new(())).lock().unwrap()
+        let guard = LOCK.get_or_init(|| Mutex::new(())).lock().unwrap();
+        CLOSING.store(false, Ordering::SeqCst);
+        guard
     }
     fn fixture(script: &str) -> PathBuf {
         let root = std::env::temp_dir().join(format!("gigi-chat-{}", uuid::Uuid::new_v4()));
@@ -463,6 +551,80 @@ mod tests {
             matches!(result, Err(ref message) if message.contains("Codex executable unavailable"))
         );
         assert!(!root.join("started").exists());
+        std::fs::remove_dir_all(root).unwrap();
+    }
+    #[test]
+    fn nvm_discovery_selects_numeric_version_and_supplies_its_node_path() {
+        let _guard = test_lock();
+        let root = fixture("#!/bin/sh\nexit 0\n");
+        for version in ["v9.0.0", "v22.3.0"] {
+            let version_root = root.join(".nvm/versions/node").join(version);
+            let bin = version_root.join("bin");
+            let target = version_root.join("lib/node_modules/codex/codex.js");
+            std::fs::create_dir_all(&bin).unwrap();
+            std::fs::create_dir_all(target.parent().unwrap()).unwrap();
+            std::fs::write(&target, "#!/usr/bin/env node\n").unwrap();
+            std::fs::set_permissions(&target, std::fs::Permissions::from_mode(0o700)).unwrap();
+            std::os::unix::fs::symlink(&target, bin.join("codex")).unwrap();
+            std::fs::write(bin.join("node"), "#!/bin/sh\nprintf 'synthetic-node'\n").unwrap();
+            std::fs::set_permissions(bin.join("node"), std::fs::Permissions::from_mode(0o700))
+                .unwrap();
+        }
+        let codex = find_codex_in_nvm(&root).unwrap();
+        assert!(codex.starts_with(
+            root.join(".nvm/versions/node/v22.3.0")
+                .canonicalize()
+                .unwrap()
+        ));
+        let output = Command::new(&codex)
+            .env(
+                "PATH",
+                companion_path(&codex, Some("/usr/bin:/bin".into())).unwrap(),
+            )
+            .output()
+            .unwrap();
+        assert!(output.status.success());
+        assert_eq!(output.stdout, b"synthetic-node");
+        assert!(find_codex_in_nvm(Path::new("relative")).is_none());
+        std::fs::remove_dir_all(root).unwrap();
+    }
+    #[test]
+    fn buffered_reply_accepts_large_unicode_transcript_and_preserves_next_frame() {
+        let value = json!({"id":1,"ok":true,"value":{"text":"🎸".repeat(120_000)}});
+        let mut bytes = serde_json::to_vec(&value).unwrap();
+        bytes.extend_from_slice(b"\n{\"id\":2}\n");
+        let mut reader = BufReader::new(std::io::Cursor::new(bytes));
+        assert_eq!(read_reply(&mut reader).unwrap(), value);
+        assert_eq!(read_reply(&mut reader).unwrap(), json!({"id":2}));
+    }
+    #[test]
+    fn shutdown_interrupts_in_flight_request_and_prevents_relaunch() {
+        let _guard = test_lock();
+        let root = fixture("#!/bin/sh\ntrap '' TERM\nwhile IFS= read -r line; do touch \"$GIGI_DATA_DIR/waiting\"; (sleep 2; touch \"$GIGI_DATA_DIR/leaked\") & sleep 10; done\n");
+        let worker_root = root.clone();
+        let worker = std::thread::spawn(move || {
+            dispatch_with_timeout(
+                &worker_root,
+                &worker_root,
+                "agent.chat.send",
+                json!({"message":"hi"}),
+                Duration::from_secs(10),
+            )
+        });
+        let deadline = Instant::now() + Duration::from_secs(3);
+        while !root.join("waiting").exists() && Instant::now() < deadline {
+            std::thread::sleep(Duration::from_millis(10));
+        }
+        assert!(root.join("waiting").exists());
+        let started = Instant::now();
+        cancel_all();
+        assert!(started.elapsed() < Duration::from_secs(2));
+        assert!(worker.join().unwrap().is_err());
+        assert!(dispatch(&root, &root, "agent.chat.status", json!({}))
+            .unwrap_err()
+            .contains("shutting down"));
+        std::thread::sleep(Duration::from_millis(2200));
+        assert!(!root.join("leaked").exists());
         std::fs::remove_dir_all(root).unwrap();
     }
 }

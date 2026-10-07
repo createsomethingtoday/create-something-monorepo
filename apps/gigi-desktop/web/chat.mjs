@@ -91,6 +91,8 @@ export class ChatController {
   accept(result) {
     if (!result || result.sessionId !== this.current?.sessionId || !['idle', 'running', 'approval', 'interrupted', 'failed'].includes(result.state)) return false;
     const previous = this.current.state;
+    const previousReceipt = this.current.decisionReceipt;
+    const verifiedEdit = result.decisionReceipt?.outcome === 'verified' && (previousReceipt?.outcome !== 'verified' || previousReceipt.approvalId !== result.decisionReceipt.approvalId);
     const messages = Array.isArray(result.messages) && result.messages.length ? result.messages : this.current.messages;
     this.current = { ...result, messages }; this.error = result.error || null;
     const unconfirmed = this.unconfirmedSends.get(result.sessionId);
@@ -101,7 +103,7 @@ export class ChatController {
     }
     if (this.visible) this.refreshRequired = false;
     this.emit();
-    if (['running', 'approval'].includes(previous) && result.state === 'idle') void this.completed?.(result);
+    if (verifiedEdit || (['running', 'approval'].includes(previous) && result.state === 'idle')) void this.completed?.(result);
     if (result.state === 'running') this.queuePoll();
     return true;
   }

@@ -211,3 +211,14 @@ test('authoritative edit receipt is separate from stale provider prose', () => {
     assert.doesNotMatch(chatView(chat), /Changes saved and verified/);
   }
 });
+
+for (const state of ['failed', 'interrupted']) test(`verified edit refreshes records after ${state} provider turn`, () => {
+  let refreshes = 0;
+  const chat = new ChatController({}, 'w1', () => {}, () => { refreshes++; });
+  chat.current = session('approval');
+  const result = session(state, { decisionReceipt: { approvalId: 'a1', outcome: 'verified' } });
+  assert.equal(chat.accept(result), true);
+  assert.equal(refreshes, 1);
+  chat.accept(result);
+  assert.equal(refreshes, 1, 'repeated receipt must not repeat the refresh');
+});

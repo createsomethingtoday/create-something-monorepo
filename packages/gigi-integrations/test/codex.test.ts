@@ -330,7 +330,7 @@ test('verified approval receipt survives completed provider prose and adapter re
 for (const outcome of ['rejected', 'failed', 'unknown'] as const) test(`${outcome} approval never produces a verified receipt`, async () => {
   const { adapter, server, mcp } = await setup();
   const { sessionId } = await adapter.start({ workspaceId: 'w', message: 'edit' });
-  await Promise.all(server.events.map(fn => fn({ id: 91, method: 'item/tool/call', params: { threadId: 'thread-1', tool: 'gigi_records_save', arguments: { workspaceId: 'w', entity: 'tasks', id: 'r', title: 'Task' } } })));
+  await Promise.all(server.events.map(fn => fn({ id: 91, method: 'item/tool/call', params: { threadId: 'thread-1', tool: 'gigi_records_save', arguments: { workspaceId: 'w', entity: 'tasks', id: 'r', title: 'Updated task' } } })));
   const approval = (await adapter.read({ workspaceId: 'w', sessionId })).approvals[0];
   const original = mcp.request.bind(mcp); let writes = 0;
   mcp.request = async (method, params) => {
@@ -422,4 +422,54 @@ test('JSON-line decoding retains Unicode across a split pipe chunk', async () =>
   const client = new JsonLineProcess(process.execPath, ['-e', childCode], process.env);
   try { assert.deepEqual(await client.request('ping', {}), { text }); }
   finally { await client.close(); }
+});
+
+
+test('materialized streamed turns cannot reappear after falling outside the transcript window', async () => {
+  const { adapter, server } = await setup();
+  const { sessionId } = await adapter.start({ workspaceId: 'w', message: 'first' });
+  const original = server.request.bind(server); let turn = 1;
+  server.request = async (method, params) => method === 'turn/start' ? { turn: { id: `turn-${++turn}` } } : original(method, params);
+  const turns: any[] = [];
+  for (let i = 1; i <= 26; i++) {
+    if (i > 1) await adapter.send({ workspaceId: 'w', sessionId, message: `Question ${i}` });
+    const id = `answer-${i}`, text = `Answer ${i}`;
+    await Promise.all(server.events.map(fn => fn({ method: 'item/agentMessage/delta', params: { threadId: 'thread-1', turnId: `turn-${i}`, itemId: id, delta: text } })));
+    turns.push({ id: `turn-${i}`, status: 'completed', items: [{ id, type: 'agentMessage', text }] });
+    server.thread.turns = turns.slice(-20);
+    const read = await adapter.read({ workspaceId: 'w', sessionId });
+    assert.deepEqual(read.messages.map(message => message.id), turns.slice(-20).map(item => item.items[0].id));
+  }
+});
+
+for (const loseReply of [false, true]) test(`imported record manual source preserves origin and reconciles on reopen (lost reply: ${loseReply})`, async () => {
+  const { adapter, server, mcp, dataDir } = await setup();
+  const original = mcp.request.bind(mcp);
+  const imported = { kind: 'import', provider: 'synthetic', externalId: 'fixture-1' };
+  let actual = { id: 'r', title: 'Task', fields: {}, source: imported as any };
+  let writes = 0;
+  mcp.request = async (method, params) => {
+    if (params.name === 'gigi_records_get') return { structuredContent: actual, content: [] };
+    if (params.name === 'gigi_records_save') {
+      writes++;
+      if (loseReply) throw new Error('lost reply');
+      actual = { ...actual, source: { kind: 'manual', origin: imported } };
+      return { structuredContent: actual, content: [] };
+    }
+    return original(method, params);
+  };
+  const { sessionId } = await adapter.start({ workspaceId: 'w', message: 'edit' });
+  await Promise.all(server.events.map(fn => fn({ id: 205, method: 'item/tool/call', params: { threadId: 'thread-1', tool: 'gigi_records_save', arguments: { workspaceId: 'w', entity: 'tasks', id: 'r', title: 'Task', source: { kind: 'manual' } } } })));
+  const approval = (await adapter.read({ workspaceId: 'w', sessionId })).approvals[0];
+  const result = await adapter.approve({ workspaceId: 'w', sessionId, approvalId: approval.id, decision: 'approve' });
+  assert.equal(result.decisionReceipt?.outcome, loseReply ? 'unknown' : 'verified');
+  if (loseReply) {
+    actual = { ...actual, source: { kind: 'manual', origin: imported } };
+    const restarted = createCodexAdapter({ dataDir, mcpBinary: '/fixture/gigi-mcp', skillPath: '/fixture/skill/SKILL.md', server, mcp });
+    await assert.rejects(restarted.read({ workspaceId: 'other-workspace', sessionId }), /session_not_found/);
+    const reopened = await restarted.read({ workspaceId: 'w', sessionId });
+    assert.equal(reopened.decisionReceipt?.outcome, 'verified');
+    assert.equal(reopened.error, undefined);
+  }
+  assert.equal(writes, 1, 'fresh read must not replay the save');
 });

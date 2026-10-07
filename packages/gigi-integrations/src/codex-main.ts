@@ -58,6 +58,7 @@ async function serve(server: JsonLineProcess, mcp: JsonLineProcess): Promise<voi
   mcp.notify('notifications/initialized');
   const adapter = createCodexAdapter({ dataDir: dataDir!, mcpBinary: mcpBinary!, skillPath: skillPath!, server, mcp });
   let buffer = '';
+  process.stdin.setEncoding('utf8');
   for await (const chunk of process.stdin) {
     buffer += String(chunk);
     if (buffer.length > 65_536) { process.stdout.write(JSON.stringify({ id: null, ok: false, error: { reason: 'invalid_request' } }) + '\n'); buffer = ''; continue; }

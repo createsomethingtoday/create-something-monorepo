@@ -21,7 +21,10 @@ function savedEditMatches(actual: Json, intended: Json): boolean {
   const fieldsMatch = intended.fieldsMode === 'replace'
     ? isDeepStrictEqual(actual?.fields, fields)
     : Object.entries(fields).every(([key, value]) => isDeepStrictEqual(actual?.fields?.[key], value));
-  return fieldsMatch && (intended.source === undefined || isDeepStrictEqual(actual?.source, intended.source));
+  let source = intended.source;
+  const priorSource = intended.expectedRecord?.source;
+  if (source?.kind === 'manual' && priorSource && priorSource.kind !== 'manual') source = { ...source, origin: priorSource };
+  return fieldsMatch && (source === undefined || isDeepStrictEqual(actual?.source, source));
 }
 
 const READ_TOOLS = new Set(['gigi_workspace_get', 'gigi_schema_describe', 'gigi_records_list', 'gigi_records_get', 'gigi_gigs_summary', 'gigi_history_list', 'gigi_context_search']);
@@ -45,7 +48,7 @@ export function createCodexAdapter(options: CodexOptions) {
   const sessions = new Map<string, Session>();
   const approvals = new Map<string, Approval>();
   const loadedThreads = new Set<string>();
-  const liveMessages = new Map<string, Map<string, string>>();
+  const liveMessages = new Map<string, Map<string, { text: string; turnId?: string }>>();
   let loaded = false;
   let queue = Promise.resolve();
 
@@ -154,8 +157,23 @@ export function createCodexAdapter(options: CodexOptions) {
     } catch (error) { session.state = submitted ? 'failed' : 'idle'; session.error = submitted ? 'turn_outcome_unknown' : undefined; if (!submitted) session.pendingMessageId = undefined; await persist(); throw error; }
     return { sessionId: session.sessionId, messages: [], state: 'running', approvals: [], recordLinks: session.record ? [session.record] : [], ...(session.decisionReceipt ? { decisionReceipt: session.decisionReceipt } : {}) };
   }
+  async function reconcileSavedEdits(workspaceId: string): Promise<void> {
+    for (const pending of sessions.values()) {
+      if (pending.workspaceId !== workspaceId || pending.uncertainWrite?.tool !== 'gigi_records_save') continue;
+      const intended = pending.uncertainWrite.arguments;
+      try {
+        const result = await options.mcp!.request('tools/call', { name: 'gigi_records_get', arguments: { workspaceId, entity: intended.entity, id: intended.id, detail: 'full' } });
+        const actual = result.structuredContent ?? JSON.parse(result.content?.find((x: Json) => x.type === 'text')?.text ?? '{}');
+        if (!result.isError && savedEditMatches(actual, intended)) {
+          if (pending.decisionReceipt?.outcome === 'unknown') pending.decisionReceipt.outcome = 'verified';
+          pending.uncertainWrite = undefined; pending.error = undefined; await persist();
+        }
+      } catch { /* Keep the write fence until a complete matching read succeeds. */ }
+    }
+  }
   async function read(input: Json): Promise<ChatRead> {
     const session = await owner(input);
+    await reconcileSavedEdits(session.workspaceId);
     if (!session.threadId) return { sessionId: session.sessionId, messages: [], state: session.state, approvals: [], recordLinks: session.record ? [session.record] : [], ...(session.decisionReceipt ? { decisionReceipt: session.decisionReceipt } : {}) };
     if (!loadedThreads.has(session.threadId)) { await options.server.request('thread/resume', { threadId: session.threadId, ...profile(await dynamicTools(), session) }); loadedThreads.add(session.threadId); }
     // Codex 0.159.2 advertises turns/list but returns "list_turns is not supported yet".
@@ -163,7 +181,7 @@ export function createCodexAdapter(options: CodexOptions) {
     try { response = await options.server.request('thread/read', { threadId: session.threadId, includeTurns: true }); }
     catch (error) {
       if (session.state !== 'running' && session.state !== 'approval') throw error;
-      const pending: ChatRead = { sessionId: session.sessionId, messages: [...(liveMessages.get(session.sessionId) ?? [])].slice(-50).map(([id, text]) => ({ id, role: 'assistant' as const, text })), state: session.state, approvals: [...approvals.values()].filter(x => x.sessionId === session.sessionId).map(({ id, title, detail }) => ({ id, title, detail })), recordLinks: session.record ? [session.record] : [], ...(session.decisionReceipt ? { decisionReceipt: session.decisionReceipt } : {}), ...(session.error ? { error: session.error } : {}) };
+      const pending: ChatRead = { sessionId: session.sessionId, messages: [...(liveMessages.get(session.sessionId) ?? [])].filter(([, entry]) => entry.turnId === session.turnId).slice(-50).map(([id, entry]) => ({ id, role: 'assistant' as const, text: entry.text })), state: session.state, approvals: [...approvals.values()].filter(x => x.sessionId === session.sessionId).map(({ id, title, detail }) => ({ id, title, detail })), recordLinks: session.record ? [session.record] : [], ...(session.decisionReceipt ? { decisionReceipt: session.decisionReceipt } : {}), ...(session.error ? { error: session.error } : {}) };
       while (pending.messages.length && Buffer.byteLength(JSON.stringify(pending)) > 500_000) pending.messages.shift();
       return pending;
     }
@@ -177,10 +195,14 @@ export function createCodexAdapter(options: CodexOptions) {
       if (turn.id === session.turnId && turn.status === 'inProgress') session.state = 'running';
       if (turn.id === session.turnId && turn.status !== 'inProgress' && (!session.pendingMessageId || turn.items?.some((x: Json) => x.type === 'userMessage' && x.clientId === session.pendingMessageId))) { session.state = turn.status === 'completed' ? 'idle' : turn.status === 'interrupted' ? 'interrupted' : 'failed'; session.pendingMessageId = undefined; session.cancelPending = false; if (!session.uncertainWrite) session.error = turn.error?.message; }
     }
-    for (const [id, text] of liveMessages.get(session.sessionId) ?? []) {
+    const stream = liveMessages.get(session.sessionId);
+    for (const [id, entry] of stream ?? []) {
       const existing = messages.find(x => x.id === id);
-      if (!existing) messages.push({ id, role: 'assistant', text: text.slice(0, MAX_TEXT) });
-      else if (text.length > existing.text.length) existing.text = text.slice(0, MAX_TEXT);
+      if (existing) {
+        if (entry.text.length > existing.text.length) existing.text = entry.text.slice(0, MAX_TEXT);
+        else stream?.delete(id); // Authoritative text now contains the whole streamed item.
+      } else if (entry.turnId === session.turnId) messages.push({ id, role: 'assistant', text: entry.text.slice(0, MAX_TEXT) });
+      else stream?.delete(id); // Older items outside the authoritative window cannot reappear.
     }
     const pending = [...approvals.values()].filter(x => x.sessionId === session.sessionId);
     if (pending.length) session.state = 'approval';
@@ -253,8 +275,9 @@ export function createCodexAdapter(options: CodexOptions) {
       if (session && message.method === 'item/agentMessage/delta') {
         const id = String(message.params?.itemId ?? '');
         const part = String(message.params?.delta ?? '');
-        const stream = liveMessages.get(session.sessionId) ?? new Map<string, string>();
-        stream.set(id, (stream.get(id) ?? '').concat(part).slice(0, MAX_TEXT));
+        const stream = liveMessages.get(session.sessionId) ?? new Map<string, { text: string; turnId?: string }>();
+        stream.set(id, { text: (stream.get(id)?.text ?? '').concat(part).slice(0, MAX_TEXT), turnId: message.params?.turnId ?? session.turnId });
+        while (stream.size > 50) stream.delete(stream.keys().next().value!);
         liveMessages.set(session.sessionId, stream);
       }
       // The notification can precede rollout materialization. Keep polling until
