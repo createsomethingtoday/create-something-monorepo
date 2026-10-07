@@ -54,7 +54,7 @@ Production React includes the `reactjs.org/docs/error-decoder` URL in its minifi
 
 ### Vendored form rules
 
-`src/vendor/form-rules/` is a one-way copy of six self-contained rule modules from `webflow/wf-app-form-cloud`, the submission form. They were calibrated against approved and rejected live listings. `VENDOR.json` records the source commit. Re-sync with:
+`src/vendor/form-rules/` is a one-way copy of seven self-contained rule modules from `webflow/wf-app-form-cloud`, the submission form. They were calibrated against approved and rejected live listings. `VENDOR.json` records the source commit. Re-sync with:
 
 ```bash
 pnpm --filter @create-something/webflow-app-forge sync:form-rules [path-to-checkout]
