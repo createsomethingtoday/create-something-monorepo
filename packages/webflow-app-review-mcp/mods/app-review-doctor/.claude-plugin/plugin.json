@@ -1,0 +1,17 @@
+{
+  "name": "app-review-doctor",
+  "version": "0.1.0",
+  "description": "Runs the Webflow App Forge doctor after every extension build, shows the result in a band and a pane, and reminds the model what Marketplace review checks.",
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "forgeCli": {
+      "type": "string",
+      "description": "Absolute path to packages/webflow-app-forge/src/cli.mjs",
+      "default": "/Users/micahjohnson/Code/create-something-monorepo/packages/webflow-app-forge/src/cli.mjs",
+      "title": "Forge CLI path"
+    }
+  },
+  "author": {
+    "name": "Webflow Marketplace team (internal)"
+  }
+}

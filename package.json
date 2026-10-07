@@ -379,6 +379,7 @@
     "linear:done": "node scripts/linear/remote.mjs done",
     "linear:comment": "node scripts/linear/remote.mjs comment",
     "linear:registry:sync": "node scripts/linear/sync-registry.mjs",
+    "forge": "node packages/webflow-app-forge/src/cli.mjs",
     "airtable:primary-tags:dry-run": "node --import tsx scripts/airtable-tag-agent.ts --dry-run",
     "airtable:primary-tags:run": "node --import tsx scripts/airtable-tag-agent.ts --live",
     "template-review:agent-feedback": "node --import tsx scripts/template-review-agent-feedback.ts",
