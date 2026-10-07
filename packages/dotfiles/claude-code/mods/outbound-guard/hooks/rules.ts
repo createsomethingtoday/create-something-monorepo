@@ -139,7 +139,15 @@ export function resolve(name: string, args: Args): Outbound | null {
     return { ...base, summary: `Public Zendesk reply to the app developer on ${str(args.version_id) ?? '?'}`, text: str(args.message) }
   }
   if (tool === 'app_review_create_ticket') {
-    return { ...base, summary: `New Zendesk ticket to the app developer: "${str(args.subject) ?? ''}"`, text: str(args.message) }
+    const target = str(args.version_id) !== null ? `version ${str(args.version_id)}` : `asset ${str(args.asset_id) ?? '?'}`
+    const to = str(args.requester_email) ?? "the asset's creator email"
+    return {
+      ...base,
+      summary: `New Zendesk ticket to ${to} (${target}): "${str(args.subject) ?? ''}"`,
+      text: str(args.message),
+      // The MCP refuses without confirm_send; approving this dialog is that confirmation.
+      fixed: { ...args, confirm_send: true },
+    }
   }
   // Decision transitions release creator-facing emails through the base's
   // review-status automations, so they get the same dialog as a direct send.

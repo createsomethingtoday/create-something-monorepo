@@ -158,3 +158,10 @@ test('rules: asset-metadata status route, Gmail recipient roles, literal plain-t
   expect(roles?.literal).toBe(true)
   expect(resolve(GMAIL, { to: ['a@example.com'], htmlBody: '<b>hi</b>' })?.literal).toBe(false)
 })
+
+test('rules: a new App Review ticket names its recipient and is sent with confirm_send after approval', () => {
+  const out = resolve('mcp__claude_ai_App_Review_MCP__app_review_create_ticket', { asset_id: 'a1', requester_email: 'dev@example.com', subject: 'Hi', message: 'Body' })
+  expect(out?.summary).toMatch(/to dev@example.com \(asset a1\)/)
+  expect(out?.fixed?.confirm_send).toBe(true)
+  expect(resolve('mcp__claude_ai_App_Review_MCP__app_review_create_ticket', { version_id: 'v1', subject: 'Hi', message: 'Body' })?.summary).toMatch(/creator email \(version v1\)/)
+})
