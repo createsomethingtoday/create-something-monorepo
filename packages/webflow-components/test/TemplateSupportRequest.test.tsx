@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { TemplateSupportRequest } from '../src/components/marketplace/TemplateSupportRequest';
+import { TemplateSupportRequest, loadStoredDraft, storeDraft } from '../src/components/marketplace/TemplateSupportRequest';
 import {
   SUPPORT_REQUEST_ENDPOINT,
   createIdempotencyKey,
@@ -108,4 +108,31 @@ test('keeps the timeout armed while the response body is decoding', async () => 
   const result = await submitSupportRequest(payload, stalledBody, SUPPORT_REQUEST_ENDPOINT, 50);
   assert.equal(result.ok, false);
   assert.ok(Date.now() - started < 2_000);
+});
+
+test('persists an unsent draft per template and clears it once sent', () => {
+  const globalRef = globalThis as typeof globalThis & { window?: unknown };
+  const original = globalRef.window;
+  const store = new Map<string, string>();
+  globalRef.window = {
+    sessionStorage: {
+      getItem: (key: string) => store.get(key) ?? null,
+      setItem: (key: string, value: string) => void store.set(key, value),
+      removeItem: (key: string) => void store.delete(key),
+    },
+  };
+  try {
+    const draft = { requestType: 'other' as const, buyerName: '', buyerEmail: 'a@example.com', message: 'Hello there', idempotencyKey: 'tsr-abcdef0123456789' };
+    storeDraft('meridian', draft);
+    assert.deepEqual(loadStoredDraft('meridian'), draft);
+    assert.equal(loadStoredDraft('other-template'), null);
+    storeDraft('meridian', null);
+    assert.equal(loadStoredDraft('meridian'), null);
+    // Throwing storage (private mode) degrades to memory only.
+    globalRef.window = { get sessionStorage(): never { throw new Error('blocked'); } };
+    assert.doesNotThrow(() => storeDraft('meridian', draft));
+    assert.equal(loadStoredDraft('meridian'), null);
+  } finally {
+    globalRef.window = original;
+  }
 });

@@ -123,6 +123,34 @@ function emptyDraft(): SupportRequestDraft {
   return { requestType: '', buyerName: '', buyerEmail: '', message: '', idempotencyKey: createIdempotencyKey() };
 }
 
+// sessionStorage, per template: an unsent submission survives a reload or
+// remount in the buyer's own tab, so retrying it after an uncertain failure
+// reuses the original key. Storage can be absent or throw (private mode,
+// blocked site data); the component then falls back to memory only.
+const DRAFT_STORAGE_PREFIX = 'wf_tm_support_draft:';
+
+export function loadStoredDraft(templateSlug: string): SupportRequestDraft | null {
+  try {
+    const raw = window.sessionStorage.getItem(DRAFT_STORAGE_PREFIX + templateSlug);
+    if (!raw) return null;
+    const draft = JSON.parse(raw) as SupportRequestDraft;
+    return typeof draft?.idempotencyKey === 'string' && /^[A-Za-z0-9_-]{16,64}$/.test(draft.idempotencyKey)
+      ? draft
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+export function storeDraft(templateSlug: string, draft: SupportRequestDraft | null): void {
+  try {
+    if (draft) window.sessionStorage.setItem(DRAFT_STORAGE_PREFIX + templateSlug, JSON.stringify(draft));
+    else window.sessionStorage.removeItem(DRAFT_STORAGE_PREFIX + templateSlug);
+  } catch {
+    // Memory-only fallback.
+  }
+}
+
 interface SupportRequestDialogProps {
   templateSlug: string;
   templateName: string;
@@ -400,11 +428,15 @@ const TemplateSupportRequestInner: React.FC<TemplateSupportRequestProps> = ({
 }) => {
   useMarketplaceComponentErrorTracking(COMPONENT, enableAnalytics);
   const [open, setOpen] = useState(false);
-  const draftRef = useRef<SupportRequestDraft | null>(null);
-  const handleDraftChange = useCallback((next: SupportRequestDraft | null) => {
-    draftRef.current = next;
-  }, []);
   const slug = inferTemplateSlug(templateSlug);
+  const draftRef = useRef<SupportRequestDraft | null>(null);
+  const handleDraftChange = useCallback(
+    (next: SupportRequestDraft | null) => {
+      draftRef.current = next;
+      if (slug) storeDraft(slug, next);
+    },
+    [slug],
+  );
   const label = buttonLabel.trim() || (creatorName ? `Contact ${creatorName}` : 'Contact creator');
 
   const handleOpen = () => {
@@ -424,7 +456,7 @@ const TemplateSupportRequestInner: React.FC<TemplateSupportRequestProps> = ({
           templateName={templateName}
           creatorName={creatorName}
           enableAnalytics={enableAnalytics}
-          draft={draftRef.current ?? emptyDraft()}
+          draft={draftRef.current ?? loadStoredDraft(slug) ?? emptyDraft()}
           onDraftChange={handleDraftChange}
           onClose={() => setOpen(false)}
         />
