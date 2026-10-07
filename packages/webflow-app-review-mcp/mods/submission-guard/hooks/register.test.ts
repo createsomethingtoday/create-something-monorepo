@@ -16,6 +16,8 @@ test('submit-form requests and .map-into-public moves are refused; ordinary comm
 test('writes and edits of a .map under public/ are refused', () => {
   expect(fileDenyReason('/app/public/bundle.js.map')).toMatch(/review-artifacts/)
   expect(fileDenyReason('public/x.map')).toMatch(/review-artifacts/)
+  expect(fileDenyReason('/app/public/maps/bundle.js.map')).toMatch(/review-artifacts/)
+  expect(fileDenyReason('public/assets/js/vendor.css.map')).toMatch(/review-artifacts/)
   expect(fileDenyReason('/app/review-artifacts/bundle.js.map')).toBe(null)
   expect(fileDenyReason('/app/public/index.html')).toBe(null)
 })

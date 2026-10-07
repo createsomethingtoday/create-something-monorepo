@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Judge agent findings against reviewer feedback.
 //
-//   node scripts/judge.mjs --arm astra [--only recX]
+//   node scripts/judge.mjs --arm astra [--only recX] [--force] [--relabel]
 //
 // Two steps, both with Claude as an independent judge (a different vendor
 // from every arm under test):
@@ -14,6 +14,7 @@
 //      a plausible issue the reviewer did not name, or unsupported?
 // Writes runs/<arm>/<versionId>/judgment.json.
 import Anthropic from '@anthropic-ai/sdk';
+import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -55,8 +56,22 @@ for (const versionId of versionIds) {
 
 async function labelReviewer(v) {
   const cache = join(PKG, 'corpus', 'judged-labels', `${v.versionId}.json`);
-  if (existsSync(cache)) return JSON.parse(readFileSync(cache, 'utf8'));
   const text = `${labels[v.versionId]?.rejectionFeedback ?? ''}\n\n${labels[v.versionId]?.reviewFeedback ?? ''}`.trim();
+  // The cache is keyed on its inputs: feedback text, taxonomy and judge model. A corpus refresh
+  // that edits the feedback, a taxonomy change or a model change relabels. Files written before
+  // this key existed are accepted once and stamped, because the corpus has not been rebuilt since;
+  // pass --relabel to force.
+  const inputsHash = createHash('sha256').update(`${MODEL}\n${CODES}\n${text}`).digest('hex').slice(0, 16);
+  if (existsSync(cache) && !args.relabel) {
+    const cached = JSON.parse(readFileSync(cache, 'utf8'));
+    if (cached.inputsHash === inputsHash) return cached;
+    if (cached.inputsHash === undefined) {
+      cached.inputsHash = inputsHash;
+      writeFileSync(cache, JSON.stringify(cached, null, 2));
+      return cached;
+    }
+    console.log(`relabel ${v.appName} v${v.versionNumber}: inputs changed`);
+  }
   const res = await client.messages.parse({
     model: MODEL,
     max_tokens: 8000,
@@ -96,6 +111,7 @@ async function labelReviewer(v) {
     },
   });
   const parsed = res.parsed_output ?? res.parsed ?? firstJson(res);
+  parsed.inputsHash = inputsHash;
   writeFileSync(cache, JSON.stringify(parsed, null, 2));
   return parsed;
 }

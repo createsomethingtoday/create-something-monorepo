@@ -130,3 +130,16 @@ test('exception item routes: a status flip, a new request and a resolution are d
   expect(call('resolve_exception_item', { exception_item_id: 'recItem', resolved_in_version_id: 'recV2', resolution_notes: 'verified' })).toMatch(/Resolve exception item/)
   expect(String(EXC_UPDATE).endsWith('update_exception_item')).toBe(true)
 })
+
+test('a failed get_review_context payload (ok:false) does not count as loaded context', async ($, on) => {
+  let reached = 0
+  on('tool.call', (_$, e) => {
+    reached += 1
+    if (String(e.tool) === CTX) return { result: { ok: false, error: 'Airtable 503' } }
+    return { result: { ok: true } }
+  })
+  await $.tool.call({ tool: CTX, version_id: 'recF' })
+  const ran = await $.tool.call({ tool: APPROVE, version_id: 'recF', review_feedback: CLEAN })
+  expect(ran.deny).toMatch(/get_review_context/)
+  expect(reached).toBe(1)
+})

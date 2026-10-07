@@ -18,8 +18,9 @@ export const register: Register = on => {
       } catch {
         // no manifest here; the CLI will say so
       }
-      const entries = await $.fs.list(`${cwd}/${publicDir}`).catch(() => [])
-      const maps = entries.filter(entry => entry.name.endsWith('.map')).map(entry => entry.name)
+      // Any depth: public/maps/bundle.js.map ships just like public/bundle.js.map.
+      const found = await $.process.run(['find', publicDir, '-type', 'f', '-name', '*.map'], { cwd, timeoutMs: 10_000 }).catch(() => null)
+      const maps = (found?.stdout ?? '').split('\n').map(s => s.trim()).filter(Boolean)
       if (maps.length > 0) {
         const deny = `submission-guard: ${publicDir}/ holds ${maps.join(', ')}; bundling now ships a source map to customers. Move it to review-artifacts/ first.`
         $.ui.toast(deny)

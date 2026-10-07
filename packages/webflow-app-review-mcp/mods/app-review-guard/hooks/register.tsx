@@ -174,8 +174,9 @@ export const register: Register = on => {
 
     if (call.name === 'get_review_context') {
       const ran = await next(e)
-      if (ran.deny === undefined && ran.isError === undefined && versionId !== null) {
-        const text = resultText(ran)
+      // asError() serializes { ok: false } as ordinary content without the transport isError flag.
+      const text = resultText(ran)
+      if (ran.deny === undefined && ran.isError === undefined && versionId !== null && !/"ok"\s*:\s*false/.test(text)) {
         await update($, contextLoaded, list => (list.includes(versionId) ? list : [...list, versionId]))
         const app = NAME_RE.exec(text)?.[1]
         if (app !== undefined) await update($, names, known => ({ ...known, [versionId]: app }))

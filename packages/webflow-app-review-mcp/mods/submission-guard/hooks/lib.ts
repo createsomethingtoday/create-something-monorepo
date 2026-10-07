@@ -18,7 +18,7 @@ export function bashDenyReason(command: string): string | null {
 
 /** Why a Write or Edit to this path is refused, or null. */
 export function fileDenyReason(filePath: string): string | null {
-  if (/(^|\/)public\/[^/]*\.map$/.test(filePath)) {
+  if (/(^|\/)public\/.*\.map$/.test(filePath)) {
     return 'submission-guard: source maps never go in public/. Write to review-artifacts/ instead.'
   }
   return null
