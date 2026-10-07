@@ -6,6 +6,9 @@ import { Effect } from 'effect';
 import { isDeepStrictEqual } from 'node:util';
 
 type Json = Record<string, any>;
+export class ProviderResponseError extends Error {
+  constructor(message: string) { super(message); this.name = 'ProviderResponseError'; }
+}
 type State = 'idle' | 'running' | 'approval' | 'interrupted' | 'failed';
 type RecordRef = { entity: string; id: string; title?: string };
 type DecisionReceipt = { approvalId: string; outcome: 'verified' | 'rejected' | 'failed' | 'unknown' };
@@ -154,7 +157,15 @@ export function createCodexAdapter(options: CodexOptions) {
       session.state = 'running'; session.error = 'turn_outcome_unknown'; session.turnId = undefined; session.pendingMessageId = randomUUID(); await persist(); submitted = true;
       const response = await options.server.request('turn/start', { threadId: session.threadId, clientUserMessageId: session.pendingMessageId, disabledPluginIds, input: [{ type: 'text', text: message, text_elements: [] }, { type: 'skill', name: 'gigi', path: options.skillPath }], environments: [], runtimeWorkspaceRoots: [], approvalPolicy: 'on-request', approvalsReviewer: 'user' });
       session.turnId = required(response?.turn?.id); session.pendingMessageId = undefined; session.state = 'running'; session.error = undefined; await persist();
-    } catch (error) { session.state = submitted ? 'failed' : 'idle'; session.error = submitted ? 'turn_outcome_unknown' : undefined; if (!submitted) session.pendingMessageId = undefined; await persist(); throw error; }
+    } catch (error) {
+      const rejected = submitted && error instanceof ProviderResponseError;
+      session.state = submitted ? 'failed' : 'idle';
+      session.error = rejected ? 'provider_turn_rejected' : submitted ? 'turn_outcome_unknown' : undefined;
+      if (!submitted || rejected) session.pendingMessageId = undefined;
+      await persist();
+      if (rejected) throw new Error('provider_turn_rejected');
+      throw error;
+    }
     return { sessionId: session.sessionId, messages: [], state: 'running', approvals: [], recordLinks: session.record ? [session.record] : [], ...(session.decisionReceipt ? { decisionReceipt: session.decisionReceipt } : {}) };
   }
   async function reconcileSavedEdits(workspaceId: string): Promise<void> {
@@ -360,7 +371,7 @@ export class JsonLineProcess implements AppServer {
       this.buffer += String(chunk);
       if (this.buffer.length > 1_000_000) { this.child.kill('SIGTERM'); return; }
       for (;;) { const end = this.buffer.indexOf('\n'); if (end < 0) break; const line = this.buffer.slice(0, end); this.buffer = this.buffer.slice(end + 1); if (!line) continue;
-        try { const message = JSON.parse(line); if (message.id !== undefined && (message.result !== undefined || message.error !== undefined)) { const p = this.pending.get(message.id); if (p) { this.pending.delete(message.id); message.error ? p.reject(new Error(message.error.message ?? 'provider_error')) : p.resolve(message.result); } } else this.listeners.forEach(fn => {
+        try { const message = JSON.parse(line); if (message.id !== undefined && (message.result !== undefined || message.error !== undefined)) { const p = this.pending.get(message.id); if (p) { this.pending.delete(message.id); message.error ? p.reject(new ProviderResponseError(message.error.message ?? 'provider_error')) : p.resolve(message.result); } } else this.listeners.forEach(fn => {
           void Promise.resolve().then(() => fn(message)).catch(async () => {
             if (message.id === undefined) return;
             const result = message.method === 'item/tool/call' ? { contentItems: [{ type: 'inputText', text: 'GiGi tool unavailable; no write was retried.' }], success: false } : { decision: 'decline' };
@@ -377,12 +388,12 @@ export class JsonLineProcess implements AppServer {
   }
   request(method: string, params: Json): Promise<any> {
     const id = this.nextId++;
-    return Effect.runPromise(Effect.tryPromise({ try: () => new Promise((resolve, reject) => {
+    return Effect.runPromise(Effect.either(Effect.tryPromise({ try: () => new Promise((resolve, reject) => {
       if (this.exited) { reject(new Error('provider_exited')); return; }
       const timeout = setTimeout(() => { this.pending.delete(id); reject(new Error('provider_timeout')); }, 15_000);
       this.pending.set(id, { resolve: value => { clearTimeout(timeout); resolve(value); }, reject: error => { clearTimeout(timeout); reject(error); } });
       this.child.stdin.write(JSON.stringify({ jsonrpc: '2.0', id, method, params }) + '\n', error => { if (error) { const pending = this.pending.get(id); this.pending.delete(id); pending?.reject(error); } });
-    }), catch: cause => cause }));
+    }), catch: cause => cause }))).then(result => { if (result._tag === 'Left') throw result.left; return result.right; });
   }
   onMessage(handler: (message: Json) => void) { this.listeners.add(handler); return () => this.listeners.delete(handler); }
   reply(id: string | number, result: unknown): Promise<void> { return new Promise((resolve, reject) => this.child.stdin.write(JSON.stringify({ jsonrpc: '2.0', id, result }) + '\n', error => error ? reject(error) : resolve())); }

@@ -3,7 +3,7 @@ import { mkdtemp, readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
-import { createCodexAdapter, JsonLineProcess, type AppServer } from '../src/codex.ts';
+import { createCodexAdapter, JsonLineProcess, ProviderResponseError, type AppServer } from '../src/codex.ts';
 
 class FakeServer implements AppServer {
   calls: Array<{ method: string; params: any }> = [];
@@ -493,4 +493,27 @@ test('matching uncertain running turn restores cancellation without a duplicate 
   await assert.rejects(adapter.send({ workspaceId: 'w', sessionId, message: 'repeat' }), /turn_in_progress/);
   await adapter.cancel({ workspaceId: 'w', sessionId });
   assert.equal([...server.calls].reverse().find(x => x.method === 'turn/interrupt')?.params.turnId, 'turn-2');
+});
+
+test('correlated provider turn rejection permits a later explicit send without an uncertainty fence', async () => {
+  const { adapter, server, dataDir, mcp } = await setup();
+  const { sessionId } = await adapter.start({ workspaceId: 'w', message: 'first' });
+  server.thread.turns = [{ id: 'turn-1', status: 'completed', items: [] }];
+  await adapter.read({ workspaceId: 'w', sessionId });
+  const original = server.request.bind(server); let attempts = 0;
+  server.request = async (method, params) => {
+    if (method === 'turn/start') { attempts++; if (attempts === 1) throw new ProviderResponseError('rate limit'); return { turn: { id: 'turn-2' } }; }
+    return original(method, params);
+  };
+  await assert.rejects(adapter.send({ workspaceId: 'w', sessionId, message: 'second' }), /provider_turn_rejected/);
+  const restarted = createCodexAdapter({ dataDir, mcpBinary: '/fixture/gigi-mcp', skillPath: '/fixture/skill/SKILL.md', server, mcp });
+  assert.equal((await restarted.read({ workspaceId: 'w', sessionId })).error, 'provider_turn_rejected');
+  assert.equal((await restarted.send({ workspaceId: 'w', sessionId, message: 'second' })).state, 'running');
+  assert.equal(attempts, 2, 'no automatic send retry');
+});
+
+test('JSON-line correlated errors retain response identity distinct from pipe failure', async () => {
+  const client = new JsonLineProcess(process.execPath, ['-e', `process.stdin.once('data',()=>process.stdout.write(JSON.stringify({jsonrpc:'2.0',id:1,error:{code:-32000,message:'rate limit'}})+'\\n'));`], process.env);
+  try { await assert.rejects(client.request('turn/start', {}), error => error instanceof ProviderResponseError); }
+  finally { await client.close(); }
 });

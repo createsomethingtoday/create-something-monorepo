@@ -7,6 +7,7 @@ const uncertainOutcomes = new Set(['reconciliation_required', 'write_outcome_unk
 const explanations = {
   codex_unavailable: 'Codex is unavailable on this Mac. Check that Codex is installed and running, then reopen Ask GiGi.',
   chatgpt_auth_required: 'Sign in to your ChatGPT account in Codex on this Mac, then reopen Ask GiGi.',
+  provider_turn_rejected: 'Your provider declined this request. Check its usage or availability, then send again when ready.',
   reconciliation_required: 'The last send may have started. Reopen this conversation and check its latest messages before sending again.',
   write_outcome_unknown: 'A record change may have happened. Check the record in GiGi before requesting another change.',
   turn_outcome_unknown: 'The last send may have started. Reopen this conversation and check its latest messages before sending again.',
