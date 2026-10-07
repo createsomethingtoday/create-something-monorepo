@@ -136,10 +136,11 @@ tell you how big a batch is. Count membership in Airtable:
    - **Published.** `template_review_get_asset` shows `3️⃣Published🚀` with an
      MRP ID for every winner (see Candidate definition).
    - **Never featured before.** Confirm the never-featured rule on every pick.
-   - **Notifiable.** Every winner has a `🎨🔑Creator WF User ID` (missing →
-     the notification is skipped) and a Name that reads correctly in an email
-     subject line (Names are validated at submission and authoritative). Fix
-     the IDs now, not after the send.
+   - **Notifiable.** The notifier skips any winner missing one of these, so
+     check all of them: a creator email, a `🔗Listing URL + UTM`, a
+     `🎨🔑Creator WF User ID`, and a Pick Reason. Also check that the Name
+     reads correctly in an email subject line (Names are validated at
+     submission and authoritative). Fix them now, not after the send.
 3. Per winner: `template_review_set_featured_flag` with `is_featured: true`
    and `confirm_creator_notification: true`. The result reports
    `featuredPeriod` — expect the first of **next** month.
@@ -152,9 +153,13 @@ tell you how big a batch is. Count membership in Airtable:
    write **only the override** directly in Airtable, then tick through
    `set_featured_flag` as usual so its coordinator check, live-reason check
    and selection checks still run. A winner that is **already ticked** may
-   already have been emailed for next month by the hourly worker. Before
-   writing its override, read `🔔Featured Notified For Period`. If it is
-   empty, write the override and continue. If it holds next month, that
+   already have been emailed for next month by the hourly worker, and an
+   empty stamp does not prove no email is in flight: the worker selects
+   records and sends in separate steps. So first **pause the worker**: set its
+   `DRY_RUN` to `"true"`, deploy, and confirm `GET /health` reports
+   `armed: false`. Then read `🔔Featured Notified For Period`. If it is
+   empty, write the override and continue. Re-arm the worker (`DRY_RUN`
+   `"false"`, deploy, `armed: true`) only after every override is written. If it holds next month, that
    wrong email has gone out: the override cannot retract it, and the current-
    month `/run` would send a second one. Follow the correction path (a
    correction email to the creator, as in the October 2026 entry under History)
@@ -174,12 +179,18 @@ tell you how big a batch is. Count membership in Airtable:
 
    The cron never sends for a current-month period, and anything added to a
    batch after its 1st is never notified (4 September 2026 additions missed
-   their email this way). For a current-month batch, preview then send with
-   the admin token: `GET /preview?period=YYYY-MM-01`, then
-   `POST /run?period=YYYY-MM-01`. Only the current UTC month is accepted.
-   Run the preview only after the step 2 preflight. Winners without a
-   `🎨🔑Creator WF User ID` are skipped and reported, so fix any the preview
-   still shows and preview again before the `POST /run`.
+   their email this way). For a current-month batch the send is manual, and
+   it comes **last**: only after step 6 confirms the live CMS shows the new
+   batch and the old one is off, so creators are never congratulated on a
+   batch the marketplace isn't showing. With the admin token:
+   1. `GET /health` must report `armed: true`. Otherwise `/run` "succeeds"
+      as a dry run and sends nothing.
+   2. `GET /preview?period=YYYY-MM-01` (only the current UTC month is
+      accepted). Every `skipped` entry must be resolved, whatever its reason,
+      then preview again until `skipped` is empty and `eligible` equals the
+      batch size.
+   3. `POST /run?period=YYYY-MM-01`, then check the response: `dryRun: false`,
+      `notified` equal to `eligible`, and `failed` empty.
 5. **Abort path**: uncheck via `set_featured_flag` with `is_featured: false`
    before the cron fires, or set the worker's `DRY_RUN` to `"true"` and
    redeploy (immediate kill switch).

@@ -228,9 +228,20 @@ can call it (everyone else gets a 403).
 flow above schedules next month. For this month, write \`📅Is Featured Period
 (Override)\` = the 1st of this month in Airtable **before** \`set_featured_flag\`,
 and check \`🔔Featured Notified For Period\` on any already-ticked winner first.
-Ticking first arms a wrong next-month email. The hourly notifier never sends for
-the current month, so the send is a separate admin \`GET /preview?period=YYYY-MM-01\`
-then \`POST /run?period=YYYY-MM-01\`. Full steps, preflight and correction path:
+Ticking first arms a wrong next-month email. Before touching an already-ticked
+winner, pause the notifier (\`DRY_RUN\` "true", deploy, \`/health\` → \`armed: false\`),
+because an empty stamp does not prove no email is in flight. If its stamp already
+holds next month, **stop for that winner**: a wrong email went out, the override
+cannot retract it, and the current-month send would add a second one. Tell the
+coordinator; the fix is a correction email to the creator and a decision on
+whether to send the current-month notification at all. Never run the send for it
+on your own.
+
+The hourly notifier never sends for the current month. The send is manual and
+comes last, after the live CMS shows the new batch: \`/health\` must report
+\`armed: true\`; \`GET /preview?period=YYYY-MM-01\` until no record is skipped;
+then \`POST /run?period=YYYY-MM-01\` and confirm \`dryRun: false\` and \`notified\`
+equal to \`eligible\`. Full steps:
 \`packages/webflow-template-review-mcp/docs/FEATURED_BATCH_RUNBOOK.md\`.
 
 Hard rules for featured copy: the live Pick Reason is quoted VERBATIM in the
