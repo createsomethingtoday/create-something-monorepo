@@ -35,9 +35,14 @@ test('renders a labelled button and no creator email', () => {
   assert.doesNotMatch(html, /mailto:/);
 });
 
-test('disables the button when no template slug can be resolved', () => {
-  const html = renderToStaticMarkup(<TemplateSupportRequest enableAnalytics={false} />);
-  assert.match(html, /disabled=""/);
+test('server-renders disabled with a blank slug (enabled after mount) and enabled with an explicit one', () => {
+  // Blank: the server can't read the URL, so it renders disabled; the client
+  // infers the slug in an effect after hydration.
+  assert.match(renderToStaticMarkup(<TemplateSupportRequest enableAnalytics={false} />), /disabled=""/);
+  assert.doesNotMatch(
+    renderToStaticMarkup(<TemplateSupportRequest templateSlug="meridian" enableAnalytics={false} />),
+    /disabled=""/,
+  );
 });
 
 test('posts the payload to the support endpoint and returns the request id', async () => {
