@@ -108,12 +108,18 @@ export function resolve(name: string, args: Args): Outbound | null {
   if (/gmail/i.test(server) && (tool === 'send_message' || tool === 'reply' || tool === 'forward')) {
     const to = [...list(args.to), ...list(args.cc), ...list(args.bcc)]
     const draft = str(args.draftId)
-    const body = str(args.body) ?? str(args.forwardText) ?? str(args.htmlBody)
+    // htmlBody is what recipients normally render; body is the plain-text
+    // fallback. Preview the version they will read.
+    const html = str(args.htmlBody)
+    const body = html ?? str(args.body) ?? str(args.forwardText)
     const what = tool === 'send_message' ? (draft !== null ? `Gmail: send draft ${draft}` : 'Gmail: new email') : tool === 'reply' ? `Gmail: reply${args.replyAll === true ? ' to all' : ''} on ${str(args.messageId) ?? '?'}` : `Gmail: forward ${str(args.messageId) ?? '?'}`
     const who = to.length > 0 ? ` to ${to.join(', ')}` : tool === 'reply' ? ' to the thread participants' : ''
     const subject = str(args.subject)
     const out: Outbound = { ...base, summary: `${what}${who}${subject === null ? '' : `, subject "${subject}"`}`, text: body }
-    if (str(args.body) !== null && /(^|\n)(#{1,6} |\* |- |\|)|\*\*/.test(str(args.body) ?? '')) {
+    if (html !== null && str(args.body) !== null) {
+      out.warnings.push('showing htmlBody (what recipients see); the plain-text body is only the fallback')
+    }
+    if (html === null && str(args.body) !== null && /(^|\n)(#{1,6} |\* |- |\|)|\*\*/.test(str(args.body) ?? '')) {
       out.warnings.push('body looks like Markdown; Gmail sends body as plain text (use htmlBody for formatting)')
     }
     return out
@@ -125,6 +131,18 @@ export function resolve(name: string, args: Args): Outbound | null {
   }
   if (tool === 'app_review_create_ticket') {
     return { ...base, summary: `New Zendesk ticket to the app developer: "${str(args.subject) ?? ''}"`, text: str(args.message) }
+  }
+  // Decision transitions release creator-facing emails through the base's
+  // review-status automations, so they get the same dialog as a direct send.
+  if (tool === 'app_review_approve_version') {
+    return { ...base, summary: `App Review: APPROVE ${str(args.version_id) ?? '?'} (the developer is emailed)`, text: str(args.review_feedback) }
+  }
+  if (tool === 'app_review_reject_version') {
+    return { ...base, summary: `App Review: REJECT ${str(args.version_id) ?? '?'} (${str(args.rejection_reason) ?? '?'}; the developer is emailed)`, text: str(args.review_feedback) }
+  }
+  if (tool === 'app_review_request_changes') {
+    const silent = str(args.review_status)?.includes('No Notification') === true
+    return { ...base, summary: `App Review: request changes on ${str(args.version_id) ?? '?'}${silent ? ' (no notification)' : ' (the developer is emailed)'}`, text: str(args.review_feedback) }
   }
 
   if (/partnerstack/i.test(server) && PARTNERSTACK_SENDS.has(tool)) {

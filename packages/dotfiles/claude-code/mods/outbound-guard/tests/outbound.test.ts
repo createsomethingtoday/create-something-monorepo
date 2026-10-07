@@ -98,3 +98,37 @@ test('a Gmail send reaches the dialog with recipients and body; reads pass throu
   expect(read.deny).toBeUndefined()
   expect(reached).toBe(1)
 })
+
+const APPROVE = 'mcp__claude_ai_App_Review_MCP__app_review_approve_version'
+const REJECT = 'mcp__claude_ai_App_Review_MCP__app_review_reject_version'
+const CHANGES = 'mcp__claude_ai_App_Review_MCP__app_review_request_changes'
+
+test('rules: App Review decisions are outbound; Gmail previews the HTML recipients see', () => {
+  expect(resolve(APPROVE, { version_id: 'v1', review_feedback: 'Looks good' })?.summary).toMatch(/APPROVE v1 \(the developer is emailed\)/)
+  expect(resolve(REJECT, { version_id: 'v1', rejection_reason: 'Spam', review_feedback: 'No' })?.text).toBe('No')
+  expect(resolve(CHANGES, { version_id: 'v1', review_feedback: 'Fix X', review_status: '📤Changes Requested (No Notification)' })?.summary).toMatch(/no notification/)
+  const both = resolve(GMAIL, { to: ['a@example.com'], body: 'plain fallback', htmlBody: '<p>rich version</p>' })
+  expect(both?.text).toBe('<p>rich version</p>')
+  expect(both?.warnings[0]).toMatch(/htmlBody/)
+  expect(resolve(GMAIL, { to: ['a@example.com'], body: 'only plain' })?.text).toBe('only plain')
+})
+
+test('an approval reaches the dialog, and text too long to review in full is refused unseen', async ($, on) => {
+  let asked = 0
+  let reached = 0
+  on('tool.call', { tool: 'AskUserQuestion' }, () => {
+    asked += 1
+    return { deny: 'declined in test' }
+  })
+  on('tool.call', { tool: APPROVE }, () => {
+    reached += 1
+    return { result: { ok: true } }
+  })
+  const short = await $.tool.call({ tool: APPROVE, version_id: 'v1', review_feedback: 'Approved, nice work.' })
+  expect(short.deny).toMatch(/outbound-guard/)
+  expect(asked).toBe(1)
+  const long = await $.tool.call({ tool: APPROVE, version_id: 'v1', review_feedback: 'x'.repeat(9501) })
+  expect(long.deny).toMatch(/longer than can be shown in full/)
+  expect(asked).toBe(1)
+  expect(reached).toBe(0)
+})

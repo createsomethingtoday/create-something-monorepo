@@ -11,6 +11,9 @@ const sent = atom({ plugin: 'outbound-guard', key: 'sent' } as const, [])
 const pending = atom({ plugin: 'outbound-guard', key: 'pending' } as const, null)
 
 const QUESTION_EXCERPT = 1500
+/** Longest text the pane renders in full. Anything longer is refused: the
+ *  person must be able to read every character they approve. */
+const PANE_LIMIT = 9500
 const MEMBER_PAGES = 12
 
 /**
@@ -47,6 +50,9 @@ function serverOf(toolName: string): string {
 
 async function confirm($: EngineInterface, out: Outbound): Promise<string | null> {
   const text = out.text
+  if (text !== null && text.length > PANE_LIMIT) {
+    return `${PLUGIN}: ${out.tool} refused: the text is ${text.length} characters, longer than can be shown in full for review (${PANE_LIMIT}). Split it or shorten it, then show the draft again.`
+  }
   let paneOpen = false
   if (text !== null) {
     await update($, pending, () => ({ summary: out.summary, text, warnings: out.warnings }))
@@ -54,6 +60,10 @@ async function confirm($: EngineInterface, out: Outbound): Promise<string | null
       paneOpen = (await $.ui.open({ id: PANE, title: 'What goes out', rows: 24 })).isPlaced
     } catch {
       paneOpen = false
+    }
+    if (!paneOpen && text.length > QUESTION_EXCERPT) {
+      await update($, pending, () => null)
+      return `${PLUGIN}: ${out.tool} refused: the full text could not be shown (the review pane did not open) and the dialog shows only ${QUESTION_EXCERPT} characters. Shorten it or retry when the pane can open.`
     }
   }
   const notes = out.warnings.length === 0 ? '' : `\n\nNote: ${out.warnings.join('; ')}.`
@@ -124,8 +134,8 @@ export const register: Register = on => {
         </Box>
       )
     }
-    const limit = 9500
-    const body = shown.text.length > limit ? `${shown.text.slice(0, limit)}\n\n_[cut: ${shown.text.length - limit} more characters]_` : shown.text
+    // confirm() refuses anything longer than PANE_LIMIT, so this is always the whole text.
+    const body = shown.text
     return (
       <Box flexDirection="column" gap={1}>
         <Text bold wrap="wrap">
