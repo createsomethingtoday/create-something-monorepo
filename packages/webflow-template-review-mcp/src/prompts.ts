@@ -224,6 +224,15 @@ step, per asset, after votes settle — enforced in authorization, not just
 convention: only reviewers whose directory entry grants \`featuredCoordinator\`
 can call it (everyone else gets a 403).
 
+**Current-month batch** (selected after the 1st, for this month): the default
+flow above schedules next month. For this month, write \`📅Is Featured Period
+(Override)\` = the 1st of this month in Airtable **before** \`set_featured_flag\`,
+and check \`🔔Featured Notified For Period\` on any already-ticked winner first.
+Ticking first arms a wrong next-month email. The hourly notifier never sends for
+the current month, so the send is a separate admin \`GET /preview?period=YYYY-MM-01\`
+then \`POST /run?period=YYYY-MM-01\`. Full steps, preflight and correction path:
+\`packages/webflow-template-review-mcp/docs/FEATURED_BATCH_RUNBOOK.md\`.
+
 Hard rules for featured copy: the live Pick Reason is quoted VERBATIM in the
 creator's email and rendered publicly on the listing — third-person marketplace
 prose, ~350–450 chars, no internal shorthand ("Main quality signal: …", "made by
