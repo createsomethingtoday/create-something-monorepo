@@ -58,7 +58,7 @@ test('closing tears down polling and ignores stale poll responses', async () => 
   const polling = timers.shift()(); await Promise.resolve();
   chat.close(); release(session('idle', { messages: [{ id: 'm1', role: 'assistant', text: 'Stale' }] })); await polling;
   assert.equal(polls, 1); assert.equal(chat.current.state, 'running'); assert.equal(chat.visible, false);
-  await chat.open(); await chat.read('s1'); assert.equal(timers.length, 1, 'a reopened running session polls again');
+  await chat.open(); assert.equal(chat.current.sessionId, 's1'); assert.equal(timers.length, 1, 'reopen resumes the selected running session and polls again');
 });
 
 test('approval is explicit and provider text is escaped', async () => {
@@ -77,10 +77,10 @@ test('record write approval presents actual proposed fields and keeps raw argume
   const chat = new ChatController(bridge, 'w1', () => {});
   await chat.open(); await chat.read('s1');
   const html = chatView(chat);
-  assert.match(html, /Save a record/);
+  assert.match(html, /Review record changes/);
   assert.match(html, /tasks · Call venue/);
-  assert.match(html, /Status<\/dt><dd>Open/);
-  assert.match(html, /Notes<\/dt><dd>&lt;review me&gt;/);
+  assert.match(html, /Status<\/th><td>Unavailable<\/td><td>Open/);
+  assert.match(html, /Notes<\/th><td>Unavailable<\/td><td>&lt;review me&gt;/);
   assert.match(html, /<summary>Technical details<\/summary>/);
   assert.doesNotMatch(html, /<review me>/);
 });

@@ -107,10 +107,13 @@ h1 span{min-width:0}
 .chat-message.from-user{margin-left:32px;background:#30392d;border:1px solid #4c6044;border-radius:10px;padding:11px 13px}
 .chat-message-label{display:block;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
 .chat-message p{margin:0}.chat-running{font-size:12px;color:var(--signal);margin:0}
-.chat-approval{border:1px solid #827454;background:#393528;border-radius:10px;padding:14px;font-size:12px;line-height:1.5}
+.chat-approval{min-width:0;border:1px solid #827454;background:#393528;border-radius:10px;padding:14px;font-size:12px;line-height:1.5}
 .chat-approval p{white-space:pre-wrap;overflow-wrap:anywhere}.chat-approval .inline-actions{margin-top:12px}
-.chat-proposal-fields{display:grid;grid-template-columns:minmax(90px,1fr) minmax(0,2fr);gap:7px 12px;margin:12px 0}
-.chat-proposal-fields dt{color:var(--muted)}.chat-proposal-fields dd{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
+.chat-proposal-fields{width:100%;table-layout:fixed;border-collapse:collapse;margin:12px 0;font-size:11px}
+.chat-proposal-fields caption{text-align:left;color:var(--text);font-weight:600;margin-bottom:6px}
+.chat-proposal-fields th,.chat-proposal-fields td{padding:7px 5px;text-align:left;vertical-align:top;white-space:pre-wrap;overflow-wrap:anywhere;border-bottom:1px solid var(--line)}
+.chat-proposal-fields th{color:var(--muted);font-weight:500}.chat-proposal-fields th:first-child{width:26%}
+.chat-proposal-note{color:var(--muted);font-size:11px}
 .chat-approval details{margin-top:10px}.chat-approval details summary{cursor:pointer;color:var(--muted)}
 .chat-approval pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:160px;overflow:auto;font-size:10px;color:var(--muted)}
 .chat-record-link{justify-self:start;white-space:normal;text-align:left}
