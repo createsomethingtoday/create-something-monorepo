@@ -185,12 +185,13 @@ export function createCodexAdapter(options: CodexOptions) {
       const response = await options.server.request('turn/start', { threadId: session.threadId, clientUserMessageId: session.pendingMessageId, disabledPluginIds, input: [{ type: 'text', text: message, text_elements: [] }, { type: 'skill', name: 'gigi', path: options.skillPath }], environments: [], runtimeWorkspaceRoots: [], approvalPolicy: 'on-request', approvalsReviewer: 'user' });
       session.turnId = required(response?.turn?.id); session.pendingMessageId = undefined; session.state = 'running'; session.error = undefined; await persist();
     } catch (error) {
-      const rejected = submitted && error instanceof ProviderResponseError;
+      const rejected = error instanceof ProviderResponseError;
+      const rejectionReason = submitted ? 'provider_turn_rejected' : 'provider_preflight_rejected';
       session.state = submitted ? 'failed' : 'idle';
-      session.error = rejected ? 'provider_turn_rejected' : submitted ? 'turn_outcome_unknown' : undefined;
+      session.error = rejected ? rejectionReason : submitted ? 'turn_outcome_unknown' : undefined;
       if (!submitted || rejected) session.pendingMessageId = undefined;
       await persist();
-      if (rejected) throw new Error('provider_turn_rejected');
+      if (rejected) throw new Error(rejectionReason);
       throw error;
     }
     return { sessionId: session.sessionId, messages: [], state: 'running', approvals: [], recordLinks: session.record ? [session.record] : [], ...(session.decisionReceipt ? { decisionReceipt: session.decisionReceipt } : {}) };

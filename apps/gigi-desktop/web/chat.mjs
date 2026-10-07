@@ -7,6 +7,7 @@ const uncertainOutcomes = new Set(['reconciliation_required', 'write_outcome_unk
 const explanations = {
   codex_unavailable: 'Codex is unavailable on this Mac. Check that Codex is installed and running, then reopen Ask GiGi.',
   chatgpt_auth_required: 'Sign in to your ChatGPT account in Codex on this Mac, then reopen Ask GiGi.',
+  provider_preflight_rejected: 'Your provider declined the request before a response started. Check its availability, then send again when ready.',
   provider_turn_rejected: 'Your provider declined this request. Check its usage or availability, then send again when ready.',
   reconciliation_required: 'The last send may have started. Reopen this conversation and check its latest messages before sending again.',
   write_outcome_unknown: 'A record change may have happened. Check the record in GiGi before requesting another change.',
@@ -140,7 +141,7 @@ export class ChatController {
       this.error = String(error?.message || error);
       // These exact adapter errors prove turn/start was not delivered or was rejected.
       // Transport failures remain uncertain and must never permit automatic replay.
-      const definitive = submittedText !== null && ['chatgpt_auth_required', 'codex_unavailable', 'provider_turn_rejected', 'session_not_found', 'plugin_inventory_unavailable'].includes(this.error);
+      const definitive = submittedText !== null && ['chatgpt_auth_required', 'codex_unavailable', 'provider_turn_rejected', 'provider_preflight_rejected', 'session_not_found', 'plugin_inventory_unavailable'].includes(this.error);
       this.refreshRequired = !definitive;
       if (submittedText !== null && !definitive) this.unconfirmedSends.set(sessionId, { sessionId, text: submittedText, messageIds });
     }

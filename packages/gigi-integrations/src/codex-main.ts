@@ -78,7 +78,7 @@ async function serve(server: JsonLineProcess, mcp: JsonLineProcess): Promise<voi
         const value = await adapter[op as keyof typeof adapter](request.input);
         process.stdout.write(JSON.stringify({ id, ok: true, value }) + '\n');
       } catch (error) {
-        const known = new Set(['invalid_request', 'unknown_operation', 'unconfigured', 'chatgpt_auth_required', 'codex_unavailable', 'gigi_tools_unavailable', 'workspace_not_found', 'record_not_found', 'session_not_found', 'session_limit', 'turn_in_progress', 'provider_turn_rejected', 'plugin_inventory_unavailable', 'reconciliation_required', 'approval_not_found', 'interrupted', 'chat_ledger_invalid']);
+        const known = new Set(['invalid_request', 'unknown_operation', 'unconfigured', 'chatgpt_auth_required', 'codex_unavailable', 'gigi_tools_unavailable', 'workspace_not_found', 'record_not_found', 'session_not_found', 'session_limit', 'turn_in_progress', 'provider_turn_rejected', 'provider_preflight_rejected', 'plugin_inventory_unavailable', 'reconciliation_required', 'approval_not_found', 'interrupted', 'chat_ledger_invalid']);
         const reason = error instanceof Error && known.has(error.message) ? error.message : 'unavailable';
         process.stdout.write(JSON.stringify({ id, ok: false, error: { reason } }) + '\n');
       }

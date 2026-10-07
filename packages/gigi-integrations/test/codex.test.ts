@@ -641,3 +641,25 @@ test('authoritative failed turns can retire at the cap while uncertainty remains
   assert.equal((await restarted.list({ workspaceId: 'w' })).sessions.length, 100);
   assert.equal(JSON.parse((await readFile(join(dataDir, 'codex-chat', 'retired-sessions.jsonl'), 'utf8')).trim()).session.error, 'Provider usage limit reached');
 });
+
+for (const failure of ['thread/start', 'thread/resume', 'plugin/installed']) test(`correlated ${failure} rejection is definitive before turn submission and allows explicit retry`, async () => {
+  const { adapter, server, mcp, dataDir } = await setup();
+  const { sessionId } = await adapter.start({ workspaceId: 'w' });
+  if (failure === 'thread/resume') {
+    await adapter.send({ workspaceId: 'w', sessionId, message: 'first' });
+    server.thread.turns = [{ id: 'turn-1', status: 'completed', items: [] }];
+    await adapter.read({ workspaceId: 'w', sessionId });
+  }
+  const active = failure === 'thread/resume' ? createCodexAdapter({ dataDir, mcpBinary: '/fixture/gigi-mcp', skillPath: '/fixture/skill/SKILL.md', server, mcp }) : adapter;
+  const original = server.request.bind(server);
+  let reject = true;
+  server.request = async (method, params) => { if (method === failure && reject) throw new ProviderResponseError('provider declined preflight'); return original(method, params); };
+  const priorTurns = server.calls.filter(x => x.method === 'turn/start').length;
+  await assert.rejects(active.send({ workspaceId: 'w', sessionId, message: 'retryable' }), /provider_preflight_rejected/);
+  assert.equal(server.calls.filter(x => x.method === 'turn/start').length, priorTurns);
+  reject = false;
+  const read = await active.read({ workspaceId: 'w', sessionId });
+  assert.notEqual(read.error, 'turn_outcome_unknown');
+  await active.send({ workspaceId: 'w', sessionId, message: 'explicit retry' });
+  assert.equal(server.calls.filter(x => x.method === 'turn/start').length, priorTurns + 1);
+});
