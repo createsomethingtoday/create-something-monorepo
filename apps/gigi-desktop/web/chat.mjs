@@ -142,7 +142,7 @@ export class ChatController {
       this.error = String(error?.message || error);
       // These exact adapter errors prove turn/start was not delivered or was rejected.
       // Transport failures remain uncertain and must never permit automatic replay.
-      const definitive = submittedText !== null && ['chatgpt_auth_required', 'codex_unavailable', 'provider_turn_rejected', 'provider_preflight_rejected', 'provider_preflight_unavailable', 'session_not_found', 'plugin_inventory_unavailable'].includes(this.error);
+      const definitive = submittedText !== null && ['chatgpt_auth_required', 'codex_unavailable', 'provider_turn_rejected', 'provider_preflight_rejected', 'provider_preflight_unavailable', 'session_not_found', 'plugin_inventory_unavailable', 'gigi_tools_unavailable'].includes(this.error);
       this.refreshRequired = !definitive;
       if (submittedText !== null && !definitive) this.unconfirmedSends.set(sessionId, { sessionId, text: submittedText, messageIds });
     }

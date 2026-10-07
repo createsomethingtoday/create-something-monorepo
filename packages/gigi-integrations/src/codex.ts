@@ -90,18 +90,25 @@ export function createCodexAdapter(options: CodexOptions) {
     if (!session || retiringSessions.has(session.sessionId) || session.workspaceId !== required(input.workspaceId)) throw new Error('session_not_found');
     return session;
   }
-  async function status() {
+  async function accountStatus() {
     try {
       const account = await options.server.request('account/read', { refreshToken: false });
       if (account?.account?.type !== 'chatgpt') return { provider: 'codex' as const, available: true, authenticated: false, reason: 'chatgpt_auth_required' };
       return { provider: 'codex' as const, available: true, authenticated: true };
     } catch { return { provider: 'codex' as const, available: false, authenticated: false, reason: 'codex_unavailable' }; }
   }
-  async function requireAuth(): Promise<void> { const s = await status(); if (!s.authenticated) throw new Error(s.reason); }
+  async function status() {
+    const account = await accountStatus();
+    if (!account.available || !account.authenticated) return account;
+    try { await dynamicTools(); } catch { return { provider: 'codex' as const, available: false, authenticated: true, reason: 'gigi_tools_unavailable' }; }
+    return account;
+  }
+  async function requireAuth(): Promise<void> { const s = await accountStatus(); if (!s.authenticated) throw new Error(s.reason); }
   async function dynamicTools() {
-    if (!options.mcp) return [];
+    if (!options.mcp) throw new Error('gigi_tools_unavailable');
     const result = await options.mcp.request('tools/list', {});
-    const tools = Array.isArray(result?.tools) ? result.tools : [];
+    const tools = (Array.isArray(result?.tools) ? result.tools : []).filter((x: Json) => x && typeof x === 'object' && !Array.isArray(x) && (READ_TOOLS.has(x.name) || WRITE_TOOLS.has(x.name)) && x.inputSchema && typeof x.inputSchema === 'object' && !Array.isArray(x.inputSchema) && x.inputSchema.type === 'object');
+    if (!tools.length) throw new Error('gigi_tools_unavailable');
     return [{ type: 'namespace', name: 'gigi', description: 'GiGi private workspace tools', tools: tools.filter((x: Json) => READ_TOOLS.has(x.name) || WRITE_TOOLS.has(x.name)).map((x: Json) => ({ type: 'function', name: x.name, description: x.name === 'gigi_records_save' ? `${x.description} In GiGi chat, calling this tool prepares a held edit proposal for user approval. It does not execute the write until the user approves in the app. Call it to request approval instead of asking in prose.` : x.name === 'gigi_records_get' ? `${x.description} For gigs, raw fields.Fee and Amount are integer minor-currency-unit values, not display amounts. MUST use gigi_gigs_summary feeCents and its currency for gig fee reporting. For standalone finance amounts, use the record's currency and schema; never infer currency.` : x.name === 'gigi_gigs_summary' ? `${x.description} feeCents and other *Cents amounts are integer minor units. Use the returned currency; for USD, divide by 100 to report dollars. Do not infer currency.` : x.description, inputSchema: x.inputSchema })) }];
   }
   function profile(tools: unknown, session?: Pick<Session, 'workspaceId' | 'record'>) {
@@ -176,8 +183,9 @@ export function createCodexAdapter(options: CodexOptions) {
     let submitted = false;
     try {
       await requireAuth();
-      if (!session.threadId) { session.threadId = required((await options.server.request('thread/start', profile(await dynamicTools(), session)))?.thread?.id); loadedThreads.add(session.threadId); await persist(); }
-      else if (!loadedThreads.has(session.threadId)) { await options.server.request('thread/resume', { threadId: session.threadId, ...profile(await dynamicTools(), session) }); loadedThreads.add(session.threadId); }
+      const tools = await dynamicTools();
+      if (!session.threadId) { session.threadId = required((await options.server.request('thread/start', profile(tools, session)))?.thread?.id); loadedThreads.add(session.threadId); await persist(); }
+      else if (!loadedThreads.has(session.threadId)) { await options.server.request('thread/resume', { threadId: session.threadId, ...profile(tools, session) }); loadedThreads.add(session.threadId); }
       const plugins = await options.server.request('plugin/installed', { cwds: [root] });
       if (!Array.isArray(plugins?.marketplaces)) throw new Error('plugin_inventory_unavailable');
       const disabledPluginIds = plugins.marketplaces.flatMap((market: Json) => Array.isArray(market.plugins) ? market.plugins.filter((x: Json) => x.installed).map((x: Json) => required(x.id)) : []);
@@ -186,7 +194,7 @@ export function createCodexAdapter(options: CodexOptions) {
       session.turnId = required(response?.turn?.id); session.pendingMessageId = undefined; session.state = 'running'; session.error = undefined; await persist();
     } catch (error) {
       const rejected = error instanceof ProviderResponseError;
-      const knownPreflight = error instanceof Error && ['chatgpt_auth_required', 'codex_unavailable', 'plugin_inventory_unavailable'].includes(error.message) ? error.message : undefined;
+      const knownPreflight = error instanceof Error && ['chatgpt_auth_required', 'codex_unavailable', 'plugin_inventory_unavailable', 'gigi_tools_unavailable'].includes(error.message) ? error.message : undefined;
       const rejectionReason = submitted ? 'provider_turn_rejected' : rejected ? 'provider_preflight_rejected' : knownPreflight || 'provider_preflight_unavailable';
       session.state = submitted ? 'failed' : 'idle';
       session.error = !submitted || rejected ? rejectionReason : 'turn_outcome_unknown';

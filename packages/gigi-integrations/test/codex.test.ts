@@ -708,3 +708,29 @@ test('recovered running turn permits Stop once the exact active turn is confirme
   server.thread.turns = [{ id: 'turn-1', status: 'interrupted', items: [] }];
   assert.equal((await afterRealStop.read({ workspaceId: 'w', sessionId })).cancelPending, undefined);
 });
+
+for (const [name, catalog] of Object.entries({ missing: {}, empty: { tools: [] }, unrelated: { tools: [{ name: 'unrecognized', inputSchema: { type: 'object' } }] }, malformed: { tools: [null, { name: 'gigi_records_get', inputSchema: null }] } })) test(`${name} catalog disables readiness and cannot start a turn`, async () => {
+  const { adapter, server, mcp } = await setup();
+  const { sessionId } = await adapter.start({ workspaceId: 'w' });
+  const original = mcp.request.bind(mcp);
+  let invalid = true;
+  mcp.request = async (method, params) => method === 'tools/list' && invalid ? catalog : original(method, params);
+  assert.deepEqual(await adapter.status(), { provider: 'codex', available: false, authenticated: true, reason: 'gigi_tools_unavailable' });
+  await assert.rejects(adapter.start({ workspaceId: 'w', message: 'not sent' }), /gigi_tools_unavailable/);
+  await assert.rejects(adapter.send({ workspaceId: 'w', sessionId, message: 'not sent' }), /gigi_tools_unavailable/);
+  assert.equal(server.calls.some(x => x.method === 'thread/start' || x.method === 'turn/start'), false);
+  invalid = false;
+  assert.equal((await adapter.status()).available, true);
+  await adapter.send({ workspaceId: 'w', sessionId, message: 'explicit retry' });
+  assert.equal(server.calls.filter(x => x.method === 'turn/start').length, 1);
+});
+
+test('a previously loaded thread rechecks the catalog before another send', async () => {
+  const { adapter, server, mcp } = await setup();
+  const { sessionId } = await adapter.start({ workspaceId: 'w', message: 'first' });
+  server.thread.turns = [{ id: 'turn-1', status: 'completed', items: [] }]; await adapter.read({ workspaceId: 'w', sessionId });
+  const original = mcp.request.bind(mcp);
+  mcp.request = async (method, params) => method === 'tools/list' ? { tools: [] } : original(method, params);
+  await assert.rejects(adapter.send({ workspaceId: 'w', sessionId, message: 'not sent' }), /gigi_tools_unavailable/);
+  assert.equal(server.calls.filter(x => x.method === 'turn/start').length, 1);
+});
