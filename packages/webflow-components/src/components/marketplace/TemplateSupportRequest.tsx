@@ -428,7 +428,14 @@ const TemplateSupportRequestInner: React.FC<TemplateSupportRequestProps> = ({
 }) => {
   useMarketplaceComponentErrorTracking(COMPONENT, enableAnalytics);
   const [open, setOpen] = useState(false);
-  const slug = inferTemplateSlug(templateSlug);
+  // Server and first client render use only the explicit prop so they match;
+  // the URL is read after mount. Reading it during render made the server
+  // HTML disabled (no window), and React keeps server attributes on hydrate,
+  // so a blank Template Slug shipped a dead button.
+  const [slug, setSlug] = useState(() => templateSlug.trim());
+  useEffect(() => {
+    setSlug(inferTemplateSlug(templateSlug));
+  }, [templateSlug]);
   // Tagged with its template so a draft never follows the buyer to another
   // listing if this component stays mounted across a slug change.
   const draftRef = useRef<{ slug: string; draft: SupportRequestDraft } | null>(null);
