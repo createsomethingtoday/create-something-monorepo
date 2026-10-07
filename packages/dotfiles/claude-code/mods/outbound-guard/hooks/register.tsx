@@ -69,7 +69,7 @@ async function confirmOne($: EngineInterface, out: Outbound): Promise<string | n
   }
   let paneOpen = false
   if (text !== null) {
-    await update($, pending, () => ({ summary: out.summary, text, warnings: out.warnings }))
+    await update($, pending, () => ({ summary: out.summary, text, warnings: out.warnings, literal: out.literal === true }))
     try {
       paneOpen = (await $.ui.open({ id: PANE, title: 'What goes out', rows: 24 })).isPlaced
     } catch {
@@ -170,7 +170,7 @@ export const register: Register = on => {
           </Text>
         ))}
         <Text dimColor>Answer Send / Do not send in the dialog. This is the exact text that goes out.</Text>
-        <Markdown text={body} />
+        {shown.literal === true ? <Text wrap="wrap">{body}</Text> : <Markdown text={body} />}
       </Box>
     )
   })

@@ -18,6 +18,9 @@ export type Outbound = {
   deny?: string
   /** Arguments rewritten with deterministic fixes applied. */
   fixed?: Args
+  /** The recipient sees the characters as written (plain-text email), so the
+   *  preview must not render them as Markdown. */
+  literal?: boolean
 }
 
 export function str(v: unknown): string | null {
@@ -109,16 +112,19 @@ export function resolve(name: string, args: Args): Outbound | null {
   }
 
   if (/gmail/i.test(server) && (tool === 'send_message' || tool === 'reply' || tool === 'forward')) {
-    const to = [...list(args.to), ...list(args.cc), ...list(args.bcc)]
+    // Keep the roles apart: an address in To instead of BCC is exposed to everyone.
+    const roles = [['to', list(args.to)], ['cc', list(args.cc)], ['bcc', list(args.bcc)]] as const
+    const to = roles.flatMap(([, xs]) => xs)
+    const labelled = roles.filter(([, xs]) => xs.length > 0).map(([role, xs]) => `${role}: ${xs.join(', ')}`).join('; ')
     const draft = str(args.draftId)
     // htmlBody is what recipients normally render; body is the plain-text
     // fallback. Preview the version they will read.
     const html = str(args.htmlBody)
     const body = html ?? str(args.body) ?? str(args.forwardText)
     const what = tool === 'send_message' ? (draft !== null ? `Gmail: send draft ${draft}` : 'Gmail: new email') : tool === 'reply' ? `Gmail: reply${args.replyAll === true ? ' to all' : ''} on ${str(args.messageId) ?? '?'}` : `Gmail: forward ${str(args.messageId) ?? '?'}`
-    const who = to.length > 0 ? ` to ${to.join(', ')}` : tool === 'reply' ? ' to the thread participants' : ''
+    const who = to.length > 0 ? ` (${labelled})` : tool === 'reply' ? ' to the thread participants' : ''
     const subject = str(args.subject)
-    const out: Outbound = { ...base, summary: `${what}${who}${subject === null ? '' : `, subject "${subject}"`}`, text: body }
+    const out: Outbound = { ...base, summary: `${what}${who}${subject === null ? '' : `, subject "${subject}"`}`, text: body, literal: html === null }
     if (html !== null && str(args.body) !== null) {
       out.warnings.push('showing htmlBody (what recipients see); the plain-text body is only the fallback')
     }
@@ -150,6 +156,13 @@ export function resolve(name: string, args: Args): Outbound | null {
     const status = str(args.review_status)
     if (status === null || !NOTIFYING_REVIEW_STATUSES.has(status)) return null
     return { ...base, summary: `App Review: set ${str(args.version_id) ?? '?'} to ${status} (the developer is emailed)`, text: str(args.review_feedback) }
+  }
+  // A third route: the asset-metadata write passes latest_review_status
+  // straight through to the version review.
+  if (tool === 'app_review_update_asset_metadata') {
+    const status = str(args.latest_review_status)
+    if (status === null || !NOTIFYING_REVIEW_STATUSES.has(status)) return null
+    return { ...base, summary: `App Review: set asset ${str(args.asset_id) ?? '?'} latest review to ${status} (the developer is emailed)`, text: null }
   }
   if (tool === 'app_review_update_ticket_status') {
     if (args.status !== 'solved') return null

@@ -17,7 +17,7 @@ test('rules: what is outbound and what is not', () => {
   expect(resolve('mcp__claude_ai_Template_Review_MCP__template_review_request_changes', { version_id: 'x' })).toBeNull()
   expect(resolve('mcp__claude_ai_App_Review_MCP__app_review_send_ticket_followup', { version_id: 'x', message: 'hi', visibility: 'internal' })).toBeNull()
   expect(resolve('mcp__claude_ai_App_Review_MCP__app_review_send_ticket_followup', { version_id: 'x', message: 'hi' })?.summary).toMatch(/Public Zendesk reply/)
-  expect(resolve(GMAIL, { to: ['a@example.com'], subject: 'Hello', body: 'plain' })?.summary).toBe('Gmail: new email to a@example.com, subject "Hello"')
+  expect(resolve(GMAIL, { to: ['a@example.com'], subject: 'Hello', body: 'plain' })?.summary).toBe('Gmail: new email (to: a@example.com), subject "Hello"')
   expect(resolve('Bash', { command: 'ls' })).toBeNull()
 })
 
@@ -145,4 +145,16 @@ test('rules: generic App Review writes are guarded only when they notify the dev
   expect(resolve(TICKET_STATUS, { ticket_id: '1', status: 'solved' })?.summary).toMatch(/solved/)
   expect(resolve(TICKET_STATUS, { ticket_id: '1', status: 'pending' })).toBeNull()
   expect(resolve(SET_STATUS, { version_id: 'v1', review_status: '⏸️On Hold' })).toBeNull()
+})
+
+const ASSET_META = 'mcp__claude_ai_App_Review_MCP__app_review_update_asset_metadata'
+
+test('rules: asset-metadata status route, Gmail recipient roles, literal plain-text preview', () => {
+  expect(resolve(ASSET_META, { asset_id: 'a1', latest_review_status: '✅Approved' })?.summary).toMatch(/developer is emailed/)
+  expect(resolve(ASSET_META, { asset_id: 'a1', latest_review_status: '⏸️On Hold' })).toBeNull()
+  expect(resolve(ASSET_META, { asset_id: 'a1', app_name: 'x' })).toBeNull()
+  const roles = resolve(GMAIL, { to: ['a@example.com'], cc: ['b@example.com'], bcc: ['c@example.com'], body: '**hi**' })
+  expect(roles?.summary).toMatch(/to: a@example.com; cc: b@example.com; bcc: c@example.com/)
+  expect(roles?.literal).toBe(true)
+  expect(resolve(GMAIL, { to: ['a@example.com'], htmlBody: '<b>hi</b>' })?.literal).toBe(false)
 })
