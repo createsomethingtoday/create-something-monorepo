@@ -217,7 +217,8 @@ export function resolve(name: string, args: Args): Outbound | null {
     return { ...base, summary: `PartnerStack: ${tool.replace(/_/g, ' ')} (money moves)`, text: null }
   }
 
-  if (/statsig/i.test(server) && !STATSIG_READ.test(tool)) {
+  // The Statsig Docs MCP (get_page, list_pages, search_docs) is read-only documentation.
+  if (/statsig/i.test(server) && !/docs/i.test(server) && !STATSIG_READ.test(tool)) {
     return { ...base, summary: `Statsig (production): ${tool.replace(/_/g, ' ')}`, text: null }
   }
 

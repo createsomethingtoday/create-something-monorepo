@@ -181,3 +181,9 @@ test('rules: Gmail attachments are named in the dialog; Statsig V3 reads pass th
   }
   expect(resolve('mcp__claude_ai_Statsig__Update_Gate_Entirely', {})?.summary).toMatch(/Statsig \(production\)/)
 })
+
+test('rules: the Statsig Docs MCP is read-only', () => {
+  for (const tool of ['get_page', 'list_pages', 'search_docs']) {
+    expect(resolve(`mcp__statsig-docs__${tool}`, {})).toBeNull()
+  }
+})
