@@ -115,6 +115,18 @@ export const CANON_CODIFICATION_EXEMPTIONS: CanonCodificationExemption[] = [
 			'Bundle scanner UI is operator tooling, not a rendered Canon-consuming product surface.'
 	},
 	{
+		path: 'packages/webflow-app-forge/template',
+		reason: 'webflow-review-tooling',
+		justification:
+			'App Forge scaffold output for third-party Webflow Designer Extensions; it renders inside the Webflow Designer iframe for Marketplace review, never on a Canon-consuming property surface.'
+	},
+	{
+		path: 'packages/webflow-app-review-mcp/mods',
+		reason: 'webflow-review-tooling',
+		justification:
+			'Claude Code mods for Marketplace App review render panes and bands inside the Claude Code terminal UI through the plugin engine, not on a Canon-consuming property surface.'
+	},
+	{
 		path: 'packages/webflow-review',
 		reason: 'webflow-review-tooling',
 		justification:
