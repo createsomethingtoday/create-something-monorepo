@@ -1,0 +1,127 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "verdict",
+    "summary",
+    "confidence",
+    "coverage",
+    "findings"
+  ],
+  "properties": {
+    "verdict": {
+      "type": "string",
+      "enum": [
+        "approve",
+        "changes_requested",
+        "reject",
+        "cannot_determine"
+      ]
+    },
+    "summary": {
+      "type": "string"
+    },
+    "confidence": {
+      "type": "number"
+    },
+    "coverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "bundle_read",
+        "listing_read",
+        "testing_site_opened",
+        "files_inspected",
+        "limits"
+      ],
+      "properties": {
+        "bundle_read": {
+          "type": "boolean"
+        },
+        "listing_read": {
+          "type": "boolean"
+        },
+        "testing_site_opened": {
+          "type": "boolean"
+        },
+        "files_inspected": {
+          "type": "integer"
+        },
+        "limits": {
+          "type": "string"
+        }
+      }
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "code",
+          "severity",
+          "title",
+          "evidence",
+          "fix",
+          "confidence"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": [
+              "SEC-URL",
+              "SEC-CSP",
+              "SEC-DCE",
+              "SEC-TOKEN",
+              "SEC-DOM",
+              "SEC-IFRAME",
+              "SEC-BACKEND",
+              "SEC-DEPS",
+              "SEC-ANALYTICS",
+              "PROD-BUILD",
+              "PROD-HOSTS",
+              "PROD-PACKAGING",
+              "SCRIPT-INJECT",
+              "OAUTH",
+              "SCOPES",
+              "UX-STATE",
+              "UX-SETUP",
+              "FUNC",
+              "LISTING-COPY",
+              "LISTING-ASSETS",
+              "LISTING-LINKS",
+              "PRICING",
+              "BRANDING",
+              "ACCESS",
+              "PRIVACY",
+              "DATA",
+              "POLICY",
+              "OTHER"
+            ]
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "blocker",
+              "required",
+              "suggested"
+            ]
+          },
+          "title": {
+            "type": "string"
+          },
+          "evidence": {
+            "type": "string"
+          },
+          "fix": {
+            "type": "string"
+          },
+          "confidence": {
+            "type": "number"
+          }
+        }
+      }
+    }
+  }
+}
