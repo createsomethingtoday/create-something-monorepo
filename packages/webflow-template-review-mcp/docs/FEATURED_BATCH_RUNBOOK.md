@@ -10,7 +10,7 @@ with a buyer-safe Pick Reason, creators notified once, and the marketplace CMS
 showing the new batch. The August, September and October 2026 batches were
 25, 26 and 25 templates; 7 is the per-reviewer norm, not the batch size.
 
-Verified against the live base 2026-08-26. Base `appMoIgXMTTTNIc3p`.
+Verified against the live 👛Marketplace Assets base 2026-08-26.
 
 ---
 
@@ -32,7 +32,7 @@ eligibility formula        ─────►  featured_candidates (read)
 ## Who does what
 
 | Role | Tools | Gate |
-|---|---|---|
+| --- | --- | --- |
 | Any mapped reviewer | `featured_candidates`, `set_featured_pick`, `cast_featured_vote` | `template-review:write` scope |
 | Featured coordinator | `set_featured_flag` | reviewer-directory entry must grant `featuredCoordinator: true` (403 otherwise) |
 
@@ -114,7 +114,7 @@ tell you how big a batch is. Count membership in Airtable:
    `featuredPeriod` — expect the first of **next** month.
 
    **Current-month batch** (selected after the 1st, for this month): write
-   `📅Is Featured Period (Override)` (`fldIzkClyOamo0E8q`) = the 1st of this
+   `📅Is Featured Period (Override)` = the 1st of this
    month on every winner **before** ticking `ℹ️Is Featured?`. Tick first and
    the period resolves to next month, and the hourly notifier will email
    creators that they are featured *next* month. `set_featured_flag` cannot
@@ -160,7 +160,7 @@ tell you how big a batch is. Count membership in Airtable:
 ## Safety rules enforced in code
 
 | Rule | Enforcement |
-|---|---|
+| --- | --- |
 | Agent copy never lands directly in the live reason | `pick_reason` requires `confirm_creator_safe: true`; drafts go to the AI-draft staging field |
 | No raw HTML in the live reason (truncates the Zendesk-parsed email) | `RAW_HTML_IN_PICK_REASON` (400) |
 | No featuring without a live reason (the email quotes it) | `MISSING_PICK_REASON` (409) — rejected before any write, never overridable |
@@ -176,7 +176,7 @@ way when building on these tools.
 ## Troubleshooting
 
 | Symptom | Meaning | Fix |
-|---|---|---|
+| --- | --- | --- |
 | `FEATURED_COORDINATOR_REQUIRED` | Reviewer lacks the directory grant | Coordinator finalizes, or grant `featuredCoordinator` in `REVIEWER_DIRECTORY_JSON` and redeploy |
 | `MISSING_PICK_REASON` | Winner has no live reason | Promote a reason via `set_featured_pick` first |
 | `CREATOR_SAFE_CONFIRMATION_REQUIRED` | Live-reason write without the confirmation | Human reads the exact text, resend with `confirm_creator_safe: true` |
