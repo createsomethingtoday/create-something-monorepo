@@ -46,11 +46,14 @@ function dimensionFor(text: string): string | null {
   return null
 }
 
-/** The lower of two tiers, so split rows (SEO / Performance) collapse to the worst. */
+/**
+ * The lower of two tiers, so split rows (SEO / Performance) collapse to the
+ * worst. An unverifiable half leaves the whole dimension unknown: a Good SEO
+ * row cannot vouch for a Performance row nobody measured.
+ */
 function lower(a: VizTier | null, b: VizTier): VizTier {
   if (a === null) return b
-  if (a === 'Unverifiable') return b
-  if (b === 'Unverifiable') return a
+  if (a === 'Unverifiable' || b === 'Unverifiable') return 'Unverifiable'
   return TIER_RANK[a] <= TIER_RANK[b] ? a : b
 }
 

@@ -186,10 +186,13 @@ function describe({ name, args }: Call, known: Record<string, string>): string |
       return args.status === 'solved'
         ? `Solve the Zendesk ticket on ${v} (sends the solved email)`
         : `Zendesk ticket status -> ${str(args.status) ?? '?'} on ${v}`
+    case 'set_featured_pick':
+      return str(args.pick_reason) !== null
+        ? `Set the live Reviewer Pick Reason on ${v}: shown on the public listing and quoted in the creator's featured email`
+        : `set featured pick on ${v}: changes what buyers see`
     case 'update_asset_publishing':
     case 'set_mrp_visibility':
     case 'set_featured_flag':
-    case 'set_featured_pick':
       return `${name.replace(/_/g, ' ')} on ${v}: changes what buyers see`
     default:
       return null
@@ -207,21 +210,30 @@ function creatorText({ name, args }: Call): string | null {
     case 'send_ticket_followup':
     case 'create_ticket':
       return str(args.message)
+    case 'set_featured_pick':
+      // pick_reason_draft is the internal staging field; only the live field reaches the public.
+      return str(args.pick_reason)
     default:
       return null
   }
 }
 
 const QUESTION_EXCERPT = 1500
+/** Longer than any review feedback should be; the pane would stop being reviewable. */
+const CREATOR_TEXT_MAX = 20_000
 
 /**
  * Asks the reviewer on the engine's own dialog (a `$` call, so the hook's
  * budget does not run while they read). The full text is drawn in a pane
- * beside it where the terminal is wide enough; the dialog carries an excerpt
- * either way. Resolves null to send, else the refusal for the model.
+ * beside it where the terminal is wide enough; the dialog carries an excerpt.
+ * Text the reviewer could not read in full is refused rather than sent on an
+ * excerpt. Resolves null to send, else the refusal for the model.
  */
 async function confirm($: EngineInterface, call: Call, summary: string): Promise<string | null> {
   const text = creatorText(call)
+  if (text !== null && text.length > CREATOR_TEXT_MAX) {
+    return `${PLUGIN}: ${call.name} carries ${text.length} characters of creator-facing text, more than a reviewer can check in full (limit ${CREATOR_TEXT_MAX}). Shorten it and retry.`
+  }
   let paneOpen = false
   if (text !== null) {
     await update($, pending, () => ({ summary, text }))
@@ -229,6 +241,10 @@ async function confirm($: EngineInterface, call: Call, summary: string): Promise
       paneOpen = (await $.ui.open({ id: PANE, title: 'What the creator will read', rows: 24 })).isPlaced
     } catch {
       paneOpen = false
+    }
+    if (!paneOpen && text.length > QUESTION_EXCERPT) {
+      await update($, pending, () => null)
+      return `${PLUGIN}: ${call.name} carries ${text.length} characters of creator-facing text and the terminal has no room for the pane that shows it in full (the dialog shows ${QUESTION_EXCERPT}). Ask the reviewer to widen the terminal, then retry; nothing was sent.`
     }
   }
   const excerpt =
@@ -243,7 +259,13 @@ async function confirm($: EngineInterface, call: Call, summary: string): Promise
   } finally {
     if (text !== null) {
       await update($, pending, () => null)
-      if (paneOpen) await $.ui.close({ id: PANE })
+      if (paneOpen) {
+        try {
+          await $.ui.close({ id: PANE })
+        } catch {
+          // The answer stands; a pane that would not close is not a reason to refuse.
+        }
+      }
     }
   }
   if (answer === 'Send') return null
@@ -353,10 +375,16 @@ export const register: Register = on => {
 
     const ran = await next(input)
     if (ran.deny === undefined && ran.isError === undefined) {
-      const entry: GuardSent = { tool: call.name, versionId, at: await $.clock.now() }
-      const all = await update($, sent, list => [...list, entry].slice(-50))
-      $.ui.status(`${all.length} creator-facing write${all.length === 1 ? '' : 's'} confirmed this session`)
-      $.ui.toast(`sent: ${call.name}${versionId === null ? '' : ` ${versionId}`}`)
+      // The write has happened. Bookkeeping that fails must not turn it into a
+      // refusal the model would retry (a second email, ticket or listing change).
+      try {
+        const entry: GuardSent = { tool: call.name, versionId, at: await $.clock.now() }
+        const all = await update($, sent, list => [...list, entry].slice(-50))
+        $.ui.status(`${all.length} creator-facing write${all.length === 1 ? '' : 's'} confirmed this session`)
+        $.ui.toast(`sent: ${call.name}${versionId === null ? '' : ` ${versionId}`}`)
+      } catch {
+        $.ui.toast(`sent: ${call.name} (the session tally could not be updated)`)
+      }
     }
     return ran
   }).catch(($, e, next) =>
@@ -376,15 +404,14 @@ export const register: Register = on => {
         </Box>
       )
     }
-    const limit = 9500
-    const body = shown.text.length > limit ? `${shown.text.slice(0, limit)}\n\n_[cut: ${shown.text.length - limit} more characters]_` : shown.text
+    // The whole text, always: Send is only offered when this pane is placed or the dialog holds it all.
     return (
       <Box flexDirection="column" gap={1}>
         <Text bold wrap="wrap">
           {shown.summary}
         </Text>
-        <Text dimColor>Answer Send / Do not send in the dialog. This is the exact text the creator receives.</Text>
-        <Markdown text={body} />
+        <Text dimColor>{`Answer Send / Do not send in the dialog. This is the exact text the creator receives (${shown.text.length} characters).`}</Text>
+        <Markdown text={shown.text} />
       </Box>
     )
   })

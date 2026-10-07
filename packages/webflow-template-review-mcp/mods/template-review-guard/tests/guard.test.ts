@@ -333,6 +333,110 @@ test('a fast-exit exemption ends when a reloaded context no longer reports one',
   expect(ran.deny).toMatch(/missing evidence.*validated, screenshots/)
 })
 
+const FEATURED = 'mcp__claude_ai_Template_Review_MCP__template_review_set_featured_pick'
+
+test('a live featured pick reason is shown to the reviewer; the draft field is not creator-facing', async ($, on) => {
+  mock.clock(on)
+  let asked = ''
+  on('tool.call', { tool: 'AskUserQuestion' }, (_$, e) => {
+    asked = JSON.stringify(e)
+    return { deny: 'nobody here' }
+  })
+  on('tool.call', { tool: FEATURED }, () => ({ result: { ok: true } }))
+  const live = await $.tool.call({ tool: FEATURED, asset_id: 'recFeat', reviewer_pick: true, pick_reason: 'Crisp editorial typography with a confident grid.', confirm_creator_safe: true })
+  expect(live.deny).toMatch(/declined|nobody answered/)
+  expect(asked).toMatch(/Reviewer Pick Reason/)
+  expect(asked).toMatch(/Crisp editorial typography/)
+  asked = ''
+  const draft = await $.tool.call({ tool: FEATURED, asset_id: 'recFeat', reviewer_pick: true, pick_reason_draft: 'Staging copy nobody has read yet.' })
+  expect(draft.deny).toMatch(/declined|nobody answered/)
+  expect(asked).not.toMatch(/Staging copy/)
+})
+
+test('a send that succeeded is reported as sent even when the bookkeeping throws', async ($, on) => {
+  mock.clock(on)
+  let reached = 0
+  on('tool.call', { tool: 'AskUserQuestion' }, (_$, e) => {
+    const questions = (e as unknown as { questions: { question: string }[] }).questions
+    return { result: { questions, answers: { [questions[0]!.question]: 'Send' } } }
+  })
+  on('state.set', { plugin: 'template-review-guard', key: 'sent' }, () => {
+    throw new Error('state unavailable')
+  })
+  on('tool.call', { tool: FOLLOWUP }, () => {
+    reached += 1
+    return { result: { ok: true, ticketId: 42 } }
+  })
+  const ran = await $.tool.call({ tool: FOLLOWUP, version_id: 'recT', message: 'Hi there,\n\nThanks for the update; the fix looks good.', visibility: 'public' })
+  expect(ran.deny).toBeUndefined()
+  expect(ran.result).toEqual({ ok: true, ticketId: 42 })
+  expect(reached).toBe(1)
+})
+
+const LONG = `${CLEAN}\n${Array.from({ length: 60 }, (_, i) => `${i + 3}. Replace the placeholder copy in section ${i + 1} with the final text.`).join('\n')}`
+
+test('creator text longer than the dialog excerpt is refused when the full-text pane has no room', async ($, on) => {
+  mock.clock(on)
+  let asked = 0
+  let reached = 0
+  fakeStore(on)
+  on('ui.open', () => ({ value: { isPlaced: false } }))
+  on('tool.call', { tool: CTX }, () => ({ result: { templateName: 'Savoria', phase0: { kind: 'DEAD_URL', status: 404 } } }))
+  on('tool.call', { tool: 'AskUserQuestion' }, () => {
+    asked += 1
+    return { deny: 'nobody here' }
+  })
+  on('tool.call', { tool: RC }, () => {
+    reached += 1
+    return { result: { ok: true } }
+  })
+  await $.tool.call({ tool: CTX, version_id: 'recLong' })
+  expect(LONG.length).toBeGreaterThan(1500)
+  const ran = await $.tool.call({ tool: RC, version_id: 'recLong', review_feedback: LONG })
+  expect(ran.deny).toMatch(/no room for the pane/)
+  expect(asked).toBe(0)
+  expect(reached).toBe(0)
+})
+
+test('creator text longer than the dialog excerpt is offered for Send once the pane shows it in full', async ($, on) => {
+  mock.clock(on)
+  let asked = ''
+  fakeStore(on)
+  on('ui.open', () => ({ value: { isPlaced: true } }))
+  on('ui.close', () => ({ value: undefined }))
+  on('tool.call', { tool: CTX }, () => ({ result: { templateName: 'Savoria', phase0: { kind: 'DEAD_URL', status: 404 } } }))
+  on('tool.call', { tool: 'AskUserQuestion' }, (_$, e) => {
+    asked = JSON.stringify(e)
+    return { deny: 'nobody here' }
+  })
+  on('tool.call', { tool: RC }, () => ({ result: { ok: true } }))
+  await $.tool.call({ tool: CTX, version_id: 'recLong2' })
+  const ran = await $.tool.call({ tool: RC, version_id: 'recLong2', review_feedback: LONG })
+  expect(ran.deny).toMatch(/declined|nobody answered/)
+  expect(asked).toMatch(/shown in full in the pane/)
+  const pane = await $.ui.render({ component: 'Pane', surface: 'terminal', requestId: 'tr-send', props: { title: 'What the creator will read', isFocused: true, bodyColumns: 100, placement: 'dock', scroll: { offset: 0, bodyRows: 24 }, view: {} } })
+  expect(JSON.stringify(pane)).not.toMatch(/cut:/)
+})
+
+test('creator text beyond the reviewable limit is refused outright', async ($, on) => {
+  mock.clock(on)
+  let asked = 0
+  fakeStore(on)
+  on('ui.open', () => ({ value: { isPlaced: true } }))
+  on('tool.call', { tool: CTX }, () => ({ result: { templateName: 'Savoria', phase0: { kind: 'DEAD_URL', status: 404 } } }))
+  on('tool.call', { tool: 'AskUserQuestion' }, () => {
+    asked += 1
+    return { deny: 'nobody here' }
+  })
+  on('tool.call', { tool: RC }, () => ({ result: { ok: true } }))
+  await $.tool.call({ tool: CTX, version_id: 'recHuge' })
+  const huge = `${CLEAN}\n${Array.from({ length: 400 }, (_, i) => `${i + 3}. Replace the placeholder copy in section ${i + 1} with the final text.`).join('\n')}`
+  expect(huge.length).toBeGreaterThan(20_000)
+  const ran = await $.tool.call({ tool: RC, version_id: 'recHuge', review_feedback: huge })
+  expect(ran.deny).toMatch(/Shorten it/)
+  expect(asked).toBe(0)
+})
+
 test('a validation run is written to the store for later sessions', async ($, on) => {
   mock.clock(on, { now: CR_MS + HOUR })
   const log = fakeStore(on)

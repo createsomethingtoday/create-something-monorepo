@@ -216,6 +216,14 @@ test('successful screenshot preparation still renders PNGs in the terminal and l
   expect(drawingText(desktop)).not.toContain('"type":"Image"')
 })
 
+test('scorecard: an unverifiable half of a split dimension keeps the dimension unknown', () => {
+  const card = fromText(`${PASS_REPORT}\n| Performance | Unverifiable | not measured |`, null, 1, 'save_agent_feedback', 'recS')
+  expect(card.dims.site_optimization?.tier).toBe('Unverifiable')
+  expect(meetsBar(card)).toBe('unknown')
+  const reversed = fromText(`${PASS_REPORT.replace('| Site Optimization | Good |', '| Performance | Unverifiable |')}\n| SEO | Good | fine |`, null, 1, 'save_agent_feedback', 'recS')
+  expect(reversed.dims.site_optimization?.tier).toBe('Unverifiable')
+})
+
 test('parse: text and json come out of every result shape', () => {
   expect(textOf('{"ok":true}')).toBe('{"ok":true}')
   expect(textOf([{ type: 'text', text: 'a' }, { type: 'text', text: 'b' }])).toBe('a\nb')
@@ -272,7 +280,8 @@ test('scorecard: the report table, verdict and list counts are read from text', 
   expect(card.dims.overall_user_experience?.tier).toBe('Good')
   expect(card.dims.graphic_design?.tier).toBe('Exceptional')
   expect(card.dims.typography?.tier).toBe('Satisfactory')
-  expect(card.dims.site_optimization?.tier).toBe('Good')
+  // SEO Good + Performance unverifiable: the dimension stays unknown, not Good.
+  expect(card.dims.site_optimization?.tier).toBe('Unverifiable')
   expect(card.dims.accessibility?.tier).toBe('Unverifiable')
   expect(meetsBar(card)).toBe('no')
   const draft = fromText('Thanks.\n\nBLOCKING\n1. One\n2. Two\n\nRECOMMENDED\n1. Three', card, 6, 'request_changes')
