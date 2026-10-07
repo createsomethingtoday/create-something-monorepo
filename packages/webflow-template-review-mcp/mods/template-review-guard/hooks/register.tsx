@@ -102,7 +102,10 @@ async function addEvidence($: EngineInterface, versionId: string, kind: GuardEvi
   await $.store.set(storeKey(versionId), { items: [...items, { kind, at }] } satisfies StoredEvidence)
 }
 
-/** Brings an earlier session's evidence for this version into the gate, dropping what went stale. */
+/**
+ * Brings the store's evidence for this version into the gate, dropping what
+ * went stale. Returns the kinds now in the gate that were not there before.
+ */
 async function restoreEvidence($: EngineInterface, versionId: string, contextText: string): Promise<GuardEvidence[]> {
   const stored = await $.store.get(storeKey(versionId))
   if (!isStored(stored)) return []
@@ -118,14 +121,13 @@ async function restoreEvidence($: EngineInterface, versionId: string, contextTex
     await $.store.set(storeKey(versionId), { items: kept } satisfies StoredEvidence)
   }
   const kinds = kept.map(item => item.kind)
-  if (kinds.length > 0) {
-    await update($, evidence, all => {
-      const had = all[versionId] ?? []
-      const merged: GuardEvidence[] = [...had, ...kinds.filter(kind => !had.includes(kind))]
-      return { ...all, [versionId]: merged }
-    })
-  }
-  return kinds
+  let added: GuardEvidence[] = []
+  await update($, evidence, all => {
+    const had = all[versionId] ?? []
+    added = kinds.filter(kind => !had.includes(kind))
+    return added.length === 0 ? all : { ...all, [versionId]: [...had, ...added] }
+  })
+  return added
 }
 
 /** Read-only tools that take the published site, never a Preview link. */
@@ -283,6 +285,12 @@ export const register: Register = on => {
         if (template !== undefined) await update($, names, known => ({ ...known, [versionId]: template }))
         const hosts = [...text.matchAll(SITE_URL_RE)].map(m => (m[1] === undefined ? null : siteKey(m[1]))).filter((h): h is string => h !== null)
         if (hosts.length > 0) await update($, sites, known => ({ ...known, ...Object.fromEntries(hosts.map(h => [h, versionId])) }))
+        // A fresh context replaces this version's in-session evidence rather
+        // than adding to it: a creator resubmission must not pass on the
+        // previous submission's runs, and a fast-exit holds only while the
+        // context still reports one. Validation and screenshots live in the
+        // store, so what is still current comes straight back.
+        await update($, evidence, all => (versionId in all ? { ...all, [versionId]: [] } : all))
         if (FAST_EXIT_RE.test(text)) await addEvidence($, versionId, 'fast-exit')
         const restored = await restoreEvidence($, versionId, text)
         if (restored.length > 0) {

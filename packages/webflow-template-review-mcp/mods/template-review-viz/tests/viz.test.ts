@@ -184,6 +184,25 @@ for (const failure of ['mkdir', 'curl', 'sips', 'throw'] as const) {
   })
 }
 
+test('Show strip on an older transcript row opens that row\'s capture, not the latest', async ($, on) => {
+  mock.clock(on, { now: 1000 })
+  const last = watch(on)
+  on('ui.open', () => ({ value: { isPlaced: true } }))
+  on('process.run', () => ({ value: { exitCode: 0, stdout: '', stderr: '', isStdoutTruncated: false, isStderrTruncated: false } }))
+  const older = { ...SHOTS, data: { ...SHOTS.data, final_url: 'https://older-template.webflow.io/', page_title: 'Older' } }
+  on('tool.call', { tool: CAPTURE }, (_$, e) => ({ result: e.published_url === 'https://older-template.webflow.io/' ? older : SHOTS }))
+  await $.tool.call({ tool: CAPTURE, tool_use_id: 'cap-older', published_url: 'https://older-template.webflow.io/' })
+  await $.tool.call({ tool: CAPTURE, tool_use_id: 'cap-latest', published_url: 'https://verity-template.webflow.io/' })
+  expect((last.strip as { captureId: string }).captureId).toBe('cap-latest')
+  const props = { tool_use_id: 'cap-older', tool: CAPTURE, isErrored: false, output: older }
+  const ui = await $.ui.mount({ plugin: 'template-review-viz', surface: 'terminal', component: 'ToolResult', requestId: 'cap-older', props })
+  expect(await ui.find({ type: 'Text', text: /screenshots: Older/ })).toBeDefined()
+  await ui.press({ key: 'strip' })
+  expect((last.strip as { captureId: string }).captureId).toBe('cap-older')
+  expect((last.captures as { id: string }[]).map(c => c.id)).toEqual(['cap-older', 'cap-latest'])
+  await ui.unmount()
+})
+
 test('successful screenshot preparation still renders PNGs in the terminal and links on desktop', async ($, on) => {
   mock.clock(on)
   on('process.run', () => ({ value: { exitCode: 0, stdout: '', stderr: '', isStdoutTruncated: false, isStderrTruncated: false } }))

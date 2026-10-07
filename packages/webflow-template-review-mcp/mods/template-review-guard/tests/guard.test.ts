@@ -292,6 +292,47 @@ test('evidence older than the last review is dropped as stale', async ($, on) =>
   expect(log).toEqual([{ op: 'delete', key: 'evidence:recH' }])
 })
 
+test('a reloaded context after a resubmission drops this session\'s own evidence', async ($, on) => {
+  mock.clock(on, { now: CR_MS + HOUR })
+  const log = fakeStore(on)
+  let latest = CR_DATE
+  let reached = 0
+  on('tool.call', { tool: CTX }, () => ({ result: { templateName: 'Verity', latestReviewDate: latest } }))
+  on('tool.call', { tool: VALIDATE }, () => ({ result: { findings: [] } }))
+  on('tool.call', { tool: SHOTS }, () => ({ result: { gallery_url: 'https://shots.example/g/2' } }))
+  on('tool.call', { tool: 'AskUserQuestion' }, () => ({ deny: 'nobody here' }))
+  on('tool.call', { tool: RC }, () => {
+    reached += 1
+    return { result: { ok: true } }
+  })
+  await $.tool.call({ tool: CTX, version_id: 'recK' })
+  await $.tool.call({ tool: VALIDATE, published_url: SITE })
+  await $.tool.call({ tool: SHOTS, published_url: SITE })
+  expect((await $.tool.call({ tool: RC, version_id: 'recK', review_feedback: CLEAN })).deny).toMatch(/declined|nobody answered/)
+  // The creator resubmits: the next context carries a review date past both runs.
+  latest = new Date(CR_MS + 2 * HOUR).toISOString()
+  await $.tool.call({ tool: CTX, version_id: 'recK' })
+  const ran = await $.tool.call({ tool: RC, version_id: 'recK', review_feedback: CLEAN })
+  expect(ran.deny).toMatch(/missing evidence.*validated, screenshots/)
+  expect(log[log.length - 1]).toEqual({ op: 'delete', key: 'evidence:recK' })
+  expect(reached).toBe(0)
+})
+
+test('a fast-exit exemption ends when a reloaded context no longer reports one', async ($, on) => {
+  mock.clock(on)
+  fakeStore(on)
+  let dead = true
+  on('tool.call', { tool: CTX }, () => ({ result: dead ? { templateName: 'Ghost', phase0: { kind: 'DEAD_URL', status: 404 } } : { templateName: 'Ghost', phase0: { kind: 'TEMPLATE' } } }))
+  on('tool.call', { tool: 'AskUserQuestion' }, () => ({ deny: 'nobody here' }))
+  on('tool.call', { tool: REJECT }, () => ({ result: { ok: true } }))
+  await $.tool.call({ tool: CTX, version_id: 'recL' })
+  expect((await $.tool.call({ tool: REJECT, version_id: 'recL', reject_reason: 'Unreachable URL', rejection_feedback: 'The submitted URL returns 404.' })).deny).not.toMatch(/evidence/)
+  dead = false
+  await $.tool.call({ tool: CTX, version_id: 'recL' })
+  const ran = await $.tool.call({ tool: REJECT, version_id: 'recL', reject_reason: 'Unreachable URL', rejection_feedback: 'The submitted URL returns 404.' })
+  expect(ran.deny).toMatch(/missing evidence.*validated, screenshots/)
+})
+
 test('a validation run is written to the store for later sessions', async ($, on) => {
   mock.clock(on, { now: CR_MS + HOUR })
   const log = fakeStore(on)

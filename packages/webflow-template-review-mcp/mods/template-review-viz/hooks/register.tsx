@@ -91,8 +91,12 @@ function sevGlyph(sev: string): string {
 
 type Ui = Pick<Elements[RenderSurface], 'Box' | 'Button' | 'Text'>
 
-/** A compact drawing of a Template Review result, or null to let the engine draw its own row. */
-function compact($: EngineInterface, ui: Ui, name: string, output: unknown): RenderElement | null {
+/**
+ * A compact drawing of a Template Review result, or null to let the engine
+ * draw its own row. `captureId` is the row's tool_use_id, the id its capture
+ * was stored under, so the row's button opens that capture and not the latest.
+ */
+function compact($: EngineInterface, ui: Ui, name: string, output: unknown, captureId?: string): RenderElement | null {
   const json = jsonOf(output)
   if (json === null) return null
   const { Box, Button, Text } = ui
@@ -146,8 +150,9 @@ function compact($: EngineInterface, ui: Ui, name: string, output: unknown): Ren
   }
 
   if (name === 'capture_published_site_screenshots') {
-    const cap = captureOf(json, 'row', now)
-    if (cap === null) return null
+    const row = captureOf(json, 'row', now)
+    if (row === null) return null
+    const cap: VizCapture = { ...row, id: captureId ?? `row:${row.url}` }
     const perViewport = VIEWPORTS.map(v => {
       const segs = segmentsOf(cap, v)
       const first = segs[0]
@@ -166,11 +171,12 @@ function compact($: EngineInterface, ui: Ui, name: string, output: unknown): Ren
             key="strip"
             label="Show strip"
             onPress={async () => {
+              // This row's capture; re-added from the row when it has left the list.
               const list = await read($, captures)
-              const latest = list[list.length - 1]
-              if (latest === undefined) return
-              await prepareIndex($, latest, 0)
-              await update($, strip, () => ({ captureId: latest.id, index: 0 }))
+              const target = list.find(c => c.id === cap.id) ?? cap
+              if (target === cap) await update($, captures, l => [...l.filter(c => c.id !== cap.id), cap].slice(-5))
+              await prepareIndex($, target, 0)
+              await update($, strip, () => ({ captureId: target.id, index: 0 }))
               await openStrip($)
             }}
           />
@@ -273,12 +279,12 @@ export const register: Register = on => {
   on('ui.render', { component: 'ToolResult', props: { tool: /template_review_|hub_execute_proxy_tool$/ } }, async ($, e, next) => {
     if (e.props.isErrored || e.props.output === undefined) return next(e)
     const name = suffixOf(e.props.tool) ?? (await read($, callNames))[e.props.tool_use_id]
-    return name === undefined ? next(e) : compact($, $.ui.resolve(e), name, e.props.output) ?? next(e)
+    return name === undefined ? next(e) : compact($, $.ui.resolve(e), name, e.props.output, e.props.tool_use_id) ?? next(e)
   })
   on('ui.render', { component: 'ToolUse', props: { tool: /template_review_|hub_execute_proxy_tool$/ } }, ($, e, next) => {
     if (e.props.isRunning || e.props.isErrored || e.props.output === undefined) return next(e)
     const call = resolveCall(e.props.tool, e.props.input)
-    return call === null ? next(e) : compact($, $.ui.resolve(e), call.name, e.props.output) ?? next(e)
+    return call === null ? next(e) : compact($, $.ui.resolve(e), call.name, e.props.output, e.props.tool_use_id) ?? next(e)
   })
 
   on('ui.render', { component: 'Pane', requestId: STRIP }, async ($, e) => {
