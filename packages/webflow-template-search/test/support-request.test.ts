@@ -25,10 +25,19 @@ function body(overrides: Record<string, unknown> = {}): Record<string, unknown> 
   };
 }
 
+const PROXY_TOKEN = 'proxy-secret-123';
+
+// Every request arrives through the proxy: one shared egress, the buyer IP forwarded.
 function post(payload: unknown, ip = '203.0.113.7', origin = 'https://webflow.com'): Request {
   return new Request(ENDPOINT, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'CF-Connecting-IP': ip, Origin: origin },
+    headers: {
+      'Content-Type': 'application/json',
+      Origin: origin,
+      'CF-Connecting-IP': '198.18.0.1',
+      'X-Templates-Proxy-Token': PROXY_TOKEN,
+      'X-Templates-Client-IP': ip,
+    },
     body: JSON.stringify(payload),
   });
 }
@@ -42,6 +51,7 @@ async function setup(
     SUPPORT_REQUESTS_ENABLED: '1',
     KNOCK_API_KEY: 'sk_test_knock',
     SUPPORT_REQUEST_HASH_SALT: 'test-salt',
+    SUPPORT_REQUEST_PROXY_TOKEN: PROXY_TOKEN,
     ALLOWED_ORIGINS: 'https://webflow.com,*.webflow.com',
     AIRTABLE_CREATOR_EMAIL_FIELD_IDS: 'fldTestOverride, fldTestRollup',
   });
@@ -121,10 +131,10 @@ describe('support request parsing', () => {
     const request = (headers: Record<string, string>) => new Request(ENDPOINT, { method: 'POST', headers });
     const viaProxy = { 'CF-Connecting-IP': '198.18.0.1', 'X-Templates-Client-IP': '203.0.113.5' };
     expect(clientIpFor(request({ ...viaProxy, 'X-Templates-Proxy-Token': 'proxy-secret-123' }), env)).toBe('203.0.113.5');
-    expect(clientIpFor(request({ ...viaProxy, 'X-Templates-Proxy-Token': 'wrong' }), env)).toBe('198.18.0.1');
-    expect(clientIpFor(request(viaProxy), env)).toBe('198.18.0.1');
-    // Without a configured token the forwarded header is ignored.
-    expect(clientIpFor(request({ ...viaProxy, 'X-Templates-Proxy-Token': 'proxy-secret-123' }), {} as Env)).toBe('198.18.0.1');
+    // No fallback to the shared egress address.
+    expect(clientIpFor(request({ ...viaProxy, 'X-Templates-Proxy-Token': 'wrong' }), env)).toBeNull();
+    expect(clientIpFor(request(viaProxy), env)).toBeNull();
+    expect(clientIpFor(request({ ...viaProxy, 'X-Templates-Proxy-Token': 'proxy-secret-123' }), {} as Env)).toBeNull();
   });
 
   it('strips campaign parameters from listing URLs', () => {
@@ -428,7 +438,12 @@ describe('POST /api/templates/support-request', () => {
     try {
       const huge = new Request(ENDPOINT, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Origin: 'https://webflow.com' },
+        headers: {
+          'Content-Type': 'application/json',
+          Origin: 'https://webflow.com',
+          'X-Templates-Proxy-Token': PROXY_TOKEN,
+          'X-Templates-Client-IP': '203.0.113.7',
+        },
         body: JSON.stringify(body({ message: 'x'.repeat(40_000) })),
       });
       expect((await callWorker(huge, env)).status).toBe(413);
@@ -474,6 +489,24 @@ describe('POST /api/templates/support-request', () => {
       for (let index = 0; index < 6; index += 1) {
         expect((await callWorker(viaProxy(`203.0.113.${index}`, index), env)).status).toBe(200);
       }
+    } finally {
+      close();
+    }
+  });
+
+  it('rejects requests that did not come through the proxy, and requires the token to be configured', async () => {
+    const { env, close, calls } = await setup();
+    try {
+      const direct = new Request(ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Origin: 'https://webflow.com', 'CF-Connecting-IP': '203.0.113.7' },
+        body: JSON.stringify(body()),
+      });
+      expect((await callWorker(direct, env)).status).toBe(403);
+      delete env.SUPPORT_REQUEST_PROXY_TOKEN;
+      expect((await callWorker(post(body()), env)).status).toBe(503);
+      expect(calls).toHaveLength(0);
+      expect(await rows(env)).toHaveLength(0);
     } finally {
       close();
     }

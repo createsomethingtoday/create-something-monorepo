@@ -8,8 +8,10 @@
 // reply-to = buyer).
 //
 // Disabled unless SUPPORT_REQUESTS_ENABLED = "1". Requires secrets
-// KNOCK_API_KEY, SUPPORT_REQUEST_HASH_SALT, AIRTABLE_API_KEY, and
-// AIRTABLE_CREATOR_EMAIL_FIELD_IDS (kept out of this public repo).
+// KNOCK_API_KEY, SUPPORT_REQUEST_HASH_SALT, AIRTABLE_API_KEY,
+// AIRTABLE_CREATOR_EMAIL_FIELD_IDS (kept out of this public repo), and
+// SUPPORT_REQUEST_PROXY_TOKEN: requests must arrive through the
+// templates.webflow.com proxy, which vouches for the buyer's IP.
 
 import { z } from 'zod';
 
@@ -146,15 +148,20 @@ function constantTimeEqual(a: string, b: string): boolean {
   return diff === 0;
 }
 
-/** The buyer's IP for rate limiting. Exported for tests. */
-export function clientIpFor(request: Request, env: Env): string {
+/**
+ * The buyer's IP as vouched for by the proxy, or null when the request didn't
+ * come through it. There is deliberately no CF-Connecting-IP fallback: the
+ * component only ever posts through the proxy, whose egress address is shared
+ * by every buyer. Exported for tests.
+ */
+export function clientIpFor(request: Request, env: Env): string | null {
   const token = env.SUPPORT_REQUEST_PROXY_TOKEN;
   const presented = request.headers.get(PROXY_TOKEN_HEADER);
   const forwarded = request.headers.get(PROXY_CLIENT_IP_HEADER)?.trim();
   if (token && presented && forwarded && forwarded.length <= 64 && constantTimeEqual(presented, token)) {
     return forwarded;
   }
-  return request.headers.get('CF-Connecting-IP') ?? 'unknown';
+  return null;
 }
 
 async function sha256Hex(value: string): Promise<string> {
@@ -329,6 +336,7 @@ export async function handleSupportRequest(request: Request, env: Env): Promise<
     !env.SUPPORT_REQUEST_HASH_SALT ||
     !env.AIRTABLE_API_KEY ||
     !env.AIRTABLE_ASSETS_TABLE_ID ||
+    !env.SUPPORT_REQUEST_PROXY_TOKEN ||
     creatorEmailFieldIds.length === 0
   ) {
     // Fail before reserving anything: a missing credential is a service fault,
@@ -336,6 +344,10 @@ export async function handleSupportRequest(request: Request, env: Env): Promise<
     console.error(JSON.stringify({ event: 'support_request_misconfigured' }));
     return respond({ success: false, error: 'support_requests_unavailable' }, 503);
   }
+
+  // Only the templates.webflow.com proxy may submit, and only it can vouch for the buyer's IP.
+  const ip = clientIpFor(request, env);
+  if (!ip) return respond({ success: false, error: 'proxy_required' }, 403);
 
   const body = await readBodyCapped(request, MAX_BODY_BYTES).catch(() => '');
   if (body === null) return respond({ success: false, error: 'payload_too_large' }, 413);
@@ -348,7 +360,6 @@ export async function handleSupportRequest(request: Request, env: Env): Promise<
   if (input.website) return respond({ success: true, data: { request_id: crypto.randomUUID() } }, 200);
 
   const salt = env.SUPPORT_REQUEST_HASH_SALT;
-  const ip = clientIpFor(request, env);
   const [ipHash, buyerEmailHash] = await Promise.all([
     sha256Hex(`${salt}:ip:${ip}`),
     sha256Hex(`${salt}:email:${input.buyer_email.toLowerCase()}`),
