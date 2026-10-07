@@ -1,6 +1,6 @@
 import { expect, mock, test } from 'claude-code/testing'
 
-import { resolve, slackFixes } from '../hooks/rules'
+import { reportsFailure, resolve, slackFixes, slackMentions } from '../hooks/rules'
 
 const SLACK = 'mcp__claude_ai_Slack__slack_send_message'
 const DRAFT = 'mcp__claude_ai_Slack__slack_send_message_draft'
@@ -164,4 +164,11 @@ test('rules: a new App Review ticket names its recipient and is sent with confir
   expect(out?.summary).toMatch(/to dev@example.com \(asset a1\)/)
   expect(out?.fixed?.confirm_send).toBe(true)
   expect(resolve('mcp__claude_ai_App_Review_MCP__app_review_create_ticket', { version_id: 'v1', subject: 'Hi', message: 'Body' })?.summary).toMatch(/creator email \(version v1\)/)
+})
+
+test('rules: W-prefixed Enterprise mentions are checked; application failures are not "sent"', () => {
+  expect(slackMentions('cc <@W0TESTUSR01> and <@U0TESTUSR02>')).toEqual(['W0TESTUSR01', 'U0TESTUSR02'])
+  expect(reportsFailure({ content: [{ type: 'text', text: '{"ok": false, "error": "ZENDESK_NOT_CONFIGURED"}' }] })).toBe(true)
+  expect(reportsFailure({ content: [{ type: 'text', text: '{"ok": true}' }] })).toBe(false)
+  expect(reportsFailure({ ok: true })).toBe(false)
 })

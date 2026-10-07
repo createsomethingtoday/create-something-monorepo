@@ -50,7 +50,24 @@ const PARTNERSTACK_SENDS = new Set([
 const NOTIFYING_REVIEW_STATUSES = new Set(['📤Changes Requested', '✅Approved', '❌Rejected'])
 
 /** The Slack checks that have each cost a deleted or lost message before. */
-export const SLACK_MENTION_RE = /<@(U[A-Z0-9]{6,})>/g
+/** User mentions: `U…` ids, and `W…` ids for Slack Enterprise users. */
+export const SLACK_MENTION_RE = /<@([UW][A-Z0-9]{6,})>/g
+export const SLACK_USER_ID_RE = /\b[UW][A-Z0-9]{6,}\b/g
+
+/**
+ * App Review tools report application failures (ZENDESK_NOT_CONFIGURED, …)
+ * as ordinary content with `"ok": false` rather than a transport error, so a
+ * result that says so did not send anything.
+ */
+export function reportsFailure(result: unknown): boolean {
+  let text: string
+  try {
+    text = JSON.stringify(result) ?? ''
+  } catch {
+    return false
+  }
+  return /\\?"ok\\?"\s*:\s*false/.test(text)
+}
 const SLACK_BARE_MENTION_RE = /(^|\s)@[a-z][\w.-]+/i
 const SLACK_TABLE_RE = /^\s*\|.*\|\s*$/m
 const SLACK_HTML_TAG_RE = /<(?!@|#|!|https?:|mailto:)[a-z][^>\n]*>/i

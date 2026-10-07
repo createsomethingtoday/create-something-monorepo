@@ -2,7 +2,7 @@ import { atom, read, update } from 'claude-code'
 import type { EngineInterface, Register } from 'claude-code'
 
 import type { OutboundSent } from '../types'
-import { resolve, slackMentions, str } from './rules'
+import { SLACK_USER_ID_RE, reportsFailure, resolve, slackMentions, str } from './rules'
 import type { Args, Outbound } from './rules'
 
 const PLUGIN = 'outbound-guard'
@@ -32,7 +32,7 @@ async function missingMembers($: EngineInterface, server: string, channel: strin
       const ran = await $.mcp.call(server, 'slack_list_channel_members', args)
       if (ran.isError) return { missing: [], unverified: 'the member list call errored' }
       const text = ran.content.map(block => ('text' in block && typeof block.text === 'string' ? block.text : '')).join('\n')
-      for (const m of text.matchAll(/\bU[A-Z0-9]{6,}\b/g)) members.add(m[0])
+      for (const m of text.matchAll(SLACK_USER_ID_RE)) members.add(m[0])
       const next = /"next_cursor"\s*:\s*"([^"]+)"/.exec(text)?.[1]
       if (next === undefined || next === '') break
       cursor = next
@@ -125,7 +125,7 @@ export const register: Register = on => {
 
     const input = out.fixed === undefined ? e : ({ ...e, ...out.fixed } as typeof e)
     const ran = await next(input)
-    if (ran.deny === undefined && ran.isError === undefined) {
+    if (ran.deny === undefined && ran.isError === undefined && !reportsFailure(ran.result)) {
       const entry: OutboundSent = { tool: out.tool, target: out.summary, at: await $.clock.now() }
       const all = await update($, sent, list => [...list, entry].slice(-100))
       $.ui.status(`${all.length} outbound send${all.length === 1 ? '' : 's'} confirmed this session`)
