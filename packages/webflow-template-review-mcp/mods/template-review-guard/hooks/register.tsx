@@ -45,7 +45,9 @@ async function evidenceTarget($: EngineInterface, url: string | null): Promise<s
 }
 
 type Args = Record<string, unknown>
-type Call = { name: string; args: Args; isProxy: boolean }
+/** `argsKey` is the Hub envelope key the arguments came from (null on a direct call), so a rewrite lands where the MCP reads. */
+type Call = { name: string; args: Args; isProxy: boolean; argsKey: string | null }
+const PROXY_ARG_KEYS = ['arguments', 'args', 'input', 'params'] as const
 
 function str(v: unknown): string | null {
   return typeof v === 'string' && v.length > 0 ? v : null
@@ -53,13 +55,20 @@ function str(v: unknown): string | null {
 
 function resolveCall(e: { tool: string } & Args): Call | null {
   const direct = TOOL_RE.exec(String(e.tool))
-  if (direct?.[1]) return { name: direct[1], args: e, isProxy: false }
+  if (direct?.[1]) return { name: direct[1], args: e, isProxy: false, argsKey: null }
   if (!PROXY_RE.test(String(e.tool))) return null
   const proxied = TOOL_RE.exec(str(e.proxyToolName) ?? '')
   if (!proxied?.[1]) return null
-  const raw = e.arguments ?? e.args ?? e.input ?? e.params
+  const argsKey = PROXY_ARG_KEYS.find(k => e[k] !== null && typeof e[k] === 'object') ?? 'args'
+  const raw = e[argsKey]
   const args = raw !== null && typeof raw === 'object' ? (raw as Args) : {}
-  return { name: proxied[1], args, isProxy: true }
+  return { name: proxied[1], args, isProxy: true, argsKey }
+}
+
+/** The MCP's own failure envelope: `{"ok":false,...}` arrives as a normal result, not as `isError`. */
+const FAILED_RE = /"ok"\s*:\s*false/
+function failed(ran: { deny?: unknown; isError?: unknown; text?: string; result?: unknown }): boolean {
+  return ran.deny !== undefined || ran.isError !== undefined || FAILED_RE.test(resultText(ran))
 }
 
 function resultText(ran: { text?: string; result?: unknown }): string {
@@ -203,8 +212,15 @@ function describe({ name, args }: Call, known: Record<string, string>): string |
 function creatorText({ name, args }: Call): string | null {
   switch (name) {
     case 'request_changes':
-    case 'update_version_review':
       return str(args.review_feedback) ?? str(args.rejection_feedback)
+    case 'update_version_review': {
+      // A rejected status emails rejection_feedback; Changes Requested emails review_feedback.
+      // Both given: show both, each under the field name, so nothing goes out unseen.
+      const review = str(args.review_feedback)
+      const rejection = str(args.rejection_feedback)
+      if (review !== null && rejection !== null) return `## review_feedback\n\n${review}\n\n## rejection_feedback (sent by the rejection email)\n\n${rejection}`
+      return /rejected/i.test(str(args.review_status) ?? '') ? (rejection ?? review) : (review ?? rejection)
+    }
     case 'reject_version':
       return str(args.rejection_feedback)
     case 'send_ticket_followup':
@@ -229,7 +245,24 @@ const CREATOR_TEXT_MAX = 20_000
  * Text the reviewer could not read in full is refused rather than sent on an
  * excerpt. Resolves null to send, else the refusal for the model.
  */
+let turn: Promise<void> = Promise.resolve()
+
+/** Confirmations run one at a time: the dialog, the pending atom and the pane are shared, so a second call must wait for the first answer. */
 async function confirm($: EngineInterface, call: Call, summary: string): Promise<string | null> {
+  const previous = turn
+  let release = () => {}
+  turn = new Promise<void>(resolve => {
+    release = resolve
+  })
+  await previous
+  try {
+    return await confirmNow($, call, summary)
+  } finally {
+    release()
+  }
+}
+
+async function confirmNow($: EngineInterface, call: Call, summary: string): Promise<string | null> {
   const text = creatorText(call)
   if (text !== null && text.length > CREATOR_TEXT_MAX) {
     return `${PLUGIN}: ${call.name} carries ${text.length} characters of creator-facing text, more than a reviewer can check in full (limit ${CREATOR_TEXT_MAX}). Shorten it and retry.`
@@ -292,7 +325,7 @@ export const register: Register = on => {
       const ran = await next(e)
       const kind = EVIDENCE_OF[call.name]
       const target = await evidenceTarget($, url)
-      if (kind !== undefined && target !== null && ran.deny === undefined && ran.isError === undefined) {
+      if (kind !== undefined && target !== null && !failed(ran)) {
         await addEvidence($, target, kind)
       }
       return ran
@@ -300,7 +333,7 @@ export const register: Register = on => {
 
     if (call.name === 'get_review_context') {
       const ran = await next(e)
-      if (ran.deny === undefined && ran.isError === undefined && versionId !== null) {
+      if (!failed(ran) && versionId !== null) {
         const text = resultText(ran)
         await update($, contextLoaded, list => (list.includes(versionId) ? list : [...list, versionId]))
         const template = NAME_RE.exec(text)?.[1]
@@ -330,9 +363,9 @@ export const register: Register = on => {
       const lint = lintComposed(text)
       if (lint.deny !== undefined) return { deny: `${PLUGIN}: ${field} ${lint.deny}` }
       for (const w of lint.warnings) $.ui.toast(`${field}: ${w}`)
-      if (lint.fixed !== undefined && !call.isProxy) {
-        input = { ...input, [field]: lint.fixed }
+      if (lint.fixed !== undefined) {
         call.args = { ...call.args, [field]: lint.fixed }
+        input = call.argsKey === null ? { ...input, [field]: lint.fixed } : { ...input, [call.argsKey]: call.args }
       }
     }
     const verbatim =
@@ -374,7 +407,7 @@ export const register: Register = on => {
     if (refusal !== null) return { deny: refusal }
 
     const ran = await next(input)
-    if (ran.deny === undefined && ran.isError === undefined) {
+    if (!failed(ran)) {
       // The write has happened. Bookkeeping that fails must not turn it into a
       // refusal the model would retry (a second email, ticket or listing change).
       try {

@@ -437,6 +437,97 @@ test('creator text beyond the reviewable limit is refused outright', async ($, o
   expect(asked).toBe(0)
 })
 
+test('an ok:false payload from context or an evidence tool is not evidence', async ($, on) => {
+  mock.clock(on)
+  fakeStore(on)
+  let reached = 0
+  let contextOk = false
+  on('tool.call', { tool: CTX }, () => ({ result: contextOk ? { ok: true, data: { templateName: 'Savoria' } } : { ok: false, error: 'version not found' } }))
+  on('tool.call', { tool: VALIDATE }, () => ({ result: { ok: false, error: 'validator unavailable' } }))
+  on('tool.call', { tool: SHOTS }, () => ({ result: { ok: false, error: 'capture failed' } }))
+  on('tool.call', { tool: 'AskUserQuestion' }, () => ({ deny: 'nobody here' }))
+  on('tool.call', { tool: RC }, () => {
+    reached += 1
+    return { result: { ok: true } }
+  })
+  await $.tool.call({ tool: CTX, version_id: 'recNo' })
+  await $.tool.call({ tool: VALIDATE, published_url: SITE })
+  await $.tool.call({ tool: SHOTS, published_url: SITE })
+  expect((await $.tool.call({ tool: RC, version_id: 'recNo', review_feedback: CLEAN })).deny).toMatch(/get_review_context/)
+  contextOk = true
+  await $.tool.call({ tool: CTX, version_id: 'recNo' })
+  await $.tool.call({ tool: VALIDATE, published_url: SITE })
+  await $.tool.call({ tool: SHOTS, published_url: SITE })
+  expect((await $.tool.call({ tool: RC, version_id: 'recNo', review_feedback: CLEAN })).deny).toMatch(/missing evidence.*validated, screenshots/)
+  expect(reached).toBe(0)
+})
+
+test('a rejected update shows the rejection copy, and both bodies when both are given', async ($, on) => {
+  mock.clock(on)
+  fakeStore(on)
+  let asked = ''
+  on('tool.call', { tool: CTX }, () => ({ result: { templateName: 'Savoria', phase0: { kind: 'NOT_A_TEMPLATE' } } }))
+  on('tool.call', { tool: 'AskUserQuestion' }, (_$, e) => {
+    asked = JSON.stringify(e)
+    return { deny: 'nobody here' }
+  })
+  on('tool.call', { tool: UPDATE }, () => ({ result: { ok: true } }))
+  await $.tool.call({ tool: CTX, version_id: 'recRej' })
+  await $.tool.call({ tool: UPDATE, version_id: 'recRej', review_status: '❌Rejected', rejection_feedback: 'This submission is a live client site, not a template.' })
+  expect(asked).toMatch(/live client site/)
+  asked = ''
+  await $.tool.call({ tool: UPDATE, version_id: 'recRej', review_status: 'Rejected', review_feedback: CLEAN, rejection_feedback: 'This submission is a live client site, not a template.' })
+  expect(asked).toMatch(/rejection_feedback \(sent by the rejection email\)/)
+  expect(asked).toMatch(/live client site/)
+  expect(asked).toMatch(/Add \/licenses at the root slug/)
+})
+
+test('concurrent creator-facing calls are confirmed one at a time', async ($, on) => {
+  mock.clock(on)
+  let inflight = 0
+  let most = 0
+  const seen: string[] = []
+  on('tool.call', { tool: 'AskUserQuestion' }, async (_$, e) => {
+    inflight += 1
+    most = Math.max(most, inflight)
+    seen.push(JSON.stringify(e))
+    await new Promise(resolve => setTimeout(resolve, 10))
+    inflight -= 1
+    return { deny: 'nobody here' }
+  })
+  on('tool.call', { tool: FOLLOWUP }, () => ({ result: { ok: true } }))
+  const [a, b] = await Promise.all([
+    $.tool.call({ tool: FOLLOWUP, version_id: 'recA', message: 'Hi there,\n\nFirst reply body.', visibility: 'public' }),
+    $.tool.call({ tool: FOLLOWUP, version_id: 'recB', message: 'Hi there,\n\nSecond reply body.', visibility: 'public' }),
+  ])
+  expect(a.deny).toMatch(/declined|nobody answered/)
+  expect(b.deny).toMatch(/declined|nobody answered/)
+  expect(most).toBe(1)
+  expect(seen.length).toBe(2)
+  expect(seen[0]).toMatch(/First reply body/)
+  expect(seen[1]).toMatch(/Second reply body/)
+})
+
+test('Hub: a lint fix to the feedback is written back into the proxy envelope', async ($, on) => {
+  mock.clock(on)
+  fakeStore(on)
+  let received: unknown = null
+  on('tool.call', { tool: CTX }, () => ({ result: { templateName: 'Savoria', phase0: { kind: 'DEAD_URL', status: 404 } } }))
+  on('tool.call', { tool: 'AskUserQuestion' }, (_$, e) => {
+    const questions = (e as unknown as { questions: { question: string }[] }).questions
+    return { result: { questions, answers: { [questions[0]!.question]: 'Send' } } }
+  })
+  on('tool.call', { tool: HUB }, (_$, e) => {
+    received = e.args
+    return { result: { ok: true } }
+  })
+  await $.tool.call({ tool: CTX, version_id: 'recGap' })
+  const gappy = 'Thanks for submitting.\n\nBLOCKING\n1. One\n\n2. Two\n\n3. Three\n\nRECOMMENDED\n1. Four'
+  const ran = await $.tool.call({ tool: HUB, proxyToolName: 'template_review_request_changes', args: { version_id: 'recGap', review_feedback: gappy } })
+  expect(ran.deny).toBeUndefined()
+  expect(received).toEqual({ version_id: 'recGap', review_feedback: 'Thanks for submitting.\n\nBLOCKING\n1. One\n2. Two\n3. Three\n\nRECOMMENDED\n1. Four' })
+})
+
 test('a validation run is written to the store for later sessions', async ($, on) => {
   mock.clock(on, { now: CR_MS + HOUR })
   const log = fakeStore(on)
