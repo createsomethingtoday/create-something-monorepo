@@ -1,0 +1,4 @@
+# Reviewer feedback, admin API responses, bundles and agent runs are internal review data; never commit.
+corpus/
+runs/
+node_modules/

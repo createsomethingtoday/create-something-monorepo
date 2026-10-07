@@ -18,6 +18,7 @@ import {
 import { corsPreflight, jsonResponse, textResponse, withCorsHeaders } from './http.js';
 import { parseSearchParams } from './query.js';
 import { searchTemplates } from './search.js';
+import { handleSupportRequest } from './supportRequest.js';
 import { handleTelemetry } from './telemetry.js';
 import {
   SyncAlreadyRunningError,
@@ -563,6 +564,11 @@ export default {
         // First-party fallback for the marketplace code components when
         // webflow.com's page-level analytics SDKs are down (see telemetry.ts).
         return await handleTelemetry(request, env, ctx);
+      }
+
+      if (url.pathname === '/api/templates/support-request' && request.method === 'POST') {
+        // Buyer → creator support form on template detail pages (see supportRequest.ts).
+        return await handleSupportRequest(request, env);
       }
 
       if ((url.pathname === '/api/templates/client.js' || url.pathname === '/client.js') && request.method === 'GET') {
