@@ -198,13 +198,24 @@ export function createCodexAdapter(options: CodexOptions) {
   async function reconcileSavedEdits(workspaceId: string): Promise<void> {
     for (const pending of sessions.values()) {
       if (pending.workspaceId !== workspaceId || pending.uncertainWrite?.tool !== 'gigi_records_save') continue;
-      const intended = pending.uncertainWrite.arguments;
+      const attempt = pending.uncertainWrite;
+      const intended = attempt.arguments;
       try {
         const result = await options.mcp!.request('tools/call', { name: 'gigi_records_get', arguments: { workspaceId, entity: intended.entity, id: intended.id, detail: 'full' } });
         const actual = result.structuredContent ?? JSON.parse(result.content?.find((x: Json) => x.type === 'text')?.text ?? '{}');
-        if (!result.isError && savedEditMatches(actual, intended)) {
-          if (pending.decisionReceipt?.outcome === 'unknown') pending.decisionReceipt.outcome = 'verified';
-          pending.uncertainWrite = undefined; pending.error = undefined; await persist();
+        if (pending.uncertainWrite !== attempt) continue;
+        if (!result.isError) {
+          const matched = savedEditMatches(actual, intended);
+          const prior = intended.expectedRecord;
+          // The owned gigi-mcp loop processes saves and these reads serially.
+          // An exact full pre-edit snapshot proves this ordered save did not change it.
+          const unchanged = actual?.id === intended.id && prior &&
+            actual.title === prior.title && isDeepStrictEqual(actual.fields, prior.fields) &&
+            isDeepStrictEqual(actual.source, prior.source);
+          if (matched || unchanged) {
+            if (pending.decisionReceipt?.outcome === 'unknown') pending.decisionReceipt.outcome = matched ? 'verified' : 'failed';
+            pending.uncertainWrite = undefined; pending.error = undefined; await persist();
+          }
         }
       } catch { /* Keep the write fence until a complete matching read succeeds. */ }
     }

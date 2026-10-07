@@ -139,7 +139,7 @@ for (const receipt of [null, { sessionId: 'other', state: 'idle' }, { sessionId:
   await chat.read('s1'); assert.equal(chat.draft, ''); assert.equal(chat.error, null);
 });
 
-for (const reason of ['chatgpt_auth_required', 'provider_turn_rejected', 'plugin_inventory_unavailable']) test(`${reason} retains the draft without fencing a later explicit retry`, async () => {
+for (const reason of ['chatgpt_auth_required', 'codex_unavailable', 'provider_turn_rejected', 'plugin_inventory_unavailable']) test(`${reason} retains the draft without fencing a later explicit retry`, async () => {
   let sends = 0;
   const { chat } = fixture({ chatSend: async () => { if (++sends === 1) throw new Error(reason); return snapshot(); } });
   await chat.open(); await chat.read('s1'); chat.draft = 'Synthetic question';

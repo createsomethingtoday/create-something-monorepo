@@ -140,7 +140,7 @@ export class ChatController {
       this.error = String(error?.message || error);
       // These exact adapter errors prove turn/start was not delivered or was rejected.
       // Transport failures remain uncertain and must never permit automatic replay.
-      const definitive = submittedText !== null && ['chatgpt_auth_required', 'provider_turn_rejected', 'session_not_found', 'plugin_inventory_unavailable'].includes(this.error);
+      const definitive = submittedText !== null && ['chatgpt_auth_required', 'codex_unavailable', 'provider_turn_rejected', 'session_not_found', 'plugin_inventory_unavailable'].includes(this.error);
       this.refreshRequired = !definitive;
       if (submittedText !== null && !definitive) this.unconfirmedSends.set(sessionId, { sessionId, text: submittedText, messageIds });
     }
@@ -176,7 +176,7 @@ export function chatView(chat, innerOnly = false) {
   const context = chat.record ? `<span class="chat-context">About ${escape(chat.record.title || `${chat.record.entity} · ${chat.record.id}`)}</span>` : '<span class="chat-context">Workspace</span>';
   const messages = (current?.messages || []).map((item) => `<div class="chat-message ${item.role === 'user' ? 'from-user' : 'from-agent'}"><span class="chat-message-label">${item.role === 'user' ? 'You' : 'GiGi'}</span><p>${escape(item.text)}</p></div>`).join('');
   const approvals = current?.state === 'approval' ? (current.approvals || []).map((item) => `<div class="chat-approval">${approvalCopy(item, typeof chat.currency === 'function' ? chat.currency() : chat.currency, typeof chat.currencyKnown === 'function' ? chat.currencyKnown() : chat.currencyKnown !== false)}<div class="inline-actions"><button class="btn primary" data-chat-approval="${escape(item.id)}" data-chat-decision="approve" ${chat.pending || chat.reading || chat.refreshRequired || uncertain || !ready ? 'disabled' : ''}>Approve changes</button><button class="btn danger" data-chat-approval="${escape(item.id)}" data-chat-decision="reject" ${chat.pending || chat.reading || chat.refreshRequired || uncertain || !ready ? 'disabled' : ''}>Reject changes</button></div></div>`).join('') : '';
-  const receiptText = { verified: 'Changes saved and verified in GiGi.', rejected: 'Changes rejected. GiGi did not execute this edit.', failed: 'GiGi returned an error for this edit.', unknown: 'Edit outcome is unknown. Check the affected record before another edit.' }[current?.decisionReceipt?.outcome];
+  const receiptText = { verified: 'Changes saved and verified in GiGi.', rejected: 'Changes rejected. GiGi did not execute this edit.', failed: 'The requested edit was not saved.', unknown: 'Edit outcome is unknown. Check the affected record before another edit.' }[current?.decisionReceipt?.outcome];
   const receipt = receiptText ? `<p class="chat-status" role="status"><strong>Last reviewed edit</strong> ${escape(receiptText)}</p>` : '';
   const links = (current?.recordLinks || []).map((item) => `<button type="button" class="btn text chat-record-link" data-chat-link-entity="${escape(item.entity)}" data-chat-link-id="${escape(item.id)}">${escape(item.title || item.id)} ↗</button>`).join('');
   const sessions = chat.sessions.map((item) => `<button type="button" class="chat-session" data-chat-session="${escape(item.sessionId)}" ${chat.pending ? 'disabled' : ''} ${item.sessionId === current?.sessionId ? 'aria-current="true"' : ''}><span>${escape(item.title || item.record?.title || 'Conversation')}</span><small>${escape(item.state || '')}</small></button>`).join('');

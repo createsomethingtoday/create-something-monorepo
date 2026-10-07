@@ -157,8 +157,10 @@ test('uncertain GiGi write is fenced before provider call and survives restart',
   const { adapter, server, mcp, dataDir } = await setup();
   const { sessionId } = await adapter.start({ workspaceId: 'w', message: 'hello' });
   const replies: unknown[] = []; server.reply = (id, value) => { replies.push({ id, value }); };
+  let saveAttempted = false;
   mcp.request = async (method, params) => {
-    if (method === 'tools/call' && params.name === 'gigi_records_save') throw new Error('broken pipe after write');
+    if (method === 'tools/call' && params.name === 'gigi_records_save') { saveAttempted = true; throw new Error('broken pipe after write'); }
+    if (params.name === 'gigi_records_get' && saveAttempted) throw new Error('read unavailable');
     if (method === 'tools/call' && params.name === 'gigi_records_get') return { structuredContent: { id: 'r', title: 'Before', fields: { status: 'open' }, source: { type: 'manual' } } };
     if (method === 'tools/list') return { tools: [{ name: 'gigi_records_save', description: 'Save', inputSchema: { type: 'object' } }] };
     return { content: [{ type: 'text', text: '{"id":"w"}' }] };
@@ -335,6 +337,7 @@ for (const outcome of ['rejected', 'failed', 'unknown'] as const) test(`${outcom
   const original = mcp.request.bind(mcp); let writes = 0;
   mcp.request = async (method, params) => {
     if (method === 'tools/call' && params.name === 'gigi_records_save') { writes++; if (outcome === 'unknown') throw new Error('lost'); return { isError: true, content: [] }; }
+    if (outcome === 'unknown' && writes && params.name === 'gigi_records_get') throw new Error('read unavailable');
     return original(method, params);
   };
   const result = await adapter.approve({ workspaceId: 'w', sessionId, approvalId: approval.id, decision: outcome === 'rejected' ? 'reject' : 'approve' });
@@ -380,8 +383,9 @@ for (const proposal of [
   const { adapter, server, mcp } = await setup();
   const original = mcp.request.bind(mcp);
   let actual = { id: 'r', title: 'Task', fields: { Status: 'Open' }, source: { kind: 'manual' } };
-  let writes = 0;
+  let writes = 0, materialized = false;
   mcp.request = async (method, params) => {
+    if (params.name === 'gigi_records_get' && writes && !materialized) throw new Error('read unavailable');
     if (params.name === 'gigi_records_get') return { structuredContent: actual, content: [] };
     if (params.name === 'gigi_records_save') { writes++; throw new Error('lost reply'); }
     return original(method, params);
@@ -393,6 +397,7 @@ for (const proposal of [
   await adapter.approve({ workspaceId: 'w', sessionId, approvalId: approval.id, decision: 'approve' });
   await emit(202, 'gigi_records_get', { detail: 'full' });
   assert.equal((await adapter.read({ workspaceId: 'w', sessionId })).decisionReceipt?.outcome, 'unknown');
+  materialized = true;
   actual = { ...actual, title: proposal.title.trim(), ...('fields' in proposal ? { fields: proposal.fields as any } : {}), ...('source' in proposal ? { source: proposal.source as any } : {}) };
   await emit(203, 'gigi_records_get', { detail: 'full' });
   assert.equal((await adapter.read({ workspaceId: 'w', sessionId })).decisionReceipt?.outcome, 'verified');
@@ -447,8 +452,9 @@ for (const loseReply of [false, true]) test(`imported record manual source prese
   const original = mcp.request.bind(mcp);
   const imported = { kind: 'import', provider: 'synthetic', externalId: 'fixture-1' };
   let actual = { id: 'r', title: 'Task', fields: {}, source: imported as any };
-  let writes = 0;
+  let writes = 0, materialized = !loseReply;
   mcp.request = async (method, params) => {
+    if (params.name === 'gigi_records_get' && writes && !materialized) throw new Error('read unavailable');
     if (params.name === 'gigi_records_get') return { structuredContent: actual, content: [] };
     if (params.name === 'gigi_records_save') {
       writes++;
@@ -464,6 +470,7 @@ for (const loseReply of [false, true]) test(`imported record manual source prese
   const result = await adapter.approve({ workspaceId: 'w', sessionId, approvalId: approval.id, decision: 'approve' });
   assert.equal(result.decisionReceipt?.outcome, loseReply ? 'unknown' : 'verified');
   if (loseReply) {
+    materialized = true;
     actual = { ...actual, source: { kind: 'manual', origin: imported } };
     const restarted = createCodexAdapter({ dataDir, mcpBinary: '/fixture/gigi-mcp', skillPath: '/fixture/skill/SKILL.md', server, mcp });
     await assert.rejects(restarted.read({ workspaceId: 'other-workspace', sessionId }), /session_not_found/);
@@ -568,4 +575,44 @@ test('Stop denies an edit whose record snapshot finishes after cancellation', as
   assert.equal(result.approvals.length, 0); assert.notEqual(result.state, 'approval');
   assert.equal(replies.find(item => item.id === 999)?.value.success, false);
   assert.equal(mcp.calls.some(call => call.params.name === 'gigi_records_save'), false);
+});
+
+
+test('ordered unchanged full-record reconciliation closes an uncertain save without replay', async () => {
+  const { adapter, server, mcp } = await setup();
+  const { sessionId } = await adapter.start({ workspaceId: 'w', message: 'edit' });
+  await Promise.all(server.events.map(fn => fn({ id: 1001, method: 'item/tool/call', params: { threadId: 'thread-1', tool: 'gigi_records_save', arguments: { entity: 'tasks', id: 'r', title: 'Updated' } } })));
+  const approval = (await adapter.read({ workspaceId: 'w', sessionId })).approvals[0];
+  const original = mcp.request.bind(mcp); let writes = 0;
+  mcp.request = async (method, params) => {
+    if (params.name === 'gigi_records_save') { writes++; throw new Error('lost before commit'); }
+    return original(method, params);
+  };
+  const result = await adapter.approve({ workspaceId: 'w', sessionId, approvalId: approval.id, decision: 'approve' });
+  assert.equal(result.decisionReceipt?.outcome, 'failed'); assert.equal(result.error, undefined);
+  await Promise.all(server.events.map(fn => fn({ id: 1002, method: 'item/tool/call', params: { threadId: 'thread-1', tool: 'gigi_records_save', arguments: { entity: 'tasks', id: 'r', title: 'New proposal' } } })));
+  assert.equal((await adapter.read({ workspaceId: 'w', sessionId })).approvals.length, 1);
+  assert.equal(writes, 1);
+});
+
+
+for (const actual of [
+  { id: 'r', title: 'Someone else changed it', fields: {}, source: {} },
+  { id: 'r', title: 'Task', fields: {} }
+]) test(`uncertain write stays fenced for conflicting or incomplete read: ${JSON.stringify(actual)}`, async () => {
+  const { adapter, server, mcp } = await setup();
+  const { sessionId } = await adapter.start({ workspaceId: 'w', message: 'edit' });
+  await Promise.all(server.events.map(fn => fn({ id: 1003, method: 'item/tool/call', params: { threadId: 'thread-1', tool: 'gigi_records_save', arguments: { entity: 'tasks', id: 'r', title: 'Updated' } } })));
+  const approval = (await adapter.read({ workspaceId: 'w', sessionId })).approvals[0];
+  const original = mcp.request.bind(mcp); let writes = 0;
+  mcp.request = async (method, params) => {
+    if (params.name === 'gigi_records_save') { writes++; throw new Error('lost reply'); }
+    if (params.name === 'gigi_records_get') return { structuredContent: actual };
+    return original(method, params);
+  };
+  const result = await adapter.approve({ workspaceId: 'w', sessionId, approvalId: approval.id, decision: 'approve' });
+  assert.equal(result.decisionReceipt?.outcome, 'unknown'); assert.equal(result.error, 'write_outcome_unknown');
+  await Promise.all(server.events.map(fn => fn({ id: 1004, method: 'item/tool/call', params: { threadId: 'thread-1', tool: 'gigi_records_save', arguments: { entity: 'tasks', id: 'r', title: 'Retry' } } })));
+  assert.equal((await adapter.read({ workspaceId: 'w', sessionId })).approvals.length, 0);
+  assert.equal(writes, 1);
 });
