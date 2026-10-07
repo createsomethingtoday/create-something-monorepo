@@ -73,6 +73,17 @@ test('tool calls through the engine land in state', async ($, on) => {
   expect(review?.decision).toBe('Changes Requested')
 })
 
+test('an ok:false payload changes nothing, through the Hub too', async ($, on) => {
+  mock.clock(on)
+  const last = watch(on)
+  on('tool.call', { tool: CTX }, () => ({ result: { ok: false, error: 'version not found' } }))
+  on('tool.call', { tool: 'mcp__reviewer__hub_execute_proxy_tool' }, () => ({ result: { ok: false, error: 'rejection failed' } }))
+  await $.tool.call({ tool: CTX, version_id: 'recY' })
+  await $.tool.call({ tool: 'mcp__reviewer__hub_execute_proxy_tool', proxyToolName: 'template_review_reject_version', args: { version_id: 'recY', reject_reason: 'x' } })
+  expect(last.current).toBeUndefined()
+  expect(last.reviews).toBeUndefined()
+})
+
 test('a failed call changes nothing', async ($, on) => {
   mock.clock(on)
   const last = watch(on)

@@ -188,12 +188,18 @@ test('a Preview link is refused on the evidence tools', async ($, on) => {
     reached += 1
     return { result: { ok: true } }
   })
-  const ran = await $.tool.call({
-    tool: VALIDATE,
-    published_url: 'https://preview.webflow.com/preview/savoria?utm_medium=preview_link&workflow=preview',
-  })
-  expect(ran.deny).toMatch(/Preview link/)
+  for (const url of [
+    'https://preview.webflow.com/preview/savoria?utm_medium=preview_link&workflow=preview',
+    'https://webflow.com/preview/komanica',
+    'https://www.webflow.com/preview/komanica?workflow=preview',
+  ]) {
+    const ran = await $.tool.call({ tool: VALIDATE, published_url: url })
+    expect(ran.deny).toMatch(/Preview link/)
+  }
   expect(reached).toBe(0)
+  const site = await $.tool.call({ tool: VALIDATE, published_url: 'https://preview-studio.webflow.io/' })
+  expect(site.deny).toBeUndefined()
+  expect(reached).toBe(1)
 })
 
 test('a decision with context but no validation or screenshots is refused', async ($, on) => {

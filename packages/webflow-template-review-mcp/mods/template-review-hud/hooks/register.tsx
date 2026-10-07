@@ -9,6 +9,8 @@ const PANE = 'template-reviews'
 const reviews = atom({ plugin: 'template-review-hud', key: 'reviews' } as const, [])
 const current = atom({ plugin: 'template-review-hud', key: 'current' } as const, null)
 const isHidden = atom({ plugin: 'template-review-hud', key: 'isHidden' } as const, false)
+/** The MCP's own failure envelope arrives as a normal result, not as `isError`. */
+const FAILED_RE = /"ok"\s*:\s*false/
 
 function paneText(list: Review[]): string {
   if (list.length === 0) return 'No template versions touched yet. Load one with template_review_get_review_context.'
@@ -45,6 +47,7 @@ export const register: Register = on => {
     const ran = await next(e)
     if (ran.deny !== undefined || ran.isError !== undefined) return ran
     const text = ran.text ?? (typeof ran.result === 'string' ? ran.result : JSON.stringify(ran.result ?? ''))
+    if (FAILED_RE.test(text)) return ran
     const seen = observe(call, text)
     const now = await $.clock.now()
     const before = { reviews: await read($, reviews), current: await read($, current) }

@@ -19,7 +19,8 @@ const TOOL_RE = /template_review_([a-z_]+)$/
 const PROXY_RE = /hub_execute_proxy_tool$/
 const NAME_RE = /"(?:templateName|template_name|assetName|asset_name)"\s*:\s*"([^"\n]+)"/
 const FAST_EXIT_RE = /"phase0"[\s\S]{0,300}?"kind"\s*:\s*"(DEAD_URL|NOT_A_TEMPLATE)"/
-const PREVIEW_HOST_RE = /^https?:\/\/preview\.webflow\.com\//i
+/** Preview links: the preview host, and preview paths on the main domain (`webflow.com/preview/<slug>`). */
+const PREVIEW_HOST_RE = /^https?:\/\/(?:preview\.webflow\.com\/|(?:www\.)?webflow\.com\/preview(?:\/|$|\?))/i
 /** Published-site fields in a get_review_context result (the asset's websiteUrl today). */
 const SITE_URL_RE = /"(?:websiteUrl|website_url|publishedUrl|published_url|customDomainUrl)"\s*:\s*"([^"\s]+)"/g
 
