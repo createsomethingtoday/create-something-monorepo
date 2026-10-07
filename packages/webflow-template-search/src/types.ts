@@ -33,6 +33,21 @@ export interface Env {
    * forwarding is additive on top.
    */
   TELEMETRY_AE?: AnalyticsEngineDataset;
+  /** "1" turns on POST /api/templates/support-request (see supportRequest.ts). */
+  SUPPORT_REQUESTS_ENABLED?: string;
+  /** Knock secret key used to email creators about buyer support requests (secret). */
+  KNOCK_API_KEY?: string;
+  /** Overrides the Knock workflow key; defaults to marketplace-template-support-request. */
+  KNOCK_SUPPORT_WORKFLOW_KEY?: string;
+  /** Salt for the IP and buyer-email hashes stored on support_requests (secret). */
+  SUPPORT_REQUEST_HASH_SALT?: string;
+  /** Comma-separated 👛Assets creator-email field IDs, override first (secret). */
+  AIRTABLE_CREATOR_EMAIL_FIELD_IDS?: string;
+  /**
+   * Shared with the templates.webflow.com proxy (secret). A request presenting it in
+   * X-Templates-Proxy-Token is trusted for the buyer IP in X-Templates-Client-IP.
+   */
+  SUPPORT_REQUEST_PROXY_TOKEN?: string;
 }
 
 export interface AirtableAttachment {
