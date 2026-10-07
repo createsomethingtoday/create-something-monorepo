@@ -3,6 +3,9 @@
 // bundle without a dependency.
 import { inflateRawSync } from 'node:zlib';
 
+/** Submitted bundles are untrusted; a 5 MB zip may inflate to gigabytes. Per-entry cap. */
+export const MAX_ENTRY_BYTES = 64 * 1024 * 1024;
+
 const EOCD_SIG = 0x06054b50;
 const CEN_SIG = 0x02014b50;
 const LOC_SIG = 0x04034b50;
@@ -37,7 +40,15 @@ export function readZip(buffer) {
     const start = q + 30 + nameLength + extraLength;
     const data = buffer.subarray(start, start + entry.compressedSize);
     if (entry.method === 0) return Buffer.from(data);
-    if (entry.method === 8) return inflateRawSync(data);
+    if (entry.method === 8) {
+      if (entry.size > MAX_ENTRY_BYTES) throw new Error(`${entry.name} declares ${entry.size} bytes uncompressed (limit ${MAX_ENTRY_BYTES}); refusing to inflate`);
+      try {
+        return inflateRawSync(data, { maxOutputLength: MAX_ENTRY_BYTES });
+      } catch (err) {
+        if (err?.code === 'ERR_BUFFER_TOO_LARGE') throw new Error(`${entry.name} inflates past ${MAX_ENTRY_BYTES} bytes; refusing to inflate`);
+        throw err;
+      }
+    }
     throw new Error(`Unsupported compression method ${entry.method} for ${entry.name}`);
   };
 

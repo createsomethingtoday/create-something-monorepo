@@ -32,6 +32,7 @@ export const LIMITS = {
   screenshotsMax: 5,
   screenshotWidth: 1280,
   screenshotHeight: 846,
+  screenshotMaxBytes: 2 * 1024 * 1024,
 };
 
 export const EXAMPLE_LISTING = {
@@ -258,7 +259,9 @@ export function runListingKit(listingPath) {
       shotProblems.push(`Screenshot ${i + 1} not found: ${shot?.path || '(unset)'}`);
       return;
     }
-    const dims = imageDimensions(readFileSync(p));
+    const buf = readFileSync(p);
+    const dims = imageDimensions(buf);
+    if (buf.length > LIMITS.screenshotMaxBytes) shotProblems.push(`Screenshot ${i + 1} is ${Math.ceil(buf.length / 1024)} KB (limit ${LIMITS.screenshotMaxBytes / 1024 / 1024} MB)`);
     if (!['png', 'jpeg'].includes(dims.format)) shotProblems.push(`Screenshot ${i + 1} must be PNG or JPEG`);
     else if (dims.width !== LIMITS.screenshotWidth || dims.height !== LIMITS.screenshotHeight) shotProblems.push(`Screenshot ${i + 1} is ${dims.width}x${dims.height} (need ${LIMITS.screenshotWidth}x${LIMITS.screenshotHeight})`);
     if (!str(shot.altText).trim()) shotProblems.push(`Screenshot ${i + 1} has no alt text`);

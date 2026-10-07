@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readZip } from '../src/lib/zip.mjs';
+import { MAX_ENTRY_BYTES, readZip } from '../src/lib/zip.mjs';
 import { imageDimensions } from '../src/lib/images.mjs';
 import { loadRegistry, coverage } from '../src/lib/registry.mjs';
 import { writeZip, writePng } from './helpers.mjs';
@@ -10,6 +10,15 @@ test('zip reader inventories and extracts stored entries', () => {
   assert.deepEqual(zip.files.map((f) => f.name), ['a.txt', 'dir/b.json']);
   assert.equal(zip.readText(zip.files[0]), 'hello');
   assert.equal(JSON.parse(zip.readText(zip.files[1])).x, 1);
+});
+
+test('zip reader inflates deflated entries but refuses ones that declare or expand past the cap', () => {
+  const ok = readZip(writeZip([{ name: 'bundle.js', data: 'console.log(1)'.repeat(50), deflate: true }]));
+  assert.equal(ok.readText(ok.files[0]).length, 14 * 50);
+  const liar = readZip(writeZip([{ name: 'bomb.js', data: 'x', deflate: true, declaredSize: MAX_ENTRY_BYTES + 1 }]));
+  assert.throws(() => liar.read(liar.files[0]), /refusing to inflate/);
+  const bomb = readZip(writeZip([{ name: 'bomb.js', data: Buffer.alloc(MAX_ENTRY_BYTES + 1024), deflate: true, declaredSize: 1 }]));
+  assert.throws(() => bomb.read(bomb.files[0]), /refusing to inflate/);
 });
 
 test('zip reader rejects non-archives', () => {

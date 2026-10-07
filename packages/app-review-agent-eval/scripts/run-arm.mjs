@@ -11,7 +11,7 @@
 // workspace.
 import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync, chmodSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { readZip } from '../../webflow-app-forge/src/lib/zip.mjs';
@@ -155,9 +155,12 @@ async function runCodex({ arm, ws, out, network }) {
   ];
   const events = [];
   const stderr = [];
+  // Ground truth must not be readable while the agent runs: workspace-write still
+  // allows reads anywhere on disk, and the labels live three directories up.
+  lockLabels();
   const code = await new Promise((resolveExit) => {
     // stdin must be closed: with a pipe, codex waits to read a <stdin> block forever.
-    const child = spawn('codex', argv, { cwd: ws, stdio: ['ignore', 'pipe', 'pipe'], env: { ...process.env, CODEX_HOME: process.env.CODEX_HOME ?? `${process.env.HOME}/.codex` } });
+    const child = spawn('codex', argv, { cwd: ws, stdio: ['ignore', 'pipe', 'pipe'], env: childEnv() });
     let buf = '';
     child.stdout.on('data', (d) => {
       buf += d.toString();
@@ -175,10 +178,13 @@ async function runCodex({ arm, ws, out, network }) {
       resolveExit(c);
     });
   });
+  unlockLabels();
   writeFileSync(join(out, 'events.jsonl'), events.join('\n') + '\n');
   if (stderr.length) writeFileSync(join(out, 'stderr.txt'), stderr.join(''));
 
-  const run = { ok: false, exitCode: code, usage: null, toolCalls: 0, subagents: 0, externalTools: [], error: null, findings: null, verdict: null, modelSeen: arm.model };
+  const run = { ok: false, exitCode: code, usage: null, toolCalls: 0, subagents: 0, externalTools: [], labelPathHits: 0, error: null, findings: null, verdict: null, modelSeen: arm.model };
+  // Audit: any event that names the label store means the sandbox boundary was crossed.
+  run.labelPathHits = events.filter((l) => /labels\.json|judged-labels|corpus\//.test(l)).length;
   for (const line of events) {
     try {
       const e = JSON.parse(line);
@@ -276,3 +282,25 @@ function fail(m) {
   console.error(m);
   process.exit(2);
 }
+
+// ---------------------------------------------------------------------------
+// Sandbox hygiene
+
+/** The child gets PATH, HOME and locale only: no Infisical-injected keys, no tokens. */
+function childEnv() {
+  const keep = ['PATH', 'HOME', 'USER', 'SHELL', 'TERM', 'LANG', 'LC_ALL', 'TMPDIR', 'TZ'];
+  const env = Object.fromEntries(keep.filter((k) => process.env[k] !== undefined).map((k) => [k, process.env[k]]));
+  env.CODEX_HOME = process.env.CODEX_HOME ?? `${process.env.HOME}/.codex`;
+  return env;
+}
+
+const LABEL_PATHS = [join(PKG, 'corpus', 'labels.json'), join(PKG, 'corpus', 'judged-labels')];
+function lockLabels() {
+  for (const p of LABEL_PATHS) { try { chmodSync(p, 0o000); } catch { /* absent */ } }
+}
+function unlockLabels() {
+  for (const p of LABEL_PATHS) { try { chmodSync(p, p.endsWith('.json') ? 0o644 : 0o755); } catch { /* absent */ } }
+}
+process.on('exit', unlockLabels);
+process.on('SIGINT', () => { unlockLabels(); process.exit(130); });
+process.on('SIGTERM', () => { unlockLabels(); process.exit(143); });

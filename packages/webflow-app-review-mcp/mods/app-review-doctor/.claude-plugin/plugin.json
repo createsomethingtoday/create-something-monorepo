@@ -6,8 +6,8 @@
   "userConfig": {
     "forgeCli": {
       "type": "string",
-      "description": "Absolute path to packages/webflow-app-forge/src/cli.mjs",
-      "default": "/Users/micahjohnson/Code/create-something-monorepo/packages/webflow-app-forge/src/cli.mjs",
+      "description": "Path to packages/webflow-app-forge/src/cli.mjs. Leave empty to search upward from the project for the monorepo package or an installed @create-something/webflow-app-forge.",
+      "default": "",
       "title": "Forge CLI path"
     }
   },

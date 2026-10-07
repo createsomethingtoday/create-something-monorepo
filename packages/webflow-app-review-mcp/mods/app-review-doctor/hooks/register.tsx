@@ -2,7 +2,7 @@ import { atom, read, update } from 'claude-code'
 import type { On, Register } from 'claude-code'
 
 import type { DoctorProject, DoctorReport } from '../types'
-import { RUBRIC, buildDir, isBuildCommand, parseDoctorOutput, resolveDir, statusLine } from './lib'
+import { FIND_FORGE_CLI_SH, RUBRIC, buildDir, isBuildCommand, parseDoctorOutput, resolveDir, statusLine } from './lib'
 
 const PANE = 'app-review-doctor'
 const project = atom({ plugin: 'app-review-doctor', key: 'project' } as const, null)
@@ -24,10 +24,17 @@ async function detect($: Engine, cwd: string): Promise<DoctorProject | null> {
   return { cwd, name }
 }
 
-async function runDoctor($: Engine, p: DoctorProject, forgeCli: string): Promise<DoctorReport> {
+async function findForgeCli($: Engine, cwd: string): Promise<string> {
+  const ran = await $.process.run(['sh', '-c', FIND_FORGE_CLI_SH], { cwd, timeoutMs: 10_000 })
+  return ran.exitCode === 0 ? ran.stdout.trim() : ''
+}
+
+async function runDoctor($: Engine, p: DoctorProject, configured: string): Promise<DoctorReport> {
   const ranAt = await $.clock.now()
   let next: DoctorReport
   try {
+    const forgeCli = configured || (await findForgeCli($, p.cwd))
+    if (!forgeCli) throw new Error('App Forge CLI not found above the project; set forgeCli in the mod options')
     const ran = await $.process.run(['node', forgeCli, 'doctor', p.cwd, '--json'], { cwd: p.cwd, timeoutMs: 60_000 })
     next = parseDoctorOutput(ran.stdout, ran.exitCode, ran.stderr, ranAt)
   } catch (error) {

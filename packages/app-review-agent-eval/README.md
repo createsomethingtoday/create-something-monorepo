@@ -28,13 +28,13 @@ infisical run ... -- node scripts/judge.mjs --arm astra          # Claude judge,
 node scripts/report.mjs                                          # runs/REPORT.md
 ```
 
-Codex uses the machine's ChatGPT login. Pass `--network` to let the agent GET the listing URLs and testing site; off by default so the first results isolate what the bundle and listing alone support.
+Codex uses the machine's ChatGPT login. The child process gets a minimal environment (PATH, HOME, locale, `CODEX_HOME`), never the Infisical-injected keys. While an arm runs, `corpus/labels.json` and `corpus/judged-labels/` are `chmod 000`, because the `workspace-write` sandbox restricts writes, not reads; every `run.json` records `labelPathHits`, the count of events that name the label store (0 across all runs so far). Pass `--network` to let the agent reach the listing URLs and testing site; this turns on unrestricted egress for the sandbox, and the GET-only rule is enforced by the prompt, not the sandbox. Off by default so the first results isolate what the bundle and listing alone support.
 
 ## What the corpus cannot tell you
 
 - Reviewer feedback is the label, and reviewers enforce some rules the docs do not state. A disagreement is not automatically an agent error; the judge marks plausible new findings separately so a human can adjudicate.
 - 226 of the 532 Jul–Sep rejections have no written reason in Airtable. They are not in this corpus. The corpus skews toward Shea's code-security reviews (264 of 346).
-- Backend authentication, OAuth state, and uninstall cleanup need live endpoints. With network off they are out of reach; with `--network` they are GET-only probes.
+- Backend authentication, OAuth state, and uninstall cleanup need live endpoints. With network off they are out of reach; with `--network` the prompt restricts the agent to GET probes, and the sandbox does not enforce that.
 - Bundles come from the admin versions API through a browser session and the public CDN. Keep `corpus/bundles/` out of git (it is).
 
 ## Preflight receipt side-finding

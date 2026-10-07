@@ -1,6 +1,6 @@
 // Test fixtures built on the fly: a stored-only zip writer and a tiny PNG
 // encoder, so the repo holds no binary blobs.
-import { deflateSync } from 'node:zlib';
+import { deflateRawSync, deflateSync } from 'node:zlib';
 import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -27,19 +27,23 @@ export function writeZip(files) {
   const centrals = [];
   let offset = 0;
   for (const f of files) {
-    const data = Buffer.isBuffer(f.data) ? f.data : Buffer.from(String(f.data), 'utf8');
+    const raw = Buffer.isBuffer(f.data) ? f.data : Buffer.from(String(f.data), 'utf8');
+    // deflate: true writes a method-8 entry; declaredSize lies about the uncompressed size (zip-bomb shape).
+    const data = f.deflate ? deflateRawSync(raw) : raw;
+    const method = f.deflate ? 8 : 0;
+    const declared = f.declaredSize ?? raw.length;
     const name = Buffer.from(f.name, 'utf8');
-    const crc = crc32(data);
+    const crc = crc32(raw);
     const local = Buffer.alloc(30);
     local.writeUInt32LE(0x04034b50, 0);
     local.writeUInt16LE(20, 4);
     local.writeUInt16LE(0, 6);
-    local.writeUInt16LE(0, 8);
+    local.writeUInt16LE(method, 8);
     local.writeUInt16LE(0, 10);
     local.writeUInt16LE(0, 12);
     local.writeUInt32LE(crc, 14);
     local.writeUInt32LE(data.length, 18);
-    local.writeUInt32LE(data.length, 22);
+    local.writeUInt32LE(declared, 22);
     local.writeUInt16LE(name.length, 26);
     local.writeUInt16LE(0, 28);
     locals.push(local, name, data);
@@ -49,12 +53,12 @@ export function writeZip(files) {
     central.writeUInt16LE(20, 4);
     central.writeUInt16LE(20, 6);
     central.writeUInt16LE(0, 8);
-    central.writeUInt16LE(0, 10);
+    central.writeUInt16LE(method, 10);
     central.writeUInt16LE(0, 12);
     central.writeUInt16LE(0, 14);
     central.writeUInt32LE(crc, 16);
     central.writeUInt32LE(data.length, 20);
-    central.writeUInt32LE(data.length, 24);
+    central.writeUInt32LE(declared, 24);
     central.writeUInt16LE(name.length, 28);
     central.writeUInt16LE(0, 30);
     central.writeUInt16LE(0, 32);

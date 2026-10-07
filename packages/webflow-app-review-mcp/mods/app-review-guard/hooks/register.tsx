@@ -43,6 +43,11 @@ const DECISION_STATUSES = /changes requested|approved|rejected/i
 /** Official decisions: review context must have been loaded this session. */
 const DECISIONS = new Set(['request_changes', 'approve_version', 'reject_version'])
 
+/** A decision by name, or a status write routed through asset metadata. */
+function isDecision(call: Call): boolean {
+  return DECISIONS.has(call.name) || (call.name === 'update_asset_metadata' && str(call.args.latest_review_status) !== null)
+}
+
 /**
  * What the call does to the developer, the marketplace, or the team, or null
  * when it is a reviewer-internal write that needs no confirmation.
@@ -73,6 +78,13 @@ export function describe({ name, args }: Call, known: Record<string, string>): s
       return args.status === 'solved' ? `Solve Zendesk ticket ${str(args.ticket_id) ?? '?'} (sends the solved email)` : null
     case 'set_marketplace_status':
       return `Marketplace Status -> ${str(args.marketplace_status) ?? '?'} on ${v}: changes what customers see`
+    case 'update_asset_metadata': {
+      const status = str(args.latest_review_status)
+      if (status) return `Set Review Status "${status}" on ${v} through asset metadata${/no notification/i.test(status) ? '' : ' (notifies the developer)'}`
+      const market = str(args.marketplace_status)
+      if (market) return `Marketplace Status -> ${market} on ${v} through asset metadata: changes what customers see`
+      return null
+    }
     default:
       return null
   }
@@ -177,11 +189,13 @@ export const register: Register = on => {
     const summary = describe(call, await read($, names))
     if (summary === null) return next(input)
 
-    if (DECISIONS.has(call.name) && versionId !== null) {
+    // An asset-level status write has no version id; it needs some review context loaded this session.
+    const gateId = versionId ?? (call.name === 'update_asset_metadata' ? str(call.args.asset_id) : null)
+    if (isDecision(call) && gateId !== null) {
       const loaded = await read($, contextLoaded)
-      if (!loaded.includes(versionId)) {
+      if (versionId !== null ? !loaded.includes(versionId) : loaded.length === 0) {
         return {
-          deny: `${PLUGIN}: ${call.name} on ${versionId} refused: app_review_get_review_context has not been called for this version in this session. Load the review context first, then retry.`,
+          deny: `${PLUGIN}: ${call.name} on ${versionId ?? gateId} refused: app_review_get_review_context has not been called ${versionId !== null ? 'for this version' : 'for any version'} in this session. Load the review context first, then retry.`,
         }
       }
     }

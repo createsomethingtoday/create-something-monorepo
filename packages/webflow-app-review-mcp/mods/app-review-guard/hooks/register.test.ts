@@ -11,6 +11,7 @@ const FOLLOWUP = `${S}app_review_send_ticket_followup`
 const DRAFT = `${S}app_review_save_draft_feedback`
 const UPDATE = `${S}app_review_update_version_review`
 const LIST = `${S}app_review_list_queue`
+const META = `${S}app_review_update_asset_metadata`
 const CLEAN = 'Thanks for submitting. Below are the items to address.\n\nBLOCKING\n1. Remove the eval() call in bundle.js.\n2. Attach the source map to the private upload.'
 
 test('lint: backticks, greetings and sign-offs are refused on the composed path; gaps collapse', () => {
@@ -82,4 +83,16 @@ test('after context loads, a decision reaches the dialog, and with nobody to ans
   const ran = await $.tool.call({ tool: RC, version_id: 'recC', review_feedback: CLEAN })
   expect(ran.deny).toMatch(/nobody answered|declined/)
   expect(reached).toBe(0)
+})
+
+test('a review-status write routed through asset metadata is gated like a decision; copy edits pass', async ($, on) => {
+  let reached = 0
+  on('tool.call', () => {
+    reached += 1
+    return { result: { ok: true } }
+  })
+  const ran = await $.tool.call({ tool: META, asset_id: 'recAsset', latest_review_status: '✅Approved', status_change: true })
+  expect(ran.deny).toMatch(/get_review_context/)
+  await $.tool.call({ tool: META, asset_id: 'recAsset', description_short: 'Copy only' })
+  expect(reached).toBe(1)
 })

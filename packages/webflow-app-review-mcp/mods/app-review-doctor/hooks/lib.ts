@@ -68,3 +68,18 @@ export function buildDir(command: string, cwd: string): string {
   const target = m ? (m[1] ?? m[2] ?? m[3] ?? '') : ''
   return target ? resolveDir(target, cwd) : cwd
 }
+
+/**
+ * Finds the Forge CLI above a project: the monorepo package first, then an
+ * installed @create-something/webflow-app-forge. Prints the path, exit 1 if none.
+ */
+export const FIND_FORGE_CLI_SH = [
+  'd="$PWD"',
+  'while [ "$d" != "/" ]; do',
+  '  for c in "$d/packages/webflow-app-forge/src/cli.mjs" "$d/node_modules/@create-something/webflow-app-forge/src/cli.mjs"; do',
+  '    if [ -f "$c" ]; then echo "$c"; exit 0; fi',
+  '  done',
+  '  d=$(dirname "$d")',
+  'done',
+  'exit 1',
+].join('\n')
