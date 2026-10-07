@@ -872,6 +872,21 @@ function validatePageSEO(pages: DesignerData['pages']): CategoryResult {
     });
   }
 
+  const shortDescriptions = staticPages.filter(p => {
+    const length = p.seo?.description?.trim().length || 0;
+    return length > 0 && length < 150;
+  });
+  if (shortDescriptions.length > 0) {
+    issues.push({
+      id: 'seo.description-too-short',
+      category: 'SEO Metadata',
+      severity: 'warning',
+      message: `${shortDescriptions.length} meta description(s) are shorter than 150 characters.`,
+      details: { pages: shortDescriptions.map(label).slice(0, 10) },
+      howToFix: 'Expand meta descriptions to 150-160 characters.'
+    });
+  }
+
   // Open Graph: the home page must define an OG image; other pages are advisory.
   const homePage = staticPages.find(p => p.isHomePage);
   if (homePage && !homePage.seo?.openGraphImage?.trim()) {

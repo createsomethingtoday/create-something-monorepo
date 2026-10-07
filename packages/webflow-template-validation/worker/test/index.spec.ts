@@ -610,6 +610,32 @@ describe('Designer Validator', () => {
 			expect(seoCategory!.issues.find(i => i.id === 'seo.missing-description')).toBeUndefined();
 		});
 
+		it('warns, without failing SEO Metadata, when Designer meta descriptions are under 150 characters', async () => {
+		const result = await validateDesignerData({
+			variables: { collections: [] },
+			components: [],
+			styles: [],
+			pages: [
+				{
+					id: 'p1', name: 'Home', slug: '', type: 'Page', isHomePage: true, publishPath: '/',
+					seo: { title: 'Acme - Webflow HTML website template', description: 'D'.repeat(155), openGraphImage: 'https://example.com/og.jpg' }
+				},
+				{
+					id: 'p2', name: 'About', slug: 'about', type: 'Page', publishPath: '/about',
+					seo: { title: 'About Acme', description: 'E'.repeat(130) }
+				}
+			],
+			assets: []
+		} as any);
+
+		const seoCategory = result.categories.find(c => c.category === 'SEO Metadata');
+		const short = seoCategory!.issues.find(i => i.id === 'seo.description-too-short');
+		expect(short?.severity).toBe('warning');
+		expect(JSON.stringify(short?.details)).toContain('About');
+		expect(JSON.stringify(short?.details)).not.toContain('Home');
+		expect(seoCategory!.passed).toBe(true);
+	});
+
 		it('passes SEO Metadata when every page has unique metadata and the home page has an OG image', async () => {
 		const result = await validateDesignerData({
 			variables: { collections: [] },
