@@ -56,6 +56,14 @@ test('non-production and non-https URLs fail; shared legal page is only suggeste
   assert.equal(legal.find((f) => f.severity === 'suggested').status, 'fail');
 });
 
+test('support email uses the form rule: placeholders and reserved domains fail', () => {
+  for (const supportEmail of ['<redacted>', 'N/A', 'support@example.com']) {
+    const f = find(runListingKit(writeGoodListing(tmp(), { supportEmail })).findings, 'listing:support')[0];
+    assert.equal(f.status, 'fail', supportEmail);
+  }
+  assert.equal(find(runListingKit(writeGoodListing(tmp())).findings, 'listing:support')[0].status, 'pass');
+});
+
 test('icon spec: wrong size, wrong type, too large, missing alt', () => {
   const dir = tmp();
   const path = writeGoodListing(dir, { icon: { path: './assets/icon.png', altText: '' } });

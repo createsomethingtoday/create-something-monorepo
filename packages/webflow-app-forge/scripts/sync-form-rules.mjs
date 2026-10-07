@@ -24,6 +24,7 @@ const FILES = [
   'productionUrls.js',
   'marketplaceCategories.js',
   'appIconSpec.js',
+  'emailFields.js',
 ];
 
 if (!existsSync(join(source, 'lib', FILES[0]))) {

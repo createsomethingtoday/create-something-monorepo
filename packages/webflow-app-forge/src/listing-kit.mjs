@@ -20,6 +20,7 @@ import { scanSubmissionGuidance } from './vendor/form-rules/submissionGuidance.j
 import { scanUrlGuidance } from './vendor/form-rules/urlGuidance.js';
 import { getProductionUrlError } from './vendor/form-rules/productionUrls.js';
 import { MARKETPLACE_APP_CATEGORIES, MAX_MARKETPLACE_APP_CATEGORIES, findInvalidMarketplaceAppCategories } from './vendor/form-rules/marketplaceCategories.js';
+import { getEmailError } from './vendor/form-rules/emailFields.js';
 import { APP_ICON_MAX_BYTES, APP_ICON_REQUIRED_SIZE, getAppIconDimensionError } from './vendor/form-rules/appIconSpec.js';
 
 export const LIMITS = {
@@ -51,7 +52,7 @@ export const EXAMPLE_LISTING = {
   documentationUrl: 'https://sectionnamer.example.com/docs',
   privacyPolicyUrl: 'https://sectionnamer.example.com/privacy',
   termsUrl: 'https://sectionnamer.example.com/terms',
-  supportEmail: 'support@sectionnamer.example.com',
+  supportEmail: 'support@sectionnamer.app',
   supportUrl: '',
   demoVideoUrl: 'https://www.loom.com/share/00000000000000000000000000000000',
   promoVideoUrl: '',
@@ -215,7 +216,10 @@ export function runListingKit(listingPath) {
   const email = str(listing.supportEmail).trim();
   const emailProblems = [];
   if (!email) emailProblems.push('Support email is empty');
-  else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) emailProblems.push(`"${email}" is not a valid email`);
+  else {
+    const emailError = getEmailError(email, { fieldLabel: 'Support email' });
+    if (emailError) emailProblems.push(emailError);
+  }
   if (copyWarnings.some((w) => w.id === 'webflow-marks-support-email')) emailProblems.push('Support email uses the Webflow mark');
   findings.push(emailProblems.length ? finding('listing:support', 'fail', 'required', 'Support email needs work', '', emailProblems) : finding('listing:support', 'pass', 'required', `Support email: ${email}`));
 

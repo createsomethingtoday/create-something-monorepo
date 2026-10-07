@@ -161,7 +161,7 @@ export function writeGoodListing(dir, listingOverrides = {}) {
     documentationUrl: 'https://sectionnamer.example.com/docs',
     privacyPolicyUrl: 'https://sectionnamer.example.com/privacy',
     termsUrl: 'https://sectionnamer.example.com/terms',
-    supportEmail: 'support@sectionnamer.example.com',
+    supportEmail: 'support@sectionnamer.app',
     demoVideoUrl: 'https://www.loom.com/share/00000000000000000000000000000000',
     testingSiteUrl: 'https://section-namer-review.webflow.io',
     accessCredentials: 'No account needed. The App works on any site once installed.',
