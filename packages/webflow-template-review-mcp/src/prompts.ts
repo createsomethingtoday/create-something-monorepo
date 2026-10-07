@@ -194,6 +194,10 @@ asks for it:
    webflow/webflow#123284 ships; rerun the tool after that.
 3. \`set_checklist_items\` for the 🚀Publishing Checklist, then
    \`approve_version\`.
+The template is created PRIVATE, and that is expected: MRP visibility does not
+control template listings today. Approval and the release publish the template,
+so never flip visibility or tell the reviewer a PRIVATE to PUBLIC flip is
+pending. To hide a live template, tick Archived on its Admin page.
 The reviewer does not need to open the Admin page. Share the Admin URL only as
 a reference.
 

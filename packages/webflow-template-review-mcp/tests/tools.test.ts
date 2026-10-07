@@ -1974,6 +1974,7 @@ test('create_admin_template POSTs the template payload, records the MRP ID, and 
   assert.equal(data.admin_url, 'https://webflow.com/admin/templates/6ac54eddbb8a7def85e05871');
   assert.equal(data.mrp_id_recorded, true);
   assert.match(data.next_steps[0] ?? '', /complete_admin_template/);
+  assert.match((payload.data as { visibility_note: string }).visibility_note, /does not control template listings/);
 });
 
 test('create_admin_template fails closed without the marketplace admin key and stays write-gated', async () => {

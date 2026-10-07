@@ -340,6 +340,13 @@ export const WRITE_TOOL_NAMES: ReadonlySet<string> = new Set([
  * Next steps after the server-side create. All run through the MCP; nobody
  * needs to open /admin/templates/<id>.
  */
+/**
+ * Templates still list from the legacy Template + Marketplace CMS, not the MRP.
+ * Verified 2026-10-06: Nocturne went live with its MRP at PRIVATE/DRAFT.
+ */
+const TEMPLATE_VISIBILITY_NOTE =
+  'MRP visibility does not control template listings today. A template goes live through approval and the release, not a PRIVATE to PUBLIC flip, and Admin has no switch for it. Do not flip it after approval. To hide a live template, tick Archived on its Admin page.';
+
 const NEXT_STEPS_AFTER_CREATE = [
   'Run template_review_complete_admin_template to push the thumbnail, Category, Primary Tag, Type, Cost and Detail Page Path and read them back.',
   'Work the 🚀Publishing Checklist with template_review_set_checklist_items.',
@@ -1313,7 +1320,7 @@ export function registerTools(
 
   server.tool(
     'template_review_set_mrp_visibility',
-    'Server-side Webflow write: set a MarketplaceResourceProfile\'s visibility to PUBLIC or PRIVATE via the key-authenticated PUT /admin/api/mrp/airtable route. For templates the mrp_id equals the Template ID from /admin/templates. Requires the marketplace admin key in this runtime and an explicit reviewer request; sends only the visibility field (partial update).',
+    'Server-side Webflow write: set a MarketplaceResourceProfile\'s visibility to PUBLIC or PRIVATE via the key-authenticated PUT /admin/api/mrp/airtable route. For templates the mrp_id equals the Template ID from /admin/templates, but visibility does not control template listings today, so do not use this to publish a template. Requires the marketplace admin key in this runtime and an explicit reviewer request; sends only the visibility field (partial update).',
     {
       mrp_id: MONGO_TEMPLATE_ID.describe('MarketplaceResourceProfile _id (equals the Template ID for templates).'),
       visibility: z.enum(MRP_VISIBILITY_VALUES),
@@ -1338,7 +1345,7 @@ export function registerTools(
     'Server-side Webflow write: create the marketplace template (MRP + Admin record) for a version via the key-authenticated POST /admin/api/mrp/airtable route — no browser session, no console script. Uses the same Airtable-derived fields as prepare_admin_template_fill, records the new Template ID in 👀ℹ️MRP ID (Override), and returns the Admin URL with the items still to finish on that page. Requires the marketplace admin key and an explicit reviewer request; refuses when required fields are missing or the asset already has a Template ID.',
     {
       version_id: z.string().min(1),
-      visibility: z.enum(MRP_VISIBILITY_VALUES).optional().describe('MRP visibility at creation. Defaults to PRIVATE.'),
+      visibility: z.enum(MRP_VISIBILITY_VALUES).optional().describe('MRP visibility at creation. Defaults to PRIVATE. Does not affect the template listing; leave the default.'),
       support_email: z.string().email().optional().describe('Support contact; defaults to the creator email on the asset.'),
       support_url: z.string().url().optional(),
       record_mrp_id: z.boolean().optional().describe('Write the new Template ID to 👀ℹ️MRP ID (Override). Defaults to true.'),
@@ -1428,6 +1435,7 @@ export function registerTools(
           source: fillBundle.source,
           payload,
           next_steps: NEXT_STEPS_AFTER_CREATE,
+          visibility_note: TEMPLATE_VISIBILITY_NOTE,
           warnings,
           note: 'Next, run template_review_complete_admin_template for this version. The Admin URL is for reference only.',
         });
@@ -1500,6 +1508,7 @@ export function registerTools(
           all_stored: checks.every((check) => check.status === 'stored'),
           warnings,
           next_steps: NEXT_STEPS_AFTER_CREATE.slice(1),
+          visibility_note: TEMPLATE_VISIBILITY_NOTE,
         });
       } catch (error) {
         return asError(error);
