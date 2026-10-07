@@ -79,6 +79,12 @@ const SKIP_DIRS = new Set([
 
 export const CANON_CODIFICATION_EXEMPTIONS: CanonCodificationExemption[] = [
 	{
+		path: 'packages/dotfiles/claude-code/mods/outbound-guard/hooks/register.tsx',
+		reason: 'operator-tooling',
+		justification:
+			'Outbound guard renders an approval pane through the Claude Code terminal mod UI; it is operator tooling rather than a Canon-consuming web product surface.'
+	},
+	{
 		path: 'packages/webflow-components',
 		reason: 'webflow-code-component-library',
 		justification:
