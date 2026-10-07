@@ -429,14 +429,17 @@ const TemplateSupportRequestInner: React.FC<TemplateSupportRequestProps> = ({
   useMarketplaceComponentErrorTracking(COMPONENT, enableAnalytics);
   const [open, setOpen] = useState(false);
   const slug = inferTemplateSlug(templateSlug);
-  const draftRef = useRef<SupportRequestDraft | null>(null);
+  // Tagged with its template so a draft never follows the buyer to another
+  // listing if this component stays mounted across a slug change.
+  const draftRef = useRef<{ slug: string; draft: SupportRequestDraft } | null>(null);
   const handleDraftChange = useCallback(
     (next: SupportRequestDraft | null) => {
-      draftRef.current = next;
+      draftRef.current = next ? { slug, draft: next } : null;
       if (slug) storeDraft(slug, next);
     },
     [slug],
   );
+  const draftForSlug = draftRef.current?.slug === slug ? draftRef.current.draft : null;
   const label = buttonLabel.trim() || (creatorName ? `Contact ${creatorName}` : 'Contact creator');
 
   const handleOpen = () => {
@@ -456,7 +459,7 @@ const TemplateSupportRequestInner: React.FC<TemplateSupportRequestProps> = ({
           templateName={templateName}
           creatorName={creatorName}
           enableAnalytics={enableAnalytics}
-          draft={draftRef.current ?? loadStoredDraft(slug) ?? emptyDraft()}
+          draft={draftForSlug ?? loadStoredDraft(slug) ?? emptyDraft()}
           onDraftChange={handleDraftChange}
           onClose={() => setOpen(false)}
         />
