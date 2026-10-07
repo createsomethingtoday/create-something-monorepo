@@ -10,7 +10,7 @@
 | **Demo video**                | A 2–5 minute walkthrough from install to usage. **Data Client Apps must** show a working OAuth flow with the user **approving and denying** the request, and describe your integration with Webflow. Private link to Loom, YouTube (unlisted), or Google Drive. |
 | **Homepage URL**              | Valid HTTPS                                                                                                                                                                                                                                                     |
 | **Designer Extension source** | Upload the `bundle.zip` (built via `webflow extension bundle`) through the App version manager. Reviewers read it.                                                                                                                                              |
-| **Source-map ZIP for review** | The submission form's private **Source map artifact** field takes one ZIP: the Source Map v3 `.map` files, `package.json`, and lockfile from the exact build that produced the bundle. Required for new Designer Extension and Hybrid Apps and for updates that change the bundle. Never include source maps in the public production bundle. |
+| **Review ZIP** | The submission form's private **Source map artifact** field takes one ZIP: the Source Map v3 `.map` files, `package.json`, and lockfile from the exact build that produced the bundle, or, for an app that ships its source unchanged, the source files plus a short README on how the bundle is packaged. Required for new Designer Extension and Hybrid Apps and for updates that change the bundle. Never include source maps in the public production bundle. |
 | **Published testing site**    | A `.webflow.io` site with the App installed where reviewers can exercise the full experience — including anything the App adds to the published site. Required for every submission.                                                                             |
 | **Preflight receipt**         | Run **App Review Preflight** ([install](https://webflow.com/oauth/authorize?response_type=code&client_id=0b5411e62233387925e082350666ef374377f81a9abba0dcc2542d6b5b1e4388&scope=authorized_user%3Aread)) in the Designer on the same bundle + source-map artifact you attach to the form; paste the issued `wfpre_…` receipt code into the form so reviewers can reconcile the submission with the validated artifacts. |
 
@@ -35,7 +35,7 @@ Practical consequence most Apps miss: if your backend stores customer data, **un
 - End users get a **fully functional experience free of placeholder content and test data**.
 - **Designer Extensions:** upload the client-side **source code** through the App version manager (reviewers read it).
 - **A published `.webflow.io` testing site** with the App installed, entered in the submission form.
-- **Source-map ZIP** (maps, `package.json`, lockfile) attached in the form's private upload when the submission ships a new or changed Designer Extension bundle.
+- **Review ZIP** (maps, `package.json`, lockfile; or unchanged source plus README) attached in the form's private upload when the submission ships a new or changed Designer Extension bundle.
 - **An App Review Preflight run** ([install the tool](https://webflow.com/oauth/authorize?response_type=code&client_id=0b5411e62233387925e082350666ef374377f81a9abba0dcc2542d6b5b1e4388&scope=authorized_user%3Aread)) on the same artifacts, with its `wfpre_…` receipt pasted into the form.
 
 ## What gets an App rejected or removed
