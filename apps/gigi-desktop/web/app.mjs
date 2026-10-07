@@ -32,7 +32,7 @@ function notice(message, error = false) {
 function readRoute() { return { version: routeVersion, page: state.page, workspace: workspaceId() }; }
 function nextRoute() { routeVersion++; return readRoute(); }
 function currentRoute(route) { return route.version === routeVersion && route.page === state.page && route.workspace === workspaceId(); }
-function leaveRoute() { routeVersion++; operationVersion++; state.busy = false; }
+function leaveRoute() { routeVersion++; }
 
 async function run(task) {
   const operation = ++operationVersion;

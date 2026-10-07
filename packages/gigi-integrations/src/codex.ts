@@ -355,6 +355,7 @@ export function createCodexAdapter(options: CodexOptions) {
         return;
       }
       if ([...sessions.values()].some(x => x.workspaceId === session.workspaceId && x.uncertainWrite)) { await options.server.reply(message.id, { contentItems: [{ type: 'inputText', text: 'Previous write outcome is unknown; fresh record read and reconciliation required.' }], success: false }); return; }
+      const originatingTurn = session.turnId;
       const id = randomUUID();
       if (tool === 'gigi_records_save') {
         if (!args.id) { await options.server.reply(message.id, { contentItems: [{ type: 'inputText', text: 'GiGi chat requires an existing record id for edits.' }], success: false }); return; }
@@ -368,6 +369,9 @@ export function createCodexAdapter(options: CodexOptions) {
             args.expectedRecord = { title: record.title, fields: record.fields, source: record.source };
           } catch { await options.server.reply(message.id, { contentItems: [{ type: 'inputText', text: 'Current record snapshot unavailable; edit denied.' }], success: false }); return; }
         }
+      }
+      if (session.cancelPending || session.state === 'interrupted' || session.state === 'failed' || session.turnId !== originatingTurn || (message.params?.turnId && message.params.turnId !== originatingTurn)) {
+        await options.server.reply(message.id, { contentItems: [{ type: 'inputText', text: 'Turn cancelled or replaced; edit denied.' }], success: false }); return;
       }
       if (tool === 'gigi_relations_link') args.idempotencyKey = `gigi-chat:${id}`;
       const detail = JSON.stringify(args);

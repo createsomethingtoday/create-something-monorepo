@@ -165,3 +165,17 @@ test('completed chat changes refresh profile currency before subsequent money pr
   if(operation==='agent.chat.approve'){currency='CAD';return{sessionId:'s1',state:'idle',messages:[],approvals:[],recordLinks:[]};}
  });
 });
+
+
+test('Cancel during a submitted creation retains the write guard until it settles', async()=>{
+ const save=deferred();
+ await appFixture(async({root,click,type,submit,calls})=>{
+  await click({page:'tasks'});await click({new:'tasks'});type('title','Synthetic creation');
+  await submit();await click({cancel:'1'});
+  assert.equal(root.loading,true);
+  await click({new:'tasks'});type('title','Synthetic creation');await submit();
+  assert.equal(calls.filter(({operation})=>operation==='records.save').length,1);
+  save.resolve({id:'created',title:'Synthetic creation',fields:{},relations:[]});await tick();
+  assert.equal(root.loading,false);
+ },operation=>operation==='records.save'?save.promise:undefined);
+});

@@ -550,3 +550,22 @@ test('the conversation cap never retires an unresolved send or approval receipt'
   assert.equal((await restarted.list({ workspaceId: 'w' })).sessions.length, 100);
   await assert.rejects(readFile(join(dataDir, 'codex-chat', 'retired-sessions.jsonl')), { code: 'ENOENT' });
 });
+
+
+test('Stop denies an edit whose record snapshot finishes after cancellation', async () => {
+  const { adapter, server, mcp } = await setup();
+  const { sessionId } = await adapter.start({ workspaceId: 'w', message: 'hello' });
+  let resolve!: (value: any) => void;
+  const snapshot = new Promise<any>(yes => { resolve = yes; });
+  const original = mcp.request.bind(mcp);
+  mcp.request = (method, params) => params.name === 'gigi_records_get' ? snapshot : original(method, params);
+  const replies: any[] = []; server.reply = (id, value) => { replies.push({ id, value }); };
+  const pending = Promise.all(server.events.map(fn => fn({ id: 999, method: 'item/tool/call', params: { threadId: 'thread-1', turnId: 'turn-1', tool: 'gigi_records_save', arguments: { workspaceId: 'w', entity: 'tasks', id: 'r', title: 'Cancelled edit' } } })));
+  await adapter.cancel({ workspaceId: 'w', sessionId });
+  resolve({ structuredContent: { id: 'r', title: 'Original', fields: {}, source: { kind: 'manual' } } });
+  await pending;
+  const result = await adapter.read({ workspaceId: 'w', sessionId });
+  assert.equal(result.approvals.length, 0); assert.notEqual(result.state, 'approval');
+  assert.equal(replies.find(item => item.id === 999)?.value.success, false);
+  assert.equal(mcp.calls.some(call => call.params.name === 'gigi_records_save'), false);
+});
