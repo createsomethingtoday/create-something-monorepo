@@ -139,7 +139,7 @@ for (const receipt of [null, { sessionId: 'other', state: 'idle' }, { sessionId:
   await chat.read('s1'); assert.equal(chat.draft, ''); assert.equal(chat.error, null);
 });
 
-for (const reason of ['chatgpt_auth_required', 'codex_unavailable', 'provider_turn_rejected', 'provider_preflight_rejected', 'plugin_inventory_unavailable']) test(`${reason} retains the draft without fencing a later explicit retry`, async () => {
+for (const reason of ['chatgpt_auth_required', 'codex_unavailable', 'provider_turn_rejected', 'provider_preflight_rejected', 'provider_preflight_unavailable', 'plugin_inventory_unavailable']) test(`${reason} retains the draft without fencing a later explicit retry`, async () => {
   let sends = 0;
   const { chat } = fixture({ chatSend: async () => { if (++sends === 1) throw new Error(reason); return snapshot(); } });
   await chat.open(); await chat.read('s1'); chat.draft = 'Synthetic question';
@@ -163,4 +163,18 @@ test('pending cancellation retains transcript, fences further actions and polls 
   assert.match(chatView(chat), /data-chat-stop="1" disabled/);
   const poll = [...timers.values()][0]; assert.ok(poll); await poll();
   assert.equal(chat.current.state, 'interrupted'); assert.equal(Boolean(chat.current.cancelPending), false);
+});
+
+test('recovery checks poll without claiming an interrupt and restore Stop after exact active-turn read', async () => {
+  let stops = 0;
+  const { chat, timers } = fixture({ chatRead: async () => snapshot('s1', 'interrupted', { recoveryPending: true }), chatPoll: async () => snapshot('s1', 'running'), chatCancel: async () => { stops++; return snapshot('s1', 'running', { cancelPending: true }); } });
+  await chat.open(); await chat.read('s1');
+  const checking = chatView(chat);
+  assert.match(checking, /Checking the previous response/);
+  assert.doesNotMatch(checking, /Stopping response|You can send another message/);
+  await chat.cancel(); assert.equal(stops, 0);
+  assert.equal(timers.size, 1); const [timerId, tick] = timers.entries().next().value; timers.delete(timerId); await tick();
+  assert.equal(chat.current.recoveryPending, undefined);
+  assert.doesNotMatch(chatView(chat), /data-chat-stop="1"[^>]*disabled/);
+  await chat.cancel(); assert.equal(stops, 1);
 });

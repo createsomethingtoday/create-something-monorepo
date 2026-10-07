@@ -663,3 +663,48 @@ for (const failure of ['thread/start', 'thread/resume', 'plugin/installed']) tes
   await active.send({ workspaceId: 'w', sessionId, message: 'explicit retry' });
   assert.equal(server.calls.filter(x => x.method === 'turn/start').length, priorTurns + 1);
 });
+
+for (const failure of ['account/read', 'thread/start', 'thread/resume', 'plugin/installed', 'tools/list']) test(`transport failure at ${failure} never fences an unsent message`, async () => {
+  const { adapter, server, mcp, dataDir } = await setup();
+  const { sessionId } = await adapter.start({ workspaceId: 'w' });
+  if (failure === 'thread/resume') {
+    await adapter.send({ workspaceId: 'w', sessionId, message: 'first' });
+    server.thread.turns = [{ id: 'turn-1', status: 'completed', items: [] }];
+    await adapter.read({ workspaceId: 'w', sessionId });
+  }
+  const active = failure === 'thread/resume' ? createCodexAdapter({ dataDir, mcpBinary: '/fixture/gigi-mcp', skillPath: '/fixture/skill/SKILL.md', server, mcp }) : adapter;
+  const target = failure === 'tools/list' ? mcp : server;
+  const original = target.request.bind(target);
+  let failing = true;
+  target.request = async (method, params) => { if (method === failure && failing) throw new Error('transport lost'); return original(method, params); };
+  const priorTurns = server.calls.filter(x => x.method === 'turn/start').length;
+  await assert.rejects(active.send({ workspaceId: 'w', sessionId, message: 'not submitted' }), failure === 'account/read' ? /codex_unavailable/ : /provider_preflight_unavailable/);
+  assert.equal(server.calls.filter(x => x.method === 'turn/start').length, priorTurns);
+  const persisted = (await readFile(join(dataDir, 'codex-chat', 'sessions.jsonl'), 'utf8')).trim().split('\n').map(line => JSON.parse(line)).find(x => x.sessionId === sessionId);
+  assert.equal(persisted.state, 'idle'); assert.equal(persisted.pendingMessageId, undefined);
+  failing = false;
+  await active.send({ workspaceId: 'w', sessionId, message: 'explicit retry' });
+  assert.equal(server.calls.filter(x => x.method === 'turn/start').length, priorTurns + 1);
+});
+
+test('recovered running turn permits Stop once the exact active turn is confirmed', async () => {
+  const { adapter, server, mcp, dataDir } = await setup();
+  const { sessionId } = await adapter.start({ workspaceId: 'w', message: 'first' });
+  const restart = () => createCodexAdapter({ dataDir, mcpBinary: '/fixture/gigi-mcp', skillPath: '/fixture/skill/SKILL.md', server, mcp });
+  const first = restart(); await first.list({ workspaceId: 'w' });
+  const recovered = restart(); // Recovery state remains distinguishable across another restart.
+  await assert.rejects(recovered.send({ workspaceId: 'w', sessionId, message: 'duplicate' }), /turn_in_progress/);
+  server.thread.turns = [{ id: 'foreign-turn', status: 'inProgress', items: [] }];
+  assert.equal((await recovered.read({ workspaceId: 'w', sessionId })).recoveryPending, true);
+  server.thread.turns = [{ id: 'turn-1', status: 'inProgress', items: [] }];
+  const confirmed = await recovered.read({ workspaceId: 'w', sessionId });
+  assert.equal(confirmed.state, 'running'); assert.equal(confirmed.cancelPending, undefined);
+  const stopped = await recovered.cancel({ workspaceId: 'w', sessionId }, true);
+  assert.equal(stopped.cancelPending, true);
+  assert.equal(server.calls.filter(x => x.method === 'turn/interrupt').length, 1);
+  const afterRealStop = restart();
+  const pending = await afterRealStop.read({ workspaceId: 'w', sessionId });
+  assert.equal(pending.cancelPending, true, 'a real pending interrupt is retained');
+  server.thread.turns = [{ id: 'turn-1', status: 'interrupted', items: [] }];
+  assert.equal((await afterRealStop.read({ workspaceId: 'w', sessionId })).cancelPending, undefined);
+});

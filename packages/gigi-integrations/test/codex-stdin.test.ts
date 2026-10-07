@@ -134,3 +134,15 @@ test('Codex companion exits when an owned provider child dies', async () => {
   child.stdin.write(JSON.stringify({ id: 1, operation: 'agent.chat.status', input: {} }) + '\n');
   assert.notEqual(await closed, 0);
 });
+
+test('Codex companion exposes ordinary preflight failures and exits when an owned provider child dies', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'gigi-child-failure-'));
+  const binary = join(root, 'fixture-server');
+  await writeFile(binary, `#!${process.execPath}\nlet buffer='';process.stdin.setEncoding('utf8');process.stdin.on('data',chunk=>{buffer+=chunk;for(;;){const n=buffer.indexOf('\\n');if(n<0)break;const request=JSON.parse(buffer.slice(0,n));buffer=buffer.slice(n+1);if(request.id==null)continue;if(request.method==='account/read')process.exit(7);const result=request.method==='config/read'?{config:{mcp_servers:{},model_provider:'openai',forced_login_method:'chatgpt',features:{shell_tool:false,unified_exec:false,browser_use:false,computer_use:false,apps:false}}}:{};process.stdout.write(JSON.stringify({jsonrpc:'2.0',id:request.id,result})+'\\n');}});\n`);
+  await chmod(binary, 0o755);
+  const child = spawn(process.execPath, ['--import', 'tsx', 'src/codex-main.ts'], { cwd: new URL('..', import.meta.url), env: { ...process.env, GIGI_DATA_DIR: root, GIGI_MCP_BINARY: binary, GIGI_CODEX_BINARY: binary, GIGI_SKILL_PATH: join(root, 'SKILL.md') }, stdio: ['pipe', 'pipe', 'pipe'] });
+  child.stdout.resume(); child.stderr.resume();
+  const closed = new Promise<number | null>((resolve, reject) => { const timer = setTimeout(() => { child.kill('SIGKILL'); reject(new Error('Outer companion survived provider death')); }, 5000); child.once('close', code => { clearTimeout(timer); resolve(code); }); });
+  child.stdin.write(JSON.stringify({ id: 1, operation: 'agent.chat.status', input: {} }) + '\n');
+  assert.notEqual(await closed, 0);
+});

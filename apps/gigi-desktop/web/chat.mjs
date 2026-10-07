@@ -7,6 +7,7 @@ const uncertainOutcomes = new Set(['reconciliation_required', 'write_outcome_unk
 const explanations = {
   codex_unavailable: 'Codex is unavailable on this Mac. Check that Codex is installed and running, then reopen Ask GiGi.',
   chatgpt_auth_required: 'Sign in to your ChatGPT account in Codex on this Mac, then reopen Ask GiGi.',
+  provider_preflight_unavailable: 'Your provider could not start this request. No message was sent; try again when it is available.',
   provider_preflight_rejected: 'Your provider declined the request before a response started. Check its availability, then send again when ready.',
   provider_turn_rejected: 'Your provider declined this request. Check its usage or availability, then send again when ready.',
   reconciliation_required: 'The last send may have started. Reopen this conversation and check its latest messages before sending again.',
@@ -25,7 +26,7 @@ function explanation(raw) {
   const code = String(raw ?? '').trim();
   return explanations[code] || 'Could not complete this request. Reopen the conversation to check its state.';
 }
-function needsReconciliation(chat) { return Boolean(chat.current?.cancelPending) || uncertainOutcomes.has(chat.error) || uncertainOutcomes.has(chat.current?.error); }
+function needsReconciliation(chat) { return Boolean(chat.current?.cancelPending || chat.current?.recoveryPending) || uncertainOutcomes.has(chat.error) || uncertainOutcomes.has(chat.current?.error); }
 
 export class ChatController {
   constructor(bridge, workspaceId, changed, completed, schedule = (callback, delay) => globalThis.setTimeout(callback, delay), clear = (timer) => globalThis.clearTimeout(timer)) {
@@ -106,7 +107,7 @@ export class ChatController {
     if (this.visible) this.refreshRequired = false;
     this.emit();
     if (verifiedEdit || (['running', 'approval'].includes(previous) && result.state === 'idle')) void this.completed?.(result);
-    if (result.state === 'running') this.queuePoll();
+    if (result.state === 'running' || result.recoveryPending) this.queuePoll();
     return true;
   }
   queuePoll() {
@@ -117,7 +118,7 @@ export class ChatController {
     const epoch = this.epoch;
     this.timer = this.schedule(async () => {
       this.timer = null;
-      if (epoch !== this.epoch || !this.visible || this.current?.state !== 'running') return;
+      if (epoch !== this.epoch || !this.visible || (this.current?.state !== 'running' && !this.current?.recoveryPending)) return;
       this.pollCount++;
       try { const result = await this.bridge.chatPoll(this.workspaceId, this.current.sessionId); if (epoch === this.epoch && this.visible) this.accept(result); }
       catch (error) { if (epoch === this.epoch) { this.error = String(error?.message || error); this.emit(); } }
@@ -141,7 +142,7 @@ export class ChatController {
       this.error = String(error?.message || error);
       // These exact adapter errors prove turn/start was not delivered or was rejected.
       // Transport failures remain uncertain and must never permit automatic replay.
-      const definitive = submittedText !== null && ['chatgpt_auth_required', 'codex_unavailable', 'provider_turn_rejected', 'provider_preflight_rejected', 'session_not_found', 'plugin_inventory_unavailable'].includes(this.error);
+      const definitive = submittedText !== null && ['chatgpt_auth_required', 'codex_unavailable', 'provider_turn_rejected', 'provider_preflight_rejected', 'provider_preflight_unavailable', 'session_not_found', 'plugin_inventory_unavailable'].includes(this.error);
       this.refreshRequired = !definitive;
       if (submittedText !== null && !definitive) this.unconfirmedSends.set(sessionId, { sessionId, text: submittedText, messageIds });
     }
@@ -184,6 +185,6 @@ export function chatView(chat, innerOnly = false) {
   const receipt = receiptText ? `<p class="chat-status" role="status"><strong>Last reviewed edit</strong> ${escape(receiptText)}</p>` : '';
   const links = (current?.recordLinks || []).map((item) => `<button type="button" class="btn text chat-record-link" data-chat-link-entity="${escape(item.entity)}" data-chat-link-id="${escape(item.id)}">${escape(item.title || item.id)} ↗</button>`).join('');
   const sessions = chat.sessions.map((item) => `<button type="button" class="chat-session" data-chat-session="${escape(item.sessionId)}" ${chat.pending ? 'disabled' : ''} ${item.sessionId === current?.sessionId ? 'aria-current="true"' : ''}><span>${escape(item.title || item.record?.title || 'Conversation')}</span><small>${escape(item.state || '')}</small></button>`).join('');
-  const contents = `<div class="chat-head"><div><p class="eyebrow">Codex · local session</p><h2>Ask GiGi</h2></div><button type="button" class="btn text" data-chat-close="1" aria-label="Close Ask GiGi">Close</button></div><div class="chat-context-row">${context}<span class="chat-presence">${ready ? 'Codex signed in' : chat.status ? 'Unavailable' : 'Checking'}</span></div><p class="chat-scope">Ask about your local workspace and approve edits to existing records. Create records and links with GiGi’s record controls. Selected record context is included when starting a chat. Phone access is a separate setup step in Settings.</p>${unavailable ? `<p class="chat-status" role="status">${unavailable}</p>` : ''}${chat.error ? `<p class="chat-error" role="alert">${escape(explanation(chat.error))}${chat.error === 'gigi_tools_unavailable' ? ' <button type="button" class="btn text" data-page="settings">Open Settings</button>' : ''}</p>` : ''}<div class="chat-sessions"><div class="chat-section-head"><strong>Conversations</strong><button type="button" class="btn text" data-chat-new="1" ${!ready || chat.pending || chat.reading ? 'disabled' : ''}>New chat</button></div>${sessions || '<p class="muted">No saved conversations yet.</p>'}</div><div class="chat-transcript" role="log" aria-label="Conversation" aria-live="polite">${messages || '<p class="chat-empty">Ask about your work, or open a saved conversation.</p>'}${approvals}${receipt}${links}${current?.state === 'running' ? `<p class="chat-running" role="status">${current.cancelPending ? 'Stopping response…' : 'GiGi is responding…'}</p>` : ''}${current?.state === 'interrupted' ? '<p class="chat-status">This response was interrupted. You can send another message.</p>' : ''}${current?.state === 'failed' ? failedMarkup : ''}</div>${current ? `<form id="chat-form" class="chat-composer"><label for="chat-message">Message GiGi</label><textarea id="chat-message" name="message" rows="3" maxlength="12000" placeholder="Ask about this ${chat.record ? 'record' : 'workspace'}…" ${!ready ? 'disabled' : ''}>${escape(chat.draft)}</textarea><div class="chat-actions">${current.state === 'running' ? `<button type="button" class="btn danger" data-chat-stop="1" ${chat.pending || chat.reading || chat.refreshRequired || uncertain || !ready ? 'disabled' : ''}>Stop response</button>` : `<button type="submit" class="btn primary" ${!ready || chat.pending || chat.reading || chat.refreshRequired || uncertain || current.state === 'approval' ? 'disabled' : ''}>Send message</button>`}</div></form>` : '<p class="chat-hint">Start a chat to ask GiGi about your workspace.</p>'}`;
+  const contents = `<div class="chat-head"><div><p class="eyebrow">Codex · local session</p><h2>Ask GiGi</h2></div><button type="button" class="btn text" data-chat-close="1" aria-label="Close Ask GiGi">Close</button></div><div class="chat-context-row">${context}<span class="chat-presence">${ready ? 'Codex signed in' : chat.status ? 'Unavailable' : 'Checking'}</span></div><p class="chat-scope">Ask about your local workspace and approve edits to existing records. Create records and links with GiGi’s record controls. Selected record context is included when starting a chat. Phone access is a separate setup step in Settings.</p>${unavailable ? `<p class="chat-status" role="status">${unavailable}</p>` : ''}${chat.error ? `<p class="chat-error" role="alert">${escape(explanation(chat.error))}${chat.error === 'gigi_tools_unavailable' ? ' <button type="button" class="btn text" data-page="settings">Open Settings</button>' : ''}</p>` : ''}<div class="chat-sessions"><div class="chat-section-head"><strong>Conversations</strong><button type="button" class="btn text" data-chat-new="1" ${!ready || chat.pending || chat.reading ? 'disabled' : ''}>New chat</button></div>${sessions || '<p class="muted">No saved conversations yet.</p>'}</div><div class="chat-transcript" role="log" aria-label="Conversation" aria-live="polite">${messages || '<p class="chat-empty">Ask about your work, or open a saved conversation.</p>'}${approvals}${receipt}${links}${current?.recoveryPending ? '<p class="chat-status" role="status">Checking the previous response…</p>' : current?.state === 'running' ? `<p class="chat-running" role="status">${current.cancelPending ? 'Stopping response…' : 'GiGi is responding…'}</p>` : ''}${current?.state === 'interrupted' && !current.recoveryPending ? '<p class="chat-status">This response was interrupted. You can send another message.</p>' : ''}${current?.state === 'failed' ? failedMarkup : ''}</div>${current ? `<form id="chat-form" class="chat-composer"><label for="chat-message">Message GiGi</label><textarea id="chat-message" name="message" rows="3" maxlength="12000" placeholder="Ask about this ${chat.record ? 'record' : 'workspace'}…" ${!ready ? 'disabled' : ''}>${escape(chat.draft)}</textarea><div class="chat-actions">${current.state === 'running' ? `<button type="button" class="btn danger" data-chat-stop="1" ${chat.pending || chat.reading || chat.refreshRequired || uncertain || !ready ? 'disabled' : ''}>Stop response</button>` : `<button type="submit" class="btn primary" ${!ready || chat.pending || chat.reading || chat.refreshRequired || uncertain || current.state === 'approval' ? 'disabled' : ''}>Send message</button>`}</div></form>` : '<p class="chat-hint">Start a chat to ask GiGi about your workspace.</p>'}`;
   return innerOnly ? contents : `<aside class="chat-panel ${chat.opening ? 'chat-entering' : ''}" aria-label="Ask GiGi">${contents}</aside>`;
 }
