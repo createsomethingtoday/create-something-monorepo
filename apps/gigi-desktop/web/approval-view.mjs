@@ -11,7 +11,7 @@ function same(left, right) {
   return keys.length === Object.keys(right).length && keys.every((key) => Object.hasOwn(right, key) && same(left[key], right[key]));
 }
 function valueCopy(name, value, currency, currencyKnown = true) {
-  if (value === null) return 'null (retained value)';
+  if (value === null) return 'Cleared (null)';
   if (value === '') return '(empty string)';
   if (moneyFields.has(name)) {
     if (typeof value !== 'number' || !Number.isSafeInteger(value)) return `${JSON.stringify(value)} (invalid minor-unit value)`;

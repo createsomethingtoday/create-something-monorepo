@@ -127,10 +127,10 @@ test('repeated close/reopen cancels obsolete status/read/poll results and mainta
   for (let i = 0; i < 3; i++) { chat.close(); assert.equal(timers.size, 0); await chat.open(); assert.equal(timers.size, 1); }
 });
 
-for (const receipt of [null, { sessionId: 'other', state: 'idle' }, { sessionId: 's1', state: 'unexpected' }]) test(`unconfirmed send receipt ${JSON.stringify(receipt)} preserves draft and fences replay until matching fresh transcript`, async () => {
+for (const receipt of [null, { sessionId: 'other', state: 'idle' }, { sessionId: 's1', state: 'unexpected' }, new Error('reply timed out')]) test(`unconfirmed send receipt ${JSON.stringify(receipt)} preserves draft and fences replay until matching fresh transcript`, async () => {
   let sends = 0;
   const old = [{ id: 'old', role: 'user', text: 'Same question' }];
-  const { chat } = fixture({ chatRead: async () => snapshot('s1', 'idle', { messages: old }), chatSend: async () => { sends++; return receipt; } });
+  const { chat } = fixture({ chatRead: async () => snapshot('s1', 'idle', { messages: old }), chatSend: async () => { sends++; if (receipt instanceof Error) throw receipt; return receipt; } });
   await chat.open(); await chat.read('s1'); chat.draft = 'Same question'; await chat.send(chat.draft);
   assert.equal(chat.draft, 'Same question'); assert.equal(chat.error, 'turn_outcome_unknown');
   await chat.send(chat.draft); assert.equal(sends, 1);

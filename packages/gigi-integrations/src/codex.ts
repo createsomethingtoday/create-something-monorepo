@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { mkdir, readFile, writeFile, rename } from 'node:fs/promises';
 import { isAbsolute, join } from 'node:path';
 import { Effect } from 'effect';
+import { isDeepStrictEqual } from 'node:util';
 
 type Json = Record<string, any>;
 type State = 'idle' | 'running' | 'approval' | 'interrupted' | 'failed';
@@ -13,6 +14,15 @@ type Approval = { id: string; title: string; detail: string; requestId: string |
 export type ChatRead = { sessionId: string; messages: Array<{ id: string; role: 'user' | 'assistant'; text: string }>; state: State; approvals: Array<{ id: string; title: string; detail: string }>; recordLinks: RecordRef[]; decisionReceipt?: DecisionReceipt; error?: string };
 export interface AppServer { request(method: string, params: Json): Promise<any>; onMessage(handler: (message: Json) => void): () => void; reply(id: string | number, result: unknown): Promise<void> | void; close?(): Promise<void> | void }
 export type CodexOptions = { dataDir: string; mcpBinary: string; skillPath: string; server: AppServer; mcp?: AppServer };
+
+function savedEditMatches(actual: Json, intended: Json): boolean {
+  if (actual?.id !== intended.id || typeof intended.title !== 'string' || actual?.title !== intended.title.trim()) return false;
+  const fields = asObject(intended.fields);
+  const fieldsMatch = intended.fieldsMode === 'replace'
+    ? isDeepStrictEqual(actual?.fields, fields)
+    : Object.entries(fields).every(([key, value]) => isDeepStrictEqual(actual?.fields?.[key], value));
+  return fieldsMatch && (intended.source === undefined || isDeepStrictEqual(actual?.source, intended.source));
+}
 
 const READ_TOOLS = new Set(['gigi_workspace_get', 'gigi_schema_describe', 'gigi_records_list', 'gigi_records_get', 'gigi_gigs_summary', 'gigi_history_list', 'gigi_context_search']);
 const WRITE_TOOLS = new Set(['gigi_records_save']);
@@ -221,8 +231,7 @@ export function createCodexAdapter(options: CodexOptions) {
               const check = await options.mcp!.request('tools/call', { name: 'gigi_records_get', arguments: { workspaceId: session.workspaceId, entity: approval.arguments?.entity, id, detail: 'full' } });
               const actual = check.structuredContent ?? JSON.parse(check.content?.find((x: Json) => x.type === 'text')?.text ?? '{}');
               const intended = approval.arguments ?? {};
-              const fieldsMatch = Object.entries(asObject(intended.fields)).every(([key, value]) => JSON.stringify(actual?.fields?.[key]) === JSON.stringify(value));
-              verified = !check.isError && actual?.id === id && id === intended.id && actual?.title === intended.title && fieldsMatch;
+              verified = !check.isError && actual?.id === id && savedEditMatches(actual, intended);
             }
             }
           } catch { /* unknown readback retains workspace fence */ }
@@ -265,8 +274,7 @@ export function createCodexAdapter(options: CodexOptions) {
             const actual = result.structuredContent ?? JSON.parse(result.content?.find((x: Json) => x.type === 'text')?.text ?? '{}');
             for (const pending of sessions.values()) if (pending.workspaceId === session.workspaceId && pending.uncertainWrite?.tool === 'gigi_records_save' && pending.uncertainWrite.arguments.id === args.id && pending.uncertainWrite.arguments.entity === args.entity) {
               const intended = pending.uncertainWrite.arguments;
-              const fieldsMatch = Object.entries(asObject(intended.fields)).every(([key, value]) => JSON.stringify(actual?.fields?.[key]) === JSON.stringify(value));
-              if (actual?.id === args.id && actual?.title === intended.title && fieldsMatch) {
+              if (actual?.id === args.id && savedEditMatches(actual, intended)) {
                 if (pending.decisionReceipt?.outcome === 'unknown') pending.decisionReceipt.outcome = 'verified';
                 pending.uncertainWrite = undefined; pending.error = undefined; await persist();
               }
@@ -318,6 +326,8 @@ export class JsonLineProcess implements AppServer {
   private stderr = '';
   constructor(command: string, args: string[], env: NodeJS.ProcessEnv) {
     this.child = spawn(command, args, { env, stdio: ['pipe', 'pipe', 'pipe'] });
+    this.child.stderr.setEncoding('utf8');
+    this.child.stdout.setEncoding('utf8');
     this.child.stderr.on('data', chunk => { this.stderr = (this.stderr + String(chunk)).slice(-2_000); });
     this.child.stdout.on('data', chunk => {
       this.buffer += String(chunk);

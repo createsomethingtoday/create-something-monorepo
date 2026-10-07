@@ -370,3 +370,56 @@ test('full record reconciliation updates an unknown receipt without replaying th
   assert.equal((await adapter.read({ workspaceId: 'w', sessionId })).decisionReceipt?.outcome, 'verified');
   assert.equal(writes, 1);
 });
+
+
+for (const proposal of [
+  { title: 'Task', fieldsMode: 'replace', fields: {} },
+  { title: 'Task', source: { kind: 'manual', label: 'Reviewed' } },
+  { title: '  New task  ' }
+]) test(`uncertain save reconciles the full intended mutation: ${JSON.stringify(proposal)}`, async () => {
+  const { adapter, server, mcp } = await setup();
+  const original = mcp.request.bind(mcp);
+  let actual = { id: 'r', title: 'Task', fields: { Status: 'Open' }, source: { kind: 'manual' } };
+  let writes = 0;
+  mcp.request = async (method, params) => {
+    if (params.name === 'gigi_records_get') return { structuredContent: actual, content: [] };
+    if (params.name === 'gigi_records_save') { writes++; throw new Error('lost reply'); }
+    return original(method, params);
+  };
+  const { sessionId } = await adapter.start({ workspaceId: 'w', message: 'edit' });
+  const emit = async (id: number, tool: string, args: any) => Promise.all(server.events.map(fn => fn({ id, method: 'item/tool/call', params: { threadId: 'thread-1', tool, arguments: { workspaceId: 'w', entity: 'tasks', id: 'r', ...args } } })));
+  await emit(201, 'gigi_records_save', proposal);
+  const approval = (await adapter.read({ workspaceId: 'w', sessionId })).approvals[0];
+  await adapter.approve({ workspaceId: 'w', sessionId, approvalId: approval.id, decision: 'approve' });
+  await emit(202, 'gigi_records_get', { detail: 'full' });
+  assert.equal((await adapter.read({ workspaceId: 'w', sessionId })).decisionReceipt?.outcome, 'unknown');
+  actual = { ...actual, title: proposal.title.trim(), ...('fields' in proposal ? { fields: proposal.fields as any } : {}), ...('source' in proposal ? { source: proposal.source as any } : {}) };
+  await emit(203, 'gigi_records_get', { detail: 'full' });
+  assert.equal((await adapter.read({ workspaceId: 'w', sessionId })).decisionReceipt?.outcome, 'verified');
+  assert.equal(writes, 1, 'reconciliation must never replay the save');
+});
+
+test('approval readback recognizes a domain-normalized title immediately', async () => {
+  const { adapter, server, mcp } = await setup();
+  const original = mcp.request.bind(mcp);
+  let actual = { id: 'r', title: 'Task', fields: {}, source: {} };
+  mcp.request = async (method, params) => {
+    if (params.name === 'gigi_records_get') return { structuredContent: actual, content: [] };
+    if (params.name === 'gigi_records_save') { actual = { ...actual, title: params.arguments.title.trim() }; return { structuredContent: actual, content: [] }; }
+    return original(method, params);
+  };
+  const { sessionId } = await adapter.start({ workspaceId: 'w', message: 'edit' });
+  await Promise.all(server.events.map(fn => fn({ id: 204, method: 'item/tool/call', params: { threadId: 'thread-1', tool: 'gigi_records_save', arguments: { workspaceId: 'w', entity: 'tasks', id: 'r', title: '  New task  ' } } })));
+  const approval = (await adapter.read({ workspaceId: 'w', sessionId })).approvals[0];
+  const result = await adapter.approve({ workspaceId: 'w', sessionId, approvalId: approval.id, decision: 'approve' });
+  assert.equal(result.decisionReceipt?.outcome, 'verified');
+});
+
+
+test('JSON-line decoding retains Unicode across a split pipe chunk', async () => {
+  const text = 'Danny — café 🎸';
+  const childCode = `process.stdin.once('data',()=>{const b=Buffer.from(JSON.stringify({id:1,result:{text:'Danny — café 🎸'}})+'\\n');const n=b.indexOf(Buffer.from('🎸'))+2;process.stdout.write(b.subarray(0,n));setTimeout(()=>process.stdout.write(b.subarray(n)),20);});`;
+  const client = new JsonLineProcess(process.execPath, ['-e', childCode], process.env);
+  try { assert.deepEqual(await client.request('ping', {}), { text }); }
+  finally { await client.close(); }
+});

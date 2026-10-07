@@ -23,11 +23,11 @@ test('approval shows only structural changes including title, with exact before/
   assert.match(html, /Technical details/); assert.match(html, /12550/);
 });
 
-test('replace shows every removal; merge omission stays unchanged; null and empty string remain literal values', () => {
+test('replace shows every removal; merge omission stays unchanged; null is cleared and empty string remains literal', () => {
   const base = args({ expectedRecord: { title: 'Existing gig', fields: { Requirements: 'Old notes', Status: 'Open', Type: 'Show' }, source: { kind: 'manual' } } });
   const replace = comparison(view({ ...base, fieldsMode: 'replace', fields: { Status: null, Type: '', Added: false } }));
   assert.match(replace, /Requirements<\/th><td>Old notes<\/td><td>Removed/);
-  assert.match(replace, /Status<\/th><td>Open<\/td><td>null \(retained value\)/);
+  assert.match(replace, /Status<\/th><td>Open<\/td><td>Cleared \(null\)/);
   assert.match(replace, /Type<\/th><td>Show<\/td><td>\(empty string\)/);
   assert.match(replace, /Added<\/th><td>Not set<\/td><td>No/);
   const merge = comparison(view({ ...base, fields: { Status: 'Done' } }));

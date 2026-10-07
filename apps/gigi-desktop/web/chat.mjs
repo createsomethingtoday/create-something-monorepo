@@ -133,7 +133,10 @@ export class ChatController {
         this.refreshRequired = true;
         if (submittedText !== null) { this.unconfirmedSends.set(sessionId, { sessionId, text: submittedText, messageIds }); this.error = 'turn_outcome_unknown'; }
       }
-    } catch (error) { this.refreshRequired = true; this.error = String(error?.message || error); }
+    } catch (error) {
+      this.refreshRequired = true; this.error = String(error?.message || error);
+      if (submittedText !== null) this.unconfirmedSends.set(sessionId, { sessionId, text: submittedText, messageIds });
+    }
     finally {
       this.pending = false; this.emit();
       if (this.visible && this.refreshRequired && this.current?.sessionId === sessionId) await this.read(sessionId, this.epoch, true);
