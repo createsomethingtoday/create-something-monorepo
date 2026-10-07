@@ -25,8 +25,8 @@ eligibility formula        ─────►  featured_candidates (read)
 ℹ️Is Featured?             ◄─────  set_featured_flag (coordinator)  ─► marketplace-featured-notifier
                                                                         worker (hourly cron :17) →
                                                                         Knock bell + Postmark email
-                                                                     ─► manual CMS backfill (Whalesync
-                                                                        does NOT sync featured fields)
+                                                                     ─► Whalesync pushes the new batch to the
+                                                                        CMS (verify; turn the old batch off by hand)
 ```
 
 ## Who does what
@@ -53,10 +53,13 @@ review interface, verified live 2026-08-26 (39 templates / 33 creators):
 - Submitted within the current month (`months_back: 0`) or up to `months_back`
   rolling months earlier (default 1 — current + past month)
 
-The tool does **not** check marketplace status. Confirm every pick is
-`3️⃣Published🚀` with an MRP ID before featuring it — in October 2026 two
-eligible candidates were still in Response to Review, and one September
-member (Vrieo) was featured while unpublished.
+The tool does **not** check marketplace status, and its response has no
+status or MRP fields, so the check needs its own call: run
+`template_review_get_asset` on every winner and confirm `3️⃣Published🚀`
+with an MRP ID (or MRP ID override) before featuring it. Opening the
+`websiteUrl` only proves the staging site loads. In October 2026 two eligible
+candidates were still in Response to Review, and one September member (Vrieo)
+was featured while unpublished.
 
 **A template is featured once.** Never top up from a previous batch. When
 the pool has fewer distinct creators than the batch needs, widen the window
@@ -109,24 +112,45 @@ tell you how big a batch is. Count membership in Airtable:
    `reviewerPick: true`, a non-empty `reviewerPickReason`, and settled
    `voteTallies` (`inQualifiedPool` requires ≥1 up vote and no down-vote
    majority).
-2. Per winner: `template_review_set_featured_flag` with `is_featured: true`
+
+   **Widened candidates** (the older pull above) do not appear here: the tool
+   filters out items that are not currently eligible. Check each directly
+   instead: `template_review_get_asset` for status, MRP and Pick Reason, and the
+   item's votes in 🗳️Reviewer Votes. Then finalize it in step 3 with
+   `override_selection_checks: true` after the coordinator confirms. The
+   result records the overridden checks.
+2. Preflight the whole batch **before any flag is written or any notification
+   can fire**:
+   - **One template per creator.** List every winner's creator and remove
+     duplicates. `set_featured_flag` does not enforce this, and picks from
+     different reviewers can land on the same creator.
+   - **Published.** `template_review_get_asset` shows `3️⃣Published🚀` with an
+     MRP ID for every winner (see Candidate definition).
+   - **Never featured before.** Confirm the never-featured rule on every pick.
+   - **Notifiable.** Every winner has a `🎨🔑Creator WF User ID` (missing →
+     the notification is skipped) and a Name that reads correctly in an email
+     subject line (Names are validated at submission and authoritative). Fix
+     the IDs now, not after the send.
+3. Per winner: `template_review_set_featured_flag` with `is_featured: true`
    and `confirm_creator_notification: true`. The result reports
    `featuredPeriod` — expect the first of **next** month.
 
    **Current-month batch** (selected after the 1st, for this month): write
-   `📅Is Featured Period (Override)` = the 1st of this
-   month on every winner **before** ticking `ℹ️Is Featured?`. Tick first and
-   the period resolves to next month, and the hourly notifier will email
-   creators that they are featured *next* month. `set_featured_flag` cannot
-   write the override, so do both writes directly in Airtable. Carry-overs
-   that are already ticked only need the override. Selection checks
+   `📅Is Featured Period (Override)` = the 1st of this month on every winner
+   **before** ticking `ℹ️Is Featured?`. Tick first and the period resolves to
+   next month, and the hourly notifier will email creators that they are
+   featured *next* month. `set_featured_flag` cannot write the override, so
+   write **only the override** directly in Airtable, then tick through
+   `set_featured_flag` as usual so its coordinator check, live-reason check
+   and selection checks still run. Carry-overs that are already ticked only
+   need the override. Selection checks
    (star set, eligibility formula, qualified votes) run before the write and
    reject with `SELECTION_CHECKS_UNMET`; if featuring an item that fails them
    is a deliberate decision, resubmit with `override_selection_checks: true`
    — the result then records exactly which checks were overridden.
-3. **What you just armed**: the `marketplace-featured-notifier` worker
-   (CREATE SOMETHING Cloudflare account, cron `:17` past each hour; source on
-   branch `feat/marketplace-featured-notifier`, not yet on `main`) sends each
+4. **What you just armed**: the `marketplace-featured-notifier` worker
+   (CREATE SOMETHING Cloudflare account, cron `:17` past each hour; source in
+   `packages/marketplace-featured-notifier`) sends each
    creator a bell + email **quoting the live Pick Reason verbatim** once the
    featured period is in the future and differs from
    `🔔Featured Notified For Period`. Idempotency is per-period — creators are
@@ -137,11 +161,13 @@ tell you how big a batch is. Count membership in Airtable:
    their email this way). For a current-month batch, preview then send with
    the admin token: `GET /preview?period=YYYY-MM-01`, then
    `POST /run?period=YYYY-MM-01`. Only the current UTC month is accepted.
-   Winners without a `🎨🔑Creator WF User ID` are skipped and reported.
-4. **Abort path**: uncheck via `set_featured_flag` with `is_featured: false`
+   Run the preview only after the step 2 preflight. Winners without a
+   `🎨🔑Creator WF User ID` are skipped and reported, so fix any the preview
+   still shows and preview again before the `POST /run`.
+5. **Abort path**: uncheck via `set_featured_flag` with `is_featured: false`
    before the cron fires, or set the worker's `DRY_RUN` to `"true"` and
    redeploy (immediate kill switch).
-5. **CMS**: as of 2026-10-01 Whalesync carries the new batch on its own.
+6. **CMS**: as of 2026-10-01 Whalesync carries the new batch on its own.
    Within about 5 minutes of the Airtable writes, all 25 October items had
    `featured-2` on, `featured-date` = the period and the live reason (plus a
    renamed template's new name), published. Verify rather than write: read
@@ -150,12 +176,13 @@ tell you how big a batch is. Count membership in Airtable:
    `featured-2` off with a `PATCH …/items/live` (leave `featured-date` as
    history). The live endpoint returns 409 for an item that was never
    published; skip those. Any CMS write resets the listing's visible
-   "Published on" date to today. Whether Whalesync will later re-push an old
-   batch's switch back on is unverified; recheck after the next batch.
-6. Data-quality pass before the period arrives: every winner needs a
-   `🎨🔑Creator WF User ID` (missing → notification skipped) and a Name that
-   reads correctly in an email subject line (Names are validated at
-   submission and authoritative).
+   "Published on" date to today. The old items' `ℹ️Is Featured?` stays
+   checked in Airtable (sticky history), so Whalesync could push `featured-2`
+   back on the next time it reprocesses those records. Re-read the old items'
+   `/items/{id}/live` about 15 minutes after switching them off and again the
+   next day. If any switched back on, the batch is not done: it needs a stable
+   source-side value, which is an open process decision, so raise it rather
+   than repeating the PATCH.
 
 ## Safety rules enforced in code
 
