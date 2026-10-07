@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { MAX_ENTRY_BYTES, readZip } from '../src/lib/zip.mjs';
+import { MAX_ENTRY_BYTES, MAX_TOTAL_BYTES, readZip } from '../src/lib/zip.mjs';
 import { imageDimensions } from '../src/lib/images.mjs';
 import { loadRegistry, coverage } from '../src/lib/registry.mjs';
 import { writeZip, writePng } from './helpers.mjs';
@@ -19,6 +19,12 @@ test('zip reader inflates deflated entries but refuses ones that declare or expa
   assert.throws(() => liar.read(liar.files[0]), /refusing to inflate/);
   const bomb = readZip(writeZip([{ name: 'bomb.js', data: Buffer.alloc(MAX_ENTRY_BYTES + 1024), deflate: true, declaredSize: 1 }]));
   assert.throws(() => bomb.read(bomb.files[0]), /refusing to inflate/);
+});
+
+test('zip reader refuses an archive whose entries together declare more than the total cap', () => {
+  const half = Math.floor(MAX_TOTAL_BYTES / 2) + 1;
+  const files = [1, 2, 3].map((i) => ({ name: `part${i}.js`, data: 'x', deflate: true, declaredSize: half }));
+  assert.throws(() => readZip(writeZip(files)), /Archive declares .* refusing to inflate/);
 });
 
 test('zip reader rejects non-archives', () => {

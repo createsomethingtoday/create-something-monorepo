@@ -28,7 +28,7 @@ infisical run ... -- node scripts/judge.mjs --arm astra          # Claude judge,
 node scripts/report.mjs                                          # runs/REPORT.md
 ```
 
-Codex uses the machine's ChatGPT login. The child process gets a minimal environment (PATH, HOME, locale, `CODEX_HOME`), never the Infisical-injected keys. While an arm runs, `corpus/labels.json` and `corpus/judged-labels/` are `chmod 000`, because the `workspace-write` sandbox restricts writes, not reads; every `run.json` records `labelPathHits`, the count of events that name the label store (0 across all runs so far). Pass `--network` to let the agent reach the listing URLs and testing site; this turns on unrestricted egress for the sandbox, and the GET-only rule is enforced by the prompt, not the sandbox. Off by default so the first results isolate what the bundle and listing alone support.
+Codex uses the machine's ChatGPT login. The child runs under an isolated HOME in `runs/.home/` that holds only Codex's `auth.json` (copied back if refreshed), with a minimal environment: no Infisical-injected keys, and no `~/.config/gh`, cloud profiles or SSH keys within reach of prompt-injected bundle content. While an arm runs, `corpus/labels.json` and `corpus/judged-labels/` are `chmod 000`, because the `workspace-write` sandbox restricts writes, not reads; every `run.json` records `labelPathHits`, the count of events that name the label store (0 across all runs so far). Pass `--network` to let the agent reach the listing URLs and testing site; this turns on unrestricted egress for the sandbox, and the GET-only rule is enforced by the prompt, not the sandbox. Off by default so the first results isolate what the bundle and listing alone support.
 
 ## What the corpus cannot tell you
 

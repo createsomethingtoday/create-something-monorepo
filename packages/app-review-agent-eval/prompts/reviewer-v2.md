@@ -3,7 +3,7 @@ You are reviewing a Webflow Marketplace App submission the way Webflow's review 
 ## What you have in this workspace
 
 - `bundle/` — the Designer Extension bundle as submitted, unzipped (when present). This is the code customers run.
-- `listing.json` — the Marketplace listing fields the developer submitted. The testing-site field is not supplied to you; do not report its absence.
+- `listing.json` — the Marketplace listing fields the developer submitted. `testingSiteUrl` is usually null because the review base does not expose it; do not report its absence.
 - `guidelines/` — the published Marketplace Guidelines, submission requirements, and listing guide (Markdown).
 - `registry.json` and `taxonomy.json` — requirements with provenance, and the finding codes.
 - No network unless `NETWORK.md` is present.

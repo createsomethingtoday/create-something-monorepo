@@ -11,7 +11,7 @@
 // workspace.
 import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync, chmodSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync, chmodSync, copyFileSync, statSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { readZip } from '../../webflow-app-forge/src/lib/zip.mjs';
@@ -63,6 +63,8 @@ for (const v of picked) {
     summary.push(readJson(join(out, 'run.json')));
     continue;
   }
+  // A forced rerun must not inherit last-message.txt, result.json, run.json or judgment.json.
+  if (args.force) rmSync(out, { recursive: true, force: true });
   const ws = prepareWorkspace(v, out, Boolean(args.network));
   if (args.dry) {
     console.log(`prepared ${ws}`);
@@ -108,6 +110,7 @@ function prepareWorkspace(v, out, network) {
     visibility: v.visibility,
     marketplaceStatus: v.marketplaceStatus,
     isPartnerProgramApp: v.isPartner,
+    testingSiteUrl: v.testingSiteUrl ?? null,
     ...v.listing,
     longDescriptionText: htmlToText(v.listing.longDescriptionHtml),
     extensionManifestFromRegistry: v.bundle.manifest,
@@ -158,9 +161,10 @@ async function runCodex({ arm, ws, out, network }) {
   // Ground truth must not be readable while the agent runs: workspace-write still
   // allows reads anywhere on disk, and the labels live three directories up.
   lockLabels();
+  const home = isolatedHome();
   const code = await new Promise((resolveExit) => {
     // stdin must be closed: with a pipe, codex waits to read a <stdin> block forever.
-    const child = spawn('codex', argv, { cwd: ws, stdio: ['ignore', 'pipe', 'pipe'], env: childEnv() });
+    const child = spawn('codex', argv, { cwd: ws, stdio: ['ignore', 'pipe', 'pipe'], env: home.env });
     let buf = '';
     child.stdout.on('data', (d) => {
       buf += d.toString();
@@ -179,6 +183,7 @@ async function runCodex({ arm, ws, out, network }) {
     });
   });
   unlockLabels();
+  home.syncBack();
   writeFileSync(join(out, 'events.jsonl'), events.join('\n') + '\n');
   if (stderr.length) writeFileSync(join(out, 'stderr.txt'), stderr.join(''));
 
@@ -286,12 +291,37 @@ function fail(m) {
 // ---------------------------------------------------------------------------
 // Sandbox hygiene
 
-/** The child gets PATH, HOME and locale only: no Infisical-injected keys, no tokens. */
-function childEnv() {
-  const keep = ['PATH', 'HOME', 'USER', 'SHELL', 'TERM', 'LANG', 'LC_ALL', 'TMPDIR', 'TZ'];
+/**
+ * The child runs under an isolated HOME that holds only Codex's auth.json: no
+ * Infisical-injected variables, and no ~/.config/gh, cloud profiles or SSH keys
+ * for prompt-injected bundle content to read and exfiltrate when --network is on.
+ * A refreshed auth.json is copied back so the operator's login does not go stale.
+ */
+function isolatedHome() {
+  const realCodex = process.env.CODEX_HOME ?? `${process.env.HOME}/.codex`;
+  const home = join(PKG, 'runs', '.home');
+  const codex = join(home, '.codex');
+  rmSync(home, { recursive: true, force: true });
+  mkdirSync(codex, { recursive: true });
+  const src = join(realCodex, 'auth.json');
+  const dst = join(codex, 'auth.json');
+  if (existsSync(src)) copyFileSync(src, dst);
+  const before = existsSync(dst) ? statSync(dst).mtimeMs : 0;
+  const keep = ['PATH', 'USER', 'SHELL', 'TERM', 'LANG', 'LC_ALL', 'TZ'];
   const env = Object.fromEntries(keep.filter((k) => process.env[k] !== undefined).map((k) => [k, process.env[k]]));
-  env.CODEX_HOME = process.env.CODEX_HOME ?? `${process.env.HOME}/.codex`;
-  return env;
+  env.HOME = home;
+  env.TMPDIR = join(home, 'tmp');
+  mkdirSync(env.TMPDIR, { recursive: true });
+  env.CODEX_HOME = codex;
+  return {
+    env,
+    syncBack() {
+      try {
+        if (existsSync(dst) && statSync(dst).mtimeMs > before) copyFileSync(dst, src);
+      } catch { /* leave the operator's auth as it was */ }
+      rmSync(home, { recursive: true, force: true });
+    },
+  };
 }
 
 const LABEL_PATHS = [join(PKG, 'corpus', 'labels.json'), join(PKG, 'corpus', 'judged-labels')];

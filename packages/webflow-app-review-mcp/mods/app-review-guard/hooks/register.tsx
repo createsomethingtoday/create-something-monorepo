@@ -7,6 +7,8 @@ import { lintComposed, lintVerbatim } from './lint'
 const PLUGIN = 'app-review-guard'
 const PANE = 'ar-send'
 const contextLoaded = atom({ plugin: 'app-review-guard', key: 'contextLoaded' } as const, [])
+/** Asset ids seen in loaded review contexts; asset-level status writes are gated on these. */
+const assetsLoaded = atom({ plugin: 'app-review-guard', key: 'assetsLoaded' } as const, [])
 const names = atom({ plugin: 'app-review-guard', key: 'names' } as const, {})
 const sent = atom({ plugin: 'app-review-guard', key: 'sent' } as const, [])
 const pending = atom({ plugin: 'app-review-guard', key: 'pending' } as const, null)
@@ -15,9 +17,10 @@ const pending = atom({ plugin: 'app-review-guard', key: 'pending' } as const, nu
 const TOOL_RE = /app_review_([a-z_]+)$/
 const PROXY_RE = /hub_execute_proxy_tool$/
 const NAME_RE = /"appName"\s*:\s*"([^"\n]+)"/
+const ASSET_RE = /"assetId"\s*:\s*"([^"\n]+)"/
 
 type Args = Record<string, unknown>
-type Call = { name: string; args: Args; isProxy: boolean }
+type Call = { name: string; args: Args; isProxy: boolean; argsKey?: string }
 
 function str(v: unknown): string | null {
   return typeof v === 'string' && v.length > 0 ? v : null
@@ -29,9 +32,10 @@ function resolveCall(e: { tool: string } & Args): Call | null {
   if (!PROXY_RE.test(String(e.tool))) return null
   const proxied = TOOL_RE.exec(str(e.proxyToolName) ?? '')
   if (!proxied?.[1]) return null
-  const raw = e.arguments ?? e.args ?? e.input ?? e.params
+  const argsKey = (['arguments', 'args', 'input', 'params'] as const).find(k => e[k] !== undefined && e[k] !== null)
+  const raw = argsKey === undefined ? undefined : e[argsKey]
   const args = raw !== null && typeof raw === 'object' ? (raw as Args) : {}
-  return { name: proxied[1], args, isProxy: true }
+  return { name: proxied[1], args, isProxy: true, argsKey }
 }
 
 function resultText(ran: { text?: string; result?: unknown }): string {
@@ -43,9 +47,11 @@ const DECISION_STATUSES = /changes requested|approved|rejected/i
 /** Official decisions: review context must have been loaded this session. */
 const DECISIONS = new Set(['request_changes', 'approve_version', 'reject_version'])
 
-/** A decision by name, or a status write routed through asset metadata. */
+/** A decision by name, a decision-valued status through set_review_status / update_version_review, or a status write routed through asset metadata. */
 function isDecision(call: Call): boolean {
-  return DECISIONS.has(call.name) || (call.name === 'update_asset_metadata' && str(call.args.latest_review_status) !== null)
+  if (DECISIONS.has(call.name)) return true
+  if (call.name === 'set_review_status' || call.name === 'update_version_review') return DECISION_STATUSES.test(str(call.args.review_status) ?? '')
+  return call.name === 'update_asset_metadata' && str(call.args.latest_review_status) !== null
 }
 
 /**
@@ -78,6 +84,11 @@ export function describe({ name, args }: Call, known: Record<string, string>): s
       return args.status === 'solved' ? `Solve Zendesk ticket ${str(args.ticket_id) ?? '?'} (sends the solved email)` : null
     case 'set_marketplace_status':
       return `Marketplace Status -> ${str(args.marketplace_status) ?? '?'} on ${v}: changes what customers see`
+    case 'set_review_status': {
+      const status = str(args.review_status)
+      if (status && DECISION_STATUSES.test(status)) return `Set Review Status "${status}" on ${v}${/no notification/i.test(status) ? '' : ' (notifies the developer)'}`
+      return null
+    }
     case 'update_asset_metadata': {
       const status = str(args.latest_review_status)
       if (status) return `Set Review Status "${status}" on ${v} through asset metadata${/no notification/i.test(status) ? '' : ' (notifies the developer)'}`
@@ -159,6 +170,8 @@ export const register: Register = on => {
         await update($, contextLoaded, list => (list.includes(versionId) ? list : [...list, versionId]))
         const app = NAME_RE.exec(text)?.[1]
         if (app !== undefined) await update($, names, known => ({ ...known, [versionId]: app }))
+        const asset = ASSET_RE.exec(text)?.[1]
+        if (asset !== undefined) await update($, assetsLoaded, list => (list.includes(asset) ? list : [...list, asset]))
       }
       return ran
     }
@@ -189,13 +202,13 @@ export const register: Register = on => {
     const summary = describe(call, await read($, names))
     if (summary === null) return next(input)
 
-    // An asset-level status write has no version id; it needs some review context loaded this session.
-    const gateId = versionId ?? (call.name === 'update_asset_metadata' ? str(call.args.asset_id) : null)
-    if (isDecision(call) && gateId !== null) {
-      const loaded = await read($, contextLoaded)
-      if (versionId !== null ? !loaded.includes(versionId) : loaded.length === 0) {
+    // An asset-level status write has no version id; it needs a loaded review context whose assetId matches.
+    const assetId = call.name === 'update_asset_metadata' ? str(call.args.asset_id) : null
+    if (isDecision(call) && (versionId !== null || assetId !== null)) {
+      const ok = versionId !== null ? (await read($, contextLoaded)).includes(versionId) : (await read($, assetsLoaded)).includes(assetId as string)
+      if (!ok) {
         return {
-          deny: `${PLUGIN}: ${call.name} on ${versionId ?? gateId} refused: app_review_get_review_context has not been called ${versionId !== null ? 'for this version' : 'for any version'} in this session. Load the review context first, then retry.`,
+          deny: `${PLUGIN}: ${call.name} on ${versionId ?? assetId} refused: app_review_get_review_context has not been called for this ${versionId !== null ? 'version' : 'asset'} in this session. Load the review context first, then retry.`,
         }
       }
     }
@@ -204,7 +217,10 @@ export const register: Register = on => {
     if (refusal !== null) return { deny: refusal }
 
     // The dialog answer is the reviewer's approval the MCP asks for on create_ticket.
-    if (call.name === 'create_ticket' && !call.isProxy) input = { ...input, ...({ confirm_send: true } as Record<string, unknown>) } as typeof e
+    if (call.name === 'create_ticket') {
+      if (!call.isProxy) input = { ...input, ...({ confirm_send: true } as Record<string, unknown>) } as typeof e
+      else if (call.argsKey !== undefined) input = { ...input, ...({ [call.argsKey]: { ...call.args, confirm_send: true } } as Record<string, unknown>) } as typeof e
+    }
 
     const ran = await next(input)
     if (ran.deny === undefined && ran.isError === undefined) {

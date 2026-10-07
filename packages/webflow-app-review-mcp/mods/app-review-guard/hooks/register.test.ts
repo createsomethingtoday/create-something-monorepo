@@ -12,6 +12,7 @@ const DRAFT = `${S}app_review_save_draft_feedback`
 const UPDATE = `${S}app_review_update_version_review`
 const LIST = `${S}app_review_list_queue`
 const META = `${S}app_review_update_asset_metadata`
+const SETSTATUS = `${S}app_review_set_review_status`
 const CLEAN = 'Thanks for submitting. Below are the items to address.\n\nBLOCKING\n1. Remove the eval() call in bundle.js.\n2. Attach the source map to the private upload.'
 
 test('lint: backticks, greetings and sign-offs are refused on the composed path; gaps collapse', () => {
@@ -85,14 +86,36 @@ test('after context loads, a decision reaches the dialog, and with nobody to ans
   expect(reached).toBe(0)
 })
 
-test('a review-status write routed through asset metadata is gated like a decision; copy edits pass', async ($, on) => {
+test('a review-status write routed through asset metadata needs context for that asset; copy edits pass', async ($, on) => {
+  let reached = 0
+  on('tool.call', (_$, e) => {
+    reached += 1
+    if (String(e.tool) === CTX) return { result: { context: { assetId: e.version_id === 'recVa' ? 'recAssetA' : 'recAssetB', appName: 'Some App' } } }
+    return { result: { ok: true } }
+  })
+  const cold = await $.tool.call({ tool: META, asset_id: 'recAssetA', latest_review_status: '✅Approved', status_change: true })
+  expect(cold.deny).toMatch(/get_review_context/)
+  await $.tool.call({ tool: CTX, version_id: 'recVb' })
+  const wrongAsset = await $.tool.call({ tool: META, asset_id: 'recAssetA', latest_review_status: '✅Approved', status_change: true })
+  expect(wrongAsset.deny).toMatch(/get_review_context/)
+  await $.tool.call({ tool: CTX, version_id: 'recVa' })
+  const gated = await $.tool.call({ tool: META, asset_id: 'recAssetA', latest_review_status: '✅Approved', status_change: true })
+  expect(gated.deny ?? '').not.toMatch(/get_review_context/)
+  const before = reached
+  await $.tool.call({ tool: META, asset_id: 'recAssetA', description_short: 'Copy only' })
+  expect(reached).toBe(before + 1)
+})
+
+test('decision-valued statuses through set_review_status and update_version_review are gated on context', async ($, on) => {
   let reached = 0
   on('tool.call', () => {
     reached += 1
     return { result: { ok: true } }
   })
-  const ran = await $.tool.call({ tool: META, asset_id: 'recAsset', latest_review_status: '✅Approved', status_change: true })
-  expect(ran.deny).toMatch(/get_review_context/)
-  await $.tool.call({ tool: META, asset_id: 'recAsset', description_short: 'Copy only' })
+  const a = await $.tool.call({ tool: SETSTATUS, version_id: 'recE', review_status: '✅Approved', status_change: { confirmed: true, expected_status: 'In Review' } })
+  expect(a.deny).toMatch(/get_review_context/)
+  const b = await $.tool.call({ tool: UPDATE, version_id: 'recE', review_status: '❌Rejected' })
+  expect(b.deny).toMatch(/get_review_context/)
+  await $.tool.call({ tool: SETSTATUS, version_id: 'recE', review_status: '🔍In Review' })
   expect(reached).toBe(1)
 })

@@ -41,15 +41,17 @@ for (const arm of arms) {
     const m = j.judgment.metrics;
     if (typeof m.recall === 'number') stats.recall.push(m.recall);
     if (typeof m.precision === 'number') stats.precision.push(m.precision);
-    stats.unsupported += m.unsupported ?? 0;
-    stats.matched += m.matched ?? 0;
-    stats.plausible += m.plausible_new ?? 0;
     // 'Testing site missing' is a workspace artifact (the field never reaches the agent); do not count it.
     const result0 = readJson(join(runsRoot, arm, id, 'result.json'));
     const artifactIdx = new Set((result0?.findings ?? []).map((f, i) => (/testing[- ]site|previewSite/i.test(`${f.title} ${f.evidence}`) ? i : -1)).filter((i) => i >= 0));
     const realFindings = j.judgment.agent_findings.filter((a) => !artifactIdx.has(a.index));
     stats.findings += realFindings.length;
-    stats.plausible -= j.judgment.agent_findings.filter((a) => artifactIdx.has(a.index) && a.class === 'plausible_new').length;
+    // All three class counters come from the filtered list, so shares stay consistent with the denominator.
+    for (const a of realFindings) {
+      if (a.class === 'matched') stats.matched++;
+      else if (a.class === 'plausible_new') stats.plausible++;
+      else if (a.class === 'unsupported') stats.unsupported++;
+    }
     stats.artifacts = (stats.artifacts ?? 0) + artifactIdx.size;
     const result = readJson(join(runsRoot, arm, id, 'result.json'));
     const humanDecision = /approved/i.test(v.decision) ? 'approve' : /changes/i.test(v.decision) ? 'changes_requested' : 'reject';
