@@ -48,7 +48,21 @@ function serverOf(toolName: string): string {
   return toolName.replace(/^mcp__/, '').replace(/__.*$/, '')
 }
 
-async function confirm($: EngineInterface, out: Outbound): Promise<string | null> {
+/**
+ * One confirmation at a time. Parallel guarded calls would otherwise share the
+ * pending atom and the single preview pane, so one call could replace or
+ * close the full text another dialog is still asking about. A module variable
+ * is enough: it resets on reload, when no dialog is open.
+ */
+let confirmQueue: Promise<unknown> = Promise.resolve()
+
+function confirm($: EngineInterface, out: Outbound): Promise<string | null> {
+  const turn = confirmQueue.then(() => confirmOne($, out))
+  confirmQueue = turn.catch(() => undefined)
+  return turn
+}
+
+async function confirmOne($: EngineInterface, out: Outbound): Promise<string | null> {
   const text = out.text
   if (text !== null && text.length > PANE_LIMIT) {
     return `${PLUGIN}: ${out.tool} refused: the text is ${text.length} characters, longer than can be shown in full for review (${PANE_LIMIT}). Split it or shorten it, then show the draft again.`
@@ -118,11 +132,20 @@ export const register: Register = on => {
       $.ui.toast(`sent: ${out.summary}`)
     }
     return ran
-  }).catch(($, e, next) =>
-    resolve(String(e.tool), e as unknown as Args) === null
-      ? next(e)
-      : { deny: `${PLUGIN}: the guard failed while checking ${String(e.tool)}; refusing the send rather than letting it through. Tell the person.` },
-  )
+  }).catch(($, e, next) => {
+    // Once next has run, next(e) replays what it settled to: nothing runs
+    // twice, and a send that went out is never reported as refused.
+    if (next.called) return next(e)
+    let guarded = true
+    try {
+      guarded = resolve(String(e.tool), e as unknown as Args) !== null
+    } catch {
+      guarded = true
+    }
+    return guarded
+      ? { deny: `${PLUGIN}: the guard failed while checking ${String(e.tool)}; refusing the send rather than letting it through. Tell the person.` }
+      : next(e)
+  })
 
   on('ui.render', { component: 'Pane', requestId: PANE }, async ($, e) => {
     const { Box, Markdown, Text } = $.ui.resolve(e)

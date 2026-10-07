@@ -132,3 +132,17 @@ test('an approval reaches the dialog, and text too long to review in full is ref
   expect(asked).toBe(1)
   expect(reached).toBe(0)
 })
+
+const UPDATE_REVIEW = 'mcp__claude_ai_App_Review_MCP__app_review_update_version_review'
+const TICKET_STATUS = 'mcp__claude_ai_App_Review_MCP__app_review_update_ticket_status'
+const SET_STATUS = 'mcp__claude_ai_App_Review_MCP__app_review_set_review_status'
+
+test('rules: generic App Review writes are guarded only when they notify the developer', () => {
+  expect(resolve(UPDATE_REVIEW, { version_id: 'v1', review_status: '✅Approved' })?.summary).toMatch(/developer is emailed/)
+  expect(resolve(UPDATE_REVIEW, { version_id: 'v1', review_status: '❌Rejected', review_feedback: 'No' })?.text).toBe('No')
+  expect(resolve(UPDATE_REVIEW, { version_id: 'v1', review_status: '✅Approved (No Notification)' })).toBeNull()
+  expect(resolve(UPDATE_REVIEW, { version_id: 'v1', hold_notes: 'x' })).toBeNull()
+  expect(resolve(TICKET_STATUS, { ticket_id: '1', status: 'solved' })?.summary).toMatch(/solved/)
+  expect(resolve(TICKET_STATUS, { ticket_id: '1', status: 'pending' })).toBeNull()
+  expect(resolve(SET_STATUS, { version_id: 'v1', review_status: '⏸️On Hold' })).toBeNull()
+})

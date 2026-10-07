@@ -43,6 +43,9 @@ const PARTNERSTACK_SENDS = new Set([
   'create_a_transaction',
 ])
 
+/** App Review statuses whose write fires a developer-facing email. */
+const NOTIFYING_REVIEW_STATUSES = new Set(['📤Changes Requested', '✅Approved', '❌Rejected'])
+
 /** The Slack checks that have each cost a deleted or lost message before. */
 export const SLACK_MENTION_RE = /<@(U[A-Z0-9]{6,})>/g
 const SLACK_BARE_MENTION_RE = /(^|\s)@[a-z][\w.-]+/i
@@ -139,6 +142,18 @@ export function resolve(name: string, args: Args): Outbound | null {
   }
   if (tool === 'app_review_reject_version') {
     return { ...base, summary: `App Review: REJECT ${str(args.version_id) ?? '?'} (${str(args.rejection_reason) ?? '?'}; the developer is emailed)`, text: str(args.review_feedback) }
+  }
+  // The generic write path reaches the same automations when it sets a
+  // notifying decision status. Internal statuses and "(No Notification)"
+  // variants stay unguarded.
+  if (tool === 'app_review_update_version_review') {
+    const status = str(args.review_status)
+    if (status === null || !NOTIFYING_REVIEW_STATUSES.has(status)) return null
+    return { ...base, summary: `App Review: set ${str(args.version_id) ?? '?'} to ${status} (the developer is emailed)`, text: str(args.review_feedback) }
+  }
+  if (tool === 'app_review_update_ticket_status') {
+    if (args.status !== 'solved') return null
+    return { ...base, summary: `Zendesk: mark ticket ${str(args.ticket_id) ?? '?'} solved (Zendesk emails the developer)`, text: str(args.private_note) }
   }
   if (tool === 'app_review_request_changes') {
     const silent = str(args.review_status)?.includes('No Notification') === true
