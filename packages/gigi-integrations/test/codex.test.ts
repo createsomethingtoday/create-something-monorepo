@@ -5,6 +5,10 @@ import { join } from 'node:path';
 import { test } from 'node:test';
 import { createCodexAdapter, JsonLineProcess, ProviderResponseError, type AppServer } from '../src/codex.ts';
 
+// Required local MCP contract; context search is intentionally optional.
+const requiredTools = ['gigi_workspace_get', 'gigi_schema_describe', 'gigi_records_list', 'gigi_records_get', 'gigi_gigs_summary', 'gigi_history_list', 'gigi_records_save'];
+const toolCatalog = () => requiredTools.map(name => ({ name, description: name, inputSchema: { type: 'object' } }));
+
 class FakeServer implements AppServer {
   calls: Array<{ method: string; params: any }> = [];
   events: Array<(message: any) => void> = [];
@@ -30,7 +34,7 @@ async function setup() {
   const server = new FakeServer();
   const mcp = new FakeServer();
   mcp.request = async (method, params) => {
-    if (method === 'tools/list') return { tools: [{ name: 'gigi_records_get', description: 'Read', inputSchema: { type: 'object' } }, { name: 'gigi_records_save', description: 'Save', inputSchema: { type: 'object' } }] };
+    if (method === 'tools/list') return { tools: toolCatalog() };
     if (method === 'tools/call' && params.name === 'gigi_workspace_get') return { content: [{ type: 'text', text: JSON.stringify({ id: params.arguments.workspaceId }) }] };
     if (method === 'tools/call' && params.name === 'gigi_records_get') return { structuredContent: { id: params.arguments.id, title: 'Task', fields: {}, source: {} } };
     return { content: [{ type: 'text', text: '{}'}] };
@@ -60,7 +64,7 @@ test('start without a message persists an idle session without a phantom Codex t
 
 test('rejects a workspace that the owned GiGi profile does not contain', async () => {
   const { adapter, server, mcp } = await setup();
-  mcp.request = async () => ({ content: [{ type: 'text', text: '{"id":"foreign"}' }] });
+  mcp.request = async method => method === 'tools/list' ? { tools: toolCatalog() } : { content: [{ type: 'text', text: '{"id":"foreign"}' }] };
   await assert.rejects(adapter.start({ workspaceId: 'w' }), /workspace_not_found/);
   assert.equal(server.calls.some(x => x.method === 'thread/start'), false);
 });
@@ -162,7 +166,7 @@ test('uncertain GiGi write is fenced before provider call and survives restart',
     if (method === 'tools/call' && params.name === 'gigi_records_save') { saveAttempted = true; throw new Error('broken pipe after write'); }
     if (params.name === 'gigi_records_get' && saveAttempted) throw new Error('read unavailable');
     if (method === 'tools/call' && params.name === 'gigi_records_get') return { structuredContent: { id: 'r', title: 'Before', fields: { status: 'open' }, source: { type: 'manual' } } };
-    if (method === 'tools/list') return { tools: [{ name: 'gigi_records_save', description: 'Save', inputSchema: { type: 'object' } }] };
+    if (method === 'tools/list') return { tools: toolCatalog() };
     return { content: [{ type: 'text', text: '{"id":"w"}' }] };
   };
   await Promise.all(server.events.map(fn => fn({ id: 50, method: 'item/tool/call', params: { threadId: 'thread-1', tool: 'gigi_records_save', arguments: { workspaceId: 'w', entity: 'tasks', id: 'r', title: 'Edit' } } }) as unknown as Promise<void>));
@@ -246,7 +250,7 @@ test('gig fee instructions use summary currency and no fixture-specific answer',
   const { adapter, server, mcp } = await setup();
   const original = mcp.request.bind(mcp);
   mcp.request = async (method, params) => method === 'tools/list'
-    ? { tools: [{ name: 'gigi_records_get', description: 'Read', inputSchema: { type: 'object' } }, { name: 'gigi_gigs_summary', description: 'Summary', inputSchema: { type: 'object' } }] }
+    ? { tools: toolCatalog() }
     : original(method, params);
   await adapter.start({ workspaceId: 'w', message: 'Read gig' });
   const profile = server.calls.find(x => x.method === 'thread/start')!.params;
@@ -733,4 +737,39 @@ test('a previously loaded thread rechecks the catalog before another send', asyn
   mcp.request = async (method, params) => method === 'tools/list' ? { tools: [] } : original(method, params);
   await assert.rejects(adapter.send({ workspaceId: 'w', sessionId, message: 'not sent' }), /gigi_tools_unavailable/);
   assert.equal(server.calls.filter(x => x.method === 'turn/start').length, 1);
+});
+
+for (const missing of requiredTools) test(`missing required ${missing} prevents readiness and provider submission`, async () => {
+  const { adapter, server, mcp } = await setup();
+  const { sessionId } = await adapter.start({ workspaceId: 'w' });
+  const original = mcp.request.bind(mcp);
+  const localCalls: string[] = [];
+  mcp.request = async (method, params) => { localCalls.push(method); return method === 'tools/list' ? { tools: toolCatalog().filter(tool => tool.name !== missing) } : original(method, params); };
+  assert.equal((await adapter.status()).reason, 'gigi_tools_unavailable');
+  await assert.rejects(adapter.start({ workspaceId: 'w', message: 'not sent' }), /gigi_tools_unavailable/);
+  await assert.rejects(adapter.send({ workspaceId: 'w', sessionId, message: 'not sent' }), /gigi_tools_unavailable/);
+  assert.equal(server.calls.some(call => call.method === 'thread/start' || call.method === 'turn/start'), false);
+  assert.equal(localCalls.includes('tools/call'), false, 'catalog is checked before workspace or record lookup');
+  mcp.request = original;
+  assert.equal((await adapter.status()).available, true);
+  await adapter.send({ workspaceId: 'w', sessionId, message: 'explicit retry' });
+  assert.equal(server.calls.filter(call => call.method === 'turn/start').length, 1);
+});
+
+test('a malformed mandatory schema cannot be replaced by optional context search', async () => {
+  const { adapter, server, mcp } = await setup();
+  const original = mcp.request.bind(mcp);
+  mcp.request = async (method, params) => method === 'tools/list' ? { tools: [...toolCatalog().map(tool => tool.name === 'gigi_records_save' ? { ...tool, inputSchema: { type: 'string' } } : tool), { name: 'gigi_context_search', inputSchema: { type: 'object' } }] } : original(method, params);
+  assert.equal((await adapter.status()).available, false);
+  await assert.rejects(adapter.start({ workspaceId: 'w', message: 'not sent' }), /gigi_tools_unavailable/);
+  assert.equal(server.calls.some(call => call.method === 'thread/start'), false);
+});
+
+test('complete mandatory catalog works without optional context search', async () => {
+  const { adapter, server } = await setup();
+  assert.equal((await adapter.status()).available, true);
+  await adapter.start({ workspaceId: 'w', message: 'hello' });
+  const tools = server.calls.find(call => call.method === 'thread/start')!.params.dynamicTools[0].tools;
+  assert.deepEqual(tools.map((tool: any) => tool.name), requiredTools);
+  assert.equal(server.calls.filter(call => call.method === 'turn/start').length, 1);
 });

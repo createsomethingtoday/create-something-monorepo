@@ -32,6 +32,7 @@ function savedEditMatches(actual: Json, intended: Json): boolean {
 
 const READ_TOOLS = new Set(['gigi_workspace_get', 'gigi_schema_describe', 'gigi_records_list', 'gigi_records_get', 'gigi_gigs_summary', 'gigi_history_list', 'gigi_context_search']);
 const WRITE_TOOLS = new Set(['gigi_records_save']);
+const REQUIRED_TOOLS = [...READ_TOOLS].filter(name => name !== 'gigi_context_search').concat([...WRITE_TOOLS]);
 const MAX_SESSIONS = 100;
 const MAX_TEXT = 16_384;
 
@@ -108,7 +109,8 @@ export function createCodexAdapter(options: CodexOptions) {
     if (!options.mcp) throw new Error('gigi_tools_unavailable');
     const result = await options.mcp.request('tools/list', {});
     const tools = (Array.isArray(result?.tools) ? result.tools : []).filter((x: Json) => x && typeof x === 'object' && !Array.isArray(x) && (READ_TOOLS.has(x.name) || WRITE_TOOLS.has(x.name)) && x.inputSchema && typeof x.inputSchema === 'object' && !Array.isArray(x.inputSchema) && x.inputSchema.type === 'object');
-    if (!tools.length) throw new Error('gigi_tools_unavailable');
+    const available = new Set(tools.map((tool: Json) => tool.name));
+    if (REQUIRED_TOOLS.some(name => !available.has(name))) throw new Error('gigi_tools_unavailable');
     return [{ type: 'namespace', name: 'gigi', description: 'GiGi private workspace tools', tools: tools.filter((x: Json) => READ_TOOLS.has(x.name) || WRITE_TOOLS.has(x.name)).map((x: Json) => ({ type: 'function', name: x.name, description: x.name === 'gigi_records_save' ? `${x.description} In GiGi chat, calling this tool prepares a held edit proposal for user approval. It does not execute the write until the user approves in the app. Call it to request approval instead of asking in prose.` : x.name === 'gigi_records_get' ? `${x.description} For gigs, raw fields.Fee and Amount are integer minor-currency-unit values, not display amounts. MUST use gigi_gigs_summary feeCents and its currency for gig fee reporting. For standalone finance amounts, use the record's currency and schema; never infer currency.` : x.name === 'gigi_gigs_summary' ? `${x.description} feeCents and other *Cents amounts are integer minor units. Use the returned currency; for USD, divide by 100 to report dollars. Do not infer currency.` : x.description, inputSchema: x.inputSchema })) }];
   }
   function profile(tools: unknown, session?: Pick<Session, 'workspaceId' | 'record'>) {
@@ -140,6 +142,7 @@ export function createCodexAdapter(options: CodexOptions) {
     if (sessions.size >= MAX_SESSIONS && !retiring) throw new Error('session_limit');
     const workspaceId = required(input.workspaceId); const message = input.message === undefined ? undefined : required(input.message, MAX_TEXT); const record = validRecord(input.record);
     if (!options.mcp) throw new Error('gigi_tools_unavailable');
+    const tools = await dynamicTools();
     const workspace = await options.mcp.request('tools/call', { name: 'gigi_workspace_get', arguments: { workspaceId } });
     if (workspace?.isError || !Array.isArray(workspace?.content) || !workspace.content.some((x: Json) => x.type === 'text' && (() => { try { return JSON.parse(x.text)?.id === workspaceId; } catch { return false; } })())) throw new Error('workspace_not_found');
     if (record) {
@@ -149,8 +152,6 @@ export function createCodexAdapter(options: CodexOptions) {
       if (value?.id !== record.id || typeof value?.title !== 'string') throw new Error('record_not_found');
       record.title = value.title.slice(0, 512);
     }
-    const tools = await dynamicTools();
-    if (tools.length === 0) throw new Error('gigi_tools_unavailable');
     const threadId = message ? required((await options.server.request('thread/start', profile(tools, { workspaceId, record })))?.thread?.id) : '';
     if (threadId) loadedThreads.add(threadId);
     const session: Session = { sessionId: randomUUID(), threadId, workspaceId, title: record?.title ?? (message?.slice(0, 80) || 'New conversation'), record, state: 'idle', createdAt: Date.now() };
