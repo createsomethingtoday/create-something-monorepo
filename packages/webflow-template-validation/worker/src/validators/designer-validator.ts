@@ -806,7 +806,7 @@ function validatePageSEO(pages: DesignerData['pages']): CategoryResult {
       severity: 'error',
       message: `${missingDescription.length} page(s) are missing a meta description.`,
       details: { pages: missingDescription.map(label).slice(0, 10) },
-      howToFix: 'Set a unique meta description (120-160 characters) in each page\'s settings. CMS template pages should bind the description to a collection field.'
+      howToFix: 'Set a unique meta description (150-160 characters) in each page\'s settings. CMS template pages should bind the description to a collection field.'
     });
   }
 
@@ -868,7 +868,7 @@ function validatePageSEO(pages: DesignerData['pages']): CategoryResult {
       severity: 'warning',
       message: `${longDescriptions.length} meta description(s) exceed 160 characters and may be truncated in search results.`,
       details: { pages: longDescriptions.map(label).slice(0, 10) },
-      howToFix: 'Shorten meta descriptions to 120-160 characters.'
+      howToFix: 'Shorten meta descriptions to 150-160 characters.'
     });
   }
 
