@@ -12,7 +12,8 @@ changes, render evidence, accepted business receipts and Canon constraints.
 ## Public interface
 
 - `validateExperiment(spec, adapter)` checks site scope, two coherent recipes,
-  allowed fields/routes, rollout/time bounds and the evaluation plan.
+  allowed fields, exactly one permitted route per allocation, rollout/time
+  bounds and the evaluation plan. Multi-route continuity is deferred.
 - `resolveAssignment(spec, adapter, context)` returns an assigned fixture
   receipt or an **unassigned** control fallback with a reason. Scope,
   consent/persistence, DNT/opt-out, kill switch, dates and rollout gates take
@@ -20,7 +21,9 @@ changes, render evidence, accepted business receipts and Canon constraints.
 - `evaluateExperiment(spec, adapter, records, now)` joins and deduplicates
   assignment/render/outcome records, reports quality and guardrail failures,
   and returns `blocked`, `inconclusive`, or `ready_for_human_review`. It never
-  returns a winner, uplift, significance or a promotion instruction.
+  returns a winner, uplift, significance or a promotion instruction. Terminal
+  readiness requires the stop time, minimum evidence and all eligible exposure
+  attribution windows to have closed; pending windows remain visible.
 - `appendDecision(scope, history, decision)` appends an owner/evidence-bearing
   decision without mutating its input. Replays are idempotent; conflicting
   IDs, foreign scope and stale history are rejected. Decisions have no actuator.
@@ -37,7 +40,9 @@ Assignment is not exposure. Only an explicit render acknowledgement can
 establish exposure. Reattaches deduplicate per assigned subject and surface;
 the earliest acknowledged exposure anchors attribution. Primary outcomes
 count assigned subjects, not repeated submissions. A receipt claimed by two
-assignments blocks evaluation. A server receipt and a client success
+assignments blocks evaluation across accepted/qualified stages; distinct stages
+on the same assignment remain separate. Excluded traffic still undergoes
+timestamp, receipt-conflict and exposure-window checks. A server receipt and a client success
 notification have different authority, even when both occur on a server-rendered
 page. External/default traffic remains unverified, and non-external classes
 are excluded from the commercial channel. Synthetic task evaluations have a
@@ -65,7 +70,7 @@ All test clocks, references, receipts and thresholds are explicitly synthetic.
 
 ## Lightweight validation
 
-Node 22.21.1 can run the TypeScript fixtures without an install, build,
+The validation used Node 22.23.1 to run TypeScript fixtures without an install, build,
 transpilation cache or browser. From the monorepo root:
 
 ```sh

@@ -36,6 +36,7 @@ test('Agency defaults cannot assign, emit exposure, or enable live mode', () => 
   assert.deepEqual(validateExperiment(agencyExperimentFixture, agencySiteAdapter), []);
   assert.deepEqual(resolveAssignment(agencyExperimentFixture, agencySiteAdapter, context(agencyExperimentFixture)), { state: 'control', reason: 'disabled' });
   assert.deepEqual(resolveAssignment(running(), agencySiteAdapter, context(running(), { mode: 'live' })), { state: 'control', reason: 'live_not_supported' });
+  assert.deepEqual(resolveAssignment(running(), agencySiteAdapter, null as unknown as AssignmentContext), { state: 'control', reason: 'invalid_context' });
   assert.equal(agencyExperimentFixture.plan.baselineRef, null);
   assert.equal(agencyExperimentFixture.plan.outcomeDefinitionRef, null);
 });
@@ -101,6 +102,16 @@ test('invalid rollout, incoherent recipes, unresolved plan and foreign goals are
   assert.equal(evaluateExperiment({ ...spec, recipes: {} } as unknown as ExperimentSpec, agencySiteAdapter, {} as Records, 11000).status, 'blocked');
 });
 
+test('one route per allocation fails closed for multi-route navigation rather than issuing colliding receipts', () => {
+  const spec = running(); const previous = assigned(spec);
+  const adapter = { ...agencySiteAdapter, paths: ['/', '/contact'] };
+  const multiRoute = { ...spec, paths: adapter.paths };
+  assert.ok(validateExperiment(multiRoute, adapter).includes('single_path_required'));
+  for (const prior of [undefined, previous]) assert.deepEqual(resolveAssignment(multiRoute, adapter, context(multiRoute, { path: '/contact', previous: prior })), { state: 'control', reason: 'invalid_specification' });
+  assert.equal(evaluateExperiment(multiRoute, adapter, ledger(spec, [previous]), 11000).status, 'blocked');
+  assert.equal(resolveAssignment({ ...spec, paths: ['/contact'] }, adapter, context(spec, { path: '/contact' })).state, 'assigned');
+});
+
 test('assignment is not exposure; missing render acknowledgement blocks quality without changing denominator', () => {
   const spec = running(); const a = assigned(spec); const records = ledger(spec, [a]);
   const report = evaluateExperiment(spec, agencySiteAdapter, { ...records, exposures: [], outcomes: [] }, 11000);
@@ -125,6 +136,19 @@ test('same accepted receipt with another assignment is blocked even when the sec
   const records = ledger(spec, [assigned(spec), assigned(spec, { subjectToken: 'visitor_0002' })]);
   const report = evaluateExperiment(spec, agencySiteAdapter, { ...records, exposures: [records.exposures[0]], outcomes: [records.outcomes[0], { ...records.outcomes[1], receiptKey: records.outcomes[0].receiptKey }] }, 11000);
   assert.equal(report.status, 'blocked'); assert.ok(report.issues.includes('conflicting_outcome_assignment')); assert.equal(total(report, 'primarySubjects'), 1);
+});
+
+test('receipt ownership spans accepted and qualified stages, while same-assignment stages remain distinct', () => {
+  const spec = running(); const records = ledger(spec, [assigned(spec), assigned(spec, { subjectToken: 'visitor_0002' })]);
+  const accepted = { ...records.outcomes[0], kind: 'accepted_contact_receipt' };
+  const qualified = { ...records.outcomes[1], receiptKey: accepted.receiptKey };
+  for (const outcomes of [[accepted, qualified], [qualified, accepted]]) {
+    const report = evaluateExperiment(spec, agencySiteAdapter, { ...records, outcomes }, 11000);
+    assert.equal(report.status, 'blocked'); assert.ok(report.issues.includes('conflicting_outcome_assignment'));
+  }
+  const report = evaluateExperiment(spec, agencySiteAdapter, { ...records, outcomes: [accepted, { ...records.outcomes[0], id: 'qualified_stage', observedAt: 130 }] }, 11000);
+  assert.deepEqual(report.issues, []); assert.equal(report.status, 'ready_for_human_review');
+  assert.equal(total(report, 'diagnosticReceipts'), 1); assert.equal(total(report, 'primarySubjects'), 1);
 });
 
 test('client conversion, synthetic intent, unacknowledged receipt and raw contact metadata cannot become primary', () => {
@@ -163,6 +187,17 @@ test('traffic classes and provenance remain uncertain and excluded classes do no
   assert.equal(assignments[0].traffic.source, 'default');
 });
 
+test('excluded traffic still validates outcome timestamps and exposure attribution relationships', () => {
+  const spec = running(); const assignments = [assigned(spec), assigned(spec, { subjectToken: 'visitor_0002' }), assigned(spec, { subjectToken: 'internal_0001', traffic: { class: 'internal', source: 'declared' } })];
+  const records = ledger(spec, assignments);
+  for (const observedAt of [NaN, 99, 12000, 105, 1000]) {
+    const report = evaluateExperiment(spec, agencySiteAdapter, { ...records, outcomes: records.outcomes.map((o, i) => i === 2 ? { ...o, observedAt } : o) }, 11000);
+    assert.equal(report.status, 'blocked'); assert.equal(total(report, 'primarySubjects'), 2);
+    assert.ok(report.issues.some(issue => issue === 'invalid_outcome_time' || issue === 'outcome_without_valid_exposure_window'));
+  }
+  assert.equal(evaluateExperiment(spec, agencySiteAdapter, records, 11000).status, 'ready_for_human_review');
+});
+
 test('stop rule prevents early review, tiny cohorts stay inconclusive and guardrail failures block', () => {
   const spec = running(); const records = ledger(spec, [assigned(spec), assigned(spec, { subjectToken: 'visitor_0002' })]);
   assert.equal(evaluateExperiment(spec, agencySiteAdapter, records, 200).status, 'inconclusive');
@@ -173,12 +208,26 @@ test('stop rule prevents early review, tiny cohorts stay inconclusive and guardr
   assert.ok(evaluateExperiment(spec, agencySiteAdapter, { ...records, guardrails: [{ ...records.guardrails[0], passed: false }, ...records.guardrails.slice(1)] }, 11000).issues.includes('guardrail_failed:consent'));
 });
 
+test('terminal review waits for eligible attribution windows, including subjects with zero outcomes', () => {
+  const spec = running(); const records = ledger(spec, [assigned(spec, { now: 9990 }), assigned(spec, { now: 9990, subjectToken: 'visitor_0002' })]);
+  const late = { ...records, exposures: records.exposures.map(e => ({ ...e, observedAt: 9999 })), outcomes: [] };
+  for (const now of [10000, 10498]) {
+    const report = evaluateExperiment(spec, agencySiteAdapter, late, now);
+    assert.deepEqual(report.issues, []); assert.equal(report.status, 'inconclusive'); assert.equal(report.pendingAttributionWindows, 2);
+  }
+  const closed = evaluateExperiment(spec, agencySiteAdapter, late, 10499);
+  assert.equal(closed.status, 'ready_for_human_review'); assert.equal(closed.pendingAttributionWindows, 0); assert.equal(total(closed, 'primarySubjects'), 0);
+});
+
 test('rollback stops rendering while historical exposure can receive a valid delayed outcome', () => {
   const spec = running({ plan: { ...running().plan, attributionWindowMs: 20000 } });
   const records = ledger(spec, [assigned(spec), assigned(spec, { subjectToken: 'visitor_0002' })]);
   const paused = { ...spec, enabled: false, killSwitch: true, rolloutBps: 0 };
   assert.equal(resolveAssignment(paused, agencySiteAdapter, context(paused, { previous: records.assignments[0] })).state, 'control');
-  assert.equal(evaluateExperiment(paused, agencySiteAdapter, { ...records, outcomes: records.outcomes.map(o => ({ ...o, observedAt: 10500 })) }, 11000).status, 'ready_for_human_review');
+  const delayed = { ...records, outcomes: records.outcomes.map(o => ({ ...o, observedAt: 10500 })) };
+  const pending = evaluateExperiment(paused, agencySiteAdapter, delayed, 11000);
+  assert.equal(pending.status, 'inconclusive'); assert.equal(pending.pendingAttributionWindows, 2); assert.equal(total(pending, 'primarySubjects'), 2);
+  assert.equal(evaluateExperiment(paused, agencySiteAdapter, delayed, 20110).status, 'ready_for_human_review');
 });
 
 test('IO and LTD use different outcome contracts through the same core; comprehension is not a click', () => {

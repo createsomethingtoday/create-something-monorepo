@@ -20,6 +20,8 @@ framework/global-browser imports. The Agency adapter is an unused fixture with
 all activation gates off. Its two copy variants share the same destination,
 heading, layout, offer facts and terms. IO/LTD test adapters prove different
 outcome contracts; LTD comprehension cannot be inferred from a click.
+Each allocation accepts exactly one route. Multi-route assignment continuity
+is deferred explicitly, rather than accepting conflicting enrollment receipts.
 
 The earlier task-directory architecture packet was inspected at a different
 source SHA. Current origin/main has a newer Agency hero (`Keep your tools
@@ -35,16 +37,22 @@ Cleanup was authorized and performed by another task. This task rechecked
 installs, heavy builds, cleanup, service provisioning, public experiment,
 production tracking, push or merge were performed.
 
-An initial version of the core and disabled Agency fixture passed a focused
-source-only TypeScript check with the existing repository compiler. Following
-small refinements and adding the regression source, final type validation and
-runtime tests require their own recorded result; the earlier compiler result
-must not be presented as validation of subsequent edits.
+Storage subsequently fell close to the reserve, so commit `1753707` preserved
+an unvalidated WIP. After the approved resumption and a fresh capacity check,
+that snapshot passed 16 regressions, the source-only TypeScript check, and six
+existing Agency public-HTML-cache tests. A fresh independent review then found
+four contract gaps. They were corrected locally and four regressions were added.
 
-Free storage subsequently fell to about 5.06 GiB, leaving about 64 MiB above
-the required reserve. Additional Node validation processes were paused while
-the reserve was that close. The evidence file records the final commands,
-results and worktree disposition. A test source file is not a passing test run.
+The resulting core passed all 20 native Node regressions and the final focused
+TypeScript 5.9.3 check under Node 22.23.1. No cache implementation changed, so
+the earlier six passing cache regressions remain the applicable result. See
+`docs/evidence/site-improvement-first-slice/validation.json` for actual commands,
+source hashes, capacity observations, independent review and validation limits.
+
+Receipt ownership now spans accepted/qualified stages; excluded traffic still
+validates timestamps and exposure windows. Pending eligible attribution windows
+are reported and keep terminal evaluation inconclusive. Stop time and minimum
+assignment thresholds never establish a winner or sufficient statistical power.
 
 ## Review limits and remaining gates
 

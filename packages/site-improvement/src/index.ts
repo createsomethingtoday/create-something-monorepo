@@ -126,7 +126,8 @@ export function validateExperiment(spec: ExperimentSpec, adapter: SiteAdapter): 
   if (!time(spec.startAt) || !time(spec.endAt) || spec.endAt <= spec.startAt) issues.push('invalid_window');
   if (!token(spec.seed) || !token(spec.surface) || spec.surface !== adapter.surface) issues.push('invalid_surface_or_seed');
   if (!Array.isArray(adapter.paths) || !Array.isArray(adapter.recipeFields) || !object(adapter.outcomes)) return [...issues, 'invalid_adapter'];
-  if (!Array.isArray(spec.paths) || !spec.paths.length || !unique(spec.paths) || spec.paths.some(p => !validPath(p) || !adapter.paths.includes(p))) issues.push('invalid_paths');
+  // One route per allocation until navigation/enrollment continuity has its own contract.
+  if (!Array.isArray(spec.paths) || spec.paths.length !== 1 || spec.paths.some(p => !validPath(p) || !adapter.paths.includes(p))) issues.push('single_path_required');
   if (!Array.isArray(spec.recipes) || spec.recipes.length !== 2) issues.push('exactly_two_recipes_required');
   else {
     if (!unique(spec.recipes.map(r => r?.id)) || !spec.recipes.some(r => r?.id === spec.controlId)) issues.push('invalid_recipe_ids');
@@ -155,6 +156,7 @@ function validAssignment(a: Assignment, spec: ExperimentSpec): boolean {
 export function resolveAssignment(spec: ExperimentSpec, adapter: SiteAdapter, ctx: AssignmentContext): AssignmentResult {
   const control = (reason: string): AssignmentResult => ({ state: 'control', reason });
   if (validateExperiment(spec, adapter).length) return control('invalid_specification');
+  if (!object(ctx)) return control('invalid_context');
   if (ctx.mode !== 'fixture') return control('live_not_supported');
   if (!sameScope(ctx.scope, spec.scope)) return control('scope_mismatch');
   if (!time(ctx.now) || !validTraffic(ctx.traffic) || !CHANNELS.includes(ctx.channel)) return control('invalid_context');
@@ -188,6 +190,7 @@ export function evaluateExperiment(spec: ExperimentSpec, adapter: SiteAdapter, r
   const eligible = new Map<string, Assignment>();
   const exposed = new Map<string, Exposure>();
   const outcomeKeys = new Map<string, Outcome>();
+  const receiptOwners = new Map<string, string>();
   const eventIds = new Map<string, string>();
   const primarySubjects = new Set<string>();
   const excluded: Record<string, number> = Object.create(null);
@@ -195,7 +198,7 @@ export function evaluateExperiment(spec: ExperimentSpec, adapter: SiteAdapter, r
   // Never traverse malformed records/spec after validation fails.
   const validRecords = object(records) && [records.assignments, records.exposures, records.outcomes, records.guardrails].every(Array.isArray);
   if (issues.length || !validRecords) {
-    return { status: 'blocked' as const, issues: [...new Set([...issues, ...(!validRecords ? ['invalid_records'] : [])])], counts, excluded, duplicates, missingExposures: 0, trafficCaveat: 'external is unverified; fixture counts are not human conversion evidence' };
+    return { status: 'blocked' as const, issues: [...new Set([...issues, ...(!validRecords ? ['invalid_records'] : [])])], counts, excluded, duplicates, missingExposures: 0, pendingAttributionWindows: 0, trafficCaveat: 'external is unverified; fixture counts are not human conversion evidence' };
   }
   const checkId = (id: unknown, record: unknown): boolean => {
     if (!text(id)) { issues.push('invalid_record_id'); return false; }
@@ -218,23 +221,30 @@ export function evaluateExperiment(spec: ExperimentSpec, adapter: SiteAdapter, r
   for (const e of records.exposures) {
     if (!keys(e, EXPOSURE_KEYS) || !sameScope(e.scope, spec.scope)) { issues.push('invalid_exposure_scope_or_fields'); continue; }
     const a = assignments.get(e.assignmentId);
-    if (!a || e.variantId !== a.variantId || e.recipeVersion !== a.recipeVersion || e.surface !== a.surface || e.path !== a.path || e.evidence !== 'render_acknowledged' || !time(e.observedAt) || e.observedAt < a.assignedAt || e.observedAt >= a.expiresAt || e.observedAt > now) { issues.push('invalid_exposure_join'); continue; }
-    if (!checkId(e.id, e) || !eligible.has(a.id)) continue;
+    if (!a || e.variantId !== a.variantId || e.recipeVersion !== a.recipeVersion || e.surface !== a.surface || e.path !== a.path || e.evidence !== 'render_acknowledged' || !time(e.observedAt) || e.observedAt < a.assignedAt || e.observedAt >= a.expiresAt || e.observedAt > now || !time(e.observedAt + spec.plan.attributionWindowMs!)) { issues.push('invalid_exposure_join'); continue; }
+    if (!checkId(e.id, e)) continue;
     if (exposed.has(a.id)) {
       duplicates++;
       // Earliest valid exposure anchors the predeclared attribution window, independent of record order.
       if (e.observedAt < exposed.get(a.id)!.observedAt) exposed.set(a.id, e);
       continue;
     }
-    exposed.set(a.id, e); counts[a.variantId].exposed++;
+    exposed.set(a.id, e);
+    if (eligible.has(a.id)) counts[a.variantId].exposed++;
   }
   for (const o of records.outcomes) {
     if (!keys(o, OUTCOME_KEYS) || !sameScope(o.scope, spec.scope) || !text(o.receiptKey)) { issues.push('invalid_outcome_scope_or_fields'); continue; }
     const a = assignments.get(o.assignmentId);
     const contract = adapter.outcomes[o.kind];
     if (!a || !contract || contract.authority !== o.authority || contract.channel !== o.channel || o.channel !== a.channel || o.acknowledged !== true) { issues.push('outcome_authority_or_channel_mismatch'); continue; }
+    if (!time(o.observedAt) || o.observedAt < a.assignedAt || o.observedAt > now) { issues.push('invalid_outcome_time'); continue; }
     if (!checkId(o.id, o)) continue;
-    // Dedup receipt authority before exposure filtering, so an unexposed conflicting claim cannot disappear.
+    // Ownership spans stages: accepted and qualified cannot reattribute one business receipt.
+    // Check before exposure/eligibility filtering so excluded or unexposed claims remain visible.
+    const receipt = canonical([scopeTuple(o.scope), o.receiptKey]);
+    const owner = receiptOwners.get(receipt);
+    if (owner && owner !== o.assignmentId) { issues.push('conflicting_outcome_assignment'); continue; }
+    receiptOwners.set(receipt, o.assignmentId);
     const key = canonical([scopeTuple(o.scope), o.kind, o.receiptKey]);
     const existing = outcomeKeys.get(key);
     if (existing) {
@@ -244,9 +254,9 @@ export function evaluateExperiment(spec: ExperimentSpec, adapter: SiteAdapter, r
       continue;
     }
     outcomeKeys.set(key, o);
-    if (!eligible.has(a.id)) continue;
     const e = exposed.get(a.id);
-    if (!e || !time(o.observedAt) || o.observedAt < e.observedAt || o.observedAt > e.observedAt + spec.plan.attributionWindowMs! || o.observedAt > now) { issues.push('outcome_without_valid_exposure_window'); continue; }
+    if (!e || o.observedAt < e.observedAt || o.observedAt > e.observedAt + spec.plan.attributionWindowMs!) { issues.push('outcome_without_valid_exposure_window'); continue; }
+    if (!eligible.has(a.id)) continue;
     if (o.kind === spec.plan.primaryOutcome) {
       if (!primarySubjects.has(a.id)) { primarySubjects.add(a.id); counts[a.variantId].primarySubjects++; }
     } else counts[a.variantId].diagnosticReceipts++;
@@ -256,10 +266,14 @@ export function evaluateExperiment(spec: ExperimentSpec, adapter: SiteAdapter, r
     else if (!g.passed) issues.push(`guardrail_failed:${g.kind}`);
   }
   for (const kind of spec.plan.guardrails) if (!records.guardrails.some(g => sameScope(g?.scope, spec.scope) && g.kind === kind && g.passed === true && text(g.evidenceRef))) issues.push(`guardrail_missing:${kind}`);
-  const missingExposures = eligible.size - exposed.size;
+  const missingExposures = [...eligible.keys()].filter(id => !exposed.has(id)).length;
+  const pendingAttributionWindows = [...eligible.keys()].filter(id => {
+    const exposure = exposed.get(id);
+    return exposure && now < exposure.observedAt + spec.plan.attributionWindowMs!;
+  }).length;
   if (eligible.size && missingExposures / eligible.size > spec.plan.maxMissingExposureFraction!) issues.push('missing_exposure_guardrail');
-  const status = issues.length ? 'blocked' as const : now < spec.endAt || eligible.size < spec.plan.minAssignments! ? 'inconclusive' as const : 'ready_for_human_review' as const;
-  return { status, issues: [...new Set(issues)], counts, excluded, duplicates, missingExposures, trafficCaveat: 'external is unverified; fixture counts are not human conversion evidence' };
+  const status = issues.length ? 'blocked' as const : now < spec.endAt || pendingAttributionWindows > 0 || eligible.size < spec.plan.minAssignments! ? 'inconclusive' as const : 'ready_for_human_review' as const;
+  return { status, issues: [...new Set(issues)], counts, excluded, duplicates, missingExposures, pendingAttributionWindows, trafficCaveat: 'external is unverified; fixture counts are not human conversion evidence' };
 }
 
 export function appendDecision(scope: Scope, history: readonly Decision[], decision: Decision):
