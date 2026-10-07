@@ -18,31 +18,62 @@ const AIRTABLE_API_BASE = 'https://api.airtable.com/v0';
 const KNOCK_API_BASE = 'https://api.knock.app/v1';
 const WORKFLOW_KEY = 'marketplace-template-featured';
 
-const DEFAULT_BASE_ID = 'appMoIgXMTTTNIc3p';
-const DEFAULT_ASSETS_TABLE_ID = 'tblRwzpWoLgE9MrUm';
+/** 👛Assets fields the notifier reads and writes. Field IDs, not names: the
+ *  Airtable token has no `schema.bases:read` scope, so names cannot be resolved
+ *  at runtime. The IDs themselves live in the AIRTABLE_SCHEMA secret because
+ *  this repo is public. */
+const FIELD_KEYS = [
+  'name', // Name
+  'listingUrlUtm', // 🔗Listing URL + UTM (populated; the raw 🔗Listing URL is empty on 11k+ assets)
+  'reviewerPick', // ⭐Reviewer pick (featured templates)
+  'pickReason', // ⭐Reviewer Pick Reason — creator-safe curatorial "why"
+  'isFeatured', // ℹ️Is Featured?
+  'featuredPeriod', // 📅Is Featured Period (formula, 1st of month)
+  'notifiedForPeriod', // 🔔Featured Notified For Period (our stamp)
+  'timesFeatured', // How many times the creator has been featured
+  'creatorEmail', // 🎨📧 Creator Email (rollup)
+  'creatorEmailOverride', // 👀🎨📧 Creator Email (Override)
+  'wfUserId', // 🎨🔑Creator WF User ID (lookup) — Knock recipient id
+  'assetType', // ⚙️🆎Asset Type Record ID (rollup)
+  'suppress', // 👀🔔Suppress Notifications? (Override)
+  'suppressViaVersion', // ⚙️Suppress Notifications via Version?
+] as const;
 
-/** 👛Assets field IDs. Hardcoded on purpose: the Airtable token has no
- *  `schema.bases:read` scope, so field names cannot be resolved at runtime. */
-const F = {
-  name: 'fldUzJBor3Gnkykjc', // Name
-  listingUrlUtm: 'fldfodjuCUF7xlfke', // 🔗Listing URL + UTM (populated; the raw 🔗Listing URL is empty on 11k+ assets)
-  reviewerPick: 'fldTgII7p9ZSSK5uW', // ⭐Reviewer pick (featured templates)
-  pickReason: 'fld3w4yqQPzqah0LE', // ⭐Reviewer Pick Reason — creator-safe curatorial "why"
-  isFeatured: 'fldtkCY5ZQxiEzJcv', // ℹ️Is Featured?
-  featuredPeriod: 'fldeDgWr09HIqDFcX', // 📅Is Featured Period (formula, 1st of month)
-  notifiedForPeriod: 'fld9qASBS2pcnXadA', // 🔔Featured Notified For Period (our stamp)
-  timesFeatured: 'fld2XFywmXYpSY1Le', // How many times the creator has been featured
-  creatorEmail: 'fldHhxmfSNMp117SP', // 🎨📧 Creator Email (rollup)
-  creatorEmailOverride: 'fldjCdCvHOy7dVwss', // 👀🎨📧 Creator Email (Override)
-  wfUserId: 'fld2jvWS6WF5rvVXr', // 🎨🔑Creator WF User ID (lookup) — Knock recipient id
-  assetType: 'fldEZRiUdsa0ALH8L', // ⚙️🆎Asset Type Record ID (rollup)
-  suppress: 'fld4SzMQuL9nHWo4R', // 👀🔔Suppress Notifications? (Override)
-  suppressViaVersion: 'fldURhvIilBGrTwZX', // ⚙️Suppress Notifications via Version?
-} as const;
+type FieldKey = (typeof FIELD_KEYS)[number];
 
-/** 🆎Asset Types record id for Template. Without this filter the "featured
+/** Parsed from the AIRTABLE_SCHEMA secret (JSON). `templateAssetTypeId` is the
+ *  🆎Asset Types record for Template: without that filter the "featured
  *  template" copy would reach App developers. */
-const TEMPLATE_ASSET_TYPE_ID = 'recA2YsPEHSuAHOLD';
+interface Schema {
+  baseId: string;
+  assetsTableId: string;
+  templateAssetTypeId: string;
+  fields: Record<FieldKey, string>;
+}
+
+/** Fail closed: a missing or partial schema throws before any Airtable read,
+ *  so a deploy without the secret can never notify anyone. */
+function loadSchema(env: Env): Schema {
+  if (!env.AIRTABLE_SCHEMA) throw new Error('AIRTABLE_SCHEMA is not configured');
+  let raw: Partial<Schema>;
+  try {
+    raw = JSON.parse(env.AIRTABLE_SCHEMA) as Partial<Schema>;
+  } catch {
+    throw new Error('AIRTABLE_SCHEMA is not valid JSON');
+  }
+  const problems: string[] = [];
+  const check = (label: string, value: unknown, prefix: string) => {
+    if (typeof value !== 'string' || !new RegExp(`^${prefix}[A-Za-z0-9]{14}$`).test(value)) {
+      problems.push(label);
+    }
+  };
+  check('baseId', raw.baseId, 'app');
+  check('assetsTableId', raw.assetsTableId, 'tbl');
+  check('templateAssetTypeId', raw.templateAssetTypeId, 'rec');
+  for (const key of FIELD_KEYS) check(`fields.${key}`, raw.fields?.[key], 'fld');
+  if (problems.length) throw new Error(`AIRTABLE_SCHEMA is missing or invalid: ${problems.join(', ')}`);
+  return raw as Schema;
+}
 
 /** Suppression choice that opts a creator out of this notification. The choice
  *  may not exist yet (the multi-selects only offer slack/zendesk), in which case
@@ -53,8 +84,7 @@ interface Env {
   AIRTABLE_API_KEY?: string;
   KNOCK_API_KEY?: string;
   ADMIN_TOKEN?: string;
-  AIRTABLE_BASE_ID?: string;
-  AIRTABLE_ASSETS_TABLE_ID?: string;
+  AIRTABLE_SCHEMA?: string;
   AIRTABLE_REQUEST_DELAY_MS?: string;
   DRY_RUN?: string;
 }
@@ -124,7 +154,8 @@ function formatMonth(period: string): string {
  * excludes the current month's picks and every historical feature. Without that
  * gate this would notify ~620 creators about features going back to 2025.
  */
-function buildFormula(currentPeriod?: string): string {
+function buildFormula(s: Schema, currentPeriod?: string): string {
+  const F = s.fields;
   // Deliberately NOT gated on ⭐Reviewer pick: measured 2026-07-31, that checkbox
   // is unset on 13 of the 25 currently-featured templates even though all 25 have
   // a Pick Reason. Requiring it would silently skip ~half of every batch.
@@ -132,7 +163,7 @@ function buildFormula(currentPeriod?: string): string {
   return [
     'AND(',
     `{${F.isFeatured}},`,
-    `{${F.assetType}}="${TEMPLATE_ASSET_TYPE_ID}",`,
+    `{${F.assetType}}="${s.templateAssetTypeId}",`,
     `NOT({${F.pickReason}}=BLANK()),`,
     currentPeriod
       ? `IS_SAME({${F.featuredPeriod}},'${currentPeriod}','month'),`
@@ -147,11 +178,10 @@ function buildFormula(currentPeriod?: string): string {
 
 async function fetchCandidateRecords(
   env: Env,
+  s: Schema,
   apiKey: string,
   currentPeriod?: string
 ): Promise<AirtableRecord[]> {
-  const baseId = env.AIRTABLE_BASE_ID || DEFAULT_BASE_ID;
-  const tableId = env.AIRTABLE_ASSETS_TABLE_ID || DEFAULT_ASSETS_TABLE_ID;
   const delay = Number(env.AIRTABLE_REQUEST_DELAY_MS || '250');
 
   const out: AirtableRecord[] = [];
@@ -159,15 +189,15 @@ async function fetchCandidateRecords(
 
   for (let page = 0; page < 50; page += 1) {
     const params = new URLSearchParams();
-    params.set('filterByFormula', buildFormula(currentPeriod));
+    params.set('filterByFormula', buildFormula(s, currentPeriod));
     params.set('pageSize', '100');
     // Without this, Airtable keys the response by field NAME and every field-ID
     // lookup silently returns undefined — producing blank notifications.
     params.set('returnFieldsByFieldId', 'true');
-    for (const id of Object.values(F)) params.append('fields[]', id);
+    for (const id of Object.values(s.fields)) params.append('fields[]', id);
     if (offset) params.set('offset', offset);
 
-    const res = await fetch(`${AIRTABLE_API_BASE}/${baseId}/${tableId}?${params.toString()}`, {
+    const res = await fetch(`${AIRTABLE_API_BASE}/${s.baseId}/${s.assetsTableId}?${params.toString()}`, {
       headers: { Authorization: `Bearer ${apiKey}` },
     });
     if (!res.ok) {
@@ -192,8 +222,9 @@ function cleanListingUrl(raw: string): string {
   return q === -1 ? trimmed : trimmed.slice(0, q);
 }
 
-function evaluate(record: AirtableRecord): { candidate?: Candidate; skipped?: Skipped } {
+function evaluate(record: AirtableRecord, s: Schema): { candidate?: Candidate; skipped?: Skipped } {
   const f = record.fields;
+  const F = s.fields;
   const templateName = first(f[F.name]).trim() || '(unnamed)';
   const skip = (reason: string) => ({ skipped: { recordId: record.id, templateName, reason } });
 
@@ -266,14 +297,12 @@ async function triggerKnock(knockKey: string, c: Candidate): Promise<void> {
   }
 }
 
-async function stampNotified(env: Env, apiKey: string, c: Candidate): Promise<void> {
-  const baseId = env.AIRTABLE_BASE_ID || DEFAULT_BASE_ID;
-  const tableId = env.AIRTABLE_ASSETS_TABLE_ID || DEFAULT_ASSETS_TABLE_ID;
-  const res = await fetch(`${AIRTABLE_API_BASE}/${baseId}/${tableId}`, {
+async function stampNotified(s: Schema, apiKey: string, c: Candidate): Promise<void> {
+  const res = await fetch(`${AIRTABLE_API_BASE}/${s.baseId}/${s.assetsTableId}`, {
     method: 'PATCH',
     headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      records: [{ id: c.recordId, fields: { [F.notifiedForPeriod]: c.featuredPeriod } }],
+      records: [{ id: c.recordId, fields: { [s.fields.notifiedForPeriod]: c.featuredPeriod } }],
     }),
   });
   if (!res.ok) {
@@ -300,12 +329,13 @@ function parseCurrentPeriod(url: URL): { period?: string; error?: string } {
 async function run(env: Env, forceDryRun?: boolean, currentPeriod?: string): Promise<RunResult> {
   const apiKey = env.AIRTABLE_API_KEY;
   if (!apiKey) throw new Error('AIRTABLE_API_KEY is not configured');
+  const schema = loadSchema(env);
 
   // Dry run unless explicitly disabled — and always dry when no Knock key exists,
   // so a half-configured deploy cannot email creators.
   const dryRun = forceDryRun ?? (env.DRY_RUN !== 'false' || !env.KNOCK_API_KEY);
 
-  const records = await fetchCandidateRecords(env, apiKey, currentPeriod);
+  const records = await fetchCandidateRecords(env, schema, apiKey, currentPeriod);
   const result: RunResult = {
     dryRun,
     scanned: records.length,
@@ -317,7 +347,7 @@ async function run(env: Env, forceDryRun?: boolean, currentPeriod?: string): Pro
   };
 
   for (const record of records) {
-    const { candidate, skipped } = evaluate(record);
+    const { candidate, skipped } = evaluate(record, schema);
     if (skipped || !candidate) {
       if (skipped) result.skipped.push(skipped);
       continue;
@@ -332,7 +362,7 @@ async function run(env: Env, forceDryRun?: boolean, currentPeriod?: string): Pro
       // which is a visible duplicate; if we stamped first a Knock failure would
       // silently suppress the notification forever.
       await triggerKnock(env.KNOCK_API_KEY as string, candidate);
-      await stampNotified(env, apiKey, candidate);
+      await stampNotified(schema, apiKey, candidate);
       result.notified += 1;
     } catch (error) {
       result.failed.push({
@@ -397,6 +427,7 @@ export default {
         workflow: WORKFLOW_KEY,
         hasAirtableKey: Boolean(env.AIRTABLE_API_KEY),
         hasKnockKey: Boolean(env.KNOCK_API_KEY),
+        hasSchema: Boolean(env.AIRTABLE_SCHEMA),
         armed: env.DRY_RUN === 'false' && Boolean(env.KNOCK_API_KEY),
       });
     }

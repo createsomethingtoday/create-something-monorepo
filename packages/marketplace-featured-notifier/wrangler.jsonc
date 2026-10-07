@@ -18,8 +18,7 @@
     "head_sampling_rate": 1
   },
   "vars": {
-    "AIRTABLE_BASE_ID": "appMoIgXMTTTNIc3p",
-    "AIRTABLE_ASSETS_TABLE_ID": "tblRwzpWoLgE9MrUm",
+    // Airtable base/table/field ids come from the AIRTABLE_SCHEMA secret (repo is public).
     "AIRTABLE_REQUEST_DELAY_MS": "250",
     // ARMED 2026-07-31. Sends for real on every cron run.
     // To stop sending: set back to "true" and redeploy (takes effect immediately).

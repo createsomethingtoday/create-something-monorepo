@@ -15,7 +15,7 @@ Sends via the Knock workflow **`marketplace-template-featured`** (in-app bell + 
 ```
 ⭐Reviewer pick ✓
   AND ℹ️Is Featured? ✓
-  AND asset type = Template (recA2YsPEHSuAHOLD)
+  AND asset type = Template
   AND ⭐Reviewer Pick Reason is not empty
   AND IS_AFTER(📅Is Featured Period, TODAY())
   AND (🔔Featured Notified For Period is empty OR its month ≠ 📅Is Featured Period)
@@ -59,8 +59,11 @@ Verify with `GET /health` → `"armed": true`, then `GET /preview` to see the ca
 
 | Secret | |
 |---|---|
-| `AIRTABLE_API_KEY` | Infisical prod `AIRTABLE_API_KEY`; needs records read+write on `appMoIgXMTTTNIc3p` |
+| `AIRTABLE_API_KEY` | Infisical prod `AIRTABLE_API_KEY`; needs records read+write on the 👛Marketplace Assets base |
+| `AIRTABLE_SCHEMA` | JSON with the Airtable ids: `{"baseId", "assetsTableId", "templateAssetTypeId", "fields": {…}}`. Keys are listed in `FIELD_KEYS` in `src/index.ts`. Kept out of the repo because it is public. The worker refuses to run without it, so a deploy without this secret can never send. |
 | `KNOCK_API_KEY` | Knock production secret. **Not yet set** |
 | `ADMIN_TOKEN` | Bearer token for `/preview` and `/run` |
 
-Note: the Airtable token has no `schema.bases:read` scope, which is why every field ID is hardcoded — field names cannot be resolved at runtime.
+Note: the Airtable token has no `schema.bases:read` scope, so the worker addresses fields by ID — names cannot be resolved at runtime. `GET /health` reports `hasSchema`.
+
+Setting it: `wrangler secret put AIRTABLE_SCHEMA` and paste the JSON (the current values are in the private ops notes, not here). Set it **before** deploying a version of this code, or the cron run fails closed and sends nothing.
