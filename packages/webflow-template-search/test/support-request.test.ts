@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
+  clientIpFor,
   cleanListingUrl,
   parseFieldIds,
   parseSupportRequestBody,
@@ -8,6 +9,7 @@ import {
   readBodyCapped,
   resolveCreatorEmail,
 } from '../src/supportRequest';
+import type { Env } from '../src/types';
 import { callWorker, createTestEnv } from './support/worker';
 
 const ENDPOINT = 'https://search.test/api/templates/support-request';
@@ -112,6 +114,17 @@ describe('support request parsing', () => {
         { count: 4, max: 3, oldest: '2026-10-06T11:00:00Z', windowMs: 86_400_000 },
       ]),
     ).toBe(23 * 3600);
+  });
+
+  it('trusts the forwarded buyer IP only when the proxy token matches', () => {
+    const env = { SUPPORT_REQUEST_PROXY_TOKEN: 'proxy-secret-123' } as Env;
+    const request = (headers: Record<string, string>) => new Request(ENDPOINT, { method: 'POST', headers });
+    const viaProxy = { 'CF-Connecting-IP': '198.18.0.1', 'X-Templates-Client-IP': '203.0.113.5' };
+    expect(clientIpFor(request({ ...viaProxy, 'X-Templates-Proxy-Token': 'proxy-secret-123' }), env)).toBe('203.0.113.5');
+    expect(clientIpFor(request({ ...viaProxy, 'X-Templates-Proxy-Token': 'wrong' }), env)).toBe('198.18.0.1');
+    expect(clientIpFor(request(viaProxy), env)).toBe('198.18.0.1');
+    // Without a configured token the forwarded header is ignored.
+    expect(clientIpFor(request({ ...viaProxy, 'X-Templates-Proxy-Token': 'proxy-secret-123' }), {} as Env)).toBe('198.18.0.1');
   });
 
   it('strips campaign parameters from listing URLs', () => {
@@ -436,6 +449,31 @@ describe('POST /api/templates/support-request', () => {
       expect((await callWorker(post(body()), env)).status).toBe(503);
       expect(calls).toHaveLength(0);
       expect(await rows(env)).toHaveLength(0);
+    } finally {
+      close();
+    }
+  });
+
+  it('rate limits each buyer behind the proxy separately', async () => {
+    const { env, close } = await setup();
+    try {
+      env.SUPPORT_REQUEST_PROXY_TOKEN = 'proxy-secret-123';
+      const viaProxy = (buyerIp: string, index: number) =>
+        new Request(ENDPOINT, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Origin: 'https://webflow.com',
+            'CF-Connecting-IP': '198.18.0.1',
+            'X-Templates-Proxy-Token': 'proxy-secret-123',
+            'X-Templates-Client-IP': buyerIp,
+          },
+          body: JSON.stringify(body({ buyer_email: `buyer${index}@example.com` })),
+        });
+      // Six different buyers through one proxy egress: none share an IP bucket.
+      for (let index = 0; index < 6; index += 1) {
+        expect((await callWorker(viaProxy(`203.0.113.${index}`, index), env)).status).toBe(200);
+      }
     } finally {
       close();
     }

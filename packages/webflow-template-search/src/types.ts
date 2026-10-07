@@ -43,6 +43,11 @@ export interface Env {
   SUPPORT_REQUEST_HASH_SALT?: string;
   /** Comma-separated 👛Assets creator-email field IDs, override first (secret). */
   AIRTABLE_CREATOR_EMAIL_FIELD_IDS?: string;
+  /**
+   * Shared with the templates.webflow.com proxy (secret). A request presenting it in
+   * X-Templates-Proxy-Token is trusted for the buyer IP in X-Templates-Client-IP.
+   */
+  SUPPORT_REQUEST_PROXY_TOKEN?: string;
 }
 
 export interface AirtableAttachment {

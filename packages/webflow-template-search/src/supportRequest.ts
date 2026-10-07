@@ -130,6 +130,33 @@ export function cleanListingUrl(value: string | null | undefined): string | null
   }
 }
 
+// The templates.webflow.com proxy forwards the buyer's IP in this header and
+// proves it is the proxy with the shared token. Behind the proxy,
+// CF-Connecting-IP is the proxy's egress address, shared by every buyer.
+const PROXY_TOKEN_HEADER = 'X-Templates-Proxy-Token';
+const PROXY_CLIENT_IP_HEADER = 'X-Templates-Client-IP';
+
+function constantTimeEqual(a: string, b: string): boolean {
+  const left = new TextEncoder().encode(a);
+  const right = new TextEncoder().encode(b);
+  let diff = left.length ^ right.length;
+  for (let index = 0; index < Math.max(left.length, right.length); index += 1) {
+    diff |= (left[index] ?? 0) ^ (right[index] ?? 0);
+  }
+  return diff === 0;
+}
+
+/** The buyer's IP for rate limiting. Exported for tests. */
+export function clientIpFor(request: Request, env: Env): string {
+  const token = env.SUPPORT_REQUEST_PROXY_TOKEN;
+  const presented = request.headers.get(PROXY_TOKEN_HEADER);
+  const forwarded = request.headers.get(PROXY_CLIENT_IP_HEADER)?.trim();
+  if (token && presented && forwarded && forwarded.length <= 64 && constantTimeEqual(presented, token)) {
+    return forwarded;
+  }
+  return request.headers.get('CF-Connecting-IP') ?? 'unknown';
+}
+
 async function sha256Hex(value: string): Promise<string> {
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value));
   return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('');
@@ -321,7 +348,7 @@ export async function handleSupportRequest(request: Request, env: Env): Promise<
   if (input.website) return respond({ success: true, data: { request_id: crypto.randomUUID() } }, 200);
 
   const salt = env.SUPPORT_REQUEST_HASH_SALT;
-  const ip = request.headers.get('CF-Connecting-IP') ?? 'unknown';
+  const ip = clientIpFor(request, env);
   const [ipHash, buyerEmailHash] = await Promise.all([
     sha256Hex(`${salt}:ip:${ip}`),
     sha256Hex(`${salt}:email:${input.buyer_email.toLowerCase()}`),
