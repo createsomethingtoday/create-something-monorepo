@@ -58,7 +58,7 @@ test('registry is well-formed and every automated check id has an owner', () => 
     if (r.check.startsWith('listing:')) assert.ok(r.enforcedBy.includes('listing-kit'), `${r.id} listing check must list listing-kit`);
     for (const s of r.source) assert.ok(reg.sources[s], `${r.id} unknown source ${s}`);
   }
-  const cov = coverage(new Map());
+  const cov = coverage([]);
   assert.equal(cov.length, reg.requirements.length);
   assert.ok(cov.some((c) => c.status === 'human'));
   assert.ok(cov.some((c) => c.status === 'not-run'));

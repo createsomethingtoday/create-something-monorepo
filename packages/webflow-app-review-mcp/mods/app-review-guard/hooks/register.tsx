@@ -84,6 +84,15 @@ export function describe({ name, args }: Call, known: Record<string, string>): s
       return args.status === 'solved' ? `Solve Zendesk ticket ${str(args.ticket_id) ?? '?'} (sends the solved email)` : null
     case 'set_marketplace_status':
       return `Marketplace Status -> ${str(args.marketplace_status) ?? '?'} on ${v}: changes what customers see`
+    case 'create_exception_item':
+      return `Request an exception on ${v} ("${str(args.item) ?? ''}"): posts to #app-review-exceptions`
+    case 'update_exception_item': {
+      const status = str(args.exception_status)
+      if (status) return `Set exception status "${status}" on item ${str(args.exception_item_id) ?? '?'}: posts to #app-review-exceptions and settles or reopens a governance decision`
+      return null
+    }
+    case 'resolve_exception_item':
+      return `Resolve exception item ${str(args.exception_item_id) ?? '?'} as fixed in ${str(args.resolved_in_version_id) ?? '?'}: writes the governance history line`
     case 'set_review_status': {
       const status = str(args.review_status)
       if (status && DECISION_STATUSES.test(status)) return `Set Review Status "${status}" on ${v}${/no notification/i.test(status) ? '' : ' (notifies the developer)'}`
@@ -183,9 +192,10 @@ export const register: Register = on => {
       const lint = lintComposed(feedback)
       if (lint.deny !== undefined) return { deny: `${PLUGIN}: review_feedback ${lint.deny}` }
       for (const w of lint.warnings) $.ui.toast(`review_feedback: ${w}`)
-      if (lint.fixed !== undefined && !call.isProxy) {
-        input = { ...input, ...({ review_feedback: lint.fixed } as Record<string, unknown>) } as typeof e
+      if (lint.fixed !== undefined) {
         call.args = { ...call.args, review_feedback: lint.fixed }
+        if (!call.isProxy) input = { ...input, ...({ review_feedback: lint.fixed } as Record<string, unknown>) } as typeof e
+        else if (call.argsKey !== undefined) input = { ...input, ...({ [call.argsKey]: call.args } as Record<string, unknown>) } as typeof e
       }
     }
     const verbatim = call.name === 'create_ticket' || (call.name === 'send_ticket_followup' && call.args.visibility !== 'internal')

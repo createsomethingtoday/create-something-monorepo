@@ -21,6 +21,7 @@ const arms = readdirSync(runsRoot).filter((d) => existsSync(join(runsRoot, d)) &
 
 const rows = [];
 const perCode = new Map(); // code -> { human: n, covered: { arm: n } }
+const seenHuman = new Set(); // version:index, so the shared cached labels count once, not once per arm
 for (const arm of arms) {
   const versions = readdirSync(join(runsRoot, arm)).filter((d) => existsSync(join(runsRoot, arm, d, 'run.json')));
   const stats = { arm, n: versions.length, judged: 0, recall: [], precision: [], unsupported: 0, matched: 0, plausible: 0, findings: 0, verdictAgree: 0, verdictTotal: 0, inTok: 0, outTok: 0, seconds: 0, failed: 0, refusals: 0 };
@@ -62,7 +63,10 @@ for (const arm of arms) {
     }
     for (const h of j.judgment.human_issues) {
       const entry = perCode.get(h.code) ?? { human: 0, covered: {} };
-      entry.human++;
+      if (!seenHuman.has(`${id}:${h.index}`)) {
+        seenHuman.add(`${id}:${h.index}`);
+        entry.human++;
+      }
       if (h.covered) entry.covered[arm] = (entry.covered[arm] ?? 0) + 1;
       perCode.set(h.code, entry);
     }

@@ -51,6 +51,7 @@ const manifest = JSON.parse(readFileSync(join(PKG, 'corpus', 'manifest.json'), '
 const pool = manifest.versions.filter((v) => v.bundle?.path);
 const pilot = args.pilot ? JSON.parse(readFileSync(join(PKG, 'corpus', 'pilot-sample.json'), 'utf8')).map((p) => p.versionId) : null;
 const picked = args.only ? pool.filter((v) => args.only.split(',').includes(v.versionId)) : pilot ? pool.filter((v) => pilot.includes(v.versionId)) : sample(pool, Number(args.sample ?? 20), Number(args.seed ?? 1));
+if (args.network && process.env.ALLOW_SANDBOX_EGRESS !== '1') fail('--network gives the sandbox unrestricted egress while it can read the Codex login it runs under; set ALLOW_SANDBOX_EGRESS=1 to run networked arms on bundles you trust');
 console.log(`arm=${armName} model=${arm.model} multiAgent=${arm.multiAgent} network=${Boolean(args.network)} versions=${picked.length}`);
 
 const runRoot = join(PKG, 'runs', armName);
@@ -210,10 +211,13 @@ async function runCodex({ arm, ws, out, network }) {
     }
   }
   // The result: result.json written by the agent, else the structured last message.
-  let result = null;
-  if (existsSync(join(ws, 'result.json'))) result = safeJson(readFileSync(join(ws, 'result.json'), 'utf8'));
-  if (!result && existsSync(lastMessage)) result = safeJson(readFileSync(lastMessage, 'utf8'));
-  if (result && Array.isArray(result.findings)) {
+  // Both candidates are checked against the schema's shape; a partial result.json must not win over a valid last message.
+  const candidates = [existsSync(join(ws, 'result.json')) ? safeJson(readFileSync(join(ws, 'result.json'), 'utf8')) : null, existsSync(lastMessage) ? safeJson(readFileSync(lastMessage, 'utf8')) : null];
+  const problems = candidates.map((c) => (c ? validateResult(c) : ['missing']));
+  const pick = problems.findIndex((p) => p.length === 0);
+  const result = pick >= 0 ? candidates[pick] : null;
+  if (pick < 0 && candidates.some(Boolean)) run.error = (run.error ? run.error + ' | ' : '') + `result failed schema: ${problems.find((p) => p[0] !== 'missing')?.slice(0, 3).join('; ')}`;
+  if (result) {
     writeFileSync(join(out, 'result.json'), JSON.stringify(result, null, 2));
     run.ok = true;
     run.findings = result.findings.length;
@@ -334,3 +338,17 @@ function unlockLabels() {
 process.on('exit', unlockLabels);
 process.on('SIGINT', () => { unlockLabels(); process.exit(130); });
 process.on('SIGTERM', () => { unlockLabels(); process.exit(143); });
+
+/** Shape check against schemas/findings.schema.json: enums and required fields, no external validator. */
+function validateResult(r) {
+  const problems = [];
+  if (!r || typeof r !== 'object') return ['not an object'];
+  if (!['approve', 'changes_requested', 'reject', 'cannot_determine'].includes(r.verdict)) problems.push(`verdict ${JSON.stringify(r.verdict)}`);
+  if (typeof r.summary !== 'string') problems.push('summary missing');
+  if (!Array.isArray(r.findings)) return [...problems, 'findings not an array'];
+  r.findings.forEach((f, i) => {
+    for (const k of ['code', 'title', 'evidence', 'fix']) if (typeof f?.[k] !== 'string' || !f[k].trim()) problems.push(`finding ${i} ${k} missing`);
+    if (!['blocker', 'required', 'suggested'].includes(f?.severity)) problems.push(`finding ${i} severity ${JSON.stringify(f?.severity)}`);
+  });
+  return problems;
+}

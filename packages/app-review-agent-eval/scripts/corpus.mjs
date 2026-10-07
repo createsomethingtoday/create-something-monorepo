@@ -2,7 +2,7 @@
 // Build corpus/manifest.json: decided app versions with written reviewer
 // feedback, joined to their asset's listing fields. Reviewer feedback is the
 // label; it is written to a separate file the agent never sees.
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, writeFileSync, existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { F, TABLES, getRecords, pages, sel } from './lib/airtable.mjs';
@@ -88,6 +88,11 @@ const labels = Object.fromEntries(
 );
 
 mkdirSync(OUT, { recursive: true });
+// A rebuild refreshes labels and listing fields; bundle metadata (admin bundleUrl, sha256, local
+// path) comes from the admin-versions join and the CDN fetch, so carry it over by version id.
+const previous = existsSync(join(OUT, 'manifest.json')) ? JSON.parse(readFileSync(join(OUT, 'manifest.json'), 'utf8')).versions : [];
+const prevById = new Map(previous.map((v) => [v.versionId, v]));
+for (const v of manifest) v.bundle = prevById.get(v.versionId)?.bundle ?? v.bundle;
 writeFileSync(join(OUT, 'manifest.json'), JSON.stringify({ since, builtAt: new Date().toISOString(), count: manifest.length, versions: manifest }, null, 2));
 writeFileSync(join(OUT, 'labels.json'), JSON.stringify(labels, null, 2));
 

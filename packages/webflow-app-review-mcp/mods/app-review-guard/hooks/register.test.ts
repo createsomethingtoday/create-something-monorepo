@@ -1,6 +1,7 @@
 import { expect, test } from 'claude-code/testing'
 
 import { lintComposed, lintVerbatim } from './lint'
+import { describe } from './register'
 
 const S = 'mcp__claude_ai_App_Review_MCP__'
 const RC = `${S}app_review_request_changes`
@@ -13,6 +14,7 @@ const UPDATE = `${S}app_review_update_version_review`
 const LIST = `${S}app_review_list_queue`
 const META = `${S}app_review_update_asset_metadata`
 const SETSTATUS = `${S}app_review_set_review_status`
+const EXC_UPDATE = `${S}app_review_update_exception_item`
 const CLEAN = 'Thanks for submitting. Below are the items to address.\n\nBLOCKING\n1. Remove the eval() call in bundle.js.\n2. Attach the source map to the private upload.'
 
 test('lint: backticks, greetings and sign-offs are refused on the composed path; gaps collapse', () => {
@@ -118,4 +120,13 @@ test('decision-valued statuses through set_review_status and update_version_revi
   expect(b.deny).toMatch(/get_review_context/)
   await $.tool.call({ tool: SETSTATUS, version_id: 'recE', review_status: '🔍In Review' })
   expect(reached).toBe(1)
+})
+
+test('exception item routes: a status flip, a new request and a resolution are developer/governance-facing; a text edit is not', () => {
+  const call = (name: string, args: Record<string, unknown>) => describe({ name, args, isProxy: false }, {})
+  expect(call('update_exception_item', { exception_item_id: 'recItem', exception_status: '✅Approved' })).toMatch(/exception status/)
+  expect(call('update_exception_item', { exception_item_id: 'recItem', item: 'Reworded item' })).toBe(null)
+  expect(call('create_exception_item', { version_id: 'recV', item: 'Third-party script' })).toMatch(/app-review-exceptions/)
+  expect(call('resolve_exception_item', { exception_item_id: 'recItem', resolved_in_version_id: 'recV2', resolution_notes: 'verified' })).toMatch(/Resolve exception item/)
+  expect(String(EXC_UPDATE).endsWith('update_exception_item')).toBe(true)
 })

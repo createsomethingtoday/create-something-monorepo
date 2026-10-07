@@ -18,12 +18,7 @@ export function buildPacket({ projectDir, listingPath }) {
   const registry = loadRegistry();
   const findings = [...doctor.findings, ...listing.findings];
 
-  const byCheck = new Map();
-  for (const f of sortFindings(findings)) {
-    // Worst status per check wins; sortFindings puts fail first.
-    if (!byCheck.has(f.check)) byCheck.set(f.check, f);
-  }
-  const cov = coverage(byCheck);
+  const cov = coverage(findings);
   const humanGates = registry.requirements.filter((r) => r.enforcedBy.includes('human'));
 
   const l = listing.listing;

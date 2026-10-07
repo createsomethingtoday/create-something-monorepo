@@ -19,7 +19,8 @@ Nothing here writes to Airtable, Zendesk, or a developer. The agent produces fin
 ```bash
 cd packages/app-review-agent-eval
 infisical run --projectId e1532079-2f2b-46b5-8972-cf7a025eb803 --env prod --path / -- node scripts/corpus.mjs   # Airtable pull
-# admin version lists need an Okta admin browser session; see scripts/fetch-bundles.mjs header and the ego-browser step in the session log
+# save GET https://webflow.com/admin/api/app/<adminAppId>/versions (Okta admin browser session) as corpus/admin-versions/<adminAppId>.json for each app, then:
+node scripts/join-admin-versions.mjs                             # bundle URLs onto the manifest, matched on extension version id
 node scripts/fetch-bundles.mjs                                   # CDN downloads
 node scripts/run-arm.mjs --arm astra --sample 20 --seed 7        # one arm, stratified by capability
 node scripts/run-arm.mjs --arm daybreak --sample 20 --seed 7     # same versions, other model
@@ -28,7 +29,7 @@ infisical run ... -- node scripts/judge.mjs --arm astra          # Claude judge,
 node scripts/report.mjs                                          # runs/REPORT.md
 ```
 
-Codex uses the machine's ChatGPT login. The child runs under an isolated HOME in `runs/.home/` that holds only Codex's `auth.json` (copied back if refreshed), with a minimal environment: no Infisical-injected keys, and no `~/.config/gh`, cloud profiles or SSH keys within reach of prompt-injected bundle content. While an arm runs, `corpus/labels.json` and `corpus/judged-labels/` are `chmod 000`, because the `workspace-write` sandbox restricts writes, not reads; every `run.json` records `labelPathHits`, the count of events that name the label store (0 across all runs so far). Pass `--network` to let the agent reach the listing URLs and testing site; this turns on unrestricted egress for the sandbox, and the GET-only rule is enforced by the prompt, not the sandbox. Off by default so the first results isolate what the bundle and listing alone support.
+Codex uses the machine's ChatGPT login. The child runs under an isolated HOME in `runs/.home/` that holds only Codex's `auth.json` (copied back if refreshed), with a minimal environment: no Infisical-injected keys, and no `~/.config/gh`, cloud profiles or SSH keys within reach of prompt-injected bundle content. While an arm runs, `corpus/labels.json` and `corpus/judged-labels/` are `chmod 000`, because the `workspace-write` sandbox restricts writes, not reads; every `run.json` records `labelPathHits`, the count of events that name the label store (0 across all runs so far). `--network` turns on unrestricted egress for the sandbox, and the sandbox can read the Codex `auth.json` it runs under, so a prompt-injected bundle could exfiltrate the ChatGPT login; the GET-only rule is enforced by the prompt, not the sandbox. For that reason `--network` refuses to run unless `ALLOW_SANDBOX_EGRESS=1` is set, and should only be used on bundles you trust. A real fix is an egress allowlist proxy in front of the sandbox. Off by default so the first results isolate what the bundle and listing alone support.
 
 ## What the corpus cannot tell you
 

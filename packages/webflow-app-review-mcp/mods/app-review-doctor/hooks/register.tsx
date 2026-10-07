@@ -73,6 +73,13 @@ export const register: Register = (on, options) => {
   on('tool.call', { tool: 'Bash' }, async ($, e, next) => {
     const ran = await next(e)
     if (!isBuildCommand(e.command) || ran.deny !== undefined) return ran
+    // A failed build leaves the previous bundle.zip in place; a doctor pass on it would be misleading.
+    const res = (ran as { result?: { exitCode?: unknown; stderr?: unknown } }).result
+    const failed = ran.isError === true || (typeof res?.exitCode === 'number' && res.exitCode !== 0)
+    if (failed) {
+      $.ui.toast('build failed: doctor skipped (the old bundle.zip would be checked otherwise)')
+      return ran
+    }
     const cwd = await $.session.cwd()
     const found = (await detect($, buildDir(e.command, cwd))) ?? (await read($, project))
     if (!found) return ran

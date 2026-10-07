@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "corpus": "node scripts/corpus.mjs",
+    "join": "node scripts/join-admin-versions.mjs",
     "bundles": "node scripts/fetch-bundles.mjs",
     "run": "node scripts/run-arm.mjs",
     "judge": "node scripts/judge.mjs",
