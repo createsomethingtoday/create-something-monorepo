@@ -22,6 +22,10 @@ A pass is complete only when:
 - every row in **Waiting for More Info** has been re-checked against its
   external thread (Zendesk or Slack) and the note says what changed, or that
   nothing changed and what the deadline is;
+- every row in **In Progress** has been re-checked the same way: its note says
+  what changed, who owns the next step, and by when. Carried-over levers,
+  approvals and review-team decisions live here, so skipping this status
+  hides the active payout, plagiarism and brand cases;
 - **#triage-marketplace-templates** (Slack) has been searched for
   open threads tagging the Templates team, because an empty Airtable view is
   not an empty queue;
@@ -106,11 +110,13 @@ substitute for the readback.
 
 Load in parallel:
 
-- the Airtable Grid view filtered to New and Waiting for More Info;
+- the Airtable Grid view filtered to New, In Progress and Waiting for More Info;
 - Zendesk search for each requester email (do this per item in step 4, but
   confirm access now);
-- `#triage-marketplace-templates` search for unresolved threads from the last
-  14 days.
+- `#triage-marketplace-templates` search for **every** unresolved thread that
+  tags the Templates team, with no date cutoff. When the Slack intake agent
+  misses a thread, no Airtable row exists, so an age window would drop that
+  creator from every later pass.
 
 The **dual-channel gotcha** drives most wasted work: a form row can sit in New
 for ten days while the same creator has already been answered by the Decagon
@@ -155,8 +161,13 @@ ticket: it holds the creator's own words, the bot's first answers (often
 wrong), and whatever Support already promised. Then search
 `#triage-marketplace-templates` for the creator or template name.
 
-If the item is already answered in either place, note where and by whom, mark
-Resolved (or Closed if no action was ever needed), and move on.
+If the item is already answered in either place, **check the answer before
+closing the row**: it must be correct, and any action it promised must be done
+and verified with the same live readback as any other resolution. Decagon's
+first answers are often wrong, and Support often acknowledges without acting.
+If both hold, note where and by whom, then mark Resolved (or Closed if no action
+was ever needed). If not, keep the row **In Progress** and note what is wrong or
+still owed.
 
 ### 5. Decide and act
 
@@ -224,8 +235,10 @@ a creator; quote the Request Number if you must.
 
 ### 9. Close out
 
-Log the pass in the memory record (date, count, Request IDs, outcomes) and
-update this runbook when a new resolution class appears.
+Log the pass as a comment on the owning Linear issue: date, row count,
+Request Numbers, outcomes, and any lever details the next pass needs. Linear is
+the record a fresh operator can find; each row's own state stays in Airtable.
+Update this runbook when a new resolution class appears.
 
 ## Resolution classes
 
@@ -241,7 +254,7 @@ in the session before execution.
 | Category change | "Move to X", "add categories A, B, C" | Current `ℹ️🪣Categories` | Link field into 🪣Categories. Hard ceiling of **two** categories. Three-category asks become keep-one-add-one or a swap. **Operator.** | Review team for the pick, operator for the write |
 | Not in "New Templates" | "My template dropped off new" | Search API `published_date`; `TS_CREATED_ON` on the product | It is a recency rail of 8, not a category. If the creator missed their window, the decision-date override to today re-surfaces the listing on the homepage (verified 2026-08-24); the search API does not follow until re-index. **Operator.** | Operator |
 | Stale sort / last position | "Last in my category and profile" | Scrape the named surfaces | Within an hour of go-live: self-corrects after re-index, resolve with position evidence. Older: compare `TS_CREATED_ON` vs `TS_UPDATED_ON` for a genuine backdated sort. | Triage |
-| Featured placement | "Exceptional but not featured" | `is_featured`, reviewer pick fields | Eligibility is not selection. Picks rotate monthly, reviewers vote and justify each. Canonical Support answer recorded 2026-08-20 (ticket reference in agent memory). An "eligible = 1, everything else empty" row means no featured email was ever sent. | Review team |
+| Featured placement | "Exceptional but not featured" | `is_featured`, reviewer pick fields | Eligibility is not selection. Picks rotate monthly, reviewers vote and justify each. Canonical Support answer recorded 2026-08-20 (ticket reference kept out of this public repo). An "eligible = 1, everything else empty" row means no featured email was ever sent. | Review team |
 | Quality score missing | "No quality score shown" | Asset `qualityRating` via Template Review MCP | Reviewer approved without setting it. Review owner assigns the rating; it surfaces on the dashboard. Never infer a rating from agent evidence. | Review owner |
 | Quality score dispute | "Got Good, wanted Exceptional" | Version feedback | Policy answer; no re-review on request. Close with the rubric pointer. | Review team |
 | Validator false positive | "Validator says N pages missing SEO title" while pages are configured | Crawl published pages for `<title>` and `meta description`; pull the R2 run | Answer: close and reopen the Validator panel in the Designer, re-run. No template change needed. Root cause tracked in the validator worker. | Triage |
@@ -350,7 +363,7 @@ in the session before execution.
 ### Open queue
 
 Per-item state (creator, ticket, account and record IDs) lives in the Airtable
-table and in the agent memory record, not here. As of 2026-10-01 three rows are
+table and the owning Linear issue, not here. As of 2026-10-01 three rows are
 In Progress: #1698 (Stripe onboarding after recreate), #1697 (brand use by a
 former creator, deadline ~2026-10-15) and #1660 (plagiarism evaluation with the
 review team).
@@ -359,5 +372,5 @@ review team).
 
 - `WEBFLOW_TEMPLATE_SEARCH_IMAGE_REFRESH_RUNBOOK.md` for search thumbnail repair.
 - `MARKETPLACE_SUBMISSION_GOVERNANCE_PLAYBOOK.md` for the review-side process.
-- Agent memory `reference_slack_help_triage_runbook.md` holds the per-pass
-  evidence trail and field IDs for the levers referenced above.
+- Per-pass evidence lives as comments on the owning Linear issue. Airtable
+  field and record IDs for the levers above are kept out of this public repo.
