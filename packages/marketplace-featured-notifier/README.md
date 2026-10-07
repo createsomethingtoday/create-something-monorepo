@@ -13,13 +13,14 @@ Sends via the Knock workflow **`marketplace-template-featured`** (in-app bell + 
 ## Selection
 
 ```
-⭐Reviewer pick ✓
-  AND ℹ️Is Featured? ✓
+ℹ️Is Featured? ✓
   AND asset type = Template
   AND ⭐Reviewer Pick Reason is not empty
   AND IS_AFTER(📅Is Featured Period, TODAY())
   AND (🔔Featured Notified For Period is empty OR its month ≠ 📅Is Featured Period)
 ```
+
+`⭐Reviewer pick` is deliberately **not** part of the gate: on 2026-07-31 it was unset on 13 of 25 featured templates that all had a Pick Reason. Unchecking it does not stop a notification. To hold one back, clear `ℹ️Is Featured?` or the Pick Reason (or use the suppression choice).
 
 Periods are always the 1st of a month, so the date gate means **next month or later**. This is load-bearing: without it the job would notify ~620 creators about features going back to 2025. The current month's picks are deliberately excluded — notifying those is a one-time deliberate action, not something a recurring job should do quietly.
 
@@ -29,8 +30,8 @@ A record is skipped (not failed) when it lacks a Pick Reason, listing URL, creat
 
 ## Safety
 
-- **`DRY_RUN` defaults to `"true"`.** It also forces dry-run whenever `KNOCK_API_KEY` is absent, so a half-configured deploy cannot email creators.
-- Knock is called **before** the Airtable stamp. A failed stamp means a visible duplicate next run; stamping first would silently suppress the notification forever.
+- **The checked-in config is ARMED (`DRY_RUN: "false"`).** Any deploy sends at the next `:17` cron run. The code treats anything other than `"false"` as a dry run, and is always dry when `KNOCK_API_KEY` is absent. To deploy without sending: set `DRY_RUN` to `"true"`, deploy, check `GET /preview`, then flip it back and redeploy.
+- Knock is called **before** the Airtable stamp; stamping first would silently suppress a notification forever if Knock failed. To keep a failed stamp from becoming a daily duplicate (Knock only remembers an idempotency key for 24 hours), every armed run first proves the stamp is writable by writing a record's current value back unchanged, and sends nothing if that fails. If a stamp still fails after a send, the run halts on that record and reports `sent but not stamped`.
 - 🗳️Reviewer Votes `Note` is never read. That field is internal reviewer rationale (explicitly encouraged for 👎 votes) and must not reach creators. Only `⭐Reviewer Pick Reason` is creator-facing.
 - The listing URL is taken from `🔗Listing URL + UTM` (the raw `🔗Listing URL` is empty on 11k+ assets) with the query string stripped, since the stored value carries `utm_source=youtube`.
 
@@ -49,7 +50,8 @@ All non-health routes require `Authorization: Bearer $ADMIN_TOKEN` — payloads 
 ```bash
 export CLOUDFLARE_ACCOUNT_ID=9645bd52e640b8a4f40a3a55ff1dd75a
 pnpm exec wrangler secret put KNOCK_API_KEY      # Knock PRODUCTION secret — ask #help-knock
-# then set DRY_RUN to "false" in wrangler.jsonc and redeploy
+pnpm exec wrangler secret put AIRTABLE_SCHEMA    # Airtable ids (JSON); from the private ops notes
+# wrangler.jsonc already ships DRY_RUN = "false", so this deploy is live
 pnpm run deploy
 ```
 

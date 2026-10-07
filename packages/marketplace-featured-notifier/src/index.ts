@@ -297,17 +297,32 @@ async function triggerKnock(knockKey: string, c: Candidate): Promise<void> {
   }
 }
 
-async function stampNotified(s: Schema, apiKey: string, c: Candidate): Promise<void> {
+async function writeStamp(s: Schema, apiKey: string, recordId: string, value: string | null): Promise<void> {
   const res = await fetch(`${AIRTABLE_API_BASE}/${s.baseId}/${s.assetsTableId}`, {
     method: 'PATCH',
     headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      records: [{ id: c.recordId, fields: { [s.fields.notifiedForPeriod]: c.featuredPeriod } }],
+      records: [{ id: recordId, fields: { [s.fields.notifiedForPeriod]: value } }],
     }),
   });
   if (!res.ok) {
     throw new Error(`Airtable stamp failed: ${res.status} ${await res.text()}`);
   }
+}
+
+async function stampNotified(s: Schema, apiKey: string, c: Candidate): Promise<void> {
+  await writeStamp(s, apiKey, c.recordId, c.featuredPeriod);
+}
+
+/**
+ * Proves the stamp can be written before anything is sent, by writing a
+ * record's current value back unchanged. Knock only remembers an idempotency
+ * key for 24 hours, so a stamp that can never be written (say, a read-only
+ * token) would otherwise re-send to the same creators every day.
+ */
+async function assertCanStamp(s: Schema, apiKey: string, record: AirtableRecord): Promise<void> {
+  const current = first(record.fields[s.fields.notifiedForPeriod]).slice(0, 10);
+  await writeStamp(s, apiKey, record.id, current || null);
 }
 
 /**
@@ -346,6 +361,11 @@ async function run(env: Env, forceDryRun?: boolean, currentPeriod?: string): Pro
     candidates: [],
   };
 
+  if (!dryRun && records.length > 0) {
+    // Throws (no sends) when the token cannot write the stamp.
+    await assertCanStamp(schema, apiKey, records[0]);
+  }
+
   for (const record of records) {
     const { candidate, skipped } = evaluate(record, schema);
     if (skipped || !candidate) {
@@ -357,19 +377,32 @@ async function run(env: Env, forceDryRun?: boolean, currentPeriod?: string): Pro
     result.candidates.push(candidate);
     if (dryRun) continue;
 
+    // Notify first, stamp second. If we stamped first, a Knock failure would
+    // silently suppress the notification forever.
     try {
-      // Notify first, stamp second. If the stamp fails the next run re-sends,
-      // which is a visible duplicate; if we stamped first a Knock failure would
-      // silently suppress the notification forever.
       await triggerKnock(env.KNOCK_API_KEY as string, candidate);
-      await stampNotified(schema, apiKey, candidate);
-      result.notified += 1;
     } catch (error) {
       result.failed.push({
         recordId: candidate.recordId,
         templateName: candidate.templateName,
         error: error instanceof Error ? error.message : String(error),
       });
+      continue;
+    }
+    try {
+      await stampNotified(schema, apiKey, candidate);
+      result.notified += 1;
+    } catch (error) {
+      // Sent but not stamped. Stop the run: the stamp just proved writable, so
+      // this is a fresh failure, and continuing would widen the set of creators
+      // a later run could re-notify once Knock's 24-hour dedupe expires.
+      result.notified += 1;
+      result.failed.push({
+        recordId: candidate.recordId,
+        templateName: candidate.templateName,
+        error: `sent but not stamped; run halted: ${error instanceof Error ? error.message : String(error)}`,
+      });
+      break;
     }
   }
 
