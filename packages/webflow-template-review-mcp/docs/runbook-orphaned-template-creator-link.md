@@ -13,21 +13,21 @@ isn't in my Asset Dashboard and I never got a review email."
 `🎨Creator`, and no Zendesk thread. The SLA keeps running while nobody owns it. Since
 2026-10-06, an alert also lands in `#triage-marketplace-templates`.
 
-Base: `appMoIgXMTTTNIc3p` (👛Marketplace Assets).
+Base: 👛Marketplace Assets.
 
 ---
 
 ## 1. What changed on 2026-10-05/06
 
 | # | Fix | Where | State |
-|---|---|---|---|
-| 1 | When the submitted email isn't linked to a Creator, look the Creator up by `📧Email` **or** `📧WF Account Email`. Link the 📧Emails row and give it a type (`WF Account` or `Other`, never `Primary`). | Automation `wflrLKII59WwoyKbW`, branch "Marketplace Template Submission", node `wacVknQRDzBrZHl3A` (Asset Ingestion Script) | Live |
+| --- | --- | --- | --- |
+| 1 | When the submitted email isn't linked to a Creator, look the Creator up by `📧Email` **or** `📧WF Account Email`. Link the 📧Emails row and give it a type (`WF Account` or `Other`, never `Primary`). | Template Creator/Asset Submission automation, branch "Marketplace Template Submission", Asset Ingestion Script step | Live |
 | 1b | If several 📧Emails rows share the address, pick the one linked to a Creator instead of crashing. Before this, `upsert()` returned an empty id and the script crashed on `selectRecordAsync('')`. | Same node | Live |
 | 2 | Don't guess. With 0 or 2+ matching Creators, still create the Asset (the submission isn't lost), leave `🎨Creator` empty, and set the script output `creatorErr` to the reason. | Same node | Live |
-| 3 | At creator signup, create or link a 📧Emails row for `📧WF Account Email`, typed `WF Account`. It never re-links a row that belongs to another Creator. | Same automation, branch "Marketplace Creator Submission", node `wac4eurISiryceKnz` (Attach Profile Image) | Live |
+| 3 | At creator signup, create or link a 📧Emails row for `📧WF Account Email`, typed `WF Account`. It never re-links a row that belongs to another Creator. | Same automation, branch "Marketplace Creator Submission", Attach Profile Image step | Live |
 | 4 | Write `Submission receipt: <id>` into the asset's ℹ️Notes, so a receipt a creator quotes can be found in Airtable. | `webflow-template-submission-form`, `app/api/intake/template/route.ts` (PR #25) | Live |
 | 5 | The confirmation copy says support can trace the receipt. | Same app | Already true: the form saves every submission in D1 under the receipt before handing it to Airtable |
-| 6 | Alert `#triage-marketplace-templates` when a template Asset is created with no Creator. | Automation `wflN0CNuHq3B2pobO` | Live |
+| 6 | Alert `#triage-marketplace-templates` when a template Asset is created with no Creator. | "🚨Template asset with no 🎨Creator" automation | Live |
 
 Also removed on 2026-10-06: the "Send Template Onboarding Email" step in the creator
 branch. It posted to an Iterable relay Zap that was turned off during the 2026-09-25
@@ -54,7 +54,7 @@ creator submitted with their Webflow account email:
 Every downstream symptom follows from that empty link:
 
 | Effect | Mechanism |
-|---|---|
+| --- | --- |
 | Version flips to `🚨Error: Field Missing` | `🎨📧 Creator Email` and Type are rollups **through** `🎨Creator` |
 | No review email, no Zendesk thread | The ZD-thread automation fires on `🆕Ready for Review`, which the version never reaches |
 | Not in the Asset Dashboard | The dashboard lists assets by creator email, through `🎨Creator` |
@@ -65,15 +65,14 @@ Every downstream symptom follows from that empty link:
 
 ## 3. Detection
 
-**Alert (live):** automation `wflN0CNuHq3B2pobO` posts to `#triage-marketplace-templates`
+**Alert (live):** the "🚨Template asset with no 🎨Creator" automation posts to `#triage-marketplace-templates`
 when an Asset *newly* matches all of these: `#️⃣🎨Creators` = 0, `🥞CMS Status` =
 Active, and Type contains "Template". It doesn't fire for records that already matched
 when it was switched on.
 
-**Backlog query:** 👛Assets (`tblRwzpWoLgE9MrUm`) where `#️⃣🎨Creators`
-(`fldn7X8GbeEjIRkEw`) = 0. The status query (Asset Versions `tblHxZ2hgSFLZxsZu`,
-`📝Review Status` `flde8Huk5NRIdm2wZ` = `🚨Error: Field Missing`) returns ~500 rows,
-mostly legacy noise. Narrow it with `📝Review Type` (`fldjYFJMGTerFYlol`) = `New Asset`
+**Backlog query:** 👛Assets where `#️⃣🎨Creators` = 0. The status query (Asset Versions,
+`📝Review Status` = `🚨Error: Field Missing`) returns ~500 rows,
+mostly legacy noise. Narrow it with `📝Review Type` = `New Asset`
 and an Asset link.
 
 **Why it still happens after the fix:** the script's `creatorErr` output says which case:
@@ -91,10 +90,8 @@ In order of reliability:
    the asset in custom field `30320430508051` (name, shortName, site `_id`, `previewId`)
    and the workspace in `20436740811411`.
 2. **Timestamp correlation.** The 📧Emails row is created 10–30 s before the Asset by the
-   same run. Query 📧Emails where 🎨Creators is empty, sorted by `📅CRT`
-   (`fldXYSFz4iiFm787K`), and match on the Asset's created time.
-3. **Search 🎨Creators** (`tbljt0plqxdMARZXb`) for `📧WF Account Email`
-   (`fldT0VVP9GXMOhajO`) = the submitted email. **More than one hit means §6 applies.
+   same run. Query 📧Emails where 🎨Creators is empty, sorted by `📅CRT`, and match on the Asset's created time.
+3. **Search 🎨Creators** for `📧WF Account Email` = the submitted email. **More than one hit means §6 applies.
    Don't pick one yourself; it's the reviewer's call.** Signals that help: which profile
    was edited around the submission date, and whose bio fits the template.
 4. **Snowflake site → owner.** Match on `DIM_SITE.owner_user_id`, not
@@ -116,18 +113,18 @@ Three writes, in this order. The Creator link must exist **before** the status w
 the validation automation flips the status straight back to the error.
 
 ```
-Step 1 — 📧Emails (tbldQNGszIyOjt9a1)
-  <email row>.fldDqzJQbU1PRhZHp = [<creator>]
-  <email row>.flde85upOCodXsivs = [...existing types, "WF Account"]   # 🌟Email Type(s)
+Step 1 — 📧Emails
+  <email row>.🎨Creators        = [<creator>]
+  <email row>.🌟Email Type(s)   = [...existing types, "WF Account"]
   The multi-select write REPLACES the field. Read the current types first and add
   "WF Account"; never drop "Primary". Writing ["WF Account"] to the creator's only
   Primary row leaves them with no Primary, and Step 3 then opens the review thread with
   no recipient. An untyped row is invisible to the Creator rollups, so always set a type.
-Step 2 — 👛Assets (tblRwzpWoLgE9MrUm)
-  <asset>.fldGDWo2VfnTbSUiL = [<creator>]
+Step 2 — 👛Assets
+  <asset>.🎨Creator = [<creator>]
   Verify: #️⃣🎨Creators = 1 and 🎨📧 Creator Email is populated.
-Step 3 — 🖌️Asset Versions (tblHxZ2hgSFLZxsZu)
-  <version>.flde8Huk5NRIdm2wZ = "🆕Ready for Review"
+Step 3 — 🖌️Asset Versions
+  <version>.📝Review Status = "🆕Ready for Review"
   Re-read it. If it bounced back to the error, the link didn't take: fix the link,
   don't retry the status.
 ```
@@ -159,7 +156,7 @@ the same Webflow account.
 3. If the profiles should be merged (the decision can wait):
    - move the other profile's 📧Emails rows to the kept Creator and type them `Other`
      (or `CC Recipient` if they should get copies). Keep one Primary.
-   - set `❌TEMP Don't Sync to CMS` (`fldmuo1M3aZcDkNWv`) on the retired record.
+   - set `❌TEMP Don't Sync to CMS` on the retired record.
    - **clear `📧WF Account Email` on the retired record.** Otherwise the ingestion script
      keeps seeing two matches and alerting.
    - move any Assets, then deal with the retired Designer CMS item. See the Creator→Designers
