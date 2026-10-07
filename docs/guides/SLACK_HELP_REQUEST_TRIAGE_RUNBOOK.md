@@ -225,8 +225,11 @@ in the session, get the approval, then send:
   path fails the same way: a create call without `comment.author_id` puts our
   text under the requester's name and sends nothing (a 2026-08-21 payout-recreate
   notice: the creator never got the onboarding instructions, and their
-  reply sat unanswered for a month). Check `/tickets/{id}/audits.json` for a
-  `Notification` event that lists the requester.
+  reply sat unanswered for a month). Set `status: "open"` in the **same update**
+  that adds the public comment: every email trigger requires the ticket not to
+  be `new`, so a public agent comment on a `new` ticket also sends nothing. Then
+  check `/tickets/{id}/audits.json` for a `Notification` event that lists the
+  requester.
 - **Slack thread:** reply in `#triage-marketplace-templates` only when the ask
   originated there.
 
@@ -280,7 +283,8 @@ in the session before execution.
 - Prefer the channel the creator is already in. Zendesk ticket beats new
   ticket beats Slack beats email.
 - Zendesk writes: Zapier `ticket_comment` on open tickets; API create-then-update
-  for new tickets, with `author_id` set to the agent on the public comment.
+  for new tickets, with `author_id` set to the agent on the public comment and
+  `status: "open"` in that same update.
 - Route new tickets to group `1500002744702` (Marketplace Review Team) on the
   update; create-time triggers move them to Programs Support otherwise.
 - Park a ticket you are not ready to send on `hold`, not `pending`. The
