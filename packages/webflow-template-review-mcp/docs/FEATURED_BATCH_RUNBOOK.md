@@ -65,10 +65,13 @@ was featured while unpublished.
 the pool has fewer distinct creators than the batch needs, widen the window
 instead: Airtable query on 👛Assets with `ℹ️Is Featured?` unchecked,
 `🚀Marketplace Status` = Published, quality lookup = 🥇Exceptional, Type =
-Template, published within ~180 days. The eligibility formula also prefers
-recent submissions, so `set_featured_pick` will warn `not_currently_eligible`
-on older picks; that warning is expected for a deliberate wider pull. Each
-older pick still needs a full site review — in October 2026 the wider pool
+Template, published within ~180 days. Age alone does not trigger any warning:
+`featured_candidates` applies its recency window separately, so older picks
+are simply absent from it. `set_featured_pick` warns `not_currently_eligible`
+only when the eligibility formula itself fails (Exceptional quality plus the
+re-feature cap). Treat that warning as a real quality or re-feature problem to
+resolve, not as expected for a wider pull. Each older pick still needs a full
+site review — in October 2026 the wider pool
 had a higher defect rate (dead CTAs, wrong buy links, leftover identities
 from other templates, off-marketplace store links) than the recent one.
 
@@ -113,12 +116,15 @@ tell you how big a batch is. Count membership in Airtable:
    `voteTallies` (`inQualifiedPool` requires ≥1 up vote and no down-vote
    majority).
 
-   **Widened candidates** (the older pull above) do not appear here: the tool
-   filters out items that are not currently eligible. Check each directly
-   instead: `template_review_get_asset` for status, MRP and Pick Reason, and the
-   item's votes in 🗳️Reviewer Votes. Then finalize it in step 3 with
-   `override_selection_checks: true` after the coordinator confirms. The
-   result records the overridden checks.
+   **Widened candidates** (the older pull above) do not appear here, because
+   the tool's recency window excludes them. Check each directly:
+   `template_review_get_asset` for status and MRP, and Airtable for
+   `⭐Reviewer Pick Reason` (no MCP read returns it for items outside the
+   candidate list) and the item's votes in 🗳️Reviewer Votes. If
+   `set_featured_pick` warned `not_currently_eligible` on it, resolve that
+   first; do not override it. Only then finalize in step 3 with
+   `override_selection_checks: true`, after the coordinator confirms, to clear
+   the vote/recency checks. The result records which checks were overridden.
 2. Preflight the whole batch **before any flag is written or any notification
    can fire**:
    - **One template per creator.** List every winner's creator and remove
