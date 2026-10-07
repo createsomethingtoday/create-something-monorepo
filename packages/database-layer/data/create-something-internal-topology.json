@@ -4,14 +4,14 @@
   "atlasCanvasId": "create-something-internal-operating-topology",
   "rootNodeId": "substrate:create-something:root",
   "coverage": {
-    "generatedAt": "2026-09-30T14:04:28.546Z",
+    "generatedAt": "2026-10-06T14:17:55.778Z",
     "rootPath": ".",
-    "packageCount": 239,
+    "packageCount": 240,
     "appCount": 13,
-    "workerCount": 115,
+    "workerCount": 116,
     "clientOverlayCount": 8,
     "policyCount": 64,
-    "guideCount": 78,
+    "guideCount": 79,
     "configCount": 40
   },
   "nodes": [
@@ -581,7 +581,7 @@
       "surface": "worker",
       "owner": "CREATE SOMETHING",
       "status": "mapped",
-      "summary": "Automation Design Firm — we apply the Subtractive Triad to design automation architectures that work",
+      "summary": "AI-native technical support — diagnosis, engineering improvements and help using the result",
       "tags": [
         "package",
         "worker",
@@ -2441,6 +2441,23 @@
         "judgment"
       ],
       "packageName": "@create-something/lms",
+      "runtime": "cloudflare, node"
+    },
+    {
+      "id": "substrate:create-something:package:pcn-workshop-starter-packages-lms-starter-pcn-workshop",
+      "atlasNodeId": "atlas_create-something_package_pcn-workshop-starter-packages-lms-starter-pcn-workshop",
+      "title": "pcn-workshop-starter",
+      "path": "packages/lms/starter/pcn-workshop",
+      "tier": "Mixed",
+      "surface": "worker",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Workspace package at packages/lms/starter/pcn-workshop.",
+      "tags": [
+        "package",
+        "worker"
+      ],
+      "packageName": "pcn-workshop-starter",
       "runtime": "cloudflare, node"
     },
     {
@@ -5618,6 +5635,23 @@
       "runtime": "cloudflare"
     },
     {
+      "id": "substrate:create-something:worker:packages-lms-starter-pcn-workshop-wrangler-jsonc",
+      "atlasNodeId": "atlas_create-something_worker_packages-lms-starter-pcn-workshop-wrangler-jsonc",
+      "title": "packages/lms/starter/pcn-workshop/wrangler.jsonc",
+      "path": "packages/lms/starter/pcn-workshop/wrangler.jsonc",
+      "tier": "Automation",
+      "surface": "worker",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Cloudflare runtime configuration at packages/lms/starter/pcn-workshop/wrangler.jsonc.",
+      "tags": [
+        "worker",
+        "cloudflare",
+        "runtime"
+      ],
+      "runtime": "cloudflare"
+    },
+    {
       "id": "substrate:create-something:worker:packages-lms-wrangler-toml",
       "atlasNodeId": "atlas_create-something_worker_packages-lms-wrangler-toml",
       "title": "packages/lms/wrangler.toml",
@@ -8192,6 +8226,21 @@
       ]
     },
     {
+      "id": "substrate:create-something:guide:docs-guides-identity-recovery-repair-md",
+      "atlasNodeId": "atlas_create-something_guide_docs-guides-identity-recovery-repair-md",
+      "title": "identity-recovery-repair.md",
+      "path": "docs/guides/identity-recovery-repair.md",
+      "tier": "Mixed",
+      "surface": "guide",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "guide artifact in the CREATE SOMETHING operating topology.",
+      "tags": [
+        "guide",
+        "documentation"
+      ]
+    },
+    {
       "id": "substrate:create-something:guide:docs-guides-judgment-layer-dogfood-playbook-md",
       "atlasNodeId": "atlas_create-something_guide_docs-guides-judgment-layer-dogfood-playbook-md",
       "title": "JUDGMENT_LAYER_DOGFOOD_PLAYBOOK.md",
@@ -10338,6 +10387,13 @@
       "evidence": "packages/lms is present in the repo scan."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-pcn-workshop-starter-packages-lms-starter-pcn-workshop",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:package:pcn-workshop-starter-packages-lms-starter-pcn-workshop",
+      "relation": "contains",
+      "evidence": "packages/lms/starter/pcn-workshop is present in the repo scan."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-loom-mcp-remote-packages-loom-mcp-remote",
       "source": "substrate:create-something:root",
       "target": "substrate:create-something:package:create-something-loom-mcp-remote-packages-loom-mcp-remote",
@@ -11528,6 +11584,13 @@
       "evidence": "packages/landing-page-filter/wrangler.toml is present in the repo scan."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-worker-packages-lms-starter-pcn-workshop-wrangler-jsonc",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:worker:packages-lms-starter-pcn-workshop-wrangler-jsonc",
+      "relation": "contains",
+      "evidence": "packages/lms/starter/pcn-workshop/wrangler.jsonc is present in the repo scan."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-worker-packages-lms-wrangler-toml",
       "source": "substrate:create-something:root",
       "target": "substrate:create-something:worker:packages-lms-wrangler-toml",
@@ -12676,6 +12739,13 @@
       "evidence": "docs/guides/HYDRA_DB_GOVERNED_RECALL.md is present in the repo scan."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-identity-recovery-repair-md",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:guide:docs-guides-identity-recovery-repair-md",
+      "relation": "contains",
+      "evidence": "docs/guides/identity-recovery-repair.md is present in the repo scan."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-judgment-layer-dogfood-playbook-md",
       "source": "substrate:create-something:root",
       "target": "substrate:create-something:guide:docs-guides-judgment-layer-dogfood-playbook-md",
@@ -13250,6 +13320,13 @@
       "evidence": "@create-something/components declares @create-something/tufte."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-app-create-something-bettermode-marketplace-creator-agent-apps-bettermode-marketplace-creator-agent-runs-substrate-create-something-worker-apps-bettermode-marketplace-creator-agent-wrangler-jsonc",
+      "source": "substrate:create-something:app:create-something-bettermode-marketplace-creator-agent-apps-bettermode-marketplace-creator-agent",
+      "target": "substrate:create-something:worker:apps-bettermode-marketplace-creator-agent-wrangler-jsonc",
+      "relation": "runs",
+      "evidence": "wrangler.jsonc configures runtime for apps/bettermode-marketplace-creator-agent."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-app-create-something-client-workspace-desktop-apps-client-workspace-desktop-depends-on-substrate-create-something-package-create-something-delivery-schema-packages-delivery-schema",
       "source": "substrate:create-something:app:create-something-client-workspace-desktop-apps-client-workspace-desktop",
       "target": "substrate:create-something:package:create-something-delivery-schema-packages-delivery-schema",
@@ -13262,6 +13339,13 @@
       "target": "substrate:create-something:package:create-something-canon-packages-canon",
       "relation": "depends_on",
       "evidence": "@create-something/create-something-scheduler declares @create-something/canon."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-app-create-something-create-something-scheduler-apps-create-something-scheduler-runs-substrate-create-something-worker-apps-create-something-scheduler-wrangler-jsonc",
+      "source": "substrate:create-something:app:create-something-create-something-scheduler-apps-create-something-scheduler",
+      "target": "substrate:create-something:worker:apps-create-something-scheduler-wrangler-jsonc",
+      "relation": "runs",
+      "evidence": "wrangler.jsonc configures runtime for apps/create-something-scheduler."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-app-create-something-even-codex-presence-apps-even-codex-presence-depends-on-substrate-create-something-package-create-something-codex-presence-packages-codex-presence",
@@ -13481,11 +13565,25 @@
       "evidence": "wrangler.toml configures runtime for packages/agency/clients/outerfields."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-outerfields-packages-agency-clients-outerfields-runs-substrate-create-something-worker-packages-agency-clients-outerfields-wrangler-jsonc",
+      "source": "substrate:create-something:package:create-something-outerfields-packages-agency-clients-outerfields",
+      "target": "substrate:create-something:worker:packages-agency-clients-outerfields-wrangler-jsonc",
+      "relation": "runs",
+      "evidence": "wrangler.jsonc configures runtime for packages/agency/clients/outerfields."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-root-client-overlay-substrate-create-something-package-create-something-the-stack-packages-agency-clients-the-stack",
       "source": "substrate:create-something:root",
       "target": "substrate:create-something:package:create-something-the-stack-packages-agency-clients-the-stack",
       "relation": "client_overlay",
       "evidence": "packages/agency/clients/the-stack is a managed client overlay under packages/agency/clients."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-the-stack-packages-agency-clients-the-stack-runs-substrate-create-something-worker-packages-agency-clients-the-stack-wrangler-jsonc",
+      "source": "substrate:create-something:package:create-something-the-stack-packages-agency-clients-the-stack",
+      "target": "substrate:create-something:worker:packages-agency-clients-the-stack-wrangler-jsonc",
+      "relation": "runs",
+      "evidence": "wrangler.jsonc configures runtime for packages/agency/clients/the-stack."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-package-create-something-agency-packages-agency-depends-on-substrate-create-something-package-create-something-arc-packages-arc",
@@ -13551,6 +13649,13 @@
       "evidence": "@create-something/agency declares @create-something/tufte."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-agency-packages-agency-runs-substrate-create-something-worker-packages-agency-wrangler-jsonc",
+      "source": "substrate:create-something:package:create-something-agency-packages-agency",
+      "target": "substrate:create-something:worker:packages-agency-wrangler-jsonc",
+      "relation": "runs",
+      "evidence": "wrangler.jsonc configures runtime for packages/agency."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-package-create-something-dental-agent-router-packages-agency-workers-dental-agent-router-runs-substrate-create-something-worker-packages-agency-workers-dental-agent-router-wrangler-toml",
       "source": "substrate:create-something:package:create-something-dental-agent-router-packages-agency-workers-dental-agent-router",
       "target": "substrate:create-something:worker:packages-agency-workers-dental-agent-router-wrangler-toml",
@@ -13563,6 +13668,13 @@
       "target": "substrate:create-something:worker:packages-agency-workers-social-poster-wrangler-toml",
       "relation": "runs",
       "evidence": "wrangler.toml configures runtime for packages/agency/workers/social-poster."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-airtable-primary-tags-worker-packages-airtable-primary-tags-worker-runs-substrate-create-something-worker-packages-airtable-primary-tags-worker-wrangler-jsonc",
+      "source": "substrate:create-something:package:create-something-airtable-primary-tags-worker-packages-airtable-primary-tags-worker",
+      "target": "substrate:create-something:worker:packages-airtable-primary-tags-worker-wrangler-jsonc",
+      "relation": "runs",
+      "evidence": "wrangler.jsonc configures runtime for packages/airtable-primary-tags-worker."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-package-app-governance-dashboard-packages-app-governance-db-dashboard-depends-on-substrate-create-something-package-create-something-canon-packages-canon",
@@ -13887,11 +13999,25 @@
       "evidence": "@create-something/eslint-plugin-canon declares @create-something/canon."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-exception-decisions-mcp-packages-exception-decisions-mcp-runs-substrate-create-something-worker-packages-exception-decisions-mcp-wrangler-jsonc",
+      "source": "substrate:create-something:package:create-something-exception-decisions-mcp-packages-exception-decisions-mcp",
+      "target": "substrate:create-something:worker:packages-exception-decisions-mcp-wrangler-jsonc",
+      "relation": "runs",
+      "evidence": "wrangler.jsonc configures runtime for packages/exception-decisions-mcp."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-package-create-something-gigi-integrations-packages-gigi-integrations-runs-substrate-create-something-worker-packages-gigi-integrations-worker-wrangler-toml",
       "source": "substrate:create-something:package:create-something-gigi-integrations-packages-gigi-integrations",
       "target": "substrate:create-something:worker:packages-gigi-integrations-worker-wrangler-toml",
       "relation": "runs",
       "evidence": "worker/wrangler.toml configures runtime for packages/gigi-integrations."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-github-actions-runner-broker-packages-github-actions-runner-broker-runs-substrate-create-something-worker-packages-github-actions-runner-broker-wrangler-jsonc",
+      "source": "substrate:create-something:package:create-something-github-actions-runner-broker-packages-github-actions-runner-broker",
+      "target": "substrate:create-something:worker:packages-github-actions-runner-broker-wrangler-jsonc",
+      "relation": "runs",
+      "evidence": "wrangler.jsonc configures runtime for packages/github-actions-runner-broker."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-package-create-something-gmail-notion-mcp-packages-gmail-notion-mcp-runs-substrate-create-something-worker-packages-gmail-notion-mcp-worker-wrangler-toml",
@@ -14356,6 +14482,13 @@
       "evidence": "@create-something/io declares @create-something/eslint-plugin-canon."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-io-packages-io-runs-substrate-create-something-worker-packages-io-wrangler-jsonc",
+      "source": "substrate:create-something:package:create-something-io-packages-io",
+      "target": "substrate:create-something:worker:packages-io-wrangler-jsonc",
+      "relation": "runs",
+      "evidence": "wrangler.jsonc configures runtime for packages/io."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-package-create-something-bundle-scanner-api-packages-io-workers-bundle-scanner-api-depends-on-substrate-create-something-package-create-something-bundle-scanner-core-packages-bundle-scanner-core",
       "source": "substrate:create-something:package:create-something-bundle-scanner-api-packages-io-workers-bundle-scanner-api",
       "target": "substrate:create-something:package:create-something-bundle-scanner-core-packages-bundle-scanner-core",
@@ -14426,6 +14559,13 @@
       "evidence": "wrangler.toml configures runtime for packages/lms."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-package-pcn-workshop-starter-packages-lms-starter-pcn-workshop-runs-substrate-create-something-worker-packages-lms-starter-pcn-workshop-wrangler-jsonc",
+      "source": "substrate:create-something:package:pcn-workshop-starter-packages-lms-starter-pcn-workshop",
+      "target": "substrate:create-something:worker:packages-lms-starter-pcn-workshop-wrangler-jsonc",
+      "relation": "runs",
+      "evidence": "wrangler.jsonc configures runtime for packages/lms/starter/pcn-workshop."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-package-create-something-loom-mcp-remote-packages-loom-mcp-remote-depends-on-substrate-create-something-package-create-something-mcp-core-packages-mcp-core",
       "source": "substrate:create-something:package:create-something-loom-mcp-remote-packages-loom-mcp-remote",
       "target": "substrate:create-something:package:create-something-mcp-core-packages-mcp-core",
@@ -14468,6 +14608,13 @@
       "evidence": "@create-something/ltd declares @create-something/tufte."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-ltd-packages-ltd-runs-substrate-create-something-worker-packages-ltd-wrangler-jsonc",
+      "source": "substrate:create-something:package:create-something-ltd-packages-ltd",
+      "target": "substrate:create-something:worker:packages-ltd-wrangler-jsonc",
+      "relation": "runs",
+      "evidence": "wrangler.jsonc configures runtime for packages/ltd."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-package-arena-curator-packages-ltd-workers-arena-curator-runs-substrate-create-something-worker-packages-ltd-workers-arena-curator-wrangler-toml",
       "source": "substrate:create-something:package:arena-curator-packages-ltd-workers-arena-curator",
       "target": "substrate:create-something:worker:packages-ltd-workers-arena-curator-wrangler-toml",
@@ -14487,6 +14634,13 @@
       "target": "substrate:create-something:package:create-something-canon-packages-canon",
       "relation": "depends_on",
       "evidence": "@create-something/mapping-canvas declares @create-something/canon."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-mapping-canvas-packages-mapping-canvas-runs-substrate-create-something-worker-packages-mapping-canvas-wrangler-jsonc",
+      "source": "substrate:create-something:package:create-something-mapping-canvas-packages-mapping-canvas",
+      "target": "substrate:create-something:worker:packages-mapping-canvas-wrangler-jsonc",
+      "relation": "runs",
+      "evidence": "wrangler.jsonc configures runtime for packages/mapping-canvas."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-package-create-something-maverick-admin-packages-maverick-admin-runs-substrate-create-something-worker-packages-maverick-admin-wrangler-toml",
@@ -14643,6 +14797,13 @@
       "evidence": "wrangler.toml configures runtime for packages/ona-agents."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-operator-chat-agent-packages-operator-chat-agent-runs-substrate-create-something-worker-packages-operator-chat-agent-wrangler-jsonc",
+      "source": "substrate:create-something:package:create-something-operator-chat-agent-packages-operator-chat-agent",
+      "target": "substrate:create-something:worker:packages-operator-chat-agent-wrangler-jsonc",
+      "relation": "runs",
+      "evidence": "wrangler.jsonc configures runtime for packages/operator-chat-agent."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-package-create-something-orchestration-packages-orchestration-depends-on-substrate-create-something-package-create-something-harness-packages-harness",
       "source": "substrate:create-something:package:create-something-orchestration-packages-orchestration",
       "target": "substrate:create-something:package:create-something-harness-packages-harness",
@@ -14669,6 +14830,13 @@
       "target": "substrate:create-something:package:create-something-delivery-schema-packages-delivery-schema",
       "relation": "depends_on",
       "evidence": "@create-something/owned-agent-runtime declares @create-something/delivery-schema."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-owned-agent-runtime-packages-owned-agent-runtime-runs-substrate-create-something-worker-packages-owned-agent-runtime-wrangler-jsonc",
+      "source": "substrate:create-something:package:create-something-owned-agent-runtime-packages-owned-agent-runtime",
+      "target": "substrate:create-something:worker:packages-owned-agent-runtime-wrangler-jsonc",
+      "relation": "runs",
+      "evidence": "wrangler.jsonc configures runtime for packages/owned-agent-runtime."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-package-create-something-playbook-mcp-packages-playbook-mcp-depends-on-substrate-create-something-package-create-something-atlas-composition-packages-atlas-composition",
@@ -14713,11 +14881,25 @@
       "evidence": "@create-something/private-pcn declares @create-something/canon."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-private-pcn-packages-private-pcn-runs-substrate-create-something-worker-packages-private-pcn-wrangler-jsonc",
+      "source": "substrate:create-something:package:create-something-private-pcn-packages-private-pcn",
+      "target": "substrate:create-something:worker:packages-private-pcn-wrangler-jsonc",
+      "relation": "runs",
+      "evidence": "wrangler.jsonc configures runtime for packages/private-pcn."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-package-create-something-quickbooks-notion-mcp-packages-quickbooks-notion-mcp-runs-substrate-create-something-worker-packages-quickbooks-notion-mcp-wrangler-toml",
       "source": "substrate:create-something:package:create-something-quickbooks-notion-mcp-packages-quickbooks-notion-mcp",
       "target": "substrate:create-something:worker:packages-quickbooks-notion-mcp-wrangler-toml",
       "relation": "runs",
       "evidence": "wrangler.toml configures runtime for packages/quickbooks-notion-mcp."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-relay-packages-relay-runs-substrate-create-something-worker-packages-relay-wrangler-jsonc",
+      "source": "substrate:create-something:package:create-something-relay-packages-relay",
+      "target": "substrate:create-something:worker:packages-relay-wrangler-jsonc",
+      "relation": "runs",
+      "evidence": "wrangler.jsonc configures runtime for packages/relay."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-package-create-something-render-pipeline-packages-render-pipeline-depends-on-substrate-create-something-package-create-something-canon-packages-canon",
@@ -14795,6 +14977,13 @@
       "target": "substrate:create-something:package:create-something-tufte-packages-tufte",
       "relation": "depends_on",
       "evidence": "@create-something/space declares @create-something/tufte."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-space-packages-space-runs-substrate-create-something-worker-packages-space-wrangler-jsonc",
+      "source": "substrate:create-something:package:create-something-space-packages-space",
+      "target": "substrate:create-something:worker:packages-space-wrangler-jsonc",
+      "relation": "runs",
+      "evidence": "wrangler.jsonc configures runtime for packages/space."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-package-create-something-agentic-executor-packages-space-workers-agentic-executor-depends-on-substrate-create-something-package-create-something-observability-packages-observability",
@@ -15042,6 +15231,13 @@
       "evidence": "@create-something/webflow-dashboard declares @create-something/webflow-dashboard-core."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-webflow-dashboard-packages-webflow-dashboard-runs-substrate-create-something-worker-packages-webflow-dashboard-wrangler-jsonc",
+      "source": "substrate:create-something:package:create-something-webflow-dashboard-packages-webflow-dashboard",
+      "target": "substrate:create-something:worker:packages-webflow-dashboard-wrangler-jsonc",
+      "relation": "runs",
+      "evidence": "wrangler.jsonc configures runtime for packages/webflow-dashboard."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-package-create-something-webflow-marketplace-sync-packages-webflow-marketplace-sync-runs-substrate-create-something-worker-packages-webflow-marketplace-sync-wrangler-toml",
       "source": "substrate:create-something:package:create-something-webflow-marketplace-sync-packages-webflow-marketplace-sync",
       "target": "substrate:create-something:worker:packages-webflow-marketplace-sync-wrangler-toml",
@@ -15154,11 +15350,25 @@
       "evidence": "wrangler.toml configures runtime for packages/webflow-site-analyzer-mcp/worker."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-package-webflow-site-analyzer-mcp-remote-packages-webflow-site-analyzer-mcp-workers-remote-runs-substrate-create-something-worker-packages-webflow-site-analyzer-mcp-workers-remote-wrangler-jsonc",
+      "source": "substrate:create-something:package:webflow-site-analyzer-mcp-remote-packages-webflow-site-analyzer-mcp-workers-remote",
+      "target": "substrate:create-something:worker:packages-webflow-site-analyzer-mcp-workers-remote-wrangler-jsonc",
+      "relation": "runs",
+      "evidence": "wrangler.jsonc configures runtime for packages/webflow-site-analyzer-mcp/workers/remote."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-package-create-something-webflow-template-agent-packages-webflow-template-agent-runs-substrate-create-something-worker-packages-webflow-template-agent-wrangler-toml",
       "source": "substrate:create-something:package:create-something-webflow-template-agent-packages-webflow-template-agent",
       "target": "substrate:create-something:worker:packages-webflow-template-agent-wrangler-toml",
       "relation": "runs",
       "evidence": "wrangler.toml configures runtime for packages/webflow-template-agent."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-package-webflow-template-analyzer-cloudflare-packages-webflow-template-analyzer-cloudflare-runs-substrate-create-something-worker-packages-webflow-template-analyzer-cloudflare-wrangler-jsonc",
+      "source": "substrate:create-something:package:webflow-template-analyzer-cloudflare-packages-webflow-template-analyzer-cloudflare",
+      "target": "substrate:create-something:worker:packages-webflow-template-analyzer-cloudflare-wrangler-jsonc",
+      "relation": "runs",
+      "evidence": "wrangler.jsonc configures runtime for packages/webflow-template-analyzer/cloudflare."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-package-create-something-webflow-template-review-mcp-packages-webflow-template-review-mcp-runs-substrate-create-something-worker-packages-webflow-template-review-mcp-worker-wrangler-toml",
@@ -15194,6 +15404,13 @@
       "target": "substrate:create-something:package:create-something-gsap-validation-worker-packages-gsap-validation-worker",
       "relation": "depends_on",
       "evidence": "@create-something/webflow-template-validation-worker declares @create-something/gsap-validation-worker."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-webflow-template-validation-worker-packages-webflow-template-validation-worker-runs-substrate-create-something-worker-packages-webflow-template-validation-worker-wrangler-jsonc",
+      "source": "substrate:create-something:package:create-something-webflow-template-validation-worker-packages-webflow-template-validation-worker",
+      "target": "substrate:create-something:worker:packages-webflow-template-validation-worker-wrangler-jsonc",
+      "relation": "runs",
+      "evidence": "wrangler.jsonc configures runtime for packages/webflow-template-validation/worker."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-package-create-something-webflow-template-views-packages-webflow-template-views-runs-substrate-create-something-worker-packages-webflow-template-views-wrangler-toml",
@@ -16013,6 +16230,13 @@
       "target": "substrate:create-something:root",
       "relation": "documents",
       "evidence": "docs/guides/HYDRA_DB_GOVERNED_RECALL.md is an operating guide."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-identity-recovery-repair-md-documents-substrate-create-something-root",
+      "source": "substrate:create-something:guide:docs-guides-identity-recovery-repair-md",
+      "target": "substrate:create-something:root",
+      "relation": "documents",
+      "evidence": "docs/guides/identity-recovery-repair.md is an operating guide."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-judgment-layer-dogfood-playbook-md-documents-substrate-create-something-root",
@@ -17021,6 +17245,13 @@
       "target": "substrate:create-something:package:create-something-hydra-db-recall-mcp-packages-hydra-db-recall-mcp",
       "relation": "documents",
       "evidence": "docs/guides/HYDRA_DB_GOVERNED_RECALL.md documents packages/hydra-db-recall-mcp through matching topology terms."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-identity-recovery-repair-md-documents-substrate-create-something-package-create-something-identity-worker-packages-identity-worker",
+      "source": "substrate:create-something:guide:docs-guides-identity-recovery-repair-md",
+      "target": "substrate:create-something:package:create-something-identity-worker-packages-identity-worker",
+      "relation": "documents",
+      "evidence": "docs/guides/identity-recovery-repair.md documents packages/identity-worker through matching topology terms."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-judgment-layer-dogfood-playbook-md-documents-substrate-create-something-package-create-something-arc-packages-arc",

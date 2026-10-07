@@ -171,7 +171,7 @@ test('public agency surfaces explain ownership and provider roles', () => {
   const home = readFileSync(new URL('../src/routes/+page.svelte', import.meta.url), 'utf8');
   const stack = readFileSync(new URL('../src/routes/stack/+page.svelte', import.meta.url), 'utf8');
   const partners = readFileSync(new URL('../src/routes/partners/+page.svelte', import.meta.url), 'utf8');
-  assert.match(home, /You keep the code, instructions, tests/);
+  assert.match(home, /you own commissioned deliverables under your agreement, except reusable provider tools/);
   assert.match(home, /ownership and provider details/);
   assert.match(stack, /Your project keeps its data, code, tool definitions, instructions, tests, and recovery guide/);
   assert.match(stack, /A different model must pass the relevant checks before you switch/);
@@ -184,11 +184,15 @@ test('the builder-facing homepage retains commercial terms, film evidence and di
   const registry = readFileSync(new URL('../src/lib/data/filmStories.ts', import.meta.url), 'utf8');
   assert.match(home, /<AgencyHero/);
   assert.match(home, /<MembershipOffer/);
-  assert.match(hero, /Tech support for your team’s tools and systems/);
+  assert.match(hero, /AI-native technical support/);
+  assert.match(hero, /Keep your tools working/);
   assert.match(registry, /Your next step, already prepared/);
-  assert.match(hero, /You keep the delivered code, records and approval authority/);
-  assert.match(hero, /one agreed workstream/);
-  assert.match(hero, /managed Control have separate agreements/);
+  const membership = readFileSync(new URL('../src/lib/components/MembershipOffer.svelte', import.meta.url), 'utf8');
+  const services = readFileSync(new URL('../src/routes/services/+page.svelte', import.meta.url), 'utf8');
+  assert.match(membership, /under your agreement/);
+  assert.match(membership, /one agreed workstream/);
+  assert.match(membership, /production incident response need separate agreements/);
+  assert.match(services, /Control starts at \$900\/month/);
   assert.match(registry, /tools and workflows that help agents do useful work/);
   assert.match(hero, /href="\/agent-foundation"/);
   assert.match(hero, /reducedFilmMotion/);
@@ -201,17 +205,17 @@ test('commercial decision routes explain the task, delivery, ownership, and proo
   const read = (route: string) => readFileSync(new URL(`../src/routes/${route}`, import.meta.url), 'utf8');
   const home = read('+page.svelte');
   const layout = read('+layout.svelte');
-  assert.match(layout, /label: 'How It Works', href: '\/services'/);
+  assert.match(layout, /label: 'Technical Support', href: '\/services'/);
   assert.match(layout, /label: 'What You Keep', href: '\/stack'/);
   assert.match(home, /We test an agreed example and a failure case/);
   assert.match(home, /Your team reviews the result before launch/);
   assert.match(read('services/+page.svelte'), /Bring a workflow, software problem or existing product/);
-  assert.match(read('services/+page.svelte'), /You keep the delivered code and approval authority/);
+  assert.match(read('services/+page.svelte'), /Your team keeps approval authority/);
   assert.match(read('services/+page.svelte'), /one agreed workstream/);
-  assert.match(read('services/+page.svelte'), /managed Control have separate agreements/);
+  assert.match(read('services/+page.svelte'), /Managed Control starts at \$900\/month/);
   assert.match(read('products/+page.svelte'), /Map and Control are subscriptions/);
   assert.match(read('products/+page.svelte'), /Control includes Map/);
-  assert.match(read('stack/+page.svelte'), /You keep the accounts, data, approval rights, and operating history/);
+  assert.match(read('stack/+page.svelte'), /Your accounts, data, and decisions stay with your team/);
   assert.match(read('proof/marketplace-workflow/+page.svelte'), /prototype measurements, not customer ROI claims/);
 });
 
@@ -479,7 +483,11 @@ test('public stack positioning names the owned Cloudflare and OpenAI boundary', 
   const dify = readFileSync(new URL('../src/routes/dify/+page.svelte', import.meta.url), 'utf8');
 
   assert.match(stack, /Our database system stores the records, tasks, approvals, and work history/i);
-  assert.match(partners, /CREATE SOMETHING owns the system/i);
+  assert.match(partners, /CREATE SOMETHING maintains the system layer for agreed support/i);
+  assert.doesNotMatch(partners, /CREATE SOMETHING owns the system/i);
+  assert.match(partners, /Your materials and agreed deliverables remain distinct from our reusable tools/i);
+  assert.match(stack, /After full payment, you own specifically commissioned deliverables, except our reusable tools/i);
+  assert.match(stack, /Incorporated provider tools are licensed for continued use/i);
   assert.match(partners, /Cloudflare provides infrastructure/i);
   assert.match(partners, /OpenAI provides intelligence/i);
   assert.doesNotMatch(stack, /Dify .{0,80}(?:active|current|runtime)/i);
@@ -528,7 +536,7 @@ test('agency README documents the public copy contract', () => {
   assert.match(source, /plain customer ownership\s+language/);
   assert.match(source, /### Current System Stack Contract/);
   assert.match(source, /Substrate is the owned database and operator layer/);
-  assert.match(source, /CREATE SOMETHING owns the system/);
+  assert.match(source, /CREATE SOMETHING maintains the system layer for agreed support/);
   assert.match(source, /Cloudflare provides infrastructure/);
   assert.match(source, /OpenAI[\s>]+provides intelligence/);
   assert.match(source, /### Compatibility Proof Contract/);

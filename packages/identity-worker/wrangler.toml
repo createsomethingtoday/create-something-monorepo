@@ -15,6 +15,9 @@ routes = [{ pattern = "id.createsomething.space", custom_domain = true }]
 
 [vars]
 PUBLIC_ENROLLMENT_ENABLED = "false"
+# Separate policy activations require reviewed production approval, not deployment alone.
+VERIFIED_RECOVERY_ENABLED = "false"
+ENROLLMENT_INVITATIONS_ENABLED = "false"
 PCN_ENROLLMENT_ENABLED = "false"
 # Controlled mailbox verification; current PCN invitation eligibility is still required.
 PCN_ENROLLMENT_CANARY_EMAILS = "micah+private-acceptance@createsomething.io"

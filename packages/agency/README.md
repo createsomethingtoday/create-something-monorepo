@@ -1,8 +1,12 @@
 # CREATE SOMETHING Agency
 
-**createsomething.agency** — Playbooks for AI-native operations
+**createsomething.agency** — AI-native technical support
 
-We give operators and AI the same Playbook, then make its Runbooks executable.
+CREATE SOMETHING provides AI-native technical support for your team’s tools and workflows. We diagnose problems, implement improvements, and help your team use what we deliver.
+
+The recurring support relationship preserves project context. Draw supports diagnosis and agreement; engineering delivers changes; PCN supports learning. Resource access, scope and response times are confirmed before payment.
+
+Focused membership is $900/month for one agreed workstream and one milestone. Team is $2,500/month for up to two workstreams and two milestones. Managed Control separately starts at $900/month for agreed live operations. Larger Builds and project costs remain separately scoped.
 
 ---
 
@@ -13,8 +17,9 @@ We give operators and AI the same Playbook, then make its Runbooks executable.
 | Name | Job |
 |------|-----|
 | **CREATE SOMETHING Playbook** | Client-owned operating system: objectives, roles, systems, authority, Plays, Runbooks, evidence, recovery, and review. |
-| **Operating systems for AI work** | Plain-language category: one mapped workflow with a named decision boundary and inspectable proof. |
-| **AI workflow systems** | Public category: business workflows with connected tools, scoped AI tasks, approvals, stop conditions, and audit trails. |
+| **Operating systems for AI work** | System description: one mapped workflow with a named decision boundary and inspectable proof. |
+| **AI-native technical support** | Public category: recurring diagnosis, engineering improvements and learning support within agreed boundaries. |
+| **AI workflow systems** | Technical capability: business workflows with connected tools, scoped AI tasks, approvals, stop conditions, and audit trails. |
 | **Delegated Work Control** | Internal thesis layer: what can run, what waits, what stops, who owns the decision, and what evidence proves the work. |
 | **Workflow Trust Layer** | Internal service-language layer for governed execution around a workflow. |
 | **CREATE SOMETHING Map** | Standalone subscription for a living workflow definition. |
@@ -204,8 +209,9 @@ The current operating boundary is:
 
 Substrate is the owned database and operator layer.
 
-> CREATE SOMETHING owns the system. Cloudflare provides infrastructure. OpenAI
-> provides intelligence.
+> CREATE SOMETHING maintains the system layer for agreed support. Cloudflare provides infrastructure. OpenAI provides intelligence.
+
+Operational responsibility does not transfer client ownership. The MSA §§4.1–4.4 retains client materials and assigns specifically commissioned deliverables after full payment, except Provider Tools. Pre-existing and generic tools remain provider-owned; incorporated tools carry the documented license. The signed agreement and scope govern each engagement.
 
 - **Substrate** owns source records, workflow state, human review, decisions,
   receipts, and API/MCP access.

@@ -21,6 +21,7 @@ import {
 } from '../types';
 import { fetchHTML, isPlatformManagedHeading, parseHTML } from '../utils/fetch-utils';
 import { analyzeHeadingSequence, extractDocumentOutline, visibleOutlineHeadings } from '../utils/document-outline';
+import { isWebflowGeneratedVideoPosterSource } from '../utils/asset-utils';
 
 const LOREM_IPSUM_PATTERNS = [
 	/lorem\s+ipsum/i,
@@ -456,10 +457,6 @@ function isLikelyPlatformVideoFallbackImage(img: HTMLImageElement | any): boolea
 	);
 }
 
-function isWebflowGeneratedVideoPosterSource(src: string): boolean {
-	return /(?:^|[/_-])[^/?#]*(?:[_-]poster|poster)\.\d+\.(?:jpe?g|png|webp|avif)(?:$|[?#])/.test(src);
-}
-
 function getImageSource(img: HTMLImageElement | any): string {
 	return img.getAttribute?.('src') || img.getAttribute?.('data-src') || img.src || 'unknown';
 }
@@ -581,7 +578,7 @@ function extractSEOData(parsedHTML: ParsedHTML): PageSEOData {
 	const metaDescElement = document.querySelector('meta[name="description"]');
 	const metaDescription = metaDescElement?.getAttribute('content')?.trim() || null;
 	const metaDescriptionLength = metaDescription?.length || 0;
-	const hasValidDescription = metaDescription !== null && metaDescriptionLength >= 120 && metaDescriptionLength <= 160;
+	const hasValidDescription = metaDescription !== null && metaDescriptionLength >= 150 && metaDescriptionLength <= 160;
 
 	// Open Graph data extraction
 	const ogTitle = document.querySelector('meta[property="og:title"]')?.getAttribute('content')?.trim() || null;
@@ -1013,22 +1010,22 @@ function generateSEOIssues(pages: AnalyzedPage[]): ValidationIssue[] {
 				severity: 'error',
 				message: `"${pageName}" is missing a meta description`,
 				description: 'Meta descriptions are essential for SEO and appear in search results.',
-				howToFix: 'Add a compelling meta description (120-160 characters) that summarizes the page content',
+				howToFix: 'Add a compelling meta description (150-160 characters) that summarizes the page content',
 				location: page.url,
 				details: {
 					page: pageName,
 					url: page.url,
 					currentDescription: seo.metaDescription,
-					recommendedLength: '120-160 characters'
+					recommendedLength: '150-160 characters'
 				}
 			});
-		} else if (seo.metaDescriptionLength < 120) {
+		} else if (seo.metaDescriptionLength < 150) {
 			seoIssues.push({
 				id: `description-too-short-${generatePageId(page.url)}`,
 				category: 'Content & Accessibility',
 				severity: 'warning',
 				message: `"${pageName}" meta description is too short (${seo.metaDescriptionLength} characters)`,
-				description: 'Meta descriptions should be 120-160 characters for optimal search result display.',
+				description: 'Meta descriptions should be 150-160 characters for optimal search result display.',
 				howToFix: 'Expand the meta description to include more compelling details about the page',
 				location: page.url,
 				details: {
@@ -1036,7 +1033,7 @@ function generateSEOIssues(pages: AnalyzedPage[]): ValidationIssue[] {
 					url: page.url,
 					currentLength: seo.metaDescriptionLength,
 					currentDescription: seo.metaDescription,
-					recommendedLength: '120-160 characters'
+					recommendedLength: '150-160 characters'
 				}
 			});
 		} else if (seo.metaDescriptionLength > 160) {
@@ -1053,7 +1050,7 @@ function generateSEOIssues(pages: AnalyzedPage[]): ValidationIssue[] {
 					url: page.url,
 					currentLength: seo.metaDescriptionLength,
 					currentDescription: seo.metaDescription,
-					recommendedLength: '120-160 characters'
+					recommendedLength: '150-160 characters'
 				}
 			});
 		}

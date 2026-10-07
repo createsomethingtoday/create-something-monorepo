@@ -281,7 +281,7 @@ test('Control and Services present the approved Managed AI Operations offer', ()
     'utf8'
   );
 
-  assert.match(controlRoute, /Managed AI Operations/);
+  assert.match(controlRoute, /Managed Live Operations/);
   assert.equal(PUBLIC_PRICING.managedControl.startingMonthlyUsd, 900);
   assert.match(controlRoute, /PUBLIC_PRICING\.managedControl\.longLabel/);
   assert.match(controlRoute, /No per-agent fees/);

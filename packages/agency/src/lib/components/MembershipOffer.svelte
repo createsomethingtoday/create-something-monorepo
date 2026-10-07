@@ -14,7 +14,7 @@
     {
       question: 'Is this the same as managed Control?',
       answer:
-        'No. Membership covers agreed delivery work, learning and operator support. Managed Control is a separate agreement for monitoring and supporting an agreed live system after launch. Production incident response is not included in membership.'
+        'No. Focused membership is $900/month for agreed improvements, learning and operator support. Managed Control starts at $900/month for agreed live operations. Managed Control is a separate agreement for monitoring and supporting an agreed live system after launch. Production incident response is not included in membership.'
     },
     {
       question: 'Who provides the support?',
@@ -57,11 +57,11 @@
 <section id="membership" class="membership" aria-labelledby="membership-title">
   <div class="offer">
     <div class="offer-intro">
-      <p class="eyebrow">CREATE SOMETHING membership</p>
+      <p class="eyebrow">AI-native technical support membership</p>
       <h2 id="membership-title">Choose the support your work needs.</h2>
       <p>
-        Bring a workflow, software problem or existing product. We agree on the work and help your
-        team build, learn and use the result.
+        Bring a workflow, software problem or existing product. We diagnose the problem, agree on the change,
+        engineer and test it, then help your team use the result. We retain project context across agreed work.
       </p>
     </div>
     <div class="plans">
@@ -69,7 +69,7 @@
         <p class="eyebrow">One workstream</p>
         <h3 id="focused-plan-title">Focused</h3>
         <p class="price">{PUBLIC_PRICING.membership.focused.label}</p>
-        <p>For one agreed workstream at a time, with delivery, learning and operator support.</p>
+        <p>For one agreed workstream at a time, with diagnosis, engineering, learning and operator support.</p>
         <ul>
           <li>{PUBLIC_PRICING.membership.focused.checkInsPerMonth} × {PUBLIC_PRICING.membership.focused.checkInMinutes}-minute check-ins each billing month</li>
           <li>{PUBLIC_PRICING.membership.focused.remoteSessionsPerMonth} × {PUBLIC_PRICING.membership.focused.remoteSessionMinutes}-minute attended remote work sessions</li>
@@ -98,7 +98,7 @@
     {/if}
   </div>
   {#if compact}
-    <p class="ownership-summary">You keep the code, tests and instructions. <a href="/services">See how delivery works →</a> <a href="/stack">What you keep →</a></p>
+    <p class="ownership-summary">You keep the agreed code, tests and instructions under your agreement, with reusable tools licensed for continued use. <a href="/services">See how delivery works →</a> <a href="/stack">What you keep →</a></p>
   {/if}
   <div class="cost-boundary" aria-labelledby="cost-boundary-title">
     <p class="eyebrow">Delivery and usage are separate</p>

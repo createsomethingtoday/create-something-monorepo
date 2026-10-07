@@ -2,12 +2,12 @@
   "id": "substrate:create-something:topology-diagnostics:internal",
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
-  "generatedAt": "2026-09-30T14:04:28.546Z",
+  "generatedAt": "2026-10-06T14:17:55.778Z",
   "summary": {
     "valueState": "connected_map_with_review_signals",
-    "nodes": 543,
-    "edges": 1122,
-    "mapped": 543,
+    "nodes": 546,
+    "edges": 1148,
+    "mapped": 546,
     "hardGapCount": 0,
     "reviewSignalCount": 6,
     "exactDuplicatePathCount": 0,
@@ -19,16 +19,16 @@
       "agent": 35,
       "mcp": 77,
       "client": 8,
-      "worker": 169,
+      "worker": 171,
       "doc": 6,
       "policy": 64,
-      "guide": 78,
+      "guide": 79,
       "config": 24
     },
     "tierCounts": {
-      "Mixed": 129,
+      "Mixed": 131,
       "Judgment": 108,
-      "Automation": 278,
+      "Automation": 279,
       "Database": 28
     }
   },
@@ -60,11 +60,11 @@
       "classification": "review_signal",
       "severity": "review",
       "title": "Automation and Database balance",
-      "summary": "Automation has 278 record(s); Database has 28 record(s). This is a business-shape review signal, not a hard gap.",
+      "summary": "Automation has 279 record(s); Database has 28 record(s). This is a business-shape review signal, not a hard gap.",
       "evidence": [
-        "Automation=278",
+        "Automation=279",
         "Database=28",
-        "Total nodes=543"
+        "Total nodes=546"
       ],
       "nodeIds": [],
       "paths": [],
@@ -75,7 +75,7 @@
       "classification": "review_signal",
       "severity": "review",
       "title": "Worker surface concentration",
-      "summary": "169 worker record(s) carry runtime delivery context. This is where Substrate receipts and Cloudflare proof matter most.",
+      "summary": "171 worker record(s) carry runtime delivery context. This is where Substrate receipts and Cloudflare proof matter most.",
       "evidence": [
         "worker: packages/agency",
         "worker: packages/agency/workers/social-poster",
@@ -145,7 +145,7 @@
       "classification": "review_signal",
       "severity": "review",
       "title": "worker surface review",
-      "summary": "169 record(s) are classified as worker.",
+      "summary": "171 record(s) are classified as worker.",
       "evidence": [
         "@create-something/agency: packages/agency",
         "social-poster-worker: packages/agency/workers/social-poster",
@@ -188,7 +188,7 @@
       "classification": "review_signal",
       "severity": "review",
       "title": "guide surface review",
-      "summary": "78 record(s) are classified as guide.",
+      "summary": "79 record(s) are classified as guide.",
       "evidence": [
         "AGENCY_ARTICLE_IMAGE_WORKFLOW.md: docs/guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md",
         "AGENCY_GOVERNANCE_PRODUCTS_OPERATIONS_RUNBOOK.md: docs/guides/AGENCY_GOVERNANCE_PRODUCTS_OPERATIONS_RUNBOOK.md",

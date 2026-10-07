@@ -211,6 +211,11 @@ function pageFileForRoute(route) {
 
 function sourceFilesForEntry(entry) {
   const files = [pageFileForRoute(entry.sourceRoute ?? entry.path)];
+  // The homepage composes its public argument in shared components. Audit the rendered copy too.
+  if (entry.path === '/') {
+    files.push(...['films/AgencyHero.svelte', 'ServiceJourney.svelte', 'BuiltWork.svelte', 'MembershipOffer.svelte']
+      .map((file) => path.join(packageRoot, 'src/lib/components', file)));
+  }
   if (entry.sourceRoute === '/workflows/[slug]') {
     files.push(path.join(packageRoot, 'src/lib/data/workflowPages.ts'));
   }

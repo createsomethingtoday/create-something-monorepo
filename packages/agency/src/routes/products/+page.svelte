@@ -1,4 +1,5 @@
 <script lang="ts">
+  import WorkflowSignalBand from '$lib/components/WorkflowSignalBand.svelte';
   import {
     Button,
     PerformanceCampaignOpening,
@@ -140,7 +141,7 @@
 
 <SEO
   title="Services & tools | CREATE SOMETHING .agency"
-  description="Plan with Map, implement with Build, and support live work with Control. Compare the services and the tools included."
+  description="Tools and services for AI-native technical support. Plan with Map, implement with Build, and support agreed live work with separate managed Control."
   keywords="workflow mapping subscription, AI workflow control, governed execution, workflow implementation service, operator surfaces"
   ogImage="/og-image.png"
   propertyName="agency"
@@ -152,7 +153,7 @@
   eyebrow="Services & tools"
   expression="editorial"
   title="Three ways to work together."
-  lede="Map defines the workflow. Build creates or improves agreed software. Control operates agreed live systems with approvals and records. You keep the delivered code and approval authority."
+  lede="Map defines the workflow. Build creates or improves agreed software. Control operates agreed live systems with approvals and records. Deliverable ownership follows your agreement; reusable provider tools are licensed for continued use. Your team keeps approval authority."
   density="compact"
 >
   {#snippet actions()}
@@ -160,6 +161,7 @@
   {/snippet}
   {#snippet artifact()}<AgencyProductJunction />{/snippet}
 </PerformanceCampaignOpening>
+<WorkflowSignalBand motionOnly quiet tall showMotionControl />
 <div class="products-paths"><AgencyPathChoices label="Choose a product path" /></div>
 </div>
 
@@ -179,7 +181,7 @@
   id="choose-product"
   eyebrow="Ways to work together"
   title="How we work together."
-  description="Map and Control are subscriptions. Build is quoted for the agreed project. Control includes Map and the views for incoming work, approvals, and results."
+  description="Our technical support membership helps with scoped improvements and learning. Map and Control are subscriptions. Build is quoted for the agreed project. Control includes Map and the views for incoming work, approvals, and results."
   scenes={productScenes}
   ariaLabel="Choose a CREATE SOMETHING product path"
 >

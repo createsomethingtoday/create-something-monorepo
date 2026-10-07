@@ -610,6 +610,32 @@ describe('Designer Validator', () => {
 			expect(seoCategory!.issues.find(i => i.id === 'seo.missing-description')).toBeUndefined();
 		});
 
+		it('warns, without failing SEO Metadata, when Designer meta descriptions are under 150 characters', async () => {
+		const result = await validateDesignerData({
+			variables: { collections: [] },
+			components: [],
+			styles: [],
+			pages: [
+				{
+					id: 'p1', name: 'Home', slug: '', type: 'Page', isHomePage: true, publishPath: '/',
+					seo: { title: 'Acme - Webflow HTML website template', description: 'D'.repeat(155), openGraphImage: 'https://example.com/og.jpg' }
+				},
+				{
+					id: 'p2', name: 'About', slug: 'about', type: 'Page', publishPath: '/about',
+					seo: { title: 'About Acme', description: 'E'.repeat(130) }
+				}
+			],
+			assets: []
+		} as any);
+
+		const seoCategory = result.categories.find(c => c.category === 'SEO Metadata');
+		const short = seoCategory!.issues.find(i => i.id === 'seo.description-too-short');
+		expect(short?.severity).toBe('warning');
+		expect(JSON.stringify(short?.details)).toContain('About');
+		expect(JSON.stringify(short?.details)).not.toContain('Home');
+		expect(seoCategory!.passed).toBe(true);
+	});
+
 		it('passes SEO Metadata when every page has unique metadata and the home page has an OG image', async () => {
 		const result = await validateDesignerData({
 			variables: { collections: [] },
@@ -1048,6 +1074,43 @@ describe('Content Validator', () => {
 		expect(issues.map(i => i.id)).toEqual(['missing-alt-text']);
 	});
 
+	it('flags meta descriptions shorter than 150 characters to match the submission guidelines', () => {
+		const pageWithDescriptionLength = (length: number) => ({
+			url: `https://example.com/page-${length}`,
+			title: `Page ${length}`,
+			hasLoremIpsum: false,
+			headingHierarchy: { h1Count: 1, hasSkippedLevels: false, structure: [] },
+			imageCount: 0,
+			imagesWithoutAlt: 0,
+			seo: {
+				title: 'A descriptive page title for testing',
+				titleLength: 36,
+				metaDescription: 'x'.repeat(length),
+				metaDescriptionLength: length,
+				hasValidTitle: true,
+				hasValidDescription: length >= 150 && length <= 160,
+				openGraph: { title: 'og', description: 'og', image: 'og.jpg', url: null },
+				twitterCard: { title: null, description: null, image: null },
+				canonical: null,
+				robots: null
+			}
+		});
+
+		const issues = generateContentIssues([pageWithDescriptionLength(130), pageWithDescriptionLength(155)] as any, {
+			lorem: false,
+			headings: false,
+			altText: false,
+			seo: true,
+			links: false,
+			contentQuality: false
+		});
+
+		const shortIssues = issues.filter(i => i.id.startsWith('description-too-short'));
+		expect(shortIssues).toHaveLength(1);
+		expect(shortIssues[0].location).toBe('https://example.com/page-130');
+		expect(shortIssues[0].details?.recommendedLength).toBe('150-160 characters');
+	});
+
 	it('can run only the lorem/placeholder check', () => {
 		const pages: any[] = [{
 			url: 'https://example.com/',
@@ -1442,6 +1505,56 @@ describe('Asset Validator', () => {
 			severity: 'error',
 			message: '1 assets exceed the 4MB maximum file size'
 		}));
+	});
+
+	it('does not ask creators to compress Webflow-generated video posters', () => {
+		// Real filename from a creator report (community.webflow.com, Sep 2026): a 177KB poster frame
+		// Webflow extracted from a background video. Creators cannot replace or compress it.
+		const posterName = '6aa109925d5dbc5060f776eb%2F6aa273caf7b2994b8b92b968_counter-bg-video_poster.0000000.jpg';
+		const issues = generateAssetIssues([
+			{
+				name: posterName,
+				url: `https://cdn.prod.website-files.com/6aa109925d5dbc5060f776eb/${posterName}`,
+				size: 177 * 1024,
+				format: 'image/jpeg',
+				isOptimized: false,
+				usageCount: 1,
+				hasLicensingIssues: false
+			},
+			{
+				name: 'hero.jpg',
+				url: 'https://cdn.prod.website-files.com/6aa109925d5dbc5060f776eb/hero.jpg',
+				size: 200 * 1024,
+				format: 'image/jpeg',
+				isOptimized: false,
+				usageCount: 1,
+				hasLicensingIssues: false
+			}
+		]);
+
+		const compressionIssue = issues.find((issue) => issue.id === 'assets-above-compression-target');
+		expect(compressionIssue?.message).toBe('1 assets are above the 150KB compression target');
+		expect(compressionIssue?.details?.oversizedAssets).toEqual([expect.objectContaining({ name: 'hero.jpg' })]);
+
+		const optimizationIssue = issues.find((issue) => issue.id === 'assets-not-optimized');
+		expect(optimizationIssue?.details?.unoptimizedAssets).toEqual([expect.objectContaining({ name: 'hero.jpg' })]);
+	});
+
+	it('still blocks Webflow-generated video posters above the 4MB maximum', () => {
+		const issues = generateAssetIssues([
+			{
+				name: 'hero-video_poster.0000000.jpg',
+				url: 'https://cdn.prod.website-files.com/site/hero-video_poster.0000000.jpg',
+				size: 5 * 1024 * 1024,
+				format: 'image/jpeg',
+				isOptimized: false,
+				usageCount: 1,
+				hasLicensingIssues: false
+			}
+		]);
+
+		expect(issues.find((issue) => issue.id === 'assets-above-compression-target')).toBeUndefined();
+		expect(issues.find((issue) => issue.id === 'assets-extremely-large')?.message).toBe('1 assets exceed the 4MB maximum file size');
 	});
 });
 

@@ -15,7 +15,7 @@
 </script>
 
 <SEO title="Remote Software & Workflow Support for DFW | CREATE SOMETHING"
-  description="Remote AI-native tech support for DFW businesses’ software and workflows. Get help with automations, integrations, forms and AI-built projects."
+  description="Remote AI-native technical support for DFW businesses’ software and workflows. Get help with automations, integrations, forms and AI-built projects."
   canonical="https://createsomething.agency/dfw-tech-support" propertyName="agency" />
 
 <div class="dfw-support property-performance" data-performance-mode="proof">
@@ -23,7 +23,7 @@
     <div>
       <p class="eyebrow">DFW · Remote software support</p>
       <h1 id="support-title">Keep the software your business depends on working.</h1>
-      <p class="lede">Remote AI-native tech support for DFW businesses’ software and workflows.</p>
+      <p class="lede">Remote AI-native technical support for DFW businesses’ software and workflows.</p>
       <p>Bring a broken automation, a failing integration, a form that loses leads, or an AI-built project you need help maintaining.</p>
       <Button href={inquiryHref} onclick={trackInquiry}>Describe the support problem</Button>
       <p class="boundary">We agree on scope, price and access before work begins. Support is remote; hardware repair and on-site visits are outside this service.</p>

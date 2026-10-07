@@ -56,7 +56,7 @@
         <iframe src="https://draw.createsomething.agency/?embed=agency" title="Draw — CREATE SOMETHING workflow mapping canvas" loading="lazy" allow="clipboard-write"></iframe>
         <p class="draw-note">Draw saves drafts in this browser. Export a copy to keep it; publishing a view-only link is a separate action in Draw. If the embedded canvas cannot load or save, use <a href={drawHref} target="_blank" rel="noreferrer">Draw in its own tab</a>.</p>
       </div>
-      <p class="mapping-boundary">Start with workflow context. Keep credentials and private customer records out of a public mapping exercise.</p>
+      <p class="mapping-boundary">Start with workflow context: name the systems, workflow owner, and approvals. Bring the drawing as booking context when you <a href="/book">book a mapping session</a>. We use it to diagnose the problem and agree on the next improvement. Keep credentials and private customer records out of a public mapping exercise.</p>
     {/snippet}
   </PerformancePageSection>
 

@@ -8,6 +8,7 @@
  */
 
 import type { Env, ErrorResponse, TokenResponse, UserResponse, JWTPayload, CrossDomainToken, User } from './types';
+import { accountPage } from './services/account-page';
 import { hashPassword, verifyPassword, generateUUID, hashToken, generateSecureToken } from './services/crypto';
 import { createSignedToken, generateTokens, refreshTokens, getJWKS, validateJWT, importPublicKey } from './services/tokens';
 import {
@@ -75,6 +76,7 @@ import {
 	revokeOAuthRefreshFamily,
 } from './db/queries';
 import { startEnrollment, completeEnrollment, enrollmentOpen } from './services/enrollment';
+import { manageEnrollmentInvitation } from './services/enrollment-invitations';
 import { sendVerificationEmail, sendDeletionConfirmationEmail } from './services/email';
 import { claimLmsMagicProof, hashMailboxMagicToken, verifyLmsMagicExchangeToken } from './services/magic-auth';
 import type { RolloutConfig } from '@create-something/policy-os-engine';
@@ -115,6 +117,13 @@ export default {
 
 // Router
 async function route(request: Request, env: Env, method: string, path: string): Promise<Response> {
+  if (method === 'GET') {
+    // Registered OAuth clients retain their existing validation and code/PKCE flow.
+    if (path === '/login' && new URL(request.url).searchParams.has('client_id'))
+      return handleOAuthAuthorizePage(request, env);
+    const page = accountPage(path);
+    if (page) return page;
+  }
 	// Health check
 	if (path === '/' && method === 'GET') {
 		return json({ service: 'identity-worker', version: '0.1.0', status: 'healthy' });
@@ -128,7 +137,7 @@ async function route(request: Request, env: Env, method: string, path: string): 
 	if (path === '/.well-known/create-something-auth' && method === 'GET') {
 		const enabled = enrollmentOpen(env) && !!env.RESEND_API_KEY;
 		const contract = createAuthPlatformContract(new URL(request.url).origin, { enrollmentEnabled: enabled, enrollmentMode: env.PUBLIC_ENROLLMENT_ENABLED === 'true' ? 'public' : 'restricted' });
-		return json(contract, 200, {
+		return json({ ...contract, recovery: { enabled: !!env.RESEND_API_KEY && (env.VERIFIED_RECOVERY_ENABLED === 'true' || enrollmentOpen(env)), mode: env.VERIFIED_RECOVERY_ENABLED === 'true' ? 'verified-existing-accounts' : 'legacy-enrollment' } }, 200, {
 			'Cache-Control': 'public, max-age=300',
 		});
 	}
@@ -163,6 +172,23 @@ async function route(request: Request, env: Env, method: string, path: string): 
 	// Auth endpoints
 	if (path === '/v1/auth/enrollment/start' && method === 'POST') return startEnrollment(request, env);
 	if (path === '/v1/auth/enrollment/complete' && method === 'POST') return completeEnrollment(request, env);
+  if (
+    (path === '/v1/auth/enrollment/invitations' && ['GET', 'POST'].includes(method)) ||
+    (/^\/v1\/auth\/enrollment\/invitations\/[a-f0-9-]{36}\/revoke$/.test(path) && method === 'POST')
+  ) {
+    if (env.ENROLLMENT_INVITATIONS_ENABLED !== 'true') return json({ error: 'not_found' }, 404);
+    const auth = await authenticateApiKeyForPermissions(request, env, [
+      'enrollment_invitation_manage'
+    ]);
+    if (!auth.ok) return json({ error: auth.error }, auth.status);
+    return manageEnrollmentInvitation(
+      request,
+      env,
+      auth.actor,
+      path.endsWith('/revoke') ? 'revoke' : method === 'GET' ? 'list' : 'issue',
+      path.endsWith('/revoke') ? path.split('/')[5] : undefined
+    );
+  }
 	if (path === '/v1/auth/signup' && method === 'POST') return handleSignup(request, env);
 	if (path === '/v1/auth/login' && method === 'POST') return handleLogin(request, env);
 	if (path === '/v1/auth/magic-login' && method === 'POST') return handleLegacyMagicAuth();

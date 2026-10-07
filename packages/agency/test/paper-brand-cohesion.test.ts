@@ -113,13 +113,15 @@ test('the Agency opening exposes the owned handoff and inspection path without a
 
   assert.match(home, /<AgencyHero/);
   const hero = read('src/lib/components/films/AgencyHero.svelte');
-  assert.match(hero, /agentFoundationRepository/);
-  assert.match(hero, /Handoff example/);
-  assert.match(hero, /Going live is scoped separately/);
+  const journey = read('src/lib/components/ServiceJourney.svelte');
+  assert.match(journey, /Illustrative service journey/);
+  assert.match(journey, /Agree the change/);
+  assert.match(journey, /Checked handoff/);
+  assert.match(hero, /CanonServiceGuide/);
   assert.match(hero, /PUBLIC_PRICING.membership.label/);
   assert.match(hero, /href="#built-work"/);
   assert.ok(home.indexOf('<BuiltWork') < home.indexOf('<FilmCollection'));
-  assert.match(home, /You keep the code/);
+  assert.match(home, /you own commissioned deliverables under your agreement/);
   assert.match(home, /what AI may do/);
   assert.match(home, /what needs approval/);
   assert.doesNotMatch(home, /OpenAI[^\n]{0,80}<img|Cloudflare[^\n]{0,80}<img/);
@@ -247,7 +249,7 @@ test('Workflow library opens with a route-specific macro Playbook hero and autho
   }
 });
 
-test('the shared social preview is a current, served Paper operating-system artifact', () => {
+test('the shared social preview states the current technical support positioning', () => {
   const svgPath = resolve(agencyRoot, 'static/og-image.svg');
   const pngPath = resolve(agencyRoot, 'static/og-image.png');
   const svg = read('static/og-image.svg');
@@ -259,15 +261,15 @@ test('the shared social preview is a current, served Paper operating-system arti
     'served raster social card should not be a placeholder'
   );
   for (const label of [
-    'OPERATING SYSTEMS',
-    'FOR AI WORK',
-    'MAP',
-    'BUILD',
-    'CONTROL',
-    'SOURCE SHEET',
-    'DECISION BOUNDARY',
-    'ATTACHED RECEIPT',
-    'SIGNAL → DECISION → PROOF'
+    'AI-NATIVE',
+    'TECHNICAL SUPPORT',
+    'For your team’s tools and workflows.',
+    'DIAGNOSE',
+    'ENGINEER',
+    'LEARN',
+    'AGREED SCOPE',
+    'PROJECT CONTEXT',
+    'createsomething.agency'
   ]) {
     assert.ok(svg.includes(label), `social preview must include ${label}`);
   }
