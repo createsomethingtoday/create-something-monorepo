@@ -15,6 +15,20 @@ import {
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../../../../..');
 
 describe('Canon codification audit', () => {
+	it('classifies template-review terminal mods without exempting adjacent web UI', async () => {
+		const root = await mkdtemp(join(tmpdir(), 'canon-template-mods-'));
+		try {
+			await writePackage(root, 'packages/webflow-template-review-mcp', '@create-something/webflow-template-review-mcp');
+			for (const mod of ['template-review-guard', 'template-review-hud', 'template-review-viz']) await writeUi(root, `packages/webflow-template-review-mcp/mods/${mod}/hooks/register.tsx`, '<Markdown text="Terminal review" />');
+			await writeUi(root, 'packages/webflow-template-review-mcp/web/App.tsx', '<main>Web app</main>');
+			const report = await buildCanonCodificationAuditReport(root);
+			const mods = report.entries.filter(entry => entry.path.includes('/mods/'));
+			expect(mods).toHaveLength(3);
+			for (const entry of mods) expect(entry.classification).toBe('product-local-exempt');
+			expect(report.entries.find(entry => entry.path.endsWith('/web/App.tsx'))?.classification).toBe('needs-canon-decision');
+		} finally { await rm(root, { recursive: true, force: true }); }
+	});
+
 	it('classifies every current repo UI source file without undecided Canon ownership', async () => {
 		const report = await buildCanonCodificationAuditReport(repoRoot);
 

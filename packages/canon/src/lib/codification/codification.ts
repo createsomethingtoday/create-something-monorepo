@@ -133,6 +133,12 @@ export const CANON_CODIFICATION_EXEMPTIONS: CanonCodificationExemption[] = [
 			'Claude Code mods for Marketplace App review render panes and bands inside the Claude Code terminal UI through the plugin engine, not on a Canon-consuming property surface.'
 	},
 	{
+		path: 'packages/webflow-template-review-mcp/mods',
+		reason: 'webflow-review-tooling',
+		justification:
+			'Claude Code template-review mods render approval panes, review bands and scorecards through the terminal plugin engine, outside Canon-consuming web property surfaces.'
+	},
+	{
 		path: 'packages/webflow-review',
 		reason: 'webflow-review-tooling',
 		justification:
