@@ -139,12 +139,13 @@ const UPSERT_TEMPLATE_SQL = `
     marketplace_status,
     source_last_modified_time,
     synced_at,
+    listing_confirmed,
     category_groups_text,
     child_categories_text,
     styles_text,
     tags_text
   ) VALUES (
-    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
   )
   ON CONFLICT(id) DO UPDATE SET
     template_slug = excluded.template_slug,
@@ -229,6 +230,7 @@ const UPSERT_TEMPLATE_SQL = `
     marketplace_status = excluded.marketplace_status,
     source_last_modified_time = excluded.source_last_modified_time,
     synced_at = excluded.synced_at,
+    listing_confirmed = excluded.listing_confirmed,
     category_groups_text = excluded.category_groups_text,
     child_categories_text = excluded.child_categories_text,
     styles_text = excluded.styles_text,
@@ -631,6 +633,7 @@ export async function upsertTemplateDocuments(db: D1Database, documents: Templat
         document.marketplaceStatus,
         document.sourceLastModifiedTime,
         document.syncedAt,
+        document.listingConfirmed ? 1 : 0,
         document.categoryGroups.join(' '),
         document.childCategories.join(' '),
         document.styles.join(' '),
@@ -1687,13 +1690,19 @@ function isSourceNewer(nextSourceLastModifiedTime: string | null | undefined, cu
 export async function filterMissingOrStaleTemplateLookupTargets(
   db: D1Database,
   targets: TemplateLookupTarget[],
+  options: { recheckUnconfirmedListings?: boolean } = {},
 ): Promise<TemplateLookupTarget[]> {
   const uniqueTargets = Array.from(
     new Map(targets.filter((target) => target.id || target.templateSlug).map((target) => [target.id, target])).values(),
   );
   if (uniqueTargets.length === 0) return [];
 
-  const rows: Array<{ id: string; templateSlug: string | null; sourceLastModifiedTime: string | null }> = [];
+  const rows: Array<{
+    id: string;
+    templateSlug: string | null;
+    sourceLastModifiedTime: string | null;
+    listingConfirmed: number | null;
+  }> = [];
   for (const targetBatch of chunk(uniqueTargets, TEMPLATE_LOOKUP_QUERY_BATCH_SIZE)) {
     const ids = targetBatch.map((target) => target.id).filter(Boolean);
     const slugs = targetBatch.map((target) => target.templateSlug).filter((slug): slug is string => Boolean(slug));
@@ -1711,12 +1720,13 @@ export async function filterMissingOrStaleTemplateLookupTargets(
 
     const result = await db
       .prepare(
-        `SELECT id, template_slug AS templateSlug, source_last_modified_time AS sourceLastModifiedTime
+        `SELECT id, template_slug AS templateSlug, source_last_modified_time AS sourceLastModifiedTime,
+                listing_confirmed AS listingConfirmed
          FROM template_documents
          WHERE ${clauses.join(' OR ')}`,
       )
       .bind(...binds)
-      .all<{ id: string; templateSlug: string | null; sourceLastModifiedTime: string | null }>();
+      .all<{ id: string; templateSlug: string | null; sourceLastModifiedTime: string | null; listingConfirmed: number | null }>();
     rows.push(...(result.results ?? []));
   }
   const existingById = new Map(rows.map((row) => [row.id, row]));
@@ -1725,6 +1735,9 @@ export async function filterMissingOrStaleTemplateLookupTargets(
   return uniqueTargets.filter((target) => {
     const existing = existingById.get(target.id) ?? (target.templateSlug ? existingBySlug.get(target.templateSlug) : undefined);
     if (!existing) return true;
+    // Indexed without a confirmed live listing (the gate failed open, or the row
+    // predates the flag): re-check it so the gate can hold it out if it 404s.
+    if (options.recheckUnconfirmedListings && existing.listingConfirmed !== 1) return true;
     return isSourceNewer(target.sourceLastModifiedTime, existing.sourceLastModifiedTime);
   });
 }

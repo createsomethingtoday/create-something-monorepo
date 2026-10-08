@@ -1034,6 +1034,90 @@ describe('webflow-template-search worker', () => {
     }
   });
 
+  it('re-checks a template indexed while the CMS lookup failed and gates it once the lookup works', async () => {
+    // Ironclaw: approved and indexed, but the CMS item never appeared (Stripe
+    // onboarding incomplete). A fail-open index must not become permanent.
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-03-16T12:00:00.000Z'));
+    const { env, close } = createTestEnv();
+    env.WEBFLOW_API_TOKEN = 'test-webflow-cms-token';
+    const dataset = {
+      publishedAssets: [PUBLISHED_ASSETS[0]],
+      incrementalAssets: [],
+      styles: LOOKUPS.styles,
+      childCategories: LOOKUPS.childCategories,
+      tags: LOOKUPS.tags,
+      creators: LOOKUPS.creators,
+    };
+    const incrementalSync = async () => {
+      await setSyncCursor(env.DB, '2026-03-16T11:55:00.000Z');
+      const response = await callWorker(
+        new Request('https://templates.test/api/templates/admin/sync', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      return (await response.json()) as { recent_published_records?: number; listing_gated_records: number };
+    };
+    const searchAgentflow = async () => {
+      const response = await callWorker(new Request('https://templates.test/api/templates/search?q=Agentflow'), env);
+      return ((await response.json()) as { items: Array<{ id: string }> }).items.map((item) => item.id);
+    };
+
+    let fetchMock = installAirtableFetchMock({
+      ...dataset,
+      webflowCollectionItemErrors: {
+        [TEMPLATES_COLLECTION_ID]: {
+          status: 500,
+          body: { message: 'An Internal Error Occurred', code: 'internal_error', details: [] },
+          headers: { 'retry-after': '0' },
+        },
+      },
+    });
+    try {
+      await callWorker(
+        new Request('https://templates.test/api/templates/admin/sync-records', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token', 'content-type': 'application/json' },
+          body: JSON.stringify({ ids: ['recAgentflow'] }),
+        }),
+        env,
+      );
+      expect(await searchAgentflow()).toEqual(['recAgentflow']);
+      fetchMock.mockRestore();
+
+      // The Airtable row has not changed, yet the sweep re-checks it because its
+      // listing was never confirmed, and the gate now holds it out.
+      fetchMock = installAirtableFetchMock({ ...dataset, webflowCollectionItems: { [TEMPLATES_COLLECTION_ID]: [] } });
+      expect(await incrementalSync()).toMatchObject({ recent_published_records: 1, listing_gated_records: 1 });
+      expect(await searchAgentflow()).toEqual([]);
+      fetchMock.mockRestore();
+
+      // Once the CMS item exists the record is indexed as confirmed, and later
+      // sweeps stop re-checking it.
+      fetchMock = installAirtableFetchMock({
+        ...dataset,
+        webflowCollectionItems: {
+          [TEMPLATES_COLLECTION_ID]: [
+            {
+              id: 'item-agentflow',
+              isArchived: false,
+              isDraft: false,
+              fieldData: { 'sync-record-id': 'recAgentflow', name: 'Agentflow', slug: 'agentflow-website-template' },
+            },
+          ],
+        },
+      });
+      expect(await incrementalSync()).toMatchObject({ recent_published_records: 1, listing_gated_records: 0 });
+      expect(await searchAgentflow()).toEqual(['recAgentflow']);
+      expect(await incrementalSync()).toMatchObject({ recent_published_records: 0 });
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
   it('refuses to gate an implausible share of published templates in one pass', async () => {
     // If every template in a batch "has no listing", the CMS read is suspect;
     // keep the rows and flag the run instead of emptying the marketplace.

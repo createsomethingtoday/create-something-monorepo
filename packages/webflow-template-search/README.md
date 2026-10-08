@@ -184,7 +184,14 @@ lookup never gates. A pass where the gated share is implausibly high (at least 5
 Summaries report `listing_gated_records`, and each gated slug appears in a `listing_gate`
 warning on `GET /api/templates/admin/sync-status`. Held-out templates are retried by the
 recent-published sweep every incremental run, and the Templates `collection_item_created`
-webhook indexes the record as soon as the CMS item appears. The 2026-09-15 baseline against
+webhook indexes the record as soon as the CMS item appears.
+
+Each indexed row stores `listing_confirmed` (1 when the sync matched a live CMS item). When
+the gate fails open, because the lookup failed or the guard kept the batch, the row is indexed
+with `listing_confirmed = 0`. The recent-published sweep treats any row that is not confirmed
+as stale and re-checks it every incremental run, so the gate holds it out once the lookup
+works. (Ironclaw, 2026-10: a paid template stuck on Stripe onboarding stayed indexed as a blank
+card linking to a 404 because nothing re-checked it.) The 2026-09-15 baseline against
 production found exactly 5 of 11,460 indexed rows without a live listing, all of them 404s.
 
 Two details keep the gate safe around edge cases:

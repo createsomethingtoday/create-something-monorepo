@@ -193,6 +193,8 @@ export interface TemplateDocumentInput {
   marketplaceStatus: string | null;
   sourceLastModifiedTime: string | null;
   syncedAt: string;
+  // A live Templates CMS item was confirmed for this record during the sync.
+  listingConfirmed: boolean;
 }
 
 export interface SearchParams {

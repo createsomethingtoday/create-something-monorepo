@@ -759,6 +759,7 @@ function normalizeTemplateRecord(
       typeof record.fields['🚀Marketplace Status'] === 'string' ? record.fields['🚀Marketplace Status'] : null,
     sourceLastModifiedTime: typeof record.fields['📅LMT'] === 'string' ? record.fields['📅LMT'] : null,
     syncedAt,
+    listingConfirmed: webflowIdentity !== null,
   };
 
   return { document, listingMissing };
@@ -945,6 +946,8 @@ async function fetchChangedRecentPublishedAssets(
       const target = templateLookupTargets([record])[0];
       return { id: record.id, templateSlug: target.templateSlug, sourceLastModifiedTime: sourceLastModifiedTime(record) };
     }),
+    // Without a CMS token no lookup can confirm a listing, so re-checking is pointless.
+    { recheckUnconfirmedListings: hasWebflowCmsToken(env) },
   );
   const changedIds = new Set(missingOrStaleTargets.map((target) => target.id));
   return candidates.filter((record) => changedIds.has(record.id));
