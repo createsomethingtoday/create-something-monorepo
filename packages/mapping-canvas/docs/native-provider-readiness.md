@@ -135,3 +135,48 @@ an inferred SKILL.md rule. A later proposal session needs selected IDs and nativ
 owner approval for each edit. Without new authority, documentation, synthetic
 broker tests, package design and source/release reconciliation can continue;
 provider activation, persistent registration and release cannot.
+
+
+## Approved secure local handoff
+
+The owner approved the bounded read-only provider test and subsequently reported
+starting access. The isolated process now exposes a Draw Unix socket, but native
+computer control still fails. Socket existence alone does not establish its mode,
+expiry or token availability. No token was read or requested through chat.
+
+Run the reviewed helper **in a local interactive Terminal**, not an agent tool
+input or chat, with Python 3:
+
+```sh
+python3 /Users/createsomething/Documents/Codex/2026-10-08/task-3/draw-offline/packages/mapping-canvas/scripts/run-approved-provider-test.py
+```
+
+It asks for owner confirmation of **Session active / 0 layers available for
+proposals**, displayed expiry, the nonsecret socket path, then a hidden token
+paste. If already expired, revoke and start a fresh read-only session under the
+same approval immediately before running. Never paste a token into this chat.
+
+Before invoking Claude, the helper authenticates against that exact process's
+socket and matches the full synthetic document hash. Its acceptance-only gateway
+exposes a single inspect tool, checks the document again before returning it, and
+rejects proposals or other methods. Claude gets no built-in tools, uses explicit
+MCP configuration only, and only the already-approved inspect tool is allowlisted.
+No permission-bypass mode or persistent registration is used. The provider run is
+limited to 180 seconds. This helper is source-bound to the recorded synthetic
+profile and will fail if it has changed; it is not a general Draw launcher.
+
+After the attempt, the helper terminates the provider process group, closes only
+the identified isolated Draw process (releasing its ephemeral grant), verifies
+that process exited, and tests the former token/socket again. Uncertain responses
+are not accepted as proof of revocation. It checks that state bytes did not change.
+Cleanup status and redacted stream evidence go in a private
+`offline-preview/provider-readonly-*` directory. The helper deliberately does not
+mark provider readback verified; inspect the actual tool result and final answer
+before claiming success. If it exits before a final receipt, manually revoke.
+
+Gateway tests use a disposable synthetic UDS, never a real provider. They cover
+Unicode hash matching, exact-document rejection, inspect-only tool exposure, and
+reject malformed-response errors as proof of revocation. Python syntax was
+checked without running the provider. Independent review covers the handoff
+runner. Native UI scope still requires the owner's observation; this source
+version does not expose grant metadata through authenticated inspect.
