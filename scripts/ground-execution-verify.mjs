@@ -30,7 +30,11 @@ const run = (binary, argv, input) => {
 };
 const cli = (workers, timeout = 120000) => {
   const result = run('ground', ['--db', join(temporary, 'cli.db'), 'analyze', directory, '--checks', 'duplicates', '--workers', String(workers), '--timeout-ms', String(timeout)]);
-  return JSON.parse(result.stdout);
+  const report = JSON.parse(result.stdout);
+  const expectedExit = report.outcome === undefined ? 0 : { CLEAN: 0, FINDINGS: 1, INCOMPLETE: 2, NOT_APPLICABLE: 3 }[report.outcome];
+  assert.notEqual(expectedExit, undefined, 'Unknown CLI outcome');
+  assert.equal(result.status, expectedExit, result.stderr);
+  return report;
 };
 const mcp = (workers, timeout = 120000) => {
   const input = [{ jsonrpc: '2.0', id: 1, method: 'initialize', params: {} }, { jsonrpc: '2.0', id: 2, method: 'tools/call', params: { name: 'ground_analyze', arguments: { directory, checks: ['duplicates'], workers, timeout_ms: timeout } } }].map(JSON.stringify).join('\n') + '\n';

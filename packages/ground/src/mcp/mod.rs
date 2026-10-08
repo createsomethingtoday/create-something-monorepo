@@ -366,7 +366,8 @@ pub fn list_tools() -> Vec<ToolDefinition> {
                             "type": "string",
                             "enum": ["duplicates", "dead_exports", "orphans", "environment"]
                         },
-                        "description": "Which checks to run. Default: all"
+                        "minItems": 1,
+                        "description": "Which checks to run. Default: duplicates and orphans. Explicit arrays must be non-empty; dead_exports requires an explicit module via ground_find_dead_exports."
                     },
                     "entry_points": {
                         "type": "array",
@@ -412,7 +413,8 @@ pub fn list_tools() -> Vec<ToolDefinition> {
                             "type": "string",
                             "enum": ["duplicates", "orphans"]
                         },
-                        "description": "Which checks to run. Default: ['duplicates']"
+                        "minItems": 1,
+                        "description": "Which checks to run. Default: ['duplicates']. Explicit arrays must be non-empty."
                     },
                     "cross_package": {
                         "type": "boolean",
@@ -618,6 +620,7 @@ pub struct VerificationResult {
     pub excluded_files: Vec<VerificationFile>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timeout_ms: Option<u64>,
+    pub scan_complete: bool,
 }
 
 impl VerificationResult {
@@ -628,12 +631,67 @@ impl VerificationResult {
             unsupported_files: Vec::new(),
             excluded_files: Vec::new(),
             timeout_ms: None,
+            scan_complete: status == VerificationStatus::NotApplicable,
         }
     }
 
     fn as_value(&self) -> Value {
         serde_json::to_value(self).expect("verification result must serialize")
     }
+}
+
+/// Authoritative semantic outcome for CLI exits; MCP transport success is separate.
+/// Incomplete requested checks take precedence even when other checks found issues.
+pub fn analysis_outcome(report: &Value) -> &'static str {
+    let Some(checks) = report.get("checks_run").and_then(Value::as_array) else { return "INCOMPLETE"; };
+    if checks.is_empty() { return "INCOMPLETE"; }
+    let coverage = report.get("coverage").or_else(|| report.get("check_coverage"));
+    let mut applicable = false;
+    let mut findings = false;
+    for check in checks {
+        let Some(check) = check.as_str() else { return "INCOMPLETE"; };
+        let Some(result) = coverage.and_then(|coverage| coverage.get(check)) else { return "INCOMPLETE"; };
+        match result.get("status").and_then(Value::as_str) {
+            Some("NOT_APPLICABLE") => {
+                if matches!(result.get("reason").and_then(Value::as_str),
+                    Some("batch_requires_explicit_module" | "no_entry_points_provided")) {
+                    return "INCOMPLETE";
+                }
+            }
+            Some(status @ ("PASS" | "FAIL")) => {
+                if result.get("scan_complete").and_then(Value::as_bool) != Some(true) {
+                    return "INCOMPLETE";
+                }
+                applicable = true;
+                findings |= status == "FAIL";
+            }
+            _ => return "INCOMPLETE",
+        }
+    }
+    if findings { "FINDINGS" } else if applicable { "CLEAN" } else { "NOT_APPLICABLE" }
+}
+
+fn with_analysis_outcome(mut report: Value) -> Value {
+    report["outcome"] = json!(analysis_outcome(&report));
+    report
+}
+
+pub const DEFAULT_ANALYZE_CHECKS: &[&str] = &["duplicates", "orphans"];
+pub const DEFAULT_DIFF_CHECKS: &[&str] = &["duplicates"];
+
+fn requested_checks<'a>(args: &'a Value, defaults: &'a [&'a str], allowed: &[&str]) -> Result<Vec<&'a str>, String> {
+    let Some(value) = args.get("checks") else { return Ok(defaults.to_vec()); };
+    let values = value.as_array().ok_or("checks must be a non-empty array of check names")?;
+    if values.is_empty() { return Err("checks must be a non-empty array of check names".into()); }
+    let mut checks = Vec::new();
+    for value in values {
+        let check = value.as_str().ok_or("check names must be strings")?;
+        if !allowed.contains(&check) {
+            return Err(format!("Unknown check '{check}'; supported checks: {}", allowed.join(", ")));
+        }
+        if !checks.contains(&check) { checks.push(check); }
+    }
+    Ok(checks)
 }
 
 const DEFAULT_DUPLICATE_TIMEOUT_MS: u64 = 120_000;
@@ -2527,10 +2585,10 @@ fn handle_batch_analyze(args: &Value) -> ToolResult {
         None => return ToolResult::error("Missing required parameter: directory"),
     };
     
-    let checks: Vec<&str> = args.get("checks")
-        .and_then(|v| v.as_array())
-        .map(|arr| arr.iter().filter_map(|v| v.as_str()).collect())
-        .unwrap_or_else(|| vec!["duplicates", "dead_exports", "orphans"]);
+    let checks = match requested_checks(args, DEFAULT_ANALYZE_CHECKS, &["duplicates", "dead_exports", "orphans", "environment"]) {
+        Ok(checks) => checks,
+        Err(error) => return ToolResult::error(error),
+    };
     
     mcp_log!("Batch analyze: {} checks={:?}", directory.display(), checks);
     let timeout_ms = duplicate_timeout_ms(args);
@@ -2683,6 +2741,7 @@ fn handle_batch_analyze(args: &Value) -> ToolResult {
                 "status": VerificationStatus::Fail,
                 "files_discovered": 0,
                 "files_checked": 0,
+                "scan_complete": false,
                 "timeout_ms": timeout_ms
             });
         }
@@ -2767,6 +2826,9 @@ fn handle_batch_analyze(args: &Value) -> ToolResult {
                 };
                 results["findings"]["orphans"] = json!(structured_orphans);
             }
+            if content.get("scan_complete").and_then(Value::as_bool) != Some(true) {
+                orphan_status = VerificationStatus::Fail;
+            }
             results["coverage"]["orphans"] = json!({
                 "status": orphan_status,
                 "files_scanned": content.get("files_scanned"),
@@ -2791,6 +2853,7 @@ fn handle_batch_analyze(args: &Value) -> ToolResult {
         let mut env_issues: Vec<Value> = Vec::new();
         let mut env_entry_points: Vec<Value> = Vec::new();
         let mut environment_failed = false;
+        let mut environment_complete = true;
         
         for entry in &entry_points {
             let resolved_entry = if entry.is_absolute() {
@@ -2840,6 +2903,7 @@ fn handle_batch_analyze(args: &Value) -> ToolResult {
                 }
             } else {
                 environment_failed = true;
+                environment_complete = false;
                 env_entry_points.push(json!({
                     "requested": entry.to_string_lossy(),
                     "resolved": resolved_entry.to_string_lossy(),
@@ -2856,7 +2920,8 @@ fn handle_batch_analyze(args: &Value) -> ToolResult {
             } else {
                 VerificationStatus::Pass
             },
-            "entry_points": env_entry_points
+            "entry_points": env_entry_points,
+            "scan_complete": environment_complete
         });
     }
     
@@ -2889,7 +2954,7 @@ fn handle_batch_analyze(args: &Value) -> ToolResult {
     results["verification_status"] = json!(verification_status);
     results["message"] = json!(message);
     
-    ToolResult::success(results)
+    ToolResult::success(with_analysis_outcome(results))
 }
 
 fn handle_verify_fix(args: &Value) -> ToolResult {
@@ -3111,10 +3176,10 @@ fn handle_diff(args: &Value) -> ToolResult {
         .and_then(|v| v.as_str())
         .unwrap_or("main");
     
-    let checks: Vec<&str> = args.get("checks")
-        .and_then(|v| v.as_array())
-        .map(|arr| arr.iter().filter_map(|v| v.as_str()).collect())
-        .unwrap_or_else(|| vec!["duplicates"]);
+    let checks = match requested_checks(args, DEFAULT_DIFF_CHECKS, &["duplicates", "orphans"]) {
+        Ok(checks) => checks,
+        Err(error) => return ToolResult::error(error),
+    };
     
     let cross_package = args.get("cross_package")
         .and_then(|v| v.as_bool())
@@ -3147,6 +3212,7 @@ fn handle_diff(args: &Value) -> ToolResult {
         }).collect::<serde_json::Map<_, _>>();
         return ToolResult::success(json!({
             "verification_status": VerificationStatus::NotApplicable,
+            "outcome": "NOT_APPLICABLE",
             "base": base_ref,
             "changed_files": 0,
             "changed_file_list": [],
@@ -3159,6 +3225,7 @@ fn handle_diff(args: &Value) -> ToolResult {
             "check_coverage": check_coverage,
             "new_issues": [],
             "total_new_issues": 0,
+            "checks_run": checks,
             "message": format!("No files changed since '{}'. Nothing to analyze.", base_ref)
         }));
     }
@@ -3244,6 +3311,7 @@ fn handle_diff(args: &Value) -> ToolResult {
             if duplicate_result.success {
                 let content = duplicate_result.content;
                 coverage.status = verification_status_from_value(content.get("verification_status"));
+                coverage.scan_complete = content.get("scan_complete").and_then(Value::as_bool) == Some(true);
             let canonical_relevant_files = relevant_files.iter()
                 .map(|file| canonicalize_parent(file))
                 .collect::<HashSet<_>>();
@@ -3279,6 +3347,7 @@ fn handle_diff(args: &Value) -> ToolResult {
                         &VerificationStatus::Unsupported
                     },
                 ]);
+                coverage.scan_complete &= excluded_files.is_empty() && coverage.unsupported_files.is_empty();
                 coverage.analyzed_files = analyzed_changed_files;
                 coverage.excluded_files = excluded_files;
 
@@ -3416,6 +3485,7 @@ fn handle_diff(args: &Value) -> ToolResult {
             unsupported_files: unsupported_changed_files.clone(),
             excluded_files: orphan_exclusions,
             timeout_ms: None,
+            scan_complete: !analysis_failed && unsupported_changed_files.is_empty(),
         };
         check_coverage.insert("orphans".to_string(), coverage.as_value());
     }
@@ -3474,7 +3544,7 @@ fn handle_diff(args: &Value) -> ToolResult {
         ),
     };
     
-    ToolResult::success(json!({
+    ToolResult::success(with_analysis_outcome(json!({
         "verification_status": verification_status,
         "base": base_ref,
         "changed_files": relevant_files.len(),
@@ -3492,7 +3562,7 @@ fn handle_diff(args: &Value) -> ToolResult {
         "total_new_issues": new_issues.len(),
         "checks_run": checks,
         "message": message
-    }))
+    })))
 }
 
 /// Get list of files changed since a git ref

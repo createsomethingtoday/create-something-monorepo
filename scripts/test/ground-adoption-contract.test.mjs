@@ -160,3 +160,14 @@ for (const status of [' M packages/mcp-core/src/server.ts\n', 'M  .ground.yml\n'
     assert.throws(() => verifyCheckout({ sourceSha, status }), /clean checkout/);
   });
 }
+
+test('analysis process receipts require the expected outcome and exact exit code', async () => {
+  const { verifyAnalysisProcess } = await import('../ground-adoption-contract.mjs');
+  const result = (outcome, status) => ({ status, stdout: JSON.stringify({ outcome }), stderr: '' });
+  assert.equal(verifyAnalysisProcess(result('CLEAN', 0), 'CLEAN').outcome, 'CLEAN');
+  assert.equal(verifyAnalysisProcess(result('FINDINGS', 1), 'FINDINGS').outcome, 'FINDINGS');
+  assert.throws(() => verifyAnalysisProcess(result('INCOMPLETE', 2), 'CLEAN'));
+  assert.throws(() => verifyAnalysisProcess(result('FINDINGS', 0), 'FINDINGS'));
+  assert.throws(() => verifyAnalysisProcess(result('CLEAN', 1), 'CLEAN'));
+  assert.throws(() => verifyAnalysisProcess({ status: null, error: new Error('timeout'), stdout: '' }, 'CLEAN'));
+});

@@ -108,9 +108,11 @@ try {
           process.stderr.write(`PASS ${seed.id}\n`);
           continue;
         }
-        assert.equal(result.cli.status, 0, result.cli.stderr);
         assert(!result.mcp.error, JSON.stringify(result.mcp));
         const cli = JSON.parse(result.cli.stdout);
+        const expectedExit = cli.outcome === undefined ? 0 : { CLEAN: 0, FINDINGS: 1, INCOMPLETE: 2, NOT_APPLICABLE: 3 }[cli.outcome];
+        assert.notEqual(expectedExit, undefined, 'Unknown CLI outcome');
+        assert.equal(result.cli.status, expectedExit, result.cli.stderr);
         const remote = result.mcp.data;
         for (const check of seed.checks) {
           assert.deepEqual(cli.coverage[check], remote.coverage[check], 'CLI/MCP coverage parity');

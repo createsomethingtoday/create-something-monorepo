@@ -18,6 +18,7 @@
 //! ## Pattern Analysis (v2.1)
 //! - Patterns: Design system drift detection and token adoption
 
+mod source_parser;
 mod similarity;
 mod usage;
 mod connectivity;
