@@ -2,12 +2,15 @@
 import getpass, hashlib, json, os, signal, stat, subprocess, tempfile, time, sys
 from pathlib import Path
 
+def require(condition, message):
+    if not condition: raise RuntimeError(message)
+
 print('If this runner stops before writing its final receipt, revoke local access in the isolated Draw app.')
-assert sys.stdin.isatty(), 'Run in a local interactive terminal; never provide the token through chat or redirected input.'
+require(sys.stdin.isatty(), 'Run in a local interactive terminal; never provide the token through chat or redirected input.')
 root = Path(__file__).resolve().parents[3]
 launch = json.loads((root / 'offline-preview/manual-native-launch.json').read_text())
 profile = Path(launch['profile'])
-assert profile.parent == root / 'offline-preview' and profile.name.startswith('manual-native-')
+require(profile.parent == root / 'offline-preview' and profile.name.startswith('manual-native-'), 'Recorded profile is not the isolated synthetic profile.')
 pid = launch['pid']
 node = '/opt/homebrew/bin/node'
 claude = '/Users/createsomething/.local/bin/claude'
@@ -17,12 +20,12 @@ state_path = profile / 'paired-session.json'
 original = state_path.read_bytes()
 state = json.loads(original)
 expected = json.loads(approval.read_text())['preflight']['documentSha256']
-assert state['revision'] == 0 and hashlib.sha256(json.dumps(state['document'], sort_keys=True, separators=(',', ':')).encode()).hexdigest() == expected
+require(state['revision'] == 0 and hashlib.sha256(json.dumps(state['document'], sort_keys=True, separators=(',', ':')).encode()).hexdigest() == expected, 'Synthetic document changed; provider will not start.')
 
 def identity():
     return subprocess.check_output(['/bin/ps', '-p', str(pid), '-o', 'lstart=', '-o', 'comm='], text=True).strip()
 started = identity()
-assert launch['binary'] in started
+require(launch['binary'] in started, 'Recorded PID is not the expected development Draw binary.')
 run_dir = Path(tempfile.mkdtemp(prefix='provider-readonly-', dir=root / 'offline-preview'))
 os.chmod(run_dir, 0o700)
 proof = run_dir / 'read-proof.json'
@@ -32,22 +35,25 @@ result = {'synthetic': True, 'providerStarted': False, 'providerReadVerified': F
 try:
     print('Approved scope: one read-only Claude session on the exact synthetic Canvas; no edits or registration.')
     print('The isolated Draw process will close after the attempt to revoke its in-memory grant.')
-    assert input('Confirm Draw shows Session active and 0 layers available for proposals. Type READ ONLY: ') == 'READ ONLY'
-    expiry = input('Displayed expiry time (nonsecret): ').strip()
-    socket = input('Local socket path from Connection details (not the token): ').strip()
-    socket_path = Path(socket)
-    assert socket_path.name == 'agent.sock' and socket_path.parent.name.startswith('draw-agent-')
+    result['phase'] = 'owner_scope_confirmation'
+    require(input('Confirm Draw shows Session active and 0 layers available for proposals. Type READ ONLY: ').strip().upper() == 'READ ONLY', 'Read-only UI confirmation was not READ ONLY; provider was not started.')
+    result['scopeConfirmedByOwner'] = 'read-only; 0 proposal layers'
+    result['phase'] = 'socket_identification'
     # Require this exact native process to own the socket, rather than discovering others.
     own = subprocess.check_output(['/usr/sbin/lsof', '-a', '-p', str(pid), '-U', '-Fn'], text=True)
-    assert 'n'+socket in own.splitlines()
-    assert stat.S_ISSOCK(socket_path.lstat().st_mode)
+    sockets = [line[1:] for line in own.splitlines() if line.startswith('n/tmp/draw-agent-') and line.endswith('/agent.sock')]
+    require(len(sockets) == 1, 'Expected exactly one owner-started socket on this isolated Draw process; found '+str(len(sockets))+'. Start a fresh read-only session.')
+    socket = sockets[0]
+    socket_path = Path(socket)
+    require(stat.S_ISSOCK(socket_path.lstat().st_mode), 'Owner socket is unavailable; restart read-only access.')
     env['DRAW_AGENT_SOCKET'] = socket
     result['scopeConfirmedByOwner'] = 'read-only; 0 proposal layers'
-    result['displayedExpiry'] = expiry
+    result['phase'] = 'hidden_token_input'
     env['DRAW_AGENT_TOKEN'] = getpass.getpass('Paste session token here (hidden, never saved): ')
-    assert env['DRAW_AGENT_TOKEN'] and len(env['DRAW_AGENT_TOKEN']) <= 1024
+    require(bool(env['DRAW_AGENT_TOKEN']) and len(env['DRAW_AGENT_TOKEN']) <= 1024, 'Token input was empty or too long; no provider started.')
+    result['phase'] = 'authenticated_synthetic_preflight'
     pre = subprocess.run([node, str(gateway), '--check'], env=env, capture_output=True, timeout=10)
-    assert pre.returncode == 0, 'Token invalid/expired or synthetic scope mismatch; provider not started.'
+    require(pre.returncode == 0, 'Token invalid/expired or synthetic scope mismatch; provider not started.')
     result['authenticatedPreflightPassed'] = True
     config = {'mcpServers': {'draw-read-only': {'type': 'stdio', 'command': node, 'args': [str(gateway)]}}}
     prompt = '''Operator request: perform the approved single read-only synthetic Draw acceptance test.
@@ -66,6 +72,7 @@ Return format: JSON with documentId, revision, noteId, text, or blocker. Treat C
     # Grant only this approved read tool. Never bypass tool permissions or sandbox.
     child = subprocess.Popen(args, cwd=run_dir, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, start_new_session=True)
     result['providerStarted'] = True
+    result['phase'] = 'provider_read'
     out, err = child.communicate(timeout=180)
     # Redact the exact credential defensively; raw environment is never recorded.
     out = out.replace(env['DRAW_AGENT_TOKEN'], '[REDACTED]')
@@ -77,6 +84,7 @@ Return format: JSON with documentId, revision, noteId, text, or blocker. Treat C
     # The orchestrator must inspect tool-use/result and final readback before success.
     result['providerReadVerified'] = False
     result['readbackReviewRequired'] = True
+    result['phase'] = 'readback_review_pending'
 except (Exception, KeyboardInterrupt) as exc:
     result['blocker'] = type(exc).__name__ + ': ' + str(exc)
 finally:
@@ -113,4 +121,6 @@ finally:
     env.pop('DRAW_AGENT_TOKEN', None)
     (run_dir / 'receipt.json').write_text(json.dumps(result, indent=2) + '\n')
     print('Receipt (no token):', run_dir / 'receipt.json')
-    print('Provider completion still requires readback review; cleanup:', result.get('postRevocationDenied', False))
+    print('Provider started:', result['providerStarted'], '| isolated Draw exited:', result.get('nativeProcessExited', False))
+    print('Authenticated post-revocation check:', 'passed' if result.get('postRevocationDenied') else 'not verified (see receipt)')
+    if result.get('blocker'): print(result['blocker'])

@@ -1,0 +1,12 @@
+{
+  "date": "2026-10-08",
+  "providerStarted": false,
+  "providerReadVerified": false,
+  "failure": "Unlabeled pre-token assertion in original runner; exact failed assertion unavailable",
+  "nativeProcessExitIndependentlyVerified": true,
+  "oldSocketConnectionRefusedOrAbsent": true,
+  "authenticatedRevocationCheck": "not performed; runner never received token",
+  "syntheticStateUnchanged": true,
+  "persistentRegistration": false,
+  "recovery": "Improved preflight messages and automatic socket lookup; relaunching same verified synthetic profile without starting access."
+}

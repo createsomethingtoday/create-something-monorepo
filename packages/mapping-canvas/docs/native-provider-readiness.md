@@ -152,8 +152,8 @@ python3 /Users/createsomething/Documents/Codex/2026-10-08/task-3/draw-offline/pa
 ```
 
 It asks for owner confirmation of **Session active / 0 layers available for
-proposals**, displayed expiry, the nonsecret socket path, then a hidden token
-paste. If already expired, revoke and start a fresh read-only session under the
+proposals**, identifies the unique socket belonging to the recorded isolated Draw
+process automatically, then accepts a hidden token paste. If already expired, revoke and start a fresh read-only session under the
 same approval immediately before running. Never paste a token into this chat.
 
 Before invoking Claude, the helper authenticates against that exact process's
@@ -180,3 +180,13 @@ reject malformed-response errors as proof of revocation. Python syntax was
 checked without running the provider. Independent review covers the handoff
 runner. Native UI scope still requires the owner's observation; this source
 version does not expose grant metadata through authenticated inspect.
+
+
+The first owner-run attempt stopped at an unlabeled pre-token assertion; Claude
+never started. Its receipt confirmed native process exit and unchanged state.
+Independent follow-up also confirmed the old socket refused connection. The exact
+failed assertion cannot be reconstructed. The runner now records phases, uses
+named checks that remain active under Python optimization, normalizes the scope
+confirmation, and avoids manual socket entry. The same unchanged synthetic
+profile was relaunched with fresh process metadata and no grant. A fresh read-only
+grant is required before retrying under the existing approval.
