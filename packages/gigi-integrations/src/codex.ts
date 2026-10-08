@@ -293,7 +293,14 @@ export function createCodexAdapter(options: CodexOptions) {
   async function poll(input: Json) { return read(input); }
   async function cancel(input: Json, immediate = false) {
     const session = await owner(input);
-    if (session.turnId && (session.state === 'running' || session.state === 'approval')) { session.cancelPending = true; await persist(); await options.server.request('turn/interrupt', { threadId: session.threadId, turnId: session.turnId }); }
+    if (session.turnId && (session.state === 'running' || session.state === 'approval')) {
+      session.cancelPending = true; await persist();
+      try { await options.server.request('turn/interrupt', { threadId: session.threadId, turnId: session.turnId }); }
+      catch (error) {
+        if (error instanceof ProviderResponseError) { session.cancelPending = false; await persist(); }
+        throw error;
+      }
+    }
     for (const [id, approval] of approvals) if (approval.sessionId === session.sessionId) { try { await options.server.reply(approval.requestId, { contentItems: [{ type: 'inputText', text: 'Turn cancelled.' }], success: false }); } catch { session.error = 'approval_delivery_unknown'; } approvals.delete(id); }
     session.state = immediate && session.cancelPending ? 'running' : 'interrupted'; await persist();
     if (immediate) return { sessionId: session.sessionId, state: session.state, messages: [], approvals: [], recordLinks: session.record ? [session.record] : [], ...(session.decisionReceipt ? { decisionReceipt: session.decisionReceipt } : {}), ...(session.error ? { error: session.error } : {}), ...(session.cancelPending ? { cancelPending: true } : {}), ...(session.recoveryPending ? { recoveryPending: true } : {}) };

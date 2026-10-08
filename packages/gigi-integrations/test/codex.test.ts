@@ -826,3 +826,24 @@ test('reading another session returns persisted workspace write verification', a
   assert.deepEqual((await restart().read({ workspaceId: 'w', sessionId: b.sessionId })).workspaceVerifiedEdits, ['held-edit-a']);
   assert.deepEqual((await restart().read({ workspaceId: 'w', sessionId: b.sessionId })).workspaceVerifiedEdits, ['held-edit-a']);
 });
+
+for (const definitive of [true, false]) test(`interrupt rejection retains only uncertain cancellation fence (definitive: ${definitive})`, async () => {
+  const { adapter, server, mcp, dataDir } = await setup();
+  const { sessionId } = await adapter.start({ workspaceId: 'w', message: 'hello' });
+  server.thread.turns = [{ id: 'turn-1', status: 'inProgress', items: [] }];
+  const original = server.request.bind(server);
+  let reject = true;
+  server.request = async (method, params) => {
+    if (method === 'turn/interrupt' && reject) throw definitive ? new ProviderResponseError('interrupt declined') : new Error('delivery lost');
+    return original(method, params);
+  };
+  await assert.rejects(adapter.cancel({ workspaceId: 'w', sessionId }, true));
+  const restarted = createCodexAdapter({ dataDir, mcpBinary: '/fixture/gigi-mcp', skillPath: '/fixture/skill/SKILL.md', server, mcp });
+  const read = await restarted.read({ workspaceId: 'w', sessionId });
+  assert.equal(read.state, 'running');
+  assert.equal(Boolean(read.cancelPending), !definitive);
+  if (definitive) {
+    reject = false;
+    assert.equal((await restarted.cancel({ workspaceId: 'w', sessionId }, true)).cancelPending, true);
+  }
+});
