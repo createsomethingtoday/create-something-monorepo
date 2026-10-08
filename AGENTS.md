@@ -1,7 +1,5 @@
 # Agent Principles & Workflow
 
-For Paperclip work, use `.agents/skills/paperclip-instance-operations/SKILL.md` and `docs/guides/PAPERCLIP_INSTANCE_OPERATING_MODEL.md`. The `create-something` instance is the monorepo home; the client-agent pilot is separate. Paperclip issue numbers overlap across instances, so include the instance or URL in handoffs.
-
 This repository uses **Linear** for agent-native coordination.
 
 Important: Linear is now the source of truth for tracked work, ownership, status, and evidence. The previous local and remote Loom queues were migrated into Linear under the `Loom to Linear Coordination Migration` project. Preserve original `lm-*` IDs in Linear issue descriptions for traceability only; do not create new Loom work.

@@ -11,9 +11,6 @@ test('Substrate documentation edges require a mention in the owning document', (
     const source = nodes.get(edge.source);
     assert.match(fs.readFileSync(new URL(source.path, root), 'utf8'), /\bsubstrate\b/i, source.path);
   }
-  const guide = topology.nodes.find((node) => node.path === 'docs/guides/PAPERCLIP_INSTANCE_OPERATING_MODEL.md');
-  assert.ok(guide);
-  assert.ok(!topology.edges.some((edge) => edge.source === guide.id && edge.target === substrate.id));
 });
 
 test('newsletter guide resolves its explicit io strategy link before generic metadata matches', () => {
