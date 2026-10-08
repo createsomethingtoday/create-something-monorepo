@@ -43,7 +43,7 @@
             value="suspended-empty">Suspended and empty</option
           ><option value="catalog-error">Library error</option><option value="progress-retry"
             >Progress retry</option
-          ></select
+          ><option value="completed-video">Completed video</option></select
         ></label
       >
       <button>Reset synthetic fixture</button>

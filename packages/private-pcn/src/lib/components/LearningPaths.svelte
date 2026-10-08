@@ -1,6 +1,6 @@
 <script lang="ts">
   import { page } from '$app/state';
-  import { pathBase, timestamp, type PathView } from '$lib/learning';
+  import { pathBase, playbackProgressLabel, type PathView } from '$lib/learning';
   import { lessonPath } from '$lib/lessons';
   import type { CatalogVideo } from '$lib/client';
   import PathEditor from './PathEditor.svelte';
@@ -95,7 +95,7 @@
                         tone="success"
                         icon="check"
                       />{:else if lesson.progress?.position}<StateBadge
-                        label={`Resume at ${timestamp(lesson.progress.position)}`}
+                        label={playbackProgressLabel(lesson.progress.position, lesson.duration)}
                         tone="info"
                         icon="refresh"
                       />{:else}<span>Ready to start</span

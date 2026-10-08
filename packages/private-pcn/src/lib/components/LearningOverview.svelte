@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { api, type CatalogVideo } from '$lib/client';
-  import { timestamp, pathBase, type LessonProgress } from '$lib/learning';
+  import { playbackProgressLabel, pathBase, type LessonProgress } from '$lib/learning';
   import { lessonPath } from '$lib/lessons';
   import Icon from './Icon.svelte';
   let { slug }: { slug?: string } = $props();
@@ -45,11 +45,9 @@
   {:else if continued.length}<div class="resumes">
       {#each continued as lesson}<a href={lessonPath(lesson.id, slug)}
           ><strong>{lesson.title}</strong><span
-            >{lesson.watched_at
-              ? 'Marked watched'
-              : `Resume at ${timestamp(lesson.position)}`}{lesson.practice_started_at
-              ? ' · Practice started'
-              : ''}</span
+            >{playbackProgressLabel(lesson.position, lesson.duration)}{lesson.watched_at
+              ? ' · Marked watched'
+              : ''}{lesson.practice_started_at ? ' · Practice started' : ''}</span
           ></a
         >{/each}
     </div>{:else}<p>

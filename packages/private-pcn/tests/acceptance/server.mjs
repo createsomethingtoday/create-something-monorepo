@@ -52,6 +52,11 @@ function reset(nextRole, nextScenario) {
     sqlite.exec(
       "INSERT INTO lesson_progress(network_id,subject,video_id,position) VALUES('default','fixture-member','lesson-1',42);"
     );
+    if (scenario === 'completed-video') {
+      sqlite.exec(
+        'UPDATE lesson_progress SET position=120, practice_started_at=CURRENT_TIMESTAMP;'
+      );
+    }
   }
 }
 const statement = (sql, values = []) => ({

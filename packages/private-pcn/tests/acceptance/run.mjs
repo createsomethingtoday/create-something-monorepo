@@ -66,6 +66,12 @@ try {
   );
   await check('keyboard skip link and mobile menu escape restore focus', async () => {
     await page.keyboard.press('Tab');
+    // The opt-in fixture controls precede the actual product layout.
+    assert.equal(
+      await page.evaluate(() => document.activeElement?.textContent?.trim()),
+      'Test controls'
+    );
+    await page.keyboard.press('Tab');
     assert.equal(
       await page.evaluate(() => document.activeElement.textContent.trim()),
       'Skip to content'
@@ -106,6 +112,22 @@ try {
     assert.equal(await page.getByRole('searchbox').inputValue(), 'handoff');
     await shot('viewer-library-desktop');
   });
+  await check(
+    'completed video offers Replay in library and path without marking watched',
+    async () => {
+      await reset('member', 'completed-video');
+      await open('/library');
+      await page.getByText('Replay · Practice started', { exact: true }).waitFor();
+      assert.equal(await page.getByText('Resume at 2:00', { exact: true }).count(), 0);
+      assert.equal(await page.getByText('Marked watched', { exact: true }).count(), 0);
+      await shot('completed-video-replay');
+      await open('/paths/path-1');
+      await page.getByText('Replay', { exact: true }).waitFor();
+      await page.getByText('Practice started', { exact: true }).waitFor();
+      assert.equal(await page.getByText('Marked watched', { exact: true }).count(), 0);
+      await noOverflow();
+    }
+  );
   await check('blocked viewers receive no private lesson data or resume controls', async () => {
     await reset('blocked');
     await open('/library');
@@ -199,13 +221,11 @@ try {
     'upload transfer success plus readiness failure preserves existing draft guidance',
     async () => {
       await page.getByLabel('Session title', { exact: true }).fill('Synthetic draft');
-      await page
-        .locator('input[type=file]')
-        .setInputFiles({
-          name: 'synthetic.mp4',
-          mimeType: 'video/mp4',
-          buffer: Buffer.from('synthetic fixture, not a recording')
-        });
+      await page.locator('input[type=file]').setInputFiles({
+        name: 'synthetic.mp4',
+        mimeType: 'video/mp4',
+        buffer: Buffer.from('synthetic fixture, not a recording')
+      });
       await page.getByRole('button', { name: 'Upload private draft' }).click();
       await page
         .getByText('Upload received, but processing status could not be checked.', { exact: false })
@@ -220,13 +240,11 @@ try {
       await reset('admin', 'upload-interrupted');
       await open('/admin');
       await page.getByLabel('Session title', { exact: true }).fill('Synthetic draft');
-      await page
-        .locator('input[type=file]')
-        .setInputFiles({
-          name: 'synthetic.mp4',
-          mimeType: 'video/mp4',
-          buffer: Buffer.from('fixture')
-        });
+      await page.locator('input[type=file]').setInputFiles({
+        name: 'synthetic.mp4',
+        mimeType: 'video/mp4',
+        buffer: Buffer.from('fixture')
+      });
       await page.getByRole('button', { name: 'Upload private draft' }).click();
       await page.getByText('Synthetic transfer interrupted.', { exact: false }).waitFor();
       await page.getByRole('heading', { name: 'Uploads to reconcile' }).waitFor();
