@@ -482,6 +482,11 @@ function operationalKnowledgeEdges(docNodes, targetCandidates, fallbackTargets) 
         !/\bsubstrate\b/i.test(fs.readFileSync(path.join(repoRoot, doc.path), 'utf8'))) {
       return [];
     }
+    // A generic Slack mention does not identify the internal CREATE SOMETHING intake.
+    if (target.path === 'config/dify-mcp-intake/slack-create-something.json' &&
+        !/\bslack-create-something\b/i.test(docText)) {
+      return [];
+    }
     const evidence = explicitTarget
       ? `${doc.path} ${relation} ${target.path} through an explicit repository link.`
       : scoredTargets[0]?.score >= 2

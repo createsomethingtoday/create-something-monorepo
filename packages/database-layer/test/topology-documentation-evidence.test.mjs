@@ -42,3 +42,13 @@ test('workshop starter connects to its JSONC runtime', () => {
   assert.ok(runtime);
   assert.ok(topology.edges.some((edge) => edge.source === owner.id && edge.target === runtime.id && edge.relation === 'runs'));
 });
+
+test('creator Slack triage does not imply ownership of the internal Slack intake', () => {
+  const topology = JSON.parse(fs.readFileSync(new URL('../data/create-something-internal-topology.json', import.meta.url), 'utf8'));
+  const guide = topology.nodes.find((node) => node.path === 'docs/guides/SLACK_HELP_REQUEST_TRIAGE_RUNBOOK.md');
+  const intake = topology.nodes.find((node) => node.path === 'config/dify-mcp-intake/slack-create-something.json');
+  assert.ok(guide);
+  assert.ok(intake);
+  assert.ok(!topology.edges.some((edge) => edge.source === guide.id && edge.target === intake.id));
+  assert.ok(topology.edges.some((edge) => edge.source === guide.id && edge.target === topology.rootNodeId && edge.relation === 'documents'));
+});

@@ -1,6 +1,6 @@
 {
   "id": "substrate:create-something:operating-slice-review:internal",
-  "generatedAt": "2026-10-06T14:17:55.986Z",
+  "generatedAt": "2026-10-08T14:00:53.671Z",
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
   "sourceCoverageId": "substrate:create-something:atlas-coverage:internal",
@@ -93,6 +93,8 @@
         "substrate:create-something:worker:packages-ltd-workers-arena-sync-wrangler-toml",
         "substrate:create-something:worker:packages-ltd-wrangler-jsonc",
         "substrate:create-something:worker:packages-mapping-canvas-wrangler-jsonc",
+        "substrate:create-something:package:create-something-marketplace-featured-notifier-packages-marketplace-featured-notifier",
+        "substrate:create-something:worker:packages-marketplace-featured-notifier-wrangler-jsonc",
         "substrate:create-something:package:create-something-maverick-admin-packages-maverick-admin",
         "substrate:create-something:worker:packages-maverick-admin-wrangler-toml",
         "substrate:create-something:worker:packages-maverick-wrangler-toml",
@@ -160,7 +162,7 @@
       "owner": "CREATE SOMETHING",
       "tier": "Automation",
       "surface": "worker",
-      "nodeCount": 143,
+      "nodeCount": 145,
       "evidence": [
         "apps/bettermode-marketplace-creator-agent/wrangler.jsonc",
         "apps/create-something-scheduler/wrangler.jsonc",
@@ -259,6 +261,7 @@
         "substrate:create-something:guide:docs-guides-recurring-cleanup-loops-md",
         "substrate:create-something:guide:docs-guides-seo-md",
         "substrate:create-something:guide:docs-guides-skills-md",
+        "substrate:create-something:guide:docs-guides-slack-help-request-triage-runbook-md",
         "substrate:create-something:guide:docs-guides-solo-operator-agent-loop-md",
         "substrate:create-something:guide:docs-guides-solo-operator-control-tower-playbook-md",
         "substrate:create-something:guide:docs-guides-steel-cli-md",
@@ -274,7 +277,7 @@
       "owner": "CREATE SOMETHING",
       "tier": "Mixed",
       "surface": "guide",
-      "nodeCount": 79,
+      "nodeCount": 80,
       "evidence": [
         "docs/guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md",
         "docs/guides/AGENCY_GOVERNANCE_PRODUCTS_OPERATIONS_RUNBOOK.md",
@@ -582,6 +585,7 @@
         "substrate:create-something:package:create-something-simulation-packages-simulation",
         "substrate:create-something:package:create-something-spritz-packages-spritz",
         "substrate:create-something:package:create-something-pencil-balance-packages-tools-pencil-balance",
+        "substrate:create-something:package:app-slug-packages-webflow-app-forge-template",
         "substrate:create-something:package:create-something-webflow-apps-admin-packages-webflow-apps-admin",
         "substrate:create-something:package:create-something-webflow-dashboard-core-packages-webflow-dashboard-core",
         "substrate:create-something:package:create-something-webflow-intake-packages-webflow-intake",
@@ -593,7 +597,7 @@
       "owner": "CREATE SOMETHING",
       "tier": "Mixed",
       "surface": "package",
-      "nodeCount": 28,
+      "nodeCount": 29,
       "evidence": [
         "packages/agency/static/films/algorithms",
         "packages/agency/static/films/dashboard",
@@ -909,6 +913,45 @@
       "nextAction": "Review tool risk, agent ownership, and MCP evidence before enabling production workflow use."
     },
     {
+      "id": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-database-surface-database-package",
+      "title": "Database package Atlas coverage",
+      "status": "review_ready",
+      "atlasCoverageGroupIds": [
+        "substrate:create-something:atlas-coverage-group:database-surface-database-package"
+      ],
+      "recordIds": [
+        "substrate:create-something:package:create-something-monorepo",
+        "substrate:create-something:package:create-something-canon-packages-canon",
+        "substrate:create-something:package:createsomething-canon-tokens-packages-canon-tokens",
+        "substrate:create-something:package:create-something-canvas-kernel-packages-canvas-kernel",
+        "substrate:create-something:package:create-something-database-layer-packages-database-layer",
+        "substrate:create-something:package:create-something-exception-flow-video-packages-exception-flow-video",
+        "substrate:create-something:package:create-something-halfdozen-landing-packages-halfdozen-landing",
+        "substrate:create-something:package:create-something-notion-tools-packages-notion-tools",
+        "substrate:create-something:package:create-something-webflow-app-forge-packages-webflow-app-forge"
+      ],
+      "owner": "CREATE SOMETHING",
+      "tier": "Database",
+      "surface": "package",
+      "nodeCount": 9,
+      "evidence": [
+        "packages/canon",
+        "packages/canon-tokens",
+        "packages/canvas-kernel",
+        "packages/database-layer",
+        "packages/exception-flow-video",
+        "packages/halfdozen-landing",
+        "packages/notion-tools",
+        "packages/webflow-app-forge"
+      ],
+      "validationCommands": [
+        "pnpm --filter @create-something/database-layer test"
+      ],
+      "promotionBoundary": "Local coverage only. Production Atlas write-back, Cloudflare mutation, Dify Studio changes, client communication, and third-party writes require explicit operator approval and the owning promotion workflow.",
+      "rollbackNote": "Rollback is local-first: regenerate coverage artifacts from repo truth or revert the approved production write through its owning workflow. Do not delete external state from this artifact alone.",
+      "nextAction": "Review the mapped slice and promote only approved records into production workflow use."
+    },
+    {
       "id": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-database-surface-database-worker",
       "title": "Database worker Atlas coverage",
       "status": "review_ready",
@@ -948,43 +991,6 @@
       "promotionBoundary": "Local coverage only. Production Atlas write-back, Cloudflare mutation, Dify Studio changes, client communication, and third-party writes require explicit operator approval and the owning promotion workflow.",
       "rollbackNote": "Rollback is local-first: regenerate coverage artifacts from repo truth or revert the approved production write through its owning workflow. Do not delete external state from this artifact alone.",
       "nextAction": "Review runtime ownership and bind approved worker slices to production workflow checks before Cloudflare mutation."
-    },
-    {
-      "id": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-database-surface-database-package",
-      "title": "Database package Atlas coverage",
-      "status": "review_ready",
-      "atlasCoverageGroupIds": [
-        "substrate:create-something:atlas-coverage-group:database-surface-database-package"
-      ],
-      "recordIds": [
-        "substrate:create-something:package:create-something-monorepo",
-        "substrate:create-something:package:create-something-canon-packages-canon",
-        "substrate:create-something:package:createsomething-canon-tokens-packages-canon-tokens",
-        "substrate:create-something:package:create-something-canvas-kernel-packages-canvas-kernel",
-        "substrate:create-something:package:create-something-database-layer-packages-database-layer",
-        "substrate:create-something:package:create-something-exception-flow-video-packages-exception-flow-video",
-        "substrate:create-something:package:create-something-halfdozen-landing-packages-halfdozen-landing",
-        "substrate:create-something:package:create-something-notion-tools-packages-notion-tools"
-      ],
-      "owner": "CREATE SOMETHING",
-      "tier": "Database",
-      "surface": "package",
-      "nodeCount": 8,
-      "evidence": [
-        "packages/canon",
-        "packages/canon-tokens",
-        "packages/canvas-kernel",
-        "packages/database-layer",
-        "packages/exception-flow-video",
-        "packages/halfdozen-landing",
-        "packages/notion-tools"
-      ],
-      "validationCommands": [
-        "pnpm --filter @create-something/database-layer test"
-      ],
-      "promotionBoundary": "Local coverage only. Production Atlas write-back, Cloudflare mutation, Dify Studio changes, client communication, and third-party writes require explicit operator approval and the owning promotion workflow.",
-      "rollbackNote": "Rollback is local-first: regenerate coverage artifacts from repo truth or revert the approved production write through its owning workflow. Do not delete external state from this artifact alone.",
-      "nextAction": "Review the mapped slice and promote only approved records into production workflow use."
     },
     {
       "id": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-application-surface-mixed-app",
@@ -1183,6 +1189,35 @@
       "nextAction": "Review client overlay boundaries and promote approved slices into client-specific Atlas sessions."
     },
     {
+      "id": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-database-surface-database-agent",
+      "title": "Database agent Atlas coverage",
+      "status": "review_ready",
+      "atlasCoverageGroupIds": [
+        "substrate:create-something:atlas-coverage-group:database-surface-database-agent"
+      ],
+      "recordIds": [
+        "substrate:create-something:package:create-something-app-review-agent-eval-packages-app-review-agent-eval",
+        "substrate:create-something:package:create-something-observability-packages-observability",
+        "substrate:create-something:package:create-something-webflow-template-agent-packages-webflow-template-agent"
+      ],
+      "owner": "CREATE SOMETHING",
+      "tier": "Database",
+      "surface": "agent",
+      "nodeCount": 3,
+      "evidence": [
+        "packages/app-review-agent-eval",
+        "packages/observability",
+        "packages/webflow-template-agent"
+      ],
+      "validationCommands": [
+        "pnpm --filter @create-something/database-layer agent-configs:generate",
+        "pnpm --filter @create-something/database-layer test"
+      ],
+      "promotionBoundary": "Local coverage only. Production Atlas write-back, Cloudflare mutation, Dify Studio changes, client communication, and third-party writes require explicit operator approval and the owning promotion workflow.",
+      "rollbackNote": "Rollback is local-first: regenerate coverage artifacts from repo truth or revert the approved production write through its owning workflow. Do not delete external state from this artifact alone.",
+      "nextAction": "Review tool risk, agent ownership, and MCP evidence before enabling production workflow use."
+    },
+    {
       "id": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-automation-surface-judgment-agent",
       "title": "Judgment agent Atlas coverage",
       "status": "review_ready",
@@ -1202,33 +1237,6 @@
         "packages/notion-agent",
         "packages/ona-agents",
         "packages/tufte"
-      ],
-      "validationCommands": [
-        "pnpm --filter @create-something/database-layer agent-configs:generate",
-        "pnpm --filter @create-something/database-layer test"
-      ],
-      "promotionBoundary": "Local coverage only. Production Atlas write-back, Cloudflare mutation, Dify Studio changes, client communication, and third-party writes require explicit operator approval and the owning promotion workflow.",
-      "rollbackNote": "Rollback is local-first: regenerate coverage artifacts from repo truth or revert the approved production write through its owning workflow. Do not delete external state from this artifact alone.",
-      "nextAction": "Review tool risk, agent ownership, and MCP evidence before enabling production workflow use."
-    },
-    {
-      "id": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-database-surface-database-agent",
-      "title": "Database agent Atlas coverage",
-      "status": "review_ready",
-      "atlasCoverageGroupIds": [
-        "substrate:create-something:atlas-coverage-group:database-surface-database-agent"
-      ],
-      "recordIds": [
-        "substrate:create-something:package:create-something-observability-packages-observability",
-        "substrate:create-something:package:create-something-webflow-template-agent-packages-webflow-template-agent"
-      ],
-      "owner": "CREATE SOMETHING",
-      "tier": "Database",
-      "surface": "agent",
-      "nodeCount": 2,
-      "evidence": [
-        "packages/observability",
-        "packages/webflow-template-agent"
       ],
       "validationCommands": [
         "pnpm --filter @create-something/database-layer agent-configs:generate",
