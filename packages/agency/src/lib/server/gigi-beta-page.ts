@@ -84,7 +84,7 @@ export const gigiBetaHtml = `<!doctype html>
           <h1>Your gigs.<br>Your people.<br>One place.</h1>
           <p class="intro">GiGi keeps gigs, contacts, tasks and money connected, so the details of your work stay together.</p>
           <a class="download" href="${gigiBeta.url}" download="${gigiBeta.filename}">Download GiGi for Mac <span aria-hidden="true">↓</span></a>
-          <p class="requirements">Beta ${gigiBeta.version} · 75.4 MB · Apple Silicon · macOS 13 or later<br>Intel Macs are not supported by this download.</p>
+          <p class="requirements">Beta ${gigiBeta.version} · ${(gigiBeta.bytes / 1_000_000).toFixed(1)} MB · Apple Silicon · macOS 13 or later<br>Intel Macs are not supported by this download.</p>
         </div>
         <div class="card" aria-label="Illustrative workspace records, not a screenshot">
           <div class="card-top"><span>GiGi workspace</span><span>Illustrative example</span></div>
@@ -122,7 +122,8 @@ export const gigiBetaHtml = `<!doctype html>
         </div>
       </section>
       <section aria-labelledby="release"><h2 id="release">Know what you’re downloading.</h2>
-        <dl><dt>Release</dt><dd>GiGi ${gigiBeta.version} · macOS arm64</dd><dt>Size</dt><dd>${gigiBeta.bytes.toLocaleString('en-US')} bytes (75.4 MB)</dd><dt>Security</dt><dd>Developer ID signed, Apple notarized and stapled. Gatekeeper checks passed for this exact installer.</dd><dt>SHA-256</dt><dd class="checksum"><code>${gigiBeta.sha256}</code></dd></dl>
+        <p><strong>Acceptance status:</strong> This exact installer passed signing, notarization, bundled synthetic chat approval/rejection checks, and native save/restart. Remaining native workflow checks and physical phone-over-cellular acceptance are pending. This is an early beta; those checks are not yet verified.</p>
+        <dl><dt>Release</dt><dd>GiGi ${gigiBeta.version} · macOS arm64</dd><dt>Size</dt><dd>${gigiBeta.bytes.toLocaleString('en-US')} bytes (${(gigiBeta.bytes / 1_000_000).toFixed(1)} MB)</dd><dt>Security</dt><dd>Developer ID signed, Apple notarized and stapled. Gatekeeper checks passed for this exact installer.</dd><dt>SHA-256</dt><dd class="checksum"><code>${gigiBeta.sha256}</code></dd></dl>
         <details><summary>Check the installer checksum</summary><p>In Terminal, run this against the file you downloaded:</p><div class="checksum"><code>shasum -a 256 ~/Downloads/${gigiBeta.filename}</code></div><p>The result should match the SHA-256 above. If it does not, stop and request a verified installer.</p></details>
       </section>
     </main>

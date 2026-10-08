@@ -14,10 +14,10 @@ test('standalone page retains the owning Agency Canon operator palette', () => {
 });
 
 test('download contract pins exact qualified installer, platform and checksum', () => {
-  assert.equal(gigiBeta.bytes, 75369025);
-  assert.equal(gigiBeta.sha256, '00e75c41b298b07712ce5939ccb6339f60c6d235360a0a133e52d72e4dbd2893');
-  assert.equal(gigiBeta.url, `https://media.createsomething.io/releases/gigi/0.1.0/${gigiBeta.sha256}/GiGi-0.1.0-arm64.dmg`);
-  for (const text of ['macOS 13', 'Apple Silicon', 'Intel Macs are not supported', gigiBeta.url, gigiBeta.sha256, '75,369,025']) assert.ok(gigiBetaHtml.includes(text), text);
+  assert.equal(gigiBeta.bytes, 75750054);
+  assert.equal(gigiBeta.sha256, 'e9ce1625e4e406fe375625f3708389ff22e9afeb369a34baa39fe0153a2d7b6e');
+  assert.equal(gigiBeta.url, `https://media.createsomething.io/releases/gigi/0.1.0/${gigiBeta.sha256}/GiGi-0.1.0-arm64-private-beta.dmg`);
+  for (const text of ['macOS 13', 'Apple Silicon', 'Intel Macs are not supported', gigiBeta.url, gigiBeta.sha256, '75,750,054', '75.8 MB']) assert.ok(gigiBetaHtml.includes(text), text);
 });
 
 test('beta stays unlisted and has no active content or tracking shell', () => {
@@ -48,3 +48,5 @@ test('walkthroughs pin reviewed footage and use user-initiated native playback',
   assert.ok(gigiBetaHtml.includes('earlier beta builds'));
   assert.ok(gigiBetaHtml.includes('not acceptance of a fresh installation'));
 });
+
+ test("pending release acceptance is disclosed", () => { assert.ok(gigiBetaHtml.includes("Remaining native workflow checks and physical phone-over-cellular acceptance are pending")); });
