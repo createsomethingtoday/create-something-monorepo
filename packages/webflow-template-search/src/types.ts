@@ -193,6 +193,11 @@ export interface TemplateDocumentInput {
   marketplaceStatus: string | null;
   sourceLastModifiedTime: string | null;
   syncedAt: string;
+  // true: a live Templates CMS item was confirmed for this record during the
+  // sync. false: the lookup completed and found none. null: the lookup was
+  // unavailable (error, no token, partial coverage), so the row keeps whatever
+  // it had; a 429 must not un-confirm rows that were confirmed last run.
+  listingConfirmed: boolean | null;
 }
 
 export interface SearchParams {
@@ -315,6 +320,7 @@ export interface SyncSummary {
   cursor: string;
   skipped_empty_windows?: number;
   recent_published_records?: number;
+  unconfirmed_recheck_records?: number;
   // Published Airtable records held out of the index because no live Webflow
   // Templates CMS item exists for them yet.
   listing_gated_records?: number;
