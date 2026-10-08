@@ -786,3 +786,9 @@ node packages/canon/node_modules/vitest/vitest.mjs run --config scripts/email-re
 
 This validates local rendering, not delivery or hosted Resend templates. See
 `docs/CRE_2151_EMAIL_SOURCE_HANDOFF.md` for the review and provider boundaries.
+
+### Property-owned unified search
+
+`UnifiedSearch` accepts an optional `content` snippet. Without it, existing cross-property search is unchanged. With it, Canon retains the dialog shell, mobile launcher, Cmd/Ctrl+K, Escape and scroll lock; the property owns its form, state, focus management and result navigation. Legacy input, Enter/arrow selection and remote search are bypassed. Set `enableAnalytics={false}` when search state must remain local. Agency's shared public search is the reference consumer and its browser QA covers this opt-in contract.
+
+Local-only input surfaces can set `data-analytics-ignore` on their root to exclude descendant interaction/error, copy and content-link events from Canon trackers. Existing page-level consent and page views are unchanged. This does not suppress DOM events or break delegated controls. Agency uses this alongside `enableAnalytics={false}`; search text remains only in session history.

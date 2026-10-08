@@ -1,0 +1,11 @@
+{
+  "packages/agency/src/lib/site-search/webmcp.ts": "d9af61ffef46a3e6dc3885521b9718dc5c8386a49a4171be6232f610113dbe7e",
+  "packages/agency/src/lib/site-search/controller.ts": "6e7ced046f7f4feb9e4ba0cc58b117a29516545b984aad73eb1fe4d6ce2e0ea0",
+  "packages/agency/src/lib/site-search/AgencySearch.svelte": "8bc30d180d69580f32452d219c958bd004dd792d1a246536e8ba1e9a446f38b9",
+  "packages/agency/src/lib/site-search/catalog.ts": "951dfbbb01be868271b037df40a4e542f84f78415cbb6c70c22859f47a487fe7",
+  "packages/agency/src/lib/annotations/page-annotations.ts": "8744c31761f9659e47808669e69bba839ec76523900537d1b7866afa63b97264",
+  "packages/agency/src/lib/annotations/PageAnnotations.svelte": "74e58d34a587bcd75f9aeb861593fd9daf1b4403c407d5751411403af633cb0b",
+  "packages/agency/src/routes/+layout.svelte": "8cc1eef2c6c037131900653a15fe189ab22f4603c5676f34c2b92dc601fae106",
+  "packages/canon/src/lib/navigation/UnifiedSearch.svelte": "ce4b51a84374b3985d1b16541d19bfa50e4a4bcb67cf26353ac07ee69ba3abdc",
+  "packages/canon/src/lib/codification/codification.ts": "0cfd7dad5a2cbb177c16e55a95af4f81ca4fbd9c38c70b499da37af94e0e2b92"
+}

@@ -1,0 +1,46 @@
+{
+  "date": "2026-10-08",
+  "base": "40863d40a",
+  "branch": "preview/agency-webmcp-search",
+  "scope": "integrated actual Agency shell, local only",
+  "url": "http://127.0.0.1:4178/",
+  "publicCatalogEntries": 24,
+  "pageAnnotationTargets": {
+    "/": 2,
+    "/services": 2,
+    "/products": 2,
+    "/field-reports": 1,
+    "/practice": 1,
+    "/stack": 1
+  },
+  "checks": {
+    "siteSearchAndAnnotationTests": {
+      "passed": 16,
+      "failed": 0
+    },
+    "agencyCheck": "passed",
+    "agencyBuild": "passed",
+    "canonSvelteDiagnostics": "0 errors, 0 warnings",
+    "canonFullCheck": "passed after exact upstream 8dfacd302 operator-tooling exemption",
+    "canonFullTests": {
+      "passed": 655,
+      "failed": 19,
+      "remainingFailuresReproducedAtBase": true
+    },
+    "canonAnalyticsOptoutTests": {
+      "passed": 5,
+      "failed": 0
+    },
+    "actualShellChromeQA": "passed desktop1440/mobile390, search and six annotation routes",
+    "nativeHostAcceptance": {
+      "search": "passed: real discovery, workflow query, 14 visible results, selection, readback",
+      "annotations": "request accepted following trusted click; comment not submitted",
+      "host": "Codex In-app Browser",
+      "receipt": "native-search-receipt.json"
+    }
+  },
+  "deployment": false,
+  "trackingAdded": false,
+  "privateSources": false,
+  "remoteSearch": false
+}

@@ -1,0 +1,14 @@
+{
+  "date": "2026-10-08",
+  "host": "Codex In-app Browser",
+  "browserId": "2",
+  "tabId": "2",
+  "url": "http://127.0.0.1:4178/",
+  "action": "Playwright trusted click on button Ask about how support works",
+  "target": ".service-journey",
+  "visibleStatus": "Request accepted. Review and send your comment in the browser.",
+  "messageSubmitted": false,
+  "limitation": "Acceptance observed in page status and screenshot; composer editing and send were not exercised.",
+  "screenshot": "native-annotation.jpg",
+  "source": "source-sha256.json"
+}

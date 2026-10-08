@@ -14,7 +14,7 @@
 	 * />
 	 */
 
-	import { onMount, type Component } from 'svelte';
+	import { onMount, type Component, type Snippet } from 'svelte';
 	import FlaskConical from 'lucide-svelte/icons/flask-conical';
 	import BookOpen from 'lucide-svelte/icons/book-open';
 	import Hammer from 'lucide-svelte/icons/hammer';
@@ -106,6 +106,10 @@
 	// =============================================================================
 
 	interface Props {
+    /** Optional property-owned body. Owns search state, focus and result actions.
+     * Canon retains the dialog, mobile launcher, Cmd/Ctrl+K and Escape. */
+    content?: Snippet;
+
 		/** Whether the palette is open */
 		open?: boolean;
 		/** URL of the unified search API */
@@ -130,6 +134,7 @@
 
 	let {
 		open = $bindable(false),
+    content,
 		searchApiUrl = 'https://unified-search.createsomething.workers.dev',
 		localItems = [],
 		placeholder = 'Search across all properties...',
@@ -327,6 +332,8 @@
 			clearTimeout(debounceTimer);
 		}
 
+		if (content) return;
+
 		if (query.trim().length >= 2) {
 			debounceTimer = setTimeout(() => {
 				performSearch(query);
@@ -379,11 +386,13 @@
 			if (!open) {
 				trackEvent('search_opened', { trigger: 'keyboard' });
 			}
-			open = !open;
+			if (open) close(); else open = true;
 			return;
 		}
 
 		if (!open) return;
+
+		if (content && event.key !== 'Escape') return;
 
 		const items = allItems();
 
@@ -479,7 +488,10 @@
 	></div>
 
 	<!-- Palette -->
-	<div class="palette" role="dialog" aria-modal="true" aria-label="Unified search">
+	<div class="palette" class:custom-content={!!content} role="dialog" aria-modal="true" aria-label="Unified search">
+    {#if content}
+      {@render content()}
+    {:else}
 		<div class="palette-input-wrapper">
 			<svg class="palette-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 				<circle cx="11" cy="11" r="8"/>
@@ -602,10 +614,12 @@
 				</span>
 			{/if}
 		</div>
+    {/if}
 	</div>
 {/if}
 
 <style>
+  .palette.custom-content { overflow: auto; background: var(--color-performance-paper); color: var(--color-performance-ink); }
 	.palette-overlay {
 		position: fixed;
 		inset: 0;
