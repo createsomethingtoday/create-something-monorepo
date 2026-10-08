@@ -1,0 +1,9 @@
+{
+  "name": "template-review-guard",
+  "version": "0.1.0",
+  "description": "Gates creator-facing Template Review MCP writes behind an in-terminal confirmation and lints review feedback before it is written.",
+  "types": "./types/index.d.ts",
+  "author": {
+    "name": "Webflow Marketplace Review Team"
+  }
+}
