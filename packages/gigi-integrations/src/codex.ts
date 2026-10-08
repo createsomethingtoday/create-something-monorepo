@@ -14,7 +14,7 @@ type RecordRef = { entity: string; id: string; title?: string };
 type DecisionReceipt = { approvalId: string; outcome: 'verified' | 'rejected' | 'failed' | 'unknown' };
 type Session = { sessionId: string; threadId: string; workspaceId: string; title: string; record?: RecordRef; state: State; turnId?: string; pendingMessageId?: string; cancelPending?: boolean; recoveryPending?: boolean; decisionReceipt?: DecisionReceipt; error?: string; uncertainWrite?: { tool: string; arguments: Json }; createdAt: number };
 type Approval = { id: string; title: string; detail: string; requestId: string | number; sessionId: string; kind: 'server' | 'tool'; tool?: string; arguments?: Json };
-export type ChatRead = { sessionId: string; messages: Array<{ id: string; role: 'user' | 'assistant'; text: string }>; state: State; approvals: Array<{ id: string; title: string; detail: string }>; recordLinks: RecordRef[]; decisionReceipt?: DecisionReceipt; error?: string; cancelPending?: boolean; recoveryPending?: boolean };
+export type ChatRead = { sessionId: string; messages: Array<{ id: string; role: 'user' | 'assistant'; text: string }>; state: State; approvals: Array<{ id: string; title: string; detail: string }>; recordLinks: RecordRef[]; workspaceVerifiedEdits?: string[]; decisionReceipt?: DecisionReceipt; error?: string; cancelPending?: boolean; recoveryPending?: boolean };
 export interface AppServer { request(method: string, params: Json): Promise<any>; onMessage(handler: (message: Json) => void): () => void; reply(id: string | number, result: unknown): Promise<void> | void; close?(): Promise<void> | void }
 export type CodexOptions = { dataDir: string; mcpBinary: string; skillPath: string; server: AppServer; mcp?: AppServer };
 
@@ -231,10 +231,14 @@ export function createCodexAdapter(options: CodexOptions) {
       } catch { /* Keep the write fence until a complete matching read succeeds. */ }
     }
   }
+  function workspaceVerifiedEdits(workspaceId: string): { workspaceVerifiedEdits?: string[] } {
+    const ids = [...sessions.values()].filter(session => session.workspaceId === workspaceId && session.decisionReceipt?.outcome === 'verified').map(session => session.decisionReceipt!.approvalId);
+    return ids.length ? { workspaceVerifiedEdits: ids } : {};
+  }
   async function read(input: Json): Promise<ChatRead> {
     const session = await owner(input);
     await reconcileSavedEdits(session.workspaceId);
-    if (!session.threadId) return { sessionId: session.sessionId, messages: [], state: session.state, approvals: [], recordLinks: session.record ? [session.record] : [], ...(session.decisionReceipt ? { decisionReceipt: session.decisionReceipt } : {}) };
+    if (!session.threadId) return { sessionId: session.sessionId, messages: [], state: session.state, approvals: [], recordLinks: session.record ? [session.record] : [], ...workspaceVerifiedEdits(session.workspaceId), ...(session.decisionReceipt ? { decisionReceipt: session.decisionReceipt } : {}) };
     if (!loadedThreads.has(session.threadId)) { await options.server.request('thread/resume', { threadId: session.threadId, excludeTurns: true, ...profile(await dynamicTools(), session) }); loadedThreads.add(session.threadId); }
     // Metadata and one-turn pages avoid hydrating an unbounded retained history.
     let response: any;
@@ -253,7 +257,7 @@ export function createCodexAdapter(options: CodexOptions) {
     }
     catch (error) {
       if (session.state !== 'running' && session.state !== 'approval') throw error;
-      const pending: ChatRead = { sessionId: session.sessionId, messages: [...(liveMessages.get(session.sessionId) ?? [])].filter(([, entry]) => entry.turnId === session.turnId).slice(-50).map(([id, entry]) => ({ id, role: 'assistant' as const, text: entry.text })), state: session.state, approvals: [...approvals.values()].filter(x => x.sessionId === session.sessionId).map(({ id, title, detail }) => ({ id, title, detail })), recordLinks: session.record ? [session.record] : [], ...(session.decisionReceipt ? { decisionReceipt: session.decisionReceipt } : {}), ...(session.error ? { error: session.error } : {}), ...(session.cancelPending ? { cancelPending: true } : {}), ...(session.recoveryPending ? { recoveryPending: true } : {}) };
+      const pending: ChatRead = { sessionId: session.sessionId, messages: [...(liveMessages.get(session.sessionId) ?? [])].filter(([, entry]) => entry.turnId === session.turnId).slice(-50).map(([id, entry]) => ({ id, role: 'assistant' as const, text: entry.text })), state: session.state, approvals: [...approvals.values()].filter(x => x.sessionId === session.sessionId).map(({ id, title, detail }) => ({ id, title, detail })), recordLinks: session.record ? [session.record] : [], ...workspaceVerifiedEdits(session.workspaceId), ...(session.decisionReceipt ? { decisionReceipt: session.decisionReceipt } : {}), ...(session.error ? { error: session.error } : {}), ...(session.cancelPending ? { cancelPending: true } : {}), ...(session.recoveryPending ? { recoveryPending: true } : {}) };
       while (pending.messages.length && Buffer.byteLength(JSON.stringify(pending)) > 500_000) pending.messages.shift();
       return pending;
     }
@@ -282,7 +286,7 @@ export function createCodexAdapter(options: CodexOptions) {
     const pending = [...approvals.values()].filter(x => x.sessionId === session.sessionId);
     if (pending.length) session.state = 'approval';
     await persist();
-    const output: ChatRead = { sessionId: session.sessionId, messages: messages.slice(-50), state: session.state, approvals: pending.map(({ id, title, detail }) => ({ id, title, detail })), recordLinks: session.record ? [session.record] : [], ...(session.decisionReceipt ? { decisionReceipt: session.decisionReceipt } : {}), ...(session.error ? { error: session.error } : {}), ...(session.cancelPending ? { cancelPending: true } : {}), ...(session.recoveryPending ? { recoveryPending: true } : {}) };
+    const output: ChatRead = { sessionId: session.sessionId, messages: messages.slice(-50), state: session.state, approvals: pending.map(({ id, title, detail }) => ({ id, title, detail })), recordLinks: session.record ? [session.record] : [], ...workspaceVerifiedEdits(session.workspaceId), ...(session.decisionReceipt ? { decisionReceipt: session.decisionReceipt } : {}), ...(session.error ? { error: session.error } : {}), ...(session.cancelPending ? { cancelPending: true } : {}), ...(session.recoveryPending ? { recoveryPending: true } : {}) };
     while (output.messages.length && Buffer.byteLength(JSON.stringify(output)) > 500_000) output.messages.shift();
     return output;
   }

@@ -32,7 +32,7 @@ export class ChatController {
   constructor(bridge, workspaceId, changed, completed, schedule = (callback, delay) => globalThis.setTimeout(callback, delay), clear = (timer) => globalThis.clearTimeout(timer)) {
     this.bridge = bridge; this.workspaceId = workspaceId; this.changed = changed; this.completed = completed;
     this.schedule = schedule; this.clear = clear; this.visible = false; this.status = null;
-    this.sessions = []; this.current = null; this.record = null; this.startRecord = null; this.draft = ''; this.error = null;
+    this.verifiedWorkspaceEdits = new Set(); this.sessions = []; this.current = null; this.record = null; this.startRecord = null; this.draft = ''; this.error = null;
     this.pending = false; this.reading = false; this.refreshRequired = false; this.drafts = new Map(); this.unconfirmedSends = new Map();
     this.timer = null; this.epoch = 0; this.pollCount = 0; this.opening = false;
   }
@@ -93,6 +93,8 @@ export class ChatController {
   }
   accept(result) {
     if (!result || result.sessionId !== this.current?.sessionId || !['idle', 'running', 'approval', 'interrupted', 'failed'].includes(result.state)) return false;
+    const newWorkspaceEdits = (Array.isArray(result.workspaceVerifiedEdits) ? result.workspaceVerifiedEdits : []).filter(id => typeof id === 'string' && !this.verifiedWorkspaceEdits.has(id));
+    for (const id of newWorkspaceEdits) this.verifiedWorkspaceEdits.add(id);
     const previous = this.current.state;
     const previousReceipt = this.current.decisionReceipt;
     const verifiedEdit = result.decisionReceipt?.outcome === 'verified' && (previousReceipt?.outcome !== 'verified' || previousReceipt.approvalId !== result.decisionReceipt.approvalId);
@@ -106,7 +108,7 @@ export class ChatController {
     }
     if (this.visible) this.refreshRequired = false;
     this.emit();
-    if (verifiedEdit || (['running', 'approval'].includes(previous) && result.state === 'idle')) void this.completed?.(result);
+    if (verifiedEdit || newWorkspaceEdits.length || (['running', 'approval'].includes(previous) && result.state === 'idle')) void this.completed?.(result);
     if (result.state === 'running' || result.recoveryPending) this.queuePoll();
     return true;
   }

@@ -809,3 +809,20 @@ test('invalid history pagination never falls back to a full-history read or clea
   assert.equal(result.state, 'running');
   assert.equal(server.calls.some(call => call.method === 'thread/read' && call.params.includeTurns), false);
 });
+
+test('reading another session returns persisted workspace write verification', async () => {
+  const { adapter, server, mcp, dataDir } = await setup();
+  const a = await adapter.start({ workspaceId: 'w' });
+  const b = await adapter.start({ workspaceId: 'w' });
+  const path = join(dataDir, 'codex-chat', 'sessions.jsonl');
+  const entries = (await readFile(path, 'utf8')).trim().split('\n').map(line => JSON.parse(line));
+  const pending = entries.find(entry => entry.sessionId === a.sessionId);
+  pending.uncertainWrite = { tool: 'gigi_records_save', arguments: { id: 'r', entity: 'tasks', title: 'Updated' } };
+  pending.decisionReceipt = { approvalId: 'held-edit-a', outcome: 'unknown' };
+  await writeFile(path, entries.map(entry => JSON.stringify(entry)).join('\n') + '\n');
+  const original = mcp.request.bind(mcp);
+  mcp.request = async (method, params) => params.name === 'gigi_records_get' ? { structuredContent: { id: 'r', title: 'Updated', fields: {}, source: {} } } : original(method, params);
+  const restart = () => createCodexAdapter({ dataDir, mcpBinary: '/fixture/gigi-mcp', skillPath: '/fixture/skill/SKILL.md', server, mcp });
+  assert.deepEqual((await restart().read({ workspaceId: 'w', sessionId: b.sessionId })).workspaceVerifiedEdits, ['held-edit-a']);
+  assert.deepEqual((await restart().read({ workspaceId: 'w', sessionId: b.sessionId })).workspaceVerifiedEdits, ['held-edit-a']);
+});

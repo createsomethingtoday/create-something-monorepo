@@ -239,3 +239,14 @@ for (const failed of ['status', 'list']) test(`successful drawer reopen clears p
   assert.equal(chat.status.available, true);
   chat.close();
 });
+
+test('workspace verification in another conversation refreshes records once', async () => {
+  let refreshes = 0;
+  const chat = new ChatController({}, 'w1', () => {}, () => { refreshes++; });
+  chat.visible = true; chat.current = session('idle');
+  const read = session('idle', { workspaceVerifiedEdits: ['edit-in-another-session'] });
+  assert.equal(chat.accept(read), true);
+  assert.equal(refreshes, 1);
+  chat.accept(read);
+  assert.equal(refreshes, 1);
+});
