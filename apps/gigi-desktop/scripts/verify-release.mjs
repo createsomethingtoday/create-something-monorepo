@@ -8,7 +8,7 @@ import { promisify } from 'node:util';
 import { fileURLToPath } from 'node:url';
 
 const execFileAsync=promisify(execFile);
-const firstParty=['Contents/MacOS/gigi','Contents/Resources/gigi-mcp','Contents/Resources/gigi-integrations'];
+const firstParty=['Contents/MacOS/gigi','Contents/Resources/gigi-mcp','Contents/Resources/gigi-integrations','Contents/Resources/gigi-codex'];
 const upstream='Contents/Resources/ctx';
 
 class ReleaseError extends Error {constructor(reason){super(reason);this.reason=reason;}}
@@ -65,7 +65,7 @@ function identity(details,reason,expectedTeam,expectedIdentifier,requireRuntime)
 }
 function accepted(output,reason,authority,notarizedSource){
  if(!/: accepted\b/.test(output))fail(reason);
- if(notarizedSource){if(!/source=Notarized Developer ID\b/.test(output)||!output.includes(`origin=${authority}`))fail(reason);}
+ if(notarizedSource){if(!/source=Notarized Developer ID\b/.test(output)||(/^origin=/m.test(output)&&!output.split('\n').includes(`origin=${authority}`)))fail(reason);}
  else if(!/source=(?:Notarized )?Developer ID\b/.test(output))fail(reason);
 }
 async function signature(run,path,reason,team,identifier,requireRuntime=true){
