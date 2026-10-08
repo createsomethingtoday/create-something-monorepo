@@ -32,7 +32,7 @@
     content="noindex"
   /></svelte:head
 >
-<main id="main" class="paths-workspace" class:paths-list={!detail && !data.path}>
+<main id="main" tabindex="-1" class="paths-workspace" class:paths-list={!detail && !data.path}>
   <a class="back-link" href={detail ? base : slug ? `/n/${slug}` : '/library'}
     ><Icon name="arrow-left" /> {detail ? 'All learning paths' : 'Back to sessions'}</a
   >
@@ -136,6 +136,15 @@
             ? 'Create a path from your lessons, then publish it when the sequence is ready.'
             : 'The creator’s published learning paths will appear here when you have access.'}
         </p>
+        {#if data.canEdit && !data.videos.length}
+          <a class="button secondary" href={slug ? `/n/${slug}/studio` : '/admin'}
+            >Prepare your first lesson</a
+          >
+        {:else}
+          <a class="button secondary" href={slug ? `/n/${slug}` : '/library'}
+            >Browse available sessions</a
+          >
+        {/if}
       </section>{:else}<div class="path-cards">
         {#each data.paths as path}<a class="path-card" href={`${base}/${path.id}`}
             ><span class="eyebrow"

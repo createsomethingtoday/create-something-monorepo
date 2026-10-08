@@ -1,4 +1,5 @@
 <script lang="ts">
+  import CreatorGuide from '$lib/components/CreatorGuide.svelte';
   import SerifPhrase from '$lib/components/SerifPhrase.svelte';
   import StateBadge from '$lib/components/StateBadge.svelte';
   import StatusNotice from '$lib/components/StatusNotice.svelte';
@@ -68,6 +69,8 @@
     busy = true;
     error = '';
     progress = 0;
+    message = '';
+    let uploadReceived = false;
     try {
       const file = files[0];
       const result = await api('uploads', { title, description, series, size: file.size });
@@ -85,12 +88,16 @@
         });
         upload.start();
       });
-      message = 'Upload received. Check processing, then choose where to publish.';
+      uploadReceived = true;
       title = '';
       description = '';
-      await mutate('videos/status', { id: result.id });
+      await api('videos/status', { id: result.id });
+      message =
+        'Upload received as a private draft. Review the lesson page, then choose an audience when processing is ready.';
     } catch (e) {
-      error = (e as Error).message;
+      error = uploadReceived
+        ? 'Upload received, but processing status could not be checked. Find the draft below and retry Check processing before uploading again.'
+        : (e as Error).message;
     } finally {
       busy = false;
       await load();
@@ -105,7 +112,7 @@
     content="noindex"
   /></svelte:head
 >
-<main id="main" class="workspace">
+<main id="main" tabindex="-1" class="workspace">
   <p class="eyebrow">PRIVATE / CREATOR WORKSPACE</p>
   <h1>Publish your <SerifPhrase text="knowledge." /></h1>
   <p>Uploads start private and unpublished. Review processing before you choose an audience.</p>
@@ -115,6 +122,15 @@
     >{/if}
   {#if error}<StatusNotice tone="error" message={error} />{/if}
   {#if message}<StatusNotice tone="success" {message} />{/if}
+  <CreatorGuide {slug} />
+  {#if !loaded && !error}<p role="status">Loading your publishing desk…</p>{/if}
+  {#if !loaded && error}<button
+      class="button secondary"
+      onclick={() => {
+        error = '';
+        void load();
+      }}>Try loading the workspace again</button
+    >{/if}
   {#if reservations.length}<section class="notice">
       <h2>Uploads to reconcile</h2>
       <p>
@@ -187,7 +203,7 @@
     </section>
   </div>
   <section class="admin-videos">
-    <h2>Publishing desk</h2>
+    <h2 id="publishing-desk" tabindex="-1">Publishing desk</h2>
     {#if loaded && !error && !videos.length && !reservations.length}
       <div class="ink-empty">
         <img src="/media/human-ink/card.webp" width="1280" height="1280" alt="" loading="lazy" />

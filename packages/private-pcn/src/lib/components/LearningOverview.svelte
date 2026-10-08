@@ -7,19 +7,42 @@
   let { slug }: { slug?: string } = $props();
   let continued = $state<(CatalogVideo & LessonProgress)[]>([]);
   let failure = $state(false);
+  let loading = $state(true);
+  async function load() {
+    loading = true;
+    failure = false;
+    try {
+      continued = (await api('learning/continue', undefined, slug)).lessons;
+    } catch {
+      failure = true;
+    } finally {
+      loading = false;
+    }
+  }
   onMount(() => {
-    void api('learning/continue', undefined, slug)
-      .then((r) => (continued = r.lessons))
-      .catch(() => (failure = true));
+    void load();
   });
 </script>
 
 <section class="learning-overview" aria-label="Your learning">
   <div class="heading">
-    <h2>{continued.length ? 'Continue learning' : 'Learn in sequence'}</h2>
+    <h2>
+      {loading || failure
+        ? 'Your learning'
+        : continued.length
+          ? 'Continue learning'
+          : 'Choose your first lesson'}
+    </h2>
     <a href={pathBase(slug)}>Learning paths <Icon name="arrow-right" /></a>
   </div>
-  {#if continued.length}<div class="resumes">
+  {#if loading}<p role="status">Checking your saved progress…</p>
+  {:else if failure}<div role="status">
+      <p>
+        Saved progress is temporarily unavailable. You can still open a lesson or learning path.
+      </p>
+      <button class="text-button" onclick={load}>Try saved progress again</button>
+    </div>
+  {:else if continued.length}<div class="resumes">
       {#each continued as lesson}<a href={lessonPath(lesson.id, slug)}
           ><strong>{lesson.title}</strong><span
             >{lesson.watched_at
@@ -30,9 +53,9 @@
           ></a
         >{/each}
     </div>{:else}<p>
-      {failure
-        ? 'Saved progress is temporarily unavailable. You can still open a lesson.'
-        : 'Follow a creator’s learning path or choose a session below. Your playback position will be saved to your account.'}
+      No saved lessons in this network yet. Choose a learning path for a sequence, or a session
+      below. Playback position saves while you watch when your connection is available. Return here
+      to resume.
     </p>{/if}
 </section>
 

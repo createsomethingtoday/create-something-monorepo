@@ -1,5 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { execFileSync, spawnSync } from 'node:child_process';
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import {
   extractPackageCoverageKeys,
@@ -59,4 +64,28 @@ test('ignores staged files outside MCP package dirs', () => {
   );
 
   assert.deepEqual(missing, []);
+});
+
+test('CLI reads exact manifests beneath dynamic routes and still rejects uncovered MCP packages', () => {
+  const cwd = mkdtempSync(join(tmpdir(), 'mcp-coverage-'));
+  const script = fileURLToPath(new URL('../check-staged-mcp-registry-coverage.mjs', import.meta.url));
+  const git = (...args) => execFileSync('git', args, { cwd, stdio: 'pipe' });
+  try {
+    git('init');
+    mkdirSync(join(cwd, 'scripts'), { recursive: true });
+    mkdirSync(join(cwd, 'packages/viewer/src/routes/[id]'), { recursive: true });
+    writeFileSync(join(cwd, 'scripts/mcp-registry-coverage.mjs'), 'const PACKAGE_COVERAGE = {\n};\n');
+    writeFileSync(join(cwd, 'packages/viewer/package.json'), JSON.stringify({ name: 'viewer' }));
+    writeFileSync(join(cwd, 'packages/viewer/src/routes/[id]/+page.svelte'), '<h1>Lesson</h1>');
+    git('add', '.');
+    const passed = spawnSync(process.execPath, [script], { cwd, encoding: 'utf8' });
+    assert.equal(passed.status, 0, passed.stderr);
+    writeFileSync(join(cwd, 'packages/viewer/package.json'), JSON.stringify({ name: 'viewer-mcp' }));
+    git('add', '.');
+    const rejected = spawnSync(process.execPath, [script], { cwd, encoding: 'utf8' });
+    assert.equal(rejected.status, 1);
+    assert.match(rejected.stderr, /packages\/viewer/);
+  } finally {
+    rmSync(cwd, { recursive: true, force: true });
+  }
 });

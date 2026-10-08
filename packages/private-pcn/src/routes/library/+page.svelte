@@ -64,7 +64,7 @@
     content="noindex"
   /></svelte:head
 >
-<main id="main" class="workspace member-library">
+<main id="main" tabindex="-1" class="workspace member-library">
   <div class="workspace-title">
     <div>
       <p class="eyebrow">PRIVATE / AGENTIC ENGINEERING</p>
