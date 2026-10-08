@@ -2,7 +2,7 @@
   "id": "substrate:create-something:topology-diagnostics:internal",
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
-  "generatedAt": "2026-10-08T14:00:53.464Z",
+  "generatedAt": "2026-10-08T14:07:04.431Z",
   "summary": {
     "valueState": "connected_map_with_review_signals",
     "nodes": 552,
@@ -26,10 +26,10 @@
       "config": 24
     },
     "tierCounts": {
-      "Mixed": 133,
+      "Mixed": 134,
       "Judgment": 108,
-      "Automation": 281,
-      "Database": 30
+      "Automation": 282,
+      "Database": 28
     }
   },
   "signals": [
@@ -60,10 +60,10 @@
       "classification": "review_signal",
       "severity": "review",
       "title": "Automation and Database balance",
-      "summary": "Automation has 281 record(s); Database has 30 record(s). This is a business-shape review signal, not a hard gap.",
+      "summary": "Automation has 282 record(s); Database has 28 record(s). This is a business-shape review signal, not a hard gap.",
       "evidence": [
-        "Automation=281",
-        "Database=30",
+        "Automation=282",
+        "Database=28",
         "Total nodes=552"
       ],
       "nodeIds": [],

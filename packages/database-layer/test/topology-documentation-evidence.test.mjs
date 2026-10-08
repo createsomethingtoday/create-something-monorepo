@@ -52,3 +52,9 @@ test('creator Slack triage does not imply ownership of the internal Slack intake
   assert.ok(!topology.edges.some((edge) => edge.source === guide.id && edge.target === intake.id));
   assert.ok(topology.edges.some((edge) => edge.source === guide.id && edge.target === topology.rootNodeId && edge.relation === 'documents'));
 });
+
+test('sandbox wording does not classify the app review agent as Database', () => {
+  const topology = JSON.parse(fs.readFileSync(new URL('../data/create-something-internal-topology.json', import.meta.url), 'utf8'));
+  assert.equal(topology.nodes.find((node) => node.path === 'packages/app-review-agent-eval')?.tier, 'Automation');
+  assert.equal(topology.nodes.find((node) => node.path === 'packages/database-layer')?.tier, 'Database');
+});

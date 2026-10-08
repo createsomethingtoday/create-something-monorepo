@@ -2,7 +2,7 @@
   "id": "substrate:create-something:topology:completion-report:internal",
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
-  "generatedAt": "2026-10-08T14:00:53.464Z",
+  "generatedAt": "2026-10-08T14:07:04.431Z",
   "totals": {
     "nodes": 552,
     "edges": 1156,
@@ -74,12 +74,12 @@
     {
       "tier": "Automation",
       "status": "mapped",
-      "count": 281
+      "count": 282
     },
     {
       "tier": "Database",
       "status": "mapped",
-      "count": 30
+      "count": 28
     },
     {
       "tier": "Judgment",
@@ -89,7 +89,7 @@
     {
       "tier": "Mixed",
       "status": "mapped",
-      "count": 133
+      "count": 134
     }
   ],
   "clientOverlays": [

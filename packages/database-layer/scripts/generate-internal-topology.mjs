@@ -140,7 +140,7 @@ function packageTier(manifest, relativePath) {
   if (manifest.createSomething?.tier === 'automation') return 'Automation';
   if (manifest.createSomething?.tier === 'judgment') return 'Judgment';
   if (/policy|prompt|canon|taste|judgment/.test(text)) return 'Judgment';
-  if (/db|database|data|search|substrate|d1|r2|registry|ledger/.test(text)) return 'Database';
+  if (/\bdb\b|database|data|search|substrate|d1|r2|registry|ledger/.test(text)) return 'Database';
   if (/mcp|worker|agent|automation|sync|scheduler|validator|review|hub|api/.test(text)) {
     return 'Automation';
   }

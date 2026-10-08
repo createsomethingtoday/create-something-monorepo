@@ -2,7 +2,7 @@
   "version": 1,
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
-  "generatedAt": "2026-10-08T14:00:53.464Z",
+  "generatedAt": "2026-10-08T14:07:04.431Z",
   "rendererBudget": {
     "initialUsableMs": 500,
     "interactionMs": 50,
@@ -304,7 +304,7 @@
     }
   },
   "insights": {
-    "generatedAt": "2026-10-08T14:00:53.464Z",
+    "generatedAt": "2026-10-08T14:07:04.431Z",
     "relationCounts": {
       "contains": 551,
       "depends_on": 164,
@@ -328,10 +328,10 @@
       "config": 24
     },
     "tierCounts": {
-      "Mixed": 133,
+      "Mixed": 134,
       "Judgment": 108,
-      "Automation": 281,
-      "Database": 30
+      "Automation": 282,
+      "Database": 28
     },
     "observations": [
       {
@@ -14878,9 +14878,9 @@
         "agentCommand": "databaseLayer.topology.records.get",
         "receiptId": "receipt:substrate:create-something:package:create-something-app-review-agent-eval-packages-app-review-agent-eval",
         "actionId": null,
-        "operatingSliceId": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-database-surface-database-agent",
-        "operatingSliceApiPath": "/api/substrate/operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-database-surface-database-agent",
-        "readinessApiPath": "/api/substrate/operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-database-surface-database-agent/readiness",
+        "operatingSliceId": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-automation-surface-automation-agent",
+        "operatingSliceApiPath": "/api/substrate/operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-automation-surface-automation-agent",
+        "readinessApiPath": "/api/substrate/operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-automation-surface-automation-agent/readiness",
         "readinessStatus": "approval_required",
         "atlasCanvasId": "create-something-internal-operating-topology",
         "atlasNodeId": "atlas_create-something_package_create-something-app-review-agent-eval-packages-app-review-agent-eval"
@@ -14888,13 +14888,13 @@
       "clientOverlay": null,
       "label": "@create-something/app-review-agent-eval",
       "path": "packages/app-review-agent-eval",
-      "tier": "Database",
+      "tier": "Automation",
       "surface": "agent",
       "status": "mapped",
       "owner": "CREATE SOMETHING",
       "clusterId": "automation:agent",
       "relationCount": 1,
-      "x": -43,
+      "x": 217,
       "y": 163,
       "z": 68,
       "size": 7.82842712474619,
@@ -18750,9 +18750,9 @@
         "agentCommand": "databaseLayer.topology.records.get",
         "receiptId": "receipt:substrate:create-something:package:create-something-relay-packages-relay",
         "actionId": null,
-        "operatingSliceId": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-database-surface-database-worker",
-        "operatingSliceApiPath": "/api/substrate/operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-database-surface-database-worker",
-        "readinessApiPath": "/api/substrate/operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-database-surface-database-worker/readiness",
+        "operatingSliceId": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-automation-surface-mixed-worker",
+        "operatingSliceApiPath": "/api/substrate/operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-automation-surface-mixed-worker",
+        "readinessApiPath": "/api/substrate/operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-automation-surface-mixed-worker/readiness",
         "readinessStatus": "approval_required",
         "atlasCanvasId": "create-something-internal-operating-topology",
         "atlasNodeId": "atlas_create-something_package_create-something-relay-packages-relay"
@@ -18760,13 +18760,13 @@
       "clientOverlay": null,
       "label": "@create-something/relay",
       "path": "packages/relay",
-      "tier": "Database",
+      "tier": "Mixed",
       "surface": "worker",
       "status": "mapped",
       "owner": "CREATE SOMETHING",
       "clusterId": "automation:worker",
       "relationCount": 2,
-      "x": -120,
+      "x": -360,
       "y": 239,
       "z": -182,
       "size": 8.464101615137753,
