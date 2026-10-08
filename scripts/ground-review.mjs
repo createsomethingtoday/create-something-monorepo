@@ -60,6 +60,15 @@ function run(command, args, cwd, options = {}) {
     maxBuffer: 1024 * 1024 * 50,
     timeout: options.timeoutMs ?? 180_000
   });
+  if (options.groundOutcome && result.status !== 0 && !result.error && result.signal === null) {
+    // This wrapper is advisory. Retain structured findings/incompleteness from
+    // strict native exits, while still rejecting process/argument failures.
+    try {
+      const report = JSON.parse(result.stdout);
+      const expected = { FINDINGS: 1, INCOMPLETE: 2, NOT_APPLICABLE: 3 }[report.outcome];
+      if (expected !== undefined && result.status === expected) return result.stdout;
+    } catch { /* Fall through to the original command failure. */ }
+  }
   if (result.status !== 0) {
     const detail = `${result.stdout ?? ''}${result.stderr ?? ''}`.trim();
     throw new Error(`${command} ${args.join(' ')} failed${detail ? `:\n${detail}` : '.'}`);
@@ -476,7 +485,7 @@ export function buildReceipt({
   const targets = packageRoots.map((path) => {
     const requiresCompletionEvidence = exceedsGroundScanLimit(resolve(root, path));
     const result = parseGroundJson(
-      run(groundBinary, ['diff', path, '--base', baseSha, '--checks', CHECKS.join(',')], root)
+      run(groundBinary, ['diff', path, '--base', baseSha, '--checks', CHECKS.join(',')], root, { groundOutcome: true })
     );
     const duplicateCompletion = result.check_coverage?.duplicates;
     const duplicateStatus = ['completed', 'partial', 'failed'].includes(duplicateCompletion?.status)

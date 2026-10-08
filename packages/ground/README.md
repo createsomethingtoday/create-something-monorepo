@@ -77,6 +77,50 @@ ground doctor . --json
 
 ## Commands
 
+### Structured analysis exit contract
+
+`analyze` defaults to `duplicates,orphans`; `diff` defaults to `duplicates`.
+The CLI and MCP reject unknown check names and explicit empty check lists.
+Batch `dead_exports` cannot evaluate an unspecified module: use
+`find dead-exports MODULE --scope DIR` / `ground_find_dead_exports` instead.
+Environment analysis requires entry points.
+
+The additive JSON `outcome` separates execution coverage from findings:
+
+| Outcome | CLI exit | Meaning |
+|---|---:|---|
+| `CLEAN` | 0 | Applicable requested checks completed without findings |
+| `FINDINGS` | 1 | Applicable requested checks completed and found issues |
+| `INCOMPLETE` | 2 | Missing inputs, unsupported required paths, timeout, or incomplete/failed analysis |
+| `NOT_APPLICABLE` | 3 | None of the requested checks applies |
+
+Argument, configuration, initialization and command failures are nonzero (2 for
+`analyze`/`diff`) and may have stderr instead of a JSON receipt. Incomplete checks
+take precedence over findings, which remain in the receipt. Legitimate skips
+such as “no new files” for a diff orphan check do not invalidate completed checks;
+missing explicit inputs do. Inspect each check's coverage and exclusions.
+
+`--advisory` on `analyze`/`diff` restores exit zero for a returned semantic receipt
+without changing its outcome. It never suppresses invalid arguments or command
+failures. Use it only for explicitly advisory consumers, never as a substitute
+for a required gate. MCP transport success still means a tool response exists;
+MCP callers must inspect `outcome`. Existing `verification_status` values remain
+for compatibility. Legacy `find` commands keep their existing exit contracts.
+The repository's `ground:review` remains advisory and consumes both historical
+exit-zero reports and the new structured nonzero results.
+
+This compatibility change ships in 0.5.0. Previously installed 0.4.3 artifacts
+retain their old behavior. Shell callers that assumed every JSON result exits
+zero must handle the documented codes or explicitly opt into advisory behavior.
+
+Svelte analysis extracts scripts; it is not a compiler or template validator.
+The shared reader ignores HTML comments, quoted tag attributes and style text.
+Script-like text in Svelte expressions (`{@html ...}` or attribute expressions)
+and nested DOM script elements remain unverified boundary cases and can report
+incomplete analysis. Use the Svelte compiler for template correctness. Generic
+import-type compatibility projects only AST-proven type operands, keeps original
+byte/line spans for evidence, and reparses to reject remaining syntax errors.
+
 ### Verified agent loop
 
 For an agent working on the current checkout, use the batch commands first:

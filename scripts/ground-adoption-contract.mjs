@@ -65,3 +65,14 @@ export function verifyAdjudicatedExports({ modules, adjudication, publicIndex, p
   }
   return modules.reduce((sum, item) => sum + item.dead_exports.length, 0);
 }
+
+// A process success alone is not evidence of completed analysis.
+export function verifyAnalysisProcess(result, expectedOutcome) {
+  assert(!result.error, result.error?.message);
+  const exits = { CLEAN: 0, FINDINGS: 1, INCOMPLETE: 2, NOT_APPLICABLE: 3 };
+  assert(Object.hasOwn(exits, expectedOutcome), 'unknown expected analysis outcome');
+  assert.equal(result.status, exits[expectedOutcome], result.stderr || 'unexpected analysis exit');
+  const receipt = JSON.parse(result.stdout);
+  assert.equal(receipt.outcome, expectedOutcome, 'unexpected analysis outcome');
+  return receipt;
+}
