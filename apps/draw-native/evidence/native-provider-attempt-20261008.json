@@ -1,0 +1,26 @@
+{
+  "date": "2026-10-08",
+  "status": "blocked_before_activation",
+  "approval": {
+    "assistant": "Draw is ready for a bounded provider test. May I run one 10-minute, read-only Claude Code session on the synthetic drawing? Its contents would be sent to Anthropic; the test would allow no edits and create no persistent plugin registration",
+    "user": "yes, pleaese",
+    "scope": "one 10-minute read-only Claude Code session; synthetic Canvas only; no edits or persistent registration"
+  },
+  "preflight": {
+    "syntheticDocumentId": "canvas-manual-synthetic",
+    "revision": 0,
+    "objectCount": 1,
+    "exactSyntheticNoteMatched": true,
+    "documentSha256": "f1e0fc3fe7f869523d6fb77848a4a7a7eca4845acb4f5599564d1d023cdc2399",
+    "nativeProcessAlive": true,
+    "drawAgentSocketObserved": false
+  },
+  "blocker": "Native computer-use startup failed; owner-only Start access action cannot be invoked through available UI control. No test-only grant path substituted.",
+  "providerStarted": false,
+  "grantActivatedByTask": false,
+  "providerReadVerified": false,
+  "revocationVerified": false,
+  "persistentRegistration": false,
+  "tokenRecorded": false,
+  "nextRequiredAction": "Restore native UI control, or have owner perform the native read-only Start access action and use a local hidden-input handoff; do not paste the token into chat."
+}
