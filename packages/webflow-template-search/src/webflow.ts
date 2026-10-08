@@ -5,7 +5,12 @@ export const DESIGNERS_COLLECTION_ID = '641b464e78789fc19d5d4461';
 const WEBFLOW_PAGE_FETCH_TIMEOUT_MS = 15_000;
 const WEBFLOW_API_MAX_RETRIES = 3;
 const WEBFLOW_API_BASE_BACKOFF_MS = 750;
-const WEBFLOW_API_MAX_BACKOFF_MS = 4_000;
+// Webflow's rate limit is per minute and a 429 carries retry-after in seconds.
+// A 4s cap meant three retries gave up ~12s into a 60s window, so one 429
+// failed a whole targeted batch and the listing gate failed open for every
+// record in it (2026-10-08, 19:46 UTC sweep). Wait the window out instead: a
+// cron run can afford a minute, and the sync job lock keeps heartbeating.
+const WEBFLOW_API_MAX_BACKOFF_MS = 60_000;
 
 interface WebflowImage {
   fileId: string;
