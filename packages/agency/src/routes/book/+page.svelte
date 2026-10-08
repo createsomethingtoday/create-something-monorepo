@@ -384,6 +384,9 @@
 	}
 
 	.scheduler-shell {
+		padding: 0;
+		margin: 0;
+		min-width: 0;
 		width: 100%;
 		scroll-margin-top: 5rem;
 	}

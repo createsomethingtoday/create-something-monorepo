@@ -261,10 +261,14 @@
           ...(selectedIntent === 'membership' ? { membershipPlan: selectedPlan } : {}),
           surface: 'contact_form'
         });
-        form.reset();
-        selectedIntent = initialIntent;
-        selectedLane = initialLane;
-        selectedPlan = initialPlan;
+        // Keep the submitted routing choices for the scheduling handoff.
+        // Native form reset also resets Svelte-bound radios and selects.
+        for (const name of ['name', 'email', 'company', 'message']) {
+          const field = form.elements.namedItem(name);
+          if (field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement) {
+            field.value = '';
+          }
+        }
       } else {
         submitSuccess = false;
         submitMessage = result.message || 'Something went wrong. Try again.';
