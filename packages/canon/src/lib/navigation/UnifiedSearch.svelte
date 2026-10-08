@@ -386,7 +386,7 @@
 			if (!open) {
 				trackEvent('search_opened', { trigger: 'keyboard' });
 			}
-			if (open) close(); else open = true;
+			if (open && content) close(); else open = !open;
 			return;
 		}
 
