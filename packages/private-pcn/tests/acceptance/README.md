@@ -35,3 +35,11 @@ full-page mobile captures. They are synthetic product evidence, not real account
 The existing API/Identity-hook suite remains the authority for synthetic access,
 tenant, revocation, publication and progress-policy assertions. Browser tests here
 exercise UI responses to those states; they do not exercise actual Identity or Stream.
+
+The fixture also exposes an explicit Test controls disclosure for manual browser
+review: select a synthetic role and empty, suspended-empty, catalog-error or
+progress-retry scenario, then Reset synthetic fixture. This changes only the
+loopback process's transient data. The suspended scenario supports
+`/n/synthetic-workshop`, `/n/synthetic-workshop/studio` and
+`/n/synthetic-workshop/paths`. Settings are not implemented by this fixture;
+inspect destination links without treating navigation there as acceptance.

@@ -47,8 +47,8 @@
 
 <style>
   .creator-guide {
-    margin-block: var(--space-performance-lg);
-    padding-block: var(--space-performance-md);
+    margin-block: var(--space-performance-md);
+    padding-block: var(--space-performance-xs);
     border-block: 1px solid var(--line);
   }
   summary {

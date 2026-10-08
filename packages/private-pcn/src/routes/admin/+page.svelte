@@ -1,6 +1,6 @@
 <script lang="ts">
   import CreatorGuide from '$lib/components/CreatorGuide.svelte';
-  import SerifPhrase from '$lib/components/SerifPhrase.svelte';
+  import NetworkContext from '$lib/components/NetworkContext.svelte';
   import StateBadge from '$lib/components/StateBadge.svelte';
   import StatusNotice from '$lib/components/StatusNotice.svelte';
 
@@ -11,6 +11,7 @@
   let { data } = $props();
   const slug = $derived(data.network?.slug === 'create-something' ? undefined : data.network?.slug);
   const api = (path: string, body?: unknown) => requestApi(path, body, slug);
+  const uploadsPaused = $derived(!!data.network && data.network.status !== 'active');
   const libraryPath = $derived(slug ? `/n/${slug}` : '/library');
   let videos = $state<CatalogVideo[]>([]);
   let members = $state<{ email: string; active: number }[]>([]);
@@ -112,14 +113,17 @@
     content="noindex"
   /></svelte:head
 >
-<main id="main" tabindex="-1" class="workspace">
-  <p class="eyebrow">PRIVATE / CREATOR WORKSPACE</p>
-  <h1>Publish your <SerifPhrase text="knowledge." /></h1>
+<main id="main" tabindex="-1" class="workspace creator-workspace">
+  <NetworkContext network={data.network} canManage={true} />
+  {#if !data.network}<p class="eyebrow">PRIVATE / CREATOR WORKSPACE</p>{/if}
+  <h1>Your lessons.</h1>
   <p>Uploads start private and unpublished. Review processing before you choose an audience.</p>
-  <a href={libraryPath}><Icon name="arrow-left" /> Back to library</a>{#if slug}<a
-      href={`/n/${slug}/settings`}
-      class="settings-link">Network settings and billing <Icon name="arrow-right" /></a
-    >{/if}
+  <nav class="studio-navigation" aria-label="Creator workspace">
+    <a href={libraryPath}><Icon name="arrow-left" /> Back to library</a>{#if slug}<a
+        href={`/n/${slug}/settings`}
+        class="settings-link">Network settings and billing <Icon name="arrow-right" /></a
+      >{/if}
+  </nav>
   {#if error}<StatusNotice tone="error" message={error} />{/if}
   {#if message}<StatusNotice tone="success" {message} />{/if}
   <CreatorGuide {slug} />
@@ -146,31 +150,41 @@
           >
         </p>{/each}
     </section>{/if}
-  <p class="muted">
-    After granting access, share <a href={libraryPath}>{libraryPath}</a> with the member. They should
-    sign in or create an account using the invited email. Granting access does not send an email.
-  </p>
   <div class="admin-grid">
     <section>
       <h2 id="upload-walkthrough" tabindex="-1">Add a walkthrough</h2>
+      {#if uploadsPaused}<p class="muted" id="upload-paused">
+          Uploads are unavailable while this network is not active. Review the network status before
+          adding a lesson.
+        </p>{/if}
       <form onsubmit={upload}>
-        <label>Session title<input bind:value={title} required maxlength="160" /></label><label
-          >Series or learning track<input bind:value={series} required maxlength="100" /></label
-        ><label>Description<textarea bind:value={description} maxlength="2000"></textarea></label
-        ><label
-          >Video file · up to 1 GB / 30 minutes<input
-            type="file"
-            accept="video/*"
-            bind:files
-            required
-          /></label
-        ><button class="button" disabled={busy}
-          >{busy ? `Working… ${progress}%` : 'Upload private draft'}</button
+        <fieldset
+          class="upload-fields"
+          disabled={uploadsPaused}
+          aria-describedby={uploadsPaused ? 'upload-paused' : undefined}
         >
+          <label>Session title<input bind:value={title} required maxlength="160" /></label><label
+            >Series or learning track<input bind:value={series} required maxlength="100" /></label
+          ><label>Description<textarea bind:value={description} maxlength="2000"></textarea></label
+          ><label
+            >Video file · up to 1 GB / 30 minutes<input
+              type="file"
+              accept="video/*"
+              bind:files
+              required
+            /></label
+          ><button class="button" disabled={busy}
+            >{busy ? `Working… ${progress}%` : 'Upload private draft'}</button
+          >
+        </fieldset>
       </form>
     </section>
     <section>
       <h2>Member access</h2>
+      <p class="muted">
+        After granting access, share <a href={libraryPath}>the network library</a> with the member. They
+        should sign in using the invited email.
+      </p>
       <p class="muted">
         Access is tied to a verified CREATE SOMETHING account. This saves an invitation; it does not
         send an email.
@@ -208,12 +222,20 @@
       <div class="ink-empty">
         <img src="/media/human-ink/card.webp" width="1280" height="1280" alt="" loading="lazy" />
         <div>
-          <h3>Give your practice a first page.</h3>
+          <h3>
+            {uploadsPaused ? 'Review your network status.' : 'Give your practice a first page.'}
+          </h3>
           <p>
-            Your first walkthrough starts as a private draft. Upload it, review processing, then
-            choose who can watch.
+            {uploadsPaused
+              ? 'Your publishing desk is empty. Uploads require an active network.'
+              : 'Your first walkthrough starts as a private draft. Upload it, review processing, then choose who can watch.'}
           </p>
-          <a class="button secondary" href="#upload-walkthrough">Add your first walkthrough</a>
+          {#if uploadsPaused && slug}<a class="button secondary" href={`/n/${slug}/settings`}
+              >Review network settings</a
+            >
+          {:else if !uploadsPaused}<a class="button secondary" href="#upload-walkthrough"
+              >Add your first walkthrough</a
+            >{/if}
         </div>
       </div>
     {/if}
@@ -315,6 +337,45 @@
 </main>
 
 <style>
+  .creator-workspace {
+    max-width: 1280px;
+    margin-inline: auto;
+    padding: var(--space-performance-md) var(--pcn-page-gutter) var(--space-performance-xl);
+  }
+  .creator-workspace > .eyebrow {
+    margin-bottom: var(--space-performance-sm);
+  }
+  .creator-workspace h1 {
+    font-size: clamp(32px, 4vw, 48px);
+    line-height: var(--pcn-leading-heading);
+    letter-spacing: -0.04em;
+    margin-bottom: var(--space-performance-sm);
+  }
+  .upload-fields {
+    display: grid;
+    gap: var(--space-performance-md);
+    border: 0;
+    padding: 0;
+    margin: 0;
+    min-width: 0;
+  }
+  .admin-grid {
+    margin-block: var(--space-performance-md);
+    gap: var(--space-performance-lg);
+  }
+  .studio-navigation {
+    display: flex;
+    flex-wrap: wrap;
+    column-gap: var(--space-performance-md);
+    row-gap: var(--space-performance-xs);
+  }
+  .studio-navigation a {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-performance-xs);
+    min-height: var(--pcn-control-height);
+  }
+
   .ink-empty {
     display: flex;
     gap: 24px;

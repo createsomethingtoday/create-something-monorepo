@@ -31,7 +31,7 @@ function reset(nextRole, nextScenario) {
   role = ['member', 'admin', 'blocked', 'anonymous'].includes(nextRole) ? nextRole : 'anonymous';
   scenario = nextScenario || '';
   progressCalls = 0;
-  if (scenario !== 'empty') {
+  if (!['empty', 'suspended-empty'].includes(scenario)) {
     sqlite
       .prepare(
         "INSERT INTO videos(id,stream_uid,title,description,series,visibility,access,ingest_status,duration) VALUES(?,?,?,?,?,'published','members','ready',120)"
@@ -82,9 +82,9 @@ const locals = () => ({
       : { subject: `fixture-${role}`, email: `${role}@example.invalid`, role },
   network: {
     id: 'default',
-    slug: 'create-something',
+    slug: scenario === 'suspended-empty' ? 'synthetic-workshop' : 'create-something',
     name: 'Synthetic workshop',
-    status: 'active',
+    status: scenario === 'suspended-empty' ? 'suspended' : 'active',
     kind: 'creator'
   },
   impersonation: null
@@ -118,7 +118,13 @@ async function pageData(path) {
     networks: [],
     remainingNetworks: 3
   };
-  const url = new URL(path, 'http://127.0.0.1:5185');
+  const url = new URL(
+    path
+      .replace('/n/synthetic-workshop/studio', '/admin')
+      .replace('/n/synthetic-workshop/paths', '/paths')
+      .replace('/n/synthetic-workshop', '/library'),
+    'http://127.0.0.1:5185'
+  );
   if (url.pathname === '/admin') {
     const { load } = await vite.ssrLoadModule(resolve(pkg, 'src/routes/admin/+page.server.ts'));
     try {
@@ -179,7 +185,7 @@ vite = await createServer({
               return respond(res, { ok: true });
             }
             if (!url.pathname.startsWith('/api/')) return next();
-            const path = url.pathname.slice(5);
+            const path = url.pathname.slice(5).replace(/^networks\/synthetic-workshop\//, '');
             let raw = '';
             for await (const chunk of req) raw += chunk;
             const body = raw ? JSON.parse(raw) : undefined;
@@ -191,6 +197,8 @@ vite = await createServer({
               role = 'anonymous';
               return respond(res, { ok: true });
             }
+            if (path === 'videos' && scenario === 'catalog-error')
+              return respond(res, { error: 'Synthetic library unavailable' }, 503);
             if (path === 'impact') return respond(res, { ok: true });
             if (
               path === 'learning/continue' &&
@@ -222,9 +230,9 @@ vite = await createServer({
             )
               return respond(res, { error: 'Operation disabled in local fixture.' }, 403);
             if (req.method !== 'GET' && path !== 'learning/progress') {
-            return respond(res, { error: 'Operation disabled in local fixture.' }, 403);
-          }
-          const response = await api(path, req.method, body);
+              return respond(res, { error: 'Operation disabled in local fixture.' }, 403);
+            }
+            const response = await api(path, req.method, body);
             res.statusCode = response.status;
             res.setHeader('Content-Type', 'application/json');
             res.end(await response.text());

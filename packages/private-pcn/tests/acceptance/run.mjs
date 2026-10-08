@@ -158,11 +158,11 @@ try {
     await page.getByRole('heading', { name: 'Synthetic: First workflow' }).waitFor();
   });
   await check(
-    'empty viewer paths offer available sessions; empty creator paths offer studio',
+    'empty viewer paths return to library; empty creator paths offer studio',
     async () => {
       await reset('member', 'empty');
       await open('/paths');
-      await page.getByRole('link', { name: 'Browse available sessions' }).waitFor();
+      await page.getByRole('link', { name: 'Back to library' }).waitFor();
       await reset('admin', 'empty');
       await open('/paths');
       assert.equal(
