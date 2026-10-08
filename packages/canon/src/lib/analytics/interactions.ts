@@ -69,6 +69,7 @@ export function createRageClickTracker(
 	function onClick(event: MouseEvent): void {
 		const now = Date.now();
 		const target = event.target as HTMLElement;
+    if (target.closest('[data-analytics-ignore]')) return;
 
 		const click: ClickRecord = {
 			x: event.clientX,
@@ -150,6 +151,7 @@ export function createFormTracker(
 
 	function onFocusIn(event: FocusEvent): void {
 		const target = event.target as HTMLElement;
+    if (target.closest('[data-analytics-ignore]')) return;
 		const form = target.closest(selector) as HTMLFormElement | null;
 		if (!form) return;
 
@@ -184,6 +186,7 @@ export function createFormTracker(
 
 	function onSubmit(event: SubmitEvent): void {
 		const form = event.target as HTMLFormElement;
+    if (form.closest('[data-analytics-ignore]')) return;
 		const formId = getFormId(form);
 
 		const state = formStates.get(formId);
@@ -243,6 +246,7 @@ export function createCTATracker(
 
 	function onClick(event: MouseEvent): void {
 		const target = event.target as HTMLElement;
+    if (target.closest('[data-analytics-ignore]')) return;
 		const cta = target.closest(selector);
 
 		if (!cta) return;
@@ -348,6 +352,7 @@ export function createErrorTracker(
 	});
 
 	function trackError(element: Element): void {
+    if (element.closest('[data-analytics-ignore]')) return;
 		const message = element.textContent?.trim().substring(0, 100) || 'Unknown error';
 		const errorType = element.getAttribute('data-error-type') || 'display';
 		const component =
@@ -361,6 +366,7 @@ export function createErrorTracker(
 		if (!trackValidation) return;
 
 		const input = event.target as HTMLInputElement;
+    if (input.closest('[data-analytics-ignore]')) return;
 		const fieldName = input.name || input.id || 'unknown';
 		const validationType = input.validity.valueMissing
 			? 'required'
