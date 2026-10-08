@@ -1,0 +1,71 @@
+import { chromium } from '@playwright/test';
+import assert from 'node:assert/strict';
+import { mkdir } from 'node:fs/promises';
+const output='/tmp/agency-integrated-qa'; await mkdir(output,{recursive:true});
+const browser=await chromium.launch({channel:'chrome',headless:true});
+try {
+ for(const viewport of [{width:1440,height:1000},{width:390,height:844}]) {
+  const page=await browser.newPage({viewport,reducedMotion:'reduce'});
+  const errors=[]; page.on('pageerror',e=>errors.push(e.message));
+  console.log('viewport',viewport.width);
+  await page.goto('http://127.0.0.1:4179/services');
+  console.log('loaded');
+  await page.waitForFunction(()=>!!document.querySelector('[data-agency-search-ready="true"]'));
+  if(viewport.width<640) await page.getByRole('button',{name:'Open search',exact:true}).click();
+  else await page.keyboard.press('Control+k');
+  console.log('opened');
+  await page.getByLabel('Search public pages').fill('MCP');
+  await page.getByLabel('Search public pages').press('Enter');
+  await page.waitForFunction(()=>document.querySelector('.agency-search .status')?.textContent?.includes('results'));
+  const count=await page.locator('.agency-search article').count(); assert.ok(count>0);
+  assert.equal(new URL(page.url()).hash,''); assert.equal(new URL(page.url()).search,'');
+  await page.locator('.agency-search .result-title').first().click();
+  await page.getByRole('complementary',{name:'Selected result'}).waitFor();
+  await page.screenshot({path:`${output}/${viewport.width}-search.png`,fullPage:false});
+  const href=await page.locator('.agency-search aside a').getAttribute('href');
+  await page.locator('.agency-search aside a').click();
+  await page.waitForURL(url=>url.pathname===href);
+  await page.waitForFunction(()=>!document.querySelector('.agency-search'));
+  console.log('navigated',page.url());
+  await page.goBack();
+  console.log('back');
+  await page.getByLabel('Search public pages').waitFor();
+  assert.equal(await page.getByLabel('Search public pages').inputValue(),'MCP');
+  await page.getByLabel('Search public pages').fill('zzzzz-nothing');
+  await page.getByLabel('Search public pages').press('Enter');
+  await page.getByText('No matching results.',{exact:false}).waitFor();
+  await page.getByLabel('Search public pages').fill('');
+  await page.getByLabel('Show',{exact:true}).selectOption('guides');
+  await page.getByRole('button',{name:'Search',exact:true}).click();
+  await page.waitForFunction(()=>document.querySelectorAll('.agency-search article').length===12);
+  await page.keyboard.press('Escape');
+  await page.waitForFunction(()=>!document.querySelector('.agency-search'));
+  await page.keyboard.press('Control+k');
+  await page.getByLabel('Search public pages').waitFor();
+  await page.getByLabel('Search public pages').focus();
+  await page.keyboard.press('ArrowDown');
+  assert.ok(await page.evaluate(()=>document.activeElement.classList.contains('result-title')));
+  assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+  assert.deepEqual(errors,[]); await page.close();
+ }
+ // Explicit test fixture, not native host acceptance.
+ const page=await browser.newPage();
+ await page.addInitScript(()=>{
+   window.fixtureTools={}; window.fixtureCleanup=[];
+   Object.defineProperty(document,'modelContext',{value:{registerTool:async(tool,{signal})=>{window.fixtureTools[tool.name]=tool;signal.addEventListener('abort',()=>{delete window.fixtureTools[tool.name];window.fixtureCleanup.push(tool.name);});}}});
+ });
+ await page.goto('http://127.0.0.1:4179/');
+ await page.waitForFunction(()=>Object.keys(window.fixtureTools).length===3);
+ const result=await page.evaluate(()=>window.fixtureTools.search_agency.execute({query:'security',category:'guides'}));
+ console.log('fixture search'); assert.equal(result.query,'security'); assert.equal(await page.getByLabel('Search public pages').inputValue(),'security');
+ await page.locator('.agency-search').getByRole('button',{name:'Close search',exact:true}).click();
+ assert.equal(await page.evaluate(()=>Object.keys(window.fixtureTools).length),3);
+ const overlap=await page.evaluate(()=>Promise.all([window.fixtureTools.search_agency.execute({query:'MCP'}),window.fixtureTools.search_agency.execute({query:'security'})]));
+ assert.equal(overlap[0].status,'superseded'); assert.equal(overlap[1].query,'security');
+ const cancelled=await page.evaluate(()=>{const abort=new AbortController();const promise=window.fixtureTools.search_agency.execute({query:'MCP'},{signal:abort.signal});abort.abort();return promise;});
+ assert.equal(cancelled.status,'cancelled');
+ await page.goto('http://127.0.0.1:4179/login');
+ await page.waitForFunction(()=>document.readyState==='complete');
+ assert.equal(await page.evaluate(()=>Object.keys(window.fixtureTools).length),0);
+ console.log(JSON.stringify({passed:true,viewports:[1440,390],hostAcceptance:false,output}));
+} finally {await browser.close();}

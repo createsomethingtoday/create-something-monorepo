@@ -1,0 +1,40 @@
+{
+  "date": "2026-10-08",
+  "authorization": "User requested Ground installation, push and deployment through normal gates",
+  "rebasedFeature": "dddcc290924e63a5754cface014657f14ba0f2b0",
+  "base": "e59c5030a22274e03fbfe6ab7a785b1bd9d6899a",
+  "originalCommitRetained": "ca1f19e423ad0f34b27000ccb1a2e228ae122497",
+  "unrelatedCronCommitExcluded": true,
+  "rollback": {
+    "source": "29fdf5585a37ccfd8a5e0138db1750c2743abfb0",
+    "url": "https://d2753416.create-something-agency.pages.dev",
+    "workflowRun": 37722153088
+  },
+  "ground": {
+    "version": "0.4.3",
+    "source": "8d3a7c3becff0a7dfa51bb819dbe43186df0f685",
+    "install": "Official pinned npm package; installer verifies native archive against official release SHA256SUMS",
+    "fullFeatureHook": "passed using unchanged hook and temporary index representing full diff against main",
+    "agencyDiff": "PASS",
+    "canonAnalyticsDiff": "PASS",
+    "canonNavigationDiff": "FAIL incomplete due baseline parser limitation in unchanged Tabs.svelte and MegaMenu.svelte import(svelte).Snippet types; current and main UnifiedSearch both PASS isolated analysis. Independent review; no source workaround.",
+    "earlierHookSkipped": [
+      "duplicates",
+      "Svelte drift",
+      "legacy Svelte props",
+      "manifest/lockfile sync",
+      "MCP package coverage"
+    ],
+    "notApplicableHookBranches": [
+      "CSS token adoption (no CSS files)",
+      "registry source validation (no registry source files)"
+    ],
+    "reviewEvidence": "Independent review results in /tmp/ground-navigation-parser-review/results.json and /tmp/navigation-ground-mcp-detail.json"
+  },
+  "checks": {
+    "agencyCheck": "passed sequential rerun; initial parallel packaging collision discarded",
+    "agencyBuild": "passed",
+    "siteSearchTests": "16 passed"
+  },
+  "annotationScreenshot": "Corrected after visual review: previous saved frame showed home after HMR, not the acceptance status. New screenshot shows accepted status; no message sent."
+}

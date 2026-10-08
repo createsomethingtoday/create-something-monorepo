@@ -298,6 +298,7 @@ export function createCopyTracker(client: AnalyticsClient): () => void {
 
 	function onCopy(event: ClipboardEvent): void {
 		const selection = window.getSelection();
+    if (document.activeElement?.closest('[data-analytics-ignore]') || selection?.anchorNode?.parentElement?.closest('[data-analytics-ignore]')) return;
 		const text = selection?.toString() ?? '';
 		client.contentCopy(text.length);
 	}
@@ -335,6 +336,7 @@ export function createLinkTracker(
 
 	function onClick(event: Event): void {
 		const target = (event as MouseEvent).target as HTMLElement;
+    if (target.closest('[data-analytics-ignore]')) return;
 		const link = target.closest('a');
 
 		if (!link) return;
