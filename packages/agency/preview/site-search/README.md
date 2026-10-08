@@ -1,6 +1,6 @@
 # Agency shared search and public-page annotations
 
-This is now integrated into the real Agency SvelteKit shell. The superseded standalone preview has been removed. Changes remain local in `preview/agency-webmcp-search`, based on `40863d40a`; the original checkout remains untouched. No deployment, merge or PR.
+This is now integrated into the real Agency SvelteKit shell. The superseded standalone preview has been removed. The original implementation was based on `40863d40a`; release branch `preview/agency-webmcp-search` is now rebased onto main. The original checkout remains untouched. Publication and production verification are tracked in PR #1938.
 
 ## Open the actual shell
 
@@ -66,6 +66,8 @@ Codex In-app Browser now supports this local preview. Real discovery, search for
 
 A trusted click on Home’s “Ask about how support works” returned “Request accepted. Review and send your comment in the browser.” See [annotation receipt](evidence/native-annotation-receipt.json) and [screenshot](evidence/native-annotation.jpg). This proves request acceptance; composer editing and message submission were deliberately not exercised. No message was sent automatically.
 
-Independent review found no remaining integration blocker. All original 21 Canon failures reproduced at base. The exact upstream `8dfacd302` terminal-tooling exemption was applied as a bounded repair: Canon check now passes, full tests are 655 passed / 19 failed. Remaining failures are one contact-copy expectation, four stale inventory-count assertions, thirteen old homepage design/source contracts, and one test reporting 24 pre-existing token uses. No new search/annotation token violations. See evidence/canon-failure-classification.json for diagnosis and separate repair scope.
+Independent review found no remaining integration blocker. All original 21 Canon failures reproduced at base. The exact upstream `8dfacd302` terminal-tooling exemption was applied as a bounded repair: Canon check now passes, full tests are 660 passed / 19 failed after the shortcut regression tests. Remaining failures are one contact-copy expectation, four stale inventory-count assertions, thirteen old homepage design/source contracts, and one test reporting 24 pre-existing token uses. No new search/annotation token violations. See evidence/canon-failure-classification.json for diagnosis and separate repair scope.
 
-Agency check/build, 16 dedicated tests, five analytics tests, desktop/mobile fixture QA and six-page annotation fixture QA passed. Native evidence is distinguished from those fixtures. Promotion requires catalog coverage review, tracked review and approved deployment/rollback. Linear environment credential was unavailable; none was requested. No merge or deployment. Worktree disposition: preserved for review.
+Agency check/build, 16 dedicated tests, five analytics tests, desktop/mobile fixture QA and six-page annotation fixture QA passed. Native evidence is distinguished from those fixtures. Promotion requires catalog coverage review, tracked review and approved deployment/rollback. Linear environment credential was unavailable; none was requested. A review deployment is verified; production status belongs to PR #1938. Worktree disposition: preserved for review.
+
+Final native receipts and source hashes cover runtime commit `5129f5a561f4a342cc6e06cd9ef63509dd265e2f` deployed at `https://2f8f9859.create-something-agency.pages.dev/`. Evidence-only follow-ups preserve those runtime bytes. The Cmd/Ctrl+K compatibility fix passes five tests and Canon check; all desktop/mobile fixture QA was rerun.

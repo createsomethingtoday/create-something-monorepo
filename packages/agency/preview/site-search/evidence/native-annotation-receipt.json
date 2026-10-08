@@ -1,14 +1,10 @@
 {
-  "date": "2026-10-08",
+  "date": "2026-10-08T17:15:16.006Z",
   "host": "Codex In-app Browser",
-  "browserId": "2",
-  "tabId": "2",
-  "url": "http://127.0.0.1:4178/",
-  "action": "Playwright trusted click on button Ask about how support works",
-  "target": ".service-journey",
-  "visibleStatus": "Request accepted. Review and send your comment in the browser.",
+  "url": "https://2f8f9859.create-something-agency.pages.dev/",
+  "source": "5129f5a561f4a342cc6e06cd9ef63509dd265e2f",
+  "action": "Trusted click: Ask about how support works",
+  "visibleReadback": "HOW SUPPORT WORKS\n\nFrom problem to checked handoff.\nAsk about this\nRequest accepted. Review and send your comment in the browser.\nILLUSTRATIVE SERVICE JOURNEY / A FORM STOPS REACHING YOUR TEAM\n01\nDiagnose\n\nMap the tools and the broken handoff in Draw.\n\nForm\n→\n?\n→\nTeam\n◇\nAgree the change\nYou approve the scope.\n02\nEngineer\n\nImplement the agreed change and test the result.\n\n✓ Change implemented\n✓ Acceptance check\n03\nLearn\n\nUse the result with a checked handoff and instructions.\n\n✓\nChecked handoff\nInstructions + recovery checks\nInspect an engineering handoff ↗\n\nProject context carries into the next agreed improvement.\n\nSee the process and support scope ↗",
   "messageSubmitted": false,
-  "limitation": "Acceptance observed in page status and screenshot; composer editing and send were not exercised.",
-  "screenshot": "native-annotation.jpg",
-  "source": "source-sha256.json"
+  "limitation": "Request acceptance only; composer editing and sending not exercised"
 }

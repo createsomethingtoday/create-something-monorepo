@@ -6,6 +6,6 @@
   "packages/agency/src/lib/annotations/page-annotations.ts": "8744c31761f9659e47808669e69bba839ec76523900537d1b7866afa63b97264",
   "packages/agency/src/lib/annotations/PageAnnotations.svelte": "74e58d34a587bcd75f9aeb861593fd9daf1b4403c407d5751411403af633cb0b",
   "packages/agency/src/routes/+layout.svelte": "8cc1eef2c6c037131900653a15fe189ab22f4603c5676f34c2b92dc601fae106",
-  "packages/canon/src/lib/navigation/UnifiedSearch.svelte": "ce4b51a84374b3985d1b16541d19bfa50e4a4bcb67cf26353ac07ee69ba3abdc",
-  "packages/canon/src/lib/codification/codification.ts": "0cfd7dad5a2cbb177c16e55a95af4f81ca4fbd9c38c70b499da37af94e0e2b92"
+  "packages/canon/src/lib/navigation/UnifiedSearch.svelte": "badd289cd0d0d0ac444f202fff0c03eb2dd4905ba00ee24b61401a8a362c64ef",
+  "packages/canon/src/lib/codification/codification.ts": "3e2df3ebb67960fe68cfb5cbcfe9e6de29b33d243b1ef42215377b53742efa56"
 }
