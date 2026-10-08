@@ -53,6 +53,7 @@ const SYNC_STATUS_STATE_KEYS = [
 const INCREMENTAL_SYNC_CRON = '*/5 * * * *';
 const IMAGE_BACKFILL_MAINTENANCE_CRON = '17 * * * *';
 const IMAGE_PRUNE_MAINTENANCE_CRON = '47 3 * * *';
+const CREATOR_REFRESH_MAINTENANCE_CRON = '37 * * * *';
 const SCHEDULED_IMAGE_BACKFILL_LIMIT = 48;
 const SCHEDULED_IMAGE_PRUNE_LIMIT = 24;
 
@@ -524,6 +525,7 @@ async function handleSyncStatus(request: Request, env: Env): Promise<Response> {
 function scheduledMode(cron: string): string {
   if (cron === IMAGE_BACKFILL_MAINTENANCE_CRON) return 'image_backfill';
   if (cron === IMAGE_PRUNE_MAINTENANCE_CRON) return 'image_prune';
+  if (cron === CREATOR_REFRESH_MAINTENANCE_CRON) return 'creator_refresh';
   return 'incremental';
 }
 
@@ -535,6 +537,16 @@ async function runScheduledJob(cron: string, env: Env): Promise<void> {
 
   if (cron === IMAGE_PRUNE_MAINTENANCE_CRON) {
     await pruneMissingTemplateImages(env, { limit: SCHEDULED_IMAGE_PRUNE_LIMIT });
+    return;
+  }
+
+  if (cron === CREATOR_REFRESH_MAINTENANCE_CRON) {
+    // A Designer CMS slug change (creator rename) does not touch the creator's
+    // template rows in Airtable, so the incremental sync only re-indexes the
+    // templates whose own 📅LMT happened to move. Refresh every creator from the
+    // Designers collection by sync-record-id so a rename reaches all of their
+    // templates within the hour even if the Designers webhook never arrived.
+    await refreshCreatorProfiles(env);
     return;
   }
 
@@ -653,6 +665,7 @@ export default {
     // */5 cron: incremental sync — picks up Airtable records modified since last cursor.
     // 17 * cron: bounded stale thumbnail backfill using stable Webflow image sources.
     // 47 3 cron: conservative stale-row prune for missing-image rows whose Webflow listing is 404.
+    // 37 * cron: creator profile refresh from the Designers collection (slug/avatar renames).
     const mode = scheduledMode(controller.cron);
     try {
       await runScheduledJob(controller.cron, env);
