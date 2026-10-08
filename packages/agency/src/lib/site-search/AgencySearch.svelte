@@ -122,9 +122,15 @@
   <div class="agency-search" data-analytics-ignore bind:this={panel} use:searchPanel role="group" aria-label="Public Agency search">
     <header><h2>Search Agency</h2><button type="button" onclick={close}>Close search</button></header>
     <form onsubmit={(event) => { event.preventDefault(); void search({ query, category }, 'human').catch((error) => { message = error.message; }); }}>
-      <label for="agency-search-query">Search public pages</label>
-      <input bind:this={input} id="agency-search-query" type="search" bind:value={query} maxlength="160" placeholder="Try MCP, security, or workflow" data-no-track />
-      <div class="controls"><label for="agency-search-category">Show</label><select id="agency-search-category" bind:value={category}><option value="all">All content</option><option value="overview">Overviews</option><option value="guides">Guides</option></select><button type="submit" data-no-track>Search</button></div>
+      <div class="query-field">
+        <label for="agency-search-query">Search public pages</label>
+        <input bind:this={input} id="agency-search-query" type="search" bind:value={query} maxlength="160" placeholder="Try MCP or workflow" data-no-track />
+      </div>
+      <div class="category-field">
+        <label for="agency-search-category">Content type</label>
+        <select id="agency-search-category" bind:value={category}><option value="all">All content</option><option value="overview">Overviews</option><option value="guides">Guides</option></select>
+      </div>
+      <button class="submit-search" type="submit" data-no-track>Search</button>
     </form>
     <p class="status" role="status">{view.status === 'ready' ? `${view.results.length} results` : view.status === 'cancelled' ? 'Search cancelled. Search again to continue.' : 'Searching…'}{view.source === 'agent' ? ' · Updated by your assistant' : ''}</p>
     {#if message}<p role="status">{message}</p>{/if}
@@ -148,13 +154,18 @@
 <UnifiedSearch bind:open content={searchContent} onclose={close} currentProperty="agency" enableAnalytics={false} showMobileButton={true} />
 
 <style>
-  .agency-search { padding: var(--space-performance-lg); font-family: var(--font-performance-sans); }
-  header, .controls { display: flex; gap: var(--space-performance-sm); justify-content: space-between; align-items: center; }
+  .agency-search { padding: var(--space-performance-lg); font-family: var(--font-performance-sans); container-type: inline-size; }
+  header { display: flex; gap: var(--space-performance-sm); justify-content: space-between; align-items: center; margin-bottom: var(--space-performance-md); }
+  form { display: grid; grid-template-columns: minmax(0, 1fr) 10rem auto; gap: var(--space-performance-sm); align-items: end; }
+  .query-field, .category-field { min-width: 0; }
   h2 { font-size: var(--text-xl); font-weight: 600; }
-  label { display: block; margin-block: var(--space-performance-sm); }
+  label { display: block; margin-bottom: var(--space-performance-xs); font-size: var(--text-sm); color: var(--color-performance-muted); }
   input, select, button { font: inherit; }
   input, select, button:not(.result-title) { padding: var(--space-performance-sm); min-height: 44px; border: 1px solid var(--color-performance-line-strong); background: var(--color-performance-paper); color: var(--color-performance-ink); border-radius: var(--radius-performance-sm); }
-  input { width: 100%; }
+  input, select { box-sizing: border-box; width: 100%; min-width: 0; }
+  button.submit-search { background: var(--color-performance-ink); color: var(--color-performance-paper); font-weight: 600; }
+  .agency-search header button { border-color: transparent; background: transparent; }
+  .status { margin-block: var(--space-performance-md) var(--space-performance-sm); }
   button { cursor: pointer; }
   :is(input, button, select, a):focus-visible { outline: 2px solid var(--color-performance-signal); outline-offset: 2px; }
   p { color: var(--color-performance-muted); font-size: var(--text-sm); line-height: 1.5; margin-block: var(--space-performance-sm); }
@@ -164,5 +175,7 @@
   .ask { margin-left: var(--space-performance-sm); }
   aside { border: 1px solid var(--color-performance-line); padding: var(--space-performance-md); margin-block: var(--space-performance-md); }
   footer { font-size: var(--text-xs); color: var(--color-performance-muted); margin-top: var(--space-performance-md); }
+  @container (max-width: 560px) { form { grid-template-columns: minmax(0, 1fr) auto; } .query-field { grid-column: 1 / -1; } }
   @media (max-width: 480px) { .agency-search { padding: var(--space-performance-md); } .ask { margin: var(--space-performance-sm) 0 0; display: block; } }
+  @media (max-width: 360px) { .agency-search { padding: var(--space-performance-sm); } .agency-search header button { padding-inline: 0; white-space: nowrap; } }
 </style>
