@@ -186,7 +186,7 @@ export function createCodexAdapter(options: CodexOptions) {
       await requireAuth();
       const tools = await dynamicTools();
       if (!session.threadId) { session.threadId = required((await options.server.request('thread/start', profile(tools, session)))?.thread?.id); loadedThreads.add(session.threadId); await persist(); }
-      else if (!loadedThreads.has(session.threadId)) { await options.server.request('thread/resume', { threadId: session.threadId, ...profile(tools, session) }); loadedThreads.add(session.threadId); }
+      else if (!loadedThreads.has(session.threadId)) { await options.server.request('thread/resume', { threadId: session.threadId, excludeTurns: true, ...profile(tools, session) }); loadedThreads.add(session.threadId); }
       const plugins = await options.server.request('plugin/installed', { cwds: [root] });
       if (!Array.isArray(plugins?.marketplaces)) throw new Error('plugin_inventory_unavailable');
       const disabledPluginIds = plugins.marketplaces.flatMap((market: Json) => Array.isArray(market.plugins) ? market.plugins.filter((x: Json) => x.installed).map((x: Json) => required(x.id)) : []);
@@ -235,10 +235,22 @@ export function createCodexAdapter(options: CodexOptions) {
     const session = await owner(input);
     await reconcileSavedEdits(session.workspaceId);
     if (!session.threadId) return { sessionId: session.sessionId, messages: [], state: session.state, approvals: [], recordLinks: session.record ? [session.record] : [], ...(session.decisionReceipt ? { decisionReceipt: session.decisionReceipt } : {}) };
-    if (!loadedThreads.has(session.threadId)) { await options.server.request('thread/resume', { threadId: session.threadId, ...profile(await dynamicTools(), session) }); loadedThreads.add(session.threadId); }
-    // Codex 0.159.2 advertises turns/list but returns "list_turns is not supported yet".
+    if (!loadedThreads.has(session.threadId)) { await options.server.request('thread/resume', { threadId: session.threadId, excludeTurns: true, ...profile(await dynamicTools(), session) }); loadedThreads.add(session.threadId); }
+    // Metadata and one-turn pages avoid hydrating an unbounded retained history.
     let response: any;
-    try { response = await options.server.request('thread/read', { threadId: session.threadId, includeTurns: true }); }
+    try {
+      response = await options.server.request('thread/read', { threadId: session.threadId, includeTurns: false });
+      const turns: Json[] = []; let cursor: string | undefined; const cursors = new Set<string>();
+      for (let page = 0; page < 20; page++) {
+        const result = await options.server.request('thread/turns/list', { threadId: session.threadId, limit: 1, sortDirection: 'desc', itemsView: 'full', ...(cursor ? { cursor } : {}) });
+        if (!Array.isArray(result?.data) || result.data.length > 1) throw new Error('provider_history_unavailable');
+        turns.push(...result.data);
+        if (!result.nextCursor) break;
+        if (typeof result.nextCursor !== 'string' || cursors.has(result.nextCursor)) throw new Error('provider_history_unavailable');
+        const nextCursor: string = result.nextCursor; cursor = nextCursor; cursors.add(nextCursor);
+      }
+      response = { thread: { ...response?.thread, turns: turns.reverse() } };
+    }
     catch (error) {
       if (session.state !== 'running' && session.state !== 'approval') throw error;
       const pending: ChatRead = { sessionId: session.sessionId, messages: [...(liveMessages.get(session.sessionId) ?? [])].filter(([, entry]) => entry.turnId === session.turnId).slice(-50).map(([id, entry]) => ({ id, role: 'assistant' as const, text: entry.text })), state: session.state, approvals: [...approvals.values()].filter(x => x.sessionId === session.sessionId).map(({ id, title, detail }) => ({ id, title, detail })), recordLinks: session.record ? [session.record] : [], ...(session.decisionReceipt ? { decisionReceipt: session.decisionReceipt } : {}), ...(session.error ? { error: session.error } : {}), ...(session.cancelPending ? { cancelPending: true } : {}), ...(session.recoveryPending ? { recoveryPending: true } : {}) };

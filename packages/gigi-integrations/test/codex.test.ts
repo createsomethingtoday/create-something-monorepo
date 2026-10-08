@@ -19,7 +19,7 @@ class FakeServer implements AppServer {
     if (method === 'account/read') return this.account;
     if (method === 'thread/start') return { thread: this.thread };
     if (method === 'thread/resume' || method === 'thread/read') return { thread: this.thread };
-    if (method === 'thread/turns/list') return { data: this.thread.turns.slice().reverse(), nextCursor: null };
+    if (method === 'thread/turns/list') { const turns = this.thread.turns.slice().reverse(); const offset = Number(params.cursor ?? 0); return { data: turns.slice(offset, offset + params.limit), nextCursor: offset + params.limit < turns.length ? String(offset + params.limit) : null }; }
     if (method === 'plugin/installed') return { marketplaces: [{ plugins: [{ id: 'example-plugin', installed: true }] }] };
     if (method === 'turn/start') return { turn: { id: 'turn-1' } };
     if (method === 'turn/interrupt') return {};
@@ -87,7 +87,7 @@ test('starts isolated persistent session and resumes by owned thread id', async 
   await same.read({ workspaceId: 'w', sessionId });
   await same.send({ workspaceId: 'w', sessionId, message: 'again' });
   assert.equal(server.calls.some(x => x.method === 'thread/resume' && x.params.threadId === 'thread-1'), true);
-  assert.equal(server.calls.some(x => x.method === 'thread/turns/list'), false);
+  assert.equal(server.calls.some(x => x.method === 'thread/turns/list' && x.params.limit === 1), true);
   await assert.rejects(same.read({ workspaceId: 'other', sessionId }), /session_not_found/);
 });
 
@@ -772,4 +772,40 @@ test('complete mandatory catalog works without optional context search', async (
   const tools = server.calls.find(call => call.method === 'thread/start')!.params.dynamicTools[0].tools;
   assert.deepEqual(tools.map((tool: any) => tool.name), requiredTools);
   assert.equal(server.calls.filter(call => call.method === 'turn/start').length, 1);
+});
+
+test('large retained history reopens through bounded pages and reconciles the latest turn', async () => {
+  const { adapter, server, mcp, dataDir } = await setup();
+  const { sessionId } = await adapter.start({ workspaceId: 'w', message: 'latest question' });
+  server.thread.turns = Array.from({ length: 120 }, (_, index) => ({ id: index === 119 ? 'turn-1' : `old-${index}`, status: 'completed', items: [{ type: 'agentMessage', id: `answer-${index}`, text: `${index}:` + 'x'.repeat(16_000) }] }));
+  assert.ok(Buffer.byteLength(JSON.stringify(server.thread)) > 1_000_000);
+  const original = server.request.bind(server);
+  server.request = async (method, params) => {
+    if (method === 'thread/read' || method === 'thread/resume') {
+      assert.equal(method === 'thread/read' ? params.includeTurns : params.excludeTurns, method === 'thread/read' ? false : true);
+      server.calls.push({ method, params });
+      return { thread: { id: server.thread.id, turns: [], status: server.thread.status } };
+    }
+    return original(method, params);
+  };
+  const restarted = createCodexAdapter({ dataDir, mcpBinary: '/fixture/gigi-mcp', skillPath: '/fixture/skill/SKILL.md', server, mcp });
+  for (let reopen = 0; reopen < 2; reopen++) {
+    const result = await restarted.read({ workspaceId: 'w', sessionId });
+    assert.equal(result.state, 'idle');
+    assert.equal(result.messages.length, 20);
+    assert.equal(result.messages[0].id, 'answer-100');
+    assert.equal(result.messages.at(-1)?.id, 'answer-119');
+    assert.ok(Buffer.byteLength(JSON.stringify(result)) < 500_000);
+  }
+  assert.equal(server.calls.filter(call => call.method === 'thread/turns/list').length, 40);
+});
+
+test('invalid history pagination never falls back to a full-history read or clears recovery', async () => {
+  const { adapter, server } = await setup();
+  const { sessionId } = await adapter.start({ workspaceId: 'w', message: 'hello' });
+  const original = server.request.bind(server);
+  server.request = async (method, params) => method === 'thread/turns/list' ? { data: [], nextCursor: 'repeated' } : original(method, params);
+  const result = await adapter.read({ workspaceId: 'w', sessionId });
+  assert.equal(result.state, 'running');
+  assert.equal(server.calls.some(call => call.method === 'thread/read' && call.params.includeTurns), false);
 });

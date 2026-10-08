@@ -222,3 +222,20 @@ for (const state of ['failed', 'interrupted']) test(`verified edit refreshes rec
   chat.accept(result);
   assert.equal(refreshes, 1, 'repeated receipt must not repeat the refresh');
 });
+
+for (const failed of ['status', 'list']) test(`successful drawer reopen clears previous ${failed} failure without a selected session`, async () => {
+  let failing = true;
+  const bridge = {
+    chatStatus: async () => { if (failing && failed === 'status') throw new Error('temporary status failure'); return { provider: 'codex', available: true, authenticated: true }; },
+    chatList: async () => { if (failing && failed === 'list') throw new Error('temporary list failure'); return { sessions: [] }; },
+  };
+  const chat = new ChatController(bridge, 'w1', () => {});
+  await chat.open();
+  assert.match(chat.error, /temporary/);
+  chat.close(); failing = false;
+  await chat.open();
+  assert.equal(chat.error, null);
+  assert.equal(chat.current, null);
+  assert.equal(chat.status.available, true);
+  chat.close();
+});

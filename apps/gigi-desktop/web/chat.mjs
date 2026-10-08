@@ -56,7 +56,7 @@ export class ChatController {
       if (epoch !== this.epoch || !this.visible) return;
       if (status.status === 'rejected') throw status.reason;
       this.status = status.value;
-      if (list.status === 'fulfilled') this.sessions = sessionItems(list.value);
+      if (list.status === 'fulfilled') { this.sessions = sessionItems(list.value); this.error = null; }
       else this.error = String(list.reason?.message || list.reason);
       if (this.current && !this.pending) await this.read(this.current.sessionId, epoch, true);
       else { this.reading = false; this.emit(); }
