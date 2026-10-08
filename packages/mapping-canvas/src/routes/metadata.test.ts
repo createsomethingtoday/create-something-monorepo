@@ -10,9 +10,9 @@ const serviceWorker = readFileSync(new URL('../../static/service-worker.js', imp
 const serverHooks = readFileSync(new URL('../hooks.server.ts', import.meta.url), 'utf8');
 
 describe('public identity and discovery', () => {
-  it('uses the governed CREATE SOMETHING logo in the product header', () => {
-    expect(page).toContain('src="/brand/create-something-agency-white.svg"');
-    expect(page).toContain('alt="CREATE SOMETHING .agency"');
+  it('uses the approved Draw identity while retaining publisher metadata', () => {
+    expect(page).toContain('src="/brand/draw-dark.svg"');
+    expect(page).toContain("name: 'CREATE SOMETHING'");
     expect(page).toContain('href="/download" target="_blank" rel="noreferrer">Mac</a>');
   });
 
@@ -26,14 +26,14 @@ describe('public identity and discovery', () => {
   });
 
   it('keeps crawler and answer-engine artifacts on the canonical origin', () => {
-    expect(manifest.name).toBe('CREATE SOMETHING Draw');
+    expect(manifest.name).toBe('Draw');
     expect(manifest.description).toContain('local-first');
     expect(robots).toContain('Sitemap: https://draw.createsomething.agency/sitemap.xml');
     expect(sitemap).toContain('<loc>https://draw.createsomething.agency/</loc>');
     expect(sitemap).toContain('<loc>https://draw.createsomething.agency/download</loc>');
-    expect(llms).toContain('# CREATE SOMETHING Draw');
+    expect(llms).toContain('# Draw');
     expect(llms).toContain('saved only on the current device');
-    expect(serviceWorker).toContain("'/brand/create-something-agency-white.svg'");
+    expect(serviceWorker).toContain("'/brand/draw-dark.svg'");
   });
 
   it('sets the production browser security contract on dynamic Pages responses', () => {

@@ -39,7 +39,7 @@
   const TOOL_SIDEBAR_PREFERENCE = 'mapping-canvas-tool-sidebar-collapsed';
   const DRAW_DOCUMENT_LOCK = 'draw-active-document';
   const canonicalUrl = 'https://draw.createsomething.agency/';
-  const publicTitle = 'Drawing Canvas for Mapping Meetings | CREATE SOMETHING';
+  const publicTitle = 'Draw — Drawing Canvas for Mapping Meetings';
   const publicDescription = 'A local-first drawing canvas for mapping meetings, spatial notes, shapes, connectors, groups, and portable JSON, SVG, or PNG exports.';
   const socialImage = `${canonicalUrl}og-image.png`;
   const organizationSchema = {
@@ -54,7 +54,7 @@
     '@context': 'https://schema.org',
     '@type': 'WebApplication',
     '@id': `${canonicalUrl}#application`,
-    name: 'CREATE SOMETHING Draw',
+    name: 'Draw',
     alternateName: 'Mapping Canvas',
     url: canonicalUrl,
     applicationCategory: 'DesignApplication',
@@ -1364,25 +1364,25 @@
 </script>
 
 <svelte:head>
-  <title>{document.title === 'Untitled mapping session' ? publicTitle : `${document.title} · CREATE SOMETHING Draw`}</title>
+  <title>{document.title === 'Untitled mapping session' ? publicTitle : `${document.title} · Draw`}</title>
   <meta name="description" content={publicDescription} />
   <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
   <meta name="author" content="CREATE SOMETHING" />
   <link rel="canonical" href={canonicalUrl} />
   <meta property="og:type" content="website" />
   <meta property="og:url" content={canonicalUrl} />
-  <meta property="og:site_name" content="CREATE SOMETHING Draw" />
+  <meta property="og:site_name" content="Draw" />
   <meta property="og:title" content={publicTitle} />
   <meta property="og:description" content={publicDescription} />
   <meta property="og:image" content={socialImage} />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
-  <meta property="og:image:alt" content="CREATE SOMETHING Draw mapping canvas interface" />
+  <meta property="og:image:alt" content="Draw — a local-first drawing canvas" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content={publicTitle} />
   <meta name="twitter:description" content={publicDescription} />
   <meta name="twitter:image" content={socialImage} />
-  <meta name="twitter:image:alt" content="CREATE SOMETHING Draw mapping canvas interface" />
+  <meta name="twitter:image:alt" content="Draw — a local-first drawing canvas" />
   {@html jsonLd(organizationSchema)}
   {@html jsonLd(applicationSchema)}
 </svelte:head>
@@ -1390,7 +1390,7 @@
 <main class="app-shell cs-workspace" class:native-shell={nativeShell} class:reduce-agent-motion={reduceAgentMotion}>
   <a class="cs-skip-link" href="#draw-workbench">Skip to canvas</a>
   <header class="topbar">
-    <div class="identity"><img src="/brand/create-something-agency-white.svg" alt="CREATE SOMETHING .agency" /><strong class="cs-product-name">Draw</strong><a class="source-link" href="/download" target="_blank" rel="noreferrer">Mac</a><a class="source-link" href="https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/mapping-canvas" target="_blank" rel="noreferrer">Source</a>{#if nativeRole !== 'web'}<button class="native-link" aria-label="Open device pairing" onclick={openPairing}>{nativeRole === 'host' ? 'Pair' : nativeSession.sessionId ? 'Linked' : 'Link'}</button>{/if}</div>
+    <div class="identity"><img src="/brand/draw-dark.svg" alt="" /><strong class="cs-product-name">Draw</strong><a class="source-link" href="/download" target="_blank" rel="noreferrer">Mac</a><a class="source-link" href="https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/mapping-canvas" target="_blank" rel="noreferrer">Source</a>{#if nativeRole !== 'web'}<button class="native-link" aria-label="Open device pairing" onclick={openPairing}>{nativeRole === 'host' ? 'Pair' : nativeSession.sessionId ? 'Linked' : 'Link'}</button>{/if}</div>
     <div class="title-area"><label class="project-title"><span class="cs-label">Project</span><input class="title" aria-label="Canvas title" maxlength="240" value={document.title} oninput={(event) => updateTitle(event.currentTarget)} /></label>{#if nativeRole === 'web'}<ProjectModes id={document.id} mode="canvas" navigate={(event,mode)=>{if(mode==='canvas')event.preventDefault();else void openMotion(event,mode==='preview');}} />{/if}{#if nativeRole === 'host'}<NativeAgentPanel {selectedIds} revision={nativeSession.revision || 0} busy={Boolean(drawing || transformGesture || pinch || pendingTouchAction || wheelTimer || replacingDocument || hostBatches.isRecovering)} action={nativeAgentAction} />{/if}{#if nativeRole === 'web'}<AgentConnection projectId={document.id} {ready} tools={connectionTools} />{/if}</div>
     {#if nativeRole !== 'companion'}<div class="file-actions">{#if projects.length>1}<select aria-label="Open Draw project" value={document.id} onchange={async event=>{const id=event.currentTarget.value;noteInput.flushAll();if(await persistCurrentDocument(document))location.href=`/?project=${encodeURIComponent(id)}`;}}>{#each projects as entry}<option value={entry.id}>{entry.title}</option>{/each}</select>{/if}<button id="draw-layers-toggle" aria-expanded={panelOpen} aria-controls="draw-inspector" onclick={()=>panelOpen=!panelOpen}>Layers</button><details class="file-menu"><summary>File <span aria-hidden="true">⌄</span></summary><div><button onclick={() => fileInput?.click()} disabled={sharing || replacingDocument}>Import</button><button onclick={exportJson}>JSON</button><button onclick={exportSvg}>SVG</button><button onclick={exportPng}>PNG</button><button onclick={resetCanvas} disabled={sharing || replacingDocument}>New canvas</button></div></details>{#if nativeRole === 'web'}{#if share}<button onclick={copyShareLink}>Copy link</button><button onclick={updateSnapshot} disabled={sharing || replacingDocument}>Update link</button><button onclick={revokeSnapshot} disabled={sharing || replacingDocument}>Revoke</button>{:else}<button class="share-action" onclick={publishSnapshot} disabled={sharing || replacingDocument}>Publish view-only</button>{/if}{/if}<input bind:this={fileInput} class="visually-hidden" type="file" accept="application/json,.json" disabled={sharing || replacingDocument} onchange={importJson} /></div>{/if}
   </header>
