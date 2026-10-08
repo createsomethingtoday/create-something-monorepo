@@ -14,15 +14,49 @@ function fixture(html = '<section id="support-scope"><header><h2>Public scope</h
   return { doc, calls, root: doc.getElementById('main-content')! };
 }
 
-test('only the six reviewed exact public routes have annotations with bounded static metadata', () => {
-  assert.deepEqual(Object.keys(annotationTargets).sort(), ['/', '/services', '/products', '/field-reports', '/practice', '/stack'].sort());
+test('only the twelve reviewed exact public routes have annotations with bounded static metadata', () => {
+  assert.deepEqual(Object.keys(annotationTargets).sort(), ['/', '/services', '/products', '/field-reports', '/practice', '/stack', '/about', '/agent-foundation', '/field-reports/template-review', '/field-reports/upstream-contributions', '/workflows/human-in-the-loop-ai', '/workflows/ai-agent-evaluation'].sort());
   for (const [route, targets] of Object.entries(annotationTargets)) for (const target of targets) {
     assert.ok(target.prompt.length <= 240);
+    assert.ok(!target.question || target.question.length <= 60);
+    assert.equal(targets.filter((entry) => entry.selector === target.selector).length, 1);
     const metadata = { title: target.title, route, kind: 'public editorial context' };
     assert.ok(Object.keys(metadata).length <= 6);
     assert.ok(Object.values(metadata).every((value) => value.length <= 256));
     assert.ok(Buffer.byteLength(JSON.stringify(metadata)) <= 2048);
   }
+});
+
+test('editorial questions keep a bounded public context and support a reviewed h3 without changing heading semantics', () => {
+  const { root, calls } = fixture('<article class="outerfields-story"><h3 id="outerfields-title">Published project timeline</h3><p>Prototype, funded development, in-house handoff.</p></article>');
+  const cleanup = installPageAnnotations(root, '/');
+  const button = root.querySelector('button')!;
+  assert.equal(button.textContent, 'What carried forward from this project?');
+  assert.equal(button.getAttribute('aria-label'), 'Ask: What carried forward from this project?');
+  assert.ok(button.closest('[data-analytics-ignore]'));
+  assert.ok(button.hasAttribute('data-no-track'));
+  assert.equal(root.querySelector('h3')!.textContent, 'Published project timeline');
+  button.click();
+  assert.match(calls[0].options.initialComment, /lessons this page does not spell out/);
+  assert.equal(calls[0].target, root.querySelector('article'));
+  cleanup();
+  assert.equal(root.querySelector('h3')!.textContent, 'Published project timeline');
+});
+
+test('newly inserted private inputs prevent requests and detached controls do nothing', () => {
+  const { root, calls } = fixture();
+  installPageAnnotations(root, '/services');
+  const button = root.querySelector('button')!;
+  const secret = root.ownerDocument.createElement('input');
+  secret.value = 'never-share';
+  root.querySelector('section')!.appendChild(secret);
+  button.click();
+  assert.equal(calls.length, 0);
+  assert.match(root.querySelector('[role="status"]')!.textContent!, /unavailable/);
+  secret.remove();
+  root.querySelector('section')!.remove();
+  button.click();
+  assert.equal(calls.length, 0);
 });
 
 test('unsupported API, iframe, and private or ambiguous routes add nothing', () => {
