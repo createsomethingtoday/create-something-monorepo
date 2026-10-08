@@ -17,7 +17,7 @@
     "fullFeatureHook": "passed using unchanged hook and temporary index representing full diff against main",
     "agencyDiff": "PASS",
     "canonAnalyticsDiff": "PASS",
-    "canonNavigationDiff": "incomplete analysis; diagnosis pending",
+    "canonNavigationDiff": "FAIL incomplete due baseline parser limitation in unchanged Tabs.svelte and MegaMenu.svelte import(svelte).Snippet types; current and main UnifiedSearch both PASS isolated analysis. Independent review; no source workaround.",
     "earlierHookSkipped": [
       "duplicates",
       "Svelte drift",
@@ -28,7 +28,8 @@
     "notApplicableHookBranches": [
       "CSS token adoption (no CSS files)",
       "registry source validation (no registry source files)"
-    ]
+    ],
+    "reviewEvidence": "Independent review results in /tmp/ground-navigation-parser-review/results.json and /tmp/navigation-ground-mcp-detail.json"
   },
   "checks": {
     "agencyCheck": "passed sequential rerun; initial parallel packaging collision discarded",
