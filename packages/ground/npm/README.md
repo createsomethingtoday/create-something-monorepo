@@ -20,6 +20,20 @@ The verified setup contract covers Claude Code, Codex, Cursor, and Windsurf.
 
 **The difference**: Ground requires computation before its claim tools accept a claim.
 
+## Source development: analysis exit compatibility
+
+The next source release makes `ground analyze` / `ground diff` return exit 0
+only for completed clean analysis; JSON `outcome` distinguishes `CLEAN` (0),
+`FINDINGS` (1), `INCOMPLETE` (2), and `NOT_APPLICABLE` (3). Missing inputs,
+unsupported required paths and execution errors never count as clean. Invalid
+commands remain nonzero. MCP callers inspect `outcome` independently from tool
+transport success. `--advisory` restores exit zero for semantic receipts only;
+it is an explicit advisory opt-in, not a required-gate bypass.
+
+Omitted checks run `duplicates,orphans` for analyze and `duplicates` for diff;
+unknown or empty check lists are rejected. Installed 0.4.3 release artifacts are
+unchanged. See the repository README for coverage limits and migration details.
+
 ## Recommended agent path
 
 Use CTX and Ground for different evidence:

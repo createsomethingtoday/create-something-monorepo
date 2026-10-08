@@ -102,3 +102,51 @@ fn bounded_worker_option_reaches_duplicate_analysis() {
     }
     assert!(!run("5").status.success());
 }
+
+fn run_analysis(directory: &std::path::Path, flags: &[&str]) -> std::process::Output {
+    Command::new(env!("CARGO_BIN_EXE_ground"))
+        .arg("--db").arg(directory.join("registry.db"))
+        .arg("analyze").arg(directory).args(flags).output().unwrap()
+}
+
+#[test]
+fn omitted_checks_run_defaults_and_unknown_or_empty_checks_fail() {
+    let dir = tempdir().unwrap();
+    fs::write(dir.path().join("a.ts"), "export const value = 1;\n").unwrap();
+    let output = run_analysis(dir.path(), &[]);
+    let report: Value = serde_json::from_slice(&output.stdout).unwrap();
+    assert_eq!(report["checks_run"], serde_json::json!(["duplicates", "orphans"]));
+    assert!(report["coverage"]["duplicates"].is_object());
+    for flags in [vec!["--checks", "typo"], vec!["--checks", ""], vec!["--checks", "typo", "--advisory"]] {
+        let output = run_analysis(dir.path(), &flags);
+        assert!(!output.status.success(), "invalid check accepted: {:?}", flags);
+    }
+}
+
+#[test]
+fn json_outcomes_have_distinct_exits_and_advisory_never_hides_invalid_checks() {
+    let dir = tempdir().unwrap();
+    let body = "export function same(x: number) {\n const a = x + 1;\n const b = a * 2;\n return b;\n}\n";
+    fs::write(dir.path().join("a.ts"), body).unwrap();
+    let assert_result = |flags: &[&str], exit, outcome| {
+        let output = run_analysis(dir.path(), flags);
+        let report: Value = serde_json::from_slice(&output.stdout).unwrap();
+        assert_eq!(report["outcome"], outcome, "{}", report);
+        assert_eq!(output.status.code(), Some(exit), "{}", report);
+    };
+    assert_result(&["--checks", "duplicates"], 0, "CLEAN");
+    fs::write(dir.path().join("b.ts"), body).unwrap();
+    assert_result(&["--checks", "duplicates"], 1, "FINDINGS");
+    assert_result(&["--checks", "duplicates", "--advisory"], 0, "FINDINGS");
+    fs::write(dir.path().join("bad.ts"), "export function broken( {").unwrap();
+    assert_result(&["--checks", "duplicates"], 2, "INCOMPLETE");
+    assert_result(&["--checks", "duplicates", "--advisory"], 0, "INCOMPLETE");
+    fs::remove_file(dir.path().join("bad.ts")).unwrap();
+    assert_result(&["--checks", "duplicates", "--timeout-ms", "0"], 2, "INCOMPLETE");
+    assert_result(&["--checks", "duplicates,environment"], 2, "INCOMPLETE");
+    assert_result(&["--checks", "dead_exports"], 2, "INCOMPLETE");
+    fs::remove_file(dir.path().join("a.ts")).unwrap();
+    fs::remove_file(dir.path().join("b.ts")).unwrap();
+    assert_result(&["--checks", "duplicates"], 3, "NOT_APPLICABLE");
+    assert!(!run_analysis(dir.path(), &["--checks", "typo", "--advisory"]).status.success());
+}

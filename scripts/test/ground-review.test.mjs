@@ -75,7 +75,8 @@ test('CLI emits an advisory JSON receipt for a changed package', (t) => {
     binaryDir,
     'fake-ground',
     `#!/bin/sh
-printf '%s\\n' '{"discovered_changed_files":1,"analyzable_changed_files":1,"changed_files":1,"changed_file_list":["${repo}/packages/example/src/index.ts"],"excluded_changed_files":[{"path":"${repo}/packages/example/README.md","reason":"unsupported_extension"}],"checks_run":["duplicates","orphans"],"new_issues":[{"type":"duplicate_function","files":["${repo}/packages/example/src/index.ts","${repo}/packages/example/src/copy.ts"]}],"total_new_issues":1}'
+printf '%s\\n' '{"outcome":"FINDINGS","discovered_changed_files":1,"analyzable_changed_files":1,"changed_files":1,"changed_file_list":["${repo}/packages/example/src/index.ts"],"excluded_changed_files":[{"path":"${repo}/packages/example/README.md","reason":"unsupported_extension"}],"checks_run":["duplicates","orphans"],"new_issues":[{"type":"duplicate_function","files":["${repo}/packages/example/src/index.ts","${repo}/packages/example/src/copy.ts"]}],"total_new_issues":1}'
+exit 1
 `
   );
   chmodSync(fakeGround, 0o755);
