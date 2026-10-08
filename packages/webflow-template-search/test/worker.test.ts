@@ -6,6 +6,7 @@ import {
   acquireSyncJobLock,
   backfillCreatorFieldsByName,
   backfillCreatorFieldsFromLookup,
+  filterMissingOrStaleTemplateLookupTargets,
   finishSyncJobLock,
   getPublicSearchCacheVersion,
   heartbeatSyncJobLock,
@@ -1069,6 +1070,51 @@ describe('webflow-template-search worker', () => {
       expect(await response.json()).toMatchObject({ indexed_records: 0, listing_gated_records: 1 });
     } finally {
       fetchMock.mockRestore();
+      close();
+    }
+  });
+
+  it('caps how many unconfirmed listings the sweep re-checks per run', async () => {
+    // Every pre-existing row is unconfirmed after migration 0016. Re-checking all
+    // of them at once burst the Webflow API (429s, 2026-10-08). Missing and
+    // changed rows are never capped; only the extra unconfirmed re-checks are.
+    const { env, close } = createTestEnv();
+    try {
+      const insert = env.DB.prepare(
+        'INSERT INTO template_documents (id, template_slug, name, synced_at, source_last_modified_time, listing_confirmed) VALUES (?, ?, ?, ?, ?, ?)',
+      );
+      const syncedAt = '2026-10-08T00:00:00.000Z';
+      const lmt = '2026-10-01T00:00:00.000Z';
+      await env.DB.batch([
+        insert.bind('recChanged', 'changed-website-template', 'Changed', syncedAt, lmt, 1),
+        insert.bind('recNullA', 'null-a-website-template', 'Null A', syncedAt, lmt, null),
+        insert.bind('recZeroB', 'zero-b-website-template', 'Zero B', syncedAt, lmt, 0),
+        insert.bind('recNullC', 'null-c-website-template', 'Null C', syncedAt, lmt, null),
+        insert.bind('recConfirmed', 'confirmed-website-template', 'Confirmed', syncedAt, lmt, 1),
+      ]);
+      const targets = ['recConfirmed', 'recNullA', 'recChanged', 'recZeroB', 'recNullC', 'recMissing'].map((id) => ({
+        id,
+        templateSlug: null,
+        sourceLastModifiedTime: id === 'recChanged' ? '2026-10-02T00:00:00.000Z' : lmt,
+      }));
+      const ids = (options: Parameters<typeof filterMissingOrStaleTemplateLookupTargets>[2]) =>
+        filterMissingOrStaleTemplateLookupTargets(env.DB, targets, options).then((result) => result.map((target) => target.id));
+
+      expect(await ids({ recheckUnconfirmedListings: false })).toEqual(['recChanged', 'recMissing']);
+      expect(await ids({ recheckUnconfirmedListings: true, maxUnconfirmedRechecks: 2 })).toEqual([
+        'recChanged',
+        'recMissing',
+        'recNullA',
+        'recZeroB',
+      ]);
+      expect(await ids({ recheckUnconfirmedListings: true })).toEqual([
+        'recChanged',
+        'recMissing',
+        'recNullA',
+        'recZeroB',
+        'recNullC',
+      ]);
+    } finally {
       close();
     }
   });

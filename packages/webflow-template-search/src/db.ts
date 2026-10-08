@@ -1690,7 +1690,7 @@ function isSourceNewer(nextSourceLastModifiedTime: string | null | undefined, cu
 export async function filterMissingOrStaleTemplateLookupTargets(
   db: D1Database,
   targets: TemplateLookupTarget[],
-  options: { recheckUnconfirmedListings?: boolean } = {},
+  options: { recheckUnconfirmedListings?: boolean; maxUnconfirmedRechecks?: number } = {},
 ): Promise<TemplateLookupTarget[]> {
   const uniqueTargets = Array.from(
     new Map(targets.filter((target) => target.id || target.templateSlug).map((target) => [target.id, target])).values(),
@@ -1732,14 +1732,26 @@ export async function filterMissingOrStaleTemplateLookupTargets(
   const existingById = new Map(rows.map((row) => [row.id, row]));
   const existingBySlug = new Map(rows.filter((row) => row.templateSlug).map((row) => [row.templateSlug, row]));
 
-  return uniqueTargets.filter((target) => {
+  const changed: TemplateLookupTarget[] = [];
+  const unconfirmed: TemplateLookupTarget[] = [];
+  for (const target of uniqueTargets) {
     const existing = existingById.get(target.id) ?? (target.templateSlug ? existingBySlug.get(target.templateSlug) : undefined);
-    if (!existing) return true;
+    if (!existing || isSourceNewer(target.sourceLastModifiedTime, existing.sourceLastModifiedTime)) {
+      changed.push(target);
+      continue;
+    }
     // Indexed without a confirmed live listing (the gate failed open, or the row
     // predates the flag): re-check it so the gate can hold it out if it 404s.
-    if (options.recheckUnconfirmedListings && existing.listingConfirmed !== 1) return true;
-    return isSourceNewer(target.sourceLastModifiedTime, existing.sourceLastModifiedTime);
-  });
+    if (options.recheckUnconfirmedListings && existing.listingConfirmed !== 1) unconfirmed.push(target);
+  }
+
+  // Missing and changed rows are never capped. The unconfirmed re-checks are:
+  // each one is a Webflow lookup, and after migration 0016 every pre-existing
+  // row is unconfirmed, so an uncapped pass re-checked ~100 rows per run and
+  // drew 429s (2026-10-08). Callers pass recent-first targets, so a new template
+  // is at the front of the line.
+  const cap = Math.max(0, options.maxUnconfirmedRechecks ?? unconfirmed.length);
+  return [...changed, ...unconfirmed.slice(0, cap)];
 }
 
 export async function recordSyncSummary(db: D1Database, summary: unknown, key: string): Promise<void> {

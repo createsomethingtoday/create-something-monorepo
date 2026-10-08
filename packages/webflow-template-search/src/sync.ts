@@ -873,6 +873,11 @@ const INCREMENTAL_WRITE_BATCH_SIZE = 12;
 const RECENT_PUBLISHED_SWEEP_LOOKBACK_DAYS = 21;
 const RECENT_MODIFIED_PUBLISHED_SWEEP_LOOKBACK_HOURS = 24;
 const RECENT_PUBLISHED_SWEEP_LIMIT = 50;
+// Extra sweep re-checks for rows indexed without a confirmed live listing. Each
+// costs a Webflow lookup (plus a Designer lookup), every 5 minutes: 10 keeps the
+// run well under the API rate limit while still clearing a backlog of ~100
+// unconfirmed rows within the hour.
+const MAX_UNCONFIRMED_LISTING_RECHECKS_PER_RUN = 10;
 
 function resolveSyncWindow(cursor: string, now: Date): { end: Date; until: string | undefined; isCaughtUp: boolean } {
   const end = new Date(Math.min(new Date(cursor).getTime() + MAX_SYNC_WINDOW_MS, now.getTime()));
@@ -947,7 +952,10 @@ async function fetchChangedRecentPublishedAssets(
       return { id: record.id, templateSlug: target.templateSlug, sourceLastModifiedTime: sourceLastModifiedTime(record) };
     }),
     // Without a CMS token no lookup can confirm a listing, so re-checking is pointless.
-    { recheckUnconfirmedListings: hasWebflowCmsToken(env) },
+    {
+      recheckUnconfirmedListings: hasWebflowCmsToken(env),
+      maxUnconfirmedRechecks: MAX_UNCONFIRMED_LISTING_RECHECKS_PER_RUN,
+    },
   );
   const changedIds = new Set(missingOrStaleTargets.map((target) => target.id));
   return candidates.filter((record) => changedIds.has(record.id));
