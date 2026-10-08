@@ -256,7 +256,11 @@ interface ListingGateResult {
   gatedIds: string[];
 }
 
-function applyListingGate(records: NormalizedTemplateRecord[], warnings: SyncWarning[]): ListingGateResult {
+function applyListingGate(
+  records: NormalizedTemplateRecord[],
+  warnings: SyncWarning[],
+  options: { verifyIds?: ReadonlySet<string> } = {},
+): ListingGateResult {
   const gated = records.filter((record) => record.listingMissing);
   if (gated.length === 0) {
     return { documents: records.map((record) => record.document), gatedIds: [] };
@@ -266,11 +270,18 @@ function applyListingGate(records: NormalizedTemplateRecord[], warnings: SyncWar
     .slice(0, LISTING_GATE_WARNING_SAMPLE)
     .map((record) => record.document.templateSlug)
     .join(', ');
-  const guardThreshold = Math.max(LISTING_GATE_GUARD_MIN_RECORDS, Math.ceil(records.length * LISTING_GATE_GUARD_RATIO));
-  if (gated.length >= guardThreshold) {
+  // Records picked for re-verification are expected to come back missing, so
+  // they do not count toward the guard: otherwise a backlog of five dead
+  // listings would trip it every run and never be removed. The guard still
+  // watches the rest of the batch, and when it fires everything is kept.
+  const verifyIds = options.verifyIds ?? new Set<string>();
+  const guardRecords = records.filter((record) => !verifyIds.has(record.document.id));
+  const guardGated = gated.filter((record) => !verifyIds.has(record.document.id));
+  const guardThreshold = Math.max(LISTING_GATE_GUARD_MIN_RECORDS, Math.ceil(guardRecords.length * LISTING_GATE_GUARD_RATIO));
+  if (guardGated.length >= guardThreshold) {
     warnings.push({
       source: 'listing_gate_guard',
-      message: `Kept ${gated.length} of ${records.length} published templates with no live Webflow listing: the count meets the guard threshold of ${guardThreshold}, so the CMS lookup is treated as unreliable for this run. Sample: ${sample}`,
+      message: `Kept ${gated.length} of ${records.length} published templates with no live Webflow listing: ${guardGated.length} of the ${guardRecords.length} not picked for re-verification meet the guard threshold of ${guardThreshold}, so the CMS lookup is treated as unreliable for this run. Sample: ${sample}`,
     });
     return { documents: records.map((record) => record.document), gatedIds: [] };
   }
@@ -1032,6 +1043,7 @@ async function runIncrementalSync(env: Env, heartbeat: SyncHeartbeat): Promise<S
   let recentPublishedRecords = 0;
   let unconfirmedRecheckRecords = 0;
   const unconfirmedMissingIds: string[] = [];
+  const unconfirmedRecheckIds = new Set<string>();
 
   while (scannedWindows < MAX_EMPTY_SYNC_WINDOWS_PER_RUN) {
     const syncWindow = resolveSyncWindow(scanCursor, now);
@@ -1099,6 +1111,7 @@ async function runIncrementalSync(env: Env, heartbeat: SyncHeartbeat): Promise<S
       const unconfirmedAssets = await fetchAssetRecordsByIds(env, unconfirmedIds);
       assets.push(...unconfirmedAssets);
       unconfirmedRecheckRecords = unconfirmedAssets.length;
+      for (const record of unconfirmedAssets) unconfirmedRecheckIds.add(record.id);
       // An id Airtable no longer returns has no record to re-index; drop the row
       // instead of leaving it to occupy a re-check slot every run.
       const returnedIds = new Set(unconfirmedAssets.map((record) => record.id));
@@ -1141,7 +1154,7 @@ async function runIncrementalSync(env: Env, heartbeat: SyncHeartbeat): Promise<S
         toDelete.push(record.id);
       }
     }
-    const listingGate = applyListingGate(normalizedRecords, warnings);
+    const listingGate = applyListingGate(normalizedRecords, warnings, { verifyIds: unconfirmedRecheckIds });
     toUpsert.push(...listingGate.documents);
     toDelete.push(...listingGate.gatedIds);
     listingGatedRecords = listingGate.gatedIds.length;

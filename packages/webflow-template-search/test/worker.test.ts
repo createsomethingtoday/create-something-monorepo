@@ -1158,6 +1158,65 @@ describe('webflow-template-search worker', () => {
     }
   });
 
+  it('removes a backlog of dead listings instead of tripping the gate guard', async () => {
+    // Six re-checked rows that genuinely lack listings meet the guard's minimum
+    // of five. They were picked to be verified, so they must not count toward
+    // it, or they would be kept with listing_confirmed = 0 and re-checked forever.
+    const deadAssets = Array.from({ length: 6 }, (_, index) => ({
+      ...PUBLISHED_ASSETS[0],
+      id: `recDead${index}`,
+      fields: {
+        ...PUBLISHED_ASSETS[0].fields,
+        Name: `Dead ${index}`,
+        '🥞CMS Slug (formula)': `dead-${index}-website-template`,
+      },
+    }));
+    const fetchMock = installAirtableFetchMock({
+      publishedAssets: deadAssets,
+      incrementalAssets: [],
+      styles: LOOKUPS.styles,
+      childCategories: LOOKUPS.childCategories,
+      tags: LOOKUPS.tags,
+      creators: LOOKUPS.creators,
+      webflowCollectionItems: { [TEMPLATES_COLLECTION_ID]: [] },
+    });
+    const { env, close } = createTestEnv();
+    env.WEBFLOW_API_TOKEN = 'test-webflow-cms-token';
+
+    try {
+      const insert = env.DB.prepare(
+        'INSERT INTO template_documents (id, template_slug, name, synced_at, published_date, listing_confirmed) VALUES (?, ?, ?, ?, ?, ?)',
+      );
+      await env.DB.batch(
+        deadAssets.map((asset, index) =>
+          insert.bind(asset.id, `dead-${index}-website-template`, `Dead ${index}`, '2026-10-08T00:00:00.000Z', '2026-10-06', null),
+        ),
+      );
+      await setSyncCursor(env.DB, new Date(Date.now() - 60_000).toISOString());
+
+      const response = await callWorker(
+        new Request('https://templates.test/api/templates/admin/sync', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      const payload = (await response.json()) as {
+        unconfirmed_recheck_records?: number;
+        listing_gated_records: number;
+        warnings?: Array<{ source: string }>;
+      };
+      expect(payload).toMatchObject({ unconfirmed_recheck_records: 6, listing_gated_records: 6 });
+      expect(payload.warnings?.map((warning) => warning.source)).not.toContain('listing_gate_guard');
+
+      const remaining = await env.DB.prepare("SELECT COUNT(*) AS n FROM template_documents WHERE id LIKE 'recDead%'").first<{ n: number }>();
+      expect(remaining?.n).toBe(0);
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
   it('re-checks a template indexed while the CMS lookup failed and gates it once the lookup works', async () => {
     // Ironclaw: approved and indexed, but the CMS item never appeared (Stripe
     // onboarding incomplete). A fail-open index must not become permanent.
