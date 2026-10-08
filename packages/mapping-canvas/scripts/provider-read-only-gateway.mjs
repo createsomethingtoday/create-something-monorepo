@@ -6,11 +6,14 @@ const receipt=JSON.parse(readFileSync(process.env.DRAW_ACCEPTANCE_RECEIPT,'utf8'
 const canonical=value=>JSON.stringify(value&&typeof value==='object'?Array.isArray(value)?value.map(v=>JSON.parse(canonical(v))):Object.fromEntries(Object.keys(value).sort().map(k=>[k,JSON.parse(canonical(value[k]))])):value);
 async function inspect(){
   const result=await requestNative(process.env.DRAW_AGENT_SOCKET,process.env.DRAW_AGENT_TOKEN,{method:'inspect'});
-  const hash=createHash('sha256').update(canonical(result.document).replace(/[\u0080-\uffff]/g,c=>'\\u'+c.charCodeAt(0).toString(16).padStart(4,'0'))).digest('hex');
-  if(result.revision!==0||result.document?.id!=='canvas-manual-synthetic'||hash!==receipt.preflight.documentSha256)throw Error('Synthetic scope mismatch; no content forwarded.');
+  const hash=createHash('sha256').update(canonical(Object.fromEntries(Object.entries(result.document||{}).filter(([key])=>!['viewport','updatedAt'].includes(key)))).replace(/[\u0080-\uffff]/g,c=>'\\u'+c.charCodeAt(0).toString(16).padStart(4,'0'))).digest('hex');
+  if(!Number.isSafeInteger(result.revision)||result.revision<0||result.document?.id!=='canvas-manual-synthetic'||hash!==receipt.preflight.syntheticContentSha256)throw Error('Synthetic scope mismatch; no content forwarded.');
   return result;
 }
-if(process.argv[2]==='--check') {await inspect();process.stdout.write('Synthetic scope verified; authenticated inspect passed.\n');}
+if(process.argv[2]==='--check') {
+  try {const value=await inspect();process.stdout.write(JSON.stringify({ok:true,revision:value.revision})+'\n');}
+  catch(error) {const code=error.message==='Synthetic scope mismatch; no content forwarded.'?'synthetic_content_mismatch':error.message==='Grant unavailable'?'token_invalid_or_expired':'native_connection_or_response_unavailable';process.stdout.write(JSON.stringify({ok:false,code})+'\n');process.exitCode=1;}
+}
 else if(process.argv[2]==='--denied') {
   // Only connection/auth denial proves cleanup; a scope mismatch does not.
   let denied=false;try{await requestNative(process.env.DRAW_AGENT_SOCKET,process.env.DRAW_AGENT_TOKEN,{method:'inspect'});}catch(error){denied=error.code==='ENOENT'||['Grant unavailable','No local grant','Native connection unavailable; reopen or inspect access in Draw.'].includes(error.message);}

@@ -157,13 +157,13 @@ process automatically, then accepts a hidden token paste. If already expired, re
 same approval immediately before running. Never paste a token into this chat.
 
 Before invoking Claude, the helper authenticates against that exact process's
-socket and matches the full synthetic document hash. Its acceptance-only gateway
-exposes a single inspect tool, checks the document again before returning it, and
+socket and matches the approved synthetic content hash. Its acceptance-only gateway
+exposes a single inspect tool, checks that content again before returning it, and
 rejects proposals or other methods. Claude gets no built-in tools, uses explicit
 MCP configuration only, and only the already-approved inspect tool is allowlisted.
 No permission-bypass mode or persistent registration is used. The provider run is
 limited to 180 seconds. This helper is source-bound to the recorded synthetic
-profile and will fail if it has changed; it is not a general Draw launcher.
+profile and will fail if its drawing content has changed; it is not a general Draw launcher.
 
 After the attempt, the helper terminates the provider process group, closes only
 the identified isolated Draw process (releasing its ephemeral grant), verifies
@@ -190,3 +190,16 @@ named checks that remain active under Python optimization, normalizes the scope
 confirmation, and avoids manual socket entry. The same unchanged synthetic
 profile was relaunched with fresh process metadata and no grant. A fresh read-only
 grant is required before retrying under the existing approval.
+
+
+A subsequent owner run reached authenticated preflight but failed before Claude
+started. Native history established three viewport/updatedAt changes and no
+artwork changes; the old revision-zero/full-document check necessarily rejected
+that state. The original first history snapshot exactly matched the approved
+hash. The new scope receipt derives a content hash from that verified snapshot,
+excluding only top-level viewport and updatedAt. All artwork, IDs, titles and
+other fields remain exact; current nonnegative revision is returned. The same
+preserved revision-3 synthetic document passed a disposable-socket preflight.
+Authentication errors now have separate safe categories; no old token was
+retained, so the prior token's validity is unknown. Blank confirmation input now
+re-prompts instead of aborting. No actual provider read has yet occurred.
