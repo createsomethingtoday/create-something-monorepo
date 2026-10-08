@@ -847,3 +847,24 @@ for (const definitive of [true, false]) test(`interrupt rejection retains only u
     assert.equal((await restarted.cancel({ workspaceId: 'w', sessionId }, true)).cancelPending, true);
   }
 });
+
+for (const duringInterrupt of [false, true]) test(`Stop preserves a turn completed before cancel settles (during interrupt: ${duringInterrupt})`, async () => {
+  const { adapter, server } = await setup();
+  const { sessionId } = await adapter.start({ workspaceId: 'w', message: 'hello' });
+  const complete = async () => {
+    server.thread.turns = [{ id: 'turn-1', status: 'completed', items: [{ id: 'final-answer', type: 'agentMessage', text: 'Finished answer' }] }];
+    await adapter.read({ workspaceId: 'w', sessionId });
+  };
+  const original = server.request.bind(server);
+  let interrupts = 0;
+  server.request = async (method, params) => {
+    if (method === 'turn/interrupt') { interrupts++; if (duringInterrupt) await complete(); }
+    return original(method, params);
+  };
+  if (!duringInterrupt) await complete();
+  const result = await adapter.cancel({ workspaceId: 'w', sessionId }, true);
+  assert.equal(result.state, 'idle');
+  assert.equal(result.messages.at(-1)?.text, 'Finished answer');
+  assert.equal(Boolean(result.cancelPending), false);
+  assert.equal(interrupts, duringInterrupt ? 1 : 0);
+});
