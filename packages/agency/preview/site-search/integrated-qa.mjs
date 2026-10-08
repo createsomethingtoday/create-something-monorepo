@@ -35,7 +35,7 @@ try {
   await page.getByLabel('Search public pages').press('Enter');
   await page.getByText('No matching results.',{exact:false}).waitFor();
   await page.getByLabel('Search public pages').fill('');
-  await page.getByLabel('Show',{exact:true}).selectOption('guides');
+  await page.getByLabel('Content type',{exact:true}).selectOption('guides');
   await page.getByRole('button',{name:'Search',exact:true}).click();
   await page.waitForFunction(()=>document.querySelectorAll('.agency-search article').length===12);
   await page.keyboard.press('Escape');

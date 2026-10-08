@@ -2,14 +2,20 @@
   "schema_version": "ground-adoption-adjudication.v1",
   "issue": "CRE-1944",
   "baseline": "17da91e7684f5ee904cc3d32119d704f3d4b4779",
+  "coverage_update": {
+    "date": "2026-10-08",
+    "source_change": "4d2b544885bb5b06bc9d17042cb71b1f52a12176",
+    "added_path": "packages/mcp-core/test/telemetry-flush.test.ts",
+    "reason": "The historical baseline remains unchanged. Published 0.4.3 and the 0.5.0 candidate both scan 20/20 core duplicate files completely, with zero findings; orphan coverage remains 18. Refresh only the current adoption denominator for this previously added test."
+  },
   "coverage": {
     "ground_duplicates": {
       "files_discovered": 26,
       "files_checked": 26
     },
     "core_duplicates": {
-      "files_discovered": 19,
-      "files_checked": 19
+      "files_discovered": 20,
+      "files_checked": 20
     },
     "core_orphans": {
       "files_scanned": 18

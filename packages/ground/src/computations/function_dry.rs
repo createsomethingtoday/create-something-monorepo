@@ -323,7 +323,7 @@ pub fn extract_functions_ts(path: &Path) -> Result<Vec<ExtractedFunction>, Compu
             message: e.to_string() 
         })?;
     
-    let tree = parser.parse(&source, None)
+    let tree = super::source_parser::parse_typescript(&mut parser, &source)
         .ok_or_else(|| ComputationError::ParseError { 
             file: path.to_path_buf(), 
             message: "Failed to parse".to_string() 
@@ -366,47 +366,17 @@ pub fn extract_functions_js(path: &Path) -> Result<Vec<ExtractedFunction>, Compu
 /// so the TypeScript parser only sees executable script content.
 pub fn extract_functions_svelte(path: &Path) -> Result<Vec<ExtractedFunction>, ComputationError> {
     let source = fs::read_to_string(path)?;
-    let mut parse_source = source.as_bytes().iter().map(|byte| {
-        if *byte == b'\n' || *byte == b'\r' { *byte } else { b' ' }
-    }).collect::<Vec<_>>();
-    let mut search_start = 0;
-    let mut found_script = false;
-
-    while let Some(relative_start) = source[search_start..].find("<script") {
-        let tag_start = search_start + relative_start;
-        let Some(open_end_relative) = source[tag_start..].find('>') else {
-            break;
-        };
-        let content_start = tag_start + open_end_relative + 1;
-        let Some(close_relative) = source[content_start..].find("</script>") else {
-            return Err(ComputationError::ParseError {
-                file: path.to_path_buf(),
-                message: "Svelte script tag has no closing </script>".to_string(),
-            });
-        };
-        let content_end = content_start + close_relative;
-        parse_source[content_start..content_end]
-            .copy_from_slice(&source.as_bytes()[content_start..content_end]);
-        found_script = true;
-        search_start = content_end + "</script>".len();
-    }
-
-    if !found_script {
+    let Some(parse_source) = super::source_parser::svelte_scripts(&source, false)
+        .map_err(|message| ComputationError::ParseError { file: path.to_path_buf(), message })? else {
         return Ok(Vec::new());
-    }
-
-    let parse_source = String::from_utf8(parse_source)
-        .map_err(|error| ComputationError::ParseError {
-            file: path.to_path_buf(),
-            message: error.to_string(),
-        })?;
+    };
     let mut parser = Parser::new();
     parser.set_language(&tree_sitter_typescript::LANGUAGE_TYPESCRIPT.into())
         .map_err(|error| ComputationError::ParseError {
             file: path.to_path_buf(),
             message: error.to_string(),
         })?;
-    let tree = parser.parse(&parse_source, None)
+    let tree = super::source_parser::parse_typescript(&mut parser, &parse_source)
         .ok_or_else(|| ComputationError::ParseError {
             file: path.to_path_buf(),
             message: "Failed to parse Svelte script".to_string(),

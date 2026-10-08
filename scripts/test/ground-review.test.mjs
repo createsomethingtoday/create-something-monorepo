@@ -15,7 +15,7 @@ import { spawnSync } from 'node:child_process';
 import test from 'node:test';
 
 const scriptPath = fileURLToPath(new URL('../ground-review.mjs', import.meta.url));
-const { formatMarkdown, matchesPathGlob, resolveGroundBinary } = await import(
+const { formatMarkdown, matchesPathGlob, resolveGroundBinary, normalizeCheckCompletion } = await import(
   new URL('../ground-review.mjs', import.meta.url)
 );
 
@@ -75,7 +75,8 @@ test('CLI emits an advisory JSON receipt for a changed package', (t) => {
     binaryDir,
     'fake-ground',
     `#!/bin/sh
-printf '%s\\n' '{"discovered_changed_files":1,"analyzable_changed_files":1,"changed_files":1,"changed_file_list":["${repo}/packages/example/src/index.ts"],"excluded_changed_files":[{"path":"${repo}/packages/example/README.md","reason":"unsupported_extension"}],"checks_run":["duplicates","orphans"],"new_issues":[{"type":"duplicate_function","files":["${repo}/packages/example/src/index.ts","${repo}/packages/example/src/copy.ts"]}],"total_new_issues":1}'
+printf '%s\\n' '{"outcome":"FINDINGS","discovered_changed_files":1,"analyzable_changed_files":1,"changed_files":1,"changed_file_list":["${repo}/packages/example/src/index.ts"],"excluded_changed_files":[{"path":"${repo}/packages/example/README.md","reason":"unsupported_extension"}],"checks_run":["duplicates","orphans"],"new_issues":[{"type":"duplicate_function","files":["${repo}/packages/example/src/index.ts","${repo}/packages/example/src/copy.ts"]}],"total_new_issues":1}'
+exit 1
 `
   );
   chmodSync(fakeGround, 0o755);
@@ -105,7 +106,7 @@ printf '%s\\n' '{"discovered_changed_files":1,"analyzable_changed_files":1,"chan
   assert.equal(receipt.targets[0].package_name, '@example/pkg');
   assert.equal(receipt.status, 'findings');
   assert.deepEqual(receipt.coverage.checks.orphans, {
-    status: 'completed',
+    status: 'partial',
     analyzable_changed_files: 0,
     analyzed_changed_files: [],
     excluded_changed_files: [
@@ -158,7 +159,7 @@ printf '%s\\n' '{"changed_file_list":["packages/example/src/existing.ts","packag
     'packages/example/src/new.ts'
   ]);
   assert.deepEqual(receipt.coverage.checks.orphans, {
-    status: 'completed',
+    status: 'partial',
     analyzable_changed_files: 1,
     analyzed_changed_files: ['packages/example/src/new.ts'],
     excluded_changed_files: [
@@ -280,7 +281,7 @@ printf '%s\\n' '{"changed_file_list":["packages/example/src/routes/+page.server.
   const receipt = JSON.parse(result.stdout);
   assert.equal(receipt.coverage.checks.duplicates.analyzable_changed_files, 1);
   assert.deepEqual(receipt.coverage.checks.orphans, {
-    status: 'completed',
+    status: 'partial',
     analyzable_changed_files: 0,
     analyzed_changed_files: [],
     excluded_changed_files: [
@@ -291,7 +292,7 @@ printf '%s\\n' '{"changed_file_list":["packages/example/src/routes/+page.server.
     ]
   });
   assert.deepEqual(receipt.findings, []);
-  assert.equal(receipt.status, 'clear');
+  assert.equal(receipt.status, 'partial');
 });
 
 test('CLI preserves manual entry-point exclusions from native orphan coverage', (t) => {
@@ -313,7 +314,7 @@ test('CLI preserves manual entry-point exclusions from native orphan coverage', 
     binaryDir,
     'fake-ground',
     `#!/bin/sh
-printf '%s\\n' '{"changed_file_list":["packages/example/scripts/install.mjs"],"excluded_changed_files":[],"check_coverage":{"duplicates":{"status":"PASS","analyzed_changed_files":["packages/example/scripts/install.mjs"],"excluded_changed_files":[]},"orphans":{"status":"NOT_APPLICABLE","analyzed_changed_files":[],"excluded_changed_files":[{"path":"packages/example/scripts/install.mjs","reason":"manual_entry_point"}]}},"new_issues":[]}'
+printf '%s\\n' '{"changed_file_list":["packages/example/scripts/install.mjs"],"excluded_changed_files":[],"check_coverage":{"duplicates":{"status":"PASS","scan_complete":true,"analyzed_changed_files":["packages/example/scripts/install.mjs"],"excluded_changed_files":[]},"orphans":{"status":"NOT_APPLICABLE","scan_complete":true,"analyzed_changed_files":[],"excluded_changed_files":[{"path":"packages/example/scripts/install.mjs","reason":"manual_entry_point"}]}},"new_issues":[]}'
 `
   );
   chmodSync(fakeGround, 0o755);
@@ -1139,7 +1140,7 @@ printf '%s\\n' '{"discovered_changed_files":2,"analyzable_changed_files":2,"chan
     { path: 'packages/example/src/catalog.generated.ts', reason: 'generated_file' }
   ]);
   assert.deepEqual(receipt.findings, []);
-  assert.equal(receipt.status, 'clear');
+  assert.equal(receipt.status, 'partial');
 });
 
 test('CLI accepts per-file completion evidence beyond the former Ground scan cap', (t) => {
@@ -1322,4 +1323,75 @@ printf '%s\\n' '{"changed_file_list":["packages/example/src/value.ts"],"excluded
   const receipt = JSON.parse(result.stdout);
   assert.equal(receipt.coverage.analyzable_changed_files, 1);
   assert.deepEqual(receipt.coverage.excluded_changed_files, []);
+});
+
+test('native incomplete coverage cannot be labeled completed by the advisory wrapper', (t) => {
+  const repo = mkdtempSync(join(tmpdir(), 'ground-native-incomplete-'));
+  t.after(() => rmSync(repo, { recursive: true, force: true }));
+  mustRun('git', ['init', '-b', 'main'], repo);
+  writeFixtureFile(repo, 'packages/example/package.json', '{"name":"example"}\n');
+  writeFixtureFile(repo, 'packages/example/index.ts', 'export const x = 1;\n');
+  mustRun('git', ['add', '.'], repo);
+  mustRun('git', ['-c', 'core.hooksPath=/dev/null', 'commit', '-m', 'synthetic baseline'], repo);
+  writeFixtureFile(repo, 'packages/example/index.ts', 'export const x = 2;\n');
+  const report = {
+    outcome: 'INCOMPLETE', changed_file_list: ['packages/example/index.ts'], new_issues: [],
+    check_coverage: {
+      duplicates: { status: 'FAIL', scan_complete: false, analyzed_changed_files: [],
+        excluded_changed_files: [{ path: 'packages/example/index.ts', reason: 'duplicate_analysis_incomplete' }] },
+      orphans: { status: 'NOT_APPLICABLE', scan_complete: true, analyzed_changed_files: [],
+        excluded_changed_files: [{ path: 'packages/example/index.ts', reason: 'existing_file_not_checked_for_orphans' }] }
+    }
+  };
+  const binary = writeFixtureFile(repo, '.git/fake-ground', `#!/usr/bin/env node\nconsole.log(${JSON.stringify(JSON.stringify(report))}); process.exit(2);\n`);
+  chmodSync(binary, 0o755);
+  const result = run(process.execPath, [scriptPath, '--base', 'HEAD', '--format', 'json'], repo, { GROUND_BINARY: binary });
+  assert.equal(result.status, 0, result.stderr);
+  const receipt = JSON.parse(result.stdout);
+  assert.equal(receipt.coverage.checks.duplicates.status, 'failed');
+  assert.equal(receipt.coverage.checks.duplicates.analyzable_changed_files, 0);
+  assert.equal(receipt.coverage.checks.orphans.status, 'completed');
+  assert.notEqual(receipt.status, 'clear');
+  assert.equal(receipt.coverage.checks.duplicates.excluded_changed_files[0].reason, 'duplicate_analysis_incomplete');
+  // Global incompleteness/unknown contracts must not be erased by contradictory
+  // per-check claims. The raw native outcome remains available for diagnosis.
+  report.check_coverage.duplicates = { status: 'PASS', scan_complete: true,
+    analyzed_changed_files: ['packages/example/index.ts'], excluded_changed_files: [] };
+  for (const [outcome, verification, code] of [
+    ['INCOMPLETE', 'FAIL', 2], ['UNKNOWN', 'PASS', 0], ['CLEAN', 'UNKNOWN', 0], ['CLEAN', 'FAIL', 0]
+  ]) {
+    report.outcome = outcome; report.verification_status = verification;
+    writeFileSync(binary, `#!/usr/bin/env node\nconsole.log(${JSON.stringify(JSON.stringify(report))}); process.exit(${code});\n`);
+    const result = run(process.execPath, [scriptPath, '--base', 'HEAD', '--format', 'json'], repo, { GROUND_BINARY: binary });
+    assert.equal(result.status, 0, result.stderr);
+    const receipt = JSON.parse(result.stdout);
+    assert.equal(receipt.status, 'partial');
+    assert.equal(receipt.coverage.checks.duplicates.status, 'partial');
+    assert.equal(receipt.targets[0].native_outcome, outcome);
+    assert(receipt.targets[0].coverage.completion_diagnostics.length > 0);
+  }
+
+});
+
+for (const [name, coverage, expected] of [
+  ['completed findings', { status: 'FAIL', scan_complete: true }, 'completed'],
+  ['completed clean', { status: 'PASS', scan_complete: true }, 'completed'],
+  ['legitimate skip', { status: 'NOT_APPLICABLE', scan_complete: true }, 'completed'],
+  ['incomplete failure', { status: 'FAIL', scan_complete: false }, 'failed'],
+  ['contradictory pass', { status: 'PASS', scan_complete: false }, 'partial'],
+  ['missing coverage', undefined, 'partial'],
+  ['missing completion', { status: 'PASS' }, 'partial'],
+  ['unknown status', { status: 'UNKNOWN', scan_complete: true }, 'partial'],
+  ['timeout', { status: 'TIMEOUT', scan_complete: true }, 'partial'],
+  ['unsupported', { status: 'UNSUPPORTED', scan_complete: true }, 'partial'],
+  ['unsupported paths', { status: 'PASS', scan_complete: true, unsupported_changed_files: ['a.py'] }, 'partial'],
+  ['execution errors', { status: 'PASS', scan_complete: true, error_count: 1 }, 'failed'],
+  ['missing input', { status: 'NOT_APPLICABLE', scan_complete: true, reason: 'no_entry_points_provided' }, 'failed'],
+  ['contradictory exclusions', { status: 'PASS', scan_complete: true, excluded_changed_files: [{ reason: 'duplicate_analysis_incomplete' }] }, 'failed'],
+  ['legacy completed', { status: 'completed' }, 'completed'],
+  ['legacy partial', { status: 'partial' }, 'partial'],
+  ['legacy failed', { status: 'failed' }, 'failed'],
+  ['legacy contradiction', { status: 'completed', scan_complete: false }, 'partial'],
+]) test(`completion normalization: ${name}`, () => {
+  assert.equal(normalizeCheckCompletion(coverage), expected);
 });
