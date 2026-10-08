@@ -233,3 +233,48 @@ test('Overview shows actionable workspace data, opens its records, and keeps lib
     assert.match(root.innerHTML, /id="record-form"/);
   } finally { globalThis.document = previous.document; globalThis.__TAURI__ = previous.tauri; globalThis.scrollTo = previous.scrollTo; }
 });
+
+
+test('saving with the native submit button focused writes once and clears the busy state', async () => {
+  const listeners = new Map(), calls = [];
+  let loading = false;
+  const form = { id: 'record-form', dataset: {}, values: { title: 'Saved native task', Status: 'Open', 'Due Date': '2026-10-09', Priority: 'High' } };
+  const root = {
+    innerHTML: '', classList: { toggle(_name, value) { loading = value; } },
+    addEventListener(name, handler) { listeners.set(name, handler); },
+    querySelector(selector) {
+      if (selector === '#') throw new SyntaxError('Invalid selector');
+      if (selector === '#record-form' && this.innerHTML.includes('id="record-form"')) {
+        form.dataset.editorVersion = this.innerHTML.match(/data-editor-version="(\d+)"/)[1];
+        return form;
+      }
+      return null;
+    }
+  };
+  const previous = { document: globalThis.document, tauri: globalThis.__TAURI__, formData: globalThis.FormData };
+  let saved = { id: 't1', title: 'Original task', fields: { Status: 'Open', Priority: 'High' }, source: { kind: 'manual' }, relations: [] };
+  globalThis.document = { querySelector: () => root, activeElement: null };
+  globalThis.FormData = class { constructor(value) { this.entries = Object.entries(value.values); } [Symbol.iterator]() { return this.entries[Symbol.iterator](); } };
+  globalThis.__TAURI__ = { core: { invoke: async (_command, { operation, input }) => {
+    calls.push({ operation, input });
+    if (operation === 'workspace.get') return { id: 'w1', name: 'Synthetic' };
+    if (operation === 'records.list') return { items: input.entity === 'profile' ? [{ id: 'p1' }] : [saved], count: 1 };
+    if (operation === 'records.get') return input.entity === 'profile' ? { id: 'p1', fields: { Currency: 'USD' } } : saved;
+    if (operation === 'records.save') { saved = { ...saved, title: input.title, fields: input.fields }; return saved; }
+    return {};
+  } } };
+  const settle = () => new Promise(resolve => setImmediate(resolve));
+  const click = async dataset => { listeners.get('click')({ target: { closest: () => ({ dataset }) } }); await settle(); };
+  try {
+    await import(`./app.mjs?native-submit=${Math.random()}`); await settle();
+    await click({ page: 'tasks' }); await click({ open: 't1', entity: 'tasks' }); await click({ edit: '1' });
+    globalThis.document.activeElement = { id: '', form };
+    listeners.get('submit')({ preventDefault() {}, target: form }); await settle();
+    assert.equal(calls.filter(call => call.operation === 'records.save').length, 1);
+    assert.equal(saved.title, 'Saved native task');
+    assert.equal(saved.fields['Due Date'], '2026-10-09');
+    assert.equal(loading, false);
+    assert.doesNotMatch(root.innerHTML, /id="record-form"/);
+    assert.match(root.innerHTML, /task saved/);
+  } finally { globalThis.document = previous.document; globalThis.__TAURI__ = previous.tauri; globalThis.FormData = previous.formData; }
+});
