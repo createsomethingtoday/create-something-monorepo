@@ -19,11 +19,55 @@ pub(crate) fn apply(runtime: &DrawRuntime, request: HostBatch) -> Result<Value, 
 // Authorization runs under the same authority lock as validation and commit.
 pub(super) fn apply_checked(
     runtime: &DrawRuntime, request: HostBatch,
-    authorize: impl FnOnce(&Value, &Value) -> Result<(), String>,
+    authorize: impl FnOnce(&NativeState, &Value) -> Result<(), String>,
 ) -> Result<Value, String> {
+    apply_as(runtime,request,"native-mac",authorize)
+}
+
+pub(super) fn apply_as(runtime: &DrawRuntime, request: HostBatch, actor: &str, authorize: impl FnOnce(&NativeState,&Value)->Result<(),String>) -> Result<Value,String> {
     if cfg!(mobile) {
         return Err("Only the Mac authority can commit local batches".into());
     }
+    let bytes = validate(&request)?;
+    let fingerprint = digest_capability(&String::from_utf8(bytes).map_err(|error| error.to_string())?);
+    let mut state = runtime.host.lock().map_err(|error| error.to_string())?;
+    if request.session_id != state.session_id || state.document["id"] != request.document_id {
+        return Err("HOST_DOCUMENT_CONFLICT: inspect the current document".into());
+    }
+    if let Some(receipt) = state.applied.get(&request.operation_id) {
+        if receipt.client_id != actor || receipt.fingerprint != fingerprint {
+            return Err("HOST_OPERATION_ID_REUSED: request differs from saved receipt".into());
+        }
+        authorize(&state, &state.document)?;
+        // Current authority may have advanced since the original commit. Never
+        // return a fabricated before snapshot or install a duplicate as new history.
+        return Ok(json!({"status":"duplicate", "sessionId":state.session_id,
+            "revision":state.revision,"document":state.document,"receipt":receipt,"history":state.history_status()}));
+    }
+    if request.expected_revision != state.revision {
+        return Err(format!("HOST_REVISION_CONFLICT: expected {}, current {}", request.expected_revision, state.revision));
+    }
+    let mut next = state.clone();
+    let before = state.document.clone();
+    let timestamp = rfc3339(now())?;
+    next.document = project(next.document.clone(), &request.operations, &timestamp)?;
+    authorize(&state, &next.document)?;
+    next.revision = state.revision.checked_add(1).ok_or("Native revision exhausted")?;
+    let receipt = AppliedOperation {
+        operation_id: request.operation_id.clone(), client_id: actor.into(),
+        fingerprint, revision: next.revision,
+        document_updated_at: next.document["updatedAt"].as_str().unwrap_or("").into(),
+    };
+    next.applied.insert(request.operation_id, receipt.clone());
+    prune_applied_receipts(&mut next.applied);
+    next.record(&before, actor)?;
+    persist_state(&runtime.state_path, &next)?;
+    *state = next;
+    Ok(json!({"status":"applied","sessionId":state.session_id,"revision":state.revision,
+        "document":state.document,"previousDocument":before,"receipt":receipt,"history":state.history_status()}))
+}
+
+pub(super) fn validate(request:&HostBatch)->Result<Vec<u8>,String> {
     if request.operations.is_empty() || request.operations.len() > 100
         || !request.operation_id.starts_with("mac-batch-") || request.operation_id.len() > 120
         || !request.operation_id.bytes().all(|byte| byte.is_ascii_alphanumeric() || byte == b'-')
@@ -37,49 +81,20 @@ pub(super) fn apply_checked(
     if bytes.len() > 2 * 1024 * 1024 {
         return Err("Native batch exceeds 2 MiB".into());
     }
-    let fingerprint = digest_capability(&String::from_utf8(bytes).map_err(|error| error.to_string())?);
-    let mut state = runtime.host.lock().map_err(|error| error.to_string())?;
-    if request.session_id != state.session_id || state.document["id"] != request.document_id {
-        return Err("HOST_DOCUMENT_CONFLICT: inspect the current document".into());
-    }
-    if let Some(receipt) = state.applied.get(&request.operation_id) {
-        if receipt.client_id != "native-mac" || receipt.fingerprint != fingerprint {
-            return Err("HOST_OPERATION_ID_REUSED: request differs from saved receipt".into());
-        }
-        authorize(&state.document, &state.document)?;
-        // Current authority may have advanced since the original commit. Never
-        // return a fabricated before snapshot or install a duplicate as new history.
-        return Ok(json!({"status":"duplicate", "sessionId":state.session_id,
-            "revision":state.revision,"document":state.document,"receipt":receipt}));
-    }
-    if request.expected_revision != state.revision {
-        return Err(format!("HOST_REVISION_CONFLICT: expected {}, current {}", request.expected_revision, state.revision));
-    }
-    let mut next = state.clone();
-    let before = state.document.clone();
-    let timestamp = rfc3339(now())?;
-    for operation in &request.operations {
+    Ok(bytes)
+}
+
+pub(super) fn project(mut document:Value, operations:&[CanvasOperation], timestamp:&str)->Result<Value,String> {
+    for operation in operations {
         // Same-value scalar settings can prefix a meaningful UI edit.
         let safe_scalar_noop = matches!(operation, CanvasOperation::SetTitle { .. }
             | CanvasOperation::SetBackground { .. } | CanvasOperation::SetViewport { .. })
-            && is_safe_idempotent(&next.document, operation);
+            && is_safe_idempotent(&document, operation);
         if safe_scalar_noop { continue; }
-        next.document = apply_canvas_operation(&next.document, operation, &timestamp)
+        document = apply_canvas_operation(&document, operation, &timestamp)
             .ok_or("Invalid native batch operation; entire batch rejected")?;
     }
-    authorize(&before, &next.document)?;
-    next.revision = state.revision.checked_add(1).ok_or("Native revision exhausted")?;
-    let receipt = AppliedOperation {
-        operation_id: request.operation_id.clone(), client_id: "native-mac".into(),
-        fingerprint, revision: next.revision,
-        document_updated_at: next.document["updatedAt"].as_str().unwrap_or("").into(),
-    };
-    next.applied.insert(request.operation_id, receipt.clone());
-    prune_applied_receipts(&mut next.applied);
-    persist_state(&runtime.state_path, &next)?;
-    *state = next;
-    Ok(json!({"status":"applied","sessionId":state.session_id,"revision":state.revision,
-        "document":state.document,"previousDocument":before,"receipt":receipt}))
+    Ok(document)
 }
 
 #[cfg(test)]
@@ -90,7 +105,7 @@ pub(super) mod tests {
         let state = initial_state();
         let path = directory.join(STATE_FILE);
         persist_state(&path,&state).unwrap();
-        DrawRuntime { state_path:path,host:Mutex::new(state),pending:Mutex::new(HashMap::new()),
+        DrawRuntime { _profile_owner:None,agent_access: Mutex::new(Default::default()), state_path:path,host:Mutex::new(state),pending:Mutex::new(HashMap::new()),
             transport:Mutex::new(None),host_capability:random_capability(),
             companion_state_path:directory.join(COMPANION_STATE_FILE),companion:Mutex::new(None),
             companion_flush:tokio::sync::Mutex::new(()) }
@@ -108,7 +123,7 @@ pub(super) mod tests {
         assert_eq!(result["revision"],1); assert_eq!(result["previousDocument"],before);
         assert_eq!(result["document"]["title"],"Synthetic batch");
         assert_eq!(load_state(&runtime.state_path).unwrap().document,result["document"]);
-        let restored=replace_host_document(&runtime,before.clone(),"undo".into(),1).unwrap();
+        let restored=native_history::action(&runtime,"undo",1,"mac-history-test","native-mac",false,|_,_|Ok(())).unwrap();
         assert_eq!(restored["document"],before); assert_eq!(restored["revision"],2);
     }
     #[test]

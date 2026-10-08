@@ -1,4 +1,5 @@
 <script lang="ts">
+  import NativeAgentPanel from '$lib/NativeAgentPanel.svelte';
   import './page.css';
   import AgentConnection from '$lib/AgentConnection.svelte';
   import type { DrawWebMcpTool } from '$lib/webmcp';
@@ -19,7 +20,7 @@
   import { DEFAULT_DRAWING_COLOR, DRAWING_COLOR_PREFERENCE, DRAWING_PALETTE, isColorableObject, isDrawingColor, recolorObjects, type DrawingColor } from '$lib/palette';
   import { applyCanvasOperations, isValidCanvasTitle, type CanvasOperation } from '$lib/paired-session';
   import { connectorLabelLayout, createDrawWebMcpTools, drawRevision, registerDrawWebMcpTools, type DrawRenderedGeometry, type DrawTransitionKind } from '$lib/webmcp';
-  import { beginPairing, companionStatus, discoverHosts, forgetCompanion, hasNativeBridge, hostStatus, nativeRole as readNativeRole, pairCompanion, refreshCompanion, replaceHostDocument, revokeCompanion, setCompanionOnline, submitNativeOperation, submitHostBatch, type DiscoveredHost, type NativeRole, type NativeSessionStatus, type PairingOffer } from '$lib/native-pairing';
+  import { beginPairing, companionStatus, discoverHosts, forgetCompanion, hasNativeBridge, hostStatus, nativeRole as readNativeRole, pairCompanion, refreshCompanion, replaceHostDocument, revokeCompanion, setCompanionOnline, submitNativeOperation, submitHostBatch, nativeHistory, invokeNative, type DiscoveredHost, type NativeRole, type NativeSessionStatus, type PairingOffer } from '$lib/native-pairing';
   import { NativeHostBatches, settleNativeHostBatch } from '$lib/native-host-batches';
   import { fitViewportToBounds, normalizeWheelDelta, panViewport, zoomViewportAt } from '$lib/viewport';
   import { createNoteInputBuffer } from '$lib/note-input';
@@ -108,10 +109,10 @@
   let followAgent = $state(false), reduceAgentMotion = $state(false), activityNow = $state(Date.now());
   let agentCameraActive = $state(false);
   let agentCameraTimer: ReturnType<typeof setTimeout> | undefined;
-  let wheelTimer: ReturnType<typeof setTimeout> | undefined;
+  let wheelTimer = $state<ReturnType<typeof setTimeout> | undefined>(undefined);
   const activeTouches = new Map<number, { x: number; y: number }>();
-  let pinch: { distance: number; world: Point; origin: CanvasDocument['viewport'] } | null = null;
-  let pendingTouchAction: { pointerId: number; point: Point; tool: 'note' | 'group' } | null = null;
+  let pinch = $state<{ distance: number; world: Point; origin: CanvasDocument['viewport'] } | null>(null);
+  let pendingTouchAction = $state<{ pointerId: number; point: Point; tool: 'note' | 'group' } | null>(null);
   const noteInput = createNoteInputBuffer(commitNoteText);
   const document = $derived(history.present), viewport = $derived(document.viewport);
   const objectIndex = $derived(new Map(document.objects.map((object) => [object.id, object])));
@@ -1045,10 +1046,32 @@
     replacingDocument = true;
     nativeOptimisticVersion += 1;
     try {
-      const next = await commitHostReplacement(() => restoreHistoryWithFreshRevision(action === 'undo' ? undo(history) : redo(history)), value => value.present, value => history = value, action);
-      selectedIds = []; queueSave(next.present);
-    } catch (error) { status = error instanceof Error ? error.message : 'History conflicted with native authority'; }
+      cancelPendingWheelSync();
+      const work = nativeTail.then(async () => {
+        const result = await nativeHistory(action, nativeSession.revision || 0);
+        nativeSession = {...nativeSession,...result};
+        if (result.document) history = {past:[],present:result.document,future:[]};
+      });
+      nativeTail = work.catch(() => undefined);
+      await work;
+      selectedIds = [];
+
+    } catch (error) { const refreshed = await hostStatus(); nativeSession = {...nativeSession,...refreshed}; if(refreshed.document) history={past:[],present:refreshed.document,future:[]}; status = error instanceof Error ? error.message : 'History conflicted with native authority'; }
     finally { replacingDocument = false; }
+  }
+  async function nativeAgentAction(command:string, args:Record<string,unknown>) {
+    if (command === 'draw_agent_revoke' || (command === 'draw_agent_review' && args.approve === false)) return await invokeNative<Record<string,unknown>>(command,args);
+    if (replacingDocument || drawing || transformGesture || pinch || pendingTouchAction || wheelTimer || hostBatches.isRecovering) throw new Error('Finish the canvas gesture before reviewing agent access.');
+    noteInput.flushAll(); replacingDocument = true; nativeOptimisticVersion += 1;
+    try {
+      await nativeTail;
+      if (hostBatches.isRecovering) throw new Error('Native authority requires recovery.');
+      if (command === 'draw_agent_start') args = {...args, documentId:document.id, expectedRevision:nativeSession.revision};
+      const result = await invokeNative<NativeSessionStatus & Record<string,unknown>>(command,args);
+      const refreshed = await hostStatus(); nativeSession = {...nativeSession,...refreshed};
+      if (refreshed.document) history = {past:[],present:refreshed.document,future:[]};
+      return result;
+    } finally {replacingDocument = false;}
   }
   async function doUndo() {
     if (replacingDocument) return;
@@ -1368,7 +1391,7 @@
   <a class="cs-skip-link" href="#draw-workbench">Skip to canvas</a>
   <header class="topbar">
     <div class="identity"><img src="/brand/create-something-agency-white.svg" alt="CREATE SOMETHING .agency" /><strong class="cs-product-name">Draw</strong><a class="source-link" href="/download" target="_blank" rel="noreferrer">Mac</a><a class="source-link" href="https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/mapping-canvas" target="_blank" rel="noreferrer">Source</a>{#if nativeRole !== 'web'}<button class="native-link" aria-label="Open device pairing" onclick={openPairing}>{nativeRole === 'host' ? 'Pair' : nativeSession.sessionId ? 'Linked' : 'Link'}</button>{/if}</div>
-    <div class="title-area"><label class="project-title"><span class="cs-label">Project</span><input class="title" aria-label="Canvas title" maxlength="240" value={document.title} oninput={(event) => updateTitle(event.currentTarget)} /></label>{#if nativeRole === 'web'}<ProjectModes id={document.id} mode="canvas" navigate={(event,mode)=>{if(mode==='canvas')event.preventDefault();else void openMotion(event,mode==='preview');}} />{/if}{#if nativeRole === 'web'}<AgentConnection projectId={document.id} {ready} tools={connectionTools} />{/if}</div>
+    <div class="title-area"><label class="project-title"><span class="cs-label">Project</span><input class="title" aria-label="Canvas title" maxlength="240" value={document.title} oninput={(event) => updateTitle(event.currentTarget)} /></label>{#if nativeRole === 'web'}<ProjectModes id={document.id} mode="canvas" navigate={(event,mode)=>{if(mode==='canvas')event.preventDefault();else void openMotion(event,mode==='preview');}} />{/if}{#if nativeRole === 'host'}<NativeAgentPanel {selectedIds} revision={nativeSession.revision || 0} busy={Boolean(drawing || transformGesture || pinch || pendingTouchAction || wheelTimer || replacingDocument || hostBatches.isRecovering)} action={nativeAgentAction} />{/if}{#if nativeRole === 'web'}<AgentConnection projectId={document.id} {ready} tools={connectionTools} />{/if}</div>
     {#if nativeRole !== 'companion'}<div class="file-actions">{#if projects.length>1}<select aria-label="Open Draw project" value={document.id} onchange={async event=>{const id=event.currentTarget.value;noteInput.flushAll();if(await persistCurrentDocument(document))location.href=`/?project=${encodeURIComponent(id)}`;}}>{#each projects as entry}<option value={entry.id}>{entry.title}</option>{/each}</select>{/if}<button id="draw-layers-toggle" aria-expanded={panelOpen} aria-controls="draw-inspector" onclick={()=>panelOpen=!panelOpen}>Layers</button><details class="file-menu"><summary>File <span aria-hidden="true">⌄</span></summary><div><button onclick={() => fileInput?.click()} disabled={sharing || replacingDocument}>Import</button><button onclick={exportJson}>JSON</button><button onclick={exportSvg}>SVG</button><button onclick={exportPng}>PNG</button><button onclick={resetCanvas} disabled={sharing || replacingDocument}>New canvas</button></div></details>{#if nativeRole === 'web'}{#if share}<button onclick={copyShareLink}>Copy link</button><button onclick={updateSnapshot} disabled={sharing || replacingDocument}>Update link</button><button onclick={revokeSnapshot} disabled={sharing || replacingDocument}>Revoke</button>{:else}<button class="share-action" onclick={publishSnapshot} disabled={sharing || replacingDocument}>Publish view-only</button>{/if}{/if}<input bind:this={fileInput} class="visually-hidden" type="file" accept="application/json,.json" disabled={sharing || replacingDocument} onchange={importJson} /></div>{/if}
   </header>
   <section id="draw-workbench" tabindex="-1" class="workbench" class:tool-sidebar-collapsed={sidebarCollapsed} class:panel-open={panelOpen && nativeRole === 'web'} aria-label="Mapping canvas workbench">
@@ -1416,8 +1439,8 @@
         </g>
       </svg>
       <div class="history" role="group" aria-label="Canvas navigation">
-        <button class="history-icon" aria-label="Undo" title="Undo (⌘/Ctrl Z)" onclick={() => void doUndo()} disabled={!history.past.length}>↶</button>
-        <button class="history-icon" aria-label="Redo" title="Redo (⌘/Ctrl Shift Z)" onclick={() => void doRedo()} disabled={!history.future.length}>↷</button>
+        <button class="history-icon" aria-label="Undo" title="Undo (⌘/Ctrl Z)" onclick={() => void doUndo()} disabled={nativeRole === 'host' ? !nativeSession.history?.canUndo || replacingDocument : !history.past.length}>↶</button>
+        <button class="history-icon" aria-label="Redo" title="Redo (⌘/Ctrl Shift Z)" onclick={() => void doRedo()} disabled={nativeRole === 'host' ? !nativeSession.history?.canRedo || replacingDocument : !history.future.length}>↷</button>
         {#if nativeRole === 'host'}<button onclick={resetCanvas}>Reset</button>{/if}
         <button class="history-icon" aria-label="Zoom out" title="Zoom out (−)" aria-keyshortcuts="-" onclick={() => zoomCanvas(1 / 1.25)} disabled={viewport.zoom <= .25}>−</button>
         <button class="zoom-level" aria-label="Reset view" title="Reset view to 100% (0)" aria-keyshortcuts="0" onclick={resetView}>{Math.round(viewport.zoom * 100)}%</button>

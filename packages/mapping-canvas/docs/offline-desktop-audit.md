@@ -1,5 +1,10 @@
 # Draw offline desktop audit — 2026-10-08
 
+Historical first checkpoint (`58a3e4ba6`). The native integration has since advanced:
+see [current native review implementation and acceptance](native-agent-review-slice.md)
+for the approval UI, private socket, shared durable history and profile ownership.
+Statements below about missing native mechanisms describe that first checkpoint.
+
 Scope: local exploratory implementation, no release, deployment, installation,
 provider registration, credential grant, network tunnel or public copy changes.
 Base: `606e5a50b02552718326dd0967deb31026fc44c7` from

@@ -18,6 +18,7 @@ export type NativeSessionStatus = {
   status?: 'unpaired' | 'paired' | 'applied' | 'duplicate' | 'queued' | 'queue_full' | 'synced' | 'conflict' | 'credentials_rejected' | 'pairing_changed';
   sessionId?: string;
   revision?: number;
+  history?: {canUndo:boolean;canRedo:boolean;undoActor?:string;depth:number};
   document?: CanvasDocument;
   previousDocument?: CanvasDocument;
   pairedClients?: { clientId: string; expiresAt: string; revokedAt?: string }[];
@@ -58,3 +59,5 @@ export const setCompanionOnline = (online: boolean) => invokeNative<NativeSessio
 export const refreshCompanion = () => invokeNative<NativeSessionStatus>('draw_companion_refresh');
 export const forgetCompanion = () => invokeNative<NativeSessionStatus>('draw_companion_forget');
 export const revokeCompanion = (clientId: string) => invokeNative<NativeSessionStatus>('draw_revoke_client', { clientId });
+
+export const nativeHistory = (direction: 'undo' | 'redo', expectedRevision:number) => invokeNative<NativeSessionStatus>('draw_host_history', {direction, expectedRevision, operationId:`mac-history-${crypto.randomUUID()}`});

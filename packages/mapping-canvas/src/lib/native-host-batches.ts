@@ -19,7 +19,7 @@ export class NativeHostBatches {
     const expectedRevision = authority.revision! + [...this.tickets].filter(ticket => ticket.epoch === this.epoch).length;
     if (!Number.isSafeInteger(expectedRevision)) throw new Error('Native revision exhausted.');
     const ticket = { epoch: this.epoch, request: { sessionId: authority.sessionId, documentId: authority.document.id,
-      expectedRevision, operationId: `mac-batch-${crypto.randomUUID()}`, operations: structuredClone(operations) } };
+      expectedRevision, operationId: `mac-batch-${crypto.randomUUID()}`, operations: JSON.parse(JSON.stringify(operations)) as CanvasOperation[] } };
     this.tickets.add(ticket);
     return ticket;
   }

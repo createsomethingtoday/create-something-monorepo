@@ -51,3 +51,13 @@ registry bundles, live gestures, native authority, provider identity, persistent
 scripts and automatic undo/redo are outside this slice.
 
 See [audit and phased architecture](../docs/offline-desktop-audit.md).
+
+## Native reviewed companion
+
+`native-client.mjs` is a separate built-in-only stdio MCP companion for the running
+Mac authority (Node >=22; acceptance used 26.11). It reads an ephemeral token from
+`DRAW_AGENT_TOKEN` and accepts `--socket /absolute/path/from/Draw`. It never reads
+the native database or stores a token. Start a bounded session in Draw's Local
+agent panel, supply the token only through the client process environment, and
+review every proposed edit in Draw. No plugin/provider is registered by this script.
+See [native review UX, authority policy and acceptance](../docs/native-agent-review-slice.md).

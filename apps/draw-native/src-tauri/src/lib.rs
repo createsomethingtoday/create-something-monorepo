@@ -10,6 +10,10 @@ use std::{
 mod transport;
 mod host_batch;
 mod local_agent;
+mod native_history;
+mod profile_owner;
+mod agent_access;
+use native_history::NativeState;
 
 use create_something_draw_pairing_protocol::{
     apply_canvas_operation, apply_envelope, digest_capability, normalize_document_compat,
@@ -154,8 +158,10 @@ fn discard_queue_with_replacement(queue: &mut VecDeque<OperationEnvelope>) -> us
 }
 
 pub(crate) struct DrawRuntime {
+    _profile_owner: Option<profile_owner::Owner>,
+    agent_access: Mutex<agent_access::Access>,
     state_path: PathBuf,
-    host: Mutex<PairingHostState>,
+    host: Mutex<NativeState>,
     pending: Mutex<HashMap<String, PendingPairing>>,
     transport: Mutex<Option<Value>>,
     host_capability: String,
@@ -290,9 +296,9 @@ pub(crate) fn rfc3339(value: SystemTime) -> Result<String, String> {
         .map_err(|error| error.to_string())
 }
 
-fn initial_state() -> PairingHostState {
+fn initial_state() -> NativeState {
     let timestamp = rfc3339(now()).unwrap_or_else(|_| "1970-01-01T00:00:00Z".into());
-    PairingHostState {
+    NativeState { native_history: Default::default(), document_epoch: 0, pairing: PairingHostState {
         session_id: format!("session-{}", Uuid::new_v4()),
         revision: 0,
         document: json!({
@@ -307,25 +313,26 @@ fn initial_state() -> PairingHostState {
         }),
         clients: BTreeMap::new(),
         applied: BTreeMap::new(),
-    }
+    }}
 }
 
-fn load_state(path: &Path) -> Result<PairingHostState, String> {
+fn load_state(path: &Path) -> Result<NativeState, String> {
     match fs::read(path) {
         Ok(bytes) => {
-            let mut state: PairingHostState = serde_json::from_slice(&bytes).map_err(|error| {
+            let mut state: NativeState = serde_json::from_slice(&bytes).map_err(|error| {
                 format!(
                     "Canonical Draw state is unreadable at {}: {error}",
                     path.display()
                 )
             })?;
-            state.document = normalize_document_compat(state.document);
+            state.document = normalize_document_compat(state.document.clone());
             if !valid_document(&state.document) {
                 return Err(format!(
                     "Canonical Draw document is invalid at {}",
                     path.display()
                 ));
             }
+            state.validate_history()?;
             Ok(state)
         }
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(initial_state()),
@@ -336,18 +343,16 @@ fn load_state(path: &Path) -> Result<PairingHostState, String> {
     }
 }
 
-fn persist_state(path: &Path, state: &PairingHostState) -> Result<(), String> {
+fn persist_state(path: &Path, state: &NativeState) -> Result<(), String> {
     let parent = path
         .parent()
         .ok_or_else(|| "Draw state path has no parent".to_string())?;
     fs::create_dir_all(parent).map_err(|error| error.to_string())?;
     let temporary = parent.join(format!(".{STATE_FILE}.{}.tmp", Uuid::new_v4()));
     let bytes = serde_json::to_vec_pretty(state).map_err(|error| error.to_string())?;
-    let mut file = OpenOptions::new()
-        .create_new(true)
-        .write(true)
-        .open(&temporary)
-        .map_err(|error| error.to_string())?;
+    let mut options=OpenOptions::new(); options.create_new(true).write(true);
+    #[cfg(unix)] {use std::os::unix::fs::OpenOptionsExt; options.mode(0o600);}
+    let mut file = options.open(&temporary).map_err(|error|error.to_string())?;
     file.write_all(&bytes).map_err(|error| error.to_string())?;
     file.write_all(b"\n").map_err(|error| error.to_string())?;
     file.sync_all().map_err(|error| error.to_string())?;
@@ -530,6 +535,7 @@ pub(crate) fn host_status(runtime: &DrawRuntime) -> Result<Value, String> {
     Ok(json!({
         "sessionId": state.session_id,
         "revision": state.revision,
+        "history": state.history_status(),
         "document": state.document,
         "pairedClients": state.clients.iter().filter(|(id, _)| id.as_str() != "native-mac").map(|(id, client)| json!({
             "clientId": id,
@@ -560,8 +566,8 @@ pub(crate) fn pair_confirm_from_source(
     client_id: String,
     source: &str,
 ) -> Result<PairingGrant, String> {
-    if client_id.trim().is_empty() {
-        return Err("Client id is required".into());
+    if client_id.trim().is_empty() || client_id.len()>200 {
+        return Err("Client id must contain 1–200 bytes".into());
     }
     if client_id == "native-mac" {
         return Err("Client id is reserved".into());
@@ -604,7 +610,8 @@ pub(crate) fn pair_confirm_from_source(
     if state.clients.contains_key(&client_id) {
         return Err("Client id is already paired".into());
     }
-    state.clients.insert(
+    let mut next = state.clone();
+    next.clients.insert(
         client_id.clone(),
         PairedClient {
             capability_digest: digest_capability(&capability),
@@ -612,7 +619,8 @@ pub(crate) fn pair_confirm_from_source(
             revoked_at: None,
         },
     );
-    persist_state(&runtime.state_path, &state)?;
+    persist_state(&runtime.state_path, &next)?;
+    *state = next;
     Ok(PairingGrant {
         session_id: state.session_id.clone(),
         client_id,
@@ -635,15 +643,18 @@ pub(crate) fn apply_operation(
 
 fn apply_operation_locked(
     runtime: &DrawRuntime,
-    state: &mut PairingHostState,
+    state: &mut NativeState,
     envelope: OperationEnvelope,
 ) -> Result<Value, String> {
     let timestamp = rfc3339(now())?;
-    let result = apply_envelope(state.clone(), envelope, &timestamp);
+    let result = apply_envelope(state.pairing.clone(), envelope, &timestamp);
     match &result {
-        OperationResult::Applied { state: next, .. } => {
-            persist_state(&runtime.state_path, next)?;
-            *state = next.clone();
+        OperationResult::Applied { state: pairing, receipt } => {
+            let mut next = state.clone();
+            next.pairing = pairing.clone();
+            next.record(&state.document, &receipt.client_id)?;
+            persist_state(&runtime.state_path, &next)?;
+            *state = next;
         }
         OperationResult::Duplicate { .. } | OperationResult::Rejected { .. } => {}
     }
@@ -798,6 +809,22 @@ async fn draw_companion_pair(
 }
 
 #[tauri::command]
+fn draw_agent_start(runtime: tauri::State<'_, Arc<DrawRuntime>>, ids:Vec<String>, document_id:String, expected_revision:u64)->Result<Value,String> {
+    agent_access::start(&runtime,ids,&document_id,expected_revision)
+}
+#[tauri::command]
+fn draw_agent_status(runtime: tauri::State<'_, Arc<DrawRuntime>>)->Result<Value,String>{agent_access::status(&runtime)}
+#[tauri::command]
+fn draw_agent_revoke(runtime: tauri::State<'_, Arc<DrawRuntime>>)->Result<Value,String>{agent_access::revoke(&runtime)}
+#[tauri::command]
+fn draw_agent_review(runtime: tauri::State<'_, Arc<DrawRuntime>>, operation_id:String, approve:bool)->Result<Value,String>{agent_access::review(&runtime,&operation_id,approve)}
+
+#[tauri::command]
+fn draw_host_history(runtime: tauri::State<'_, Arc<DrawRuntime>>, direction: String, expected_revision: u64, operation_id: String) -> Result<Value,String> {
+    native_history::action(&runtime,&direction,expected_revision,&operation_id,"native-mac",false,|_,_|Ok(()))
+}
+
+#[tauri::command]
 fn draw_host_apply_batch(
     runtime: tauri::State<'_, Arc<DrawRuntime>>,
     request: host_batch::HostBatch,
@@ -841,6 +868,7 @@ fn replace_host_document(
     if cfg!(mobile) {
         return Err("Only the Mac authority can replace the canonical document".into());
     }
+    if !matches!(reason.as_str(), "import" | "reset") { return Err("Use authoritative native history commands".into()); }
     let document = normalize_document_compat(document);
     if !valid_document(&document) {
         return Err("Replacement document is invalid".into());
@@ -855,6 +883,7 @@ fn replace_host_document(
     let mut next = state.clone();
     next.revision += 1;
     next.document = document;
+    next.clear_history()?;
     let operation_id = format!("mac-replace-{}", Uuid::new_v4());
     let fingerprint = digest_capability(
         &serde_json::to_string(&next.document).map_err(|error| error.to_string())?,
@@ -1325,6 +1354,7 @@ pub fn run() {
             let home = std::env::var_os("CREATE_SOMETHING_DRAW_HOME")
                 .map(PathBuf::from)
                 .unwrap_or(app.path().app_data_dir()?);
+            let owner = profile_owner::claim(&home).map_err(std::io::Error::other)?;
             let state_path = home.join(STATE_FILE);
             let companion_state_path = home.join(COMPANION_STATE_FILE);
             let host = load_state(&state_path).map_err(std::io::Error::other)?;
@@ -1340,6 +1370,8 @@ pub fn run() {
             );
             persist_state(&state_path, &host).map_err(std::io::Error::other)?;
             let runtime = Arc::new(DrawRuntime {
+                _profile_owner: Some(owner),
+                agent_access: Mutex::new(Default::default()),
                 state_path,
                 host: Mutex::new(host),
                 pending: Mutex::new(HashMap::new()),
@@ -1363,6 +1395,8 @@ pub fn run() {
             draw_companion_pair,
             draw_host_apply_local,
             draw_host_apply_batch,
+            draw_host_history,
+            draw_agent_start,draw_agent_status,draw_agent_revoke,draw_agent_review,
             draw_host_replace_document,
             draw_companion_submit,
             draw_companion_set_online,
@@ -1439,7 +1473,7 @@ mod tests {
             "protocolVersion": PROTOCOL_VERSION,
             "documentVersion": DOCUMENT_VERSION,
             "revision": 0,
-            "document": initial_state().document,
+            "document": initial_state().document.clone(),
         })
     }
 
@@ -1488,6 +1522,8 @@ mod tests {
         state.clients.insert("native-mac".into(), client.clone());
         state.clients.insert("iphone-visible".into(), client);
         let runtime = DrawRuntime {
+            _profile_owner: None,
+            agent_access: Mutex::new(Default::default()),
             state_path: directory.join(STATE_FILE),
             host: Mutex::new(state),
             pending: Mutex::new(HashMap::new()),
@@ -1537,6 +1573,8 @@ mod tests {
     fn pairing_failures_are_bounded_per_source_without_invalidating_the_offer() {
         let directory = std::env::temp_dir().join(format!("draw-pair-limit-{}", Uuid::new_v4()));
         let runtime = DrawRuntime {
+            _profile_owner: None,
+            agent_access: Mutex::new(Default::default()),
             state_path: directory.join(STATE_FILE),
             host: Mutex::new(initial_state()),
             pending: Mutex::new(HashMap::new()),
@@ -1608,7 +1646,7 @@ mod tests {
             capability: "never-write-this-secret".into(),
             expires_at: "2099-01-01T00:00:00Z".into(),
             revision: 3,
-            document: initial_state().document,
+            document: initial_state().document.clone(),
             queue,
             online: true,
             requires_repair: false,
@@ -1645,7 +1683,7 @@ mod tests {
             capability: "never-write-this-secret".into(),
             expires_at: "2099-01-01T00:00:00Z".into(),
             revision: 0,
-            document: initial_state().document,
+            document: initial_state().document.clone(),
             queue: VecDeque::from([OperationEnvelope {
                 protocol_version: PROTOCOL_VERSION.into(),
                 document_version: DOCUMENT_VERSION.into(),
@@ -1702,12 +1740,14 @@ mod tests {
             capability: "fixture".into(),
             expires_at: "2099-01-01T00:00:00Z".into(),
             revision: 0,
-            document: initial_state().document,
+            document: initial_state().document.clone(),
             queue,
             online: false,
             requires_repair: false,
         };
         let runtime = DrawRuntime {
+            _profile_owner: None,
+            agent_access: Mutex::new(Default::default()),
             state_path: directory.join(STATE_FILE),
             host: Mutex::new(initial_state()),
             pending: Mutex::new(HashMap::new()),
@@ -1738,7 +1778,7 @@ mod tests {
             capability: "new-capability".into(),
             expires_at: "2099-01-01T00:00:00Z".into(),
             revision: 1,
-            document: initial_state().document,
+            document: initial_state().document.clone(),
             queue: VecDeque::new(),
             online: true,
             requires_repair: false,
@@ -1764,7 +1804,7 @@ mod tests {
         fs::create_dir_all(&directory).unwrap();
         let invalid_parent = directory.join("not-a-directory");
         fs::write(&invalid_parent, b"fixture").unwrap();
-        let original_document = initial_state().document;
+        let original_document = initial_state().document.clone();
         let session = CompanionSession {
             host: transport::DiscoveredHost {
                 endpoint: "https://draw-mac.local:4242".into(),
@@ -1783,6 +1823,8 @@ mod tests {
             requires_repair: false,
         };
         let runtime = DrawRuntime {
+            _profile_owner: None,
+            agent_access: Mutex::new(Default::default()),
             state_path: directory.join(STATE_FILE),
             host: Mutex::new(initial_state()),
             pending: Mutex::new(HashMap::new()),
@@ -1823,6 +1865,8 @@ mod tests {
             },
         );
         let runtime = DrawRuntime {
+            _profile_owner: None,
+            agent_access: Mutex::new(Default::default()),
             state_path: directory.join(STATE_FILE),
             host: Mutex::new(state),
             pending: Mutex::new(HashMap::new()),
@@ -1881,6 +1925,8 @@ mod tests {
         let state = initial_state();
         let session_id = state.session_id.clone();
         let runtime = DrawRuntime {
+            _profile_owner: None,
+            agent_access: Mutex::new(Default::default()),
             state_path: state_path.clone(),
             host: Mutex::new(state.clone()),
             pending: Mutex::new(HashMap::new()),
@@ -1897,11 +1943,11 @@ mod tests {
             0
         )
         .is_err());
-        let mut replacement = state.document;
+        let mut replacement = state.document.clone();
         replacement["title"] = json!("Restored Mac history");
         replacement["updatedAt"] = json!("2026-08-29T16:30:00Z");
         let result =
-            replace_host_document(&runtime, replacement.clone(), "undo".into(), 0).unwrap();
+            replace_host_document(&runtime, replacement.clone(), "import".into(), 0).unwrap();
         assert_eq!(result["revision"], 1);
         let persisted = load_state(&state_path).unwrap();
         assert_eq!(persisted.session_id, session_id);
@@ -1929,6 +1975,8 @@ mod tests {
         let state = initial_state();
         let original_document = state.document.clone();
         let runtime = DrawRuntime {
+            _profile_owner: None,
+            agent_access: Mutex::new(Default::default()),
             state_path: invalid_parent.join(STATE_FILE),
             host: Mutex::new(state),
             pending: Mutex::new(HashMap::new()),
@@ -1967,6 +2015,8 @@ mod tests {
             },
         );
         let runtime = DrawRuntime {
+            _profile_owner: None,
+            agent_access: Mutex::new(Default::default()),
             state_path: invalid_parent.join(STATE_FILE),
             host: Mutex::new(state),
             pending: Mutex::new(HashMap::new()),
@@ -2005,6 +2055,8 @@ mod tests {
         state.revision = create_something_draw_pairing_protocol::MAX_APPLIED_RECEIPTS as u64;
         let replacement = state.document.clone();
         let runtime = DrawRuntime {
+            _profile_owner: None,
+            agent_access: Mutex::new(Default::default()),
             state_path: state_path.clone(),
             host: Mutex::new(state),
             pending: Mutex::new(HashMap::new()),
@@ -2038,6 +2090,8 @@ mod tests {
     fn offline_put_coalescing_preserves_dependency_order() {
         let directory = std::env::temp_dir().join(format!("draw-queue-order-{}", Uuid::new_v4()));
         let runtime = DrawRuntime {
+            _profile_owner: None,
+            agent_access: Mutex::new(Default::default()),
             state_path: directory.join(STATE_FILE),
             host: Mutex::new(initial_state()),
             pending: Mutex::new(HashMap::new()),
@@ -2056,7 +2110,7 @@ mod tests {
                 capability: "fixture-secret".into(),
                 expires_at: "2099-01-01T00:00:00Z".into(),
                 revision: 4,
-                document: initial_state().document,
+                document: initial_state().document.clone(),
                 queue: VecDeque::new(),
                 online: false,
                 requires_repair: false,
@@ -2157,6 +2211,8 @@ mod tests {
         let directory = std::env::temp_dir().join(format!("draw-offline-{}", Uuid::new_v4()));
         let companion_state_path = directory.join(COMPANION_STATE_FILE);
         let runtime = DrawRuntime {
+            _profile_owner: None,
+            agent_access: Mutex::new(Default::default()),
             state_path: directory.join(STATE_FILE),
             host: Mutex::new(initial_state()),
             pending: Mutex::new(HashMap::new()),
@@ -2175,7 +2231,7 @@ mod tests {
                 capability: "offline-secret".into(),
                 expires_at: "2099-01-01T00:00:00Z".into(),
                 revision: 0,
-                document: initial_state().document,
+                document: initial_state().document.clone(),
                 queue: VecDeque::new(),
                 online: true,
                 requires_repair: false,
@@ -2205,6 +2261,8 @@ mod tests {
         let directory =
             std::env::temp_dir().join(format!("draw-repair-required-{}", Uuid::new_v4()));
         let runtime = DrawRuntime {
+            _profile_owner: None,
+            agent_access: Mutex::new(Default::default()),
             state_path: directory.join(STATE_FILE),
             host: Mutex::new(initial_state()),
             pending: Mutex::new(HashMap::new()),
@@ -2223,7 +2281,7 @@ mod tests {
                 capability: "rejected-secret".into(),
                 expires_at: "2099-01-01T00:00:00Z".into(),
                 revision: 4,
-                document: initial_state().document,
+                document: initial_state().document.clone(),
                 queue: VecDeque::from([OperationEnvelope {
                     protocol_version: PROTOCOL_VERSION.into(),
                     document_version: DOCUMENT_VERSION.into(),
@@ -2272,7 +2330,7 @@ mod tests {
             capability: "new-secret".into(),
             expires_at: "2099-01-01T00:00:00Z".into(),
             revision: 1,
-            document: initial_state().document,
+            document: initial_state().document.clone(),
             queue: VecDeque::new(),
             online: true,
             requires_repair: false,

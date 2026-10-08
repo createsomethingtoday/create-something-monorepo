@@ -1,7 +1,6 @@
-//! In-process authority seam. Deliberately not registered as a Tauri command or
-//! transport: production activation requires a native grant/revocation UI.
-//! Tokens/history are ephemeral; restarting loses authority, not saved artwork.
-#![allow(dead_code)]
+//! Ephemeral native document grants. Socket writes are proposals; only the
+//! native owner review command invokes edit/history commits.
+//! Tokens are ephemeral. Approved changes use the shared durable native journal.
 use super::*;
 use std::collections::BTreeSet;
 use std::time::{Duration, Instant};
@@ -13,7 +12,8 @@ struct Grant {
     expires: Instant,
     edit_ids: BTreeSet<String>,
     revoked: bool,
-    undo: Option<(u64, Value)>,
+    actor: String,
+    document_epoch: u64,
 }
 
 pub(super) struct LocalAgent {
@@ -22,7 +22,7 @@ pub(super) struct LocalAgent {
 
 impl LocalAgent {
     // Only the native owner may construct a grant. No RPC can issue or expand one.
-    fn issue(runtime: &DrawRuntime, edit_ids: BTreeSet<String>, ttl: Duration) -> Result<(Self, String), String> {
+    pub(super) fn issue(runtime: &DrawRuntime, edit_ids: BTreeSet<String>, ttl: Duration) -> Result<(Self, String), String> {
         if ttl.is_zero() || ttl > Duration::from_secs(3600) || edit_ids.len() > 200 {
             return Err("Invalid grant bounds".into());
         }
@@ -31,67 +31,73 @@ impl LocalAgent {
         Ok((Self { grant: Mutex::new(Grant {
             digest: digest_capability(&token), session_id: state.session_id.clone(),
             document_id: state.document["id"].as_str().ok_or("Invalid document")?.into(),
-            expires: Instant::now() + ttl, edit_ids, revoked: false, undo: None,
+            expires: Instant::now() + ttl, edit_ids, revoked: false,
+            actor:format!("agent-{}",Uuid::new_v4()), document_epoch:state.document_epoch,
         }) }, token))
     }
 
-    fn revoke(&self) -> Result<(), String> {
+    pub(super) fn revoke(&self) -> Result<(), String> {
         let mut grant = self.grant.lock().map_err(|e| e.to_string())?;
         grant.revoked = true;
-        grant.undo = None;
         Ok(())
     }
 
-    fn inspect(&self, runtime: &DrawRuntime, token: &str) -> Result<Value, String> {
+    pub(super) fn inspect(&self, runtime: &DrawRuntime, token: &str) -> Result<Value, String> {
         let grant = self.grant.lock().map_err(|e| e.to_string())?;
         grant.authenticate(token)?;
         let state = runtime.host.lock().map_err(|e| e.to_string())?;
         grant.authenticate(token)?;
-        grant.check_document(&state.session_id, &state.document["id"])?;
+        grant.check_state(&state)?;
         Ok(json!({"sessionId":state.session_id,"revision":state.revision,"document":state.document}))
     }
 
-    fn edit(&self, runtime: &DrawRuntime, token: &str, request: host_batch::HostBatch) -> Result<Value, String> {
+    pub(super) fn edit(&self, runtime: &DrawRuntime, token: &str, request: host_batch::HostBatch) -> Result<Value, String> {
         // Holding this lock through commit makes successful revocation a barrier.
-        let mut grant = self.grant.lock().map_err(|e| e.to_string())?;
+        let grant = self.grant.lock().map_err(|e| e.to_string())?;
         grant.authenticate(token)?;
         grant.check_document(&request.session_id, &json!(request.document_id))?;
         if grant.edit_ids.is_empty() { return Err("Read-only grant".into()); }
-        let result = host_batch::apply_checked(runtime, request, |before, after| { grant.authenticate(token)?;
-            let inverse = grant.inverse_request(u64::MAX, before)?;
-            if serde_json::to_vec(&inverse).map_err(|e| e.to_string())?.len() > 2 * 1024 * 1024 {
-                return Err("Undo snapshot exceeds native batch limit".into());
-            }
-            grant.check_edit(before, after) })?;
-        if result["status"] == "applied" {
-            grant.undo = Some((result["revision"].as_u64().ok_or("Invalid receipt")?, result["previousDocument"].clone()));
-        }
-        Ok(result)
+        host_batch::apply_as(runtime, request, &grant.actor, |before, after| {
+            grant.authenticate(token)?; grant.check_state(before)?;
+            grant.check_edit(&before.document, after)
+        })
     }
 
-    fn undo(&self, runtime: &DrawRuntime, token: &str, expected_revision: u64) -> Result<Value, String> {
-        let mut grant = self.grant.lock().map_err(|e| e.to_string())?;
-        grant.authenticate(token)?;
-        let (revision, before) = grant.undo.as_ref().ok_or("No agent edit to undo")?;
-        if *revision != expected_revision { return Err("Undo revision conflict".into()); }
-        // Only the exact latest agent transaction can be undone. Any intervening
-        // human/phone/agent change fails the native CAS; no history overwrite.
-        let request = grant.inverse_request(expected_revision, before)?;
-        let result = host_batch::apply_checked(runtime, request, |current, restored| { grant.authenticate(token)?; grant.check_edit(current, restored) })?;
-        grant.undo = None;
-        Ok(result)
+    pub(super) fn preview(&self, runtime:&DrawRuntime, token:&str, request:&host_batch::HostBatch)->Result<Value,String> {
+        host_batch::validate(request)?;
+        let grant=self.grant.lock().map_err(|e|e.to_string())?;
+        let state=runtime.host.lock().map_err(|e|e.to_string())?;
+        grant.authenticate(token)?; grant.check_state(&state)?;
+        grant.check_document(&request.session_id,&json!(request.document_id))?;
+        if grant.edit_ids.is_empty() {return Err("Read-only grant".into());}
+        if request.expected_revision != state.revision {return Err("HOST_REVISION_CONFLICT".into());}
+        let after=host_batch::project(state.document.clone(),&request.operations,&rfc3339(now())?)?;
+        grant.check_edit(&state.document,&after)?;
+        let mut candidate=state.clone(); candidate.document=after.clone();candidate.record(&state.document,&grant.actor)?;
+        Ok(json!({"revision":state.revision,"beforeObjectCount":state.document["objects"].as_array().map(Vec::len),"afterObjectCount":after["objects"].as_array().map(Vec::len)}))
     }
+
+    #[cfg(test)]
+    pub(super) fn history(&self, runtime:&DrawRuntime, token:&str, direction:&str, expected:u64, operation_id:&str)->Result<Value,String> {
+        let grant=self.grant.lock().map_err(|e|e.to_string())?;
+        grant.authenticate(token)?;
+        if grant.edit_ids.is_empty() {return Err("Read-only grant".into());}
+        native_history::action(runtime,direction,expected,operation_id,&grant.actor,true,|state,restored|{
+            grant.authenticate(token)?;grant.check_state(state)?;grant.check_edit(&state.document,restored)
+        })
+    }
+    #[cfg(test)]
+    fn undo(&self,runtime:&DrawRuntime,token:&str,expected:u64)->Result<Value,String> {
+        self.history(runtime,token,"undo",expected,&format!("mac-history-{}",Uuid::new_v4()))
+    }
+
 }
 
 impl Grant {
-    fn inverse_request(&self, revision: u64, before: &Value) -> Result<host_batch::HostBatch, String> {
-        Ok(host_batch::HostBatch {
-            session_id: self.session_id.clone(), document_id: self.document_id.clone(),
-            expected_revision: revision, operation_id: format!("mac-batch-{}", Uuid::new_v4()),
-            operations: vec![CanvasOperation::ReplaceObjects {
-                objects: before["objects"].as_array().ok_or("Invalid undo snapshot")?.clone(),
-            }],
-        })
+    fn check_state(&self,state:&NativeState)->Result<(),String> {
+        self.check_document(&state.session_id,&state.document["id"])?;
+        if self.document_epoch != state.document_epoch {return Err("Document replaced; grant revoked".into());}
+        Ok(())
     }
     fn authenticate(&self, token: &str) -> Result<(), String> {
         if self.revoked || Instant::now() >= self.expires || token.len() > 1024 {
@@ -164,7 +170,7 @@ mod tests {
         let (agent, token) = LocalAgent::issue(&runtime, BTreeSet::from(["note-test".into()]), Duration::from_secs(60)).unwrap();
         (runtime, agent, token)
     }
-    fn edit(runtime: &DrawRuntime) -> host_batch::HostBatch {
+    pub(super) fn edit(runtime: &DrawRuntime) -> host_batch::HostBatch {
         let state = runtime.host.lock().unwrap();
         host_batch::HostBatch {
             session_id: state.session_id.clone(), document_id: state.document["id"].as_str().unwrap().into(),
@@ -211,7 +217,7 @@ mod tests {
         assert_eq!(runtime.host.lock().unwrap().revision, 0);
     }
     #[test]
-    fn oversized_inverse_is_rejected_before_commit() {
+    fn large_document_undo_uses_durable_journal_not_oversized_batch() {
         let (runtime, agent, token) = setup();
         // Legacy native stores can exceed the new per-batch bound.
         {
@@ -221,9 +227,9 @@ mod tests {
                 objects.push(json!({"kind":"note","id":format!("existing-{index}"),"createdAt":"2026-10-08T00:00:00Z","x":0,"y":0,"width":200,"height":100,"text":"x".repeat(5000)}));
             }
         }
-        let failure = agent.edit(&runtime, &token, edit(&runtime)).unwrap_err();
-        assert!(failure.contains("Undo snapshot"), "{failure}");
-        assert_eq!(runtime.host.lock().unwrap().revision, 0);
+        agent.edit(&runtime, &token, edit(&runtime)).unwrap();
+        agent.undo(&runtime, &token, 1).unwrap();
+        assert_eq!(runtime.host.lock().unwrap().document["objects"].as_array().unwrap().len(), 500);
     }
     #[test]
     fn agent_cannot_lock_hide_or_create_a_group() {

@@ -111,7 +111,9 @@ For disposable native tests, set both `CREATE_SOMETHING_DRAW_HOME` to a new test
 profile and `CREATE_SOMETHING_DRAW_EPHEMERAL_WEBVIEW=1` to avoid installed WebView
 storage. This does not replace a signed-app or real native UI acceptance run.
 
-The unregistered `local_agent.rs` seam tests ephemeral document/layer grants,
-revocation, expiry, native lock enforcement, and one revision-guarded inverse.
-It has no Tauri command or socket and cannot issue real agent authority. Shared
-durable undo, approval UI, and a reviewed live transport remain integration gates.
+The Local agent panel now offers ephemeral read access and selected-layer proposals.
+A private Unix socket accepts inspect/propose/status only; every edit requires native
+owner review. UI, phone, and approved agent changes share durable Undo/Redo, and a
+retained profile lock excludes a second cooperating native writer. No real grant
+or provider connection was activated during acceptance. See
+[the current test matrix and preview](../../packages/mapping-canvas/docs/native-agent-review-slice.md).

@@ -31,3 +31,10 @@ test('multi-operation edit has one undo step, exact retry cannot manufacture his
   assert.equal(recovered.past.length,0);
   assert.throws(()=>settleNativeHostBatch(settled,{status:'conflict',document:before},true,false),/not committed/);
 });
+
+test('reactive viewport proxies are snapshotted through the JSON operation contract',()=>{
+  const viewport=new Proxy({x:1,y:2,zoom:1},{}),batches=new NativeHostBatches();
+  const ticket=batches.reserve(authority(),[{type:'set_viewport',viewport}]);
+  viewport.x=99;
+  assert.deepEqual(ticket.request.operations[0].viewport,{x:1,y:2,zoom:1});
+});
