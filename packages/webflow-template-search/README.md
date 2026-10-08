@@ -186,6 +186,10 @@ warning on `GET /api/templates/admin/sync-status`. Held-out templates are retrie
 recent-published sweep every incremental run, and the Templates `collection_item_created`
 webhook indexes the record as soon as the CMS item appears.
 
+Templates and Designers are read from `/items/live`, not the staged `/items` endpoint: a
+created-but-unpublished item, or a pending edit to a published one, does not exist on the
+public site yet.
+
 Each indexed row stores `listing_confirmed` (1 when the sync matched a live CMS item). When
 the gate fails open, because the lookup failed or the guard kept the batch, the row is indexed
 with `listing_confirmed = 0`. The recent-published sweep treats any row that is not confirmed

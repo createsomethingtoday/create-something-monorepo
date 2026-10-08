@@ -477,7 +477,12 @@ export async function fetchWebflowTemplateImages(
   const token = webflowApiToken(env);
   if (!token) throw new Error('A Webflow CMS read token is not configured.');
 
-  return paginateWebflow(token, TEMPLATES_COLLECTION_ID, (item) => mapTemplateFieldData(item.fieldData), options);
+  // Live, not staged: the listing gate treats a match as proof the public page
+  // exists, and a created-but-never-published item still 404s.
+  return paginateWebflow(token, TEMPLATES_COLLECTION_ID, (item) => mapTemplateFieldData(item.fieldData), {
+    ...options,
+    live: true,
+  });
 }
 
 export async function fetchWebflowTemplateImagesForTargets(
@@ -497,7 +502,7 @@ export async function fetchWebflowTemplateImagesForTargets(
     (target) => target.name,
     (item) => mapTemplateFieldData(item.fieldData),
     templateRecordMatchesTarget,
-    options,
+    { ...options, live: true },
   );
 }
 

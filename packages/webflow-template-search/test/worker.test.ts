@@ -1034,6 +1034,45 @@ describe('webflow-template-search worker', () => {
     }
   });
 
+  it('holds out a template whose CMS item exists but was never published', async () => {
+    // A staged item is not a listing: its public page still 404s.
+    const fetchMock = installAirtableFetchMock({
+      publishedAssets: [PUBLISHED_ASSETS[0]],
+      styles: LOOKUPS.styles,
+      childCategories: LOOKUPS.childCategories,
+      tags: LOOKUPS.tags,
+      creators: LOOKUPS.creators,
+      webflowCollectionItems: {
+        [TEMPLATES_COLLECTION_ID]: [
+          {
+            id: 'item-agentflow',
+            isArchived: false,
+            isDraft: false,
+            fieldData: { 'sync-record-id': 'recAgentflow', name: 'Agentflow', slug: 'agentflow-website-template' },
+          },
+        ],
+      },
+      webflowLiveCollectionItems: { [TEMPLATES_COLLECTION_ID]: [] },
+    });
+    const { env, close } = createTestEnv();
+    env.WEBFLOW_API_TOKEN = 'test-webflow-cms-token';
+
+    try {
+      const response = await callWorker(
+        new Request('https://templates.test/api/templates/admin/sync-records', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token', 'content-type': 'application/json' },
+          body: JSON.stringify({ ids: ['recAgentflow'] }),
+        }),
+        env,
+      );
+      expect(await response.json()).toMatchObject({ indexed_records: 0, listing_gated_records: 1 });
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
   it('re-checks a template indexed while the CMS lookup failed and gates it once the lookup works', async () => {
     // Ironclaw: approved and indexed, but the CMS item never appeared (Stripe
     // onboarding incomplete). A fail-open index must not become permanent.
@@ -1444,7 +1483,7 @@ describe('webflow-template-search worker', () => {
 
       const cmsPageCalls = fetchMock.mock.calls.filter(([input]) => {
         const url = new URL(typeof input === 'string' ? input : input.url);
-        return url.pathname === `/v2/collections/${TEMPLATES_COLLECTION_ID}/items` && !url.searchParams.get('slug') && !url.searchParams.get('name');
+        return url.pathname === `/v2/collections/${TEMPLATES_COLLECTION_ID}/items/live` && !url.searchParams.get('slug') && !url.searchParams.get('name');
       });
       expect(cmsPageCalls.length).toBeGreaterThan(0);
       for (const [, init] of cmsPageCalls) {
