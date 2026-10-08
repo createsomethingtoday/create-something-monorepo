@@ -121,6 +121,22 @@ incomplete analysis. Use the Svelte compiler for template correctness. Generic
 import-type compatibility projects only AST-proven type operands, keeps original
 byte/line spans for evidence, and reparses to reject remaining syntax errors.
 
+### 0.5.1 follow-up compatibility
+
+The source candidate recovers generic calls using `typeof import('module')`
+without changing original source spans. Recovery requires a complete single-string
+import operand and a reparsed type query inside a complete generic call; malformed
+syntax still fails. Import options (a second argument) are outside this bounded
+recovery and remain incomplete rather than being projected. Runtime
+import/comparison expressions are not projected.
+
+The advisory `ground:review` wrapper now uses explicit per-check completion
+rather than treating unrecognized native statuses as complete. A completed native
+`FAIL` with findings remains completed; false or missing completion evidence,
+timeouts and unsupported coverage cannot be clear. Historical receipts lacking
+per-check completion may now report partial. Process exits remain advisory.
+The installed 0.5.0 runtime is unchanged until a separately verified release.
+
 ### Verified agent loop
 
 For an agent working on the current checkout, use the batch commands first:

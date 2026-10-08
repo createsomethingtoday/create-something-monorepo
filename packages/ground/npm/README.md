@@ -34,6 +34,12 @@ Omitted checks run `duplicates,orphans` for analyze and `duplicates` for diff;
 unknown or empty check lists are rejected. Installed 0.4.3 release artifacts are
 unchanged. See the repository README for coverage limits and migration details.
 
+## 0.5.1 parser correction
+
+Generic calls such as `original<typeof import('./module')>()` now parse through
+bounded type-context recovery, with original source evidence preserved. Invalid
+syntax still produces incomplete analysis. The 0.5.0 CLI exit contract is unchanged.
+
 ## Recommended agent path
 
 Use CTX and Ground for different evidence:
