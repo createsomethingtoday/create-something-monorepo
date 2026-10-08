@@ -1690,19 +1690,13 @@ function isSourceNewer(nextSourceLastModifiedTime: string | null | undefined, cu
 export async function filterMissingOrStaleTemplateLookupTargets(
   db: D1Database,
   targets: TemplateLookupTarget[],
-  options: { recheckUnconfirmedListings?: boolean; maxUnconfirmedRechecks?: number } = {},
 ): Promise<TemplateLookupTarget[]> {
   const uniqueTargets = Array.from(
     new Map(targets.filter((target) => target.id || target.templateSlug).map((target) => [target.id, target])).values(),
   );
   if (uniqueTargets.length === 0) return [];
 
-  const rows: Array<{
-    id: string;
-    templateSlug: string | null;
-    sourceLastModifiedTime: string | null;
-    listingConfirmed: number | null;
-  }> = [];
+  const rows: Array<{ id: string; templateSlug: string | null; sourceLastModifiedTime: string | null }> = [];
   for (const targetBatch of chunk(uniqueTargets, TEMPLATE_LOOKUP_QUERY_BATCH_SIZE)) {
     const ids = targetBatch.map((target) => target.id).filter(Boolean);
     const slugs = targetBatch.map((target) => target.templateSlug).filter((slug): slug is string => Boolean(slug));
@@ -1720,38 +1714,40 @@ export async function filterMissingOrStaleTemplateLookupTargets(
 
     const result = await db
       .prepare(
-        `SELECT id, template_slug AS templateSlug, source_last_modified_time AS sourceLastModifiedTime,
-                listing_confirmed AS listingConfirmed
+        `SELECT id, template_slug AS templateSlug, source_last_modified_time AS sourceLastModifiedTime
          FROM template_documents
          WHERE ${clauses.join(' OR ')}`,
       )
       .bind(...binds)
-      .all<{ id: string; templateSlug: string | null; sourceLastModifiedTime: string | null; listingConfirmed: number | null }>();
+      .all<{ id: string; templateSlug: string | null; sourceLastModifiedTime: string | null }>();
     rows.push(...(result.results ?? []));
   }
   const existingById = new Map(rows.map((row) => [row.id, row]));
   const existingBySlug = new Map(rows.filter((row) => row.templateSlug).map((row) => [row.templateSlug, row]));
 
-  const changed: TemplateLookupTarget[] = [];
-  const unconfirmed: TemplateLookupTarget[] = [];
-  for (const target of uniqueTargets) {
+  return uniqueTargets.filter((target) => {
     const existing = existingById.get(target.id) ?? (target.templateSlug ? existingBySlug.get(target.templateSlug) : undefined);
-    if (!existing || isSourceNewer(target.sourceLastModifiedTime, existing.sourceLastModifiedTime)) {
-      changed.push(target);
-      continue;
-    }
-    // Indexed without a confirmed live listing (the gate failed open, or the row
-    // predates the flag): re-check it so the gate can hold it out if it 404s.
-    if (options.recheckUnconfirmedListings && existing.listingConfirmed !== 1) unconfirmed.push(target);
-  }
+    if (!existing) return true;
+    return isSourceNewer(target.sourceLastModifiedTime, existing.sourceLastModifiedTime);
+  });
+}
 
-  // Missing and changed rows are never capped. The unconfirmed re-checks are:
-  // each one is a Webflow lookup, and after migration 0016 every pre-existing
-  // row is unconfirmed, so an uncapped pass re-checked ~100 rows per run and
-  // drew 429s (2026-10-08). Callers pass recent-first targets, so a new template
-  // is at the front of the line.
-  const cap = Math.max(0, options.maxUnconfirmedRechecks ?? unconfirmed.length);
-  return [...changed, ...unconfirmed.slice(0, cap)];
+// Rows indexed without a confirmed live listing: the gate failed open (lookup
+// error, or the guard kept the batch), or the row predates listing_confirmed.
+// Newest template first, because a fresh submission is the common case and the
+// one creators notice; least-recently synced first within a day, so the pool
+// rotates instead of re-checking the same rows every run.
+export async function listUnconfirmedListingTemplateIds(db: D1Database, limit: number): Promise<string[]> {
+  const result = await db
+    .prepare(
+      `SELECT id FROM template_documents
+       WHERE listing_confirmed IS NULL OR listing_confirmed = 0
+       ORDER BY COALESCE(published_date, '') DESC, synced_at ASC
+       LIMIT ?`,
+    )
+    .bind(limit)
+    .all<{ id: string }>();
+  return (result.results ?? []).map((row) => row.id);
 }
 
 export async function recordSyncSummary(db: D1Database, summary: unknown, key: string): Promise<void> {

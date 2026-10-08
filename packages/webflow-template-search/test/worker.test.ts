@@ -6,7 +6,7 @@ import {
   acquireSyncJobLock,
   backfillCreatorFieldsByName,
   backfillCreatorFieldsFromLookup,
-  filterMissingOrStaleTemplateLookupTargets,
+  listUnconfirmedListingTemplateIds,
   finishSyncJobLock,
   getPublicSearchCacheVersion,
   heartbeatSyncJobLock,
@@ -1074,46 +1074,21 @@ describe('webflow-template-search worker', () => {
     }
   });
 
-  it('caps how many unconfirmed listings the sweep re-checks per run', async () => {
-    // Every pre-existing row is unconfirmed after migration 0016. Re-checking all
-    // of them at once burst the Webflow API (429s, 2026-10-08). Missing and
-    // changed rows are never capped; only the extra unconfirmed re-checks are.
+  it('re-checks unconfirmed listings newest template first, least-recently synced first within a day', async () => {
     const { env, close } = createTestEnv();
     try {
       const insert = env.DB.prepare(
-        'INSERT INTO template_documents (id, template_slug, name, synced_at, source_last_modified_time, listing_confirmed) VALUES (?, ?, ?, ?, ?, ?)',
+        'INSERT INTO template_documents (id, template_slug, name, synced_at, published_date, listing_confirmed) VALUES (?, ?, ?, ?, ?, ?)',
       );
-      const syncedAt = '2026-10-08T00:00:00.000Z';
-      const lmt = '2026-10-01T00:00:00.000Z';
       await env.DB.batch([
-        insert.bind('recChanged', 'changed-website-template', 'Changed', syncedAt, lmt, 1),
-        insert.bind('recNullA', 'null-a-website-template', 'Null A', syncedAt, lmt, null),
-        insert.bind('recZeroB', 'zero-b-website-template', 'Zero B', syncedAt, lmt, 0),
-        insert.bind('recNullC', 'null-c-website-template', 'Null C', syncedAt, lmt, null),
-        insert.bind('recConfirmed', 'confirmed-website-template', 'Confirmed', syncedAt, lmt, 1),
+        insert.bind('recConfirmed', 'confirmed-website-template', 'Confirmed', '2026-10-08T00:00:00.000Z', '2026-10-09', 1),
+        insert.bind('recOldNull', 'old-website-template', 'Old', '2026-10-08T00:00:00.000Z', '2025-01-01', null),
+        insert.bind('recNewLater', 'new-later-website-template', 'New Later', '2026-10-08T12:00:00.000Z', '2026-10-06', 0),
+        insert.bind('recNewEarly', 'new-early-website-template', 'New Early', '2026-10-08T06:00:00.000Z', '2026-10-06', null),
+        insert.bind('recNewest', 'newest-website-template', 'Newest', '2026-10-08T00:00:00.000Z', '2026-10-08', 0),
       ]);
-      const targets = ['recConfirmed', 'recNullA', 'recChanged', 'recZeroB', 'recNullC', 'recMissing'].map((id) => ({
-        id,
-        templateSlug: null,
-        sourceLastModifiedTime: id === 'recChanged' ? '2026-10-02T00:00:00.000Z' : lmt,
-      }));
-      const ids = (options: Parameters<typeof filterMissingOrStaleTemplateLookupTargets>[2]) =>
-        filterMissingOrStaleTemplateLookupTargets(env.DB, targets, options).then((result) => result.map((target) => target.id));
-
-      expect(await ids({ recheckUnconfirmedListings: false })).toEqual(['recChanged', 'recMissing']);
-      expect(await ids({ recheckUnconfirmedListings: true, maxUnconfirmedRechecks: 2 })).toEqual([
-        'recChanged',
-        'recMissing',
-        'recNullA',
-        'recZeroB',
-      ]);
-      expect(await ids({ recheckUnconfirmedListings: true })).toEqual([
-        'recChanged',
-        'recMissing',
-        'recNullA',
-        'recZeroB',
-        'recNullC',
-      ]);
+      expect(await listUnconfirmedListingTemplateIds(env.DB, 3)).toEqual(['recNewest', 'recNewEarly', 'recNewLater']);
+      expect(await listUnconfirmedListingTemplateIds(env.DB, 10)).toEqual(['recNewest', 'recNewEarly', 'recNewLater', 'recOldNull']);
     } finally {
       close();
     }
@@ -1143,7 +1118,11 @@ describe('webflow-template-search worker', () => {
         }),
         env,
       );
-      return (await response.json()) as { recent_published_records?: number; listing_gated_records: number };
+      return (await response.json()) as {
+        recent_published_records?: number;
+        unconfirmed_recheck_records?: number;
+        listing_gated_records: number;
+      };
     };
     const searchAgentflow = async () => {
       const response = await callWorker(new Request('https://templates.test/api/templates/search?q=Agentflow'), env);
@@ -1172,10 +1151,10 @@ describe('webflow-template-search worker', () => {
       expect(await searchAgentflow()).toEqual(['recAgentflow']);
       fetchMock.mockRestore();
 
-      // The Airtable row has not changed, yet the sweep re-checks it because its
+      // The Airtable row has not changed, yet the run re-checks it because its
       // listing was never confirmed, and the gate now holds it out.
       fetchMock = installAirtableFetchMock({ ...dataset, webflowCollectionItems: { [TEMPLATES_COLLECTION_ID]: [] } });
-      expect(await incrementalSync()).toMatchObject({ recent_published_records: 1, listing_gated_records: 1 });
+      expect(await incrementalSync()).toMatchObject({ unconfirmed_recheck_records: 1, listing_gated_records: 1 });
       expect(await searchAgentflow()).toEqual([]);
       fetchMock.mockRestore();
 
@@ -1196,7 +1175,7 @@ describe('webflow-template-search worker', () => {
       });
       expect(await incrementalSync()).toMatchObject({ recent_published_records: 1, listing_gated_records: 0 });
       expect(await searchAgentflow()).toEqual(['recAgentflow']);
-      expect(await incrementalSync()).toMatchObject({ recent_published_records: 0 });
+      expect(await incrementalSync()).toMatchObject({ recent_published_records: 0, unconfirmed_recheck_records: 0 });
     } finally {
       fetchMock.mockRestore();
       close();

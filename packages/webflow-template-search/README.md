@@ -192,11 +192,12 @@ public site yet.
 
 Each indexed row stores `listing_confirmed` (1 when the sync matched a live CMS item). When
 the gate fails open, because the lookup failed or the guard kept the batch, the row is indexed
-with `listing_confirmed = 0`. The recent-published sweep treats any row that is not confirmed
-as stale and re-checks it every incremental run, so the gate holds it out once the lookup
-works. Missing and changed rows are never capped, but these extra re-checks are limited to 10
-per run: every row indexed before the column existed is unconfirmed, and re-checking all of
-them at once drew Webflow 429s (2026-10-08). (Ironclaw, 2026-10: a paid template stuck on Stripe onboarding stayed indexed as a blank
+with `listing_confirmed = 0`. Each incremental run re-checks up to 10 unconfirmed rows, chosen
+from D1 (newest template first), so the gate holds one out once the lookup works. They are not
+taken from the LMT-sorted Airtable sweeps: a quiet row that nobody edits never reaches the top
+of those 50-row fetches (Ironclaw sat behind 1,000+ rows modified after it, 2026-10-08), and
+re-checking every unconfirmed row at once drew Webflow 429s the same day. Summaries report
+`unconfirmed_recheck_records`. (Ironclaw, 2026-10: a paid template stuck on Stripe onboarding stayed indexed as a blank
 card linking to a 404 because nothing re-checked it.) The 2026-09-15 baseline against
 production found exactly 5 of 11,460 indexed rows without a live listing, all of them 404s.
 

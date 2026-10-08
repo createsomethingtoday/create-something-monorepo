@@ -17,6 +17,7 @@ import {
   bumpPublicSearchCacheVersion,
   deleteTemplateDocuments,
   filterMissingOrStaleTemplateLookupTargets,
+  listUnconfirmedListingTemplateIds,
   finishSyncJobLock,
   getSyncCursor,
   heartbeatSyncJobLock,
@@ -873,11 +874,11 @@ const INCREMENTAL_WRITE_BATCH_SIZE = 12;
 const RECENT_PUBLISHED_SWEEP_LOOKBACK_DAYS = 21;
 const RECENT_MODIFIED_PUBLISHED_SWEEP_LOOKBACK_HOURS = 24;
 const RECENT_PUBLISHED_SWEEP_LIMIT = 50;
-// Extra sweep re-checks for rows indexed without a confirmed live listing. Each
-// costs a Webflow lookup (plus a Designer lookup), every 5 minutes: 10 keeps the
-// run well under the API rate limit while still clearing a backlog of ~100
-// unconfirmed rows within the hour.
-const MAX_UNCONFIRMED_LISTING_RECHECKS_PER_RUN = 10;
+// Rows indexed without a confirmed live listing, re-checked per incremental run.
+// Each costs a Webflow Templates lookup plus a Designer lookup, every 5 minutes:
+// 10 stays well under the API rate limit (an uncapped pass drew 429s on
+// 2026-10-08) while a fresh submission still gets re-checked within minutes.
+const UNCONFIRMED_LISTING_RECHECKS_PER_RUN = 10;
 
 function resolveSyncWindow(cursor: string, now: Date): { end: Date; until: string | undefined; isCaughtUp: boolean } {
   const end = new Date(Math.min(new Date(cursor).getTime() + MAX_SYNC_WINDOW_MS, now.getTime()));
@@ -951,11 +952,6 @@ async function fetchChangedRecentPublishedAssets(
       const target = templateLookupTargets([record])[0];
       return { id: record.id, templateSlug: target.templateSlug, sourceLastModifiedTime: sourceLastModifiedTime(record) };
     }),
-    // Without a CMS token no lookup can confirm a listing, so re-checking is pointless.
-    {
-      recheckUnconfirmedListings: hasWebflowCmsToken(env),
-      maxUnconfirmedRechecks: MAX_UNCONFIRMED_LISTING_RECHECKS_PER_RUN,
-    },
   );
   const changedIds = new Set(missingOrStaleTargets.map((target) => target.id));
   return candidates.filter((record) => changedIds.has(record.id));
@@ -1034,6 +1030,8 @@ async function runIncrementalSync(env: Env, heartbeat: SyncHeartbeat): Promise<S
   let boundedCursor: string | null = null;
   let hitStaleFetchLimit = false;
   let recentPublishedRecords = 0;
+  let unconfirmedRecheckRecords = 0;
+  const unconfirmedMissingIds: string[] = [];
 
   while (scannedWindows < MAX_EMPTY_SYNC_WINDOWS_PER_RUN) {
     const syncWindow = resolveSyncWindow(scanCursor, now);
@@ -1086,8 +1084,31 @@ async function runIncrementalSync(env: Env, heartbeat: SyncHeartbeat): Promise<S
     await heartbeat();
   }
 
+  // Re-check rows indexed without a confirmed live listing (the gate failed
+  // open, or the row predates listing_confirmed). They are chosen from D1, not
+  // from the LMT-sorted Airtable sweeps above: a quiet row that nobody edits
+  // never reaches the top of those 50-row fetches (Ironclaw sat behind 1,000+
+  // rows modified after it). Without a CMS token nothing can confirm a listing,
+  // so the pass is skipped rather than re-indexing rows as unconfirmed again.
+  if (hasWebflowCmsToken(env)) {
+    const queuedIds = new Set(assets.map((record) => record.id));
+    const unconfirmedIds = (await listUnconfirmedListingTemplateIds(env.DB, UNCONFIRMED_LISTING_RECHECKS_PER_RUN)).filter(
+      (id) => !queuedIds.has(id),
+    );
+    if (unconfirmedIds.length > 0) {
+      const unconfirmedAssets = await fetchAssetRecordsByIds(env, unconfirmedIds);
+      assets.push(...unconfirmedAssets);
+      unconfirmedRecheckRecords = unconfirmedAssets.length;
+      // An id Airtable no longer returns has no record to re-index; drop the row
+      // instead of leaving it to occupy a re-check slot every run.
+      const returnedIds = new Set(unconfirmedAssets.map((record) => record.id));
+      unconfirmedMissingIds.push(...unconfirmedIds.filter((id) => !returnedIds.has(id)));
+    }
+    await heartbeat();
+  }
+
   const toUpsert: TemplateDocumentInput[] = [];
-  const toDelete: string[] = [];
+  const toDelete: string[] = [...unconfirmedMissingIds];
   let aliasRecords = 0;
   let listingGatedRecords = 0;
   let webflowImageIndex: Awaited<ReturnType<typeof loadWebflowTemplateImageIndex>> = null;
@@ -1153,6 +1174,7 @@ async function runIncrementalSync(env: Env, heartbeat: SyncHeartbeat): Promise<S
     cursor: newCursor,
     skipped_empty_windows: skippedEmptyWindows,
     recent_published_records: recentPublishedRecords,
+    unconfirmed_recheck_records: unconfirmedRecheckRecords,
     listing_gated_records: listingGatedRecords,
     queued_record_sync_records: pendingRecordIds.length,
   };
