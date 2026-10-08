@@ -184,7 +184,21 @@ lookup never gates. A pass where the gated share is implausibly high (at least 5
 Summaries report `listing_gated_records`, and each gated slug appears in a `listing_gate`
 warning on `GET /api/templates/admin/sync-status`. Held-out templates are retried by the
 recent-published sweep every incremental run, and the Templates `collection_item_created`
-webhook indexes the record as soon as the CMS item appears. The 2026-09-15 baseline against
+webhook indexes the record as soon as the CMS item appears.
+
+Templates and Designers are read from `/items/live`, not the staged `/items` endpoint: a
+created-but-unpublished item, or a pending edit to a published one, does not exist on the
+public site yet.
+
+Each indexed row stores `listing_confirmed` (1 when the sync matched a live CMS item). When
+the gate fails open, because the lookup failed or the guard kept the batch, the row is indexed
+with `listing_confirmed = 0`. Each incremental run re-checks up to 10 unconfirmed rows, chosen
+from D1 (newest template first), so the gate holds one out once the lookup works. They are not
+taken from the LMT-sorted Airtable sweeps: a quiet row that nobody edits never reaches the top
+of those 50-row fetches (Ironclaw sat behind 1,000+ rows modified after it, 2026-10-08), and
+re-checking every unconfirmed row at once drew Webflow 429s the same day. Summaries report
+`unconfirmed_recheck_records`. (Ironclaw, 2026-10: a paid template stuck on Stripe onboarding stayed indexed as a blank
+card linking to a 404 because nothing re-checked it.) The 2026-09-15 baseline against
 production found exactly 5 of 11,460 indexed rows without a live listing, all of them 404s.
 
 Two details keep the gate safe around edge cases:

@@ -6,6 +6,7 @@ import {
   acquireSyncJobLock,
   backfillCreatorFieldsByName,
   backfillCreatorFieldsFromLookup,
+  listUnconfirmedListingTemplateIds,
   finishSyncJobLock,
   getPublicSearchCacheVersion,
   heartbeatSyncJobLock,
@@ -1034,6 +1035,276 @@ describe('webflow-template-search worker', () => {
     }
   });
 
+  it('holds out a template whose CMS item exists but was never published', async () => {
+    // A staged item is not a listing: its public page still 404s.
+    const fetchMock = installAirtableFetchMock({
+      publishedAssets: [PUBLISHED_ASSETS[0]],
+      styles: LOOKUPS.styles,
+      childCategories: LOOKUPS.childCategories,
+      tags: LOOKUPS.tags,
+      creators: LOOKUPS.creators,
+      webflowCollectionItems: {
+        [TEMPLATES_COLLECTION_ID]: [
+          {
+            id: 'item-agentflow',
+            isArchived: false,
+            isDraft: false,
+            fieldData: { 'sync-record-id': 'recAgentflow', name: 'Agentflow', slug: 'agentflow-website-template' },
+          },
+        ],
+      },
+      webflowLiveCollectionItems: { [TEMPLATES_COLLECTION_ID]: [] },
+    });
+    const { env, close } = createTestEnv();
+    env.WEBFLOW_API_TOKEN = 'test-webflow-cms-token';
+
+    try {
+      const response = await callWorker(
+        new Request('https://templates.test/api/templates/admin/sync-records', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token', 'content-type': 'application/json' },
+          body: JSON.stringify({ ids: ['recAgentflow'] }),
+        }),
+        env,
+      );
+      expect(await response.json()).toMatchObject({ indexed_records: 0, listing_gated_records: 1 });
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
+  it('re-checks unconfirmed listings newest template first, least-recently synced first within a day', async () => {
+    const { env, close } = createTestEnv();
+    try {
+      const insert = env.DB.prepare(
+        'INSERT INTO template_documents (id, template_slug, name, synced_at, published_date, listing_confirmed) VALUES (?, ?, ?, ?, ?, ?)',
+      );
+      await env.DB.batch([
+        insert.bind('recConfirmed', 'confirmed-website-template', 'Confirmed', '2026-10-08T00:00:00.000Z', '2026-10-09', 1),
+        insert.bind('recOldNull', 'old-website-template', 'Old', '2026-10-08T00:00:00.000Z', '2025-01-01', null),
+        insert.bind('recNewLater', 'new-later-website-template', 'New Later', '2026-10-08T12:00:00.000Z', '2026-10-06', 0),
+        insert.bind('recNewEarly', 'new-early-website-template', 'New Early', '2026-10-08T06:00:00.000Z', '2026-10-06', null),
+        insert.bind('recNewest', 'newest-website-template', 'Newest', '2026-10-08T00:00:00.000Z', '2026-10-08', 0),
+      ]);
+      expect(await listUnconfirmedListingTemplateIds(env.DB, 3)).toEqual(['recNewest', 'recNewEarly', 'recNewLater']);
+      expect(await listUnconfirmedListingTemplateIds(env.DB, 10)).toEqual(['recNewest', 'recNewEarly', 'recNewLater', 'recOldNull']);
+    } finally {
+      close();
+    }
+  });
+
+  it('keeps a confirmed listing when a later sync cannot reach the CMS', async () => {
+    // One 429 failed a whole targeted batch and un-confirmed 80 rows that were
+    // confirmed the run before (2026-10-08), pushing them back into the re-check
+    // queue. An unavailable lookup is not evidence either way.
+    const { env, close } = createTestEnv();
+    env.WEBFLOW_API_TOKEN = 'test-webflow-cms-token';
+    const dataset = {
+      publishedAssets: [PUBLISHED_ASSETS[0]],
+      styles: LOOKUPS.styles,
+      childCategories: LOOKUPS.childCategories,
+      tags: LOOKUPS.tags,
+      creators: LOOKUPS.creators,
+    };
+    const syncAgentflow = () =>
+      callWorker(
+        new Request('https://templates.test/api/templates/admin/sync-records', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token', 'content-type': 'application/json' },
+          body: JSON.stringify({ ids: ['recAgentflow'] }),
+        }),
+        env,
+      );
+    const listingConfirmed = () =>
+      env.DB.prepare('SELECT listing_confirmed FROM template_documents WHERE id = ?')
+        .bind('recAgentflow')
+        .first<{ listing_confirmed: number | null }>()
+        .then((row) => row?.listing_confirmed);
+
+    let fetchMock = installAirtableFetchMock({
+      ...dataset,
+      webflowCollectionItems: {
+        [TEMPLATES_COLLECTION_ID]: [
+          {
+            id: 'item-agentflow',
+            isArchived: false,
+            isDraft: false,
+            fieldData: { 'sync-record-id': 'recAgentflow', name: 'Agentflow', slug: 'agentflow-website-template' },
+          },
+        ],
+      },
+    });
+    try {
+      await syncAgentflow();
+      expect(await listingConfirmed()).toBe(1);
+      fetchMock.mockRestore();
+
+      fetchMock = installAirtableFetchMock({
+        ...dataset,
+        webflowCollectionItemErrors: {
+          [TEMPLATES_COLLECTION_ID]: {
+            status: 429,
+            body: { message: 'Too Many Requests', code: 'too_many_requests', details: [] },
+            headers: { 'retry-after': '0' },
+          },
+        },
+      });
+      await syncAgentflow();
+      expect(await listingConfirmed()).toBe(1);
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
+  it('removes a backlog of dead listings instead of tripping the gate guard', async () => {
+    // Six re-checked rows that genuinely lack listings meet the guard's minimum
+    // of five. They were picked to be verified, so they must not count toward
+    // it, or they would be kept with listing_confirmed = 0 and re-checked forever.
+    const deadAssets = Array.from({ length: 6 }, (_, index) => ({
+      ...PUBLISHED_ASSETS[0],
+      id: `recDead${index}`,
+      fields: {
+        ...PUBLISHED_ASSETS[0].fields,
+        Name: `Dead ${index}`,
+        '🥞CMS Slug (formula)': `dead-${index}-website-template`,
+      },
+    }));
+    const fetchMock = installAirtableFetchMock({
+      publishedAssets: deadAssets,
+      incrementalAssets: [],
+      styles: LOOKUPS.styles,
+      childCategories: LOOKUPS.childCategories,
+      tags: LOOKUPS.tags,
+      creators: LOOKUPS.creators,
+      webflowCollectionItems: { [TEMPLATES_COLLECTION_ID]: [] },
+    });
+    const { env, close } = createTestEnv();
+    env.WEBFLOW_API_TOKEN = 'test-webflow-cms-token';
+
+    try {
+      const insert = env.DB.prepare(
+        'INSERT INTO template_documents (id, template_slug, name, synced_at, published_date, listing_confirmed) VALUES (?, ?, ?, ?, ?, ?)',
+      );
+      await env.DB.batch(
+        deadAssets.map((asset, index) =>
+          insert.bind(asset.id, `dead-${index}-website-template`, `Dead ${index}`, '2026-10-08T00:00:00.000Z', '2026-10-06', null),
+        ),
+      );
+      await setSyncCursor(env.DB, new Date(Date.now() - 60_000).toISOString());
+
+      const response = await callWorker(
+        new Request('https://templates.test/api/templates/admin/sync', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      const payload = (await response.json()) as {
+        unconfirmed_recheck_records?: number;
+        listing_gated_records: number;
+        warnings?: Array<{ source: string }>;
+      };
+      expect(payload).toMatchObject({ unconfirmed_recheck_records: 6, listing_gated_records: 6 });
+      expect(payload.warnings?.map((warning) => warning.source)).not.toContain('listing_gate_guard');
+
+      const remaining = await env.DB.prepare("SELECT COUNT(*) AS n FROM template_documents WHERE id LIKE 'recDead%'").first<{ n: number }>();
+      expect(remaining?.n).toBe(0);
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
+  it('re-checks a template indexed while the CMS lookup failed and gates it once the lookup works', async () => {
+    // Ironclaw: approved and indexed, but the CMS item never appeared (Stripe
+    // onboarding incomplete). A fail-open index must not become permanent.
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-03-16T12:00:00.000Z'));
+    const { env, close } = createTestEnv();
+    env.WEBFLOW_API_TOKEN = 'test-webflow-cms-token';
+    const dataset = {
+      publishedAssets: [PUBLISHED_ASSETS[0]],
+      incrementalAssets: [],
+      styles: LOOKUPS.styles,
+      childCategories: LOOKUPS.childCategories,
+      tags: LOOKUPS.tags,
+      creators: LOOKUPS.creators,
+    };
+    const incrementalSync = async () => {
+      await setSyncCursor(env.DB, '2026-03-16T11:55:00.000Z');
+      const response = await callWorker(
+        new Request('https://templates.test/api/templates/admin/sync', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      return (await response.json()) as {
+        recent_published_records?: number;
+        unconfirmed_recheck_records?: number;
+        listing_gated_records: number;
+      };
+    };
+    const searchAgentflow = async () => {
+      const response = await callWorker(new Request('https://templates.test/api/templates/search?q=Agentflow'), env);
+      return ((await response.json()) as { items: Array<{ id: string }> }).items.map((item) => item.id);
+    };
+
+    let fetchMock = installAirtableFetchMock({
+      ...dataset,
+      webflowCollectionItemErrors: {
+        [TEMPLATES_COLLECTION_ID]: {
+          status: 500,
+          body: { message: 'An Internal Error Occurred', code: 'internal_error', details: [] },
+          headers: { 'retry-after': '0' },
+        },
+      },
+    });
+    try {
+      await callWorker(
+        new Request('https://templates.test/api/templates/admin/sync-records', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token', 'content-type': 'application/json' },
+          body: JSON.stringify({ ids: ['recAgentflow'] }),
+        }),
+        env,
+      );
+      expect(await searchAgentflow()).toEqual(['recAgentflow']);
+      fetchMock.mockRestore();
+
+      // The Airtable row has not changed, yet the run re-checks it because its
+      // listing was never confirmed, and the gate now holds it out.
+      fetchMock = installAirtableFetchMock({ ...dataset, webflowCollectionItems: { [TEMPLATES_COLLECTION_ID]: [] } });
+      expect(await incrementalSync()).toMatchObject({ unconfirmed_recheck_records: 1, listing_gated_records: 1 });
+      expect(await searchAgentflow()).toEqual([]);
+      fetchMock.mockRestore();
+
+      // Once the CMS item exists the record is indexed as confirmed, and later
+      // sweeps stop re-checking it.
+      fetchMock = installAirtableFetchMock({
+        ...dataset,
+        webflowCollectionItems: {
+          [TEMPLATES_COLLECTION_ID]: [
+            {
+              id: 'item-agentflow',
+              isArchived: false,
+              isDraft: false,
+              fieldData: { 'sync-record-id': 'recAgentflow', name: 'Agentflow', slug: 'agentflow-website-template' },
+            },
+          ],
+        },
+      });
+      expect(await incrementalSync()).toMatchObject({ recent_published_records: 1, listing_gated_records: 0 });
+      expect(await searchAgentflow()).toEqual(['recAgentflow']);
+      expect(await incrementalSync()).toMatchObject({ recent_published_records: 0, unconfirmed_recheck_records: 0 });
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
   it('refuses to gate an implausible share of published templates in one pass', async () => {
     // If every template in a batch "has no listing", the CMS read is suspect;
     // keep the rows and flag the run instead of emptying the marketplace.
@@ -1360,7 +1631,7 @@ describe('webflow-template-search worker', () => {
 
       const cmsPageCalls = fetchMock.mock.calls.filter(([input]) => {
         const url = new URL(typeof input === 'string' ? input : input.url);
-        return url.pathname === `/v2/collections/${TEMPLATES_COLLECTION_ID}/items` && !url.searchParams.get('slug') && !url.searchParams.get('name');
+        return url.pathname === `/v2/collections/${TEMPLATES_COLLECTION_ID}/items/live` && !url.searchParams.get('slug') && !url.searchParams.get('name');
       });
       expect(cmsPageCalls.length).toBeGreaterThan(0);
       for (const [, init] of cmsPageCalls) {

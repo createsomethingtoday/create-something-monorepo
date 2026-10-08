@@ -53,3 +53,55 @@ fn script_mentions_without_a_real_script_are_not_imports() {
         assert!(extract_exports(&file).unwrap().is_empty());
     }
 }
+
+#[test]
+fn typeof_import_call_arguments_preserve_source_and_exports() {
+    let dir = tempdir().unwrap();
+    for ext in ["ts", "tsx", "svelte"] {
+        let body = "import { value } from './dep';\nexport async function load(original: <T>() => Promise<T>) {\n return await original<typeof import('./module')>();\n}\n";
+        let source = if ext == "svelte" { format!("<script module lang=\"ts\">\n{body}</script>") } else { body.to_string() };
+        let file = dir.path().join(format!("loader.{ext}"));
+        fs::write(&file, &source).unwrap();
+        let functions = extract_functions(&file).unwrap();
+        assert_eq!(functions.len(), 1);
+        assert!(functions[0].source.contains("original<typeof import('./module')>()"));
+        assert_eq!(functions[0].start_line, if ext == "svelte" { 3 } else { 2 });
+        assert_eq!(extract_imports(&file).unwrap()[0].source, "./dep");
+        assert!(extract_exports(&file).unwrap().iter().any(|export| export.name == "load"));
+        assert_eq!(fs::read_to_string(file).unwrap(), source);
+    }
+}
+
+#[test]
+fn typeof_import_recovery_is_bounded_by_call_type_context() {
+    let dir = tempdir().unwrap();
+    let file = dir.path().join("fixture.ts");
+    for body in [
+        "return original<Promise<typeof import('./module')>>();",
+        "return original<[typeof import('./module'), string]>();",
+        "return original<typeof import('./one') | typeof import('./two')>();",
+        "const query: typeof import('./module') = value; return query;",
+        "return typeof import('./module');",
+        "return original < typeof import('./module')();",
+        "return a < typeof import('./module') > b;",
+    ] {
+        let source = format!("export function load() {{ {body} }}");
+        fs::write(&file, &source).unwrap();
+        let functions = extract_functions(&file).unwrap_or_else(|error| panic!("{source}: {error}"));
+        assert_eq!(functions[0].source, source.strip_prefix("export ").unwrap());
+        assert!(extract_imports(&file).is_ok());
+    }
+    for source in [
+        "export function load() { return original<typeof import(foo)>(); }",
+        "export function load() { return original<typeof import('./one', './two')>(); }",
+        "export function load() { return original<typeof import('./one', { with: {} })>(); }",
+        "export function load() { return original<typeof import('./one')>(); ",
+        "export function load() { return original<typeof import('./one')>(; }",
+        "export function load() { return typeof import('./module'); } const broken = ;",
+        "export function load() { return a < typeof import('./module') > b; } const broken = ;",
+    ] {
+        fs::write(&file, source).unwrap();
+        assert!(extract_functions(&file).is_err(), "malformed or unsupported import form accepted: {source}");
+        assert!(extract_imports(&file).is_err(), "malformed or unsupported import form accepted: {source}");
+    }
+}

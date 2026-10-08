@@ -451,6 +451,25 @@ function parseGroundJson(output) {
   return JSON.parse(output.slice(start, end + 1));
 }
 
+// Native verification status describes findings; completion is separate evidence.
+// In particular FAIL may be a fully completed scan with findings. Never infer
+// completion from an unrecognized/missing status or an advisory process exit.
+export function normalizeCheckCompletion(coverage) {
+  if (!coverage || typeof coverage !== 'object') return 'partial';
+  const { status, scan_complete: complete } = coverage;
+  if (status === 'partial' || status === 'failed') return status;
+  if (coverage.error_count > 0 || coverage.reason === 'batch_requires_explicit_module'
+      || coverage.reason === 'no_entry_points_provided') return 'failed';
+  if (coverage.excluded_changed_files?.some((file) => ['duplicate_analysis_incomplete',
+      'duplicate_analysis_failed', 'orphan_analysis_failed', 'file_unavailable'].includes(file.reason))) return 'failed';
+  if (coverage.unsupported_changed_files?.length > 0) return 'partial';
+  if (complete === false) return status === 'FAIL' || status === 'failed' ? 'failed' : 'partial';
+  if (status === 'TIMEOUT' || status === 'UNSUPPORTED') return 'partial';
+  if (['completed', 'partial', 'failed'].includes(status)) return status;
+  if (['PASS', 'FAIL', 'NOT_APPLICABLE'].includes(status) && complete === true) return 'completed';
+  return 'partial';
+}
+
 export function buildReceipt({
   root,
   base,
@@ -488,15 +507,26 @@ export function buildReceipt({
       run(groundBinary, ['diff', path, '--base', baseSha, '--checks', CHECKS.join(',')], root, { groundOutcome: true })
     );
     const duplicateCompletion = result.check_coverage?.duplicates;
-    const duplicateStatus = ['completed', 'partial', 'failed'].includes(duplicateCompletion?.status)
-      ? duplicateCompletion.status
-      : requiresCompletionEvidence
-        ? 'partial'
-        : 'completed';
+    let duplicateStatus = normalizeCheckCompletion(duplicateCompletion);
     const orphanCompletion = result.check_coverage?.orphans;
-    const orphanStatus = ['completed', 'partial', 'failed'].includes(orphanCompletion?.status)
-      ? orphanCompletion.status
-      : 'completed';
+    let orphanStatus = normalizeCheckCompletion(orphanCompletion);
+    const completionDiagnostics = [];
+    const knownOutcomes = ['CLEAN', 'FINDINGS', 'INCOMPLETE', 'NOT_APPLICABLE'];
+    const knownVerification = ['PASS', 'FAIL', 'NOT_APPLICABLE', 'TIMEOUT', 'UNSUPPORTED'];
+    const unknownOutcome = result.outcome !== undefined && !knownOutcomes.includes(result.outcome);
+    const unknownVerification = result.verification_status !== undefined && !knownVerification.includes(result.verification_status);
+    const incomplete = result.outcome === 'INCOMPLETE' || ['TIMEOUT', 'UNSUPPORTED'].includes(result.verification_status);
+    if (unknownOutcome || unknownVerification) completionDiagnostics.push('unknown_native_completion_contract');
+    if (incomplete && duplicateStatus === 'completed' && orphanStatus === 'completed') {
+      completionDiagnostics.push('native_incomplete_contradicts_check_completion');
+    }
+    if (result.outcome === 'CLEAN' && result.verification_status !== undefined && result.verification_status !== 'PASS') {
+      completionDiagnostics.push('native_clean_contradicts_verification_status');
+    }
+    if (completionDiagnostics.length > 0) {
+      if (duplicateStatus === 'completed') duplicateStatus = 'partial';
+      if (orphanStatus === 'completed') orphanStatus = 'partial';
+    }
     const duplicateReportedFiles = Array.isArray(duplicateCompletion?.analyzed_changed_files)
       ? duplicateCompletion.analyzed_changed_files
       : requiresCompletionEvidence
@@ -569,7 +599,10 @@ export function buildReceipt({
     return {
       path,
       package_name: packageName(root, path),
+      native_outcome: result.outcome ?? null,
+      native_verification_status: result.verification_status ?? null,
       coverage: {
+        completion_diagnostics: completionDiagnostics,
         discovered_changed_files: files.filter((file) => file.startsWith(`${path}/`)).length,
         analyzable_changed_files: analyzedChangedFiles.length,
         analyzed_changed_files: analyzedChangedFiles,

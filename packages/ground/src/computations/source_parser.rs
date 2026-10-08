@@ -108,7 +108,30 @@ pub(super) fn parse_typescript(parser: &mut Parser, source: &str) -> Option<Tree
     while tree.root_node().has_error() {
         let mut spans = Vec::new();
         type_import_spans(tree.root_node(), &mut spans);
-        if spans.is_empty() { break; }
+        if spans.is_empty() {
+            // The grammar can recover typeof-import call arguments as runtime
+            // comparisons. Accept a speculative operand projection only when
+            // reparsing proves a complete generic CALL's type-query context.
+            let mut candidates = Vec::new();
+            typeof_import_spans(tree.root_node(), &mut candidates);
+            let mut recovered = None;
+            for (start, end) in candidates {
+                let mut trial = projected.clone();
+                trial[start..end].copy_from_slice(&whitespace(&source[start..end]));
+                trial[start] = b'I';
+                let candidate = parser.parse(&trial, None)?;
+                if is_call_type_query(candidate.root_node(), start) {
+                    recovered = Some((trial, candidate));
+                    break;
+                }
+            }
+            if let Some((trial, candidate)) = recovered {
+                projected = trial;
+                tree = candidate;
+                continue;
+            }
+            break;
+        }
         for (start, end) in spans {
             projected[start..end].copy_from_slice(&whitespace(&source[start..end]));
             projected[start] = b'I';
@@ -142,4 +165,41 @@ fn type_import_spans(node: Node, spans: &mut Vec<(usize, usize)>) {
     }
     let mut cursor = node.walk();
     for child in node.named_children(&mut cursor) { type_import_spans(child, spans); }
+}
+
+
+fn typeof_import_spans(node: Node, spans: &mut Vec<(usize, usize)>) {
+    if node.kind() == "call_expression" && !node.has_error()
+        && node.child_by_field_name("function").is_some_and(|n| n.kind() == "import")
+        && node.parent().is_some_and(|parent| parent.kind() == "unary_expression"
+            && parent.child_by_field_name("operator").is_some_and(|op| op.kind() == "typeof")) {
+        if let Some(args) = node.child_by_field_name("arguments") {
+            let mut cursor = args.walk();
+            let args: Vec<_> = args.named_children(&mut cursor).filter(|n| n.kind() != "comment").collect();
+            if args.len() == 1 && args[0].kind() == "string" && !args[0].has_error() {
+                spans.push((node.start_byte(), node.end_byte()));
+            }
+        }
+    }
+    let mut cursor = node.walk();
+    for child in node.named_children(&mut cursor) { typeof_import_spans(child, spans); }
+}
+
+fn is_call_type_query(root: Node, start: usize) -> bool {
+    let Some(identifier) = root.descendant_for_byte_range(start, start + 1) else { return false; };
+    if identifier.kind() != "identifier" || identifier.start_byte() != start || identifier.end_byte() != start + 1 {
+        return false;
+    }
+    let Some(mut node) = identifier.parent().filter(|node| node.kind() == "type_query") else { return false; };
+    while let Some(parent) = node.parent() {
+        if node.kind() == "type_arguments" && parent.kind() == "call_expression" {
+            return !parent.has_error() && parent.child_by_field_name("type_arguments") == Some(node)
+                && parent.child_by_field_name("arguments").is_some();
+        }
+        // A runtime expression may contain a type query elsewhere; it cannot
+        // establish this operand as a call's type argument.
+        if matches!(parent.kind(), "statement_block" | "program" | "binary_expression" | "arguments") { return false; }
+        node = parent;
+    }
+    false
 }
