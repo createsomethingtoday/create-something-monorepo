@@ -1,5 +1,6 @@
 import type { CanvasDocument } from './document';
 import type { CanvasOperation } from './paired-session';
+import type { NativeHostBatch } from './native-host-batches';
 
 export type NativeRole = 'web' | 'host' | 'companion';
 
@@ -50,6 +51,7 @@ export const discoverHosts = () => invokeNative<DiscoveredHost[]>('draw_discover
 export const pairCompanion = (host: DiscoveredHost, code: string) => invokeNative<NativeSessionStatus>('draw_companion_pair', { host, code });
 export const submitNativeOperation = (role: Exclude<NativeRole, 'web'>, operation: CanvasOperation) =>
   invokeNative<NativeSessionStatus>(role === 'host' ? 'draw_host_apply_local' : 'draw_companion_submit', { operation });
+export const submitHostBatch = (request: NativeHostBatch) => invokeNative<NativeSessionStatus>('draw_host_apply_batch', { request });
 export const replaceHostDocument = (document: CanvasDocument, reason: 'undo' | 'redo' | 'import' | 'reset', expectedRevision: number) =>
   invokeNative<NativeSessionStatus>('draw_host_replace_document', { document, reason, expectedRevision });
 export const setCompanionOnline = (online: boolean) => invokeNative<NativeSessionStatus>('draw_companion_set_online', { online });

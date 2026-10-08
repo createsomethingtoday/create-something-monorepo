@@ -88,3 +88,30 @@ builds the App Store Connect IPA, uploads it to TestFlight, creates a draft
 GitHub release, and downloads the release assets again to prove their hashes
 match `production-release.json`. The release stays draft until two clean
 physical Mac/iPhone acceptance receipts are attached.
+
+## Offline-first local development pilot
+
+This branch no longer starts the desktop LAN listener or Bonjour advertisement
+by default. Phone pairing requires launching with
+`CREATE_SOMETHING_DRAW_ENABLE_LAN=1`; the Pair action explains this when disabled.
+This is a compiled development change with isolated launch/persistence evidence, not a new release.
+Cloud sharing/agent relay remain separate explicit features; disabling LAN alone
+is not an outbound-network sandbox.
+
+The [offline file pilot](../../packages/mapping-canvas/offline-agent/README.md)
+works on an explicitly selected Canvas JSON export. It creates reviewed copies,
+never writes `paired-session.json`, and is not live native agent integration.
+
+
+Native host edits use `draw_host_apply_batch` for a single caller-revision-checked,
+atomic commit per UI batch. It is trusted UI IPC, not an external agent API;
+agent grants, native layer-lock policy and shared authoritative history are pending.
+See the [current audit and acceptance](../../packages/mapping-canvas/docs/offline-desktop-audit.md).
+For disposable native tests, set both `CREATE_SOMETHING_DRAW_HOME` to a new test
+profile and `CREATE_SOMETHING_DRAW_EPHEMERAL_WEBVIEW=1` to avoid installed WebView
+storage. This does not replace a signed-app or real native UI acceptance run.
+
+The unregistered `local_agent.rs` seam tests ephemeral document/layer grants,
+revocation, expiry, native lock enforcement, and one revision-guarded inverse.
+It has no Tauri command or socket and cannot issue real agent authority. Shared
+durable undo, approval UI, and a reviewed live transport remain integration gates.

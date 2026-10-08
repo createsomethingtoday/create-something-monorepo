@@ -8,6 +8,8 @@ use std::{
 };
 
 mod transport;
+mod host_batch;
+mod local_agent;
 
 use create_something_draw_pairing_protocol::{
     apply_canvas_operation, apply_envelope, digest_capability, normalize_document_compat,
@@ -796,6 +798,14 @@ async fn draw_companion_pair(
 }
 
 #[tauri::command]
+fn draw_host_apply_batch(
+    runtime: tauri::State<'_, Arc<DrawRuntime>>,
+    request: host_batch::HostBatch,
+) -> Result<Value, String> {
+    host_batch::apply(&runtime, request)
+}
+
+#[tauri::command]
 fn draw_host_apply_local(
     runtime: tauri::State<'_, Arc<DrawRuntime>>,
     operation: CanvasOperation,
@@ -1279,6 +1289,9 @@ async fn draw_companion_refresh(
 
 #[tauri::command]
 fn draw_pair_begin(runtime: tauri::State<'_, Arc<DrawRuntime>>) -> Result<PairingOffer, String> {
+    if runtime.transport.lock().map_err(|error| error.to_string())?.is_none() {
+        return Err("LAN pairing is disabled. Restart with CREATE_SOMETHING_DRAW_ENABLE_LAN=1 only when you want phone pairing.".into());
+    }
     pair_begin(&runtime)
 }
 
@@ -1299,6 +1312,14 @@ async fn draw_discover_hosts() -> Result<Vec<transport::DiscoveredHost>, String>
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    let mut context = tauri::generate_context!();
+    // Acceptance runs can avoid the installed app's WKWebView storage entirely.
+    // Canonical document persistence still uses the explicit isolated Draw home.
+    if std::env::var("CREATE_SOMETHING_DRAW_EPHEMERAL_WEBVIEW").as_deref() == Ok("1") {
+        for window in &mut context.config_mut().app.windows {
+            window.incognito = true;
+        }
+    }
     tauri::Builder::default()
         .setup(|app| {
             let home = std::env::var_os("CREATE_SOMETHING_DRAW_HOME")
@@ -1329,7 +1350,9 @@ pub fn run() {
                 companion_flush: tokio::sync::Mutex::new(()),
             });
             #[cfg(desktop)]
-            transport::start(runtime.clone(), &home).map_err(std::io::Error::other)?;
+            if std::env::var("CREATE_SOMETHING_DRAW_ENABLE_LAN").as_deref() == Ok("1") {
+                transport::start(runtime.clone(), &home).map_err(std::io::Error::other)?;
+            }
             app.manage(runtime);
             Ok(())
         })
@@ -1339,6 +1362,7 @@ pub fn run() {
             draw_companion_status,
             draw_companion_pair,
             draw_host_apply_local,
+            draw_host_apply_batch,
             draw_host_replace_document,
             draw_companion_submit,
             draw_companion_set_online,
@@ -1348,7 +1372,7 @@ pub fn run() {
             draw_revoke_client,
             draw_discover_hosts
         ])
-        .run(tauri::generate_context!())
+        .run(context)
         .expect("error while running CREATE SOMETHING Draw");
 }
 

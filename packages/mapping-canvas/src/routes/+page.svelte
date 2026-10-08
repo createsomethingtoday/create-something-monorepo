@@ -19,7 +19,8 @@
   import { DEFAULT_DRAWING_COLOR, DRAWING_COLOR_PREFERENCE, DRAWING_PALETTE, isColorableObject, isDrawingColor, recolorObjects, type DrawingColor } from '$lib/palette';
   import { applyCanvasOperations, isValidCanvasTitle, type CanvasOperation } from '$lib/paired-session';
   import { connectorLabelLayout, createDrawWebMcpTools, drawRevision, registerDrawWebMcpTools, type DrawRenderedGeometry, type DrawTransitionKind } from '$lib/webmcp';
-  import { beginPairing, companionStatus, discoverHosts, forgetCompanion, hasNativeBridge, hostStatus, nativeRole as readNativeRole, pairCompanion, refreshCompanion, replaceHostDocument, revokeCompanion, setCompanionOnline, submitNativeOperation, type DiscoveredHost, type NativeRole, type NativeSessionStatus, type PairingOffer } from '$lib/native-pairing';
+  import { beginPairing, companionStatus, discoverHosts, forgetCompanion, hasNativeBridge, hostStatus, nativeRole as readNativeRole, pairCompanion, refreshCompanion, replaceHostDocument, revokeCompanion, setCompanionOnline, submitNativeOperation, submitHostBatch, type DiscoveredHost, type NativeRole, type NativeSessionStatus, type PairingOffer } from '$lib/native-pairing';
+  import { NativeHostBatches, settleNativeHostBatch } from '$lib/native-host-batches';
   import { fitViewportToBounds, normalizeWheelDelta, panViewport, zoomViewportAt } from '$lib/viewport';
   import { createNoteInputBuffer } from '$lib/note-input';
   import { paddedSegmentBounds } from '$lib/spatial';
@@ -78,6 +79,7 @@
   let nativeRole = $state<NativeRole>('web'), pairingOpen = $state(false), pairingBusy = $state(false);
   let pairingOffer = $state<PairingOffer | null>(null), discoveredHosts = $state<DiscoveredHost[]>([]), selectedHost = $state<DiscoveredHost | null>(null), pairingCode = $state('');
   let nativeSession = $state<NativeSessionStatus>({});
+  const hostBatches = new NativeHostBatches();
   let sidebarCollapsed = $state(false);
   let shortcutsDialog: HTMLDialogElement;
   let drawingColor = $state<DrawingColor>(DEFAULT_DRAWING_COLOR);
@@ -640,7 +642,7 @@
         nativeSession = { ...nativeSession, ...reconciled };
         if (reconciled.document) history = { past: [], present: reconciled.document, future: [] };
       }
-      status = nativeRole === 'host' ? 'Mac session ready · Wi-Fi pairing available' : nativeSession.status === 'paired' ? 'Paired with Mac' : 'Pair this iPhone with Draw on Mac';
+      status = nativeRole === 'host' ? (nativeSession.transport ? 'Mac session ready · Wi-Fi pairing enabled' : 'Mac session ready · LAN pairing disabled') : nativeSession.status === 'paired' ? 'Paired with Mac' : 'Pair this iPhone with Draw on Mac';
     } catch (error) { status = error instanceof Error ? error.message : 'Native session unavailable'; }
     ready = true;
   }
@@ -655,12 +657,12 @@
   }
 
   async function refreshMirroredState() {
-    if (!ready || nativeRole === 'web' || drawing || transformGesture || wheelTimer || window.document.activeElement?.closest('input,textarea,select,[contenteditable="true"]')) return;
+    if (!ready || nativeRole === 'web' || (nativeRole === 'host' && !hostBatches.canMirror) || replacingDocument || drawing || transformGesture || pinch || pendingTouchAction || wheelTimer || window.document.activeElement?.closest('input,textarea,select,[contenteditable="true"]')) return;
     if (nativeRole === 'companion' && (!nativeSession.sessionId || nativeSession.online === false || (nativeSession.queueDepth || 0) > 0)) return;
     const optimisticVersion = nativeOptimisticVersion;
     try {
       const refreshed = nativeRole === 'host' ? await hostStatus() : await refreshCompanion();
-      if (optimisticVersion !== nativeOptimisticVersion || wheelTimer) return;
+      if (optimisticVersion !== nativeOptimisticVersion || wheelTimer || drawing || transformGesture || pinch || pendingTouchAction || replacingDocument || (nativeRole === 'host' && !hostBatches.canMirror)) return;
       if (refreshed.revision !== nativeSession.revision && refreshed.document) {
         companionResetArmed = false; clearTimeout(companionResetTimer);
         history = nativeRole === 'host'
@@ -691,6 +693,34 @@
       historyOperationIndex = 1;
     }
     const role = nativeRole;
+    if (role === 'host') {
+      const ticket = hostBatches.reserve(nativeSession, operations);
+      const optimisticVersion = ++nativeOptimisticVersion;
+      nativeTail = nativeTail.then(async () => {
+        if (!hostBatches.current(ticket)) return;
+        try {
+          const result = await submitHostBatch(ticket.request);
+          if (!result.document || !['applied', 'duplicate'].includes(result.status || '')) throw new Error('Native batch did not commit.');
+          nativeSession = { ...nativeSession, ...result };
+          if (optimisticVersion === nativeOptimisticVersion)
+            history = settleNativeHostBatch(history, result, recordsHistory, preserveFuture);
+          status = `Mac committed revision ${result.revision}`;
+        } catch (error) {
+          // Outcome may be uncertain: never replay automatically or keep dependent optimistic edits.
+          hostBatches.invalidate();
+          nativeConflictEpoch += 1; nativeOptimisticVersion += 1;
+          try {
+            const refreshed = await hostStatus();
+            nativeSession = { ...nativeSession, ...refreshed };
+            if (!refreshed.document) throw new Error('Native recovery returned no document.');
+            history = { past: [], present: refreshed.document, future: [] };
+            hostBatches.recovered();
+          } catch { /* Stay blocked; the operator must relaunch/reconcile native authority. */ }
+          status = `${error instanceof Error ? error.message : 'Native batch failed'} · dependent edits discarded; inspect the authoritative canvas`;
+        }
+      }).finally(() => hostBatches.finish(ticket));
+      return;
+    }
     const conflictEpoch = nativeConflictEpoch;
     const queued = operations.map((operation) => ({ operation, optimisticVersion: ++nativeOptimisticVersion }));
     nativeTail = nativeTail.then(async () => {
@@ -724,13 +754,13 @@
         if (result.status === 'queued') status = `${result.queueDepth || 1} action queued · reconnect to Mac`;
         else if (result.status === 'credentials_rejected') status = 'Pairing credentials rejected · export if needed, then forget and re-pair';
         else if (result.status === 'pairing_changed') status = 'Pairing changed while syncing · using the current Mac session';
-        else status = role === 'host' ? `Mac committed revision ${result.revision}` : `Synced revision ${result.revision}`;
+        else status = `Synced revision ${result.revision}`;
       }
     }).catch((error) => { status = error instanceof Error ? error.message : 'Native operation failed'; });
   }
 
   function point(event: PointerEvent): Point { const rect = surface.getBoundingClientRect(); return { x: (event.clientX - rect.left - viewport.x) / viewport.zoom, y: (event.clientY - rect.top - viewport.y) / viewport.zoom }; }
-  function companionCanEdit() { if (replacingDocument) { status = 'Wait for the document replacement to finish'; return false; } if (nativeRole !== 'companion') return true; if (nativeSession.sessionId && !nativeSession.requiresRepair) return true; status = nativeSession.requiresRepair ? 'Pairing credentials rejected · export if needed, then forget and re-pair' : 'Pair this iPhone with a Mac before editing'; return false; }
+  function companionCanEdit() { if (nativeRole === 'host' && hostBatches.isRecovering) { status = 'Native state recovery failed · relaunch and inspect before editing'; return false; } if (replacingDocument) { status = 'Wait for the document replacement to finish'; return false; } if (nativeRole !== 'companion') return true; if (nativeSession.sessionId && !nativeSession.requiresRepair) return true; status = nativeSession.requiresRepair ? 'Pairing credentials rejected · export if needed, then forget and re-pair' : 'Pair this iPhone with a Mac before editing'; return false; }
   async function persistCurrentDocument(next: CanvasDocument) {
     const run = () => writeCanvasDocument(next, persistedCanvasVersions.get(next.id) ?? null);
     return navigator.locks ? navigator.locks.request(`${DRAW_DOCUMENT_LOCK}:${next.id}`, run) : run();
@@ -989,9 +1019,49 @@
   function runConversion(target: 'note' | 'connector' | 'group') { const next = convert(document, selectedIds, target); if (next === document) { status = target === 'connector' ? 'Select two objects to make a connector' : 'Select source material first'; return; } const created = next.objects.at(-1)!; apply(next, { type: 'convert', selectedIds: [...selectedIds], target, resultId: created.id, createdAt: created.createdAt }); selectedIds = [created.id]; conversionOpen = false; status = `Converted to ${target}. Source preserved.`; }
   function restoreSelected() { const selected = selectedObjects[0]; if (!selected?.sourceSnapshot) return; const next = restoreConversion(document, selected.id); apply(next, { type: 'restore_conversion', id: selected.id }); selectedIds = selected.sourceIds || []; status = 'Conversion removed. Source restored.'; }
   function cancelPendingWheelSync() { clearTimeout(wheelTimer); wheelTimer = undefined; }
-  async function commitHostReplacement<T>(resolve: () => T, documentOf: (value: T) => CanvasDocument, install: (value: T) => void, reason: 'undo' | 'redo' | 'import' | 'reset') { if (nativeRole === 'host') cancelPendingWheelSync(); if (nativeRole !== 'host') { const value = resolve(); install(value); return value; } let committed!: T; const replacement = nativeTail.then(async () => { committed = resolve(); const expectedRevision = nativeSession.revision || 0; const result = await replaceHostDocument(documentOf(committed), reason, expectedRevision); nativeSession = { ...nativeSession, ...result }; install(committed); status = `Mac committed ${reason} at revision ${nativeSession.revision}`; }); nativeTail = replacement.catch(() => undefined); try { await replacement; return committed; } catch (error) { const refreshed = await hostStatus(); nativeSession = { ...nativeSession, ...refreshed }; if (refreshed.document) history = { past: history.past, present: refreshed.document, future: [] }; throw error; } }
-  async function doUndo() { if (replacingDocument) return; if (nativeRole === 'companion') { cancelPendingWheelSync(); const current = document, next = restoreHistoryWithFreshRevision(undo(history)); if (next === history) return; history = next; selectedIds = []; sendNative(operationsBetween(current, next.present), false, true); return; } try { const next = await commitHostReplacement(() => restoreHistoryWithFreshRevision(undo(history)), (value) => value.present, (value) => history = value, 'undo'); selectedIds = []; queueSave(next.present); } catch (error) { status = error instanceof Error ? error.message : 'Undo conflicted with an iPhone change'; } }
-  async function doRedo() { if (replacingDocument) return; if (nativeRole === 'companion') { cancelPendingWheelSync(); const current = document, next = restoreHistoryWithFreshRevision(redo(history)); if (next === history) return; history = next; selectedIds = []; sendNative(operationsBetween(current, next.present), false, true); return; } try { const next = await commitHostReplacement(() => restoreHistoryWithFreshRevision(redo(history)), (value) => value.present, (value) => history = value, 'redo'); selectedIds = []; queueSave(next.present); } catch (error) { status = error instanceof Error ? error.message : 'Redo conflicted with an iPhone change'; } }
+  async function commitHostReplacement<T>(resolve: () => T, documentOf: (value: T) => CanvasDocument, install: (value: T) => void, reason: 'undo' | 'redo' | 'import' | 'reset') {
+    if (nativeRole === 'host') cancelPendingWheelSync();
+    if (nativeRole !== 'host') { const value = resolve(); install(value); return value; }
+    let committed!: T;
+    const replacement = nativeTail.then(async () => {
+      if (hostBatches.isRecovering) throw new Error('Native authority requires recovery.');
+      committed = resolve();
+      const result = await replaceHostDocument(documentOf(committed), reason, nativeSession.revision || 0);
+      nativeSession = { ...nativeSession, ...result };
+      install(committed);
+      status = `Mac committed ${reason} at revision ${nativeSession.revision}`;
+    });
+    nativeTail = replacement.catch(() => undefined);
+    try { await replacement; return committed; }
+    catch (error) {
+      const refreshed = await hostStatus(); nativeSession = { ...nativeSession, ...refreshed };
+      if (refreshed.document) history = { past: [], present: refreshed.document, future: [] };
+      throw error;
+    }
+  }
+  async function nativeHistoryAction(action: 'undo' | 'redo') {
+    if (replacingDocument || drawing || transformGesture || pinch || pendingTouchAction || hostBatches.isRecovering) return;
+    noteInput.flushAll();
+    replacingDocument = true;
+    nativeOptimisticVersion += 1;
+    try {
+      const next = await commitHostReplacement(() => restoreHistoryWithFreshRevision(action === 'undo' ? undo(history) : redo(history)), value => value.present, value => history = value, action);
+      selectedIds = []; queueSave(next.present);
+    } catch (error) { status = error instanceof Error ? error.message : 'History conflicted with native authority'; }
+    finally { replacingDocument = false; }
+  }
+  async function doUndo() {
+    if (replacingDocument) return;
+    if (nativeRole === 'host') { await nativeHistoryAction('undo'); return; }
+    if (nativeRole === 'companion') { cancelPendingWheelSync(); const current = document, next = restoreHistoryWithFreshRevision(undo(history)); if (next === history) return; history = next; selectedIds = []; sendNative(operationsBetween(current, next.present), false, true); return; }
+    const next = restoreHistoryWithFreshRevision(undo(history)); history = next; selectedIds = []; queueSave(next.present);
+  }
+  async function doRedo() {
+    if (replacingDocument) return;
+    if (nativeRole === 'host') { await nativeHistoryAction('redo'); return; }
+    if (nativeRole === 'companion') { cancelPendingWheelSync(); const current = document, next = restoreHistoryWithFreshRevision(redo(history)); if (next === history) return; history = next; selectedIds = []; sendNative(operationsBetween(current, next.present), false, true); return; }
+    const next = restoreHistoryWithFreshRevision(redo(history)); history = next; selectedIds = []; queueSave(next.present);
+  }
   function zoomCanvas(scale: number) {
     stopAgentCamera();
     updateViewport(zoomViewportAt(viewport, { x: viewportWidth / 2, y: viewportHeight / 2 }, scale));
@@ -1128,6 +1198,7 @@
     replacingDocument = true;
     clearTimeout(saveTimer); saveTimer = undefined;
     try {
+      if (nativeRole !== 'web') return await action();
       const run = async () => {
         const persisted = await loadDocument(documentId);
         if (!persistedVersionMatches(documentId, persisted)) throw new Error('Another tab changed this canvas. Reload Draw before replacing it again.');
