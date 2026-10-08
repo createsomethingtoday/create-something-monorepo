@@ -193,8 +193,11 @@ export interface TemplateDocumentInput {
   marketplaceStatus: string | null;
   sourceLastModifiedTime: string | null;
   syncedAt: string;
-  // A live Templates CMS item was confirmed for this record during the sync.
-  listingConfirmed: boolean;
+  // true: a live Templates CMS item was confirmed for this record during the
+  // sync. false: the lookup completed and found none. null: the lookup was
+  // unavailable (error, no token, partial coverage), so the row keeps whatever
+  // it had; a 429 must not un-confirm rows that were confirmed last run.
+  listingConfirmed: boolean | null;
 }
 
 export interface SearchParams {

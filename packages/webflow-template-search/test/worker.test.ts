@@ -1094,6 +1094,70 @@ describe('webflow-template-search worker', () => {
     }
   });
 
+  it('keeps a confirmed listing when a later sync cannot reach the CMS', async () => {
+    // One 429 failed a whole targeted batch and un-confirmed 80 rows that were
+    // confirmed the run before (2026-10-08), pushing them back into the re-check
+    // queue. An unavailable lookup is not evidence either way.
+    const { env, close } = createTestEnv();
+    env.WEBFLOW_API_TOKEN = 'test-webflow-cms-token';
+    const dataset = {
+      publishedAssets: [PUBLISHED_ASSETS[0]],
+      styles: LOOKUPS.styles,
+      childCategories: LOOKUPS.childCategories,
+      tags: LOOKUPS.tags,
+      creators: LOOKUPS.creators,
+    };
+    const syncAgentflow = () =>
+      callWorker(
+        new Request('https://templates.test/api/templates/admin/sync-records', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token', 'content-type': 'application/json' },
+          body: JSON.stringify({ ids: ['recAgentflow'] }),
+        }),
+        env,
+      );
+    const listingConfirmed = () =>
+      env.DB.prepare('SELECT listing_confirmed FROM template_documents WHERE id = ?')
+        .bind('recAgentflow')
+        .first<{ listing_confirmed: number | null }>()
+        .then((row) => row?.listing_confirmed);
+
+    let fetchMock = installAirtableFetchMock({
+      ...dataset,
+      webflowCollectionItems: {
+        [TEMPLATES_COLLECTION_ID]: [
+          {
+            id: 'item-agentflow',
+            isArchived: false,
+            isDraft: false,
+            fieldData: { 'sync-record-id': 'recAgentflow', name: 'Agentflow', slug: 'agentflow-website-template' },
+          },
+        ],
+      },
+    });
+    try {
+      await syncAgentflow();
+      expect(await listingConfirmed()).toBe(1);
+      fetchMock.mockRestore();
+
+      fetchMock = installAirtableFetchMock({
+        ...dataset,
+        webflowCollectionItemErrors: {
+          [TEMPLATES_COLLECTION_ID]: {
+            status: 429,
+            body: { message: 'Too Many Requests', code: 'too_many_requests', details: [] },
+            headers: { 'retry-after': '0' },
+          },
+        },
+      });
+      await syncAgentflow();
+      expect(await listingConfirmed()).toBe(1);
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
   it('re-checks a template indexed while the CMS lookup failed and gates it once the lookup works', async () => {
     // Ironclaw: approved and indexed, but the CMS item never appeared (Stripe
     // onboarding incomplete). A fail-open index must not become permanent.

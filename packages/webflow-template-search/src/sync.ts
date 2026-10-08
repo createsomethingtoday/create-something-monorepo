@@ -760,7 +760,7 @@ function normalizeTemplateRecord(
       typeof record.fields['🚀Marketplace Status'] === 'string' ? record.fields['🚀Marketplace Status'] : null,
     sourceLastModifiedTime: typeof record.fields['📅LMT'] === 'string' ? record.fields['📅LMT'] : null,
     syncedAt,
-    listingConfirmed: webflowIdentity !== null,
+    listingConfirmed: webflowIdentity !== null ? true : webflowImageIndex?.listingCoverageComplete === true ? false : null,
   };
 
   return { document, listingMissing };
