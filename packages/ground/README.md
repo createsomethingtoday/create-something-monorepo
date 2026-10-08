@@ -109,8 +109,8 @@ for compatibility. Legacy `find` commands keep their existing exit contracts.
 The repository's `ground:review` remains advisory and consumes both historical
 exit-zero reports and the new structured nonzero results.
 
-This is a source-level compatibility change for the next release, not a change
-to installed 0.4.3 artifacts. Shell callers that assumed every JSON result exits
+This compatibility change ships in 0.5.0. Previously installed 0.4.3 artifacts
+retain their old behavior. Shell callers that assumed every JSON result exits
 zero must handle the documented codes or explicitly opt into advisory behavior.
 
 Svelte analysis extracts scripts; it is not a compiler or template validator.

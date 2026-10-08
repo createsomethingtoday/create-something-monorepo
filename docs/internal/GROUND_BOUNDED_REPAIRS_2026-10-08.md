@@ -81,3 +81,22 @@ validators still run. No hook bypass, push, merge, release or deploy is authoriz
 Worktree disposition: retained at
 `/Users/createsomething/Documents/Codex/2026-10-08/task-2/ground-repairs`
 for local review and a separately approved promotion decision.
+
+## Approved promotion follow-up
+
+After the local repair review, the operator authorized normal PR review, required
+CI, merge, a verified versioned release, and installation on the current Mac.
+Version 0.5.0 marks the CLI exit-contract change. Package manifests, the lockfile
+and GA package version move together; all calibration thresholds and workflow
+gates remain unchanged. Earlier scope statements above record the local-only
+checkpoint, not the subsequent promotion authorization. The existing 0.4.3
+installation remains a rollback reference, and its active Agency runtime will
+not be replaced during concurrent release checks.
+
+The release review also identified the published-package adoption verifier's
+old exit-zero assumption. It now requires exact CLI outcome/exit pairs (CLEAN/0
+for core, FINDINGS/1 for the intentional duplicate fixture), retains MCP outcome
+and coverage assertions, and checks dead exports only through its existing
+explicit-module calls. A regression rejects incomplete, mismatched and failed
+process receipts. The Agency public instructions remain pinned to 0.4.3 pending
+a separately coordinated site update; this release does not change that site.

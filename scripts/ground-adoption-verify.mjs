@@ -7,7 +7,7 @@ import { mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { verifyAdjudicatedExports, verifyCheckout, verifyModuleInventory, verifyScanCoverage } from './ground-adoption-contract.mjs';
+import { verifyAnalysisProcess, verifyAdjudicatedExports, verifyCheckout, verifyModuleInventory, verifyScanCoverage } from './ground-adoption-contract.mjs';
 import { receiptDestination, writeReceipt } from './ground-adoption-output.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -25,17 +25,18 @@ const database = join(temporary, 'registry.db');
 const core = join(root, 'packages/mcp-core');
 const ground = join(root, 'packages/ground');
 
-function command(binary, args, input) {
+function command(binary, args, input, expectedOutcome) {
   // Both commands must come from the same exact published package.
   const result = spawnSync('npm', [
     'exec', '--yes', `--package=${packageSpec}`, '--', binary, ...args
   ], { cwd: root, input, encoding: 'utf8', timeout: 120_000, maxBuffer: 16 * 1024 * 1024 });
-  assert.equal(result.status, 0, `${binary} failed: ${result.error || result.stderr}`);
+  if (expectedOutcome) verifyAnalysisProcess(result, expectedOutcome);
+  else assert.equal(result.status, 0, `${binary} failed: ${result.error || result.stderr}`);
   return result;
 }
 
-function cli(args) {
-  return command('ground', ['--db', database, ...args]);
+function cli(args, expectedOutcome) {
+  return command('ground', ['--db', database, ...args], undefined, expectedOutcome);
 }
 
 function parse(result) {
@@ -49,8 +50,7 @@ function checkCore(result) {
   assert.equal(result.coverage.orphans.status, 'PASS');
   assert.equal(result.coverage.orphans.scan_complete, true);
   assert.equal(result.coverage.orphans.error_count, 0);
-  assert.equal(result.coverage.dead_exports.status, 'NOT_APPLICABLE');
-  assert.equal(result.coverage.dead_exports.reason, 'batch_requires_explicit_module');
+  assert.equal(result.outcome, 'CLEAN');
   assert.equal(result.summary.total_issues, 0, JSON.stringify(result.findings));
   assert(result.coverage.orphans.entry_point_evidence.some(entry =>
     entry.relative_path === 'eslint.evidence.config.mjs' &&
@@ -59,6 +59,7 @@ function checkCore(result) {
 }
 
 function checkGround(result) {
+  assert.equal(result.outcome, 'FINDINGS');
   verifyScanCoverage(result.coverage.duplicates, adjudication.coverage.ground_duplicates);
   assert.equal(result.coverage.duplicates.status, 'FAIL');
   assert.equal(result.coverage.duplicates.files_checked, result.coverage.duplicates.files_discovered);
@@ -106,18 +107,18 @@ try {
   assert.equal(coreDoctor.verification_status, 'PASS');
   assert.equal(coreDoctor.policy.source, join(core, '.ground.yml'));
 
-  const coreCommand = cli(['analyze', core, '--checks', 'duplicates,orphans,dead_exports', '--timeout-ms', '15000']);
+  const coreCommand = cli(['analyze', core, '--checks', 'duplicates,orphans', '--timeout-ms', '15000'], 'CLEAN');
   // In 0.4.0 extends merges arrays. Avoid silently changing the repository threshold.
   assert.match(coreCommand.stderr, /threshold=85%/);
   const coreAnalysis = parse(coreCommand);
   checkCore(coreAnalysis);
-  const groundAnalysis = parse(cli(['analyze', ground, '--checks', 'duplicates', '--timeout-ms', '15000']));
+  const groundAnalysis = parse(cli(['analyze', ground, '--checks', 'duplicates', '--timeout-ms', '15000'], 'FINDINGS'));
   checkGround(groundAnalysis);
 
   const modules = sourceModules(join(core, 'src'));
   verifyModuleInventory(modules.map(file => relative(root, file).replaceAll('\\', '/')), adjudication.dead_exports.inventory);
   const calls = [
-    { name: 'ground_analyze', arguments: { directory: core, checks: ['duplicates', 'orphans', 'dead_exports'], timeout_ms: 15000 } },
+    { name: 'ground_analyze', arguments: { directory: core, checks: ['duplicates', 'orphans'], timeout_ms: 15000 } },
     { name: 'ground_analyze', arguments: { directory: ground, checks: ['duplicates'], timeout_ms: 15000 } },
     ...modules.map(module_path => ({ name: 'ground_find_dead_exports', arguments: { module_path, search_scope: core } }))
   ];

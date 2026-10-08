@@ -20,9 +20,9 @@ The verified setup contract covers Claude Code, Codex, Cursor, and Windsurf.
 
 **The difference**: Ground requires computation before its claim tools accept a claim.
 
-## Source development: analysis exit compatibility
+## 0.5.0: analysis exit compatibility
 
-The next source release makes `ground analyze` / `ground diff` return exit 0
+Version 0.5.0 makes `ground analyze` / `ground diff` return exit 0
 only for completed clean analysis; JSON `outcome` distinguishes `CLEAN` (0),
 `FINDINGS` (1), `INCOMPLETE` (2), and `NOT_APPLICABLE` (3). Missing inputs,
 unsupported required paths and execution errors never count as clean. Invalid
