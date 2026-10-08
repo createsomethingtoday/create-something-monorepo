@@ -1649,7 +1649,7 @@ describe('webflow-template-search worker', () => {
 
       const webflowItemUrls = fetchMock.mock.calls
         .map(([input]) => new URL(typeof input === 'string' ? input : input.url))
-        .filter((url) => url.hostname === 'api.webflow.com' && /\/v2\/collections\/[^/]+\/items$/.test(url.pathname));
+        .filter((url) => url.hostname === 'api.webflow.com' && /\/v2\/collections\/[^/]+\/items(\/live)?$/.test(url.pathname));
       expect(webflowItemUrls.some((url) => url.searchParams.get('slug') === 'agentflow-website-template')).toBe(true);
       expect(webflowItemUrls.some((url) => url.searchParams.get('slug') === 'brix-templates')).toBe(true);
       expect(webflowItemUrls.some((url) => url.searchParams.get('name') === 'Agentflow')).toBe(false);
@@ -5832,6 +5832,135 @@ describe('webflow-template-search worker', () => {
       const setrexResponse = await callWorker(new Request('https://templates.test/api/templates/search?q=setrex'), env);
       const setrexPayload = (await setrexResponse.json()) as { pagination: { total_items: number } };
       expect(setrexPayload.pagination.total_items).toBe(0);
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
+  it('runs a scheduled creator refresh that propagates a Designer slug rename to every indexed template', async () => {
+    const fetchMock = installAirtableFetchMock({
+      publishedAssets: [],
+      webflowCollectionItems: {
+        [DESIGNERS_COLLECTION_ID]: [
+          {
+            id: 'designer-olyflow',
+            isArchived: false,
+            isDraft: false,
+            fieldData: {
+              'sync-record-id': 'creator-olyflow',
+              name: 'OlyFlow',
+              slug: 'olyflow',
+              avatar: {
+                url: 'https://cdn.prod.website-files.com/site/olyflow-avatar.webp',
+                alt: 'OlyFlow',
+              },
+            },
+          },
+        ],
+      },
+    });
+    const { env, close } = createTestEnv();
+    env.WEBFLOW_API_TOKEN = 'test-webflow-cms-token';
+
+    try {
+      // Two templates still indexed under the creator's previous slug. Their Airtable
+      // rows did not change, so the incremental sync would never revisit them.
+      await env.DB.prepare(
+        `INSERT INTO template_documents (
+          id, template_slug, name, creator_name, creator_record_id, creator_slug, creator_profile_url, synced_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?), (?, ?, ?, ?, ?, ?, ?, ?)`,
+      )
+        .bind(
+          'recFyras',
+          'fyras-website-template',
+          'Fyras',
+          'OlyFlow',
+          'creator-olyflow',
+          'templix',
+          'https://webflow.com/templates/designers/templix',
+          '2026-05-26T00:00:00.000Z',
+          'recNaxova',
+          'naxova-website-template',
+          'Naxova',
+          'OlyFlow',
+          'creator-olyflow',
+          'templix',
+          'https://webflow.com/templates/designers/templix',
+          '2026-05-26T00:00:00.000Z',
+        )
+        .run();
+
+      await callScheduled('37 * * * *', env);
+
+      const refreshState = await env.DB.prepare('SELECT value_json FROM sync_state WHERE key = ?')
+        .bind('last_creator_refresh')
+        .first<{ value_json: string }>();
+      expect(JSON.parse(refreshState?.value_json ?? '{}')).toMatchObject({
+        mode: 'creator_refresh',
+        fetched_records: 1,
+        refreshed_records: 2,
+      });
+
+      const rows = await env.DB.prepare(
+        'SELECT id, creator_slug, creator_profile_url FROM template_documents WHERE creator_record_id = ? ORDER BY id',
+      )
+        .bind('creator-olyflow')
+        .all<{ id: string; creator_slug: string; creator_profile_url: string }>();
+      expect(rows.results).toEqual([
+        { id: 'recFyras', creator_slug: 'olyflow', creator_profile_url: 'https://webflow.com/templates/designers/olyflow' },
+        { id: 'recNaxova', creator_slug: 'olyflow', creator_profile_url: 'https://webflow.com/templates/designers/olyflow' },
+      ]);
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
+  it('keeps the published creator slug when the Designer has an unpublished rename', async () => {
+    // The staged endpoint already shows the pending slug; the public profile page
+    // still lives at the published one, so template cards must keep linking there.
+    const designer = (slug: string) => ({
+      id: 'designer-olyflow',
+      isArchived: false,
+      isDraft: false,
+      fieldData: { 'sync-record-id': 'creator-olyflow', name: 'OlyFlow', slug },
+    });
+    const fetchMock = installAirtableFetchMock({
+      publishedAssets: [],
+      webflowCollectionItems: { [DESIGNERS_COLLECTION_ID]: [designer('olyflow-studio')] },
+      webflowLiveCollectionItems: { [DESIGNERS_COLLECTION_ID]: [designer('olyflow')] },
+    });
+    const { env, close } = createTestEnv();
+    env.WEBFLOW_API_TOKEN = 'test-webflow-cms-token';
+
+    try {
+      await env.DB.prepare(
+        `INSERT INTO template_documents (
+          id, template_slug, name, creator_name, creator_record_id, creator_slug, creator_profile_url, synced_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      )
+        .bind(
+          'recFyras',
+          'fyras-website-template',
+          'Fyras',
+          'OlyFlow',
+          'creator-olyflow',
+          'olyflow',
+          'https://webflow.com/templates/designers/olyflow',
+          '2026-05-26T00:00:00.000Z',
+        )
+        .run();
+
+      await callScheduled('37 * * * *', env);
+
+      const row = await env.DB.prepare('SELECT creator_slug FROM template_documents WHERE id = ?')
+        .bind('recFyras')
+        .first<{ creator_slug: string }>();
+      expect(row?.creator_slug).toBe('olyflow');
+      expect(
+        fetchMock.mock.calls.some(([input]) => String(input instanceof Request ? input.url : input).includes(`/collections/${DESIGNERS_COLLECTION_ID}/items/live`)),
+      ).toBe(true);
     } finally {
       fetchMock.mockRestore();
       close();

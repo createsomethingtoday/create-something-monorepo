@@ -257,6 +257,11 @@ Scheduled maintenance keeps this path hands-off:
 - `17 * * * *`: runs a bounded `image_backfill` pass (`limit=96`) for missing or temporary thumbnails.
 - `47 3 * * *`: runs a conservative `image_prune` pass (`limit=24`) for unresolved missing-image rows
   whose Webflow listing returns `404`.
+- `37 * * * *`: runs a `creator_refresh` pass that re-reads every live Designers CMS item and
+  updates `creator_slug`, `creator_profile_url`, and avatars on the creator's templates by
+  `sync-record-id`. A creator rename changes the Designer item but not the template rows in
+  Airtable, so the incremental sync only catches the templates whose own `📅LMT` moved; this
+  pass closes that gap within the hour when the Designers webhook is missing or not delivered.
 
 ## Sync locking
 

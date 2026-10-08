@@ -39,7 +39,7 @@ DEFAULT_CLIENT_MODE = "shadow"
 SUPPORT_REQUESTS_ENABLED = "1"
 
 [triggers]
-crons = ["*/5 * * * *", "17 * * * *", "47 3 * * *"]
+crons = ["*/5 * * * *", "17 * * * *", "37 * * * *", "47 3 * * *"]
 
 # Secrets:
 # - AIRTABLE_API_KEY
