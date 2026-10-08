@@ -122,18 +122,25 @@ export interface WebflowDesignerAvatarRecord {
   avatarAlt: string | null;
 }
 
+// `/items` returns staged content, including unpublished edits to published
+// items; `/items/live` returns only what the public site serves. Reads that
+// feed public links (creator slugs, profile pages) must use the live endpoint.
+function collectionItemsPath(collectionId: string, live: boolean | undefined): string {
+  return `https://api.webflow.com/v2/collections/${collectionId}/items${live ? '/live' : ''}`;
+}
+
 async function paginateWebflow<T>(
   apiToken: string,
   collectionId: string,
   mapper: (item: WebflowCmsItem) => T | null,
-  options: { onPage?: () => Promise<void> } = {},
+  options: { onPage?: () => Promise<void>; live?: boolean } = {},
 ): Promise<T[]> {
   const results: T[] = [];
   let offset = 0;
   const limit = 100;
 
   while (true) {
-    const url = `https://api.webflow.com/v2/collections/${collectionId}/items?limit=${limit}&offset=${offset}`;
+    const url = `${collectionItemsPath(collectionId, options.live)}?limit=${limit}&offset=${offset}`;
     let response: Response;
     try {
       response = await fetchWebflowPageWithRetry(url, apiToken);
@@ -167,14 +174,14 @@ async function fetchWebflowCollectionItems<T>(
   collectionId: string,
   query: Record<string, string>,
   mapper: (item: WebflowCmsItem) => T | null,
-  options: { onPage?: () => Promise<void> } = {},
+  options: { onPage?: () => Promise<void>; live?: boolean } = {},
 ): Promise<T[]> {
   const results: T[] = [];
   let offset = 0;
   const limit = 100;
 
   while (true) {
-    const url = new URL(`https://api.webflow.com/v2/collections/${collectionId}/items`);
+    const url = new URL(collectionItemsPath(collectionId, options.live));
     url.searchParams.set('limit', String(limit));
     url.searchParams.set('offset', String(offset));
     for (const [key, value] of Object.entries(query)) {
@@ -270,7 +277,7 @@ async function fetchTargetedWebflowCollectionItems<TTarget, TRecord extends { id
   targetName: (target: TTarget) => string | null | undefined,
   mapper: (item: WebflowCmsItem) => TRecord | null,
   matchesTarget: (record: TRecord, target: TTarget) => boolean,
-  options: { onPage?: () => Promise<void> } = {},
+  options: { onPage?: () => Promise<void>; live?: boolean } = {},
 ): Promise<TRecord[]> {
   const unresolvedTargets = new Map<string, TTarget>();
   for (const target of targets) {
@@ -563,7 +570,12 @@ export async function fetchWebflowDesignerAvatars(
   const token = webflowApiToken(env);
   if (!token) throw new Error('A Webflow CMS read token is not configured.');
 
-  return paginateWebflow(token, DESIGNERS_COLLECTION_ID, (item) => mapDesignerFieldData(item.fieldData), options);
+  // Live, not staged: a pending creator rename must not reach template cards
+  // before its profile page is published.
+  return paginateWebflow(token, DESIGNERS_COLLECTION_ID, (item) => mapDesignerFieldData(item.fieldData), {
+    ...options,
+    live: true,
+  });
 }
 
 export async function fetchWebflowDesignerAvatarsForTargets(
@@ -583,6 +595,6 @@ export async function fetchWebflowDesignerAvatarsForTargets(
     (target) => target.name,
     (item) => mapDesignerFieldData(item.fieldData),
     designerRecordMatchesTarget,
-    options,
+    { ...options, live: true },
   );
 }

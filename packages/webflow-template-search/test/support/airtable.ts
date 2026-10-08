@@ -6,6 +6,9 @@ interface MockDataset {
   webflowAssets?: Array<Record<string, unknown>>;
   webflowCollections?: Array<Record<string, unknown>>;
   webflowCollectionItems?: Record<string, Array<Record<string, unknown>>>;
+  // Served from `/items/live`; a collection without an entry here serves the
+  // staged `webflowCollectionItems` from both endpoints.
+  webflowLiveCollectionItems?: Record<string, Array<Record<string, unknown>>>;
   webflowCollectionItemErrors?: Record<string, { status: number; body: unknown; headers?: Record<string, string> }>;
   webflowCollectionItemErrorSequences?: Record<string, Array<{ status: number; body: unknown; headers?: Record<string, string> }>>;
   publishedTemplatePages?: Record<string, string>;
@@ -43,9 +46,10 @@ export function installAirtableFetchMock(dataset: MockDataset) {
         return Response.json({ collections: dataset.webflowCollections ?? [] });
       }
 
-      const collectionItemsMatch = url.pathname.match(/\/v2\/collections\/([^/]+)\/items$/);
+      const collectionItemsMatch = url.pathname.match(/\/v2\/collections\/([^/]+)\/items(\/live)?$/);
       if (collectionItemsMatch) {
         const collectionId = collectionItemsMatch[1] ?? '';
+        const liveItems = collectionItemsMatch[2] ? dataset.webflowLiveCollectionItems?.[collectionId] : undefined;
         const sequencedError = dataset.webflowCollectionItemErrorSequences?.[collectionId]?.shift();
         if (sequencedError) {
           return Response.json(sequencedError.body, { status: sequencedError.status, headers: sequencedError.headers });
@@ -60,7 +64,7 @@ export function installAirtableFetchMock(dataset: MockDataset) {
         const limit = Number(url.searchParams.get('limit') ?? '100') || 100;
         const requestedName = url.searchParams.get('name');
         const requestedSlug = url.searchParams.get('slug');
-        const items = (dataset.webflowCollectionItems?.[collectionId] ?? []).filter((item) => {
+        const items = (liveItems ?? dataset.webflowCollectionItems?.[collectionId] ?? []).filter((item) => {
           const fieldData = (item.fieldData ?? {}) as Record<string, unknown>;
           if (requestedName && fieldData.name !== requestedName) return false;
           if (requestedSlug && fieldData.slug !== requestedSlug) return false;

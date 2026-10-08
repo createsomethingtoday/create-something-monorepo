@@ -1649,7 +1649,7 @@ describe('webflow-template-search worker', () => {
 
       const webflowItemUrls = fetchMock.mock.calls
         .map(([input]) => new URL(typeof input === 'string' ? input : input.url))
-        .filter((url) => url.hostname === 'api.webflow.com' && /\/v2\/collections\/[^/]+\/items$/.test(url.pathname));
+        .filter((url) => url.hostname === 'api.webflow.com' && /\/v2\/collections\/[^/]+\/items(\/live)?$/.test(url.pathname));
       expect(webflowItemUrls.some((url) => url.searchParams.get('slug') === 'agentflow-website-template')).toBe(true);
       expect(webflowItemUrls.some((url) => url.searchParams.get('slug') === 'brix-templates')).toBe(true);
       expect(webflowItemUrls.some((url) => url.searchParams.get('name') === 'Agentflow')).toBe(false);
@@ -5911,6 +5911,56 @@ describe('webflow-template-search worker', () => {
         { id: 'recFyras', creator_slug: 'olyflow', creator_profile_url: 'https://webflow.com/templates/designers/olyflow' },
         { id: 'recNaxova', creator_slug: 'olyflow', creator_profile_url: 'https://webflow.com/templates/designers/olyflow' },
       ]);
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
+  it('keeps the published creator slug when the Designer has an unpublished rename', async () => {
+    // The staged endpoint already shows the pending slug; the public profile page
+    // still lives at the published one, so template cards must keep linking there.
+    const designer = (slug: string) => ({
+      id: 'designer-olyflow',
+      isArchived: false,
+      isDraft: false,
+      fieldData: { 'sync-record-id': 'creator-olyflow', name: 'OlyFlow', slug },
+    });
+    const fetchMock = installAirtableFetchMock({
+      publishedAssets: [],
+      webflowCollectionItems: { [DESIGNERS_COLLECTION_ID]: [designer('olyflow-studio')] },
+      webflowLiveCollectionItems: { [DESIGNERS_COLLECTION_ID]: [designer('olyflow')] },
+    });
+    const { env, close } = createTestEnv();
+    env.WEBFLOW_API_TOKEN = 'test-webflow-cms-token';
+
+    try {
+      await env.DB.prepare(
+        `INSERT INTO template_documents (
+          id, template_slug, name, creator_name, creator_record_id, creator_slug, creator_profile_url, synced_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      )
+        .bind(
+          'recFyras',
+          'fyras-website-template',
+          'Fyras',
+          'OlyFlow',
+          'creator-olyflow',
+          'olyflow',
+          'https://webflow.com/templates/designers/olyflow',
+          '2026-05-26T00:00:00.000Z',
+        )
+        .run();
+
+      await callScheduled('37 * * * *', env);
+
+      const row = await env.DB.prepare('SELECT creator_slug FROM template_documents WHERE id = ?')
+        .bind('recFyras')
+        .first<{ creator_slug: string }>();
+      expect(row?.creator_slug).toBe('olyflow');
+      expect(
+        fetchMock.mock.calls.some(([input]) => String(input instanceof Request ? input.url : input).includes(`/collections/${DESIGNERS_COLLECTION_ID}/items/live`)),
+      ).toBe(true);
     } finally {
       fetchMock.mockRestore();
       close();
