@@ -1,0 +1,65 @@
+Independent source/security/UX review — 2026-10-09
+Reviewer: separate independent_review agent; no files edited, no browser controlled.
+
+Identity/deployment-evidence expansion recheck:
+Actual Canon verifier imported and tested with ephemeral signed ES256 fixtures.
+Independent tests verified signed roles/tenants cannot override server membership,
+cloned principals are rejected, and KV-only/deployment-only/late drift blocks apply.
+Found P2: configured evidence map with a missing reader silently disabled checks.
+Fixed: own callable readers required for every fixed tenant before repository init.
+Regression plus independent inherited-reader test passed; P2 resolved.
+Implementing-agent full suite: 23/23, including HTTP verified membership tests.
+No live Identity/provider/KV call; live Git/KV atomicity remains explicitly gated.
+
+
+Repository/MCP expansion recheck:
+Actual SDK stdio transport, fixed tenant/path repository adapter and source commit
+plus content hash reviewed. Reviewer independently ran 14 tests initially and 7
+targeted tests after fixes; all passed. Identified an application lock surviving
+process death and hidden stale-approved receipt recovery in the browser. Both
+fixed: unique private Git indexes plus atomic ref CAS need no application lock;
+context exposes reachable commit receipt and UI offers recovery after reload.
+Actual subprocess-death recovery was independently reproduced successfully.
+Repository-mode wording now explicitly describes source commits/no deployment.
+No remaining blocker found for the bounded local synthetic loop.
+Receipt recovery trusts operator-owned Git messages and does not authenticate a
+hostile Git writer or independently validate every field against commit trees.
+Hosted identity/agent separation and live provider acceptance remain gates.
+
+Original projection review follows:
+
+Initial findings (both independently reproduced):
+P2: UI lost idempotency key when POST committed but following context refresh failed.
+P2: stale pending proposals could not be rejected after a competing promotion.
+
+Resolution recheck:
+Both defects fixed. Request ID is retained through refresh failure. Current-source
+check applies only to approval; rejection remains available for stale proposals.
+Independent non-HTTP test run: 9 passing including both regressions.
+HTTP tests blocked for reviewer by sandbox loopback EPERM. Implementing agent ran
+the complete suite with authorized loopback binding: 10 passing.
+
+No additional blocking defects for this bounded synthetic preview.
+Hosted blocker: browser requests are assigned synthetic reviewer identity.
+Loopback/Origin/CSRF are not authenticated human or agent authority. Replace with
+verified Identity sessions, memberships and distinct agent scope before hosting.
+
+Positive findings: transactional persistence, content-bound approval, tenant-scoped
+lookup, constrained agent tools, plain-text rendering, CSP, existing Canon tokens,
+responsive grid, visible diff and separate promotion controls.
+
+Browser evidence is implementing-agent evidence, not independent accessibility
+certification. Implementing agent fixed observed 390px grid overflow and verified
+full workflow with an isolated headless Chrome; no desktop browser takeover.
+
+2026-10-09 — Team release policy and project registry independent review
+Reviewer: /root/independent_review
+Found and fixed: requests did not bind reviewed destination; equivalent origin strings bypassed isolation; preview evidence did not cover full runtime version/tenant/preview target.
+Reviewer rechecked fixes and ran 8 initial promotion/registry tests plus 3 targeted regression tests. No remaining blocking defect found for the local unexecuted flow. URL resolution has no network path; copied/revoked principals denied. Deployment executor and real credentials remain absent.
+
+2026-10-09 — Hosted D1 and roster review
+Independent reviewer reproduced a P2: headline-only equivalence could overwrite divergent KV subtitle/flags. Fixed by requiring full parsed manifest equivalence; regression passed. Independent run: 6/6 hosted tests at review point. Membership binding, tenant checks, atomic revocation/CAS, replay, one-proposal tasks and no executor/approval MCP route checked. Remaining gates explicitly recorded: trusted internal result provenance, live Git/KV concurrency, remote agent transport/grants and actual deployment target. Later implementing-agent tests add observation port drift, workerd restart, actual MCP SDK, and browser UI.
+
+Final hosted UI/MCP recheck: reviewer independently passed 9 API/MCP/D1 tests. Browser not rerun independently (dependency path); implementing-agent configured run passed 10/10. Reviewer found expired task permanently hiding replacement action and request-vs-publish wording. Fixed newest-task selection, expiry-aware explicit replacement, stale-anchor guidance and wording. Browser regression proves replacement retains task history. Reviewer source recheck confirms fixes; no remaining blocking UI finding. Live execution/provenance gates remain.
+
+Publisher review: independent reviewer found mutable-job fingerprint/reconciliation replay and missing preflight revocation checks; both fixed. Added authoritative D1 active-version binding so sequential old-base jobs cannot overwrite a publication. Reviewer independently passed 4/4 publisher regressions and found no remaining blocker for the local source commit. Real provider idempotency/provenance and exclusive pointer consumption remain deployment acceptance requirements.

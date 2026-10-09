@@ -1,0 +1,2 @@
+PASS: TypeScript 5.9.3 tsc -p hosted/tsconfig.json
+Final verification includes immutable content-key version binding.

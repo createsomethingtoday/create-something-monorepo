@@ -214,6 +214,28 @@ importers:
         specifier: ^4.103.0
         version: 4.110.0(@cloudflare/workers-types@5.20260903.1)(@types/node@24.10.9)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
+  apps/client-collaboration-pilot:
+    dependencies:
+      '@create-something/canon':
+        specifier: workspace:*
+        version: link:../../packages/canon
+      '@modelcontextprotocol/sdk':
+        specifier: 1.26.0
+        version: 1.26.0(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(zod@4.3.6)
+    devDependencies:
+      esbuild:
+        specifier: 0.28.1
+        version: 0.28.1
+      miniflare:
+        specifier: 4.20260708.1
+        version: 4.20260708.1(@types/node@24.10.9)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+      '@cloudflare/workers-types':
+        specifier: 4.20260621.1
+        version: 4.20260621.1
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+
   apps/client-workspace-desktop:
     devDependencies:
       '@create-something/delivery-schema':

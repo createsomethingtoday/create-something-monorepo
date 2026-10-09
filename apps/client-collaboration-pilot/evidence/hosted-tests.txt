@@ -1,0 +1,98 @@
+TAP version 13
+# ▲ [WARNING] Cannot find base config file "./.svelte-kit/tsconfig.json" [tsconfig.json]
+#     ../../packages/canon/tsconfig.json:2:12:
+#       2 │   "extends": "./.svelte-kit/tsconfig.json",
+#         ╵              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Subtest: D1 exact approved roster binds verified subjects; email/domain spoofing, takeover, foreign project and revocation fail
+ok 1 - D1 exact approved roster binds verified subjects; email/domain spoofing, takeover, foreign project and revocation fail
+  ---
+  duration_ms: 389.0525
+  type: 'test'
+  ...
+# Subtest: bounded agent proposes once; human review produces durable exact preview job and verified Git/KV receipt
+ok 2 - bounded agent proposes once; human review produces durable exact preview job and verified Git/KV receipt
+  ---
+  duration_ms: 607.5425
+  type: 'test'
+  ...
+# Subtest: D1 CAS prevents lost updates and rechecks membership atomically at mutation commit
+ok 3 - D1 CAS prevents lost updates and rechecks membership atomically at mutation commit
+  ---
+  duration_ms: 335.439208
+  type: 'test'
+  ...
+# Subtest: Git, deployment-only, KV-only and target drift invalidate anchored proposals; task expiry and bounds enforced
+ok 4 - Git, deployment-only, KV-only and target drift invalidate anchored proposals; task expiry and bounds enforced
+  ---
+  duration_ms: 347.197167
+  type: 'test'
+  ...
+# Subtest: HTTP uses verified project membership, rejects cross-site writes and has no agent-approval or executor route
+ok 5 - HTTP uses verified project membership, rejects cross-site writes and has no agent-approval or executor route
+  ---
+  duration_ms: 456.208917
+  type: 'test'
+  ...
+# Subtest: headline edit cannot overwrite divergent unreviewed runtime fields
+ok 6 - headline edit cannot overwrite divergent unreviewed runtime fields
+  ---
+  duration_ms: 152.665667
+  type: 'test'
+  ...
+# Subtest: fixed Git/Pages/KV read ports bind exact deployment commit and detect changes between reads
+ok 7 - fixed Git/Pages/KV read ports bind exact deployment commit and detect changes between reads
+  ---
+  duration_ms: 0.327666
+  type: 'test'
+  ...
+# Subtest: D1 state and idempotency survive workerd restart, while foreign project data is unchanged
+ok 8 - D1 state and idempotency survive workerd restart, while foreign project data is unchanged
+  ---
+  duration_ms: 278.165
+  type: 'test'
+  ...
+# Subtest: actual MCP SDK round trip exposes only task context and one proposal tool, never approval
+ok 9 - actual MCP SDK round trip exposes only task context and one proposal tool, never approval
+  ---
+  duration_ms: 371.575459
+  type: 'test'
+  ...
+# Subtest: team browser shows exact proposal and records human review/preview request with synthetic D1
+ok 10 - team browser shows exact proposal and records human review/preview request with synthetic D1
+  ---
+  duration_ms: 1636.440041
+  type: 'test'
+  ...
+# Subtest: publisher recovers unknown provider outcome by job identity and verifies immutable provenance before visibility
+ok 11 - publisher recovers unknown provider outcome by job identity and verifies immutable provenance before visibility
+  ---
+  duration_ms: 674.187125
+  type: 'test'
+  ...
+# Subtest: publisher denies bad Git ancestry, stale base, missing immutable KV and revocation during preparation
+ok 12 - publisher denies bad Git ancestry, stale base, missing immutable KV and revocation during preparation
+  ---
+  duration_ms: 791.032416
+  type: 'test'
+  ...
+# Subtest: two competing approved previews have one atomic visible winner
+ok 13 - two competing approved previews have one atomic visible winner
+  ---
+  duration_ms: 890.130791
+  type: 'test'
+  ...
+# Subtest: publisher stable replay survives job reconciliation; sequential old-base jobs and pre-revoked actors cannot prepare
+ok 14 - publisher stable replay survives job reconciliation; sequential old-base jobs and pre-revoked actors cannot prepare
+  ---
+  duration_ms: 893.097959
+  type: 'test'
+  ...
+1..14
+# tests 14
+# suites 0
+# pass 14
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 8072.130417

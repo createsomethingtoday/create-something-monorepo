@@ -1,0 +1,296 @@
+TAP version 13
+# Subtest: KV-only drift and deployment-only drift block approved source application
+ok 1 - KV-only drift and deployment-only drift block approved source application
+  ---
+  duration_ms: 10920.478917
+  type: 'test'
+  ...
+# Subtest: late KV drift blocks ref update; missing/old/foreign evidence fails closed
+ok 2 - late KV drift blocks ref update; missing/old/foreign evidence fails closed
+  ---
+  duration_ms: 8177.654334
+  type: 'test'
+  ...
+# Subtest: repository/runtime divergence blocks edits; source-only commit does not publish KV
+ok 3 - repository/runtime divergence blocks edits; source-only commit does not publish KV
+  ---
+  duration_ms: 6836.855667
+  type: 'test'
+  ...
+# Subtest: configured evidence mode requires own callable readers for every tenant; absent records fail closed
+ok 4 - configured evidence mode requires own callable readers for every tenant; absent records fail closed
+  ---
+  duration_ms: 909.291792
+  type: 'test'
+  ...
+# ▲ [WARNING] Cannot find base config file "./.svelte-kit/tsconfig.json" [tsconfig.json]
+#     ../../packages/canon/tsconfig.json:2:12:
+#       2 │   "extends": "./.svelte-kit/tsconfig.json",
+#         ╵              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Subtest: D1 exact approved roster binds verified subjects; email/domain spoofing, takeover, foreign project and revocation fail
+ok 5 - D1 exact approved roster binds verified subjects; email/domain spoofing, takeover, foreign project and revocation fail
+  ---
+  duration_ms: 441.980541
+  type: 'test'
+  ...
+# Subtest: bounded agent proposes once; human review produces durable exact preview job and verified Git/KV receipt
+ok 6 - bounded agent proposes once; human review produces durable exact preview job and verified Git/KV receipt
+  ---
+  duration_ms: 602.529791
+  type: 'test'
+  ...
+# Subtest: D1 CAS prevents lost updates and rechecks membership atomically at mutation commit
+ok 7 - D1 CAS prevents lost updates and rechecks membership atomically at mutation commit
+  ---
+  duration_ms: 351.067042
+  type: 'test'
+  ...
+# Subtest: Git, deployment-only, KV-only and target drift invalidate anchored proposals; task expiry and bounds enforced
+ok 8 - Git, deployment-only, KV-only and target drift invalidate anchored proposals; task expiry and bounds enforced
+  ---
+  duration_ms: 353.139792
+  type: 'test'
+  ...
+# Subtest: HTTP uses verified project membership, rejects cross-site writes and has no agent-approval or executor route
+ok 9 - HTTP uses verified project membership, rejects cross-site writes and has no agent-approval or executor route
+  ---
+  duration_ms: 477.826125
+  type: 'test'
+  ...
+# Subtest: headline edit cannot overwrite divergent unreviewed runtime fields
+ok 10 - headline edit cannot overwrite divergent unreviewed runtime fields
+  ---
+  duration_ms: 168.293833
+  type: 'test'
+  ...
+# Subtest: fixed Git/Pages/KV read ports bind exact deployment commit and detect changes between reads
+ok 11 - fixed Git/Pages/KV read ports bind exact deployment commit and detect changes between reads
+  ---
+  duration_ms: 0.386
+  type: 'test'
+  ...
+# Subtest: D1 state and idempotency survive workerd restart, while foreign project data is unchanged
+ok 12 - D1 state and idempotency survive workerd restart, while foreign project data is unchanged
+  ---
+  duration_ms: 312.869709
+  type: 'test'
+  ...
+# Subtest: actual MCP SDK round trip exposes only task context and one proposal tool, never approval
+ok 13 - actual MCP SDK round trip exposes only task context and one proposal tool, never approval
+  ---
+  duration_ms: 422.719708
+  type: 'test'
+  ...
+# Subtest: team browser shows exact proposal and records human review/preview request with synthetic D1
+ok 14 - team browser shows exact proposal and records human review/preview request with synthetic D1
+  ---
+  duration_ms: 1820.172958
+  type: 'test'
+  ...
+# Subtest: publisher recovers unknown provider outcome by job identity and verifies immutable provenance before visibility
+ok 15 - publisher recovers unknown provider outcome by job identity and verifies immutable provenance before visibility
+  ---
+  duration_ms: 701.888542
+  type: 'test'
+  ...
+# Subtest: publisher denies bad Git ancestry, stale base, missing immutable KV and revocation during preparation
+ok 16 - publisher denies bad Git ancestry, stale base, missing immutable KV and revocation during preparation
+  ---
+  duration_ms: 806.608208
+  type: 'test'
+  ...
+# Subtest: two competing approved previews have one atomic visible winner
+ok 17 - two competing approved previews have one atomic visible winner
+  ---
+  duration_ms: 944.686167
+  type: 'test'
+  ...
+# Subtest: publisher stable replay survives job reconciliation; sequential old-base jobs and pre-revoked actors cannot prepare
+ok 18 - publisher stable replay survives job reconciliation; sequential old-base jobs and pre-revoked actors cannot prepare
+  ---
+  duration_ms: 923.96225
+  type: 'test'
+  ...
+# Subtest: actual Canon verifier checks signature/issuer/audience/session; policy owns roles and revocation
+ok 19 - actual Canon verifier checks signature/issuer/audience/session; policy owns roles and revocation
+  ---
+  duration_ms: 52.949125
+  type: 'test'
+  ...
+# Subtest: HTTP integration rejects claimed roles and permits only verified member approval
+ok 20 - HTTP integration rejects claimed roles and permits only verified member approval
+  ---
+  duration_ms: 10321.735334
+  type: 'test'
+  ...
+# Subtest: actual SDK stdio MCP lifecycle: request → proposal → reviewer → Git application, with replay
+ok 21 - actual SDK stdio MCP lifecycle: request → proposal → reviewer → Git application, with replay
+  ---
+  duration_ms: 14305.109666
+  type: 'test'
+  ...
+# Subtest: URL discovers only server-owned scope after cryptographically verified project membership
+ok 22 - URL discovers only server-owned scope after cryptographically verified project membership
+  ---
+  duration_ms: 96.245583
+  type: 'test'
+  ...
+# Subtest: unregistered URL, userinfo, network literals, spoofed subdomains, redirects and arbitrary paths are rejected without fetch
+ok 23 - unregistered URL, userinfo, network literals, spoofed subdomains, redirects and arbitrary paths are rejected without fetch
+  ---
+  duration_ms: 6.079
+  type: 'test'
+  ...
+# Subtest: registry rejects ambiguous origin ownership
+ok 24 - registry rejects ambiguous origin ownership
+  ---
+  duration_ms: 0.13925
+  type: 'test'
+  ...
+# Subtest: authenticated member can request preview, but cannot approve production or forge membership
+ok 25 - authenticated member can request preview, but cannot approve production or forge membership
+  ---
+  duration_ms: 11589.560334
+  type: 'test'
+  ...
+# Subtest: approval binds evidence/version/destination; replay persists and does not approve changed evidence
+ok 26 - approval binds evidence/version/destination; replay persists and does not approve changed evidence
+  ---
+  duration_ms: 7298.669833
+  type: 'test'
+  ...
+# Subtest: missing Micah mapping and unverified preview evidence block production
+ok 27 - missing Micah mapping and unverified preview evidence block production
+  ---
+  duration_ms: 4848.569709
+  type: 'test'
+  ...
+# Subtest: configuration rejects shared bindings/projects, production aliases and ambiguous destinations
+ok 28 - configuration rejects shared bindings/projects, production aliases and ambiguous destinations
+  ---
+  duration_ms: 0.377375
+  type: 'test'
+  ...
+# Subtest: team member can review and apply scoped source proposals, distinct from production approval
+ok 29 - team member can review and apply scoped source proposals, distinct from production approval
+  ---
+  duration_ms: 5051.548084
+  type: 'test'
+  ...
+# Subtest: source change invalidates approved deployment; agent channel cannot request or approve releases
+ok 30 - source change invalidates approved deployment; agent channel cannot request or approve releases
+  ---
+  duration_ms: 4826.005292
+  type: 'test'
+  ...
+# Subtest: recorded evidence cannot carry across runtime deployment, tenant, or preview target changes
+ok 31 - recorded evidence cannot carry across runtime deployment, tenant, or preview target changes
+  ---
+  duration_ms: 0.402208
+  type: 'test'
+  ...
+# Subtest: approved proposal becomes exact source Git commit, preserving other fields; replay survives reopen
+ok 32 - approved proposal becomes exact source Git commit, preserving other fields; replay survives reopen
+  ---
+  duration_ms: 14607.200125
+  type: 'test'
+  ...
+# Subtest: stale competing approved edit and foreign tenant cannot apply; strict path rejects traversal
+ok 33 - stale competing approved edit and foreign tenant cannot apply; strict path rejects traversal
+  ---
+  duration_ms: 9868.986541
+  type: 'test'
+  ...
+# Subtest: Git commit/SQLite failure recovers once without applying source twice
+ok 34 - Git commit/SQLite failure recovers once without applying source twice
+  ---
+  duration_ms: 7364.03325
+  type: 'test'
+  ...
+# Subtest: post-commit interruption recovers without application lock; symlink root is rejected
+ok 35 - post-commit interruption recovers without application lock; symlink root is rejected
+  ---
+  duration_ms: 3900.620334
+  type: 'test'
+  ...
+# Subtest: atomic ref CAS rejects an overlapping source application
+ok 36 - atomic ref CAS rejects an overlapping source application
+  ---
+  duration_ms: 5321.910791
+  type: 'test'
+  ...
+# Subtest: actual process death after Git commit releases SQLite and leaves recoverable receipt
+ok 37 - actual process death after Git commit releases SQLite and leaves recoverable receipt
+  ---
+  duration_ms: 5508.615959
+  type: 'test'
+  ...
+# Subtest: HTTP boundary: hostile origins, malformed requests, tool escalation, full browser workflow
+ok 38 - HTTP boundary: hostile origins, malformed requests, tool escalation, full browser workflow
+  ---
+  duration_ms: 37.81575
+  type: 'test'
+  ...
+# Subtest: durable full flow and rejection keep feedback separate from source
+ok 39 - durable full flow and rejection keep feedback separate from source
+  ---
+  duration_ms: 8.568458
+  type: 'test'
+  ...
+# Subtest: tool call cannot approve, escalate role, or change arbitrary fields
+ok 40 - tool call cannot approve, escalate role, or change arbitrary fields
+  ---
+  duration_ms: 2.968209
+  type: 'test'
+  ...
+# Subtest: tenant isolation covers reads, approval, feedback and proposal references
+ok 41 - tenant isolation covers reads, approval, feedback and proposal references
+  ---
+  duration_ms: 2.123333
+  type: 'test'
+  ...
+# Subtest: idempotent replay survives restart and rejects key reuse with different content
+ok 42 - idempotent replay survives restart and rejects key reuse with different content
+  ---
+  duration_ms: 3.343709
+  type: 'test'
+  ...
+# Subtest: approval binds digest; concurrent approved proposals cannot overwrite promoted source
+ok 43 - approval binds digest; concurrent approved proposals cannot overwrite promoted source
+  ---
+  duration_ms: 4.694667
+  type: 'test'
+  ...
+# Subtest: stale feedback, edited proposal content, invalid anchors and oversized changes fail closed
+ok 44 - stale feedback, edited proposal content, invalid anchors and oversized changes fail closed
+  ---
+  duration_ms: 3.884791
+  type: 'test'
+  ...
+# Subtest: transaction failure rolls back proposal, receipt and replay; same request can recover
+ok 45 - transaction failure rolls back proposal, receipt and replay; same request can recover
+  ---
+  duration_ms: 2.532917
+  type: 'test'
+  ...
+# Subtest: stale pending proposal can be rejected but cannot be approved
+ok 46 - stale pending proposal can be rejected but cannot be approved
+  ---
+  duration_ms: 4.279792
+  type: 'test'
+  ...
+# Subtest: UI retries committed mutation with same ID when refresh fails
+ok 47 - UI retries committed mutation with same ID when refresh fails
+  ---
+  duration_ms: 2.765208
+  type: 'test'
+  ...
+1..47
+# tests 47
+# suites 0
+# pass 47
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 46830.381291
