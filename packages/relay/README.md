@@ -200,7 +200,8 @@ R2 storage uses a backup/restore approach for simplicity:
 - OpenClaw uses its default paths (no special configuration needed)
 
 **During operation:**
-- A cron job runs every 5 minutes to sync the moltbot config to R2
+- The gateway container attempts a backup every five minutes while it is running. Backups use the existing R2 mount and never call the Sandbox API, mount storage, or start a container. Each rsync is limited to 30 seconds; runs are serial.
+- Gateway exit or termination cancels backup timers and in-flight rsync. The Worker cron is disabled; residual scheduled events do no work.
 - You can also trigger a manual backup from the admin UI at `/_admin/`
 
 **In the admin UI:**
@@ -211,16 +212,18 @@ Without R2 credentials, moltbot still works but uses ephemeral storage (data los
 
 ## Container Lifecycle
 
-By default, the sandbox container stays alive indefinitely (`SANDBOX_SLEEP_AFTER=never`). This is recommended because cold starts take 1-2 minutes.
+By default, the sandbox sleeps after ten minutes without Sandbox activity, matching the installed SDK default. Keep-alive is explicitly disabled. `SANDBOX_SLEEP_AFTER` accepts positive finite durations in seconds, minutes, or hours; `never`, zero, and malformed values fail configuration validation.
 
-To reduce costs for infrequently used deployments, you can configure the container to sleep after a period of inactivity:
+To choose a different idle period:
 
 ```bash
 npx wrangler secret put SANDBOX_SLEEP_AFTER
 # Enter: 10m (or 1h, 30m, etc.)
 ```
 
-When the container sleeps, the next request will trigger a cold start. If you have R2 storage configured, your paired devices and data will persist across restarts.
+When the container sleeps, the next request triggers a cold start (typically 1–2 minutes). With R2 configured, startup restores the last successful backup. Unsynced changes since that backup can be lost on sleep, crash, or restart; there is no guaranteed final shutdown flush. A configured sleep period shorter than five minutes may finish before the first automatic backup, so use the explicit admin backup when needed.
+
+This is an idle safeguard, not an absolute uptime or model-spend cap. Active requests, WebSocket sessions, and status polling can keep a container active. Always-on messaging integrations lose availability while the container is asleep. Confirm that availability and backup recovery tradeoff before deployment.
 
 ## Admin UI
 
@@ -369,7 +372,7 @@ The `AI_GATEWAY_*` variables take precedence over `ANTHROPIC_*` if both are set.
 | `MOLTBOT_GATEWAY_TOKEN` | Yes | Gateway token for authentication (pass via `?token=` query param) |
 | `DEV_MODE` | No | Set to `true` to skip CF Access auth + device pairing (local dev only) |
 | `DEBUG_ROUTES` | No | Set to `true` to enable `/debug/*` routes |
-| `SANDBOX_SLEEP_AFTER` | No | Container sleep timeout: `never` (default) or duration like `10m`, `1h` |
+| `SANDBOX_SLEEP_AFTER` | No | Positive finite idle timeout: `10m` (SDK default), for example `30s` or `1h`; `never` rejected |
 | `R2_ACCESS_KEY_ID` | No | R2 access key for persistent storage |
 | `R2_SECRET_ACCESS_KEY` | No | R2 secret key for persistent storage |
 | `CF_ACCOUNT_ID` | No | Cloudflare account ID (required for R2 storage) |

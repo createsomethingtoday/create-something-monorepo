@@ -63,9 +63,9 @@
       "bucket_name": "moltbot-data",
     },
   ],
-  // Cron trigger to sync moltbot data to R2 every 5 minutes
+  // Backups run inside the live container; never wake idle containers.
   "triggers": {
-    "crons": ["*/5 * * * *"],
+    "crons": [],
   },
   // Browser Rendering binding for CDP shim
   "browser": {
