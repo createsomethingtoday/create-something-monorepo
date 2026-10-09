@@ -19,11 +19,15 @@ export const GET: RequestHandler = async ({ url, platform }) => {
 	}
 
 	// Get Durable Object instance
+	if (!await platform.env.DB.prepare('SELECT id FROM facilities WHERE id = ?').bind(facilityId).first()) {
+		throw error(404, 'Unknown facility');
+	}
+
 	const id = platform.env.COURT_STATE.idFromName(facilityId);
 	const stub = platform.env.COURT_STATE.get(id);
 
 	// Forward WebSocket upgrade to DO
-	const doRequest = new Request(`https://dummy/websocket?facilityId=${facilityId}`, {
+	const doRequest = new Request(`https://dummy/websocket?facilityId=${encodeURIComponent(facilityId)}`, {
 		headers: {
 			Upgrade: 'websocket'
 		}

@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>MaverickX · Project edits</title>
+    <link rel="stylesheet" href="/collaboration/canon.css" />
+    <link rel="stylesheet" href="/collaboration/style.css" />
+  </head>
+  <body>
+    <main>
+      <header>
+        <p class="eyebrow">CREATE SOMETHING / MAVERICKX</p>
+        <h1>Project edits</h1>
+        <p>
+          Request a focused edit, review the proposal, and request a preview.
+          Production requires Micah’s approval.
+        </p>
+        <button id="refresh">Refresh</button>
+      </header>
+      <p id="status" role="status">Loading project access…</p>
+      <section aria-labelledby="version-heading">
+        <h2 id="version-heading">Current preview</h2>
+        <p id="headline"></p>
+        <dl id="version"></dl>
+      </section>
+      <section aria-labelledby="feedback-heading">
+        <h2 id="feedback-heading">Request an edit</h2>
+        <p>Homepage · Hero headline</p>
+        <form id="feedback-form">
+          <label for="feedback">What should change?</label
+          ><textarea id="feedback" maxlength="1000" required></textarea
+          ><button>Save feedback</button>
+        </form>
+        <div id="feedback-list"></div>
+      </section>
+      <section aria-labelledby="proposals-heading">
+        <h2 id="proposals-heading">Proposals</h2>
+        <div id="proposals"></div>
+      </section>
+      <section aria-labelledby="jobs-heading">
+        <h2 id="jobs-heading">Preview requests</h2>
+        <div id="jobs"></div>
+      </section>
+    </main>
+    <script type="module" src="/collaboration/app.js"></script>
+  </body>
+</html>

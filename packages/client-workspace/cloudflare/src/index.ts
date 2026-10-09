@@ -1,3 +1,5 @@
+import { workerCollaborationRoutes, isCollaborationRoute, serveCollaboration } from '../../../../apps/client-collaboration-pilot/hosted/worker-routes';
+import { sourceBundle, workerAssets } from '../../../../apps/client-collaboration-pilot/hosted/worker-bundle';
 import { getSandbox, Sandbox } from '@cloudflare/sandbox';
 import { resolveApplicationAccess } from '@create-something/canon/auth/access';
 
@@ -12,6 +14,7 @@ import { WorkspaceSnapshotStore } from '../../src/lib/cloudflare/snapshot-store.
 import { createClientWorkspaceWorker } from '../../src/lib/cloudflare/worker.js';
 
 interface Env {
+  COLLABORATION_ENABLED?: string;
   Sandbox: DurableObjectNamespace<Sandbox>;
   DB: D1Database;
   SNAPSHOTS: R2Bucket;
@@ -54,6 +57,14 @@ export default {
     const identityResponse = await identityRoutes.fetch(request);
     if (identityResponse) return withSecurityHeaders(identityResponse);
 
+    // Separate team boundary, before operator-only Sandbox routing. Disabled
+    // until reviewed migration + source bundle + explicit rollout approval.
+    if (isCollaborationRoute(new URL(request.url).pathname)) {
+      if (env.COLLABORATION_ENABLED !== 'true') return withSecurityHeaders(new Response('Not found', { status: 404 }));
+      const routes = workerCollaborationRoutes({ db: env.DB, origin: 'https://workspace.createsomething.io', source: sourceBundle, assets: workerAssets });
+      return withSecurityHeaders(await serveCollaboration(request, routes, identityRoutes.refreshAccess));
+    }
+
     if (!env.WORKSPACE_COOKIE_SECRET || !env.OPENAI_API_KEY) {
       return withSecurityHeaders(
         Response.json({ error: 'workspace_not_configured' }, { status: 503 })
@@ -67,7 +78,7 @@ export default {
         verification: {
           issuer: env.CS_IDENTITY_ISSUER,
           jwksUrl: env.CS_IDENTITY_JWKS_URL,
-          audience: [env.CS_IDENTITY_AUDIENCE],
+          audience: env.CS_IDENTITY_AUDIENCE,
           fetch: globalThis.fetch
         },
         policy: {

@@ -1,0 +1,32 @@
+{
+  "checkedOn": "2026-10-09",
+  "executor": "Micah-W4FJPH",
+  "identity": {
+    "issuer": "https://id.createsomething.space",
+    "discoveryStatus": 200,
+    "jwksStatus": 200,
+    "algorithm": "ES256",
+    "micah": {
+      "subject": "b8adb839-ddbb-4747-968e-7668687cf140",
+      "verified": true,
+      "deleted": false
+    },
+    "approvedTeamAccountsFound": 0,
+    "approvedTeamAddressesQueried": [
+      "vanessa.ortiz@maverickx.com",
+      "estefania.fernandez@maverickx.com",
+      "rajat.sehgal@maverickenergy.com"
+    ],
+    "queryChanges": 0,
+    "rowsWritten": 0
+  },
+  "pages": {
+    "project": "maverick-x",
+    "branch": "preview",
+    "latestListedDeploymentId": "e573c3ba-4713-4fad-8705-f171ad2324bb",
+    "abbreviatedSource": "e2b0ea8",
+    "fullSourceAndKVVersionVerified": false
+  },
+  "credentialsGenerated": false,
+  "liveWrites": false
+}

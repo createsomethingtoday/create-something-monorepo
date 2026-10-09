@@ -5,6 +5,7 @@ import type { RequestHandler } from './$types';
 import { json, error } from '@sveltejs/kit';
 import { InputSanitizationHook } from '$lib/agentic/hooks';
 import { generateId } from '$lib/utils/id';
+import { authorizeAgenticSubmission, validateSubmissionBudget } from '$lib/server/agentic-admission';
 
 interface SubmitRequest {
   type: 'template-generation' | 'feature-implementation' | 'research';
@@ -18,8 +19,10 @@ interface SubmitRequest {
   };
 }
 
-export const POST: RequestHandler = async ({ request, platform }) => {
+export const POST: RequestHandler = async ({ request, platform, locals }) => {
   try {
+    // Verify admission before parsing a body, writing database rows, or forwarding a secret.
+    const authorization = authorizeAgenticSubmission(request, locals.user, platform?.env ?? {});
     const body: SubmitRequest = await request.json();
 
     // Validate inputs
@@ -27,9 +30,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
       throw error(400, 'Missing required fields: type, prompt, budget');
     }
 
-    if (body.budget <= 0 || body.budget > 100) {
-      throw error(400, 'Budget must be between $0.01 and $100');
-    }
+    validateSubmissionBudget(body.budget);
 
     // HOOK: Sanitize prompt (prevent injection)
     const sanitizationHook = new InputSanitizationHook();
@@ -81,7 +82,8 @@ export const POST: RequestHandler = async ({ request, platform }) => {
     // Submit to worker via HTTP (Pages can't access queues directly)
     const workerResponse = await fetch('https://agentic-executor.createsomething.workers.dev/submit', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', Authorization: authorization },
+      signal: AbortSignal.timeout(15_000),
       body: JSON.stringify({
         issueId: sessionId,
         epicId,
@@ -107,7 +109,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 
   } catch (err: any) {
     console.error('Agentic submit failed', err);
-    if (err.status) throw err;
+    if (err.status) throw error(err.status, err.message);
     throw error(500, `Failed to submit task: ${err.message}`);
   }
 };

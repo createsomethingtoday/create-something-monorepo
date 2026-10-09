@@ -1,4 +1,4 @@
-name: Draw native release candidate
+name: Draw paired iOS release candidate
 
 on:
   workflow_dispatch:
@@ -132,7 +132,12 @@ jobs:
         env:
           DRAW_INSTALLED_SKIP_BUILD: '1'
           DRAW_REQUIRE_PRODUCTION_RELEASE: '1'
-        run: pnpm --dir apps/draw-native verify:installed
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          dmgs=("$GITHUB_WORKSPACE"/apps/draw-native/src-tauri/target/release/bundle/dmg/*.dmg)
+          test "${#dmgs[@]}" -eq 1
+          DRAW_DMG_PATH="${dmgs[0]}" pnpm --dir apps/draw-native verify:installed
       - name: Initialize clean-checkout iOS project
         run: CI=true pnpm --dir apps/draw-native ios:init
       - name: Validate release slot before external mutation

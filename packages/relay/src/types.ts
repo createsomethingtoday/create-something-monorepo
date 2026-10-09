@@ -19,7 +19,7 @@ export interface MoltbotEnv {
   CLAWDBOT_BIND_MODE?: string;
   DEV_MODE?: string; // Set to 'true' for local dev (skips CF Access auth + moltbot device pairing)
   DEBUG_ROUTES?: string; // Set to 'true' to enable /debug/* routes
-  SANDBOX_SLEEP_AFTER?: string; // How long before sandbox sleeps: 'never' (default), or duration like '10m', '1h'
+  SANDBOX_SLEEP_AFTER?: string; // How long before sandbox sleeps: positive finite duration like '10m' (SDK default), '1h'; never rejected
   TELEGRAM_BOT_TOKEN?: string;
   TELEGRAM_DM_POLICY?: string;
   DISCORD_BOT_TOKEN?: string;

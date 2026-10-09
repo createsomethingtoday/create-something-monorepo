@@ -520,6 +520,7 @@ mod tests {
         let home = std::env::temp_dir().join(format!("draw-transport-{}", uuid::Uuid::new_v4()));
         let state_path = home.join("paired-session.json");
         let runtime = Arc::new(DrawRuntime {
+            _profile_owner: None,agent_access: Mutex::new(Default::default()),
             state_path: state_path.clone(),
             host: Mutex::new(initial_state()),
             pending: Mutex::new(HashMap::new()),

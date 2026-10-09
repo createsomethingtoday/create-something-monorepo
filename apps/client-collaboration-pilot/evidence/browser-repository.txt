@@ -1,0 +1,1 @@
+PASS actual MCP proposal → browser exact approval → Git source commit → injected SQLite failure → reload recovery → one source commit/receipt; desktop/mobile no overflow or page errors.

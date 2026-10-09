@@ -4,7 +4,9 @@
   "account_id": "9645bd52e640b8a4f40a3a55ff1dd75a",
   "main": "src/index.ts",
   "compatibility_date": "2026-07-15",
-  "compatibility_flags": ["nodejs_compat"],
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
   "routes": [
     {
       "pattern": "workspace.createsomething.io",
@@ -47,7 +49,9 @@
   "migrations": [
     {
       "tag": "v1",
-      "new_sqlite_classes": ["Sandbox"]
+      "new_sqlite_classes": [
+        "Sandbox"
+      ]
     }
   ],
   "vars": {
@@ -55,6 +59,7 @@
     "CS_IDENTITY_ISSUER": "https://id.createsomething.space",
     "CS_IDENTITY_JWKS_URL": "https://id.createsomething.space/.well-known/jwks.json",
     "CS_IDENTITY_AUDIENCE": "client-workspace",
-    "CS_AUTH_ALLOWED_EMAILS": "micah@createsomething.io"
+    "CS_AUTH_ALLOWED_EMAILS": "micah@createsomething.io",
+    "COLLABORATION_ENABLED": "true"
   }
 }

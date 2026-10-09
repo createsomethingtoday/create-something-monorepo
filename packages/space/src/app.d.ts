@@ -27,6 +27,8 @@ declare global {
 				TURNSTILE_SECRET_KEY?: string;
 				TURNSTILE_SITE_KEY?: string;
 				ANALYTICS_SERVICE_TOKEN?: string;
+				AGENTIC_ADMISSION_TOKEN?: string;
+				AGENTIC_ALLOWED_SUBMITTER_IDS?: string;
 				ENVIRONMENT: string;
 				TERMINAL_VERSION: string;
 				DEFAULT_THEME: string;

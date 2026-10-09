@@ -173,3 +173,13 @@ test('identity routes rotate a host-only refresh session for access retry', asyn
   assert.match(refreshed.setCookies.join(';'), /Secure/);
   assert.equal(refreshed.setCookies.join(';').includes('Domain='), false);
 });
+
+test('collaboration sign-in returns only to the fixed collaboration route', async () => {
+  const routes = createIdentityRoutes({ identityApiUrl: 'https://id.createsomething.space', fetch: async () => Response.json({ access_token: 'fixture-access', refresh_token: 'fixture-refresh', expires_in: 900 }) });
+  const form = await routes.fetch(new Request('https://workspace.createsomething.io/sign-in?next=collaboration'));
+  assert.match(await form!.text(), /action="\/api\/auth\/login\?next=collaboration"/);
+  for (const [next, expected] of [['collaboration', '/collaboration/'], ['https://evil.invalid', '/']]) {
+    const response = await routes.fetch(new Request('https://workspace.createsomething.io/api/auth/login?next=' + next, { method: 'POST', body: new URLSearchParams({ email: 'synthetic@example.invalid', password: 'synthetic' }) }));
+    assert.equal(response!.headers.get('location'), expected);
+  }
+});

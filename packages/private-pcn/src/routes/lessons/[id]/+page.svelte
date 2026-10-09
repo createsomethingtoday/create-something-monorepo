@@ -28,7 +28,7 @@
     content="noindex"
   /></svelte:head
 >
-<main id="main" class="lesson-workspace">
+<main id="main" tabindex="-1" class="lesson-workspace">
   <a class="back-link" href={data.libraryPath}><Icon name="arrow-left" /> Back to sessions</a>
   {#if !content}
     <section class="empty-state">

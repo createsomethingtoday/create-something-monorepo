@@ -547,7 +547,7 @@
 <main class:preview-mode={previewMode}>
   <header>
     <a href={`/?project=${encodeURIComponent(project.id)}`} onclick={openCanvas} class="brand"
-      >DRAW <span>MOTION</span></a
+      ><img src="/brand/draw-dark.svg" alt="" width="32" height="32" />Draw <span>MOTION</span></a
     ><input
       aria-label="Animation title"
       value={project.title}
