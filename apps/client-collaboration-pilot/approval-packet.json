@@ -39,7 +39,8 @@
     "onlyProject": "maverickx",
     "mutationLimit": 200,
     "projectStateByteLimit": 512000,
-    "publicationStorage": "Atomic revision-checked project aggregate; immutable per-job snapshot and current publication pointer commit with actor/reviewer/requester membership predicates"
+    "publicationStorage": "Atomic revision-checked project aggregate; immutable per-job snapshot and current publication pointer commit with actor/reviewer/requester membership predicates",
+    "deploymentMigration": "packages/client-workspace/cloudflare/migrations/0003_collaboration.sql"
   },
   "preview": {
     "existingPagesProject": "maverick-x",
@@ -135,5 +136,10 @@
   "research": [
     "https://developers.cloudflare.com/pages/functions/bindings/",
     "https://developers.cloudflare.com/d1/worker-api/d1-database/"
-  ]
+  ],
+  "rolloutApproval": {
+    "message": "Sentinel_4afc2def16288191bc65a4688935a65b",
+    "approved": "Normal reviewed source promotion, CI, existing Worker deployment, two D1 tables and mailbox-verified enrollment for the three exact teammates",
+    "excluded": "New deputy/credential, broader access, website production promotion, pilot availability claim before live acceptance"
+  }
 }

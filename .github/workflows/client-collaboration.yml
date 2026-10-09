@@ -1,0 +1,42 @@
+name: Client collaboration pilot
+on:
+  pull_request:
+    paths:
+      - 'apps/client-collaboration-pilot/**'
+      - 'packages/client-workspace/**'
+      - 'packages/canon/src/lib/auth/**'
+      - 'packages/auth-platform/**'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/client-collaboration.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  bounded-pilot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1
+        with:
+          version: 9.15.0
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version: '24'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @create-something/auth-platform build
+      - name: Edge types and identity guard
+        run: |
+          pnpm --filter @create-something/client-collaboration-pilot exec tsc -p hosted/tsconfig.json
+          pnpm --filter @create-something/client-workspace cloudflare:check
+          node scripts/check-retired-identity-provider.mjs
+          cmp apps/client-collaboration-pilot/hosted/migrations/0001_collaboration.sql packages/client-workspace/cloudflare/migrations/0003_collaboration.sql
+      - name: Synthetic D1, MCP and browser acceptance
+        run: |
+          export PILOT_BROWSER_EXECUTABLE="$(command -v google-chrome)"
+          test -x "$PILOT_BROWSER_EXECUTABLE"
+          pnpm --filter @create-something/client-collaboration-pilot test
+          pnpm --filter @create-something/client-workspace exec tsx --test test/cloudflare-identity-routes.test.ts test/cloudflare-worker.test.ts
+      - name: Worker package dry run; preserve existing container
+        run: pnpm --filter @create-something/client-workspace exec wrangler deploy --dry-run --containers-rollout none --config cloudflare/wrangler.jsonc --outdir /tmp/client-collaboration-worker
