@@ -62,7 +62,7 @@ export function findMissingCoverageForStagedFiles(stagedFiles, packageJsonByDir,
 }
 
 function runGit(args) {
-  return execFileSync('git', args, { encoding: 'utf8' }).trimEnd();
+  return execFileSync('git', args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trimEnd();
 }
 
 function tryRunGit(args) {
@@ -79,7 +79,8 @@ function readStagedFiles() {
 }
 
 function readIndexOrHeadBlob(pathname) {
-  return tryRunGit(['show', `:${pathname}`]) ?? tryRunGit(['show', `HEAD:${pathname}`]);
+  // Read an exact blob: `git show :path` can treat Svelte [id] routes as patterns.
+  return tryRunGit(['cat-file', 'blob', `:${pathname}`]) ?? tryRunGit(['cat-file', 'blob', `HEAD:${pathname}`]);
 }
 
 function buildPackageJsonByDir(stagedFiles) {
