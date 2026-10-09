@@ -50,41 +50,77 @@ is written under `apps/draw-native/output/installed-acceptance/`.
 
 ## Production release gates
 
-An unsigned DMG or simulator archive is development evidence only. Production
-requires all of the following against the exact candidate bytes:
+Mac and paired-iOS release scopes are separate. An unsigned or merely compiled
+artifact is development evidence. Never reuse a version/tag for different bytes.
 
-- Developer ID Application signing and strict `codesign` verification;
-- Apple notarization, ticket stapling, and Gatekeeper assessment;
-- a signed iPhone build installed on the physical device;
-- two consecutive physical Mac/iPhone acceptance runs covering touch ink, a
-  spaced note, movement, conversion, Wi-Fi disconnect/queue/reconnect,
-  Mac relaunch, JSON/SVG/PNG export, revocation, and re-pair rejection;
-- a redacted receipt with build identities, revisions, final document/export
-  hashes, and artifact SHA-256.
+### Mac-only
+
+The `Draw macOS signed candidate` workflow (`draw-macos-release.yml`) is manually
+dispatched from `main`, requires the existing `draw-apple-production` environment
+and `DRAW_SIGNING_ENABLED=true`, and does not require iOS signing credentials or
+upload to TestFlight. Its signed job verifies an explicitly selected DMG before
+launching an isolated copy. It does not publish a GitHub release.
+
+Mac release retains all of these gates against one exact artifact:
+
+- Developer ID Application signing for team `PRP5VQQPPB`, strict signature checks;
+- Apple notarization, app and DMG stapling, app-execution and DMG Gatekeeper checks;
+- exact installed app/executable/DMG hashes, source commit, version and isolated relaunch;
+- two clean physical Mac UI runs including edit/undo/redo, JSON/SVG/PNG export,
+  import recovery, persistent relaunch, Compose save/restore and motion export,
+  plus approved/rejected local-agent proposals and shared undo/redo;
+- explicitly owner-approved, synthetic, live read-only provider acceptance with
+  observed readback, revocation and authenticated post-revocation denial;
+- preserved prior artifact and untouched profile backup with an isolated rollback
+  rehearsal. Older binaries must never be tested against the newly written live profile.
+
+The machine receipt alone is insufficient. `receipt:macos` checks the installed
+receipt plus a separately reviewed owner acceptance receipt, raw provider receipt,
+prior artifact and profile backup. Missing, failed, stale-source or mismatched
+artifact evidence fails closed. Its fixture tests are synthetic and are not real
+acceptance receipts. See [the exact Mac handoff](docs/macos-release.md).
+
+### Paired iOS
+
+The existing `draw-native-release.yml`, now named `Draw paired iOS release
+candidate`, retains signed iPhone packaging, TestFlight, and two consecutive
+physical Mac/iPhone acceptance runs covering touch ink, spaced notes, movement,
+conversion, Wi-Fi disconnect/queue/reconnect, Mac relaunch, export, revocation and
+re-pair rejection. Those gates remain mandatory for the paired iOS release; a
+Mac-only receipt never claims they passed. Its draft release stays draft until
+both clean physical receipts are attached. The existing paired receipt and
+`draw-vVERSION` channel remain separate from `draw-macos-vVERSION`.
 
 Signing and notarization use an already-authorized Apple owner surface. Never
-commit certificates, provisioning profiles, app-specific passwords, or API
-keys. Retain the previous signed DMG and hash as the rollback artifact.
+commit certificates, private keys, certificate passwords or API credentials.
+`DRAW_SIGNING_ENABLED` and protected environment access are not configured by
+these changes. New credential configuration requires the owner's secure handoff.
 
-The `Draw native release candidate` workflow owns the production candidate.
-Its first job produces unsigned development evidence. Its
-`draw-apple-production` job is restricted to protected branches, requires an
-operator review, and remains disabled unless the repository variable
-`DRAW_SIGNING_ENABLED` is exactly `true`.
+## Offline-first local development pilot
 
-The protected environment requires these secrets:
+This branch no longer starts the desktop LAN listener or Bonjour advertisement
+by default. Phone pairing requires launching with
+`CREATE_SOMETHING_DRAW_ENABLE_LAN=1`; the Pair action explains this when disabled.
+This is a compiled development change with isolated launch/persistence evidence, not a new release.
+Cloud sharing/agent relay remain separate explicit features; disabling LAN alone
+is not an outbound-network sandbox.
 
-- `APPLE_CERTIFICATE` and `APPLE_CERTIFICATE_PASSWORD`: base64 Developer ID
-  Application `.p12` and its export password;
-- `IOS_CERTIFICATE` and `IOS_CERTIFICATE_PASSWORD`: base64 Apple Distribution
-  `.p12` and its export password;
-- `IOS_MOBILE_PROVISION`: base64 App Store Connect provisioning profile for
-  `agency.createsomething.draw`;
-- `APPLE_API_ISSUER`, `APPLE_API_KEY`, and `APPLE_API_PRIVATE_KEY`: App Store
-  Connect issuer, key ID, and base64 `.p8` private key.
+The [offline file pilot](../../packages/mapping-canvas/offline-agent/README.md)
+works on an explicitly selected Canvas JSON export. It creates reviewed copies,
+never writes `paired-session.json`, and is not live native agent integration.
 
-On an approved run, the workflow builds and verifies the Developer ID DMG,
-builds the App Store Connect IPA, uploads it to TestFlight, creates a draft
-GitHub release, and downloads the release assets again to prove their hashes
-match `production-release.json`. The release stays draft until two clean
-physical Mac/iPhone acceptance receipts are attached.
+
+Native host edits use `draw_host_apply_batch` for a single caller-revision-checked,
+atomic commit per UI batch. It is trusted UI IPC, not an external agent API;
+agent grants, native layer-lock policy and shared authoritative history are pending.
+See the [current audit and acceptance](../../packages/mapping-canvas/docs/offline-desktop-audit.md).
+For disposable native tests, set both `CREATE_SOMETHING_DRAW_HOME` to a new test
+profile and `CREATE_SOMETHING_DRAW_EPHEMERAL_WEBVIEW=1` to avoid installed WebView
+storage. This does not replace a signed-app or real native UI acceptance run.
+
+The Local agent panel now offers ephemeral read access and selected-layer proposals.
+A private Unix socket accepts inspect/propose/status only; every edit requires native
+owner review. UI, phone, and approved agent changes share durable Undo/Redo, and a
+retained profile lock excludes a second cooperating native writer. No real grant
+or provider connection was activated during acceptance. See
+[the current test matrix and preview](../../packages/mapping-canvas/docs/native-agent-review-slice.md).

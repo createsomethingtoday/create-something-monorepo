@@ -589,7 +589,12 @@ fn validate_envelope(envelope: &OperationEnvelope) -> bool {
     {
         return false;
     }
-    match &envelope.operation {
+    valid_canvas_operation(&envelope.operation)
+}
+
+/// Shared validation for paired envelopes and trusted native atomic batches.
+pub fn valid_canvas_operation(operation: &CanvasOperation) -> bool {
+    match operation {
         CanvasOperation::PutObject { object } => valid_object(object),
         CanvasOperation::RemoveObjects { ids } => {
             !ids.is_empty() && ids.iter().all(|id| non_empty(id))

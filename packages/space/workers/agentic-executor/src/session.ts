@@ -2,6 +2,8 @@
 // Implements session management with hooks for security and cost control
 
 import Anthropic from '@anthropic-ai/sdk';
+import { GuardError, guardResponse, readPolicy, validateTask, usdUnits } from './guards.ts';
+import { quota } from './quota.ts';
 import {
   BudgetEnforcementHook,
   CompletionValidationHook,
@@ -60,7 +62,8 @@ class WorkerLangfuse {
           'Content-Type': 'application/json',
           'Authorization': `Basic ${btoa(`${this.publicKey}:${this.secretKey}`)}`
         },
-        body: JSON.stringify({ batch: [body] })
+        body: JSON.stringify({ batch: [body] }),
+        signal: AbortSignal.timeout(10_000)
       });
     } catch (err) {
       console.error('Langfuse ingestion error:', err);
@@ -137,7 +140,10 @@ export class AgenticSession {
 
   // Session state (persisted)
   private conversationHistory: Message[] = [];
-  private context: SessionContext;
+  private context!: SessionContext;
+  private starting: Promise<Response> | null = null;
+  private executing = false;
+  private requestAbort: AbortController | null = null;
   private lastCheckpoint: number = 0;
 
   // Hooks
@@ -145,21 +151,14 @@ export class AgenticSession {
   private completionHook: CompletionValidationHook;
   private promptProtection: SystemPromptProtectionHook;
 
-  // Cost tracking (Sonnet 4.5 pricing)
-  private readonly INPUT_COST = 0.003 / 1000;   // $3 per MTok
-  private readonly OUTPUT_COST = 0.015 / 1000;  // $15 per MTok
 
   constructor(state: DurableObjectState, env: Env) {
     this.state = state;
     this.env = env;
 
-    // Log API key status (first 10 chars only for security)
-    const hasApiKey = !!env.ANTHROPIC_API_KEY;
-    const apiKeyPreview = env.ANTHROPIC_API_KEY?.substring(0, 10) || 'undefined';
-    console.log('Durable Object constructor', { hasApiKey, apiKeyPreview });
+    // Disable SDK retries: a failed request can still have incurred provider charges.
+    this.anthropic = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY, maxRetries: 0, timeout: 60_000, fetch: globalThis.fetch as any });
 
-    this.anthropic = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
-    
     // Initialize Langfuse for observability
     this.langfuse = new WorkerLangfuse(env);
 
@@ -175,32 +174,18 @@ export class AgenticSession {
         this.conversationHistory = stored.conversationHistory;
         this.context = stored.context;
         this.lastCheckpoint = stored.lastCheckpoint;
+        if (this.context.guardVersion !== 1 || this.context.callPending || this.context.initializationPending) {
+          this.context.status = 'error';
+          this.context.error = 'Legacy state or interrupted initialization/model outcome requires operator reconciliation';
+          await this.saveSessionState();
+          await this.state.storage.deleteAlarm();
+        }
       }
     });
   }
 
   async fetch(request: Request): Promise<Response> {
     const url = new URL(request.url);
-
-    // Log all headers for debugging
-    const headers: Record<string, string> = {};
-    request.headers.forEach((value, key) => {
-      headers[key] = value.substring(0, 20);  // Truncate for security
-    });
-    console.log('Durable Object fetch request', { pathname: url.pathname, headers });
-
-    // Extract API key from header (secrets aren't inherited by Durable Objects)
-    const apiKey = request.headers.get('X-Api-Key');
-    if (apiKey) {
-      // Reinitialize Anthropic client with the provided API key
-      this.anthropic = new Anthropic({ apiKey });
-      console.log('Reinitialized Anthropic client with provided API key', {
-        hasKey: true,
-        keyPreview: apiKey.substring(0, 10)
-      });
-    } else {
-      console.log('No API key in request header', { allHeaders: Object.keys(headers) });
-    }
 
     switch (url.pathname) {
       case '/start':
@@ -225,56 +210,45 @@ export class AgenticSession {
   // ============================================================================
 
   async start(task: AgenticTask): Promise<Response> {
-    // Validate budget upfront
-    if (task.budget <= 0 || task.budget > 100) {
-      return Response.json(
-        { error: 'Budget must be between $0.01 and $100' },
-        { status: 400 }
-      );
-    }
+    if (this.starting) return this.starting;
+    this.starting = this.startOnce(task);
+    try { return await this.starting; } catch (error) { return guardResponse(error); }
+    finally { this.starting = null; }
+  }
 
-    // Check if resuming existing session
+  private async startOnce(input: AgenticTask): Promise<Response> {
+    const task = validateTask(input, readPolicy(this.env));
+    const admission = await quota(this.env).fetch('https://quota/verify', {method:'POST',body:JSON.stringify(task)});
+    if (!admission.ok) {
+      const transient = admission.status >= 500 || [408,429].includes(admission.status);
+      return Response.json({error:transient ? 'Admission verification unavailable' : 'Admission required'}, {status:transient ? 503 : 403});
+    }
+    const receipt = await admission.json() as {deadline:number};
     const stored = await this.state.storage.get<SessionState>('session');
-
     if (stored) {
-      // Resuming
-      this.conversationHistory = stored.conversationHistory;
-      this.context = stored.context;
-
-      // Check if budget was already exhausted
-      if (this.context.status === 'budget_exhausted') {
-        return Response.json({
-          error: 'Session budget exhausted',
-          budget: this.getBudgetStatus()
-        }, { status: 402 });  // 402 Payment Required
+      if (this.context.initializationPending) {
+        return Response.json({error:'Interrupted initialization requires reconciliation',status:this.context.status}, {status:409});
       }
-    } else {
-      // New session - load Beads issue
-      const issue = await this.loadBeadsIssue(task.issueId);
-
-      // Initialize context
-      this.context = {
-        issueId: task.issueId,
-        epicId: task.epicId,
-        convoyId: task.convoyId,
-        budget: task.budget,
-        costConsumed: 0,
-        iteration: 0,
-        iterationCosts: [],
-        filesModified: [],
-        status: 'running',
-        budgetWarned: false,
-        acceptanceCriteria: task.acceptanceCriteria || issue.acceptance
-      };
-
-      // Initial system message
-      this.conversationHistory.push({
-        role: 'user',
-        content: this.buildInitialPrompt(issue, task)
-      });
+      // Queue redelivery never resumes, resets, or re-arms an existing session.
+      return Response.json({status:this.context.status,sessionId:this.state.id.toString(),budget:this.getBudgetStatus()});
     }
+    if (!Number.isFinite(receipt.deadline) || receipt.deadline <= Date.now()) {
+      return Response.json({error:'Admission expired'}, {status:410});
+    }
+    const issue = await this.loadBeadsIssue(task.issueId);
+    this.context = {
+      issueId:task.issueId, epicId:task.epicId, convoyId:task.convoyId,
+      budget:task.budget, costConsumed:0, costReserved:0, guardVersion:1,
+      deadline:receipt.deadline, callPending:false, initializationPending:true, iteration:0, iterationCosts:[],
+      filesModified:[],status:'running',budgetWarned:false,
+      acceptanceCriteria:task.acceptanceCriteria || issue.acceptance
+    };
+    this.conversationHistory = [{role:'user',content:this.buildInitialPrompt(issue,task)}];
+    // Persist before any external tracking or alarm. A failed start remains deduplicated.
+    await this.saveSessionState();
 
-    // Track session start in DB
+    try {
+    // Tracking may have an uncertain outcome; never restart it automatically.
     await this.trackSessionStart();
 
     // Create Langfuse trace for observability
@@ -297,7 +271,25 @@ export class AgenticSession {
 
     // Schedule execution loop via alarm (fires immediately)
     // This is the correct pattern for Durable Objects - alarms trigger background work
-    await this.state.storage.setAlarm(Date.now() + 100);  // Fire in 100ms
+    // Commit readiness and the first alarm together: no persisted running state
+    // can be advertised as initialized without a durable wake-up.
+    const initializedContext = {...this.context, initializationPending:false};
+    await this.state.storage.transaction(async storage => {
+      await storage.put<SessionState>('session', {
+        conversationHistory:this.conversationHistory, context:initializedContext,
+        lastCheckpoint:this.lastCheckpoint
+      });
+      await storage.setAlarm(Date.now()+100);
+    });
+    this.context = initializedContext;
+    } catch (error) {
+      this.context.status = 'error';
+      this.context.error = 'Session initialization failed; operator reconciliation required';
+      // Keep the pending marker, including after a crash before this catch.
+      await this.saveSessionState();
+      await this.state.storage.deleteAlarm();
+      throw error;
+    }
 
     console.log('✅ Scheduled executeLoop via alarm');
 
@@ -310,8 +302,9 @@ export class AgenticSession {
 
   // Durable Object alarm handler - triggered for background execution
   async alarm(): Promise<void> {
-    console.log('🔔 Alarm fired - starting executeLoop');
-    await this.executeLoop();
+    if (!this.context || this.context.status !== 'running' || this.context.initializationPending || this.executing) return;
+    this.executing = true;
+    try { await this.executeLoop(); } finally { this.executing = false; }
   }
 
   async executeLoop(): Promise<void> {
@@ -333,6 +326,11 @@ export class AgenticSession {
       });
 
       while (this.context.status === 'running' && this.context.iteration < maxIterations) {
+        if (!this.context.deadline || Date.now() >= this.context.deadline || this.context.guardVersion !== 1 || this.context.callPending) {
+          this.context.status = 'error';
+          this.context.error = 'Execution deadline or durable spend guard stopped the session';
+          break;
+        }
         console.log('Loop iteration starting', {
           iteration: this.context.iteration,
           status: this.context.status
@@ -356,6 +354,7 @@ export class AgenticSession {
 
         // Execute iteration
         const response = await this.iterate();
+        if (this.context.status !== 'running') break;
 
         // HOOK: Budget enforcement (after iteration)
         const lastCost = this.context.iterationCosts[this.context.iterationCosts.length - 1];
@@ -373,6 +372,7 @@ export class AgenticSession {
           // HOOK: Validate completion claim (don't trust it)
           const completionCheck = await this.completionHook.validate(this.context, this.env);
 
+          if (this.context.status !== 'running') break;
           if (completionCheck.approved) {
             // Actually complete
             this.context.status = 'complete';
@@ -405,13 +405,17 @@ export class AgenticSession {
           errorDetails
         });
 
-        this.context.status = 'error';
+        if (this.context.status === 'running') this.context.status = 'error';
         this.context.error = errorDetails.message || JSON.stringify(errorDetails);
         await this.saveSessionState();
         break;
       }
     }
 
+      if (this.context.status === 'running' && this.context.iteration >= maxIterations) {
+        this.context.status = 'error';
+        this.context.terminationReason = 'Maximum iteration limit reached';
+      }
       // Finalize if completed normally
       if (this.context.status === 'complete') {
         await this.finalize();
@@ -451,6 +455,16 @@ export class AgenticSession {
   }
 
   async iterate(): Promise<any> {
+    const policy = readPolicy(this.env);
+    if (this.context.status !== 'running' || this.context.guardVersion !== 1 || this.context.callPending ||
+        !Number.isFinite(this.context.costReserved) || !this.context.deadline || Date.now() >= this.context.deadline) {
+      throw new GuardError('Session cannot make another model request',409);
+    }
+    if (Math.round(this.context.costReserved! * 1_000_000) + usdUnits(policy.callReservation) > Math.floor(this.context.budget * 1_000_000)) {
+      this.context.status = 'budget_exhausted';
+      await this.saveSessionState();
+      throw new GuardError('Insufficient unreserved model budget',402);
+    }
     this.context.iteration++;
 
     // Build system prompt with budget info
@@ -476,24 +490,44 @@ export class AgenticSession {
       });
     }
 
-    // Make API call with full conversation history + Extended Thinking
-    const response = await this.anthropic.messages.create({
-      model: 'claude-sonnet-4-5-20250929',
-      max_tokens: 16384,  // Must be > thinking.budget_tokens (10000)
-      thinking: {
-        type: 'enabled',
-        budget_tokens: 10000  // Extended thinking for better reasoning
-      },
-      system: systemPrompt,
-      messages: this.conversationHistory as any,
-      tools: this.buildTools(),
-      tool_choice: { type: 'auto' }
-    });
+    const parameters = {
+      model: 'claude-sonnet-4-5-20250929', max_tokens: 16384,
+      thinking: { type: 'enabled' as const, budget_tokens: 10000 },
+      system: systemPrompt, messages: this.conversationHistory as any,
+      tools: this.buildTools(), tool_choice: { type: 'auto' as const }
+    };
+    if (new TextEncoder().encode(JSON.stringify(parameters)).length > policy.maxRequestBytes) {
+      throw new GuardError('Model request exceeds configured context byte cap');
+    }
+    // Debit the conservative maximum, never refund automatically. Persist before crossing
+    // the provider boundary; unknown outcomes stop on recovery rather than repeating a call.
+    this.context.costReserved = (Math.round(this.context.costReserved! * 1_000_000) + usdUnits(policy.callReservation)) / 1_000_000;
+    this.context.callPending = true;
+    await this.saveSessionState();
+    if (this.context.status !== 'running') throw new GuardError('Session paused',409);
+    this.requestAbort = new AbortController();
+    const deadlineTimer = setTimeout(() => this.requestAbort?.abort(), Math.max(1, Math.min(60_000, this.context.deadline! - Date.now())));
+    let response;
+    try {
+      response = await this.anthropic.messages.create(parameters, {signal:this.requestAbort.signal});
+    } finally {
+      clearTimeout(deadlineTimer);
+      this.requestAbort = null;
+    }
 
     // Calculate actual cost
     const actualCost = this.calculateCost(response.usage!);
     this.context.costConsumed += actualCost;
     this.context.iterationCosts.push(actualCost);
+    this.context.callPending = false;
+    if (!Number.isFinite(actualCost) || actualCost < 0 || actualCost > policy.callReservation) {
+      this.context.status = 'error';
+      this.context.error = 'Provider usage exceeded configured reservation; reconcile pricing policy';
+    }
+    // Persist the response/accounting before external tracking or tool effects.
+    this.conversationHistory.push({role:'assistant',content:response.content as any});
+    await this.saveSessionState();
+    if (this.context.status !== 'running' || Date.now() >= this.context.deadline!) return response;
 
     // End Langfuse generation with results
     if (this.langfuse.isEnabled() && generationId) {
@@ -525,16 +559,11 @@ export class AgenticSession {
       return response;
     }
 
-    // Add assistant response to history
-    this.conversationHistory.push({
-      role: 'assistant',
-      content: response.content
-    });
-
     // Execute tool calls
     const toolResults: ToolResultContent[] = [];
 
     for (const block of response.content) {
+      if (this.context.status !== 'running' || Date.now() >= this.context.deadline!) break;
       if (block.type === 'tool_use') {
         const result = await this.executeToolCall(block);
 
@@ -564,29 +593,34 @@ export class AgenticSession {
   }
 
   async pause(): Promise<Response> {
+    if (!this.context) return Response.json({error:'No session'}, {status:404});
+    if (this.context.status !== 'running') return this.status();
     this.context.status = 'paused';
-    await this.createCheckpoint();
+    this.requestAbort?.abort();
     await this.saveSessionState();
-
-    return Response.json({ status: 'paused' });
+    await this.state.storage.deleteAlarm();
+    return Response.json({status:'paused'});
   }
 
   async resume(): Promise<Response> {
+    if (!this.context || this.context.status !== 'paused' || this.context.callPending || this.executing ||
+        this.context.guardVersion !== 1 || !this.context.deadline || Date.now() >= this.context.deadline) {
+      return Response.json({error:'Session cannot safely resume'}, {status:409});
+    }
+    readPolicy(this.env);
     this.context.status = 'running';
     await this.saveSessionState();
-
-    // Resume execution loop via alarm
-    await this.state.storage.setAlarm(Date.now() + 100);
-    console.log('✅ Scheduled resume via alarm');
-
-    return Response.json({ status: 'resumed' });
+    await this.state.storage.setAlarm(Date.now()+100);
+    return Response.json({status:'resumed'});
   }
 
   status(): Response {
+    if (!this.context) return Response.json({error:'No session'}, {status:404});
     return Response.json({
       sessionId: this.state.id.toString(),
       iteration: this.context.iteration,
       costConsumed: this.context.costConsumed,
+      costReserved: this.context.costReserved,
       budget: this.context.budget,
       status: this.context.status,
       filesModified: this.context.filesModified.length,
@@ -626,7 +660,9 @@ export class AgenticSession {
   }
 
   private calculateCost(usage: { input_tokens: number; output_tokens: number }): number {
-    return (usage.input_tokens * this.INPUT_COST) + (usage.output_tokens * this.OUTPUT_COST);
+    const policy = readPolicy(this.env);
+    if (!Number.isSafeInteger(usage.input_tokens) || usage.input_tokens < 0 || !Number.isSafeInteger(usage.output_tokens) || usage.output_tokens < 0) return NaN;
+    return (usage.input_tokens * policy.inputRate + usage.output_tokens * policy.outputRate) / 1_000_000;
   }
 
   private async injectBudgetWarning(): Promise<void> {

@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { readCanvasImport } from '$lib/import-admission';
+  import NativeAgentPanel from '$lib/NativeAgentPanel.svelte';
   import './page.css';
   import AgentConnection from '$lib/AgentConnection.svelte';
   import type { DrawWebMcpTool } from '$lib/webmcp';
@@ -13,12 +15,14 @@
   import { compileEdits, clipboardObjects, transformRoots, editBounds, visualBounds, assertLockedLayersPreserved, descendants, visibleObjects, isLayerLocked, type EditCommand } from '$lib/editing';
   import { onMount } from 'svelte';
   import { loadDocument, saveDocument } from '$lib/persistence';
+  import { createRegistryPilotTools } from '$lib/session-registry-tools';
   import { activateCanvasProject } from '$lib/project-storage';
   import { commit, convert, createDocument, createObjectCenterResolver, expandCompoundIds, objectBounds, parse, redo, removeObjects, resizeGroup, restoreConversion, selectObjectIdsInBounds, serialize, uid, undo, withObjects, type CanvasDocument, type CanvasObject, type History, type Point, type Shape, type Stroke, type Tool } from '$lib/document';
   import { DEFAULT_DRAWING_COLOR, DRAWING_COLOR_PREFERENCE, DRAWING_PALETTE, isColorableObject, isDrawingColor, recolorObjects, type DrawingColor } from '$lib/palette';
   import { applyCanvasOperations, isValidCanvasTitle, type CanvasOperation } from '$lib/paired-session';
   import { connectorLabelLayout, createDrawWebMcpTools, drawRevision, registerDrawWebMcpTools, type DrawRenderedGeometry, type DrawTransitionKind } from '$lib/webmcp';
-  import { beginPairing, companionStatus, discoverHosts, forgetCompanion, hasNativeBridge, hostStatus, nativeRole as readNativeRole, pairCompanion, refreshCompanion, replaceHostDocument, revokeCompanion, setCompanionOnline, submitNativeOperation, type DiscoveredHost, type NativeRole, type NativeSessionStatus, type PairingOffer } from '$lib/native-pairing';
+  import { beginPairing, companionStatus, discoverHosts, forgetCompanion, hasNativeBridge, hostStatus, nativeRole as readNativeRole, pairCompanion, refreshCompanion, replaceHostDocument, revokeCompanion, setCompanionOnline, submitNativeOperation, submitHostBatch, nativeHistory, invokeNative, type DiscoveredHost, type NativeRole, type NativeSessionStatus, type PairingOffer } from '$lib/native-pairing';
+  import { NativeHostBatches, settleNativeHostBatch } from '$lib/native-host-batches';
   import { fitViewportToBounds, normalizeWheelDelta, panViewport, zoomViewportAt } from '$lib/viewport';
   import { createNoteInputBuffer } from '$lib/note-input';
   import { paddedSegmentBounds } from '$lib/spatial';
@@ -36,7 +40,7 @@
   const TOOL_SIDEBAR_PREFERENCE = 'mapping-canvas-tool-sidebar-collapsed';
   const DRAW_DOCUMENT_LOCK = 'draw-active-document';
   const canonicalUrl = 'https://draw.createsomething.agency/';
-  const publicTitle = 'Drawing Canvas for Mapping Meetings | CREATE SOMETHING';
+  const publicTitle = 'Draw — Drawing Canvas for Mapping Meetings';
   const publicDescription = 'A local-first drawing canvas for mapping meetings, spatial notes, shapes, connectors, groups, and portable JSON, SVG, or PNG exports.';
   const socialImage = `${canonicalUrl}og-image.png`;
   const organizationSchema = {
@@ -51,7 +55,7 @@
     '@context': 'https://schema.org',
     '@type': 'WebApplication',
     '@id': `${canonicalUrl}#application`,
-    name: 'CREATE SOMETHING Draw',
+    name: 'Draw',
     alternateName: 'Mapping Canvas',
     url: canonicalUrl,
     applicationCategory: 'DesignApplication',
@@ -77,8 +81,10 @@
   let nativeRole = $state<NativeRole>('web'), pairingOpen = $state(false), pairingBusy = $state(false);
   let pairingOffer = $state<PairingOffer | null>(null), discoveredHosts = $state<DiscoveredHost[]>([]), selectedHost = $state<DiscoveredHost | null>(null), pairingCode = $state('');
   let nativeSession = $state<NativeSessionStatus>({});
+  const hostBatches = new NativeHostBatches();
   let sidebarCollapsed = $state(false);
   let shortcutsDialog: HTMLDialogElement;
+  let importErrorDialog: HTMLDialogElement;
   let drawingColor = $state<DrawingColor>(DEFAULT_DRAWING_COLOR);
   let start = $state<Point | null>(null), draftPoints = $state<Point[]>([]), draftShape = $state<Shape | null>(null);
   let movingObjectId = $state<string | null>(null), dragLast = $state<Point | null>(null), dragOrigin = $state<CanvasDocument | null>(null), dragMoved = $state(false);
@@ -105,10 +111,10 @@
   let followAgent = $state(false), reduceAgentMotion = $state(false), activityNow = $state(Date.now());
   let agentCameraActive = $state(false);
   let agentCameraTimer: ReturnType<typeof setTimeout> | undefined;
-  let wheelTimer: ReturnType<typeof setTimeout> | undefined;
+  let wheelTimer = $state<ReturnType<typeof setTimeout> | undefined>(undefined);
   const activeTouches = new Map<number, { x: number; y: number }>();
-  let pinch: { distance: number; world: Point; origin: CanvasDocument['viewport'] } | null = null;
-  let pendingTouchAction: { pointerId: number; point: Point; tool: 'note' | 'group' } | null = null;
+  let pinch = $state<{ distance: number; world: Point; origin: CanvasDocument['viewport'] } | null>(null);
+  let pendingTouchAction = $state<{ pointerId: number; point: Point; tool: 'note' | 'group' } | null>(null);
   const noteInput = createNoteInputBuffer(commitNoteText);
   const document = $derived(history.present), viewport = $derived(document.viewport);
   const objectIndex = $derived(new Map(document.objects.map((object) => [object.id, object])));
@@ -147,7 +153,7 @@
       panelOpen = false;
     };
     const dismissInspector = (event: KeyboardEvent) => {
-      if (event.key !== 'Escape' || event.isComposing || event.defaultPrevented || !panelOpen || !narrowViewport.matches || shortcutsDialog?.open) return;
+      if (event.key !== 'Escape' || event.isComposing || event.defaultPrevented || !panelOpen || !narrowViewport.matches || (shortcutsDialog?.open || importErrorDialog?.open)) return;
       if (!window.document.activeElement?.closest('#draw-inspector, #draw-layers-toggle')) return;
       event.preventDefault();
       panelOpen = false;
@@ -180,6 +186,9 @@
       updateSnapshot: updateSnapshotForAgent,
       revokeSnapshot: revokeSnapshotForAgent
     });
+    if (!nativeShell && new URLSearchParams(window.location.search).get('registryPilot') === '1') {
+      connectionTools = [...connectionTools, ...createRegistryPilotTools(connectionTools, () => document, persistCurrentDocument)];
+    }
     const webMcp = registerDrawWebMcpTools(connectionTools);
     if (webMcp.registered) status = `${webMcp.registered} agent tools ready · loading local canvas…`;
     const activityTimer = setInterval(() => activityNow = Date.now(), 1000);
@@ -636,7 +645,7 @@
         nativeSession = { ...nativeSession, ...reconciled };
         if (reconciled.document) history = { past: [], present: reconciled.document, future: [] };
       }
-      status = nativeRole === 'host' ? 'Mac session ready · Wi-Fi pairing available' : nativeSession.status === 'paired' ? 'Paired with Mac' : 'Pair this iPhone with Draw on Mac';
+      status = nativeRole === 'host' ? (nativeSession.transport ? 'Mac session ready · Wi-Fi pairing enabled' : 'Mac session ready · LAN pairing disabled') : nativeSession.status === 'paired' ? 'Paired with Mac' : 'Pair this iPhone with Draw on Mac';
     } catch (error) { status = error instanceof Error ? error.message : 'Native session unavailable'; }
     ready = true;
   }
@@ -651,12 +660,12 @@
   }
 
   async function refreshMirroredState() {
-    if (!ready || nativeRole === 'web' || drawing || transformGesture || wheelTimer || window.document.activeElement?.closest('input,textarea,select,[contenteditable="true"]')) return;
+    if (!ready || nativeRole === 'web' || (nativeRole === 'host' && !hostBatches.canMirror) || replacingDocument || drawing || transformGesture || pinch || pendingTouchAction || wheelTimer || window.document.activeElement?.closest('input,textarea,select,[contenteditable="true"]')) return;
     if (nativeRole === 'companion' && (!nativeSession.sessionId || nativeSession.online === false || (nativeSession.queueDepth || 0) > 0)) return;
     const optimisticVersion = nativeOptimisticVersion;
     try {
       const refreshed = nativeRole === 'host' ? await hostStatus() : await refreshCompanion();
-      if (optimisticVersion !== nativeOptimisticVersion || wheelTimer) return;
+      if (optimisticVersion !== nativeOptimisticVersion || wheelTimer || drawing || transformGesture || pinch || pendingTouchAction || replacingDocument || (nativeRole === 'host' && !hostBatches.canMirror)) return;
       if (refreshed.revision !== nativeSession.revision && refreshed.document) {
         companionResetArmed = false; clearTimeout(companionResetTimer);
         history = nativeRole === 'host'
@@ -687,6 +696,34 @@
       historyOperationIndex = 1;
     }
     const role = nativeRole;
+    if (role === 'host') {
+      const ticket = hostBatches.reserve(nativeSession, operations);
+      const optimisticVersion = ++nativeOptimisticVersion;
+      nativeTail = nativeTail.then(async () => {
+        if (!hostBatches.current(ticket)) return;
+        try {
+          const result = await submitHostBatch(ticket.request);
+          if (!result.document || !['applied', 'duplicate'].includes(result.status || '')) throw new Error('Native batch did not commit.');
+          nativeSession = { ...nativeSession, ...result };
+          if (optimisticVersion === nativeOptimisticVersion)
+            history = settleNativeHostBatch(history, result, recordsHistory, preserveFuture);
+          status = `Mac committed revision ${result.revision}`;
+        } catch (error) {
+          // Outcome may be uncertain: never replay automatically or keep dependent optimistic edits.
+          hostBatches.invalidate();
+          nativeConflictEpoch += 1; nativeOptimisticVersion += 1;
+          try {
+            const refreshed = await hostStatus();
+            nativeSession = { ...nativeSession, ...refreshed };
+            if (!refreshed.document) throw new Error('Native recovery returned no document.');
+            history = { past: [], present: refreshed.document, future: [] };
+            hostBatches.recovered();
+          } catch { /* Stay blocked; the operator must relaunch/reconcile native authority. */ }
+          status = `${error instanceof Error ? error.message : 'Native batch failed'} · dependent edits discarded; inspect the authoritative canvas`;
+        }
+      }).finally(() => hostBatches.finish(ticket));
+      return;
+    }
     const conflictEpoch = nativeConflictEpoch;
     const queued = operations.map((operation) => ({ operation, optimisticVersion: ++nativeOptimisticVersion }));
     nativeTail = nativeTail.then(async () => {
@@ -720,13 +757,13 @@
         if (result.status === 'queued') status = `${result.queueDepth || 1} action queued · reconnect to Mac`;
         else if (result.status === 'credentials_rejected') status = 'Pairing credentials rejected · export if needed, then forget and re-pair';
         else if (result.status === 'pairing_changed') status = 'Pairing changed while syncing · using the current Mac session';
-        else status = role === 'host' ? `Mac committed revision ${result.revision}` : `Synced revision ${result.revision}`;
+        else status = `Synced revision ${result.revision}`;
       }
     }).catch((error) => { status = error instanceof Error ? error.message : 'Native operation failed'; });
   }
 
   function point(event: PointerEvent): Point { const rect = surface.getBoundingClientRect(); return { x: (event.clientX - rect.left - viewport.x) / viewport.zoom, y: (event.clientY - rect.top - viewport.y) / viewport.zoom }; }
-  function companionCanEdit() { if (replacingDocument) { status = 'Wait for the document replacement to finish'; return false; } if (nativeRole !== 'companion') return true; if (nativeSession.sessionId && !nativeSession.requiresRepair) return true; status = nativeSession.requiresRepair ? 'Pairing credentials rejected · export if needed, then forget and re-pair' : 'Pair this iPhone with a Mac before editing'; return false; }
+  function companionCanEdit() { if (nativeRole === 'host' && hostBatches.isRecovering) { status = 'Native state recovery failed · relaunch and inspect before editing'; return false; } if (replacingDocument) { status = 'Wait for the document replacement to finish'; return false; } if (nativeRole !== 'companion') return true; if (nativeSession.sessionId && !nativeSession.requiresRepair) return true; status = nativeSession.requiresRepair ? 'Pairing credentials rejected · export if needed, then forget and re-pair' : 'Pair this iPhone with a Mac before editing'; return false; }
   async function persistCurrentDocument(next: CanvasDocument) {
     const run = () => writeCanvasDocument(next, persistedCanvasVersions.get(next.id) ?? null);
     return navigator.locks ? navigator.locks.request(`${DRAW_DOCUMENT_LOCK}:${next.id}`, run) : run();
@@ -744,6 +781,24 @@
       : { ...next, present: { ...next.present, updatedAt: mintReplacementTimestamp(document.updatedAt) } };
   }
   function queueSave(next: CanvasDocument) { if (!browser || nativeRole !== 'web') return; clearTimeout(saveTimer); status = 'Saving locally…'; saveTimer = setTimeout(() => void persistCurrentDocument(next).then((saved) => status = saved ? 'Saved on this device' : 'Another tab replaced this canvas · reload to continue').catch(() => status = 'Local save failed · export a copy'), 120); }
+  async function openCompose(event: MouseEvent) {
+    event.preventDefault();
+    if (!canImportCanvas()) { status = 'Finish the current canvas action before opening Compose'; return; }
+    noteInput.flushAll();
+    replacingDocument = true;
+    try {
+      if (nativeRole === 'host') {
+        const conflictEpoch = nativeConflictEpoch;
+        cancelPendingWheelSync();
+        await nativeTail;
+        if (conflictEpoch !== nativeConflictEpoch) throw Error('Canvas recovered after a conflicting edit · inspect it before opening Compose.');
+        if (hostBatches.isRecovering) throw Error('Recover the native canvas before opening Compose.');
+      }
+      else if (!await persistCurrentDocument(document)) throw Error('A newer Canvas is saved in another tab · reload before opening Compose');
+      location.href = '/compose';
+    } catch (error) { status = (error as Error).message; }
+    finally { replacingDocument = false; }
+  }
   async function openMotion(event: MouseEvent, preview = false) { event.preventDefault(); if (!ready) { status = 'Canvas is still loading'; return; } if (sharing || replacingDocument) { status = 'Wait for sharing or document replacement to finish before opening Motion'; return; } noteInput.flushAll(); clearTimeout(saveTimer); saveTimer = undefined; if (!await persistCurrentDocument(document)) { status = 'A newer Canvas is saved in another tab · reload before opening Motion'; return; } location.href = `/animate?project=${encodeURIComponent(document.id)}${preview?'&mode=preview':''}`; }
   function commitNoteText(id: string, text: string) { if (!companionCanEdit()) return; const current = document.objects.find((entry) => entry.id === id); if (!current || isLayerLocked(document,id) || current.kind !== 'note' || (current.text === text && !current.content)) return; const changed = { ...current, text, content: undefined }; const next = withObjects(document, document.objects.map((entry) => entry.id === id ? changed : entry)); history = { ...history, present: next }; queueSave(next); sendNative([{ type: 'put_object', object: changed }]); }
   function formatSelectedNote(blockType?: NoteBlockType, mark?: 'bold' | 'italic' | 'underline' | 'code' | 'link') {
@@ -985,9 +1040,71 @@
   function runConversion(target: 'note' | 'connector' | 'group') { const next = convert(document, selectedIds, target); if (next === document) { status = target === 'connector' ? 'Select two objects to make a connector' : 'Select source material first'; return; } const created = next.objects.at(-1)!; apply(next, { type: 'convert', selectedIds: [...selectedIds], target, resultId: created.id, createdAt: created.createdAt }); selectedIds = [created.id]; conversionOpen = false; status = `Converted to ${target}. Source preserved.`; }
   function restoreSelected() { const selected = selectedObjects[0]; if (!selected?.sourceSnapshot) return; const next = restoreConversion(document, selected.id); apply(next, { type: 'restore_conversion', id: selected.id }); selectedIds = selected.sourceIds || []; status = 'Conversion removed. Source restored.'; }
   function cancelPendingWheelSync() { clearTimeout(wheelTimer); wheelTimer = undefined; }
-  async function commitHostReplacement<T>(resolve: () => T, documentOf: (value: T) => CanvasDocument, install: (value: T) => void, reason: 'undo' | 'redo' | 'import' | 'reset') { if (nativeRole === 'host') cancelPendingWheelSync(); if (nativeRole !== 'host') { const value = resolve(); install(value); return value; } let committed!: T; const replacement = nativeTail.then(async () => { committed = resolve(); const expectedRevision = nativeSession.revision || 0; const result = await replaceHostDocument(documentOf(committed), reason, expectedRevision); nativeSession = { ...nativeSession, ...result }; install(committed); status = `Mac committed ${reason} at revision ${nativeSession.revision}`; }); nativeTail = replacement.catch(() => undefined); try { await replacement; return committed; } catch (error) { const refreshed = await hostStatus(); nativeSession = { ...nativeSession, ...refreshed }; if (refreshed.document) history = { past: history.past, present: refreshed.document, future: [] }; throw error; } }
-  async function doUndo() { if (replacingDocument) return; if (nativeRole === 'companion') { cancelPendingWheelSync(); const current = document, next = restoreHistoryWithFreshRevision(undo(history)); if (next === history) return; history = next; selectedIds = []; sendNative(operationsBetween(current, next.present), false, true); return; } try { const next = await commitHostReplacement(() => restoreHistoryWithFreshRevision(undo(history)), (value) => value.present, (value) => history = value, 'undo'); selectedIds = []; queueSave(next.present); } catch (error) { status = error instanceof Error ? error.message : 'Undo conflicted with an iPhone change'; } }
-  async function doRedo() { if (replacingDocument) return; if (nativeRole === 'companion') { cancelPendingWheelSync(); const current = document, next = restoreHistoryWithFreshRevision(redo(history)); if (next === history) return; history = next; selectedIds = []; sendNative(operationsBetween(current, next.present), false, true); return; } try { const next = await commitHostReplacement(() => restoreHistoryWithFreshRevision(redo(history)), (value) => value.present, (value) => history = value, 'redo'); selectedIds = []; queueSave(next.present); } catch (error) { status = error instanceof Error ? error.message : 'Redo conflicted with an iPhone change'; } }
+  async function commitHostReplacement<T>(resolve: () => T, documentOf: (value: T) => CanvasDocument, install: (value: T) => void, reason: 'undo' | 'redo' | 'import' | 'reset') {
+    if (nativeRole === 'host') cancelPendingWheelSync();
+    if (nativeRole !== 'host') { const value = resolve(); install(value); return value; }
+    let committed!: T;
+    const replacement = nativeTail.then(async () => {
+      if (hostBatches.isRecovering) throw new Error('Native authority requires recovery.');
+      committed = resolve();
+      const result = await replaceHostDocument(documentOf(committed), reason, nativeSession.revision || 0);
+      nativeSession = { ...nativeSession, ...result };
+      install(committed);
+      status = `Mac committed ${reason} at revision ${nativeSession.revision}`;
+    });
+    nativeTail = replacement.catch(() => undefined);
+    try { await replacement; return committed; }
+    catch (error) {
+      const refreshed = await hostStatus(); nativeSession = { ...nativeSession, ...refreshed };
+      if (refreshed.document) history = { past: [], present: refreshed.document, future: [] };
+      throw error;
+    }
+  }
+  async function nativeHistoryAction(action: 'undo' | 'redo') {
+    if (replacingDocument || drawing || transformGesture || pinch || pendingTouchAction || hostBatches.isRecovering) return;
+    noteInput.flushAll();
+    replacingDocument = true;
+    nativeOptimisticVersion += 1;
+    try {
+      cancelPendingWheelSync();
+      const work = nativeTail.then(async () => {
+        const result = await nativeHistory(action, nativeSession.revision || 0);
+        nativeSession = {...nativeSession,...result};
+        if (result.document) history = {past:[],present:result.document,future:[]};
+      });
+      nativeTail = work.catch(() => undefined);
+      await work;
+      selectedIds = [];
+
+    } catch (error) { const refreshed = await hostStatus(); nativeSession = {...nativeSession,...refreshed}; if(refreshed.document) history={past:[],present:refreshed.document,future:[]}; status = error instanceof Error ? error.message : 'History conflicted with native authority'; }
+    finally { replacingDocument = false; }
+  }
+  async function nativeAgentAction(command:string, args:Record<string,unknown>) {
+    if (command === 'draw_agent_revoke' || (command === 'draw_agent_review' && args.approve === false)) return await invokeNative<Record<string,unknown>>(command,args);
+    if (replacingDocument || drawing || transformGesture || pinch || pendingTouchAction || wheelTimer || hostBatches.isRecovering) throw new Error('Finish the canvas gesture before reviewing agent access.');
+    noteInput.flushAll(); replacingDocument = true; nativeOptimisticVersion += 1;
+    try {
+      await nativeTail;
+      if (hostBatches.isRecovering) throw new Error('Native authority requires recovery.');
+      if (command === 'draw_agent_start') args = {...args, documentId:document.id, expectedRevision:nativeSession.revision};
+      const result = await invokeNative<NativeSessionStatus & Record<string,unknown>>(command,args);
+      const refreshed = await hostStatus(); nativeSession = {...nativeSession,...refreshed};
+      if (refreshed.document) history = {past:[],present:refreshed.document,future:[]};
+      return result;
+    } finally {replacingDocument = false;}
+  }
+  async function doUndo() {
+    if (replacingDocument) return;
+    if (nativeRole === 'host') { await nativeHistoryAction('undo'); return; }
+    if (nativeRole === 'companion') { cancelPendingWheelSync(); const current = document, next = restoreHistoryWithFreshRevision(undo(history)); if (next === history) return; history = next; selectedIds = []; sendNative(operationsBetween(current, next.present), false, true); return; }
+    const next = restoreHistoryWithFreshRevision(undo(history)); history = next; selectedIds = []; queueSave(next.present);
+  }
+  async function doRedo() {
+    if (replacingDocument) return;
+    if (nativeRole === 'host') { await nativeHistoryAction('redo'); return; }
+    if (nativeRole === 'companion') { cancelPendingWheelSync(); const current = document, next = restoreHistoryWithFreshRevision(redo(history)); if (next === history) return; history = next; selectedIds = []; sendNative(operationsBetween(current, next.present), false, true); return; }
+    const next = restoreHistoryWithFreshRevision(redo(history)); history = next; selectedIds = []; queueSave(next.present);
+  }
   function zoomCanvas(scale: number) {
     stopAgentCamera();
     updateViewport(zoomViewportAt(viewport, { x: viewportWidth / 2, y: viewportHeight / 2 }, scale));
@@ -1006,12 +1123,12 @@
 
   function clipboardIsEditing(event:ClipboardEvent) {return event.target instanceof Element && Boolean(event.target.closest('input,textarea,select,[contenteditable="true"]'));}
   function copySelection(event:ClipboardEvent) {
-    if(clipboardIsEditing(event) || !selectedIds.length || !event.clipboardData) return;
+    if(shortcutsDialog?.open || importErrorDialog?.open || clipboardIsEditing(event) || !selectedIds.length || !event.clipboardData) return;
     const objects=clipboardObjects(document,selectedIds);
     event.clipboardData.setData('text/plain',JSON.stringify({...document,objects}));event.preventDefault();status='Artwork copied';
   }
   function pasteSelection(event:ClipboardEvent) {
-    if(clipboardIsEditing(event) || !event.clipboardData) return;
+    if(shortcutsDialog?.open || importErrorDialog?.open || clipboardIsEditing(event) || !event.clipboardData) return;
     try {
       const source=parse(event.clipboardData.getData('text/plain'));
       event.preventDefault();
@@ -1021,7 +1138,7 @@
   function releasePan() { if(temporaryPan!==null) {tool=temporaryPan;temporaryPan=null;} }
   function keyup(event:KeyboardEvent) {if(event.code==='Space') releasePan();}
   function keydown(event: KeyboardEvent) {
-    if (event.defaultPrevented || event.isComposing || shortcutsDialog?.open || replacingDocument || isTextEditingEvent(event)) return;
+    if (event.defaultPrevented || event.isComposing || shortcutsDialog?.open || importErrorDialog?.open || replacingDocument || isTextEditingEvent(event)) return;
     if(event.code==='Space' && !event.metaKey && !event.ctrlKey) {event.preventDefault();if(temporaryPan===null){temporaryPan=tool;tool='pan';}return;}
     if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'z') { event.preventDefault(); void (event.shiftKey ? doRedo() : doUndo()); return; }
     if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'd') {event.preventDefault(); if(selectedIds.length) editSelection([{type:'duplicate',ids:selectedIds}]); return;}
@@ -1124,6 +1241,7 @@
     replacingDocument = true;
     clearTimeout(saveTimer); saveTimer = undefined;
     try {
+      if (nativeRole !== 'web') return await action();
       const run = async () => {
         const persisted = await loadDocument(documentId);
         if (!persistedVersionMatches(documentId, persisted)) throw new Error('Another tab changed this canvas. Reload Draw before replacing it again.');
@@ -1222,11 +1340,21 @@
     }
     context.restore(); const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png')); if (!blob) throw new Error('PNG export failed'); download(blob, 'image/png', 'png'); status = 'PNG exported';
   }
+  function canImportCanvas() { return ready && nativeRole !== 'companion' && !sharing && !replacingDocument && !agentMutationActive && !hostBatches.isRecovering && !drawing && !transformGesture && !pinch && !pendingTouchAction && !resizingGroupId && !resizeOrigin && !movingObjectId && !dragOrigin && !wheelTimer && !noteInput.hasPending(); }
   async function importJson(event: Event) {
     const file = (event.currentTarget as HTMLInputElement).files?.[0];
-    if (!file || nativeRole === 'companion' || sharing || replacingDocument) return;
-    try { await coordinateDocumentReplacement(async () => { const previous = history.present, managed = currentManagedShare(); const parsed = parse(await file.text()); const next = parsed.id === previous.id ? { ...parsed, updatedAt: mintReplacementTimestamp(previous.updatedAt) } : { ...parsed, id: crypto.randomUUID(), updatedAt: new Date().toISOString() }; const committed = await commitHostReplacement(() => next, (value) => value, (value) => history = { past: [], present: value, future: [] }, 'import'); selectedIds = []; if (nativeRole === 'web') await writeCanvasDocument(committed); else queueSave(committed); restoreManagedShareAfterReplacement(managed, previous, committed); status = 'Canvas imported'; }); }
-    catch (error) { status = error instanceof Error ? error.message : 'Import failed'; }
+    if (!file || !canImportCanvas()) return;
+    importErrorDialog?.close();
+    const importTarget = history.present;
+    try { const parsed = await readCanvasImport(() => file.text(), () => history.present, () => !canImportCanvas());
+      if (!parsed || !canImportCanvas() || history.present !== importTarget) { status = 'Canvas changed while reading the file · choose Import again'; return; }
+      await coordinateDocumentReplacement(async () => { const previous = history.present, managed = currentManagedShare(); const next = parsed.id === previous.id ? { ...parsed, updatedAt: mintReplacementTimestamp(previous.updatedAt) } : { ...parsed, id: crypto.randomUUID(), updatedAt: new Date().toISOString() }; const committed = await commitHostReplacement(() => next, (value) => value, (value) => history = { past: [], present: value, future: [] }, 'import'); selectedIds = []; if (nativeRole === 'web') await writeCanvasDocument(committed); else queueSave(committed); restoreManagedShareAfterReplacement(managed, previous, committed); status = 'Canvas imported'; }); }
+    catch (error) {
+      if (error instanceof SyntaxError || (error instanceof Error && error.message === 'This file is not a supported mapping canvas document.')) {
+        status = 'Import failed · choose a Draw JSON file';
+        importErrorDialog.showModal();
+      } else { status = error instanceof Error ? error.message : 'Import failed'; }
+    }
     finally { if (fileInput) fileInput.value = ''; }
   }
   async function resetCanvas() {
@@ -1266,25 +1394,25 @@
 </script>
 
 <svelte:head>
-  <title>{document.title === 'Untitled mapping session' ? publicTitle : `${document.title} · CREATE SOMETHING Draw`}</title>
+  <title>{document.title === 'Untitled mapping session' ? publicTitle : `${document.title} · Draw`}</title>
   <meta name="description" content={publicDescription} />
   <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
   <meta name="author" content="CREATE SOMETHING" />
   <link rel="canonical" href={canonicalUrl} />
   <meta property="og:type" content="website" />
   <meta property="og:url" content={canonicalUrl} />
-  <meta property="og:site_name" content="CREATE SOMETHING Draw" />
+  <meta property="og:site_name" content="Draw" />
   <meta property="og:title" content={publicTitle} />
   <meta property="og:description" content={publicDescription} />
   <meta property="og:image" content={socialImage} />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
-  <meta property="og:image:alt" content="CREATE SOMETHING Draw mapping canvas interface" />
+  <meta property="og:image:alt" content="Draw — a local-first drawing canvas" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content={publicTitle} />
   <meta name="twitter:description" content={publicDescription} />
   <meta name="twitter:image" content={socialImage} />
-  <meta name="twitter:image:alt" content="CREATE SOMETHING Draw mapping canvas interface" />
+  <meta name="twitter:image:alt" content="Draw — a local-first drawing canvas" />
   {@html jsonLd(organizationSchema)}
   {@html jsonLd(applicationSchema)}
 </svelte:head>
@@ -1292,9 +1420,9 @@
 <main class="app-shell cs-workspace" class:native-shell={nativeShell} class:reduce-agent-motion={reduceAgentMotion}>
   <a class="cs-skip-link" href="#draw-workbench">Skip to canvas</a>
   <header class="topbar">
-    <div class="identity"><img src="/brand/create-something-agency-white.svg" alt="CREATE SOMETHING .agency" /><strong class="cs-product-name">Draw</strong><a class="source-link" href="/download" target="_blank" rel="noreferrer">Mac</a><a class="source-link" href="https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/mapping-canvas" target="_blank" rel="noreferrer">Source</a>{#if nativeRole !== 'web'}<button class="native-link" aria-label="Open device pairing" onclick={openPairing}>{nativeRole === 'host' ? 'Pair' : nativeSession.sessionId ? 'Linked' : 'Link'}</button>{/if}</div>
-    <div class="title-area"><label class="project-title"><span class="cs-label">Project</span><input class="title" aria-label="Canvas title" maxlength="240" value={document.title} oninput={(event) => updateTitle(event.currentTarget)} /></label>{#if nativeRole === 'web'}<ProjectModes id={document.id} mode="canvas" navigate={(event,mode)=>{if(mode==='canvas')event.preventDefault();else void openMotion(event,mode==='preview');}} />{/if}{#if nativeRole === 'web'}<AgentConnection projectId={document.id} {ready} tools={connectionTools} />{/if}</div>
-    {#if nativeRole !== 'companion'}<div class="file-actions">{#if projects.length>1}<select aria-label="Open Draw project" value={document.id} onchange={async event=>{const id=event.currentTarget.value;noteInput.flushAll();if(await persistCurrentDocument(document))location.href=`/?project=${encodeURIComponent(id)}`;}}>{#each projects as entry}<option value={entry.id}>{entry.title}</option>{/each}</select>{/if}<button id="draw-layers-toggle" aria-expanded={panelOpen} aria-controls="draw-inspector" onclick={()=>panelOpen=!panelOpen}>Layers</button><details class="file-menu"><summary>File <span aria-hidden="true">⌄</span></summary><div><button onclick={() => fileInput?.click()} disabled={sharing || replacingDocument}>Import</button><button onclick={exportJson}>JSON</button><button onclick={exportSvg}>SVG</button><button onclick={exportPng}>PNG</button><button onclick={resetCanvas} disabled={sharing || replacingDocument}>New canvas</button></div></details>{#if nativeRole === 'web'}{#if share}<button onclick={copyShareLink}>Copy link</button><button onclick={updateSnapshot} disabled={sharing || replacingDocument}>Update link</button><button onclick={revokeSnapshot} disabled={sharing || replacingDocument}>Revoke</button>{:else}<button class="share-action" onclick={publishSnapshot} disabled={sharing || replacingDocument}>Publish view-only</button>{/if}{/if}<input bind:this={fileInput} class="visually-hidden" type="file" accept="application/json,.json" disabled={sharing || replacingDocument} onchange={importJson} /></div>{/if}
+    <div class="identity"><img src="/brand/draw-dark.svg" alt="" /><strong class="cs-product-name">Draw</strong><a class="source-link" href="/download" target="_blank" rel="noreferrer">Mac</a><a class="source-link" href="https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/mapping-canvas" target="_blank" rel="noreferrer">Source</a>{#if nativeRole !== 'web'}<button class="native-link" aria-label="Open device pairing" onclick={openPairing}>{nativeRole === 'host' ? 'Pair' : nativeSession.sessionId ? 'Linked' : 'Link'}</button>{/if}</div>
+    <div class="title-area"><label class="project-title"><span class="cs-label">Project</span><input class="title" aria-label="Canvas title" maxlength="240" value={document.title} oninput={(event) => updateTitle(event.currentTarget)} /></label>{#if nativeRole === 'web'}<ProjectModes id={document.id} mode="canvas" navigate={(event,mode)=>{if(mode==='canvas')event.preventDefault();else void openMotion(event,mode==='preview');}} />{/if}{#if nativeRole === 'host'}<NativeAgentPanel {selectedIds} revision={nativeSession.revision || 0} busy={Boolean(drawing || transformGesture || pinch || pendingTouchAction || wheelTimer || replacingDocument || hostBatches.isRecovering)} action={nativeAgentAction} />{/if}{#if nativeRole === 'web'}<AgentConnection projectId={document.id} {ready} tools={connectionTools} />{/if}</div>
+    {#if nativeRole !== 'companion'}<div class="file-actions">{#if projects.length>1}<select aria-label="Open Draw project" value={document.id} onchange={async event=>{const id=event.currentTarget.value;noteInput.flushAll();if(await persistCurrentDocument(document))location.href=`/?project=${encodeURIComponent(id)}`;}}>{#each projects as entry}<option value={entry.id}>{entry.title}</option>{/each}</select>{/if}<a class="compose-link" href="/compose" onclick={openCompose}>Compose</a><button id="draw-layers-toggle" aria-expanded={panelOpen} aria-controls="draw-inspector" onclick={()=>panelOpen=!panelOpen}>Layers</button><details class="file-menu"><summary>File <span aria-hidden="true">⌄</span></summary><div><button onclick={() => fileInput?.click()} disabled={sharing || replacingDocument}>Import</button><button onclick={exportJson}>JSON</button><button onclick={exportSvg}>SVG</button><button onclick={exportPng}>PNG</button><button onclick={resetCanvas} disabled={sharing || replacingDocument}>New canvas</button></div></details>{#if nativeRole === 'web'}{#if share}<button onclick={copyShareLink}>Copy link</button><button onclick={updateSnapshot} disabled={sharing || replacingDocument}>Update link</button><button onclick={revokeSnapshot} disabled={sharing || replacingDocument}>Revoke</button>{:else}<button class="share-action" onclick={publishSnapshot} disabled={sharing || replacingDocument}>Publish view-only</button>{/if}{/if}<input bind:this={fileInput} class="visually-hidden" type="file" accept="application/json,.json" disabled={sharing || replacingDocument} onchange={importJson} /></div>{/if}
   </header>
   <section id="draw-workbench" tabindex="-1" class="workbench" class:tool-sidebar-collapsed={sidebarCollapsed} class:panel-open={panelOpen && nativeRole === 'web'} aria-label="Mapping canvas workbench">
     <nav class="toolbar" aria-label="Canvas tools"><button class="sidebar-toggle" aria-expanded={!sidebarCollapsed} aria-label={sidebarCollapsed ? 'Expand tool sidebar' : 'Collapse tool sidebar'} title={sidebarCollapsed ? 'Expand tools' : 'Collapse tools'} onclick={toggleSidebar}><i aria-hidden="true">{sidebarCollapsed ? '›' : '‹'}</i><span>{sidebarCollapsed ? 'Expand' : 'Collapse'}</span></button>{#each tools as entry}<button class:active={tool === entry.id} aria-pressed={tool === entry.id} aria-label={`${entry.label} tool (${entry.key})`} aria-keyshortcuts={entry.key} title={`${entry.label} · ${entry.key}`} onclick={() => tool = entry.id}><ToolIcon tool={entry.id} /><span class="tool-label">{entry.label}</span><kbd class="tool-key" aria-hidden="true">{entry.key}</kbd></button>{/each}</nav>
@@ -1341,8 +1469,8 @@
         </g>
       </svg>
       <div class="history" role="group" aria-label="Canvas navigation">
-        <button class="history-icon" aria-label="Undo" title="Undo (⌘/Ctrl Z)" onclick={() => void doUndo()} disabled={!history.past.length}>↶</button>
-        <button class="history-icon" aria-label="Redo" title="Redo (⌘/Ctrl Shift Z)" onclick={() => void doRedo()} disabled={!history.future.length}>↷</button>
+        <button class="history-icon" aria-label="Undo" title="Undo (⌘/Ctrl Z)" onclick={() => void doUndo()} disabled={nativeRole === 'host' ? !nativeSession.history?.canUndo || replacingDocument : !history.past.length}>↶</button>
+        <button class="history-icon" aria-label="Redo" title="Redo (⌘/Ctrl Shift Z)" onclick={() => void doRedo()} disabled={nativeRole === 'host' ? !nativeSession.history?.canRedo || replacingDocument : !history.future.length}>↷</button>
         {#if nativeRole === 'host'}<button onclick={resetCanvas}>Reset</button>{/if}
         <button class="history-icon" aria-label="Zoom out" title="Zoom out (−)" aria-keyshortcuts="-" onclick={() => zoomCanvas(1 / 1.25)} disabled={viewport.zoom <= .25}>−</button>
         <button class="zoom-level" aria-label="Reset view" title="Reset view to 100% (0)" aria-keyshortcuts="0" onclick={resetView}>{Math.round(viewport.zoom * 100)}%</button>
@@ -1360,6 +1488,11 @@
     {#if panelOpen && nativeRole === 'web'}<WorkbenchPanel {document} {selectedIds} select={(ids)=>{if(!drawing && !agentMutationActive){selectedIds=ids;tool='select';}}} edit={editSelection} disabled={drawing || agentMutationActive || replacingDocument || sharing} />{/if}
   </section>
   <footer class="statusbar"><span role="status" aria-live="polite">{status}</span><span class="object-count">{document.objects.length} {document.objects.length === 1 ? 'object' : 'objects'}</span><button class="shortcuts-trigger" aria-haspopup="dialog" title="Keyboard shortcuts (?)" onclick={() => shortcutsDialog.showModal()}>Shortcuts <b aria-hidden="true">?</b></button><span>{nativeRole === 'host' ? 'MAC AUTHORITY' : nativeRole === 'companion' ? 'IPHONE COMPANION' : 'LOCAL CANVAS'}</span></footer>
+  <dialog bind:this={importErrorDialog} class="shortcuts-dialog import-error-dialog" aria-labelledby="import-error-title" aria-describedby="import-error-description">
+    <header><h2 id="import-error-title">Could not open this file</h2><button aria-label="Close import error" onclick={() => importErrorDialog.close()}>×</button></header>
+    <p id="import-error-description">Choose a JSON file exported by Draw. Your current canvas is still here.</p>
+    <div class="import-recovery-actions"><button class="import-retry" onclick={() => { importErrorDialog.close(); fileInput?.click(); }}>Choose Draw JSON</button><button onclick={() => importErrorDialog.close()}>Keep current canvas</button></div>
+  </dialog>
   <dialog bind:this={shortcutsDialog} class="shortcuts-dialog" aria-labelledby="shortcuts-title" aria-describedby="shortcuts-description">
     <header><h2 id="shortcuts-title">Keyboard shortcuts</h2><button aria-label="Close keyboard shortcuts" onclick={() => shortcutsDialog.close()}>×</button></header>
     <p id="shortcuts-description">Use these when you’re not typing in a title, note, or form.</p>

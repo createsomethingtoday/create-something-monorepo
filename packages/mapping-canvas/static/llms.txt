@@ -1,6 +1,8 @@
-# CREATE SOMETHING Draw
+# Draw
 
-CREATE SOMETHING Draw is a free, local-first drawing canvas for mapping meetings and spatial notes.
+Draw is published by CREATE SOMETHING.
+
+Draw is a free, local-first drawing canvas for mapping meetings and spatial notes.
 
 ## Capabilities
 

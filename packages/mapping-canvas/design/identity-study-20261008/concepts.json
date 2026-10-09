@@ -1,0 +1,14 @@
+{
+  "fold": {
+    "name": "Fold",
+    "description": "A canvas with a turned corner. The surface stays primary."
+  },
+  "draft": {
+    "name": "Draft",
+    "description": "An isometric D. A compact, solid signature for a drawing tool."
+  },
+  "path": {
+    "name": "Trace",
+    "description": "A continuous isometric stroke. Open-ended, like a drawing in progress."
+  }
+}
