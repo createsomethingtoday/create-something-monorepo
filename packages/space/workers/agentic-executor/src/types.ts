@@ -24,6 +24,7 @@ export interface SessionContext {
   costReserved?: number;
   guardVersion?: 1;
   callPending?: boolean;
+  initializationPending?: boolean;
   deadline?: number;
   costConsumed: number;
   iteration: number;

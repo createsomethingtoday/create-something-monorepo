@@ -8,6 +8,10 @@ class Storage {
  async put(k,v) { this.data.set(k,structuredClone(v)); }
  async setAlarm() { this.alarms++; }
  async deleteAlarm() { this.alarms=0; }
+ async transaction(fn) {
+  const snapshot=structuredClone(this.data);const alarms=this.alarms;
+  try { return await fn(this); } catch(error) { this.data=snapshot;this.alarms=alarms;throw error; }
+ }
 }
 function fixture(storage=new Storage()) {
  let ready=Promise.resolve();
@@ -87,4 +91,23 @@ test('model payload cap prevents external work and pause before work can resume 
  assert.equal((await f.session.resume()).status,200);
  f.env.AGENTIC_MAX_REQUEST_BYTES='1';await f.session.alarm();
  assert.equal(calls,0);assert.equal((await f.session.status().json()).status,'error');
+});
+test('session verification preserves transient failure without persisting initialization',async()=>{
+ const f=fixture();await f.ready();f.env.AGENTIC_QUOTA.get=()=>({fetch:async()=>new Response(null,{status:503})});
+ assert.equal((await f.session.start(task)).status,503);assert.equal(f.storage.data.has('session'),false);
+});
+test('failed start tracking is durable terminal state and cannot masquerade as running on retry',async()=>{
+ const f=fixture();await f.ready();f.env.DB.prepare=()=>({bind(){return this},run:async()=>{throw Error('D1 unavailable')}});
+ assert.equal((await f.session.start(task)).status,503);
+ assert.equal((await f.session.status().json()).status,'error');
+ assert.equal((await f.session.start(task)).status,409);assert.equal(f.storage.alarms,0);
+ const restored=fixture(f.storage);await restored.ready();assert.equal((await restored.session.start(task)).status,409);
+});
+test('interrupted initialization and failed alarm setup stop durably without paid work',async()=>{
+ const f=fixture();await f.ready();f.storage.setAlarm=async()=>{throw Error('alarm storage unavailable')};
+ assert.equal((await f.session.start(task)).status,503);
+ assert.equal((await f.session.status().json()).status,'error');
+ const saved=f.storage.data.get('session');saved.context.initializationPending=true;saved.context.status='running';
+ const restored=fixture(f.storage);await restored.ready();await restored.session.alarm();
+ assert.equal((await restored.session.status().json()).status,'error');assert.equal((await restored.session.start(task)).status,409);
 });

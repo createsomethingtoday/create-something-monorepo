@@ -45,7 +45,10 @@ export default {
       try {
         task = validateTask(task, readPolicy(env));
         const admission = await quota(env).fetch('https://quota/verify', {method:'POST', body:JSON.stringify(task)});
-        if (!admission.ok) { message.ack(); continue; }
+        if (admission.status >= 400 && admission.status < 500 && ![408, 429].includes(admission.status)) {
+          message.ack(); continue;
+        }
+        if (!admission.ok) throw new Error(`Admission verification unavailable (${admission.status})`);
         console.log('Starting agentic task', {
           issueId: task.issueId,
           budget: task.budget,

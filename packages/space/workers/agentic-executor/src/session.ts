@@ -174,9 +174,9 @@ export class AgenticSession {
         this.conversationHistory = stored.conversationHistory;
         this.context = stored.context;
         this.lastCheckpoint = stored.lastCheckpoint;
-        if (this.context.guardVersion !== 1 || this.context.callPending) {
+        if (this.context.guardVersion !== 1 || this.context.callPending || this.context.initializationPending) {
           this.context.status = 'error';
-          this.context.error = 'Legacy state or uncertain model outcome requires operator reconciliation';
+          this.context.error = 'Legacy state or interrupted initialization/model outcome requires operator reconciliation';
           await this.saveSessionState();
           await this.state.storage.deleteAlarm();
         }
@@ -219,10 +219,16 @@ export class AgenticSession {
   private async startOnce(input: AgenticTask): Promise<Response> {
     const task = validateTask(input, readPolicy(this.env));
     const admission = await quota(this.env).fetch('https://quota/verify', {method:'POST',body:JSON.stringify(task)});
-    if (!admission.ok) return new Response('Admission required', {status:403});
+    if (!admission.ok) {
+      const transient = admission.status >= 500 || [408,429].includes(admission.status);
+      return Response.json({error:transient ? 'Admission verification unavailable' : 'Admission required'}, {status:transient ? 503 : 403});
+    }
     const receipt = await admission.json() as {deadline:number};
     const stored = await this.state.storage.get<SessionState>('session');
     if (stored) {
+      if (this.context.initializationPending) {
+        return Response.json({error:'Interrupted initialization requires reconciliation',status:this.context.status}, {status:409});
+      }
       // Queue redelivery never resumes, resets, or re-arms an existing session.
       return Response.json({status:this.context.status,sessionId:this.state.id.toString(),budget:this.getBudgetStatus()});
     }
@@ -233,7 +239,7 @@ export class AgenticSession {
     this.context = {
       issueId:task.issueId, epicId:task.epicId, convoyId:task.convoyId,
       budget:task.budget, costConsumed:0, costReserved:0, guardVersion:1,
-      deadline:receipt.deadline, callPending:false, iteration:0, iterationCosts:[],
+      deadline:receipt.deadline, callPending:false, initializationPending:true, iteration:0, iterationCosts:[],
       filesModified:[],status:'running',budgetWarned:false,
       acceptanceCriteria:task.acceptanceCriteria || issue.acceptance
     };
@@ -241,7 +247,8 @@ export class AgenticSession {
     // Persist before any external tracking or alarm. A failed start remains deduplicated.
     await this.saveSessionState();
 
-    // Track session start in DB
+    try {
+    // Tracking may have an uncertain outcome; never restart it automatically.
     await this.trackSessionStart();
 
     // Create Langfuse trace for observability
@@ -264,7 +271,25 @@ export class AgenticSession {
 
     // Schedule execution loop via alarm (fires immediately)
     // This is the correct pattern for Durable Objects - alarms trigger background work
-    await this.state.storage.setAlarm(Date.now() + 100);  // Fire in 100ms
+    // Commit readiness and the first alarm together: no persisted running state
+    // can be advertised as initialized without a durable wake-up.
+    const initializedContext = {...this.context, initializationPending:false};
+    await this.state.storage.transaction(async storage => {
+      await storage.put<SessionState>('session', {
+        conversationHistory:this.conversationHistory, context:initializedContext,
+        lastCheckpoint:this.lastCheckpoint
+      });
+      await storage.setAlarm(Date.now()+100);
+    });
+    this.context = initializedContext;
+    } catch (error) {
+      this.context.status = 'error';
+      this.context.error = 'Session initialization failed; operator reconciliation required';
+      // Keep the pending marker, including after a crash before this catch.
+      await this.saveSessionState();
+      await this.state.storage.deleteAlarm();
+      throw error;
+    }
 
     console.log('✅ Scheduled executeLoop via alarm');
 
@@ -277,7 +302,7 @@ export class AgenticSession {
 
   // Durable Object alarm handler - triggered for background execution
   async alarm(): Promise<void> {
-    if (!this.context || this.context.status !== 'running' || this.executing) return;
+    if (!this.context || this.context.status !== 'running' || this.context.initializationPending || this.executing) return;
     this.executing = true;
     try { await this.executeLoop(); } finally { this.executing = false; }
   }
