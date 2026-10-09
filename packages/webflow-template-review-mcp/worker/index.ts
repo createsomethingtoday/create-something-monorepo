@@ -25,7 +25,6 @@ import {
   getReviewerProfileForEmail,
 } from '../src/reviewer-directory.js';
 import { registerTools } from '../src/tools.js';
-import { findDelistDrift, formatDriftAlert } from '../src/marketplace-delist.js';
 import { parseZendeskGroupId, ZendeskClient } from '../src/zendesk.js';
 import { handleThumbnailProxyRequest, THUMBNAIL_PROXY_PATH } from '../src/thumbnail-proxy.js';
 import {
@@ -76,8 +75,6 @@ interface Env {
   MARKETPLACE_ZENDESK_GROUP_ID?: string;
   /** cms:write site token for the Marketplace site (secret) — enables delist/relist. Infisical dev /webflow/template-marketplace TEMPLATE_MARKETPLACE. */
   MARKETPLACE_CMS_TOKEN?: string;
-  /** Slack incoming-webhook URL (secret) for the daily delisted-but-live check. Without it the check only logs. */
-  DELIST_DRIFT_SLACK_WEBHOOK_URL?: string;
 }
 
 type RequestProps = {
@@ -373,27 +370,7 @@ function protectedResourceResponse(env: Env, origin: string, resourcePath: strin
   );
 }
 
-/** Daily cron: report delisted templates whose Marketplace page is still live. Read-only. */
-async function runDelistDriftCheck(env: Env): Promise<void> {
-  if (!env.AIRTABLE_API_KEY) return;
-  const client = new AirtableClient({ apiKey: env.AIRTABLE_API_KEY, baseId: env.AIRTABLE_BASE_ID ?? DEFAULT_AIRTABLE_BASE_ID });
-  const drift = await findDelistDrift(client, {});
-  const text = formatDriftAlert(drift);
-  console.log(JSON.stringify({ event: 'delist_drift_check', checked: drift.checked, live_after_delist: drift.live_after_delist.length }));
-  if (!text || !env.DELIST_DRIFT_SLACK_WEBHOOK_URL) return;
-  const response = await fetch(env.DELIST_DRIFT_SLACK_WEBHOOK_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ text }),
-  });
-  if (!response.ok) console.error(JSON.stringify({ event: 'delist_drift_slack_failed', status: response.status }));
-}
-
 export default {
-  async scheduled(_controller: ScheduledController, env: Env, ctx: ExecutionContext) {
-    ctx.waitUntil(runDelistDriftCheck(env));
-  },
-
   async fetch(request: Request, env: Env, ctx: ExecutionContext) {
     const url = new URL(request.url);
 

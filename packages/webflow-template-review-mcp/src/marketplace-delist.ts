@@ -520,13 +520,3 @@ export async function findDelistDrift(airtable: DelistAirtable, cmsConfig: Pick<
   }
   return { checked: queue.length, skipped_shared_page: skippedShared, live_after_delist: live };
 }
-
-export function formatDriftAlert(drift: Awaited<ReturnType<typeof findDelistDrift>>): string | null {
-  if (drift.live_after_delist.length === 0) return null;
-  const lines = drift.live_after_delist.map((item) => `• ${item.name} — https://webflow.com${item.page_path} (asset ${item.asset_id})`);
-  return [
-    `*${drift.live_after_delist.length} delisted template(s) still have a live Marketplace page.*`,
-    'Run `template_review_delist_template` on each (preview first).',
-    ...lines,
-  ].join('\n');
-}
