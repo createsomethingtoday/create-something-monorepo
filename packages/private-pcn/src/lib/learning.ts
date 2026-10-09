@@ -23,3 +23,13 @@ export function timestamp(seconds: number) {
   const whole = Math.max(0, Math.floor(seconds));
   return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, '0')}`;
 }
+
+export function playbackResumePosition(position: number, duration: number) {
+  return position > 0 && position < duration - 2 ? position : 0;
+}
+
+export function playbackProgressLabel(position: number, duration: number | null) {
+  if (position > 0 && duration && position >= duration - 2) return 'Replay';
+  const resume = playbackResumePosition(position, duration ?? 0);
+  return resume ? `Resume at ${timestamp(resume)}` : 'Play';
+}

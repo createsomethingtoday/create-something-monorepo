@@ -1,9 +1,10 @@
 <script lang="ts">
   import { page } from '$app/state';
-  import { pathBase, timestamp, type PathView } from '$lib/learning';
+  import { pathBase, playbackProgressLabel, type PathView } from '$lib/learning';
   import { lessonPath } from '$lib/lessons';
   import type { CatalogVideo } from '$lib/client';
   import PathEditor from './PathEditor.svelte';
+  import NetworkContext from './NetworkContext.svelte';
   import StateBadge from './StateBadge.svelte';
   import StatusNotice from './StatusNotice.svelte';
   import Icon from './Icon.svelte';
@@ -15,11 +16,12 @@
       paths: PathView[];
       videos: CatalogVideo[];
       canEdit: boolean;
-      network?: { slug: string; name: string } | null;
+      network?: { slug: string; name: string; status?: string } | null;
       identity?: unknown;
     };
   } = $props();
   const slug = $derived(data.network?.slug === 'create-something' ? undefined : data.network?.slug);
+  const inactiveNetwork = $derived(!!data.network?.status && data.network.status !== 'active');
   const base = $derived(pathBase(slug));
   const detail = $derived(!!page.params.id);
   const next = $derived(data.path?.lessons.find((v) => !v.progress?.watched_at));
@@ -32,10 +34,11 @@
     content="noindex"
   /></svelte:head
 >
-<main id="main" class="paths-workspace" class:paths-list={!detail && !data.path}>
+<main id="main" tabindex="-1" class="paths-workspace" class:paths-list={!detail && !data.path}>
   <a class="back-link" href={detail ? base : slug ? `/n/${slug}` : '/library'}
     ><Icon name="arrow-left" /> {detail ? 'All learning paths' : 'Back to sessions'}</a
   >
+  <NetworkContext network={data.network} canManage={data.canEdit} />
   {#if detail && !data.path}<section class="empty-state">
       <h1>Learning path unavailable.</h1>
       <p>
@@ -92,7 +95,7 @@
                         tone="success"
                         icon="check"
                       />{:else if lesson.progress?.position}<StateBadge
-                        label={`Resume at ${timestamp(lesson.progress.position)}`}
+                        label={playbackProgressLabel(lesson.progress.position, lesson.duration)}
                         tone="info"
                         icon="refresh"
                       />{:else}<span>Ready to start</span
@@ -128,14 +131,31 @@
         A deliberate sequence from a technique to something you can put into practice.
       </p>
     </header>
-    {#if data.canEdit}<PathEditor videos={data.videos} {slug} />{/if}
+    {#if data.canEdit && data.videos.length}<PathEditor videos={data.videos} {slug} />{/if}
     {#if !data.paths.length}<section class="empty-state paths-list-empty">
         <h2>No paths available yet.</h2>
         <p>
           {data.canEdit
-            ? 'Create a path from your lessons, then publish it when the sequence is ready.'
+            ? data.videos.length
+              ? 'Create a path from your lessons, then publish it when the sequence is ready.'
+              : inactiveNetwork
+                ? 'Uploads require an active network. Review the network status before preparing your first lesson.'
+                : 'Prepare a lesson first. Once a lesson is available, you can arrange it into a learning path.'
             : 'The creator’s published learning paths will appear here when you have access.'}
         </p>
+        {#if data.canEdit && !data.videos.length}
+          <a
+            class="button secondary"
+            href={inactiveNetwork && slug
+              ? `/n/${slug}/settings`
+              : slug
+                ? `/n/${slug}/studio`
+                : '/admin'}
+            >{inactiveNetwork && slug ? 'Review network settings' : 'Prepare your first lesson'}</a
+          >
+        {:else}
+          <a class="button secondary" href={slug ? `/n/${slug}` : '/library'}>Back to library</a>
+        {/if}
       </section>{:else}<div class="path-cards">
         {#each data.paths as path}<a class="path-card" href={`${base}/${path.id}`}
             ><span class="eyebrow"
