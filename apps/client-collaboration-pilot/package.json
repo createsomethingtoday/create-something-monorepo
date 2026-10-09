@@ -1,0 +1,24 @@
+{
+  "name": "@create-something/client-collaboration-pilot",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node server.mjs",
+    "test": "node --test test/*.test.mjs",
+    "test:hosted": "node --test test/hosted.test.mjs"
+  },
+  "engines": {
+    "node": ">=22.13"
+  },
+  "dependencies": {
+    "@cfworker/json-schema": "4.1.1",
+    "@create-something/canon": "workspace:*",
+    "@modelcontextprotocol/sdk": "1.31.0"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.1",
+    "miniflare": "4.20260708.1",
+    "@cloudflare/workers-types": "4.20260621.1",
+    "typescript": "5.9.3"
+  }
+}
