@@ -26,10 +26,13 @@
     "verify:download": "node scripts/verify-download.mjs",
     "verify:native-ui": "node scripts/verify-native-ui.mjs",
     "deploy": "pnpm build && CLOUDFLARE_ACCOUNT_ID=9645bd52e640b8a4f40a3a55ff1dd75a node ../../scripts/run-wrangler.mjs pages deploy .svelte-kit/cloudflare --project-name=create-something-mapping-canvas --branch=main --commit-dirty=true",
-    "verify:editing": "node scripts/verify-editing.mjs"
+    "verify:editing": "node scripts/verify-editing.mjs",
+    "verify:composition": "node scripts/composition/verify-browser.mjs",
+    "verify:hyperframes": "node scripts/composition/verify-hyperframes.mjs"
   },
   "dependencies": {
-    "@create-something/canon": "workspace:*"
+    "@create-something/canon": "workspace:*",
+    "fflate": "0.8.2"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20260903.1",

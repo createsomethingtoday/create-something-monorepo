@@ -228,3 +228,5 @@ svg .agent-camera{transition:transform 420ms cubic-bezier(.22,1,.36,1)}
 .import-error-dialog #import-error-description { font-size:var(--text-performance-body-sm); line-height:1.6; }
 .cs-workspace .import-recovery-actions .import-retry { background:var(--workspace-fg); color:var(--workspace-bg); font-weight:var(--font-performance-semibold); }
 .cs-workspace .import-recovery-actions .import-retry:is(:hover,:focus-visible):not(:disabled) { background:var(--workspace-fg); color:var(--workspace-bg); border-color:var(--workspace-focus); }
+
+.compose-link{display:inline-flex;align-items:center;justify-content:center;min-height:36px;padding:0 12px;border:1px solid var(--workspace-line);color:var(--workspace-fg);text-decoration:none;font-weight:600;font-size:12px}.compose-link:focus-visible{outline:2px solid var(--workspace-focus);outline-offset:2px}

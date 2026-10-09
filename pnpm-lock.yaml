@@ -3134,6 +3134,9 @@ importers:
       '@create-something/canon':
         specifier: workspace:*
         version: link:../canon
+      fflate:
+        specifier: 0.8.2
+        version: 0.8.2
     devDependencies:
       '@cloudflare/workers-types':
         specifier: ^5.20260903.1
