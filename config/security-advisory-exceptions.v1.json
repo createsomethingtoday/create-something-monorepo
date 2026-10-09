@@ -12,7 +12,7 @@
       "owner": "createsomethingtoday",
       "trackingIssue": "CRE-1634",
       "acceptedOn": "2026-09-22",
-      "reviewBy": "2026-10-06",
+      "reviewBy": "2026-10-13",
       "state": "open-upstream-unpatched",
       "suppressesScanner": false,
       "runtimeExposure": "tooling-only",
@@ -29,7 +29,9 @@
         "pnpm why extract-zip -r shows only Puppeteer, Cloudflare Puppeteer, and Remotion dependency chains.",
         "scripts/security-advisory-exceptions.mjs verifies expiry, ownership, non-suppression, controls, and absence of direct source imports.",
         "2026-09-22 review: GitHub alert 1586 remains open/high with first_patched_version null. pnpm why confirms existing Puppeteer/Remotion transitive chains; direct-import scan reports only expiry. Owner Micah explicitly approved seven-day renewal through September 29 in the CRE-2054 release conversation. Scanner visibility and compensating controls remain unchanged.",
-        "2026-09-29 owner review: GitHub Dependabot alert 1586 remains open/high with first_patched_version null; npm reports extract-zip 2.0.1 as the latest release. pnpm why confirms Puppeteer, Cloudflare Puppeteer, and Remotion transitive chains; the direct-import check reports no new exposure. Micah explicitly approved a seven-day renewal through October 6 in the CRE-2179 publication conversation. Scanner visibility and compensating controls remain unchanged."
+        "2026-09-29 owner review: GitHub Dependabot alert 1586 remains open/high with first_patched_version null; npm reports extract-zip 2.0.1 as the latest release. pnpm why confirms Puppeteer, Cloudflare Puppeteer, and Remotion transitive chains; the direct-import check reports no new exposure. Micah explicitly approved a seven-day renewal through October 6 in the CRE-2179 publication conversation. Scanner visibility and compensating controls remain unchanged.",
+        "2026-10-06 owner review: Micah explicitly approved continued acceptance of the existing tooling risk through October 13 (expiry October 14 00:00 UTC / October 13 19:00 America/Chicago), retaining acceptedOn September 22. The official GitHub Advisory Database still lists GHSA-jmr9-qjv8-65gv as high, affecting extract-zip <= 2.0.1, with no patched version (https://github.com/advisories/GHSA-jmr9-qjv8-65gv). Additional high advisory GHSA-7pqw-9j4j-h8q3 also affects <= 2.0.1 with no patched version (https://github.com/advisories/GHSA-7pqw-9j4j-h8q3); it remains outside this exception and the advisory allowlist, and any resulting audit failure remains blocking. Live Dependabot alert and audit status were not verified. Existing controls remain required: no direct application imports, remote Cloudflare browsers, and trusted upstream browser/video archives only, with no untrusted ZIP input. This renewal is risk acceptance, not vulnerability remediation; scanner visibility and security gates remain unchanged.",
+        "2026-10-06 remediation review: No safe blanket dependency upgrade was established; Puppeteer requires a major-version migration and Node 22 compatibility work. Removing Remotion alone does not prove containment, and the standalone motion-ontology npm/Docker path is separate. Dependency changes and patches require a separate remediation review."
       ],
       "removalTrigger": "Replace or upgrade the affected dependency immediately when an upstream patched release is available, then delete this exception after the alert closes."
     }

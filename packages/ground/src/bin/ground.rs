@@ -97,7 +97,7 @@ enum Commands {
         #[arg(default_value = ".")]
         directory: PathBuf,
         /// Checks to run (comma-separated: duplicates,dead_exports,orphans,environment)
-        #[arg(long, value_delimiter = ',')]
+        #[arg(long, value_delimiter = ',', default_values = ground::mcp::DEFAULT_ANALYZE_CHECKS)]
         checks: Vec<String>,
         /// Entry points to include in environment analysis
         #[arg(long)]
@@ -111,6 +111,9 @@ enum Commands {
         /// Duplicate parsing workers (0 = automatic, at most four; 1 = serial)
         #[arg(long, default_value_t = 0, value_parser = clap::value_parser!(u8).range(0..=4))]
         workers: u8,
+        /// Keep semantic results advisory (JSON outcome still records failures/incompleteness)
+        #[arg(long)]
+        advisory: bool,
     },
 
     /// Report only verified issues involving files changed since a git baseline
@@ -122,7 +125,7 @@ enum Commands {
         #[arg(long, default_value = "main")]
         base: String,
         /// Checks to run (comma-separated: duplicates,orphans)
-        #[arg(long, value_delimiter = ',')]
+        #[arg(long, value_delimiter = ',', default_values = ground::mcp::DEFAULT_DIFF_CHECKS)]
         checks: Vec<String>,
         /// Scan across packages in a monorepo
         #[arg(long)]
@@ -133,6 +136,9 @@ enum Commands {
         /// Duplicate parsing workers (0 = automatic, at most four; 1 = serial)
         #[arg(long, default_value_t = 0, value_parser = clap::value_parser!(u8).range(0..=4))]
         workers: u8,
+        /// Keep semantic results advisory (JSON outcome still records failures/incompleteness)
+        #[arg(long)]
+        advisory: bool,
     },
     
     /// Make a claim (only works if you've checked first)
@@ -360,10 +366,11 @@ enum ClaimCommands {
 
 fn main() {
     let cli = Cli::parse();
+    let structured_analysis = matches!(&cli.command, Commands::Analyze { .. } | Commands::Diff { .. });
     
     if let Err(e) = run(cli) {
         eprintln!("Error: {}", e);
-        std::process::exit(1);
+        std::process::exit(if structured_analysis { 2 } else { 1 });
     }
 }
 
@@ -577,10 +584,11 @@ fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
         
         Commands::Find(find_cmd) => run_find(find_cmd, &cli.db),
 
-        Commands::Analyze { directory, checks, entry_points, cross_package, timeout_ms, workers } => {
+        Commands::Analyze { directory, checks, entry_points, cross_package, timeout_ms, workers, advisory } => {
             run_mcp_analysis(
                 "ground_analyze",
                 &cli.db,
+                advisory,
                 json!({
                     "directory": directory,
                     "checks": checks,
@@ -592,10 +600,11 @@ fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
             )
         }
 
-        Commands::Diff { directory, base, checks, cross_package, timeout_ms, workers } => {
+        Commands::Diff { directory, base, checks, cross_package, timeout_ms, workers, advisory } => {
             run_mcp_analysis(
                 "ground_diff",
                 &cli.db,
+                advisory,
                 json!({
                     "directory": directory,
                     "base": base,
@@ -741,6 +750,7 @@ fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
 fn run_mcp_analysis(
     tool: &str,
     db: &Path,
+    advisory: bool,
     arguments: serde_json::Value,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let mut triad = VerifiedTriad::new(db)?;
@@ -748,6 +758,15 @@ fn run_mcp_analysis(
 
     if result.success {
         println!("{}", serde_json::to_string_pretty(&result.content)?);
+        if !advisory {
+            let code = match ground::mcp::analysis_outcome(&result.content) {
+                "CLEAN" => 0,
+                "FINDINGS" => 1,
+                "NOT_APPLICABLE" => 3,
+                _ => 2,
+            };
+            if code != 0 { std::process::exit(code); }
+        }
         Ok(())
     } else {
         Err(std::io::Error::other(result.error.unwrap_or_else(|| "Ground analysis failed".to_string())).into())
@@ -779,6 +798,7 @@ fn run_find(cmd: FindCommands, db: &Path) -> Result<(), Box<dyn std::error::Erro
         FindCommands::Orphans { path } => run_mcp_analysis(
             "ground_analyze",
             db,
+            true,
             json!({
                 "directory": path,
                 "checks": ["orphans"],

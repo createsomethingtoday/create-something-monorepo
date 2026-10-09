@@ -298,7 +298,7 @@ export const DELETE: RequestHandler = async ({ params, request, platform }) => {
 		const stub = platform.env.COURT_STATE.get(id);
 
 		await stub.fetch(
-			new Request('https://dummy/cancel', {
+			new Request(`https://dummy/cancel?facilityId=${encodeURIComponent(reservation.facility_id)}`, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({

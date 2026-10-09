@@ -274,7 +274,7 @@ EOFNODE
 # ============================================================
 # START GATEWAY
 # ============================================================
-# Note: R2 backup sync is handled by the Worker's cron trigger
+# R2 backups share the gateway lifetime; no Worker cron can wake this container.
 echo "Starting Moltbot Gateway..."
 echo "Gateway will be available on port 18789"
 
@@ -287,8 +287,8 @@ echo "Dev mode: ${CLAWDBOT_DEV_MODE:-false}, Bind mode: $BIND_MODE"
 
 if [ -n "$CLAWDBOT_GATEWAY_TOKEN" ]; then
     echo "Starting gateway with token auth..."
-    exec clawdbot gateway --port 18789 --verbose --allow-unconfigured --bind "$BIND_MODE" --token "$CLAWDBOT_GATEWAY_TOKEN"
+    exec node /usr/local/lib/relay/run-gateway.mjs gateway --port 18789 --verbose --allow-unconfigured --bind "$BIND_MODE" --token "$CLAWDBOT_GATEWAY_TOKEN"
 else
     echo "Starting gateway with device pairing (no token)..."
-    exec clawdbot gateway --port 18789 --verbose --allow-unconfigured --bind "$BIND_MODE"
+    exec node /usr/local/lib/relay/run-gateway.mjs gateway --port 18789 --verbose --allow-unconfigured --bind "$BIND_MODE"
 fi

@@ -2,7 +2,7 @@
   import StatusNotice from './StatusNotice.svelte';
   import { onMount } from 'svelte';
   import { trackImpact } from '$lib/impact';
-  import { timestamp } from '$lib/learning';
+  import { timestamp, playbackResumePosition } from '$lib/learning';
   import { api, supportHeaders } from '$lib/client';
   let {
     id,
@@ -31,7 +31,7 @@
     let lastPosition = initialPosition;
     let pending: number | undefined;
     let writing = false;
-    const resume = initialPosition > 0 && initialPosition < duration - 2 ? initialPosition : 0;
+    const resume = playbackResumePosition(initialPosition, duration);
     async function flush() {
       if (!saveProgress || !started || renewing || !duration || failed) return;
       const position = Math.min(duration, Math.max(0, element.currentTime));
@@ -139,7 +139,7 @@
 </script>
 
 <div class="player">
-  {#if saveProgress && initialPosition > 0 && initialPosition < duration - 2}<p class="resume-note">
+  {#if saveProgress && playbackResumePosition(initialPosition, duration)}<p class="resume-note">
       Resume from {timestamp(initialPosition)}. Your position is saved as you watch.
     </p>{/if}
   <video bind:this={element} controls playsinline aria-label={title}

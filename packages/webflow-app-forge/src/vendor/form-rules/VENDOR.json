@@ -1,0 +1,14 @@
+{
+  "source": "https://github.com/webflow/wf-app-form-cloud.git",
+  "commit": "a5ad399b1c7dbc826e25bf91ee8350e9f825ecff",
+  "syncedAt": "2026-10-07",
+  "files": [
+    "contentGuidelines.js",
+    "submissionGuidance.js",
+    "urlGuidance.js",
+    "productionUrls.js",
+    "marketplaceCategories.js",
+    "appIconSpec.js",
+    "emailFields.js"
+  ]
+}

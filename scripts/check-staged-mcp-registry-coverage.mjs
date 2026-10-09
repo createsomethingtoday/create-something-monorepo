@@ -79,8 +79,7 @@ function readStagedFiles() {
 }
 
 function readIndexOrHeadBlob(pathname) {
-  // Require an actual blob: `git show` may treat bracketed route names as
-  // patterns and succeed with empty output for a nonexistent package.json.
+  // Read a literal blob: `show` can treat absent bracket paths as revision patterns.
   return tryRunGit(['cat-file', 'blob', `:${pathname}`]) ?? tryRunGit(['cat-file', 'blob', `HEAD:${pathname}`]);
 }
 

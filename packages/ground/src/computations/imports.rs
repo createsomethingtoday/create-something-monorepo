@@ -14,82 +14,12 @@ use tree_sitter::{Parser, Node};
 /// 
 /// Handles both regular `<script>` and `<script context="module">` tags while
 /// preserving source line positions.
-fn extract_svelte_script(source: &str) -> Option<String> {
-    extract_svelte_scripts(source, false)
+fn extract_svelte_script(source: &str) -> Result<Option<String>, String> {
+    super::source_parser::svelte_scripts(source, false)
 }
 
-/// Extract only module-context scripts from a Svelte component.
-///
-/// Instance-script exports are component API (`export let` props and exported
-/// component methods), not JavaScript module exports. Dead-export analysis must
-/// therefore ignore the entire instance script.
-fn extract_svelte_module_script(source: &str) -> Option<String> {
-    extract_svelte_scripts(source, true)
-}
-
-fn extract_svelte_scripts(source: &str, module_only: bool) -> Option<String> {
-    let source_bytes = source.as_bytes();
-    let mut extracted = source_bytes
-        .iter()
-        .map(|byte| {
-            if matches!(byte, b'\n' | b'\r') {
-                *byte
-            } else {
-                b' '
-            }
-        })
-        .collect::<Vec<_>>();
-    let mut found = false;
-    let mut search_start = 0;
-
-    while let Some(tag_start) = source[search_start..].find("<script") {
-        let abs_tag_start = search_start + tag_start;
-
-        // Find the end of the opening tag
-        let tag_content_start = match source[abs_tag_start..].find('>') {
-            Some(pos) => abs_tag_start + pos + 1,
-            None => {
-                search_start = abs_tag_start + 7; // skip "<script"
-                continue;
-            }
-        };
-
-        // Find the closing </script> tag
-        let tag_content_end = match source[tag_content_start..].find("</script>") {
-            Some(pos) => tag_content_start + pos,
-            None => {
-                search_start = tag_content_start;
-                continue;
-            }
-        };
-
-        let opening_tag = &source[abs_tag_start..tag_content_start];
-        let normalized_tag = opening_tag
-            .to_ascii_lowercase()
-            .chars()
-            .filter(|character| !character.is_ascii_whitespace())
-            .collect::<String>();
-        let has_context_module = normalized_tag.contains("context=\"module\"")
-            || normalized_tag.contains("context='module'");
-        let has_module_attribute = opening_tag
-            .trim_end_matches('>')
-            .split_ascii_whitespace()
-            .any(|attribute| attribute.eq_ignore_ascii_case("module"));
-
-        if !module_only || has_context_module || has_module_attribute {
-            extracted[tag_content_start..tag_content_end]
-                .copy_from_slice(&source_bytes[tag_content_start..tag_content_end]);
-            found = true;
-        }
-
-        search_start = tag_content_end + 9; // skip "</script>"
-    }
-
-    if !found {
-        return None;
-    }
-
-    String::from_utf8(extracted).ok()
+fn extract_svelte_module_script(source: &str) -> Result<Option<String>, String> {
+    super::source_parser::svelte_scripts(source, true)
 }
 
 /// An import statement extracted from source
@@ -138,8 +68,7 @@ fn extract_imports_source(path: &Path, source: &str) -> Result<Vec<ExtractedImpo
     
     // Handle Svelte files by extracting script content
     let (parse_source, language) = if ext == "svelte" {
-        let Some(script) = extract_svelte_script(&source) else {
-            if source.contains("<script") { return Err("Incomplete Svelte script tag".to_string()); }
+        let Some(script) = extract_svelte_script(&source)? else {
             return Ok(Vec::new());
         };
         (script, tree_sitter_typescript::LANGUAGE_TYPESCRIPT.into())
@@ -155,7 +84,7 @@ fn extract_imports_source(path: &Path, source: &str) -> Result<Vec<ExtractedImpo
     parser.set_language(&language)
         .map_err(|e| format!("Failed to set language: {}", e))?;
     
-    let tree = parser.parse(&parse_source, None)
+    let tree = super::source_parser::parse_typescript(&mut parser, &parse_source)
         .ok_or_else(|| "Failed to parse file".to_string())?;
     
     if tree.root_node().has_error() { return Err("Syntax errors prevent complete import analysis".to_string()); }
@@ -184,7 +113,7 @@ fn extract_exports_source(path: &Path, source: &str) -> Result<Vec<ExtractedExpo
     // Svelte module exports exist only in module-context scripts. Instance
     // exports describe the component API and must not enter dead-export checks.
     let (parse_source, language) = if ext == "svelte" {
-        let Some(script) = extract_svelte_module_script(&source) else {
+        let Some(script) = extract_svelte_module_script(&source)? else {
             return Ok(Vec::new());
         };
         (script, tree_sitter_typescript::LANGUAGE_TYPESCRIPT.into())
@@ -200,7 +129,7 @@ fn extract_exports_source(path: &Path, source: &str) -> Result<Vec<ExtractedExpo
     parser.set_language(&language)
         .map_err(|e| format!("Failed to set language: {}", e))?;
     
-    let tree = parser.parse(&parse_source, None)
+    let tree = super::source_parser::parse_typescript(&mut parser, &parse_source)
         .ok_or_else(|| "Failed to parse file".to_string())?;
     
     if tree.root_node().has_error() { return Err("Syntax errors prevent complete export analysis".to_string()); }
@@ -231,7 +160,7 @@ fn extract_reexport_edges_source(path: &Path, source: &str) -> Result<Vec<Reexpo
     let source = source.to_string();
     let ext = path.extension().and_then(|value| value.to_str()).unwrap_or("");
     let source = if ext == "svelte" {
-        match extract_svelte_module_script(&source) { Some(script) => script, None => return Ok(Vec::new()) }
+        match extract_svelte_module_script(&source)? { Some(script) => script, None => return Ok(Vec::new()) }
     } else { source };
     let language = match ext {
         "tsx" => tree_sitter_typescript::LANGUAGE_TSX.into(),
@@ -240,7 +169,7 @@ fn extract_reexport_edges_source(path: &Path, source: &str) -> Result<Vec<Reexpo
     };
     let mut parser = Parser::new();
     parser.set_language(&language).map_err(|error| error.to_string())?;
-    let tree = parser.parse(&source, None).ok_or("Cannot parse barrel")?;
+    let tree = super::source_parser::parse_typescript(&mut parser, &source).ok_or("Cannot parse barrel")?;
     if tree.root_node().has_error() { return Err("Syntax errors prevent complete barrel analysis".to_string()); }
     let mut edges = Vec::new();
     let mut cursor = tree.root_node().walk();
@@ -900,7 +829,7 @@ let count = 0;
 
 <div>Hello {count}</div>"#;
         
-        let script = super::extract_svelte_script(source).unwrap();
+        let script = super::extract_svelte_script(source).unwrap().unwrap();
         assert!(script.contains("import { foo, bar }"));
         assert!(script.contains("let count = 0"));
         assert!(!script.contains("<div>"));
@@ -920,7 +849,7 @@ let ready = false;
 
 <div>Content</div>"#;
         
-        let script = super::extract_svelte_script(source).unwrap();
+        let script = super::extract_svelte_script(source).unwrap().unwrap();
         assert!(script.contains("export const prerender"));
         assert!(script.contains("import { onMount }"));
     }

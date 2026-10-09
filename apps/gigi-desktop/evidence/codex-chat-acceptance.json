@@ -1,0 +1,14 @@
+{
+  "passed": true,
+  "checks": [
+    "installed ChatGPT authentication",
+    "read selected gig fee/contact/task",
+    "approval before exact task rename",
+    "retained fields and relations",
+    "rejected rename unchanged",
+    "conversation retained after companion restart"
+  ],
+  "readAnswer": "- **Fee:** $450.00 USD\n- **Booking contact:** Synthetic Casey Booker\n- **Linked task:** Confirm synthetic Friday load-in\n\nNo records changed.",
+  "turns": 3,
+  "resumedMessages": 6
+}

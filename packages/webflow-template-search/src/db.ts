@@ -139,12 +139,13 @@ const UPSERT_TEMPLATE_SQL = `
     marketplace_status,
     source_last_modified_time,
     synced_at,
+    listing_confirmed,
     category_groups_text,
     child_categories_text,
     styles_text,
     tags_text
   ) VALUES (
-    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
   )
   ON CONFLICT(id) DO UPDATE SET
     template_slug = excluded.template_slug,
@@ -229,6 +230,7 @@ const UPSERT_TEMPLATE_SQL = `
     marketplace_status = excluded.marketplace_status,
     source_last_modified_time = excluded.source_last_modified_time,
     synced_at = excluded.synced_at,
+    listing_confirmed = COALESCE(excluded.listing_confirmed, template_documents.listing_confirmed),
     category_groups_text = excluded.category_groups_text,
     child_categories_text = excluded.child_categories_text,
     styles_text = excluded.styles_text,
@@ -631,6 +633,7 @@ export async function upsertTemplateDocuments(db: D1Database, documents: Templat
         document.marketplaceStatus,
         document.sourceLastModifiedTime,
         document.syncedAt,
+        document.listingConfirmed === null ? null : document.listingConfirmed ? 1 : 0,
         document.categoryGroups.join(' '),
         document.childCategories.join(' '),
         document.styles.join(' '),
@@ -1727,6 +1730,24 @@ export async function filterMissingOrStaleTemplateLookupTargets(
     if (!existing) return true;
     return isSourceNewer(target.sourceLastModifiedTime, existing.sourceLastModifiedTime);
   });
+}
+
+// Rows indexed without a confirmed live listing: the gate failed open (lookup
+// error, or the guard kept the batch), or the row predates listing_confirmed.
+// Newest template first, because a fresh submission is the common case and the
+// one creators notice; least-recently synced first within a day, so the pool
+// rotates instead of re-checking the same rows every run.
+export async function listUnconfirmedListingTemplateIds(db: D1Database, limit: number): Promise<string[]> {
+  const result = await db
+    .prepare(
+      `SELECT id FROM template_documents
+       WHERE listing_confirmed IS NULL OR listing_confirmed = 0
+       ORDER BY COALESCE(published_date, '') DESC, synced_at ASC
+       LIMIT ?`,
+    )
+    .bind(limit)
+    .all<{ id: string }>();
+  return (result.results ?? []).map((row) => row.id);
 }
 
 export async function recordSyncSummary(db: D1Database, summary: unknown, key: string): Promise<void> {

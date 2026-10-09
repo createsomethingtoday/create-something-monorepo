@@ -54,3 +54,11 @@ test('setup summary gives a next step from receipts without upgrading agent or p
   assert.equal(used.steps[2].label, 'Local tool used · Phone unverified');
   assert.equal(used.nextStep, 'Confirm the tool result in your agent, then test phone access separately if needed.');
 });
+
+test('summary directs uncertain refresh outcomes to status recovery alongside its card', () => {
+  const sources = { gmail: { state: 'unavailable', detail: 'refresh_outcome_unknown' }, googlecalendar: { state: 'connected' } };
+  const summary = setupSummary({ workspace: { name: 'Synthetic' }, sources });
+  assert.match(summary.nextStep, /Check source status before trying to connect again/);
+  assert.match(summary.steps[1].description, /refresh outcome is uncertain/i);
+  assert.equal(summary.steps[1].label, '1 of 2 verified');
+});

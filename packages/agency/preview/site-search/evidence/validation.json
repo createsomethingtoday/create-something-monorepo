@@ -1,0 +1,51 @@
+{
+  "date": "2026-10-08",
+  "base": "e59c5030a22274e03fbfe6ab7a785b1bd9d6899a",
+  "branch": "preview/agency-webmcp-search",
+  "scope": "integrated actual Agency shell, local only",
+  "url": "https://2f8f9859.create-something-agency.pages.dev/",
+  "publicCatalogEntries": 24,
+  "pageAnnotationTargets": {
+    "/": 2,
+    "/services": 2,
+    "/products": 2,
+    "/field-reports": 1,
+    "/practice": 1,
+    "/stack": 1
+  },
+  "checks": {
+    "siteSearchAndAnnotationTests": {
+      "passed": 16,
+      "failed": 0
+    },
+    "agencyCheck": "passed",
+    "agencyBuild": "passed",
+    "canonSvelteDiagnostics": "0 errors, 0 warnings",
+    "canonFullCheck": "passed after exact upstream 8dfacd302 operator-tooling exemption",
+    "canonFullTests": {
+      "passed": 660,
+      "failed": 19,
+      "remainingFailuresReproducedAtBase": true
+    },
+    "canonAnalyticsOptoutTests": {
+      "passed": 5,
+      "failed": 0
+    },
+    "actualShellChromeQA": "passed again after shortcut fix: desktop1440/mobile390 search and six annotation routes",
+    "nativeHostAcceptance": {
+      "search": "passed: real discovery, workflow query, 14 visible results, selection, readback",
+      "annotations": "accepted request on corrected review deployment via trusted click; no comment sent",
+      "host": "Codex In-app Browser",
+      "receipt": "native-search-receipt.json"
+    },
+    "shortcutRegressionTests": {
+      "passed": 5,
+      "failed": 0
+    }
+  },
+  "deployment": "review preview only; production result tracked in PR #1938",
+  "trackingAdded": false,
+  "privateSources": false,
+  "remoteSearch": false,
+  "runtimeSource": "5129f5a561f4a342cc6e06cd9ef63509dd265e2f"
+}

@@ -1,6 +1,6 @@
 {
   "name": "@create-something/agency",
-  "description": "AI-native technical support — diagnosis, engineering improvements and help using the result",
+  "description": "AI-native technical support \u2014 diagnosis, engineering improvements and help using the result",
   "private": true,
   "version": "1.0.0",
   "type": "module",
@@ -20,7 +20,7 @@
     "dev": "node ./scripts/run-pinned-bin.mjs vite vite dev",
     "prepare:build-dir": "node ./scripts/prepare-build-dir.mjs",
     "prepare:local-deps": "node ./scripts/prepare-local-deps.mjs",
-    "build": "pnpm prepare:build-dir && pnpm prepare:local-deps && node ./scripts/run-pinned-bin.mjs @sveltejs/kit svelte-kit sync && node ./scripts/run-pinned-bin.mjs vite vite build",
+    "build": "pnpm test:gigi-beta && pnpm prepare:build-dir && pnpm prepare:local-deps && node ./scripts/run-pinned-bin.mjs @sveltejs/kit svelte-kit sync && node ./scripts/run-pinned-bin.mjs vite vite build",
     "preview": "node ./scripts/run-pinned-bin.mjs vite vite preview",
     "prepare": "pnpm prepare:build-dir && pnpm prepare:local-deps && node ./scripts/run-pinned-bin.mjs @sveltejs/kit svelte-kit sync || echo ''",
     "copy:check": "node ./scripts/check-public-copy.mjs && node --import tsx --test test/public-marketing-copy.test.ts test/field-report-evidence.test.ts test/product-family-contract.test.ts test/public-pricing-contract.test.ts test/membership-inquiry.test.ts test/integration-catalog.test.ts test/system-context-experience.test.ts test/playbook-hero-image-assets.test.ts test/public-ga-browser-policy.test.mjs",
@@ -31,7 +31,7 @@
     "integrations:check": "node ./scripts/generate-integration-catalog.mjs --check",
     "canon:check": "node ./scripts/check-canon-debt.mjs && node --import tsx --test test/canon-debt.test.ts test/paper-brand-cohesion.test.ts test/public-surface-policy.test.ts",
     "canon:debt:pilot": "node ./scripts/check-canon-debt.mjs --pilot --base origin/main",
-    "check": "pnpm prepare:build-dir && pnpm prepare:local-deps && pnpm integrations:check && pnpm search:campaign:check && node ./scripts/run-pinned-bin.mjs @sveltejs/kit svelte-kit sync && node ./scripts/run-pinned-bin.mjs svelte-check svelte-check --tsconfig ./tsconfig.json --fail-on-warnings && pnpm canon:check && pnpm copy:check && node --import tsx --test test/community-api-auth.test.ts test/identity-provider-retirement.test.ts test/public-html-cache.test.ts test/film-motion-preference.test.ts && pnpm test:mcp-entitlement-authority && pnpm test:map-commercial-lifecycle && pnpm test:control-activation && pnpm test:inspection && pnpm test:contact",
+    "check": "pnpm prepare:build-dir && pnpm prepare:local-deps && pnpm integrations:check && pnpm search:campaign:check && node ./scripts/run-pinned-bin.mjs @sveltejs/kit svelte-kit sync && node ./scripts/run-pinned-bin.mjs svelte-check svelte-check --tsconfig ./tsconfig.json --fail-on-warnings && pnpm canon:check && pnpm copy:check && node --import tsx --test test/community-api-auth.test.ts test/identity-provider-retirement.test.ts test/public-html-cache.test.ts test/gigi-beta-page.test.ts test/film-motion-preference.test.ts && pnpm test:mcp-entitlement-authority && pnpm test:map-commercial-lifecycle && pnpm test:control-activation && pnpm test:inspection && pnpm test:contact",
     "seo:check": "node ./scripts/check-seo-aeo.mjs && pnpm marketing:check",
     "analytics:commercial-funnel": "node ./scripts/report-commercial-funnel.mjs",
     "analytics:marketing-attribution": "node ./scripts/report-marketing-attribution.mjs",
@@ -60,7 +60,10 @@
     "deploy": "pnpm build && CLOUDFLARE_ACCOUNT_ID=9645bd52e640b8a4f40a3a55ff1dd75a node ../../scripts/run-wrangler.mjs pages deploy .svelte-kit/cloudflare --project-name=create-something-agency --commit-dirty=true",
     "deploy:preview": "pnpm build && CLOUDFLARE_ACCOUNT_ID=9645bd52e640b8a4f40a3a55ff1dd75a node ../../scripts/run-wrangler.mjs pages deploy .svelte-kit/cloudflare --project-name=create-something-agency --branch=preview --commit-dirty=true",
     "cf-typegen": "node ../../scripts/run-wrangler.mjs types",
-    "test:contact": "node --import ./test/register-sveltekit-test-loader.mjs --import tsx --test test/contact-intake.test.ts test/contact-d1.test.ts test/contact-workerd.test.ts"
+    "test:contact": "node --import ./test/register-sveltekit-test-loader.mjs --import tsx --test test/contact-intake.test.ts test/contact-d1.test.ts test/contact-workerd.test.ts",
+    "test:gigi-beta": "node --import tsx --test test/gigi-beta-page.test.ts",
+    "preview:site-search": "node ./scripts/run-pinned-bin.mjs vite vite dev --host 127.0.0.1 --port 4178 --strictPort",
+    "test:site-search": "node --import tsx --test test/site-search.test.ts test/page-annotations.test.ts"
   },
   "dependencies": {
     "@composio/core": "^0.6.4",
