@@ -38,6 +38,11 @@ ZENDESK_SUBDOMAIN = "webflow2579"
 # refuse tickets outside it. Programs Support (46157931219347) is out of scope.
 MARKETPLACE_ZENDESK_GROUP_ID = "1500002744702"
 
+# Daily delisted-but-live check (14:00 UTC = 9am CT). Read-only; posts to
+# DELIST_DRIFT_SLACK_WEBHOOK_URL when set. Disabled for env.dev below.
+[triggers]
+crons = ["0 14 * * *"]
+
 [browser]
 binding = "BROWSER"
 
@@ -63,6 +68,9 @@ new_sqlite_classes = ["WebflowTemplateReviewMCP"]
 name = "webflow-template-review-mcp-dev"
 workers_dev = true
 preview_urls = false
+
+[env.dev.triggers]
+crons = []
 
 [env.dev.vars]
 TEMPLATE_REVIEW_ENVIRONMENT = "development"

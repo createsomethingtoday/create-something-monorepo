@@ -199,6 +199,26 @@ field-for-field before approving. \`set_mrp_visibility\` changes what buyers can
 see on the marketplace — never call it without the reviewer naming the MRP and
 the target visibility in the same request.
 
+### Taking a template off the Marketplace (delist)
+
+| Tool | Purpose |
+|------|---------|
+| \`template_review_delist_template\` | Preview, then (with \`confirm\`) set Delisted/Archived in Airtable AND unpublish the live CMS page |
+| \`template_review_relist_template\` | Undo a delist: Published/Active, republish, restore related-template links |
+| \`template_review_delist_drift\` | Read-only: templates marked Delisted whose page is still live |
+
+Setting 🚀Marketplace Status to Delisted in Airtable does NOT take the page
+down — Whalesync never unpublishes it. Always use \`delist_template\`: call it
+once without \`confirm\` and show the reviewer the preview (public page status,
+CMS items, planned Airtable writes), then call again with
+\`confirm: { confirmed: true, expected_cms_item_ids }\` only after they approve.
+Use mode \`permanent\` (creator request, Stripe status, policy infringement —
+sets the reason and renames "{Name} Archived YYYYMMDD") or \`temporary\` (a
+relist is expected after a fix — leaves name and reason alone). Report the
+final \`public_page_status\`; 404 means the page is down. Archiving the Webflow
+Admin template is a separate, permanent-only step (it blocks checkout and
+strands existing buyers) — do not suggest it for a temporary delist.
+
 Work the publishing checklist per item with \`set_checklist_items\`. Only pass
 \`mark_all_publishing_items: true\` to \`complete_publishing\` when every publishing
 step genuinely was completed — the checklist is audit evidence, not a formality.
