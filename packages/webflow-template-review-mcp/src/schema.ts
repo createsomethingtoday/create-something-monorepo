@@ -179,6 +179,29 @@ export const CONFIRMED_WRITE_FIELD_IDS = {
   },
 } as const;
 
+/**
+ * 👛Assets fields read and written by the Marketplace delist/relist tools.
+ * Reads and writes are id-keyed so display-name drift cannot break a takedown.
+ */
+export const DELIST_ASSET_FIELD_IDS = {
+  type: 'fld7kubS6EE1LOC8d',
+  name: 'fldUzJBor3Gnkykjc',
+  marketplaceStatus: 'fld51CeQNGDgW9b0D',
+  delistReason: 'fldoWOdsRchGYa7Td',
+  cmsStatus: 'fldQRpdwNXArAOYFA',
+  /** 🏸Admin Detail Page Path — the real public path (slugs do not always match the UID). */
+  detailPagePath: 'fldNN1C3STWNQ4QBc',
+  /** 🥞CMS Record ID — lookup of every Webflow Templates item linked to the asset (can be more than one). */
+  cmsItemIds: 'fldJ1WxYdIhxAXMm0',
+  /** 🕸️🚰🥞CMS Status (Actual) — Whalesync's read-back of the Webflow item state. */
+  cmsStatusActual: 'fldStZzIuQLCZ587l',
+} as const;
+
+export const MARKETPLACE_STATUS_PUBLISHED = '3️⃣Published🚀';
+export const MARKETPLACE_STATUS_DELISTED = '4️⃣Delisted☠️';
+export const DELIST_REASON_VALUES = ['Creator request', 'Stripe status', 'Policy infringement'] as const;
+export type DelistReason = (typeof DELIST_REASON_VALUES)[number];
+
 export const PENDING_VERSION_FIELDS = {
   createdAt: 'pending_verification',
 } as const;

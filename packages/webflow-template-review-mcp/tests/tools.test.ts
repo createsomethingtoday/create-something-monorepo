@@ -1914,6 +1914,34 @@ test('set_mrp_visibility fails closed without the marketplace admin key and stay
   assert.notEqual(readOnly.names.indexOf('template_review_prepare_admin_template_verify'), -1);
 });
 
+test('delist/relist are write-gated, need a reason for permanent, and fail closed without the CMS token', async () => {
+  const { server, handlers } = createServerHarness();
+  registerTools(server, () => ({}) as AirtableClient, () => reviewer, {});
+
+  const noReason = parsePayload((await handlers.get('template_review_delist_template')?.({ asset_id: 'recTESTASSET00001', mode: 'permanent' }))!);
+  assert.equal((noReason.error as { code?: string })?.code, 'DELIST_REASON_REQUIRED');
+
+  const noToken = parsePayload(
+    (await handlers.get('template_review_delist_template')?.({
+      asset_id: 'recTESTASSET00001',
+      mode: 'temporary',
+      confirm: { confirmed: true, expected_cms_item_ids: ['a00000000000000000000001'] },
+    }))!,
+  );
+  assert.equal((noToken.error as { code?: string })?.code, 'MARKETPLACE_CMS_TOKEN_UNAVAILABLE');
+
+  const anonymous = createServerHarness();
+  registerTools(anonymous.server, () => ({}) as AirtableClient, () => null, {});
+  const noReviewer = parsePayload((await anonymous.handlers.get('template_review_delist_template')?.({ asset_id: 'recTESTASSET00001', mode: 'temporary' }))!);
+  assert.equal((noReviewer.error as { code?: string })?.code, 'REVIEWER_IDENTITY_UNAVAILABLE');
+
+  const readOnly = createServerHarness();
+  registerTools(readOnly.server, () => ({}) as AirtableClient, () => reviewer, {}, { allowWrites: false });
+  assert.equal(readOnly.names.indexOf('template_review_delist_template'), -1);
+  assert.equal(readOnly.names.indexOf('template_review_relist_template'), -1);
+  assert.notEqual(readOnly.names.indexOf('template_review_delist_drift'), -1);
+});
+
 test('set_featured_flag is restricted to featured-batch coordinators', async () => {
   const { server, handlers } = createServerHarness();
   let clientCalled = false;

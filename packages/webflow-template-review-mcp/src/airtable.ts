@@ -16,12 +16,14 @@ import {
   CONFIRMED_WRITE_FIELD_IDS,
   CONFIRMED_VERSION_FIELDS,
   DEFAULT_AIRTABLE_BASE_ID,
+  DELIST_ASSET_FIELD_IDS,
   FEATURED_ASSET_FIELDS,
   FEATURED_ASSET_FIELD_IDS,
   FEATURED_VOTE_FIELDS,
   FEATURED_VOTE_OPTIONS,
   FEATURED_VOTING_STATE_FIELDS,
   IMPROVEMENT_AREA_OPTIONS,
+  MARKETPLACE_STATUS_DELISTED,
   METRICS_ASSET_FIELD_IDS,
   QUALITY_RATING_OPTIONS,
   REVIEW_STATUS_OPTIONS,
@@ -462,7 +464,7 @@ export interface AgentFeedbackQueueQuery {
   viewId?: string;
 }
 
-interface AirtableRecord {
+export interface AirtableRecord {
   id: string;
   createdTime?: string;
   fields: Record<string, unknown>;
@@ -2452,6 +2454,86 @@ export class AirtableClient {
       throw new AirtableClientError('OUT_OF_SCOPE_ASSET', 'Updated asset is outside template-review scope.', 403);
     }
     return mapAsset(updated);
+  }
+
+  /** Id-keyed read of one asset for the delist/relist tools. Template scope is enforced. */
+  async getDelistAssetFields(assetId: string): Promise<AirtableRecord> {
+    const response = await this.request(`/${TABLE_IDS.assets}/${assetId}?returnFieldsByFieldId=true`);
+    if (response.status === 404) {
+      throw new AirtableClientError('ASSET_NOT_FOUND_OR_OUT_OF_SCOPE', 'Template asset not found in template-review scope.', 404, { asset_id: assetId });
+    }
+    if (!response.ok) {
+      throw new AirtableClientError('AIRTABLE_GET_FAILED', 'Failed to fetch Airtable record.', response.status, { asset_id: assetId });
+    }
+    const record = (await response.json()) as AirtableRecord;
+    const type = record.fields[DELIST_ASSET_FIELD_IDS.type];
+    if (typeof type !== 'string' || !type.includes('Template')) {
+      throw new AirtableClientError('ASSET_NOT_FOUND_OR_OUT_OF_SCOPE', 'Template asset not found in template-review scope.', 404, { asset_id: assetId });
+    }
+    return record;
+  }
+
+  /** Id-keyed field write for the delist/relist tools (null clears a field). */
+  async updateDelistAssetFields(assetId: string, fields: Record<string, unknown>): Promise<AirtableRecord> {
+    return this.updateRecord(TABLE_IDS.assets, assetId, fields);
+  }
+
+  async addAssetComment(assetId: string, text: string): Promise<{ id: string }> {
+    const response = await this.request(`/${TABLE_IDS.assets}/${assetId}/comments`, {
+      method: 'POST',
+      body: JSON.stringify({ text }),
+    });
+    if (!response.ok) {
+      const airtable = await this.readErrorDetails(response);
+      throw new AirtableClientError('AIRTABLE_COMMENT_FAILED', 'Failed to write the Airtable record comment.', response.status, {
+        asset_id: assetId,
+        ...(airtable === undefined ? {} : { airtable }),
+      });
+    }
+    return (await response.json()) as { id: string };
+  }
+
+  /** All comments on an asset, newest first (Airtable's order). */
+  async listAssetComments(assetId: string): Promise<Array<{ id: string; text: string; createdTime: string }>> {
+    const comments: Array<{ id: string; text: string; createdTime: string }> = [];
+    let offset: string | undefined;
+    do {
+      const params = new URLSearchParams({ pageSize: '100' });
+      if (offset) params.set('offset', offset);
+      const response = await this.request(`/${TABLE_IDS.assets}/${assetId}/comments?${params.toString()}`);
+      if (!response.ok) {
+        throw new AirtableClientError('AIRTABLE_COMMENT_LIST_FAILED', 'Failed to list Airtable record comments.', response.status, { asset_id: assetId });
+      }
+      const json = (await response.json()) as { comments?: Array<{ id: string; text: string; createdTime: string }>; offset?: string | null };
+      comments.push(...(json.comments ?? []));
+      offset = json.offset ?? undefined;
+    } while (offset);
+    return comments;
+  }
+
+  /** Assets marked Delisted whose Whalesync read-back still says a linked CMS item is Active. */
+  async listDelistedAssetsWithActiveCms(): Promise<AirtableRecord[]> {
+    const f = DELIST_ASSET_FIELD_IDS;
+    return this.listRecords({
+      tableId: TABLE_IDS.assets,
+      filterByFormula: `AND({${f.marketplaceStatus}}='${MARKETPLACE_STATUS_DELISTED}', FIND('Active', ARRAYJOIN({${f.cmsStatusActual}})))`,
+      fieldIds: [f.type, f.name, f.detailPagePath, f.cmsItemIds, f.cmsStatusActual],
+      returnFieldsByFieldId: true,
+    });
+  }
+
+  /** Non-delisted assets that link any of the given CMS items (an update twin can share its page with a newer listing). */
+  async listNonDelistedAssetsLinkingCmsItems(cmsItemIds: string[]): Promise<AirtableRecord[]> {
+    const ids = cmsItemIds.filter((id) => /^[0-9a-f]{24}$/.test(id));
+    if (ids.length === 0) return [];
+    const f = DELIST_ASSET_FIELD_IDS;
+    const matches = ids.map((id) => `FIND('${id}', ARRAYJOIN({${f.cmsItemIds}}))`).join(', ');
+    return this.listRecords({
+      tableId: TABLE_IDS.assets,
+      filterByFormula: `AND({${f.marketplaceStatus}}!='${MARKETPLACE_STATUS_DELISTED}', OR(${matches}))`,
+      fieldIds: [f.name, f.marketplaceStatus, f.cmsItemIds],
+      returnFieldsByFieldId: true,
+    });
   }
 
   async completePublishing(

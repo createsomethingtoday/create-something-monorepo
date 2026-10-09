@@ -4,6 +4,8 @@ import { createHash } from 'node:crypto';
 
 import { prepareAdminTemplateFill, prepareAdminTemplateFillBatch } from './admin-template-fill.js';
 import { MRP_VISIBILITY_VALUES, setMrpVisibility, type MarketplaceAdminConfig } from './admin-mrp.js';
+import { executeDelist, executeRelist, findDelistDrift, previewDelist, type MarketplaceCmsConfig } from './marketplace-delist.js';
+import { DELIST_REASON_VALUES } from './schema.js';
 import {
   buildAdminExecuteBundle,
   buildAdminTemplateCreateExecuteScript,
@@ -283,6 +285,8 @@ export interface ToolRuntimeConfig extends ValidationToolConfig {
    * the tools then fail closed with ZENDESK_NOT_CONFIGURED.
    */
   getZendeskClient?: () => ZendeskClient | null;
+  /** Marketplace Templates CMS access for delist/relist; fails closed without a site token. */
+  marketplaceCms?: MarketplaceCmsConfig;
 }
 
 /**
@@ -323,6 +327,10 @@ export const WRITE_TOOL_NAMES: ReadonlySet<string> = new Set([
   'template_review_prepare_admin_template_thumbnail_execute',
   // Server-side Webflow write: flips MarketplaceResourceProfile visibility.
   'template_review_set_mrp_visibility',
+  // Marketplace listing takedown/restore: writes Airtable and the live
+  // Templates CMS (including other templates' related-assets).
+  'template_review_delist_template',
+  'template_review_relist_template',
 ]);
 
 export function registerTools(
@@ -1266,6 +1274,77 @@ export function registerTools(
           ...result,
           note: 'Partial update: only visibility was sent. Verify the listing state in Admin or on the marketplace before announcing the change.',
         });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  const CMS_ITEM_IDS = z.array(z.string().regex(/^[0-9a-f]{24}$/)).describe('cms_item_ids exactly as returned by the preview.');
+  const delistActor = (reviewer: ReviewerProfile) => reviewer.email ?? reviewer.name ?? reviewer.accountId;
+
+  server.tool(
+    'template_review_delist_template',
+    'Take a published template off the Marketplace: sets 🚀Marketplace Status → Delisted and 🥞CMS Status → Archived in Airtable, then unpublishes the live Webflow Templates CMS item (the Airtable flip alone does NOT take the page down) and archives its staged copy. If other templates list it in related-assets, they are saved to an Airtable comment on the asset and stripped so the unpublish can succeed. Mode "permanent" (creator request, Stripe, policy) also sets the delist reason and renames the asset "{Name} Archived YYYYMMDD"; "temporary" (relist expected after a fix) leaves both alone. Does NOT archive the Webflow Admin template (that strands buyers; do it separately only for permanent removals). Call without confirm to preview; then call again with confirm: { confirmed: true, expected_cms_item_ids } from the preview, only after the reviewer approves.',
+    {
+      asset_id: z.string().regex(/^rec[A-Za-z0-9]{14}$/),
+      mode: z.enum(['permanent', 'temporary']),
+      reason: z.enum(DELIST_REASON_VALUES).optional().describe('Required for permanent.'),
+      confirm: z.object({ confirmed: z.literal(true), expected_cms_item_ids: CMS_ITEM_IDS }).optional(),
+    },
+    async ({ asset_id, mode, reason, confirm }) => {
+      try {
+        const reviewer = requireResolvedReviewer(getReviewer);
+        if (mode === 'permanent' && !reason) {
+          throw new AirtableClientError('DELIST_REASON_REQUIRED', 'A permanent delist needs a reason: Creator request, Stripe status, or Policy infringement.', 400);
+        }
+        const cmsConfig = runtimeConfig.marketplaceCms ?? {};
+        if (!confirm) {
+          return asSuccess({ preview: true, ...(await previewDelist(getClient(), cmsConfig, { assetId: asset_id, mode, reason })) });
+        }
+        const result = await executeDelist(getClient(), cmsConfig, {
+          assetId: asset_id,
+          mode,
+          reason,
+          expectedCmsItemIds: confirm.expected_cms_item_ids,
+          actor: delistActor(reviewer),
+        });
+        return asSuccess({ reviewer: reviewerPayload(reviewer), ...result });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'template_review_relist_template',
+    'Undo template_review_delist_template: sets 🚀Marketplace Status → Published and 🥞CMS Status → Active, clears the delist reason, strips any " Archived …" name suffix, un-archives and republishes the Webflow Templates CMS item(s), and adds the item back to every template whose related-assets were stripped (read from the snapshot comment on the asset). Only for assets currently Delisted. Run template_review_delist_template in preview mode first to get the cms_item_ids, confirm with the reviewer, then pass them here.',
+    {
+      asset_id: z.string().regex(/^rec[A-Za-z0-9]{14}$/),
+      confirm: z.object({ confirmed: z.literal(true), expected_cms_item_ids: CMS_ITEM_IDS }),
+    },
+    async ({ asset_id, confirm }) => {
+      try {
+        const reviewer = requireResolvedReviewer(getReviewer);
+        const result = await executeRelist(getClient(), runtimeConfig.marketplaceCms ?? {}, {
+          assetId: asset_id,
+          expectedCmsItemIds: confirm.expected_cms_item_ids,
+          actor: delistActor(reviewer),
+        });
+        return asSuccess({ reviewer: reviewerPayload(reviewer), ...result });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'template_review_delist_drift',
+    'Read-only: list templates marked Delisted in Airtable whose Marketplace page still serves 200 (the Airtable flip was made but the CMS item was never unpublished). Excludes update twins whose page belongs to a newer listing. Fix each with template_review_delist_template.',
+    {},
+    async () => {
+      try {
+        return asSuccess(await findDelistDrift(getClient(), runtimeConfig.marketplaceCms ?? {}));
       } catch (error) {
         return asError(error);
       }
