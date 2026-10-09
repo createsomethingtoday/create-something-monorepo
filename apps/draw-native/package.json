@@ -15,7 +15,9 @@
     "receipt:production": "node scripts/production-release-receipt.mjs",
     "ios:init": "tauri ios init",
     "ios:dev": "tauri ios dev",
-    "ios:build": "tauri ios build"
+    "ios:build": "tauri ios build",
+    "receipt:macos": "node scripts/mac-release-receipt.mjs",
+    "test:release": "node --test scripts/mac-release.test.mjs"
   },
   "devDependencies": {
     "@tauri-apps/cli": "2.11.2"

@@ -50,44 +50,51 @@ is written under `apps/draw-native/output/installed-acceptance/`.
 
 ## Production release gates
 
-An unsigned DMG or simulator archive is development evidence only. Production
-requires all of the following against the exact candidate bytes:
+Mac and paired-iOS release scopes are separate. An unsigned or merely compiled
+artifact is development evidence. Never reuse a version/tag for different bytes.
 
-- Developer ID Application signing and strict `codesign` verification;
-- Apple notarization, ticket stapling, and Gatekeeper assessment;
-- a signed iPhone build installed on the physical device;
-- two consecutive physical Mac/iPhone acceptance runs covering touch ink, a
-  spaced note, movement, conversion, Wi-Fi disconnect/queue/reconnect,
-  Mac relaunch, JSON/SVG/PNG export, revocation, and re-pair rejection;
-- a redacted receipt with build identities, revisions, final document/export
-  hashes, and artifact SHA-256.
+### Mac-only
+
+The `Draw macOS signed candidate` workflow (`draw-macos-release.yml`) is manually
+dispatched from `main`, requires the existing `draw-apple-production` environment
+and `DRAW_SIGNING_ENABLED=true`, and does not require iOS signing credentials or
+upload to TestFlight. Its signed job verifies an explicitly selected DMG before
+launching an isolated copy. It does not publish a GitHub release.
+
+Mac release retains all of these gates against one exact artifact:
+
+- Developer ID Application signing for team `PRP5VQQPPB`, strict signature checks;
+- Apple notarization, app and DMG stapling, app-execution and DMG Gatekeeper checks;
+- exact installed app/executable/DMG hashes, source commit, version and isolated relaunch;
+- two clean physical Mac UI runs including edit/undo/redo, JSON/SVG/PNG export,
+  import recovery, persistent relaunch, Compose save/restore and motion export,
+  plus approved/rejected local-agent proposals and shared undo/redo;
+- explicitly owner-approved, synthetic, live read-only provider acceptance with
+  observed readback, revocation and authenticated post-revocation denial;
+- preserved prior artifact and untouched profile backup with an isolated rollback
+  rehearsal. Older binaries must never be tested against the newly written live profile.
+
+The machine receipt alone is insufficient. `receipt:macos` checks the installed
+receipt plus a separately reviewed owner acceptance receipt, raw provider receipt,
+prior artifact and profile backup. Missing, failed, stale-source or mismatched
+artifact evidence fails closed. Its fixture tests are synthetic and are not real
+acceptance receipts. See [the exact Mac handoff](docs/macos-release.md).
+
+### Paired iOS
+
+The existing `draw-native-release.yml`, now named `Draw paired iOS release
+candidate`, retains signed iPhone packaging, TestFlight, and two consecutive
+physical Mac/iPhone acceptance runs covering touch ink, spaced notes, movement,
+conversion, Wi-Fi disconnect/queue/reconnect, Mac relaunch, export, revocation and
+re-pair rejection. Those gates remain mandatory for the paired iOS release; a
+Mac-only receipt never claims they passed. Its draft release stays draft until
+both clean physical receipts are attached. The existing paired receipt and
+`draw-vVERSION` channel remain separate from `draw-macos-vVERSION`.
 
 Signing and notarization use an already-authorized Apple owner surface. Never
-commit certificates, provisioning profiles, app-specific passwords, or API
-keys. Retain the previous signed DMG and hash as the rollback artifact.
-
-The `Draw native release candidate` workflow owns the production candidate.
-Its first job produces unsigned development evidence. Its
-`draw-apple-production` job is restricted to protected branches, requires an
-operator review, and remains disabled unless the repository variable
-`DRAW_SIGNING_ENABLED` is exactly `true`.
-
-The protected environment requires these secrets:
-
-- `APPLE_CERTIFICATE` and `APPLE_CERTIFICATE_PASSWORD`: base64 Developer ID
-  Application `.p12` and its export password;
-- `IOS_CERTIFICATE` and `IOS_CERTIFICATE_PASSWORD`: base64 Apple Distribution
-  `.p12` and its export password;
-- `IOS_MOBILE_PROVISION`: base64 App Store Connect provisioning profile for
-  `agency.createsomething.draw`;
-- `APPLE_API_ISSUER`, `APPLE_API_KEY`, and `APPLE_API_PRIVATE_KEY`: App Store
-  Connect issuer, key ID, and base64 `.p8` private key.
-
-On an approved run, the workflow builds and verifies the Developer ID DMG,
-builds the App Store Connect IPA, uploads it to TestFlight, creates a draft
-GitHub release, and downloads the release assets again to prove their hashes
-match `production-release.json`. The release stays draft until two clean
-physical Mac/iPhone acceptance receipts are attached.
+commit certificates, private keys, certificate passwords or API credentials.
+`DRAW_SIGNING_ENABLED` and protected environment access are not configured by
+these changes. New credential configuration requires the owner's secure handoff.
 
 ## Offline-first local development pilot
 
