@@ -3,7 +3,7 @@ import {
   getTokenFromRequest,
   type IdentityVerificationConfig,
 } from "@create-something/canon/auth/server";
-import { type D1, type Member, requireValue } from "./common";
+import { type D1, type Member, requireValue, hash } from "./common";
 export function membershipBoundary(
   db: D1,
   verification: IdentityVerificationConfig,
@@ -23,6 +23,21 @@ export function membershipBoundary(
   }
   return {
     accepts,
+    async resolveTaskGrant(request: Request, project: string, audience: string) {
+      const token = request.headers.get('authorization')?.match(/^Bearer (cg_[a-f0-9]{64})$/)?.[1];
+      requireValue(token, 'task_grant_required', 401);
+      const row = await db.withSession('first-primary').prepare('SELECT state FROM collaboration_projects WHERE id=?').bind(project).first<{state: string}>();
+      requireValue(row, 'task_grant_required', 401);
+      const digest = await hash(token);
+      const task = JSON.parse(row.state).jobs.find((j: any) => j.kind === 'agent-proposal' && j.grant?.hash === digest);
+      requireValue(task?.grant.audience === audience && task.expiresAt > now() * 1000 &&
+        task.grant.expiresAt > now() * 1000, 'task_grant_required', 401);
+      const p = Object.freeze({ project, issuer: task.issuer, subject: task.owner,
+        email: task.grant.email, revision: task.grant.revision, expiresAt: Math.floor(task.grant.expiresAt / 1000) });
+      issued.add(p);
+      requireValue(await accepts(p), 'project_membership_required', 403);
+      return { member: p, taskId: task.id };
+    },
     async resolve(request: Request, project: string): Promise<Member> {
       const token = getTokenFromRequest(request);
       requireValue(

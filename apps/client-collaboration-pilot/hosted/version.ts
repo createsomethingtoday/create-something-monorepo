@@ -15,6 +15,9 @@ export type Observation = {
   deploymentCommit: string;
   rawKV: string;
   contentKey?: string;
+  // Approved Worker snapshot; sourceRaw/commit remain the immutable Git base.
+  previewPublication?: string;
+  sourceRepositoryPath?: string;
   observedAt: number;
   target: PreviewTarget;
 };
@@ -63,8 +66,12 @@ export async function mapVersion(
   text(source.hero?.title, 160);
   text(runtime.hero?.title, 160);
   requireValue(
-    JSON.stringify(source) === JSON.stringify(runtime) &&
-      source.hero.title === runtime.hero.title &&
+    (o.previewPublication
+      ? expected.target.contentBinding === "DB:collaboration_projects" &&
+        /^[a-f0-9-]{36}$/.test(o.previewPublication) &&
+        o.deploymentId === "worker-preview:" + o.previewPublication &&
+        JSON.stringify({ ...source, hero: { ...source.hero, title: runtime.hero.title } }) === JSON.stringify(runtime)
+      : JSON.stringify(source) === JSON.stringify(runtime)) &&
       o.sourceCommit === o.deploymentCommit,
     "source_runtime_diverged",
   );
@@ -82,6 +89,7 @@ export async function mapVersion(
     project: o.project,
     repository: o.repository,
     path: o.path,
+    ...(o.sourceRepositoryPath ? { sourceRepositoryPath: o.sourceRepositoryPath } : {}),
     page: "/",
     component: "hero.headline",
     field: "hero.title",
@@ -92,7 +100,8 @@ export async function mapVersion(
     kvKey: contentKey,
     kvContentHash: await hash(o.rawKV),
     target: structuredClone(o.target),
-    text: source.hero.title,
+    text: runtime.hero.title,
+    ...(o.previewPublication ? { previewPublication: o.previewPublication, sourceUnchanged: true } : {}),
   };
   return { ...version, hash: await hash(version) };
 }

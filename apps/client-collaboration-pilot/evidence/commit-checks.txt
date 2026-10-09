@@ -6,3 +6,9 @@ Repository .husky/pre-commit run explicitly: passed required lockfile validator.
 Ground native duplicate/CSS checks: UNEVALUATED (binary unavailable; advisory).
 core.hooksPath unset; no installed secret scanner found. No secret-scanning or commit gate bypass was used.
 Independent source/security review: no remaining local-source blocker; live provider adapters and exclusive pointer consumption remain integration gates.
+
+Worker-only follow-up: 56/56 full pilot tests and 13/13 existing Workspace route/sign-in tests passed; no skipped cases.
+Both edge TypeScript projects and existing Worker bundle passed.
+Independent follow-up review closed all findings; immutable snapshots, grant boundary and early-expiry recovery verified.
+New screenshots worker-review.png and worker-published-preview.png inspected: synthetic content and hashes only, no credentials or personal information.
+No Pages binding change, provisioning, credential issuance, deployment or provider call performed.

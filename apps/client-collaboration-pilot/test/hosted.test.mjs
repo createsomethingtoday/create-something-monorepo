@@ -10,12 +10,13 @@ import { fileURLToPath } from "node:url";
 const root = new URL("../../../", import.meta.url);
 const bundle = await build({
   stdin: {
-    contents: `export * from './hosted/identity';export * from './hosted/persistence';export * from './hosted/service';export * from './hosted/http';export * from './hosted/common';export * from './hosted/version';export * from './hosted/observation-reader';export * from './hosted/publisher';`,
+    contents: `export * from './hosted/identity';export * from './hosted/persistence';export * from './hosted/service';export * from './hosted/http';export * from './hosted/common';export * from './hosted/version';export * from './hosted/observation-reader';export * from './hosted/publisher';export * from './hosted/worker-preview';export * from './hosted/worker-routes';`,
     resolveDir: fileURLToPath(new URL("../", import.meta.url)),
     loader: "ts",
   },
   bundle: true,
   platform: "neutral",
+  mainFields: ["module", "main"],
   format: "esm",
   write: false,
   alias: {
@@ -646,7 +647,7 @@ test(
     const expiredTask = await f.task();
     await f.db
       .prepare(
-        "UPDATE collaboration_projects SET state=json_set(state,'$.jobs[1].expiresAt',0),revision=revision+1 WHERE id=?",
+        "UPDATE collaboration_projects SET state=json_set(state,'$.jobs[1].grant.expiresAt',0),revision=revision+1 WHERE id=?",
       )
       .bind("maverickx")
       .run();
@@ -666,7 +667,7 @@ test(
       "/collaboration/": ["../hosted/public/index.html", "text/html"],
       "/collaboration/app.js": ["../hosted/public/app.js", "text/javascript"],
       "/collaboration/style.css": ["../hosted/public/style.css", "text/css"],
-      "/canon.css": [
+      "/collaboration/canon.css": [
         "../../../packages/canon/src/lib/styles/tokens.css",
         "text/css",
       ],
@@ -970,4 +971,184 @@ test("publisher stable replay survives job reconciliation; sequential old-base j
     /publication_access_revoked/,
   );
   assert.equal(f.created(), 1);
+});
+
+async function workerFixture(t) {
+  const f = await fixture(t), origin = 'https://workspace.fixture.invalid';
+  const target = mod.workerPreviewTarget(origin);
+  const source = { commit: f.observation().sourceCommit, raw: f.observation().sourceRaw, repositoryPath: 'synthetic/content.json' };
+  const preview = mod.workerPreview({ store: f.store, project: 'maverickx', repository: f.options.repository, target, source });
+  const service = mod.collaborationService({ ...f.options, target, readObservation: () => preview.readObservation(f.member) });
+  const routes = mod.workerCollaborationRoutes({ db: f.db, origin, source, assets: {'/collaboration/': { body: '<h1>Review</h1>', contentType: 'text/html' }}, identity: f.identity });
+  async function job(replacement = 'Reviewed chemistry') {
+    const c = await service.query(f.member);
+    const feedback = await service.feedback(f.member, { requestId: randomUUID(), versionHash: c.version.hash, text: 'Improve headline' });
+    const task = await service.requestAgent(f.member, { requestId: randomUUID(), versionHash: c.version.hash, feedbackId: feedback.id });
+    const q = await service.agentTools(f.member, task.id).propose({ requestId: randomUUID(), versionHash: c.version.hash, replacement, reason: 'Bounded copy change' });
+    await service.review(f.member, { requestId: randomUUID(), id: q.id, digest: q.digest, decision: 'approved' });
+    const j = await service.requestPreview(f.member, { requestId: randomUUID(), id: q.id, digest: q.digest, targetHash: await mod.hash(target) });
+    return { q, j, args: { requestId: randomUUID(), jobId: j.id, digest: j.digest, targetHash: j.targetHash } };
+  }
+  return { ...f, origin, target, source, preview, service, routes, job };
+}
+test('Worker preview publishes safely, preserves source and supports successive edits', async t => {
+  const f = await workerFixture(t), first = await f.job('<script>alert("x")</script>');
+  const p = await f.preview.publish(f.member, first.args);
+  assert.equal(p.sourceCommit, f.source.commit); assert.equal(p.sourceUnchanged, true);
+  assert.deepEqual(await f.preview.publish(f.member, first.args), p);
+  const page = await f.preview.render(f.member), html = await page.text();
+  assert.match(html, /&lt;script&gt;/); assert.doesNotMatch(html, /<script>/);
+  assert.match(page.headers.get('content-security-policy'), /sandbox/);
+  const second = await f.job('Next reviewed headline'), p2 = await f.preview.publish(f.member, second.args);
+  assert.equal(p2.previousPublication, p.id);
+  assert.match(await (await f.preview.render(f.member, p.id)).text(), /&lt;script&gt;/);
+  assert.match(await (await f.preview.render(f.member, p2.id)).text(), /Next reviewed headline/);
+  await f.preview.publish(f.member, { ...first.args, requestId: randomUUID() });
+  assert.equal((await f.service.query(f.member)).version.text, 'Next reviewed headline');
+  assert.equal(JSON.parse(p2.raw).other, 'preserve');
+  const exported = await f.preview.sourceProposal(f.member, p.id);
+  assert.equal(exported.proposedValue, p.raw); assert.equal(exported.expectedValue, f.source.raw);
+  assert.equal(exported.execution, 'not-applied');
+});
+test('Worker publication rejects concurrent stale jobs and recovers lost response by request ID', async t => {
+  const f = await workerFixture(t), a = await f.job('First'), b = await f.job('Second');
+  const results = await Promise.allSettled([f.preview.publish(f.member, a.args), f.preview.publish(f.member, b.args)]);
+  assert.equal(results.filter(r => r.status === 'fulfilled').length, 1);
+  const winner = results[0].status === 'fulfilled' ? a : b, loser = winner === a ? b : a;
+  assert.equal((await f.preview.publish(f.member, winner.args)).id, (await f.store.load(f.member)).state.publication.id);
+  await assert.rejects(f.preview.publish(f.member, loser.args), /stale_version/);
+});
+test('Worker routes enforce membership, request boundary and preserve unrelated workspace routing', async t => {
+  const f = await workerFixture(t);
+  const req = (path, init = {}) => new Request(f.origin + path, { ...init, headers: { authorization: 'Bearer ' + f.token(), ...init.headers } });
+  assert.equal(await f.routes.fetch(req('/api/runtime/codex')), null);
+  assert.equal((await f.routes.fetch(new Request(f.origin + '/collaboration/'))).status, 401);
+  assert.equal((await f.routes.fetch(req('/collaboration/'))).status, 200);
+  assert.equal((await f.routes.fetch(req('/collaboration/preview/'))).status, 404);
+  const j = await f.job(), post = { method: 'POST', headers: { origin: f.origin, 'content-type': 'application/json' }, body: JSON.stringify(j.args) };
+  assert.equal((await f.routes.fetch(req('/api/collaboration/publish-preview', post))).status, 200);
+  assert.equal((await f.routes.fetch(req('/collaboration/preview/'))).status, 200);
+  assert.equal((await f.routes.fetch(req('/api/collaboration/publish-preview', { ...post, headers: { ...post.headers, origin: 'https://evil.invalid' } }))).status, 403);
+  assert.equal((await f.routes.fetch(req('/collaboration/preview/?project=other'))).status, 403);
+  await f.db.prepare('UPDATE collaboration_members SET active=0 WHERE email=?').bind(roster[0]).run();
+  assert.equal((await f.routes.fetch(req('/collaboration/preview/'))).status, 403);
+});
+test('Worker publication denies revoked reviewers, changed source and corrupted content', async t => {
+  const f = await workerFixture(t), j = await f.job();
+  const other = await f.identity.resolve(f.request(f.token(roster[1], 'subject-other')), 'maverickx');
+  await f.db.prepare('UPDATE collaboration_members SET active=0 WHERE email=?').bind(roster[0]).run();
+  await assert.rejects(f.preview.publish(other, j.args));
+  assert.equal((await f.store.load(other)).state.publication, undefined);
+  await f.db.prepare('UPDATE collaboration_members SET active=1 WHERE email=?').bind(roster[0]).run();
+  await f.preview.publish(f.member, j.args);
+  const changed = mod.workerPreview({ store: f.store, project: 'maverickx', repository: f.options.repository, target: f.target, source: { ...f.source, commit: 'b'.repeat(40) } });
+  await assert.rejects(changed.render(f.member), /source_bundle_changed/);
+  await f.db.prepare("UPDATE collaboration_projects SET state=json_set(state,'$.publication.raw','{}') WHERE id='maverickx'").run();
+  await assert.rejects(f.preview.render(f.member), /preview_content_unavailable/);
+});
+
+test('Worker HTML navigation refreshes before sign-in redirect', async t => {
+  const f = await workerFixture(t);
+  const request = new Request(f.origin + '/collaboration/', { headers: { accept: 'text/html' } });
+  let refreshed = 0;
+  const response = await mod.serveCollaboration(request, f.routes, async r => {
+    refreshed++;
+    return { request: new Request(r, { headers: { accept: 'text/html', authorization: 'Bearer ' + f.token() } }), setCookies: ['synthetic=refreshed; HttpOnly; Secure'] };
+  });
+  assert.equal(refreshed, 1); assert.equal(response.status, 200);
+  assert.match(response.headers.get('set-cookie'), /synthetic=refreshed/);
+  const denied = await mod.serveCollaboration(request, f.routes, async () => null);
+  assert.equal(denied.status, 303); assert.equal(denied.headers.get('location'), '/sign-in?next=collaboration');
+});
+
+test('Worker task grant uses real MCP HTTP transport without human approval authority', async t => {
+  const f = await workerFixture(t), context = await f.service.query(f.member);
+  const feedback = await f.service.feedback(f.member, { requestId: randomUUID(), versionHash: context.version.hash, text: 'Agent edit' });
+  const task = await f.service.requestAgent(f.member, { requestId: randomUUID(), versionHash: context.version.hash, feedbackId: feedback.id });
+  const token = 'cg_' + Array.from(crypto.getRandomValues(new Uint8Array(32)), b => b.toString(16).padStart(2, '0')).join('');
+  await f.service.connectAgent(f.member, { requestId: randomUUID(), taskId: task.id, tokenHash: await mod.hash(token) });
+  const { Client } = await import('@modelcontextprotocol/sdk/client/index.js');
+  const { StreamableHTTPClientTransport } = await import('@modelcontextprotocol/sdk/client/streamableHttp.js');
+  const client = new Client({ name: 'synthetic-agent', version: '1' });
+  const transport = new StreamableHTTPClientTransport(new URL(f.origin + '/api/collaboration/mcp'), {
+    requestInit: { headers: { authorization: 'Bearer ' + token } },
+    fetch: async (url, init) => f.routes.fetch(new Request(url, init)),
+  });
+  t.after(() => client.close());
+  await client.connect(transport);
+  assert.deepEqual((await client.listTools()).tools.map(t => t.name), ['proposal.create']);
+  const resource = await client.readResource({ uri: 'collaboration://workspace/context' });
+  assert.equal(JSON.parse(resource.contents[0].text).version.hash, context.version.hash);
+  const proposal = await client.callTool({ name: 'proposal.create', arguments: { requestId: randomUUID(), versionHash: context.version.hash, replacement: 'Real transport, synthetic model', reason: 'Focused change' } });
+  assert.equal(proposal.isError, undefined);
+  assert.equal(JSON.parse(proposal.content[0].text).status, 'proposed');
+  const forbidden = await client.callTool({ name: 'review', arguments: { decision: 'approved' } });
+  assert.equal(forbidden.isError, true);
+  const raw = (await f.db.prepare("SELECT state FROM collaboration_projects WHERE id='maverickx'").first()).state;
+  assert.equal(raw.includes(token), false);
+  assert.equal(JSON.parse(raw).proposals[0].status, 'proposed');
+  const ordinary = await f.routes.fetch(new Request(f.origin + '/api/collaboration', { headers: { authorization: 'Bearer ' + token } }));
+  assert.equal(ordinary.status, 401);
+  await f.db.prepare('UPDATE collaboration_members SET active=0 WHERE email=?').bind(roster[0]).run();
+  const revoked = await f.routes.fetch(new Request(f.origin + '/api/collaboration/mcp', { method: 'POST', headers: { authorization: 'Bearer ' + token, 'content-type': 'application/json' }, body: '{}' }));
+  assert.equal(revoked.status, 403);
+});
+
+test('MCP JSON transport executes in workerd without eval, provider calls or persistent sessions', async t => {
+  const built = await build({ stdin: { contents: `import {proposalHttp} from './hosted/agent-http.mjs'; export default {fetch(request){return proposalHttp(request,{readContext:async()=>({synthetic:true}),propose:async()=>({status:'proposed'})});}}`, resolveDir: fileURLToPath(new URL('../', import.meta.url)), loader: 'js' }, bundle: true, platform: 'browser', format: 'esm', write: false });
+  const mf = new Miniflare({ modules: true, script: built.outputFiles[0].text, compatibilityDate: '2026-07-15' });
+  t.after(() => mf.dispose());
+  const response = await mf.dispatchFetch('https://worker.fixture.invalid/mcp', { method: 'POST', headers: { 'content-type': 'application/json', accept: 'application/json, text/event-stream' }, body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/list', params: {} }) });
+  assert.equal(response.status, 200);
+  assert.deepEqual((await response.json()).result.tools.map(t => t.name), ['proposal.create']);
+  assert.equal(response.headers.get('mcp-session-id'), null);
+});
+
+test('Task grant rejects human credentials, wrong resource and early expiry while task remains live', async t => {
+  const f = await workerFixture(t), c = await f.service.query(f.member);
+  const feedback = await f.service.feedback(f.member, { requestId: randomUUID(), versionHash: c.version.hash, text: 'Scoped grant' });
+  const task = await f.service.requestAgent(f.member, { requestId: randomUUID(), versionHash: c.version.hash, feedbackId: feedback.id });
+  const expires = Math.floor(Date.now() / 1000) + 3;
+  const nearExpiry = await f.identity.resolve(f.request(f.token(roster[0], 'subject-vanessa', { exp: expires })), 'maverickx');
+  const token = 'cg_' + Array.from(crypto.getRandomValues(new Uint8Array(32)), b => b.toString(16).padStart(2, '0')).join('');
+  const grant = await f.service.connectAgent(nearExpiry, { requestId: randomUUID(), taskId: task.id, tokenHash: await mod.hash(token) });
+  assert.equal(grant.expiresAt, expires * 1000); assert.ok(task.expiresAt > grant.expiresAt);
+  const request = new Request(f.origin + '/api/collaboration/mcp', { headers: { authorization: 'Bearer ' + token } });
+  await assert.rejects(f.identity.resolveTaskGrant(request, 'maverickx', 'https://other.invalid/mcp'), /task_grant_required/);
+  assert.equal((await f.routes.fetch(new Request(request, { headers: { authorization: 'Bearer ' + f.token() } }))).status, 401);
+  f.advance(4);
+  await assert.rejects(f.identity.resolveTaskGrant(request, 'maverickx', f.origin + '/api/collaboration/mcp'), /task_grant_required/);
+});
+
+test('Worker browser publishes and opens an exact reviewed snapshot', { skip: process.platform !== 'darwin' && !process.env.PILOT_BROWSER_EXECUTABLE }, async t => {
+  const { createRequire } = await import('node:module');
+  const require = createRequire(process.env.PILOT_DEPENDENCIES || new URL('../../../package.json', import.meta.url));
+  const puppeteer = require('puppeteer-core'), f = await workerFixture(t);
+  const job = await f.job('Chemistry with measurable outcomes.');
+  const browser = await puppeteer.launch({ executablePath: process.env.PILOT_BROWSER_EXECUTABLE || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless: true, args: ['--no-sandbox'] });
+  t.after(() => browser.close());
+  const page = await browser.newPage(), errors = [];
+  page.on('pageerror', e => errors.push(e.message));
+  await page.setRequestInterception(true);
+  page.on('request', async req => {
+    try {
+      const path = new URL(req.url()).pathname;
+      const assets = { '/collaboration/': ['hosted/public/index.html','text/html'], '/collaboration/app.js':['hosted/public/app.js','text/javascript'], '/collaboration/style.css':['hosted/public/style.css','text/css'], '/collaboration/canon.css':['../../packages/canon/src/lib/styles/tokens.css','text/css'] };
+      if (assets[path]) return req.respond({ status: 200, contentType: assets[path][1], body: readFileSync(new URL('../' + assets[path][0], import.meta.url), 'utf8') });
+      const response = await f.routes.fetch(new Request(f.origin + path, { method: req.method(), headers: { authorization: 'Bearer ' + f.token(), origin: f.origin, 'content-type': 'application/json' }, ...(req.method() === 'POST' ? { body: req.postData() } : {}) }));
+      return req.respond({ status: response?.status ?? 404, headers: response ? Object.fromEntries(response.headers) : {}, body: response ? await response.text() : '' });
+    } catch (e) { errors.push(e.message); await req.respond({ status: 500, body: '{}' }); }
+  });
+  await page.setViewport({ width: 1200, height: 900 });
+  await page.goto('http://127.0.0.1:4329/collaboration/');
+  await page.waitForFunction(() => [...document.querySelectorAll('button')].some(b => b.textContent === 'Publish reviewed preview'));
+  await page.evaluate(() => [...document.querySelectorAll('button')].find(b => b.textContent === 'Publish reviewed preview').click());
+  await page.waitForFunction(() => document.querySelector('#jobs').textContent.includes('Preview verified'));
+  await page.screenshot({ path: new URL('../evidence/worker-review.png', import.meta.url).pathname, fullPage: true });
+  const href = await page.$eval('#jobs a', a => a.getAttribute('href'));
+  assert.equal(href, '/collaboration/preview/' + job.j.id + '/');
+  await page.goto('http://127.0.0.1:4329' + href);
+  assert.equal(await page.$eval('h1', e => e.textContent), 'Chemistry with measurable outcomes.');
+  await page.screenshot({ path: new URL('../evidence/worker-published-preview.png', import.meta.url).pathname, fullPage: true });
+  assert.deepEqual(errors, []);
 });

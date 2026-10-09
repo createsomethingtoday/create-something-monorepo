@@ -1,0 +1,19 @@
+▲ [WARNING] Cannot find base config file "./.svelte-kit/tsconfig.json" [tsconfig.json]
+
+    ../../packages/canon/tsconfig.json:2:12:
+      2 │   "extends": "./.svelte-kit/tsconfig.json",
+        ╵              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+✔ Worker preview publishes safely, preserves source and supports successive edits (1227.944541ms)
+✔ Worker publication rejects concurrent stale jobs and recovers lost response by request ID (1095.588959ms)
+✔ Worker routes enforce membership, request boundary and preserve unrelated workspace routing (811.436708ms)
+✔ Worker publication denies revoked reviewers, changed source and corrupted content (765.91675ms)
+✔ Worker HTML navigation refreshes before sign-in redirect (177.614875ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4508.157042

@@ -96,6 +96,11 @@ dd {
 a {
   color: inherit;
 }
+article a {
+  display: inline-block;
+  margin-inline-end: var(--space-sm, 1rem);
+  margin-block: var(--space-xs, 0.5rem);
+}
 @media (max-width: 480px) {
   dl {
     display: block;

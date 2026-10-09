@@ -1,6 +1,7 @@
 let context;
 let busy = false;
 const pending = new Map();
+const grants = new Map();
 const byId = (id) => document.getElementById(id);
 const element = (tag, text, cls) => {
   const e = document.createElement(tag);
@@ -75,6 +76,23 @@ async function targetHash() {
     .map((x) => x.toString(16).padStart(2, "0"))
     .join("");
 }
+async function connectAgent(task) {
+  if (busy) return;
+  busy = true;
+  let grant = grants.get(task.id);
+  if (!grant) {
+    const token = 'cg_' + Array.from(crypto.getRandomValues(new Uint8Array(32)), b => b.toString(16).padStart(2, '0')).join('');
+    const tokenHash = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(token))), b => b.toString(16).padStart(2, '0')).join('');
+    grant = { token, args: { requestId: crypto.randomUUID(), taskId: task.id, tokenHash } };
+    grants.set(task.id, grant);
+  }
+  try {
+    await request('/agent-connect', grant.args);
+    status('Agent connection ready. Copy the task token into your agent’s secure MCP configuration.');
+    await refresh();
+  } catch (e) { status(e.message + ' · Retry connection with the same task.'); }
+  finally { busy = false; }
+}
 function render() {
   byId("headline").textContent = context.version.text;
   const dl = byId("version");
@@ -95,7 +113,7 @@ function render() {
       .reverse()
       .find((j) => j.kind === "agent-proposal" && j.feedbackId === f.id);
     const expired =
-      task?.status === "requested" && task.expiresAt <= Date.now();
+      task?.status === "requested" && Math.min(task.expiresAt, task.grant?.expiresAt ?? task.expiresAt) <= Date.now();
     if (f.versionHash !== context.version.hash) {
       a.append(
         element(
@@ -116,6 +134,16 @@ function render() {
             "muted",
           ),
         );
+      if (task?.status === 'requested' && !expired && context.version.target.contentBinding === 'DB:collaboration_projects') {
+        if (!task.grant) a.append(button('Connect Claude or Codex', () => connectAgent(task)));
+        else if (grants.has(task.id)) {
+          a.append(element('p', 'MCP endpoint: ' + task.grant.audience, 'muted'));
+          a.append(button('Copy task token', async () => {
+            try { await navigator.clipboard.writeText(grants.get(task.id).token); status('Task token copied. It cannot approve or publish.'); }
+            catch { status('Clipboard unavailable. Reconnect from a browser with clipboard permission.'); }
+          }));
+        } else a.append(element('p', 'Agent connected. Token is held only in the browser that created it; request a new task after expiry if it was lost.', 'muted'));
+      }
       if (!task || expired)
         a.append(
           button(
@@ -185,6 +213,13 @@ function render() {
       element("p", j.destination.origin),
       element("p", "Request " + j.id, "muted"),
     );
+    if (context.version.target.contentBinding === "DB:collaboration_projects") {
+      if (j.status === "awaiting-executor") a.append(button("Publish reviewed preview", () => action("publish:" + j.id, "/publish-preview", { jobId: j.id, digest: j.digest, targetHash: j.targetHash })));
+      if (j.execution === "worker-snapshot-published") {
+        const link = element("a", "Open reviewed preview"); link.href = "/collaboration/preview/" + j.id + "/"; a.append(link);
+        const source = element("a", "Download source proposal"); source.href = "/collaboration/source/" + j.id + ".json"; a.append(source);
+      }
+    }
     if (j.evidence)
       a.append(
         element("p", "Source " + j.evidence.version.sourceCommit, "muted"),

@@ -108,6 +108,22 @@ export function collaborationService(options: {
         return task;
       });
     },
+    async connectAgent(p: Member, a: Record<string, unknown>) {
+      projectMember(p);
+      exactKeys(a, ["requestId", "taskId", "tokenHash"]);
+      requireValue(typeof a.tokenHash === 'string' && /^[a-f0-9]{64}$/.test(a.tokenHash), 'invalid_grant', 400);
+      // The human client generates 256 random bits; only its hash is persisted.
+      return store.mutate(p, 'agent.connect', a, async s => {
+        const task = s.jobs.find(j => j.kind === 'agent-proposal' && j.id === a.taskId);
+        requireValue(task && task.owner === p.subject && task.issuer === p.issuer &&
+          task.status === 'requested' && task.expiresAt > now(), 'agent_task_unavailable', 403);
+        requireValue(!task.grant && !s.jobs.some(j => j.grant?.hash === a.tokenHash), 'agent_already_connected');
+        task.grant = { hash: a.tokenHash, audience: target.origin + '/api/collaboration/mcp',
+          email: p.email, revision: p.revision, expiresAt: Math.min(task.expiresAt, p.expiresAt * 1000) };
+        return { id: task.id, expiresAt: task.grant.expiresAt, resource: task.grant.audience,
+          scopes: ['context:read', 'proposal:create'] };
+      });
+    },
     // Internal operator adapter only. A live remote grant/transport is deliberately
     // not configured. Models receive these two tools, never human review methods.
     agentTools(owner: Member, taskId: string) {
@@ -158,7 +174,7 @@ export function collaborationService(options: {
                 403,
               );
               const candidate = await candidateManifest(
-                observation.sourceRaw,
+                observation.previewPublication ? observation.rawKV : observation.sourceRaw,
                 a.replacement as string,
               );
               const content = {

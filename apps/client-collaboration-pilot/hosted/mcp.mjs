@@ -1,3 +1,4 @@
+import { CfWorkerJsonSchemaValidator } from '@modelcontextprotocol/sdk/validation/cfworker';
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import {
   ListResourcesRequestSchema,
@@ -10,7 +11,7 @@ import {
 export function hostedProposalMcp(taskTools) {
   const server = new Server(
     { name: "create-something-project-proposals", version: "1.0.0" },
-    { capabilities: { resources: {}, tools: {} } },
+    { capabilities: { resources: {}, tools: {} }, jsonSchemaValidator: new CfWorkerJsonSchemaValidator() },
   );
   const uri = "collaboration://workspace/context";
   server.setRequestHandler(ListResourcesRequestSchema, async () => ({

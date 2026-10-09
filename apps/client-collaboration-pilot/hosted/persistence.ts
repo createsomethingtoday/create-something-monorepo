@@ -7,6 +7,7 @@ import {
   type Member,
 } from "./common";
 export type State = {
+  publication?: any;
   feedback: any[];
   proposals: any[];
   jobs: any[];
@@ -38,6 +39,7 @@ export function persistence(
       args: Record<string, unknown>,
       apply: (state: State) => Promise<any>,
       scope = "human",
+      reviewers?: (state: State) => Pick<Member, "issuer" | "subject" | "email" | "revision">[],
     ) {
       text(args.requestId, 100);
       const fingerprint = await hash({ action, args });
@@ -62,6 +64,9 @@ export function persistence(
         at: now(),
       });
       state.replay[key] = { fingerprint, result };
+      const guards = reviewers?.(state) ?? [];
+      requireValue(guards.length <= 2, "too_many_commit_guards");
+      const [guard = p, requester = p] = guards;
       const serialized = JSON.stringify(state);
       requireValue(
         new TextEncoder().encode(serialized).byteLength <= 512000,
@@ -70,7 +75,7 @@ export function persistence(
       );
       const write = await db
         .prepare(
-          `UPDATE collaboration_projects SET state=?,revision=revision+1 WHERE id=? AND revision=? AND ? > ? AND EXISTS (SELECT 1 FROM collaboration_members WHERE project=? AND issuer=? AND subject=? AND email=? AND revision=? AND active=1)`,
+          `UPDATE collaboration_projects SET state=?,revision=revision+1 WHERE id=? AND revision=? AND ? > ? AND EXISTS (SELECT 1 FROM collaboration_members WHERE project=? AND issuer=? AND subject=? AND email=? AND revision=? AND active=1) AND EXISTS (SELECT 1 FROM collaboration_members WHERE project=? AND issuer=? AND subject=? AND email=? AND revision=? AND active=1) AND EXISTS (SELECT 1 FROM collaboration_members WHERE project=? AND issuer=? AND subject=? AND email=? AND revision=? AND active=1)`,
         )
         .bind(
           serialized,
@@ -83,6 +88,8 @@ export function persistence(
           p.subject,
           p.email,
           p.revision,
+          p.project, guard.issuer, guard.subject, guard.email, guard.revision,
+          p.project, requester.issuer, requester.subject, requester.email, requester.revision,
         )
         .run();
       if (write.meta.changes !== 1) {

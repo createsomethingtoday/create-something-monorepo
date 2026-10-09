@@ -1,4 +1,4 @@
-import { BoundaryError, requireValue } from "./common";
+import { BoundaryError, requireValue, type Member } from "./common";
 import type { membershipBoundary } from "./identity";
 import type { collaborationService } from "./service";
 export function httpBoundary({
@@ -6,18 +6,22 @@ export function httpBoundary({
   project,
   identity,
   service,
+  publishPreview,
 }: {
   origin: string;
   project: string;
   identity: ReturnType<typeof membershipBoundary>;
   service: ReturnType<typeof collaborationService>;
+  publishPreview?: (p: Member, args: Record<string, unknown>) => Promise<unknown>;
 }) {
   const methods = {
     feedback: service.feedback,
     "agent-request": service.requestAgent,
+    "agent-connect": service.connectAgent,
     review: service.review,
     preview: service.requestPreview,
     "production-review": service.approveProduction,
+    ...(publishPreview ? { "publish-preview": publishPreview } : {}),
   };
   return {
     async fetch(request: Request) {

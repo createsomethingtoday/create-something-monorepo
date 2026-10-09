@@ -1,3 +1,5 @@
+> Current hosted recommendation: existing Client Workspace Worker + existing D1 only. See [approval-packet.json](approval-packet.json) and [INTEGRATION-GATES.md](INTEGRATION-GATES.md). The Worker renders immutable approved component snapshots; it does not edit Pages bindings, deploy Pages branches, or require Pages/Git publishing credentials. Older repository/Pages experiments below remain local historical fixtures.
+
 # Client collaboration: agent proposal loop
 
 The target is **request → scoped agent proposal → exact preview/diff/evidence → reviewer approval → repository-controlled application**. Comments support that loop; feedback-only is not completion.
@@ -105,4 +107,4 @@ The latest bounded contracts add durable preview requests and Micah-only product
 
 Evidence: `evidence/hosted-tests.txt`, `evidence/hosted-typecheck.txt`, `evidence/hosted-team-review.png`, and `evidence/hosted-team-mobile.png`. Full live team access, real model acceptance and deployment publication have not been demonstrated.
 
-Latest combined verification: **47/47 tests pass**, including 14 hosted D1/MCP/browser/publisher cases. TypeScript and retired-identity-provider guard pass. Public Identity and scoped account metadata were checked read-only; details are in `evidence/live-readonly-metadata.json`.
+Latest combined verification: **56/56 tests pass**, including 23 hosted D1/MCP/browser/publication cases. Existing Workspace routing/sign-in tests also pass 13/13. TypeScript and retired-identity-provider guard pass. Public Identity and scoped account metadata were checked read-only; details are in `evidence/live-readonly-metadata.json`.

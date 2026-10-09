@@ -1,2 +1,4 @@
-PASS: TypeScript 5.9.3 tsc -p hosted/tsconfig.json
-Final verification includes immutable content-key version binding.
+PASS: hosted/tsconfig.json and packages/client-workspace/cloudflare/tsconfig.json
+PASS: existing Worker entry bundled locally (2.4 MiB unminified; not deployed).
+Prerequisite: built local ignored auth-platform/dist with its tsc project.
+Warnings: isolated worktree lacks generated SvelteKit tsconfig files; edge TypeScript and bundle checks passed.
