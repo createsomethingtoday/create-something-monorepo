@@ -1,0 +1,66 @@
+{
+  "recordedAtUtc": "2026-10-09T02:46:49.908826+00:00",
+  "sourceBase": "ad8dec0a59f7c2a3e425ee06d0c76b0e408e993b",
+  "qualification": "source_and_synthetic_only; native/provider acceptance pending",
+  "importPolish": {
+    "proposalBase": "ad8dec0a59f7c2a3e425ee06d0c76b0e408e993b",
+    "adoptedWithCorrections": [
+      "reject active gestures and buffered notes after async file read",
+      "reject native recovery and agent mutation",
+      "recheck exact document reference immediately before replacement"
+    ],
+    "sourceSha256": {
+      "packages/mapping-canvas/src/routes/+page.svelte": "f3441348a05698ad0c5366da9828fa08457b6d1c8fc4476ab4532a9e94cd48d7",
+      "packages/mapping-canvas/src/routes/page.css": "abccd934ff23f88e7f2fc3b7e45e1b0af436d093ffeb5d4d02811c6e3dbc474e",
+      "packages/mapping-canvas/src/lib/import-admission.ts": "9dc2a79f69a47f521552cf0bc5aee5815643edb8a13dd99074fb9ef8c646b4f4",
+      "packages/mapping-canvas/src/lib/import-admission.test.ts": "66a284b197d8970e60ce0e9226c58c3f326f331de2d3d50593043c220c159682"
+    },
+    "independentReview": "cleared source; helper busy flags do not constitute native/UI coverage"
+  },
+  "checks": {
+    "canvasEditingPairingMetadataDownloadTests": 64,
+    "offlineFileAndNativeQueueTests": 14,
+    "syntheticGatewayTests": 1,
+    "importAdmissionAndNoteBufferTests": 9,
+    "svelteErrors": 0,
+    "svelteWarnings": 0,
+    "nativeFrontendBuild": "passed"
+  },
+  "frontendBuild": {
+    "fileCount": 55,
+    "manifestSha256": "f82c0337da14c7b84adbdce57091db4a7ddbca57d13a2a722a415a53746939f6",
+    "manifestAlgorithm": "SHA256 of compact sorted JSON mapping relative POSIX file paths to SHA256 bytes"
+  },
+  "preservedNativeArtifact": {
+    "path": "/Users/createsomething/Documents/Codex/2026-10-08/task-3/draw-cargo-target/debug/create_something_draw_native",
+    "sha256": "fc46f59c55071a26e3ef25b288720bfac7fbd605922dcf0efc7a19b1fc296fdd",
+    "architecture": "arm64",
+    "signature": "ad-hoc linker signed; no TeamIdentifier; no bound Info.plist",
+    "includesCurrentBrandingAndImportPolish": false,
+    "rebuiltOrReplaced": false,
+    "recordedPid": 21715,
+    "processIdentityReadback": "alive, exact binary path matched"
+  },
+  "syntheticScope": {
+    "documentId": "canvas-manual-synthetic",
+    "revision": 3,
+    "objectCount": 1,
+    "contentSha256": "68242aa7afbbdb3f6c2d99aac9d918ea4352043be40320f2c6b4692572765029",
+    "matchesExistingApproval": true
+  },
+  "provider": {
+    "historicalAttemptCount": 3,
+    "startedInAnyRecordedAttempt": false,
+    "readVerified": false,
+    "authenticatedRevocationVerified": false,
+    "startedThisQualification": false,
+    "newGrantCreated": false,
+    "persistentRegistration": false,
+    "runnerSha256": "435fc6c42df786c9d5097fae9d0c038b61a14526df9d6e9fb6c5f1d50267479d",
+    "gatewaySha256": "8d07bf3a4dd67240e68b7f449ef17b2a7046c1bf4d62303bb394877651a9979f"
+  },
+  "nativeUiAttempted": false,
+  "uiCoordination": "PCN owns native UI; wait for handoff; native pipe reported unavailable",
+  "publicDistribution": false,
+  "releaseReady": false
+}

@@ -219,3 +219,12 @@ svg .agent-camera{transition:transform 420ms cubic-bezier(.22,1,.36,1)}
 @media (max-width: 820px) {
   .cs-workspace .empty-canvas { top: 112px; transform: translateX(-50%); max-height: calc(100% - 192px); overflow-y: auto; }
 }
+
+/* Bounded local proof: reuse Draw dialog and workspace roles. */
+.import-recovery-actions { display:flex; flex-wrap:wrap; gap:var(--workspace-gap,8px); margin-top:var(--space-performance-md); }
+.import-recovery-actions button { min-height:44px; padding:8px 12px; }
+
+/* Recovery copy and primary action reuse the existing workspace type/color pairs. */
+.import-error-dialog #import-error-description { font-size:var(--text-performance-body-sm); line-height:1.6; }
+.cs-workspace .import-recovery-actions .import-retry { background:var(--workspace-fg); color:var(--workspace-bg); font-weight:var(--font-performance-semibold); }
+.cs-workspace .import-recovery-actions .import-retry:is(:hover,:focus-visible):not(:disabled) { background:var(--workspace-fg); color:var(--workspace-bg); border-color:var(--workspace-focus); }

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { readCanvasImport } from '$lib/import-admission';
   import NativeAgentPanel from '$lib/NativeAgentPanel.svelte';
   import './page.css';
   import AgentConnection from '$lib/AgentConnection.svelte';
@@ -83,6 +84,7 @@
   const hostBatches = new NativeHostBatches();
   let sidebarCollapsed = $state(false);
   let shortcutsDialog: HTMLDialogElement;
+  let importErrorDialog: HTMLDialogElement;
   let drawingColor = $state<DrawingColor>(DEFAULT_DRAWING_COLOR);
   let start = $state<Point | null>(null), draftPoints = $state<Point[]>([]), draftShape = $state<Shape | null>(null);
   let movingObjectId = $state<string | null>(null), dragLast = $state<Point | null>(null), dragOrigin = $state<CanvasDocument | null>(null), dragMoved = $state(false);
@@ -151,7 +153,7 @@
       panelOpen = false;
     };
     const dismissInspector = (event: KeyboardEvent) => {
-      if (event.key !== 'Escape' || event.isComposing || event.defaultPrevented || !panelOpen || !narrowViewport.matches || shortcutsDialog?.open) return;
+      if (event.key !== 'Escape' || event.isComposing || event.defaultPrevented || !panelOpen || !narrowViewport.matches || (shortcutsDialog?.open || importErrorDialog?.open)) return;
       if (!window.document.activeElement?.closest('#draw-inspector, #draw-layers-toggle')) return;
       event.preventDefault();
       panelOpen = false;
@@ -1103,12 +1105,12 @@
 
   function clipboardIsEditing(event:ClipboardEvent) {return event.target instanceof Element && Boolean(event.target.closest('input,textarea,select,[contenteditable="true"]'));}
   function copySelection(event:ClipboardEvent) {
-    if(clipboardIsEditing(event) || !selectedIds.length || !event.clipboardData) return;
+    if(shortcutsDialog?.open || importErrorDialog?.open || clipboardIsEditing(event) || !selectedIds.length || !event.clipboardData) return;
     const objects=clipboardObjects(document,selectedIds);
     event.clipboardData.setData('text/plain',JSON.stringify({...document,objects}));event.preventDefault();status='Artwork copied';
   }
   function pasteSelection(event:ClipboardEvent) {
-    if(clipboardIsEditing(event) || !event.clipboardData) return;
+    if(shortcutsDialog?.open || importErrorDialog?.open || clipboardIsEditing(event) || !event.clipboardData) return;
     try {
       const source=parse(event.clipboardData.getData('text/plain'));
       event.preventDefault();
@@ -1118,7 +1120,7 @@
   function releasePan() { if(temporaryPan!==null) {tool=temporaryPan;temporaryPan=null;} }
   function keyup(event:KeyboardEvent) {if(event.code==='Space') releasePan();}
   function keydown(event: KeyboardEvent) {
-    if (event.defaultPrevented || event.isComposing || shortcutsDialog?.open || replacingDocument || isTextEditingEvent(event)) return;
+    if (event.defaultPrevented || event.isComposing || shortcutsDialog?.open || importErrorDialog?.open || replacingDocument || isTextEditingEvent(event)) return;
     if(event.code==='Space' && !event.metaKey && !event.ctrlKey) {event.preventDefault();if(temporaryPan===null){temporaryPan=tool;tool='pan';}return;}
     if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'z') { event.preventDefault(); void (event.shiftKey ? doRedo() : doUndo()); return; }
     if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'd') {event.preventDefault(); if(selectedIds.length) editSelection([{type:'duplicate',ids:selectedIds}]); return;}
@@ -1320,11 +1322,21 @@
     }
     context.restore(); const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png')); if (!blob) throw new Error('PNG export failed'); download(blob, 'image/png', 'png'); status = 'PNG exported';
   }
+  function canImportCanvas() { return ready && nativeRole !== 'companion' && !sharing && !replacingDocument && !agentMutationActive && !hostBatches.isRecovering && !drawing && !transformGesture && !pinch && !pendingTouchAction && !resizingGroupId && !resizeOrigin && !movingObjectId && !dragOrigin && !wheelTimer && !noteInput.hasPending(); }
   async function importJson(event: Event) {
     const file = (event.currentTarget as HTMLInputElement).files?.[0];
-    if (!file || nativeRole === 'companion' || sharing || replacingDocument) return;
-    try { await coordinateDocumentReplacement(async () => { const previous = history.present, managed = currentManagedShare(); const parsed = parse(await file.text()); const next = parsed.id === previous.id ? { ...parsed, updatedAt: mintReplacementTimestamp(previous.updatedAt) } : { ...parsed, id: crypto.randomUUID(), updatedAt: new Date().toISOString() }; const committed = await commitHostReplacement(() => next, (value) => value, (value) => history = { past: [], present: value, future: [] }, 'import'); selectedIds = []; if (nativeRole === 'web') await writeCanvasDocument(committed); else queueSave(committed); restoreManagedShareAfterReplacement(managed, previous, committed); status = 'Canvas imported'; }); }
-    catch (error) { status = error instanceof Error ? error.message : 'Import failed'; }
+    if (!file || !canImportCanvas()) return;
+    importErrorDialog?.close();
+    const importTarget = history.present;
+    try { const parsed = await readCanvasImport(() => file.text(), () => history.present, () => !canImportCanvas());
+      if (!parsed || !canImportCanvas() || history.present !== importTarget) { status = 'Canvas changed while reading the file · choose Import again'; return; }
+      await coordinateDocumentReplacement(async () => { const previous = history.present, managed = currentManagedShare(); const next = parsed.id === previous.id ? { ...parsed, updatedAt: mintReplacementTimestamp(previous.updatedAt) } : { ...parsed, id: crypto.randomUUID(), updatedAt: new Date().toISOString() }; const committed = await commitHostReplacement(() => next, (value) => value, (value) => history = { past: [], present: value, future: [] }, 'import'); selectedIds = []; if (nativeRole === 'web') await writeCanvasDocument(committed); else queueSave(committed); restoreManagedShareAfterReplacement(managed, previous, committed); status = 'Canvas imported'; }); }
+    catch (error) {
+      if (error instanceof SyntaxError || (error instanceof Error && error.message === 'This file is not a supported mapping canvas document.')) {
+        status = 'Import failed · choose a Draw JSON file';
+        importErrorDialog.showModal();
+      } else { status = error instanceof Error ? error.message : 'Import failed'; }
+    }
     finally { if (fileInput) fileInput.value = ''; }
   }
   async function resetCanvas() {
@@ -1458,6 +1470,11 @@
     {#if panelOpen && nativeRole === 'web'}<WorkbenchPanel {document} {selectedIds} select={(ids)=>{if(!drawing && !agentMutationActive){selectedIds=ids;tool='select';}}} edit={editSelection} disabled={drawing || agentMutationActive || replacingDocument || sharing} />{/if}
   </section>
   <footer class="statusbar"><span role="status" aria-live="polite">{status}</span><span class="object-count">{document.objects.length} {document.objects.length === 1 ? 'object' : 'objects'}</span><button class="shortcuts-trigger" aria-haspopup="dialog" title="Keyboard shortcuts (?)" onclick={() => shortcutsDialog.showModal()}>Shortcuts <b aria-hidden="true">?</b></button><span>{nativeRole === 'host' ? 'MAC AUTHORITY' : nativeRole === 'companion' ? 'IPHONE COMPANION' : 'LOCAL CANVAS'}</span></footer>
+  <dialog bind:this={importErrorDialog} class="shortcuts-dialog import-error-dialog" aria-labelledby="import-error-title" aria-describedby="import-error-description">
+    <header><h2 id="import-error-title">Could not open this file</h2><button aria-label="Close import error" onclick={() => importErrorDialog.close()}>×</button></header>
+    <p id="import-error-description">Choose a JSON file exported by Draw. Your current canvas is still here.</p>
+    <div class="import-recovery-actions"><button class="import-retry" onclick={() => { importErrorDialog.close(); fileInput?.click(); }}>Choose Draw JSON</button><button onclick={() => importErrorDialog.close()}>Keep current canvas</button></div>
+  </dialog>
   <dialog bind:this={shortcutsDialog} class="shortcuts-dialog" aria-labelledby="shortcuts-title" aria-describedby="shortcuts-description">
     <header><h2 id="shortcuts-title">Keyboard shortcuts</h2><button aria-label="Close keyboard shortcuts" onclick={() => shortcutsDialog.close()}>×</button></header>
     <p id="shortcuts-description">Use these when you’re not typing in a title, note, or form.</p>
