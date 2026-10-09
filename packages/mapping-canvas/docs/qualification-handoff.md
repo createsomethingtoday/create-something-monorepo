@@ -63,5 +63,37 @@ test passes. No real provider result or authenticated revocation has been verifi
    plugin installation/registration, and public distribution remain separate
    gates. Existing read-only approval does not authorize broader provider access.
 
-PCN currently owns native UI. No UI, provider, grant, registration, installation,
-or publishing action was performed during this source qualification.
+PCN subsequently released native UI after its browser connection failed. No UI,
+provider, grant, registration, installation, or publishing action was performed
+during this qualification; no known-broken native connection retry was attempted.
+
+## Current-source candidate now prepared
+
+Preparation did not need to wait for the older candidate's provider acceptance.
+Source `277b1dc2e8cf92e3bf60e5957a5ed0d27b44faf1` was built offline using a separate
+APFS-cloned target cache, then packaged with `tauri bundle --debug --bundles app
+--no-sign --ci`. See `apps/draw-native/evidence/current-source-native-candidate.json`
+for the exact executable/bundle file hashes and path. All 52 native tests passed;
+one LAN-discovery test was explicitly excluded. The packaged icon matches the
+approved source. The older executable's hash remains unchanged.
+
+This `.app` is prepared, not launched, installed, notarized, UI-accepted, or
+release-qualified. It has only the executable's ad-hoc linker signature; bundle
+metadata/resources are not Developer ID signed. Use it for step 5 after the
+coordinated handoff; do not rebuild it unless source or packaging changes require it.
+
+### Smallest user handoff
+
+In the **already-open isolated synthetic Draw window**, open **Local agent access**
+and start the approved temporary read-only session. Confirm **Session active ·
+0 layers available for proposals**. In a local Terminal, run:
+
+```sh
+python3 /Users/createsomething/Documents/Codex/2026-10-08/task-3/draw-offline/packages/mapping-canvas/scripts/run-approved-provider-test.py
+```
+
+Type `READ ONLY`, then paste **Copy session token** into the hidden terminal prompt.
+Return only the printed receipt path. Never send the token in chat. The runner
+closes the isolated app after the attempt; if it stops unexpectedly, revoke local
+access. If the isolated window is absent, stop and request a coordinated relaunch;
+do not substitute a normal app/profile or launch the new candidate over its data.
