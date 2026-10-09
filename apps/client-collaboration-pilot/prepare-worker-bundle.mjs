@@ -5,6 +5,8 @@ const root = new URL('../../', import.meta.url);
 const git = (...args) => execFileSync('git', args, { cwd: root, encoding: 'utf8' }).trim();
 const commit = process.argv[2];
 if (!/^[a-f0-9]{40}$/.test(commit ?? '')) throw Error('Pass an explicit reviewed source commit SHA');
+// Keep exported provenance reachable even when this feature branch is squashed.
+git('merge-base', '--is-ancestor', commit, 'origin/main');
 const repositoryPath = 'packages/maverick/scripts/seed-data.json';
 const seed = JSON.parse(git('show', `${commit}:${repositoryPath}`));
 const raw = seed.find(x => x.key === 'content:home')?.value;

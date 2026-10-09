@@ -53,7 +53,7 @@
     "livePreviewCurrentlySharesAllFourProductionBindings": true,
     "existingPreviewAliasRemainsUnchanged": true,
     "mechanism": "Authenticated Client Workspace renderer reads a reviewed snapshot from existing D1; no Pages requests, bindings, branch deployments or alias changes",
-    "sourceBundleCommit": "e748cb12dccb23c9ae18e3c415895327fc9d5eef",
+    "sourceBundleCommit": "e0f57769f33f3aca0d654fbb79305deedf73df2c",
     "sourceRepositoryPath": "packages/maverick/scripts/seed-data.json",
     "sourceSelector": "content:home value",
     "sourceBaseline": "Checked-in seed content, not a claim of current live KV equivalence",
