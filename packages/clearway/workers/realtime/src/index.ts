@@ -10,7 +10,7 @@
  * The infrastructure disappears; courts get booked.
  */
 
-import type { CourtType } from '$lib/types';
+
 
 // ============================================================================
 // Types
@@ -44,6 +44,11 @@ interface BroadcastMessage {
 	reservationId?: string;
 }
 
+// Keep the reconstructible availability cache below the DO per-value storage limit.
+// This is a technical cache capacity, not a billing allowance.
+const MAX_CACHE_BYTES = 96 * 1024;
+const MAX_CACHE_SLOTS = 512;
+
 // ============================================================================
 // Durable Object
 // ============================================================================
@@ -52,55 +57,86 @@ export class CourtStateManager {
 	private state: DurableObjectState;
 	private env: Env;
 	private availability: Map<string, SlotState>;
-	private websockets: Set<WebSocket>;
+
 	private facilityId: string;
-	private holdCleanupTimer?: number;
+
 
 	constructor(state: DurableObjectState, env: Env) {
 		this.state = state;
 		this.env = env;
 		this.availability = new Map();
-		this.websockets = new Set();
+
 		this.facilityId = ''; // Set on first request
 
-		// Schedule periodic cleanup of expired holds
-		this.scheduleHoldCleanup();
+		state.blockConcurrencyWhile(async () => {
+			this.facilityId = await state.storage.get<string>('facilityId') || '';
+			this.availability = new Map(await state.storage.get<Array<[string, SlotState]>>('availability') || []);
+		});
 	}
 
 	/**
 	 * Handle incoming requests
 	 */
 	async fetch(request: Request): Promise<Response> {
+		// Serialize admission and state changes across body/D1/storage awaits.
+		return this.state.blockConcurrencyWhile(() => this.handleRequest(request));
+	}
+
+	private async handleRequest(request: Request): Promise<Response> {
 		const url = new URL(request.url);
 
-		// Extract facility ID from path or query
-		const facilityId = url.searchParams.get('facilityId') || url.pathname.split('/')[2];
-		if (facilityId && !this.facilityId) {
-			this.facilityId = facilityId;
+		const facilityId = url.searchParams.get('facilityId');
+		if (!facilityId || this.env.COURT_STATE.idFromName(facilityId).toString() !== this.state.id.toString()) {
+			return Response.json({ error: 'Valid facilityId required for this object' }, { status: 400 });
 		}
+		if (this.facilityId && facilityId !== this.facilityId) {
+			return Response.json({ error: 'Facility mismatch' }, { status: 409 });
+		}
+		if (!this.facilityId) {
+			if (!await knownFacility(this.env, facilityId)) {
+				return Response.json({ error: 'Unknown facility' }, { status: 404 });
+			}
+			this.facilityId = facilityId;
+			await this.state.storage.put('facilityId', facilityId);
+		}
+		this.prunePastCache();
+		this.expireHolds();
 
 		try {
+			if (['/attempt', '/confirm', '/release', '/cancel'].includes(url.pathname)) {
+				const body = await request.clone().json<{ courtId?: unknown; startTime?: unknown; memberId?: unknown; reservationId?: unknown }>();
+				if (typeof body.courtId !== 'string' || typeof body.startTime !== 'string' || body.courtId.length > 128 || body.startTime.length > 64 || !Number.isFinite(Date.parse(body.startTime))) {
+					return Response.json({ error: 'Valid courtId and startTime required' }, { status: 400 });
+				}
+				if (url.pathname === '/attempt' && (typeof body.memberId !== 'string' || body.memberId.length > 128) ||
+					url.pathname === '/confirm' && (typeof body.reservationId !== 'string' || body.reservationId.length > 128)) {
+					return Response.json({ error: 'Valid member or reservation identity required' }, { status: 400 });
+				}
+				if (!await this.env.DB.prepare('SELECT id FROM courts WHERE id = ? AND facility_id = ?').bind(body.courtId, facilityId).first()) {
+					return Response.json({ error: 'Court does not belong to facility' }, { status: 404 });
+				}
+			}
 			switch (url.pathname) {
 				case '/websocket':
-					return this.handleWebSocket(request);
+					return await this.handleWebSocket(request);
 
 				case '/attempt':
-					return this.handleReservationAttempt(request);
+					return await this.handleReservationAttempt(request);
 
 				case '/confirm':
-					return this.handleConfirmReservation(request);
+					return await this.handleConfirmReservation(request);
 
 				case '/release':
-					return this.handleReleaseHold(request);
+					return await this.handleReleaseHold(request);
 
 				case '/cancel':
-					return this.handleCancellation(request);
+					return await this.handleCancellation(request);
 
 				case '/availability':
-					return this.handleGetAvailability(request);
+					return await this.handleGetAvailability(request);
 
 				case '/sync':
-					return this.handleSyncFromD1(request);
+					return await this.handleSyncFromD1(request);
 
 				default:
 					return new Response('Not Found', { status: 404 });
@@ -117,6 +153,8 @@ export class CourtStateManager {
 					headers: { 'Content-Type': 'application/json' }
 				}
 			);
+		} finally {
+			await this.persistAndSchedule();
 		}
 	}
 
@@ -128,14 +166,14 @@ export class CourtStateManager {
 		const [client, server] = Object.values(pair);
 
 		// Accept the WebSocket connection
-		server.accept();
+		this.state.acceptWebSocket(server);
 
 		// Add to connected clients
-		this.websockets.add(server);
+
 
 		// Send current availability state
 		const availabilitySnapshot = Array.from(this.availability.entries()).map(([key, state]) => {
-			const [courtId, startTime] = key.split(':');
+			const [courtId, startTime] = this.splitSlotKey(key);
 			return { courtId, startTime, ...state };
 		});
 
@@ -146,14 +184,6 @@ export class CourtStateManager {
 			})
 		);
 
-		// Handle disconnection
-		server.addEventListener('close', () => {
-			this.websockets.delete(server);
-		});
-
-		server.addEventListener('error', () => {
-			this.websockets.delete(server);
-		});
 
 		return new Response(null, {
 			status: 101,
@@ -197,7 +227,9 @@ export class CourtStateManager {
 			holdExpiry
 		};
 
-		this.availability.set(slotKey, pendingState);
+		const next = new Map(this.availability).set(slotKey, pendingState);
+		if (!this.withinCacheCapacity(next)) return Response.json({ success: false, error: 'Availability capacity reached; retry after holds expire' }, { status: 503 });
+		this.availability = next;
 
 		// Broadcast update
 		this.broadcast({
@@ -218,12 +250,12 @@ export class CourtStateManager {
 	 * Confirm a reservation (after payment success)
 	 */
 	private async handleConfirmReservation(request: Request): Promise<Response> {
-		const { courtId, startTime, reservationId } = await request.json();
+		const { courtId, startTime, reservationId } = await request.json<{ courtId: string; startTime: string; reservationId: string }>();
 		const slotKey = this.makeSlotKey(courtId, startTime);
 		const currentState = this.availability.get(slotKey);
 
 		// Verify it's in pending state
-		if (!currentState || currentState.status !== 'pending') {
+		if (!currentState || currentState.status !== 'pending' || !currentState.holdExpiry || currentState.holdExpiry <= Date.now()) {
 			return this.json({
 				success: false,
 				error: 'Slot not held or hold expired'
@@ -236,7 +268,9 @@ export class CourtStateManager {
 			reservationId
 		};
 
-		this.availability.set(slotKey, reservedState);
+		const next = new Map(this.availability).set(slotKey, reservedState);
+		if (!this.withinCacheCapacity(next)) return Response.json({ success: false, error: 'Availability capacity reached' }, { status: 503 });
+		this.availability = next;
 
 		// Broadcast confirmation
 		this.broadcast({
@@ -254,7 +288,7 @@ export class CourtStateManager {
 	 * Release a pending hold (payment failed, timeout, or cancel)
 	 */
 	private async handleReleaseHold(request: Request): Promise<Response> {
-		const { courtId, startTime } = await request.json();
+		const { courtId, startTime } = await request.json<{ courtId: string; startTime: string }>();
 		const slotKey = this.makeSlotKey(courtId, startTime);
 
 		this.releaseHold(slotKey);
@@ -266,7 +300,7 @@ export class CourtStateManager {
 	 * Handle cancellation - make slot available again
 	 */
 	private async handleCancellation(request: Request): Promise<Response> {
-		const { courtId, startTime, reservationId } = await request.json();
+		const { courtId, startTime, reservationId } = await request.json<{ courtId: string; startTime: string; reservationId: string }>();
 		const slotKey = this.makeSlotKey(courtId, startTime);
 
 		// Mark as available
@@ -299,7 +333,7 @@ export class CourtStateManager {
 		if (courtId) {
 			// Filter by court
 			for (const [key, state] of this.availability.entries()) {
-				const [cid, startTime] = key.split(':');
+				const [cid, startTime] = this.splitSlotKey(key);
 				if (cid === courtId) {
 					if (!date || startTime.startsWith(date)) {
 						slots.push({ courtId: cid, startTime, state });
@@ -309,7 +343,7 @@ export class CourtStateManager {
 		} else {
 			// All slots
 			for (const [key, state] of this.availability.entries()) {
-				const [cid, startTime] = key.split(':');
+				const [cid, startTime] = this.splitSlotKey(key);
 				if (!date || startTime.startsWith(date)) {
 					slots.push({ courtId: cid, startTime, state });
 				}
@@ -324,7 +358,7 @@ export class CourtStateManager {
 	 * Called periodically or on-demand to refresh state
 	 */
 	private async handleSyncFromD1(request: Request): Promise<Response> {
-		const { date } = await request.json(); // YYYY-MM-DD
+		const { date } = await request.json<{ date: string }>(); // YYYY-MM-DD
 
 		// Query D1 for all reservations on this date
 		const reservations = await this.env.DB.prepare(
@@ -346,10 +380,12 @@ export class CourtStateManager {
 				status: string;
 			}>();
 
+		const next = new Map(this.availability);
+
 		// Clear existing state for this date
-		for (const key of this.availability.keys()) {
+		for (const key of next.keys()) {
 			if (key.includes(date)) {
-				this.availability.delete(key);
+				next.delete(key);
 			}
 		}
 
@@ -361,7 +397,7 @@ export class CourtStateManager {
 					status: res.status === 'confirmed' ? 'reserved' : 'pending',
 					reservationId: res.id
 				};
-				this.availability.set(slotKey, state);
+				next.set(slotKey, state);
 			}
 		}
 
@@ -383,10 +419,13 @@ export class CourtStateManager {
 				// If court_id is null, it applies to all courts - we'd need to query courts
 				if (block.court_id) {
 					const slotKey = this.makeSlotKey(block.court_id, block.start_time);
-					this.availability.set(slotKey, { status: 'maintenance' });
+					next.set(slotKey, { status: 'maintenance' });
 				}
 			}
 		}
+
+		if (!this.withinCacheCapacity(next)) return Response.json({ success: false, error: 'Availability capacity reached' }, { status: 503 });
+		this.availability = next;
 
 		return this.json({
 			success: true,
@@ -404,7 +443,7 @@ export class CourtStateManager {
 	}
 
 	private releaseHold(slotKey: string): void {
-		const [courtId, startTime] = slotKey.split(':');
+		const [courtId, startTime] = this.splitSlotKey(slotKey);
 		this.availability.delete(slotKey);
 
 		this.broadcast({
@@ -417,12 +456,12 @@ export class CourtStateManager {
 
 	private broadcast(message: BroadcastMessage): void {
 		const data = JSON.stringify(message);
-		for (const ws of this.websockets) {
+		for (const ws of this.state.getWebSockets()) {
 			try {
 				ws.send(data);
 			} catch (error) {
 				// Client disconnected, remove it
-				this.websockets.delete(ws);
+				try { ws.close(1011, 'Send failed'); } catch { /* Already closed. */ }
 			}
 		}
 	}
@@ -433,32 +472,61 @@ export class CourtStateManager {
 		});
 	}
 
-	/**
-	 * Schedule periodic cleanup of expired holds
-	 */
-	private scheduleHoldCleanup(): void {
-		// Run every 5 seconds
-		const cleanup = () => {
-			const now = Date.now();
-			let cleaned = 0;
-
-			for (const [key, state] of this.availability.entries()) {
-				if (state.status === 'pending' && state.holdExpiry && now > state.holdExpiry) {
-					this.releaseHold(key);
-					cleaned++;
-				}
-			}
-
-			if (cleaned > 0) {
-				console.log(`Cleaned ${cleaned} expired holds`);
-			}
-
-			// Schedule next cleanup
-			this.holdCleanupTimer = setTimeout(cleanup, 5000) as unknown as number;
-		};
-
-		cleanup();
+	private withinCacheCapacity(slots: Map<string, SlotState>): boolean {
+		return slots.size <= MAX_CACHE_SLOTS && new TextEncoder().encode(JSON.stringify([...slots])).byteLength <= MAX_CACHE_BYTES;
 	}
+
+	private prunePastCache(): void {
+		// Slots older than a full day are outside the documented current-day cache.
+		// D1 remains the source of truth for historical reservation records.
+		for (const [key, slot] of this.availability) {
+			if (!slot.holdExpiry && Date.parse(this.splitSlotKey(key)[1]) < Date.now() - 86_400_000) this.availability.delete(key);
+		}
+	}
+
+	private splitSlotKey(key: string): [string, string] {
+		const separator = key.indexOf(':');
+		return [key.slice(0, separator), key.slice(separator + 1)];
+	}
+
+	private expireHolds(): void {
+		for (const [key, slot] of this.availability) {
+			if (slot.status === 'pending' && slot.holdExpiry !== undefined && slot.holdExpiry <= Date.now()) {
+				this.releaseHold(key);
+			}
+		}
+	}
+
+	private async persistAndSchedule(): Promise<void> {
+		const expiries = [...this.availability.values()]
+			.filter(slot => slot.status === 'pending' && Number.isFinite(slot.holdExpiry))
+			.map(slot => slot.holdExpiry!);
+		await this.state.storage.transaction(async tx => {
+			await tx.put('availability', [...this.availability]);
+			if (expiries.length) await tx.setAlarm(Math.min(...expiries));
+			else await tx.deleteAlarm();
+		});
+	}
+
+	async alarm(): Promise<void> {
+		await this.state.blockConcurrencyWhile(async () => {
+			this.expireHolds();
+			await this.persistAndSchedule();
+		});
+	}
+
+	webSocketMessage(): void {
+		// This is a server-to-client availability stream; no periodic keepalive work.
+	}
+
+	webSocketClose(ws: WebSocket, code: number, reason: string): void {
+		try { ws.close(code === 1005 ? 1000 : code, reason); } catch { /* Already closed. */ }
+	}
+
+	webSocketError(ws: WebSocket): void {
+		try { ws.close(1011, 'Socket error'); } catch { /* Already closed. */ }
+	}
+
 }
 
 // ============================================================================
@@ -469,13 +537,17 @@ export default {
 	async fetch(request: Request, env: Env): Promise<Response> {
 		// Route to appropriate Durable Object instance based on facility
 		const url = new URL(request.url);
-		const facilityId = url.searchParams.get('facilityId') || url.pathname.split('/')[2];
+		const facilityId = url.searchParams.get('facilityId');
 
 		if (!facilityId) {
 			return new Response(
 				JSON.stringify({ error: 'facilityId required' }),
 				{ status: 400, headers: { 'Content-Type': 'application/json' } }
 			);
+		}
+
+		if (!await knownFacility(env, facilityId)) {
+			return Response.json({ error: 'Unknown facility' }, { status: 404 });
 		}
 
 		// Get Durable Object instance for this facility
@@ -495,4 +567,9 @@ interface Env {
 	COURT_STATE: DurableObjectNamespace;
 	DB: D1Database;
 	NOTIFICATION_QUEUE: Queue;
+}
+
+async function knownFacility(env: Env, facilityId: string): Promise<boolean> {
+	if (facilityId.length > 128) return false;
+	return !!await env.DB.prepare('SELECT id FROM facilities WHERE id = ?').bind(facilityId).first();
 }

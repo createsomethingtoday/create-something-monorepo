@@ -21,6 +21,10 @@ export interface SessionContext {
   epicId: string;
   convoyId?: string;
   budget: number;
+  costReserved?: number;
+  guardVersion?: 1;
+  callPending?: boolean;
+  deadline?: number;
   costConsumed: number;
   iteration: number;
   iterationCosts: number[];          // Cost of each iteration
@@ -168,6 +172,16 @@ export interface BeadsIssue {
 
 export interface Env {
   ANTHROPIC_API_KEY: string;
+  AGENTIC_ADMISSION_TOKEN?: string;
+  AGENTIC_MAX_TASK_USD?: string;
+  AGENTIC_LIFETIME_BUDGET_USD?: string;
+  AGENTIC_LIFETIME_TASK_LIMIT?: string;
+  AGENTIC_INPUT_USD_PER_MILLION?: string;
+  AGENTIC_OUTPUT_USD_PER_MILLION?: string;
+  AGENTIC_CALL_RESERVATION_USD?: string;
+  AGENTIC_MAX_REQUEST_BYTES?: string;
+  AGENTIC_SESSION_TIMEOUT_MS?: string;
+  AGENTIC_QUOTA: DurableObjectNamespace;
   DB: D1Database;
   AGENTIC_QUEUE: Queue;
   AGENTIC_SESSION: DurableObjectNamespace;

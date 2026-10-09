@@ -15,7 +15,8 @@
 		"deploy:preview": "pnpm build && node ../../scripts/run-wrangler.mjs pages deploy .svelte-kit/cloudflare --project-name=notion-agent --branch=preview",
 		"cf-typegen": "node ../../scripts/run-wrangler.mjs types",
 		"db:migrate": "node ../../scripts/run-wrangler.mjs d1 migrations apply notion-agent-db --local",
-		"db:migrate:prod": "node ../../scripts/run-wrangler.mjs d1 migrations apply notion-agent-db"
+		"db:migrate:prod": "node ../../scripts/run-wrangler.mjs d1 migrations apply notion-agent-db",
+		"test:cost-guards": "node --import tsx --test test/duplicate-finder.test.ts"
 	},
 	"devDependencies": {
 		"@cloudflare/workers-types": "^4.20260621.1",

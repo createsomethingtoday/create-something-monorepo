@@ -51,9 +51,17 @@ name = "AGENTIC_SESSION"
 class_name = "AgenticSession"
 script_name = "agentic-executor"
 
+[[durable_objects.bindings]]
+name = "AGENTIC_QUOTA"
+class_name = "AgenticQuota"
+
 [[migrations]]
 tag = "v1"
 new_classes = ["AgenticSession"]
+
+[[migrations]]
+tag = "v2-cost-guards"
+new_sqlite_classes = ["AgenticQuota"]
 
 # ============================================================================
 # Environment Variables

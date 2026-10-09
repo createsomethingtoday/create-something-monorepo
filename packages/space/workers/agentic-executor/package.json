@@ -7,7 +7,9 @@
     "dev": "node ../../../../scripts/run-wrangler.mjs dev",
     "deploy": "node ../../../../scripts/run-wrangler.mjs deploy",
     "tail": "node ../../../../scripts/run-wrangler.mjs tail",
-    "types": "node ../../../../scripts/run-wrangler.mjs types"
+    "types": "node ../../../../scripts/run-wrangler.mjs types",
+    "test": "node --import tsx --test test/*.test.ts",
+    "check": "tsc -p tsconfig.json"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.32.1",

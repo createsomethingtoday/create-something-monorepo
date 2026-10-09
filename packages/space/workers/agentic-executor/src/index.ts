@@ -2,6 +2,9 @@
 // Receives tasks from queue and spawns Durable Object sessions
 
 import { AgenticSession } from './session';
+import { authorized, guardResponse, readPolicy, validateTask } from './guards.ts';
+import { quota } from './quota.ts';
+export { AgenticQuota } from './quota.ts';
 import type { Env, AgenticTask } from './types';
 
 export { AgenticSession };
@@ -14,63 +17,35 @@ export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
 
-    // POST /submit - Submit task to queue
     if (url.pathname === '/submit' && request.method === 'POST') {
-      try {
-        const task: AgenticTask = await request.json();
-
-        // Validate task
-        if (!task.issueId || !task.budget) {
-          return new Response(JSON.stringify({ error: 'Missing required fields' }), {
-            status: 400,
-            headers: { 'Content-Type': 'application/json' }
-          });
-        }
-
-        // Send to queue
-        await env.AGENTIC_QUEUE.send(task);
-
-        return new Response(JSON.stringify({
-          success: true,
-          taskId: task.issueId,
-          status: 'queued'
-        }), {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' }
-        });
-
-      } catch (err: any) {
-        return new Response(JSON.stringify({ error: err.message }), {
-          status: 500,
-          headers: { 'Content-Type': 'application/json' }
-        });
+      if (!env.AGENTIC_ADMISSION_TOKEN || env.AGENTIC_ADMISSION_TOKEN.length < 32) {
+        return Response.json({error:'Admission authentication is not configured'}, {status:503});
       }
+      if (!await authorized(request, env.AGENTIC_ADMISSION_TOKEN)) {
+        return Response.json({error:'Unauthorized'}, {status:401});
+      }
+      try {
+        const policy = readPolicy(env);
+        const body = await request.text();
+        if (new TextEncoder().encode(body).length > policy.maxRequestBytes) {
+          return Response.json({error:'Task payload too large'}, {status:413});
+        }
+        const task = validateTask(JSON.parse(body), policy);
+        return await quota(env).fetch('https://quota/admit', {method:'POST',body:JSON.stringify(task)});
+      } catch (error) { return guardResponse(error); }
     }
 
     return new Response('Not Found', { status: 404 });
   },
 
   async queue(batch: MessageBatch<AgenticTask>, env: Env): Promise<void> {
-    // Debug: Check API key in multiple ways
-    const apiKey1 = env.ANTHROPIC_API_KEY;
-    const apiKey2 = (env as any)['ANTHROPIC_API_KEY'];
-    const apiKey3 = Reflect.get(env, 'ANTHROPIC_API_KEY');
-
-    console.log('Queue consumer env check', {
-      hasApiKey: !!apiKey1,
-      typeof1: typeof apiKey1,
-      typeof2: typeof apiKey2,
-      typeof3: typeof apiKey3,
-      preview1: apiKey1?.substring(0, 10) || String(apiKey1),
-      preview2: apiKey2?.substring(0, 10) || String(apiKey2),
-      preview3: apiKey3?.substring(0, 10) || String(apiKey3),
-      envKeys: Object.keys(env)
-    });
-
     for (const message of batch.messages) {
-      const task = message.body;
+      let task = message.body;
 
       try {
+        task = validateTask(task, readPolicy(env));
+        const admission = await quota(env).fetch('https://quota/verify', {method:'POST', body:JSON.stringify(task)});
+        if (!admission.ok) { message.ack(); continue; }
         console.log('Starting agentic task', {
           issueId: task.issueId,
           budget: task.budget,
@@ -82,22 +57,22 @@ export default {
         const sessionId = env.AGENTIC_SESSION.idFromName(task.issueId);
         const session = env.AGENTIC_SESSION.get(sessionId);
 
-        // Start session - pass API key explicitly since secrets aren't inherited by Durable Objects
+        // DO bindings inherit this worker's environment; never forward or log credentials.
         const response = await session.fetch('https://session/start', {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json',
-            'X-Api-Key': env.ANTHROPIC_API_KEY  // Pass API key via header
+            'Content-Type': 'application/json'
           },
           body: JSON.stringify(task)
         });
 
+        if ([400, 402, 403, 409, 410].includes(response.status)) { message.ack(); continue; }
         if (!response.ok) {
           const errorData = await response.json();
           throw new Error(`Session start failed: ${JSON.stringify(errorData)}`);
         }
 
-        const result = await response.json();
+        const result = await response.json() as {sessionId: string; budget: unknown};
 
         console.log('Session started', {
           issueId: task.issueId,
@@ -125,7 +100,7 @@ export default {
 
       } catch (err: any) {
         console.error('Agentic task failed', {
-          issueId: task.issueId,
+          issueId: task?.issueId,
           error: err.message,
           attempts: message.attempts
         });
@@ -137,7 +112,7 @@ export default {
           message.retry({ delaySeconds });
         } else {
           // Max retries exceeded, mark as failed
-          await markTaskFailed(env, task.issueId, err.message);
+          if (typeof task?.issueId === 'string') await markTaskFailed(env, task.issueId, err.message);
           message.ack();
         }
       }
