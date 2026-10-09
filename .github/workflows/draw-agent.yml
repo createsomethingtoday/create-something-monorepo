@@ -1,10 +1,10 @@
 name: Draw agent contracts
 on:
   pull_request:
-    paths: ['packages/mapping-canvas/**', '.github/workflows/draw-agent.yml']
+    paths: ['packages/mapping-canvas/**', 'apps/draw-native/scripts/**', '.github/workflows/draw-agent.yml', '.github/workflows/draw-macos-release.yml', '.github/workflows/draw-native-release.yml']
   push:
     branches: [main]
-    paths: ['packages/mapping-canvas/**', '.github/workflows/draw-agent.yml']
+    paths: ['packages/mapping-canvas/**', 'apps/draw-native/scripts/**', '.github/workflows/draw-agent.yml', '.github/workflows/draw-macos-release.yml', '.github/workflows/draw-native-release.yml']
 permissions:
   contents: read
 jobs:
@@ -14,3 +14,4 @@ jobs:
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
       - run: python3 -m unittest discover -s packages/mapping-canvas/scripts -p 'test_draw_*.py' -v
+      - run: node --test apps/draw-native/scripts/mac-release.test.mjs

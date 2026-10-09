@@ -4,7 +4,7 @@
 
   const canonicalUrl = 'https://draw.createsomething.agency/download';
   const title = 'Draw for Mac | CREATE SOMETHING';
-  const description = 'Request the CREATE SOMETHING Draw Mac preview, or open the free local-first drawing canvas in your browser.';
+  const description = 'Request the Draw Mac preview, or open the free local-first drawing canvas in your browser.';
   const sourceSha = '7c74dc1485377e316efa7173796dda883cb21eee';
   const dmgSha256 = '0c82b266fa7df6d7078bdc93d7ff2f02186da4168e7b3567f97a376f5843f0bd';
   const workflowUrl = 'https://github.com/createsomethingtoday/create-something-monorepo/actions/runs/33711866576';
@@ -13,7 +13,7 @@
     '@context': 'https://schema.org',
     '@type': 'SoftwareApplication',
     '@id': `${canonicalUrl}#mac`,
-    name: 'CREATE SOMETHING Draw for Mac',
+    name: 'Draw for Mac',
     url: canonicalUrl,
     applicationCategory: 'DesignApplication',
     operatingSystem: 'macOS',
@@ -51,7 +51,7 @@
   <link rel="canonical" href={canonicalUrl} />
   <meta property="og:type" content="website" />
   <meta property="og:url" content={canonicalUrl} />
-  <meta property="og:site_name" content="CREATE SOMETHING Draw" />
+  <meta property="og:site_name" content="Draw" />
   <meta property="og:title" content={title} />
   <meta property="og:description" content={description} />
   <meta property="og:image" content="https://draw.createsomething.agency/og-image.png" />
@@ -64,8 +64,8 @@
 
 <main class="download-page">
   <nav class="page-nav" aria-label="Draw navigation">
-    <a class="brand" href="/" aria-label="Open CREATE SOMETHING Draw">
-      <img src="/brand/create-something-agency-white.svg" alt="CREATE SOMETHING .agency" />
+    <a class="brand" href="/" aria-label="Open Draw">
+      <img src="/brand/draw-dark.svg" alt="" />
       <span>Draw</span>
     </a>
     <div>
@@ -126,5 +126,5 @@
     </div>
   </section>
 
-  <footer><span>CREATE SOMETHING Draw</span><span>FREE · OPEN SOURCE · LOCAL-FIRST</span></footer>
+  <footer><span>Draw by CREATE SOMETHING</span><span>FREE · OPEN SOURCE · LOCAL-FIRST</span></footer>
 </main>

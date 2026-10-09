@@ -1,0 +1,33 @@
+{
+  "date": "2026-10-08",
+  "implementationCommit": "a4ec5d16f06acba9a23abb48dfd86d745c171b43",
+  "nativeControl": "single check failed: Sky Computer Use native pipe startup failed",
+  "syntheticNativeProcess": {
+    "alive": true,
+    "revision": 0,
+    "networkSocketsAtSample": 0,
+    "agentSessionStarted": false,
+    "guiAccepted": false
+  },
+  "clients": {
+    "node": "26.11.0",
+    "claudeCode": "2.1.294",
+    "bundledCodex": "0.162.0-alpha.2",
+    "providerSessionStarted": false,
+    "persistentConfigChanged": false,
+    "pluginInstalled": false
+  },
+  "draftValidation": {
+    "claudeJSON": "parsed",
+    "codexTOML": "source reviewed; Python tomllib unavailable, no runtime activation"
+  },
+  "artifact": {
+    "architecture": "arm64",
+    "signature": "adhoc linker-signed",
+    "teamIdentifier": null,
+    "sha256": "fc46f59c55071a26e3ef25b288720bfac7fbd605922dcf0efc7a19b1fc296fdd",
+    "dmgPresentInInspectedBuildPaths": false,
+    "signingSecretsAccessed": false
+  },
+  "pendingApproval": "One 10-minute read-only synthetic Canvas session through local Claude Code; no persistent registration or edits"
+}
