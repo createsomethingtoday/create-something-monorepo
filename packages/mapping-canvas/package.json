@@ -32,7 +32,7 @@
   },
   "dependencies": {
     "@create-something/canon": "workspace:*",
-    "fflate": "0.8.2"
+    "fflate": "0.8.3"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20260903.1",
