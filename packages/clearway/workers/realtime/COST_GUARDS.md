@@ -1,6 +1,6 @@
 # Realtime lifecycle safeguards
 
-Each object persists facility identity and availability. The next alarm is the earliest pending hold expiry; when no timed holds remain, it deletes its alarm. Reservations imported from D1 have no timed expiry and do not create background work. WebSockets use Cloudflare hibernation and hold state survives eviction. Confirmation rejects expired holds even if alarm delivery is delayed.
+Each object persists facility identity and availability. The next alarm is the earliest pending hold expiry; when no timed holds remain, it deletes its alarm. Reservations imported from D1 do not create a new timed expiry. A pending row matching a live checkout hold by court/start time, member and any already-associated reservation ID preserves that hold’s original deadline. Sync also preserves live holds not yet written to D1; it never extends or revives them. Confirmation must use the associated reservation ID when present. WebSockets use Cloudflare hibernation and hold state survives eviction. Confirmation rejects expired holds even if alarm delivery is delayed.
 
 The public worker and Svelte realtime callers check that a facility exists before allocating a namespace object. Internal requests must include `?facilityId=...`; the DO checks this against its named ID and validates court ownership for slot mutations. Deploy caller changes together with the worker. `/cancel` from the existing reservation route carries the reservation's stored facility ID.
 

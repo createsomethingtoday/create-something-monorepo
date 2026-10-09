@@ -255,7 +255,8 @@ export class CourtStateManager {
 		const currentState = this.availability.get(slotKey);
 
 		// Verify it's in pending state
-		if (!currentState || currentState.status !== 'pending' || !currentState.holdExpiry || currentState.holdExpiry <= Date.now()) {
+		if (!currentState || currentState.status !== 'pending' || !currentState.holdExpiry || currentState.holdExpiry <= Date.now() ||
+			(currentState.reservationId !== undefined && currentState.reservationId !== reservationId)) {
 			return this.json({
 				success: false,
 				error: 'Slot not held or hold expired'
@@ -363,7 +364,7 @@ export class CourtStateManager {
 		// Query D1 for all reservations on this date
 		const reservations = await this.env.DB.prepare(
 			`
-      SELECT court_id, start_time, end_time, id, status
+      SELECT court_id, start_time, end_time, id, member_id, status
       FROM reservations
       WHERE facility_id = ?
         AND date(start_time) = ?
@@ -376,15 +377,17 @@ export class CourtStateManager {
 				court_id: string;
 				start_time: string;
 				end_time: string;
+				member_id: string;
 				id: string;
 				status: string;
 			}>();
 
 		const next = new Map(this.availability);
 
-		// Clear existing state for this date
-		for (const key of next.keys()) {
-			if (key.includes(date)) {
+		// Keep live checkout holds even before their reservation row reaches D1.
+		for (const [key, slot] of next) {
+			const liveHold = slot.status === 'pending' && slot.holdExpiry !== undefined && slot.holdExpiry > Date.now();
+			if (key.includes(date) && !liveHold) {
 				next.delete(key);
 			}
 		}
@@ -397,6 +400,16 @@ export class CourtStateManager {
 					status: res.status === 'confirmed' ? 'reserved' : 'pending',
 					reservationId: res.id
 				};
+				const held = this.availability.get(slotKey);
+				// A matching D1 pending row must not erase or extend checkout's deadline.
+				// Never transfer a hold to another member or reservation at the same slot.
+				if (res.status === 'pending' && held?.status === 'pending' &&
+					held.holdExpiry !== undefined && held.holdExpiry > Date.now() &&
+					held.memberId === res.member_id &&
+					(held.reservationId === undefined || held.reservationId === res.id)) {
+					state.holdExpiry = held.holdExpiry;
+					state.memberId = held.memberId;
+				}
 				next.set(slotKey, state);
 			}
 		}
