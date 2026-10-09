@@ -1,4 +1,4 @@
-import { spawnSync } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import {
   cpSync,
@@ -27,6 +27,7 @@ const stateHome = join(temporaryRoot, 'state');
 const bundleIdentifier = 'agency.createsomething.draw';
 const requireProductionRelease = process.env.DRAW_REQUIRE_PRODUCTION_RELEASE === '1';
 let attached = false;
+const launchedProcesses = new Set();
 
 function command(name, args, { allowFailure = false, env } = {}) {
   const result = spawnSync(name, args, {
@@ -68,17 +69,6 @@ async function waitForFile(path, timeout = 20_000) {
   }
   throw new Error(`Timed out waiting for ${path}`);
 }
-async function waitForNewProcess(binary, previousPids, timeout = 20_000) {
-  const deadline = Date.now() + timeout;
-  while (Date.now() < deadline) {
-    const result = command('pgrep', ['-f', binary], { allowFailure: true });
-    const pids = result.status === 0 ? result.stdout.split('\n').filter(Boolean) : [];
-    const fresh = pids.filter((pid) => !previousPids.has(pid));
-    if (fresh.length) return fresh;
-    await delay(200);
-  }
-  throw new Error('Timed out waiting for a fresh installed-app process');
-}
 function newestDmg() {
   const directory = join(bundleRoot, 'dmg');
   const candidates = readdirSync(directory)
@@ -88,22 +78,79 @@ function newestDmg() {
   if (!candidates[0]) throw new Error(`No Draw DMG exists under ${directory}`);
   return candidates[0];
 }
-function launch(appPath, executable) {
+function launch(appPath, executable, profile = stateHome) {
   const binary = join(appPath, 'Contents', 'MacOS', executable);
-  const result = command('open', [
-    '-n',
-    '-g',
-    '--env',
-    `CREATE_SOMETHING_DRAW_HOME=${stateHome}`,
-    appPath
-  ]);
-  if (result.status !== 0) throw new Error('Installed app failed to launch');
-  return binary;
-}
-function quit() {
-  command('osascript', ['-e', `tell application id "${bundleIdentifier}" to quit`], {
-    allowFailure: true
+  const child = spawn(binary, [], {
+    cwd: appRoot,
+    env: { ...process.env, CREATE_SOMETHING_DRAW_HOME: profile },
+    stdio: 'ignore'
   });
+  launchedProcesses.add(child);
+  child.on('error', () => {});
+  return child;
+}
+async function quit(child) {
+  if (!child || !launchedProcesses.has(child)) return;
+  if (child.exitCode === null && child.signalCode === null) {
+    child.kill('SIGTERM');
+    const deadline = Date.now() + 5000;
+    while (child.exitCode === null && child.signalCode === null && Date.now() < deadline) await delay(100);
+    if (child.exitCode === null && child.signalCode === null) {
+      child.kill('SIGKILL');
+      const deadline = Date.now() + 5000;
+      while (child.exitCode === null && child.signalCode === null && Date.now() < deadline) await delay(100);
+      if (child.exitCode === null && child.signalCode === null) throw new Error(`Isolated Draw process ${child.pid} did not terminate`);
+    }
+  }
+  launchedProcesses.delete(child);
+}
+function canonical(value) {
+  if (Array.isArray(value)) return value.map(canonical);
+  if (value && typeof value === 'object') return Object.fromEntries(Object.keys(value).sort().map((key) => [key, canonical(value[key])]));
+  return value;
+}
+// Rust serializes object keys in sorted order; key order is not document data.
+const documentHash = (state) => createHash('sha256').update(JSON.stringify(canonical(state.document))).digest('hex');
+async function persistenceRun(appPath, executable, profile, expected) {
+  const statePath = join(profile, 'paired-session.json');
+  const first = launch(appPath, executable, profile);
+  let firstState;
+  try {
+    await waitForFile(statePath);
+    await delay(1200);
+    if (first.exitCode !== null || first.signalCode !== null || !first.pid) throw new Error('Packaged app exited during launch');
+    firstState = await waitForFile(statePath);
+    if (expected && (firstState.sessionId !== expected.sessionId || firstState.revision !== expected.revision || documentHash(firstState) !== documentHash(expected))) throw new Error('Existing document changed during first launch');
+  } finally { await quit(first); }
+  const second = launch(appPath, executable, profile);
+  let secondState;
+  try {
+    await delay(1200);
+    if (second.exitCode !== null || second.signalCode !== null || !second.pid) throw new Error('Packaged app exited during relaunch');
+    secondState = await waitForFile(statePath);
+  } finally { await quit(second); }
+  if (firstState.sessionId !== secondState.sessionId || firstState.revision !== secondState.revision || documentHash(firstState) !== documentHash(secondState)) throw new Error('Relaunch did not preserve the canonical session, revision, and document');
+  return { sessionId: firstState.sessionId, revision: firstState.revision, documentHash: documentHash(firstState), relaunchExact: true, processIds: [first.pid, second.pid], state: firstState };
+}
+function populatedLegacyState(state) {
+  const createdAt = '2026-08-01T12:00:00Z';
+  const base = { createdAt };
+  const content = { blocks: [
+    { type: 'heading1', runs: [{ text: 'Decision map' }] },
+    { type: 'paragraph', runs: [{ text: 'Preserve ', bold: true }, { text: 'formatted notes', italic: true }] },
+    { type: 'bullet', runs: [{ text: 'Follow up', underline: true }] }
+  ] };
+  return { ...state, revision: 17, document: {
+    version: 'create-something.mapping-canvas.v1', id: 'canvas-installed-upgrade-fixture',
+    title: 'Existing mapping document', background: '#000000', createdAt, updatedAt: createdAt,
+    viewport: { x: 25, y: -10, zoom: 0.85 }, objects: [
+      { ...base, id: 'legacy-note', kind: 'note', x: 30, y: 30, width: 240, height: 170, text: 'Legacy plain note\n  Indented detail\nLong content remains readable after reopening.' },
+      { ...base, id: 'rich-note', kind: 'note', x: 310, y: 30, width: 240, height: 210, text: 'Decision map\nPreserve formatted notes\n• Follow up', content },
+      { ...base, id: 'shape', kind: 'rectangle', from: { x: 60, y: 250 }, to: { x: 220, y: 340 }, color: '#ffffff', name: 'Existing shape' },
+      { ...base, id: 'connection', kind: 'connector', fromId: 'legacy-note', toId: 'rich-note', label: 'Next step' },
+      { ...base, id: 'group', kind: 'group', x: 15, y: 15, width: 560, height: 350, label: 'Existing group', childIds: ['legacy-note', 'rich-note', 'shape'] }
+    ]
+  } };
 }
 
 async function main() {
@@ -144,31 +191,13 @@ async function main() {
   if (/\/usr\/local|\/opt\/homebrew|node_modules/.test(dylibs))
     throw new Error(`Unexpected external dependency:\n${dylibs}`);
 
-  const binary = launch(canonicalApp, executable);
-  const firstState = await waitForFile(join(stateHome, 'paired-session.json'));
-  const firstDocumentHash = createHash('sha256')
-    .update(JSON.stringify(firstState.document))
-    .digest('hex');
-  const processEvidence = command('pgrep', ['-f', binary]);
-  const firstProcessIds = new Set(processEvidence.stdout.split('\n').filter(Boolean));
-  quit();
-  await delay(800);
-  launch(canonicalApp, executable);
-  const secondProcessIds = await waitForNewProcess(binary, firstProcessIds);
-  await delay(1200);
-  for (const pid of secondProcessIds) command('kill', ['-0', pid]);
-  const secondState = await waitForFile(join(stateHome, 'paired-session.json'));
-  const secondDocumentHash = createHash('sha256')
-    .update(JSON.stringify(secondState.document))
-    .digest('hex');
-  quit();
-  if (
-    firstState.sessionId !== secondState.sessionId ||
-    firstState.revision !== secondState.revision ||
-    firstDocumentHash !== secondDocumentHash
-  ) {
-    throw new Error('Relaunch did not preserve the canonical session, revision, and document');
-  }
+  const binary = join(canonicalApp, 'Contents', 'MacOS', executable);
+  const fresh = await persistenceRun(canonicalApp, executable, stateHome);
+  const upgradeHome = join(temporaryRoot, 'existing-document-state');
+  mkdirSync(upgradeHome);
+  const seeded = populatedLegacyState(fresh.state);
+  writeFileSync(join(upgradeHome, 'paired-session.json'), `${JSON.stringify(seeded, null, 2)}\n`);
+  const upgrade = await persistenceRun(canonicalApp, executable, upgradeHome, seeded);
   const signingCheck = command('codesign', ['--verify', '--deep', '--strict', canonicalApp], {
     allowFailure: true
   });
@@ -230,22 +259,25 @@ async function main() {
     },
     bundle: { identifier, version, binary, selfContained: true },
     state: {
-      sessionId: firstState.sessionId,
-      revision: firstState.revision,
-      documentHash: firstDocumentHash,
-      relaunchExact: true
+      sessionId: fresh.sessionId,
+      revision: fresh.revision,
+      documentHash: fresh.documentHash,
+      relaunchExact: true,
+      existingDocument: { sessionId: upgrade.sessionId, revision: upgrade.revision, documentHash: upgrade.documentHash, relaunchExact: true, objectCount: seeded.document.objects.length, fixtureVersion: seeded.document.version }
     },
     evidence: {
       hdiutilVerify: dmgVerification.status === 0,
       readonlyMount: true,
       isolatedCopy: true,
-      processIds: processEvidence.stdout.split('\n'),
-      relaunchProcessIds: secondProcessIds,
+      processIds: fresh.processIds,
+      existingDocumentProcessIds: upgrade.processIds,
+      termination: 'exact spawned child processes only',
       externalDylibCheck: true
     },
     gates: {
       installedLaunch: 'performed',
       persistenceRelaunch: 'performed',
+      existingDocumentUpgrade: 'performed',
       signing,
       notarization: {
         status: notarizationPerformed ? 'performed' : 'unperformed',
@@ -272,7 +304,7 @@ async function main() {
 try {
   await main();
 } finally {
-  quit();
+  for (const child of [...launchedProcesses]) await quit(child);
   if (attached) command('hdiutil', ['detach', mountPath], { allowFailure: true });
   rmSync(temporaryRoot, { recursive: true, force: true });
 }

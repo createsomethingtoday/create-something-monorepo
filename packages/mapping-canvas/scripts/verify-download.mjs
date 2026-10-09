@@ -1,3 +1,4 @@
+import { mkdir } from 'node:fs/promises';
 import { chromium } from '@playwright/test';
 import { spawn, spawnSync } from 'node:child_process';
 import { createServer } from 'node:net';
@@ -24,26 +25,34 @@ async function verify(viewport, label) {
   if (await page.title() !== 'Draw for Mac | CREATE SOMETHING') throw new Error(`${label} title is incorrect`);
   if (await page.locator('link[rel="canonical"][href="https://draw.createsomething.agency/download"]').count() !== 1) throw new Error(`${label} canonical URL is unavailable`);
   if (await page.locator('script[type="application/ld+json"]').evaluateAll((nodes) => nodes.map((node) => JSON.parse(node.textContent || '{}')['@type'])).then((types) => !types.includes('SoftwareApplication'))) throw new Error(`${label} SoftwareApplication schema is unavailable`);
-  if (!(await page.getByRole('heading', { level: 1, name: /Keep the Mac authoritative/ }).isVisible())) throw new Error(`${label} proposition is unavailable`);
+  if (!(await page.getByRole('heading', { level: 1, name: /Make the handoff clear/ }).isVisible())) throw new Error(`${label} proposition is unavailable`);
   if (await page.getByRole('link', { name: 'Open Draw' }).count() < 2) throw new Error(`${label} primary action is incomplete`);
-  const requestLinks = page.getByRole('link', { name: 'Request Mac preview' });
+  const requestLinks = page.getByRole('link', { name: 'Request pilot build' });
   if (await requestLinks.count() !== 2 || !(await requestLinks.first().getAttribute('href'))?.startsWith('mailto:micah@createsomething.io')) throw new Error(`${label} preview handoff is incomplete`);
-  if (!await page.getByText('unsigned, not notarized', { exact: false }).first().isVisible()) throw new Error(`${label} unsigned boundary is unavailable`);
-  if (!await page.getByText('0c82b266fa7df6d7078bdc93d7ff2f02186da4168e7b3567f97a376f5843f0bd', { exact: true }).isVisible()) throw new Error(`${label} checksum is unavailable`);
-  if (await page.locator('a[href$=".dmg"]').count()) throw new Error(`${label} exposes an unsigned public DMG`);
+  if (!await page.getByText('Developer ID signed, Apple notarized, Gatekeeper accepted.', { exact: false }).first().isVisible()) throw new Error(`${label} verified signing boundary is unavailable`);
+  if (!await page.getByText('25c4394b1ab71ab7e71ec28b0711f084bf6a5dace321cc212c9e30a57153e141', { exact: true }).isVisible()) throw new Error(`${label} checksum is unavailable`);
+  if (await page.locator('a[href$=".dmg"]').count()) throw new Error(`${label} exposes a binary before publication approval`);
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth);
   if (overflow) throw new Error(`${label} has horizontal overflow`);
   if (errors.length) throw new Error(`${label} console errors: ${errors.join(' | ')}`);
   if (failedRequests.length) throw new Error(`${label} failed requests: ${failedRequests.join(' | ')}`);
+  await page.screenshot({ path: `output/pilot-demo/download-${label.toLowerCase()}.png`, fullPage: true });
   await page.getByRole('navigation', { name: 'Draw navigation' }).getByRole('link', { name: 'Open Draw' }).click();
+  const welcome = page.getByRole('button', { name: 'Start sketching', exact: true });
+  if (await welcome.isVisible()) await welcome.click();
   await page.getByRole('button', { name: /Pen tool/ }).waitFor();
   const workbenchPadding = await page.locator('.workbench').evaluate((node) => getComputedStyle(node).paddingTop);
   if (workbenchPadding !== '0px') throw new Error(`${label} landing styles leaked into the canvas (${workbenchPadding} workbench padding)`);
-  const [landingPage] = await Promise.all([
-    context.waitForEvent('page'),
-    page.getByRole('link', { name: 'Mac', exact: true }).click()
-  ]);
-  await landingPage.getByRole('heading', { level: 1, name: /Keep the Mac authoritative/ }).waitFor();
+  const macLink = page.getByRole('link', { name: 'Mac', exact: true });
+  let landingPage;
+  if (await macLink.isVisible()) {
+    [landingPage] = await Promise.all([context.waitForEvent('page'), macLink.click()]);
+  } else {
+    // The existing narrow canvas hides its source/download links. Verify direct landing access.
+    landingPage = await context.newPage();
+    await landingPage.goto(downloadUrl, { waitUntil: 'networkidle' });
+  }
+  await landingPage.getByRole('heading', { level: 1, name: /Make the handoff clear/ }).waitFor();
   const canScroll = await landingPage.evaluate(() => {
     window.scrollTo(0, document.documentElement.scrollHeight);
     return getComputedStyle(document.body).overflow !== 'hidden' && scrollY > 0;
@@ -76,12 +85,13 @@ try {
   }
   if (!configuredUrl) throw new Error('Download verifier URL is unavailable');
   downloadUrl = new URL('/download', new URL(configuredUrl)).href;
+  await mkdir(new URL('../output/pilot-demo/', import.meta.url), { recursive: true });
   browser = await chromium.launch({ headless: true });
   const result = {
     url: downloadUrl,
     desktop: await verify({ width: 1440, height: 1000 }, 'Desktop'),
     mobile: await verify({ width: 390, height: 844 }, 'Mobile'),
-    publicBinary: 'held-until-signed-and-notarized'
+    publicBinary: 'pending-publication-approval'
   };
   console.log(JSON.stringify(result, null, 2));
 } finally {

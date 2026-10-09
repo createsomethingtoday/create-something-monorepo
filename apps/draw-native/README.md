@@ -45,10 +45,22 @@ DRAW_INSTALLED_SKIP_BUILD=1 pnpm --dir apps/draw-native verify:installed
 
 The installed verifier mounts the DMG read-only, copies the app into an isolated
 temporary location, launches with isolated application data, checks packaged
-dependencies, and verifies canonical persistence across relaunch. Its receipt
+dependencies, and verifies canonical persistence across relaunch for both a fresh
+profile and a seeded existing mapping-canvas.v1 document containing legacy plain
+notes, formatted notes, shapes, connectors, and groups. The seeded session, revision,
+and complete document hash must remain exact on first launch and relaunch. The
+verifier terminates only its own spawned packaged executable processes, never an
+application selected by bundle ID. Both profiles and the app copy are temporary;
+the installed app and personal documents are untouched. Its receipt
 is written under `apps/draw-native/output/installed-acceptance/`.
 
 ## Production release gates
+
+For local Mac notarization, use the user-managed Keychain profile
+`Create Something` with team `PRP5VQQPPB`. Verify access with
+`xcrun notarytool history --keychain-profile "Create Something"` before submitting.
+The older `GiGi-PRP5VQQPPB` profile remains available for existing release scripts.
+Profile credentials stay in Keychain; do not extract them or add them to this repository.
 
 An unsigned DMG or simulator archive is development evidence only. Production
 requires all of the following against the exact candidate bytes:

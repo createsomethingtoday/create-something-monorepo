@@ -52,3 +52,19 @@ describe('agent follow camera', () => {
     expect(fitViewportToBounds(current, { x: -Number.MAX_VALUE, y: 0, width: Infinity, height: 10 }, { width: 1200, height: 800 })).toBe(current);
   });
 });
+
+
+describe('explicit drawing overview', () => {
+  it('fits a tall note between narrow-screen operator controls', () => {
+    const bounds = { x: 100, y: 100, width: 280, height: 2400 };
+    const next = fitViewportToBounds({ x: 0, y: 0, zoom: 1 }, bounds, { width: 390, height: 630 }, { padding: 31, force: true, insets: { top: 104, bottom: 210 }, allowOverview: true });
+    expect(next.zoom).toBeLessThan(.25);
+    expect(bounds.y * next.zoom + next.y).toBeCloseTo(135);
+    expect((bounds.y + bounds.height) * next.zoom + next.y).toBeCloseTo(389);
+  });
+
+  it('keeps the previous camera when controls leave no usable area', () => {
+    const current = { x: 20, y: 10, zoom: 1 };
+    expect(fitViewportToBounds(current, { x: 0, y: 0, width: 300, height: 800 }, { width: 390, height: 200 }, { insets: { top: 100, bottom: 100 }, allowOverview: true })).toBe(current);
+  });
+});

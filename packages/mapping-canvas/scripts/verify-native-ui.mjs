@@ -77,7 +77,8 @@ async function nativePage(role, viewport, restoredQueue = false) {
             window.__nativeRefreshDelay = false;
             window.__nativeRefreshInFlight = true;
             const staleDocument = { ...structuredClone(document), viewport: { x: 0, y: 0, zoom: 1 } };
-            await new Promise((resolve) => setTimeout(resolve, 200));
+            if (window.__nativeRefreshGate) await window.__nativeRefreshGate;
+            else await new Promise((resolve) => setTimeout(resolve, 200));
             window.__nativeRefreshInFlight = false;
             return { status: 'paired', sessionId: 'session-native', revision: revision + 1, document: staleDocument, queueDepth: 0, online, certificateFingerprint: 'abcdef0123456789'.repeat(4) };
           }
@@ -161,9 +162,15 @@ try {
   await host.page.mouse.click(hostBox.x + 220, hostBox.y + 220);
   await host.page.waitForFunction(() => window.__nativeCalls.some(({ command, args }) => command === 'draw_host_apply_local' && args?.operation?.type === 'put_object'));
   const hostViewportSubmits = await host.page.evaluate(() => window.__nativeCalls.filter(({ command, args }) => command === 'draw_host_apply_local' && args?.operation?.type === 'set_viewport').length);
-  await host.page.mouse.move(hostBox.x + 320, hostBox.y + 280);
-  await host.page.mouse.wheel(18, -12);
-  await host.page.getByRole('button', { name: 'Undo' }).click();
+  // Trigger undo in the same browser task, before the 120ms wheel debounce.
+  // Separate automation commands can let that debounce legitimately finish
+  // before Undo, especially while the native release is compiling.
+  await hostSurface.evaluate((surface) => {
+    const rect = surface.getBoundingClientRect();
+    surface.dispatchEvent(new WheelEvent('wheel', { deltaX: 18, deltaY: -12,
+      clientX: rect.x + 320, clientY: rect.y + 280, bubbles: true, cancelable: true }));
+    document.querySelector('button[aria-label="Undo"]').click();
+  });
   await host.page.waitForFunction(() => window.__nativeReplacementInFlight);
   await host.page.waitForTimeout(400);
   const hostViewportSubmitsAfterUndo = await host.page.evaluate(() => window.__nativeCalls.filter(({ command, args }) => command === 'draw_host_apply_local' && args?.operation?.type === 'set_viewport').length);
@@ -231,9 +238,14 @@ try {
   const viewportTransformAfterRace = await surface.locator('g[data-agent-camera]').getAttribute('transform');
   if (viewportTransformAfterRace !== 'translate(-40 30) scale(1)') throw new Error(`Earlier native response overwrote debounced trackpad navigation: ${viewportTransformAfterRace}`);
   await title.evaluate((input) => input.blur());
-  await page.evaluate(() => { window.__nativeRefreshDelay = true; });
+  await page.evaluate(() => {
+    window.__nativeRefreshGate = new Promise((resolve) => { window.__nativeReleaseRefresh = resolve; });
+    window.__nativeRefreshDelay = true;
+  });
   await page.waitForFunction(() => window.__nativeRefreshInFlight, undefined, { timeout: 2000 });
   await page.mouse.wheel(10, 5);
+  await page.waitForFunction(() => document.querySelector('g[data-agent-camera]')?.getAttribute('transform') === 'translate(-50 25) scale(1)');
+  await page.evaluate(() => { window.__nativeReleaseRefresh(); window.__nativeRefreshGate = null; });
   await page.waitForTimeout(350);
   const viewportTransformAfterRefreshRace = await surface.locator('g[data-agent-camera]').getAttribute('transform');
   if (viewportTransformAfterRefreshRace !== 'translate(-50 25) scale(1)') throw new Error(`Mirror refresh overwrote debounced trackpad navigation: ${viewportTransformAfterRefreshRace}`);
@@ -357,7 +369,8 @@ try {
   await surface.dispatchEvent('pointerup', { pointerId: 40, pointerType: 'touch', button: 0, clientX: box.x + 45, clientY: box.y + 430 });
   await page.getByRole('button', { name: /Select tool/ }).click();
   const group = page.getByRole('button', { name: /^Group:/ });
-  await group.click();
+  await group.focus();
+  await group.press('Enter');
   const resize = page.getByRole('button', { name: 'Resize group' });
   const groupGeometry = (locator) => locator.locator('rect').first().evaluate((rect) => ({ width: rect.getAttribute('width'), height: rect.getAttribute('height') }));
   const groupBeforeCancel = await groupGeometry(group);

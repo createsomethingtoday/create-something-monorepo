@@ -1,11 +1,11 @@
 {
   "schema": "create-something/draw-installed-acceptance@1",
   "ok": true,
-  "runId": "2026-10-04T20-49-59-088Z",
+  "runId": "2026-10-04T20-44-31-250Z",
   "artifact": {
     "name": "CREATE SOMETHING Draw_0.1.1_aarch64.dmg",
-    "sha256": "25c4394b1ab71ab7e71ec28b0711f084bf6a5dace321cc212c9e30a57153e141",
-    "appSha256": "cebdc92092456e124e26475d22ac7b812b38206693e36de3a679545ebfd0ba75"
+    "sha256": "39a67f31b5ccb8d1ec9e1638c6fade856f5d91fb28a443da911aa5a163af88b5",
+    "appSha256": "3fb7847a8f8838cc77961c415ac1c437908685e6e78559097f858216f04b6724"
   },
   "bundle": {
     "identifier": "agency.createsomething.draw",
@@ -14,12 +14,12 @@
     "selfContained": true
   },
   "state": {
-    "sessionId": "session-162475aa-1c59-491e-8424-6c6edd2087b2",
+    "sessionId": "session-42bd9c0a-dde4-442d-9a02-03100ebfaccb",
     "revision": 0,
-    "documentHash": "d9e84a8b813e07a8d1c06077db8c261f9ce809e667b2ae053cddb103cc88158f",
+    "documentHash": "fca5c0ef2242a24d051d173f97d2817f2997d25893bf62204c3a9c9cda195a42",
     "relaunchExact": true,
     "existingDocument": {
-      "sessionId": "session-162475aa-1c59-491e-8424-6c6edd2087b2",
+      "sessionId": "session-42bd9c0a-dde4-442d-9a02-03100ebfaccb",
       "revision": 17,
       "documentHash": "274f4cad1704e327ca3dd96067d1ad012e9e86abc1d7ec96132ee0bca360725c",
       "relaunchExact": true,
@@ -32,12 +32,12 @@
     "readonlyMount": true,
     "isolatedCopy": true,
     "processIds": [
-      46990,
-      47033
+      19767,
+      20285
     ],
     "existingDocumentProcessIds": [
-      47582,
-      48405
+      20847,
+      21333
     ],
     "termination": "exact spawned child processes only",
     "externalDylibCheck": true
@@ -53,13 +53,13 @@
       "verification": ""
     },
     "notarization": {
-      "status": "performed",
-      "app": "Processing: <disposable-profile>/installed/CREATE SOMETHING Draw.app\nThe validate action worked!",
-      "dmg": "Processing: <workspace>/apps/draw-native/src-tauri/target/release/bundle/dmg/CREATE SOMETHING Draw_0.1.1_aarch64.dmg\nThe validate action worked!"
+      "status": "unperformed",
+      "app": "Processing: <disposable-profile>/installed/CREATE SOMETHING Draw.app\nCREATE SOMETHING Draw.app does not have a ticket stapled to it.",
+      "dmg": "Processing: <workspace>/apps/draw-native/src-tauri/target/release/bundle/dmg/CREATE SOMETHING Draw_0.1.1_aarch64.dmg\nCREATE SOMETHING Draw_0.1.1_aarch64.dmg does not have a ticket stapled to it."
     },
     "gatekeeper": {
-      "status": "performed",
-      "assessment": "<workspace>/apps/draw-native/src-tauri/target/release/bundle/dmg/CREATE SOMETHING Draw_0.1.1_aarch64.dmg: accepted\nsource=Notarized Developer ID"
+      "status": "unperformed",
+      "assessment": "<workspace>/apps/draw-native/src-tauri/target/release/bundle/dmg/CREATE SOMETHING Draw_0.1.1_aarch64.dmg: rejected\nsource=Unnotarized Developer ID"
     },
     "physicalIPhoneAcceptance": "unperformed"
   }

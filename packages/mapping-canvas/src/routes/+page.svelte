@@ -23,8 +23,9 @@
   import { createNoteInputBuffer } from '$lib/note-input';
   import { paddedSegmentBounds } from '$lib/spatial';
   import RichNote from '$lib/RichNote.svelte';
+  import NoteEditor from '$lib/NoteEditor.svelte';
   import ToolIcon from '$lib/ToolIcon.svelte';
-  import { layoutNoteContent, normalizeNoteContent, noteContentText, plainNoteContent, type NoteBlockType, type NoteContent, type NoteRun } from '$lib/note-content';
+  import { layoutNoteContent, normalizeNoteContent, noteContentText, type NoteBlockType, type NoteContent, type NoteRun } from '$lib/note-content';
 
   const tools: { id: Tool; label: string; key: string }[] = [
     { id: 'select', label: 'Select', key: 'V' }, { id: 'pen', label: 'Pen', key: 'P' },
@@ -746,26 +747,22 @@
   function queueSave(next: CanvasDocument) { if (!browser || nativeRole !== 'web') return; clearTimeout(saveTimer); status = 'Saving locally…'; saveTimer = setTimeout(() => void persistCurrentDocument(next).then((saved) => status = saved ? 'Saved on this device' : 'Another tab replaced this canvas · reload to continue').catch(() => status = 'Local save failed · export a copy'), 120); }
   async function openMotion(event: MouseEvent, preview = false) { event.preventDefault(); if (!ready) { status = 'Canvas is still loading'; return; } if (sharing || replacingDocument) { status = 'Wait for sharing or document replacement to finish before opening Motion'; return; } noteInput.flushAll(); clearTimeout(saveTimer); saveTimer = undefined; if (!await persistCurrentDocument(document)) { status = 'A newer Canvas is saved in another tab · reload before opening Motion'; return; } location.href = `/animate?project=${encodeURIComponent(document.id)}${preview?'&mode=preview':''}`; }
   function commitNoteText(id: string, text: string) { if (!companionCanEdit()) return; const current = document.objects.find((entry) => entry.id === id); if (!current || isLayerLocked(document,id) || current.kind !== 'note' || (current.text === text && !current.content)) return; const changed = { ...current, text, content: undefined }; const next = withObjects(document, document.objects.map((entry) => entry.id === id ? changed : entry)); history = { ...history, present: next }; queueSave(next); sendNative([{ type: 'put_object', object: changed }]); }
-  function formatSelectedNote(blockType?: NoteBlockType, mark?: 'bold' | 'italic' | 'underline' | 'code' | 'link') {
-    const note = selectedIds.length === 1 ? history.present.objects.find((entry) => entry.id === selectedIds[0]) : null;
-    if (!note || note.kind !== 'note' || !companionCanEdit()) return;
-    const link = mark === 'link' ? prompt('Safe link (https:// or mailto:)') : undefined;
-    if (mark === 'link' && (!link || (!link.startsWith('https://') && !link.startsWith('mailto:')))) { status = 'Links must use https:// or mailto:'; return; }
-    const content: NoteContent = note.content ? JSON.parse(JSON.stringify(note.content)) : plainNoteContent(note.text);
-    if (blockType) content.blocks = content.blocks.map((block) => ({ ...block, type: blockType }));
-    if (mark) content.blocks = content.blocks.map((block) => ({ ...block, runs: block.runs.map((run) => ({ ...run, ...(mark === 'link' ? { link: link! } : { [mark]: true }) })) }));
-    const normalized = normalizeNoteContent(content);
-    if (!normalized) { status = 'Note formatting is invalid or exceeds its limits'; return; }
-    const changed = { ...note, text: noteContentText(normalized), content: normalized };
-    apply(withObjects(document, document.objects.map((entry) => entry.id === note.id ? changed : entry)), { type: 'put_object', object: changed });
-    status = 'Formatted note saved locally';
+  let editingNote = $state<{ id: string; original: string; width: number; content: NoteContent } | null>(null);
+  function openNoteEditor() {
+    noteInput.flushAll();
+    const note = selectedObjects.length === 1 ? document.objects.find((entry) => entry.id === selectedIds[0]) : null;
+    if (!note || note.kind !== 'note' || isLayerLocked(document, note.id) || !companionCanEdit()) return;
+    const paragraphs = note.text.split('\n');
+    const content: NoteContent = note.content || { blocks: paragraphs.length > 100 || paragraphs.some((text) => !text) ? [{ type: 'paragraph', runs: [{ text: note.text || ' ' }] }] : paragraphs.map((text) => ({ type: 'paragraph', runs: [{ text }] })) };
+    editingNote = { id: note.id, original: JSON.stringify(note), width: note.width, content };
   }
-  function clearSelectedNoteFormatting() {
-    const note = selectedObjects.find((entry) => entry.kind === 'note');
-    if (!note || note.kind !== 'note' || !note.content || !companionCanEdit()) return;
-    const changed = { ...note, content: undefined };
+  function saveEditedNote(content: NoteContent, height?: number) {
+    if (!editingNote) return;
+    const note = document.objects.find((entry) => entry.id === editingNote!.id);
+    if (!note || note.kind !== 'note' || JSON.stringify(note) !== editingNote.original) { status = 'This note changed while editing · reopen it to continue'; editingNote = null; return; }
+    const changed = { ...note, text: noteContentText(content), content, ...(height ? { height: Math.max(note.height, height) } : {}) };
     apply(withObjects(document, document.objects.map((entry) => entry.id === note.id ? changed : entry)), { type: 'put_object', object: changed });
-    status = 'Note formatting cleared';
+    editingNote = null;
   }
   function apply(next: CanvasDocument, operation?: CanvasOperation | CanvasOperation[]) { if (!companionCanEdit()) return; try {assertLockedLayersPreserved(document,next);} catch(error) {status=error instanceof Error?error.message:'Unlock layers before editing';return;} history = commit(history, next); queueSave(next); sendNative(operation ? (Array.isArray(operation) ? operation : [operation]) : [], true); }
   function operationsBetween(from: CanvasDocument, to: CanvasDocument): CanvasOperation[] {
@@ -996,7 +993,17 @@
   function fitDrawing() {
     if (!visibleLayers.length) return;
     stopAgentCamera();
-    updateViewport(fitViewportToBounds(viewport, visualBounds(visibleLayers), { width: viewportWidth, height: viewportHeight }, { padding: Math.min(72, viewportWidth * .08), force: true }));
+    const surfaceRect = surface.getBoundingClientRect();
+    let top = 0, bottom = 0;
+    // Fit artwork into the visible canvas, clear of the current operator controls.
+    for (const overlay of surface.parentElement!.querySelectorAll<HTMLElement>('.history, .paper, .selection, .palette, .agent-activity')) {
+      const rect = overlay.getBoundingClientRect();
+      if (!rect.width || !rect.height) continue;
+      const bottomAnchored = rect.top + rect.height / 2 > surfaceRect.top + surfaceRect.height / 2;
+      if (bottomAnchored) bottom = Math.max(bottom, surfaceRect.bottom - rect.top);
+      else top = Math.max(top, rect.bottom - surfaceRect.top);
+    }
+    updateViewport(fitViewportToBounds(viewport, visualBounds(visibleLayers), { width: viewportWidth, height: viewportHeight }, { padding: Math.min(72, viewportWidth * .08), force: true, insets: { top, bottom }, allowOverview: true }));
   }
 
   function resetView() {
@@ -1351,7 +1358,7 @@
         {#if nativeRole === 'companion'}<button class:reset-confirm={companionResetArmed} aria-label={companionResetArmed ? 'Confirm reset' : 'Reset'} onclick={resetCanvas}>{companionResetArmed ? 'Confirm' : 'Reset'}</button>{/if}
       </div>
       <div class="mark-controls">
-      {#if selectedIds.length}<div class="selection" data-ui="true"><span>{selectedIds.length} selected</span>{#if selectedObjects.length === 1 && selectedObjects[0].kind === 'note'}<div class="note-format" role="toolbar" aria-label="Note formatting"><button onclick={() => formatSelectedNote('heading1')}>H1</button><button onclick={() => formatSelectedNote(undefined,'bold')}>Bold</button><button onclick={() => formatSelectedNote(undefined,'italic')}>Italic</button><button onclick={() => formatSelectedNote('bullet')}>Bullet</button><button onclick={() => formatSelectedNote('quote')}>Quote</button><button onclick={() => formatSelectedNote(undefined,'code')}>Code</button><button onclick={() => formatSelectedNote(undefined,'link')}>Link</button><button onclick={clearSelectedNoteFormatting}>Plain</button></div>{/if}<button class="convert" data-testid="convert-menu" onclick={() => conversionOpen = !conversionOpen}>Convert to…</button>{#if selectedObjects.length === 1 && selectedObjects[0].sourceSnapshot}<button data-testid="restore-source" onclick={restoreSelected}>Restore source</button>{/if}{#if conversionOpen}<div class="conversion-menu"><button data-testid="convert-note" onclick={() => runConversion('note')}>Note<small>Retain as editable text</small></button><button data-testid="convert-connector" onclick={() => runConversion('connector')} disabled={selectedIds.length < 2}>Connector<small>Relate two selected objects</small></button><button data-testid="convert-group" onclick={() => runConversion('group')}>Group<small>Name a working boundary</small></button></div>{/if}</div>{/if}
+      {#if selectedIds.length}<div class="selection" data-ui="true"><span>{selectedIds.length} selected</span>{#if selectedObjects.length === 1 && selectedObjects[0].kind === 'note'}<button onclick={openNoteEditor} disabled={isLayerLocked(document, selectedObjects[0].id)}>Edit & format</button>{/if}<button class="convert" data-testid="convert-menu" onclick={() => conversionOpen = !conversionOpen}>Convert to…</button>{#if selectedObjects.length === 1 && selectedObjects[0].sourceSnapshot}<button data-testid="restore-source" onclick={restoreSelected}>Restore source</button>{/if}{#if conversionOpen}<div class="conversion-menu"><button data-testid="convert-note" onclick={() => runConversion('note')}>Note<small>Retain as editable text</small></button><button data-testid="convert-connector" onclick={() => runConversion('connector')} disabled={selectedIds.length < 2}>Connector<small>Relate two selected objects</small></button><button data-testid="convert-group" onclick={() => runConversion('group')}>Group<small>Name a working boundary</small></button></div>{/if}</div>{/if}
       {#if paletteVisible}<div class="palette" role="group" aria-label="Mark color" data-ui="true"><span>Mark color</span><div>{#each DRAWING_PALETTE as color}<button class:active={drawingColor === color.value} aria-pressed={drawingColor === color.value} aria-label={`${color.label} color`} data-testid={`color-${color.id}`} style={`--swatch:var(${color.token},${color.value})`} onclick={() => chooseColor(color.value, color.label)}><i aria-hidden="true"></i><small>{color.label}</small></button>{/each}</div></div>{/if}
       </div>
       {#if currentActivity}<AgentActivityPanel activity={currentActivity} now={activityNow} bind:follow={followAgent} bind:reduced={reduceAgentMotion} stop={stopAgentCamera} />{/if}
@@ -1385,3 +1392,5 @@
     <p class="shortcuts-platform">Use ⌘ on Mac or Ctrl on Windows and Linux.</p>
   </dialog>
 </main>
+
+{#if editingNote}<NoteEditor width={editingNote.width} content={editingNote.content} onsave={saveEditedNote} oncancel={() => editingNote = null} />{/if}
