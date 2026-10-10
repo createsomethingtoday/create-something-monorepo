@@ -9,6 +9,8 @@ export interface KnockRecipient {
 export interface KnockLoginPayload {
   verificationToken: string;
   expiresAtIso: string;
+  /** Absolute URL of the dashboard's standalone code-entry page (`/verify`). Required: the email's only CTA points here. */
+  verifyUrl: string;
 }
 
 export interface TriggerLoginWorkflowInput {
