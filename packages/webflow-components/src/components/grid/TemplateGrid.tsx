@@ -12,6 +12,7 @@ import { TemplateCard, TEMPLATE_CARD_STYLES, type TemplateCardBadge, type Templa
 import { trackMarketplaceEvent } from '../marketplace/analytics';
 import { FeaturedTemplatePreview } from '../marketplace/FeaturedTemplatePreview';
 import { TemplateCampaignLane } from '../marketplace/TemplateCampaignLane';
+import { templateAnnotationContainerProps, templateAnnotationProps } from '../marketplace/templateAnnotations';
 import {
   MarketplaceComponentErrorBoundary,
   useMarketplaceComponentErrorTracking,
@@ -1135,6 +1136,15 @@ const TemplateGridItemView = memo<TemplateGridItemViewProps>(({
       className="tmgrid-item"
       style={{ animationDelay: `${Math.min(index % pageSize, 11) * 40}ms` }}
       data-template-slug={item.template_slug}
+      {...templateAnnotationProps({
+        name: item.name,
+        template_slug: item.template_slug,
+        creator_name: item.creator_name,
+        price: item.price,
+        is_free: item.is_free,
+        category: primaryCategory?.name,
+        url: item.url,
+      })}
       onClickCapture={(event) => onCardClick(event, item, index, signals)}
     >
       <TemplateCard
@@ -2116,7 +2126,7 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
     return withFeaturedPreview(
       <div style={S.root} data-marketplace-component="template-grid">
         <style dangerouslySetInnerHTML={{ __html: GRID_STYLES }} />
-        <div className="tmgrid-grid">
+        <div className="tmgrid-grid" {...templateAnnotationContainerProps()}>
           {Array.from({ length: Math.min(resolvedPageSize, 12) }).map((_, i) => (
             <SkeletonCard key={i} index={i} />
           ))}
@@ -2185,7 +2195,7 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
               <p style={S.emptyRecommendationsTitle}>{emptyRecommendationsTitleState}</p>
               <p style={S.emptyRecommendationsDescription}>Fresh starting points while you refine the search.</p>
             </div>
-            <div className="tmgrid-grid">
+            <div className="tmgrid-grid" {...templateAnnotationContainerProps()}>
               {emptyRecommendationsLoading && emptyRecommendations.length === 0
                 ? Array.from({ length: EMPTY_RECOMMENDATION_COUNT }).map((_, i) => <SkeletonCard key={`empty-skeleton-${i}`} index={i} />)
                 : emptyRecommendations.map((item, i) => renderTemplateGridItem(item, i, 'empty-recommendation'))}
@@ -2235,7 +2245,7 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
             <div className="tmgrid-spinner" />
           </div>
         )}
-        <div className="tmgrid-grid">
+        <div className="tmgrid-grid" {...templateAnnotationContainerProps()}>
           {displayItems.map((displayItem) =>
             displayItem.kind === 'campaign'
               ? <TemplateCampaignLane key={displayItem.campaignId} enableAnalytics={enableAnalytics} />

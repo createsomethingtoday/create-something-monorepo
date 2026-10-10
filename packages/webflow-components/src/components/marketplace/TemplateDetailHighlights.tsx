@@ -2,6 +2,7 @@ import React, { useEffect, useMemo } from 'react';
 import { trackMarketplaceEvent } from './analytics';
 import { MarketplaceComponentErrorBoundary, useMarketplaceComponentErrorTracking } from './MarketplaceComponentErrorBoundary';
 import { inferTemplateSlug, templateDetailAnalyticsBase } from './templateDetailOffer';
+import { templateAnnotationTextContainerProps } from './templateAnnotations';
 import { TEMPLATE_DETAIL_STYLES } from './templateDetailStyles';
 
 export interface TemplateDetailHighlightItem {
@@ -143,7 +144,11 @@ const TemplateDetailHighlightsInner: React.FC<TemplateDetailHighlightsProps> = (
   }, [enableAnalytics, highlights.length, resolvedSlug]);
 
   return (
-    <section className="wfdt wfdt-highlights" data-template-detail-highlights="">
+    <section
+      className="wfdt wfdt-highlights"
+      data-template-detail-highlights=""
+      {...templateAnnotationTextContainerProps()}
+    >
       <style>{TEMPLATE_DETAIL_STYLES}</style>
       <div>
         <h2 className="wfdt-highlights-title">{title}</h2>

@@ -38,7 +38,7 @@ import {
   type TemplateRouteState,
 } from './templateRoute';
 
-export const MARKETPLACE_AGENT_TOOLS_VERSION = '2026-09-10.1';
+export const MARKETPLACE_AGENT_TOOLS_VERSION = '2026-10-10.1';
 
 // Same default + rewrite guard as the sibling marketplace components:
 // webflow.com's CSP is `connect-src https://*.webflow.com`, so direct worker
@@ -218,11 +218,27 @@ export function summarizeSearchItem(item: SearchApiItem): Record<string, unknown
 
 // ── Tool + registration types ────────────────────────────────────────────────
 
+/**
+ * WebMCP ToolAnnotations (W3C draft, October 2026). ChatGPT's Site tools reads
+ * readOnlyHint to count read vs write tools; the other hints describe trust
+ * and blast radius so clients can decide when to confirm before calling.
+ */
+export interface WebMcpToolAnnotations {
+  /** The tool only reads; it never changes page or remote state. */
+  readOnlyHint: boolean;
+  /** The result carries third-party content (creator-authored listings). */
+  untrustedContentHint?: boolean;
+  /** Execution has significant or irreversible real-world effects. */
+  consequentialHint?: boolean;
+  /** Developer tooling rather than end-user interaction. */
+  debugging?: boolean;
+}
+
 export interface MarketplaceAgentTool {
   name: string;
   description: string;
   inputSchema: Record<string, unknown>;
-  annotations: { readOnlyHint: boolean };
+  annotations: WebMcpToolAnnotations;
   execute: (input: Record<string, unknown>) => Promise<unknown>;
 }
 
@@ -625,7 +641,8 @@ export function createMarketplaceAgentTools(
     description:
       'Search the Webflow Template Marketplace catalog. Returns matching templates with name, creator, price, categories, styles, demand tier, and links. Use list_categories_and_styles first to discover valid category and style slugs.',
     inputSchema: SEARCH_INPUT_SCHEMA,
-    annotations: { readOnlyHint: true },
+    // Results carry creator-authored listing text.
+    annotations: { readOnlyHint: true, untrustedContentHint: true },
     async execute(input) {
       const invalid = await validateTaxonomy(input);
       if (invalid) return invalid;
@@ -690,7 +707,8 @@ export function createMarketplaceAgentTools(
         template_slug: { type: 'string', description: 'Slug from search_templates results.' },
       },
     },
-    annotations: { readOnlyHint: true },
+    // The description and feature list are creator-authored.
+    annotations: { readOnlyHint: true, untrustedContentHint: true },
     async execute(input) {
       const slug = String(input.template_slug ?? '').trim().toLowerCase();
       if (!slug) return { ok: false, message: 'template_slug is required.' };
@@ -733,7 +751,8 @@ export function createMarketplaceAgentTools(
     description:
       'Apply search, subcategory, scope, styles, type, sorting or page to the visible grid. Returns ready only after matching results render; Back undoes the action. If this page has no grid, open the returned next_url and fetch tools again.',
     inputSchema: UPDATE_PAGE_INPUT_SCHEMA,
-    annotations: { readOnlyHint: false },
+    // Changes the visible grid and URL only; Back undoes it, nothing is bought or sent.
+    annotations: { readOnlyHint: false, consequentialHint: false },
     async execute(input) {
       if (typeof window === 'undefined' || typeof document === 'undefined') {
         return { ok: false, message: 'Page context unavailable.' };
@@ -844,7 +863,8 @@ export function createMarketplaceAgentTools(
     description:
       'Read loading/ready/error state, result revision, pagination and active filters. Visible template slugs are returned only for ready results; never describe loading results as matches.',
     inputSchema: { type: 'object', additionalProperties: false, properties: {} },
-    annotations: { readOnlyHint: true },
+    // Visible slugs are creator-chosen strings.
+    annotations: { readOnlyHint: true, untrustedContentHint: true },
     async execute() {
       if (typeof window === 'undefined' || typeof document === 'undefined') {
         return { ok: false, message: 'Page context unavailable.' };
@@ -972,12 +992,30 @@ interface ModelContextLike {
   provideContext?: (context: { tools: unknown[] }) => unknown;
 }
 
+/**
+ * The W3C draft and ChatGPT's Site tools expose `document.modelContext`; early
+ * Chromium builds used `navigator.modelContext`. Prefer the spec surface.
+ */
 function findModelContext(): ModelContextLike | null {
+  if (typeof document !== 'undefined') {
+    const doc = document as Document & { modelContext?: ModelContextLike };
+    if (doc?.modelContext) return doc.modelContext;
+  }
   if (typeof window === 'undefined') return null;
   const nav = window.navigator as Navigator & { modelContext?: ModelContextLike };
-  if (nav?.modelContext) return nav.modelContext;
-  const doc = document as Document & { modelContext?: ModelContextLike };
-  return doc?.modelContext ?? null;
+  return nav?.modelContext ?? null;
+}
+
+/** Fill every spec-defined hint so a client never reads an absent member as unknown. */
+export function normalizeToolAnnotations(
+  annotations: WebMcpToolAnnotations,
+): Required<WebMcpToolAnnotations> {
+  return {
+    readOnlyHint: annotations.readOnlyHint === true,
+    untrustedContentHint: annotations.untrustedContentHint === true,
+    consequentialHint: annotations.consequentialHint === true,
+    debugging: annotations.debugging === true,
+  };
 }
 
 /** Adapt a tool so its result matches the WebMCP content-array shape. */
@@ -986,7 +1024,7 @@ export function toWebMcpTool(tool: MarketplaceAgentTool): Record<string, unknown
     name: tool.name,
     description: tool.description,
     inputSchema: tool.inputSchema,
-    annotations: tool.annotations,
+    annotations: normalizeToolAnnotations(tool.annotations),
     execute: async (input: Record<string, unknown>): Promise<WebMcpToolResult> => {
       const raw = await tool.execute(input ?? {});
       if (
@@ -1045,7 +1083,12 @@ export function registerMarketplaceAgentTools(
 
 export interface AgentToolsWindowHandle {
   version: string;
-  listTools: () => Array<{ name: string; description: string; readOnly: boolean }>;
+  listTools: () => Array<{
+    name: string;
+    description: string;
+    readOnly: boolean;
+    annotations: Required<WebMcpToolAnnotations>;
+  }>;
   callTool: (name: string, input?: Record<string, unknown>) => Promise<unknown>;
 }
 
@@ -1059,6 +1102,7 @@ export function createAgentToolsWindowHandle(
         name: tool.name,
         description: tool.description,
         readOnly: tool.annotations.readOnlyHint,
+        annotations: normalizeToolAnnotations(tool.annotations),
       })),
     callTool: async (name, input = {}) => {
       const tool = tools.find((entry) => entry.name === name);

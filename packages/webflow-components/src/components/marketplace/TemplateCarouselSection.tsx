@@ -1,6 +1,7 @@
 import React, { CSSProperties, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { TemplateCard, TEMPLATE_CARD_STYLES } from '../cards/TemplateCard';
 import { MarketplaceExperimentRole, trackMarketplaceEvent } from './analytics';
+import { templateAnnotationContainerProps, templateAnnotationProps } from './templateAnnotations';
 import type { TemplateSort } from './templateRoute';
 
 type TemplateScope = 'all' | 'featured' | 'free' | 'landing_pages';
@@ -649,6 +650,7 @@ export const TemplateCarouselSection: React.FC<TemplateCarouselSectionProps> = (
       data-marketplace-scope={scope}
       data-marketplace-sort={sort}
       data-marketplace-landing-experiment={experimentRole === 'none' ? undefined : experimentRole}
+      {...templateAnnotationContainerProps()}
     >
       <style dangerouslySetInnerHTML={{ __html: CAROUSEL_STYLES }} />
       <div className="tmcarousel-header">
@@ -719,6 +721,14 @@ export const TemplateCarouselSection: React.FC<TemplateCarouselSectionProps> = (
                     className="tmcarousel-item"
                     data-template-slug={item.template_slug}
                     data-marketplace-template-position={index + 1}
+                    {...templateAnnotationProps({
+                      name: item.name,
+                      template_slug: item.template_slug,
+                      creator_name: item.creator_name,
+                      price: item.price,
+                      is_free: item.is_free,
+                      url: item.url,
+                    })}
                     onClickCapture={(event) => onItemClickCapture(item, index, event)}
                   >
                     <TemplateCard
