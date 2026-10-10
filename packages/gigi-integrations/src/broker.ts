@@ -81,13 +81,13 @@ export function createBrokerClient(options: BrokerOptions): BrokerClient {
           ...(body === undefined ? {} : { body: JSON.stringify(body) }),
         }));
         if (response.status === 401) throw new IntegrationError({ operation, reason: 'session_expired' });
-        if (response.status === 403) throw new IntegrationError({ operation, reason: 'access_denied' });
         if (!response.ok) {
           // Only fixed, recognized codes cross the process/UI boundary, never provider text.
-          let reason: 'unconfigured' | 'provider_unavailable' | 'invalid_readback' | 'unavailable' = 'unavailable';
+          let reason: 'access_denied' | 'unconfigured' | 'provider_unavailable' | 'invalid_readback' | 'unavailable' = response.status === 403 ? 'provider_unavailable' : 'unavailable';
           try {
             const failure = await readBoundedJson(response) as { error?: unknown };
-            if (response.status === 503 && failure?.error === 'unconfigured') reason = 'unconfigured';
+            if (response.status === 403 && failure?.error === 'access_denied') reason = 'access_denied';
+            else if (response.status === 503 && failure?.error === 'unconfigured') reason = 'unconfigured';
             else if (response.status === 503 && ['provider_unavailable', 'source_unavailable'].includes(String(failure?.error))) reason = 'provider_unavailable';
             else if (response.status === 502 && failure?.error === 'provider_readback_invalid') reason = 'invalid_readback';
           } catch { /* Preserve a safe generic error for malformed diagnostics. */ }

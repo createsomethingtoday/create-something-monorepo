@@ -12,7 +12,7 @@
       "skipped": 0
     },
     "integrations": {
-      "passed": 204,
+      "passed": 205,
       "skipped": 0
     },
     "rustDomain": {
@@ -29,14 +29,16 @@
   "independentReview": {
     "security": "no outstanding blocking findings",
     "ux": "screenshots reviewed; no blocking findings",
-    "reviewerSetupTestsPassed": 8
+    "reviewerSetupTestsPassed": 8,
+    "reviewerBrokerTestsPassed": 17
   },
   "boundaries": [
     "No live provider account data read or imported",
     "No new credentials, scopes or admission grants",
     "No email/calendar writes or invitations",
     "Installed GiGi unchanged",
-    "Prior source QA bundle file hashes verified; prior native acceptance is historical evidence, not this candidate native acceptance"
+    "Prior source QA bundle file hashes verified; prior native acceptance is historical evidence, not this candidate native acceptance",
+    "Public health probe received edge browser-signature denial; Worker health/version and Grant access remain unverified"
   ],
   "remainingGates": [
     "Remote GiGi regression CI",

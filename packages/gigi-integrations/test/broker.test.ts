@@ -59,7 +59,7 @@ test('authorization failure remains a typed failure without exposing response co
     fetch: async () => new Response('secret diagnostic', { status: 403 }),
   });
   await assert.rejects(broker.connectionStatus('gmail'), (error) =>
-    error instanceof IntegrationError && error.reason === 'access_denied');
+    error instanceof IntegrationError && error.reason === 'provider_unavailable');
 });
 
 test('connected status requires an account identity', async () => {
@@ -82,7 +82,8 @@ test('reconnectable is accepted only for attention status', async () => {
 
 for (const [status, payload, reason] of [
   [401, { error: 'secret diagnostic' }, 'session_expired'],
-  [403, { error: 'secret diagnostic' }, 'access_denied'],
+  [403, { error: 'secret diagnostic' }, 'provider_unavailable'],
+  [403, { error: 'access_denied' }, 'access_denied'],
   [503, { error: 'provider_unavailable' }, 'provider_unavailable'],
   [503, { error: 'unconfigured' }, 'unconfigured'],
   [503, { error: 'secret diagnostic' }, 'unavailable'],
