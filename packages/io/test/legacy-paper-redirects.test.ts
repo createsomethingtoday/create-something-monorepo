@@ -5,7 +5,8 @@ import { load } from '../src/routes/papers/[slug]/+page.server';
 const legacyPaperRedirects = [
 	['ascii-renderer', '/experiments/ascii-renderer'],
 	['ai-native-filtering', '/experiments/ai-native-filtering'],
-	['webflow-analyzer-lineage', '/experiments/webflow-analyzer-lineage']
+	['webflow-analyzer-lineage', '/experiments/webflow-analyzer-lineage'],
+	['governed-codex-model-routing', '/experiments/governed-codex-model-routing']
 ] as const;
 
 describe('legacy paper experiment routes', () => {
