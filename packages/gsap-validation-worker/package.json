@@ -13,8 +13,9 @@
   "scripts": {
     "dev": "node ../../scripts/run-wrangler.mjs dev",
     "deploy": "node ../../scripts/run-wrangler.mjs deploy",
-    "test": "pnpm test:unicorn",
+    "test": "pnpm test:unicorn && pnpm test:keyboard",
     "test:unicorn": "node scripts/test-unicorn-detection.mjs",
-    "test:live": "node scripts/repro-live-worker.mjs"
+    "test:live": "node scripts/repro-live-worker.mjs",
+    "test:keyboard": "node scripts/test-keyboard-accessibility.mjs"
   }
 }
