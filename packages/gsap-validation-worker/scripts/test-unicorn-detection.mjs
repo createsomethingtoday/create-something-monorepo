@@ -1,3 +1,4 @@
+import { matchesReviewedKeyboardException } from '../src/reviewed-keyboard-exception.js';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
@@ -12,6 +13,7 @@ assert.notEqual(start, -1, 'validator slice start not found');
 assert.notEqual(end, endMarker.length - 1, 'validator slice end not found');
 
 const sandbox = {
+  matchesReviewedKeyboardException,
   console,
   Set,
   URL,
