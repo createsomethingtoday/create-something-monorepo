@@ -37,7 +37,7 @@ Use campaign tags only after the receiving property accepts and records them. Ke
 
 ## Agent handoff and review
 
-Linear owns shared scope, owner, approval, and evidence. Paperclip's `create-something` instance is the monorepo execution surface; its `CRE-*` numbers are not Linear IDs. Give a delegated agent the source card, exact deliverable, account or page, claim limits, links to the owning policy, and the expected proof. Ask for drafts or read-only checks separately from publication. An agent's completion means its assigned artifact is ready for review, not that the campaign is live.
+Linear owns shared scope, owner, approval, and evidence. Give a delegated agent the source card, exact deliverable, account or page, claim limits, links to the owning policy, and the expected proof. Ask for drafts or read-only checks separately from publication. An agent's completion means its assigned artifact is ready for review, not that the campaign is live.
 
 Before a public write, bind the approval to the exact copy, account, link, and timing. If any of those change materially, review that changed item. The operator checks that the intended account is signed in, the source and destination still render, and no matching post already exists. Publish once, then read back the post under the right author and record its public URL and time. If a composer errors or a tool times out, inspect the account activity before retrying; social writes are not safely idempotent.
 
