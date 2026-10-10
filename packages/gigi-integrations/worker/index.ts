@@ -66,8 +66,9 @@ export async function handleConnectorRequest(
     });
   }
   if (!url.pathname.startsWith('/v1/gigi/')) return json({ error: 'not_found' }, 404);
-  const subject = await authenticate(request, env, providerFetch);
-  if (!subject) return json({ error: 'unauthorized' }, 401);
+  const admission = await authenticate(request, env, providerFetch);
+  if ('error' in admission) return json({ error: admission.error }, admission.status);
+  const subject = admission.subject;
   if (!env.DB || !env.COMPOSIO_API_KEY) return json({ error: 'unconfigured' }, 503);
   const status = /^\/v1\/gigi\/connections\/(gmail|googlecalendar)$/u.exec(url.pathname);
   if (status && request.method === 'GET') {
@@ -92,7 +93,7 @@ export async function handleConnectorRequest(
           ...(release.meta?.changes === 1 ? { reconnectable: true } : {}) });
       }
       if (row.status === 'active') return state === 'active'
-        ? json({ provider, state: 'connected', connectedAccountId: row.connected_account_id })
+        ? json({ provider, state: 'connected', connectedAccountId: row.connected_account_id, ...await accountLabel(env, providerFetch, provider, row.connected_account_id) })
         : json({ provider, state: 'attention', connectedAccountId: row.connected_account_id });
       if (row.status === 'linked' && state === 'pending') {
         if (validConsentLink(row.redirect_url, row.expires_at)) {
@@ -130,7 +131,7 @@ export async function handleConnectorRequest(
       "UPDATE gigi_connection_attempts SET status = 'active' WHERE subject = ? AND provider = ? AND connected_account_id = ? AND status IN ('linked', 'active')",
     ).bind(subject, provider, accountId).run() as { meta?: { changes?: number } };
     if (activation.meta?.changes !== 1) return json({ error: 'connection_changed' }, 409);
-    return json({ provider, state: 'connected', connectedAccountId: accountId });
+    return json({ provider, state: 'connected', connectedAccountId: accountId, ...await accountLabel(env, providerFetch, provider, accountId) });
   }
   const source = /^\/v1\/gigi\/sources\/(gmail|googlecalendar)\/([A-Za-z0-9._:-]+)\/page$/u.exec(url.pathname);
   if (source && request.method === 'GET') {
@@ -204,7 +205,8 @@ export async function readSourcePage(
     if (!isRecord(item) || typeof item.id !== 'string' || !item.id || item.id.length > 256) throw new Error('calendar_event_id_invalid');
     return { externalId: item.id, kind: 'event' as const, observedAt, data: {
       calendarId, summary: typeof item.summary === 'string' ? item.summary.slice(0, 500) : '',
-      start: isRecord(item.start) ? item.start : {}, end: isRecord(item.end) ? item.end : {},
+      start: calendarTimeProjection(item.start), end: calendarTimeProjection(item.end),
+      ...(typeof item.htmlLink === 'string' && item.htmlLink.length <= 512 ? { htmlLink: item.htmlLink } : {}),
       location: typeof item.location === 'string' ? item.location.slice(0, 500) : '',
       description: typeof item.description === 'string' ? item.description.slice(0, 1000) : '',
     } };
@@ -213,22 +215,50 @@ export async function readSourcePage(
     nextCursor: typeof page.nextPageToken === 'string' ? page.nextPageToken : null };
 }
 
+// Project only bounded provider time metadata, never arbitrary nested event properties.
+function calendarTimeProjection(value: unknown): Record<string, string> {
+  if (!isRecord(value)) return {};
+  const result: Record<string, string> = {};
+  for (const key of ['date', 'dateTime', 'timeZone']) {
+    if (value[key] !== undefined) {
+      if (typeof value[key] !== 'string' || value[key].length > (key === 'timeZone' ? 128 : 64)) throw new Error('calendar_time_invalid');
+      result[key] = value[key];
+    }
+  }
+  return result;
+}
+
 async function proxyRead(
   env: ConnectorEnv,
   providerFetch: typeof fetch,
   accountId: string,
   endpoint: string,
   parameters: Array<{ name: string; value: string; type: 'query' }>,
+  timeoutMs = 8_000,
 ): Promise<Record<string, unknown>> {
   const response = await providerFetch(new Request('https://backend.composio.dev/api/v3.1/tools/execute/proxy', {
     method: 'POST', headers: { 'x-api-key': env.COMPOSIO_API_KEY!, 'content-type': 'application/json', accept: 'application/json' },
     body: JSON.stringify({ connected_account_id: accountId, endpoint, method: 'GET', parameters }),
-    redirect: 'manual', signal: AbortSignal.timeout(8_000),
+    redirect: 'manual', signal: AbortSignal.timeout(timeoutMs),
   }));
   if (!response.ok) throw new Error('composio_proxy_unavailable');
   const outer = await boundedJson(response);
   if (!isRecord(outer) || outer.status !== 200 || !isRecord(outer.data)) throw new Error('composio_proxy_invalid');
   return outer.data;
+}
+
+// Call only after ownership, toolkit, scopes and ACTIVE state were verified.
+// These fixed Google GET endpoints use the selected connection, never Identity email.
+async function accountLabel(env: ConnectorEnv, providerFetch: typeof fetch,
+  provider: 'gmail' | 'googlecalendar', accountId: string): Promise<Record<string, unknown>> {
+  try {
+    const data = await proxyRead(env, providerFetch, accountId, provider === 'gmail'
+      ? 'https://gmail.googleapis.com/gmail/v1/users/me/profile'
+      : 'https://www.googleapis.com/calendar/v3/calendars/primary', [], 750);
+    const value = provider === 'gmail' ? data.emailAddress : data.id;
+    if (typeof value !== 'string' || !value.trim() || value.length > 320 || /[\u0000-\u001f\u007f<>]/u.test(value)) return {};
+    return { accountLabel: { kind: provider === 'gmail' ? 'gmail_address' : 'primary_calendar', value } };
+  } catch { return {}; } // A missing display label must not become an invented identity.
 }
 
 async function readAccountState(
@@ -300,6 +330,7 @@ async function recoverDispatchedAccount(env: ConnectorEnv, providerFetch: typeof
   if (update.meta?.changes !== 1) return null;
   return { provider, state: state === 'active' ? 'connected' : 'attention',
     connectedAccountId: accountId,
+    ...(state === 'active' ? await accountLabel(env, providerFetch, provider, accountId) : {}),
     ...(state === 'terminal' ? { reconnectable: true } : state === 'pending' ? { recovery: 'operator_review' } : {}) };
 }
 
@@ -404,11 +435,13 @@ function approvedScopes(provider: 'gmail' | 'googlecalendar', authConfigId: stri
   return false;
 }
 
-async function authenticate(request: Request, env: ConnectorEnv, providerFetch: typeof fetch): Promise<string | null> {
+type Admission = { subject: string } | { error: 'session_expired' | 'access_denied' | 'provider_unavailable' | 'unconfigured'; status: number };
+
+async function authenticate(request: Request, env: ConnectorEnv, providerFetch: typeof fetch): Promise<Admission> {
   const token = request.headers.get('authorization')?.match(/^Bearer ([^\s]+)$/iu)?.[1];
-  if (!token || token.length > 4096) return null;
+  if (!token || token.length > 4096) return { error: 'session_expired', status: 401 };
   const allowlist = new Set((env.GIGI_ALLOWED_SUBJECTS ?? '').split(',').map((item) => item.trim()).filter(Boolean));
-  if (allowlist.size === 0) return null;
+  if (allowlist.size === 0) return { error: 'unconfigured', status: 503 };
   try {
     const response = await providerFetch(new Request(IDENTITY_USERINFO, {
       method: 'GET',
@@ -416,12 +449,19 @@ async function authenticate(request: Request, env: ConnectorEnv, providerFetch: 
       redirect: 'manual',
       signal: AbortSignal.timeout(8_000),
     }));
-    if (!response.ok) return null;
+    if (response.status === 401) return { error: 'session_expired', status: 401 };
+    if (response.status === 403) return { error: 'access_denied', status: 403 };
+    if (!response.ok) return { error: 'provider_unavailable', status: 503 };
     const data = await boundedJson(response);
-    if (!isRecord(data) || data.resource !== GIGI_RESOURCE || data.email_verified !== true ||
-      typeof data.sub !== 'string' || !allowlist.has(data.sub)) return null;
-    return data.sub;
-  } catch { return null; }
+    if (!isRecord(data) || typeof data.sub !== 'string' || !data.sub || typeof data.resource !== 'string') {
+      return { error: 'provider_unavailable', status: 503 };
+    }
+    // Valid Identity is not admission. Do not expose which policy dimension failed.
+    if (data.resource !== GIGI_RESOURCE || data.email_verified !== true || !allowlist.has(data.sub)) {
+      return { error: 'access_denied', status: 403 };
+    }
+    return { subject: data.sub };
+  } catch { return { error: 'provider_unavailable', status: 503 }; }
 }
 
 function json(value: unknown, status = 200): Response {

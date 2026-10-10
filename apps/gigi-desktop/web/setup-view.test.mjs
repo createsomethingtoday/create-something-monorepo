@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { sourceView, setupSummary } from './setup-view.mjs';
+import { sourceView, setupSummary, sourceJourney } from './setup-view.mjs';
 
 test('source feedback names the verified account state and keeps import separate', () => {
   assert.deepEqual(sourceView({ state: 'connected', connectedAccountId: 'acct-1' }), {
@@ -61,4 +61,30 @@ test('summary directs uncertain refresh outcomes to status recovery alongside it
   assert.match(summary.nextStep, /Check source status before trying to connect again/);
   assert.match(summary.steps[1].description, /refresh outcome is uncertain/i);
   assert.equal(summary.steps[1].label, '1 of 2 verified');
+});
+
+
+test('admission, session expiry and service failures have distinct next steps', () => {
+  assert.match(sourceView({ state: 'unavailable', detail: 'session_expired' }).description, /Sign in again/);
+  assert.match(sourceView({ state: 'unavailable', detail: 'access_denied' }).description, /operator/);
+  assert.doesNotMatch(sourceView({ state: 'unavailable', detail: 'access_denied' }).description, /Sign in again/);
+  assert.match(sourceView({ state: 'unavailable', detail: 'provider_unavailable' }).description, /Check status later/);
+});
+
+test('source journey advances only from receipts and preserves pending consent', () => {
+  assert.equal(sourceJourney({}).current, 1);
+  assert.equal(sourceJourney({ gmail: { state: 'disconnected' } }).current, 2);
+  assert.equal(sourceJourney({ gmail: { state: 'pending', provider: 'gmail', connectedAccountId: 'ca_one', url: 'https://connect.composio.dev/session', expiresAt: '2030-01-01T00:00:00Z' } }).current, 3);
+  assert.equal(sourceJourney({ gmail: { state: 'pending' } }).current, 4);
+  assert.equal(sourceJourney({ gmail: { state: 'connected', connectedAccountId: 'ca_one' } }).current, 5);
+  assert.match(sourceJourney({ gmail: { state: 'unavailable', detail: 'access_denied' } }).next, /operator/);
+});
+
+
+test('journey directs each guarded recovery to its available action', () => {
+  assert.match(sourceJourney({ gmail: { state: 'attention', recovery: 'operator_review' } }).next, /operator to review/);
+  assert.match(sourceJourney({ gmail: { state: 'attention', reconnectable: true } }).next, /Choose Reconnect/);
+  assert.equal(sourceJourney({ gmail: { state: 'attention', reconnectable: true } }).current, 2);
+  assert.match(sourceJourney({ gmail: { state: 'pending' } }).next, /Check status and verify/);
+  assert.doesNotMatch(sourceJourney({ gmail: { state: 'pending' } }).next, /Resume/);
 });

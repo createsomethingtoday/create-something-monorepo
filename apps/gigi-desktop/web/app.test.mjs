@@ -145,7 +145,7 @@ test('connector sign-in explains provider outages and timeouts without exposing 
     await settle();
     click({ page: 'settings' }); await settle();
     click({ signIn: '1' }); await settle();
-    assert.match(root.innerHTML, /temporarily unavailable.*try again/i);
+    assert.match(root.innerHTML, /temporarily unavailable.*check status later/i);
     assert.doesNotMatch(root.innerHTML, /provider_unavailable/);
 
     failure = 'timeout';

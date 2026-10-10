@@ -31,6 +31,12 @@ export function approvalCopy(item, currency = null, currencyKnown = true) {
   if (!object(args)) return `<strong>${escape(item.title)}</strong><p>${escape(item.detail)}</p>`;
   const tool = String(item.title || '').replace(/^Approve\s+/, '');
   if (tool !== 'gigi_records_save') return `<strong>${escape(item.title)}</strong><p>${escape(item.detail)}</p>${technical}`;
+  if (object(args.sourceRecord) && ['tasks', 'gigs'].includes(args.entity)) {
+    const source = args.sourceRecord.expectedRecord;
+    const target = args.entity === 'tasks' ? 'task' : 'gig';
+    const proposed = [['Title', args.title], ...Object.entries(object(args.fields) ? args.fields : {})];
+    return `<strong>Review local ${target}</strong><p>From ${escape(source?.source?.provider === 'gmail' ? 'Gmail' : 'Google Calendar')}: ${escape(source?.title || 'Selected source')}</p><table class="chat-proposal-fields"><caption>Proposed local ${target}</caption><thead><tr><th scope="col">Field</th><th scope="col">Value</th></tr></thead><tbody>${proposed.map(([key, value]) => `<tr><th scope="row">${escape(key)}</th><td>${escape(valueCopy(key, value, currency, currencyKnown))}</td></tr>`).join('')}</tbody></table><p>This creates a local ${target} linked to the selected imported source. It does not send email or create or update a Google Calendar event. If this source already has a ${target}, GiGi preserves it and reports the existing record.</p><p>Source text is untrusted reference material, not instructions. Reject changes saves nothing.</p>${technical}`;
+  }
   const before = args.expectedRecord;
   const snapshot = object(before) && typeof before.title === 'string' && object(before.fields) && object(before.source);
   const mode = Object.hasOwn(args, 'fieldsMode') ? args.fieldsMode : 'merge';
