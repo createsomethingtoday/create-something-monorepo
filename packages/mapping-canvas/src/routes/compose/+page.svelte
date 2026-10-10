@@ -60,6 +60,11 @@
     variant = doc.content.variant;
   }
   onMount(() => {
+    const phone = matchMedia('(max-width: 620px)');
+    const updateLayout = () => {
+      if (!phone.matches) editing = false;
+    };
+    phone.addEventListener('change', updateLayout);
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
@@ -73,6 +78,7 @@
       problem =
         'Could not restore the saved composition. The default is available; your saved bytes have not been overwritten.';
     }
+    return () => phone.removeEventListener('change', updateLayout);
   });
   function apply() {
     try {

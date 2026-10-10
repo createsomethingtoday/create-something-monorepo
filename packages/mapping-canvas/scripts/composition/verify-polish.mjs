@@ -60,7 +60,9 @@ try {
   const canceledReload = page.waitForEvent('dialog').then((dialog) => dialog.dismiss());
   // A canceled reload never reaches Playwright's load condition. Trigger the
   // browser action without waiting for a navigation that must not complete.
-  await page.evaluate(() => { window.setTimeout(() => window.location.reload(), 0); });
+  await page.evaluate(() => {
+    window.setTimeout(() => window.location.reload(), 0);
+  });
   await canceledReload;
   await expect(heading).toHaveValue('SYNTHETIC — applied draft');
   result.assertions.push('Canceling browser reload preserves applied unsaved edits');
@@ -257,6 +259,25 @@ try {
     ).toBeGreaterThanOrEqual(44);
   result.assertions.push(
     'Both phone sequences keep readable captions and relevant cues in view; selected state, keyboard seek and 44px controls work without overflow'
+  );
+  await page.getByRole('button', { name: 'Edit', exact: true }).click();
+  await heading.fill('SYNTHETIC — pending Motion export');
+  await page.getByRole('button', { name: 'Motion', exact: true }).click();
+  await expect(
+    page.getByRole('button', { name: 'Export Context ZIP', exact: true })
+  ).toBeDisabled();
+  result.assertions.push('Motion ZIP export requires pending edits to be applied or saved');
+  await page.getByRole('button', { name: 'Edit', exact: true }).click();
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await expect(page.getByRole('button', { name: 'Motion', exact: true })).toHaveAttribute(
+    'aria-pressed',
+    'true'
+  );
+  await expect(heading).toHaveValue('SYNTHETIC — pending Motion export');
+  await page.getByRole('button', { name: 'Cancel edits', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Export Context ZIP', exact: true })).toBeEnabled();
+  result.assertions.push(
+    'Leaving the phone Edit layout restores the visible mode selection without losing the draft'
   );
   expect(result.errors).toEqual([]);
   result.completed = true;
