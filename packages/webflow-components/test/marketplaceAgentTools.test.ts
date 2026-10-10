@@ -25,6 +25,10 @@ function installWindow(overrides: Record<string, unknown>): void {
   (globalThis as GlobalWithDom).window = overrides as unknown as Window;
 }
 
+function installDocument(overrides: Record<string, unknown>): void {
+  (globalThis as GlobalWithDom).document = overrides as unknown as Document;
+}
+
 beforeEach(() => {
   removeDom();
 });
@@ -294,6 +298,46 @@ test('registerMarketplaceAgentTools prefers registerTool', () => {
     'update_page_filters',
     'get_page_state',
   ]);
+});
+
+test('registerMarketplaceAgentTools prefers document.modelContext (spec, ChatGPT Site tools) over navigator', () => {
+  const viaDocument: unknown[] = [];
+  const viaNavigator: unknown[] = [];
+  installWindow({
+    navigator: { modelContext: { registerTool: (tool: unknown) => viaNavigator.push(tool) } },
+  });
+  installDocument({ modelContext: { registerTool: (tool: unknown) => viaDocument.push(tool) } });
+  const tools = createMarketplaceAgentTools({ fetchImpl: stubFetch({}) });
+  assert.deepEqual(registerMarketplaceAgentTools(tools), { api: 'registerTool', registered: 5 });
+  assert.equal(viaDocument.length, 5);
+  assert.equal(viaNavigator.length, 0);
+});
+
+test('registered tools carry the full WebMCP annotation set', () => {
+  const registered: Array<{ name: string; annotations: Record<string, boolean> }> = [];
+  installDocument({ modelContext: { registerTool: (tool: unknown) => registered.push(tool as never) } });
+  const tools = createMarketplaceAgentTools({ fetchImpl: stubFetch({}) });
+  registerMarketplaceAgentTools(tools);
+  const byName = Object.fromEntries(registered.map((tool) => [tool.name, tool.annotations]));
+  for (const annotations of Object.values(byName)) {
+    assert.deepEqual(Object.keys(annotations).sort(), [
+      'consequentialHint',
+      'debugging',
+      'readOnlyHint',
+      'untrustedContentHint',
+    ]);
+    assert.equal(annotations.debugging, false);
+    assert.equal(annotations.consequentialHint, false);
+  }
+  // Creator-authored listing text flows through these; taxonomy is Webflow-owned.
+  assert.equal(byName.search_templates.readOnlyHint, true);
+  assert.equal(byName.search_templates.untrustedContentHint, true);
+  assert.equal(byName.get_template.untrustedContentHint, true);
+  assert.equal(byName.get_page_state.untrustedContentHint, true);
+  assert.equal(byName.list_categories_and_styles.untrustedContentHint, false);
+  // The only write tool is reversible navigation, not a consequential action.
+  assert.equal(byName.update_page_filters.readOnlyHint, false);
+  assert.equal(byName.update_page_filters.consequentialHint, false);
 });
 
 test('registerMarketplaceAgentTools falls back to provideContext, then none', () => {

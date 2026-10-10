@@ -330,7 +330,21 @@ export {
 export type {
   MarketplaceAgentTool,
   MarketplaceAgentToolsOptions,
+  WebMcpToolAnnotations,
 } from './components/marketplace/agentTools';
+export {
+  annotationApiStatus,
+  findAnnotationApi,
+  templateAnnotationContainerProps,
+  templateAnnotationProps,
+  templateAnnotationTextContainerProps,
+  toAnnotationMetadata,
+} from './components/marketplace/templateAnnotations';
+export type {
+  AnnotationApiStatus,
+  TemplateAnnotationProps,
+  TemplateAnnotationSource,
+} from './components/marketplace/templateAnnotations';
 
 export type {
   MarketplaceAnalyticsData,
