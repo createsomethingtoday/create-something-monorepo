@@ -1,6 +1,7 @@
 <script lang="ts">
   import HyperframesExport from '$lib/composition/HyperframesExport.svelte';
   import { onMount } from 'svelte';
+  import { beforeNavigate } from '$app/navigation';
   import FormView from '$lib/composition/FormView.svelte';
   import MotionView from '$lib/composition/MotionView.svelte';
   import {
@@ -17,12 +18,41 @@
   const initial = createDocument();
   let doc = $state<Document>(initial),
     mode = $state<'preview' | 'motion'>('preview'),
-    notice = $state('Ready to compose.'),
+    editing = $state(false),
+    notice = $state(''),
     problem = $state('');
   let title = $state(initial.content.title),
     description = $state(initial.content.description),
     buttonLabel = $state(initial.content.buttonLabel),
     variant = $state<'primary' | 'secondary'>(initial.content.variant);
+  let saved = $state(serialize(initial)),
+    hasSaved = $state(false);
+  let importAttempt = 0;
+  const pending = $derived(
+    title !== doc.content.title ||
+      description !== doc.content.description ||
+      buttonLabel !== doc.content.buttonLabel ||
+      variant !== doc.content.variant
+  );
+  const dirty = $derived(pending || serialize(doc) !== saved);
+  const saveState = $derived(
+    pending
+      ? 'Unapplied changes · not saved.'
+      : dirty
+        ? 'Unsaved changes.'
+        : hasSaved
+          ? 'Saved on this device.'
+          : 'Not saved on this device.'
+  );
+  const draftKey = () => JSON.stringify({ doc, title, description, buttonLabel, variant });
+  function candidate() {
+    return pending ? updateContent(doc, { title, description, buttonLabel, variant }) : doc;
+  }
+  beforeNavigate((navigation) => {
+    if (!dirty) return;
+    if (navigation.willUnload) navigation.cancel();
+    else if (!window.confirm('Leave without saving your composition changes?')) navigation.cancel();
+  });
   function sync() {
     title = doc.content.title;
     description = doc.content.description;
@@ -31,11 +61,13 @@
   }
   onMount(() => {
     try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        doc = parseDocument(saved);
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        doc = parseDocument(stored);
         sync();
-        notice = 'Saved composition restored.';
+        saved = serialize(doc);
+        hasSaved = true;
+        notice = '';
       }
     } catch {
       problem =
@@ -44,20 +76,35 @@
   });
   function apply() {
     try {
-      doc = updateContent(doc, { title, description, buttonLabel, variant });
+      doc = candidate();
       problem = '';
-      notice = 'Props applied to the shared composition.';
-    } catch (e) {
-      problem = (e as Error).message;
+      notice = 'Preview updated. Save locally to keep these changes.';
+    } catch {
+      notice = '';
+      problem = 'Complete the heading, supporting copy and action label before applying.';
     }
+  }
+  function cancelEdits() {
+    sync();
+    problem = '';
+    notice = 'Unapplied edits canceled. The preview is unchanged.';
   }
   function save() {
     try {
-      localStorage.setItem(STORAGE_KEY, serialize(doc));
-      notice = 'Saved on this device.';
+      // Save the visible editor in one transaction. Failed validation or storage
+      // must leave both the previous preview and the user's draft intact.
+      const next = candidate();
+      const text = serialize(next);
+      localStorage.setItem(STORAGE_KEY, text);
+      doc = next;
+      saved = text;
+      hasSaved = true;
+      notice = '';
       problem = '';
     } catch {
-      problem = 'Could not save. Export the composition to keep your changes.';
+      notice = '';
+      problem =
+        'Could not save. Check the required fields and try again, or export JSON to keep a copy.';
     }
   }
   function download(text: string, name: string) {
@@ -68,31 +115,69 @@
     a.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
-  async function exportRender() {
+  function exportJson() {
     try {
-      const h = await handoff(doc);
+      download(serialize(candidate()), 'draw-composition.json');
+      problem = '';
+      notice =
+        'Composition JSON exported, including visible edits. Your local saved copy is unchanged.';
+    } catch {
+      notice = '';
+      problem = 'Complete the required content before exporting. Your edits are still here.';
+    }
+  }
+  async function exportRender() {
+    const before = draftKey();
+    try {
+      const h = await handoff(candidate());
       await parseHandoff(JSON.stringify(h));
+      if (before !== draftKey()) throw Error('Composition changed during export. Try again.');
       download(JSON.stringify(h, null, 2), 'draw-render-handoff.json');
-      notice = 'Validated handoff exported. Open it in the render view to export offline HyperFrames HTML.';
+      problem = '';
+      notice =
+        'Render handoff JSON exported. Open the render view and choose this file to export offline HTML ZIPs.';
     } catch (e) {
+      notice = '';
       problem = (e as Error).message;
     }
+  }
+  function cancelImport() {
+    importAttempt++;
+    problem = '';
+    notice = 'Import canceled. Current composition unchanged.';
   }
   async function importFile(event: Event) {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
-    if (!file) return;
-    const before = doc;
+    if (!file) {
+      cancelImport();
+      return;
+    }
+    const attempt = ++importAttempt;
+    const before = draftKey();
     try {
       if (file.size > 40000) throw Error('Composition is too large.');
       const candidate = parseDocument(await file.text());
-      if (before !== doc) throw Error('Composition changed while reading. Choose the file again.');
+      if (attempt !== importAttempt) return;
+      if (before !== draftKey()) {
+        problem =
+          'Your composition changed while the file was opening. Choose the file again. Your edits are still here.';
+        notice = '';
+        return;
+      }
+      if (dirty && !window.confirm('Replace your unsaved composition changes with this file?')) {
+        cancelImport();
+        return;
+      }
       doc = candidate;
       sync();
       problem = '';
       notice = 'Composition imported. Save to keep it on this device.';
-    } catch (e) {
-      problem = `Could not import: ${(e as Error).message} Current composition retained.`;
+    } catch {
+      if (attempt !== importAttempt) return;
+      notice = '';
+      problem =
+        'Choose a valid Draw composition JSON file. Your current composition and edits are unchanged.';
     } finally {
       input.value = '';
     }
@@ -100,7 +185,7 @@
 </script>
 
 <svelte:head
-  ><title>Compose · Draw local proof</title><meta
+  ><title>Compose a form · Draw</title><meta
     name="robots"
     content="noindex,nofollow"
   /></svelte:head
@@ -109,21 +194,58 @@
   <header>
     <a href="/" aria-label="Draw canvas"
       ><img src="/brand/draw-dark.svg" width="28" height="28" alt="" /><strong>Draw</strong></a
-    ><span class="divider"></span><span>Compose</span><span class="local">LOCAL PROOF</span>
+    ><span class="divider"></span><span>Compose</span><span class="local">DEVICE LOCAL</span>
   </header>
   <main>
     <section class="intro">
       <div>
-        <p class="kicker">REUSABLE BY DESIGN</p>
-        <h1>One composition.<br />More than one way to tell it.</h1>
+        <p class="kicker">CANON FORM TEMPLATE</p>
+        <h1>Compose a form.<br />Show how it works.</h1>
       </div>
-      <p>Edit the content. Try the interaction.<br />Then use the same form to teach the idea.</p>
+      <p>
+        Edit this four-component form and its teaching sequences.<br />This composition saves
+        separately from your Draw canvas.
+      </p>
     </section>
-    <div class="workspace">
+    <div class="workspace-tools">
+      <div class="tabs" aria-label="Composition views">
+        <button
+          class="edit-tab"
+          class:chosen={editing}
+          aria-pressed={editing}
+          onclick={() => (editing = true)}>Edit</button
+        >
+        <button
+          class:chosen={!editing && mode === 'preview'}
+          aria-pressed={!editing && mode === 'preview'}
+          onclick={() => {
+            editing = false;
+            mode = 'preview';
+          }}>Preview</button
+        >
+        <button
+          class:chosen={!editing && mode === 'motion'}
+          aria-pressed={!editing && mode === 'motion'}
+          onclick={() => {
+            editing = false;
+            mode = 'motion';
+          }}>Motion</button
+        >
+      </div>
+      <div class="save-actions">
+        <button class="save" onclick={save}>Save locally</button><span
+          class="save-state"
+          role="status">{saveState}</span
+        >
+      </div>
+    </div>
+    {#if notice}<div class="status" role="status">{notice}</div>{/if}
+    {#if problem}<div role="alert" class="problem">{problem}</div>{/if}
+    <div class="workspace" class:editing>
       <aside class="inspector" aria-label="Composition editor">
         <div class="section-head">
           <span>01</span>
-          <h2>Content & props</h2>
+          <h2>Edit form content</h2>
         </div>
         <form
           onsubmit={(e) => {
@@ -151,18 +273,23 @@
             maxlength="32"
             required
           />
-          <label for="variant">Canon variant</label><select id="variant" bind:value={variant}
+          <label for="variant">Button style</label><select id="variant" bind:value={variant}
             ><option value="primary">Primary</option><option value="secondary">Secondary</option
             ></select
           >
-          <button class="apply" type="submit">Apply props <span>↗</span></button>
+          <button class="apply" type="submit">Apply changes <span>↗</span></button>
+          <button class="cancel-edits" type="button" disabled={!pending} onclick={cancelEdits}
+            >Cancel edits</button
+          >
         </form>
-        <div class="structure">
+        <details class="structure">
+          <summary>Structure · 4 Canon components</summary>
           <div class="section-head">
             <span>02</span>
-            <h2>Composition</h2>
+            <h2>Structure</h2>
           </div>
           <p>Request form</p>
+          <p class="scope-note">Fixed template · edit the content and button style above.</p>
           <ul>
             <li>heading <span>slot</span></li>
             <li>
@@ -178,35 +305,29 @@
           <small
             >{expand(doc).filter((n) => n.kind === 'component').length} Canon components · revision {doc.revision}</small
           >
-        </div>
+        </details>
         <div class="file-actions">
-          <button onclick={save}>Save locally</button><button
-            onclick={() => download(serialize(doc), 'draw-composition.json')}>Export JSON</button
-          ><label class="import"
+          <button onclick={exportJson}>Export JSON</button><label class="import"
             >Import JSON<input
               aria-label="Import composition JSON"
               type="file"
               accept="application/json,.json"
               onchange={importFile}
+              oncancel={cancelImport}
             /></label
           ><button onclick={exportRender}>Export render handoff</button>
         </div>
+        <a class="render-link" href="/compose/render" target="_blank" rel="noopener"
+          >Open render view <span aria-hidden="true">↗</span><span class="sr-only">
+            (new tab)</span
+          ></a
+        >
+        <p class="scope-note">
+          JSON keeps the editable composition. Render handoff JSON opens in the render view. Motion
+          exports an offline HTML ZIP, not a video.
+        </p>
       </aside>
       <section class="preview-area" aria-label="Composition workspace">
-        <div class="preview-head">
-          <div class="tabs">
-            <button
-              class:chosen={mode === 'preview'}
-              aria-pressed={mode === 'preview'}
-              onclick={() => (mode = 'preview')}>Interactive</button
-            ><button
-              class:chosen={mode === 'motion'}
-              aria-pressed={mode === 'motion'}
-              onclick={() => (mode = 'motion')}>Motion</button
-            >
-          </div>
-          <span>Agency / Canon</span>
-        </div>
         <div hidden={mode !== 'preview'} class="preview-stage">
           <div class="preview-form"><FormView {doc} /></div>
           <p class="stage-note">
@@ -215,15 +336,16 @@
           </p>
         </div>
         <div hidden={mode !== 'motion'} class="motion-stage">
-          {#if mode === 'motion'}<MotionView {doc} /><HyperframesExport {doc} />{/if}
+          {#if mode === 'motion'}<MotionView {doc} /><HyperframesExport
+              {doc}
+              disabled={pending}
+            />{/if}
         </div>
       </section>
     </div>
-    <div class="status" role="status">{notice}</div>
-    {#if problem}<div role="alert" class="problem">{problem}</div>{/if}
     <footer>
-      <span>Shared content. Independent camera & timing.</span><span
-        >Review candidate · no approved visual baseline</span
+      <span>One form. Two teaching sequences.</span><span
+        >Device-local composition · export JSON to keep a copy</span
       >
     </footer>
   </main>
@@ -292,6 +414,63 @@
     align-items: flex-end;
     margin-bottom: 34px;
     gap: 24px;
+  }
+  .workspace-tools,
+  .save-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .workspace-tools {
+    padding: 12px 0;
+    border-top: 1px solid var(--color-performance-line);
+  }
+  .save-actions {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+  .save-state {
+    font-size: 12px;
+    color: var(--color-performance-muted);
+  }
+  .save,
+  .cancel-edits {
+    min-height: 44px;
+    padding: 10px 14px;
+    border: 1px solid var(--color-performance-line);
+    background: transparent;
+  }
+  .save {
+    background: var(--color-performance-ink);
+    color: var(--color-performance-paper);
+  }
+  .cancel-edits {
+    margin-top: 8px;
+  }
+  button:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+  .render-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    color: inherit;
+    font-size: 13px;
+  }
+  .scope-note {
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--color-performance-muted);
+    font-weight: 400 !important;
+  }
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
   }
   .kicker {
     font: 10px var(--font-performance-mono);
@@ -379,6 +558,14 @@
     padding-top: 24px;
     font-size: 12px;
   }
+  .structure summary {
+    min-height: 44px;
+    cursor: pointer;
+    padding: 12px 0;
+  }
+  .structure[open] summary {
+    margin-bottom: 12px;
+  }
   .structure p {
     font-weight: 600;
   }
@@ -410,6 +597,7 @@
   }
   .file-actions button,
   .import {
+    min-height: 44px;
     padding: 8px;
     border: 1px solid var(--color-performance-line);
     background: transparent;
@@ -419,6 +607,12 @@
   .import {
     cursor: pointer;
     position: relative;
+    display: inline-flex;
+    align-items: center;
+  }
+  .import:focus-within {
+    outline: 2px solid var(--color-performance-signal);
+    outline-offset: 3px;
   }
   .import input {
     position: absolute;
@@ -427,23 +621,18 @@
     cursor: pointer;
     margin: 0 !important;
   }
-  .preview-head {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 17px 24px;
-    border-bottom: 1px solid var(--color-performance-line);
-    font: 10px var(--font-performance-mono);
-    color: var(--color-performance-muted);
-  }
   .tabs {
     display: flex;
     gap: 3px;
   }
   .tabs button {
+    min-height: 44px;
     border: 0;
     background: transparent;
     padding: 9px 14px;
+  }
+  .tabs .edit-tab {
+    display: none;
   }
   .tabs .chosen {
     background: var(--color-performance-ink);
@@ -504,17 +693,47 @@
     .preview-stage {
       padding: 20px 12px;
     }
-    .preview-head {
-      padding: 12px;
-    }
-    .preview-head > span {
-      display: none;
-    }
     .motion-stage {
       padding: 16px;
     }
   }
   @media (max-width: 620px) {
+    main {
+      padding-top: 20px;
+    }
+    .intro {
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+    .kicker {
+      margin-bottom: 8px;
+    }
+    .intro h1 {
+      font-size: 28px;
+    }
+    .intro > p {
+      font-size: 12px;
+    }
+    .workspace-tools {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      background: var(--color-performance-paper);
+      flex-wrap: wrap;
+    }
+    .tabs {
+      width: 100%;
+    }
+    .tabs button {
+      flex: 1;
+    }
+    .tabs .edit-tab {
+      display: block;
+    }
+    .save-actions {
+      width: 100%;
+      justify-content: flex-start;
+    }
     header {
       padding: 0 20px;
     }
@@ -523,9 +742,21 @@
       flex-direction: column;
     }
     .inspector {
+      display: none;
       border-right: 0;
       border-bottom: 1px solid var(--color-performance-line);
       padding-right: 0;
+    }
+    .editing .inspector {
+      display: block;
+    }
+    .editing .preview-area {
+      display: none;
+    }
+    .inspector input,
+    .inspector textarea,
+    .inspector select {
+      font-size: 16px;
     }
     .inspector form {
       display: grid;
@@ -536,7 +767,8 @@
     .inspector form textarea,
     .inspector form input,
     .inspector form select,
-    .apply {
+    .apply,
+    .cancel-edits {
       grid-column: 1/-1;
     }
     .structure {
@@ -544,9 +776,6 @@
     }
     .preview-stage {
       padding: 20px 0;
-    }
-    .preview-head {
-      padding: 12px 0;
     }
     .motion-stage {
       padding: 16px 0;
