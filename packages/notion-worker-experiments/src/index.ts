@@ -3,6 +3,7 @@ import * as Builder from '@notionhq/workers/builder';
 import * as Schema from '@notionhq/workers/schema';
 import { j } from '@notionhq/workers/schema-builder';
 import { registerBlondishDeliveryTickets } from './blondish-delivery-tickets.js';
+import { classifyMeetingFollowup } from './jev-followup.js';
 
 const worker = new Worker();
 
@@ -140,6 +141,24 @@ const summarizePageTool = worker.tool('summarizePage', {
 });
 
 markReadOnly(summarizePageTool);
+
+const classifyMeetingFollowupTool = worker.tool('classifyMeetingFollowup', {
+  title: 'Classify Meeting Follow-up',
+  description:
+    'Suggest one Half Dozen lane for an already-extracted meeting follow-up. Read-only and advisory: never create pages or change relations. Use only when the meeting source and requester/output evidence are available.',
+  schema: j.object({
+    sourcePageUrl: j.string().describe('URL of the source Internal LLM meeting page.'),
+    candidateText: j.string().describe('One atomic follow-up, including the source-supported requested outcome; do not pass a full transcript.'),
+    requesterKind: j.enum('external', 'internal', 'unknown').describe('Whether the requester is external to Half Dozen.'),
+    outputLocation: j.enum('client_workspace', 'half_dozen', 'other', 'unknown').describe('Where the requested output must exist, based on the transcript.')
+  }),
+  execute: async (input) => classifyMeetingFollowup(input, {
+    enabled: process.env.JEV_FOLLOWUP_CLASSIFICATION_ENABLED === 'true',
+    apiKey: process.env.TYPESAFE_API_KEY
+  })
+});
+
+markReadOnly(classifyMeetingFollowupTool);
 
 worker.tool('appendPolicyNote', {
   title: 'Append Policy Note',

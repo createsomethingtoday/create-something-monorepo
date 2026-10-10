@@ -3558,6 +3558,9 @@ importers:
       '@notionhq/workers':
         specifier: ^0.3.0
         version: 0.3.0(@notionhq/client@2.3.0)
+      effect:
+        specifier: 3.22.2
+        version: 3.22.2
     devDependencies:
       '@types/node':
         specifier: 24.10.9
