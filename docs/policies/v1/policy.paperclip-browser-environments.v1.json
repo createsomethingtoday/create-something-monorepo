@@ -1,0 +1,122 @@
+{
+  "policy_id": "policy.paperclip-browser-environments.v1",
+  "version": 1,
+  "status": "draft",
+  "tier": "Judgment",
+  "scope": {
+    "paperclip_instance": "create-something",
+    "company_id": "1fb053c2-aa2a-4d88-8c45-0ef82ac8aef5",
+    "linear_issue": "CRE-2150",
+    "excluded_instance": "client-agent-pilot"
+  },
+  "enforcement": {
+    "artifact": "declarative_role_policy",
+    "paperclip_role_runtime_installed": false,
+    "broker": "task_token_origin_method_expiry_limits_in_broker",
+    "host_ego_os_denial": "unverified",
+    "assignment_alone_grants_access": false
+  },
+  "restricted_runner_preflight": {
+    "environment_id": "8da4aa7c-eecc-4f39-a6fc-67368e209834",
+    "ssh_probe": "passed_as_papercliprunner_uid_504",
+    "host_home_acl_denial": "passed_direct_ssh_probe",
+    "ego_profile_and_socket_denial": "passed_direct_ssh_probe_not_assigned_run",
+    "paperclip_loopback_denial": "passed_temporary_pf_uid_504_lo0_tcp_udp_not_reboot_persistent",
+    "codex_adapter_probe": "passed_remote_hello_with_skip_git_repo_check",
+    "staged_codex_home_cleanup": "launcher_signal_cleanup_passed_but_assigned_run_failed_adapter_copyback_after_deletion",
+    "codex_launcher_sha256": "fea8dec8bf138c6311539f2ad3873fe50bfbf6cc379d7d578b68234204053c23",
+    "unsigned_browser": "offline_chromium_render_passed_broker_assigned_run_pending",
+    "assigned_nonbrowser_probe": "CRE-159_codex_log_denials_observed_paperclip_run_failed_in_teardown",
+    "persistent_pf_guard": "prepared_uninstalled_review_pending"
+  },
+  "roles": {
+    "nonbrowser_executor": {
+      "repo": "assigned_worktree",
+      "unsigned_browser": "deny",
+      "signed_in_ego": "deny",
+      "production": "deny",
+      "integrations": "explicit_task_scope_only",
+      "client_devices": "deny"
+    },
+    "browser_engineer": {
+      "repo": "assigned_worktree",
+      "unsigned_browser": "assigned_broker_read_only",
+      "signed_in_ego": "deny",
+      "production": "deny",
+      "integrations": "task_coordination_only",
+      "client_devices": "deny"
+    },
+    "unsigned_ui_qa": {
+      "repo": "assigned_candidate_read",
+      "unsigned_browser": "assigned_broker_read_only",
+      "signed_in_ego": "deny",
+      "production": "deny",
+      "integrations": "task_coordination_only",
+      "client_devices": "deny"
+    },
+    "named_ego_operator": {
+      "repo": "separate_assignment_required",
+      "unsigned_browser": "separate_broker_assignment_required",
+      "signed_in_ego": "explicit_named_task_with_exclusive_lease",
+      "production": "deny",
+      "integrations": "explicit_task_scope_only",
+      "client_devices": "deny"
+    },
+    "independent_reviewer": {
+      "repo": "candidate_read",
+      "unsigned_browser": "separate_broker_assignment_required",
+      "signed_in_ego": "deny",
+      "production": "deny",
+      "integrations": "evidence_read_only",
+      "client_devices": "deny"
+    }
+  },
+  "task_binding": {
+    "paperclip_issue": "CRE-109",
+    "agent_id": "d80267b5-6c6d-45b8-9357-441fda5614ac",
+    "role": "browser_engineer",
+    "unsigned_browser": {
+      "operation": "POST /read",
+      "page_methods": [
+        "GET"
+      ],
+      "allowed_page_origins": [
+        "https://example.com"
+      ],
+      "task_id": "CRE-109",
+      "max_session_seconds": 900,
+      "fresh_context_per_request": true,
+      "credential_transport": "private_0600_session_file_to_bearer_header",
+      "token_in_artifacts": false,
+      "active_candidate_source_sha256": null,
+      "candidate_status": "v7_code_review_passed_role_runtime_denial_pending",
+      "historical_probe": {
+        "broker_version": "v2",
+        "source_sha256": "9ac5f48f4a1140e6a69da95977092b73f760cf031d93d8304c72f1b9b43e87e6",
+        "scope": "two_example_com_render_receipts_only",
+        "current_candidate": false
+      }
+    }
+  },
+  "named_operator_assignment": {
+    "paperclip_issue": "CRE-124",
+    "agent_id": null,
+    "user_id": "local-board",
+    "name": "Host Ego Operator",
+    "scope": "explicitly assigned host TaskSpace qualification only",
+    "lease_verified": false,
+    "signed_in_site_authorization": "separate_task_requirement",
+    "self_approval": false,
+    "broader_browser_qa_issue": "CRE-110",
+    "agent_preflight_result": "bootstrap_failed",
+    "host_taskspace_proof": "public_page_create_finish_and_absence_passed_without_lease"
+  },
+  "acceptance": {
+    "unsigned_example_page_render": "observed_v6_host_and_agent_qa",
+    "storage_mutation_separation": "v7_host_fixture_cookie_local_and_session_storage_passed",
+    "host_ego_negative": "inconclusive_exit_4",
+    "operator_lifecycle": "host_public_page_passed_exclusive_lease_and_signed_in_task_pending",
+    "role_runtime_denial": "partial_CRE-159_denial_log_paperclip_run_failed_persistence_pending",
+    "production_promotion": "not_authorized"
+  }
+}
