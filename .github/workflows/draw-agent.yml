@@ -4,6 +4,8 @@ on:
     paths:
       [
         'packages/mapping-canvas/**',
+        'packages/canon/**',
+        'packages/agency/canon-overlay/**',
         'apps/draw-native/scripts/**',
         '.github/workflows/draw-agent.yml',
         '.github/workflows/draw-macos-release.yml',
@@ -14,6 +16,8 @@ on:
     paths:
       [
         'packages/mapping-canvas/**',
+        'packages/canon/**',
+        'packages/agency/canon-overlay/**',
         'apps/draw-native/scripts/**',
         '.github/workflows/draw-agent.yml',
         '.github/workflows/draw-macos-release.yml',
