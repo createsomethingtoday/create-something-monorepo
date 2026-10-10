@@ -1,0 +1,22 @@
+{
+  "getLink": {
+    "accessor": [],
+    "method": "getLink",
+    "httpMethod": "GET",
+    "path": "/api/v1/links/createsomething/together",
+    "responseType": "Link"
+  },
+  "listAvailability": {
+    "accessor": [],
+    "method": "listAvailability",
+    "httpMethod": "GET",
+    "path": "/api/v1/availability",
+    "requestType": "ListAvailabilityRequest",
+    "responseType": "Availability",
+    "requiredRequestProperties": [
+      "from",
+      "timezone",
+      "to"
+    ]
+  }
+}

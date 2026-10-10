@@ -13,6 +13,13 @@ export const schedulerOpenApi = {
     '/api/v1/availability': {
       get: {
         ...operation('listAvailability', 'List safe availability', 'Fails closed when Calendar is uncertain.', 'Availability'),
+        responses: {
+          ...responses('Availability'),
+          '503': {
+            description: 'Retryable availability with no slots when Calendar cannot be confirmed.',
+            content: { 'application/json': { schema: ref('Availability') } }
+          }
+        },
         parameters: [
           ...['from', 'to', 'timezone'].map((name) => ({
             name,

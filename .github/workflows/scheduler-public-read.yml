@@ -1,0 +1,69 @@
+name: Scheduler public read client
+
+on:
+  pull_request:
+    paths:
+      - 'apps/create-something-scheduler/**'
+      - '.github/workflows/scheduler-public-read.yml'
+      - 'pnpm-lock.yaml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  boundary:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+        with:
+          version: 9.15.0
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: '22.21.1'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile --filter '@create-something/create-something-scheduler...' --filter @create-something/monorepo
+      - run: pnpm --filter @create-something/canon package
+      - run: pnpm --filter @create-something/create-something-scheduler check
+      - run: pnpm --filter @create-something/create-something-scheduler check:public-read
+      - run: pnpm --filter @create-something/create-something-scheduler test
+      - run: pnpm --filter @create-something/create-something-scheduler test:public-read
+      - run: pnpm --filter @create-something/create-something-scheduler verify:public-read
+      - run: pnpm --filter @create-something/create-something-scheduler project:public-read
+      - run: |
+          git diff --exit-code
+          base=$(git merge-base HEAD origin/main)
+          git diff --check "$base"..HEAD
+      - run: pnpm --filter @create-something/create-something-scheduler build
+
+  generation:
+    # Intentionally fails closed until CRE-186 supplies a reviewed upstream pin.
+    # A skipped generator job must never masquerade as production readiness.
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+        with:
+          version: 9.15.0
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: '22.21.1'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile --filter '@create-something/create-something-scheduler...' --filter @create-something/monorepo
+      - run: pnpm --filter @create-something/create-something-scheduler generate:public-read --check
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: scheduler-generation-${{ github.sha }}
+          path: |
+            ${{ runner.temp }}/scheduler-forge-*/*.log
+            ${{ runner.temp }}/scheduler-forge-*/manifest-*.json
+            ${{ runner.temp }}/scheduler-forge-*/receipt.json
+          if-no-files-found: ignore
