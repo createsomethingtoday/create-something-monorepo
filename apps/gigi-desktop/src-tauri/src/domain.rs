@@ -453,6 +453,39 @@ pub fn dispatch(root: &Path, op: &str, input: Value) -> Result<Value, String> {
             if id.is_empty() || id.len() > 200 {
                 return Err("invalid id".into());
             }
+            // Resolve attribution from stored data inside the creation transaction.
+            let conversion = if let Some(reference) = input.get("sourceRecord") {
+                if !["tasks", "gigs"].contains(&entity) || input.get("source").is_some()
+                    || input.get("expectedRecord").is_some() || input.get("fieldsMode").is_some() {
+                    return Err("source conversion requires a new task or gig without source overrides".into());
+                }
+                need(&input, "idempotencyKey")?;
+                let from = need(reference, "entity")?;
+                let provider = match from { "interactions" => "gmail", "schedule" => "googlecalendar", _ => return Err("invalid source record type".into()) };
+                let origin_id = need(reference, "id")?;
+                let account = need(reference, "connectedAccountId")?;
+                let origin = get(&tx, wid, from, origin_id)?;
+                let expected = reference.get("expectedRecord").ok_or("source snapshot required")?;
+                if expected.get("title") != origin.get("title") || expected.get("fields") != origin.get("fields")
+                    || expected.get("source") != origin.get("source") {
+                    return Err("source record changed; reopen it and review a new proposal".into());
+                }
+                let mut attribution = origin["source"].clone();
+                if attribution["kind"] != "import" || attribution["provider"] != provider
+                    || attribution["connectedAccountId"] != account {
+                    return Err("source account or provenance mismatch".into());
+                }
+                need(&attribution, "externalId")?;
+                need(&attribution, "collectionId")?;
+                attribution["kind"] = json!("derived");
+                let c = catalog();
+                let roles = c[entity]["relationFields"].as_object().ok_or("relation catalog unavailable")?;
+                let role = roles.iter().find(|(_, target)| target.as_str() == Some(from))
+                    .map(|(role, _)| role.clone()).ok_or("source relation unavailable")?;
+                let exists: bool = tx.query_row(&format!("SELECT EXISTS(SELECT 1 FROM {entity} WHERE id=?1)"), [&id], |r| r.get(0)).map_err(|e|e.to_string())?;
+                if exists { return Err("source conversion cannot overwrite an existing record".into()); }
+                Some((from.to_string(), origin_id.to_string(), role, attribution))
+            } else { None };
             let prior:Option<(String,String,Option<String>,String)>=tx.query_row(&format!("SELECT title,source_json,source_key,fields_json FROM {entity} WHERE workspace_id=?1 AND id=?2"),params![wid,id],|r|Ok((r.get(0)?,r.get(1)?,r.get(2)?,r.get(3)?))).optional().map_err(|e|e.to_string())?;
             if let Some(expected) = input.get("expectedRecord") {
                 let expected_title = expected.get("title").and_then(Value::as_str).ok_or("expectedRecord requires title, fields, and source")?;
@@ -489,9 +522,9 @@ pub fn dispatch(root: &Path, op: &str, input: Value) -> Result<Value, String> {
             let prior_source = prior
                 .as_ref()
                 .and_then(|p| serde_json::from_str::<Value>(&p.1).ok());
-            let mut source = input
+            let mut source = conversion.as_ref().map(|value| value.3.clone()).or_else(|| input
                 .get("source")
-                .cloned()
+                .cloned())
                 .or_else(|| prior_source.clone())
                 .unwrap_or_else(|| json!({"kind":"manual"}));
             if source.get("kind").and_then(Value::as_str).is_none() {
@@ -530,8 +563,11 @@ pub fn dispatch(root: &Path, op: &str, input: Value) -> Result<Value, String> {
                     .optional()
                     .map_err(|e| e.to_string())?;
                 if let Some(prior_id) = prior {
-                    if prior_id != id && input.get("id").is_none() {
-                        let result = get(&tx, wid, entity, &prior_id)?;
+                    if prior_id != id && (input.get("id").is_none() || conversion.is_some()) {
+                        let mut result = get(&tx, wid, entity, &prior_id)?;
+                        if let Some((from, origin_id, _, _)) = &conversion {
+                            result["sourceProposal"] = json!({"outcome":"existing","sourceEntity":from,"sourceId":origin_id});
+                        }
                         receipt(&tx, wid, op, &input, &result)?;
                         tx.commit().map_err(|e| e.to_string())?;
                         return Ok(result);
@@ -574,21 +610,42 @@ pub fn dispatch(root: &Path, op: &str, input: Value) -> Result<Value, String> {
                 ],
             )
             .map_err(|e| e.to_string())?;
-            let result = get(&tx, wid, entity, &id)?;
+            if let Some((from, origin_id, role, _)) = &conversion {
+                tx.execute("INSERT INTO relations VALUES(?1,?2,?3,?4,?5,?6)", params![wid,entity,id,role,from,origin_id]).map_err(|e|e.to_string())?;
+            }
+            let mut result = get(&tx, wid, entity, &id)?;
+            if let Some((from, origin_id, _, _)) = &conversion {
+                result["sourceProposal"] = json!({"outcome":"created","sourceEntity":from,"sourceId":origin_id});
+            }
             history(&tx, wid, op, Some(entity), Some(&id), &audit_summary(entity,&id,title,&fields))?;
             receipt(&tx, wid, op, &input, &result)?;
             tx.commit().map_err(|e| e.to_string())?;
             Ok(result)
         }
-        "records.get" => Ok(bounded(
-            get(
-                &db,
-                need(&input, "workspaceId")?,
-                table(&input, "entity")?,
-                need(&input, "id")?,
-            )?,
-            input["detail"] == "full",
-        )),
+        "records.get" => {
+            let wid = need(&input, "workspaceId")?;
+            let entity = table(&input, "entity")?;
+            let id = need(&input, "id")?;
+            if let Some(lookup) = input.get("saveReceipt") {
+                workspace(&db, wid)?;
+                let key = need(lookup, "idempotencyKey")?;
+                let expected = lookup.get("expectedInput").filter(|value| value.is_object()).ok_or("expected save input required")?;
+                if expected.get("workspaceId").and_then(Value::as_str) != Some(wid)
+                    || expected.get("entity").and_then(Value::as_str) != Some(entity)
+                    || expected.get("id").and_then(Value::as_str) != Some(id)
+                    || expected.get("idempotencyKey").and_then(Value::as_str) != Some(key)
+                    || expected.to_string().len() > 65_536 {
+                    return Err("save receipt scope mismatch".into());
+                }
+                // Query one records.save receipt only; never execute or replay a write.
+                match replay(&db, wid, "records.save", expected)? {
+                    Some(record) => Ok(json!({"receiptFound":true,"record":record})),
+                    None => Ok(json!({"receiptFound":false})),
+                }
+            } else {
+                Ok(bounded(get(&db, wid, entity, id)?, input["detail"] == "full"))
+            }
+        },
         "records.list" => {
             let wid = need(&input, "workspaceId")?;
             let entity = table(&input, "entity")?;
@@ -822,6 +879,97 @@ mod tests {
     use super::*;
     fn temp() -> std::path::PathBuf {
         std::env::temp_dir().join(format!("gigi-domain-test-{}", Uuid::new_v4()))
+    }
+
+    fn source_proposal(root: &Path, from: &str, target: &str) -> Value {
+        let wid = dispatch(root,"workspace.create",json!({"name":"Synthetic"})).unwrap()["id"].clone();
+        let provider = if from == "interactions" { "gmail" } else { "googlecalendar" };
+        let record = dispatch(root,"records.save",json!({"workspaceId":wid,"entity":from,"title":"Synthetic source","fields":{"Date":"2026-11-01T06:30:00Z/2026-11-01T07:30:00Z"},"source":{"kind":"import","provider":provider,"connectedAccountId":"ca_one","collectionId":"collection","externalId":"external","url":"https://example.com/source","timeZone":"America/Chicago"}})).unwrap();
+        json!({"workspaceId":wid,"entity":target,"id":Uuid::new_v4().to_string(),"title":"Review source","fields":{"Status":"Open"},"idempotencyKey":"proposal-one","sourceRecord":{"entity":from,"id":record["id"],"connectedAccountId":"ca_one","expectedRecord":{"title":record["title"],"fields":record["fields"],"source":record["source"]}}})
+    }
+
+    #[test]
+    fn source_conversion_preserves_provenance_relations_retry_and_duplicate() {
+        for from in ["interactions", "schedule"] { for target in ["tasks", "gigs"] {
+            let root=temp(); let input=source_proposal(&root,from,target);
+            let saved=dispatch(&root,"records.save",input.clone()).unwrap();
+            assert_eq!(saved["source"]["kind"],"derived");
+            for key in ["provider","connectedAccountId","collectionId","externalId","url","timeZone"] { assert_eq!(saved["source"][key],input["sourceRecord"]["expectedRecord"]["source"][key]); }
+            assert_eq!(saved["relationCount"],1);
+            assert_eq!(dispatch(&root,"records.save",input.clone()).unwrap(),saved);
+            dispatch(&root,"records.save",json!({"workspaceId":input["workspaceId"],"entity":target,"id":saved["id"],"title":"User correction"})).unwrap();
+            let mut duplicate=input.clone(); duplicate["id"]=json!(Uuid::new_v4().to_string()); duplicate["idempotencyKey"]=json!("another-proposal");
+            let existing=dispatch(&root,"records.save",duplicate).unwrap();
+            assert_eq!(existing["id"],saved["id"]); assert_eq!(existing["title"],"User correction");
+            assert_eq!(dispatch(&root,"records.list",json!({"workspaceId":input["workspaceId"],"entity":target})).unwrap()["count"],1);
+            let _=fs::remove_dir_all(root);
+        }}
+    }
+
+    #[test]
+    fn source_conversion_rejects_stale_wrong_scope_and_override_without_writes() {
+        let root=temp(); let input=source_proposal(&root,"interactions","tasks");
+        let mut cases=Vec::new();
+        let mut wrong=input.clone();wrong["sourceRecord"]["connectedAccountId"]=json!("ca_other");cases.push(wrong);
+        let mut stale=input.clone();stale["sourceRecord"]["expectedRecord"]["title"]=json!("stale");cases.push(stale);
+        let mut forged=input.clone();forged["source"]=json!({"kind":"manual"});cases.push(forged);
+        let mut keyless=input.clone();keyless.as_object_mut().unwrap().remove("idempotencyKey");cases.push(keyless);
+        let other=Uuid::new_v4().to_string();open(&root).unwrap().execute("INSERT INTO workspaces(id,name) VALUES(?1,'Other')",[&other]).unwrap();
+        let mut cross=input.clone();cross["workspaceId"]=json!(other);cases.push(cross);
+        for case in cases { assert!(dispatch(&root,"records.save",case).is_err()); }
+        dispatch(&root,"records.save",json!({"workspaceId":input["workspaceId"],"entity":"interactions","id":input["sourceRecord"]["id"],"title":"Source changed since review"})).unwrap();
+        assert!(dispatch(&root,"records.save",input.clone()).unwrap_err().contains("source record changed"));
+        let db=open(&root).unwrap();
+        for table in ["tasks","relations","mutation_receipts"] { let count:i64=db.query_row(&format!("SELECT count(*) FROM {table}"),[],|r|r.get(0)).unwrap();assert_eq!(count,0); }
+        let _=fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn source_conversion_separates_matching_external_ids_across_accounts() {
+        let root=temp();let input=source_proposal(&root,"interactions","tasks");
+        let first=dispatch(&root,"records.save",input.clone()).unwrap();
+        let mut attribution=input["sourceRecord"]["expectedRecord"]["source"].clone();
+        attribution["connectedAccountId"]=json!("ca_two");
+        let origin=dispatch(&root,"records.save",json!({"workspaceId":input["workspaceId"],"entity":"interactions","title":"Second account email","source":attribution})).unwrap();
+        let mut other=input.clone();other["id"]=json!(Uuid::new_v4().to_string());other["idempotencyKey"]=json!("second-account");
+        other["sourceRecord"]=json!({"entity":"interactions","id":origin["id"],"connectedAccountId":"ca_two","expectedRecord":{"title":origin["title"],"fields":origin["fields"],"source":origin["source"]}});
+        let second=dispatch(&root,"records.save",other).unwrap();
+        assert_ne!(first["id"],second["id"]);assert_eq!(second["source"]["connectedAccountId"],"ca_two");
+        let _=fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn source_receipt_lookup_recovers_created_and_existing_without_writes() {
+        let root=temp();let input=source_proposal(&root,"interactions","tasks");
+        let lookup = |save: &Value| json!({"workspaceId":save["workspaceId"],"entity":save["entity"],"id":save["id"],"saveReceipt":{"idempotencyKey":save["idempotencyKey"],"expectedInput":save}});
+        assert_eq!(dispatch(&root,"records.get",lookup(&input)).unwrap(),json!({"receiptFound":false}));
+        open(&root).unwrap().execute("INSERT INTO mutation_receipts VALUES(?1,'relations.link',?2,?3,'{}')",params![input["workspaceId"].as_str().unwrap(),input["idempotencyKey"].as_str().unwrap(),input.to_string()]).unwrap();
+        assert_eq!(dispatch(&root,"records.get",lookup(&input)).unwrap(),json!({"receiptFound":false}));
+        let created=dispatch(&root,"records.save",input.clone()).unwrap();
+        assert_eq!(dispatch(&root,"records.get",lookup(&input)).unwrap(),json!({"receiptFound":true,"record":created}));
+        let mut duplicate=input.clone();duplicate["id"]=json!(Uuid::new_v4().to_string());duplicate["idempotencyKey"]=json!("duplicate-receipt");
+        let existing=dispatch(&root,"records.save",duplicate.clone()).unwrap();
+        assert_ne!(existing["id"],duplicate["id"]);
+        let before:i64=open(&root).unwrap().query_row("SELECT count(*) FROM history",[],|r|r.get(0)).unwrap();
+        assert_eq!(dispatch(&root,"records.get",lookup(&duplicate)).unwrap(),json!({"receiptFound":true,"record":existing}));
+        let mut tampered=input.clone();tampered["sourceRecord"]["connectedAccountId"]=json!("ca_intruder");
+        assert!(dispatch(&root,"records.get",lookup(&tampered)).is_err());
+        for key in ["workspaceId","entity","id"] { let mut request=lookup(&input);request[key]=json!(if key=="entity" {"gigs"} else {"wrong"});assert!(dispatch(&root,"records.get",request).is_err()); }
+        let other=Uuid::new_v4().to_string();open(&root).unwrap().execute("INSERT INTO workspaces(id,name) VALUES(?1,'Other')",[&other]).unwrap();
+        let mut foreign=input.clone();foreign["workspaceId"]=json!(other);
+        assert_eq!(dispatch(&root,"records.get",lookup(&foreign)).unwrap(),json!({"receiptFound":false}));
+        let after:i64=open(&root).unwrap().query_row("SELECT count(*) FROM history",[],|r|r.get(0)).unwrap();assert_eq!(before,after);
+        let _=fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn source_conversion_relation_failure_rolls_back_creation() {
+        let root=temp();let input=source_proposal(&root,"schedule","gigs");
+        open(&root).unwrap().execute_batch("CREATE TRIGGER reject_link BEFORE INSERT ON relations BEGIN SELECT RAISE(ABORT,'synthetic relation failure'); END;").unwrap();
+        assert!(dispatch(&root,"records.save",input.clone()).is_err());
+        let db=open(&root).unwrap();for table in ["gigs","mutation_receipts"] { let count:i64=db.query_row(&format!("SELECT count(*) FROM {table}"),[],|r|r.get(0)).unwrap();assert_eq!(count,0); }
+        assert!(get(&db,input["workspaceId"].as_str().unwrap(),"gigs",input["id"].as_str().unwrap()).is_err());
+        let _=fs::remove_dir_all(root);
     }
 
     #[test]
