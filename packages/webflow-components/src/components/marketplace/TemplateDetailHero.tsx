@@ -765,7 +765,10 @@ const TemplateDetailHeroInner: React.FC<TemplateDetailHeroProps> = ({
               name: titleLabel,
               template_slug: resolvedSlug,
               creator_name: creatorName,
-              price,
+              price: (offer.hasOffer && offer.offerPriceLabel) || price,
+              is_free: isFree,
+              category: titleCategory,
+              url: resolvedSlug ? `https://webflow.com/templates/html/${resolvedSlug}` : null,
             })}
           >
             <div className="wfdt-hero-identity">
