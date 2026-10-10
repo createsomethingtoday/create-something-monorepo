@@ -3,15 +3,31 @@
   import FormView from './FormView.svelte';
   import type { Document } from './model';
   import { sequences, beatAt, type Sequence } from './motion';
-  let { doc, tracks, renderSequence, renderTime, exportOnly = false }: { doc: Document; tracks?: Sequence[]; renderSequence?: Sequence; renderTime?: number; exportOnly?: boolean } = $props();
+  let {
+    doc,
+    tracks,
+    renderSequence,
+    renderTime,
+    exportOnly = false
+  }: {
+    doc: Document;
+    tracks?: Sequence[];
+    renderSequence?: Sequence;
+    renderTime?: number;
+    exportOnly?: boolean;
+  } = $props();
   let selection = $state<'context' | 'detail'>('context'),
     time = $state(0),
     playing = $state(false),
     reduced = $state(false),
     width = $state(1000);
-  const seq = $derived(renderSequence ?? (tracks ?? sequences(doc)).find((s) => s.id === selection)!);
+  const seq = $derived(
+    renderSequence ?? (tracks ?? sequences(doc)).find((s) => s.id === selection)!
+  );
   const beat = $derived(beatAt(seq, renderTime ?? time));
-  let world: HTMLDivElement;
+  const compact = $derived(!exportOnly && width <= 600);
+  let compactStage = $state<HTMLDivElement>();
+  let world = $state<HTMLDivElement>();
   let tx = $state(0),
     ty = $state(0),
     zoom = $state(1);
@@ -21,9 +37,33 @@
     const snapshot = doc;
     const viewportWidth = width;
     const cue = beat.state;
+    const isCompact = compact;
     void snapshot;
     void cue;
     void tick().then(() => {
+      if (isCompact && compactStage) {
+        // Reframe only the scrollable teaching scene, never the surrounding
+        // document. Keep Canon text at its actual size on a phone.
+        const stage = compactStage;
+        const targetNode =
+          z > 1
+            ? [...stage.querySelectorAll<HTMLElement>('[data-instance-id]')].find(
+                (e) => e.dataset.instanceId === target
+              )
+            : cue === 'error' || cue === 'recovered'
+              ? stage.querySelector<HTMLElement>('[role="alert"], [role="status"]')
+              : null;
+        stage.scrollTop = targetNode
+          ? Math.max(
+              0,
+              stage.scrollTop +
+                targetNode.getBoundingClientRect().top -
+                stage.getBoundingClientRect().top -
+                24
+            )
+          : 0;
+        return;
+      }
       if (!world) return;
       const el = [...world.querySelectorAll<HTMLElement>('[data-instance-id]')].find(
         (e) => e.dataset.instanceId === target
@@ -80,68 +120,91 @@
 </script>
 
 {#if !exportOnly}<div class="motion-tools">
-  <div class="sequences" aria-label="Camera sequence">
-    <button class:active={selection === 'context'} onclick={() => choose('context')}
-      >01 / Context</button
-    ><button class:active={selection === 'detail'} onclick={() => choose('detail')}
-      >02 / Detail</button
-    >
-  </div>
-  <span>Same composition · two explanations</span>
-</div>{/if}
+    <div class="sequences" aria-label="Camera sequence">
+      <button
+        class:active={selection === 'context'}
+        aria-pressed={selection === 'context'}
+        onclick={() => choose('context')}>01 / Context</button
+      ><button
+        class:active={selection === 'detail'}
+        aria-pressed={selection === 'detail'}
+        onclick={() => choose('detail')}>02 / Detail</button
+      >
+    </div>
+    <span>Same composition · two explanations</span>
+  </div>{/if}
 <div
   class="viewport"
+  class:compact
   bind:clientWidth={width}
-  style:height={`${width * 0.75}px`}
+  style:height={compact ? 'clamp(280px, 50svh, 480px)' : `${width * 0.75}px`}
   aria-label="Teaching animation"
   data-sequence={selection}
   data-time={(renderTime ?? time).toFixed(2)}
 >
-  <div class="scale" style:transform={`scale(${width / 1200})`}>
+  {#if compact}
+    <!-- svelte-ignore a11y_no_noninteractive_tabindex (Scrollable scripted scene needs keyboard access; its form remains inert.) -->
     <div
-      class="world"
-      bind:this={world!}
-      style:transform={`translate(${tx}px, ${ty}px) scale(${zoom})`}
-      class:reduced
-      class:playing
-      class:detail={beat.zoom > 1}
+      class="compact-stage"
+      bind:this={compactStage}
+      tabindex="0"
+      role="region"
+      aria-label="Scripted form preview; scroll to inspect"
     >
-      <div class="paper"><FormView {doc} scripted={beat.state} prefix="motion" /></div>
-      <aside>
-        <p class="step">A BETTER NEXT STEP</p>
-        <h3>Keep the context.<br />Make recovery clear.</h3>
-        <p>
-          Inputs, feedback and actions stay together. Change the explanation without rebuilding the
-          form.
-        </p>
-        <div class="rule"></div>
-        <span>Canon components<br />Agency composition<br />Draw motion</span>
-      </aside>
+      <div class="compact-paper"><FormView {doc} scripted={beat.state} prefix="motion" /></div>
     </div>
-    <div class="caption">
-      <span>LOCAL DEMONSTRATION</span>
-      <p>{beat.caption}</p>
+  {:else}
+    <div class="scale" style:transform={`scale(${width / 1200})`}>
+      <div
+        class="world"
+        bind:this={world!}
+        style:transform={`translate(${tx}px, ${ty}px) scale(${zoom})`}
+        class:reduced
+        class:playing
+        class:detail={beat.zoom > 1}
+      >
+        <div class="paper"><FormView {doc} scripted={beat.state} prefix="motion" /></div>
+        <aside>
+          <p class="step">A BETTER NEXT STEP</p>
+          <h3>Keep the context.<br />Make recovery clear.</h3>
+          <p>
+            Inputs, feedback and actions stay together. Change the explanation without rebuilding
+            the form.
+          </p>
+          <div class="rule"></div>
+          <span>Canon components<br />Agency composition<br />Draw motion</span>
+        </aside>
+      </div>
+      <div class="caption">
+        <span>LOCAL DEMONSTRATION</span>
+        <p>{beat.caption}</p>
+      </div>
     </div>
-  </div>
+  {/if}
 </div>
+{#if compact}<div class="live-caption"><p>{beat.caption}</p></div>{/if}
 {#if !exportOnly}<div class="transport">
-  <button
-    onclick={() => {
-      if (time >= seq.duration) time = 0;
-      playing = !playing;
-    }}>{playing ? 'Pause' : 'Play'}</button
-  ><label for="playhead">Time</label><input
-    id="playhead"
-    aria-label="Animation time"
-    type="range"
-    min="0"
-    max={seq.duration}
-    step="0.1"
-    bind:value={time}
-    oninput={() => (playing = false)}
-  /><output>{Number(time).toFixed(1)} / {seq.duration}s</output>
-</div>
-<p class="reason">{beat.reason} {reduced ? 'Reduced motion: camera changes use cuts.' : ''}</p>{/if}
+    <button
+      onclick={() => {
+        if (time >= seq.duration) time = 0;
+        playing = !playing;
+      }}>{playing ? 'Pause' : 'Play'}</button
+    ><label for="playhead">Time</label><input
+      id="playhead"
+      aria-label="Animation time"
+      type="range"
+      min="0"
+      max={seq.duration}
+      step="0.1"
+      aria-valuetext={`${Number(time).toFixed(1)} of ${seq.duration} seconds`}
+      bind:value={time}
+      oninput={() => (playing = false)}
+    /><output>{Number(time).toFixed(1)} / {seq.duration}s</output>
+  </div>
+  <p class="reason">
+    {beat.reason}
+    {reduced ? 'Reduced motion: camera changes use cuts.' : ''}
+  </p>{/if}
 
 <style>
   .motion-tools,
@@ -164,6 +227,7 @@
     gap: 4px;
   }
   button {
+    min-height: 44px;
     font: inherit;
     font-size: 12px;
     border: 1px solid var(--color-performance-line);
@@ -181,6 +245,31 @@
     position: relative;
     background: var(--color-performance-paper);
     border: 1px solid var(--color-performance-line);
+  }
+  .compact-stage {
+    height: 100%;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  .compact-paper {
+    width: 100%;
+  }
+  .live-caption {
+    padding: 12px 16px;
+    min-height: 96px;
+    background: var(--color-performance-ink);
+    color: var(--color-performance-paper);
+  }
+  .live-caption p {
+    margin: 0;
+    font-size: 16px;
+    line-height: 1.5;
+  }
+  .compact-stage:focus-visible,
+  button:focus-visible,
+  input:focus-visible {
+    outline: 2px solid var(--color-performance-signal);
+    outline-offset: 3px;
   }
   .scale {
     width: 1200px;
@@ -264,6 +353,7 @@
     font-size: 12px;
   }
   .transport input {
+    min-height: 44px;
     flex: 1;
     min-width: 70px;
     accent-color: var(--color-performance-ink);
