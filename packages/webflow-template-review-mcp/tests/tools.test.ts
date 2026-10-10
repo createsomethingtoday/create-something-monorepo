@@ -1840,78 +1840,212 @@ test('prepare_admin_template_verify fails cleanly when no MRP id is resolvable',
   assert.equal((payload.error as { code?: string })?.code, 'TEMPLATE_ID_UNRESOLVED');
 });
 
-test('set_mrp_visibility PUTs the airtable MRP route with bearer key and XHR header', async () => {
+function adminCreateContext(overrides: Record<string, unknown> = {}) {
+  const base = adminFillContext();
+  return { ...base, canPublish: true, asset: { ...base.asset, creatorEmail: 'hello@komanica.co', ...overrides } };
+}
+
+test('create_admin_template POSTs the template payload, records the MRP ID, and returns the Admin URL', async () => {
   const { server, handlers } = createServerHarness();
   const calls: Array<{ url: string; init: RequestInit }> = [];
   const fetchStub = (async (url: string | URL | Request, init?: RequestInit) => {
     calls.push({ url: String(url), init: init ?? {} });
-    return new Response(JSON.stringify({ _id: 'abcdef012345abcdef012345', visibility: 'PRIVATE' }), {
+    return new Response(JSON.stringify({ _id: '6ac54eddbb8a7def85e05871', slug: 'komanica', status: 'DRAFT' }), {
       status: 200,
       headers: { 'content-type': 'application/json' },
     });
   }) as typeof fetch;
+  const publishingWrites: Array<{ assetId: string; input: unknown }> = [];
+  const client = {
+    getReviewContext: async () => adminCreateContext(),
+    updateAssetPublishing: async (assetId: string, input: unknown) => {
+      publishingWrites.push({ assetId, input });
+      return {};
+    },
+  } as unknown as AirtableClient;
 
-  registerTools(
-    server,
-    () => ({}) as AirtableClient,
-    () => reviewer,
-    { marketplaceAdmin: { apiKey: 'k'.repeat(128), fetchFn: fetchStub } },
-  );
+  registerTools(server, () => client, () => reviewer, { marketplaceAdmin: { apiKey: 'k'.repeat(128), fetchFn: fetchStub } });
 
-  const result = await handlers.get('template_review_set_mrp_visibility')?.({
-    mrp_id: 'abcdef012345abcdef012345',
-    visibility: 'PRIVATE',
-  });
+  const result = await handlers.get('template_review_create_admin_template')?.({ version_id: 'rec_version_komanica' });
 
   assert.ok(result);
   const payload = parsePayload(result);
-  assert.equal(payload.ok, true);
+  assert.equal(payload.ok, true, JSON.stringify(payload.error));
 
   assert.equal(calls.length, 1);
   assert.equal(calls[0]?.url, 'https://webflow.com/admin/api/mrp/airtable');
-  assert.equal(calls[0]?.init.method, 'PUT');
+  assert.equal(calls[0]?.init.method, 'POST');
   const headers = calls[0]?.init.headers as Record<string, string>;
   assert.equal(headers['X-Requested-With'], 'XMLHttpRequest');
   assert.match(headers.Authorization ?? '', /^Bearer k+$/);
-  assert.deepEqual(JSON.parse(String(calls[0]?.init.body)), { mrpId: 'abcdef012345abcdef012345', visibility: 'PRIVATE' });
 
-  const data = payload.data as { requestedVisibility: string; response: { visibility?: string } };
-  assert.equal(data.requestedVisibility, 'PRIVATE');
-  assert.equal(data.response.visibility, 'PRIVATE');
+  const body = JSON.parse(String(calls[0]?.init.body)) as Record<string, any>;
+  assert.equal(body.resourceType, 'TEMPLATE');
+  assert.equal(body.name, 'Komanica');
+  assert.equal(body.displayName, 'Komanica');
+  assert.equal(body.siteSlug, 'komanica');
+  assert.equal(body.visibility, 'PRIVATE');
+  assert.deepEqual(body.price, { value: 9900, unit: 'USD' });
+  assert.deepEqual(body.support, { email: 'hello@komanica.co' });
+  assert.equal(body.templateMetadata.type, 'CMS');
+  assert.equal(body.templateMetadata.extDetailPageUrl, '/templates/html/komanica-website-template');
+  assert.equal(body.templateMetadata.extCategory, 'Design');
+  assert.ok(typeof body.templateMetadata.extMainTag === 'string' && body.templateMetadata.extMainTag.length > 0);
+  assert.deepEqual(body.thumbnailImage, { url: 'https://example.com/thumb.png', altText: 'Komanica' });
+
+  assert.deepEqual(publishingWrites, [{ assetId: 'rec_asset_komanica', input: { mrp_id_overwrite: '6ac54eddbb8a7def85e05871' } }]);
+
+  const data = payload.data as { template_id: string; admin_url: string; mrp_id_recorded: boolean; next_steps: string[] };
+  assert.equal(data.template_id, '6ac54eddbb8a7def85e05871');
+  assert.equal(data.admin_url, 'https://webflow.com/admin/templates/6ac54eddbb8a7def85e05871');
+  assert.equal(data.mrp_id_recorded, true);
+  assert.match(data.next_steps[0] ?? '', /complete_admin_template/);
+  assert.equal('visibility' in (payload.data as Record<string, unknown>), false);
+  assert.ok(!JSON.stringify(payload.data).includes('visibility'));
 });
 
-test('set_mrp_visibility fails closed without the marketplace admin key and stays write-gated', async () => {
+test('create_admin_template fails closed without the marketplace admin key and stays write-gated', async () => {
   const { server, handlers, names } = createServerHarness();
+  registerTools(server, () => ({ getReviewContext: async () => adminCreateContext() }) as unknown as AirtableClient, () => reviewer, {});
 
-  registerTools(
-    server,
-    () => ({}) as AirtableClient,
-    () => reviewer,
-    {},
-  );
-
-  const result = await handlers.get('template_review_set_mrp_visibility')?.({
-    mrp_id: 'abcdef012345abcdef012345',
-    visibility: 'PUBLIC',
-  });
-
+  const result = await handlers.get('template_review_create_admin_template')?.({ version_id: 'rec_version_komanica' });
   assert.ok(result);
   const payload = parsePayload(result);
   assert.equal(payload.ok, false);
   assert.equal((payload.error as { code?: string })?.code, 'MARKETPLACE_ADMIN_KEY_UNAVAILABLE');
-  assert.ok(WRITE_TOOL_NAMES.has('template_review_set_mrp_visibility'));
-  assert.notEqual(names.indexOf('template_review_prepare_admin_template_verify'), -1);
+  assert.ok(WRITE_TOOL_NAMES.has('template_review_create_admin_template'));
+  assert.notEqual(names.indexOf('template_review_create_admin_template'), -1);
 
   const readOnly = createServerHarness();
-  registerTools(
-    readOnly.server,
-    () => ({}) as AirtableClient,
-    () => reviewer,
-    {},
-    { allowWrites: false },
-  );
-  assert.equal(readOnly.names.indexOf('template_review_set_mrp_visibility'), -1);
-  assert.notEqual(readOnly.names.indexOf('template_review_prepare_admin_template_verify'), -1);
+  registerTools(readOnly.server, () => ({}) as AirtableClient, () => reviewer, {}, { allowWrites: false });
+  assert.equal(readOnly.names.indexOf('template_review_create_admin_template'), -1);
+});
+
+test('create_admin_template refuses to duplicate an asset that already has a Template ID', async () => {
+  const { server, handlers } = createServerHarness();
+  let fetched = false;
+  const fetchStub = (async () => {
+    fetched = true;
+    return new Response('{}', { status: 200 });
+  }) as typeof fetch;
+  const client = {
+    getReviewContext: async () => adminCreateContext({ mrpIdOverride: 'abcdef012345abcdef012345' }),
+  } as unknown as AirtableClient;
+  registerTools(server, () => client, () => reviewer, { marketplaceAdmin: { apiKey: 'k'.repeat(128), fetchFn: fetchStub } });
+
+  const result = await handlers.get('template_review_create_admin_template')?.({ version_id: 'rec_version_komanica' });
+  assert.ok(result);
+  const payload = parsePayload(result);
+  assert.equal(payload.ok, false);
+  assert.equal((payload.error as { code?: string })?.code, 'TEMPLATE_ID_ALREADY_RECORDED');
+  assert.equal(fetched, false);
+});
+
+test('create_admin_template refuses without a support contact', async () => {
+  const { server, handlers } = createServerHarness();
+  let fetched = false;
+  const fetchStub = (async () => {
+    fetched = true;
+    return new Response('{}', { status: 200 });
+  }) as typeof fetch;
+  const client = {
+    getReviewContext: async () => adminCreateContext({ creatorEmail: undefined }),
+  } as unknown as AirtableClient;
+  registerTools(server, () => client, () => reviewer, { marketplaceAdmin: { apiKey: 'k'.repeat(128), fetchFn: fetchStub } });
+
+  const result = await handlers.get('template_review_create_admin_template')?.({ version_id: 'rec_version_komanica' });
+  assert.ok(result);
+  const payload = parsePayload(result);
+  assert.equal(payload.ok, false);
+  assert.equal((payload.error as { code?: string })?.code, 'SUPPORT_CONTACT_MISSING');
+  assert.equal(fetched, false);
+});
+
+function mrpRouteStub(stored: Record<string, unknown>) {
+  const calls: Array<Record<string, any>> = [];
+  const fetchFn = (async (_url: string | URL | Request, init?: RequestInit) => {
+    const body = JSON.parse(String(init?.body)) as Record<string, any>;
+    calls.push({ method: init?.method, body });
+    return new Response(JSON.stringify(stored), { status: 200, headers: { 'content-type': 'application/json' } });
+  }) as typeof fetch;
+  return { calls, fetchFn };
+}
+
+test('complete_admin_template PUTs the Admin fields to the recorded Template ID and reads them back', async () => {
+  const { server, handlers, names } = createServerHarness();
+  const stored = {
+    _id: '6ac54eddbb8a7def85e05871',
+    name: 'Komanica',
+    price: { value: 9900, unit: 'USD' },
+    templateMetadata: { type: 'CMS', extDetailPageUrl: '/templates/html/komanica-website-template' },
+    thumbnailImage: { url: 'https://cdn.prod.website-files.com/template-assets/6ac54eddbb8a7def85e05871/thumbnails/1_thumb.png' },
+  };
+  const { calls, fetchFn } = mrpRouteStub(stored);
+  const client = {
+    getReviewContext: async () => adminCreateContext({ mrpIdOverride: '6ac54eddbb8a7def85e05871' }),
+  } as unknown as AirtableClient;
+  registerTools(server, () => client, () => reviewer, { marketplaceAdmin: { apiKey: 'k'.repeat(128), fetchFn } });
+
+  const result = await handlers.get('template_review_complete_admin_template')?.({ version_id: 'rec_version_komanica' });
+  assert.ok(result);
+  const payload = parsePayload(result);
+  assert.equal(payload.ok, true, JSON.stringify(payload.error));
+
+  assert.equal(calls.length, 2);
+  assert.equal(calls[0]?.method, 'PUT');
+  assert.equal(calls[0]?.body.mrpId, '6ac54eddbb8a7def85e05871');
+  assert.deepEqual(calls[0]?.body.price, { value: 9900, unit: 'USD' });
+  assert.equal(calls[0]?.body.templateMetadata.extCategory, 'Design');
+  assert.equal(calls[0]?.body.thumbnailImage.url, 'https://example.com/thumb.png');
+  assert.deepEqual(calls[1]?.body, { mrpId: '6ac54eddbb8a7def85e05871' });
+
+  const data = payload.data as { fields: Array<{ field: string; status: string }>; all_stored: boolean; warnings: string[] };
+  const status = Object.fromEntries(data.fields.map((check) => [check.field, check.status]));
+  assert.equal(status['price.value'], 'stored');
+  assert.equal(status['templateMetadata.type'], 'stored');
+  assert.equal(status['thumbnailImage.url'], 'stored');
+  assert.equal(status['templateMetadata.extCategory'], 'unverifiable');
+  assert.equal(data.all_stored, false);
+  assert.ok(data.warnings.some((warning) => /123284/.test(warning)));
+
+  assert.ok(WRITE_TOOL_NAMES.has('template_review_complete_admin_template'));
+  assert.notEqual(names.indexOf('template_review_complete_admin_template'), -1);
+  const readOnly = createServerHarness();
+  registerTools(readOnly.server, () => ({}) as AirtableClient, () => reviewer, {}, { allowWrites: false });
+  assert.equal(readOnly.names.indexOf('template_review_complete_admin_template'), -1);
+});
+
+test('complete_admin_template reports a mismatch and flags an Airtable thumbnail', async () => {
+  const { server, handlers } = createServerHarness();
+  const { fetchFn } = mrpRouteStub({
+    _id: '6ac54eddbb8a7def85e05871',
+    price: { value: 4900, unit: 'USD' },
+    thumbnailImage: { url: 'https://v5.airtableusercontent.com/old.png' },
+  });
+  const client = {
+    getReviewContext: async () => adminCreateContext({ mrpIdOverride: '6ac54eddbb8a7def85e05871' }),
+  } as unknown as AirtableClient;
+  registerTools(server, () => client, () => reviewer, { marketplaceAdmin: { apiKey: 'k'.repeat(128), fetchFn } });
+
+  const payload = parsePayload((await handlers.get('template_review_complete_admin_template')?.({ version_id: 'rec_version_komanica' }))!);
+  assert.equal(payload.ok, true, JSON.stringify(payload.error));
+  const data = payload.data as { fields: Array<{ field: string; status: string }>; warnings: string[] };
+  const status = Object.fromEntries(data.fields.map((check) => [check.field, check.status]));
+  assert.equal(status['price.value'], 'mismatch');
+  assert.equal(status['thumbnailImage.url'], 'mismatch');
+  assert.ok(data.warnings.some((warning) => /Airtable link/.test(warning)));
+});
+
+test('complete_admin_template refuses when no Template ID is recorded', async () => {
+  const { server, handlers } = createServerHarness();
+  const { calls, fetchFn } = mrpRouteStub({});
+  const client = { getReviewContext: async () => adminCreateContext() } as unknown as AirtableClient;
+  registerTools(server, () => client, () => reviewer, { marketplaceAdmin: { apiKey: 'k'.repeat(128), fetchFn } });
+
+  const payload = parsePayload((await handlers.get('template_review_complete_admin_template')?.({ version_id: 'rec_version_komanica' }))!);
+  assert.equal(payload.ok, false);
+  assert.equal((payload.error as { code?: string })?.code, 'TEMPLATE_ID_MISSING');
+  assert.equal(calls.length, 0);
 });
 
 test('set_featured_flag is restricted to featured-batch coordinators', async () => {
