@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { ArrowUpRight, PencilLine, Workflow, ShieldCheck } from 'lucide-svelte';
-  import { Button, PerformanceConversionHandoff, PerformancePageSection, SEO } from '@create-something/canon';
+  import { ArrowUpRight, PencilLine } from 'lucide-svelte';
+  import { IsometricIllustration, Button, PerformanceConversionHandoff, PerformancePageSection, SEO } from '@create-something/canon';
   import AgencyMapHero from '$lib/components/AgencyMapHero.svelte';
   import WorkflowSignalBand from '$lib/components/WorkflowSignalBand.svelte';
   import { page } from '$app/stores';
@@ -10,9 +10,9 @@
   const initialIntegrationName = $derived($page.url.searchParams.get('source') === 'integration-catalog' ? $page.url.searchParams.get('integration_name') : null);
   const drawHref = 'https://draw.createsomething.agency/';
   const mappingSteps = [
-    { icon: PencilLine, label: '01 / Sketch', title: 'Start with the work.', detail: 'Name the task, the people involved, and the result you need.' },
-    { icon: Workflow, label: '02 / Connect', title: 'Make the handoffs visible.', detail: 'Connect the steps and tools. Mark where information moves or work gets stuck.' },
-    { icon: ShieldCheck, label: '03 / Review', title: 'Decide who does what.', detail: 'Mark what AI may do, where a person approves, and how you will check the result.' }
+    { kind: 'map' as const, label: '01 / Sketch', title: 'Start with the work.', detail: 'Name the task, the people involved, and the result you need.' },
+    { kind: 'handoff' as const, label: '02 / Connect', title: 'Make the handoffs visible.', detail: 'Connect the steps and tools. Mark where information moves or work gets stuck.' },
+    { kind: 'approve' as const, label: '03 / Review', title: 'Decide who does what.', detail: 'Mark what AI may do, where a person approves, and how you will check the result.' }
   ];
 </script>
 
@@ -42,7 +42,7 @@
       <ol class="mapping-steps" aria-label="How we map a workflow">
         {#each mappingSteps as step}
           <li>
-            <div class="step-label"><step.icon size={20} strokeWidth={1.5} aria-hidden="true" /><span>{step.label}</span></div>
+            <div class="step-label"><IsometricIllustration kind={step.kind} size={80} /><span>{step.label}</span></div>
             <h3>{step.title}</h3>
             <p>{step.detail}</p>
           </li>
