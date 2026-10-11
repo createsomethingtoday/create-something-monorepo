@@ -313,6 +313,18 @@ test('registerMarketplaceAgentTools prefers document.modelContext (spec, ChatGPT
   assert.equal(viaNavigator.length, 0);
 });
 
+test('registerMarketplaceAgentTools falls back to navigator when document.modelContext cannot register', () => {
+  const viaNavigator: unknown[] = [];
+  installWindow({
+    navigator: { modelContext: { registerTool: (tool: unknown) => viaNavigator.push(tool) } },
+  });
+  // A polyfill stub: truthy, but with no registration method.
+  installDocument({ modelContext: {} });
+  const tools = createMarketplaceAgentTools({ fetchImpl: stubFetch({}) });
+  assert.deepEqual(registerMarketplaceAgentTools(tools), { api: 'registerTool', registered: 5 });
+  assert.equal(viaNavigator.length, 5);
+});
+
 test('registered tools carry the full WebMCP annotation set', () => {
   const registered: Array<{ name: string; annotations: Record<string, boolean> }> = [];
   installDocument({ modelContext: { registerTool: (tool: unknown) => registered.push(tool as never) } });

@@ -765,8 +765,9 @@ const TemplateDetailHeroInner: React.FC<TemplateDetailHeroProps> = ({
               name: titleLabel,
               template_slug: resolvedSlug,
               creator_name: creatorName,
-              price: (offer.hasOffer && offer.offerPriceLabel) || price,
-              is_free: isFree,
+              // The resolved offer, not the raw props, is what the page shows.
+              price: offer.offerPriceLabel || offer.priceLabel,
+              is_free: offer.mode === 'free',
               category: titleCategory,
               url: resolvedSlug ? `https://webflow.com/templates/html/${resolvedSlug}` : null,
             })}

@@ -997,13 +997,21 @@ interface ModelContextLike {
  * Chromium builds used `navigator.modelContext`. Prefer the spec surface.
  */
 function findModelContext(): ModelContextLike | null {
+  // A polyfill can expose a truthy but inert document.modelContext beside a
+  // working navigator one, so only a context that can register tools wins.
   if (typeof document !== 'undefined') {
     const doc = document as Document & { modelContext?: ModelContextLike };
-    if (doc?.modelContext) return doc.modelContext;
+    if (canRegister(doc?.modelContext)) return doc.modelContext ?? null;
   }
   if (typeof window === 'undefined') return null;
   const nav = window.navigator as Navigator & { modelContext?: ModelContextLike };
-  return nav?.modelContext ?? null;
+  return canRegister(nav?.modelContext) ? (nav.modelContext ?? null) : null;
+}
+
+function canRegister(context: ModelContextLike | undefined): boolean {
+  return Boolean(
+    context && (typeof context.registerTool === 'function' || typeof context.provideContext === 'function'),
+  );
 }
 
 /** Fill every spec-defined hint so a client never reads an absent member as unknown. */
