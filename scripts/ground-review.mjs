@@ -310,7 +310,11 @@ export function matchesPathGlob(path, pattern) {
       if (chars[index + 2] === '*' || (index > 0 && chars[index - 1] !== '/') ||
           (index + 2 < chars.length && chars[index + 2] !== '/')) invalid();
       index += 1;
-      if (chars[index + 1] === '/') { index += 1; source += '(?:.*/)?'; }
+      if (chars[index + 1] === '/') {
+        index += 1;
+        // Rust's terminal recursive token also consumes a final filename.
+        source += index === chars.length - 1 ? '.*' : '(?:.*/)?';
+      }
       else source += '.*';
     } else if (c === '?') {
       source += '.';

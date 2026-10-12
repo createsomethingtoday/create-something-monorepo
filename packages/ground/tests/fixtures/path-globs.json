@@ -98,5 +98,30 @@
     "pattern": "a.ts",
     "path": "a.ts\n",
     "matches": false
+  },
+  {
+    "pattern": "src/**/",
+    "path": "src/a.ts",
+    "matches": true
+  },
+  {
+    "pattern": "**/",
+    "path": "a.ts",
+    "matches": true
+  },
+  {
+    "pattern": "src/**/**/",
+    "path": "src/nested/a.ts",
+    "matches": true
+  },
+  {
+    "pattern": "src/**/**/",
+    "path": "src/a.ts",
+    "matches": true
+  },
+  {
+    "pattern": "src/**/",
+    "path": "src/",
+    "matches": true
   }
 ]
