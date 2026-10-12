@@ -1,6 +1,7 @@
 <script lang="ts">
   import HyperframesExport from '$lib/composition/HyperframesExport.svelte';
   import { onMount } from 'svelte';
+  import { beforeNavigate } from '$app/navigation';
   import FormView from '$lib/composition/FormView.svelte';
   import MotionView from '$lib/composition/MotionView.svelte';
   import {
@@ -23,6 +24,13 @@
     description = $state(initial.content.description),
     buttonLabel = $state(initial.content.buttonLabel),
     variant = $state<'primary' | 'secondary'>(initial.content.variant);
+  let canvasHref = $state('/');
+  let savedContent = $state(serialize(initial));
+  const pending = $derived(title !== doc.content.title || description !== doc.content.description || buttonLabel !== doc.content.buttonLabel || variant !== doc.content.variant);
+  const unsaved = $derived(pending || serialize(doc) !== savedContent);
+  beforeNavigate(({ willUnload, cancel }) => {
+    if (!willUnload && unsaved && !confirm('Leave Compose without saving your changes on this device?')) cancel();
+  });
   function sync() {
     title = doc.content.title;
     description = doc.content.description;
@@ -30,11 +38,14 @@
     variant = doc.content.variant;
   }
   onMount(() => {
+    const project = new URL(location.href).searchParams.get('project');
+    if (project) canvasHref = `/?project=${encodeURIComponent(project)}`;
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         doc = parseDocument(saved);
         sync();
+        savedContent = serialize(doc);
         notice = 'Saved composition restored.';
       }
     } catch {
@@ -44,16 +55,21 @@
   });
   function apply() {
     try {
-      doc = updateContent(doc, { title, description, buttonLabel, variant });
+      if (pending) doc = updateContent(doc, { title, description, buttonLabel, variant });
       problem = '';
-      notice = 'Props applied to the shared composition.';
+      notice = 'Preview updated. Save to keep your changes on this device.';
+      return true;
     } catch (e) {
       problem = (e as Error).message;
+      return false;
     }
   }
   function save() {
+    if (!apply()) return;
     try {
-      localStorage.setItem(STORAGE_KEY, serialize(doc));
+      const serialized = serialize(doc);
+      localStorage.setItem(STORAGE_KEY, serialized);
+      savedContent = serialized;
       notice = 'Saved on this device.';
       problem = '';
     } catch {
@@ -69,9 +85,12 @@
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
   async function exportRender() {
+    if (!apply()) return;
+    const before = doc;
     try {
-      const h = await handoff(doc);
+      const h = await handoff(before);
       await parseHandoff(JSON.stringify(h));
+      if (before !== doc || pending) throw Error('Composition changed during export. Try again.');
       download(JSON.stringify(h, null, 2), 'draw-render-handoff.json');
       notice = 'Validated handoff exported. Open it in the render view to export offline HyperFrames HTML.';
     } catch (e) {
@@ -83,10 +102,11 @@
     const file = input.files?.[0];
     if (!file) return;
     const before = doc;
+    const draft = JSON.stringify({ title, description, buttonLabel, variant });
     try {
       if (file.size > 40000) throw Error('Composition is too large.');
       const candidate = parseDocument(await file.text());
-      if (before !== doc) throw Error('Composition changed while reading. Choose the file again.');
+      if (before !== doc || draft !== JSON.stringify({ title, description, buttonLabel, variant })) throw Error('Composition changed while reading. Choose the file again.');
       doc = candidate;
       sync();
       problem = '';
@@ -99,6 +119,8 @@
   }
 </script>
 
+<svelte:window onbeforeunload={(event) => { if (unsaved) { event.preventDefault(); event.returnValue = ''; } }} />
+
 <svelte:head
   ><title>Compose · Draw local proof</title><meta
     name="robots"
@@ -107,7 +129,7 @@
 >
 <div class="app">
   <header>
-    <a href="/" aria-label="Draw canvas"
+    <a href={canvasHref} data-sveltekit-reload aria-label="Draw canvas"
       ><img src="/brand/draw-dark.svg" width="28" height="28" alt="" /><strong>Draw</strong></a
     ><span class="divider"></span><span>Compose</span><span class="local">LOCAL PROOF</span>
   </header>
@@ -155,7 +177,8 @@
             ><option value="primary">Primary</option><option value="secondary">Secondary</option
             ></select
           >
-          <button class="apply" type="submit">Apply props <span>↗</span></button>
+          <button class="apply" type="submit">Update preview <span>↗</span></button>
+          {#if pending}<small>Preview is out of date. Save or export JSON to include your latest edits.</small>{/if}
         </form>
         <div class="structure">
           <div class="section-head">
@@ -181,7 +204,7 @@
         </div>
         <div class="file-actions">
           <button onclick={save}>Save locally</button><button
-            onclick={() => download(serialize(doc), 'draw-composition.json')}>Export JSON</button
+            onclick={() => { if (apply()) download(serialize(doc), 'draw-composition.json'); }}>Export JSON</button
           ><label class="import"
             >Import JSON<input
               aria-label="Import composition JSON"
@@ -215,11 +238,11 @@
           </p>
         </div>
         <div hidden={mode !== 'motion'} class="motion-stage">
-          {#if mode === 'motion'}<MotionView {doc} /><HyperframesExport {doc} />{/if}
+          {#if mode === 'motion'}<MotionView {doc} /><HyperframesExport {doc} disabled={pending} />{/if}
         </div>
       </section>
     </div>
-    <div class="status" role="status">{notice}</div>
+    <div class="status" role="status">{pending ? 'Content changed · update the preview, or save/export to include your edits.' : notice} {unsaved ? 'Unsaved on this device.' : ''}</div>
     {#if problem}<div role="alert" class="problem">{problem}</div>{/if}
     <footer>
       <span>Shared content. Independent camera & timing.</span><span

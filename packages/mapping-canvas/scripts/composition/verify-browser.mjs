@@ -97,7 +97,7 @@ try {
   ok('Switching modes preserves interactive state');
   await p.getByLabel('Heading', { exact: true }).fill('Keep the useful details.');
   await p.getByLabel('Canon variant').selectOption('secondary');
-  await p.getByRole('button', { name: 'Apply props', exact: false }).click();
+  await p.getByRole('button', { name: 'Update preview', exact: false }).click();
   await preview.getByRole('heading', { name: 'Keep the useful details.' }).waitFor();
   assert.deepEqual(
     await preview
