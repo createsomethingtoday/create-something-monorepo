@@ -1,0 +1,38 @@
+{
+  "baseURL": "http://127.0.0.1:4186",
+  "completedAt": "2026-10-12T20:05:49.167Z",
+  "results": [
+    {
+      "test": "keyboard, records, validation, completion, reload, edit, reduced motion, geometry",
+      "width": 1440,
+      "pass": true
+    },
+    {
+      "test": "keyboard, records, validation, completion, reload, edit, reduced motion, geometry",
+      "width": 390,
+      "pass": true
+    },
+    {
+      "test": "keyboard, records, validation, completion, reload, edit, reduced motion, geometry",
+      "width": 320,
+      "pass": true
+    },
+    {
+      "test": "deep link, Back/Forward, route return, rapid interruption, idle animations",
+      "pass": true
+    },
+    {
+      "test": "emulated touch and orientation",
+      "pass": true
+    },
+    {
+      "test": "SSR/no-JavaScript full explanation",
+      "pass": true
+    },
+    {
+      "test": "invalid fragment and blocked-storage completion",
+      "pass": true
+    }
+  ],
+  "pageErrors": []
+}

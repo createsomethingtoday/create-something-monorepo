@@ -1459,6 +1459,12 @@ describe('Canon registry manifest', () => {
     expect(missingPolicy).toEqual([]);
   });
 
+  it('keeps the bounded journey pilot explicitly experimental until promotion evidence exists', () => {
+    expect(getCanonPublicExportClassification('./patterns', 'InspectableJourney')).toMatchObject({
+      classification: 'experiment', registryPolicy: 'classified-out'
+    });
+  });
+
   it('keeps candidate-review public Svelte exports backed by registry items', () => {
     const registryIds = new Set(CANON_REGISTRY_MANIFEST.items.map((item) => item.id));
     const publicExports = publicSvelteComponentExports();
