@@ -58,8 +58,11 @@ enum Commands {
         json: bool,
     },
 
-    /// Validate Ground policy, workspace discovery, and build provenance
+    /// Validate a target and policy; optionally compare reported build provenance
     Doctor {
+        /// Require the binary to report this 40-character source commit SHA
+        #[arg(long)]
+        expected_source_sha: Option<String>,
         /// Repository or package path to inspect
         #[arg(default_value = ".")]
         directory: PathBuf,
@@ -191,7 +194,7 @@ enum FindCommands {
         #[arg(default_value = ".")]
         path: PathBuf,
         /// Similarity threshold (0.0-1.0)
-        #[arg(long, default_value = "0.75")]
+        #[arg(long, default_value = "0.75", value_parser = parse_similarity)]
         threshold: f64,
         /// File extensions to check (comma-separated)
         #[arg(long, default_value = "ts,tsx,js,jsx,svelte,rs")]
@@ -215,7 +218,7 @@ enum FindCommands {
         #[arg(default_value = ".")]
         path: PathBuf,
         /// Similarity threshold (0.0-1.0)
-        #[arg(long, default_value = "0.8")]
+        #[arg(long, default_value = "0.8", value_parser = parse_similarity)]
         threshold: f64,
         /// Max files to analyze
         #[arg(long, default_value = "200")]
@@ -364,6 +367,11 @@ enum ClaimCommands {
     },
 }
 
+fn parse_similarity(value: &str) -> Result<f64, String> {
+    value.parse::<f64>().ok().filter(|number| number.is_finite() && (0.0..=1.0).contains(number))
+        .ok_or_else(|| "similarity threshold must be a finite number between 0.0 and 1.0".to_owned())
+}
+
 fn main() {
     let cli = Cli::parse();
     let structured_analysis = matches!(&cli.command, Commands::Analyze { .. } | Commands::Diff { .. });
@@ -395,8 +403,23 @@ fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
             }
             Ok(())
         }
-        Commands::Doctor { directory, json: as_json } => {
+        Commands::Doctor { directory, json: as_json, expected_source_sha } => {
+            let directory = directory.canonicalize().map_err(|error| format!(
+                "doctor target {} is unavailable: {}; provide an existing repository or package directory",
+                directory.display(), error
+            ))?;
+            if !directory.is_dir() {
+                return Err(format!("doctor target {} must be a directory", directory.display()).into());
+            }
             let build = ground::build_info();
+            if let Some(expected) = &expected_source_sha {
+                if expected.len() != 40 || !expected.bytes().all(|byte| byte.is_ascii_hexdigit()) {
+                    return Err("--expected-source-sha must be a 40-character hexadecimal commit SHA".into());
+                }
+                if !build.source_sha.eq_ignore_ascii_case(expected) {
+                    return Err(format!("Ground source SHA mismatch: expected {}, binary reports {}; select or rebuild the intended binary", expected, build.source_sha).into());
+                }
+            }
             let (config, config_path) = ground::config::GroundConfig::load_for_path(&directory)?;
             let policy_json = serde_json::to_vec(&config)?;
             let policy_sha256 = format!("{:x}", Sha256::digest(&policy_json));
@@ -404,6 +427,11 @@ fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
             let report = json!({
                 "verification_status": "PASS",
                 "build": build,
+                "provenance": {
+                    "expected_source_sha": expected_source_sha,
+                    "source_sha_matches": expected_source_sha.as_ref().map(|_| true),
+                    "attestation_verified": false,
+                },
                 "policy": {
                     "source": config_path.map(|path| path.to_string_lossy().to_string()),
                     "sha256": policy_sha256,
