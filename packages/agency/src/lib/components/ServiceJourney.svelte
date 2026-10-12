@@ -61,6 +61,7 @@
       closeDetail(location.stepId);
     }
   }
+  function openSearch() { window.dispatchEvent(new Event('agency:open-search')); }
   function saveDraft() {
     try {
       sessionStorage.setItem(storageKey, JSON.stringify(draft));
@@ -127,6 +128,7 @@
     <h2 id="service-journey-title">From problem to checked handoff.</h2>
     <p class="introduction">Follow one form that stops reaching a team. Inspect the decision, the checks and the instructions that stay with them.</p>
     <p class="example-label">Synthetic example · no connected systems, messages or bookings</p>
+    {#if enhanced}<button class="quiet inline-search" onclick={openSearch}>Search public pages</button>{/if}
   </header>
   <InspectableJourney id={journeyId} label="Inspect the service journey" {steps} {location} {enhanced} reducedMotion={$reducedFilmMotion} onselect={(next) => void move(next)}>
     {#snippet overview(selectedId)}
@@ -198,7 +200,7 @@
       <p class="sr-only" role="status">{announcement}</p>
     </div>
   </section>
-  <footer><p>Project context carries into the next agreed improvement.</p><a href="/services">See the process and support scope ↗</a></footer>
+  <footer>{#if enhanced}<button class="quiet inline-search" onclick={openSearch}>Search public pages</button>{/if}<p>Project context carries into the next agreed improvement.</p><a href="/services">See the process and support scope ↗</a></footer>
 </section>
 
 <style>

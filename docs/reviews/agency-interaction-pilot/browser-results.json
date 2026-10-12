@@ -1,6 +1,6 @@
 {
   "baseURL": "http://127.0.0.1:4186",
-  "completedAt": "2026-10-12T20:05:49.167Z",
+  "completedAt": "2026-10-12T20:14:43.532Z",
   "results": [
     {
       "test": "keyboard, records, validation, completion, reload, edit, reduced motion, geometry",
@@ -18,11 +18,11 @@
       "pass": true
     },
     {
-      "test": "deep link, Back/Forward, route return, rapid interruption, idle animations",
+      "test": "deep link, Back/Forward, early Back, rapid interruption, idle animations",
       "pass": true
     },
     {
-      "test": "emulated touch and orientation",
+      "test": "mobile inline search, focus return, no floating overlap, touch and orientation",
       "pass": true
     },
     {

@@ -89,6 +89,11 @@ try {
   }
   {
     const { page, context } = await createPage({ reducedMotion: 'no-preference' });
+    await page.addInitScript(() => {
+      window.__routeSnapshots = 0;
+      const start = document.startViewTransition?.bind(document);
+      if (start) document.startViewTransition = (...args) => { window.__routeSnapshots++; return start(...args); };
+    });
     await start(page);
     await page.locator('#handoff-example-problem-inspect').click();
     await page.goBack();
@@ -115,19 +120,30 @@ try {
     await page.locator('#handoff-example-handoff-inspect').click();
     await page.locator('[data-journey]').scrollIntoViewIfNeeded();
     await page.screenshot({ path: `${output}/journey-desktop-detail.png` });
-    // Navigate away through an existing read-only page, then restore actual app history.
-    await page.locator('.service-journey footer a').click();
-    await page.waitForURL('**/services');
-    await page.getByRole('heading', { level: 1, name: 'Bring a workflow, software problem or existing product.' }).waitFor();
-    await page.goBack();
-    await assertSelected(page, 'Handoff');
-    await page.locator('#handoff-example-handoff-record').waitFor({ state: 'visible' });
-    results.push({ test: 'deep link, Back/Forward, route return, rapid interruption, idle animations', pass: true });
+    // Repeat early Back with cold and cached route data. No snapshot may delay commit.
+    for (let attempt = 0; attempt < 3; attempt++) {
+      await page.locator('.service-journey footer a').click();
+      await page.waitForURL('**/services');
+      // Back as soon as history changes, before waiting for destination render.
+      await page.goBack();
+      await assertSelected(page, 'Handoff');
+      await page.locator('#handoff-example-handoff-record').waitFor({ state: 'visible' });
+      await page.waitForTimeout(500); // ensure an older route cannot overwrite restored content
+      await assertSelected(page, 'Handoff');
+    }
+    assert.equal(await page.evaluate(() => window.__routeSnapshots), 0);
+    results.push({ test: 'deep link, Back/Forward, early Back, rapid interruption, idle animations', pass: true });
     await context.close();
   }
   {
     const { page, context } = await createPage({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
     await start(page);
+    assert.equal(await page.locator('.mobile-search-button').count(), 0);
+    const inlineSearch = page.locator('.service-journey header').getByRole('button', { name: 'Search public pages' });
+    await inlineSearch.tap();
+    await page.getByRole('heading', { name: 'Search Agency', exact: true }).waitFor();
+    await page.locator('.agency-search').getByRole('button', { name: 'Close search', exact: true }).tap();
+    await page.waitForFunction(() => document.activeElement?.textContent === 'Search public pages');
     await page.locator('#handoff-example-approval-control').tap();
     await assertSelected(page, 'Approval');
     await page.locator('#handoff-example-approval-inspect').tap();
@@ -140,7 +156,7 @@ try {
     await page.setViewportSize({ width: 844, height: 390 });
     await assertSelected(page, 'Handoff');
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
-    results.push({ test: 'emulated touch and orientation', pass: true });
+    results.push({ test: 'mobile inline search, focus return, no floating overlap, touch and orientation', pass: true });
     await context.close();
   }
   {

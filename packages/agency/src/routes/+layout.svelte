@@ -50,6 +50,10 @@
       disableScrollHandling();
     }
 
+    // Commit pilot route changes without waiting for a visual snapshot.
+    // SvelteKit updates history before awaiting onNavigate; delaying here lets
+    // early Back race an older, still-uncommitted destination.
+    if (navigation.from?.url.pathname === '/' || navigation.to?.url.pathname === '/') return;
     // Local fragment selection already has bounded component feedback.
     if (navigation.from?.url.pathname === navigation.to?.url.pathname && navigation.from?.url.search === navigation.to?.url.search) return;
     if (!document.startViewTransition) return;
@@ -316,7 +320,7 @@
 
 <!-- Unified Search - Cmd/Ctrl+K to open -->
 {#if isPublicSearchPage($page.url.pathname)}
-  <AgencySearch />
+  <AgencySearch showMobileButton={$page.url.pathname !== '/'} />
 {:else}
   <UnifiedSearch currentProperty="agency" localItems={quickAccessItems} showMobileButton={false} />
 {/if}

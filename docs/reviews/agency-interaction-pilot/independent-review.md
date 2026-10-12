@@ -13,4 +13,6 @@ Resolved findings:
 
 Evidence: browser-results.json records all seven groups passing with no page errors. Desktop detail and 1440/390/320 receipts retain accepted assets, legible hierarchy and truthful synthetic completion.
 
-Remaining limitations: immediate Back before destination rendering completes remains unresolved; physical-device and screen-reader testing are outstanding. Existing mobile floating search can overlap lower receipt text and needs page integration review before release.
+Follow-up source review: no new blocker. Homepage navigation bypasses the asynchronous snapshot delay implicated in early Back. Inline search reuses existing search/focus handling and cleans up its event listener; other routes retain the default mobile trigger. The refreshed browser receipt includes three early-Back repetitions and inline-search focus return.
+
+Remaining limitations: physical-device and screen-reader testing are outstanding. Static reading preview uses fallback fonts and does not exercise live interaction.
