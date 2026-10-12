@@ -112,3 +112,31 @@ test('provider label is bounded and tied to the verified provider', async () => 
     await assert.rejects(broker.connectionStatus('gmail'), error => error instanceof IntegrationError && error.reason === 'invalid_readback');
   }
 });
+
+for (const [status, payload, reason, operation] of [
+  [503, { error: 'journal_unavailable', detail: 'SECRET' }, 'journal_unavailable', 'begin'],
+  [503, { provider: 'gmail', status: 'readback_required', attemptId: 'private-attempt' }, 'link_outcome_unknown', 'begin'],
+  [409, { error: 'connection_changed', detail: 'SECRET' }, 'connection_changed', 'reconcile'],
+  [404, { error: 'not_found', detail: 'SECRET' }, 'connection_not_found', 'reconcile'],
+] as const) test(`source recovery preserves ${reason} without response data or retries`, async () => {
+  let calls = 0;
+  const broker = createBrokerClient({ baseUrl: 'https://gigi.example.test', getAccessToken: async () => 'test-token',
+    fetch: async () => { calls++; return Response.json(payload, { status }); } });
+  await assert.rejects(operation === 'begin' ? broker.beginConnection('gmail', 'request-1') : broker.reconcileConnection('gmail', 'ca_one'),
+    error => error instanceof IntegrationError && error.reason === reason && !/SECRET|private-attempt/.test(JSON.stringify(error)));
+  assert.equal(calls, 1);
+});
+
+test('link readback-required marker cannot masquerade as another operation error', async () => {
+  const broker = createBrokerClient({ baseUrl: 'https://gigi.example.test', getAccessToken: async () => 'test-token',
+    fetch: async () => Response.json({ provider: 'gmail', status: 'readback_required' }, { status: 503 }) });
+  await assert.rejects(broker.connectionStatus('gmail'), error => error instanceof IntegrationError && error.reason === 'unavailable');
+});
+
+for (const [status, error] of [[503, 'journal_unavailable'], [409, 'connection_changed'], [404, 'not_found'], [400, 'journal_unavailable']] as const) {
+  test(`recovery codes are not accepted on unrelated status calls: ${status}/${error}`, async () => {
+    const broker = createBrokerClient({ baseUrl: 'https://gigi.example.test', getAccessToken: async () => 'test-token',
+      fetch: async () => Response.json({ error, detail: 'SECRET' }, { status }) });
+    await assert.rejects(broker.connectionStatus('gmail'), e => e instanceof IntegrationError && e.reason === 'unavailable');
+  });
+}

@@ -1,0 +1,29 @@
+{
+  "issue": "CRE-2256",
+  "scope": "Bounded source-connection recovery and opt-in diagnostics follow-up",
+  "baselineRegressionFailures": {
+    "broker": 4,
+    "webAndBridge": 6,
+    "rustDiagnostic": 1
+  },
+  "validation": {
+    "desktopTests": 164,
+    "integrationTests": 215,
+    "rustDomainTests": 62,
+    "rustMcpTests": 7,
+    "optionalTests": "Initial3 skips exercised separately:2 MCP+1 CTX, all passed",
+    "sourceProcessCalls": 39,
+    "typecheck": true,
+    "retiredProviderGuard": true,
+    "independentReview": "No remaining blockers; inherited-message-key and stale-copy polish findings fixed"
+  },
+  "boundaries": {
+    "providerCalls": 0,
+    "newCredentialsOrPermissions": false,
+    "realRecordsUsed": false,
+    "appReplacement": false,
+    "automaticDiagnosticUploads": false
+  },
+  "releaseQualified": false,
+  "releaseNote": "Existing signed unnotarized5924f5594 candidate does not include this patch. New candidate must be rebuilt, signed, notarized, qualified and accepted before distribution. Grant live-provider failure remains unverified."
+}
