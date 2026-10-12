@@ -165,7 +165,8 @@ pub fn list_tools() -> Vec<ToolDefinition> {
                     },
                     "threshold": {
                         "type": "number",
-                        "description": "How similar functions need to be (0.0-1.0, default: 0.8)"
+                        "description": "How similar functions need to be (0.0-1.0, default: 0.8)",
+                        "minimum": 0, "maximum": 1
                     },
                     "exclude_tests": {
                         "type": "boolean",
@@ -969,6 +970,14 @@ fn handle_check_connections(g: &mut VerifiedTriad, args: &Value) -> ToolResult {
     }
 }
 
+fn similarity_argument(args: &Value, name: &str) -> Result<Option<f64>, String> {
+    match args.get(name) {
+        None => Ok(None),
+        Some(value) => value.as_f64().filter(|number| number.is_finite() && (0.0..=1.0).contains(number))
+            .map(Some).ok_or_else(|| format!("{name} must be a number between 0.0 and 1.0; got {value}")),
+    }
+}
+
 fn handle_find_duplicate_functions(args: &Value) -> ToolResult {
     let workers = match duplicate_workers(args) {
         Ok(workers) => workers,
@@ -1010,9 +1019,10 @@ fn handle_find_duplicate_functions(args: &Value) -> ToolResult {
     };
     
     // Use config threshold as default, allow override from args
-    let threshold = args.get("threshold")
-        .and_then(|v| v.as_f64())
-        .unwrap_or_else(|| config.similarity_threshold());
+    let threshold = match similarity_argument(args, "threshold") {
+        Ok(value) => value.unwrap_or_else(|| config.similarity_threshold()),
+        Err(error) => return ToolResult::error(error),
+    };
     
     // Use config min_lines as default, allow override from args
     let min_lines = args.get("min_lines")
@@ -1065,8 +1075,10 @@ fn handle_find_duplicate_functions(args: &Value) -> ToolResult {
         .and_then(|v| v.as_bool())
         .unwrap_or(false);
     
-    let intra_file_threshold = args.get("intra_file_threshold")
-        .and_then(|v| v.as_f64());
+    let intra_file_threshold = match similarity_argument(args, "intra_file_threshold") {
+        Ok(value) => value,
+        Err(error) => return ToolResult::error(error),
+    };
 
     let mut focus_files = args.get("focus_files")
         .and_then(|value| value.as_array())
@@ -1785,7 +1797,7 @@ fn handle_find_orphans(args: &Value) -> ToolResult {
     
     // Filter using config path patterns first
     let files: Vec<_> = files.into_iter()
-        .filter(|f| !config.should_ignore_path(f))
+        .filter(|f| !config.should_ignore_path(f.strip_prefix(&directory).unwrap_or(f)))
         .collect();
     let paths_ignored = total_files_before_filter - files.len();
     
@@ -2602,7 +2614,7 @@ fn handle_batch_analyze(args: &Value) -> ToolResult {
         .map(|arr| arr.iter().filter_map(|v| v.as_str()).map(PathBuf::from).collect())
         .unwrap_or_default();
     
-    // Load config
+    // Validate policy even when the diff has no changed files.
     let config = match load_config_in_ancestors(&directory) {
         Ok(config) => config,
         Err(error) => return ToolResult::error(error),
@@ -3203,6 +3215,12 @@ fn handle_diff(args: &Value) -> ToolResult {
         }
     };
     
+    // Load config
+    let config = match load_config_in_ancestors(&directory) {
+        Ok(config) => config,
+        Err(error) => return ToolResult::error(error),
+    };
+
     if changed_files.is_empty() {
         let check_coverage = checks.iter().map(|check| {
             (
@@ -3229,12 +3247,6 @@ fn handle_diff(args: &Value) -> ToolResult {
             "message": format!("No files changed since '{}'. Nothing to analyze.", base_ref)
         }));
     }
-    
-    // Load config
-    let config = match load_config_in_ancestors(&directory) {
-        Ok(config) => config,
-        Err(error) => return ToolResult::error(error),
-    };
     
     // Classify every discovered file so a clean diff result cannot imply that
     // unsupported or policy-excluded changes were analyzed.

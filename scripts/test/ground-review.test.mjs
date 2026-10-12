@@ -4,6 +4,7 @@ import {
   mkdirSync,
   mkdtempSync,
   renameSync,
+  readFileSync,
   rmSync,
   symlinkSync,
   writeFileSync
@@ -1394,4 +1395,12 @@ for (const [name, coverage, expected] of [
   ['legacy contradiction', { status: 'completed', scan_complete: false }, 'partial'],
 ]) test(`completion normalization: ${name}`, () => {
   assert.equal(normalizeCheckCompletion(coverage), expected);
+});
+
+test('wrapper path globs match the native Rust policy fixture contract', () => {
+  const fixtures = JSON.parse(readFileSync(new URL('../../packages/ground/tests/fixtures/path-globs.json', import.meta.url), 'utf8'));
+  for (const fixture of fixtures) {
+    if (fixture.invalid) assert.throws(() => matchesPathGlob(fixture.path, fixture.pattern), /Invalid Ground path glob/);
+    else assert.equal(matchesPathGlob(fixture.path, fixture.pattern), fixture.matches, JSON.stringify(fixture));
+  }
 });

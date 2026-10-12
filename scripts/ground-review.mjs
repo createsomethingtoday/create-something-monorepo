@@ -296,29 +296,44 @@ function groundIgnorePatterns(root) {
   return [...new Set(patterns)];
 }
 
+// Rust glob::Pattern::matches grammar, including character classes and its
+// default separator behavior. Shared fixtures run in both Rust and this wrapper.
 export function matchesPathGlob(path, pattern) {
+  const chars = Array.from(pattern);
+  const literal = (c) => `\\u{${c.codePointAt(0).toString(16)}}`;
+  const invalid = () => { throw new Error(`Invalid Ground path glob ${JSON.stringify(pattern)}; escape a literal opening bracket as [[]`); };
   let source = '^';
-  for (let index = 0; index < pattern.length; index += 1) {
-    const character = pattern[index];
-    if (character === '*') {
-      if (pattern[index + 1] === '*') {
-        index += 1;
-        if (pattern[index + 1] === '/') {
-          index += 1;
-          source += '(?:.*/)?';
-        } else {
-          source += '.*';
-        }
-      } else {
-        source += '[^/]*';
+  for (let index = 0; index < chars.length; index += 1) {
+    const c = chars[index];
+    if (c === '*') {
+      if (chars[index + 1] !== '*') { source += '.*'; continue; }
+      if (chars[index + 2] === '*' || (index > 0 && chars[index - 1] !== '/') ||
+          (index + 2 < chars.length && chars[index + 2] !== '/')) invalid();
+      index += 1;
+      if (chars[index + 1] === '/') { index += 1; source += '(?:.*/)?'; }
+      else source += '.*';
+    } else if (c === '?') {
+      source += '.';
+    } else if (c === '[') {
+      const negative = chars[index + 1] === '!';
+      const start = index + (negative ? 2 : 1);
+      // A closing bracket can be the first member, e.g. []] and [!]].
+      const end = chars.indexOf(']', start + 1);
+      if (end < 0) invalid();
+      let members = '';
+      for (let member = start; member < end; member += 1) {
+        if (member + 2 < end && chars[member + 1] === '-') {
+          if (chars[member].codePointAt(0) <= chars[member + 2].codePointAt(0)) {
+            members += `${literal(chars[member])}-${literal(chars[member + 2])}`;
+          }
+          member += 2;
+        } else members += literal(chars[member]);
       }
-    } else if (character === '?') {
-      source += '[^/]';
-    } else {
-      source += character.replace(/[\\^$.*+?()[\]{}|]/g, '\\$&');
-    }
+      source += members ? `[${negative ? '^' : ''}${members}]` : (negative ? '.' : '(?!)');
+      index = end;
+    } else source += literal(c);
   }
-  return new RegExp(`${source}$`).test(normalizePath(path));
+  return new RegExp(`${source}(?![\\s\\S])`, 'su').test(normalizePath(path));
 }
 
 function groundPolicyIgnored(root, target, file, patterns) {

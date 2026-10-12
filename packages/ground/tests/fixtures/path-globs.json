@@ -1,0 +1,102 @@
+[
+  {
+    "pattern": "routes/[id]/**",
+    "path": "routes/i/a.ts",
+    "matches": true
+  },
+  {
+    "pattern": "routes/[id]/**",
+    "path": "routes/[id]/a.ts",
+    "matches": false
+  },
+  {
+    "pattern": "routes/[[]id]/**",
+    "path": "routes/[id]/a.ts",
+    "matches": true
+  },
+  {
+    "pattern": "**/routes/[[]id]/**",
+    "path": "routes/[id]/a.ts",
+    "matches": true
+  },
+  {
+    "pattern": "**/routes/[[]id]/**",
+    "path": "src/routes/[id]/a.ts",
+    "matches": true
+  },
+  {
+    "pattern": "routes/i/**",
+    "path": "routes/i/a.ts",
+    "matches": true
+  },
+  {
+    "pattern": "routes/i/**",
+    "path": "other/routes/i/a.ts",
+    "matches": false
+  },
+  {
+    "pattern": "**/**/+page.server.ts",
+    "path": "src/routes/+page.server.ts",
+    "matches": true
+  },
+  {
+    "pattern": "**/*.d.ts",
+    "path": "types.d.ts",
+    "matches": true
+  },
+  {
+    "pattern": "*.ts",
+    "path": "src/a.ts",
+    "matches": true
+  },
+  {
+    "pattern": "a?b",
+    "path": "a/b",
+    "matches": true
+  },
+  {
+    "pattern": "[!a-c].ts",
+    "path": "d.ts",
+    "matches": true
+  },
+  {
+    "pattern": "[!a-c].ts",
+    "path": "b.ts",
+    "matches": false
+  },
+  {
+    "pattern": "[]].ts",
+    "path": "].ts",
+    "matches": true
+  },
+  {
+    "pattern": "[z-a].ts",
+    "path": "z.ts",
+    "matches": false
+  },
+  {
+    "pattern": "?.ts",
+    "path": "\ud83d\ude00.ts",
+    "matches": true
+  },
+  {
+    "pattern": "[",
+    "path": "[",
+    "invalid": true
+  },
+  {
+    "pattern": "foo**/a",
+    "path": "foo/a",
+    "invalid": true
+  },
+  {
+    "pattern": "***",
+    "path": "a",
+    "invalid": true
+  },
+  {
+    "pattern": "a.ts",
+    "path": "a.ts\n",
+    "matches": false
+  }
+]

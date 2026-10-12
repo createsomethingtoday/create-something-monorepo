@@ -13,6 +13,8 @@ on:
       - 'scripts/agency-pages-deploy-eligibility.mjs'
       - 'scripts/agency-ground-release-parity.mjs'
       - 'scripts/agency-ground-release-parity.test.mjs'
+      - 'scripts/ground-release-evidence.mjs'
+      - 'scripts/ground-release-evidence.test.mjs'
       - 'package.json'
       - 'pnpm-lock.yaml'
       - '.github/workflows/agency-pages-deploy.yml'
@@ -121,22 +123,15 @@ jobs:
           receipt_dir=$(mktemp -d)
           trap 'rm -rf "$receipt_dir"' EXIT
           gh release download "$tag" \
-            --pattern ground-calibration-receipt.json \
+            --pattern 'ground-*' \
+            --pattern SHA256SUMS \
+            --pattern CONSUMER-SHA256SUMS \
             --dir "$receipt_dir"
-          node -e '
-            const [file, sourceSha, version] = process.argv.slice(1);
-            const receipt = JSON.parse(require("node:fs").readFileSync(file, "utf8"));
-            if (receipt.schema_version !== "ground-calibration-release-receipt.v1" ||
-                receipt.source_sha !== sourceSha || receipt.version !== version ||
-                receipt.release_tag !== `ground-v${version}` ||
-                receipt.fixture_execution?.schema_version !== "ground-calibration-execution-receipt.v1" ||
-                receipt.fixture_execution?.source_sha !== sourceSha ||
-                receipt.fixture_execution?.result?.exit_code !== 0 ||
-                receipt.fixture_execution?.result?.failed !== 0 ||
-                receipt.fixture_execution?.ready !== true ||
-                receipt.promotion?.ready !== true) process.exit(1);
-          ' "$receipt_dir/ground-calibration-receipt.json" "$release_sha" "$version"
-          test "$(npm view "${package_name}@${version}" version)" = "$version"
+          npm view "${package_name}@${version}" name version gitHead dist.integrity --json \
+            > "$receipt_dir/npm-metadata.json"
+          node --test scripts/ground-release-evidence.test.mjs
+          node scripts/ground-release-evidence.mjs \
+            "$receipt_dir" "$release_sha" "$version" "$receipt_dir/npm-metadata.json"
 
       - name: Resolve Pages branch alias
         id: branch
