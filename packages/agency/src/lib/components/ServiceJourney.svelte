@@ -1,17 +1,20 @@
+<script lang="ts">
+  import { IsometricIllustration } from "@create-something/canon";
+</script>
 <section class="service-journey" aria-labelledby="service-journey-title">
   <header><p class="eyebrow">How support works</p><h2 id="service-journey-title">From problem to checked handoff.</h2></header>
   <figure>
     <figcaption>Illustrative service journey / a form stops reaching your team</figcaption>
     <ol class="journey">
-      <li class="diagnose"><span class="step">01</span><h3>Diagnose</h3><p>Map the tools and the broken handoff in Draw.</p><div class="map-sketch" aria-hidden="true"><span>Form</span><i>→</i><span class="break">?</span><i>→</i><span>Team</span></div><div class="approval"><span aria-hidden="true">◇</span><div><strong>Agree the change</strong><small>You approve the scope.</small></div></div></li>
-      <li class="engineer"><span class="step">02</span><h3>Engineer</h3><p>Implement the agreed change and test the result.</p><div class="check-trace"><span><i aria-hidden="true">✓</i> Change implemented</span><span><i aria-hidden="true">✓</i> Acceptance check</span></div></li>
-      <li class="learn"><span class="step">03</span><h3>Learn</h3><p>Use the result with a checked handoff and instructions.</p><div class="handoff"><span aria-hidden="true">✓</span><div><strong>Checked handoff</strong><small>Instructions + recovery checks</small></div></div><a href="/agent-foundation">Inspect an engineering handoff ↗</a></li>
+      <li class="diagnose"><span class="step">01</span><IsometricIllustration kind="diagnose" size={112} /><h3>Diagnose</h3><p>Map the tools and the broken handoff in Draw.</p><div class="map-sketch" aria-hidden="true"><span>Form</span><i>→</i><span class="break">?</span><i>→</i><span>Team</span></div><div class="approval"><span aria-hidden="true">◇</span><div><strong>Agree the change</strong><small>You approve the scope.</small></div></div></li>
+      <li class="engineer"><span class="step">02</span><IsometricIllustration kind="build" size={112} /><h3>Engineer</h3><p>Implement the agreed change and test the result.</p><div class="check-trace"><span><i aria-hidden="true">✓</i> Change implemented</span><span><i aria-hidden="true">✓</i> Acceptance check</span></div></li>
+      <li class="learn"><span class="step">03</span><IsometricIllustration kind="learn" size={112} /><h3>Learn</h3><p>Use the result with a checked handoff and instructions.</p><div class="handoff"><span aria-hidden="true">✓</span><div><strong>Checked handoff</strong><small>Instructions + recovery checks</small></div></div><a href="/agent-foundation">Inspect an engineering handoff ↗</a></li>
     </ol>
   </figure>
   <footer><p>Project context carries into the next agreed improvement.</p><a href="/services">See the process and support scope ↗</a></footer>
 </section>
 <style>
-  .service-journey { padding: var(--space-performance-xl) 7vw var(--space-performance-lg); background: var(--color-performance-mode-campaign-surface); color: var(--color-performance-mode-campaign-ink); border-block: 1px solid var(--color-performance-shell-border-default); }
+  .service-journey { --isometric-surface: var(--color-performance-mode-campaign-surface); padding: var(--space-performance-xl) 7vw var(--space-performance-lg); background: var(--color-performance-mode-campaign-surface); color: var(--color-performance-mode-campaign-ink); border-block: 1px solid var(--color-performance-shell-border-default); }
   header { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-performance-md); flex-wrap: wrap; }
   .eyebrow, figcaption, .step { font: var(--text-performance-operator-label)/1.5 var(--font-performance-mono); text-transform: uppercase; }
   .eyebrow { margin: 0; color: var(--color-performance-fg-tertiary); }

@@ -141,7 +141,7 @@ try {
     await page.getByRole('button', { name: 'Export JSON', exact: true }).click();
     const value = JSON.parse(await readFile(await (await downloading).path(), 'utf8'));
     assert.equal(value.content.title, 'Current exported draft');
-    await expect(page.locator('.preview-form')).toContainText('Current exported draft');
+    await expect(page.locator('.preview-form')).toContainText('Draft saved without preview');
   });
   await check('invalid draft preserves saved bytes and shows error', async () => {
     const saved = await page.evaluate(() => localStorage.getItem('draw.composition.demo.v1'));
@@ -159,7 +159,7 @@ try {
       page.getByRole('button', { name: 'Export Context ZIP', exact: true })
     ).toBeDisabled();
     await page.getByLabel('Heading', { exact: true }).fill('Updated ZIP content');
-    await page.getByRole('button', { name: 'Update preview' }).click();
+    await page.getByRole('button', { name: 'Apply changes' }).click();
     await expect(
       page.getByRole('button', { name: 'Export Context ZIP', exact: true })
     ).toBeEnabled();
@@ -173,7 +173,7 @@ try {
     await expect(page.getByRole('link', { name: 'Draw canvas' })).toBeFocused();
   });
   await page.getByRole('button', { name: 'Save locally', exact: true }).click();
-  await expect(page.locator('.status')).toContainText('Saved on this device');
+  await expect(page.locator('.save-state')).toContainText('Saved on this device');
   await mkdir(output, { recursive: true });
   await page.screenshot({ path: `${output}/compose.png`, fullPage: true });
   await check('client-side Back supports cancel and leave', async () => {
@@ -237,7 +237,7 @@ try {
     await page.getByRole('link', { name: 'Draw canvas' }).click();
     await page.getByRole('button', { name: 'Save and return' }).click();
     await expect(page).toHaveURL(/compose/);
-    await expect(page.getByRole('alert')).toContainText('Could not complete local save');
+    await expect(page.getByRole('alert')).toContainText('Could not save');
     assert.equal(await page.evaluate(() => localStorage.getItem('draw.composition.demo.v1')), saved);
     await page.evaluate(() => { Storage.prototype.setItem = window.__originalSetItem; });
     await page.getByRole('link', { name: 'Draw canvas' }).click();
@@ -269,11 +269,27 @@ try {
     await expect.poll(() => page.evaluate(() => localStorage.getItem('draw.composition.recovery.v1'))).not.toBe(null);
     await page.evaluate(() => { window.__originalRemoveItem = Storage.prototype.removeItem; Storage.prototype.removeItem = function(key) { if (key === 'draw.composition.recovery.v1') throw Error('Synthetic cleanup failure'); return window.__originalRemoveItem.call(this, key); }; });
     await page.getByRole('button', { name: 'Save locally', exact: true }).click();
-    await expect(page.locator('.status')).toContainText('Saved on this device');
+    await expect(page.locator('.save-state')).toContainText('Saved on this device');
     await expect(page.getByRole('alert')).toContainText('Saved content is safe');
     await page.reload();
     await expect(page.getByRole('button', { name: 'Restore draft' })).toHaveCount(0);
     await expect(page.getByLabel('Heading', { exact: true })).toHaveValue('Saved despite cleanup failure');
+  });
+  await check('phone recovery gates actions and focuses the visible editor', async () => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.getByRole('button', { name: 'Edit', exact: true }).click();
+    await page.getByLabel('Heading', { exact: true }).fill('Phone recovery draft');
+    await page.reload();
+    await expect(page.locator('.workspace-tools')).toHaveAttribute('inert', '');
+    await page.getByRole('button', { name: 'Restore draft' }).click();
+    await expect(page.getByLabel('Heading', { exact: true })).toBeFocused();
+    await expect(page.getByLabel('Heading', { exact: true })).toHaveValue('Phone recovery draft');
+    await page.reload();
+    await page.getByRole('button', { name: 'Discard draft' }).click();
+    await expect(page.getByLabel('Heading', { exact: true })).toBeFocused();
+    await expect(page.getByLabel('Heading', { exact: true })).toHaveValue('Saved despite cleanup failure');
+    await expect(page.getByRole('alert')).toHaveCount(0);
+    await page.setViewportSize({ width: 1440, height: 1000 });
   });
   await page.goto(`${base}/animate`);
   await check('Motion distinguishes editable JSON from images and video', async () => {

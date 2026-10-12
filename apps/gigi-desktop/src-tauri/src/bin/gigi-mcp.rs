@@ -70,9 +70,11 @@ fn schema(operation: &str) -> Value {
     }
     if operation == "records.get" {
         properties.insert("detail".into(), json!({"type":"string","enum":["summary","full"]}));
+        properties.insert("saveReceipt".into(), json!({"type":"object","additionalProperties":false,"properties":{"idempotencyKey":{"type":"string"},"expectedInput":{"type":"object"}},"required":["idempotencyKey","expectedInput"],"description":"Read-only recovery of a records.save result after a lost response. Supply the exact original save input; its workspaceId, entity, intended id and idempotencyKey must match this lookup. Returns receiptFound and record, or receiptFound:false. Never retries a write."}));
     }
     if operation == "records.save" {
         properties.insert("fieldsMode".into(), json!({"type":"string","enum":["merge","replace"],"description":"Defaults to merge. Replace requires fields and removes omitted field keys."}));
+        properties.insert("sourceRecord".into(), json!({"type":"object","additionalProperties":false,"properties":{"entity":{"type":"string","enum":["interactions","schedule"]},"id":{"type":"string"},"connectedAccountId":{"type":"string"},"expectedRecord":{"type":"object","properties":{"title":{"type":"string"},"fields":{"type":"object"},"source":{"type":"object"}},"required":["title","fields","source"]}},"required":["entity","id","connectedAccountId","expectedRecord"],"description":"Create a local task or gig from an imported Gmail interaction or Calendar schedule record. Requires idempotencyKey and full source snapshot. Attribution and source relation are server-derived. No source, expectedRecord or fieldsMode overrides. Duplicates return the existing target unchanged. Does not write to Google."}));
         properties.insert("expectedRecord".into(), json!({"type":"object","properties":{"title":{"type":"string"},"fields":{"type":"object"},"source":{"type":"object"}},"required":["title","fields","source"],"description":"Optional full snapshot from records.get detail=full. If title, fields, or source changed before this save, the save fails without overwriting the newer record."}));
     }
     json!({"type":"object","properties":properties,"required":required,"additionalProperties":false})
@@ -254,8 +256,18 @@ mod tests {
         assert_eq!(denied["error"]["code"], -32602);
     }
     #[test]
+    fn source_conversion_schema_requires_attribution_and_snapshot() {
+        let descriptor = schema("records.save");
+        let source = &descriptor["properties"]["sourceRecord"];
+        assert_eq!(source["additionalProperties"], false);
+        assert_eq!(source["required"], json!(["entity", "id", "connectedAccountId", "expectedRecord"]));
+        assert_eq!(source["properties"]["entity"]["enum"], json!(["interactions", "schedule"]));
+        assert_eq!(source["properties"]["expectedRecord"]["required"], json!(["title", "fields", "source"]));
+    }
+    #[test]
     fn detail_is_discoverable_and_context_rejects_foreign_workspace() {
         assert_eq!(schema("records.get")["properties"]["detail"]["enum"], json!(["summary", "full"]));
+        assert_eq!(schema("records.get")["properties"]["saveReceipt"]["required"], json!(["idempotencyKey", "expectedInput"]));
         let root = std::env::temp_dir().join(format!("gigi-mcp-scope-{}", uuid::Uuid::new_v4()));
         domain::dispatch(&root,"workspace.create",json!({"name":"Owner"})).unwrap();
         let response=reply(&root,&json!({"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"gigi_context_search","arguments":{"workspaceId":"foreign","query":"music"}}})).unwrap();

@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { dirname, join, resolve } from 'node:path';
+import { basename, dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 
@@ -20,6 +21,18 @@ assert(
     '<ground-binary> <ground-mcp-binary> <platform-id> <receipt-path>'
   ].join(' ')
 );
+
+function nativeHash(binary) {
+  const path = resolve(binary);
+  const nativePath = path.endsWith('.js')
+    ? join(dirname(path), 'native', basename(path, '.js') + (process.platform === 'win32' ? '.exe' : ''))
+    : path;
+  return createHash('sha256').update(readFileSync(nativePath)).digest('hex');
+}
+const binaries = {
+  ground: { sha256: nativeHash(groundBinary) },
+  'ground-mcp': { sha256: nativeHash(mcpBinary) }
+};
 
 function run(binary, args, { expectedOutcome, ...options } = {}) {
   const resolvedBinary = resolve(binary);
@@ -204,8 +217,11 @@ try {
     );
   }
 
+  assert.equal(nativeHash(groundBinary), binaries.ground.sha256, 'CLI bytes changed during smoke');
+  assert.equal(nativeHash(mcpBinary), binaries['ground-mcp'].sha256, 'MCP bytes changed during smoke');
   const receipt = {
     schema_version: 'ground-native-release-smoke.v1',
+    binaries,
     platform: platformId,
     version: packageManifest.version,
     source_sha: buildInfo.source_sha,

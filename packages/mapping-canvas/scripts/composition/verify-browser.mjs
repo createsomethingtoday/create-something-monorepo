@@ -2,7 +2,7 @@ import { chromium } from '@playwright/test';
 import { mkdir, writeFile, readFile } from 'node:fs/promises';
 import assert from 'node:assert/strict';
 const base = process.env.DRAW_COMPOSITION_URL || 'http://127.0.0.1:51957';
-const out = '../../output/composition';
+const out = process.env.DRAW_COMPOSITION_OUTPUT || '../../output/composition';
 await mkdir(out, { recursive: true });
 const browser = await chromium.launch({
   executablePath:
@@ -23,7 +23,7 @@ try {
     reducedMotion: 'reduce'
   });
   await context.route('**/*', (route) =>
-    new URL(route.request().url()).hostname === '127.0.0.1' ? route.continue() : route.abort()
+    new URL(route.request().url()).origin === new URL(base).origin && ['GET', 'HEAD'].includes(route.request().method()) ? route.continue() : route.abort()
   );
   const p = await context.newPage();
   p.on('pageerror', (e) => result.errors.push(e.message));
@@ -91,13 +91,13 @@ try {
   ok('Keyboard retry recovers with retained details');
   await shot('desktop-recovered');
   await p.getByRole('button', { name: 'Motion', exact: true }).click();
-  await p.getByRole('button', { name: 'Interactive', exact: true }).click();
+  await p.getByRole('button', { name: 'Preview', exact: true }).click();
   assert.equal(await preview.getByLabel('Your name').inputValue(), 'Alex Morgan');
   await preview.getByText('Ready to continue', { exact: true }).waitFor();
   ok('Switching modes preserves interactive state');
   await p.getByLabel('Heading', { exact: true }).fill('Keep the useful details.');
-  await p.getByLabel('Canon variant').selectOption('secondary');
-  await p.getByRole('button', { name: 'Update preview', exact: false }).click();
+  await p.getByLabel('Button style').selectOption('secondary');
+  await p.getByRole('button', { name: 'Apply changes', exact: false }).click();
   await preview.getByRole('heading', { name: 'Keep the useful details.' }).waitFor();
   assert.deepEqual(
     await preview
@@ -124,7 +124,7 @@ try {
       mimeType: 'application/json',
       buffer: Buffer.from('{bad')
     });
-  await p.getByText(/Could not import:/).waitFor();
+  await p.getByText(/Choose a valid Draw composition JSON file/).waitFor();
   await preview.getByRole('heading', { name: 'Keep the useful details.' }).waitFor();
   ok('Malformed import retains current composition');
   const download = p.waitForEvent('download');
@@ -166,7 +166,7 @@ try {
   await p.getByRole('button', { name: 'Pause', exact: true }).click();
   ok('Playback advances; reduced motion uses camera cuts');
   await p.setViewportSize({ width: 390, height: 844 });
-  await p.getByRole('button', { name: 'Interactive', exact: true }).click();
+  await p.getByRole('button', { name: 'Preview', exact: true }).click();
   await shot('mobile-empty');
   assert.equal(await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
   await preview.getByRole('button', { name: 'Review request', exact: true }).click();

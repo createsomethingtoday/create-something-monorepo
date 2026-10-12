@@ -34,12 +34,13 @@ describe('Licensed Meridian public-system rollout', () => {
     );
     const packageManifest = readFileSync(join(REPO_ROOT, 'packages/canon/package.json'), 'utf8');
 
-    for (const property of ['agency', 'io', 'space'] as const) {
+    for (const property of ['agency', 'io'] as const) {
       const layout = layoutSource(property);
       expect(layout).toContain('visualStyle="editorial"');
       expect(layout).not.toContain('visualStyle="performance"');
     }
 
+    expect(layoutSource('space')).toContain('visualStyle="performance"');
     const ltdLayout = layoutSource('ltd');
     expect(ltdLayout).toContain('visualStyle="performance"');
     expect(ltdLayout).not.toContain('visualStyle="editorial"');
@@ -118,31 +119,22 @@ describe('Licensed Meridian public-system rollout', () => {
     expect(footer).toContain('footer-editorial-identity');
     expect(footer).toContain('.footer-editorial #newsletter');
 
-    expect(routeSource('agency')).toContain('<MeridianMetrics');
-    expect(routeSource('agency')).toContain('<MeridianEvidenceCarousel');
     expect(routeSource('agency')).toContain('<MeridianAccordion');
-    expect(routeSource('io')).toContain('<MeridianFeatureSplit');
-    expect(routeSource('io')).toContain('<MeridianCardGrid');
-    expect(routeSource('ltd')).toContain('ltdOperatingFieldMedia');
+    expect(routeSource('io')).toContain('<PropertyFunnel');
     expect(routeSource('ltd')).toContain('<PerformanceCardGrid');
     expect(routeSource('ltd')).toContain('<PropertyFunnel');
-    expect(routeSource('space')).toContain('<PerformanceDecisionPanel');
-    expect(routeSource('space')).toContain('<PerformanceCardGrid');
-    expect(routeSource('space')).toContain('<PerformanceConversionHandoff');
+    expect(routeSource('space')).toContain('<ProjectCard');
     expect(layoutSource('agency')).toContain('children: [');
   });
 
-  it('frames .agency as the embedded operating partner and names the client-owned Playbook', () => {
+  it('frames Agency support with explicit scope, ownership and production boundaries', () => {
     const source = routeSource('agency');
-
-    expect(source).toContain('expression="editorial"');
-    expect(source.match(/expression="editorial"/g)?.length).toBeGreaterThanOrEqual(2);
-    expect(source).toContain('propertyRole="Embedded AI operating partner"');
-    expect(source).toContain('We embed with operators');
-    expect(source).toContain('client-owned Playbook');
-    expect(source).toContain(
-      'The opposition is ambiguity, AI out of reach, and untrusted automation.'
-    );
+    expect(source).toContain('<AgencyHero');
+    expect(source).toContain('<ServiceJourney');
+    expect(source).toContain('AI-native Technical Support');
+    expect(source).toContain('After full payment, you own commissioned deliverables');
+    expect(source).toContain('production incident response requires a separate managed Control agreement');
+    expect(source).toContain('We test an agreed example and a failure case.');
   });
 
   it('uses one artifact-led offer action with property-specific records', () => {
@@ -185,17 +177,16 @@ describe('Licensed Meridian public-system rollout', () => {
     expect(stack).toContain('expression="editorial"');
     expect(metrics).toContain('grid-template-rows: auto auto minmax(2.9em, auto)');
     expect(metrics).toContain('grid-template-rows: auto auto auto');
-    expect(home).toContain('Every run, wait, or stop stays explicit.');
-    expect(home).toContain('Your team keeps the working system.');
+    expect(home).toContain('Your team reviews the result before launch.');
+    expect(home).toContain('You keep the instructions, tests, project history and recovery guide.');
   });
 
   it('keeps .io distinct as the research and field-evidence property', () => {
     const source = routeSource('io');
     const layout = layoutSource('io');
 
-    expect(source).toContain('expression="editorial"');
-    expect(source.match(/expression="editorial"/g)).toHaveLength(2);
-    expect(source).toContain('propertyRole="Research + field evidence"');
+    expect(source).toContain('Research + field evidence');
+    expect(source).toContain('aria-labelledby="research-title"');
     expect(source).toContain('Research for automation you can defend.');
     expect(source).toContain('Read The Papers');
     expect(layout).toContain('padding-top: var(--height-performance-header);');
@@ -208,19 +199,19 @@ describe('Licensed Meridian public-system rollout', () => {
     const source = routeSource('ltd');
 
     expect(layoutSource('ltd')).toContain('visualStyle="performance"');
-    expect(source).toContain('ltdOperatingFieldMedia');
+    expect(source).toContain('aria-label="The operating sequence"');
     expect(source).toContain('Run AI work people can trust.');
     expect(source).toContain('<PerformanceCardGrid');
     expect(source).toContain('<PropertyFunnel');
     expect(source).toContain('<NewsletterSignup');
   });
 
-  it('keeps .space distinct as the public systems workbench', () => {
+  it('keeps .space distinct as the public workshop with inspectable projects', () => {
     const source = routeSource('space');
-
-    expect(source).toContain('expression="editorial"');
-    expect(source).toContain('propertyRole="Public systems workbench"');
-    expect(source).toContain('A public workbench for testing runtime ideas.');
-    expect(source).toContain('Open The Playground');
+    expect(source).toContain('The Public Workshop');
+    expect(source).toContain('Useful tools.<br />Shared openly.');
+    expect(source).toContain('href="/projects"');
+    expect(source).toContain('href="/workbench"');
+    expect(source).toContain('https://github.com/createsomethingtoday');
   });
 });

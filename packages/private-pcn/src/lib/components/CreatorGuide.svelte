@@ -14,7 +14,8 @@
     <li>
       <strong>Check and review.</strong> At the <a href="#publishing-desk">publishing desk</a>,
       check processing, then open the lesson page to review playback and add prerequisites, a
-      transcript or practice.
+      transcript or practice. Confirm that captions appear in the player and review their timing and
+      accuracy; video processing alone does not confirm caption readiness.
     </li>
     <li>
       <strong>Choose your audience.</strong> Publish only after review. Members need current network

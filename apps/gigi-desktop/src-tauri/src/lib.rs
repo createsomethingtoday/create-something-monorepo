@@ -4,6 +4,7 @@ pub mod integrations;
 mod agent_setup;
 mod navigation;
 pub mod chat;
+pub mod diagnostics;
 
 use tauri::Manager;
 
@@ -15,6 +16,9 @@ async fn dispatch(app: tauri::AppHandle, operation: String, input: serde_json::V
     };
     let resources=app.path().resource_dir().map_err(|e|e.to_string())?;
     tauri::async_runtime::spawn_blocking(move || {
+        if operation.starts_with("diagnostics.") {return diagnostics::dispatch(&data_dir,&operation,input);}
+        let diagnostic_input=input.clone();
+        diagnostics::observe(&data_dir,&operation,&diagnostic_input,|| {
         if operation=="agent.status" {return agent_setup::status(&data_dir);}
         if operation=="agent.prepare" {return agent_setup::prepare(&resources,&data_dir);}
         if operation=="help.open" {return navigation::open_help(input);}
@@ -30,6 +34,7 @@ async fn dispatch(app: tauri::AppHandle, operation: String, input: serde_json::V
         } else {
             domain::dispatch(&data_dir,&operation,input)
         }
+        })
     }).await.map_err(|_|"GiGi operation interrupted".to_string())?
 }
 

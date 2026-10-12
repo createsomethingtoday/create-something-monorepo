@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
+import { groundVersion, groundInstalls } from '../../packages/agency/src/lib/data/ground-release.mjs';
 
 const agencyPage = new URL(
   '../../packages/agency/src/routes/products/ground/+page.svelte',
@@ -28,7 +29,7 @@ test('Ground public surfaces use executable agent-client commands', async () => 
 
   const command = 'codex mcp add ground -- npx --yes -p @createsomething/ground-mcp ground-mcp';
   assert.match(
-    agency.replaceAll('@createsomething/ground-mcp@0.4.3', '@createsomething/ground-mcp'),
+    groundInstalls.map(install => install.command).join('\n').replaceAll(`@createsomething/ground-mcp@${groundVersion}`, '@createsomething/ground-mcp'),
     new RegExp(command.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
   );
   assert.match(docs, new RegExp(command.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
@@ -37,9 +38,12 @@ test('Ground public surfaces use executable agent-client commands', async () => 
   assert.doesNotMatch(docs, /codex mcp add ground --command/);
   assert.doesNotMatch(readme, /codex mcp add ground --command/);
 
-  assert.match(agency, /npm install -g @createsomething\/ground-mcp@0\.4\.3/);
+  assert.equal(groundInstalls.find(install => install.id === 'npm').command, `npm install -g @createsomething/ground-mcp@${groundVersion}`);
+  assert.match(agency, /groundInstalls as installs/);
+  assert.match(agency, /Version \$\{groundVersion\}/);
+  assert.match(agency, /ground-0\.4\.3-performance\.json/);
   for (const source of [
-    agency.replaceAll('@createsomething/ground-mcp@0.4.3', '@createsomething/ground-mcp'),
+    groundInstalls.map(install => install.command).join('\n').replaceAll(`@createsomething/ground-mcp@${groundVersion}`, '@createsomething/ground-mcp'),
     docs,
     readme
   ]) {
@@ -115,9 +119,8 @@ test('Agency production deployment waits for the released Ground source tree', a
   assert.match(workflow, /ground-linux-arm64-consumer-smoke\.json/);
   assert.match(workflow, /CONSUMER-SHA256SUMS/);
   assert.match(workflow, /ground-calibration-receipt\.json/);
-  assert.match(workflow, /promotion\?\.ready/);
-  assert.match(workflow, /fixture_execution\?\.ready/);
-  assert.match(workflow, /npm view "\$\{package_name\}@\$\{version\}" version/);
+  assert.match(workflow, /ground-release-evidence\.mjs/);
+  assert.match(workflow, /npm view "\$\{package_name\}@\$\{version\}" name version gitHead dist\.integrity --json/);
 });
 
 test('Ground public discovery omits retired distribution paths', async () => {

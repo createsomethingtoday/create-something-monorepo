@@ -5,9 +5,15 @@ fn consent_url(value:&str)->Result<String,String>{
  Ok(url.to_string())
 }
 pub fn open_consent(input:Value)->Result<Value,String>{
+ open_consent_with(input, |url| {
+  std::process::Command::new("/usr/bin/open").arg(url).stdin(std::process::Stdio::null()).stdout(std::process::Stdio::null()).stderr(std::process::Stdio::null()).status()
+   .map(|status| status.success()).map_err(|_| ())
+ })
+}
+fn open_consent_with(input:Value, open:impl FnOnce(&str)->Result<bool,()>)->Result<Value,String>{
+ if !matches!(input.get("provider").and_then(Value::as_str),Some("gmail"|"googlecalendar")){return Err("invalid_request".into());}
  let url=consent_url(input.get("url").and_then(Value::as_str).ok_or("Consent URL required")?)?;
- let status=std::process::Command::new("/usr/bin/open").arg(url).stdin(std::process::Stdio::null()).stdout(std::process::Stdio::null()).stderr(std::process::Stdio::null()).status().map_err(|_|"Browser could not open")?;
- if !status.success(){return Err("Browser could not open".into());}
+ if !open(&url).map_err(|_|"browser_unavailable")?{return Err("browser_unavailable".into());}
  Ok(json!({"opened":true,"verified":false}))
 }
 fn help_url(topic:&str)->Result<&'static str,String>{
@@ -44,4 +50,16 @@ mod help_tests {
   assert!(consent_url("https://connect.composio.dev/link?token=synthetic").is_ok());
   for url in ["file:///etc/passwd","https://connect.composio.dev.attacker.test/link","https://user:secret@connect.composio.dev/link","http://connect.composio.dev/link","https://connect.composio.dev:8443/link"]{assert!(consent_url(url).is_err());}
  }
+ #[test]fn consent_browser_failures_are_safe_and_provider_is_required(){
+  for provider in ["gmail","googlecalendar"] {
+   for failure in [Ok(false),Err(())] {
+    assert_eq!(open_consent_with(json!({"provider":provider,"url":"https://connect.composio.dev/synthetic"}),|_|failure).unwrap_err(),"browser_unavailable");
+   }
+   assert_eq!(open_consent_with(json!({"provider":provider,"url":"https://connect.composio.dev/synthetic"}),|_|Ok(true)).unwrap()["verified"],false);
+  }
+  for input in [json!({"url":"https://connect.composio.dev/synthetic"}),json!({"provider":"secret@example.test","url":"https://connect.composio.dev/synthetic"}),json!({"provider":"gmail","url":"https://evil.invalid"})] {
+   assert!(open_consent_with(input,|_|panic!("invalid input must not open a browser")).is_err());
+  }
+ }
+
 }

@@ -84,3 +84,59 @@ fn diff_defaults_and_no_change_outcome_agree_across_cli_and_mcp() {
     assert_eq!(report["outcome"], "INCOMPLETE");
     assert_eq!(output.status.code(), Some(2));
 }
+
+#[test]
+fn native_path_globs_match_the_shared_wrapper_contract() {
+    let fixtures: Vec<Value> = serde_json::from_str(include_str!("fixtures/path-globs.json")).unwrap();
+    for fixture in fixtures {
+        let pattern = glob::Pattern::new(fixture["pattern"].as_str().unwrap());
+        if fixture["invalid"] == true { assert!(pattern.is_err(), "{fixture}"); }
+        else { assert_eq!(pattern.unwrap().matches(fixture["path"].as_str().unwrap()), fixture["matches"].as_bool().unwrap(), "{fixture}"); }
+    }
+}
+
+#[test]
+fn batch_orphan_ignores_use_analysis_relative_paths_and_literal_bracket_escapes() {
+    let dir = tempdir().unwrap();
+    for folder in ["routes/[id]", "routes/i"] {
+        fs::create_dir_all(dir.path().join(folder)).unwrap();
+        fs::write(dir.path().join(folder).join("a.ts"), "export const unused = 1;\n").unwrap();
+    }
+    let mut triad = VerifiedTriad::new(dir.path().join("db")).unwrap();
+    for (pattern, remaining) in [("routes/[[]id]/**", "routes/i/a.ts"), ("routes/[id]/**", "routes/[id]/a.ts")] {
+        fs::write(dir.path().join(".ground.yml"), format!("ignore:\n  paths: ['{pattern}']\n")).unwrap();
+        let result = handle_tool_call(&mut triad, "ground_analyze", &json!({"directory":dir.path(),"checks":["orphans"]}));
+        assert!(result.success, "{:?}", result.error);
+        let orphans = result.content["findings"]["orphans"].as_array().unwrap();
+        assert_eq!(orphans.len(), 1, "{}", result.content);
+        assert!(orphans[0]["path"].as_str().unwrap().ends_with(remaining));
+    }
+}
+
+#[test]
+fn duplicate_tool_rejects_invalid_threshold_overrides() {
+    let dir = tempdir().unwrap();
+    let mut triad = VerifiedTriad::new(dir.path().join("db")).unwrap();
+    for field in ["threshold", "intra_file_threshold"] {
+        for value in [json!(1.01), json!(-0.1), json!("0.8"), json!(null)] {
+            let mut args = json!({"directory":dir.path()}); args[field] = value;
+            let result = handle_tool_call(&mut triad, "ground_find_duplicate_functions", &args);
+            assert!(!result.success, "accepted {args}");
+            assert!(result.error.unwrap().contains(field));
+        }
+    }
+}
+
+#[test]
+fn invalid_policy_blocks_even_an_unchanged_diff() {
+    let dir = tempdir().unwrap();
+    let git = |args: &[&str]| assert!(Command::new("git").args(args).current_dir(dir.path()).output().unwrap().status.success());
+    git(&["init", "-q"]);
+    git(&["-c", "user.name=Fixture", "-c", "user.email=fixture@example.test", "-c", "core.hooksPath=/dev/null", "commit", "--allow-empty", "-qm", "fixture"]);
+    fs::write(dir.path().join(".gitignore"), "*\n").unwrap();
+    fs::write(dir.path().join(".ground.yml"), "version: '999'\n").unwrap();
+    let mut triad = VerifiedTriad::new(dir.path().join("db")).unwrap();
+    let result = handle_tool_call(&mut triad, "ground_diff", &json!({"directory":dir.path(),"base":"HEAD"}));
+    assert!(!result.success);
+    assert!(result.error.unwrap().contains("version"));
+}
