@@ -70,6 +70,15 @@ describe('Shared Draw editing commands', () => {
     expect(() => assertLockedLayersPreserved(before, {...before, objects: [{...before.objects[0], id:'added'}, ...before.objects]})).not.toThrow();
   });
 
+  it('moves one layer forward and backward without changing its metadata', () => {
+    const before = fixture();
+    before.objects = before.objects.slice(0, 3);
+    const forward = compileEdits(before, [{ type: 'arrange', ids: ['a'], position: 'forward' }], identity()).document;
+    expect(forward.objects.map(o => o.id)).toEqual(['b', 'a', 'c']);
+    const backward = compileEdits(forward, [{ type: 'arrange', ids: ['a'], position: 'backward' }], identity()).document;
+    expect(backward.objects).toEqual(before.objects);
+  });
+
   it('uses the same geometry root for mixed connector and shape rotation', () => {
     const before = fixture();
     before.objects[0].rotation = 20;
@@ -260,4 +269,21 @@ describe('Shared Draw editing commands', () => {
     await expect(tools.find(tool => tool.name === 'draw_replace_canvas')!.execute({objects: [...document.objects].reverse(), confirmation: 'REPLACE CANVAS'})).rejects.toThrow('stacking order');
     expect(document).toBe(locked);
   });
+});
+
+it('applies layer visibility and locking with unrelated reactive rich notes', () => {
+  const raw = fixture();
+  const note = raw.objects.find(o => o.kind === 'note')!;
+  if (note.kind !== 'note') throw Error('fixture');
+  note.content = { blocks: [{ type: 'paragraph', runs: [{ text: note.text, bold: true }] }] };
+  const reactive = <T>(value: T): T => value && typeof value === 'object'
+    ? new Proxy(value as object, { get(target, key) { return reactive(Reflect.get(target, key)); } }) as T : value;
+  let current = reactive(raw);
+  for (const metadata of [{ hidden: true }, { hidden: false }, { locked: true }, { locked: false }]) {
+    const result = compileEdits(current, [{ type: 'layer', ids: ['a'], ...metadata }], { id: () => 'unused', now: '2026-10-12' });
+    const next = applyCanvasOperations(current, result.operations)!;
+    expect(next.objects.find(o => o.id === 'a')).toMatchObject(metadata);
+    expect(next.objects.find(o => o.id === note.id)).toEqual(note);
+    current = reactive(next);
+  }
 });

@@ -51,9 +51,9 @@ try {
   await page.getByRole('button', { name: 'Apply changes' }).click();
   await expect(preview.getByRole('heading', { name: 'SYNTHETIC — applied draft' })).toBeVisible();
   await expect(page.getByText('Unsaved changes.', { exact: true })).toBeVisible();
-  const canceledLeave = page.waitForEvent('dialog').then((d) => d.dismiss());
   await page.getByRole('link', { name: 'Draw canvas', exact: true }).click();
-  await canceledLeave;
+  await expect(page.getByRole('dialog')).toBeVisible();
+  await page.getByRole('button', { name: 'Keep editing', exact: true }).click();
   await expect(page).toHaveURL(`${base}/compose`);
   await expect(heading).toHaveValue('SYNTHETIC — applied draft');
   result.assertions.push('Apply updates preview; canceling departure preserves unsaved work');

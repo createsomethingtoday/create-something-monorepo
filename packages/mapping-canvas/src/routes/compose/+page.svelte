@@ -1,6 +1,7 @@
 <script lang="ts">
   import HyperframesExport from '$lib/composition/HyperframesExport.svelte';
-  import { onMount } from 'svelte';
+  import { onMount, tick } from 'svelte';
+  import { RECOVERY_KEY, parseRecovery, serializeRecovery, recoveryMatchesSaved, type Recovery } from '$lib/composition/recovery';
   import { beforeNavigate } from '$app/navigation';
   import FormView from '$lib/composition/FormView.svelte';
   import MotionView from '$lib/composition/MotionView.svelte';
@@ -49,10 +50,55 @@
     return pending ? updateContent(doc, { title, description, buttonLabel, variant }) : doc;
   }
   beforeNavigate((navigation) => {
-    if (!dirty) return;
+    if (!dirty || leaving) return;
     if (navigation.willUnload) navigation.cancel();
     else if (!window.confirm('Leave without saving your composition changes?')) navigation.cancel();
   });
+  let canvasHref = $state('/');
+  let loaded = $state(false), leaving = $state(false), recoveryError = $state(false);
+  let recovery = $state<Recovery | null>(null);
+  let leaveDialog: HTMLDialogElement, returnLink: HTMLAnchorElement;
+  $effect(() => {
+    if (!loaded || leaving || recovery || recoveryError) return;
+    try {
+      if (dirty) localStorage.setItem(RECOVERY_KEY, serializeRecovery(doc, { title, description, buttonLabel, variant }, saved));
+      else localStorage.removeItem(RECOVERY_KEY);
+    } catch { problem = dirty ? 'Draft recovery is unavailable. Save or export before closing Compose.' : 'Saved content is safe, but draft recovery could not be cleared.'; }
+  });
+  function clearRecovery() {
+    try { localStorage.removeItem(RECOVERY_KEY); recovery = null; recoveryError = false; return true; }
+    catch { problem = 'Could not clear draft recovery. Your saved composition is unchanged.'; return false; }
+  }
+  function restoreDraft() {
+    if (!recovery) return;
+    const draft = recovery;
+    doc = draft.document;
+    ({ title, description, buttonLabel, variant } = draft.fields);
+    recovery = null;
+    notice = 'Unsaved draft restored. Review it, then save to keep it on this device.';
+    problem = '';
+    editing = matchMedia('(max-width: 620px)').matches;
+    void tick().then(() => window.document.getElementById('title')?.focus());
+  }
+  function discardDraft() {
+    if (!clearRecovery()) return;
+    notice = 'Draft discarded. The saved composition is unchanged.';
+    problem = '';
+    editing = matchMedia('(max-width: 620px)').matches;
+    void tick().then(() => window.document.getElementById('title')?.focus());
+  }
+  function requestReturn(event: MouseEvent) {
+    if (!dirty || leaving) return;
+    event.preventDefault();
+    leaveDialog.showModal();
+  }
+  function keepEditing() { leaveDialog.close(); returnLink.focus(); }
+  function returnToCanvas(saveFirst: boolean) {
+    if (saveFirst ? !save() : !clearRecovery()) { keepEditing(); return; }
+    leaving = true;
+    leaveDialog.close();
+    location.href = canvasHref;
+  }
   function sync() {
     title = doc.content.title;
     description = doc.content.description;
@@ -60,6 +106,8 @@
     variant = doc.content.variant;
   }
   onMount(() => {
+    const project = new URL(location.href).searchParams.get('project');
+    if (project) canvasHref = `/?project=${encodeURIComponent(project)}`;
     const phone = matchMedia('(max-width: 620px)');
     const updateLayout = () => {
       if (!phone.matches) editing = false;
@@ -78,6 +126,14 @@
       problem =
         'Could not restore the saved composition. The default is available; your saved bytes have not been overwritten.';
     }
+    try {
+      const draft = localStorage.getItem(RECOVERY_KEY);
+      if (draft) { const candidate = parseRecovery(draft); if (!recoveryMatchesSaved(candidate, saved)) recovery = candidate; }
+    } catch {
+      recoveryError = true;
+      problem = 'Could not read draft recovery. Your saved composition and recovery bytes have not been changed.';
+    }
+    loaded = true;
     return () => phone.removeEventListener('change', updateLayout);
   });
   function apply() {
@@ -111,7 +167,11 @@
       notice = '';
       problem =
         'Could not save. Check the required fields and try again, or export JSON to keep a copy.';
+      return false;
     }
+    try { localStorage.removeItem(RECOVERY_KEY); }
+    catch { problem = 'Saved content is safe, but draft recovery could not be cleared.'; }
+    return true;
   }
   function download(text: string, name: string) {
     const url = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
@@ -190,15 +250,24 @@
   }
 </script>
 
+<svelte:window onbeforeunload={(event) => { if (dirty && !leaving) { event.preventDefault(); event.returnValue = ''; } }} />
+
 <svelte:head
   ><title>Compose a form · Draw</title><meta
     name="robots"
     content="noindex,nofollow"
   /></svelte:head
 >
+<dialog bind:this={leaveDialog} aria-labelledby="leave-title" oncancel={() => returnLink.focus()}>
+  <h2 id="leave-title">Save changes before returning to Draw?</h2>
+  <p>Your latest edits have not been saved on this device.</p>
+  <button onclick={() => returnToCanvas(true)}>Save and return</button>
+  <button onclick={() => returnToCanvas(false)}>Leave without saving</button>
+  <button autofocus onclick={keepEditing}>Keep editing</button>
+</dialog>
 <div class="app">
   <header>
-    <a href="/" aria-label="Draw canvas"
+    <a bind:this={returnLink} href={canvasHref} onclick={requestReturn} data-sveltekit-reload aria-label="Draw canvas"
       ><img src="/brand/draw-dark.svg" width="28" height="28" alt="" /><strong>Draw</strong></a
     ><span class="divider"></span><span>Compose</span><span class="local">DEVICE LOCAL</span>
   </header>
@@ -213,7 +282,15 @@
         separately from your Draw canvas.
       </p>
     </section>
-    <div class="workspace-tools">
+    {#if recovery || recoveryError}
+      <section class="recovery" aria-label="Unsaved draft recovery">
+        <h2>Unsaved draft available</h2>
+        <p>{recoveryError ? 'Recovery could not be read. The saved composition is still available.' : recovery?.baseline !== saved ? 'The saved composition has changed since this draft. Restoring keeps saved content intact until you choose Save.' : 'Restore your previous edits, or discard the draft and keep the saved composition.'}</p>
+        {#if recovery}<button onclick={restoreDraft}>Restore draft</button>{/if}
+        <button onclick={discardDraft}>Discard draft</button>
+      </section>
+    {/if}
+    <div class="workspace-tools" inert={Boolean(recovery || recoveryError)}>
       <div class="tabs" aria-label="Composition views">
         <button
           class="edit-tab"
@@ -247,7 +324,7 @@
     </div>
     {#if notice}<div class="status" role="status">{notice}</div>{/if}
     {#if problem}<div role="alert" class="problem">{problem}</div>{/if}
-    <div class="workspace" class:editing>
+    <div class="workspace" class:editing inert={Boolean(recovery || recoveryError)}>
       <aside class="inspector" aria-label="Composition editor">
         <div class="section-head">
           <span>01</span>
@@ -358,6 +435,8 @@
 </div>
 
 <style>
+  dialog,.recovery{background:var(--color-performance-panel);color:var(--color-performance-ink);border:1px solid var(--color-performance-line);padding:24px;max-width:560px}dialog::backdrop{background:#0008}dialog button,.recovery button{font:inherit;padding:10px;margin:8px 8px 0 0}dialog p,.recovery p{line-height:1.6}.recovery{margin-bottom:24px}
+
   :global(body) {
     margin: 0;
     background: var(--color-performance-paper);

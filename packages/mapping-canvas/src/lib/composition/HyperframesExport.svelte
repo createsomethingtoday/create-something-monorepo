@@ -67,9 +67,9 @@
   </p>
   {#if disabled}<p>Apply your edits or Save locally before exporting Motion ZIPs.</p>{/if}
   <div>
-    <button disabled={busy || disabled} onclick={() => void save('context')}
+    <button class:busy disabled={busy || disabled} onclick={() => void save('context')}
       >Export Context ZIP</button
-    ><button disabled={busy || disabled} onclick={() => void save('detail')}
+    ><button class:busy disabled={busy || disabled} onclick={() => void save('detail')}
       >Export Detail ZIP</button
     >
   </div>
@@ -116,8 +116,9 @@
   }
   button:disabled {
     opacity: 0.5;
-    cursor: wait;
+    cursor: not-allowed;
   }
+  button.busy { cursor: wait; }
   .capture-stage {
     position: fixed;
     left: -100000px;
