@@ -72,6 +72,14 @@
         />{/key}{/if}
     <div class="lesson-grid">
       <div class="lesson-main">
+        {#if material?.prerequisites || material?.tools}<section>
+            <h2>Before you start</h2>
+            {#if material?.prerequisites}<h3>Prerequisites</h3>
+              <p class="plain-text">{material.prerequisites}</p>{/if}{#if material?.tools}<h3>
+                Tools and versions
+              </h3>
+              <p class="plain-text">{material.tools}</p>{/if}
+          </section>{/if}
         <section aria-label="Walkthrough">
           {#key content.video.id}<Player
               id={content.video.id}
@@ -79,6 +87,7 @@
               networkSlug={slug}
               duration={content.video.duration || 0}
               initialPosition={content.progress?.position || 0}
+              pathId={data.learningPath?.id}
               saveProgress={!!data.canSaveProgress}
             />{/key}
         </section>
@@ -88,6 +97,21 @@
               progress={content.progress}
               practice={!!material?.practice}
             />{/key}{/if}
+        {#if data.learningPath}<section>
+            <p class="eyebrow">LEARNING PATH</p>
+            <h2>{data.learningPath.title}</h2>
+            <a href={`${pathBase(slug)}/${data.learningPath.id}`}
+              >View the sequence <Icon name="arrow-right" /></a
+            >
+            {#if nextLesson}<p>Up next: {nextLesson.title}</p>
+              <a
+                class="button secondary"
+                href={`${lessonPath(nextLesson.id, slug)}?path=${encodeURIComponent(data.learningPath.id)}`}
+                >Next lesson <Icon name="arrow-right" /></a
+              >{:else}<p>
+                This is the last lesson in the sequence. Return to the path to review your practice.
+              </p>{/if}
+          </section>{/if}
         {#if material?.outcome}<section class="material">
             <p class="eyebrow">OUTCOME</p>
             <h2>What you’ll be able to do</h2>
@@ -107,35 +131,12 @@
           </section>{/if}
       </div>
       <aside aria-label="Lesson context">
-        {#if data.learningPath}<section>
-            <p class="eyebrow">LEARNING PATH</p>
-            <h2>{data.learningPath.title}</h2>
-            <a href={`${pathBase(slug)}/${data.learningPath.id}`}
-              >View the sequence <Icon name="arrow-right" /></a
-            >
-            {#if nextLesson}<p>Up next: {nextLesson.title}</p>
-              <a
-                class="button secondary"
-                href={`${lessonPath(nextLesson.id, slug)}?path=${encodeURIComponent(data.learningPath.id)}`}
-                >Next lesson <Icon name="arrow-right" /></a
-              >{:else}<p>
-                This is the last lesson in the sequence. Return to the path to review your practice.
-              </p>{/if}
-          </section>{/if}
         <section>
           <p class="eyebrow">YOUR NETWORK</p>
           <h2>{data.network?.name || 'CREATE SOMETHING'}</h2>
           <p>Teaching and resources from this private network.</p>
           <a href={data.libraryPath}>Explore its sessions <Icon name="arrow-right" /></a>
         </section>
-        {#if material?.prerequisites || material?.tools}<section>
-            <h2>Before you start</h2>
-            {#if material?.prerequisites}<h3>Prerequisites</h3>
-              <p class="plain-text">{material.prerequisites}</p>{/if}{#if material?.tools}<h3>
-                Tools and versions
-              </h3>
-              <p class="plain-text">{material.tools}</p>{/if}
-          </section>{/if}
         {#if content.release}<section>
             <p class="eyebrow">RELATED RELEASE</p>
             <h2>{content.release.title}</h2>

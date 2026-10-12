@@ -55,6 +55,11 @@
     These optional details help members apply the walkthrough. Saved changes are visible immediately
     wherever this session is published. Video publication and access stay separate.
   </p>
+  <p>
+    Accessibility review: check the player’s available caption tracks, language and timing before
+    publishing. The transcript below is a separate reading aid; saving it does not create
+    synchronized captions.
+  </p>
   <form onsubmit={save} aria-busy={busy}>
     <fieldset disabled={busy}>
       <label
