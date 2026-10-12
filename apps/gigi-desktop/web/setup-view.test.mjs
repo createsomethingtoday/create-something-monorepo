@@ -26,8 +26,8 @@ test('source feedback explains a session refresh without asking for another conn
 
 test('source feedback gives sign-in recovery without exposing connector codes', () => {
   assert.deepEqual(sourceView({ state: 'unavailable', detail: 'reauthentication_required' }), {
-    label: 'Sign in again',
-    description: 'Your connector session expired. Sign in again, then check source status.',
+    label: 'Sign in needed',
+    description: 'Sign in to GiGi sources, then check source status.',
   });
   assert.deepEqual(sourceView({ state: 'attention', detail: 'unauthorized' }), {
     label: 'Sign in needed',
@@ -65,7 +65,7 @@ test('summary directs uncertain refresh outcomes to status recovery alongside it
 
 
 test('admission, session expiry and service failures have distinct next steps', () => {
-  assert.match(sourceView({ state: 'unavailable', detail: 'session_expired' }).description, /Sign in again/);
+  assert.match(sourceView({ state: 'unavailable', detail: 'session_expired' }).description, /Sign in to GiGi sources/);
   assert.match(sourceView({ state: 'unavailable', detail: 'access_denied' }).description, /operator/);
   assert.doesNotMatch(sourceView({ state: 'unavailable', detail: 'access_denied' }).description, /Sign in again/);
   assert.match(sourceView({ state: 'unavailable', detail: 'provider_unavailable' }).description, /Check status later/);

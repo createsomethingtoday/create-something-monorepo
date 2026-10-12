@@ -39,8 +39,8 @@ export function sourceView(source) {
     description: 'The connection service could not complete this check. Try Check status later. Do not start another consent attempt.',
   };
   if (source?.detail === 'session_expired' || source?.detail === 'reauthentication_required') return {
-    label: 'Sign in again',
-    description: 'Your connector session expired. Sign in again, then check source status.',
+    label: 'Sign in needed',
+    description: 'Sign in to GiGi sources, then check source status.',
   };
   if (source?.detail === 'unauthorized') return {
     label: 'Sign in needed',

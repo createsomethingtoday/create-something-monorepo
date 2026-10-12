@@ -28,6 +28,12 @@ The local build uses a separate ad-hoc signing configuration, requires macOS 13 
 
 ## Local state and agent access
 
+### Source connection diagnostics
+
+In Settings → Source connection support, choose **Start local capture**, repeat the failing source action, then **Stop capture** and **Review diagnostics**. Export is available only for that stopped, reviewed report. The app saves a private local JSON file and shows its path; nothing is uploaded automatically. Share it deliberately with the GiGi operator, alongside the steps that failed, without adding account details or source content. Pending consent or operator-review states must be reconciled before another consent attempt.
+
+Capture records only compiled build identity, platform, timestamps, random correlation IDs, provider/stage, safe outcome codes, transitions and retry indicators. It excludes credentials, account identities, URLs, message/event content and record payloads. Capture stops after one hour or app restart, retains at most 200 events, and prunes events older than seven days when diagnostics are accessed. **Delete diagnostics** removes the app-owned capture and export, including unreadable captures; it cannot recall copies a user has shared. Diagnostic failures do not change the result of source operations.
+
 The default macOS state directory is `~/Library/Application Support/agency.createsomething.gigi`. `GIGI_DATA_DIR` selects an isolated test profile for both the desktop and MCP companion. Never point acceptance tests at an existing person's database.
 
 The app's `gigi-mcp` companion exposes bounded typed tools over stdio. The bundled `agent/gigi` skill teaches domain relationships and progressive retrieval. Generate install-specific connector configuration with `scripts/package-agent.mjs`, passing the installed app bundle, a new output directory, and the absolute data root for the reviewed GiGi workspace. The workspace must already exist with its `gigi.sqlite` database. The generated MCP configuration binds that exact profile; an omitted or invalid data root fails before packaging. Provider connection acceptance is separate from generating configuration.
