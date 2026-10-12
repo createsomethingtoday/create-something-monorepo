@@ -203,3 +203,22 @@ preserved revision-3 synthetic document passed a disposable-socket preflight.
 Authentication errors now have separate safe categories; no old token was
 retained, so the prior token's validity is unknown. Blank confirmation input now
 re-prompts instead of aborting. No actual provider read has yet occurred.
+
+### Native Layers regression
+
+`pnpm --dir packages/mapping-canvas verify:native-layers` runs against `CANVAS_URL`
+(default `http://127.0.0.1:5187`). Start a native build preview first. Set
+`PLAYWRIGHT_CHANNEL=chrome` to use an installed Chrome instead of the Playwright
+Chromium binary. The verifier owns disposable browser contexts and synthetic
+artwork; it never attaches to an open user project.
+
+The real Svelte UI is exercised with a revision-checked synthetic native bridge:
+Mac inspector opening and layout, row and multi-selection, rendered stacking,
+hide/show, lock/unlock, native undo/redo dispatch, failed-commit reconciliation,
+bridge-state reload, and minimum-width (780px) opening/closing/focus. Web and
+companion eligibility are checked separately. This does not establish physical
+Mac persistence: qualify the built candidate with a unique bundle identifier,
+`CREATE_SOMETHING_DRAW_HOME` pointing at a disposable absolute directory,
+`CREATE_SOMETHING_DRAW_ENABLE_LAN=0`, and
+`CREATE_SOMETHING_DRAW_EPHEMERAL_WEBVIEW=1`; inspect the saved document and relaunch
+that same candidate/profile. Keep the installed app and its live profile intact.

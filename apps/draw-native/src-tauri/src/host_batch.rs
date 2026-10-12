@@ -127,6 +127,31 @@ pub(super) mod tests {
         assert_eq!(restored["document"],before); assert_eq!(restored["revision"],2);
     }
     #[test]
+    fn layer_order_visibility_and_lock_survive_history_and_disk_reload() {
+        let runtime=runtime();
+        let shape=|id:&str| json!({"id":id,"kind":"rectangle","createdAt":"2026-10-12T00:00:00Z",
+            "from":{"x":100,"y":100},"to":{"x":300,"y":260},"color":"#ffffff"});
+        let mut seed=request(&runtime);
+        seed.operations=vec![CanvasOperation::ReplaceObjects{objects:vec![shape("back"),shape("front")]}];
+        let initial=apply(&runtime,seed).unwrap()["document"].clone();
+        let mut back=shape("back"); back["hidden"]=json!(true); back["locked"]=json!(true); back["name"]=json!("Back");
+        let mut edit=request(&runtime);
+        edit.operations=vec![CanvasOperation::ReplaceObjects{objects:vec![shape("front"),back]}];
+        let changed=apply(&runtime,edit).unwrap()["document"].clone();
+        assert_eq!(changed["objects"][0]["id"],"front");
+        assert_eq!(changed["objects"][1]["hidden"],true);
+        assert_eq!(changed["objects"][1]["locked"],true);
+        *runtime.host.lock().unwrap()=load_state(&runtime.state_path).unwrap();
+        assert_eq!(runtime.host.lock().unwrap().document,changed);
+        let undone=native_history::action(&runtime,"undo",2,"mac-history-layer-undo","native-mac",false,|_,_|Ok(())).unwrap();
+        assert_eq!(undone["document"]["objects"],initial["objects"]);
+        *runtime.host.lock().unwrap()=load_state(&runtime.state_path).unwrap();
+        let redone=native_history::action(&runtime,"redo",3,"mac-history-layer-redo","native-mac",false,|_,_|Ok(())).unwrap();
+        assert_eq!(redone["document"]["objects"],changed["objects"]);
+        assert_eq!(load_state(&runtime.state_path).unwrap().document["objects"],changed["objects"]);
+        fs::remove_dir_all(runtime.state_path.parent().unwrap()).unwrap();
+    }
+    #[test]
     fn invalid_tail_and_persistence_failure_leave_disk_and_memory_unchanged() {
         let runtime=runtime(); let before=fs::read(&runtime.state_path).unwrap();
         let mut batch=request(&runtime); batch.operations.push(CanvasOperation::SetBackground{background:"invalid".into()});

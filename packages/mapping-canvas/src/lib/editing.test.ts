@@ -70,6 +70,15 @@ describe('Shared Draw editing commands', () => {
     expect(() => assertLockedLayersPreserved(before, {...before, objects: [{...before.objects[0], id:'added'}, ...before.objects]})).not.toThrow();
   });
 
+  it('moves one layer forward and backward without changing its metadata', () => {
+    const before = fixture();
+    before.objects = before.objects.slice(0, 3);
+    const forward = compileEdits(before, [{ type: 'arrange', ids: ['a'], position: 'forward' }], identity()).document;
+    expect(forward.objects.map(o => o.id)).toEqual(['b', 'a', 'c']);
+    const backward = compileEdits(forward, [{ type: 'arrange', ids: ['a'], position: 'backward' }], identity()).document;
+    expect(backward.objects).toEqual(before.objects);
+  });
+
   it('uses the same geometry root for mixed connector and shape rotation', () => {
     const before = fixture();
     before.objects[0].rotation = 20;
