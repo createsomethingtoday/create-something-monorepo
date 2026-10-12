@@ -21,6 +21,40 @@ const selectedCalendarScopes = [
   'https://www.googleapis.com/auth/calendar.events',
 ];
 
+test('Gmail header filters survive a proxy that normalizes additional query parameters', async () => {
+  const calls: URL[] = [];
+  const page = await readSourcePage({ COMPOSIO_API_KEY: 'synthetic' }, async (request) => {
+    const payload = await (request as Request).json() as {
+      endpoint: string; method: string; parameters: Array<{name: string; value: string; type: string}>;
+    };
+    assert.equal(payload.method, 'GET');
+    const endpoint = new URL(payload.endpoint);
+    // Model the duplicate-key loss observed as a possible proxy boundary behavior.
+    for (const [name, value] of Object.entries(Object.fromEntries(payload.parameters.map(p => [p.name, p.value])))) {
+      endpoint.searchParams.set(name, value);
+    }
+    calls.push(endpoint);
+    if (endpoint.pathname.endsWith('/messages')) {
+      assert.equal(endpoint.searchParams.get('maxResults'), '2');
+      return Response.json({status: 200, data: {messages: [{id: 'synthetic1'}]}});
+    }
+    assert.equal(endpoint.pathname, '/gmail/v1/users/me/messages/synthetic1');
+    assert.equal(endpoint.searchParams.get('format'), 'metadata');
+    const selected = endpoint.searchParams.getAll('metadataHeaders');
+    const headers = [
+      {name: 'Subject', value: 'Synthetic booking'}, {name: 'From', value: 'synthetic@example.test'},
+      {name: 'Date', value: 'Mon, 12 Oct 2026 00:00:00 +0000'},
+    ].filter(header => selected.includes(header.name));
+    return Response.json({status: 200, data: {id: 'synthetic1', snippet: 'Synthetic reference', payload: {headers}}});
+  }, 'gmail', 'synthetic-account', null) as {records: Array<{data: Record<string, unknown>}>};
+  assert.equal(page.records[0].data.subject, 'Synthetic booking');
+  assert.equal(page.records[0].data.from, 'synthetic@example.test');
+  assert.equal(page.records[0].data.date, 'Mon, 12 Oct 2026 00:00:00 +0000');
+  assert.deepEqual(calls[1].searchParams.getAll('metadataHeaders'), ['Subject', 'From', 'Date']);
+  assert.equal(calls.length, 2);
+  assert.deepEqual(Object.keys(page.records[0].data).sort(), ['date', 'from', 'snippet', 'subject', 'threadId']);
+});
+
 test('Gmail malformed message aborts page before exposing next cursor', async () => {
   await assert.rejects(readSourcePage({ COMPOSIO_API_KEY: 'ak_test' }, async (request) => {
     const payload = await (request as Request).json() as { endpoint: string };
@@ -588,7 +622,7 @@ test('Gmail source page returns projected read-only message metadata for the ver
     assert.equal(payload.method, 'GET');
     endpoints.push(payload.endpoint);
     if (payload.endpoint.endsWith('/messages')) return Response.json({ status: 200, data: { messages: [{ id: 'm1', threadId: 't1' }] } });
-    if (payload.endpoint.endsWith('/messages/m1')) return Response.json({ status: 200, data: { id: 'm1', threadId: 't1', snippet: 'Doors at 7',
+    if (new URL(payload.endpoint).pathname.endsWith('/messages/m1')) return Response.json({ status: 200, data: { id: 'm1', threadId: 't1', snippet: 'Doors at 7',
       payload: { headers: [{ name: 'Subject', value: 'Friday show' }, { name: 'From', value: 'venue@example.com' }] } } });
     throw new Error('unexpected provider endpoint');
   });
