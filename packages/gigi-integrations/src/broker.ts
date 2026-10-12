@@ -9,6 +9,7 @@ export interface ConnectionStatus {
   state: ConnectionState;
   connectedAccountId?: string;
   scopes?: string[];
+  accountLabel?: { kind: 'gmail_address' | 'primary_calendar'; value: string };
   reconnectable?: boolean;
   recovery?: 'operator_review';
 }
@@ -38,7 +39,7 @@ export interface SourcePage {
 
 export class IntegrationError extends Data.TaggedError('IntegrationError')<{
   readonly operation: string;
-  readonly reason: 'invalid_configuration' | 'unauthorized' | 'unavailable' | 'invalid_readback';
+  readonly reason: 'invalid_configuration' | 'unauthorized' | 'session_expired' | 'access_denied' | 'provider_unavailable' | 'unconfigured' | 'unavailable' | 'invalid_readback' | 'journal_unavailable' | 'link_outcome_unknown' | 'connection_changed' | 'connection_not_found';
   readonly cause?: unknown;
 }> {}
 
@@ -79,10 +80,23 @@ export function createBrokerClient(options: BrokerOptions): BrokerClient {
           signal: requestSignal,
           ...(body === undefined ? {} : { body: JSON.stringify(body) }),
         }));
-        if (response.status === 401 || response.status === 403) {
-          throw new IntegrationError({ operation, reason: 'unauthorized' });
+        if (response.status === 401) throw new IntegrationError({ operation, reason: 'session_expired' });
+        if (!response.ok) {
+          // Only fixed, recognized codes cross the process/UI boundary, never provider text.
+          let reason: IntegrationError['reason'] = response.status === 403 ? 'provider_unavailable' : 'unavailable';
+          try {
+            const failure = await readBoundedJson(response) as { error?: unknown; status?: unknown };
+            if (response.status === 403 && failure?.error === 'access_denied') reason = 'access_denied';
+            else if (response.status === 503 && failure?.error === 'unconfigured') reason = 'unconfigured';
+            else if (response.status === 503 && ['provider_unavailable', 'source_unavailable'].includes(String(failure?.error))) reason = 'provider_unavailable';
+            else if (response.status === 502 && failure?.error === 'provider_readback_invalid') reason = 'invalid_readback';
+            else if (response.status === 503 && operation === 'begin_connection' && failure?.error === 'journal_unavailable') reason = 'journal_unavailable';
+            else if (response.status === 409 && operation === 'reconcile_connection' && failure?.error === 'connection_changed') reason = 'connection_changed';
+            else if (response.status === 404 && failure?.error === 'not_found' && operation === 'reconcile_connection') reason = 'connection_not_found';
+            else if (response.status === 503 && operation === 'begin_connection' && failure?.status === 'readback_required') reason = 'link_outcome_unknown';
+          } catch { /* Preserve a safe generic error for malformed diagnostics. */ }
+          throw new IntegrationError({ operation, reason });
         }
-        if (!response.ok) throw new IntegrationError({ operation, reason: 'unavailable' });
         const value = await readBoundedJson(response);
         return value;
       },
@@ -149,6 +163,12 @@ function decodeConnectionStatus(value: unknown, provider: SourceProvider): Conne
   if (data.scopes !== undefined && (!Array.isArray(data.scopes) || !data.scopes.every((scope) => typeof scope === 'string'))) {
     throw invalidReadback('connection_status');
   }
+  if (data.accountLabel !== undefined) {
+    const label = data.accountLabel as Record<string, unknown> | null;
+    if (data.state !== 'connected' || !label || typeof label !== 'object' || Array.isArray(label) ||
+      label.kind !== (provider === 'gmail' ? 'gmail_address' : 'primary_calendar') ||
+      typeof label.value !== 'string' || !label.value.trim() || label.value.length > 320 || /[\u0000-\u001f\u007f<>]/u.test(label.value)) throw invalidReadback('connection_status');
+  }
   if (data.reconnectable !== undefined && (data.reconnectable !== true || data.state !== 'attention')) throw invalidReadback('connection_status');
   if (data.recovery !== undefined && (data.recovery !== 'operator_review' || data.state !== 'attention')) throw invalidReadback('connection_status');
   return data as unknown as ConnectionStatus;
@@ -167,7 +187,7 @@ function decodeBeginConnection(value: unknown, provider: SourceProvider): BeginC
     if (typeof data.url !== 'string' || typeof data.expiresAt !== 'string' ||
         typeof data.connectedAccountId !== 'string' || !/^ca_[A-Za-z0-9_-]{1,128}$/u.test(data.connectedAccountId)) throw invalidReadback('begin_connection');
     const consent = new URL(data.url);
-    if (consent.protocol !== 'https:' || consent.hostname !== 'connect.composio.dev' || consent.username || consent.password || consent.hash || !Number.isFinite(Date.parse(data.expiresAt))) throw invalidReadback('begin_connection');
+    if (consent.protocol !== 'https:' || consent.hostname !== 'connect.composio.dev' || consent.port || consent.username || consent.password || consent.hash || data.url.length > 2048 || !Number.isFinite(Date.parse(data.expiresAt)) || Date.parse(data.expiresAt) <= Date.now()) throw invalidReadback('begin_connection');
   }
   return data as unknown as BeginConnectionResult;
 }

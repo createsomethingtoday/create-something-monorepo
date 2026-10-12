@@ -256,14 +256,14 @@
     object-fit: contain;
   }
   figcaption {
-    font-size: var(--text-body-sm);
+    font-size: var(--text-performance-body-sm);
     line-height: 1.5;
     padding: 1rem 0;
   }
   figcaption span,
   .step-number {
-    font-family: var(--font-mono);
-    font-size: var(--text-body-sm);
+    font-family: var(--font-performance-mono);
+    font-size: var(--text-performance-body-sm);
   }
   figcaption p {
     margin: 0.5rem 0 0;
@@ -279,7 +279,7 @@
     border: 1px solid var(--color-performance-line);
     color: inherit;
     background: transparent;
-    font-size: var(--text-body-sm);
+    font-size: var(--text-performance-body-sm);
     text-decoration: none;
   }
   nav a[aria-current] {
@@ -313,7 +313,7 @@
     margin: 1rem 0;
   }
   li p {
-    font-size: var(--text-body);
+    font-size: var(--text-performance-body);
     line-height: 1.65;
   }
   .scope-note {

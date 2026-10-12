@@ -1,0 +1,52 @@
+{
+  "date": "2026-10-10",
+  "issues": [
+    "CRE-2253",
+    "CRE-2254"
+  ],
+  "base": "7d0fa2c3315fab9ba1cca6a6492a3789b61a555d",
+  "status": "synthetic candidate accepted; production gates remain",
+  "tests": {
+    "desktop": {
+      "passed": 140,
+      "skipped": 0
+    },
+    "integrations": {
+      "passed": 205,
+      "skipped": 0
+    },
+    "rustDomain": {
+      "passed": 53,
+      "skipped": 0
+    },
+    "rustMcp": {
+      "passed": 7,
+      "skipped": 0
+    },
+    "sourceMcpProcessCalls": 39,
+    "headlessOnboardingScenarios": 6
+  },
+  "independentReview": {
+    "security": "no outstanding blocking findings",
+    "ux": "screenshots reviewed; no blocking findings",
+    "reviewerSetupTestsPassed": 8,
+    "reviewerBrokerTestsPassed": 17
+  },
+  "boundaries": [
+    "No live provider account data read or imported",
+    "No new credentials, scopes or admission grants",
+    "No email/calendar writes or invitations",
+    "Installed GiGi unchanged",
+    "Prior source QA bundle file hashes verified; prior native acceptance is historical evidence, not this candidate native acceptance",
+    "Public health probe received edge browser-signature denial; Worker health/version and Grant access remain unverified"
+  ],
+  "remainingGates": [
+    "Remote GiGi regression CI",
+    "Fresh admitted-user, provider-backed onboarding and bounded import acceptance",
+    "Actual subscribed source-proposal chat acceptance",
+    "New-candidate native workflow acceptance",
+    "Developer ID signing, notarization, artifact-pair qualification and rollback identity",
+    "Exact qualified artifact installation and production readback"
+  ],
+  "worktreeDisposition": "preserved at /Users/createsomething/Documents/Codex/2026-10-10/task/gigi-source-proposals, branch codex/gigi-source-proposals"
+}

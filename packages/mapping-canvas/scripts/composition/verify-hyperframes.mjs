@@ -3,13 +3,13 @@ import { mkdir, writeFile, readFile } from 'node:fs/promises';
 import assert from 'node:assert/strict';
 import { unzipSync, strFromU8 } from 'fflate';
 const base = process.env.DRAW_COMPOSITION_URL || 'http://127.0.0.1:51959';
-const out = '../../output/integration/hyperframes';
+const out = process.env.DRAW_HYPERFRAMES_OUTPUT || '../../output/integration/hyperframes';
 await mkdir(out, {recursive:true});
-const browser = await chromium.launch({executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',headless:true});
+const browser = await chromium.launch({executablePath:process.env.CHROME_PATH || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',headless:true});
 const result = {completed:false, assertions:[], errors:[], exports:[]};
 try {
  const ctx = await browser.newContext({viewport:{width:1440,height:1100},reducedMotion:'reduce'});
- await ctx.route('**/*', r => new URL(r.request().url()).hostname === '127.0.0.1' ? r.continue() : r.abort());
+ await ctx.route('**/*', r => new URL(r.request().url()).origin === new URL(base).origin && ['GET','HEAD'].includes(r.request().method()) ? r.continue() : r.abort());
  const p = await ctx.newPage();
  p.on('pageerror',e=>result.errors.push(e.message));
  await p.goto(`${base}/compose`);

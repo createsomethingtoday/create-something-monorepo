@@ -67,7 +67,7 @@
   .airtable-workflow { color: var(--color-performance-ink); background: var(--color-performance-paper); }
   .chapter { max-width: 1440px; margin: 0 auto; padding: clamp(3rem, 7vw, 7rem) clamp(1.25rem, 5vw, 6rem); border-bottom: 1px solid var(--color-performance-line); }
   .opening, .fit, .proof, .handoff { display: grid; grid-template-columns: 1.2fr 1fr; gap: clamp(2rem, 5vw, 5rem); }
-  .eyebrow, figcaption, .map-note, dt { font-family: var(--font-mono); font-size: .75rem; letter-spacing: .08em; }
+  .eyebrow, figcaption, .map-note, dt { font-family: var(--font-performance-mono); font-size: .75rem; letter-spacing: .08em; }
   .eyebrow { text-transform: uppercase; margin: 0 0 1.5rem; }
   h1 { font-size: clamp(2.7rem, 5.4vw, 5.8rem); line-height: 1.02; letter-spacing: -.045em; max-width: 12ch; margin: 0 0 1.75rem; }
   h2 { font-size: clamp(2rem, 3.5vw, 3.75rem); line-height: 1.08; letter-spacing: -.035em; margin: 0 0 1.5rem; max-width: 17ch; }
@@ -80,7 +80,7 @@
   .workflow-map ol { list-style: none; padding: 0; margin: 1.5rem 0; }
   .workflow-map li { display: flex; gap: 1.25rem; padding: 1rem 0; border-top: 1px solid var(--color-performance-line); }
   .workflow-map li p { margin: .5rem 0 0; font-size: .875rem; }
-  .mark { font-family: var(--font-mono); font-size: 1.75rem; width: 2rem; flex: 0 0 2rem; }
+  .mark { font-family: var(--font-performance-mono); font-size: 1.75rem; width: 2rem; flex: 0 0 2rem; }
   .gate { color: var(--color-performance-pressure); }
   .map-note { margin: 0; letter-spacing: 0; }
   .failure-list { margin: 0; }
