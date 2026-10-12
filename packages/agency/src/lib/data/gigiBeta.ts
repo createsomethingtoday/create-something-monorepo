@@ -2,9 +2,9 @@
 export const gigiBeta = {
   version: '0.1.0',
   filename: 'GiGi-0.1.0-arm64-private-beta.dmg',
-  bytes: 75750054,
-  sha256: 'e9ce1625e4e406fe375625f3708389ff22e9afeb369a34baa39fe0153a2d7b6e',
-  url: 'https://media.createsomething.io/releases/gigi/0.1.0/e9ce1625e4e406fe375625f3708389ff22e9afeb369a34baa39fe0153a2d7b6e/GiGi-0.1.0-arm64-private-beta.dmg'
+  bytes: 78003842,
+  sha256: 'bd5bd761ab7c27dfe1902612f0a04bc235e2ea6fb734de835cc7b254f9842218',
+  url: 'https://media.createsomething.io/releases/gigi/0.1.0/bd5bd761ab7c27dfe1902612f0a04bc235e2ea6fb734de835cc7b254f9842218/GiGi-0.1.0-arm64-private-beta.dmg'
 } as const;
 
 export const gigiWalkthroughs = [
