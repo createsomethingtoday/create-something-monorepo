@@ -25,7 +25,14 @@ human observation.
    The ephemeral WebView does not prove composition persistence across process
    exits. Qualify that separately on the installed release profile with synthetic
    data, after preserving existing user data.
-4. Perform the two actual physical Mac UI runs. Record native UI and live-agent
+4. Before any user-operated grant test, invoke the exact signed app executable
+   with `--draw-transport-check`. Require `ok: true`, matching clean source SHA,
+   and both delayed-first-byte and fragmented-frame checks. Bind the output to
+   the executable SHA-256 in the release evidence. This creates only a private
+   disposable synthetic socket, exercises the production framing/stream setup,
+   and exits without opening Draw, loading profiles or issuing grants. It does
+   not substitute for the authenticated owner UI checks.
+5. Perform the two actual physical Mac UI runs. Record native UI and live-agent
    observations only after execution. Browser mocks, sampled screenshots and the
    old debug candidate do not qualify a newly signed artifact. For the provider
    check, the owner creates the explicitly scoped read-only grant and enters any
