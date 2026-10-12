@@ -8,6 +8,7 @@ function fixture(fetchGrant = vi.fn().mockResolvedValue({ hlsUrl: 'synthetic-hls
   const video = Object.assign(new EventTarget(), {
     currentTime: 0,
     paused: true,
+    ended: false,
     src: '',
     textTracks: Object.assign([], { addEventListener: vi.fn(), removeEventListener: vi.fn() }),
     canPlayType: () => 'probably',
@@ -50,6 +51,64 @@ function fixture(fetchGrant = vi.fn().mockResolvedValue({ hlsUrl: 'synthetic-hls
 }
 afterEach(() => vi.useRealTimers());
 describe('player session recovery without provider calls', () => {
+  it('does not renew or report a stall after completion, and refreshes access for replay', async () => {
+    const f = fixture();
+    await settle();
+    f.ready();
+    await f.video.play();
+    f.video.currentTime = 120;
+    f.video.ended = true;
+    f.video.paused = true;
+    f.video.dispatchEvent(new Event('ended'));
+    f.video.dispatchEvent(new Event('waiting'));
+    f.video.dispatchEvent(new Event('error'));
+    await vi.advanceTimersByTimeAsync(90000);
+    expect(f.state.failed).toBe(false);
+    expect(f.state.message).toBe('');
+    expect(f.fetchGrant).toHaveBeenCalledTimes(1);
+    expect(f.savePosition).toHaveBeenCalledWith(120, 'chosen');
+    f.video.ended = false;
+    f.video.currentTime = 0;
+    await f.video.play();
+    await settle();
+    f.ready();
+    expect(f.fetchGrant).toHaveBeenCalledTimes(2);
+    expect(f.video.currentTime).toBe(0);
+    f.session.dispose();
+  });
+  it.each(['resolve', 'reject'])(
+    'ignores a renewal that settles after completion: %s',
+    async (outcome) => {
+      let resolve!: (value: { hlsUrl: string }) => void;
+      let reject!: (error: Error) => void;
+      const grants = vi
+        .fn()
+        .mockResolvedValueOnce({ hlsUrl: 'initial' })
+        .mockImplementationOnce(
+          () =>
+            new Promise((yes, no) => {
+              resolve = yes;
+              reject = no;
+            })
+        );
+      const f = fixture(grants);
+      await settle();
+      f.ready();
+      await f.video.play();
+      await vi.advanceTimersByTimeAsync(45000);
+      f.video.currentTime = 120;
+      f.video.ended = true;
+      f.video.paused = true;
+      f.video.dispatchEvent(new Event('ended'));
+      if (outcome === 'resolve') resolve({ hlsUrl: 'late' });
+      else reject(new Error('late failure'));
+      await settle();
+      expect(f.video.src).toBe('initial');
+      expect(f.state.failed).toBe(false);
+      expect(f.state.message).toBe('');
+      f.session.dispose();
+    }
+  );
   it('retains the saved resume position when initial grant fails then retries', async () => {
     const grants = vi
       .fn()

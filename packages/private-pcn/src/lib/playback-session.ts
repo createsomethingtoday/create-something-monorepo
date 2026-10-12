@@ -40,6 +40,7 @@ export function createPlaybackSession(
   let requestNumber = 0;
   let seekOnMetadata: (() => void) | undefined;
   let started = false;
+  let completed = false;
   let recoveryPosition = playbackResumePosition(initialPosition, duration);
   let lastPosition = initialPosition;
   let pending: number | undefined;
@@ -68,6 +69,11 @@ export function createPlaybackSession(
     writing = false;
   }
   function played() {
+    if (completed) {
+      completed = false;
+      recoveryPosition = 0;
+      void load(true);
+    }
     if (!started) {
       started = true;
       onFirstPlay(!!resume);
@@ -80,11 +86,20 @@ export function createPlaybackSession(
   function metadata() {
     renewing = false;
   }
+  function ended() {
+    completed = true;
+    void flush();
+    clearTimeout(timer);
+    timer = undefined;
+    observation.cancelWaiting();
+    state.failed = false;
+    state.message = '';
+  }
   element.addEventListener('play', played);
   element.addEventListener('timeupdate', rememberPosition);
   element.addEventListener('loadedmetadata', metadata);
   element.addEventListener('pause', flush);
-  element.addEventListener('ended', flush);
+  element.addEventListener('ended', ended);
   pageEvents.addEventListener('pagehide', flush);
   const progressTimer = setInterval(flush, 15000);
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -92,12 +107,14 @@ export function createPlaybackSession(
     ready: () => {
       state.failed = false;
       state.message = '';
-      if (!timer && !stopped) timer = setTimeout(() => load(true), 45000);
+      if (!timer && !stopped && !completed && !element.ended)
+        timer = setTimeout(() => load(true), 45000);
     },
     waiting: () => {
-      if (!state.failed) state.message = 'Preparing playback…';
+      if (!state.failed && !completed) state.message = 'Preparing playback…';
     },
     failed: () => {
+      if (completed || element.ended) return;
       state.failed = true;
       state.message = 'Playback was interrupted. Retry playback to check access and continue.';
       clearTimeout(timer);
@@ -108,6 +125,7 @@ export function createPlaybackSession(
     }
   });
   async function load(renew = false) {
+    if (renew && (completed || element.ended)) return;
     const request = ++requestNumber;
     clearTimeout(timer);
     timer = undefined;
@@ -120,7 +138,7 @@ export function createPlaybackSession(
     }
     try {
       const grant = await fetchGrant();
-      if (stopped || request !== requestNumber) return;
+      if (stopped || request !== requestNumber || (renew && completed)) return;
       renewing = true;
       if (element.canPlayType('application/vnd.apple.mpegurl')) {
         if (seekOnMetadata) element.removeEventListener('loadedmetadata', seekOnMetadata);
@@ -131,7 +149,7 @@ export function createPlaybackSession(
         element.src = grant.hlsUrl;
       } else {
         const Hls = await loadHls();
-        if (stopped || request !== requestNumber) return;
+        if (stopped || request !== requestNumber || completed) return;
         if (!Hls.isSupported())
           throw new Error('This browser cannot play this video. Try a current browser.');
         hls?.destroy();
@@ -139,7 +157,7 @@ export function createPlaybackSession(
         hls.loadSource(grant.hlsUrl);
         hls.attachMedia(element);
         hls.on(Hls.Events.ERROR, (_, data) => {
-          if (stopped || request !== requestNumber) return;
+          if (stopped || request !== requestNumber || completed) return;
           if (data.fatal) {
             observation.cancelWaiting();
             state.failed = true;
@@ -152,10 +170,10 @@ export function createPlaybackSession(
       }
       // canplay/playing, not grant receipt, confirms media readiness.
       if (playing) await element.play().catch(() => {});
-      if (stopped || request !== requestNumber || state.failed) return;
+      if (stopped || request !== requestNumber || state.failed || completed) return;
       if (!timer) timer = setTimeout(() => load(true), 45000);
     } catch (e) {
-      if (stopped || request !== requestNumber) return;
+      if (stopped || request !== requestNumber || (renew && completed)) return;
       observation.cancelWaiting();
       state.failed = true;
       state.message = (e as Error).message;
@@ -176,7 +194,7 @@ export function createPlaybackSession(
       element.removeEventListener('timeupdate', rememberPosition);
       element.removeEventListener('loadedmetadata', metadata);
       element.removeEventListener('pause', flush);
-      element.removeEventListener('ended', flush);
+      element.removeEventListener('ended', ended);
       pageEvents.removeEventListener('pagehide', flush);
       stopped = true;
       requestNumber++;

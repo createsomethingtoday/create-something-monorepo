@@ -22,6 +22,8 @@ export function observePlayback(
   };
   const waiting = () => {
     clearTimeout(timer);
+    // Native HLS can emit waiting at the end of the final segment.
+    if (media.ended) return ready();
     notify.waiting();
     timer = setTimeout(failed, 15000);
   };
@@ -30,7 +32,14 @@ export function observePlayback(
     captions();
     notify.ready();
   };
-  const events = { canplay: ready, playing: ready, waiting, stalled: waiting, error: failed };
+  const events = {
+    canplay: ready,
+    playing: ready,
+    ended: ready,
+    waiting,
+    stalled: waiting,
+    error: failed
+  };
   for (const [event, handler] of Object.entries(events)) media.addEventListener(event, handler);
   media.addEventListener('loadedmetadata', captions);
   for (const event of ['addtrack', 'removetrack', 'change'])

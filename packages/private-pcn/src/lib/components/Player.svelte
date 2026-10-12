@@ -78,6 +78,8 @@
   {#if playback.failed}<button class="button secondary" onclick={retry}>Retry playback</button>{/if}
   <p class="caption-status" role="status">
     {#if playback.captionLabels === null}Caption availability will be checked when the video loads.
+    {:else if playback.captionLabels.length && playback.captionLabels.every((label) => label === 'Unlabelled track')}The
+      browser reports an unlabelled caption track. Caption availability and timing are unverified.
     {:else if playback.captionLabels.length}Caption tracks available: {playback.captionLabels.join(
         ', '
       )}. Use the video’s caption control.
