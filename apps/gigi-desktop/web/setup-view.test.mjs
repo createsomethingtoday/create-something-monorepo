@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { sourceView, setupSummary, sourceJourney } from './setup-view.mjs';
+import { sourceView, setupSummary, sourceJourney, sourceErrorMessage } from './setup-view.mjs';
 
 test('source feedback names the verified account state and keeps import separate', () => {
   assert.deepEqual(sourceView({ state: 'connected', connectedAccountId: 'acct-1' }), {
@@ -87,4 +87,27 @@ test('journey directs each guarded recovery to its available action', () => {
   assert.equal(sourceJourney({ gmail: { state: 'attention', reconnectable: true } }).current, 2);
   assert.match(sourceJourney({ gmail: { state: 'pending' } }).next, /Check status and verify/);
   assert.doesNotMatch(sourceJourney({ gmail: { state: 'pending' } }).next, /Resume/);
+});
+
+
+for (const detail of ['journal_unavailable', 'link_outcome_unknown', 'connection_changed', 'connection_not_found', 'invalid_readback']) {
+  test(`source recovery card gives a guarded next action for ${detail}`, () => {
+    const source = { state: 'unavailable', detail };
+    assert.match(sourceView(source).description, /Check status/);
+    assert.doesNotMatch(sourceView(source).description, /account ID|Try again later/);
+    assert.match(sourceJourney({ gmail: source }).next, /Check status/);
+    assert.match(setupSummary({ workspace: { name: 'Synthetic' }, sources: { gmail: source } }).nextStep, /Check status/);
+  });
+}
+
+for (const code of ['browser_unavailable', 'loopback_unavailable', 'identity_contract_mismatch', 'redirect_registration_mismatch', 'identity_mismatch', 'invalid_token_readback']) {
+  test(`sign-in recovery explains ${code} without exposing technical codes`, () => {
+    const copy = sourceErrorMessage(code);
+    assert.equal(typeof copy, 'string');
+    assert.doesNotMatch(copy, /_|account ID|password|disable/i);
+    assert.match(copy, /browser|GiGi operator|Sign in to GiGi sources/);
+  });
+}
+test('unknown source errors are not interpolated by the fixed recovery map', () => {
+  for (const code of ['SECRET https://private.test', 'constructor', 'toString', '__proto__', undefined]) assert.equal(sourceErrorMessage(code), undefined);
 });

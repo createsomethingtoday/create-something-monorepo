@@ -39,3 +39,11 @@ test('source import is workspace owned and context search stays within five snip
   assert.deepEqual(calls[0], { operation: 'connections.import', input: { workspaceId: 'w1', provider: 'gmail', connectedAccountId: 'account-1', cursor: 'page-2' } });
   assert.deepEqual(calls[1], { operation: 'context.search', input: { query: 'Friday show', limit: 5 } });
 });
+
+
+test('consent navigation carries the selected provider for diagnostics', async () => {
+  const calls = [];
+  const bridge = createBridge(async (_command, request) => { calls.push(request); return { opened: true, verified: false }; });
+  await bridge.openConsent('https://connect.composio.dev/synthetic', 'googlecalendar');
+  assert.deepEqual(calls, [{ operation: 'connections.openConsent', input: { url: 'https://connect.composio.dev/synthetic', provider: 'googlecalendar' } }]);
+});

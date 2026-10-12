@@ -35,7 +35,7 @@ export function createBridge(invoke) {
     chatApprove: (workspaceId, sessionId, approvalId, decision) => call('agent.chat.approve', { workspaceId: owned(workspaceId), sessionId, approvalId, decision }),
     connectionStatus: (provider) => call('connections.status', { provider }),
     beginConnection: (provider, requestId) => call('connections.begin', { provider, requestId }),
-    openConsent: (url) => call('connections.openConsent', { url }),
+    openConsent: (url, provider) => call('connections.openConsent', { url, provider }),
     reconcileConnection: (provider, connectedAccountId) => call('connections.reconcile', { provider, connectedAccountId }),
     importSource: (workspaceId, provider, connectedAccountId, cursor) => call('connections.import', { workspaceId: owned(workspaceId), provider, connectedAccountId, ...(cursor ? { cursor } : {}) }),
     searchContext: (query, limit = 5) => call('context.search', { query, limit }),

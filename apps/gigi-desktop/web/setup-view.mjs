@@ -1,7 +1,26 @@
+/** Fixed source recovery text. Unknown values are never interpolated here. */
+export function sourceErrorMessage(code) {
+  const messages = {
+    journal_unavailable: 'The connection attempt could not be confirmed. Check status before connecting again. If this persists, ask the GiGi operator to review it.',
+    link_outcome_unknown: 'Consent may have started, but GiGi could not confirm the result. Check status. Do not start another consent attempt; ask the GiGi operator if it remains unresolved.',
+    connection_changed: 'The connection changed during verification. Check status before verifying again. Do not start another consent attempt.',
+    connection_not_found: 'GiGi could not find this connection attempt. Check status. If it remains unresolved, ask the GiGi operator before connecting again.',
+    invalid_readback: 'GiGi could not verify the sign-in or source response. Check status after finishing sign-in or consent. If this persists, ask the GiGi operator; do not start another consent attempt.',
+    browser_unavailable: 'GiGi could not open your browser. Check that a browser is available, then retry the same sign-in or consent page. Do not start a second consent attempt.',
+    loopback_unavailable: 'GiGi could not receive the local sign-in response. Close any older GiGi sign-in attempt, then try Sign in to GiGi sources again. If this persists, ask the GiGi operator.',
+    identity_contract_mismatch: 'GiGi could not verify the sign-in service configuration. Ask the GiGi operator to check this build before signing in again.',
+    redirect_registration_mismatch: 'GiGi could not verify the sign-in return address. Ask the GiGi operator to check this build before signing in again.',
+    identity_mismatch: 'The sign-in response did not match this GiGi session. Try Sign in to GiGi sources again. If this persists, ask the GiGi operator.',
+    invalid_token_readback: 'GiGi could not verify the sign-in response. Try Sign in to GiGi sources again. If this persists, ask the GiGi operator.',
+  };
+  return typeof code === 'string' && Object.hasOwn(messages, code) ? messages[code] : undefined;
+}
+
 import { sourceNeedsOperatorReview, pendingConsentForProvider } from './model.mjs';
 
 /** Plain-language feedback for a connector status receipt. UI callers escape the strings. */
 export function sourceView(source) {
+  if (sourceErrorMessage(source?.detail)) return { label: 'Check connection', description: sourceErrorMessage(source.detail) };
   if (source?.state === 'connected') return {
     label: 'Account verified',
     description: 'Account verified. Import records when you are ready.',
@@ -97,6 +116,7 @@ export function setupSummary({ workspace, sources = {}, agentReceipt, agent } = 
   let nextStep = 'Start with a record or choose an optional connection below.';
   if (!workspace) nextStep = 'Create your private workspace.';
   else if (providers.some((provider) => sourceNeedsOperatorReview(sources?.[provider]))) nextStep = 'Ask the GiGi operator to review the uncertain source connection.';
+  else if (providers.some(provider => sourceErrorMessage(sources?.[provider]?.detail))) nextStep = sourceJourney(sources).next;
   else if (uncertainRefresh) nextStep = 'Check source status before trying to connect again.';
   else if (checkingCount) nextStep = 'Wait for the source check, then check status again if needed.';
   else if (sources?.googlecalendar?.state === 'pending') nextStep = 'Finish Google Calendar consent, then verify the account.';
@@ -111,6 +131,7 @@ export function setupSummary({ workspace, sources = {}, agentReceipt, agent } = 
 /** Steps derive from authoritative status receipts, never from sign-in button clicks. */
 export function sourceJourney(sources = {}, attempts = {}) {
   const values = ['gmail', 'googlecalendar'].map(provider => sources[provider]);
+  const recoveryMessage = values.map(source => sourceErrorMessage(source?.detail)).find(Boolean);
   const denied = values.some(source => source?.detail === 'access_denied');
   const signIn = values.some(source => ['session_expired', 'reauthentication_required', 'unauthorized'].includes(source?.detail));
   const service = values.some(source => ['provider_unavailable', 'unconfigured', 'refresh_outcome_unknown', 'refresh_in_progress'].includes(source?.detail));
@@ -121,7 +142,7 @@ export function sourceJourney(sources = {}, attempts = {}) {
   const admitted = !denied && !signIn && !service && values.some(source => ['disconnected', 'pending', 'connected', 'attention'].includes(source?.state));
   const consent = ['gmail', 'googlecalendar'].some(provider => pendingConsentForProvider(sources[provider], attempts, provider));
   const current = !admitted ? 1 : review ? 4 : consent ? 3 : reconnect ? 2 : pending ? 4 : connected ? 5 : 2;
-  const next = denied ? 'Ask the GiGi operator to check source access for this app.'
+  const next = recoveryMessage || (denied ? 'Ask the GiGi operator to check source access for this app.'
     : signIn ? 'Sign in to GiGi sources, then check status. Google consent is a separate step.'
     : service ? 'Check status again before starting or resuming consent.'
     : review ? 'Ask the GiGi operator to review the uncertain connection before connecting again.'
@@ -130,6 +151,6 @@ export function sourceJourney(sources = {}, attempts = {}) {
     : pending ? 'Check status and verify the pending connection. If no consent link is available, do not start another attempt.'
     : connected ? 'Check the verified Google identity below, then import one bounded page when ready.'
     : admitted ? 'Choose Gmail or Google Calendar below. You can connect either source independently.'
-    : 'Check source status or sign in to GiGi sources. Your local workspace is ready.';
+    : 'Check source status or sign in to GiGi sources. Your local workspace is ready.');
   return { current, next, stages: ['Local workspace', 'GiGi source sign-in', 'Choose a source', 'Google consent', 'Verify connection', 'Import one page'] };
 }

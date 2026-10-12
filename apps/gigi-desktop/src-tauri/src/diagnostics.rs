@@ -67,13 +67,15 @@ fn stage(operation: &str) -> Option<&'static str> {
 fn valid_state(value: &str) -> bool { matches!(value, "connected" | "disconnected" | "pending" | "attention" | "unavailable" | "unconfigured" | "checking") }
 fn safe_code(value: &str) -> &'static str {
     match value {
+        "journal_unavailable" => "journal_unavailable", "link_outcome_unknown" => "link_outcome_unknown",
+        "connection_changed" => "connection_changed", "connection_not_found" => "connection_not_found",
         "started" => "started", "ok" => "ok", "partial_failure" => "partial_failure",
         "access_denied" => "access_denied", "session_expired" => "session_expired", "reauthentication_required" => "reauthentication_required",
         "unauthorized" => "unauthorized", "provider_unavailable" => "provider_unavailable", "unavailable" => "unavailable",
         "unconfigured" => "unconfigured", "refresh_in_progress" => "refresh_in_progress", "refresh_outcome_unknown" => "refresh_outcome_unknown",
         "provider_readback_invalid" => "provider_readback_invalid", "invalid_readback" => "invalid_readback",
         "operator_review" => "operator_review", "reconnect_required" => "reconnect_required", "source_unavailable" => "source_unavailable",
-        "invalid_configuration" => "invalid_configuration", "cancelled" => "cancelled", "browser_unavailable" => "browser_unavailable", "loopback_unavailable" => "loopback_unavailable",
+        "invalid_configuration" => "invalid_configuration", "cancelled" => "cancelled", "Browser could not open" | "browser_unavailable" => "browser_unavailable", "loopback_unavailable" => "loopback_unavailable",
         "identity_contract_mismatch" => "identity_contract_mismatch", "identity_mismatch" => "identity_mismatch", "invalid_token_readback" => "invalid_token_readback",
         "redirect_registration_mismatch" => "redirect_registration_mismatch", "invalid_data_directory" => "invalid_data_directory",
         "unsafe_data_directory" => "unsafe_data_directory", "unsafe_session_file" => "unsafe_session_file",
@@ -415,4 +417,20 @@ mod tests {
         f.call("diagnostics.delete");
         assert_eq!(f.call("diagnostics.status")["enabled"], false);
     }
+    #[test]
+    fn source_recovery_codes_remain_specific_without_raw_payloads() {
+        let f = Fixture::new(); f.call("diagnostics.start");
+        for code in ["journal_unavailable", "link_outcome_unknown", "connection_changed", "connection_not_found"] {
+            observe(&f.0,"connections.begin",&json!({"provider":"gmail"}),|| Err(code.into())).unwrap_err();
+        }
+        observe(&f.0,"connections.openConsent",&json!({"provider":"googlecalendar","url":"https://secret.example"}),|| Err("Browser could not open".into())).unwrap_err();
+        f.call("diagnostics.stop");
+        let report=f.call("diagnostics.review");
+        for (index, code) in ["journal_unavailable", "link_outcome_unknown", "connection_changed", "connection_not_found", "browser_unavailable"].iter().enumerate() {
+            assert_eq!(report["events"][index*2+1]["code"], *code);
+        }
+        assert_eq!(report["events"][9]["provider"], "googlecalendar");
+        assert!(!report["content"].as_str().unwrap().contains("secret.example"));
+    }
+
 }
