@@ -169,10 +169,12 @@ export async function readSourcePage(
     const records = [];
     for (const message of messages) {
       if (!isRecord(message) || typeof message.id !== 'string' || !/^[A-Za-z0-9_-]{1,128}$/u.test(message.id)) throw new Error('gmail_message_id_invalid');
-      const detail = await proxyRead(env, providerFetch, accountId, `https://gmail.googleapis.com/gmail/v1/users/me/messages/${message.id}`,
-        [{ name: 'format', value: 'metadata', type: 'query' },
-          { name: 'metadataHeaders', value: 'Subject', type: 'query' }, { name: 'metadataHeaders', value: 'From', type: 'query' },
-          { name: 'metadataHeaders', value: 'Date', type: 'query' }]);
+      // Keep Gmail's repeated header filters in the URL: proxy parameter maps can
+      // collapse repeated names to the final value, silently dropping Subject/From.
+      const detailUrl = new URL(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${message.id}`);
+      detailUrl.searchParams.set('format', 'metadata');
+      for (const name of ['Subject', 'From', 'Date']) detailUrl.searchParams.append('metadataHeaders', name);
+      const detail = await proxyRead(env, providerFetch, accountId, detailUrl.toString(), []);
       if (detail.id !== message.id) throw new Error('gmail_detail_mismatch');
       const headers = isRecord(detail.payload) && Array.isArray(detail.payload.headers) ? detail.payload.headers : [];
       const header = (name: string) => {
