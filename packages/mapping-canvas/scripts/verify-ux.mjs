@@ -164,16 +164,13 @@ try {
       page.getByRole('button', { name: 'Export Context ZIP', exact: true })
     ).toBeEnabled();
   });
-  await check('unsaved return offers browser leave protection', async () => {
-    page.removeAllListeners('dialog');
-    const dialog = page.waitForEvent('dialog');
-    const clicking = page.getByRole('link', { name: 'Draw canvas' }).click();
-    const warning = await dialog;
-    assert.equal(warning.type(), 'beforeunload');
-    await warning.dismiss();
-    await clicking;
+  await check('unsaved return offers an in-page cancellation dialog', async () => {
+    await page.getByRole('link', { name: 'Draw canvas' }).click();
+    await expect(page.getByRole('dialog')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Keep editing' })).toBeFocused();
+    await page.getByRole('button', { name: 'Keep editing' }).click();
     await expect(page).toHaveURL(/compose/);
-    page.on('dialog', (dialog) => dialog.accept());
+    await expect(page.getByRole('link', { name: 'Draw canvas' })).toBeFocused();
   });
   await page.getByRole('button', { name: 'Save locally', exact: true }).click();
   await expect(page.locator('.status')).toContainText('Saved on this device');
@@ -200,6 +197,83 @@ try {
     assert.equal((await leaving).type(), 'confirm');
     await again;
     await expect(page).toHaveURL(/compose\/render/);
+  });
+  await check('unapplied invalid draft survives reload without replacing saved content', async () => {
+    await page.goto(`${base}/compose`);
+    await page.getByRole('button', { name: 'Restore draft' }).click();
+    await page.getByRole('button', { name: 'Save locally', exact: true }).click();
+    const saved = await page.evaluate(() => localStorage.getItem('draw.composition.demo.v1'));
+    await page.getByLabel('Heading', { exact: true }).fill('   ');
+    await page.reload();
+    await page.getByRole('button', { name: 'Restore draft' }).click();
+    await expect(page.getByLabel('Heading', { exact: true })).toHaveValue('   ');
+    assert.equal(await page.evaluate(() => localStorage.getItem('draw.composition.demo.v1')), saved);
+    await page.getByRole('link', { name: 'Draw canvas' }).click();
+    await page.getByRole('button', { name: 'Save and return' }).click();
+    await expect(page).toHaveURL(/compose/);
+    await expect(page.getByRole('alert')).toBeVisible();
+    await page.getByRole('link', { name: 'Draw canvas' }).click();
+    await page.getByRole('button', { name: 'Leave without saving' }).click();
+    await page.goto(`${base}/compose`);
+    await expect(page.getByRole('button', { name: 'Restore draft' })).toHaveCount(0);
+    await expect(page.getByLabel('Heading', { exact: true })).toHaveValue('Retain this draft on Back');
+  });
+  await check('successful save and return clears recovery', async () => {
+    await page.getByLabel('Heading', { exact: true }).fill('Native-safe return');
+    await page.getByRole('link', { name: 'Draw canvas' }).click();
+    await page.getByRole('button', { name: 'Save and return' }).click();
+    await expect(page).not.toHaveURL(/compose/);
+    await page.goto(`${base}/compose`);
+    await expect(page.getByLabel('Heading', { exact: true })).toHaveValue('Native-safe return');
+    assert.equal(await page.evaluate(() => localStorage.getItem('draw.composition.recovery.v1')), null);
+  });
+  await check('failed save and return stays in Compose and preserves saved bytes', async () => {
+    const saved = await page.evaluate(() => {
+      window.__originalSetItem = Storage.prototype.setItem;
+      Storage.prototype.setItem = function(key, value) { if (key === 'draw.composition.demo.v1') throw Error('Synthetic storage failure'); return window.__originalSetItem.call(this, key, value); };
+      return localStorage.getItem('draw.composition.demo.v1');
+    });
+    await page.getByLabel('Heading', { exact: true }).fill('Failed save draft');
+    await page.getByRole('link', { name: 'Draw canvas' }).click();
+    await page.getByRole('button', { name: 'Save and return' }).click();
+    await expect(page).toHaveURL(/compose/);
+    await expect(page.getByRole('alert')).toContainText('Could not complete local save');
+    assert.equal(await page.evaluate(() => localStorage.getItem('draw.composition.demo.v1')), saved);
+    await page.evaluate(() => { Storage.prototype.setItem = window.__originalSetItem; });
+    await page.getByRole('link', { name: 'Draw canvas' }).click();
+    await page.getByRole('button', { name: 'Leave without saving' }).click();
+    await page.goto(`${base}/compose`);
+    await expect(page.getByLabel('Heading', { exact: true })).toHaveValue('Native-safe return');
+  });
+  await check('malformed recovery retains saved bytes until explicit discard', async () => {
+    const saved = await page.evaluate(() => { localStorage.setItem('draw.composition.recovery.v1', '{broken'); return localStorage.getItem('draw.composition.demo.v1'); });
+    await page.reload();
+    await expect(page.getByRole('region', { name: 'Unsaved draft recovery' })).toBeVisible();
+    assert.equal(await page.evaluate(() => localStorage.getItem('draw.composition.recovery.v1')), '{broken');
+    assert.equal(await page.evaluate(() => localStorage.getItem('draw.composition.demo.v1')), saved);
+    await page.screenshot({ path: `${output}/recovery-error.png`, fullPage: true });
+    await page.getByRole('button', { name: 'Discard draft' }).click();
+    await expect(page.getByLabel('Heading', { exact: true })).toHaveValue('Native-safe return');
+    assert.equal(await page.evaluate(() => localStorage.getItem('draw.composition.demo.v1')), saved);
+  });
+  await check('reverting to saved fields removes obsolete recovery', async () => {
+    await page.getByLabel('Heading', { exact: true }).fill('Temporary draft');
+    await expect.poll(() => page.evaluate(() => localStorage.getItem('draw.composition.recovery.v1'))).not.toBe(null);
+    await page.getByLabel('Heading', { exact: true }).fill('Native-safe return');
+    await expect.poll(() => page.evaluate(() => localStorage.getItem('draw.composition.recovery.v1'))).toBe(null);
+    await page.reload();
+    await expect(page.getByRole('button', { name: 'Restore draft' })).toHaveCount(0);
+  });
+  await check('saved content survives recovery cleanup failure without stale restoration', async () => {
+    await page.getByLabel('Heading', { exact: true }).fill('Saved despite cleanup failure');
+    await expect.poll(() => page.evaluate(() => localStorage.getItem('draw.composition.recovery.v1'))).not.toBe(null);
+    await page.evaluate(() => { window.__originalRemoveItem = Storage.prototype.removeItem; Storage.prototype.removeItem = function(key) { if (key === 'draw.composition.recovery.v1') throw Error('Synthetic cleanup failure'); return window.__originalRemoveItem.call(this, key); }; });
+    await page.getByRole('button', { name: 'Save locally', exact: true }).click();
+    await expect(page.locator('.status')).toContainText('Saved on this device');
+    await expect(page.getByRole('alert')).toContainText('Saved content is safe');
+    await page.reload();
+    await expect(page.getByRole('button', { name: 'Restore draft' })).toHaveCount(0);
+    await expect(page.getByLabel('Heading', { exact: true })).toHaveValue('Saved despite cleanup failure');
   });
   await page.goto(`${base}/animate`);
   await check('Motion distinguishes editable JSON from images and video', async () => {

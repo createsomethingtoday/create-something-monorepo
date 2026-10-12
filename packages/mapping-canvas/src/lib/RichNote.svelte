@@ -40,6 +40,6 @@
 </div>
 
 <style>
-  .note-frame{position:relative;height:100%}.overflow-warning{position:absolute;bottom:0;left:0;right:0;background:var(--color-performance-shell-surface,#111);color:var(--color-performance-signal,#fcaa2d);padding:3px 0;font:600 11px/1.4 var(--font-performance-sans,Arial,sans-serif)}
+  .note-frame{position:relative;height:100%}.overflow-warning{position:absolute;bottom:0;left:0;right:0;background:var(--color-performance-shell-surface,#111);color:var(--color-performance-warning,#aa8844);padding:3px 0;font:600 11px/1.4 var(--font-performance-sans,Arial,sans-serif)}
   .rich-note{height:100%;overflow:hidden;color:#fff;font:500 16px/1.35 Arial,sans-serif;overflow-wrap:anywhere}.rich-note :global(*){margin:0 0 .35em}.rich-note span,.rich-note a{white-space:pre-wrap}.rich-note h1{font-size:1.45em}.rich-note h2{font-size:1.25em}.rich-note h3{font-size:1.1em}.rich-note ul,.rich-note ol{padding-left:1.25em}.rich-note blockquote{border-left:3px solid #fcaa2d;padding-left:.65em;color:#ddd}.bold{font-weight:800}.italic{font-style:italic}.underline{text-decoration:underline}.code{font-family:monospace;background:#292929;border-radius:3px;padding:.05em .2em}.rich-note a{color:#7bb7ff;text-decoration:underline}
 </style>

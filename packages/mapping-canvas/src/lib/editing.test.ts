@@ -270,3 +270,20 @@ describe('Shared Draw editing commands', () => {
     expect(document).toBe(locked);
   });
 });
+
+it('applies layer visibility and locking with unrelated reactive rich notes', () => {
+  const raw = fixture();
+  const note = raw.objects.find(o => o.kind === 'note')!;
+  if (note.kind !== 'note') throw Error('fixture');
+  note.content = { blocks: [{ type: 'paragraph', runs: [{ text: note.text, bold: true }] }] };
+  const reactive = <T>(value: T): T => value && typeof value === 'object'
+    ? new Proxy(value as object, { get(target, key) { return reactive(Reflect.get(target, key)); } }) as T : value;
+  let current = reactive(raw);
+  for (const metadata of [{ hidden: true }, { hidden: false }, { locked: true }, { locked: false }]) {
+    const result = compileEdits(current, [{ type: 'layer', ids: ['a'], ...metadata }], { id: () => 'unused', now: '2026-10-12' });
+    const next = applyCanvasOperations(current, result.operations)!;
+    expect(next.objects.find(o => o.id === 'a')).toMatchObject(metadata);
+    expect(next.objects.find(o => o.id === note.id)).toEqual(note);
+    current = reactive(next);
+  }
+});

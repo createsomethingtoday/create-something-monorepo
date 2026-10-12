@@ -12,6 +12,7 @@ const fixture = {
   createdAt: '2026-10-12T00:00:00Z', updatedAt: '2026-10-12T00:00:00Z',
   viewport: { x: 0, y: 0, zoom: 1 },
   objects: [
+    { id: 'rich-note', kind: 'note', name: 'Rich note', x: 450, y: 100, width: 270, height: 130, text: 'Unrelated rich content', content: { blocks: [{ type: 'paragraph', runs: [{ text: 'Unrelated rich content' }] }] }, createdAt: '2026-10-12' },
     { id: 'back', kind: 'rectangle', name: 'Back', from: { x: 100, y: 100 }, to: { x: 300, y: 260 }, color: '#ffffff', fill: '#0057b8', createdAt: '2026-10-12' },
     { id: 'front', kind: 'rectangle', name: 'Front', from: { x: 200, y: 180 }, to: { x: 400, y: 340 }, color: '#ffffff', fill: '#fcaa2d', createdAt: '2026-10-12' }
   ]
@@ -90,9 +91,9 @@ try {
   await expect(panel.getByText('2 selected', { exact: true })).toBeVisible();
   await row('Back').click();
   await commit(() => panel.getByRole('button', { name: 'Forward', exact: true }).click());
-  expect(await order()).toEqual(['front', 'back']);
+  expect(await order()).toEqual(['rich-note', 'front', 'back']);
   await commit(() => panel.getByRole('button', { name: 'Backward', exact: true }).click());
-  expect(await order()).toEqual(['back', 'front']);
+  expect(await order()).toEqual(['rich-note', 'back', 'front']);
   await commit(() => panel.getByRole('button', { name: 'Hide layer Back', exact: true }).click());
   await expect(shape('back')).toHaveCount(0);
   await commit(() => page.getByRole('button', { name: 'Undo', exact: true }).click());
@@ -116,7 +117,7 @@ try {
   expect((await authority()).document).toEqual(saved);
   await expect(shape('back')).toHaveCount(0);
   await expect(panel.getByRole('button', { name: 'Unlock layer Back', exact: true })).toBeVisible();
-  expect(saved.objects.map(o => o.id)).toEqual(['front', 'back']);
+  expect(saved.objects.map(o => o.id)).toEqual(['rich-note', 'front', 'back']);
   // Failed native commit must reconcile to authority rather than leaving an optimistic hide.
   await page.evaluate(() => { window.__layerTest.failNext = true; });
   await panel.getByRole('button', { name: 'Hide layer Front', exact: true }).click();
