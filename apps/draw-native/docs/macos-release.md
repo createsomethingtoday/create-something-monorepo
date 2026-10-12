@@ -67,8 +67,17 @@ DRAW_RELEASE_VERSION=<committed-version> GITHUB_SHA=<exact-source-sha> \
   node apps/draw-native/scripts/mac-release-receipt.mjs \
   <exact.dmg> <installed-acceptance.json> <owner-acceptance.json> \
   <prior-artifact> <profile-backup-directory> <redacted-provider-receipt.json> \
-  <new-mac-release-receipt.json>
+  <transport-acceptance.json> <new-mac-release-receipt.json>
 ```
+
+The transport input uses schema `create-something/draw-transport-acceptance@1`,
+with `executableSha256` matching the installed receipt, `startedAt` and
+`completedAt` ISO timestamps after installed acceptance, and `result` containing
+the exact parsed diagnostic output. Hash the executable before and after the
+bounded diagnostic invocation and require both hashes to match. The validator
+requires matching clean source, both successful transport cases, no error, and
+synthetic-only execution without a loaded profile or grant. It records the
+transport receipt digest in the production receipt and rejects missing evidence.
 
 The validator writes no credentials and does not publish. It rejects iOS scope,
 missing gates and hash mismatches. Do not fabricate a successful receipt to satisfy

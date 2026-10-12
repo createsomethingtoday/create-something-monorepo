@@ -7,6 +7,7 @@ function fixture() {
   const sourceSha = 'a'.repeat(40), digest = 'b'.repeat(64);
   const artifact = {sha256:digest,appSha256:digest,executableSha256:digest};
   return {sourceSha,version:'0.1.2',dmgName:'Draw.dmg',dmgSha256:digest,rollbackArtifactSha256:digest,rollbackProfileSha256:digest,
+    transportReceipt:{schema:'create-something/draw-transport-acceptance@1',executableSha256:digest,startedAt:'2026-10-09T00:01:00Z',completedAt:'2026-10-09T00:01:01Z',result:{schema:'create-something/draw-transport-check@1',ok:true,sourceSha,sourceClean:true,syntheticOnly:true,profileLoaded:false,grantCreated:false,delayedFirstByte:true,fragmentedFrame:true,error:null}},
     providerReceipt:{schema:'create-something/draw-provider-readonly@1',sourceSha,executableSha256:digest,startedAt:'2026-10-09T00:30:00Z',completedAt:'2026-10-09T00:31:00Z',synthetic:true,providerStarted:true,authenticatedPreflightPassed:true,gatewayReadProofPresent:true,providerTerminated:true,nativeProcessExited:true,postRevocationDenied:true,syntheticContentUnchanged:true,providerExitCode:0,editsAllowed:false,persistentRegistration:false,scopeConfirmedByOwner:'read-only; 0 proposal layers'},
     installed:{buildInfo:{schema:'create-something/draw-build-info@1',sourceSha,sourceClean:true},schema:'create-something/draw-installed-acceptance@1',ok:true,sourceSha,completedAt:'2026-10-09T00:00:00Z',artifact,bundle:{version:'0.1.2',identifier:'agency.createsomething.draw'},state:{relaunchExact:true},evidence:{hdiutilVerify:true,readonlyMount:true,isolatedCopy:true,externalDylibCheck:true},gates:{installedLaunch:'performed',persistenceRelaunch:'performed',signing:{status:'performed',teamIdentifier:'PRP5VQQPPB',authority:'Developer ID Application: SYNTHETIC TEST'},notarization:{status:'performed'},gatekeeper:{status:'performed'}}},
     acceptance:{schema:'create-something/draw-mac-owner-acceptance@1',scope:'macos',sourceSha,artifact,nativeUI:{runs:['one','two'].map(id=>({id,status:'passed',physicalMac:true,completedAt:'2026-10-09T01:00:00Z',checks:Object.fromEntries(['canvasEdit','undoRedo','jsonSvgPngExport','importRecovery','persistenceRelaunch','composeSaveRestore','motionExport','agentProposalApproveRejectUndoRedo'].map(k=>[k,true]))}))},liveAgent:{status:'passed',scope:'read-only',ownerApproved:true,syntheticOnly:true,readbackVerified:true,revocationVerified:true,postRevocationDenied:true,receiptSha256:digest},rollback:{status:'passed',isolatedRestoreVerified:true,artifactSha256:digest,profileSha256:digest}}};
@@ -15,6 +16,19 @@ test('Mac scope can qualify without fabricating any iOS pass',()=>{
  const r=validateMacRelease(fixture()); assert.equal(r.scope,'macos');assert.equal(r.artifacts.ios,undefined);assert.match(r.iosAcceptance,/required-by-separate-ios/);
 });
 for (const [name, mutate] of [
+ ['missing transport evidence',f=>delete f.transportReceipt],
+ ['failed transport',f=>f.transportReceipt.result.ok=false],
+ ['delayed request failure',f=>f.transportReceipt.result.delayedFirstByte=false],
+ ['fragmented request failure',f=>f.transportReceipt.result.fragmentedFrame=false],
+ ['transport wrong binary',f=>f.transportReceipt.executableSha256='c'.repeat(64)],
+ ['transport wrong source',f=>f.transportReceipt.result.sourceSha='c'.repeat(40)],
+ ['transport dirty source',f=>f.transportReceipt.result.sourceClean=false],
+ ['transport profile loaded',f=>f.transportReceipt.result.profileLoaded=true],
+ ['transport grant created',f=>f.transportReceipt.result.grantCreated=true],
+ ['transport real data',f=>f.transportReceipt.result.syntheticOnly=false],
+ ['transport stale',f=>f.transportReceipt.startedAt='2025-01-01'],
+ ['transport reversed time',f=>f.transportReceipt.completedAt='2026-10-09T00:00:00Z'],
+ ['transport error',f=>f.transportReceipt.result.error='failure'],
  ['older executable source',f=>f.installed.buildInfo.sourceSha='c'.repeat(40)],
  ['dirty build source',f=>f.installed.buildInfo.sourceClean=false],
  ['legacy failed provider receipt',f=>f.providerReceipt={providerStarted:false,nativeProcessExited:true,blocker:'Token invalid/expired or synthetic scope mismatch; provider not started.'}],
