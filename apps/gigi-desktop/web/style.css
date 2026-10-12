@@ -100,7 +100,8 @@ h1 span{min-width:0}
 .chat-session[aria-current=true],.chat-session:hover{border-color:var(--line);background:var(--raised)}
 .chat-session span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.chat-session small{color:var(--muted)}
 .chat-sessions > .muted{font-size:12px;margin:12px 0 0}
-.chat-transcript{flex:1;min-height:180px;overflow-y:auto;padding:19px 20px;display:grid;align-content:start;gap:15px}
+.chat-intro{flex:0 1 auto;min-height:0;max-height:42%;overflow-y:auto;overflow-wrap:anywhere}
+.chat-transcript{flex:1;min-height:0;overflow-y:auto;padding:19px 20px;display:grid;align-content:start;gap:15px}
 .chat-empty,.chat-hint{color:var(--muted);font-size:13px;line-height:1.6;margin:0}
 .chat-hint{padding:16px 20px;border-top:1px solid var(--line)}
 .chat-message{min-width:0;font-size:13px;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere}
@@ -117,7 +118,7 @@ h1 span{min-width:0}
 .chat-approval details{margin-top:10px}.chat-approval details summary{cursor:pointer;color:var(--muted)}
 .chat-approval pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:160px;overflow:auto;font-size:10px;color:var(--muted)}
 .chat-record-link{justify-self:start;white-space:normal;text-align:left}
-.chat-composer{padding:16px 20px 18px;border-top:1px solid var(--line)}
+.chat-composer{flex:0 0 auto;padding:16px 20px 18px;border-top:1px solid var(--line)}
 .chat-composer label{display:block;font-size:11px;color:var(--muted);margin-bottom:8px}
 .chat-composer textarea{width:100%;resize:vertical;min-height:74px;max-height:180px;border:1px solid #50564e;border-radius:8px;background:#171917;color:var(--text);padding:10px 12px;font-size:13px;line-height:1.5}
 .chat-actions{display:flex;justify-content:flex-end;margin-top:10px}
@@ -134,3 +135,9 @@ h1 span{min-width:0}
 .agenda-event{display:grid;grid-template-columns:minmax(150px,220px) minmax(0,1fr) 20px;gap:18px;align-items:start;text-align:left}
 .agenda-time{font-size:13px;color:var(--muted);line-height:1.6}.agenda-event strong{overflow-wrap:anywhere}
 @media(max-width:700px){.agenda-event{grid-template-columns:minmax(0,1fr) 20px;gap:6px}.agenda-time{grid-column:1}.agenda-event>span:nth-child(2){grid-column:1}.agenda-event .arrow{grid-column:2;grid-row:1/3}}
+
+/* Optional support capture stays adjacent to source recovery and readable locally. */
+#source-diagnostics{scroll-margin-top:24px}
+.diagnostics-events{padding-left:22px;max-height:240px;overflow-y:auto;font-size:12px;line-height:1.6}
+.diagnostics-events li{margin-bottom:12px;overflow-wrap:anywhere}
+.diagnostics-events small{display:block;color:var(--muted)}

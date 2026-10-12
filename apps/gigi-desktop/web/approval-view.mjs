@@ -27,7 +27,7 @@ function valueCopy(name, value, currency, currencyKnown = true) {
 export function approvalCopy(item, currency = null, currencyKnown = true) {
   let args;
   try { args = JSON.parse(item.detail); } catch { /* Keep non-JSON provider detail as escaped explanatory text. */ }
-  const technical = `<details><summary>Technical details</summary><pre>${escape(item.detail)}</pre></details>`;
+  const technical = `<details data-view-key="approval-${escape(item.id)}"><summary>Technical details</summary><pre>${escape(item.detail)}</pre></details>`;
   if (!object(args)) return `<strong>${escape(item.title)}</strong><p>${escape(item.detail)}</p>`;
   const tool = String(item.title || '').replace(/^Approve\s+/, '');
   if (tool !== 'gigi_records_save') return `<strong>${escape(item.title)}</strong><p>${escape(item.detail)}</p>${technical}`;

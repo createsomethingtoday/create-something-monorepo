@@ -62,7 +62,15 @@ test('desktop source flow cancels without writing, reviews before saving and ret
     click({ sourcePropose: 'tasks' }); await settle();
     listeners.get('submit')({ preventDefault() {}, target: { id: 'source-proposal-form', values: { title: 'Reply to booking', date: '' } } }); await settle();
     assert.equal(calls.filter(call => call.operation === 'records.save').length, 0);
+    assert.match(root.innerHTML, /Back to edit/);
+    click({ sourceEdit: '1' }); await settle();
+    assert.match(root.innerHTML, /value="Reply to booking"/);
+    assert.doesNotMatch(root.innerHTML, /data-source-approve/);
+    listeners.get('submit')({ preventDefault() {}, target: { id: 'source-proposal-form', values: { title: 'Corrected booking', date: '2026-10-12' } } }); await settle();
     click({ sourceApprove: '1' }); await settle();
+    assert.match(root.innerHTML, /Retry exact save/);
+    assert.doesNotMatch(root.innerHTML, /data-source-edit/);
+    click({ sourceEdit: '1' }); await settle();
     assert.match(root.innerHTML, /Retry exact save/);
     assert.match(root.innerHTML, /GiGi has not confirmed this save/);
     assert.match(root.innerHTML, /Closing this review does not cancel or undo the submitted save/);
@@ -71,6 +79,8 @@ test('desktop source flow cancels without writing, reviews before saving and ret
     const saves = calls.filter(call => call.operation === 'records.save');
     assert.equal(saves.length, 2); assert.deepEqual(saves[0].input, saves[1].input);
     assert.equal(saves[0].input.sourceRecord.connectedAccountId, 'ca_1');
+    assert.equal(saves[0].input.title, 'Corrected booking');
+    assert.deepEqual(saves[0].input.fields, { 'Due Date': '2026-10-12' });
     assert.match(root.innerHTML, /Local record created and linked/);
     assert.equal(calls.some(call => call.operation.startsWith('connections.')), false);
   } finally { globalThis.document = prior.document; globalThis.__TAURI__ = prior.tauri; globalThis.FormData = prior.FormData; }

@@ -8,6 +8,7 @@ import { promisify } from 'node:util';
 import { fileURLToPath } from 'node:url';
 
 const execFileAsync=promisify(execFile);
+const firstPartyTeam='PRP5VQQPPB';
 const firstParty=['Contents/MacOS/gigi','Contents/Resources/gigi-mcp','Contents/Resources/gigi-integrations','Contents/Resources/gigi-codex'];
 const upstream='Contents/Resources/ctx';
 
@@ -89,7 +90,7 @@ export async function verifyRelease({appPath,dmgPath,sourceSha,run=realCommand})
   if(bundleId!=='agency.createsomething.gigi')fail('app_identifier');
   receipt.appExecutableSha256=await sha256(main);
   receipt.dmgSha256=await sha256(dmg);
-  const appIdentity=await signature(run,app,'app_identity',undefined,'agency.createsomething.gigi');
+  const appIdentity=await signature(run,app,'app_identity',firstPartyTeam,'agency.createsomething.gigi');
   receipt.teamIdentifier=appIdentity.team;
   receipt.appCodeDirectoryHash=appIdentity.cdhash;
   for(const entry of firstParty)await signature(run,join(app,entry),'companion_identity',appIdentity.team);

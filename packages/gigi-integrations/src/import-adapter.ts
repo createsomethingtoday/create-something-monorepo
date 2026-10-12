@@ -28,7 +28,7 @@ export function mapSourcePage(workspaceId: string, page: SourcePage): CanonicalI
     if (page.provider === 'gmail') {
       if (record.kind !== 'message') throw new Error('invalid_source_page');
       const collectionId = bounded(record.data.threadId, 128) || 'mailbox';
-      const subject = bounded(record.data.subject, 500);
+      const subject = boundedTitle(record.data.subject);
       const source = {
         kind: 'import' as const, provider: page.provider, connectedAccountId: page.connectedAccountId,
         collectionId, externalId: record.externalId, observedAt,
@@ -59,7 +59,7 @@ export function mapSourcePage(workspaceId: string, page: SourcePage): CanonicalI
     trimPreview(source);
     const fields: Record<string, string | boolean> = { Date: `${start.value}/${end.value}`, 'All Day': start.allDay, 'External Calendar ID': collectionId };
     return {
-      workspaceId, entity: 'schedule' as const, title: bounded(record.data.summary, 500) || 'Untitled event',
+      workspaceId, entity: 'schedule' as const, title: boundedTitle(record.data.summary) || 'Untitled event',
       fields, source,
     };
   });
@@ -79,6 +79,19 @@ function safeId(value: unknown): value is string {
 }
 function bounded(value: unknown, max: number): string {
   return typeof value === 'string' ? value.slice(0, max).trim() : '';
+}
+// records.save enforces 500 UTF-8 bytes, not JavaScript string length.
+function boundedTitle(value: unknown): string {
+  if (typeof value !== 'string') return '';
+  let title = '';
+  let bytes = 0;
+  for (const character of value.trim()) {
+    const size = Buffer.byteLength(character, 'utf8');
+    if (bytes + size > 500) break;
+    title += character;
+    bytes += size;
+  }
+  return title.trim();
 }
 function calendarLink(value: unknown): string | undefined {
   if (typeof value !== 'string' || value.length > 512 || /[\s\u0000-\u001f]/u.test(value)) return undefined;

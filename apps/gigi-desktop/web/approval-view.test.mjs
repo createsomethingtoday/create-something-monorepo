@@ -7,7 +7,7 @@ function view(args, currency = 'USD') {
     current: { state: 'approval', approvals: [{ id: 'a1', title: 'Approve gigi_records_save', detail: JSON.stringify(args) }] } });
 }
 const args = (extra = {}) => ({ entity: 'gigs', id: 'synthetic-gig', title: 'Existing gig', fields: {}, expectedRecord: { title: 'Existing gig', fields: { Status: 'Open', Fee: 9000, Date: '2026-10-03' }, source: { kind: 'manual' } }, ...extra });
-const comparison = (html) => html.split('<details>')[0];
+const comparison = (html) => html.split(/<details(?:\s|>)/)[0];
 
 test('approval shows only structural changes including title, with exact before/after money and date semantics', () => {
   const html = view(args({ title: '  Renamed gig  ', fields: { Status: 'Open', Fee: 12550, Date: '2026-10-04' } }));
