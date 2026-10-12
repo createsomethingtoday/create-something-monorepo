@@ -1,6 +1,7 @@
 <script lang="ts">
   import StatusNotice from './StatusNotice.svelte';
   import { onMount } from 'svelte';
+  import { createPlaybackSession, type PlaybackState } from '$lib/playback-session';
   import { trackImpact } from '$lib/impact';
   import { timestamp, playbackResumePosition } from '$lib/learning';
   import { api, supportHeaders } from '$lib/client';
@@ -10,6 +11,7 @@
     networkSlug,
     initialPosition = 0,
     saveProgress = false,
+    pathId,
     duration = 0
   }: {
     id: string;
@@ -17,124 +19,47 @@
     networkSlug?: string;
     initialPosition?: number;
     saveProgress?: boolean;
+    pathId?: string;
     duration?: number;
   } = $props();
   let element: HTMLVideoElement;
-  let message = $state('Preparing playback…');
-  let failed = $state(false);
-  let progressError = $state(false);
+  const playback = $state<PlaybackState>({
+    message: 'Preparing playback…',
+    failed: false,
+    progressError: false,
+    captionLabels: null
+  });
+  let retry = $state<() => void>(() => {});
   onMount(() => {
-    let hls: import('hls.js').default | undefined;
-    let stopped = false;
-    let renewing = false;
-    let started = false;
-    let lastPosition = initialPosition;
-    let pending: number | undefined;
-    let writing = false;
-    const resume = playbackResumePosition(initialPosition, duration);
-    async function flush() {
-      if (!saveProgress || !started || renewing || !duration || failed) return;
-      const position = Math.min(duration, Math.max(0, element.currentTime));
-      if (!Number.isFinite(position) || Math.abs(position - lastPosition) < 1) return;
-      pending = position;
-      if (writing) return;
-      writing = true;
-      while (pending !== undefined) {
-        const value = pending;
-        pending = undefined;
-        try {
-          const prefix = networkSlug ? `/api/networks/${encodeURIComponent(networkSlug)}` : '/api';
-          const response = await fetch(`${prefix}/learning/progress`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', ...supportHeaders() },
-            body: JSON.stringify({ id, action: 'position', position: value }),
-            keepalive: true
-          });
-          if (!response.ok) throw new Error('Save failed');
-          lastPosition = value;
-          progressError = false;
-        } catch {
-          progressError = true;
-          pending = undefined;
-          break;
-        }
-      }
-      writing = false;
-    }
-    function played() {
-      if (!started) {
-        started = true;
+    const session = createPlaybackSession(element, playback, {
+      initialPosition,
+      duration,
+      saveProgress,
+      pathId,
+      fetchGrant: () => api('playback', { id }, networkSlug),
+      savePosition: async (position, context) => {
+        const prefix = networkSlug ? `/api/networks/${encodeURIComponent(networkSlug)}` : '/api';
+        const response = await fetch(`${prefix}/learning/progress`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...supportHeaders() },
+          body: JSON.stringify({
+            id,
+            action: 'position',
+            position,
+            ...(context ? { path_id: context } : {})
+          }),
+          keepalive: true
+        });
+        if (!response.ok) throw new Error('Save failed');
+      },
+      onFirstPlay: (resumed) => {
         trackImpact('lesson_start', location.pathname);
-        if (resume) trackImpact('lesson_resume', location.pathname);
-      }
-    }
-    function metadata() {
-      renewing = false;
-    }
-    element.addEventListener('play', played);
-    element.addEventListener('loadedmetadata', metadata);
-    element.addEventListener('pause', flush);
-    element.addEventListener('ended', flush);
-    window.addEventListener('pagehide', flush);
-    const progressTimer = setInterval(flush, 15000);
-    let timer: ReturnType<typeof setTimeout>;
-    async function load(renew = false) {
-      try {
-        const grant = await api('playback', { id }, networkSlug);
-        if (stopped) return;
-        const position = renew ? element.currentTime : resume;
-        renewing = true;
-        const playing = renew && !element.paused;
-        if (element.canPlayType('application/vnd.apple.mpegurl')) {
-          element.addEventListener(
-            'loadedmetadata',
-            () => {
-              element.currentTime = position;
-            },
-            { once: true }
-          );
-          element.src = grant.hlsUrl;
-        } else {
-          const { default: Hls } = await import('hls.js');
-          if (stopped) return;
-          if (!Hls.isSupported())
-            throw new Error('This browser cannot play this video. Try a current browser.');
-          hls?.destroy();
-          hls = new Hls({ startPosition: position });
-          hls.loadSource(grant.hlsUrl);
-          hls.attachMedia(element);
-          hls.on(Hls.Events.ERROR, (_, data) => {
-            if (data.fatal) {
-              failed = true;
-              message = 'Playback was interrupted. Reload this page to try again.';
-            }
-          });
-        }
-        failed = false;
-        message = '';
-        if (playing) await element.play().catch(() => {});
-        timer = setTimeout(() => load(true), 45000);
-      } catch (e) {
-        failed = true;
-        message = (e as Error).message;
-        element.pause();
-        element.removeAttribute('src');
-        hls?.destroy();
-      }
-    }
-    load();
-    return () => {
-      void flush();
-      clearInterval(progressTimer);
-      element.removeEventListener('play', played);
-      element.removeEventListener('loadedmetadata', metadata);
-      element.removeEventListener('pause', flush);
-      element.removeEventListener('ended', flush);
-      window.removeEventListener('pagehide', flush);
-      stopped = true;
-      clearTimeout(timer);
-      hls?.destroy();
-    };
+        if (resumed) trackImpact('lesson_resume', location.pathname);
+      },
+      pageEvents: window
+    });
+    retry = session.retry;
+    return session.dispose;
   });
 </script>
 
@@ -142,16 +67,35 @@
   {#if saveProgress && playbackResumePosition(initialPosition, duration)}<p class="resume-note">
       Resume from {timestamp(initialPosition)}. Your position is saved as you watch.
     </p>{/if}
+  <!-- Captions arrive as signed HLS text tracks; an empty HTML track would falsely imply a caption source. -->
+  <!-- svelte-ignore a11y_media_has_caption -->
   <video bind:this={element} controls playsinline aria-label={title}
-    ><track kind="captions" /></video
-  >{#if message}<StatusNotice tone={failed ? 'error' : 'info'} busy={!failed} {message} />{/if}
-  {#if progressError}<StatusNotice
+  ></video>{#if playback.message}<StatusNotice
+      tone={playback.failed ? 'error' : 'info'}
+      busy={!playback.failed}
+      message={playback.message}
+    />{/if}
+  {#if playback.failed}<button class="button secondary" onclick={retry}>Retry playback</button>{/if}
+  <p class="caption-status" role="status">
+    {#if playback.captionLabels === null}Caption availability will be checked when the video loads.
+    {:else if playback.captionLabels.length}Caption tracks available: {playback.captionLabels.join(
+        ', '
+      )}. Use the video’s caption control.
+    {:else}No caption tracks detected in this playback. A transcript, when provided, is available
+      below.{/if}
+  </p>
+  {#if playback.progressError}<StatusNotice
       tone="warning"
       message="Your latest position could not be saved. Playback can continue; saving will retry."
     />{/if}
 </div>
 
 <style>
+  .caption-status {
+    color: var(--muted);
+    font-size: 14px;
+    margin-block: 12px;
+  }
   .resume-note {
     font-size: 14px;
     color: var(--muted);

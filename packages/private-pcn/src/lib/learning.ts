@@ -1,5 +1,6 @@
 import type { CatalogVideo } from './client';
 export interface LessonProgress {
+  path_id?: string | null;
   position: number;
   watched_at: string | null;
   practice_started_at: string | null;
