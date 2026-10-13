@@ -1,5 +1,6 @@
 <script lang="ts">
-  import Media from './Media.svelte';
+  import MaterialStudy from './MaterialStudy.svelte';
+  import { reveal } from './motion';
   import SEO from '$lib/components/SEO.svelte';
   let {
     title,
@@ -24,9 +25,11 @@
   canonical={`https://www.maverickx.com${path}`}
   ogImage="https://www.maverickx.com/images/logo.png"
 />
-<section class="design-section hero-banner editorial-hero">
-  {#if imagery}<Media kind="about" opacity={0.45} />{/if}
-  <div class="editorial-copy">
+<section class="design-section hero-banner editorial-hero light-content">
+  {#if imagery}<div class="editorial-material">
+      <MaterialStudy id={path.replaceAll('/', '')} />
+    </div>{/if}
+  <div class="editorial-copy" use:reveal>
     <p class="eyebrow">{eyebrow}</p>
     <h1>{title}</h1>
     <p class="intro">{intro}</p>
@@ -41,7 +44,7 @@
     position: relative;
     overflow: hidden;
     padding: 200px 48px 100px;
-    background: #18222b;
+    background: #f0f4ed;
   }
   .editorial-copy {
     position: relative;
@@ -59,7 +62,7 @@
       600 clamp(48px, 6vw, 88px)/1 'Barlow Condensed',
       sans-serif;
     text-transform: uppercase;
-    max-width: 900px;
+    max-width: 760px;
     margin: 0;
   }
   .intro {
@@ -74,5 +77,30 @@
   .editorial-inner {
     max-width: 1200px;
     margin: auto;
+  }
+  .editorial-material {
+    position: absolute;
+    width: 48%;
+    right: -4%;
+    top: 40px;
+    opacity: 0.55;
+  }
+  .editorial-copy {
+    z-index: 1;
+  }
+  .editorial-copy h1,
+  .editorial-copy .intro {
+    max-width: 65%;
+  }
+  @media (max-width: 700px) {
+    .editorial-material {
+      width: 80%;
+      right: -35%;
+      opacity: 0.2;
+    }
+    .editorial-copy h1,
+    .editorial-copy .intro {
+      max-width: 100%;
+    }
   }
 </style>

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { reveal } from '$lib/redesign/motion';
   import Media from '$lib/redesign/Media.svelte';
   import SEO from '$lib/components/SEO.svelte';
   import MineralsCarousel from '$lib/redesign/MineralsCarousel.svelte';
@@ -17,7 +18,7 @@
 
 <div>
   <section
-    class="design-section design-hero"
+    class="design-section design-hero light-content industry-hero"
     style="position:relative;display:flex;align-items:flex-end;overflow:hidden"
     data-screen-label="Mining hero"
   >
@@ -48,6 +49,7 @@
 
   <section
     class="design-section light-content"
+    use:reveal
     style="padding:120px 48px;border-bottom:1px solid rgba(var(--section-ink, 255,255,255),.12)"
     data-screen-label="LithX"
   >

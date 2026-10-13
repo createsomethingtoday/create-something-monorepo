@@ -12,6 +12,8 @@
   import DesignFooter from '$lib/redesign/Footer.svelte';
   import '$lib/redesign/fonts.css';
   import '$lib/redesign/design.css';
+  import MotionControl from '$lib/redesign/MotionControl.svelte';
+  import { motionEnabled } from '$lib/redesign/motion';
   import ContactModal from '$lib/components/ContactModal.svelte';
   import type { LayoutData } from './$types';
 
@@ -71,7 +73,7 @@
   />
 </svelte:head>
 
-<div class:redesign={isRedesign}>
+<div class:redesign={isRedesign} data-motion={$motionEnabled ? 'on' : 'off'}>
   <a href="#main-content" class="skip-link">Skip to main content</a>
 
   {#if !isAdmin}
@@ -84,6 +86,7 @@
 
   {#if !isAdmin}
     <DesignFooter onContactClick={openContactModal} />
+    <MotionControl />
 
     <!-- Contact Modal -->
     <ContactModal

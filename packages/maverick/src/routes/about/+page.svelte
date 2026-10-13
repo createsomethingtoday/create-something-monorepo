@@ -1,5 +1,6 @@
 <script lang="ts">
-  import Media from '$lib/redesign/Media.svelte';
+  import { reveal } from '$lib/redesign/motion';
+  import MaterialStudy from '$lib/redesign/MaterialStudy.svelte';
   import SEO from '$lib/components/SEO.svelte';
   import Backers from '$lib/redesign/Backers.svelte';
   import { team } from '$lib/redesign/content';
@@ -15,14 +16,12 @@
 <div>
   <section
     id="mission"
-    class="design-section hero-banner"
+    class="design-section hero-banner light-content company-hero"
     style="position:relative;padding:220px 48px 120px;overflow:hidden"
     data-screen-label="About"
   >
-    <Media kind="about" opacity={1} />
-    <div
-      style="position:absolute;inset:0;background:linear-gradient(rgba(0,0,0,.05),rgba(0,0,0,.55))"
-    ></div>
+    <div class="company-material"><MaterialStudy id="about-material" /></div>
+
     <div style="position:relative;max-width:1100px;margin:0 auto;">
       <div
         style="font-size:13px;letter-spacing:4px;text-transform:uppercase;color:rgba(var(--section-ink, 255,255,255),.7);margin-bottom:20px"
@@ -47,6 +46,7 @@
   <section
     id="leadership"
     class="design-section light-content"
+    use:reveal
     style="padding:100px 48px;border-bottom:1px solid rgba(var(--section-ink, 255,255,255),.12)"
   >
     <div style="max-width:1100px;margin:0 auto">
@@ -88,6 +88,7 @@
 
   <section
     class="design-section light-content"
+    use:reveal
     style="padding:100px 48px;border-bottom:1px solid rgba(var(--section-ink, 255,255,255),.12)"
   >
     <div

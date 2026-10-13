@@ -56,6 +56,7 @@ try {
     if (width <= 1100) await header.getByRole('button', { name: 'Menu', exact: true }).click();
     await header.getByRole('button', { name: 'Contact Us', exact: true }).click();
     const dialog = page.getByRole('dialog');
+    await dialog.waitFor({ state: 'visible' });
     assert.equal(await dialog.locator('a[href^="mailto:"]').count(), 1);
     await dialog.getByRole('button', { name: 'Submit', exact: true }).click();
     assert.equal(submissions, 0, 'empty form never sent');

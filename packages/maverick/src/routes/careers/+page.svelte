@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { reveal } from '$lib/redesign/motion';
   import EditorialPage from '$lib/redesign/EditorialPage.svelte';
 </script>
 
@@ -13,7 +14,7 @@
     <a href="#how-we-work">01 · How we work</a><a href="#open-roles">02 · Open roles</a>
   </nav>
   <div class="editorial-grid">
-    <section id="how-we-work" class="indexed-section">
+    <section id="how-we-work" class="indexed-section" use:reveal>
       <span class="chapter-index">01</span>
       <h2>How we work</h2>
       <p>Built in Austin, Texas.</p>
@@ -22,7 +23,7 @@
         <p>The team’s culture and core-values copy will be added after review.</p>
       </aside>
     </section>
-    <section id="open-roles" class="indexed-section">
+    <section id="open-roles" class="indexed-section" use:reveal>
       <span class="chapter-index">02</span>
       <h2>Open roles</h2>
       <p>Explore current opportunities through our careers page and LinkedIn.</p>

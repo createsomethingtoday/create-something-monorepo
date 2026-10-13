@@ -80,6 +80,8 @@ try {
   const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
   const page = await context.newPage();
   await page.goto(origin + '/', { waitUntil: 'networkidle' });
+  await page.locator('#chemistry').scrollIntoViewIfNeeded();
+  await page.locator('video').waitFor();
   assert.equal(
     await page.locator('video[src="/redesign/reference-home.mp4"]').count(),
     1,

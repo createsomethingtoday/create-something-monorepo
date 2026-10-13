@@ -1,5 +1,6 @@
 <script lang="ts">
-  import Media from '$lib/redesign/Media.svelte';
+  import { reveal } from '$lib/redesign/motion';
+  import MaterialStudy from '$lib/redesign/MaterialStudy.svelte';
   import SEO from '$lib/components/SEO.svelte';
   import { news as approvedNews } from '$lib/redesign/content';
   // The October launch review supersedes stale CMS articles until each link is cleared.
@@ -15,14 +16,12 @@
 
 <div>
   <section
-    class="design-section hero-banner"
+    class="design-section hero-banner light-content company-hero"
     style="position:relative;padding:220px 48px 100px;border-bottom:1px solid rgba(var(--section-ink, 255,255,255),.12);overflow:hidden"
     data-screen-label="News"
   >
-    <Media kind="oil" opacity={1} />
-    <div
-      style="position:absolute;inset:0;background:linear-gradient(rgba(0,0,0,.08) 40%,rgba(0,0,0,.65))"
-    ></div>
+    <div class="company-material"><MaterialStudy id="news-material" /></div>
+
     <div style="position:relative;max-width:1100px;margin:0 auto;">
       <div
         style="font-size:13px;letter-spacing:4px;text-transform:uppercase;color:rgba(var(--section-ink, 255,255,255),.7);margin-bottom:20px"
@@ -45,6 +44,7 @@
   </section>
   <section
     class="design-section light-content"
+    use:reveal
     style="padding:80px 48px 40px;border-bottom:1px solid rgba(var(--section-ink, 255,255,255),.12)"
   >
     <div style="max-width:1100px;margin:0 auto">
@@ -91,6 +91,7 @@
   </section>
   <section
     class="design-section light-content"
+    use:reveal
     style="padding:64px 48px;border-bottom:1px solid rgba(var(--section-ink, 255,255,255),.12)"
   >
     <div

@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { reveal } from '$lib/redesign/motion';
+  import IndustrySequence from '$lib/redesign/IndustrySequence.svelte';
   import EditorialPage from '$lib/redesign/EditorialPage.svelte';
 </script>
 
@@ -8,12 +10,12 @@
   path="/technology"
   intro="Bio-based chemistry engineered for specific industrial applications."
 >
-  <div class="chapter-row">
+  <div class="chapter-row" use:reveal>
     <span class="chapter-index">01</span>
     <h2>Engineered<br />for the job</h2>
     <p>Bio-based chemistry engineered for specific industrial applications.</p>
   </div>
-  <div class="chapter-row">
+  <div class="chapter-row" use:reveal>
     <span class="chapter-index">02</span>
     <h2>One platform.<br />Two markets.</h2>
     <div>
@@ -25,7 +27,8 @@
       <a class="text-link" href="/mining">Explore Mining &amp; Metals →</a>
     </div>
   </div>
-  <div class="chapter-row">
+  <IndustrySequence />
+  <div class="chapter-row" use:reveal>
     <span class="chapter-index">03</span>
     <h2>Made by us</h2>
     <p>We manufacture our own chemistry.</p>

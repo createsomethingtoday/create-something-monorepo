@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { materialMotion, imageEntry } from './motion';
   let index = $state(0);
   const minerals = [
     { name: 'Gold', image: 'gold' },
@@ -40,14 +41,18 @@
         ><button type="button" onclick={() => move(1)} aria-label="Next mineral">→</button>
       </div>
     </div>
-    <figure>
-      <img
-        src={`/images/metals/${minerals[index].image}.png`}
-        alt={minerals[index].name}
-        width="600"
-        height="600"
-        loading="lazy"
-      />
+    <figure use:materialMotion data-mineral-stage>
+      <div class="specimen-lines" aria-hidden="true"></div>
+      {#key index}
+        <img
+          use:imageEntry
+          src={`/images/metals/${minerals[index].image}.png`}
+          alt={minerals[index].name}
+          width="600"
+          height="600"
+          loading="lazy"
+        />
+      {/key}
       <figcaption>{minerals[index].name}</figcaption>
     </figure>
   </div>
@@ -88,8 +93,11 @@
     color: #52616b;
   }
   figure {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
     margin: 0;
-    background: #f4f5f5;
+    background: #edf2ed;
     padding: 24px;
     text-align: center;
   }
@@ -98,6 +106,9 @@
     width: 100%;
     height: 360px;
     object-fit: contain;
+    position: relative;
+    transform: rotateY(var(--tilt-y, 0deg)) rotateX(var(--tilt-x, 0deg));
+    transition: transform 700ms ease;
   }
   figcaption {
     font-size: 13px;
@@ -148,6 +159,30 @@
     }
     img {
       height: 240px;
+    }
+  }
+  .specimen-lines {
+    position: absolute;
+    inset: 12%;
+    border: 1px solid #718e8133;
+    border-radius: 50%;
+    transform: rotate(-20deg);
+  }
+  .specimen-lines::before,
+  .specimen-lines::after {
+    content: '';
+    position: absolute;
+    inset: 12%;
+    border: 1px solid #718e8133;
+    border-radius: 50%;
+  }
+  .specimen-lines::after {
+    inset: -10%;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    img {
+      transition: none;
+      transform: none;
     }
   }
 </style>

@@ -1,37 +1,63 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  let { kind, opacity = 1 }: { kind: 'home' | 'oil' | 'mining' | 'oilHero' | 'miningHero' | 'about'; opacity?: number } = $props();
-  // Exact supplied reference clips, retained without transcoding for preview review.
-  let animate = $state(false);
+  import { motionEnabled } from './motion';
+  let {
+    kind,
+    opacity = 1
+  }: { kind: 'home' | 'oil' | 'mining' | 'oilHero' | 'miningHero' | 'about'; opacity?: number } =
+    $props();
+  let shell: HTMLDivElement;
+  let video: HTMLVideoElement | undefined = $state();
+  let visible = $state(false);
+  let pageVisible = $state(true);
+  let loaded = $state(false);
   onMount(() => {
-    const preference = matchMedia('(prefers-reduced-motion: reduce)');
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        visible = entry.isIntersecting;
+      },
+      { rootMargin: '80px' }
+    );
+    observer.observe(shell);
     const update = () => {
-      animate = !preference.matches;
+      pageVisible = !document.hidden;
     };
+    document.addEventListener('visibilitychange', update);
     update();
-    preference.addEventListener('change', update);
-    return () => preference.removeEventListener('change', update);
+    return () => {
+      observer.disconnect();
+      document.removeEventListener('visibilitychange', update);
+    };
+  });
+  $effect(() => {
+    if ($motionEnabled && visible) loaded = true;
+  });
+  $effect(() => {
+    const play = $motionEnabled && visible && pageVisible;
+    if (video) {
+      if (play) void video.play().catch(() => {});
+      else video.pause();
+    }
   });
 </script>
 
-{#if animate}
-  <video
-    style:opacity
-    aria-hidden="true"
-    tabindex="-1"
-    autoplay
-    muted
-    loop
-    playsinline
-    preload="metadata"
-    poster={`/redesign/reference-${kind}.jpg`}
-    src={`/redesign/reference-${kind}.mp4`}
-  ></video>
-{:else}
-  <img style:opacity src={`/redesign/reference-${kind}.jpg`} alt="" />
-{/if}
+<div class="media-shell" bind:this={shell} style:opacity>
+  <img src={`/redesign/reference-${kind}.jpg`} alt="" />
+  {#if loaded}<video
+      bind:this={video}
+      aria-hidden="true"
+      tabindex="-1"
+      muted
+      loop
+      playsinline
+      preload="metadata"
+      poster={`/redesign/reference-${kind}.jpg`}
+      src={`/redesign/reference-${kind}.mp4`}
+    ></video>{/if}
+</div>
 
 <style>
+  .media-shell,
   video,
   img {
     position: absolute;
