@@ -17,6 +17,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 const tables = {
   assets: 'tblRwzpWoLgE9MrUm',
   categories: 'tblSygBX7adZ4VNjK',
+  creators: 'tbljt0plqxdMARZXb',
   snapshot: 'tblSnapshotTest01'
 };
 const fixture = () => ({
@@ -217,13 +218,32 @@ test('library records cannot supply template attribution even with overlapping I
  assert.equal(result.snapshot.leaderboard[0].creatorEmail,'fixture@example.test');
 });
 
-test('multiple distinct taxonomy parents fail before publication', () => {
+test('a subcategory with two parent groups uses the first and is noted in the receipt', () => {
  const data = fixture();
  data.records[tables.categories][0].fields.fldDSMRYPV8KBIeX7 = ['Business', 'Creative'];
  const result = run(data);
- assert.equal(result.status,1);
- assert.match(result.stderr,/Ambiguous taxonomy parent/);
- assert.equal(result.writes.length,0);
+ assert.equal(result.status, 0, result.stderr);
+ assert.equal(result.snapshot.leaderboard[0].category, 'Business');
+ assert.match(result.stdout, /"kind":"dual-parent"/);
+});
+test('a published subcategory with no parent group falls back to its siblings group, else Other', () => {
+ const data = fixture();
+ data.records[tables.assets][0].fields.fldBv3YTf6Bd5HDXN = ['Agency', 'Orphan'];
+ data.records[tables.categories].push({ id: 'recOrphan', fields: { fldWQDQuXlqwWxORG: 'Orphan', fldDSMRYPV8KBIeX7: [] } });
+ const result = run(data);
+ assert.equal(result.status, 0, result.stderr);
+ assert.ok(result.snapshot.categories.some((c) => c.subcategory === 'Orphan' && c.category === 'Business'));
+ assert.match(result.stdout, /"kind":"unmapped"/);
+});
+test('a missing creator email rollup falls back to the creator record and is noted', () => {
+ const data = fixture();
+ data.records[tables.assets][0].fields.fldHhxmfSNMp117SP = [];
+ data.records[tables.assets][0].fields.fldGDWo2VfnTbSUiL = ['recCreator'];
+ data.records[tables.creators] = [{ id: 'recCreator', fields: { fld5AtQoz6Af7jdos: 'owner@example.test' } }];
+ const result = run(data);
+ assert.equal(result.status, 0, result.stderr);
+ assert.equal(result.snapshot.leaderboard[0].creatorEmail, 'owner@example.test');
+ assert.match(result.stdout, /creatorEmailNotes":\[\{/);
 });
 test('repeated identical taxonomy parents remain unambiguous', () => {
  const data = fixture();
