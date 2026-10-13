@@ -1320,7 +1320,9 @@ export function registerTools(
     async ({ version_id, support_email, support_url, record_mrp_id }) => {
       try {
         const reviewer = requireResolvedReviewer(getReviewer);
-        const context = await getClient().getReviewContext(version_id, currentReviewerAsCollaborator(getReviewer));
+        const actingReviewer = currentReviewerAsCollaborator(getReviewer);
+        await getClient().requireAssignedVersion(version_id, actingReviewer);
+        const context = await getClient().getReviewContext(version_id, actingReviewer);
         const fillBundle = prepareAdminTemplateFill(context, { includeScript: false, includeBookmarklet: false });
         if (fillBundle.missing_fields.length > 0) {
           throw new AirtableClientError(
@@ -1411,22 +1413,33 @@ export function registerTools(
 
   server.tool(
     'template_review_complete_admin_template',
-    'Server-side Webflow write: finish a created template\'s Admin fields without opening Admin. Sends the Airtable-derived thumbnail (fresh link), Category, Primary Tag, Type, Cost, Description and Detail Page Path through the key-authenticated PUT /admin/api/mrp/airtable route, then reads the record back and reports each field as stored, mismatch or unverifiable. Uses the Template ID in 👀ℹ️MRP ID (Override) unless mrp_id is passed. Requires the marketplace admin key and an explicit reviewer request.',
+    'Server-side Webflow write: finish a created template\'s Admin fields without opening Admin. Sends the Airtable-derived thumbnail (fresh link), Category, Primary Tag, Type, Cost, Description and Detail Page Path through the key-authenticated PUT /admin/api/mrp/airtable route, then reads the record back and reports each field as stored, mismatch or unverifiable. Writes only to the Template ID recorded on the asset in 👀ℹ️MRP ID (Override), for a version assigned to the calling reviewer. Requires the marketplace admin key and an explicit reviewer request.',
     {
       version_id: z.string().min(1),
-      mrp_id: MONGO_TEMPLATE_ID.optional().describe('Template ID; defaults to the one recorded on the asset.'),
+      mrp_id: MONGO_TEMPLATE_ID.optional().describe('Optional check: must equal the Template ID recorded on the asset.'),
     },
     async ({ version_id, mrp_id }) => {
       try {
         const reviewer = requireResolvedReviewer(getReviewer);
-        const context = await getClient().getReviewContext(version_id, currentReviewerAsCollaborator(getReviewer));
+        const actingReviewer = currentReviewerAsCollaborator(getReviewer);
+        await getClient().requireAssignedVersion(version_id, actingReviewer);
+        const context = await getClient().getReviewContext(version_id, actingReviewer);
         const recorded = context.asset?.mrpIdOverride ?? context.asset?.mrpId;
-        const templateId = mrp_id ?? (recorded && /^[0-9a-f]{24}$/i.test(recorded) ? recorded : undefined);
+        const templateId = recorded && /^[0-9a-f]{24}$/i.test(recorded) ? recorded : undefined;
         if (!templateId) {
           throw new AirtableClientError(
             'TEMPLATE_ID_MISSING',
-            'No Template ID is recorded on the asset. Run template_review_create_admin_template first, or pass mrp_id.',
+            'No Template ID is recorded on the asset. Run template_review_create_admin_template first, or record the ID with template_review_update_asset_publishing.',
             422,
+          );
+        }
+        // Writes are bound to this asset's own Admin record; a different id is never written.
+        if (mrp_id && mrp_id.toLowerCase() !== templateId.toLowerCase()) {
+          throw new AirtableClientError(
+            'TEMPLATE_ID_MISMATCH',
+            'mrp_id does not match the Template ID recorded on this asset. Nothing was written.',
+            409,
+            { mrp_id, recorded_template_id: templateId },
           );
         }
 

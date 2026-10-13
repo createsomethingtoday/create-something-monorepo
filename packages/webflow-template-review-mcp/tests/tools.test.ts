@@ -1857,6 +1857,7 @@ test('create_admin_template POSTs the template payload, records the MRP ID, and 
   }) as typeof fetch;
   const publishingWrites: Array<{ assetId: string; input: unknown }> = [];
   const client = {
+    requireAssignedVersion: async () => ({}),
     getReviewContext: async () => adminCreateContext(),
     updateAssetPublishing: async (assetId: string, input: unknown) => {
       publishingWrites.push({ assetId, input });
@@ -1906,7 +1907,8 @@ test('create_admin_template POSTs the template payload, records the MRP ID, and 
 
 test('create_admin_template fails closed without the marketplace admin key and stays write-gated', async () => {
   const { server, handlers, names } = createServerHarness();
-  registerTools(server, () => ({ getReviewContext: async () => adminCreateContext() }) as unknown as AirtableClient, () => reviewer, {});
+  registerTools(server, () => ({ requireAssignedVersion: async () => ({}),
+    getReviewContext: async () => adminCreateContext() }) as unknown as AirtableClient, () => reviewer, {});
 
   const result = await handlers.get('template_review_create_admin_template')?.({ version_id: 'rec_version_komanica' });
   assert.ok(result);
@@ -1929,6 +1931,7 @@ test('create_admin_template refuses to duplicate an asset that already has a Tem
     return new Response('{}', { status: 200 });
   }) as typeof fetch;
   const client = {
+    requireAssignedVersion: async () => ({}),
     getReviewContext: async () => adminCreateContext({ mrpIdOverride: 'abcdef012345abcdef012345' }),
   } as unknown as AirtableClient;
   registerTools(server, () => client, () => reviewer, { marketplaceAdmin: { apiKey: 'k'.repeat(128), fetchFn: fetchStub } });
@@ -1949,6 +1952,7 @@ test('create_admin_template refuses without a support contact', async () => {
     return new Response('{}', { status: 200 });
   }) as typeof fetch;
   const client = {
+    requireAssignedVersion: async () => ({}),
     getReviewContext: async () => adminCreateContext({ creatorEmail: undefined }),
   } as unknown as AirtableClient;
   registerTools(server, () => client, () => reviewer, { marketplaceAdmin: { apiKey: 'k'.repeat(128), fetchFn: fetchStub } });
@@ -1982,6 +1986,7 @@ test('complete_admin_template PUTs the Admin fields to the recorded Template ID 
   };
   const { calls, fetchFn } = mrpRouteStub(stored);
   const client = {
+    requireAssignedVersion: async () => ({}),
     getReviewContext: async () => adminCreateContext({ mrpIdOverride: '6ac54eddbb8a7def85e05871' }),
   } as unknown as AirtableClient;
   registerTools(server, () => client, () => reviewer, { marketplaceAdmin: { apiKey: 'k'.repeat(128), fetchFn } });
@@ -2023,6 +2028,7 @@ test('complete_admin_template reports a mismatch and flags an Airtable thumbnail
     thumbnailImage: { url: 'https://v5.airtableusercontent.com/old.png' },
   });
   const client = {
+    requireAssignedVersion: async () => ({}),
     getReviewContext: async () => adminCreateContext({ mrpIdOverride: '6ac54eddbb8a7def85e05871' }),
   } as unknown as AirtableClient;
   registerTools(server, () => client, () => reviewer, { marketplaceAdmin: { apiKey: 'k'.repeat(128), fetchFn } });
@@ -2039,12 +2045,48 @@ test('complete_admin_template reports a mismatch and flags an Airtable thumbnail
 test('complete_admin_template refuses when no Template ID is recorded', async () => {
   const { server, handlers } = createServerHarness();
   const { calls, fetchFn } = mrpRouteStub({});
-  const client = { getReviewContext: async () => adminCreateContext() } as unknown as AirtableClient;
+  const client = { requireAssignedVersion: async () => ({}),
+    getReviewContext: async () => adminCreateContext() } as unknown as AirtableClient;
   registerTools(server, () => client, () => reviewer, { marketplaceAdmin: { apiKey: 'k'.repeat(128), fetchFn } });
 
   const payload = parsePayload((await handlers.get('template_review_complete_admin_template')?.({ version_id: 'rec_version_komanica' }))!);
   assert.equal(payload.ok, false);
   assert.equal((payload.error as { code?: string })?.code, 'TEMPLATE_ID_MISSING');
+  assert.equal(calls.length, 0);
+});
+
+test('create and complete admin template refuse a version not assigned to the caller, before any Webflow call', async () => {
+  const { calls, fetchFn } = mrpRouteStub({});
+  for (const tool of ['template_review_create_admin_template', 'template_review_complete_admin_template']) {
+    const { server, handlers } = createServerHarness();
+    const client = {
+      requireAssignedVersion: async () => {
+        throw new AirtableClientError('VERSION_NOT_ASSIGNED', 'Version is assigned to another reviewer.', 403);
+      },
+      getReviewContext: async () => adminCreateContext({ mrpIdOverride: '6ac54eddbb8a7def85e05871' }),
+    } as unknown as AirtableClient;
+    registerTools(server, () => client, () => reviewer, { marketplaceAdmin: { apiKey: 'k'.repeat(128), fetchFn } });
+    const payload = parsePayload((await handlers.get(tool)?.({ version_id: 'rec_version_komanica' }))!);
+    assert.equal(payload.ok, false, tool);
+    assert.equal((payload.error as { code?: string })?.code, 'VERSION_NOT_ASSIGNED', tool);
+  }
+  assert.equal(calls.length, 0);
+});
+
+test('complete_admin_template never writes to an mrp_id other than the one recorded on the asset', async () => {
+  const { server, handlers } = createServerHarness();
+  const { calls, fetchFn } = mrpRouteStub({});
+  const client = {
+    requireAssignedVersion: async () => ({}),
+    getReviewContext: async () => adminCreateContext({ mrpIdOverride: '6ac54eddbb8a7def85e05871' }),
+  } as unknown as AirtableClient;
+  registerTools(server, () => client, () => reviewer, { marketplaceAdmin: { apiKey: 'k'.repeat(128), fetchFn } });
+
+  const payload = parsePayload(
+    (await handlers.get('template_review_complete_admin_template')?.({ version_id: 'rec_version_komanica', mrp_id: '0123456789abcdef01234567' }))!,
+  );
+  assert.equal(payload.ok, false);
+  assert.equal((payload.error as { code?: string })?.code, 'TEMPLATE_ID_MISMATCH');
   assert.equal(calls.length, 0);
 });
 
