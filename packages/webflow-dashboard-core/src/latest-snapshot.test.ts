@@ -33,3 +33,49 @@ test('treats the same instant written with different precision as one snapshot',
 	const rows = [row('2026-10-12T16:03:35Z', 'a'), row('2026-10-12T16:03:35.000Z', 'b')];
 	assert.equal(latestSnapshotRecords(rows).length, 2);
 });
+
+import { selectLatestSnapshotRecords } from './latest-snapshot';
+
+function pagedQuery<T>(pages: T[][], onPage?: (index: number) => void) {
+	return {
+		eachPage(cb: (records: readonly T[], next: () => void) => void, done: (e?: Error | null) => void) {
+			let index = 0;
+			const step = () => {
+				if (index >= pages.length) return done();
+				onPage?.(index);
+				cb(pages[index++], step);
+			};
+			step();
+		}
+	};
+}
+
+test('stops paging at the first row from an older snapshot', async () => {
+	const fetched: number[] = [];
+	const query = pagedQuery(
+		[
+			[row('2026-10-12T16:03:35.000Z', 'a'), row('2026-10-12T16:03:35.000Z', 'b')],
+			[row('2026-10-12T16:03:35.000Z', 'c'), row('2026-10-05T16:04:52.000Z', 'old')],
+			[row('2026-09-21T16:00:00.000Z', 'older')]
+		],
+		(i) => fetched.push(i)
+	);
+	const rows = await selectLatestSnapshotRecords(query);
+	assert.deepEqual(rows.map((r) => r.fields.NAME), ['a', 'b', 'c']);
+	assert.deepEqual(fetched, [0, 1]);
+});
+
+test('reads every page when the whole table is one snapshot', async () => {
+	const query = pagedQuery([[row('2026-10-12T16:03:35.000Z', 'a')], [row('2026-10-12T16:03:35.000Z', 'b')]]);
+	assert.deepEqual((await selectLatestSnapshotRecords(query)).map((r) => r.fields.NAME), ['a', 'b']);
+});
+
+test('keeps an unstamped legacy table unchanged', async () => {
+	const query = pagedQuery([[row(undefined, 'a')], [row(undefined, 'b')]]);
+	assert.deepEqual((await selectLatestSnapshotRecords(query)).map((r) => r.fields.NAME), ['a', 'b']);
+});
+
+test('rejects when the query fails', async () => {
+	const query = { eachPage(_cb: unknown, done: (e?: Error) => void) { done(new Error('boom')); } };
+	await assert.rejects(() => selectLatestSnapshotRecords(query as never), /boom/);
+});

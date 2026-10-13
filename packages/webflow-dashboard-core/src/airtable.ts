@@ -1,5 +1,5 @@
 import { fetchMarketplaceSnapshot, type MarketplaceSnapshot } from './marketplace-snapshot.mjs';
-import { latestSnapshotRecords } from './latest-snapshot';
+import { selectLatestSnapshotRecords } from './latest-snapshot';
 import Airtable from 'airtable';
 import { createHash, randomBytes } from 'node:crypto';
 
@@ -1538,15 +1538,18 @@ export function getAirtableClient(env: AirtableEnvLike | undefined) {
     }> {
       const snapshot = await getSnapshot();
       if (snapshot) return { records: options.maxRecords === null ? snapshot.leaderboard : snapshot.leaderboard.slice(0, options.maxRecords ?? 50), freshness: {timestamp: snapshot.snapshotAt, source: 'field', fieldName: 'SNAPSHOT_AT'}, snapshotVersion: snapshot.contentVersion, marketplaceSummary: snapshot.summary };
-      // The view stacks every weekly snapshot, so the Airtable-side maxRecords
-      // would mix weeks. Read the whole view, keep the newest snapshot, then cut.
-      const allRecords = await base(TABLES.LEADERBOARD)
-        .select({
+      // The view stacks every weekly snapshot, so an Airtable-side maxRecords
+      // would mix weeks. Sort newest snapshot first and stop paging once an
+      // older week appears, then cut to the requested size.
+      const latest = await selectLatestSnapshotRecords(
+        base(TABLES.LEADERBOARD).select({
           view: VIEWS.LEADERBOARD,
-          sort: [{ field: 'SALES_RANK', direction: 'asc' }]
+          sort: [
+            { field: 'SNAPSHOT_AT', direction: 'desc' },
+            { field: 'SALES_RANK', direction: 'asc' }
+          ]
         })
-        .all();
-      const latest = latestSnapshotRecords(allRecords);
+      );
       const records = options.maxRecords === null ? latest : latest.slice(0, options.maxRecords ?? 50);
 
       return {
@@ -1580,13 +1583,14 @@ export function getAirtableClient(env: AirtableEnvLike | undefined) {
     }> {
       const snapshot = await getSnapshot();
       if (snapshot) return {records: snapshot.categories, freshness: {timestamp: snapshot.snapshotAt, source: 'field', fieldName: 'SNAPSHOT_AT'}, snapshotVersion: snapshot.contentVersion, marketplaceSummary: snapshot.summary};
-      const records = latestSnapshotRecords(
-        await base(TABLES.CATEGORY_PERFORMANCE)
-          .select({
-            view: VIEWS.CATEGORY_PERFORMANCE,
-            sort: [{ field: 'REVENUE_RANK', direction: 'asc' }]
-          })
-          .all()
+      const records = await selectLatestSnapshotRecords(
+        base(TABLES.CATEGORY_PERFORMANCE).select({
+          view: VIEWS.CATEGORY_PERFORMANCE,
+          sort: [
+            { field: 'SNAPSHOT_AT', direction: 'desc' },
+            { field: 'REVENUE_RANK', direction: 'asc' }
+          ]
+        })
       );
 
       return {
