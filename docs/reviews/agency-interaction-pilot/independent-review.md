@@ -16,3 +16,5 @@ Evidence: browser-results.json records all seven groups passing with no page err
 Follow-up source review: no new blocker. Homepage navigation bypasses the asynchronous snapshot delay implicated in early Back. Inline search reuses existing search/focus handling and cleans up its event listener; other routes retain the default mobile trigger. The refreshed browser receipt includes three early-Back repetitions and inline-search focus return.
 
 Remaining limitations: physical-device and screen-reader testing are outstanding. Static reading preview uses fallback fonts and does not exercise live interaction.
+
+2026-10-13 follow-up: independent reviewer verified the reproduced URL-fragment and modal-focus fixes. No additional source blocker found. Final-head checks, physical mobile and actual screen-reader acceptance remain release requirements.

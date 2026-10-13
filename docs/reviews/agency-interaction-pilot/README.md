@@ -1,6 +1,6 @@
 # Agency interaction pilot (CRE-2259)
 
-Local implementation for review; no merge or deployment. Base: `9de2b762b35142b3aad3eb84999685baec4eae6f`. Branch: `codex/agency-interaction-pilot`.
+Production promotion authorized on 2026-10-13; acceptance gates remain pending. No merge or production deployment yet. Base: `9de2b762b35142b3aad3eb84999685baec4eae6f`. Branch: `codex/agency-interaction-pilot`.
 
 The homepage service journey now follows one broken form through Problem → Approval → Check → Handoff. The accepted Anatomy/isometric family and Canon performance tokens remain. Each selection preserves the workflow overview, opens a contextual record, and leads to a fixed synthetic receipt. No customer input, provider, booking, request, payment or production approval is involved.
 
@@ -42,8 +42,19 @@ An independent source/visual reviewer accepted the bounded local pilot with no r
 
 Follow-up fixes: entering/leaving the homepage no longer waits for an asynchronous view-transition snapshot after history changes. Three early-Back repetitions restore Handoff before waiting for destination rendering and remain stable after 500ms; no route snapshot delays those commits. Homepage search is now inline at the journey entrance and end, reusing the existing palette. Other routes retain their mobile floating search. The browser tests verify no floating search control over the pilot and touch open/close/focus return.
 
-Before any release: inspect the local preview, perform physical mobile and screen-reader testing. Retain this isolated checkout until the owner decides whether to proceed. Do not generalize to .io/.ltd/PCN/Draw until this journey is accepted and a second consumer establishes shared needs. Merge and deployment need separate authorization.
+Before any release: inspect the local preview, perform physical mobile and screen-reader testing. Retain this isolated checkout until the owner decides whether to proceed. Do not generalize to .io/.ltd/PCN/Draw until this journey is accepted and a second consumer establishes shared needs. Production promotion is authorized, but physical-mobile and screen-reader acceptance remain required before merge/deployment.
 
 ## Static review delivery
 
 `export-interaction-review.mjs` creates a self-contained reading copy from actual rendered markup/styles and an actual completed synthetic receipt. All four records are expanded. No scripts, remote assets or external links are included. It uses fallback fonts because font assets are stripped; this is not a pixel-parity or interactive substitute for the live local preview. The exporter validates all records and horizontal geometry at 1440/390/320.
+
+
+## Release review — 2026-10-13
+
+Integrated upstream main `bd46604e4` without Agency/Canon conflicts. Canon check and 680 tests passed; Agency build and check passed on integration head before the final continuity fixes. Final checks are recorded in the release acceptance receipt.
+
+Independent review exposed two linked search/history defects. Submitting search removed the selected journey fragment. Preserving the actual URL then exposed Back moving focus behind the open dialog. Both were reproduced as failing browser assertions before correction. Search now preserves the full URL and existing history state; journey history callbacks defer focus while an ARIA modal is present. The eight-group browser receipt passes with no page errors, including search Back/Forward, transient focus ownership and close/reload selection.
+
+Ground advisory review reports the two documented standalone browser/export scripts as orphan modules; unsupported document formats and incomplete duplicate analysis remain exclusions, not clean results.
+
+Worktree disposition: retained at the explicit isolated checkout on `codex/agency-interaction-pilot` until release acceptance and production verification. No shared checkout edits.

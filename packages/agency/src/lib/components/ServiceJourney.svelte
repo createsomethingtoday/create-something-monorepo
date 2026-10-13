@@ -28,7 +28,7 @@
     if (type === 'popstate' && (window.location.hash.startsWith(`#${journeyId}-`) || window.location.hash === '#sample-handoff' || restoreOwnedFocus)) {
       const revision = ++focusRevision;
       void tick().then(() => {
-        if (revision === focusRevision) document.getElementById(window.location.hash === '#sample-handoff' ? 'sample-handoff' : `${journeyId}-${location.stepId}-${location.detail ? 'detail' : 'control'}`)?.focus();
+        if (revision === focusRevision && !document.querySelector('[role="dialog"][aria-modal="true"]')) document.getElementById(window.location.hash === '#sample-handoff' ? 'sample-handoff' : `${journeyId}-${location.stepId}-${location.detail ? 'detail' : 'control'}`)?.focus();
       });
     }
   });
@@ -110,7 +110,7 @@
       restoreOwnedFocus = ownedFocus;
       location = locationFromHash(window.location.hash);
       await tick();
-      if (revision !== focusRevision || (!window.location.hash.startsWith(`#${journeyId}-`) && !ownedFocus)) return;
+      if (revision !== focusRevision || document.querySelector('[role="dialog"][aria-modal="true"]') || (!window.location.hash.startsWith(`#${journeyId}-`) && !ownedFocus)) return;
       const restored = locationFromHash(window.location.hash);
       document.getElementById(window.location.hash === '#sample-handoff' ? 'sample-handoff' : `${journeyId}-${restored.stepId}-${restored.detail ? 'detail' : 'control'}`)?.focus();
     };

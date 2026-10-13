@@ -27,7 +27,7 @@
     // State stays in session history, never the URL, referrer or analytics payload.
     const next: HistorySearch = { query: view.query, category: view.category, selectedId: view.selectedId, open };
     const current = ($page.state as Record<string, unknown>).agencySearch;
-    if (JSON.stringify(current) !== JSON.stringify(next)) pushState('', { ...$page.state, agencySearch: next });
+    if (JSON.stringify(current) !== JSON.stringify(next)) pushState(new URL(window.location.href), { ...$page.state, agencySearch: next });
   }
   async function search(args: unknown, source: SearchState['source'], signal?: AbortSignal) {
     if (signal?.aborted) return { status: 'cancelled' };

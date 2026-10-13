@@ -160,6 +160,39 @@ try {
     await context.close();
   }
   {
+    const { page, context } = await createPage({ reducedMotion: 'reduce' });
+    await start(page, '#handoff-example-handoff');
+    await page.locator('.service-journey header').getByRole('button', { name: 'Search public pages' }).click();
+    const palette = page.locator('.agency-search');
+    const query = palette.getByRole('searchbox', { name: 'Search public pages' });
+    for (const text of ['workflow', 'MCP']) {
+      await query.fill(text);
+      await palette.getByRole('button', { name: 'Search', exact: true }).click();
+      await page.waitForFunction(text => history.state?.['sveltekit:states']?.agencySearch?.query === text, text);
+      assert.equal(new URL(page.url()).hash, '#handoff-example-handoff', 'search preserves journey URL context');
+    }
+    await page.evaluate(() => {
+      window.__backgroundFocus = [];
+      document.addEventListener('focusin', event => {
+        if (document.querySelector('[role="dialog"][aria-modal="true"]') && event.target.closest('.service-journey')) window.__backgroundFocus.push(event.target.id);
+      });
+    });
+    await page.goBack();
+    await page.waitForFunction(() => document.querySelector('#agency-search-query')?.value === 'workflow');
+    await page.waitForTimeout(180);
+    assert.ok(await palette.evaluate(el => el.contains(document.activeElement)), 'search history retains modal focus ownership');
+    await page.goForward();
+    await page.waitForFunction(() => document.querySelector('#agency-search-query')?.value === 'MCP');
+    assert.ok(await palette.evaluate(el => el.contains(document.activeElement)), 'forward search history retains modal focus');
+    assert.deepEqual(await page.evaluate(() => window.__backgroundFocus), [], 'history never briefly focuses behind the modal');
+    await palette.getByRole('button', { name: 'Close search', exact: true }).click();
+    assert.equal(new URL(page.url()).hash, '#handoff-example-handoff');
+    await page.reload({ waitUntil: 'networkidle' });
+    await assertSelected(page, 'Handoff');
+    results.push({ test: 'journey fragment with open-search Back/Forward preserves modal focus', pass: true });
+    await context.close();
+  }
+  {
     const { page, context } = await createPage({ javaScriptEnabled: false, viewport: { width: 390, height: 844 } });
     await page.goto(baseURL, { waitUntil: 'networkidle' });
     assert.equal(await page.locator('[data-journey] .panels > section:visible').count(), 4);
