@@ -1409,9 +1409,13 @@ export function registerTools(
           mrp_id_recorded: mrpIdRecorded,
           source: fillBundle.source,
           payload,
-          next_steps: NEXT_STEPS_AFTER_CREATE,
+          next_steps: mrpIdRecorded
+            ? NEXT_STEPS_AFTER_CREATE
+            : [`Record ${result.templateId} in 👀ℹ️MRP ID (Override) with template_review_update_asset_publishing (complete_admin_template needs it).`, ...NEXT_STEPS_AFTER_CREATE],
           warnings,
-          note: 'Next, run template_review_complete_admin_template for this version. The Admin URL is for reference only.',
+          note: mrpIdRecorded
+            ? 'Next, run template_review_complete_admin_template for this version. The Admin URL is for reference only.'
+            : `The Template ID was not recorded on the asset. Record ${result.templateId} first, then run template_review_complete_admin_template.`,
         });
       } catch (error) {
         return asError(error);

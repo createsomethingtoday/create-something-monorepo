@@ -584,3 +584,31 @@ test('a site no review context named falls back to the last-named version', asyn
   const ran = await $.tool.call({ tool: RC, version_id: 'recM', review_feedback: CLEAN })
   expect(ran.deny).not.toMatch(/missing evidence/)
 })
+
+test('Admin template create/complete and confirmed delist/relist ask for Send; a delist preview does not', async ($, on) => {
+  let asked = 0
+  let reached = 0
+  on('tool.call', { tool: 'AskUserQuestion' }, () => {
+    asked += 1
+    return { deny: 'nobody here' }
+  })
+  const prefix = 'mcp__claude_ai_Template_Review_MCP__template_review_'
+  for (const name of ['create_admin_template', 'complete_admin_template', 'delist_template', 'relist_template']) {
+    on('tool.call', { tool: `${prefix}${name}` }, () => {
+      reached += 1
+      return { result: { ok: true } }
+    })
+  }
+  const writes = [
+    { tool: `${prefix}create_admin_template`, version_id: 'recAdmin' },
+    { tool: `${prefix}complete_admin_template`, version_id: 'recAdmin' },
+    { tool: `${prefix}delist_template`, asset_id: 'recAsset', mode: 'temporary', confirm: { confirmed: true, expected_cms_item_ids: ['a'], plan_token: 'b' } },
+    { tool: `${prefix}relist_template`, asset_id: 'recAsset', confirm: { confirmed: true, expected_cms_item_ids: ['a'] } },
+  ]
+  for (const input of writes) expect((await $.tool.call(input)).deny).toMatch(/declined|nobody answered/)
+  expect(asked).toBe(4)
+  expect(reached).toBe(0)
+  expect((await $.tool.call({ tool: `${prefix}delist_template`, asset_id: 'recAsset', mode: 'temporary' })).deny).toBeUndefined()
+  expect(asked).toBe(4)
+  expect(reached).toBe(1)
+})

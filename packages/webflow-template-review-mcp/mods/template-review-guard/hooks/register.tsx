@@ -200,8 +200,18 @@ function describe({ name, args }: Call, known: Record<string, string>): string |
       return str(args.pick_reason) !== null
         ? `Set the live Reviewer Pick Reason on ${v}: shown on the public listing and quoted in the creator's featured email`
         : `set featured pick on ${v}: changes what buyers see`
+    case 'create_admin_template':
+      return `Create the production marketplace template (MRP + Admin record) for ${v}`
+    case 'complete_admin_template':
+      return `Write Admin fields (thumbnail, category, tag, type, price, description) to the production template for ${v}`
+    case 'delist_template':
+      // Without confirm the call is a read-only preview.
+      return args.confirm === undefined
+        ? null
+        : `Take ${v} off the Marketplace (${str(args.mode) ?? '?'}): unpublishes the live page and edits other templates' related lists`
+    case 'relist_template':
+      return `Relist ${v}: republishes the Marketplace page and restores other templates' related lists`
     case 'update_asset_publishing':
-    case 'set_mrp_visibility':
     case 'set_featured_flag':
       return `${name.replace(/_/g, ' ')} on ${v}: changes what buyers see`
     default:
