@@ -13,6 +13,8 @@ mod local_agent;
 mod native_history;
 mod profile_owner;
 mod agent_access;
+mod local_socket;
+pub use local_socket::verify_transport as verify_local_transport;
 use native_history::NativeState;
 
 use create_something_draw_pairing_protocol::{
