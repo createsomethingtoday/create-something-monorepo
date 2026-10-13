@@ -1996,13 +1996,15 @@ test('complete_admin_template PUTs the Admin fields to the recorded Template ID 
   const payload = parsePayload(result);
   assert.equal(payload.ok, true, JSON.stringify(payload.error));
 
-  assert.equal(calls.length, 2);
-  assert.equal(calls[0]?.method, 'PUT');
-  assert.equal(calls[0]?.body.mrpId, '6ac54eddbb8a7def85e05871');
-  assert.deepEqual(calls[0]?.body.price, { value: 9900, unit: 'USD' });
-  assert.equal(calls[0]?.body.templateMetadata.extCategory, 'Design');
-  assert.equal(calls[0]?.body.thumbnailImage.url, 'https://example.com/thumb.png');
-  assert.deepEqual(calls[1]?.body, { mrpId: '6ac54eddbb8a7def85e05871' });
+  // Read current metadata, PUT, read back.
+  assert.equal(calls.length, 3);
+  assert.deepEqual(calls[0]?.body, { mrpId: '6ac54eddbb8a7def85e05871' });
+  assert.equal(calls[1]?.method, 'PUT');
+  assert.equal(calls[1]?.body.mrpId, '6ac54eddbb8a7def85e05871');
+  assert.deepEqual(calls[1]?.body.price, { value: 9900, unit: 'USD' });
+  assert.equal(calls[1]?.body.templateMetadata.extCategory, 'Design');
+  assert.equal(calls[1]?.body.thumbnailImage.url, 'https://example.com/thumb.png');
+  assert.deepEqual(calls[2]?.body, { mrpId: '6ac54eddbb8a7def85e05871' });
 
   const data = payload.data as { fields: Array<{ field: string; status: string }>; all_stored: boolean; warnings: string[] };
   const status = Object.fromEntries(data.fields.map((check) => [check.field, check.status]));
@@ -2018,6 +2020,25 @@ test('complete_admin_template PUTs the Admin fields to the recorded Template ID 
   const readOnly = createServerHarness();
   registerTools(readOnly.server, () => ({}) as AirtableClient, () => reviewer, {}, { allowWrites: false });
   assert.equal(readOnly.names.indexOf('template_review_complete_admin_template'), -1);
+});
+
+test('complete_admin_template keeps stored metadata keys Airtable does not supply, and drops nulls', async () => {
+  const { server, handlers } = createServerHarness();
+  const { calls, fetchFn } = mrpRouteStub({
+    _id: '6ac54eddbb8a7def85e05871',
+    templateMetadata: { type: 'CMS', legacyKey: 'keep-me', longDescription: null },
+  });
+  const client = {
+    requireAssignedVersion: async () => ({}),
+    getReviewContext: async () => adminCreateContext({ mrpIdOverride: '6ac54eddbb8a7def85e05871' }),
+  } as unknown as AirtableClient;
+  registerTools(server, () => client, () => reviewer, { marketplaceAdmin: { apiKey: 'k'.repeat(128), fetchFn } });
+
+  const payload = parsePayload((await handlers.get('template_review_complete_admin_template')?.({ version_id: 'rec_version_komanica' }))!);
+  assert.equal(payload.ok, true, JSON.stringify(payload.error));
+  const sent = calls[1]?.body.templateMetadata as Record<string, unknown>;
+  assert.equal(sent.legacyKey, 'keep-me');
+  assert.equal('longDescription' in sent, false);
 });
 
 test('complete_admin_template reports a mismatch and flags an Airtable thumbnail', async () => {

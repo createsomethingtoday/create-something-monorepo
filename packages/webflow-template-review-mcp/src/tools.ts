@@ -1459,11 +1459,19 @@ export function registerTools(
         const form = fillBundle.form_data.admin_form;
         const thumbnailUrl = fillBundle.form_data.thumbnail_image_url;
         const cost = Number(form.cost);
+        const adminConfig = runtimeConfig.marketplaceAdmin ?? {};
+        // The route $sets templateMetadata as a whole, so start from what is stored (nulls dropped; the route rejects them)
+        // and overlay only the values Airtable has. A cleared Airtable value never erases a stored one.
+        const storedMetadata = readPath(await readMrp(adminConfig, templateId), 'templateMetadata');
+        const existingMetadata = Object.fromEntries(
+          Object.entries(storedMetadata && typeof storedMetadata === 'object' ? (storedMetadata as Record<string, unknown>) : {}).filter(([, value]) => value !== null && value !== undefined),
+        );
         const fields: MrpTemplateUpdateFields = {
           ...(form.name ? { name: form.name, displayName: form.name } : {}),
           ...(form.description ? { description: form.description } : {}),
           ...(Number.isFinite(cost) && form.cost !== undefined && form.cost !== '' ? { price: { value: cost, unit: 'USD' as const } } : {}),
           templateMetadata: {
+            ...existingMetadata,
             ...(form.type ? { type: form.type } : {}),
             ...(form.extDetailPageUrl ? { extDetailPageUrl: form.extDetailPageUrl } : {}),
             ...(form.extCategory ? { extCategory: form.extCategory } : {}),
@@ -1472,7 +1480,6 @@ export function registerTools(
           ...(thumbnailUrl ? { thumbnailImage: { url: thumbnailUrl, altText: form.name ?? 'Template thumbnail' } } : {}),
         };
 
-        const adminConfig = runtimeConfig.marketplaceAdmin ?? {};
         await updateMrpTemplate(adminConfig, templateId, fields);
         const stored = await readMrp(adminConfig, templateId);
         const checks = compareAdminFields(fields, stored);
