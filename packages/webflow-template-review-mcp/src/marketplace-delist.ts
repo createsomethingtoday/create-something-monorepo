@@ -555,11 +555,16 @@ export async function executeRelist(
   }
 
   const referencers = new Map<string, Map<string, SnapshotRef>>();
-  // Oldest first, so the newest snapshot's copy flags win.
-  for (const snapshot of [...snapshots].reverse()) {
+  // A retried delist writes another snapshot after a partial strip; a copy changed in any attempt is restored.
+  for (const snapshot of snapshots) {
     for (const [itemId, refs] of Object.entries(snapshot.referencers ?? {})) {
       const byId = referencers.get(itemId) ?? new Map<string, SnapshotRef>();
-      for (const ref of refs) byId.set(ref.id, ref);
+      for (const ref of refs) {
+        const seen = byId.get(ref.id);
+        if (!seen) byId.set(ref.id, ref);
+        else if (typeof seen.staged !== 'boolean' || typeof ref.staged !== 'boolean') byId.set(ref.id, { ...seen, staged: undefined, live: undefined });
+        else byId.set(ref.id, { ...seen, staged: seen.staged || ref.staged, live: Boolean(seen.live) || Boolean(ref.live) });
+      }
       referencers.set(itemId, byId);
     }
   }
@@ -587,8 +592,12 @@ export async function executeRelist(
     items.push({ cms_item_id: itemId, unarchived: true, published: true, referencers_restored: restored });
   }
 
-  await airtable.addAssetComment(asset.asset_id, `${RELIST_MARKER}\n${JSON.stringify({ at: now.toISOString(), by: input.actor })}`);
+  // The marker ends resumability, so write it only once the page is confirmed back (or there is no page to check).
   const status = await waitForPageStatus(cmsConfig, asset.page_path, 200);
+  const complete = status === 200 || status === null;
+  if (complete) {
+    await airtable.addAssetComment(asset.asset_id, `${RELIST_MARKER}\n${JSON.stringify({ at: now.toISOString(), by: input.actor })}`);
+  }
   return {
     asset_id: asset.asset_id,
     name: listedName(asset.name),
@@ -598,6 +607,7 @@ export async function executeRelist(
     public_page: asset.page_path,
     public_page_status: status,
     verified: status === 200,
+    ...(complete ? {} : { note: 'The page is not back yet. Re-run relist to retry; it resumes from the current state.' }),
   };
 }
 

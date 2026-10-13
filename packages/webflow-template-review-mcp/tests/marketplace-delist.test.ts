@@ -370,3 +370,34 @@ test('a publish that answers 202 with item errors fails, and the relist can be r
   assert.equal(retry.resumed, true);
   assert.equal(retry.verified, true);
 });
+
+test('relist that cannot confirm the page leaves no marker, so it can be re-run', async () => {
+  const web = fakeWebflow();
+  const at = fakeAirtable(publishedFields);
+  await delist(at, web.config, { mode: 'temporary' });
+  const down: typeof fetch = async (input, init) =>
+    new URL(String(input)).hostname === 'webflow.com' ? new Response('', { status: 404 }) : web.config.fetchFn!(input, init);
+  const first = await executeRelist(at.airtable, { ...web.config, fetchFn: down }, { assetId: ASSET, expectedCmsItemIds: [TARGET], actor: 'x', now: NOW });
+  assert.equal(first.verified, false);
+  assert.doesNotMatch(at.comments[0]!.text, /^\[template-review:relist v1\]/);
+  const second = await executeRelist(at.airtable, web.config, { assetId: ASSET, expectedCmsItemIds: [TARGET], actor: 'x', now: NOW });
+  assert.equal(second.resumed, true);
+  assert.equal(second.verified, true);
+  assert.match(at.comments[0]!.text, /^\[template-review:relist v1\]/);
+});
+
+test('copy flags from a retried delist are merged, so relist restores every copy any attempt removed', async () => {
+  const web = fakeWebflow();
+  const at = fakeAirtable({ ...publishedFields, [F.marketplaceStatus]: '4️⃣Delisted☠️' });
+  const snapshot = (flags: { staged: boolean; live: boolean }) =>
+    `[template-review:delist-snapshot v1]\n${JSON.stringify({ asset_id: ASSET, at: '', by: 'x', mode: 'temporary', cms_item_ids: [TARGET], referencers: { [TARGET]: [{ id: REF_B, name: 'B', collectionId: TEMPLATES, ...flags }] } })}`;
+  // First attempt stripped the staged copy and failed on live; the retry saw only live.
+  at.comments.unshift({ id: 'c1', text: snapshot({ staged: true, live: true }), createdTime: '' });
+  at.comments.unshift({ id: 'c2', text: snapshot({ staged: false, live: true }), createdTime: '' });
+  web.staged.get(REF_B)!.related = [];
+  web.live.get(REF_B)!.related = [];
+  web.live.delete(TARGET);
+  await executeRelist(at.airtable, web.config, { assetId: ASSET, expectedCmsItemIds: [TARGET], actor: 'x', now: NOW });
+  assert.ok(web.staged.get(REF_B)?.related.includes(TARGET));
+  assert.ok(web.live.get(REF_B)?.related.includes(TARGET));
+});
