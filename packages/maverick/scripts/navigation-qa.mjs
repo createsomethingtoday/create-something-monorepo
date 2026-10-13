@@ -28,7 +28,7 @@ try {
       if (mobile && (await menu.getAttribute('aria-expanded')) === 'false') await menu.click();
     }
     await openNav();
-    for (const id of ['solutions', 'technology', 'about']) {
+    for (const id of ['industries', 'technology', 'about']) {
       const trigger = page.locator(`#${id}-toggle`);
       await trigger.focus();
       await page.keyboard.press('Enter');
@@ -64,7 +64,7 @@ try {
       );
       await page.keyboard.press('Escape');
     }
-    await page.locator('#solutions-toggle').click();
+    await page.locator('#industries-toggle').click();
     await page.locator('#about-toggle').click();
     assert.equal(
       await page.locator('#about-toggle').getAttribute('aria-expanded'),
@@ -72,7 +72,7 @@ try {
       'pointer switch opens About'
     );
     assert.equal(
-      await page.locator('#solutions-links').isVisible(),
+      await page.locator('#industries-links').isVisible(),
       false,
       'only one disclosure open'
     );
@@ -93,11 +93,15 @@ try {
         .evaluate((el) => el === document.activeElement),
       true
     );
-    await page.locator('#solutions-toggle').click();
+    await page.locator('#industries-toggle').click();
     if (screenshots && [1440, 390].includes(width))
-      await page.screenshot({ path: `${screenshots}/${width}-solutions-menu.png` });
+      await page.screenshot({ path: `${screenshots}/${width}-industries-menu.png` });
     await page.mouse.click(width - 8, 850);
-    assert.equal(await page.locator('#solutions-links').isVisible(), false, 'outside click closes');
+    assert.equal(
+      await page.locator('#industries-links').isVisible(),
+      false,
+      'outside click closes'
+    );
     if (mobile) {
       assert.equal(await menu.getAttribute('aria-expanded'), 'false');
       await openNav();
@@ -109,11 +113,11 @@ try {
       );
     }
     const destinations = [
-      ['solutions', 'Oil & Gas and Water Treatment', '/oil-gas'],
-      ['solutions', 'Mining & Metals', '/mining'],
-      ['technology', 'How our chemistry works', '/#chemistry'],
-      ['about', 'Mission', '/about#mission'],
-      ['about', 'Meet the Team/Leadership', '/about#leadership'],
+      ['industries', 'Oil & Gas', '/oil-gas'],
+      ['industries', 'Mining & Metals', '/mining'],
+      ['technology', 'How our chemistry works', '/technology'],
+      ['about', 'Mission & Vision', '/mission-vision'],
+      ['about', 'Leadership', '/about#leadership'],
       ['about', 'News', '/news']
     ];
     for (const [id, label, path] of destinations) {
@@ -158,21 +162,19 @@ try {
     await openNav();
     assert.equal(
       await nav.getByRole('link', { name: 'Careers', exact: true }).getAttribute('href'),
-      'https://jobs.lever.co/maverickx'
+      '/careers'
     );
-    await context.route('https://jobs.lever.co/maverickx', (route) => route.abort());
-    await page.locator('#solutions-toggle').click();
-    const popupPromise = page.waitForEvent('popup');
+
+    await page.locator('#industries-toggle').click();
     await nav.getByRole('link', { name: 'Careers', exact: true }).click();
-    const popup = await popupPromise;
-    await popup.close();
+    await page.waitForURL(new URL('/careers', origin).href);
     assert.equal(
-      await page.locator('#solutions-links').isVisible(),
+      await page.locator('#industries-links').isVisible(),
       false,
       'Careers closes dropdown'
     );
     await openNav();
-    await page.locator('#solutions-toggle').click();
+    await page.locator('#industries-toggle').click();
     await nav.getByRole('button', { name: 'Contact Us', exact: true }).click();
     assert.equal(await page.getByRole('dialog').isVisible(), true, 'existing Contact opens');
     await page.waitForFunction(() =>

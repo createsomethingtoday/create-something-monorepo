@@ -3,9 +3,11 @@
   const links = [
     ['Oil & Gas', '/oil-gas'],
     ['Mining & Metals', '/mining'],
-    ['About', '/about'],
+    ['Technology', '/technology'],
+    ['Mission & Vision', '/mission-vision'],
+    ['Leadership', '/about#leadership'],
     ['News', '/news'],
-    ['Careers', 'https://jobs.lever.co/maverickx']
+    ['Careers', '/careers']
   ];
 </script>
 

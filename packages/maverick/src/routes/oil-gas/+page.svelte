@@ -2,7 +2,6 @@
   import Media from '$lib/redesign/Media.svelte';
   import SEO from '$lib/components/SEO.svelte';
   import { openContact } from '$lib/redesign/contact';
-  import { oilApps } from '$lib/redesign/content';
   import type { PageData } from './$types';
   let { data }: { data: PageData } = $props();
   const overrides = $derived(data.content?.redesign);
@@ -41,7 +40,8 @@
       <p
         style="margin:26px 0 0;font-size:19px;color:rgba(var(--section-ink, 255,255,255),.85);max-width:560px;line-height:1.5;text-wrap:pretty"
       >
-        {#if overrides?.subtitle}{overrides.subtitle}{:else}Bio-based chemistry for oil &amp; gas, including treatment of the produced water that returns from the well.{/if}
+        {#if overrides?.subtitle}{overrides.subtitle}{:else}Bio-based chemistry for oil &amp; gas,
+          including treatment of the produced water that returns from the well.{/if}
       </p>
     </div>
   </section>
@@ -49,6 +49,7 @@
   <section
     class="design-section light-content"
     style="padding:120px 48px;border-bottom:1px solid rgba(var(--section-ink, 255,255,255),.12)"
+    id="produced-water"
     data-screen-label="PetroX Boost"
   >
     <div
@@ -85,54 +86,15 @@
         >
       </div>
       <div class="media-panel" style="position:relative;height:480px;overflow:hidden">
-        <Media kind="oil" />
+        <img
+          src="/images/petrox-processing.jpg"
+          alt="Industrial processing equipment at dusk"
+          loading="lazy"
+          width="2048"
+          height="937"
+          style="width:100%;height:100%;object-fit:cover"
+        />
       </div>
     </div>
   </section>
-
-  <section
-    class="design-section light-content"
-    style="padding:120px 48px;border-bottom:1px solid rgba(var(--section-ink, 255,255,255),.12)"
-  >
-    <div id="produced-water" style="max-width:1200px;margin:0 auto;scroll-margin-top:100px">
-      <h2
-        class="display-title"
-        style="margin:0 0 56px;font-family:'Barlow Condensed',sans-serif;font-weight:500;font-size:44px;text-transform:uppercase"
-      >
-        The PetroX family
-      </h2>
-      <div
-        class="grid-three"
-        style="display:grid;gap:1px;background:rgba(var(--section-ink, 255,255,255),.12);border:1px solid rgba(var(--section-ink, 255,255,255),.12)"
-      >
-        {#each oilApps as app}
-          <div style="background:var(--section-surface, #000);padding:36px 32px 44px">
-            <div
-              style="font-family:'Barlow Condensed',sans-serif;font-size:15px;color:rgba(var(--section-ink, 255,255,255),.4);margin-bottom:18px"
-            >
-              {app.num}
-            </div>
-            <h3
-              class="display-title"
-              style="margin:0 0 12px;font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:26px;text-transform:uppercase;letter-spacing:.5px"
-            >
-              {app.name}
-            </h3>
-            <p style="margin:0;font-size:15px;color:rgba(var(--section-ink, 255,255,255),.7);line-height:1.55">
-              {app.desc}
-            </p>
-          </div>
-        {/each}
-        <div style="background:var(--section-surface, #000);padding:36px 32px 44px;display:flex;align-items:flex-end">
-          <button
-            type="button"
-            onclick={() => openContact(categoryId)}
-            style="cursor:pointer;font-size:13px;font-weight:600;letter-spacing:2.5px;text-transform:uppercase;border-bottom:1px solid rgba(var(--section-ink, 255,255,255),.6);padding-bottom:4px"
-            >Discuss your application →</button
-          >
-        </div>
-      </div>
-    </div>
-  </section>
-
 </div>

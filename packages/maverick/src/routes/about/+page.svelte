@@ -1,9 +1,8 @@
 <script lang="ts">
   import Media from '$lib/redesign/Media.svelte';
   import SEO from '$lib/components/SEO.svelte';
-  import { openContact } from '$lib/redesign/contact';
+  import Backers from '$lib/redesign/Backers.svelte';
   import { team } from '$lib/redesign/content';
-  const categoryId = 'general';
 </script>
 
 <SEO
@@ -79,7 +78,7 @@
             <div
               style="font-size:13px;letter-spacing:2px;text-transform:uppercase;color:rgba(var(--section-ink, 255,255,255),.6);margin-top:4px"
             >
-              {p.role}
+              Updated title and bio pending review
             </div>
           </div>
         {/each}
@@ -127,14 +126,16 @@
             style="color:rgba(var(--section-ink, 255,255,255),.6);letter-spacing:2px;text-transform:uppercase;font-size:12px"
             >Careers</span
           ><a
-            href="https://jobs.lever.co/maverickx"
+            href="/careers"
             target="_blank"
             rel="noopener noreferrer"
             style="border-bottom:1px solid rgba(var(--section-ink, 255,255,255),.4)"
-            >We're hiring →</a
+            >Explore careers →</a
           >
         </div>
       </div>
     </div>
   </section>
 </div>
+
+<Backers />

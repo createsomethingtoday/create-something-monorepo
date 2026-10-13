@@ -12,24 +12,24 @@
   let pointerTarget: Element | null = null;
   const groups = [
     {
-      id: 'solutions',
-      label: 'Solutions',
+      id: 'industries',
+      label: 'Industries',
       links: [
-        ['Oil & Gas and Water Treatment', '/oil-gas'],
+        ['Oil & Gas', '/oil-gas'],
         ['Mining & Metals', '/mining']
       ]
     },
     {
       id: 'technology',
       label: 'Technology',
-      links: [['How our chemistry works', '/#chemistry']]
+      links: [['How our chemistry works', '/technology']]
     },
     {
       id: 'about',
       label: 'About',
       links: [
-        ['Mission', '/about#mission'],
-        ['Meet the Team/Leadership', '/about#leadership'],
+        ['Mission & Vision', '/mission-vision'],
+        ['Leadership', '/about#leadership'],
         ['News', '/news']
       ]
     }
@@ -158,12 +158,7 @@
         </ul>
       </div>
     {/each}
-    <a
-      href="https://jobs.lever.co/maverickx"
-      onclick={closeMenus}
-      target="_blank"
-      rel="noopener noreferrer">Careers</a
-    >
+    <a href="/careers" onclick={closeMenus}>Careers</a>
     <button type="button" class="contact" onclick={contact}>Contact Us</button>
   </nav>
 </header>

@@ -1,7 +1,13 @@
 /** October 2026 preview corrections. Claims, partner permissions and new leadership copy remain gated. */
 // Existing press links include unapproved partner names, legacy taxonomy or capacity claims.
 // Reintroduce individual items only after the launch press review.
-export const news: Array<{ date: string; kind: string; title: string; source: string; url: string }> = [];
+export const news: Array<{
+  date: string;
+  kind: string;
+  title: string;
+  source: string;
+  url: string;
+}> = [];
 export const oilApps = [
   {
     num: '01',
@@ -53,17 +59,5 @@ export const team = [
     role: 'Director of Operations',
     photo: '/redesign/team-matthew.jpg',
     linkedin: 'https://www.linkedin.com/in/matt-maverickx/'
-  },
-  {
-    name: 'Suman Mandava',
-    role: 'Principal Scientist, Bioprocess Technical Operations',
-    photo: '/redesign/team-suman.jpg',
-    linkedin: 'https://www.linkedin.com/in/suman-mandava-00721ba4/'
-  },
-  {
-    name: 'Hayden Lippelman',
-    role: 'Senior Scientist, Biological Research & Process Development',
-    photo: '/redesign/team-hayden.jpg',
-    linkedin: 'https://www.linkedin.com/in/haydenlippelman8a0a4b157/'
   }
 ];

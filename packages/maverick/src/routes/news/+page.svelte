@@ -49,9 +49,18 @@
   >
     <div style="max-width:1100px;margin:0 auto">
       {#if news.length === 0}
-        <h2 class="display-title" style="font-size:36px;line-height:1.1;margin:0 0 24px">MaverickX company news</h2>
-        <p style="font-size:18px;line-height:1.6;max-width:700px">MaverickX brings Maverick Energy and Maverick Metals together under one brand. Our focus is bio-based chemistry for oil &amp; gas through PetroX and mining &amp; metals through LithX.</p>
-        <p style="font-size:18px;line-height:1.6;max-width:700px">For company information, interviews or media assets, contact our team below.</p>
+        <h2 class="display-title" style="font-size:36px;line-height:1.1;margin:0 0 24px">
+          Company updates
+        </h2>
+        <p style="font-size:18px;line-height:1.6;max-width:700px">
+          MaverickX brings Maverick Energy and Maverick Metals together under one brand. Our focus
+          is bio-based chemistry for oil &amp; gas through PetroX and mining &amp; metals through
+          LithX.
+        </p>
+        <p style="font-size:18px;line-height:1.6;max-width:700px">
+          Preview · approved news stories and media links will be added after review. For company
+          information, contact our team below.
+        </p>
       {/if}
       {#each news as item}
         <a
@@ -98,9 +107,9 @@
         </div>
       </div>
       <a
-        href="mailto:press@maverickx.com"
+        href="mailto:info@maverickx.com"
         style="border:1px solid rgba(var(--section-ink, 255,255,255),.5);font-size:13px;font-weight:600;letter-spacing:2.5px;text-transform:uppercase;padding:14px 30px"
-        >press@maverickx.com</a
+        >info@maverickx.com</a
       >
     </div>
   </section>
