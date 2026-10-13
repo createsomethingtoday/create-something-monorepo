@@ -122,7 +122,7 @@ export const gigiBetaHtml = `<!doctype html>
         </div>
       </section>
       <section aria-labelledby="release"><h2 id="release">Know what you’re downloading.</h2>
-        <p><strong>Acceptance status:</strong> This exact installer passed signing, notarization, bundled synthetic chat approval/rejection checks, and native save/restart. Remaining native workflow checks and physical phone-over-cellular acceptance are pending. This is an early beta; those checks are not yet verified.</p>
+        <p><strong>Acceptance status:</strong> This exact installer passed signing, notarization, native onboarding, save/restart, backup restoration, reviewed agent edits, and bounded Gmail and Calendar imports with linked local task/gig creation. Phone remote access passed on an earlier build; that physical-device test was not repeated for this installer. This remains an early beta.</p>
         <dl><dt>Release</dt><dd>GiGi ${gigiBeta.version} · macOS arm64</dd><dt>Size</dt><dd>${gigiBeta.bytes.toLocaleString('en-US')} bytes (${(gigiBeta.bytes / 1_000_000).toFixed(1)} MB)</dd><dt>Security</dt><dd>Developer ID signed, Apple notarized and stapled. Gatekeeper checks passed for this exact installer.</dd><dt>SHA-256</dt><dd class="checksum"><code>${gigiBeta.sha256}</code></dd></dl>
         <details><summary>Check the installer checksum</summary><p>In Terminal, run this against the file you downloaded:</p><div class="checksum"><code>shasum -a 256 ~/Downloads/${gigiBeta.filename}</code></div><p>The result should match the SHA-256 above. If it does not, stop and request a verified installer.</p></details>
       </section>

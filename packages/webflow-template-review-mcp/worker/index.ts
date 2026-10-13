@@ -73,6 +73,8 @@ interface Env {
   ZENDESK_SUBDOMAIN?: string;
   /** Zendesk group that owns Marketplace review tickets; search default + status-write boundary. */
   MARKETPLACE_ZENDESK_GROUP_ID?: string;
+  /** cms:write site token for the Marketplace site (secret) — enables delist/relist. Infisical dev /webflow/template-marketplace TEMPLATE_MARKETPLACE. */
+  MARKETPLACE_CMS_TOKEN?: string;
 }
 
 type RequestProps = {
@@ -151,6 +153,7 @@ export class WebflowTemplateReviewMCP extends McpAgent<Env, unknown, RequestProp
           apiKey: this.env.MARKETPLACE_ADMIN_API_KEY,
         },
         getZendeskClient: () => zendesk,
+        marketplaceCms: { siteToken: this.env.MARKETPLACE_CMS_TOKEN },
         ...(this.env.BROWSER
           ? {
               screenshotCapture: {

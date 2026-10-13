@@ -114,9 +114,10 @@ test('the Agency opening exposes the owned handoff and inspection path without a
   assert.match(home, /<AgencyHero/);
   const hero = read('src/lib/components/films/AgencyHero.svelte');
   const journey = read('src/lib/components/ServiceJourney.svelte');
-  assert.match(journey, /Illustrative service journey/);
-  assert.match(journey, /Agree the change/);
-  assert.match(journey, /Checked handoff/);
+  const journeyContent = read('src/lib/interaction-pilot/model.ts');
+  assert.match(journey, /Synthetic example/);
+  assert.match(journeyContent, /Agree the change/);
+  assert.match(journeyContent, /instructions and the next step/);
   assert.match(hero, /CanonServiceGuide/);
   assert.match(hero, /PUBLIC_PRICING.membership.label/);
   assert.match(hero, /href="#built-work"/);

@@ -51,6 +51,7 @@ jobs:
 
       - name: Verify frozen seeded trial through CLI and MCP
         run: |
+          node --test scripts/ground-release-evidence.test.mjs
           cargo build --manifest-path packages/ground/Cargo.toml --bins
           node --test scripts/test/ground-review-native.test.mjs
           node scripts/ground-seeded-trial.mjs --native-dir packages/ground/target/debug --output /tmp/ground-seeded-trial.json

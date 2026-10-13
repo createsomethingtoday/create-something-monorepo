@@ -25,7 +25,8 @@ function reset(nextRole, nextScenario) {
     '0008_creator_admission.sql',
     '0010_company_support.sql',
     '0014_lesson_material.sql',
-    '0015_guided_learning.sql'
+    '0015_guided_learning.sql',
+    '0027_progress_path_context.sql'
   ])
     sqlite.exec(readFileSync(resolve(pkg, 'migrations', file), 'utf8'));
   role = ['member', 'admin', 'blocked', 'anonymous'].includes(nextRole) ? nextRole : 'anonymous';
@@ -50,8 +51,19 @@ function reset(nextRole, nextScenario) {
       "INSERT INTO learning_paths(id,network_id,title,outcome,estimated_minutes,lesson_ids,visibility) VALUES('path-1','default','Synthetic: First workflow','Review the handoff',10,'[\"lesson-1\"]','published');"
     );
     sqlite.exec(
-      "INSERT INTO lesson_progress(network_id,subject,video_id,position) VALUES('default','fixture-member','lesson-1',42);"
+      "INSERT INTO lesson_progress(network_id,subject,video_id,position,path_id) VALUES('default','fixture-member','lesson-1',42,'path-1');"
     );
+    if (scenario === 'polish') {
+      sqlite.exec(
+        "INSERT INTO videos(id,stream_uid,title,visibility,access,ingest_status,duration) VALUES('lesson-2','synthetic-next','Synthetic: Verify the result','published','members','ready',120)"
+      );
+      sqlite
+        .prepare('UPDATE learning_paths SET lesson_ids=? WHERE id=?')
+        .run(JSON.stringify(['lesson-1', 'lesson-2']), 'path-1');
+      sqlite
+        .prepare('UPDATE lesson_material SET transcript=? WHERE video_id=?')
+        .run('Synthetic long transcript. '.repeat(120), 'lesson-1');
+    }
     if (scenario === 'completed-video') {
       sqlite.exec(
         'UPDATE lesson_progress SET position=120, practice_started_at=CURRENT_TIMESTAMP;'
@@ -159,7 +171,7 @@ const respond = (res, data, status = 200) => {
   res.setHeader('Content-Type', 'application/json');
   res.end(JSON.stringify(data));
 };
-reset('member', '');
+reset('member', 'polish');
 vite = await createServer({
   configFile: false,
   root,

@@ -19,7 +19,7 @@
 //!     - __test__*          # Test helpers
 //!     - internal_*         # Internal APIs
 //!   
-//!   # File patterns to skip entirely
+//!   # Orphan and diff paths to exclude, relative to the analysis directory
 //!   paths:
 //!     - "**/*.test.ts"
 //!     - "**/*.spec.ts"
@@ -46,7 +46,7 @@ use std::path::{Path, PathBuf};
 use glob::Pattern;
 
 /// Ground configuration loaded from .ground.yml
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct GroundConfig {
     /// Config version
@@ -72,6 +72,16 @@ pub struct GroundConfig {
     /// Report settings
     #[serde(default)]
     pub report: ReportConfig,
+}
+
+impl Default for GroundConfig {
+    fn default() -> Self {
+        Self {
+            version: default_version(), extends: Vec::new(), ignore: IgnoreConfig::default(),
+            entry_points: EntryPointConfig::default(), thresholds: ThresholdConfig::default(),
+            report: ReportConfig::default(),
+        }
+    }
 }
 
 fn default_version() -> String {
@@ -238,7 +248,7 @@ impl GroundConfig {
         }
         
         if !path.exists() {
-            return Ok(Self::default());
+            return Err(ConfigError::Io(format!("configuration does not exist: {}", path.display())));
         }
         
         let contents = std::fs::read_to_string(path)
@@ -247,6 +257,8 @@ impl GroundConfig {
         let mut config: GroundConfig = serde_yaml::from_str(&contents)
             .map_err(|e| ConfigError::Parse(e.to_string()))?;
         
+        config.validate()?;
+
         // Process extends directives
         if !config.extends.is_empty() {
             let base_dir = path.parent().unwrap_or(Path::new("."));
@@ -268,6 +280,41 @@ impl GroundConfig {
         Ok(config)
     }
     
+    /// Reject policy typos before they can turn a requested check into a clean result.
+    pub fn validate(&self) -> Result<(), ConfigError> {
+        if self.version != "1" {
+            return Err(ConfigError::Parse(format!("unsupported version {:?}; expected \"1\"", self.version)));
+        }
+        if self.thresholds.duplicate_similarity > 100 {
+            return Err(ConfigError::Parse(format!(
+                "thresholds.duplicate_similarity must be between 0 and 100; got {}",
+                self.thresholds.duplicate_similarity
+            )));
+        }
+        for (field, patterns) in [
+            ("ignore.paths", &self.ignore.paths),
+            ("ignore.functions", &self.ignore.functions),
+            ("ignore.exports", &self.ignore.exports),
+        ] {
+            for pattern in patterns {
+                Pattern::new(pattern).map_err(|error| ConfigError::Parse(format!(
+                    "invalid {field} pattern {pattern:?}: {error}; escape a literal opening bracket as [[]"
+                )))?;
+            }
+        }
+        for pair in &self.ignore.duplicate_pairs {
+            for pattern in pair {
+                // Exact pairs also accept literal paths; validate only explicit wildcard patterns.
+                if pattern.contains('*') || pattern.contains('?') {
+                    Pattern::new(pattern).map_err(|error| ConfigError::Parse(format!(
+                        "invalid ignore.duplicate_pairs pattern {pattern:?}: {error}"
+                    )))?;
+                }
+            }
+        }
+        Ok(())
+    }
+
     /// Merge another config into this one (other takes precedence for scalars,
     /// arrays are concatenated)
     pub fn merge(&mut self, other: GroundConfig) {

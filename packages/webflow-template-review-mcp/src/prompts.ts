@@ -171,18 +171,37 @@ Automated validation and sandbox evidence do not approve, reject, request change
 | \`template_review_prepare_admin_template_update_execute\` | Execute-mode: console script that PUTs metadata changes to an existing template (diff table + confirm; preserves untouched checkbox booleans) |
 | \`template_review_prepare_admin_template_thumbnail_execute\` | Execute-mode: console script that uploads the Airtable thumbnail as the template's tall thumbnail (confirm-gated) |
 | \`template_review_prepare_admin_template_verify\` | Read-only: console script that GETs the Admin template record and prints a field-by-field match table against Airtable (writes nothing) |
-| \`template_review_set_mrp_visibility\` | Server-side Webflow write: flip MRP visibility PUBLIC/PRIVATE via the key-authenticated Airtable write-back route — only on an explicit reviewer request |
+| \`template_review_create_admin_template\` | Server-side Webflow write: create the marketplace template (MRP + Admin record) from the Airtable version via the key-authenticated route, record the Template ID in the MRP ID override, and return the Admin URL plus what is left to finish there |
+| \`template_review_complete_admin_template\` | Server-side Webflow write: push the remaining Admin fields for a created template and read them back — only on an explicit reviewer request |
 | \`template_review_list_releases\` | Available releases to attach |
 | \`template_review_update_asset_metadata\` | Update name, description, thumbnails |
 | \`template_review_update_asset_publishing\` | Update MRP ID override |
 | \`template_review_set_checklist_items\` | Check off 🚀Publishing Checklist items as you complete them |
 | \`template_review_complete_publishing\` | Attach the release (does not mark the checklist unless \`mark_all_publishing_items\` is set) |
 
-Manual Admin sequence for a new template: \`prepare_admin_template_fill\` → paste
-the fill-only script on https://webflow.com/admin/templates → click Create
-Template yourself → \`get_template_thumbnail\` and upload the image on the new
-template's Admin edit page → copy the new Template ID into the MRP ID override
-via \`update_asset_publishing\`.
+Preferred sequence for a new template, all through the MCP once the reviewer
+asks for it:
+1. \`create_admin_template\` with the version_id. It creates the MRP and Admin
+   record server-side, writes the new Template ID into the MRP ID override, and
+   returns the Template ID. It refuses when required form fields are missing,
+   when the site already has a template, or when no support contact exists.
+2. \`complete_admin_template\` with the same version_id. It pushes the
+   thumbnail, Category, Primary Tag, Type, Cost, Description and Detail Page
+   Path, reads the record back, and reports each field as stored, mismatch or
+   unverifiable. Report any mismatch to the reviewer. Category and Primary Tag
+   stay unverifiable, and the thumbnail stays an expiring Airtable link, until
+   webflow/webflow#123284 ships; rerun the tool after that.
+3. \`set_checklist_items\` for the 🚀Publishing Checklist, then
+   \`approve_version\`.
+The reviewer does not need to open the Admin page. Share the Admin URL only as
+a reference.
+
+Manual Admin sequence (fallback when the admin key is unavailable):
+\`prepare_admin_template_fill\` → paste the fill-only script on
+https://webflow.com/admin/templates → click Create Template yourself →
+\`get_template_thumbnail\` and upload the image on the new template's Admin edit
+page → copy the new Template ID into the MRP ID override via
+\`update_asset_publishing\`.
 
 Script-assisted alternative: \`prepare_admin_template_create_execute\` returns a
 console script that performs the whole create sequence (POST create → PUT field
@@ -195,9 +214,28 @@ preserves untouched checkbox booleans); for thumbnail replacement use
 \`prepare_admin_template_thumbnail_execute\`. Always finish by recording the
 Template ID in the MRP ID override via \`update_asset_publishing\`, then run
 \`prepare_admin_template_verify\` to confirm the Admin record matches Airtable
-field-for-field before approving. \`set_mrp_visibility\` changes what buyers can
-see on the marketplace — never call it without the reviewer naming the MRP and
-the target visibility in the same request.
+field-for-field before approving.
+
+### Taking a template off the Marketplace (delist)
+
+| Tool | Purpose |
+|------|---------|
+| \`template_review_delist_template\` | Preview, then (with \`confirm\`) set Delisted/Archived in Airtable AND unpublish the live CMS page |
+| \`template_review_relist_template\` | Undo a delist: Published/Active, republish, restore related-template links |
+| \`template_review_delist_drift\` | Read-only: templates marked Delisted whose page is still live |
+
+Setting 🚀Marketplace Status to Delisted in Airtable does NOT take the page
+down — Whalesync never unpublishes it. Always use \`delist_template\`: call it
+once without \`confirm\` and show the reviewer the preview (public page status,
+CMS items, planned Airtable writes), then call again with
+\`confirm: { confirmed: true, expected_cms_item_ids, plan_token }\` (and the
+same mode and reason) only after they approve.
+Use mode \`permanent\` (creator request, Stripe status, policy infringement —
+sets the reason and renames "{Name} Archived YYYYMMDD") or \`temporary\` (a
+relist is expected after a fix — leaves name and reason alone). Report the
+final \`public_page_status\`; 404 means the page is down. Archiving the Webflow
+Admin template is a separate, permanent-only step (it blocks checkout and
+strands existing buyers) — do not suggest it for a temporary delist.
 
 Work the publishing checklist per item with \`set_checklist_items\`. Only pass
 \`mark_all_publishing_items: true\` to \`complete_publishing\` when every publishing

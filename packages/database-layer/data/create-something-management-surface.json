@@ -1,6 +1,6 @@
 {
   "id": "substrate:create-something:management-surface:internal",
-  "generatedAt": "2026-10-08T14:07:05.468Z",
+  "generatedAt": "2026-10-13T14:05:52.315Z",
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
   "sourceReadinessId": "substrate:create-something:operating-slice-readiness:internal",
@@ -321,6 +321,20 @@
       "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
       "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-app-create-something-bettermode-marketplace-creator-agent-apps-bettermode-marketplace-creator-agent",
       "mcpUri": "substrate://topology/internal/records/substrate-create-something-app-create-something-bettermode-marketplace-creator-agent-apps-bettermode-marketplace-creator-agent",
+      "agentCommand": "databaseLayer.topology.records.get",
+      "access": [
+        "read"
+      ],
+      "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
+    },
+    {
+      "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-app-create-something-client-collaboration-pilot-apps-client-collaboration-pilot",
+      "kind": "topology_record",
+      "title": "@create-something/client-collaboration-pilot",
+      "recordId": "substrate:create-something:app:create-something-client-collaboration-pilot-apps-client-collaboration-pilot",
+      "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
+      "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-app-create-something-client-collaboration-pilot-apps-client-collaboration-pilot",
+      "mcpUri": "substrate://topology/internal/records/substrate-create-something-app-create-something-client-collaboration-pilot-apps-client-collaboration-pilot",
       "agentCommand": "databaseLayer.topology.records.get",
       "access": [
         "read"
@@ -8721,37 +8735,6 @@
       "policy": "Proposal and approval records are local review state until an owning production workflow promotes them."
     },
     {
-      "id": "substrate:create-something:management-resource:slice:substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-database-surface-database-agent",
-      "kind": "slice",
-      "title": "Database agent Atlas coverage",
-      "recordId": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-database-surface-database-agent",
-      "sourcePath": "packages/database-layer/data/create-something-operating-slice-review.json",
-      "apiPath": "/api/substrate/operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-database-surface-database-agent",
-      "mcpUri": "substrate://operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-database-surface-database-agent",
-      "agentCommand": "databaseLayer.operatingSlices.get",
-      "access": [
-        "read",
-        "propose"
-      ],
-      "policy": "Proposal and approval records are local review state until an owning production workflow promotes them."
-    },
-    {
-      "id": "substrate:create-something:management-resource:readiness:substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-database-surface-database-agent",
-      "kind": "readiness",
-      "title": "Database agent Atlas coverage readiness",
-      "recordId": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-database-surface-database-agent",
-      "sourcePath": "packages/database-layer/data/create-something-operating-slice-readiness.json",
-      "apiPath": "/api/substrate/operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-database-surface-database-agent/readiness",
-      "mcpUri": "substrate://operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-database-surface-database-agent/readiness",
-      "agentCommand": "databaseLayer.operatingSlices.readiness",
-      "access": [
-        "read",
-        "approve",
-        "receipt"
-      ],
-      "policy": "Proposal and approval records are local review state until an owning production workflow promotes them."
-    },
-    {
       "id": "substrate:create-something:management-resource:slice:substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-application-surface-judgment-app",
       "kind": "slice",
       "title": "Judgment app Atlas coverage",
@@ -8774,6 +8757,37 @@
       "sourcePath": "packages/database-layer/data/create-something-operating-slice-readiness.json",
       "apiPath": "/api/substrate/operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-application-surface-judgment-app/readiness",
       "mcpUri": "substrate://operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-application-surface-judgment-app/readiness",
+      "agentCommand": "databaseLayer.operatingSlices.readiness",
+      "access": [
+        "read",
+        "approve",
+        "receipt"
+      ],
+      "policy": "Proposal and approval records are local review state until an owning production workflow promotes them."
+    },
+    {
+      "id": "substrate:create-something:management-resource:slice:substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-database-surface-database-agent",
+      "kind": "slice",
+      "title": "Database agent Atlas coverage",
+      "recordId": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-database-surface-database-agent",
+      "sourcePath": "packages/database-layer/data/create-something-operating-slice-review.json",
+      "apiPath": "/api/substrate/operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-database-surface-database-agent",
+      "mcpUri": "substrate://operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-database-surface-database-agent",
+      "agentCommand": "databaseLayer.operatingSlices.get",
+      "access": [
+        "read",
+        "propose"
+      ],
+      "policy": "Proposal and approval records are local review state until an owning production workflow promotes them."
+    },
+    {
+      "id": "substrate:create-something:management-resource:readiness:substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-database-surface-database-agent",
+      "kind": "readiness",
+      "title": "Database agent Atlas coverage readiness",
+      "recordId": "substrate:create-something:operating-slice:substrate-create-something-atlas-coverage-group-database-surface-database-agent",
+      "sourcePath": "packages/database-layer/data/create-something-operating-slice-readiness.json",
+      "apiPath": "/api/substrate/operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-database-surface-database-agent/readiness",
+      "mcpUri": "substrate://operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-database-surface-database-agent/readiness",
       "agentCommand": "databaseLayer.operatingSlices.readiness",
       "access": [
         "read",

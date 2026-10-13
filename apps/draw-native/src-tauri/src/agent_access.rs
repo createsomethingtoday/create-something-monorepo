@@ -2,6 +2,7 @@
 use super::*;
 use serde::Deserialize;
 use std::collections::BTreeSet;
+#[cfg(test)]
 use std::io::{BufRead, BufReader};
 use std::os::unix::fs::{DirBuilderExt, PermissionsExt};
 use std::os::unix::net::UnixListener;
@@ -42,14 +43,9 @@ impl Server {
             while !stopping.load(Ordering::Acquire) {
                 match listener.accept() {
                     Ok((mut stream,_)) => {
-                        let _=stream.set_read_timeout(Some(Duration::from_secs(2)));
-                        let _=stream.set_write_timeout(Some(Duration::from_secs(2)));
+                        if local_socket::configure(&stream).is_err() { continue; }
                         let result=(||->Result<Value,String>{
-                            let mut line=Vec::new();
-                            // One bounded newline-delimited request per connection.
-                            use std::io::Read;
-                            BufReader::new((&mut stream).take(2*1024*1024+1)).read_until(b'\n',&mut line).map_err(|_|"Incomplete local request")?;
-                            if line.len()>2*1024*1024 || line.last()!=Some(&b'\n'){return Err("Invalid local request size or framing".into());}
+                            let line=local_socket::read_frame(&mut stream)?;
                             let request:Request=serde_json::from_slice(&line).map_err(|_|"Invalid local request")?;
                             let runtime=runtime.upgrade().ok_or("Native authority closed")?;
                             dispatch(&runtime,request)
@@ -212,6 +208,26 @@ pub(super) fn review(runtime:&DrawRuntime, id:&str, approve:bool)->Result<Value,
         for response in &responses[2..] {assert_ne!(response["result"]["isError"],true);let value:Value=serde_json::from_str(response["result"]["content"][0]["text"].as_str().unwrap()).unwrap();assert_eq!(value["status"],"pending-owner-review");}
         assert_eq!(runtime.host.lock().unwrap().revision,0);
         assert_eq!(review(&runtime,"mac-batch-reviewed",true).unwrap()["status"],"applied");revoke(&runtime).unwrap();
+    }
+    #[test] fn unix_transport_waits_for_delayed_and_fragmented_requests(){
+        let(runtime,token)=setup();
+        let path=status(&runtime).unwrap()["socketPath"].as_str().unwrap().to_string();
+        let payload=format!("{}\n",json!({"method":"inspect","token":token}));
+        for fragmented in [false,true] {
+            let mut stream=UnixStream::connect(&path).unwrap();
+            stream.set_read_timeout(Some(Duration::from_secs(3))).unwrap();
+            let split=if fragmented {payload.len()/2}else{0};
+            if split>0 {stream.write_all(&payload.as_bytes()[..split]).unwrap();}
+            // Exceed the listener's 25ms poll interval so accept/read happens
+            // before either the first byte or the terminating newline arrives.
+            std::thread::sleep(Duration::from_millis(100));
+            stream.write_all(&payload.as_bytes()[split..]).unwrap();
+            let mut response=String::new();
+            BufReader::new(stream).read_line(&mut response).unwrap();
+            assert_eq!(serde_json::from_str::<Value>(&response).unwrap()["result"]["revision"],0);
+        }
+        assert_eq!(runtime.host.lock().unwrap().revision,0);
+        revoke(&runtime).unwrap();
     }
     #[test] fn real_unix_transport_is_private_bounded_and_proposal_only(){
         let(runtime,token)=setup();let path=status(&runtime).unwrap()["socketPath"].as_str().unwrap().to_string();

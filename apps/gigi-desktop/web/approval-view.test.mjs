@@ -1,12 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { chatView } from './chat.mjs';
+import { approvalCopy } from './approval-view.mjs';
 function view(args, currency = 'USD') {
   return chatView({ visible: true, status: { available: true, authenticated: true }, sessions: [], record: null, draft: '', currency,
     current: { state: 'approval', approvals: [{ id: 'a1', title: 'Approve gigi_records_save', detail: JSON.stringify(args) }] } });
 }
 const args = (extra = {}) => ({ entity: 'gigs', id: 'synthetic-gig', title: 'Existing gig', fields: {}, expectedRecord: { title: 'Existing gig', fields: { Status: 'Open', Fee: 9000, Date: '2026-10-03' }, source: { kind: 'manual' } }, ...extra });
-const comparison = (html) => html.split('<details>')[0];
+const comparison = (html) => html.split(/<details(?:\s|>)/)[0];
 
 test('approval shows only structural changes including title, with exact before/after money and date semantics', () => {
   const html = view(args({ title: '  Renamed gig  ', fields: { Status: 'Open', Fee: 12550, Date: '2026-10-04' } }));
@@ -99,4 +100,10 @@ test('profile merge/replace money uses authoritative before/after Currency even 
   assert.match(merge, /CA\$80\.00 CAD/); assert.match(merge, /CA\$90\.00 CAD/); assert.doesNotMatch(merge, / USD/);
   const replace = comparison(view({ ...proposal, fieldsMode: 'replace' }, 'USD'));
   assert.match(replace, /90\.00 \(currency unset\)/); assert.match(replace, /Currency<\/th><td>CAD<\/td><td>Removed/);
+});
+test('selected-source creation review names local target, source and external-write boundary', () => {
+  const html = approvalCopy({ title: 'Approve gigi_records_save', detail: JSON.stringify({ entity: 'tasks', title: 'Reply to booking', fields: {}, sourceRecord: { entity: 'interactions', id: 'mail', connectedAccountId: 'account', expectedRecord: { title: '<img src=x onerror=bad()>', fields: {}, source: { provider: 'gmail' } } } }) });
+  assert.match(html, /Review local task/); assert.match(html, /From Gmail/);
+  assert.match(html, /does not send email or create or update a Google Calendar event/);
+  assert.match(html, /&lt;img/); assert.doesNotMatch(html, /<img|Current values unavailable/);
 });

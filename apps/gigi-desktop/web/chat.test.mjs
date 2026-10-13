@@ -96,8 +96,8 @@ test('Codex status and uncertain writes use plain recovery copy and stop another
   chat.current = session('failed', { error: 'write_outcome_unknown' });
   chat.error = 'write_outcome_unknown';
   const html = chatView(chat);
-  assert.match(html, /record change may have happened/i);
-  assert.match(html, /Check the latest conversation and affected GiGi records/);
+  assert.match(html, /GiGi cannot yet confirm whether this save completed/);
+  assert.match(html, /Do not recreate the record or submit another change/);
   assert.match(html, /type="submit" class="btn primary" disabled/);
   assert.doesNotMatch(html, /write_outcome_unknown/);
   await chat.send('Repeat the write');
@@ -125,7 +125,8 @@ test('resuming a saved conversation displays its own record context and honest c
   assert.doesNotMatch(html, /About Friday show/);
   assert.match(html, /Codex signed in/);
   assert.match(html, /approve edits to existing records/);
-  assert.match(html, /Create records and links with GiGi/);
+  assert.match(html, /Select an imported email or calendar event to propose a linked local task or gig/);
+  assert.match(html, /Other records and links use GiGi/);
   assert.match(html, /Phone access is a separate setup step/);
   await chat.read('s3');
   html = chatView(chat);
@@ -249,4 +250,28 @@ test('workspace verification in another conversation refreshes records once', as
   assert.equal(refreshes, 1);
   chat.accept(read);
   assert.equal(refreshes, 1);
+});
+
+test('existing source receipt preserves changes without claiming save failure or new creation', () => {
+  const chat = { visible: true, status: { available: true, authenticated: true }, sessions: [], current: session('idle', { decisionReceipt: { approvalId: 'existing', outcome: 'existing' } }) };
+  const html = chatView(chat);
+  assert.match(html, /A linked record already exists\. No new record was created; your existing changes were kept\./);
+  assert.doesNotMatch(html, /requested edit was not saved|Changes saved and verified/);
+});
+
+for (const error of [undefined, 'write_outcome_unknown']) test(`interrupted uncertain save blocks sending and supplies safe recovery (error: ${error})`, async () => {
+  let sends = 0;
+  const chat = new ChatController({ chatSend: async () => { sends++; } }, 'w1', () => {});
+  chat.visible = true;
+  chat.status = { available: true, authenticated: true };
+  chat.current = session('interrupted', { error, decisionReceipt: { approvalId: 'pending', outcome: 'unknown' } });
+  const html = chatView(chat);
+  assert.match(html, /GiGi cannot yet confirm whether this save completed/);
+  assert.match(html, /Do not recreate the record or submit another change/);
+  assert.match(html, /Reopen this conversation to check again/);
+  assert.match(html, /ask for help resolving the saved request/);
+  assert.doesNotMatch(html, /You can send another message/);
+  assert.match(html, /type="submit" class="btn primary" disabled/);
+  await chat.send('Create again');
+  assert.equal(sends, 0);
 });

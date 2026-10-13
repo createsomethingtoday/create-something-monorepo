@@ -4,10 +4,10 @@
   "atlasCanvasId": "create-something-internal-operating-topology",
   "rootNodeId": "substrate:create-something:root",
   "coverage": {
-    "generatedAt": "2026-10-08T14:07:04.431Z",
+    "generatedAt": "2026-10-13T14:05:51.285Z",
     "rootPath": ".",
-    "packageCount": 244,
-    "appCount": 13,
+    "packageCount": 245,
+    "appCount": 14,
     "workerCount": 117,
     "clientOverlayCount": 8,
     "policyCount": 64,
@@ -87,6 +87,23 @@
       ],
       "packageName": "@create-something/bettermode-marketplace-creator-agent",
       "runtime": "cloudflare, node"
+    },
+    {
+      "id": "substrate:create-something:app:create-something-client-collaboration-pilot-apps-client-collaboration-pilot",
+      "atlasNodeId": "atlas_create-something_app_create-something-client-collaboration-pilot-apps-client-collaboration-pilot",
+      "title": "@create-something/client-collaboration-pilot",
+      "path": "apps/client-collaboration-pilot",
+      "tier": "Judgment",
+      "surface": "app",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Workspace package at apps/client-collaboration-pilot.",
+      "tags": [
+        "package",
+        "app"
+      ],
+      "packageName": "@create-something/client-collaboration-pilot",
+      "runtime": "node"
     },
     {
       "id": "substrate:create-something:app:create-something-client-workspace-desktop-apps-client-workspace-desktop",
@@ -9619,6 +9636,13 @@
       "evidence": "apps/bettermode-marketplace-creator-agent is present in the repo scan."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-app-create-something-client-collaboration-pilot-apps-client-collaboration-pilot",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:app:create-something-client-collaboration-pilot-apps-client-collaboration-pilot",
+      "relation": "contains",
+      "evidence": "apps/client-collaboration-pilot is present in the repo scan."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-app-create-something-client-workspace-desktop-apps-client-workspace-desktop",
       "source": "substrate:create-something:root",
       "target": "substrate:create-something:app:create-something-client-workspace-desktop-apps-client-workspace-desktop",
@@ -13469,6 +13493,13 @@
       "evidence": "wrangler.jsonc configures runtime for apps/bettermode-marketplace-creator-agent."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-app-create-something-client-collaboration-pilot-apps-client-collaboration-pilot-depends-on-substrate-create-something-package-create-something-canon-packages-canon",
+      "source": "substrate:create-something:app:create-something-client-collaboration-pilot-apps-client-collaboration-pilot",
+      "target": "substrate:create-something:package:create-something-canon-packages-canon",
+      "relation": "depends_on",
+      "evidence": "@create-something/client-collaboration-pilot declares @create-something/canon."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-app-create-something-client-workspace-desktop-apps-client-workspace-desktop-depends-on-substrate-create-something-package-create-something-delivery-schema-packages-delivery-schema",
       "source": "substrate:create-something:app:create-something-client-workspace-desktop-apps-client-workspace-desktop",
       "target": "substrate:create-something:package:create-something-delivery-schema-packages-delivery-schema",
@@ -16822,18 +16853,18 @@
       "evidence": "docs/policies/v1/policy.auth0-subject-rebind-governance.v1.md governs packages/app-governance-db through matching topology terms."
     },
     {
-      "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-client-hub-user-experience-v1-json-governs-substrate-create-something-agent-config-config-dify-agents-aaron-hub-json",
+      "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-client-hub-user-experience-v1-json-governs-substrate-create-something-app-create-something-client-collaboration-pilot-apps-client-collaboration-pilot",
       "source": "substrate:create-something:policy:docs-policies-v1-policy-client-hub-user-experience-v1-json",
-      "target": "substrate:create-something:agent-config:config-dify-agents-aaron-hub-json",
+      "target": "substrate:create-something:app:create-something-client-collaboration-pilot-apps-client-collaboration-pilot",
       "relation": "governs",
-      "evidence": "docs/policies/v1/policy.client-hub-user-experience.v1.json governs config/dify-agents/aaron-hub.json through matching topology terms."
+      "evidence": "docs/policies/v1/policy.client-hub-user-experience.v1.json governs apps/client-collaboration-pilot through matching topology terms."
     },
     {
-      "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-client-hub-user-experience-v1-md-governs-substrate-create-something-agent-config-config-dify-agents-aaron-hub-json",
+      "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-client-hub-user-experience-v1-md-governs-substrate-create-something-app-create-something-client-collaboration-pilot-apps-client-collaboration-pilot",
       "source": "substrate:create-something:policy:docs-policies-v1-policy-client-hub-user-experience-v1-md",
-      "target": "substrate:create-something:agent-config:config-dify-agents-aaron-hub-json",
+      "target": "substrate:create-something:app:create-something-client-collaboration-pilot-apps-client-collaboration-pilot",
       "relation": "governs",
-      "evidence": "docs/policies/v1/policy.client-hub-user-experience.v1.md governs config/dify-agents/aaron-hub.json through matching topology terms."
+      "evidence": "docs/policies/v1/policy.client-hub-user-experience.v1.md governs apps/client-collaboration-pilot through matching topology terms."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-cross-workspace-sync-governance-v1-json-governs-substrate-create-something-package-create-something-app-governance-db-packages-app-governance-db",

@@ -3,7 +3,16 @@ import { z } from 'zod';
 import { createHash } from 'node:crypto';
 
 import { prepareAdminTemplateFill, prepareAdminTemplateFillBatch } from './admin-template-fill.js';
-import { MRP_VISIBILITY_VALUES, setMrpVisibility, type MarketplaceAdminConfig } from './admin-mrp.js';
+import {
+  createMrpTemplate,
+  readMrp,
+  updateMrpTemplate,
+  type MrpTemplateUpdateFields,
+  type MarketplaceAdminConfig,
+  type MrpTemplateCreatePayload,
+} from './admin-mrp.js';
+import { executeDelist, executeRelist, findDelistDrift, previewDelist, type MarketplaceCmsConfig } from './marketplace-delist.js';
+import { DELIST_REASON_VALUES } from './schema.js';
 import {
   buildAdminExecuteBundle,
   buildAdminTemplateCreateExecuteScript,
@@ -283,6 +292,8 @@ export interface ToolRuntimeConfig extends ValidationToolConfig {
    * the tools then fail closed with ZENDESK_NOT_CONFIGURED.
    */
   getZendeskClient?: () => ZendeskClient | null;
+  /** Marketplace Templates CMS access for delist/relist; fails closed without a site token. */
+  marketplaceCms?: MarketplaceCmsConfig;
 }
 
 /**
@@ -321,9 +332,64 @@ export const WRITE_TOOL_NAMES: ReadonlySet<string> = new Set([
   'template_review_prepare_admin_template_create_execute',
   'template_review_prepare_admin_template_update_execute',
   'template_review_prepare_admin_template_thumbnail_execute',
-  // Server-side Webflow write: flips MarketplaceResourceProfile visibility.
-  'template_review_set_mrp_visibility',
+  // Server-side Webflow writes: create the MRP + Template, complete its fields.
+  'template_review_create_admin_template',
+  'template_review_complete_admin_template',
+  // Marketplace listing takedown/restore: writes Airtable and the live
+  // Templates CMS (including other templates' related-assets).
+  'template_review_delist_template',
+  'template_review_relist_template',
 ]);
+
+/**
+ * Next steps after the server-side create. All run through the MCP; nobody
+ * needs to open /admin/templates/<id>.
+ */
+const NEXT_STEPS_AFTER_CREATE = [
+  'Run template_review_complete_admin_template to push the thumbnail, Category, Primary Tag, Type, Cost and Detail Page Path and read them back.',
+  'Work the 🚀Publishing Checklist with template_review_set_checklist_items.',
+  'Approve the version with template_review_approve_version.',
+] as const;
+
+/**
+ * Fields the route accepts but stores only on the legacy Template, which the
+ * key-authenticated route cannot read back. webflow/webflow#123284 makes the
+ * route store them; until it ships they are sent but unverified.
+ */
+const LEGACY_TEMPLATE_ONLY_FIELDS = ['templateMetadata.extCategory', 'templateMetadata.extMainTag'] as const;
+
+type AdminFieldCheck = { field: string; sent: unknown; stored: unknown; status: 'stored' | 'mismatch' | 'unverifiable' };
+
+function readPath(doc: Record<string, unknown> | null, path: string): unknown {
+  return path.split('.').reduce<unknown>((value, key) => (value && typeof value === 'object' ? (value as Record<string, unknown>)[key] : undefined), doc);
+}
+
+function compareAdminFields(sent: MrpTemplateUpdateFields, stored: Record<string, unknown> | null): AdminFieldCheck[] {
+  const paths: Array<[string, unknown]> = [
+    ['name', sent.name],
+    ['description', sent.description],
+    ['price.value', sent.price?.value],
+    ['templateMetadata.type', sent.templateMetadata?.type],
+    ['templateMetadata.extDetailPageUrl', sent.templateMetadata?.extDetailPageUrl],
+    ['templateMetadata.extCategory', sent.templateMetadata?.extCategory],
+    ['templateMetadata.extMainTag', sent.templateMetadata?.extMainTag],
+    ['thumbnailImage.url', sent.thumbnailImage?.url],
+  ];
+  return paths
+    .filter(([, value]) => value !== undefined)
+    .map(([field, value]) => {
+      const storedValue = readPath(stored, field);
+      if (stored === null || ((LEGACY_TEMPLATE_ONLY_FIELDS as readonly string[]).includes(field) && storedValue === undefined)) {
+        return { field, sent: value, stored: storedValue ?? null, status: 'unverifiable' as const };
+      }
+      if (field === 'thumbnailImage.url') {
+        // The route copies the image to the template's CDN path once #123284 ships; any stored URL there counts.
+        const ok = storedValue === value || (typeof storedValue === 'string' && /\/template-assets\/[0-9a-f]{24}\/thumbnails\//.test(storedValue));
+        return { field, sent: value, stored: storedValue ?? null, status: ok ? ('stored' as const) : ('mismatch' as const) };
+      }
+      return { field, sent: value, stored: storedValue ?? null, status: storedValue === value ? ('stored' as const) : ('mismatch' as const) };
+    });
+}
 
 export function registerTools(
   mcpServer: McpServer,
@@ -1251,21 +1317,272 @@ export function registerTools(
   );
 
   server.tool(
-    'template_review_set_mrp_visibility',
-    'Server-side Webflow write: set a MarketplaceResourceProfile\'s visibility to PUBLIC or PRIVATE via the key-authenticated PUT /admin/api/mrp/airtable route. For templates the mrp_id equals the Template ID from /admin/templates. Requires the marketplace admin key in this runtime and an explicit reviewer request; sends only the visibility field (partial update).',
+    'template_review_create_admin_template',
+    'Server-side Webflow write: create the marketplace template (MRP + Admin record) for a version via the key-authenticated POST /admin/api/mrp/airtable route — no browser session, no console script. Uses the same Airtable-derived fields as prepare_admin_template_fill, records the new Template ID in 👀ℹ️MRP ID (Override), and returns the Admin URL with the items still to finish on that page. Requires the marketplace admin key and an explicit reviewer request; refuses when required fields are missing or the asset already has a Template ID.',
     {
-      mrp_id: MONGO_TEMPLATE_ID.describe('MarketplaceResourceProfile _id (equals the Template ID for templates).'),
-      visibility: z.enum(MRP_VISIBILITY_VALUES),
+      version_id: z.string().min(1),
+      support_email: z.string().email().optional().describe('Support contact; defaults to the creator email on the asset.'),
+      support_url: z.string().url().optional(),
+      record_mrp_id: z.boolean().optional().describe('Write the new Template ID to 👀ℹ️MRP ID (Override). Defaults to true.'),
     },
-    async ({ mrp_id, visibility }) => {
+    async ({ version_id, support_email, support_url, record_mrp_id }) => {
       try {
         const reviewer = requireResolvedReviewer(getReviewer);
-        const result = await setMrpVisibility(runtimeConfig.marketplaceAdmin ?? {}, mrp_id, visibility);
+        const actingReviewer = currentReviewerAsCollaborator(getReviewer);
+        await getClient().requireAssignedVersion(version_id, actingReviewer);
+        const context = await getClient().getReviewContext(version_id, actingReviewer);
+        const fillBundle = prepareAdminTemplateFill(context, { includeScript: false, includeBookmarklet: false });
+        if (fillBundle.missing_fields.length > 0) {
+          throw new AirtableClientError(
+            'ADMIN_FORM_INCOMPLETE',
+            'Cannot create the template while required Admin form fields are missing.',
+            422,
+            { missing_fields: fillBundle.missing_fields },
+          );
+        }
+
+        const existingTemplateId = context.asset?.mrpIdOverride ?? context.asset?.mrpId;
+        if (existingTemplateId && /^[0-9a-f]{24}$/i.test(existingTemplateId)) {
+          throw new AirtableClientError(
+            'TEMPLATE_ID_ALREADY_RECORDED',
+            'The asset already has a Template ID recorded; creating again would duplicate it. Use the Admin page or clear the override first.',
+            409,
+            { template_id: existingTemplateId, admin_url: `https://webflow.com/admin/templates/${existingTemplateId}` },
+          );
+        }
+
+        const supportEmail = support_email ?? context.asset?.creatorEmail;
+        if (!supportEmail && !support_url) {
+          throw new AirtableClientError(
+            'SUPPORT_CONTACT_MISSING',
+            'The route requires a support email or URL for templates and the asset has no creator email. Pass support_email or support_url.',
+            422,
+          );
+        }
+
+        const warnings: string[] = [...(fillBundle.form_data.admin_form_warnings ?? [])];
+        if (!fillBundle.readiness.can_publish) {
+          warnings.push('This version is not currently publish-ready according to MCP capability flags. Confirm approval state before relying on the created template.');
+        }
+
+        const form = fillBundle.form_data.admin_form;
+        const thumbnailUrl = fillBundle.form_data.thumbnail_image_url;
+        const payload: MrpTemplateCreatePayload = {
+          name: form.name ?? '',
+          displayName: form.name ?? '',
+          description: form.description ?? '',
+          resourceType: 'TEMPLATE',
+          siteSlug: form.shortName ?? '',
+          // Admin's cost field and the route's price.value are both cents.
+          price: { value: Number(form.cost), unit: 'USD' },
+          support: {
+            ...(supportEmail ? { email: supportEmail } : {}),
+            ...(support_url ? { url: support_url } : {}),
+          },
+          templateMetadata: {
+            type: form.type ?? 'basic',
+            ...(form.extDetailPageUrl ? { extDetailPageUrl: form.extDetailPageUrl } : {}),
+            ...(form.extCategory ? { extCategory: form.extCategory } : {}),
+            ...(form.extMainTag ? { extMainTag: form.extMainTag } : {}),
+          },
+          ...(thumbnailUrl ? { thumbnailImage: { url: thumbnailUrl, altText: form.name ?? 'Template thumbnail' } } : {}),
+        };
+
+        const result = await createMrpTemplate(runtimeConfig.marketplaceAdmin ?? {}, payload);
+
+        let mrpIdRecorded = false;
+        if (record_mrp_id !== false && context.assetId) {
+          try {
+            await getClient().updateAssetPublishing(context.assetId, { mrp_id_overwrite: result.templateId });
+            mrpIdRecorded = true;
+          } catch (error) {
+            warnings.push(
+              `The template was created but writing the MRP ID override failed (${error instanceof Error ? error.message : String(error)}). Record ${result.templateId} via template_review_update_asset_publishing.`,
+            );
+          }
+        }
+
         return asSuccess({
           reviewer: reviewerPayload(reviewer),
-          ...result,
-          note: 'Partial update: only visibility was sent. Verify the listing state in Admin or on the marketplace before announcing the change.',
+          template_id: result.templateId,
+          admin_url: result.adminUrl,
+          mrp_id_recorded: mrpIdRecorded,
+          source: fillBundle.source,
+          payload,
+          next_steps: mrpIdRecorded
+            ? NEXT_STEPS_AFTER_CREATE
+            : [`Record ${result.templateId} in 👀ℹ️MRP ID (Override) with template_review_update_asset_publishing (complete_admin_template needs it).`, ...NEXT_STEPS_AFTER_CREATE],
+          warnings,
+          note: mrpIdRecorded
+            ? 'Next, run template_review_complete_admin_template for this version. The Admin URL is for reference only.'
+            : `The Template ID was not recorded on the asset. Record ${result.templateId} first, then run template_review_complete_admin_template.`,
         });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'template_review_complete_admin_template',
+    'Server-side Webflow write: finish a created template\'s Admin fields without opening Admin. Sends the Airtable-derived thumbnail (fresh link), Category, Primary Tag, Type, Cost, Description and Detail Page Path through the key-authenticated PUT /admin/api/mrp/airtable route, then reads the record back and reports each field as stored, mismatch or unverifiable. Writes only to the Template ID recorded on the asset in 👀ℹ️MRP ID (Override), for a version assigned to the calling reviewer. Requires the marketplace admin key and an explicit reviewer request.',
+    {
+      version_id: z.string().min(1),
+      mrp_id: MONGO_TEMPLATE_ID.optional().describe('Optional check: must equal the Template ID recorded on the asset.'),
+    },
+    async ({ version_id, mrp_id }) => {
+      try {
+        const reviewer = requireResolvedReviewer(getReviewer);
+        const actingReviewer = currentReviewerAsCollaborator(getReviewer);
+        await getClient().requireAssignedVersion(version_id, actingReviewer);
+        const context = await getClient().getReviewContext(version_id, actingReviewer);
+        const recorded = context.asset?.mrpIdOverride ?? context.asset?.mrpId;
+        const templateId = recorded && /^[0-9a-f]{24}$/i.test(recorded) ? recorded : undefined;
+        if (!templateId) {
+          throw new AirtableClientError(
+            'TEMPLATE_ID_MISSING',
+            'No Template ID is recorded on the asset. Run template_review_create_admin_template first, or record the ID with template_review_update_asset_publishing.',
+            422,
+          );
+        }
+        // Writes are bound to this asset's own Admin record; a different id is never written.
+        if (mrp_id && mrp_id.toLowerCase() !== templateId.toLowerCase()) {
+          throw new AirtableClientError(
+            'TEMPLATE_ID_MISMATCH',
+            'mrp_id does not match the Template ID recorded on this asset. Nothing was written.',
+            409,
+            { mrp_id, recorded_template_id: templateId },
+          );
+        }
+
+        const fillBundle = prepareAdminTemplateFill(context, { includeScript: false, includeBookmarklet: false });
+        const form = fillBundle.form_data.admin_form;
+        const thumbnailUrl = fillBundle.form_data.thumbnail_image_url;
+        const cost = Number(form.cost);
+        const adminConfig = runtimeConfig.marketplaceAdmin ?? {};
+        // The route $sets templateMetadata as a whole, so start from what is stored (nulls dropped; the route rejects them)
+        // and overlay only the values Airtable has. A cleared Airtable value never erases a stored one.
+        const storedMetadata = readPath(await readMrp(adminConfig, templateId), 'templateMetadata');
+        const existingMetadata = Object.fromEntries(
+          Object.entries(storedMetadata && typeof storedMetadata === 'object' ? (storedMetadata as Record<string, unknown>) : {}).filter(([, value]) => value !== null && value !== undefined),
+        );
+        const fields: MrpTemplateUpdateFields = {
+          ...(form.name ? { name: form.name, displayName: form.name } : {}),
+          ...(form.description ? { description: form.description } : {}),
+          ...(Number.isFinite(cost) && form.cost !== undefined && form.cost !== '' ? { price: { value: cost, unit: 'USD' as const } } : {}),
+          templateMetadata: {
+            ...existingMetadata,
+            ...(form.type ? { type: form.type } : {}),
+            ...(form.extDetailPageUrl ? { extDetailPageUrl: form.extDetailPageUrl } : {}),
+            ...(form.extCategory ? { extCategory: form.extCategory } : {}),
+            ...(form.extMainTag ? { extMainTag: form.extMainTag } : {}),
+          },
+          ...(thumbnailUrl ? { thumbnailImage: { url: thumbnailUrl, altText: form.name ?? 'Template thumbnail' } } : {}),
+        };
+
+        await updateMrpTemplate(adminConfig, templateId, fields);
+        const stored = await readMrp(adminConfig, templateId);
+        const checks = compareAdminFields(fields, stored);
+
+        const warnings: string[] = [...(fillBundle.form_data.admin_form_warnings ?? [])];
+        if (fillBundle.missing_fields.length > 0) {
+          warnings.push(`Not sent because Airtable has no value: ${fillBundle.missing_fields.join(', ')}.`);
+        }
+        const storedThumb = readPath(stored, 'thumbnailImage.url');
+        if (typeof storedThumb === 'string' && /airtable/i.test(storedThumb)) {
+          warnings.push('The stored thumbnail is an Airtable link. It expires and Admin cannot display it. The route copies it to the CDN once webflow/webflow#123284 ships; rerun this tool then.');
+        }
+        if (checks.some((check) => check.status === 'unverifiable')) {
+          warnings.push('Category and Primary Tag live on the legacy Template, which this route cannot read back. They are stored only after webflow/webflow#123284 ships.');
+        }
+
+        return asSuccess({
+          reviewer: reviewerPayload(reviewer),
+          template_id: templateId,
+          admin_url: `https://webflow.com/admin/templates/${templateId}`,
+          fields: checks,
+          all_stored: checks.every((check) => check.status === 'stored'),
+          warnings,
+          next_steps: NEXT_STEPS_AFTER_CREATE.slice(1),
+        });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  const CMS_ITEM_IDS = z.array(z.string().regex(/^[0-9a-f]{24}$/)).min(1).describe('cms_item_ids exactly as returned by the preview.');
+  const delistActor = (reviewer: ReviewerProfile) => reviewer.email ?? reviewer.name ?? reviewer.accountId;
+
+  server.tool(
+    'template_review_delist_template',
+    'Take a published template off the Marketplace: sets 🚀Marketplace Status → Delisted and 🥞CMS Status → Archived in Airtable, then unpublishes the live Webflow Templates CMS item (the Airtable flip alone does NOT take the page down) and archives its staged copy. If other templates list it in related-assets, they are saved to an Airtable comment on the asset and stripped so the unpublish can succeed. Mode "permanent" (creator request, Stripe, policy) also sets the delist reason and renames the asset "{Name} Archived YYYYMMDD"; "temporary" (relist expected after a fix) leaves both alone. Does NOT archive the Webflow Admin template (that strands buyers; do it separately only for permanent removals). Only for Published assets (or Delisted ones whose page is still live); refuses when a CMS item is shared with a published update twin. Call without confirm to preview; then call again with the same mode and reason and confirm: { confirmed: true, expected_cms_item_ids, plan_token } from the preview, only after the reviewer approves.',
+    {
+      asset_id: z.string().regex(/^rec[A-Za-z0-9]{14}$/),
+      mode: z.enum(['permanent', 'temporary']),
+      reason: z.enum(DELIST_REASON_VALUES).optional().describe('Required for permanent.'),
+      confirm: z
+        .object({
+          confirmed: z.literal(true),
+          expected_cms_item_ids: CMS_ITEM_IDS,
+          plan_token: z.string().regex(/^[0-9a-f]{64}$/).describe('plan_token from the preview; binds the confirm to that mode, reason, and plan.'),
+        })
+        .optional(),
+    },
+    async ({ asset_id, mode, reason, confirm }) => {
+      try {
+        const reviewer = requireResolvedReviewer(getReviewer);
+        if (mode === 'permanent' && !reason) {
+          throw new AirtableClientError('DELIST_REASON_REQUIRED', 'A permanent delist needs a reason: Creator request, Stripe status, or Policy infringement.', 400);
+        }
+        const cmsConfig = runtimeConfig.marketplaceCms ?? {};
+        if (!confirm) {
+          return asSuccess({ preview: true, ...(await previewDelist(getClient(), cmsConfig, { assetId: asset_id, mode, reason })) });
+        }
+        const result = await executeDelist(getClient(), cmsConfig, {
+          assetId: asset_id,
+          mode,
+          reason,
+          expectedCmsItemIds: confirm.expected_cms_item_ids,
+          planToken: confirm.plan_token,
+          actor: delistActor(reviewer),
+        });
+        return asSuccess({ reviewer: reviewerPayload(reviewer), ...result });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'template_review_relist_template',
+    'Undo template_review_delist_template: sets 🚀Marketplace Status → Published and 🥞CMS Status → Active, clears the delist reason, strips any " Archived …" name suffix, un-archives and republishes the Webflow Templates CMS item(s), and adds the item back to every template whose related-assets were stripped (read from the snapshot comment on the asset). Only for assets currently Delisted, never for a Policy infringement delist; re-running after an interrupted relist resumes it. Run template_review_delist_template in preview mode first to get the cms_item_ids, confirm with the reviewer, then pass them here.',
+    {
+      asset_id: z.string().regex(/^rec[A-Za-z0-9]{14}$/),
+      confirm: z.object({ confirmed: z.literal(true), expected_cms_item_ids: CMS_ITEM_IDS }),
+    },
+    async ({ asset_id, confirm }) => {
+      try {
+        const reviewer = requireResolvedReviewer(getReviewer);
+        const result = await executeRelist(getClient(), runtimeConfig.marketplaceCms ?? {}, {
+          assetId: asset_id,
+          expectedCmsItemIds: confirm.expected_cms_item_ids,
+          actor: delistActor(reviewer),
+        });
+        return asSuccess({ reviewer: reviewerPayload(reviewer), ...result });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'template_review_delist_drift',
+    'Read-only: list templates marked Delisted in Airtable whose Marketplace page still serves 200 (the Airtable flip was made but the CMS item was never unpublished). Checks every Delisted asset that links a CMS item; excludes update twins whose page belongs to a published listing. Fix each with template_review_delist_template.',
+    {},
+    async () => {
+      try {
+        return asSuccess(await findDelistDrift(getClient(), runtimeConfig.marketplaceCms ?? {}));
       } catch (error) {
         return asError(error);
       }

@@ -34,7 +34,11 @@ export function normalizeNoteContent(value: unknown): NoteContent | null {
       if (runs > 500 || bytes > 32_000) return null;
     }
   }
-  return structuredClone(value) as NoteContent;
+  // Reactive editors pass proxy-backed content. Copy the validated JSON AST
+  // into a portable snapshot instead of asking structuredClone to clone proxies.
+  return { blocks: (blocks as NoteBlock[]).map(block => ({
+    type: block.type, runs: block.runs.map(run => ({ ...run }))
+  })) };
 }
 
 export function noteContentText(content: NoteContent): string {

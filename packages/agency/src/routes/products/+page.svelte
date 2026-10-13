@@ -1,6 +1,7 @@
 <script lang="ts">
   import WorkflowSignalBand from '$lib/components/WorkflowSignalBand.svelte';
   import {
+    IsometricIllustration,
     Button,
     PerformanceCampaignOpening,
     PerformanceConversionHandoff,
@@ -20,7 +21,6 @@
   import { filmStories } from '$lib/data/filmStories';
   import { PUBLIC_PRICING } from '$lib/data/publicPricing';
   import AgencyWayfindingSign from '$lib/components/AgencyWayfindingSign.svelte';
-  import AgencyIsometricGlyph from '$lib/components/AgencyIsometricGlyph.svelte';
   import AgencyPathChoices from '$lib/components/AgencyPathChoices.svelte';
 
   type ProductSurfaceKind = 'signal' | 'decision' | 'proof';
@@ -212,7 +212,7 @@
             <span>{item.label}</span>
             {#if item.kind}
               <div class="control-surface-icon" data-icon={item.kind}>
-                <AgencyIsometricGlyph kind={item.kind === 'decision' ? 'approval' : item.kind} />
+                <IsometricIllustration kind={item.kind === 'decision' ? 'approve' : item.kind === 'proof' ? 'verify' : 'operate'} size="100%" />
               </div>
             {/if}
             <strong>{item.title}</strong>
@@ -559,35 +559,18 @@
       border-left: 0;
     }
 
+    /* Keep native keyboard focus visible: mandatory horizontal snapping can
+       return a partially scrolled focused card to the preceding snap point. */
     .control-surfaces,
-    .proof-chooser {
-      grid-template-columns: none;
-      grid-auto-flow: column;
-      grid-auto-columns: minmax(15rem, 82vw);
-      max-width: 100%;
-      overflow-x: auto;
-      overscroll-behavior-inline: contain;
-      scroll-snap-type: inline mandatory;
-    }
-
-    .control-surfaces a,
-    .proof-chooser a {
-      scroll-snap-align: start;
-    }
-
-    .control-surfaces a + a,
-    .proof-chooser a + a {
-      border-left: 1px solid var(--color-performance-line, #d7d7d2);
-    }
-
     .proof-chooser {
       grid-template-columns: 1fr;
       grid-auto-flow: row;
       grid-auto-columns: auto;
+      max-width: 100%;
       overflow-x: visible;
-      scroll-snap-type: none;
     }
 
+    .control-surfaces a + a,
     .proof-chooser a + a {
       border-top: 1px solid var(--color-performance-line, #d7d7d2);
       border-left: 0;

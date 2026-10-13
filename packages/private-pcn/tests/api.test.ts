@@ -98,6 +98,9 @@ beforeEach(() => {
   sqlite.exec(
     readFileSync(new URL('../migrations/0015_guided_learning.sql', import.meta.url), 'utf8')
   );
+  sqlite.exec(
+    readFileSync(new URL('../migrations/0027_progress_path_context.sql', import.meta.url), 'utf8')
+  );
   remote = vi.fn();
   vi.stubGlobal('fetch', remote);
 });
@@ -107,6 +110,139 @@ afterEach(() => {
 });
 
 describe('API against migrated SQLite schema (supporting proof)', () => {
+  it('keeps legacy progress and selects the last valid sequence without leaking other networks', async () => {
+    seed('shared');
+    seed('private-next');
+    sqlite.exec('UPDATE videos SET duration=120');
+    const make = async (title: string, lesson_ids: string[]) =>
+      (
+        await (
+          await POST(
+            event(
+              'learning/paths/save',
+              {
+                title,
+                outcome: 'Verify',
+                prerequisites: '',
+                estimated_minutes: 10,
+                lesson_ids,
+                visibility: 'published'
+              },
+              'admin'
+            )
+          )
+        ).json()
+      ).id;
+    const first = await make('First', ['shared']);
+    const second = await make('Second', ['shared', 'private-next']);
+    const save = async (position: number, path_id?: string) =>
+      POST(
+        event(
+          'learning/progress',
+          { id: 'shared', action: 'position', position, ...(path_id ? { path_id } : {}) },
+          'member'
+        )
+      );
+    const read = async () =>
+      (await (await GET(event('learning/continue', undefined, 'member'))).json()).lessons[0];
+    await save(10);
+    expect(await read()).toMatchObject({ position: 10, path_id: null, watched_at: null });
+    await save(20, first);
+    await save(30, second);
+    expect(await read()).toMatchObject({ position: 30, path_id: second });
+    sqlite.exec("UPDATE videos SET visibility='draft' WHERE id='private-next'");
+    expect((await read()).path_id).toBeNull();
+    expect((await save(40, second)).status).toBe(200);
+    expect(await read()).toMatchObject({ position: 40, path_id: null });
+    sqlite.exec(
+      "INSERT INTO networks(id,slug,name) VALUES('elsewhere','elsewhere','Other network')"
+    );
+    sqlite.prepare("UPDATE learning_paths SET network_id='elsewhere' WHERE id=?").run(first);
+    await save(50, first);
+    expect((await read()).path_id).toBeNull();
+  });
+
+  it('resumes the selected accessible path without changing watched status or leaking revoked paths', async () => {
+    seed('context-lesson');
+    sqlite.exec("UPDATE videos SET duration=120 WHERE id='context-lesson'");
+    const payload = {
+      title: 'Chosen sequence',
+      outcome: 'Verify',
+      prerequisites: '',
+      estimated_minutes: 10,
+      lesson_ids: ['context-lesson'],
+      visibility: 'published'
+    };
+    const { id } = await (await POST(event('learning/paths/save', payload, 'admin'))).json();
+    const write = await POST(
+      event(
+        'learning/progress',
+        { id: 'context-lesson', action: 'position', position: 35, path_id: id },
+        'member'
+      )
+    );
+    expect(write.status).toBe(200);
+    const read = async () =>
+      (await (await GET(event('learning/continue', undefined, 'member'))).json()).lessons[0];
+    expect(await read()).toMatchObject({ position: 35, path_id: id, watched_at: null });
+    await POST(
+      event(
+        'learning/progress',
+        { id: 'context-lesson', action: 'watched', watched: true },
+        'member'
+      )
+    );
+    expect(await read()).toMatchObject({ path_id: id });
+    sqlite.prepare("UPDATE learning_paths SET visibility='archived' WHERE id=?").run(id);
+    expect((await read()).path_id).toBeNull();
+    expect(
+      (
+        await POST(
+          event(
+            'learning/progress',
+            { id: 'context-lesson', action: 'position', position: 40, path_id: id },
+            'member'
+          )
+        )
+      ).status
+    ).toBe(200);
+  });
+  it('discards an unrelated path without blocking authorized playback progress', async () => {
+    seed('context-one');
+    seed('context-two');
+    sqlite.exec('UPDATE videos SET duration=120');
+    const { id } = await (
+      await POST(
+        event(
+          'learning/paths/save',
+          {
+            title: 'Other sequence',
+            outcome: 'Verify',
+            prerequisites: '',
+            estimated_minutes: 10,
+            lesson_ids: ['context-two'],
+            visibility: 'published'
+          },
+          'admin'
+        )
+      )
+    ).json();
+    expect(
+      (
+        await POST(
+          event(
+            'learning/progress',
+            { id: 'context-one', action: 'position', position: 35, path_id: id },
+            'member'
+          )
+        )
+      ).status
+    ).toBe(200);
+    expect(
+      (await (await GET(event('learning/continue', undefined, 'member'))).json()).lessons[0].path_id
+    ).toBeNull();
+  });
+
   it('does not expose archived, cross-network or suspended paths, or accept stale edits', async () => {
     seed('one');
     seed('two');
