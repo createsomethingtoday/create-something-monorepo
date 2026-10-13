@@ -401,3 +401,13 @@ test('copy flags from a retried delist are merged, so relist restores every copy
   assert.ok(web.staged.get(REF_B)?.related.includes(TARGET));
   assert.ok(web.live.get(REF_B)?.related.includes(TARGET));
 });
+
+test('relist with no page path and no CMS item left in Webflow does not record completion', async () => {
+  const web = fakeWebflow();
+  const at = fakeAirtable({ ...publishedFields, [F.marketplaceStatus]: '4️⃣Delisted☠️', [F.detailPagePath]: undefined, [F.cmsItemIds]: [MISSING] });
+  at.comments.unshift({ id: 'c1', text: `[template-review:delist-snapshot v1]\n${JSON.stringify({ asset_id: ASSET, at: '', by: 'x', mode: 'temporary', cms_item_ids: [MISSING], referencers: {} })}`, createdTime: '' });
+  const result = await executeRelist(at.airtable, web.config, { assetId: ASSET, expectedCmsItemIds: [MISSING], actor: 'x', now: NOW });
+  assert.equal(result.verified, false);
+  assert.match(String(result.note), /nothing was republished/);
+  assert.doesNotMatch(at.comments[0]!.text, /^\[template-review:relist v1\]/);
+});

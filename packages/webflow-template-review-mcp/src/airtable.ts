@@ -2525,16 +2525,21 @@ export class AirtableClient {
 
   /** Published assets that link any of the given CMS items (an update twin can share its page with a newer listing). */
   async listPublishedAssetsLinkingCmsItems(cmsItemIds: string[]): Promise<AirtableRecord[]> {
-    const ids = cmsItemIds.filter((id) => /^[0-9a-f]{24}$/.test(id));
-    if (ids.length === 0) return [];
+    const ids = [...new Set(cmsItemIds.filter((id) => /^[0-9a-f]{24}$/.test(id)))];
     const f = DELIST_ASSET_FIELD_IDS;
-    const matches = ids.map((id) => `FIND('${id}', ARRAYJOIN({${f.cmsItemIds}}))`).join(', ');
-    return this.listRecords({
-      tableId: TABLE_IDS.assets,
-      filterByFormula: `AND({${f.marketplaceStatus}}='${MARKETPLACE_STATUS_PUBLISHED}', OR(${matches}))`,
-      fieldIds: [f.name, f.marketplaceStatus, f.cmsItemIds],
-      returnFieldsByFieldId: true,
-    });
+    const records = new Map<string, AirtableRecord>();
+    // Chunked so the GET formula stays well under Airtable's 16,000-character URL limit.
+    for (let index = 0; index < ids.length; index += 50) {
+      const matches = ids.slice(index, index + 50).map((id) => `FIND('${id}', ARRAYJOIN({${f.cmsItemIds}}))`).join(', ');
+      const chunk = await this.listRecords({
+        tableId: TABLE_IDS.assets,
+        filterByFormula: `AND({${f.marketplaceStatus}}='${MARKETPLACE_STATUS_PUBLISHED}', OR(${matches}))`,
+        fieldIds: [f.name, f.marketplaceStatus, f.cmsItemIds],
+        returnFieldsByFieldId: true,
+      });
+      for (const record of chunk) records.set(record.id, record);
+    }
+    return [...records.values()];
   }
 
   async completePublishing(

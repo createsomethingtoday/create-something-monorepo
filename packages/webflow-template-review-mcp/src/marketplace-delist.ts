@@ -594,7 +594,9 @@ export async function executeRelist(
 
   // The marker ends resumability, so write it only once the page is confirmed back (or there is no page to check).
   const status = await waitForPageStatus(cmsConfig, asset.page_path, 200);
-  const complete = status === 200 || status === null;
+  const published = items.filter((item) => item.published).length;
+  // With no page path, a relist is complete only if at least one CMS item was actually republished.
+  const complete = status === 200 || (status === null && published > 0);
   if (complete) {
     await airtable.addAssetComment(asset.asset_id, `${RELIST_MARKER}\n${JSON.stringify({ at: now.toISOString(), by: input.actor })}`);
   }
@@ -607,7 +609,14 @@ export async function executeRelist(
     public_page: asset.page_path,
     public_page_status: status,
     verified: status === 200,
-    ...(complete ? {} : { note: 'The page is not back yet. Re-run relist to retry; it resumes from the current state.' }),
+    ...(complete
+      ? {}
+      : {
+          note:
+            published > 0
+              ? 'The page is not back yet. Re-run relist to retry; it resumes from the current state.'
+              : 'No linked CMS item exists in Webflow, so nothing was republished. Fix the asset\'s CMS link, then re-run relist.',
+        }),
   };
 }
 
