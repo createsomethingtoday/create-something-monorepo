@@ -183,7 +183,10 @@ export function createIdentityRoutes(options: IdentityRoutesOptions): IdentityRo
     async fetch(request) {
       const url = new URL(request.url);
       if (request.method === 'GET' && url.pathname === '/sign-in') {
-        return new Response(signInHtml, {
+        const html = url.searchParams.get('next') === 'collaboration'
+          ? signInHtml.replace('Operator-only production pilot.', 'Sign in to review your project edits.').replace('action="/api/auth/login"', 'action="/api/auth/login?next=collaboration"')
+          : signInHtml;
+        return new Response(html, {
           headers: {
             'content-type': 'text/html; charset=utf-8',
             'cache-control': 'no-store',
@@ -234,7 +237,7 @@ export function createIdentityRoutes(options: IdentityRoutesOptions): IdentityRo
         headers.append('set-cookie', cookie('cs_access_token', data.access_token, data.expires_in));
         headers.append('set-cookie', cookie('cs_refresh_token', data.refresh_token, 7 * 24 * 60 * 60));
         if (!request.headers.get('content-type')?.includes('application/json')) {
-          headers.set('location', '/');
+          headers.set('location', url.searchParams.get('next') === 'collaboration' ? '/collaboration/' : '/');
           return new Response(null, { status: 303, headers });
         }
         return new Response(JSON.stringify({ success: true }), { status: 200, headers });

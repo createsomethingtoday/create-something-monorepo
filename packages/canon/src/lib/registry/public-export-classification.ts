@@ -1161,6 +1161,7 @@ const SUBPATH_EXPORT_POLICIES: CanonPublicExportClassificationRule[] = [
 ];
 
 export const CANON_PUBLIC_EXPORT_CLASSIFICATION_RULES: CanonPublicExportClassificationRule[] = [
+  { exportPath: './isometric', classification: 'brand-surface', registryPolicy: 'classified-out', rationale: 'Original conceptual illustration support, not a promoted foundation UI primitive; see isometric/README.md.' },
   ...ROOT_COMPONENT_EXPORT_POLICIES,
   ...PACKAGE_EXPORT_PATH_POLICIES,
   ...SUBPATH_EXPORT_POLICIES

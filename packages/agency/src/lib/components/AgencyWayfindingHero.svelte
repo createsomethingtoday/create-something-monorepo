@@ -1,8 +1,8 @@
 <script lang="ts">
-  import AgencyIsometricGlyph, { type AgencySignKind } from './AgencyIsometricGlyph.svelte';
+  import { IsometricIllustration, type IsometricKind } from '@create-something/canon';
 
   type HeroRoute = 'practice' | 'fieldReports' | 'stack' | 'services' | 'control';
-  type Step = { kind: AgencySignKind; label: string; detail: string };
+  type Step = { kind: IsometricKind; label: string; detail: string };
   type Story = { eyebrow: string; steps: Step[]; note: string };
 
   let { route }: { route: HeroRoute } = $props();
@@ -12,8 +12,8 @@
       eyebrow: 'Practice route',
       steps: [
         { kind: 'map', label: 'Sample task', detail: 'One workflow to rehearse' },
-        { kind: 'approval', label: 'Human review', detail: 'Approval and stop rules' },
-        { kind: 'proof', label: 'Draft record', detail: 'Result and limits' }
+        { kind: 'approve', label: 'Human review', detail: 'Approval and stop rules' },
+        { kind: 'verify', label: 'Draft record', detail: 'Result and limits' }
       ],
       note: 'Practice only · no live access'
     },
@@ -21,8 +21,8 @@
       eyebrow: 'Evidence route',
       steps: [
         { kind: 'map', label: 'Source record', detail: 'Named workflow' },
-        { kind: 'approval', label: 'Review limits', detail: 'What remains blocked' },
-        { kind: 'proof', label: 'Read report', detail: 'Result and unknowns' }
+        { kind: 'approve', label: 'Review limits', detail: 'What remains blocked' },
+        { kind: 'verify', label: 'Read report', detail: 'Result and unknowns' }
       ],
       note: 'Measured · blocked · unknown'
     },
@@ -30,26 +30,26 @@
       eyebrow: 'Ownership route',
       steps: [
         { kind: 'map', label: 'Your accounts', detail: 'Systems and access' },
-        { kind: 'approval', label: 'Your decisions', detail: 'Approval authority' },
-        { kind: 'proof', label: 'Your records', detail: 'Work history and proof' }
+        { kind: 'approve', label: 'Your decisions', detail: 'Approval authority' },
+        { kind: 'verify', label: 'Your records', detail: 'Work history and proof' }
       ],
       note: 'Your team keeps the durable assets'
     },
     services: {
       eyebrow: 'Technical support',
       steps: [
-        { kind: 'map', label: 'Diagnose', detail: 'Agree on the problem and scope' },
-        { kind: 'approval', label: 'Engineer', detail: 'Implement and test approved changes' },
-        { kind: 'proof', label: 'Learn', detail: 'Use the result and keep project context' }
+        { kind: 'diagnose', label: 'Diagnose', detail: 'Agree on the problem and scope' },
+        { kind: 'build', label: 'Engineer', detail: 'Implement and test approved changes' },
+        { kind: 'learn', label: 'Learn', detail: 'Use the result and keep project context' }
       ],
       note: 'Larger Build and managed Control are scoped separately'
     },
     control: {
       eyebrow: 'Operating route',
       steps: [
-        { kind: 'control', label: 'Watch the system', detail: 'One agreed live environment' },
-        { kind: 'approval', label: 'Hold decisions', detail: 'Protected actions wait for a person' },
-        { kind: 'proof', label: 'Record and recover', detail: 'Outcome and next step' }
+        { kind: 'operate', label: 'Watch the system', detail: 'One agreed live environment' },
+        { kind: 'approve', label: 'Hold decisions', detail: 'Protected actions wait for a person' },
+        { kind: 'verify', label: 'Record and recover', detail: 'Outcome and next step' }
       ],
       note: 'Post-launch operation · Control includes Map'
     }
@@ -65,7 +65,7 @@
   <div class="wayfinding-hero__route">
     {#each story.steps as step}
       <div class="wayfinding-hero__step">
-        <span class="wayfinding-hero__glyph"><AgencyIsometricGlyph kind={step.kind} /></span>
+        <span class="wayfinding-hero__glyph"><IsometricIllustration kind={step.kind} size="100%" /></span>
         <strong>{step.label}</strong>
         <span class="wayfinding-hero__detail">{step.detail}</span>
       </div>
@@ -75,7 +75,7 @@
 </div>
 
 <style>
-  .wayfinding-hero {
+  .wayfinding-hero { --isometric-surface: var(--color-performance-editorial-dark);
     box-sizing: border-box;
     display: grid;
     align-content: center;
@@ -124,7 +124,7 @@
 
   .wayfinding-hero__glyph {
     display: block;
-    width: clamp(3.25rem, 5vw, 5rem);
+    width: clamp(5rem, 8vw, 8rem);
     margin-block: var(--space-performance-sm);
   }
   .wayfinding-hero__step strong {
@@ -165,7 +165,7 @@
       text-align: center;
     }
     .wayfinding-hero__glyph {
-      width: 2.25rem;
+      width: 4rem;
       margin: 0;
     }
     .wayfinding-hero__step strong {

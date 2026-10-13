@@ -145,7 +145,7 @@ test('connector sign-in explains provider outages and timeouts without exposing 
     await settle();
     click({ page: 'settings' }); await settle();
     click({ signIn: '1' }); await settle();
-    assert.match(root.innerHTML, /temporarily unavailable.*try again/i);
+    assert.match(root.innerHTML, /temporarily unavailable.*check status later/i);
     assert.doesNotMatch(root.innerHTML, /provider_unavailable/);
 
     failure = 'timeout';
@@ -217,7 +217,7 @@ test('Overview shows actionable workspace data, opens its records, and keeps lib
     assert.match(root.innerHTML, /Open tasks/); assert.match(root.innerHTML, /Follow up/);
     assert.match(root.innerHTML, /Expense · \$90\.00/);
     assert.match(root.innerHTML, /Showing 1 of 6 matching records · 2 without a usable date/);
-    assert.match(root.innerHTML, /<details class="nav-library" data-library-nav="1" >/);
+    assert.match(root.innerHTML, /<details data-view-key="library" class="nav-library" data-library-nav="1" >/);
     assert.equal(calls.filter(({operation}) => operation === 'workspace.overview').length, 1);
     const beforeNavigation = scrolls.length;
     click({ open: 'f1', entity: 'finances' }); await settle();

@@ -12,6 +12,32 @@ import {
   isMcpPackage,
 } from '../check-staged-mcp-registry-coverage.mjs';
 
+test('CLI handles bracketed routes and still rejects uncovered MCP packages', () => {
+  const cwd = mkdtempSync(join(tmpdir(), 'registry-bracket-route-'));
+  const script = fileURLToPath(new URL('../check-staged-mcp-registry-coverage.mjs', import.meta.url));
+  try {
+    execFileSync('git', ['init', '-q', cwd]);
+    mkdirSync(join(cwd, 'scripts'));
+    mkdirSync(join(cwd, 'packages/draw/src/routes/[shareId]'), { recursive: true });
+    writeFileSync(join(cwd, 'scripts/mcp-registry-coverage.mjs'), 'const PACKAGE_COVERAGE = {\n};\n');
+    writeFileSync(join(cwd, 'packages/draw/package.json'), JSON.stringify({ name: 'draw' }));
+    writeFileSync(join(cwd, 'packages/draw/src/routes/[shareId]/+page.svelte'), '<p>Draw</p>');
+    execFileSync('git', ['add', '.'], { cwd });
+    execFileSync('git', ['-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid', '-c', 'core.hooksPath=/dev/null', 'commit', '-qm', 'fixture'], { cwd });
+    writeFileSync(join(cwd, 'packages/draw/src/routes/[shareId]/+page.svelte'), '<p>Draw identity</p>');
+    execFileSync('git', ['add', '.'], { cwd });
+    const clean = spawnSync(process.execPath, [script], { cwd, encoding: 'utf8' });
+    assert.equal(clean.status, 0, clean.stderr);
+    writeFileSync(join(cwd, 'packages/draw/package.json'), JSON.stringify({ name: 'draw-mcp' }));
+    execFileSync('git', ['add', '.'], { cwd });
+    const uncovered = spawnSync(process.execPath, [script], { cwd, encoding: 'utf8' });
+    assert.equal(uncovered.status, 1);
+    assert.match(uncovered.stderr, /Missing coverage entries:[\s\S]*packages\/draw/);
+  } finally {
+    rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
 test('extracts top-level PACKAGE_COVERAGE keys from the coverage script source', () => {
   const source = `
 const PACKAGE_COVERAGE = {

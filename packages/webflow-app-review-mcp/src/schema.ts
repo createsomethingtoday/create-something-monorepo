@@ -48,6 +48,18 @@ export const FIELD_IDS = {
     creatorName: 'fldbkU8CKmDPtf83d',
     previewSiteUrl: 'fldROrXCnuZyKNCxW',
     promoVideoUrl: 'fldXlxAN7Afc8vUYS',
+    // Preflight evidence, written 1:1 by the Marketplace submission form webhook. Read-only here.
+    preflightReceipt: 'fldyED3GJQ6RY9FD8',
+    preflightBundleSha: 'fldxkahQoKgJ2GSQw',
+    preflightReadiness: 'fld1Uv5irWmtmb498',
+    preflightSourceMapStatus: 'fldPYQFHhAMrltgg3',
+    preflightRuntimeStatus: 'fldQSkFGVbbDFhkXO',
+    preflightVerifiedAt: 'fldaMnARk1uVvJX8G',
+    preflightTraceError: 'fldQ9PyklHtha2UHK',
+    preflightInstallUrlStatus: 'fldHStfyVCmvzMTTC',
+    preflightInstallUrlProbe: 'fld9pVFSuvMfbMhGX',
+    preflightInstallUrlCheckedAt: 'fldPCPIZgVLDIRsAj',
+    preflightInstallUrlCheckedBy: 'fldrs3ObJM8uEYgPq',
   },
   versions: {
     name: 'fldKA9eJja5uajlok',
@@ -88,6 +100,18 @@ export const FIELD_IDS = {
     zendeskSubject: 'fldit9ZTSm7non29Z',
     /** Reverse of ⚖️Exceptions.✔️Resolved in Version — rows THIS resubmission fixed (9/16/2026). */
     resolvedExceptionItems: 'fldNi85OKGFEg8vQg',
+    // Preflight evidence, written 1:1 by the Marketplace submission form webhook. Read-only here.
+    preflightReceipt: 'fldsC51z2wJrWCfKj',
+    preflightBundleSha: 'fldytGQ5duG6i5n4i',
+    preflightReadiness: 'fldWkWWkL9PftWQ8w',
+    preflightSourceMapStatus: 'fldaW81hsbdiNaaqM',
+    preflightRuntimeStatus: 'fldEIPd9glGRQIhAs',
+    preflightVerifiedAt: 'fldzf8iD3DLMt21C0',
+    preflightTraceError: 'fld1uFVqLRNDQCNZc',
+    preflightInstallUrlStatus: 'fld6YeCf8UbgReTPJ',
+    preflightInstallUrlProbe: 'fldT6vMEb7xNmxpGM',
+    preflightInstallUrlCheckedAt: 'flduoayx2NPnwVkYu',
+    preflightInstallUrlCheckedBy: 'fldrHBRM5Zszp0gEm',
   },
   exceptions: {
     item: 'fldmJcVJCytD1VY1r',
@@ -214,6 +238,36 @@ export const REJECTION_REASON_OPTIONS = [
   'Unsubmitted',
   'Other',
 ] as const;
+
+export const PREFLIGHT_READINESS_OPTIONS = ['ready', 'changes_required', 'needs_review'] as const;
+
+export const PREFLIGHT_INSTALL_URL_STATUS_OPTIONS = ['pass', 'warn', 'block', 'not_checked'] as const;
+
+/**
+ * Preflight read-only keys (snake_case, as exposed by the field map) -> FIELD_IDS key.
+ * The same eleven fields exist on both Assets and Asset Versions.
+ */
+export const PREFLIGHT_FIELD_KEYS = {
+  preflight_receipt: 'preflightReceipt',
+  preflight_bundle_sha: 'preflightBundleSha',
+  preflight_readiness: 'preflightReadiness',
+  preflight_source_map_status: 'preflightSourceMapStatus',
+  preflight_runtime_status: 'preflightRuntimeStatus',
+  preflight_verified_at: 'preflightVerifiedAt',
+  preflight_trace_error: 'preflightTraceError',
+  preflight_install_url_status: 'preflightInstallUrlStatus',
+  preflight_install_url_probe: 'preflightInstallUrlProbe',
+  preflight_install_url_checked_at: 'preflightInstallUrlCheckedAt',
+  preflight_install_url_checked_by: 'preflightInstallUrlCheckedBy',
+} as const;
+
+export type PreflightReadOnlyKey = keyof typeof PREFLIGHT_FIELD_KEYS;
+
+function preflightReadOnlyFields(table: 'assets' | 'versions'): Record<PreflightReadOnlyKey, string> {
+  return Object.fromEntries(
+    Object.entries(PREFLIGHT_FIELD_KEYS).map(([key, fieldKey]) => [key, FIELD_IDS[table][fieldKey]]),
+  ) as Record<PreflightReadOnlyKey, string>;
+}
 
 export const GOVERNANCE_FINDING_CATEGORY_OPTIONS = [
   'Runtime Integrity & Custom Code Governance',
@@ -511,6 +565,7 @@ export const APP_REVIEW_FIELD_MAP = {
       workspace_dashboard_url: FIELD_IDS.assets.workspaceDashboardUrl,
       app_id: FIELD_IDS.assets.appId,
       install_url_formula: FIELD_IDS.assets.installUrlFormula,
+      ...preflightReadOnlyFields('assets'),
     },
   },
   versions: {
@@ -546,6 +601,7 @@ export const APP_REVIEW_FIELD_MAP = {
       asset_exception_history: FIELD_IDS.versions.assetExceptionHistory,
       resolved_exception_items: FIELD_IDS.versions.resolvedExceptionItems,
       is_partnership_app: FIELD_IDS.versions.partnershipApp,
+      ...preflightReadOnlyFields('versions'),
     },
   },
   exceptions: {
@@ -585,6 +641,8 @@ export const APP_REVIEW_FIELD_MAP = {
     exceptionStatus: EXCEPTION_STATUS_OPTIONS,
     exceptionType: EXCEPTION_TYPE_OPTIONS,
     holdReason: HOLD_REASON_OPTIONS,
+    preflightReadiness: PREFLIGHT_READINESS_OPTIONS,
+    preflightInstallUrlStatus: PREFLIGHT_INSTALL_URL_STATUS_OPTIONS,
     governanceFindingCategory: GOVERNANCE_FINDING_CATEGORY_OPTIONS,
     governanceFindingStatus: GOVERNANCE_FINDING_STATUS_OPTIONS,
     governanceFindingPriority: GOVERNANCE_FINDING_PRIORITY_OPTIONS,

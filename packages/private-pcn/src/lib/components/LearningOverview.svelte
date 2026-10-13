@@ -43,7 +43,9 @@
       <button class="text-button" onclick={load}>Try saved progress again</button>
     </div>
   {:else if continued.length}<div class="resumes">
-      {#each continued as lesson}<a href={lessonPath(lesson.id, slug)}
+      {#each continued as lesson}<a
+          href={lessonPath(lesson.id, slug) +
+            (lesson.path_id ? `?path=${encodeURIComponent(lesson.path_id)}` : '')}
           ><strong>{lesson.title}</strong><span
             >{playbackProgressLabel(lesson.position, lesson.duration)}{lesson.watched_at
               ? ' · Marked watched'

@@ -1,3 +1,4 @@
+import { launchOwned } from './owned-process.mjs';
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import {
@@ -27,6 +28,7 @@ const stateHome = join(temporaryRoot, 'state');
 const bundleIdentifier = 'agency.createsomething.draw';
 const requireProductionRelease = process.env.DRAW_REQUIRE_PRODUCTION_RELEASE === '1';
 let attached = false;
+let ownedProcess;
 
 function command(name, args, { allowFailure = false, env } = {}) {
   const result = spawnSync(name, args, {
@@ -68,17 +70,6 @@ async function waitForFile(path, timeout = 20_000) {
   }
   throw new Error(`Timed out waiting for ${path}`);
 }
-async function waitForNewProcess(binary, previousPids, timeout = 20_000) {
-  const deadline = Date.now() + timeout;
-  while (Date.now() < deadline) {
-    const result = command('pgrep', ['-f', binary], { allowFailure: true });
-    const pids = result.status === 0 ? result.stdout.split('\n').filter(Boolean) : [];
-    const fresh = pids.filter((pid) => !previousPids.has(pid));
-    if (fresh.length) return fresh;
-    await delay(200);
-  }
-  throw new Error('Timed out waiting for a fresh installed-app process');
-}
 function newestDmg() {
   const directory = join(bundleRoot, 'dmg');
   const candidates = readdirSync(directory)
@@ -89,26 +80,23 @@ function newestDmg() {
   return candidates[0];
 }
 function launch(appPath, executable) {
+  if (ownedProcess?.alive()) throw Error('Previous owned Draw process is still running.');
   const binary = join(appPath, 'Contents', 'MacOS', executable);
-  const result = command('open', [
-    '-n',
-    '-g',
-    '--env',
-    `CREATE_SOMETHING_DRAW_HOME=${stateHome}`,
-    appPath
-  ]);
-  if (result.status !== 0) throw new Error('Installed app failed to launch');
+  ownedProcess = launchOwned(binary, { ...process.env,
+    CREATE_SOMETHING_DRAW_HOME: stateHome,
+    CREATE_SOMETHING_DRAW_ENABLE_LAN: '0',
+    CREATE_SOMETHING_DRAW_EPHEMERAL_WEBVIEW: '1'
+  });
   return binary;
 }
-function quit() {
-  command('osascript', ['-e', `tell application id "${bundleIdentifier}" to quit`], {
-    allowFailure: true
-  });
-}
+async function quit() { await ownedProcess?.stop(); }
 
 async function main() {
   if (process.env.DRAW_INSTALLED_SKIP_BUILD !== '1') command('pnpm', ['build:dmg']);
-  const dmgPath = newestDmg();
+  if (requireProductionRelease && !process.env.DRAW_DMG_PATH) throw Error('Production acceptance requires explicit DRAW_DMG_PATH.');
+  const dmgPath = process.env.DRAW_DMG_PATH ? realpathSync(process.env.DRAW_DMG_PATH) : newestDmg();
+  const sourceSha = command('git', ['rev-parse', 'HEAD']).stdout;
+  if (requireProductionRelease && (process.env.GITHUB_SHA && process.env.GITHUB_SHA !== sourceSha || command('git', ['status', '--porcelain', '--untracked-files=no']).stdout)) throw Error('Production acceptance requires the clean exact source commit.');
   const dmgVerification = command('hdiutil', ['verify', dmgPath]);
   mkdirSync(mountPath);
   command('hdiutil', ['attach', '-readonly', '-nobrowse', '-mountpoint', mountPath, dmgPath]);
@@ -144,31 +132,6 @@ async function main() {
   if (/\/usr\/local|\/opt\/homebrew|node_modules/.test(dylibs))
     throw new Error(`Unexpected external dependency:\n${dylibs}`);
 
-  const binary = launch(canonicalApp, executable);
-  const firstState = await waitForFile(join(stateHome, 'paired-session.json'));
-  const firstDocumentHash = createHash('sha256')
-    .update(JSON.stringify(firstState.document))
-    .digest('hex');
-  const processEvidence = command('pgrep', ['-f', binary]);
-  const firstProcessIds = new Set(processEvidence.stdout.split('\n').filter(Boolean));
-  quit();
-  await delay(800);
-  launch(canonicalApp, executable);
-  const secondProcessIds = await waitForNewProcess(binary, firstProcessIds);
-  await delay(1200);
-  for (const pid of secondProcessIds) command('kill', ['-0', pid]);
-  const secondState = await waitForFile(join(stateHome, 'paired-session.json'));
-  const secondDocumentHash = createHash('sha256')
-    .update(JSON.stringify(secondState.document))
-    .digest('hex');
-  quit();
-  if (
-    firstState.sessionId !== secondState.sessionId ||
-    firstState.revision !== secondState.revision ||
-    firstDocumentHash !== secondDocumentHash
-  ) {
-    throw new Error('Relaunch did not preserve the canonical session, revision, and document');
-  }
   const signingCheck = command('codesign', ['--verify', '--deep', '--strict', canonicalApp], {
     allowFailure: true
   });
@@ -179,7 +142,7 @@ async function main() {
   const signingAuthority = signingOutput.match(/^Authority=(.+)$/m)?.[1] || null;
   const teamIdentifier = signingOutput.match(/^TeamIdentifier=(.+)$/m)?.[1] || null;
   const productionSigned =
-    signingCheck.status === 0 && signingAuthority?.startsWith('Developer ID Application:') === true;
+    signingCheck.status === 0 && signingAuthority?.startsWith('Developer ID Application:') === true && teamIdentifier === 'PRP5VQQPPB';
   const signing =
     signingCheck.status === 0
       ? {
@@ -210,7 +173,8 @@ async function main() {
     { allowFailure: true }
   );
   const notarizationPerformed = appStapling.status === 0 && dmgStapling.status === 0;
-  const gatekeeperPerformed = gatekeeper.status === 0;
+  const appGatekeeper = command('spctl', ['--assess', '--type', 'execute', '--verbose=4', canonicalApp], { allowFailure: true });
+  const gatekeeperPerformed = gatekeeper.status === 0 && appGatekeeper.status === 0;
   if (
     requireProductionRelease &&
     (!productionSigned || !notarizationPerformed || !gatekeeperPerformed)
@@ -219,14 +183,54 @@ async function main() {
       `Production release gates failed: Developer ID=${productionSigned}, app stapling=${appStapling.status === 0}, DMG stapling=${dmgStapling.status === 0}, Gatekeeper=${gatekeeperPerformed}`
     );
   }
+  // Query only after production signature, notarization and Gatekeeper preflight.
+  ownedProcess = launchOwned(join(canonicalApp, 'Contents', 'MacOS', executable), {
+    ...process.env,
+    CREATE_SOMETHING_DRAW_HOME: join(temporaryRoot, 'build-info-profile'),
+    CREATE_SOMETHING_DRAW_ENABLE_LAN: '0',
+    CREATE_SOMETHING_DRAW_EPHEMERAL_WEBVIEW: '1'
+  }, ['--draw-build-info'], true);
+  const probe = await ownedProcess.result();
+  if (probe.code !== 0) throw Error('Executable build-info probe failed.');
+  const buildInfo = JSON.parse(probe.stdout);
+  if (buildInfo.schema !== 'create-something/draw-build-info@1') throw Error('Unsupported executable build-info schema.');
+  if (requireProductionRelease && (buildInfo.schema !== 'create-something/draw-build-info@1' || buildInfo.sourceSha !== sourceSha || buildInfo.sourceClean !== true)) throw Error('Signed executable build source does not match the clean release commit.');
+  const binary = launch(canonicalApp, executable);
+  const firstState = await waitForFile(join(stateHome, 'paired-session.json'));
+  const firstDocumentHash = createHash('sha256')
+    .update(JSON.stringify(firstState.document))
+    .digest('hex');
+  const firstProcessIds = [ownedProcess.pid];
+  if (!ownedProcess.alive()) throw Error('Owned Draw process exited before acceptance.');
+  await quit();
+  launch(canonicalApp, executable);
+  const secondProcessIds = [ownedProcess.pid];
+  await delay(1200);
+  if (!ownedProcess.alive()) throw Error('Relaunched Draw process exited before acceptance.');
+  const secondState = await waitForFile(join(stateHome, 'paired-session.json'));
+  const secondDocumentHash = createHash('sha256')
+    .update(JSON.stringify(secondState.document))
+    .digest('hex');
+  await quit();
+  if (
+    firstState.sessionId !== secondState.sessionId ||
+    firstState.revision !== secondState.revision ||
+    firstDocumentHash !== secondDocumentHash
+  ) {
+    throw new Error('Relaunch did not preserve the canonical session, revision, and document');
+  }
   const receipt = {
     schema: 'create-something/draw-installed-acceptance@1',
     ok: true,
     runId,
+    completedAt: new Date().toISOString(),
+    sourceSha,
+    buildInfo,
     artifact: {
       name: basename(dmgPath),
       sha256: sha256File(dmgPath),
-      appSha256: hashDirectory(canonicalApp)
+      appSha256: hashDirectory(canonicalApp),
+      executableSha256: sha256File(binary)
     },
     bundle: { identifier, version, binary, selfContained: true },
     state: {
@@ -239,7 +243,7 @@ async function main() {
       hdiutilVerify: dmgVerification.status === 0,
       readonlyMount: true,
       isolatedCopy: true,
-      processIds: processEvidence.stdout.split('\n'),
+      processIds: firstProcessIds,
       relaunchProcessIds: secondProcessIds,
       externalDylibCheck: true
     },
@@ -254,7 +258,8 @@ async function main() {
       },
       gatekeeper: {
         status: gatekeeperPerformed ? 'performed' : 'unperformed',
-        assessment: gatekeeper.stderr || gatekeeper.stdout
+        assessment: gatekeeper.stderr || gatekeeper.stdout,
+        appAssessment: appGatekeeper.stderr || appGatekeeper.stdout
       },
       physicalIPhoneAcceptance: 'unperformed'
     }
@@ -272,7 +277,7 @@ async function main() {
 try {
   await main();
 } finally {
-  quit();
+  await quit();
   if (attached) command('hdiutil', ['detach', mountPath], { allowFailure: true });
   rmSync(temporaryRoot, { recursive: true, force: true });
 }

@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { basename, join } from 'node:path';
 import { verifyRelease } from './verify-release.mjs';
 
-const team='ABCDE12345';
+const team='PRP5VQQPPB';
 const developerId=`Developer ID Application: CREATE SOMETHING (${team})`;
 const signed=`Identifier=agency.createsomething.gigi\nAuthority=${developerId}\nAuthority=Developer ID Certification Authority\nAuthority=Apple Root CA\nTeamIdentifier=${team}\nTimestamp=Sep 30, 2026 at 1:00:00 PM\nCodeDirectory flags=0x10000(runtime)\nCDHash=${'a'.repeat(40)}\n`;
 const upstream=signed.replaceAll(team,'6JJ2TTFB9A').replace('CREATE SOMETHING','ctx engineering inc');
@@ -77,6 +77,16 @@ test('ad-hoc app signature fails closed before Gatekeeper or mount',async(t)=>{
  assert.equal(result.qualified,false);
  assert.equal(result.reason,'app_identity');
  assert.ok(!calls.some(call=>call[0]==='hdiutil'&&call[1]==='attach'));
+});
+
+test('a valid Developer ID from another team cannot qualify a GiGi release',async(t)=>{
+ const {appPath,dmgPath}=await fixture(t);
+ const {run,calls}=commands({appPath,override:(command,args)=>command==='codesign'&&args.includes('-dv')&&args.at(-1)===appPath
+  ?{exitCode:0,stdout:'',stderr:signed.replaceAll(team,'ABCDE12345')}:null});
+ const result=await verifyRelease({appPath,dmgPath,run});
+ assert.equal(result.qualified,false);
+ assert.equal(result.reason,'app_identity');
+ assert.ok(!calls.some(call=>call[0]==='spctl'||call[0]==='hdiutil'));
 });
 
 test('different app bytes inside the DMG fail and the owned mount is detached',async(t)=>{

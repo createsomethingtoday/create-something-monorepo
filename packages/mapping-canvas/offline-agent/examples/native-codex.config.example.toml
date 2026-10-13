@@ -1,0 +1,8 @@
+# Source-bound, inactive draft. Do not copy into an active config before approval.
+[mcp_servers.draw-native-reviewed]
+command = "/opt/homebrew/bin/node"
+args = ["/Users/createsomething/Documents/Codex/2026-10-08/task-3/draw-offline/packages/mapping-canvas/offline-agent/native-client.mjs", "--socket", "/REPLACE_WITH_APPROVED_SESSION/agent.sock"]
+env_vars = ["DRAW_AGENT_TOKEN"]
+enabled = false
+enabled_tools = ["draw_native_inspect", "draw_native_proposal_status"]
+default_tools_approval_mode = "prompt"

@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>MaverickX / Client review</title>
+    <link rel="stylesheet" href="/canon.css" />
+    <link rel="stylesheet" href="/style.css" />
+    <script src="/app.js" defer></script>
+  </head>
+  <body>
+    <header>
+      <a href="/">CREATE SOMETHING</a
+      ><span>CLIENT COLLABORATION / LOCAL PILOT</span
+      ><span>Synthetic reviewer</span>
+    </header>
+    <main>
+      <section class="intro">
+        <p class="eyebrow">MAVERICKX · SYNTHETIC WORKSPACE</p>
+        <h1>Make the next change clear.</h1>
+        <p id="intro-copy">
+          Leave feedback on an exact version. Review the proposed copy, then
+          choose what moves forward.
+        </p>
+        <p class="boundary">
+          Local demonstration · No model calls · No deployment · ChatGPT sign-in
+          pending partner registration
+        </p>
+      </section>
+      <div id="notice" role="status" aria-live="polite"></div>
+      <section class="workspace" aria-label="Review workspace">
+        <div>
+          <div class="section-title">
+            <h2>01 / Page & edit request</h2>
+            <button id="refresh">Refresh</button>
+          </div>
+          <p id="anchor" class="meta"></p>
+          <article class="preview">
+            <span class="eyebrow">MAVERICKX / HERO</span>
+            <h2 id="headline"></h2>
+            <p id="preview-subtitle">Strategy. Creative. Measurable growth.</p>
+            <span class="preview-link">Explore our approach ↗</span>
+          </article>
+          <form id="feedback-form">
+            <label for="feedback">Requested change and supporting context</label
+            ><textarea
+              id="feedback"
+              maxlength="1000"
+              required
+              placeholder="What should change, and why?"
+            ></textarea
+            ><button class="primary">Save edit request</button>
+          </form>
+          <div id="feedback-list"></div>
+        </div>
+        <div>
+          <h2>02 / Proposal & decision</h2>
+          <p id="agent-explanation">
+            Use the same bounded contract for Claude Code or Codex. This local
+            form simulates the agent’s proposal.
+          </p>
+          <form id="proposal-form">
+            <label for="feedback-id">Respond to feedback</label
+            ><select id="feedback-id" required></select
+            ><label for="replacement">Proposed headline</label
+            ><input
+              id="replacement"
+              maxlength="160"
+              required
+              value="Turn ambitious goals into measurable growth."
+            /><label for="reason">Reason for this change</label
+            ><textarea id="reason" maxlength="500" required>
+Make the outcome concrete while keeping the headline concise.</textarea
+            ><button class="primary">Create proposal</button>
+          </form>
+          <div id="proposals"></div>
+        </div>
+      </section>
+      <section class="receipts">
+        <h2>03 / Handoff & evidence</h2>
+        <p id="application-boundary">
+          Promotion creates a local source-change handoff and advances this
+          synthetic preview. Repository edits and deployment require a separate
+          reviewed workflow.
+        </p>
+        <div id="handoffs"></div>
+        <details>
+          <summary>Agent-readable context & common contract</summary>
+          <pre id="contract"></pre>
+        </details>
+        <details>
+          <summary>Activity receipts</summary>
+          <pre id="receipts"></pre>
+        </details>
+      </section>
+    </main>
+    <footer>Source → Feedback → Proposal → Review → Local handoff</footer>
+  </body>
+</html>

@@ -1,5 +1,15 @@
 # GiGi desktop beta
 
+## Selected source proposals (candidate)
+
+Open an already imported Gmail interaction or Google Calendar schedule record and choose **Create task from source** or **Create gig from source**. Review the title and optional date, then approve the local save. Ask GiGi supports the same operation when a conversation starts with that source selected. Source text is reference material, never authority to execute instructions. This feature neither sends email nor creates or updates Google Calendar events, and requires no new Google scopes.
+
+The save atomically creates the local record and its source relation. Workspace, account, provider and source identity are validated again against the reviewed snapshot. Repeating a conversion returns the existing task or gig and preserves user edits. Tasks have no inferred deadline. Calendar gigs retain their explicit date range; all-day end dates remain exclusive. Newly imported events can retain their original time zone, offsets and provider reference. Older imports may lack that metadata.
+
+Chat reconciles uncertain saves using an exact, read-only receipt lookup. An absent receipt, or a created record edited before recovery, can remain unresolved and block another chat mutation; do not interpret this as proof that nothing was saved. Inspect local records before attempting another proposal. The direct form retries its identical idempotent request. Import remains the existing explicit, bounded page operation; this feature does not add inbox browsing or live provider selection.
+
+Acceptance for this candidate covers synthetic Gmail/Calendar proposals, cancellation, stale snapshots, cross-workspace/account rejection, atomic links, duplicates, lost replies, all-day dates and offset-aware times. An isolated ad-hoc QA bundle passed native cancellation, Gmail task save/duplicate preservation, Calendar all-day gig save and restart/reopen with source links. Missing receipts and mismatch rejection were exercised deterministically, not through native fault injection. Production release qualification and actual provider-backed chat acceptance remain separate gates; the installed production app and real records were untouched.
+
 A Rust/Tauri desktop workspace for music-related work. Each installation owns a private SQLite database. The UI and local MCP companion use the same validated domain operations. CTX supplies supporting history; current records and calculations remain in SQLite.
 
 The local functional beta passed connected desktop and physical cellular-phone acceptance; current receipts and artifact hashes are in `evidence/local-checkpoint.md`. Developer ID signing, notarization and installation of the qualified release remain required before production distribution. See `evidence/tdd.md` for checks and failures; a successful build alone does not prove acceptance.
@@ -17,6 +27,12 @@ From the monorepo root, run `pnpm bootstrap:worktree` first.
 The local build uses a separate ad-hoc signing configuration, requires macOS 13 or later, and currently targets Apple Silicon. It does not require Grant’s Apple credentials. Production packaging uses `pnpm --filter @create-something/gigi-desktop build` after release signing is configured. An app bundle alone does not establish a signed/notarized production release. Run `verify:release` with the absolute app and DMG paths after production packaging; it exits nonzero for an unqualified pair. Qualification is separate from installing that exact release and repeating the native workflow. The verifier is read-only and must reject the local ad-hoc build. It checks the signed GiGi identifier, Developer ID executable signatures, Gatekeeper and stapled notarization, DMG integrity, and the byte/mode identity of the app mounted read-only from that DMG. An optional `--source-sha` is recorded as a caller assertion, not verified build provenance.
 
 ## Local state and agent access
+
+### Source connection diagnostics
+
+In Settings → Source connection support, choose **Start local capture**, repeat the failing source action, then **Stop capture** and **Review diagnostics**. Export is available only for that stopped, reviewed report. The app saves a private local JSON file and shows its path; nothing is uploaded automatically. Share it deliberately with the GiGi operator, alongside the steps that failed, without adding account details or source content. Pending consent or operator-review states must be reconciled before another consent attempt.
+
+Capture records only compiled build identity, platform, timestamps, random correlation IDs, provider/stage, safe outcome codes, transitions and retry indicators. It excludes credentials, account identities, URLs, message/event content and record payloads. Capture stops after one hour or app restart, retains at most 200 events, and prunes events older than seven days when diagnostics are accessed. **Delete diagnostics** removes the app-owned capture and export, including unreadable captures; it cannot recall copies a user has shared. Diagnostic failures do not change the result of source operations.
 
 The default macOS state directory is `~/Library/Application Support/agency.createsomething.gigi`. `GIGI_DATA_DIR` selects an isolated test profile for both the desktop and MCP companion. Never point acceptance tests at an existing person's database.
 
@@ -39,6 +55,13 @@ Imports read bounded Gmail metadata and Calendar event pages. Each saved record 
 Agent setup generates exact Codex MCP registration and Claude plugin launch commands. Preparing files is not installing a plugin or verifying a session. The user must approve writes in their provider's session; read-only automation cannot supply that acceptance. Use the compact bundled skill and retrieve full details only for selected records.
 
 ## Guided onboarding
+
+Source setup now shows six stages: local workspace, GiGi source sign-in, source choice, Google consent, verification, and explicit bounded import. An expired GiGi session asks for sign-in; admission/resource denial asks the operator to check app access; an unavailable identity/connector service asks for a later status check. None of those errors grants access or releases a pending consent attempt.
+
+After ownership and active-connection verification, the connector reads a display label through that same Google connection: Gmail's profile address or Calendar's primary-calendar identifier. The GiGi sign-in email is never used as the Google label. Missing, malformed or slow optional labels stay unavailable without inventing an account identity. Existing approved Google grants are broader than read-only; GiGi's fixed source proxy uses only GET operations. Each explicit import reads at most two Gmail metadata/snippet records or ten primary-calendar events. Open an imported record to review a linked local task or gig.
+
+The dedicated `GiGi regression` workflow covers desktop, integrations, native domain, explicit MCP and CTX fixtures, and source conversion process acceptance. These synthetic checks do not replace fresh admitted-user consent/import acceptance or signed/notarized artifact qualification.
+
 
 First launch explains the local workspace, optional Google sources and optional subscribed agent. Creating a workspace leads to Setup & safety, with a manual-work action and links to the source, agent and phone steps. Local records need no sign-in. Connecting sources uses the GiGi connector account and separate Google consent; verification and page imports stay separate.
 
@@ -64,7 +87,7 @@ Daily navigation remains visible; Library expands for supporting records. Record
 
 Ask GiGi slides out as a right-side overlay for a selected record or the workspace. It preserves the underlying page and scroll position; Escape closes the drawer. The opening motion respects reduced-motion settings and does not replay during conversation polling. This beta uses a locally installed Codex CLI signed in with ChatGPT; it does not offer a separate GiGi ChatGPT sign-in or a paid model API fallback. The app locates the executable and checks the provider account. Account presence is distinct from a successful model turn, and subscription limits still apply.
 
-The bundled `gigi-codex` companion drives Codex app-server. It verifies a restricted configuration, presents only GiGi reads and existing-record saves, and routes them through the existing local MCP/domain boundary. Saves require an explicit in-app approval, a fresh expected record and a verified readback. Record creation, relation changes and backups remain available through the manual or external-agent workflows. A completed reply triggers a fresh record read; cancelling or restarting must not silently replay a mutation. Other provider tools, shell execution, permission expansion and external MCP connections are outside this embedded workflow.
+The bundled `gigi-codex` companion drives Codex app-server. It verifies a restricted configuration, presents GiGi reads, existing-record saves and reviewed task/gig creation from a selected imported source, and routes them through the existing local MCP/domain boundary. Saves require an explicit in-app approval, a fresh expected record and a verified readback. Other record creation, relation changes and backups remain available through the manual or external-agent workflows. A completed reply triggers a fresh record read; cancelling or restarting must not silently replay a mutation. Other provider tools, shell execution, permission expansion and external MCP connections are outside this embedded workflow.
 
 GiGi stores conversation ownership metadata under the selected profile's `codex-chat` directory. Codex stores its own local thread history and processes selected record context through the user's provider account. SQLite remains the source of truth for business records. Existing SQLite backups do not include Codex-owned transcripts or the chat metadata; provider session history is separate from a record backup. Embedded conversations do not automatically appear in the ChatGPT mobile app. The existing external MCP/remote-session route remains available separately.
 
