@@ -18,6 +18,7 @@ export const AGENCY_ATLAS_PROOF_PATHS = [
 ] as const;
 
 export const AGENCY_COMPACT_PRIVACY_PATHS = [
+  '/scopefield',
   '/airtable-workflow-consulting',
   '/dfw-tech-support',
   '/',
@@ -37,6 +38,7 @@ export const AGENCY_COMPACT_PRIVACY_PATHS = [
 ] as const;
 
 export const AGENCY_ROUTE_OWNED_PERFORMANCE_ENDING_PATHS = [
+  '/scopefield',
   '/airtable-workflow-consulting',
   '/dfw-tech-support',
   '/',
