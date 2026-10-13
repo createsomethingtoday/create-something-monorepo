@@ -3,6 +3,8 @@ pub mod source_import;
 pub mod integrations;
 mod agent_setup;
 mod navigation;
+pub mod chat;
+pub mod diagnostics;
 
 use tauri::Manager;
 
@@ -14,11 +16,15 @@ async fn dispatch(app: tauri::AppHandle, operation: String, input: serde_json::V
     };
     let resources=app.path().resource_dir().map_err(|e|e.to_string())?;
     tauri::async_runtime::spawn_blocking(move || {
+        if operation.starts_with("diagnostics.") {return diagnostics::dispatch(&data_dir,&operation,input);}
+        let diagnostic_input=input.clone();
+        diagnostics::observe(&data_dir,&operation,&diagnostic_input,|| {
         if operation=="agent.status" {return agent_setup::status(&data_dir);}
         if operation=="agent.prepare" {return agent_setup::prepare(&resources,&data_dir);}
         if operation=="help.open" {return navigation::open_help(input);}
         if operation=="connections.openConsent" {return navigation::open_consent(input);}
         if operation=="context.sync" {return integrations::sync_history(&resources,&data_dir);}
+        if operation.starts_with("agent.chat.") {return chat::dispatch(&resources,&data_dir,&operation,input);}
         if operation=="connections.import" {
             let page=integrations::dispatch(&resources,&data_dir,&operation,input.clone())?;
             return source_import::persist_page(&data_dir,&input,page);
@@ -28,6 +34,7 @@ async fn dispatch(app: tauri::AppHandle, operation: String, input: serde_json::V
         } else {
             domain::dispatch(&data_dir,&operation,input)
         }
+        })
     }).await.map_err(|_|"GiGi operation interrupted".to_string())?
 }
 
@@ -39,6 +46,7 @@ pub fn run() {
         .run(|_app, event| {
             if matches!(event, tauri::RunEvent::Exit) {
                 integrations::cancel_all();
+                chat::cancel_all();
             }
         });
 }

@@ -9,7 +9,8 @@
   "scripts": {
     "build:companion": "bun build src/runner-main.ts --compile --outfile dist/gigi-integrations",
     "test": "node --import tsx --test test/*.test.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "build:codex-companion": "bun build src/codex-main.ts --compile --outfile dist/gigi-codex"
   },
   "dependencies": {
     "effect": "3.22.2"

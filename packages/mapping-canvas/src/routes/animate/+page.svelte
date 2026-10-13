@@ -547,7 +547,7 @@
 <main class:preview-mode={previewMode}>
   <header>
     <a href={`/?project=${encodeURIComponent(project.id)}`} onclick={openCanvas} class="brand"
-      >DRAW <span>MOTION</span></a
+      ><img src="/brand/draw-dark.svg" alt="" width="32" height="32" />Draw <span>MOTION</span></a
     ><input
       aria-label="Animation title"
       value={project.title}
@@ -557,14 +557,14 @@
       onclick={() => run(() => fresh())}
       disabled={!ready || busy || exporting}>New</button
     ><button onclick={() => fileInput.click()} disabled={!ready || busy || exporting}
-      >Open project</button
+      >Import project JSON</button
     ><button
       onclick={() =>
         download(
           new Blob([JSON.stringify(project)], { type: 'application/json' }),
           'animation.draw.json'
         )}
-      disabled={!ready}>Save project</button
+      disabled={!ready || busy || exporting}>Export project JSON</button
     ><ProjectModes id={project.id} mode={previewMode?'preview':'motion'} navigate={(event,mode)=>{if(mode==='canvas')void openCanvas(event);else{event.preventDefault();previewMode=mode==='preview';window.history.replaceState(null,'',`/animate?project=${encodeURIComponent(project.id)}${previewMode?'&mode=preview':''}`);}}} />
     <AgentConnection projectId={project.id} {ready} tools={connectionTools} mode="motion" />
   </header>
@@ -817,7 +817,7 @@
             r.paint(c.getContext('2d')!, project, time);
             download(await png(c), 'animation-frame.png');
           })}
-        disabled={!assetsReady || exporting}>Export clean frame</button
+        disabled={!assetsReady || exporting}>Export PNG frame</button
       ><button
         class="primary"
         onclick={() => run(video)}

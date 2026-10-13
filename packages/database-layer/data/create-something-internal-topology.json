@@ -4,14 +4,14 @@
   "atlasCanvasId": "create-something-internal-operating-topology",
   "rootNodeId": "substrate:create-something:root",
   "coverage": {
-    "generatedAt": "2026-10-06T14:17:55.778Z",
+    "generatedAt": "2026-10-08T14:07:04.431Z",
     "rootPath": ".",
-    "packageCount": 240,
+    "packageCount": 244,
     "appCount": 13,
-    "workerCount": 116,
+    "workerCount": 117,
     "clientOverlayCount": 8,
     "policyCount": 64,
-    "guideCount": 79,
+    "guideCount": 80,
     "configCount": 40
   },
   "nodes": [
@@ -890,6 +890,23 @@
       ],
       "packageName": "app-governance-desktop",
       "runtime": "tauri, node"
+    },
+    {
+      "id": "substrate:create-something:package:create-something-app-review-agent-eval-packages-app-review-agent-eval",
+      "atlasNodeId": "atlas_create-something_package_create-something-app-review-agent-eval-packages-app-review-agent-eval",
+      "title": "@create-something/app-review-agent-eval",
+      "path": "packages/app-review-agent-eval",
+      "tier": "Automation",
+      "surface": "agent",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Internal experiment harness: does an agent with sandbox access, on a given model, produce reviewer-grade Marketplace App review findings? Replays labeled versions, runs model arms through the Codex CLI, judges against reviewer feedback.",
+      "tags": [
+        "package",
+        "agent"
+      ],
+      "packageName": "@create-something/app-review-agent-eval",
+      "runtime": "node"
     },
     {
       "id": "substrate:create-something:package:create-something-arc-packages-arc",
@@ -2600,6 +2617,23 @@
       "runtime": "cloudflare, node"
     },
     {
+      "id": "substrate:create-something:package:create-something-marketplace-featured-notifier-packages-marketplace-featured-notifier",
+      "atlasNodeId": "atlas_create-something_package_create-something-marketplace-featured-notifier-packages-marketplace-featured-notifier",
+      "title": "@create-something/marketplace-featured-notifier",
+      "path": "packages/marketplace-featured-notifier",
+      "tier": "Automation",
+      "surface": "worker",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Cloudflare Worker cron that notifies creators when their template is a featured pick (Knock marketplace-template-featured)",
+      "tags": [
+        "package",
+        "worker"
+      ],
+      "packageName": "@create-something/marketplace-featured-notifier",
+      "runtime": "cloudflare, node"
+    },
+    {
       "id": "substrate:create-something:package:create-something-maverick-admin-packages-maverick-admin",
       "atlasNodeId": "atlas_create-something_package_create-something-maverick-admin-packages-maverick-admin",
       "title": "@create-something/maverick-admin",
@@ -3180,7 +3214,7 @@
       "atlasNodeId": "atlas_create-something_package_create-something-relay-packages-relay",
       "title": "@create-something/relay",
       "path": "packages/relay",
-      "tier": "Database",
+      "tier": "Mixed",
       "surface": "worker",
       "owner": "CREATE SOMETHING",
       "status": "mapped",
@@ -3783,6 +3817,40 @@
         "dev-server"
       ],
       "packageName": "@create-something/ui-preview-mcp",
+      "runtime": "node"
+    },
+    {
+      "id": "substrate:create-something:package:create-something-webflow-app-forge-packages-webflow-app-forge",
+      "atlasNodeId": "atlas_create-something_package_create-something-webflow-app-forge-packages-webflow-app-forge",
+      "title": "@create-something/webflow-app-forge",
+      "path": "packages/webflow-app-forge",
+      "tier": "Database",
+      "surface": "package",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Internal: scaffold a Webflow Designer Extension that passes Marketplace review, check the built bundle and listing against a versioned requirements registry, and assemble the submission packet.",
+      "tags": [
+        "package",
+        "package"
+      ],
+      "packageName": "@create-something/webflow-app-forge",
+      "runtime": "node"
+    },
+    {
+      "id": "substrate:create-something:package:app-slug-packages-webflow-app-forge-template",
+      "atlasNodeId": "atlas_create-something_package_app-slug-packages-webflow-app-forge-template",
+      "title": "__APP_SLUG__",
+      "path": "packages/webflow-app-forge/template",
+      "tier": "Mixed",
+      "surface": "package",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "__APP_NAME__ - a Webflow Designer Extension",
+      "tags": [
+        "package",
+        "package"
+      ],
+      "packageName": "__APP_SLUG__",
       "runtime": "node"
     },
     {
@@ -5746,6 +5814,23 @@
       "owner": "CREATE SOMETHING",
       "status": "mapped",
       "summary": "Cloudflare runtime configuration at packages/mapping-canvas/wrangler.jsonc.",
+      "tags": [
+        "worker",
+        "cloudflare",
+        "runtime"
+      ],
+      "runtime": "cloudflare"
+    },
+    {
+      "id": "substrate:create-something:worker:packages-marketplace-featured-notifier-wrangler-jsonc",
+      "atlasNodeId": "atlas_create-something_worker_packages-marketplace-featured-notifier-wrangler-jsonc",
+      "title": "packages/marketplace-featured-notifier/wrangler.jsonc",
+      "path": "packages/marketplace-featured-notifier/wrangler.jsonc",
+      "tier": "Automation",
+      "surface": "worker",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Cloudflare runtime configuration at packages/marketplace-featured-notifier/wrangler.jsonc.",
       "tags": [
         "worker",
         "cloudflare",
@@ -8691,6 +8776,21 @@
       ]
     },
     {
+      "id": "substrate:create-something:guide:docs-guides-slack-help-request-triage-runbook-md",
+      "atlasNodeId": "atlas_create-something_guide_docs-guides-slack-help-request-triage-runbook-md",
+      "title": "SLACK_HELP_REQUEST_TRIAGE_RUNBOOK.md",
+      "path": "docs/guides/SLACK_HELP_REQUEST_TRIAGE_RUNBOOK.md",
+      "tier": "Mixed",
+      "surface": "guide",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "guide artifact in the CREATE SOMETHING operating topology.",
+      "tags": [
+        "guide",
+        "documentation"
+      ]
+    },
+    {
       "id": "substrate:create-something:guide:docs-guides-solo-operator-agent-loop-md",
       "atlasNodeId": "atlas_create-something_guide_docs-guides-solo-operator-agent-loop-md",
       "title": "SOLO_OPERATOR_AGENT_LOOP.md",
@@ -9834,6 +9934,13 @@
       "evidence": "packages/app-governance-desktop is present in the repo scan."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-app-review-agent-eval-packages-app-review-agent-eval",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:package:create-something-app-review-agent-eval-packages-app-review-agent-eval",
+      "relation": "contains",
+      "evidence": "packages/app-review-agent-eval is present in the repo scan."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-arc-packages-arc",
       "source": "substrate:create-something:root",
       "target": "substrate:create-something:package:create-something-arc-packages-arc",
@@ -10436,6 +10543,13 @@
       "evidence": "packages/mapping-canvas is present in the repo scan."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-marketplace-featured-notifier-packages-marketplace-featured-notifier",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:package:create-something-marketplace-featured-notifier-packages-marketplace-featured-notifier",
+      "relation": "contains",
+      "evidence": "packages/marketplace-featured-notifier is present in the repo scan."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-maverick-admin-packages-maverick-admin",
       "source": "substrate:create-something:root",
       "target": "substrate:create-something:package:create-something-maverick-admin-packages-maverick-admin",
@@ -10847,6 +10961,20 @@
       "target": "substrate:create-something:package:create-something-ui-preview-mcp-packages-ui-preview-mcp",
       "relation": "contains",
       "evidence": "packages/ui-preview-mcp is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-webflow-app-forge-packages-webflow-app-forge",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:package:create-something-webflow-app-forge-packages-webflow-app-forge",
+      "relation": "contains",
+      "evidence": "packages/webflow-app-forge is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-app-slug-packages-webflow-app-forge-template",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:package:app-slug-packages-webflow-app-forge-template",
+      "relation": "contains",
+      "evidence": "packages/webflow-app-forge/template is present in the repo scan."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-webflow-app-review-mcp-packages-webflow-app-review-mcp",
@@ -11631,6 +11759,13 @@
       "target": "substrate:create-something:worker:packages-mapping-canvas-wrangler-jsonc",
       "relation": "contains",
       "evidence": "packages/mapping-canvas/wrangler.jsonc is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-worker-packages-marketplace-featured-notifier-wrangler-jsonc",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:worker:packages-marketplace-featured-notifier-wrangler-jsonc",
+      "relation": "contains",
+      "evidence": "packages/marketplace-featured-notifier/wrangler.jsonc is present in the repo scan."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-worker-packages-maverick-admin-wrangler-toml",
@@ -12954,6 +13089,13 @@
       "target": "substrate:create-something:guide:docs-guides-skills-md",
       "relation": "contains",
       "evidence": "docs/guides/SKILLS.md is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-slack-help-request-triage-runbook-md",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:guide:docs-guides-slack-help-request-triage-runbook-md",
+      "relation": "contains",
+      "evidence": "docs/guides/SLACK_HELP_REQUEST_TRIAGE_RUNBOOK.md is present in the repo scan."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-solo-operator-agent-loop-md",
@@ -14641,6 +14783,13 @@
       "target": "substrate:create-something:worker:packages-mapping-canvas-wrangler-jsonc",
       "relation": "runs",
       "evidence": "wrangler.jsonc configures runtime for packages/mapping-canvas."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-marketplace-featured-notifier-packages-marketplace-featured-notifier-runs-substrate-create-something-worker-packages-marketplace-featured-notifier-wrangler-jsonc",
+      "source": "substrate:create-something:package:create-something-marketplace-featured-notifier-packages-marketplace-featured-notifier",
+      "target": "substrate:create-something:worker:packages-marketplace-featured-notifier-wrangler-jsonc",
+      "relation": "runs",
+      "evidence": "wrangler.jsonc configures runtime for packages/marketplace-featured-notifier."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-package-create-something-maverick-admin-packages-maverick-admin-runs-substrate-create-something-worker-packages-maverick-admin-wrangler-toml",
@@ -16447,6 +16596,13 @@
       "target": "substrate:create-something:root",
       "relation": "documents",
       "evidence": "docs/guides/SKILLS.md is an operating guide."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-slack-help-request-triage-runbook-md-documents-substrate-create-something-root",
+      "source": "substrate:create-something:guide:docs-guides-slack-help-request-triage-runbook-md",
+      "target": "substrate:create-something:root",
+      "relation": "documents",
+      "evidence": "docs/guides/SLACK_HELP_REQUEST_TRIAGE_RUNBOOK.md is an operating guide."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-solo-operator-agent-loop-md-documents-substrate-create-something-root",

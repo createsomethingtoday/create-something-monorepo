@@ -32,9 +32,14 @@ WEBFLOW_TEMPLATE_COLLECTION_ID = "641b464e78789f611a5d4496"
 ALLOWED_ORIGINS = "https://webflow.com,https://www.webflow.com,https://templates.webflow.com,https://template-marketplace.webflow.io,*.webflow.com"
 DEFAULT_PAGE_SIZE = "24"
 DEFAULT_CLIENT_MODE = "shadow"
+# Buyer → creator support requests (see src/supportRequest.ts). Security + Enterprise
+# AI Ops signed off 2026-10-06. Served only through the templates.webflow.com/templates-api
+# proxy (webflow-template-marketplace), which supplies SUPPORT_REQUEST_PROXY_TOKEN.
+# Set "0" to turn the route off (503).
+SUPPORT_REQUESTS_ENABLED = "1"
 
 [triggers]
-crons = ["*/5 * * * *", "17 * * * *", "47 3 * * *"]
+crons = ["*/5 * * * *", "17 * * * *", "37 * * * *", "47 3 * * *"]
 
 # Secrets:
 # - AIRTABLE_API_KEY

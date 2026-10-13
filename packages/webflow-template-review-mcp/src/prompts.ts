@@ -216,6 +216,27 @@ Template ID in the MRP ID override via \`update_asset_publishing\`, then run
 \`prepare_admin_template_verify\` to confirm the Admin record matches Airtable
 field-for-field before approving.
 
+### Taking a template off the Marketplace (delist)
+
+| Tool | Purpose |
+|------|---------|
+| \`template_review_delist_template\` | Preview, then (with \`confirm\`) set Delisted/Archived in Airtable AND unpublish the live CMS page |
+| \`template_review_relist_template\` | Undo a delist: Published/Active, republish, restore related-template links |
+| \`template_review_delist_drift\` | Read-only: templates marked Delisted whose page is still live |
+
+Setting 🚀Marketplace Status to Delisted in Airtable does NOT take the page
+down — Whalesync never unpublishes it. Always use \`delist_template\`: call it
+once without \`confirm\` and show the reviewer the preview (public page status,
+CMS items, planned Airtable writes), then call again with
+\`confirm: { confirmed: true, expected_cms_item_ids, plan_token }\` (and the
+same mode and reason) only after they approve.
+Use mode \`permanent\` (creator request, Stripe status, policy infringement —
+sets the reason and renames "{Name} Archived YYYYMMDD") or \`temporary\` (a
+relist is expected after a fix — leaves name and reason alone). Report the
+final \`public_page_status\`; 404 means the page is down. Archiving the Webflow
+Admin template is a separate, permanent-only step (it blocks checkout and
+strands existing buyers) — do not suggest it for a temporary delist.
+
 Work the publishing checklist per item with \`set_checklist_items\`. Only pass
 \`mark_all_publishing_items: true\` to \`complete_publishing\` when every publishing
 step genuinely was completed — the checklist is audit evidence, not a formality.
@@ -241,12 +262,34 @@ step, per asset, after votes settle — enforced in authorization, not just
 convention: only reviewers whose directory entry grants \`featuredCoordinator\`
 can call it (everyone else gets a 403).
 
+**Current-month batch** (selected after the 1st, for this month): the default
+flow above schedules next month. For this month, write \`📅Is Featured Period
+(Override)\` = the 1st of this month in Airtable **before** \`set_featured_flag\`,
+and check \`🔔Featured Notified For Period\` on any already-ticked winner first.
+Ticking first arms a wrong next-month email. Before touching an already-ticked
+winner, pause the notifier (\`DRY_RUN\` "true", deploy, \`/health\` → \`armed: false\`),
+because an empty stamp does not prove no email is in flight. If its stamp already
+holds next month, **stop for that winner**: a wrong email went out, the override
+cannot retract it, and the current-month send would add a second one. Tell the
+coordinator; the fix is a correction email to the creator and a decision on
+whether to send the current-month notification at all. Never run the send for it
+on your own.
+
+The hourly notifier never sends for the current month. The send is manual and
+comes last, after the live CMS shows the new batch: \`/health\` must report
+\`armed: true\`; \`GET /preview?period=YYYY-MM-01\` until no record is skipped;
+then \`POST /run?period=YYYY-MM-01\` and confirm \`dryRun: false\` and \`notified\`
+equal to \`eligible\`. Full steps:
+\`packages/webflow-template-review-mcp/docs/FEATURED_BATCH_RUNBOOK.md\`.
+
 Hard rules for featured copy: the live Pick Reason is quoted VERBATIM in the
 creator's email and rendered publicly on the listing — third-person marketplace
 prose, ~350–450 chars, no internal shorthand ("Main quality signal: …", "made by
 a newer creator"). Vote notes are the place for candid internal rationale and
-must never be quoted to creators. Whalesync does not sync featured fields to the
-marketplace CMS — the CMS backfill after finalization is a separate manual step.
+must never be quoted to creators. Whalesync pushes the finalized batch to the
+marketplace CMS on its own — verify it, do not backfill by hand (any CMS write
+resets the listing's visible publish date). Switching the previous batch off in
+the CMS is still manual.
 
 ## Quick Reference Checklist
 

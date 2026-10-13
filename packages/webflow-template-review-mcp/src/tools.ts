@@ -11,6 +11,8 @@ import {
   type MarketplaceAdminConfig,
   type MrpTemplateCreatePayload,
 } from './admin-mrp.js';
+import { executeDelist, executeRelist, findDelistDrift, previewDelist, type MarketplaceCmsConfig } from './marketplace-delist.js';
+import { DELIST_REASON_VALUES } from './schema.js';
 import {
   buildAdminExecuteBundle,
   buildAdminTemplateCreateExecuteScript,
@@ -290,6 +292,8 @@ export interface ToolRuntimeConfig extends ValidationToolConfig {
    * the tools then fail closed with ZENDESK_NOT_CONFIGURED.
    */
   getZendeskClient?: () => ZendeskClient | null;
+  /** Marketplace Templates CMS access for delist/relist; fails closed without a site token. */
+  marketplaceCms?: MarketplaceCmsConfig;
 }
 
 /**
@@ -331,6 +335,10 @@ export const WRITE_TOOL_NAMES: ReadonlySet<string> = new Set([
   // Server-side Webflow writes: create the MRP + Template, complete its fields.
   'template_review_create_admin_template',
   'template_review_complete_admin_template',
+  // Marketplace listing takedown/restore: writes Airtable and the live
+  // Templates CMS (including other templates' related-assets).
+  'template_review_delist_template',
+  'template_review_relist_template',
 ]);
 
 /**
@@ -895,7 +903,7 @@ export function registerTools(
 
   server.tool(
     'template_review_set_featured_flag',
-    'Finalize (or revert) one template\'s membership in the upcoming Featured batch by setting ℹ️Is Featured?. CONSEQUENTIAL: checking it resolves the featured period to the first of next month and arms the creator-notification worker (hourly cron) for that period — the creator receives a congratulations email quoting the live Pick Reason. Restricted to reviewers whose directory entry grants featuredCoordinator (403 otherwise). Requires confirm_creator_notification: true AND a non-empty live ⭐Reviewer Pick Reason (never overridable). Selection-state checks (⭐Reviewer pick starred, eligibility formula, qualified votes) also run before the write and reject with SELECTION_CHECKS_UNMET; pass override_selection_checks: true only when the coordinator confirms featuring the asset is a deliberate decision. Unchecking before the worker fires is the abort path. The marketplace-CMS backfill remains a separate manual step.',
+    'Finalize (or revert) one template\'s membership in the upcoming Featured batch by setting ℹ️Is Featured?. CONSEQUENTIAL: checking it resolves the featured period to the first of next month and arms the creator-notification worker (hourly cron) for that period — the creator receives a congratulations email quoting the live Pick Reason. Restricted to reviewers whose directory entry grants featuredCoordinator (403 otherwise). Requires confirm_creator_notification: true AND a non-empty live ⭐Reviewer Pick Reason (never overridable). Selection-state checks (⭐Reviewer pick starred, eligibility formula, qualified votes) also run before the write and reject with SELECTION_CHECKS_UNMET; pass override_selection_checks: true only when the coordinator confirms featuring the asset is a deliberate decision. CURRENT-MONTH BATCH (selected after the 1st, for this month): write 📅Is Featured Period (Override) = the 1st of this month in Airtable BEFORE calling this, and first check 🔔Featured Notified For Period on any already-ticked winner; ticking first arms a wrong next-month email. The hourly cron never sends for the current month, so the send is a separate admin GET /preview?period=YYYY-MM-01 then POST /run?period=YYYY-MM-01 on the notifier worker (see docs/FEATURED_BATCH_RUNBOOK.md). Unchecking before the worker fires is the abort path. Whalesync then pushes the batch to the marketplace CMS on its own (verify it; no manual backfill), but switching the previous batch off in the CMS is still manual.',
     {
       asset_id: z.string().min(1),
       is_featured: z.boolean(),
@@ -1486,6 +1494,84 @@ export function registerTools(
           warnings,
           next_steps: NEXT_STEPS_AFTER_CREATE.slice(1),
         });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  const CMS_ITEM_IDS = z.array(z.string().regex(/^[0-9a-f]{24}$/)).min(1).describe('cms_item_ids exactly as returned by the preview.');
+  const delistActor = (reviewer: ReviewerProfile) => reviewer.email ?? reviewer.name ?? reviewer.accountId;
+
+  server.tool(
+    'template_review_delist_template',
+    'Take a published template off the Marketplace: sets 🚀Marketplace Status → Delisted and 🥞CMS Status → Archived in Airtable, then unpublishes the live Webflow Templates CMS item (the Airtable flip alone does NOT take the page down) and archives its staged copy. If other templates list it in related-assets, they are saved to an Airtable comment on the asset and stripped so the unpublish can succeed. Mode "permanent" (creator request, Stripe, policy) also sets the delist reason and renames the asset "{Name} Archived YYYYMMDD"; "temporary" (relist expected after a fix) leaves both alone. Does NOT archive the Webflow Admin template (that strands buyers; do it separately only for permanent removals). Only for Published assets (or Delisted ones whose page is still live); refuses when a CMS item is shared with a published update twin. Call without confirm to preview; then call again with the same mode and reason and confirm: { confirmed: true, expected_cms_item_ids, plan_token } from the preview, only after the reviewer approves.',
+    {
+      asset_id: z.string().regex(/^rec[A-Za-z0-9]{14}$/),
+      mode: z.enum(['permanent', 'temporary']),
+      reason: z.enum(DELIST_REASON_VALUES).optional().describe('Required for permanent.'),
+      confirm: z
+        .object({
+          confirmed: z.literal(true),
+          expected_cms_item_ids: CMS_ITEM_IDS,
+          plan_token: z.string().regex(/^[0-9a-f]{64}$/).describe('plan_token from the preview; binds the confirm to that mode, reason, and plan.'),
+        })
+        .optional(),
+    },
+    async ({ asset_id, mode, reason, confirm }) => {
+      try {
+        const reviewer = requireResolvedReviewer(getReviewer);
+        if (mode === 'permanent' && !reason) {
+          throw new AirtableClientError('DELIST_REASON_REQUIRED', 'A permanent delist needs a reason: Creator request, Stripe status, or Policy infringement.', 400);
+        }
+        const cmsConfig = runtimeConfig.marketplaceCms ?? {};
+        if (!confirm) {
+          return asSuccess({ preview: true, ...(await previewDelist(getClient(), cmsConfig, { assetId: asset_id, mode, reason })) });
+        }
+        const result = await executeDelist(getClient(), cmsConfig, {
+          assetId: asset_id,
+          mode,
+          reason,
+          expectedCmsItemIds: confirm.expected_cms_item_ids,
+          planToken: confirm.plan_token,
+          actor: delistActor(reviewer),
+        });
+        return asSuccess({ reviewer: reviewerPayload(reviewer), ...result });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'template_review_relist_template',
+    'Undo template_review_delist_template: sets 🚀Marketplace Status → Published and 🥞CMS Status → Active, clears the delist reason, strips any " Archived …" name suffix, un-archives and republishes the Webflow Templates CMS item(s), and adds the item back to every template whose related-assets were stripped (read from the snapshot comment on the asset). Only for assets currently Delisted, never for a Policy infringement delist; re-running after an interrupted relist resumes it. Run template_review_delist_template in preview mode first to get the cms_item_ids, confirm with the reviewer, then pass them here.',
+    {
+      asset_id: z.string().regex(/^rec[A-Za-z0-9]{14}$/),
+      confirm: z.object({ confirmed: z.literal(true), expected_cms_item_ids: CMS_ITEM_IDS }),
+    },
+    async ({ asset_id, confirm }) => {
+      try {
+        const reviewer = requireResolvedReviewer(getReviewer);
+        const result = await executeRelist(getClient(), runtimeConfig.marketplaceCms ?? {}, {
+          assetId: asset_id,
+          expectedCmsItemIds: confirm.expected_cms_item_ids,
+          actor: delistActor(reviewer),
+        });
+        return asSuccess({ reviewer: reviewerPayload(reviewer), ...result });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'template_review_delist_drift',
+    'Read-only: list templates marked Delisted in Airtable whose Marketplace page still serves 200 (the Airtable flip was made but the CMS item was never unpublished). Checks every Delisted asset that links a CMS item; excludes update twins whose page belongs to a published listing. Fix each with template_review_delist_template.',
+    {},
+    async () => {
+      try {
+        return asSuccess(await findDelistDrift(getClient(), runtimeConfig.marketplaceCms ?? {}));
       } catch (error) {
         return asError(error);
       }

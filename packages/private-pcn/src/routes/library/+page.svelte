@@ -1,6 +1,7 @@
 <script lang="ts">
   import FoundationEntry from '$lib/components/FoundationEntry.svelte';
   import LearningOverview from '$lib/components/LearningOverview.svelte';
+  import NetworkContext from '$lib/components/NetworkContext.svelte';
   import Icon from '$lib/components/Icon.svelte';
   import { onMount, onDestroy } from 'svelte';
   import { page } from '$app/state';
@@ -11,6 +12,7 @@
   let { data } = $props();
   const slug = $derived(data.network?.slug === 'create-something' ? undefined : data.network?.slug);
   const api = (path: string, body?: unknown) => requestApi(path, body, slug);
+  const inactiveNetwork = $derived(!!data.network && data.network.status !== 'active');
   const libraryPath = $derived(slug ? `/n/${slug}` : '/library');
   let videos = $state<CatalogVideo[]>([]);
   let error = $state('');
@@ -64,7 +66,7 @@
     content="noindex"
   /></svelte:head
 >
-<main id="main" class="workspace member-library">
+<main id="main" tabindex="-1" class="workspace member-library">
   <div class="workspace-title">
     <div>
       <p class="eyebrow">PRIVATE / AGENTIC ENGINEERING</p>
@@ -92,6 +94,11 @@
         >{/if}
     </div>
   </div>
+  {#if data.network?.status !== 'active'}<NetworkContext
+      network={data.network}
+      showName={false}
+      canManage={data.identity?.role === 'admin'}
+    />{/if}
   {#if data.foundation}<FoundationEntry foundation={data.foundation} />{/if}
   {#if data.identity?.role === 'blocked'}<aside class="notice">
       <strong>Public previews only</strong>
@@ -100,7 +107,7 @@
         ask the creator to check the email on your invitation.
       </p>
     </aside>{/if}
-  {#if data.identity && data.identity.role !== 'blocked'}{#key slug}<LearningOverview
+  {#if !loading && !error && videos.length && data.identity && data.identity.role !== 'blocked'}{#key slug}<LearningOverview
         {slug}
       />{/key}{/if}
   {#if videos.length}<div class="library-tools">
@@ -144,10 +151,22 @@
       <p>
         {#if !data.identity}There are no public sessions in this library. If you have an invitation,
           sign in with the invited email.{:else if data.identity.role === 'blocked'}Private sessions
-          require member access. Your acquired assets are kept separately in your collection.{:else}When
+          require member access. Your acquired assets are kept separately in your collection.{:else if data.identity.role === 'admin' && inactiveNetwork}Member
+          access is paused. Resolve the network status before inviting members to watch.{:else if data.identity.role === 'admin'}Prepare
+          a private lesson in your creator workspace. Review it before choosing who can watch.{:else}When
           the creator publishes a session for your access level, it will appear here.{/if}
       </p>
-      {#if data.identity}<a class="button secondary" href="/collection"
+      {#if data.identity?.role === 'admin'}<a
+          class="button secondary"
+          href={inactiveNetwork && slug
+            ? `/n/${slug}/settings`
+            : slug
+              ? `/n/${slug}/studio`
+              : '/admin'}
+          >{inactiveNetwork && slug ? 'Review network settings' : 'Prepare your first lesson'}
+          <Icon name="arrow-right" /></a
+        >
+      {:else if data.identity}<a class="button secondary" href="/collection"
           >Open your collection <Icon name="arrow-right" /></a
         >{:else}<a class="button secondary" href={`/login?next=${encodeURIComponent(libraryPath)}`}
           >Member sign in <Icon name="arrow-right" /></a

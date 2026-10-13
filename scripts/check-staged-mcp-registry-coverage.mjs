@@ -79,7 +79,8 @@ function readStagedFiles() {
 }
 
 function readIndexOrHeadBlob(pathname) {
-  return tryRunGit(['show', `:${pathname}`]) ?? tryRunGit(['show', `HEAD:${pathname}`]);
+  // Read a literal blob: `show` can treat absent bracket paths as revision patterns.
+  return tryRunGit(['cat-file', 'blob', `:${pathname}`]) ?? tryRunGit(['cat-file', 'blob', `HEAD:${pathname}`]);
 }
 
 function buildPackageJsonByDir(stagedFiles) {

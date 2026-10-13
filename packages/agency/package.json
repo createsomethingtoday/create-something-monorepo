@@ -1,6 +1,6 @@
 {
   "name": "@create-something/agency",
-  "description": "AI-native technical support — diagnosis, engineering improvements and help using the result",
+  "description": "AI-native technical support \u2014 diagnosis, engineering improvements and help using the result",
   "private": true,
   "version": "1.0.0",
   "type": "module",
@@ -61,7 +61,9 @@
     "deploy:preview": "pnpm build && CLOUDFLARE_ACCOUNT_ID=9645bd52e640b8a4f40a3a55ff1dd75a node ../../scripts/run-wrangler.mjs pages deploy .svelte-kit/cloudflare --project-name=create-something-agency --branch=preview --commit-dirty=true",
     "cf-typegen": "node ../../scripts/run-wrangler.mjs types",
     "test:contact": "node --import ./test/register-sveltekit-test-loader.mjs --import tsx --test test/contact-intake.test.ts test/contact-d1.test.ts test/contact-workerd.test.ts",
-    "test:gigi-beta": "node --import tsx --test test/gigi-beta-page.test.ts"
+    "test:gigi-beta": "node --import tsx --test test/gigi-beta-page.test.ts",
+    "preview:site-search": "node ./scripts/run-pinned-bin.mjs vite vite dev --host 127.0.0.1 --port 4178 --strictPort",
+    "test:site-search": "node --import tsx --test test/site-search.test.ts test/page-annotations.test.ts"
   },
   "dependencies": {
     "@composio/core": "^0.6.4",

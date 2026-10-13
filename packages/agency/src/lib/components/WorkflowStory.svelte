@@ -1,5 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { IsometricIllustration, type IsometricKind } from '@create-something/canon';
+  const storyKinds: IsometricKind[] = ['diagnose', 'approve', 'handoff', 'learn'];
   import { reducedFilmMotion } from '$lib/motion/filmPlayback';
 
   const scenes = [
@@ -65,25 +67,14 @@
 <figure class="workflow-story" class:running class:still={!eligible} data-scene={scene} bind:this={root} aria-labelledby="workflow-story-title">
   <div class="story-meta"><span>Illustrative / one form handoff</span><span aria-hidden="true">{String(scene + 1).padStart(2, '0')} / 04</span></div>
   <div class="story-picture" aria-hidden="true">
-    <svg viewBox="0 0 480 210" fill="none">
-      <path class="tangle" d="M74 108C120 14 233 182 178 72S310 28 238 130S409 201 400 106M74 108C152 186 214 12 267 74S342 31 400 106" />
-      <path class="route" d="M85 106H210M270 106H395" pathLength="100" />
-      <path class="packet" d="M85 106H210M270 106H395" pathLength="100" />
-      <rect class="node" x="28" y="82" width="58" height="48" rx="4" />
-      <path class="form-lines" d="M43 96H70M43 105H65M43 114H59" />
-      <path class="gate" d="M240 75L271 106L240 137L209 106Z" />
-      <path class="gate-check" d="M227 106L237 115L253 96" />
-      <rect class="node team" x="395" y="82" width="58" height="48" rx="4" />
-      <path class="team-lines" d="M410 98H438M410 108H438M410 118H427" />
-      <path class="lesson-line" d="M424 133V161H296" />
-      <rect class="lesson" x="184" y="147" width="112" height="34" rx="3" />
-      <path class="lesson-check" d="M195 163L201 169L210 158" />
-      <text x="57" y="65" text-anchor="middle">FORM</text>
-      <text x="240" y="58" text-anchor="middle">AGREE THE CHANGE</text>
-      <text x="424" y="65" text-anchor="middle">TEAM</text>
-      <text class="lesson-text" x="219" y="168">INSTRUCTIONS</text>
-      <text class="problem-mark" x="149" y="104">?</text>
-    </svg>
+    <div class="story-assemblies">
+      {#each storyKinds as kind, index}
+        <div class="story-assembly" class:active={scene === index}>
+          <IsometricIllustration {kind} size="100%" />
+          <span>{['Trace the break', 'Agree the change', 'Checked handoff', 'Keep the lesson'][index]}</span>
+        </div>
+      {/each}
+    </div>
   </div>
   <figcaption>
     <h2 id="workflow-story-title">{scenes[scene].title}</h2>
@@ -100,31 +91,15 @@
 </figure>
 
 <style>
-  .workflow-story { margin: 0; border-top: 1px solid var(--color-performance-shell-border-strong); padding-top: var(--space-performance-sm); }
+  .workflow-story { --isometric-surface: var(--color-performance-mode-campaign-surface); margin: 0; border-top: 1px solid var(--color-performance-shell-border-strong); padding-top: var(--space-performance-sm); }
   .story-meta, .story-controls { display: flex; justify-content: space-between; gap: var(--space-performance-sm); font: var(--text-performance-operator-label)/1.5 var(--font-performance-mono); color: var(--color-performance-fg-secondary); }
   .story-meta { text-transform: uppercase; letter-spacing: .04em; }
   .story-picture { position: relative; padding-block: var(--space-performance-sm); }
-  svg { display: block; width: 100%; height: auto; overflow: visible; }
-  svg path, svg rect { stroke: currentColor; stroke-width: 1.2; vector-effect: non-scaling-stroke; }
-  svg text { fill: currentColor; font: 9px var(--font-performance-mono); letter-spacing: .06em; }
-  .tangle { opacity: 0; transition: opacity 700ms ease; }
-  .route { opacity: .5; transition: opacity 700ms ease; }
-  .node { opacity: .8; }
-  .gate { opacity: .7; }
-  .gate-check { opacity: 1; transition: opacity 700ms ease; }
-  .lesson-line, .lesson, .lesson-check, .lesson-text { opacity: .8; transition: opacity 700ms ease; }
-  .packet { stroke-width: 2; stroke-dasharray: 4 96; stroke-dashoffset: 0; opacity: 0; }
-  .problem-mark { opacity: 0; }
-  [data-scene="0"] .tangle { opacity: .65; }
-  [data-scene="1"] .tangle { opacity: .2; }
-  [data-scene="0"] .route { opacity: .08; }
-  [data-scene="0"] .gate-check, [data-scene="0"] .lesson-line, [data-scene="0"] .lesson, [data-scene="0"] .lesson-check, [data-scene="0"] .lesson-text,
-  [data-scene="1"] .lesson-line, [data-scene="1"] .lesson, [data-scene="1"] .lesson-check, [data-scene="1"] .lesson-text,
-  [data-scene="2"] .lesson-line, [data-scene="2"] .lesson, [data-scene="2"] .lesson-check, [data-scene="2"] .lesson-text { opacity: .06; }
-  [data-scene="0"] .problem-mark { opacity: 1; font-size: 18px; }
-  [data-scene="1"] .gate { stroke-width: 2; }
-  [data-scene="2"].running .packet { opacity: 1; animation: handoff 1700ms linear infinite; }
-  [data-scene="2"] .packet { animation-play-state: paused; }
+  .story-assemblies { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-performance-xs); }
+  .story-assembly { position: relative; min-width: 0; border-bottom: 1px solid var(--color-performance-shell-border-default); }
+  .story-assembly:not(:last-child)::after { content: '→'; position: absolute; top: 44%; right: -7px; }
+  .story-assembly.active { border-bottom-color: currentColor; }
+  .story-assembly span { display: block; min-height: 3em; font: var(--text-performance-operator-label)/1.4 var(--font-performance-mono); }
   h2 { font: var(--font-performance-medium) clamp(1.25rem, 1.7vw, 1.6rem)/1.3 var(--font-performance-interface); min-height: 2.6em; margin: 0; letter-spacing: var(--tracking-performance-tight); }
   .story-detail { min-height: 3.3em; font-size: var(--text-performance-caption); line-height: 1.6; max-width: 52ch; color: var(--color-performance-fg-secondary); margin: var(--space-performance-xs) 0 var(--space-performance-sm); }
   .story-sequence { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: .4rem 1rem; font-size: var(--text-performance-caption); color: var(--color-performance-fg-tertiary); }
@@ -133,8 +108,5 @@
   .story-controls { align-items: center; border-bottom: 1px solid var(--color-performance-shell-border-default); min-height: 50px; margin-top: var(--space-performance-sm); }
   figure.workflow-story .story-controls button { min-height: 44px; font: inherit; color: inherit; padding: 0; border: 0; background: transparent; cursor: pointer; }
   .story-controls button:focus-visible { outline: 2px solid var(--color-performance-focus); outline-offset: 4px; }
-  .still .tangle { opacity: 0; }
-  .still svg path, .still svg rect, .still svg text { transition: none; animation: none !important; }
-  @keyframes handoff { to { stroke-dashoffset: -100; } }
-  @media(max-width:900px), (prefers-reduced-motion:reduce) { svg path, svg rect, svg text { transition: none; animation: none !important; } }
+  @media(max-width:480px) { .story-assemblies { grid-template-columns: repeat(2, minmax(0, 1fr)); } .story-assembly:nth-child(2)::after { content: none; } }
 </style>

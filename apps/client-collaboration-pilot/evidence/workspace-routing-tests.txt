@@ -1,0 +1,25 @@
+(node:34121) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+✔ identity routes serve a credential form without protected workspace data (9.738875ms)
+✔ identity routes exchange credentials server-side and set host-only secure cookies (0.827417ms)
+✔ identity routes preserve login failure status and clear sessions on logout (0.752792ms)
+✔ identity routes invoke fetch with the Workers global receiver (0.335875ms)
+✔ identity routes contain upstream login transport failures (0.2015ms)
+✔ identity routes return null for non-auth paths (0.067167ms)
+✔ identity routes rotate a host-only refresh session for access retry (0.337458ms)
+✔ collaboration sign-in returns only to the fixed collaboration route (0.914583ms)
+(node:34122) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+✔ edge worker denies anonymous access to /api/workspaces/demo/sessions before a sandbox is addressed (9.46475ms)
+✔ edge worker denies anonymous access to /api/workspaces/demo/preview/ before a sandbox is addressed (0.215542ms)
+✔ edge worker routes an allowed request through one opaque RPC sandbox and strips identity cookies (5.229084ms)
+✔ edge worker preserves a bounded multipart turn while stripping browser authority (3.503208ms)
+✔ edge worker redirects blocked document requests to sign-in without leaking workspace data (0.185083ms)
+ℹ tests 13
+ℹ suites 0
+ℹ pass 13
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 195.450875

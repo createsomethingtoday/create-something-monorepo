@@ -12,7 +12,7 @@
     "types": "node ../../scripts/run-wrangler.mjs types",
     "lint": "pnpm run typecheck",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run",
+    "test": "vitest run && node --test scripts/*.test.mjs",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage"
   },

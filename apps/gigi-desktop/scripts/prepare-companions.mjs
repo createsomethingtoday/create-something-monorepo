@@ -14,8 +14,10 @@ function run(command,args,cwd=app) {
 run('cargo',['build','--manifest-path','src-tauri/Cargo.toml','--bin','gigi-mcp',...(profile==='release'?['--release']:[])]);
 copyFileSync(join(app,'src-tauri','target',profile,'gigi-mcp'),join(resources,'gigi-mcp'));
 run('bun',['build','--compile','src/runner-main.ts','--outfile',join(resources,'gigi-integrations')],resolve(app,'../../packages/gigi-integrations'));
+run('bun',['build','--compile','src/codex-main.ts','--outfile',join(resources,'gigi-codex')],resolve(app,'../../packages/gigi-integrations'));
 chmodSync(join(resources,'gigi-mcp'),0o755);
 chmodSync(join(resources,'gigi-integrations'),0o755);
+chmodSync(join(resources,'gigi-codex'),0o755);
 cpSync(join(app,'agent'),join(resources,'agent'),{recursive:true});
 
 await prepareCtx(resources);

@@ -21,6 +21,40 @@ const selectedCalendarScopes = [
   'https://www.googleapis.com/auth/calendar.events',
 ];
 
+test('Gmail header filters survive a proxy that normalizes additional query parameters', async () => {
+  const calls: URL[] = [];
+  const page = await readSourcePage({ COMPOSIO_API_KEY: 'synthetic' }, async (request) => {
+    const payload = await (request as Request).json() as {
+      endpoint: string; method: string; parameters: Array<{name: string; value: string; type: string}>;
+    };
+    assert.equal(payload.method, 'GET');
+    const endpoint = new URL(payload.endpoint);
+    // Model the duplicate-key loss observed as a possible proxy boundary behavior.
+    for (const [name, value] of Object.entries(Object.fromEntries(payload.parameters.map(p => [p.name, p.value])))) {
+      endpoint.searchParams.set(name, value);
+    }
+    calls.push(endpoint);
+    if (endpoint.pathname.endsWith('/messages')) {
+      assert.equal(endpoint.searchParams.get('maxResults'), '2');
+      return Response.json({status: 200, data: {messages: [{id: 'synthetic1'}]}});
+    }
+    assert.equal(endpoint.pathname, '/gmail/v1/users/me/messages/synthetic1');
+    assert.equal(endpoint.searchParams.get('format'), 'metadata');
+    const selected = endpoint.searchParams.getAll('metadataHeaders');
+    const headers = [
+      {name: 'Subject', value: 'Synthetic booking'}, {name: 'From', value: 'synthetic@example.test'},
+      {name: 'Date', value: 'Mon, 12 Oct 2026 00:00:00 +0000'},
+    ].filter(header => selected.includes(header.name));
+    return Response.json({status: 200, data: {id: 'synthetic1', snippet: 'Synthetic reference', payload: {headers}}});
+  }, 'gmail', 'synthetic-account', null) as {records: Array<{data: Record<string, unknown>}>};
+  assert.equal(page.records[0].data.subject, 'Synthetic booking');
+  assert.equal(page.records[0].data.from, 'synthetic@example.test');
+  assert.equal(page.records[0].data.date, 'Mon, 12 Oct 2026 00:00:00 +0000');
+  assert.deepEqual(calls[1].searchParams.getAll('metadataHeaders'), ['Subject', 'From', 'Date']);
+  assert.equal(calls.length, 2);
+  assert.deepEqual(Object.keys(page.records[0].data).sort(), ['date', 'from', 'snippet', 'subject', 'threadId']);
+});
+
 test('Gmail malformed message aborts page before exposing next cursor', async () => {
   await assert.rejects(readSourcePage({ COMPOSIO_API_KEY: 'ak_test' }, async (request) => {
     const payload = await (request as Request).json() as { endpoint: string };
@@ -108,7 +142,7 @@ test('broker denies a caller whose online Identity userinfo is not for GiGi', as
     calls.push(request instanceof Request ? request.url : String(request));
     return Response.json({ sub: 'actual-subject', resource: 'https://another-app.example', email_verified: true });
   });
-  assert.equal(response.status, 401);
+  assert.equal(response.status, 403);
   assert.equal(calls.length, 1);
   assert.equal(new URL(calls[0]!).pathname, '/oauth/userinfo');
 });
@@ -478,7 +512,7 @@ test('unknown link outcome recovers only a unique exact-owner Composio alias wit
     headers: { authorization: 'Bearer test-token' },
   }), env, fetcher);
   assert.deepEqual(await response.json(), { provider: 'gmail', state: 'connected', connectedAccountId: 'ca_recovered' });
-  assert.deepEqual(calls, ['/oauth/userinfo', '/api/v3.1/connected_accounts', '/api/v3.1/connected_accounts/ca_recovered']);
+  assert.deepEqual(calls, ['/oauth/userinfo', '/api/v3.1/connected_accounts', '/api/v3.1/connected_accounts/ca_recovered', '/api/v3.1/tools/execute/proxy']);
 });
 
 test('old dispatched attempt with zero alias matches requires operator review and stays guarded', async () => {
@@ -538,6 +572,7 @@ test('reconcile cannot reactivate an attention row or win a concurrent release',
   const fetcher: typeof fetch = async (request) => {
     const path = new URL((request as Request).url).pathname;
     if (path === '/oauth/userinfo') return Response.json({ sub: 'actual-subject', resource: 'https://gigi-connector.createsomething.workers.dev', email_verified: true });
+    if (path === '/api/v3.1/tools/execute/proxy') return Response.json({ status: 503 });
     providerGets++;
     assert.equal(path, '/api/v3.1/connected_accounts/ca_account1');
     return Response.json({ id: 'ca_account1', user_id: userId, auth_config: { id: 'ac_qXoEQURadG-h' },
@@ -587,7 +622,7 @@ test('Gmail source page returns projected read-only message metadata for the ver
     assert.equal(payload.method, 'GET');
     endpoints.push(payload.endpoint);
     if (payload.endpoint.endsWith('/messages')) return Response.json({ status: 200, data: { messages: [{ id: 'm1', threadId: 't1' }] } });
-    if (payload.endpoint.endsWith('/messages/m1')) return Response.json({ status: 200, data: { id: 'm1', threadId: 't1', snippet: 'Doors at 7',
+    if (new URL(payload.endpoint).pathname.endsWith('/messages/m1')) return Response.json({ status: 200, data: { id: 'm1', threadId: 't1', snippet: 'Doors at 7',
       payload: { headers: [{ name: 'Subject', value: 'Friday show' }, { name: 'From', value: 'venue@example.com' }] } } });
     throw new Error('unexpected provider endpoint');
   });
@@ -723,4 +758,105 @@ test('selected Calendar config accepts only its exact grant while proxying bound
   assert.equal((await handleConnectorRequest(request(), env, fetcher)).status, 502);
   assert.equal((await handleConnectorRequest(request(), { ...env, GIGI_GOOGLECALENDAR_AUTH_CONFIG_ID: 'ac_other' }, fetcher)).status, 502);
   assert.equal(endpoints.length, 2);
+});
+
+
+test('Calendar proxy projection retains bounded original time metadata and provider link only', async () => {
+  const start = { dateTime: '2026-11-01T01:30:00-05:00', timeZone: 'America/Chicago' };
+  const end = { dateTime: '2026-11-01T01:30:00-06:00', timeZone: 'America/Chicago' };
+  const htmlLink = 'https://calendar.google.com/calendar/event?eid=synthetic';
+  const page = await readSourcePage({ COMPOSIO_API_KEY: 'ak_test' }, async (request) => {
+    const payload = await (request as Request).json() as { endpoint: string; method: string };
+    assert.equal(payload.method, 'GET');
+    if (payload.endpoint.endsWith('/calendars/primary')) return Response.json({ status: 200, data: { id: 'primary@example.test' } });
+    return Response.json({ status: 200, data: { items: [{ id: 'event1', start: { ...start, arbitrary: 'drop me' }, end, htmlLink }] } });
+  }, 'googlecalendar', 'ca_account1', null);
+  const projected = page as { records: Array<{ data: Record<string, unknown> }> };
+  assert.deepEqual(projected.records[0]?.data.start, start);
+  assert.deepEqual(projected.records[0]?.data.end, end);
+  assert.equal(projected.records[0]?.data.htmlLink, htmlLink);
+});
+
+test('Calendar proxy rejects oversized time metadata rather than silently changing it', async () => {
+  await assert.rejects(readSourcePage({ COMPOSIO_API_KEY: 'ak_test' }, async (request) => {
+    const payload = await (request as Request).json() as { endpoint: string };
+    if (payload.endpoint.endsWith('/calendars/primary')) return Response.json({ status: 200, data: { id: 'primary@example.test' } });
+    return Response.json({ status: 200, data: { items: [{ id: 'event1', start: { dateTime: 'x'.repeat(65) }, end: {} }] } });
+  }, 'googlecalendar', 'ca_account1', null), /calendar_time_invalid/);
+});
+
+for (const [name, identityStatus, identity, expectedStatus, error] of [
+  ['expired session', 401, {}, 401, 'session_expired'],
+  ['resource denial', 403, {}, 403, 'access_denied'],
+  ['not admitted', 200, { sub: 'not-admitted', resource: 'https://gigi-connector.createsomething.workers.dev', email_verified: true }, 403, 'access_denied'],
+  ['wrong resource', 200, { sub: 'admitted', resource: 'https://wrong.test', email_verified: true }, 403, 'access_denied'],
+  ['unverified', 200, { sub: 'admitted', resource: 'https://gigi-connector.createsomething.workers.dev', email_verified: false }, 403, 'access_denied'],
+  ['Identity outage', 500, { secret: 'never expose' }, 503, 'provider_unavailable'],
+  ['malformed Identity', 200, { secret: 'never expose' }, 503, 'provider_unavailable'],
+] as const) test(`admission failure remains fail-closed: ${name}`, async () => {
+  let calls = 0;
+  const response = await handleConnectorRequest(new Request('https://gigi-connector.createsomething.workers.dev/v1/gigi/connections/gmail', {
+    headers: { authorization: 'Bearer synthetic-token' },
+  }), { GIGI_ALLOWED_SUBJECTS: 'admitted', DB: { prepare() { throw new Error('denial must not query user data'); } } }, async () => {
+    calls++; return Response.json(identity, { status: identityStatus });
+  });
+  assert.equal(response.status, expectedStatus);
+  assert.deepEqual(await response.json(), { error });
+  assert.equal(calls, 1);
+});
+
+test('network failure is provider unavailability, not an expired session', async () => {
+  const response = await handleConnectorRequest(new Request('https://gigi-connector.createsomething.workers.dev/v1/gigi/connections/gmail', {
+    headers: { authorization: 'Bearer synthetic-token' },
+  }), { GIGI_ALLOWED_SUBJECTS: 'admitted' }, async () => { throw new Error('secret network details'); });
+  assert.equal(response.status, 503);
+  assert.deepEqual(await response.json(), { error: 'provider_unavailable' });
+});
+
+for (const provider of ['gmail', 'googlecalendar'] as const) test(`${provider} label comes only from verified Google readback`, async () => {
+  const ownerHash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('admitted'));
+  const owner = 'gigi_' + [...new Uint8Array(ownerHash)].map(byte => byte.toString(16).padStart(2, '0')).join('').slice(0, 32);
+  const config = provider === 'gmail' ? 'ac_qXoEQURadG-h' : 'ac_F0JVbnFvV3DQ';
+  const scopes = provider === 'gmail' ? selectedGmailScopes : selectedCalendarScopes;
+  let mode = 'valid', labelReads = 0;
+  const env = { GIGI_ALLOWED_SUBJECTS: 'admitted', COMPOSIO_API_KEY: 'synthetic',
+    GIGI_GMAIL_AUTH_CONFIG_ID: config, GIGI_GOOGLECALENDAR_AUTH_CONFIG_ID: config,
+    GIGI_GMAIL_APPROVED_SCOPES: scopes.join(','), GIGI_GOOGLECALENDAR_APPROVED_SCOPES: scopes.join(','),
+    DB: { prepare() { return { bind(...values: unknown[]) { assert.deepEqual(values, ['admitted', provider]); return {
+      async first() { return { status: 'active', connected_account_id: 'ca_label', request_id: 'request-label' }; },
+      async run() { throw new Error('no writes'); }, async all() { return { results: [] }; },
+    }; } }; } },
+  };
+  const fetcher: typeof fetch = async request => {
+    const req = request as Request;
+    if (new URL(req.url).pathname === '/oauth/userinfo') return Response.json({ sub: 'admitted', resource: 'https://gigi-connector.createsomething.workers.dev', email_verified: true, email: 'identity-only@example.test' });
+    if (new URL(req.url).pathname === '/api/v3.1/connected_accounts/ca_label') return Response.json({ id: 'ca_label', user_id: mode === 'wrong-owner' ? 'other-owner' : owner,
+      auth_config: { id: config }, toolkit: { slug: provider }, status: 'ACTIVE', is_disabled: false,
+      experimental: { account_type: 'PRIVATE' }, requested_scopes: scopes });
+    assert.equal(new URL(req.url).pathname, '/api/v3.1/tools/execute/proxy');
+    const payload = await req.json() as { connected_account_id: string; method: string; endpoint: string };
+    assert.equal(payload.connected_account_id, 'ca_label'); assert.equal(payload.method, 'GET');
+    assert.equal(payload.endpoint, provider === 'gmail' ? 'https://gmail.googleapis.com/gmail/v1/users/me/profile' : 'https://www.googleapis.com/calendar/v3/calendars/primary');
+    labelReads++;
+    if (mode === 'slow') {
+      await new Promise<void>((resolve) => { if (req.signal.aborted) resolve(); else req.signal.addEventListener('abort', () => resolve(), { once: true }); });
+      throw new Error('optional label timed out');
+    }
+    if (mode === 'outage') return new Response('secret diagnostic', { status: 503 });
+    const value = mode === 'malformed' ? '<script>bad</script>' : 'google-only@example.test';
+    return Response.json({ status: 200, data: provider === 'gmail' ? { emailAddress: value } : { id: value } });
+  };
+  for (mode of ['valid', 'malformed', 'outage', 'slow', 'wrong-owner']) {
+    const before = labelReads;
+    const started = Date.now();
+    const keepAlive = setTimeout(() => {}, 2000);
+    const response = await handleConnectorRequest(new Request(`https://gigi-connector.createsomething.workers.dev/v1/gigi/connections/${provider}`, { headers: { authorization: 'Bearer synthetic-token' } }), env, fetcher);
+    clearTimeout(keepAlive);
+    const result = await response.json() as { state: string; accountLabel?: unknown };
+    if (mode === 'slow') { assert.equal(result.state, 'connected'); assert.ok(Date.now() - started < 1500); }
+    assert.equal(JSON.stringify(result).includes('identity-only'), false);
+    if (mode === 'valid') assert.deepEqual(result.accountLabel, { kind: provider === 'gmail' ? 'gmail_address' : 'primary_calendar', value: 'google-only@example.test' });
+    else assert.equal(result.accountLabel, undefined);
+    if (mode === 'wrong-owner') { assert.notEqual(result.state, 'connected'); assert.equal(labelReads, before); }
+  }
 });

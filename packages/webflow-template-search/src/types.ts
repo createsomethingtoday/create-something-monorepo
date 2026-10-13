@@ -33,6 +33,21 @@ export interface Env {
    * forwarding is additive on top.
    */
   TELEMETRY_AE?: AnalyticsEngineDataset;
+  /** "1" turns on POST /api/templates/support-request (see supportRequest.ts). */
+  SUPPORT_REQUESTS_ENABLED?: string;
+  /** Knock secret key used to email creators about buyer support requests (secret). */
+  KNOCK_API_KEY?: string;
+  /** Overrides the Knock workflow key; defaults to marketplace-template-support-request. */
+  KNOCK_SUPPORT_WORKFLOW_KEY?: string;
+  /** Salt for the IP and buyer-email hashes stored on support_requests (secret). */
+  SUPPORT_REQUEST_HASH_SALT?: string;
+  /** Comma-separated 👛Assets creator-email field IDs, override first (secret). */
+  AIRTABLE_CREATOR_EMAIL_FIELD_IDS?: string;
+  /**
+   * Shared with the templates.webflow.com proxy (secret). A request presenting it in
+   * X-Templates-Proxy-Token is trusted for the buyer IP in X-Templates-Client-IP.
+   */
+  SUPPORT_REQUEST_PROXY_TOKEN?: string;
 }
 
 export interface AirtableAttachment {
@@ -178,6 +193,11 @@ export interface TemplateDocumentInput {
   marketplaceStatus: string | null;
   sourceLastModifiedTime: string | null;
   syncedAt: string;
+  // true: a live Templates CMS item was confirmed for this record during the
+  // sync. false: the lookup completed and found none. null: the lookup was
+  // unavailable (error, no token, partial coverage), so the row keeps whatever
+  // it had; a 429 must not un-confirm rows that were confirmed last run.
+  listingConfirmed: boolean | null;
 }
 
 export interface SearchParams {
@@ -300,6 +320,7 @@ export interface SyncSummary {
   cursor: string;
   skipped_empty_windows?: number;
   recent_published_records?: number;
+  unconfirmed_recheck_records?: number;
   // Published Airtable records held out of the index because no live Webflow
   // Templates CMS item exists for them yet.
   listing_gated_records?: number;

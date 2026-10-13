@@ -26,11 +26,15 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 	}
 
 	// Get Durable Object instance
+	if (!await platform.env.DB.prepare('SELECT id FROM facilities WHERE id = ?').bind(facilityId).first()) {
+		throw error(404, 'Unknown facility');
+	}
+
 	const id = platform.env.COURT_STATE.idFromName(facilityId);
 	const stub = platform.env.COURT_STATE.get(id);
 
 	// Forward confirm request to DO
-	const doRequest = new Request('https://dummy/confirm', {
+	const doRequest = new Request(`https://dummy/confirm?facilityId=${encodeURIComponent(facilityId)}`, {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
 		body: JSON.stringify({

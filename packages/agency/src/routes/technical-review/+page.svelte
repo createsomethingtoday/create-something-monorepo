@@ -110,14 +110,14 @@
 
   .technical-review { background: var(--color-performance-paper); color: var(--color-performance-ink); }
   .review-section { padding: clamp(2rem, 5vw, 5rem) max(1.25rem, calc((100% - 80rem) / 2)); border-bottom: 1px solid var(--color-performance-line); }
-  .eyebrow { color: var(--color-performance-ink, var(--color-fg-primary)); font-family: var(--font-mono); font-size: var(--text-body-sm); }
+  .eyebrow { color: var(--color-performance-ink, var(--color-performance-fg-primary)); font-family: var(--font-performance-mono); font-size: var(--text-performance-body-sm); }
   h1 { font-size: clamp(2.75rem, 6vw, 5.5rem); line-height: 1.05; max-width: 18ch; margin: 1rem 0 1.5rem; }
   h2 { font-size: clamp(2rem, 3.5vw, 3rem); line-height: 1.15; max-width: 28ch; margin: 0 0 1.5rem; }
-  h3 { font-size: var(--text-h3); line-height: 1.3; margin: 1.5rem 0 .75rem; }
-  p { font-size: var(--text-body); line-height: 1.65; max-width: 68ch; }
+  h3 { font-size: var(--text-performance-h3); line-height: 1.3; margin: 1.5rem 0 .75rem; }
+  p { font-size: var(--text-performance-body); line-height: 1.65; max-width: 68ch; }
   p { margin: 0 0 1.25rem; }
   .opening :global(.btn), .review-section:last-child :global(.btn) { margin-bottom: 1rem; }
-  .lede { font-size: var(--text-body-lg); }
+  .lede { font-size: var(--text-performance-body-lg); }
   .opening { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); gap: clamp(2rem, 4vw, 4rem); align-items: center; }
   .opening h1 { font-size: clamp(2.75rem, 4.5vw, 4.5rem); }
   .report-layout { display: grid; grid-template-columns: minmax(0, .7fr) minmax(0, 1.3fr); gap: clamp(2rem, 4vw, 4rem); align-items: start; margin-top: 2.5rem; }
@@ -131,7 +131,7 @@
   .fit-layout, .scope-layout, .closing { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(2rem, 5vw, 5rem); }
   .fit-rows { list-style: none; padding: 0; margin: 0; }
   .fit-rows li { display: flex; gap: 1.25rem; border-top: 1px solid var(--color-performance-line); padding: 1.25rem 0; }
-  .fit-rows span { font-family: var(--font-mono); font-size: .75rem; padding-top: .35rem; }
+  .fit-rows span { font-family: var(--font-performance-mono); font-size: .75rem; padding-top: .35rem; }
   .fit-rows h3, .scope-questions h3 { margin-top: 0; }
   .fit-rows h3 { font-size: 1.25rem; }
   .fit-rows p { margin-bottom: 0; }

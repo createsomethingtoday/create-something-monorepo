@@ -50,7 +50,7 @@
     content="noindex"
   /></svelte:head
 >
-<main id="main" class="workspace">
+<main id="main" tabindex="-1" class="workspace">
   <header class="workspace-heading">
     <div>
       <p class="eyebrow">PRIVATE / BUILDER WORKSPACE</p>
@@ -137,6 +137,10 @@
                     >Technical walkthroughs</span
                   >
                 </dd>
+              </div>
+              <div>
+                <dt><Icon name="workflow" /> Sequence</dt>
+                <dd><a href={`/n/${network.slug}/paths`}>Learning paths</a><span>Order lessons for members</span></dd>
               </div>
               <div>
                 <dt><Icon name="skill" /> Document</dt>

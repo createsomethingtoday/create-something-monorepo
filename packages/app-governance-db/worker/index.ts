@@ -13,51 +13,7 @@ interface Env {
 
 type Props = { operator?: string };
 
-/**
- * Presence hub: one Durable Object instance fans every governance write out to
- * connected WebSocket clients, so operators can watch multiple agents work the
- * database live. Best-effort; the audit log in D1 remains the record.
- */
-export class PresenceHub {
-  private sockets = new Set<WebSocket>();
-  private recent: unknown[] = [];
-
-  constructor(private state: DurableObjectState) {}
-
-  async fetch(request: Request): Promise<Response> {
-    const url = new URL(request.url);
-
-    if (request.headers.get('Upgrade')?.toLowerCase() === 'websocket') {
-      const pair = new WebSocketPair();
-      const [client, server] = [pair[0], pair[1]];
-      server.accept();
-      this.sockets.add(server);
-      server.send(JSON.stringify({ type: 'hello', recent: this.recent }));
-      server.addEventListener('close', () => this.sockets.delete(server));
-      server.addEventListener('error', () => this.sockets.delete(server));
-      return new Response(null, { status: 101, webSocket: client });
-    }
-
-    if (request.method === 'POST' && url.pathname.endsWith('/publish')) {
-      const event = await request.json();
-      this.recent.push(event);
-      if (this.recent.length > 50) this.recent.shift();
-      const message = JSON.stringify({ type: 'event', ...(event as Record<string, unknown>) });
-      for (const ws of this.sockets) {
-        try {
-          ws.send(message);
-        } catch {
-          this.sockets.delete(ws);
-        }
-      }
-      return new Response(JSON.stringify({ ok: true, subscribers: this.sockets.size }), {
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }
-
-    return new Response('Not found', { status: 404 });
-  }
-}
+export { PresenceHub } from './presence.js';
 
 export class AppGovernanceMCP extends McpAgent<Env> {
   server = new McpServer({

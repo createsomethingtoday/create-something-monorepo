@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "draw-native-reviewed": {
+      "type": "stdio",
+      "command": "/opt/homebrew/bin/node",
+      "args": [
+        "/Users/createsomething/Documents/Codex/2026-10-08/task-3/draw-offline/packages/mapping-canvas/offline-agent/native-client.mjs",
+        "--socket",
+        "${DRAW_AGENT_SOCKET}"
+      ],
+      "env": { "DRAW_AGENT_TOKEN": "${DRAW_AGENT_TOKEN}" }
+    }
+  }
+}

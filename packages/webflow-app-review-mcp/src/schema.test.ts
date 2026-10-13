@@ -111,6 +111,34 @@ describe('schema helpers', () => {
     expect(APP_REVIEW_FIELD_MAP.versions.readOnly.resolved_exception_items).toBe(FIELD_IDS.versions.resolvedExceptionItems);
   });
 
+  it('exposes the eleven Preflight fields as read-only on assets and versions', () => {
+    const keys = [
+      'preflight_receipt',
+      'preflight_bundle_sha',
+      'preflight_readiness',
+      'preflight_source_map_status',
+      'preflight_runtime_status',
+      'preflight_verified_at',
+      'preflight_trace_error',
+      'preflight_install_url_status',
+      'preflight_install_url_probe',
+      'preflight_install_url_checked_at',
+      'preflight_install_url_checked_by',
+    ];
+    for (const key of keys) {
+      expect(APP_REVIEW_FIELD_MAP.assets.readOnly).toHaveProperty(key);
+      expect(APP_REVIEW_FIELD_MAP.versions.readOnly).toHaveProperty(key);
+      expect(APP_REVIEW_FIELD_MAP.assets.writable).not.toHaveProperty(key);
+      expect(APP_REVIEW_FIELD_MAP.versions.writable).not.toHaveProperty(key);
+    }
+    expect(APP_REVIEW_FIELD_MAP.assets.readOnly.preflight_receipt).toBe('fldyED3GJQ6RY9FD8');
+    expect(APP_REVIEW_FIELD_MAP.versions.readOnly.preflight_receipt).toBe('fldsC51z2wJrWCfKj');
+    expect(APP_REVIEW_FIELD_MAP.assets.readOnly.preflight_install_url_status).toBe('fldHStfyVCmvzMTTC');
+    expect(APP_REVIEW_FIELD_MAP.versions.readOnly.preflight_install_url_checked_by).toBe('fldrHBRM5Zszp0gEm');
+    expect(APP_REVIEW_FIELD_MAP.statusOptions.preflightInstallUrlStatus).toEqual(['pass', 'warn', 'block', 'not_checked']);
+    expect(APP_REVIEW_FIELD_MAP.statusOptions.preflightReadiness).toEqual(['ready', 'changes_required', 'needs_review']);
+  });
+
   it('exposes governance finding table, field names, and enum options', () => {
     expect(TABLE_IDS.governanceFindings).toBe('App Review Governance Findings');
     expect(GOVERNANCE_FINDING_FIELD_NAMES.title).toBe('Title');

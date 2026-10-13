@@ -17,6 +17,7 @@ import {
   bumpPublicSearchCacheVersion,
   deleteTemplateDocuments,
   filterMissingOrStaleTemplateLookupTargets,
+  listUnconfirmedListingTemplateIds,
   finishSyncJobLock,
   getSyncCursor,
   heartbeatSyncJobLock,
@@ -255,7 +256,11 @@ interface ListingGateResult {
   gatedIds: string[];
 }
 
-function applyListingGate(records: NormalizedTemplateRecord[], warnings: SyncWarning[]): ListingGateResult {
+function applyListingGate(
+  records: NormalizedTemplateRecord[],
+  warnings: SyncWarning[],
+  options: { verifyIds?: ReadonlySet<string> } = {},
+): ListingGateResult {
   const gated = records.filter((record) => record.listingMissing);
   if (gated.length === 0) {
     return { documents: records.map((record) => record.document), gatedIds: [] };
@@ -265,11 +270,18 @@ function applyListingGate(records: NormalizedTemplateRecord[], warnings: SyncWar
     .slice(0, LISTING_GATE_WARNING_SAMPLE)
     .map((record) => record.document.templateSlug)
     .join(', ');
-  const guardThreshold = Math.max(LISTING_GATE_GUARD_MIN_RECORDS, Math.ceil(records.length * LISTING_GATE_GUARD_RATIO));
-  if (gated.length >= guardThreshold) {
+  // Records picked for re-verification are expected to come back missing, so
+  // they do not count toward the guard: otherwise a backlog of five dead
+  // listings would trip it every run and never be removed. The guard still
+  // watches the rest of the batch, and when it fires everything is kept.
+  const verifyIds = options.verifyIds ?? new Set<string>();
+  const guardRecords = records.filter((record) => !verifyIds.has(record.document.id));
+  const guardGated = gated.filter((record) => !verifyIds.has(record.document.id));
+  const guardThreshold = Math.max(LISTING_GATE_GUARD_MIN_RECORDS, Math.ceil(guardRecords.length * LISTING_GATE_GUARD_RATIO));
+  if (guardGated.length >= guardThreshold) {
     warnings.push({
       source: 'listing_gate_guard',
-      message: `Kept ${gated.length} of ${records.length} published templates with no live Webflow listing: the count meets the guard threshold of ${guardThreshold}, so the CMS lookup is treated as unreliable for this run. Sample: ${sample}`,
+      message: `Kept ${gated.length} of ${records.length} published templates with no live Webflow listing: ${guardGated.length} of the ${guardRecords.length} not picked for re-verification meet the guard threshold of ${guardThreshold}, so the CMS lookup is treated as unreliable for this run. Sample: ${sample}`,
     });
     return { documents: records.map((record) => record.document), gatedIds: [] };
   }
@@ -759,6 +771,7 @@ function normalizeTemplateRecord(
       typeof record.fields['🚀Marketplace Status'] === 'string' ? record.fields['🚀Marketplace Status'] : null,
     sourceLastModifiedTime: typeof record.fields['📅LMT'] === 'string' ? record.fields['📅LMT'] : null,
     syncedAt,
+    listingConfirmed: webflowIdentity !== null ? true : webflowImageIndex?.listingCoverageComplete === true ? false : null,
   };
 
   return { document, listingMissing };
@@ -872,6 +885,11 @@ const INCREMENTAL_WRITE_BATCH_SIZE = 12;
 const RECENT_PUBLISHED_SWEEP_LOOKBACK_DAYS = 21;
 const RECENT_MODIFIED_PUBLISHED_SWEEP_LOOKBACK_HOURS = 24;
 const RECENT_PUBLISHED_SWEEP_LIMIT = 50;
+// Rows indexed without a confirmed live listing, re-checked per incremental run.
+// Each costs a Webflow Templates lookup plus a Designer lookup, every 5 minutes:
+// 10 stays well under the API rate limit (an uncapped pass drew 429s on
+// 2026-10-08) while a fresh submission still gets re-checked within minutes.
+const UNCONFIRMED_LISTING_RECHECKS_PER_RUN = 10;
 
 function resolveSyncWindow(cursor: string, now: Date): { end: Date; until: string | undefined; isCaughtUp: boolean } {
   const end = new Date(Math.min(new Date(cursor).getTime() + MAX_SYNC_WINDOW_MS, now.getTime()));
@@ -1023,6 +1041,9 @@ async function runIncrementalSync(env: Env, heartbeat: SyncHeartbeat): Promise<S
   let boundedCursor: string | null = null;
   let hitStaleFetchLimit = false;
   let recentPublishedRecords = 0;
+  let unconfirmedRecheckRecords = 0;
+  const unconfirmedMissingIds: string[] = [];
+  const unconfirmedRecheckIds = new Set<string>();
 
   while (scannedWindows < MAX_EMPTY_SYNC_WINDOWS_PER_RUN) {
     const syncWindow = resolveSyncWindow(scanCursor, now);
@@ -1075,8 +1096,32 @@ async function runIncrementalSync(env: Env, heartbeat: SyncHeartbeat): Promise<S
     await heartbeat();
   }
 
+  // Re-check rows indexed without a confirmed live listing (the gate failed
+  // open, or the row predates listing_confirmed). They are chosen from D1, not
+  // from the LMT-sorted Airtable sweeps above: a quiet row that nobody edits
+  // never reaches the top of those 50-row fetches (Ironclaw sat behind 1,000+
+  // rows modified after it). Without a CMS token nothing can confirm a listing,
+  // so the pass is skipped rather than re-indexing rows as unconfirmed again.
+  if (hasWebflowCmsToken(env)) {
+    const queuedIds = new Set(assets.map((record) => record.id));
+    const unconfirmedIds = (await listUnconfirmedListingTemplateIds(env.DB, UNCONFIRMED_LISTING_RECHECKS_PER_RUN)).filter(
+      (id) => !queuedIds.has(id),
+    );
+    if (unconfirmedIds.length > 0) {
+      const unconfirmedAssets = await fetchAssetRecordsByIds(env, unconfirmedIds);
+      assets.push(...unconfirmedAssets);
+      unconfirmedRecheckRecords = unconfirmedAssets.length;
+      for (const record of unconfirmedAssets) unconfirmedRecheckIds.add(record.id);
+      // An id Airtable no longer returns has no record to re-index; drop the row
+      // instead of leaving it to occupy a re-check slot every run.
+      const returnedIds = new Set(unconfirmedAssets.map((record) => record.id));
+      unconfirmedMissingIds.push(...unconfirmedIds.filter((id) => !returnedIds.has(id)));
+    }
+    await heartbeat();
+  }
+
   const toUpsert: TemplateDocumentInput[] = [];
-  const toDelete: string[] = [];
+  const toDelete: string[] = [...unconfirmedMissingIds];
   let aliasRecords = 0;
   let listingGatedRecords = 0;
   let webflowImageIndex: Awaited<ReturnType<typeof loadWebflowTemplateImageIndex>> = null;
@@ -1109,7 +1154,7 @@ async function runIncrementalSync(env: Env, heartbeat: SyncHeartbeat): Promise<S
         toDelete.push(record.id);
       }
     }
-    const listingGate = applyListingGate(normalizedRecords, warnings);
+    const listingGate = applyListingGate(normalizedRecords, warnings, { verifyIds: unconfirmedRecheckIds });
     toUpsert.push(...listingGate.documents);
     toDelete.push(...listingGate.gatedIds);
     listingGatedRecords = listingGate.gatedIds.length;
@@ -1142,6 +1187,7 @@ async function runIncrementalSync(env: Env, heartbeat: SyncHeartbeat): Promise<S
     cursor: newCursor,
     skipped_empty_windows: skippedEmptyWindows,
     recent_published_records: recentPublishedRecords,
+    unconfirmed_recheck_records: unconfirmedRecheckRecords,
     listing_gated_records: listingGatedRecords,
     queued_record_sync_records: pendingRecordIds.length,
   };

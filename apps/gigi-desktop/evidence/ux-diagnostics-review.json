@@ -1,0 +1,49 @@
+{
+  "date": "2026-10-12",
+  "issue": "CRE-2256",
+  "baseline": "fb26e09dbd4326e7f86a943f9083a1c192523c4c",
+  "priorMergedWork": "b725a2b388d30d8bcfe98a6364bca851ebb98f18",
+  "status": "reviewed source; production qualification pending",
+  "changes": [
+    "first-run chat initialization",
+    "same-view form/focus/disclosure persistence",
+    "compact chat controls and scroll preservation",
+    "editable pre-submission source review",
+    "neutral sign-in recovery copy",
+    "UTF-8 import title bounds",
+    "first-party release signing team pin",
+    "opt-in bounded local source diagnostics with reviewed export"
+  ],
+  "validation": {
+    "desktopTests": 150,
+    "integrationTests": 206,
+    "rustDomainTests": 60,
+    "rustMcpTests": 7,
+    "skipped": 0,
+    "sourceProposalProcessCalls": 39,
+    "typecheck": "passed",
+    "retiredProviderGuard": "passed",
+    "independentUxReview": "completed; actionable findings implemented",
+    "independentSourceSecurityReview": "completed; actionable findings implemented",
+    "independentPolishReview": "completed; native-discovered disclosure regression repaired"
+  },
+  "nativeSyntheticEvidence": [
+    "fresh onboarding at 880x620",
+    "first-run Ask GiGi recovery panel without restart",
+    "source draft review, back-to-edit, corrected local creation and linked provenance",
+    "diagnostic opt-in, disconnected source status capture, stop, exact review, private local export, deletion",
+    "subscribed Codex read, explicit synthetic edit approval, rejection, companion restart readback using explicit installed ChatGPT bundled CLI"
+  ],
+  "limitations": [
+    "Latest disclosure and crash-temp fixes require final rebuilt native confirmation",
+    "Native evidence uses separately identified QA app, not qualified production artifact",
+    "No fresh real-user provider consent/import or Grant acceptance claimed",
+    "Notary profile Create-Something unavailable; owner handoff pending",
+    "Signed/notarized exact artifact pair, installed production acceptance and physical-device acceptance remain required",
+    "No release announcement or diagnostic upload performed"
+  ],
+  "testNotes": [
+    "Full Rust suite passed serially; parallel shutdown timing assertion failed during concurrent build load",
+    "Initial sandbox socket tests failed EPERM; host-permission isolated suites passed"
+  ]
+}

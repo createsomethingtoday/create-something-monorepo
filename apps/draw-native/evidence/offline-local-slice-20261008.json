@@ -1,0 +1,122 @@
+{
+  "schema": "draw.offline-local-slice.v1",
+  "date": "2026-10-08",
+  "base": "606e5a50b02552718326dd0967deb31026fc44c7",
+  "scope": "local development only; synthetic data",
+  "checks": {
+    "nativeRust": {
+      "passed": 39,
+      "failed": 0,
+      "filtered": 1,
+      "filteredReason": "existing LAN discovery test requires sandbox networking"
+    },
+    "fileAgentAndNativeQueue": {
+      "passed": 13
+    },
+    "documentPairedSessionEditing": {
+      "passed": 54
+    },
+    "svelteCheck": {
+      "errors": 0,
+      "warnings": 0
+    },
+    "nativeStaticBuild": "passed",
+    "nativeBinaryBuild": "passed"
+  },
+  "ui": {
+    "synthetic": true,
+    "transport": "mocked Tauri IPC, actual bundled Canvas UI and TypeScript operations",
+    "passed": true,
+    "revision": 6,
+    "checks": [
+      "queued CAS revisions",
+      "native batch route",
+      "undo/redo",
+      "conflict drops dependent edits",
+      "undo invalidated after conflict",
+      "LAN-disabled status"
+    ],
+    "calls": [
+      {
+        "command": "draw_runtime_role"
+      },
+      {
+        "command": "draw_host_status"
+      },
+      {
+        "command": "draw_host_apply_batch",
+        "expectedRevision": 0
+      },
+      {
+        "command": "draw_host_apply_batch",
+        "expectedRevision": 1
+      },
+      {
+        "command": "draw_host_apply_batch",
+        "expectedRevision": 2
+      },
+      {
+        "command": "draw_host_replace_document"
+      },
+      {
+        "command": "draw_host_status"
+      },
+      {
+        "command": "draw_host_replace_document"
+      },
+      {
+        "command": "draw_host_apply_batch",
+        "expectedRevision": 5
+      },
+      {
+        "command": "draw_host_status"
+      }
+    ]
+  },
+  "nativeProcess": {
+    "synthetic": true,
+    "binarySha256": "de6b51441c1c5ef3297791c5963cade2feb1f2b33aeac1efd411238aacc903f0",
+    "ephemeralWebview": true,
+    "LANEnabled": false,
+    "runs": [
+      {
+        "alive": true,
+        "documentPreserved": true,
+        "revision": 7,
+        "networkSockets": 0
+      },
+      {
+        "alive": true,
+        "documentPreserved": true,
+        "revision": 7,
+        "networkSockets": 0
+      }
+    ],
+    "installedAppReplaced": false,
+    "nativeUIInteraction": "not accepted: native computer-use pipe unavailable",
+    "agentLiveCanvasAccepted": false
+  },
+  "review": {
+    "independent": true,
+    "finalResult": "No remaining blocker found for unregistered prototype local checkpoint",
+    "fixedFindings": [
+      "source-parent symlink scope",
+      "native operation validation",
+      "gesture exclusion",
+      "expiry after mutex wait including duplicates",
+      "indirect group scope",
+      "lock and visibility inverse constraints",
+      "oversized inverse preflight"
+    ],
+    "reviewerReranBuilds": false
+  },
+  "limitations": [
+    "Native computer-use pipe unavailable; native UI gesture/export acceptance pending",
+    "No live provider connection or native grants enabled; no native agent listener",
+    "Native UI history remains in memory; agent seam has one latest inverse, not unified durable undo/redo",
+    "Canvas-only portability; Motion/assets not preserved",
+    "Historical 0.1.1 signed evidence on sibling branch; exact artifact not verified here",
+    "Dependencies reused; clean lockfile bootstrap remains promotion gate",
+    "Linear unavailable; no issue created or claimed"
+  ]
+}
