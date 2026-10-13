@@ -21,6 +21,9 @@ jobs:
         node: ['20', '22']
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+        with:
+          version: 9.15.0
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
         with:
           node-version: ${{ matrix.node }}
@@ -45,9 +48,6 @@ jobs:
           node --test scripts/test/extract-zip-installation.test.mjs
           node packages/huggingface-spaces/motion-ontology/security/apply-extract-zip-patch.cjs "$RUNNER_TEMP/zip-security/node_modules"
           node --test scripts/test/extract-zip-security.test.mjs
-      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
-        with:
-          version: 9.15.0
       - name: Verify pnpm applies the same patch bytes
         run: |
           mkdir -p "$RUNNER_TEMP/zip-pnpm"
