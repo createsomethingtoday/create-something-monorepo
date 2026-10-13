@@ -1,6 +1,6 @@
 # Agency interaction pilot (CRE-2259)
 
-Production promotion authorized on 2026-10-13; acceptance gates remain pending. No merge or production deployment yet. Base: `9de2b762b35142b3aad3eb84999685baec4eae6f`. Branch: `codex/agency-interaction-pilot`.
+Production promotion authorized on 2026-10-13; owner explicitly waived physical-mobile and screen-reader acceptance, which remain unverified. Exact-head CI and live-verification requirements remain. No merge or production deployment yet. Base: `9de2b762b35142b3aad3eb84999685baec4eae6f`. Branch: `codex/agency-interaction-pilot`.
 
 The homepage service journey now follows one broken form through Problem → Approval → Check → Handoff. The accepted Anatomy/isometric family and Canon performance tokens remain. Each selection preserves the workflow overview, opens a contextual record, and leads to a fixed synthetic receipt. No customer input, provider, booking, request, payment or production approval is involved.
 
@@ -42,7 +42,7 @@ An independent source/visual reviewer accepted the bounded local pilot with no r
 
 Follow-up fixes: entering/leaving the homepage no longer waits for an asynchronous view-transition snapshot after history changes. Three early-Back repetitions restore Handoff before waiting for destination rendering and remain stable after 500ms; no route snapshot delays those commits. Homepage search is now inline at the journey entrance and end, reusing the existing palette. Other routes retain their mobile floating search. The browser tests verify no floating search control over the pilot and touch open/close/focus return.
 
-Before any release: inspect the local preview, perform physical mobile and screen-reader testing. Retain this isolated checkout until the owner decides whether to proceed. Do not generalize to .io/.ltd/PCN/Draw until this journey is accepted and a second consumer establishes shared needs. Production promotion is authorized, but physical-mobile and screen-reader acceptance remain required before merge/deployment.
+The owner explicitly waived physical-mobile and actual screen-reader acceptance for this release after the limitations were disclosed. Retain these as deferred checks, not passing results. Retain the isolated checkout until production verification. Do not generalize to .io/.ltd/PCN/Draw until this journey is accepted and a second consumer establishes shared needs. Production promotion is authorized subject to required GitHub CI and review resolution. See release-acceptance.md for the waiver and live-verification requirements.
 
 ## Static review delivery
 

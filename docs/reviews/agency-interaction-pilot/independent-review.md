@@ -18,3 +18,5 @@ Follow-up source review: no new blocker. Homepage navigation bypasses the asynch
 Remaining limitations: physical-device and screen-reader testing are outstanding. Static reading preview uses fallback fonts and does not exercise live interaction.
 
 2026-10-13 follow-up: independent reviewer verified the reproduced URL-fragment and modal-focus fixes. No additional source blocker found. Final-head checks, physical mobile and actual screen-reader acceptance remain release requirements.
+
+Subsequent owner decision, 2026-10-13: the owner explicitly waived physical-mobile and actual screen-reader acceptance and authorized deployment with those limitations. The historical reviewer recommendation above is preserved; these manual checks remain unverified. Required exact-head GitHub CI, review resolution and live verification remain in force. See release-acceptance.md.

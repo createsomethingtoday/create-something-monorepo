@@ -3,13 +3,14 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import assert from 'node:assert/strict';
 
 const base = process.env.AGENCY_PREVIEW_URL || 'http://127.0.0.1:4186';
+const previewOrigin = new URL(base).origin;
 const output = process.env.PILOT_REVIEW_DIR;
 assert.ok(output, 'PILOT_REVIEW_DIR is required');
 await mkdir(output, { recursive: true });
 const browser = await chromium.launch({ headless: true, ...(process.env.CHROME_PATH ? { executablePath: process.env.CHROME_PATH } : {}) });
 try {
   const context = await browser.newContext({ javaScriptEnabled: false });
-  await context.route('**/*', route => new URL(route.request().url()).origin === base ? route.continue() : route.abort());
+  await context.route('**/*', route => new URL(route.request().url()).origin === previewOrigin ? route.continue() : route.abort());
   const page = await context.newPage();
   await page.goto(base, { waitUntil: 'networkidle' });
   const snapshot = await page.evaluate(() => {
@@ -19,7 +20,7 @@ try {
     return { markup: section.outerHTML, css, bodyClass: document.body.className, htmlClass: document.documentElement.className };
   });
   const liveContext = await browser.newContext();
-  await liveContext.route('**/*', route => new URL(route.request().url()).origin === base ? route.continue() : route.abort());
+  await liveContext.route('**/*', route => new URL(route.request().url()).origin === previewOrigin ? route.continue() : route.abort());
   const live = await liveContext.newPage();
   await live.goto(base, { waitUntil: 'networkidle' });
   await live.locator('[data-journey].enhanced').waitFor();

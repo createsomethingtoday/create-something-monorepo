@@ -1,8 +1,8 @@
 # Release acceptance — CRE-2259
 
-Status: not ready to merge or deploy. Production promotion authorized; required acceptance is incomplete.
+Status: owner authorized merge/deployment on 2026-10-13 and explicitly waived physical-mobile and actual screen-reader acceptance. Those checks remain unverified, not passed. Required exact-head GitHub CI, review resolution, deployment evidence and live verification remain in force.
 
-## Required native checks
+## Deferred native checks — owner waiver
 
 Use the candidate preview on the exact release head. Record tester, device, OS, browser/assistive-technology version, date, URL and commit. A Mac Ego viewport pass is desktop browser evidence, not physical-mobile acceptance.
 
@@ -20,11 +20,11 @@ Final continuity-fix validation: Agency check passes (0 Svelte errors/warnings),
 
 Automated local browser: eight groups pass at 1440/390/320, keyboard, emulated touch/orientation, reduced motion, search/history, no JavaScript and blocked storage; no page errors. See browser-results.json. This does not claim VoiceOver or physical-device acceptance.
 
-Native Ego: pending desktop coordination. Physical device: not available; user suggested Ego browser. Actual screen-reader pass: pending. No acceptance gate waived.
+Native Ego/VoiceOver could not run because the Mac was locked; the execution environment subsequently became unavailable. No physical device was verified. After these limitations were disclosed, the owner explicitly answered “Yes, please” to waiving physical-mobile and actual screen-reader acceptance and authorizing deployment with that limitation. Emulated touch and desktop Ego are not physical-phone evidence.
 
 ## Promotion and rollback
 
-Create reviewed draft PR, retain required exact-head checks (Require immutable action references, Public Distribution GA), then complete acceptance before merge. Normal Agency Pages workflow owns deployment; do not bypass checks.
+Merge reviewed PR #1970 only after required exact-head checks (Require immutable action references, Public Distribution GA) and review resolution. The two deferred manual checks above are waived for this release; no GitHub rule is waived. Normal Agency Pages workflow owns deployment; do not bypass checks.
 
 Prior successful main workflow: https://github.com/createsomethingtoday/create-something-monorepo/actions/runs/38199580411 at commit 2b5bb7e10c9b39416c388e28e85b9ac65465a479, deployment https://6403287e.create-something-agency.pages.dev. Verify the current production deployment before promoting and retain it as the rollback target; this older workflow receipt alone is not proof of current production.
 
