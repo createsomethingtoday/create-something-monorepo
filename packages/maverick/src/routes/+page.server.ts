@@ -45,5 +45,6 @@ export interface HomeContent {
 
 export const load: PageServerLoad = async ({ platform }) => {
 	const content = await fetchPageContent<HomeContent>(platform, 'home');
-	return { content };
+	// Do not serialize retired legacy markets or unreviewed legacy claims into public page data.
+	return { content: content?.redesign ? { redesign: content.redesign } : null };
 };

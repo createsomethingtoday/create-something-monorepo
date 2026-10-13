@@ -3,7 +3,6 @@
  */
 
 import type { PageServerLoad } from './$types';
-import { fetchPageContent } from '$lib/server/content';
 
 export interface NewsArticle {
   id: string;
@@ -24,7 +23,5 @@ export interface NewsContent {
   articles?: NewsArticle[];
 }
 
-export const load: PageServerLoad = async ({ platform }) => {
-  const content = await fetchPageContent<NewsContent>(platform, 'news');
-  return { content };
-};
+// Press publication is versioned in source while the October launch review is pending.
+export const load: PageServerLoad = () => ({ content: null });

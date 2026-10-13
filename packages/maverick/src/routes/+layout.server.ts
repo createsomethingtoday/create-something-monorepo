@@ -31,7 +31,8 @@ export const load: LayoutServerLoad = async ({ platform }) => {
 
 	try {
 		const globalContent = await platform.env.CONTENT.get('content:global', { type: 'json' }) as GlobalContent | null;
-		return { globalContent };
+		// Public navigation/address now come from the reviewed source version.
+		return { globalContent: globalContent ? { contact: globalContent.contact } : null };
 	} catch (error) {
 		console.error('Failed to fetch global content from KV:', error);
 		return { globalContent: null };

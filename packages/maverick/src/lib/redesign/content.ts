@@ -1,52 +1,38 @@
-/** September 2026 client-approved content. Legacy CMS fields remain available; redesign overrides are versioned separately. */
-export const news = [
-  {
-    date: 'May 20, 2026',
-    kind: 'Coverage',
-    title: 'Chord Energy invests in MaverickX shale recovery technology',
-    source: 'World Oil',
-    url: 'https://www.worldoil.com/news/2026/5/20/chord-energy-invests-in-maverickx-shale-recovery-technology/'
-  },
-  {
-    date: 'Apr 22, 2026',
-    kind: 'Coverage',
-    title: 'Biotechnology firm opens new production facility to support growth',
-    source: 'San Antonio Business Journal',
-    url: 'https://www.bizjournals.com/sanantonio/news/2026/04/22/biotechnology-firm-new-production-facility-growth.html'
-  },
-  {
-    date: 'Jan 13, 2026',
-    kind: 'Press Release',
-    title: 'Maverick Labs becomes MaverickX, unlocking a new era of precision biologics',
-    source: 'GlobeNewswire',
-    url: 'https://www.globenewswire.com/news-release/2026/01/13/3217830/0/en/maverick-labs-becomes-maverickx-unlocking-oil-metals-and-water-from-existing-oilfields-and-waste.html'
-  }
-];
+/** October 2026 preview corrections. Claims, partner permissions and new leadership copy remain gated. */
+// Existing press links include unapproved partner names, legacy taxonomy or capacity claims.
+// Reintroduce individual items only after the launch press review.
+export const news: Array<{
+  date: string;
+  kind: string;
+  title: string;
+  source: string;
+  url: string;
+}> = [];
 export const oilApps = [
   {
     num: '01',
     name: 'Well Stimulation',
-    desc: 'Restores flow in damaged and underperforming wells — recovering production conventional treatments leave behind.'
+    desc: 'PetroX Boost is designed to improve porosity and permeability. Discuss suitability for your well.'
   },
   {
     num: '02',
     name: 'Fracking',
-    desc: 'Improves flowback and formation permeability without affecting proppant integrity.'
+    desc: 'Discuss your fracturing conditions and formulation requirements with our team.'
   },
   {
     num: '03',
     name: 'Saltwater Disposal',
-    desc: 'Improves separation and cuts sludge, scale, and fouling — lowering injection pressure.'
+    desc: 'Produced-water treatment belongs within the PetroX family. Discuss your water, sludge and scale challenges.'
   },
   {
     num: '04',
     name: 'Oil Quality Improvement',
-    desc: 'Removes metals and other contaminants from crude — from the wellhead through the refinery.'
+    desc: 'Discuss crude-oil contaminants and the requirements of your process.'
   },
   {
     num: '05',
     name: 'Production Chemistry',
-    desc: 'Solutions for iron control, scale inhibition, and more.'
+    desc: 'Discuss iron, scale and other production-chemistry needs with our team.'
   }
 ];
 export const team = [
@@ -73,23 +59,5 @@ export const team = [
     role: 'Director of Operations',
     photo: '/redesign/team-matthew.jpg',
     linkedin: 'https://www.linkedin.com/in/matt-maverickx/'
-  },
-  {
-    name: 'Calvin Heffes',
-    role: 'Director of Growth',
-    photo: '/redesign/team-calvin.jpg',
-    linkedin: 'https://www.linkedin.com/in/calvinheffes/'
-  },
-  {
-    name: 'Suman Mandava',
-    role: 'Principal Scientist, Bioprocess Technical Operations',
-    photo: '/redesign/team-suman.jpg',
-    linkedin: 'https://www.linkedin.com/in/suman-mandava-00721ba4/'
-  },
-  {
-    name: 'Hayden Lippelman',
-    role: 'Senior Scientist, Biological Research & Process Development',
-    photo: '/redesign/team-hayden.jpg',
-    linkedin: 'https://www.linkedin.com/in/haydenlippelman8a0a4b157/'
   }
 ];

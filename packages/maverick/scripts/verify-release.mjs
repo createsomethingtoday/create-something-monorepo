@@ -1,38 +1,65 @@
 import assert from 'node:assert/strict';
-
 const origin = process.argv[2];
 assert(origin && /^https?:\/\//.test(origin), 'Pass the release origin');
+const forbidden =
+  /HydroX|Calvin Heffes|Chord Energy|Chevron|Hess|Bldg\. B|Building B|non.hazmat|non.toxic|non.flammable|non.carcinogenic|biodegradable|clean feedstocks|More Oil From Every Well|raises production|boosts production|supercharge production|changes the rock itself|from every mine|Higher Recovery|industrial scale/i;
 const expected = {
-  '/': ['chemistry that', 'helping operators recover more, for less'],
-  '/oil-gas': ['PetroX Boost changes the rock itself.', 'Production Chemistry'],
-  '/mining': ['more metal', 'from every mine', 'Curing Chemistry'],
-  '/about': ['Sanjay Jain', 'Hayden Lippelman', 'Principal Scientist, Bioprocess Technical Operations'],
-  '/news': ['May 20, 2026', 'Apr 22, 2026', 'Jan 13, 2026', 'GlobeNewswire']
+  '/': ['One platform. Two markets.', 'How our chemistry works', 'Industries'],
+  '/oil-gas': ['PetroX Boost', 'produced-water', 'designed to improve porosity and permeability'],
+  '/mining': ['LithX', 'laboratory test', 'Mineral gallery', 'Gold'],
+  '/about': ['Sanjay Jain', 'Matthew Rodriguez', 'Suite B', 'Our investors'],
+  '/news': ['Company updates', 'info@maverickx.com'],
+  '/technology': ['How our chemistry works', 'technical detail pending'],
+  '/mission-vision': ['Mission &amp; Vision', 'Core values'],
+  '/careers': ['How we work', 'Open roles']
 };
 for (const [path, needles] of Object.entries(expected)) {
-  const response = await fetch(new URL(path, origin));
-  assert.equal(response.status, 200, path);
-  const html = await response.text();
-  for (const needle of needles) assert(html.includes(needle), `${path}: missing ${needle}`);
-  assert(!/PetroX Bo\.\.\.|PLACEHOLDER|photo —|href="#"/.test(html), `${path}: unfinished content`);
-  assert(html.includes('rel="canonical"'), `${path}: canonical missing`);
-  if (path === '/about') {
-    const portraits = [...html.matchAll(/src="(\/redesign\/team-[^"]+)"/g)];
-    assert.equal(portraits.length, 7);
-    for (const [, src] of portraits) assert.equal((await fetch(new URL(src, origin))).status, 200, src);
+  const res = await fetch(new URL(path, origin));
+  assert.equal(res.status, 200, path);
+  const html = await res.text();
+  for (const needle of needles) assert(html.includes(needle), path + ': missing ' + needle);
+  assert(!forbidden.test(html), path + ': restricted or stale content');
+  assert(!/PLACEHOLDER|href="#"/.test(html), path + ': unfinished content');
+  assert(html.includes('rel="canonical"'), path + ': canonical missing');
+  if (path === '/') {
+    assert(!/PetroX|LithX/i.test(html), 'home: product names removed');
+    assert(!html.includes('sector-card'), 'home product sections removed');
   }
-  console.log(`PASS ${path}`);
+  if (path === '/oil-gas')
+    assert(!html.includes('Discuss your application'), 'product family chart removed');
+  if (path === '/mining')
+    assert(!/Metals of Interest|Talk to Us/.test(html), 'mining boxes removed');
+  if (path === '/about')
+    assert(!/Suman Mandava|Hayden Lippelman/.test(html), 'only approved roster');
+  if (path === '/about') {
+    const photos = [...html.matchAll(/src="(\/redesign\/team-[^"]+)"/g)];
+    assert.equal(photos.length, 4);
+    for (const [, src] of photos)
+      assert.equal((await fetch(new URL(src, origin))).status, 200, src);
+  }
+  console.log('PASS content, metadata and assets ' + path);
 }
-for (const path of ['/privacy', '/terms', '/water-treatment', '/admin/login']) {
-  assert.equal((await fetch(new URL(path, origin))).status, 200, path);
-  console.log(`PASS retained route ${path}`);
+for (const path of ['/privacy', '/terms']) {
+  const res = await fetch(new URL(path, origin));
+  assert.equal(res.status, 200, path);
+  const html = await res.text();
+  assert(!forbidden.test(html), path + ': stale shared navigation/footer');
+  assert(!html.includes('href="/water-treatment"'), path + ': separate water market');
+  console.log('PASS shared navigation ' + path);
 }
-const protectedRoute = await fetch(new URL('/admin/content', origin), { redirect: 'manual' });
-assert.equal(protectedRoute.status, 303, 'Admin content stays session protected');
-assert.equal(protectedRoute.headers.get('location'), '/admin/login');
+const retired = await fetch(new URL('/water-treatment', origin), { redirect: 'manual' });
+assert.equal(retired.status, 308);
+assert.equal(retired.headers.get('location'), '/oil-gas#produced-water');
+console.log('PASS retired market redirects to PetroX');
+const admin = await fetch(new URL('/admin/content', origin), { redirect: 'manual' });
+assert.equal(admin.status, 303);
+assert.equal(admin.headers.get('location'), '/admin/login');
 console.log('PASS admin authentication boundary');
+// Deliberately no real lead submission. Only invalid input, rejected before D1/email writes.
 const invalid = await fetch(new URL('/api/contact', origin), {
-  method: 'POST', headers: { 'Content-Type': 'application/json', Origin: new URL(origin).origin }, body: '{}'
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json', Origin: new URL(origin).origin },
+  body: '{}'
 });
-assert.equal(invalid.status, 400, 'Invalid contact request must fail before database/email writes');
-console.log('PASS non-sending contact API validation (400)');
+assert.equal(invalid.status, 400);
+console.log('PASS non-sending contact validation');
