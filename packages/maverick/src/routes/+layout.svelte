@@ -12,8 +12,6 @@
   import DesignFooter from '$lib/redesign/Footer.svelte';
   import '$lib/redesign/fonts.css';
   import '$lib/redesign/design.css';
-  import Header from '$lib/components/Header.svelte';
-  import Footer from '$lib/components/Footer.svelte';
   import ContactModal from '$lib/components/ContactModal.svelte';
   import type { LayoutData } from './$types';
 
@@ -34,11 +32,7 @@
   // Check if we're on an admin route - admin has its own layout
   const isAdmin = $derived($page.url.pathname.startsWith('/admin'));
 
-  const isRedesign = $derived(
-    ['/', '/oil-gas', '/mining', '/about', '/news', '/privacy', '/terms', '/water-treatment'].includes(
-      $page.url.pathname.replace(/\/$/, '') || '/'
-    )
-  );
+  const isRedesign = $derived(!isAdmin);
   let contactModalOpen = $state(false);
   let modalContext = $state<ContactModalContext>({});
 
@@ -81,9 +75,7 @@
   <a href="#main-content" class="skip-link">Skip to main content</a>
 
   {#if !isAdmin}
-    {#if isRedesign}<DesignHeader onContactClick={openContactModal} />{:else}<Header
-        onContactClick={openContactModal}
-      />{/if}
+    <DesignHeader onContactClick={openContactModal} />
   {/if}
 
   <main id="main-content" tabindex="-1">
@@ -91,10 +83,7 @@
   </main>
 
   {#if !isAdmin}
-    {#if isRedesign}<DesignFooter onContactClick={openContactModal} />{:else}<Footer
-        onContactClick={openContactModal}
-        content={globalContent?.footer}
-      />{/if}
+    <DesignFooter onContactClick={openContactModal} />
 
     <!-- Contact Modal -->
     <ContactModal
