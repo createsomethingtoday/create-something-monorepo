@@ -612,3 +612,13 @@ test('Admin template create/complete and confirmed delist/relist ask for Send; a
   expect(asked).toBe(4)
   expect(reached).toBe(1)
 })
+
+test('the create confirmation names a support contact override', async ($, on) => {
+  let question = ''
+  on('tool.call', { tool: 'AskUserQuestion' }, (_$, e) => {
+    question = JSON.stringify(e)
+    return { deny: 'nobody here' }
+  })
+  await $.tool.call({ tool: 'mcp__claude_ai_Template_Review_MCP__template_review_create_admin_template', version_id: 'recAdmin', support_email: 'help@example.com' })
+  expect(question).toContain('help@example.com')
+})

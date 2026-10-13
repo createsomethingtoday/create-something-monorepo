@@ -200,8 +200,12 @@ function describe({ name, args }: Call, known: Record<string, string>): string |
       return str(args.pick_reason) !== null
         ? `Set the live Reviewer Pick Reason on ${v}: shown on the public listing and quoted in the creator's featured email`
         : `set featured pick on ${v}: changes what buyers see`
-    case 'create_admin_template':
-      return `Create the production marketplace template (MRP + Admin record) for ${v}`
+    case 'create_admin_template': {
+      // Support overrides replace the creator contact on the public listing; show them before Send.
+      const support = [str(args.support_email), str(args.support_url)].filter((value) => value !== null)
+      const override = support.length > 0 ? `, public support contact overridden to ${support.join(' and ')}` : ''
+      return `Create the production marketplace template (MRP + Admin record) for ${v}${override}`
+    }
     case 'complete_admin_template':
       return `Write Admin fields (thumbnail, category, tag, type, price, description) to the production template for ${v}`
     case 'delist_template':
