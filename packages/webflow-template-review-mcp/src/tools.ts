@@ -1280,17 +1280,23 @@ export function registerTools(
     },
   );
 
-  const CMS_ITEM_IDS = z.array(z.string().regex(/^[0-9a-f]{24}$/)).describe('cms_item_ids exactly as returned by the preview.');
+  const CMS_ITEM_IDS = z.array(z.string().regex(/^[0-9a-f]{24}$/)).min(1).describe('cms_item_ids exactly as returned by the preview.');
   const delistActor = (reviewer: ReviewerProfile) => reviewer.email ?? reviewer.name ?? reviewer.accountId;
 
   server.tool(
     'template_review_delist_template',
-    'Take a published template off the Marketplace: sets 🚀Marketplace Status → Delisted and 🥞CMS Status → Archived in Airtable, then unpublishes the live Webflow Templates CMS item (the Airtable flip alone does NOT take the page down) and archives its staged copy. If other templates list it in related-assets, they are saved to an Airtable comment on the asset and stripped so the unpublish can succeed. Mode "permanent" (creator request, Stripe, policy) also sets the delist reason and renames the asset "{Name} Archived YYYYMMDD"; "temporary" (relist expected after a fix) leaves both alone. Does NOT archive the Webflow Admin template (that strands buyers; do it separately only for permanent removals). Call without confirm to preview; then call again with confirm: { confirmed: true, expected_cms_item_ids } from the preview, only after the reviewer approves.',
+    'Take a published template off the Marketplace: sets 🚀Marketplace Status → Delisted and 🥞CMS Status → Archived in Airtable, then unpublishes the live Webflow Templates CMS item (the Airtable flip alone does NOT take the page down) and archives its staged copy. If other templates list it in related-assets, they are saved to an Airtable comment on the asset and stripped so the unpublish can succeed. Mode "permanent" (creator request, Stripe, policy) also sets the delist reason and renames the asset "{Name} Archived YYYYMMDD"; "temporary" (relist expected after a fix) leaves both alone. Does NOT archive the Webflow Admin template (that strands buyers; do it separately only for permanent removals). Only for Published assets (or Delisted ones whose page is still live); refuses when a CMS item is shared with a published update twin. Call without confirm to preview; then call again with the same mode and reason and confirm: { confirmed: true, expected_cms_item_ids, plan_token } from the preview, only after the reviewer approves.',
     {
       asset_id: z.string().regex(/^rec[A-Za-z0-9]{14}$/),
       mode: z.enum(['permanent', 'temporary']),
       reason: z.enum(DELIST_REASON_VALUES).optional().describe('Required for permanent.'),
-      confirm: z.object({ confirmed: z.literal(true), expected_cms_item_ids: CMS_ITEM_IDS }).optional(),
+      confirm: z
+        .object({
+          confirmed: z.literal(true),
+          expected_cms_item_ids: CMS_ITEM_IDS,
+          plan_token: z.string().regex(/^[0-9a-f]{64}$/).describe('plan_token from the preview; binds the confirm to that mode, reason, and plan.'),
+        })
+        .optional(),
     },
     async ({ asset_id, mode, reason, confirm }) => {
       try {
@@ -1307,6 +1313,7 @@ export function registerTools(
           mode,
           reason,
           expectedCmsItemIds: confirm.expected_cms_item_ids,
+          planToken: confirm.plan_token,
           actor: delistActor(reviewer),
         });
         return asSuccess({ reviewer: reviewerPayload(reviewer), ...result });
@@ -1318,7 +1325,7 @@ export function registerTools(
 
   server.tool(
     'template_review_relist_template',
-    'Undo template_review_delist_template: sets 🚀Marketplace Status → Published and 🥞CMS Status → Active, clears the delist reason, strips any " Archived …" name suffix, un-archives and republishes the Webflow Templates CMS item(s), and adds the item back to every template whose related-assets were stripped (read from the snapshot comment on the asset). Only for assets currently Delisted. Run template_review_delist_template in preview mode first to get the cms_item_ids, confirm with the reviewer, then pass them here.',
+    'Undo template_review_delist_template: sets 🚀Marketplace Status → Published and 🥞CMS Status → Active, clears the delist reason, strips any " Archived …" name suffix, un-archives and republishes the Webflow Templates CMS item(s), and adds the item back to every template whose related-assets were stripped (read from the snapshot comment on the asset). Only for assets currently Delisted, never for a Policy infringement delist; re-running after an interrupted relist resumes it. Run template_review_delist_template in preview mode first to get the cms_item_ids, confirm with the reviewer, then pass them here.',
     {
       asset_id: z.string().regex(/^rec[A-Za-z0-9]{14}$/),
       confirm: z.object({ confirmed: z.literal(true), expected_cms_item_ids: CMS_ITEM_IDS }),
@@ -1340,7 +1347,7 @@ export function registerTools(
 
   server.tool(
     'template_review_delist_drift',
-    'Read-only: list templates marked Delisted in Airtable whose Marketplace page still serves 200 (the Airtable flip was made but the CMS item was never unpublished). Excludes update twins whose page belongs to a newer listing. Fix each with template_review_delist_template.',
+    'Read-only: list templates marked Delisted in Airtable whose Marketplace page still serves 200 (the Airtable flip was made but the CMS item was never unpublished). Checks every Delisted asset that links a CMS item; excludes update twins whose page belongs to a published listing. Fix each with template_review_delist_template.',
     {},
     async () => {
       try {

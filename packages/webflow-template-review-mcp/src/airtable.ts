@@ -24,6 +24,7 @@ import {
   FEATURED_VOTING_STATE_FIELDS,
   IMPROVEMENT_AREA_OPTIONS,
   MARKETPLACE_STATUS_DELISTED,
+  MARKETPLACE_STATUS_PUBLISHED,
   METRICS_ASSET_FIELD_IDS,
   QUALITY_RATING_OPTIONS,
   REVIEW_STATUS_OPTIONS,
@@ -2511,26 +2512,26 @@ export class AirtableClient {
     return comments;
   }
 
-  /** Assets marked Delisted whose Whalesync read-back still says a linked CMS item is Active. */
-  async listDelistedAssetsWithActiveCms(): Promise<AirtableRecord[]> {
+  /** Assets marked Delisted that still link a CMS item. The page check, not Whalesync's read-back, decides drift. */
+  async listDelistedAssetsWithCmsItems(): Promise<AirtableRecord[]> {
     const f = DELIST_ASSET_FIELD_IDS;
     return this.listRecords({
       tableId: TABLE_IDS.assets,
-      filterByFormula: `AND({${f.marketplaceStatus}}='${MARKETPLACE_STATUS_DELISTED}', FIND('Active', ARRAYJOIN({${f.cmsStatusActual}})))`,
+      filterByFormula: `AND({${f.marketplaceStatus}}='${MARKETPLACE_STATUS_DELISTED}', ARRAYJOIN({${f.cmsItemIds}})!='')`,
       fieldIds: [f.type, f.name, f.detailPagePath, f.cmsItemIds, f.cmsStatusActual],
       returnFieldsByFieldId: true,
     });
   }
 
-  /** Non-delisted assets that link any of the given CMS items (an update twin can share its page with a newer listing). */
-  async listNonDelistedAssetsLinkingCmsItems(cmsItemIds: string[]): Promise<AirtableRecord[]> {
+  /** Published assets that link any of the given CMS items (an update twin can share its page with a newer listing). */
+  async listPublishedAssetsLinkingCmsItems(cmsItemIds: string[]): Promise<AirtableRecord[]> {
     const ids = cmsItemIds.filter((id) => /^[0-9a-f]{24}$/.test(id));
     if (ids.length === 0) return [];
     const f = DELIST_ASSET_FIELD_IDS;
     const matches = ids.map((id) => `FIND('${id}', ARRAYJOIN({${f.cmsItemIds}}))`).join(', ');
     return this.listRecords({
       tableId: TABLE_IDS.assets,
-      filterByFormula: `AND({${f.marketplaceStatus}}!='${MARKETPLACE_STATUS_DELISTED}', OR(${matches}))`,
+      filterByFormula: `AND({${f.marketplaceStatus}}='${MARKETPLACE_STATUS_PUBLISHED}', OR(${matches}))`,
       fieldIds: [f.name, f.marketplaceStatus, f.cmsItemIds],
       returnFieldsByFieldId: true,
     });

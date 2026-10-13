@@ -211,7 +211,8 @@ Setting 🚀Marketplace Status to Delisted in Airtable does NOT take the page
 down — Whalesync never unpublishes it. Always use \`delist_template\`: call it
 once without \`confirm\` and show the reviewer the preview (public page status,
 CMS items, planned Airtable writes), then call again with
-\`confirm: { confirmed: true, expected_cms_item_ids }\` only after they approve.
+\`confirm: { confirmed: true, expected_cms_item_ids, plan_token }\` (and the
+same mode and reason) only after they approve.
 Use mode \`permanent\` (creator request, Stripe status, policy infringement —
 sets the reason and renames "{Name} Archived YYYYMMDD") or \`temporary\` (a
 relist is expected after a fix — leaves name and reason alone). Report the

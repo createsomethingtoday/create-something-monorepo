@@ -53,11 +53,12 @@ function fakeWebflow() {
     calls.push(`${method} ${url.pathname}`);
     const [, , , collectionId, , itemId, liveSegment] = url.pathname.split('/');
     if (itemId === 'publish') {
-      for (const id of JSON.parse(String(init?.body)).itemIds as string[]) {
+      const ids = JSON.parse(String(init?.body)).itemIds as string[];
+      for (const id of ids) {
         const item = staged.get(id)!;
         live.set(id, { ...item, related: [...item.related] });
       }
-      return new Response('{}', { status: 202 });
+      return Response.json({ publishedItemIds: ids }, { status: 202 });
     }
     const store = liveSegment === 'live' ? live : staged;
     const item = store.get(itemId);
@@ -94,7 +95,7 @@ function fakeWebflow() {
   return { staged, live, calls, config };
 }
 
-function fakeAirtable(fields: Record<string, unknown>, options: { failComment?: boolean } = {}) {
+function fakeAirtable(fields: Record<string, unknown>, options: { failComment?: boolean; publishedOwners?: AirtableRecord[] } = {}) {
   const record: AirtableRecord = { id: ASSET, createdTime: '', fields: { [F.type]: 'Template🏗️', ...fields } } as AirtableRecord;
   const comments: Array<{ id: string; text: string; createdTime: string }> = [];
   const writes: Array<Record<string, unknown>> = [];
@@ -111,10 +112,30 @@ function fakeAirtable(fields: Record<string, unknown>, options: { failComment?: 
       return { id: `com${comments.length}` };
     },
     listAssetComments: async () => comments,
-    listDelistedAssetsWithActiveCms: async () => [],
-    listNonDelistedAssetsLinkingCmsItems: async () => [],
+    listDelistedAssetsWithCmsItems: async () => [],
+    listPublishedAssetsLinkingCmsItems: async () => [{ ...record }, ...(options.publishedOwners ?? [])],
   } satisfies DelistAirtable;
   return { airtable, comments, writes, record };
+}
+
+type Fake = ReturnType<typeof fakeAirtable>;
+
+/** Preview, then confirm with the preview's ids and plan token (the tool's two-call flow). */
+async function delist(
+  at: Fake,
+  config: MarketplaceCmsConfig,
+  input: { mode: 'permanent' | 'temporary'; reason?: 'Creator request' | 'Stripe status' | 'Policy infringement'; confirmMode?: 'permanent' | 'temporary' },
+) {
+  const preview = await previewDelist(at.airtable, config, { assetId: ASSET, mode: input.mode, reason: input.reason, now: NOW });
+  return executeDelist(at.airtable, config, {
+    assetId: ASSET,
+    mode: input.confirmMode ?? input.mode,
+    reason: input.reason,
+    expectedCmsItemIds: preview.cms_items.map((item) => item.cms_item_id),
+    planToken: preview.plan_token,
+    actor: 'reviewer@example.com',
+    now: NOW,
+  });
 }
 
 const publishedFields = {
@@ -136,14 +157,7 @@ test('permanent delist snapshots first, writes Airtable, strips referencers, unp
   const web = fakeWebflow();
   const at = fakeAirtable(publishedFields);
 
-  const result = await executeDelist(at.airtable, web.config, {
-    assetId: ASSET,
-    mode: 'permanent',
-    reason: 'Creator request',
-    expectedCmsItemIds: [TARGET],
-    actor: 'reviewer@example.com',
-    now: NOW,
-  });
+  const result = await delist(at, web.config, { mode: 'permanent', reason: 'Creator request' });
 
   assert.equal(result.verified, true);
   assert.equal(result.public_page_status, 404);
@@ -174,7 +188,7 @@ test('permanent delist snapshots first, writes Airtable, strips referencers, unp
 test('a CMS item still linked in Airtable but deleted in Webflow is skipped, not fatal', async () => {
   const web = fakeWebflow();
   const at = fakeAirtable({ ...publishedFields, [F.cmsItemIds]: [TARGET, MISSING] });
-  const result = await executeDelist(at.airtable, web.config, { assetId: ASSET, mode: 'temporary', expectedCmsItemIds: [TARGET, MISSING], actor: 'x', now: NOW });
+  const result = await delist(at, web.config, { mode: 'temporary' });
   assert.equal(result.verified, true);
   assert.equal(result.cms_items[1]?.missing_in_webflow, true);
   assert.equal(web.live.has(TARGET), false);
@@ -188,7 +202,7 @@ test('an unpublish blocked by an unsupported collection stops with the reference
       : web.config.fetchFn!(input, init);
   const at = fakeAirtable(publishedFields);
   await assert.rejects(
-    executeDelist(at.airtable, { ...web.config, fetchFn: blocked }, { assetId: ASSET, mode: 'temporary', expectedCmsItemIds: [TARGET], actor: 'x', now: NOW }),
+    delist(at, { ...web.config, fetchFn: blocked }, { mode: 'temporary' }),
     (error: { code?: string }) => error.code === 'DELIST_UNSUPPORTED_REFERENCE',
   );
 });
@@ -196,26 +210,23 @@ test('an unpublish blocked by an unsupported collection stops with the reference
 test('temporary delist leaves the name and delist reason untouched', async () => {
   const web = fakeWebflow();
   const at = fakeAirtable(publishedFields);
-  await executeDelist(at.airtable, web.config, { assetId: ASSET, mode: 'temporary', expectedCmsItemIds: [TARGET], actor: 'x', now: NOW });
+  await delist(at, web.config, { mode: 'temporary' });
   assert.deepEqual(at.writes, [{ [F.marketplaceStatus]: '4️⃣Delisted☠️', [F.cmsStatus]: 'Archived' }]);
 });
 
 test('delist changes nothing when the snapshot comment cannot be written', async () => {
   const web = fakeWebflow();
   const at = fakeAirtable(publishedFields, { failComment: true });
-  await assert.rejects(
-    executeDelist(at.airtable, web.config, { assetId: ASSET, mode: 'temporary', expectedCmsItemIds: [TARGET], actor: 'x', now: NOW }),
-    /comments not permitted/,
-  );
+  await assert.rejects(delist(at, web.config, { mode: 'temporary' }), /comments not permitted/);
   assert.equal(at.writes.length, 0);
-  assert.equal(web.calls.length, 0);
+  assert.ok(web.calls.every((call) => call.startsWith('GET ')), 'only the preview reads ran');
 });
 
 test('delist refuses when the linked CMS items differ from the preview', async () => {
   const web = fakeWebflow();
   const at = fakeAirtable({ ...publishedFields, [F.cmsItemIds]: [TARGET, 'bbbbbbbbbbbbbbbbbbbbbbbb'] });
   await assert.rejects(
-    executeDelist(at.airtable, web.config, { assetId: ASSET, mode: 'temporary', expectedCmsItemIds: [TARGET], actor: 'x', now: NOW }),
+    executeDelist(at.airtable, web.config, { assetId: ASSET, mode: 'temporary', expectedCmsItemIds: [TARGET], planToken: '0'.repeat(64), actor: 'x', now: NOW }),
     (error: { code?: string }) => error.code === 'DELIST_PLAN_CHANGED',
   );
   assert.equal(at.writes.length, 0);
@@ -232,14 +243,7 @@ test('delist fails closed without a CMS token', async () => {
 test('relist restores fields, republishes, and puts the item back into stripped related-assets', async () => {
   const web = fakeWebflow();
   const at = fakeAirtable(publishedFields);
-  await executeDelist(at.airtable, web.config, {
-    assetId: ASSET,
-    mode: 'permanent',
-    reason: 'Creator request',
-    expectedCmsItemIds: [TARGET],
-    actor: 'x',
-    now: NOW,
-  });
+  await delist(at, web.config, { mode: 'permanent', reason: 'Creator request' });
 
   const result = await executeRelist(at.airtable, { ...web.config, verifyAttempts: 1 }, { assetId: ASSET, expectedCmsItemIds: [TARGET], actor: 'x', now: NOW });
 
@@ -263,12 +267,12 @@ test('drift reports delisted assets still serving 200 and skips pages owned by a
     ({ id, createdTime: '', fields: { [F.name]: id, [F.detailPagePath]: path, [F.cmsItemIds]: [cmsId] } }) as AirtableRecord;
   const airtable = {
     ...fakeAirtable({}).airtable,
-    listDelistedAssetsWithActiveCms: async () => [
+    listDelistedAssetsWithCmsItems: async () => [
       asset('recLive', '/templates/html/live', 'c00000000000000000000001'),
       asset('recGone', '/templates/html/gone', 'c00000000000000000000002'),
       asset('recTwin', '/templates/html/twin', 'c00000000000000000000003'),
     ],
-    listNonDelistedAssetsLinkingCmsItems: async () => [
+    listPublishedAssetsLinkingCmsItems: async () => [
       { id: 'recNewer', createdTime: '', fields: { [F.cmsItemIds]: ['c00000000000000000000003'] } } as AirtableRecord,
     ],
   } satisfies DelistAirtable;
@@ -279,4 +283,90 @@ test('drift reports delisted assets still serving 200 and skips pages owned by a
   assert.equal(drift.checked, 2);
   assert.equal(drift.skipped_shared_page, 1);
   assert.deepEqual(drift.live_after_delist.map((item) => item.asset_id), ['recLive']);
+});
+
+test('a confirm whose mode differs from the approved preview is refused before any write', async () => {
+  const web = fakeWebflow();
+  const at = fakeAirtable(publishedFields);
+  await assert.rejects(
+    delist(at, web.config, { mode: 'temporary', reason: 'Creator request', confirmMode: 'permanent' }),
+    (error: { code?: string }) => error.code === 'DELIST_PLAN_CHANGED',
+  );
+  assert.equal(at.writes.length, 0);
+  assert.equal(at.comments.length, 0);
+});
+
+test('an asset with no linked CMS item is refused instead of flipping Airtable alone', async () => {
+  const web = fakeWebflow();
+  const at = fakeAirtable({ ...publishedFields, [F.cmsItemIds]: [] });
+  await assert.rejects(previewDelist(at.airtable, web.config, { assetId: ASSET, mode: 'temporary' }), (error: { code?: string }) => error.code === 'DELIST_NO_CMS_ITEMS');
+  await assert.rejects(
+    executeRelist(at.airtable, web.config, { assetId: ASSET, expectedCmsItemIds: [], actor: 'x', now: NOW }),
+    (error: { code?: string }) => error.code === 'DELIST_NO_CMS_ITEMS',
+  );
+  assert.equal(at.writes.length, 0);
+});
+
+test('an asset that is not Published (or already Delisted) is refused', async () => {
+  const web = fakeWebflow();
+  const at = fakeAirtable({ ...publishedFields, [F.marketplaceStatus]: '2️⃣Upcoming' });
+  await assert.rejects(previewDelist(at.airtable, web.config, { assetId: ASSET, mode: 'temporary' }), (error: { code?: string }) => error.code === 'DELIST_ASSET_NOT_PUBLISHED');
+});
+
+test('a CMS item shared with a published update twin is refused, so the newer listing stays up', async () => {
+  const web = fakeWebflow();
+  const twin = { id: 'recNEWERTWIN00001', createdTime: '', fields: { [F.name]: 'Sample v2', [F.cmsItemIds]: [TARGET] } } as AirtableRecord;
+  const at = fakeAirtable(publishedFields, { publishedOwners: [twin] });
+  await assert.rejects(previewDelist(at.airtable, web.config, { assetId: ASSET, mode: 'temporary' }), (error: { code?: string; details?: any }) => {
+    assert.equal(error.code, 'DELIST_CMS_ITEM_SHARED');
+    assert.equal(error.details?.published_owners?.[0]?.asset_id, 'recNEWERTWIN00001');
+    return true;
+  });
+  assert.equal(web.live.has(TARGET), true);
+});
+
+test('relist refuses a Policy infringement delist', async () => {
+  const web = fakeWebflow();
+  const at = fakeAirtable(publishedFields);
+  await delist(at, web.config, { mode: 'permanent', reason: 'Policy infringement' });
+  await assert.rejects(
+    executeRelist(at.airtable, web.config, { assetId: ASSET, expectedCmsItemIds: [TARGET], actor: 'x', now: NOW }),
+    (error: { code?: string }) => error.code === 'RELIST_POLICY_DELIST',
+  );
+  assert.equal(web.live.has(TARGET), false);
+});
+
+test('relist restores only the referencer copies the delist changed', async () => {
+  const web = fakeWebflow();
+  // An editor already removed the target from REF_B's staged copy; only its live copy still lists it.
+  web.staged.get(REF_B)!.related = [];
+  const at = fakeAirtable(publishedFields);
+  await delist(at, web.config, { mode: 'temporary' });
+  await executeRelist(at.airtable, web.config, { assetId: ASSET, expectedCmsItemIds: [TARGET], actor: 'x', now: NOW });
+  assert.ok(web.live.get(REF_B)?.related.includes(TARGET));
+  assert.deepEqual(web.staged.get(REF_B)?.related, []);
+  assert.ok(web.staged.get(REF_A)?.related.includes(TARGET));
+});
+
+test('a publish that answers 202 with item errors fails, and the relist can be re-run to finish', async () => {
+  const web = fakeWebflow();
+  const at = fakeAirtable(publishedFields);
+  await delist(at, web.config, { mode: 'temporary' });
+  let failPublish = true;
+  const flaky: typeof fetch = async (input, init) => {
+    if (failPublish && String(input).endsWith('/items/publish')) {
+      failPublish = false;
+      return Response.json({ publishedItemIds: [], errors: [{ id: TARGET, message: 'validation' }] }, { status: 202 });
+    }
+    return web.config.fetchFn!(input, init);
+  };
+  const config = { ...web.config, fetchFn: flaky };
+  await assert.rejects(
+    executeRelist(at.airtable, config, { assetId: ASSET, expectedCmsItemIds: [TARGET], actor: 'x', now: NOW }),
+    (error: { code?: string }) => error.code === 'MARKETPLACE_CMS_WRITE_FAILED',
+  );
+  assert.equal(web.live.has(TARGET), false);
+  const retry = await executeRelist(at.airtable, config, { assetId: ASSET, expectedCmsItemIds: [TARGET], actor: 'x', now: NOW });
+  assert.equal(retry.resumed, true);
+  assert.equal(retry.verified, true);
 });

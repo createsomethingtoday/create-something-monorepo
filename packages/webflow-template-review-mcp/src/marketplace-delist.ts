@@ -58,8 +58,8 @@ export type DelistAirtable = Pick<
   | 'updateDelistAssetFields'
   | 'addAssetComment'
   | 'listAssetComments'
-  | 'listDelistedAssetsWithActiveCms'
-  | 'listNonDelistedAssetsLinkingCmsItems'
+  | 'listDelistedAssetsWithCmsItems'
+  | 'listPublishedAssetsLinkingCmsItems'
 >;
 
 interface CmsRef {
@@ -67,6 +67,12 @@ interface CmsRef {
   name: string;
   /** Absent in snapshots written before Tags support; those were Templates items. */
   collectionId?: string;
+}
+
+/** Which copies of a referencing item listed the target before the delist. Absent in older snapshots: restore both. */
+interface SnapshotRef extends CmsRef {
+  staged?: boolean;
+  live?: boolean;
 }
 
 interface DelistSnapshot {
@@ -77,7 +83,7 @@ interface DelistSnapshot {
   original?: { name: string; marketplace_status: string | null; cms_status: string | null; delist_reason: string | null };
   cms_item_ids: string[];
   /** CMS item id → items (templates' related-assets, tag pages' templates) that listed it before the takedown. */
-  referencers: Record<string, CmsRef[]>;
+  referencers: Record<string, SnapshotRef[]>;
 }
 
 const sleep = (ms: number) => (ms > 0 ? new Promise((resolve) => setTimeout(resolve, ms)) : Promise.resolve());
@@ -216,17 +222,42 @@ class MarketplaceCms {
     this.fail('DELETE live item', itemId, result);
   }
 
+  /** Webflow can answer 202 and still not publish an item (it lists it under `errors`), so check every id came back. */
   async publish(itemIds: string[]): Promise<void> {
     const result = await this.call('POST', `/${MARKETPLACE_TEMPLATES_COLLECTION_ID}/items/publish`, { itemIds });
     if (result.status !== 200 && result.status !== 202) this.fail('publish items', itemIds.join(','), result);
+    const published = new Set(stringList(result.json?.publishedItemIds));
+    const errors = Array.isArray(result.json?.errors) ? result.json.errors : [];
+    if (errors.length > 0 || itemIds.some((id) => !published.has(id))) this.fail('publish items', itemIds.join(','), result);
   }
 
-  /** Remove or add `targetId` in the referencing item's template list (staged and live copies). Returns which copies changed. */
-  async setReference(ref: CmsRef, targetId: string, present: boolean): Promise<{ staged: boolean; live: boolean }> {
+  /** Which copies (staged, live) of the referencing item currently list `targetId`. */
+  async referenceState(ref: CmsRef, targetId: string): Promise<{ staged: boolean; live: boolean }> {
+    const collectionId = ref.collectionId ?? MARKETPLACE_TEMPLATES_COLLECTION_ID;
+    const field = REFERENCE_FIELDS[collectionId];
+    const state = { staged: false, live: false };
+    for (const live of [false, true]) {
+      const item = await this.getItem(ref.id, live, collectionId);
+      state[live ? 'live' : 'staged'] = stringList(item?.fieldData?.[field]).includes(targetId);
+    }
+    return state;
+  }
+
+  /**
+   * Remove or add `targetId` in the referencing item's template list. `copies` limits which
+   * copies are touched (relist restores only the ones the delist changed). Returns which copies changed.
+   */
+  async setReference(
+    ref: CmsRef,
+    targetId: string,
+    present: boolean,
+    copies: { staged: boolean; live: boolean } = { staged: true, live: true },
+  ): Promise<{ staged: boolean; live: boolean }> {
     const collectionId = ref.collectionId ?? MARKETPLACE_TEMPLATES_COLLECTION_ID;
     const field = REFERENCE_FIELDS[collectionId];
     const changed = { staged: false, live: false };
     for (const live of [false, true]) {
+      if (!copies[live ? 'live' : 'staged']) continue;
       const item = await this.getItem(ref.id, live, collectionId);
       if (!item) continue;
       const current = stringList(item.fieldData?.[field]);
@@ -288,6 +319,59 @@ function assertExpectedItems(actual: string[], expected: string[]): void {
   }
 }
 
+function assertHasCmsItems(asset: ReturnType<typeof readAsset>): void {
+  if (asset.cms_item_ids.length === 0) {
+    throw new AirtableClientError(
+      'DELIST_NO_CMS_ITEMS',
+      'This asset has no linked Webflow Templates CMS item, so there is no listing page to take down or restore. Nothing was changed.',
+      409,
+      { asset_id: asset.asset_id },
+    );
+  }
+}
+
+/** Delist applies to a published listing, or to an asset already Delisted whose page is still up (repair). */
+function assertDelistable(asset: ReturnType<typeof readAsset>): void {
+  if (asset.marketplace_status !== MARKETPLACE_STATUS_PUBLISHED && asset.marketplace_status !== MARKETPLACE_STATUS_DELISTED) {
+    throw new AirtableClientError(
+      'DELIST_ASSET_NOT_PUBLISHED',
+      'Delist only applies to an asset whose 🚀Marketplace Status is Published (or already Delisted with its page still live).',
+      409,
+      { marketplace_status: asset.marketplace_status },
+    );
+  }
+}
+
+/**
+ * An older version (update twin) can share its CMS item with the published listing that replaced it.
+ * Unpublishing that item would take the newer listing down, so refuse before changing anything.
+ */
+async function assertNotSharedWithPublished(airtable: DelistAirtable, asset: ReturnType<typeof readAsset>): Promise<void> {
+  const owners = (await airtable.listPublishedAssetsLinkingCmsItems(asset.cms_item_ids)).filter((record) => record.id !== asset.asset_id);
+  const shared = owners
+    .map((record) => ({
+      asset_id: record.id,
+      name: typeof record.fields[F.name] === 'string' ? (record.fields[F.name] as string) : '',
+      cms_item_ids: stringList(record.fields[F.cmsItemIds]).filter((id) => asset.cms_item_ids.includes(id)),
+    }))
+    .filter((owner) => owner.cms_item_ids.length > 0);
+  if (shared.length > 0) {
+    throw new AirtableClientError(
+      'DELIST_CMS_ITEM_SHARED',
+      'A CMS item linked to this asset also belongs to a published listing (an update twin). Unpublishing it would take that listing down. Nothing was changed; delist the old asset in Airtable only, or unlink the shared item first.',
+      409,
+      { published_owners: shared },
+    );
+  }
+}
+
+/** Ties a confirm to the exact preview: asset, mode, reason, CMS items, and the planned Airtable writes. */
+async function planToken(asset: ReturnType<typeof readAsset>, writes: Record<string, unknown>): Promise<string> {
+  const plan = JSON.stringify({ asset_id: asset.asset_id, cms_item_ids: [...asset.cms_item_ids].sort(), writes: Object.entries(writes).sort() });
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(plan));
+  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('');
+}
+
 function delistFieldWrites(asset: ReturnType<typeof readAsset>, mode: DelistMode, reason: DelistReason | undefined, now: Date) {
   const fields: Record<string, unknown> = {
     [F.marketplaceStatus]: MARKETPLACE_STATUS_DELISTED,
@@ -305,6 +389,9 @@ function delistFieldWrites(asset: ReturnType<typeof readAsset>, mode: DelistMode
 export async function previewDelist(airtable: DelistAirtable, cmsConfig: MarketplaceCmsConfig, input: { assetId: string; mode: DelistMode; reason?: DelistReason; now?: Date }) {
   const asset = readAsset(await airtable.getDelistAssetFields(input.assetId));
   const cms = new MarketplaceCms(cmsConfig);
+  assertDelistable(asset);
+  assertHasCmsItems(asset);
+  await assertNotSharedWithPublished(airtable, asset);
   const items = [];
   for (const id of asset.cms_item_ids) {
     const exists = (await cms.getItem(id, false)) !== null;
@@ -312,6 +399,7 @@ export async function previewDelist(airtable: DelistAirtable, cmsConfig: Marketp
   }
   const writes = delistFieldWrites(asset, input.mode, input.reason, input.now ?? new Date());
   return {
+    plan_token: await planToken(asset, writes),
     asset,
     public_page_status: await pageStatus(cmsConfig, asset.page_path),
     cms_items: items,
@@ -333,12 +421,23 @@ export async function previewDelist(airtable: DelistAirtable, cmsConfig: Marketp
 export async function executeDelist(
   airtable: DelistAirtable,
   cmsConfig: MarketplaceCmsConfig,
-  input: { assetId: string; mode: DelistMode; reason?: DelistReason; expectedCmsItemIds: string[]; actor: string; now?: Date },
+  input: { assetId: string; mode: DelistMode; reason?: DelistReason; expectedCmsItemIds: string[]; planToken: string; actor: string; now?: Date },
 ) {
   const now = input.now ?? new Date();
   const cms = new MarketplaceCms(cmsConfig);
   const asset = readAsset(await airtable.getDelistAssetFields(input.assetId));
   assertExpectedItems(asset.cms_item_ids, input.expectedCmsItemIds);
+  assertDelistable(asset);
+  assertHasCmsItems(asset);
+  const writes = delistFieldWrites(asset, input.mode, input.reason, now);
+  if ((await planToken(asset, writes)) !== input.planToken) {
+    throw new AirtableClientError(
+      'DELIST_PLAN_CHANGED',
+      'The mode, reason, or planned Airtable writes differ from the approved preview. Run the preview again and confirm the new plan.',
+      409,
+    );
+  }
+  await assertNotSharedWithPublished(airtable, asset);
 
   const snapshot: DelistSnapshot = {
     asset_id: asset.asset_id,
@@ -360,7 +459,7 @@ export async function executeDelist(
   await writeSnapshot();
 
   // 2. Airtable first so Whalesync has nothing to push back.
-  await airtable.updateDelistAssetFields(asset.asset_id, delistFieldWrites(asset, input.mode, input.reason, now));
+  await airtable.updateDelistAssetFields(asset.asset_id, writes);
 
   // 3. CMS: unpublish each item (stripping referencers on 409), then archive the staged copy.
   const items = [];
@@ -375,7 +474,10 @@ export async function executeDelist(
     if (wasLive) {
       let outcome = await cms.deleteLive(itemId);
       if (!outcome.deleted) {
-        snapshot.referencers[itemId] = outcome.referencers;
+        // Record which copies list the target, so relist restores only those.
+        const refs: SnapshotRef[] = [];
+        for (const ref of outcome.referencers) refs.push({ ...ref, ...(await cms.referenceState(ref, itemId)) });
+        snapshot.referencers[itemId] = refs;
         try {
           await writeSnapshot();
         } catch (error) {
@@ -386,7 +488,7 @@ export async function executeDelist(
             { cms_item_id: itemId, referencers: outcome.referencers, cause: error instanceof Error ? error.message : String(error) },
           );
         }
-        for (const ref of outcome.referencers) {
+        for (const ref of refs) {
           stripped.push({ ...ref, ...(await cms.setReference(ref, itemId, false)) });
         }
         outcome = await cms.deleteLive(itemId);
@@ -406,7 +508,7 @@ export async function executeDelist(
   return {
     asset_id: asset.asset_id,
     mode: input.mode,
-    airtable: delistFieldWrites(asset, input.mode, input.reason, now),
+    airtable: writes,
     cms_items: items,
     public_page: asset.page_path,
     public_page_status: status,
@@ -435,17 +537,28 @@ export async function executeRelist(
   const cms = new MarketplaceCms(cmsConfig);
   const asset = readAsset(await airtable.getDelistAssetFields(input.assetId));
   assertExpectedItems(asset.cms_item_ids, input.expectedCmsItemIds);
-  if (asset.marketplace_status !== MARKETPLACE_STATUS_DELISTED) {
+  assertHasCmsItems(asset);
+  const snapshots = snapshotsSinceLastRelist(await airtable.listAssetComments(asset.asset_id));
+  // An interrupted relist leaves Airtable Published with no relist marker yet; allow resuming it.
+  const resuming = asset.marketplace_status === MARKETPLACE_STATUS_PUBLISHED && snapshots.length > 0;
+  if (asset.marketplace_status !== MARKETPLACE_STATUS_DELISTED && !resuming) {
     throw new AirtableClientError('ASSET_NOT_DELISTED', 'Relist only applies to an asset whose 🚀Marketplace Status is Delisted.', 409, {
       marketplace_status: asset.marketplace_status,
     });
   }
+  if (asset.delist_reason === 'Policy infringement') {
+    throw new AirtableClientError(
+      'RELIST_POLICY_DELIST',
+      'This template was delisted for Policy infringement. Policy delists stay down; relist needs a reviewer decision outside this tool.',
+      409,
+    );
+  }
 
-  const snapshots = snapshotsSinceLastRelist(await airtable.listAssetComments(asset.asset_id));
-  const referencers = new Map<string, Map<string, CmsRef>>();
-  for (const snapshot of snapshots) {
+  const referencers = new Map<string, Map<string, SnapshotRef>>();
+  // Oldest first, so the newest snapshot's copy flags win.
+  for (const snapshot of [...snapshots].reverse()) {
     for (const [itemId, refs] of Object.entries(snapshot.referencers ?? {})) {
-      const byId = referencers.get(itemId) ?? new Map<string, CmsRef>();
+      const byId = referencers.get(itemId) ?? new Map<string, SnapshotRef>();
       for (const ref of refs) byId.set(ref.id, ref);
       referencers.set(itemId, byId);
     }
@@ -468,7 +581,8 @@ export async function executeRelist(
     await cms.publish([itemId]);
     const restored = [];
     for (const ref of referencers.get(itemId)?.values() ?? []) {
-      restored.push({ ...ref, ...(await cms.setReference(ref, itemId, true)) });
+      const copies = typeof ref.staged === 'boolean' && typeof ref.live === 'boolean' ? { staged: ref.staged, live: ref.live } : undefined;
+      restored.push({ ...ref, ...(await cms.setReference(ref, itemId, true, copies)) });
     }
     items.push({ cms_item_id: itemId, unarchived: true, published: true, referencers_restored: restored });
   }
@@ -478,6 +592,7 @@ export async function executeRelist(
   return {
     asset_id: asset.asset_id,
     name: listedName(asset.name),
+    resumed: resuming,
     snapshots_used: snapshots.length,
     cms_items: items,
     public_page: asset.page_path,
@@ -494,12 +609,13 @@ export interface DelistDriftItem {
 }
 
 /**
- * Delisted assets whose listing page still serves 200. Excludes update twins
- * whose CMS item also belongs to a non-delisted asset (that page is correctly live).
+ * Delisted assets whose listing page still serves 200. Every Delisted asset with a CMS item is
+ * checked (Whalesync's read-back can say Archived while the live page is still up). Excludes
+ * update twins whose CMS item also belongs to a Published asset (that page is correctly live).
  */
 export async function findDelistDrift(airtable: DelistAirtable, cmsConfig: Pick<MarketplaceCmsConfig, 'fetchFn' | 'publicBaseUrl'>) {
-  const candidates = (await airtable.listDelistedAssetsWithActiveCms()).map(readAsset);
-  const shared = await airtable.listNonDelistedAssetsLinkingCmsItems(candidates.flatMap((asset) => asset.cms_item_ids));
+  const candidates = (await airtable.listDelistedAssetsWithCmsItems()).map(readAsset);
+  const shared = await airtable.listPublishedAssetsLinkingCmsItems(candidates.flatMap((asset) => asset.cms_item_ids));
   const sharedIds = new Set(shared.flatMap((record) => stringList(record.fields[F.cmsItemIds])));
 
   const live: DelistDriftItem[] = [];
