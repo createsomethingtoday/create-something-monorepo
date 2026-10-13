@@ -1,14 +1,14 @@
 {
   "id": "substrate:create-something:organization-review:internal",
-  "generatedAt": "2026-10-08T14:07:05.352Z",
+  "generatedAt": "2026-10-13T14:05:52.197Z",
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
   "valueState": "valuable_with_review_signals",
   "answer": "Atlas is showing value for CREATE SOMETHING: the business is mapped enough to reveal review signals, especially automation/database imbalance and worker/MCP concentration.",
   "summary": {
-    "nodes": 552,
-    "edges": 1156,
-    "mapped": 552,
+    "nodes": 553,
+    "edges": 1158,
+    "mapped": 553,
     "hardGaps": 0,
     "reviewSignals": 6,
     "operatingSlices": 23,
@@ -28,7 +28,7 @@
       "title": "Atlas is showing operating value",
       "summary": "CREATE SOMETHING now has a connected internal map with all current topology records mapped and no hard gaps.",
       "evidence": [
-        "552/552 topology records mapped",
+        "553/553 topology records mapped",
         "0 local Atlas/Substrate gaps",
         "0 exact duplicate paths",
         "0 isolated nodes"

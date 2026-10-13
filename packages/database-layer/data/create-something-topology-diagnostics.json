@@ -2,12 +2,12 @@
   "id": "substrate:create-something:topology-diagnostics:internal",
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
-  "generatedAt": "2026-10-08T14:07:04.431Z",
+  "generatedAt": "2026-10-13T14:05:51.285Z",
   "summary": {
     "valueState": "connected_map_with_review_signals",
-    "nodes": 552,
-    "edges": 1156,
-    "mapped": 552,
+    "nodes": 553,
+    "edges": 1158,
+    "mapped": 553,
     "hardGapCount": 0,
     "reviewSignalCount": 6,
     "exactDuplicatePathCount": 0,
@@ -15,7 +15,7 @@
     "surfaceCounts": {
       "repo": 1,
       "package": 70,
-      "app": 13,
+      "app": 14,
       "agent": 36,
       "mcp": 77,
       "client": 8,
@@ -27,7 +27,7 @@
     },
     "tierCounts": {
       "Mixed": 134,
-      "Judgment": 108,
+      "Judgment": 109,
       "Automation": 282,
       "Database": 28
     }
@@ -64,7 +64,7 @@
       "evidence": [
         "Automation=282",
         "Database=28",
-        "Total nodes=552"
+        "Total nodes=553"
       ],
       "nodeIds": [],
       "paths": [],
