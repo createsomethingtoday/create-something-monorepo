@@ -223,6 +223,13 @@ const ROOT_COMPONENT_EXPORT_POLICIES: CanonPublicExportClassificationRule[] = [
 const PACKAGE_EXPORT_PATH_POLICIES: CanonPublicExportClassificationRule[] = [
   {
     exportPath: '.',
+    exportName: 'InspectableJourney',
+    classification: 'experiment',
+    registryPolicy: 'classified-out',
+    rationale: 'Root-barrel alias of the bounded Agency journey pilot (CRE-2259); same experimental boundary as ./patterns. See patterns/InspectableJourney.md.'
+  },
+  {
+    exportPath: '.',
     classification: 'supporting-api',
     registryPolicy: 'candidate-review',
     rationale:
@@ -1099,6 +1106,13 @@ const SUBPATH_EXPORT_POLICIES: CanonPublicExportClassificationRule[] = [
     registryPolicy: 'candidate-review',
     rationale:
       'Conversion components need proof/receipt and property-policy contracts before promotion.'
+  },
+  {
+    exportPath: './patterns',
+    exportName: 'InspectableJourney',
+    classification: 'experiment',
+    registryPolicy: 'classified-out',
+    rationale: 'Bounded Agency interaction pilot (CRE-2259); provisional controlled composition. Promotion requires accepted journey evidence and a second consumer. See patterns/InspectableJourney.md.'
   },
   {
     exportPath: './patterns',

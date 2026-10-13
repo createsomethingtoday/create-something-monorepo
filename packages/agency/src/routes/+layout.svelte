@@ -42,12 +42,20 @@
 
   // View Transitions API - Hermeneutic Navigation
   // .agency: Efficient (200ms)
+  let activeRouteTransition: ViewTransition | undefined;
   onNavigate((navigation) => {
+    activeRouteTransition?.skipTransition();
     // Keep back/forward restoration, but force top-scroll on normal page links
     if (navigation.type !== 'popstate' && !navigation.to?.url.hash) {
       disableScrollHandling();
     }
 
+    // Commit pilot route changes without waiting for a visual snapshot.
+    // SvelteKit updates history before awaiting onNavigate; delaying here lets
+    // early Back race an older, still-uncommitted destination.
+    if (navigation.from?.url.pathname === '/' || navigation.to?.url.pathname === '/') return;
+    // Local fragment selection already has bounded component feedback.
+    if (navigation.from?.url.pathname === navigation.to?.url.pathname && navigation.from?.url.search === navigation.to?.url.search) return;
     if (!document.startViewTransition) return;
     if (
       typeof window !== 'undefined' &&
@@ -56,9 +64,16 @@
       return;
 
     return new Promise((resolve) => {
-      document.startViewTransition(async () => {
+      const transition = document.startViewTransition(async () => {
         resolve();
-        await navigation.complete;
+        // Rapid Back/Forward can abort the older navigation. The newest route
+        // still owns state; skipping its predecessor is an expected outcome.
+        try { await navigation.complete; } catch { /* Superseded navigation. */ }
+      });
+      activeRouteTransition = transition;
+      void transition.ready.catch(() => {});
+      void transition.finished.catch(() => {}).finally(() => {
+        if (activeRouteTransition === transition) activeRouteTransition = undefined;
       });
     });
   });
@@ -262,7 +277,9 @@
   // - Preserve browser restore for popstate/back-forward
   // - Hash links scroll to section
   // - Other internal links scroll to top
-  afterNavigate(({ to, type }) => {
+  afterNavigate(({ from, to, type }) => {
+    // The journey owns focus/scroll for same-document exploration.
+    if (from?.url.pathname === to?.url.pathname && from?.url.search === to?.url.search && (to?.url.hash.startsWith('#handoff-example-') || to?.url.hash === '#sample-handoff')) return;
     if (to?.url.hash) {
       setTimeout(() => scrollToHash(to.url.hash), 100);
       return;
@@ -303,7 +320,7 @@
 
 <!-- Unified Search - Cmd/Ctrl+K to open -->
 {#if isPublicSearchPage($page.url.pathname)}
-  <AgencySearch />
+  <AgencySearch showMobileButton={$page.url.pathname !== '/'} />
 {:else}
   <UnifiedSearch currentProperty="agency" localItems={quickAccessItems} showMobileButton={false} />
 {/if}
