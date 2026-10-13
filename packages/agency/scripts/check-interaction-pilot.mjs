@@ -15,8 +15,14 @@ async function createPage(options = {}) {
   page.on('pageerror', error => pageErrors.push(error.message));
   return { page, context };
 }
+function pilotURL(hash = '') {
+  const url = new URL(baseURL);
+  url.searchParams.set('pilot', 'synthetic');
+  url.hash = hash;
+  return url.href;
+}
 async function start(page, hash = '') {
-  await page.goto(`${baseURL}/?pilot=synthetic${hash}`, { waitUntil: 'networkidle' });
+  await page.goto(pilotURL(hash), { waitUntil: 'networkidle' });
   const consent = page.getByRole('button', { name: 'Necessary only', exact: true });
   if (await consent.isVisible()) await consent.click();
   await page.locator('[data-journey="handoff-example"].enhanced').waitFor();
@@ -99,7 +105,7 @@ try {
     await page.goBack();
     await assertSelected(page, 'Problem');
     await page.waitForFunction(() => document.activeElement?.id === 'handoff-example-problem-control');
-    await page.goto(`${baseURL}/?pilot=synthetic#handoff-example-approval-detail`, { waitUntil: 'networkidle' });
+    await page.goto(pilotURL('#handoff-example-approval-detail'), { waitUntil: 'networkidle' });
     await assertSelected(page, 'Approval');
     assert.equal(await page.locator('#handoff-example-approval-record').isVisible(), true);
     await page.locator('#handoff-example-check-control').click();

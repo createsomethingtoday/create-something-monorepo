@@ -1460,9 +1460,11 @@ describe('Canon registry manifest', () => {
   });
 
   it('keeps the bounded journey pilot explicitly experimental until promotion evidence exists', () => {
-    expect(getCanonPublicExportClassification('./patterns', 'InspectableJourney')).toMatchObject({
-      classification: 'experiment', registryPolicy: 'classified-out'
-    });
+    for (const exportPath of ['.', './patterns']) {
+      expect(getCanonPublicExportClassification(exportPath, 'InspectableJourney')).toMatchObject({
+        classification: 'experiment', registryPolicy: 'classified-out'
+      });
+    }
   });
 
   it('keeps candidate-review public Svelte exports backed by registry items', () => {
