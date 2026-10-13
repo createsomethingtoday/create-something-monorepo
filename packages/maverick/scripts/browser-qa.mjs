@@ -14,7 +14,7 @@ try{
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,'home overflow '+width);
   const header=page.locator('header');
   if(width<=1100){await header.getByRole('button',{name:'Menu',exact:true}).click();assert.equal(await header.locator('nav').isVisible(),true);}
-  await header.getByRole('button',{name:'Contact',exact:true}).click();
+  await header.getByRole('button',{name:'Contact Us',exact:true}).click();
   assert.equal(await page.getByRole('dialog').isVisible(),true,'contact opens');
   await page.getByRole('button',{name:'Select solution area',exact:true}).click();
   assert.deepEqual(await page.locator('.dropdown-option').allTextContents().then(x=>x.map(t=>t.trim())),['Oil & Gas','Mining & Metals','General Inquiry']);

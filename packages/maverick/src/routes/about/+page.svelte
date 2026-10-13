@@ -15,6 +15,7 @@
 
 <div>
   <section
+    id="mission"
     class="design-section hero-banner"
     style="position:relative;padding:220px 48px 120px;overflow:hidden"
     data-screen-label="About"
@@ -38,12 +39,14 @@
       <p
         style="margin:28px 0 0;font-size:19px;color:rgba(var(--section-ink, 255,255,255),.85);max-width:640px;line-height:1.6;text-wrap:pretty"
       >
-        We engineer bio-based chemistry for industrial applications: PetroX for oil &amp; gas and produced water, and LithX for mining &amp; metals.
+        We engineer bio-based chemistry for industrial applications: PetroX for oil &amp; gas and
+        produced water, and LithX for mining &amp; metals.
       </p>
     </div>
   </section>
 
   <section
+    id="leadership"
     class="design-section light-content"
     style="padding:100px 48px;border-bottom:1px solid rgba(var(--section-ink, 255,255,255),.12)"
   >
@@ -102,7 +105,8 @@
         <p
           style="margin:0;font-size:17px;color:rgba(var(--section-ink, 255,255,255),.8);line-height:1.6;max-width:480px;text-wrap:pretty"
         >
-          A team of scientists, engineers, and operators developing and manufacturing bio-based chemistry for oil, gas and metals.
+          A team of scientists, engineers, and operators developing and manufacturing bio-based
+          chemistry for oil, gas and metals.
         </p>
       </div>
       <div style="display:flex;flex-direction:column;gap:24px">
@@ -126,7 +130,8 @@
             href="https://jobs.lever.co/maverickx"
             target="_blank"
             rel="noopener noreferrer"
-            style="border-bottom:1px solid rgba(var(--section-ink, 255,255,255),.4)">We're hiring →</a
+            style="border-bottom:1px solid rgba(var(--section-ink, 255,255,255),.4)"
+            >We're hiring →</a
           >
         </div>
       </div>
