@@ -28,7 +28,9 @@ export async function GET(request: Request) {
       categoryResult.freshness
     );
     const topCategories = categories.slice(0, 5);
-    const totalSales = categoryResult.marketplaceSummary?.totalSales ?? categories.reduce((sum, category) => sum + category.totalSales30d, 0);
+    // Category rows overlap (a multi-tag template sits in every category it
+    // carries) and must never be summed into a marketplace total.
+    const totalSales = categoryResult.marketplaceSummary?.totalSales ?? null;
     const avgRevenue =
       categories.length > 0
         ? categories.reduce((sum, category) => sum + category.avgRevenuePerTemplate, 0) /
@@ -71,14 +73,8 @@ export async function GET(request: Request) {
       actualSource: categoryResult.freshness.source
     });
 
-    const totalRevenue = categoryResult.marketplaceSummary?.totalRevenue ?? categories.reduce(
-      (sum, category) => sum + (category.totalRevenue30d || 0),
-      0
-    );
-    const totalTemplates = categoryResult.marketplaceSummary?.sellingTemplates ?? categories.reduce(
-      (sum, category) => sum + category.templatesInSubcategory,
-      0
-    );
+    const totalRevenue = categoryResult.marketplaceSummary?.totalRevenue ?? null;
+    const totalTemplates = categoryResult.marketplaceSummary?.sellingTemplates ?? null;
 
     return jsonNoStore({
       categories,
