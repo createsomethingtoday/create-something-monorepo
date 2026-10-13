@@ -2,6 +2,14 @@ import { agencyCoreMessaging } from './marketingCopy';
 
 export const quickAccessItems = [
     {
+      id: 'nav-scopefield',
+      label: 'Scopefield',
+      description: 'Mac browser with a collapsible Page workspace. Public beta for Apple Silicon, macOS 13+.',
+      href: '/scopefield',
+      icon: '◻',
+      keywords: ['browser', 'Mac', 'Apple Silicon', 'Page workspace', 'beta', 'download']
+    },
+    {
       id: 'nav-services',
       label: 'How It Works',
       description: 'AI-native technical support: diagnosis, engineering improvements, and team learning',

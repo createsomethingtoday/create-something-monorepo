@@ -250,6 +250,12 @@
     </a>
   </div>
   <div class="proof-chooser" aria-label="Public product proof">
+    <a href="/scopefield">
+      <span>Mac public beta</span>
+      <strong>Scopefield</strong>
+      <p>A browser with a collapsible Page workspace and explicit human control.</p>
+      <small>Apple Silicon · macOS 13+ · Review beta limits</small>
+    </a>
     {#each featured.map(productCard) as item}
       <a href={item.href}>
         <span>{item.label}</span>
