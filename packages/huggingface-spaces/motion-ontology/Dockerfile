@@ -5,6 +5,7 @@ FROM node:20-slim
 
 # Install Chromium dependencies
 RUN apt-get update && apt-get install -y \
+    patch \
     chromium \
     fonts-liberation \
     libasound2 \
@@ -29,15 +30,19 @@ RUN apt-get update && apt-get install -y \
 
 # Set Puppeteer to use installed Chromium
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+ENV PUPPETEER_SKIP_DOWNLOAD=true
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 
 WORKDIR /app
 
 # Copy package files
 COPY package.json ./
+COPY security/ ./security/
 
-# Install dependencies
-RUN npm install
+# Patch before any package lifecycle can acquire a browser. System Chromium is
+# supplied by apt; neither Puppeteer's download hook nor other install scripts
+# are needed here. Fail closed on unexpected extractor versions or source bytes.
+RUN npm install --ignore-scripts && node security/apply-extract-zip-patch.cjs
 
 # Copy source files
 COPY tsconfig.json ./

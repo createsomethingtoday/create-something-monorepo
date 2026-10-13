@@ -130,6 +130,9 @@ patchedDependencies:
   '@modelcontextprotocol/sdk@1.26.0':
     hash: 22lrrz44ijo2k64j4pex7onqp4
     path: patches/@modelcontextprotocol__sdk@1.26.0.patch
+  extract-zip@2.0.1:
+    hash: 52wxib5vfv72vak73iyzhp2euu
+    path: packages/huggingface-spaces/motion-ontology/security/extract-zip@2.0.1.patch
 
 importers:
 
@@ -23300,7 +23303,7 @@ snapshots:
   '@puppeteer/browsers@1.7.0':
     dependencies:
       debug: 4.3.4
-      extract-zip: 2.0.1
+      extract-zip: 2.0.1(patch_hash=52wxib5vfv72vak73iyzhp2euu)
       progress: 2.0.3
       proxy-agent: 6.3.0
       tar-fs: 3.1.1
@@ -23315,7 +23318,7 @@ snapshots:
   '@puppeteer/browsers@1.9.1':
     dependencies:
       debug: 4.3.4
-      extract-zip: 2.0.1
+      extract-zip: 2.0.1(patch_hash=52wxib5vfv72vak73iyzhp2euu)
       progress: 2.0.3
       proxy-agent: 6.3.1
       tar-fs: 3.1.1
@@ -23330,7 +23333,7 @@ snapshots:
   '@puppeteer/browsers@2.11.2':
     dependencies:
       debug: 4.4.3
-      extract-zip: 2.0.1
+      extract-zip: 2.0.1(patch_hash=52wxib5vfv72vak73iyzhp2euu)
       progress: 2.0.3
       proxy-agent: 6.5.0
       semver: 7.8.5
@@ -23345,7 +23348,7 @@ snapshots:
   '@puppeteer/browsers@2.2.4':
     dependencies:
       debug: 4.4.3
-      extract-zip: 2.0.1
+      extract-zip: 2.0.1(patch_hash=52wxib5vfv72vak73iyzhp2euu)
       progress: 2.0.3
       proxy-agent: 6.5.0
       semver: 7.8.5
@@ -23361,7 +23364,7 @@ snapshots:
   '@puppeteer/browsers@2.6.1':
     dependencies:
       debug: 4.4.3
-      extract-zip: 2.0.1
+      extract-zip: 2.0.1(patch_hash=52wxib5vfv72vak73iyzhp2euu)
       progress: 2.0.3
       proxy-agent: 6.5.0
       semver: 7.8.5
@@ -23481,7 +23484,7 @@ snapshots:
       '@remotion/licensing': 4.0.410
       '@remotion/streaming': 4.0.410
       execa: 5.1.1
-      extract-zip: 2.0.1
+      extract-zip: 2.0.1(patch_hash=52wxib5vfv72vak73iyzhp2euu)
       react: 19.2.4
       react-dom: 19.2.4(react@19.2.4)
       remotion: 4.0.410(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -28408,7 +28411,7 @@ snapshots:
 
   extend@3.0.2: {}
 
-  extract-zip@2.0.1:
+  extract-zip@2.0.1(patch_hash=52wxib5vfv72vak73iyzhp2euu):
     dependencies:
       debug: 4.4.3
       get-stream: 5.2.0

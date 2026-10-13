@@ -1,0 +1,126 @@
+--- a/index.js
++++ b/index.js
+@@ -1,6 +1,6 @@
+ const debug = require('debug')('extract-zip')
+ // eslint-disable-next-line node/no-unsupported-features/node-builtins
+-const { createWriteStream, promises: fs } = require('fs')
++const { createWriteStream, constants, promises: fs } = require('fs')
+ const getStream = require('get-stream')
+ const path = require('path')
+ const { promisify } = require('util')
+@@ -9,6 +9,54 @@
+ 
+ const openZip = promisify(yauzl.open)
+ const pipeline = promisify(stream.pipeline)
++
++// Defense in depth for the two symlink advisories. The caller must own the
++// destination exclusively; these checks do not sandbox concurrent host writers.
++function isInsideDirectory (dir, target) {
++  const relative = path.relative(dir, target)
++  return !path.isAbsolute(relative) && !relative.split(path.sep).includes('..')
++}
++
++async function validatePath (dir, target) {
++  if (!isInsideDirectory(dir, target)) throw new Error(`Out of bound path "${target}"`)
++  let current = dir
++  for (const component of path.relative(dir, target).split(path.sep).filter(Boolean)) {
++    current = path.join(current, component)
++    let stat
++    try {
++      stat = await fs.lstat(current)
++    } catch (err) {
++      if (err.code === 'ENOENT') return // Remaining components do not exist yet.
++      throw err
++    }
++    if (stat.isSymbolicLink()) {
++      // realpath must succeed: dangling parents must fail BEFORE recursive mkdir.
++      const canonical = await fs.realpath(current)
++      if (!isInsideDirectory(dir, canonical)) throw new Error(`Out of bound path "${current}"`)
++    }
++  }
++}
++
++async function validateLinkTarget (dir, parent, link) {
++  if (path.isAbsolute(link)) throw new Error(`Out of bound symlink target "${link}"`)
++  let current = parent
++  // Do not normalize away alias/.. before resolving alias: OS symlink traversal
++  // interprets .. against the linked directory, not its lexical spelling.
++  for (const component of link.split(path.sep)) {
++    if (!component || component === '.') continue
++    current = component === '..' ? path.dirname(current) : path.join(current, component)
++    if (!isInsideDirectory(dir, current)) throw new Error(`Out of bound symlink target "${link}"`)
++    let stat
++    try {
++      stat = await fs.lstat(current)
++    } catch (err) {
++      if (err.code !== 'ENOENT') throw err
++      continue
++    }
++    if (stat.isSymbolicLink()) current = await fs.realpath(current)
++    if (!isInsideDirectory(dir, current)) throw new Error(`Out of bound symlink target "${link}"`)
++  }
++}
+ 
+ class Extractor {
+   constructor (zipPath, opts) {
+@@ -53,12 +101,12 @@
+         const destDir = path.dirname(path.join(this.opts.dir, entry.fileName))
+ 
+         try {
++          await validatePath(this.opts.dir, destDir)
+           await fs.mkdir(destDir, { recursive: true })
+ 
+           const canonicalDestDir = await fs.realpath(destDir)
+-          const relativeDestDir = path.relative(this.opts.dir, canonicalDestDir)
+-
+-          if (relativeDestDir.split(path.sep).includes('..')) {
++
++          if (!isInsideDirectory(this.opts.dir, canonicalDestDir)) {
+             throw new Error(`Out of bound path "${canonicalDestDir}" found while processing file ${entry.fileName}`)
+           }
+ 
+@@ -86,6 +134,7 @@
+     }
+ 
+     const dest = path.join(this.opts.dir, entry.fileName)
++    if (!isInsideDirectory(this.opts.dir, dest)) throw new Error(`Out of bound path "${dest}"`)
+ 
+     // convert external file attr int into a fs stat mode int
+     const mode = (entry.externalFileAttributes >> 16) & 0xFFFF
+@@ -118,6 +167,7 @@
+       mkdirOptions.mode = procMode
+     }
+     debug('mkdir', { dir: destDir, ...mkdirOptions })
++    await validatePath(this.opts.dir, destDir)
+     await fs.mkdir(destDir, mkdirOptions)
+     if (isDir) return
+ 
+@@ -126,10 +176,27 @@
+ 
+     if (symlink) {
+       const link = await getStream(readStream)
++      // Resolve against the REAL parent: an internal parent link can change the
++      // meaning of ../ even when the lexical target appears contained.
++      const parent = await fs.realpath(path.dirname(dest))
++      await validateLinkTarget(this.opts.dir, parent, link)
+       debug('creating symlink', link, dest)
+       await fs.symlink(link, dest)
+     } else {
+-      await pipeline(readStream, createWriteStream(dest, { mode: procMode }))
++      // Do not truncate a pre-existing link (including a hard link). Archive
++      // symlink/file name collisions fail closed instead of following the link.
++      let stat
++      try {
++        stat = await fs.lstat(dest)
++      } catch (err) {
++        if (err.code !== 'ENOENT') throw err
++      }
++      if (stat && (!stat.isFile() || stat.nlink !== 1)) {
++        readStream.destroy()
++        throw new Error(`Unsafe existing destination "${dest}"`)
++      }
++      const flags = constants.O_WRONLY | constants.O_CREAT | constants.O_TRUNC | constants.O_NOFOLLOW
++      await pipeline(readStream, createWriteStream(dest, { mode: procMode, flags }))
+     }
+   }
+ 
