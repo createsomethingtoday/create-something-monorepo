@@ -35,7 +35,7 @@
   const isAdmin = $derived($page.url.pathname.startsWith('/admin'));
 
   const isRedesign = $derived(
-    ['/', '/oil-gas', '/mining', '/about', '/news'].includes(
+    ['/', '/oil-gas', '/mining', '/about', '/news', '/privacy', '/terms', '/water-treatment'].includes(
       $page.url.pathname.replace(/\/$/, '') || '/'
     )
   );

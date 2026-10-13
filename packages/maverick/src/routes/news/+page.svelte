@@ -1,12 +1,9 @@
 <script lang="ts">
   import Media from '$lib/redesign/Media.svelte';
   import SEO from '$lib/components/SEO.svelte';
-  import { openContact } from '$lib/redesign/contact';
   import { news as approvedNews } from '$lib/redesign/content';
-  import type { PageData } from './$types';
-  let { data }: { data: PageData } = $props();
-  const news = $derived(data.content?.redesign?.articles ?? approvedNews);
-  const categoryId = 'general';
+  // The October launch review supersedes stale CMS articles until each link is cleared.
+  const news = approvedNews;
 </script>
 
 <SEO
@@ -19,7 +16,7 @@
 <div>
   <section
     class="design-section hero-banner"
-    style="position:relative;padding:220px 48px 100px;border-bottom:1px solid rgba(255,255,255,.12);overflow:hidden"
+    style="position:relative;padding:220px 48px 100px;border-bottom:1px solid rgba(var(--section-ink, 255,255,255),.12);overflow:hidden"
     data-screen-label="News"
   >
     <Media kind="oil" opacity={1} />
@@ -28,7 +25,7 @@
     ></div>
     <div style="position:relative;max-width:1100px;margin:0 auto;">
       <div
-        style="font-size:13px;letter-spacing:4px;text-transform:uppercase;color:rgba(255,255,255,.7);margin-bottom:20px"
+        style="font-size:13px;letter-spacing:4px;text-transform:uppercase;color:rgba(var(--section-ink, 255,255,255),.7);margin-bottom:20px"
       >
         Newsroom
       </div>
@@ -39,7 +36,7 @@
         News
       </h1>
       <p
-        style="margin:24px 0 0;font-size:18px;color:rgba(255,255,255,.8);max-width:560px;line-height:1.6;text-wrap:pretty"
+        style="margin:24px 0 0;font-size:18px;color:rgba(var(--section-ink, 255,255,255),.8);max-width:560px;line-height:1.6;text-wrap:pretty"
       >
         Follow us on our mission to revitalize critical resource extraction with precision
         biologics.
@@ -47,31 +44,36 @@
     </div>
   </section>
   <section
-    class="design-section"
-    style="padding:80px 48px 40px;border-bottom:1px solid rgba(255,255,255,.12)"
+    class="design-section light-content"
+    style="padding:80px 48px 40px;border-bottom:1px solid rgba(var(--section-ink, 255,255,255),.12)"
   >
     <div style="max-width:1100px;margin:0 auto">
+      {#if news.length === 0}
+        <h2 class="display-title" style="font-size:36px;line-height:1.1;margin:0 0 24px">MaverickX company news</h2>
+        <p style="font-size:18px;line-height:1.6;max-width:700px">MaverickX brings Maverick Energy and Maverick Metals together under one brand. Our focus is bio-based chemistry for oil &amp; gas through PetroX and mining &amp; metals through LithX.</p>
+        <p style="font-size:18px;line-height:1.6;max-width:700px">For company information, interviews or media assets, contact our team below.</p>
+      {/if}
       {#each news as item}
         <a
           href={item.url}
           target="_blank"
           rel="noopener noreferrer"
           class="news-row"
-          style="display:grid;gap:32px;align-items:baseline;padding:32px 0;border-top:1px solid rgba(255,255,255,.15)"
+          style="display:grid;gap:32px;align-items:baseline;padding:32px 0;border-top:1px solid rgba(var(--section-ink, 255,255,255),.15)"
         >
           <span
-            style="font-family:'Barlow Condensed',sans-serif;font-size:16px;color:rgba(255,255,255,.5)"
+            style="font-family:'Barlow Condensed',sans-serif;font-size:16px;color:rgba(var(--section-ink, 255,255,255),.5)"
             >{item.date}</span
           >
           <span
-            style="font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.55)"
+            style="font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:rgba(var(--section-ink, 255,255,255),.55)"
             >{item.kind}</span
           >
           <span style="font-size:19px;font-weight:500;line-height:1.4;text-wrap:pretty"
             >{item.title}</span
           >
           <span
-            style="font-size:13px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.5)"
+            style="font-size:13px;letter-spacing:2px;text-transform:uppercase;color:rgba(var(--section-ink, 255,255,255),.5)"
             >{item.source} →</span
           >
         </a>
@@ -79,25 +81,25 @@
     </div>
   </section>
   <section
-    class="design-section"
-    style="padding:64px 48px;border-bottom:1px solid rgba(255,255,255,.12)"
+    class="design-section light-content"
+    style="padding:64px 48px;border-bottom:1px solid rgba(var(--section-ink, 255,255,255),.12)"
   >
     <div
       style="max-width:1100px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:20px"
     >
       <div>
         <div
-          style="font-size:13px;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.6);margin-bottom:8px"
+          style="font-size:13px;letter-spacing:3px;text-transform:uppercase;color:rgba(var(--section-ink, 255,255,255),.6);margin-bottom:8px"
         >
           Media Inquiries
         </div>
-        <div style="font-size:16px;color:rgba(255,255,255,.85)">
+        <div style="font-size:16px;color:rgba(var(--section-ink, 255,255,255),.85)">
           For interviews, assets, or press questions, reach out directly.
         </div>
       </div>
       <a
         href="mailto:press@maverickx.com"
-        style="border:1px solid rgba(255,255,255,.5);font-size:13px;font-weight:600;letter-spacing:2.5px;text-transform:uppercase;padding:14px 30px"
+        style="border:1px solid rgba(var(--section-ink, 255,255,255),.5);font-size:13px;font-weight:600;letter-spacing:2.5px;text-transform:uppercase;padding:14px 30px"
         >press@maverickx.com</a
       >
     </div>

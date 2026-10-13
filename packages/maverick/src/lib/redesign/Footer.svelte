@@ -2,7 +2,7 @@
   let { onContactClick }: { onContactClick: () => void } = $props();
   const links = [
     ['Oil & Gas', '/oil-gas'],
-    ['Mining', '/mining'],
+    ['Mining & Metals', '/mining'],
     ['About', '/about'],
     ['News', '/news'],
     ['Careers', 'https://jobs.lever.co/maverickx']
@@ -28,7 +28,7 @@
   </nav>
   <div class="contact-details">
     <span>Get in Touch</span>
-    <address>444 E. St. Elmo Rd, Bldg. B<br />Austin, TX 78745</address>
+    <address>444 E. St. Elmo Rd, Suite B<br />Austin, TX 78745</address>
     <a href="mailto:info@maverickx.com">info@maverickx.com</a>
   </div>
   <div class="social">
@@ -39,7 +39,6 @@
         rel="noopener noreferrer">LinkedIn</a
       >
     </div>
-    <p>Backed by Chord Energy, Y Combinator,<br />and other leading organizations</p>
   </div>
 </footer>
 
@@ -118,10 +117,6 @@
   }
   .social a + a {
     margin-left: 20px;
-  }
-  .social p {
-    font-size: 11px;
-    line-height: 1.8;
   }
   a {
     color: #fff;

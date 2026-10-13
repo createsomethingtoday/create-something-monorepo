@@ -154,7 +154,7 @@ export const POST: RequestHandler = async ({ request, platform, getClientAddress
     <div class="content">
       <h1 style="font-size: 24px; margin: 0 0 24px 0;">Thanks for reaching out</h1>
       <p>Hi ${escapeHtml(firstName)},</p>
-      <p>We've received your inquiry${safeCategory ? ` about ${safeCategory}` : ''} and will get back to you within 24 hours to discuss your needs.</p>
+      <p>We've received your inquiry${safeCategory ? ` about ${safeCategory}` : ''} and our team will follow up to discuss your needs.</p>
       ${safeComment ? `
       <div class="message-box">
         <p style="color: rgba(255, 255, 255, 0.4); font-size: 14px; margin-bottom: 10px;">Your Message:</p>
@@ -172,8 +172,7 @@ export const POST: RequestHandler = async ({ request, platform, getClientAddress
 
 		// Send notification to sales team
 		const notificationRecipients = [
-			'calvin@maverickmetals.com',
-			'matthew@maverickmetals.com'
+			'matthew.fontenot@maverickx.com'
 		];
 
 		const notificationPromise = fetch('https://api.resend.com/emails', {

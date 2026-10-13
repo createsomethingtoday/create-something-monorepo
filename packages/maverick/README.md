@@ -10,7 +10,7 @@ Client project for MaverickX - oil & gas chemistry solutions company. Canon-comp
 
 ## Features
 
-- **Product Pages**: PetroX, LithX, HydroX solutions
+- **Product Pages**: PetroX (oil & gas, including produced water) and LithX (mining & metals)
 - **Interactive Hotspots**: Operations visualization
 - **News Section**: Company updates
 - **Contact System**: Modal-based inquiry form
@@ -33,7 +33,7 @@ pnpm dev --filter=maverick
 ## Deployment
 
 ```bash
-pnpm --filter=maverick deploy
+pnpm --filter @create-something/maverick deploy:preview
 ```
 
 ## Content Management
@@ -44,3 +44,5 @@ Content is editable via `/admin/content`. All text stored in KV with fallbacks t
 
 - `packages/maverick-admin` - Admin dashboard
 - `.claude/rules/css-canon.md` - Design tokens
+
+October preview scope, pending decisions and verification: [review notes](OCTOBER-2026-REVIEW.md). Production promotion requires Micah’s approval.

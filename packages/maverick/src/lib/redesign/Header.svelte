@@ -3,10 +3,12 @@
   import { afterNavigate } from '$app/navigation';
   let { onContactClick }: { onContactClick: () => void } = $props();
   let menuOpen = $state(false);
+  let scrollY = $state(0);
   let toggle: HTMLButtonElement;
   const links = [
+    ['Home', '/'],
     ['Oil & Gas', '/oil-gas'],
-    ['Mining', '/mining'],
+    ['Mining & Metals', '/mining'],
     ['About', '/about'],
     ['News', '/news'],
     ['Careers', 'https://jobs.lever.co/maverickx']
@@ -27,8 +29,8 @@
   }
 </script>
 
-<svelte:window onkeydown={escapeMenu} />
-<header class:expanded={menuOpen}>
+<svelte:window onkeydown={escapeMenu} bind:scrollY />
+<header class:expanded={menuOpen} class:scrolled={scrollY > 72}>
   <a href="/" aria-label="Maverick X home"
     ><img src="/images/full-logo.svg" alt="Maverick X" width="105" height="31" /></a
   >
@@ -71,6 +73,9 @@
     display: block;
     object-fit: contain;
   }
+  header.scrolled {
+    background: #18222bf5;
+  }
   nav {
     display: flex;
     gap: 36px;
@@ -102,7 +107,7 @@
   .menu-toggle {
     display: none;
   }
-  @media (max-width: 820px) {
+  @media (max-width: 1100px) {
     header {
       padding: 0 24px;
     }

@@ -139,3 +139,15 @@
     padding-top: 128px !important;
   }
 }
+
+/* Neutral light-content pass; the October 15 accent/type direction remains open. */
+.redesign .light-content {
+  --section-ink: 24, 34, 43;
+  --section-surface: #fff;
+  --section-button: #18222b;
+  --section-button-text: #fff;
+  background: var(--section-surface);
+  color: #18222b;
+}
+.redesign .light-content a:hover { color: #415c71; }
+.redesign .light-content :is(p, h2, h3) { text-wrap: pretty; }

@@ -43,7 +43,7 @@
 
 	// Defaults with CMS overrides
 	const modalTitle = $derived(content?.title ?? 'Get in Touch');
-	const modalDescription = $derived(content?.description ?? 'Ready to transform your industrial chemistry operations? Our technical team is here to help you optimize performance and drive results.');
+	const modalDescription = $derived(content?.description ?? 'Tell us about your wells, produced water or ore. Our team can discuss your application and testing requirements.');
 	const contactEmails = $derived(content?.emails ?? [
 		{ label: 'General Inquiries', address: 'info@maverickx.com' },
 		{ label: 'Technical Support', address: 'support@maverickx.com' },
@@ -68,8 +68,7 @@
 	// Categories
 	const categories = [
 		{ id: 'petrox', title: 'Oil & Gas' },
-		{ id: 'lithx', title: 'Metals & Mining' },
-		{ id: 'water', title: 'Water Treatment' },
+		{ id: 'lithx', title: 'Mining & Metals' },
 		{ id: 'general', title: 'General Inquiry' }
 	];
 
