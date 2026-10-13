@@ -10,6 +10,8 @@ The root pnpm patch maps all six lockfile references (five @puppeteer/browsers v
 
 The standalone motion-ontology Docker context has its own copy of the patch, which is also the root pnpm patch source. Its npm install disables all lifecycle scripts and applies the patch before TypeScript build. The installer requires version 2.0.1 and exact upstream SHA-256, verifies the patched SHA-256, covers nested npm copies, and fails closed if the extractor is missing or changes unexpectedly. System Chromium remains the browser. The image adds the OS patch utility; there is no application or browser version migration.
 
+The standalone integration build exposed an existing TS2322 mismatch: KeyframeData declared string-only properties, although the unchanged DOM getKeyframes result includes numeric and nullable metadata. Its type now reflects those existing values; runtime extraction behavior is unchanged.
+
 The extraction root must be controlled exclusively by the caller. This is not a sandbox against concurrent local filesystem mutation, untrusted onEntry callbacks, mount changes, resource exhaustion, or arbitrary pre-existing host state. Safe-looking internal links can still be changed after extraction by a separate host actor. Windows behavior is not validated. Ordinary standalone npm installs outside the documented Docker build do not inherit pnpm patches; use `npm install --ignore-scripts` followed by `node security/apply-extract-zip-patch.cjs` before building or running. Existing installations and deployed images are unchanged until explicitly rebuilt and promoted.
 
 ## Candidate evaluation
