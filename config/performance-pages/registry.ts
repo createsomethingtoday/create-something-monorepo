@@ -7,7 +7,7 @@ import type {
 export const performancePageRegistry: PerformancePageRegistryGroup[] = [
   group('agency-scopefield', 'agency', ['scopefield'], 'pending',
     contract('landing', 'Decide whether to try the Scopefield Mac public beta.',
-      'The browser/workspace relationship, explicit browsing boundary and linked beta release notes establish current capability and limits.',
+      'A labeled conceptual isometric story explains the browser/workspace direction; explicit beta facts and linked release notes establish current capability and limits.',
       'Download Scopefield for Apple Silicon after reviewing requirements and limitations')),
   group('agency-dfw-tech-support', 'agency', ['dfw-tech-support'], 'pending',
     contract('commercial', 'Decide whether one software or workflow problem fits remote support.',

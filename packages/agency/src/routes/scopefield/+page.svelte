@@ -1,5 +1,6 @@
 <script lang="ts">
   import { SEO } from '@create-something/canon';
+  import ScopefieldStory from '$lib/components/scopefield/ScopefieldStory.svelte';
 
   const releaseRoot = 'https://media.createsomething.io/releases/scopefield/0.1.0-beta.1/0289e532714af555c11c4c6be0d701179fb7f2fb52616607ddc775d1412fdca6';
   const downloadUrl = `${releaseRoot}/Scopefield-0.1.0-beta.1-macos-arm64.zip`;
@@ -13,39 +14,32 @@
 
 <div class="scopefield-page">
   <section class="opening" id="opening" aria-labelledby="scopefield-title">
-    <div class="edition"><a href="/products">CREATE SOMETHING / Products</a><span>Public beta · 0.1.0-beta.1</span></div>
+    <div class="edition"><a href="/products">CREATE SOMETHING / Scopefield</a><span>Mac public beta · 0.1.0-beta.1</span></div>
     <div class="hero-grid">
-      <div>
-        <p class="eyebrow">Scopefield for Mac</p>
-        <h1 id="scopefield-title">A browser.<br />Room for<br /><em>the work.</em></h1>
-      </div>
+      <div><p class="eyebrow">A browser for the way we want to work</p><h1 id="scopefield-title">The page<br />comes <em>first.</em></h1></div>
       <div class="hero-aside">
-        <p class="lede">Browse with a Page workspace beside you. Open it when you need it. Hide it when you need the page.</p>
-        <p class="support">Scopefield brings browsing and a collapsible workspace into one Mac app, with human control made explicit.</p>
-        <a class="primary" href="#handoff">Get the Mac beta <span aria-hidden="true">↘</span></a>
-        <p class="compatibility">Apple Silicon · macOS 13+<br />Experimental public browsing · No automatic updates</p>
+        <p class="lede">Room to browse.<br />A workspace when you need it.<br />Control you can see.</p>
+        <p class="support">We’re building Scopefield for our daily AI work and client work. Page review is the first working part of that direction.</p>
+        <a class="primary" href="#handoff">Explore the Mac beta <span aria-hidden="true">↘</span></a>
+        <p class="compatibility">Apple Silicon · macOS 13+<br />An early beta, not yet a daily-browser replacement.</p>
       </div>
     </div>
-    <figure class="workspace-map" aria-labelledby="map-caption">
-      <div class="map-top"><span>01 / Browser + workspace</span><span>One app. Two working areas.</span></div>
-      <div class="map-body">
-        <div class="browser-area"><span class="map-index">01</span><strong>Browse.</strong><p>The page stays in view.</p><div class="browser-rule" aria-hidden="true"></div><span class="map-note">Public browsing is opt-in</span></div>
-        <div class="page-area"><span class="map-index">02</span><strong>Make room.</strong><p>Show or hide the Page workspace without losing its state.</p><span class="map-note">Collapsible workspace</span></div>
-      </div>
-      <figcaption id="map-caption"><span>Workspace relationship diagram — not a product screenshot.</span><span>Human control remains explicit.</span></figcaption>
-    </figure>
+    <div class="opening-footer"><span class="product-name">Scopefield</span><a href="#focused-proof">Scroll through the idea <span aria-hidden="true">↓</span></a></div>
   </section>
 
-  <section class="proof" id="focused-proof" aria-labelledby="boundary-title">
-    <div class="section-heading"><p class="eyebrow">02 / The boundary</p><h2 id="boundary-title">You choose<br />what opens up.</h2></div>
-    <div class="boundary-body">
-      <p class="section-lede">Public browsing starts with a choice in settings. Visiting a site does not grant project access or permission to deploy.</p>
-      <dl class="boundary-list">
-        <div><dt>Browse by choice.</dt><dd>Enable Experimental public browsing, save for next launch, then quit and reopen. Offline-practice launches always stay offline.</dd></div>
-        <div><dt>Keep the workspace close.</dt><dd>Show or hide the Page workspace while preserving its state. Give the browser more room without closing the workspace.</dd></div>
-        <div><dt>Keep control explicit.</dt><dd>Browser access is separate from permission to act. Public agent navigation and native WebMCP execution are unavailable in this beta.</dd></div>
-      </dl>
-      <div class="release-proof"><span class="proof-label">Release evidence</span><p>Signed by Create Something LLC.<br />Notarized by Apple.</p><a href={`${releaseRoot}/README.txt`}>Read the beta release notes <span aria-hidden="true">↗</span></a></div>
+  <section class="proof" id="focused-proof" aria-labelledby="story-title">
+    <div class="story-heading"><p class="eyebrow">01 / A little less between you and the work</p><h2 id="story-title">Open space.<br /><em>Close at hand.</em></h2><p>The page, the workspace, and the decision belong together. They don’t all need to be in the way.</p></div>
+    <ScopefieldStory />
+    <div class="reality">
+      <div><p class="eyebrow">02 / Direction, with a boundary</p><h2>Built toward<br />daily AI work.<br /><em>Starting here.</em></h2></div>
+      <div class="reality-body"><p class="section-lede">The illustration explains the idea. The public beta is a smaller, specific release.</p>
+        <dl>
+          <div><dt>Available in beta 1</dt><dd>A Mac browser and collapsible Page workspace. Experimental public browsing is an explicit opt-in.</dd></div>
+          <div><dt>Practice, clearly separated</dt><dd>Agent activity uses synthetic practice pages. It is not evidence of live AI control on public sites.</dd></div>
+          <div><dt>Still being qualified</dt><dd>Daily-browser reliability and general login/SSO. Public agent execution is not implemented or qualified. Browsing never grants project access or deployment permission.</dd></div>
+        </dl>
+        <div class="release-proof"><span class="proof-label">Public release</span><p>Signed by Create Something LLC.<br />Notarized by Apple.</p><a href={`${releaseRoot}/README.txt`}>Read the beta release notes <span aria-hidden="true">↗</span></a></div>
+      </div>
     </div>
   </section>
 
@@ -64,41 +58,37 @@
 
 <style>
   .scopefield-page { color: var(--color-performance-ink); font-family: var(--font-performance-sans); }
-  .opening, .proof, .download { padding: clamp(2rem, 5vw, 6rem) 7vw; }
+  .opening, .proof, .download { padding: clamp(2rem, 5vw, 6rem) 6vw; }
   .opening { padding-top: 1rem; }
-  .edition, .eyebrow, .compatibility, .map-top, .map-index, .map-note, figcaption, .proof-label { font-family: var(--font-performance-mono); font-size: 0.75rem; line-height: 1.6; }
+  .edition, .eyebrow, .compatibility, .proof-label, .opening-footer a { font-family: var(--font-performance-mono); font-size: 0.75rem; line-height: 1.6; }
   .edition { display: flex; justify-content: space-between; gap: 1rem; padding-block: 1rem; border-bottom: 1px solid var(--color-performance-line); color: var(--color-performance-muted); }
   a { text-underline-offset: 0.3em; }
   .edition a { color: inherit; }
-  .hero-grid { display: grid; grid-template-columns: 1.45fr 1fr; gap: 8vw; align-items: end; padding-block: clamp(3rem, 6vw, 6rem); }
-  .eyebrow { margin: 0 0 1.5rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--color-performance-muted); }
+  .hero-grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: 7vw; align-items: end; padding-block: clamp(3rem, 7vw, 7rem); }
+  .eyebrow { margin: 0 0 1.5rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-performance-muted); }
   h1, h2, h3, p { margin: 0; }
-  h1 { font-family: var(--font-performance-display); font-size: clamp(3.8rem, 7.7vw, 8.5rem); line-height: 0.95; font-weight: 600; letter-spacing: -0.055em; }
+  h1 { font-family: var(--font-performance-display); font-size: clamp(4rem, 8.5vw, 9rem); line-height: 0.98; font-weight: 500; letter-spacing: -0.065em; }
   em { font-family: var(--font-performance-editorial); font-weight: 400; }
   .hero-aside { max-width: 29rem; padding-bottom: 0.25rem; }
-  .lede { font-size: clamp(1.3rem, 2.1vw, 2rem); line-height: 1.35; letter-spacing: -0.025em; }
+  .lede { font-size: clamp(1.3rem, 1.85vw, 1.85rem); line-height: 1.4; letter-spacing: -0.025em; }
   .support { color: var(--color-performance-muted); line-height: 1.6; margin-top: 1.5rem; }
   .primary { display: flex; justify-content: space-between; align-items: center; gap: 2rem; padding: 1rem 1.25rem; background: var(--color-performance-ink); color: var(--color-performance-paper); border: 1px solid var(--color-performance-ink); border-radius: var(--radius-operator-control); font-weight: 600; text-decoration: none; margin-top: 2rem; min-height: 3.5rem; }
   .primary:hover { background: var(--color-performance-paper); color: var(--color-performance-ink); }
   .primary span { font-size: 1.5rem; line-height: 1; }
   .compatibility { margin-top: 1rem; color: var(--color-performance-muted); }
-  .workspace-map { margin: 0; border: 1px solid var(--color-performance-line); background: var(--color-performance-panel); }
-  .map-top, figcaption { display: flex; gap: 1rem; justify-content: space-between; padding: 1rem 1.5rem; color: var(--color-performance-muted); }
-  .map-top { border-bottom: 1px solid var(--color-performance-line); }
-  .map-body { display: grid; grid-template-columns: 1.6fr 1fr; }
-  .browser-area, .page-area { min-height: 20rem; padding: 2rem 2.5rem; display: flex; flex-direction: column; align-items: start; }
-  .page-area { border-left: 1px dashed var(--color-performance-line-strong); background: var(--color-performance-paper); }
-  .map-index { color: var(--color-performance-muted); margin-bottom: 2rem; }
-  .map-body strong { font-size: clamp(2rem, 3.8vw, 4rem); font-weight: 400; letter-spacing: -0.04em; line-height: 1.1; }
-  .map-body p { color: var(--color-performance-muted); line-height: 1.6; margin-top: 0.8rem; max-width: 22rem; }
-  .map-note { margin-top: auto; padding-top: 2rem; }
-  .browser-rule { width: 60%; border-top: 1px solid var(--color-performance-line); margin-top: 1.5rem; }
-  figcaption { border-top: 1px solid var(--color-performance-line); font-size: 0.6875rem; }
-  .proof, .download { display: grid; grid-template-columns: 1fr 1fr; gap: 8vw; border-top: 1px solid var(--color-performance-line); padding-block: clamp(4rem, 8vw, 8rem); }
+  .opening-footer { display: flex; justify-content: space-between; align-items: end; gap: 2rem; border-top: 1px solid var(--color-performance-line); padding-top: 2rem; }
+  .product-name { font-size: clamp(2.8rem, 6vw, 6rem); letter-spacing: -0.06em; line-height: 1; }
+  .opening-footer a { color: var(--color-performance-muted); padding-block: 0.75rem; }
+  .proof { border-top: 1px solid var(--color-performance-line); padding-block: 5rem 0; }
+  .story-heading { display: grid; grid-template-columns: 1.35fr 1fr; column-gap: 6vw; margin-bottom: 4rem; align-items: end; }
+  .story-heading .eyebrow { grid-column: 1 / -1; }
+  .story-heading > p:last-child { font-size: 1.15rem; color: var(--color-performance-muted); line-height: 1.6; max-width: 29rem; }
   h2 { font-size: clamp(2.6rem, 4.6vw, 5rem); line-height: 1.05; letter-spacing: -0.045em; font-weight: 500; }
+  .reality, .download { display: grid; grid-template-columns: 1fr 1fr; gap: 8vw; border-top: 1px solid var(--color-performance-line); padding-block: clamp(4rem, 8vw, 8rem); }
+  .reality { margin-top: 4rem; }
   .section-lede { font-size: 1.35rem; line-height: 1.5; max-width: 34rem; }
-  .boundary-list { margin: 2.5rem 0 0; }
-  .boundary-list > div { padding-block: 1.5rem; border-top: 1px solid var(--color-performance-line); }
+  dl { margin: 2rem 0 0; }
+  dl > div { padding-block: 1.5rem; border-top: 1px solid var(--color-performance-line); }
   dt { font-weight: 600; margin-bottom: 0.65rem; font-size: 1.1rem; }
   dd { margin: 0; color: var(--color-performance-muted); line-height: 1.65; }
   .release-proof { margin-top: 1.5rem; border-left: 2px solid var(--color-operator-status-done-text); padding-left: 1.5rem; }
@@ -117,19 +107,15 @@
   .install-steps li::marker { color: var(--color-performance-muted); font-family: var(--font-performance-mono); font-size: 0.75rem; }
   .install-note { color: var(--color-performance-muted); line-height: 1.6; margin-block: 1.5rem; }
   a:focus-visible { outline: 2px solid var(--color-performance-focus); outline-offset: 5px; }
-  @media (min-width: 1600px) { .opening, .proof, .download { padding-inline: max(7vw, calc((100vw - 1440px) / 2)); } }
-  @media (max-width: 760px) {
-    .opening, .proof, .download { padding-inline: 6vw; }
+  @media (min-width: 1600px) { .opening, .proof, .download { padding-inline: max(6vw, calc((100vw - 1440px) / 2)); } }
+  @media (max-width: 850px) {
     .edition { flex-direction: column; gap: 0.35rem; }
-    .hero-grid, .proof, .download { grid-template-columns: 1fr; gap: 2.5rem; }
+    .hero-grid, .story-heading, .reality, .download { grid-template-columns: 1fr; gap: 2.5rem; }
     .hero-grid { padding-block: 2.5rem; }
-    h1 { font-size: clamp(3.6rem, 15vw, 6.5rem); }
+    h1 { font-size: clamp(3.6rem, 14vw, 6.5rem); }
     .hero-aside { max-width: none; }
-    .map-top, figcaption { flex-direction: column; gap: 0.35rem; padding: 1rem; }
-    .map-body { grid-template-columns: 1fr; }
-    .browser-area, .page-area { padding: 1.5rem; min-height: 15rem; }
-    .page-area { border-left: 0; border-top: 1px dashed var(--color-performance-line-strong); }
-    .map-index { margin-bottom: 1.25rem; }
+    .opening-footer { flex-direction: column; align-items: start; gap: 0.75rem; }
+    .story-heading .eyebrow { margin-bottom: 0; }
     .download-intro .primary { max-width: none; }
   }
 </style>
