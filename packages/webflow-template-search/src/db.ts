@@ -1,4 +1,4 @@
-import type { AliasType, CreatorLookupValue, DocumentCountRow, SlugAliasInput, TemplateDocumentInput, TemplateImageSourceStats } from './types.js';
+import type { AliasType, CreatorLookupValue, DocumentCountRow, SlugAliasInput, TemplateDocumentInput, TemplateDemoSignalStats, TemplateImageSourceStats } from './types.js';
 import type { WebflowDesignerAvatarRecord, WebflowTemplateImageRecord } from './webflow.js';
 import { chunk, nowIso } from './utils.js';
 
@@ -1846,5 +1846,98 @@ export async function healthCounts(db: D1Database): Promise<{ documents: number;
     documents: Number(documents?.total ?? 0),
     fts_rows: Number(ftsRows?.total ?? 0),
     aliases: Number(aliases?.total ?? 0),
+  };
+}
+
+export interface TemplateDemoSignalRow {
+  id: string;
+  template_slug: string;
+  website_url: string;
+}
+
+export interface TemplateDemoSignalUpdateInput {
+  id: string;
+  /** Stored only on success; a failed attempt keeps the previous signals. */
+  signalsJson: string | null;
+  syncedAt: string | null;
+  attemptedAt: string;
+}
+
+const DEMO_SIGNAL_ROW_SELECT = `SELECT id, template_slug, website_url
+  FROM template_documents`;
+const DEMO_SIGNAL_ELIGIBLE_WHERE = `website_url LIKE 'http%'`;
+
+export async function listTemplateDemoSignalRows(
+  db: D1Database,
+  limit: number,
+  templateSlugs: string[] = [],
+  options: { retryBefore: string; refreshBefore: string },
+): Promise<TemplateDemoSignalRow[]> {
+  const uniqueTemplateSlugs = Array.from(new Set(templateSlugs.map((slug) => slug.trim()).filter(Boolean)));
+  if (uniqueTemplateSlugs.length > 0) {
+    const result = await db
+      .prepare(
+        `${DEMO_SIGNAL_ROW_SELECT}
+         WHERE ${DEMO_SIGNAL_ELIGIBLE_WHERE}
+           AND template_slug IN (${placeholderList(uniqueTemplateSlugs.length)})
+         LIMIT ?`,
+      )
+      .bind(...uniqueTemplateSlugs, limit)
+      .all<TemplateDemoSignalRow>();
+    return result.results ?? [];
+  }
+
+  const result = await db
+    .prepare(
+      `${DEMO_SIGNAL_ROW_SELECT}
+       WHERE ${DEMO_SIGNAL_ELIGIBLE_WHERE}
+         AND (demo_signals_attempted_at IS NULL OR demo_signals_attempted_at < ?)
+         AND (demo_signals_synced_at IS NULL OR demo_signals_synced_at < ?)
+       ORDER BY
+         CASE WHEN demo_signals_attempted_at IS NULL THEN 0 ELSE 1 END,
+         is_featured DESC,
+         COALESCE(popularity_score, 0) DESC,
+         id
+       LIMIT ?`,
+    )
+    .bind(options.retryBefore, options.refreshBefore, limit)
+    .all<TemplateDemoSignalRow>();
+  return result.results ?? [];
+}
+
+/** Returns the number of rows that received new signals. */
+export async function updateTemplateDemoSignals(db: D1Database, updates: TemplateDemoSignalUpdateInput[]): Promise<number> {
+  let updated = 0;
+  for (const batch of chunk(updates, 40)) {
+    await db.batch(
+      batch.map((update) =>
+        update.signalsJson === null
+          ? db.prepare('UPDATE template_documents SET demo_signals_attempted_at = ? WHERE id = ?').bind(update.attemptedAt, update.id)
+          : db
+              .prepare(
+                'UPDATE template_documents SET demo_signals_json = ?, demo_signals_synced_at = ?, demo_signals_attempted_at = ? WHERE id = ?',
+              )
+              .bind(update.signalsJson, update.syncedAt, update.attemptedAt, update.id),
+      ),
+    );
+    updated += batch.filter((update) => update.signalsJson !== null).length;
+  }
+  return updated;
+}
+
+export async function templateDemoSignalStats(db: D1Database): Promise<TemplateDemoSignalStats> {
+  const row = await db
+    .prepare(
+      `SELECT
+         SUM(CASE WHEN ${DEMO_SIGNAL_ELIGIBLE_WHERE} THEN 1 ELSE 0 END) AS eligible_records,
+         SUM(CASE WHEN demo_signals_json IS NOT NULL THEN 1 ELSE 0 END) AS records_with_signals,
+         SUM(CASE WHEN demo_signals_attempted_at IS NOT NULL THEN 1 ELSE 0 END) AS attempted_records
+       FROM template_documents`,
+    )
+    .first<TemplateDemoSignalStats>();
+  return {
+    eligible_records: Number(row?.eligible_records ?? 0),
+    records_with_signals: Number(row?.records_with_signals ?? 0),
+    attempted_records: Number(row?.attempted_records ?? 0),
   };
 }

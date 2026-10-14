@@ -1,4 +1,5 @@
 import { extractDescriptionList } from './html.js';
+import { parseDemoSignals } from './demo-signals.js';
 import { lookupPublicSlugMap, resolveAlias } from './db.js';
 import { publicPurchaseBucket, publicViewerBucket } from './public-signals.js';
 import type {
@@ -813,6 +814,7 @@ export async function searchTemplates(env: Env, rawParams: SearchParams, cacheVe
       item.included_pages = extractDescriptionList(row.description_long_html, 'pages');
       item.features = extractDescriptionList(row.description_long_html, 'features');
       item.source_updated_at = row.source_last_modified_time;
+      item.demo_signals = parseDemoSignals(row.demo_signals_json);
     }
 
     return item;

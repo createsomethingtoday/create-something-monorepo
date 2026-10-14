@@ -40,7 +40,12 @@ import {
   clearPendingRecordSyncIds,
   listPendingRecordSyncIds,
   listTemplateSlugsByIds,
+  listTemplateDemoSignalRows,
+  templateDemoSignalStats,
+  updateTemplateDemoSignals,
+  type TemplateDemoSignalUpdateInput,
 } from './db.js';
+import { fetchDemoSignals } from './demo-signals.js';
 import {
   fetchWebflowDesignerAvatars,
   fetchWebflowDesignerAvatarsForTargets,
@@ -60,6 +65,7 @@ import type {
   LookupMaps,
   SyncSummary,
   TemplateDocumentInput,
+  TemplateDemoSignalRefreshSummary,
   TemplateImageBackfillSummary,
   TemplateImagePruneSummary,
   CreatorLookupValue,
@@ -80,6 +86,12 @@ import {
 const IMAGE_BACKFILL_DEFAULT_LIMIT = 48;
 const IMAGE_BACKFILL_MAX_LIMIT = 480;
 const IMAGE_BACKFILL_FETCH_BATCH_SIZE = 24;
+const DEMO_SIGNAL_REFRESH_DEFAULT_LIMIT = 120;
+const DEMO_SIGNAL_REFRESH_MAX_LIMIT = 600;
+const DEMO_SIGNAL_FETCH_BATCH_SIZE = 8;
+const DEMO_SIGNAL_RETRY_AFTER_MS = 24 * 60 * 60 * 1000;
+const DEMO_SIGNAL_REFRESH_AFTER_MS = 30 * 24 * 60 * 60 * 1000;
+const DEMO_SIGNAL_MAX_REPORTED_FAILURES = 25;
 const DEFAULT_SYNC_LOCK_TTL_MS = 20 * 60 * 1000;
 const FULL_SYNC_LOCK_TTL_MS = 3 * 60 * 60 * 1000;
 const SYNC_HEARTBEAT_INTERVAL_MS = 30 * 1000;
@@ -98,7 +110,7 @@ function staleHeartbeatMsForMode(mode: string): number | undefined {
   if (mode === 'records') return RECORD_SYNC_STALE_HEARTBEAT_MS;
   if (mode === 'creator_backfill') return RECORD_SYNC_STALE_HEARTBEAT_MS;
   if (mode === 'incremental') return INCREMENTAL_SYNC_STALE_HEARTBEAT_MS;
-  if (['full', 'image_refresh', 'creator_refresh', 'image_backfill', 'image_prune'].includes(mode)) {
+  if (['full', 'image_refresh', 'creator_refresh', 'image_backfill', 'image_prune', 'demo_signals'].includes(mode)) {
     return LONG_SYNC_STALE_HEARTBEAT_MS;
   }
   return undefined;
@@ -1656,6 +1668,69 @@ export async function pruneMissingTemplateImages(
     };
 
     await recordSyncSummary(env.DB, summary, 'last_image_prune');
+    return summary;
+  });
+}
+
+/**
+ * Fetch each eligible template's demo homepage and store its matching signals
+ * (see src/demo-signals.ts). Rows are picked never-attempted first, then by
+ * featured/popularity; a failed attempt is not retried for a day and a success
+ * is refreshed after thirty days. Explicit slugs bypass both gates.
+ */
+export async function refreshTemplateDemoSignals(
+  env: Env,
+  options: { limit?: number; templateSlugs?: string[] } = {},
+): Promise<TemplateDemoSignalRefreshSummary> {
+  return runWithSyncJobLock(env, 'demo_signals', async (heartbeat) => {
+    const startedAt = nowIso();
+    const requestedLimit = clamp(Math.floor(options.limit ?? DEMO_SIGNAL_REFRESH_DEFAULT_LIMIT), 1, DEMO_SIGNAL_REFRESH_MAX_LIMIT);
+    const requestedTemplateSlugs = uniqueStrings((options.templateSlugs ?? []).map((slug) => slug.trim()).filter(Boolean));
+    const now = Date.now();
+    const rows = await listTemplateDemoSignalRows(env.DB, requestedLimit, requestedTemplateSlugs, {
+      retryBefore: new Date(now - DEMO_SIGNAL_RETRY_AFTER_MS).toISOString(),
+      refreshBefore: new Date(now - DEMO_SIGNAL_REFRESH_AFTER_MS).toISOString(),
+    });
+
+    const updates: TemplateDemoSignalUpdateInput[] = [];
+    const failures: TemplateDemoSignalRefreshSummary['failures'] = [];
+    for (const batch of chunk(rows, DEMO_SIGNAL_FETCH_BATCH_SIZE)) {
+      const results = await Promise.all(
+        batch.map(async (row) => ({ row, result: await fetchDemoSignals(row.website_url, nowIso()) })),
+      );
+      for (const { row, result } of results) {
+        const attemptedAt = nowIso();
+        if (result.ok) {
+          updates.push({ id: row.id, signalsJson: JSON.stringify(result.signals), syncedAt: attemptedAt, attemptedAt });
+        } else {
+          updates.push({ id: row.id, signalsJson: null, syncedAt: null, attemptedAt });
+          failures.push({ template_slug: row.template_slug, status: result.status, reason: result.reason });
+        }
+      }
+      await heartbeat();
+    }
+
+    const updatedCount = await updateTemplateDemoSignals(env.DB, updates);
+    await heartbeat();
+    const demoSignalStats = await templateDemoSignalStats(env.DB);
+
+    const summary: TemplateDemoSignalRefreshSummary = {
+      mode: 'demo_signals',
+      started_at: startedAt,
+      finished_at: nowIso(),
+      requested_limit: requestedLimit,
+      requested_template_slugs: requestedTemplateSlugs.length > 0 ? requestedTemplateSlugs : undefined,
+      scanned_records: rows.length,
+      updated_records: updatedCount,
+      failed_records: failures.length,
+      failures: failures.slice(0, DEMO_SIGNAL_MAX_REPORTED_FAILURES),
+      demo_signal_stats: demoSignalStats,
+    };
+
+    if (summary.updated_records > 0) {
+      await bumpPublicSearchCacheVersion(env.DB, summary.mode);
+    }
+    await recordSyncSummary(env.DB, summary, 'last_demo_signal_refresh');
     return summary;
   });
 }
