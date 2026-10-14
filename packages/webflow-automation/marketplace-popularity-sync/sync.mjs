@@ -69,6 +69,9 @@ const F = {
 
 // Fivetran-written fields older than this mean its activation did not run.
 const MAX_INPUT_AGE_HOURS = 30;
+// One Fivetran activation run writes every row within minutes; rows older than
+// this relative to the newest SYNCED_AT were not part of the latest run.
+const COHORT_WINDOW_HOURS = 6;
 
 const EXECUTE = process.argv.includes('--execute');
 const modelArg = process.argv.indexOf('--model');
@@ -138,7 +141,7 @@ async function mainFromAirtable() {
 
   log('Fetching Assets from Airtable...');
   const assets = await listAssets();
-  const withInputs = [];
+  const candidates = [];
   let duplicateKeys = 0;
   const seen = new Set();
   let newestSync = '';
@@ -150,9 +153,15 @@ async function mainFromAirtable() {
     seen.add(key);
     const syncedAt = record.fields[F.SYNCED_AT] ?? '';
     if (syncedAt > newestSync) newestSync = syncedAt;
-    withInputs.push(record);
+    candidates.push(record);
   }
-  log(`Assets: ${assets.length} records, ${withInputs.length} with V8 inputs.`);
+  // Only the latest Fivetran write is a valid cohort. Rows the activation did not
+  // touch (partial run, asset left the result set) keep old inputs: exclude them
+  // from scoring and from the beacon percent-rank population.
+  const cohortStart = Date.parse(newestSync) - COHORT_WINDOW_HOURS * 3_600_000;
+  const withInputs = candidates.filter((record) => Date.parse(record.fields[F.SYNCED_AT] ?? '') >= cohortStart);
+  const staleInputs = candidates.length - withInputs.length;
+  log(`Assets: ${assets.length} records, ${candidates.length} with V8 inputs, ${staleInputs} stale (outside the latest sync).`);
   if (withInputs.length < 5000) fail(`Only ${withInputs.length} assets carry 🖌️Score ex-views — Fivetran V8 inputs missing, refusing to write.`);
   const ageHours = newestSync ? (Date.now() - Date.parse(newestSync)) / 3_600_000 : Infinity;
   if (ageHours > MAX_INPUT_AGE_HOURS) fail(`Newest SYNCED_AT is ${newestSync || 'empty'} (${Math.round(ageHours)}h old) — Fivetran V8 activation did not run, refusing to write.`);
@@ -197,6 +206,7 @@ async function mainFromAirtable() {
     ranAt: new Date().toISOString(),
     assetsWithInputs: withInputs.length,
     duplicateMrpIds: duplicateKeys,
+    staleInputsSkipped: staleInputs,
     inputsNewestSyncedAt: newestSync,
     beaconSlugs: beacon.size,
     beaconCoverage,

@@ -34,9 +34,11 @@
 			<integer>15</integer>
 		</dict>
 	</array>
+	<!-- launchd opens these before run.sh starts and does not create parent
+	     directories, so they live outside the gitignored runs/. -->
 	<key>StandardOutPath</key>
-	<string>/Users/micahjohnson/Code/create-something-monorepo-wt-popularity-sync/packages/webflow-automation/marketplace-popularity-sync/runs/launchd.log</string>
+	<string>/Users/micahjohnson/Library/Logs/marketplace-popularity-sync.log</string>
 	<key>StandardErrorPath</key>
-	<string>/Users/micahjohnson/Code/create-something-monorepo-wt-popularity-sync/packages/webflow-automation/marketplace-popularity-sync/runs/launchd.log</string>
+	<string>/Users/micahjohnson/Library/Logs/marketplace-popularity-sync.log</string>
 </dict>
 </plist>

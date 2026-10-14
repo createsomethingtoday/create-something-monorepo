@@ -17,7 +17,8 @@ PKG="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 MONOREPO="$(git -C "$PKG" rev-parse --show-toplevel)"
 NODE="${NODE_BIN:-/Users/micahjohnson/.nvm/versions/node/v22.21.1/bin/node}"
 INFISICAL="$(command -v infisical || echo /opt/homebrew/bin/infisical)"
-export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
+# sync.mjs spawns npx (wrangler for the beacon D1); use the same Node install.
+export PATH="$(dirname "$NODE"):/opt/homebrew/bin:/usr/local/bin:$PATH"
 
 # Scoring variant written to 🖌️Popularity Score. v7 = Fivetran parity (status quo);
 # v8-beacon = V7 with the viewer term from the owned beacon. See model.mjs.
