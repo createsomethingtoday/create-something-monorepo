@@ -35,7 +35,7 @@ const schedulerPage = readFileSync(
 );
 
 test('owned /book route embeds the first-party scheduler and remains the Map destination', () => {
-	assert.ok(mapRoute.includes('bookingHref="/book"'));
+	assert.ok(mapRoute.includes('href="/book"'));
 	assert.ok(bookServerRoute.includes('createBookingHandoffState'));
 	assert.ok(bookRoute.includes('<iframe'));
 	assert.ok(bookRoute.includes("iframeTitle: 'Schedule a CREATE SOMETHING mapping session'"));
@@ -43,13 +43,11 @@ test('owned /book route embeds the first-party scheduler and remains the Map des
 	assert.equal(bookRoute.toLowerCase().includes('savvycal'), false);
 });
 
-test('owned /book route uses the Canon product-mode handoff with the scheduler as its proof artifact', () => {
-	assert.ok(bookRoute.includes('PerformanceConversionHandoff'));
-	assert.ok(bookRoute.includes('artifactPlacement="full-width"'));
-	assert.ok(bookRoute.includes('{#snippet aside()}'));
-	assert.ok(bookRoute.includes('id="first-party-scheduler"'));
-	assert.equal(bookRoute.includes('PerformanceCampaignOpening'), false);
-	assert.equal(bookRoute.includes('pressure-boundary-natural.webp'), false);
+test('booking keeps a direct time-selection action and conditionally renders populated context', () => {
+	assert.ok(bookRoute.includes('href="#first-party-scheduler"'));
+	assert.match(bookRoute, /\{#if handoffSheet.state === 'ready'\}\s*<section\s*class="booking-handoff"/);
+	assert.ok(bookRoute.includes("class:booking-content--with-handoff={handoffSheet.state === 'ready'}"));
+	assert.match(bookRoute, /@media \(min-width: 1000px\) \{ \.booking-content--with-handoff/);
 });
 
 test('shared scheduling CTA is provider-neutral and preserves the owned route', () => {
@@ -180,8 +178,8 @@ test('the parent turns only the bounded scheduler context into a readable incomi
 		fields: []
 	});
 	assert.ok(bookRoute.includes('createBookingHandoffState'));
-	assert.ok(bookRoute.includes('Incoming handoff'));
-	assert.ok(bookRoute.includes('Details included with your booking'));
+	assert.ok(bookRoute.includes('Booking context'));
+	assert.ok(bookRoute.includes('Review your booking context'));
 	assert.ok(bookRoute.includes('booking_handoff_viewed'));
 	assert.ok(
 		bookRoute.indexOf('booking-handoff') < bookRoute.lastIndexOf('id="first-party-scheduler"')
@@ -380,4 +378,16 @@ test('the same loaded draft survives switching between review and mapping handof
   }
   assert.match(bookRoute, /warmupNotes = window\.localStorage\.getItem\(PUBLIC_ATLAS_STORAGE_KEYS\.warmupSummary\)/);
   assert.match(bookRoute, /hasWarmupNotes: Boolean\(handoffSheet\.warmupNotes\)/);
+});
+
+
+test('empty and invalid numeric inputs do not invent a handoff; explicit zero remains valid', () => {
+  for (const search of ['', '?score=&agent_messages=', '?score=%20&agent_messages=%20', '?score=101&agent_messages=-1', '?score=no&agent_messages=NaN', '?source=!!!&unknown=ignored']) {
+    const state = createBookingHandoffState(search);
+    assert.equal(state.handoffSheet.state, 'empty');
+    assert.deepEqual(state.handoffContext, {});
+    assert.equal(new URL(state.schedulerHref).search, '');
+  }
+  assert.equal(createBookingHandoffState('?score=0&agent_messages=0').handoffSheet.state, 'ready');
+  assert.equal(createBookingHandoffState('', 'Synthetic Map summary.').handoffSheet.state, 'ready');
 });
