@@ -31,20 +31,23 @@ mkdir -p runs
 LOG="runs/sync-$(date +%Y-%m-%d).log"
 
 # One run at a time (07:15 and 12:15 must not overlap). The lock records its
-# owner PID; a lock whose owner is gone (power loss, SIGKILL) is reclaimed so a
-# dead run cannot block every later slot.
+# owner's PID and start time; a lock whose owner is gone (power loss, SIGKILL,
+# PID reused after reboot) is reclaimed so a dead run cannot block later slots.
 LOCK="runs/.lock"
+started() { ps -o lstart= -p "$1" 2>/dev/null; }
 if ! mkdir "$LOCK" 2>/dev/null; then
   OWNER="$(cat "$LOCK/pid" 2>/dev/null || true)"
-  if [ -n "$OWNER" ] && kill -0 "$OWNER" 2>/dev/null; then
+  OWNER_START="$(cat "$LOCK/started" 2>/dev/null || true)"
+  if [ -n "$OWNER" ] && [ -n "$OWNER_START" ] && [ "$(started "$OWNER")" = "$OWNER_START" ]; then
     echo "$(date '+%Y-%m-%d %H:%M:%S %Z') run $OWNER holds $LOCK — skipping" >> "$LOG"
     exit 0
   fi
-  echo "$(date '+%Y-%m-%d %H:%M:%S %Z') reclaiming stale $LOCK (owner ${OWNER:-unknown} not running)" >> "$LOG"
+  echo "$(date '+%Y-%m-%d %H:%M:%S %Z') reclaiming stale $LOCK (owner ${OWNER:-unknown} is not the recorded run)" >> "$LOG"
   rm -rf "$LOCK"
   mkdir "$LOCK" || exit 1
 fi
 echo $$ > "$LOCK/pid"
+started $$ > "$LOCK/started"
 trap 'rm -rf "$LOCK"' EXIT
 
 {
