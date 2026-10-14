@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "astro dev --host 127.0.0.1",
+    "dev": "astro dev",
     "build": "astro build",
     "start": "node ./dist/server/entry.mjs",
     "check": "astro check",

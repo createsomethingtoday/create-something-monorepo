@@ -4,7 +4,7 @@ import {createHash} from 'node:crypto';
 import ts from 'typescript';
 const source=resolve('../webflow-components/src/components');
 const destination=resolve('src/vendor/marketplace');
-const roots=['cards/TemplateCard.tsx','grid/TemplateGrid.tsx','filter/TemplateFilterBar.tsx','marketplace/TemplateSearchSidebar.tsx','marketplace/TemplateMarketplaceHeading.tsx','marketplace/TemplateDetailHero.tsx','marketplace/TemplateDetailStickyBar.tsx'];
+const roots=['marketplace/TemplateDetailConversionTracker.tsx','chat/TemplateChat.tsx','cards/TemplateCard.tsx','grid/TemplateGrid.tsx','filter/TemplateFilterBar.tsx','marketplace/TemplateSearchSidebar.tsx','marketplace/TemplateMarketplaceHeading.tsx','marketplace/TemplateDetailHero.tsx','marketplace/TemplateDetailStickyBar.tsx'];
 const manifest={sourcePackage:'packages/webflow-components/src/components',files:{}};
 async function visit(path){
  const key=relative(source,path);if(manifest.files[key])return;

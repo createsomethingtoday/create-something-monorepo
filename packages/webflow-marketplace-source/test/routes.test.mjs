@@ -1,9 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {routeFor,localLink,searchFilters} from '../src/lib/routes.mjs';
-test('only migrated buyer destinations become local',()=>{
+test('covered buyer and reference destinations become local',()=>{
  assert.equal(localLink('https://webflow.com/templates/html/fycare-website-template'),'/templates/html/fycare-website-template');
- assert.equal(localLink('https://webflow.com/templates/submission-guidelines'),'https://webflow.com/templates/submission-guidelines');
+ assert.equal(localLink('https://webflow.com/templates/submission-guidelines'),'/templates/submission-guidelines');
+ assert.equal(localLink('https://webflow.com/templates/submit-a-template'),'/templates/submit-a-template');
+ assert.equal(routeFor('/templates/services/onboarding-guide').kind,'reference');
  assert.equal(localLink('https://webflow.com/dashboard/marketplace-checkout/redirect?rid=abc'),'https://webflow.com/dashboard/marketplace-checkout/redirect?rid=abc');
  assert.equal(localLink('javascript:alert(1)'),'');
  assert.equal(localLink('https://webflow.com.evil.test/templates/all'),'https://webflow.com.evil.test/templates/all');

@@ -1,10 +1,22 @@
+export const SERVICE_ROUTES = new Set(['services/home','services/service-type','services/budget','services/schedule','services/search-results']);
+export const REFERENCE_ROUTES = new Set(['submission-guidelines','grading-rubric','styleguide','styles/type','styles/components','styles/layout','services/onboarding-guide','services/stripe-onboarding-guide','services/component-library','services/program-guidelines']);
 export const CATALOG_ROUTES = new Set(['all','free','landing-pages','featured','free-website-templates','popular-website-templates','new-website-templates','landing-page','search','search-results','search-v2','basic-website-templates','cms-website-templates','ecommerce-website-templates','premium-website-templates','user-accounts-website-templates']);
 export const DYNAMIC_KINDS = new Set(['category','subcategory','style','tag','designers','html','feature','languages']);
 export function routeFor(pathname) {
   const path = pathname.replace(/\/+$/, '') || '/';
   if (path === '/' || path === '/templates') return {kind:'home'};
   if (!path.startsWith('/templates/')) return {kind:'missing'};
+  const reference=path.slice('/templates/'.length);
+  if(SERVICE_ROUTES.has(reference))return {kind:'service',page:reference};
+  if(REFERENCE_ROUTES.has(reference))return {kind:'reference',page:reference};
   const parts = path.slice('/templates/'.length).split('/');
+  if(parts.length===1&&parts[0]==='services')return {kind:'service',page:'services/home'};
+  if(parts.length===1&&parts[0]==='applications')return {kind:'published',page:'applications'};
+  if(parts.length===2&&['groups','success-stories','notifications','faqs'].includes(parts[0])&&/^[a-z0-9][a-z0-9-]*$/.test(parts[1]))return {kind:'published',page:parts[0],slug:parts[1]};
+  if (parts.length===1&&parts[0]==='slack-invitation-request')return {kind:'invitation'};
+  if (parts.length===1&&parts[0]==='submit-a-library')return {kind:'library'};
+  if (parts.length===1&&['submit-a-template','submit-a-template-clone'].includes(parts[0]))return {kind:'submission'};
+  if (parts.length===1&&parts[0]==='chat')return {kind:'chat'};
   if (parts.length === 1 && CATALOG_ROUTES.has(parts[0])) return {kind:'catalog',page:parts[0]};
   if (parts.length === 1 && ['categories','designers','template-licenses','tags'].includes(parts[0])) return {kind:'static',page:parts[0]};
   if (parts.length === 2 && DYNAMIC_KINDS.has(parts[0]) && /^[a-z0-9][a-z0-9-]*$/.test(parts[1])) return {kind:parts[0] === 'html' ? 'detail' : 'catalog',page:parts[0],slug:parts[1]};

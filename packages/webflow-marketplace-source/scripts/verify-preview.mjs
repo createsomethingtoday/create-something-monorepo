@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {load} from 'cheerio';
-const origin=process.env.PREVIEW_URL||'http://127.0.0.1:4321';
+const origin=process.env.PREVIEW_URL||'http://localhost:4321';
 const receipts=[];
 for(const [path,status,content] of [
  ['/templates',200,'Launch a high-performing site'],

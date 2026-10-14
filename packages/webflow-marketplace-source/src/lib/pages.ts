@@ -1,15 +1,19 @@
 import {load} from 'cheerio';
+import assetPathMap from '../../export-path-map.json';
 import {publishedCms,cmsProps,CmsNotFound} from './cms';
 import {search, type Template} from './api';
 import {routeFor,localLink,searchFilters} from './routes.mjs';
-const exports = import.meta.glob('../../original-export/*.html',{eager:true,query:'?raw',import:'default'}) as Record<string,string>;
+const exports = import.meta.glob('../../original-export/**/*.html',{eager:true,query:'?raw',import:'default'}) as Record<string,string>;
 const raw=(name:string)=>exports[`../../original-export/${name}.html`];
 const escape=(s:unknown)=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
-export interface Island {kind:'cards'|'catalog'|'detail'|'widget';widget?:string;props?:Record<string,unknown>;items?:Template[];item?:Template;title?:string;description?:string;creatorSlug?:string;heroProps?:Record<string,unknown>}
+export interface Island {kind:'cards'|'catalog'|'detail'|'widget'|'comments'|'chat'|'library';widget?:string;props?:Record<string,unknown>;items?:Template[];item?:Template;title?:string;description?:string;creatorSlug?:string;heroProps?:Record<string,unknown>}
 export interface Page {title:string;description:string;head:string;body:string;parts:string[];islands:Island[];status:number;pageId?:string;canonical:string}
 function clean(name:string){
  const $=load(raw(name)||raw('404'));
- $('script,link[rel="prefetch"],link[rel="preconnect"],link[rel="stylesheet"],meta[http-equiv],.g-nav-modal_wrap,.g-nav-js,.w-dyn-empty,.notification_bar').remove();
+ // Archived marketing headers depend on retired custom scripts. Use the
+ // current exported Marketplace navigation across all retained app pages.
+ if(name!=='index'){const header=load(raw('index'))('.sb-nav-wrapper').first().toString();$('.g-nav_wrapper,.g-nav-wrapper').filter((_,element)=>$(element).parents('.g-nav_wrapper,.g-nav-wrapper').length===0).replaceWith(header);}
+ $('base,script,link[rel="prefetch"],link[rel="preconnect"],link[rel="stylesheet"],meta[http-equiv],.g-nav-modal_wrap,.g-nav-js,.w-dyn-empty,.notification_bar').remove();
  $('head style').remove();
  $('[onload],[onclick],[onerror]').removeAttr('onload onclick onerror');
  $('[src],[href],[srcset]').each((_,e)=>{
@@ -17,13 +21,20 @@ function clean(name:string){
   for(const attr of ['src','href','srcset']){
    const v=el.attr(attr);if(!v)continue;
    let next=v.replace(/(?<![\w/:])(?:\.\.\/)?(images|fonts|css|js|documents)\//g,'/export/$1/');
+   for(const [from,to] of Object.entries(assetPathMap))next=next.split(from).join(to);
    if(attr==='href'){
-    if(/^[\w-]+\.html(?:[?#]|$)/.test(next)){const [file,suffix='']=next.split(/(?=[?#])/);next=file==='index.html'?'/templates'+suffix:'/templates/'+file.replace(/\.html$/,'')+suffix;}
+    if(/^(?!https?:|\/\/|\/)(?:[\w.-]+\/)*[\w-]+\.html(?:[?#]|$)/.test(next)){const [file,suffix='']=next.split(/(?=[?#])/);const filename=new URL(file,`https://webflow.com/templates/${name.includes('/')?name.slice(0,name.lastIndexOf('/')+1):''}`).pathname;
+     const destination=filename.replace(/\.html$/,'').replace(/\/index$/,'');
+     next=localLink('https://webflow.com'+destination+suffix);}
     if(next.startsWith('https://webflow.com/templates'))next=localLink(next);
    }
    el.attr(attr,next);
   }
  });
+ // Finsweet accordion controls are portable native details rather than absent CDN code.
+ $('[fs-accordion-element="accordion"]').each((_,element)=>{const el=$(element),trigger=el.find('[fs-accordion-element="trigger"]').first(),content=el.find('[fs-accordion-element="content"]').first();if(!trigger.length||!content.length)return;el.replaceWith('<details data-source-accordion="true" class="'+(el.attr('class')||'')+'"'+(el.attr('data-hide-initially')?' data-hide-initially="true"':'')+'><summary>'+trigger.html()+'</summary>'+content.toString()+'</details>');});
+ const headingKey=(value:string)=>value.toLowerCase().replace(/^\s*\d+[.)]\s*/,'').replace(/\b(your|tool)\b/g,'').replace(/[^a-z0-9]/g,'');
+ $('.link-nav-submission[href="#"]').each((index,element)=>{const link=$(element),key=headingKey(link.text());const heading=$('h2,h3').filter((_,candidate)=>headingKey($(candidate).text())===key||headingKey($(candidate).text()).startsWith(key)).first();if(!key||!heading.length)return;const id=heading.attr('id')||`source-guide-${index}`;heading.attr('id',id);link.attr('href','#'+id);});
  $('a[target="_blank"]').attr('rel','noopener noreferrer');
  $('.g-nav_menu-button').attr('aria-label','Menu');
  return $;
@@ -31,7 +42,7 @@ function clean(name:string){
 function finish($:ReturnType<typeof load>,url:URL,islands:Island[]=[],status=200):Page{
  $('.source-skip,#skip-link').remove();
  $('code-island[data-loader]').each((_,e)=>{const t=$(e).find('template').first();if(t.length)$(e).replaceWith(t.html()||'')});
- $('[id=show-cookie-preferences]').attr('href','https://webflow.com/legal/cookie-policy');
+ $('[id=show-cookie-preferences]').attr('href','#cookie-preferences').attr('aria-haspopup','dialog');
  $('meta[property="og:title"],meta[name="twitter:title"]').attr('content',$('title').text());
  $('meta[property="og:description"],meta[name="twitter:description"]').attr('content',$('meta[name="description"]').attr('content')||'');
  if(!$('[id=main]').length)$('body > .section').first().attr('id','main');
@@ -56,7 +67,7 @@ function hydrateCms($:ReturnType<typeof load>,islands:Island[]){
  $('code-island').each((_,e)=>{
   const el=$(e);let widget:string,props:Record<string,unknown>;
   try{widget=JSON.parse(el.attr('data-loader')||'{}').val?.submoduleId;props=JSON.parse(el.attr('data-props')||'{}')}catch{return}
-  if(['TemplateCard','TemplateGrid','TemplateFilterBar'].includes(widget)){
+  if(['TemplateCard','TemplateGrid','TemplateFilterBar','TemplateSupportRequest'].includes(widget)){
    islands.push({kind:'widget',widget,props});el.replaceWith('<source-island></source-island>');
   }
  });
@@ -65,6 +76,66 @@ export async function pageFor(url:URL):Promise<Page>{
  const route=routeFor(url.pathname);
  if(route.kind==='missing')return errorPage(url,404);
  try{
+ if(route.kind==='published'){
+  const cms=await publishedCms('/'+route.page+(route.slug?'/'+route.slug:''));
+  const content=cms('body .section,body main,body > section').filter((_,element)=>cms(element).parents('.section,main').length===0).toArray().map(element=>cms(element).toString()).join('');
+  if(!content)return errorPage(url,404);
+  const $=shell(content,cms('title').text(),cms('meta[name="description"]').attr('content')||'');
+  const islands:Island[]=[];hydrateCms($,islands);return finish($,url,islands);
+ }
+ if(route.kind==='invitation'){
+  const $=clean('slack-invitation-request');
+  $('form').attr('data-source-owned-form','true');
+  $('#Creator-Check-Success').attr('name','Creator-Check-Success');
+  $('label[for="email"],label[for="Primary-email"]').attr('for','Primary-Email');
+  return finish($,url);
+ }
+ if(route.kind==='library'){
+  const $=shell('<main id="main"><source-island></source-island></main>','Submit a Library | Webflow');
+  return finish($,url,[{kind:'library'}]);
+ }
+ if(route.kind==='submission'){
+  const $=clean('submit-a-template');
+  const frame=$('#ts-submission-frame');
+  const destination=new URL('https://webflow-template-form.webflow.io/submit');
+  for(const key of ['section','utm_source','utm_medium','utm_campaign','utm_content','utm_term']){const value=url.searchParams.get(key);if(value)destination.searchParams.set(key,value);}
+  frame.attr('src',destination.href).attr('data-source-submission','true');
+  return finish($,url);
+ }
+ if(route.kind==='chat'){
+  const $=shell('<main id="main" class="section"><div class="container" style="height:80vh"><source-island></source-island></div></main>','Find your template | Webflow');
+  return finish($,url,[{kind:'chat'}]);
+ }
+ if(route.kind==='service'){
+  const $=clean(route.page!);
+  if(route.page==='services/search-results'){const result=await search({q:url.searchParams.get('q')||url.searchParams.get('query')||'',page_size:'24',sort:'newest'});const $=shell('<main id="main" class="section"><div class="container"><source-island></source-island></div></main>','Find a template to customize | Webflow');return finish($,url,[{kind:'catalog',title:'Choose a template to customize',items:result.items}]);}
+  if(route.page==='services/home'){
+   const result=await search({page_size:'24',sort:'newest'});
+   $('.services_tab-wrapper').replaceWith('<source-island></source-island>');
+   $('.w-dyn-list').filter((_,element)=>$(element).find('.w-dyn-bind-empty').length>0).remove();
+   $('form[action="/search"]').attr('action','/templates/search');
+   return finish($,url,[{kind:'catalog',title:'Choose a template to customize',items:result.items}]);
+  }
+  if(route.page==='services/schedule'){const modal=$('[fs-modal-element="modal"]');const content=modal.find('.ts_schedule-call--help-modal').first();modal.replaceWith('<dialog class="source-support-dialog" data-source-help="true" aria-label="Template customization services">'+content.html()+'</dialog>');}
+  $('form').attr('data-source-example','true');
+  $('#hire-cta').attr('href','/templates/services/budget'+url.search);
+  $('#budget-back').attr('href','/templates/services/service-type'+url.search);
+  $('#budget-continue').removeAttr('href').attr('aria-disabled','true');
+  $('#ts-calendly-embed').attr('data-source-booking','true');
+  return finish($,url);
+ }
+ if(route.kind==='reference'){
+  const $=clean(route.page!);
+  if(route.page==='grading-rubric'){const cms=await publishedCms('/grading-rubric');const examples=cms('.cc-site-reference-container').first();if(examples.length)$('.cc-site-reference-container').replaceWith(examples.toString());else $('.cc-site-reference-container').remove();}
+  // Reference form examples must not deliver export-placeholder submissions.
+  if(route.page==='styles/components')$('form').attr('data-source-example','true');
+  if(route.page==='services/component-library'){
+   $('body').prepend('<aside class="source-reference-notice" role="note"><strong>Service component reference</strong><p>These are design examples. Sample template, purchase and preview controls have no destination; use <a href="/templates/services">Template customization services</a> for the working workflow.</p></aside>');
+   $('a[href="#"]').each((_,element)=>{$(element).removeAttr('href').attr('aria-disabled','true').attr('data-source-example-link','true');});
+  }
+  if(route.page==='services/program-guidelines')$('form').attr('data-source-owned-form','true').attr('data-redirect','/templates/services/onboarding-guide').attr('redirect','/templates/services/onboarding-guide');
+  return finish($,url);
+ }
  if(route.kind==='home'){
   const $=clean('index');$('.starter_templates').remove();
   const result=await Promise.all([search({scope:'featured',sort:'newest',page_size:'8'}),search({sort:'newest',page_size:'8'}),search({scope:'free',sort:'newest',page_size:'8'})]);
@@ -88,16 +159,31 @@ export async function pageFor(url:URL):Promise<Page>{
   $('#longDescription').removeClass('w-dyn-bind-empty');
   $('#longDescriptionOverlay,.cc_show_more_long_description').remove();
   $('.long-description').attr('style','height:auto;max-height:none');
+  $('#subcategory h5').text((item.child_categories||[]).length>1?'Subcategories':'Subcategory');
   $('#subcategory .w-dyn-list').html((item.child_categories||[]).map(t=>`<a class="tag-list_link" href="${escape(localLink(t.url))}">${escape(t.name)}</a>`).join(''));
   // CMS-only collection placeholders must never masquerade as real content.
   $('.mp-sidebar-features .w-dyn-list').each((_,e)=>{if($(e).find('.w-dyn-bind-empty').length)$(e).remove()});
   const related=cms('#marketing');
-  if(related.length)$('#marketing').replaceWith(related.toString());else $('#marketing').remove();
-  $('[data-w-tab="Comments"]').remove();
+  if(related.length){
+   const browse=related.find('#browseRelated');
+   const destination=related.find('.util-related-category').first().attr('href');
+   if(destination&&destination!=='#')browse.attr('href',localLink(destination));else if(browse.attr('href')==='#')browse.remove();
+   $('#marketing').replaceWith(related.toString());
+  }else $('#marketing').remove();
+  const comments=$('.w-tab-pane[data-w-tab="Comments"]');
+  comments.find('#disqus_thread_2').replaceWith('<source-island></source-island>');
   $('.w-dyn-bind-empty').filter((_,e)=>!$(e).text().trim()&&!$(e).attr('src')).remove();
   const islands:Island[]=[{kind:'detail',item,heroProps:cmsProps(cms,'TemplateDetailHero')}];
-  hydrateCms($,islands);
-  return finish($,url,islands);
+  if(cmsProps(cms,'TemplateSupportRequest'))$('.w-tab-pane[data-w-tab="Support"] a[href="#"]').remove();
+  // Islands follow document order: hero, support, comments, related cards.
+  $('source-island').first().attr('data-hero','true');
+  const ordered:Island[]=[];
+  $('source-island,code-island').each((_,element)=>{
+   const el=$(element);
+   if(el.is('source-island')){ordered.push(el.attr('data-hero')?islands[0]:{kind:'comments',item});return;}
+   const holder=load(el.toString());const widgets:Island[]=[];hydrateCms(holder,widgets);if(widgets.length){ordered.push(...widgets);el.replaceWith('<source-island></source-island>');}
+  });
+  return finish($,url,ordered);
  }
  if(route.kind==='catalog' && (route.page==='designers'||['basic-website-templates','cms-website-templates','ecommerce-website-templates','premium-website-templates','user-accounts-website-templates','feature','languages'].includes(route.page!))){
   const cms=await publishedCms('/'+route.page+(route.slug?'/'+route.slug:''));

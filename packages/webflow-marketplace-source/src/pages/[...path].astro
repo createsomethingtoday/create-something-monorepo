@@ -3,8 +3,17 @@ import {pageFor} from '../lib/pages';
 import Catalog from '../components/Catalog';
 import Cards from '../components/Cards';
 import Detail from '../components/Detail';
+import {LibraryIntake} from '../vendor/library/components/library-intake';
+import Consent from '../components/Consent';
+import Comments from '../components/Comments';
+import Chat from '../components/Chat';
 import CmsWidget from '../components/CmsWidget';
+if(Astro.url.pathname.replace(/\/+$/,'')==='/templates/tags')return Astro.redirect('/templates/categories',301);
 const page=await pageFor(Astro.url);
+// The standalone adapter may use its internal origin behind a reverse proxy.
+// The public Host identifies whether the demo permits this embedding parent.
+const requestHostname=new URL(`http://${Astro.request.headers.get('host')||Astro.url.host}`).hostname;
+const allowEmbed=requestHostname==='webflow.com'||requestHostname.endsWith('.webflow.com');
 Astro.response.status=page.status;
 Astro.response.headers.set('X-Robots-Tag','noindex, nofollow');
 ---
@@ -19,20 +28,41 @@ Astro.response.headers.set('X-Robots-Tag','noindex, nofollow');
  <link rel="stylesheet" href="/export/css/webflow.css"/>
  <link rel="stylesheet" href="/export/css/template-marketplace.webflow.css"/>
  <link rel="stylesheet" href="/source.css"/>
+ {page.islands.some(island=>island.kind==='library') && <link rel="stylesheet" href="/library-intake.css"/>}
 </head>
 <body>
  <a class="source-skip" href="#main">Skip to main content</a>
  {page.parts.map((part,i)=><>
   <Fragment set:html={part}/>
+  {page.islands[i]?.kind==='library' && (import.meta.env.DEV ? <><p class="container" role="status">Development preview: Library validation, uploads and deliveries are disabled.</p><LibraryIntake client:only="react"/></> : <iframe data-source-submission="true" title="Library submission" src="https://webflow-library-submission-form.webflow.io/libraries/submit" style="width:100%;height:1800px;border:0"/>)}
+  {page.islands[i]?.kind==='comments' && <Comments slug={page.islands[i].item!.template_slug} client:load/>}
+  {page.islands[i]?.kind==='chat' && <Chat client:only="react"/>}
   {page.islands[i]?.kind==='cards' && <Cards items={page.islands[i].items!} client:load/>}
   {page.islands[i]?.kind==='catalog' && <Catalog title={page.islands[i].title!} path={Astro.url.pathname} creatorSlug={page.islands[i].creatorSlug} client:only="react"><div slot="fallback"><h1>{page.islands[i].title}</h1><Cards items={page.islands[i].items!}/></div></Catalog>}
   {page.islands[i]?.kind==='widget' && <CmsWidget widget={page.islands[i].widget!} props={page.islands[i].props!} client:load/>}
-  {page.islands[i]?.kind==='detail' && <Detail item={page.islands[i].item!} heroProps={page.islands[i].heroProps} allowEmbed={Astro.url.hostname==='webflow.com'||Astro.url.hostname.endsWith('.webflow.com')} client:load/>}
+  {page.islands[i]?.kind==='detail' && <Detail item={page.islands[i].item!} heroProps={page.islands[i].heroProps} allowEmbed={allowEmbed} devPreview={import.meta.env.DEV&&!allowEmbed} client:load/>}
  </>)}
+ <Consent client:load/>
  <script is:inline src="https://d3e54v103j8qbb.cloudfront.net/js/jquery-3.5.1.min.dc5e7f18c8.js"></script>
  <script is:inline src="/export/js/webflow.js"></script>
  <script>
   document.documentElement.classList.add('w-mod-js');
+  import {initServices} from '../lib/services-client';
+  initServices();
+  import {initSubmission} from '../lib/submission-client';
+  initSubmission();
+  import {initForms} from '../lib/forms-client';
+  initForms();
+  import {initNavigation} from '../lib/navigation-client';
+  initNavigation();
+  document.querySelectorAll<HTMLFormElement>('form[data-source-example]').forEach(form=>form.addEventListener('submit',event=>{event.preventDefault();event.stopImmediatePropagation();let note=form.querySelector('[role=status]');if(!note){note=document.createElement('p');note.setAttribute('role','status');form.append(note)}note.textContent='This is a reference example. No form was sent.'},true));
+  document.querySelectorAll<HTMLElement>('.sb-nav_menu-button').forEach(button=>{
+   const menu=document.querySelector<HTMLElement>('.sb-nav-wrapper .w-nav-menu');
+   if(!menu)return;
+   const sync=()=>button.setAttribute('aria-expanded',String(menu.hasAttribute('data-nav-menu-open')||menu.classList.contains('w--nav-menu-open')));
+   new MutationObserver(sync).observe(menu,{attributes:true,attributeFilter:['class','data-nav-menu-open']});
+   sync();
+  });
   // Exported FAQ interactions are click-only divs; provide native keyboard control.
   document.querySelectorAll<HTMLElement>('.faq-section_title-wrapper,.feature_accordion_button').forEach(el=>{
    el.tabIndex=0;el.setAttribute('role','button');el.setAttribute('aria-expanded','false');

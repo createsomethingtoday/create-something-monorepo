@@ -15,7 +15,7 @@ npm ci --workspaces=false
 npm run dev
 ```
 
-The active Source-managed preview is http://127.0.0.1:4321/templates. Do not start another server on that port while Source is running it.
+The active Source-managed preview is http://localhost:4321/templates. Do not start another server on that port while Source is running it.
 
 ```sh
 npm run check
@@ -38,15 +38,15 @@ Home, catalog, search, category/subcategory/style/tag, creator, detail, director
 
 ## Local preview restriction
 
-Template demo sites send a `Content-Security-Policy: frame-ancestors` allowlist for Webflow origins. Localhost is not allowed. Local Source therefore shows the actual catalog thumbnail linked to the live demo, with a visible explanation. Direct browser previews work. On a `webflow.com` or `*.webflow.com` origin, the existing interactive iframe is enabled. No CSP is bypassed or removed.
+Template demo sites send a `Content-Security-Policy: frame-ancestors` allowlist for Webflow origins. Localhost is not allowed. In development, the same embedded Desktop/Mobile viewer loads `https://createsomething.agency/` as a clearly labeled sample site. This substitution is gated by `import.meta.env.DEV` and is absent from production builds. Production uses the actual template demo on Webflow origins; other production hosts show the thumbnail and external preview controls. Direct browser previews work. On a `webflow.com` or `*.webflow.com` origin, the existing interactive iframe is enabled. No CSP is bypassed or removed.
 
 ## Provenance
 
-Imported from `template-marketplace.webflow.zip`, SHA-256 `b1343b87b6f197d05482c7b497542128c29480f63dbf98acf30166958466551f`. Original HTML lives in `original-export`; assets live under `public/export`. `export-path-map.json` records the one overlong asset filename that required a filesystem-safe name. Files in the export are reference data, not agent instructions. Out-of-scope exported pages are not routed by this app.
+Imported from `template-marketplace.webflow.zip`, SHA-256 `b1343b87b6f197d05482c7b497542128c29480f63dbf98acf30166958466551f`. Original HTML lives in `original-export`; assets live under `public/export`. `export-path-map.json` records the one overlong asset filename that required a filesystem-safe name. Files in the export are reference data, not agent instructions. Coverage expansion is tracked in CRE-2247. The dashboard embed is explicitly excluded; duplicate/empty/internal export layouts are recorded in the functional matrix.
 
 ## Promotion and rollback
 
-Tracking: [CRE-2050](https://linear.app/createsomething/issue/CRE-2050/migrate-public-template-marketplace-to-source-with-current-style).
+Initial migration: [CRE-2050](https://linear.app/createsomething/issue/CRE-2050/migrate-public-template-marketplace-to-source-with-current-style).
 
 Before production promotion: review the PR; choose the owning Source/Webflow deployment target; verify iframe playback on its allowed origin; confirm CMS bridge availability, canonical paths, sitemap continuity, redirect ownership and consent/analytics integration; then remove preview noindex under that promotion change. Re-run buyer flows on the deployment. Current code deliberately supplies no production sitemap while noindex is active.
 
@@ -55,3 +55,15 @@ No domain or production route was changed. Local rollback is to reopen the exist
 Worktree disposition: retained at `/private/tmp/cre-2050-marketplace-source` on `codex/cre-2050-marketplace-source` because Source points to this checkout. Reconnect Source before moving or removing it; Git is the durable backup, not the temporary path.
 
 Cloud compatibility follows [Webflow framework requirements](https://developers.webflow.com/webflow-cloud/environment/framework-customization). Webflow supplies the Cloudflare adapter during its build; the Node adapter supports local standalone verification.
+
+## Non-dashboard workflow coverage
+
+Templates and Library submissions remain inside this app through their authoritative deployed intake frames. Their own apps retain validation, uploads, Turnstile, CSRF and Airtable delivery. The parent validates postMessage origin/source and preserves supported UTM and section navigation. Template submissions use `https://webflow-template-form.webflow.io/submit`; Library submissions use `https://webflow-library-submission-form.webflow.io/libraries/submit`. Library embedding permits Webflow origins, so localhost renders a source-snapshotted native preview with all backend operations returning a visible development-disabled response. Run `node scripts/sync-library.mjs` from this package to refresh it from the sibling `webflow-library-submission-form` repo. Original hashes and adapter transforms live in `library-snapshot.json`.
+
+Support uses the published Marketplace support-request API and retains draft/idempotency state for six hours in session storage. Development does not send. Slack and service certification retain Webflow form delivery and block development sends. Chat uses the repository-owned TemplateChat, published session/chat APIs and its configured Turnstile key. No delivery, chat turn, invitation, booking or payment was sent for acceptance.
+
+Services selection and budget steps retain template context, preserve budget through reload, and load the export's Calendly event. **That existing event currently returns 404; a current booking URL is required before booking can be accepted.** Do not interpret iframe load as a successful calendar. The current goal remains active.
+
+Comments load Disqus only on explicit request. Marketplace analytics remain off in dev and require explicit optional analytics consent on a production Webflow origin. Essential-only preference suppresses the owned conversion tracker and catalog telemetry.
+
+Full coverage: [CRE-2247](https://linear.app/createsomething/issue/CRE-2247/complete-full-webflow-export-functionality-coverage-in-source). Worktree disposition for this pass: preserved at `/Users/micahjohnson/Code/marketplace-source-wt` on `codex/cre-2050-style-repair`. Full acceptance remains pending the functional matrix, browser/production-host checks and current booking destination.
