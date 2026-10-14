@@ -1,5 +1,16 @@
 # Agent Principles & Workflow
 
+## Atlas/Substrate agent context
+
+For Atlas/Substrate orientation, use the shared repository skill at
+`.agents/skills/atlas-substrate/SKILL.md` (also exposed under `.claude/skills`).
+Start with `node packages/database-layer/scripts/atlas-context.mjs search "your question"`.
+Load the cited domain module, then inspect its canonical source. Search is local,
+bounded and read-only; no model evaluation or background refresh runs automatically.
+Context is descriptive evidence, not action permission. See
+`docs/guides/ATLAS_SUBSTRATE_AGENT_CONTEXT.md` for freshness and access boundaries.
+
+
 For Paperclip work, use `.agents/skills/paperclip-instance-operations/SKILL.md` and `docs/guides/PAPERCLIP_INSTANCE_OPERATING_MODEL.md`. The `create-something` instance is the monorepo home; the client-agent pilot is separate. Paperclip issue numbers overlap across instances, so include the instance or URL in handoffs.
 
 This repository uses **Linear** for agent-native coordination.

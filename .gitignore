@@ -183,3 +183,5 @@ packages/webflow-template-search/output/featured-template-feedback/
 
 # Template Popularity sync: receipts, raw Snowflake dumps (creator emails), impact reports
 packages/webflow-automation/marketplace-popularity-sync/runs/
+# Explicit local Atlas context search cache
+.cache/atlas-context/

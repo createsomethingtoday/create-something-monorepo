@@ -434,7 +434,8 @@
     "operator:langfuse-quality": "pnpm --dir packages/calm-operator-ink-bridge post:langfuse-quality",
     "zellij:cockpit": "node scripts/zellij-cockpit.mjs",
     "zellij:cockpit:build": "cargo build --manifest-path packages/zellij-cockpit/Cargo.toml --target wasm32-wasip1 --release --locked",
-    "zellij:cockpit:install": "node scripts/zellij-cockpit-install.mjs"
+    "zellij:cockpit:install": "node scripts/zellij-cockpit-install.mjs",
+    "atlas:context": "node packages/database-layer/scripts/atlas-context.mjs"
   },
   "devDependencies": {
     "@create-something/observability": "workspace:*",
