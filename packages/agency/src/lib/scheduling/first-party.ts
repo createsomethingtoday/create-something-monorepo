@@ -143,11 +143,11 @@ export function schedulerHandoffContext(
 	copy('atlas_session_id', 'atlasSessionId', 100);
 	const trafficClass = declaredTrafficClass(params.get('traffic_class'));
 	if (trafficClass) context.trafficClass = trafficClass;
-	if (params.has('score')) {
+	if (params.get('score')?.trim()) {
 		const score = Number(params.get('score'));
 		if (Number.isInteger(score) && score >= 0 && score <= 100) context.score = score;
 	}
-	if (params.has('agent_messages')) {
+	if (params.get('agent_messages')?.trim()) {
 		const agentMessages = Number(params.get('agent_messages'));
 		if (Number.isInteger(agentMessages) && agentMessages >= 0 && agentMessages <= 200) {
 			context.agentMessages = agentMessages;
