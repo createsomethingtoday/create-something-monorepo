@@ -168,7 +168,12 @@
 		if (schedulerAccess) {
 			window.history.replaceState(window.history.state, '', schedulerAccess.cleanPath);
 		}
-		warmupNotes = window.localStorage.getItem(PUBLIC_ATLAS_STORAGE_KEYS.warmupSummary) ?? undefined;
+		try {
+			warmupNotes = window.localStorage.getItem(PUBLIC_ATLAS_STORAGE_KEYS.warmupSummary) ?? undefined;
+		} catch {
+			// Booking remains available when browser storage is disabled.
+			warmupNotes = undefined;
+		}
 		void tick().then(() => {
 			sendSchedulerContext();
 			getAnalytics()?.track('interaction', 'booking_handoff_viewed', {
@@ -192,7 +197,7 @@
 	propertyName="agency"
 />
 
-<main class="booking-page" data-performance-surface="booking">
+<div class="booking-page" data-performance-surface="booking">
 	{#if intent === 'agent-foundation' || intent === 'technical-review'}
 		<section
 			class="agent-booking"
@@ -243,41 +248,41 @@
 		</section>
 	{:else}
 <section class="booking-entry"><p>{bookingOffer.eyebrow}</p><h1>{bookingOffer.title}</h1><p>{bookingOffer.description}</p><p>Choose a 30- or 60-minute opening. Review the details before confirming your booking.</p><Button href="#first-party-scheduler">Choose a time</Button></section>
-<div class="booking-content">
+<div class="booking-content" class:booking-content--with-handoff={handoffSheet.state === 'ready'}>
 
+				{#if handoffSheet.state === 'ready'}
 				<section
 					class="booking-handoff"
 					data-booking-handoff-state={handoffSheet.state}
 					aria-labelledby="booking-handoff-title"
 				>
 					<div class="booking-handoff__heading">
-						<span>Incoming handoff</span>
-						<h2 id="booking-handoff-title">Details included with your booking</h2>
+						<span>Booking context</span>
+						<h2 id="booking-handoff-title">Review your booking context</h2>
 						<p>{handoffSheet.summary}</p>
 					</div>
 
-					{#if handoffSheet.state === 'ready'}
-						<dl class="booking-handoff__fields">
-							{#each handoffSheet.fields as field}
-								<div>
-									<dt>{field.label}</dt>
-									<dd>{field.value}</dd>
-								</div>
-							{/each}
-							{#if handoffSheet.warmupNotes}
-								<div class="booking-handoff__notes">
-									<dt>Private draft notes</dt>
-									<dd>{handoffSheet.warmupNotes}</dd>
-								</div>
-							{/if}
-						</dl>
-					{/if}
+					<dl class="booking-handoff__fields">
+						{#each handoffSheet.fields as field}
+							<div>
+								<dt>{field.label}</dt>
+								<dd>{field.value}</dd>
+							</div>
+						{/each}
+						{#if handoffSheet.warmupNotes}
+							<div class="booking-handoff__notes">
+								<dt>Private draft notes</dt>
+								<dd>{handoffSheet.warmupNotes}</dd>
+							</div>
+						{/if}
+					</dl>
 
 					<p class="booking-handoff__privacy">
-						Only these fields are shared with the scheduler below. Do not add credentials, client
+						This context is sent to the scheduler below. Choose a time to continue. Do not add credentials, client
 						secrets, or private records.
 					</p>
 				</section>
+				{/if}
 
 				<section
 					id="first-party-scheduler"
@@ -304,14 +309,14 @@
 				</section>
 </div>
 	{/if}
-</main>
+</div>
 
 <style>
   .booking-entry { padding: var(--space-performance-lg) 7vw var(--space-performance-md); color: var(--color-performance-ink); }
   .booking-entry h1 { font: var(--font-performance-medium) clamp(1.8rem, 3vw, 2.75rem)/1.15 var(--font-performance-interface); max-width: 28ch; letter-spacing: var(--tracking-performance-tight); }
   .booking-entry p { max-width: 70ch; line-height: 1.55; }
   .booking-content { display: grid; align-items: start; gap: var(--space-performance-md); padding: 0 7vw var(--space-performance-xl); }
-  @media (min-width: 1000px) { .booking-content { grid-template-columns: minmax(0, .7fr) minmax(0, 1.3fr); } }
+  @media (min-width: 1000px) { .booking-content--with-handoff { grid-template-columns: minmax(0, .7fr) minmax(0, 1.3fr); } }
 
 
 	.booking-page {
