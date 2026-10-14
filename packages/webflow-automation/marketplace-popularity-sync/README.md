@@ -105,12 +105,13 @@ job never runs uncommitted code:
 ```bash
 git worktree add --detach ~/Code/create-something-monorepo-wt-popularity-sync origin/main
 git worktree lock ~/Code/create-something-monorepo-wt-popularity-sync --reason "launchd popularity sync"
+(cd ~/Code/create-something-monorepo-wt-popularity-sync && pnpm bootstrap:worktree)   # pinned wrangler for the beacon query
 cp <wt>/packages/webflow-automation/marketplace-popularity-sync/com.webflow.marketplace-popularity-sync.plist ~/Library/LaunchAgents/
 launchctl bootout gui/$(id -u)/com.webflow.marketplace-popularity-sync 2>/dev/null
 launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.webflow.marketplace-popularity-sync.plist
 
 # pick up a merged change
-git -C <wt> fetch && git -C <wt> checkout --detach origin/main
+git -C <wt> fetch && git -C <wt> checkout --detach origin/main && (cd <wt> && pnpm bootstrap:worktree)
 ```
 
 Rollback to Snowflake inputs: set `SOURCE=snowflake` in the plist env and reload.

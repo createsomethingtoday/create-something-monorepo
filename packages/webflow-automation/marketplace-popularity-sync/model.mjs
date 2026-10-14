@@ -92,9 +92,11 @@ export function querySnowflake({ sql, file }, { timeout = 900_000 } = {}) {
 
 /** Trailing-window sessions per slug from the beacon D1 (Webflow Hosting account). */
 export function queryBeacon() {
+  // The repo's runner uses the workspace's pinned wrangler (needs a bootstrapped
+  // checkout), so the unattended job never fetches an unpinned package.
   const result = spawnSync(
-    'npx',
-    ['wrangler', 'd1', 'execute', 'webflow-template-views', '--remote', '--json', '--command', BEACON_SQL],
+    process.execPath,
+    [join(HERE, '..', '..', '..', 'scripts', 'run-wrangler.mjs'), 'd1', 'execute', 'webflow-template-views', '--remote', '--json', '--command', BEACON_SQL],
     {
       encoding: 'utf8',
       maxBuffer: 64 * 1024 * 1024,

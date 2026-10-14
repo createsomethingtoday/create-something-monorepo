@@ -42,6 +42,12 @@ if ! mkdir "$LOCK" 2>/dev/null; then
     echo "$(date '+%Y-%m-%d %H:%M:%S %Z') run $OWNER holds $LOCK — skipping" >> "$LOG"
     exit 0
   fi
+  # No owner recorded yet: another run may have just created the lock. Only a
+  # lock that stayed ownerless for 10+ minutes is abandoned.
+  if [ -z "$OWNER_START" ] && [ $(( $(date +%s) - $(stat -f %m "$LOCK" 2>/dev/null || echo 0) )) -lt 600 ]; then
+    echo "$(date '+%Y-%m-%d %H:%M:%S %Z') $LOCK is initializing — skipping" >> "$LOG"
+    exit 0
+  fi
   echo "$(date '+%Y-%m-%d %H:%M:%S %Z') reclaiming stale $LOCK (owner ${OWNER:-unknown} is not the recorded run)" >> "$LOG"
   rm -rf "$LOCK"
   mkdir "$LOCK" || exit 1
@@ -79,7 +85,7 @@ trap 'rm -rf "$LOCK"' EXIT
   fi
   export CLOUDFLARE_API_TOKEN
   export CLOUDFLARE_ACCOUNT_ID="${CLOUDFLARE_ACCOUNT_ID:-ac24bc906aca8307bdba8c2a85ff08c9}"
-  if [ "$MODEL" != "v7" ] && [ -z "$CLOUDFLARE_API_TOKEN" ]; then
+  if { [ "$MODEL" = "v8-beacon" ] || [ "$MODEL" = "v8" ]; } && [ -z "$CLOUDFLARE_API_TOKEN" ]; then
     echo "CLOUDFLARE_API_TOKEN unavailable — beacon source unreachable, aborting (no writes attempted)."
     exit 1
   fi
