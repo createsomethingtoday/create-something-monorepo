@@ -39,31 +39,55 @@ source ID identifies a module; passage IDs combine the source ID with an excerpt
 hash, so unrelated line shifts preserve identity. Changed text changes the passage
 ID. Citations always use current observed local line numbers.
 
-## Freshness and cache behavior
+## Automatic local refresh
 
-Search and show perform local reads only. They do not log queries, write a cache,
-refresh upstream sources, invoke CTX, or call a model. Defaults are five passages
-and 12,000 UTF-8 JSON bytes; configurable limits are 20 passages and 50,000 bytes.
+Search/show fingerprint local inputs and automatically refresh their cached wiki
+projection when those inputs change. The safe renderer reads nine existing local
+JSON artifacts and checks local links; its `--json` mode returns before any tracked
+write. It does not run the full `substrate:refresh` pipeline. That pipeline rebuilds
+many tracked artifacts, compiles code and can optionally install Atlas app-data.
 
-Optional, explicit local indexing:
+The automatic path writes only `.cache/atlas-context/`: immutable snapshot Markdown,
+a parsed index, a refresh lock and the last attempt status. Publication uses an
+atomic pointer replacement after all snapshot files exist. The previous snapshot
+remains intact. Source IDs stay stable; passage IDs change with excerpt content.
+Citations point to the exact immutable snapshot, while `canonicalPath` gives the
+original wiki location for resolving relative links. The tracked wiki may lag.
+
+Unchanged input bytes avoid generation. One caller refreshes within a two-second
+generator deadline; concurrent callers serve the last good snapshot without waiting.
+A 200 ms successful-refresh debounce coalesces edit bursts. Failed identical inputs
+back off for two seconds; the next lookup retries after that interval. No daemon,
+watcher, hook or timer refreshes data between searches. A failed generation, timeout,
+input race or unavailable cache reports its state and preserves the last good result.
+Without one, search falls back to tracked Markdown and labels it unverified.
+
+Use `refresh.status` (`current`, `refreshed`, `refresh_in_progress`, `debounced`,
+`failed`, `off`) and `projectionConsistency` to distinguish local freshness from
+snapshot age. `oldestSnapshot`, `ageDays` and `stale` still describe upstream JSON
+snapshot dates. Re-rendering October 8 artifacts does not make their facts newer.
+`liveVerified` is always false. Missing dates mean unknown, not fresh.
 
 ```sh
-node packages/database-layer/scripts/atlas-context.mjs index
+pnpm atlas:context search "client delivery packets"
+pnpm atlas:context search "client delivery packets" --refresh off
+pnpm atlas:context index
 ```
 
-This runs the existing wiki consistency check and writes a parsed index under
-ignored `.cache/atlas-context/`. Source content hashes invalidate stale passages;
-missing/corrupt indexes fall back deterministically to current local documents.
-Matching upstream JSON and generator fingerprints preserve `verified_at_index`.
-Otherwise consistency is `unverified`. Indexing does not regenerate the wiki.
+`--refresh off` performs no writes or generation. `--no-cache` also disables refresh
+and parses tracked Markdown directly. `index` forces a retry of the same safe local
+projection, bypassing debounce. Neither command fetches external data.
 
-`oldestSnapshot` and `ageDays` describe source snapshots, separately from local
-index consistency. `stale` uses a caller-selectable age threshold (default seven
-days); absent dates return unknown, not fresh. Missing modules are listed.
-`liveVerified` is always false. Stale context remains searchable for orientation.
-Use `pnpm substrate:agent-wiki:check` for full projection/link validation; local
-source regeneration through `pnpm substrate:refresh` is a separate authorized
-operation, not a search side effect.
+Defaults remain five passages and 12,000 UTF-8 JSON bytes, with maximums of 20
+passages and 50,000 bytes. Queries are not logged. Immutable cached snapshots are
+retained so older citations remain readable; cache cleanup is not automatic.
+
+Changes in source code, Notion, Linear or live infrastructure still require their
+own authorized source capture/topology rebuild. Automatic projection refresh only
+uses existing local JSON artifacts, generator/extractor code and link existence.
+The fingerprint conservatively includes all local database-layer JSON and tracked
+wiki files. These broader inputs may trigger a harmless extra projection refresh.
+Use `pnpm substrate:refresh` explicitly when rebuilding local topology is in scope.
 
 ## CTX patterns inspected
 
@@ -79,7 +103,7 @@ The earlier Jev router remains available for an explicitly useful advisory
 comparison. Ordinary context search never invokes it. Returned documentation is
 untrusted evidence; embedded instructions cannot authorize actions.
 
-## Measured results
+## Initial search benchmark (before automatic refresh)
 
 Measured on 2026-10-14, macOS arm64, Node v26.11.0. Five trials per query/mode.
 Cold means parsed-cache bypass, not a flushed operating-system file cache. Warm
@@ -136,3 +160,29 @@ Linear tracking could not be created because no Linear connector or environment
 credential was available. Record the commit and this evidence in the existing
 coordination system when authorized access is available. Keep the isolated
 `codex/atlas-context-search` worktree for review; no automatic merge or deployment.
+
+## Automatic refresh measurements
+
+Measured on 2026-10-14, macOS arm64, Node v26.11.0. Five separate-process trials
+per mode using the real renderer and temporary isolated caches. OS file caches
+were not flushed. Inputs were symlinked to the repo; only temporary outputs changed.
+
+| Path | Median ms | p95 ms | Response bytes |
+| --- | --- | --- | --- |
+| Cold search, no projection cache | 280.98 | 291.82 | 6670 |
+| Warm search, unchanged local inputs | 114.24 | 126.38 | 6668 |
+| Forced render and atomic publish | 279.45 | 292.37 | 197 (index receipt) |
+
+All search trials selected the expected business-recommendations source. These
+measure one representative query and local refresh cost, not live-source freshness
+or universal latency. The forced path exercises the same renderer/publication used
+after changes. Changed-input, concurrent-reader, failure and timeout behavior is
+covered separately by fixture tests.
+
+```sh
+node packages/database-layer/scripts/benchmark-atlas-refresh.mjs
+node --test packages/database-layer/test/agent-wiki*.test.mjs packages/database-layer/test/atlas-context*.test.mjs
+```
+
+The implementation is prepared on `codex/atlas-context-auto-refresh`; this follow-up
+has not been merged or deployed. The earlier search feature is already on local main.

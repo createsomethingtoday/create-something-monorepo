@@ -1,10 +1,11 @@
 #!/usr/bin/env node
-// Local orientation only. Search/show never refresh sources, write caches, or call a model.
+// Local orientation only. Automatic refresh writes ignored projections, never sources.
 import fs from 'node:fs';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
+import { refreshProjection } from './atlas-context-refresh.mjs';
 import { wikiPassages } from './agent-wiki-passages.mjs';
 
 export const repoRoot = path.resolve(fileURLToPath(new URL('../../..', import.meta.url)));
@@ -30,7 +31,7 @@ function sources(root) {
 function buildIndex(inputs) {
   return inputs.flatMap(source => wikiPassages(source.text, source.sourceId).map(passage => ({
     id: `${source.sourceId}:${hash(passage.excerpt).slice(0, 16)}`,
-    sourceId: source.sourceId, path: source.path, heading: passage.heading,
+    sourceId: source.sourceId, path: source.path, ...(source.canonicalPath ? { canonicalPath: source.canonicalPath } : {}), heading: passage.heading,
     citation: `${source.path}:${passage.line}`, sourceLines: passage.sourceLines,
     contentHash: hash(passage.excerpt), fileHash: source.contentHash,
     excerpt: passage.excerpt,
@@ -52,8 +53,9 @@ function evidenceHash(root) {
   return digest.digest('hex');
 }
 
-function load(root, now, maxAgeDays, ignoreCache) {
-  const inputs = sources(root);
+function load(root, now, maxAgeDays, ignoreCache, refresh = 'auto') {
+  const automatic = ignoreCache ? { snapshot: null, refresh: { status: 'off', serving: 'tracked_wiki' }, current: false } : refreshProjection(root, buildIndex, { enabled: refresh === 'auto' });
+  const inputs = automatic.snapshot?.sources ?? sources(root);
   const signature = hash(JSON.stringify(inputs.map(s => [s.path, s.contentHash])));
   let cached;
   if (!ignoreCache) { try { cached = JSON.parse(fs.readFileSync(cacheFile(root), 'utf8')); } catch {} }
@@ -65,24 +67,27 @@ function load(root, now, maxAgeDays, ignoreCache) {
   const oldest = validDates.length ? Math.min(...validDates) : null;
   const ageDays = oldest === null ? null : Math.max(0, (now - oldest) / 86400000);
   return {
-    passages: hit ? cached.passages : buildIndex(inputs), signature,
-    cache: ignoreCache ? 'bypassed' : hit ? 'hit' : cached ? 'invalid' : 'missing',
+    passages: automatic.snapshot?.passages ?? (hit ? cached.passages : buildIndex(inputs)), signature,
+    refresh: automatic.refresh,
+    cache: automatic.snapshot ? 'projection' : ignoreCache ? 'bypassed' : hit ? 'hit' : cached ? 'invalid' : 'missing',
     freshness: {
       oldestSnapshot: oldest === null ? null : new Date(oldest).toISOString(),
       ageDays: ageDays === null ? null : Math.round(ageDays * 100) / 100,
       stale: ageDays === null ? null : ageDays > maxAgeDays, maxAgeDays,
-      projectionConsistency: hit && cached.checked && cached.evidenceHash === evidenceHash(root) ? 'verified_at_index' : 'unverified',
+      projectionConsistency: automatic.snapshot ? (automatic.refresh.status === 'off' ? 'unchecked_local_projection' : automatic.current ? 'current_local_projection' : 'stale_local_projection') : hit && cached.checked && cached.evidenceHash === evidenceHash(root) ? 'verified_at_index' : 'unverified',
+      projectionGeneratedAt: automatic.snapshot?.generatedAt ?? null,
       liveVerified: false,
       missingModules: modules.filter(name => !inputs.some(s => s.sourceId === `atlas-context:${name}`)),
     },
   };
 }
 
-export function searchContext(query, { root = repoRoot, limit = 5, maxBytes = 12000, maxAgeDays = 7, now = Date.now(), ignoreCache = false, id = null, domain = null } = {}) {
+export function searchContext(query, { root = repoRoot, limit = 5, maxBytes = 12000, maxAgeDays = 7, now = Date.now(), ignoreCache = false, id = null, domain = null, refresh = 'auto' } = {}) {
   if (!id && (typeof query !== 'string' || !query.trim() || Buffer.byteLength(query) > 2000)) throw new Error('Query must contain 1–2000 UTF-8 bytes');
   if (!Number.isInteger(limit) || limit < 1 || limit > 20 || !Number.isInteger(maxBytes) || maxBytes < 2000 || maxBytes > 50000 || !Number.isFinite(maxAgeDays) || maxAgeDays < 0) throw new Error('Use limit 1–20, max-bytes 2000–50000, and nonnegative max-age-days');
   if (domain && !modules.includes(domain)) throw new Error(`Unknown domain; use ${modules.join(', ')}`);
-  const loaded = load(root, now, maxAgeDays, ignoreCache);
+  if (!['auto', 'off'].includes(refresh)) throw new Error('Use refresh auto or off');
+  const loaded = load(root, now, maxAgeDays, ignoreCache, refresh);
   const all = loaded.passages;
   const terms = [...new Set(tokens(query ?? ''))];
   const average = all.reduce((sum, p) => sum + p.terms.length, 0) / (all.length || 1);
@@ -100,7 +105,7 @@ export function searchContext(query, { root = repoRoot, limit = 5, maxBytes = 12
   const result = {
     schema, authority: 'orientation_only', requiresSourceInspection: true,
     status: ranked.length ? 'matches' : 'no_match', cache: loaded.cache,
-    freshness: loaded.freshness,
+    freshness: loaded.freshness, refresh: loaded.refresh,
     fallback: 'Read packages/database-layer/docs/agent-wiki/README.md and inspect owning sources; no remote evaluation is automatic.',
     truncated: false, results: [],
   };
@@ -113,7 +118,12 @@ export function searchContext(query, { root = repoRoot, limit = 5, maxBytes = 12
   return result;
 }
 
-export function indexContext({ root = repoRoot } = {}) {
+export function indexContext({ root = repoRoot, refresh = 'auto' } = {}) {
+  if (refresh === 'auto') {
+    const result = refreshProjection(root, buildIndex, { force: true });
+    if (!result.current) throw new Error(`Local projection refresh ${result.refresh.status}: ${result.refresh.reason ?? 'try again later'}`);
+    return { schema, indexedPassages: result.snapshot.passages.length, cachePath: '.cache/atlas-context/projection.json', refresh: result.refresh, liveVerified: false };
+  }
   const check = spawnSync(process.execPath, ['packages/database-layer/scripts/generate-agent-wiki.mjs', '--check'], { cwd: root, encoding: 'utf8' });
   if (check.status !== 0) throw new Error('Projection check failed; inspect agent-wiki:check before indexing. No source refresh was performed.');
   const loaded = load(root, Date.now(), 7, true);
@@ -130,7 +140,7 @@ function main(args) {
   args = args.filter(a => a !== '--');
   const command = args.shift();
   if (!command || command === '--help') {
-    console.log('atlas-context search "question" [--domain module] [--limit 5] [--max-bytes 12000] [--max-age-days 7] [--no-cache]\natlas-context show <source-or-passage-id>\natlas-context index\nJSON output. Search/show are local reads; index explicitly writes only the ignored local cache. No source refresh, model calls, credentials, or action authority.');
+    console.log('atlas-context search "question" [--domain module] [--limit 5] [--max-bytes 12000] [--max-age-days 7] [--refresh auto|off] [--no-cache]\natlas-context show <source-or-passage-id>\natlas-context index\nJSON output. Search/show automatically refresh only ignored local projections on changed inputs (bounded to 2 seconds); --refresh off disables writes. Index forces a local retry. No external refresh, model calls, credentials, or action authority.');
     return;
   }
   if (command === 'index' && !args.length) { console.log(JSON.stringify(indexContext())); return; }
@@ -138,11 +148,11 @@ function main(args) {
   const value = args.shift();
   if (!value || value.startsWith('--')) throw new Error('Provide a query or ID');
   const options = command === 'show' ? { id: value } : {};
-  const flags = { '--limit': 'limit', '--max-bytes': 'maxBytes', '--max-age-days': 'maxAgeDays', '--domain': 'domain' };
+  const flags = { '--limit': 'limit', '--max-bytes': 'maxBytes', '--max-age-days': 'maxAgeDays', '--domain': 'domain', '--refresh': 'refresh' };
   while (args.length) {
     const flag = args.shift();
     if (flag === '--no-cache') options.ignoreCache = true;
-    else if (flags[flag] && args.length) options[flags[flag]] = flag === '--domain' ? args.shift() : Number(args.shift());
+    else if (flags[flag] && args.length) options[flags[flag]] = ['--domain', '--refresh'].includes(flag) ? args.shift() : Number(args.shift());
     else throw new Error(`Unknown or incomplete flag: ${flag}`);
   }
   console.log(JSON.stringify(searchContext(command === 'search' ? value : '', options)));

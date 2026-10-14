@@ -15,10 +15,11 @@ service are needed for this path. Run commands from the repository root.
 3. For a focused follow-up, use `show <source-or-passage-id>` or search with
    `--domain management-surface` (other modules appear below). Default output is
    JSON, capped at 12,000 UTF-8 bytes and five passages. Read `truncated`.
-4. Read `freshness`: snapshot age, missing modules, projection consistency and
+4. Read `freshness`: snapshot age, missing modules, projection consistency, refresh status and
    `liveVerified`. Unknown or stale evidence can orient you, but cannot establish
-   current production state. `verified_at_index` only means the locally checked
-   projection and its source bytes still match; it is not live verification.
+   current production state. `current_local_projection` means the cached wiki matches current local inputs;
+   it is not live verification. Failed or concurrent refreshes serve a marked
+   last-good snapshot when available.
 5. No match or unsuitable results: read the wiki index, then use ordinary `rg`
    and inspect owning files. Do not invent source IDs or auto-call remote ranking.
 
@@ -32,13 +33,21 @@ service are needed for this path. Run commands from the repository root.
 | Where to read next, optional historical lookup | agent-routes |
 | Snapshot freshness and source index | README |
 
-Search/show never write caches or refresh sources. Optional `index` explicitly
-checks the generated wiki and writes only `.cache/atlas-context/index.json`.
-A missing or stale cache falls back to parsing current local documents. Indexing
-is not a source refresh. Use `pnpm substrate:agent-wiki:check` for a full projection
-check; consider `pnpm substrate:refresh` only when local regeneration is in scope.
-There is no background refresh or automatic external evaluation.
+Search/show automatically refresh the ignored local wiki/index cache when local
+input content changes. The generator is bounded to two seconds, with single-flight
+publication, a short edit debounce and failure backoff. No background daemon runs.
+Use `--refresh off` for strictly read-only lookup; `index` forces a local retry.
+An unavailable cache falls back to tracked wiki files with unverified freshness.
 
+Automatic refresh only renders the nine existing local JSON artifacts into a
+cached wiki. It does not rebuild topology from changed code or fetch live sources.
+`pnpm substrate:refresh` remains a separate explicit local topology rebuild.
+No external sync, model evaluation or persistent access configuration is automatic.
+
+Citations point to immutable cached Markdown when serving a projection. Use the
+reported `canonicalPath` as the base for relative links in those excerpts, not as
+a claim that the tracked Markdown already contains the same text. Source IDs remain
+stable across cache generations.
 For rationale from past work, CTX is a separate route: use its installed skill and
 `ctx search "question" --refresh off --verbose`. History is not current authority.
 The optional Jev passage router remains available for explicitly warranted ranking;

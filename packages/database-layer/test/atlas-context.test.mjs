@@ -3,7 +3,8 @@ import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
-import { searchContext } from '../scripts/atlas-context.mjs';
+import { searchContext as search } from '../scripts/atlas-context.mjs';
+const searchContext = (query, options = {}) => search(query, { refresh: 'off', ...options });
 
 test('local search returns bounded cited context without granting authority', () => {
   const root = mkdtempSync(path.join(tmpdir(), 'atlas-context-'));
@@ -44,7 +45,7 @@ test('explicit cache detects changed documents, corrupt cache, and changed upstr
     const initial = searchContext('record truth', { root: f.root, now: Date.parse('2026-01-20') });
     assert.equal(initial.freshness.stale, true);
     assert.equal(existsSync(f.cache), false, 'search must never persist an index');
-    indexContext({ root: f.root });
+    indexContext({ root: f.root, refresh: 'off' });
     const warm = searchContext('record truth', { root: f.root });
     assert.equal(warm.cache, 'hit');
     assert.equal(warm.freshness.projectionConsistency, 'verified_at_index');
@@ -56,7 +57,7 @@ test('explicit cache detects changed documents, corrupt cache, and changed upstr
     assert.equal(changed.results[0].id, id, 'line shifts preserve passage identity');
     assert.notEqual(changed.results[0].citation, warm.results[0].citation);
     assert.equal(changed.freshness.projectionConsistency, 'unverified');
-    indexContext({ root: f.root });
+    indexContext({ root: f.root, refresh: 'off' });
     writeFileSync(path.join(f.base, 'data/source.json'), '{"revision":2}');
     assert.equal(searchContext('record truth', { root: f.root }).freshness.projectionConsistency, 'unverified');
     writeFileSync(f.cache, '{broken');

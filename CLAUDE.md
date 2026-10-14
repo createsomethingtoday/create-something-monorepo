@@ -5,8 +5,8 @@
 For Atlas/Substrate orientation, use the shared repository skill at
 `.agents/skills/atlas-substrate/SKILL.md` (also exposed under `.claude/skills`).
 Start with `node packages/database-layer/scripts/atlas-context.mjs search "your question"`.
-Load the cited domain module, then inspect its canonical source. Search is local,
-bounded and read-only; no model evaluation or background refresh runs automatically.
+Load the cited domain module, then inspect its canonical source. Search is local and bounded. Changed local artifacts automatically refresh only
+the ignored wiki/index cache; no model evaluation or external refresh runs.
 Context is descriptive evidence, not action permission. See
 `docs/guides/ATLAS_SUBSTRATE_AGENT_CONTEXT.md` for freshness and access boundaries.
 

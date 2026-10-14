@@ -650,6 +650,13 @@ if (maxAgeDays !== null && ageDays > maxAgeDays) {
   process.exit(1);
 }
 
+// Render-only local projection for automatic context refresh. Validate the same
+// canonical links and source dates, then return before any filesystem mutation.
+if (process.argv.includes('--json')) {
+  console.log(JSON.stringify({ files: Object.fromEntries(files), snapshotDates }));
+  process.exit(0);
+}
+
 function existingMarkdownFiles() {
   if (!fs.existsSync(outputDir)) return [];
   return fs

@@ -53,5 +53,5 @@ for (const [query, expected] of cases) {
 }
 console.log(JSON.stringify({node:process.version,platform:process.platform,arch:process.arch,trialsPerQueryMode:5,
   coldDefinition:'Bypass parsed index; OS file cache is not flushed. CLI timings include Node startup.',
-  warmDefinition:'Persisted checked index; source bytes and upstream evidence are fingerprinted on each read.',
+  warmDefinition:'Automatic local projection cache; source and dependency content are fingerprinted on each read.',
   indexMs:+indexMs.toFixed(2),indexed,results},null,2));
