@@ -33,7 +33,8 @@ const SELLER_FIELDS = {
   REVENUE_30D: 'fldxVd61LWea9SlEF',
   SNAPSHOT_AT: 'fldLJlqsFaukWP4Jq',
   WINDOW_SELLERS: 'fldkJiQBUdfWUMP7Q',
-  WINDOW_SALES: 'fld31oTda0kji5IDi'
+  WINDOW_SALES: 'fld31oTda0kji5IDi',
+  WINDOW_REVENUE: 'fldzB6kawJH32fDmA'
 };
 const log = (...parts) => console.log(new Date().toISOString(), ...parts);
 const fail = (message) => {
@@ -169,7 +170,9 @@ async function readSellersFromAirtable(windowEnd) {
   const rows = records.filter((r) => r.fields[F.SNAPSHOT_AT] === want);
   if (!rows.length)
     fail(`Fivetran sellers activation has no rows for window ${want} (newest: ${stamps.at(-1) ?? 'none'})`);
-  const totals = new Set(rows.map((r) => `${r.fields[F.WINDOW_SELLERS]}/${r.fields[F.WINDOW_SALES]}`));
+  const totals = new Set(
+    rows.map((r) => `${r.fields[F.WINDOW_SELLERS]}/${r.fields[F.WINDOW_SALES]}/${r.fields[F.WINDOW_REVENUE]}`)
+  );
   if (totals.size !== 1) fail(`Fivetran sellers rows disagree on window totals for ${want}`);
   const sellers = rows.map((r) => ({
     templateId: r.fields[F.TEMPLATE_ID],
@@ -180,10 +183,18 @@ async function readSellersFromAirtable(windowEnd) {
   }));
   const expectedSellers = parseMetric(rows[0].fields[F.WINDOW_SELLERS]);
   const expectedSales = parseMetric(rows[0].fields[F.WINDOW_SALES]);
+  const expectedRevenue = parseMetric(rows[0].fields[F.WINDOW_REVENUE]);
   const sales = sellers.reduce((sum, row) => sum + row.sales, 0);
-  if (sellers.length !== expectedSellers || sales !== expectedSales)
+  // Revenue is compared in cents so a rerun that changed only revenue cannot
+  // pass with a mix of old and new rows.
+  const cents = Math.round(sellers.reduce((sum, row) => sum + row.revenue, 0) * 100);
+  if (
+    sellers.length !== expectedSellers ||
+    sales !== expectedSales ||
+    cents !== Math.round(expectedRevenue * 100)
+  )
     fail(
-      `Fivetran sellers rows are incomplete for ${want}: ${sellers.length}/${expectedSellers} sellers, ${sales}/${expectedSales} sales`
+      `Fivetran sellers rows are incomplete for ${want}: ${sellers.length}/${expectedSellers} sellers, ${sales}/${expectedSales} sales, ${cents / 100}/${expectedRevenue} revenue`
     );
   log(`Read ${sellers.length} sellers from Airtable (window ending ${want}).`);
   return sellers;

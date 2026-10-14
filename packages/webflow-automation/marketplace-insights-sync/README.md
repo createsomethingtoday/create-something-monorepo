@@ -42,8 +42,9 @@ only the latest window; rows for templates that stopped selling keep an older
 `SNAPSHOT_AT` and are ignored. Rebuilding an older week needs `--source
 snowflake`: with `--source airtable` it fails the completeness check below.
 The reader uses only rows whose `SNAPSHOT_AT` equals the requested window end,
-and it fails unless their count and summed sales equal `WINDOW_SELLERS` and
-`WINDOW_SALES`, which the query writes on every row. A run that starts before
+and it fails unless their count, summed sales and summed revenue equal
+`WINDOW_SELLERS`, `WINDOW_SALES` and `WINDOW_REVENUE`, which the query writes on
+every row. A run that starts before
 the activation finishes therefore fails instead of publishing a partial week.
 Schedule the sync at least 30 minutes after 16:05 UTC.
 

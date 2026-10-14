@@ -267,6 +267,7 @@ const sellerRow = (overrides = {}) => ({
     fldLJlqsFaukWP4Jq: '2026-09-21T16:00:00.000Z',
     fldkJiQBUdfWUMP7Q: 1,
     fld31oTda0kji5IDi: 3,
+    fldzB6kawJH32fDmA: 150,
     ...overrides
   }
 });
@@ -306,4 +307,10 @@ test('unknown source is rejected before any provider access', () => {
   const result = run(fixture(), ['--source', 'warehouse']);
   assert.equal(result.status, 1);
   assert.equal(result.calls.length, 0);
+});
+test('airtable source fails when revenue does not match the window total', () => {
+  const result = run(airtableFixture([sellerRow({ fldxVd61LWea9SlEF: 149.99 })]), ['--execute', '--source', 'airtable']);
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /incomplete/);
+  assert.equal(result.writes.length, 0);
 });
