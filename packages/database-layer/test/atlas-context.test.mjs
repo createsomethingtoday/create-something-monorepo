@@ -122,4 +122,5 @@ test('Codex and Claude entry instructions resolve to one shared repository skill
   assert.equal(readFileSync(path.join(repoRoot, '.claude/skills/atlas-substrate/SKILL.md'), 'utf8'), readFileSync(path.join(repoRoot, skill), 'utf8'));
   const scripts = JSON.parse(readFileSync(path.join(repoRoot, 'package.json'), 'utf8')).scripts;
   assert.equal(scripts['atlas:context'], 'node packages/database-layer/scripts/atlas-context.mjs');
+  assert.match(readFileSync(path.join(repoRoot, 'AGENTS.md'), 'utf8'), /not before every search/);
 });
