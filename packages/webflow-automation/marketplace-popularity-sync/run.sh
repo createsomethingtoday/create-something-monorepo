@@ -63,9 +63,11 @@ trap 'rm -rf "$LOCK"' EXIT
   echo ""
   echo "===== run $(date '+%Y-%m-%d %H:%M:%S %Z') model=$MODEL source=$SOURCE ====="
 
-  # Skip the retry slot when today already succeeded.
-  if [ -f "runs/receipt-$(date +%Y-%m-%d).json" ]; then
-    echo "receipt for today exists — nothing to do."
+  # Skip the retry slot when today already succeeded with this model and source
+  # (a same-day rollback or model change still runs).
+  TODAY_RECEIPT="runs/receipt-$(date -u +%Y-%m-%d).json"
+  if [ -f "$TODAY_RECEIPT" ] && [ "$("$NODE" -e 'const r=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));process.stdout.write(r.model+"/"+(r.source??"snowflake"))' "$TODAY_RECEIPT" 2>/dev/null)" = "$MODEL/$SOURCE" ]; then
+    echo "receipt for today ($MODEL/$SOURCE) exists — nothing to do."
     exit 0
   fi
 

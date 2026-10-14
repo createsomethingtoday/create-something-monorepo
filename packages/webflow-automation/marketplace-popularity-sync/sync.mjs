@@ -172,7 +172,7 @@ async function mainFromAirtable() {
   // Records without inputs are invisible to the stale check above (e.g. while
   // the activation is first populating, or after its mappings are recreated).
   // Compare against the last successful run's population instead.
-  const previous = lastExecuteReceipt();
+  const previous = lastExecuteReceipt('airtable');
   if (previous?.assetsWithInputs && withInputs.length < previous.assetsWithInputs * (1 - MAX_STALE_FRACTION)) {
     fail(`${withInputs.length} assets carry current inputs vs ${previous.assetsWithInputs} on the last run — partial population, refusing to write.`);
   }
@@ -230,8 +230,8 @@ async function mainFromAirtable() {
   await writeAndReceipt(updates, receipt);
 }
 
-/** Newest executed airtable-source receipt in runs/, or null. */
-function lastExecuteReceipt() {
+/** Newest executed receipt for this source in runs/, or null. */
+function lastExecuteReceipt(source) {
   let files = [];
   try {
     files = readdirSync(RUNS_DIR).filter((f) => /^receipt-\d{4}-\d{2}-\d{2}\.json$/.test(f)).sort();
@@ -241,7 +241,7 @@ function lastExecuteReceipt() {
   for (const file of files.reverse()) {
     try {
       const receipt = JSON.parse(readFileSync(join(RUNS_DIR, file), 'utf8'));
-      if (receipt.source === 'airtable' && receipt.mode === 'execute') return receipt;
+      if ((receipt.source ?? 'snowflake') === source && receipt.mode === 'execute') return receipt;
     } catch {}
   }
   return null;
@@ -281,6 +281,13 @@ async function main() {
   log('Running Template Popularity V7 in Snowflake...');
   const rows = querySnowflake({ file: join(HERE, 'v7.sql') });
   log(`V7 returned ${rows.length} templates.`);
+  // A successful but partial result (upstream incident) would rank against a
+  // reduced population; V7 reproduction cannot see that.
+  const previous = lastExecuteReceipt('snowflake');
+  if (rows.length < 5000) fail(`V7 returned only ${rows.length} templates — partial population, refusing to write.`);
+  if (previous?.v7Rows && rows.length < previous.v7Rows * (1 - MAX_STALE_FRACTION)) {
+    fail(`V7 returned ${rows.length} templates vs ${previous.v7Rows} on the last run — partial population, refusing to write.`);
+  }
   mkdirSync(RUNS_DIR, { recursive: true });
   writeFileSync(join(RUNS_DIR, 'v7-rows.json'), JSON.stringify(rows));
 
@@ -367,6 +374,7 @@ async function main() {
   const receipt = {
     mode: EXECUTE ? 'execute' : 'dry-run',
     model: MODEL,
+    source: 'snowflake',
     ranAt: new Date().toISOString(),
     v7Rows: rows.length,
     v7ReproductionCheck: repro,
