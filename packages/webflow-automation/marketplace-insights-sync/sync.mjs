@@ -188,8 +188,8 @@ async function main() {
     if (!name || !groups.length) continue;
     if (groups.length > 1) taxonomyNotes.push({ kind: 'dual-parent', id: r.id, name, groups, used: groups[0] });
     if (taxonomy.has(name)) {
-      if (taxonomy.get(name) !== groups[0])
-        taxonomyNotes.push({ kind: 'duplicate-name', id: r.id, name, kept: taxonomy.get(name), dropped: groups[0] });
+      // Every later same-name row is a source-data task, even when its group agrees.
+      taxonomyNotes.push({ kind: 'duplicate-name', id: r.id, name, kept: taxonomy.get(name), dropped: groups[0] });
       continue;
     }
     taxonomy.set(name, groups[0]);
