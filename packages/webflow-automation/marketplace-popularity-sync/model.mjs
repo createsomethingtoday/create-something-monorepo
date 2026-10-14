@@ -24,6 +24,8 @@ import { fileURLToPath } from 'node:url';
 const HERE = dirname(fileURLToPath(import.meta.url));
 
 export const WEIGHTS = { conversion: 0.1, sites: 0.25, views: 0.1, freshness: 0.05 };
+// The beacon is keyed by UTC day: this covers the 28 complete prior days plus
+// today's partial bucket. Production scores since the 2026-10-02 cutover use it.
 export const BEACON_WINDOW_DAYS = 28;
 
 export const VARIANTS = {

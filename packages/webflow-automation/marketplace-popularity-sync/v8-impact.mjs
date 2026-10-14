@@ -39,6 +39,8 @@ function fail(message) {
 
 // Ties follow the production Popular sort (webflow-template-search search.ts):
 // 📋 Cumulative Purchases (V7 basis for every variant), viewers, newest, ID.
+// Approximation: production breaks the last ties on Airtable published_date and
+// record ID; this uses Snowflake created date and template ID. Advisory only.
 function rankBy(rows, scoreKey) {
   const sorted = [...rows].sort(
     (a, b) =>
