@@ -49,8 +49,11 @@ if ! mkdir "$LOCK" 2>/dev/null; then
     exit 0
   fi
   echo "$(date '+%Y-%m-%d %H:%M:%S %Z') reclaiming stale $LOCK (owner ${OWNER:-unknown} is not the recorded run)" >> "$LOG"
-  rm -rf "$LOCK"
-  mkdir "$LOCK" || exit 1
+  # rename is atomic: only one concurrent reclaimer moves the stale lock away,
+  # and only one can then create the replacement.
+  mv "$LOCK" "$LOCK.stale.$$" 2>/dev/null || { echo "$(date '+%Y-%m-%d %H:%M:%S %Z') lost stale-lock reclaim race — skipping" >> "$LOG"; exit 0; }
+  rm -rf "$LOCK.stale.$$"
+  mkdir "$LOCK" 2>/dev/null || { echo "$(date '+%Y-%m-%d %H:%M:%S %Z') another run took $LOCK — skipping" >> "$LOG"; exit 0; }
 fi
 echo $$ > "$LOCK/pid"
 started $$ > "$LOCK/started"

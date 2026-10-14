@@ -31,7 +31,7 @@
  * runs/v7-rows.json for v8-impact.mjs.
  */
 
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
@@ -169,6 +169,13 @@ async function mainFromAirtable() {
   if (staleInputs > candidates.length * MAX_STALE_FRACTION) {
     fail(`${staleInputs}/${candidates.length} assets missed the latest Fivetran write (${newestSync}) — partial activation, refusing to write.`);
   }
+  // Records without inputs are invisible to the stale check above (e.g. while
+  // the activation is first populating, or after its mappings are recreated).
+  // Compare against the last successful run's population instead.
+  const previous = lastExecuteReceipt();
+  if (previous?.assetsWithInputs && withInputs.length < previous.assetsWithInputs * (1 - MAX_STALE_FRACTION)) {
+    fail(`${withInputs.length} assets carry current inputs vs ${previous.assetsWithInputs} on the last run — partial population, refusing to write.`);
+  }
   if (withInputs.length < 5000) fail(`Only ${withInputs.length} assets carry 🖌️Score ex-views — Fivetran V8 inputs missing, refusing to write.`);
   const ageHours = newestSync ? (Date.now() - Date.parse(newestSync)) / 3_600_000 : Infinity;
   if (ageHours > MAX_INPUT_AGE_HOURS) fail(`Newest SYNCED_AT is ${newestSync || 'empty'} (${Math.round(ageHours)}h old) — Fivetran V8 activation did not run, refusing to write.`);
@@ -221,6 +228,23 @@ async function mainFromAirtable() {
     plannedWrites: updates.length
   };
   await writeAndReceipt(updates, receipt);
+}
+
+/** Newest executed airtable-source receipt in runs/, or null. */
+function lastExecuteReceipt() {
+  let files = [];
+  try {
+    files = readdirSync(RUNS_DIR).filter((f) => /^receipt-\d{4}-\d{2}-\d{2}\.json$/.test(f)).sort();
+  } catch {
+    return null;
+  }
+  for (const file of files.reverse()) {
+    try {
+      const receipt = JSON.parse(readFileSync(join(RUNS_DIR, file), 'utf8'));
+      if (receipt.source === 'airtable' && receipt.mode === 'execute') return receipt;
+    } catch {}
+  }
+  return null;
 }
 
 async function writeAndReceipt(updates, receipt) {

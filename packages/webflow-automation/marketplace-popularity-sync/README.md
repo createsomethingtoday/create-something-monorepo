@@ -106,6 +106,8 @@ job never runs uncommitted code:
 git worktree add --detach ~/Code/create-something-monorepo-wt-popularity-sync origin/main
 git worktree lock ~/Code/create-something-monorepo-wt-popularity-sync --reason "launchd popularity sync"
 (cd ~/Code/create-something-monorepo-wt-popularity-sync && pnpm bootstrap:worktree)   # pinned wrangler for the beacon query
+# seed the population guard with the last executed receipt (runs/ is gitignored)
+mkdir -p <wt>/packages/webflow-automation/marketplace-popularity-sync/runs && cp <old checkout>/…/runs/receipt-<latest>.json <wt>/packages/webflow-automation/marketplace-popularity-sync/runs/
 cp <wt>/packages/webflow-automation/marketplace-popularity-sync/com.webflow.marketplace-popularity-sync.plist ~/Library/LaunchAgents/
 launchctl bootout gui/$(id -u)/com.webflow.marketplace-popularity-sync 2>/dev/null
 launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.webflow.marketplace-popularity-sync.plist
