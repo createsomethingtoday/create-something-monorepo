@@ -25,6 +25,25 @@ artifact. No legacy leaderboard/category record is created, updated or deleted.
 The window is 30 days ending at the latest Monday 16:00 UTC; `--as-of` can specify
 another boundary. Revenue is `SUM(PRICE_VALUE)`, not a payout/net revenue measure.
 
+## Seller source
+
+The seller list (one row per selling template, 30-day window) comes from one
+of two places. Both run the same query.
+
+| Source | How to select | Needs |
+| --- | --- | --- |
+| `airtable` (recommended) | `--source airtable` or `MARKETPLACE_INSIGHTS_SOURCE=airtable` | Fivetran activation "Marketplace Insights sellers (30d) → Airtable" (sync 3666218, dataset 149094) to have written the window |
+| `snowflake` (default) | nothing | a live Snowflake Okta session on this machine |
+
+The Fivetran activation runs Mondays at 16:05 UTC, five minutes after the window
+closes, and upserts on `TEMPLATE_ID` into **Marketplace Insights Sellers**
+(`tblkyKZ5nGOcEqb5r`). It never deletes, so the table holds earlier weeks too.
+The reader uses only rows whose `SNAPSHOT_AT` equals the requested window end,
+and it fails unless their count and summed sales equal `WINDOW_SELLERS` and
+`WINDOW_SALES`, which the query writes on every row. A run that starts before
+the activation finishes therefore fails instead of publishing a partial week.
+Schedule the sync at least 30 minutes after 16:05 UTC.
+
 ## Running
 
 From this directory, with Airtable credentials already supplied by the approved
