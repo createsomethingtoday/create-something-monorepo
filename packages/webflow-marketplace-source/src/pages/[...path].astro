@@ -37,7 +37,7 @@ Astro.response.headers.set('X-Robots-Tag','noindex, nofollow');
   {page.islands[i]?.kind==='library' && (import.meta.env.DEV ? <><p class="container" role="status">Development preview: Library validation, uploads and deliveries are disabled.</p><LibraryIntake client:only="react"/></> : <iframe data-source-submission="true" title="Library submission" src="https://webflow-library-submission-form.webflow.io/libraries/submit" style="width:100%;height:1800px;border:0"/>)}
   {page.islands[i]?.kind==='comments' && <Comments slug={page.islands[i].item!.template_slug} client:load/>}
   {page.islands[i]?.kind==='chat' && <Chat client:only="react"/>}
-  {page.islands[i]?.kind==='cards' && <Cards items={page.islands[i].items!} client:load/>}
+  {page.islands[i]?.kind==='cards' && <Cards items={page.islands[i].items!} columns={page.islands[i].columns} client:load/>}
   {page.islands[i]?.kind==='catalog' && <Catalog title={page.islands[i].title!} path={Astro.url.pathname} creatorSlug={page.islands[i].creatorSlug} client:only="react"><div slot="fallback"><h1>{page.islands[i].title}</h1><Cards items={page.islands[i].items!}/></div></Catalog>}
   {page.islands[i]?.kind==='widget' && <CmsWidget widget={page.islands[i].widget!} props={page.islands[i].props!} client:load/>}
   {page.islands[i]?.kind==='detail' && <Detail item={page.islands[i].item!} heroProps={page.islands[i].heroProps} allowEmbed={allowEmbed} devPreview={import.meta.env.DEV&&!allowEmbed} client:load/>}

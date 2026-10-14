@@ -3,12 +3,25 @@ export const SEARCH_ORIGIN='https://webflow-template-search.webflow-inc.workers.
 export interface Term {name:string;slug:string;url?:string;count?:number}
 export interface Template {id:string;template_slug:string;name:string;url:string;creator_name:string;creator_slug:string;creator_profile_url:string;creator_avatar_url:string;thumbnail_image_url:string;thumbnail_image_secondary_url:string;price:number;is_free:boolean;is_featured:boolean;website_url:string;preview_url:string;purchase_url:string;description_short?:string;description?:string;included_pages?:string[];features?:string[];category_groups?:Term[];child_categories?:Term[];styles?:Term[];published_date?:string;[key:string]:unknown}
 export interface SearchResult {items:Template[];pagination:{total_items:number;total_pages:number;page:number};category_pills:Term[];subcategory_pills:Term[];available_facets?:{styles:Term[]}}
+// Server renders reuse identical catalog reads for one minute (same window as the CMS bridge).
+// Failures are not cached, so an outage recovers on the next request.
+const SEARCH_TTL_MS=60_000;
+const searchCache=new Map<string,{at:number;value:Promise<SearchResult>}>();
 export async function search(params:URLSearchParams|Record<string,string>):Promise<SearchResult>{
  const query=new URLSearchParams(params);
  if(query.get('q')?.trim())query.set('strict','true');
- const response=await fetch(`${SEARCH_ORIGIN}/api/templates/search?${query}`,{signal:AbortSignal.timeout(15000)});
- if(!response.ok)throw new Error(`Catalog unavailable (${response.status})`);
- return response.json();
+ query.sort();
+ const key=query.toString(),now=Date.now(),hit=searchCache.get(key);
+ if(hit&&now-hit.at<SEARCH_TTL_MS)return hit.value;
+ const value=(async()=>{
+  const response=await fetch(`${SEARCH_ORIGIN}/api/templates/search?${key}`,{signal:AbortSignal.timeout(15000)});
+  if(!response.ok)throw new Error(`Catalog unavailable (${response.status})`);
+  return response.json() as Promise<SearchResult>;
+ })();
+ if(searchCache.size>200)searchCache.clear();
+ searchCache.set(key,{at:now,value});
+ value.catch(()=>searchCache.delete(key));
+ return value;
 }
 export function localizePayload(value:unknown):unknown {
  if(Array.isArray(value))return value.map(localizePayload);

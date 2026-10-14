@@ -3,10 +3,11 @@ import assetPathMap from '../../export-path-map.json';
 import {publishedCms,cmsProps,CmsNotFound} from './cms';
 import {search, type Template} from './api';
 import {routeFor,localLink,searchFilters} from './routes.mjs';
+import {homeMarkup,pickCreators,TILE_CATEGORIES} from './home';
 const exports = import.meta.glob('../../original-export/**/*.html',{eager:true,query:'?raw',import:'default'}) as Record<string,string>;
 const raw=(name:string)=>exports[`../../original-export/${name}.html`];
 const escape=(s:unknown)=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
-export interface Island {kind:'cards'|'catalog'|'detail'|'widget'|'comments'|'chat'|'library';widget?:string;props?:Record<string,unknown>;items?:Template[];item?:Template;title?:string;description?:string;creatorSlug?:string;heroProps?:Record<string,unknown>}
+export interface Island {kind:'cards'|'catalog'|'detail'|'widget'|'comments'|'chat'|'library';widget?:string;props?:Record<string,unknown>;items?:Template[];columns?:number;item?:Template;title?:string;description?:string;creatorSlug?:string;heroProps?:Record<string,unknown>}
 export interface Page {title:string;description:string;head:string;body:string;parts:string[];islands:Island[];status:number;pageId?:string;canonical:string}
 function clean(name:string){
  const $=load(raw(name)||raw('404'));
@@ -137,14 +138,15 @@ export async function pageFor(url:URL):Promise<Page>{
   return finish($,url);
  }
  if(route.kind==='home'){
-  const $=clean('index');$('.starter_templates').remove();
-  const result=await Promise.all([search({scope:'featured',sort:'newest',page_size:'8'}),search({sort:'newest',page_size:'8'}),search({scope:'free',sort:'newest',page_size:'8'})]);
-  // The exported Featured block has an id instead of a dedicated class.
-  const featured=$('#featured');featured.replaceWith('<source-island></source-island>');
-  $('.new_templates .w-dyn-list,.free_templates .w-dyn-list').replaceWith('<source-island></source-island>');
-  $('.search-wrap input').wrap('<form action="/templates/search" method="get" role="search"></form>').attr('aria-label','Search templates').attr('name','q');
-  $('body > .section').first().attr('id','main');
-  return finish($,url,result.map(r=>({kind:'cards',items:r.items})));
+  // Redesigned home: own hero, MCP row, sections and category directory;
+  // keeps the exported navigation, seller CTA, FAQ and footer.
+  const [featured,newest,free,pills]=await Promise.all([search({scope:'featured',sort:'newest',page_size:'7'}),search({sort:'newest',page_size:'4'}),search({scope:'free',sort:'newest',page_size:'3'}),search({page_size:'1',include:'facets,pills'})]);
+  const stacks=Object.fromEntries(await Promise.all(TILE_CATEGORIES.map(async slug=>[slug,(await search({category_group_slug:slug,sort:'popular',page_size:'3'}).catch(()=>({items:[]}))).items] as const)));
+  const index=clean('index');
+  const faq=index('body > section.section').filter((_,element)=>/Frequently Asked Questions/i.test(index(element).text())).first().toString();
+  const main=homeMarkup({total:newest.pagination.total_items,hero:featured.items.slice(4,7),creators:pickCreators(featured.items),categories:pills.category_pills||[],stacks});
+  const $=shell(main+faq,index('title').text(),index('meta[name="description"]').attr('content')||'');
+  return finish($,url,[{kind:'cards',items:featured.items.slice(0,4)},{kind:'cards',items:newest.items},{kind:'cards',items:free.items,columns:3}]);
  }
  if(route.kind==='detail'){
   const r=await search({template_slug:route.slug!,strict:'true',page_size:'1'});

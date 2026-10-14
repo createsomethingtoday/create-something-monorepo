@@ -26,6 +26,14 @@ node scripts/verify-preview.mjs
 
 The final command checks the running preview. `PREVIEW_URL` optionally selects a separately started build server. Production output is a Node standalone server (`npm start` after build), not a static ZIP upload.
 
+## Home page redesign
+
+The home page follows the template marketplace redesign canvas (Claude Design artifact `V3dGyP7LZULLvYZEMVVyH2`, version 42). `src/lib/home.ts` renders the hero, the MCP 2.0 row, the category tiles, the category list and the creator row on the server. Featured, New and Free cards are still the production `TemplateCard` islands, showing 4, 4 and 3 cards. The exported navigation, seller CTA, FAQ and footer are kept.
+
+Category counts come from the search API's `category_pills`, so the home shows real numbers. The seven tiles are the redesign's manual pick, listed in `TILE_CATEGORIES`. On phones, card sections become swipe rails and category tiles stay two-up. Catalog, search, detail and the featured preview were already production components and are unchanged.
+
+Catalog reads are cached in memory for one minute (`src/lib/api.ts`). A home render makes 11 catalog calls when the cache is cold.
+
 ## Ownership and boundaries
 
 - **Database:** existing Marketplace search index and published CMS remain authoritative. No export placeholders become template records.
