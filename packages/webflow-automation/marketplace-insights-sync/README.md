@@ -37,7 +37,10 @@ of two places. Both run the same query.
 
 The Fivetran activation runs Mondays at 16:05 UTC, five minutes after the window
 closes, and upserts on `TEMPLATE_ID` into **Marketplace Insights Sellers**
-(`tblkyKZ5nGOcEqb5r`). It never deletes, so the table holds earlier weeks too.
+(`tblkyKZ5nGOcEqb5r`). Each run overwrites a template's row, so the table holds
+only the latest window; rows for templates that stopped selling keep an older
+`SNAPSHOT_AT` and are ignored. Rebuilding an older week needs `--source
+snowflake`: with `--source airtable` it fails the completeness check below.
 The reader uses only rows whose `SNAPSHOT_AT` equals the requested window end,
 and it fails unless their count and summed sales equal `WINDOW_SELLERS` and
 `WINDOW_SALES`, which the query writes on every row. A run that starts before

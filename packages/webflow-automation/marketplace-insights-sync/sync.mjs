@@ -157,9 +157,10 @@ async function listAll(table, fields) {
   } while (offset);
   return records;
 }
-// The activation upserts on TEMPLATE_ID and never deletes, so the table holds
-// every week's sellers. Use only the requested window, and prove the set is
-// complete: every row carries the window totals computed in the same query.
+// The activation upserts on TEMPLATE_ID, so the table holds the latest window
+// plus stale rows for templates that stopped selling. Use only the requested
+// window, and prove the set is complete: every row carries the window totals
+// computed in the same query. An older window fails here; use --source snowflake.
 async function readSellersFromAirtable(windowEnd) {
   const want = windowEnd.toISOString();
   const F = SELLER_FIELDS;
