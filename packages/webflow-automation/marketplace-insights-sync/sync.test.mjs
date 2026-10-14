@@ -18,7 +18,8 @@ const tables = {
   assets: 'tblRwzpWoLgE9MrUm',
   categories: 'tblSygBX7adZ4VNjK',
   creators: 'tbljt0plqxdMARZXb',
-  snapshot: 'tblSnapshotTest01'
+  snapshot: 'tblSnapshotTest01',
+  sellers: 'tblkyKZ5nGOcEqb5r'
 };
 const fixture = () => ({
   sellers: [
@@ -65,9 +66,11 @@ function run(data, args = ['--execute'], configured = true) {
     mkdirSync(join(root, 'bin'));
     writeFileSync(
       join(root, 'bin/uvx'),
-      '#!/usr/bin/env node\nprocess.stdout.write(' +
-        JSON.stringify(JSON.stringify(data.sellers)) +
-        ');\n',
+      data.noSnowflake
+        ? '#!/usr/bin/env node\nprocess.stderr.write("snowflake must not be called");process.exit(9);\n'
+        : '#!/usr/bin/env node\nprocess.stdout.write(' +
+            JSON.stringify(JSON.stringify(data.sellers)) +
+            ');\n',
       { mode: 0o755 }
     );
     writeFileSync(join(root, 'fixture.json'), JSON.stringify(data));
@@ -250,4 +253,64 @@ test('repeated identical taxonomy parents remain unambiguous', () => {
  data.records[tables.categories][0].fields.fldDSMRYPV8KBIeX7 = ['Business', 'Business'];
  const result = run(data);
  assert.equal(result.status,0,result.stderr);
+});
+
+// Fivetran → Airtable seller source. The window under test ends 2026-09-21T16:00Z.
+const sellerRow = (overrides = {}) => ({
+  id: 'recSeller' + Math.random().toString(36).slice(2, 8),
+  fields: {
+    fldgZHXYZqlX2HSag: 'a'.repeat(24),
+    fldA9ZA24286DtNyZ: 'b'.repeat(24),
+    fldgO5x1KhpKkL0QP: 'Template',
+    fldXU6c3ERnqBbvSp: 3,
+    fldxVd61LWea9SlEF: 150,
+    fldLJlqsFaukWP4Jq: '2026-09-21T16:00:00.000Z',
+    fldkJiQBUdfWUMP7Q: 1,
+    fld31oTda0kji5IDi: 3,
+    fldzB6kawJH32fDmA: 150,
+    ...overrides
+  }
+});
+const airtableFixture = (rows) => {
+  const data = fixture();
+  data.noSnowflake = true;
+  data.records[tables.sellers] = rows;
+  return data;
+};
+test('airtable source publishes the requested window without calling Snowflake', () => {
+  const stale = sellerRow({ fldgZHXYZqlX2HSag: 'c'.repeat(24), fldLJlqsFaukWP4Jq: '2026-09-14T16:00:00.000Z', fldkJiQBUdfWUMP7Q: 9, fld31oTda0kji5IDi: 99 });
+  const result = run(airtableFixture([sellerRow(), stale]), ['--execute', '--source', 'airtable']);
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(result.snapshot.summary.totalSales, 3);
+  assert.equal(result.snapshot.summary.sellingTemplates, 1);
+  assert.match(result.stdout, /"source":"airtable"/);
+});
+test('airtable source fails when the activation has not written the window', () => {
+  const result = run(
+    airtableFixture([sellerRow({ fldLJlqsFaukWP4Jq: '2026-09-14T16:00:00.000Z' })]),
+    ['--execute', '--source', 'airtable']
+  );
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /no rows for window 2026-09-21T16:00:00.000Z/);
+  assert.equal(result.writes.length, 0);
+});
+test('airtable source fails when the window is only partly written', () => {
+  const result = run(
+    airtableFixture([sellerRow({ fldkJiQBUdfWUMP7Q: 2, fld31oTda0kji5IDi: 5 })]),
+    ['--execute', '--source', 'airtable']
+  );
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /incomplete/);
+  assert.equal(result.writes.length, 0);
+});
+test('unknown source is rejected before any provider access', () => {
+  const result = run(fixture(), ['--source', 'warehouse']);
+  assert.equal(result.status, 1);
+  assert.equal(result.calls.length, 0);
+});
+test('airtable source fails when revenue does not match the window total', () => {
+  const result = run(airtableFixture([sellerRow({ fldxVd61LWea9SlEF: 149.99 })]), ['--execute', '--source', 'airtable']);
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /incomplete/);
+  assert.equal(result.writes.length, 0);
 });

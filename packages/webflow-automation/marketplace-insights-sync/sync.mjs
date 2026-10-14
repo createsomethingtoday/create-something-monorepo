@@ -19,6 +19,23 @@ const args = process.argv.slice(2);
 const EXECUTE = args.includes('--execute');
 const AIRTABLE_KEY = process.env.AIRTABLE_API_KEY;
 const snapshotTable = process.env.MARKETPLACE_INSIGHTS_SNAPSHOT_TABLE_ID;
+// Seller rows come from Snowflake directly (needs a live Okta session) or from
+// the Fivetran activation "Marketplace Insights sellers (30d)", which writes the
+// same query's output to an Airtable table (no Snowflake credential needed here).
+const SOURCES = ['snowflake', 'airtable'];
+let source = process.env.MARKETPLACE_INSIGHTS_SOURCE || 'snowflake';
+const SELLERS_TABLE = 'tblkyKZ5nGOcEqb5r';
+const SELLER_FIELDS = {
+  TEMPLATE_ID: 'fldgZHXYZqlX2HSag',
+  MRP_ID: 'fldA9ZA24286DtNyZ',
+  TEMPLATE_NAME: 'fldgO5x1KhpKkL0QP',
+  SALES_30D: 'fldXU6c3ERnqBbvSp',
+  REVENUE_30D: 'fldxVd61LWea9SlEF',
+  SNAPSHOT_AT: 'fldLJlqsFaukWP4Jq',
+  WINDOW_SELLERS: 'fldkJiQBUdfWUMP7Q',
+  WINDOW_SALES: 'fld31oTda0kji5IDi',
+  WINDOW_REVENUE: 'fldzB6kawJH32fDmA'
+};
 const log = (...parts) => console.log(new Date().toISOString(), ...parts);
 const fail = (message) => {
   throw new Error(message);
@@ -141,6 +158,47 @@ async function listAll(table, fields) {
   } while (offset);
   return records;
 }
+// The activation upserts on TEMPLATE_ID, so the table holds the latest window
+// plus stale rows for templates that stopped selling. Use only the requested
+// window, and prove the set is complete: every row carries the window totals
+// computed in the same query. An older window fails here; use --source snowflake.
+async function readSellersFromAirtable(windowEnd) {
+  const want = windowEnd.toISOString();
+  const F = SELLER_FIELDS;
+  const records = await listAll(SELLERS_TABLE, Object.values(F));
+  const stamps = [...new Set(records.map((r) => r.fields[F.SNAPSHOT_AT]).filter(Boolean))].sort();
+  const rows = records.filter((r) => r.fields[F.SNAPSHOT_AT] === want);
+  if (!rows.length)
+    fail(`Fivetran sellers activation has no rows for window ${want} (newest: ${stamps.at(-1) ?? 'none'})`);
+  const totals = new Set(
+    rows.map((r) => `${r.fields[F.WINDOW_SELLERS]}/${r.fields[F.WINDOW_SALES]}/${r.fields[F.WINDOW_REVENUE]}`)
+  );
+  if (totals.size !== 1) fail(`Fivetran sellers rows disagree on window totals for ${want}`);
+  const sellers = rows.map((r) => ({
+    templateId: r.fields[F.TEMPLATE_ID],
+    mrpId: r.fields[F.MRP_ID],
+    name: r.fields[F.TEMPLATE_NAME],
+    sales: parseMetric(r.fields[F.SALES_30D]),
+    revenue: parseMetric(r.fields[F.REVENUE_30D])
+  }));
+  const expectedSellers = parseMetric(rows[0].fields[F.WINDOW_SELLERS]);
+  const expectedSales = parseMetric(rows[0].fields[F.WINDOW_SALES]);
+  const expectedRevenue = parseMetric(rows[0].fields[F.WINDOW_REVENUE]);
+  const sales = sellers.reduce((sum, row) => sum + row.sales, 0);
+  // Revenue is compared in cents so a rerun that changed only revenue cannot
+  // pass with a mix of old and new rows.
+  const cents = Math.round(sellers.reduce((sum, row) => sum + row.revenue, 0) * 100);
+  if (
+    sellers.length !== expectedSellers ||
+    sales !== expectedSales ||
+    cents !== Math.round(expectedRevenue * 100)
+  )
+    fail(
+      `Fivetran sellers rows are incomplete for ${want}: ${sellers.length}/${expectedSellers} sellers, ${sales}/${expectedSales} sales, ${cents / 100}/${expectedRevenue} revenue`
+    );
+  log(`Read ${sellers.length} sellers from Airtable (window ending ${want}).`);
+  return sellers;
+}
 const values = (raw) =>
   (Array.isArray(raw) ? raw : [raw])
     .filter((x) => typeof x === 'string' && x.trim())
@@ -150,14 +208,22 @@ async function main() {
   let asOf = latestMondayBoundary();
   for (let i = 0; i < args.length; i++) {
     if (args[i] === '--execute') continue;
+    if (args[i] === '--source' && args[i + 1] && !args[i + 1].startsWith('--')) {
+      source = args[++i];
+      continue;
+    }
     if (args[i] === '--as-of' && args[i + 1] && !args[i + 1].startsWith('--'))
       asOf = new Date(args[++i]);
     else fail(`Unknown or incomplete argument: ${args[i]}`);
   }
   if (!Number.isFinite(asOf.getTime())) fail('Invalid --as-of timestamp');
+  if (!SOURCES.includes(source)) fail(`Unknown source "${source}" (known: ${SOURCES.join(', ')})`);
   if (EXECUTE && !/^tbl[a-zA-Z0-9]{14}$/.test(snapshotTable ?? ''))
     fail('Set the approved MARKETPLACE_INSIGHTS_SNAPSHOT_TABLE_ID before executing');
-  const sellers = querySnowflake(new Date(asOf.getTime() - 30 * 86400000), asOf);
+  const sellers =
+    source === 'airtable'
+      ? await readSellersFromAirtable(asOf)
+      : querySnowflake(new Date(asOf.getTime() - 30 * 86400000), asOf);
   const categoryRecords = await listAll('tblSygBX7adZ4VNjK', [
     'fldWQDQuXlqwWxORG',
     'fldDSMRYPV8KBIeX7'
@@ -270,6 +336,7 @@ async function main() {
   }
   const receipt = {
     mode: EXECUTE ? 'execute' : 'dry-run',
+    source,
     snapshotAt: snapshot.snapshotAt,
     summary: snapshot.summary,
     leaderboardRows: snapshot.leaderboard.length,
