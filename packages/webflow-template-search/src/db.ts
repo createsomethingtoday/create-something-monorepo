@@ -153,6 +153,11 @@ const UPSERT_TEMPLATE_SQL = `
     listing_url = excluded.listing_url,
     preview_url = excluded.preview_url,
     website_url = excluded.website_url,
+    -- Demo signals describe one specific demo site: drop them when the URL changes so the
+    -- next refresh re-fetches instead of serving a signature of the former demo for 30 days.
+    demo_signals_json = CASE WHEN excluded.website_url IS template_documents.website_url THEN template_documents.demo_signals_json ELSE NULL END,
+    demo_signals_synced_at = CASE WHEN excluded.website_url IS template_documents.website_url THEN template_documents.demo_signals_synced_at ELSE NULL END,
+    demo_signals_attempted_at = CASE WHEN excluded.website_url IS template_documents.website_url THEN template_documents.demo_signals_attempted_at ELSE NULL END,
     mrp_id = excluded.mrp_id,
     creator_name = excluded.creator_name,
     creator_record_id = excluded.creator_record_id,

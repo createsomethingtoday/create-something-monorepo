@@ -14,7 +14,8 @@ export const DEMO_SIGNALS_VERSION = 1;
 export const DEMO_SIGNALS_MINHASH_SIZE = 32;
 export const DEMO_SIGNALS_USER_AGENT = 'WebflowTemplateSearch/1.0 (+https://templates.webflow.com)';
 const DEMO_SIGNALS_FETCH_TIMEOUT_MS = 8000;
-const DEMO_SIGNALS_MAX_HTML_CHARS = 2_000_000;
+/** Demo homepages above this size are rejected (`too_large`) rather than buffered. */
+export const DEMO_SIGNALS_MAX_HTML_BYTES = 2_000_000;
 
 export interface DemoSignals {
   version: number;
@@ -31,7 +32,7 @@ export interface DemoSignals {
 
 export type DemoSignalFetchResult =
   | { ok: true; signals: DemoSignals }
-  | { ok: false; status: number | null; reason: 'http_error' | 'not_html' | 'timeout' | 'fetch_failed' };
+  | { ok: false; status: number | null; reason: 'http_error' | 'not_html' | 'too_large' | 'timeout' | 'fetch_failed' };
 
 // Ids are part of the public contract: add, never rename. Patterns run against
 // the concatenated <script> and <link> tags only, so page copy cannot match.
@@ -136,12 +137,48 @@ export function computeDemoSignals(html: string, fetchedAt: string): DemoSignals
   };
 }
 
-export async function fetchDemoSignals(previewUrl: string, fetchedAt: string): Promise<DemoSignalFetchResult> {
+/**
+ * Reads at most `maxBytes` of the body without buffering more than that. Returns
+ * null when the declared or streamed size exceeds the cap; an oversized body must
+ * not be able to exhaust the Worker's memory and abort a whole batch.
+ */
+async function readBoundedText(response: Response, maxBytes: number): Promise<string | null> {
+  const declared = Number(response.headers.get('content-length'));
+  if (Number.isFinite(declared) && declared > maxBytes) return null;
+  if (!response.body) return '';
+
+  const reader = response.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let received = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    received += value.byteLength;
+    if (received > maxBytes) {
+      await reader.cancel();
+      return null;
+    }
+    chunks.push(value);
+  }
+  const bytes = new Uint8Array(received);
+  let offset = 0;
+  for (const piece of chunks) {
+    bytes.set(piece, offset);
+    offset += piece.byteLength;
+  }
+  return new TextDecoder().decode(bytes);
+}
+
+export async function fetchDemoSignals(
+  demoUrl: string,
+  fetchedAt: string,
+  options: { maxBytes?: number } = {},
+): Promise<DemoSignalFetchResult> {
   const abortController = new AbortController();
   const timeoutId = setTimeout(() => abortController.abort(), DEMO_SIGNALS_FETCH_TIMEOUT_MS);
 
   try {
-    const response = await fetch(previewUrl, {
+    const response = await fetch(demoUrl, {
       headers: { Accept: 'text/html', 'User-Agent': DEMO_SIGNALS_USER_AGENT },
       redirect: 'follow',
       signal: abortController.signal,
@@ -149,7 +186,8 @@ export async function fetchDemoSignals(previewUrl: string, fetchedAt: string): P
     if (!response.ok) return { ok: false, status: response.status, reason: 'http_error' };
     const contentType = response.headers.get('content-type') ?? '';
     if (contentType && !/text\/html/i.test(contentType)) return { ok: false, status: response.status, reason: 'not_html' };
-    const html = (await response.text()).slice(0, DEMO_SIGNALS_MAX_HTML_CHARS);
+    const html = await readBoundedText(response, options.maxBytes ?? DEMO_SIGNALS_MAX_HTML_BYTES);
+    if (html === null) return { ok: false, status: response.status, reason: 'too_large' };
     return { ok: true, signals: computeDemoSignals(html, fetchedAt) };
   } catch (error) {
     const timedOut = error instanceof Error && error.name === 'AbortError';

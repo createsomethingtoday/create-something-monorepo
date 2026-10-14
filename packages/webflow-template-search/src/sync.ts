@@ -1692,12 +1692,15 @@ export async function refreshTemplateDemoSignals(
       refreshBefore: new Date(now - DEMO_SIGNAL_REFRESH_AFTER_MS).toISOString(),
     });
 
-    const updates: TemplateDemoSignalUpdateInput[] = [];
+    // Each batch is written as soon as it resolves: an HTTP-triggered run can be
+    // cancelled ~30s after the response, so progress must never wait for the end.
+    let updatedCount = 0;
     const failures: TemplateDemoSignalRefreshSummary['failures'] = [];
     for (const batch of chunk(rows, DEMO_SIGNAL_FETCH_BATCH_SIZE)) {
       const results = await Promise.all(
         batch.map(async (row) => ({ row, result: await fetchDemoSignals(row.website_url, nowIso()) })),
       );
+      const updates: TemplateDemoSignalUpdateInput[] = [];
       for (const { row, result } of results) {
         const attemptedAt = nowIso();
         if (result.ok) {
@@ -1707,11 +1710,9 @@ export async function refreshTemplateDemoSignals(
           failures.push({ template_slug: row.template_slug, status: result.status, reason: result.reason });
         }
       }
+      updatedCount += await updateTemplateDemoSignals(env.DB, updates);
       await heartbeat();
     }
-
-    const updatedCount = await updateTemplateDemoSignals(env.DB, updates);
-    await heartbeat();
     const demoSignalStats = await templateDemoSignalStats(env.DB);
 
     const summary: TemplateDemoSignalRefreshSummary = {

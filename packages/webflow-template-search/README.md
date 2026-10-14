@@ -84,11 +84,15 @@ Algorithm (`src/demo-signals.ts`, output version 1):
    (Webflow interactions).
 
 Refresh: the `7 * * * *` cron resolves 120 templates an hour, never-attempted
-rows first. A failed fetch (404, timeout, non-HTML) is retried after a day and
-keeps any previous signals; a success is refreshed after thirty days.
-`POST /api/templates/admin/refresh-demo-signals?limit=&slug=&slugs=&async=true`
-runs the same job on demand. Progress is in `GET /api/templates/admin/sync-status`
-under `last_demo_signal_refresh`.
+rows first. A failed fetch (404, timeout, non-HTML, body over 2 MB) is retried
+after a day and keeps any previous signals; a success is refreshed after thirty
+days. When a sync changes a template's `website_url`, its signals are cleared
+so the next run re-fetches the new demo. Each batch of eight is written as it
+resolves. `POST /api/templates/admin/refresh-demo-signals?limit=&slug=&slugs=&async=true`
+runs the same job on demand; `async=true` is best effort, because Cloudflare
+cancels HTTP-triggered background work about 30 s after the response, so the
+cron is the durable path and an interrupted run simply resumes there. Progress
+is in `GET /api/templates/admin/sync-status` under `last_demo_signal_refresh`.
 
 Changing anything that alters the output bumps `version`; consumers should
 compare only signals with the same `version`.

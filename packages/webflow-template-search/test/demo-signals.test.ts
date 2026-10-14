@@ -1,12 +1,15 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { upsertTemplateDocuments } from '../src/db.js';
 import {
   classMinhash,
   computeDemoSignals,
   estimateClassSimilarity,
   extractClassNames,
+  fetchDemoSignals,
   fnv1a32,
 } from '../src/demo-signals.js';
 import { parseSearchParams } from '../src/query.js';
+import type { TemplateDocumentInput } from '../src/types.js';
 import { searchTemplates } from '../src/search.js';
 import { callScheduled, callWorker, createTestEnv } from './support/worker.js';
 
@@ -49,6 +52,113 @@ describe('demo signal extraction', () => {
     expect(similarity).toBeLessThan(0.55);
     expect(estimateClassSimilarity(same, classMinhash(['unrelated']))).toBeLessThan(0.2);
     expect(classMinhash([])).toEqual([]);
+  });
+
+  it('rejects oversized bodies before buffering them', async () => {
+    const chunk = new TextEncoder().encode('<div class="x"></div>'.repeat(50));
+    const stream = (chunks: number) =>
+      new ReadableStream<Uint8Array>({
+        start(controller) {
+          for (let index = 0; index < chunks; index += 1) controller.enqueue(chunk);
+          controller.close();
+        },
+      });
+    const html = { headers: { 'content-type': 'text/html' } };
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url.endsWith('/declared')) return new Response(stream(1), { headers: { ...html.headers, 'content-length': '5000000' } });
+        if (url.endsWith('/streamed')) return new Response(stream(10), html);
+        return new Response(stream(1), html);
+      }),
+    );
+    try {
+      const maxBytes = chunk.byteLength * 3;
+      expect(await fetchDemoSignals('https://demo.webflow.io/declared', 'now', { maxBytes })).toMatchObject({ ok: false, reason: 'too_large' });
+      expect(await fetchDemoSignals('https://demo.webflow.io/streamed', 'now', { maxBytes })).toMatchObject({ ok: false, reason: 'too_large' });
+      const small = await fetchDemoSignals('https://demo.webflow.io/small', 'now', { maxBytes });
+      expect(small.ok && small.signals.class_count).toBe(1);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+});
+
+function documentInput(overrides: Partial<TemplateDocumentInput>): TemplateDocumentInput {
+  return {
+    id: 'rec1',
+    templateSlug: 'one-website-template',
+    name: 'One',
+    listingUrl: 'https://webflow.com/templates/html/one-website-template',
+    previewUrl: null,
+    websiteUrl: 'https://one.webflow.io',
+    mrpId: null,
+    creatorName: null,
+    creatorRecordId: null,
+    creatorSlug: null,
+    creatorProfileUrl: null,
+    creatorAvatarUrl: null,
+    creatorAvatarAlt: null,
+    thumbnailImageUrl: null,
+    thumbnailImageSecondaryUrl: null,
+    carouselImageUrls: [],
+    descriptionShort: '',
+    descriptionLongHtml: '',
+    descriptionLongText: '',
+    categoryGroups: [],
+    categoryGroupSlugs: [],
+    childCategories: [],
+    childCategorySlugs: [],
+    categoryMemberships: [],
+    styles: [],
+    styleSlugs: [],
+    tags: [],
+    tagSlugs: [],
+    templateType: null,
+    hasCms: null,
+    isFree: false,
+    isFeatured: false,
+    isLandingPage: false,
+    reviewerPickReason: null,
+    popularityScore: null,
+    uniqueViewers: null,
+    cumulativePurchases: null,
+    price: null,
+    publishedDate: null,
+    marketplaceStatus: null,
+    sourceLastModifiedTime: null,
+    syncedAt: '2026-10-01T00:00:00.000Z',
+    listingConfirmed: null,
+    ...overrides,
+  };
+}
+
+describe('demo signals across template syncs', () => {
+  it('keeps signals while website_url is unchanged and clears them when it changes', async () => {
+    const { env, close } = createTestEnv();
+    try {
+      await upsertTemplateDocuments(env.DB, [documentInput({})]);
+      await env.DB.prepare(
+        "UPDATE template_documents SET demo_signals_json = ?, demo_signals_synced_at = ?, demo_signals_attempted_at = ? WHERE id = 'rec1'",
+      )
+        .bind(JSON.stringify(computeDemoSignals(DEMO_HTML, '2026-10-14T00:00:00.000Z')), '2026-10-14T00:00:00.000Z', '2026-10-14T00:00:00.000Z')
+        .run();
+      const read = () =>
+        env.DB.prepare('SELECT demo_signals_json, demo_signals_synced_at, demo_signals_attempted_at FROM template_documents WHERE id = ?')
+          .bind('rec1')
+          .first<{ demo_signals_json: string | null; demo_signals_synced_at: string | null; demo_signals_attempted_at: string | null }>();
+
+      await upsertTemplateDocuments(env.DB, [documentInput({ name: 'One (renamed)' })]);
+      const kept = await read();
+      expect(kept?.demo_signals_synced_at).toBe('2026-10-14T00:00:00.000Z');
+      expect(JSON.parse(kept?.demo_signals_json ?? 'null')?.class_count).toBe(4);
+
+      await upsertTemplateDocuments(env.DB, [documentInput({ websiteUrl: 'https://one-v2.webflow.io' })]);
+      expect(await read()).toEqual({ demo_signals_json: null, demo_signals_synced_at: null, demo_signals_attempted_at: null });
+    } finally {
+      close();
+    }
   });
 });
 
