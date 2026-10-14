@@ -1871,6 +1871,7 @@ export interface TemplateDemoSignalUpdateInput {
 const DEMO_SIGNAL_ROW_SELECT = `SELECT id, template_slug, website_url
   FROM template_documents`;
 const DEMO_SIGNAL_ELIGIBLE_WHERE = `website_url LIKE 'http%'`;
+const DEMO_SIGNAL_SLUG_LOOKUP_BATCH_SIZE = 90;
 
 export async function listTemplateDemoSignalRows(
   db: D1Database,
@@ -1880,16 +1881,24 @@ export async function listTemplateDemoSignalRows(
 ): Promise<TemplateDemoSignalRow[]> {
   const uniqueTemplateSlugs = Array.from(new Set(templateSlugs.map((slug) => slug.trim()).filter(Boolean)));
   if (uniqueTemplateSlugs.length > 0) {
-    const result = await db
-      .prepare(
-        `${DEMO_SIGNAL_ROW_SELECT}
-         WHERE ${DEMO_SIGNAL_ELIGIBLE_WHERE}
-           AND template_slug IN (${placeholderList(uniqueTemplateSlugs.length)})
-         LIMIT ?`,
-      )
-      .bind(...uniqueTemplateSlugs, limit)
-      .all<TemplateDemoSignalRow>();
-    return result.results ?? [];
+    // D1 allows at most 100 bound parameters per statement; chunk the IN list
+    // so a long explicit slug list cannot turn into a 500 before any fetch.
+    const rows: TemplateDemoSignalRow[] = [];
+    for (const slugBatch of chunk(uniqueTemplateSlugs, DEMO_SIGNAL_SLUG_LOOKUP_BATCH_SIZE)) {
+      const remaining = limit - rows.length;
+      if (remaining <= 0) break;
+      const result = await db
+        .prepare(
+          `${DEMO_SIGNAL_ROW_SELECT}
+           WHERE ${DEMO_SIGNAL_ELIGIBLE_WHERE}
+             AND template_slug IN (${placeholderList(slugBatch.length)})
+           LIMIT ?`,
+        )
+        .bind(...slugBatch, remaining)
+        .all<TemplateDemoSignalRow>();
+      rows.push(...(result.results ?? []));
+    }
+    return rows;
   }
 
   const result = await db

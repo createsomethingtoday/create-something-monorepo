@@ -246,6 +246,38 @@ describe('demo signal refresh job', () => {
     }
   });
 
+  it('accepts explicit slug lists longer than one D1 statement can bind', async () => {
+    const { env, close } = createTestEnv();
+    try {
+      const slugs = Array.from({ length: 150 }, (_, index) => `live-demo-${index}`);
+      await env.DB.batch(
+        slugs.map((slug) =>
+          env.DB.prepare('INSERT INTO template_documents (id, template_slug, name, website_url, synced_at) VALUES (?, ?, ?, ?, ?)').bind(
+            slug,
+            slug,
+            slug,
+            `https://live-demo.webflow.io/${slug}`,
+            '2026-10-01',
+          ),
+        ),
+      );
+      stubDemoFetch();
+      const response = await callWorker(
+        new Request(`https://test/api/templates/admin/refresh-demo-signals?limit=600&slugs=${slugs.join(',')}`, {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(response.status).toBe(200);
+      const summary = (await response.json()) as any;
+      expect(summary.scanned_records).toBe(150);
+      expect(summary.updated_records).toBe(150);
+    } finally {
+      close();
+    }
+  });
+
   it('runs from the hourly maintenance cron', async () => {
     const { env, close } = createTestEnv();
     try {
