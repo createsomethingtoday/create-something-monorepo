@@ -72,6 +72,10 @@ const MAX_INPUT_AGE_HOURS = 30;
 // One Fivetran activation run writes every row within minutes; rows older than
 // this relative to the newest SYNCED_AT were not part of the latest run.
 const COHORT_WINDOW_HOURS = 6;
+// A complete run leaves a handful of rows behind (assets that left the V8 result
+// set). More than this means the activation stopped partway: ranking a partial
+// cohort would mix scores normalized against different populations.
+const MAX_STALE_FRACTION = 0.02;
 
 const EXECUTE = process.argv.includes('--execute');
 const modelArg = process.argv.indexOf('--model');
@@ -162,6 +166,9 @@ async function mainFromAirtable() {
   const withInputs = candidates.filter((record) => Date.parse(record.fields[F.SYNCED_AT] ?? '') >= cohortStart);
   const staleInputs = candidates.length - withInputs.length;
   log(`Assets: ${assets.length} records, ${candidates.length} with V8 inputs, ${staleInputs} stale (outside the latest sync).`);
+  if (staleInputs > candidates.length * MAX_STALE_FRACTION) {
+    fail(`${staleInputs}/${candidates.length} assets missed the latest Fivetran write (${newestSync}) — partial activation, refusing to write.`);
+  }
   if (withInputs.length < 5000) fail(`Only ${withInputs.length} assets carry 🖌️Score ex-views — Fivetran V8 inputs missing, refusing to write.`);
   const ageHours = newestSync ? (Date.now() - Date.parse(newestSync)) / 3_600_000 : Infinity;
   if (ageHours > MAX_INPUT_AGE_HOURS) fail(`Newest SYNCED_AT is ${newestSync || 'empty'} (${Math.round(ageHours)}h old) — Fivetran V8 activation did not run, refusing to write.`);

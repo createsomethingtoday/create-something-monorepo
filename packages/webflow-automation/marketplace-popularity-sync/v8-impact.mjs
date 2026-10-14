@@ -37,13 +37,16 @@ function fail(message) {
   process.exit(1);
 }
 
+// Ties follow the production Popular sort (webflow-template-search search.ts):
+// 📋 Cumulative Purchases (V7 basis for every variant), viewers, newest, ID.
 function rankBy(rows, scoreKey) {
   const sorted = [...rows].sort(
     (a, b) =>
       b[scoreKey] - a[scoreKey] ||
-      b.ordersCumulative - a.ordersCumulative ||
+      b.reportCumulative - a.reportCumulative ||
       b.uniqueViewers - a.uniqueViewers ||
-      (b.createdDate < a.createdDate ? -1 : 1)
+      String(b.createdDate ?? '').localeCompare(String(a.createdDate ?? '')) ||
+      String(a.templateId).localeCompare(String(b.templateId))
   );
   const ranks = new Map();
   sorted.forEach((row, i) => ranks.set(row.templateId, i + 1));
@@ -91,6 +94,7 @@ for (const t of templates) {
 
 // Verify our scoring reproduces the SQL (guards the whole analysis).
 const repro = verifyV7Reproduction(templates);
+if (!repro.ok) fail(`JS scoring does not reproduce v7.sql (max delta ${repro.maxScoreDelta}) — refusing to write an impact report from an invalid baseline.`);
 const reproOk = repro.ok;
 const reproMax = repro.maxScoreDelta;
 const prBeacon = (() => {

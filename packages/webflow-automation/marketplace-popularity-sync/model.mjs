@@ -156,6 +156,7 @@ export function buildTemplates(v7Rows, orderRows = [], beaconRows = []) {
       createdDate: r.TEMPLATE_CREATED_DATE,
       daysSinceCreated: Number(r.DAYS_SINCE_CREATED_CURRENT) || 0,
       uniqueViewers: Number(r.UNIQUE_VIEWERS) || 0,
+      reportCumulative: Number(r.CUMULATIVE_PURCHASES) || 0,
       conversionQuality: Number(r.CONVERSION_QUALITY_V7) || 0,
       freshness: Number(r.FRESHNESS_SCORE) || 0,
       sitesScore: Number(r.RECENT_SITES_SCORE) || 0,
