@@ -172,8 +172,15 @@ test('metadata-only corrections change content identity within the same week', a
  assert.equal(after.contentVersion, (await read()).contentVersion);
 });
 
-test('rejects cross-group template tags instead of choosing an alphabetical primary', () => {
+test('reports cross-group template tags under the first subcategory group and in every breakdown', () => {
  const input = fixture();
  input.categories[1].group = 'Creative';
- assert.throws(() => buildMarketplaceSnapshot(input), /ambiguous asset parent group/);
+ const snapshot = buildMarketplaceSnapshot(input);
+ const multi = input.assets[0];
+ const row = snapshot.leaderboard.find((r) => r.templateId === String(multi.templateId).toLowerCase());
+ const sorted = [...new Set(multi.categories)].sort();
+ const groupOf = new Map(input.categories.map((c) => [c.name, c.group]));
+ assert.equal(row.category, groupOf.get(sorted[0]));
+ for (const subcategory of sorted)
+   assert.ok(snapshot.categories.some((c) => c.subcategory === subcategory && c.category === groupOf.get(subcategory)));
 });

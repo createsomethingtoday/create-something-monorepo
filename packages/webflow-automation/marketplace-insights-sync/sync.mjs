@@ -166,23 +166,82 @@ async function main() {
     'fldFeWROxzwzCo84b',
     'fldHhxmfSNMp117SP',
     'fldBv3YTf6Bd5HDXN',
-    'fldmfcD7pebc82EuN'
+    'fldmfcD7pebc82EuN',
+    'fldGDWo2VfnTbSUiL'
   ]);
+  const publishedAssets = assetRecords.filter((r) =>
+    values(r.fields.fldmfcD7pebc82EuN).includes('recA2YsPEHSuAHOLD')
+  );
+
+  // Taxonomy tolerance. The category table is edited by hand; three shapes
+  // appear in practice and none should stop the weekly snapshot:
+  //  - a subcategory linked to two parent groups → first linked group;
+  //  - the same subcategory name on two rows → first row;
+  //  - a subcategory on a published asset with no parent group at all → the
+  //    group its sibling subcategories (on the same assets) use most, else Other.
+  // Every substitution is listed in the receipt as taxonomyNotes.
+  const taxonomyNotes = [];
+  const taxonomy = new Map();
+  for (const r of categoryRecords) {
+    const name = (r.fields.fldWQDQuXlqwWxORG ?? '').trim();
+    const groups = [...new Set(values(r.fields.fldDSMRYPV8KBIeX7))];
+    if (!name || !groups.length) continue;
+    if (groups.length > 1) taxonomyNotes.push({ kind: 'dual-parent', id: r.id, name, groups, used: groups[0] });
+    if (taxonomy.has(name)) {
+      // Every later same-name row is a source-data task, even when its group agrees.
+      taxonomyNotes.push({ kind: 'duplicate-name', id: r.id, name, kept: taxonomy.get(name), dropped: groups[0] });
+      continue;
+    }
+    taxonomy.set(name, groups[0]);
+  }
+  const cooccur = new Map();
+  // No usable taxonomy at all is an empty source, not something to paper over.
+  for (const r of taxonomy.size ? publishedAssets : []) {
+    const cats = values(r.fields.fldBv3YTf6Bd5HDXN);
+    const siblingGroups = cats.filter((c) => taxonomy.has(c)).map((c) => taxonomy.get(c));
+    for (const c of cats)
+      if (!taxonomy.has(c)) {
+        const counts = cooccur.get(c) ?? new Map();
+        for (const g of siblingGroups) counts.set(g, (counts.get(g) ?? 0) + 1);
+        cooccur.set(c, counts);
+      }
+  }
+  for (const [name, counts] of cooccur) {
+    const best = [...counts.entries()].sort((a, b) => b[1] - a[1])[0];
+    const group = best ? best[0] : 'Other';
+    taxonomy.set(name, group);
+    taxonomyNotes.push({ kind: 'unmapped', name, used: group });
+  }
+
+  // 🎨📧 Creator Email rolls up only Emails tagged Primary; a creator with linked
+  // Emails but no Primary tag leaves it empty. Fall back to the creator record's
+  // own ❗👛Creator Email rollup and list the substitution in the receipt.
+  const creatorEmailNotes = [];
+  let creatorEmails;
+  async function creatorEmailFor(r) {
+    const direct = values(r.fields.fldHhxmfSNMp117SP)[0];
+    if (direct) return direct;
+    const creatorId = values(r.fields.fldGDWo2VfnTbSUiL)[0];
+    if (!creatorId) return undefined;
+    creatorEmails ??= new Map(
+      (await listAll('tbljt0plqxdMARZXb', ['fld5AtQoz6Af7jdos'])).map((c) => [c.id, values(c.fields.fld5AtQoz6Af7jdos)[0]])
+    );
+    const email = creatorEmails.get(creatorId);
+    if (email) creatorEmailNotes.push({ asset: r.id, creator: creatorId });
+    return email;
+  }
+  const assetEmails = new Map();
+  for (const r of publishedAssets) assetEmails.set(r.id, await creatorEmailFor(r));
+
   const snapshot = buildMarketplaceSnapshot({
     snapshotAt: asOf.toISOString(),
     sellers,
-    categories: categoryRecords
-      .filter((r) => r.fields.fldWQDQuXlqwWxORG && values(r.fields.fldDSMRYPV8KBIeX7).length)
-      .map((r) => {
-        const groups = [...new Set(values(r.fields.fldDSMRYPV8KBIeX7))];
-        if (groups.length !== 1) fail(`Ambiguous taxonomy parent group for ${r.id}`);
-        return { name: r.fields.fldWQDQuXlqwWxORG, group: groups[0] };
-      }),
-    assets: assetRecords.filter(r => values(r.fields.fldmfcD7pebc82EuN).includes('recA2YsPEHSuAHOLD')).flatMap((r) =>
+    categories: [...taxonomy].map(([name, group]) => ({ name, group })),
+    assets: publishedAssets.flatMap((r) =>
       values(r.fields.fldFeWROxzwzCo84b).flatMap((value) =>
         value.split(',').map((templateId) => ({
           templateId: templateId.trim(),
-          creatorEmail: values(r.fields.fldHhxmfSNMp117SP)[0],
+          creatorEmail: assetEmails.get(r.id),
           categories: values(r.fields.fldBv3YTf6Bd5HDXN)
         }))
       )
@@ -217,6 +276,8 @@ async function main() {
     categoryRows: snapshot.categories.length,
     recordId,
     legacyTablesModified: false,
+    taxonomyNotes,
+    creatorEmailNotes,
     ranAt: new Date().toISOString()
   };
   writeFileSync(
