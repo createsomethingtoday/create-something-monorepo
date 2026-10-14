@@ -76,6 +76,6 @@
     .state-label { display: none; }
     article { min-height: 68svh; padding: 2rem 0; scroll-margin-top: 430px; }
   }
-  @media (max-width: 850px) and (max-height: 650px) { .enhanced .stage-column { position: static; } }
+  @media (max-height: 650px) { .enhanced .stage-column, .enhanced .stage { position: static; } }
   @media (prefers-reduced-motion: reduce) { .enhanced .stage-column, .enhanced .stage { position: static; } article { min-height: auto; padding-block: 3rem; } }
 </style>
