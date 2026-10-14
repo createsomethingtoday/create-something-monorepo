@@ -19,6 +19,7 @@ Hosting endpoint above.
 - `GET /api/templates/admin/sync-status`
 - `POST /api/templates/admin/refresh-images`
 - `POST /api/templates/admin/backfill-images`
+- `POST /api/templates/admin/refresh-demo-signals`
 - `POST /api/templates/webhooks/webflow`
 
 ## Sync auth
@@ -39,6 +40,62 @@ Use `Authorization: Bearer <SYNC_ADMIN_TOKEN>` or `X-API-Key`.
 - `free_only`, `sort`, `page`, `page_size`, and `include`
 
 Designer profile pages should use the Webflow **Template Filter Bar** plus **Template Grid** components instead of a native Collection List when the page needs to show every published template for a creator. The components infer `creator_slug` from `/templates/designers/{slug}` automatically and can bind `creator_record_id` when the current Designer CMS item exposes the sync record ID.
+
+## Demo site signals
+
+`view=full` items carry `demo_signals`: a small, documented summary of the
+template's public demo homepage (`website_url`, the `*.webflow.io` site). It exists so a third party can
+match a live site to a Marketplace template without crawling demo sites. The
+worker fetches each demo homepage itself, on a schedule, with the User-Agent
+`WebflowTemplateSearch/1.0`.
+
+```json
+"demo_signals": {
+  "version": 1,
+  "fetched_at": "2026-10-14T18:07:12.000Z",
+  "frameworks": ["gsap", "scrolltrigger", "swiper"],
+  "has_interactions": true,
+  "class_count": 212,
+  "class_minhash": [1835017, 2301144, "... 32 unsigned 32-bit integers"]
+}
+```
+
+`demo_signals` is `null` until the first successful fetch, and absent on
+`view=grid`. To compare a live site, compute the same signals from its homepage
+HTML with the algorithm below and treat matching `class_minhash` slots divided
+by 32 as the estimated Jaccard similarity of the two class sets.
+
+Algorithm (`src/demo-signals.ts`, output version 1):
+
+1. **Class set.** Collect every value of a `class` attribute, split on
+   whitespace, drop names starting with `w-` or `wf-` (Webflow runtime and
+   font-loader classes shared by every site). Deduplicate.
+2. **`class_count`.** The size of that set.
+3. **`class_minhash`.** For each slot `i` from 0 to 31, the minimum over the set
+   of `fnv1a32(i + ":" + className)`, where `fnv1a32` is the 32-bit FNV-1a hash
+   of the UTF-8 bytes (`fnv1a32("a") === 0xe40c292c`). Empty array when the set
+   is empty.
+4. **`frameworks`.** Library ids whose marker matches the concatenated
+   `<script>` and `<link>` tags. Ids are stable and only ever added:
+   `gsap`, `scrolltrigger`, `lenis`, `swiper`, `splide`, `locomotive-scroll`,
+   `barba`, `three`, `lottie`, `finsweet`, `split-type`, `splitting`, `alpine`,
+   `anime`, `aos`, `typed`, `rive`, `spline`, `matter`.
+5. **`has_interactions`.** Whether any `data-w-id` attribute is present
+   (Webflow interactions).
+
+Refresh: the `7 * * * *` cron resolves 120 templates an hour, never-attempted
+rows first. A failed fetch (404, timeout, non-HTML, body over 2 MB) is retried
+after a day and keeps any previous signals; a success is refreshed after thirty
+days. When a sync changes a template's `website_url`, its signals are cleared
+so the next run re-fetches the new demo. Each batch of eight is written as it
+resolves. `POST /api/templates/admin/refresh-demo-signals?limit=&slug=&slugs=&async=true`
+runs the same job on demand; `async=true` is best effort, because Cloudflare
+cancels HTTP-triggered background work about 30 s after the response, so the
+cron is the durable path and an interrupted run simply resumes there. Progress
+is in `GET /api/templates/admin/sync-status` under `last_demo_signal_refresh`.
+
+Changing anything that alters the output bumps `version`; consumers should
+compare only signals with the same `version`.
 
 ## Search caching
 

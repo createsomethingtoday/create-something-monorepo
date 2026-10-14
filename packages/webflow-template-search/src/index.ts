@@ -28,6 +28,7 @@ import {
   pruneMissingTemplateImages,
   refreshCreatorProfiles,
   refreshImages,
+  refreshTemplateDemoSignals,
   syncTemplateRecordsByIds,
   syncTemplates,
 } from './sync.js';
@@ -44,6 +45,7 @@ const SYNC_STATUS_STATE_KEYS = [
   'last_creator_backfill',
   'last_image_backfill',
   'last_image_prune',
+  'last_demo_signal_refresh',
   'public_search_cache_version',
   'last_sync_error',
   'last_sync_skipped',
@@ -54,8 +56,12 @@ const INCREMENTAL_SYNC_CRON = '*/5 * * * *';
 const IMAGE_BACKFILL_MAINTENANCE_CRON = '17 * * * *';
 const IMAGE_PRUNE_MAINTENANCE_CRON = '47 3 * * *';
 const CREATOR_REFRESH_MAINTENANCE_CRON = '37 * * * *';
+const DEMO_SIGNAL_REFRESH_MAINTENANCE_CRON = '7 * * * *';
 const SCHEDULED_IMAGE_BACKFILL_LIMIT = 48;
 const SCHEDULED_IMAGE_PRUNE_LIMIT = 24;
+// 120 demo homepages an hour covers the ~11.5k catalog in about four days and
+// then sustains the 30-day refresh cycle with headroom.
+const SCHEDULED_DEMO_SIGNAL_REFRESH_LIMIT = 120;
 
 const PUBLIC_SEARCH_CACHE_HEADERS = {
   'Cache-Control': 'public, max-age=60, s-maxage=300, stale-while-revalidate=86400',
@@ -480,6 +486,33 @@ async function handleImageBackfill(request: Request, env: Env, ctx?: ExecutionCo
   return jsonResponse(request, env, await backfillTemplateImages(env, options));
 }
 
+async function handleDemoSignalRefresh(request: Request, env: Env, ctx?: ExecutionContext): Promise<Response> {
+  const authError = validateAdminToken(request, env);
+  if (authError) return authError;
+
+  const url = new URL(request.url);
+  const limitParam = url.searchParams.get('limit');
+  const limit = limitParam === null ? undefined : Number(limitParam);
+  const templateSlugs = [
+    ...url.searchParams.getAll('slug'),
+    ...(url.searchParams.get('slugs') ?? '')
+      .split(',')
+      .map((slug) => slug.trim())
+      .filter(Boolean),
+  ];
+  const options = { limit: limit === undefined || Number.isFinite(limit) ? limit : undefined, templateSlugs };
+  if (url.searchParams.get('async') === 'true' && ctx) {
+    ctx.waitUntil(
+      refreshTemplateDemoSignals(env, options).catch((error) => {
+        console.error('Background demo signal refresh failed.', error);
+      }),
+    );
+    return jsonResponse(request, env, { status: 'demo_signal_refresh_started', message: 'Demo signal refresh started in background.' });
+  }
+
+  return jsonResponse(request, env, await refreshTemplateDemoSignals(env, options));
+}
+
 async function handleImagePrune(request: Request, env: Env): Promise<Response> {
   const authError = validateAdminToken(request, env);
   if (authError) return authError;
@@ -526,6 +559,7 @@ function scheduledMode(cron: string): string {
   if (cron === IMAGE_BACKFILL_MAINTENANCE_CRON) return 'image_backfill';
   if (cron === IMAGE_PRUNE_MAINTENANCE_CRON) return 'image_prune';
   if (cron === CREATOR_REFRESH_MAINTENANCE_CRON) return 'creator_refresh';
+  if (cron === DEMO_SIGNAL_REFRESH_MAINTENANCE_CRON) return 'demo_signals';
   return 'incremental';
 }
 
@@ -547,6 +581,11 @@ async function runScheduledJob(cron: string, env: Env): Promise<void> {
     // Designers collection by sync-record-id so a rename reaches all of their
     // templates within the hour even if the Designers webhook never arrived.
     await refreshCreatorProfiles(env);
+    return;
+  }
+
+  if (cron === DEMO_SIGNAL_REFRESH_MAINTENANCE_CRON) {
+    await refreshTemplateDemoSignals(env, { limit: SCHEDULED_DEMO_SIGNAL_REFRESH_LIMIT });
     return;
   }
 
@@ -646,6 +685,10 @@ export default {
         return await handleImagePrune(request, env);
       }
 
+      if (url.pathname === '/api/templates/admin/refresh-demo-signals' && request.method === 'POST') {
+        return await handleDemoSignalRefresh(request, env, ctx);
+      }
+
       return jsonResponse(request, env, { error: 'Not found' }, 404);
     } catch (error) {
       if (error instanceof SyncAlreadyRunningError) {
@@ -666,6 +709,7 @@ export default {
     // 17 * cron: bounded stale thumbnail backfill using stable Webflow image sources.
     // 47 3 cron: conservative stale-row prune for missing-image rows whose Webflow listing is 404.
     // 37 * cron: creator profile refresh from the Designers collection (slug/avatar renames).
+    // 7 * cron: bounded demo-homepage signal refresh (frameworks, class MinHash) for view=full.
     const mode = scheduledMode(controller.cron);
     try {
       await runScheduledJob(controller.cron, env);

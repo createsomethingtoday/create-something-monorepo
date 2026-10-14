@@ -1,3 +1,5 @@
+import type { DemoSignals } from './demo-signals.js';
+
 export type TemplateScope = 'all' | 'featured' | 'free' | 'landing_pages';
 export type TemplateSort = 'popular' | 'best_selling' | 'newest' | 'price_asc' | 'price_desc';
 export type TemplateSearchView = 'full' | 'grid';
@@ -251,6 +253,8 @@ export interface SearchItem {
   included_pages?: string[];
   features?: string[];
   source_updated_at?: string | null;
+  /** view=full only. Matching signals from the demo homepage; null until resolved. */
+  demo_signals?: DemoSignals | null;
   template_type: string | null;
   has_cms: boolean | null;
   popularity_score: number | null;
@@ -369,6 +373,25 @@ export interface TemplateImagePruneSummary {
   image_source_stats: TemplateImageSourceStats;
 }
 
+export interface TemplateDemoSignalStats {
+  eligible_records: number;
+  records_with_signals: number;
+  attempted_records: number;
+}
+
+export interface TemplateDemoSignalRefreshSummary {
+  mode: 'demo_signals';
+  started_at: string;
+  finished_at: string;
+  requested_limit: number;
+  requested_template_slugs?: string[];
+  scanned_records: number;
+  updated_records: number;
+  failed_records: number;
+  failures: Array<{ template_slug: string; status: number | null; reason: string }>;
+  demo_signal_stats: TemplateDemoSignalStats;
+}
+
 export interface DocumentRow {
   id: string;
   template_slug: string;
@@ -409,6 +432,9 @@ export interface DocumentRow {
   published_date: string | null;
   marketplace_status: string | null;
   source_last_modified_time: string | null;
+  demo_signals_json: string | null;
+  demo_signals_synced_at: string | null;
+  demo_signals_attempted_at: string | null;
 }
 
 export interface DocumentCountRow {
