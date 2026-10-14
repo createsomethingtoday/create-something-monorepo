@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>EnvironmentVariables</key>
+	<dict>
+		<key>SOURCE</key>
+		<string>airtable</string>
+	</dict>
+	<key>Label</key>
+	<string>com.webflow.marketplace-popularity-sync</string>
+	<key>ProgramArguments</key>
+	<array>
+		<string>/bin/bash</string>
+		<string>/Users/micahjohnson/Code/create-something-monorepo-wt-popularity-sync/packages/webflow-automation/marketplace-popularity-sync/run.sh</string>
+	</array>
+	<key>RunAtLoad</key>
+	<false/>
+	<!-- 07:15 CT: after the Fivetran "Template popularity inputs (V8)" write
+	     (~05:03 UTC). 12:15 CT is a retry slot (run.sh skips it when today's
+	     receipt already exists). -->
+	<key>StartCalendarInterval</key>
+	<array>
+		<dict>
+			<key>Hour</key>
+			<integer>7</integer>
+			<key>Minute</key>
+			<integer>15</integer>
+		</dict>
+		<dict>
+			<key>Hour</key>
+			<integer>12</integer>
+			<key>Minute</key>
+			<integer>15</integer>
+		</dict>
+	</array>
+	<key>StandardOutPath</key>
+	<string>/Users/micahjohnson/Code/create-something-monorepo-wt-popularity-sync/packages/webflow-automation/marketplace-popularity-sync/runs/launchd.log</string>
+	<key>StandardErrorPath</key>
+	<string>/Users/micahjohnson/Code/create-something-monorepo-wt-popularity-sync/packages/webflow-automation/marketplace-popularity-sync/runs/launchd.log</string>
+</dict>
+</plist>
