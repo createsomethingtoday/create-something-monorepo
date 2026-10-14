@@ -14,7 +14,7 @@
 
 <div class="scopefield-page">
   <section class="opening" id="opening" aria-labelledby="scopefield-title">
-    <div class="edition"><a href="/products">CREATE SOMETHING / Scopefield</a><span>Mac public beta · 0.1.0-beta.1</span></div>
+    <div class="edition"><a href="/products">Products</a><span>Mac public beta · 0.1.0-beta.1</span></div>
     <div class="hero-grid">
       <div><p class="eyebrow">A browser for the way we want to work</p><h1 id="scopefield-title">The page<br />comes <em>first.</em></h1></div>
       <div class="hero-aside">
