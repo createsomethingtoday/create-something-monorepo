@@ -81,6 +81,141 @@ function assertNoRawHtmlInCreatorFeedback(field: 'review_feedback' | 'rejection_
   }
 }
 
+// A published Webflow site legitimately serves assets under two cdn.prod.website-files.com
+// prefixes: the site ID (Designer/Assets-panel uploads) and the CMS database ID (uploads
+// made through CMS image fields). Reviewer sessions that crawl the HTML and group image
+// URLs by prefix read the second one as "another project" and ask the creator to
+// re-upload — a fix the creator cannot make, because CMS uploads always land under the
+// CMS database ID (observed: Aentoria ZD 1193704 2026-10-01, Upodes ZD 1203560 2026-10-13).
+// A genuine cross-site dependency does exist: elements pasted between sites keep the
+// original site's asset URLs, which die if that site is deleted (Webflow Help Center,
+// "Copy and paste between sites"). That shows up as a THIRD prefix, neither the site ID
+// nor the CMS database ID, and the feedback must cite it. So this guard rejects only an
+// UNEVIDENCED claim: the item asserts a source relationship ("served from a different
+// project", "hosted in other projects", "another project's images") about an asset and
+// cites no 24-hex ID. An item that withdraws or negates the claim ("ignore the earlier
+// item about images from a different project", "not from another project") is the
+// correction the policy asks for and must go through. An item that both asserts and
+// mentions an earlier round slips past this backstop; the prompt and contract policy
+// are the primary defence.
+// A feedback item is a numbered/bulleted line plus any continuation lines up to the next
+// marker or blank line, so "Images:\nThese come from another project" is one item.
+const CROSS_PROJECT_PHRASE = '(?:different|another|other|separate|external)\\s+(?:webflow\\s+)?projects?';
+const ASSET_NOUN = '(?:images?|assets?|files?|photos?|videos?|media|thumbnails?|cdn|urls?|prefix(?:es)?)';
+// A hosting/transfer construction, not any preposition: "used in another project" is an
+// originality remark, "served from another project" is a hosting claim.
+const HOSTING_RELATION =
+  `(?:(?:served|hosted|load(?:s|ed|ing)?|stored|uploaded|come(?:s)?|coming|pulled|referenced|linked|sourced|fetched|delivered)\\s+(?:from|in|on|by|within|under)` +
+  `|(?:are|is|were|was)\\s+(?:also\\s+|still\\s+)?(?:from|in|on)` +
+  `|${ASSET_NOUN}\\s+(?:from|in|on))`;
+const CROSS_PROJECT_CLAIM_PATTERN = new RegExp(
+  `\\b${HOSTING_RELATION}\\s+(?:a\\s+|an\\s+|the\\s+|this\\s+|that\\s+|some\\s+)?(${CROSS_PROJECT_PHRASE})\\b` +
+    `|\\b(${CROSS_PROJECT_PHRASE.replace('projects?', "project(?:s'|'s)")})\\s+(?:images?|assets?|files?|photos?|videos?|media|cdn|urls?)\\b`,
+  'gi',
+);
+const ASSET_NOUN_PATTERN = new RegExp(`\\b${ASSET_NOUN}\\b`, 'i');
+const ASSET_ID_EVIDENCE_PATTERN = /\b[0-9a-f]{24}\b/i;
+const WITHDRAWAL_CONTEXT_PATTERN =
+  /\b(?:ignore|disregard|withdraw(?:n|s|ing|al)?|retract(?:ed|s|ing|ion)?|false positive|no change (?:is )?needed|not\s+(?:from|served|hosted|loaded|in)\b|(?:earlier|previous|prior)\s+(?:item|request|claim|feedback|round|note)|in error|was (?:wrong|incorrect|mistaken|withdrawn))\b/i;
+// A list marker or a Markdown heading starts a new feedback item; only the list marker
+// makes it a list item (a heading is carried into the list items that follow it).
+const FEEDBACK_LIST_MARKER_PATTERN = /^\s*(?:\d+[.)]|[-*•])\s/;
+const FEEDBACK_ITEM_START_PATTERN = /^\s*(?:\d+[.)]|[-*•]|#{1,6})\s/;
+
+const FEEDBACK_HEADING_MAX_LENGTH = 120;
+
+// Returns the feedback item containing `index`. A list item also carries the short
+// heading/label line that introduces its list ("### Images" / "Images:"), so a claim split
+// across a heading and a bullet is evaluated with both.
+function feedbackItemAt(text: string, index: number): string {
+  const items: Array<{ start: number; end: number; listItem: boolean }> = [];
+  let itemStart = 0;
+  let offset = 0;
+  let previousBlank = false;
+  let currentIsListItem = false;
+  for (const [i, line] of text.split('\n').entries()) {
+    if (i > 0 && (FEEDBACK_ITEM_START_PATTERN.test(line) || previousBlank)) {
+      items.push({ start: itemStart, end: offset - 1, listItem: currentIsListItem });
+      itemStart = offset;
+      currentIsListItem = false;
+    }
+    if (offset === itemStart) currentIsListItem = FEEDBACK_LIST_MARKER_PATTERN.test(line);
+    previousBlank = line.trim() === '';
+    offset += line.length + 1;
+  }
+  items.push({ start: itemStart, end: text.length, listItem: currentIsListItem });
+
+  const position = items.findIndex((range) => index >= range.start && index <= range.end);
+  const item = items[position === -1 ? items.length - 1 : position];
+  const body = text.slice(item.start, item.end);
+  if (!item.listItem) return body;
+  const heading = items
+    .slice(0, position === -1 ? items.length - 1 : position)
+    .reverse()
+    .find((range) => !range.listItem);
+  const headingText = heading ? text.slice(heading.start, heading.end).trim() : '';
+  // A heading is one short line with no sentence punctuation ("### Images", "Images:");
+  // an intro sentence or paragraph is not carried, so its withdrawals and asset words
+  // stay out of the list items.
+  const isHeading =
+    headingText.length > 0 &&
+    headingText.length <= FEEDBACK_HEADING_MAX_LENGTH &&
+    !headingText.includes('\n') &&
+    !/[.;!?](?:\s|$)/.test(headingText);
+  return isHeading ? `${headingText}\n${body}` : body;
+}
+
+// The sentence containing `index`: withdrawal and evidence must sit in the same sentence as
+// the claim, so "not hosted on this project; they come from another project" is still a
+// claim and "Site ID: <id>. Images are hosted in another project" is still unevidenced.
+// A dot ends a sentence only before whitespace or end of text, so a cited
+// cdn.prod.website-files.com/<id>/ prefix stays in the sentence.
+const SENTENCE_BOUNDARY_PATTERN = /[.;!?](?=\s|$)|\n/g;
+
+function sentenceAt(text: string, index: number): string {
+  let start = 0;
+  let end = text.length;
+  for (const boundary of text.matchAll(SENTENCE_BOUNDARY_PATTERN)) {
+    const at = boundary.index ?? 0;
+    if (at < index) {
+      start = at + boundary[0].length;
+    } else {
+      end = at;
+      break;
+    }
+  }
+  return text.slice(start, end);
+}
+
+export function findCrossProjectAssetClaim(text: string): string | null {
+  for (const match of text.matchAll(CROSS_PROJECT_CLAIM_PATTERN)) {
+    const index = match.index ?? 0;
+    const item = feedbackItemAt(text, index);
+    const sentence = sentenceAt(text, index);
+    if (
+      ASSET_NOUN_PATTERN.test(item) &&
+      !ASSET_ID_EVIDENCE_PATTERN.test(sentence) &&
+      !WITHDRAWAL_CONTEXT_PATTERN.test(sentence)
+    ) {
+      return match[1] ?? match[2] ?? match[0];
+    }
+  }
+  return null;
+}
+
+function assertNoCrossProjectAssetClaim(field: 'review_feedback' | 'rejection_feedback', value: string | undefined): void {
+  if (value === undefined) return;
+  const phrase = findCrossProjectAssetClaim(value);
+  if (phrase !== null) {
+    throw new AirtableClientError(
+      'CROSS_PROJECT_ASSET_CLAIM',
+      `${field} claims assets come from a "${phrase}" without citing the asset ID prefix. A cdn.prod.website-files.com/<id>/ prefix other than the site ID is usually the site's CMS database ID (the prefix on CMS-bound images, which change per collection item or page), not another project, and re-uploading keeps that prefix. Flag a cross-site dependency only when the prefix matches neither the site ID (data-wf-site) nor the CMS database ID, and cite that 24-hex prefix in the same sentence as the claim. Otherwise drop this item, or if an earlier round sent it, withdraw it explicitly.`,
+      400,
+      { field, phrase },
+    );
+  }
+}
+
 export interface TemplateReviewQueueItem {
   assetId: string;
   templateName: string;
@@ -2124,6 +2259,8 @@ export class AirtableClient {
     // Creator-facing feedback only; agent_review_feedback is internal and never emailed.
     assertNoRawHtmlInCreatorFeedback('review_feedback', input.review_feedback);
     assertNoRawHtmlInCreatorFeedback('rejection_feedback', input.rejection_feedback);
+    assertNoCrossProjectAssetClaim('review_feedback', input.review_feedback);
+    assertNoCrossProjectAssetClaim('rejection_feedback', input.rejection_feedback);
 
     if (input.release_date !== undefined) {
       throw new AirtableClientError('UNSUPPORTED_WRITE_FIELD', 'release_date is a read-only rollup on template versions. Use release_record_id to link a 🚀Release record instead.', 501, {
