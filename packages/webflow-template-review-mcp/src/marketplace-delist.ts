@@ -520,10 +520,12 @@ export async function executeDelist(
   };
 }
 
-/** True when the item is archived or unpublished, or the page answers 404 (a 429/5xx/redirect is not proof of an outage). */
+/**
+ * True when the live listing itself is down: the item has no live copy, or the page answers 404.
+ * A staged-only state (archived or edited staged copy) is not evidence, and a 429/5xx/redirect is not proof of an outage.
+ */
 async function listingDown(cms: MarketplaceCms, config: MarketplaceCmsConfig, itemId: string, pagePath: string | null): Promise<boolean> {
-  const staged = await cms.getItem(itemId, false);
-  if (staged !== null && (staged.isArchived === true || (await cms.getItem(itemId, true)) === null)) return true;
+  if ((await cms.getItem(itemId, false)) !== null && (await cms.getItem(itemId, true)) === null) return true;
   return (await pageStatus(config, pagePath)) === 404;
 }
 

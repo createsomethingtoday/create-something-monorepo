@@ -461,6 +461,18 @@ test('a multi-item Published asset with one stale archived item and a serving pa
   assert.equal(at.writes.length, 0);
 });
 
+test('a Published asset whose staged copy is archived but whose live listing serves is not resumable', async () => {
+  const web = withoutReferencers(fakeWebflow());
+  web.staged.get(TARGET)!.isArchived = true;
+  const at = fakeAirtable(publishedFields);
+  await assert.rejects(
+    executeRelist(at.airtable, web.config, { assetId: ASSET, expectedCmsItemIds: [TARGET], actor: 'x', now: NOW }),
+    (error: { code?: string }) => error.code === 'ASSET_NOT_DELISTED',
+  );
+  assert.equal(at.writes.length, 0);
+  assert.equal(web.staged.get(TARGET)?.isArchived, true);
+});
+
 test('a relist with no snapshot to retire writes no marker, so it completes when comments are not permitted', async () => {
   const web = withoutReferencers(fakeWebflow());
   const at = fakeAirtable(publishedFields, { failComment: true });
