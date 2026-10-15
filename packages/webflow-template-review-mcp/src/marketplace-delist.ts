@@ -18,9 +18,12 @@ import {
  * put it back.
  *
  * Order matters: Airtable is written first so Whalesync has nothing to push
- * back, then the CMS. The snapshot comment is written only when an unpublish
- * reports referencers, before any of them is stripped: relist reads nothing
- * else, so a delist with no referencers needs no comment at all.
+ * back, then the CMS. Relist reads only the referencer lists, so a
+ * single-item delist writes the snapshot comment only when the unpublish
+ * reports referencers, before any of them is stripped (a 409 changes nothing,
+ * so the CMS is still untouched if that write fails). An asset with several
+ * CMS items writes it up front instead: a later item's referencers must not
+ * fail the snapshot after an earlier item was already taken down.
  */
 
 export const MARKETPLACE_TEMPLATES_COLLECTION_ID = '641b464e78789f611a5d4496';
@@ -456,10 +459,13 @@ export async function executeDelist(
   };
   const writeSnapshot = () => airtable.addAssetComment(asset.asset_id, `${SNAPSHOT_MARKER}\n${JSON.stringify(snapshot)}`);
 
-  // 1. Airtable first so Whalesync has nothing to push back.
+  // 1. Several items: prove the snapshot can be written before any change. Failure here aborts with nothing changed.
+  if (asset.cms_item_ids.length > 1) await writeSnapshot();
+
+  // 2. Airtable first so Whalesync has nothing to push back.
   await airtable.updateDelistAssetFields(asset.asset_id, writes);
 
-  // 2. CMS: unpublish each item (stripping referencers on 409, after saving them), then archive the staged copy.
+  // 3. CMS: unpublish each item (stripping referencers on 409, after saving them), then archive the staged copy.
   const items = [];
   for (const itemId of asset.cms_item_ids) {
     // Airtable can still link a CMS item that was deleted in Webflow (an old Whalesync duplicate). Nothing to take down.
@@ -514,6 +520,17 @@ export async function executeDelist(
   };
 }
 
+/** True when any linked CMS item is archived or unpublished, or the page is not serving. */
+async function listingDown(cms: MarketplaceCms, config: MarketplaceCmsConfig, asset: ReturnType<typeof readAsset>): Promise<boolean> {
+  for (const itemId of asset.cms_item_ids) {
+    const staged = await cms.getItem(itemId, false);
+    if (staged === null) continue;
+    if (staged.isArchived === true || (await cms.getItem(itemId, true)) === null) return true;
+  }
+  const status = await pageStatus(config, asset.page_path);
+  return status !== null && status !== 200;
+}
+
 /** Snapshots since the last relist, newest first. */
 function snapshotsSinceLastRelist(comments: Array<{ text: string }>): DelistSnapshot[] {
   const snapshots: DelistSnapshot[] = [];
@@ -537,8 +554,10 @@ export async function executeRelist(
   assertExpectedItems(asset.cms_item_ids, input.expectedCmsItemIds);
   assertHasCmsItems(asset);
   const snapshots = snapshotsSinceLastRelist(await airtable.listAssetComments(asset.asset_id));
-  // An interrupted relist leaves Airtable Published with no relist marker yet; allow resuming it.
-  const resuming = asset.marketplace_status === MARKETPLACE_STATUS_PUBLISHED && snapshots.length > 0;
+  // An interrupted relist leaves Airtable Published with the listing still down; allow resuming it.
+  // A delist with no referencers leaves no snapshot, so the listing state decides too.
+  const resuming =
+    asset.marketplace_status === MARKETPLACE_STATUS_PUBLISHED && (snapshots.length > 0 || (await listingDown(cms, cmsConfig, asset)));
   if (asset.marketplace_status !== MARKETPLACE_STATUS_DELISTED && !resuming) {
     throw new AirtableClientError('ASSET_NOT_DELISTED', 'Relist only applies to an asset whose 🚀Marketplace Status is Delisted.', 409, {
       marketplace_status: asset.marketplace_status,

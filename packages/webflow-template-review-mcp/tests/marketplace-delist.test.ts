@@ -95,6 +95,14 @@ function fakeWebflow() {
   return { staged, live, calls, config };
 }
 
+/** Nothing links to the target, so its unpublish never 409s. */
+function withoutReferencers(web: ReturnType<typeof fakeWebflow>) {
+  for (const store of [web.staged, web.live]) {
+    for (const item of store.values()) item.related = item.related.filter((id) => id !== TARGET);
+  }
+  return web;
+}
+
 function fakeAirtable(fields: Record<string, unknown>, options: { failComment?: boolean; publishedOwners?: AirtableRecord[] } = {}) {
   const record: AirtableRecord = { id: ASSET, createdTime: '', fields: { [F.type]: 'Template🏗️', ...fields } } as AirtableRecord;
   const comments: Array<{ id: string; text: string; createdTime: string }> = [];
@@ -215,10 +223,7 @@ test('temporary delist leaves the name and delist reason untouched', async () =>
 });
 
 test('a delist with no referencers writes no comment, so it succeeds when comments are not permitted', async () => {
-  const web = fakeWebflow();
-  for (const store of [web.staged, web.live]) {
-    for (const item of store.values()) item.related = item.related.filter((id) => id !== TARGET);
-  }
+  const web = withoutReferencers(fakeWebflow());
   const at = fakeAirtable(publishedFields, { failComment: true });
   const result = await delist(at, web.config, { mode: 'permanent', reason: 'Creator request' });
   assert.equal(result.verified, true);
@@ -241,6 +246,14 @@ test('a delist with referencers stops before stripping them when the snapshot co
   assert.deepEqual(web.live.get(REF_B)?.related, [TARGET]);
   assert.deepEqual(web.live.get(TAG)?.related, [TARGET, REF_A]);
   assert.ok(web.calls.every((call) => !call.startsWith('PATCH ')), 'no item was patched');
+});
+
+test('an asset with several CMS items changes nothing when the snapshot comment cannot be written', async () => {
+  const web = withoutReferencers(fakeWebflow());
+  const at = fakeAirtable({ ...publishedFields, [F.cmsItemIds]: [TARGET, MISSING] }, { failComment: true });
+  await assert.rejects(delist(at, web.config, { mode: 'temporary' }), /comments not permitted/);
+  assert.equal(at.writes.length, 0);
+  assert.ok(web.calls.every((call) => call.startsWith('GET ')), 'only the preview reads ran');
 });
 
 test('delist refuses when the linked CMS items differ from the preview', async () => {
@@ -390,6 +403,39 @@ test('a publish that answers 202 with item errors fails, and the relist can be r
   const retry = await executeRelist(at.airtable, config, { assetId: ASSET, expectedCmsItemIds: [TARGET], actor: 'x', now: NOW });
   assert.equal(retry.resumed, true);
   assert.equal(retry.verified, true);
+});
+
+test('a relist interrupted after a delist with no referencers (no snapshot) can be re-run to finish', async () => {
+  const web = withoutReferencers(fakeWebflow());
+  const at = fakeAirtable(publishedFields);
+  await delist(at, web.config, { mode: 'temporary' });
+  assert.equal(at.comments.length, 0);
+  let failPublish = true;
+  const flaky: typeof fetch = async (input, init) => {
+    if (failPublish && String(input).endsWith('/items/publish')) {
+      failPublish = false;
+      return Response.json({ publishedItemIds: [], errors: [{ id: TARGET, message: 'validation' }] }, { status: 202 });
+    }
+    return web.config.fetchFn!(input, init);
+  };
+  const config = { ...web.config, fetchFn: flaky };
+  await assert.rejects(
+    executeRelist(at.airtable, config, { assetId: ASSET, expectedCmsItemIds: [TARGET], actor: 'x', now: NOW }),
+    (error: { code?: string }) => error.code === 'MARKETPLACE_CMS_WRITE_FAILED',
+  );
+  const retry = await executeRelist(at.airtable, config, { assetId: ASSET, expectedCmsItemIds: [TARGET], actor: 'x', now: NOW });
+  assert.equal(retry.resumed, true);
+  assert.equal(retry.verified, true);
+});
+
+test('relist still refuses a Published asset whose listing is fully live', async () => {
+  const web = withoutReferencers(fakeWebflow());
+  const at = fakeAirtable(publishedFields);
+  await assert.rejects(
+    executeRelist(at.airtable, web.config, { assetId: ASSET, expectedCmsItemIds: [TARGET], actor: 'x', now: NOW }),
+    (error: { code?: string }) => error.code === 'ASSET_NOT_DELISTED',
+  );
+  assert.equal(at.writes.length, 0);
 });
 
 test('relist that cannot confirm the page leaves no marker, so it can be re-run', async () => {
