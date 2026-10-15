@@ -1436,6 +1436,13 @@ test('findCrossProjectAssetClaim detects "another project" asset claims but not 
   assert.equal(findCrossProjectAssetClaim('The Services nav link points to another project. Link it to /services.'), null);
   assert.equal(findCrossProjectAssetClaim('Buy Template should open the marketplace listing, not a different Webflow project.'), null);
   assert.equal(findCrossProjectAssetClaim('The case-study image depicts another project and does not match this client.'), null);
+  assert.equal(findCrossProjectAssetClaim('The case-study image depicting another project loads slowly on mobile.'), null);
+  // A claim that cites the prefix is evidenced (genuine cross-site paste dependency); let it through.
+  assert.equal(
+    findCrossProjectAssetClaim('Hero images are served from a different Webflow project (prefix 5f1a2b3c4d5e6f7a8b9c0d1e is neither the site ID nor the CMS database ID). Re-upload them.'),
+    null,
+  );
+  assert.equal(findCrossProjectAssetClaim("These are another project's images; re-upload them."), 'another project\'s');
   // Asset context in a different item does not rescue the match.
   assert.equal(findCrossProjectAssetClaim('1. Optimize the hero images.\n2. The footer link opens another project.'), null);
   // Asset + hosting context in the same item does.

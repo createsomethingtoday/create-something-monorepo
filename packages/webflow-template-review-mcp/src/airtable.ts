@@ -87,20 +87,27 @@ function assertNoRawHtmlInCreatorFeedback(field: 'review_feedback' | 'rejection_
 // URLs by prefix read the second one as "another project" and ask the creator to
 // re-upload — a fix the creator cannot make, because CMS uploads always land under the
 // CMS database ID (observed: Aentoria ZD 1193704 2026-10-01, Upodes ZD 1203560 2026-10-13).
-// Only an asset whose host is not a Webflow CDN is hosted elsewhere. The phrase alone is
-// not enough ("the nav link points to another project" is valid feedback, and so is "the
-// image depicts another project"), so the claim must sit in a feedback item that also
-// names an asset AND uses hosting/transfer language (served, hosted, load, from, cdn…).
-// An item that withdraws or negates the claim ("ignore the earlier item about images from
-// a different project", "not from another project") is the correction the policy asks
-// for and must go through. An item that both asserts and mentions an earlier round slips
-// past this backstop; the prompt and contract policy are the primary defence.
+// A genuine cross-site dependency does exist: elements pasted between sites keep the
+// original site's asset URLs, which die if that site is deleted (Webflow Help Center,
+// "Copy and paste between sites"). That shows up as a THIRD prefix, neither the site ID
+// nor the CMS database ID, and the feedback must cite it. So this guard rejects only an
+// UNEVIDENCED claim: the item asserts a source relationship ("served from a different
+// project", "hosted in other projects", "another project's images") about an asset and
+// cites no 24-hex ID. An item that withdraws or negates the claim ("ignore the earlier
+// item about images from a different project", "not from another project") is the
+// correction the policy asks for and must go through. An item that both asserts and
+// mentions an earlier round slips past this backstop; the prompt and contract policy
+// are the primary defence.
 // A feedback item is a numbered/bulleted line plus any continuation lines up to the next
 // marker or blank line, so "Images:\nThese come from another project" is one item.
-const CROSS_PROJECT_PHRASE_PATTERN = /\b(?:different|another|other|separate|external)\s+(?:webflow\s+)?projects?\b/gi;
+const CROSS_PROJECT_PHRASE = '(?:different|another|other|separate|external)\\s+(?:webflow\\s+)?projects?';
+const CROSS_PROJECT_CLAIM_PATTERN = new RegExp(
+  `\\b(?:from|in|on|by|into|within|under|across)\\s+(?:a\\s+|an\\s+|the\\s+|this\\s+|that\\s+|some\\s+)?(${CROSS_PROJECT_PHRASE})\\b` +
+    `|\\b(${CROSS_PROJECT_PHRASE.replace('projects?', "project(?:s'|'s)")})\\s+(?:images?|assets?|files?|photos?|videos?|media|cdn|urls?)\\b`,
+  'gi',
+);
 const ASSET_NOUN_PATTERN = /\b(?:images?|assets?|files?|photos?|videos?|media|thumbnails?)\b/i;
-const HOSTING_CONTEXT_PATTERN =
-  /\b(?:hosted|hosts?|serv(?:ed|es?|ing)|load(?:s|ed|ing)?|stored|uploaded|re-?upload(?:s|ed|ing)?|cdn|website-files|urls?|prefix(?:es)?|domain|from)\b/i;
+const ASSET_ID_EVIDENCE_PATTERN = /\b[0-9a-f]{24}\b/i;
 const WITHDRAWAL_CONTEXT_PATTERN =
   /\b(?:ignore|disregard|withdraw(?:n|s|ing|al)?|retract(?:ed|s|ing|ion)?|false positive|no change (?:is )?needed|not\s+(?:from|served|hosted|loaded|in)\b|(?:earlier|previous|prior)\s+(?:item|request|claim|feedback|round|note)|in error|was (?:wrong|incorrect|mistaken|withdrawn))\b/i;
 const FEEDBACK_ITEM_START_PATTERN = /^\s*(?:\d+[.)]|[-*•])\s/;
@@ -124,10 +131,14 @@ function feedbackItemAt(text: string, index: number): string {
 }
 
 export function findCrossProjectAssetClaim(text: string): string | null {
-  for (const match of text.matchAll(CROSS_PROJECT_PHRASE_PATTERN)) {
+  for (const match of text.matchAll(CROSS_PROJECT_CLAIM_PATTERN)) {
     const item = feedbackItemAt(text, match.index ?? 0);
-    if (ASSET_NOUN_PATTERN.test(item) && HOSTING_CONTEXT_PATTERN.test(item) && !WITHDRAWAL_CONTEXT_PATTERN.test(item)) {
-      return match[0];
+    if (
+      ASSET_NOUN_PATTERN.test(item) &&
+      !ASSET_ID_EVIDENCE_PATTERN.test(item) &&
+      !WITHDRAWAL_CONTEXT_PATTERN.test(item)
+    ) {
+      return match[1] ?? match[2] ?? match[0];
     }
   }
   return null;
@@ -139,7 +150,7 @@ function assertNoCrossProjectAssetClaim(field: 'review_feedback' | 'rejection_fe
   if (phrase !== null) {
     throw new AirtableClientError(
       'CROSS_PROJECT_ASSET_CLAIM',
-      `${field} claims assets come from a "${phrase}". A second cdn.prod.website-files.com/<id>/ prefix on a published site is the site's CMS database ID (CMS image-field uploads), not another project, and re-uploading keeps that prefix. Only flag an asset whose host is not a Webflow CDN. Drop this item, or if an earlier round sent it, withdraw it explicitly.`,
+      `${field} claims assets come from a "${phrase}" without citing the asset ID prefix. A second cdn.prod.website-files.com/<id>/ prefix on a published site is the site's CMS database ID (CMS image-field uploads), not another project, and re-uploading keeps that prefix. Flag a cross-site dependency only when the prefix matches neither the site ID (data-wf-site) nor the CMS database ID (the prefix used by collection-item images), and cite that 24-hex prefix in the item. Otherwise drop this item, or if an earlier round sent it, withdraw it explicitly.`,
       400,
       { field, phrase },
     );
