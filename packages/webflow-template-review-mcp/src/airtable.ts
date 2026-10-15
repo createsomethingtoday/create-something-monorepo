@@ -162,13 +162,26 @@ function feedbackItemAt(text: string, index: number): string {
   return isHeading ? `${headingText}\n${body}` : body;
 }
 
+// The sentence containing `index`: withdrawal and evidence must sit in the same sentence as
+// the claim, so "not hosted on this project; they come from another project" is still a
+// claim and "Site ID: <id>. Images are hosted in another project" is still unevidenced.
+function sentenceAt(text: string, index: number): string {
+  const boundaries = ['.', ';', '!', '?', '\n'];
+  const start = Math.max(...boundaries.map((b) => text.lastIndexOf(b, index))) + 1;
+  const ends = boundaries.map((b) => text.indexOf(b, index)).filter((i) => i !== -1);
+  const end = ends.length > 0 ? Math.min(...ends) : text.length;
+  return text.slice(start, end);
+}
+
 export function findCrossProjectAssetClaim(text: string): string | null {
   for (const match of text.matchAll(CROSS_PROJECT_CLAIM_PATTERN)) {
-    const item = feedbackItemAt(text, match.index ?? 0);
+    const index = match.index ?? 0;
+    const item = feedbackItemAt(text, index);
+    const sentence = sentenceAt(text, index);
     if (
       ASSET_NOUN_PATTERN.test(item) &&
-      !ASSET_ID_EVIDENCE_PATTERN.test(item) &&
-      !WITHDRAWAL_CONTEXT_PATTERN.test(item)
+      !ASSET_ID_EVIDENCE_PATTERN.test(sentence) &&
+      !WITHDRAWAL_CONTEXT_PATTERN.test(sentence)
     ) {
       return match[1] ?? match[2] ?? match[0];
     }
@@ -182,7 +195,7 @@ function assertNoCrossProjectAssetClaim(field: 'review_feedback' | 'rejection_fe
   if (phrase !== null) {
     throw new AirtableClientError(
       'CROSS_PROJECT_ASSET_CLAIM',
-      `${field} claims assets come from a "${phrase}" without citing the asset ID prefix. A second cdn.prod.website-files.com/<id>/ prefix on a published site is the site's CMS database ID (CMS image-field uploads), not another project, and re-uploading keeps that prefix. Flag a cross-site dependency only when the prefix matches neither the site ID (data-wf-site) nor the CMS database ID (the prefix used by collection-item images), and cite that 24-hex prefix in the item. Otherwise drop this item, or if an earlier round sent it, withdraw it explicitly.`,
+      `${field} claims assets come from a "${phrase}" without citing the asset ID prefix. A cdn.prod.website-files.com/<id>/ prefix other than the site ID is usually the site's CMS database ID (the prefix used by collection-item and collection-page images), not another project, and re-uploading keeps that prefix. Flag a cross-site dependency only when the prefix matches neither the site ID (data-wf-site) nor the CMS database ID, and cite that 24-hex prefix in the same sentence as the claim. Otherwise drop this item, or if an earlier round sent it, withdraw it explicitly.`,
       400,
       { field, phrase },
     );

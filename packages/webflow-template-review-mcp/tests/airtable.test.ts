@@ -1443,6 +1443,15 @@ test('findCrossProjectAssetClaim detects "another project" asset claims but not 
     null,
   );
   assert.equal(findCrossProjectAssetClaim("These are another project's images; re-upload them."), 'another project\'s');
+  // Negation and evidence bind to the sentence holding the claim, not the whole item.
+  assert.equal(
+    findCrossProjectAssetClaim('The images are not hosted on this project; they come from another project.'),
+    'another project',
+  );
+  assert.equal(
+    findCrossProjectAssetClaim('Site ID: 5f1a2b3c4d5e6f7a8b9c0d1e. Images are hosted in another project; re-upload them.'),
+    'another project',
+  );
   // Originality/similarity remarks are not hosting claims.
   assert.equal(
     findCrossProjectAssetClaim('The hero image is also used in another Webflow project, so replace this duplicated portfolio work.'),
