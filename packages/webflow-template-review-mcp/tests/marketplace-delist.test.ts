@@ -428,13 +428,12 @@ test('a relist interrupted after a delist with no referencers (no snapshot) can 
   assert.equal(retry.verified, true);
 });
 
-test('relist still refuses a Published asset whose listing is fully live', async () => {
+test('relist of a Published asset whose listing is fully live is a no-change success', async () => {
   const web = withoutReferencers(fakeWebflow());
   const at = fakeAirtable(publishedFields);
-  await assert.rejects(
-    executeRelist(at.airtable, web.config, { assetId: ASSET, expectedCmsItemIds: [TARGET], actor: 'x', now: NOW }),
-    (error: { code?: string }) => error.code === 'ASSET_NOT_DELISTED',
-  );
+  const result = await executeRelist(at.airtable, web.config, { assetId: ASSET, expectedCmsItemIds: [TARGET], actor: 'x', now: NOW });
+  assert.equal(result.already_listed, true);
+  assert.deepEqual(result.cms_items, []);
   assert.equal(at.writes.length, 0);
 });
 
@@ -450,25 +449,23 @@ test('a transient page error on a live Published asset is not treated as an inte
   assert.equal(at.writes.length, 0);
 });
 
-test('a multi-item Published asset with one stale archived item and a serving page is not resumable', async () => {
+test('a multi-item Published asset with one stale archived item and a serving page is not republished', async () => {
   const web = withoutReferencers(fakeWebflow());
   web.staged.set(MISSING, { related: [], isArchived: true });
   const at = fakeAirtable({ ...publishedFields, [F.cmsItemIds]: [TARGET, MISSING] });
-  await assert.rejects(
-    executeRelist(at.airtable, web.config, { assetId: ASSET, expectedCmsItemIds: [TARGET, MISSING], actor: 'x', now: NOW }),
-    (error: { code?: string }) => error.code === 'ASSET_NOT_DELISTED',
-  );
+  const result = await executeRelist(at.airtable, web.config, { assetId: ASSET, expectedCmsItemIds: [TARGET, MISSING], actor: 'x', now: NOW });
+  assert.equal(result.already_listed, true);
+  assert.deepEqual(result.cms_items, []);
   assert.equal(at.writes.length, 0);
 });
 
-test('a Published asset whose staged copy is archived but whose live listing serves is not resumable', async () => {
+test('a Published asset whose staged copy is archived but whose live listing serves is not republished', async () => {
   const web = withoutReferencers(fakeWebflow());
   web.staged.get(TARGET)!.isArchived = true;
   const at = fakeAirtable(publishedFields);
-  await assert.rejects(
-    executeRelist(at.airtable, web.config, { assetId: ASSET, expectedCmsItemIds: [TARGET], actor: 'x', now: NOW }),
-    (error: { code?: string }) => error.code === 'ASSET_NOT_DELISTED',
-  );
+  const result = await executeRelist(at.airtable, web.config, { assetId: ASSET, expectedCmsItemIds: [TARGET], actor: 'x', now: NOW });
+  assert.equal(result.already_listed, true);
+  assert.deepEqual(result.cms_items, []);
   assert.equal(at.writes.length, 0);
   assert.equal(web.staged.get(TARGET)?.isArchived, true);
 });
@@ -481,6 +478,21 @@ test('a relist with no snapshot to retire writes no marker, so it completes when
   assert.equal(result.verified, true);
   assert.equal(web.live.has(TARGET), true);
   assert.equal(at.comments.length, 0);
+});
+
+test('a no-snapshot relist retried after the page recovered reports success without changes', async () => {
+  const web = withoutReferencers(fakeWebflow());
+  const at = fakeAirtable(publishedFields);
+  await delist(at, web.config, { mode: 'temporary' });
+  const down: typeof fetch = async (input, init) =>
+    new URL(String(input)).hostname === 'webflow.com' ? new Response('', { status: 404 }) : web.config.fetchFn!(input, init);
+  const first = await executeRelist(at.airtable, { ...web.config, fetchFn: down }, { assetId: ASSET, expectedCmsItemIds: [TARGET], actor: 'x', now: NOW });
+  assert.equal(first.verified, false);
+  const writes = at.writes.length;
+  const retry = await executeRelist(at.airtable, web.config, { assetId: ASSET, expectedCmsItemIds: [TARGET], actor: 'x', now: NOW });
+  assert.equal(retry.already_listed, true);
+  assert.equal(retry.verified, true);
+  assert.equal(at.writes.length, writes);
 });
 
 test('relist that cannot confirm the page leaves no marker, so it can be re-run', async () => {

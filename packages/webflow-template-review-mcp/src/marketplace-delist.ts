@@ -558,6 +558,10 @@ export async function executeRelist(
   const resuming =
     asset.marketplace_status === MARKETPLACE_STATUS_PUBLISHED &&
     (snapshots.length > 0 || (asset.cms_item_ids.length === 1 && (await listingDown(cms, cmsConfig, asset.cms_item_ids[0]!, asset.page_path))));
+  if (asset.marketplace_status === MARKETPLACE_STATUS_PUBLISHED && !resuming && (await pageStatus(cmsConfig, asset.page_path)) === 200) {
+    // Already listed (e.g. a retry after the page recovered): nothing to do, and nothing is changed.
+    return { asset_id: asset.asset_id, name: asset.name, already_listed: true, resumed: false, snapshots_used: 0, cms_items: [], public_page: asset.page_path, public_page_status: 200, verified: true };
+  }
   if (asset.marketplace_status !== MARKETPLACE_STATUS_DELISTED && !resuming) {
     throw new AirtableClientError('ASSET_NOT_DELISTED', 'Relist only applies to an asset whose 🚀Marketplace Status is Delisted.', 409, {
       marketplace_status: asset.marketplace_status,
