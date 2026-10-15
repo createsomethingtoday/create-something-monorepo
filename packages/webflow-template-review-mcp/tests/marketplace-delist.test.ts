@@ -450,6 +450,27 @@ test('a transient page error on a live Published asset is not treated as an inte
   assert.equal(at.writes.length, 0);
 });
 
+test('a multi-item Published asset with one stale archived item and a serving page is not resumable', async () => {
+  const web = withoutReferencers(fakeWebflow());
+  web.staged.set(MISSING, { related: [], isArchived: true });
+  const at = fakeAirtable({ ...publishedFields, [F.cmsItemIds]: [TARGET, MISSING] });
+  await assert.rejects(
+    executeRelist(at.airtable, web.config, { assetId: ASSET, expectedCmsItemIds: [TARGET, MISSING], actor: 'x', now: NOW }),
+    (error: { code?: string }) => error.code === 'ASSET_NOT_DELISTED',
+  );
+  assert.equal(at.writes.length, 0);
+});
+
+test('a relist with no snapshot to retire writes no marker, so it completes when comments are not permitted', async () => {
+  const web = withoutReferencers(fakeWebflow());
+  const at = fakeAirtable(publishedFields, { failComment: true });
+  await delist(at, web.config, { mode: 'temporary' });
+  const result = await executeRelist(at.airtable, web.config, { assetId: ASSET, expectedCmsItemIds: [TARGET], actor: 'x', now: NOW });
+  assert.equal(result.verified, true);
+  assert.equal(web.live.has(TARGET), true);
+  assert.equal(at.comments.length, 0);
+});
+
 test('relist that cannot confirm the page leaves no marker, so it can be re-run', async () => {
   const web = fakeWebflow();
   const at = fakeAirtable(publishedFields);

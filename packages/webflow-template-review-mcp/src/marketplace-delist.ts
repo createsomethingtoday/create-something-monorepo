@@ -520,15 +520,11 @@ export async function executeDelist(
   };
 }
 
-/** True when any linked CMS item is archived or unpublished, or the page answers 404 (a 429/5xx/redirect is not proof of an outage). */
-async function listingDown(cms: MarketplaceCms, config: MarketplaceCmsConfig, asset: ReturnType<typeof readAsset>): Promise<boolean> {
-  for (const itemId of asset.cms_item_ids) {
-    const staged = await cms.getItem(itemId, false);
-    if (staged === null) continue;
-    if (staged.isArchived === true || (await cms.getItem(itemId, true)) === null) return true;
-  }
-  const status = await pageStatus(config, asset.page_path);
-  return status === 404;
+/** True when the item is archived or unpublished, or the page answers 404 (a 429/5xx/redirect is not proof of an outage). */
+async function listingDown(cms: MarketplaceCms, config: MarketplaceCmsConfig, itemId: string, pagePath: string | null): Promise<boolean> {
+  const staged = await cms.getItem(itemId, false);
+  if (staged !== null && (staged.isArchived === true || (await cms.getItem(itemId, true)) === null)) return true;
+  return (await pageStatus(config, pagePath)) === 404;
 }
 
 /** Snapshots since the last relist, newest first. */
@@ -555,9 +551,11 @@ export async function executeRelist(
   assertHasCmsItems(asset);
   const snapshots = snapshotsSinceLastRelist(await airtable.listAssetComments(asset.asset_id));
   // An interrupted relist leaves Airtable Published with the listing still down; allow resuming it.
-  // A delist with no referencers leaves no snapshot, so the listing state decides too.
+  // Only a single-item delist with no referencers leaves no snapshot (several items always snapshot up front),
+  // so for that case the listing state decides.
   const resuming =
-    asset.marketplace_status === MARKETPLACE_STATUS_PUBLISHED && (snapshots.length > 0 || (await listingDown(cms, cmsConfig, asset)));
+    asset.marketplace_status === MARKETPLACE_STATUS_PUBLISHED &&
+    (snapshots.length > 0 || (asset.cms_item_ids.length === 1 && (await listingDown(cms, cmsConfig, asset.cms_item_ids[0]!, asset.page_path))));
   if (asset.marketplace_status !== MARKETPLACE_STATUS_DELISTED && !resuming) {
     throw new AirtableClientError('ASSET_NOT_DELISTED', 'Relist only applies to an asset whose 🚀Marketplace Status is Delisted.', 409, {
       marketplace_status: asset.marketplace_status,
@@ -614,7 +612,8 @@ export async function executeRelist(
   const published = items.filter((item) => item.published).length;
   // With no page path, a relist is complete only if at least one CMS item was actually republished.
   const complete = status === 200 || (status === null && published > 0);
-  if (complete) {
+  // The marker only retires snapshots; with none there is nothing to retire (and no comment write to fail).
+  if (complete && snapshots.length > 0) {
     await airtable.addAssetComment(asset.asset_id, `${RELIST_MARKER}\n${JSON.stringify({ at: now.toISOString(), by: input.actor })}`);
   }
   return {
