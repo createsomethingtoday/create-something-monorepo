@@ -1443,6 +1443,25 @@ test('findCrossProjectAssetClaim detects "another project" asset claims but not 
     null,
   );
   assert.equal(findCrossProjectAssetClaim("These are another project's images; re-upload them."), 'another project\'s');
+  // Originality/similarity remarks are not hosting claims.
+  assert.equal(
+    findCrossProjectAssetClaim('The hero image is also used in another Webflow project, so replace this duplicated portfolio work.'),
+    null,
+  );
+  // A list item carries its introducing heading, so a claim split across them is still caught.
+  assert.equal(findCrossProjectAssetClaim('### Images\n- These are served from another Webflow project.'), 'another Webflow project');
+  assert.equal(findCrossProjectAssetClaim('Images:\n- served from another project\n- fix the footer'), 'another project');
+  // An intro paragraph is not a heading: its asset words (or withdrawals) do not leak into the list.
+  assert.equal(
+    findCrossProjectAssetClaim(
+      '**Thanks for the quick turnaround. Most items are resolved, and the remaining images and copy are in good shape overall. Please address the two remaining items below.**\n1. These are served from another project.',
+    ),
+    null,
+  );
+  assert.equal(
+    findCrossProjectAssetClaim('Ignore the earlier note; here is the new list.\n1. The blog images are served from a different Webflow project.'),
+    'different Webflow project',
+  );
   // Asset context in a different item does not rescue the match.
   assert.equal(findCrossProjectAssetClaim('1. Optimize the hero images.\n2. The footer link opens another project.'), null);
   // Asset + hosting context in the same item does.

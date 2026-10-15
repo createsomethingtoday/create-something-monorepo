@@ -101,33 +101,65 @@ function assertNoRawHtmlInCreatorFeedback(field: 'review_feedback' | 'rejection_
 // A feedback item is a numbered/bulleted line plus any continuation lines up to the next
 // marker or blank line, so "Images:\nThese come from another project" is one item.
 const CROSS_PROJECT_PHRASE = '(?:different|another|other|separate|external)\\s+(?:webflow\\s+)?projects?';
+const ASSET_NOUN = '(?:images?|assets?|files?|photos?|videos?|media|thumbnails?)';
+// A hosting/transfer construction, not any preposition: "used in another project" is an
+// originality remark, "served from another project" is a hosting claim.
+const HOSTING_RELATION =
+  `(?:(?:served|hosted|load(?:s|ed|ing)?|stored|uploaded|come(?:s)?|coming|pulled|referenced|linked|sourced|fetched|delivered)\\s+(?:from|in|on|by|within|under)` +
+  `|(?:are|is|were|was)\\s+(?:also\\s+|still\\s+)?(?:from|in|on)` +
+  `|${ASSET_NOUN}\\s+(?:from|in|on))`;
 const CROSS_PROJECT_CLAIM_PATTERN = new RegExp(
-  `\\b(?:from|in|on|by|into|within|under|across)\\s+(?:a\\s+|an\\s+|the\\s+|this\\s+|that\\s+|some\\s+)?(${CROSS_PROJECT_PHRASE})\\b` +
+  `\\b${HOSTING_RELATION}\\s+(?:a\\s+|an\\s+|the\\s+|this\\s+|that\\s+|some\\s+)?(${CROSS_PROJECT_PHRASE})\\b` +
     `|\\b(${CROSS_PROJECT_PHRASE.replace('projects?', "project(?:s'|'s)")})\\s+(?:images?|assets?|files?|photos?|videos?|media|cdn|urls?)\\b`,
   'gi',
 );
-const ASSET_NOUN_PATTERN = /\b(?:images?|assets?|files?|photos?|videos?|media|thumbnails?)\b/i;
+const ASSET_NOUN_PATTERN = new RegExp(`\\b${ASSET_NOUN}\\b`, 'i');
 const ASSET_ID_EVIDENCE_PATTERN = /\b[0-9a-f]{24}\b/i;
 const WITHDRAWAL_CONTEXT_PATTERN =
   /\b(?:ignore|disregard|withdraw(?:n|s|ing|al)?|retract(?:ed|s|ing|ion)?|false positive|no change (?:is )?needed|not\s+(?:from|served|hosted|loaded|in)\b|(?:earlier|previous|prior)\s+(?:item|request|claim|feedback|round|note)|in error|was (?:wrong|incorrect|mistaken|withdrawn))\b/i;
 const FEEDBACK_ITEM_START_PATTERN = /^\s*(?:\d+[.)]|[-*•])\s/;
 
+const FEEDBACK_HEADING_MAX_LENGTH = 120;
+
+// Returns the feedback item containing `index`. A list item also carries the short
+// heading/label line that introduces its list ("### Images" / "Images:"), so a claim split
+// across a heading and a bullet is evaluated with both.
 function feedbackItemAt(text: string, index: number): string {
-  const items: Array<{ start: number; end: number }> = [];
+  const items: Array<{ start: number; end: number; listItem: boolean }> = [];
   let itemStart = 0;
   let offset = 0;
   let previousBlank = false;
+  let currentIsListItem = false;
   for (const [i, line] of text.split('\n').entries()) {
     if (i > 0 && (FEEDBACK_ITEM_START_PATTERN.test(line) || previousBlank)) {
-      items.push({ start: itemStart, end: offset - 1 });
+      items.push({ start: itemStart, end: offset - 1, listItem: currentIsListItem });
       itemStart = offset;
+      currentIsListItem = false;
     }
+    if (offset === itemStart) currentIsListItem = FEEDBACK_ITEM_START_PATTERN.test(line);
     previousBlank = line.trim() === '';
     offset += line.length + 1;
   }
-  items.push({ start: itemStart, end: text.length });
-  const item = items.find((range) => index >= range.start && index <= range.end) ?? items[items.length - 1];
-  return text.slice(item.start, item.end);
+  items.push({ start: itemStart, end: text.length, listItem: currentIsListItem });
+
+  const position = items.findIndex((range) => index >= range.start && index <= range.end);
+  const item = items[position === -1 ? items.length - 1 : position];
+  const body = text.slice(item.start, item.end);
+  if (!item.listItem) return body;
+  const heading = items
+    .slice(0, position === -1 ? items.length - 1 : position)
+    .reverse()
+    .find((range) => !range.listItem);
+  const headingText = heading ? text.slice(heading.start, heading.end).trim() : '';
+  // A heading is one short line with no sentence punctuation ("### Images", "Images:");
+  // an intro sentence or paragraph is not carried, so its withdrawals and asset words
+  // stay out of the list items.
+  const isHeading =
+    headingText.length > 0 &&
+    headingText.length <= FEEDBACK_HEADING_MAX_LENGTH &&
+    !headingText.includes('\n') &&
+    !/[.;!?](?:\s|$)/.test(headingText);
+  return isHeading ? `${headingText}\n${body}` : body;
 }
 
 export function findCrossProjectAssetClaim(text: string): string | null {
