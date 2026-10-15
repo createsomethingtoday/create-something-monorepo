@@ -1452,6 +1452,13 @@ test('findCrossProjectAssetClaim detects "another project" asset claims but not 
     findCrossProjectAssetClaim('Site ID: 5f1a2b3c4d5e6f7a8b9c0d1e. Images are hosted in another project; re-upload them.'),
     'another project',
   );
+  // A full CDN prefix cited in the same sentence is evidence; its dots are not sentence breaks.
+  assert.equal(
+    findCrossProjectAssetClaim('Images are hosted in another project, prefix cdn.prod.website-files.com/5f1a2b3c4d5e6f7a8b9c0d1e/. Re-upload them.'),
+    null,
+  );
+  // CDN/URL terminology is asset context too.
+  assert.equal(findCrossProjectAssetClaim('### CDN URLs\n- These are served from another Webflow project.'), 'another Webflow project');
   // Originality/similarity remarks are not hosting claims.
   assert.equal(
     findCrossProjectAssetClaim('The hero image is also used in another Webflow project, so replace this duplicated portfolio work.'),

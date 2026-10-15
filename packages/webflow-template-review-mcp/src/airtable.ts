@@ -101,7 +101,7 @@ function assertNoRawHtmlInCreatorFeedback(field: 'review_feedback' | 'rejection_
 // A feedback item is a numbered/bulleted line plus any continuation lines up to the next
 // marker or blank line, so "Images:\nThese come from another project" is one item.
 const CROSS_PROJECT_PHRASE = '(?:different|another|other|separate|external)\\s+(?:webflow\\s+)?projects?';
-const ASSET_NOUN = '(?:images?|assets?|files?|photos?|videos?|media|thumbnails?)';
+const ASSET_NOUN = '(?:images?|assets?|files?|photos?|videos?|media|thumbnails?|cdn|urls?|prefix(?:es)?)';
 // A hosting/transfer construction, not any preposition: "used in another project" is an
 // originality remark, "served from another project" is a hosting claim.
 const HOSTING_RELATION =
@@ -165,11 +165,22 @@ function feedbackItemAt(text: string, index: number): string {
 // The sentence containing `index`: withdrawal and evidence must sit in the same sentence as
 // the claim, so "not hosted on this project; they come from another project" is still a
 // claim and "Site ID: <id>. Images are hosted in another project" is still unevidenced.
+// A dot ends a sentence only before whitespace or end of text, so a cited
+// cdn.prod.website-files.com/<id>/ prefix stays in the sentence.
+const SENTENCE_BOUNDARY_PATTERN = /[.;!?](?=\s|$)|\n/g;
+
 function sentenceAt(text: string, index: number): string {
-  const boundaries = ['.', ';', '!', '?', '\n'];
-  const start = Math.max(...boundaries.map((b) => text.lastIndexOf(b, index))) + 1;
-  const ends = boundaries.map((b) => text.indexOf(b, index)).filter((i) => i !== -1);
-  const end = ends.length > 0 ? Math.min(...ends) : text.length;
+  let start = 0;
+  let end = text.length;
+  for (const boundary of text.matchAll(SENTENCE_BOUNDARY_PATTERN)) {
+    const at = boundary.index ?? 0;
+    if (at < index) {
+      start = at + boundary[0].length;
+    } else {
+      end = at;
+      break;
+    }
+  }
   return text.slice(start, end);
 }
 
@@ -195,7 +206,7 @@ function assertNoCrossProjectAssetClaim(field: 'review_feedback' | 'rejection_fe
   if (phrase !== null) {
     throw new AirtableClientError(
       'CROSS_PROJECT_ASSET_CLAIM',
-      `${field} claims assets come from a "${phrase}" without citing the asset ID prefix. A cdn.prod.website-files.com/<id>/ prefix other than the site ID is usually the site's CMS database ID (the prefix used by collection-item and collection-page images), not another project, and re-uploading keeps that prefix. Flag a cross-site dependency only when the prefix matches neither the site ID (data-wf-site) nor the CMS database ID, and cite that 24-hex prefix in the same sentence as the claim. Otherwise drop this item, or if an earlier round sent it, withdraw it explicitly.`,
+      `${field} claims assets come from a "${phrase}" without citing the asset ID prefix. A cdn.prod.website-files.com/<id>/ prefix other than the site ID is usually the site's CMS database ID (the prefix on CMS-bound images, which change per collection item or page), not another project, and re-uploading keeps that prefix. Flag a cross-site dependency only when the prefix matches neither the site ID (data-wf-site) nor the CMS database ID, and cite that 24-hex prefix in the same sentence as the claim. Otherwise drop this item, or if an earlier round sent it, withdraw it explicitly.`,
       400,
       { field, phrase },
     );
