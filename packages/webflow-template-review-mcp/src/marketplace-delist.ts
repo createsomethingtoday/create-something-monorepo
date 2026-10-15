@@ -18,8 +18,9 @@ import {
  * put it back.
  *
  * Order matters: Airtable is written first so Whalesync has nothing to push
- * back, then the CMS. The snapshot comment is written before any change; if
- * it cannot be written, nothing is changed.
+ * back, then the CMS. The snapshot comment is written only when an unpublish
+ * reports referencers, before any of them is stripped: relist reads nothing
+ * else, so a delist with no referencers needs no comment at all.
  */
 
 export const MARKETPLACE_TEMPLATES_COLLECTION_ID = '641b464e78789f611a5d4496';
@@ -455,13 +456,10 @@ export async function executeDelist(
   };
   const writeSnapshot = () => airtable.addAssetComment(asset.asset_id, `${SNAPSHOT_MARKER}\n${JSON.stringify(snapshot)}`);
 
-  // 1. Snapshot before any change. Failure here aborts with nothing changed.
-  await writeSnapshot();
-
-  // 2. Airtable first so Whalesync has nothing to push back.
+  // 1. Airtable first so Whalesync has nothing to push back.
   await airtable.updateDelistAssetFields(asset.asset_id, writes);
 
-  // 3. CMS: unpublish each item (stripping referencers on 409), then archive the staged copy.
+  // 2. CMS: unpublish each item (stripping referencers on 409, after saving them), then archive the staged copy.
   const items = [];
   for (const itemId of asset.cms_item_ids) {
     // Airtable can still link a CMS item that was deleted in Webflow (an old Whalesync duplicate). Nothing to take down.

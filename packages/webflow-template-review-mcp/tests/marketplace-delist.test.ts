@@ -153,7 +153,7 @@ test('archivedName replaces any earlier Archived suffixes with the delist date; 
   assert.equal(listedName('SoftBit - Ecommerce'), 'SoftBit - Ecommerce');
 });
 
-test('permanent delist snapshots first, writes Airtable, strips referencers, unpublishes and archives', async () => {
+test('permanent delist writes Airtable, snapshots and strips referencers, unpublishes and archives', async () => {
   const web = fakeWebflow();
   const at = fakeAirtable(publishedFields);
 
@@ -214,12 +214,33 @@ test('temporary delist leaves the name and delist reason untouched', async () =>
   assert.deepEqual(at.writes, [{ [F.marketplaceStatus]: '4️⃣Delisted☠️', [F.cmsStatus]: 'Archived' }]);
 });
 
-test('delist changes nothing when the snapshot comment cannot be written', async () => {
+test('a delist with no referencers writes no comment, so it succeeds when comments are not permitted', async () => {
+  const web = fakeWebflow();
+  for (const store of [web.staged, web.live]) {
+    for (const item of store.values()) item.related = item.related.filter((id) => id !== TARGET);
+  }
+  const at = fakeAirtable(publishedFields, { failComment: true });
+  const result = await delist(at, web.config, { mode: 'permanent', reason: 'Creator request' });
+  assert.equal(result.verified, true);
+  assert.equal(web.live.has(TARGET), false);
+  assert.equal(web.staged.get(TARGET)?.isArchived, true);
+  assert.equal(at.comments.length, 0);
+});
+
+test('a delist with referencers stops before stripping them when the snapshot comment cannot be written', async () => {
   const web = fakeWebflow();
   const at = fakeAirtable(publishedFields, { failComment: true });
-  await assert.rejects(delist(at, web.config, { mode: 'temporary' }), /comments not permitted/);
-  assert.equal(at.writes.length, 0);
-  assert.ok(web.calls.every((call) => call.startsWith('GET ')), 'only the preview reads ran');
+  await assert.rejects(
+    delist(at, web.config, { mode: 'temporary' }),
+    (error: { code?: string }) => error.code === 'DELIST_PARTIAL_REFERENCER_SNAPSHOT_FAILED',
+  );
+  // Airtable is already Delisted; the CMS is untouched, so no link is lost.
+  assert.deepEqual(at.writes, [{ [F.marketplaceStatus]: '4️⃣Delisted☠️', [F.cmsStatus]: 'Archived' }]);
+  assert.equal(web.live.has(TARGET), true);
+  assert.equal(web.staged.get(TARGET)?.isArchived, false);
+  assert.deepEqual(web.live.get(REF_B)?.related, [TARGET]);
+  assert.deepEqual(web.live.get(TAG)?.related, [TARGET, REF_A]);
+  assert.ok(web.calls.every((call) => !call.startsWith('PATCH ')), 'no item was patched');
 });
 
 test('delist refuses when the linked CMS items differ from the preview', async () => {
