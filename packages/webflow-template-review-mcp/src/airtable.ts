@@ -87,12 +87,21 @@ function assertNoRawHtmlInCreatorFeedback(field: 'review_feedback' | 'rejection_
 // URLs by prefix read the second one as "another project" and ask the creator to
 // re-upload — a fix the creator cannot make, because CMS uploads always land under the
 // CMS database ID (observed: Aentoria ZD 1193704 2026-10-01, Upodes ZD 1203560 2026-10-13).
-// Only an asset whose host is not a Webflow CDN is hosted elsewhere.
-const CROSS_PROJECT_ASSET_CLAIM_PATTERN = /\b(?:different|another|other|separate|external)\s+(?:webflow\s+)?project\b/i;
+// Only an asset whose host is not a Webflow CDN is hosted elsewhere. The phrase alone is
+// not enough ("the nav link points to another project" is valid feedback), so the claim
+// must share its line with an asset/hosting word. Feedback items are one line each.
+const CROSS_PROJECT_PHRASE_PATTERN = /\b(?:different|another|other|separate|external)\s+(?:webflow\s+)?project\b/gi;
+const ASSET_CONTEXT_PATTERN = /\b(?:images?|assets?|files?|photos?|videos?|media|uploads?|re-?uploads?|re-?uploaded|hosted|served|cdn|website-files)\b/i;
 
 export function findCrossProjectAssetClaim(text: string): string | null {
-  const match = CROSS_PROJECT_ASSET_CLAIM_PATTERN.exec(text);
-  return match ? match[0] : null;
+  for (const match of text.matchAll(CROSS_PROJECT_PHRASE_PATTERN)) {
+    const index = match.index ?? 0;
+    const lineStart = text.lastIndexOf('\n', index) + 1;
+    const lineEnd = text.indexOf('\n', index);
+    const line = text.slice(lineStart, lineEnd === -1 ? undefined : lineEnd);
+    if (ASSET_CONTEXT_PATTERN.test(line)) return match[0];
+  }
+  return null;
 }
 
 function assertNoCrossProjectAssetClaim(field: 'review_feedback' | 'rejection_feedback', value: string | undefined): void {

@@ -1431,6 +1431,14 @@ test('findCrossProjectAssetClaim detects "another project" asset claims but not 
   assert.equal(findCrossProjectAssetClaim('Re-upload the OG image at 1200x630.'), null);
   assert.equal(findCrossProjectAssetClaim('The "Buy Template" buttons link to "#".'), null);
   assert.equal(findCrossProjectAssetClaim('Add a project showcase section with at least 3 CMS items.'), null);
+
+  // The phrase without asset context is legitimate link/navigation feedback.
+  assert.equal(findCrossProjectAssetClaim('The Services nav link points to another project. Link it to /services.'), null);
+  assert.equal(findCrossProjectAssetClaim('Buy Template should open the marketplace listing, not a different Webflow project.'), null);
+  // Asset context on a different line does not rescue the match.
+  assert.equal(findCrossProjectAssetClaim('1. Optimize the hero images.\n2. The footer link opens another project.'), null);
+  // Asset context on the same line does.
+  assert.equal(findCrossProjectAssetClaim('1. Fix the footer.\n2. Team photos are hosted in another project.'), 'another project');
 });
 
 test('updateVersionReview rejects cross-project asset claims in creator-facing feedback before calling Airtable', async () => {
