@@ -438,6 +438,18 @@ test('relist still refuses a Published asset whose listing is fully live', async
   assert.equal(at.writes.length, 0);
 });
 
+test('a transient page error on a live Published asset is not treated as an interrupted relist', async () => {
+  const web = withoutReferencers(fakeWebflow());
+  const at = fakeAirtable(publishedFields);
+  const flaky: typeof fetch = async (input, init) =>
+    new URL(String(input)).hostname === 'webflow.com' ? new Response('', { status: 503 }) : web.config.fetchFn!(input, init);
+  await assert.rejects(
+    executeRelist(at.airtable, { ...web.config, fetchFn: flaky }, { assetId: ASSET, expectedCmsItemIds: [TARGET], actor: 'x', now: NOW }),
+    (error: { code?: string }) => error.code === 'ASSET_NOT_DELISTED',
+  );
+  assert.equal(at.writes.length, 0);
+});
+
 test('relist that cannot confirm the page leaves no marker, so it can be re-run', async () => {
   const web = fakeWebflow();
   const at = fakeAirtable(publishedFields);

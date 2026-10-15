@@ -520,7 +520,7 @@ export async function executeDelist(
   };
 }
 
-/** True when any linked CMS item is archived or unpublished, or the page is not serving. */
+/** True when any linked CMS item is archived or unpublished, or the page answers 404 (a 429/5xx/redirect is not proof of an outage). */
 async function listingDown(cms: MarketplaceCms, config: MarketplaceCmsConfig, asset: ReturnType<typeof readAsset>): Promise<boolean> {
   for (const itemId of asset.cms_item_ids) {
     const staged = await cms.getItem(itemId, false);
@@ -528,7 +528,7 @@ async function listingDown(cms: MarketplaceCms, config: MarketplaceCmsConfig, as
     if (staged.isArchived === true || (await cms.getItem(itemId, true)) === null) return true;
   }
   const status = await pageStatus(config, asset.page_path);
-  return status !== null && status !== 200;
+  return status === 404;
 }
 
 /** Snapshots since the last relist, newest first. */
