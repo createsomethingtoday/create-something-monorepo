@@ -1,7 +1,7 @@
 "use strict";
 (() => {
   // src/utils.ts
-  var EXTENSION_VERSION = "1.3.7";
+  var EXTENSION_VERSION = "1.3.8";
   function filterRetiredAccessibilityIssues(issues) {
     return issues.filter((issue) => issue.id !== "color-contrast-violations");
   }
@@ -410,6 +410,56 @@
     }
   }
 
+  // src/run-storage.ts
+  var LAST_RUN_KEY_PREFIX = "webflow_validator_last_run";
+  var FIX_LIST_KEY_PREFIX = "webflow_validator_submission_fix_list";
+  var LEGACY_STORAGE_KEYS = [LAST_RUN_KEY_PREFIX, FIX_LIST_KEY_PREFIX];
+  function getLastRunStorageKey(siteId) {
+    return `${LAST_RUN_KEY_PREFIX}:${siteId}`;
+  }
+  function getFixListStorageKey(siteId) {
+    return `${FIX_LIST_KEY_PREFIX}:${siteId}`;
+  }
+  function parseStoredValidationRun(raw, siteId) {
+    if (!raw) return null;
+    let parsed;
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      return null;
+    }
+    if (!parsed || typeof parsed !== "object") return null;
+    const candidate = parsed;
+    if (candidate.siteId !== siteId) return null;
+    if (!candidate.data || typeof candidate.data !== "object") return null;
+    if (!Array.isArray(candidate.data.categories)) return null;
+    if (typeof candidate.generatedAt !== "string") return null;
+    return {
+      siteId,
+      data: candidate.data,
+      correlationId: typeof candidate.correlationId === "string" ? candidate.correlationId : null,
+      generatedAt: candidate.generatedAt
+    };
+  }
+  function pruneLegacyRunStorage(storage) {
+    for (const key of LEGACY_STORAGE_KEYS) {
+      try {
+        storage.removeItem(key);
+      } catch {
+      }
+    }
+  }
+  function describeRequestFailure(error) {
+    if (error instanceof DOMException && error.name === "AbortError") return "request timed out";
+    if (typeof error === "object" && error !== null) {
+      const status = error.status;
+      if (typeof status === "number") return `server responded ${status}`;
+    }
+    if (error instanceof TypeError) return "network request blocked or offline";
+    if (error instanceof Error && error.message) return error.message.slice(0, 120);
+    return "unknown error";
+  }
+
   // src/index.ts
   var WORKER_API_BASE = "https://validation-worker.createsomething.workers.dev";
   var APP_VALIDATOR_BASE = "https://validation-worker.createsomething.workers.dev";
@@ -425,7 +475,6 @@
   var bridgeStatus = null;
   var lastValidationReport = null;
   var canvasElementRegistry = /* @__PURE__ */ new Map();
-  var LAST_RUN_STORAGE_KEY = "webflow_validator_last_run";
   function initializeExtension() {
     if (extensionInitialized) return;
     extensionInitialized = true;
@@ -458,9 +507,9 @@
     rotateBtn?.addEventListener("click", () => rotateBridgeToken());
     recheckBtn?.addEventListener("click", () => refreshBridgeStatus());
     copyBtn?.addEventListener("click", () => void copyBridgeSnippetFromCurrentStatus());
+    pruneLegacyRunStorage(localStorage);
     void bootstrapBridgePanel();
     void fetchWorkerVersion();
-    restoreLastValidationReport();
   }
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", initializeExtension, { once: true });
@@ -1183,6 +1232,7 @@
   async function runDesignerValidation(projectData, siteUrl, correlationId) {
     const body = JSON.stringify({ designerData: projectData, siteUrl });
     const endpoints = [`${APP_VALIDATOR_BASE}/api/validate`];
+    let lastError;
     for (const endpoint of endpoints) {
       try {
         const result = await fetchJsonWithRetry(
@@ -1202,9 +1252,10 @@
         return result;
       } catch (error) {
         console.warn(`Designer validation failed via ${endpoint}:`, error);
+        lastError = error;
       }
     }
-    throw new Error("Designer validation failed on all configured backends.");
+    throw new Error(`Designer validation failed on all configured backends (${describeRequestFailure(lastError)}).`);
   }
   async function runLegacyEnhancedValidation(siteUrl, projectData, pageSlugs, correlationId, workerOptions) {
     try {
@@ -1268,6 +1319,7 @@
       }
       bridgeContext = { siteId, siteName, siteUrl: siteUrl || void 0 };
       setBridgeActionsDisabled(false);
+      restoreLastValidationReport(siteId);
       await refreshBridgeStatus();
     } catch (error) {
       console.warn("Bridge bootstrap failed:", error);
@@ -1360,7 +1412,7 @@
       console.warn("Bridge install failed:", error);
       setBridgeBadge("failed");
       setBridgeMessage(
-        "Could not prepare the Validator script. Try again, then publish and re-check."
+        `Could not prepare the Validator script (${describeRequestFailure(error)}). Try again, then publish and re-check.`
       );
       setBridgeSetupStep("install");
       setToolbarStatus("Validator script setup failed", "failed");
@@ -2747,17 +2799,21 @@
     metaDisplay.style.display = "block";
   }
   function registerValidationReport(data, correlationId) {
+    const siteId = bridgeContext?.siteId || null;
     lastValidationReport = {
+      siteId,
       data,
       correlationId,
       generatedAt: (/* @__PURE__ */ new Date()).toISOString(),
       restored: false
     };
+    if (!siteId) return;
+    const storageKey = getLastRunStorageKey(siteId);
     try {
-      localStorage.setItem(LAST_RUN_STORAGE_KEY, JSON.stringify(lastValidationReport));
+      localStorage.setItem(storageKey, JSON.stringify(lastValidationReport));
     } catch {
       try {
-        localStorage.setItem(LAST_RUN_STORAGE_KEY, JSON.stringify({
+        localStorage.setItem(storageKey, JSON.stringify({
           ...lastValidationReport,
           data: { ...data, collectedData: void 0 }
         }));
@@ -2766,14 +2822,16 @@
       }
     }
   }
-  function restoreLastValidationReport() {
+  function restoreLastValidationReport(siteId) {
+    if (isValidating || lastValidationReport) return false;
     try {
-      const saved = localStorage.getItem(LAST_RUN_STORAGE_KEY);
+      const saved = parseStoredValidationRun(
+        localStorage.getItem(getLastRunStorageKey(siteId)),
+        siteId
+      );
       if (!saved) return false;
-      const parsed = JSON.parse(saved);
-      if (!parsed?.data?.categories) return false;
-      lastValidationReport = { ...parsed, restored: true };
-      showResults(parsed.data);
+      lastValidationReport = { ...saved, restored: true };
+      showResults(saved.data);
       return true;
     } catch (error) {
       console.warn("Could not restore last validation results:", error);
@@ -3712,19 +3770,27 @@
       window.setTimeout(() => categorySection.classList.remove("is-targeted"), 1400);
     }
   }
-  function getFixListStorageKey() {
-    return "webflow_validator_submission_fix_list";
+  function getFixListStorageKey2() {
+    const siteId = bridgeContext?.siteId;
+    return siteId ? getFixListStorageKey(siteId) : null;
   }
   function saveFixList(fixItems) {
+    const storageKey = getFixListStorageKey2();
+    if (!storageKey) return;
     const data = {
       fixItems,
       timestamp: Date.now()
     };
-    localStorage.setItem(getFixListStorageKey(), JSON.stringify(data));
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(data));
+    } catch (error) {
+      console.warn("Could not persist fix list:", error);
+    }
   }
   function loadFixList() {
     try {
-      const saved = localStorage.getItem(getFixListStorageKey());
+      const storageKey = getFixListStorageKey2();
+      const saved = storageKey ? localStorage.getItem(storageKey) : null;
       if (saved) {
         const data = JSON.parse(saved);
         return data.fixItems || data.errors || [];
