@@ -1439,6 +1439,22 @@ test('findCrossProjectAssetClaim detects "another project" asset claims but not 
   assert.equal(findCrossProjectAssetClaim('1. Optimize the hero images.\n2. The footer link opens another project.'), null);
   // Asset context on the same line does.
   assert.equal(findCrossProjectAssetClaim('1. Fix the footer.\n2. Team photos are hosted in another project.'), 'another project');
+
+  // Withdrawing or negating the claim is the correction the policy asks for; let it through.
+  assert.equal(
+    findCrossProjectAssetClaim("You can ignore the earlier item about images from a different Webflow project. Those images come from this site's own CMS, so no change is needed."),
+    null,
+  );
+  assert.equal(
+    findCrossProjectAssetClaim('I withdraw the earlier claim that these images are from another project; the second prefix is the CMS database ID.'),
+    null,
+  );
+  assert.equal(findCrossProjectAssetClaim('The case study images are not from another project after all.'), null);
+  // A withdrawal on one line does not excuse a fresh assertion on another.
+  assert.equal(
+    findCrossProjectAssetClaim('1. Ignore the earlier note about the logo.\n2. The blog images are served from a different Webflow project. Re-upload them.'),
+    'different Webflow project',
+  );
 });
 
 test('updateVersionReview rejects cross-project asset claims in creator-facing feedback before calling Airtable', async () => {

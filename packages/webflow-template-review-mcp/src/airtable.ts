@@ -90,8 +90,14 @@ function assertNoRawHtmlInCreatorFeedback(field: 'review_feedback' | 'rejection_
 // Only an asset whose host is not a Webflow CDN is hosted elsewhere. The phrase alone is
 // not enough ("the nav link points to another project" is valid feedback), so the claim
 // must share its line with an asset/hosting word. Feedback items are one line each.
+// A line that withdraws or negates the claim ("ignore the earlier item about images from
+// a different project", "not from another project") is the correction the policy asks
+// for and must go through. A line that both asserts and mentions an earlier round slips
+// past this backstop; the prompt and contract policy are the primary defence.
 const CROSS_PROJECT_PHRASE_PATTERN = /\b(?:different|another|other|separate|external)\s+(?:webflow\s+)?project\b/gi;
 const ASSET_CONTEXT_PATTERN = /\b(?:images?|assets?|files?|photos?|videos?|media|uploads?|re-?uploads?|re-?uploaded|hosted|served|cdn|website-files)\b/i;
+const WITHDRAWAL_CONTEXT_PATTERN =
+  /\b(?:ignore|disregard|withdraw(?:n|s|ing|al)?|retract(?:ed|s|ing|ion)?|false positive|no change (?:is )?needed|not\s+(?:from|served|hosted|loaded|in)\b|(?:earlier|previous|prior)\s+(?:item|request|claim|feedback|round|note)|in error|was (?:wrong|incorrect|mistaken|withdrawn))\b/i;
 
 export function findCrossProjectAssetClaim(text: string): string | null {
   for (const match of text.matchAll(CROSS_PROJECT_PHRASE_PATTERN)) {
@@ -99,7 +105,7 @@ export function findCrossProjectAssetClaim(text: string): string | null {
     const lineStart = text.lastIndexOf('\n', index) + 1;
     const lineEnd = text.indexOf('\n', index);
     const line = text.slice(lineStart, lineEnd === -1 ? undefined : lineEnd);
-    if (ASSET_CONTEXT_PATTERN.test(line)) return match[0];
+    if (ASSET_CONTEXT_PATTERN.test(line) && !WITHDRAWAL_CONTEXT_PATTERN.test(line)) return match[0];
   }
   return null;
 }
