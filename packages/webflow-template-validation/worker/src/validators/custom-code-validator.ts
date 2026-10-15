@@ -5,6 +5,14 @@ import {
 import type { CustomCodeAnalysisResult, ValidationIssue } from '../types';
 import { fetchHTML } from '../utils/fetch-utils';
 
+const HOW_TO_FIX: Record<MarketplaceCustomCodeFinding['policy'], string> = {
+	'custom-code-font-loading':
+		'Remove the custom font code, add the eligible Google or OFL font through Site settings > Fonts, publish again, and rerun validation.',
+	'custom-code-schema-markup-not-allowed': 'Remove the schema markup, publish again, and rerun validation.',
+	'custom-code-html-embed-not-allowed':
+		'Rebuild the embed with native Webflow elements (for video, the Video element or a YouTube/Vimeo iframe), keep only inline SVG, CSS, or approved scripts in HTML Embeds, publish again, and rerun validation.'
+};
+
 function toValidationIssue(finding: MarketplaceCustomCodeFinding, index: number): ValidationIssue {
 	return {
 		id: index === 0 ? finding.policy : `${finding.policy}-${index + 1}`,
@@ -12,10 +20,7 @@ function toValidationIssue(finding: MarketplaceCustomCodeFinding, index: number)
 		severity: 'error',
 		message: finding.message,
 		description: `${finding.kind}: ${finding.source}`,
-		howToFix:
-			finding.policy === 'custom-code-font-loading'
-				? 'Remove the custom font code, add the eligible Google or OFL font through Site settings > Fonts, publish again, and rerun validation.'
-				: 'Remove the schema markup, publish again, and rerun validation.',
+		howToFix: HOW_TO_FIX[finding.policy],
 		details: {
 			policy: finding.policy,
 			kind: finding.kind,
