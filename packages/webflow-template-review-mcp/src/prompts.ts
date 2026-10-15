@@ -100,7 +100,7 @@ These analysis paths are **read-only** and do not use Designer API data, Preview
 
 The published-site validators cover:
 - **Content**: lorem/placeholder signals, headings, SEO metadata, links, content quality. Treat lorem/placeholder findings as review evidence, not automatic blockers. Utility-page example/specimen copy is allowed when it intentionally appears on Style Guide, Changelog, Licenses, Instructions, Password, Search, 401/404, or \`/utility/*\` pages. If placeholder evidence is limited to intentional utility-page specimens, Webflow search snippets, warning-only placeholder signals, or Webflow-generated video fallback assets, exclude it from draft creator feedback.
-- **Images/assets**: asset/image issues available from the published-site worker and supplied asset data
+- **Images/assets**: asset/image issues available from the published-site worker and supplied asset data. A second \`cdn.prod.website-files.com/<id>/\` prefix is the site's CMS database ID, not another project (see below).
 - **Accessibility**: validator-detectable alt text, heading, and accessibility signals. Treat alt-text findings as actionable only when they point to editable content images/icons; do not cite decorative empty-alt images or Webflow-generated video fallback/poster assets as creator-fixable missing-alt issues.
 - **Interactions**: legacy IX2 markers detected from published HTML
 - **Custom code / GSAP**: GSAP usage, flagged custom code, security-risk patterns, legacy IX2, and Unicorn Studio embeds
@@ -108,6 +108,8 @@ The published-site validators cover:
 Required utility pages do **not** need root-only slugs. License, Instructions, Changelog, and Style Guide pages may be nested in folders when they are discoverable, return 200, and visible links point to the matching utility page. Intentional utility-page examples such as "Heading 1", "Button Text", or Lorem copy used as typography/component specimens are not placeholder failures by themselves and should not be included in creator feedback. Flag missing pages, broken pages, missing required license text, customer-facing placeholder copy on non-utility pages, or utility links that point to unrelated pages.
 
 A \`/sitemap.xml\` is **not** a template requirement. Webflow only serves the auto-generated sitemap for sites on a paid Site plan, and unhosted \`*.webflow.io\` template demos have no plan, so enabling Auto-generate sitemap and republishing does nothing there. Use a sitemap only to discover pages when one exists. If it is missing or returns 404, crawl links instead, and never ask the creator to enable, fix, or republish a sitemap. If an earlier round asked for one, withdraw that request explicitly in the next feedback. Publish-time proof is the \`<!-- Last Published: ... -->\` comment in the page head.
+
+A published site serves assets under **two** \`cdn.prod.website-files.com/<24-hex id>/\` prefixes: the site ID (\`data-wf-site\`, Designer and Assets-panel uploads) and the CMS database ID (images uploaded through CMS fields — service, case study, blog, team images). The second prefix is **not** another Webflow project, and re-uploading keeps it. Never ask a creator to re-upload assets because a prefix differs from the site ID; the write tools reject feedback that claims assets come from a "different project". The only hosted-elsewhere finding is an asset whose host is not a Webflow CDN (\`website-files.com\`, \`webflow.com\`). If an earlier round asked for a re-upload on this basis, withdraw it explicitly.
 
 ${COMPREHENSIVE_REVIEW_WORKFLOW_GUIDANCE}
 

@@ -1417,6 +1417,64 @@ test('updateVersionReview rejects raw HTML tags in creator-facing feedback befor
   assert.equal(called, false);
 });
 
+test('findCrossProjectAssetClaim detects "another project" asset claims but not ordinary feedback', async () => {
+  const { findCrossProjectAssetClaim } = await import('../src/airtable.js');
+
+  // The Upodes / Aentoria wording: a CMS database ID prefix read as another project.
+  assert.equal(
+    findCrossProjectAssetClaim('The service and case study images (19 files) are served from a different Webflow project. Re-upload them into this project.'),
+    'different Webflow project',
+  );
+  assert.equal(findCrossProjectAssetClaim('21 images still load from another project'), 'another project');
+  assert.equal(findCrossProjectAssetClaim('Images hosted in a separate project will break if it is unpublished'), 'separate project');
+
+  assert.equal(findCrossProjectAssetClaim('Re-upload the OG image at 1200x630.'), null);
+  assert.equal(findCrossProjectAssetClaim('The "Buy Template" buttons link to "#".'), null);
+  assert.equal(findCrossProjectAssetClaim('Add a project showcase section with at least 3 CMS items.'), null);
+});
+
+test('updateVersionReview rejects cross-project asset claims in creator-facing feedback before calling Airtable', async () => {
+  let called = false;
+  const client = new AirtableClient({
+    apiKey: 'test',
+    fetchFn: async () => {
+      called = true;
+      throw new Error('should not run');
+    },
+  });
+
+  await assert.rejects(
+    client.updateVersionReview('rec_version_cross_project', {
+      review_feedback: '6. The service images are served from a different Webflow project. Re-upload them into this project so they do not break if that project is unpublished.',
+    }),
+    (error: unknown) => {
+      assert.equal((error as { code?: string }).code, 'CROSS_PROJECT_ASSET_CLAIM');
+      assert.deepEqual((error as { details?: unknown }).details, {
+        field: 'review_feedback',
+        phrase: 'different Webflow project',
+      });
+      assert.match((error as Error).message, /CMS database ID/);
+      return true;
+    },
+  );
+
+  await assert.rejects(
+    client.updateVersionReview('rec_version_cross_project_rejection', {
+      rejection_feedback: 'Most assets load from another project.',
+    }),
+    (error: unknown) => {
+      assert.equal((error as { code?: string }).code, 'CROSS_PROJECT_ASSET_CLAIM');
+      assert.deepEqual((error as { details?: unknown }).details, {
+        field: 'rejection_feedback',
+        phrase: 'another project',
+      });
+      return true;
+    },
+  );
+
+  assert.equal(called, false);
+});
+
 test('updateVersionReview allows autolinks and internal agent feedback with raw tags', async () => {
   const client = new AirtableClient({
     apiKey: 'test',

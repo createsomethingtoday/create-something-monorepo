@@ -81,6 +81,33 @@ function assertNoRawHtmlInCreatorFeedback(field: 'review_feedback' | 'rejection_
   }
 }
 
+// A published Webflow site legitimately serves assets under two cdn.prod.website-files.com
+// prefixes: the site ID (Designer/Assets-panel uploads) and the CMS database ID (uploads
+// made through CMS image fields). Reviewer sessions that crawl the HTML and group image
+// URLs by prefix read the second one as "another project" and ask the creator to
+// re-upload — a fix the creator cannot make, because CMS uploads always land under the
+// CMS database ID (observed: Aentoria ZD 1193704 2026-10-01, Upodes ZD 1203560 2026-10-13).
+// Only an asset whose host is not a Webflow CDN is hosted elsewhere.
+const CROSS_PROJECT_ASSET_CLAIM_PATTERN = /\b(?:different|another|other|separate|external)\s+(?:webflow\s+)?project\b/i;
+
+export function findCrossProjectAssetClaim(text: string): string | null {
+  const match = CROSS_PROJECT_ASSET_CLAIM_PATTERN.exec(text);
+  return match ? match[0] : null;
+}
+
+function assertNoCrossProjectAssetClaim(field: 'review_feedback' | 'rejection_feedback', value: string | undefined): void {
+  if (value === undefined) return;
+  const phrase = findCrossProjectAssetClaim(value);
+  if (phrase !== null) {
+    throw new AirtableClientError(
+      'CROSS_PROJECT_ASSET_CLAIM',
+      `${field} claims assets come from a "${phrase}". A second cdn.prod.website-files.com/<id>/ prefix on a published site is the site's CMS database ID (CMS image-field uploads), not another project, and re-uploading keeps that prefix. Only flag an asset whose host is not a Webflow CDN. Drop this item, or if an earlier round sent it, withdraw it explicitly.`,
+      400,
+      { field, phrase },
+    );
+  }
+}
+
 export interface TemplateReviewQueueItem {
   assetId: string;
   templateName: string;
@@ -2124,6 +2151,8 @@ export class AirtableClient {
     // Creator-facing feedback only; agent_review_feedback is internal and never emailed.
     assertNoRawHtmlInCreatorFeedback('review_feedback', input.review_feedback);
     assertNoRawHtmlInCreatorFeedback('rejection_feedback', input.rejection_feedback);
+    assertNoCrossProjectAssetClaim('review_feedback', input.review_feedback);
+    assertNoCrossProjectAssetClaim('rejection_feedback', input.rejection_feedback);
 
     if (input.release_date !== undefined) {
       throw new AirtableClientError('UNSUPPORTED_WRITE_FIELD', 'release_date is a read-only rollup on template versions. Use release_record_id to link a 🚀Release record instead.', 501, {
