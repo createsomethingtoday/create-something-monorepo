@@ -117,7 +117,10 @@ const ASSET_NOUN_PATTERN = new RegExp(`\\b${ASSET_NOUN}\\b`, 'i');
 const ASSET_ID_EVIDENCE_PATTERN = /\b[0-9a-f]{24}\b/i;
 const WITHDRAWAL_CONTEXT_PATTERN =
   /\b(?:ignore|disregard|withdraw(?:n|s|ing|al)?|retract(?:ed|s|ing|ion)?|false positive|no change (?:is )?needed|not\s+(?:from|served|hosted|loaded|in)\b|(?:earlier|previous|prior)\s+(?:item|request|claim|feedback|round|note)|in error|was (?:wrong|incorrect|mistaken|withdrawn))\b/i;
-const FEEDBACK_ITEM_START_PATTERN = /^\s*(?:\d+[.)]|[-*•])\s/;
+// A list marker or a Markdown heading starts a new feedback item; only the list marker
+// makes it a list item (a heading is carried into the list items that follow it).
+const FEEDBACK_LIST_MARKER_PATTERN = /^\s*(?:\d+[.)]|[-*•])\s/;
+const FEEDBACK_ITEM_START_PATTERN = /^\s*(?:\d+[.)]|[-*•]|#{1,6})\s/;
 
 const FEEDBACK_HEADING_MAX_LENGTH = 120;
 
@@ -136,7 +139,7 @@ function feedbackItemAt(text: string, index: number): string {
       itemStart = offset;
       currentIsListItem = false;
     }
-    if (offset === itemStart) currentIsListItem = FEEDBACK_ITEM_START_PATTERN.test(line);
+    if (offset === itemStart) currentIsListItem = FEEDBACK_LIST_MARKER_PATTERN.test(line);
     previousBlank = line.trim() === '';
     offset += line.length + 1;
   }

@@ -1459,6 +1459,12 @@ test('findCrossProjectAssetClaim detects "another project" asset claims but not 
   );
   // CDN/URL terminology is asset context too.
   assert.equal(findCrossProjectAssetClaim('### CDN URLs\n- These are served from another Webflow project.'), 'another Webflow project');
+  // A Markdown heading starts a new item even without a blank line before it.
+  assert.equal(
+    findCrossProjectAssetClaim('### Layout\n- Fix spacing.\n### Images\n- These are served from another project.'),
+    'another project',
+  );
+  assert.equal(findCrossProjectAssetClaim('### Images\n- Compress the hero.\n### Links\n- The footer link opens another project.'), null);
   // Originality/similarity remarks are not hosting claims.
   assert.equal(
     findCrossProjectAssetClaim('The hero image is also used in another Webflow project, so replace this duplicated portfolio work.'),
