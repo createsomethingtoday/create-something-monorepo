@@ -88,24 +88,47 @@ function assertNoRawHtmlInCreatorFeedback(field: 'review_feedback' | 'rejection_
 // re-upload — a fix the creator cannot make, because CMS uploads always land under the
 // CMS database ID (observed: Aentoria ZD 1193704 2026-10-01, Upodes ZD 1203560 2026-10-13).
 // Only an asset whose host is not a Webflow CDN is hosted elsewhere. The phrase alone is
-// not enough ("the nav link points to another project" is valid feedback), so the claim
-// must share its line with an asset/hosting word. Feedback items are one line each.
-// A line that withdraws or negates the claim ("ignore the earlier item about images from
+// not enough ("the nav link points to another project" is valid feedback, and so is "the
+// image depicts another project"), so the claim must sit in a feedback item that also
+// names an asset AND uses hosting/transfer language (served, hosted, load, from, cdn…).
+// An item that withdraws or negates the claim ("ignore the earlier item about images from
 // a different project", "not from another project") is the correction the policy asks
-// for and must go through. A line that both asserts and mentions an earlier round slips
+// for and must go through. An item that both asserts and mentions an earlier round slips
 // past this backstop; the prompt and contract policy are the primary defence.
-const CROSS_PROJECT_PHRASE_PATTERN = /\b(?:different|another|other|separate|external)\s+(?:webflow\s+)?project\b/gi;
-const ASSET_CONTEXT_PATTERN = /\b(?:images?|assets?|files?|photos?|videos?|media|uploads?|re-?uploads?|re-?uploaded|hosted|served|cdn|website-files)\b/i;
+// A feedback item is a numbered/bulleted line plus any continuation lines up to the next
+// marker or blank line, so "Images:\nThese come from another project" is one item.
+const CROSS_PROJECT_PHRASE_PATTERN = /\b(?:different|another|other|separate|external)\s+(?:webflow\s+)?projects?\b/gi;
+const ASSET_NOUN_PATTERN = /\b(?:images?|assets?|files?|photos?|videos?|media|thumbnails?)\b/i;
+const HOSTING_CONTEXT_PATTERN =
+  /\b(?:hosted|hosts?|serv(?:ed|es?|ing)|load(?:s|ed|ing)?|stored|uploaded|re-?upload(?:s|ed|ing)?|cdn|website-files|urls?|prefix(?:es)?|domain|from)\b/i;
 const WITHDRAWAL_CONTEXT_PATTERN =
   /\b(?:ignore|disregard|withdraw(?:n|s|ing|al)?|retract(?:ed|s|ing|ion)?|false positive|no change (?:is )?needed|not\s+(?:from|served|hosted|loaded|in)\b|(?:earlier|previous|prior)\s+(?:item|request|claim|feedback|round|note)|in error|was (?:wrong|incorrect|mistaken|withdrawn))\b/i;
+const FEEDBACK_ITEM_START_PATTERN = /^\s*(?:\d+[.)]|[-*•])\s/;
+
+function feedbackItemAt(text: string, index: number): string {
+  const items: Array<{ start: number; end: number }> = [];
+  let itemStart = 0;
+  let offset = 0;
+  let previousBlank = false;
+  for (const [i, line] of text.split('\n').entries()) {
+    if (i > 0 && (FEEDBACK_ITEM_START_PATTERN.test(line) || previousBlank)) {
+      items.push({ start: itemStart, end: offset - 1 });
+      itemStart = offset;
+    }
+    previousBlank = line.trim() === '';
+    offset += line.length + 1;
+  }
+  items.push({ start: itemStart, end: text.length });
+  const item = items.find((range) => index >= range.start && index <= range.end) ?? items[items.length - 1];
+  return text.slice(item.start, item.end);
+}
 
 export function findCrossProjectAssetClaim(text: string): string | null {
   for (const match of text.matchAll(CROSS_PROJECT_PHRASE_PATTERN)) {
-    const index = match.index ?? 0;
-    const lineStart = text.lastIndexOf('\n', index) + 1;
-    const lineEnd = text.indexOf('\n', index);
-    const line = text.slice(lineStart, lineEnd === -1 ? undefined : lineEnd);
-    if (ASSET_CONTEXT_PATTERN.test(line) && !WITHDRAWAL_CONTEXT_PATTERN.test(line)) return match[0];
+    const item = feedbackItemAt(text, match.index ?? 0);
+    if (ASSET_NOUN_PATTERN.test(item) && HOSTING_CONTEXT_PATTERN.test(item) && !WITHDRAWAL_CONTEXT_PATTERN.test(item)) {
+      return match[0];
+    }
   }
   return null;
 }

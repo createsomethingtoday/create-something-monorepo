@@ -1432,13 +1432,18 @@ test('findCrossProjectAssetClaim detects "another project" asset claims but not 
   assert.equal(findCrossProjectAssetClaim('The "Buy Template" buttons link to "#".'), null);
   assert.equal(findCrossProjectAssetClaim('Add a project showcase section with at least 3 CMS items.'), null);
 
-  // The phrase without asset context is legitimate link/navigation feedback.
+  // The phrase without asset + hosting context is legitimate link/navigation/content feedback.
   assert.equal(findCrossProjectAssetClaim('The Services nav link points to another project. Link it to /services.'), null);
   assert.equal(findCrossProjectAssetClaim('Buy Template should open the marketplace listing, not a different Webflow project.'), null);
-  // Asset context on a different line does not rescue the match.
+  assert.equal(findCrossProjectAssetClaim('The case-study image depicts another project and does not match this client.'), null);
+  // Asset context in a different item does not rescue the match.
   assert.equal(findCrossProjectAssetClaim('1. Optimize the hero images.\n2. The footer link opens another project.'), null);
-  // Asset context on the same line does.
+  // Asset + hosting context in the same item does.
   assert.equal(findCrossProjectAssetClaim('1. Fix the footer.\n2. Team photos are hosted in another project.'), 'another project');
+  // Plural form and heading-plus-continuation items are still claims.
+  assert.equal(findCrossProjectAssetClaim('Images are hosted in other Webflow projects.'), 'other Webflow projects');
+  assert.equal(findCrossProjectAssetClaim('Images:\nThese come from another Webflow project.'), 'another Webflow project');
+  assert.equal(findCrossProjectAssetClaim('- Hero images\n  are served from a different project\n- Fix the footer'), 'different project');
 
   // Withdrawing or negating the claim is the correction the policy asks for; let it through.
   assert.equal(
