@@ -95,6 +95,14 @@ function fakeWebflow() {
   return { staged, live, calls, config };
 }
 
+/** Nothing links to the target, so its unpublish never 409s. */
+function withoutReferencers(web: ReturnType<typeof fakeWebflow>) {
+  for (const store of [web.staged, web.live]) {
+    for (const item of store.values()) item.related = item.related.filter((id) => id !== TARGET);
+  }
+  return web;
+}
+
 function fakeAirtable(fields: Record<string, unknown>, options: { failComment?: boolean; publishedOwners?: AirtableRecord[] } = {}) {
   const record: AirtableRecord = { id: ASSET, createdTime: '', fields: { [F.type]: 'Template🏗️', ...fields } } as AirtableRecord;
   const comments: Array<{ id: string; text: string; createdTime: string }> = [];
@@ -153,7 +161,7 @@ test('archivedName replaces any earlier Archived suffixes with the delist date; 
   assert.equal(listedName('SoftBit - Ecommerce'), 'SoftBit - Ecommerce');
 });
 
-test('permanent delist snapshots first, writes Airtable, strips referencers, unpublishes and archives', async () => {
+test('permanent delist writes Airtable, snapshots and strips referencers, unpublishes and archives', async () => {
   const web = fakeWebflow();
   const at = fakeAirtable(publishedFields);
 
@@ -214,9 +222,35 @@ test('temporary delist leaves the name and delist reason untouched', async () =>
   assert.deepEqual(at.writes, [{ [F.marketplaceStatus]: '4️⃣Delisted☠️', [F.cmsStatus]: 'Archived' }]);
 });
 
-test('delist changes nothing when the snapshot comment cannot be written', async () => {
+test('a delist with no referencers writes no comment, so it succeeds when comments are not permitted', async () => {
+  const web = withoutReferencers(fakeWebflow());
+  const at = fakeAirtable(publishedFields, { failComment: true });
+  const result = await delist(at, web.config, { mode: 'permanent', reason: 'Creator request' });
+  assert.equal(result.verified, true);
+  assert.equal(web.live.has(TARGET), false);
+  assert.equal(web.staged.get(TARGET)?.isArchived, true);
+  assert.equal(at.comments.length, 0);
+});
+
+test('a delist with referencers stops before stripping them when the snapshot comment cannot be written', async () => {
   const web = fakeWebflow();
   const at = fakeAirtable(publishedFields, { failComment: true });
+  await assert.rejects(
+    delist(at, web.config, { mode: 'temporary' }),
+    (error: { code?: string }) => error.code === 'DELIST_PARTIAL_REFERENCER_SNAPSHOT_FAILED',
+  );
+  // Airtable is already Delisted; the CMS is untouched, so no link is lost.
+  assert.deepEqual(at.writes, [{ [F.marketplaceStatus]: '4️⃣Delisted☠️', [F.cmsStatus]: 'Archived' }]);
+  assert.equal(web.live.has(TARGET), true);
+  assert.equal(web.staged.get(TARGET)?.isArchived, false);
+  assert.deepEqual(web.live.get(REF_B)?.related, [TARGET]);
+  assert.deepEqual(web.live.get(TAG)?.related, [TARGET, REF_A]);
+  assert.ok(web.calls.every((call) => !call.startsWith('PATCH ')), 'no item was patched');
+});
+
+test('an asset with several CMS items changes nothing when the snapshot comment cannot be written', async () => {
+  const web = withoutReferencers(fakeWebflow());
+  const at = fakeAirtable({ ...publishedFields, [F.cmsItemIds]: [TARGET, MISSING] }, { failComment: true });
   await assert.rejects(delist(at, web.config, { mode: 'temporary' }), /comments not permitted/);
   assert.equal(at.writes.length, 0);
   assert.ok(web.calls.every((call) => call.startsWith('GET ')), 'only the preview reads ran');
@@ -369,6 +403,96 @@ test('a publish that answers 202 with item errors fails, and the relist can be r
   const retry = await executeRelist(at.airtable, config, { assetId: ASSET, expectedCmsItemIds: [TARGET], actor: 'x', now: NOW });
   assert.equal(retry.resumed, true);
   assert.equal(retry.verified, true);
+});
+
+test('a relist interrupted after a delist with no referencers (no snapshot) can be re-run to finish', async () => {
+  const web = withoutReferencers(fakeWebflow());
+  const at = fakeAirtable(publishedFields);
+  await delist(at, web.config, { mode: 'temporary' });
+  assert.equal(at.comments.length, 0);
+  let failPublish = true;
+  const flaky: typeof fetch = async (input, init) => {
+    if (failPublish && String(input).endsWith('/items/publish')) {
+      failPublish = false;
+      return Response.json({ publishedItemIds: [], errors: [{ id: TARGET, message: 'validation' }] }, { status: 202 });
+    }
+    return web.config.fetchFn!(input, init);
+  };
+  const config = { ...web.config, fetchFn: flaky };
+  await assert.rejects(
+    executeRelist(at.airtable, config, { assetId: ASSET, expectedCmsItemIds: [TARGET], actor: 'x', now: NOW }),
+    (error: { code?: string }) => error.code === 'MARKETPLACE_CMS_WRITE_FAILED',
+  );
+  const retry = await executeRelist(at.airtable, config, { assetId: ASSET, expectedCmsItemIds: [TARGET], actor: 'x', now: NOW });
+  assert.equal(retry.resumed, true);
+  assert.equal(retry.verified, true);
+});
+
+test('relist of a Published asset whose listing is fully live is a no-change success', async () => {
+  const web = withoutReferencers(fakeWebflow());
+  const at = fakeAirtable(publishedFields);
+  const result = await executeRelist(at.airtable, web.config, { assetId: ASSET, expectedCmsItemIds: [TARGET], actor: 'x', now: NOW });
+  assert.equal(result.already_listed, true);
+  assert.deepEqual(result.cms_items, []);
+  assert.equal(at.writes.length, 0);
+});
+
+test('a transient page error on a live Published asset is not treated as an interrupted relist', async () => {
+  const web = withoutReferencers(fakeWebflow());
+  const at = fakeAirtable(publishedFields);
+  const flaky: typeof fetch = async (input, init) =>
+    new URL(String(input)).hostname === 'webflow.com' ? new Response('', { status: 503 }) : web.config.fetchFn!(input, init);
+  await assert.rejects(
+    executeRelist(at.airtable, { ...web.config, fetchFn: flaky }, { assetId: ASSET, expectedCmsItemIds: [TARGET], actor: 'x', now: NOW }),
+    (error: { code?: string }) => error.code === 'ASSET_NOT_DELISTED',
+  );
+  assert.equal(at.writes.length, 0);
+});
+
+test('a multi-item Published asset with one stale archived item and a serving page is not republished', async () => {
+  const web = withoutReferencers(fakeWebflow());
+  web.staged.set(MISSING, { related: [], isArchived: true });
+  const at = fakeAirtable({ ...publishedFields, [F.cmsItemIds]: [TARGET, MISSING] });
+  const result = await executeRelist(at.airtable, web.config, { assetId: ASSET, expectedCmsItemIds: [TARGET, MISSING], actor: 'x', now: NOW });
+  assert.equal(result.already_listed, true);
+  assert.deepEqual(result.cms_items, []);
+  assert.equal(at.writes.length, 0);
+});
+
+test('a Published asset whose staged copy is archived but whose live listing serves is not republished', async () => {
+  const web = withoutReferencers(fakeWebflow());
+  web.staged.get(TARGET)!.isArchived = true;
+  const at = fakeAirtable(publishedFields);
+  const result = await executeRelist(at.airtable, web.config, { assetId: ASSET, expectedCmsItemIds: [TARGET], actor: 'x', now: NOW });
+  assert.equal(result.already_listed, true);
+  assert.deepEqual(result.cms_items, []);
+  assert.equal(at.writes.length, 0);
+  assert.equal(web.staged.get(TARGET)?.isArchived, true);
+});
+
+test('a relist with no snapshot to retire writes no marker, so it completes when comments are not permitted', async () => {
+  const web = withoutReferencers(fakeWebflow());
+  const at = fakeAirtable(publishedFields, { failComment: true });
+  await delist(at, web.config, { mode: 'temporary' });
+  const result = await executeRelist(at.airtable, web.config, { assetId: ASSET, expectedCmsItemIds: [TARGET], actor: 'x', now: NOW });
+  assert.equal(result.verified, true);
+  assert.equal(web.live.has(TARGET), true);
+  assert.equal(at.comments.length, 0);
+});
+
+test('a no-snapshot relist retried after the page recovered reports success without changes', async () => {
+  const web = withoutReferencers(fakeWebflow());
+  const at = fakeAirtable(publishedFields);
+  await delist(at, web.config, { mode: 'temporary' });
+  const down: typeof fetch = async (input, init) =>
+    new URL(String(input)).hostname === 'webflow.com' ? new Response('', { status: 404 }) : web.config.fetchFn!(input, init);
+  const first = await executeRelist(at.airtable, { ...web.config, fetchFn: down }, { assetId: ASSET, expectedCmsItemIds: [TARGET], actor: 'x', now: NOW });
+  assert.equal(first.verified, false);
+  const writes = at.writes.length;
+  const retry = await executeRelist(at.airtable, web.config, { assetId: ASSET, expectedCmsItemIds: [TARGET], actor: 'x', now: NOW });
+  assert.equal(retry.already_listed, true);
+  assert.equal(retry.verified, true);
+  assert.equal(at.writes.length, writes);
 });
 
 test('relist that cannot confirm the page leaves no marker, so it can be re-run', async () => {
