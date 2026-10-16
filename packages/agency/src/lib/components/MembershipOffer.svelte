@@ -63,6 +63,8 @@
         Bring a workflow, software problem or existing product. We diagnose the problem, agree on the change,
         engineer and test it, then help your team use the result. We retain project context across agreed work.
       </p>
+      <p><strong>Micah Johnson currently delivers the service.</strong> He diagnoses problems, engineers improvements and helps your team use the result. <a href="/about">Meet Micah and inspect his work →</a></p>
+      <p><strong>Focused and managed Control cover different work.</strong> Focused is {PUBLIC_PRICING.membership.focused.label} for agreed improvements, learning and operator support. <a href="/control">Managed Control</a> starts at $900/month for agreed live operations after launch, under a separate agreement. Production incident response is not included in membership.</p>
     </div>
     <div class="plans">
       <article class="plan" aria-labelledby="focused-plan-title">
@@ -137,6 +139,7 @@
   }
   .offer { padding: clamp(2rem, 5vw, 5rem) max(1.25rem, calc((100% - 80rem) / 2)); }
   .offer-intro { max-width: 65ch; }
+  .offer-intro a { text-decoration: underline; }
   .plans { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-performance-md); margin-block: var(--space-performance-xl); }
   .plan { display: flex; flex-direction: column; min-width: 0; border: 1px solid var(--color-performance-line-strong); padding: var(--space-performance-lg); }
   .plan h3 { margin: var(--space-performance-sm) 0 0; }

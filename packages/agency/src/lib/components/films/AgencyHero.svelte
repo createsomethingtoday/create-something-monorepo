@@ -39,6 +39,7 @@
     <h1 id="agency-hero-title">Keep your tools working.</h1>
     <p class="lede">We diagnose problems, engineer improvements, and help your team use the result.</p>
     <div class="hero-actions"><a class="primary" href={agencyCoreMessaging.workflowMappingSessionHref}>Talk through your workflow ↗</a></div>
+    <p class="starting-point">Choose your next step: <a href="/services#membership">ongoing technical support</a>, <a href="/products">available tools</a>, or <a href="/agent-foundation">a custom build</a>. The catalog labels public tools, beta limits and separately scoped services.</p>
     <p class="starting-point">Support {PUBLIC_PRICING.membership.label.toLowerCase()} · Agreed scope. <a href="/services#membership">See membership and costs ↗</a></p>
   </div>
   </div>
@@ -67,7 +68,7 @@
   .primary { display: inline-flex; align-items: center; min-height: 48px; padding: var(--space-performance-xs) var(--space-performance-md); background: var(--color-performance-paper); color: var(--color-performance-ink); border: 1px solid var(--color-performance-paper); border-radius: var(--radius-performance-sm); text-decoration: none; }
   .primary:hover { background: var(--color-performance-ink); color: var(--color-performance-paper); }
   .starting-point { margin-top: var(--space-performance-md); font-size: var(--text-performance-caption); line-height: 1.6; color: var(--color-performance-fg-secondary); }
-  .starting-point a { display: inline-flex; min-height: 44px; align-items: center; }
+  .starting-point a { text-decoration: underline; text-underline-offset: .2em; display: inline-flex; min-height: 44px; align-items: center; }
   .hero-bottom { display: flex; flex-wrap: wrap; gap: var(--space-performance-sm); justify-content: space-between; align-items: center; padding: var(--space-performance-sm) 7vw; border-top: 1px solid var(--color-performance-shell-border-default); }
   a { color: inherit; text-underline-offset: .3em; }
   .hero-bottom a { display: inline-flex; align-items: center; min-height: 44px; }

@@ -199,6 +199,13 @@
         <strong>{product.name}</strong>
         <p>{product.customerJob}</p>
         <small>{product.accessLabel}</small>
+        {#if product.id === 'map'}
+          <p><strong>Availability:</strong> Explore the browser-local starter now. The separate account workspace has pricing at launch; this is not a paid workspace checkout.</p>
+        {:else if product.id === 'build'}
+          <p><strong>Requirements:</strong> Build is a service scoped and quoted separately. Agree on the workflow, deliverables and acceptance checks before work begins. Production launch is agreed separately.</p>
+        {:else}
+          <p><strong>Requirements:</strong> Managed Control starts after launch for an agreed live environment. Scope, access, response times and activation require a separate agreement.</p>
+        {/if}
       </div>
       <ul>
         {#each familyPoints(index) as point}<li>{point}</li>{/each}

@@ -38,7 +38,7 @@
       {#if initialIntegrationName}
         <p class="mapping-boundary">Mapping context: {initialIntegrationName}. Add its role and handoffs to your drawing. Account access is agreed separately.</p>
       {/if}
-      <p class="mapping-boundary">{PUBLIC_PRICING.map.publicStarterLabel} · Use Draw below to explore the workflow.</p>
+      <p class="mapping-boundary">{PUBLIC_PRICING.map.publicStarterLabel} · Use Draw below to explore the workflow. The separate account workspace has pricing at launch; opening it does not purchase a subscription.</p>
       <ol class="mapping-steps" aria-label="How we map a workflow">
         {#each mappingSteps as step}
           <li>
