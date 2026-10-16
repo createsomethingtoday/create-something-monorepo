@@ -31,7 +31,7 @@
     <p class="eyebrow">AI-native technical support · Local preview</p>
     <h1>Make the problem clear.</h1>
     <p>Describe one real workflow. Review the evidence, boundaries and unknowns before sharing it with an accountable expert.</p>
-    <p class="boundary">This form keeps your brief in page memory. Reloading clears it. Export saves a file; it does not open a ticket or authorize work. Omit passwords, tokens and confidential customer details.</p>
+    <p class="boundary">This form keeps your brief in page memory. Reloading clears it. Export requests a file download; it does not open a ticket or authorize work. Omit passwords, tokens and confidential customer details.</p>
   </header>
   <section aria-labelledby="agent-heading">
     <h2 id="agent-heading">Start with your agent, or write here.</h2>

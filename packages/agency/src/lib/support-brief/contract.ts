@@ -54,6 +54,6 @@ export function briefMarkdown(value: SupportBrief): string {
   return ['# Support brief', '', `Contract: ${brief.version}`, '',
     'Prepared locally. Not submitted. No work, access, purchase, or publication authorized.', '',
     ...Object.entries(briefFields).flatMap(([key, field]) => [
-      `## ${field.label}`, '', ...(brief[key as BriefField] || 'Not provided.').split(/\r?\n/).map(line => `    ${line}`), ''
+      `## ${field.label}`, '', ...(brief[key as BriefField] || 'Not provided.').split(/\r\n?|\n/).map(line => `    ${line}`), ''
     ])].join('\n');
 }

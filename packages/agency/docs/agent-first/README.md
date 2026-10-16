@@ -56,7 +56,7 @@ Do not push this `codex/**` branch: `.github/workflows/agency-pages-deploy.yml` 
 ## Validation record
 
 - Worktree bootstrap completed with pinned Node 22.21.1 / pnpm 9.15.0; unrelated optional install-script and unbuilt package-bin warnings were reported.
-- Six support-brief contract/transition tests pass. Local discovery GET and server-rendered page pass via localhost.
-- Agency Svelte diagnostics are rerun after the reducer change; see task handoff for final result.
-- Skill validator could not start with system Python because PyYAML is absent. Required name/description and bundled schema were manually inspected; schema parity is tested. No dependency was installed to hide this limitation.
+- Ten support-brief contract/transition tests pass. Local discovery GET and server-rendered page pass via localhost.
+- Agency Svelte diagnostics pass with zero errors and zero warnings after the reducer and export corrections.
+- Skill validator passes using PyYAML 6.0.3 from PyPI in /tmp/cs-skill-validation, an isolated temporary virtual environment. No global Python package or repository dependency changed. Bundled schema parity is also tested.
 - Chrome interaction verification paused after the computer-use tool reported user activity. No host is marked end-to-end qualified.
