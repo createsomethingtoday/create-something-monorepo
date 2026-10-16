@@ -34,6 +34,18 @@ export interface ArtifactVisualSummary {
   title: string;
   caption?: string;
   nodes: ArtifactVisualNode[];
+  /** Optional diagram, rendered with the shared IsometricArchitecture component. */
+  architecture?: {
+    nodes: Array<{
+      id: string;
+      label: string;
+      sublabel?: string;
+      position: { x: number; y: number; z: number };
+      size?: { w: number; h: number; d: number };
+    }>;
+    connections?: Array<{ from: string; to: string; label?: string }>;
+    title?: string;
+  };
 }
 
 export interface GeneratedBrandImageSpec {

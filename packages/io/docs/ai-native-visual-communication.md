@@ -177,3 +177,26 @@ Before publishing an artifact with visuals:
 
 The current catalog applies that pattern to every file-based `.io` paper and
 experiment.
+
+## Optional isometric architecture
+
+A visual definition can supply `architecture` with `nodes`, optional `connections`,
+and a `title`. Each node names its `id`, `label`, optional `sublabel`, 3D `position`
+(`x`, `y`, `z`), and optional `size` (`w`, `h`, `d`). The shared
+`ArtifactVisualSummary` renders this through Canon's existing
+`IsometricArchitecture`, with animation disabled. Existing summaries without
+`architecture` retain their previous rendering.
+
+Keep the ordinary summary `nodes` alongside the diagram: they explain its meaning
+in text at narrow widths and without relying on geometry. Use synthetic records
+for publication drafts. The `selective-context` paper demonstrates separate source
+and index dates. Its image-generation metadata remains prompt-only; the diagram
+requires no generated image or model call.
+
+The static renderer explicitly shows faces and labels when `animate={false}`.
+Research summaries place labels above solid faces to keep dates legible. Local
+file-backed paper drafts may set `publication_status: 'draft'`: published
+collections exclude them, their detail route returns 404 outside development,
+and the article header labels the date as Draft. Frontmatter `published: false`
+alone is not a route guard. Remove the metadata draft flag only through the
+separately authorized publication workflow.
