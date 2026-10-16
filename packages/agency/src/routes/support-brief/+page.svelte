@@ -72,7 +72,7 @@
   h1 { font-size: clamp(2.5rem, 6vw, 4.5rem); line-height: 1.05; letter-spacing: -0.04em; }
   h2 { font-size: 1.5rem; margin-bottom: 1rem; }
   p { max-width: 70ch; line-height: 1.6; margin: 1rem 0; }
-  .eyebrow { font-family: var(--font-performance-mono, monospace); font-size: 0.8rem; }
+  .eyebrow { color: inherit; font-family: var(--font-performance-mono, monospace); font-size: 0.8rem; }
   .boundary { border-left: 2px solid currentColor; padding-left: 1rem; }
   .field { margin-bottom: 1.5rem; }
   label { display: block; margin: 1rem 0 0.5rem; }
