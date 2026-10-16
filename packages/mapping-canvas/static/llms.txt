@@ -18,7 +18,7 @@ Draw registers a semantic WebMCP surface through `document.modelContext.register
 
 ## Data boundary
 
-Ordinary canvas editing persists on the current device in browser storage. Explicit snapshot publishing uploads the document to CREATE SOMETHING and creates an unlisted view-only link; anyone with that link can view it. A paired agent connection sends short-lived commands and results through the Draw service, and the connected agent provider may receive canvas content. Pair only the intended project and disconnect when finished. Exports also leave browser storage at your direction. Browser storage and installed-app state are specific to the hostname in use, so use JSON export and import when moving between origins or devices.
+During ordinary local editing, canvas content is saved only on the current device in browser storage. Explicit snapshot publishing uploads the document to CREATE SOMETHING and creates an unlisted view-only link; anyone with that link can view it. A paired agent connection sends short-lived commands and results through the Draw service, and the connected agent provider may receive canvas content. Pair only the intended project and disconnect when finished. Exports also leave browser storage at your direction. Browser storage and installed-app state are specific to the hostname in use, so use JSON export and import when moving between origins or devices.
 
 ## Canonical URL
 
