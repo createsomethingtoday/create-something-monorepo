@@ -1,6 +1,6 @@
 # Draw agent plugin connection
 
-The existing personal `draw-motion-descript` plugin bundles the adapter in `../scripts/draw-agent.py` and the `skills/draw-agent` skill. Update it with `python3 packages/mapping-canvas/scripts/install-agent-plugin.py /Users/micahjohnson/plugins/draw-motion-descript`, validate, run the Plugin Creator cachebuster helper, and reinstall `draw-motion-descript@personal`. The installer preserves narration scripts/configuration and other MCP servers.
+The existing personal `draw-motion-descript` plugin bundles the adapter in `../scripts/draw-agent.py` and the `skills/draw-agent` skill. Update it with `python3 packages/mapping-canvas/scripts/install-agent-plugin.py /absolute/path/to/your/draw-motion-descript`, validate, run the Plugin Creator cachebuster helper, and reinstall `draw-motion-descript@personal`. The installer preserves narration scripts/configuration and other MCP servers.
 
 The stdio adapter requires Python 3, uses no third-party dependencies, and connects to Draw's bounded `/api/agent` API. WebMCP continues using the same underlying browser tool instances. An open project and explicit one-time pairing code are required; this is delegated access to a device-local project, not authenticated account identity or a cloud project store. Agent names are self-reported.
 
