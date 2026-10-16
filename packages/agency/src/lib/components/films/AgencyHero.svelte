@@ -39,6 +39,7 @@
     <h1 id="agency-hero-title">Keep your tools working.</h1>
     <p class="lede">We diagnose problems, engineer improvements, and help your team use the result.</p>
     <div class="hero-actions"><a class="primary" href={agencyCoreMessaging.workflowMappingSessionHref}>Talk through your workflow ↗</a></div>
+    <p class="starting-point">Choose your next step: <a href="/services#membership">ongoing technical support</a>, <a href="/products">available tools</a>, or <a href="/agent-foundation">a custom build</a>. The catalog labels public tools, beta limits and separately scoped services.</p>
     <p class="starting-point">Support {PUBLIC_PRICING.membership.label.toLowerCase()} · Agreed scope. <a href="/services#membership">See membership and costs ↗</a></p>
   </div>
   </div>

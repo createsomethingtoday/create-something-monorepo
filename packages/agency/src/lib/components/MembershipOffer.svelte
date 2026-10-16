@@ -63,6 +63,8 @@
         Bring a workflow, software problem or existing product. We diagnose the problem, agree on the change,
         engineer and test it, then help your team use the result. We retain project context across agreed work.
       </p>
+      <p><strong>Micah Johnson currently delivers the service.</strong> He diagnoses problems, engineers improvements and helps your team use the result. <a href="/about">Meet Micah and inspect his work →</a></p>
+      <p><strong>Focused and managed Control cover different work.</strong> Focused is {PUBLIC_PRICING.membership.focused.label} for agreed improvements, learning and operator support. <a href="/control">Managed Control</a> starts at $900/month for agreed live operations after launch, under a separate agreement. Production incident response is not included in membership.</p>
     </div>
     <div class="plans">
       <article class="plan" aria-labelledby="focused-plan-title">
