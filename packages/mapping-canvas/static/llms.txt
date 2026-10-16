@@ -10,15 +10,15 @@ Draw is a free, local-first drawing canvas for mapping meetings and spatial note
 - Add editable spatial notes and organize work with groups.
 - Convert selected marks into notes, connectors, or groups while retaining source provenance.
 - Export the canvas as JSON, SVG, or PNG and import compatible JSON documents.
-- Control the visible canvas with sixteen WebMCP site tools in supported agent browsers.
+- Control the visible canvas through WebMCP in compatible browsers. Inspect the current runtime tool catalog; tools vary by project mode and host support.
 
 ## Agent interface
 
-Draw registers a semantic WebMCP surface through `document.modelContext.registerTool`: compact inspection, composition, paths, partial patches, layout, camera focus, targeted revert, dedicated destructive actions, complete state, low-level operations, selection, tool choice, history, and reset. Agent changes use the same local document, history, and persistence operations as human changes, return revision-bearing receipts, and display an on-canvas transition. WebMCP mutation is limited to the browser-local canvas; paired native shells use their dedicated synchronization controls.
+Draw registers a semantic WebMCP surface through `document.modelContext.registerTool`: compact inspection, composition, paths, partial patches, layout, camera focus, targeted revert, dedicated destructive actions, complete state, low-level operations, selection, tool choice, history, and reset. Agent changes use the same local document, history, and persistence operations as human changes, return revision-bearing receipts, and display an on-canvas transition. Ordinary drawing mutations operate on the browser-local canvas. Explicit snapshot publishing sends document content to the Draw service. Paired native shells use their dedicated synchronization controls. A separate Python stdio adapter can connect an agent through explicit, temporary project pairing; this is not an unrestricted remote MCP endpoint.
 
 ## Data boundary
 
-Canvas content is saved only on the current device in browser storage. CREATE SOMETHING does not receive the canvas contents. Browser storage and installed-app state are specific to the hostname in use, so use JSON export and import when moving between origins or devices.
+Ordinary canvas editing persists on the current device in browser storage. Explicit snapshot publishing uploads the document to CREATE SOMETHING and creates an unlisted view-only link; anyone with that link can view it. A paired agent connection sends short-lived commands and results through the Draw service, and the connected agent provider may receive canvas content. Pair only the intended project and disconnect when finished. Exports also leave browser storage at your direction. Browser storage and installed-app state are specific to the hostname in use, so use JSON export and import when moving between origins or devices.
 
 ## Canonical URL
 

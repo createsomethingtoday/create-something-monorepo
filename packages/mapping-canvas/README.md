@@ -26,7 +26,7 @@ pnpm --filter @create-something/mapping-canvas verify:download
 
 ## WebMCP site tools
 
-Draw registers twenty-seven tools through `document.modelContext.registerTool`, with a compatibility fallback for older `navigator.modelContext` or `provideContext` implementations:
+Draw registers its current tool catalog through `document.modelContext.registerTool`, with a compatibility fallback for older `navigator.modelContext` or `provideContext` implementations:
 
 - `draw_get_state` reads the full local document and shared focus state.
 - `draw_execute` runs a revision-guarded edit batch plus object/rendered verification and real activity in one browser command. The agent plugin exposes `draw_agent_run` and optional bounded Jev routing via `draw_agent_intent`; see [fast execution](docs/fast-execution.md).
