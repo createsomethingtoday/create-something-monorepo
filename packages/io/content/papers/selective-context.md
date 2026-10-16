@@ -5,19 +5,19 @@ authors: ['CREATE SOMETHING']
 category: 'Research'
 abstract: 'A local index helps an agent find relevant evidence without loading an entire workspace. In a synthetic workshop with seven modules and twenty frozen questions, Atlas selected the expected passage nineteen times. Exact citation and response-budget checks passed. Tests also confirmed that refreshing a projection preserves the age of its source facts and does not claim live verification. The remaining retrieval miss shows why readers still need to inspect the source.'
 keywords: ['Atlas', 'Substrate', 'Context Retrieval', 'Evidence', 'Agent Engineering']
-publishedAt: '2026-10-15'
+publishedAt: '2026-10-16'
 readingTime: 7
 difficulty: 'intermediate'
-published: false
+published: true
 ---
-
-> Local research draft. Publication has not been approved. Results below come from synthetic data, not a client workflow.
 
 Give an agent a way to find the relevant passage, then make it check what that passage can prove. A freshly rebuilt index tells you that local documents were processed. It does not tell you that their underlying facts were checked today.
 
 Consider a workshop inventory observed on October 1. On October 15, an agent rebuilds its search index and retrieves an ownership note. The search result can be accurate, correctly cited, and newly generated while the ownership information is still two weeks old. If the owner changed yesterday, refreshing the index will not discover it.
 
 We built a small experiment around that distinction. It asks whether selective retrieval can return useful, inspectable context within a fixed response budget. It also tests whether refresh and failure states remain honest.
+
+![Synthetic source facts observed October 1 feed a local index rebuilt October 15; the cited passage still needs inspection.](/research/selective-context/article-diagram.svg)
 
 ## Find a passage before loading the workspace
 
@@ -97,7 +97,7 @@ The crucial rule is simple: a successful local refresh can improve projection co
 
 ## Reproduce the result
 
-The [recorded result](/research/selective-context/results.json), [questions](/research/selective-context/queries.json), and [frozen input hashes](/research/selective-context/freeze.json) are public-safe companion files prepared with this draft. The [reproduction guide](/research/selective-context/README.md) lists all seven corpus files and the selected controls.
+The [recorded result](/research/selective-context/results.json), [questions](/research/selective-context/queries.json), and [frozen input hashes](/research/selective-context/freeze.json) are public-safe companion files for this study. The [reproduction guide](/research/selective-context/README.md) lists all seven corpus files and the selected controls.
 
 From a checkout containing this article, use Node 22.21.1 and run:
 

@@ -1,6 +1,5 @@
 <script lang="ts">
 	import Icon from '../../icons/Icon.svelte';
-	import IsometricArchitecture from '../../visual/IsometricArchitecture.svelte';
 	import type { ArtifactVisualSummary as ArtifactVisualSummaryData } from '../../types/paper.js';
 
 	interface Props {
@@ -29,10 +28,6 @@
 		{/if}
 	</div>
 
-	{#if visual.architecture}
-		<IsometricArchitecture {...visual.architecture} animate={false} size={460} />
-	{/if}
-
 	<div class="visual-nodes" role="list">
 		{#each visual.nodes as node, index}
 			<div class="visual-node tone-{node.tone || 'neutral'}" role="listitem">
@@ -55,15 +50,6 @@
 </section>
 
 <style>
-	/* Keep diagram labels above solid faces and readable in the research shell. */
-	.artifact-visual-summary :global(.isometric-architecture .node-label) {
-		transform: translateY(-55px);
-		font-size: 13px;
-	}
-	.artifact-visual-summary :global(.isometric-architecture .node-sublabel) {
-		transform: translateY(-55px);
-		font-size: 10px;
-	}
 	.artifact-visual-summary {
 		margin-top: 2rem;
 		padding: 1.25rem;

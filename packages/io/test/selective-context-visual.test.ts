@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { render } from 'svelte/server';
 import ArtifactVisualSummary from '../../canon/src/lib/domains/io/ArtifactVisualSummary.svelte';
@@ -8,12 +9,14 @@ describe('research diagrams preserve the textual explanation', () => {
   it('renders the synthetic context diagram with source and projection dates', () => {
     const visual = getFileBasedPaper('selective-context')!.visual_summary!;
     const { body } = render(ArtifactVisualSummary, { props: { visual } });
-    expect(body).toContain('<svg');
-    expect(body).toContain('static-diagram');
-    expect(body).not.toContain('<animate');
-    expect(body).toContain('Observed Oct 1');
-    expect(body).toContain('Rebuilt Oct 15');
-    expect(body).toContain('Still inspect');
+    const svg = readFileSync(new URL('../static/research/selective-context/article-diagram.svg', import.meta.url), 'utf8');
+    const article = readFileSync(new URL('../content/papers/selective-context.md', import.meta.url), 'utf8');
+    expect(article).toContain('/research/selective-context/article-diagram.svg');
+    expect(svg).toContain('<svg');
+    expect(svg).not.toContain('<animate');
+    expect(svg).toContain('Observed Oct 1');
+    expect(svg).toContain('Rebuilt Oct 15');
+    expect(svg).toContain('Still inspect');
     expect(body).toContain('When were the underlying facts checked?');
     expect(body).toContain('Does the local index match its inputs?');
     expect(body).toContain('role="list"');

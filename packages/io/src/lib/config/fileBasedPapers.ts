@@ -23,7 +23,6 @@ export type FileBasedPaper = FileBasedExperiment & { publication_status?: 'draft
 const fileBasedPaperMetadata: FileBasedPaper[] = [
 	{
 		id: 'paper-selective-context',
-		publication_status: 'draft',
 		slug: 'selective-context',
 		title: 'A Fresh Index Can Still Carry Old Facts',
 		description: 'A synthetic Atlas/Substrate experiment on selective context: 20 frozen questions, exact citations, bounded responses, and the difference between refreshing a projection and verifying its sources.',
@@ -31,8 +30,8 @@ const fileBasedPaperMetadata: FileBasedPaper[] = [
 		excerpt_long: 'Nineteen of twenty synthetic questions selected the expected passage. The remaining question exposed a lexical retrieval limit. Citation, byte-budget, and recovery checks passed; none of those results establishes that the source facts are current.',
 		category: 'Research',
 		tags: ['Atlas', 'Substrate', 'Context Retrieval', 'Evidence', 'Agent Engineering'],
-		created_at: '2026-10-15T12:00:00Z',
-		updated_at: '2026-10-15T12:00:00Z',
+		created_at: '2026-10-16T00:00:00Z',
+		updated_at: '2026-10-16T00:00:00Z',
 		reading_time_minutes: 7,
 		difficulty: 'intermediate',
 		is_file_based: true,
@@ -575,15 +574,6 @@ const fileBasedPaperVisuals = {
 			{ label: 'Refresh', detail: 'Does the local index match its inputs?', tone: 'receipt' },
 			{ label: 'Inspect', detail: 'Does this cited passage answer the question?', tone: 'neutral' }
 		],
-		architecture: {
-			title: 'Source facts flow through a local index to a cited passage',
-			nodes: [
-				{ id: 'facts', label: 'Source facts', sublabel: 'Observed Oct 1', position: { x: -190, y: 0, z: 0 }, size: { w: 100, h: 35, d: 65 } },
-				{ id: 'index', label: 'Local index', sublabel: 'Rebuilt Oct 15', position: { x: -35, y: 0, z: 0 }, size: { w: 100, h: 35, d: 65 } },
-				{ id: 'passage', label: 'Cited passage', sublabel: 'Still inspect', position: { x: 120, y: 0, z: 0 }, size: { w: 100, h: 35, d: 65 } }
-			],
-			connections: [{ from: 'facts', to: 'index' }, { from: 'index', to: 'passage' }]
-		},
 		subject: 'Three isometric blocks distinguish source observation, local projection refresh, and cited retrieval.',
 		motifs: ['source date remains unchanged', 'bounded cited passage', 'separate authority boundary'],
 		alt: 'Source facts observed October 1 feed an index rebuilt October 15 and a passage that still needs inspection.'

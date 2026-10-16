@@ -13,7 +13,6 @@ export interface ArtifactVisualDefinitionInput {
 	title: string;
 	caption?: string;
 	nodes: ArtifactVisualNode[];
-	architecture?: ArtifactVisualSummary['architecture'];
 	subject: string;
 	motifs: string[];
 	alt: string;
@@ -31,8 +30,7 @@ export function defineArtifactVisuals(input: ArtifactVisualDefinitionInput): Art
 			kind: input.kind,
 			title: input.title,
 			caption: input.caption,
-			nodes: input.nodes,
-			...(input.architecture ? { architecture: input.architecture } : {})
+			nodes: input.nodes
 		},
 		generated_brand_image: {
 			prompt_contract: CREATE_SOMETHING_RESEARCH_VISUAL_PROMPT_CONTRACT,

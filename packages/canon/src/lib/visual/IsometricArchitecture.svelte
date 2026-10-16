@@ -107,7 +107,6 @@
 
 <div
 	class="isometric-architecture {className}"
-	class:static-diagram={!animate}
 	use:inview={{ threshold: 0.3, onInView: () => (isInView = true) }}
 >
 	<svg viewBox={viewBox} class="arch-svg">
@@ -352,20 +351,6 @@
 		font-style: italic;
 		fill: var(--color-performance-fg-muted, rgba(255, 255, 255, 0.4));
 		opacity: 0;
-	}
-
-	/* Static exports must remain visible without SMIL animation. */
-	.static-diagram .face,
-	.static-diagram .node-label,
-	.static-diagram .node-sublabel,
-	.static-diagram .connection-label,
-	.static-diagram .arch-title {
-		opacity: 1;
-	}
-
-	.static-diagram .connection {
-		stroke-dasharray: none;
-		stroke-dashoffset: 0;
 	}
 
 	/* Hover states */
