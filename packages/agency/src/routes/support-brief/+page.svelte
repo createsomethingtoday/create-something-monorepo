@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { Button } from '@create-something/canon';
   import { briefFields, parseBrief, briefMarkdown, type BriefField } from '$lib/support-brief/contract';
   import { initialBriefState, reduceBrief, type BriefEvent } from '$lib/support-brief/state';
   let model = $state(initialBriefState());
@@ -26,9 +27,9 @@
   <meta name="description" content="Prepare and review a workflow support brief before sharing it." />
 </svelte:head>
 
-<main data-no-track data-analytics-ignore>
+<div class="brief-workspace" data-no-track data-analytics-ignore>
   <header>
-    <p class="eyebrow">AI-native technical support · Local preview</p>
+    <p class="brief-eyebrow">AI-native technical support · Local preview</p>
     <h1>Make the problem clear.</h1>
     <p>Describe one real workflow. Review the evidence, boundaries and unknowns before sharing it with an accountable expert.</p>
     <p class="boundary">This form keeps your brief in page memory. Reloading clears it. Export requests a file download; it does not open a ticket or authorize work. Omit passwords, tokens and confidential customer details.</p>
@@ -40,46 +41,57 @@
       <summary>Import a prepared brief</summary>
       <label for="brief-import">Brief JSON</label>
       <textarea id="brief-import" bind:value={incoming} rows="6" maxlength="40000" spellcheck="false"></textarea>
-      <button type="button" onclick={load}>Import for review</button>
+      <Button variant="secondary" onclick={load}>Import for review</Button>
     </details>
   </section>
-  <form onsubmit={(event) => { event.preventDefault(); dispatch({ type: 'prepare' }); }}>
+  <form aria-label="Support brief" onsubmit={(event) => { event.preventDefault(); dispatch({ type: 'prepare' }); }}>
     {#each fields as [key, field]}
-      <div class="field">
+      <div class="field" class:field-wide={key !== 'tools' && key !== 'owner'}>
         <label for={`brief-${key}`}>{field.label}{field.required ? ' (required)' : ' (optional)'}</label>
         <textarea id={`brief-${key}`} value={model.brief[key]} oninput={(event) => dispatch({ type: 'edit', field: key, value: event.currentTarget.value })} rows={key === 'workflow' || key === 'owner' ? 2 : 3} required={field.required} maxlength={field.maxLength}></textarea>
       </div>
     {/each}
-    <button type="submit">Prepare for review</button>
-    <button type="button" onclick={() => { incoming = ''; dispatch({ type: 'clear' }); }}>Clear brief</button>
+    <div class="brief-actions">
+      <Button type="submit">Prepare for review</Button>
+      <Button variant="secondary" onclick={() => { incoming = ''; dispatch({ type: 'clear' }); }}>Clear brief</Button>
+    </div>
   </form>
-  {#if model.error}<p role="alert">{model.error}</p>{/if}
+  {#if model.error}<p class="brief-error" role="alert">{model.error}</p>{/if}
   <p role="status" aria-live="polite">{model.notice}</p>
   {#if model.phase === 'prepared'}
     <section aria-labelledby="review-heading">
       <h2 id="review-heading">Review before sharing</h2>
       <p>Confirm the evidence and remove anything the recipient should not receive. Arrange the recipient and scope separately; this preview has no submission connection.</p>
       <pre aria-label="Prepared support brief">{model.prepared}</pre>
-      <button type="button" onclick={() => download('json')}>Export JSON</button>
-      <button type="button" onclick={() => download('md')}>Export Markdown</button>
+      <div class="brief-actions">
+        <Button onclick={() => download('json')}>Export JSON</Button>
+        <Button variant="secondary" onclick={() => download('md')}>Export Markdown</Button>
+      </div>
     </section>
   {/if}
-</main>
+</div>
 
 <style>
-  main { max-width: 58rem; margin: auto; padding: var(--space-performance-xl, 4rem) var(--space-performance-md, 1.5rem); }
-  header, section, form { margin-bottom: var(--space-performance-xl, 3rem); }
-  h1 { font-size: clamp(2.5rem, 6vw, 4.5rem); line-height: 1.05; letter-spacing: -0.04em; }
-  h2 { font-size: 1.5rem; margin-bottom: 1rem; }
-  p { max-width: 70ch; line-height: 1.6; margin: 1rem 0; }
-  .eyebrow { color: inherit; font-family: var(--font-performance-mono, monospace); font-size: 0.8rem; }
-  .boundary { border-left: 2px solid currentColor; padding-left: 1rem; }
-  .field { margin-bottom: 1.5rem; }
-  label { display: block; margin: 1rem 0 0.5rem; }
-  textarea { display: block; width: 100%; box-sizing: border-box; background: transparent; color: inherit; border: 1px solid currentColor; padding: 0.75rem; font: inherit; resize: vertical; }
-  button { background: transparent; color: inherit; border: 1px solid currentColor; padding: 0.75rem 1rem; margin: 0.75rem 0.5rem 0 0; cursor: pointer; font: inherit; }
-  :is(button, textarea, summary, a, pre):focus-visible { outline: 3px solid currentColor; outline-offset: 4px; }
-  summary { cursor: pointer; padding: 0.75rem 0; }
-  a { text-decoration: underline; }
-  pre { white-space: pre-wrap; overflow-wrap: anywhere; border: 1px solid currentColor; padding: 1rem; font-size: 0.85rem; }
+  .brief-workspace { width: min(var(--content-width-performance), 86%); margin-inline: auto; padding-block: var(--space-performance-lg) var(--space-performance-2xl); font-family: var(--font-performance-interface); }
+  header, section, form { max-width: 52rem; margin-block-end: var(--space-performance-lg); }
+  header { padding-block-end: var(--space-performance-sm); border-bottom: 1px solid var(--color-performance-line); }
+  h1 { max-width: 24ch; margin-block: var(--space-performance-sm); font: var(--font-performance-medium) var(--text-performance-h1)/var(--leading-performance-tight) var(--font-performance-interface); letter-spacing: var(--tracking-performance-tight); }
+  h2 { margin-block-end: var(--space-performance-sm); font: var(--font-performance-medium) var(--text-performance-h2)/var(--leading-performance-tight) var(--font-performance-interface); }
+  p { max-width: 70ch; line-height: var(--leading-performance-relaxed); margin-block: var(--space-performance-sm); }
+  .brief-eyebrow { color: var(--color-performance-muted); font: var(--text-performance-operator-label) var(--font-performance-mono); text-transform: uppercase; }
+  .boundary { padding-inline-start: var(--space-performance-md); border-inline-start: 2px solid var(--color-performance-line-strong); color: var(--color-performance-muted); font-size: var(--text-performance-body-sm); }
+  form { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-performance-md); }
+  .field { min-width: 0; }
+  .field-wide, .brief-actions { grid-column: 1 / -1; }
+  label { display: block; margin-block-end: var(--space-performance-xs); font-size: var(--text-performance-body-sm); font-weight: var(--font-performance-medium); }
+  textarea { display: block; width: 100%; box-sizing: border-box; background: var(--color-performance-panel); color: var(--color-performance-ink); border: 1px solid var(--color-performance-line-strong); border-radius: var(--radius-performance-sm); padding: var(--space-performance-sm) var(--space-performance-md); font: inherit; line-height: var(--leading-performance-normal); resize: vertical; }
+  .brief-actions { display: flex; flex-wrap: wrap; gap: var(--space-performance-sm); }
+  :is(textarea, summary, a):focus-visible { outline: 2px solid var(--color-performance-focus); outline-offset: 3px; }
+  details { margin-block-start: var(--space-performance-md); border-block: 1px solid var(--color-performance-line); padding-block-end: var(--space-performance-sm); }
+  details textarea { margin-block-end: var(--space-performance-sm); font-family: var(--font-performance-code); }
+  summary { display: list-item; cursor: pointer; min-height: var(--height-performance-control-min); align-content: center; padding-block: var(--space-performance-xs); }
+  a { color: inherit; text-decoration: underline; text-underline-offset: 0.2em; }
+  pre { white-space: pre-wrap; overflow-wrap: anywhere; border: 1px solid var(--color-performance-line-strong); border-radius: var(--radius-performance-sm); background: var(--color-performance-panel); padding: var(--space-performance-md); font: var(--text-performance-body-sm)/var(--leading-performance-relaxed) var(--font-performance-code); }
+  .brief-error { border-inline-start: 2px solid var(--color-performance-error); padding-inline-start: var(--space-performance-md); }
+  @media (max-width: 40rem) { form { grid-template-columns: minmax(0, 1fr); } .brief-actions { flex-direction: column; align-items: stretch; } }
 </style>
