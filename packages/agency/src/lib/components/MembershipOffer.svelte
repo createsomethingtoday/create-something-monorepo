@@ -139,6 +139,7 @@
   }
   .offer { padding: clamp(2rem, 5vw, 5rem) max(1.25rem, calc((100% - 80rem) / 2)); }
   .offer-intro { max-width: 65ch; }
+  .offer-intro a { text-decoration: underline; }
   .plans { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-performance-md); margin-block: var(--space-performance-xl); }
   .plan { display: flex; flex-direction: column; min-width: 0; border: 1px solid var(--color-performance-line-strong); padding: var(--space-performance-lg); }
   .plan h3 { margin: var(--space-performance-sm) 0 0; }
