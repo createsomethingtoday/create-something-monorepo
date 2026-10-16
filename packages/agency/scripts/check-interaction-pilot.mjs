@@ -29,7 +29,7 @@ async function start(page, hash = '') {
   await page.locator('.service-journey').scrollIntoViewIfNeeded();
 }
 const selected = page => page.locator('[data-journey] nav a[aria-current="step"]');
-const sample = page => page.locator('.service-journey .sample');
+const handoff = page => page.locator('.service-journey .handoff-deliverables');
 async function assertSelected(page, label) {
   await page.waitForFunction(label => document.querySelector('[data-journey] nav a[aria-current="step"]')?.textContent?.includes(label), label);
   assert.match(await selected(page).innerText(), new RegExp(label));
@@ -66,31 +66,19 @@ try {
     const focused = await page.evaluate(() => { const r = document.activeElement.getBoundingClientRect(); return { top: r.top, bottom: r.bottom, height: innerHeight }; });
     assert.ok(focused.top >= 0 && focused.bottom <= focused.height, `vertical focus visibility ${width}`);
     await nav.getByRole('link', { name: /Handoff/ }).click();
-    await page.getByRole('link', { name: 'Prepare the sample handoff' }).click();
+    await page.getByRole('link', { name: 'See what your team keeps' }).click();
     await assertSelected(page, 'Handoff');
-    await page.getByRole('button', { name: 'Create sample handoff', exact: true }).click();
-    assert.match(await page.locator('#sample-error').innerText(), /Choose a destination/);
-    assert.equal(await page.locator('#sample-destination').evaluate(el => el === document.activeElement), true);
-    await page.locator('#sample-destination').selectOption('queue');
-    await page.getByRole('button', { name: 'Create sample handoff', exact: true }).click();
-    assert.match(await page.locator('#sample-error').innerText(), /Review/);
-    await page.getByRole('checkbox', { name: /reviewed this fictional/ }).check();
-    await page.getByRole('button', { name: 'Create sample handoff', exact: true }).click();
-    await sample(page).locator('.receipt').waitFor();
-    assert.match(await sample(page).innerText(), /Nothing was sent, changed or booked/);
-    assert.match(await sample(page).innerText(), /Review queue/);
+    assert.equal(await page.locator('.service-journey select, .service-journey input').count(), 0);
+    assert.equal(await page.getByRole('button', { name: 'Create sample handoff', exact: true }).count(), 0);
+    assert.match(await handoff(page).innerText(), /configuration notes, acceptance checks and recovery instructions/);
+    assert.equal(await handoff(page).getByRole('link', { name: /Discuss support/ }).getAttribute('href'), '/services#membership');
     await page.reload({ waitUntil: 'networkidle' });
-    await sample(page).locator('.receipt').waitFor();
     await assertSelected(page, 'Handoff');
-    assert.match(await sample(page).innerText(), /Restored/);
-    await sample(page).scrollIntoViewIfNeeded();
-    await page.screenshot({ path: `${output}/journey-${width}-receipt.png` });
+    await handoff(page).scrollIntoViewIfNeeded();
+    await page.screenshot({ path: `${output}/journey-${width}-handoff.png` });
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `no overflow ${width}`);
     assert.equal(await page.locator('[data-journey]').evaluate(el => el.getAnimations({ subtree: true }).filter(a => a.playState === 'running').length), 0);
-    await page.getByRole('button', { name: 'Edit sample', exact: true }).click();
-    assert.equal(await page.locator('#sample-destination').inputValue(), 'queue');
-    assert.equal(await page.locator('#sample-destination').evaluate(el => el === document.activeElement), true);
-    results.push({ test: 'keyboard, records, validation, completion, reload, edit, reduced motion, geometry', width, pass: true });
+    results.push({ test: 'keyboard, records, static handoff, real support link, reload, reduced motion, geometry', width, pass: true });
     await context.close();
   }
   {
@@ -155,7 +143,7 @@ try {
     await page.locator('#handoff-example-approval-inspect').tap();
     assert.equal(await page.locator('#handoff-example-approval-record').isVisible(), true);
     await page.locator('#handoff-example-handoff-control').tap();
-    await page.getByRole('link', { name: 'Prepare the sample handoff' }).tap();
+    await page.getByRole('link', { name: 'See what your team keeps' }).tap();
     await page.goBack(); await assertSelected(page, 'Handoff');
     await page.goForward(); await assertSelected(page, 'Handoff');
     await page.waitForFunction(() => document.activeElement?.id === 'sample-handoff');
@@ -203,7 +191,7 @@ try {
     await page.goto(baseURL, { waitUntil: 'networkidle' });
     assert.equal(await page.locator('[data-journey] .panels > section:visible').count(), 4);
     assert.equal(await page.locator('[data-journey] .record:visible').count(), 4);
-    assert.match(await sample(page).innerText(), /remain readable/);
+    assert.match(await handoff(page).innerText(), /What your team keeps/);
     await page.locator('#handoff-example-problem').scrollIntoViewIfNeeded();
     await page.screenshot({ path: `${output}/journey-no-js.png` });
     results.push({ test: 'SSR/no-JavaScript full explanation', pass: true });
@@ -216,12 +204,9 @@ try {
     });
     await start(page, '#handoff-example-not-a-stage');
     await assertSelected(page, 'Problem');
-    await page.locator('#sample-destination').selectOption('inbox');
-    await page.getByRole('checkbox', { name: /reviewed this fictional/ }).check();
-    await page.getByRole('button', { name: 'Create sample handoff', exact: true }).click();
-    assert.match(await sample(page).innerText(), /storage is unavailable/);
-    assert.match(await sample(page).innerText(), /Sample handoff ready/);
-    results.push({ test: 'invalid fragment and blocked-storage completion', pass: true });
+    assert.match(await handoff(page).innerText(), /What your team keeps/);
+    assert.equal(await page.locator('.service-journey select, .service-journey input').count(), 0);
+    results.push({ test: 'invalid fragment and static handoff without storage', pass: true });
     await context.close();
   }
 } finally {
