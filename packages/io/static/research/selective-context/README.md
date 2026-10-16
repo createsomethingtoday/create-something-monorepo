@@ -1,6 +1,6 @@
 # Selective context: reproduction package
 
-This synthetic experiment accompanies the local draft **A Fresh Index Can Still Carry Old Facts**. No client data, private transcripts, credentials, model calls, or live-service checks are used.
+This synthetic experiment accompanies the paper **A Fresh Index Can Still Carry Old Facts**. No client data, private transcripts, credentials, model calls, or live-service checks are used.
 
 Use Node 22.21.1 from a checkout containing the article:
 
