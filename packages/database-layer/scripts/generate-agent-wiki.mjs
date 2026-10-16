@@ -1,8 +1,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { checkLocalLinks, sourceTimestamp } from './agent-wiki-support.mjs';
 
-const packageRoot = path.resolve(new URL('..', import.meta.url).pathname);
+const packageRoot = fileURLToPath(new URL('..', import.meta.url));
 const outputDir = path.join(packageRoot, 'docs', 'agent-wiki');
 const check = process.argv.includes('--check');
 const ageIndex = process.argv.indexOf('--max-age-days');
