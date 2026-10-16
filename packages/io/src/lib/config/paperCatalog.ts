@@ -28,7 +28,7 @@ export function getPublishedPaperMetas(): PaperMeta[] {
 	const staticPapers = getStaticPaperMetas();
 	const staticSlugs = new Set(staticPapers.map((paper) => paper.slug));
 	const markdownPapers: PaperMeta[] = fileBasedPapers
-		.filter((paper) => !staticSlugs.has(paper.slug))
+		.filter((paper) => paper.publication_status !== 'draft' && !staticSlugs.has(paper.slug))
 		.map((paper) => ({
 			slug: paper.slug,
 			title: paper.title,

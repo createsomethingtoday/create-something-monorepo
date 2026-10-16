@@ -1,0 +1,122 @@
+[
+  {
+    "id": "Q01",
+    "query": "Does rebuilding the index tell us when services were inspected?",
+    "expectedModule": "README",
+    "expectedHeading": "Snapshot age"
+  },
+  {
+    "id": "Q02",
+    "query": "What should an absent observation date mean?",
+    "expectedModule": "README",
+    "expectedHeading": "Unknown evidence"
+  },
+  {
+    "id": "Q03",
+    "query": "How large can the JSON search response be?",
+    "expectedModule": "README",
+    "expectedHeading": "Reading limits"
+  },
+  {
+    "id": "Q04",
+    "query": "Where is canonical record truth kept?",
+    "expectedModule": "operating-loop",
+    "expectedHeading": "Record truth"
+  },
+  {
+    "id": "Q05",
+    "query": "Can a retrieved passage authorize deployment?",
+    "expectedModule": "operating-loop",
+    "expectedHeading": "Decision ownership"
+  },
+  {
+    "id": "Q06",
+    "query": "Which layer decides if evidence is sufficient?",
+    "expectedModule": "operating-loop",
+    "expectedHeading": "Three layers"
+  },
+  {
+    "id": "Q07",
+    "query": "What must a delivery packet include?",
+    "expectedModule": "business-recommendations",
+    "expectedHeading": "Delivery packets"
+  },
+  {
+    "id": "Q08",
+    "query": "Which workflow should we prioritize first?",
+    "expectedModule": "business-recommendations",
+    "expectedHeading": "Priority review"
+  },
+  {
+    "id": "Q09",
+    "query": "May private notes appear in public screenshots?",
+    "expectedModule": "business-recommendations",
+    "expectedHeading": "Public proof"
+  },
+  {
+    "id": "Q10",
+    "query": "What consumes the intake queue?",
+    "expectedModule": "topology-inventory",
+    "expectedHeading": "Queue topology"
+  },
+  {
+    "id": "Q11",
+    "query": "Who resolves an incident in a component?",
+    "expectedModule": "topology-inventory",
+    "expectedHeading": "Component ownership"
+  },
+  {
+    "id": "Q12",
+    "query": "Does placing boxes nearby establish a dependency?",
+    "expectedModule": "topology-inventory",
+    "expectedHeading": "Dependency map"
+  },
+  {
+    "id": "Q13",
+    "query": "What permission is required for production deployment?",
+    "expectedModule": "management-surface",
+    "expectedHeading": "Production approval"
+  },
+  {
+    "id": "Q14",
+    "query": "Does inventory_read mutate component records?",
+    "expectedModule": "management-surface",
+    "expectedHeading": "Read operations"
+  },
+  {
+    "id": "Q15",
+    "query": "Is ledger_append safe just because the role is called reader?",
+    "expectedModule": "management-surface",
+    "expectedHeading": "Write operations"
+  },
+  {
+    "id": "Q16",
+    "query": "Does a reachable preview establish production readiness?",
+    "expectedModule": "operating-slices",
+    "expectedHeading": "Preview readiness"
+  },
+  {
+    "id": "Q17",
+    "query": "What happens after an acceptance test fails?",
+    "expectedModule": "operating-slices",
+    "expectedHeading": "Failed acceptance"
+  },
+  {
+    "id": "Q18",
+    "query": "How do we recover from a timed out operation without duplicates?",
+    "expectedModule": "operating-slices",
+    "expectedHeading": "Recovery checkpoint"
+  },
+  {
+    "id": "Q19",
+    "query": "Where should I begin when locating source evidence?",
+    "expectedModule": "agent-routes",
+    "expectedHeading": "Local search"
+  },
+  {
+    "id": "Q20",
+    "query": "Can historical context establish what is live now?",
+    "expectedModule": "agent-routes",
+    "expectedHeading": "Historical context"
+  }
+]

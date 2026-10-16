@@ -1,0 +1,13 @@
+{
+  "protocol": "Frozen before first scoring; same-author synthetic holdout, not an independent benchmark. No tuning after results.",
+  "sha256": {
+    "corpus/README.md": "cc5e59b9da84c4f65cb60c77c2f45c11c04c252790d7054372bb88fa443a5bca",
+    "corpus/agent-routes.md": "722ba68bb13a9f7350f9cfcedde15d4cae62d26da9d2ecf556ede4bfeeb0f38a",
+    "corpus/business-recommendations.md": "fab42745fbf7f692a3220ce6ec17e8c597f2be7783f8b5df6f01d8a9314d32a9",
+    "corpus/management-surface.md": "fde2166f76ea8a6d8c5cf56e1b3b76134ef489e99834f6686dffa3ad216ea97a",
+    "corpus/operating-loop.md": "2e7def4a55e0d35ae6f08697b133079fe5c61237d5ca34444b4fade4f2c78559",
+    "corpus/operating-slices.md": "072e8c419725f4e4dc059cf082261c4d979d79be52dc737b5e93ce3811ff5654",
+    "corpus/topology-inventory.md": "b9de73cc8fb5e82ac9e47f564b71c488b583bc8b2c3b72dda0f04bf700ed79d4",
+    "queries.json": "7c11c8b6e71eb56da9a2b4378949d7c603e5ddd4081c2dc5117ef655c10ecc0b"
+  }
+}

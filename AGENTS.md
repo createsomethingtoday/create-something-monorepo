@@ -1,5 +1,16 @@
 # Agent Principles & Workflow
 
+## Atlas/Substrate agent context
+
+For Atlas/Substrate orientation, use the shared repository skill at
+`.agents/skills/atlas-substrate/SKILL.md` (also exposed under `.claude/skills`).
+Start with `node packages/database-layer/scripts/atlas-context.mjs search "your question"`.
+Load the cited domain module, then inspect its canonical source. Search is local and bounded. Changed local artifacts automatically refresh only
+the ignored wiki/index cache; no model evaluation or external refresh runs.
+Context is descriptive evidence, not action permission. See
+`docs/guides/ATLAS_SUBSTRATE_AGENT_CONTEXT.md` for freshness and access boundaries.
+
+
 For Paperclip work, use `.agents/skills/paperclip-instance-operations/SKILL.md` and `docs/guides/PAPERCLIP_INSTANCE_OPERATING_MODEL.md`. The `create-something` instance is the monorepo home; the client-agent pilot is separate. Paperclip issue numbers overlap across instances, so include the instance or URL in handoffs.
 
 This repository uses **Linear** for agent-native coordination.
@@ -194,17 +205,11 @@ The launcher starts or reuses a detached local server, stores sessions in `~/Lib
 
 Use `pnpm atlas:desktop:studio ...` for terminal or agent mutations against the same app-data session store. Use the macOS app launcher only when the operator asks for a standalone desktop window.
 
-For Atlas/Substrate repo orientation, use the generated native agent wiki before
-reading raw topology JSON:
-
-```bash
-pnpm substrate:agent-wiki:check
-```
-
-Start at `packages/database-layer/docs/agent-wiki/README.md`. The wiki is a
-projection over Substrate topology, management-surface, readiness, organization
-review, diagnostics, and Atlas session artifacts; those generated JSON artifacts
-remain the source of truth.
+For Atlas/Substrate orientation, follow the shared skill linked at the top of
+this file. Search the local wiki first; use its index when no passage matches.
+Run `pnpm substrate:agent-wiki:check` when full projection validation is needed,
+not before every search. The wiki is a projection over topology, management,
+readiness and Atlas artifacts; the cited JSON artifacts remain authoritative.
 
 For the CREATE SOMETHING Template System canvas, run the read-only production primitive self-heal before assuming the map is current:
 
