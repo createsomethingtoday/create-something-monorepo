@@ -51,7 +51,8 @@ export interface AnimationData {
 
 export interface KeyframeData {
   offset: number;
-  properties: Record<string, string>;
+  // getKeyframes() also includes numeric/nullable DOM metadata (for example computedOffset).
+  properties: Record<string, string | number | null | undefined>;
 }
 
 // CSS transition data
