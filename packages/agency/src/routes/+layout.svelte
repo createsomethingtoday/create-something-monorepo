@@ -237,6 +237,10 @@
 
     let id: string;
     try { id = decodeURIComponent(hash.slice(1)); } catch { return; }
+    // Retired interactive-journey bookmarks still lead to the current explanation.
+    if (id === 'sample-handoff' || /^handoff-example-(problem|approval|check|handoff)(-(detail|record|control|inspect))?$/.test(id)) {
+      id = 'service-journey-title';
+    }
     const element = document.getElementById(id);
     if (element) {
       const nav = document.querySelector('.nav-fixed');
@@ -277,9 +281,7 @@
   // - Preserve browser restore for popstate/back-forward
   // - Hash links scroll to section
   // - Other internal links scroll to top
-  afterNavigate(({ from, to, type }) => {
-    // The journey owns focus/scroll for same-document exploration.
-    if (from?.url.pathname === to?.url.pathname && from?.url.search === to?.url.search && (to?.url.hash.startsWith('#handoff-example-') || to?.url.hash === '#sample-handoff')) return;
+  afterNavigate(({ to, type }) => {
     if (to?.url.hash) {
       setTimeout(() => scrollToHash(to.url.hash), 100);
       return;

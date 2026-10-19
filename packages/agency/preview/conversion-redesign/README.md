@@ -55,3 +55,9 @@ Artifacts are outside the Git worktree at `/Users/createsomething/Documents/Code
 - `check-final.log`, `build-final.log`: final validation output.
 
 Worktree disposition: preserved at `/Users/createsomething/Documents/Codex/2026-10-19/task-6/agency-redesign`, branch `codex/agency-conversion-rea`, for release verification and rollback context.
+
+PR review compatibility checks: retired `#sample-handoff` and named
+`#handoff-example-*` fragments resolve to the current journey heading. The retained
+`scripts/check-interaction-pilot.mjs` command now checks the static journey at
+1440/390/320px, keyboard navigation, legacy bookmarks/history, reduced motion and
+complete no-JavaScript content. All five browser scenarios passed locally.
