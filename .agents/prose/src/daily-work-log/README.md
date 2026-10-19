@@ -1,8 +1,7 @@
 # Daily work log: OpenProse pilot
 
-Started October 18, 2026. Owner: Micah Johnson. Status: pilot, run once
-(manual, 2026-10-19, run `20261019-004020-1df175`). Reviewer added 2026-10-19,
-not yet run.
+Started October 18, 2026. Owner: Micah Johnson. Status: pilot. On 2026-10-19,
+discovery, review and delivery each ran once, by hand.
 
 This package is the executable view of
 `docs/guides/DAILY_WORK_LOG_RUNBOOK.md`. The runbook remains the operating
@@ -87,8 +86,36 @@ sessions, every event dispositioned, 47 candidates, cutoff advanced after a
 
 What changed after the run: `candidates-reviewed.prose.md` now sits between
 discovery and delivery, and the excerpt rule is stated in the discovery
-contract's review session. The reviewer has not run yet. Until a reviewer
-receipt exists, a receipt from this package is evidence, not Proof.
+contract's review session.
 
-Known limit at this pin: semantic postconditions are self-attested by the
-render. Independent review is a human step until a reviewer contract exists.
+## Reviewer and delivery, 2026-10-19
+
+The reviewer ran once (run `20261019-133009-98ecce`). Six review sessions read
+the full text of the 45 candidate sessions, not excerpts. A seventh re-read 10
+of the 103 sessions discovery excluded. The host checked the postconditions in
+code: every candidate appears once, no proof level rose, and held items stay
+pending.
+
+| Review result | Count |
+| --- | --- |
+| Confirmed | 37 |
+| Narrowed wording, same proof level | 4 |
+| Held as pending | 5 |
+| Exclusion errors in the sample | 0 |
+
+Three held items added nothing new to their existing threads. Two were real
+work that the reviewer could not map to a thread, because the review input
+carried a thread reference only for checkpoints. The next contract revision
+should pass recent ledger titles to the reviewer.
+
+Delivery ran after an operator restored the Composio login. The 15 drafts
+from 2026-10-15 posted first, then the 41 reviewed candidates: 89 messages,
+each read back from Slack by timestamp and content, with no uncertain sends.
+
+The answer to question 3 changes from "the render itself" to "separate review
+sessions over full text, with deterministic checks by the host." That is still
+a model evaluator, not a human. Send approval stayed with the operator for
+every delivery.
+
+Known limits at this pin: the runtime does not enforce the declarative
+sections, receipts carry no signer or token cost, and runs start by hand.
