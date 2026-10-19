@@ -3,6 +3,8 @@
 OpenProse kernel: https://pkg.prose.md/releases/0.4.6-rc.1/core/README.md
 Workflow: source-grounding → implementation → focused independent review → rendered validation → reviewable result.
 
+Reusable review criteria: [Performance Page Sharpness — Explain Real Work](../../docs/PERFORMANCE_PAGE_SHARPNESS.md#explain-real-work). Keep project-specific sources and results here; keep shared guidance in that existing contract.
+
 Requirements:
 - Use actual Cato recording frames and distinguish observable interface interpretation from measured outcomes.
 - Show authentic publicly allowlisted handoff files; label repository example, not client delivery.
