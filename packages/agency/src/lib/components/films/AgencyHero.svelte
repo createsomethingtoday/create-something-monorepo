@@ -5,6 +5,8 @@
   import { reducedFilmMotion, toggleFilmMotion } from '$lib/motion/filmPlayback';
   import CanonServiceGuide from '../CanonServiceGuide.svelte';
   import WorkflowStory from '../WorkflowStory.svelte';
+  let explorationTrigger = $state(0);
+  let explorationScene = $state<number | null>(null);
   let copy = $state<HTMLElement>();
   let right = $state<HTMLElement>();
   let measured = $state(false);
@@ -43,7 +45,7 @@
     <p class="starting-point">Support {PUBLIC_PRICING.membership.label.toLowerCase()} · Agreed scope. <a href="/services#membership">See membership and costs ↗</a></p>
   </div>
   </div>
-  <div class="hero-story" bind:this={right}><WorkflowStory /><div class="hero-guide"><CanonServiceGuide showSuggestions /></div></div>
+  <div class="hero-story" bind:this={right}><WorkflowStory onExplore={(scene) => { explorationScene = scene; if (scene !== null) explorationTrigger++; }} /><div class="hero-guide"><CanonServiceGuide showSuggestions {explorationTrigger} {explorationScene} /></div></div>
   </div>
   <div class="hero-bottom">
     <a href="#built-work">Inspect the work ↓</a>

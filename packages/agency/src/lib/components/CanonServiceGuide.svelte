@@ -2,7 +2,8 @@
   import { tick, onMount } from 'svelte';
   import CanonCompanion from './CanonCompanion.svelte';
   import { canonServiceQuestions, canonServiceAnswers, type ServiceQuestion } from '$lib/data/canonServiceGuide';
-  let { showSuggestions = false }: { showSuggestions?: boolean } = $props();
+  let { showSuggestions = false, explorationTrigger = 0, explorationScene = null }: { showSuggestions?: boolean; explorationTrigger?: number; explorationScene?: number | null } = $props();
+  const explorationNotes = ['Find the broken handoff before choosing a fix.', 'Your approval comes before the change.', 'Check the result before relying on it.', 'Keep the instructions and a way to recover.'];
   let ready = $state(false);
   let mobile = $state(true);
   let characterTrigger = $state(0);
@@ -37,10 +38,13 @@
 
 <div class="canon-guide" bind:this={guideRoot}>
   <div class="guide-introduction">
-    <CanonCompanion action="waving" trigger={characterTrigger} staticOnly={mobile} />
+    <CanonCompanion action="waving" trigger={characterTrigger + explorationTrigger} pose={explorationScene === 1 ? "review" : "idle"} staticOnly={mobile} />
     <div><button class="guide-trigger" bind:this={trigger} onclick={toggle} disabled={!ready} aria-expanded={open} aria-controls="canon-service-guide">Ask canon <span aria-hidden="true">{open ? '−' : '+'}</span></button>
     <span class="guide-label">Canon service guide · local prototype / scripted answers</span></div>
   </div>
+  {#if showSuggestions}
+    <div class="exploration-note"><p>{explorationScene !== null ? explorationNotes[explorationScene] : "Follow one form from problem to handoff."}</p><a href="#service-journey-title">Explore how support works ↓</a></div>
+  {/if}
   {#if showSuggestions}
     <ul class="questions suggested" bind:this={suggestedList} aria-label="Suggested questions for Canon">{#each canonServiceQuestions as question}<li><button disabled={!ready} onclick={() => choose(question.id)} aria-controls="canon-service-guide">{question.label}<span aria-hidden="true">↗</span></button></li>{/each}</ul>
   {/if}
@@ -76,6 +80,9 @@
   .guide-introduction :global(.canon) { width: 56px; }
   .guide-introduction > div { min-width: 0; }
   div.canon-guide .guide-introduction button.guide-trigger { background: transparent; border: 0; padding: 0; text-decoration: underline; text-underline-offset: .3em; }
+  .exploration-note { margin-block: var(--space-performance-sm); padding-left: var(--space-performance-sm); border-left: 1px solid var(--color-performance-shell-border-strong); }
+  .exploration-note p { margin: 0; min-height: 3.3em; }
+  .exploration-note a { display: inline-flex; align-items: center; font-size: var(--text-performance-caption); }
   .guide-label { display: block; color: var(--color-performance-fg-tertiary); font-size: var(--text-performance-caption); line-height: 1.6; }
   .guide-panel { margin-top: var(--space-performance-md); padding: var(--space-performance-md); border: 1px solid var(--color-performance-shell-border-strong); max-width: 65ch; }
   header { display: flex; align-items: start; gap: var(--space-performance-sm); }
