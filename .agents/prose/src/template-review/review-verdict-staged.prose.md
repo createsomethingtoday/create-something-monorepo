@@ -55,9 +55,14 @@ immaterial.
   asterisks, no cross-references to item numbers. It explicitly withdraws
   earlier asks that `screen-false-positives` withdrew.
 - The packet sent to `template_review_format_agent_review_feedback` lists
-  every manual-check topic the formatter requires (components, variables,
-  interactions, style selectors, audits) with its result, or `Manual: not
-  checked this round` when the Designer pass did not cover it.
+  every manual-check topic the formatter requires, each with its result or
+  `not checked this round`. At this MCP build there are 17: components,
+  variables, unused styles/classes, interactions cleanup, Designer
+  responsive QA, forms, CMS/dynamic page setup, site settings, custom fonts
+  and licenses, asset thumbnail, template name and categories,
+  pricing/page-count calculation, MRP/admin publishing prerequisites,
+  visual quality, originality, similarity/flooding, category fit. The
+  formatter's `missing_manual_check_topics` error names any new one.
 - Agent Review Feedback is saved with `template_review_save_agent_feedback`
   and holds the coverage matrix, Auto/Partial/Manual labels, and evidence
   references.
@@ -85,6 +90,12 @@ immaterial.
 - `state/template-review/verdicts.json` is updated with each version's
   `last_published` and `status`, so the next run skips unchanged versions.
 - The digest contains no creator email addresses and no secrets.
+- Parallel judge sessions share one host scratchpad. Each session writes
+  only its own `workspace/<version_id>/verdict.json`, by full path, and
+  never stages text in a generic temp file: on 2026-10-19 two verdicts
+  picked up another version's draft from a shared `draft.txt`.
+- Fixture version ids (prefix `recTEST`) are never written to Airtable; under
+  `prose test` the save is recorded as `agent_feedback_saved: simulated`.
 
 ### Shape
 
@@ -98,7 +109,7 @@ immaterial.
 
 ```prose
 agent judge:
-  model: sonnet
+  model: opus
   prompt: "You stage template review verdicts. Apply the comprehensive review contract to the evidence bundle. You recommend; a human decides."
   shape:
     self: ["judge evidence", "draft creator feedback", "save agent feedback"]
@@ -126,3 +137,8 @@ return {
 ### Runtime
 
 - `persist`: project
+- `judge`: the strongest reasoning model the host offers. On Claude Code
+  that is `opus` (Opus 5.5 or newer); on Codex the operator's stated
+  equivalent is Sol 6.1. Verdicts are reasoning, not extraction, so no
+  smaller model stages them. Collectors stay on sonnet and rechecks on
+  haiku; they gather, they do not judge.

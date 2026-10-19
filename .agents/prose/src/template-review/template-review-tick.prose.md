@@ -28,16 +28,19 @@ external-driven
 - Manual kick: the reviewer runs `bin/template-review-run.sh` or asks for a
   run in a Claude Code session.
 - Targeted kick: the reviewer names one or more version ids.
+- Pickup kick: the reviewer asks to pick up N New submissions
+  (`--pickup N`). Only this kick lets the run claim unassigned versions.
 
 ### Maintains
 
-- `run_request`: `{ run_started_at, mode, version_ids, max_versions }` where
-  `run_started_at` is one UTC timestamp captured once, `mode` is one of
-  `scheduled`, `manual`, `targeted`, `version_ids` is empty unless
-  targeted, and `max_versions` defaults to 12.
+- `run_request`: `{ run_started_at, mode, version_ids, max_versions,
+  pickup_new }` where `run_started_at` is one UTC timestamp captured once,
+  `mode` is one of `scheduled`, `manual`, `targeted`, `version_ids` is empty
+  unless targeted, `max_versions` defaults to 12, and `pickup_new` is 0
+  unless the reviewer asked to pick up New submissions.
 
-**Canonicalization spec**: `run_started_at`, `mode`, and `version_ids` are
-material. Transport ids are immaterial.
+**Canonicalization spec**: `run_started_at`, `mode`, `version_ids`, and
+`pickup_new` are material. Transport ids are immaterial.
 
 ### Emits
 

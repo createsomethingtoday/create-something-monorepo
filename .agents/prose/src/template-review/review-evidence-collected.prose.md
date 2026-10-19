@@ -8,10 +8,10 @@ id: 01M58T5M4W8MTY3JM903F4EESB
 # Review Evidence Collected
 
 > Automation tier. Collects published-site and Designer evidence for each
-> queued version. Each version runs in its own small-model session, so raw
-> validator output, screenshots, and stylesheets stay out of the main context.
-> First reviews collect everything. Re-reviews recheck only the items cited in
-> the last round.
+> queued version. Each version runs in its own session, so raw validator
+> output, screenshots, and stylesheets stay out of the main context. First
+> reviews collect everything and read the screenshots, so they run on Sonnet.
+> Re-reviews recheck only the items cited in the last round and run on Haiku.
 
 ### Goal
 
@@ -64,6 +64,9 @@ immaterial.
 ### Invariants
 
 - Read-only. No template_review write tool is called.
+- The brief each session reads is `workspace/collector-brief.md` in the run
+  directory, written from this contract; it carries the checks, the
+  false-positive rules, and the output schema.
 - Published sites are never screenshotted with a code-execution sandbox
   browser; the MCP capture tool is the screenshot path.
 - Sandbox console errors seen under a request cap are rerun per page
@@ -84,22 +87,37 @@ immaterial.
 
 ```prose
 agent collector:
-  model: haiku
-  prompt: "You collect template review evidence for one version. Use the Template Review MCP read tools and curl. Save raw output under the run directory. Return compact findings with evidence references, never raw payloads."
+  model: sonnet
+  prompt: "You collect template review evidence for one first-review version. Use the Template Review MCP read tools and curl. Look at the captured screenshots and record visual observations. Save raw output under the run directory. Return compact findings with evidence references, never raw payloads."
   shape:
-    self: ["published-site validation", "screenshots", "stylesheet", "static HTML checks"]
+    self: ["published-site validation", "screenshots", "stylesheet", "sandbox", "static HTML checks"]
     prohibited: ["any template_review write tool", "Airtable writes", "Preview URLs as analysis input"]
+
+agent rechecker:
+  model: haiku
+  prompt: "You recheck the items cited in the last Changes Requested round for one version. Use the Template Review MCP read tools and curl. Save raw output under the run directory. Return each cited item as resolved, open, or withdrawn with evidence, never raw payloads."
+  shape:
+    self: ["ticket thread", "cited items", "static HTML checks"]
+    prohibited: ["any template_review write tool", "Airtable writes", "Preview URLs as analysis input", "full screenshot or sandbox passes"]
 
 let active = session "Return the queue entries whose skip_reason is null."
   context: queue
 
 let bundles = []
 parallel for entry in active (on-fail: "continue"):
-  let raw = session: collector
-    prompt: "If entry.status is response_to_review, recheck only entry.prior_cited_items and anything those fixes could break. Otherwise run the full published-site pass: validation, desktop/tablet/mobile screenshots, stylesheet summary, sandbox collector, href=# and label checks per page. Return findings and the gallery_url."
-    context: entry
-    retry: 1
-    backoff: linear
+  let raw = null
+  if entry.status == "response_to_review":
+    raw = session: rechecker
+      prompt: "Recheck only entry.prior_cited_items and anything those fixes could break. Compare Last Published with the last Changes Requested date. Return findings."
+      context: entry
+      retry: 1
+      backoff: linear
+  else:
+    raw = session: collector
+      prompt: "Run the full published-site pass: validation, desktop and mobile screenshots, stylesheet summary, sandbox collector, href=# and label checks per page. Return findings and the gallery_url."
+      context: entry
+      retry: 1
+      backoff: linear
 
   let designer = null
   if entry.needs_designer_pass:

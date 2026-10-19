@@ -45,6 +45,10 @@ payloads are immaterial. Ordered by version id.
 - For `response_to_review`, `prior_cited_items` lists each numbered item from
   the last Changes Requested feedback and from the ticket thread, and the
   creator's reply to each, when there is one.
+- Each listed version carries `prior_sessions`: the ctx hits for its
+  template name and version id (`ctx search "<name> <version_id>" --since
+  90d`), so a re-review sees what earlier agent sessions decided, accepted,
+  or withdrew, not only what the ticket thread shows.
 - `last_published` is read from the `<!-- Last Published: ... -->` comment in
   the published home page head. If it is not newer than the last Changes
   Requested date, `skip_reason` is `not_republished`.
@@ -62,14 +66,18 @@ payloads are immaterial. Ordered by version id.
 
 ### Tools
 
+- `cli:ctx`: `ctx search` over indexed Claude Code and Codex sessions
 - `mcp:claude_ai_Template_Review_MCP`: `template_review_workflow`,
-  `template_review_my_queue`, `template_review_get_version`,
+  `template_review_my_queue`, `template_review_list_queue` (through
+  `claim-new-submissions`), `template_review_get_version`,
   `template_review_get_asset`, `template_review_get_review_context`,
   `template_review_get_ticket_thread`
 
 ### Invariants
 
-- Read-only. No status, assignment, or metadata writes.
+- Read-only, except `claim-new-submissions`, which runs only when
+  `run_request.pickup_new > 0` and makes the assignment write itself. No
+  status or metadata writes.
 - Status comes from `latestReviewStatus`. `📤Changes Requested` versions wait
   on the creator and are not listed.
 - The queue is capped at `run_request.max_versions`; the oldest versions are
@@ -80,7 +88,10 @@ payloads are immaterial. Ordered by version id.
 
 - `self`: list, read context, read thread, read the published stamp, diff
   against prior verdicts.
-- `prohibited`: assigning, unassigning, setting status, or any write tool.
+- `delegates`:
+  - `claim-new-submissions`: pick up N unassigned New versions on request
+- `prohibited`: assigning outside `claim-new-submissions`, unassigning,
+  setting status, or any other write tool.
 
 ### Execution
 
@@ -95,13 +106,19 @@ agent loader:
 let prior = session "Read state/template-review/verdicts.json if present. Return a map of version_id to { last_published, status, staged_at }. Return an empty map if the file is missing."
   context: []
 
+let claimed = []
+if run_request.pickup_new > 0:
+  claimed = call claim-new-submissions
+    count: run_request.pickup_new
+    run_dir: run_dir
+
 let listed = session: loader
   prompt: "Call template_review_my_queue with limit 100. Filter on latestReviewStatus, not normalizedStatus (normalizedStatus reports changes_requested for Response to Review too). Keep Ready for Review and 🔁Response to Review; drop 📤Changes Requested, which waits on the creator. The version id is assignableVersionId. If run_request.version_ids is not empty, keep only those. Sort oldest first and cap at run_request.max_versions."
   context: run_request
 
 let queue = session: loader
-  prompt: "For each listed version: call get_version, get_asset, get_review_context, and get_ticket_thread. Read the Last Published comment from the published home page. Extract prior cited items for re-reviews. Set needs_designer_pass and skip_reason per the postconditions. Return the queue records."
-  context: { listed, prior }
+  prompt: "For each listed and claimed version: call get_version, get_asset, get_review_context, and get_ticket_thread. Read the Last Published comment from the published home page. Extract prior cited items for re-reviews. Claimed versions are ready_for_review, round 1, needs_designer_pass true. Set skip_reason per the postconditions. Return the queue records."
+  context: { listed, claimed, prior }
 
 return { queue: queue }
 ```
