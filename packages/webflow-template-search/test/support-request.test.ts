@@ -689,6 +689,21 @@ describe('refreshSupportRequestDeliveries', () => {
     }
   });
 
+  it('bounds each lookup with an abort signal', async () => {
+    const harness = createTestEnv();
+    Object.assign(harness.env, { KNOCK_API_KEY: 'sk_test_knock' });
+    const fetchMock = vi.fn(async () => Response.json({ items: [{ status: 'delivered' }] }));
+    vi.stubGlobal('fetch', fetchMock);
+    try {
+      await seed(harness.env, 'fresh', '2026-10-18T10:00:00Z');
+      await refreshSupportRequestDeliveries(harness.env, { now: NOW });
+      const init = (fetchMock.mock.calls[0] as unknown[] | undefined)?.[1] as RequestInit | undefined;
+      expect(init?.signal).toBeInstanceOf(AbortSignal);
+    } finally {
+      harness.close();
+    }
+  });
+
   it('does nothing without a Knock key', async () => {
     const harness = createTestEnv();
     const fetchMock = vi.fn();

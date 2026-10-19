@@ -49,6 +49,8 @@ const FINAL_DELIVERY_STATUSES = ['delivered', 'bounced', 'undelivered', 'not_sen
 // Past this age a still-unconfirmed request stops being polled.
 const DELIVERY_REFRESH_WINDOW_MS = 14 * 24 * 60 * 60 * 1000;
 const DELIVERY_REFRESH_LIMIT = 25;
+// Covers the response body too, so a stalled Knock can't hold the hourly cron.
+const DELIVERY_LOOKUP_TIMEOUT_MS = 10_000;
 
 const MAX_BODY_CHARS = 16_000;
 // Read cap in bytes, enforced while streaming so an oversized body is never
@@ -615,7 +617,10 @@ export async function refreshSupportRequestDeliveries(
     let deliveryStatus: string | null = null;
     try {
       const url = `${KNOCK_MESSAGES_URL}?workflow_run_id=${encodeURIComponent(row.knock_workflow_run_id)}&page_size=5`;
-      const response = await fetch(url, { headers: { Authorization: `Bearer ${env.KNOCK_API_KEY}` } });
+      const response = await fetch(url, {
+        headers: { Authorization: `Bearer ${env.KNOCK_API_KEY}` },
+        signal: AbortSignal.timeout(DELIVERY_LOOKUP_TIMEOUT_MS),
+      });
       if (!response.ok) throw new Error(`Knock message lookup failed (${response.status})`);
       const { items } = (await response.json()) as { items?: Array<{ status?: string }> };
       deliveryStatus = items?.[0]?.status ?? null;
