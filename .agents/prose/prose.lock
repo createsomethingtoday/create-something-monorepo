@@ -1,0 +1,1 @@
+# No external OpenProse dependencies. The open-prose skill is vendored at .claude/skills/open-prose (see docs/openprose/VENDOR.md).

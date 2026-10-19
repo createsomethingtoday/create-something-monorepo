@@ -32,6 +32,8 @@ Before enabling execution there, securely transfer the authoritative ledger, see
 
 Use `output/daily-work-log/` in this repository. Keep full provenance and private receipts local.
 
+An OpenProse executable view of this runbook lives at `.agents/prose/src/daily-work-log/` (pin: `docs/openprose/VENDOR.md`). This document stays the operating contract; the contract files are derived from it and corrected when they drift.
+
 | Artifact | Contract |
 | --- | --- |
 | `state.json` | Authoritative current task ledger, pending delivery, discovery receipts and health; never reset it |
