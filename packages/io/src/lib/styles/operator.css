@@ -66,9 +66,9 @@
   --text-performance-body: 1rem;
   --text-performance-body-lg: 1rem;
   --height-performance-header: 64px;
-  --radius-performance-sm: 6px;
-  --radius-performance-md: 8px;
-  --radius-performance-lg: 10px;
+  --radius-performance-sm: var(--radius-operator-control);
+  --radius-performance-md: var(--radius-operator-panel);
+  --radius-performance-lg: var(--radius-operator-panel);
   background: var(--color-operator-background);
   color: var(--color-operator-foreground);
   font-family: var(--font-performance-sans);
@@ -122,7 +122,7 @@
 }
 .layout-root.io-research-shell[data-canon-palette='operator']
   :is(.nav-cta, .nav-menu-button, .nav-link) {
-  border-radius: 6px;
+  border-radius: var(--radius-operator-control);
 }
 .layout-root.io-research-shell[data-canon-palette='operator'] .nav-cta {
   background: var(--color-operator-secondary);
@@ -182,7 +182,7 @@
   font-size: 0.875rem;
 }
 .layout-root.io-research-shell[data-canon-palette='operator'] .footer-editorial .footer-links-grid {
-  border-radius: 8px;
+  border-radius: var(--radius-operator-panel);
 }
 /* Ordinary reading pages use the same compact type and rhythm. */
 .layout-root.io-research-shell[data-canon-palette='operator']
@@ -252,7 +252,7 @@
   min-height: 44px;
   padding: 8px 16px;
   border: 1px solid var(--color-operator-input-border);
-  border-radius: 6px;
+  border-radius: var(--radius-operator-control);
 }
 .io-research-home .research-action-primary {
   background: var(--color-operator-foreground);
@@ -315,7 +315,7 @@
   gap: 10px;
   padding: 20px;
   border: 1px solid var(--color-operator-border);
-  border-radius: 8px;
+  border-radius: var(--radius-operator-panel);
   background: var(--color-operator-panel);
 }
 .io-research-home .research-artifact:hover {
@@ -342,7 +342,7 @@
 .io-research-home .research-decisions article {
   padding: 20px;
   border: 1px solid var(--color-operator-border);
-  border-radius: 8px;
+  border-radius: var(--radius-operator-panel);
 }
 .io-research-home .research-decisions :is(p:not(.research-eyebrow), li) {
   font-size: 0.875rem;
@@ -399,7 +399,7 @@
 .layout-root.io-research-shell[data-canon-palette='operator'] .tool-card {
   padding: 24px;
   border: 1px solid var(--color-operator-border);
-  border-radius: 8px;
+  border-radius: var(--radius-operator-panel);
 }
 .layout-root.io-research-shell[data-canon-palette='operator'] .footer-editorial .footer-links-grid {
   padding: 24px;
@@ -432,7 +432,7 @@
   min-height: 120px;
   padding: 16px;
   border: 1px solid var(--color-operator-border);
-  border-radius: 8px;
+  border-radius: var(--radius-operator-panel);
   background: var(--color-operator-panel);
 }
 .layout-root.io-research-shell[data-canon-palette='operator'] .ascii-art {

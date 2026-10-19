@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { SkipToContent } from '@create-something/canon/components';
   import '../app.css';
   import { Navigation, Footer, Analytics, ModeIndicator, LayoutSEO } from '@create-something/canon';
   import { projects } from '$lib/workshop/catalog';
@@ -125,7 +126,7 @@
 
     const element = document.querySelector(hash);
     if (element) {
-      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      element.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
     }
   }
 
@@ -137,8 +138,10 @@
       sessionStorage.removeItem('cs-transition-from');
       sessionStorage.removeItem('cs-transition-to');
       sessionStorage.removeItem('cs-transition-time');
-      document.body.classList.add('transitioning-in');
-      setTimeout(() => document.body.classList.remove('transitioning-in'), 500);
+      if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        document.body.classList.add('transitioning-in');
+        setTimeout(() => document.body.classList.remove('transitioning-in'), 500);
+      }
     }
 
     if (window.location.hash) {
@@ -173,9 +176,8 @@
     deferMobileButtonUntilCampaignExit={['/', '/workbench'].includes($page.url.pathname)}
   />
 
-  <a class="skip-link" href="#main-content">Skip to content</a>
-
   <div class="layout property-performance" data-canon-palette="operator">
+    <SkipToContent />
     <Navigation
       logo="CREATE SOMETHING"
       logoSuffix=".space"
@@ -223,28 +225,13 @@
 {/if}
 
 <style>
-  .skip-link {
-    position: fixed;
-    top: 0.5rem;
-    left: 0.5rem;
-    z-index: 10000;
-    padding: 0.75rem 1rem;
-    background: var(--color-performance-panel);
-    color: var(--color-performance-ink);
-    border: 2px solid var(--color-performance-signal);
-    border-radius: var(--radius-performance-md);
-    transform: translateY(-200%);
-  }
-  .skip-link:focus {
-    transform: translateY(0);
-  }
   .layout {
     min-height: 100vh;
     background: var(--color-operator-background);
   }
 
   .content {
-    padding-top: 72px;
+    padding-top: var(--height-performance-header);
   }
 
   .workway-local-shell {

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { SkipToContent } from '@create-something/canon/components';
 	import { Navigation, Footer, Analytics, ModeIndicator, LayoutSEO } from '@create-something/canon';
 	import { UnifiedSearch } from '@create-something/canon/navigation';
 	import { onNavigate, goto, invalidateAll } from '$app/navigation';
@@ -38,8 +39,10 @@
 			sessionStorage.removeItem('cs-transition-from');
 			sessionStorage.removeItem('cs-transition-to');
 			sessionStorage.removeItem('cs-transition-time');
-			document.body.classList.add('transitioning-in');
-			setTimeout(() => document.body.classList.remove('transitioning-in'), 500);
+			if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+				document.body.classList.add('transitioning-in');
+				setTimeout(() => document.body.classList.remove('transitioning-in'), 500);
+			}
 		}
 	});
 
@@ -98,6 +101,7 @@
 />
 
 <div class="min-h-screen flex flex-col ltd-clear-shell property-performance" class:ltd-public-library={isPublicLibraryRoute} class:ltd-operator-public={isPublicLibraryRoute} data-canon-palette={isPublicLibraryRoute ? 'operator' : undefined}>
+	<SkipToContent />
 	{#if !isCanonRoute}
 		<Navigation
 			logo="CREATE SOMETHING"
@@ -119,7 +123,7 @@
 		/>
 	{/if}
 
-	<main id="main-content" class="flex-1">
+	<main id="main-content" class="flex-1" tabindex="-1">
 		{@render children()}
 	</main>
 
