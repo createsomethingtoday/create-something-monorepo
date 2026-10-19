@@ -1,81 +1,66 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
   import { PUBLIC_PRICING } from '$lib/data/publicPricing';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
-  import { reducedFilmMotion, toggleFilmMotion } from '$lib/motion/filmPlayback';
-  import CanonServiceGuide from '../CanonServiceGuide.svelte';
-  import WorkflowStory from '../WorkflowStory.svelte';
-  let explorationTrigger = $state(0);
-  let explorationScene = $state<number | null>(null);
-  let copy = $state<HTMLElement>();
-  let right = $state<HTMLElement>();
-  let measured = $state(false);
-  let sticky = $state(false);
-  let copyOffset = $state(0);
-  onMount(() => {
-    const measure = () => {
-      if (!copy || !right) return;
-      const answer = right.querySelector<HTMLElement>('.guide-panel');
-      const expandedHeight = answer ? answer.getBoundingClientRect().height + parseFloat(getComputedStyle(answer).marginTop) : 0;
-      const restingHeight = right.getBoundingClientRect().height - expandedHeight;
-      const copyHeight = copy.getBoundingClientRect().height;
-      copyOffset = Math.max(0, (restingHeight - copyHeight) / 2);
-      const stickyTop = parseFloat(getComputedStyle(document.documentElement).fontSize) * 8;
-      sticky = window.innerWidth > 900 && copyHeight + stickyTop + 32 <= window.innerHeight;
-      measured = true;
-    };
-    const observer = new ResizeObserver(measure);
-    if (copy) observer.observe(copy);
-    if (right) observer.observe(right);
-    window.addEventListener('resize', measure);
-    measure();
-    return () => { observer.disconnect(); window.removeEventListener('resize', measure); };
-  });
 </script>
 
 <section class="hero-track" aria-labelledby="agency-hero-title">
+  <div class="hero-heading">
+    <p class="eyebrow">CREATE SOMETHING .agency / Diagnose · Engineer · Learn</p>
+    <h1 id="agency-hero-title">AI-native <span>Technical support</span></h1>
+  </div>
   <div class="hero-composition">
-  <div class="hero-copy-rail" class:measured style:--copy-offset={`${copyOffset}px`}>
-  <div class="hero-copy" class:sticky bind:this={copy}>
-    <p class="eyebrow">CREATE SOMETHING / AI-native technical support</p>
-    <h1 id="agency-hero-title">Keep your tools working.</h1>
-    <p class="lede">We diagnose problems, engineer improvements, and help your team use the result.</p>
-    <div class="hero-actions"><a class="primary" href={agencyCoreMessaging.workflowMappingSessionHref}>Talk through your workflow ↗</a></div>
-    <p class="starting-point">Choose your next step: <a href="/services#membership">ongoing technical support</a>, <a href="/products">available tools</a>, or <a href="/agent-foundation">a custom build</a>. The catalog labels public tools, beta limits and separately scoped services.</p>
-    <p class="starting-point">Support {PUBLIC_PRICING.membership.label.toLowerCase()} · Agreed scope. <a href="/services#membership">See membership and costs ↗</a></p>
+    <div class="hero-copy">
+      <h2>Keep your tools working.<br />Make the next improvement.</h2>
+      <p class="lede">A broken form. A manual handoff. An AI tool your team needs help using. We diagnose the problem, build the agreed change, and teach you how to use it.</p>
+      <div class="hero-actions"><a class="primary" href={agencyCoreMessaging.workflowMappingSessionHref}>Talk through your workflow <span aria-hidden="true">↗</span></a></div>
+      <p class="next-step">Bring one task. We agree on scope and cost before work begins.</p>
+      <p class="starting-point">Support {PUBLIC_PRICING.membership.label.toLowerCase()} <span aria-hidden="true">/</span> <a href="/services#membership">Membership and costs ↗</a></p>
+    </div>
+    <figure class="service-record">
+      <figcaption><span>One task, made workable</span><span>Illustrative example / 01</span></figcaption>
+      <div class="record-problem"><span class="record-label">The problem</span><p>“The form submits.<br />Our team never gets it.”</p></div>
+      <ol>
+        <li><span class="step">01</span><div><h3>Find the broken handoff.</h3><p>Trace the form, connection and destination.</p></div><span class="state">Diagnose</span></li>
+        <li><span class="step">02</span><div><h3>Repair it. Check the result.</h3><p>Test a valid submission and a failure case.</p></div><span class="state">Engineer</span></li>
+        <li><span class="step">03</span><div><h3>Know what to do next.</h3><p>Keep the change, instructions and recovery checks.</p></div><span class="state">Learn</span></li>
+      </ol>
+      <div class="record-footer"><span>You approve the scope.</span><span>You review the result.</span></div>
+    </figure>
   </div>
-  </div>
-  <div class="hero-story" bind:this={right}><WorkflowStory onExplore={(scene) => { explorationScene = scene; if (scene !== null) explorationTrigger++; }} /><div class="hero-guide"><CanonServiceGuide showSuggestions {explorationTrigger} {explorationScene} /></div></div>
-  </div>
-  <div class="hero-bottom">
-    <a href="#built-work">Inspect the work ↓</a>
-    <a href="/agent-foundation">Engineering handoff ↗</a>
-    <a href="/stack#openai-qualifications">OpenAI Select Partner ↗</a>
-    <button onclick={toggleFilmMotion} aria-pressed={$reducedFilmMotion}>{$reducedFilmMotion ? 'Enable motion' : 'Reduce motion'}</button>
-  </div>
+  <div class="hero-bottom"><a href="#built-work">See the work behind the offer <span aria-hidden="true">↓</span></a><a href="/agent-foundation">What a checked handoff includes ↗</a></div>
 </section>
 
 <style>
-  .hero-track { padding: 0; background: var(--color-performance-ink); color: var(--color-performance-paper); }
-  .hero-composition { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); align-items: stretch; column-gap: clamp(2rem, 5vw, 6rem); padding: 8rem 7vw var(--space-performance-lg); }
-  .hero-copy-rail, .hero-copy, .hero-story, .hero-guide { min-width: 0; }
-  .hero-copy-rail { display: flex; align-items: center; }
-  .hero-copy-rail.measured { display: block; padding-top: var(--copy-offset); }
-  .hero-copy.sticky { position: sticky; top: 8rem; }
-  .hero-story { padding-top: var(--space-performance-sm); }
-  .eyebrow, .hero-bottom { font: var(--text-performance-operator-label)/1.5 var(--font-performance-mono); }
-  .eyebrow { margin: 0; }
-  h1 { max-width: 15ch; margin-block: var(--space-performance-md); font: var(--font-performance-medium) clamp(3.1rem, 5.8vw, 5.25rem)/1.04 var(--font-performance-interface); letter-spacing: var(--tracking-performance-tight); }
-  .lede { max-width: 45ch; font-size: var(--text-performance-body); line-height: 1.55; margin-bottom: var(--space-performance-md); }
-  .primary { display: inline-flex; align-items: center; min-height: 48px; padding: var(--space-performance-xs) var(--space-performance-md); background: var(--color-performance-paper); color: var(--color-performance-ink); border: 1px solid var(--color-performance-paper); border-radius: var(--radius-performance-sm); text-decoration: none; }
+  .hero-track { background: var(--color-performance-ink); color: var(--color-performance-paper); padding: 8rem 7vw 0; }
+  .eyebrow, figcaption, .record-label, .step, .state, .record-footer, .hero-bottom { font: var(--text-performance-operator-label)/1.5 var(--font-performance-mono); }
+  .eyebrow { margin: 0 0 var(--space-performance-lg); }
+  h1 { font: var(--font-performance-medium) clamp(3.2rem, 6.8vw, 7rem)/.98 var(--font-performance-interface); letter-spacing: var(--tracking-performance-tight); margin: 0; }
+  h1 span { display: block; }
+  .hero-composition { display: grid; grid-template-columns: minmax(0, .95fr) minmax(0, 1fr); gap: clamp(2rem, 6vw, 7rem); align-items: start; padding-block: var(--space-performance-lg); }
+  .hero-copy { min-width: 0; }
+  h2 { font: var(--font-performance-medium) clamp(1.5rem, 2.1vw, 2rem)/1.25 var(--font-performance-interface); margin: 0 0 var(--space-performance-sm); }
+  .lede { max-width: 46ch; margin: 0 0 var(--space-performance-md); font-size: var(--text-performance-body-sm); line-height: 1.65; }
+  .primary { display: inline-flex; align-items: center; justify-content: space-between; gap: var(--space-performance-lg); min-height: 52px; padding: var(--space-performance-sm) var(--space-performance-md); background: var(--color-performance-paper); color: var(--color-performance-ink); border: 1px solid var(--color-performance-paper); text-decoration: none; border-radius: var(--radius-performance-sm); }
   .primary:hover { background: var(--color-performance-ink); color: var(--color-performance-paper); }
-  .starting-point { margin-top: var(--space-performance-md); font-size: var(--text-performance-caption); line-height: 1.6; color: var(--color-performance-fg-secondary); }
-  .starting-point a { text-decoration: underline; text-underline-offset: .2em; display: inline-flex; min-height: 44px; align-items: center; }
-  .hero-bottom { display: flex; flex-wrap: wrap; gap: var(--space-performance-sm); justify-content: space-between; align-items: center; padding: var(--space-performance-sm) 7vw; border-top: 1px solid var(--color-performance-shell-border-default); }
+  .next-step, .starting-point { font-size: var(--text-performance-caption); line-height: 1.6; max-width: 46ch; }
+  .next-step { margin-top: var(--space-performance-sm); }
+  .starting-point { display: flex; align-items: center; gap: var(--space-performance-xs); flex-wrap: wrap; margin-bottom: 0; }
+  .service-record { margin: 0; border: 1px solid var(--color-performance-shell-border-strong); border-radius: var(--radius-performance-sm); min-width: 0; }
+  figcaption, .record-footer { display: flex; justify-content: space-between; flex-wrap: wrap; gap: var(--space-performance-xs); padding: var(--space-performance-sm) var(--space-performance-md); }
+  figcaption { border-bottom: 1px solid var(--color-performance-shell-border-strong); }
+  .record-problem { padding: var(--space-performance-md); }
+  .record-problem p { font: var(--font-performance-medium) clamp(1.45rem, 2.2vw, 2.1rem)/1.25 var(--font-performance-interface); margin: var(--space-performance-sm) 0 0; }
+  ol { list-style: none; padding: 0 var(--space-performance-md); margin: 0; }
+  li { display: grid; grid-template-columns: auto 1fr auto; align-items: start; gap: var(--space-performance-sm); padding-block: var(--space-performance-sm); border-top: 1px solid var(--color-performance-shell-border-default); }
+  h3 { margin: 0; font-size: var(--text-performance-caption); font-weight: var(--font-performance-medium); line-height: 1.5; }
+  li p { margin: .3rem 0 0; font-size: var(--text-performance-caption); line-height: 1.5; }
+  .step { padding-top: .1rem; }
+  .state { border: 1px solid var(--color-performance-shell-border-strong); padding: .1rem .4rem; }
+  .record-footer { border-top: 1px solid var(--color-performance-shell-border-strong); }
+  .hero-bottom { display: flex; justify-content: space-between; flex-wrap: wrap; gap: var(--space-performance-sm); border-top: 1px solid var(--color-performance-shell-border-strong); padding-block: var(--space-performance-sm); }
   a { color: inherit; text-underline-offset: .3em; }
-  .hero-bottom a { display: inline-flex; align-items: center; min-height: 44px; }
-  button { min-height: 44px; padding: var(--space-performance-xs) var(--space-performance-sm); border: 1px solid var(--color-performance-shell-border-strong); border-radius: var(--radius-performance-sm); background: var(--color-performance-ink); color: inherit; font: inherit; }
-  a:focus-visible, button:focus-visible { outline: 2px solid var(--color-performance-focus); outline-offset: 3px; }
-  @media(max-width:900px) { .hero-composition { grid-template-columns: 1fr; padding-top: 7rem; gap: var(--space-performance-md); } .hero-copy-rail.measured { padding-top: 0; } .hero-copy.sticky { position: static; } .hero-story { max-width: 42rem; } }
-  @media(max-width:720px) { h1 { font-size: clamp(2.75rem, 11vw, 4.5rem); } .lede { font-size: var(--text-performance-body-sm); } .hero-bottom { justify-content: start; column-gap: var(--space-performance-md); } }
+  .hero-bottom a, .starting-point a { display: inline-flex; align-items: center; gap: var(--space-performance-sm); min-height: 44px; }
+  a:focus-visible { outline: 2px solid var(--color-performance-focus); outline-offset: 5px; }
+  @media(max-width:900px) { .hero-track { padding-top: 7rem; } .hero-composition { grid-template-columns: 1fr; gap: var(--space-performance-lg); padding-block: var(--space-performance-lg); } .hero-copy { max-width: 40rem; } .service-record { max-width: 42rem; } }
+  @media(max-width:540px) { .hero-track { padding-inline: 6vw; } h1 { font-size: clamp(2.6rem, 10vw, 3.4rem); line-height: 1.04; } .eyebrow { font-size: .65rem; margin-bottom: var(--space-performance-md); } .primary { width: 100%; } .state { display: none; } li { grid-template-columns: auto 1fr; } figcaption { flex-direction: column; } }
 </style>

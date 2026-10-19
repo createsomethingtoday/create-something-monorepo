@@ -120,7 +120,7 @@
   // Public pages share one navigation; workspace and identity routes retain their existing shell.
   const usesPublicNavigation = $derived(!/^\/(account|admin|dashboard|login|logout|auth|mcp-access|delivery)(?:\/|$)/.test($page.url.pathname) && !/^\/map\/(workspace|subscribe|share)(?:\/|$)/.test($page.url.pathname));
   const filmNavLinks = [
-    { label: 'The work', href: '/#work' },
+    { label: 'The work', href: '/#built-work' },
     { label: 'Technical support', href: '/services' },
     { label: 'From $900/mo', href: agencyCoreMessaging.membershipHref },
     { label: 'Explore', href: '/products', children: [

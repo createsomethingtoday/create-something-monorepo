@@ -2,7 +2,9 @@
   import SelectedClientWork from '$lib/components/SelectedClientWork.svelte';
   import AgencyHero from '$lib/components/films/AgencyHero.svelte';
   import ServiceJourney from '$lib/components/ServiceJourney.svelte';
-  import WorkflowSignalBand from '$lib/components/WorkflowSignalBand.svelte';
+  import AgencyProof from '$lib/components/AgencyProof.svelte';
+  import CanonServiceGuide from '$lib/components/CanonServiceGuide.svelte';
+  import { agencyCoreMessaging } from '$lib/data/marketingCopy';
   import FilmCollection from '$lib/components/films/FilmCollection.svelte';
   import BuiltWork from '$lib/components/BuiltWork.svelte';
   import MembershipOffer from '$lib/components/MembershipOffer.svelte';
@@ -85,12 +87,19 @@
 
 <div class="home-pilot property-performance">
   <AgencyHero />
-  <WorkflowSignalBand motionOnly quiet tall />
+  <AgencyProof>
+    <BuiltWork sectionId="engineering-work" />
+    <FilmCollection />
+    <SelectedClientWork />
+  </AgencyProof>
   <ServiceJourney />
-  <BuiltWork showCanonContinuation />
-  <FilmCollection />
-  <SelectedClientWork />
-  <MembershipOffer compact />
+  <section class="conversion" aria-labelledby="conversion-title">
+    <header class="conversion-intro">
+      <div><p class="eyebrow">Start with one task</p><h2 id="conversion-title">What would you like<br />working better?</h2><p>Bring the tools involved and an example of the result you need. We’ll discuss fit, then agree on the work and how to check it.</p><a class="conversion-action" href={agencyCoreMessaging.workflowMappingSessionHref}>Talk through your workflow ↗</a></div>
+      <aside aria-label="Help choosing a service"><CanonServiceGuide /><p>Explore published service answers with Canon, or go straight to a conversation.</p></aside>
+    </header>
+    <MembershipOffer compact />
+  </section>
   <MeridianAccordion
     eyebrow="Before we begin"
     title="A few practical questions."
@@ -101,5 +110,16 @@
 </div>
 
 <style>
+  .conversion { background: var(--color-performance-paper); color: var(--color-performance-ink); }
+  .conversion-intro { padding: var(--space-performance-xl) 7vw 0; display: grid; grid-template-columns: 1.5fr 1fr; gap: var(--space-performance-lg); align-items: end; }
+  .eyebrow { font: var(--text-performance-operator-label)/1.5 var(--font-performance-mono); text-transform: uppercase; }
+  .conversion-intro h2 { font: var(--font-performance-medium) clamp(2.5rem,5vw,4.5rem)/1.08 var(--font-performance-interface); letter-spacing: var(--tracking-performance-tight); margin-block: var(--space-performance-sm); }
+  .conversion-intro p { max-width: 50ch; line-height: 1.65; }
+  .conversion-intro aside { padding: var(--space-performance-md); background: var(--color-performance-ink); color: var(--color-performance-paper); border-radius: var(--radius-performance-sm); }
+  .conversion-intro aside p { font-size: var(--text-performance-caption); }
+  .conversion-action { display: inline-flex; align-items: center; min-height: 48px; padding: var(--space-performance-sm) var(--space-performance-md); background: var(--color-performance-ink); color: var(--color-performance-paper); text-decoration: none; border-radius: var(--radius-performance-sm); }
+  .conversion-action:focus-visible { outline: 2px solid var(--color-performance-focus); outline-offset: 4px; }
+  @media(max-width:800px) { .conversion-intro { grid-template-columns: 1fr; } }
+  @media (prefers-reduced-motion: reduce) { :global(html:has(.home-pilot)) { scroll-behavior: auto; } }
   .home-pilot { background: var(--color-performance-paper); color: var(--color-performance-ink); }
 </style>

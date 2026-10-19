@@ -2,9 +2,10 @@
   import CanonCompanion from './CanonCompanion.svelte';
   import { builtWork } from '$lib/data/builtWork';
   export let showCanonContinuation = false;
+  export let sectionId = 'built-work';
 </script>
 
-<section id="built-work" class="built-work" aria-labelledby="built-work-title">
+<section id={sectionId} class="built-work" aria-labelledby="built-work-title">
   <header>
     <p class="eyebrow">What we’ve built</p>
     <h2 id="built-work-title">From the agent’s tools to the customer’s screen.</h2>
