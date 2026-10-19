@@ -15,9 +15,17 @@ export const SUPPORT_REQUEST_TYPE_LABELS: Readonly<Record<SupportRequestType, st
   bug_help: 'Bug or help using the template',
   customization: 'Customization request',
   file_request: 'File request (Figma, assets)',
-  refund_licensing: 'Refund or licensing',
+  // Key kept for D1 history; see SUPPORT_REQUEST_REFUND_NOTE.
+  refund_licensing: 'Licensing question',
   other: 'Other',
 };
+
+// Marketplace purchases are final (Webflow Refund Policy), so a creator can't
+// grant a refund. Shown when the buyer picks the licensing topic.
+export const SUPPORT_REQUEST_REFUND_POLICY_URL =
+  'https://help.webflow.com/hc/en-us/articles/40102090399635-Webflow-Refund-Policy';
+export const SUPPORT_REQUEST_REFUND_NOTE =
+  "Looking for a refund? Marketplace purchases are final, and creators can't issue refunds.";
 
 // The templates.webflow.com proxy, not workers.dev: webflow.com's CSP limits
 // connect-src to https://*.webflow.com (see agentTools.ts).

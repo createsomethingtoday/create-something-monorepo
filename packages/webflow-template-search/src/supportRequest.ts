@@ -35,12 +35,20 @@ export const SUPPORT_REQUEST_TYPE_LABELS: Readonly<Record<SupportRequestType, st
   bug_help: 'Bug or help using the template',
   customization: 'Customization request',
   file_request: 'File request (Figma, assets)',
-  refund_licensing: 'Refund or licensing',
+  // Key kept for D1 history. Marketplace purchases are final, so refunds aren't
+  // the creator's to grant; the form points refund questions to Webflow.
+  refund_licensing: 'Licensing question',
   other: 'Other',
 };
 
 export const DEFAULT_SUPPORT_WORKFLOW_KEY = 'marketplace-template-support-request';
 const KNOCK_WORKFLOWS_URL = 'https://api.knock.app/v1/workflows';
+const KNOCK_MESSAGES_URL = 'https://api.knock.app/v1/messages';
+// Knock message statuses that won't change again.
+const FINAL_DELIVERY_STATUSES = ['delivered', 'bounced', 'undelivered', 'not_sent'];
+// Past this age a still-unconfirmed request stops being polled.
+const DELIVERY_REFRESH_WINDOW_MS = 14 * 24 * 60 * 60 * 1000;
+const DELIVERY_REFRESH_LIMIT = 25;
 
 const MAX_BODY_CHARS = 16_000;
 // Read cap in bytes, enforced while streaming so an oversized body is never
@@ -577,4 +585,42 @@ export async function handleSupportRequest(request: Request, env: Env): Promise<
     await finishRow(env, attemptId, 'send_failed', { error: message }).catch(() => undefined);
     return respond({ success: false, error: 'send_failed', request_id: attemptId }, 502);
   }
+}
+
+/**
+ * Copy Knock's email status onto sent rows that aren't final yet, oldest check
+ * first. A row stuck at `sent` means the email provider accepted it but Knock
+ * never confirmed delivery.
+ */
+export async function refreshSupportRequestDeliveries(
+  env: Env,
+  options: { limit?: number; now?: Date } = {},
+): Promise<{ checked: number; updated: number }> {
+  if (!env.KNOCK_API_KEY) return { checked: 0, updated: 0 };
+  const now = options.now ?? new Date();
+  const cutoff = new Date(now.getTime() - DELIVERY_REFRESH_WINDOW_MS).toISOString();
+  const finals = FINAL_DELIVERY_STATUSES.map((status) => `'${status}'`).join(', ');
+  const { results } = await env.DB.prepare(
+    `SELECT id, knock_workflow_run_id FROM support_requests
+     WHERE status = 'sent' AND knock_workflow_run_id IS NOT NULL AND created_at >= ?
+       AND (delivery_status IS NULL OR delivery_status NOT IN (${finals}))
+     ORDER BY delivery_checked_at IS NOT NULL, delivery_checked_at, created_at
+     LIMIT ?`,
+  )
+    .bind(cutoff, options.limit ?? DELIVERY_REFRESH_LIMIT)
+    .all<{ id: string; knock_workflow_run_id: string }>();
+
+  let updated = 0;
+  for (const row of results ?? []) {
+    const url = `${KNOCK_MESSAGES_URL}?workflow_run_id=${encodeURIComponent(row.knock_workflow_run_id)}&page_size=5`;
+    const response = await fetch(url, { headers: { Authorization: `Bearer ${env.KNOCK_API_KEY}` } });
+    if (!response.ok) throw new Error(`Knock message lookup failed (${response.status})`);
+    const { items } = (await response.json()) as { items?: Array<{ status?: string }> };
+    const deliveryStatus = items?.[0]?.status ?? null;
+    await env.DB.prepare('UPDATE support_requests SET delivery_status = ?, delivery_checked_at = ? WHERE id = ?')
+      .bind(deliveryStatus, now.toISOString(), row.id)
+      .run();
+    if (deliveryStatus) updated += 1;
+  }
+  return { checked: results?.length ?? 0, updated };
 }

@@ -5,6 +5,8 @@ import { MarketplaceComponentErrorBoundary, useMarketplaceComponentErrorTracking
 import { applyHostInert } from './modalIsolation';
 import {
   SUPPORT_REQUEST_ERROR_MESSAGES,
+  SUPPORT_REQUEST_REFUND_NOTE,
+  SUPPORT_REQUEST_REFUND_POLICY_URL,
   SUPPORT_REQUEST_TYPE_LABELS,
   SUPPORT_REQUEST_TYPES,
   SupportRequestError,
@@ -343,6 +345,14 @@ const SupportRequestDialog: React.FC<SupportRequestDialogProps> = ({
                   <option key={type} value={type}>{SUPPORT_REQUEST_TYPE_LABELS[type]}</option>
                 ))}
               </select>
+              {requestType === 'refund_licensing' ? (
+                <p className="tmsupport-note">
+                  {SUPPORT_REQUEST_REFUND_NOTE}{' '}
+                  <a href={SUPPORT_REQUEST_REFUND_POLICY_URL} target="_blank" rel="noopener noreferrer">
+                    See Webflow's refund policy.
+                  </a>
+                </p>
+              ) : null}
             </div>
             <div className="tmsupport-field">
               <label className="tmsupport-label" htmlFor={`${fieldId}-name`}>Your name (optional)</label>

@@ -18,7 +18,7 @@ import {
 import { corsPreflight, jsonResponse, textResponse, withCorsHeaders } from './http.js';
 import { parseSearchParams } from './query.js';
 import { searchTemplates } from './search.js';
-import { handleSupportRequest } from './supportRequest.js';
+import { handleSupportRequest, refreshSupportRequestDeliveries } from './supportRequest.js';
 import { handleTelemetry } from './telemetry.js';
 import {
   SyncAlreadyRunningError,
@@ -580,6 +580,11 @@ async function runScheduledJob(cron: string, env: Env): Promise<void> {
     // templates whose own 📅LMT happened to move. Refresh every creator from the
     // Designers collection by sync-record-id so a rename reaches all of their
     // templates within the hour even if the Designers webhook never arrived.
+    // Support-request delivery status rides the same hourly slot; a Knock
+    // outage must not block the creator refresh.
+    await refreshSupportRequestDeliveries(env).catch((error) => {
+      console.error(JSON.stringify({ event: 'support_request_delivery_refresh_failed', error: String(error) }));
+    });
     await refreshCreatorProfiles(env);
     return;
   }
@@ -708,7 +713,8 @@ export default {
     // */5 cron: incremental sync — picks up Airtable records modified since last cursor.
     // 17 * cron: bounded stale thumbnail backfill using stable Webflow image sources.
     // 47 3 cron: conservative stale-row prune for missing-image rows whose Webflow listing is 404.
-    // 37 * cron: creator profile refresh from the Designers collection (slug/avatar renames).
+    // 37 * cron: creator profile refresh from the Designers collection (slug/avatar renames),
+    //          plus support-request delivery status from Knock.
     // 7 * cron: bounded demo-homepage signal refresh (frameworks, class MinHash) for view=full.
     const mode = scheduledMode(controller.cron);
     try {
