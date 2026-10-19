@@ -120,7 +120,7 @@
   // Public pages share one navigation; workspace and identity routes retain their existing shell.
   const usesPublicNavigation = $derived(!/^\/(account|admin|dashboard|login|logout|auth|mcp-access|delivery)(?:\/|$)/.test($page.url.pathname) && !/^\/map\/(workspace|subscribe|share)(?:\/|$)/.test($page.url.pathname));
   const filmNavLinks = [
-    { label: 'The work', href: '/#work' },
+    { label: 'The work', href: '/#built-work' },
     { label: 'Technical support', href: '/services' },
     { label: 'From $900/mo', href: agencyCoreMessaging.membershipHref },
     { label: 'Explore', href: '/products', children: [
@@ -237,6 +237,10 @@
 
     let id: string;
     try { id = decodeURIComponent(hash.slice(1)); } catch { return; }
+    // Retired interactive-journey bookmarks still lead to the current explanation.
+    if (id === 'sample-handoff' || /^handoff-example-(problem|approval|check|handoff)(-(detail|record|control|inspect))?$/.test(id)) {
+      id = 'service-journey-title';
+    }
     const element = document.getElementById(id);
     if (element) {
       const nav = document.querySelector('.nav-fixed');
@@ -277,9 +281,7 @@
   // - Preserve browser restore for popstate/back-forward
   // - Hash links scroll to section
   // - Other internal links scroll to top
-  afterNavigate(({ from, to, type }) => {
-    // The journey owns focus/scroll for same-document exploration.
-    if (from?.url.pathname === to?.url.pathname && from?.url.search === to?.url.search && (to?.url.hash.startsWith('#handoff-example-') || to?.url.hash === '#sample-handoff')) return;
+  afterNavigate(({ to, type }) => {
     if (to?.url.hash) {
       setTimeout(() => scrollToHash(to.url.hash), 100);
       return;
