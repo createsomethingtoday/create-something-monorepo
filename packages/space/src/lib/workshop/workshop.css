@@ -49,7 +49,7 @@
 .workshop .primary {
   display: inline-flex;
   padding: 0.95rem 1.35rem;
-  border-radius: var(--radius-performance-md);
+  border-radius: var(--radius-operator-control);
   background: var(--color-performance-ink, #090909);
   color: var(--color-performance-paper, #f3f3f0);
   text-decoration: none;

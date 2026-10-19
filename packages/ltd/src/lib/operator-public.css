@@ -124,7 +124,7 @@ body:has(.ltd-operator-public) {
 .ltd-operator-public main :is(.clear-card-grid__card, .product-surface, .readiness-page__questions button) {
   background: var(--color-operator-secondary);
   border: 1px solid var(--color-operator-border);
-  border-radius: 8px;
+  border-radius: var(--radius-operator-panel);
   box-shadow: none;
   color: var(--color-operator-foreground);
 }
@@ -136,10 +136,13 @@ body:has(.ltd-operator-public) {
   color: var(--color-operator-foreground);
 }
 .property-performance.ltd-operator-public main .opposition .clear-card-grid__card {
-  border-radius: 8px;
+  border-radius: var(--radius-operator-panel);
 }
 .property-performance.ltd-operator-public main .opposition .clear-card-grid__card :is(p, .clear-card-grid__eyebrow) {
   color: var(--color-operator-muted);
+}
+.ltd-operator-public main .readiness-page__questions button {
+  border-radius: var(--radius-operator-control);
 }
 .ltd-operator-public main .readiness-page__questions button[aria-pressed='true'] {
   background: var(--color-operator-raised);
@@ -159,7 +162,7 @@ body:has(.ltd-operator-public) {
 .ltd-operator-public .footer-clear .footer-links-grid {
   background: var(--color-operator-secondary);
   border-color: var(--color-operator-border);
-  border-radius: 8px;
+  border-radius: var(--radius-operator-panel);
   box-shadow: none;
 }
 .ltd-operator-public .footer-clear :is(.brand-description, .section-description, .footer-link) {
@@ -194,12 +197,12 @@ body:has(.ltd-operator-public) {
 }
 .ltd-operator-hero__actions { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 1.5rem; }
 .ltd-operator-hero__actions :is(a, button) { min-height: 2.75rem; }
-.property-performance.ltd-operator-public .btn { border-radius: 8px; }
+.property-performance.ltd-operator-public .btn { border-radius: var(--radius-operator-control); }
 .property-performance.ltd-operator-public :is(a.btn-primary, a.property-funnel__button--primary):hover {
   opacity: 1;
 }
 .property-performance.ltd-operator-public :is(.property-funnel__button, .newsletter-section .submit-button, .newsletter-section input[type='email']) {
-  border-radius: 8px;
+  border-radius: var(--radius-operator-control);
 }
 .property-performance.ltd-operator-public .property-funnel__step--active .property-funnel__step {
   background: var(--color-operator-raised);
@@ -227,7 +230,7 @@ body:has(.ltd-operator-public) {
   padding: 0;
   list-style: none;
   border: 1px solid var(--color-operator-border);
-  border-radius: 8px;
+  border-radius: var(--radius-operator-panel);
   background: var(--color-operator-secondary);
 }
 .ltd-operator-hero__proof li { display: grid; gap: .2rem; padding: .75rem 1rem; }
@@ -273,7 +276,7 @@ body:has(.ltd-operator-public) {
   background: var(--color-operator-secondary);
   border-color: var(--color-operator-border);
   color: var(--color-operator-muted);
-  border-radius: 6px;
+  border-radius: var(--radius-operator-control);
 }
 .ltd-operator-public main .performance-narrative-stage {
   background: var(--color-operator-background);

@@ -1,19 +1,4 @@
 /* Public research surfaces only. Canon remains the token and component owner. */
-.layout-root.io-research-shell .research-skip-link {
-  position: fixed;
-  top: var(--space-performance-xs);
-  left: var(--space-performance-xs);
-  z-index: 10000;
-  padding: var(--space-performance-xs) var(--space-performance-sm);
-  border: 2px solid var(--color-performance-signal);
-  border-radius: var(--radius-performance-md);
-  background: var(--color-performance-panel);
-  color: var(--color-performance-ink);
-  transform: translateY(-200%);
-}
-.layout-root.io-research-shell .research-skip-link:focus {
-  transform: translateY(0);
-}
 .layout-root.io-research-shell :is(a, button, input, select):focus-visible {
   outline: 3px solid var(--color-performance-signal);
   outline-offset: 4px;

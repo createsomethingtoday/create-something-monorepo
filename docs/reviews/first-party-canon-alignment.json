@@ -1,0 +1,165 @@
+{
+  "status": "reviewable isolated draft integrated with exact deployed agency baseline; not published",
+  "base": "caa129c23cb780784e67a71ff31860a3dcec8bce",
+  "branch": "codex/first-party-canon-alignment-integrated",
+  "tier": "Judgment: presentation of research, operating standards, and public workshop; no content or policy semantics changed",
+  "scope": [
+    {
+      "package": "packages/io",
+      "purpose": "Research, papers, reference implementations",
+      "evidence": [
+        "packages/io/README.md",
+        "packages/io/UNDERSTANDING.md",
+        "packages/io/src/lib/config/researchSurface.ts"
+      ]
+    },
+    {
+      "package": "packages/ltd",
+      "purpose": "Operating library, playbooks, readiness, Canon",
+      "evidence": [
+        "packages/ltd/README.md",
+        "packages/ltd/UNDERSTANDING.md"
+      ]
+    },
+    {
+      "package": "packages/space",
+      "purpose": "Public workshop, project catalog, retained interactive tools",
+      "evidence": [
+        "packages/space/README.md",
+        "packages/space/UNDERSTANDING.md"
+      ]
+    }
+  ],
+  "excluded": [
+    "packages/agency: approved deployed baseline integrated; no draft edits",
+    "packages/canon: existing shared components/tokens consumed; no exported behavior or global palette changed",
+    "packages/learn: MCP server rather than a web property (package.json and README)",
+    "Client and separate-brand applications, including Half Dozen, Webflow, PCN, Gigi, and other product surfaces: ownership/brand scope requires separate review; not rebranded"
+  ],
+  "audit": [
+    {
+      "dimension": "typography",
+      "finding": "All three use Canon Performance sans and mono. IO locally compresses display scale to 2.25\u20133.25rem; LTD uses a similar reading scale; Space workshop uses 2.25\u20133.25rem. Agency public headings can reach 4.5rem. These are purpose-specific scales, not a missing font system.",
+      "action": "Preserve reading/workshop scale and content; no font swap.",
+      "sources": [
+        "packages/canon/src/lib/styles/tokens.css",
+        "packages/agency/src/lib/styles/operator-palette.css",
+        "packages/io/src/lib/styles/operator.css",
+        "packages/ltd/src/lib/operator-public.css",
+        "packages/space/src/lib/workshop/workshop.css"
+      ]
+    },
+    {
+      "dimension": "palette",
+      "finding": "All three already opt into Canon operator neutral colors. Local aliases differ: IO panels use operator-panel, LTD and Space panels use operator-secondary. Space still hardcoded hover/active opacity values.",
+      "action": "Use existing Canon hover/raised and accessible focus tokens in Space. Preserve surface-role distinctions; wider alias consolidation deferred.",
+      "sources": [
+        "packages/canon/src/lib/styles/operator.css",
+        "packages/io/src/lib/styles/operator.css",
+        "packages/ltd/src/lib/operator-public.css",
+        "packages/space/src/app.css"
+      ]
+    },
+    {
+      "dimension": "spacing",
+      "finding": "IO has a 64px local header, but its hash scroll offset assumed 72px; Space main padding duplicated 72px rather than the shared header token. Reading and workshop section spacing intentionally differs from agency campaign openings.",
+      "action": "Measure IO nav for hash offset; use Canon header-height token in Space. Preserve route-owned section rhythm.",
+      "sources": [
+        "packages/io/src/routes/+layout.svelte",
+        "packages/space/src/routes/+layout.svelte"
+      ]
+    },
+    {
+      "dimension": "navigation",
+      "finding": "IO uses Canon editorial navigation/footer; LTD and Space use Canon performance variants. Destinations reflect each property. IO/Space duplicated skip-link markup/styles; LTD main lacked an explicit focus target.",
+      "action": "Reuse exported Canon SkipToContent in all three; add tabindex=-1 to LTD main. No destination or primary CTA changes.",
+      "sources": [
+        "packages/canon/src/lib/components/SkipToContent.svelte",
+        "packages/canon/src/lib/components/index.ts",
+        "packages/io/src/routes/+layout.svelte",
+        "packages/ltd/src/routes/+layout.svelte",
+        "packages/space/src/routes/+layout.svelte"
+      ]
+    },
+    {
+      "dimension": "components",
+      "finding": "Property controls/panels hardcoded 6/8/10px while agency uses Canon operator-control (6px) and operator-panel (10px).",
+      "action": "Consume the existing role tokens in IO/LTD overlays and Space workshop/control styles, including project cards.",
+      "sources": [
+        "packages/canon/src/lib/styles/operator.css",
+        "packages/agency/src/lib/styles/operator-palette.css",
+        "packages/space/src/lib/workshop/ProjectCard.svelte"
+      ]
+    },
+    {
+      "dimension": "motion/accessibility",
+      "finding": "Cross-property body entry animation did not guard reduced motion; IO/Space hash scrolling forced smooth motion.",
+      "action": "Respect prefers-reduced-motion for entry and hash scroll. Keep each property view-transition duration.",
+      "sources": [
+        "packages/io/src/routes/+layout.svelte",
+        "packages/ltd/src/routes/+layout.svelte",
+        "packages/space/src/routes/+layout.svelte"
+      ]
+    },
+    {
+      "dimension": "Canon usage",
+      "finding": "Canonical navigation, footer, colors and font families already shared; duplicated local overlay mappings are the larger remaining maintenance opportunity.",
+      "action": "Reuse existing exports now; defer a new shared alias contract until PR #1992 baseline lands and rendered regression coverage is available."
+    }
+  ],
+  "review_plan": [
+    "Parent review of isolated draft diff against caa129c23cb780784e67a71ff31860a3dcec8bce.",
+    "Before promotion, verify database-backed IO papers in an environment with populated D1.",
+    "Consider shared opt-in alias layer separately after reviewing intentionally different surface roles."
+  ],
+  "validation": {
+    "io_check": "passed",
+    "ltd_check": "passed",
+    "space_check": "passed",
+    "space_build": "passed on final draft; Cloudflare adapter warns that 70 exclude rules exceed routing limits",
+    "svelte_compile": "four changed components compiled without warnings",
+    "diff_check": "passed",
+    "browser": "Installed Playwright 1.58.2 with isolated headless system Chrome: 8 routes x 1440/390 widths, HTTP 200, no horizontal overflow or page errors, skip focus transfer passes; applicable mobile menus open with Enter and close with Escape. Home screenshots visually reviewed.",
+    "preview_server": "Loopback-only servers started with approved escalation; all three stopped after review.",
+    "dependencies": "bootstrap attempted; network DNS failed. Copied cached Node/pnpm/dependencies to isolated worktree; installed cache does not establish a fresh lockfile install.",
+    "linear": "LINEAR_API_KEY absent; no external issue created",
+    "reduced_motion": "All three consume cross-property entry flag without animation class under reduce. IO and Space hash-scroll instrumentation confirms behavior:auto.",
+    "routing_warning": "Clean git archive of baseline a45054436 rebuilt in /tmp with unchanged dependencies: same warning dropping 70 exclude rules. Predates draft; no unrelated repair.",
+    "browser_limits": "Bounded public route review, not a full accessibility audit. Remote/authenticated tools were not exercised. Mobile search can precede skip link in tab order; skip precedes primary property navigation.",
+    "data_caveat": "Local IO D1 reports no such table: papers (SQLITE_ERROR). Public pages render fallback content with HTTP 200. Preview evidence does not validate database-backed paper completeness or live data health.",
+    "integrated_io_check": "passed, including new selective-context tests and Canon package/publint; zero Svelte errors or warnings",
+    "integrated_browser": "IO homepage and papers at 1440/390: 200, no overflow or uncaught page errors, skip focus transfer and mobile Enter/Escape passed; integrated screenshots captured",
+    "integration_scope": "No baseline changes to LTD, Space, Canon styles, Navigation, Footer or SkipToContent; prior checks and browser evidence retained, unrelated tests not repeated."
+  },
+  "workflow_reference": {
+    "url": "https://prose.md/",
+    "use": "Reviewed public Markdown contract model: explicit scope, source-grounded claims, and unmet requirements. No OpenProse runtime or token-savings claim."
+  },
+  "isolation": {
+    "original_checkout": "clean at original SHA during final source review",
+    "agency_files_changed": false,
+    "push_merge_deploy": false,
+    "worktree_disposition": "preserved at task-4/property-alignment on codex/first-party-canon-alignment-integrated; previews stopped"
+  },
+  "changed_files": [
+    "packages/io/src/lib/styles/operator.css",
+    "packages/io/src/lib/styles/research.css",
+    "packages/io/src/routes/+layout.svelte",
+    "packages/ltd/src/lib/operator-public.css",
+    "packages/ltd/src/routes/+layout.svelte",
+    "packages/space/src/app.css",
+    "packages/space/src/lib/workshop/ProjectCard.svelte",
+    "packages/space/src/lib/workshop/workshop.css",
+    "packages/space/src/routes/+layout.svelte",
+    "docs/reviews/first-party-canon-alignment.json"
+  ],
+  "evidence_directory": "../property-alignment-evidence",
+  "original_base": "a45054436f97496c3958995829b005d4af3623de",
+  "integration": {
+    "method": "new branch at exact approved commit, retained uncommitted non-overlapping draft; no cherry-pick or merge required",
+    "pr": "https://github.com/createsomethingtoday/create-something-monorepo/pull/1992",
+    "draft_preservation": "binary git diff before/after integration matches byte-for-byte",
+    "original_checkout": "clean at a45054436f97496c3958995829b005d4af3623de; three divergent Atlas commits remain there",
+    "production": "no push, merge, or deployment of branding draft"
+  }
+}
