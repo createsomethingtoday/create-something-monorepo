@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import { IsometricIllustration, type IsometricKind } from '@create-something/canon';
   const storyKinds: IsometricKind[] = ['diagnose', 'approve', 'handoff', 'learn'];
+  let { onExplore }: { onExplore?: (scene: number | null) => void } = $props();
   import { reducedFilmMotion } from '$lib/motion/filmPlayback';
 
   const scenes = [
@@ -11,6 +12,7 @@
     { title: 'The lesson stays with your team.', detail: 'A checked handoff, instructions, and recovery checks preserve the context.' }
   ];
   let scene = $state(3);
+  let manuallySelected = $state(false);
   let running = $state(false);
   let ready = $state(false);
   let mobile = $state(true);
@@ -23,6 +25,10 @@
   let visible = false;
   const eligible = $derived(ready && !mobile && !systemReduced && !$reducedFilmMotion);
 
+  function explore(index: number) {
+    pause(); manuallySelected = true; scene = index; elapsed = index * 3400; complete = index === 3;
+    onExplore?.(index);
+  }
   function pause() { running = false; cancelAnimationFrame(frame); }
   function advance(time: number) {
     if (!running) return;
@@ -34,6 +40,7 @@
   }
   function play() {
     if (!eligible || !visible || document.hidden) return;
+    manuallySelected = false; onExplore?.(null);
     if (complete) { elapsed = 0; scene = 0; complete = false; }
     running = true; previous = performance.now(); frame = requestAnimationFrame(advance);
   }
@@ -42,12 +49,12 @@
     const preference = matchMedia('(prefers-reduced-motion: reduce)');
     const sync = () => {
       mobile = narrow.matches; systemReduced = preference.matches;
-      if (mobile || systemReduced) { pause(); scene = 3; complete = true; }
+      if (mobile || systemReduced) { pause(); if (!manuallySelected) { scene = 3; complete = true; } }
     };
     sync(); ready = true;
     narrow.addEventListener('change', sync); preference.addEventListener('change', sync);
     const unsubscribe = reducedFilmMotion.subscribe(value => {
-      if (value) { pause(); scene = 3; complete = true; }
+      if (value) { pause(); if (!manuallySelected) { scene = 3; complete = true; } }
     });
     const observer = new IntersectionObserver(([entry]) => {
       visible = entry.isIntersecting && entry.intersectionRatio >= .3;
@@ -77,14 +84,22 @@
     </div>
   </div>
   <figcaption>
-    <h2 id="workflow-story-title">{scenes[scene].title}</h2>
-    <p class="story-detail">{scenes[scene].detail}</p>
+    <div aria-live={running ? "off" : "polite"} aria-atomic="true">
+      <h2 id="workflow-story-title">{scenes[scene].title}</h2>
+      <p class="story-detail">{scenes[scene].detail}</p>
+    </div>
+    <p class="explore-hint">Choose a moment. Explore at your own pace.</p>
     <ol class="story-sequence" aria-label="The whole service story">
-      <li class:current={scene === 0}>Problem</li><li class:current={scene === 1}>Approval</li><li class:current={scene === 2}>Working system</li><li class:current={scene === 3}>Captured lesson</li>
+      {#each ['Problem', 'Approval', 'Working system', 'Captured lesson'] as label, index}
+        <li class:current={scene === index}>
+          {#if ready}<button type="button" class="scene-choice" aria-pressed={scene === index} onclick={() => explore(index)}><span aria-hidden="true">0{index + 1}</span> {label}</button>
+          {:else}{label}{/if}
+        </li>
+      {/each}
     </ol>
     <div class="story-controls">
       {#if eligible}<button onclick={() => running ? pause() : play()} aria-label={running ? 'Pause workflow story' : complete ? 'Play workflow story' : 'Resume workflow story'}>{running ? 'Pause story' : complete ? 'Play the story' : 'Resume story'} <span aria-hidden="true">{running ? 'Ⅱ' : '▷'}</span></button>
-      {:else}<span>Still view / the whole story</span>{/if}
+      {:else}<span>Explore without motion</span>{/if}
       <span>Silent · {eligible ? '14 seconds' : 'no motion'}</span>
     </div>
   </figcaption>
@@ -103,7 +118,13 @@
   h2 { font: var(--font-performance-medium) clamp(1.25rem, 1.7vw, 1.6rem)/1.3 var(--font-performance-interface); min-height: 2.6em; margin: 0; letter-spacing: var(--tracking-performance-tight); }
   .story-detail { min-height: 3.3em; font-size: var(--text-performance-caption); line-height: 1.6; max-width: 52ch; color: var(--color-performance-fg-secondary); margin: var(--space-performance-xs) 0 var(--space-performance-sm); }
   .story-sequence { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: .4rem 1rem; font-size: var(--text-performance-caption); color: var(--color-performance-fg-tertiary); }
-  .story-sequence li:not(:last-child)::after { content: ' →'; margin-left: .5rem; }
+  .explore-hint { font-size: var(--text-performance-caption); color: var(--color-performance-fg-secondary); margin-block: var(--space-performance-sm); }
+  figure.workflow-story .scene-choice { display: inline-flex; align-items: center; gap: var(--space-performance-xs); min-height: 44px; padding: var(--space-performance-xs); border: 1px solid transparent; border-bottom-color: var(--color-performance-shell-border-strong); background: transparent; color: inherit; font: inherit; cursor: pointer; text-align: left; }
+  figure.workflow-story .scene-choice[aria-pressed="true"] { border-color: currentColor; }
+  .scene-choice span { font-family: var(--font-performance-mono); }
+  .scene-choice:hover { text-decoration: underline; text-underline-offset: .3em; }
+  .scene-choice:focus-visible { outline: 2px solid var(--color-performance-focus); outline-offset: 4px; }
+  .story-sequence li:not(:last-child)::after { content: none; }
   .story-sequence .current { color: var(--color-performance-fg-primary); font-weight: var(--font-performance-medium); }
   .story-controls { align-items: center; border-bottom: 1px solid var(--color-performance-shell-border-default); min-height: 50px; margin-top: var(--space-performance-sm); }
   figure.workflow-story .story-controls button { min-height: 44px; font: inherit; color: inherit; padding: 0; border: 0; background: transparent; cursor: pointer; }

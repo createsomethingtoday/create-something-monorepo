@@ -79,7 +79,7 @@
 <section class="service-journey" aria-labelledby="service-journey-title" bind:this={root} data-analytics-ignore>
   <header>
     <p class="eyebrow">How support works</p>
-    <h2 id="service-journey-title">From problem to checked handoff.</h2>
+    <h2 id="service-journey-title" tabindex="-1">From problem to checked handoff.</h2>
     <p class="introduction">Follow one form that stops reaching a team. Inspect the decision, the checks and the instructions that stay with them.</p>
     <p class="example-label">Synthetic example · no connected systems, messages or bookings</p>
     {#if enhanced}<button class="quiet inline-search" onclick={openSearch}>Search public pages</button>{/if}
@@ -139,6 +139,7 @@
   header { max-width: 68ch; margin-bottom: var(--space-performance-lg); }
   .eyebrow, .example-label, figcaption, .map-number, .map-selected { font: var(--text-performance-operator-label)/1.5 var(--font-performance-mono); }
   .eyebrow { text-transform: uppercase; margin: 0 0 var(--space-performance-sm); }
+  h2:focus { outline: 2px solid var(--color-performance-focus); outline-offset: 4px; }
   h2 { margin: 0; font: var(--font-performance-medium) clamp(1.8rem, 3vw, 2.8rem)/1.15 var(--font-performance-interface); }
   p { font-size: var(--text-performance-caption); line-height: 1.65; }
   .introduction { font-size: var(--text-performance-body-sm); }
