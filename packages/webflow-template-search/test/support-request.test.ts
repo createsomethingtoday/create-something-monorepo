@@ -7,6 +7,7 @@ import {
   parseSupportRequestBody,
   rateLimitRetrySeconds,
   readBodyCapped,
+  refreshSupportRequestDeliveries,
   resolveCreatorEmail,
 } from '../src/supportRequest';
 import type { Env } from '../src/types';
@@ -614,6 +615,104 @@ describe('POST /api/templates/support-request', () => {
       expect((await callWorker(post(body(), '198.51.100.99'), env)).status).toBe(429);
     } finally {
       close();
+    }
+  });
+});
+
+describe('refreshSupportRequestDeliveries', () => {
+  const NOW = new Date('2026-10-19T12:00:00Z');
+
+  async function seed(env: Env, id: string, createdAt: string, extra: Record<string, string | null> = {}) {
+    await env.DB.prepare(
+      `INSERT INTO support_requests (id, created_at, template_document_id, template_slug, request_type, status,
+         ip_hash, buyer_email_hash, message_chars, knock_workflow_run_id, delivery_status)
+       VALUES (?, ?, 'recAsset1', 'meridian', 'bug_help', ?, 'ip', 'buyer', 10, ?, ?)`,
+    )
+      .bind(id, createdAt, extra.status ?? 'sent', extra.run ?? `run-${id}`, extra.delivery ?? null)
+      .run();
+  }
+
+  it('copies Knock status onto pending sent rows and skips final, old, and unsent rows', async () => {
+    const harness = createTestEnv();
+    Object.assign(harness.env, { KNOCK_API_KEY: 'sk_test_knock' });
+    const statuses: Record<string, string> = { 'run-fresh': 'delivered', 'run-stuck': 'sent' };
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const runId = new URL(String(input)).searchParams.get('workflow_run_id') ?? '';
+      return Response.json({ items: [{ status: statuses[runId] }] });
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    try {
+      await seed(harness.env, 'fresh', '2026-10-18T10:00:00Z');
+      await seed(harness.env, 'stuck', '2026-10-16T10:00:00Z', { delivery: 'sent' });
+      await seed(harness.env, 'done', '2026-10-17T10:00:00Z', { delivery: 'delivered' });
+      await seed(harness.env, 'old', '2026-09-01T10:00:00Z');
+      await seed(harness.env, 'failed', '2026-10-18T11:00:00Z', { status: 'send_failed', run: null });
+
+      const result = await refreshSupportRequestDeliveries(harness.env, { now: NOW });
+      expect(result).toEqual({ checked: 2, updated: 2 });
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+      const byId = Object.fromEntries((await rows(harness.env)).map((row) => [row.id, row]));
+      expect(byId.fresh?.delivery_status).toBe('delivered');
+      expect(byId.stuck?.delivery_status).toBe('sent');
+      expect(byId.stuck?.delivery_checked_at).toBe(NOW.toISOString());
+      expect(byId.done?.delivery_checked_at).toBeNull();
+      expect(byId.old?.delivery_checked_at).toBeNull();
+    } finally {
+      harness.close();
+    }
+  });
+
+  it('keeps going past a failed lookup and rotates the failed row to the back', async () => {
+    const harness = createTestEnv();
+    Object.assign(harness.env, { KNOCK_API_KEY: 'sk_test_knock' });
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: RequestInfo | URL) => {
+        const runId = new URL(String(input)).searchParams.get('workflow_run_id');
+        return runId === 'run-bad' ? new Response('not found', { status: 404 }) : Response.json({ items: [{ status: 'delivered' }] });
+      }),
+    );
+    try {
+      await seed(harness.env, 'bad', '2026-10-17T10:00:00Z', { delivery: 'sent' });
+      await seed(harness.env, 'good', '2026-10-18T10:00:00Z');
+
+      expect(await refreshSupportRequestDeliveries(harness.env, { now: NOW })).toEqual({ checked: 2, updated: 1 });
+      const byId = Object.fromEntries((await rows(harness.env)).map((row) => [row.id, row]));
+      expect(byId.good?.delivery_status).toBe('delivered');
+      // The prior status survives a failed lookup; the stamp moves it behind unchecked rows.
+      expect(byId.bad?.delivery_status).toBe('sent');
+      expect(byId.bad?.delivery_checked_at).toBe(NOW.toISOString());
+    } finally {
+      harness.close();
+      vi.restoreAllMocks();
+    }
+  });
+
+  it('bounds each lookup with an abort signal', async () => {
+    const harness = createTestEnv();
+    Object.assign(harness.env, { KNOCK_API_KEY: 'sk_test_knock' });
+    const fetchMock = vi.fn(async () => Response.json({ items: [{ status: 'delivered' }] }));
+    vi.stubGlobal('fetch', fetchMock);
+    try {
+      await seed(harness.env, 'fresh', '2026-10-18T10:00:00Z');
+      await refreshSupportRequestDeliveries(harness.env, { now: NOW });
+      const init = (fetchMock.mock.calls[0] as unknown[] | undefined)?.[1] as RequestInit | undefined;
+      expect(init?.signal).toBeInstanceOf(AbortSignal);
+    } finally {
+      harness.close();
+    }
+  });
+
+  it('does nothing without a Knock key', async () => {
+    const harness = createTestEnv();
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    try {
+      expect(await refreshSupportRequestDeliveries(harness.env, { now: NOW })).toEqual({ checked: 0, updated: 0 });
+      expect(fetchMock).not.toHaveBeenCalled();
+    } finally {
+      harness.close();
     }
   });
 });
