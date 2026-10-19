@@ -612,12 +612,21 @@ export async function refreshSupportRequestDeliveries(
 
   let updated = 0;
   for (const row of results ?? []) {
-    const url = `${KNOCK_MESSAGES_URL}?workflow_run_id=${encodeURIComponent(row.knock_workflow_run_id)}&page_size=5`;
-    const response = await fetch(url, { headers: { Authorization: `Bearer ${env.KNOCK_API_KEY}` } });
-    if (!response.ok) throw new Error(`Knock message lookup failed (${response.status})`);
-    const { items } = (await response.json()) as { items?: Array<{ status?: string }> };
-    const deliveryStatus = items?.[0]?.status ?? null;
-    await env.DB.prepare('UPDATE support_requests SET delivery_status = ?, delivery_checked_at = ? WHERE id = ?')
+    let deliveryStatus: string | null = null;
+    try {
+      const url = `${KNOCK_MESSAGES_URL}?workflow_run_id=${encodeURIComponent(row.knock_workflow_run_id)}&page_size=5`;
+      const response = await fetch(url, { headers: { Authorization: `Bearer ${env.KNOCK_API_KEY}` } });
+      if (!response.ok) throw new Error(`Knock message lookup failed (${response.status})`);
+      const { items } = (await response.json()) as { items?: Array<{ status?: string }> };
+      deliveryStatus = items?.[0]?.status ?? null;
+    } catch (error) {
+      // Stamp the check anyway so a bad run ID rotates to the back of the
+      // queue instead of being picked first, and failing, every hour.
+      console.error(JSON.stringify({ event: 'support_request_delivery_lookup_failed', request_id: row.id, error: String(error) }));
+    }
+    await env.DB.prepare(
+      'UPDATE support_requests SET delivery_status = COALESCE(?, delivery_status), delivery_checked_at = ? WHERE id = ?',
+    )
       .bind(deliveryStatus, now.toISOString(), row.id)
       .run();
     if (deliveryStatus) updated += 1;

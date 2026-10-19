@@ -662,6 +662,33 @@ describe('refreshSupportRequestDeliveries', () => {
     }
   });
 
+  it('keeps going past a failed lookup and rotates the failed row to the back', async () => {
+    const harness = createTestEnv();
+    Object.assign(harness.env, { KNOCK_API_KEY: 'sk_test_knock' });
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: RequestInfo | URL) => {
+        const runId = new URL(String(input)).searchParams.get('workflow_run_id');
+        return runId === 'run-bad' ? new Response('not found', { status: 404 }) : Response.json({ items: [{ status: 'delivered' }] });
+      }),
+    );
+    try {
+      await seed(harness.env, 'bad', '2026-10-17T10:00:00Z', { delivery: 'sent' });
+      await seed(harness.env, 'good', '2026-10-18T10:00:00Z');
+
+      expect(await refreshSupportRequestDeliveries(harness.env, { now: NOW })).toEqual({ checked: 2, updated: 1 });
+      const byId = Object.fromEntries((await rows(harness.env)).map((row) => [row.id, row]));
+      expect(byId.good?.delivery_status).toBe('delivered');
+      // The prior status survives a failed lookup; the stamp moves it behind unchecked rows.
+      expect(byId.bad?.delivery_status).toBe('sent');
+      expect(byId.bad?.delivery_checked_at).toBe(NOW.toISOString());
+    } finally {
+      harness.close();
+      vi.restoreAllMocks();
+    }
+  });
+
   it('does nothing without a Knock key', async () => {
     const harness = createTestEnv();
     const fetchMock = vi.fn();
