@@ -680,7 +680,21 @@ pub fn dispatch(root: &Path, op: &str, input: Value) -> Result<Value, String> {
                 let next = if offset + limit < count { Some((offset + limit).to_string()) } else { None };
                 return Ok(json!({"items":items,"count":count,"limit":limit,"nextCursor":next}));
             }
-            let sql=format!("SELECT id,title,status,occurred_at,money_cents,updated_at,json_extract(fields_json,'$.\"All Day\"'),json_extract(fields_json,'$.\"Call Time\"'),json_extract(fields_json,'$.\"Set Time\"') FROM {entity} WHERE workspace_id=?1 ORDER BY updated_at DESC,id LIMIT ?2 OFFSET ?3");
+            // Transaction Date governs the complete finance dataset before pagination.
+            // Validate the literal calendar day before SQLite normalizes impossible dates.
+            // Explicit offsets compare as instants; date-only/floating times get no local-time
+            // modifier, and the original Date string remains unchanged in the projection.
+            let order = if entity == "finances" {
+                "CASE WHEN substr(occurred_at,1,10) GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]'
+                  AND substr(occurred_at,1,4) != '0000'
+                  AND date(julianday(substr(occurred_at,1,10))) = substr(occurred_at,1,10)
+                  AND (length(occurred_at)=10 OR (substr(occurred_at,11,1) IN ('T',' ')
+                    AND substr(occurred_at,12,5) GLOB '[0-9][0-9]:[0-9][0-9]'
+                    AND substr(occurred_at,12,2) BETWEEN '00' AND '23'
+                    AND substr(occurred_at,15,2) BETWEEN '00' AND '59'))
+                  THEN julianday(occurred_at) ELSE NULL END DESC NULLS LAST,id ASC"
+            } else { "updated_at DESC,id" };
+            let sql=format!("SELECT id,title,status,occurred_at,money_cents,updated_at,json_extract(fields_json,'$.\"All Day\"'),json_extract(fields_json,'$.\"Call Time\"'),json_extract(fields_json,'$.\"Set Time\"') FROM {entity} WHERE workspace_id=?1 ORDER BY {order} LIMIT ?2 OFFSET ?3");
             let mut stmt = db.prepare(&sql).map_err(|e| e.to_string())?;
             let items=stmt.query_map(params![wid,limit,offset],|r|{
                 let title:String=r.get(1)?;let truncated=title.chars().count()>120;let display:String=title.chars().take(120).collect();
@@ -988,6 +1002,42 @@ mod tests {
         let db=open(&root).unwrap();for table in ["gigs","mutation_receipts"] { let count:i64=db.query_row(&format!("SELECT count(*) FROM {table}"),[],|r|r.get(0)).unwrap();assert_eq!(count,0); }
         assert!(get(&db,input["workspaceId"].as_str().unwrap(),"gigs",input["id"].as_str().unwrap()).is_err());
         let _=fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn finances_sort_transaction_dates_before_paging_and_keep_invalid_last() {
+        let root=temp();let wid=dispatch(&root,"workspace.create",json!({"name":"Synthetic finance order"})).unwrap()["id"].clone();
+        let other=Uuid::new_v4().to_string();open(&root).unwrap().execute("INSERT INTO workspaces(id,name) VALUES(?1,'Other synthetic workspace')",[&other]).unwrap();
+        // Larger rank means newer. Offset timestamps cross local date/year boundaries.
+        let mut cases:Vec<(Option<String>,i32)>=vec![
+            (Some("2026-12-31T23:00:00-12:00".into()),90),
+            (Some("2027-01-01T11:00:00Z".into()),90),
+            (Some("2027-01-01".into()),80),
+            (Some("2027-01-01T00:00:00+14:00".into()),70),
+            (Some("2026-10-20T12:00:00".into()),60),
+            (Some("2026-10-20".into()),50),
+            (Some("2024-02-29".into()),40),
+            (Some("2023-12-31".into()),30),
+            (None,-1),(Some("".into()),-1),(Some("not-a-date".into()),-1),(Some("2460000".into()),-1),(Some("2026-02".into()),-1),(Some("0000-01-01".into()),-1),
+            (Some("2026-02-30".into()),-1),(Some("2025-02-29".into()),-1),
+            (Some("2028-01-01T99:00:00Z".into()),-1),
+        ];
+        for day in 1..=55 {cases.push((Some(format!("2022-{:02}-{:02}",1+day/28,1+day%28)),0));}
+        let mut expected=Vec::new();let mut originals=std::collections::HashMap::new();
+        for (index,(date,rank)) in cases.into_iter().enumerate(){
+            let fields=if let Some(ref date)=date{json!({"Date":date,"Amount":100})}else{json!({"Amount":100})};
+            let record=dispatch(&root,"records.save",json!({"workspaceId":wid,"entity":"finances","title":format!("Transaction {index}"),"fields":fields})).unwrap();
+            let id=record["id"].as_str().unwrap().to_string();originals.insert(id.clone(),date.clone());
+            expected.push((rank,if rank==0{date.clone().unwrap()}else{String::new()},id));
+        }
+        dispatch(&root,"records.save",json!({"workspaceId":other,"entity":"finances","title":"Never include foreign finance","fields":{"Date":"2099-01-01"}})).unwrap();
+        // Editing an old/undated record must not promote it above newer transactions.
+        let db=open(&root).unwrap();for (rank,_,id) in &expected{db.execute("UPDATE finances SET updated_at=?2 WHERE id=?1",params![id,if *rank<0{"2099-01-01 00:00:00"}else{"2000-01-01 00:00:00"}]).unwrap();}drop(db);
+        expected.sort_by(|a,b|b.0.cmp(&a.0).then_with(||b.1.cmp(&a.1)).then_with(||a.2.cmp(&b.2)));
+        let read_all=|limit:i64|{let mut cursor=Value::Null;let mut ids=Vec::new();loop{let page=dispatch(&root,"records.list",json!({"workspaceId":wid,"entity":"finances","limit":limit,"cursor":cursor})).unwrap();assert_eq!(page["count"].as_u64().unwrap() as usize,expected.len());for item in page["items"].as_array().unwrap(){let id=item["id"].as_str().unwrap().to_string();assert_eq!(item["date"],json!(originals[&id]),"date/offset must not be rewritten");ids.push(id);}cursor=page["nextCursor"].clone();if cursor.is_null(){break;}}ids};
+        let expected_ids:Vec<_>=expected.iter().map(|item|item.2.clone()).collect();
+        assert_eq!(read_all(7),expected_ids);assert_eq!(read_all(50),expected_ids);
+        fs::remove_dir_all(root).unwrap();
     }
 
     #[test]

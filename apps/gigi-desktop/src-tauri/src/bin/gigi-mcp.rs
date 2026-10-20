@@ -68,6 +68,10 @@ fn schema(operation: &str) -> Value {
     for (key, kind) in optional {
         properties.insert((*key).to_string(), json!({"type":kind}));
     }
+    if operation == "context.search" {
+        properties.insert("query".into(), json!({"type":"string","minLength":1,"maxLength":200,"description":"Nonblank local history search, at most 200 characters. Does not import sources or create tasks."}));
+        properties.insert("limit".into(), json!({"type":"integer","minimum":1,"maximum":5,"default":5}));
+    }
     if operation == "records.get" {
         properties.insert("detail".into(), json!({"type":"string","enum":["summary","full"]}));
         properties.insert("saveReceipt".into(), json!({"type":"object","additionalProperties":false,"properties":{"idempotencyKey":{"type":"string"},"expectedInput":{"type":"object"}},"required":["idempotencyKey","expectedInput"],"description":"Read-only recovery of a records.save result after a lost response. Supply the exact original save input; its workspaceId, entity, intended id and idempotencyKey must match this lookup. Returns receiptFound and record, or receiptFound:false. Never retries a write."}));
@@ -270,6 +274,9 @@ mod tests {
     }
     #[test]
     fn detail_is_discoverable_and_context_rejects_foreign_workspace() {
+        assert_eq!(schema("context.search")["properties"]["query"]["maxLength"], 200);
+        assert_eq!(schema("context.search")["properties"]["limit"]["minimum"], 1);
+        assert_eq!(schema("context.search")["properties"]["limit"]["maximum"], 5);
         assert_eq!(schema("records.get")["properties"]["detail"]["enum"], json!(["summary", "full"]));
         assert_eq!(schema("records.get")["properties"]["saveReceipt"]["required"], json!(["idempotencyKey", "expectedInput"]));
         let root = std::env::temp_dir().join(format!("gigi-mcp-scope-{}", uuid::Uuid::new_v4()));

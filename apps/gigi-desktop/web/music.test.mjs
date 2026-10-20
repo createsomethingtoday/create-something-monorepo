@@ -79,16 +79,19 @@ test('returning from an agent refreshes music without replacing active organizat
 });
 
 test('music save sends the original revision and preserves edits when another writer changed the entry',async()=>{
- const {mountMusic}=await import('./music.mjs');const previous={document:globalThis.document,FormData:globalThis.FormData};let submitted,lists=0;
+ const {mountMusic}=await import('./music.mjs');const previous={document:globalThis.document,FormData:globalThis.FormData};let submitted,lists=0,decide;
  const item={id:'one',title:'Original',artist:'',project:'',collection:'Old collection',version:'',tags:'',organizationRevision:'a'.repeat(64)};
  const node=()=>({children:[],listeners:{},innerHTML:'',addEventListener(type,fn){this.listeners[type]=fn;},removeEventListener(type){delete this.listeners[type];},replaceChildren(...children){this.children=children;},querySelector(){return {focus(){}};},querySelectorAll(){return [];}});
  globalThis.document={createElement:node};globalThis.FormData=class{constructor(form){return Object.entries(form.values);}};
- try{const container=node();const controller=mountMusic(container,{workspaceId:'w',confirm:()=>true,call:async(operation,input)=>{if(operation==='music.list'){lists++;return {items:[lists>1?{...item,collection:'New agent collection',organizationRevision:'b'.repeat(64)}:item],total:1};}submitted=input;throw Error('This music entry changed elsewhere. Your edits have not been saved.');}});const content=container.children[1];await new Promise(resolve=>setImmediate(resolve));
+ try{const container=node();const controller=mountMusic(container,{workspaceId:'w',confirm:()=>new Promise(resolve=>{decide=resolve;}),call:async(operation,input)=>{if(operation==='music.list'){lists++;return {items:[lists>1?{...item,collection:'New agent collection',organizationRevision:'b'.repeat(64)}:item],total:1};}submitted=input;throw Error('This music entry changed elsewhere. Your edits have not been saved.');}});const content=container.children[1];await new Promise(resolve=>setImmediate(resolve));
   await content.listeners.click({target:{closest:()=>({dataset:{musicEdit:'one'},hasAttribute:()=>false})}});
   content.listeners.input({target:{closest:()=>true,name:'title',value:'My unsaved title'}});
   await content.listeners.submit({preventDefault(){},target:{values:{...item,title:'My unsaved title'},hasAttribute:name=>name==='data-music-edit-form'}});
   assert.equal(submitted.expectedRevision,item.organizationRevision);assert.match(content.innerHTML,/My unsaved title/);assert.match(content.innerHTML,/changed elsewhere/);
-  await content.listeners.click({target:{closest:()=>({dataset:{},hasAttribute:name=>name==='data-music-edit-cancel'})}});
+  const cancelEvent={target:{closest:()=>({dataset:{},hasAttribute:name=>name==='data-music-edit-cancel'})}};
+  const rejected=content.listeners.click(cancelEvent);assert.equal(lists,1,'must wait for the dialog choice');decide(false);await rejected;assert.match(content.innerHTML,/My unsaved title/);assert.equal(lists,1);
+  const leave=controller.canLeave();decide(false);assert.equal(await leave,false,'sidebar navigation respects rejection');
+  const accepted=content.listeners.click(cancelEvent);assert.equal(lists,1);decide(true);await accepted;
   assert.equal(lists,2,'cancel/reopen must load the current metadata after a conflict');assert.match(content.innerHTML,/New agent collection/);
   container.children[0].querySelector=()=>null;controller.dispose();
  }finally{globalThis.document=previous.document;globalThis.FormData=previous.FormData;}

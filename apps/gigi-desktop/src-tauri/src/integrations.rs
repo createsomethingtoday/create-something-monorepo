@@ -96,9 +96,24 @@ fn dispatch_with_timeout(resource_dir:&Path,data_dir:&Path,operation:&str,input:
     if bytes.len()>response_limit as usize{return Err("Integration response exceeds limit".into())}
     let response:Value=serde_json::from_slice(&bytes).map_err(|_|"Integration returned invalid JSON")?;
     if response.get("ok").and_then(Value::as_bool)!=Some(true){
+        if operation == "context.search" { if let Some(message) = context_configuration_message(&response["error"]) { return Err(message); } }
         return Err(response.get("error").and_then(|error|error.as_str().or_else(||error.get("reason").and_then(Value::as_str))).unwrap_or("Integration unavailable").chars().take(500).collect());
     }
     Ok(response.get("value").cloned().unwrap_or(Value::Null))
+}
+
+// Only fixed, local guidance is exposed; never echo companion paths or causes.
+fn context_configuration_message(error: &Value) -> Option<String> {
+    if error["reason"] != "invalid_configuration" { return None; }
+    let guidance = match error["detail"].as_str()? {
+        "query_bounds" => "Use a nonblank search of at most 200 characters.",
+        "limit_bounds" => "Request between 1 and 5 history results.",
+        "scoped_config_missing" => "The dedicated history store contains data but lacks its safety configuration. Ask the operator to inspect it; do not reset or overwrite it.",
+        "scoped_config_mismatch" => "The dedicated history configuration does not match GiGi's manual-only policy. Ask the operator to inspect it; do not replace it or change permissions.",
+        "invalid_scoped_root" => "The dedicated history store is not configured correctly. Ask the operator to check this installation.",
+        _ => return None,
+    };
+    Some(format!("invalid_configuration: {guidance}"))
 }
 
 fn terminate_group(child:&mut Child){
@@ -123,6 +138,16 @@ pub fn sync_history(resource_dir:&Path,data_dir:&Path)->Result<Value,String>{
 #[cfg(test)]
 mod tests{
     use super::*;
+    #[test]
+    fn context_configuration_guidance_is_allowlisted_and_keeps_code() {
+        for detail in ["query_bounds", "limit_bounds", "scoped_config_missing", "scoped_config_mismatch", "invalid_scoped_root"] {
+            let message=context_configuration_message(&serde_json::json!({"reason":"invalid_configuration","detail":detail,"cause":"private-token /private/path"})).unwrap();
+            assert!(message.starts_with("invalid_configuration:"));
+            assert!(!message.contains("private-token")); assert!(!message.contains("/private/path"));
+        }
+        assert!(context_configuration_message(&serde_json::json!({"reason":"invalid_configuration","detail":"/private/path"})).is_none());
+        assert!(context_configuration_message(&serde_json::json!({"reason":"unauthorized","detail":"query_bounds"})).is_none());
+    }
     use std::os::unix::fs::PermissionsExt;
     fn test_lock()->std::sync::MutexGuard<'static,()>{
         static LOCK:OnceLock<Mutex<()>>=OnceLock::new();

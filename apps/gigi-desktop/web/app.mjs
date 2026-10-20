@@ -123,7 +123,7 @@ function keepEditing() {
 }
 async function openPage(page, resetScroll = false) {
   if (!protectEditor(() => void run(() => openPage(page, resetScroll)))) return false;
-  if (creatorMount?.canLeave && !creatorMount.canLeave()) return false;
+  if (creatorMount?.canLeave && !await creatorMount.canLeave()) return false;
   if (creatorMount) { if(typeof creatorMount==='function') creatorMount(); else creatorMount.dispose?.(); }
   creatorMount=null; creatorNode=null; creatorRoute=null;
   if (page !== 'settings') state.justCreated = false;

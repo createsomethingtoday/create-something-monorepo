@@ -9,7 +9,7 @@ import { mapSourcePage } from './import-adapter.ts';
 const BROKER_RESOURCE = 'https://gigi-connector.createsomething.workers.dev';
 
 export type RunnerRequest = { operation: string; input: Record<string, unknown> };
-export type RunnerResult = { ok: true; value: unknown } | { ok: false; error: { operation: string; reason: string } };
+export type RunnerResult = { ok: true; value: unknown } | { ok: false; error: { operation: string; reason: string; detail?: CtxError['detail'] } };
 export interface RunnerOptions {
   dataDir?: string;
   fetch?: typeof fetch;
@@ -65,7 +65,8 @@ export async function runOperation(request: RunnerRequest, options: RunnerOption
   } catch (error) {
     if (error instanceof RunnerInputError) return failure(operation, 'invalid_request');
     if (error instanceof LoginError) return failure(operation, error.reason);
-    if (error instanceof IntegrationError || error instanceof CtxError) return failure(operation, error.reason);
+    if (error instanceof CtxError) return { ok: false, error: { operation, reason: error.reason, ...(error.detail ? { detail: error.detail } : {}) } };
+    if (error instanceof IntegrationError) return failure(operation, error.reason);
     return failure(operation, 'unavailable');
   }
 }

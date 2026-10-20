@@ -1,3 +1,4 @@
+import {confirmAction} from './confirm.mjs';
 import { sourceErrorMessage } from './setup-view.mjs';
 import { sourceCanBegin, pendingConsentForProvider, pendingAccountForProvider, sourceNeedsOperatorReview } from './model.mjs';
 const escape = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -64,7 +65,7 @@ export function socialWorkspaceView(state) {
   ${state.confirming?`<div class="social-confirm" role="dialog" aria-modal="true" aria-labelledby="social-confirm-title"><div><h2 id="social-confirm-title">Publish this exact post?</h2><p>This will share the saved JPEG and caption publicly on <strong>@${escape(account?.username||'the selected Instagram account')}</strong>.</p>${state.preview?`<img class="social-confirm-image" src="${escape(state.preview.dataUrl)}" alt="Exact image approved for publication">`:""}<p class="social-confirm-caption">${escape(saved.body.caption)}</p><p class="muted">${escape(saved.body.imageUrl)}</p><p>Only continue if you have permission to publish this media.</p><div class="inline-actions"><button class="btn" data-social-cancel>Keep as draft</button><button class="btn primary" data-social-publish>Publish on Instagram</button></div></div></div>`:''}</section>`;
 }
 
-export function createSocialWorkspace({call,workspaceId,onSettings=()=>{}}) {
+export function createSocialWorkspace({call,workspaceId,onSettings=()=>{},confirm=confirmAction}) {
   const state={items:[],selected:null,editor:null,total:0,nextOffset:null,account:null,loading:false,busy:false,dirty:false,message:null,confirming:false,setupOpen:false,connection:null,connectionAttempt:null,connectionRequestId:null,preview:null,validationMode:null,fieldIssue:null};
   let container,disposed=false,pendingSave=null,focusValidation=false;
   const invoke=(operation,input={})=>call(operation,{workspaceId,...input});
@@ -74,7 +75,7 @@ export function createSocialWorkspace({call,workspaceId,onSettings=()=>{}}) {
   async function refreshDrafts(){await list();if(state.selected)select(await invoke('social.get',{id:state.selected.id}));}
   const focusRefresh=()=>{if(!disposed&&!state.loading&&!state.busy&&!state.dirty&&!state.confirming)void act(refreshDrafts);};
   const select=record=>{state.selected=record;state.editor={...record.body};state.dirty=false;state.confirming=false;pendingSave=null;state.validationMode=null;state.fieldIssue=null;};
-  const discard=()=>!state.busy&&(!state.dirty||globalThis.confirm(pendingSave?'The last save is unverified. Leave and check saved drafts before creating another copy?':'Discard unsaved changes? The saved draft stays unchanged.'));
+  const discard=async()=>!state.busy&&(!state.dirty||await confirm(pendingSave?'The last save is unverified. Leave and check saved drafts before creating another copy?':'Discard unsaved changes? The saved draft stays unchanged.',{title:'Leave this draft?',acceptLabel:'Discard changes'}));
   async function checkConnection(){const source=await call('connections.status',{provider:'instagram'});state.connection=source;const id=source.connectedAccountId;if(!id||source.state!=='connected'){state.account=null;state.message='Instagram is not verified. Open Connection setup to connect or reconcile the existing attempt.';return;}state.account=await call('instagram.account',{connectedAccountId:id});}
   function bindPreview(){
     container.querySelector('[data-social-preview]')?.addEventListener('click',()=>act(async()=>{
@@ -98,10 +99,11 @@ export function createSocialWorkspace({call,workspaceId,onSettings=()=>{}}) {
   function keydown(event){if((event.metaKey||event.ctrlKey)&&event.key.toLowerCase()==='s'&&state.editor&&!state.confirming){event.preventDefault();const save=container.querySelector('[data-social-save]');if(save&&!save.disabled)save.click();}}
   function bind(){
     const on=(selector,event,handler)=>container.querySelectorAll(selector).forEach(el=>el.addEventListener(event,handler));
-    on('[data-social-new]','click',()=>{if(!discard())return;pendingSave=null;state.selected=null;state.editor={title:'',caption:'',imageUrl:'',connectedAccountId:state.account?.connectedAccountId||''};state.dirty=false;state.validationMode=null;state.fieldIssue=null;paint();container.querySelector('[data-social-field="title"]')?.focus();});
+    on('[data-social-new]','click',async()=>{if(!await discard())return;pendingSave=null;state.selected=null;state.editor={title:'',caption:'',imageUrl:'',connectedAccountId:state.account?.connectedAccountId||''};state.dirty=false;state.validationMode=null;state.fieldIssue=null;paint();container.querySelector('[data-social-field="title"]')?.focus();});
     on('[data-social-select]','click',async event=>{
-      if(!discard())return;
-      const id=event.currentTarget.dataset.socialSelect;let loaded=false;
+      const id=event.currentTarget.dataset.socialSelect;
+      if(!await discard())return;
+      let loaded=false;
       await act(async()=>{select(await invoke('social.get',{id}));loaded=true;});
       if(loaded&&!disposed){container.querySelector('[data-social-field="title"]')?.focus({preventScroll:true});container.querySelector('.social-composer')?.scrollIntoView?.({block:'start'});}
     });
@@ -109,7 +111,7 @@ export function createSocialWorkspace({call,workspaceId,onSettings=()=>{}}) {
     on('[data-social-more]','click',()=>act(()=>list(state.nextOffset)));
     on('[data-social-settings]','click',()=>{state.setupOpen=!state.setupOpen;paint();});
     on('[data-social-login]','click',()=>act(async()=>{await call('auth.login',{});await checkConnection();}));
-    on('[data-social-connect]','click',()=>act(async()=>{if(!sourceCanBegin(state.connection))throw Error('Check the existing connection before starting consent.');if(!globalThis.confirm('Start an Instagram connection through Composio? The existing configuration requests profile access, content publishing, messages, comments and insights. GiGi uses only identity and publishing here. Review and approve the full requested access in the browser before granting it.'))return;state.connectionRequestId ||= crypto.randomUUID();state.connection={provider:'instagram',state:'pending'};const attempt=await call('connections.begin',{provider:'instagram',requestId:state.connectionRequestId});state.connectionAttempt=attempt;state.connection={provider:'instagram',state:'pending',connectedAccountId:attempt.connectedAccountId};state.message='Consent prepared. Open the existing consent page, then return to verify the account.';}));
+    on('[data-social-connect]','click',()=>act(async()=>{if(!sourceCanBegin(state.connection))throw Error('Check the existing connection before starting consent.');if(!await confirm('Start an Instagram connection through Composio? The existing configuration requests profile access, content publishing, messages, comments and insights. GiGi uses only identity and publishing here. Review and approve the full requested access in the browser before granting it.',{title:'Connect Instagram?',acceptLabel:'Continue to connection',cancelLabel:'Cancel'}))return;state.connectionRequestId ||= crypto.randomUUID();state.connection={provider:'instagram',state:'pending'};const attempt=await call('connections.begin',{provider:'instagram',requestId:state.connectionRequestId});state.connectionAttempt=attempt;state.connection={provider:'instagram',state:'pending',connectedAccountId:attempt.connectedAccountId};state.message='Consent prepared. Open the existing consent page, then return to verify the account.';}));
     on('[data-social-consent]','click',()=>act(async()=>{const url=pendingConsentForProvider(state.connection,{instagram:state.connectionAttempt},'instagram');if(!url)throw Error('Consent URL expired or unavailable. Check status before taking another action.');await call('connections.openConsent',{provider:'instagram',url});state.message='Consent page opened. Return here and verify after completing the browser step.';}));
     on('[data-social-verify]','click',()=>act(async()=>{const connectedAccountId=pendingAccountForProvider(state.connection,'instagram');if(!connectedAccountId)throw Error('Check status to find the existing connection attempt.');state.connection=await call('connections.reconcile',{provider:'instagram',connectedAccountId});await checkConnection();}));
     on('[data-social-connection]','click',()=>act(checkConnection));
