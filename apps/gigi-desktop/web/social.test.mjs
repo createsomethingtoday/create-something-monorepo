@@ -144,3 +144,19 @@ test('selecting a saved draft focuses its title and reveals the editor only afte
  assert.deepEqual(moves,[],'saving and repainting must not jump back to the editor top');
  workspace.dispose();
 });
+
+test('agent requests are visible and focus refresh preserves edits and confirmation',async()=>{
+ const listeners={},calls=[];const oldAdd=globalThis.addEventListener,oldRemove=globalThis.removeEventListener;
+ globalThis.addEventListener=(type,fn)=>listeners[type]=fn;globalThis.removeEventListener=type=>delete listeners[type];
+ const saved={id:'draft',revision:1,state:'draft',body:{title:'Studio',caption:'New work'},approvalRequest:{id:'request',state:'pending_user_approval'}};
+ const container={innerHTML:'',addEventListener(){},removeEventListener(){},querySelector(){return null;},querySelectorAll(){return [];}};
+ const workspace=createSocialWorkspace({workspaceId:'w',call:async operation=>{calls.push(operation);return operation==='social.list'?{items:[saved],total:1}:saved;}});
+ try{
+  await workspace.mount(container);workspace.state.selected=saved;workspace.state.editor={...saved.body};
+  listeners.focus();await new Promise(resolve=>setImmediate(resolve));assert.match(container.innerHTML,/An agent requested your review/);assert.match(container.innerHTML,/Nothing has been approved or published/);
+  const count=calls.length;
+  for(const field of ['dirty','confirming','busy','loading']){workspace.state[field]=true;listeners.focus();await new Promise(resolve=>setImmediate(resolve));workspace.state[field]=false;assert.equal(calls.length,count,field+' blocks refresh');}
+  workspace.state.selected.approvalRequest.state='stale';assert.match(socialWorkspaceView(workspace.state),/cannot authorize this version/);
+  workspace.dispose();assert.equal(listeners.focus,undefined);
+ }finally{globalThis.addEventListener=oldAdd;globalThis.removeEventListener=oldRemove;}
+});

@@ -24,12 +24,31 @@ function valueCopy(name, value, currency, currencyKnown = true) {
   return dateField && typeof value === 'string' && formatted !== value ? `${formatted}\n${value}` : formatted;
 }
 
+const creativeLabels = {
+  gigi_music_import: ['Choose music to import', 'Continue to file picker', 'You choose the files or folder in the native picker. Originals stay in place; nothing is uploaded.'],
+  gigi_music_organize: ['Review music organization', 'Save organization', 'Updates library metadata only. Original files stay unchanged.'],
+  gigi_instagram_draft_create: ['Review local Instagram draft', 'Save local draft', 'Saves a local draft. Nothing is published.'],
+  gigi_instagram_draft_update: ['Review local Instagram draft changes', 'Save local draft', 'Updates the exact saved revision. Nothing is published.'],
+  gigi_instagram_request_publication_approval: ['Request Instagram review', 'Request review (does not publish)', 'Records a request to review this exact draft and account in Instagram drafts. You must separately review the image and confirm Review & publish there. This approval does not publish.'],
+};
+export function approvalAction(item) { return creativeLabels[String(item.title || '').replace(/^Approve\s+/, '')]?.[1] || 'Approve changes'; }
+export function creativeReceipt(receipt) {
+  if (!creativeLabels[receipt?.tool]) return null;
+  if (receipt.outcome === 'verified') return ({gigi_music_import: 'Music selection finished. Check the tool receipt for added, duplicate, skipped or cancelled items.', gigi_music_organize: 'Music organization saved and verified.', gigi_instagram_request_publication_approval: 'Review request recorded in Instagram drafts. Nothing published.'})[receipt.tool] || 'Instagram draft saved locally and verified. Nothing published.';
+  return {cancelled: 'Music selection cancelled. No files added.', rejected: 'Request rejected. GiGi did not execute it.', failed: 'The requested action failed. Check the tool receipt.', unknown: 'The action outcome is unknown. Do not retry or assume success.'}[receipt.outcome] || null;
+}
 export function approvalCopy(item, currency = null, currencyKnown = true) {
   let args;
   try { args = JSON.parse(item.detail); } catch { /* Keep non-JSON provider detail as escaped explanatory text. */ }
   const technical = `<details data-view-key="approval-${escape(item.id)}"><summary>Technical details</summary><pre>${escape(item.detail)}</pre></details>`;
   if (!object(args)) return `<strong>${escape(item.title)}</strong><p>${escape(item.detail)}</p>`;
   const tool = String(item.title || '').replace(/^Approve\s+/, '');
+  if (creativeLabels[tool]) {
+    const [title, , note] = creativeLabels[tool];
+    const proposed = object(args.fields) ? { 'Music entry': args.id, ...args.fields } : Object.fromEntries(Object.entries(args).filter(([key]) => !['workspaceId', 'requestId', 'expectedImageSha256'].includes(key)));
+    const rows = Object.entries(proposed).map(([key, value]) => `<tr><th scope="row">${escape(key)}</th><td>${escape(typeof value === 'string' ? value : JSON.stringify(value))}</td></tr>`).join('');
+    return `<strong>${escape(title)}</strong><p>${escape(note)}</p><table class="chat-proposal-fields"><caption>Proposed action</caption><tbody>${rows}</tbody></table>${technical}`;
+  }
   if (tool !== 'gigi_records_save') return `<strong>${escape(item.title)}</strong><p>${escape(item.detail)}</p>${technical}`;
   if (object(args.sourceRecord) && ['tasks', 'gigs'].includes(args.entity)) {
     const source = args.sourceRecord.expectedRecord;

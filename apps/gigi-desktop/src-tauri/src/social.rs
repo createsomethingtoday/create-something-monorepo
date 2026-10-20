@@ -8,13 +8,18 @@ use uuid::Uuid;
 fn text<'a>(value: &'a Value,key:&str)->Result<&'a str,String>{value[key].as_str().filter(|s|!s.trim().is_empty()).ok_or_else(||format!("{key} is required"))}
 fn open(root:&Path)->Result<Connection,String>{
     let db=crate::domain::open(root)?;
-    db.execute_batch("CREATE TABLE IF NOT EXISTS instagram_drafts (id TEXT PRIMARY KEY, workspace_id TEXT NOT NULL REFERENCES workspaces(id), revision INTEGER NOT NULL, body_json TEXT NOT NULL, state TEXT NOT NULL DEFAULT 'draft', request_id TEXT, receipt_json TEXT, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP); CREATE INDEX IF NOT EXISTS idx_instagram_drafts_workspace ON instagram_drafts(workspace_id,updated_at,id);").map_err(|e|e.to_string())?;
+    db.execute_batch("CREATE TABLE IF NOT EXISTS instagram_drafts (id TEXT PRIMARY KEY, workspace_id TEXT NOT NULL REFERENCES workspaces(id), revision INTEGER NOT NULL, body_json TEXT NOT NULL, state TEXT NOT NULL DEFAULT 'draft', request_id TEXT, receipt_json TEXT, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP); CREATE INDEX IF NOT EXISTS idx_instagram_drafts_workspace ON instagram_drafts(workspace_id,updated_at,id);
+CREATE TABLE IF NOT EXISTS instagram_approval_requests (id TEXT PRIMARY KEY,workspace_id TEXT NOT NULL REFERENCES workspaces(id),draft_id TEXT NOT NULL REFERENCES instagram_drafts(id),revision INTEGER NOT NULL,body_json TEXT NOT NULL,instagram_account_id TEXT NOT NULL,created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP);
+CREATE INDEX IF NOT EXISTS idx_instagram_approval_draft ON instagram_approval_requests(workspace_id,draft_id,created_at);").map_err(|e|e.to_string())?;
     Ok(db)
 }
 fn workspace(db:&Connection,input:&Value)->Result<String,String>{let id=text(input,"workspaceId")?; if db.query_row("SELECT 1 FROM workspaces WHERE id=?1",[id],|r|r.get::<_,i32>(0)).optional().map_err(|e|e.to_string())?.is_none(){return Err("Select an existing workspace".into())}Ok(id.into())}
 fn get(db:&Connection,workspace:&str,id:&str)->Result<Value,String>{
-    db.query_row("SELECT revision,body_json,state,request_id,receipt_json,updated_at FROM instagram_drafts WHERE workspace_id=?1 AND id=?2",params![workspace,id],|r|Ok((r.get::<_,i64>(0)?,r.get::<_,String>(1)?,r.get::<_,String>(2)?,r.get::<_,Option<String>>(3)?,r.get::<_,Option<String>>(4)?,r.get::<_,String>(5)?)))
-        .optional().map_err(|e|e.to_string())?.map(|(revision,body,state,request,receipt,updated)|json!({"id":id,"revision":revision,"body":serde_json::from_str::<Value>(&body).unwrap_or(Value::Null),"state":state,"requestId":request,"receipt":receipt.and_then(|r|serde_json::from_str::<Value>(&r).ok()),"updatedAt":updated})).ok_or("Draft not found in this workspace".into())
+    let mut draft=db.query_row("SELECT revision,body_json,state,request_id,receipt_json,updated_at FROM instagram_drafts WHERE workspace_id=?1 AND id=?2",params![workspace,id],|r|Ok((r.get::<_,i64>(0)?,r.get::<_,String>(1)?,r.get::<_,String>(2)?,r.get::<_,Option<String>>(3)?,r.get::<_,Option<String>>(4)?,r.get::<_,String>(5)?)))
+        .optional().map_err(|e|e.to_string())?.map(|(revision,body,state,request,receipt,updated)|json!({"id":id,"revision":revision,"body":serde_json::from_str::<Value>(&body).unwrap_or(Value::Null),"state":state,"requestId":request,"receipt":receipt.and_then(|r|serde_json::from_str::<Value>(&r).ok()),"updatedAt":updated})).ok_or_else(||"Draft not found in this workspace".to_string())?;
+    let request:Option<(String,i64,String)>=db.query_row("SELECT id,revision,instagram_account_id FROM instagram_approval_requests WHERE workspace_id=?1 AND draft_id=?2 ORDER BY rowid DESC LIMIT 1",params![workspace,id],|r|Ok((r.get(0)?,r.get(1)?,r.get(2)?))).optional().map_err(|e|e.to_string())?;
+    draft["approvalRequest"]=request.map(|(id,revision,account)|json!({"id":id,"revision":revision,"instagramAccountId":account,"state":if draft["revision"]!=revision{"stale"}else if draft["state"]=="draft"{"pending_user_approval"}else{"publication_attempted"}})).unwrap_or(Value::Null);
+    Ok(draft)
 }
 fn body(input:&Value)->Result<Value,String>{
     let title=input["title"].as_str().unwrap_or("").trim(); let caption=input["caption"].as_str().unwrap_or("");
@@ -40,7 +45,7 @@ fn publishable(body:&Value)->Result<(),String>{
 pub fn dispatch(resources:&Path,root:&Path,operation:&str,input:Value)->Result<Value,String>{
     dispatch_with(root,operation,input,|operation,input|crate::integrations::dispatch(resources,root,operation,input))
 }
-fn dispatch_with<F>(root:&Path,operation:&str,input:Value,broker:F)->Result<Value,String> where F:Fn(&str,Value)->Result<Value,String>{
+pub(crate) fn dispatch_with<F>(root:&Path,operation:&str,input:Value,broker:F)->Result<Value,String> where F:Fn(&str,Value)->Result<Value,String>{
     let mut db=open(root)?; let workspace=workspace(&db,&input)?;
     match operation{
         "social.list"=>{
@@ -52,6 +57,15 @@ fn dispatch_with<F>(root:&Path,operation:&str,input:Value,broker:F)->Result<Valu
             Ok(json!({"items":items,"total":count,"nextOffset":if offset+50<count{Some(offset+50)}else{None}}))
         },
         "social.get"=>get(&db,&workspace,text(&input,"id")?),
+        "social.saveStatus"=>{
+            let request_id=text(&input,"requestId")?;
+            Uuid::parse_str(request_id).map_err(|_|"Invalid save request ID")?;
+            let result:Option<String>=db.query_row("SELECT result_json FROM mutation_receipts WHERE workspace_id=?1 AND operation='social.save' AND idempotency_key=?2",params![workspace,request_id],|r|r.get(0)).optional().map_err(|e|e.to_string())?;
+            match result {
+                Some(result)=>Ok(json!({"requestId":request_id,"state":"saved","draft":serde_json::from_str::<Value>(&result).map_err(|_|"Invalid saved receipt")?})),
+                None=>Ok(json!({"requestId":request_id,"state":"unknown","draft":null,"instruction":"No completed save receipt was found. This does not prove the save did not run; do not create a replacement or retry with a new request ID."}))
+            }
+        },
         "social.save"=>{
             let data=body(&input)?;
             let request_id=text(&input,"requestId")?;
@@ -73,6 +87,43 @@ fn dispatch_with<F>(root:&Path,operation:&str,input:Value,broker:F)->Result<Valu
             tx.execute("INSERT INTO mutation_receipts(workspace_id,operation,idempotency_key,request_json,result_json) VALUES(?1,'social.save',?2,?3,?4)",params![workspace,request_id,request_json,result.to_string()]).map_err(|e|e.to_string())?;
             tx.commit().map_err(|e|e.to_string())?;Ok(result)
         },
+        "social.validateMedia"=>{
+            let image_url=text(&input,"imageUrl")?;
+            let preview=broker("instagram.preview",json!({"imageUrl":image_url}))?;
+            let digest=text(&preview,"expectedImageSha256")?;
+            if preview["imageUrl"]!=image_url || digest.len()!=64 || !digest.bytes().all(|c|c.is_ascii_hexdigit()&&!c.is_ascii_uppercase()){return Err("Image verification did not match this URL".into())}
+            Ok(json!({"imageUrl":image_url,"expectedImageSha256":digest,"width":preview["width"],"height":preview["height"],"state":"validated","format":"image/jpeg","externalActionPerformed":false,"instruction":"Save this digest with the draft. The user must load the exact preview and approve in GiGi before publication."}))
+        },
+        "social.connectionStatus"=>{
+            let status=broker("connections.status",json!({"provider":"instagram"}))?;
+            if status["state"]=="connected"{
+                let account=broker("instagram.account",json!({"connectedAccountId":text(&status,"connectedAccountId")?}))?;
+                Ok(json!({"connection":status,"account":account,"externalActionPerformed":false}))
+            }else{Ok(json!({"connection":status,"account":null,"externalActionPerformed":false}))}
+        },
+        "social.requestApproval"=>{
+            let id=text(&input,"id")?;let request_id=text(&input,"requestId")?;
+            Uuid::parse_str(request_id).map_err(|_|"Invalid approval request ID")?;
+            let expected_account=text(&input,"expectedInstagramAccountId")?;
+            let draft=get(&db,&workspace,id)?;
+            if draft["revision"]!=input["expectedRevision"] {return Err("Draft changed. Read it again.".into())}
+            publishable(&draft["body"])?;
+            let existing:Option<(String,i64,String,String)>=db.query_row("SELECT draft_id,revision,body_json,instagram_account_id FROM instagram_approval_requests WHERE workspace_id=?1 AND id=?2",params![workspace,request_id],|r|Ok((r.get(0)?,r.get(1)?,r.get(2)?,r.get(3)?))).optional().map_err(|e|e.to_string())?;
+            if let Some((old_id,revision,body,account))=existing{
+                if old_id!=id || draft["revision"]!=revision || body!=draft["body"].to_string() || account!=expected_account{return Err("Approval request ID is bound to different content".into())}
+                return approval_status(&db,&workspace,request_id);
+            }
+            if draft["state"]!="draft" {return Err("This draft already has a publish attempt. Check its receipt.".into())}
+            let account=broker("instagram.account",json!({"connectedAccountId":draft["body"]["connectedAccountId"]}))?;
+            if account["connectedAccountId"]!=draft["body"]["connectedAccountId"] || account["instagramAccountId"]!=expected_account || !["BUSINESS","MEDIA_CREATOR","CREATOR"].contains(&account["accountType"].as_str().unwrap_or("")){return Err("Verify the intended Business or Creator account before requesting approval".into())}
+            let tx=db.transaction_with_behavior(TransactionBehavior::Immediate).map_err(|e|e.to_string())?;
+            let current=get(&tx,&workspace,id)?;
+            if current["revision"]!=draft["revision"] || current["state"]!="draft"{return Err("Draft changed while checking account".into())}
+            tx.execute("INSERT INTO instagram_approval_requests(id,workspace_id,draft_id,revision,body_json,instagram_account_id) VALUES(?1,?2,?3,?4,?5,?6)",params![request_id,workspace,id,draft["revision"].as_i64(),draft["body"].to_string(),expected_account]).map_err(|e|e.to_string())?;
+            tx.commit().map_err(|e|e.to_string())?;
+            approval_status(&db,&workspace,request_id)
+        },
+        "social.approvalStatus"=>approval_status(&db,&workspace,text(&input,"requestId")?),
         "social.publish"=>{
             if input["confirmed"]!=true{return Err("Confirm this exact saved post before publishing".into())}
             let id=text(&input,"id")?;
@@ -80,6 +131,10 @@ fn dispatch_with<F>(root:&Path,operation:&str,input:Value,broker:F)->Result<Valu
             if draft["revision"]!=input["expectedRevision"]{return Err("Draft changed. Review its current version.".into())}
             if draft["state"]!="draft"{return Err("A publish attempt already exists. Check its receipt; do not publish again.".into())}
             publishable(&draft["body"])?;
+            if let Some(request_id)=input["approvalRequestId"].as_str(){
+                let approval=approval_status(&db,&workspace,request_id)?;
+                if approval["draftId"]!=id || approval["revision"]!=draft["revision"] || approval["state"]!="pending_user_approval" || approval["instagramAccountId"]!=input["expectedInstagramAccountId"]{return Err("This approval request is stale or belongs to another post. Review the current draft.".into())}
+            }
             // Verify provider account identity before claiming a publish attempt.
             // No provider mutation occurs in this read.
             let account=broker("instagram.account",json!({"connectedAccountId":draft["body"]["connectedAccountId"]}))?;
@@ -105,6 +160,14 @@ fn dispatch_with<F>(root:&Path,operation:&str,input:Value,broker:F)->Result<Valu
         _=>Err("Unsupported social operation".into())
     }
 }
+fn approval_status(db:&Connection,workspace:&str,request_id:&str)->Result<Value,String>{
+    let request:Option<(String,i64,String,String)>=db.query_row("SELECT draft_id,revision,body_json,instagram_account_id FROM instagram_approval_requests WHERE workspace_id=?1 AND id=?2",params![workspace,request_id],|r|Ok((r.get(0)?,r.get(1)?,r.get(2)?,r.get(3)?))).optional().map_err(|e|e.to_string())?;
+    let(id,revision,body,account)=request.ok_or("Approval request not found in this workspace")?;
+    let draft=get(db,workspace,&id)?;
+    let stale=draft["revision"]!=revision || draft["body"].to_string()!=body;
+    Ok(json!({"requestId":request_id,"draftId":id,"revision":revision,"instagramAccountId":account,"state":if stale{"stale"}else if draft["state"]=="draft"{"pending_user_approval"}else{draft["state"].as_str().unwrap_or("unknown")},"publishRequestId":if stale{Value::Null}else{draft["requestId"].clone()},"receipt":if stale{Value::Null}else{draft["receipt"].clone()},"requiresUserAction":!stale&&draft["state"]=="draft","instruction":"Open Instagram drafts in GiGi, load the verified preview, and use Review & publish. An agent request is not permission to publish."}))
+}
+
 // Only exact broker codes known to occur before a provider mutation are safe.
 // Timeouts, conflicts, readback failures and arbitrary text remain uncertain.
 fn failed_publish_receipt(request:&str,error:&str)->Value{

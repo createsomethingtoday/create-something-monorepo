@@ -199,7 +199,7 @@ h2{font-size:23px}
 .chat-capabilities .chat-scope{padding:8px 0 0}
 
 .contact-search { display: flex; align-items: end; gap: 12px; }
-.contact-search .field { flex: 1; min-width: 0; }
+.contact-search .field { flex: 1; min-width: 0; margin-bottom: 0; }
 .contact-search input { width: 100%; }
 .contact-search + .muted { margin: 10px 0 20px; }
 @media (max-width: 600px) { .contact-search { align-items: stretch; flex-direction: column; } }

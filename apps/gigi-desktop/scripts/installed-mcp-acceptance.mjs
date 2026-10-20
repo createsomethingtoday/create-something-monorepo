@@ -36,7 +36,7 @@ async function call(name,args={}){
 try{
   client=await connect();
   const tools=(await client.listTools()).tools;
-  assert.ok(tools.length<=12);
+  assert.equal(tools.length,26);
   const names=new Set(tools.map(tool=>tool.name));
   for(const required of ['gigi_workspace_create','gigi_records_save','gigi_records_get','gigi_records_list','gigi_relations_link','gigi_gigs_summary','gigi_backup_create'])assert.ok(names.has(required),`missing ${required}`);
   const restoreExposed=[...names].some(name=>name.includes('restore'));

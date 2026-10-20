@@ -1,5 +1,7 @@
 pub mod media_protocol;
 pub mod music;
+pub mod music_mcp;
+pub mod social_mcp;
 pub mod social;
 pub mod domain;
 pub mod source_import;

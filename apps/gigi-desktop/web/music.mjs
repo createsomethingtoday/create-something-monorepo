@@ -29,7 +29,7 @@ export function mountMusic(container,{call,workspaceId,confirm=message=>globalTh
     state.offset=0;await load();
    });importRequest=null;return;
   }
-  if(button.hasAttribute('data-music-edit-cancel')){if(canLeave()){editing=null;dirty=false;render();}return;}
+  if(button.hasAttribute('data-music-edit-cancel')){if(canLeave()){editing=null;dirty=false;await load();}return;}
   const find=id=>state.items.find(item=>item.id===id);
   if(button.dataset.musicEdit){if(!canLeave())return;editing={...find(button.dataset.musicEdit)};dirty=false;render();content.querySelector('[name="title"]')?.focus();return;}
   if(button.dataset.musicRemove){const item=find(button.dataset.musicRemove);if(!item||!confirm(`Remove “${item.title}” from this library? The original file remains untouched.`))return;await action('music.remove',{id:item.id},async()=>{stop();state.notice='Removed library entry. Original file unchanged.';if(editing?.id===item.id){editing=null;dirty=false;}await load();});return;}
@@ -50,12 +50,14 @@ export function mountMusic(container,{call,workspaceId,confirm=message=>globalTh
  async function submit(event){
   const form=event.target;event.preventDefault();if(state.busy)return;const values=Object.fromEntries(new FormData(form));
   if(form.hasAttribute('data-music-search')){if(!canLeave())return;editing=null;dirty=false;state.query=values.query;state.kind=values.kind;state.offset=0;await load();}
-  else if(form.hasAttribute('data-music-edit-form')&&editing){await action('music.edit',{id:editing.id,...values},async()=>{editing=null;dirty=false;state.notice='Organization saved in this workspace.';await load();});}
+  else if(form.hasAttribute('data-music-edit-form')&&editing){await action('music.edit',{id:editing.id,expectedRevision:editing.organizationRevision,...values},async()=>{editing=null;dirty=false;state.notice='Organization saved in this workspace.';await load();});}
  }
  function input(event){if(event.target.closest('[data-music-edit-form]')&&editing){editing[event.target.name]=event.target.value;dirty=true;}}
  function keydown(event){if(event.key==='Escape'&&previewId){event.preventDefault();stop(true);}}
+ const refresh=()=>{if(!disposed&&!state.busy&&!dirty&&!editing)void load();};
+ globalThis.window?.addEventListener('focus',refresh);
  container.addEventListener('keydown',keydown);
  content.addEventListener('click',click);content.addEventListener('submit',submit);content.addEventListener('input',input);
  render();void load();
- return {canLeave,dispose(){disposed=true;requestRevision++;if(importRequest)void invoke('music.cancel',{requestId:importRequest}).catch(()=>{});stop();container.removeEventListener('keydown',keydown);content.removeEventListener('click',click);content.removeEventListener('submit',submit);content.removeEventListener('input',input);}};
+ return {canLeave,dispose(){disposed=true;requestRevision++;if(importRequest)void invoke('music.cancel',{requestId:importRequest}).catch(()=>{});stop();globalThis.window?.removeEventListener('focus',refresh);container.removeEventListener('keydown',keydown);content.removeEventListener('click',click);content.removeEventListener('submit',submit);content.removeEventListener('input',input);}};
 }

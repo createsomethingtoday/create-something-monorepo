@@ -1,4 +1,4 @@
-use gigi_desktop_lib::domain;
+use gigi_desktop_lib::{domain,music_mcp,social_mcp};
 use serde_json::{json, Value};
 use std::fs;
 use std::io::{self, BufRead, Read, Write};
@@ -81,7 +81,7 @@ fn schema(operation: &str) -> Value {
 }
 
 fn tool_catalog() -> Value {
-    let tools: Vec<_> = TOOLS.iter().map(|(name, operation, read_only)| {
+    let mut tools: Vec<_> = TOOLS.iter().map(|(name, operation, read_only)| {
         let description = if *operation == "records.save" {
             "GiGi records.save. For an existing id, omitted fields are preserved by default; supplied field keys merge into the record. Set fieldsMode to replace with a fields object to remove omitted field keys. Pass expectedRecord from a full records.get to reject a stale save. Omitted source and links are preserved. Local private workspace only; results are bounded.".to_string()
         } else {
@@ -94,6 +94,8 @@ fn tool_catalog() -> Value {
             "annotations":{"readOnlyHint":read_only,"destructiveHint":operation == &"backup.restore"}
         })
     }).collect();
+    tools.extend(music_mcp::catalog());
+    tools.extend(social_mcp::catalog());
     json!({"tools":tools})
 }
 
@@ -119,18 +121,15 @@ fn reply(root: &std::path::Path, request: &Value) -> Option<Value> {
     let method = request.get("method").and_then(Value::as_str).unwrap_or("");
     let result = match method {
         "initialize" => {
-            json!({"protocolVersion":"2025-06-18","capabilities":{"tools":{"listChanged":false}},"serverInfo":{"name":"gigi-local","version":"0.1.0"}})
+            json!({"protocolVersion":"2025-06-18","capabilities":{"tools":{"listChanged":false}},"serverInfo":{"name":"gigi-local","version":env!("CARGO_PKG_VERSION")}})
         }
         "ping" => json!({}),
         "tools/list" => tool_catalog(),
         "tools/call" => {
             let params = request.get("params").unwrap_or(&Value::Null);
             let name = params.get("name").and_then(Value::as_str).unwrap_or("");
-            let Some((_, operation, _)) = TOOLS.iter().find(|(candidate, _, _)| *candidate == name)
-            else {
-                return Some(
-                    json!({"jsonrpc":"2.0","id":id,"error":{"code":-32602,"message":"unknown GiGi tool"}}),
-                );
+            let operation = if music_mcp::handles(name)||social_mcp::handles(name){name}else if let Some((_,operation,_))=TOOLS.iter().find(|(candidate,_,_)|*candidate==name){*operation}else{
+                return Some(json!({"jsonrpc":"2.0","id":id,"error":{"code":-32602,"message":"unknown GiGi tool"}}));
             };
             let arguments = params
                 .get("arguments")
@@ -141,7 +140,12 @@ fn reply(root: &std::path::Path, request: &Value) -> Option<Value> {
                     json!({"jsonrpc":"2.0","id":id,"error":{"code":-32602,"message":"arguments must be an object"}}),
                 );
             }
-            let outcome = if *operation == "context.search" {
+            let outcome = if music_mcp::handles(name){music_mcp::dispatch(root,name,arguments)}else if social_mcp::handles(name){
+                match std::env::current_exe().ok().and_then(|p|p.parent().map(std::path::Path::to_path_buf)){
+                    Some(resources)=>social_mcp::dispatch(&resources,root,name,arguments),
+                    None=>Err("MCP resource directory unavailable".into()),
+                }
+            }else if operation == "context.search" {
                 let resource_dir = std::env::current_exe()
                     .ok()
                     .and_then(|p| p.parent().map(std::path::Path::to_path_buf));
@@ -247,7 +251,7 @@ mod tests {
             &json!({"jsonrpc":"2.0","id":1,"method":"tools/list"}),
         )
         .unwrap();
-        assert_eq!(listed["result"]["tools"].as_array().unwrap().len(), 11);
+        assert_eq!(listed["result"]["tools"].as_array().unwrap().len(), TOOLS.len()+music_mcp::catalog().len()+social_mcp::catalog().len());
         assert_eq!(
             listed["result"]["tools"][3]["inputSchema"]["properties"]["limit"]["type"],
             "integer"

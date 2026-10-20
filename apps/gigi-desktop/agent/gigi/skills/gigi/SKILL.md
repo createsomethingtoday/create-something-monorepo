@@ -1,6 +1,6 @@
 ---
 name: gigi
-description: Use the local GiGi MCP tools to find or update music-work gigs, shifts, people, tasks, schedules and financial records in the user’s private workspace.
+description: Use local GiGi MCP tools to find and organize music files, prepare Instagram drafts for human review, and manage gigs, people, tasks, schedules and money in the user’s private workspace.
 ---
 
 # GiGi
@@ -28,3 +28,25 @@ An email received date is not a deadline or gig date. Preserve Calendar instants
 ## Connection states
 
 A provider subscription supplies inference. GiGi does not provide paid API fallback. If desktop tools are unavailable, say the desktop/session needs reconnection; do not invent records. Use the provider’s remote session for phone access. Source consent, disconnection and backups belong to GiGi’s settings workflow. This skill does not authorize external messages, payments or new account access.
+
+## Your music — local files and organization
+
+Use `gigi_music_list` with a short query and optional `kind` (`audio`, `video`, `project`, `other`) to find existing entries before adding anything. Results are paged and contain metadata/availability, not file contents or private paths. `gigi_music_get` reads one exact entry. The agent and Your music desktop view share the same workspace index.
+
+When the user asks to add music, call `gigi_music_import` with `workspaceId`, a new UUID `requestId`, and `mode: "files"` or `"folder"`. Explain that the native picker on this Mac needs the user's selection. **No path, folder root, shell scan, download or persistent permission is accepted by this tool.** The picker selection authorizes just this bounded import. An unattended/remote agent must wait for the user on the Mac; it must not claim it selected files. Cancelled or unreadable selections are not successful additions. Read `addedIds`, `duplicateIds`, skipped/limited counts and `nextStep`. Retry an uncertain request with the same UUID; do not manufacture a new selection to bypass receipt recovery.
+
+Then use `gigi_music_organize` with the entry `id`, its latest `organizationRevision` as `expectedRevision`, and only requested `fields`. A stale revision is rejected; read the current entry and ask the user to resolve conflicting changes before retrying. Omitted fields stay unchanged. Example: `fields: {"project":"Night Drive","version":"Mix 03","collection":"EP ideas","tags":"ambient"}`. A project groups bounces and session references; a collection groups listening references. A version labels a separately imported original—it does not edit, export or replace a DAW session. Confirm the result with `gigi_music_get` or a targeted list query. Originals stay in place, no media is uploaded, and the desktop refreshes its list when returning from an agent session. Never overwrite unsaved organization work.
+
+Missing/changed originals require the desktop's Reconnect/Add workflow. Unsupported files may be indexed as references without playback. macOS codec support determines actual audio/video playback. Do not invent playback, file access, account grants or publication success from a metadata receipt.
+
+## Instagram drafts and human publication approval
+
+The ten `gigi_instagram_*` tools prepare local drafts and request human approval; they do not publish, continue publication, grant account access or approve on the user's behalf. Use `drafts_list`/`draft_get` to discover saved work. `draft_create` and `draft_update` save locally, with a stable requestId for exact retries and expectedRevision for edits. Validate an approved public HTTPS JPEG with `media_validate` and save the returned SHA-256 with the draft; never upload private local media implicitly.
+
+Read `connection_status`, then request publication approval for the exact saved revision and verified Instagram account ID. The user must open Instagram drafts in GiGi, Refresh drafts if necessary, load and inspect the exact image, and explicitly confirm Review & publish. Poll `approval_status` or read `publish_receipt`. Pending, stale, unknown, not_published and published_unverified are not successful publication. Only `published` confirms provider readback. Never create a replacement draft to work around an unknown publication outcome.
+
+Use `gigi_instagram_draft_save_status` with the original requestId to recover a lost save response without writing again; `unknown` does not prove failure.
+
+See [Instagram MCP examples](references/instagram-mcp.md) for exact preparation and approval-request calls.
+
+For uncertain music imports, call `gigi_music_import_status` with the original workspaceId/requestId. `completed` contains the receipt (check `cancelled` and `added`); `unknown` means in progress or interrupted, so inspect Your music and do not automatically start another selection; `not_started` means no claim or receipt exists. Status reads never open a picker.
