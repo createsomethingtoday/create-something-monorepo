@@ -29,7 +29,7 @@ const CONTACT_COMPANY_SEARCH_SQL: &str = "SELECT r.from_id,co.title FROM relatio
     UNION ALL SELECT r.to_id,co.title FROM relations r JOIN companies co ON co.id=r.from_id AND co.workspace_id=r.workspace_id WHERE r.workspace_id=?1 AND r.from_entity='companies' AND r.to_entity='contacts'";
 const CONTACT_SEARCH_SQL: &str = "SELECT id,title,status,updated_at,json_extract(fields_json,'$.Email'),json_extract(fields_json,'$.Phone'),json_extract(fields_json,'$.Contact') FROM contacts WHERE workspace_id=?1 ORDER BY updated_at DESC,id";
 fn search_fold(value: &str) -> String {
-    value.nfd().filter(|ch| !is_combining_mark(*ch)).flat_map(char::to_lowercase).collect()
+    value.nfd().filter(|ch| !is_combining_mark(*ch)).collect::<String>().to_lowercase()
 }
 fn search_contacts(db: &Connection, wid: &str, query: &str, offset: i64, limit: i64) -> Result<Value,String> {
     // Both scans see the same state even if an agent edits companies concurrently.
@@ -1291,6 +1291,11 @@ mod tests {
         assert_eq!(dispatch(&root,"records.list",json!({"workspaceId":wid,"entity":"contacts","query":"\u{301}"})).unwrap()["count"],0);
         // The supported schema has Contact (title), not separately stored first/last fields.
         assert!(dispatch(&root,"records.save",json!({"workspaceId":wid,"entity":"contacts","title":"Separate","fields":{"First Name":"Latasha","Last Name":"Baxter"}})).unwrap_err().contains("unknown contacts field"));
+        let greek=dispatch(&root,"records.save",json!({"workspaceId":wid,"entity":"contacts","title":"ΟΣ"})).unwrap();
+        for query in ["ΟΣ","ος"] {assert_eq!(dispatch(&root,"records.list",json!({"workspaceId":wid,"entity":"contacts","query":query})).unwrap()["items"][0]["id"],greek["id"],"{query}");}
+        let greek_company=dispatch(&root,"records.save",json!({"workspaceId":wid,"entity":"companies","title":"ΝΙΚΟΣ"})).unwrap();
+        dispatch(&root,"relations.link",json!({"workspaceId":wid,"fromEntity":"contacts","fromId":target["id"],"toEntity":"companies","toId":greek_company["id"],"role":"Company"})).unwrap();
+        for query in ["ΝΙΚΟΣ latasha","νικος latasha"] {assert_eq!(dispatch(&root,"records.list",json!({"workspaceId":wid,"entity":"contacts","query":query})).unwrap()["items"][0]["id"],target["id"],"{query}");}
         let _=fs::remove_dir_all(root);
     }
 
