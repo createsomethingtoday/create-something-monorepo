@@ -70,7 +70,7 @@
     },
     {
       question: 'Can we cancel?',
-      answer: 'Cancel before your next renewal by emailing micah@createsomething.agency to stop future membership charges. Support continues through your paid period while we hand over your code and documentation, document open work, and plan the transition. If you need more help afterward, we’ll agree on the scope and price before extending support. Separately scoped projects follow their agreed terms.'
+      answer: 'Cancel before your next renewal by emailing support@createsomething.io to stop future membership charges. Support continues through your paid period while we hand over your code and documentation, document open work, and plan the transition. If you need more help afterward, we’ll agree on the scope and price before extending support. Separately scoped projects follow their agreed terms.'
     }
   ];
 </script>

@@ -445,8 +445,8 @@
 <section class="email-section">
   <div class="section-container">
     <p class="email-text">
-      Or email directly: <a href="mailto:micah@createsomething.agency" class="email-link"
-        >micah@createsomething.agency</a
+      Or email directly: <a href="mailto:support@createsomething.io" class="email-link"
+        >support@createsomething.io</a
       >
     </p>
   </div>

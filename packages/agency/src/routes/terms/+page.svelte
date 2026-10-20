@@ -24,7 +24,7 @@
         property="agency"
         domain="createsomething.agency"
         lastUpdated="January 29, 2026"
-        contactEmail="legal@createsomething.io"
+        contactEmail="support@createsomething.io"
       />
     </AgencyLegalContent>
   {/snippet}

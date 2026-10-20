@@ -43,7 +43,7 @@
 				<ul class="footer-links">
 					<li><a href="/about">About Me</a></li>
 					<li><a href="https://createsomething.ltd" target="_blank" rel="noopener">Philosophy</a></li>
-					<li><a href="mailto:micah@createsomething.agency">Email</a></li>
+					<li><a href="mailto:support@createsomething.io">Email</a></li>
 				</ul>
 			</div>
 

@@ -167,7 +167,7 @@ The public /terminal route and API were retired.
 				return {
 					output: `
 Contact Create Something:
-• Email: hello@createsomething.agency
+• Email: support@createsomething.io
 • GitHub: github.com/createsomethingtoday
 						`.trim(),
 						type: 'info'
