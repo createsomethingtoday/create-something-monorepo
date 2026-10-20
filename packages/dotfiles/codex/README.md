@@ -12,6 +12,8 @@ This symlinks repo-owned skills into `~/.codex/skills` without deleting unrelate
 
 ## Current Skills
 
+- `anatomy-xray` - original translucent systems explainers with accessible zoom/pan, evidence mapping and static SVG fallback
+
 - `bootstrap-gitpod-ona` - prepare Gitpod/Ona or other fresh workspaces so repo-owned Codex skills are installed and verified
 - `canon-design-review` - Mobbin-backed UX research translated through Canon and Performance Lab
 - `canon-public-surface` - Performance public-page research and sharpness without generic SaaS drift
