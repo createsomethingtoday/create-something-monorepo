@@ -11,6 +11,7 @@
   />
 -->
 <script lang="ts">
+  import { PUBLIC_CONTACT_EMAIL } from '../utils/public-contact.js';
   interface Props {
     /** Which CREATE SOMETHING property these terms are for */
     property: 'io' | 'space' | 'agency' | 'ltd' | 'lms';
@@ -26,7 +27,7 @@
     property,
     domain,
     lastUpdated = 'January 29, 2026',
-    contactEmail = 'legal@createsomething.io'
+    contactEmail = PUBLIC_CONTACT_EMAIL
   }: Props = $props();
 
   const propertyLabels: Record<string, string> = {

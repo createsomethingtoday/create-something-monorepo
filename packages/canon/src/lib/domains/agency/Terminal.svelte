@@ -139,7 +139,7 @@ Built with:
 				return {
 					output: `
 Contact Create Something:
-• Email: hello@createsomething.agency
+• Email: support@createsomething.io
 • GitHub: github.com/createsomethingtoday
 • Twitter: @createsomething
 					`.trim(),

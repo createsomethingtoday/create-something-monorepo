@@ -3,7 +3,7 @@
 
 <svelte:head>
 	<title>Contact | CREATE SOMETHING</title>
-	<meta name="description" content="Get in touch about AI-native development research, tracked experiments, or collaboration on building with Claude Code + Cloudflare. Questions about methodology or experiment results? Contact micah@createsomething.io" />
+	<meta name="description" content="Get in touch about AI-native development research, tracked experiments, or collaboration on building with Claude Code + Cloudflare. Questions about methodology or experiment results? Contact support@createsomething.io" />
 	<meta name="keywords" content="contact, AI-native development, Claude Code, experiment collaboration, development research, technical inquiry" />
 	<!-- Open Graph -->
 	<meta property="og:title" content="Contact | AI-Native Development Research" />
@@ -60,10 +60,10 @@
 						Questions about experiment methodology, development metrics, or research collaboration? Get in touch.
 					</p>
 					<a
-						href="mailto:micah@createsomething.io"
+						href="mailto:support@createsomething.io"
 						class="contact-link"
 					>
-						micah@createsomething.io
+						support@createsomething.io
 						<svg
 							class="w-4 h-4"
 							fill="none"

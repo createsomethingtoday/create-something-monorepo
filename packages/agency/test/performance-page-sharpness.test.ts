@@ -79,7 +79,7 @@ test('preserves the primary destinations carried by the commercial cohort', () =
       '/partners'
     ],
     partners: ['/products', '/cloudflare', '/stack'],
-    security: ['/bearer-token-policy', 'mailto:legal@createsomething.io'],
+    security: ['/bearer-token-policy', 'mailto:support@createsomething.io'],
     // The opening CTA moved from an in-page '#map-warmup' jump to the canonical Map
     // destination in 10e3f02b5; Map and Control routes now travel in ServicesProductPath.
     services: ['agencyCoreMessaging.selfMapHref', 'agencyCoreMessaging.servicesMappingSessionHref'],
