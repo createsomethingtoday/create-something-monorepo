@@ -11,6 +11,7 @@ The candidate ran with disposable profile `/tmp/gigi-creator-acceptance-20261020
 - Confirmed separate Audio, Music video, Project file and Other / unsupported labels.
 - Played a generated three-second WAV and a generated three-second H.264 MP4 through the indexed local media protocol. Native controls showed the three-second duration; the video reached its final frame.
 - Saved artist, project, collection, version and tags for the synthetic WAV. Searching the project returned that recording alone.
+- Moved only the generated WAV fixture outside the selected folder. The library showed “Original unavailable · reconnect” and removed its preview action. Selecting the moved original through the reconnect picker restored availability and preserved its organization.
 - Created and saved an Instagram draft without an account connection. The app showed revision 1 and “Draft saved locally. Nothing was published.”
 - An incomplete publish review stopped with missing verified image, account and HTTPS JPEG requirements.
 
