@@ -24,10 +24,10 @@ async function verify(viewport, label) {
   if (await page.title() !== 'Draw for Mac | CREATE SOMETHING') throw new Error(`${label} title is incorrect`);
   if (await page.locator('link[rel="canonical"][href="https://draw.createsomething.agency/download"]').count() !== 1) throw new Error(`${label} canonical URL is unavailable`);
   if (await page.locator('script[type="application/ld+json"]').evaluateAll((nodes) => nodes.map((node) => JSON.parse(node.textContent || '{}')['@type'])).then((types) => !types.includes('SoftwareApplication'))) throw new Error(`${label} SoftwareApplication schema is unavailable`);
-  if (!(await page.getByRole('heading', { level: 1, name: /Keep the Mac authoritative/ }).isVisible())) throw new Error(`${label} proposition is unavailable`);
+  if (!(await page.getByRole('heading', { level: 1, name: /Make the idea/ }).isVisible())) throw new Error(`${label} proposition is unavailable`);
   if (await page.getByRole('link', { name: 'Open Draw' }).count() < 2) throw new Error(`${label} primary action is incomplete`);
   const requestLinks = page.getByRole('link', { name: 'Request Mac preview' });
-  if (await requestLinks.count() !== 2 || !(await requestLinks.first().getAttribute('href'))?.startsWith('mailto:micah@createsomething.io')) throw new Error(`${label} preview handoff is incomplete`);
+  if (await requestLinks.count() !== 2 || !(await requestLinks.first().getAttribute('href'))?.startsWith('mailto:support@createsomething.io')) throw new Error(`${label} preview handoff is incomplete`);
   if (!await page.getByText('unsigned, not notarized', { exact: false }).first().isVisible()) throw new Error(`${label} unsigned boundary is unavailable`);
   if (!await page.getByText('0c82b266fa7df6d7078bdc93d7ff2f02186da4168e7b3567f97a376f5843f0bd', { exact: true }).isVisible()) throw new Error(`${label} checksum is unavailable`);
   if (await page.locator('a[href$=".dmg"]').count()) throw new Error(`${label} exposes an unsigned public DMG`);
@@ -35,22 +35,47 @@ async function verify(viewport, label) {
   if (overflow) throw new Error(`${label} has horizontal overflow`);
   if (errors.length) throw new Error(`${label} console errors: ${errors.join(' | ')}`);
   if (failedRequests.length) throw new Error(`${label} failed requests: ${failedRequests.join(' | ')}`);
-  await page.getByRole('navigation', { name: 'Draw navigation' }).getByRole('link', { name: 'Open Draw' }).click();
+  await page.getByRole('navigation', { name: 'Draw navigation' }).getByRole('link', { name: 'Open Draw' }).last().click();
   await page.getByRole('button', { name: /Pen tool/ }).waitFor();
   const workbenchPadding = await page.locator('.workbench').evaluate((node) => getComputedStyle(node).paddingTop);
   if (workbenchPadding !== '0px') throw new Error(`${label} landing styles leaked into the canvas (${workbenchPadding} workbench padding)`);
-  const [landingPage] = await Promise.all([
-    context.waitForEvent('page'),
-    page.getByRole('link', { name: 'Mac', exact: true }).click()
-  ]);
-  await landingPage.getByRole('heading', { level: 1, name: /Keep the Mac authoritative/ }).waitFor();
+  const macLink = page.locator('.identity a[href="/download"]');
+  if (await macLink.count() !== 1 || await macLink.getAttribute('target') !== '_blank' || await macLink.getAttribute('rel') !== 'noreferrer') {
+    throw new Error(`${label} canvas Mac link contract changed`);
+  }
+  let landingPage;
+  let returnPath;
+  // The canvas intentionally hides source links through 820px (routes/page.css).
+  // Assert that boundary, rather than waiting for a popup from an invisible link.
+  if (viewport.width <= 820) {
+    if (await macLink.isVisible()) throw new Error(`${label} unexpectedly exposes the compact-layout source link`);
+    if (await page.getByRole('link', { name: 'Mac', exact: true }).count()) throw new Error(`${label} hidden Mac link remains in the accessibility tree`);
+    await page.goBack({ waitUntil: 'networkidle' });
+    landingPage = page;
+    returnPath = 'browser-back; Mac link intentionally hidden';
+  } else {
+    if (!await macLink.isVisible()) throw new Error(`${label} Mac link is hidden above its breakpoint`);
+    const canvasUrl = page.url();
+    [landingPage] = await Promise.all([
+      context.waitForEvent('page'),
+      macLink.click()
+    ]);
+    if (page.url() !== canvasUrl || !await page.getByRole('button', { name: /Pen tool/ }).isVisible()) {
+      throw new Error(`${label} opening the Mac page replaced the active canvas`);
+    }
+    returnPath = 'Mac link opens separate tab; canvas retained';
+  }
+  await landingPage.waitForURL(downloadUrl);
+  await landingPage.getByRole('heading', { level: 1, name: /Make the idea/ }).waitFor();
   const canScroll = await landingPage.evaluate(() => {
     window.scrollTo(0, document.documentElement.scrollHeight);
     return getComputedStyle(document.body).overflow !== 'hidden' && scrollY > 0;
   });
   if (!canScroll) throw new Error(`${label} landing cannot scroll after opening from the canvas`);
+  if (errors.length) throw new Error(`${label} navigation console errors: ${errors.join(' | ')}`);
+  if (failedRequests.length) throw new Error(`${label} navigation failed requests: ${failedRequests.join(' | ')}`);
   await context.close();
-  return 'pass';
+  return { status: 'pass', returnPath };
 }
 
 try {
@@ -76,11 +101,13 @@ try {
   }
   if (!configuredUrl) throw new Error('Download verifier URL is unavailable');
   downloadUrl = new URL('/download', new URL(configuredUrl)).href;
-  browser = await chromium.launch({ headless: true });
+  browser = await chromium.launch({ headless: true, ...(process.env.CHROME_PATH ? { executablePath: process.env.CHROME_PATH } : {}) });
   const result = {
     url: downloadUrl,
     desktop: await verify({ width: 1440, height: 1000 }, 'Desktop'),
     mobile: await verify({ width: 390, height: 844 }, 'Mobile'),
+    compactBoundary: await verify({ width: 820, height: 1000 }, 'Compact boundary'),
+    wideBoundary: await verify({ width: 821, height: 1000 }, 'Wide boundary'),
     publicBinary: 'held-until-signed-and-notarized'
   };
   console.log(JSON.stringify(result, null, 2));

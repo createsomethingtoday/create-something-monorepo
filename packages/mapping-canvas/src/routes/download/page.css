@@ -13,3 +13,20 @@ html{background:#000;color-scheme:dark;scroll-behavior:smooth}body{margin:0;back
 @media(max-width:760px){.opening .hero-visual{margin-top:8px}}
 
 .brand{gap:10px}.brand span{padding-left:0;border-left:0;color:var(--color-performance-fg,#fff);font:700 20px var(--font-performance-sans,Arial,sans-serif);text-transform:none}
+
+/* Draw product surface: restrained Canon palette, legible action before exploration. */
+.download-page{--amber:#fff;--signal:#aaa;--growth:#bbb;--line:#333}
+.download-page .opening{background-image:none;min-height:auto;padding-top:64px;padding-bottom:72px;grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr);gap:56px;align-items:start}
+.download-page .opening h1{font-size:clamp(48px,6vw,88px);line-height:.98;font-weight:600;letter-spacing:-.055em;margin:32px 0 24px}
+.download-page .lede{font-size:20px;line-height:1.55;max-width:490px}
+.download-page .eyebrow{color:#aaa;font-weight:400;line-height:1.6;flex-wrap:wrap;gap:10px}
+.download-page .eyebrow span+span{padding-left:10px}
+.download-page .requirements{color:#ccc;font-size:13px;line-height:1.9;margin:24px 0 0}
+.download-page .boundary{font-family:inherit;text-transform:none;font-size:13px;line-height:1.6;color:#aaa;max-width:450px}
+.download-page .actions .primary{color:#111}.download-page .actions a{font-size:14px;font-weight:600}
+.download-page .section-label h2{font-size:clamp(30px,4vw,52px);line-height:1.06;font-weight:500}
+.download-page .handoff h2{font-size:clamp(34px,5vw,64px);font-weight:500;line-height:1.08}
+.download-page .receipt{background:#151515}.download-page footer a{color:#bbb;text-decoration:none}
+.download-page a:focus-visible{outline:2px solid #fff;outline-offset:4px}
+@media(max-width:1050px){.download-page .opening{grid-template-columns:1fr;gap:42px}.download-page .opening-copy{max-width:640px}.download-page .opening h1{font-size:64px}.download-page .lede{max-width:620px}}
+@media(max-width:760px){.download-page .opening{padding-top:40px}.download-page .opening h1{font-size:52px}.download-page .lede{font-size:18px}.download-page>section{padding-inline:20px}.download-page .section-label{margin-bottom:32px}.download-page .flow article{min-height:0}.download-page .node{margin-bottom:24px}}
