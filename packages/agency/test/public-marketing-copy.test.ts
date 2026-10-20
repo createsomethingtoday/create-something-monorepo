@@ -238,7 +238,6 @@ test('public Agency commercial propositions declare the shared editorial express
     'experiments'
   ];
   const sectionHeroRoutes = [
-    'about',
     'cloudflare',
     // Contact is a task-led inquiry form, not an editorial campaign hero.
     'for-service-providers',
@@ -344,6 +343,11 @@ test('commercial conversion handoffs use editorial propositions while task surfa
       assert.equal(openings.length, 0, 'homepage uses its membership offer as the conversion section');
       continue;
     }
+    if (route === 'about') {
+      assert.match(source, /class="letter-signoff"/);
+      assert.match(source, /href="\/book"/);
+      continue;
+    }
     if (route === 'book') {
       assert.match(source, /class="booking-entry"/);
       assert.match(source, /id="first-party-scheduler"/);
@@ -384,6 +388,11 @@ test('commercial conversion handoffs use editorial propositions while task surfa
     );
     const openings = conversionHandoffOpenings(source);
 
+    if (route === 'about') {
+      assert.match(source, /class="letter-signoff"/);
+      assert.match(source, /href="\/book"/);
+      continue;
+    }
     if (route === 'book') {
       assert.match(source, /class="booking-entry"/);
       assert.match(source, /id="first-party-scheduler"/);

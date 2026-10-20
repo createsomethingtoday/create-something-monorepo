@@ -1,5 +1,6 @@
 <script lang="ts">
   import { Button, MeridianAccordion } from '@create-something/canon';
+  import MembershipPlanJourney from './MembershipPlanJourney.svelte';
   import { PUBLIC_PRICING } from '$lib/data/publicPricing';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
@@ -54,16 +55,16 @@
   ];
 </script>
 
-<section id="membership" class="membership" aria-labelledby="membership-title">
+<section id="membership" class="membership" class:compact aria-labelledby="membership-title">
   <div class="offer">
     <div class="offer-intro">
       <p class="eyebrow">AI-native technical support membership</p>
       <h2 id="membership-title">Choose the support your work needs.</h2>
       <p>
-        Bring a workflow, software problem or existing product. We diagnose the problem, agree on the change,
-        engineer and test it, then help your team use the result. We retain project context across agreed work.
+        Two plans for agreed improvements, with project context carried from one task to the next.
+        Choose by the number of workstreams and the time your team needs.
       </p>
-      <p><strong>Micah Johnson currently delivers the service.</strong> He diagnoses problems, engineers improvements and helps your team use the result. <a href="/about">Meet Micah and inspect his work →</a></p>
+      <p><strong>Micah Johnson currently delivers the service.</strong> <a href="/about">Meet Micah →</a></p>
       <p><strong>Focused and managed Control cover different work.</strong> Focused is {PUBLIC_PRICING.membership.focused.label} for agreed improvements, learning and operator support. <a href="/control">Managed Control</a> starts at $900/month for agreed live operations after launch, under a separate agreement. Production incident response is not included in membership.</p>
     </div>
     <div class="plans">
@@ -102,6 +103,7 @@
   {#if compact}
     <p class="ownership-summary">You keep the agreed code, tests and instructions under your agreement, with reusable tools licensed for continued use. <a href="/services">See how delivery works →</a> <a href="/stack">What you keep →</a></p>
   {/if}
+  <MembershipPlanJourney />
   <div class="cost-boundary" aria-labelledby="cost-boundary-title">
     <p class="eyebrow">Delivery and usage are separate</p>
     <h3 id="cost-boundary-title">Know the cost before the work starts.</h3>
@@ -124,8 +126,9 @@
 </section>
 
 <style>
+  .membership.compact { --membership-gutter: 7vw; }
   .next-steps { margin-top: var(--space-performance-md); }
-  .ownership-summary { max-width: none; padding: 0 max(1.25rem, calc((100% - 80rem) / 2)) var(--space-performance-lg); }
+  .ownership-summary { max-width: none; padding: 0 var(--membership-gutter, max(1.25rem, calc((100% - 80rem) / 2))) var(--space-performance-lg); }
   a { color: inherit; text-underline-offset: .2em; display: inline-flex; align-items: center; min-height: 44px; margin-right: 1rem; }
   a:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; }
   .membership {
@@ -135,13 +138,14 @@
     border-block: 1px solid var(--color-performance-line);
   }
   .membership :global(.meridian-accordion) {
-    padding-inline: max(1.25rem, calc((100% - 80rem) / 2));
+    padding-inline: var(--membership-gutter, max(1.25rem, calc((100% - 80rem) / 2)));
   }
-  .offer { padding: clamp(2rem, 5vw, 5rem) max(1.25rem, calc((100% - 80rem) / 2)); }
+  .offer { padding: clamp(2rem, 5vw, 5rem) var(--membership-gutter, max(1.25rem, calc((100% - 80rem) / 2))); }
   .offer-intro { max-width: 65ch; }
   .offer-intro a { text-decoration: underline; }
-  .plans { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-performance-md); margin-block: var(--space-performance-xl); }
-  .plan { display: flex; flex-direction: column; min-width: 0; border: 1px solid var(--color-performance-line-strong); padding: var(--space-performance-lg); }
+  .offer-intro p:last-child { font-size: .875rem; color: var(--color-performance-ink-soft); }
+  .plans { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-performance-md); margin-block: var(--space-performance-lg); }
+  .plan { display: flex; flex-direction: column; min-width: 0; border: 1px solid var(--color-performance-line-strong); padding: clamp(1.25rem, 3vw, 2.5rem); }
   .plan h3 { margin: var(--space-performance-sm) 0 0; }
   .plan ul { flex: 1; }
   .plan :global(a) { align-self: flex-start; }
@@ -180,15 +184,15 @@
     color: var(--color-performance-ink-soft);
   }
   .cost-boundary {
-    padding: 0 max(1.25rem, calc((100% - 80rem) / 2)) var(--space-performance-xl);
+    padding: 0 var(--membership-gutter, max(1.25rem, calc((100% - 80rem) / 2))) var(--space-performance-xl);
   }
   h3 { font-family: var(--font-performance-editorial); font-size: clamp(1.5rem, 3vw, 2.25rem); font-weight: 400; line-height: 1.2; }
   dl { margin-block: var(--space-performance-lg); border-top: 1px solid var(--color-performance-line-strong); }
   dl > div { display: grid; grid-template-columns: 1fr 2fr; gap: var(--space-performance-lg); padding-block: var(--space-performance-md); border-bottom: 1px solid var(--color-performance-line); }
   dt { font-weight: 600; }
   dd { margin: 0; line-height: 1.65; max-width: 65ch; }
+  @media (max-width: 760px) { .plans { grid-template-columns: 1fr; } }
   @media (max-width: 640px) {
     dl > div { grid-template-columns: 1fr; gap: var(--space-performance-sm); }
-    .plans { grid-template-columns: 1fr; }
   }
 </style>
