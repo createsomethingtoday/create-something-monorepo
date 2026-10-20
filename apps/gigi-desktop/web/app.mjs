@@ -1,3 +1,4 @@
+import {createContactRead} from './contact-read.mjs';
 import { historyPresentation, copyableRecordField } from './record-polish.mjs';
 import { mountMusic } from './music.mjs';
 import { mountSocial } from './social.mjs';
@@ -29,6 +30,7 @@ let editorBaseline = null;
 let submittedEditor = null;
 let pendingLeave = null;
 let editorReturnFocus = null;
+const contactRead=createContactRead();
 let contactSearchTimer;
 let contactSearchVersion = 0;
 const state = { workspace: null, setupProfile: false, setupDraft: null, currency: null, currencyKnown: false, page: 'overview', contactQuery: '', contactSearching: false, contactSearchError: false, scheduleView: 'upcoming', libraryOpen: false, records: [], recordCount: 0, nextCursor: null, selected: null, editing: false, editorDraft: null, editorOrigin: null, sourceExpanded: false, busy: false, signingIn: false, justCreated: false, agentProvider: 'codex', toast: null, summary: null, summaryUnavailable: false, history: [], backupId: null, pendingRestoreId: null, agent: null, agentReceipt: null, relationSchema: null, linkChoices: null, sources: {}, sourceAttempts: {}, connectionRequests: {}, imports: {}, contextHits: [], contextQueried: false, diagnostics: { status: null, review: null, exported: null } };
@@ -50,9 +52,9 @@ function notice(message, error = false) {
 }
 
 function readRoute() { return { version: routeVersion, page: state.page, workspace: workspaceId() }; }
-function nextRoute() { sourceProposal = null; routeVersion++; return readRoute(); }
+function nextRoute() { sourceProposal = null; routeVersion++; clearTimeout(contactSearchTimer); contactRead.cancel(); return readRoute(); }
 function currentRoute(route) { return route.version === routeVersion && route.page === state.page && route.workspace === workspaceId(); }
-function leaveRoute() { sourceProposal = null; routeVersion++; }
+function leaveRoute() { sourceProposal = null; routeVersion++; clearTimeout(contactSearchTimer); contactRead.cancel(); }
 
 async function run(task) {
   const operation = ++operationVersion;
@@ -150,6 +152,7 @@ async function openPage(page, resetScroll = false) {
     state.diagnostics = { status: results[3].status === 'fulfilled' ? results[3].value : null, review: null, exported: null };
   } else if (fields[page]) {
     state.records = []; state.recordCount = 0; state.nextCursor = null;
+    if(page==='contacts'){await searchContacts(state.contactQuery,true);if(!currentRoute(route))return false;render();if(resetScroll)globalThis.scrollTo?.(0,0);return true;}
     const result = page === 'schedule' ? await readWorkspaceAgenda((entity, cursor) => bridge.listRecords(route.workspace, entity, cursor), () => currentRoute(route)).then(items => items && ({ items, count: items.length })) : await bridge.listRecords(route.workspace, page, null, page === 'contacts' ? state.contactQuery : undefined);
     if (!currentRoute(route)) return false;
     state.records = listFrom(result);
@@ -268,23 +271,24 @@ function scheduleView() {
 function searchContacts(query, immediate = false) {
   if (state.page !== 'contacts' || state.selected || state.editing) return;
   clearTimeout(contactSearchTimer);
+  contactRead.cancel();
   state.contactQuery = query.slice(0,160); state.contactSearching = true; state.contactSearchError = false;
-  const version = ++contactSearchVersion, route = readRoute();
+  const version = ++contactSearchVersion, route = readRoute(), requestedQuery = state.contactQuery;
   render();
   const search = async () => {
     if (version !== contactSearchVersion || !currentRoute(route) || state.selected || state.editing) return;
     try {
-      const result = await bridge.listRecords(route.workspace, 'contacts', null, state.contactQuery);
+      const result = await contactRead.read(()=>bridge.listRecords(route.workspace, 'contacts', null, requestedQuery));
       if (version !== contactSearchVersion || !currentRoute(route) || state.selected || state.editing) return;
       state.records = listFrom(result); state.recordCount = result?.count ?? state.records.length; state.nextCursor = result?.nextCursor || null;
-    } catch {
-      if (version !== contactSearchVersion || !currentRoute(route)) return;
-      state.records = []; state.recordCount = 0; state.nextCursor = null; state.contactSearchError = true;
+    } catch (error) {
+      if (version !== contactSearchVersion || !currentRoute(route) || error?.code==='contact_read_superseded') return;
+      state.records = []; state.recordCount = 0; state.nextCursor = null; state.contactSearchError = error?.code==='contact_read_timeout'?'timeout':true;
     } finally {
       if (version === contactSearchVersion && currentRoute(route) && !state.selected && !state.editing) { state.contactSearching = false; render(); }
     }
   };
-  if (immediate) void search(); else contactSearchTimer = setTimeout(search, 150);
+  if (immediate) return search(); else contactSearchTimer = setTimeout(search, 150);
 }
 function contactSearchControls() {
   return `<div class="contact-search"><div class="field"><label for="contact-search">Search people</label><input id="contact-search" type="search" maxlength="160" value="${safe(state.contactQuery)}" placeholder="Name, email, phone or company" aria-describedby="contact-search-help" aria-controls="contact-results" autocomplete="off"></div><button type="button" class="btn" data-clear-contacts="1" ${state.contactQuery ? '' : 'disabled'}>Clear search</button></div><p class="muted" id="contact-search-help">Search contacts on this Mac, including linked company names. Escape clears the search.</p>`;
@@ -297,7 +301,7 @@ function collection() {
   const searching = name === 'contacts' && state.contactSearching;
   const searchError = name === 'contacts' && state.contactSearchError;
   const filtered = name === 'contacts' && state.contactQuery.trim();
-  const content = searching ? '<p role="status">Searching people…</p>' : searchError ? '<div class="empty"><strong>Couldn’t search people.</strong><p>Your contacts are unchanged. Try again.</p><button class="btn" data-retry-contacts="1">Retry search</button></div>' : filtered && !state.records.length ? '<div class="empty"><strong>No people match your search.</strong><p>Try a name, email, phone or linked company, or clear the search to see everyone.</p></div>' : rows(name, state.records);
+  const content = searching ? '<p role="status">Searching people…</p>' : searchError ? `<div class="empty"><strong>Couldn’t search people.</strong><p>${state.contactSearchError==='timeout'?'The search took too long. GiGi stopped waiting; the local read may still finish. Your contacts are unchanged. Retry or clear the search.':'Your contacts are unchanged. Try again.'}</p><button class="btn" data-retry-contacts="1">Retry search</button></div>` : filtered && !state.records.length ? '<div class="empty"><strong>No people match your search.</strong><p>Try a name, email, phone or linked company, or clear the search to see everyone.</p></div>' : rows(name, state.records);
   return heading('Your records', label(name), `A private view of your ${name === 'finances' ? 'financial records' : label(name).toLowerCase()}. Open any record to inspect its details and links.`, action) + `<section class="panel">${name === 'contacts' ? contactSearchControls() : ''}<div id="contact-results" aria-busy="${searching}"><div class="panel-head"><h2>${safe(collectionCount(name, state.recordCount))}</h2><small role="status" aria-live="polite">${searching ? 'Searching…' : searchError ? 'Search unavailable' : `Showing ${state.records.length} of ${state.recordCount}${filtered ? ' matching contacts' : ''}`}</small></div>${content}${!searching && !searchError && state.nextCursor ? '<button class="btn section-gap" data-more="1">Load more</button>' : ''}</div></section>`;
 }
 
@@ -527,6 +531,17 @@ async function enterLinkEditor() {
 }
 
 async function loadMore() {
+  if(state.page==='contacts'){
+    if(state.contactSearching||state.selected||state.editing||!state.nextCursor)return;
+    const route=readRoute(),version=++contactSearchVersion,cursor=state.nextCursor,records=state.records,query=state.contactQuery;
+    state.contactSearching=true;state.contactSearchError=false;render();
+    try{const result=await contactRead.read(()=>bridge.listRecords(route.workspace,'contacts',cursor,query));
+      if(!currentRoute(route)||version!==contactSearchVersion)return;
+      state.records=[...records,...listFrom(result)];state.nextCursor=result?.nextCursor||null;state.recordCount=result?.count??state.recordCount;
+    }catch(error){if(!currentRoute(route)||version!==contactSearchVersion||error?.code==='contact_read_superseded')return;state.contactSearchError=error?.code==='contact_read_timeout'?'timeout':true;}
+    finally{if(currentRoute(route)&&version===contactSearchVersion){state.contactSearching=false;render();}}
+    return;
+  }
   const route = nextRoute(), cursor = state.nextCursor, records = state.records, searchVersion = contactSearchVersion;
   const result = await bridge.listRecords(route.workspace, route.page, cursor, route.page === 'contacts' ? state.contactQuery : undefined);
   if (!currentRoute(route)) return;

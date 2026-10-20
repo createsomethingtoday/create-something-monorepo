@@ -38,3 +38,30 @@ test('People filters locally, clears, preserves search on detail/back, and ignor
   assert.equal(calls.some(c=>/save|delete|connection|import/.test(c.operation)),false);
  }finally{globalThis.document=previous.document;globalThis.__TAURI__=previous.tauri;}
 });
+
+test('People exits an unresolved search, ignores late completion, and retries without stale page replacement',async()=>{
+ const listeners=new Map(),pending=[],calls=[];let holdOpening=false;
+ const root={innerHTML:'',classList:{toggle(){}},addEventListener(n,h){listeners.set(n,h);},querySelector(){return null;}};
+ const previous={document:globalThis.document,tauri:globalThis.__TAURI__,setTimeout:globalThis.setTimeout};
+ globalThis.setTimeout=(fn,delay,...args)=>previous.setTimeout(fn,delay===150?0:delay===10000?30:delay,...args);
+ globalThis.document={querySelector:()=>root};globalThis.__TAURI__={core:{invoke:async(_,{operation,input})=>{
+  calls.push({operation,input});if(operation==='workspace.get')return{id:'w',name:'Synthetic'};
+  if(operation==='records.list'){if(input.entity==='profile')return{items:[{id:'p'}]};if(input.entity==='contacts'){
+   if(input.query==='hang'||holdOpening||input.cursor)return new Promise(resolve=>pending.push(resolve));
+   return{items:[{id:'new',title:input.query||'Initial'}],count:1,nextCursor:'more'};
+  }return{items:[]};}if(operation==='records.get')return{id:'p',fields:{Currency:'USD'}};return{};
+ }}};
+ const settle=(ms=12)=>new Promise(resolve=>previous.setTimeout(resolve,ms));const click=dataset=>listeners.get('click')({target:{closest:()=>({dataset})}});const input=value=>listeners.get('input')({target:{id:'contact-search',value}});
+ try{
+  await import(`./app.mjs?contact-hang=${Date.now()}`);await settle();click({page:'contacts'});await settle();
+  input('hang');await settle();assert.match(root.innerHTML,/Searching people/);await settle(45);
+  assert.doesNotMatch(root.innerHTML,/Searching people/);assert.match(root.innerHTML,/stopped waiting/);assert.match(root.innerHTML,/data-retry-contacts/);
+  input('Fresh');await settle();pending.shift()({items:[{id:'late',title:'LATE'}],count:1});await settle();assert.match(root.innerHTML,/Fresh/);assert.doesNotMatch(root.innerHTML,/LATE/);
+  click({page:'tasks'});await settle();holdOpening=true;click({page:'contacts'});await settle();holdOpening=false;input('Newest');await settle();pending.shift()({items:[{id:'old',title:'OLD OPENING'}],count:1});await settle();assert.match(root.innerHTML,/Newest/);assert.doesNotMatch(root.innerHTML,/OLD OPENING/);
+  click({more:'1'});await settle();input('New page query');await settle();pending.shift()({items:[{id:'oldpage',title:'OLD PAGE'}],count:2});await settle();assert.match(root.innerHTML,/New page query/);assert.doesNotMatch(root.innerHTML,/OLD PAGE/);
+  click({more:'1'});await settle(45);assert.match(root.innerHTML,/stopped waiting/);assert.doesNotMatch(root.innerHTML,/Searching people/);click({retryContacts:'1'});await settle();assert.match(root.innerHTML,/New page query/);
+  pending.shift()({items:[{id:'latepage',title:'LATE PAGE'}],count:2});await settle();assert.doesNotMatch(root.innerHTML,/LATE PAGE/);
+  input('hang');await settle();const before=calls.length;click({more:'1'});await settle();assert.equal(calls.length,before,'queued pagination must not invalidate active search');
+  click({page:'tasks'});await settle();await settle(45);assert.doesNotMatch(root.innerHTML,/stopped waiting|Searching people/);
+ }finally{globalThis.document=previous.document;globalThis.__TAURI__=previous.tauri;globalThis.setTimeout=previous.setTimeout;}
+});
