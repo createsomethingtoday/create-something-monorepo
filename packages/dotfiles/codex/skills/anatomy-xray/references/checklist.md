@@ -2,6 +2,9 @@
 
 - [ ] Reader question and boundary stated; schematic/inferred/measured status visible.
 - [ ] Each assembly and edge maps to evidence or a declared design assumption.
+- [ ] Default XRay has a coherent ghosted enclosure, multiple actual depths, projected overlap, volumetric shading, and attached routed paths; a flat exploded diagram does not pass.
+- [ ] Zoom/pan/fit/reset work via buttons, keyboard and touch; normal page gestures remain usable, with an explicit inspection-mode exit.
+- [ ] Selected labels remain legible at 100–400% zoom, with dependencies and provenance nearby; print resets cropping and restores interaction state afterward.
 - [ ] Stable IDs, unique names, valid endpoints, and same topology across every view/mode.
 - [ ] Exterior occludes; transparency preserves shell; cutaway specifies removed region; explosion retains identity and connections.
 - [ ] Shared scale, upright labels, consistent legend and selection; no false physical units.

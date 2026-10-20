@@ -5,6 +5,6 @@
   "sources": [{"id": "design", "locator": "User-approved explanation", "status": "schematic", "limitation": "No observed runtime"}],
   "assemblies": [{"id": "a", "name": "Intent", "position": [0,0,0], "size": [42,60,14], "sourceIds": ["design"]}],
   "connections": [],
-  "state": {"mode": "transparent", "selected": "a", "trace": false},
+  "state": {"mode": "transparent", "selected": "a", "trace": false, "zoom": 1, "panX": 0, "panY": 0},
   "measurement": null
 }
