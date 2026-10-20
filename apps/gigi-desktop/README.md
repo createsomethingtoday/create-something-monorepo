@@ -14,6 +14,46 @@ A Rust/Tauri desktop workspace for music-related work. Each installation owns a 
 
 The local functional beta passed connected desktop and physical cellular-phone acceptance; current receipts and artifact hashes are in `evidence/local-checkpoint.md`. Developer ID signing, notarization and installation of the qualified release remain required before production distribution. See `evidence/tdd.md` for checks and failures; a successful build alone does not prove acceptance.
 
+## Organize music on this Mac
+
+Open **Music library** under Creative work to organize demos, final bounces, session files and music videos. You need a local GiGi workspace and the original files on this Mac. No source sign-in or agent subscription is required.
+
+1. Choose **Add files** and select a file in the native picker. The import result reports how many entries were added, duplicated or skipped. Files stay in their original locations; GiGi does not upload or copy them.
+2. Choose **Organize** beside the entry. Give related files the same **Project** name, label a bounce with **Version**, and use **Collection** for listening references. Artist and tags are optional. Choose **Save organization**; the saved fields appear in the library and can be searched.
+3. Choose **Preview** on an available audio or video entry. Playback stays local. If its format or codec cannot play on this Mac, GiGi shows a preview error; use the file's own application instead. Session files and other formats remain indexed references without an in-app preview.
+
+**Add folder** indexes only the folder you select and its descendants. Hidden files and symbolic links are skipped. Imports stop at 1,000 entries, 10,000 visited entries, or 16 folder levels; the library holds up to 10,000 entries per workspace. A limit notice means some files were not indexed. Select a smaller folder to continue. **Cancel import** requests cancellation. An “Import cancelled” receipt confirms that no new entries were saved; an import that already finished reports its added entries. Search covers title, artist, project, collection, version and tags; the media filter separates audio, music video, project files and other formats.
+
+If an original becomes unavailable, choose **Reconnect** and select that original in its current location. Reconnection requires the same filename and file identity on the same device. A changed file or a copy on another volume must be added separately. Importing an edited file creates a new entry; the old entry stays marked changed. Give each entry a version label to distinguish it. GiGi does not keep earlier media bytes or restore an overwritten bounce.
+
+**Remove entry** removes its organization from GiGi after confirmation. It never deletes the original. Organization is saved in the selected workspace's local database and included in GiGi's database backups. The media itself is not included: keep your own backup of recordings and project folders.
+
+## Draft an Instagram post
+
+Open **Instagram drafts** under Creative work, then choose **New draft**. Add a title and caption and choose **Save draft**. “Saved locally” confirms the draft was saved on this Mac; it does not mean the post was published. Drafting works without an Instagram connection, and an unfinished draft can omit its image and account.
+
+This release's publishing flow supports one JPEG image and a caption within the displayed 2,200-character limit. The image needs a direct public HTTPS URL on an operator-approved image host. It does not upload local library media or photos. It does not offer carousels, Reels, Stories, scheduling, music overlays or personal-account publishing. Keep private files private; only use an image URL you intend to share publicly.
+
+When you want to publish:
+
+1. Choose **Check connection**. Publishing needs a verified Instagram Business or Creator account and its required publishing permissions. **Connection setup** explains sign-in and consent. If Instagram is not configured for this release, ask the GiGi operator to configure the existing Composio integration; your local drafts remain available. Starting browser consent is a separate, explicit choice. An unfinished consent attempt should be completed and verified rather than restarted.
+2. Enter the **Public JPEG image URL**, then choose **Load verified image preview**. The connector fetches and validates that public image without publishing it. GiGi requires a JPEG no larger than 8 MiB, at least 320 pixels wide, with an aspect ratio from 4:5 through 1.91:1. A rejected image needs correction before review. If its host is not allowed, ask the operator which image host this release accepts. The preview layout is approximate.
+3. Select the verified **Publishing account** and choose **Save draft** again. This saves the exact image identity with the caption and account. If the public image changes later, load its preview and review it again before publishing.
+4. Choose **Review & publish**. Check the account, image and caption in the confirmation dialog. **Keep as draft** closes the dialog without publishing. **Publish on Instagram** authorizes that exact saved post.
+5. Read the receipt. **Published on Instagram** means GiGi verified Instagram's post readback. **Publish returned · verification pending** means a post ID was returned but not yet verified. **Publishing outcome unknown** means the result is uncertain. For either uncertain state, use **Check publish receipt** and inspect Instagram; do not publish again. **Not published** preserves the failed attempt and allows **Copy into a new draft** after correcting its requirements.
+
+Connection verification, a saved draft and a preview do not establish that a real post was published. Native playback and provider publishing acceptance require their own release evidence; this guide makes no acceptance claim.
+
+### Why these workspaces use these patterns
+
+The recommended structure draws on familiar creative tools:
+
+- [Ableton Collections](https://help.ableton.com/hc/en-us/articles/360000268570-Using-Collections) organizes mixed music assets through collections. GiGi uses project, collection and version labels so a musician can keep related work together while a listener can organize reference tracks and MP4s.
+- [Apple Music's file-reference option](https://support.apple.com/guide/music-windows/change-where-music-files-are-stored-mus69248042d/windows) keeps a library entry while leaving the original file in place. GiGi follows that non-destructive reference pattern, with explicit recovery when the original changes or disappears.
+- [Buffer's draft workflow](https://support.buffer.com/articles/managing-and-approving-draft-posts-57li7M8tDA) separates saved work from publishing. GiGi pairs that separation with an image preview, account verification, a final confirmation and distinct outcome receipts.
+
+These comparisons explain the interaction choices. They do not imply feature parity with those products or change Instagram's API restrictions.
+
 ## Development
 
 From the monorepo root, run `pnpm bootstrap:worktree` first.

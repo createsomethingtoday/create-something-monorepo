@@ -1,5 +1,5 @@
 export { createBrokerClient, IntegrationError } from './broker.ts';
-export type { BrokerClient, BrokerOptions, ConnectionState, ConnectionStatus, BeginConnectionResult, SourceProvider, SourcePage, SourceRecord } from './broker.ts';
+export type { BrokerClient, BrokerOptions, ConnectionState, ConnectionStatus, BeginConnectionResult, SourceProvider, ConnectionProvider, InstagramAccount, InstagramPublishInput, InstagramReceipt, SourcePage, SourceRecord } from './broker.ts';
 export { createCtxClient, CtxError } from './ctx.ts';
 export type { CtxClient, CtxOptions, CtxHit } from './ctx.ts';
 export { login } from './auth.ts';

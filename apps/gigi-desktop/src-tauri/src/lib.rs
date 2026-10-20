@@ -1,3 +1,6 @@
+pub mod media_protocol;
+pub mod music;
+pub mod social;
 pub mod domain;
 pub mod source_import;
 pub mod integrations;
@@ -16,6 +19,8 @@ async fn dispatch(app: tauri::AppHandle, operation: String, input: serde_json::V
     };
     let resources=app.path().resource_dir().map_err(|e|e.to_string())?;
     tauri::async_runtime::spawn_blocking(move || {
+        if operation.starts_with("music.") {return music::dispatch(&data_dir,&operation,input);}
+        if operation.starts_with("social.") {return social::dispatch(&resources,&data_dir,&operation,input);}
         if operation.starts_with("diagnostics.") {return diagnostics::dispatch(&data_dir,&operation,input);}
         let diagnostic_input=input.clone();
         diagnostics::observe(&data_dir,&operation,&diagnostic_input,|| {
@@ -29,7 +34,7 @@ async fn dispatch(app: tauri::AppHandle, operation: String, input: serde_json::V
             let page=integrations::dispatch(&resources,&data_dir,&operation,input.clone())?;
             return source_import::persist_page(&data_dir,&input,page);
         }
-        if operation.starts_with("context.") || operation.starts_with("connections.") || operation=="auth.login" {
+        if operation.starts_with("context.") || operation.starts_with("connections.") || matches!(operation.as_str(),"instagram.preview"|"instagram.account"|"instagram.receipt") || operation=="auth.login" {
             integrations::dispatch(&resources,&data_dir,&operation,input)
         } else {
             domain::dispatch(&data_dir,&operation,input)
@@ -40,6 +45,11 @@ async fn dispatch(app: tauri::AppHandle, operation: String, input: serde_json::V
 
 pub fn run() {
     tauri::Builder::default()
+        .register_uri_scheme_protocol("gigi-media", |context, request| {
+            let app=context.app_handle();
+            let root=std::env::var_os("GIGI_DATA_DIR").map(std::path::PathBuf::from).or_else(||app.path().app_data_dir().ok());
+            media_protocol::respond(root.as_deref(), request)
+        })
         .invoke_handler(tauri::generate_handler![dispatch])
         .build(tauri::generate_context!())
         .expect("GiGi could not start")

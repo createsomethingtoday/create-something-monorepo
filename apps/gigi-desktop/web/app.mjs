@@ -1,3 +1,5 @@
+import { mountMusic } from './music.mjs';
+import { mountSocial } from './social.mjs';
 import { diagnosticsView } from './diagnostics-view.mjs';
 import { captureViewState, restoreViewState } from './view-state.mjs';
 import { scheduleAgenda, scheduleEntry, readSchedulePages } from './schedule.mjs';
@@ -17,6 +19,9 @@ let operationVersion = 0;
 let currencyVersion = 0;
 let sourceProposal = null;
 let renderedView = null;
+let creatorMount = null;
+let creatorNode = null;
+let creatorRoute = null;
 let renderedChatSession = null;
 const state = { workspace: null, setupProfile: false, setupDraft: null, currency: null, currencyKnown: false, page: 'overview', scheduleView: 'upcoming', libraryOpen: false, records: [], recordCount: 0, nextCursor: null, selected: null, editing: false, editorDraft: null, editorOrigin: null, sourceExpanded: false, busy: false, signingIn: false, justCreated: false, agentProvider: 'codex', toast: null, summary: null, summaryUnavailable: false, history: [], backupId: null, pendingRestoreId: null, agent: null, agentReceipt: null, relationSchema: null, linkChoices: null, sources: {}, sourceAttempts: {}, connectionRequests: {}, imports: {}, contextHits: [], contextQueried: false, diagnostics: { status: null, review: null, exported: null } };
 const safe = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
@@ -95,6 +100,9 @@ async function load() {
 }
 
 async function openPage(page, resetScroll = false) {
+  if (creatorMount?.canLeave && !creatorMount.canLeave()) return false;
+  if (creatorMount) { if(typeof creatorMount==='function') creatorMount(); else creatorMount.dispose?.(); }
+  creatorMount=null; creatorNode=null; creatorRoute=null;
   if (page !== 'settings') state.justCreated = false;
   state.page = page; state.selected = null; state.editing = false; state.editorDraft = null; state.editorOrigin = null; state.sourceExpanded = false; state.summary = null; state.summaryUnavailable = false;
   const route = nextRoute();
@@ -196,7 +204,7 @@ async function cancelEditor() {
 function sidebar() {
   const nav = (ids, name) => `<nav class="nav" aria-label="${name}">${ids.map((id) => sections.find((item) => item.id === id)).map((item) => `<button type="button" data-page="${item.id}" ${state.page === item.id ? 'aria-current="page"' : ''}>${icon(entityIcon(item.id))}<span>${safe(item.label)}</span></button>`).join('')}</nav>`;
   const library = ['locations', 'notes', 'documents', 'interactions', 'services', 'tags'];
-  return `<aside class="sidebar"><div class="brand"><span class="brand-mark">g.</span><div><strong>GiGi</strong><small>Private workspace</small></div></div><div class="workspace-chip" title="${safe(state.workspace?.name)}">${safe(state.workspace?.name || 'My workspace')}</div><div><p class="nav-label">Daily work</p>${nav(['overview', 'gigs', 'schedule', 'tasks', 'finances'], 'Daily work')}</div><div><p class="nav-label">People & organizations</p>${nav(['contacts', 'companies'], 'People & organizations')}</div><details data-view-key="library" class="nav-library" data-library-nav="1" ${state.libraryOpen || library.includes(state.page) ? 'open' : ''}><summary>Library</summary>${nav(library, 'Library')}</details><div><p class="nav-label">Workspace</p>${nav(['profile', 'history', 'settings'], 'Workspace')}</div><div class="sidebar-foot"><span class="status-dot"></span>Stored on this desktop<br>Source and agent status in Settings</div></aside>`;
+  return `<aside class="sidebar"><div class="brand"><span class="brand-mark">g.</span><div><strong>GiGi</strong><small>Private workspace</small></div></div><div class="workspace-chip" title="${safe(state.workspace?.name)}">${safe(state.workspace?.name || 'My workspace')}</div><div><p class="nav-label">Daily work</p>${nav(['overview', 'gigs', 'schedule', 'tasks', 'finances'], 'Daily work')}</div><div><p class="nav-label">Creative work</p>${nav(['music', 'social'], 'Creative work')}</div><div><p class="nav-label">People & organizations</p>${nav(['contacts', 'companies'], 'People & organizations')}</div><details data-view-key="library" class="nav-library" data-library-nav="1" ${state.libraryOpen || library.includes(state.page) ? 'open' : ''}><summary>Library</summary>${nav(library, 'Library')}</details><div><p class="nav-label">Workspace</p>${nav(['profile', 'history', 'settings'], 'Workspace')}</div><div class="sidebar-foot"><span class="status-dot"></span>Stored on this desktop<br>Source and agent status in Settings</div></aside>`;
 }
 
 function shell(body) {
@@ -331,6 +339,7 @@ function render() {
   else if (state.editing === 'link') body = linkEditor();
   else if (state.editing) body = editor();
   else if (state.selected) body = recordDetail();
+  else if (['music','social'].includes(state.page)) body = '<div id="creator-workspace"></div>';
   else if (state.page === 'overview') body = overview();
   else if (state.page === 'history') body = history();
   else if (state.page === 'settings') body = settings();
@@ -340,6 +349,15 @@ function render() {
   const transcript = root.querySelector?.('.chat-transcript');
   const transcriptPosition = transcript ? { top: transcript.scrollTop, stick: transcript.scrollHeight - transcript.scrollTop - transcript.clientHeight < 48 } : null;
   root.innerHTML = shell(body);
+  if (['music','social'].includes(state.page)) {
+    const placeholder=root.querySelector?.('#creator-workspace');
+    const key=workspaceId()+':'+state.page;
+    if (placeholder && creatorNode && creatorRoute===key) placeholder.replaceWith(creatorNode);
+    else if (placeholder) {
+      creatorNode=placeholder; creatorRoute=key;
+      creatorMount=(state.page==='music'?mountMusic:mountSocial)(creatorNode,{call:bridge.call,workspaceId:workspaceId(),onError:(error)=>notice(explain(error),true)});
+    }
+  }
   renderedChatSession = chat?.current?.sessionId ?? null;
   restoreViewState(root, viewState);
   if (chat) chat.opening = false;

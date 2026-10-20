@@ -10,7 +10,18 @@ database_name = "gigi-connector-consent"
 database_id = "bcefe77e-d4b7-4d70-9002-1f969eef3457"
 migrations_dir = "migrations"
 
+# Dedicated temporary originals only. Provision with a one-day object deletion
+# lifecycle rule before deploying this binding. The application also enforces
+# ten-minute read expiry and deletes objects when each publish attempt exits.
+[[r2_buckets]]
+binding = "INSTAGRAM_MEDIA"
+bucket_name = "gigi-instagram-publish-media"
+
 [vars]
+# Existing managed auth configuration; no user grant is created by deployment.
+GIGI_INSTAGRAM_AUTH_CONFIG_ID = "ac_9TS_DrtjidYX"
+GIGI_INSTAGRAM_APPROVED_SCOPES = "instagram_business_basic,instagram_business_manage_messages,instagram_business_manage_comments,instagram_business_content_publish,instagram_business_manage_insights"
+GIGI_INSTAGRAM_MEDIA_HOSTS = "media.createsomething.io"
 GIGI_GMAIL_AUTH_CONFIG_ID = "ac_qXoEQURadG-h"
 GIGI_GOOGLECALENDAR_AUTH_CONFIG_ID = "ac_F0JVbnFvV3DQ"
 GIGI_GMAIL_APPROVED_SCOPES = "https://www.googleapis.com/auth/userinfo.profile,https://www.googleapis.com/auth/userinfo.email,https://www.googleapis.com/auth/contacts.readonly,https://www.googleapis.com/auth/contacts.other.readonly,https://www.googleapis.com/auth/profile.language.read,https://www.googleapis.com/auth/user.addresses.read,https://www.googleapis.com/auth/user.birthday.read,https://www.googleapis.com/auth/user.emails.read,https://www.googleapis.com/auth/user.phonenumbers.read,https://www.googleapis.com/auth/profile.emails.read,https://mail.google.com/"

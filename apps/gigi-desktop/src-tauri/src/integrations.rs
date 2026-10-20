@@ -33,7 +33,7 @@ pub fn dispatch(resource_dir:&Path,data_dir:&Path,operation:&str,input:Value)->R
 }
 
 fn dispatch_with_timeout(resource_dir:&Path,data_dir:&Path,operation:&str,input:Value,timeout:Duration)->Result<Value,String>{
-    if !matches!(operation,"auth.login"|"context.search"|"context.sync"|"context.import"|"connections.status"|"connections.begin"|"connections.reconcile"|"connections.import"){
+    if !matches!(operation,"auth.login"|"context.search"|"context.sync"|"context.import"|"connections.status"|"connections.begin"|"connections.reconcile"|"connections.import"|"instagram.preview"|"instagram.account"|"instagram.publish"|"instagram.receipt"){
         return Err("Unsupported integration operation".into());
     }
     let request=serde_json::to_vec(&serde_json::json!({"operation":operation,"input":input})).map_err(|_|"Invalid integration request")?;
@@ -69,11 +69,12 @@ fn dispatch_with_timeout(resource_dir:&Path,data_dir:&Path,operation:&str,input:
         Ok(Err(_))=>{terminate_group(&mut child);return Err("Integration request could not be delivered".into())},
         Err(_)=>{terminate_group(&mut child);return Err("Integration timed out. Reconcile connection status before retrying.".into())},
     }
+    let response_limit=if operation=="instagram.preview" {12*1024*1024}else{MAX_RESPONSE};
     let stdout=match child.stdout.take(){Some(stdout)=>stdout,None=>{terminate_group(&mut child);return Err("Companion output unavailable".into())}};
     let (sender,receiver)=mpsc::sync_channel(1);
     std::thread::spawn(move ||{
         let mut bytes=Vec::new();
-        let result=stdout.take(MAX_RESPONSE+1).read_to_end(&mut bytes).map(|_|bytes);
+        let result=stdout.take(response_limit+1).read_to_end(&mut bytes).map(|_|bytes);
         let _=sender.send(result);
     });
     let status=loop{
@@ -92,7 +93,7 @@ fn dispatch_with_timeout(resource_dir:&Path,data_dir:&Path,operation:&str,input:
         Ok(Err(_))=>return Err("Integration output unreadable".into()),
         Err(_)=>{terminate_group(&mut child);return Err("Integration output did not close; companion descendants were stopped.".into())}
     };
-    if bytes.len()>MAX_RESPONSE as usize{return Err("Integration response exceeds limit".into())}
+    if bytes.len()>response_limit as usize{return Err("Integration response exceeds limit".into())}
     let response:Value=serde_json::from_slice(&bytes).map_err(|_|"Integration returned invalid JSON")?;
     if response.get("ok").and_then(Value::as_bool)!=Some(true){
         return Err(response.get("error").and_then(|error|error.as_str().or_else(||error.get("reason").and_then(Value::as_str))).unwrap_or("Integration unavailable").chars().take(500).collect());
@@ -141,6 +142,16 @@ mod tests{
         let result=dispatch(&dir,&dir,"connections.status",serde_json::json!({"provider":"gmail"}));
         std::fs::remove_dir_all(&dir).unwrap();
         assert_eq!(result.unwrap()["state"],"unconfigured");
+    }
+    #[test]
+    fn only_instagram_preview_accepts_larger_image_receipts(){
+        let _guard=test_lock();
+        let dir=std::env::temp_dir().join(format!("gigi-preview-cap-{}",uuid::Uuid::new_v4()));
+        fixture(&dir,"#!/bin/sh\nread request\ncat \"$GIGI_DATA_DIR/response.json\"\n");
+        std::fs::write(dir.join("response.json"),serde_json::json!({"ok":true,"value":{"dataUrl":"x".repeat(1_100_000)}}).to_string()).unwrap();
+        assert!(dispatch(&dir,&dir,"instagram.preview",serde_json::json!({})).is_ok());
+        assert!(dispatch(&dir,&dir,"connections.status",serde_json::json!({})).is_err());
+        std::fs::remove_dir_all(dir).unwrap();
     }
     #[test]
     fn unknown_operations_are_rejected_before_process_launch(){

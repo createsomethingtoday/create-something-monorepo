@@ -84,7 +84,7 @@ fn fields_for(entity: &str, input: &Value) -> Result<Value, String> {
     }
     Ok(fields)
 }
-fn open(root: &Path) -> Result<Connection, String> {
+pub(crate) fn open(root: &Path) -> Result<Connection, String> {
     fs::create_dir_all(root).map_err(|e| e.to_string())?;
     private_dir(root)?;
     let path=root.join("gigi.sqlite");
