@@ -242,17 +242,23 @@ export function createCodexAdapter(options: CodexOptions) {
       if (CREATIVE_WRITES.has(pending.uncertainWrite.tool)) {
         const attempt = pending.uncertainWrite;
         try {
-          let saved = attempt.result;
           const args = attempt.arguments;
-          if (!saved && attempt.tool === 'gigi_music_organize') saved = {saved:true,item:{id:args.id}};
-          if (!saved && attempt.tool === 'gigi_instagram_request_publication_approval') saved = {requestId:args.requestId};
-          if (!saved && ['gigi_music_import', 'gigi_instagram_draft_create', 'gigi_instagram_draft_update'].includes(attempt.tool)) {
-            const status = payload(await options.mcp!.request('tools/call', {name:attempt.tool === 'gigi_music_import' ? 'gigi_music_import_status' : 'gigi_instagram_draft_save_status', arguments:{workspaceId,requestId:args.requestId}}));
-            if (attempt.tool === 'gigi_music_import' && status.state === 'completed') saved = status.receipt;
-            else if (attempt.tool !== 'gigi_music_import' && status.state === 'saved' && status.requestId === args.requestId) saved = status.draft;
+          if (args.workspaceId !== workspaceId) continue;
+          let saved = attempt.result;
+          let verified = false;
+          // Completion receipts prove the historical action. Current records may
+          // have been edited/deleted or published since; never replay a mutation.
+          if (['gigi_music_import', 'gigi_instagram_draft_create', 'gigi_instagram_draft_update', 'gigi_instagram_request_publication_approval'].includes(attempt.tool)) {
+            const name = attempt.tool === 'gigi_music_import' ? 'gigi_music_import_status' : attempt.tool === 'gigi_instagram_request_publication_approval' ? 'gigi_instagram_approval_status' : 'gigi_instagram_draft_save_status';
+            const status = payload(await options.mcp!.request('tools/call', {name, arguments:{workspaceId,requestId:args.requestId}}));
+            verified = completedCreativeMatches(attempt.tool, args, status);
+            saved = attempt.tool === 'gigi_music_import' ? status.receipt : status.draft;
+          } else {
+            if (!saved && attempt.tool === 'gigi_music_organize') saved = {saved:true,item:{id:args.id}};
+            verified = Boolean(saved && await verifyCreative(attempt.tool, args, saved));
           }
-          if (saved && await verifyCreative(attempt.tool, args, saved) && pending.uncertainWrite === attempt) {
-            if (pending.decisionReceipt?.outcome === 'unknown') pending.decisionReceipt.outcome = attempt.tool === 'gigi_music_import' && saved.cancelled === true ? 'cancelled' : 'verified';
+          if (verified && pending.uncertainWrite === attempt) {
+            if (pending.decisionReceipt?.outcome === 'unknown') pending.decisionReceipt.outcome = attempt.tool === 'gigi_music_import' && saved?.cancelled === true ? 'cancelled' : 'verified';
             pending.uncertainWrite = undefined; pending.error = undefined; await persist();
           }
         } catch { /* Exact read-only recovery only; no blind mutation retry. */ }
@@ -383,6 +389,30 @@ export function createCodexAdapter(options: CodexOptions) {
     const record = response.structuredContent ?? JSON.parse(response.content?.find((x: Json) => x.type === 'text')?.text ?? '{}');
     if (response.isError || record?.id !== ref.id || record.workspaceId !== session.workspaceId || record.entity !== ref.entity || typeof record.title !== 'string' || !record.fields || Array.isArray(record.fields) || record.source?.kind !== 'import' || record.source.provider !== provider || record.source.connectedAccountId !== ref.connectedAccountId || !record.source.externalId || !record.source.collectionId) throw new Error('invalid_source');
     return { title: record.title, fields: record.fields, source: record.source };
+  }
+  function completedCreativeMatches(tool: string, args: Json, status: Json): boolean {
+    if (typeof args.requestId !== 'string' || status.requestId !== args.requestId || (status.workspaceId !== undefined && status.workspaceId !== args.workspaceId)) return false;
+    if (tool === 'gigi_instagram_request_publication_approval') {
+      // This verifies only creation of this review request, never publication
+      // authority. The native publisher independently rejects stale approvals.
+      return status.draftId === args.id && status.revision === args.expectedRevision && status.instagramAccountId === args.expectedInstagramAccountId &&
+        ['pending_user_approval', 'stale', 'publishing', 'unknown', 'not_published', 'published_unverified', 'published'].includes(status.state);
+    }
+    if (tool === 'gigi_music_import') {
+      const receipt = status.receipt;
+      if (status.state !== 'completed' || status.mode !== (args.mode ?? 'files') || !receipt) return false;
+      if (receipt.cancelled === true) return receipt.added === 0;
+      return receipt.uploaded === false && receipt.originalsUnchanged === true && Array.isArray(receipt.addedIds) && Array.isArray(receipt.duplicateIds) &&
+        receipt.addedIds.length === receipt.added && receipt.duplicateIds.length === receipt.duplicates && receipt.addedIds.length + receipt.duplicateIds.length <= 1000 &&
+        [...receipt.addedIds, ...receipt.duplicateIds].every(id => typeof id === 'string' && id.length > 0);
+    }
+    const draft = status.draft;
+    const revision = tool === 'gigi_instagram_draft_create' ? 1 : Number.isInteger(args.expectedRevision) ? args.expectedRevision + 1 : null;
+    return status.state === 'saved' && draft && typeof draft.id === 'string' && draft.id.length > 0 && (!args.id || draft.id === args.id) && draft.revision === revision && draft.state === 'draft' &&
+      ['title', 'caption', 'imageUrl', 'connectedAccountId', 'expectedImageSha256'].every(key => {
+        const intended = args[key] ?? '';
+        return typeof intended === 'string' && (draft.body?.[key] ?? '') === (['title', 'imageUrl'].includes(key) ? intended.trim() : intended);
+      });
   }
   async function verifyCreative(tool: string, args: Json, saved: Json): Promise<boolean> {
     const get = async (name: string, input: Json) => payload(await options.mcp!.request('tools/call', { name, arguments: { ...input, workspaceId: args.workspaceId } }));

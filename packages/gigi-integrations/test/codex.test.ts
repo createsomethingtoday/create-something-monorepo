@@ -1150,7 +1150,7 @@ for(const tool of ['gigi_music_import','gigi_instagram_draft_create','gigi_insta
  mcp.request=async(m,p)=>{
   calls.push(p.name);
   if(p.name===tool){writes++;args=p.arguments;throw new Error('lost');}
-  if(p.name==='gigi_music_import_status')return {structuredContent:available?{state:'completed',receipt:{added:1,duplicates:0,addedIds:['m'],duplicateIds:[],originalsUnchanged:true,uploaded:false}}:{state:'unknown'}};
+  if(p.name==='gigi_music_import_status')return {structuredContent:available?{state:'completed',requestId:args.requestId,mode:'files',receipt:{added:1,duplicates:0,addedIds:['m'],duplicateIds:[],originalsUnchanged:true,uploaded:false}}:{state:'unknown'}};
   if(p.name==='gigi_music_get')return {structuredContent:{id:'m'}};
   if(p.name==='gigi_instagram_draft_save_status')return {structuredContent:available?{state:'saved',requestId:args.requestId,draft}:{state:'unknown'}};
   if(p.name==='gigi_instagram_draft_get')return {structuredContent:draft};
@@ -1172,4 +1172,25 @@ test('cancelled music picker is not import success and creates no record links o
  await Promise.all(server.events.map(fn=>fn({id:80,method:'item/tool/call',params:{threadId:'thread-1',tool:'gigi_music_import',arguments:{mode:'files'}}})));
  const pending=await adapter.read({workspaceId:'w',sessionId});const result=await adapter.approve({workspaceId:'w',sessionId,approvalId:pending.approvals[0].id,decision:'approve'});
  assert.equal(result.decisionReceipt?.outcome,'cancelled');assert.equal(result.error,undefined);assert.deepEqual(result.recordLinks,[]);assert.equal(replies.at(-1).success,false);
+});
+
+for(const scenario of ['create-edited','create-readback-failed','update-published','import-deleted','approval-stale','approval-published','approval-unknown','wrong-request','wrong-workspace','wrong-draft','wrong-revision','wrong-body','wrong-account','wrong-import-mode','incomplete-import'])test(`durable creative recovery: ${scenario}`,async()=>{
+ const {adapter,server,mcp}=await setup();const original=mcp.request.bind(mcp);let writes=0,available=false,args:any;let receiptReads=0;
+ const tool=scenario.startsWith('approval')||scenario==='wrong-account'?'gigi_instagram_request_publication_approval':scenario.includes('import')?'gigi_music_import':scenario.startsWith('create')?'gigi_instagram_draft_create':'gigi_instagram_draft_update';
+ const input=tool==='gigi_music_import'?{mode:'files'}:tool==='gigi_instagram_request_publication_approval'?{id:'d',expectedRevision:4,expectedInstagramAccountId:'account'}:{title:'  Idea  ',caption:'Approved caption',imageUrl:' https://approved/image.jpg ',...(tool.endsWith('update')?{id:'d',expectedRevision:4}:{})};
+ mcp.request=async(method,p)=>{
+  if(p.name===tool){writes++;args=p.arguments;if(scenario==='create-readback-failed')return {structuredContent:{id:'d',revision:1,state:'draft',body:{title:'Idea',caption:'Approved caption',imageUrl:'https://approved/image.jpg',connectedAccountId:'',expectedImageSha256:''}}};throw Error('lost response');}
+  if(['gigi_instagram_draft_save_status','gigi_music_import_status','gigi_instagram_approval_status'].includes(p.name)){
+   receiptReads++;assert.equal(p.arguments.workspaceId,'w');assert.equal(p.arguments.requestId,args.requestId);if(!available)return {structuredContent:{state:'unknown'}};
+   const status:any=p.name==='gigi_music_import_status'?{requestId:args.requestId,state:'completed',mode:'files',receipt:{added:1,duplicates:0,addedIds:['deleted'],duplicateIds:[],uploaded:false,originalsUnchanged:true}}:p.name==='gigi_instagram_approval_status'?{requestId:args.requestId,draftId:'d',revision:4,instagramAccountId:'account',state:scenario.startsWith('approval-')?scenario.slice(9):'published',receipt:null}:{requestId:args.requestId,state:'saved',draft:{id:'d',revision:tool.endsWith('update')?5:1,state:'draft',body:{title:'Idea',caption:'Approved caption',imageUrl:'https://approved/image.jpg',connectedAccountId:'',expectedImageSha256:''}}};
+   if(scenario==='wrong-request')status.requestId='unrelated';if(scenario==='wrong-workspace')status.workspaceId='foreign';if(scenario==='wrong-draft')status.draft.id='other';if(scenario==='wrong-revision')status.draft.revision=4;if(scenario==='wrong-body')status.draft.body.title='Unapproved';if(scenario==='wrong-account')status.instagramAccountId='foreign';if(scenario==='incomplete-import')status.state='unknown';if(scenario==='wrong-import-mode')status.mode='folder';
+   return {structuredContent:status};
+  }
+  if(['gigi_music_get','gigi_instagram_draft_get'].includes(p.name))throw Error('Current entity changed or was deleted; historical receipt must suffice');
+  return original(method,p);
+ };
+ const {sessionId}=await adapter.start({workspaceId:'w',message:'Prepare local work'});
+ await Promise.all(server.events.map(fn=>fn({id:180,method:'item/tool/call',params:{threadId:'thread-1',tool,arguments:input}})));
+ const pending=await adapter.read({workspaceId:'w',sessionId});const uncertain=await adapter.approve({workspaceId:'w',sessionId,approvalId:pending.approvals[0].id,decision:'approve'});assert.equal(uncertain.decisionReceipt?.outcome,'unknown');
+ available=true;const result=await adapter.read({workspaceId:'w',sessionId});const rejected=scenario.startsWith('wrong-')||scenario==='incomplete-import';assert.equal(result.decisionReceipt?.outcome,rejected?'unknown':'verified');assert.equal(result.decisionReceipt?.tool,tool);assert.equal(result.error,rejected?'write_outcome_unknown':undefined);assert.equal(writes,1);assert.ok(receiptReads>0);
 });

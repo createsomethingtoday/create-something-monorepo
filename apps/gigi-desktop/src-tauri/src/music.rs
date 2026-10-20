@@ -180,8 +180,8 @@ fn import_status(root:&Path,input:&Value)->Result<Value,String>{
     if db.query_row("SELECT 1 FROM workspaces WHERE id=?1",[wid],|r|r.get::<_,i32>(0)).optional().map_err(|e|e.to_string())?.is_none(){return Err("Select an existing private workspace.".into());}
     let exists=|name:&str|->Result<bool,String>{Ok(db.query_row("SELECT 1 FROM sqlite_master WHERE type='table' AND name=?1",[name],|r|r.get::<_,i32>(0)).optional().map_err(|e|e.to_string())?.is_some())};
     if exists("music_import_receipts")?{
-        let receipt:Option<String>=db.query_row("SELECT receipt FROM music_import_receipts WHERE workspace_id=?1 AND request_id=?2",params![wid,request],|r|r.get(0)).optional().map_err(|e|e.to_string())?;
-        if let Some(receipt)=receipt{let receipt:Value=serde_json::from_str(&receipt).map_err(|_|"Import receipt is unreadable. Inspect Your music before another selection.")?;return Ok(json!({"state":"completed","requestId":request,"receipt":receipt}));}
+        let receipt:Option<(String,String)>=db.query_row("SELECT receipt,mode FROM music_import_receipts WHERE workspace_id=?1 AND request_id=?2",params![wid,request],|r|Ok((r.get(0)?,r.get(1)?))).optional().map_err(|e|e.to_string())?;
+        if let Some((receipt,mode))=receipt{let receipt:Value=serde_json::from_str(&receipt).map_err(|_|"Import receipt is unreadable. Inspect Your music before another selection.")?;return Ok(json!({"state":"completed","workspaceId":wid,"requestId":request,"mode":mode,"receipt":receipt}));}
     }
     if exists("music_import_claims")?&&db.query_row("SELECT 1 FROM music_import_claims WHERE workspace_id=?1 AND request_id=?2",params![wid,request],|r|r.get::<_,i32>(0)).optional().map_err(|e|e.to_string())?.is_some(){return Ok(json!({"state":"unknown","requestId":request,"reason":"in_progress_or_interrupted","nextStep":"The picker may still be open or the process may have stopped. Inspect Your music; do not start another selection automatically."}));}
     Ok(json!({"state":"not_started","requestId":request}))
@@ -259,7 +259,7 @@ pub fn dispatch(root:&Path,op:&str,input:Value)->Result<Value,String> {
         assert_eq!(fs::read(root.join("gigi.sqlite")).unwrap(),before,"status must not even initialize music tables");
         assert!(dispatch(&root,"music.importStatus",json!({"workspaceId":"foreign","requestId":request})).is_err());
         let receipt=import_with_picker(&root,&input,|_|{assert_eq!(dispatch(&root,"music.importStatus",input.clone()).unwrap()["state"],"unknown");Ok(vec![file])}).unwrap();
-        let before=fs::read(root.join("gigi.sqlite")).unwrap();let status=dispatch(&root,"music.importStatus",input).unwrap();assert_eq!(status["state"],"completed");assert_eq!(status["receipt"],receipt);assert_eq!(fs::read(root.join("gigi.sqlite")).unwrap(),before);
+        let before=fs::read(root.join("gigi.sqlite")).unwrap();let status=dispatch(&root,"music.importStatus",input).unwrap();assert_eq!(status["state"],"completed");assert_eq!(status["receipt"],receipt);assert_eq!(status["mode"],"files");assert_eq!(status["workspaceId"],wid);assert_eq!(fs::read(root.join("gigi.sqlite")).unwrap(),before);
         let cancel_id=Uuid::new_v4().to_string();let cancel=json!({"workspaceId":wid,"requestId":cancel_id});import_with_picker(&root,&cancel,|_|Ok(vec![])).unwrap();assert_eq!(dispatch(&root,"music.importStatus",cancel).unwrap()["receipt"]["cancelled"],true);
         fs::remove_dir_all(root).unwrap();
     }
