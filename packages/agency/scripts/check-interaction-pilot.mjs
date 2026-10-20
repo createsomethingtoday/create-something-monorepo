@@ -40,7 +40,7 @@ try {
     const { page, context } = await createPage({ viewport: { width, height: width === 1440 ? 1000 : 844 } });
     await start(page);
     const journey = page.locator('.service-journey');
-    assert.equal(await journey.locator('ol > li').count(), 3);
+    assert.equal(await journey.locator(':scope > figure > ol > li').count(), 3);
     assert.match(await journey.innerText(), /Confirm the deliverable, price, capacity and acceptance checks before payment/);
     assert.match(await journey.innerText(), /Keep the instructions and recovery checks/);
     const support = journey.getByRole('link', { name: 'Read the process and support scope' });
@@ -77,7 +77,7 @@ try {
   {
     const { page, context } = await createPage({ javaScriptEnabled: false, viewport: { width: 390, height: 844 } });
     await page.goto(baseURL, { waitUntil: 'networkidle' });
-    assert.equal(await page.locator('.service-journey ol > li:visible').count(), 3);
+    assert.equal(await page.locator('.service-journey > figure > ol > li:visible').count(), 3);
     assert.match(await page.locator('.service-journey').innerText(), /production incident response require separate agreements/);
     await page.locator('.service-journey').scrollIntoViewIfNeeded();
     await page.screenshot({ path: `${output}/journey-no-js.png` });
