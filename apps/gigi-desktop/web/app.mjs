@@ -1,8 +1,9 @@
+import { historyPresentation, copyableRecordField } from './record-polish.mjs';
 import { mountMusic } from './music.mjs';
 import { mountSocial } from './social.mjs';
 import { diagnosticsView } from './diagnostics-view.mjs';
 import { captureViewState, restoreViewState } from './view-state.mjs';
-import { scheduleAgenda, scheduleEntry, readSchedulePages } from './schedule.mjs';
+import { scheduleAgenda, scheduleEntry, readWorkspaceAgenda } from './schedule.mjs';
 import { displayField, importantDetails, emptyCopy, localToday, fieldHelp, collectionCount } from './experience.mjs';
 import { sourceView, setupSummary, sourceJourney, sourceErrorMessage } from './setup-view.mjs';
 import { canUseSource, sourceDraft, reviewSourceDraft, sourceProposalView } from './source-proposal.mjs';
@@ -23,6 +24,11 @@ let creatorMount = null;
 let creatorNode = null;
 let creatorRoute = null;
 let renderedChatSession = null;
+let chatRefreshFocus = null;
+let editorBaseline = null;
+let submittedEditor = null;
+let pendingLeave = null;
+let editorReturnFocus = null;
 const state = { workspace: null, setupProfile: false, setupDraft: null, currency: null, currencyKnown: false, page: 'overview', scheduleView: 'upcoming', libraryOpen: false, records: [], recordCount: 0, nextCursor: null, selected: null, editing: false, editorDraft: null, editorOrigin: null, sourceExpanded: false, busy: false, signingIn: false, justCreated: false, agentProvider: 'codex', toast: null, summary: null, summaryUnavailable: false, history: [], backupId: null, pendingRestoreId: null, agent: null, agentReceipt: null, relationSchema: null, linkChoices: null, sources: {}, sourceAttempts: {}, connectionRequests: {}, imports: {}, contextHits: [], contextQueried: false, diagnostics: { status: null, review: null, exported: null } };
 const safe = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
 const label = (name) => sections.find((item) => item.id === name)?.label || name;
@@ -99,7 +105,22 @@ async function load() {
   render();
 }
 
+function protectEditor(next) {
+  captureEditorDraft();
+  if (submittedEditor?.version === routeVersion && Object.keys(submittedEditor.values).every(key => String(state.editorDraft?.[key] ?? '') === String(submittedEditor.values[key] ?? ''))) return true;
+  if (state.editing !== true || !editorBaseline || !state.editorDraft || Object.keys(editorBaseline.values).every(key => String(state.editorDraft[key] ?? '') === String(editorBaseline.values[key] ?? ''))) return true;
+  pendingLeave = next;
+  editorReturnFocus = globalThis.document?.activeElement?.id || 'title';
+  render();
+  root.querySelector?.('[data-keep-editing]')?.focus?.();
+  return false;
+}
+function keepEditing() {
+  pendingLeave = null; render();
+  root.querySelector?.(`#${editorReturnFocus || 'title'}`)?.focus?.();
+}
 async function openPage(page, resetScroll = false) {
+  if (!protectEditor(() => void run(() => openPage(page, resetScroll)))) return false;
   if (creatorMount?.canLeave && !creatorMount.canLeave()) return false;
   if (creatorMount) { if(typeof creatorMount==='function') creatorMount(); else creatorMount.dispose?.(); }
   creatorMount=null; creatorNode=null; creatorRoute=null;
@@ -126,7 +147,7 @@ async function openPage(page, resetScroll = false) {
     state.diagnostics = { status: results[3].status === 'fulfilled' ? results[3].value : null, review: null, exported: null };
   } else if (fields[page]) {
     state.records = []; state.recordCount = 0; state.nextCursor = null;
-    const result = page === 'schedule' ? await readSchedulePages(cursor => bridge.listRecords(route.workspace, page, cursor), () => currentRoute(route)).then(items => items && ({ items, count: items.length })) : await bridge.listRecords(route.workspace, page);
+    const result = page === 'schedule' ? await readWorkspaceAgenda((entity, cursor) => bridge.listRecords(route.workspace, entity, cursor), () => currentRoute(route)).then(items => items && ({ items, count: items.length })) : await bridge.listRecords(route.workspace, page);
     if (!currentRoute(route)) return false;
     state.records = listFrom(result);
     state.recordCount = result?.count ?? state.records.length;
@@ -151,6 +172,7 @@ async function selectRecord(id, entity = state.page) {
 }
 
 async function navigateRecord(entity, id) {
+  if (!protectEditor(() => void run(() => navigateRecord(entity, id)))) return;
   if (!fields[entity]) return;
   if (state.page !== entity && !await openPage(entity)) return;
   await selectRecord(id, entity);
@@ -184,6 +206,7 @@ function editorOrigin(selected, focus, keepPosition = true) {
 }
 
 async function cancelEditor() {
+  if (!protectEditor(() => void cancelEditor())) return;
   const origin = state.editorOrigin;
   leaveRoute();
   if (origin?.reloadCollection) {
@@ -201,14 +224,19 @@ async function cancelEditor() {
   globalThis.scrollTo?.(origin?.x || 0, origin?.y || 0);
 }
 
+function newRecord(entity) {
+  if (!protectEditor(() => newRecord(entity))) return;
+  leaveRoute(); state.editorOrigin = editorOrigin(null, `[data-new="${entity}"]`, state.page === entity); state.justCreated = false; state.page = entity; state.selected = null; state.editorDraft = null; state.editing = true; render(); globalThis.scrollTo?.(0, 0); root.querySelector?.('#title')?.focus?.();
+}
+
 function sidebar() {
   const nav = (ids, name) => `<nav class="nav" aria-label="${name}">${ids.map((id) => sections.find((item) => item.id === id)).map((item) => `<button type="button" data-page="${item.id}" ${state.page === item.id ? 'aria-current="page"' : ''}>${icon(entityIcon(item.id))}<span>${safe(item.label)}</span></button>`).join('')}</nav>`;
   const library = ['locations', 'notes', 'documents', 'interactions', 'services', 'tags'];
-  return `<aside class="sidebar"><div class="brand"><span class="brand-mark">g.</span><div><strong>GiGi</strong><small>Private workspace</small></div></div><div class="workspace-chip" title="${safe(state.workspace?.name)}">${safe(state.workspace?.name || 'My workspace')}</div><div><p class="nav-label">Daily work</p>${nav(['overview', 'gigs', 'schedule', 'tasks', 'finances'], 'Daily work')}</div><div><p class="nav-label">Creative work</p>${nav(['music', 'social'], 'Creative work')}</div><div><p class="nav-label">People & organizations</p>${nav(['contacts', 'companies'], 'People & organizations')}</div><details data-view-key="library" class="nav-library" data-library-nav="1" ${state.libraryOpen || library.includes(state.page) ? 'open' : ''}><summary>Library</summary>${nav(library, 'Library')}</details><div><p class="nav-label">Workspace</p>${nav(['profile', 'history', 'settings'], 'Workspace')}</div><div class="sidebar-foot"><span class="status-dot"></span>Stored on this desktop<br>Source and agent status in Settings</div></aside>`;
+  return `<aside class="sidebar"><div class="brand"><span class="brand-mark">g.</span><div><strong>GiGi</strong><small>Private workspace</small></div></div><div class="workspace-chip" title="${safe(state.workspace?.name)}">${safe(state.workspace?.name || 'My workspace')}</div><div class="sidebar-navigation"><div><p class="nav-label">Daily work</p>${nav(['overview', 'gigs', 'schedule', 'tasks', 'finances'], 'Daily work')}</div><div><p class="nav-label">Creative work</p>${nav(['music', 'social'], 'Creative work')}</div><div><p class="nav-label">People & organizations</p>${nav(['contacts', 'companies'], 'People & organizations')}</div><details data-view-key="library" class="nav-library" data-library-nav="1" ${state.libraryOpen || library.includes(state.page) ? 'open' : ''}><summary>Library</summary>${nav(library, 'Library')}</details></div><div class="workspace-navigation"><p class="nav-label">Workspace</p>${nav(['profile', 'history', 'settings'], 'Workspace')}</div><div class="sidebar-foot"><span class="status-dot"></span>Stored on this desktop<br>Source and agent status in Settings</div></aside>`;
 }
 
 function shell(body) {
-  return `<div class="shell">${sidebar()}<main class="main"><div class="topbar"><span class="crumb">GiGi / ${safe(label(state.page))}</span><div class="topbar-actions"><button type="button" class="btn text" data-chat-open="1">Ask GiGi</button><span class="right">PRIVATE · LOCAL</span></div></div><div class="content"><div class="content-primary"><button type="button" class="btn mobile-chat-entry" data-chat-open="1">Ask GiGi</button>${body}</div></div></main>${chatView(chat || { visible: false })}</div>${state.toast ? `<div class="toast ${state.toast.error ? 'error' : ''}" role="status">${safe(state.toast.message)}</div>` : ''}`;
+  return `<div class="shell">${sidebar()}<main class="main"><div class="topbar"><span class="crumb">GiGi / ${safe(label(state.page))}</span><div class="topbar-actions"><button type="button" class="btn text" data-chat-open="1">Ask GiGi</button><span class="right">PRIVATE · LOCAL</span></div></div><div class="content"><div class="content-primary"><button type="button" class="btn mobile-chat-entry" data-chat-open="1">Ask GiGi</button>${body}</div></div></main>${chatView(chat || { visible: false })}</div>${pendingLeave ? '<div class="record-leave-backdrop"><section class="record-leave-dialog panel" role="alertdialog" aria-modal="true" aria-labelledby="leave-title" aria-describedby="leave-description"><h2 id="leave-title">Keep your changes?</h2><p id="leave-description">This record has unsaved changes. Keep editing to save them, or discard them to leave.</p><div class="inline-actions"><button class="btn primary" data-keep-editing="1">Keep editing</button><button class="btn" data-discard-changes="1">Discard changes</button></div></section></div>' : ''}${state.toast ? `<div class="toast ${state.toast.error ? 'error' : ''}" role="status">${safe(state.toast.message)}</div>` : ''}`;
 }
 
 function heading(eyebrow, title, description, action = '') {
@@ -224,14 +252,14 @@ function overview() {
   const data = state.overview || {};
   const counts = data.counts || {};
   const group = (entity, title, description) => { const value = data[entity] || { items: [], count: 0 }; return `<section class="panel"><div class="panel-head"><h2>${icon(entityIcon(entity))}<span>${title}</span></h2><button class="btn text" data-page="${entity}">View all ${safe(label(entity).toLowerCase())} ${icon('arrow-up-right')}</button></div><p class="muted">${description}</p>${value.items.length ? rows(entity, value.items) : `<p class="muted overview-empty">${entity === 'gigs' ? 'No upcoming dated gigs or shifts. Add a date to a gig to include it here.' : entity === 'tasks' ? 'No open tasks. Add a task when there is something to follow up.' : 'No expected, invoiced or overdue payments. Record income or an expense when you need to track it.'}</p>`}<small class="muted">Showing ${value.items.length} of ${value.count} matching records${entity === 'gigs' && data.undatedGigsCount ? ` · ${data.undatedGigsCount} without a usable date` : ''}</small></section>`; };
-  return heading('Your workspace', 'Your work at a glance.', 'See what is coming up, what needs attention and which payments are still open.', `<button class="btn primary" data-new="gigs">${icon('plus')}New gig</button>`) + `<div class="cards overview-metrics"><div class="card"><div class="label">${icon('music')} Gigs & shifts</div><div class="value">${counts.gigs || 0}</div></div><div class="card"><div class="label">${icon('list-checks')} Tasks</div><div class="value">${counts.tasks || 0}</div></div><div class="card"><div class="label">${icon('users')} People</div><div class="value">${counts.contacts || 0}</div></div></div>${counts.gigs || counts.tasks || counts.finances ? '' : `<div class="callout section-gap"><strong>Start with the work you know.</strong><p>Add a gig or shift, then link its people, place and tasks. Sources and an agent are optional.</p><button class="btn" data-new="gigs">${icon('plus')}Add your first gig or shift</button></div>`}<div class="split section-gap">${group('gigs', 'Upcoming work', 'Today and future dates, ordered by date. Completed and cancelled work is excluded.')}${group('tasks', 'Open tasks', 'Unfinished tasks, with the earliest due dates first.')}</div>${group('finances', 'Unpaid income & expenses', 'Expected, invoiced and overdue records. Income and expenses are shown separately on each record; this is not a net balance.')}<details data-view-key="overview-guide" class="panel overview-guide"><summary>Connections and getting started</summary><p class="muted">You can work directly in GiGi. Connect Gmail, Calendar or your subscribed agent when useful.</p><button class="btn" data-page="settings">Open setup guide ${icon('arrow-up-right')}</button></details>`;
+  return heading('Your workspace', 'Your work at a glance.', 'See what is coming up, what needs attention and which payments are still open.', `<button class="btn primary" data-new="gigs">${icon('plus')}New gig</button>`) + `<div class="cards overview-metrics"><div class="card"><div class="label">${icon('music')} Gigs & shifts</div><div class="value">${counts.gigs || 0}</div></div><div class="card"><div class="label">${icon('list-checks')} Tasks</div><div class="value">${counts.tasks || 0}</div></div><div class="card"><div class="label">${icon('users')} People</div><div class="value">${counts.contacts || 0}</div></div></div>${counts.gigs || counts.tasks || counts.finances ? '' : `<div class="callout section-gap"><strong>Start with the work you know.</strong><p>Add a gig or shift, then link its people, place and tasks. Sources and an agent are optional.</p><button class="btn" data-new="gigs">${icon('plus')}Add your first gig or shift</button><button class="btn" data-page="music">Add music</button><button class="btn" data-page="social">Draft a post</button></div>`}<div class="split section-gap">${group('gigs', 'Upcoming work', 'Today and future dates, ordered by date. Completed and cancelled work is excluded.')}${group('tasks', 'Open tasks', 'Unfinished tasks, with the earliest due dates first.')}</div>${group('finances', 'Unpaid income & expenses', 'Expected, invoiced and overdue records. Income and expenses are shown separately on each record; this is not a net balance.')}<details data-view-key="overview-guide" class="panel overview-guide"><summary>Connections and getting started</summary><p class="muted">You can work directly in GiGi. Connect Gmail, Calendar or your subscribed agent when useful.</p><button class="btn" data-page="settings">Open setup guide ${icon('arrow-up-right')}</button></details>`;
 }
 
 function scheduleView() {
   const agenda = scheduleAgenda(state.records, state.scheduleView);
   const zone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const controls = ['upcoming', 'past', 'all'].map(view => `<button class="btn" data-schedule-view="${view}" aria-pressed="${state.scheduleView === view}">${view === 'all' ? 'All entries' : view === 'past' ? 'Past' : 'Upcoming'} (${agenda.counts[view]})</button>`).join('');
-  return heading('Daily work', 'Schedule', 'See what is happening and when. Open an event for details.', `<button class="btn primary" data-new="schedule">${icon('plus')}Add event</button>`) + `<section class="panel"><div class="panel-head"><h2>Agenda</h2><button class="btn" data-schedule-today="1">Today</button></div><div class="inline-actions schedule-controls" aria-label="Schedule views">${controls}</div><p class="muted">Times in ${safe(zone)} · ${safe(collectionCount('schedule', state.records.length))}</p>${agenda.undated ? `<p class="muted">${agenda.undated} ${agenda.undated === 1 ? 'entry needs' : 'entries need'} a usable date. Find ${agenda.undated === 1 ? 'it' : 'them'} in All entries.</p>` : ''}${agenda.groups.length ? agenda.groups.map(group => `<section class="agenda-day" ${group.key === localToday() ? 'id="schedule-today"' : ''}><h3>${safe(group.title)}</h3>${group.entries.map(entry => `<button class="row agenda-event" type="button" data-open="${safe(entry.record.id)}" data-entity="schedule"><span class="agenda-time">${safe(entry.time)}</span><span><strong>${safe(entry.record.title || 'Untitled event')}</strong><small>Open event details</small></span><span class="arrow" aria-hidden="true">${icon('arrow-up-right')}</span></button>`).join('')}</section>`).join('') : state.records.length ? `<div class="empty"><strong>${state.scheduleView === 'past' ? 'No past events.' : 'Nothing scheduled for today or later.'}</strong><p>View All entries to find earlier events, or add an event.</p><button class="btn" data-schedule-view="all">View all entries</button></div>` : rows('schedule', [])}</section>`;
+  return heading('Daily work', 'Schedule', 'Dated gigs and schedule entries, together. Open an item for details.', `<button class="btn primary" data-new="schedule">${icon('plus')}Add event</button>`) + `<section class="panel"><div class="panel-head"><h2>Agenda</h2><button class="btn" data-schedule-today="1">Today</button></div><div class="inline-actions schedule-controls" aria-label="Schedule views">${controls}</div><p class="muted">Times in ${safe(zone)} · ${state.records.length} agenda ${state.records.length === 1 ? 'item' : 'items'}</p>${agenda.undated ? `<p class="muted">${agenda.undated} ${agenda.undated === 1 ? 'entry needs' : 'entries need'} a usable date. Find ${agenda.undated === 1 ? 'it' : 'them'} in All entries.</p>` : ''}${agenda.groups.length ? agenda.groups.map(group => `<section class="agenda-day" ${group.key === localToday() ? 'id="schedule-today"' : ''}><h3>${safe(group.title)}</h3>${group.entries.map(entry => `<button class="row agenda-event" type="button" data-open="${safe(entry.record.id)}" data-entity="${safe(entry.record.entity || 'schedule')}"><span class="agenda-time">${safe(entry.time)}</span><span><strong>${safe(entry.record.title || 'Untitled event')}</strong><small>${entry.record.entity === 'gigs' ? 'Gig or shift' : 'Schedule entry'}${entry.record.status ? ` · ${safe(entry.record.status)}` : ''}</small></span><span class="arrow" aria-hidden="true">${icon('arrow-up-right')}</span></button>`).join('')}</section>`).join('') : state.records.length ? `<div class="empty"><strong>${state.scheduleView === 'past' ? 'No past events.' : 'Nothing scheduled for today or later.'}</strong><p>View All entries to find earlier events, or add an event.</p><button class="btn" data-schedule-view="all">View all entries</button></div>` : rows('schedule', [])}</section>`;
 }
 
 function collection() {
@@ -245,7 +273,7 @@ function recordDetail() {
   const record = state.selected;
   const values = record.fields || {};
   const detail = importantDetails(state.page, values);
-  const detailRows = (items) => items.map(([key, value]) => `<dt>${safe(key === 'Do Date' ? 'Planned date' : key === 'Venue Intel' ? 'Venue notes' : key === 'Note Details' ? 'Note' : key)}</dt><dd>${safe(state.page === 'schedule' && key === 'Date' ? (() => { const entry = scheduleEntry(record); return entry.key ? `${new Intl.DateTimeFormat('en-US', { dateStyle: 'full' }).format(new Date(`${entry.key}T12:00:00`))} · ${entry.time} · ${Intl.DateTimeFormat().resolvedOptions().timeZone}` : displayField(key, value, state.currency); })() : displayField(key, value, state.currency))}</dd>`).join('');
+  const detailRows = (items) => items.map(([key, value]) => `<dt>${safe(key === 'Do Date' ? 'Planned date' : key === 'Venue Intel' ? 'Venue notes' : key === 'Note Details' ? 'Note' : key)}</dt><dd>${safe(state.page === 'schedule' && key === 'Date' ? (() => { const entry = scheduleEntry(record); return entry.key ? `${new Intl.DateTimeFormat('en-US', { dateStyle: 'full' }).format(new Date(`${entry.key}T12:00:00`))} · ${entry.time} · ${Intl.DateTimeFormat().resolvedOptions().timeZone}` : displayField(key, value, state.currency); })() : displayField(key, value, state.currency))}${copyableRecordField(key,value) ? ` <button type="button" class="btn text" data-copy-record-value="${safe(value)}" aria-label="Copy ${safe(key)}">Copy</button>` : ''}</dd>`).join('');
   const links = Array.isArray(record.relations) ? record.relations.map((link) => relatedEndpoint(link, state.page, record.id)).filter(Boolean) : [];
   const summary = state.page === 'gigs' ? `<div class="cards summary-cards section-gap"><div class="card"><div class="label">${icon('wallet')} Balance due</div><div class="value">${state.summaryUnavailable ? 'Unavailable' : safe(gigBalance(state.summary))}</div>${state.summaryUnavailable ? '<small class="muted">Financial summary unavailable. Reopen the record to check again.</small>' : ''}${state.summary && !state.summary.financialsComplete ? '<small class="muted">Financial details incomplete</small>' : ''}</div><div class="card"><div class="label">${icon('link')} Linked records</div><div class="value">${record.relationCount ?? links.length}</div></div></div>` : '';
   const truncated = (record.truncatedFields || []).length > 0;
@@ -273,7 +301,11 @@ function linkEditor() {
 }
 
 function history() {
-  return heading('Activity', 'History', 'Recent changes in this private workspace.') + `<section class="panel">${state.history.length ? `<div class="rows">${state.history.map((item) => `<div class="row"><span><strong>${safe(item.operation || item.action || 'Record change')}</strong><small>${safe(item.entity || '')} ${safe(item.title || item.recordId || '')}</small></span><small>${safe(item.createdAt || item.at || '')}</small></div>`).join('')}</div>` : '<div class="empty"><strong>No activity yet.</strong>Changes to your workspace will appear here.</div>'}</section>`;
+  return heading('Activity', 'History', 'Recent changes in this private workspace.') + `<section class="panel">${state.history.length ? `<div class="rows">${state.history.map((item) => {
+    const receipt = historyPresentation(item);
+    const canOpen = fields[item.entity] && item.recordId;
+    return `<${canOpen ? 'button type="button"' : 'div'} class="row" ${canOpen ? `data-open="${safe(item.recordId)}" data-entity="${safe(item.entity)}"` : ''}><span><strong>${safe(receipt.action)}</strong><small>${safe(receipt.detail || label(item.entity || ''))}</small></span><small>${safe(receipt.time)}</small></${canOpen ? 'button' : 'div'}>`;
+  }).join('')}</div>` : '<div class="empty"><strong>No activity yet.</strong>Changes to your workspace will appear here.</div>'}</section>`;
 }
 
 function sourceCard(provider, title) {
@@ -294,7 +326,7 @@ function agentSetup() {
   const claude = state.agentProvider === 'claude';
   const provider = claude ? 'Claude Code' : 'Codex';
   const command = claude ? state.agent?.claudeCommand : state.agent?.codexCommand;
-  return `<section class="panel" id="agent-setup"><div class="panel-head"><h2>${icon('terminal')}<span>Connect your desktop agent</span></h2><small>Optional</small></div><p class="muted">GiGi stores your work; Codex or Claude Code runs the conversation. Use an eligible subscription account in the agent on this Mac. GiGi does not supply model tokens or require a model API key for this beta.</p><fieldset class="provider-choice"><legend>Choose your agent</legend><div class="inline-actions"><button type="button" class="btn" data-agent-provider="codex" aria-pressed="${!claude}">Codex</button><button type="button" class="btn" data-agent-provider="claude" aria-pressed="${claude}">Claude Code</button></div></fieldset>
+  return `<section class="panel" id="agent-setup"><div class="panel-head"><h2>${icon('terminal')}<span>Connect your desktop agent</span></h2><small>Optional</small></div><p class="muted">Built-in Ask GiGi uses Codex. You can also connect this workspace to a separate Codex or Claude Code session. Use an eligible subscription account in the agent on this Mac. GiGi does not supply model tokens or require a model API key for this beta.</p><fieldset class="provider-choice"><legend>Choose your agent</legend><div class="inline-actions"><button type="button" class="btn" data-agent-provider="codex" aria-pressed="${!claude}">Codex</button><button type="button" class="btn" data-agent-provider="claude" aria-pressed="${claude}">Claude Code</button></div></fieldset>
     <details data-view-key="agent-walkthrough" class="agent-walkthrough" ${state.agentReceipt?.lastCall ? '' : 'open'}><summary>${state.agentReceipt?.lastCall ? 'Review agent setup steps' : 'Set up and verify your agent'}</summary><ol class="setup-instructions"><li><strong>Sign in to ${provider} on this Mac.</strong> ${claude ? 'Have Claude Code available in Terminal and sign in with your Claude subscription account.' : 'Have the Codex CLI available in Terminal and sign in with your ChatGPT account. The setup guide explains installation and sign-in.'} <button class="btn text" data-help="${claude ? 'claude-setup' : 'codex-setup'}">Open ${provider} setup guide ↗</button></li><li><strong>Prepare GiGi’s connector.</strong> This creates commands for this workspace; it does not install or connect the agent for you.<div class="inline-actions"><button class="btn" data-prepare-agent="1">${icon('terminal')}${state.agentReceipt?.prepared || state.agent ? 'Show setup commands' : 'Prepare GiGi connector'}</button></div></li><li><strong>${claude ? 'Start Claude with GiGi.' : 'Register GiGi with Codex.'}</strong> ${claude ? 'Run the command below in Terminal. It loads GiGi for that Claude session. Use this command again for future GiGi sessions.' : 'Run the command below in Terminal, then open a new local Codex session on this Mac. Restart an already-open desktop host if it has not picked up the connector.'}${command ? `<pre class="config" id="agent-command">${safe(command)}</pre><button class="btn" data-copy-agent="command">${icon('copy')}Copy ${provider} command</button>` : '<p>Prepare the connector to reveal your exact command.</p>'}</li><li><strong>Verify a real tool call.</strong> Check the agent’s MCP connections with <code>/mcp</code>, then send this prompt in that session. Confirm it returns this workspace’s name and ID before asking it to change records.${state.agent?.starterPrompt ? `<pre class="config prompt" id="agent-prompt">${safe(state.agent.starterPrompt)}</pre><div class="inline-actions"><button class="btn" data-copy-agent="prompt">${icon('copy')}Copy verification prompt</button><button class="btn" data-source-refresh="agent">${icon('refresh-cw')}Check local tool status</button></div>` : '<p>The verification prompt appears after preparing the connector.</p>'}</li></ol></details>
     ${state.agentReceipt?.lastCall ? `<p class="tool-receipt muted">Last local GiGi tool: ${safe(state.agentReceipt.lastCall.tool)} at ${safe(new Date(state.agentReceipt.lastCall.lastToolAt * 1000).toLocaleString())}. This is local tool-use evidence; confirm the result in your agent. Phone access still needs its own test.</p>` : '<p class="tool-receipt muted">No local tool call recorded yet. Preparing commands does not verify the connection.</p>'}
     <details data-view-key="agent-expectations"><summary>What to expect when working with your agent</summary><ul class="setup-instructions"><li>Ask for a specific gig, contact or task. GiGi’s compact skill and bounded tools help the agent retrieve only the context it needs.</li><li>Ask the agent to read first and confirm the workspace. Review proposed changes before approving them; edits update the local records you see in GiGi.</li><li>Model usage is handled by your provider account. Your subscription’s eligibility, limits and availability apply. GiGi has no paid model API fallback.</li><li>If the agent is unavailable or at its subscription limit, keep working directly in GiGi and reconnect the agent later.</li><li>Local records stay on this Mac. Information retrieved by the agent is processed by the provider you use; imported source text is context to review.</li></ul></details>
@@ -305,7 +337,7 @@ function settings() {
   const journey = sourceJourney(state.sources, state.sourceAttempts);
   return heading('Workspace', 'Setup & safety', 'Review what is ready, what still needs your consent, and how to protect your local data.') +
     `${state.justCreated ? `<div class="callout setup-welcome"><strong>Your private workspace is ready.</strong><p>Connect sources and an agent below, or start with a record. You can return to Settings at any time.</p><button class="btn" data-new="gigs">${icon('plus')}Start with a gig</button></div>` : ''}` +
-    `<section class="setup-checklist"><div class="panel-head"><h2>Choose your next step</h2><small>Connections are optional</small></div><p class="muted">${safe(setupSummary(state).nextStep)}</p><div class="steps">${setupSummary(state).steps.map((step, index) => `<div class="step"><span class="number">${index + 1}</span><div><h3>${safe(step.title)}</h3><p>${safe(step.description)}</p>${step.href ? `<a class="setup-link" href="${step.href}">Open ${step.id === 'agent' ? 'agent setup' : step.id === 'phone' ? 'phone guide' : 'source setup'} ↓</a>` : ''}</div><span class="tag ${step.id === 'workspace' ? '' : 'off'}">${safe(step.label)}</span></div>`).join('')}</div><button class="btn section-gap" data-page="overview">Continue with local records ${icon('arrow-up-right')}</button></section>
+    `<section class="setup-checklist"><div class="panel-head"><h2>Choose your next step</h2><small>Connections are optional</small></div><button class="btn section-gap" data-page="overview">Continue with local records ${icon('arrow-up-right')}</button><p class="muted">${safe(setupSummary(state).nextStep)}</p><div class="steps">${setupSummary(state).steps.map((step, index) => `<div class="step"><span class="number">${index + 1}</span><div><h3>${safe(step.title)}</h3><p>${safe(step.description)}</p>${step.href ? `<a class="setup-link" href="${step.href}">Open ${step.id === 'agent' ? 'agent setup' : step.id === 'phone' ? 'phone guide' : 'source setup'} ↓</a>` : ''}</div><span class="tag ${step.id === 'workspace' ? '' : 'off'}">${safe(step.label)}</span></div>`).join('')}</div></section>
     <section class="panel" id="source-connections"><div class="panel-head"><h2>${icon('unplug')}<span>Source connections</span></h2><small>Separate consent required</small></div><p class="muted">Your local workspace needs no login. GiGi source sign-in confirms access to this app. Google consent connects the Google account you choose; it may be different from your GiGi sign-in.</p><ol class="welcome-plan" aria-label="Source setup stages">${journey.stages.map((title, index) => `<li ${index === journey.current ? 'aria-current="step"' : ''}><strong>${safe(title)}</strong>${index === journey.current ? '<span>Current step</span>' : ''}</li>`).join('')}</ol><p role="status">${safe(journey.next)}</p><button class="btn" data-sign-in="1" ${state.signingIn ? 'disabled' : ''}>${state.signingIn ? 'Waiting for browser sign-in…' : 'Sign in to GiGi sources'}</button><details data-view-key="source-permissions"><summary>What connecting and importing allow</summary><p>Review the Google consent screen before continuing. The configured Google grants are broader than read-only. GiGi’s source workflow uses them only to read source identity and the bounded pages described below; it does not send email, modify calendars or invite anyone.</p><p>Return here after consent, choose Check status, then Verify connection if shown. Once Account verified appears, review the Google identity and choose Import one page. Each next page requires another action. You can skip sources and keep working with local records.</p></details><div class="steps section-gap">${sourceCard('gmail', 'Gmail')}${sourceCard('googlecalendar', 'Google Calendar')}</div><p class="muted">If a connection needs operator help, <a href="#source-diagnostics">record local diagnostics below</a>, then review the report before sharing it.</p></section>
     ${diagnosticsView(state.diagnostics, state.busy)}
     ${agentSetup()}
@@ -358,6 +390,10 @@ function render() {
       creatorMount=(state.page==='music'?mountMusic:mountSocial)(creatorNode,{call:bridge.call,workspaceId:workspaceId(),onError:(error)=>notice(explain(error),true)});
     }
   }
+  if (state.editing === true) {
+    const form = root.querySelector?.('#record-form');
+    if (form && editorBaseline?.version !== routeVersion) editorBaseline = { version: routeVersion, values: Object.fromEntries(new FormData(form)) };
+  } else editorBaseline = null;
   renderedChatSession = chat?.current?.sessionId ?? null;
   restoreViewState(root, viewState);
   if (chat) chat.opening = false;
@@ -379,6 +415,7 @@ function render() {
     const nextTranscript = root.querySelector?.('.chat-transcript');
     if (nextTranscript) nextTranscript.scrollTop = transcriptPosition.stick ? nextTranscript.scrollHeight : transcriptPosition.top;
   }
+  if (pendingLeave) root.querySelector?.('[data-keep-editing]')?.focus?.();
   const linkButton = root.querySelector?.('[data-link-submit]');
   linkButton?.addEventListener('click', (event) => {
     event.preventDefault();
@@ -404,19 +441,22 @@ function renderChat() {
       shellNode.insertAdjacentHTML('beforeend', chatView(chat));
       renderedChatSession = chat?.current?.sessionId ?? null;
       chat.opening = false;
+      root.querySelector?.('[data-chat-close]')?.focus?.();
       return;
     }
-    render(); return;
+    render(); root.querySelector?.('[data-chat-close]')?.focus?.(); return;
   }
   const composer = globalThis.document?.activeElement?.id === 'chat-message' ? globalThis.document.activeElement : null;
   const selection = composer ? { start: composer.selectionStart, end: composer.selectionEnd, scrollTop: composer.scrollTop } : null;
   const transcript = panel.querySelector?.('.chat-transcript');
   const transcriptPosition = transcript ? { top: transcript.scrollTop, stick: transcript.scrollHeight - transcript.scrollTop - transcript.clientHeight < 48 } : null;
+  const activeAction = ['chatClose','chatRefresh','chatSetup','chatNew','chatStop'].find(key => globalThis.document?.activeElement?.dataset?.[key] !== undefined);
   const session = chat?.current?.sessionId ?? null;
   const viewState = session === renderedChatSession ? captureViewState(panel) : null;
   panel.innerHTML = chatView(chat, true);
   renderedChatSession = session;
   restoreViewState(panel, viewState);
+  if (activeAction) { const attr = activeAction.replace(/[A-Z]/g, letter => '-'+letter.toLowerCase()); root.querySelector?.(`[data-${attr}]`)?.focus?.(); }
   if (selection) {
     const nextComposer = panel.querySelector?.('#chat-message');
     nextComposer?.focus?.(); nextComposer?.setSelectionRange?.(selection.start, selection.end);
@@ -479,7 +519,15 @@ function submitLink(data) {
 
 root.addEventListener('click', (event) => {
   const button = event.target.closest('button'); if (!button) return;
-  if (button.dataset.sourcePropose) {
+  if (button.dataset.keepEditing) { keepEditing(); }
+  else if (button.dataset.discardChanges) { const next = pendingLeave; pendingLeave = null; state.editing = false; state.editorDraft = null; editorBaseline = null; next?.(); }
+  else if (pendingLeave) return;
+  else if (button.dataset.copyRecordValue) {
+    const value = button.dataset.copyRecordValue;
+    if (!globalThis.navigator?.clipboard?.writeText) { notice('Select the value and copy it manually.', true); return; }
+    void navigator.clipboard.writeText(value).then(() => notice('Copied to clipboard.')).catch(() => notice('Select the value and copy it manually.', true));
+  }
+  else if (button.dataset.sourcePropose) {
     if (state.busy) return;
     const route = readRoute(), selected = state.selected;
     void run(async () => {
@@ -547,6 +595,16 @@ root.addEventListener('click', (event) => {
   else if (button.dataset.scheduleView) { state.scheduleView = button.dataset.scheduleView; render(); }
   else if (button.dataset.scheduleToday) { state.scheduleView = 'upcoming'; render(); root.querySelector('#schedule-today')?.scrollIntoView?.({ block: 'start' }); }
   else if (button.dataset.chatOpen) void chat?.open(state.selected && !state.editing ? { entity: state.page, id: state.selected.id, title: state.selected.title } : null);
+  else if (button.dataset.chatRefresh) {
+    button.focus?.();
+    const request = {}; chatRefreshFocus = request;
+    void chat?.checkStatus().finally(() => {
+      const active = globalThis.document?.activeElement;
+      if (chatRefreshFocus === request && chat?.visible && (!active || active === document.body || active === document.documentElement || active.dataset?.chatRefresh !== undefined)) root.querySelector?.('[data-chat-refresh]')?.focus?.();
+      if (chatRefreshFocus === request) chatRefreshFocus = null;
+    });
+  }
+  else if (button.dataset.chatSetup) { chat?.close(); void run(() => openPage('settings')); }
   else if (button.dataset.chatClose) { chat?.close(); focusChatTrigger(); }
   else if (button.dataset.chatNew) void chat?.start();
   else if (button.dataset.chatSession) void chat?.read(button.dataset.chatSession);
@@ -554,10 +612,10 @@ root.addEventListener('click', (event) => {
   else if (button.dataset.chatApproval) void chat?.decide(button.dataset.chatApproval, button.dataset.chatDecision);
   else if (button.dataset.chatLinkEntity) void run(() => navigateRecord(button.dataset.chatLinkEntity, button.dataset.chatLinkId));
   else if (button.dataset.page) void run(() => openPage(button.dataset.page, true));
-  else if (button.dataset.new) { leaveRoute(); state.editorOrigin = editorOrigin(null, `[data-new="${button.dataset.new}"]`, state.page === button.dataset.new); state.justCreated = false; state.page = button.dataset.new; state.selected = null; state.editorDraft = null; state.editing = true; render(); globalThis.scrollTo?.(0, 0); }
+  else if (button.dataset.new) newRecord(button.dataset.new);
   else if (button.dataset.open) void run(() => navigateRecord(button.dataset.entity, button.dataset.open));
   else if (button.dataset.cancel) void cancelEditor();
-  else if (button.dataset.back) { leaveRoute(); state.selected = null; state.editing = false; state.editorDraft = null; state.editorOrigin = null; render(); globalThis.scrollTo?.(0, 0); }
+  else if (button.dataset.back) { if (!protectEditor(() => void run(() => openPage(state.page)))) return; leaveRoute(); state.selected = null; state.editing = false; state.editorDraft = null; state.editorOrigin = null; render(); globalThis.scrollTo?.(0, 0); }
   else if (button.dataset.edit) void enterEditor();
   else if (button.dataset.full) void run(() => refreshSelected());
   else if (button.dataset.sourceDetail) void run(() => refreshSelected(true));
@@ -583,7 +641,17 @@ root.addEventListener('click', (event) => {
   else if (button.dataset.confirmRestore && !state.busy && state.pendingRestoreId) { const backupId = state.pendingRestoreId; void run(async () => { const restored = await bridge.restoreBackup(backupId); state.pendingRestoreId = null; state.imports = {}; state.contextHits = []; state.contextQueried = false; state.sourceAttempts = {}; state.backupId = restored.safetyBackupId || null; await load(); notice('Backup restored. A safety backup was created; sync local history before relying on CTX results.'); }); }
 });
 
-root.addEventListener('keydown', (event) => {
+globalThis.document?.addEventListener?.('focusin', event => {
+  if (chatRefreshFocus && event.target !== document.body && event.target !== document.documentElement && event.target?.dataset?.chatRefresh === undefined) chatRefreshFocus = null;
+});
+globalThis.document?.addEventListener?.('pointerdown', () => { chatRefreshFocus = null; });
+(globalThis.document?.addEventListener ? document : root).addEventListener('keydown', (event) => {
+  if (chatRefreshFocus && event.key === 'Tab') chatRefreshFocus = null;
+  if (pendingLeave) {
+    if (event.key === 'Escape') { event.preventDefault?.(); keepEditing(); }
+    if (event.key === 'Tab') { event.preventDefault?.(); const keep = root.querySelector?.('[data-keep-editing]'); const discard = root.querySelector?.('[data-discard-changes]'); (document.activeElement === keep ? discard : keep)?.focus?.(); }
+    return;
+  }
   if (event.key !== 'Escape' || !chat?.visible) return;
   event.preventDefault?.();
   chat.close();
@@ -613,7 +681,7 @@ root.addEventListener('submit', (event) => {
   }
   else if (form.id === 'chat-form') { const value = String(new FormData(form).get('message') || ''); if (chat) { chat.draft = value; void chat.send(value); } }
   else if (form.id === 'workspace-form') { const data = Object.fromEntries(new FormData(form)); state.setupDraft = { ...data }; void run(async () => { if (!state.workspace) state.workspace = await bridge.createWorkspace(data.name); state.setupProfile = true; await bridge.saveRecord(workspaceId(), 'profile', { title: String(data.ownerName).trim(), fields: { Currency: String(data.currency) } }); state.currency = String(data.currency); state.currencyKnown = true; currencyVersion++; state.setupProfile = false; state.setupDraft = null; state.justCreated = true; initializeChat(); await openPage('settings'); notice('Your private workspace is ready. Connections are optional.'); }); }
-  else if (form.id === 'record-form') { const data = Object.fromEntries(new FormData(form)); state.editorDraft = { ...data }; const route = readRoute(), selected = state.selected; void run(async () => { const title = String(data.title).trim(); delete data.title; const saved = await bridge.saveRecord(route.workspace, route.page, { ...(selected?.id ? { id: selected.id, fieldsMode: 'replace', expectedRecord: { title: selected.title, fields: selected.fields, source: selected.source } } : {}), title, fields: selected?.id ? editedFields(selected.fields, data, route.page) : recordFields(data, route.page) }); if (route.page === 'profile' && route.workspace === workspaceId()) { state.currency = saved.fields?.Currency || null; state.currencyKnown = true; currencyVersion++; } if (!currentRoute(route)) return; state.editing = false; state.editorDraft = null; if (!await openPage(route.page)) return; if (!await selectRecord(saved.id || saved.record?.id, route.page)) return; notice(`${entityName(route.page)} saved.`); }); }
+  else if (form.id === 'record-form') { const data = Object.fromEntries(new FormData(form)); state.editorDraft = { ...data }; const route = readRoute(), selected = state.selected; submittedEditor = { version: route.version, values: { ...data } }; void run(async () => { const title = String(data.title).trim(); delete data.title; const saved = await bridge.saveRecord(route.workspace, route.page, { ...(selected?.id ? { id: selected.id, fieldsMode: 'replace', expectedRecord: { title: selected.title, fields: selected.fields, source: selected.source } } : {}), title, fields: selected?.id ? editedFields(selected.fields, data, route.page) : recordFields(data, route.page) }); if (route.page === 'profile' && route.workspace === workspaceId()) { state.currency = saved.fields?.Currency || null; state.currencyKnown = true; currencyVersion++; } if (!currentRoute(route)) return; state.editing = false; state.editorDraft = null; if (!await openPage(route.page)) return; if (!await selectRecord(saved.id || saved.record?.id, route.page)) return; notice(`${entityName(route.page)} saved.`); }).finally(() => { if (submittedEditor?.version === route.version) submittedEditor = null; }); }
   else if (form.id === 'link-form') submitLink(Object.fromEntries(new FormData(form)));
   else if (form.id === 'restore-form') { const backupId = String(new FormData(form).get('backupId')).trim(); if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(backupId)) { notice('Enter a valid backup ID.', true); return; } state.pendingRestoreId = backupId; render(); }
   else if (form.id === 'context-form') void run(async () => { const query = String(new FormData(form).get('query')).trim(); state.contextHits = await bridge.searchContext(query, 5); state.contextQueried = true; });

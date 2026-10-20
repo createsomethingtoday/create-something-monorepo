@@ -58,7 +58,7 @@ test('toast expiry and unrelated rerenders retain an unsaved editor draft, focus
   assert.equal(controls.get('title').value,'Unsubmitted next draft');
   assert.equal(controls.get('field-requirements').value,'Unsubmitted multiline\nnotes <&>');
   assert.equal(calls.filter(({operation})=>operation==='records.save').length,1);
-  await click({cancel:'1'});await click({edit:'1'});
+  await click({cancel:'1'});await click({discardChanges:'1'});await click({edit:'1'});
   assert.equal(controls.get('title').value,'First synthetic save','Cancel intentionally discards the draft');
  });
 });
@@ -178,4 +178,19 @@ test('Cancel during a submitted creation retains the write guard until it settle
   save.resolve({id:'created',title:'Synthetic creation',fields:{},relations:[]});await tick();
   assert.equal(root.loading,false);
  },operation=>operation==='records.save'?save.promise:undefined);
+});
+
+test('sidebar navigation protects an unfinished record and explicitly discards only after confirmation', async()=>{
+ await appFixture(async({root,click,type,controls,calls})=>{
+  await click({page:'tasks'});await click({new:'tasks'});type('title','Keep this unfinished task');
+  await click({page:'finances'});
+  assert.match(root.innerHTML,/Keep editing/);
+  assert.equal(controls.get('title').value,'Keep this unfinished task');
+  await click({keepEditing:'1'});
+  assert.equal(controls.get('title').value,'Keep this unfinished task');
+  await click({page:'finances'});await click({discardChanges:'1'});
+  assert.match(root.innerHTML,/GiGi \/ Money/);
+  assert.doesNotMatch(root.innerHTML,/id="record-form"/);
+  assert.equal(calls.some(({operation})=>operation==='records.save'),false);
+ });
 });

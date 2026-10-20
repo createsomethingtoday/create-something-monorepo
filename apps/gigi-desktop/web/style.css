@@ -141,3 +141,59 @@ h1 span{min-width:0}
 .diagnostics-events{padding-left:22px;max-height:240px;overflow-y:auto;font-size:12px;line-height:1.6}
 .diagnostics-events li{margin-bottom:12px;overflow-wrap:anywhere}
 .diagnostics-events small{display:block;color:var(--muted)}
+
+/* Working screens put records and actions ahead of repeated introductory chrome. */
+:root{--topbar-height:52px}
+.topbar{height:var(--topbar-height);padding-inline:28px}
+.content{padding:24px 28px 64px}
+h1{font-size:34px;line-height:1.15}
+h2{font-size:23px}
+.eyebrow{margin-bottom:8px}
+.subhead{margin-top:9px;font-size:13px;line-height:1.5}
+.page-head{margin-bottom:20px;gap:14px;align-items:center}
+.page-head>div{flex-basis:260px}
+.panel{padding:18px;margin-top:16px}
+.panel-head{margin-bottom:12px}
+.section-gap{margin-top:20px}
+.card{padding:16px;min-height:100px}
+.card .value{font-size:28px;margin-top:12px}
+.empty{padding:28px 20px}
+.sidebar{padding:18px 12px;gap:14px;overflow:hidden}
+.brand{padding-bottom:12px}
+.workspace-chip{padding:8px 10px}
+.sidebar-navigation{min-height:0;overflow-y:auto;overscroll-behavior:contain;display:flex;flex-direction:column;gap:16px;flex:1 1 auto!important;padding:2px}
+.workspace-navigation{padding-top:10px;border-top:1px solid var(--line)}
+.workspace-navigation .nav{grid-template-columns:repeat(3,minmax(0,1fr));gap:2px}
+.workspace-navigation .nav button{padding:9px 3px;justify-content:center;font-size:11px;gap:4px}
+.workspace-navigation .nav .ui-icon{width:13px;height:13px;flex-basis:13px}
+.sidebar-foot{padding:0 4px;border:0;margin-top:0;font-size:10px}
+.nav button{padding:8px 10px}
+.form-actions{position:sticky;bottom:12px;z-index:2;padding:12px;background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:0 6px 20px #0003}
+.chat-panel{top:var(--topbar-height)}
+.chat-intro{max-height:65%;flex-shrink:0}
+.chat-head{padding:14px 18px 10px}
+.chat-scope{padding:10px 18px 0}
+.chat-status,.chat-error{margin:10px 18px}
+.chat-hint{padding:12px 18px}
+.record-leave-backdrop{position:fixed;inset:0;z-index:100;background:#0009;display:grid;place-items:center;padding:24px}
+.record-leave-dialog{width:min(440px,100%);max-height:calc(100vh - 48px);overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:24px;box-shadow:0 24px 80px #0008}
+.record-leave-dialog p{font-size:14px;line-height:1.6;color:var(--muted)}
+.record-leave-dialog .inline-actions{justify-content:flex-end;margin-top:20px}
+@media(max-width:900px){
+ .content{padding:20px 20px 56px}.topbar{padding-inline:20px}
+ h1{font-size:30px}.sidebar{padding-inline:10px;gap:12px}
+ .brand{gap:8px}.brand small{font-size:9px;letter-spacing:.09em}
+ .workspace-navigation .nav .ui-icon{display:none}
+ .detail-grid{grid-template-columns:110px minmax(0,1fr)}
+ .agenda-event{grid-template-columns:minmax(100px,140px) minmax(0,1fr) 20px;gap:12px}
+}
+@media(max-width:700px){
+ .sidebar{overflow:visible}.sidebar-navigation{overflow:visible;display:block}.workspace-navigation{border:0;padding:0}
+ .workspace-navigation .nav{display:flex}.sidebar-foot{display:none}.chat-panel{top:0}.form-actions{bottom:8px}
+}
+.chat-recovery{margin:10px 18px;padding:12px;border:1px solid var(--line);border-radius:8px;background:var(--raised);font-size:12px;line-height:1.5}
+.chat-recovery .chat-status{margin:0 0 10px;padding:0;background:none}
+.chat-recovery .inline-actions{margin-top:10px}
+.chat-capabilities{margin:10px 18px;color:var(--muted);font-size:11px;line-height:1.5}
+.chat-capabilities summary{cursor:pointer;padding-block:4px}
+.chat-capabilities .chat-scope{padding:8px 0 0}

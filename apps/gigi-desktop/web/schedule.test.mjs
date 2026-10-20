@@ -57,3 +57,36 @@ test('schedule navigation renders both pages and switches between past and upcom
     assert.equal(calls.includes('records.save'), false);
   } finally { globalThis.document = prior.document; globalThis.__TAURI__ = prior.tauri; }
 });
+
+test('workspace agenda includes dated gigs across all pages and preserves their record identity', async () => {
+  const { readWorkspaceAgenda } = await import('./schedule.mjs');
+  const calls = [];
+  const items = await readWorkspaceAgenda(async (entity, cursor) => {
+    calls.push([entity,cursor]);
+    if(entity==='schedule') return {items:[record('event','2026-10-22')]};
+    return cursor ? {items:[record('gig-two','2026-10-23T19:00:00-05:00')]} : {items:[record('gig-one','2026-10-22'),record('undated',null)],nextCursor:'next'};
+  });
+  assert.equal(items.length,3);
+  assert.deepEqual(items.map(item=>[item.id,item.entity]),[['event','schedule'],['gig-one','gigs'],['gig-two','gigs']]);
+  assert.equal(items[2].date,'2026-10-23T19:00:00-05:00');
+  assert.equal(calls.length,3);
+  assert.equal(await readWorkspaceAgenda(async()=>({items:[]}),()=>false),null);
+});
+
+ test('date-only gigs show call and set times instead of claiming all-day availability',()=>{
+ const gig={...record('gig','2026-10-22'),entity:'gigs',callTime:'18:30',setTime:'20:00'};
+ assert.equal(scheduleEntry(gig).time,'Call 18:30 · Set 20:00');
+ assert.equal(scheduleEntry({...gig,callTime:null,setTime:null}).time,'Time not set');
+ assert.equal(scheduleEntry(record('calendar','2026-10-22')).time,'All day');
+ const range=scheduleEntry({...gig,date:'2026-10-22/2026-10-24'});
+ assert.equal(range.endKey,'2026-10-23');assert.match(range.time,/ends.*exclusive/);
+});
+
+test('explicit imported all-day gig ranges retain all-day and exclusive end semantics',()=>{
+ const gig={...record('imported','2026-10-22/2026-10-24'),entity:'gigs',allDay:true};
+ const entry=scheduleEntry(gig);
+ assert.match(entry.time,/^All day.*exclusive/);assert.equal(entry.endKey,'2026-10-23');
+ assert.equal(scheduleAgenda([gig],'upcoming','2026-10-24').counts.upcoming,0);
+ const fieldsFlag={...gig,allDay:false,fields:{Date:'2026-10-22/2026-10-24','All Day':true}};
+ assert.match(scheduleEntry(fieldsFlag).time,/^All day/);
+});

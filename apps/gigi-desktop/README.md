@@ -136,3 +136,9 @@ The installed runtime's app-server protocol is a versioned integration boundary.
 If delivery of a turn is uncertain and the provider cannot identify the matching turn, that conversation remains blocked rather than resending automatically. An uncertain save blocks embedded writes across the workspace until the affected record has a matching readback. Manual GiGi use remains available.
 
 For isolated native acceptance, build the companions and run `cargo run --manifest-path apps/gigi-desktop/src-tauri/Cargo.toml --example verify_codex_chat -- <built-app-resources-directory> <new-absolute-disposable-profile-path>`. The verifier seeds synthetic records, performs a real subscribed read, approves one exact task rename, rejects another and checks restart/readback. It refuses an existing profile. Provider acceptance requires the actual bundled runtime, not fixture tests alone.
+
+### 0.2.1 usability pass
+
+Working pages use compact headers and keep record save actions in reach. Leaving an unsaved ordinary record asks whether to keep editing or discard; it does not silently save incomplete input. Schedule includes dated gigs alongside schedule entries, with their record type identified. This does not create or modify external calendar events.
+
+When embedded chat is unavailable, **Check status** performs read-only reconciliation and **Open setup** explains the local Codex requirements. Status checks never resend a message or approve a write. Music keeps recovery actions contextual and its player separate from the list; Instagram keeps Save/Review visible, links validation to relevant fields and supports Command-S for local saving. Explicit publishing confirmation and uncertain-outcome protections remain unchanged.

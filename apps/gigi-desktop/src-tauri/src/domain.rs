@@ -662,11 +662,11 @@ pub fn dispatch(root: &Path, op: &str, input: Value) -> Result<Value, String> {
                 .or_else(|| input.get("offset").and_then(Value::as_u64))
                 .unwrap_or(0)
                 .min(100_000) as i64;
-            let sql=format!("SELECT id,title,status,occurred_at,money_cents,updated_at,json_extract(fields_json,'$.\"All Day\"') FROM {entity} WHERE workspace_id=?1 ORDER BY updated_at DESC,id LIMIT ?2 OFFSET ?3");
+            let sql=format!("SELECT id,title,status,occurred_at,money_cents,updated_at,json_extract(fields_json,'$.\"All Day\"'),json_extract(fields_json,'$.\"Call Time\"'),json_extract(fields_json,'$.\"Set Time\"') FROM {entity} WHERE workspace_id=?1 ORDER BY updated_at DESC,id LIMIT ?2 OFFSET ?3");
             let mut stmt = db.prepare(&sql).map_err(|e| e.to_string())?;
             let items=stmt.query_map(params![wid,limit,offset],|r|{
                 let title:String=r.get(1)?;let truncated=title.chars().count()>120;let display:String=title.chars().take(120).collect();
-                Ok(json!({"id":r.get::<_,String>(0)?,"workspaceId":wid,"entity":entity,"title":display,"titleTruncated":truncated,"status":r.get::<_,Option<String>>(2)?,"date":r.get::<_,Option<String>>(3)?,"moneyCents":r.get::<_,Option<i64>>(4)?,"updatedAt":r.get::<_,String>(5)?,"allDay":entity == "schedule" && r.get::<_,Option<i64>>(6)?.unwrap_or(0) == 1}))
+                Ok(json!({"id":r.get::<_,String>(0)?,"workspaceId":wid,"entity":entity,"title":display,"titleTruncated":truncated,"status":r.get::<_,Option<String>>(2)?,"date":r.get::<_,Option<String>>(3)?,"moneyCents":r.get::<_,Option<i64>>(4)?,"updatedAt":r.get::<_,String>(5)?,"allDay":(entity == "schedule" || entity == "gigs") && r.get::<_,Option<i64>>(6)?.unwrap_or(0) == 1,"callTime":if entity == "gigs" { r.get::<_,Option<String>>(7)? } else { None },"setTime":if entity == "gigs" { r.get::<_,Option<String>>(8)? } else { None }}))
             }).map_err(|e|e.to_string())?.collect::<Result<Vec<_>,_>>().map_err(|e|e.to_string())?;
             let count: i64 = db
                 .query_row(
@@ -1097,6 +1097,19 @@ mod tests {
         .unwrap();
         assert_eq!(got["fields"]["Fee"], 12500);
         let _ = std::fs::remove_dir_all(root);
+    }
+    #[test]
+    fn gig_list_exposes_only_agenda_times_without_full_private_fields() {
+        let root = temp();
+        let workspace = dispatch(&root, "workspace.create", json!({"name":"Agenda"})).unwrap();
+        let wid = &workspace["id"];
+        dispatch(&root, "records.save", json!({"workspaceId":wid,"entity":"gigs","title":"Soundcheck","fields":{"Date":"2026-10-22","Call Time":"18:30","Set Time":"20:00","Requirements":"Private notes"}})).unwrap();
+        let result = dispatch(&root, "records.list", json!({"workspaceId":wid,"entity":"gigs"})).unwrap();
+        assert_eq!(result["items"][0]["callTime"], "18:30");
+        assert_eq!(result["items"][0]["setTime"], "20:00");
+        assert!(result["items"][0].get("fields").is_none());
+        assert!(!result.to_string().contains("Private notes"));
+        let _ = fs::remove_dir_all(root);
     }
     #[test]
     fn title_only_save_preserves_gig_details_source_and_links() {
