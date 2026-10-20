@@ -29,7 +29,7 @@
 
 <section class="plan-journey" aria-labelledby="plan-journey-title" bind:this={root}>
   <header class="journey-heading">
-    <p class="eyebrow">How the capacity becomes useful work</p>
+    <p class="eyebrow">From agreement to handoff</p>
     <h3 id="plan-journey-title">An agreed improvement.<br />A result you can keep using.</h3>
     <p>Both plans follow the same process. The difference is the agreed capacity each billing month.</p>
   </header>
@@ -51,7 +51,7 @@
       </section>
       <section class="chapter" data-chapter="1" aria-labelledby="plan-capacity-title">
         <p class="eyebrow">02 / Each billing month</p>
-        <h4 id="plan-capacity-title">Choose the room your work needs.</h4>
+        <h4 id="plan-capacity-title">Choose the capacity your work needs.</h4>
         <p><strong>Focused · {focused.label}.</strong> {focused.workstreams} workstream, {focused.milestonesPerMonth} agreed milestone and {focused.remoteSessionsPerMonth} attended {focused.remoteSessionMinutes}-minute remote work sessions.</p>
         <p><strong>Team · {team.label}.</strong> Up to {team.workstreams} workstreams, {team.milestonesPerMonth} agreed milestones and {team.remoteSessionsPerMonth} attended {team.remoteSessionMinutes}-minute remote work sessions.</p>
         <p class="example">An illustrative Focused month could map the approval handoff for your website. With Team, you might agree on that map plus one scoped improvement to an existing intake workflow. We confirm feasibility and acceptance checks before committing to either milestone.</p>
@@ -68,7 +68,7 @@
 </section>
 
 <style>
-  .plan-journey { padding: 0 max(1.25rem, calc((100% - 80rem) / 2)) var(--space-performance-xl); color: var(--color-performance-ink); }
+  .plan-journey { padding: 0 var(--membership-gutter, max(1.25rem, calc((100% - 80rem) / 2))) var(--space-performance-xl); color: var(--color-performance-ink); }
   .journey-heading { border-top: 1px solid var(--color-performance-line-strong); padding-top: 2rem; max-width: none; }
   .eyebrow, .diagram-label, .stage-index { font: .7rem/1.6 var(--font-performance-mono); text-transform: uppercase; letter-spacing: .04em; }
   .journey-heading h3 { font: 400 clamp(1.7rem, 3vw, 2.5rem)/1.15 var(--font-performance-editorial); margin: .75rem 0 1rem; }

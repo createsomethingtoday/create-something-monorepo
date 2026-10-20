@@ -14,7 +14,7 @@
       <p class="lede">A broken form. A manual handoff. An AI tool your team needs help using. We diagnose the problem, build the agreed change, and teach you how to use it.</p>
       <div class="hero-actions"><a class="primary" href={agencyCoreMessaging.workflowMappingSessionHref}>Talk through your workflow <span aria-hidden="true">↗</span></a></div>
       <p class="next-step">Bring one task. We agree on scope and cost before work begins.</p>
-      <p class="starting-point">Support {PUBLIC_PRICING.membership.label.toLowerCase()} <span aria-hidden="true">/</span> <a href="/services#membership">Membership and costs ↗</a></p>
+      <p class="starting-point">Support {PUBLIC_PRICING.membership.label.toLowerCase()} <a href="/services#membership">Membership and costs ↗</a></p>
     </div>
     <figure class="service-record">
       <figcaption><span>Your dot. Your workflow.</span><span>Illustrative example / 01</span></figcaption>
@@ -76,5 +76,5 @@
   .hero-bottom a, .starting-point a { display: inline-flex; align-items: center; gap: var(--space-performance-sm); min-height: 44px; }
   a:focus-visible { outline: 2px solid var(--color-performance-focus); outline-offset: 5px; }
   @media(max-width:900px) { .hero-track { padding-top: 7rem; } .hero-composition { grid-template-columns: 1fr; gap: var(--space-performance-lg); padding-block: var(--space-performance-lg); } .hero-copy { max-width: 40rem; } .service-record { max-width: 42rem; } }
-  @media(max-width:540px) { .hero-track { padding-inline: 6vw; } h1 { font-size: clamp(2.6rem, 10vw, 3.4rem); line-height: 1.04; } .eyebrow { font-size: .65rem; margin-bottom: var(--space-performance-md); } .primary { width: 100%; } .example-receipt dl > div { grid-template-columns: 1fr; gap: .25rem; } figcaption { flex-direction: column; } }
+  @media(max-width:540px) { .hero-track { padding-inline: 6vw; } h1 { font-size: clamp(2.6rem, 10vw, 3.4rem); line-height: 1.04; } .eyebrow { font-size: .65rem; margin-bottom: var(--space-performance-md); } .primary { width: 100%; } .starting-point { display: block; } .starting-point a { display: flex; width: fit-content; } .workflow-path { display: grid; grid-template-columns: 1fr; justify-items: start; } .workflow-path span[aria-hidden] { transform: rotate(90deg); margin-left: .75rem; line-height: 1; } .example-receipt dl > div { grid-template-columns: 1fr; gap: .25rem; } figcaption { flex-direction: column; } }
 </style>
