@@ -52,7 +52,7 @@ const REQUIRED_TOOLS = [...READ_TOOLS].filter(name => name !== 'gigi_context_sea
 const CREATIVE_KEYS: Record<string, string[]> = {
   gigi_music_list: ['query', 'kind', 'offset', 'limit'],
   gigi_music_import_status: ['requestId'], gigi_music_get: ['id'], gigi_music_import: ['requestId', 'mode'],
-  gigi_music_organize: ['id', 'fields', 'expectedRevision'],
+  gigi_music_organize: ['requestId', 'id', 'fields', 'expectedRevision'], gigi_music_organize_status: ['requestId'],
   gigi_instagram_draft_save_status: ['requestId'], gigi_instagram_drafts_list: ['offset'], gigi_instagram_draft_get: ['id'],
   gigi_instagram_media_validate: ['imageUrl'], gigi_instagram_connection_status: [],
   gigi_instagram_approval_status: ['requestId'], gigi_instagram_publish_receipt: ['id'],
@@ -248,8 +248,8 @@ export function createCodexAdapter(options: CodexOptions) {
           let verified = false;
           // Completion receipts prove the historical action. Current records may
           // have been edited/deleted or published since; never replay a mutation.
-          if (['gigi_music_import', 'gigi_instagram_draft_create', 'gigi_instagram_draft_update', 'gigi_instagram_request_publication_approval'].includes(attempt.tool)) {
-            const name = attempt.tool === 'gigi_music_import' ? 'gigi_music_import_status' : attempt.tool === 'gigi_instagram_request_publication_approval' ? 'gigi_instagram_approval_status' : 'gigi_instagram_draft_save_status';
+          if (['gigi_music_import', 'gigi_music_organize', 'gigi_instagram_draft_create', 'gigi_instagram_draft_update', 'gigi_instagram_request_publication_approval'].includes(attempt.tool)) {
+            const name = attempt.tool === 'gigi_music_organize' ? 'gigi_music_organize_status' : attempt.tool === 'gigi_music_import' ? 'gigi_music_import_status' : attempt.tool === 'gigi_instagram_request_publication_approval' ? 'gigi_instagram_approval_status' : 'gigi_instagram_draft_save_status';
             const status = payload(await options.mcp!.request('tools/call', {name, arguments:{workspaceId,requestId:args.requestId}}));
             verified = completedCreativeMatches(attempt.tool, args, status);
             saved = attempt.tool === 'gigi_music_import' ? status.receipt : status.draft;
@@ -392,6 +392,10 @@ export function createCodexAdapter(options: CodexOptions) {
   }
   function completedCreativeMatches(tool: string, args: Json, status: Json): boolean {
     if (typeof args.requestId !== 'string' || status.requestId !== args.requestId || (status.workspaceId !== undefined && status.workspaceId !== args.workspaceId)) return false;
+    if (tool === 'gigi_music_organize') {
+      return status.state === 'completed' && isDeepStrictEqual(status.input, args) && status.receipt?.saved === true && status.receipt.id === args.id && status.receipt.item?.id === args.id && status.receipt.uploaded === false && status.receipt.originalsUnchanged === true &&
+        Object.entries(asObject(args.fields)).every(([key,value]) => typeof value === 'string' && status.receipt.item[key] === value.trim());
+    }
     if (tool === 'gigi_instagram_request_publication_approval') {
       // This verifies only creation of this review request, never publication
       // authority. The native publisher independently rejects stale approvals.
@@ -472,6 +476,12 @@ export function createCodexAdapter(options: CodexOptions) {
         } catch {
           try { await options.server.reply(approval.requestId, { contentItems: [{ type: 'inputText', text: 'Write outcome unknown. Reconcile in GiGi before any more writes.' }], success: false }); } catch { /* delivery is also unknown; never retry */ }
           approvals.delete(approval.id); session.state = 'running'; await persist(); return read(input);
+        }
+        if (result.isError && approval.tool === 'gigi_music_import' && (result.content ?? []).some((item: Json) => item.type === 'text' && typeof item.text === 'string' && item.text.includes('Import may have completed but its receipt could not be saved.'))) {
+          // Entries may be committed already. Keep the durable unknown fence.
+          approvals.delete(approval.id); session.state = 'running'; await persist();
+          try { await options.server.reply(approval.requestId, {contentItems:[{type:'inputText',text:'Import outcome unknown. Inspect Your music; do not start another selection.'}],success:false}); } catch { /* Keep unknown fence. */ }
+          return read(input);
         }
         if (result.isError) {
           session.decisionReceipt = { ...(CREATIVE_WRITES.has(approval.tool!) ? { tool: approval.tool } : {}), approvalId: approval.id, outcome: 'failed' };
@@ -561,7 +571,7 @@ export function createCodexAdapter(options: CodexOptions) {
       const originatingTurn = session.turnId;
       const id = randomUUID();
       if (CREATIVE_WRITES.has(tool)) {
-        if (tool !== 'gigi_music_organize') args.requestId = randomUUID();
+        args.requestId = randomUUID();
         if (tool === 'gigi_music_organize') {
           try {
             const actual = payload(await options.mcp!.request('tools/call', { name: 'gigi_music_get', arguments: { workspaceId: session.workspaceId, id: args.id } }));

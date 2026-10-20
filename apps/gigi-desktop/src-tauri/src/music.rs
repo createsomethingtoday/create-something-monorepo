@@ -187,8 +187,16 @@ fn import_status(root:&Path,input:&Value)->Result<Value,String>{
     Ok(json!({"state":"not_started","requestId":request}))
 }
 
+fn organize_status(root:&Path,input:&Value)->Result<Value,String>{
+ let wid=need(input,"workspaceId")?;let request=need(input,"requestId")?;Uuid::parse_str(request).map_err(|_|"requestId must be a UUID.")?;
+ let db=Connection::open_with_flags(root.join("gigi.sqlite"),rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY).map_err(|_|"Local workspace is unavailable.")?;
+ if db.query_row("SELECT 1 FROM workspaces WHERE id=?1",[wid],|r|r.get::<_,i32>(0)).optional().map_err(|e|e.to_string())?.is_none(){return Err("Select an existing private workspace.".into());}
+ let found:Option<(String,String)>=db.query_row("SELECT request_json,result_json FROM mutation_receipts WHERE workspace_id=?1 AND operation='music.organize' AND idempotency_key=?2",params![wid,request],|r|Ok((r.get(0)?,r.get(1)?))).optional().map_err(|e|e.to_string())?;
+ match found{Some((input,result))=>Ok(json!({"state":"completed","workspaceId":wid,"requestId":request,"input":serde_json::from_str::<Value>(&input).map_err(|e|e.to_string())?,"receipt":serde_json::from_str::<Value>(&result).map_err(|e|e.to_string())?})),None=>Ok(json!({"state":"unknown","workspaceId":wid,"requestId":request}))}
+}
 pub fn dispatch(root:&Path,op:&str,input:Value)->Result<Value,String> {
     if op=="music.importStatus"{return import_status(root,&input);}
+    if op=="music.organizeStatus"{return organize_status(root,&input);}
     let wid=need(&input,"workspaceId")?;
     let mut db=open(root,wid)?;
     match op {
@@ -219,13 +227,17 @@ pub fn dispatch(root:&Path,op:&str,input:Value)->Result<Value,String> {
         "music.organize"|"music.edit"=>{
             let id=need(&input,"id")?;let expected=need(&input,"expectedRevision")?;
             let tx=db.transaction_with_behavior(TransactionBehavior::Immediate).map_err(|e|e.to_string())?;
-            let(_,_,mut item)=get(&tx,wid,id)?;
+            let request=if op=="music.organize"{let request=need(&input,"requestId")?;Uuid::parse_str(request).map_err(|_|"requestId must be a UUID.")?;Some(request)}else{None};
+            if let Some(request)=request{let prior:Option<(String,String)>=tx.query_row("SELECT request_json,result_json FROM mutation_receipts WHERE workspace_id=?1 AND operation='music.organize' AND idempotency_key=?2",params![wid,request],|r|Ok((r.get(0)?,r.get(1)?))).optional().map_err(|e|e.to_string())?;if let Some((original,result))=prior{if original!=input.to_string(){return Err("Organization request ID is bound to different input.".into());}return serde_json::from_str(&result).map_err(|e|e.to_string());}}
+            let(path,fp,mut item)=get(&tx,wid,id)?;
             if expected!=organization_revision(&item){return Err("This music entry changed elsewhere. Your edits have not been saved. Copy any changes you want to keep, cancel this editor, then reopen the entry to review its latest organization.".into());}
             let fields=if op=="music.organize"{input["fields"].as_object().filter(|f|!f.is_empty()).ok_or("Supply at least one organization field.")?.clone()}else{["title","artist","project","collection","version","tags"].into_iter().map(|f|(f.to_string(),input[f].clone())).collect()};
             for(field,value)in fields{if !["title","artist","project","collection","version","tags"].contains(&field.as_str()){return Err(format!("Unknown music organization field: {field}"));}let value=value.as_str().ok_or("Music organization values must be text.")?.trim();if value.len()>1000||(field=="title"&&value.is_empty()){return Err("Use a nonempty title and text of at most 1,000 bytes per field.".into());}item[&field]=json!(value);}
             tx.execute("UPDATE music_items SET metadata=?3,updated_at=CURRENT_TIMESTAMP WHERE workspace_id=?1 AND id=?2",params![wid,id,item.to_string()]).map_err(|e|e.to_string())?;
-            tx.commit().map_err(|e|e.to_string())?;
-            Ok(json!({"saved":true,"id":id,"item":dispatch(root,"music.get",json!({"workspaceId":wid,"id":id}))?,"originalsUnchanged":true,"uploaded":false}))
+            item["id"]=json!(id);item["organizationRevision"]=json!(organization_revision(&item));item["previewable"]=json!(previewable(Path::new(&path)));item["availability"]=json!(match fingerprint(Path::new(&path)){Ok(current)if current==fp=>"available",Ok(_)=>"changed",Err(_)=>"missing"});
+            let result=json!({"saved":true,"id":id,"item":item,"originalsUnchanged":true,"uploaded":false});
+            if let Some(request)=request{tx.execute("INSERT INTO mutation_receipts(workspace_id,operation,idempotency_key,request_json,result_json) VALUES(?1,'music.organize',?2,?3,?4)",params![wid,request,input.to_string(),result.to_string()]).map_err(|e|e.to_string())?;}
+            tx.commit().map_err(|e|e.to_string())?;Ok(result)
         },
         "music.remove"=>{let id=need(&input,"id")?;get(&db,wid,id)?;db.execute("DELETE FROM music_items WHERE workspace_id=?1 AND id=?2",params![wid,id]).map_err(|e|e.to_string())?;Ok(json!({"removed":true,"originalUnchanged":true}))},
         "music.reconnect"=>{
@@ -252,6 +264,27 @@ pub fn dispatch(root:&Path,op:&str,input:Value)->Result<Value,String> {
 #[cfg(test)] mod tests {
     use super::*;
     fn fixture()->(PathBuf,String,PathBuf){let root=std::env::temp_dir().join(format!("gigi-music-{}",Uuid::new_v4()));fs::create_dir_all(&root).unwrap();let root=fs::canonicalize(root).unwrap();let w=crate::domain::dispatch(&root,"workspace.create",json!({"name":"Synthetic music"})).unwrap();let wid=w["id"].as_str().or_else(||w["workspace"]["id"].as_str()).unwrap().to_string();let file=root.join("test.mp4");fs::write(&file,b"synthetic media").unwrap();(root,wid,file)}
+    #[test]fn organization_receipt_is_atomic_exact_and_survives_later_edit_and_removal(){
+      let(root,wid,file)=fixture();let imported=import_with_picker(&root,&json!({"workspaceId":wid,"requestId":Uuid::new_v4().to_string()}),|_|Ok(vec![file])).unwrap();let id=&imported["addedIds"][0];
+      let old=dispatch(&root,"music.get",json!({"workspaceId":wid,"id":id})).unwrap();let request=Uuid::new_v4().to_string();let input=json!({"workspaceId":wid,"requestId":request,"id":id,"expectedRevision":old["organizationRevision"],"fields":{"title":" New title "}});let lookup=json!({"workspaceId":wid,"requestId":request});
+      open(&root,&wid).unwrap().execute_batch("CREATE TRIGGER fail_organization_receipt BEFORE INSERT ON mutation_receipts WHEN NEW.operation='music.organize' BEGIN SELECT RAISE(ABORT,'synthetic receipt failure'); END;").unwrap();
+      assert!(dispatch(&root,"music.organize",input.clone()).is_err());assert_eq!(dispatch(&root,"music.get",json!({"workspaceId":wid,"id":id})).unwrap()["title"],old["title"]);assert_eq!(dispatch(&root,"music.organizeStatus",lookup.clone()).unwrap()["state"],"unknown");
+      open(&root,&wid).unwrap().execute_batch("DROP TRIGGER fail_organization_receipt;").unwrap();
+      let saved=dispatch(&root,"music.organize",input.clone()).unwrap();assert_eq!(saved["item"]["title"],"New title");assert_eq!(dispatch(&root,"music.organize",input.clone()).unwrap(),saved);
+      let mut changed=input.clone();changed["fields"]["title"]=json!("Different");assert!(dispatch(&root,"music.organize",changed).is_err());
+      dispatch(&root,"music.organize",json!({"workspaceId":wid,"requestId":Uuid::new_v4().to_string(),"id":id,"expectedRevision":saved["item"]["organizationRevision"],"fields":{"title":"Later"}})).unwrap();
+      dispatch(&root,"music.remove",json!({"workspaceId":wid,"id":id})).unwrap();assert_eq!(dispatch(&root,"music.organize",input.clone()).unwrap(),saved);
+      let before=fs::read(root.join("gigi.sqlite")).unwrap();let status=dispatch(&root,"music.organizeStatus",lookup).unwrap();assert_eq!(status["input"],input);assert_eq!(status["receipt"],saved);assert_eq!(before,fs::read(root.join("gigi.sqlite")).unwrap());
+      let foreign=Uuid::new_v4().to_string();crate::domain::open(&root).unwrap().execute("INSERT INTO workspaces(id,name) VALUES(?1,'Other')",[&foreign]).unwrap();assert_eq!(dispatch(&root,"music.organizeStatus",json!({"workspaceId":foreign,"requestId":request})).unwrap()["state"],"unknown");
+      let failed=Uuid::new_v4().to_string();assert!(dispatch(&root,"music.organize",json!({"workspaceId":wid,"requestId":failed,"id":id,"expectedRevision":"stale","fields":{"title":"Rejected"}})).is_err());assert_eq!(dispatch(&root,"music.organizeStatus",json!({"workspaceId":wid,"requestId":failed})).unwrap()["state"],"unknown");fs::remove_dir_all(root).unwrap();
+    }
+    #[test]fn failed_import_receipt_is_explicitly_uncertain_and_never_reopens_picker(){
+      let(root,wid,file)=fixture();let input=json!({"workspaceId":wid,"requestId":Uuid::new_v4().to_string()});
+      open(&root,&wid).unwrap().execute_batch("CREATE TRIGGER fail_import_receipt BEFORE INSERT ON music_import_receipts BEGIN SELECT RAISE(ABORT,'synthetic receipt failure'); END;").unwrap();
+      let error=import_with_picker(&root,&input,|_|Ok(vec![file])).unwrap_err();assert!(error.contains("Import may have completed but its receipt could not be saved."));
+      assert_eq!(dispatch(&root,"music.list",json!({"workspaceId":wid})).unwrap()["total"],1);assert_eq!(dispatch(&root,"music.importStatus",input.clone()).unwrap()["state"],"unknown");
+      assert!(import_with_picker(&root,&input,|_|panic!("never retry unknown import")).is_err());fs::remove_dir_all(root).unwrap();
+    }
     #[test]fn import_status_is_read_only_and_distinguishes_receipt_claim_and_absence(){
         let(root,wid,file)=fixture();let request=Uuid::new_v4().to_string();let input=json!({"workspaceId":wid,"requestId":request});
         let before=fs::read(root.join("gigi.sqlite")).unwrap();
@@ -266,12 +299,12 @@ pub fn dispatch(root:&Path,op:&str,input:Value)->Result<Value,String> {
     #[test]fn stale_ui_and_agent_organization_cannot_overwrite_newer_metadata(){
         let(root,wid,file)=fixture();let imported=import_with_picker(&root,&json!({"workspaceId":wid,"requestId":Uuid::new_v4().to_string()}),|_|Ok(vec![file])).unwrap();let id=&imported["addedIds"][0];
         let original=dispatch(&root,"music.get",json!({"workspaceId":wid,"id":id})).unwrap();
-        dispatch(&root,"music.organize",json!({"workspaceId":wid,"id":id,"expectedRevision":original["organizationRevision"],"fields":{"collection":"Agent collection"}})).unwrap();
+        dispatch(&root,"music.organize",json!({"requestId":Uuid::new_v4().to_string(),"workspaceId":wid,"id":id,"expectedRevision":original["organizationRevision"],"fields":{"collection":"Agent collection"}})).unwrap();
         let mut stale=original.clone();stale["workspaceId"]=json!(wid);stale["expectedRevision"]=original["organizationRevision"].clone();stale["title"]=json!("Unsaved UI title");
         assert!(dispatch(&root,"music.edit",stale).unwrap_err().contains("changed elsewhere"));
-        assert!(dispatch(&root,"music.organize",json!({"workspaceId":wid,"id":id,"expectedRevision":original["organizationRevision"],"fields":{"tags":"stale agent tags"}})).unwrap_err().contains("changed elsewhere"));
+        assert!(dispatch(&root,"music.organize",json!({"requestId":Uuid::new_v4().to_string(),"workspaceId":wid,"id":id,"expectedRevision":original["organizationRevision"],"fields":{"tags":"stale agent tags"}})).unwrap_err().contains("changed elsewhere"));
         let fresh=dispatch(&root,"music.get",json!({"workspaceId":wid,"id":id})).unwrap();assert_eq!(fresh["collection"],"Agent collection");assert_eq!(fresh["title"],original["title"]);
-        dispatch(&root,"music.organize",json!({"workspaceId":wid,"id":id,"expectedRevision":fresh["organizationRevision"],"fields":{"title":"Reviewed new title"}})).unwrap();
+        dispatch(&root,"music.organize",json!({"requestId":Uuid::new_v4().to_string(),"workspaceId":wid,"id":id,"expectedRevision":fresh["organizationRevision"],"fields":{"title":"Reviewed new title"}})).unwrap();
         assert_eq!(dispatch(&root,"music.get",json!({"workspaceId":wid,"id":id})).unwrap()["collection"],"Agent collection");fs::remove_dir_all(root).unwrap();
     }
     #[test]fn import_claim_is_persisted_before_picker_and_survives_restart(){

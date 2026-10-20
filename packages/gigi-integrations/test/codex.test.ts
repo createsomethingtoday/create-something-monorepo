@@ -1194,3 +1194,22 @@ for(const scenario of ['create-edited','create-readback-failed','update-publishe
  const pending=await adapter.read({workspaceId:'w',sessionId});const uncertain=await adapter.approve({workspaceId:'w',sessionId,approvalId:pending.approvals[0].id,decision:'approve'});assert.equal(uncertain.decisionReceipt?.outcome,'unknown');
  available=true;const result=await adapter.read({workspaceId:'w',sessionId});const rejected=scenario.startsWith('wrong-')||scenario==='incomplete-import';assert.equal(result.decisionReceipt?.outcome,rejected?'unknown':'verified');assert.equal(result.decisionReceipt?.tool,tool);assert.equal(result.error,rejected?'write_outcome_unknown':undefined);assert.equal(writes,1);assert.ok(receiptReads>0);
 });
+
+for(const scenario of ['edited','deleted','wrong-input','wrong-request','wrong-workspace','receipt-error'])test(`organization or import durable recovery: ${scenario}`,async()=>{
+ const {adapter,server,mcp}=await setup();const original=mcp.request.bind(mcp);let args:any,available=false,writes=0,currentReads=0;const replies:any[]=[];server.reply=(_id,result)=>{replies.push(result)};
+ const tool=scenario==='receipt-error'?'gigi_music_import':'gigi_music_organize';
+ mcp.request=async(method,p)=>{
+  if(p.name==='gigi_music_get'){currentReads++;if(args)throw Error('later entry changed or removed');return {structuredContent:{id:'m',title:'Before',organizationRevision:'a'.repeat(64)}};}
+  if(p.name===tool){writes++;args=p.arguments;if(scenario==='receipt-error')return {isError:true,content:[{type:'text',text:'Import may have completed but its receipt could not be saved. Inspect Your music before retrying.'}]};throw Error('lost response');}
+  if(p.name==='gigi_music_import_status')return {structuredContent:{state:'unknown'}};
+  if(p.name==='gigi_music_organize_status'){
+   assert.equal(p.arguments.requestId,args.requestId);assert.equal(p.arguments.workspaceId,'w');if(!available)return {structuredContent:{state:'unknown'}};
+   const status:any={state:'completed',workspaceId:'w',requestId:args.requestId,input:structuredClone(args),receipt:{saved:true,id:'m',item:{id:'m',title:'After'},uploaded:false,originalsUnchanged:true}};
+   if(scenario==='wrong-input')status.input.expectedRevision='b'.repeat(64);if(scenario==='wrong-request')status.requestId='other';if(scenario==='wrong-workspace')status.workspaceId='foreign';return {structuredContent:status};
+  }return original(method,p);
+ };
+ const {sessionId}=await adapter.start({workspaceId:'w',message:'Organize'});const message={id:280,method:'item/tool/call',params:{threadId:'thread-1',tool,arguments:tool==='gigi_music_import'?{mode:'files'}:{id:'m',fields:{title:'After'}}}};await Promise.all(server.events.map(fn=>fn(message)));
+ const pending=await adapter.read({workspaceId:'w',sessionId});const uncertain=await adapter.approve({workspaceId:'w',sessionId,approvalId:pending.approvals[0].id,decision:'approve'});assert.equal(uncertain.decisionReceipt?.outcome,'unknown');available=true;
+ const recovered=await adapter.read({workspaceId:'w',sessionId});const unknown=scenario.startsWith('wrong')||scenario==='receipt-error';assert.equal(recovered.decisionReceipt?.outcome,unknown?'unknown':'verified');assert.equal(currentReads,tool==='gigi_music_import'?0:1);assert.equal(writes,1);
+ if(unknown){await Promise.all(server.events.map(fn=>fn({...message,id:281})));assert.equal(writes,1);assert.match(replies.at(-1).contentItems[0].text,/unknown/);}
+});
