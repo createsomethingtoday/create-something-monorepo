@@ -20,7 +20,7 @@
       <figcaption><span>Your dot. Your workflow.</span><span>Illustrative example / 01</span></figcaption>
       <div class="record-problem"><span class="record-label">The goal</span><p>“Help my ChatGPT dot prepare website updates for my review.”</p></div>
       <div class="workflow-path" aria-label="Proposed workflow"><span>Your ChatGPT dot</span><span aria-hidden="true">→</span><span>Website + codebase</span><span aria-hidden="true">→</span><span>Your review</span></div>
-      <p class="record-context">We check compatibility, connect or build the missing pieces, and agree on what your dot may access. An MCP connection or a prose.md workflow may help, where your setup supports it.</p>
+      <p class="record-context">We check compatibility, connect or build the missing pieces, and agree on what your dot may access. We may add a tool connection or written instructions for the task, depending on what your setup supports.</p>
       <details class="example-receipt">
         <summary>Inspect the proposed handoff <span aria-hidden="true">+</span></summary>
         <dl>
