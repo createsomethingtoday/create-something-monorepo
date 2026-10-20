@@ -32,9 +32,13 @@ describe('Mac preview landing', () => {
     expect(canvasPage).toContain('href="/download" target="_blank" rel="noreferrer"');
   });
 
-  it('uses the provenance-tracked Draw communication image without baking claims into it', () => {
-    expect(page).toContain('/images/draw/draw-together-mapping-instrument.webp');
-    expect(page).toContain('alt="A tactile desktop mapping plane linked to a smaller handheld companion plane"');
-    expect(page).toContain('<figcaption>');
+  it('uses an accessible explanatory figure instead of decorative media', () => {
+    const figure = readFileSync(new URL('./DrawExplainer.svelte', import.meta.url), 'utf8');
+    expect(page).toContain('<DrawExplainer />');
+    expect(figure).toContain('aria-pressed={stage === i}');
+    expect(figure).toContain('<desc id="drawing-desc">');
+    expect(figure).toContain('prefers-reduced-motion:reduce');
+    expect(figure).toContain('no live canvas, AI connection or automated action');
+    expect(page).toContain('mailto:support@createsomething.io');
   });
 });
