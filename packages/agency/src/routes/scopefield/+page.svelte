@@ -16,47 +16,57 @@
   <section class="opening" id="opening" aria-labelledby="scopefield-title">
     <div class="edition"><a href="/products">Products</a><span>Mac public beta · 0.1.0-beta.1</span></div>
     <div class="hero-grid">
-      <div><p class="eyebrow">A browser for the way we want to work</p><h1 id="scopefield-title">The page<br />comes <em>first.</em></h1></div>
+      <div><p class="eyebrow">Scopefield / A browser by CREATE SOMETHING</p><h1 id="scopefield-title">Your browser.<br /><em>Your call.</em></h1></div>
       <div class="hero-aside">
-        <p class="lede">Room to browse.<br />A workspace when you need it.<br />Control you can see.</p>
-        <p class="support">We’re building Scopefield for our daily AI work and client work. Page review is the first working part of that direction.</p>
-        <a class="primary" href="#handoff">Explore the Mac beta <span aria-hidden="true">↘</span></a>
-        <p class="compatibility">Apple Silicon · macOS 13+<br />An early beta, not yet a daily-browser replacement.</p>
+        <p class="lede">A URL browser with room for the page, the work, and your decisions.</p>
+        <p class="support">Explore the published Mac beta. See separately how we’re testing bounded context sharing with AI agents.</p>
+        <a class="primary" href={downloadUrl}>Download the Mac beta <span aria-hidden="true">↘</span></a>
+        <p class="compatibility">0.1.0-beta.1 · Apple Silicon · macOS 13+<br />ZIP · 131 MB · Early beta, not a daily-browser replacement.</p><a class="text-link hero-details" href="#handoff">Requirements, installation &amp; integrity ↓</a>
       </div>
     </div>
-    <div class="opening-footer"><span class="product-name">Scopefield</span><a href="#focused-proof">Scroll through the idea <span aria-hidden="true">↓</span></a></div>
+    <div class="opening-footer"><span class="product-name"><img src="/scopefield/mark.svg" width="52" height="52" alt="" />Scopefield</span><a href="#focused-proof">Understand the boundary <span aria-hidden="true">↓</span></a></div>
   </section>
 
   <section class="proof" id="focused-proof" aria-labelledby="story-title">
-    <div class="story-heading"><p class="eyebrow">01 / A little less between you and the work</p><h2 id="story-title">Open space.<br /><em>Close at hand.</em></h2><p>The page, the workspace, and the decision belong together. They don’t all need to be in the way.</p></div>
+    <div class="story-heading"><p class="eyebrow">01 / Anatomy of a bounded task</p><h2 id="story-title">What crosses<br /><em>the boundary?</em></h2><p>A conceptual model of context, recipient, approval, interruption, and evidence. The capability record below states what is actually available.</p></div>
     <ScopefieldStory />
     <div class="reality">
       <div><p class="eyebrow">02 / Direction, with a boundary</p><h2>Built toward<br />daily AI work.<br /><em>Starting here.</em></h2></div>
       <div class="reality-body"><p class="section-lede">The illustration explains the idea. The public beta is a smaller, specific release.</p>
         <dl>
           <div><dt>Available in beta 1</dt><dd>A Mac browser and collapsible Page workspace. Experimental public browsing is an explicit opt-in.</dd></div>
-          <div><dt>Practice, clearly separated</dt><dd>Agent activity uses synthetic practice pages. It is not evidence of live AI control on public sites.</dd></div>
-          <div><dt>Still being qualified</dt><dd>Daily-browser reliability and general login/SSO. Public agent execution is not implemented or qualified. Browsing never grants project access or deployment permission.</dd></div>
+          <div><dt>Verified locally · newer candidate</dt><dd>Codex observation was exercised; its human-approved action loop remains unverified. Claude has only a browser-side check that one page observation was read and the connection was cleaned up. These results do not qualify general agent actions or describe features in this download.</dd></div>
+          <div><dt>Roadmap · unavailable today</dt><dd>Agent access to real websites is disabled. There is no supported way to attach Dots. Here “Dots” refers to ChatGPT dots; no integration or partnership is implied. Daily-browser reliability and general login/SSO remain unqualified.</dd></div>
         </dl>
-        <div class="release-proof"><span class="proof-label">Public release</span><p>Signed by Create Something LLC.<br />Notarized by Apple.</p><a href={`${releaseRoot}/README.txt`}>Read the beta release notes <span aria-hidden="true">↗</span></a></div>
+        <p class="candidate-note">The newer 0.1.2-beta.9 candidate is not notarized or published. It is not offered for download here.</p><div class="release-proof"><span class="proof-label">Public release</span><p>Signed by Create Something LLC.<br />Notarized by Apple.<br /><small>Applies to published beta1 only.</small></p><a href={`${releaseRoot}/README.txt`}>Read the beta release notes <span aria-hidden="true">↗</span></a></div>
       </div>
     </div>
   </section>
 
   <section class="download" id="handoff" aria-labelledby="download-title">
-    <div class="download-intro"><p class="eyebrow">03 / Try Scopefield</p><h2 id="download-title">A small start.<br /><em>A real beta.</em></h2><p>For exploring the browser and workspace on an Apple Silicon Mac. Read the limits before you install.</p><a class="primary" href={downloadUrl}>Download for Apple Silicon <span aria-hidden="true">↓</span></a><p class="compatibility">0.1.0-beta.1 · macOS 13 or newer · ZIP, 131 MB</p><a class="text-link" href={`${releaseRoot}/SHA256SUMS.txt`}>Verify the download checksum <span aria-hidden="true">↗</span></a></div>
+    <div class="download-intro"><p class="eyebrow">03 / Try Scopefield</p><h2 id="download-title">A small start.<br /><em>A real beta.</em></h2><p>For exploring the browser and workspace on an Apple Silicon Mac. Read the limits before you install.</p><a class="primary" href={downloadUrl}>Download for Apple Silicon <span aria-hidden="true">↓</span></a><p class="compatibility">0.1.0-beta.1 · macOS 13 or newer · ZIP, 131 MB</p><a class="text-link" href={`${releaseRoot}/SHA256SUMS.txt`}>Verify the download checksum <span aria-hidden="true">↗</span></a><details class="integrity"><summary>SHA-256 · published beta1</summary><code>0289e532714af555c11c4c6be0d701179fb7f2fb52616607ddc775d1412fdca6</code><p>Run <code>shasum -a 256</code> on the downloaded ZIP and compare all 64 characters with this value.</p></details></div>
     <div class="install-details">
       <h3>Before you install</h3>
       <ul class="limits"><li>Experimental public HTTPS only: IPv4, port 443.</li><li>Up to eight browser tabs.</li><li>General login and SSO are not qualified for this beta.</li><li>Public agent navigation and native WebMCP execution are unavailable.</li><li>No automatic updates.</li></ul>
       <h3>Install on your Mac</h3>
       <ol class="install-steps"><li><span>Unzip the download.</span></li><li><span>Copy Scopefield.app to Applications. Preserve any existing copy before replacing it.</span></li><li><span>Open Scopefield normally.</span></li></ol>
       <p class="install-note">To browse public sites, enable <strong>Experimental public browsing</strong> in browsing settings. Save for next launch, quit, and reopen normally.</p>
-      <a class="text-link" href={`${releaseRoot}/README.txt`}>Full installation notes <span aria-hidden="true">↗</span></a>
+      <a class="text-link" href={`${releaseRoot}/README.txt`}>Full installation notes <span aria-hidden="true">↗</span></a><p class="install-note">Questions or a problem with the beta?<br /><a href="mailto:support@createsomething.io">support@createsomething.io</a></p>
     </div>
   </section>
 </div>
 
 <style>
+  .hero-details { display:inline-block; margin-top:1rem; padding-block:0.5rem; }
+  .candidate-note { margin-top:1.5rem; font-size:0.85rem; line-height:1.6; color:var(--color-performance-muted); }
+  .product-name img { background:#f3f3f0; border-radius:6px; padding:4px; }
+  .product-name { display:flex; align-items:center; gap:1rem; }
+  .integrity { margin-top:1.5rem; border-top:1px solid var(--color-performance-line); font-size:0.8rem; line-height:1.6; }
+  summary { cursor:pointer; padding:1rem 0; min-height:44px; }
+  .integrity code { overflow-wrap:anywhere; }
+  .integrity > code { display:block; margin-bottom:1rem; }
+  summary:focus-visible { outline:2px solid var(--color-performance-focus); outline-offset:4px; }
+  @media print { .opening,.proof,.download { padding:1.5rem 0 !important; } .hero-grid,.reality,.download { display:block !important; } h1 { font-size:3rem !important; } h2 { font-size:2rem !important; } .primary { background:transparent !important; color:#000 !important; } .integrity > * { display:block !important; } }
   .scopefield-page { color: var(--color-performance-ink); font-family: var(--font-performance-sans); }
   .opening, .proof, .download { padding: clamp(2rem, 5vw, 6rem) 6vw; }
   .opening { padding-top: 1rem; }

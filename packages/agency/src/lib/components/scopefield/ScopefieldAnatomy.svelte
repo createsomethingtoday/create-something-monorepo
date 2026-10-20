@@ -3,7 +3,7 @@
   let { stage = 2, still = true }: { stage?: number; still?: boolean } = $props();
 </script>
 
-<div class="anatomy" class:still data-stage={still ? 2 : stage}>
+<div class="anatomy" class:still data-stage={stage}>
   <svg viewBox="0 0 760 500" aria-hidden="true" focusable="false">
     <ellipse class="shadow" cx="355" cy="350" rx="260" ry="78" />
     <g class="base">{#each base as face}<path d={face.path} class={face.tone} />{/each}</g>
@@ -15,24 +15,24 @@
 </div>
 
 <style>
-  .anatomy { --iso-top: var(--color-operator-raised); --iso-side: var(--color-operator-background); --iso-front: var(--color-operator-secondary); --iso-line: var(--color-operator-focus-ring-accessible); width: 100%; }
+  .anatomy { --iso-top: var(--color-performance-paper-fold); --iso-side: var(--color-performance-ink); --iso-front: var(--color-performance-paper-edge); --iso-line: var(--color-performance-muted); width: 100%; }
   svg { width: 100%; height: auto; display: block; overflow: visible; }
   path { stroke: var(--iso-line); stroke-width: 0.65; stroke-linejoin: round; }
   .top { fill: var(--iso-top); }
   .side { fill: var(--iso-side); }
   .front { fill: var(--iso-front); }
-  .edge { fill: var(--color-operator-hover); }
-  .paper { fill: var(--color-operator-foreground); }
-  .ink { fill: none; stroke: var(--color-operator-background); stroke-width: 1.2; }
-  .signal { fill: var(--color-operator-status-paused-text); stroke: var(--color-operator-status-paused-text); }
-  .shadow { fill: var(--color-operator-background); opacity: 0.7; }
+  .edge { fill: var(--color-performance-panel); }
+  .paper { fill: var(--color-performance-paper); }
+  .ink { fill: none; stroke: var(--color-performance-ink); stroke-width: 1.2; }
+  .signal { fill: var(--color-performance-ink); stroke: var(--color-performance-ink); }
+  .shadow { fill: var(--color-performance-ink); opacity: 0.08; }
   .screw { fill: var(--iso-side); stroke: var(--iso-line); stroke-width: 0.6; }
   .screw-core { fill: var(--iso-line); }
   .drawer { transform: var(--travel); }
   .control { opacity: 1; }
   .anatomy:not(.still) .drawer { transition: transform var(--duration-complex) var(--ease-standard); }
   .anatomy:not(.still) .control { transition: opacity var(--duration-slow) var(--ease-standard); }
-  .anatomy:not(.still)[data-stage='0'] .drawer { transform: translate(0,0); }
-  .anatomy:not(.still):not([data-stage='2']) .control { opacity: 0.3; }
+  .anatomy[data-stage='0'] .drawer { transform: translate(0,0); }
+  .anatomy[data-stage='0'] .control, .anatomy[data-stage='1'] .control { opacity: 0.3; }
   @media (prefers-reduced-motion: reduce) { .drawer, .control { transition: none !important; } }
 </style>

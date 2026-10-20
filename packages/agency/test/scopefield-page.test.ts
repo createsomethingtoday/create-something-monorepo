@@ -10,7 +10,5 @@ test('Scopefield parent navigation names the Products destination', () => {
   assert.equal(link[1].trim(), 'Products', 'The link must name its destination, not the current product');
 });
 
-test('short viewports release the pinned illustration at every width', () => {
-  const story = readFileSync(new URL('../src/lib/components/scopefield/ScopefieldStory.svelte', import.meta.url), 'utf8');
-  assert.match(story, /@media \(max-height: 650px\)\s*\{\s*\.enhanced \.stage-column,\s*\.enhanced \.stage\s*\{\s*position: static;/);
-});
+// Scroll pinning was removed. Rendered keyboard, touch, no-JavaScript, print
+// and reduced-motion acceptance is documented in anatomy-provenance.md.
