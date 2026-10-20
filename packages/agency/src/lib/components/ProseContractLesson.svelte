@@ -1,3 +1,7 @@
+<script>
+  import ProseContractXRay from './ProseContractXRay.svelte';
+</script>
+
 <section class="contract-lesson" aria-labelledby="contract-lesson-title">
   <header>
     <p class="eyebrow">Inside an AI-enabled workflow</p>
@@ -7,7 +11,7 @@
   <div class="lesson-layout">
     <figure>
       <div class="figure-label"><span>Fig. 01</span><span>A contract reader</span></div>
-      <img src="/diagrams/contract-reader.svg" width="360" height="558" loading="lazy" alt="Illustrative contract reader: contract enters, orchestration and host controls handle the work, and a receipt records what was observed." />
+      <ProseContractXRay />
       <figcaption>Our four-part teaching model. No task is running; this is not a receipt from client work.</figcaption>
     </figure>
     <div class="lesson-parts">
@@ -41,7 +45,6 @@
   .lesson-layout { display: grid; grid-template-columns: minmax(0,.75fr) minmax(0,1.25fr); gap: clamp(2rem,5vw,5rem); margin-top: 2rem; align-items: start; }
   figure { margin: 0; padding: 1rem; background: var(--color-performance-shell-surface-secondary); border: 1px solid var(--color-performance-shell-border-strong); }
   .figure-label { display: flex; justify-content: space-between; gap: 1rem; }
-  img { display: block; width: min(100%,360px); height: auto; margin: 1.25rem auto; }
   figcaption { font-size: .75rem; line-height: 1.6; color: var(--color-performance-fg-secondary); }
   ol { margin: 0; padding-left: 1.5rem; }
   ol > li { padding-left: .5rem; margin-bottom: 1.5rem; }
