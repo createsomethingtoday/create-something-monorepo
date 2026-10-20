@@ -1,5 +1,6 @@
 <script lang="ts">
   import { Button, MeridianAccordion } from '@create-something/canon';
+  import MembershipPlanJourney from './MembershipPlanJourney.svelte';
   import { PUBLIC_PRICING } from '$lib/data/publicPricing';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
@@ -102,6 +103,7 @@
   {#if compact}
     <p class="ownership-summary">You keep the agreed code, tests and instructions under your agreement, with reusable tools licensed for continued use. <a href="/services">See how delivery works →</a> <a href="/stack">What you keep →</a></p>
   {/if}
+  <MembershipPlanJourney />
   <div class="cost-boundary" aria-labelledby="cost-boundary-title">
     <p class="eyebrow">Delivery and usage are separate</p>
     <h3 id="cost-boundary-title">Know the cost before the work starts.</h3>
