@@ -47,3 +47,13 @@ test('consent navigation carries the selected provider for diagnostics', async (
   await bridge.openConsent('https://connect.composio.dev/synthetic', 'googlecalendar');
   assert.deepEqual(calls, [{ operation: 'connections.openConsent', input: { url: 'https://connect.composio.dev/synthetic', provider: 'googlecalendar' } }]);
 });
+
+test('People search sends trimmed local query and cursor without changing other collections', async () => {
+  const calls=[]; const bridge=createBridge(async (_command,args)=>{calls.push(args);return {};});
+  await bridge.listRecords('w1','contacts','20','  NORTH  ');
+  assert.deepEqual(calls[0].input,{workspaceId:'w1',entity:'contacts',cursor:'20',query:'NORTH'});
+  await bridge.listRecords('w1','contacts',null,' ');
+  assert.equal(calls[1].input.query,undefined);
+  await bridge.listRecords('w1','gigs',null,'secret');
+  assert.equal(calls[2].input.query,undefined);
+});

@@ -662,6 +662,24 @@ pub fn dispatch(root: &Path, op: &str, input: Value) -> Result<Value, String> {
                 .or_else(|| input.get("offset").and_then(Value::as_u64))
                 .unwrap_or(0)
                 .min(100_000) as i64;
+            let query = input.get("query").and_then(Value::as_str).unwrap_or("").trim().to_lowercase();
+            if query.chars().count() > 160 { return Err("search query is too long".into()); }
+            if entity == "contacts" && !query.is_empty() {
+                // Search only existing contact fields and linked company titles. Never return
+                // the searchable values or private notes in this compact list projection.
+                let mut stmt = db.prepare("SELECT c.id,c.title,c.status,c.updated_at,json_extract(c.fields_json,'$.Email'),json_extract(c.fields_json,'$.Phone'),(SELECT group_concat(co.title, char(10)) FROM companies co WHERE co.workspace_id=c.workspace_id AND EXISTS (SELECT 1 FROM relations r WHERE r.workspace_id=c.workspace_id AND ((r.from_entity='contacts' AND r.from_id=c.id AND r.to_entity='companies' AND r.to_id=co.id) OR (r.to_entity='contacts' AND r.to_id=c.id AND r.from_entity='companies' AND r.from_id=co.id)))) FROM contacts c WHERE c.workspace_id=?1 ORDER BY c.updated_at DESC,c.id").map_err(|e|e.to_string())?;
+                let found = stmt.query_map([wid], |r| Ok((r.get::<_,String>(0)?,r.get::<_,String>(1)?,r.get::<_,Option<String>>(2)?,r.get::<_,String>(3)?,r.get::<_,Option<String>>(4)?,r.get::<_,Option<String>>(5)?,r.get::<_,Option<String>>(6)?))).map_err(|e|e.to_string())?;
+                let mut count = 0i64; let mut items = Vec::new();
+                for row in found {
+                    let (id,title,status,updated,email,phone,company) = row.map_err(|e|e.to_string())?;
+                    if [&title,email.as_deref().unwrap_or(""),phone.as_deref().unwrap_or(""),company.as_deref().unwrap_or("")].iter().any(|value| value.to_lowercase().contains(&query)) {
+                        if count >= offset && count < offset + limit { items.push(json!({"id":id,"workspaceId":wid,"entity":entity,"title":title.chars().take(120).collect::<String>(),"titleTruncated":title.chars().count()>120,"status":status,"updatedAt":updated})); }
+                        count += 1;
+                    }
+                }
+                let next = if offset + limit < count { Some((offset + limit).to_string()) } else { None };
+                return Ok(json!({"items":items,"count":count,"limit":limit,"nextCursor":next}));
+            }
             let sql=format!("SELECT id,title,status,occurred_at,money_cents,updated_at,json_extract(fields_json,'$.\"All Day\"'),json_extract(fields_json,'$.\"Call Time\"'),json_extract(fields_json,'$.\"Set Time\"') FROM {entity} WHERE workspace_id=?1 ORDER BY updated_at DESC,id LIMIT ?2 OFFSET ?3");
             let mut stmt = db.prepare(&sql).map_err(|e| e.to_string())?;
             let items=stmt.query_map(params![wid,limit,offset],|r|{
@@ -1097,6 +1115,29 @@ mod tests {
         .unwrap();
         assert_eq!(got["fields"]["Fee"], 12500);
         let _ = std::fs::remove_dir_all(root);
+    }
+    #[test]
+    fn contact_search_matches_local_fields_companies_and_paginates_without_private_payloads() {
+        let root = temp();
+        let w = dispatch(&root,"workspace.create",json!({"name":"Search"})).unwrap(); let wid=&w["id"];
+        let a=dispatch(&root,"records.save",json!({"workspaceId":wid,"entity":"contacts","title":"ÉLODIE Rivera","fields":{"Email":"Stage@Example.test","Phone":"555-0101","Rate Notes":"hidden-secret"}})).unwrap();
+        let b=dispatch(&root,"records.save",json!({"workspaceId":wid,"entity":"contacts","title":"Other person"})).unwrap();
+        let company=dispatch(&root,"records.save",json!({"workspaceId":wid,"entity":"companies","title":"North Studio"})).unwrap();
+        dispatch(&root,"relations.link",json!({"workspaceId":wid,"fromEntity":"companies","fromId":company["id"],"toEntity":"contacts","toId":a["id"],"role":"Contacts"})).unwrap();
+        for q in ["élodie", "STAGE@EXAMPLE", "555-0101", "north studio"] {
+            let r=dispatch(&root,"records.list",json!({"workspaceId":wid,"entity":"contacts","query":q})).unwrap();
+            assert_eq!(r["count"],1,"{q}"); assert_eq!(r["items"][0]["id"],a["id"]); assert!(!r.to_string().contains("hidden-secret"));
+        }
+        for q in ["hidden-secret", "%", "no match"] {assert_eq!(dispatch(&root,"records.list",json!({"workspaceId":wid,"entity":"contacts","query":q})).unwrap()["count"],0);}
+        let r=dispatch(&root,"records.list",json!({"workspaceId":wid,"entity":"contacts","query":" ","limit":1})).unwrap(); assert_eq!(r["count"],2); assert_eq!(r["nextCursor"],"1");
+        let r=dispatch(&root,"records.list",json!({"workspaceId":wid,"entity":"contacts","query":"other","limit":1})).unwrap(); assert_eq!(r["items"][0]["id"],b["id"]); assert!(r["nextCursor"].is_null());
+        dispatch(&root,"records.save",json!({"workspaceId":wid,"entity":"contacts","title":"Another person"})).unwrap();
+        let first=dispatch(&root,"records.list",json!({"workspaceId":wid,"entity":"contacts","query":"person","limit":1})).unwrap();
+        let second=dispatch(&root,"records.list",json!({"workspaceId":wid,"entity":"contacts","query":"person","limit":1,"cursor":first["nextCursor"]})).unwrap();
+        assert_eq!(first["count"],2);assert_eq!(second["count"],2);assert_ne!(first["items"][0]["id"],second["items"][0]["id"]);assert!(second["nextCursor"].is_null());
+        dispatch(&root,"records.save",json!({"workspaceId":wid,"entity":"companies","title":"Unlinked Company"})).unwrap();
+        assert_eq!(dispatch(&root,"records.list",json!({"workspaceId":wid,"entity":"contacts","query":"Unlinked"})).unwrap()["count"],0);
+        let _=fs::remove_dir_all(root);
     }
     #[test]
     fn gig_list_exposes_only_agenda_times_without_full_private_fields() {
