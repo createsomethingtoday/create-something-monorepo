@@ -1,6 +1,6 @@
 {
   "id": "substrate:create-something:operating-slice-review:internal",
-  "generatedAt": "2026-10-13T14:05:51.489Z",
+  "generatedAt": "2026-10-20T14:05:08.349Z",
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
   "sourceCoverageId": "substrate:create-something:atlas-coverage:internal",
@@ -203,6 +203,7 @@
         "substrate:create-something:guide:docs-guides-antigravity-mcp-enablement-md",
         "substrate:create-something:guide:docs-guides-arena-taste-integration-md",
         "substrate:create-something:guide:docs-guides-atlas-linear-integration-md",
+        "substrate:create-something:guide:docs-guides-atlas-substrate-agent-context-md",
         "substrate:create-something:guide:docs-guides-bounded-research-interrupt-runbook-md",
         "substrate:create-something:guide:docs-guides-browser-proof-and-closeout-runbook-md",
         "substrate:create-something:guide:docs-guides-chatgpt-mcp-oauth-managed-bearer-md",
@@ -213,6 +214,7 @@
         "substrate:create-something:guide:docs-guides-commit-driven-marketing-schedule-md",
         "substrate:create-something:guide:docs-guides-component-guide-md",
         "substrate:create-something:guide:docs-guides-ctx-to-draw-storytelling-playbook-md",
+        "substrate:create-something:guide:docs-guides-daily-work-log-runbook-md",
         "substrate:create-something:guide:docs-guides-dify-bettermode-creator-agent-md",
         "substrate:create-something:guide:docs-guides-dify-first-agent-control-plane-md",
         "substrate:create-something:guide:docs-guides-dify-partner-affiliate-operating-runbook-md",
@@ -277,7 +279,7 @@
       "owner": "CREATE SOMETHING",
       "tier": "Mixed",
       "surface": "guide",
-      "nodeCount": 80,
+      "nodeCount": 82,
       "evidence": [
         "docs/guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md",
         "docs/guides/AGENCY_GOVERNANCE_PRODUCTS_OPERATIONS_RUNBOOK.md",
@@ -289,8 +291,8 @@
         "docs/guides/ANTIGRAVITY_MCP_ENABLEMENT.md",
         "docs/guides/ARENA_TASTE_INTEGRATION.md",
         "docs/guides/ATLAS_LINEAR_INTEGRATION.md",
-        "docs/guides/BOUNDED_RESEARCH_INTERRUPT_RUNBOOK.md",
-        "docs/guides/BROWSER_PROOF_AND_CLOSEOUT_RUNBOOK.md"
+        "docs/guides/ATLAS_SUBSTRATE_AGENT_CONTEXT.md",
+        "docs/guides/BOUNDED_RESEARCH_INTERRUPT_RUNBOOK.md"
       ],
       "validationCommands": [
         "pnpm --filter @create-something/database-layer atlas-coverage:generate",

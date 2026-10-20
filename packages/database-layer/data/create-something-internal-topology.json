@@ -4,14 +4,14 @@
   "atlasCanvasId": "create-something-internal-operating-topology",
   "rootNodeId": "substrate:create-something:root",
   "coverage": {
-    "generatedAt": "2026-10-13T14:05:51.285Z",
+    "generatedAt": "2026-10-20T14:05:08.031Z",
     "rootPath": ".",
     "packageCount": 245,
     "appCount": 14,
     "workerCount": 117,
     "clientOverlayCount": 8,
     "policyCount": 64,
-    "guideCount": 80,
+    "guideCount": 82,
     "configCount": 40
   },
   "nodes": [
@@ -7923,6 +7923,21 @@
       ]
     },
     {
+      "id": "substrate:create-something:guide:docs-guides-atlas-substrate-agent-context-md",
+      "atlasNodeId": "atlas_create-something_guide_docs-guides-atlas-substrate-agent-context-md",
+      "title": "ATLAS_SUBSTRATE_AGENT_CONTEXT.md",
+      "path": "docs/guides/ATLAS_SUBSTRATE_AGENT_CONTEXT.md",
+      "tier": "Mixed",
+      "surface": "guide",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "guide artifact in the CREATE SOMETHING operating topology.",
+      "tags": [
+        "guide",
+        "documentation"
+      ]
+    },
+    {
       "id": "substrate:create-something:guide:docs-guides-bounded-research-interrupt-runbook-md",
       "atlasNodeId": "atlas_create-something_guide_docs-guides-bounded-research-interrupt-runbook-md",
       "title": "BOUNDED_RESEARCH_INTERRUPT_RUNBOOK.md",
@@ -8062,6 +8077,21 @@
       "atlasNodeId": "atlas_create-something_guide_docs-guides-ctx-to-draw-storytelling-playbook-md",
       "title": "CTX_TO_DRAW_STORYTELLING_PLAYBOOK.md",
       "path": "docs/guides/CTX_TO_DRAW_STORYTELLING_PLAYBOOK.md",
+      "tier": "Mixed",
+      "surface": "guide",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "guide artifact in the CREATE SOMETHING operating topology.",
+      "tags": [
+        "guide",
+        "documentation"
+      ]
+    },
+    {
+      "id": "substrate:create-something:guide:docs-guides-daily-work-log-runbook-md",
+      "atlasNodeId": "atlas_create-something_guide_docs-guides-daily-work-log-runbook-md",
+      "title": "DAILY_WORK_LOG_RUNBOOK.md",
+      "path": "docs/guides/DAILY_WORK_LOG_RUNBOOK.md",
       "tier": "Mixed",
       "surface": "guide",
       "owner": "CREATE SOMETHING",
@@ -12709,6 +12739,13 @@
       "evidence": "docs/guides/ATLAS_LINEAR_INTEGRATION.md is present in the repo scan."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-atlas-substrate-agent-context-md",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:guide:docs-guides-atlas-substrate-agent-context-md",
+      "relation": "contains",
+      "evidence": "docs/guides/ATLAS_SUBSTRATE_AGENT_CONTEXT.md is present in the repo scan."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-bounded-research-interrupt-runbook-md",
       "source": "substrate:create-something:root",
       "target": "substrate:create-something:guide:docs-guides-bounded-research-interrupt-runbook-md",
@@ -12777,6 +12814,13 @@
       "target": "substrate:create-something:guide:docs-guides-ctx-to-draw-storytelling-playbook-md",
       "relation": "contains",
       "evidence": "docs/guides/CTX_TO_DRAW_STORYTELLING_PLAYBOOK.md is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-daily-work-log-runbook-md",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:guide:docs-guides-daily-work-log-runbook-md",
+      "relation": "contains",
+      "evidence": "docs/guides/DAILY_WORK_LOG_RUNBOOK.md is present in the repo scan."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-dify-bettermode-creator-agent-md",
@@ -16223,6 +16267,13 @@
       "evidence": "docs/guides/ATLAS_LINEAR_INTEGRATION.md is an operating guide."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-atlas-substrate-agent-context-md-documents-substrate-create-something-root",
+      "source": "substrate:create-something:guide:docs-guides-atlas-substrate-agent-context-md",
+      "target": "substrate:create-something:root",
+      "relation": "documents",
+      "evidence": "docs/guides/ATLAS_SUBSTRATE_AGENT_CONTEXT.md is an operating guide."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-bounded-research-interrupt-runbook-md-documents-substrate-create-something-root",
       "source": "substrate:create-something:guide:docs-guides-bounded-research-interrupt-runbook-md",
       "target": "substrate:create-something:root",
@@ -16291,6 +16342,13 @@
       "target": "substrate:create-something:root",
       "relation": "documents",
       "evidence": "docs/guides/CTX_TO_DRAW_STORYTELLING_PLAYBOOK.md is an operating guide."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-daily-work-log-runbook-md-documents-substrate-create-something-root",
+      "source": "substrate:create-something:guide:docs-guides-daily-work-log-runbook-md",
+      "target": "substrate:create-something:root",
+      "relation": "documents",
+      "evidence": "docs/guides/DAILY_WORK_LOG_RUNBOOK.md is an operating guide."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-dify-bettermode-creator-agent-md-documents-substrate-create-something-root",
@@ -17273,6 +17331,13 @@
       "evidence": "docs/guides/ATLAS_LINEAR_INTEGRATION.md documents packages/interaction-atlas-mcp through matching topology terms."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-atlas-substrate-agent-context-md-documents-substrate-create-something-package-create-something-substrate-mcp-packages-substrate-mcp",
+      "source": "substrate:create-something:guide:docs-guides-atlas-substrate-agent-context-md",
+      "target": "substrate:create-something:package:create-something-substrate-mcp-packages-substrate-mcp",
+      "relation": "documents",
+      "evidence": "docs/guides/ATLAS_SUBSTRATE_AGENT_CONTEXT.md documents packages/substrate-mcp through matching topology terms."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-bounded-research-interrupt-runbook-md-documents-substrate-create-something-package-create-something-arc-packages-arc",
       "source": "substrate:create-something:guide:docs-guides-bounded-research-interrupt-runbook-md",
       "target": "substrate:create-something:package:create-something-arc-packages-arc",
@@ -17334,6 +17399,13 @@
       "target": "substrate:create-something:package:create-something-arc-packages-arc",
       "relation": "documents",
       "evidence": "docs/guides/CTX_TO_DRAW_STORYTELLING_PLAYBOOK.md documents packages/arc through matching topology terms."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-daily-work-log-runbook-md-documents-substrate-create-something-package-create-something-arc-packages-arc",
+      "source": "substrate:create-something:guide:docs-guides-daily-work-log-runbook-md",
+      "target": "substrate:create-something:package:create-something-arc-packages-arc",
+      "relation": "documents",
+      "evidence": "docs/guides/DAILY_WORK_LOG_RUNBOOK.md documents packages/arc through matching topology terms."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-dify-bettermode-creator-agent-md-documents-substrate-create-something-agent-config-config-dify-agents-bettermode-marketplace-creator-agent-json",

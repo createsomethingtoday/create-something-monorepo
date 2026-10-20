@@ -1,6 +1,6 @@
 {
   "id": "substrate:create-something:operating-slice-readiness:internal",
-  "generatedAt": "2026-10-13T14:05:51.535Z",
+  "generatedAt": "2026-10-20T14:05:08.402Z",
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
   "sourceReviewId": "substrate:create-something:operating-slice-review:internal",
@@ -71,7 +71,7 @@
         "runtime": "cloudflare",
         "runtimeConfigRecords": 117,
         "workerPackageRecords": 28,
-        "bindingRefs": 622,
+        "bindingRefs": 626,
         "routeRefs": 25,
         "bindingKinds": {
           "assets": 8,
@@ -79,15 +79,15 @@
           "durable_object": 45,
           "kv": 39,
           "queue": 16,
-          "r2": 22,
+          "r2": 23,
           "route": 25,
-          "var": 372,
+          "var": 375,
           "vectorize": 2
         },
         "workersWithD1": 78,
         "workersWithDurableObjects": 41,
         "workersWithQueues": 10,
-        "workersWithR2": 22,
+        "workersWithR2": 23,
         "secretHandling": "Readiness uses binding names, route refs, and environment variable keys from repo config. It does not capture secret values."
       }
     },
@@ -99,20 +99,20 @@
       "tier": "Mixed",
       "surface": "guide",
       "owner": "CREATE SOMETHING",
-      "recordCount": 80,
-      "mappedRecordCount": 80,
+      "recordCount": 82,
+      "mappedRecordCount": 82,
       "missingRecordIds": [],
       "gates": [
         {
           "id": "topology_records_exist",
           "status": "pass",
-          "summary": "80/80 slice records exist in the internal topology.",
+          "summary": "82/82 slice records exist in the internal topology.",
           "evidence": "packages/database-layer/data/create-something-internal-topology.json"
         },
         {
           "id": "topology_records_mapped",
           "status": "pass",
-          "summary": "80/80 slice records are mapped.",
+          "summary": "82/82 slice records are mapped.",
           "evidence": "packages/database-layer/data/create-something-internal-topology.json"
         },
         {
