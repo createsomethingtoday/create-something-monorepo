@@ -1,81 +1,68 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import ScopefieldAnatomy from './ScopefieldAnatomy.svelte';
-  let root: HTMLElement;
   let active = $state(0);
   let mounted = $state(false);
   let reduced = $state(true);
-  let paused = $state(false);
   const steps = [
-    {id:'page-first', label:'01 / The page', title:'Give the page the room.', copy:'Our daily work starts on the web: reading, comparing, and understanding what is in front of us. The browser should make space for that.', fact:'In the public beta: browse with the Page workspace hidden. Public browsing requires an explicit opt-in.'},
-    {id:'workspace-close', label:'02 / The workspace', title:'Bring the work closer.', copy:'When a detail needs attention, bring the workspace into reach. For client work, keep the page and the review close before deciding what to hand off.', fact:'In the public beta: show or hide the Page workspace while preserving its state.'},
-    {id:'visible-control', label:'03 / The decision', title:'Keep the next move yours.', copy:'AI belongs in our daily work. Its permission to act should be visible, specific, and separate from simply opening a page.', fact:'Practice only: agent activity is demonstrated on synthetic pages. Public agent execution is not implemented or qualified.'}
+    { label:'Context', title:'One page. A smaller view.', copy:'The raised page is your browser. The pull-out tray represents a bounded observation from the selected tab and document—not your whole browsing session.', fact:'Local checks: observations exclude input values. Visible text can still be sensitive. Inspect what would be shared before releasing it.', part:'Page → selected context' },
+    { label:'Recipient', title:'Name who receives it.', copy:'The tray belongs to a specific task and recipient. Opening a tab is not permission to send its contents to an agent.', fact:'Current local work: Codex observation and a narrow Claude read have been exercised. They are separate integrations, not interchangeable connections.', part:'Selected context → named task' },
+    { label:'Approval', title:'A request is not an action.', copy:'The control strip is a human decision gate. Review the target and proposed action before approving. A pending request must stay visibly pending.', fact:'Unverified: the live Codex human-approved action loop. This illustration does not demonstrate a successful agent action.', part:'Proposed action → human decision' },
+    { label:'Stop', title:'Keep a way back to you.', copy:'Stop or Take control ends the task’s permission for further actions. It does not prove that an action already in flight was undone.', fact:'Local checks cover permission revocation and cleanup with synthetic tasks. An uncertain effect needs inspection, not a success label.', part:'Stop → further actions revoked' },
+    { label:'Receipt', title:'Check what actually happened.', copy:'The paper in the tray stands for a receipt: what was requested, what was observed, and what remains uncertain. Completion requires evidence from the target.', fact:'A completed process is not proof of a completed action. No live session, page data or provider connection is present in this diagram.', part:'Observed result → evidence' }
   ];
   onMount(() => {
     mounted = true;
     const preference = matchMedia('(prefers-reduced-motion: reduce)');
     const update = () => { reduced = preference.matches; };
     update(); preference.addEventListener('change', update);
-    const targets = [...root.querySelectorAll<HTMLElement>('[data-story-step]')];
-    const mobile = matchMedia('(max-width: 850px)');
-    let observer: IntersectionObserver;
-    const observe = () => {
-      observer?.disconnect();
-      observer = new IntersectionObserver(entries => {
-      for (const entry of entries) if (entry.isIntersecting) active = Number((entry.target as HTMLElement).dataset.storyStep);
-    }, {rootMargin:mobile.matches ? '-58% 0px -35% 0px' : '-25% 0px -45% 0px',threshold:0});
-      targets.forEach(target => observer.observe(target));
-    };
-    observe(); mobile.addEventListener('change', observe);
-    return () => { observer.disconnect(); mobile.removeEventListener('change', observe); preference.removeEventListener('change',update); };
+    return () => preference.removeEventListener('change', update);
   });
 </script>
 
-<div class="story" class:enhanced={mounted} bind:this={root}>
-  <div class="stage-column">
-    <figure class="stage">
-      <div class="stage-top"><span>Scopefield / Anatomy of the idea</span>{#if mounted}<button onclick={() => { paused = !paused; }} aria-pressed={paused} disabled={reduced}>{reduced ? 'Static illustration' : paused ? 'Resume motion' : 'Pause motion'}</button>{/if}</div>
-      <ScopefieldAnatomy stage={active} still={!mounted || reduced || paused} />
-      <figcaption><span>Conceptual illustration. Not a product recording.</span><span class="state-label" aria-hidden="true">{!mounted || reduced || paused ? 'Page + workspace + control' : steps[active].label}</span></figcaption>
-    </figure>
-  </div>
-  <div class="steps">
-    {#each steps as step, i}
-      <article id={step.id} data-story-step={i} class:active={active === i}>
-        <p class="step-label">{step.label}</p><h3>{step.title}</h3><p class="step-copy">{step.copy}</p><p class="fact">{step.fact}</p>
-      </article>
-    {/each}
+<div class="story" class:enhanced={mounted}>
+  <figure class="stage">
+    <div class="stage-top"><span>FIG. 01 / THE CONTEXT BOUNDARY</span><span>Illustrative</span></div>
+    <ScopefieldAnatomy stage={active} still={reduced} />
+    <figcaption><span>Original conceptual drafting station.</span><span>Not a product recording or live agent session.</span></figcaption>
+  </figure>
+  <div class="explanation">
+    {#if mounted}
+      <div class="selector" role="group" aria-label="Explore the context boundary">
+        {#each steps as step, i}
+          <button type="button" aria-pressed={active === i} aria-controls={`boundary-${i}`} onclick={() => { active = i; }}><span class="number">0{i+1}</span> {step.label}</button>
+        {/each}
+      </div>
+    {/if}
+    <div class="readout" aria-live="polite" aria-atomic="true">
+      {#each steps as step, i}
+        <article id={`boundary-${i}`} hidden={mounted && active !== i}>
+          <p class="step-label">0{i+1} / {step.part}</p><h3>{step.title}</h3><p class="step-copy">{step.copy}</p><p class="fact">{step.fact}</p>
+        </article>
+      {/each}
+    </div>
+    <p class="model-note">Select a part to read its role. These controls only change the illustration.</p>
   </div>
 </div>
 
 <style>
-  .story { display: grid; grid-template-columns: 1.35fr 1fr; gap: 6vw; align-items: start; }
-  .stage-column { align-self: stretch; }
-  .stage { position: static; top: 120px; margin: 0; border: 1px solid var(--color-performance-line); background: var(--color-performance-panel); }
-  .enhanced .stage { position: sticky; }
-  .stage-top, figcaption { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1rem 1.25rem; color: var(--color-performance-muted); font: 0.7rem/1.5 var(--font-performance-mono); }
-  .stage-top { min-height: 4.5rem; border-bottom: 1px solid var(--color-performance-line); }
-  button { min-height: 44px; padding: 0.5rem 0.75rem; border: 1px solid var(--color-performance-line-strong); border-radius: var(--radius-operator-control); color: var(--color-performance-ink); background: transparent; font: inherit; cursor: pointer; }
-  button:disabled { border-color: var(--color-performance-line); cursor: default; color: var(--color-performance-muted); }
-  button:focus-visible { outline: 2px solid var(--color-performance-focus); outline-offset: 4px; }
-  figcaption { border-top: 1px solid var(--color-performance-line); flex-wrap: wrap; }
-  .state-label { color: var(--color-performance-ink); }
-  article { min-height: 68svh; padding: 6rem 0; display: flex; flex-direction: column; justify-content: center; scroll-margin-top: 140px; }
-  article + article { border-top: 1px solid var(--color-performance-line); }
-  .step-label { font: 0.75rem/1.6 var(--font-performance-mono); color: var(--color-performance-muted); margin: 0 0 1.5rem; }
-  h3 { font-size: clamp(2.5rem, 4vw, 4.5rem); font-weight: 500; letter-spacing: -0.045em; line-height: 1.05; margin: 0 0 1.5rem; }
-  .step-copy { font-size: 1.1rem; line-height: 1.65; margin: 0; max-width: 31rem; }
-  .fact { font-size: 0.875rem; line-height: 1.6; color: var(--color-performance-muted); border-left: 2px solid var(--color-performance-line-strong); padding-left: 1rem; margin: 2rem 0 0; }
-  @media (max-width: 850px) {
-    .story { display: block; }
-    .enhanced .stage-column { position: sticky; top: 88px; z-index: 2; }
-    .enhanced .stage { position: static; }
-    .stage :global(.anatomy) { max-width: 460px; margin: auto; }
-    .stage-top { padding: 0.5rem 0.75rem; min-height: 3.5rem; }
-    figcaption { padding: 0.65rem 0.75rem; font-size: 0.625rem; }
-    .state-label { display: none; }
-    article { min-height: 68svh; padding: 2rem 0; scroll-margin-top: 430px; }
-  }
-  @media (max-height: 650px) { .enhanced .stage-column, .enhanced .stage { position: static; } }
-  @media (prefers-reduced-motion: reduce) { .enhanced .stage-column, .enhanced .stage { position: static; } article { min-height: auto; padding-block: 3rem; } }
+  .story { display:grid; grid-template-columns:1.2fr 1fr; gap:4vw; align-items:start; }
+  .stage { margin:0; border:1px solid var(--color-performance-line); background:var(--color-performance-panel); }
+  .stage-top, figcaption { display:flex; justify-content:space-between; gap:1rem; padding:1rem 1.25rem; color:var(--color-performance-muted); font:0.7rem/1.5 var(--font-performance-mono); }
+  .stage-top { border-bottom:1px solid var(--color-performance-line); }
+  figcaption { border-top:1px solid var(--color-performance-line); flex-wrap:wrap; }
+  .selector { display:flex; flex-wrap:wrap; gap:0.4rem; padding-bottom:2rem; }
+  button { min-height:44px; padding:0.65rem 0.8rem; border:1px solid var(--color-performance-line-strong); border-radius:2px; color:var(--color-performance-ink); background:transparent; font:0.8rem/1.4 var(--font-performance-sans); cursor:pointer; }
+  button[aria-pressed='true'] { color:var(--color-performance-paper); background:var(--color-performance-ink); }
+  button:focus-visible { outline:2px solid var(--color-performance-focus); outline-offset:4px; }
+  .number { font:0.65rem var(--font-performance-mono); opacity:0.8; margin-right:0.3rem; }
+  article { padding:0 0 2rem; }
+  article[hidden] { display:none; }
+  .step-label { font:0.72rem/1.6 var(--font-performance-mono); color:var(--color-performance-muted); margin:0 0 1rem; text-transform:uppercase; }
+  h3 { font-size:clamp(1.8rem,2.7vw,3rem); font-weight:500; letter-spacing:-0.04em; line-height:1.12; margin:0 0 1.4rem; }
+  .step-copy { font-size:1.05rem; line-height:1.65; margin:0; }
+  .fact { font-size:0.85rem; line-height:1.65; color:var(--color-performance-muted); border-left:2px solid var(--color-performance-line-strong); padding-left:1rem; margin:1.5rem 0 0; }
+  .model-note { font:0.72rem/1.6 var(--font-performance-mono); color:var(--color-performance-muted); border-top:1px solid var(--color-performance-line); padding-top:1rem; }
+  @media(max-width:850px) { .story { grid-template-columns:1fr; gap:1.5rem; } .stage :global(.anatomy) { max-width:560px; margin:auto; } .selector { padding-bottom:1.5rem; } }
+  @media print { .story { display:block; } .stage { max-width:26rem; margin-bottom:1.5rem; } .selector,.model-note { display:none; } article[hidden] { display:block; } article { break-inside:avoid; } }
 </style>
