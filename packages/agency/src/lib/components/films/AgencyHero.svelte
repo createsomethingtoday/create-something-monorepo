@@ -14,17 +14,24 @@
       <p class="lede">A broken form. A manual handoff. An AI tool your team needs help using. We diagnose the problem, build the agreed change, and teach you how to use it.</p>
       <div class="hero-actions"><a class="primary" href={agencyCoreMessaging.workflowMappingSessionHref}>Talk through your workflow <span aria-hidden="true">↗</span></a></div>
       <p class="next-step">Bring one task. We agree on scope and cost before work begins.</p>
-      <p class="starting-point">Support {PUBLIC_PRICING.membership.label.toLowerCase()} <span aria-hidden="true">/</span> <a href="/services#membership">Membership and costs ↗</a></p>
+      <p class="starting-point">Support {PUBLIC_PRICING.membership.label.toLowerCase()} <a href="/services#membership">Membership and costs ↗</a></p>
     </div>
     <figure class="service-record">
-      <figcaption><span>One task, made workable</span><span>Illustrative example / 01</span></figcaption>
-      <div class="record-problem"><span class="record-label">The problem</span><p>“The form submits.<br />Our team never gets it.”</p></div>
-      <ol>
-        <li><span class="step">01</span><div><h3>Find the broken handoff.</h3><p>Trace the form, connection and destination.</p></div><span class="state">Diagnose</span></li>
-        <li><span class="step">02</span><div><h3>Repair it. Check the result.</h3><p>Test a valid submission and a failure case.</p></div><span class="state">Engineer</span></li>
-        <li><span class="step">03</span><div><h3>Know what to do next.</h3><p>Keep the change, instructions and recovery checks.</p></div><span class="state">Learn</span></li>
-      </ol>
-      <div class="record-footer"><span>You approve the scope.</span><span>You review the result.</span></div>
+      <figcaption><span>Your dot. Your workflow.</span><span>Illustrative example / 01</span></figcaption>
+      <div class="record-problem"><span class="record-label">The goal</span><p>“Help my ChatGPT dot prepare website updates for my review.”</p></div>
+      <div class="workflow-path" aria-label="Proposed workflow"><span>Your ChatGPT dot</span><span aria-hidden="true">→</span><span>Website + codebase</span><span aria-hidden="true">→</span><span>Your review</span></div>
+      <p class="record-context">We check compatibility, connect or build the missing pieces, and agree on what your dot may access. We may add a tool connection or written instructions for the task, depending on what your setup supports.</p>
+      <details class="example-receipt">
+        <summary>Inspect the proposed handoff <span aria-hidden="true">+</span></summary>
+        <dl>
+          <div><dt>Scope</dt><dd>One page update, using an agreed brief and selected repository.</dd></div>
+          <div><dt>Permission</dt><dd>Read the selected files. Prepare a draft. Wait for your approval before publishing.</dd></div>
+          <div><dt>Change record</dt><dd>A proposed diff, connection setup and workflow instructions, with each change explained.</dd></div>
+          <div><dt>Checks &amp; results</dt><dd>Record the build, mobile review and approval-stop check, with actual results and any blockers.</dd></div>
+          <div><dt>Handoff</dt><dd>Review the preview and receipts. Keep the setup, instructions and recovery steps.</dd></div>
+        </dl>
+      </details>
+      <div class="record-footer"><span>Proposed workflow. No task has run.</span><a href="https://chatgpt.com/features/dots/">About ChatGPT dots ↗</a></div>
     </figure>
   </div>
   <div class="hero-bottom"><a href="#built-work">See the work behind the offer <span aria-hidden="true">↓</span></a><a href="/agent-foundation">What a checked handoff includes ↗</a></div>
@@ -32,7 +39,7 @@
 
 <style>
   .hero-track { background: var(--color-performance-ink); color: var(--color-performance-paper); padding: 8rem 7vw 0; }
-  .eyebrow, figcaption, .record-label, .step, .state, .record-footer, .hero-bottom { font: var(--text-performance-operator-label)/1.5 var(--font-performance-mono); }
+  .eyebrow, figcaption, .record-label, .record-footer, .hero-bottom { font: var(--text-performance-operator-label)/1.5 var(--font-performance-mono); }
   .eyebrow { margin: 0 0 var(--space-performance-lg); }
   h1 { font: var(--font-performance-medium) clamp(3.2rem, 6.8vw, 7rem)/.98 var(--font-performance-interface); letter-spacing: var(--tracking-performance-tight); margin: 0; }
   h1 span { display: block; }
@@ -50,17 +57,24 @@
   figcaption { border-bottom: 1px solid var(--color-performance-shell-border-strong); }
   .record-problem { padding: var(--space-performance-md); }
   .record-problem p { font: var(--font-performance-medium) clamp(1.45rem, 2.2vw, 2.1rem)/1.25 var(--font-performance-interface); margin: var(--space-performance-sm) 0 0; }
-  ol { list-style: none; padding: 0 var(--space-performance-md); margin: 0; }
-  li { display: grid; grid-template-columns: auto 1fr auto; align-items: start; gap: var(--space-performance-sm); padding-block: var(--space-performance-sm); border-top: 1px solid var(--color-performance-shell-border-default); }
-  h3 { margin: 0; font-size: var(--text-performance-caption); font-weight: var(--font-performance-medium); line-height: 1.5; }
-  li p { margin: .3rem 0 0; font-size: var(--text-performance-caption); line-height: 1.5; }
-  .step { padding-top: .1rem; }
-  .state { border: 1px solid var(--color-performance-shell-border-strong); padding: .1rem .4rem; }
+  .workflow-path { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem; margin: 0 var(--space-performance-md); font: .75rem/1.5 var(--font-performance-mono); }
+  .workflow-path span:not([aria-hidden]) { border: 1px solid var(--color-performance-shell-border-strong); padding: .4rem .6rem; }
+  .record-context { margin: 1rem var(--space-performance-md); font-size: .875rem; line-height: 1.6; }
+  .example-receipt { margin: 0 var(--space-performance-md); border-top: 1px solid var(--color-performance-shell-border-strong); }
+  .example-receipt summary { display: flex; justify-content: space-between; gap: 1rem; align-items: center; min-height: 56px; font-size: .875rem; cursor: pointer; list-style: none; }
+  .example-receipt summary::-webkit-details-marker { display: none; }
+  .example-receipt[open] summary span { transform: rotate(45deg); }
+  .example-receipt dl { margin: 0 0 1rem; }
+  .example-receipt dl > div { display: grid; grid-template-columns: 7rem 1fr; gap: 1rem; border-top: 1px solid var(--color-performance-shell-border-default); padding-block: .75rem; font-size: .8125rem; line-height: 1.6; }
+  .example-receipt dt { font-weight: var(--font-performance-medium); }
+  .example-receipt dd { margin: 0; }
+  .record-footer a { display: inline-flex; align-items: center; min-height: 44px; }
+  .example-receipt summary:focus-visible { outline: 2px solid var(--color-performance-focus); outline-offset: 4px; }
   .record-footer { border-top: 1px solid var(--color-performance-shell-border-strong); }
   .hero-bottom { display: flex; justify-content: space-between; flex-wrap: wrap; gap: var(--space-performance-sm); border-top: 1px solid var(--color-performance-shell-border-strong); padding-block: var(--space-performance-sm); }
   a { color: inherit; text-underline-offset: .3em; }
   .hero-bottom a, .starting-point a { display: inline-flex; align-items: center; gap: var(--space-performance-sm); min-height: 44px; }
   a:focus-visible { outline: 2px solid var(--color-performance-focus); outline-offset: 5px; }
   @media(max-width:900px) { .hero-track { padding-top: 7rem; } .hero-composition { grid-template-columns: 1fr; gap: var(--space-performance-lg); padding-block: var(--space-performance-lg); } .hero-copy { max-width: 40rem; } .service-record { max-width: 42rem; } }
-  @media(max-width:540px) { .hero-track { padding-inline: 6vw; } h1 { font-size: clamp(2.6rem, 10vw, 3.4rem); line-height: 1.04; } .eyebrow { font-size: .65rem; margin-bottom: var(--space-performance-md); } .primary { width: 100%; } .state { display: none; } li { grid-template-columns: auto 1fr; } figcaption { flex-direction: column; } }
+  @media(max-width:540px) { .hero-track { padding-inline: 6vw; } h1 { font-size: clamp(2.6rem, 10vw, 3.4rem); line-height: 1.04; } .eyebrow { font-size: .65rem; margin-bottom: var(--space-performance-md); } .primary { width: 100%; } .starting-point { display: block; } .starting-point a { display: flex; width: fit-content; } .workflow-path { display: grid; grid-template-columns: 1fr; justify-items: start; } .workflow-path span[aria-hidden] { transform: rotate(90deg); margin-left: .75rem; line-height: 1; } .example-receipt dl > div { grid-template-columns: 1fr; gap: .25rem; } figcaption { flex-direction: column; } }
 </style>
