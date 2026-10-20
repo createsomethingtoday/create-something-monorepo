@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import ProseContractLesson from './ProseContractLesson.svelte';
 
   let ready = $state(false);
   let reducedMotion = $state(true);
@@ -37,6 +38,7 @@
     </div>
     <div class="figure-foot"><p>One support relationship, across agreed work.</p></div>
   </figure>
+  <ProseContractLesson />
   <footer><p>Membership covers agreed improvements. Larger Builds, launch and production incident response require separate agreements.</p><a href="/services">Read the process and support scope ↗</a></footer>
 </section>
 <style>
