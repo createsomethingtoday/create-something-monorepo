@@ -11,7 +11,7 @@ pub fn open_consent(input:Value)->Result<Value,String>{
  })
 }
 fn open_consent_with(input:Value, open:impl FnOnce(&str)->Result<bool,()>)->Result<Value,String>{
- if !matches!(input.get("provider").and_then(Value::as_str),Some("gmail"|"googlecalendar")){return Err("invalid_request".into());}
+ if !matches!(input.get("provider").and_then(Value::as_str),Some("gmail"|"googlecalendar"|"instagram")){return Err("invalid_request".into());}
  let url=consent_url(input.get("url").and_then(Value::as_str).ok_or("Consent URL required")?)?;
  if !open(&url).map_err(|_|"browser_unavailable")?{return Err("browser_unavailable".into());}
  Ok(json!({"opened":true,"verified":false}))

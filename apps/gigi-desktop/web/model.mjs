@@ -1,5 +1,7 @@
 export const sections = [
   { id: 'overview', label: 'Overview' },
+  { id: 'music', label: 'Music library' },
+  { id: 'social', label: 'Instagram drafts' },
   { id: 'gigs', label: 'Gigs & shifts' },
   { id: 'schedule', label: 'Schedule' },
   { id: 'contacts', label: 'People' },
