@@ -59,7 +59,7 @@ export interface BrokerClient {
   instagramPreview(imageUrl:string,signal?:AbortSignal):Promise<{imageUrl:string;expectedImageSha256:string;width:number;height:number;dataUrl:string}>;
   instagramAccount(connectedAccountId:string,signal?:AbortSignal):Promise<InstagramAccount>;
   publishInstagram(input:InstagramPublishInput,signal?:AbortSignal):Promise<InstagramReceipt>;
-  instagramReceipt(requestId:string,signal?:AbortSignal):Promise<InstagramReceipt>;
+  instagramReceipt(requestId:string,signal?:AbortSignal,continueConfirmed?:boolean):Promise<InstagramReceipt>;
   connectionStatus(provider: ConnectionProvider, signal?: AbortSignal): Promise<ConnectionStatus>;
   beginConnection(provider: ConnectionProvider, requestId: string, signal?: AbortSignal): Promise<BeginConnectionResult>;
   reconcileConnection(provider: ConnectionProvider, connectedAccountId: string, signal?: AbortSignal): Promise<ConnectionStatus>;
@@ -144,9 +144,9 @@ export function createBrokerClient(options: BrokerOptions): BrokerClient {
       if(input.confirmed!==true||typeof input.caption!=='string'||input.caption.length>2200)throw new IntegrationError({operation:'instagram_publish',reason:'invalid_configuration'});
       return decodeInstagramReceipt(await call('/v1/gigi/instagram/publish','instagram_publish','POST',input,signal),input.requestId);
     },
-    async instagramReceipt(requestId, signal) {
+    async instagramReceipt(requestId:string, signal?:AbortSignal, continueConfirmed=false) {
       requireId(requestId);
-      return decodeInstagramReceipt(await call(`/v1/gigi/instagram/receipts/${encodeURIComponent(requestId)}`,'instagram_receipt','GET',undefined,signal),requestId);
+      return decodeInstagramReceipt(await call(`/v1/gigi/instagram/receipts/${encodeURIComponent(requestId)}`,'instagram_receipt',continueConfirmed?'POST':'GET',continueConfirmed?{continueConfirmed:true}:undefined,signal),requestId);
     },
     async connectionStatus(provider, signal) {
       requireProvider(provider);

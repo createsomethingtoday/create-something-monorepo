@@ -28,3 +28,5 @@ Only one publicly hosted JPEG is supported. Carousels, Reels, Stories, schedulin
 Desktop tables are additive and included in the existing SQLite backup. Media originals remain outside the backup and are never moved or copied by importing.
 
 Connector migration `0004_instagram_workspace.sql` adds separate consent and publication journals. It does not modify existing Google tables or grants. Temporary copies of already-public JPEGs use a dedicated R2 bucket with ten-minute application expiry and one-day lifecycle deletion. The prior connector deployment and prior immutable desktop download remain the rollback targets. Do not delete publication journals when rolling back: they retain duplicate-prevention evidence.
+
+PR review follow-up: pending Instagram containers retain staged JPEG bytes until the ten-minute expiry and are journaled before readiness checks. Explicit continuation checks readiness once and claims the prior confirmed publication atomically; GET receipts never publish. Tests cover competing continuations, expiry without publication and exact prepublication-error recovery. Ambiguous errors remain fenced.

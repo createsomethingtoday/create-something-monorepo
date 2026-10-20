@@ -89,3 +89,11 @@ test('current auth and runner failure codes never reach the user as raw identifi
  assert.equal(socialErrorMessage('unavailable'),'The connection service is unavailable. Keep your draft saved and try Check connection later.');
  assert.equal(socialErrorMessage('A readable native error.'),'A readable native error.');
 });
+
+test('pending processing explicitly describes continuation and definitive rejection gives recovery',()=>{
+ const pending={state:'unknown',reason:'container_processing'};
+ assert.match(socialReceiptCopy(pending).detail,/may publish the exact image, caption and account you already confirmed/);
+ const html=socialWorkspaceView({items:[],editor:{title:'Test',caption:'',imageUrl:''},selected:{id:'1',revision:1,state:'unknown',body:{},receipt:pending}});
+ assert.match(html,/Continue pending publish/);assert.doesNotMatch(html,/Copy into a new draft/);
+ assert.match(socialReceiptCopy({state:'not_published',reason:'image_changed'}).detail,/Load the verified preview again/);
+});

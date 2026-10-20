@@ -4,6 +4,9 @@ use serde_json::{json, Value};
 use std::{collections::HashMap, fs, path::{Path, PathBuf}, sync::{Arc, Mutex, OnceLock, atomic::{AtomicBool, Ordering}}, time::UNIX_EPOCH};
 use std::os::unix::fs::MetadataExt;
 use uuid::Uuid;
+use sha2::{Digest, Sha256};
+const BUNDLE_ENTRY_LIMIT: usize = 10000;
+const BUNDLE_DEPTH_LIMIT: usize = 32;
 const IMPORT_LIMIT: usize = 1000;
 const LIBRARY_LIMIT: i64 = 10000;
 static IMPORTS: OnceLock<Mutex<HashMap<String, Arc<AtomicBool>>>> = OnceLock::new();
@@ -25,10 +28,59 @@ fn no_symlinks(path: &Path) -> Result<(),String> {
     }
     Ok(())
 }
+fn metadata_identity(m: &fs::Metadata) -> Result<String,String> {
+    Ok(format!("{}:{}:{}:{}",m.dev(),m.ino(),m.len(),m.modified().map_err(|e|e.to_string())?.duration_since(UNIX_EPOCH).map_err(|e|e.to_string())?.as_nanos()))
+}
 fn fingerprint(path: &Path) -> Result<String,String> {
     no_symlinks(path)?;
     let m=fs::metadata(path).map_err(|_|"Original unavailable. Reconnect its current location.")?;
-    Ok(format!("{}:{}:{}:{}",m.dev(),m.ino(),m.len(),m.modified().map_err(|e|e.to_string())?.duration_since(UNIX_EPOCH).map_err(|e|e.to_string())?.as_nanos()))
+    let identity=metadata_identity(&m)?;
+    if !m.is_dir() { return Ok(identity); }
+    // Project bundles are references, but their nested files change independently of
+    // the root directory. Bound traversal, never follow links, and fail closed if
+    // the complete metadata manifest cannot be verified. Relative names allow moves.
+    let mut pending=vec![(path.to_path_buf(),0usize)];
+    let mut entries=Vec::new();
+    while let Some((directory,depth))=pending.pop() {
+        no_symlinks(&directory)?;
+        for entry in fs::read_dir(&directory).map_err(|_|"Project bundle cannot be read.")? {
+            let entry=entry.map_err(|_|"Project bundle cannot be read.")?;
+            if entries.len()>=BUNDLE_ENTRY_LIMIT {return Err("Project bundle exceeds the 10,000-entry verification limit.".into());}
+            let entry_path=entry.path();
+            let meta=fs::symlink_metadata(&entry_path).map_err(|_|"Project bundle changed while being checked.")?;
+            if meta.file_type().is_symlink() || !(meta.is_file()||meta.is_dir()) {return Err("Project bundles containing symbolic links or special files cannot be indexed.".into());}
+            let relative=entry_path.strip_prefix(path).map_err(|e|e.to_string())?.to_str().ok_or("Project filename is not valid Unicode.")?.to_string();
+            entries.push((relative,meta.is_dir(),metadata_identity(&meta)?));
+            if meta.is_dir() {
+                if depth>=BUNDLE_DEPTH_LIMIT {return Err("Project bundle exceeds the folder-depth verification limit.".into());}
+                pending.push((entry_path,depth+1));
+            }
+        }
+    }
+    entries.sort_unstable_by(|a,b|a.0.cmp(&b.0));
+    let manifest=serde_json::to_vec(&entries).map_err(|e|e.to_string())?;
+    Ok(format!("bundle-v1:{identity}:{:x}",Sha256::digest(manifest)))
+}
+fn previewable(path: &Path) -> bool {
+    matches!(kind(path),"audio"|"video") && !path.extension().and_then(|s|s.to_str()).is_some_and(|ext|ext.eq_ignore_ascii_case("mkv"))
+}
+fn bundle_entry(item: &Value, path: &Path, fp: &str) -> bool {
+    item["isBundle"].as_bool().unwrap_or_else(|| fp.starts_with("bundle-v1:") || (item["kind"]=="project" && (path.is_dir() || matches!(path.extension().and_then(|e|e.to_str()).unwrap_or("").to_ascii_lowercase().as_str(),"logicx"|"band"))))
+}
+fn bundle_reconnect_candidate(selected: &Path, item: &Value) -> Result<PathBuf,String> {
+    let filename=item["filename"].as_str().ok_or("Project bundle filename is unavailable.")?;
+    if Path::new(filename).file_name().and_then(|v|v.to_str())!=Some(filename) {
+        return Err("Project bundle filename is invalid.".into());
+    }
+    // macOS may present .logicx/.band packages as files, so folder selection asks
+    // for their parent. Also accept a directly selected package when supported.
+    Ok(if selected.file_name().and_then(|v|v.to_str())==Some(filename) {selected.to_path_buf()} else {selected.join(filename)})
+}
+fn reconnect_path(db:&Connection,wid:&str,id:&str,path:&Path)->Result<Value,String> {
+    let(_,fp,item)=get(db,wid,id)?;
+    if fingerprint(path)?!=fp || metadata(path)?["filename"]!=item["filename"] {return Err("The selected file or project bundle differs from this original. Add it separately and give it a version label.".into());}
+    db.execute("UPDATE music_items SET path=?3 WHERE workspace_id=?1 AND id=?2",params![wid,id,path.to_str().ok_or("Invalid path")?]).map_err(|e|e.to_string())?;
+    Ok(json!({"reconnected":true}))
 }
 fn open(root:&Path,wid:&str)->Result<Connection,String> {
     // Existing domain remains the owner of workspace creation and database permissions.
@@ -48,7 +100,7 @@ fn metadata(path:&Path)->Result<Value,String> {
     let name=path.file_name().and_then(|s|s.to_str()).ok_or("Filename is not valid Unicode.")?;
     let m=fs::metadata(path).map_err(|e|e.to_string())?;
     if !m.is_file() && !(m.is_dir()&&kind(path)=="project") {return Err("Select a media file or recognized project bundle.".into());}
-    Ok(json!({"title":path.file_stem().and_then(|s|s.to_str()).unwrap_or(name),"filename":name,"kind":kind(path),"bytes":m.len(),"modified":m.modified().ok().and_then(|t|t.duration_since(UNIX_EPOCH).ok()).map(|d|d.as_secs()),"artist":"","project":"","collection":"","version":"","tags":""}))
+    Ok(json!({"title":path.file_stem().and_then(|s|s.to_str()).unwrap_or(name),"filename":name,"kind":kind(path),"isBundle":m.is_dir(),"previewable":previewable(path),"bytes":m.len(),"modified":m.modified().ok().and_then(|t|t.duration_since(UNIX_EPOCH).ok()).map(|d|d.as_secs()),"artist":"","project":"","collection":"","version":"","tags":""}))
 }
 fn selected(mode:&str)->Result<Vec<PathBuf>,String> {
     let dialog=rfd::FileDialog::new().set_title("GiGi: index selected local music — nothing is uploaded");
@@ -106,6 +158,7 @@ pub fn dispatch(root:&Path,op:&str,input:Value)->Result<Value,String> {
             for row in rows {
                 let(id,path,fp,data)=row.map_err(|e|e.to_string())?; let mut item:Value=serde_json::from_str(&data).map_err(|e|e.to_string())?;
                 item["id"]=json!(id);
+                item["previewable"]=json!(previewable(Path::new(&path)));
                 item["availability"]=json!(match fingerprint(Path::new(&path)) {Ok(current) if current==fp=>"available",Ok(_)=>"changed",Err(_)=>"missing"});
                 items.push(item);
             }
@@ -134,16 +187,18 @@ pub fn dispatch(root:&Path,op:&str,input:Value)->Result<Value,String> {
         },
         "music.remove"=>{let id=need(&input,"id")?;get(&db,wid,id)?;db.execute("DELETE FROM music_items WHERE workspace_id=?1 AND id=?2",params![wid,id]).map_err(|e|e.to_string())?;Ok(json!({"removed":true,"originalUnchanged":true}))},
         "music.reconnect"=>{
-            let id=need(&input,"id")?;let(_,fp,item)=get(&db,wid,id)?;
-            let path=rfd::FileDialog::new().set_title("Reconnect the original file (changed files must be added separately)").pick_file();
-            let Some(path)=path else{return Ok(json!({"cancelled":true}));};
-            if fingerprint(&path)?!=fp || metadata(&path)?["filename"]!=item["filename"] {return Err("The selected file differs from this original. Add it separately and give it a version label.".into());}
-            db.execute("UPDATE music_items SET path=?3 WHERE workspace_id=?1 AND id=?2",params![wid,id,path.to_str().ok_or("Invalid path")?]).map_err(|e|e.to_string())?;
-            Ok(json!({"reconnected":true}))
+            let id=need(&input,"id")?;let(original,fp,item)=get(&db,wid,id)?;
+            let is_bundle=bundle_entry(&item,Path::new(&original),&fp);
+            let title=if is_bundle {format!("Select the folder containing {}",item["filename"].as_str().unwrap_or("the original project bundle"))} else {"Reconnect the original file (changed versions must be added separately)".into()};
+            let dialog=rfd::FileDialog::new().set_title(title);
+            let selection=if is_bundle {dialog.pick_folder()} else {dialog.pick_file()};
+            let Some(selection)=selection else{return Ok(json!({"cancelled":true}));};
+            let path=if is_bundle {bundle_reconnect_candidate(&selection,&item)?} else {selection};
+            reconnect_path(&db,wid,id,&path)
         },
         "music.preview"=>{
             let(path,fp,item)=get(&db,wid,need(&input,"id")?)?;
-            if !["audio","video"].contains(&item["kind"].as_str().unwrap_or("")) {return Err("Project files and unsupported formats have no in-app preview.".into());}
+            if !previewable(Path::new(&path)) {return Err("Project files and unsupported formats have no in-app preview.".into());}
             if fingerprint(Path::new(&path))?!=fp {return Err("Original changed. Add the changed file as a new version.".into());}
             fs::File::open(&path).map_err(|_|"The original cannot be read. Reconnect it or check access.")?;
             Ok(json!({"path":path,"kind":item["kind"],"title":item["title"]}))
@@ -191,4 +246,34 @@ pub fn dispatch(root:&Path,op:&str,input:Value)->Result<Value,String> {
         let result=import_paths(&mut open(&root,&wid).unwrap(),&wid,vec![folder],true,&AtomicBool::new(false)).unwrap();assert_eq!(result["added"],1);assert_eq!(result["skipped"],1);
         fs::remove_dir_all(root).unwrap();
     }
+    #[test]fn bundle_nested_edits_are_new_versions_and_moved_original_reconnects(){
+        let(root,wid,_)=fixture();let bundle=root.join("Song.logicx");let nested=bundle.join("Alternatives/000");fs::create_dir_all(&nested).unwrap();
+        let session=nested.join("ProjectData");fs::write(&session,b"first").unwrap();let mut db=open(&root,&wid).unwrap();let cancel=AtomicBool::new(false);
+        assert_eq!(import_paths(&mut db,&wid,vec![bundle.clone()],false,&cancel).unwrap()["added"],1);
+        let first=dispatch(&root,"music.list",json!({"workspaceId":wid})).unwrap();let id=first["items"][0]["id"].as_str().unwrap();
+        assert!(bundle_entry(&first["items"][0],&bundle,""));assert_eq!(first["items"][0]["previewable"],false);
+        let root_identity=metadata_identity(&fs::metadata(&bundle).unwrap()).unwrap();
+        fs::write(&session,b"second revision").unwrap();
+        assert_eq!(metadata_identity(&fs::metadata(&bundle).unwrap()).unwrap(),root_identity);
+        assert_eq!(dispatch(&root,"music.list",json!({"workspaceId":wid})).unwrap()["items"][0]["availability"],"changed");
+        assert!(reconnect_path(&db,&wid,id,&bundle).is_err());
+        assert_eq!(import_paths(&mut db,&wid,vec![bundle.clone()],false,&cancel).unwrap()["added"],1);
+        let current=dispatch(&root,"music.list",json!({"workspaceId":wid})).unwrap();
+        let item=current["items"].as_array().unwrap().iter().find(|v|v["availability"]=="available").unwrap();let current_id=item["id"].as_str().unwrap();
+        let moved_parent=root.join("relocated");fs::create_dir(&moved_parent).unwrap();let moved=moved_parent.join("Song.logicx");fs::rename(&bundle,&moved).unwrap();
+        assert!(bundle_entry(item,&bundle,""));
+        let candidate=bundle_reconnect_candidate(&moved_parent,item).unwrap();assert_eq!(candidate,moved);
+        assert_eq!(bundle_reconnect_candidate(&moved,item).unwrap(),moved);
+        assert_eq!(reconnect_path(&db,&wid,current_id,&candidate).unwrap()["reconnected"],true);
+        assert_eq!(get(&db,&wid,current_id).unwrap().0,moved.to_str().unwrap());fs::remove_dir_all(root).unwrap();
+    }
+    #[test]fn bundle_verification_rejects_links_and_excessive_depth(){
+        let(root,_,file)=fixture();let bundle=root.join("Session.band");fs::create_dir(&bundle).unwrap();let link=bundle.join("outside");std::os::unix::fs::symlink(&file,&link).unwrap();assert!(fingerprint(&bundle).is_err());fs::remove_file(link).unwrap();
+        let mut deep=bundle.clone();for _ in 0..=BUNDLE_DEPTH_LIMIT {deep=deep.join("nested");fs::create_dir(&deep).unwrap();}assert!(fingerprint(&bundle).is_err());fs::remove_dir_all(root).unwrap();
+    }
+    #[test]fn mkv_is_organized_as_video_without_a_broken_preview(){
+        let(root,wid,_)=fixture();let file=root.join("Reference.mkv");fs::write(&file,b"fixture").unwrap();let mut db=open(&root,&wid).unwrap();
+        import_paths(&mut db,&wid,vec![file],false,&AtomicBool::new(false)).unwrap();let result=dispatch(&root,"music.list",json!({"workspaceId":wid})).unwrap();let item=&result["items"][0];assert_eq!(item["kind"],"video");assert_eq!(item["previewable"],false);assert!(dispatch(&root,"music.preview",json!({"workspaceId":wid,"id":item["id"]})).is_err());fs::remove_dir_all(root).unwrap();
+    }
+
 }

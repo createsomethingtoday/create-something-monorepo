@@ -17,7 +17,7 @@ export function musicView({items=[],total=0,offset=0,hasMore=false,query='',kind
  </section>`;
 }
 function musicRow(item,disabled) {
- const available=item.availability==='available'; const playable=['audio','video'].includes(item.kind);
+ const available=item.availability==='available'; const playable=item.previewable !== false && ['audio','video'].includes(item.kind);
  return `<article class="music-row"><div class="music-kind" aria-hidden="true">${item.kind==='audio'?'♪':item.kind==='video'?'▶':'▤'}</div><div class="music-info"><h2>${escape(item.title)}</h2><p>${escape([kinds[item.kind]||kinds.other,item.artist,item.project,item.collection,item.version].filter(Boolean).join(' · '))}</p><p class="muted">${escape(item.filename)} · ${size(item.bytes)}${item.tags?` · ${escape(item.tags)}`:''}</p><span class="music-availability">${available?(playable?'Available on this Mac':'Indexed · no in-app preview'):item.availability==='changed'?'Original changed · add as a new version':'Original unavailable · reconnect'}</span></div><div class="music-row-actions">${available&&playable?`<button class="btn" data-music-preview="${escape(item.id)}" ${disabled} aria-label="Preview ${escape(item.title)}">Preview</button>`:''}<button class="btn" data-music-edit="${escape(item.id)}" ${disabled}>Organize</button><button class="btn" data-music-reconnect="${escape(item.id)}" ${disabled}>Reconnect</button><button class="btn" data-music-remove="${escape(item.id)}" ${disabled}>Remove entry</button></div></article>`;
 }
 export function musicEditView(item,{busy=false,error=''}={}) {

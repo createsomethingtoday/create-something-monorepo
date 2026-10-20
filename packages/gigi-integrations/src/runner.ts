@@ -33,7 +33,7 @@ export async function runOperation(request: RunnerRequest, options: RunnerOption
       if(operation==='instagram.preview')return success(await broker.instagramPreview(requireString(input.imageUrl,2048),options.signal));
       if(operation==='instagram.account')return success(await broker.instagramAccount(requireString(input.connectedAccountId),options.signal));
       if(operation==='instagram.publish')return success(await broker.publishInstagram(input as unknown as InstagramPublishInput,options.signal));
-      if(operation==='instagram.receipt')return success(await broker.instagramReceipt(requireString(input.requestId),options.signal));
+      if(operation==='instagram.receipt')return success(await broker.instagramReceipt(requireString(input.requestId),options.signal,input.continueConfirmed===true));
       const provider = requireProvider(input.provider);
       switch (operation) {
         case 'connections.status': return success(await broker.connectionStatus(provider, options.signal));

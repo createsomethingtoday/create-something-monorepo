@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS gigi_instagram_publishes (
  subject TEXT NOT NULL, request_id TEXT NOT NULL, payload_hash TEXT NOT NULL,
  connected_account_id TEXT NOT NULL, instagram_account_id TEXT NOT NULL,
  state TEXT NOT NULL CHECK(state IN ('preparing','publishing','not_published','unknown','published_unverified','published')),
- container_id TEXT, media_id TEXT, permalink TEXT, reason TEXT, created_at TEXT NOT NULL,
+ container_id TEXT, staging_key TEXT, staging_expires_at INTEGER, media_id TEXT, permalink TEXT, reason TEXT, created_at TEXT NOT NULL,
  PRIMARY KEY(subject,request_id)
 );
 

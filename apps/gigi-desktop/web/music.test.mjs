@@ -24,3 +24,8 @@ test('bounded paging and cancellation are explicit',()=>{
  assert.ok(html.includes('up to 1,000'));
  assert.ok(!musicView({busy:true}).includes('Cancel import'));
 });
+
+test('unsupported video containers retain music organization without a preview action',()=>{
+ const html=musicView({items:[{id:'mkv',title:'Reference',filename:'reference.mkv',kind:'video',previewable:false,availability:'available'}],total:1});
+ assert.ok(html.includes('Music video'));assert.ok(html.includes('Indexed · no in-app preview'));assert.ok(!html.includes('data-music-preview="mkv"'));assert.ok(html.includes('data-music-edit="mkv"'));
+});

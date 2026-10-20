@@ -11,7 +11,7 @@ const baseInput={requestId:'post-one',connectedAccountId:'ca_artist',instagramAc
 // Structural SOF fixture; provider decoding remains the final validity authority.
 const jpeg=new Uint8Array([255,216,255,192,0,17,8,1,144,1,144,3,1,17,0,2,17,0,3,17,0,255,218,0,8,1,1,0,0,63,0,0,255,217]);
 const input={...baseInput,expectedImageSha256:createHash('sha256').update(jpeg).digest('hex')};
-function fixture(options:{accountOverride?:Record<string,unknown>;containerFails?:boolean;publishTimeout?:boolean;mediaReadError?:boolean;identity?:string;mediaResponse?:()=>Response;noConnection?:boolean;noConfig?:boolean}={}){
+function fixture(options:{statuses?:string[];accountOverride?:Record<string,unknown>;containerFails?:boolean;publishTimeout?:boolean;mediaReadError?:boolean;identity?:string;mediaResponse?:()=>Response;noConnection?:boolean;noConfig?:boolean}={}){
  const db=new DatabaseSync(':memory:');
  for(const name of ['0001_connections.sql','0002_exact_linked_recovery_fence.sql','0003_selected_gmail_insert_guard.sql','0004_instagram_workspace.sql'])db.exec(readFileSync(new URL(`../worker/migrations/${name}`,import.meta.url),'utf8'));
  if(!options.noConnection)db.prepare("INSERT INTO gigi_instagram_connections(subject,provider,request_id,status,connected_account_id,created_at,auth_config_id) VALUES('owner','instagram','connect-one','active','ca_artist','2026-10-20','ac_instagram')").run();
@@ -31,7 +31,7 @@ function fixture(options:{accountOverride?:Record<string,unknown>;containerFails
   if(body?.endpoint?.endsWith('/me'))return Response.json({status:200,data:{id:options.identity??'1784',username:'artist',account_type:'BUSINESS'}});
   if(body?.endpoint?.endsWith('/media_publish')){if(options.publishTimeout)throw new Error('private token response');return Response.json({status:200,data:{id:'3001'}});}
   if(body?.endpoint?.endsWith('/media'))return Response.json({status:options.containerFails?503:200,data:{id:'2001'}});
-  if(body?.endpoint?.endsWith('/2001'))return Response.json({status:200,data:{status_code:options.publishTimeout&&calls.some(c=>c.body?.endpoint?.endsWith('/media_publish'))?'PUBLISHED':'FINISHED'}});
+  if(body?.endpoint?.endsWith('/2001'))return Response.json({status:200,data:{status_code:options.publishTimeout&&calls.some(c=>c.body?.endpoint?.endsWith('/media_publish'))?'PUBLISHED':options.statuses?.shift()??'FINISHED'}});
   if(body?.endpoint?.endsWith('/3001'))return Response.json({status:options.mediaReadError?503:200,data:{id:'3001',media_type:'IMAGE',permalink:'https://www.instagram.com/p/receipt/'}});
   throw new Error('unexpected request '+url);
  };
@@ -129,4 +129,38 @@ test('existing selected Instagram auth config admits only its exact five-scope s
  assert.equal(f.calls.filter(c=>c.method==='POST').length,0);
  f.env.GIGI_INSTAGRAM_APPROVED_SCOPES='instagram_business_basic,instagram_business_content_publish';
  assert.equal((await f.call('/v1/gigi/connections/instagram')).status,503);f.db.close();
+});
+
+test('pending container retains staging and only explicit POST reconciliation publishes',async()=>{
+ const f=fixture({statuses:['IN_PROGRESS','FINISHED']});
+ const first=await (await f.call('/v1/gigi/instagram/publish',input)).json() as any;
+ assert.equal(first.state,'unknown');assert.equal(first.reason,'container_processing');assert.equal(f.objects.size,1);
+ assert.equal(f.db.prepare('SELECT container_id FROM gigi_instagram_publishes').get()!.container_id,'2001');
+ await f.call('/v1/gigi/instagram/receipts/post-one');
+ assert.equal(f.calls.filter(c=>c.body?.endpoint?.endsWith('/media_publish')).length,0);
+ await Promise.all([f.call('/v1/gigi/instagram/receipts/post-one',{continueConfirmed:true}),f.call('/v1/gigi/instagram/receipts/post-one',{continueConfirmed:true})]);
+ assert.equal(f.calls.filter(c=>c.body?.endpoint?.endsWith('/media_publish')).length,1);
+ assert.equal(f.db.prepare('SELECT state FROM gigi_instagram_publishes').get()!.state,'published');
+ assert.equal(f.objects.size,0);f.db.close();
+});
+test('pending container expires without publication and cleans staging',async()=>{
+ const f=fixture({statuses:['IN_PROGRESS']});await f.call('/v1/gigi/instagram/publish',input);
+ f.db.prepare('UPDATE gigi_instagram_publishes SET staging_expires_at = 0').run();
+ f.db.prepare('DELETE FROM gigi_instagram_connections').run();
+ const receipt=await (await f.call('/v1/gigi/instagram/receipts/post-one',{continueConfirmed:true})).json() as any;
+ assert.equal(receipt.state,'not_published');assert.equal(receipt.reason,'container_processing_expired');
+ assert.equal(f.calls.filter(c=>c.body?.endpoint?.endsWith('/media_publish')).length,0);assert.equal(f.objects.size,0);f.db.close();
+});
+
+test('pending continuation requires explicit confirmation and terminal container failure never publishes',async()=>{
+ const f=fixture({statuses:['IN_PROGRESS','ERROR']});await f.call('/v1/gigi/instagram/publish',input);
+ for(const body of [{},{continueConfirmed:false},{continueConfirmed:true,extra:true}])assert.equal((await f.call('/v1/gigi/instagram/receipts/post-one',body)).status,400);
+ assert.equal(f.calls.filter(c=>c.body?.endpoint?.endsWith('/media_publish')).length,0);
+ const receipt=await (await f.call('/v1/gigi/instagram/receipts/post-one',{continueConfirmed:true})).json() as any;
+ assert.equal(receipt.state,'not_published');assert.equal(receipt.reason,'container_processing_failed');assert.equal(f.objects.size,0);f.db.close();
+});
+test('broker uses POST only for explicitly confirmed pending continuation',async()=>{
+ const calls:Request[]=[];const broker=createBrokerClient({baseUrl:GIGI_RESOURCE,getAccessToken:async()=>'test',fetch:async(r)=>{calls.push(r as Request);return Response.json({requestId:'post-one',state:'unknown',reason:'container_processing'});}});
+ await broker.instagramReceipt('post-one');await broker.instagramReceipt('post-one',undefined,true);
+ assert.equal(calls[0]!.method,'GET');assert.equal(calls[1]!.method,'POST');assert.deepEqual(await calls[1]!.json(),{continueConfirmed:true});
 });

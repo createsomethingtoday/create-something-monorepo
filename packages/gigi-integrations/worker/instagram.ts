@@ -90,10 +90,56 @@ async function handle(request:Request,env:ConnectorEnv,fetcher:typeof fetch,subj
   const accountId=url.searchParams.get('connectedAccountId');if(!accountId||!/^ca_[A-Za-z0-9_-]{1,128}$/u.test(accountId))return json({error:'invalid_request'},400);
   return json(await account(accountId));
  }
+ const load=async(requestId:string)=>db.prepare('SELECT * FROM gigi_instagram_publishes WHERE subject = ? AND request_id = ?').bind(subject,requestId).first();
+ const cleanup=async(row:Record<string,unknown>)=>{if(typeof row.staging_key==='string')await env.INSTAGRAM_MEDIA?.delete(row.staging_key).catch(()=>{});};
+ // One readiness poll per explicit action, bounded by the staged image's ten-minute
+ // deadline. A GET receipt never advances publication. CAS owns the one POST.
+ async function advance(row:Record<string,unknown>):Promise<InstagramReceipt>{
+  if(row.state!=='preparing'||!numeric(row.container_id))return projection(row);
+  let dispatched=false;
+  try{
+   let terminal:string|null=Number(row.staging_expires_at)<=Date.now()?'container_processing_expired':null;
+   let status:Record<string,unknown>={};
+   let identity:Awaited<ReturnType<typeof account>>|null=null;
+   if(!terminal){identity=await account(String(row.connected_account_id));if(identity.instagramAccountId!==row.instagram_account_id)return projection({...row,reason:'container_processing'});status=await graph(String(row.connected_account_id),row.container_id,'GET',{fields:'status_code'});}
+   if(['ERROR','EXPIRED'].includes(String(status.status_code)))terminal='container_processing_failed';
+   if(terminal){
+    const updated=await db.prepare("UPDATE gigi_instagram_publishes SET state = 'not_published', reason = ? WHERE subject = ? AND request_id = ? AND state = 'preparing'").bind(terminal,subject,row.request_id).run() as {meta?:{changes?:number}};
+    if(updated.meta?.changes===1)await cleanup(row);
+    return projection((await load(String(row.request_id)))!);
+   }
+   if(status.status_code!=='FINISHED')return projection({...row,reason:'container_processing'});
+   // Recheck expiry in the atomic claim; racing reconciliations cannot duplicate.
+   const claim=await db.prepare("UPDATE gigi_instagram_publishes SET state = 'publishing', reason = NULL WHERE subject = ? AND request_id = ? AND state = 'preparing' AND staging_expires_at > ?").bind(subject,row.request_id,Date.now()).run() as {meta?:{changes?:number}};
+   if(claim.meta?.changes!==1)return projection((await load(String(row.request_id)))!);
+   dispatched=true;
+   const published=await graph(String(row.connected_account_id),`${identity!.instagramAccountId}/media_publish`,'POST',{creation_id:row.container_id});
+   if(!numeric(published.id))fail('publish_receipt_invalid');
+   row={...row,state:'published_unverified',media_id:published.id,reason:null};
+   await db.prepare("UPDATE gigi_instagram_publishes SET state = 'published_unverified', media_id = ?, reason = NULL WHERE subject = ? AND request_id = ?").bind(published.id,subject,row.request_id).run();
+   try{
+    const media=await graph(String(row.connected_account_id),String(row.media_id),'GET',{fields:'id,media_type,permalink'});
+    if(media.id===row.media_id&&media.media_type==='IMAGE'){
+     const permalink=typeof media.permalink==='string'&&safePermalink(media.permalink)?media.permalink:null;
+     await db.prepare("UPDATE gigi_instagram_publishes SET state = 'published', permalink = ? WHERE subject = ? AND request_id = ?").bind(permalink,subject,row.request_id).run();
+     row={...row,state:'published',permalink};
+    }
+   }catch{/* Accepted by provider; readback remains unverified. */}
+   return projection(row);
+  }catch(error){
+   const reason=dispatched?'publish_outcome_unknown':'container_processing';
+   if(dispatched){try{await db.prepare("UPDATE gigi_instagram_publishes SET state = 'unknown', reason = ? WHERE subject = ? AND request_id = ? AND state = 'publishing'").bind(reason,subject,row.request_id).run();}catch{/* publishing remains a fence */}}
+   return projection({...row,state:numeric(row.media_id)?'published_unverified':dispatched?'unknown':'preparing',reason});
+  }finally{if(dispatched)await cleanup(row);}
+ }
  const receipt=/^\/v1\/gigi\/instagram\/receipts\/([A-Za-z0-9._:-]+)$/u.exec(url.pathname);
- if(receipt&&request.method==='GET'){
-  const row=await db.prepare('SELECT * FROM gigi_instagram_publishes WHERE subject = ? AND request_id = ?').bind(subject,receipt[1]).first();
+ if(receipt&&['GET','POST'].includes(request.method)){
+  const row=await load(receipt[1]!);
   if(!row)return json({error:'not_found'},404);
+  if(row.state==='preparing'&&numeric(row.container_id)){
+   if(request.method==='POST'){const consent=await boundedJson(request);if(!object(consent)||consent.continueConfirmed!==true||Object.keys(consent).length!==1)return json({error:'invalid_request'},400);return json(await advance(row));}
+   return json(projection({...row,reason:'container_processing'}));
+  }
   if(['publishing','unknown','published_unverified'].includes(String(row.state))){
    try{
     const identity=await account(String(row.connected_account_id));if(identity.instagramAccountId!==row.instagram_account_id)return json(projection(row));
@@ -123,43 +169,29 @@ async function handle(request:Request,env:ConnectorEnv,fetcher:typeof fetch,subj
  const insert=await db.prepare("INSERT OR IGNORE INTO gigi_instagram_publishes(subject,request_id,payload_hash,connected_account_id,instagram_account_id,state,created_at) VALUES(?,?,?,?,?,'preparing',?)")
   .bind(subject,input.requestId,payloadHash,input.connectedAccountId,input.instagramAccountId,new Date().toISOString()).run() as {meta?:{changes?:number}};
  if(insert.meta?.changes!==1)return json({error:'publication_conflict'},409);
- let publicStage=false;
+ let preserveStage=false;
  const token=Array.from(crypto.getRandomValues(new Uint8Array(32))).map(n=>n.toString(16).padStart(2,'0')).join('');
- const stagingKey=`instagram/${token}.jpg`;
- const persist=async(state:string,reason:string|null,mediaId:string|null=null,permalink:string|null=null)=>{
-  const result=await db.prepare('UPDATE gigi_instagram_publishes SET state = ?, reason = ?, media_id = ?, permalink = ? WHERE subject = ? AND request_id = ?').bind(state,reason,mediaId,permalink,subject,input.requestId).run() as {meta?:{changes?:number}};
-  if(result.meta?.changes!==1)fail('journal_unavailable');
- };
+ const stagingKey=`instagram/${token}.jpg`,expiresAt=Date.now()+10*60_000;
  try{
-  await env.INSTAGRAM_MEDIA.put(stagingKey,bytes,{customMetadata:{expiresAt:String(Date.now()+10*60_000),sha256:input.expectedImageSha256}});
+  await env.INSTAGRAM_MEDIA.put(stagingKey,bytes,{customMetadata:{expiresAt:String(expiresAt),sha256:input.expectedImageSha256}});
   const created=await graph(input.connectedAccountId,`${identity.instagramAccountId}/media`,'POST',{image_url:`${url.origin}/v1/gigi/instagram/media/${token}.jpg`,caption:input.caption});
-  if(!numeric(created.id))fail('container_invalid');const containerId=created.id as string;
-  // JPEG containers usually finish immediately. Bounded status check; a slow
-  // image fails before publication and leaves an explicit not-published receipt.
-  const status=await graph(input.connectedAccountId,containerId,'GET',{fields:'status_code'});
-  if(status.status_code!=='FINISHED')fail('container_not_ready');
-  const checkpoint=await db.prepare("UPDATE gigi_instagram_publishes SET container_id = ?, state = 'publishing' WHERE subject = ? AND request_id = ? AND state = 'preparing'").bind(containerId,subject,input.requestId).run() as {meta?:{changes?:number}};
-  if(checkpoint.meta?.changes!==1)fail('journal_unavailable');publicStage=true;
-  const published=await graph(input.connectedAccountId,`${identity.instagramAccountId}/media_publish`,'POST',{creation_id:containerId});
-  if(!numeric(published.id))fail('publish_receipt_invalid');const mediaId=published.id as string;
-  await persist('published_unverified',null,mediaId);
-  try{
-   const media=await graph(input.connectedAccountId,mediaId,'GET',{fields:'id,media_type,permalink'});
-   if(media.id===mediaId&&media.media_type==='IMAGE'){
-    const permalink=typeof media.permalink==='string'&&safePermalink(media.permalink)?media.permalink:null;
-    await persist('published',null,mediaId,permalink);return json({requestId:input.requestId,state:'published',mediaId:mediaId,...(permalink?{permalink}:{})});
-   }
-  }catch{/* Provider accepted the post; readback did not verify it yet. */}
-  return json({requestId:input.requestId,state:'published_unverified',mediaId:mediaId});
+  if(!numeric(created.id))fail('container_invalid');
+  const checkpoint=await db.prepare("UPDATE gigi_instagram_publishes SET container_id = ?, staging_key = ?, staging_expires_at = ?, reason = 'container_processing' WHERE subject = ? AND request_id = ? AND state = 'preparing'").bind(created.id,stagingKey,expiresAt,subject,input.requestId).run() as {meta?:{changes?:number}};
+  if(checkpoint.meta?.changes!==1)fail('journal_unavailable');
+  preserveStage=true;
+  return json(await advance((await load(input.requestId))!));
  }catch(error){
-  const state=publicStage?'unknown':'not_published',reason=error instanceof InstagramError?error.reason:'provider_unavailable';
-  try{await persist(state,reason);}catch{/* Durable preparing/publishing row remains a retry fence. */}
-  return json({requestId:input.requestId,state,reason});
- }finally{await env.INSTAGRAM_MEDIA.delete(stagingKey).catch(()=>{});}
+  const reason=error instanceof InstagramError?error.reason:'provider_unavailable';
+  // No media_publish is dispatched in this block; a failed container creation
+  // cannot create a public post. Keep a durable terminal receipt where possible.
+  try{await db.prepare("UPDATE gigi_instagram_publishes SET state = 'not_published', reason = ? WHERE subject = ? AND request_id = ? AND state = 'preparing'").bind(reason,subject,input.requestId).run();}catch{/* preparing remains a retry fence */}
+  return json({requestId:input.requestId,state:'not_published',reason});
+ }finally{if(!preserveStage)await env.INSTAGRAM_MEDIA.delete(stagingKey).catch(()=>{});}
+
 }
 
 /** Opaque short-lived URL for Meta only; no account credential or private file
- * path is in the URL. Objects are deleted after the publish attempt. Bucket
+ * path is in the URL. Pending containers retain objects until their deadline; terminal attempts delete them. Bucket
  * lifecycle expiry is a backstop for a worker crash, not public-access policy. */
 export async function instagramStagedMedia(request:Request,env:ConnectorEnv):Promise<Response|null>{
  const path=new URL(request.url).pathname;const match=/^\/v1\/gigi\/instagram\/media\/([a-f0-9]{64}\.jpg)$/u.exec(path);

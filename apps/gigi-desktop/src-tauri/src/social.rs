@@ -92,17 +92,25 @@ fn dispatch_with<F>(root:&Path,operation:&str,input:Value,broker:F)->Result<Valu
             let request=Uuid::new_v4().to_string();
             tx.execute("UPDATE instagram_drafts SET state='publishing',request_id=?1,updated_at=CURRENT_TIMESTAMP WHERE workspace_id=?2 AND id=?3",params![request,workspace,id]).map_err(|e|e.to_string())?;
             tx.commit().map_err(|e|e.to_string())?;
-            let receipt=broker("instagram.publish",json!({"requestId":request,"connectedAccountId":draft["body"]["connectedAccountId"],"instagramAccountId":account_id,"caption":draft["body"]["caption"],"imageUrl":draft["body"]["imageUrl"],"expectedImageSha256":draft["body"]["expectedImageSha256"],"confirmed":true})).unwrap_or_else(|_|json!({"requestId":request,"state":"unknown","reason":"connection_lost"}));
+            let receipt=broker("instagram.publish",json!({"requestId":request,"connectedAccountId":draft["body"]["connectedAccountId"],"instagramAccountId":account_id,"caption":draft["body"]["caption"],"imageUrl":draft["body"]["imageUrl"],"expectedImageSha256":draft["body"]["expectedImageSha256"],"confirmed":true})).unwrap_or_else(|error|failed_publish_receipt(&request,&error));
             store_receipt(&db,&workspace,id,&request,receipt)?;
             get(&db,&workspace,id)
         },
         "social.receipt"=>{
             let id=text(&input,"id")?;let draft=get(&db,&workspace,id)?;let request=text(&draft,"requestId")?;
-            let receipt=broker("instagram.receipt",json!({"requestId":request}))?;
+            let resume=input["continueConfirmed"]==true && draft["state"]=="unknown" && draft["receipt"]["reason"]=="container_processing";
+            let receipt=broker("instagram.receipt",json!({"requestId":request,"continueConfirmed":resume}))?;
             store_receipt(&db,&workspace,id,request,receipt)?;get(&db,&workspace,id)
         },
         _=>Err("Unsupported social operation".into())
     }
+}
+// Only exact broker codes known to occur before a provider mutation are safe.
+// Timeouts, conflicts, readback failures and arbitrary text remain uncertain.
+fn failed_publish_receipt(request:&str,error:&str)->Value{
+    let definitive=matches!(error,"image_changed"|"jpeg_required"|"image_dimensions"|"media_too_large"|"media_host_not_allowed"|"media_staging_unconfigured"|"account_changed"|"account_unsupported"|"connection_unavailable"|"caption_limits"|"invalid_media_url");
+    if definitive{json!({"requestId":request,"state":"not_published","reason":error})}
+    else{json!({"requestId":request,"state":"unknown","reason":"connection_lost"})}
 }
 fn store_receipt(db:&Connection,workspace:&str,id:&str,request:&str,receipt:Value)->Result<(),String>{
     let valid=receipt["requestId"]==request && ["not_published","unknown","published_unverified","published"].contains(&receipt["state"].as_str().unwrap_or(""));
@@ -130,6 +138,26 @@ fn store_receipt(db:&Connection,workspace:&str,id:&str,request:&str,receipt:Valu
         assert!(result.unwrap_err().contains("account changed"));
         assert_eq!(dispatch_with(&root,"social.get",json!({"workspaceId":w,"id":draft["id"]}),|_,_|panic!()).unwrap()["state"],"draft");
         std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]fn definitive_publish_rejections_remain_recoverable_without_unfencing_ambiguous_errors(){
+        for reason in ["image_changed","jpeg_required","image_dimensions","media_too_large","media_host_not_allowed","media_staging_unconfigured","account_changed","account_unsupported","connection_unavailable","caption_limits","invalid_media_url"] {
+            let(root,w)=setup();let draft=dispatch_with(&root,"social.save",json!({"workspaceId":w,"requestId":Uuid::new_v4().to_string(),"title":"Release","imageUrl":"https://example.com/image.jpg","expectedImageSha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","connectedAccountId":"ca_test"}),|_,_|panic!()).unwrap();
+            let result=dispatch_with(&root,"social.publish",json!({"workspaceId":w,"id":draft["id"],"expectedRevision":1,"confirmed":true,"expectedInstagramAccountId":"1784"}),|operation,_|if operation=="instagram.account"{Ok(json!({"connectedAccountId":"ca_test","instagramAccountId":"1784","accountType":"BUSINESS"}))}else{Err(reason.into())}).unwrap();
+            assert_eq!(result["state"],"not_published");assert_eq!(result["receipt"]["reason"],reason);
+            std::fs::remove_dir_all(root).unwrap();
+        }
+        for reason in ["timeout","provider_unavailable","publication_conflict","invalid_readback","journal_unavailable","image_changed after dispatch","connection_lost"]{assert_eq!(failed_publish_receipt("attempt",reason)["state"],"unknown");}
+    }
+
+    #[test]fn continuation_requires_pending_receipt_and_fresh_explicit_action(){
+        let(root,w)=setup();let draft=dispatch_with(&root,"social.save",json!({"workspaceId":w,"requestId":Uuid::new_v4().to_string(),"title":"Release"}),|_,_|panic!()).unwrap();
+        let db=open(&root).unwrap();let id=draft["id"].as_str().unwrap();
+        for (state,reason,confirmed,expected) in [("unknown","container_processing",true,true),("unknown","container_processing",false,false),("unknown","connection_lost",true,false),("published_unverified","container_processing",true,false)]{
+            db.execute("UPDATE instagram_drafts SET state=?1,request_id='attempt',receipt_json=?2 WHERE id=?3",params![state,json!({"requestId":"attempt","state":state,"reason":reason}).to_string(),id]).unwrap();
+            dispatch_with(&root,"social.receipt",json!({"workspaceId":w,"id":id,"continueConfirmed":confirmed}),|op,input|{assert_eq!(op,"instagram.receipt");assert_eq!(input["continueConfirmed"],expected);Ok(json!({"requestId":"attempt","state":"unknown","reason":reason}))}).unwrap();
+        }
+        drop(db);std::fs::remove_dir_all(root).unwrap();
     }
 
 }
