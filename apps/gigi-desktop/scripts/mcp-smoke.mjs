@@ -13,7 +13,7 @@ let calls=0;
 try {
  await client.connect(new StdioClientTransport({command:binary,env:{PATH:process.env.PATH,HOME:process.env.HOME,GIGI_DATA_DIR:data}}));
  const catalog=await client.listTools();
- assert.ok(catalog.tools.length<=12);
+ assert.equal(catalog.tools.length,27);
  assert.ok(!catalog.tools.some(t=>t.name.includes('restore')));
  async function call(name,args={}) {
   const response=await client.callTool({name,arguments:args}); calls++;

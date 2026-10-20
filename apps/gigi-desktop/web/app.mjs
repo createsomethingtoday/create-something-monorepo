@@ -29,7 +29,9 @@ let editorBaseline = null;
 let submittedEditor = null;
 let pendingLeave = null;
 let editorReturnFocus = null;
-const state = { workspace: null, setupProfile: false, setupDraft: null, currency: null, currencyKnown: false, page: 'overview', scheduleView: 'upcoming', libraryOpen: false, records: [], recordCount: 0, nextCursor: null, selected: null, editing: false, editorDraft: null, editorOrigin: null, sourceExpanded: false, busy: false, signingIn: false, justCreated: false, agentProvider: 'codex', toast: null, summary: null, summaryUnavailable: false, history: [], backupId: null, pendingRestoreId: null, agent: null, agentReceipt: null, relationSchema: null, linkChoices: null, sources: {}, sourceAttempts: {}, connectionRequests: {}, imports: {}, contextHits: [], contextQueried: false, diagnostics: { status: null, review: null, exported: null } };
+let contactSearchTimer;
+let contactSearchVersion = 0;
+const state = { workspace: null, setupProfile: false, setupDraft: null, currency: null, currencyKnown: false, page: 'overview', contactQuery: '', contactSearching: false, contactSearchError: false, scheduleView: 'upcoming', libraryOpen: false, records: [], recordCount: 0, nextCursor: null, selected: null, editing: false, editorDraft: null, editorOrigin: null, sourceExpanded: false, busy: false, signingIn: false, justCreated: false, agentProvider: 'codex', toast: null, summary: null, summaryUnavailable: false, history: [], backupId: null, pendingRestoreId: null, agent: null, agentReceipt: null, relationSchema: null, linkChoices: null, sources: {}, sourceAttempts: {}, connectionRequests: {}, imports: {}, contextHits: [], contextQueried: false, diagnostics: { status: null, review: null, exported: null } };
 const safe = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
 const label = (name) => sections.find((item) => item.id === name)?.label || name;
 const entityName = (name) => ({ schedule: 'schedule', finances: 'financial record', contacts: 'contact', companies: 'company', gigs: 'gig or shift', locations: 'place' })[name] || name.replace(/s$/, '');
@@ -121,10 +123,11 @@ function keepEditing() {
 }
 async function openPage(page, resetScroll = false) {
   if (!protectEditor(() => void run(() => openPage(page, resetScroll)))) return false;
-  if (creatorMount?.canLeave && !creatorMount.canLeave()) return false;
+  if (creatorMount?.canLeave && !await creatorMount.canLeave()) return false;
   if (creatorMount) { if(typeof creatorMount==='function') creatorMount(); else creatorMount.dispose?.(); }
   creatorMount=null; creatorNode=null; creatorRoute=null;
   if (page !== 'settings') state.justCreated = false;
+  clearTimeout(contactSearchTimer); contactSearchVersion++; state.contactSearching = false; state.contactSearchError = false;
   state.page = page; state.selected = null; state.editing = false; state.editorDraft = null; state.editorOrigin = null; state.sourceExpanded = false; state.summary = null; state.summaryUnavailable = false;
   const route = nextRoute();
   if (page !== 'settings') state.pendingRestoreId = null;
@@ -147,7 +150,7 @@ async function openPage(page, resetScroll = false) {
     state.diagnostics = { status: results[3].status === 'fulfilled' ? results[3].value : null, review: null, exported: null };
   } else if (fields[page]) {
     state.records = []; state.recordCount = 0; state.nextCursor = null;
-    const result = page === 'schedule' ? await readWorkspaceAgenda((entity, cursor) => bridge.listRecords(route.workspace, entity, cursor), () => currentRoute(route)).then(items => items && ({ items, count: items.length })) : await bridge.listRecords(route.workspace, page);
+    const result = page === 'schedule' ? await readWorkspaceAgenda((entity, cursor) => bridge.listRecords(route.workspace, entity, cursor), () => currentRoute(route)).then(items => items && ({ items, count: items.length })) : await bridge.listRecords(route.workspace, page, null, page === 'contacts' ? state.contactQuery : undefined);
     if (!currentRoute(route)) return false;
     state.records = listFrom(result);
     state.recordCount = result?.count ?? state.records.length;
@@ -209,7 +212,7 @@ async function cancelEditor() {
   if (!protectEditor(() => void cancelEditor())) return;
   const origin = state.editorOrigin;
   leaveRoute();
-  if (origin?.reloadCollection) {
+  if (origin?.reloadCollection || (state.page === 'contacts' && !origin?.selected && state.contactSearching)) {
     state.records = []; state.recordCount = 0; state.nextCursor = null;
     if (!await run(() => openPage(state.page))) return;
   } else {
@@ -262,11 +265,40 @@ function scheduleView() {
   return heading('Daily work', 'Schedule', 'Dated gigs and schedule entries, together. Open an item for details.', `<button class="btn primary" data-new="schedule">${icon('plus')}Add event</button>`) + `<section class="panel"><div class="panel-head"><h2>Agenda</h2><button class="btn" data-schedule-today="1">Today</button></div><div class="inline-actions schedule-controls" aria-label="Schedule views">${controls}</div><p class="muted">Times in ${safe(zone)} · ${state.records.length} agenda ${state.records.length === 1 ? 'item' : 'items'}</p>${agenda.undated ? `<p class="muted">${agenda.undated} ${agenda.undated === 1 ? 'entry needs' : 'entries need'} a usable date. Find ${agenda.undated === 1 ? 'it' : 'them'} in All entries.</p>` : ''}${agenda.groups.length ? agenda.groups.map(group => `<section class="agenda-day" ${group.key === localToday() ? 'id="schedule-today"' : ''}><h3>${safe(group.title)}</h3>${group.entries.map(entry => `<button class="row agenda-event" type="button" data-open="${safe(entry.record.id)}" data-entity="${safe(entry.record.entity || 'schedule')}"><span class="agenda-time">${safe(entry.time)}</span><span><strong>${safe(entry.record.title || 'Untitled event')}</strong><small>${entry.record.entity === 'gigs' ? 'Gig or shift' : 'Schedule entry'}${entry.record.status ? ` · ${safe(entry.record.status)}` : ''}</small></span><span class="arrow" aria-hidden="true">${icon('arrow-up-right')}</span></button>`).join('')}</section>`).join('') : state.records.length ? `<div class="empty"><strong>${state.scheduleView === 'past' ? 'No past events.' : 'Nothing scheduled for today or later.'}</strong><p>View All entries to find earlier events, or add an event.</p><button class="btn" data-schedule-view="all">View all entries</button></div>` : rows('schedule', [])}</section>`;
 }
 
+function searchContacts(query, immediate = false) {
+  if (state.page !== 'contacts' || state.selected || state.editing) return;
+  clearTimeout(contactSearchTimer);
+  state.contactQuery = query.slice(0,160); state.contactSearching = true; state.contactSearchError = false;
+  const version = ++contactSearchVersion, route = readRoute();
+  render();
+  const search = async () => {
+    if (version !== contactSearchVersion || !currentRoute(route) || state.selected || state.editing) return;
+    try {
+      const result = await bridge.listRecords(route.workspace, 'contacts', null, state.contactQuery);
+      if (version !== contactSearchVersion || !currentRoute(route) || state.selected || state.editing) return;
+      state.records = listFrom(result); state.recordCount = result?.count ?? state.records.length; state.nextCursor = result?.nextCursor || null;
+    } catch {
+      if (version !== contactSearchVersion || !currentRoute(route)) return;
+      state.records = []; state.recordCount = 0; state.nextCursor = null; state.contactSearchError = true;
+    } finally {
+      if (version === contactSearchVersion && currentRoute(route) && !state.selected && !state.editing) { state.contactSearching = false; render(); }
+    }
+  };
+  if (immediate) void search(); else contactSearchTimer = setTimeout(search, 150);
+}
+function contactSearchControls() {
+  return `<div class="contact-search"><div class="field"><label for="contact-search">Search people</label><input id="contact-search" type="search" maxlength="160" value="${safe(state.contactQuery)}" placeholder="Name, email, phone or company" aria-describedby="contact-search-help" aria-controls="contact-results" autocomplete="off"></div><button type="button" class="btn" data-clear-contacts="1" ${state.contactQuery ? '' : 'disabled'}>Clear search</button></div><p class="muted" id="contact-search-help">Search contacts on this Mac, including linked company names. Escape clears the search.</p>`;
+}
+
 function collection() {
   if (state.page === 'schedule') return scheduleView();
   const name = state.page;
   const action = name === 'profile' && state.records.length ? `<button class="btn" data-open="${safe(state.records[0].id)}" data-entity="profile">Open profile</button>` : `<button class="btn primary" data-new="${name}">${icon('plus')}Add ${safe(entityName(name))}</button>`;
-  return heading('Your records', label(name), `A private view of your ${name === 'finances' ? 'financial records' : label(name).toLowerCase()}. Open any record to inspect its details and links.`, action) + `<section class="panel"><div class="panel-head"><h2>${safe(collectionCount(name, state.recordCount))}</h2><small>Showing ${state.records.length} of ${state.recordCount}</small></div>${rows(name, state.records)}${state.nextCursor ? '<button class="btn section-gap" data-more="1">Load more</button>' : ''}</section>`;
+  const searching = name === 'contacts' && state.contactSearching;
+  const searchError = name === 'contacts' && state.contactSearchError;
+  const filtered = name === 'contacts' && state.contactQuery.trim();
+  const content = searching ? '<p role="status">Searching people…</p>' : searchError ? '<div class="empty"><strong>Couldn’t search people.</strong><p>Your contacts are unchanged. Try again.</p><button class="btn" data-retry-contacts="1">Retry search</button></div>' : filtered && !state.records.length ? '<div class="empty"><strong>No people match your search.</strong><p>Try a name, email, phone or linked company, or clear the search to see everyone.</p></div>' : rows(name, state.records);
+  return heading('Your records', label(name), `A private view of your ${name === 'finances' ? 'financial records' : label(name).toLowerCase()}. Open any record to inspect its details and links.`, action) + `<section class="panel">${name === 'contacts' ? contactSearchControls() : ''}<div id="contact-results" aria-busy="${searching}"><div class="panel-head"><h2>${safe(collectionCount(name, state.recordCount))}</h2><small role="status" aria-live="polite">${searching ? 'Searching…' : searchError ? 'Search unavailable' : `Showing ${state.records.length} of ${state.recordCount}${filtered ? ' matching contacts' : ''}`}</small></div>${content}${!searching && !searchError && state.nextCursor ? '<button class="btn section-gap" data-more="1">Load more</button>' : ''}</div></section>`;
 }
 
 function recordDetail() {
@@ -495,9 +527,10 @@ async function enterLinkEditor() {
 }
 
 async function loadMore() {
-  const route = nextRoute(), cursor = state.nextCursor, records = state.records;
-  const result = await bridge.listRecords(route.workspace, route.page, cursor);
+  const route = nextRoute(), cursor = state.nextCursor, records = state.records, searchVersion = contactSearchVersion;
+  const result = await bridge.listRecords(route.workspace, route.page, cursor, route.page === 'contacts' ? state.contactQuery : undefined);
   if (!currentRoute(route)) return;
+  if (route.page === 'contacts' && searchVersion !== contactSearchVersion) return;
   state.records = [...records, ...listFrom(result)]; state.nextCursor = result?.nextCursor || null; state.recordCount = result?.count ?? state.recordCount;
 }
 
@@ -519,7 +552,9 @@ function submitLink(data) {
 
 root.addEventListener('click', (event) => {
   const button = event.target.closest('button'); if (!button) return;
-  if (button.dataset.keepEditing) { keepEditing(); }
+  if (button.dataset.clearContacts) { searchContacts('', true); root.querySelector?.('#contact-search')?.focus?.(); }
+  else if (button.dataset.retryContacts) searchContacts(state.contactQuery, true);
+  else if (button.dataset.keepEditing) { keepEditing(); }
   else if (button.dataset.discardChanges) { const next = pendingLeave; pendingLeave = null; state.editing = false; state.editorDraft = null; editorBaseline = null; next?.(); }
   else if (pendingLeave) return;
   else if (button.dataset.copyRecordValue) {
@@ -615,6 +650,7 @@ root.addEventListener('click', (event) => {
   else if (button.dataset.new) newRecord(button.dataset.new);
   else if (button.dataset.open) void run(() => navigateRecord(button.dataset.entity, button.dataset.open));
   else if (button.dataset.cancel) void cancelEditor();
+  else if (button.dataset.back && state.page === 'contacts') void run(() => openPage('contacts'));
   else if (button.dataset.back) { if (!protectEditor(() => void run(() => openPage(state.page)))) return; leaveRoute(); state.selected = null; state.editing = false; state.editorDraft = null; state.editorOrigin = null; render(); globalThis.scrollTo?.(0, 0); }
   else if (button.dataset.edit) void enterEditor();
   else if (button.dataset.full) void run(() => refreshSelected());
@@ -647,6 +683,7 @@ globalThis.document?.addEventListener?.('focusin', event => {
 globalThis.document?.addEventListener?.('pointerdown', () => { chatRefreshFocus = null; });
 (globalThis.document?.addEventListener ? document : root).addEventListener('keydown', (event) => {
   if (chatRefreshFocus && event.key === 'Tab') chatRefreshFocus = null;
+  if (event.target?.id === 'contact-search' && event.key === 'Escape') { event.preventDefault?.(); searchContacts('', true); root.querySelector?.('#contact-search')?.focus?.(); return; }
   if (pendingLeave) {
     if (event.key === 'Escape') { event.preventDefault?.(); keepEditing(); }
     if (event.key === 'Tab') { event.preventDefault?.(); const keep = root.querySelector?.('[data-keep-editing]'); const discard = root.querySelector?.('[data-discard-changes]'); (document.activeElement === keep ? discard : keep)?.focus?.(); }
@@ -662,6 +699,7 @@ root.addEventListener('toggle', (event) => { if (event.target.dataset?.libraryNa
 
 root.addEventListener('change', (event) => { if (event.target.id === 'link-entity') void run(() => loadLinkChoices(event.target.value)); });
 root.addEventListener('input', (event) => {
+  if (event.target.id === 'contact-search') { searchContacts(event.target.value); return; }
   if (event.target.id === 'chat-message' && chat) chat.draft = event.target.value;
   if (sourceProposal?.phase === 'draft') {
     if (event.target.id === 'source-proposal-title') sourceProposal.title = event.target.value;

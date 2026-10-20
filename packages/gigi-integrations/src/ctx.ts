@@ -11,6 +11,7 @@ const SCOPED_CONFIG = '[indexing]\nmode = "manual"\n[sources]\nautomatic = false
 export class CtxError extends Data.TaggedError('CtxError')<{
   readonly operation: 'search' | 'import';
   readonly reason: 'invalid_configuration' | 'missing_dependency' | 'unavailable' | 'invalid_readback' | 'cancelled';
+  readonly detail?: 'invalid_scoped_root' | 'query_bounds' | 'limit_bounds' | 'scoped_config_missing' | 'scoped_config_mismatch';
   readonly cause?: unknown;
 }> {}
 
@@ -38,7 +39,7 @@ export function createCtxClient(options: CtxOptions): CtxClient {
   const { dataRoot, importRoot, sourceId } = options;
   if (!dataRoot || !dataRoot.startsWith('/') || (importRoot && !importRoot.startsWith('/')) ||
     (sourceId && !/^[A-Za-z0-9._:-]{1,100}$/u.test(sourceId))) {
-    throw new CtxError({ operation: 'search', reason: 'invalid_configuration' });
+    throw new CtxError({ operation: 'search', reason: 'invalid_configuration', detail: 'invalid_scoped_root' });
   }
   const binary = options.binary || 'ctx';
 
@@ -91,9 +92,9 @@ export function createCtxClient(options: CtxOptions): CtxClient {
   return {
     async search(query, searchOptions = {}) {
       const normalized = query.trim();
-      if (!normalized || normalized.length > 200) throw new CtxError({ operation: 'search', reason: 'invalid_configuration' });
+      if (!normalized || Array.from(normalized).length > 200) throw new CtxError({ operation: 'search', reason: 'invalid_configuration', detail: 'query_bounds' });
       const limit = searchOptions.limit ?? 5;
-      if (!Number.isInteger(limit) || limit < 1 || limit > 5) throw new CtxError({ operation: 'search', reason: 'invalid_configuration' });
+      if (!Number.isInteger(limit) || limit < 1 || limit > 5) throw new CtxError({ operation: 'search', reason: 'invalid_configuration', detail: 'limit_bounds' });
       const args = [normalized, '--limit', String(limit), '--refresh', 'off', '--backend', 'lexical', '--format', 'json'];
       args.push('--provider-key', 'gigi-local');
       if (sourceId) args.push('--source-id', sourceId);
@@ -145,9 +146,9 @@ async function configureScopedRoot(dataRoot: string): Promise<void> {
   catch (error) {
     if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
     const entries = await readdir(dataRoot);
-    if (entries.length > 0) throw new CtxError({ operation: 'import', reason: 'invalid_configuration' });
+    if (entries.length > 0) throw new CtxError({ operation: 'import', reason: 'invalid_configuration', detail: 'scoped_config_missing' });
     await writeFile(path, SCOPED_CONFIG, { mode: 0o600, flag: 'wx' });
     content = SCOPED_CONFIG;
   }
-  if (content !== SCOPED_CONFIG) throw new CtxError({ operation: 'import', reason: 'invalid_configuration' });
+  if (content !== SCOPED_CONFIG) throw new CtxError({ operation: 'import', reason: 'invalid_configuration', detail: 'scoped_config_mismatch' });
 }

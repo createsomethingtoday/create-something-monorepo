@@ -67,3 +67,22 @@ test('context sync imports the app-owned history export without a user-supplied 
     assert.deepEqual(result, { ok: true, value: { imported: true } });
   } finally { await rm(root, { recursive: true }); }
 });
+
+test('context configuration details distinguish input and scoped policy without leaking paths', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'gigi-context-detail-'));
+  try {
+    for (const [name, input, detail] of [
+      ['query', {query:'x'.repeat(201)}, 'query_bounds'],
+      ['limit', {query:'synthetic',limit:6}, 'limit_bounds'],
+      ['missing', {query:'synthetic'}, 'scoped_config_missing'],
+      ['mismatch', {query:'synthetic'}, 'scoped_config_mismatch'],
+    ] as const) {
+      const dataDir=join(root,name); await mkdir(join(dataDir,'ctx'),{recursive:true});
+      if(name==='missing')await writeFile(join(dataDir,'ctx','private-fixture'),'secret');
+      if(name==='mismatch')await writeFile(join(dataDir,'ctx','config.toml'),'secret-config');
+      const result=await runOperation({operation:'context.search',input},{dataDir,ctxBinary:'/nonexistent-fixture'});
+      assert.deepEqual(result,{ok:false,error:{operation:'context.search',reason:'invalid_configuration',detail}});
+      assert.ok(!JSON.stringify(result).includes(root));assert.ok(!JSON.stringify(result).includes('secret'));
+    }
+  } finally {await rm(root,{recursive:true});}
+});
