@@ -43,4 +43,8 @@ jobs:
         run: pnpm --filter @create-something/composio-bridge build
 
       - name: Strict workspace check
+        # Agency prepares Canon during its check; concurrent consumers can read
+        # a partially rebuilt dist directory. Keep every gate, serialize packages.
+        env:
+          npm_config_workspace_concurrency: '1'
         run: pnpm check
