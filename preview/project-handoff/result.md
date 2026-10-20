@@ -1,7 +1,7 @@
-# Reviewable Agency project tour and handoff draft
+# Agency project tour and handoff release evidence
 
-Base: origin/main at 914cd4ef8ce7204c33113ce082264f7f837da5ea.
-Branch: codex/agency-project-handoff. No push, merge or deployment.
+Original base: 914cd4ef8ce7204c33113ce082264f7f837da5ea. Integrated current main 6e00ed6b3 before release checks; unrelated Webflow support changes preserved.
+Branch: codex/agency-project-handoff. User approved final checks, merge and Agency production deployment on October 20, 2026. PR: https://github.com/createsomethingtoday/create-something-monorepo/pull/1997. Deployment and live evidence are recorded in the release closeout after workflow completion.
 
 ## Preview
 - http://127.0.0.1:4178/products#cato-tour
@@ -25,7 +25,12 @@ The preview runs on Micah-W4FJPH. Browser QA used isolated headless Google Chrom
 Evidence: ../evidence/project-handoff/browser-results.json (relative to worktree root); ../evidence/tour-check.log; ../evidence/tour-build.log. Screenshots in ../evidence/project-handoff/.
 
 ## Limits
-No conversion uplift is claimed. Public source example demonstrates inspectable materials, not a client's full operating runbook or exclusive ownership. The original recording remains a September2026 snapshot; no new client results or design-decision claims are invented. A no-JavaScript visitor retains native video controls and can pause before closing its disclosure; the close-to-pause enhancement requires JavaScript. External source pages were not modified. Production approval remains outstanding by design.
+No conversion uplift is claimed. Public source example demonstrates inspectable materials, not a client's full operating runbook or exclusive ownership. The original recording remains a September2026 snapshot; no new client results or design-decision claims are invented. A no-JavaScript visitor retains native video controls and can pause before closing its disclosure; the close-to-pause enhancement requires JavaScript. External source pages were not modified. Production release is explicitly approved; merge remains gated on final checks.
 
 ## Library delivery blocker
 The required Library batch helper could not discover Library prepare_uploads on this host after network access was granted. No upload was prepared or finalized, and no Library screenshot IDs were created. This is a capability failure, not an approval denial. Local PNGs remain available. Per the Library skill, the started helper workflow was not switched to direct writes.
+
+## Integrated release validation
+Agency full check and production build passed after merging current main. Independent source/provenance review found no material blockers. The reusable browser check accepts AGENCY_PREVIEW_URL, EVIDENCE_DIR and CHROME_PATH for preview and production verification. Logs: ../evidence/project-handoff/release-check.log and release-build.log.
+
+The broader Performance page audit has five pre-existing registry omissions, and its media tests assert retired homepage structures. Their inputs match base main; these are not Agency package or deployment gates. No check was disabled or bypassed.
