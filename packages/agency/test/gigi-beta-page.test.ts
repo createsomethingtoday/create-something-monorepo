@@ -14,12 +14,12 @@ test('standalone page retains the owning Agency Canon operator palette', () => {
 });
 
 test('download contract pins exact qualified installer, platform and checksum', () => {
-  assert.equal(gigiBeta.version, '0.2.3');
-  assert.equal(gigiBeta.filename, 'GiGi-0.2.3-arm64-private-beta.dmg');
-  assert.equal(gigiBeta.bytes, 96323388);
-  assert.equal(gigiBeta.sha256, '72a49d909307f72576d879f95905fc0fea827f145e41fd1018d9e644ed3780f4');
-  assert.equal(gigiBeta.url, `https://media.createsomething.io/releases/gigi/0.2.3/${gigiBeta.sha256}/GiGi-0.2.3-arm64-private-beta.dmg`);
-  for (const text of ['macOS 13', 'Apple Silicon', 'Intel Macs are not supported', gigiBeta.url, gigiBeta.sha256, '96,323,388', '96.3 MB']) assert.ok(gigiBetaHtml.includes(text), text);
+  assert.equal(gigiBeta.version, '0.2.4');
+  assert.equal(gigiBeta.filename, 'GiGi-0.2.4-arm64-private-beta.dmg');
+  assert.equal(gigiBeta.bytes, 96304067);
+  assert.equal(gigiBeta.sha256, '0cf8951649671e30960df72c2b76b0b6398e62836b23249702036d100f972b61');
+  assert.equal(gigiBeta.url, `https://media.createsomething.io/releases/gigi/0.2.4/${gigiBeta.sha256}/GiGi-0.2.4-arm64-private-beta.dmg`);
+  for (const text of ['macOS 13', 'Apple Silicon', 'Intel Macs are not supported', gigiBeta.url, gigiBeta.sha256, '96,304,067', '96.3 MB']) assert.ok(gigiBetaHtml.includes(text), text);
 });
 
 test('beta stays unlisted and has no active content or tracking shell', () => {
@@ -81,5 +81,10 @@ test('release describes bounded agent actions and separates saved tasks from sou
 
 
 test('search release explains token matching, bounded waits and synthetic acceptance', () => {
-  for (const text of ['What changed in 0.2.3', 'Included from 0.2.2', 'middle name', 'without changing saved contacts', 'retry or clear', 'native read may still finish', '5,000 contacts and 200 linked companies', 'stale requests, timeouts and database contention', 'do not establish Grant’s live outcome or repair account connections', 'on GiGi 0.2.2']) assert.ok(gigiBetaHtml.includes(text), text);
+  for (const text of ['Included from 0.2.3', 'Included from 0.2.2', 'middle name', 'without changing saved contacts', 'retry or clear', 'native read may still finish', '5,000 contacts and 200 linked companies', 'stale requests, timeouts and database contention', 'do not establish Grant’s live outcome or repair account connections', 'on GiGi 0.2.2']) assert.ok(gigiBetaHtml.includes(text), text);
+});
+
+
+test('slate release describes presentation changes without overstating workflow acceptance', () => {
+  for (const text of ['What changed in 0.2.4', 'slate/grey surfaces', 'system typography', 'keyboard focus', 'retain their behavior', 'Visual checks used an isolated synthetic workspace', 'compact and expanded windows', 'Search checks from 0.2.3', 'do not establish Grant’s live outcome']) assert.ok(gigiBetaHtml.includes(text), text);
 });
