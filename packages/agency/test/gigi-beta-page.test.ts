@@ -14,12 +14,12 @@ test('standalone page retains the owning Agency Canon operator palette', () => {
 });
 
 test('download contract pins exact qualified installer, platform and checksum', () => {
-  assert.equal(gigiBeta.version, '0.2.1');
-  assert.equal(gigiBeta.filename, 'GiGi-0.2.1-arm64-private-beta.dmg');
-  assert.equal(gigiBeta.bytes, 95725120);
-  assert.equal(gigiBeta.sha256, '30bad3fea157e78c791fa2245b92fc454add5982ef0c9a4d4107d49976dc5c13');
-  assert.equal(gigiBeta.url, `https://media.createsomething.io/releases/gigi/0.2.1/${gigiBeta.sha256}/GiGi-0.2.1-arm64-private-beta.dmg`);
-  for (const text of ['macOS 13', 'Apple Silicon', 'Intel Macs are not supported', gigiBeta.url, gigiBeta.sha256, '95,725,120', '95.7 MB']) assert.ok(gigiBetaHtml.includes(text), text);
+  assert.equal(gigiBeta.version, '0.2.2');
+  assert.equal(gigiBeta.filename, 'GiGi-0.2.2-arm64-private-beta.dmg');
+  assert.equal(gigiBeta.bytes, 96043545);
+  assert.equal(gigiBeta.sha256, 'f97e1052db6c0503d5a8140b43d539d268bd7571d7d60e27f12329c0623cf010');
+  assert.equal(gigiBeta.url, `https://media.createsomething.io/releases/gigi/0.2.2/${gigiBeta.sha256}/GiGi-0.2.2-arm64-private-beta.dmg`);
+  for (const text of ['macOS 13', 'Apple Silicon', 'Intel Macs are not supported', gigiBeta.url, gigiBeta.sha256, '96,043,545', '96.0 MB']) assert.ok(gigiBetaHtml.includes(text), text);
 });
 
 test('beta stays unlisted and has no active content or tracking shell', () => {
@@ -52,8 +52,8 @@ test('walkthroughs pin reviewed footage and use user-initiated native playback',
 });
 
 test('release acceptance distinguishes this installer from historical workflow evidence', () => {
-  assert.ok(gigiBetaHtml.includes('signed app passed native music-library and local Instagram-draft checks before packaging'));
-  assert.ok(gigiBetaHtml.includes('unsaved-record protection, dated gigs in Schedule, disconnected-chat recovery, and keyboard-focus checks'));
+  assert.ok(gigiBetaHtml.includes('Native checks used an isolated test workspace'));
+  assert.ok(gigiBetaHtml.includes('GiGi 0.2.1 previously passed unsaved-record protection'));
   assert.ok(gigiBetaHtml.includes('Earlier builds passed native onboarding'));
   assert.ok(gigiBetaHtml.includes('No real Instagram publication has been verified for this release'));
   assert.ok(gigiBetaHtml.includes('bounded Gmail and Calendar imports'));
@@ -72,4 +72,9 @@ test('creative work scope preserves local media and explicit publishing boundari
     'Business or Creator account', 'Personal accounts, Reels, Stories, carousels and scheduling are not supported',
     'explicitly confirm publication', 'outcome is unknown', 'local drafting remains available'
   ]) assert.ok(gigiBetaHtml.includes(text), text);
+});
+
+
+test('release describes bounded agent actions and separates saved tasks from sources', () => {
+  for (const text of ['full local contact collection', 'before pagination', 'missing or invalid dates last', 'native picker', 'they cannot publish', 'earlier review request stale', 'does not automatically turn messages or events into tasks', 'does not change history configuration or repair an account connection', 'synthetic requests']) assert.ok(gigiBetaHtml.includes(text), text);
 });
