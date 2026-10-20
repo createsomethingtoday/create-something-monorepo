@@ -7,7 +7,14 @@ function view(args, currency = 'USD') {
     current: { state: 'approval', approvals: [{ id: 'a1', title: 'Approve gigi_records_save', detail: JSON.stringify(args) }] } });
 }
 const args = (extra = {}) => ({ entity: 'gigs', id: 'synthetic-gig', title: 'Existing gig', fields: {}, expectedRecord: { title: 'Existing gig', fields: { Status: 'Open', Fee: 9000, Date: '2026-10-03' }, source: { kind: 'manual' } }, ...extra });
-const comparison = (html) => html.split(/<details(?:\s|>)/)[0];
+function comparison(html) {
+  // Read the primary approval, not unrelated disclosures in the surrounding drawer.
+  const start = html.indexOf('<div class="chat-approval">');
+  assert.notEqual(start, -1, 'the rendered chat must contain its approval');
+  const technical = html.indexOf('<details data-view-key="approval-', start);
+  assert.ok(technical > start, 'the approval must retain its technical-detail disclosure');
+  return html.slice(start, technical);
+}
 
 test('approval shows only structural changes including title, with exact before/after money and date semantics', () => {
   const html = view(args({ title: '  Renamed gig  ', fields: { Status: 'Open', Fee: 12550, Date: '2026-10-04' } }));

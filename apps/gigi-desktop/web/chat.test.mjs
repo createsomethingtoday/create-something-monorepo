@@ -144,7 +144,7 @@ test('missing GiGi tools gives setup guidance without claiming a connected works
   await chat.open(); await chat.start();
   const html = chatView(chat);
   assert.match(html, /GiGi’s local tools are unavailable/);
-  assert.match(html, /data-page="settings">Open Settings/);
+  assert.match(html, /data-chat-setup="1">Open agent setup/);
   assert.doesNotMatch(html, /gigi_tools_unavailable/);
   assert.doesNotMatch(html, />Connected</);
 });
@@ -268,10 +268,57 @@ for (const error of [undefined, 'write_outcome_unknown']) test(`interrupted unce
   const html = chatView(chat);
   assert.match(html, /GiGi cannot yet confirm whether this save completed/);
   assert.match(html, /Do not recreate the record or submit another change/);
-  assert.match(html, /Reopen this conversation to check again/);
+  assert.match(html, /Choose Check status to check again/);
   assert.match(html, /ask for help resolving the saved request/);
   assert.doesNotMatch(html, /You can send another message/);
   assert.match(html, /type="submit" class="btn primary" disabled/);
   await chat.send('Create again');
   assert.equal(sends, 0);
+});
+
+test('unavailable empty chat offers status recovery without telling users to start a disabled chat', async () => {
+  const chat = new ChatController({ chatStatus: async () => ({ available: false, authenticated: false, reason: 'codex_unavailable' }), chatList: async () => { throw new Error('companion unavailable'); } }, 'w1', () => {});
+  await chat.open();
+  const html = chatView(chat);
+  assert.match(html, /data-chat-refresh="1"/);
+  assert.match(html, /Check status/);
+  assert.match(html, /data-chat-setup="1"/);
+  assert.match(html, /local records/);
+  assert.doesNotMatch(html, /Start a chat to ask|Ask about your work, or open|Reopen the conversation/);
+});
+
+test('Check status refreshes availability without creating or sending a conversation', async () => {
+  let available = false;
+  const calls = [];
+  const chat = new ChatController({
+    chatStatus: async () => { calls.push('status'); return { available, authenticated: available, reason: available ? undefined : 'codex_unavailable' }; },
+    chatList: async () => { calls.push('list'); return []; },
+    chatStart: async () => { calls.push('start'); },
+    chatSend: async () => { calls.push('send'); },
+  }, 'w1', () => {});
+  await chat.open(); available = true;
+  await chat.checkStatus();
+  assert.equal(chat.status.available, true);
+  assert.equal(chat.current, null);
+  assert.deepEqual(calls, ['status', 'list', 'status', 'list']);
+  assert.match(chatView(chat), /Choose New chat to begin/);
+});
+
+test('Check status reconciles an uncertain conversation without replay and keeps sending blocked', async () => {
+  const calls = [];
+  const unknown = session('interrupted', { decisionReceipt: { approvalId: 'a1', outcome: 'unknown' } });
+  const chat = new ChatController({
+    chatStatus: async () => { calls.push('status'); return { available: true, authenticated: true }; },
+    chatList: async () => { calls.push('list'); return [{ sessionId: 's1' }]; },
+    chatRead: async () => { calls.push('read'); return unknown; },
+    chatSend: async () => { calls.push('send'); },
+    chatApprove: async () => { calls.push('approve'); },
+  }, 'w1', () => {});
+  chat.visible = true; chat.current = unknown; chat.draft = 'Keep this unsent';
+  await chat.checkStatus();
+  await chat.send(chat.draft); await chat.decide('a1', 'approve');
+  assert.deepEqual(calls, ['status', 'list', 'read']);
+  assert.equal(chat.draft, 'Keep this unsent');
+  assert.match(chatView(chat), /data-chat-refresh="1"/);
+  assert.match(chatView(chat), /type="submit" class="btn primary" disabled/);
 });

@@ -2,13 +2,13 @@ import {musicView} from './music-view.mjs';
 
 /** Local UI controller. The native picker owns path selection; this bridge never accepts arbitrary paths. */
 export function mountMusic(container,{call,workspaceId,confirm=message=>globalThis.confirm(message)}={}) {
- let disposed=false,requestRevision=0,editing=null,dirty=false,importRequest=null;
+ let disposed=false,requestRevision=0,editing=null,dirty=false,importRequest=null,previewId=null;
  let state={items:[],total:0,offset:0,hasMore:false,query:'',kind:'',busy:false,notice:'Loading your local music…',error:''};
  const content=document.createElement('div'); const playerHost=document.createElement('div');
- playerHost.className='music-player'; container.replaceChildren(content,playerHost);
+ playerHost.className='music-player'; container.replaceChildren(playerHost,content);
  const invoke=(operation,input={})=>call(operation,{...input,workspaceId});
  const render=()=>{if(!disposed)content.innerHTML=musicView({...state,editing,dirty,importing:Boolean(importRequest)});};
- function stop(){const media=playerHost.querySelector('audio,video');if(media){media.pause();media.removeAttribute('src');media.load();}playerHost.replaceChildren();}
+ function stop(restoreFocus=false){const previousId=previewId;previewId=null;const media=playerHost.querySelector('audio,video');if(media){media.pause();media.removeAttribute('src');media.load();}playerHost.replaceChildren();if(restoreFocus&&previousId){[...content.querySelectorAll('[data-music-preview]')].find(button=>button.dataset.musicPreview===previousId)?.focus();}}
  async function load(){const revision=++requestRevision;try{const result=await invoke('music.list',{query:state.query,kind:state.kind,offset:state.offset});if(disposed||revision!==requestRevision)return;state={...state,...result,notice:state.notice==='Loading your local music…'?'':state.notice,error:''};render();}catch(error){if(disposed||revision!==requestRevision)return;state.error=error.message||String(error);state.notice='';render();}}
  async function action(operation,input={},after){
    if(state.busy)return;
@@ -37,13 +37,13 @@ export function mountMusic(container,{call,workspaceId,confirm=message=>globalTh
   if(button.dataset.musicPreview){
    const item=find(button.dataset.musicPreview);if(!item)return;
    await action('music.preview',{id:item.id},result=>{
-    stop();const heading=document.createElement('strong');heading.textContent=result.title;
-    const media=document.createElement(result.kind==='video'?'video':'audio');media.controls=true;media.preload='metadata';media.setAttribute('aria-label',`Local preview of ${result.title}`);
+    stop();previewId=item.id;const heading=document.createElement('strong');heading.textContent=result.title;
+    const media=document.createElement(result.kind==='video'?'video':'audio');media.controls=true;media.tabIndex=0;media.preload='metadata';media.setAttribute('aria-label',`Local preview of ${result.title}`);
     const status=document.createElement('p');status.className='muted';status.setAttribute('role','status');status.textContent='Local preview. Playback depends on this Mac’s codec support.';
     media.addEventListener('error',()=>{status.textContent='This media cannot be played here. It may use an unsupported codec or be unavailable. Reconnect the original, or open it in its own application.';});
-    const close=document.createElement('button');close.className='btn';close.textContent='Close preview';close.addEventListener('click',stop);
+    const close=document.createElement('button');close.className='btn';close.textContent='Close preview';close.addEventListener('click',()=>stop(true));
     media.src=`gigi-media://localhost/${encodeURIComponent(workspaceId)}/${encodeURIComponent(item.id)}`;playerHost.append(heading,media,status,close);media.play().catch(()=>{status.textContent='Press Play to start. If playback fails, this format or codec may not be supported.';});
-   });return;
+   });playerHost.querySelector('audio,video')?.focus();playerHost.scrollIntoView?.({block:'nearest'});return;
   }
   if(button.dataset.musicPage){if(!canLeave())return;editing=null;dirty=false;state.offset=Math.max(0,state.offset+(button.dataset.musicPage==='next'?100:-100));await load();}
  }
@@ -53,7 +53,9 @@ export function mountMusic(container,{call,workspaceId,confirm=message=>globalTh
   else if(form.hasAttribute('data-music-edit-form')&&editing){await action('music.edit',{id:editing.id,...values},async()=>{editing=null;dirty=false;state.notice='Organization saved in this workspace.';await load();});}
  }
  function input(event){if(event.target.closest('[data-music-edit-form]')&&editing){editing[event.target.name]=event.target.value;dirty=true;}}
+ function keydown(event){if(event.key==='Escape'&&previewId){event.preventDefault();stop(true);}}
+ container.addEventListener('keydown',keydown);
  content.addEventListener('click',click);content.addEventListener('submit',submit);content.addEventListener('input',input);
  render();void load();
- return {canLeave,dispose(){disposed=true;requestRevision++;if(importRequest)void invoke('music.cancel',{requestId:importRequest}).catch(()=>{});stop();content.removeEventListener('click',click);content.removeEventListener('submit',submit);content.removeEventListener('input',input);}};
+ return {canLeave,dispose(){disposed=true;requestRevision++;if(importRequest)void invoke('music.cancel',{requestId:importRequest}).catch(()=>{});stop();container.removeEventListener('keydown',keydown);content.removeEventListener('click',click);content.removeEventListener('submit',submit);content.removeEventListener('input',input);}};
 }
