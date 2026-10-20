@@ -1,6 +1,6 @@
-# OpenProse lesson — review only
+# OpenProse lesson
 
-Local follow-on to the separately approved Agency release. Not approved for deployment.
+Follow-on to the Agency conversion release. The user approved this lesson for production on 2026-10-20. Promotion follows the normal PR, CI and deployment gates.
 
 ## Source grounding
 
@@ -18,7 +18,7 @@ The four-part model is CREATE SOMETHING's teaching model, not an official OpenPr
 
 Anatomy reference: https://github.com/wheresryan22/anatomy and its SKILL.md. Adapted the purposeful physical-object principle into an original document-reader diagram. This is a lightweight orthographic teaching figure, not the full isometric Anatomy kit; no kit code, dependencies, WebGL or remote script was installed or executed. Static geometry and native HTML disclosure preserve no-JavaScript and reduced-motion reading.
 
-Structured source: `contract-reader.json`; generated asset: `../../static/diagrams/contract-reader.svg`. The SVG education CLI check passes with no overflow/collision warnings. The direct SVG route is chosen for exact readable labels; publication remains subject to review.
+Structured source: `contract-reader.json`; generated asset: `../../static/diagrams/contract-reader.svg`. The SVG education CLI check passes with no overflow/collision warnings. The direct SVG route is chosen for exact readable labels; the reviewed preview was approved for publication.
 
 Placement: inside the existing service journey, after the working relationship explanation and before the conversion section. Pricing and other service boundaries are unchanged. No Danny/Notion content changes.
 
