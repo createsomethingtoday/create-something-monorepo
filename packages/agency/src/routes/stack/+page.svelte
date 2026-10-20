@@ -1,4 +1,5 @@
 <script lang="ts">
+  import PublicHandoffExplorer from '$lib/components/PublicHandoffExplorer.svelte';
   import WorkflowSignalBand from '$lib/components/WorkflowSignalBand.svelte';
   import AgencyWayfindingHero from '$lib/components/AgencyWayfindingHero.svelte';
   import AgencyWayfindingOpening from '$lib/components/AgencyWayfindingOpening.svelte';
@@ -39,45 +40,6 @@
       title: 'Control',
       detail:
         'Decide which tasks can run automatically, which need approval, and which must stop.'
-    }
-  ];
-
-  const deliveryArtifacts: PerformanceCardItem[] = [
-    {
-      eyebrow: 'Map',
-      icon: 'folder',
-      title: 'Workflow Map',
-      detail: 'One workflow, source systems, owners, handoffs, and failure points.'
-    },
-    {
-      eyebrow: 'Boundary',
-      icon: 'check',
-      title: 'Who owns what',
-      detail: 'Your materials and commissioned deliverables, our reusable tools, and the services vendors provide.'
-    },
-    {
-      eyebrow: 'Contract',
-      icon: 'document',
-      title: 'Tool/API contract',
-      detail: 'Which tools the agent can use, the access it needs, and the limits on each action.'
-    },
-    {
-      eyebrow: 'Control',
-      icon: 'settings',
-      title: 'Policy rules',
-      detail: 'Auto-allow, approval-needed, and blocked states with reasons.'
-    },
-    {
-      eyebrow: 'Operate',
-      icon: 'refresh',
-      title: 'Runbook',
-      detail: 'How to run the system, check a release, undo a change, and recover from failure.'
-    },
-    {
-      eyebrow: 'Surface',
-      icon: 'document',
-      title: 'Operator brief',
-      detail: 'A view of current work in your application or our database system, Substrate.'
     }
   ];
 
@@ -278,11 +240,7 @@
         compact
       />
     {:else if scene.id === 'ownership'}
-      <PerformanceCardGrid
-        items={deliveryArtifacts}
-        columns={3}
-        ariaLabel="Stack delivery artifacts"
-      />
+      <PublicHandoffExplorer />
     {:else}
       <div class="stack-proof-pair">
         <section aria-labelledby="platform-conviction-title">

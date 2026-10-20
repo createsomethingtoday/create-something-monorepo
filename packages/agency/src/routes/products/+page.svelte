@@ -1,4 +1,5 @@
 <script lang="ts">
+  import CatoProjectTour from '$lib/components/CatoProjectTour.svelte';
   import WorkflowSignalBand from '$lib/components/WorkflowSignalBand.svelte';
   import {
     IsometricIllustration,
@@ -169,9 +170,10 @@
   <p>Apps, workflows & agents</p><h2 id="capabilities-title">Inspect what your team will keep.</h2>
   <p>Review the linked implementations and clearly labeled scenarios below. For your Build, agree on the source, instructions, tests and handoff your team will own, plus what agents may do and what needs human approval. Production launch is agreed separately.</p>
   <p>Focused membership is {PUBLIC_PRICING.membership.focused.label} for one workstream, one milestone, two check-ins and two remote work sessions each billing month. Team is {PUBLIC_PRICING.membership.team.label} for up to two workstreams, two milestones, two check-ins and four remote sessions. Larger Builds, managed Control and project costs are separate.</p>
+  <CatoProjectTour />
   {#each filmStories as story}
     <article><div><h3>{story.name}</h3><p>{story.desc}</p><p class="deliverable">What you keep: {story.deliver}</p><p class="evidence-status">{story.status}</p><p class="evidence-proof">{story.proof}</p></div>
-      <div class="capability-links"><a href={`/?film=${story.id}#work`}>Watch the story →</a><a href={story.source}>{story.sourceLabel} ↗</a><a href={agencyCoreMessaging.membershipInquiryHref}>Discuss this work →</a></div>
+      <div class="capability-links"><a href={story.id === 'webflow' ? '#cato-tour' : `/?film=${story.id}#work`}>{story.id === 'webflow' ? 'Explore the annotated tour →' : 'Watch the story →'}</a><a href={story.source}>{story.sourceLabel} ↗</a><a href={agencyCoreMessaging.membershipInquiryHref}>Discuss this work →</a></div>
     </article>
   {/each}
   <AgencyWayfindingSign kind="map" label="Compare ways to work together" href="#choose-product" direction="down" />
