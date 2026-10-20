@@ -5,6 +5,9 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { TemplateSupportRequest, loadStoredDraft, storeDraft } from '../src/components/marketplace/TemplateSupportRequest';
 import {
   SUPPORT_REQUEST_ENDPOINT,
+  SUPPORT_REQUEST_REFUND_NOTE,
+  SUPPORT_REQUEST_REFUND_POLICY_URL,
+  SUPPORT_REQUEST_TYPE_LABELS,
   createIdempotencyKey,
   describeRetryAfter,
   submitSupportRequest,
@@ -140,4 +143,10 @@ test('persists an unsent draft per template and clears it once sent', () => {
   } finally {
     globalRef.window = original;
   }
+});
+
+test('labels the refund_licensing topic as licensing and points refunds to Webflow policy', () => {
+  assert.equal(SUPPORT_REQUEST_TYPE_LABELS.refund_licensing, 'Licensing question');
+  assert.match(SUPPORT_REQUEST_REFUND_NOTE, /creators can't issue refunds/);
+  assert.match(SUPPORT_REQUEST_REFUND_POLICY_URL, /^https:\/\/help\.webflow\.com\/.+Refund-Policy$/);
 });
