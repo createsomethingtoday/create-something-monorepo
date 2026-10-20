@@ -75,3 +75,17 @@ test('image field explains the approved host and JPEG constraints before preview
  const html=socialWorkspaceView({items:[],editor:{title:'Draft',caption:'',imageUrl:''}});
  for(const text of ['8 MiB','320 pixels wide','4:5 to 1.91:1','media.createsomething.io only'])assert.ok(html.includes(text));
 });
+
+test('observed signed-out connection error directs the user to embedded sign-in',()=>{
+ const expected='Sign in to GiGi sources in Connection setup, then check Instagram status again. Your local drafts are still available.';
+ assert.equal(socialErrorMessage('reauthentication_required'),expected);
+ assert.equal(socialErrorMessage(new Error('reauthentication_required')),expected);
+});
+test('current auth and runner failure codes never reach the user as raw identifiers',()=>{
+ for(const code of ['reauthentication_required','unauthorized','unavailable','refresh_in_progress','refresh_outcome_unknown','cancelled','timeout','invalid_data_directory','unsafe_data_directory','unsafe_session_file','invalid_configuration','invalid_request','unsupported_operation','unknown_operation','browser_unavailable','identity_contract_mismatch','identity_mismatch','invalid_readback','invalid_token_readback','loopback_unavailable','redirect_registration_mismatch','connection_changed','connection_not_found']){
+  const message=socialErrorMessage(code);
+  assert.notEqual(message,code,code);if(code.includes('_'))assert.ok(!message.includes(code),code);assert.ok(message.length>30,code);
+ }
+ assert.equal(socialErrorMessage('unavailable'),'The connection service is unavailable. Keep your draft saved and try Check connection later.');
+ assert.equal(socialErrorMessage('A readable native error.'),'A readable native error.');
+});
