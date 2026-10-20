@@ -1,10 +1,11 @@
 import { chromium } from '@playwright/test';
 import assert from 'node:assert/strict';
 import { mkdir, writeFile } from 'node:fs/promises';
-const out = process.env.EVIDENCE_DIR;
+const baseURL = process.env.AGENCY_PREVIEW_URL || 'http://127.0.0.1:4178';
+const out = process.env.EVIDENCE_DIR || 'preview/project-handoff/evidence';
 await mkdir(out, { recursive: true });
 const browser = await chromium.launch({
-  executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+  executablePath: process.env.CHROME_PATH,
   headless: true
 });
 const results = [];
@@ -23,7 +24,7 @@ for (const config of [
   const page = await context.newPage();
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));
-  await page.goto('http://127.0.0.1:4178/products', { waitUntil: 'networkidle' });
+  await page.goto(`${baseURL}/products`, { waitUntil: 'networkidle' });
   const tour = page.locator('#cato-tour');
   for (const i of [1, 2, 0, 2, 1]) {
     const chapter = tour.locator('.chapters details').nth(i);
@@ -48,7 +49,7 @@ for (const config of [
     await page.waitForTimeout(100);
     assert.equal(await recording.locator('video').evaluate((v) => v.paused), true);
   }
-  await page.goto('http://127.0.0.1:4178/stack', { waitUntil: 'networkidle' });
+  await page.goto(`${baseURL}/stack`, { waitUntil: 'networkidle' });
   if (config.javaScriptEnabled !== false)
     await page.getByRole('tab', { name: /Ownership/ }).click();
   const handoff = page.locator('.handoff');
@@ -85,7 +86,7 @@ for (const config of [
 }
 {
   const page = await browser.newPage();
-  await page.goto('http://127.0.0.1:4178/', { waitUntil: 'networkidle' });
+  await page.goto(`${baseURL}/`, { waitUntil: 'networkidle' });
   assert.equal(await page.locator('h1').innerText(), 'AI-native\nTechnical support');
   const cta = page.locator('.hero-actions .primary');
   assert.equal(
