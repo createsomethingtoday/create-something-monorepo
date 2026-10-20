@@ -23,7 +23,7 @@
 <div class="story" class:enhanced={mounted}>
   <figure class="stage">
     <div class="stage-top"><span>FIG. 01 / THE CONTEXT BOUNDARY</span><span>Illustrative</span></div>
-    <ScopefieldAnatomy stage={mounted ? active : 4} still={reduced} />
+    <ScopefieldAnatomy stage={active} still={reduced} />
     <figcaption><span>Original conceptual drafting station.</span><span>Not a product recording or live agent session.</span></figcaption>
   </figure>
   <div class="explanation">
