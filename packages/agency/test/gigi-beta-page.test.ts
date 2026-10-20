@@ -14,12 +14,12 @@ test('standalone page retains the owning Agency Canon operator palette', () => {
 });
 
 test('download contract pins exact qualified installer, platform and checksum', () => {
-  assert.equal(gigiBeta.version, '0.2.2');
-  assert.equal(gigiBeta.filename, 'GiGi-0.2.2-arm64-private-beta.dmg');
-  assert.equal(gigiBeta.bytes, 96043545);
-  assert.equal(gigiBeta.sha256, 'f97e1052db6c0503d5a8140b43d539d268bd7571d7d60e27f12329c0623cf010');
-  assert.equal(gigiBeta.url, `https://media.createsomething.io/releases/gigi/0.2.2/${gigiBeta.sha256}/GiGi-0.2.2-arm64-private-beta.dmg`);
-  for (const text of ['macOS 13', 'Apple Silicon', 'Intel Macs are not supported', gigiBeta.url, gigiBeta.sha256, '96,043,545', '96.0 MB']) assert.ok(gigiBetaHtml.includes(text), text);
+  assert.equal(gigiBeta.version, '0.2.3');
+  assert.equal(gigiBeta.filename, 'GiGi-0.2.3-arm64-private-beta.dmg');
+  assert.equal(gigiBeta.bytes, 96323388);
+  assert.equal(gigiBeta.sha256, '72a49d909307f72576d879f95905fc0fea827f145e41fd1018d9e644ed3780f4');
+  assert.equal(gigiBeta.url, `https://media.createsomething.io/releases/gigi/0.2.3/${gigiBeta.sha256}/GiGi-0.2.3-arm64-private-beta.dmg`);
+  for (const text of ['macOS 13', 'Apple Silicon', 'Intel Macs are not supported', gigiBeta.url, gigiBeta.sha256, '96,323,388', '96.3 MB']) assert.ok(gigiBetaHtml.includes(text), text);
 });
 
 test('beta stays unlisted and has no active content or tracking shell', () => {
@@ -77,4 +77,9 @@ test('creative work scope preserves local media and explicit publishing boundari
 
 test('release describes bounded agent actions and separates saved tasks from sources', () => {
   for (const text of ['full local contact collection', 'before pagination', 'missing or invalid dates last', 'native picker', 'they cannot publish', 'earlier review request stale', 'does not automatically turn messages or events into tasks', 'does not change history configuration or repair an account connection', 'synthetic requests']) assert.ok(gigiBetaHtml.includes(text), text);
+});
+
+
+test('search release explains token matching, bounded waits and synthetic acceptance', () => {
+  for (const text of ['What changed in 0.2.3', 'Included from 0.2.2', 'middle name', 'without changing saved contacts', 'retry or clear', 'native read may still finish', '5,000 contacts and 200 linked companies', 'stale requests, timeouts and database contention', 'do not establish Grant’s live outcome or repair account connections', 'on GiGi 0.2.2']) assert.ok(gigiBetaHtml.includes(text), text);
 });
