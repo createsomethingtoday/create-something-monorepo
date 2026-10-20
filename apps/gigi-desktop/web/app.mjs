@@ -24,6 +24,7 @@ let creatorMount = null;
 let creatorNode = null;
 let creatorRoute = null;
 let renderedChatSession = null;
+let chatRefreshFocus = null;
 let editorBaseline = null;
 let submittedEditor = null;
 let pendingLeave = null;
@@ -258,7 +259,7 @@ function scheduleView() {
   const agenda = scheduleAgenda(state.records, state.scheduleView);
   const zone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const controls = ['upcoming', 'past', 'all'].map(view => `<button class="btn" data-schedule-view="${view}" aria-pressed="${state.scheduleView === view}">${view === 'all' ? 'All entries' : view === 'past' ? 'Past' : 'Upcoming'} (${agenda.counts[view]})</button>`).join('');
-  return heading('Daily work', 'Schedule', 'Dated gigs and schedule entries, together. Open an item for details.', `<button class="btn primary" data-new="schedule">${icon('plus')}Add event</button>`) + `<section class="panel"><div class="panel-head"><h2>Agenda</h2><button class="btn" data-schedule-today="1">Today</button></div><div class="inline-actions schedule-controls" aria-label="Schedule views">${controls}</div><p class="muted">Times in ${safe(zone)} · ${state.records.length} agenda items</p>${agenda.undated ? `<p class="muted">${agenda.undated} ${agenda.undated === 1 ? 'entry needs' : 'entries need'} a usable date. Find ${agenda.undated === 1 ? 'it' : 'them'} in All entries.</p>` : ''}${agenda.groups.length ? agenda.groups.map(group => `<section class="agenda-day" ${group.key === localToday() ? 'id="schedule-today"' : ''}><h3>${safe(group.title)}</h3>${group.entries.map(entry => `<button class="row agenda-event" type="button" data-open="${safe(entry.record.id)}" data-entity="${safe(entry.record.entity || 'schedule')}"><span class="agenda-time">${safe(entry.time)}</span><span><strong>${safe(entry.record.title || 'Untitled event')}</strong><small>${entry.record.entity === 'gigs' ? 'Gig or shift' : 'Schedule entry'}${entry.record.status ? ` · ${safe(entry.record.status)}` : ''}</small></span><span class="arrow" aria-hidden="true">${icon('arrow-up-right')}</span></button>`).join('')}</section>`).join('') : state.records.length ? `<div class="empty"><strong>${state.scheduleView === 'past' ? 'No past events.' : 'Nothing scheduled for today or later.'}</strong><p>View All entries to find earlier events, or add an event.</p><button class="btn" data-schedule-view="all">View all entries</button></div>` : rows('schedule', [])}</section>`;
+  return heading('Daily work', 'Schedule', 'Dated gigs and schedule entries, together. Open an item for details.', `<button class="btn primary" data-new="schedule">${icon('plus')}Add event</button>`) + `<section class="panel"><div class="panel-head"><h2>Agenda</h2><button class="btn" data-schedule-today="1">Today</button></div><div class="inline-actions schedule-controls" aria-label="Schedule views">${controls}</div><p class="muted">Times in ${safe(zone)} · ${state.records.length} agenda ${state.records.length === 1 ? 'item' : 'items'}</p>${agenda.undated ? `<p class="muted">${agenda.undated} ${agenda.undated === 1 ? 'entry needs' : 'entries need'} a usable date. Find ${agenda.undated === 1 ? 'it' : 'them'} in All entries.</p>` : ''}${agenda.groups.length ? agenda.groups.map(group => `<section class="agenda-day" ${group.key === localToday() ? 'id="schedule-today"' : ''}><h3>${safe(group.title)}</h3>${group.entries.map(entry => `<button class="row agenda-event" type="button" data-open="${safe(entry.record.id)}" data-entity="${safe(entry.record.entity || 'schedule')}"><span class="agenda-time">${safe(entry.time)}</span><span><strong>${safe(entry.record.title || 'Untitled event')}</strong><small>${entry.record.entity === 'gigs' ? 'Gig or shift' : 'Schedule entry'}${entry.record.status ? ` · ${safe(entry.record.status)}` : ''}</small></span><span class="arrow" aria-hidden="true">${icon('arrow-up-right')}</span></button>`).join('')}</section>`).join('') : state.records.length ? `<div class="empty"><strong>${state.scheduleView === 'past' ? 'No past events.' : 'Nothing scheduled for today or later.'}</strong><p>View All entries to find earlier events, or add an event.</p><button class="btn" data-schedule-view="all">View all entries</button></div>` : rows('schedule', [])}</section>`;
 }
 
 function collection() {
@@ -594,7 +595,15 @@ root.addEventListener('click', (event) => {
   else if (button.dataset.scheduleView) { state.scheduleView = button.dataset.scheduleView; render(); }
   else if (button.dataset.scheduleToday) { state.scheduleView = 'upcoming'; render(); root.querySelector('#schedule-today')?.scrollIntoView?.({ block: 'start' }); }
   else if (button.dataset.chatOpen) void chat?.open(state.selected && !state.editing ? { entity: state.page, id: state.selected.id, title: state.selected.title } : null);
-  else if (button.dataset.chatRefresh) void chat?.checkStatus();
+  else if (button.dataset.chatRefresh) {
+    button.focus?.();
+    const request = {}; chatRefreshFocus = request;
+    void chat?.checkStatus().finally(() => {
+      const active = globalThis.document?.activeElement;
+      if (chatRefreshFocus === request && chat?.visible && (!active || active === document.body || active === document.documentElement || active.dataset?.chatRefresh !== undefined)) root.querySelector?.('[data-chat-refresh]')?.focus?.();
+      if (chatRefreshFocus === request) chatRefreshFocus = null;
+    });
+  }
   else if (button.dataset.chatSetup) { chat?.close(); void run(() => openPage('settings')); }
   else if (button.dataset.chatClose) { chat?.close(); focusChatTrigger(); }
   else if (button.dataset.chatNew) void chat?.start();
@@ -632,7 +641,12 @@ root.addEventListener('click', (event) => {
   else if (button.dataset.confirmRestore && !state.busy && state.pendingRestoreId) { const backupId = state.pendingRestoreId; void run(async () => { const restored = await bridge.restoreBackup(backupId); state.pendingRestoreId = null; state.imports = {}; state.contextHits = []; state.contextQueried = false; state.sourceAttempts = {}; state.backupId = restored.safetyBackupId || null; await load(); notice('Backup restored. A safety backup was created; sync local history before relying on CTX results.'); }); }
 });
 
+globalThis.document?.addEventListener?.('focusin', event => {
+  if (chatRefreshFocus && event.target !== document.body && event.target !== document.documentElement && event.target?.dataset?.chatRefresh === undefined) chatRefreshFocus = null;
+});
+globalThis.document?.addEventListener?.('pointerdown', () => { chatRefreshFocus = null; });
 (globalThis.document?.addEventListener ? document : root).addEventListener('keydown', (event) => {
+  if (chatRefreshFocus && event.key === 'Tab') chatRefreshFocus = null;
   if (pendingLeave) {
     if (event.key === 'Escape') { event.preventDefault?.(); keepEditing(); }
     if (event.key === 'Tab') { event.preventDefault?.(); const keep = root.querySelector?.('[data-keep-editing]'); const discard = root.querySelector?.('[data-discard-changes]'); (document.activeElement === keep ? discard : keep)?.focus?.(); }

@@ -95,3 +95,36 @@ test('first workspace creation initializes Ask GiGi without requiring an app res
     assert.equal(calls.filter(operation => operation === 'workspace.create').length, 1);
   } finally { globalThis.document = previous.document; globalThis.__TAURI__ = previous.tauri; globalThis.FormData = previous.FormData; }
 });
+
+test('Check status restores its control after disabled repaint without stealing a later focus choice', async()=>{
+ const handlers=new Map();let markup='',panelMarkup='',mounted=false,statusReads=0,resolveStatus;
+ const document={activeElement:null,body:{},documentElement:{},addEventListener(type,handler){handlers.set('document:'+type,handler);},querySelector:()=>root};
+ const refresh={dataset:{chatRefresh:'1'},focus(){if(!/data-chat-refresh="1" disabled/.test(panelMarkup))document.activeElement=this;}};
+ const close={dataset:{chatClose:'1'},focus(){document.activeElement=this;}};
+ const panel={set innerHTML(value){panelMarkup=value;document.activeElement=document.body;},querySelector(){return null;},remove(){mounted=false;}};
+ const root={get innerHTML(){return markup;},set innerHTML(value){markup=value;},classList:{toggle(){}},addEventListener(type,handler){handlers.set(type,handler);},querySelector(selector){
+  if(selector==='.shell')return{insertAdjacentHTML(_position,value){mounted=true;panelMarkup=value;}};
+  if(selector==='.chat-panel')return mounted?panel:null;
+  if(selector==='[data-chat-close]')return close;
+  if(selector==='[data-chat-refresh]')return refresh;
+  return null;
+ }};
+ const prior={document:globalThis.document,tauri:globalThis.__TAURI__};globalThis.document=document;
+ globalThis.__TAURI__={core:{invoke:async(_,{operation,input})=>{
+  if(operation==='workspace.get')return{id:'w',name:'Synthetic'};
+  if(operation==='records.list')return{items:input.entity==='profile'?[{id:'p'}]:[]};
+  if(operation==='records.get')return{fields:{Currency:'USD'}};
+  if(operation==='agent.chat.status'){if(++statusReads===1)return{available:false,reason:'codex_unavailable'};return new Promise(resolve=>{resolveStatus=resolve;});}
+  if(operation==='agent.chat.list')return{sessions:[]};return{};
+ }}};
+ const tick=()=>new Promise(resolve=>setImmediate(resolve));
+ const click=button=>handlers.get('click')({target:{closest:()=>button}});
+ try{
+  await import(`./app.mjs?refresh-focus=${Date.now()}`);await tick();
+  click({dataset:{chatOpen:'1'}});await tick();
+  click(refresh);assert.equal(document.activeElement,document.body,'disabled repaint loses browser focus');
+  resolveStatus({available:false,reason:'codex_unavailable'});await tick();assert.equal(document.activeElement,refresh);
+  click(refresh);document.activeElement=close;handlers.get('document:focusin')({target:close});
+  resolveStatus({available:false,reason:'codex_unavailable'});await tick();assert.equal(document.activeElement,close,'retain user focus after completion');
+ }finally{globalThis.document=prior.document;globalThis.__TAURI__=prior.tauri;}
+});

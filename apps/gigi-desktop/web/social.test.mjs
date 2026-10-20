@@ -128,3 +128,19 @@ test('saved draft review focuses invalid media without calling publishing and Cm
  assert.ok(!calls.includes('social.publish'));
  workspace.dispose();assert.equal(listeners.keydown,undefined);
 });
+
+test('selecting a saved draft focuses its title and reveals the editor only after loading',async()=>{
+ const elements=new Map(),moves=[];let resolveRecord;
+ const saved={id:'draft',revision:1,state:'draft',body:{title:'Idea',caption:'',imageUrl:'',connectedAccountId:''}};
+ const element=selector=>{if(!elements.has(selector))elements.set(selector,{dataset:{socialSelect:'draft'},listeners:{},focus(options){moves.push(['focus',selector,options]);},scrollIntoView(options){moves.push(['scroll',selector,options]);},addEventListener(type,fn){this.listeners[type]=fn;},click(){return this.listeners.click?.({currentTarget:this});}});return elements.get(selector);};
+ const container={set innerHTML(value){elements.clear();},addEventListener(){},removeEventListener(){},querySelector:element,querySelectorAll(selector){return [element(selector)];}};
+ const workspace=createSocialWorkspace({workspaceId:'w',call:async operation=>{if(operation==='social.list')return {items:[saved],total:1};if(operation==='social.get')return new Promise(resolve=>{resolveRecord=resolve;});if(operation==='social.save')return saved;throw Error('Unexpected '+operation);}});
+ await workspace.mount(container);
+ const selecting=element('[data-social-select]').click();
+ assert.deepEqual(moves,[],'do not move focus into the disabled loading editor');
+ resolveRecord(saved);await selecting;
+ assert.deepEqual(moves,[['focus','[data-social-field="title"]',{preventScroll:true}],['scroll','.social-composer',{block:'start'}]]);
+ moves.length=0;await element('[data-social-save]').click();
+ assert.deepEqual(moves,[],'saving and repainting must not jump back to the editor top');
+ workspace.dispose();
+});

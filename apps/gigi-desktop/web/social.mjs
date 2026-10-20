@@ -97,7 +97,12 @@ export function createSocialWorkspace({call,workspaceId,onSettings=()=>{}}) {
   function bind(){
     const on=(selector,event,handler)=>container.querySelectorAll(selector).forEach(el=>el.addEventListener(event,handler));
     on('[data-social-new]','click',()=>{if(!discard())return;pendingSave=null;state.selected=null;state.editor={title:'',caption:'',imageUrl:'',connectedAccountId:state.account?.connectedAccountId||''};state.dirty=false;state.validationMode=null;state.fieldIssue=null;paint();container.querySelector('[data-social-field="title"]')?.focus();});
-    on('[data-social-select]','click',event=>{if(!discard())return;act(async()=>select(await invoke('social.get',{id:event.currentTarget.dataset.socialSelect})));});
+    on('[data-social-select]','click',async event=>{
+      if(!discard())return;
+      const id=event.currentTarget.dataset.socialSelect;let loaded=false;
+      await act(async()=>{select(await invoke('social.get',{id}));loaded=true;});
+      if(loaded&&!disposed){container.querySelector('[data-social-field="title"]')?.focus({preventScroll:true});container.querySelector('.social-composer')?.scrollIntoView?.({block:'start'});}
+    });
     on('[data-social-more]','click',()=>act(()=>list(state.nextOffset)));
     on('[data-social-settings]','click',()=>{state.setupOpen=!state.setupOpen;paint();});
     on('[data-social-login]','click',()=>act(async()=>{await call('auth.login',{});await checkConnection();}));
