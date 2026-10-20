@@ -14,10 +14,12 @@ test('standalone page retains the owning Agency Canon operator palette', () => {
 });
 
 test('download contract pins exact qualified installer, platform and checksum', () => {
-  assert.equal(gigiBeta.bytes, 78003842);
-  assert.equal(gigiBeta.sha256, 'bd5bd761ab7c27dfe1902612f0a04bc235e2ea6fb734de835cc7b254f9842218');
-  assert.equal(gigiBeta.url, `https://media.createsomething.io/releases/gigi/0.1.0/${gigiBeta.sha256}/GiGi-0.1.0-arm64-private-beta.dmg`);
-  for (const text of ['macOS 13', 'Apple Silicon', 'Intel Macs are not supported', gigiBeta.url, gigiBeta.sha256, '78,003,842', '78.0 MB']) assert.ok(gigiBetaHtml.includes(text), text);
+  assert.equal(gigiBeta.version, '0.2.0');
+  assert.equal(gigiBeta.filename, 'GiGi-0.2.0-arm64-private-beta.dmg');
+  assert.equal(gigiBeta.bytes, 95713766);
+  assert.equal(gigiBeta.sha256, 'a7869926c854c28ede5d8c1c67e0cc3e68359ca5f122855bc127e0b18e76fbd8');
+  assert.equal(gigiBeta.url, `https://media.createsomething.io/releases/gigi/0.2.0/${gigiBeta.sha256}/GiGi-0.2.0-arm64-private-beta.dmg`);
+  for (const text of ['macOS 13', 'Apple Silicon', 'Intel Macs are not supported', gigiBeta.url, gigiBeta.sha256, '95,713,766', '95.7 MB']) assert.ok(gigiBetaHtml.includes(text), text);
 });
 
 test('beta stays unlisted and has no active content or tracking shell', () => {
@@ -49,9 +51,24 @@ test('walkthroughs pin reviewed footage and use user-initiated native playback',
   assert.ok(gigiBetaHtml.includes('not acceptance of a fresh installation'));
 });
 
-test('release acceptance distinguishes this installer from historical phone evidence', () => {
+test('release acceptance distinguishes this installer from historical workflow evidence', () => {
+  assert.ok(gigiBetaHtml.includes('signed app passed native music-library and local Instagram-draft checks before packaging'));
+  assert.ok(gigiBetaHtml.includes('Earlier builds passed native onboarding'));
+  assert.ok(gigiBetaHtml.includes('No real Instagram publication has been verified for this release'));
   assert.ok(gigiBetaHtml.includes('bounded Gmail and Calendar imports'));
   assert.ok(gigiBetaHtml.includes('Phone remote access passed on an earlier build'));
   assert.ok(gigiBetaHtml.includes('not repeated for this installer'));
   assert.doesNotMatch(gigiBetaHtml, /Remaining native workflow checks.*pending/);
+});
+
+
+test('creative work scope preserves local media and explicit publishing boundaries', () => {
+  for (const text of [
+    'Music library', 'Instagram drafts', 'including MP4s', 'bounded and cancellable',
+    'does not upload, move or delete your original media', 'index, not the media',
+    'not copies of earlier file contents', 'Missing or changed files',
+    'one JPEG image', 'direct public HTTPS URL', 'approved image host',
+    'Business or Creator account', 'Personal accounts, Reels, Stories, carousels and scheduling are not supported',
+    'explicitly confirm publication', 'outcome is unknown', 'local drafting remains available'
+  ]) assert.ok(gigiBetaHtml.includes(text), text);
 });
