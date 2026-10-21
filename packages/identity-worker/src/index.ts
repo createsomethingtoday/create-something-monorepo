@@ -4638,14 +4638,12 @@ function renderOAuthAuthorizePage(params: URLSearchParams, env: Env, errorMessag
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="color-scheme" content="light" />
-  <style>@import url('https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&display=swap');</style>
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23f3f3f0'/%3E%3Cpath d='M20 20h24v24H20z' fill='none' stroke='%23090909' stroke-width='4'/%3E%3C/svg%3E" />
-  <title>Authorize CREATE SOMETHING MCP</title>
+  <meta name="robots" content="noindex,nofollow" />
+  <title>Authorize MCP access | CREATE SOMETHING Identity</title>
   <style>
     :root {
       color-scheme: light;
-      /* Canon Performance Lab tokens. Keep this subset synchronized with
-         @create-something/canon/styles/tokens.css. */
+      /* Worker-rendered subset of Canon tokens.css; no external font requests. */
       --color-performance-paper: #f3f3f0;
       --color-performance-panel: #ffffff;
       --color-performance-ink: #090909;
@@ -4653,168 +4651,76 @@ function renderOAuthAuthorizePage(params: URLSearchParams, env: Env, errorMessag
       --color-performance-muted: #5e6268;
       --color-performance-line: #d7d7d2;
       --color-performance-line-strong: #9c9c96;
-      --color-performance-grid: rgb(9 9 9 / 0.055);
-      --color-performance-pressure: #e54800;
+      --color-performance-signal: #0057b8;
+      --color-performance-signal-soft: #dce8f5;
       --color-performance-risk: #c62026;
       --color-performance-risk-soft: #f3dadd;
-      --shadow-performance-panel: none;
+      --color-performance-controlled: var(--color-performance-signal);
       --radius-performance-sm: 0;
-      --radius-performance-md: 4px;
-      --font-performance-display: 'Satoshi', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      --font-performance-mono: 'IBM Plex Mono', 'SFMono-Regular', Consolas, monospace;
+      --font-performance-sans: 'Geist Variable', Arial, 'Helvetica Neue', Helvetica, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --font-performance-display: var(--font-performance-sans);
+      --font-performance-mono: 'IBM Plex Mono', 'SFMono-Regular', 'SF Mono', Menlo, Monaco, Consolas, monospace;
     }
     * { box-sizing: border-box; }
-    body {
-      font-family: var(--font-performance-display);
-      color: var(--color-performance-ink);
-      margin: 0;
-      min-height: 100vh;
-      padding: 32px;
-      background:
-        linear-gradient(90deg, var(--color-performance-grid) 1px, transparent 1px) 0 0 / 42px 42px,
-        var(--color-performance-paper);
-      display: grid;
-      place-items: center;
-    }
-    .shell {
-      width: 100%;
-      max-width: 980px;
-      display: grid;
-      gap: 24px;
-    }
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      color: var(--color-performance-ink);
-      font-family: var(--font-performance-mono);
-      font-weight: 700;
-      letter-spacing: 0;
-      text-transform: uppercase;
-      font-size: 0.8rem;
-    }
-    .mark {
-      width: 40px;
-      height: 40px;
-      border-radius: var(--radius-performance-sm);
-      border: 1px solid var(--color-performance-line-strong);
-      background: var(--color-performance-panel);
-      display: grid;
-      place-items: center;
-      box-shadow: var(--shadow-performance-panel);
-    }
-    .mark::before {
-      content: "";
-      width: 18px;
-      height: 18px;
-      border: 2px solid var(--color-performance-ink);
-      display: block;
-    }
-    .card {
-      width: 100%;
-      max-width: 620px;
-      background: var(--color-performance-panel);
-      border: 1px solid var(--color-performance-line);
-      border-top: 4px solid var(--color-performance-pressure);
-      border-radius: var(--radius-performance-md);
-      padding: 28px;
-      box-shadow: var(--shadow-performance-panel);
-    }
-    .eyebrow {
-      margin: 0 0 12px;
-      color: var(--color-performance-pressure);
-      font-family: var(--font-performance-mono);
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0;
-      font-size: 0.74rem;
-    }
-    h1 {
-      font-family: var(--font-performance-display);
-      font-size: clamp(2rem, 4vw, 2.7rem);
-      line-height: 1.02;
-      letter-spacing: -0.03em;
-      margin: 0 0 12px;
-    }
+    body { margin: 0; min-height: 100vh; min-height: 100svh; background: var(--color-performance-paper); color: var(--color-performance-ink); font-family: var(--font-performance-sans); }
+    a { color: inherit; text-underline-offset: 4px; }
+    .shell { width: min(1120px, calc(100% - 64px)); margin: auto; }
+    .masthead { background: var(--color-performance-ink); color: var(--color-performance-panel); }
+    .brand { display: flex; justify-content: space-between; align-items: center; gap: 24px; min-height: 88px; font: 500 12px/1.5 var(--font-performance-mono); letter-spacing: .04em; }
+    .brand-name { display: inline-flex; align-items: center; gap: 14px; font-family: var(--font-performance-sans); font-weight: 700; text-decoration: none; }
+    .product-label { padding-left: 20px; border-left: 1px solid currentColor; }
+    .masthead :focus-visible { outline-color: var(--color-performance-panel); }
+    main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 80px; padding: 72px 0 88px; align-items: start; }
+    .eyebrow { margin: 0 0 24px; color: var(--color-performance-controlled); font: 500 12px/1.5 var(--font-performance-mono); text-transform: uppercase; letter-spacing: .04em; }
+    h1 { font: 500 clamp(2.5rem, 5vw, 4rem)/1.04 var(--font-performance-display); letter-spacing: -.04em; margin: 0 0 24px; max-width: 12ch; }
     p { color: var(--color-performance-muted); line-height: 1.65; margin: 0; }
-    .lede { max-width: 52ch; }
-    label { display: block; margin-top: 18px; font-weight: 600; font-size: 0.96rem; }
-    input {
-      width: 100%;
-      margin-top: 8px;
-      border: 1px solid var(--color-performance-line-strong);
-      background: var(--color-performance-panel);
-      color: var(--color-performance-ink);
-      border-radius: var(--radius-performance-sm);
-      padding: 14px 16px;
-      font-family: var(--font-performance-mono);
-      font-size: 0.92rem;
-      outline: none;
-      box-shadow: none;
-    }
-    input:focus {
-      border-color: var(--color-performance-ink);
-      box-shadow: 0 0 0 3px var(--color-performance-paper);
-    }
-    button {
-      margin-top: 22px;
-      width: 100%;
-      border: 1px solid var(--color-performance-ink);
-      border-radius: var(--radius-performance-sm);
-      background: var(--color-performance-ink);
-      color: var(--color-performance-panel);
-      padding: 14px 18px;
-      font: inherit;
-      font-weight: 700;
-      cursor: pointer;
-    }
+    .lede { max-width: 48ch; }
+    .boundary { margin-top: 28px; padding-top: 20px; border-top: 1px solid var(--color-performance-line); font-size: 14px; max-width: 48ch; }
+    .card { min-width: 0; background: var(--color-performance-panel); border: 1px solid var(--color-performance-line); border-top: 3px solid var(--color-performance-ink); padding: 32px; }
+    h2 { margin: 0 0 16px; font-size: 20px; font-weight: 500; letter-spacing: -.02em; }
+    .meta { padding: 16px; border: 1px solid var(--color-performance-line); border-inline-start: 3px solid var(--color-performance-controlled); background: var(--color-performance-paper); font: 12px/1.7 var(--font-performance-mono); color: var(--color-performance-muted); overflow-wrap: anywhere; }
+    label { display: block; margin-top: 24px; font-size: 14px; font-weight: 500; }
+    input { display: block; width: 100%; min-height: 52px; margin-top: 8px; padding: 14px; border: 1px solid var(--color-performance-line-strong); border-radius: var(--radius-performance-sm); background: var(--color-performance-panel); color: var(--color-performance-ink); font: 400 16px var(--font-performance-sans); }
+    button { width: 100%; min-height: 54px; margin-top: 28px; border: 1px solid var(--color-performance-ink); border-radius: var(--radius-performance-sm); background: var(--color-performance-ink); color: var(--color-performance-panel); padding: 14px 18px; font: 600 15px/1.5 var(--font-performance-sans); cursor: pointer; }
     button:hover { background: var(--color-performance-ink-soft); }
-    button:focus-visible { outline: 2px solid var(--color-performance-pressure); outline-offset: 3px; }
-    .meta {
-      margin-top: 14px;
-      padding: 14px;
-      border: 1px solid var(--color-performance-line);
-      border-inline-start: 4px solid var(--color-performance-pressure);
-      background: var(--color-performance-paper);
-      font-family: var(--font-performance-mono);
-      font-size: .92rem;
-      color: var(--color-performance-muted);
-      overflow-wrap: anywhere;
+    :focus-visible { outline: 3px solid var(--color-performance-controlled); outline-offset: 4px; }
+    .error { margin-top: 20px; padding: 14px; border: 1px solid var(--color-performance-risk); border-inline-start-width: 3px; background: var(--color-performance-risk-soft); color: var(--color-performance-risk); font-size: 14px; }
+    footer { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 16px; border-top: 1px solid var(--color-performance-line); padding: 24px 0; color: var(--color-performance-muted); font-size: 12px; line-height: 1.6; }
+    footer nav { display: flex; gap: 24px; }
+    @media (max-width: 760px) {
+      .shell { width: calc(100% - 40px); }
+      .brand { min-height: 72px; font-size: 11px; }
+      main { grid-template-columns: minmax(0, 1fr); gap: 32px; padding: 40px 0 56px; }
+      h1 { max-width: 16ch; }
+      .card { padding: 24px; }
     }
-    .error {
-      margin: 18px 0 0;
-      background: var(--color-performance-risk-soft);
-      border: 1px solid var(--color-performance-risk);
-      border-inline-start-width: 4px;
-      color: var(--color-performance-risk);
-      border-radius: var(--radius-performance-sm);
-      padding: 12px 14px;
-    }
-    @media (max-width: 640px) {
-      body { padding: 18px; }
-      .card { padding: 22px; }
-    }
+    @media (max-width: 360px) { .card { padding: 20px; } .brand { gap: 12px; font-size: 10px; } }
+    @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto; } }
   </style>
 </head>
 <body>
+  <header class="masthead"><div class="shell brand"><a class="brand-name" href="/login">CREATE SOMETHING</a><span class="product-label">IDENTITY</span></div></header>
   <div class="shell">
-    <div class="brand">
-      <div class="mark" aria-hidden="true"></div>
-      <div>CREATE SOMETHING</div>
-    </div>
-    <main class="card">
-    <p class="eyebrow">${accessEyebrow}</p>
-    <h1>Authorize MCP Access</h1>
-    <p class="lede">${accessDescription}</p>
-    ${errorMessage ? `<div class="error">${escapeHtml(errorMessage)}</div>` : ''}
-    <form method="post" action="/oauth/authorize">
-      ${hidden}
-      <label>Email<input type="email" name="email" autocomplete="username" required /></label>
-      <label>Password<input type="password" name="password" autocomplete="current-password" required /></label>
-      <button type="submit">Authorize</button>
-    </form>
-    <div class="meta">${accessMetadata}</div>
-  </main>
+    <main>
+      <section aria-labelledby="authorize-title">
+        <p class="eyebrow">${accessEyebrow}</p>
+        <h1 id="authorize-title">Authorize MCP access.</h1>
+        <p class="lede">${accessDescription}</p>
+        <p class="boundary">Review the requested access before continuing. Signing in authorizes this connection.</p>
+      </section>
+      <section class="card" aria-labelledby="request-title">
+        <h2 id="request-title">Requested access</h2>
+        <div class="meta">${accessMetadata}</div>
+        ${errorMessage ? `<div class="error" role="alert">${escapeHtml(errorMessage)}</div>` : ''}
+        <form method="post" action="/oauth/authorize">
+          ${hidden}
+          <label>Email<input type="email" name="email" autocomplete="username" required /></label>
+          <label>Password<input type="password" name="password" autocomplete="current-password" required /></label>
+          <button type="submit">Sign in and authorize</button>
+        </form>
+      </section>
+    </main>
+    <footer><span>CREATE SOMETHING Identity</span><nav aria-label="Legal"><a href="https://createsomething.agency/privacy">Privacy</a><a href="https://createsomething.agency/terms">Terms</a></nav></footer>
   </div>
 </body>
 </html>`;
