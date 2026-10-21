@@ -35,7 +35,6 @@ WORKDIR /app
 
 # Copy package files
 COPY package.json package-lock.json ./
-COPY vendor/ ./vendor/
 
 # Install dependencies
 RUN npm ci --ignore-scripts
