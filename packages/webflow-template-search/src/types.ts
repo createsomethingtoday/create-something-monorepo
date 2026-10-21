@@ -23,6 +23,10 @@ export interface Env {
   WEBFLOW_TEMPLATE_ENABLE_CMS_INDEX?: string;
   ALLOWED_ORIGINS?: string;
   DEFAULT_PAGE_SIZE?: string;
+  /** Number of rank bands the popular browse order shuffles daily; unset or 0 = strict order. */
+  POPULAR_SHUFFLE_BANDS?: string;
+  /** Ranks per shuffle band (default 24, one grid page). */
+  POPULAR_SHUFFLE_BAND_SIZE?: string;
   DEFAULT_CLIENT_MODE?: string;
   ENVIRONMENT?: string;
   SYNC_ADMIN_TOKEN?: string;

@@ -16,6 +16,7 @@ import {
   updateTemplateImagesFromWebflow,
 } from './db.js';
 import { corsPreflight, jsonResponse, textResponse, withCorsHeaders } from './http.js';
+import { popularShuffleFor } from './popular-shuffle.js';
 import { parseSearchParams } from './query.js';
 import { searchTemplates } from './search.js';
 import { handleSupportRequest, refreshSupportRequestDeliveries } from './supportRequest.js';
@@ -133,7 +134,7 @@ function includeCacheValue(params: SearchParams): string {
     .join(',');
 }
 
-function buildPublicSearchCacheRequest(requestUrl: URL, params: SearchParams, cacheVersion: string): Request | null {
+function buildPublicSearchCacheRequest(requestUrl: URL, params: SearchParams, cacheVersion: string, shuffleSeed?: string): Request | null {
   if (params.templateSlug || params.strict || params.page < 1 || params.page > 10) return null;
   const cacheQuery = params.q ?? '';
   if (cacheQuery.length > 64) return null;
@@ -141,6 +142,9 @@ function buildPublicSearchCacheRequest(requestUrl: URL, params: SearchParams, ca
   const cacheUrl = new URL(requestUrl.pathname, requestUrl.origin);
   cacheUrl.searchParams.set('cache_version', `${cacheVersion}:cms-v1:signals-v1`);
   if (cacheQuery) cacheUrl.searchParams.set('q', cacheQuery);
+  // The popular order changes at the UTC day boundary; key on it so a cached
+  // page never mixes yesterday's band order with today's.
+  if (shuffleSeed) cacheUrl.searchParams.set('shuffle', shuffleSeed);
   for (const key of PUBLIC_SEARCH_CACHE_PARAM_ORDER) {
     switch (key) {
       case 'view':
@@ -208,7 +212,7 @@ async function handleSearch(request: Request, env: Env, ctx: ExecutionContext): 
     if (!unknown || Number(unknown.count) > 0) return jsonResponse(request, env, { error: 'CMS capability backfill is incomplete' }, 503);
   }
   const cacheVersion = await getPublicSearchCacheVersion(env.DB, DEFAULT_PUBLIC_SEARCH_CACHE_VERSION);
-  const cacheRequest = buildPublicSearchCacheRequest(url, params, cacheVersion);
+  const cacheRequest = buildPublicSearchCacheRequest(url, params, cacheVersion, popularShuffleFor(env, params)?.seed);
   const cache = cacheRequest ? getDefaultCache() : null;
 
   if (cache && cacheRequest) {
