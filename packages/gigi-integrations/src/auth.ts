@@ -19,6 +19,7 @@ export interface LoginOptions {
   fetch?:typeof fetch;
 }
 export interface LoginResult { sub:string; email:string; name?:string; resource:string; expiresAt:number; }
+export interface LogoutResult { signedOut: true; localOnly: true }
 export interface SessionAccessOptions { dataDir:string; signal?:AbortSignal; fetch?:typeof fetch; }
 
 export class LoginError extends Error {
@@ -177,7 +178,36 @@ export async function getSessionAccessToken(options:SessionAccessOptions):Promis
   }
 }
 
+async function withSessionWriteLock<T>(dataDir:string, action:()=>Promise<T>):Promise<T>{
+  if(!dataDir||!dataDir.startsWith('/'))fail('invalid_data_directory');
+  await mkdir(dataDir,{recursive:true,mode:0o700});
+  const metadata=await lstat(dataDir);
+  if(!metadata.isDirectory()||metadata.isSymbolicLink())fail('unsafe_data_directory');
+  await chmod(dataDir,0o700);
+  const lockPath=join(dataDir,'.broker-refresh.lock');
+  let lock;
+  try{lock=await open(lockPath,'wx',0o600);}catch{fail('session_busy');}
+  try{return await action();}finally{
+    await lock.close();
+    await unlink(lockPath).catch(()=>undefined);
+  }
+}
+
+/** Local sign-out only. Provider consent and the browser's SSO session remain. */
+export async function logout(options:{dataDir:string}):Promise<LogoutResult>{
+  return withSessionWriteLock(options.dataDir,async()=>{
+    try{await unlink(join(options.dataDir,'broker-session.json'));}
+    catch(error){if((error as NodeJS.ErrnoException).code!=='ENOENT')fail('session_unavailable');}
+    return {signedOut:true,localOnly:true};
+  });
+}
+
 export async function login(options:LoginOptions):Promise<LoginResult>{
+  if(options.signal?.aborted)fail('cancelled');
+  return withSessionWriteLock(options.dataDir,()=>loginUnlocked(options));
+}
+
+async function loginUnlocked(options:LoginOptions):Promise<LoginResult>{
   if(!options.dataDir||!options.dataDir.startsWith('/'))fail('invalid_data_directory');
   if(options.signal?.aborted)fail('cancelled');
   const request=options.fetch??fetch;

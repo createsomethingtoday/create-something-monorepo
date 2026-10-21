@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { chmod, mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { chmod, mkdir, mkdtemp, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
@@ -168,5 +168,25 @@ test('calendar windows include overlapping timed events, report all-day uncertai
       assert.equal(page.nextCursor, 'more');
       assert.equal(page.coverage.complete, false);
     }
+  } finally { await rm(root, { recursive: true }); }
+});
+
+
+test('source sign-out clears only the local session and is safe to repeat', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'gigi-runner-logout-'));
+  const session = join(root, 'broker-session.json');
+  await writeFile(session, JSON.stringify({ baseUrl: 'https://gigi-connector.createsomething.workers.dev', accessToken: 'synthetic-token',
+    refreshToken: 'synthetic-refresh', clientId: 'client-1', sub: 'user-1', expiresAt: Math.floor(Date.now() / 1000) + 3600, status: 'active' }), { mode: 0o600 });
+  const localRecord = join(root, 'synthetic-local-record');
+  await writeFile(localRecord, 'keep imported data');
+  let requests = 0;
+  const options = { dataDir: root, fetch: async () => { requests += 1; throw new Error('sign-out must not call provider'); } };
+  try {
+    assert.deepEqual(await runOperation({ operation: 'auth.logout', input: {} }, options), { ok: true, value: { signedOut: true, localOnly: true } });
+    await assert.rejects(stat(session), { code: 'ENOENT' });
+    assert.deepEqual(await runOperation({ operation: 'connections.status', input: { provider: 'gmail' } }, options), { ok: false, error: { operation: 'connections.status', reason: 'reauthentication_required' } });
+    assert.deepEqual(await runOperation({ operation: 'auth.logout', input: {} }, options), { ok: true, value: { signedOut: true, localOnly: true } });
+    assert.equal(await readFile(localRecord, 'utf8'), 'keep imported data');
+    assert.equal(requests, 0);
   } finally { await rm(root, { recursive: true }); }
 });

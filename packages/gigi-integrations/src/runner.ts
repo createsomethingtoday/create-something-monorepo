@@ -3,7 +3,7 @@ import { dirname, isAbsolute, join } from 'node:path';
 
 import { createBrokerClient, IntegrationError, type ConnectionProvider, type InstagramPublishInput } from './broker.ts';
 import { createCtxClient, CtxError } from './ctx.ts';
-import { getSessionAccessToken, login, LoginError } from './auth.ts';
+import { getSessionAccessToken, login, logout, LoginError } from './auth.ts';
 import { mapSourcePage } from './import-adapter.ts';
 import { requireSourceSelection, selectSourceRecords, SourceSelectionError } from './source-selection.ts';
 
@@ -24,6 +24,7 @@ export async function runOperation(request: RunnerRequest, options: RunnerOption
   try {
     const dataDir = options.dataDir ?? process.env.GIGI_DATA_DIR;
     if (!dataDir || !isAbsolute(dataDir)) return failure(operation, 'unconfigured');
+    if (operation === 'auth.logout') return success(await logout({ dataDir }));
     if (operation === 'auth.login') return success(await login({ dataDir, signal: options.signal, fetch: options.fetch }));
     if (operation.startsWith('connections.') || operation.startsWith('instagram.')) {
       const broker = createBrokerClient({

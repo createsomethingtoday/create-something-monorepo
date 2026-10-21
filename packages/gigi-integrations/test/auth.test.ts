@@ -3,7 +3,7 @@ import { mkdtemp, readFile, stat, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
-import { login, getSessionAccessToken, LoginError } from '../src/auth.ts';
+import { login, logout, getSessionAccessToken, LoginError } from '../src/auth.ts';
 
 const ISSUER='https://id.createsomething.space';
 const RESOURCE='https://gigi-connector.createsomething.workers.dev';
@@ -21,7 +21,7 @@ test('PKCE login binds registered redirect, resource, userinfo and private sessi
     if(url.pathname==='/.well-known/oauth-authorization-server') return Response.json({issuer:ISSUER,authorization_endpoint:ISSUER+'/oauth/authorize',token_endpoint:ISSUER+'/oauth/token',registration_endpoint:ISSUER+'/oauth/register',userinfo_endpoint:ISSUER+'/oauth/userinfo',token_endpoint_auth_methods_supported:['none'],code_challenge_methods_supported:['S256']});
     if(url.pathname==='/oauth/register'){const body=await req.json() as Record<string,unknown>;redirect=(body.redirect_uris as string[])[0]!;assert.match(String(body.scope),/offline_access/);assert.deepEqual(body.grant_types,['authorization_code','refresh_token']);return Response.json({client_id:'oauth_gigi_test',redirect_uris:[redirect],token_endpoint_auth_method:'none',scope:'openid profile email mcp offline_access'}, {status:201});}
     if(url.pathname==='/oauth/token'){const body=new URLSearchParams(await req.text());assert.equal(body.get('redirect_uri'),redirect);assert.equal(body.get('resource'),RESOURCE);verifier=body.get('code_verifier')!;assert.equal(body.get('code'),'code_123');return Response.json({access_token:'test-access-token',refresh_token:'test-refresh-token',token_type:'Bearer',expires_in:3600,scope:'openid profile email mcp offline_access',resource:RESOURCE});}
-    if(url.pathname==='/oauth/userinfo'){assert.equal(req.headers.get('authorization'),'Bearer test-access-token');return Response.json({sub:'user-1',email:'gigi@example.test',email_verified:true,name:'GiGi',client_id:'oauth_gigi_test',resource:RESOURCE,scope:'openid profile email mcp'});}
+    if(url.pathname==='/oauth/userinfo'){await assert.rejects(logout({dataDir:root}),/session_busy/);assert.equal(req.headers.get('authorization'),'Bearer test-access-token');return Response.json({sub:'user-1',email:'gigi@example.test',email_verified:true,name:'GiGi',client_id:'oauth_gigi_test',resource:RESOURCE,scope:'openid profile email mcp'});}
     throw new Error('unexpected request '+req.url);
   };
   try{
@@ -42,6 +42,8 @@ test('PKCE login binds registered redirect, resource, userinfo and private sessi
     assert.equal(challenge,Buffer.from(digest).toString('base64url'));
     assert.ok(state.length>=32);
     assert.equal(calls.length,4);
+    assert.deepEqual(await logout({dataDir:root}),{signedOut:true,localOnly:true});
+    await assert.rejects(getSessionAccessToken({dataDir:root}),/reauthentication_required/);
   }finally{await rm(root,{recursive:true,force:true});}
 });
 
@@ -120,5 +122,29 @@ test('cancelled provider request preserves typed nonsecret login reason',async()
       assert.equal(error.message,'provider_unavailable');
       return true;
     });
+  }finally{await rm(root,{recursive:true,force:true});}
+});
+
+
+test('sign-out refuses a pending refresh, then removes the committed session without resurrection', async()=>{
+  const root=await mkdtemp(join(tmpdir(),'gigi-auth-logout-refresh-'));
+  const path=join(root,'broker-session.json');
+  await writeFile(path,JSON.stringify({baseUrl:RESOURCE,accessToken:'expired',refreshToken:'synthetic-refresh',clientId:'oauth_test',sub:'user-1',expiresAt:1,status:'active'}),{mode:0o600});
+  let entered!:()=>void;
+  const started=new Promise<void>(resolve=>{entered=resolve;});
+  let release!:(response:Response)=>void;
+  const pending=new Promise<Response>(resolve=>{release=resolve;});
+  try{
+    const refresh=getSessionAccessToken({dataDir:root,fetch:async()=>{entered();return pending;}});
+    await started;
+    await assert.rejects(logout({dataDir:root}),/session_busy/);
+    let browserOpened=false;
+    await assert.rejects(login({dataDir:root,openBrowser:()=>{browserOpened=true;}}),/session_busy/);
+    assert.equal(browserOpened,false);
+    release(Response.json({access_token:'synthetic-new',refresh_token:'synthetic-rotated',token_type:'Bearer',resource:RESOURCE,expires_in:3600}));
+    assert.equal(await refresh,'synthetic-new');
+    assert.deepEqual(await logout({dataDir:root}),{signedOut:true,localOnly:true});
+    await assert.rejects(getSessionAccessToken({dataDir:root}),/reauthentication_required/);
+    await assert.rejects(stat(path),{code:'ENOENT'});
   }finally{await rm(root,{recursive:true,force:true});}
 });
