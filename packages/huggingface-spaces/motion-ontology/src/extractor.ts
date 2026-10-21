@@ -26,13 +26,17 @@ async function getBrowser(): Promise<Browser> {
   if (!browserInstance || !browserInstance.connected) {
     const executablePath = process.env.PUPPETEER_EXECUTABLE_PATH;
     if (!executablePath || !isAbsolute(executablePath)) {
-      throw new Error('Configure PUPPETEER_EXECUTABLE_PATH with an absolute path to an installed browser. Automatic browser installation is unavailable.');
+      throw new Error(
+        'Configure PUPPETEER_EXECUTABLE_PATH with an absolute path to an installed browser. Automatic browser installation is unavailable.',
+      );
     }
     try {
       if (!(await stat(executablePath)).isFile()) throw new Error('Not a file');
       await access(executablePath, constants.X_OK);
     } catch {
-      throw new Error('The configured browser is missing or not executable. Install Chromium explicitly and check PUPPETEER_EXECUTABLE_PATH.');
+      throw new Error(
+        'The configured browser is missing or not executable. Install Chromium explicitly and check PUPPETEER_EXECUTABLE_PATH.',
+      );
     }
     browserInstance = await puppeteer.launch({
       executablePath,
@@ -82,9 +86,13 @@ async function extractAnimations(page: Page): Promise<AnimationData[]> {
         keyframes: (effect?.getKeyframes?.() || []).map((kf) => ({
           offset: kf.offset || 0,
           properties: Object.fromEntries(
-            Object.entries(kf).filter(
-              ([k, value]) => !['offset', 'easing', 'composite'].includes(k) && value != null
-            ).map(([key, value]) => [key, String(value)])
+            Object.entries(kf)
+              .filter(
+                ([k, value]) =>
+                  !['offset', 'easing', 'composite'].includes(k) &&
+                  value != null,
+              )
+              .map(([key, value]) => [key, String(value)]),
           ),
         })),
       };
@@ -139,7 +147,7 @@ async function extractTransitions(page: Page): Promise<TransitionData[]> {
  */
 function calculateTimingProfile(
   animations: AnimationData[],
-  transitions: TransitionData[]
+  transitions: TransitionData[],
 ): TimingProfile {
   const allDurations = [
     ...animations.map((a) => a.duration + a.delay),
@@ -171,7 +179,7 @@ function calculateTimingProfile(
  */
 function extractAnimatedProperties(
   animations: AnimationData[],
-  transitions: TransitionData[]
+  transitions: TransitionData[],
 ): string[] {
   const properties = new Set<string>();
 
@@ -195,7 +203,7 @@ function extractAnimatedProperties(
  */
 export async function extractMotion(
   url: string,
-  trigger: TriggerConfig
+  trigger: TriggerConfig,
 ): Promise<TechnicalAnalysis> {
   const browser = await getBrowser();
   const page = await browser.newPage();
@@ -237,7 +245,10 @@ export async function extractMotion(
         await element.focus();
       }
     } else if (trigger.type === 'scroll') {
-      await page.evaluate((pos) => window.scrollTo(0, pos), trigger.scrollPosition || 500);
+      await page.evaluate(
+        (pos) => window.scrollTo(0, pos),
+        trigger.scrollPosition || 500,
+      );
     }
 
     // Wait for animations to start
@@ -254,7 +265,10 @@ export async function extractMotion(
 
     // Calculate timing and properties
     const timing = calculateTimingProfile(animations, transitions);
-    const propertiesAnimated = extractAnimatedProperties(animations, transitions);
+    const propertiesAnimated = extractAnimatedProperties(
+      animations,
+      transitions,
+    );
 
     return {
       animations,
