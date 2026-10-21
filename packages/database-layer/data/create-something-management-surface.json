@@ -1,6 +1,6 @@
 {
   "id": "substrate:create-something:management-surface:internal",
-  "generatedAt": "2026-10-13T14:05:52.315Z",
+  "generatedAt": "2026-10-21T14:05:02.192Z",
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
   "sourceReadinessId": "substrate:create-something:operating-slice-readiness:internal",
@@ -6474,6 +6474,20 @@
       "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
     },
     {
+      "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-guide-docs-guides-atlas-substrate-agent-context-md",
+      "kind": "topology_record",
+      "title": "ATLAS_SUBSTRATE_AGENT_CONTEXT.md",
+      "recordId": "substrate:create-something:guide:docs-guides-atlas-substrate-agent-context-md",
+      "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
+      "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-guide-docs-guides-atlas-substrate-agent-context-md",
+      "mcpUri": "substrate://topology/internal/records/substrate-create-something-guide-docs-guides-atlas-substrate-agent-context-md",
+      "agentCommand": "databaseLayer.topology.records.get",
+      "access": [
+        "read"
+      ],
+      "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
+    },
+    {
       "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-guide-docs-guides-bounded-research-interrupt-runbook-md",
       "kind": "topology_record",
       "title": "BOUNDED_RESEARCH_INTERRUPT_RUNBOOK.md",
@@ -6607,6 +6621,20 @@
       "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
       "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-guide-docs-guides-ctx-to-draw-storytelling-playbook-md",
       "mcpUri": "substrate://topology/internal/records/substrate-create-something-guide-docs-guides-ctx-to-draw-storytelling-playbook-md",
+      "agentCommand": "databaseLayer.topology.records.get",
+      "access": [
+        "read"
+      ],
+      "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
+    },
+    {
+      "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-guide-docs-guides-daily-work-log-runbook-md",
+      "kind": "topology_record",
+      "title": "DAILY_WORK_LOG_RUNBOOK.md",
+      "recordId": "substrate:create-something:guide:docs-guides-daily-work-log-runbook-md",
+      "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
+      "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-guide-docs-guides-daily-work-log-runbook-md",
+      "mcpUri": "substrate://topology/internal/records/substrate-create-something-guide-docs-guides-daily-work-log-runbook-md",
       "agentCommand": "databaseLayer.topology.records.get",
       "access": [
         "read"

@@ -2,12 +2,12 @@
   "id": "substrate:create-something:topology-diagnostics:internal",
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
-  "generatedAt": "2026-10-13T14:05:51.285Z",
+  "generatedAt": "2026-10-21T14:05:01.097Z",
   "summary": {
     "valueState": "connected_map_with_review_signals",
-    "nodes": 553,
-    "edges": 1158,
-    "mapped": 553,
+    "nodes": 555,
+    "edges": 1164,
+    "mapped": 555,
     "hardGapCount": 0,
     "reviewSignalCount": 6,
     "exactDuplicatePathCount": 0,
@@ -22,11 +22,11 @@
       "worker": 173,
       "doc": 6,
       "policy": 64,
-      "guide": 80,
+      "guide": 82,
       "config": 24
     },
     "tierCounts": {
-      "Mixed": 134,
+      "Mixed": 136,
       "Judgment": 109,
       "Automation": 282,
       "Database": 28
@@ -64,7 +64,7 @@
       "evidence": [
         "Automation=282",
         "Database=28",
-        "Total nodes=553"
+        "Total nodes=555"
       ],
       "nodeIds": [],
       "paths": [],
@@ -188,7 +188,7 @@
       "classification": "review_signal",
       "severity": "review",
       "title": "guide surface review",
-      "summary": "80 record(s) are classified as guide.",
+      "summary": "82 record(s) are classified as guide.",
       "evidence": [
         "AGENCY_ARTICLE_IMAGE_WORKFLOW.md: docs/guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md",
         "AGENCY_GOVERNANCE_PRODUCTS_OPERATIONS_RUNBOOK.md: docs/guides/AGENCY_GOVERNANCE_PRODUCTS_OPERATIONS_RUNBOOK.md",
@@ -207,8 +207,8 @@
         "substrate:create-something:guide:docs-guides-antigravity-mcp-enablement-md",
         "substrate:create-something:guide:docs-guides-arena-taste-integration-md",
         "substrate:create-something:guide:docs-guides-atlas-linear-integration-md",
-        "substrate:create-something:guide:docs-guides-bounded-research-interrupt-runbook-md",
-        "substrate:create-something:guide:docs-guides-browser-proof-and-closeout-runbook-md"
+        "substrate:create-something:guide:docs-guides-atlas-substrate-agent-context-md",
+        "substrate:create-something:guide:docs-guides-bounded-research-interrupt-runbook-md"
       ],
       "paths": [
         "docs/guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md",
@@ -221,8 +221,8 @@
         "docs/guides/ANTIGRAVITY_MCP_ENABLEMENT.md",
         "docs/guides/ARENA_TASTE_INTEGRATION.md",
         "docs/guides/ATLAS_LINEAR_INTEGRATION.md",
-        "docs/guides/BOUNDED_RESEARCH_INTERRUPT_RUNBOOK.md",
-        "docs/guides/BROWSER_PROOF_AND_CLOSEOUT_RUNBOOK.md"
+        "docs/guides/ATLAS_SUBSTRATE_AGENT_CONTEXT.md",
+        "docs/guides/BOUNDED_RESEARCH_INTERRUPT_RUNBOOK.md"
       ],
       "nextAction": "Use group explanation before drawing product or business conclusions from this surface."
     },
