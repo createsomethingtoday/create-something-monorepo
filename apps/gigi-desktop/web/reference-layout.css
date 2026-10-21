@@ -34,3 +34,7 @@
 .reference-header summary:focus-visible,.reference-header button:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
 .reference-menu button{min-height:36px}
 @media(prefers-reduced-motion:reduce){.reference-header *,.today-card{animation:none;transition:none;scroll-behavior:auto}}
+
+/* Anchor headings must clear the sticky workspace strip. */
+.agenda-day,#source-connections,#agent-setup,#phone-access,#source-diagnostics,.social-composer{scroll-margin-top:64px}
+@media(max-width:700px){.agenda-day,#source-connections,#agent-setup,#phone-access,#source-diagnostics,.social-composer{scroll-margin-top:112px}}
