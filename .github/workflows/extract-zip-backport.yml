@@ -9,6 +9,7 @@ on:
       - 'scripts/test/security-*'
       - 'security/advisory-history/**'
       - 'security/extract-zip/**'
+      - 'security/basic-ftp/**'
       - 'patches/extract-zip@2.0.1.patch'
       - 'package.json'
       - 'pnpm-lock.yaml'
@@ -53,3 +54,21 @@ jobs:
           npm ci --ignore-scripts --no-audit --no-fund
       - name: Verify standalone dependency bytes and behavior
         run: node security/extract-zip/verify-installed.mjs "${{ runner.temp }}/motion-standalone"
+
+  standalone-node20:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: '20'
+      - name: Clean standalone install on Docker runtime major
+        run: |
+          mkdir -p "$RUNNER_TEMP/motion-node20/vendor"
+          cp packages/huggingface-spaces/motion-ontology/package{,-lock}.json "$RUNNER_TEMP/motion-node20/"
+          cp packages/huggingface-spaces/motion-ontology/vendor/*.tgz "$RUNNER_TEMP/motion-node20/vendor/"
+          cd "$RUNNER_TEMP/motion-node20"
+          npm ci --ignore-scripts --no-fund
+      - name: Verify actual bytes, archive containment and FTP consumer
+        run: node security/extract-zip/verify-installed.mjs "${{ runner.temp }}/motion-node20"

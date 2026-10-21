@@ -22,6 +22,9 @@
     "typescript": "^5.3.0"
   },
   "overrides": {
-    "extract-zip": "file:vendor/extract-zip-2.0.1-backport.tgz"
+    "extract-zip": "file:vendor/extract-zip-2.0.1-backport.tgz",
+    "get-uri": {
+      "basic-ftp": "6.2.1"
+    }
   }
 }

@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { verifyProvenance } from './verify-provenance.mjs';
 const root = resolve(process.argv[2] || '.');
 const expected = verifyProvenance().patchedIndexSha256;
-const seen = new Set(), packages = new Set(), extracts = new Set();
+const seen = new Set(), packages = new Set(), extracts = new Set(), ftpConsumers = new Set();
 function modules(dir) {
   if (!existsSync(dir)) return;
   dir = realpathSync(dir);
@@ -32,6 +32,16 @@ function visit(candidate) {
     if(digest!==expected) throw new Error(`Unpatched extract-zip: ${location}`);
     extracts.add(location);
   }
+  if(metadata.name==='basic-ftp') {
+    const official=JSON.parse(readFileSync(new URL('../basic-ftp/provenance.json',import.meta.url)));
+    const shipped=readdirSync(join(location,'dist')).filter(file=>file.endsWith('.js')).map(file=>'dist/'+file).sort();
+    if(!shipped.includes('dist/Client.js') || JSON.stringify(shipped)!==JSON.stringify(Object.keys(official.files).sort())) throw new Error('Missing or extra basic-ftp JavaScript evidence');
+    if(metadata.version!==official.version || official.version!=='6.2.1') throw new Error(`Unpatched basic-ftp: ${location}`);
+    for(const [file,hash] of Object.entries(official.files)) {
+      if(!/^dist\/[a-zA-Z0-9]+\.js$/.test(file) || createHash('sha256').update(readFileSync(join(location,file))).digest('hex')!==hash) throw new Error(`Changed basic-ftp bytes: ${location}/${file}`);
+    }
+  }
+  if(metadata.name==='get-uri') ftpConsumers.add(location);
   modules(join(location,'node_modules'));
   // pnpm keeps dependency links adjacent to the package in its virtual store.
   let parent=dirname(location);
@@ -51,4 +61,9 @@ for (const family of ['apps','packages']) {
 if(!extracts.size) throw new Error('No installed extract-zip was verified');
 const result=spawnSync(process.execPath,['--test',fileURLToPath(new URL('./security.test.cjs',import.meta.url))],{env:{...process.env,EXTRACT_ZIP_MODULE:[...extracts][0]},stdio:'inherit'});
 if(result.status!==0) process.exit(result.status||1);
-console.log(JSON.stringify({root,packagesChecked:packages.size,verifiedExtractZip:[...extracts],sha256:expected}));
+if(!ftpConsumers.size) throw new Error('No actual get-uri consumer was verified');
+for(const consumer of ftpConsumers) {
+  const ftp=spawnSync(process.execPath,['--test',fileURLToPath(new URL('../basic-ftp/compatibility.test.cjs',import.meta.url))],{env:{...process.env,GET_URI_MODULE:consumer},stdio:'inherit'});
+  if(ftp.status!==0) process.exit(ftp.status||1);
+}
+console.log(JSON.stringify({ftpConsumers:[...ftpConsumers],root,packagesChecked:packages.size,verifiedExtractZip:[...extracts],sha256:expected}));

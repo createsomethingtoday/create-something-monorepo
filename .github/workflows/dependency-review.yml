@@ -6,6 +6,7 @@ on:
       - '.gitattributes'
       - 'patches/extract-zip@2.0.1.patch'
       - 'security/extract-zip/**'
+      - 'security/basic-ftp/**'
       - '.github/workflows/extract-zip-backport.yml'
       - '**/package.json'
       - '**/pnpm-lock.yaml'

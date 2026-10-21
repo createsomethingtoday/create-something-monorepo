@@ -49,3 +49,12 @@ test('actual missing installation and unpatched installed code block promotion',
 test('direct import detection remains independent of retired exception entries', () => {
   assert.deepEqual(findDirectPackageImports(new Map([['src/new.ts',"import extract from 'extract-zip'"]]),record.package),['src/new.ts']);
 });
+
+test('basic-ftp version metadata cannot substitute for official installed bytes', t => {
+  const dir=mkdtempSync(join(tmpdir(),'remediation-ftp-bytes-'));t.after(()=>rmSync(dir,{recursive:true,force:true}));
+  const pkg=join(dir,'node_modules/basic-ftp');mkdirSync(join(pkg,'dist'),{recursive:true});
+  writeFileSync(join(pkg,'package.json'),JSON.stringify({name:'basic-ftp',version:'6.2.1'}));
+  const manifest=JSON.parse(readFileSync(join(root,'security/basic-ftp/provenance.json')));
+  for(const file of Object.keys(manifest.files)) writeFileSync(join(pkg,file),'changed implementation');
+  assert.throws(()=>verifyInstall(root,dir,record.provenance.patchedIndexSha256),/Changed basic-ftp bytes/);
+});
