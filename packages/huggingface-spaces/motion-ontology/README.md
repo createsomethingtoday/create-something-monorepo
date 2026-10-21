@@ -63,3 +63,25 @@ When `ANTHROPIC_API_KEY` is set, Claude provides rich phenomenological interpret
 - [.io](https://createsomething.io) — Research
 - [.agency](https://createsomething.agency) — Services
 - [.ltd](https://createsomething.ltd) — Philosophy
+
+## Explicit system browser (qualification candidate)
+
+Use Node 22.12 or newer (qualification pins 22.21.1) and install Chromium or
+Chrome separately. Set `PUPPETEER_EXECUTABLE_PATH` to its absolute executable
+path. The service validates the file before launching it and never falls back
+to installing a browser. `puppeteer-core` ignores Puppeteer's configuration
+files; this application passes the validated path explicitly.
+
+The Dockerfile supplies Debian Chromium at `/usr/bin/chromium`. Use
+`npm ci --ignore-scripts` for installation; browser package lifecycle hooks are
+absent and other dependency lifecycles remain disabled. The core dependency
+still contains browser download/extraction APIs through `@puppeteer/browsers`;
+this change does not remove that capability from disk. Application launch does
+not call those APIs. Do not add a downloader fallback for missing browsers.
+
+Run `npm run build`, `npm test`, `node test/check-dependency-policy.mjs`, then
+`npm run test:browser` with the explicit path configured. Browser tests use
+synthetic data URLs, disposable profiles and prohibit remote Node HTTP/fetch.
+The container qualification additionally disables container networking.
+System browser versions need qualification when updated; arbitrary installed
+Chromium versions are not guaranteed compatible.

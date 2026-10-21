@@ -5,7 +5,10 @@
  * using real browser interaction.
  */
 
-import puppeteer, { Browser, Page } from 'puppeteer';
+import puppeteer, { Browser, Page } from 'puppeteer-core';
+import { constants } from 'node:fs';
+import { access, stat } from 'node:fs/promises';
+import { isAbsolute } from 'node:path';
 import type {
   TriggerConfig,
   TechnicalAnalysis,
@@ -21,7 +24,18 @@ let browserInstance: Browser | null = null;
  */
 async function getBrowser(): Promise<Browser> {
   if (!browserInstance || !browserInstance.connected) {
+    const executablePath = process.env.PUPPETEER_EXECUTABLE_PATH;
+    if (!executablePath || !isAbsolute(executablePath)) {
+      throw new Error('Configure PUPPETEER_EXECUTABLE_PATH with an absolute path to an installed browser. Automatic browser installation is unavailable.');
+    }
+    try {
+      if (!(await stat(executablePath)).isFile()) throw new Error('Not a file');
+      await access(executablePath, constants.X_OK);
+    } catch {
+      throw new Error('The configured browser is missing or not executable. Install Chromium explicitly and check PUPPETEER_EXECUTABLE_PATH.');
+    }
     browserInstance = await puppeteer.launch({
+      executablePath,
       headless: true,
       args: [
         '--no-sandbox',
@@ -69,8 +83,8 @@ async function extractAnimations(page: Page): Promise<AnimationData[]> {
           offset: kf.offset || 0,
           properties: Object.fromEntries(
             Object.entries(kf).filter(
-              ([k]) => !['offset', 'easing', 'composite'].includes(k)
-            )
+              ([k, value]) => !['offset', 'easing', 'composite'].includes(k) && value != null
+            ).map(([key, value]) => [key, String(value)])
           ),
         })),
       };
@@ -236,7 +250,7 @@ export async function extractMotion(
 
     // Take screenshot
     const screenshotBuffer = await page.screenshot({ type: 'png' });
-    const screenshot = screenshotBuffer.toString('base64');
+    const screenshot = Buffer.from(screenshotBuffer).toString('base64');
 
     // Calculate timing and properties
     const timing = calculateTimingProfile(animations, transitions);
