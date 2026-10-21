@@ -17,7 +17,7 @@ test('restore requires visible in-app confirmation before native mutation',async
     if(operation==='workspace.get')return {id:'w1',name:'Acceptance'};
     if(operation==='records.list')return input.entity==='profile'?{items:[{id:'p1'}],count:1}:{items:[],count:0};
     if(operation==='records.get')return {id:'p1',fields:{Currency:'USD'}};
-    if(operation==='connections.status')return {state:'disconnected'};
+    if((operation==='connections.status'||operation==='sources.status'))return {state:'disconnected'};
     if(operation==='agent.status')return {};
     if(operation==='backup.restore')return {restored:true,safetyBackupId:'safety-1'};
     throw new Error(`unexpected ${operation}`);

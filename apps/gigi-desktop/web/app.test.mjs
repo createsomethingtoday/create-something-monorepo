@@ -133,7 +133,7 @@ test('connector sign-in explains provider outages and timeouts without exposing 
     if (operation === 'workspace.get') return { id: 'w1', name: 'Test' };
     if (operation === 'records.list') return { items: input.entity === 'profile' ? [{ id: 'p1' }] : [], count: 0 };
     if (operation === 'records.get') return { id: 'p1', title: 'Owner', fields: { Currency: 'USD' } };
-    if (operation === 'connections.status') return { provider: input.provider, state: 'disconnected' };
+    if ((operation === 'connections.status' || operation === 'sources.status')) return { provider: input.provider, state: 'disconnected' };
     if (operation === 'agent.status') return {};
     if (operation === 'auth.login') throw new Error(failure);
     return {};
@@ -168,7 +168,7 @@ test('source card explains an in-progress session refresh and keeps manual statu
     if (operation === 'workspace.get') return { id: 'w1', name: 'Test' };
     if (operation === 'records.list') return { items: input.entity === 'profile' ? [{ id: 'p1' }] : [], count: 0 };
     if (operation === 'records.get') return { id: 'p1', title: 'Owner', fields: { Currency: 'USD' } };
-    if (operation === 'connections.status') return input.provider === 'gmail'
+    if ((operation === 'connections.status' || operation === 'sources.status')) return input.provider === 'gmail'
       ? { provider: 'gmail', state: 'unavailable', detail: gmailDetail }
       : { provider: 'googlecalendar', state: 'connected', connectedAccountId: 'ca_calendar' };
     if (operation === 'agent.status') return {};

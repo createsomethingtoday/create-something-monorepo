@@ -34,6 +34,11 @@ export function createBridge(invoke) {
     chatCancel: (workspaceId, sessionId) => call('agent.chat.cancel', { workspaceId: owned(workspaceId), sessionId }),
     chatApprove: (workspaceId, sessionId, approvalId, decision) => call('agent.chat.approve', { workspaceId: owned(workspaceId), sessionId, approvalId, decision }),
     connectionStatus: (provider) => call('connections.status', { provider }),
+    sourceStatus: (workspaceId, provider) => call('sources.status', { workspaceId: owned(workspaceId), provider }),
+    previewSource: (workspaceId, provider, connectedAccountId, selection = {}, cursor) => call('sources.preview', { workspaceId: owned(workspaceId), provider, connectedAccountId, selection, maxPages: 1, maxRecords: 25, ...(cursor ? { cursor } : {}) }),
+    commitSource: (workspaceId, previewId, expectedRevision, idempotencyKey) => call('imports.commit', { workspaceId: owned(workspaceId), previewId, expectedRevision, idempotencyKey, confirmed: true }),
+    importStatus: (workspaceId, jobId) => call('imports.status', { workspaceId: owned(workspaceId), jobId }),
+    cancelImport: (workspaceId, previewId) => call('imports.cancel', { workspaceId: owned(workspaceId), previewId }),
     beginConnection: (provider, requestId) => call('connections.begin', { provider, requestId }),
     openConsent: (url, provider) => call('connections.openConsent', { url, provider }),
     reconcileConnection: (provider, connectedAccountId) => call('connections.reconcile', { provider, connectedAccountId }),
@@ -41,6 +46,7 @@ export function createBridge(invoke) {
     searchContext: (query, limit = 5) => call('context.search', { query, limit }),
     syncContext: () => call('context.sync', {}),
     signIn: () => call('auth.login', {}),
+    signOut: () => call('auth.logout', {}),
     call
   };
 }

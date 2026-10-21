@@ -149,8 +149,8 @@ export function sourceJourney(sources = {}, attempts = {}) {
     : consent ? 'Resume the pending Google consent below, then check status and verify. Do not start a second attempt.'
     : reconnect ? 'The previous connection ended. Choose Reconnect below to start fresh consent.'
     : pending ? 'Check status and verify the pending connection. If no consent link is available, do not start another attempt.'
-    : connected ? 'Check the verified Google identity below, then import one bounded page when ready.'
+    : connected ? 'Check the verified Google identity below, then preview a bounded source page when ready.'
     : admitted ? 'Choose Gmail or Google Calendar below. You can connect either source independently.'
     : 'Check source status or sign in to GiGi sources. Your local workspace is ready.');
-  return { current, next, stages: ['Local workspace', 'GiGi source sign-in', 'Choose a source', 'Google consent', 'Verify connection', 'Import one page'] };
+  return { current, next, stages: ['Local workspace', 'GiGi source sign-in', 'Choose a source', 'Google consent', 'Verify connection', 'Preview and import'] };
 }
