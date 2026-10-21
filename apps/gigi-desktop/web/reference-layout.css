@@ -38,3 +38,35 @@
 /* Anchor headings must clear the sticky workspace strip. */
 .agenda-day,#source-connections,#agent-setup,#phone-access,#source-diagnostics,.social-composer{scroll-margin-top:64px}
 @media(max-width:700px){.agenda-day,#source-connections,#agent-setup,#phone-access,#source-diagnostics,.social-composer{scroll-margin-top:112px}}
+
+/* Focused daily-work polish. Palette and data ordering stay unchanged. */
+.content-primary:has(.today-summary) .page-head{margin:4px 0 10px}
+.content-primary:has(.today-summary) .page-head .eyebrow{display:none}
+.content-primary:has(.today-summary) .subhead{margin-top:4px}
+.today-summary{display:flex;flex-wrap:wrap;gap:4px 16px;margin-bottom:4px}
+.today-summary .btn{padding:6px 0;min-height:36px;font-size:13px}
+.today-summary strong{color:var(--signal);margin-right:5px;font-variant-numeric:tabular-nums}
+.overview-counts{margin-bottom:8px}.overview-counts summary{padding:4px 0}
+.today-scope{font-size:12px;color:var(--muted);margin:0}
+.today-scope summary{cursor:pointer;min-height:24px}
+.today-scope p{margin:4px 0 8px}
+.today-card{gap:6px}.today-card-status{margin-bottom:0}.today-card-footer{padding-top:10px}
+.today-grid:has(>.today-card:only-child){grid-template-columns:1fr}
+@container(min-width:900px){.today-sections{grid-template-columns:repeat(2,minmax(0,1fr))}.today-sections .today-grid{grid-template-columns:1fr}.today-sections .panel-head{flex-wrap:wrap;gap:4px}}
+.reference-header .reference-find{flex:0 1 auto;min-width:0;max-width:none;border:0;background:transparent;color:var(--muted);gap:6px}
+.reference-find kbd{font-size:10px}.reference-shortcuts p{line-height:1.8;margin:8px 0}
+.contact-search{gap:12px}.contact-search+#contact-search-help{font-size:12px;margin:6px 0 16px}
+.content-primary:has(#contact-search) .page-head{margin:4px 0 16px}
+.content-primary:has(#contact-search) .page-head .eyebrow{display:none}
+#built-in-chat{scroll-margin-top:64px}#built-in-chat p{max-width:72ch}#built-in-chat .inline-actions{margin-top:14px}
+#agent-setup>details>summary{cursor:pointer;padding:8px 0}
+@media(max-width:700px){#built-in-chat{scroll-margin-top:112px}}
+
+.today-sections .panel>.today-scope,.content-primary>.panel>.today-scope{margin:0}
+.today-sections .panel-head .btn{min-height:36px;padding-block:6px}
+.today-scope summary{padding:0}
+/* Keep proposed changes readable even with the composer and recovery controls. */
+.chat-intro{max-height:34%;flex-shrink:0}
+.chat-composer{padding:10px 18px 12px}
+.chat-composer textarea{min-height:52px;max-height:100px}
+.chat-composer .chat-actions{margin-top:8px}

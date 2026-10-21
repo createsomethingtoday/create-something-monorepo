@@ -144,7 +144,7 @@ test('missing GiGi tools gives setup guidance without claiming a connected works
   await chat.open(); await chat.start();
   const html = chatView(chat);
   assert.match(html, /GiGi’s local tools are unavailable/);
-  assert.match(html, /data-chat-setup="1">Open agent setup/);
+  assert.match(html, /data-chat-setup="1">Open chat setup/);
   assert.doesNotMatch(html, /gigi_tools_unavailable/);
   assert.doesNotMatch(html, />Connected</);
 });
