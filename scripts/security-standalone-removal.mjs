@@ -120,7 +120,9 @@ export function verifyStandaloneRemoval(installation) {
       locked && locked.version === metadata.version,
       `Unrecorded or mismatched installed package: ${local}`,
     );
-    inspectNames(metadata);
+    // Published packages may describe upstream development tools that npm does not install.
+    // Inspect runtime declarations here; any physically installed package is still scanned.
+    inspectNames({ ...metadata, devDependencies: undefined });
     seen.add(location);
     // Every required runtime dependency must resolve inside this isolated tree.
     for (const name of Object.keys(metadata.dependencies || {})) {

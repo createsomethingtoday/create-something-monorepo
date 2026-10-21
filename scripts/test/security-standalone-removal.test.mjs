@@ -115,3 +115,15 @@ test('installed dependency cannot escape the isolated tree', (t) => {
   );
   assert.throws(() => verifyStandaloneRemoval(f.root), /escapes/);
 });
+
+test('upstream-only development declarations are not installed dependencies', (t) => {
+  const f = fixture(t);
+  f.pkg('@puppeteer/browsers', {
+    name: '@puppeteer/browsers',
+    version: '3.2.5',
+    devDependencies: { puppeteer: '25.15.0' },
+  });
+  assert.equal(verifyStandaloneRemoval(f.root).packagesChecked, 2);
+  f.pkg('puppeteer', { name: 'puppeteer', version: '25.15.0' });
+  assert.throws(() => verifyStandaloneRemoval(f.root), /Removed installed/);
+});
