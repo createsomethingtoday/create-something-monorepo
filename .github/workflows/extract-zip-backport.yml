@@ -2,6 +2,7 @@ name: Extract ZIP backport qualification
 on:
   pull_request:
     paths:
+      - '.gitattributes'
       - 'security/extract-zip/**'
       - 'patches/extract-zip@2.0.1.patch'
       - 'package.json'
