@@ -21,3 +21,9 @@ Qualification is incomplete until independent review, clean pnpm and npm resolut
 - Existing absolute links are accepted only when rooted in the canonical extraction path; alternate absolute spellings through filesystem aliases fail closed. Browser archive-created links must be relative. Windows/Linux qualification remains pending.
 - Independent review validated the earlier 19-case macOS state and requested the Windows separator correction. The correction is present, but the subsequent final-review request was blocked by the agent service's cybersecurity filter. Final independent approval remains outstanding. No alternative agent was used to bypass that block.
 - The existing exception configuration and security gates are unchanged. This branch must not be merged or released until review and all required gates pass; changing exception policy is not authorized as a workaround for incomplete qualification.
+
+## Local recovery and Windows checkout correction
+
+The interrupted full-workspace install was preserved under `.cache/interrupted-node_modules-b69a5048c` and replaced with a fresh frozen install, scripts and side-effect caching disabled. It completed successfully; byte verification traversed 2,662 reachable packages and all 21 tests passed. This supersedes the earlier local-install failure, whose evidence remains retained.
+
+Windows CI at b69a5048c failed before behavior tests because Git converted the patch to CRLF. A narrow `.gitattributes` rule pins only this patch to LF; an actual Git checkout with core.autocrlf=true now preserves the original expected hash. Hash checks were not relaxed. Exact-head cross-platform CI still determines qualification. Dependency-review triggers now include this patch, its verification files and the line-ending rule; existing security validation behavior remains unchanged.

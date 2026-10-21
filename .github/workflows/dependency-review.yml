@@ -3,6 +3,10 @@ name: Dependency Review
 on:
   pull_request:
     paths:
+      - '.gitattributes'
+      - 'patches/extract-zip@2.0.1.patch'
+      - 'security/extract-zip/**'
+      - '.github/workflows/extract-zip-backport.yml'
       - '**/package.json'
       - '**/pnpm-lock.yaml'
       - '**/Cargo.toml'
