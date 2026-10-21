@@ -3,8 +3,9 @@ import { resolve, dirname, basename, join } from 'node:path';
 import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { verifyProvenance } from './verify-provenance.mjs';
 const root = resolve(process.argv[2] || '.');
-const expected = JSON.parse(readFileSync(new URL('./provenance.json', import.meta.url))).patchedIndexSha256;
+const expected = verifyProvenance().patchedIndexSha256;
 const seen = new Set(), packages = new Set(), extracts = new Set();
 function modules(dir) {
   if (!existsSync(dir)) return;
