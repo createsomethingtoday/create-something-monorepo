@@ -1,3 +1,4 @@
+import {referenceHeader, referenceCards, createWorkspaceHistory} from './reference-layout.mjs';
 import {createContactRead} from './contact-read.mjs';
 import { historyPresentation, copyableRecordField } from './record-polish.mjs';
 import { mountMusic } from './music.mjs';
@@ -17,6 +18,7 @@ const root = document.querySelector('#app');
 const bridge = tauriBridge();
 let chat;
 let routeVersion = 0;
+const workspaceHistory=createWorkspaceHistory();
 let operationVersion = 0;
 let currencyVersion = 0;
 let sourceProposal = null;
@@ -123,13 +125,14 @@ function keepEditing() {
   pendingLeave = null; render();
   root.querySelector?.(`#${editorReturnFocus || 'title'}`)?.focus?.();
 }
-async function openPage(page, resetScroll = false) {
-  if (!protectEditor(() => void run(() => openPage(page, resetScroll)))) return false;
+async function openPage(page, resetScroll = false, historyIndex = null) {
+  if (!protectEditor(() => void run(() => openPage(page, resetScroll, historyIndex)))) return false;
   if (creatorMount?.canLeave && !await creatorMount.canLeave()) return false;
   if (creatorMount) { if(typeof creatorMount==='function') creatorMount(); else creatorMount.dispose?.(); }
   creatorMount=null; creatorNode=null; creatorRoute=null;
   if (page !== 'settings') state.justCreated = false;
   clearTimeout(contactSearchTimer); contactSearchVersion++; state.contactSearching = false; state.contactSearchError = false;
+  workspaceHistory.visit(page, historyIndex);
   state.page = page; state.selected = null; state.editing = false; state.editorDraft = null; state.editorOrigin = null; state.sourceExpanded = false; state.summary = null; state.summaryUnavailable = false;
   const route = nextRoute();
   if (page !== 'settings') state.pendingRestoreId = null;
@@ -235,14 +238,9 @@ function newRecord(entity) {
   leaveRoute(); state.editorOrigin = editorOrigin(null, `[data-new="${entity}"]`, state.page === entity); state.justCreated = false; state.page = entity; state.selected = null; state.editorDraft = null; state.editing = true; render(); globalThis.scrollTo?.(0, 0); root.querySelector?.('#title')?.focus?.();
 }
 
-function sidebar() {
-  const nav = (ids, name) => `<nav class="nav" aria-label="${name}">${ids.map((id) => sections.find((item) => item.id === id)).map((item) => `<button type="button" data-page="${item.id}" ${state.page === item.id ? 'aria-current="page"' : ''}>${icon(entityIcon(item.id))}<span>${safe(item.label)}</span></button>`).join('')}</nav>`;
-  const library = ['locations', 'notes', 'documents', 'interactions', 'services', 'tags'];
-  return `<aside class="sidebar"><div class="brand"><span class="brand-mark">g.</span><div><strong>GiGi</strong><small>Private workspace</small></div></div><div class="workspace-chip" title="${safe(state.workspace?.name)}">${safe(state.workspace?.name || 'My workspace')}</div><div class="sidebar-navigation"><div><p class="nav-label">Daily work</p>${nav(['overview', 'gigs', 'schedule', 'tasks', 'finances'], 'Daily work')}</div><div><p class="nav-label">Creative work</p>${nav(['music', 'social'], 'Creative work')}</div><div><p class="nav-label">People & organizations</p>${nav(['contacts', 'companies'], 'People & organizations')}</div><details data-view-key="library" class="nav-library" data-library-nav="1" ${state.libraryOpen || library.includes(state.page) ? 'open' : ''}><summary>Library</summary>${nav(library, 'Library')}</details></div><div class="workspace-navigation"><p class="nav-label">Workspace</p>${nav(['profile', 'history', 'settings'], 'Workspace')}</div><div class="sidebar-foot"><span class="status-dot"></span>Stored on this desktop<br>Source and agent status in Settings</div></aside>`;
-}
 
 function shell(body) {
-  return `<div class="shell">${sidebar()}<main class="main"><div class="topbar"><span class="crumb">GiGi / ${safe(label(state.page))}</span><div class="topbar-actions"><button type="button" class="btn text" data-chat-open="1">Ask GiGi</button><span class="right">PRIVATE · LOCAL</span></div></div><div class="content"><div class="content-primary"><button type="button" class="btn mobile-chat-entry" data-chat-open="1">Ask GiGi</button>${body}</div></div></main>${chatView(chat || { visible: false })}</div>${pendingLeave ? '<div class="record-leave-backdrop"><section class="record-leave-dialog panel" role="alertdialog" aria-modal="true" aria-labelledby="leave-title" aria-describedby="leave-description"><h2 id="leave-title">Keep your changes?</h2><p id="leave-description">This record has unsaved changes. Keep editing to save them, or discard them to leave.</p><div class="inline-actions"><button class="btn primary" data-keep-editing="1">Keep editing</button><button class="btn" data-discard-changes="1">Discard changes</button></div></section></div>' : ''}${state.toast ? `<div class="toast ${state.toast.error ? 'error' : ''}" role="status">${safe(state.toast.message)}</div>` : ''}`;
+  return `<div class="shell">${referenceHeader({page:state.page,sections,workspace:state.workspace?.name,history:workspaceHistory})}<main class="main" aria-label="GiGi / ${safe(label(state.page))}"><div class="content"><div class="content-primary"><button type="button" class="btn mobile-chat-entry" data-chat-open="1">Ask GiGi</button>${body}</div></div></main>${chatView(chat || { visible: false })}</div>${pendingLeave ? '<div class="record-leave-backdrop"><section class="record-leave-dialog panel" role="alertdialog" aria-modal="true" aria-labelledby="leave-title" aria-describedby="leave-description"><h2 id="leave-title">Keep your changes?</h2><p id="leave-description">This record has unsaved changes. Keep editing to save them, or discard them to leave.</p><div class="inline-actions"><button class="btn primary" data-keep-editing="1">Keep editing</button><button class="btn" data-discard-changes="1">Discard changes</button></div></section></div>' : ''}${state.toast ? `<div class="toast ${state.toast.error ? 'error' : ''}" role="status">${safe(state.toast.message)}</div>` : ''}`;
 }
 
 function heading(eyebrow, title, description, action = '') {
@@ -257,8 +255,8 @@ function rows(name, records, max = Infinity) {
 function overview() {
   const data = state.overview || {};
   const counts = data.counts || {};
-  const group = (entity, title, description) => { const value = data[entity] || { items: [], count: 0 }; return `<section class="panel"><div class="panel-head"><h2>${icon(entityIcon(entity))}<span>${title}</span></h2><button class="btn text" data-page="${entity}">View all ${safe(label(entity).toLowerCase())} ${icon('arrow-up-right')}</button></div><p class="muted">${description}</p>${value.items.length ? rows(entity, value.items) : `<p class="muted overview-empty">${entity === 'gigs' ? 'No upcoming dated gigs or shifts. Add a date to a gig to include it here.' : entity === 'tasks' ? 'No open tasks. Add a task when there is something to follow up.' : 'No expected, invoiced or overdue payments. Record income or an expense when you need to track it.'}</p>`}<small class="muted">Showing ${value.items.length} of ${value.count} matching records${entity === 'gigs' && data.undatedGigsCount ? ` · ${data.undatedGigsCount} without a usable date` : ''}</small></section>`; };
-  return heading('Your workspace', 'Your work at a glance.', 'See what is coming up, what needs attention and which payments are still open.', `<button class="btn primary" data-new="gigs">${icon('plus')}New gig</button>`) + `<div class="cards overview-metrics"><div class="card"><div class="label">${icon('music')} Gigs & shifts</div><div class="value">${counts.gigs || 0}</div></div><div class="card"><div class="label">${icon('list-checks')} Tasks</div><div class="value">${counts.tasks || 0}</div></div><div class="card"><div class="label">${icon('users')} People</div><div class="value">${counts.contacts || 0}</div></div></div>${counts.gigs || counts.tasks || counts.finances ? '' : `<div class="callout section-gap"><strong>Start with the work you know.</strong><p>Add a gig or shift, then link its people, place and tasks. Sources and an agent are optional.</p><button class="btn" data-new="gigs">${icon('plus')}Add your first gig or shift</button><button class="btn" data-page="music">Add music</button><button class="btn" data-page="social">Draft a post</button></div>`}<div class="split section-gap">${group('gigs', 'Upcoming work', 'Today and future dates, ordered by date. Completed and cancelled work is excluded.')}${group('tasks', 'Open tasks', 'Unfinished tasks, with the earliest due dates first.')}</div>${group('finances', 'Unpaid income & expenses', 'Expected, invoiced and overdue records. Income and expenses are shown separately on each record; this is not a net balance.')}<details data-view-key="overview-guide" class="panel overview-guide"><summary>Connections and getting started</summary><p class="muted">You can work directly in GiGi. Connect Gmail, Calendar or your subscribed agent when useful.</p><button class="btn" data-page="settings">Open setup guide ${icon('arrow-up-right')}</button></details>`;
+  const group = (entity, title, description) => { const value = data[entity] || { items: [], count: 0 }; return `<section class="panel"><div class="panel-head"><h2>${icon(entityIcon(entity))}<span>${title}</span></h2><button class="btn text" data-page="${entity}">View all ${safe(label(entity).toLowerCase())} ${icon('arrow-up-right')}</button></div><p class="muted">${description}</p>${value.items.length ? referenceCards(entity, value.items, {status,date:value=>displayField('Date',value),money:value=>formatMoney(value,state.currency)}) : `<p class="muted overview-empty">${entity === 'gigs' ? 'No upcoming dated gigs or shifts. Add a date to a gig to include it here.' : entity === 'tasks' ? 'No open tasks. Add a task when there is something to follow up.' : 'No expected, invoiced or overdue payments. Record income or an expense when you need to track it.'}</p>`}<small class="muted">Showing ${value.items.length} of ${value.count} matching records${entity === 'gigs' && data.undatedGigsCount ? ` · ${data.undatedGigsCount} without a usable date` : ''}</small></section>`; };
+  return heading('Local workspace', 'Today', 'See what is coming up, what needs attention and which payments are still open.', `<button class="btn primary" data-new="gigs">${icon('plus')}New gig</button>`) + `<details class="overview-counts"><summary>Workspace totals</summary><div class="cards overview-metrics"><div class="card"><div class="label">${icon('music')} Gigs & shifts</div><div class="value">${counts.gigs || 0}</div></div><div class="card"><div class="label">${icon('list-checks')} Tasks</div><div class="value">${counts.tasks || 0}</div></div><div class="card"><div class="label">${icon('users')} People</div><div class="value">${counts.contacts || 0}</div></div></div></details>${counts.gigs || counts.tasks || counts.finances ? '' : `<div class="callout section-gap"><strong>Start with the work you know.</strong><p>Add a gig or shift, then link its people, place and tasks. Sources and an agent are optional.</p><button class="btn" data-new="gigs">${icon('plus')}Add your first gig or shift</button><button class="btn" data-page="music">Add music</button><button class="btn" data-page="social">Draft a post</button></div>`}<div class="today-sections section-gap">${group('gigs', 'Upcoming work', 'Today and future dates, ordered by date. Completed and cancelled work is excluded.')}${group('tasks', 'Open tasks', 'Unfinished tasks, with the earliest due dates first.')}</div>${group('finances', 'Unpaid income & expenses', 'Expected, invoiced and overdue records. Income and expenses are shown separately on each record; this is not a net balance.')}<details data-view-key="overview-guide" class="panel overview-guide"><summary>Connections and getting started</summary><p class="muted">You can work directly in GiGi. Connect Gmail, Calendar or your subscribed agent when useful.</p><button class="btn" data-page="settings">Open setup guide ${icon('arrow-up-right')}</button></details>`;
 }
 
 function scheduleView() {
@@ -565,6 +563,11 @@ function submitLink(data) {
   });
 }
 
+async function findPeople() {
+  if(!protectEditor(()=>void run(findPeople))) return;
+  if(await openPage('contacts',true)) root.querySelector?.('#contact-search')?.focus?.();
+}
+
 root.addEventListener('click', (event) => {
   const button = event.target.closest('button'); if (!button) return;
   if (button.dataset.clearContacts) { searchContacts('', true); root.querySelector?.('#contact-search')?.focus?.(); }
@@ -661,6 +664,8 @@ root.addEventListener('click', (event) => {
   else if (button.dataset.chatStop) void chat?.cancel();
   else if (button.dataset.chatApproval) void chat?.decide(button.dataset.chatApproval, button.dataset.chatDecision);
   else if (button.dataset.chatLinkEntity) void run(() => navigateRecord(button.dataset.chatLinkEntity, button.dataset.chatLinkId));
+  else if (button.dataset.findPeople) void run(findPeople);
+  else if (button.dataset.workspaceHistory) { const target=workspaceHistory.target(Number(button.dataset.workspaceHistory)); if(target) void run(()=>openPage(target.page,true,target.index)); }
   else if (button.dataset.page) void run(() => openPage(button.dataset.page, true));
   else if (button.dataset.new) newRecord(button.dataset.new);
   else if (button.dataset.open) void run(() => navigateRecord(button.dataset.entity, button.dataset.open));
@@ -704,6 +709,9 @@ globalThis.document?.addEventListener?.('pointerdown', () => { chatRefreshFocus 
     if (event.key === 'Tab') { event.preventDefault?.(); const keep = root.querySelector?.('[data-keep-editing]'); const discard = root.querySelector?.('[data-discard-changes]'); (document.activeElement === keep ? discard : keep)?.focus?.(); }
     return;
   }
+  if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'f' && !chat?.visible) { event.preventDefault?.(); void run(findPeople); return; }
+  if (event.metaKey && ['[',']'].includes(event.key) && !chat?.visible) { const target=workspaceHistory.target(event.key==='['?-1:1); if(target){event.preventDefault?.();void run(()=>openPage(target.page,true,target.index));} return; }
+  if(event.key==='Escape' && !chat?.visible) { const more=root.querySelector?.('.reference-more[open]'); if(more){more.open=false;more.querySelector?.('summary')?.focus?.();event.preventDefault?.();} }
   if (event.key !== 'Escape' || !chat?.visible) return;
   event.preventDefault?.();
   chat.close();
