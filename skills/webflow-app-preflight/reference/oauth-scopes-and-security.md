@@ -63,7 +63,7 @@ Table regenerated from the public scopes reference (<https://developers.webflow.
 
 A `:write` scope you only read with, or an `ecommerce` scope on a non-commerce App, is exactly what a reviewer asks about. Drop it — **with one exception below.**
 
-**Keep the scopes you need to clean up.** If your App applies custom code, it must retain the scopes required to remove that code on uninstall: `custom_code:write`, plus `sites:write` or `pages:write` for scripts applied at the site or page level. Dropping them would strand code on the user's site.
+**Keep the scopes you need to remove code while installed.** Uninstall removes the Custom Code your App applied through the API, and your App can't call the API after uninstall. If your App removes scripts while it stays installed (for example, a feature toggle), keep `custom_code:write`, plus `sites:write` or `pages:write` for scripts applied at the site or page level.
 
 ## Token lifecycle — the part apps get wrong
 
@@ -82,7 +82,7 @@ The rules that get apps removed if broken:
 - **Loaders are not allowed** unless every remotely loaded resource is declared at submission **and** pinned. Hosted scripts require a `hostedLocation` plus an `integrityHash` (SRI, e.g. sha256) computed over the exact contents. A remote endpoint referenced by an approved script may not start serving different functional code after approval.
 - **No self-certified live updates.** Routing new functional code to sites through any path that bypasses review — swapping a hosted script's contents, a loader endpoint, or a dynamically imported module — results in Marketplace removal and may result in a ban.
 - **Changes take effect on publish.** Applying/updating/removing a script only goes live when the site is published, and publish pushes _all_ staged changes. Prompt the user to publish when ready; don't auto-publish on their behalf.
-- **Remove on uninstall.** Remove applied scripts at **both site and page level** when the App is uninstalled, where technically feasible. If automated removal isn't possible, give the user clear removal instructions.
+- **Know what uninstall removes.** Webflow removes API-applied scripts on uninstall (live after the next publish). If your App removes scripts while it stays installed, remove them at **both site and page level**. Give clear removal instructions for anything the platform doesn't remove, such as manually pasted code.
 
 Two different surfaces, two different limits (verified 2026-08-03):
 

@@ -28,8 +28,8 @@ evals:
       - type: 'contains'
         value: 'immutable'
   - id: 3
-    input: "Our sync loop calls the Data API every 60 seconds and logs '401, retrying in 60s' when the token fails. onUninstall only console.logs because Webflow removes our scripts automatically."
-    expected_output: 'Identifies persistent 401 as revocation requiring an immediate stop (not backoff), and corrects the false claim that Webflow auto-removes injected scripts.'
+    input: "Our sync loop calls the Data API every 60 seconds and logs '401, retrying in 60s' when the token fails. On the 401 we then call DELETE custom_code to clean up our scripts."
+    expected_output: 'Identifies persistent 401 as revocation requiring an immediate stop (not backoff), and explains that the cleanup call cannot work after revocation; uninstall already removes API-applied Custom Code.'
     assertions:
       - type: 'contains'
         value: 'revocation'

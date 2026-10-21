@@ -62,8 +62,9 @@ Reviewers verify these by calling your endpoints and asking for evidence, not by
 - [ ] Code on customer sites is delivered via the Custom Code API, not manual paste.
 - [ ] Injected scripts are version-pinned (hosted scripts registered through the Custom Code API carry an SRI `integrityHash`); every remotely loaded resource is declared at submission; no undisclosed runtime loaders. `[control]` SRI `integrity` + `crossorigin="anonymous"` on `<script>` tags in published-site code is a recommended practice in the Marketplace Guidelines, not a review gate; Preflight's production-runtime validation still reports a missing or mismatched pin as a blocker; for Partner Program apps the review team routes that finding to the exceptions queue rather than rejecting.
 - [ ] Any change to injected code ships as a new script version + App update — never edited in place.
-- [ ] App retains the scopes needed to clean up (`custom_code:write` + `sites:write`/`pages:write`) and removes scripts at both site and page level on uninstall.
-- [ ] If programmatic removal isn't possible, the App gives clear in-app instructions telling the user exactly what to remove and where — injected code is never simply left behind.
+- [ ] App does not depend on calling the API after uninstall (uninstall removes API-applied Custom Code; the token is revoked). If the App removes scripts while it stays installed, it retains `custom_code:write` + `sites:write`/`pages:write` and removes them at site and page level.
+- [ ] If the App links a Webflow site or Workspace to an account in its service, it has an in-App Disconnect that ends that account link **without** calling `/oauth/revoke_authorization`, and the user can connect again without redoing Webflow OAuth.
+- [ ] Webflow-side data the platform doesn't remove (CMS items, assets, manually pasted code) has clear removal instructions.
 - [ ] User is prompted to publish after any API-managed apply, update, or removal, since the change only reaches the published site on publish.
 
 ## Privacy & data handling

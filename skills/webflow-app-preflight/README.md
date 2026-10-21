@@ -43,7 +43,7 @@ In our internal evaluation (July 2026), the skill was run against a fixture app 
 The unaided run got every issue inferable from general security instinct (hardcoded secret, credential harvesting, `eval`, the review-bypass loader) and then degraded on Webflow-specific governance — producing three confidently wrong recommendations now captured in the skill's **Anti-advice** section:
 
 - "Add exponential backoff and retry on the 401" (it's revocation — stop)
-- "Drop the extra scopes on uninstall" (you must retain cleanup scopes)
+- "Clean up after the 401 on uninstall" (the token is already revoked; uninstall removes API-applied code)
 - Accepting the claim that Webflow auto-removes injected scripts (it doesn't)
 
 The eval also caught two defects in the skill itself: a `redirect_uri` description that contradicted its own example, and a missing privacy/data-handling section. Re-run the evals in `evals/` before changing guidance.

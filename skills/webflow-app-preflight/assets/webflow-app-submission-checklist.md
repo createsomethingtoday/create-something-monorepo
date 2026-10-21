@@ -84,8 +84,9 @@ Reviewers verify these by calling your endpoints and asking for evidence, not by
 - [ ] Code on customer sites is delivered via the Custom Code API, not manual copy-paste.
 - [ ] Injected scripts are version-pinned — hosted scripts registered through the Custom Code API carry an SRI `integrityHash`. Every remotely loaded resource is declared at submission; no undisclosed runtime loaders. `[control]` SRI `integrity` + `crossorigin="anonymous"` on `<script>` tags in published-site code is a recommended practice in the Marketplace Guidelines, not a review gate; Preflight's production-runtime validation still reports a missing or mismatched pin as a blocker; for Partner Program apps the review team routes that finding to the exceptions queue rather than rejecting.
 - [ ] Any change to injected code ships as a new script version plus an App update — never edited in place.
-- [ ] App retains the scopes needed to clean up (`custom_code:write` plus `sites:write`/`pages:write`) and removes scripts at both site and page level on uninstall.
-- [ ] If programmatic removal isn't possible, the App gives clear in-app instructions telling the user exactly what to remove and where — injected code is never simply left behind.
+- [ ] App does not depend on calling the API after uninstall (uninstall removes API-applied Custom Code; the token is revoked). If the App removes scripts while it stays installed, it retains `custom_code:write` + `sites:write`/`pages:write` and removes them at site and page level.
+- [ ] If the App links a Webflow site or Workspace to an account in its service, it has an in-App Disconnect that ends that account link **without** calling `/oauth/revoke_authorization`, and the user can connect again without redoing Webflow OAuth.
+- [ ] Webflow-side data the platform doesn't remove (CMS items, assets, manually pasted code) has clear removal instructions.
 - [ ] User is prompted to publish after any API-managed apply, update, or removal, since the change only reaches the published site on publish.
 
 ### Privacy and data handling
@@ -141,7 +142,7 @@ These are the recurring reasons a well-intentioned App gets bounced or pulled in
 
 **2 · DOM scraping and credential-field access.** Reading data out of the published DOM instead of an API, or reaching into password and login inputs. _Use official APIs. Never read credential fields. If an API gap is forcing you to scrape, that's a signal to reconsider the approach._
 
-**3 · Injecting code you don't pin, version, or clean up.** Manual paste snippets, runtime loaders that fetch remote code, in-place edits to an approved script, or scripts left behind after uninstall. Swapping what a hosted script serves after approval can get an App removed and possibly banned. _Deliver through the Custom Code API. Script versions are immutable — register a new version and submit an App update. Loaders are allowed only when every remote resource is declared and SRI-pinned at submission. Remove your scripts at site and page level on uninstall, and prompt the user to publish._
+**3 · Injecting code you don't pin, version, or clean up.** Manual paste snippets, runtime loaders that fetch remote code, in-place edits to an approved script, or scripts left behind after uninstall. Swapping what a hosted script serves after approval can get an App removed and possibly banned. _Deliver through the Custom Code API. Script versions are immutable — register a new version and submit an App update. Loaders are allowed only when every remote resource is declared and SRI-pinned at submission. Uninstall removes API-applied scripts; if your App removes scripts while it stays installed, do it at site and page level and prompt the user to publish._
 
 **4 · Calling the API after the user said no.** There is no uninstall webhook. _Treat persistent 401s on a previously valid token as revocation: stop all calls for that site, tear down scheduled jobs, forget cached tokens. Do not retry past it._
 
@@ -166,8 +167,8 @@ These are the recurring reasons a well-intentioned App gets bounced or pulled in
 Worth stating plainly, because each one inverts a real requirement:
 
 - ❌ "Add exponential backoff and retry on the 401." A persistent 401 on a previously valid token is **revocation**. Stop calling. (429s and transient 5xx are the opposite case — back off and retry those.)
-- ❌ "Drop the extra scopes on uninstall." You must **retain** `custom_code:write` plus `sites:write`/`pages:write`, or cleanup is impossible.
-- ❌ "Webflow removes injected scripts automatically on uninstall." It does not. Removal is your responsibility, at site _and_ page level.
+- ❌ "Make Disconnect revoke the Webflow token." Disconnect ends your App's own account link. Revoking the Webflow authorization is uninstall's job; calling `/oauth/revoke_authorization` from Disconnect leaves the App installed with no Webflow access.
+- ❌ "Detect the 401 after uninstall, then delete your scripts." The token is already revoked, so that call fails. Uninstall removes API-applied Custom Code on its own; it reaches the live site on the next publish.
 
 Two more on the backend side:
 
