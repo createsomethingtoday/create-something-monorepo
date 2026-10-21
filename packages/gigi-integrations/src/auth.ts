@@ -1,7 +1,9 @@
 import { createHash, randomBytes } from 'node:crypto';
-import { execFile } from 'node:child_process';
+import { execFile, spawn } from 'node:child_process';
+import { AsyncLocalStorage } from 'node:async_hooks';
+import { constants } from 'node:fs';
 import { createServer, type Server } from 'node:http';
-import { mkdir, lstat, rename, writeFile, chmod, readFile, open, unlink } from 'node:fs/promises';
+import { mkdir, lstat, rename, writeFile, chmod, readFile, open, unlink, link } from 'node:fs/promises';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
 import { Effect } from 'effect';
@@ -11,6 +13,8 @@ const ISSUER='https://id.createsomething.space';
 const RESOURCE='https://gigi-connector.createsomething.workers.dev';
 const SCOPE='openid profile email mcp offline_access';
 const MAX_RESPONSE=16_384;
+const SESSION_LOCK_MARKER='gigi-session-advisory-v1\n';
+const sessionLease=new AsyncLocalStorage<{alive:boolean}>();
 
 export interface LoginOptions {
   dataDir:string;
@@ -107,6 +111,7 @@ async function callbackServer(signal?:AbortSignal):Promise<{
 }
 
 async function privateSession(dataDir:string,value:Record<string,unknown>):Promise<void>{
+  if(!sessionLease.getStore()?.alive)fail('session_lock_unavailable');
   await mkdir(dataDir,{recursive:true,mode:0o700});
   const metadata=await lstat(dataDir);
   if(!metadata.isDirectory()||metadata.isSymbolicLink())fail('unsafe_data_directory');
@@ -115,6 +120,7 @@ async function privateSession(dataDir:string,value:Record<string,unknown>):Promi
   const temporary=join(dataDir,`.broker-session-${randomBytes(12).toString('hex')}.tmp`);
   try{
     await writeFile(temporary,JSON.stringify(value)+'\n',{mode:0o600,flag:'wx'});
+    if(!sessionLease.getStore()?.alive)fail('session_lock_unavailable');
     await rename(temporary,target);
     await chmod(target,0o600);
   }finally{await unlink(temporary).catch(()=>undefined);}
@@ -142,10 +148,7 @@ export async function getSessionAccessToken(options:SessionAccessOptions):Promis
   if(typeof session.expiresAt!=='number'||!Number.isFinite(session.expiresAt))fail('unsafe_session_file');
   if(session.expiresAt>now+60)return exactString(session.accessToken);
   const refreshToken=exactString(session.refreshToken);
-  const lockPath=join(options.dataDir,'.broker-refresh.lock');
-  let lock;
-  try{lock=await open(lockPath,'wx',0o600);}catch{fail('refresh_in_progress');}
-  try{
+  return withSessionWriteLock(options.dataDir,async()=>{
     const latest=await readSession(options.dataDir);
     if(latest.status!=='active')fail('reauthentication_required');
     if(typeof latest.expiresAt==='number'&&latest.expiresAt>Math.floor(Date.now()/1000)+60)return exactString(latest.accessToken);
@@ -172,25 +175,70 @@ export async function getSessionAccessToken(options:SessionAccessOptions):Promis
     }
     await privateSession(options.dataDir,{...latest,accessToken,refreshToken:newRefresh,expiresAt:Math.floor(Date.now()/1000)+expiresIn,status:'active'});
     return accessToken;
-  }finally{
-    await lock?.close();
-    await unlink(lockPath).catch(()=>undefined);
-  }
+  },'refresh_in_progress');
 }
 
-async function withSessionWriteLock<T>(dataDir:string, action:()=>Promise<T>):Promise<T>{
+/** macOS ships lockf. Keep one protocol-marked inode permanently: unlinking a
+ * lock file would let concurrent callers lock different replacement inodes.
+ * A pipe-held helper releases its kernel lock even if the auth process crashes.
+ */
+async function withSessionWriteLock<T>(dataDir:string, action:()=>Promise<T>, busyReason='session_busy'):Promise<T>{
   if(!dataDir||!dataDir.startsWith('/'))fail('invalid_data_directory');
   await mkdir(dataDir,{recursive:true,mode:0o700});
-  const metadata=await lstat(dataDir);
-  if(!metadata.isDirectory()||metadata.isSymbolicLink())fail('unsafe_data_directory');
+  const directory=await lstat(dataDir);
+  if(!directory.isDirectory()||directory.isSymbolicLink())fail('unsafe_data_directory');
   await chmod(dataDir,0o700);
   const lockPath=join(dataDir,'.broker-refresh.lock');
-  let lock;
-  try{lock=await open(lockPath,'wx',0o600);}catch{fail('session_busy');}
-  try{return await action();}finally{
-    await lock.close();
-    await unlink(lockPath).catch(()=>undefined);
-  }
+  // Publish the complete marker atomically. A crash during preparation leaves
+  // only an inert temporary file, never an unidentifiable newly created lock.
+  const prepared=join(dataDir,`.broker-lock-${randomBytes(12).toString('hex')}.tmp`);
+  let created;
+  try{
+    created=await open(prepared,'wx',0o600);await created.writeFile(SESSION_LOCK_MARKER);await created.sync();await created.close();created=undefined;
+    try{await link(prepared,lockPath);}catch(error){if((error as NodeJS.ErrnoException).code!=='EEXIST')fail('session_lock_unavailable');}
+  }catch(error){if(error instanceof LoginError)throw error;fail('session_lock_unavailable');}
+  finally{await created?.close();await unlink(prepared).catch(()=>undefined);}
+  let handle;
+  try{handle=await open(lockPath,constants.O_RDONLY|constants.O_NOFOLLOW);}
+  catch{fail('session_lock_unverified');}
+  const metadata=await handle.stat();
+  let marker='';
+  try{
+    if(!metadata.isFile()||(metadata.mode&0o077)!==0||metadata.size!==Buffer.byteLength(SESSION_LOCK_MARKER)||
+      (typeof process.getuid==='function'&&metadata.uid!==process.getuid()))fail('session_lock_unverified');
+    marker=await handle.readFile('utf8');
+  }finally{await handle.close();}
+  if(marker!==SESSION_LOCK_MARKER)fail('session_lock_unverified');
+  // Fixed trusted command; no input, provider text or user paths become shell code.
+  // Separate stdio pipes are close-on-exec and never inherited by auth/browser children.
+  const helper=spawn('/usr/bin/lockf',['-k','-t','0',lockPath,'/bin/sh','-c',"printf 'gigi-session-lock\\n'; exec /bin/cat >/dev/null"],{stdio:['pipe','pipe','ignore']});
+  const lease={alive:false};
+  let exited=false;
+  const ended=new Promise<void>(resolve=>{
+    helper.once('error',()=>{exited=true;lease.alive=false;resolve();});
+    helper.once('exit',()=>{exited=true;lease.alive=false;resolve();});
+  });
+  const release=async()=>{
+    helper.stdin.end();
+    let timer:ReturnType<typeof setTimeout>|undefined;
+    try{await Promise.race([ended,new Promise<void>(resolve=>{timer=setTimeout(()=>{if(!exited)helper.kill('SIGKILL');resolve();},1000);})]);if(!exited)await ended;}
+    finally{if(timer)clearTimeout(timer);}
+  };
+  helper.stdin.on('error',()=>undefined);
+  try{
+    await new Promise<void>((resolve,reject)=>{
+      let output='';
+      const timer=setTimeout(()=>reject(new LoginError('session_lock_unavailable')),3000);
+      const finish=(error?:Error)=>{clearTimeout(timer);helper.stdout.off('data',ack);helper.off('error',spawnError);helper.off('exit',earlyExit);error?reject(error):resolve();};
+      const ack=(chunk:Buffer)=>{output+=chunk.toString();if(output==='gigi-session-lock\n'){lease.alive=true;finish();}else if(output.length>64)finish(new LoginError('session_lock_unavailable'));};
+      const spawnError=()=>finish(new LoginError('session_lock_unavailable'));
+      const earlyExit=(code:number|null)=>finish(new LoginError(code===75?busyReason:'session_lock_unavailable'));
+      helper.stdout.on('data',ack);helper.once('error',spawnError);helper.once('exit',earlyExit);
+    });
+    const current=await lstat(lockPath);
+    if(!lease.alive||current.dev!==metadata.dev||current.ino!==metadata.ino)fail('session_lock_unverified');
+    return await sessionLease.run(lease,action);
+  }finally{await release();}
 }
 
 /** Local sign-out only. Provider consent and the browser's SSO session remain. */

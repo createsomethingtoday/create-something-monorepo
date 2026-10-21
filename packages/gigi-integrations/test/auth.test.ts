@@ -1,4 +1,6 @@
 import assert from 'node:assert/strict';
+import { spawn } from 'node:child_process';
+import { once } from 'node:events';
 import { mkdtemp, readFile, stat, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -146,5 +148,81 @@ test('sign-out refuses a pending refresh, then removes the committed session wit
     assert.deepEqual(await logout({dataDir:root}),{signedOut:true,localOnly:true});
     await assert.rejects(getSessionAccessToken({dataDir:root}),/reauthentication_required/);
     await assert.rejects(stat(path),{code:'ENOENT'});
+  }finally{await rm(root,{recursive:true,force:true});}
+});
+
+
+test('a killed interactive sign-in owner releases its source lock for refresh, sign-out and a new sign-in', async()=>{
+  const root=await mkdtemp(join(tmpdir(),'gigi-auth-crash-'));
+  const path=join(root,'broker-session.json');
+  await writeFile(path,JSON.stringify({baseUrl:RESOURCE,accessToken:'expired',refreshToken:'synthetic-refresh',clientId:'oauth_test',sub:'user-1',expiresAt:1,status:'active'}),{mode:0o600});
+  const script=`import { login } from ${JSON.stringify(new URL('../src/auth.ts',import.meta.url).href)}; await login({dataDir:${JSON.stringify(root)},fetch:async()=>{process.stdout.write('lock-held\\n');return new Promise(()=>{});}});`;
+  const child=spawn(process.execPath,['--import','tsx','--input-type=module','-e',script],{stdio:['ignore','pipe','pipe']});
+  try{
+    await new Promise<void>((resolve,reject)=>{
+      const timer=setTimeout(()=>reject(Error('Synthetic login did not acquire its lock')),5000);
+      child.stdout.on('data',chunk=>{if(String(chunk).includes('lock-held')){clearTimeout(timer);resolve();}});
+      child.once('error',reject);child.once('exit',()=>{clearTimeout(timer);reject(Error('Synthetic login exited before lock acquisition'));});
+    });
+    child.kill('SIGKILL');await once(child,'exit');
+    const token=await getSessionAccessToken({dataDir:root,fetch:async()=>Response.json({access_token:'synthetic-after-crash',refresh_token:'synthetic-rotated',token_type:'Bearer',resource:RESOURCE,expires_in:3600})});
+    assert.equal(token,'synthetic-after-crash');
+    assert.deepEqual(await logout({dataDir:root}),{signedOut:true,localOnly:true});
+    let reachedIdentity=false;
+    await assert.rejects(login({dataDir:root,fetch:async()=>{reachedIdentity=true;return Response.json({});}}),/identity_contract_mismatch/);
+    assert.equal(reachedIdentity,true);
+    await assert.rejects(stat(path),{code:'ENOENT'});
+  }finally{child.kill('SIGKILL');await rm(root,{recursive:true,force:true});}
+});
+
+test('legacy unknown session locks are retained with fixed recovery guidance', async()=>{
+  const root=await mkdtemp(join(tmpdir(),'gigi-auth-legacy-lock-'));
+  const lock=join(root,'.broker-refresh.lock');
+  try{
+    for(const marker of ['', 'unknown-owner']){
+      await writeFile(lock,marker,{mode:0o600});
+      let requested=false;
+      await assert.rejects(login({dataDir:root,fetch:async()=>{requested=true;return Response.json({});}}),/session_lock_unverified/);
+      await assert.rejects(logout({dataDir:root}),/session_lock_unverified/);
+      assert.equal(requested,false);assert.equal(await readFile(lock,'utf8'),marker);
+    }
+  }finally{await rm(root,{recursive:true,force:true});}
+});
+
+test('live concurrent source writers have exactly one owner across processes', async()=>{
+  const root=await mkdtemp(join(tmpdir(),'gigi-auth-concurrent-'));
+  const script=String.raw`import { login } from ${JSON.stringify(new URL('../src/auth.ts',import.meta.url).href)}; process.stdout.write('ready\n'); await new Promise(resolve=>process.stdin.once('data',resolve)); try {await login({dataDir:${JSON.stringify(root)},fetch:async()=>{process.stdout.write('owned\n');return new Promise(()=>{});}});}catch(error){process.stdout.write(error.reason+'\n');}`;
+  const children=[0,1].map(()=>spawn(process.execPath,['--import','tsx','--input-type=module','-e',script],{stdio:['pipe','pipe','pipe']}));
+  const outputs=['',''];
+  const waitFor=(index:number,pattern:RegExp)=>new Promise<void>((resolve,reject)=>{
+    const timer=setTimeout(()=>reject(Error('Concurrent fixture timeout: '+outputs[index])),5000);
+    const check=()=>{if(pattern.test(outputs[index]!)){clearTimeout(timer);resolve();}};
+    children[index]!.stdout.on('data',chunk=>{outputs[index]+=String(chunk);check();});
+    check();
+  });
+  try{
+    await Promise.all(children.map((_,i)=>waitFor(i,/ready/)));
+    children.forEach(child=>child.stdin.write('go\n'));
+    await Promise.all(children.map((_,i)=>waitFor(i,/owned|session_busy/)));
+    assert.equal(outputs.filter(output=>output.includes('owned')).length,1);
+    assert.equal(outputs.filter(output=>output.includes('session_busy')).length,1);
+  }finally{
+    await Promise.all(children.map(async child=>{if(child.exitCode===null&&child.signalCode===null){const exited=once(child,'exit');child.kill('SIGKILL');await exited;}}));
+    assert.deepEqual(await logout({dataDir:root}),{signedOut:true,localOnly:true});
+    await rm(root,{recursive:true,force:true});
+  }
+});
+
+test('releasing an older lock never unlinks a replacement inode', async()=>{
+  const root=await mkdtemp(join(tmpdir(),'gigi-auth-replaced-lock-'));
+  const path=join(root,'.broker-refresh.lock');
+  try{
+    await assert.rejects(login({dataDir:root,fetch:async()=>{
+      const {rename}=await import('node:fs/promises');
+      await rename(path,path+'.old');
+      await writeFile(path,'replacement-owner',{mode:0o600});
+      return Response.json({});
+    }}),/identity_contract_mismatch/);
+    assert.equal(await readFile(path,'utf8'),'replacement-owner');
   }finally{await rm(root,{recursive:true,force:true});}
 });
