@@ -111,3 +111,32 @@ for (const code of ['browser_unavailable', 'loopback_unavailable', 'identity_con
 test('unknown source errors are not interpolated by the fixed recovery map', () => {
   for (const code of ['SECRET https://private.test', 'constructor', 'toString', '__proto__', undefined]) assert.equal(sourceErrorMessage(code), undefined);
 });
+
+test('source session contention explains the running operation without exposing its lock details', () => {
+  const copy = sourceErrorMessage('session_busy');
+  assert.equal(typeof copy, 'string');
+  assert.match(copy, /finish|complete/i);
+  assert.match(copy, /sign-in.*refresh|refresh.*sign-in/i);
+  assert.match(copy, /retry|try again/i);
+  assert.doesNotMatch(copy, /session_busy|lock|\/Users\/|\.json/);
+  const source = { state: 'unavailable', detail: 'session_busy' };
+  assert.equal(sourceView(source).description, copy);
+  assert.equal(sourceJourney({ gmail: source }).next, copy);
+  assert.equal(setupSummary({ workspace: { name: 'Synthetic' }, sources: { gmail: source } }).nextStep, copy);
+});
+
+test('an unverified source session requires operator review and never suggests a restart or new consent', () => {
+  const copy = sourceErrorMessage('session_lock_unverified');
+  assert.equal(typeof copy, 'string');
+  assert.match(copy, /GiGi operator/);
+  assert.match(copy, /local source session/);
+  assert.match(copy, /before.*retry|before.*again/i);
+  assert.doesNotMatch(copy, /session_lock_unverified|restart|delete|remove|\/Users\/|\.lock|\.json|Google consent/);
+  for (const state of ['unavailable', 'attention', 'connected']) {
+    const source = { state, reconnectable: true, detail: 'session_lock_unverified' };
+    assert.equal(sourceView(source).description, copy);
+    assert.equal(sourceJourney({ gmail: source }).next, copy);
+    assert.notEqual(sourceJourney({ gmail: source }).current, 5);
+    assert.equal(setupSummary({ workspace: { name: 'Synthetic' }, sources: { gmail: source } }).nextStep, copy);
+  }
+});

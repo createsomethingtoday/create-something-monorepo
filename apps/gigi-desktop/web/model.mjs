@@ -121,8 +121,10 @@ export function sourcePreview(source) {
   return names.filter(([, value]) => typeof value === 'string' && value.trim()).map(([label, value]) => ({ label, value: value.trim() }));
 }
 
+export const sourceSessionBlocked = source => ['session_busy', 'session_lock_unverified'].includes(source?.detail);
+
 export function sourceCanBegin(source) {
-  return source?.state === 'disconnected' || source?.state === 'attention' && source.reconnectable === true && !sourceNeedsOperatorReview(source);
+  return !sourceSessionBlocked(source) && (source?.state === 'disconnected' || source?.state === 'attention' && source.reconnectable === true && !sourceNeedsOperatorReview(source));
 }
 
 export function sourceNeedsOperatorReview(source) {

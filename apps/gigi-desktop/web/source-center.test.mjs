@@ -193,3 +193,35 @@ test('restored agent import stays visibly in progress and can be stopped from So
   assert.equal(calls.filter(c=>['connections.import','imports.commit','records.save'].includes(c.operation)).length,0);
  }finally{globalThis.document=prior.document;globalThis.__TAURI__=prior.tauri;}
 });
+
+test('an unresolved source session blocks cached connect, verify and import controls while status remains available', async () => {
+ const listeners=new Map(),calls=[];
+ const root={innerHTML:'',classList:{toggle(){}},addEventListener(n,h){listeners.set(n,h);},querySelector(){return null;}};
+ const prior={document:globalThis.document,tauri:globalThis.__TAURI__};
+ let detail='session_lock_unverified', sourceState='connected';
+ globalThis.document={querySelector:s=>s==='#app'?root:null};
+ globalThis.__TAURI__={core:{invoke:async(_,{operation,input})=>{
+  calls.push({operation,input});
+  if(operation==='workspace.get')return{id:'w1',name:'Synthetic'};
+  if(operation==='records.list')return{items:input.entity==='profile'?[{id:'profile'}]:[],count:0};
+  if(operation==='records.get')return{id:'profile',fields:{Currency:'USD'}};
+  if(operation==='sources.status')return{provider:input.provider,state:sourceState,detail,connectedAccountId:'cached-account',reconnectable:true,url:'https://connect.composio.dev/synthetic',expiresAt:'2030-01-01T00:00:00Z'};
+  return {};
+ }}};
+ const settle=()=>new Promise(r=>setImmediate(r));const click=dataset=>listeners.get('click')({target:{closest:()=>({dataset})}});
+ try{
+  await import(`./app.mjs?source-session-guard=${Date.now()}`);await settle();
+  for(const code of ['session_lock_unverified','session_busy'])for(const cached of ['connected','attention','pending']){
+   detail=code;sourceState=cached;click({page:'settings'});await settle();
+   assert.match(root.innerHTML,/data-source-refresh="gmail"/);
+   assert.doesNotMatch(root.innerHTML,/data-source-preview=|data-source-commit=|data-source-begin=|data-source-reconcile=|data-open-consent=|data-sign-in="1"/);
+   assert.doesNotMatch(root.innerHTML,/session_lock_unverified|session_busy/);
+   click({sourcePreview:'gmail'});await settle();
+   click({sourceBegin:'gmail'});await settle();
+   click({sourceReconcile:'gmail'});await settle();
+   click({openConsent:'gmail'});await settle();
+   click({signIn:'1'});await settle();
+  }
+  assert.equal(calls.filter(c=>['sources.preview','imports.commit','connections.begin','connections.reconcile','connections.openConsent','auth.login'].includes(c.operation)).length,0);
+ }finally{globalThis.document=prior.document;globalThis.__TAURI__=prior.tauri;}
+});
