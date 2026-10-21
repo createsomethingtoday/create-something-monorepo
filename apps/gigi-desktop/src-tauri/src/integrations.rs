@@ -33,7 +33,7 @@ pub fn dispatch(resource_dir:&Path,data_dir:&Path,operation:&str,input:Value)->R
 }
 
 fn dispatch_with_timeout(resource_dir:&Path,data_dir:&Path,operation:&str,input:Value,timeout:Duration)->Result<Value,String>{
-    if !matches!(operation,"auth.login"|"context.search"|"context.sync"|"context.import"|"connections.status"|"connections.begin"|"connections.reconcile"|"connections.import"|"instagram.preview"|"instagram.account"|"instagram.publish"|"instagram.receipt"){
+    if !matches!(operation,"auth.login"|"auth.logout"|"context.search"|"context.sync"|"context.import"|"connections.status"|"connections.begin"|"connections.reconcile"|"connections.import"|"instagram.preview"|"instagram.account"|"instagram.publish"|"instagram.receipt"){
         return Err("Unsupported integration operation".into());
     }
     let request=serde_json::to_vec(&serde_json::json!({"operation":operation,"input":input})).map_err(|_|"Invalid integration request")?;

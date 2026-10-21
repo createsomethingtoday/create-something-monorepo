@@ -5,6 +5,7 @@ pub mod social_mcp;
 pub mod social;
 pub mod domain;
 pub mod source_import;
+pub mod source_jobs;
 pub mod integrations;
 mod agent_setup;
 mod navigation;
@@ -32,6 +33,8 @@ async fn dispatch(app: tauri::AppHandle, operation: String, input: serde_json::V
         if operation=="connections.openConsent" {return navigation::open_consent(input);}
         if operation=="context.sync" {return integrations::sync_history(&resources,&data_dir);}
         if operation.starts_with("agent.chat.") {return chat::dispatch(&resources,&data_dir,&operation,input);}
+        if source_jobs::handles(&operation) {return source_jobs::dispatch(&resources,&data_dir,&operation,input);}
+        if operation=="auth.logout" {source_jobs::cancel_pending(&data_dir)?;return integrations::dispatch(&resources,&data_dir,&operation,input);}
         if operation=="connections.import" {
             let page=integrations::dispatch(&resources,&data_dir,&operation,input.clone())?;
             return source_import::persist_page(&data_dir,&input,page);

@@ -608,6 +608,7 @@ pub fn dispatch(root: &Path, op: &str, input: Value) -> Result<Value, String> {
                 if let Some(prior_id) = prior {
                     if prior_id != id && (input.get("id").is_none() || conversion.is_some()) {
                         let mut result = get(&tx, wid, entity, &prior_id)?;
+                        if source["kind"] == "import" { result["importDisposition"] = json!("existing"); }
                         if let Some((from, origin_id, _, _)) = &conversion {
                             result["sourceProposal"] = json!({"outcome":"existing","sourceEntity":from,"sourceId":origin_id});
                         }
@@ -657,6 +658,7 @@ pub fn dispatch(root: &Path, op: &str, input: Value) -> Result<Value, String> {
                 tx.execute("INSERT INTO relations VALUES(?1,?2,?3,?4,?5,?6)", params![wid,entity,id,role,from,origin_id]).map_err(|e|e.to_string())?;
             }
             let mut result = get(&tx, wid, entity, &id)?;
+            if source["kind"] == "import" && prior.is_none() { result["importDisposition"] = json!("created"); }
             if let Some((from, origin_id, _, _)) = &conversion {
                 result["sourceProposal"] = json!({"outcome":"created","sourceEntity":from,"sourceId":origin_id});
             }
