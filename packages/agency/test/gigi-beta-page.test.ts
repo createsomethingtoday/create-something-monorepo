@@ -14,12 +14,12 @@ test('standalone page retains the owning Agency Canon operator palette', () => {
 });
 
 test('download contract pins exact qualified installer, platform and checksum', () => {
-  assert.equal(gigiBeta.version, '0.2.4');
-  assert.equal(gigiBeta.filename, 'GiGi-0.2.4-arm64-private-beta.dmg');
-  assert.equal(gigiBeta.bytes, 96304067);
-  assert.equal(gigiBeta.sha256, '0cf8951649671e30960df72c2b76b0b6398e62836b23249702036d100f972b61');
-  assert.equal(gigiBeta.url, `https://media.createsomething.io/releases/gigi/0.2.4/${gigiBeta.sha256}/GiGi-0.2.4-arm64-private-beta.dmg`);
-  for (const text of ['macOS 13', 'Apple Silicon', 'Intel Macs are not supported', gigiBeta.url, gigiBeta.sha256, '96,304,067', '96.3 MB']) assert.ok(gigiBetaHtml.includes(text), text);
+  assert.equal(gigiBeta.version, '0.2.5');
+  assert.equal(gigiBeta.filename, 'GiGi-0.2.5-arm64-private-beta.dmg');
+  assert.equal(gigiBeta.bytes, 96333653);
+  assert.equal(gigiBeta.sha256, '565675d055ce4e7f2bc6173d483525f94b875b456cf60727d3f90ba67c3ffc25');
+  assert.equal(gigiBeta.url, `https://media.createsomething.io/releases/gigi/0.2.5/${gigiBeta.sha256}/GiGi-0.2.5-arm64-private-beta.dmg`);
+  for (const text of ['macOS 13', 'Apple Silicon', 'Intel Macs are not supported', gigiBeta.url, gigiBeta.sha256, '96,333,653', '96.3 MB']) assert.ok(gigiBetaHtml.includes(text), text);
 });
 
 test('beta stays unlisted and has no active content or tracking shell', () => {
@@ -85,6 +85,6 @@ test('search release explains token matching, bounded waits and synthetic accept
 });
 
 
-test('slate release describes presentation changes without overstating workflow acceptance', () => {
-  for (const text of ['What changed in 0.2.4', 'slate/grey surfaces', 'system typography', 'keyboard focus', 'retain their behavior', 'Visual checks used an isolated synthetic workspace', 'compact and expanded windows', 'Search checks from 0.2.3', 'do not establish Grant’s live outcome']) assert.ok(gigiBetaHtml.includes(text), text);
+test('Today layout release describes presentation changes without overstating workflow acceptance', () => {
+  for (const text of ['What changed in 0.2.5', 'compact top navigation', 'centered Today board', 'keyboard shortcut', 'retain their behavior', 'Visual checks used an isolated synthetic workspace', 'compact and expanded windows', 'Search checks from 0.2.3', 'do not establish Grant’s live outcome']) assert.ok(gigiBetaHtml.includes(text), text);
 });
