@@ -7,7 +7,14 @@ function view(args, currency = 'USD') {
     current: { state: 'approval', approvals: [{ id: 'a1', title: 'Approve gigi_records_save', detail: JSON.stringify(args) }] } });
 }
 const args = (extra = {}) => ({ entity: 'gigs', id: 'synthetic-gig', title: 'Existing gig', fields: {}, expectedRecord: { title: 'Existing gig', fields: { Status: 'Open', Fee: 9000, Date: '2026-10-03' }, source: { kind: 'manual' } }, ...extra });
-const comparison = (html) => html.split(/<details(?:\s|>)/)[0];
+function comparison(html) {
+  // Read the primary approval, not unrelated disclosures in the surrounding drawer.
+  const start = html.indexOf('<div class="chat-approval">');
+  assert.notEqual(start, -1, 'the rendered chat must contain its approval');
+  const technical = html.indexOf('<details data-view-key="approval-', start);
+  assert.ok(technical > start, 'the approval must retain its technical-detail disclosure');
+  return html.slice(start, technical);
+}
 
 test('approval shows only structural changes including title, with exact before/after money and date semantics', () => {
   const html = view(args({ title: '  Renamed gig  ', fields: { Status: 'Open', Fee: 12550, Date: '2026-10-04' } }));
@@ -106,4 +113,15 @@ test('selected-source creation review names local target, source and external-wr
   assert.match(html, /Review local task/); assert.match(html, /From Gmail/);
   assert.match(html, /does not send email or create or update a Google Calendar event/);
   assert.match(html, /&lt;img/); assert.doesNotMatch(html, /<img|Current values unavailable/);
+});
+
+test('creative approvals name the target and never imply publication', async () => {
+  const { approvalAction, creativeReceipt } = await import('./approval-view.mjs');
+  const request = { id:'review', title:'Approve gigi_instagram_request_publication_approval', detail:JSON.stringify({id:'draft-1',expectedRevision:2,expectedInstagramAccountId:'account-1'}) };
+  assert.match(approvalCopy(request), /does not publish/);
+  assert.match(approvalCopy(request), /draft-1/);
+  assert.equal(approvalAction(request), 'Request review (does not publish)');
+  assert.match(creativeReceipt({tool:'gigi_instagram_request_publication_approval',outcome:'verified'}), /Nothing published/);
+  assert.match(creativeReceipt({tool:'gigi_music_import',outcome:'verified'}), /cancelled/);
+  assert.equal(approvalAction({title:'Approve gigi_music_import'}), 'Continue to file picker');
 });

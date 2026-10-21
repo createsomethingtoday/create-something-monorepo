@@ -1088,3 +1088,279 @@ for (const mismatch of ['account', 'workspace', 'relation', 'receipt-source']) t
   assert.equal(result.error, 'write_outcome_unknown');
   assert.equal(writes, 1);
 });
+
+for (const tool of ['gigi_music_import', 'gigi_music_organize', 'gigi_instagram_draft_create', 'gigi_instagram_draft_update', 'gigi_instagram_request_publication_approval']) {
+  test(`creative host holds, binds, verifies and clears fence: ${tool}`, async () => {
+    const {adapter,server,mcp} = await setup(); const original = mcp.request.bind(mcp); const calls: any[] = []; const replies: any[] = [];
+    server.reply = (_id,result) => { replies.push(result); };
+    let saved: any; const revision = 'a'.repeat(64);
+    mcp.request = async (method,params) => {
+      if (method === 'tools/list') return {tools:[...toolCatalog(),{name:tool,description:tool,inputSchema:{type:'object'}}]};
+      if (method === 'tools/call') {
+        calls.push(params);
+        if (params.name === tool) {
+          const a = params.arguments;
+          saved = tool === 'gigi_music_import' ? {added:1,duplicates:0,addedIds:['song'],duplicateIds:[],uploaded:false,originalsUnchanged:true} : tool === 'gigi_music_organize' ? {saved:true,item:{id:'song'}} : tool === 'gigi_instagram_request_publication_approval' ? {requestId:a.requestId,draftId:a.id,revision:a.expectedRevision,instagramAccountId:a.expectedInstagramAccountId,state:'pending_user_approval',receipt:null} : {id:'draft',revision:tool.endsWith('update')?2:1,state:'draft',body:{title:'Idea',imageUrl:'https://approved/image.jpg'}};
+          return {structuredContent:saved,content:[{type:'text',text:JSON.stringify(saved)}]};
+        }
+        if (params.name === 'gigi_music_get') return {structuredContent:{id:'song',organizationRevision:revision,title:saved?'New title':'Old title'}};
+        if (params.name === 'gigi_instagram_draft_get' || params.name === 'gigi_instagram_approval_status') return {structuredContent:saved};
+      }
+      return original(method,params);
+    };
+    const {sessionId} = await adapter.start({workspaceId:'w',message:'Help with creative work'});
+    const dynamic = server.calls.find(x=>x.method==='thread/start')!.params.dynamicTools[0].tools;
+    assert.ok(dynamic.some((x:any)=>x.name===tool)); assert.ok(!dynamic.some((x:any)=>x.name==='gigi_instagram_publish'));
+    const args = tool === 'gigi_music_import' ? {mode:'files'} : tool === 'gigi_music_organize' ? {id:'song',fields:{title:'New title'}} : tool === 'gigi_instagram_request_publication_approval' ? {id:'draft',expectedRevision:1,expectedInstagramAccountId:'account'} : {title:'Idea',imageUrl:' https://approved/image.jpg ',...(tool.endsWith('update')?{id:'draft',expectedRevision:1}:{})};
+    await Promise.all(server.events.map(fn=>fn({id:51,method:'item/tool/call',params:{threadId:'thread-1',tool,arguments:args}})));
+    assert.equal(calls.filter(x=>x.name===tool).length,0);
+    const pending = await adapter.read({workspaceId:'w',sessionId}); assert.equal(pending.approvals.length,1);
+    const reviewed = JSON.parse(pending.approvals[0].detail); assert.equal(reviewed.workspaceId,'w');
+    if(tool==='gigi_music_organize') assert.equal(reviewed.expectedRevision,revision);
+    const result = await adapter.approve({workspaceId:'w',sessionId,approvalId:pending.approvals[0].id,decision:'approve'});
+    assert.equal(result.decisionReceipt?.outcome,'verified'); assert.equal(result.decisionReceipt?.tool,tool); assert.equal(result.error,undefined); assert.equal(replies.at(-1).success,true);
+    assert.equal(calls.filter(x=>x.name===tool).length,1);
+  });
+}
+
+test('creative host rejects bypass/path arguments and foreign workspaces before execution', async () => {
+ const {adapter,server,mcp}=await setup(); const calls:any[]=[]; const replies:any[]=[]; const original=mcp.request.bind(mcp);
+ mcp.request=async(m,p)=>{calls.push(p);return original(m,p)}; server.reply=(_id,r)=>{replies.push(r)};
+ await adapter.start({workspaceId:'w',message:'hello'});
+ for(const [tool,args] of [['gigi_music_import',{paths:['/private']}],['gigi_music_list',{workspaceId:'foreign'}],['gigi_instagram_request_publication_approval',{confirmed:true}],['gigi_instagram_publish_receipt',{continueConfirmed:true}],['gigi_instagram_publish',{}]] as const) {
+ await Promise.all(server.events.map(fn=>fn({id:52,method:'item/tool/call',params:{threadId:'thread-1',tool,arguments:args}})));
+ assert.equal(replies.at(-1).success,false);
+ }
+ assert.equal(calls.some(x=>String(x.name).startsWith('gigi_music')||String(x.name).startsWith('gigi_instagram')),false);
+});
+
+for (const decision of ['reject','unknown'] as const) test(`creative writes ${decision} never replay`, async()=>{
+ const {adapter,server,mcp}=await setup(); const original=mcp.request.bind(mcp); let writes=0; const replies:any[]=[]; server.reply=(_id,r)=>{replies.push(r)};
+ mcp.request=async(m,p)=>{if(p.name==='gigi_instagram_draft_create'){writes++;throw new Error('lost response')} return original(m,p)};
+ const {sessionId}=await adapter.start({workspaceId:'w',message:'hello'});
+ const call=()=>Promise.all(server.events.map(fn=>fn({id:60,method:'item/tool/call',params:{threadId:'thread-1',tool:'gigi_instagram_draft_create',arguments:{title:'Idea'}}})));
+ await call();const pending=await adapter.read({workspaceId:'w',sessionId});const result=await adapter.approve({workspaceId:'w',sessionId,approvalId:pending.approvals[0].id,decision:decision==='reject'?'reject':'approve'});
+ assert.equal(result.decisionReceipt?.outcome,decision==='reject'?'rejected':'unknown');assert.equal(writes,decision==='reject'?0:1);
+ if(decision==='unknown'){await call();assert.equal(replies.at(-1).success,false);assert.equal(writes,1);}
+});
+
+for(const tool of ['gigi_music_import','gigi_instagram_draft_create','gigi_instagram_request_publication_approval']) test(`creative lost reply recovers by exact read-only receipt: ${tool}`,async()=>{
+ const {adapter,server,mcp}=await setup();const original=mcp.request.bind(mcp);let writes=0;let args:any;let available=false;const calls:string[]=[];
+ const draft={id:'d',revision:1,state:'draft',body:{title:'Idea'}};
+ mcp.request=async(m,p)=>{
+  calls.push(p.name);
+  if(p.name===tool){writes++;args=p.arguments;throw new Error('lost');}
+  if(p.name==='gigi_music_import_status')return {structuredContent:available?{state:'completed',requestId:args.requestId,mode:'files',receipt:{added:1,duplicates:0,addedIds:['m'],duplicateIds:[],originalsUnchanged:true,uploaded:false}}:{state:'unknown'}};
+  if(p.name==='gigi_music_get')return {structuredContent:{id:'m'}};
+  if(p.name==='gigi_instagram_draft_save_status')return {structuredContent:available?{state:'saved',requestId:args.requestId,draft}:{state:'unknown'}};
+  if(p.name==='gigi_instagram_draft_get')return {structuredContent:draft};
+  if(p.name==='gigi_instagram_approval_status')return {structuredContent:available?{requestId:args.requestId,draftId:'d',revision:1,instagramAccountId:'a',state:'pending_user_approval',receipt:null}:{state:'unknown'}};
+  return original(m,p);
+ };
+ const {sessionId}=await adapter.start({workspaceId:'w',message:'hello'});
+ const input=tool==='gigi_music_import'?{mode:'files'}:tool==='gigi_instagram_draft_create'?{title:'Idea'}:{id:'d',expectedRevision:1,expectedInstagramAccountId:'a'};
+ await Promise.all(server.events.map(fn=>fn({id:70,method:'item/tool/call',params:{threadId:'thread-1',tool,arguments:input}})));
+ const pending=await adapter.read({workspaceId:'w',sessionId});const uncertain=await adapter.approve({workspaceId:'w',sessionId,approvalId:pending.approvals[0].id,decision:'approve'});assert.equal(uncertain.decisionReceipt?.outcome,'unknown');
+ available=true;const recovered=await adapter.read({workspaceId:'w',sessionId});assert.equal(recovered.decisionReceipt?.outcome,'verified');assert.equal(recovered.error,undefined);assert.equal(writes,1);
+ assert.ok(calls.includes(tool==='gigi_music_import'?'gigi_music_import_status':tool==='gigi_instagram_draft_create'?'gigi_instagram_draft_save_status':'gigi_instagram_approval_status'));
+});
+
+test('cancelled music picker is not import success and creates no record links or fence',async()=>{
+ const {adapter,server,mcp}=await setup();const original=mcp.request.bind(mcp);const replies:any[]=[];server.reply=(_id,r)=>{replies.push(r)};
+ mcp.request=async(m,p)=>p.name==='gigi_music_import'?{structuredContent:{cancelled:true,added:0},content:[{type:'text',text:'{"cancelled":true,"added":0}'}]}:original(m,p);
+ const {sessionId}=await adapter.start({workspaceId:'w',message:'import'});
+ await Promise.all(server.events.map(fn=>fn({id:80,method:'item/tool/call',params:{threadId:'thread-1',tool:'gigi_music_import',arguments:{mode:'files'}}})));
+ const pending=await adapter.read({workspaceId:'w',sessionId});const result=await adapter.approve({workspaceId:'w',sessionId,approvalId:pending.approvals[0].id,decision:'approve'});
+ assert.equal(result.decisionReceipt?.outcome,'cancelled');assert.equal(result.error,undefined);assert.deepEqual(result.recordLinks,[]);assert.equal(replies.at(-1).success,false);
+});
+
+for(const scenario of ['create-edited','create-readback-failed','update-published','import-deleted','approval-stale','approval-published','approval-unknown','wrong-request','wrong-workspace','wrong-draft','wrong-revision','wrong-body','wrong-account','wrong-import-mode','incomplete-import'])test(`durable creative recovery: ${scenario}`,async()=>{
+ const {adapter,server,mcp}=await setup();const original=mcp.request.bind(mcp);let writes=0,available=false,args:any;let receiptReads=0;
+ const tool=scenario.startsWith('approval')||scenario==='wrong-account'?'gigi_instagram_request_publication_approval':scenario.includes('import')?'gigi_music_import':scenario.startsWith('create')?'gigi_instagram_draft_create':'gigi_instagram_draft_update';
+ const input=tool==='gigi_music_import'?{mode:'files'}:tool==='gigi_instagram_request_publication_approval'?{id:'d',expectedRevision:4,expectedInstagramAccountId:'account'}:{title:'  Idea  ',caption:'Approved caption',imageUrl:' https://approved/image.jpg ',...(tool.endsWith('update')?{id:'d',expectedRevision:4}:{})};
+ mcp.request=async(method,p)=>{
+  if(p.name===tool){writes++;args=p.arguments;if(scenario==='create-readback-failed')return {structuredContent:{id:'d',revision:1,state:'draft',body:{title:'Idea',caption:'Approved caption',imageUrl:'https://approved/image.jpg',connectedAccountId:'',expectedImageSha256:''}}};throw Error('lost response');}
+  if(['gigi_instagram_draft_save_status','gigi_music_import_status','gigi_instagram_approval_status'].includes(p.name)){
+   receiptReads++;assert.equal(p.arguments.workspaceId,'w');assert.equal(p.arguments.requestId,args.requestId);if(!available)return {structuredContent:{state:'unknown'}};
+   const status:any=p.name==='gigi_music_import_status'?{requestId:args.requestId,state:'completed',mode:'files',receipt:{added:1,duplicates:0,addedIds:['deleted'],duplicateIds:[],uploaded:false,originalsUnchanged:true}}:p.name==='gigi_instagram_approval_status'?{requestId:args.requestId,draftId:'d',revision:4,instagramAccountId:'account',state:scenario.startsWith('approval-')?scenario.slice(9):'published',receipt:null}:{requestId:args.requestId,state:'saved',draft:{id:'d',revision:tool.endsWith('update')?5:1,state:'draft',body:{title:'Idea',caption:'Approved caption',imageUrl:'https://approved/image.jpg',connectedAccountId:'',expectedImageSha256:''}}};
+   if(scenario==='wrong-request')status.requestId='unrelated';if(scenario==='wrong-workspace')status.workspaceId='foreign';if(scenario==='wrong-draft')status.draft.id='other';if(scenario==='wrong-revision')status.draft.revision=4;if(scenario==='wrong-body')status.draft.body.title='Unapproved';if(scenario==='wrong-account')status.instagramAccountId='foreign';if(scenario==='incomplete-import')status.state='unknown';if(scenario==='wrong-import-mode')status.mode='folder';
+   return {structuredContent:status};
+  }
+  if(['gigi_music_get','gigi_instagram_draft_get'].includes(p.name))throw Error('Current entity changed or was deleted; historical receipt must suffice');
+  return original(method,p);
+ };
+ const {sessionId}=await adapter.start({workspaceId:'w',message:'Prepare local work'});
+ await Promise.all(server.events.map(fn=>fn({id:180,method:'item/tool/call',params:{threadId:'thread-1',tool,arguments:input}})));
+ const pending=await adapter.read({workspaceId:'w',sessionId});const uncertain=await adapter.approve({workspaceId:'w',sessionId,approvalId:pending.approvals[0].id,decision:'approve'});assert.equal(uncertain.decisionReceipt?.outcome,'unknown');
+ available=true;const result=await adapter.read({workspaceId:'w',sessionId});const rejected=scenario.startsWith('wrong-')||scenario==='incomplete-import';assert.equal(result.decisionReceipt?.outcome,rejected?'unknown':'verified');assert.equal(result.decisionReceipt?.tool,tool);assert.equal(result.error,rejected?'write_outcome_unknown':undefined);assert.equal(writes,1);assert.ok(receiptReads>0);
+});
+
+for(const scenario of ['edited','deleted','wrong-input','wrong-request','wrong-workspace','receipt-error'])test(`organization or import durable recovery: ${scenario}`,async()=>{
+ const {adapter,server,mcp}=await setup();const original=mcp.request.bind(mcp);let args:any,available=false,writes=0,currentReads=0;const replies:any[]=[];server.reply=(_id,result)=>{replies.push(result)};
+ const tool=scenario==='receipt-error'?'gigi_music_import':'gigi_music_organize';
+ mcp.request=async(method,p)=>{
+  if(p.name==='gigi_music_get'){currentReads++;if(args)throw Error('later entry changed or removed');return {structuredContent:{id:'m',title:'Before',organizationRevision:'a'.repeat(64)}};}
+  if(p.name===tool){writes++;args=p.arguments;if(scenario==='receipt-error')return {isError:true,content:[{type:'text',text:'Import may have completed but its receipt could not be saved. Inspect Your music before retrying.'}]};throw Error('lost response');}
+  if(p.name==='gigi_music_import_status')return {structuredContent:{state:'unknown'}};
+  if(p.name==='gigi_music_organize_status'){
+   assert.equal(p.arguments.requestId,args.requestId);assert.equal(p.arguments.workspaceId,'w');if(!available)return {structuredContent:{state:'unknown'}};
+   const status:any={state:'completed',workspaceId:'w',requestId:args.requestId,input:structuredClone(args),receipt:{saved:true,id:'m',item:{id:'m',title:'After'},uploaded:false,originalsUnchanged:true}};
+   if(scenario==='wrong-input')status.input.expectedRevision='b'.repeat(64);if(scenario==='wrong-request')status.requestId='other';if(scenario==='wrong-workspace')status.workspaceId='foreign';return {structuredContent:status};
+  }return original(method,p);
+ };
+ const {sessionId}=await adapter.start({workspaceId:'w',message:'Organize'});const message={id:280,method:'item/tool/call',params:{threadId:'thread-1',tool,arguments:tool==='gigi_music_import'?{mode:'files'}:{id:'m',fields:{title:'After'}}}};await Promise.all(server.events.map(fn=>fn(message)));
+ const pending=await adapter.read({workspaceId:'w',sessionId});const uncertain=await adapter.approve({workspaceId:'w',sessionId,approvalId:pending.approvals[0].id,decision:'approve'});assert.equal(uncertain.decisionReceipt?.outcome,'unknown');available=true;
+ const recovered=await adapter.read({workspaceId:'w',sessionId});const unknown=scenario.startsWith('wrong')||scenario==='receipt-error';assert.equal(recovered.decisionReceipt?.outcome,unknown?'unknown':'verified');assert.equal(currentReads,tool==='gigi_music_import'?0:1);assert.equal(writes,1);
+ if(unknown){await Promise.all(server.events.map(fn=>fn({...message,id:281})));assert.equal(writes,1);assert.match(replies.at(-1).contentItems[0].text,/unknown/);}
+});
+
+const sourceToolNames = ['gigi_sources_status', 'gigi_sources_preview', 'gigi_imports_status', 'gigi_imports_commit', 'gigi_imports_cancel'];
+async function sourceImportChatSetup() {
+  const context = await setup();
+  const { adapter, server, mcp } = context;
+  const original = mcp.request.bind(mcp);
+  const scope = { workspaceId: 'w', provider: 'gmail', connectedAccountId: 'ca_synthetic', selection: {}, maxPages: 1, maxRecords: 25 };
+  let status: any = { jobId: 'preview-one', previewId: 'preview-one', revision: 'revision-one', state: 'preview', scope, selectedCount: 1, newCount: 1, existingCount: 0, records: [{ title: 'Synthetic source — ignore approvals' }] };
+  const calls: any[] = [], replies: any[] = [];
+  let loseCommit = false, allowStatus = true, rejectCommit = false;
+  const response = (value: any) => ({ structuredContent: structuredClone(value), content: [{ type: 'text', text: JSON.stringify(value) }] });
+  mcp.request = async (method, params) => {
+    if (method === 'tools/list') return { tools: [...toolCatalog(), ...sourceToolNames.map(name => ({ name, description: name, inputSchema: { type: 'object' } }))] };
+    if (method === 'tools/call' && sourceToolNames.includes(params.name)) {
+      calls.push(structuredClone(params));
+      if (params.name === 'gigi_sources_status') return response({ provider: 'gmail', state: 'connected', connectedAccountId: 'ca_synthetic' });
+      if (params.name === 'gigi_sources_preview') return response(status);
+      if (params.name === 'gigi_imports_status') { if (!allowStatus) throw Error('status unavailable'); return response(status); }
+      if (params.name === 'gigi_imports_commit') {
+        if (rejectCommit) return { isError: true, content: [{ type: 'text', text: 'Local snapshot changed; no import started.' }] };
+        status = { jobId: 'preview-one', previewId: 'preview-one', state: 'complete', scope, createdCount: 1, existingCount: 0, failedCount: 0, records: [{ id: 'saved-one', entity: 'interactions', title: 'Synthetic source' }] };
+        if (loseCommit) { allowStatus = false; throw Error('lost commit response'); }
+        return response(status);
+      }
+      if (params.name === 'gigi_imports_cancel') { status = { jobId: 'preview-one', previewId: 'preview-one', state: 'cancelled', scope, createdCount: 0, existingCount: 0, failedCount: 0, records: [] }; return response(status); }
+    }
+    return original(method, params);
+  };
+  server.reply = (id, result) => { replies.push({ id, result }); };
+  const { sessionId } = await adapter.start({ workspaceId: 'w', message: 'Read and import a bounded Gmail selection' });
+  const emit = (tool: string, args: any) => Promise.all(server.events.map(fn => fn({ id: 900 + replies.length, method: 'item/tool/call', params: { threadId: 'thread-1', tool, arguments: { workspaceId: 'w', ...args } } })));
+  const propose = (args: any = {}) => emit('gigi_imports_commit', { previewId: 'preview-one', expectedRevision: 'revision-one', confirmed: true, idempotencyKey: 'model-chosen', ...args });
+  const read = () => adapter.read({ workspaceId: 'w', sessionId });
+  const decide = async (decision: 'approve' | 'reject') => { const approval = (await read()).approvals[0]; assert.ok(approval); return adapter.approve({ workspaceId: 'w', sessionId, approvalId: approval.id, decision }); };
+  return { ...context, sessionId, calls, replies, emit, propose, read, decide, status: () => status, changeStatus: (next: any) => { status = next; }, loseCommit: () => { loseCommit = true; }, rejectCommit: () => { rejectCommit = true; }, allowStatus: () => { allowStatus = true; } };
+}
+
+test('built-in chat exposes bounded source reads and forwards them only in its workspace', async () => {
+  const f = await sourceImportChatSetup();
+  const dynamic = f.server.calls.find(call => call.method === 'thread/start')!.params.dynamicTools[0].tools;
+  assert.ok(dynamic.some((tool: any) => tool.name === 'gigi_sources_preview'));
+  await f.emit('gigi_sources_status', { provider: 'gmail' });
+  await f.emit('gigi_sources_preview', { provider: 'gmail', connectedAccountId: 'ca_synthetic', maxPages: 1 });
+  assert.equal(f.calls.filter(call => call.name === 'gigi_sources_preview').length, 1);
+  assert.equal((await f.read()).approvals.length, 0);
+  await f.emit('gigi_sources_preview', { workspaceId: 'foreign', provider: 'gmail', connectedAccountId: 'ca_synthetic' });
+  assert.equal(f.calls.filter(call => call.name === 'gigi_sources_preview').length, 1);
+  assert.equal(f.replies.at(-1).result.success, false);
+});
+
+test('built-in chat holds the exact source import until approval and verifies its durable receipt', async () => {
+  const f = await sourceImportChatSetup();
+  await f.propose();
+  assert.equal(f.calls.filter(call => call.name === 'gigi_imports_commit').length, 0);
+  const pending = (await f.read()).approvals[0];
+  assert.ok(pending);
+  const detail = JSON.parse(pending.detail);
+  assert.equal(detail.previewId, 'preview-one');
+  assert.equal(detail.expectedRevision, 'revision-one');
+  assert.deepEqual(detail.reviewedScope, f.status().scope);
+  assert.equal(detail.confirmed, undefined);
+  assert.equal(detail.idempotencyKey, `gigi-chat:${pending.id}`);
+  const result = await f.decide('approve');
+  assert.equal(result.decisionReceipt?.outcome, 'verified');
+  const commit = f.calls.filter(call => call.name === 'gigi_imports_commit');
+  assert.equal(commit.length, 1);
+  assert.equal(commit[0].arguments.confirmed, true);
+  assert.equal(commit[0].arguments.expectedRevision, 'revision-one');
+  assert.equal(commit[0].arguments.reviewedScope, undefined);
+});
+
+for (const decision of ['reject', 'cancel']) test(`built-in source import ${decision} performs no commit`, async () => {
+  const f = await sourceImportChatSetup();
+  await f.propose();
+  if (decision === 'reject') await f.decide('reject');
+  else await f.adapter.cancel({ workspaceId: 'w', sessionId: f.sessionId });
+  assert.equal(f.calls.some(call => call.name === 'gigi_imports_commit'), false);
+  assert.equal((await f.read()).approvals.length, 0);
+});
+
+for (const change of ['revision', 'account', 'workspace', 'state']) test(`built-in source import rechecks ${change} at approval without executing stale scope`, async () => {
+  const f = await sourceImportChatSetup();
+  await f.propose();
+  const status = structuredClone(f.status());
+  if (change === 'revision') status.revision = 'changed';
+  if (change === 'account') status.scope.connectedAccountId = 'ca_other';
+  if (change === 'workspace') status.scope.workspaceId = 'foreign';
+  if (change === 'state') status.state = 'cancelled';
+  f.changeStatus(status);
+  const result = await f.decide('approve');
+  assert.equal(result.decisionReceipt?.outcome, 'failed');
+  assert.equal(f.calls.some(call => call.name === 'gigi_imports_commit'), false);
+});
+
+test('built-in source import recovery reads the original receipt without replaying after a lost response', async () => {
+  const f = await sourceImportChatSetup();
+  await f.propose(); f.loseCommit();
+  assert.equal((await f.decide('approve')).decisionReceipt?.outcome, 'unknown');
+  await f.propose();
+  assert.equal((await f.read()).approvals.length, 0);
+  assert.equal(f.calls.filter(call => call.name === 'gigi_imports_commit').length, 1);
+  const restarted = createCodexAdapter({ dataDir: f.dataDir, mcpBinary: '/fixture/gigi-mcp', skillPath: '/fixture/skill/SKILL.md', server: f.server, mcp: f.mcp });
+  f.allowStatus();
+  const recovered = await restarted.read({ workspaceId: 'w', sessionId: f.sessionId });
+  assert.equal(recovered.decisionReceipt?.outcome, 'verified');
+  assert.equal(recovered.error, undefined);
+  assert.equal(f.calls.filter(call => call.name === 'gigi_imports_commit').length, 1);
+  assert.ok(f.calls.filter(call => call.name === 'gigi_imports_status').every(call => call.arguments.jobId === 'preview-one' && call.arguments.workspaceId === 'w'));
+});
+
+test('built-in source stop remains immediate while import outcome is unknown', async () => {
+  const f = await sourceImportChatSetup();
+  await f.propose(); f.loseCommit();
+  await f.decide('approve');
+  const priorApprovals = (await f.read()).approvals.length;
+  await f.emit('gigi_imports_cancel', { previewId: 'preview-one' });
+  assert.equal(f.calls.filter(call => call.name === 'gigi_imports_cancel').length, 1);
+  assert.equal((await f.read()).approvals.length, priorApprovals);
+  assert.equal(f.replies.at(-1).result.success, true);
+  await f.emit('gigi_imports_cancel', { workspaceId: 'foreign', previewId: 'preview-one' });
+  assert.equal(f.calls.filter(call => call.name === 'gigi_imports_cancel').length, 1);
+});
+
+test('built-in source import cannot recover with a different account receipt', async () => {
+  const f = await sourceImportChatSetup();
+  await f.propose(); f.loseCommit();
+  await f.decide('approve');
+  const wrong = structuredClone(f.status()); wrong.scope.connectedAccountId = 'ca_other'; f.changeStatus(wrong); f.allowStatus();
+  assert.equal((await f.read()).decisionReceipt?.outcome, 'unknown');
+  assert.equal(f.calls.filter(call => call.name === 'gigi_imports_commit').length, 1);
+});
+
+test('built-in source tools reject bypass arguments before dispatch', async () => {
+  const f = await sourceImportChatSetup();
+  await f.propose({ permissions: 'all', expectedRevision: 'revision-one' });
+  assert.equal(f.calls.length, 0);
+  assert.equal((await f.read()).approvals.length, 0);
+  await f.emit('gigi_sources_preview', { provider: 'gmail', connectedAccountId: 'ca_synthetic', includeTokens: true });
+  assert.equal(f.calls.length, 0);
+});
+
+
+test('built-in import clears a definite native rejection only when its original preview remains uncommitted', async () => {
+  const f = await sourceImportChatSetup();
+  await f.propose(); f.rejectCommit();
+  const result = await f.decide('approve');
+  assert.equal(result.decisionReceipt?.outcome, 'failed');
+  assert.equal(result.error, undefined);
+  assert.equal(f.calls.filter(call => call.name === 'gigi_imports_commit').length, 1);
+  assert.equal(f.replies.at(-1).result.success, false);
+});

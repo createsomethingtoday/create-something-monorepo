@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {validateSocialDraft,socialReceiptCopy,socialWorkspaceView,socialErrorMessage} from './social.mjs';
+import {validateSocialDraft,socialReceiptCopy,socialWorkspaceView,socialErrorMessage,socialDraftIssues,createSocialWorkspace} from './social.mjs';
 test('drafts can be incomplete but publishing requires account and public image',()=>{
  assert.deepEqual(validateSocialDraft({title:'Studio idea',caption:''}),[]);
  assert.equal(validateSocialDraft({title:'Idea',caption:'x'.repeat(2201)}).length,1);
@@ -38,7 +38,7 @@ test('social surfaces use the host dark theme tokens and embedded connection set
  assert.ok(css.includes('background:var(--bg); color:inherit'));
  assert.ok(css.includes('max-height:calc(100dvh - 24px)'));
  const html=socialWorkspaceView({items:[],editor:null});
- assert.ok(html.includes('Open Connection setup below'));
+ assert.ok(html.includes('Drafting needs no connection.'));
  assert.ok(!html.includes('account in Sources'));
 });
 
@@ -96,4 +96,71 @@ test('pending processing explicitly describes continuation and definitive reject
  const html=socialWorkspaceView({items:[],editor:{title:'Test',caption:'',imageUrl:''},selected:{id:'1',revision:1,state:'unknown',body:{},receipt:pending}});
  assert.match(html,/Continue pending publish/);assert.doesNotMatch(html,/Copy into a new draft/);
  assert.match(socialReceiptCopy({state:'not_published',reason:'image_changed'}).detail,/Load the verified preview again/);
+});
+
+
+test('publishing issues identify fields without telling an already saved draft to save again',()=>{
+ const issues=socialDraftIssues({title:'Idea',caption:'',imageUrl:''},true);
+ assert.deepEqual(issues.map(issue=>issue.field),['imageUrl','imageUrl','connectedAccountId']);
+ assert.ok(issues.every(issue=>!issue.message.includes('save this draft')));
+ const html=socialWorkspaceView({items:[],editor:{title:'Idea',caption:'',imageUrl:''},validationMode:true,selected:{id:'one',revision:1,state:'draft'}});
+ assert.match(html,/data-social-field="imageUrl" aria-describedby="social-imageUrl-error" aria-invalid="true"/);
+ assert.ok(html.indexOf('data-social-save ')<html.indexOf('<label>Title'));
+ assert.match(html,/<details class="social-media-guide">/);
+});
+
+test('saved draft review focuses invalid media without calling publishing and CmdS saves locally',async()=>{
+ const calls=[],listeners={},elements=new Map();let html='',focused='';
+ const saved={id:'draft',revision:1,state:'draft',body:{title:'Idea',caption:'',imageUrl:'',connectedAccountId:''}};
+ const element=selector=>{if(!elements.has(selector))elements.set(selector,{listeners:{},disabled:false,textContent:'',setAttribute(){},scrollIntoView(){},focus(){focused=selector;},addEventListener(type,fn){this.listeners[type]=fn;},click(){return this.listeners.click?.({currentTarget:this});}});return elements.get(selector);};
+ const container={get innerHTML(){return html;},set innerHTML(value){html=value;elements.clear();},addEventListener(type,fn){listeners[type]=fn;},removeEventListener(type){delete listeners[type];},querySelector:element,querySelectorAll(selector){return [element(selector)];}};
+ const workspace=createSocialWorkspace({workspaceId:'w',call:async(operation,input)=>{calls.push(operation);if(operation==='social.list')return {items:[saved],total:1};if(operation==='social.save')return {...saved,revision:2,body:{...saved.body,title:input.title}};throw Error('Unexpected '+operation);}});
+ await workspace.mount(container);workspace.state.selected=saved;workspace.state.editor={...saved.body};
+ // Repaint through the list action, retaining the synthetic selected state.
+ await element('[data-social-more]').click();
+ await element('[data-social-review]').click();
+ assert.equal(focused,'[data-social-field="imageUrl"]');
+ assert.deepEqual(calls,['social.list','social.list']);
+ workspace.state.editor.title='Changed title';workspace.state.dirty=true;
+ let prevented=false;listeners.keydown({metaKey:true,key:'s',preventDefault(){prevented=true;}});
+ await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(prevented,true);assert.ok(calls.includes('social.save'));assert.equal(workspace.state.selected.body.title,'Changed title');
+ assert.ok(!calls.includes('social.publish'));
+ workspace.dispose();assert.equal(listeners.keydown,undefined);
+});
+
+test('selecting a saved draft captures its event target before awaiting and focuses only after loading',async()=>{
+ const elements=new Map(),moves=[];let resolveRecord;
+ const saved={id:'draft',revision:1,state:'draft',body:{title:'Idea',caption:'',imageUrl:'',connectedAccountId:''}};
+ const element=selector=>{if(!elements.has(selector))elements.set(selector,{dataset:{socialSelect:'draft'},listeners:{},focus(options){moves.push(['focus',selector,options]);},scrollIntoView(options){moves.push(['scroll',selector,options]);},addEventListener(type,fn){this.listeners[type]=fn;},click(){return this.listeners.click?.({currentTarget:this});}});return elements.get(selector);};
+ const container={set innerHTML(value){elements.clear();},addEventListener(){},removeEventListener(){},querySelector:element,querySelectorAll(selector){return [element(selector)];}};
+ const workspace=createSocialWorkspace({workspaceId:'w',call:async operation=>{if(operation==='social.list')return {items:[saved],total:1};if(operation==='social.get')return new Promise(resolve=>{resolveRecord=resolve;});if(operation==='social.save')return saved;throw Error('Unexpected '+operation);}});
+ await workspace.mount(container);
+ const button=element('[data-social-select]');
+ const event={currentTarget:button};
+ const selecting=button.listeners.click(event);
+ event.currentTarget=null; // Browsers clear currentTarget as soon as synchronous dispatch ends.
+ await Promise.resolve();
+ assert.deepEqual(moves,[],'do not move focus into the disabled loading editor');
+ resolveRecord(saved);await selecting;
+ assert.deepEqual(moves,[['focus','[data-social-field="title"]',{preventScroll:true}],['scroll','.social-composer',{block:'start'}]]);
+ moves.length=0;await element('[data-social-save]').click();
+ assert.deepEqual(moves,[],'saving and repainting must not jump back to the editor top');
+ workspace.dispose();
+});
+
+test('agent requests are visible and focus refresh preserves edits and confirmation',async()=>{
+ const listeners={},calls=[];const oldAdd=globalThis.addEventListener,oldRemove=globalThis.removeEventListener;
+ globalThis.addEventListener=(type,fn)=>listeners[type]=fn;globalThis.removeEventListener=type=>delete listeners[type];
+ const saved={id:'draft',revision:1,state:'draft',body:{title:'Studio',caption:'New work'},approvalRequest:{id:'request',state:'pending_user_approval'}};
+ const container={innerHTML:'',addEventListener(){},removeEventListener(){},querySelector(){return null;},querySelectorAll(){return [];}};
+ const workspace=createSocialWorkspace({workspaceId:'w',call:async operation=>{calls.push(operation);return operation==='social.list'?{items:[saved],total:1}:saved;}});
+ try{
+  await workspace.mount(container);workspace.state.selected=saved;workspace.state.editor={...saved.body};
+  listeners.focus();await new Promise(resolve=>setImmediate(resolve));assert.match(container.innerHTML,/An agent requested your review/);assert.match(container.innerHTML,/Nothing has been approved or published/);
+  const count=calls.length;
+  for(const field of ['dirty','confirming','busy','loading']){workspace.state[field]=true;listeners.focus();await new Promise(resolve=>setImmediate(resolve));workspace.state[field]=false;assert.equal(calls.length,count,field+' blocks refresh');}
+  workspace.state.selected.approvalRequest.state='stale';assert.match(socialWorkspaceView(workspace.state),/cannot authorize this version/);
+  workspace.dispose();assert.equal(listeners.focus,undefined);
+ }finally{globalThis.addEventListener=oldAdd;globalThis.removeEventListener=oldRemove;}
 });

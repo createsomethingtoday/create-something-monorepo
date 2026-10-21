@@ -3,13 +3,14 @@ import { dirname, isAbsolute, join } from 'node:path';
 
 import { createBrokerClient, IntegrationError, type ConnectionProvider, type InstagramPublishInput } from './broker.ts';
 import { createCtxClient, CtxError } from './ctx.ts';
-import { getSessionAccessToken, login, LoginError } from './auth.ts';
+import { getSessionAccessToken, login, logout, LoginError } from './auth.ts';
 import { mapSourcePage } from './import-adapter.ts';
+import { requireSourceSelection, selectSourceRecords, SourceSelectionError } from './source-selection.ts';
 
 const BROKER_RESOURCE = 'https://gigi-connector.createsomething.workers.dev';
 
 export type RunnerRequest = { operation: string; input: Record<string, unknown> };
-export type RunnerResult = { ok: true; value: unknown } | { ok: false; error: { operation: string; reason: string } };
+export type RunnerResult = { ok: true; value: unknown } | { ok: false; error: { operation: string; reason: string; detail?: CtxError['detail'] } };
 export interface RunnerOptions {
   dataDir?: string;
   fetch?: typeof fetch;
@@ -23,6 +24,7 @@ export async function runOperation(request: RunnerRequest, options: RunnerOption
   try {
     const dataDir = options.dataDir ?? process.env.GIGI_DATA_DIR;
     if (!dataDir || !isAbsolute(dataDir)) return failure(operation, 'unconfigured');
+    if (operation === 'auth.logout') return success(await logout({ dataDir }));
     if (operation === 'auth.login') return success(await login({ dataDir, signal: options.signal, fetch: options.fetch }));
     if (operation.startsWith('connections.') || operation.startsWith('instagram.')) {
       const broker = createBrokerClient({
@@ -41,9 +43,13 @@ export async function runOperation(request: RunnerRequest, options: RunnerOption
         case 'connections.reconcile': return success(await broker.reconcileConnection(provider, requireString(input.connectedAccountId), options.signal));
         case 'connections.import': {
           if(provider==='instagram')return failure(operation,'unsupported_operation');
+          const workspaceId = requireString(input.workspaceId);
+          const selection = requireSourceSelection(input.selection, provider);
           const page = await broker.readSourcePage(provider, requireString(input.connectedAccountId), optionalString(input.cursor), options.signal);
+          const selected = selectSourceRecords(mapSourcePage(workspaceId, page), selection);
           return success({ provider: page.provider, connectedAccountId: page.connectedAccountId,
-            records: mapSourcePage(requireString(input.workspaceId), page), nextCursor: page.nextCursor });
+            records: selected.records, nextCursor: page.nextCursor,
+            coverage: { ...selected.coverage, complete: page.nextCursor === null } });
         }
         default: return failure(operation, 'unknown_operation');
       }
@@ -63,9 +69,10 @@ export async function runOperation(request: RunnerRequest, options: RunnerOption
     }
     return failure(operation, 'unknown_operation');
   } catch (error) {
-    if (error instanceof RunnerInputError) return failure(operation, 'invalid_request');
+    if (error instanceof RunnerInputError || error instanceof SourceSelectionError) return failure(operation, 'invalid_request');
     if (error instanceof LoginError) return failure(operation, error.reason);
-    if (error instanceof IntegrationError || error instanceof CtxError) return failure(operation, error.reason);
+    if (error instanceof CtxError) return { ok: false, error: { operation, reason: error.reason, ...(error.detail ? { detail: error.detail } : {}) } };
+    if (error instanceof IntegrationError) return failure(operation, error.reason);
     return failure(operation, 'unavailable');
   }
 }

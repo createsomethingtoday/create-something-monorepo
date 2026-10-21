@@ -1,6 +1,8 @@
 /** Fixed source recovery text. Unknown values are never interpolated here. */
 export function sourceErrorMessage(code) {
   const messages = {
+    session_lock_unverified: 'GiGi could not verify the local source session. Ask the GiGi operator to check it before retrying.',
+    session_busy: 'A source sign-in or session refresh is running. Finish or cancel that operation, then retry.',
     journal_unavailable: 'The connection attempt could not be confirmed. Check status before connecting again. If this persists, ask the GiGi operator to review it.',
     link_outcome_unknown: 'Consent may have started, but GiGi could not confirm the result. Check status. Do not start another consent attempt; ask the GiGi operator if it remains unresolved.',
     connection_changed: 'The connection changed during verification. Check status before verifying again. Do not start another consent attempt.',
@@ -16,7 +18,7 @@ export function sourceErrorMessage(code) {
   return typeof code === 'string' && Object.hasOwn(messages, code) ? messages[code] : undefined;
 }
 
-import { sourceNeedsOperatorReview, pendingConsentForProvider } from './model.mjs';
+import { sourceSessionBlocked, sourceNeedsOperatorReview, pendingConsentForProvider } from './model.mjs';
 
 /** Plain-language feedback for a connector status receipt. UI callers escape the strings. */
 export function sourceView(source) {
@@ -86,7 +88,7 @@ export function sourceView(source) {
 /** Copy and hierarchy for Settings. Counts only status receipts, never setup intent. */
 export function setupSummary({ workspace, sources = {}, agentReceipt, agent } = {}) {
   const providers = ['gmail', 'googlecalendar'];
-  const verifiedCount = providers.filter((provider) => sources?.[provider]?.state === 'connected').length;
+  const verifiedCount = providers.filter((provider) => sources?.[provider]?.state === 'connected' && !sourceSessionBlocked(sources[provider])).length;
   const checkingCount = providers.filter((provider) => sources?.[provider]?.state === 'checking' || sources?.[provider]?.state !== 'connected' && sources?.[provider]?.detail === 'refresh_in_progress').length;
   const uncertainRefresh = providers.some((provider) => sources?.[provider]?.state !== 'connected' && sources?.[provider]?.detail === 'refresh_outcome_unknown');
   const prepared = agentReceipt?.prepared === true || Boolean(agent);
@@ -102,7 +104,7 @@ export function setupSummary({ workspace, sources = {}, agentReceipt, agent } = 
       description: checkingCount ? `Checking ${checkingCount} ${checkingCount === 1 ? 'source' : 'sources'}. Your local records are ready to use.` : uncertainRefresh ? 'The session refresh outcome is uncertain. Check source status before trying to connect again.' : 'Each account needs its own consent. Import records after verification.',
     },
     {
-      id: 'agent', title: 'Codex or Claude Code',
+      id: 'agent', title: 'External Codex or Claude Code',
       label: localToolUsed ? phoneVerified ? 'Local tool used · Device test recorded' : 'Local tool used · Phone unverified' : prepared ? 'Prepared · Not verified' : 'Not verified',
       href: '#agent-setup',
       description: localToolUsed ? 'Confirm the tool result in your agent.' : prepared ? 'Run the setup command, then verify a real local tool call.' : 'Prepare the connector, then run and verify it in your agent.',
@@ -134,7 +136,7 @@ export function sourceJourney(sources = {}, attempts = {}) {
   const recoveryMessage = values.map(source => sourceErrorMessage(source?.detail)).find(Boolean);
   const denied = values.some(source => source?.detail === 'access_denied');
   const signIn = values.some(source => ['session_expired', 'reauthentication_required', 'unauthorized'].includes(source?.detail));
-  const service = values.some(source => ['provider_unavailable', 'unconfigured', 'refresh_outcome_unknown', 'refresh_in_progress'].includes(source?.detail));
+  const service = values.some(source => ['provider_unavailable', 'unconfigured', 'refresh_outcome_unknown', 'refresh_in_progress', 'session_busy', 'session_lock_unverified'].includes(source?.detail));
   const connected = values.some(source => source?.state === 'connected');
   const pending = values.some(source => ['pending', 'attention'].includes(source?.state));
   const review = values.some(sourceNeedsOperatorReview);
@@ -149,8 +151,8 @@ export function sourceJourney(sources = {}, attempts = {}) {
     : consent ? 'Resume the pending Google consent below, then check status and verify. Do not start a second attempt.'
     : reconnect ? 'The previous connection ended. Choose Reconnect below to start fresh consent.'
     : pending ? 'Check status and verify the pending connection. If no consent link is available, do not start another attempt.'
-    : connected ? 'Check the verified Google identity below, then import one bounded page when ready.'
+    : connected ? 'Check the verified Google identity below, then preview a bounded source page when ready.'
     : admitted ? 'Choose Gmail or Google Calendar below. You can connect either source independently.'
     : 'Check source status or sign in to GiGi sources. Your local workspace is ready.');
-  return { current, next, stages: ['Local workspace', 'GiGi source sign-in', 'Choose a source', 'Google consent', 'Verify connection', 'Import one page'] };
+  return { current, next, stages: ['Local workspace', 'GiGi source sign-in', 'Choose a source', 'Google consent', 'Verify connection', 'Preview and import'] };
 }

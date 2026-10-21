@@ -13,7 +13,7 @@ test('fresh workspace leads to optional setup without automatically signing in, 
     if (operation === 'workspace.get') return null;
     if (operation === 'workspace.create') return { id: 'w-new', name: input.name };
     if (operation === 'records.save') return { id: 'profile-new', ...input };
-    if (operation === 'connections.status') return { provider: input.provider, state: 'disconnected' };
+    if ((operation === 'connections.status' || operation === 'sources.status')) return { provider: input.provider, state: 'disconnected' };
     if (operation === 'agent.status') return { prepared: false, phoneVerified: false };
     return { items: [], count: 0 };
   } } };
@@ -47,7 +47,7 @@ test('provider choice shows and copies only that exact prepared command; prepari
     if (operation === 'workspace.get') return { id: 'w1', name: 'Alex workspace' };
     if (operation === 'records.list') return { items: input.entity === 'profile' ? [{ id: 'p1' }] : [], count: 0 };
     if (operation === 'records.get') return { id: 'p1', fields: { Currency: 'USD' } };
-    if (operation === 'connections.status') return { provider: input.provider, state: 'disconnected' };
+    if ((operation === 'connections.status' || operation === 'sources.status')) return { provider: input.provider, state: 'disconnected' };
     if (operation === 'agent.prepare') return agent;
     if (operation === 'agent.status') return { prepared: calls.includes('agent.prepare'), phoneVerified: false };
     return {};
@@ -95,7 +95,7 @@ test('profile save failure keeps typed defaults and resumes the existing workspa
     if (operation === 'workspace.get') return null;
     if (operation === 'workspace.create') { creates++; return { id: 'w1', name: input.name }; }
     if (operation === 'records.save') { saves++; if (saves === 1) throw new Error('Temporary profile save failure'); return { id: 'p1', ...input }; }
-    if (operation === 'connections.status') return { provider: input.provider, state: 'disconnected' };
+    if ((operation === 'connections.status' || operation === 'sources.status')) return { provider: input.provider, state: 'disconnected' };
     if (operation === 'agent.status') return {};
     return { items: [], count: 0 };
   } } };
@@ -127,7 +127,7 @@ test('source consent keeps provider context and shows actionable browser and sig
     if (operation === 'workspace.get') return { id: 'synthetic-w', name: 'Synthetic' };
     if (operation === 'records.list') return { items: input.entity === 'profile' ? [{ id: 'p1' }] : [], count: 0 };
     if (operation === 'records.get') return { id: 'p1', fields: { Currency: 'USD' } };
-    if (operation === 'connections.status') return { provider: input.provider, state: 'pending', connectedAccountId: 'synthetic-account', url: 'https://connect.composio.dev/synthetic', expiresAt: '2030-01-01T00:00:00Z' };
+    if ((operation === 'connections.status' || operation === 'sources.status')) return { provider: input.provider, state: 'pending', connectedAccountId: 'synthetic-account', url: 'https://connect.composio.dev/synthetic', expiresAt: '2030-01-01T00:00:00Z' };
     if (operation === 'connections.openConsent') throw new Error('browser_unavailable');
     if (operation === 'auth.login') throw new Error(signInError);
     return {};

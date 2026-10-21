@@ -19,12 +19,19 @@ export function scheduleEntry(record) {
   const start = parts.length <= 2 ? parse(parts[0]) : null;
   const end = parts.length === 2 ? parse(parts[1]) : null;
   if (!start || (parts.length === 2 && (!end || end.date < start.date))) return { record, key: null, time: 'Date needs attention' };
-  const allDay = start.day || record.fields?.['All Day'] === true || record.allDay === true;
+  const gig = record.entity === 'gigs';
+  const allDay = record.fields?.['All Day'] === true || record.allDay === true || (!gig && start.day);
+  const gigTimes = gig ? [['Call',record.fields?.['Call Time'] ?? record.callTime],['Set',record.fields?.['Set Time'] ?? record.setTime]].flatMap(([label,value]) => {
+    if (typeof value !== 'string' || !value.trim()) return [];
+    if (/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(value)) return [`${label} ${value}`];
+    const instant = parse(value);
+    return instant && !instant.day ? [`${label} ${new Intl.DateTimeFormat(undefined,{dateStyle:'medium',timeStyle:'short'}).format(instant.date)}`] : [`${label} time needs attention`];
+  }).join(' · ') : '';
   const time = new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit' });
   const dayLabel = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   const rangeEnd = end && end.key !== start.key ? `${dayLabel.format(end.date)}, ${time.format(end.date)}` : end ? time.format(end.date) : '';
-  const lastDay = allDay && end && end.key > start.key ? localToday(new Date(end.date.getFullYear(), end.date.getMonth(), end.date.getDate() - 1)) : end?.key || start.key;
-  return { record, key: start.key, date: start.date, endKey: lastDay, time: allDay ? (end && end.key !== start.key ? `All day · ends ${dayLabel.format(end.date)} (exclusive)` : 'All day') : `${time.format(start.date)}${rangeEnd ? ` – ${rangeEnd}` : ''}` };
+  const lastDay = (allDay || (start.day && end?.day)) && end && end.key > start.key ? localToday(new Date(end.date.getFullYear(), end.date.getMonth(), end.date.getDate() - 1)) : end?.key || start.key;
+  return { record, key: start.key, date: start.date, endKey: lastDay, time: gig && start.day && !allDay ? `${gigTimes || 'Time not set'}${end && end.key !== start.key ? ` · ends ${dayLabel.format(end.date)}${end.day ? ' (exclusive)' : ''}` : ''}` : allDay ? (end && end.key !== start.key ? `All day · ends ${dayLabel.format(end.date)} (exclusive)` : 'All day') : `${time.format(start.date)}${rangeEnd ? ` – ${rangeEnd}` : ''}` };
 }
 export function scheduleAgenda(records, view = 'upcoming', today = localToday()) {
   const entries = records.map(scheduleEntry).sort((a, b) => (a.key === null) - (b.key === null) || (a.date?.getTime() ?? 0) - (b.date?.getTime() ?? 0) || String(a.record.id).localeCompare(String(b.record.id)));
@@ -53,4 +60,13 @@ export async function readSchedulePages(read, current = () => true) {
     if (cursor) cursors.add(cursor);
   } while (cursor);
   return records;
+}
+
+// Read both collections without changing either original. Keep explicit entity
+// identity: a gig and a calendar event may describe the same occasion, but are
+// separate records unless a verified relationship says otherwise.
+export async function readWorkspaceAgenda(read, current = () => true) {
+  const [events, gigs] = await Promise.all(['schedule','gigs'].map(entity => readSchedulePages(cursor => read(entity, cursor), current)));
+  if (!current() || !events || !gigs) return null;
+  return [...events.map(record => ({...record, entity:'schedule'})), ...gigs.filter(record => record.fields?.Date || record.date).map(record => ({...record, entity:'gigs'}))];
 }

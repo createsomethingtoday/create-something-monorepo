@@ -14,10 +14,12 @@ test('standalone page retains the owning Agency Canon operator palette', () => {
 });
 
 test('download contract pins exact qualified installer, platform and checksum', () => {
-  assert.equal(gigiBeta.bytes, 78003842);
-  assert.equal(gigiBeta.sha256, 'bd5bd761ab7c27dfe1902612f0a04bc235e2ea6fb734de835cc7b254f9842218');
-  assert.equal(gigiBeta.url, `https://media.createsomething.io/releases/gigi/0.1.0/${gigiBeta.sha256}/GiGi-0.1.0-arm64-private-beta.dmg`);
-  for (const text of ['macOS 13', 'Apple Silicon', 'Intel Macs are not supported', gigiBeta.url, gigiBeta.sha256, '78,003,842', '78.0 MB']) assert.ok(gigiBetaHtml.includes(text), text);
+  assert.equal(gigiBeta.version, '0.2.6');
+  assert.equal(gigiBeta.filename, 'GiGi-0.2.6-arm64-private-beta.dmg');
+  assert.equal(gigiBeta.bytes, 96475154);
+  assert.equal(gigiBeta.sha256, '19b3a4bf0971fad5e66eb14fb0dd9cc7cd4ffda95a18fae2e86c95394161a214');
+  assert.equal(gigiBeta.url, `https://media.createsomething.io/releases/gigi/0.2.6/${gigiBeta.sha256}/GiGi-0.2.6-arm64-private-beta.dmg`);
+  for (const text of ['macOS 13', 'Apple Silicon', 'Intel Macs are not supported', gigiBeta.url, gigiBeta.sha256, '96,475,154', '96.5 MB']) assert.ok(gigiBetaHtml.includes(text), text);
 });
 
 test('beta stays unlisted and has no active content or tracking shell', () => {
@@ -49,9 +51,56 @@ test('walkthroughs pin reviewed footage and use user-initiated native playback',
   assert.ok(gigiBetaHtml.includes('not acceptance of a fresh installation'));
 });
 
-test('release acceptance distinguishes this installer from historical phone evidence', () => {
+test('release acceptance distinguishes this installer from historical workflow evidence', () => {
+  assert.ok(gigiBetaHtml.includes('Native checks used an isolated test workspace'));
+  assert.ok(gigiBetaHtml.includes('GiGi 0.2.1 previously passed unsaved-record protection'));
+  assert.ok(gigiBetaHtml.includes('Earlier builds passed native onboarding'));
+  assert.ok(gigiBetaHtml.includes('No real Instagram publication has been verified for this release'));
   assert.ok(gigiBetaHtml.includes('bounded Gmail and Calendar imports'));
   assert.ok(gigiBetaHtml.includes('Phone remote access passed on an earlier build'));
   assert.ok(gigiBetaHtml.includes('not repeated for this installer'));
   assert.doesNotMatch(gigiBetaHtml, /Remaining native workflow checks.*pending/);
+});
+
+
+test('creative work scope preserves local media and explicit publishing boundaries', () => {
+  for (const text of [
+    'Music library', 'Instagram drafts', 'including MP4s', 'bounded and cancellable',
+    'does not upload, move or delete your original media', 'index, not the media',
+    'not copies of earlier file contents', 'Missing or changed files',
+    'one JPEG image', 'direct public HTTPS URL', 'approved image host',
+    'Business or Creator account', 'Personal accounts, Reels, Stories, carousels and scheduling are not supported',
+    'explicitly confirm publication', 'outcome is unknown', 'local drafting remains available'
+  ]) assert.ok(gigiBetaHtml.includes(text), text);
+});
+
+
+test('release describes bounded agent actions and separates saved tasks from sources', () => {
+  for (const text of ['full local contact collection', 'before pagination', 'missing or invalid dates last', 'native picker', 'they cannot publish', 'earlier review request stale', 'does not automatically turn messages or events into tasks', 'does not change history configuration or repair an account connection', 'synthetic requests']) assert.ok(gigiBetaHtml.includes(text), text);
+});
+
+
+test('search release explains token matching, bounded waits and synthetic acceptance', () => {
+  for (const text of ['Included from 0.2.3', 'Included from 0.2.2', 'middle name', 'without changing saved contacts', 'retry or clear', 'native read may still finish', '5,000 contacts and 200 linked companies', 'stale requests, timeouts and database contention', 'do not establish Grant’s live outcome or repair account connections', 'on GiGi 0.2.2']) assert.ok(gigiBetaHtml.includes(text), text);
+});
+
+
+test('Today layout release describes presentation changes without overstating workflow acceptance', () => {
+  for (const text of ['Included from 0.2.5', 'compact top navigation', 'centered Today board', 'keyboard shortcut', 'retain their behavior', 'Visual checks used an isolated synthetic workspace', 'compact and expanded windows', 'Search checks from 0.2.3', 'do not establish Grant’s live outcome']) assert.ok(gigiBetaHtml.includes(text), text);
+});
+
+
+test('Sources release explains scoped preview, approval, sign-out and synthetic evidence', () => {
+  const changes = gigiBetaHtml.match(/<section aria-labelledby="changes">([\s\S]*?)<\/section>/)?.[1] ?? '';
+  for (const text of [
+    'What changed in 0.2.6', 'bounded Gmail or primary Calendar selection',
+    'Ask GiGi', 'external MCP agent', 'UTC date scope',
+    'scanned pages, not complete history', 'approve the local import',
+    'created, existing and failed records', 'already saved records',
+    'Sign out of GiGi sources', 'Google consent and imported records',
+    'Included from 0.2.5'
+  ]) assert.ok(changes.includes(text), text);
+  assert.ok(gigiBetaHtml.includes('synthetic native companion/database fixtures and synthetic UI'));
+  assert.ok(gigiBetaHtml.includes('do not establish real Google import, Grant’s access or fresh-installation acceptance'));
+  assert.doesNotMatch(changes, /automatically import all|complete mailbox history|Linq.*connected|Grant.*verified/i);
 });

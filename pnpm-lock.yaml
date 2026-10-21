@@ -11,7 +11,7 @@ overrides:
   '@create-something/client-collaboration-pilot>@modelcontextprotocol/sdk': 1.31.0
   protobufjs: '>=7.5.5 <8'
   tar@>=7.0.0: '>=7.5.19 <8'
-  basic-ftp: '>=5.3.1 <6'
+  get-uri>basic-ftp: 6.2.1
   fast-uri: '>=3.1.5 <4'
   axios: '>=1.18.0 <2'
   ws@8: '>=8.21.0 <9'
@@ -130,6 +130,9 @@ patchedDependencies:
   '@modelcontextprotocol/sdk@1.26.0':
     hash: 22lrrz44ijo2k64j4pex7onqp4
     path: patches/@modelcontextprotocol__sdk@1.26.0.patch
+  extract-zip@2.0.1:
+    hash: dda5b3ukk7t2lvsawgakoau2ka
+    path: patches/extract-zip@2.0.1.patch
 
 importers:
 
@@ -2639,9 +2642,9 @@ importers:
       express:
         specifier: ^4.18.2
         version: 4.22.1
-      puppeteer:
-        specifier: ^21.6.0
-        version: 21.11.0(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)
+      puppeteer-core:
+        specifier: 25.15.0
+        version: 25.15.0(bufferutil@4.1.0)(utf-8-validate@6.0.6)(yauzl@2.10.0)
     devDependencies:
       '@types/cors':
         specifier: ^2.8.17
@@ -9389,6 +9392,19 @@ packages:
     engines: {node: '>=18'}
     hasBin: true
 
+  '@puppeteer/browsers@3.2.5':
+    resolution: {integrity: sha512-UoCo3Pynbm37aLEEoydSiG+t24ui7sLD40+07CKxzxNy4PpSowJMkvlLIiV67XjP1lMVynhQVnuwlTABqBH8LQ==}
+    engines: {node: '>=22.12.0'}
+    hasBin: true
+    peerDependencies:
+      proxy-agent: '>=8.0.1'
+      yauzl: ^2.10.0 || ^3.4.0
+    peerDependenciesMeta:
+      proxy-agent:
+        optional: true
+      yauzl:
+        optional: true
+
   '@quietloudlab/ai-interaction-atlas@1.0.7':
     resolution: {integrity: sha512-KNKElTt6i/0DOSzRXKyRnNiuv7eqUuZqNj0DvGaE13SZHlm0Hi2rVBZqjMMUU77FhSzmbOpzlWNl+JOjvT/c+A==}
     engines: {node: '>=18.0.0'}
@@ -11744,8 +11760,8 @@ packages:
     resolution: {integrity: sha512-e23vBV1ZLfjb9apvfPk4rHVu2ry6RIr2Wfs+O324okSidrX7pTAnEJPCh/O5BtRlr7QtZI7ktOP3vsqr7Z5XoA==}
     hasBin: true
 
-  basic-ftp@5.3.1:
-    resolution: {integrity: sha512-bopVNp6ugyA150DDuZfPFdt1KZ5a94ZDiwX4hMgZDzF+GttD80lEy8kj98kbyhLXnPvhtIo93mdnLIjpCAeeOw==}
+  basic-ftp@6.2.1:
+    resolution: {integrity: sha512-bK67isD+lKq46AU8vNtjvMaT2ZqAOAmNCbxUHlFBRD4k15NWxyEjmaKtZPlgce58So4BNTjITGQOVTjL9y0ECA==}
     engines: {node: '>=10.0.0'}
 
   better-sqlite3@11.10.0:
@@ -12022,6 +12038,12 @@ packages:
 
   chromium-bidi@13.0.1:
     resolution: {integrity: sha512-c+RLxH0Vg2x2syS9wPw378oJgiJNXtYXUvnVAldUlt5uaHekn0CCU7gPksNgHjrH1qFhmjVXQj4esvuthuC7OQ==}
+    peerDependencies:
+      devtools-protocol: '*'
+
+  chromium-bidi@157.0.8090-0:
+    resolution: {integrity: sha512-KJw7IQgqXwxpJgJlEIPg5mr2ZoqA+jkTRtc5EABI7sUJ3bu3cpI7NuEBoj4Gn1AsF78CaT9So5WQWspK3/wYag==}
+    engines: {node: '>=20.19.0 <22.0.0 || >=22.12.0'}
     peerDependencies:
       devtools-protocol: '*'
 
@@ -16098,6 +16120,10 @@ packages:
     resolution: {integrity: sha512-L7ykMWc3lQf3HS7ME3PSjp7wMIjJeW6+bKfH/RSTz5l6VUDGubnrC2BKj3UvM28Y5PMDFW0xniJOZHBZPpW1dQ==}
     engines: {node: '>=18'}
 
+  puppeteer-core@25.15.0:
+    resolution: {integrity: sha512-DEk7S2tlBDp4+iXdnHjFmMofoqVftlz1JO4eyE+oBSiQIfIVTYq8hWF1EsjmRvD49chxGX3oKQT5hX2dnIIDdg==}
+    engines: {node: '>=22.12.0'}
+
   puppeteer@21.11.0:
     resolution: {integrity: sha512-9jTHuYe22TD3sNxy0nEIzC7ZrlRnDgeX3xPkbS7PnbdwYjl2o/z/YuCrRBwezdKpbTDTJ4VqIggzNyeRcKq3cg==}
     engines: {node: '>=16.13.2'}
@@ -18132,6 +18158,28 @@ packages:
 
   zwitch@2.0.4:
     resolution: {integrity: sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A==}
+
+  devtools-protocol@0.0.1696802:
+    resolution:
+      integrity: sha512-FO5/SENfvc2K8wRnWQflKcwuoTH4dBkXCWTQ9ebIWtuX8JM5+ZvCotaEmkfh21pO7TvIKGTM3hG4xFiq9WTwmg==
+
+  typed-query-selector@2.12.3:
+    resolution:
+      integrity: sha512-/dtuMZyutHLlrxWhhC1uib00ELUr2dZ8C9B8YzZYsJmeE3V56OxRblrSM2UaF142pcMtak7ehZ6+poWGeehNIg==
+
+  webdriver-bidi-protocol@1.0.1:
+    resolution:
+      integrity: sha512-WXWs/aXF2a6Al1Z2/V/7Gp2oPZOAAmHjJOTmv4KCXRJ122IMj3tSSMc6a4q3K4QOmhQbse/Ahr+oTVJOU2dUiw==
+
+  modern-tar@0.8.6:
+    resolution:
+      integrity: sha512-LYSks0tNVqbtez/9OB0YFP6qLRSqkdAxJWOQpVaR67lNTbj2zNLyYpowkRMia5lXLCZKzxwoxkxH2MbbBR2aEg==
+    engines:
+      node: ">=18.0.0"
+
+  zod@4.6.7:
+    resolution:
+      integrity: sha512-g8W2D2kU6a8untc053fX1uVBKzM7yqAxW/3zwk83+6RyF2+SKOuV+c0wBDhUwzV1PaGapmZH+rmcUzPf+3CGwg==
 
 snapshots:
 
@@ -23300,7 +23348,7 @@ snapshots:
   '@puppeteer/browsers@1.7.0':
     dependencies:
       debug: 4.3.4
-      extract-zip: 2.0.1
+      extract-zip: 2.0.1(patch_hash=dda5b3ukk7t2lvsawgakoau2ka)
       progress: 2.0.3
       proxy-agent: 6.3.0
       tar-fs: 3.1.1
@@ -23315,7 +23363,7 @@ snapshots:
   '@puppeteer/browsers@1.9.1':
     dependencies:
       debug: 4.3.4
-      extract-zip: 2.0.1
+      extract-zip: 2.0.1(patch_hash=dda5b3ukk7t2lvsawgakoau2ka)
       progress: 2.0.3
       proxy-agent: 6.3.1
       tar-fs: 3.1.1
@@ -23330,7 +23378,7 @@ snapshots:
   '@puppeteer/browsers@2.11.2':
     dependencies:
       debug: 4.4.3
-      extract-zip: 2.0.1
+      extract-zip: 2.0.1(patch_hash=dda5b3ukk7t2lvsawgakoau2ka)
       progress: 2.0.3
       proxy-agent: 6.5.0
       semver: 7.8.5
@@ -23345,7 +23393,7 @@ snapshots:
   '@puppeteer/browsers@2.2.4':
     dependencies:
       debug: 4.4.3
-      extract-zip: 2.0.1
+      extract-zip: 2.0.1(patch_hash=dda5b3ukk7t2lvsawgakoau2ka)
       progress: 2.0.3
       proxy-agent: 6.5.0
       semver: 7.8.5
@@ -23361,7 +23409,7 @@ snapshots:
   '@puppeteer/browsers@2.6.1':
     dependencies:
       debug: 4.4.3
-      extract-zip: 2.0.1
+      extract-zip: 2.0.1(patch_hash=dda5b3ukk7t2lvsawgakoau2ka)
       progress: 2.0.3
       proxy-agent: 6.5.0
       semver: 7.8.5
@@ -23373,6 +23421,13 @@ snapshots:
       - bare-buffer
       - react-native-b4a
       - supports-color
+
+  '@puppeteer/browsers@3.2.5(yauzl@2.10.0)':
+    dependencies:
+      modern-tar: 0.8.6
+      yargs: 18.0.0
+    optionalDependencies:
+      yauzl: 2.10.0
 
   '@quietloudlab/ai-interaction-atlas@1.0.7': {}
 
@@ -23481,7 +23536,7 @@ snapshots:
       '@remotion/licensing': 4.0.410
       '@remotion/streaming': 4.0.410
       execa: 5.1.1
-      extract-zip: 2.0.1
+      extract-zip: 2.0.1(patch_hash=dda5b3ukk7t2lvsawgakoau2ka)
       react: 19.2.4
       react-dom: 19.2.4(react@19.2.4)
       remotion: 4.0.410(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -26419,7 +26474,7 @@ snapshots:
 
   baseline-browser-mapping@2.9.18: {}
 
-  basic-ftp@5.3.1: {}
+  basic-ftp@6.2.1: {}
 
   better-sqlite3@11.10.0:
     dependencies:
@@ -26738,6 +26793,12 @@ snapshots:
       devtools-protocol: 0.0.1551306
       mitt: 3.0.1
       zod: 3.25.76
+
+  chromium-bidi@157.0.8090-0(devtools-protocol@0.0.1696802):
+    dependencies:
+      devtools-protocol: 0.0.1696802
+      mitt: 3.0.1
+      zod: 4.6.7
 
   ci-info@4.4.0: {}
 
@@ -28408,7 +28469,7 @@ snapshots:
 
   extend@3.0.2: {}
 
-  extract-zip@2.0.1:
+  extract-zip@2.0.1(patch_hash=dda5b3ukk7t2lvsawgakoau2ka):
     dependencies:
       debug: 4.4.3
       get-stream: 5.2.0
@@ -28820,7 +28881,7 @@ snapshots:
 
   get-uri@6.0.5:
     dependencies:
-      basic-ftp: 5.3.1
+      basic-ftp: 6.2.1
       data-uri-to-buffer: 6.0.2
       debug: 4.4.3
     transitivePeerDependencies:
@@ -31710,6 +31771,20 @@ snapshots:
       - supports-color
       - utf-8-validate
 
+  puppeteer-core@25.15.0(bufferutil@4.1.0)(utf-8-validate@6.0.6)(yauzl@2.10.0):
+    dependencies:
+      '@puppeteer/browsers': 3.2.5(yauzl@2.10.0)
+      chromium-bidi: 157.0.8090-0(devtools-protocol@0.0.1696802)
+      devtools-protocol: 0.0.1696802
+      typed-query-selector: 2.12.3
+      webdriver-bidi-protocol: 1.0.1
+      ws: 8.21.3(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+    transitivePeerDependencies:
+      - bufferutil
+      - proxy-agent
+      - utf-8-validate
+      - yauzl
+
   puppeteer@21.11.0(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6):
     dependencies:
       '@puppeteer/browsers': 1.9.1
@@ -34391,3 +34466,13 @@ snapshots:
   zod@4.3.6: {}
 
   zwitch@2.0.4: {}
+
+  "devtools-protocol@0.0.1696802": {}
+
+  "typed-query-selector@2.12.3": {}
+
+  "webdriver-bidi-protocol@1.0.1": {}
+
+  "modern-tar@0.8.6": {}
+
+  "zod@4.6.7": {}

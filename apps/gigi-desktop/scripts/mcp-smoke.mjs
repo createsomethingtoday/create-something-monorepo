@@ -13,7 +13,13 @@ let calls=0;
 try {
  await client.connect(new StdioClientTransport({command:binary,env:{PATH:process.env.PATH,HOME:process.env.HOME,GIGI_DATA_DIR:data}}));
  const catalog=await client.listTools();
- assert.ok(catalog.tools.length<=12);
+ assert.equal(catalog.tools.length,32);
+ for (const [name,readOnly] of [['gigi_sources_status',true],['gigi_sources_preview',true],['gigi_imports_status',true],['gigi_imports_commit',false],['gigi_imports_cancel',false]]) {
+  const descriptor=catalog.tools.find(tool=>tool.name===name);
+  assert.ok(descriptor,`Missing source tool ${name}`);
+  assert.equal(descriptor.annotations.readOnlyHint,readOnly);
+  assert.equal(descriptor.inputSchema.additionalProperties,false);
+ }
  assert.ok(!catalog.tools.some(t=>t.name.includes('restore')));
  async function call(name,args={}) {
   const response=await client.callTool({name,arguments:args}); calls++;

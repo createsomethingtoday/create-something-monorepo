@@ -24,7 +24,7 @@ async function appFixture(exercise, custom = () => undefined) {
   let record = { id:'g1',title:'Saved title',fields:{Requirements:'Saved notes',Date:'2026-10-03'},source:{kind:'manual'},relations:[] };
   globalThis.document = document; globalThis.scrollX=0; globalThis.scrollY=0;
   globalThis.scrollTo=(x,y)=>{globalThis.scrollX=x;globalThis.scrollY=y;};
-  globalThis.setTimeout=(callback,delay)=>{assert.equal(delay,5000);timers.push(callback);return timers.length;};
+  globalThis.setTimeout=(callback,delay)=>{if(delay===10000)return previous.setTimeout(callback,delay);assert.equal(delay,5000);timers.push(callback);return timers.length;};
   globalThis.FormData=class{constructor(target){this.entries=Object.entries(target.values);}[Symbol.iterator](){return this.entries[Symbol.iterator]();}};
   globalThis.__TAURI__={core:{invoke:async(_,{operation,input})=>{
     calls.push({operation,input}); const result=custom(operation,input); if(result!==undefined)return result;
@@ -58,7 +58,7 @@ test('toast expiry and unrelated rerenders retain an unsaved editor draft, focus
   assert.equal(controls.get('title').value,'Unsubmitted next draft');
   assert.equal(controls.get('field-requirements').value,'Unsubmitted multiline\nnotes <&>');
   assert.equal(calls.filter(({operation})=>operation==='records.save').length,1);
-  await click({cancel:'1'});await click({edit:'1'});
+  await click({cancel:'1'});await click({discardChanges:'1'});await click({edit:'1'});
   assert.equal(controls.get('title').value,'First synthetic save','Cancel intentionally discards the draft');
  });
 });
@@ -178,4 +178,45 @@ test('Cancel during a submitted creation retains the write guard until it settle
   save.resolve({id:'created',title:'Synthetic creation',fields:{},relations:[]});await tick();
   assert.equal(root.loading,false);
  },operation=>operation==='records.save'?save.promise:undefined);
+});
+
+test('sidebar navigation protects an unfinished record and explicitly discards only after confirmation', async()=>{
+ await appFixture(async({root,click,type,controls,calls})=>{
+  await click({page:'tasks'});await click({new:'tasks'});type('title','Keep this unfinished task');
+  await click({page:'finances'});
+  assert.match(root.innerHTML,/Keep editing/);
+  assert.equal(controls.get('title').value,'Keep this unfinished task');
+  await click({keepEditing:'1'});
+  assert.equal(controls.get('title').value,'Keep this unfinished task');
+  await click({page:'finances'});await click({discardChanges:'1'});
+  assert.match(root.innerHTML,/GiGi \/ Money/);
+  assert.doesNotMatch(root.innerHTML,/id="record-form"/);
+  assert.equal(calls.some(({operation})=>operation==='records.save'),false);
+ });
+});
+
+test('reference history and scoped search cannot discard an unfinished task', async()=>{
+ await appFixture(async({root,click,type,controls,calls})=>{
+  await click({page:'gigs'});await click({page:'tasks'});await click({new:'tasks'});type('title','Keep navigation draft');
+  await click({workspaceHistory:'-1'});assert.match(root.innerHTML,/Keep your changes/);
+  await click({keepEditing:'1'});assert.equal(controls.get('title').value,'Keep navigation draft');
+  await click({findPeople:'1'});assert.match(root.innerHTML,/Keep your changes/);
+  await click({keepEditing:'1'});assert.equal(controls.get('title').value,'Keep navigation draft');
+  await click({workspaceHistory:'-1'});await click({discardChanges:'1'});assert.match(root.innerHTML,/GiGi \/ Gigs &amp; shifts/);
+  await click({workspaceHistory:'1'});assert.match(root.innerHTML,/GiGi \/ Tasks/);
+  assert.equal(calls.some(({operation})=>operation==='records.save'),false);
+ });
+});
+
+
+test('Today creation enters workspace history and protects the new draft on Back', async()=>{
+ await appFixture(async({root,click,type,controls,calls})=>{
+  await click({new:'gigs'});type('title','Keep new gig');
+  assert.doesNotMatch(root.innerHTML,/data-workspace-history="-1"[^>]*disabled/);
+  await click({workspaceHistory:'-1'});assert.match(root.innerHTML,/Keep your changes/);
+  await click({keepEditing:'1'});assert.equal(controls.get('title').value,'Keep new gig');
+  await click({workspaceHistory:'-1'});await click({discardChanges:'1'});
+  assert.match(root.innerHTML,/GiGi \/ Overview/);
+  assert.equal(calls.some(({operation})=>operation==='records.save'),false);
+ });
 });

@@ -22,6 +22,8 @@ console.log(JSON.stringify({results:[{ctx_session_id:'session-1',provider:'claud
     assert.equal(result.length, 1);
     assert.equal(result[0]?.sessionId, 'session-1');
     assert.equal(result[0]?.snippet.length, 500);
+    assert.equal((await ctx.search('🎵'.repeat(200), { limit: 1 })).length, 1);
+    await assert.rejects(ctx.search('🎵'.repeat(201)), error => error instanceof CtxError && error.detail === 'query_bounds');
   } finally { await rm(root, { recursive: true }); }
 });
 

@@ -12,7 +12,7 @@ async function fixture(run, { currency = 'CAD', status = () => ({ state: 'connec
     if (operation === 'workspace.get') return { id: 'w1', name: 'Synthetic review' };
     if (operation === 'records.list') return { items: input.entity === 'profile' ? [{ id: 'p1' }] : count ? [{ id: 'r1', title: 'Saved record', date: '2026-10-03T16:00:00-05:00' }] : [], count };
     if (operation === 'records.get') return input.entity === 'profile' ? { id: 'p1', title: 'Owner', fields: { Currency: currency } } : { id: 'r1', title: 'Saved record', fields: { Date: '2026-10-03T16:00:00-05:00', Requirements: 'Saved detail', 'Estimated Time': 2, Recurring: 'Custom value' }, relations: [] };
-    if (operation === 'connections.status') return status(input.provider);
+    if ((operation === 'connections.status' || operation === 'sources.status')) return status(input.provider);
     return {};
   } } };
   const settle = () => new Promise(resolve => setImmediate(resolve));

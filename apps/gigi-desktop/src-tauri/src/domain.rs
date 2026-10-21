@@ -4,6 +4,7 @@ use std::{fs, path::Path};
 use std::os::unix::fs::{OpenOptionsExt, PermissionsExt};
 use std::io::Write;
 use uuid::Uuid;
+use unicode_normalization::{UnicodeNormalization, char::is_combining_mark};
 
 const CATALOG: &str = include_str!("../migrations/notion_fields.json");
 const ENTITIES: [&str; 13] = [
@@ -21,6 +22,48 @@ const ENTITIES: [&str; 13] = [
     "profile",
     "services",
 ];
+
+// Two scans replace a correlated contacts × companies × relations search.
+// Keep Unicode name normalization in Rust; never project private searchable fields.
+const CONTACT_COMPANY_SEARCH_SQL: &str = "SELECT r.from_id,co.title FROM relations r JOIN companies co ON co.id=r.to_id AND co.workspace_id=r.workspace_id WHERE r.workspace_id=?1 AND r.from_entity='contacts' AND r.to_entity='companies'
+    UNION ALL SELECT r.to_id,co.title FROM relations r JOIN companies co ON co.id=r.from_id AND co.workspace_id=r.workspace_id WHERE r.workspace_id=?1 AND r.from_entity='companies' AND r.to_entity='contacts'";
+const CONTACT_SEARCH_SQL: &str = "SELECT id,title,status,updated_at,json_extract(fields_json,'$.Email'),json_extract(fields_json,'$.Phone'),json_extract(fields_json,'$.Contact') FROM contacts WHERE workspace_id=?1 ORDER BY updated_at DESC,id";
+fn search_fold(value: &str) -> String {
+    value.nfd().filter(|ch| !is_combining_mark(*ch)).collect::<String>().to_lowercase()
+}
+fn search_contacts(db: &Connection, wid: &str, query: &str, offset: i64, limit: i64) -> Result<Value,String> {
+    // Both scans see the same state even if an agent edits companies concurrently.
+    let snapshot = db.unchecked_transaction().map_err(|e|e.to_string())?;
+    let folded=search_fold(query);
+    let tokens: Vec<&str>=folded.split_whitespace().collect();
+    // Empty after normalization is not a wildcard (e.g. combining marks alone).
+    if tokens.is_empty() {return Ok(json!({"items":[],"count":0,"limit":limit,"nextCursor":null}));}
+    let mut company_matches: std::collections::HashMap<String,Vec<bool>> = std::collections::HashMap::new();
+    let mut companies = snapshot.prepare(CONTACT_COMPANY_SEARCH_SQL).map_err(|e|e.to_string())?;
+    let links = companies.query_map([wid], |r| Ok((r.get::<_,String>(0)?,r.get::<_,String>(1)?))).map_err(|e|e.to_string())?;
+    for row in links {
+        let (id,title) = row.map_err(|e|e.to_string())?;
+        let title=search_fold(&title);
+        let matched:Vec<bool>=tokens.iter().map(|token|title.contains(token)).collect();
+        if matched.iter().any(|hit|*hit) {
+            let flags=company_matches.entry(id).or_insert_with(||vec![false;tokens.len()]);
+            for (flag,hit) in flags.iter_mut().zip(matched) {*flag |= hit;}
+        }
+    }
+    let mut contacts = snapshot.prepare(CONTACT_SEARCH_SQL).map_err(|e|e.to_string())?;
+    let found = contacts.query_map([wid], |r| Ok((r.get::<_,String>(0)?,r.get::<_,String>(1)?,r.get::<_,Option<String>>(2)?,r.get::<_,String>(3)?,r.get::<_,Option<String>>(4)?,r.get::<_,Option<String>>(5)?,r.get::<_,Option<String>>(6)?))).map_err(|e|e.to_string())?;
+    let mut count = 0i64; let mut items = Vec::new();
+    for row in found {
+        let (id,title,status,updated,email,phone,contact) = row.map_err(|e|e.to_string())?;
+        let values=[title.as_str(),email.as_deref().unwrap_or(""),phone.as_deref().unwrap_or(""),contact.as_deref().unwrap_or("")].map(search_fold);
+        if tokens.iter().enumerate().all(|(index,token)|values.iter().any(|value|value.contains(token)) || company_matches.get(&id).is_some_and(|flags|flags[index])) {
+            if count >= offset && count < offset + limit {items.push(json!({"id":id,"workspaceId":wid,"entity":"contacts","title":title.chars().take(120).collect::<String>(),"titleTruncated":title.chars().count()>120,"status":status,"updatedAt":updated}));}
+            count += 1;
+        }
+    }
+    let next = if offset + limit < count {Some((offset + limit).to_string())} else {None};
+    Ok(json!({"items":items,"count":count,"limit":limit,"nextCursor":next}))
+}
 
 fn need<'a>(input: &'a Value, key: &str) -> Result<&'a str, String> {
     input
@@ -565,6 +608,7 @@ pub fn dispatch(root: &Path, op: &str, input: Value) -> Result<Value, String> {
                 if let Some(prior_id) = prior {
                     if prior_id != id && (input.get("id").is_none() || conversion.is_some()) {
                         let mut result = get(&tx, wid, entity, &prior_id)?;
+                        if source["kind"] == "import" { result["importDisposition"] = json!("existing"); }
                         if let Some((from, origin_id, _, _)) = &conversion {
                             result["sourceProposal"] = json!({"outcome":"existing","sourceEntity":from,"sourceId":origin_id});
                         }
@@ -614,6 +658,7 @@ pub fn dispatch(root: &Path, op: &str, input: Value) -> Result<Value, String> {
                 tx.execute("INSERT INTO relations VALUES(?1,?2,?3,?4,?5,?6)", params![wid,entity,id,role,from,origin_id]).map_err(|e|e.to_string())?;
             }
             let mut result = get(&tx, wid, entity, &id)?;
+            if source["kind"] == "import" && prior.is_none() { result["importDisposition"] = json!("created"); }
             if let Some((from, origin_id, _, _)) = &conversion {
                 result["sourceProposal"] = json!({"outcome":"created","sourceEntity":from,"sourceId":origin_id});
             }
@@ -662,11 +707,30 @@ pub fn dispatch(root: &Path, op: &str, input: Value) -> Result<Value, String> {
                 .or_else(|| input.get("offset").and_then(Value::as_u64))
                 .unwrap_or(0)
                 .min(100_000) as i64;
-            let sql=format!("SELECT id,title,status,occurred_at,money_cents,updated_at,json_extract(fields_json,'$.\"All Day\"') FROM {entity} WHERE workspace_id=?1 ORDER BY updated_at DESC,id LIMIT ?2 OFFSET ?3");
+            let query = input.get("query").and_then(Value::as_str).unwrap_or("").trim().to_lowercase();
+            if query.chars().count() > 160 { return Err("search query is too long".into()); }
+            if entity == "contacts" && !query.is_empty() {
+                return search_contacts(&db, wid, &query, offset, limit);
+            }
+            // Transaction Date governs the complete finance dataset before pagination.
+            // Validate the literal calendar day before SQLite normalizes impossible dates.
+            // Explicit offsets compare as instants; date-only/floating times get no local-time
+            // modifier, and the original Date string remains unchanged in the projection.
+            let order = if entity == "finances" {
+                "CASE WHEN substr(occurred_at,1,10) GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]'
+                  AND substr(occurred_at,1,4) != '0000'
+                  AND date(julianday(substr(occurred_at,1,10))) = substr(occurred_at,1,10)
+                  AND (length(occurred_at)=10 OR (substr(occurred_at,11,1) IN ('T',' ')
+                    AND substr(occurred_at,12,5) GLOB '[0-9][0-9]:[0-9][0-9]'
+                    AND substr(occurred_at,12,2) BETWEEN '00' AND '23'
+                    AND substr(occurred_at,15,2) BETWEEN '00' AND '59'))
+                  THEN julianday(occurred_at) ELSE NULL END DESC NULLS LAST,id ASC"
+            } else { "updated_at DESC,id" };
+            let sql=format!("SELECT id,title,status,occurred_at,money_cents,updated_at,json_extract(fields_json,'$.\"All Day\"'),json_extract(fields_json,'$.\"Call Time\"'),json_extract(fields_json,'$.\"Set Time\"') FROM {entity} WHERE workspace_id=?1 ORDER BY {order} LIMIT ?2 OFFSET ?3");
             let mut stmt = db.prepare(&sql).map_err(|e| e.to_string())?;
             let items=stmt.query_map(params![wid,limit,offset],|r|{
                 let title:String=r.get(1)?;let truncated=title.chars().count()>120;let display:String=title.chars().take(120).collect();
-                Ok(json!({"id":r.get::<_,String>(0)?,"workspaceId":wid,"entity":entity,"title":display,"titleTruncated":truncated,"status":r.get::<_,Option<String>>(2)?,"date":r.get::<_,Option<String>>(3)?,"moneyCents":r.get::<_,Option<i64>>(4)?,"updatedAt":r.get::<_,String>(5)?,"allDay":entity == "schedule" && r.get::<_,Option<i64>>(6)?.unwrap_or(0) == 1}))
+                Ok(json!({"id":r.get::<_,String>(0)?,"workspaceId":wid,"entity":entity,"title":display,"titleTruncated":truncated,"status":r.get::<_,Option<String>>(2)?,"date":r.get::<_,Option<String>>(3)?,"moneyCents":r.get::<_,Option<i64>>(4)?,"updatedAt":r.get::<_,String>(5)?,"allDay":(entity == "schedule" || entity == "gigs") && r.get::<_,Option<i64>>(6)?.unwrap_or(0) == 1,"callTime":if entity == "gigs" { r.get::<_,Option<String>>(7)? } else { None },"setTime":if entity == "gigs" { r.get::<_,Option<String>>(8)? } else { None }}))
             }).map_err(|e|e.to_string())?.collect::<Result<Vec<_>,_>>().map_err(|e|e.to_string())?;
             let count: i64 = db
                 .query_row(
@@ -973,6 +1037,42 @@ mod tests {
     }
 
     #[test]
+    fn finances_sort_transaction_dates_before_paging_and_keep_invalid_last() {
+        let root=temp();let wid=dispatch(&root,"workspace.create",json!({"name":"Synthetic finance order"})).unwrap()["id"].clone();
+        let other=Uuid::new_v4().to_string();open(&root).unwrap().execute("INSERT INTO workspaces(id,name) VALUES(?1,'Other synthetic workspace')",[&other]).unwrap();
+        // Larger rank means newer. Offset timestamps cross local date/year boundaries.
+        let mut cases:Vec<(Option<String>,i32)>=vec![
+            (Some("2026-12-31T23:00:00-12:00".into()),90),
+            (Some("2027-01-01T11:00:00Z".into()),90),
+            (Some("2027-01-01".into()),80),
+            (Some("2027-01-01T00:00:00+14:00".into()),70),
+            (Some("2026-10-20T12:00:00".into()),60),
+            (Some("2026-10-20".into()),50),
+            (Some("2024-02-29".into()),40),
+            (Some("2023-12-31".into()),30),
+            (None,-1),(Some("".into()),-1),(Some("not-a-date".into()),-1),(Some("2460000".into()),-1),(Some("2026-02".into()),-1),(Some("0000-01-01".into()),-1),
+            (Some("2026-02-30".into()),-1),(Some("2025-02-29".into()),-1),
+            (Some("2028-01-01T99:00:00Z".into()),-1),
+        ];
+        for day in 1..=55 {cases.push((Some(format!("2022-{:02}-{:02}",1+day/28,1+day%28)),0));}
+        let mut expected=Vec::new();let mut originals=std::collections::HashMap::new();
+        for (index,(date,rank)) in cases.into_iter().enumerate(){
+            let fields=if let Some(ref date)=date{json!({"Date":date,"Amount":100})}else{json!({"Amount":100})};
+            let record=dispatch(&root,"records.save",json!({"workspaceId":wid,"entity":"finances","title":format!("Transaction {index}"),"fields":fields})).unwrap();
+            let id=record["id"].as_str().unwrap().to_string();originals.insert(id.clone(),date.clone());
+            expected.push((rank,if rank==0{date.clone().unwrap()}else{String::new()},id));
+        }
+        dispatch(&root,"records.save",json!({"workspaceId":other,"entity":"finances","title":"Never include foreign finance","fields":{"Date":"2099-01-01"}})).unwrap();
+        // Editing an old/undated record must not promote it above newer transactions.
+        let db=open(&root).unwrap();for (rank,_,id) in &expected{db.execute("UPDATE finances SET updated_at=?2 WHERE id=?1",params![id,if *rank<0{"2099-01-01 00:00:00"}else{"2000-01-01 00:00:00"}]).unwrap();}drop(db);
+        expected.sort_by(|a,b|b.0.cmp(&a.0).then_with(||b.1.cmp(&a.1)).then_with(||a.2.cmp(&b.2)));
+        let read_all=|limit:i64|{let mut cursor=Value::Null;let mut ids=Vec::new();loop{let page=dispatch(&root,"records.list",json!({"workspaceId":wid,"entity":"finances","limit":limit,"cursor":cursor})).unwrap();assert_eq!(page["count"].as_u64().unwrap() as usize,expected.len());for item in page["items"].as_array().unwrap(){let id=item["id"].as_str().unwrap().to_string();assert_eq!(item["date"],json!(originals[&id]),"date/offset must not be rewritten");ids.push(id);}cursor=page["nextCursor"].clone();if cursor.is_null(){break;}}ids};
+        let expected_ids:Vec<_>=expected.iter().map(|item|item.2.clone()).collect();
+        assert_eq!(read_all(7),expected_ids);assert_eq!(read_all(50),expected_ids);
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
     fn overview_finds_eligible_records_beyond_recent_page_and_sorts_by_real_dates() {
         let root = temp();
         let wid = dispatch(&root,"workspace.create",json!({"name":"Solo"})).unwrap()["id"].clone();
@@ -1097,6 +1197,149 @@ mod tests {
         .unwrap();
         assert_eq!(got["fields"]["Fee"], 12500);
         let _ = std::fs::remove_dir_all(root);
+    }
+    fn large_contact_fixture(contact_count: usize) -> (std::path::PathBuf,String) {
+        let root=temp(); let w=dispatch(&root,"workspace.create",json!({"name":"Synthetic scale"})).unwrap();
+        let wid=w["id"].as_str().unwrap().to_string(); let mut db=open(&root).unwrap();let tx=db.transaction().unwrap();
+        for (entity,total) in [("contacts",contact_count),("companies",200)] {
+            for n in 0..total {
+                let id=format!("{entity}-{n:05}");
+                let title=if entity=="contacts" && n==4458 {"Danny Morgan".to_string()} else if entity=="companies" && n==0 {"ÉLODIE Studio".to_string()} else {format!("Synthetic {entity} {n}")};
+                tx.execute("INSERT INTO record_index VALUES(?1,?2,?3)",params![wid,entity,id]).unwrap();
+                tx.execute(&format!("INSERT INTO {entity}(id,workspace_id,title,fields_json,source_json) VALUES(?1,?2,?3,?4,'{{}}')"),params![id,wid,title,json!({"Email":format!("person{n}@example.test"),"Phone":format!("555-{n:05}"),"Rate Notes":"private-search-excluded"}).to_string()]).unwrap();
+            }
+        }
+        for n in 0..contact_count {
+            let contact=format!("contacts-{n:05}");let company=format!("companies-{:05}",n%200);
+            if n%2==0 {tx.execute("INSERT INTO relations VALUES(?1,'contacts',?2,'Company','companies',?3)",params![wid,contact,company]).unwrap();}
+            else {tx.execute("INSERT INTO relations VALUES(?1,'companies',?3,'Contacts','contacts',?2)",params![wid,contact,company]).unwrap();}
+        }
+        // Reverse duplicate must not duplicate a contact in the search result.
+        tx.execute("INSERT INTO relations VALUES(?1,'companies','companies-00000','Contacts','contacts','contacts-00000')",[&wid]).unwrap();
+        tx.commit().unwrap();drop(db);(root,wid)
+    }
+
+    #[test]
+    fn contact_search_realistic_scale_has_linear_work_and_correct_global_pages() {
+        let (root,wid)=large_contact_fixture(4459);let started=std::time::Instant::now();
+        let call=|query:&str,cursor:Option<&str>|dispatch(&root,"records.list",json!({"workspaceId":wid,"entity":"contacts","query":query,"limit":7,"cursor":cursor})).unwrap();
+        let named=call("DANNY MORGAN",None);assert_eq!(named["count"],1);assert_eq!(named["items"][0]["id"],"contacts-04458");
+        assert_eq!(call("person4458@",None)["count"],1);assert_eq!(call("555-04458",None)["count"],1);
+        let mut cursor=None;let mut ids=std::collections::HashSet::new();let mut pages=0;
+        loop {let page=call("élodie",cursor.as_deref());assert_eq!(page["count"],23);for item in page["items"].as_array().unwrap(){assert!(ids.insert(item["id"].as_str().unwrap().to_string()));assert!(item.get("fields").is_none());}pages+=1;cursor=page["nextCursor"].as_str().map(str::to_string);if cursor.is_none(){break;}}
+        assert_eq!(ids.len(),23);assert_eq!(pages,4);assert_eq!(call("private-search-excluded",None)["count"],0);
+        assert_eq!(call("no such person",None)["count"],0);assert_eq!(call("",None)["count"],4459);
+        // Deterministic SQLite work budget, not a machine-speed timing assertion.
+        let db=open(&root).unwrap();let mut steps=0;
+        for sql in [CONTACT_COMPANY_SEARCH_SQL,CONTACT_SEARCH_SQL] {
+            let mut stmt=db.prepare(sql).unwrap(); {let mut rows=stmt.query([&wid]).unwrap();while rows.next().unwrap().is_some(){}}
+            steps+=stmt.get_status(rusqlite::StatementStatus::VmStep);
+        }
+        assert!(steps<1_000_000,"search used {steps} VM steps");
+        eprintln!("4459-contact searches: {:?}; one scan pair: {steps} VM steps",started.elapsed());
+        // A concurrent WAL writer must not prevent a consistent read of committed contacts.
+        db.execute_batch("BEGIN IMMEDIATE; UPDATE contacts SET title='Uncommitted' WHERE id='contacts-04458';").unwrap();
+        assert_eq!(call("danny morgan",None)["count"],1);db.execute_batch("ROLLBACK;").unwrap();
+        drop(db);let _=fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn contact_search_above_reported_scale_keeps_full_collection_count() {
+        let (root,wid)=large_contact_fixture(5000);
+        for (query,count) in [("",5000),("danny morgan",1),("élodie",25)] {
+            let page=dispatch(&root,"records.list",json!({"workspaceId":wid,"entity":"contacts","query":query})).unwrap();
+            assert_eq!(page["count"],count);assert!(page["items"].as_array().unwrap().len()<=20);
+        }
+        let _=fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn contact_search_sqlite_lock_uses_busy_timeout_and_recovers() {
+        let root=temp();let w=dispatch(&root,"workspace.create",json!({"name":"Lock fixture"})).unwrap();let wid=w["id"].as_str().unwrap().to_string();
+        dispatch(&root,"records.save",json!({"workspaceId":wid,"entity":"contacts","title":"Danny Morgan"})).unwrap();
+        let lock=open(&root).unwrap();
+        // Verify SQLite's deadline directly: shared-runner scheduling can exceed
+        // wall-clock margins even when SQLite honors its configured busy timeout.
+        assert_eq!(lock.query_row("PRAGMA busy_timeout",[],|r|r.get::<_,i64>(0)).unwrap(),5000);
+        lock.execute_batch("PRAGMA locking_mode=EXCLUSIVE; BEGIN EXCLUSIVE; UPDATE contacts SET title='Locked';").unwrap();
+        let error=dispatch(&root,"records.list",json!({"workspaceId":wid,"entity":"contacts","query":"danny"})).unwrap_err();
+        assert!(error.contains("locked") || error.contains("busy"),"{error}");
+        lock.execute_batch("ROLLBACK;").unwrap();drop(lock);
+        assert_eq!(dispatch(&root,"records.list",json!({"workspaceId":wid,"entity":"contacts","query":"danny"})).unwrap()["count"],1);
+        let _=fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn contact_search_matches_all_name_tokens_without_cross_contact_leaks() {
+        let root=temp();let w=dispatch(&root,"workspace.create",json!({"name":"Name matching"})).unwrap();let wid=&w["id"];
+        let target=dispatch(&root,"records.save",json!({"workspaceId":wid,"entity":"contacts","title":"Latasha Nicole Baxter"})).unwrap();
+        for n in 0..60 {dispatch(&root,"records.save",json!({"workspaceId":wid,"entity":"contacts","title":format!("Other {n}")})).unwrap();}
+        for query in ["latasha baxter","BAXTER LATASHA","  latasha   baxter  ","latasha\tbaxter","latasha nicole baxter","latasha","baxter"] {
+            let page=dispatch(&root,"records.list",json!({"workspaceId":wid,"entity":"contacts","query":query,"limit":1})).unwrap();
+            assert_eq!(page["count"],1,"{query}");assert_eq!(page["items"][0]["id"],target["id"]);
+        }
+        dispatch(&root,"records.save",json!({"workspaceId":wid,"entity":"contacts","title":"Élodie Bäxter"})).unwrap();
+        assert_eq!(dispatch(&root,"records.list",json!({"workspaceId":wid,"entity":"contacts","query":"elodie baxter"})).unwrap()["count"],1);
+        assert_eq!(dispatch(&root,"records.list",json!({"workspaceId":wid,"entity":"contacts","query":"latasha elodie"})).unwrap()["count"],0);
+        for query in ["ELODIE BAXTER", "e\u{301}lodie ba\u{308}xter", "baxter\u{a0}elodie"] {
+            assert_eq!(dispatch(&root,"records.list",json!({"workspaceId":wid,"entity":"contacts","query":query})).unwrap()["count"],1,"{query}");
+        }
+        let company=dispatch(&root,"records.save",json!({"workspaceId":wid,"entity":"companies","title":"Northern Agency"})).unwrap();
+        dispatch(&root,"relations.link",json!({"workspaceId":wid,"fromEntity":"contacts","fromId":target["id"],"toEntity":"companies","toId":company["id"],"role":"Company"})).unwrap();
+        assert_eq!(dispatch(&root,"records.list",json!({"workspaceId":wid,"entity":"contacts","query":"northern latasha"})).unwrap()["count"],1);
+        assert_eq!(dispatch(&root,"records.list",json!({"workspaceId":wid,"entity":"contacts","query":"northern elodie"})).unwrap()["count"],0);
+        dispatch(&root,"records.save",json!({"workspaceId":wid,"entity":"contacts","title":"Imported alias","fields":{"Contact":"Maya Jane López"}})).unwrap();
+        assert_eq!(dispatch(&root,"records.list",json!({"workspaceId":wid,"entity":"contacts","query":"maya lopez"})).unwrap()["count"],1);
+        let foreign=Uuid::new_v4().to_string();
+        open(&root).unwrap().execute("INSERT INTO workspaces(id,name) VALUES(?1,'Other search workspace')",[&foreign]).unwrap();
+        dispatch(&root,"records.save",json!({"workspaceId":foreign,"entity":"contacts","title":"Latasha Baxter"})).unwrap();
+        assert_eq!(dispatch(&root,"records.list",json!({"workspaceId":wid,"entity":"contacts","query":"latasha baxter"})).unwrap()["count"],1);
+        assert_eq!(dispatch(&root,"records.list",json!({"workspaceId":wid,"entity":"contacts","query":"\u{301}"})).unwrap()["count"],0);
+        // The supported schema has Contact (title), not separately stored first/last fields.
+        assert!(dispatch(&root,"records.save",json!({"workspaceId":wid,"entity":"contacts","title":"Separate","fields":{"First Name":"Latasha","Last Name":"Baxter"}})).unwrap_err().contains("unknown contacts field"));
+        let greek=dispatch(&root,"records.save",json!({"workspaceId":wid,"entity":"contacts","title":"ΟΣ"})).unwrap();
+        for query in ["ΟΣ","ος"] {assert_eq!(dispatch(&root,"records.list",json!({"workspaceId":wid,"entity":"contacts","query":query})).unwrap()["items"][0]["id"],greek["id"],"{query}");}
+        let greek_company=dispatch(&root,"records.save",json!({"workspaceId":wid,"entity":"companies","title":"ΝΙΚΟΣ"})).unwrap();
+        dispatch(&root,"relations.link",json!({"workspaceId":wid,"fromEntity":"contacts","fromId":target["id"],"toEntity":"companies","toId":greek_company["id"],"role":"Company"})).unwrap();
+        for query in ["ΝΙΚΟΣ latasha","νικος latasha"] {assert_eq!(dispatch(&root,"records.list",json!({"workspaceId":wid,"entity":"contacts","query":query})).unwrap()["items"][0]["id"],target["id"],"{query}");}
+        let _=fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn contact_search_matches_local_fields_companies_and_paginates_without_private_payloads() {
+        let root = temp();
+        let w = dispatch(&root,"workspace.create",json!({"name":"Search"})).unwrap(); let wid=&w["id"];
+        let a=dispatch(&root,"records.save",json!({"workspaceId":wid,"entity":"contacts","title":"ÉLODIE Rivera","fields":{"Email":"Stage@Example.test","Phone":"555-0101","Rate Notes":"hidden-secret"}})).unwrap();
+        let b=dispatch(&root,"records.save",json!({"workspaceId":wid,"entity":"contacts","title":"Other person"})).unwrap();
+        let company=dispatch(&root,"records.save",json!({"workspaceId":wid,"entity":"companies","title":"North Studio"})).unwrap();
+        dispatch(&root,"relations.link",json!({"workspaceId":wid,"fromEntity":"companies","fromId":company["id"],"toEntity":"contacts","toId":a["id"],"role":"Contacts"})).unwrap();
+        for q in ["élodie", "STAGE@EXAMPLE", "555-0101", "north studio"] {
+            let r=dispatch(&root,"records.list",json!({"workspaceId":wid,"entity":"contacts","query":q})).unwrap();
+            assert_eq!(r["count"],1,"{q}"); assert_eq!(r["items"][0]["id"],a["id"]); assert!(!r.to_string().contains("hidden-secret"));
+        }
+        for q in ["hidden-secret", "%", "no match"] {assert_eq!(dispatch(&root,"records.list",json!({"workspaceId":wid,"entity":"contacts","query":q})).unwrap()["count"],0);}
+        let r=dispatch(&root,"records.list",json!({"workspaceId":wid,"entity":"contacts","query":" ","limit":1})).unwrap(); assert_eq!(r["count"],2); assert_eq!(r["nextCursor"],"1");
+        let r=dispatch(&root,"records.list",json!({"workspaceId":wid,"entity":"contacts","query":"other","limit":1})).unwrap(); assert_eq!(r["items"][0]["id"],b["id"]); assert!(r["nextCursor"].is_null());
+        dispatch(&root,"records.save",json!({"workspaceId":wid,"entity":"contacts","title":"Another person"})).unwrap();
+        let first=dispatch(&root,"records.list",json!({"workspaceId":wid,"entity":"contacts","query":"person","limit":1})).unwrap();
+        let second=dispatch(&root,"records.list",json!({"workspaceId":wid,"entity":"contacts","query":"person","limit":1,"cursor":first["nextCursor"]})).unwrap();
+        assert_eq!(first["count"],2);assert_eq!(second["count"],2);assert_ne!(first["items"][0]["id"],second["items"][0]["id"]);assert!(second["nextCursor"].is_null());
+        dispatch(&root,"records.save",json!({"workspaceId":wid,"entity":"companies","title":"Unlinked Company"})).unwrap();
+        assert_eq!(dispatch(&root,"records.list",json!({"workspaceId":wid,"entity":"contacts","query":"Unlinked"})).unwrap()["count"],0);
+        let _=fs::remove_dir_all(root);
+    }
+    #[test]
+    fn gig_list_exposes_only_agenda_times_without_full_private_fields() {
+        let root = temp();
+        let workspace = dispatch(&root, "workspace.create", json!({"name":"Agenda"})).unwrap();
+        let wid = &workspace["id"];
+        dispatch(&root, "records.save", json!({"workspaceId":wid,"entity":"gigs","title":"Soundcheck","fields":{"Date":"2026-10-22","Call Time":"18:30","Set Time":"20:00","Requirements":"Private notes"}})).unwrap();
+        let result = dispatch(&root, "records.list", json!({"workspaceId":wid,"entity":"gigs"})).unwrap();
+        assert_eq!(result["items"][0]["callTime"], "18:30");
+        assert_eq!(result["items"][0]["setTime"], "20:00");
+        assert!(result["items"][0].get("fields").is_none());
+        assert!(!result.to_string().contains("Private notes"));
+        let _ = fs::remove_dir_all(root);
     }
     #[test]
     fn title_only_save_preserves_gig_details_source_and_links() {
