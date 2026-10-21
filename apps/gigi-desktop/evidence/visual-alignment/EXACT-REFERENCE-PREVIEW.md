@@ -40,3 +40,9 @@ The preview replaces the sidebar with a compact top strip, preserves every desti
 Local review artifacts: `release-evidence/reference-preview/review.html`, `today-compact.png`, `today-expanded.png`, `people-search.png`, `music.png`, `instagram.png`, `unsaved-protection.png`, `contrast.json`, `tests.log`, `build.log`. The gallery places original source evidence beside actual native screenshots and explicitly labels the missing original render.
 
 Before any production release: review this preview and the explicit functional adaptations, then run release CI/installed-companion qualification against the approved exact candidate. No release approval is assumed for this branch.
+
+## Follow-up polish, 2026-10-21
+
+Removed inherited panel margins that doubled the reference's 22px section rhythm; standardized Music/Instagram 32px headings; centered and tightened the Music empty state; kept visible focus rings inside the compact header and 36px overflow-menu targets; explicitly suppressed preview transitions under reduced motion. No JavaScript or backend changes in this follow-up.
+
+Rebuilt the isolated native application successfully. Rechecked compact and expanded Today, Music empty state, Escape closing More and restoring focus to its summary, and Command-[ returning from Music to Today with forward navigation available. Updated the gallery screenshots. The prior 211-pass behavioral suite remains applicable because this follow-up changes only CSS; two installed-companion checks remain opt-in and unexecuted. Reduced-motion behavior is source-verified, not a claim of changing or testing the user's OS preference.
