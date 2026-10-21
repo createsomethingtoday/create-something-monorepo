@@ -24,7 +24,7 @@ test('restore requires visible in-app confirmation before native mutation',async
   }}};
   try{
     await import('./app.mjs?restore-flow-test');
-    await until(()=>root.innerHTML.includes('Your work at a glance'));
+    await until(()=>root.innerHTML.includes('Workspace totals'));
     handlers.click({target:{closest:()=>({dataset:{page:'settings'}})}});
     await until(()=>root.innerHTML.includes('Backup & restore')&&!root.loading);
     handlers.submit({preventDefault(){},target:{id:'restore-form',backupId:'64cad020-db32-49e9-8e85-581ed3172dbb'}});

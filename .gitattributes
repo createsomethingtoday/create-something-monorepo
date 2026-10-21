@@ -1,3 +1,13 @@
 
 # Use bd merge for beads JSONL files
 .beads/issues.jsonl merge=beads
+
+# Security backport bytes are integrity checked on every platform.
+/patches/extract-zip@2.0.1.patch text eol=lf
+/security/extract-zip/security.test.cjs text eol=lf
+/security/advisory-history/extract-zip-exception-expired-2026-10-20.json text eol=lf
+
+# Standalone removal evidence is byte-bound across all platforms.
+/packages/huggingface-spaces/motion-ontology/package.json text eol=lf
+/packages/huggingface-spaces/motion-ontology/package-lock.json text eol=lf
+/packages/huggingface-spaces/motion-ontology/src/extractor.ts text eol=lf
