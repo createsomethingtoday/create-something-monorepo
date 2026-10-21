@@ -203,3 +203,13 @@ h2{font-size:23px}
 .contact-search input { width: 100%; }
 .contact-search + .muted { margin: 10px 0 20px; }
 @media (max-width: 600px) { .contact-search { align-items: stretch; flex-direction: column; } }
+
+/* Bounded source reads and local imports share one review surface. */
+.source-import{margin-top:18px;border-top:1px solid var(--line);padding-top:16px}
+.source-selection{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;max-width:480px}
+.source-selection input{min-width:0;width:100%}
+.source-preview,.source-receipt{margin-top:16px;padding:14px;border:1px solid var(--line);border-radius:8px;background:var(--bg)}
+.source-preview h4,.source-receipt h4{font-size:13px;margin:0 0 10px}
+.source-preview-records{padding-left:18px;max-height:200px;overflow:auto;font-size:13px}
+.source-preview-records li{padding:6px 0;overflow-wrap:anywhere}.source-preview-records small{display:block;color:var(--muted);margin-top:4px}
+@media(max-width:760px){.source-selection{grid-template-columns:1fr}}
