@@ -1,7 +1,7 @@
 # Motion Ontology Analyzer - HuggingFace Space
 # Puppeteer + Express + Claude
 
-FROM node:20-slim
+FROM node:22.21.1-bookworm-slim
 
 # Install Chromium dependencies
 RUN apt-get update && apt-get install -y \
@@ -28,14 +28,13 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Set Puppeteer to use installed Chromium
-ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+ENV PUPPETEER_SKIP_DOWNLOAD=true
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 
 WORKDIR /app
 
 # Copy package files
 COPY package.json package-lock.json ./
-COPY vendor/ ./vendor/
 
 # Install dependencies
 RUN npm ci --ignore-scripts
