@@ -5,6 +5,7 @@ import { createBrokerClient, IntegrationError, type ConnectionProvider, type Ins
 import { createCtxClient, CtxError } from './ctx.ts';
 import { getSessionAccessToken, login, LoginError } from './auth.ts';
 import { mapSourcePage } from './import-adapter.ts';
+import { requireSourceSelection, selectSourceRecords, SourceSelectionError } from './source-selection.ts';
 
 const BROKER_RESOURCE = 'https://gigi-connector.createsomething.workers.dev';
 
@@ -41,9 +42,13 @@ export async function runOperation(request: RunnerRequest, options: RunnerOption
         case 'connections.reconcile': return success(await broker.reconcileConnection(provider, requireString(input.connectedAccountId), options.signal));
         case 'connections.import': {
           if(provider==='instagram')return failure(operation,'unsupported_operation');
+          const workspaceId = requireString(input.workspaceId);
+          const selection = requireSourceSelection(input.selection, provider);
           const page = await broker.readSourcePage(provider, requireString(input.connectedAccountId), optionalString(input.cursor), options.signal);
+          const selected = selectSourceRecords(mapSourcePage(workspaceId, page), selection);
           return success({ provider: page.provider, connectedAccountId: page.connectedAccountId,
-            records: mapSourcePage(requireString(input.workspaceId), page), nextCursor: page.nextCursor });
+            records: selected.records, nextCursor: page.nextCursor,
+            coverage: { ...selected.coverage, complete: page.nextCursor === null } });
         }
         default: return failure(operation, 'unknown_operation');
       }
@@ -63,7 +68,7 @@ export async function runOperation(request: RunnerRequest, options: RunnerOption
     }
     return failure(operation, 'unknown_operation');
   } catch (error) {
-    if (error instanceof RunnerInputError) return failure(operation, 'invalid_request');
+    if (error instanceof RunnerInputError || error instanceof SourceSelectionError) return failure(operation, 'invalid_request');
     if (error instanceof LoginError) return failure(operation, error.reason);
     if (error instanceof CtxError) return { ok: false, error: { operation, reason: error.reason, ...(error.detail ? { detail: error.detail } : {}) } };
     if (error instanceof IntegrationError) return failure(operation, error.reason);
