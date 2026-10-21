@@ -46,3 +46,24 @@ Before any production release: review this preview and the explicit functional a
 Removed inherited panel margins that doubled the reference's 22px section rhythm; standardized Music/Instagram 32px headings; centered and tightened the Music empty state; kept visible focus rings inside the compact header and 36px overflow-menu targets; explicitly suppressed preview transitions under reduced motion. No JavaScript or backend changes in this follow-up.
 
 Rebuilt the isolated native application successfully. Rechecked compact and expanded Today, Music empty state, Escape closing More and restoring focus to its summary, and Command-[ returning from Music to Today with forward navigation available. Updated the gallery screenshots. The prior 211-pass behavioral suite remains applicable because this follow-up changes only CSS; two installed-companion checks remain opt-in and unexecuted. Reduced-motion behavior is source-verified, not a claim of changing or testing the user's OS preference.
+
+## Pre-publication cohesion audit
+
+REA was requested but was not available as an exposed tool, PATH executable, or installed local skill. Its public repository documentation was inspected; setup would register an MCP server and modify agent configuration. No REA executable was installed/run, and this audit must not be described as REA-assisted. Existing source/native tooling was used instead.
+
+| Surface | Evidence / result |
+| --- | --- |
+| Today, People, Music, Instagram drafts | Native synthetic screenshots, compact/expanded layout and search checks described above. |
+| Companies, Money | Native empty-state/control hierarchy captured; no real records changed. |
+| Tasks | Native saved synthetic task and guarded creation; automated history/unsaved regression. |
+| Schedule | Native dated synthetic gig present; shared typography and controls retained. |
+| Settings | Native loading-to-sign-in-needed state, setup hierarchy and anchor navigation. |
+| Agent panel | Native disconnected recovery actions; Escape restores focus to opener; no provider turn sent. |
+| Dialogs | Native unsaved guard; synthetic approval tests. Instagram full-window confirmation placement remains native-unverified without a verified fixture account. A containment concern was investigated but not established as a defect; no speculative architecture change retained. |
+| Loading/error/recovery | Existing fixture tests and Settings/native agent states; no forced real-provider faults. |
+
+Confirmed correction: anchor scroll margins were 24px beneath a new 48px sticky header. Changed Schedule, Settings and composer targets to 64px (112px at wrapped-header widths). Rebuilt isolated preview and verified the Settings agent heading fully visible below the header, with screenshot `settings-anchor-fixed.png`. No data/schema/API changes.
+
+Independent review also caught Today → New gig missing workspace history. Fixed before release; regression verifies Back prompts for a dirty draft and Keep editing preserves it. Reviewer reran 17 focused checks with no remaining blocking findings. Release local gates on source 09a1c84f4: 214 desktop, 108 native and 269 integrations pass, no skips; source acceptance makes zero provider calls. The subsequent anchor CSS change requires a refreshed exact-source release build, not mutation of the earlier signed app.
+
+Publication blocked independently by expired security exception GHSA-jmr9-qjv8-65gv in `config/security-advisory-exceptions.v1.json` (reviewBy 2026-10-20). Dependency Review and Public Distribution GA both reject it. No renewal, suppression or bypass performed. The original signed 0.2.5 build is superseded and must not ship; no notarization/public upload has occurred. Production remains 0.2.4.
