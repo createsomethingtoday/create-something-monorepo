@@ -1,0 +1,23 @@
+# extract-zip 2.0.1 local security backport — review candidate
+
+This is not an upstream patched version or an advisory suppression. Both GHSA-jmr9-qjv8-65gv and GHSA-7pqw-9j4j-h8q3 remain visible to scanners. The package retains upstream version 2.0.1. Tracking: CRE-1634.
+
+Upstream archive: npm extract-zip@2.0.1, SHA-512 `GDhU9ntwuKyGXdZBUgTIe+vXnWj0fppUEtMDL0+idd5Sta8TGpHssn/eusA9mrPr9qNDym6SxAYZjNvCn/9RBg==`. LICENSE and all files except index.js remain unchanged. Upstream PR162 informed the investigation but is not represented as merged or sufficient by itself.
+
+The patch validates path components before directory creation, rejects escaping symlink targets, preserves component order when resolving links, and validates the final graph including pre-existing links. Failed extraction removes archive-created links. Regular files are written to exclusive temporary files and atomically renamed to avoid following destination symlinks or hard links. Normal duplicates, callbacks, executable modes and Chromium-style framework forward links are tested.
+
+Extraction must use a private directory not concurrently writable by another process. Node pathname APIs do not provide dirfd/openat traversal isolation. This patch does not claim transactional rollback of ordinary files, resistance to a concurrent local filesystem attacker, ZIP bomb protection, or remediation of other packages' advisories. Rejected extraction may leave ordinary in-root files; consumers must discard failed installations.
+
+Root pnpm uses `patchedDependencies` before lifecycle scripts. The standalone motion-ontology npm path uses a local tarball override, applied during resolution before any install lifecycle. Reproduce that tarball with `python3 security/extract-zip/build-vendor.py`; it validates the original archive and applies the same patch. No version renaming or postinstall-only patching.
+
+Qualification is incomplete until independent review, clean pnpm and npm resolution checks, malicious archive tests and Linux/macOS/Windows CI pass. The expired risk exception is unchanged while this candidate is under review. Do not release based on this README alone.
+
+## Current local evidence
+
+- Original dependency: initial suite 3 pass / 10 fail.
+- First backport: review reproduced two additional link-graph defects; both corrected. A pre-existing forward-link mutation case was subsequently reproduced and corrected.
+- Final source SHA-256 is recorded in provenance.json. Clean isolated pnpm (77 packages) and standalone npm ci (227 packages) verify installed bytes and pass 21 regression/compatibility tests on macOS. A patch hash in a lockfile was insufficient: verification caught stale unpatched bytes in the reused full workspace. Full-workspace reinstall/verification remains required.
+- Standalone TypeScript compilation reports TS2322 in src/extractor.ts:42. A separate clean untouched-baseline install produces byte-identical diagnostics; this backport does not change that source or claim to fix the existing build error.
+- Existing absolute links are accepted only when rooted in the canonical extraction path; alternate absolute spellings through filesystem aliases fail closed. Browser archive-created links must be relative. Windows/Linux qualification remains pending.
+- Independent review validated the earlier 19-case macOS state and requested the Windows separator correction. The correction is present, but the subsequent final-review request was blocked by the agent service's cybersecurity filter. Final independent approval remains outstanding. No alternative agent was used to bypass that block.
+- The existing exception configuration and security gates are unchanged. This branch must not be merged or released until review and all required gates pass; changing exception policy is not authorized as a workaround for incomplete qualification.

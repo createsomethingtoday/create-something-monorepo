@@ -34,10 +34,11 @@ ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 WORKDIR /app
 
 # Copy package files
-COPY package.json ./
+COPY package.json package-lock.json ./
+COPY vendor/ ./vendor/
 
 # Install dependencies
-RUN npm install
+RUN npm ci --ignore-scripts
 
 # Copy source files
 COPY tsconfig.json ./

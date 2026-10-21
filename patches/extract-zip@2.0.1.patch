@@ -1,0 +1,189 @@
+diff --git a/index.js b/index.js
+--- a/index.js
++++ b/index.js
+@@ -6,6 +6,7 @@
+ const { promisify } = require('util')
+ const stream = require('stream')
+ const yauzl = require('yauzl')
++const { randomBytes } = require('crypto')
+ 
+ const openZip = promisify(yauzl.open)
+ const pipeline = promisify(stream.pipeline)
+@@ -14,6 +15,7 @@
+   constructor (zipPath, opts) {
+     this.zipPath = zipPath
+     this.opts = opts
++    this.createdLinks = []
+   }
+ 
+   async extract () {
+@@ -50,18 +52,11 @@
+           return
+         }
+ 
+-        const destDir = path.dirname(path.join(this.opts.dir, entry.fileName))
+-
+         try {
+-          await fs.mkdir(destDir, { recursive: true })
+-
+-          const canonicalDestDir = await fs.realpath(destDir)
+-          const relativeDestDir = path.relative(this.opts.dir, canonicalDestDir)
+-
+-          if (relativeDestDir.split(path.sep).includes('..')) {
+-            throw new Error(`Out of bound path "${canonicalDestDir}" found while processing file ${entry.fileName}`)
++          if (path.isAbsolute(entry.fileName) || path.win32.isAbsolute(entry.fileName) || entry.fileName.includes('\\')) {
++            throw new Error('Out of bound archive entry')
+           }
+-
++          this.assertInside(path.resolve(this.opts.dir, entry.fileName))
+           await this.extractEntry(entry)
+           debug('finished processing', entry.fileName)
+           this.zipfile.readEntry()
+@@ -84,8 +79,6 @@
+     if (this.opts.onEntry) {
+       this.opts.onEntry(entry, this.zipfile)
+     }
+-
+-    const dest = path.join(this.opts.dir, entry.fileName)
+ 
+     // convert external file attr int into a fs stat mode int
+     const mode = (entry.externalFileAttributes >> 16) & 0xFFFF
+@@ -110,27 +103,102 @@
+ 
+     const procMode = this.getExtractedMode(mode, isDir) & 0o777
+ 
+-    // always ensure folders are created
+-    const destDir = isDir ? dest : path.dirname(dest)
+-
+-    const mkdirOptions = { recursive: true }
++    // Resolve before creating directories: recursive mkdir followed by realpath
++    // can already have created directories through an outside symlink.
++    const parent = await this.checkedPath(path.dirname(entry.fileName), true)
++    const dest = path.join(parent, path.basename(entry.fileName))
++    this.assertInside(dest)
+     if (isDir) {
+-      mkdirOptions.mode = procMode
+-    }
+-    debug('mkdir', { dir: destDir, ...mkdirOptions })
+-    await fs.mkdir(destDir, mkdirOptions)
+-    if (isDir) return
+-
+-    debug('opening read stream', dest)
++      await this.checkedPath(entry.fileName, true, procMode)
++      return
++    }
++
+     const readStream = await promisify(this.zipfile.openReadStream.bind(this.zipfile))(entry)
+-
+     if (symlink) {
+       const link = await getStream(readStream)
+-      debug('creating symlink', link, dest)
++      if (!link || path.isAbsolute(link) || path.win32.isAbsolute(link) || link.includes('\\')) {
++        throw new Error('Out of bound symlink target')
++      }
++      // Preserve component order (link/.. is not equivalent to lexical ..).
++      await this.checkedPath(path.relative(this.opts.dir, parent) + '/' + link)
++      await this.removeDestinationSymlink(dest)
+       await fs.symlink(link, dest)
++      this.createdLinks.push(dest)
+     } else {
+-      await pipeline(readStream, createWriteStream(dest, { mode: procMode }))
+-    }
++      // An exclusive temporary file and rename never follow a final symlink
++      // (or hard link), including duplicate archive entries. Extraction roots
++      // must not be concurrently modified by another process.
++      const temporary = path.join(parent, '.extract-zip-' + randomBytes(16).toString('hex'))
++      try {
++        await pipeline(readStream, createWriteStream(temporary, { flags: 'wx', mode: procMode }))
++        await fs.rename(temporary, dest)
++      } finally {
++        await fs.unlink(temporary).catch(err => { if (err.code !== 'ENOENT') throw err })
++      }
++    }
++  }
++
++  assertInside (target) {
++    const relative = path.relative(this.opts.dir, target)
++    if (path.isAbsolute(relative) || relative.split(path.sep).includes('..')) {
++      throw new Error('Out of bound path: ' + target)
++    }
++  }
++
++  async existingLinks (directory = this.opts.dir) {
++    const links = []
++    for (const entry of await fs.readdir(directory, { withFileTypes: true })) {
++      const target = path.join(directory, entry.name)
++      if (entry.isSymbolicLink()) links.push(target)
++      else if (entry.isDirectory()) links.push(...await this.existingLinks(target))
++    }
++    return links
++  }
++
++  async removeDestinationSymlink (dest) {
++    try {
++      if ((await fs.lstat(dest)).isSymbolicLink()) await fs.unlink(dest)
++    } catch (err) { if (err.code !== 'ENOENT') throw err }
++  }
++
++  async checkedPath (relative, create = false, mode) {
++    let current = this.opts.dir
++    const parts = relative.split(path.sep).join('/').split('/')
++    let links = 0
++    while (parts.length) {
++      const part = parts.shift()
++      if (!part || part === '.') continue
++      if (part === '..') {
++        current = path.dirname(current)
++        this.assertInside(current)
++        continue
++      }
++      const next = path.join(current, part)
++      this.assertInside(next)
++      let stat
++      try { stat = await fs.lstat(next) } catch (err) { if (err.code !== 'ENOENT') throw err }
++      if (stat && stat.isSymbolicLink()) {
++        if (++links > 40) throw new Error('Symlink cycle or excessive depth')
++        const link = await fs.readlink(next)
++        if (path.isAbsolute(link)) {
++          this.assertInside(link)
++          current = this.opts.dir
++          // Do not normalize symlink/.. components before resolving them.
++          if (link !== this.opts.dir && !link.startsWith(this.opts.dir + path.sep)) throw new Error('Out of bound symlink target')
++          parts.unshift(...link.slice(this.opts.dir.length).split(path.sep))
++        } else {
++          if (path.win32.isAbsolute(link) || link.includes('\\')) throw new Error('Out of bound symlink target')
++          parts.unshift(...link.split('/'))
++        }
++        continue
++      }
++      if (create) {
++        if (stat && !stat.isDirectory()) throw new Error('Not a directory: ' + next)
++        if (!stat) await fs.mkdir(next, { mode })
++      }
++      current = next
++    }
++    return current
+   }
+ 
+   getExtractedMode (entryMode, isDir) {
+@@ -169,5 +237,19 @@
+ 
+   await fs.mkdir(opts.dir, { recursive: true })
+   opts.dir = await fs.realpath(opts.dir)
+-  return new Extractor(zipPath, opts).extract()
++  const extractor = new Extractor(zipPath, opts)
++  try {
++    const existingLinks = await extractor.existingLinks()
++    await extractor.extract()
++    // Later archive entries may change forward targets. Validate the final
++    // graph before success, and remove owned links on any rejection.
++    for (const link of [...existingLinks, ...extractor.createdLinks]) {
++      await extractor.checkedPath(path.relative(opts.dir, link))
++    }
++  } catch (err) {
++    for (const link of extractor.createdLinks.reverse()) {
++      await extractor.removeDestinationSymlink(link)
++    }
++    throw err
++  }
+ }

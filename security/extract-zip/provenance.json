@@ -1,0 +1,11 @@
+{
+  "upstreamVersion": "2.0.1",
+  "upstreamSha512": "GDhU9ntwuKyGXdZBUgTIe+vXnWj0fppUEtMDL0+idd5Sta8TGpHssn/eusA9mrPr9qNDym6SxAYZjNvCn/9RBg==",
+  "advisories": [
+    "GHSA-jmr9-qjv8-65gv",
+    "GHSA-7pqw-9j4j-h8q3"
+  ],
+  "patchedIndexSha256": "6be7ee6ab9bb33416f6d691d96a6c1e0c270c82f20dceb4b253ea10913d0df8f",
+  "patchSha256": "fa5956bc383bb01e6424250978b419b3bc97231963033a63b1f5bb9566ce84f3",
+  "standaloneTarballSha256": "831a096a80b25cf3a577e4d74088632a77b68d7478c51bb9e47e0afd8a1cc41c"
+}
