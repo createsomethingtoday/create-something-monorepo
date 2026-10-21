@@ -48,7 +48,7 @@ diff --git a/index.js b/index.js
  
      // convert external file attr int into a fs stat mode int
      const mode = (entry.externalFileAttributes >> 16) & 0xFFFF
-@@ -110,27 +103,102 @@
+@@ -110,27 +103,104 @@
  
      const procMode = this.getExtractedMode(mode, isDir) & 0o777
  
@@ -151,8 +151,10 @@ diff --git a/index.js b/index.js
 +          if (link !== this.opts.dir && !link.startsWith(this.opts.dir + path.sep)) throw new Error('Out of bound symlink target')
 +          parts.unshift(...link.slice(this.opts.dir.length).split(path.sep))
 +        } else {
-+          if (path.win32.isAbsolute(link) || link.includes('\\')) throw new Error('Out of bound symlink target')
-+          parts.unshift(...link.split('/'))
++          if (path.win32.isAbsolute(link) || (path.sep !== '\\' && link.includes('\\'))) throw new Error('Out of bound symlink target')
++          // readlink returns native separators on Windows; archive text was
++          // already checked before creation. Preserve component order here.
++          parts.unshift(...link.split(path.sep).join('/').split('/'))
 +        }
 +        continue
 +      }
@@ -166,7 +168,7 @@ diff --git a/index.js b/index.js
    }
  
    getExtractedMode (entryMode, isDir) {
-@@ -169,5 +237,19 @@
+@@ -169,5 +239,19 @@
  
    await fs.mkdir(opts.dir, { recursive: true })
    opts.dir = await fs.realpath(opts.dir)

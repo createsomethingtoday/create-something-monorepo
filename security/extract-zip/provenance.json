@@ -5,7 +5,7 @@
     "GHSA-jmr9-qjv8-65gv",
     "GHSA-7pqw-9j4j-h8q3"
   ],
-  "patchedIndexSha256": "6be7ee6ab9bb33416f6d691d96a6c1e0c270c82f20dceb4b253ea10913d0df8f",
-  "patchSha256": "fa5956bc383bb01e6424250978b419b3bc97231963033a63b1f5bb9566ce84f3",
-  "standaloneTarballSha256": "831a096a80b25cf3a577e4d74088632a77b68d7478c51bb9e47e0afd8a1cc41c"
+  "patchedIndexSha256": "25d3ab1dc8dd11ae3a41503f46bad9cd47c55f040ccc3371481708d372f0c3ea",
+  "patchSha256": "d3483128118385874d6691cceddeb52e6a300f12b933ed7ed853702fde7b13e2",
+  "standaloneTarballSha256": "11b811b526156a487386ba04ab48c4366c7f01a467a4f6a174c1b691abfccbd7"
 }
