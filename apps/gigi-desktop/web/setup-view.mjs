@@ -102,7 +102,7 @@ export function setupSummary({ workspace, sources = {}, agentReceipt, agent } = 
       description: checkingCount ? `Checking ${checkingCount} ${checkingCount === 1 ? 'source' : 'sources'}. Your local records are ready to use.` : uncertainRefresh ? 'The session refresh outcome is uncertain. Check source status before trying to connect again.' : 'Each account needs its own consent. Import records after verification.',
     },
     {
-      id: 'agent', title: 'Codex or Claude Code',
+      id: 'agent', title: 'External Codex or Claude Code',
       label: localToolUsed ? phoneVerified ? 'Local tool used · Device test recorded' : 'Local tool used · Phone unverified' : prepared ? 'Prepared · Not verified' : 'Not verified',
       href: '#agent-setup',
       description: localToolUsed ? 'Confirm the tool result in your agent.' : prepared ? 'Run the setup command, then verify a real local tool call.' : 'Prepare the connector, then run and verify it in your agent.',
