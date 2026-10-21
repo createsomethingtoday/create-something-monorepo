@@ -235,7 +235,7 @@ async function cancelEditor() {
 
 function newRecord(entity) {
   if (!protectEditor(() => newRecord(entity))) return;
-  leaveRoute(); state.editorOrigin = editorOrigin(null, `[data-new="${entity}"]`, state.page === entity); state.justCreated = false; state.page = entity; state.selected = null; state.editorDraft = null; state.editing = true; render(); globalThis.scrollTo?.(0, 0); root.querySelector?.('#title')?.focus?.();
+  workspaceHistory.visit(entity); leaveRoute(); state.editorOrigin = editorOrigin(null, `[data-new="${entity}"]`, state.page === entity); state.justCreated = false; state.page = entity; state.selected = null; state.editorDraft = null; state.editing = true; render(); globalThis.scrollTo?.(0, 0); root.querySelector?.('#title')?.focus?.();
 }
 
 

@@ -207,3 +207,16 @@ test('reference history and scoped search cannot discard an unfinished task', as
   assert.equal(calls.some(({operation})=>operation==='records.save'),false);
  });
 });
+
+
+test('Today creation enters workspace history and protects the new draft on Back', async()=>{
+ await appFixture(async({root,click,type,controls,calls})=>{
+  await click({new:'gigs'});type('title','Keep new gig');
+  assert.doesNotMatch(root.innerHTML,/data-workspace-history="-1"[^>]*disabled/);
+  await click({workspaceHistory:'-1'});assert.match(root.innerHTML,/Keep your changes/);
+  await click({keepEditing:'1'});assert.equal(controls.get('title').value,'Keep new gig');
+  await click({workspaceHistory:'-1'});await click({discardChanges:'1'});
+  assert.match(root.innerHTML,/GiGi \/ Overview/);
+  assert.equal(calls.some(({operation})=>operation==='records.save'),false);
+ });
+});
