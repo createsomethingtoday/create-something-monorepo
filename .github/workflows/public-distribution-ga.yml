@@ -33,13 +33,13 @@ jobs:
           cache: 'pnpm'
 
       - name: Install verifier dependencies
-        run: pnpm install --frozen-lockfile --ignore-scripts
+        run: pnpm install --frozen-lockfile --ignore-scripts --side-effects-cache=false
 
       - name: Verify public-distribution and security contracts
         run: |
           node --test scripts/test/public-distribution.test.mjs
           node --test scripts/test/public-ga-policy.test.mjs
-          node --test scripts/test/security-advisory-exceptions.test.mjs
+          node --test scripts/test/security-advisory-exceptions.test.mjs scripts/test/security-local-remediation.test.mjs
           node scripts/security-advisory-exceptions.mjs
           node scripts/check-github-actions-pins.mjs
 

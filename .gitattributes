@@ -4,3 +4,5 @@
 
 # Security backport bytes are integrity checked on every platform.
 /patches/extract-zip@2.0.1.patch text eol=lf
+/security/extract-zip/security.test.cjs text eol=lf
+/security/advisory-history/extract-zip-exception-expired-2026-10-20.json text eol=lf

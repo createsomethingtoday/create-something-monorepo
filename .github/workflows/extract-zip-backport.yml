@@ -3,6 +3,11 @@ on:
   pull_request:
     paths:
       - '.gitattributes'
+      - 'config/security-advisory-exceptions.v1.json'
+      - 'scripts/security-*remediation*'
+      - 'scripts/security-advisory-exceptions.mjs'
+      - 'scripts/test/security-*'
+      - 'security/advisory-history/**'
       - 'security/extract-zip/**'
       - 'patches/extract-zip@2.0.1.patch'
       - 'package.json'
@@ -32,6 +37,8 @@ jobs:
         run: |
           python3 security/extract-zip/build-vendor.py
           git diff --exit-code -- packages/huggingface-spaces/motion-ontology/vendor
+      - name: Verify policy rejection cases
+        run: node --test scripts/test/security-advisory-exceptions.test.mjs scripts/test/security-local-remediation.test.mjs
       - name: Clean workspace dependency installation
         run: pnpm install --frozen-lockfile --ignore-scripts --side-effects-cache=false
       - name: Verify actual reachable packages and archive containment
