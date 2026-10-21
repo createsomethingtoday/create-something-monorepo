@@ -8,6 +8,39 @@
 const RESEND_API = 'https://api.resend.com/emails';
 const FROM_ADDRESS = 'CREATE SOMETHING <noreply@createsomething.io>';
 
+/**
+ * Resolved Canon Performance tokens for email clients without CSS variable support.
+ * Source: packages/canon/src/lib/styles/tokens.css. No remote fonts or assets.
+ */
+const EMAIL_STYLES = `
+    body { margin: 0; padding: 0; font-family: 'Geist Variable', Arial, 'Helvetica Neue', Helvetica, system-ui, sans-serif; background-color: #f3f3f0; color: #090909; -webkit-text-size-adjust: 100%; }
+    .container { max-width: 560px; margin: 0 auto; padding: 32px 24px 48px; }
+    .logo { margin-bottom: 32px; padding: 20px; background: #090909; color: #ffffff; font-size: 13px; font-weight: 700; line-height: 1.4; letter-spacing: 0; }
+    .identity { display: block; margin-top: 6px; color: #ffffff; font-family: 'IBM Plex Mono', 'SFMono-Regular', Menlo, Monaco, Consolas, monospace; font-size: 11px; font-weight: 400; }
+    h1 { margin: 0 0 24px; font-size: 32px; font-weight: 500; line-height: 1.15; letter-spacing: -0.03em; overflow-wrap: anywhere; }
+    h2 { margin: 32px 0 16px; font-size: 20px; font-weight: 600; line-height: 1.3; }
+    p { margin: 0 0 16px; color: #262626; font-size: 16px; line-height: 1.6; }
+    a { color: #0057b8; text-underline-offset: 3px; }
+    a:focus { outline: 2px solid #0057b8; outline-offset: 4px; }
+    .button { display: inline-block; box-sizing: border-box; max-width: 100%; margin: 16px 0 24px; border: 1px solid #090909; border-radius: 0; padding: 12px 20px; background: #090909; color: #ffffff; font-size: 16px; font-weight: 600; line-height: 1.4; text-align: center; text-decoration: none; }
+    .button.secondary { background: #ffffff; color: #090909; }
+    .button.danger { border-color: #c62026; background: #c62026; color: #ffffff; }
+    .buttons { margin: 24px 0; }
+    .buttons .button { margin: 0 8px 12px 0; }
+    .warning { margin: 24px 0; border: 1px solid #d7d7d2; border-left: 4px solid #c62026; padding: 16px; background: #ffffff; }
+    .warning p { margin: 0; }
+    .instructions { margin: 24px 0; border: 1px solid #d7d7d2; padding: 20px; background: #ffffff; }
+    .instructions h3 { margin: 0 0 12px; color: #5e6268; font-family: 'IBM Plex Mono', 'SFMono-Regular', Menlo, Monaco, Consolas, monospace; font-size: 12px; font-weight: 600; line-height: 1.4; text-transform: uppercase; }
+    .instructions ol { margin: 0; padding-left: 20px; }
+    .instructions li { margin-bottom: 8px; color: #262626; font-size: 16px; line-height: 1.6; }
+    code { padding: 2px 4px; background: #e6e6e0; color: #090909; font-family: 'IBM Plex Mono', 'SFMono-Regular', Menlo, Monaco, Consolas, monospace; font-size: 14px; overflow-wrap: anywhere; }
+    .link { color: #0057b8; word-break: break-all; overflow-wrap: anywhere; }
+    .case-study { margin-top: 32px; border-top: 1px solid #d7d7d2; padding-top: 24px; }
+    .footer { margin-top: 40px; border-top: 1px solid #d7d7d2; padding-top: 24px; }
+    .footer p { color: #5e6268; font-size: 14px; }
+    @media (max-width: 400px) { .container { padding: 20px 16px 32px; } h1 { font-size: 28px; } }
+`;
+
 interface EmailResult {
 	success: boolean;
 	id?: string;
@@ -64,24 +97,15 @@ export async function sendVerificationEmail(
 	const displayName = name || 'there';
 
 	const html = `<!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #000000; color: #ffffff; }
-    .container { max-width: 560px; margin: 0 auto; padding: 48px 24px; }
-    .logo { font-size: 14px; letter-spacing: 0.1em; color: rgba(255, 255, 255, 0.6); margin-bottom: 32px; }
-    h1 { font-size: 24px; font-weight: 600; margin: 0 0 24px 0; }
-    p { font-size: 16px; line-height: 1.6; color: rgba(255, 255, 255, 0.8); margin: 0 0 16px 0; }
-    .button { display: inline-block; background: #ffffff; color: #000000; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: 500; margin: 24px 0; }
-    .footer { margin-top: 48px; padding-top: 24px; border-top: 1px solid rgba(255, 255, 255, 0.1); font-size: 14px; color: rgba(255, 255, 255, 0.4); }
-    .link { color: rgba(255, 255, 255, 0.6); word-break: break-all; }
-  </style>
+  <style>${EMAIL_STYLES}</style>
 </head>
 <body>
   <div class="container">
-    <div class="logo">CREATE SOMETHING</div>
+    <div class="logo">CREATE SOMETHING<span class="identity">IDENTITY</span></div>
     <h1>Verify your email</h1>
     <p>Hi ${displayName},</p>
     <p>Please verify your email address to complete your account setup.</p>
@@ -111,24 +135,15 @@ export async function sendPasswordResetEmail(
 	const displayName = name || 'there';
 
 	const html = `<!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #000000; color: #ffffff; }
-    .container { max-width: 560px; margin: 0 auto; padding: 48px 24px; }
-    .logo { font-size: 14px; letter-spacing: 0.1em; color: rgba(255, 255, 255, 0.6); margin-bottom: 32px; }
-    h1 { font-size: 24px; font-weight: 600; margin: 0 0 24px 0; }
-    p { font-size: 16px; line-height: 1.6; color: rgba(255, 255, 255, 0.8); margin: 0 0 16px 0; }
-    .button { display: inline-block; background: #ffffff; color: #000000; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: 500; margin: 24px 0; }
-    .footer { margin-top: 48px; padding-top: 24px; border-top: 1px solid rgba(255, 255, 255, 0.1); font-size: 14px; color: rgba(255, 255, 255, 0.4); }
-    .link { color: rgba(255, 255, 255, 0.6); word-break: break-all; }
-  </style>
+  <style>${EMAIL_STYLES}</style>
 </head>
 <body>
   <div class="container">
-    <div class="logo">CREATE SOMETHING</div>
+    <div class="logo">CREATE SOMETHING<span class="identity">IDENTITY</span></div>
     <h1>Reset your password</h1>
     <p>Hi ${displayName},</p>
     <p>We received a request to reset your password. Click the button below to choose a new one.</p>
@@ -158,32 +173,22 @@ export async function sendDeletionConfirmationEmail(
 	const displayName = name || 'there';
 
 	const html = `<!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #000000; color: #ffffff; }
-    .container { max-width: 560px; margin: 0 auto; padding: 48px 24px; }
-    .logo { font-size: 14px; letter-spacing: 0.1em; color: rgba(255, 255, 255, 0.6); margin-bottom: 32px; }
-    h1 { font-size: 24px; font-weight: 600; margin: 0 0 24px 0; color: #cc4444; }
-    p { font-size: 16px; line-height: 1.6; color: rgba(255, 255, 255, 0.8); margin: 0 0 16px 0; }
-    .button { display: inline-block; background: #cc4444; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: 500; margin: 24px 0; }
-    .warning { background: rgba(204, 68, 68, 0.1); border: 1px solid rgba(204, 68, 68, 0.3); border-radius: 6px; padding: 16px; margin: 24px 0; }
-    .footer { margin-top: 48px; padding-top: 24px; border-top: 1px solid rgba(255, 255, 255, 0.1); font-size: 14px; color: rgba(255, 255, 255, 0.4); }
-    .link { color: rgba(255, 255, 255, 0.6); word-break: break-all; }
-  </style>
+  <style>${EMAIL_STYLES}</style>
 </head>
 <body>
   <div class="container">
-    <div class="logo">CREATE SOMETHING</div>
+    <div class="logo">CREATE SOMETHING<span class="identity">IDENTITY</span></div>
     <h1>Confirm account deletion</h1>
     <p>Hi ${displayName},</p>
     <p>We received a request to delete your account. This action is permanent and cannot be undone.</p>
     <div class="warning">
-      <p style="margin: 0; color: #cc4444;"><strong>Warning:</strong> All your data will be permanently deleted.</p>
+      <p><strong>Warning:</strong> All your data will be permanently deleted.</p>
     </div>
-    <a href="${confirmUrl}" class="button">Delete My Account</a>
+    <a href="${confirmUrl}" class="button danger">Delete My Account</a>
     <p>Or copy and paste this link:</p>
     <p class="link">${confirmUrl}</p>
     <p>This link expires in 1 hour.</p>
@@ -219,22 +224,15 @@ export async function sendWelcomeEmail(
 	const sourceName = sourceNames[source] || 'CREATE SOMETHING';
 
 	const html = `<!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #000000; color: #ffffff; }
-    .container { max-width: 560px; margin: 0 auto; padding: 48px 24px; }
-    .logo { font-size: 14px; letter-spacing: 0.1em; color: rgba(255, 255, 255, 0.6); margin-bottom: 32px; }
-    h1 { font-size: 24px; font-weight: 600; margin: 0 0 24px 0; }
-    p { font-size: 16px; line-height: 1.6; color: rgba(255, 255, 255, 0.8); margin: 0 0 16px 0; }
-    .footer { margin-top: 48px; padding-top: 24px; border-top: 1px solid rgba(255, 255, 255, 0.1); font-size: 14px; color: rgba(255, 255, 255, 0.4); }
-  </style>
+  <style>${EMAIL_STYLES}</style>
 </head>
 <body>
   <div class="container">
-    <div class="logo">CREATE SOMETHING</div>
+    <div class="logo">CREATE SOMETHING<span class="identity">IDENTITY</span></div>
     <h1>Welcome to ${sourceName}</h1>
     <p>Hi ${displayName},</p>
     <p>Thanks for signing up. Your account is ready.</p>
@@ -275,34 +273,15 @@ export async function sendProductDeliveryEmail(
   `;
 
 	const html = `<!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #000000; color: #ffffff; }
-    .container { max-width: 560px; margin: 0 auto; padding: 48px 24px; }
-    .logo { font-size: 14px; letter-spacing: 0.1em; color: rgba(255, 255, 255, 0.6); margin-bottom: 32px; }
-    h1 { font-size: 24px; font-weight: 600; margin: 0 0 16px 0; }
-    h2 { font-size: 18px; font-weight: 600; margin: 32px 0 16px 0; color: rgba(255, 255, 255, 0.9); }
-    p { font-size: 16px; line-height: 1.6; color: rgba(255, 255, 255, 0.8); margin: 0 0 16px 0; }
-    .buttons { margin: 32px 0; display: flex; gap: 12px; flex-wrap: wrap; }
-    .button { display: inline-block; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: 500; font-size: 14px; }
-    .button.primary { background: #ffffff; color: #000000; }
-    .button.secondary { background: transparent; color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.3); }
-    .instructions { background: rgba(255, 255, 255, 0.05); border-radius: 8px; padding: 20px; margin: 24px 0; }
-    .instructions h3 { font-size: 14px; font-weight: 600; margin: 0 0 12px 0; color: rgba(255, 255, 255, 0.6); text-transform: uppercase; letter-spacing: 0.05em; }
-    .instructions ol { margin: 0; padding-left: 20px; }
-    .instructions li { margin-bottom: 8px; color: rgba(255, 255, 255, 0.8); }
-    code { background: rgba(255, 255, 255, 0.1); padding: 2px 6px; border-radius: 4px; font-family: monospace; font-size: 14px; }
-    .case-study { margin-top: 32px; padding-top: 24px; border-top: 1px solid rgba(255, 255, 255, 0.1); }
-    .case-study a { color: rgba(255, 255, 255, 0.6); text-decoration: underline; }
-    .footer { margin-top: 48px; padding-top: 24px; border-top: 1px solid rgba(255, 255, 255, 0.1); font-size: 14px; color: rgba(255, 255, 255, 0.4); }
-  </style>
+  <style>${EMAIL_STYLES}</style>
 </head>
 <body>
   <div class="container">
-    <div class="logo">CREATE SOMETHING</div>
+    <div class="logo">CREATE SOMETHING<span class="identity">IDENTITY</span></div>
     <h1>Your ${product.name}</h1>
     <p>${product.description}</p>
     
