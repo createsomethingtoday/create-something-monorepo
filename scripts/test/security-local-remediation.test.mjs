@@ -18,7 +18,7 @@ test('empty policy cannot silently retire the only security obligation', () => {
   assert.ok(validateSecurityAdvisoryPolicy({...policy, remediations: []}).length);
 });
 test('missing coverage, provenance, review, or suppression fails closed', () => {
-  for (const field of ['installRoots','provenance','backportSourceCommit','regressionSuiteSha256','historicalExceptionSha256']) {
+  for (const field of ['installRoots','provenance','backportSourceCommit','regressionSuiteSha256','historicalExceptionSha256','standaloneRemoval']) {
     const item=clone(); delete item[field]; assert.throws(()=>validateLocalRemediation(item));
   }
   for (const change of [{installRoots:['workspace']},{suppressesScanner:true},{humanReviewRequired:false},{advisories:[record.advisories[0]]}]) {
@@ -28,11 +28,12 @@ test('missing coverage, provenance, review, or suppression fails closed', () => 
 test('mismatched or missing on-disk evidence blocks policy verification', t => {
   const dir=mkdtempSync(join(tmpdir(),'remediation-evidence-'));t.after(()=>rmSync(dir,{recursive:true,force:true}));
   assert.throws(()=>verifyRecordFiles(dir,record));
-  for (const file of ['security/extract-zip/provenance.json','security/extract-zip/security.test.cjs',record.historicalException]) {
+  for (const file of ['security/extract-zip/provenance.json','security/extract-zip/security.test.cjs',record.historicalException,...Object.keys(record.standaloneRemoval.files).map(file=>'packages/huggingface-spaces/motion-ontology/'+file)]) {
     mkdirSync(dirname(join(dir,file)),{recursive:true});copyFileSync(join(root,file),join(dir,file));
   }
   verifyRecordFiles(dir,record);
   for (const field of ['regressionSuiteSha256','historicalExceptionSha256']) assert.throws(()=>verifyRecordFiles(dir,{...clone(),[field]:'0'.repeat(64)}));
+  const removalChanged=clone();removalChanged.standaloneRemoval.files['package-lock.json']='0'.repeat(64);assert.throws(()=>verifyRecordFiles(dir,removalChanged));
   const changed=clone();changed.provenance.patchedIndexSha256='0'.repeat(64);assert.throws(()=>verifyRecordFiles(dir,changed));
 });
 test('missing and forged byte receipts fail', () => {

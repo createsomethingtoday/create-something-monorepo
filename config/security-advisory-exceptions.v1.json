@@ -39,7 +39,16 @@
         "Private extraction destination; no concurrent filesystem mutation.",
         "Rejected extraction may leave ordinary in-root files; discard failed installations.",
         "No ZIP-bomb mitigation or remediation of other dependencies is claimed."
-      ]
+      ],
+      "standaloneRemoval": {
+        "mode": "dependency-removed",
+        "sourceCommit": "8afe370f995761a114c95cd825a78c12b293b827",
+        "files": {
+          "package.json": "3303598d3ff085b2c297f286b0d9e427da812d8d4b9ba15f2cbb47dea737a981",
+          "package-lock.json": "82be8ce4f729347e040464d794996a0c1f5dd73bb848b560f86589bc41570d34",
+          "src/extractor.ts": "0a67d8dc0e6b92afe52b7d1251af35032de3e3cda113c83932845ed1c482185c"
+        }
+      }
     }
   ]
 }

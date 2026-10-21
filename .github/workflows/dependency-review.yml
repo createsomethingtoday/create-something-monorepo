@@ -17,6 +17,8 @@ on:
       - 'config/security-advisory-exceptions.v1.json'
       - 'scripts/security-advisory-exceptions.mjs'
       - 'scripts/security-local-remediation.mjs'
+      - 'scripts/security-standalone-removal.mjs'
+      - 'scripts/test/security-standalone-removal.test.mjs'
       - 'scripts/test/security-local-remediation.test.mjs'
       - 'security/advisory-history/**'
       - 'scripts/test/security-advisory-exceptions.test.mjs'
@@ -47,7 +49,7 @@ jobs:
 
       - name: Verify owned exceptions and local remediation
         run: |
-          node --test scripts/test/security-advisory-exceptions.test.mjs scripts/test/security-local-remediation.test.mjs
+          node --test scripts/test/security-advisory-exceptions.test.mjs scripts/test/security-local-remediation.test.mjs scripts/test/security-standalone-removal.test.mjs
           node scripts/security-advisory-exceptions.mjs
 
       - name: Review dependency changes

@@ -5,6 +5,7 @@ on:
       - '.gitattributes'
       - 'config/security-advisory-exceptions.v1.json'
       - 'scripts/security-*remediation*'
+      - 'scripts/security-standalone-removal.mjs'
       - 'scripts/security-advisory-exceptions.mjs'
       - 'scripts/test/security-*'
       - 'security/advisory-history/**'
@@ -39,7 +40,7 @@ jobs:
           python3 security/extract-zip/build-vendor.py
           git diff --exit-code -- packages/huggingface-spaces/motion-ontology/vendor
       - name: Verify policy rejection cases
-        run: node --test scripts/test/security-advisory-exceptions.test.mjs scripts/test/security-local-remediation.test.mjs
+        run: node --test scripts/test/security-advisory-exceptions.test.mjs scripts/test/security-local-remediation.test.mjs scripts/test/security-standalone-removal.test.mjs
       - name: Clean workspace dependency installation
         run: pnpm install --frozen-lockfile --ignore-scripts --side-effects-cache=false
       - name: Verify actual reachable packages and archive containment
@@ -52,24 +53,24 @@ jobs:
           cp packages/huggingface-spaces/motion-ontology/vendor/*.tgz "$RUNNER_TEMP/motion-standalone/vendor/"
           cd "$RUNNER_TEMP/motion-standalone"
           npm ci --ignore-scripts --no-audit --no-fund
-      - name: Verify standalone dependency bytes and behavior
-        run: node security/extract-zip/verify-installed.mjs "${{ runner.temp }}/motion-standalone"
+      - name: Verify standalone removed dependency closure
+        run: node scripts/security-standalone-removal.mjs "${{ runner.temp }}/motion-standalone"
 
-  standalone-node20:
+  standalone-node22:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
         with:
-          node-version: '20'
+          node-version: '22.21.1'
           package-manager-cache: false
       - name: Clean standalone install on Docker runtime major
         run: |
-          mkdir -p "$RUNNER_TEMP/motion-node20/vendor"
-          cp packages/huggingface-spaces/motion-ontology/package{,-lock}.json "$RUNNER_TEMP/motion-node20/"
-          cp packages/huggingface-spaces/motion-ontology/vendor/*.tgz "$RUNNER_TEMP/motion-node20/vendor/"
-          cd "$RUNNER_TEMP/motion-node20"
+          mkdir -p "$RUNNER_TEMP/motion-node22/vendor"
+          cp packages/huggingface-spaces/motion-ontology/package{,-lock}.json "$RUNNER_TEMP/motion-node22/"
+          cp packages/huggingface-spaces/motion-ontology/vendor/*.tgz "$RUNNER_TEMP/motion-node22/vendor/"
+          cd "$RUNNER_TEMP/motion-node22"
           npm ci --ignore-scripts --no-fund
-      - name: Verify actual bytes, archive containment and FTP consumer
-        run: node security/extract-zip/verify-installed.mjs "${{ runner.temp }}/motion-node20"
+      - name: Verify standalone dependency removal
+        run: node scripts/security-standalone-removal.mjs "${{ runner.temp }}/motion-node22"

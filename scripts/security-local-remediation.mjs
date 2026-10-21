@@ -5,6 +5,8 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { execFileSync } from 'node:child_process';
 
+import { verifyStandaloneRemoval } from './security-standalone-removal.mjs';
+
 const ADVISORIES = ['GHSA-jmr9-qjv8-65gv', 'GHSA-7pqw-9j4j-h8q3'];
 const INSTALL_ROOTS = ['workspace', 'standalone-motion-ontology'];
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');
@@ -19,6 +21,10 @@ export function validateLocalRemediation(record) {
   assert.equal(record.suppressesScanner, false, 'Scanner suppression is forbidden');
   assert.equal(record.humanReviewRequired, true, 'Human review remains required');
   assert.equal(record.runtimeExposure, 'tooling-only');
+  assert.equal(record.standaloneRemoval?.mode, 'dependency-removed');
+  assert.equal(record.standaloneRemoval?.sourceCommit, '8afe370f995761a114c95cd825a78c12b293b827');
+  assert.deepEqual(Object.keys(record.standaloneRemoval.files).sort(), ['package-lock.json', 'package.json', 'src/extractor.ts']);
+  for (const hash of Object.values(record.standaloneRemoval.files)) assert.match(hash, /^[a-f0-9]{64}$/);
   assert.match(record.owner ?? '', /\S/);
   assert.match(record.trackingIssue ?? '', /^CRE-\d+$/);
   assert.match(record.backportSourceCommit ?? '', /^[a-f0-9]{40}$/);
@@ -37,6 +43,7 @@ export function verifyRecordFiles(root, record) {
   assert.deepEqual(JSON.parse(read('security/extract-zip/provenance.json')), record.provenance, 'Provenance does not match the review record');
   assert.equal(sha(read('security/extract-zip/security.test.cjs')), record.regressionSuiteSha256, 'Regression suite changed; review record must be updated');
   assert.equal(sha(read(record.historicalException)), record.historicalExceptionSha256, 'Historical exception evidence changed');
+  for (const [file, hash] of Object.entries(record.standaloneRemoval.files)) assert.equal(sha(read('packages/huggingface-spaces/motion-ontology/' + file)), hash, 'Standalone reviewed evidence changed');
   // verify-installed additionally checks upstream, patch, vendor archive and installed code bytes.
 }
 
@@ -62,11 +69,10 @@ export async function verifyLocalRemediation(root, record) {
   const standalone = mkdtempSync(join(tmpdir(), 'extract-remediation-'));
   try {
     const source = join(root, 'packages/huggingface-spaces/motion-ontology');
-    mkdirSync(join(standalone, 'vendor'));
-    for (const file of ['package.json', 'package-lock.json', 'vendor/extract-zip-2.0.1-backport.tgz']) copyFileSync(join(source, file), join(standalone, file));
+    for (const file of ['package.json', 'package-lock.json']) copyFileSync(join(source, file), join(standalone, file));
     // Isolated from workspace node_modules, and before any package lifecycle code.
     execFileSync(process.platform === 'win32' ? 'npm.cmd' : 'npm', ['ci', '--ignore-scripts', '--no-fund'], { cwd: standalone, stdio: 'inherit', shell: process.platform === 'win32' });
-    const installed = verifyInstall(root, standalone, record.provenance.patchedIndexSha256);
+    const installed = verifyStandaloneRemoval(standalone);
     console.log(JSON.stringify({ remediation: record.id, coverage: { workspace, standalone: installed }, humanReviewRequired: true, scannerSuppression: false }));
   } finally {
     rmSync(standalone, { recursive: true, force: true });
