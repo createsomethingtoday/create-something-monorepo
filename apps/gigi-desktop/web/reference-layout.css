@@ -18,3 +18,19 @@
 @container(max-width:899px){.today-grid{grid-template-columns:1fr}}
 @media(max-width:1000px){.reference-header{gap:4px;padding:0 10px}.reference-nav{gap:2px}.reference-header .reference-find{min-width:140px}.reference-find kbd{display:none}.reference-header button{padding-inline:6px}}
 @media(max-width:700px){.reference-header{height:auto;min-height:48px;flex-wrap:wrap;padding:8px}.reference-nav{order:2;width:100%;justify-content:center}.content{padding:16px}.reference-menu{right:-70px}.chat-panel{top:96px}.today-grid{grid-template-columns:1fr}}
+
+/* One 22px rhythm between Today sections, rather than inherited panel margins
+   added to the reference grid gap. Keep controls and empty states aligned. */
+.today-sections{margin-top:16px}
+.today-sections>.panel{margin-top:0}
+.today-sections .panel-head{margin-bottom:8px}
+.today-sections .panel>p.muted{font-size:14px;line-height:1.5;margin:0}
+.today-sections .panel>small{display:block;font-size:12px}
+.today-grid{margin:14px 0 10px}
+.music-empty{display:grid;justify-items:center;align-content:center;gap:12px;padding:32px 24px;border-radius:12px;text-align:center}
+.music-empty>h2,.music-empty>p{width:100%;max-width:520px;margin:0}
+.music-empty>.btn{justify-self:center}
+.music-header h1,.social-workspace h1{font-size:32px;font-weight:500;letter-spacing:-1.2px}
+.reference-header summary:focus-visible,.reference-header button:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
+.reference-menu button{min-height:36px}
+@media(prefers-reduced-motion:reduce){.reference-header *,.today-card{animation:none;transition:none;scroll-behavior:auto}}
