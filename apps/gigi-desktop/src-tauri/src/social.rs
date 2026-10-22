@@ -51,6 +51,47 @@ fn publishable(body:&Value)->Result<(),String>{
     Ok(())
 }
 
+fn save(db: &mut Connection, workspace: &str, input: &Value) -> Result<Value, String> {
+    let request_id = text(input, "requestId")?;
+    Uuid::parse_str(request_id).map_err(|_| "Invalid save request ID")?;
+    let request_json = input.to_string();
+    let tx = db
+        .transaction_with_behavior(TransactionBehavior::Immediate)
+        .map_err(|e| e.to_string())?;
+    let previous:Option<(String,String)>=tx.query_row("SELECT request_json,result_json FROM mutation_receipts WHERE workspace_id=?1 AND operation='social.save' AND idempotency_key=?2",params![workspace,request_id],|r|Ok((r.get(0)?,r.get(1)?))).optional().map_err(|e|e.to_string())?;
+    if let Some((original, result)) = previous {
+        if original != request_json {
+            return Err("Save request changed; check the saved draft before trying again".into());
+        }
+        return serde_json::from_str(&result).map_err(|_| "Invalid saved receipt".into());
+    }
+    let data = body(&tx, workspace, input)?;
+    let id = input["id"]
+        .as_str()
+        .map(String::from)
+        .unwrap_or_else(|| Uuid::new_v4().to_string());
+    if input["id"].is_string() {
+        let old = get(&tx, workspace, &id)?;
+        if old["state"] != "draft" {
+            return Err("This draft has a publishing attempt. Duplicate it deliberately to create a new post.".into());
+        }
+        if old["revision"] != input["expectedRevision"] {
+            return Err("Draft changed. Reload before saving.".into());
+        }
+        tx.execute("UPDATE instagram_drafts SET body_json=?1,revision=revision+1,updated_at=CURRENT_TIMESTAMP WHERE id=?2 AND workspace_id=?3",params![data.to_string(),id,workspace]).map_err(|e|e.to_string())?;
+    } else {
+        tx.execute(
+            "INSERT INTO instagram_drafts(id,workspace_id,revision,body_json) VALUES(?1,?2,1,?3)",
+            params![id, workspace, data.to_string()],
+        )
+        .map_err(|e| e.to_string())?;
+    }
+    let result = get(&tx, workspace, &id)?;
+    tx.execute("INSERT INTO mutation_receipts(workspace_id,operation,idempotency_key,request_json,result_json) VALUES(?1,'social.save',?2,?3,?4)",params![workspace,request_id,request_json,result.to_string()]).map_err(|e|e.to_string())?;
+    tx.commit().map_err(|e| e.to_string())?;
+    Ok(result)
+}
+
 pub fn dispatch(resources:&Path,root:&Path,operation:&str,input:Value)->Result<Value,String>{
     dispatch_with(root,operation,input,|operation,input|crate::integrations::dispatch(resources,root,operation,input))
 }
@@ -75,27 +116,7 @@ pub(crate) fn dispatch_with<F>(root:&Path,operation:&str,input:Value,broker:F)->
                 None=>Ok(json!({"requestId":request_id,"state":"unknown","draft":null,"instruction":"No completed save receipt was found. This does not prove the save did not run; do not create a replacement or retry with a new request ID."}))
             }
         },
-        "social.save"=>{
-            let data=body(&db,&workspace,&input)?;
-            let request_id=text(&input,"requestId")?;
-            Uuid::parse_str(request_id).map_err(|_|"Invalid save request ID")?;
-            let request_json=input.to_string();
-            let tx=db.transaction_with_behavior(TransactionBehavior::Immediate).map_err(|e|e.to_string())?;
-            let previous:Option<(String,String)>=tx.query_row("SELECT request_json,result_json FROM mutation_receipts WHERE workspace_id=?1 AND operation='social.save' AND idempotency_key=?2",params![workspace,request_id],|r|Ok((r.get(0)?,r.get(1)?))).optional().map_err(|e|e.to_string())?;
-            if let Some((original,result))=previous {if original!=request_json{return Err("Save request changed; check the saved draft before trying again".into())}return serde_json::from_str(&result).map_err(|_|"Invalid saved receipt".into())}
-            let id=input["id"].as_str().map(String::from).unwrap_or_else(||Uuid::new_v4().to_string());
-            if input["id"].is_string(){
-                let old=get(&tx,&workspace,&id)?;
-                if old["state"]!="draft"{return Err("This draft has a publishing attempt. Duplicate it deliberately to create a new post.".into())}
-                if old["revision"]!=input["expectedRevision"]{return Err("Draft changed. Reload before saving.".into())}
-                tx.execute("UPDATE instagram_drafts SET body_json=?1,revision=revision+1,updated_at=CURRENT_TIMESTAMP WHERE id=?2 AND workspace_id=?3",params![data.to_string(),id,workspace]).map_err(|e|e.to_string())?;
-            }else{
-                tx.execute("INSERT INTO instagram_drafts(id,workspace_id,revision,body_json) VALUES(?1,?2,1,?3)",params![id,workspace,data.to_string()]).map_err(|e|e.to_string())?;
-            }
-            let result=get(&tx,&workspace,&id)?;
-            tx.execute("INSERT INTO mutation_receipts(workspace_id,operation,idempotency_key,request_json,result_json) VALUES(?1,'social.save',?2,?3,?4)",params![workspace,request_id,request_json,result.to_string()]).map_err(|e|e.to_string())?;
-            tx.commit().map_err(|e|e.to_string())?;Ok(result)
-        },
+        "social.save"=>save(&mut db,&workspace,&input),
         "social.validateMedia"=>{
             let image_url=text(&input,"imageUrl")?;
             let preview=broker("instagram.preview",json!({"imageUrl":image_url}))?;
@@ -230,6 +251,89 @@ fn store_receipt(db:&Connection,workspace:&str,id:&str,request:&str,receipt:Valu
             dispatch_with(&root,"social.receipt",json!({"workspaceId":w,"id":id,"continueConfirmed":confirmed}),|op,input|{assert_eq!(op,"instagram.receipt");assert_eq!(input["continueConfirmed"],expected);Ok(json!({"requestId":"attempt","state":"unknown","reason":reason}))}).unwrap();
         }
         drop(db);std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn draft_snapshot_waits_for_writer_before_resolving_image_bytes() {
+        use std::sync::atomic::{AtomicBool, Ordering};
+        use std::time::{Duration, Instant};
+        static WAITING: AtomicBool = AtomicBool::new(false);
+        WAITING.store(false, Ordering::SeqCst);
+        let (root, w) = setup();
+        let root = std::fs::canonicalize(root).unwrap();
+        let gig = crate::domain::dispatch(
+            &root,
+            "records.save",
+            json!({"workspaceId":w,"entity":"gigs","title":"Synthetic race target"}),
+        )
+        .unwrap();
+        let path = root.join("race.png");
+        image::DynamicImage::new_rgb8(3, 2).save(&path).unwrap();
+        let imported=crate::artwork::import_with_picker(&root,json!({"workspaceId":w,"requestId":Uuid::new_v4().to_string(),"mode":"picker","entity":"gigs","id":gig["id"],"expectedRevision":0,"alt":"Synthetic race artwork","provenance":{"origin":"supplied","purpose":"artwork","rights":"unknown"}}),||Some(path)).unwrap();
+        let asset = imported["cover"]["assetId"].as_str().unwrap().to_string();
+        crate::artwork::dispatch(&root,"media.attach",json!({"workspaceId":w,"requestId":Uuid::new_v4().to_string(),"entity":"gigs","id":gig["id"],"expectedRevision":1,"assetId":null})).unwrap();
+        // Open before taking the competing write lock so schema setup is not the race.
+        let mut saver = open(&root).unwrap();
+        saver
+            .busy_handler(Some(|attempt| {
+                WAITING.store(true, Ordering::SeqCst);
+                std::thread::sleep(Duration::from_millis(5));
+                attempt < 1000
+            }))
+            .unwrap();
+        let mut cleaner = crate::domain::open(&root).unwrap();
+        let lock = cleaner
+            .transaction_with_behavior(TransactionBehavior::Immediate)
+            .unwrap();
+        let request = Uuid::new_v4().to_string();
+        let input = json!({"workspaceId":w,"requestId":request,"title":"Synthetic raced draft","imageAssetId":asset,"imageAlt":"Synthetic race artwork"});
+        let worker_w = w.clone();
+        let worker = std::thread::spawn(move || save(&mut saver, &worker_w, &input));
+        let deadline = Instant::now() + Duration::from_secs(3);
+        while !WAITING.load(Ordering::SeqCst) && Instant::now() < deadline {
+            std::thread::sleep(Duration::from_millis(2));
+        }
+        assert!(
+            WAITING.load(Ordering::SeqCst),
+            "draft must reach the contended write lock"
+        );
+        // Model the cleanup transaction winning: there is no cover or saved draft.
+        assert_eq!(
+            lock.query_row(
+                "SELECT count(*) FROM instagram_drafts WHERE workspace_id=?1",
+                [&w],
+                |r| r.get::<_, i64>(0)
+            )
+            .unwrap(),
+            0
+        );
+        assert_eq!(
+            lock.execute(
+                "DELETE FROM image_assets WHERE workspace_id=?1 AND id=?2",
+                params![w, asset]
+            )
+            .unwrap(),
+            1
+        );
+        lock.commit().unwrap();
+        assert!(worker
+            .join()
+            .unwrap()
+            .unwrap_err()
+            .contains("unavailable in this workspace"));
+        assert_eq!(
+            cleaner
+                .query_row(
+                    "SELECT count(*) FROM instagram_drafts WHERE workspace_id=?1",
+                    [&w],
+                    |r| r.get::<_, i64>(0)
+                )
+                .unwrap(),
+            0
+        );
+        assert_eq!(cleaner.query_row("SELECT count(*) FROM mutation_receipts WHERE workspace_id=?1 AND operation='social.save' AND idempotency_key=?2",params![w,request],|r|r.get::<_,i64>(0)).unwrap(),0);
+        drop(cleaner);
+        std::fs::remove_dir_all(root).unwrap();
     }
 
 }
