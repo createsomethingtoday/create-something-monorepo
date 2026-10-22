@@ -26,6 +26,7 @@ let operationVersion = 0;
 let currencyVersion = 0;
 let sourceProposal = null;
 let renderedView = null;
+let renderedGigsCriteria = null;
 let creatorMount = null;
 let creatorNode = null;
 let creatorRoute = null;
@@ -457,6 +458,9 @@ function captureEditorDraft() {
 
 function render() {
   const view = [workspaceId(), state.setupProfile, routeVersion, state.page, state.editing, state.selected?.id, sourceProposal?.phase].join('|');
+  const gigsCriteria = state.page === 'gigs' && !state.selected && !state.editing ? JSON.stringify(gigs.state?.criteria) : null;
+  const gigsPosition = gigsCriteria !== null ? view === renderedView && gigsCriteria === renderedGigsCriteria ? globalThis.scrollY || 0 : gigs.state?.scroll || 0 : null;
+  renderedGigsCriteria = gigsCriteria;
   const viewState = view === renderedView ? captureViewState(root) : null;
   renderedView = view;
   const editorPosition = captureEditorDraft();
@@ -492,6 +496,8 @@ function render() {
   } else editorBaseline = null;
   renderedChatSession = chat?.current?.sessionId ?? null;
   restoreViewState(root, viewState);
+  // WebKit may clamp window scroll while innerHTML replaces the collection.
+  if (gigsPosition !== null) globalThis.scrollTo?.(0, gigsPosition);
   if (chat) chat.opening = false;
   if (editorPosition) {
     const focus = editorPosition.focus;
