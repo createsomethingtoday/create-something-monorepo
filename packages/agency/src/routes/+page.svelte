@@ -1,7 +1,7 @@
 <script lang="ts">
   import SelectedClientWork from '$lib/components/SelectedClientWork.svelte';
   import AgencyHero from '$lib/components/films/AgencyHero.svelte';
-  import ServiceJourney from '$lib/components/ServiceJourney.svelte';
+  import AgentEnablement from '$lib/components/AgentEnablement.svelte';
   import AgencyProof from '$lib/components/AgencyProof.svelte';
   import CanonServiceGuide from '$lib/components/CanonServiceGuide.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
@@ -77,7 +77,7 @@
 
 <SEO
   title="AI-native Technical Support | CREATE SOMETHING .agency"
-  description="AI-native technical support from $900/month. Diagnose problems, implement improvements and learn to use what we deliver. Focused includes one workstream, one milestone and four scheduled sessions. Team is $2,500/month for up to two workstreams, two milestones and six sessions. Project costs are separate."
+  description="AI-native Technical support from $900/month. Set up, connect and improve agents in your team’s tools, with agreed permissions, inspectable outputs and ongoing support. Focused includes one workstream, one milestone and four scheduled sessions. Team is $2,500/month for up to two workstreams, two milestones and six sessions. Project costs are separate."
   keywords="AI-native technical support, workflow support, software engineering, client-owned AI agent, agent foundation"
   ogImage="/og-image.png"
   propertyName="agency"
@@ -92,11 +92,11 @@
     <FilmCollection />
     <SelectedClientWork />
   </AgencyProof>
-  <ServiceJourney />
+  <AgentEnablement />
   <section class="conversion" aria-labelledby="conversion-title">
     <header class="conversion-intro">
       <div><p class="eyebrow">Start with one task</p><h2 id="conversion-title">What would you like working better?</h2><p>Bring the tools involved and an example of the result you need. We’ll discuss fit, then agree on the work and how to check it.</p><a class="conversion-action" href={agencyCoreMessaging.workflowMappingSessionHref}>Talk through your workflow ↗</a></div>
-      <aside aria-label="Help choosing a service"><CanonServiceGuide /></aside>
+      <aside aria-label="Optional help choosing a service"><details><summary>Ask canon about service fit</summary><CanonServiceGuide /></details></aside>
     </header>
     <MembershipOffer compact />
   </section>
