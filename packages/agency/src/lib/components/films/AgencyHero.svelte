@@ -10,28 +10,18 @@
   </div>
   <div class="hero-composition">
     <div class="hero-copy">
-      <h2>Keep your tools working.<br />Make the next improvement.</h2>
-      <p class="lede">A broken form. A manual handoff. An AI tool your team needs help using. We diagnose the problem, build the agreed change, and teach you how to use it.</p>
+      <h2>Agents that do the work.<br />In the tools you already use.</h2>
+      <p class="lede">We set up, connect and improve agents that carry out agreed work in your team’s tools. You see what they may access, review their outputs, and get ongoing technical support from people who know the project.</p>
       <div class="hero-actions"><a class="primary" href={agencyCoreMessaging.workflowMappingSessionHref}>Talk through your workflow <span aria-hidden="true">↗</span></a></div>
       <p class="next-step">Bring one task. We agree on scope and cost before work begins.</p>
       <p class="starting-point">Support {PUBLIC_PRICING.membership.label.toLowerCase()} <a href="/services#membership">Membership and costs ↗</a></p>
     </div>
     <figure class="service-record">
-      <figcaption><span>Your dot. Your workflow.</span><span>Illustrative example / 01</span></figcaption>
-      <div class="record-problem"><span class="record-label">The goal</span><p>“Help my ChatGPT dot prepare website updates for my review.”</p></div>
-      <div class="workflow-path" aria-label="Proposed workflow"><span>Your ChatGPT dot</span><span aria-hidden="true">→</span><span>Website + codebase</span><span aria-hidden="true">→</span><span>Your review</span></div>
-      <p class="record-context">We check compatibility, connect or build the missing pieces, and agree on what your dot may access. We may add a tool connection or written instructions for the task, depending on what your setup supports.</p>
-      <details class="example-receipt">
-        <summary>Inspect the proposed handoff <span aria-hidden="true">+</span></summary>
-        <dl>
-          <div><dt>Scope</dt><dd>One page update, using an agreed brief and selected repository.</dd></div>
-          <div><dt>Permission</dt><dd>Read the selected files. Prepare a draft. Wait for your approval before publishing.</dd></div>
-          <div><dt>Change record</dt><dd>A proposed diff, connection setup and workflow instructions, with each change explained.</dd></div>
-          <div><dt>Checks &amp; results</dt><dd>Record the build, mobile review and approval-stop check, with actual results and any blockers.</dd></div>
-          <div><dt>Handoff</dt><dd>Review the preview and receipts. Keep the setup, instructions and recovery steps.</dd></div>
-        </dl>
-      </details>
-      <div class="record-footer"><span>Proposed workflow. No task has run.</span><a href="https://chatgpt.com/features/dots/">About ChatGPT dots ↗</a></div>
+      <figcaption><span>From sharing an agent to doing the work.</span><span>Our starting point</span></figcaption>
+      <div class="record-problem"><span class="record-label">The opportunity</span><p>Sharing an agent opens a conversation. Context makes it useful.</p></div>
+      <p class="record-context">Using and sharing our OpenAI dots changed how we thought about helping others put agents to work. The next step is practical: connect the recipient’s tools and context, agree on permissions, and inspect the result.</p>
+      <p class="record-context">Sharing an agent does not grant access to someone else’s private context or credentials. Each client setup needs its own approved access.</p>
+      <div class="record-footer"><a href="#agent-enablement">See the workflow and optional canon story ↓</a><a href="#team-enablement">Team setup and governance ↗</a></div>
     </figure>
   </div>
   <div class="hero-bottom"><a href="#built-work">See the work behind the offer <span aria-hidden="true">↓</span></a><a href="/agent-foundation">What a checked handoff includes ↗</a></div>
@@ -57,24 +47,12 @@
   figcaption { border-bottom: 1px solid var(--color-performance-shell-border-strong); }
   .record-problem { padding: var(--space-performance-md); }
   .record-problem p { font: var(--font-performance-medium) clamp(1.45rem, 2.2vw, 2.1rem)/1.25 var(--font-performance-interface); margin: var(--space-performance-sm) 0 0; }
-  .workflow-path { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem; margin: 0 var(--space-performance-md); font: .75rem/1.5 var(--font-performance-mono); }
-  .workflow-path span:not([aria-hidden]) { border: 1px solid var(--color-performance-shell-border-strong); padding: .4rem .6rem; }
   .record-context { margin: 1rem var(--space-performance-md); font-size: .875rem; line-height: 1.6; }
-  .example-receipt { margin: 0 var(--space-performance-md); border-top: 1px solid var(--color-performance-shell-border-strong); }
-  .example-receipt summary { display: flex; justify-content: space-between; gap: 1rem; align-items: center; min-height: 56px; font-size: .875rem; cursor: pointer; list-style: none; }
-  .example-receipt summary::-webkit-details-marker { display: none; }
-  .example-receipt[open] summary span { transform: rotate(45deg); }
-  .example-receipt dl { margin: 0 0 1rem; }
-  .example-receipt dl > div { display: grid; grid-template-columns: 7rem 1fr; gap: 1rem; border-top: 1px solid var(--color-performance-shell-border-default); padding-block: .75rem; font-size: .8125rem; line-height: 1.6; }
-  .example-receipt dt { font-weight: var(--font-performance-medium); }
-  .example-receipt dd { margin: 0; }
-  .record-footer a { display: inline-flex; align-items: center; min-height: 44px; }
-  .example-receipt summary:focus-visible { outline: 2px solid var(--color-performance-focus); outline-offset: 4px; }
   .record-footer { border-top: 1px solid var(--color-performance-shell-border-strong); }
   .hero-bottom { display: flex; justify-content: space-between; flex-wrap: wrap; gap: var(--space-performance-sm); border-top: 1px solid var(--color-performance-shell-border-strong); padding-block: var(--space-performance-sm); }
   a { color: inherit; text-underline-offset: .3em; }
   .hero-bottom a, .starting-point a { display: inline-flex; align-items: center; gap: var(--space-performance-sm); min-height: 44px; }
   a:focus-visible { outline: 2px solid var(--color-performance-focus); outline-offset: 5px; }
   @media(max-width:900px) { .hero-track { padding-top: 7rem; } .hero-composition { grid-template-columns: 1fr; gap: var(--space-performance-lg); padding-block: var(--space-performance-lg); } .hero-copy { max-width: 40rem; } .service-record { max-width: 42rem; } }
-  @media(max-width:540px) { .hero-track { padding-inline: 6vw; } h1 { font-size: clamp(2.6rem, 10vw, 3.4rem); line-height: 1.04; } .eyebrow { font-size: .65rem; margin-bottom: var(--space-performance-md); } .primary { width: 100%; } .starting-point { display: block; } .starting-point a { display: flex; width: fit-content; } .workflow-path { display: grid; grid-template-columns: 1fr; justify-items: start; } .workflow-path span[aria-hidden] { transform: rotate(90deg); margin-left: .75rem; line-height: 1; } .example-receipt dl > div { grid-template-columns: 1fr; gap: .25rem; } figcaption { flex-direction: column; } }
+  @media(max-width:540px) { .hero-track { padding-inline: 6vw; } h1 { font-size: clamp(2.6rem, 10vw, 3.4rem); line-height: 1.04; } .eyebrow { font-size: .65rem; margin-bottom: var(--space-performance-md); } .primary { width: 100%; } .starting-point { display: block; } .starting-point a { display: flex; width: fit-content; } figcaption { flex-direction: column; } }
 </style>

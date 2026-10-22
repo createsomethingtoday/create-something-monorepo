@@ -185,7 +185,7 @@ test('the builder-facing homepage retains commercial terms, film evidence and di
   assert.match(home, /<AgencyHero/);
   assert.match(home, /<MembershipOffer/);
   assert.match(hero, /AI-native <span>Technical support<\/span>/);
-  assert.match(hero, /Keep your tools working/);
+  assert.match(hero, /Agents that do the work/);
   assert.match(registry, /Your next step, already prepared/);
   const membership = readFileSync(new URL('../src/lib/components/MembershipOffer.svelte', import.meta.url), 'utf8');
   const services = readFileSync(new URL('../src/routes/services/+page.svelte', import.meta.url), 'utf8');
@@ -197,7 +197,7 @@ test('the builder-facing homepage retains commercial terms, film evidence and di
   assert.match(hero, /href="\/agent-foundation"/);
   assert.doesNotMatch(hero, /requestAnimationFrame|<video|<iframe|WorkflowStory/);
   assert.match(hero, /workflowMappingSessionHref/);
-  assert.ok(home.indexOf('<AgencyProof') < home.indexOf('<ServiceJourney'));
+  assert.ok(home.indexOf('<AgencyProof') < home.indexOf('<AgentEnablement'));
   assert.ok(home.indexOf('<FilmCollection') < home.indexOf('<MembershipOffer'));
   assert.ok(home.indexOf('<BuiltWork') < home.indexOf('<FilmCollection'));
   assert.match(home, /<MembershipOffer compact/);
