@@ -4,7 +4,7 @@
   "atlasCanvasId": "create-something-internal-operating-topology",
   "rootNodeId": "substrate:create-something:root",
   "coverage": {
-    "generatedAt": "2026-10-21T14:05:01.097Z",
+    "generatedAt": "2026-10-22T14:00:48.677Z",
     "rootPath": ".",
     "packageCount": 245,
     "appCount": 14,
