@@ -36,9 +36,9 @@ async function call(name,args={}){
 try{
   client=await connect();
   const tools=(await client.listTools()).tools;
-  assert.equal(tools.length,32);
+  assert.equal(tools.length,38);
   const names=new Set(tools.map(tool=>tool.name));
-  for(const required of ['gigi_workspace_create','gigi_records_save','gigi_records_get','gigi_records_list','gigi_relations_link','gigi_gigs_summary','gigi_backup_create','gigi_sources_status','gigi_sources_preview','gigi_imports_commit','gigi_imports_status','gigi_imports_cancel'])assert.ok(names.has(required),`missing ${required}`);
+  for(const required of ['gigi_workspace_create','gigi_records_save','gigi_records_get','gigi_records_list','gigi_relations_link','gigi_gigs_summary','gigi_backup_create','gigi_sources_status','gigi_sources_preview','gigi_imports_commit','gigi_imports_status','gigi_imports_cancel','gigi_media_import_prepare','gigi_media_import','gigi_media_get','gigi_media_list','gigi_media_attach','gigi_media_operation_status'])assert.ok(names.has(required),`missing ${required}`);
   const restoreExposed=[...names].some(name=>name.includes('restore'));
   assert.equal(restoreExposed,false);
   assert.equal(await call('gigi_workspace_get'),null);

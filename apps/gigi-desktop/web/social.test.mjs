@@ -164,3 +164,16 @@ test('agent requests are visible and focus refresh preserves edits and confirmat
   workspace.dispose();assert.equal(listeners.focus,undefined);
  }finally{globalThis.addEventListener=oldAdd;globalThis.removeEventListener=oldRemove;}
 });
+
+test('a pending local artwork save cannot lose a simultaneous removal',async()=>{
+ const elements=new Map();let finish;
+ const saved={id:'local-draft',revision:1,state:'draft',body:{title:'Local idea',caption:'Private',imageUrl:'',connectedAccountId:'',expectedImageSha256:'',imageAssetId:'asset',imageAlt:'Artwork'},imageSnapshot:{workspaceId:'w',assetId:'asset',provenance:{origin:'generated',rights:'unknown'}}};
+ const element=selector=>{if(!elements.has(selector))elements.set(selector,{listeners:{},dataset:{socialSelect:'local-draft'},addEventListener(type,fn){this.listeners[type]=fn;},focus(){},scrollIntoView(){},setAttribute(){},click(){return this.listeners.click?.({currentTarget:this});}});return elements.get(selector);};
+ const container={set innerHTML(value){elements.clear();this.html=value;},addEventListener(){},removeEventListener(){},querySelector:element,querySelectorAll(selector){return [element(selector)];}};
+ const workspace=createSocialWorkspace({workspaceId:'w',call:async operation=>{if(operation==='social.list')return {items:[saved],total:1};if(operation==='social.get')return saved;if(operation==='social.save')return new Promise(resolve=>finish=resolve);throw Error(operation);}});
+ await workspace.mount(container);await element('[data-social-select]').click();
+ const saving=element('[data-social-save]').click();await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(workspace.state.busy,true);assert.match(container.html,/data-social-remove-artwork disabled/);
+ await element('[data-social-remove-artwork]').click();assert.equal(workspace.state.editor.imageAssetId,'asset');
+ finish({...saved,revision:2});await saving;assert.equal(workspace.state.editor.imageAssetId,'asset');workspace.dispose();
+});

@@ -17,11 +17,12 @@ fn workspace(db:&Connection,input:&Value)->Result<String,String>{let id=text(inp
 fn get(db:&Connection,workspace:&str,id:&str)->Result<Value,String>{
     let mut draft=db.query_row("SELECT revision,body_json,state,request_id,receipt_json,updated_at FROM instagram_drafts WHERE workspace_id=?1 AND id=?2",params![workspace,id],|r|Ok((r.get::<_,i64>(0)?,r.get::<_,String>(1)?,r.get::<_,String>(2)?,r.get::<_,Option<String>>(3)?,r.get::<_,Option<String>>(4)?,r.get::<_,String>(5)?)))
         .optional().map_err(|e|e.to_string())?.map(|(revision,body,state,request,receipt,updated)|json!({"id":id,"revision":revision,"body":serde_json::from_str::<Value>(&body).unwrap_or(Value::Null),"state":state,"requestId":request,"receipt":receipt.and_then(|r|serde_json::from_str::<Value>(&r).ok()),"updatedAt":updated})).ok_or_else(||"Draft not found in this workspace".to_string())?;
+    if let Some(snapshot)=draft["body"].as_object_mut().and_then(|body|body.remove("imageSnapshot")){draft["imageSnapshot"]=snapshot;draft["mediaState"]=json!("local_preview_only");}
     let request:Option<(String,i64,String)>=db.query_row("SELECT id,revision,instagram_account_id FROM instagram_approval_requests WHERE workspace_id=?1 AND draft_id=?2 ORDER BY rowid DESC LIMIT 1",params![workspace,id],|r|Ok((r.get(0)?,r.get(1)?,r.get(2)?))).optional().map_err(|e|e.to_string())?;
     draft["approvalRequest"]=request.map(|(id,revision,account)|json!({"id":id,"revision":revision,"instagramAccountId":account,"state":if draft["revision"]!=revision{"stale"}else if draft["state"]=="draft"{"pending_user_approval"}else{"publication_attempted"}})).unwrap_or(Value::Null);
     Ok(draft)
 }
-fn body(input:&Value)->Result<Value,String>{
+fn body(db:&Connection,workspace:&str,input:&Value)->Result<Value,String>{
     let title=input["title"].as_str().unwrap_or("").trim(); let caption=input["caption"].as_str().unwrap_or("");
     let image=input["imageUrl"].as_str().unwrap_or("").trim();
     if title.is_empty() || title.chars().count()>200{return Err("Use a draft title of 1–200 characters".into())}
@@ -31,10 +32,18 @@ fn body(input:&Value)->Result<Value,String>{
     if account.len()>200{return Err("Invalid account".into())}
     let digest=input["expectedImageSha256"].as_str().unwrap_or("");
     if !digest.is_empty() && (digest.len()!=64 || !digest.bytes().all(|c|c.is_ascii_hexdigit()&&!c.is_ascii_uppercase())){return Err("Invalid image verification".into())}
-    Ok(json!({"title":title,"caption":caption,"imageUrl":image,"connectedAccountId":account,"expectedImageSha256":digest}))
+    let mut result=json!({"title":title,"caption":caption,"imageUrl":image,"connectedAccountId":account,"expectedImageSha256":digest});
+    if let Some(id)=input["imageAssetId"].as_str().filter(|s|!s.is_empty()) {
+        if !image.is_empty()||!digest.is_empty(){return Err("Choose local artwork or a public JPEG URL for this draft".into())}
+        let alt=text(input,"imageAlt")?;if alt.chars().count()>500{return Err("Describe local artwork in at most 500 characters".into())}
+        let mut snapshot=crate::artwork::asset(db,workspace,id)?;
+        snapshot["alt"]=json!(alt);result["imageAssetId"]=json!(id);result["imageAlt"]=json!(alt);result["imageSnapshot"]=snapshot;
+    }
+    Ok(result)
 }
 /// Broker validates DNS/private destinations and JPEG requirements again.
 fn publishable(body:&Value)->Result<(),String>{
+    if body["imageAssetId"].as_str().is_some_and(|s|!s.is_empty()){return Err("This local artwork is saved for draft preview only and is not available for publishing".into())}
     let image=text(body,"imageUrl")?;
     if !image.starts_with("https://") || image.contains('@') || image.chars().any(char::is_whitespace){return Err("Publishing needs a public HTTPS JPEG image URL".into())}
     text(body,"connectedAccountId")?;
@@ -67,7 +76,7 @@ pub(crate) fn dispatch_with<F>(root:&Path,operation:&str,input:Value,broker:F)->
             }
         },
         "social.save"=>{
-            let data=body(&input)?;
+            let data=body(&db,&workspace,&input)?;
             let request_id=text(&input,"requestId")?;
             Uuid::parse_str(request_id).map_err(|_|"Invalid save request ID")?;
             let request_json=input.to_string();

@@ -213,6 +213,8 @@ pub fn dispatch(root:&Path,op:&str,input:Value)->Result<Value,String> {
             for row in rows {
                 let(id,path,fp,data)=row.map_err(|e|e.to_string())?; let mut item:Value=serde_json::from_str(&data).map_err(|e|e.to_string())?;
                 item["id"]=json!(id);
+                item["cover"]=crate::artwork::cover(&db,wid,"music",&id)?;
+                item["coverRevision"]=json!(crate::artwork::revision(&db,wid,"music",&id)?);
                 item["previewable"]=json!(previewable(Path::new(&path)));
                 item["organizationRevision"]=json!(organization_revision(&item));
                 item["availability"]=json!(match fingerprint(Path::new(&path)) {Ok(current) if current==fp=>"available",Ok(_)=>"changed",Err(_)=>"missing"});
@@ -222,7 +224,7 @@ pub fn dispatch(root:&Path,op:&str,input:Value)->Result<Value,String> {
         },
         "music.import"=>import_with_picker(root,&input,selected),
         "music.cancel"=>{let key=format!("{}:{wid}:{}",root.display(),need(&input,"requestId")?);if let Some(cancel)=IMPORTS.get_or_init(Default::default).lock().map_err(|_|"Import state unavailable")?.get(&key){cancel.store(true,Ordering::Relaxed);}Ok(json!({"cancelRequested":true}))},
-        "music.get"=>{let id=need(&input,"id")?;let(path,fp,mut item)=get(&db,wid,id)?;item["id"]=json!(id);item["previewable"]=json!(previewable(Path::new(&path)));item["organizationRevision"]=json!(organization_revision(&item));
+        "music.get"=>{let id=need(&input,"id")?;let(path,fp,mut item)=get(&db,wid,id)?;item["id"]=json!(id);item["previewable"]=json!(previewable(Path::new(&path)));item["organizationRevision"]=json!(organization_revision(&item));item["cover"]=crate::artwork::cover(&db,wid,"music",id)?;item["coverRevision"]=json!(crate::artwork::revision(&db,wid,"music",id)?);
                 item["availability"]=json!(match fingerprint(Path::new(&path)){Ok(current)if current==fp=>"available",Ok(_)=>"changed",Err(_)=>"missing"});Ok(item)},
         "music.organize"|"music.edit"=>{
             let id=need(&input,"id")?;let expected=need(&input,"expectedRevision")?;
@@ -239,7 +241,7 @@ pub fn dispatch(root:&Path,op:&str,input:Value)->Result<Value,String> {
             if let Some(request)=request{tx.execute("INSERT INTO mutation_receipts(workspace_id,operation,idempotency_key,request_json,result_json) VALUES(?1,'music.organize',?2,?3,?4)",params![wid,request,input.to_string(),result.to_string()]).map_err(|e|e.to_string())?;}
             tx.commit().map_err(|e|e.to_string())?;Ok(result)
         },
-        "music.remove"=>{let id=need(&input,"id")?;get(&db,wid,id)?;db.execute("DELETE FROM music_items WHERE workspace_id=?1 AND id=?2",params![wid,id]).map_err(|e|e.to_string())?;Ok(json!({"removed":true,"originalUnchanged":true}))},
+        "music.remove"=>{let id=need(&input,"id")?;get(&db,wid,id)?;let tx=db.transaction().map_err(|e|e.to_string())?;tx.execute("DELETE FROM image_covers WHERE workspace_id=?1 AND entity='music' AND record_id=?2",params![wid,id]).map_err(|e|e.to_string())?;tx.execute("DELETE FROM music_items WHERE workspace_id=?1 AND id=?2",params![wid,id]).map_err(|e|e.to_string())?;tx.commit().map_err(|e|e.to_string())?;Ok(json!({"removed":true,"originalUnchanged":true}))},
         "music.reconnect"=>{
             let id=need(&input,"id")?;let(original,fp,item)=get(&db,wid,id)?;
             let is_bundle=bundle_entry(&item,Path::new(&original),&fp);

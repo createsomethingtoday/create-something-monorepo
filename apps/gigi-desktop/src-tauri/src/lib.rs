@@ -1,4 +1,8 @@
 mod gig_list;
+pub mod artwork;
+pub mod artwork_mcp;
+pub mod artwork_protocol;
+mod agenda;
 pub mod media_protocol;
 pub mod music;
 pub mod music_mcp;
@@ -23,6 +27,7 @@ async fn dispatch(app: tauri::AppHandle, operation: String, input: serde_json::V
     };
     let resources=app.path().resource_dir().map_err(|e|e.to_string())?;
     tauri::async_runtime::spawn_blocking(move || {
+        if operation.starts_with("media.") {return artwork::dispatch(&data_dir,&operation,input);}
         if operation.starts_with("music.") {return music::dispatch(&data_dir,&operation,input);}
         if operation.starts_with("social.") {return social::dispatch(&resources,&data_dir,&operation,input);}
         if operation.starts_with("diagnostics.") {return diagnostics::dispatch(&data_dir,&operation,input);}
@@ -51,6 +56,11 @@ async fn dispatch(app: tauri::AppHandle, operation: String, input: serde_json::V
 
 pub fn run() {
     tauri::Builder::default()
+        .register_uri_scheme_protocol("gigi-image", |context, request| {
+            let app=context.app_handle();
+            let root=std::env::var_os("GIGI_DATA_DIR").map(std::path::PathBuf::from).or_else(||app.path().app_data_dir().ok());
+            artwork_protocol::respond(root.as_deref(),request)
+        })
         .register_uri_scheme_protocol("gigi-media", |context, request| {
             let app=context.app_handle();
             let root=std::env::var_os("GIGI_DATA_DIR").map(std::path::PathBuf::from).or_else(||app.path().app_data_dir().ok());

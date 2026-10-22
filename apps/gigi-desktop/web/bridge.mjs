@@ -12,7 +12,7 @@ export function createBridge(invoke, onMutation = () => {}) {
     return name;
   };
   return {
-    overview: (workspaceId, today) => call('workspace.overview', { workspaceId: owned(workspaceId), today }),
+    overview: (workspaceId, today) => call('workspace.overview', { workspaceId: owned(workspaceId), today, timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone }),
     getWorkspace: (workspaceId) => call('workspace.get', workspaceId ? { workspaceId } : {}),
     createWorkspace: (name) => call('workspace.create', { name: name.trim() }),
     listRecords: (workspaceId, name, cursor, query) => call('records.list', { workspaceId: owned(workspaceId), entity: entity(name), ...(cursor ? { cursor } : {}), ...(name === 'contacts' && query?.trim() ? { query: query.trim() } : {}) }),

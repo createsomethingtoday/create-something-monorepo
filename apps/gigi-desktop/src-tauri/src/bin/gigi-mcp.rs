@@ -1,4 +1,4 @@
-use gigi_desktop_lib::{domain,music_mcp,social_mcp,source_jobs};
+use gigi_desktop_lib::{domain,music_mcp,social_mcp,source_jobs,artwork_mcp};
 use serde_json::{json, Value};
 use std::fs;
 use std::io::{self, BufRead, Read, Write};
@@ -99,6 +99,7 @@ fn tool_catalog() -> Value {
         })
     }).collect();
     tools.extend(music_mcp::catalog());
+    tools.extend(artwork_mcp::catalog());
     tools.extend(social_mcp::catalog());
     tools.extend(source_jobs::catalog());
     json!({"tools":tools})
@@ -133,7 +134,7 @@ fn reply(root: &std::path::Path, request: &Value) -> Option<Value> {
         "tools/call" => {
             let params = request.get("params").unwrap_or(&Value::Null);
             let name = params.get("name").and_then(Value::as_str).unwrap_or("");
-            let operation = if let Some(op)=source_jobs::tool_operation(name){op}else if music_mcp::handles(name)||social_mcp::handles(name){name}else if let Some((_,operation,_))=TOOLS.iter().find(|(candidate,_,_)|*candidate==name){*operation}else{
+            let operation = if let Some(op)=source_jobs::tool_operation(name){op}else if music_mcp::handles(name)||social_mcp::handles(name)||artwork_mcp::handles(name){name}else if let Some((_,operation,_))=TOOLS.iter().find(|(candidate,_,_)|*candidate==name){*operation}else{
                 return Some(json!({"jsonrpc":"2.0","id":id,"error":{"code":-32602,"message":"unknown GiGi tool"}}));
             };
             let arguments = params
@@ -145,7 +146,7 @@ fn reply(root: &std::path::Path, request: &Value) -> Option<Value> {
                     json!({"jsonrpc":"2.0","id":id,"error":{"code":-32602,"message":"arguments must be an object"}}),
                 );
             }
-            let outcome = if music_mcp::handles(name){music_mcp::dispatch(root,name,arguments)}else if social_mcp::handles(name){
+            let outcome = if artwork_mcp::handles(name){artwork_mcp::dispatch(root,name,arguments)}else if music_mcp::handles(name){music_mcp::dispatch(root,name,arguments)}else if social_mcp::handles(name){
                 match std::env::current_exe().ok().and_then(|p|p.parent().map(std::path::Path::to_path_buf)){
                     Some(resources)=>social_mcp::dispatch(&resources,root,name,arguments),
                     None=>Err("MCP resource directory unavailable".into()),
@@ -261,7 +262,7 @@ mod tests {
             &json!({"jsonrpc":"2.0","id":1,"method":"tools/list"}),
         )
         .unwrap();
-        assert_eq!(listed["result"]["tools"].as_array().unwrap().len(), TOOLS.len()+music_mcp::catalog().len()+social_mcp::catalog().len()+source_jobs::catalog().len());
+        assert_eq!(listed["result"]["tools"].as_array().unwrap().len(), TOOLS.len()+music_mcp::catalog().len()+social_mcp::catalog().len()+source_jobs::catalog().len()+artwork_mcp::catalog().len());
         assert_eq!(
             listed["result"]["tools"][3]["inputSchema"]["properties"]["limit"]["type"],
             "integer"

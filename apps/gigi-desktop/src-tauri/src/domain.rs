@@ -159,6 +159,7 @@ pub(crate) fn open(root: &Path) -> Result<Connection, String> {
         db.execute_batch("PRAGMA user_version=1; COMMIT;")
             .map_err(|e| e.to_string())?;
     }
+    crate::artwork::ensure(&db)?;
     Ok(db)
 }
 
@@ -314,7 +315,7 @@ fn get(db: &Connection, wid: &str, entity: &str, id: &str) -> Result<Value, Stri
     }
     let link_count:i64=db.query_row("SELECT count(*) FROM relations WHERE workspace_id=?1 AND ((from_entity=?2 AND from_id=?3) OR (to_entity=?2 AND to_id=?3))",params![wid,entity,id],|r|r.get(0)).map_err(|e|e.to_string())?;
     Ok(
-        json!({"id":id,"workspaceId":wid,"entity":entity,"title":row.0,"fields":serde_json::from_str::<Value>(&row.1).map_err(|e|e.to_string())?,"source":serde_json::from_str::<Value>(&row.2).map_err(|e|e.to_string())?,"createdAt":row.3,"updatedAt":row.4,"relations":links,"relationCount":link_count,"relationsTruncated":link_count>100}),
+        json!({"id":id,"workspaceId":wid,"entity":entity,"title":row.0,"fields":serde_json::from_str::<Value>(&row.1).map_err(|e|e.to_string())?,"source":serde_json::from_str::<Value>(&row.2).map_err(|e|e.to_string())?,"createdAt":row.3,"updatedAt":row.4,"relations":links,"relationCount":link_count,"relationsTruncated":link_count>100,"cover":crate::artwork::resolved_cover(db,wid,entity,id)?,"coverRevision":crate::artwork::revision(db,wid,entity,id)?}),
     )
 }
 fn bounded(mut record: Value, full: bool) -> Value {
@@ -464,7 +465,9 @@ pub fn dispatch(root: &Path, op: &str, input: Value) -> Result<Value, String> {
             let wid = need(&input, "workspaceId")?;
             let today = need(&input, "today")?;
             if !valid_iso_day(today) { return Err("today must be a valid YYYY-MM-DD date".into()); }
-            overview(&db, wid, today)
+            let mut result=overview(&db, wid, today)?;
+            result["events"]=crate::agenda::overview(&db,wid,today,input["timeZone"].as_str().unwrap_or("UTC"))?;
+            Ok(result)
         }
         "records.save" => {
             let wid = need(&input, "workspaceId")?;

@@ -20,8 +20,8 @@ fn fields(name:&str)->(&'static[&'static str],&'static[&'static str]){
     match name{
         "gigi_instagram_drafts_list"=>(&["workspaceId"],&["offset"]),
         "gigi_instagram_draft_get"|"gigi_instagram_publish_receipt"=>(&["workspaceId","id"],&[]),
-        "gigi_instagram_draft_create"=>(&["workspaceId","requestId","title"],&["caption","imageUrl","connectedAccountId","expectedImageSha256"]),
-        "gigi_instagram_draft_update"=>(&["workspaceId","requestId","id","expectedRevision","title","caption","imageUrl","connectedAccountId","expectedImageSha256"],&[]),
+        "gigi_instagram_draft_create"=>(&["workspaceId","requestId","title"],&["caption","imageUrl","connectedAccountId","expectedImageSha256","imageAssetId","imageAlt"]),
+        "gigi_instagram_draft_update"=>(&["workspaceId","requestId","id","expectedRevision","title","caption","imageUrl","connectedAccountId","expectedImageSha256"],&["imageAssetId","imageAlt"]),
         "gigi_instagram_media_validate"=>(&["workspaceId","imageUrl"],&[]),
         "gigi_instagram_connection_status"=>(&["workspaceId"],&[]),
         "gigi_instagram_request_publication_approval"=>(&["workspaceId","requestId","id","expectedRevision","expectedInstagramAccountId"],&[]),

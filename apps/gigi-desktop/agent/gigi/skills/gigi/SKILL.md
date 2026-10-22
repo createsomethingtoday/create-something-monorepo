@@ -5,6 +5,8 @@ description: Use local GiGi MCP tools to find and organize music files, prepare 
 
 # GiGi
 
+For requested original artwork, use the separately bundled [gigi-artwork skill](../gigi-artwork/SKILL.md) in an external host that actually supplies native image generation and local file access. Local images can be reused in Instagram draft previews; they are not uploaded or publishable. Embedded Ask GiGi remains limited to its supplied tools.
+
 GiGi owns a private relational workspace on this desktop. SQLite is authoritative for current records and calculated balances. CTX supplies supporting history, not a competing record store.
 
 ## Work with the smallest relevant context
