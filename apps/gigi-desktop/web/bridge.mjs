@@ -1,7 +1,8 @@
+import {localToday} from './experience.mjs';
 const entities = new Set(['tasks', 'interactions', 'notes', 'gigs', 'finances', 'contacts', 'companies', 'documents', 'locations', 'schedule', 'tags', 'profile', 'services']);
 
-export function createBridge(invoke) {
-  const call = (operation, input = {}) => invoke('dispatch', { operation, input });
+export function createBridge(invoke, onMutation = () => {}) {
+  const call = async (operation, input = {}) => {const result=await invoke('dispatch', {operation,input});if(['records.save','relations.link','backup.restore','connections.import','imports.commit'].includes(operation))onMutation(input.workspaceId);return result;};
   const owned = (workspaceId) => {
     if (!workspaceId) throw new Error('Create or select a private workspace first.');
     return workspaceId;
@@ -15,6 +16,7 @@ export function createBridge(invoke) {
     getWorkspace: (workspaceId) => call('workspace.get', workspaceId ? { workspaceId } : {}),
     createWorkspace: (name) => call('workspace.create', { name: name.trim() }),
     listRecords: (workspaceId, name, cursor, query) => call('records.list', { workspaceId: owned(workspaceId), entity: entity(name), ...(cursor ? { cursor } : {}), ...(name === 'contacts' && query?.trim() ? { query: query.trim() } : {}) }),
+    listGigs: (workspaceId, gigs, cursor) => call('records.list', { workspaceId: owned(workspaceId), entity: 'gigs', gigs: { ...gigs, today: localToday(), timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone }, ...(cursor ? {cursor} : {}) }),
     getRecord: (workspaceId, name, id, detail) => call('records.get', { workspaceId: owned(workspaceId), entity: entity(name), id, ...(detail ? { detail } : {}) }),
     saveRecord: (workspaceId, name, record) => call('records.save', { workspaceId: owned(workspaceId), entity: entity(name), ...record }),
     linkRecords: (workspaceId, fromEntity, fromId, toEntity, toId, role) => call('relations.link', { workspaceId: owned(workspaceId), fromEntity: entity(fromEntity), fromId, toEntity: entity(toEntity), toId, ...(role ? { role } : {}) }),
@@ -51,8 +53,8 @@ export function createBridge(invoke) {
   };
 }
 
-export function tauriBridge() {
+export function tauriBridge(onMutation) {
   const invoke = globalThis.__TAURI__?.core?.invoke;
   if (!invoke) throw new Error('GiGi must be opened in the installed desktop app.');
-  return createBridge(invoke);
+  return createBridge(invoke, onMutation);
 }

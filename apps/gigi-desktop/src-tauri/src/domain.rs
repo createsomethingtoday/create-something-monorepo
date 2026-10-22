@@ -28,7 +28,7 @@ const ENTITIES: [&str; 13] = [
 const CONTACT_COMPANY_SEARCH_SQL: &str = "SELECT r.from_id,co.title FROM relations r JOIN companies co ON co.id=r.to_id AND co.workspace_id=r.workspace_id WHERE r.workspace_id=?1 AND r.from_entity='contacts' AND r.to_entity='companies'
     UNION ALL SELECT r.to_id,co.title FROM relations r JOIN companies co ON co.id=r.from_id AND co.workspace_id=r.workspace_id WHERE r.workspace_id=?1 AND r.from_entity='companies' AND r.to_entity='contacts'";
 const CONTACT_SEARCH_SQL: &str = "SELECT id,title,status,updated_at,json_extract(fields_json,'$.Email'),json_extract(fields_json,'$.Phone'),json_extract(fields_json,'$.Contact') FROM contacts WHERE workspace_id=?1 ORDER BY updated_at DESC,id";
-fn search_fold(value: &str) -> String {
+pub(crate) fn search_fold(value: &str) -> String {
     value.nfd().filter(|ch| !is_combining_mark(*ch)).collect::<String>().to_lowercase()
 }
 fn search_contacts(db: &Connection, wid: &str, query: &str, offset: i64, limit: i64) -> Result<Value,String> {
@@ -695,6 +695,9 @@ pub fn dispatch(root: &Path, op: &str, input: Value) -> Result<Value, String> {
             let wid = need(&input, "workspaceId")?;
             let entity = table(&input, "entity")?;
             workspace(&db, wid)?;
+            if entity == "gigs" && input.get("gigs").is_some() {
+                return crate::gig_list::list(&db, wid, &input);
+            }
             let limit = input
                 .get("limit")
                 .and_then(Value::as_u64)
