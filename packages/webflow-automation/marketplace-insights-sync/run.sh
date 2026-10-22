@@ -18,7 +18,7 @@ if [[ ! "${MARKETPLACE_INSIGHTS_SNAPSHOT_TABLE_ID:-}" =~ ^tbl[a-zA-Z0-9]{14}$ ]]
 fi
 
 PKG="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-NODE="${NODE_BIN:-/Users/micahjohnson/.nvm/versions/node/v22.21.1/bin/node}"
+NODE="${NODE_BIN:-/Users/micahjohnson/.nvm/versions/node/v22.23.4/bin/node}"
 INFISICAL="$(command -v infisical || echo /opt/homebrew/bin/infisical)"
 export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
 

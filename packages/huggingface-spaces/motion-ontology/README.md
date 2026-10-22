@@ -66,7 +66,7 @@ When `ANTHROPIC_API_KEY` is set, Claude provides rich phenomenological interpret
 
 ## Explicit system browser (qualification candidate)
 
-Use Node 22.12 or newer (qualification pins 22.21.1) and install Chromium or
+Use Node 22.12 or newer (qualification pins 22.23.4) and install Chromium or
 Chrome separately. Set `PUPPETEER_EXECUTABLE_PATH` to its absolute executable
 path. The service validates the file before launching it and never falls back
 to installing a browser. `puppeteer-core` ignores Puppeteer's configuration

@@ -1571,8 +1571,8 @@ importers:
         version: 5.56.9(@typescript-eslint/types@8.58.2)
     devDependencies:
       '@cloudflare/sandbox':
-        specifier: 0.12.3
-        version: 0.12.3(@openai/agents@0.15.0(@aws-sdk/credential-provider-node@3.972.81)(@smithy/signature-v4@5.7.3)(bufferutil@4.1.0)(utf-8-validate@6.0.6)(ws@8.21.3(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6))
+        specifier: 0.12.14
+        version: 0.12.14(@openai/agents@0.15.0(@aws-sdk/credential-provider-node@3.972.81)(@smithy/signature-v4@5.7.3)(bufferutil@4.1.0)(utf-8-validate@6.0.6)(ws@8.21.3(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6))
       '@cloudflare/workers-types':
         specifier: ^4.20260621.1
         version: 4.20260621.1
@@ -6674,8 +6674,8 @@ packages:
   '@cloudflare/realtimekit@2.0.0':
     resolution: {integrity: sha512-z066fbMEqCsfaz5xDUsLphZt5uxydA1tv0BDZFAZxSWg90NGlmUJKZ0/byNQMkHQp0gpTWCYY/Ph5TODzYlZkw==}
 
-  '@cloudflare/sandbox@0.12.3':
-    resolution: {integrity: sha512-4yx+PtBCZBrS3eZteefwBfGOm+8MTZahLH8/fG/qsvqoNflzno9780FsM6HZf02gGuoDy+s9jQrXbg/h5gEvgw==}
+  '@cloudflare/sandbox@0.12.14':
+    resolution: {integrity: sha512-Y+QaTgYtK3tfu2mz7q3Egn9Yzo1gFlmM5/+0tqHaXuXZBuPfEETQ1Dj4UeL/KWd+2KFefUlBdrLL6/uAMRUj9g==}
     peerDependencies:
       '@openai/agents': ^0.3.3
       '@opencode-ai/sdk': ^1.1.40
@@ -12832,6 +12832,9 @@ packages:
   devtools-protocol@0.0.1551306:
     resolution: {integrity: sha512-CFx8QdSim8iIv+2ZcEOclBKTQY6BI1IEDa7Tm9YkwAXzEWFndTEzpTo5jAUhSnq24IC7xaDw0wvGcm96+Y3PEg==}
 
+  devtools-protocol@0.0.1696802:
+    resolution: {integrity: sha512-FO5/SENfvc2K8wRnWQflKcwuoTH4dBkXCWTQ9ebIWtuX8JM5+ZvCotaEmkfh21pO7TvIKGTM3hG4xFiq9WTwmg==}
+
   didyoumean@1.2.2:
     resolution: {integrity: sha512-gxtyfqMg7GKyhQmb056K7M3xszy/myH8w+B4RT+QXBQsvAOdc3XymqDDPHx1BgPgsdAA5SIifona89YtRATDzw==}
 
@@ -13887,6 +13890,10 @@ packages:
   homedir-polyfill@1.0.3:
     resolution: {integrity: sha512-eSmmWE5bZTK2Nou4g0AI3zZ9rswp7GRKoKXS1BLUkvPviOqs4YTN1djQIqrXy9k5gEtdLPy86JjRwsNM9tnDcA==}
     engines: {node: '>=0.10.0'}
+
+  hono@4.13.13:
+    resolution: {integrity: sha512-CQ46U0ZkAGmbT/4UxdzzGJpacP2IeKgY4a5/tOI9AABbpOMfK739wfDXmv1usCk+3RkKj1hQy4/fjhiwa2xlrA==}
+    engines: {node: '>=16.9.0'}
 
   hono@4.13.3:
     resolution: {integrity: sha512-r8AO2mYHoLxSHkgafNeC/BXyb2vWRxD3jem4Ts+ptav8oTG5FIRifAjuJEmZI4bSvvc2ns0GxmIYiZnHqN3mMw==}
@@ -15168,6 +15175,10 @@ packages:
 
   modern-tar@0.7.7:
     resolution: {integrity: sha512-t9VmxaqrmANnEOBhpSDI6HD192Ge48k8vmWqQQL7hSFEqHEYwZbbsu49+aKLWZeRvFs3j1pMhXOqqF4kPlvjkQ==}
+    engines: {node: '>=18.0.0'}
+
+  modern-tar@0.8.6:
+    resolution: {integrity: sha512-LYSks0tNVqbtez/9OB0YFP6qLRSqkdAxJWOQpVaR67lNTbj2zNLyYpowkRMia5lXLCZKzxwoxkxH2MbbBR2aEg==}
     engines: {node: '>=18.0.0'}
 
   module-definition@6.0.1:
@@ -17406,6 +17417,9 @@ packages:
   typed-query-selector@2.12.0:
     resolution: {integrity: sha512-SbklCd1F0EiZOyPiW192rrHZzZ5sBijB6xM+cpmrwDqObvdtunOHHIk9fCGsoK5JVIYXoyEp4iEdE3upFH3PAg==}
 
+  typed-query-selector@2.12.3:
+    resolution: {integrity: sha512-/dtuMZyutHLlrxWhhC1uib00ELUr2dZ8C9B8YzZYsJmeE3V56OxRblrSM2UaF142pcMtak7ehZ6+poWGeehNIg==}
+
   typescript@5.6.3:
     resolution: {integrity: sha512-hjcS1mhfuyi4WW8IWtjP7brDrG2cuDZukyrYrSauoXGNgx0S7zceP07adYkJycEr56BOUTNPzbInooiN3fn1qw==}
     engines: {node: '>=14.17'}
@@ -17789,6 +17803,9 @@ packages:
   webdriver-bidi-protocol@0.4.0:
     resolution: {integrity: sha512-U9VIlNRrq94d1xxR9JrCEAx5Gv/2W7ERSv8oWRoNe/QYbfccS0V3h/H6qeNeCRJxXGMhhnkqvwNrvPAYeuP9VA==}
 
+  webdriver-bidi-protocol@1.0.1:
+    resolution: {integrity: sha512-WXWs/aXF2a6Al1Z2/V/7Gp2oPZOAAmHjJOTmv4KCXRJ122IMj3tSSMc6a4q3K4QOmhQbse/Ahr+oTVJOU2dUiw==}
+
   webflow-api@3.2.0:
     resolution: {integrity: sha512-fFZoxFl8TZeGCkC9/NGA7BKgVysfmEYPx4sK7HWLmHakd4pRI+ZivZk5ycCOJFHMmUKyH+owkzgYneDiJZ2cDA==}
 
@@ -18156,30 +18173,11 @@ packages:
   zod@4.3.6:
     resolution: {integrity: sha512-rftlrkhHZOcjDwkGlnUtZZkvaPHCsDATp4pGpuOOMDaTdDDXF91wuVDJoWoPsKX/3YPQ5fHuF3STjcYyKr+Qhg==}
 
+  zod@4.6.7:
+    resolution: {integrity: sha512-g8W2D2kU6a8untc053fX1uVBKzM7yqAxW/3zwk83+6RyF2+SKOuV+c0wBDhUwzV1PaGapmZH+rmcUzPf+3CGwg==}
+
   zwitch@2.0.4:
     resolution: {integrity: sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A==}
-
-  devtools-protocol@0.0.1696802:
-    resolution:
-      integrity: sha512-FO5/SENfvc2K8wRnWQflKcwuoTH4dBkXCWTQ9ebIWtuX8JM5+ZvCotaEmkfh21pO7TvIKGTM3hG4xFiq9WTwmg==
-
-  typed-query-selector@2.12.3:
-    resolution:
-      integrity: sha512-/dtuMZyutHLlrxWhhC1uib00ELUr2dZ8C9B8YzZYsJmeE3V56OxRblrSM2UaF142pcMtak7ehZ6+poWGeehNIg==
-
-  webdriver-bidi-protocol@1.0.1:
-    resolution:
-      integrity: sha512-WXWs/aXF2a6Al1Z2/V/7Gp2oPZOAAmHjJOTmv4KCXRJ122IMj3tSSMc6a4q3K4QOmhQbse/Ahr+oTVJOU2dUiw==
-
-  modern-tar@0.8.6:
-    resolution:
-      integrity: sha512-LYSks0tNVqbtez/9OB0YFP6qLRSqkdAxJWOQpVaR67lNTbj2zNLyYpowkRMia5lXLCZKzxwoxkxH2MbbBR2aEg==
-    engines:
-      node: ">=18.0.0"
-
-  zod@4.6.7:
-    resolution:
-      integrity: sha512-g8W2D2kU6a8untc053fX1uVBKzM7yqAxW/3zwk83+6RyF2+SKOuV+c0wBDhUwzV1PaGapmZH+rmcUzPf+3CGwg==
 
 snapshots:
 
@@ -20630,12 +20628,12 @@ snapshots:
       uuid: 14.0.2
       worker-timers: 7.0.60
 
-  '@cloudflare/sandbox@0.12.3(@openai/agents@0.15.0(@aws-sdk/credential-provider-node@3.972.81)(@smithy/signature-v4@5.7.3)(bufferutil@4.1.0)(utf-8-validate@6.0.6)(ws@8.21.3(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6))':
+  '@cloudflare/sandbox@0.12.14(@openai/agents@0.15.0(@aws-sdk/credential-provider-node@3.972.81)(@smithy/signature-v4@5.7.3)(bufferutil@4.1.0)(utf-8-validate@6.0.6)(ws@8.21.3(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6))':
     dependencies:
       '@cloudflare/containers': 0.3.7
       aws4fetch: 1.0.20
       capnweb: 0.8.0
-      hono: 4.13.3
+      hono: 4.13.13
     optionalDependencies:
       '@openai/agents': 0.15.0(@aws-sdk/credential-provider-node@3.972.81)(@smithy/signature-v4@5.7.3)(bufferutil@4.1.0)(utf-8-validate@6.0.6)(ws@8.21.3(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
 
@@ -27614,6 +27612,8 @@ snapshots:
 
   devtools-protocol@0.0.1551306: {}
 
+  devtools-protocol@0.0.1696802: {}
+
   didyoumean@1.2.2: {}
 
   diet-sprite@0.0.1: {}
@@ -29143,6 +29143,8 @@ snapshots:
   homedir-polyfill@1.0.3:
     dependencies:
       parse-passwd: 1.0.0
+
+  hono@4.13.13: {}
 
   hono@4.13.3: {}
 
@@ -30683,6 +30685,8 @@ snapshots:
       obliterator: 1.6.1
 
   modern-tar@0.7.7: {}
+
+  modern-tar@0.8.6: {}
 
   module-definition@6.0.1:
     dependencies:
@@ -33403,6 +33407,8 @@ snapshots:
 
   typed-query-selector@2.12.0: {}
 
+  typed-query-selector@2.12.3: {}
+
   typescript@5.6.3: {}
 
   typescript@5.9.3: {}
@@ -33874,6 +33880,8 @@ snapshots:
   web-streams-polyfill@4.0.0-beta.3: {}
 
   webdriver-bidi-protocol@0.4.0: {}
+
+  webdriver-bidi-protocol@1.0.1: {}
 
   webflow-api@3.2.0:
     dependencies:
@@ -34465,14 +34473,6 @@ snapshots:
 
   zod@4.3.6: {}
 
+  zod@4.6.7: {}
+
   zwitch@2.0.4: {}
-
-  "devtools-protocol@0.0.1696802": {}
-
-  "typed-query-selector@2.12.3": {}
-
-  "webdriver-bidi-protocol@1.0.1": {}
-
-  "modern-tar@0.8.6": {}
-
-  "zod@4.6.7": {}

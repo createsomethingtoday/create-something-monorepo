@@ -18,7 +18,7 @@
 set -uo pipefail
 
 PKG="/Users/micahjohnson/Code/create-something-monorepo/packages/exception-decisions-mcp"
-NODE="/Users/micahjohnson/.nvm/versions/node/v22.21.1/bin/node"
+NODE="/Users/micahjohnson/.nvm/versions/node/v22.23.4/bin/node"
 INFISICAL="$(command -v infisical || echo /opt/homebrew/bin/infisical)"
 export CLAUDE_BIN="${CLAUDE_BIN:-/Users/micahjohnson/.local/bin/claude}"
 

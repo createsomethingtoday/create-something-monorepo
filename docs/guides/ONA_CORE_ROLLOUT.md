@@ -15,7 +15,7 @@ This guide wires the CREATE SOMETHING monorepo into Ona Core without splitting t
 - `.devcontainer/` defines the shared monorepo environment.
 - `.ona/automations.yaml` defines the startup task plus the lane services and manual tasks.
 - `.ona/skills/` defines repo-local Ona workflows that agents discover on demand.
-- `.nvmrc` pins the local and remote Node runtime to `22.21.1`.
+- `.nvmrc` pins the local and remote Node runtime to `22.23.4`.
 - `AGENTS.md` remains the primary agent instruction file for Ona agents.
 - Any app or package that Ona must build or deploy has to be Git-tracked.
   If a target lives under `apps/`, make sure `.gitignore` explicitly allows it.
@@ -106,14 +106,14 @@ Avoid keeping the working tree on a spinning external drive and bind-mounting it
 
 Local bootstrap is expected to match the same runtime the repo dev container uses:
 
-- Node `22.21.1` from `.nvmrc`
+- Node `22.23.4` from `.nvmrc`
 - pnpm `9.15.0` via Corepack
 
-If `.ona/scripts/bootstrap.sh` fails with `Expected Node v22.21.1`, the intended fix is:
+If `.ona/scripts/bootstrap.sh` fails with `Expected Node v22.23.4`, the intended fix is:
 
 1. Open the repo through `.devcontainer/devcontainer.json`, or
-2. Run `./scripts/ona-bootstrap-local.sh` to bootstrap with a repo-cached Node `22.21.1` and pnpm `9.15.0`, or
-3. Install Node `22.21.1` locally, then run `corepack prepare "pnpm@9.15.0" --activate`
+2. Run `./scripts/ona-bootstrap-local.sh` to bootstrap with a repo-cached Node `22.23.4` and pnpm `9.15.0`, or
+3. Install Node `22.23.4` locally, then run `corepack prepare "pnpm@9.15.0" --activate`
 
 The runtime pin is deliberate. Do not treat a newer local Node version as equivalent just because `package.json` allows a broader engine range.
 
@@ -207,7 +207,7 @@ Run this checklist after the projects are created:
 
 1. Start an environment from each Ona project and confirm the bootstrap task succeeds.
    The repo bootstrap only hard-requires the pinned Node and pnpm toolchain plus a healthy workspace install. Missing `gh`, `infisical`, `jq`, or `wrangler` should surface as warnings unless you explicitly opt into strict mode with `ONA_BOOTSTRAP_REQUIRE_OPTIONAL_TOOLS=1`.
-2. Confirm `node -v` returns `v22.21.1`.
+2. Confirm `node -v` returns `v22.23.4`.
 3. Confirm `pnpm -v` returns `9.15.0`.
 4. Start `agency-dev` and confirm the forwarded preview is reachable.
 5. Start `product-dev`, `services-dev`, and `platform-dev` and confirm each service launches from the shared monorepo environment.
