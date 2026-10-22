@@ -25,6 +25,10 @@ fn point(value: &str, zone: Tz) -> Option<(NaiveDate, Option<i64>)> {
     if let Some(date) = day(value) {
         return Some((date, None));
     }
+    let value = instant(value)?;
+    Some((value.with_timezone(&zone).date_naive(), Some(value.timestamp_millis())))
+}
+pub(crate) fn instant(value: &str) -> Option<DateTime<chrono::FixedOffset>> {
     // Same strict Date contract as Schedule: date-only or an offset-bearing ISO timestamp.
     if value.len() < 17
         || value.as_bytes().get(10) != Some(&b'T')
@@ -50,12 +54,9 @@ fn point(value: &str, zone: Tz) -> Option<(NaiveDate, Option<i64>)> {
         normalized = format!("{}:00{}", value.get(..16)?, value.get(16..)?);
         &normalized
     };
-    let value = DateTime::parse_from_rfc3339(value).ok()?;
-    Some((
-        value.with_timezone(&zone).date_naive(),
-        Some(value.timestamp_millis()),
-    ))
+    DateTime::parse_from_rfc3339(value).ok()
 }
+
 #[derive(Clone)]
 pub(crate) struct Timing {
     pub(crate) start: NaiveDate,

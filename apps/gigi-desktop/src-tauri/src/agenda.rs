@@ -1,6 +1,6 @@
 //! Complete-collection Today agenda. Source identity and typed relations are
 //! required together before a derived gig can stand in for a Calendar entry.
-use crate::gig_list::{day, timing, Timing};
+use crate::gig_list::{day, instant, timing, Timing};
 use rusqlite::{params, Connection};
 use serde_json::{json, Value};
 use std::collections::{HashMap, HashSet};
@@ -72,7 +72,7 @@ pub(crate) fn overview(
     let mut undated = 0;
     let mut sources = HashMap::new();
     for entity in ["gigs", "schedule"] {
-        let mut stmt=snapshot.prepare(&format!("SELECT id,title,status,fields_json,source_json FROM {entity} WHERE workspace_id=?1 ORDER BY id")).map_err(|e|e.to_string())?;
+        let mut stmt=snapshot.prepare(&format!("SELECT id,title,status,fields_json FROM {entity} WHERE workspace_id=?1 ORDER BY id")).map_err(|e|e.to_string())?;
         let rows = stmt
             .query_map([wid], |r| {
                 Ok((
@@ -80,12 +80,11 @@ pub(crate) fn overview(
                     r.get::<_, String>(1)?,
                     r.get::<_, Option<String>>(2)?,
                     r.get::<_, String>(3)?,
-                    r.get::<_, String>(4)?,
                 ))
             })
             .map_err(|e| e.to_string())?;
         for row in rows {
-            let (id, title, status, fields, source) = row.map_err(|e| e.to_string())?;
+            let (id, title, status, fields) = row.map_err(|e| e.to_string())?;
             if status.as_deref().is_some_and(|s| {
                 ["done", "complete", "completed", "cancelled", "canceled"]
                     .contains(&s.trim().to_lowercase().as_str())
@@ -93,7 +92,6 @@ pub(crate) fn overview(
                 continue;
             }
             let fields: Value = serde_json::from_str(&fields).map_err(|e| e.to_string())?;
-            let source: Value = serde_json::from_str(&source).map_err(|e| e.to_string())?;
             let verified = if entity == "gigs" {
                 verified_source(&snapshot, wid, &id)?
             } else {
@@ -107,7 +105,15 @@ pub(crate) fn overview(
                         |r| r.get(0),
                     )
                     .map_err(|e| e.to_string())?;
-                serde_json::from_str::<Value>(&raw).map_err(|e| e.to_string())?["All Day"] == true
+                let saved: Value = serde_json::from_str(&raw).map_err(|e| e.to_string())?;
+                // Source provenance never overrides a local timing correction.
+                fields["Date"] == saved["Date"]
+                    && fields["Date"]
+                        .as_str()
+                        .is_some_and(|s| s.split('/').all(|s| day(s).is_some()))
+                    && !["Call Time", "Set Time"]
+                        .iter()
+                        .any(|key| fields[*key].as_str().is_some_and(|s| !s.trim().is_empty()))
             } else {
                 false
             };
@@ -116,7 +122,6 @@ pub(crate) fn overview(
             }
             let all_day = source_all_day
                 || fields["All Day"] == true
-                || origin(&source)["calendarTiming"]["start"]["date"].is_string()
                 || (entity == "schedule"
                     && fields["Date"]
                         .as_str()
@@ -133,9 +138,9 @@ pub(crate) fn overview(
                 if let Some(end) = fields["Date"]
                     .as_str()
                     .and_then(|s| s.split_once('/'))
-                    .and_then(|(_, s)| chrono::DateTime::parse_from_rfc3339(s).ok())
+                    .and_then(|(_, s)| instant(s))
                 {
-                    time.end = (end - chrono::Duration::milliseconds(1))
+                    time.end = (end - chrono::Duration::nanoseconds(1))
                         .with_timezone(&zone)
                         .date_naive();
                 }
@@ -158,12 +163,12 @@ pub(crate) fn overview(
             if let Some(source) = sources.get(record["id"].as_str().unwrap()) {
                 if event_ids.contains(source) {
                     represented.insert(source.clone());
-                    if record["cover"].is_null() && record["coverRevision"] == 0 {
-                        inherited.insert(
-                            record["id"].as_str().unwrap().to_string(),
-                            crate::artwork::cover(&snapshot, wid, "schedule", source)?,
-                        );
-                    }
+                }
+                if record["cover"].is_null() && record["coverRevision"] == 0 {
+                    inherited.insert(
+                        record["id"].as_str().unwrap().to_string(),
+                        crate::artwork::cover(&snapshot, wid, "schedule", source)?,
+                    );
                 }
             }
         }
