@@ -1,3 +1,4 @@
+import {eventLabel} from './event-identity.mjs';
 import {imageMarkup} from './artwork.mjs';
 import {scheduleEntry} from './schedule.mjs';
 // Presentation-only adaptation of grantbot 3f39f6468. No new data or permissions.
@@ -19,5 +20,5 @@ export function referenceHeader({page,sections,workspace,history}) {
 }
 export function referenceCards(entity,records,{status,date,money}) {
   const safe=escapeHtml;
-  return `<div class="today-grid">${records.map(record=>`<button type="button" class="today-card" data-open="${safe(record.id)}" data-entity="${safe(entity==='events'?record.entity:entity)}">${imageMarkup(record.cover)}<span class="today-card-kind">${safe({tasks:'Saved task',gigs:'Gig or shift',schedule:'Calendar entry',finances:'Financial record'}[entity==='events'?record.entity:entity])}</span><strong>${safe(record.title || 'Untitled')}</strong><span class="today-card-status">${safe(status(record)||'Status not set')}</span><span class="today-card-footer"><span>${safe(record.date?date(record.date):'No date recorded')}</span><span>${entity==='events'?`${safe(scheduleEntry(record).time)} · `:''}${safe(entity==='finances'?[record.fields?.Direction||'Direction not set',money(record.moneyCents)].join(' · '):'Open record ↗')}</span></span></button>`).join('')}</div>`;
+  return `<div class="today-grid">${records.map(record=>`<button type="button" class="today-card" data-open="${safe(record.id)}" data-entity="${safe(entity==='events'?record.entity:entity)}">${imageMarkup(record.cover)}<span class="today-card-kind">${safe(['events','gigs','schedule'].includes(entity)?eventLabel(record,entity==='events'?record.entity:entity):{tasks:'Saved task',finances:'Financial record'}[entity])}</span><strong>${safe(record.title || 'Untitled')}</strong><span class="today-card-status">${safe(status(record)||'Status not set')}</span><span class="today-card-footer"><span>${safe(record.date?date(record.date):'No date recorded')}</span><span>${entity==='events'?`${safe(scheduleEntry(record).time)} · `:''}${safe(entity==='finances'?[record.fields?.Direction||'Direction not set',money(record.moneyCents)].join(' · '):'Open record ↗')}</span></span></button>`).join('')}</div>`;
 }

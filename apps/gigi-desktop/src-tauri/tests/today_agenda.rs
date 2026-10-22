@@ -1,6 +1,41 @@
 use gigi_desktop_lib::domain;
 use serde_json::json;
 #[test]
+fn classification_filters_before_limits_preserves_legacy_and_keeps_calendar_when_representing_gig_is_excluded() {
+    let root=std::env::temp_dir().join(format!("gigi-classification-{}",uuid::Uuid::new_v4()));
+    let w=domain::dispatch(&root,"workspace.create",json!({"name":"Synthetic classified agenda"})).unwrap()["id"].clone();
+    for n in 0..7 {domain::dispatch(&root,"records.save",json!({"workspaceId":w,"entity":"gigs","title":format!("Unclassified {n}"),"fields":{"Date":"2026-11-01","Type":"Custom concert label"}})).unwrap();}
+    let performance=domain::dispatch(&root,"records.save",json!({"workspaceId":w,"entity":"gigs","title":"Classified performance beyond first five","fields":{"Date":"2026-11-04","Work kind":"Performance","Type":"Custom original"}})).unwrap();
+    let calendar=domain::dispatch(&root,"records.save",json!({"workspaceId":w,"entity":"schedule","title":"Calendar commitment","fields":{"Date":"2026-11-02"},"source":{"kind":"import","provider":"googlecalendar","connectedAccountId":"ca_one","collectionId":"primary","externalId":"stable"}})).unwrap();
+    let crew=domain::dispatch(&root,"records.save",json!({"workspaceId":w,"entity":"gigs","title":"Crew commitment","fields":{"Date":"2026-11-02","Work kind":"Crew / work"},"idempotencyKey":"derive","sourceRecord":{"entity":"schedule","id":calendar["id"],"connectedAccountId":"ca_one","expectedRecord":{"title":calendar["title"],"fields":calendar["fields"],"source":calendar["source"]}}})).unwrap();
+    let read=|kind:Option<&str>,offset:u32,limit:u32| {let mut input=json!({"workspaceId":w,"today":"2026-10-22","timeZone":"America/Los_Angeles","offset":offset,"limit":limit});if let Some(k)=kind{input["recordKind"]=json!(k)}domain::dispatch(&root,"agenda.list",input).unwrap()};
+    let all=read(None,0,5);assert_eq!(all["count"],9);assert_eq!(all["nextOffset"],5);assert_eq!(all["items"][0]["identity"]["recordKind"],"unclassified");
+    let filtered=read(Some("performance"),0,1);assert_eq!(filtered["count"],1);assert_eq!(filtered["items"][0]["id"],performance["id"]);assert!(filtered["nextOffset"].is_null());
+    assert_eq!(read(Some("calendar_event"),0,1)["items"][0]["id"],calendar["id"]);
+    assert_eq!(read(Some("crew_work"),0,1)["items"][0]["id"],crew["id"]);
+    let backup=domain::dispatch(&root,"backup.create",json!({"workspaceId":w})).unwrap();
+    domain::dispatch(&root,"backup.restore",json!({"backupId":backup["backupId"]})).unwrap();
+    let restored=domain::dispatch(&root,"records.get",json!({"workspaceId":w,"entity":"gigs","id":performance["id"],"detail":"full"})).unwrap();assert_eq!(restored["fields"]["Type"],"Custom original");assert_eq!(restored["fields"]["Work kind"],"Performance");
+    let legacy=read(Some("unclassified"),0,1);assert_eq!(legacy["items"][0]["identity"]["rawType"],"Custom concert label");
+    assert!(domain::dispatch(&root,"agenda.list",json!({"workspaceId":"other","today":"2026-10-22","timeZone":"UTC"})).is_err());
+    assert!(domain::dispatch(&root,"agenda.list",json!({"workspaceId":w,"today":"2026-10-22","timeZone":"UTC","limit":1000})).is_err());
+    assert!(domain::dispatch(&root,"records.save",json!({"workspaceId":w,"entity":"gigs","title":"Do not infer","fields":{"Work kind":"Jazz stage"}})).is_err());
+    std::fs::remove_dir_all(root).unwrap();
+}
+#[test]
+fn identity_summaries_bound_custom_type_without_changing_original_or_source_ids() {
+    let root=std::env::temp_dir().join(format!("gigi-identity-budget-{}",uuid::Uuid::new_v4()));
+    let w=domain::dispatch(&root,"workspace.create",json!({"name":"Synthetic legacy type budget"})).unwrap()["id"].clone();
+    let custom="X".repeat(24000);
+    let record=domain::dispatch(&root,"records.save",json!({"workspaceId":w,"entity":"gigs","title":"Legacy","fields":{"Date":"2026-11-01","Type":custom}})).unwrap();
+    let read=|detail:&str|domain::dispatch(&root,"records.get",json!({"workspaceId":w,"entity":"gigs","id":record["id"],"detail":detail})).unwrap();
+    let summary=read("summary");assert_eq!(summary["identity"]["rawType"].as_str().unwrap().len(),160);assert_eq!(summary["identity"]["rawTypeTruncated"],true);
+    assert_eq!(read("full")["fields"]["Type"],custom);
+    let agenda=domain::dispatch(&root,"agenda.list",json!({"workspaceId":w,"today":"2026-10-22","timeZone":"UTC"})).unwrap();assert!(agenda.to_string().len()<2500);
+    let backup=domain::dispatch(&root,"backup.create",json!({"workspaceId":w})).unwrap();domain::dispatch(&root,"backup.restore",json!({"backupId":backup["backupId"]})).unwrap();assert_eq!(read("full")["fields"]["Type"],custom);
+    std::fs::remove_dir_all(root).unwrap();
+}
+#[test]
 fn today_orders_both_complete_collections_and_keeps_ongoing_events() {
     let root = std::env::temp_dir().join(format!("gigi-today-{}", uuid::Uuid::new_v4()));
     let w = domain::dispatch(
