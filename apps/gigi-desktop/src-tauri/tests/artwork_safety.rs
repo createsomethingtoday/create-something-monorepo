@@ -275,3 +275,40 @@ fn jpeg_orientation_is_applied_to_preview_and_animated_png_is_rejected() {
     );
     fs::remove_dir_all(root).unwrap();
 }
+
+#[test]
+fn duplicate_bytes_cannot_silently_discard_reviewed_provenance() {
+    let (root, w, gig) = setup();
+    let path = root.join("provenance.png");
+    image::DynamicImage::new_rgb8(3, 2).save(&path).unwrap();
+    let saved = artwork::import_with_picker(&root, input(&w, &gig), || Some(path.clone())).unwrap();
+    for provenance in [
+        json!({"origin":"supplied","purpose":"artwork","rights":"owned"}),
+        json!({"origin":"supplied","purpose":"official_flyer","rights":"unknown","sourceUrl":"https://example.test/flyer"}),
+        json!({"origin":"generated","purpose":"illustration","rights":"unknown","generator":"codex-native"}),
+    ] {
+        let mut request = input(&w, &gig);
+        request["expectedRevision"] = json!(1);
+        request["provenance"] = provenance;
+        assert!(
+            artwork::import_with_picker(&root, request, || Some(path.clone()))
+                .unwrap_err()
+                .contains("different immutable provenance")
+        );
+    }
+    let read = domain::dispatch(
+        &root,
+        "records.get",
+        json!({"workspaceId":w,"entity":"gigs","id":gig["id"],"detail":"full"}),
+    )
+    .unwrap();
+    assert_eq!(read["coverRevision"], 1);
+    assert_eq!(read["cover"], saved["cover"]);
+    let reused=artwork::dispatch(&root,"media.attach",json!({"workspaceId":w,"requestId":uuid::Uuid::new_v4().to_string(),"entity":"gigs","id":gig["id"],"expectedRevision":1,"assetId":saved["cover"]["assetId"],"alt":"Explicitly reused local artwork"})).unwrap();
+    assert_eq!(reused["cover"]["provenance"], saved["cover"]["provenance"]);
+    assert_eq!(
+        artwork::dispatch(&root, "media.list", json!({"workspaceId":w})).unwrap()["count"],
+        1
+    );
+    fs::remove_dir_all(root).unwrap();
+}

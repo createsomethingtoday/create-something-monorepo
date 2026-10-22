@@ -495,6 +495,9 @@ pub fn import_with_picker(
         .optional()
         .map_err(err)?;
     let asset_id = if let Some(id) = existing {
+        if asset(&tx, &wid, &id)?["provenance"] != metadata {
+            return Err("These image bytes already have different immutable provenance. Review and reuse the saved artwork explicitly; the new metadata was not saved".into());
+        }
         id
     } else {
         let (count,used):(i64,i64)=tx.query_row("SELECT count(*),coalesce(sum(length(original)+length(thumbnail)),0) FROM image_assets WHERE workspace_id=?1",[&wid],|r|Ok((r.get(0)?,r.get(1)?))).map_err(err)?;
