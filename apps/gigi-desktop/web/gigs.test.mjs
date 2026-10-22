@@ -41,3 +41,10 @@ test('a read begun before a mutation cannot clear invalidation',async()=>{
  const refreshing=gigs.refresh();await tick();gigs.invalidate('one');old.resolve({items:[{id:'pre-write'}],count:1,total:1});await refreshing;
  gigs.cancel();await gigs.open('one');assert.equal(reads,3);assert.equal(gigs.state.result.items[0].id,'read-3');gigs.cancel();
 });
+
+test('reopening revalidates external changes and the current day while restoring loaded depth',async()=>{
+ let revision='before',day='2026-10-21';const calls=[];
+ const gigs=createGigs({storage:null,read:async(_w,c,cursor)=>{calls.push({revision,day,c,cursor});return{items:[{id:`${revision}-${day}-${cursor||'first'}`}],count:3,total:3,nextCursor:cursor?null:'next'};}});
+ await gigs.open('one');await gigs.more();gigs.remember(620,'old');gigs.cancel();revision='external-write';day='2026-10-22';await gigs.open('one');
+ assert.equal(calls.length,4);assert.equal(calls[2].cursor,null);assert.equal(calls[3].cursor,'next');assert.equal(gigs.state.result.items.length,2);assert.ok(gigs.state.result.items.every(row=>row.id.startsWith('external-write-2026-10-22')));assert.equal(gigs.state.scroll,620);gigs.cancel();
+});

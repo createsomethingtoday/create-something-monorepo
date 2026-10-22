@@ -24,13 +24,18 @@ export function createGigs({read,changed=()=>{},storage=globalThis.localStorage,
   }
   return workspaces.get(workspace);
  }
- async function load(more=false){
+ async function load(more=false,restoreCount=0){
   if(!active||!current||(more&&(!current.result?.nextCursor||current.loading||current.stale||current.error)))return;
   stop();const selected=current,id=version;selected.loading=true;selected.error='';changed();
   const requested=JSON.stringify(selected.criteria);
   try{
    if(selected.criteria.from&&selected.criteria.to&&selected.criteria.from>selected.criteria.to)throw Error('Start date must be on or before end date.');
-   const result=await reader.read(()=>read(selected.workspace,{...selected.criteria},more?selected.result.nextCursor:null));
+   let result=await reader.read(()=>read(selected.workspace,{...selected.criteria},more?selected.result.nextCursor:null));
+   while(!more&&(result.items?.length||0)<restoreCount&&result.nextCursor){
+    if(!active||id!==version||selected!==current)return;
+    const page=await reader.read(()=>read(selected.workspace,{...selected.criteria},result.nextCursor));
+    result={...page,items:[...(result.items||[]),...(page.items||[])]};
+   }
    if(!active||id!==version||selected!==current||requested!==JSON.stringify(selected.criteria))return;
    selected.result={...result,items:more?[...selected.result.items,...(result.items||[])]:result.items||[]};selected.stale=false;
   }catch(error){
@@ -40,7 +45,7 @@ export function createGigs({read,changed=()=>{},storage=globalThis.localStorage,
  }
  return {
   get state(){return current;},
-  async open(workspace){stop();current=get(workspace);active=true;if(!current.result||current.stale)return load();changed();},
+  async open(workspace){stop();current=get(workspace);active=true;return load(false,current.result?.items?.length||0);},
   cancel(){stop();active=false;},
   remember(scroll,focusId){if(current){current.scroll=Math.max(0,Number(scroll)||0);current.focusId=focusId??current.focusId;persist();}},
   update(patch,debounce=true){if(!current)return;stop();current.criteria=criteria({...current.criteria,...patch});current.scroll=0;current.focusId=null;current.loading=true;current.stale=true;current.error='';persist();changed();if(debounce)timer=schedule(()=>void load(),150);else void load();},

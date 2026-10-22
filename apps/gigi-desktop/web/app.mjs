@@ -741,7 +741,7 @@ root.addEventListener('click', (event) => {
   else if (button.dataset.new) newRecord(button.dataset.new);
   else if (button.dataset.open) void run(() => navigateRecord(button.dataset.entity, button.dataset.open));
   else if (button.dataset.cancel) void cancelEditor();
-  else if(button.dataset.back&&state.page==='gigs'){if(!protectEditor(()=>void run(()=>openPage('gigs'))))return;leaveRoute();state.selected=null;state.editing=false;state.editorDraft=null;state.editorOrigin=null;void gigs.open(workspaceId()).then(()=>{if(state.page==='gigs'&&!state.selected&&!state.editing){render();root.querySelector?.(`[data-open="${gigs.state?.focusId||''}"]`)?.focus?.({preventScroll:true});globalThis.scrollTo?.(0,gigs.state?.scroll||0);}});}
+  else if(button.dataset.back&&state.page==='gigs'){if(!protectEditor(()=>void run(()=>openPage('gigs'))))return;leaveRoute();state.selected=null;state.editing=false;state.editorDraft=null;state.editorOrigin=null;void gigs.open(workspaceId()).then(()=>{if(state.page==='gigs'&&!state.selected&&!state.editing){render();Array.from(root.querySelectorAll?.('[data-open]')||[]).find(row=>row.dataset.open===gigs.state?.focusId)?.focus?.({preventScroll:true});globalThis.scrollTo?.(0,gigs.state?.scroll||0);}});}
   else if (button.dataset.back && state.page === 'contacts') void run(() => openPage('contacts'));
   else if (button.dataset.back) { if (!protectEditor(() => void run(() => openPage(state.page)))) return; leaveRoute(); state.selected = null; state.editing = false; state.editorDraft = null; state.editorOrigin = null; render(); globalThis.scrollTo?.(0, 0); }
   else if (button.dataset.edit) void enterEditor();
