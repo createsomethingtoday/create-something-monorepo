@@ -14,12 +14,12 @@ test('standalone page retains the owning Agency Canon operator palette', () => {
 });
 
 test('download contract pins exact qualified installer, platform and checksum', () => {
-  assert.equal(gigiBeta.version, '0.2.7');
-  assert.equal(gigiBeta.filename, 'GiGi-0.2.7-arm64-private-beta.dmg');
-  assert.equal(gigiBeta.bytes, 97154000);
-  assert.equal(gigiBeta.sha256, '94e5a65e493e3356bfa416e166e28fd9798004e5a220a8a0becefea4b0d761b1');
-  assert.equal(gigiBeta.url, `https://media.createsomething.io/releases/gigi/0.2.7/${gigiBeta.sha256}/GiGi-0.2.7-arm64-private-beta.dmg`);
-  for (const text of ['macOS 13', 'Apple Silicon', 'Intel Macs are not supported', gigiBeta.url, gigiBeta.sha256, '97,154,000', '97.2 MB']) assert.ok(gigiBetaHtml.includes(text), text);
+  assert.equal(gigiBeta.version, '0.2.8');
+  assert.equal(gigiBeta.filename, 'GiGi-0.2.8-arm64-private-beta.dmg');
+  assert.equal(gigiBeta.bytes, 98601117);
+  assert.equal(gigiBeta.sha256, '2be3b50358f220fbfc6dd6ca9310747a1e32b151ac8b9b646223b0a2d303ab4d');
+  assert.equal(gigiBeta.url, `https://media.createsomething.io/releases/gigi/0.2.8/${gigiBeta.sha256}/GiGi-0.2.8-arm64-private-beta.dmg`);
+  for (const text of ['macOS 13', 'Apple Silicon', 'Intel Macs are not supported', gigiBeta.url, gigiBeta.sha256, '98,601,117', '98.6 MB']) assert.ok(gigiBetaHtml.includes(text), text);
 });
 
 test('beta stays unlisted and has no active content or tracking shell', () => {
@@ -66,7 +66,7 @@ test('release acceptance distinguishes this installer from historical workflow e
 test('creative work scope preserves local media and explicit publishing boundaries', () => {
   for (const text of [
     'Music library', 'Instagram drafts', 'including MP4s', 'bounded and cancellable',
-    'does not upload, move or delete your original media', 'index, not the media',
+    'does not upload, move or delete your original media', 'index and saved artwork, not the media originals',
     'not copies of earlier file contents', 'Missing or changed files',
     'one JPEG image', 'direct public HTTPS URL', 'approved image host',
     'Business or Creator account', 'Personal accounts, Reels, Stories, carousels and scheduling are not supported',
@@ -108,7 +108,7 @@ test('Sources release explains scoped preview, approval, sign-out and synthetic 
 test('Gigs release explains collection-wide ordering and bounded acceptance', () => {
   const changes = gigiBetaHtml.match(/<section aria-labelledby="changes">([\s\S]*?)<\/section>/)?.[1] ?? '';
   for (const text of [
-    'What changed in 0.2.7', 'Upcoming', 'Past', 'All', 'Needs date',
+    'Included from 0.2.7', 'Upcoming', 'Past', 'All', 'Needs date',
     'linked people or places', 'Status, Type and date range',
     'before pagination', 'matching counts', 'filters and scroll position',
     'same local-day and date-range rules as Schedule'
@@ -116,4 +116,13 @@ test('Gigs release explains collection-wide ordering and bounded acceptance', ()
   assert.ok(gigiBetaHtml.includes('59 synthetic gigs'));
   assert.ok(gigiBetaHtml.includes('Reset and detail/Back scroll recovery'));
   assert.ok(gigiBetaHtml.includes('do not establish real Google import, Grant’s access or fresh-installation acceptance'));
+});
+
+
+test('artwork release preserves local previews and external generation boundaries', () => {
+  const changes = gigiBetaHtml.match(/<section aria-labelledby="changes">([\s\S]*?)<\/section>/)?.[1] ?? '';
+  assert.ok(changes.includes(`What changed in ${gigiBeta.version}`));
+  for (const text of ['Calendar entries', 'ongoing events', 'fit the whole image', 'AI illustrations', 'no publish control', 'external Codex', 'Embedded Ask GiGi cannot generate images', 'automatic flyer discovery', '8 MiB', '24 megapixels', '8,192 pixels', '128 MiB', 'including previews', 'Unknown rights remain unknown']) assert.ok(changes.includes(text), text);
+  assert.ok(gigiBetaHtml.includes('Create a backup in GiGi, then quit the app before installing a new release.'));
+  for (const text of ['mocked generation', 'no real image generation was invoked', 'do not establish a fresh Mac installation', 'local draft snapshots', 'provenance conflicts', 'backup restoration']) assert.ok(gigiBetaHtml.includes(text), text);
 });
