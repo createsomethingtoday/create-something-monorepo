@@ -20,7 +20,7 @@ export function createGigs({read,changed=()=>{},storage=globalThis.localStorage,
  function get(workspace){
   if(!workspaces.has(workspace)){
    let saved;try{saved=JSON.parse(storage?.getItem(`gigi:gigs:${workspace}`)||'null');}catch{}
-   workspaces.set(workspace,{workspace,criteria:criteria(saved?.criteria),scroll:Math.max(0,Number(saved?.scroll)||0),focusId:null,result:null,error:'',loading:false,stale:false});
+   workspaces.set(workspace,{workspace,criteria:criteria(saved?.criteria),scroll:Math.max(0,Number(saved?.scroll)||0),scrollRevision:0,focusId:null,result:null,error:'',loading:false,stale:false});
   }
   return workspaces.get(workspace);
  }
@@ -48,8 +48,8 @@ export function createGigs({read,changed=()=>{},storage=globalThis.localStorage,
   async open(workspace){stop();current=get(workspace);active=true;return load(false,current.result?.items?.length||0);},
   cancel(){stop();active=false;},
   remember(scroll,focusId){if(current){current.scroll=Math.max(0,Number(scroll)||0);current.focusId=focusId??current.focusId;persist();}},
-  update(patch,debounce=true){if(!current)return;stop();current.criteria=criteria({...current.criteria,...patch});current.scroll=0;current.focusId=null;current.loading=true;current.stale=true;current.error='';persist();changed();if(debounce)timer=schedule(()=>void load(),150);else void load();},
-  reset(){if(!current)return;stop();current.criteria=defaults();current.stale=true;current.scroll=0;current.focusId=null;persist();void load();},
+  update(patch,debounce=true){if(!current)return;stop();current.criteria=criteria({...current.criteria,...patch});current.scroll=0;current.scrollRevision++;current.focusId=null;current.loading=true;current.stale=true;current.error='';persist();changed();if(debounce)timer=schedule(()=>void load(),150);else void load();},
+  reset(){if(!current)return;stop();current.criteria=defaults();current.stale=true;current.scroll=0;current.scrollRevision++;current.focusId=null;persist();void load();},
   invalidate(workspace=current?.workspace){const saved=workspaces.get(workspace);if(!saved)return;saved.stale=true;if(saved===current&&active){stop();changed();}},
   refresh(){return load();},more(){return load(true);}
  };
