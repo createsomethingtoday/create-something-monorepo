@@ -3,6 +3,7 @@ pub mod artwork;
 pub mod artwork_mcp;
 pub mod artwork_protocol;
 mod agenda;
+mod event_identity;
 pub mod media_protocol;
 pub mod music;
 pub mod music_mcp;
@@ -13,6 +14,7 @@ pub mod source_import;
 pub mod source_jobs;
 pub mod integrations;
 mod agent_setup;
+mod agent_preflight;
 mod navigation;
 pub mod chat;
 pub mod diagnostics;
@@ -35,6 +37,7 @@ async fn dispatch(app: tauri::AppHandle, operation: String, input: serde_json::V
         diagnostics::observe(&data_dir,&operation,&diagnostic_input,|| {
         if operation=="agent.status" {return agent_setup::status(&data_dir);}
         if operation=="agent.prepare" {return agent_setup::prepare(&resources,&data_dir);}
+        if operation=="agent.preflight" {return Ok(agent_preflight::check(&resources,&data_dir));}
         if operation=="help.open" {return navigation::open_help(input);}
         if operation=="connections.openConsent" {return navigation::open_consent(input);}
         if operation=="context.sync" {return integrations::sync_history(&resources,&data_dir);}

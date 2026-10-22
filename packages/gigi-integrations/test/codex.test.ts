@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdtemp, readFile, writeFile } from 'node:fs/promises';
+import { mkdtemp, readFile, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
@@ -772,6 +772,47 @@ test('complete mandatory catalog works without optional context search', async (
   const tools = server.calls.find(call => call.method === 'thread/start')!.params.dynamicTools[0].tools;
   assert.deepEqual(tools.map((tool: any) => tool.name), requiredTools);
   assert.equal(server.calls.filter(call => call.method === 'turn/start').length, 1);
+});
+
+test('agenda and connection reads stay in the chat workspace without exposing media tools', async () => {
+  const { adapter, server, mcp, dataDir } = await setup();
+  const original = mcp.request.bind(mcp);
+  const forwarded: Array<{ name: string; arguments: any }> = [];
+  const replies: any[] = [];
+  const newReads = ['gigi_agenda_list', 'gigi_connection_check'];
+  server.reply = (_id, result) => { replies.push(result); };
+  mcp.request = async (method, params) => {
+    if (method === 'tools/list') return { tools: [...toolCatalog(), ...newReads.concat('gigi_media_list', 'gigi_media_attach').map(name => ({ name, description: name, inputSchema: { type: 'object' } }))] };
+    if (method === 'tools/call' && newReads.includes(params.name)) {
+      forwarded.push(structuredClone(params));
+      return { content: [{ type: 'text', text: JSON.stringify({ workspaceId: params.arguments.workspaceId }) }] };
+    }
+    return original(method, params);
+  };
+  try {
+    await adapter.start({ workspaceId: 'w', message: 'Read my classified agenda' });
+    const profile = server.calls.find(call => call.method === 'thread/start')!.params;
+    const dynamic = profile.dynamicTools[0].tools;
+    for (const name of newReads) assert.ok(dynamic.some((tool: any) => tool.name === name));
+    assert.equal(dynamic.some((tool: any) => tool.name.startsWith('gigi_media_')), false);
+    assert.match(profile.baseInstructions, /unclassified gig does not establish a performance/);
+    assert.match(profile.baseInstructions, /Never invoke shell, files, network/);
+    const emit = (tool: string, args: any) => Promise.all(server.events.map(fn => fn({ id: 1800 + replies.length, method: 'item/tool/call', params: { threadId: 'thread-1', tool, arguments: args } })));
+    for (const name of newReads) {
+      await emit(name, name === 'gigi_agenda_list' ? { today: '2026-10-22', timeZone: 'UTC', recordKind: 'performance' } : {});
+      assert.equal(forwarded.at(-1)!.arguments.workspaceId, 'w');
+      assert.equal(replies.at(-1).success, true);
+      const before = forwarded.length;
+      await emit(name, { workspaceId: 'other' });
+      assert.equal(forwarded.length, before);
+      assert.equal(replies.at(-1).success, false);
+    }
+    await emit('gigi_media_attach', { workspaceId: 'w' });
+    assert.equal(replies.at(-1).success, false);
+    assert.equal(forwarded.length, 2);
+  } finally {
+    await rm(dataDir, { recursive: true, force: true });
+  }
 });
 
 test('large retained history reopens through bounded pages and reconciles the latest turn', async () => {

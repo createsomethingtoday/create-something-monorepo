@@ -1,7 +1,7 @@
 import { formatMoney, moneyFields, supportedCurrencies } from './model.mjs';
 
 const priorities = {
-  gigs: ['Date', 'Call Time', 'Set Time', 'Fee', 'Status', 'Requirements'],
+  gigs: ['Work kind', 'Date', 'Call Time', 'Set Time', 'Fee', 'Status', 'Requirements'],
   tasks: ['Due Date', 'Do Date', 'Priority', 'Status'],
   finances: ['Amount', 'Direction', 'Status', 'Due Date', 'Date'],
   schedule: ['Date', 'Type', 'Availability', 'All Day', 'Confirmed'],
@@ -68,6 +68,7 @@ export function fieldHelp(field, currency) {
   if (moneyFields.has(field)) return supportedCurrencies.has(currency)
     ? `Enter an amount in ${currency}, using up to two decimal places (for example, 90.00).`
     : 'Currency is not set. Check your profile currency before entering an amount.';
+  if (field === 'Work kind') return 'Optional. Choose the work you confirmed; leave unclassified if uncertain. Calendar imports do not establish a performance.';
   if (field === 'Date' || field.endsWith(' Date')) return 'Use YYYY-MM-DD (2026-10-03), or a timestamp with a UTC offset (2026-10-03T16:00:00-05:00).';
   if (field === 'Call Time' || field === 'Set Time') return 'Use a clear time (18:30), or include the date and UTC offset (2026-10-03T18:30:00-05:00).';
   return '';

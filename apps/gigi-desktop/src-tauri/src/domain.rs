@@ -115,6 +115,9 @@ fn fields_for(entity: &str, input: &Value) -> Result<Value, String> {
         if !valid {
             return Err(format!("invalid value for {name}: {kind}"));
         }
+        if entity=="gigs"&&name=="Work kind"&&!value.is_null()&&!["Performance","Crew / work","Other"].contains(&value.as_str().unwrap_or("")){
+            return Err("Work kind must be Performance, Crew / work or Other; omit it to leave unclassified".into());
+        }
         if entity=="profile"&&name=="Currency"&&!["USD","CAD","EUR","GBP"].contains(&value.as_str().unwrap_or("")){
             return Err("unsupported currency for integer-cent beta".into());
         }
@@ -315,7 +318,7 @@ fn get(db: &Connection, wid: &str, entity: &str, id: &str) -> Result<Value, Stri
     }
     let link_count:i64=db.query_row("SELECT count(*) FROM relations WHERE workspace_id=?1 AND ((from_entity=?2 AND from_id=?3) OR (to_entity=?2 AND to_id=?3))",params![wid,entity,id],|r|r.get(0)).map_err(|e|e.to_string())?;
     Ok(
-        json!({"id":id,"workspaceId":wid,"entity":entity,"title":row.0,"fields":serde_json::from_str::<Value>(&row.1).map_err(|e|e.to_string())?,"source":serde_json::from_str::<Value>(&row.2).map_err(|e|e.to_string())?,"createdAt":row.3,"updatedAt":row.4,"relations":links,"relationCount":link_count,"relationsTruncated":link_count>100,"cover":crate::artwork::resolved_cover(db,wid,entity,id)?,"coverRevision":crate::artwork::revision(db,wid,entity,id)?}),
+        json!({"id":id,"workspaceId":wid,"entity":entity,"title":row.0,"fields":serde_json::from_str::<Value>(&row.1).map_err(|e|e.to_string())?,"source":serde_json::from_str::<Value>(&row.2).map_err(|e|e.to_string())?,"createdAt":row.3,"updatedAt":row.4,"relations":links,"relationCount":link_count,"relationsTruncated":link_count>100,"identity":crate::event_identity::project(entity,&serde_json::from_str::<Value>(&row.1).map_err(|e|e.to_string())?,&serde_json::from_str::<Value>(&row.2).map_err(|e|e.to_string())?),"cover":crate::artwork::resolved_cover(db,wid,entity,id)?,"coverRevision":crate::artwork::revision(db,wid,entity,id)?}),
     )
 }
 fn bounded(mut record: Value, full: bool) -> Value {
@@ -460,6 +463,14 @@ pub fn dispatch(root: &Path, op: &str, input: Value) -> Result<Value, String> {
             Ok(row
                 .map(|(id, name, created)| json!({"id":id,"name":name,"createdAt":created}))
                 .unwrap_or(Value::Null))
+        }
+        "agenda.list" => {
+            let wid=need(&input,"workspaceId")?;workspace(&db,wid)?;
+            let today=need(&input,"today")?;let zone=need(&input,"timeZone")?;
+            let kind=input.get("recordKind").map(|v|v.as_str().ok_or("recordKind must be text")).transpose()?;
+            if kind.is_some_and(|k|!["calendar_event","performance","crew_work","other","unclassified"].contains(&k)){return Err("Unknown agenda classification".into())}
+            let number=|key:&str,default:u64,max:u64|->Result<usize,String>{match input.get(key){None=>Ok(default as usize),Some(v)=>v.as_u64().filter(|n|*n<=max && (key!="limit" || *n>0)).map(|n|n as usize).ok_or_else(||format!("Invalid agenda {key}"))}};
+            crate::agenda::list(&db,wid,today,zone,kind,number("offset",0,10000)?,number("limit",5,50)?)
         }
         "workspace.overview" => {
             let wid = need(&input, "workspaceId")?;

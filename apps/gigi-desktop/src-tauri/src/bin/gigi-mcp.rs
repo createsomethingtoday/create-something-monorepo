@@ -4,7 +4,9 @@ use std::fs;
 use std::io::{self, BufRead, Read, Write};
 use std::path::PathBuf;
 
-const TOOLS: [(&str, &str, bool); 11] = [
+const TOOLS: [(&str, &str, bool); 13] = [
+    ("gigi_connection_check", "connection.check", true),
+    ("gigi_agenda_list", "agenda.list", true),
     ("gigi_workspace_get", "workspace.get", true),
     ("gigi_schema_describe", "schema.describe", true),
     ("gigi_workspace_create", "workspace.create", false),
@@ -31,6 +33,7 @@ fn data_dir() -> Result<PathBuf, String> {
 
 fn required_keys(operation: &str) -> &'static [&'static str] {
     match operation {
+        "agenda.list" => &["workspaceId","today","timeZone"],
         "schema.describe" => &["entity"],
         "context.search" => &["workspaceId", "query"],
         "workspace.create" => &["name"],
@@ -51,7 +54,8 @@ fn schema(operation: &str) -> Value {
     }
     let required = required_keys(operation);
     let optional: &[(&str, &str)] = match operation {
-        "workspace.get" => &[("workspaceId", "string")],
+        "connection.check" | "workspace.get" => &[("workspaceId", "string")],
+        "agenda.list" => &[("recordKind","string"),("offset","integer"),("limit","integer")],
         "records.list" => &[("limit", "integer"), ("cursor", "string")],
         "records.save" => &[
             ("id", "string"),
@@ -67,6 +71,11 @@ fn schema(operation: &str) -> Value {
     };
     for (key, kind) in optional {
         properties.insert((*key).to_string(), json!({"type":kind}));
+    }
+    if operation == "agenda.list" {
+        properties.insert("recordKind".into(),json!({"type":"string","enum":["calendar_event","performance","crew_work","other","unclassified"]}));
+        properties.insert("limit".into(),json!({"type":"integer","minimum":1,"maximum":50,"default":5}));
+        properties.insert("offset".into(),json!({"type":"integer","minimum":0,"maximum":10000,"default":0}));
     }
     if operation == "context.search" {
         properties.insert("query".into(), json!({"type":"string","minLength":1,"maxLength":200,"description":"Nonblank local history search, at most 200 characters. Does not import sources or create tasks."}));
@@ -86,7 +95,11 @@ fn schema(operation: &str) -> Value {
 
 fn tool_catalog() -> Value {
     let mut tools: Vec<_> = TOOLS.iter().map(|(name, operation, read_only)| {
-        let description = if *operation == "records.save" {
+        let description = if *operation == "connection.check" {
+            "Check this actual MCP connection: executable, server version, workspace identity and media tool names. Run in the external host session you intend to use; a fresh standalone process cannot prove another session’s cached connection.".to_string()
+        } else if *operation == "agenda.list" {
+            "Read the same combined ongoing/upcoming agenda as Today. All gigs and schedule entries are ordered before classification filtering/pagination. Performance and crew require explicit Work kind; unclassified is never assumed to be performance. Use recordKind=performance for the next classified performance. Read the exact record before attaching artwork. Offset pages are separate snapshots; refresh if records change.".to_string()
+        } else if *operation == "records.save" {
             "GiGi records.save. For an existing id, omitted fields are preserved by default; supplied field keys merge into the record. Set fieldsMode to replace with a fields object to remove omitted field keys. Pass expectedRecord from a full records.get to reject a stale save. Omitted source and links are preserved. Local private workspace only; results are bounded.".to_string()
         } else {
             format!("GiGi {}. Local private workspace only; results are bounded.", operation)
@@ -115,7 +128,7 @@ fn record_tool_use(root: &std::path::Path, name: &str) -> Result<(), String> {
     let temporary = root.join(format!(".agent-last-call-{}.tmp", std::process::id()));
     fs::write(
         &temporary,
-        format!("{}\n", json!({"lastToolAt":seconds,"tool":name})),
+        format!("{}\n", json!({"lastToolAt":seconds,"tool":name,"serverVersion":env!("CARGO_PKG_VERSION"),"executable":std::env::current_exe().ok()})),
     )
     .map_err(|e| e.to_string())?;
     fs::rename(&temporary, &target).map_err(|e| e.to_string())?;
@@ -146,7 +159,9 @@ fn reply(root: &std::path::Path, request: &Value) -> Option<Value> {
                     json!({"jsonrpc":"2.0","id":id,"error":{"code":-32602,"message":"arguments must be an object"}}),
                 );
             }
-            let outcome = if artwork_mcp::handles(name){artwork_mcp::dispatch(root,name,arguments)}else if music_mcp::handles(name){music_mcp::dispatch(root,name,arguments)}else if social_mcp::handles(name){
+            let outcome = if operation=="connection.check" {
+                domain::dispatch(root,"workspace.get",arguments).map(|workspace|json!({"serverInfo":{"name":"gigi-local","version":env!("CARGO_PKG_VERSION")},"executable":std::env::current_exe().ok(),"workspace":workspace,"mediaTools":artwork_mcp::catalog().iter().map(|t|t["name"].clone()).collect::<Vec<_>>(),"scope":"this_mcp_connection","nativeGeneration":"external_host_capability_required"}))
+            }else if artwork_mcp::handles(name){artwork_mcp::dispatch(root,name,arguments)}else if music_mcp::handles(name){music_mcp::dispatch(root,name,arguments)}else if social_mcp::handles(name){
                 match std::env::current_exe().ok().and_then(|p|p.parent().map(std::path::Path::to_path_buf)){
                     Some(resources)=>social_mcp::dispatch(&resources,root,name,arguments),
                     None=>Err("MCP resource directory unavailable".into()),
@@ -264,7 +279,7 @@ mod tests {
         .unwrap();
         assert_eq!(listed["result"]["tools"].as_array().unwrap().len(), TOOLS.len()+music_mcp::catalog().len()+social_mcp::catalog().len()+source_jobs::catalog().len()+artwork_mcp::catalog().len());
         assert_eq!(
-            listed["result"]["tools"][3]["inputSchema"]["properties"]["limit"]["type"],
+            listed["result"]["tools"].as_array().unwrap().iter().find(|tool|tool["name"]=="gigi_records_list").unwrap()["inputSchema"]["properties"]["limit"]["type"],
             "integer"
         );
         let denied = reply(std::path::Path::new("/unused"), &json!({"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"run_sql","arguments":{"sql":"DROP TABLE gigs"}}})).unwrap();

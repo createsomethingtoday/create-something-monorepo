@@ -19,10 +19,14 @@ test('email proposal never invents a deadline; source text is escaped and a save
 test('calendar proposal retains exact date range and explains exclusive all-day end', () => {
   const record = { ...email(), entity: 'schedule', fields: { Date: '2026-11-01/2026-11-03', 'All Day': true }, source: { ...email().source, provider: 'googlecalendar' } };
   const draft = sourceDraft('w1', 'schedule', record, 'gigs', () => 'stable');
-  assert.equal(reviewSourceDraft(draft, draft).payload.fields.Date, '2026-11-01/2026-11-03');
+  assert.throws(()=>reviewSourceDraft(draft,{title:'Calendar commitment',date:record.fields.Date}),/Choose the work kind/);
+  assert.match(sourceProposalView(draft,false),/Leave unclassified/);
+  assert.equal(reviewSourceDraft(draft,{...draft,workKind:'Performance'}).payload.fields['Work kind'],'Performance');
+  assert.equal(reviewSourceDraft(draft,{...draft,workKind:'unclassified'}).payload.fields['Work kind'],undefined);
+  assert.equal(reviewSourceDraft(draft, { ...draft, workKind:'unclassified' }).payload.fields.Date, '2026-11-01/2026-11-03');
   assert.match(sourceProposalView(draft, false), /end is exclusive/);
   const offset = '2026-11-01T01:30:00-05:00/2026-11-01T01:30:00-06:00';
-  assert.equal(reviewSourceDraft(draft, { title: 'DST event', date: offset }).payload.fields.Date, offset);
+  assert.equal(reviewSourceDraft(draft, { title: 'DST event', date: offset, workKind:'Performance' }).payload.fields.Date, offset);
   for (const date of ['2026-02-30', '2026-10-10T24:00:00Z/2026-10-12T00:00:00Z', '2026-11-01T01:30/2026-11-01T02:30', '2026-11-03/2026-11-01']) assert.throws(() => reviewSourceDraft(draft, { title: 'Bad date', date }));
 });
 test('wrong workspace, incomplete account provenance and unsupported sources are rejected', () => {
