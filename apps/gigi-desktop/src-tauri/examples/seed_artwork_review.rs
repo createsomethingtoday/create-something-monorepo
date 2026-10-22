@@ -1,0 +1,21 @@
+//! Disposable deterministic visual fixture; never opens an existing workspace.
+use gigi_desktop_lib::{artwork,domain,music,social};
+use serde_json::json;
+use std::{fs,path::PathBuf};
+fn main()->Result<(),String>{
+ let root=PathBuf::from(std::env::args().nth(1).ok_or("Pass a new synthetic profile directory")?);
+ if !root.is_absolute()||root.join("gigi.sqlite").exists(){return Err("A new absolute synthetic profile is required".into())}
+ fs::create_dir_all(&root).map_err(|e|e.to_string())?;let root=fs::canonicalize(root).map_err(|e|e.to_string())?;
+ let w=domain::dispatch(&root,"workspace.create",json!({"name":"Synthetic artwork review"}))?["id"].clone();
+ let today=chrono::Utc::now().date_naive();let tomorrow=today.succ_opt().unwrap();let later=tomorrow.succ_opt().unwrap();
+ let mut images=Vec::new();for (index,(width,height)) in [(600,900),(700,700),(900,600)].into_iter().enumerate(){let mut image=image::RgbImage::new(width,height);for(x,y,pixel)in image.enumerate_pixels_mut(){*pixel=image::Rgb(if x<8||y<8||x>=width-8||y>=height-8{[222,230,201]}else{[35+(x*65/width)as u8,49+(y*90/height)as u8,45+index as u8*28]});}let path=root.join(format!("synthetic-{index}.png"));image.save(&path).map_err(|e|e.to_string())?;images.push(path);}
+ let event=domain::dispatch(&root,"records.save",json!({"workspaceId":w,"entity":"schedule","title":"Synthetic Calendar event","fields":{"Date":format!("{today}/{tomorrow}"),"All Day":true},"source":{"kind":"import","provider":"googlecalendar","connectedAccountId":"ca_synthetic","collectionId":"primary","externalId":"synthetic-calendar-1"}}))?;
+ let gig=domain::dispatch(&root,"records.save",json!({"workspaceId":w,"entity":"gigs","title":"Synthetic evening set","fields":{"Date":format!("{today}T20:00:00Z/{today}T22:00:00Z"),"Status":"Confirmed"}}))?;
+ domain::dispatch(&root,"records.save",json!({"workspaceId":w,"entity":"schedule","title":"Synthetic event without image","fields":{"Date":format!("{tomorrow}/{later}"),"All Day":true}}))?;
+ let mut covers=Vec::new();for (n,(entity,id)) in [("schedule",event["id"].clone()),("gigs",gig["id"].clone())].into_iter().enumerate(){let cover=artwork::import_with_picker(&root,json!({"workspaceId":w,"requestId":uuid::Uuid::new_v4().to_string(),"mode":"picker","entity":entity,"id":id,"expectedRevision":0,"alt":if n==0{"Synthetic portrait flyer with a pale border"}else{"Synthetic square olive illustration"},"provenance":if n==0{json!({"origin":"supplied","purpose":"official_flyer","rights":"unknown","sourceUrl":"https://example.test/synthetic-flyer","creator":"QA fixture"})}else{json!({"origin":"generated","purpose":"illustration","rights":"unknown","generator":"deterministic QA fixture"})}}),||Some(images[n].clone()))?;covers.push(cover);}
+ let wav=root.join("synthetic-demo.wav");let data=vec![0u8;16000];let mut bytes=Vec::new();bytes.extend(b"RIFF");bytes.extend((data.len()as u32+36).to_le_bytes());bytes.extend(b"WAVEfmt ");bytes.extend(16u32.to_le_bytes());bytes.extend(1u16.to_le_bytes());bytes.extend(1u16.to_le_bytes());bytes.extend(8000u32.to_le_bytes());bytes.extend(16000u32.to_le_bytes());bytes.extend(2u16.to_le_bytes());bytes.extend(16u16.to_le_bytes());bytes.extend(b"data");bytes.extend((data.len()as u32).to_le_bytes());bytes.extend(data);fs::write(&wav,bytes).map_err(|e|e.to_string())?;
+ let music=music::import_with_picker(&root,&json!({"workspaceId":w,"requestId":uuid::Uuid::new_v4().to_string(),"mode":"files"}),|_|Ok(vec![wav]))?;
+ artwork::dispatch(&root,"media.attach",json!({"workspaceId":w,"requestId":uuid::Uuid::new_v4().to_string(),"entity":"music","id":music["addedIds"][0],"assetId":covers[1]["cover"]["assetId"],"expectedRevision":0,"alt":"Synthetic square olive illustration"}))?;
+ let draft=social::dispatch(&root,&root,"social.save",json!({"workspaceId":w,"requestId":uuid::Uuid::new_v4().to_string(),"title":"Synthetic local draft","caption":"Private artwork preview. Synthetic data only.","imageAssetId":covers[0]["cover"]["assetId"],"imageAlt":"Synthetic portrait flyer with a pale border"}))?;
+ println!("{}",json!({"profile":root,"workspaceId":w,"eventId":event["id"],"gigId":gig["id"],"musicId":music["addedIds"][0],"draftId":draft["id"],"syntheticOnly":true}));Ok(())
+}

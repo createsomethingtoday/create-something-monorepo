@@ -10,7 +10,7 @@ export function peopleShortcut(event, page, chatVisible) {
   return !chatVisible && (event.metaKey || event.ctrlKey) && !event.altKey && event.key.toLowerCase() === 'f' && (event.shiftKey || page === 'contacts');
 }
 export function todaySummary(data) {
-  return `<nav class="today-summary" aria-label="Today summary">${[['gigs','Upcoming work'],['tasks','Open tasks'],['finances','Unpaid records']].map(([entity,title]) => `<button class="btn text" data-page="${entity}"><strong>${safe(data[entity]?.count ?? 0)}</strong> ${title}</button>`).join('')}</nav>`;
+  return `<nav class="today-summary" aria-label="Today summary">${[[data.events?'events':'gigs','Upcoming work'],['tasks','Open tasks'],['finances','Unpaid records']].map(([entity,title]) => `<button class="btn text" data-page="${entity==='events'?'schedule':entity}"><strong>${safe(data[entity]?.count ?? 0)}</strong> ${title}</button>`).join('')}</nav>`;
 }
 export function builtInChatSetup(status, failed = false) {
   const ready = status?.available === true && status?.authenticated === true;

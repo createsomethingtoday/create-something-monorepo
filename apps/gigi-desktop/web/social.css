@@ -16,6 +16,9 @@
 .social-preview { padding:16px; border:1px solid var(--line); border-radius:12px; align-self:start; overflow:hidden; }
 .social-preview-image { min-height:220px; background:var(--bg); display:flex; align-items:center; justify-content:center; }
 .social-preview-image img { width:100%; height:auto; max-height:420px; object-fit:contain; }
+.social-preview-image:has(.artwork-frame) { display:block; padding:12px; }
+.social-preview-image .artwork-frame img { height:100%; }
+.social-preview-image .artwork-origin { padding-top:8px; }
 .social-preview p, .social-confirm-caption { white-space:pre-wrap; overflow-wrap:anywhere; }
 .social-preview small { display:block; opacity:.65; }
 .social-notice, .social-receipt { padding:14px; border:1px solid var(--line); border-radius:8px; margin:16px 0; }

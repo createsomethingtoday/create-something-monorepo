@@ -32,6 +32,7 @@ test('requires an explicit existing profile and packages its exact data root', a
   assert.deepEqual(config.mcpServers.gigi.args,[]);
   assert.equal(config.mcpServers.gigi.env.GIGI_DATA_DIR,dataRoot);
   assert.ok((await readFile(join(output,'skills','gigi','SKILL.md'),'utf8')).includes('SQLite'));
+  assert.ok((await readFile(join(output,'skills','gigi-artwork','SKILL.md'),'utf8')).includes('gigi_media_import'));
   const manifest=JSON.parse(await readFile(join(output,'.codex-plugin','plugin.json'),'utf8'));
   assert.equal(manifest.mcpServers,'./.mcp.json');
  } finally {await rm(root,{recursive:true,force:true});}

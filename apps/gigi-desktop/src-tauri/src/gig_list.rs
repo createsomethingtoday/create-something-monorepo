@@ -7,7 +7,7 @@ use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
 use std::collections::{BTreeSet, HashMap};
 
-fn day(value: &str) -> Option<NaiveDate> {
+pub(crate) fn day(value: &str) -> Option<NaiveDate> {
     if value.len() != 10
         || value.as_bytes()[4] != b'-'
         || value.as_bytes()[7] != b'-'
@@ -25,6 +25,10 @@ fn point(value: &str, zone: Tz) -> Option<(NaiveDate, Option<i64>)> {
     if let Some(date) = day(value) {
         return Some((date, None));
     }
+    let value = instant(value)?;
+    Some((value.with_timezone(&zone).date_naive(), Some(value.timestamp_millis())))
+}
+pub(crate) fn instant(value: &str) -> Option<DateTime<chrono::FixedOffset>> {
     // Same strict Date contract as Schedule: date-only or an offset-bearing ISO timestamp.
     if value.len() < 17
         || value.as_bytes().get(10) != Some(&b'T')
@@ -50,19 +54,16 @@ fn point(value: &str, zone: Tz) -> Option<(NaiveDate, Option<i64>)> {
         normalized = format!("{}:00{}", value.get(..16)?, value.get(16..)?);
         &normalized
     };
-    let value = DateTime::parse_from_rfc3339(value).ok()?;
-    Some((
-        value.with_timezone(&zone).date_naive(),
-        Some(value.timestamp_millis()),
-    ))
+    DateTime::parse_from_rfc3339(value).ok()
 }
+
 #[derive(Clone)]
-struct Timing {
-    start: NaiveDate,
-    end: NaiveDate,
-    order: i64,
+pub(crate) struct Timing {
+    pub(crate) start: NaiveDate,
+    pub(crate) end: NaiveDate,
+    pub(crate) order: i64,
 }
-fn timing(value: &str, all_day: bool, zone: Tz) -> Option<Timing> {
+pub(crate) fn timing(value: &str, all_day: bool, zone: Tz) -> Option<Timing> {
     let mut parts = value.split('/');
     let (start, instant) = point(parts.next()?, zone)?;
     let end = parts.next().map(|v| point(v, zone));

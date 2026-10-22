@@ -14,6 +14,18 @@ A Rust/Tauri desktop workspace for music-related work. Each installation owns a 
 
 The local functional beta passed connected desktop and physical cellular-phone acceptance; current receipts and artifact hashes are in `evidence/local-checkpoint.md`. Developer ID signing, notarization and installation of the qualified release remain required before production distribution. See `evidence/tdd.md` for checks and failures; a successful build alone does not prove acceptance.
 
+## Local flyers and artwork (0.2.8)
+
+Today combines dated gigs and Calendar schedule entries, ordered across the complete workspace before showing five. Ongoing events are included. Only verified source-derived duplicates collapse; matching titles alone stay separate. A Calendar import supplies event details, not flyer bytes.
+
+Open a gig or schedule entry and choose **Add artwork**, or use **Add artwork** beside a music entry. Select one static JPEG/PNG, describe the image, and record its provenance and rights status. Images are copied into the private SQLite workspace; original files remain unchanged. Limits are 8 MiB per input, 24 megapixels, an 8,192-pixel edge, and 100 stored images or 128 MiB including thumbnails. Reuse saved artwork across records. Identical bytes deduplicate only when provenance matches; conflicting rights, purpose or attribution are rejected so reviewed metadata is never silently discarded. Explicit reuse retains the saved provenance. **Remove cover** detaches an image; **Remove unused saved image** frees an image only when no record or draft references it. Images are included in database backups; audio, video and DAW project originals remain external references. The image quota counts live asset bytes, not SQLite file size or accumulated backups; SQLite can retain freed pages and backups need their own disk space.
+
+Cards fit the whole image so portrait flyers retain their edges. Open a record's image or a music thumbnail for the full original. Missing or damaged images retain the record's text. “Official flyer · user supplied” records the user's attribution and source URL; GiGi does not verify an issuer. Generated illustrations remain labelled separately. Unknown rights stay unknown, and no image is uploaded automatically.
+
+In Instagram drafts, **Choose saved local artwork** reuses a workspace image and saves an immutable image snapshot with the caption. Local artwork supports private preview only and has no publish control. Changing a record's cover does not change an existing draft. The existing public-JPEG publication workflow remains a separate option with its existing human approval boundary.
+
+The bundled **gigi-artwork** skill uses an external Codex host's built-in/default image generation when the user asks for it and the host actually supplies that capability. Generation consumes host usage. The host inspects and copies the selected output into an exact expiring GiGi import slot; typed MCP validates, attaches and returns a receipt, then the skill reads the target back. Image bytes never enter MCP prompts as base64. Embedded Ask GiGi cannot generate images. Remote hosts need actual access to the same bytes and this Mac's MCP; a connection alone does not establish that. There is no automatic API fallback, flyer discovery, account linking or local-image publishing.
+
 ## Organize music on this Mac
 
 Open **Music library** under Creative work to organize demos, final bounces, session files and music videos. You need a local GiGi workspace and the original files on this Mac. No source sign-in or agent subscription is required.
@@ -88,7 +100,7 @@ A fresh local install must complete onboarding, linked record creation and corre
 
 ## Implemented beta scope
 
-The reviewed catalog preserves all 13 entity types and named relationship roles. The beta implements typed record editing, validated links, integer-cent money summaries for USD/CAD/EUR/GBP, source provenance/deduplication, mutation history, and SQLite backup/restore. It does not yet reproduce every Notion formula/rollup or manage binary attachments. Empty or incomplete financial inputs are marked incomplete; the catalog alone is not formula parity.
+The reviewed catalog preserves all 13 entity types and named relationship roles. The beta implements typed record editing, validated links, integer-cent money summaries for USD/CAD/EUR/GBP, source provenance/deduplication, mutation history, and SQLite backup/restore. It does not yet reproduce every Notion formula/rollup. Binary attachments are limited to the bounded local artwork described above; other catalog file fields remain text. Empty or incomplete financial inputs are marked incomplete; the catalog alone is not formula parity.
 
 Imports read bounded Gmail metadata and Calendar event pages. Each saved record is transactional; a failed page returns an explicit retry cursor and preserves completed records. Repeating the page deduplicates by provider, connected account, collection, and external ID and preserves local corrections. It does not send email or modify calendars.
 
