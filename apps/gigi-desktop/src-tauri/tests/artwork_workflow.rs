@@ -101,3 +101,78 @@ fn imported_artwork_is_atomic_workspace_owned_and_restored_with_database() {
     assert!(restored["cover"].is_null());
     fs::remove_dir_all(root).unwrap();
 }
+
+#[test]
+fn larger_artwork_backup_and_restore_preserve_bytes_without_per_page_stalls() {
+    let root = std::env::temp_dir().join(format!("gigi-artwork-backup-{}", uuid::Uuid::new_v4()));
+    std::fs::create_dir_all(&root).unwrap();
+    let root = std::fs::canonicalize(root).unwrap();
+    let w = domain::dispatch(
+        &root,
+        "workspace.create",
+        json!({"name":"Synthetic artwork backup"}),
+    )
+    .unwrap()["id"]
+        .clone();
+    let gig = domain::dispatch(
+        &root,
+        "records.save",
+        json!({"workspaceId":w,"entity":"gigs","title":"Synthetic backup target"}),
+    )
+    .unwrap();
+    let mut images = Vec::new();
+    for revision in 0..2 {
+        let mut image = image::RgbImage::new(2048, 1000);
+        let mut state = 123456789_u32 + revision;
+        for p in image.pixels_mut() {
+            for c in p.0.iter_mut() {
+                state ^= state << 13;
+                state ^= state >> 17;
+                state ^= state << 5;
+                *c = state as u8;
+            }
+        }
+        let path = root.join(format!("synthetic-noise-{revision}.png"));
+        image.save(&path).unwrap();
+        let original = fs::read(&path).unwrap();
+        assert!(original.len() > 5_000_000 && original.len() < 8 * 1024 * 1024);
+        let saved=gigi_desktop_lib::artwork::import_with_picker(&root,json!({"workspaceId":w,"requestId":uuid::Uuid::new_v4().to_string(),"mode":"picker","entity":"gigs","id":gig["id"],"expectedRevision":revision,"alt":"Deterministic synthetic noise for backup testing","provenance":{"origin":"supplied","purpose":"artwork","rights":"unknown"}}),||Some(path)).unwrap();
+        images.push((
+            saved["cover"]["assetId"].as_str().unwrap().to_string(),
+            original,
+        ));
+    }
+    let started = std::time::Instant::now();
+    let backup = domain::dispatch(&root, "backup.create", json!({"workspaceId":w})).unwrap();
+    gigi_desktop_lib::artwork::dispatch(&root,"media.attach",json!({"workspaceId":w,"requestId":uuid::Uuid::new_v4().to_string(),"entity":"gigs","id":gig["id"],"expectedRevision":2,"assetId":null})).unwrap();
+    let restored = domain::dispatch(
+        &root,
+        "backup.restore",
+        json!({"backupId":backup["backupId"]}),
+    )
+    .unwrap();
+    assert!(restored["safetyBackupId"].is_string());
+    for (id, original) in images {
+        assert_eq!(
+            gigi_desktop_lib::artwork::bytes(&root, w.as_str().unwrap(), &id, false)
+                .unwrap()
+                .0,
+            original
+        );
+    }
+    let elapsed = started.elapsed();
+    eprintln!("Synthetic 12 MiB artwork backup + safety backup + restore: {elapsed:?}");
+    assert!(
+        elapsed < std::time::Duration::from_secs(30),
+        "large artwork recovery must not pause per five SQLite pages: {elapsed:?}"
+    );
+    let record = domain::dispatch(
+        &root,
+        "records.get",
+        json!({"workspaceId":w,"entity":"gigs","id":gig["id"],"detail":"full"}),
+    )
+    .unwrap();
+    assert_eq!(record["coverRevision"], 2);
+    assert!(!record["cover"].is_null());
+    fs::remove_dir_all(root).unwrap();
+}

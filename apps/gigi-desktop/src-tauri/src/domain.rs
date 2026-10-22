@@ -874,7 +874,7 @@ pub fn dispatch(root: &Path, op: &str, input: Value) -> Result<Value, String> {
                 Connection::open(backup_path).map_err(|e| e.to_string())?;
             rusqlite::backup::Backup::new(&db, &mut target)
                 .map_err(|e| e.to_string())?
-                .run_to_completion(5, std::time::Duration::from_millis(100), None)
+                .run_to_completion(256, std::time::Duration::from_millis(5), None)
                 .map_err(|e| e.to_string())?;
             Ok(json!({"backupId":id,"workspaceId":wid,"created":true}))
         }
@@ -931,12 +931,12 @@ pub fn dispatch(root: &Path, op: &str, input: Value) -> Result<Value, String> {
                     .map_err(|e| e.to_string())?;
             rusqlite::backup::Backup::new(&db, &mut safety)
                 .map_err(|e| e.to_string())?
-                .run_to_completion(5, std::time::Duration::from_millis(100), None)
+                .run_to_completion(256, std::time::Duration::from_millis(5), None)
                 .map_err(|e| e.to_string())?;
             drop(safety);
             rusqlite::backup::Backup::new(&source, &mut db)
                 .map_err(|e| e.to_string())?
-                .run_to_completion(5, std::time::Duration::from_millis(100), None)
+                .run_to_completion(256, std::time::Duration::from_millis(5), None)
                 .map_err(|e| e.to_string())?;
             Ok(json!({"restored":true,"backupId":id,"safetyBackupId":safety_id}))
         }
