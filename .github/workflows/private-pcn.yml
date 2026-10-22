@@ -22,7 +22,7 @@ jobs:
           version: 9.15.0
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
         with:
-          node-version: 22.21.1
+          node-version: 22.23.4
           cache: pnpm
       - run: pnpm install --filter @create-something/private-pcn... --filter @create-something/identity-worker... --frozen-lockfile
       - run: pnpm --filter @create-something/auth-platform build
