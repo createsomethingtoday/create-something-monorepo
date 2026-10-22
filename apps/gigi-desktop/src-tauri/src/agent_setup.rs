@@ -28,7 +28,7 @@ pub fn prepare(resources: &Path, data: &Path) -> Result<Value,String> {
  copy_skills(&resources.join("agent/gigi/skills"),&output.join("skills"))?;
  for kind in [".codex-plugin",".claude-plugin"] {
   let folder=output.join(kind);std::fs::create_dir_all(&folder).map_err(|e|e.to_string())?;
-  let mut manifest=serde_json::json!({"name":"gigi","version":"0.2.8","description":"Private music-work records through local GiGi MCP"});
+  let mut manifest=serde_json::json!({"name":"gigi","version":env!("CARGO_PKG_VERSION"),"description":"Private music-work records through local GiGi MCP"});
   if kind==".codex-plugin" {manifest["skills"]=serde_json::json!("./skills/");manifest["mcpServers"]=serde_json::json!("./.mcp.json");}
   std::fs::write(folder.join("plugin.json"),serde_json::to_vec_pretty(&manifest).unwrap()).map_err(|e|e.to_string())?;
  }
@@ -38,7 +38,7 @@ pub fn prepare(resources: &Path, data: &Path) -> Result<Value,String> {
  let claude_command=format!("claude --plugin-dir {}",shell_quote(&output.to_string_lossy()));
  Ok(serde_json::json!({"packagePath":output,"mcpConfig":config,"installed":false,"state":"prepared",
   "codexCommand":codex_command,"claudeCommand":claude_command,"skillPath":skill_output.join("SKILL.md"),"artworkSkillPath":output.join("skills/gigi-artwork/SKILL.md"),
-  "starterPrompt":format!("Read the GiGi skill at \"{}\". Actually call gigi_workspace_get and return my workspace name and ID. Use bounded lists. Do not change any records.",skill_output.join("SKILL.md").display()),
+  "starterPrompt":format!("Read the GiGi skill at \"{}\". Actually call gigi_connection_check and gigi_workspace_get in this session. Return the connector executable, server version, media tool names and my workspace name and ID. Stop on a path/version mismatch or missing media tools. Use bounded lists. Do not change any records.",skill_output.join("SKILL.md").display()),
   "nextStep":"Follow the selected Codex or Claude Code setup steps, then verify a real GiGi tool call."}))
 }
 

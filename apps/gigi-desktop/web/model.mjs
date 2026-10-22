@@ -20,7 +20,7 @@ export const sections = [
 ];
 
 export const fields = {
-  gigs: ['Status', 'Type', 'Date', 'Call Time', 'Set Time', 'Fee', 'Rate Type', 'Hours', 'Lead Source', 'Requirements'],
+  gigs: ['Status', 'Work kind', 'Type', 'Date', 'Call Time', 'Set Time', 'Fee', 'Rate Type', 'Hours', 'Lead Source', 'Requirements'],
   schedule: ['Date', 'Type', 'Availability', 'All Day', 'Confirmed'],
   contacts: ['Type', 'Role', 'Email', 'Phone', 'Instagram', 'Preferred Channel', 'Status', 'Rate Notes'],
   companies: ['Type', 'Status', 'Website', 'Instagram', 'Email', 'Phone'],
@@ -38,7 +38,7 @@ export const moneyFields = new Set(['Fee', 'Amount', 'Default Day Rate', 'Defaul
 export const numericFields = new Set(['Hours', 'Estimated Time', 'Tax Set-Aside Percentage', 'Capacity', 'Default Hours']);
 export const booleanFields = new Set(['notes.Pinned', 'gigs.Promotable', 'finances.Deductible', 'finances.Recurring', 'documents.Requires Signature', 'documents.Confidential', 'schedule.All Day', 'schedule.Confirmed', 'tags.Active', 'services.Active']);
 export const supportedCurrencies = new Set(['USD', 'CAD', 'EUR', 'GBP']);
-const options = { 'finances.Direction': ['Income', 'Expense'], 'finances.Status': ['Expected', 'Invoiced', 'Paid', 'Overdue'] };
+const options = { 'gigs.Work kind': ['Performance', 'Crew / work', 'Other'], 'finances.Direction': ['Income', 'Expense'], 'finances.Status': ['Expected', 'Invoiced', 'Paid', 'Overdue'] };
 export const fieldOptions = (entity, field) => options[`${entity}.${field}`] || null;
 
 export function listFrom(result) {

@@ -1344,7 +1344,7 @@ dependencies = [
 
 [[package]]
 name = "gigi_desktop"
-version = "0.2.8"
+version = "0.2.9"
 dependencies = [
  "chrono",
  "chrono-tz",
@@ -1357,6 +1357,7 @@ dependencies = [
  "sha2",
  "tauri",
  "tauri-build",
+ "toml 0.8.2",
  "unicode-normalization",
  "uuid",
 ]

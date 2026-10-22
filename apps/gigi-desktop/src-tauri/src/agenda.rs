@@ -63,6 +63,9 @@ pub(crate) fn overview(
     today: &str,
     time_zone: &str,
 ) -> Result<Value, String> {
+    list(db,wid,today,time_zone,None,0,5)
+}
+pub(crate) fn list(db:&Connection,wid:&str,today:&str,time_zone:&str,kind:Option<&str>,offset:usize,limit:usize)->Result<Value,String> {
     let today = day(today).ok_or("Today needs a valid local date")?;
     let zone: chrono_tz::Tz = time_zone
         .parse()
@@ -72,7 +75,7 @@ pub(crate) fn overview(
     let mut undated = 0;
     let mut sources = HashMap::new();
     for entity in ["gigs", "schedule"] {
-        let mut stmt=snapshot.prepare(&format!("SELECT id,title,status,fields_json FROM {entity} WHERE workspace_id=?1 ORDER BY id")).map_err(|e|e.to_string())?;
+        let mut stmt=snapshot.prepare(&format!("SELECT id,title,status,fields_json,source_json FROM {entity} WHERE workspace_id=?1 ORDER BY id")).map_err(|e|e.to_string())?;
         let rows = stmt
             .query_map([wid], |r| {
                 Ok((
@@ -80,11 +83,12 @@ pub(crate) fn overview(
                     r.get::<_, String>(1)?,
                     r.get::<_, Option<String>>(2)?,
                     r.get::<_, String>(3)?,
+                    r.get::<_, String>(4)?,
                 ))
             })
             .map_err(|e| e.to_string())?;
         for row in rows {
-            let (id, title, status, fields) = row.map_err(|e| e.to_string())?;
+            let (id, title, status, fields, source) = row.map_err(|e| e.to_string())?;
             if status.as_deref().is_some_and(|s| {
                 ["done", "complete", "completed", "cancelled", "canceled"]
                     .contains(&s.trim().to_lowercase().as_str())
@@ -92,6 +96,8 @@ pub(crate) fn overview(
                 continue;
             }
             let fields: Value = serde_json::from_str(&fields).map_err(|e| e.to_string())?;
+            if kind.is_some_and(|k|k!=crate::event_identity::kind(entity,&fields)) {continue;}
+            let identity=crate::event_identity::project(entity,&fields,&serde_json::from_str::<Value>(&source).map_err(|e|e.to_string())?);
             let verified = if entity == "gigs" {
                 verified_source(&snapshot, wid, &id)?
             } else {
@@ -148,7 +154,7 @@ pub(crate) fn overview(
             if time.end < today {
                 continue;
             }
-            items.push((json!({"workspaceId":wid,"entity":entity,"id":id,"title":title.chars().take(120).collect::<String>(),"status":status,"date":time.start.to_string(),"endDate":time.end.to_string(),"allDay":all_day,"fields":{"Date":fields["Date"],"All Day":all_day,"Call Time":fields["Call Time"].as_str().map(|s|s.chars().take(160).collect::<String>()),"Set Time":fields["Set Time"].as_str().map(|s|s.chars().take(160).collect::<String>())},"coverRevision":crate::artwork::revision(&snapshot,wid,entity,&id)?,"cover":crate::artwork::cover(&snapshot,wid,entity,&id)?}),time));
+            items.push((json!({"workspaceId":wid,"entity":entity,"id":id,"identity":identity,"title":title.chars().take(120).collect::<String>(),"status":status,"date":time.start.to_string(),"endDate":time.end.to_string(),"allDay":all_day,"fields":{"Date":fields["Date"],"All Day":all_day,"Call Time":fields["Call Time"].as_str().map(|s|s.chars().take(160).collect::<String>()),"Set Time":fields["Set Time"].as_str().map(|s|s.chars().take(160).collect::<String>())},"coverRevision":crate::artwork::revision(&snapshot,wid,entity,&id)?,"cover":crate::artwork::cover(&snapshot,wid,entity,&id)?}),time));
         }
     }
     let event_ids: HashSet<String> = items
@@ -186,7 +192,8 @@ pub(crate) fn overview(
     let count = items.len();
     let records = items
         .into_iter()
-        .take(5)
+        .skip(offset)
+        .take(limit)
         .map(|(mut r, _)| {
             if let Some(cover) = inherited.remove(r["id"].as_str().unwrap()) {
                 r["cover"] = cover;
@@ -194,5 +201,5 @@ pub(crate) fn overview(
             r
         })
         .collect::<Vec<_>>();
-    Ok(json!({"items":records,"count":count,"undatedCount":undated,"timeZone":time_zone}))
+    Ok(json!({"items":records,"count":count,"undatedCount":undated,"timeZone":time_zone,"offset":offset,"limit":limit,"nextOffset":if offset+limit<count {Some(offset+limit)}else{None},"recordKind":kind}))
 }

@@ -1,5 +1,13 @@
 # GiGi desktop beta
 
+## Setup checks and event selection (0.2.9 candidate)
+
+Settings → External agent connection offers a read-only Codex setup check. It compares this app's connector and workspace with the narrow `gigi` entry in the local Codex configuration, reads the discovered CLI version, and checks the bundled connector's version and media catalog in a fresh process. It never rewrites configuration or reconnects accounts. A mismatched registered executable is not executed. Other configuration scopes and an already-running host remain separate: run `gigi_connection_check` and `gigi_workspace_get` in the external session you intend to use, then confirm the executable, version, media tools and workspace.
+
+Gigs have an optional **Work kind**: Performance, Crew / work or Other. Existing records remain unclassified; original **Type**, source and dates remain unchanged. Calendar schedule entries retain their identity. Source-to-gig review requires choosing a classification or explicitly leaving it unclassified. Artwork controls identify the selected title, kind, date and Calendar source when available. Cover revisions reject simultaneous cover edits; they do not lock simultaneous title/date/classification edits, so reread a target after a long generation and resolve observed changes.
+
+`gigi_agenda_list` shares Today's combined ordering, ongoing/all-day/timezone rules and verified source deduplication. It requires a local `today` date and IANA `timeZone`, accepts an optional `recordKind`, and returns at most 50 items with count and `nextOffset`. Classification filtering happens before deduplication and truncation, so a Calendar event remains available when its derived gig is excluded. Offset pages are separate read snapshots; refresh when records change. “Next performance” means explicitly classified performance, never a guess from the earliest record or a title. Native generation, music picker selection, installed UI rendering and an active host connection each need their own acceptance evidence.
+
 ## Selected source proposals (candidate)
 
 Open an already imported Gmail interaction or Google Calendar schedule record and choose **Create task from source** or **Create gig from source**. Review the title and optional date, then approve the local save. Ask GiGi supports the same operation when a conversation starts with that source selected. Source text is reference material, never authority to execute instructions. This feature neither sends email nor creates or updates Google Calendar events, and requires no new Google scopes.
