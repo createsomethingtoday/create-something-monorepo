@@ -7,6 +7,7 @@ import {artworkButton} from './artwork.mjs';
 test('fresh setup evidence never claims cached host or generation readiness',()=>{
  const html=agentPreflightView({appVersion:'0.2.9',expectedCommand:'/Applications/GiGi',registration:{state:'matches',command:'<old>',registeredVersion:'0.2.9'},connector:{state:'verified',version:'0.2.9',missingMediaTools:[]}});
  assert.match(html,/current external agent session still needs/);assert.match(html,/Configuration unchanged/);assert.match(html,/&lt;old&gt;/);assert.match(html,/embedded Ask GiGi cannot generate/);
+ assert.match(agentPreflightView(null,true),/disabled aria-busy="true"/);
  assert.match(agentPreflightView({registration:{state:'mismatch'},connector:{state:'unavailable',reason:'Timed out'}}),/registered command, profile or options differ/);
 });
 test('classification never derives from title, custom Type, money or source',()=>{

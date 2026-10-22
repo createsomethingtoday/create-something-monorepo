@@ -1,6 +1,6 @@
 const safe=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-export function agentPreflightView(value){
- const button='<button type="button" class="btn" data-agent-preflight="1">Check Codex registration &amp; connector</button>';
+export function agentPreflightView(value,busy=false){
+ const button=`<button type="button" class="btn" data-agent-preflight="1" ${busy?'disabled aria-busy="true"':''}>${busy?'Checking setup…':'Check Codex registration &amp; connector'}</button>`;
  if(!value)return `<p class="muted">Check that Codex points to this installed GiGi and workspace after an update.</p>${button}`;
  if(value.error)return `<p role="alert">${safe(value.error)}</p>${button}`;
  const registration=value.registration,connector=value.connector;
