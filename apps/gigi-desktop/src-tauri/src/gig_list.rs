@@ -304,24 +304,28 @@ pub(crate) fn list(db: &Connection, wid: &str, input: &Value) -> Result<Value, S
         let item = json!({"id":id,"workspaceId":wid,"entity":"gigs","title":title.chars().take(120).collect::<String>(),"titleTruncated":title.chars().count()>120,"status":status,"type":kind,"date":date,"allDay":all_day,"callTime":fields["Call Time"],"setTime":fields["Set Time"],"updatedAt":updated,"moneyCents":money});
         matches.push((when, updated, id, item));
     }
-    matches.sort_by(|a, b| match (&a.0, &b.0) {
-        (None, Some(_)) => std::cmp::Ordering::Greater,
-        (Some(_), None) => std::cmp::Ordering::Less,
-        _ => {
-            let order = if sort == "updated" {
-                b.1.cmp(&a.1)
-            } else {
-                let order =
-                    a.0.as_ref()
-                        .map(|v| (v.start, v.order))
-                        .cmp(&b.0.as_ref().map(|v| (v.start, v.order)));
-                if view == "past" {
-                    order.reverse()
-                } else {
-                    order
+    matches.sort_by(|a, b| {
+        if sort == "updated" {
+            b.1.cmp(&a.1).then_with(|| a.2.cmp(&b.2))
+        } else {
+            match (&a.0, &b.0) {
+                (None, Some(_)) => std::cmp::Ordering::Greater,
+                (Some(_), None) => std::cmp::Ordering::Less,
+                _ => {
+                    let order = {
+                        let order =
+                            a.0.as_ref()
+                                .map(|v| (v.start, v.order))
+                                .cmp(&b.0.as_ref().map(|v| (v.start, v.order)));
+                        if view == "past" {
+                            order.reverse()
+                        } else {
+                            order
+                        }
+                    };
+                    order.then_with(|| a.2.cmp(&b.2))
                 }
-            };
-            order.then_with(|| a.2.cmp(&b.2))
+            }
         }
     });
     let count = matches.len();
@@ -355,6 +359,34 @@ mod tests {
         .unwrap()["id"]
             .clone();
         (root, wid)
+    }
+    #[test]
+    fn gigs_updated_sort_includes_undated_before_paging_with_stable_ties() {
+        let (root, wid) = fixture();
+        for (id, date) in [
+            ("dated", "2026-11-01"),
+            ("a-undated", ""),
+            ("b-invalid", "invalid"),
+        ] {
+            dispatch(&root,"records.save",json!({"workspaceId":wid,"entity":"gigs","id":id,"title":id,"fields":{"Date":date}})).unwrap();
+        }
+        let db = crate::domain::open(&root).unwrap();
+        db.execute("UPDATE gigs SET updated_at=CASE WHEN id='dated' THEN '2000-01-01 00:00:00' ELSE '2099-01-01 00:00:00' END",[]).unwrap();
+        drop(db);
+        let mut request = json!({"workspaceId":wid,"entity":"gigs","limit":1,"gigs":{"view":"all","sort":"updated","today":"2026-10-22","timeZone":"UTC"}});
+        let first = dispatch(&root, "records.list", request.clone()).unwrap();
+        assert_eq!(first["items"][0]["id"], "a-undated");
+        assert_eq!(first["count"], 3);
+        request["cursor"] = first["nextCursor"].clone();
+        let next = dispatch(&root, "records.list", request.clone()).unwrap();
+        assert_eq!(next["items"][0]["id"], "b-invalid");
+        request["cursor"] = Value::Null;
+        request["gigs"]["sort"] = json!("date");
+        assert_eq!(
+            dispatch(&root, "records.list", request).unwrap()["items"][0]["id"],
+            "dated"
+        );
+        std::fs::remove_dir_all(root).unwrap();
     }
     #[test]
     fn gigs_dates_use_viewer_days_ranges_exclusive_all_day_and_dst() {

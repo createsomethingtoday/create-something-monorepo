@@ -1,8 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createGigs} from './gigs.mjs';
+import {createGigs,gigsView} from './gigs.mjs';
 const tick=()=>new Promise(r=>setImmediate(r));
 const pending=()=>{let resolve,reject;const promise=new Promise((yes,no)=>{resolve=yes;reject=no;});return{resolve,reject,promise};};
+test('pending Gigs criteria do not show old matching or view counts',()=>{
+ const html=gigsView({criteria:{view:'all',sort:'date',query:'needle'},loading:true,result:{items:[{id:'old',title:'Previous gig'}],count:42,total:57,viewCounts:{all:42,upcoming:40,past:2},needsDateCount:3}});
+ assert.match(html,/Updating results/);assert.match(html,/Previous results are shown/);assert.doesNotMatch(html,/All \(42\)|Upcoming \(40\)|Past \(2\)|Needs date \(3\)|Showing 1 of 42/);
+});
 test('Gigs ignores stale search results, retains rows on failure, and restores workspace state',async()=>{
  const calls=[],deferred=[];const store=new Map();
  const gigs=createGigs({read:async(w,c,cursor)=>{calls.push({w,c,cursor});const p=pending();deferred.push(p);return p.promise;},storage:{getItem:k=>store.get(k),setItem:(k,v)=>store.set(k,v)},changed(){}});
