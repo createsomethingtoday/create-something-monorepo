@@ -1,6 +1,6 @@
 [package]
 name = "gigi_desktop"
-version = "0.2.6"
+version = "0.2.7"
 edition = "2021"
 default-run = "gigi"
 
@@ -29,3 +29,5 @@ rfd = "0.15"
 sha2 = "0.10"
 uuid = { version = "1", features = ["v4"] }
 unicode-normalization = "0.1.24"
+chrono = "0.4.45"
+chrono-tz = "0.10.4"

@@ -1,3 +1,4 @@
+import {createGigs, gigsView, gigsFilterValue} from './gigs.mjs';
 import {sourceSelection, sourceImportView, sourceImportRunning} from './source-center.mjs';
 import {statusLabel, peopleShortcut, todaySummary, builtInChatSetup} from './desktop-polish.mjs';
 import {referenceHeader, referenceCards, createWorkspaceHistory} from './reference-layout.mjs';
@@ -17,7 +18,7 @@ import { ChatController, chatView } from './chat.mjs';
 import { sections, fields, moneyFields, booleanFields, fieldOptions, listFrom, recordFields, editedFields, formatMoney, gigBalance, relatedEndpoint, sourcePreview, sourceSessionBlocked, sourceCanBegin, sourceNeedsOperatorReview, importRunForAccount, pendingConsentForProvider, pendingAccountForProvider, linkInput } from './model.mjs';
 
 const root = document.querySelector('#app');
-const bridge = tauriBridge();
+const bridge = tauriBridge(workspace=>gigs.invalidate(workspace));
 let chat;
 let routeVersion = 0;
 const workspaceHistory=createWorkspaceHistory();
@@ -38,6 +39,7 @@ const contactRead=createContactRead();
 let contactSearchTimer;
 let contactSearchVersion = 0;
 const state = { workspace: null, setupProfile: false, setupDraft: null, currency: null, currencyKnown: false, page: 'overview', contactQuery: '', contactSearching: false, contactSearchError: false, scheduleView: 'upcoming', libraryOpen: false, records: [], recordCount: 0, nextCursor: null, selected: null, editing: false, editorDraft: null, editorOrigin: null, sourceExpanded: false, busy: false, signingIn: false, signingOut: false, sourceSignedOut: false, justCreated: false, agentProvider: 'codex', toast: null, summary: null, summaryUnavailable: false, history: [], backupId: null, pendingRestoreId: null, agent: null, agentReceipt: null, relationSchema: null, linkChoices: null, sources: {}, sourceAttempts: {}, connectionRequests: {}, imports: {}, sourceDrafts: {}, sourceBusy: {}, contextHits: [], contextQueried: false, diagnostics: { status: null, review: null, exported: null } };
+const gigs=createGigs({read:(workspace,criteria,cursor)=>bridge.listGigs(workspace,criteria,cursor),changed(){if(state.page==='gigs'&&!state.selected&&!state.editing)render();}});
 const safe = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
 const label = (name) => sections.find((item) => item.id === name)?.label || name;
 const entityName = (name) => ({ schedule: 'schedule', finances: 'financial record', contacts: 'contact', companies: 'company', gigs: 'gig or shift', locations: 'place' })[name] || name.replace(/s$/, '');
@@ -56,9 +58,9 @@ function notice(message, error = false) {
 }
 
 function readRoute() { return { version: routeVersion, page: state.page, workspace: workspaceId() }; }
-function nextRoute() { sourceProposal = null; routeVersion++; clearTimeout(contactSearchTimer); contactRead.cancel(); return readRoute(); }
+function nextRoute() { sourceProposal = null; routeVersion++; clearTimeout(contactSearchTimer); contactRead.cancel(); gigs.cancel(); return readRoute(); }
 function currentRoute(route) { return route.version === routeVersion && route.page === state.page && route.workspace === workspaceId(); }
-function leaveRoute() { sourceProposal = null; routeVersion++; clearTimeout(contactSearchTimer); contactRead.cancel(); }
+function leaveRoute() { sourceProposal = null; routeVersion++; clearTimeout(contactSearchTimer); contactRead.cancel(); gigs.cancel(); }
 
 async function run(task) {
   const operation = ++operationVersion;
@@ -86,6 +88,7 @@ function initializeChat() {
   chat?.close();
   chat = new ChatController(bridge, workspaceId(), renderChat, async () => {
     const route = readRoute();
+    gigs.invalidate();
     await refreshCurrency();
     if (!currentRoute(route) || state.editing) return;
     if (state.selected?.id) await selectRecord(state.selected.id);
@@ -134,6 +137,7 @@ async function openPage(page, resetScroll = false, historyIndex = null) {
   creatorMount=null; creatorNode=null; creatorRoute=null;
   if (page !== 'settings') state.justCreated = false;
   clearTimeout(contactSearchTimer); contactSearchVersion++; state.contactSearching = false; state.contactSearchError = false;
+  if(state.page==='gigs'&&!state.selected&&!state.editing)gigs.remember(globalThis.scrollY||0);
   workspaceHistory.visit(page, historyIndex);
   state.page = page; state.selected = null; state.editing = false; state.editorDraft = null; state.editorOrigin = null; state.sourceExpanded = false; state.summary = null; state.summaryUnavailable = false;
   const route = nextRoute();
@@ -166,6 +170,8 @@ async function openPage(page, resetScroll = false, historyIndex = null) {
     state.setupChatFailed = results[4].status === 'rejected';
     state.agentReceipt = results[2].status === 'fulfilled' ? results[2].value : null;
     state.diagnostics = { status: results[3].status === 'fulfilled' ? results[3].value : null, review: null, exported: null };
+  } else if (page==='gigs') {
+    await gigs.open(route.workspace);if(!currentRoute(route))return false;
   } else if (fields[page]) {
     state.records = []; state.recordCount = 0; state.nextCursor = null;
     if(page==='contacts'){await searchContacts(state.contactQuery,true);if(!currentRoute(route))return false;render();if(resetScroll)globalThis.scrollTo?.(0,0);return true;}
@@ -176,12 +182,14 @@ async function openPage(page, resetScroll = false, historyIndex = null) {
     state.nextCursor = result?.nextCursor || null;
   }
   render();
-  if (resetScroll) globalThis.scrollTo?.(0, 0);
+  if(page==='gigs')globalThis.scrollTo?.(0,gigs.state?.scroll||0);
+  else if (resetScroll) globalThis.scrollTo?.(0, 0);
   return true;
 }
 
 async function selectRecord(id, entity = state.page) {
   if (state.page !== entity) return false;
+  if(entity==='gigs'&&!state.selected&&!state.editing)gigs.remember(globalThis.scrollY||0,id);
   const route = nextRoute();
   state.selected = null; state.editing = false; state.editorDraft = null; state.editorOrigin = null; state.sourceExpanded = false;
   const [record, summary] = await Promise.allSettled([bridge.getRecord(route.workspace, entity, id), entity === 'gigs' ? bridge.gigSummary(route.workspace, id) : null]);
@@ -237,6 +245,7 @@ async function cancelEditor() {
   } else {
     state.selected = origin?.selected || null;
     state.editing = false; state.editorDraft = null; state.editorOrigin = null;
+    if(state.page==='gigs'&&!state.selected)await gigs.open(workspaceId());
     render();
   }
   if (origin) {
@@ -307,6 +316,7 @@ function contactSearchControls() {
 
 function collection() {
   if (state.page === 'schedule') return scheduleView();
+  if (state.page === 'gigs') return heading('Your records','Gigs & shifts','Find upcoming work, revisit past gigs, or check dates that need attention.',`<button class="btn primary" data-new="gigs">${icon('plus')}Add gig or shift</button>`)+gigsView(gigs.state);
   const name = state.page;
   const action = name === 'profile' && state.records.length ? `<button class="btn" data-open="${safe(state.records[0].id)}" data-entity="profile">Open profile</button>` : `<button class="btn primary" data-new="${name}">${icon('plus')}Add ${safe(entityName(name))}</button>`;
   const searching = name === 'contacts' && state.contactSearching;
@@ -622,7 +632,11 @@ async function findPeople() {
 
 root.addEventListener('click', (event) => {
   const button = event.target.closest('button'); if (!button) return;
-  if (button.dataset.clearContacts) { searchContacts('', true); root.querySelector?.('#contact-search')?.focus?.(); }
+  if(button.dataset.gigsView)gigs.update({view:button.dataset.gigsView,...(button.dataset.gigsView==='needs_date'?{from:'',to:''}:{})},false);
+  else if(button.dataset.gigsReset)gigs.reset();
+  else if(button.dataset.gigsRefresh)void gigs.refresh();
+  else if(button.dataset.gigsMore)void gigs.more();
+  else if (button.dataset.clearContacts) { searchContacts('', true); root.querySelector?.('#contact-search')?.focus?.(); }
   else if (button.dataset.retryContacts) searchContacts(state.contactQuery, true);
   else if (button.dataset.keepEditing) { keepEditing(); }
   else if (button.dataset.discardChanges) { const next = pendingLeave; pendingLeave = null; state.editing = false; state.editorDraft = null; editorBaseline = null; next?.(); }
@@ -727,6 +741,7 @@ root.addEventListener('click', (event) => {
   else if (button.dataset.new) newRecord(button.dataset.new);
   else if (button.dataset.open) void run(() => navigateRecord(button.dataset.entity, button.dataset.open));
   else if (button.dataset.cancel) void cancelEditor();
+  else if(button.dataset.back&&state.page==='gigs'){if(!protectEditor(()=>void run(()=>openPage('gigs'))))return;leaveRoute();state.selected=null;state.editing=false;state.editorDraft=null;state.editorOrigin=null;void gigs.open(workspaceId()).then(()=>{if(state.page==='gigs'&&!state.selected&&!state.editing){render();root.querySelector?.(`[data-open="${gigs.state?.focusId||''}"]`)?.focus?.({preventScroll:true});globalThis.scrollTo?.(0,gigs.state?.scroll||0);}});}
   else if (button.dataset.back && state.page === 'contacts') void run(() => openPage('contacts'));
   else if (button.dataset.back) { if (!protectEditor(() => void run(() => openPage(state.page)))) return; leaveRoute(); state.selected = null; state.editing = false; state.editorDraft = null; state.editorOrigin = null; render(); globalThis.scrollTo?.(0, 0); }
   else if (button.dataset.edit) void enterEditor();
@@ -776,6 +791,11 @@ globalThis.document?.addEventListener?.('focusin', event => {
 globalThis.document?.addEventListener?.('pointerdown', () => { chatRefreshFocus = null; });
 (globalThis.document?.addEventListener ? document : root).addEventListener('keydown', (event) => {
   if (chatRefreshFocus && event.key === 'Tab') chatRefreshFocus = null;
+  if(state.page==='gigs'&&!state.selected&&!state.editing&&!chat?.visible){
+    if(event.metaKey&&!event.shiftKey&&event.key.toLowerCase()==='f'){event.preventDefault?.();root.querySelector?.('#gigs-search')?.focus?.();return;}
+    if(event.target?.id==='gigs-search'&&event.key==='Escape'){event.preventDefault?.();gigs.update({query:''},false);root.querySelector?.('#gigs-search')?.focus?.();return;}
+    if(event.key==='Escape'){const filter=root.querySelector?.('.gigs-filters[open]');if(filter){filter.open=false;filter.querySelector?.('summary')?.focus?.();event.preventDefault?.();return;}}
+  }
   if (event.target?.id === 'contact-search' && event.key === 'Escape') { event.preventDefault?.(); searchContacts('', true); root.querySelector?.('#contact-search')?.focus?.(); return; }
   if (pendingLeave) {
     if (event.key === 'Escape') { event.preventDefault?.(); keepEditing(); }
@@ -791,6 +811,8 @@ globalThis.document?.addEventListener?.('pointerdown', () => { chatRefreshFocus 
   focusChatTrigger();
 });
 
+root.addEventListener('change',event=>{const field=event.target?.dataset?.gigsField;if(!field)return;gigs.update({[field]:['status','type'].includes(field)?gigsFilterValue(event.target.value):event.target.value},false);});
+
 root.addEventListener('toggle', (event) => { if (event.target.dataset?.libraryNav) state.libraryOpen = event.target.open; }, true);
 
 root.addEventListener('change', (event) => { if (event.target.id === 'link-entity') void run(() => loadLinkChoices(event.target.value)); });
@@ -803,6 +825,7 @@ root.addEventListener('input', (event) => {
     }
     return;
   }
+  if(event.target.id==='gigs-search'){gigs.update({query:event.target.value});return;}
   if (event.target.id === 'contact-search') { searchContacts(event.target.value); return; }
   if (event.target.id === 'chat-message' && chat) chat.draft = event.target.value;
   if (sourceProposal?.phase === 'draft') {
@@ -823,7 +846,7 @@ root.addEventListener('submit', (event) => {
   }
   else if (form.id === 'chat-form') { const value = String(new FormData(form).get('message') || ''); if (chat) { chat.draft = value; void chat.send(value); } }
   else if (form.id === 'workspace-form') { const data = Object.fromEntries(new FormData(form)); state.setupDraft = { ...data }; void run(async () => { if (!state.workspace) state.workspace = await bridge.createWorkspace(data.name); state.setupProfile = true; await bridge.saveRecord(workspaceId(), 'profile', { title: String(data.ownerName).trim(), fields: { Currency: String(data.currency) } }); state.currency = String(data.currency); state.currencyKnown = true; currencyVersion++; state.setupProfile = false; state.setupDraft = null; state.justCreated = true; initializeChat(); await openPage('settings'); notice('Your private workspace is ready. Connections are optional.'); }); }
-  else if (form.id === 'record-form') { const data = Object.fromEntries(new FormData(form)); state.editorDraft = { ...data }; const route = readRoute(), selected = state.selected; submittedEditor = { version: route.version, values: { ...data } }; void run(async () => { const title = String(data.title).trim(); delete data.title; const saved = await bridge.saveRecord(route.workspace, route.page, { ...(selected?.id ? { id: selected.id, fieldsMode: 'replace', expectedRecord: { title: selected.title, fields: selected.fields, source: selected.source } } : {}), title, fields: selected?.id ? editedFields(selected.fields, data, route.page) : recordFields(data, route.page) }); if (route.page === 'profile' && route.workspace === workspaceId()) { state.currency = saved.fields?.Currency || null; state.currencyKnown = true; currencyVersion++; } if (!currentRoute(route)) return; state.editing = false; state.editorDraft = null; if (!await openPage(route.page)) return; if (!await selectRecord(saved.id || saved.record?.id, route.page)) return; notice(`${entityName(route.page)} saved.`); }).finally(() => { if (submittedEditor?.version === route.version) submittedEditor = null; }); }
+  else if (form.id === 'record-form') { const data = Object.fromEntries(new FormData(form)); state.editorDraft = { ...data }; const route = readRoute(), selected = state.selected; submittedEditor = { version: route.version, values: { ...data } }; void run(async () => { const title = String(data.title).trim(); delete data.title; const saved = await bridge.saveRecord(route.workspace, route.page, { ...(selected?.id ? { id: selected.id, fieldsMode: 'replace', expectedRecord: { title: selected.title, fields: selected.fields, source: selected.source } } : {}), title, fields: selected?.id ? editedFields(selected.fields, data, route.page) : recordFields(data, route.page) }); if(route.page==='gigs'&&route.workspace===workspaceId())gigs.invalidate(); if (route.page === 'profile' && route.workspace === workspaceId()) { state.currency = saved.fields?.Currency || null; state.currencyKnown = true; currencyVersion++; } if (!currentRoute(route)) return; state.editing = false; state.editorDraft = null; if (!await openPage(route.page)) return; if (!await selectRecord(saved.id || saved.record?.id, route.page)) return; notice(`${entityName(route.page)} saved.`); }).finally(() => { if (submittedEditor?.version === route.version) submittedEditor = null; }); }
   else if (form.id === 'link-form') submitLink(Object.fromEntries(new FormData(form)));
   else if (form.id === 'restore-form') { const backupId = String(new FormData(form).get('backupId')).trim(); if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(backupId)) { notice('Enter a valid backup ID.', true); return; } state.pendingRestoreId = backupId; render(); }
   else if (form.id === 'context-form') void run(async () => { const query = String(new FormData(form).get('query')).trim(); state.contextHits = await bridge.searchContext(query, 5); state.contextQueried = true; });

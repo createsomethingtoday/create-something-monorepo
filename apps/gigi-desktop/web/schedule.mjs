@@ -31,10 +31,10 @@ export function scheduleEntry(record) {
   const dayLabel = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   const rangeEnd = end && end.key !== start.key ? `${dayLabel.format(end.date)}, ${time.format(end.date)}` : end ? time.format(end.date) : '';
   const lastDay = (allDay || (start.day && end?.day)) && end && end.key > start.key ? localToday(new Date(end.date.getFullYear(), end.date.getMonth(), end.date.getDate() - 1)) : end?.key || start.key;
-  return { record, key: start.key, date: start.date, endKey: lastDay, time: gig && start.day && !allDay ? `${gigTimes || 'Time not set'}${end && end.key !== start.key ? ` · ends ${dayLabel.format(end.date)}${end.day ? ' (exclusive)' : ''}` : ''}` : allDay ? (end && end.key !== start.key ? `All day · ends ${dayLabel.format(end.date)} (exclusive)` : 'All day') : `${time.format(start.date)}${rangeEnd ? ` – ${rangeEnd}` : ''}` };
+  return { record, key: start.key, date: start.date, sortTime: allDay ? -Infinity : start.day ? Infinity : start.date.getTime(), endKey: lastDay, time: gig && start.day && !allDay ? `${gigTimes || 'Time not set'}${end && end.key !== start.key ? ` · ends ${dayLabel.format(end.date)}${end.day ? ' (exclusive)' : ''}` : ''}` : allDay ? (end && end.key !== start.key ? `All day · ends ${dayLabel.format(end.date)} (exclusive)` : 'All day') : `${time.format(start.date)}${rangeEnd ? ` – ${rangeEnd}` : ''}` };
 }
 export function scheduleAgenda(records, view = 'upcoming', today = localToday()) {
-  const entries = records.map(scheduleEntry).sort((a, b) => (a.key === null) - (b.key === null) || (a.date?.getTime() ?? 0) - (b.date?.getTime() ?? 0) || String(a.record.id).localeCompare(String(b.record.id)));
+  const entries = records.map(scheduleEntry).sort((a, b) => (a.key === null) - (b.key === null) || String(a.key || '').localeCompare(String(b.key || '')) || (a.sortTime === b.sortTime ? 0 : (a.sortTime ?? 0) - (b.sortTime ?? 0)) || String(a.record.id).localeCompare(String(b.record.id)));
   const counts = { upcoming: entries.filter(e => e.key && e.endKey >= today).length, past: entries.filter(e => e.key && e.endKey < today).length, all: entries.length };
   const visible = entries.filter(e => view === 'all' || (e.key && (view === 'past' ? e.endKey < today : e.endKey >= today)));
   const groups = [];

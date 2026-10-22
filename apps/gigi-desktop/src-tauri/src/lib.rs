@@ -1,3 +1,4 @@
+mod gig_list;
 pub mod media_protocol;
 pub mod music;
 pub mod music_mcp;
