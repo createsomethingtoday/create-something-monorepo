@@ -46,6 +46,13 @@ fn image_import_attach_and_local_draft_roundtrip_use_real_stdio() {
         value["result"].clone()
     };
     let catalog = rpc("tools/list", json!({}));
+    let connected=rpc("tools/call",json!({"name":"gigi_connection_check","arguments":{"workspaceId":wid}}))["structuredContent"].clone();
+    assert_eq!(connected["workspace"]["id"],*wid);
+    assert_eq!(connected["serverInfo"]["version"],env!("CARGO_PKG_VERSION"));
+    assert_eq!(connected["scope"],"this_mcp_connection");
+    assert_eq!(connected["mediaTools"].as_array().unwrap().len(),6);
+    let agenda=rpc("tools/call",json!({"name":"gigi_agenda_list","arguments":{"workspaceId":wid,"today":"2026-10-22","timeZone":"UTC","recordKind":"unclassified","limit":1}}))["structuredContent"].clone();
+    assert_eq!(agenda["items"][0]["id"],gig["id"]);
     for name in [
         "gigi_media_import_prepare",
         "gigi_media_import",

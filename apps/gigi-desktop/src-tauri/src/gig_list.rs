@@ -302,7 +302,7 @@ pub(crate) fn list(db: &Connection, wid: &str, input: &Value) -> Result<Value, S
         if view != "all" && view != bucket {
             continue;
         }
-        let item = json!({"id":id,"workspaceId":wid,"entity":"gigs","title":title.chars().take(120).collect::<String>(),"titleTruncated":title.chars().count()>120,"status":status,"type":kind,"date":date,"allDay":all_day,"callTime":fields["Call Time"],"setTime":fields["Set Time"],"updatedAt":updated,"moneyCents":money});
+        let item = json!({"id":id,"workspaceId":wid,"entity":"gigs","title":title.chars().take(120).collect::<String>(),"titleTruncated":title.chars().count()>120,"status":status,"type":kind,"identity":crate::event_identity::project("gigs",&fields,&Value::Null),"date":date,"allDay":all_day,"callTime":fields["Call Time"],"setTime":fields["Set Time"],"updatedAt":updated,"moneyCents":money});
         matches.push((when, updated, id, item));
     }
     matches.sort_by(|a, b| {

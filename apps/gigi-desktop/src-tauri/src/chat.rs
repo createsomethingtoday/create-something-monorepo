@@ -129,7 +129,7 @@ fn find_codex_in_nvm(home: &Path) -> Option<PathBuf> {
     find_codex_in_path(folders.into_iter().map(|(_, folder)| folder))
 }
 
-fn companion_path(
+pub(crate) fn companion_path(
     codex: &Path,
     inherited: Option<std::ffi::OsString>,
 ) -> Result<std::ffi::OsString, String> {
@@ -152,7 +152,7 @@ fn companion_path(
     std::env::join_paths(folders).map_err(|_| "Codex executable path unavailable".into())
 }
 
-fn find_codex() -> Option<PathBuf> {
+pub(crate) fn find_codex() -> Option<PathBuf> {
     if let Some(value) = std::env::var_os("GIGI_CODEX_BINARY") {
         if let Some(path) = resolved_executable(&PathBuf::from(value)) {
             return Some(path);
