@@ -3976,8 +3976,8 @@ importers:
         version: 19.2.4(react@19.2.4)
     devDependencies:
       '@cloudflare/sandbox':
-        specifier: '*'
-        version: 0.4.18
+        specifier: 0.12.14
+        version: 0.12.14(@openai/agents@0.15.0(@aws-sdk/credential-provider-node@3.972.81)(@smithy/signature-v4@5.7.3)(bufferutil@4.1.0)(utf-8-validate@6.0.6)(ws@8.21.3(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6))
       '@cloudflare/vite-plugin':
         specifier: ^1.0.0
         version: 1.22.1(@types/node@24.10.9)(bufferutil@4.1.0)(utf-8-validate@6.0.6)(vite@6.4.3(@types/node@24.10.9)(jiti@2.7.0)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))(workerd@1.20260903.1)(wrangler@4.110.0(@cloudflare/workers-types@4.20260621.1)(@types/node@24.10.9)(bufferutil@4.1.0)(utf-8-validate@6.0.6))

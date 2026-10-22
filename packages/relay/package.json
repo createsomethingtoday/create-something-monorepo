@@ -25,7 +25,7 @@
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
-    "@cloudflare/sandbox": "*",
+    "@cloudflare/sandbox": "0.12.14",
     "@cloudflare/vite-plugin": "^1.0.0",
     "@cloudflare/workers-types": "^4.20260621.1",
     "@types/node": "^22.0.0",
