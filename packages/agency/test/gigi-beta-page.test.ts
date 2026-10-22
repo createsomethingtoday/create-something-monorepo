@@ -14,12 +14,12 @@ test('standalone page retains the owning Agency Canon operator palette', () => {
 });
 
 test('download contract pins exact qualified installer, platform and checksum', () => {
-  assert.equal(gigiBeta.version, '0.2.8');
-  assert.equal(gigiBeta.filename, 'GiGi-0.2.8-arm64-private-beta.dmg');
-  assert.equal(gigiBeta.bytes, 98601117);
-  assert.equal(gigiBeta.sha256, '2be3b50358f220fbfc6dd6ca9310747a1e32b151ac8b9b646223b0a2d303ab4d');
-  assert.equal(gigiBeta.url, `https://media.createsomething.io/releases/gigi/0.2.8/${gigiBeta.sha256}/GiGi-0.2.8-arm64-private-beta.dmg`);
-  for (const text of ['macOS 13', 'Apple Silicon', 'Intel Macs are not supported', gigiBeta.url, gigiBeta.sha256, '98,601,117', '98.6 MB']) assert.ok(gigiBetaHtml.includes(text), text);
+  assert.equal(gigiBeta.version, '0.2.9');
+  assert.equal(gigiBeta.filename, 'GiGi-0.2.9-arm64-private-beta.dmg');
+  assert.equal(gigiBeta.bytes, 91106122);
+  assert.equal(gigiBeta.sha256, '2beae69244c71cd45b6d7ca19761018ee644fe486eb6a2b0d6fa0d69c7c39b91');
+  assert.equal(gigiBeta.url, `https://media.createsomething.io/releases/gigi/0.2.9/${gigiBeta.sha256}/GiGi-0.2.9-arm64-private-beta.dmg`);
+  for (const text of ['macOS 13', 'Apple Silicon', 'Intel Macs are not supported', gigiBeta.url, gigiBeta.sha256, '91,106,122', '91.1 MB']) assert.ok(gigiBetaHtml.includes(text), text);
 });
 
 test('beta stays unlisted and has no active content or tracking shell', () => {
@@ -125,4 +125,11 @@ test('artwork release preserves local previews and external generation boundarie
   for (const text of ['Calendar entries', 'ongoing events', 'fit the whole image', 'AI illustrations', 'no publish control', 'external Codex', 'Embedded Ask GiGi cannot generate images', 'automatic flyer discovery', '8 MiB', '24 megapixels', '8,192 pixels', '128 MiB', 'including previews', 'Unknown rights remain unknown']) assert.ok(changes.includes(text), text);
   assert.ok(gigiBetaHtml.includes('Create a backup in GiGi, then quit the app before installing a new release.'));
   for (const text of ['mocked generation', 'no real image generation was invoked', 'do not establish a fresh Mac installation', 'local draft snapshots', 'provenance conflicts', 'backup restoration']) assert.ok(gigiBetaHtml.includes(text), text);
+});
+
+
+test('setup and classification release keeps session and acceptance boundaries explicit', () => {
+  const changes = gigiBetaHtml.match(/<section aria-labelledby="changes">([\s\S]*?)<\/section>/)?.[1] ?? '';
+  for (const text of ['Included from 0.2.8', 'Work kind', 'leaves existing records unchanged', 'not automatically a performance', 'Configuration stays unchanged', 'already-open agent session', 'before pagination', 'Original Type values']) assert.ok(changes.includes(text), text);
+  for (const text of ['final compiled app code and data in isolated QA wrappers', 'One real Codex-generated illustration', 'already-running agent session remain unverified', 'GiGi 0.2.8: Earlier checks', 'Previous installer:', '2be3b50358f220fbfc6dd6ca9310747a1e32b151ac8b9b646223b0a2d303ab4d/GiGi-0.2.8-arm64-private-beta.dmg']) assert.ok(gigiBetaHtml.includes(text), text);
 });
