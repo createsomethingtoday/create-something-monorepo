@@ -17,5 +17,7 @@ test('Gigs toolbar searches the current collection and Back restores list positi
   await click({gigsView:'past'});assert.equal(calls.filter(c=>c.input.gigs).at(-1).input.gigs.view,'past');
   globalThis.scrollY=640;await click({open:gigId,entity:'gigs'});await click({back:'1'});assert.equal(globalThis.scrollY,640);assert.equal(rowFocused,true);assert.match(root.innerHTML,/data-gigs-view="past" aria-pressed="true"/);
   await click({gigsView:'upcoming'});assert.equal(globalThis.scrollY,0);
+  globalThis.scrollY=380;await click({gigsReset:'1'});assert.equal(globalThis.scrollY,0);
+  globalThis.scrollY=420;await click({gigsView:'upcoming'});assert.equal(globalThis.scrollY,0);
  }finally{globalThis.document=before.document;globalThis.__TAURI__=before.tauri;globalThis.scrollTo=before.scrollTo;globalThis.scrollY=before.scrollY;}
 });

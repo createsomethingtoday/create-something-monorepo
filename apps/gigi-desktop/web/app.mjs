@@ -458,7 +458,7 @@ function captureEditorDraft() {
 
 function render() {
   const view = [workspaceId(), state.setupProfile, routeVersion, state.page, state.editing, state.selected?.id, sourceProposal?.phase].join('|');
-  const gigsCriteria = state.page === 'gigs' && !state.selected && !state.editing ? JSON.stringify(gigs.state?.criteria) : null;
+  const gigsCriteria = state.page === 'gigs' && !state.selected && !state.editing ? JSON.stringify([gigs.state?.criteria, gigs.state?.scrollRevision]) : null;
   const gigsPosition = gigsCriteria !== null ? view === renderedView && gigsCriteria === renderedGigsCriteria ? globalThis.scrollY || 0 : gigs.state?.scroll || 0 : null;
   renderedGigsCriteria = gigsCriteria;
   const viewState = view === renderedView ? captureViewState(root) : null;
