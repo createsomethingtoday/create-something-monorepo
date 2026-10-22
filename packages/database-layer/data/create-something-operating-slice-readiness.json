@@ -1,6 +1,6 @@
 {
   "id": "substrate:create-something:operating-slice-readiness:internal",
-  "generatedAt": "2026-10-21T14:05:01.368Z",
+  "generatedAt": "2026-10-22T14:00:49.024Z",
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
   "sourceReviewId": "substrate:create-something:operating-slice-review:internal",
@@ -71,7 +71,7 @@
         "runtime": "cloudflare",
         "runtimeConfigRecords": 117,
         "workerPackageRecords": 28,
-        "bindingRefs": 626,
+        "bindingRefs": 627,
         "routeRefs": 25,
         "bindingKinds": {
           "assets": 8,
@@ -81,7 +81,7 @@
           "queue": 16,
           "r2": 23,
           "route": 25,
-          "var": 375,
+          "var": 376,
           "vectorize": 2
         },
         "workersWithD1": 78,
