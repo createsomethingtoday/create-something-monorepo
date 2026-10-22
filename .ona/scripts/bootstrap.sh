@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-EXPECTED_NODE="v22.21.1"
+EXPECTED_NODE="v22.23.4"
 EXPECTED_PNPM="9.15.0"
 LOCKFILE_PATH="pnpm-lock.yaml"
 LOCKFILE_STAMP_PATH="node_modules/.pnpm-lock.sha256"
@@ -42,7 +42,7 @@ print_runtime_alignment_help() {
 Use the repo-pinned runtime before rerunning bootstrap:
   - Preferred: open the repository through the dev container defined in .devcontainer/devcontainer.json
   - Fast local fallback: run ./scripts/ona-bootstrap-local.sh
-  - Local fallback: install Node 22.21.1 from .nvmrc, then run corepack prepare "pnpm@9.15.0" --activate
+  - Local fallback: install Node 22.23.4 from .nvmrc, then run corepack prepare "pnpm@9.15.0" --activate
 See docs/guides/ONA_CORE_ROLLOUT.md for the local OrbStack/dev container path.
 EOF
 }

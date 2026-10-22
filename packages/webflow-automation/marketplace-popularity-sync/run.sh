@@ -15,7 +15,7 @@ set -uo pipefail
 
 PKG="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 MONOREPO="$(git -C "$PKG" rev-parse --show-toplevel)"
-NODE="${NODE_BIN:-/Users/micahjohnson/.nvm/versions/node/v22.21.1/bin/node}"
+NODE="${NODE_BIN:-/Users/micahjohnson/.nvm/versions/node/v22.23.4/bin/node}"
 INFISICAL="$(command -v infisical || echo /opt/homebrew/bin/infisical)"
 # sync.mjs spawns npx (wrangler for the beacon D1); use the same Node install.
 export PATH="$(dirname "$NODE"):/opt/homebrew/bin:/usr/local/bin:$PATH"

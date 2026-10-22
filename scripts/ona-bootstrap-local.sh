@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-EXPECTED_NODE="22.21.1"
+EXPECTED_NODE="22.23.4"
 EXPECTED_PNPM="9.15.0"
 CACHE_DIR="$ROOT_DIR/.cache"
 TOOLCHAIN_DIR="$CACHE_DIR/toolchains"
