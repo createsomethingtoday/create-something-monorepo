@@ -1202,6 +1202,8 @@
 
 <style>
 	.arena-experiment {
+		/* Legacy brand accent; semantic state colors retain their dedicated data tokens. */
+		--color-accent: var(--color-performance-fg-primary);
 		min-height: 100vh;
 		background: var(--color-performance-bg-pure);
 		color: var(--color-performance-fg-primary);

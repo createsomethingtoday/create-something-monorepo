@@ -33,7 +33,7 @@
 		"test:experiment-filters": "vitest run test/experiment-catalog-filters.test.ts",
 		"test:admin-experiments": "node --import tsx --test test/admin-experiments.test.ts",
 		"test:threshold-dwelling": "node --import tsx --test test/threshold-dwelling-performance.test.ts",
-		"test:footer-handoff": "vitest run test/footer-handoff.test.ts",
+		"test:footer-handoff": "vitest run test/footer-handoff.test.ts test/research-surface.test.ts",
 		"test:legacy-paper-redirects": "vitest run test/legacy-paper-redirects.test.ts",
 		"test:newsletter-confirmation": "node --import tsx --test test/newsletter-confirmation-request.test.ts test/newsletter-lifecycle.test.ts",
 		"test:newsletter-archive": "vitest run test/newsletter-archive.test.ts",
