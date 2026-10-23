@@ -31,7 +31,8 @@
     "verify:editing": "node scripts/verify-editing.mjs",
     "verify:composition": "node scripts/composition/verify-browser.mjs",
     "verify:polish": "node scripts/composition/verify-polish.mjs",
-    "verify:hyperframes": "node scripts/composition/verify-hyperframes.mjs"
+    "verify:hyperframes": "node scripts/composition/verify-hyperframes.mjs",
+    "verify:activity": "node scripts/verify-completed-activity.mjs"
   },
   "dependencies": {
     "@create-something/canon": "workspace:*",
