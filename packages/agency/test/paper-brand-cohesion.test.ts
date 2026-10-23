@@ -111,7 +111,7 @@ test('the homepage retains a readable listing independent of scene motion', () =
   assert.match(content, /id="cc-team-plan-title">Team<\/h3>[\s\S]*?\$2,500<span>\/month/);
   assert.match(content, /class="trace-static"/);
   assert.match(content, /An illustrative workflow trace, not live activity/);
-  assert.match(salesHome, /<details id="work" class="work-library" bind:open=\{libraryOpen\}>/);
+  assert.match(salesHome, /<details id="work-library" class="work-library" bind:open=\{libraryOpen\}>/);
   assert.match(salesHome, /<summary>Explore the work library/);
   assert.match(salesHome, /\{#if libraryOpen\}<BuiltWork sectionId="engineering-work" \/><FilmCollection \/><SelectedClientWork \/>/);
   assert.match(salesHome, /<noscript><a href="\/products">[\s\S]*?<a href="\/field-reports">/);

@@ -18,7 +18,7 @@
 <svelte:head><link rel="stylesheet" href="/styles/agency/home.css" /><link rel="preload" as="image" href="/images/agency-sales/hero.webp" fetchpriority="high" /></svelte:head>
 <div class="agency-home" bind:this={root}>
   {@html content}
-  <details id="work" class="work-library" bind:open={libraryOpen}>
+  <details id="work-library" class="work-library" bind:open={libraryOpen}>
     <summary>Explore the work library <span>Films, source and field reports +</span></summary>
     {#if libraryOpen}<BuiltWork sectionId="engineering-work" /><FilmCollection /><SelectedClientWork />{/if}
     <noscript><a href="/products">Explore the product library</a> · <a href="/field-reports">Read field reports</a></noscript>
