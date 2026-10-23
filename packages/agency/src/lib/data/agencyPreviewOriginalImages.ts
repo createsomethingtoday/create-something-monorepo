@@ -95,7 +95,7 @@ export const originalHeroImages: Record<string, {image:string; shot:'wide'|'medi
  '/field-reports':{image:'original-stories/editorial-field-reports-load-rig',shot:'wide',focus:'50% 50%',preserveFrame:true,caption:'Concept illustration · test the work and keep the evidence.'},
  '/field-reports/upstream-contributions':{image:'original-stories/editorial-upstream-shared-tool-repair',shot:'medium',focus:'50% 50%',preserveFrame:true,caption:'Concept illustration · contribute a useful repair to a shared tool. Public contribution links below.'},
  '/about':{image:'original-stories/about-careful-working-notes',shot:'medium',focus:'50% 50%',preserveFrame:true,caption:'Concept illustration · careful notes and work your team can keep.'},
- '/agent-readiness':{image:'original-stories/buyer-answer-source-check',shot:'macro',focus:'50% 50%',preserveFrame:true,caption:'Concept illustration · check the source before trusting an answer.'},
+ '/agent-readiness':{image:'original-stories/answer-source-check',shot:'macro',focus:'50% 50%',preserveFrame:true,caption:'Concept illustration · check the source before trusting an answer.'},
  '/stack':{image:'original-stories/ownership-removable-toolcase',shot:'wide',focus:'50% 50%',preserveFrame:true,caption:'Concept illustration · tools you can change without losing your work.'},
  '/products/decision':{image:'original-stories/decision-manual-routing-gate',shot:'medium',focus:'50% 50%',preserveFrame:true,caption:'Concept illustration · hold the next action for a deliberate decision.'},
  '/contact':{image:'original-stories/contact-one-clear-request',shot:'medium',focus:'50% 50%',preserveFrame:true,caption:'Concept illustration · bring one real problem to the conversation.'},

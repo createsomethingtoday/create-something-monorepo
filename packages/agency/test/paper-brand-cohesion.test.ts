@@ -99,34 +99,59 @@ test('the Agency footer uses one linked lockup instead of repeating the brand in
 
 test('the homepage retains a readable listing independent of scene motion', () => {
   const home = read('src/routes/+page.svelte');
-  assert.match(home, /<BuiltWork/);
-  assert.match(home, /<MembershipOffer compact/);
-  assert.doesNotMatch(home, /PerformanceNarrativeStage|motionIntent|ScrollTrigger|Lenis|SmoothScroll/);
+  const salesHome = read('src/lib/components/AgencySalesHome.svelte');
+  const content = read('src/lib/content/agency-home.html');
+
+  assert.match(home, /<AgencySalesHome \/>/);
+  assert.match(salesHome, /import content from '\$lib\/content\/agency-home\.html\?raw'/);
+  assert.match(salesHome, /\{@html content\}/);
+  assert.match(content, /<h1 id="hero-title">Put AI to work\./);
+  assert.match(content, /Products, education and hands-on support\./);
+  assert.match(content, /id="cc-focused-title">Focused<\/h3>[\s\S]*?\$900<span>\/month/);
+  assert.match(content, /id="cc-team-plan-title">Team<\/h3>[\s\S]*?\$2,500<span>\/month/);
+  assert.match(content, /class="trace-static"/);
+  assert.match(content, /An illustrative workflow trace, not live activity/);
+  assert.match(salesHome, /<details id="work" class="work-library" bind:open=\{libraryOpen\}>/);
+  assert.match(salesHome, /<summary>Explore the work library/);
+  assert.match(salesHome, /\{#if libraryOpen\}<BuiltWork sectionId="engineering-work" \/><FilmCollection \/><SelectedClientWork \/>/);
+  assert.match(salesHome, /<noscript><a href="\/products">[\s\S]*?<a href="\/field-reports">/);
+  assert.ok(salesHome.indexOf('<BuiltWork') < salesHome.indexOf('<FilmCollection'));
+  assert.doesNotMatch(home + salesHome, /PerformanceNarrativeStage|motionIntent|ScrollTrigger|Lenis|SmoothScroll/);
 });
 
-test('the Agency opening exposes the owned handoff and inspection path without a provider logo lockup', () => {
+test('the Agency opening exposes proof, approval and ownership alongside the approved partner badge', () => {
   const home = read('src/routes/+page.svelte');
+  const content = read('src/lib/content/agency-home.html');
   const campaignOpening = read(
     '../canon/src/lib/components/performance/PerformanceCampaignOpening.svelte'
   );
   const field = read('src/lib/components/PlaybookField.svelte');
 
-  assert.match(home, /<AgencyHero/);
-  const hero = read('src/lib/components/films/AgencyHero.svelte');
-  const journey = read('src/lib/components/AgentEnablement.svelte');
-  assert.match(journey, /Illustrative Draw workflow/);
-  assert.match(journey, /before payment/);
-  assert.match(journey, /Review checkpoint/);
-  assert.match(journey, /Pending owner review/);
-  assert.match(home, /<CanonServiceGuide/);
-  assert.doesNotMatch(hero, /WorkflowStory|ResizeObserver|position: sticky/);
-  assert.match(hero, /PUBLIC_PRICING.membership.label/);
-  assert.match(hero, /href="#built-work"/);
-  assert.ok(home.indexOf('<BuiltWork') < home.indexOf('<FilmCollection'));
-  assert.match(home, /you own commissioned deliverables under your agreement/);
+  assert.match(home, /<AgencySalesHome \/>/);
+  assert.match(content, /href="\/book\?source=agency&intent=workflow-mapping&lane=workflow_infrastructure"/);
+  assert.match(content, /href="#plans"/);
+  assert.match(content, /href="https:\/\/www\.maverickx\.com\/"/);
+  assert.match(content, /href="\/films\/websites\/reference\.png"/);
+  assert.match(content, /href="\/products#cato-tour"/);
+  assert.match(content, /href="\/films\/cato-tour\/overview\.jpg"/);
+  // The official Select Partner badge is authorized; retain its qualification link and accessible identity.
+  assert.match(content, /href="\/stack#openai-qualifications"><img src="\/images\/agency-sales\/OpenAI_Select_Partner_Badge\.png"[^>]*alt="OpenAI Select Partner"/);
+  assert.match(content, /href="https:\/\/github\.com\/openai\/codex-security\/commit\/[a-f0-9]{40}"/);
+  assert.match(content, /Original conceptual illustration \/ people approve the work/);
+  assert.match(content, /not delivered hardware/);
+  assert.match(content, /These projects show delivered work; they are not evidence of client adoption of OpenAI tools\./);
+  assert.match(content, /Your team keeps approval authority\./);
+  assert.match(content, /Approval applies to the stated action and scope\./);
+  assert.match(content, /A refusal stops that action; it does not grant a workaround\./);
+  assert.match(content, /Correctness still needs evidence from the output and its checks\./);
+  assert.match(content, /id="plans"/);
+  assert.match(content, /Scope, costs &amp; ownership/);
+  assert.match(content, /You approve the budget first\./);
+  assert.match(content, /before payment/);
+  assert.match(content, /you own commissioned deliverables under your agreement, except reusable provider tools, which are licensed for continued use/);
+  assert.match(content, /href="\/services"/);
   assert.match(home, /what AI may do/);
   assert.match(home, /what needs approval/);
-  assert.doesNotMatch(home, /OpenAI[^\n]{0,80}<img|Cloudflare[^\n]{0,80}<img/);
   assert.match(campaignOpening, /media\?: PerformanceCampaignMedia/);
   assert.match(field, /O = owner/);
   assert.match(field, /X = opposition/);

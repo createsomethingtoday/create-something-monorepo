@@ -289,7 +289,16 @@ test('homepage links to evidence while Services retains the qualified readback',
   assert.match(builtWork, /\/field-reports\/template-review/);
   assert.doesNotMatch(home, /class="service-proof-row"/);
   assert.doesNotMatch(home, /class="field-report"/);
-  assert.match(home, /<BuiltWork/);
+  const salesHome = readFileSync(new URL('../src/lib/components/AgencySalesHome.svelte', import.meta.url), 'utf8');
+  const content = readFileSync(new URL('../src/lib/content/agency-home.html', import.meta.url), 'utf8');
+  assert.match(home, /<AgencySalesHome/);
+  assert.match(salesHome, /\{@html content\}/);
+  assert.match(salesHome, /<BuiltWork sectionId="engineering-work"/);
+  assert.match(salesHome, /<noscript>[\s\S]*?href="\/field-reports"/);
+  assert.match(content, /href="https:\/\/www\.maverickx\.com\/"/);
+  assert.match(content, /href="\/products#cato-tour"/);
+  assert.match(content, /Illustrative example<br>Not a client delivery/);
+  assert.match(content, /not evidence of client adoption of OpenAI tools/);
   assert.match(readback, /import \{ templateReviewFieldReport \} from '\$lib\/data\/fieldReports'/);
   assert.match(readback, /templateReviewFieldReport\.id/);
   assert.match(readback, /evidence\.usableCases/);
