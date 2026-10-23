@@ -66,7 +66,8 @@ export async function syncTranscriptToNotion(
   if (existing) {
     pageId = existing.id;
     pageUrl = existing.url;
-    await notion.updatePage(pageId, properties);
+    // Existing lifecycle properties belong to operators and downstream workflows.
+    // Verification and source corrections append versioned artifacts only.
   } else {
     // Reserve once before create. A timeout must resolve through the existing-page query.
     if (!await journal.reserve(`meeting-page:${candidate.canonicalMeetingKey}:${candidate.meetingDate}`)) {

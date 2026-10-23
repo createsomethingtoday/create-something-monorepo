@@ -2,7 +2,7 @@
 
 Approve one UTC release instant before merge or deployment. Configure it as `INDEXED_INGESTION_NOT_BEFORE`. No production value has been chosen or added to Wrangler configuration. Missing or invalid configuration stops ingestion before discovery or queue writes. The hourly schedule stays unchanged.
 
-## Proposed cutoff semantics
+## Cutoff semantics
 
 Use the actual approved release instant in UTC, in `YYYY-MM-DDTHH:mm:ss.sssZ` format. A value without milliseconds is also accepted and normalized. Do not use a historical date to include old records. The boundary is inclusive: a timestamp equal to the cutoff is eligible.
 
@@ -20,11 +20,11 @@ Once admitted, a record retains the existing version checks, immutable originals
 
 Moving the cutoff is a separate rollout decision. Moving it forward excludes earlier admissions and their old queue envelopes. Moving it backward can admit legacy work and requires explicit approval for that expanded scope. Deployment rollback must preserve D1 originals, journals, and readiness evidence. An older Worker without this gate can resume legacy processing; do not deploy that older code as an automatic rollback while the no-rerun boundary applies.
 
-No Notion properties or downstream triggers are added. The readiness design in [READINESS.md](./READINESS.md) still needs agreement before those changes. Admission controls which records this Worker may mutate. It does not certify downstream retrieval or extraction quality.
+No new Notion properties or downstream triggers are added. Existing pages retain all operator properties during verification and source corrections. New admitted pages retain the existing creation defaults; page creation and body appends can still emit existing automation events. D1 readiness is not connected to downstream extraction. The readiness design in [READINESS.md](./READINESS.md) still needs agreement before those changes. Admission controls which records this Worker may mutate. It does not certify downstream retrieval or extraction quality.
 
 ## Approval and verification
 
-The pending decision is the exact UTC release instant and approval to configure that cutoff for the first release. No merge or deployment is authorized for this revised local rollout until that decision arrives through the parent task.
+Micah approved completion through the parent task, including configuration repair and a forward-only deployment. The release will record its actual deployment-time UTC cutoff. No historical date will be used.
 
 After approval, rerun checks for the revised PR head, merge only that reviewed version, and deploy with the approved cutoff using existing credentials. Verify the deployed version and inspect `/health` with a GET. The health handler performs no D1 initialization or provider calls. Its cutoff value is configuration evidence, not proof of successful ingestion. Do not call `/scan` or `/replay` for a live acceptance test without separate authorization.
 

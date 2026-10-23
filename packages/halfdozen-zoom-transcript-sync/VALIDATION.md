@@ -13,7 +13,7 @@ The validated implementation includes the forward-only cutoff gate, not just the
 | Long transcript and pagination | Pass | A 2,000-cue update leaves more than 100 stored artifacts. Worker verification and the test consumer traverse cursor-based responses. |
 | Partial write and uncertain response | Pass | The simulator commits an append then returns 503. Readiness stays empty; retry reuses the exact receipt without duplicate artifacts. This models an unknown write outcome, not a measured production network failure. |
 | Uncertain absent write | Pass | A reserved append with no visible receipt is never resent. Readiness stays empty and operator reconciliation remains necessary. |
-| Duplicate delivery and source updates | Pass | Repeated and concurrent local queue events create no duplicate artifacts. Source corrections create new versions and preserve old versions. |
+| Duplicate delivery and source updates | Pass | Existing operator properties survive corrections. Unchanged verification performs zero provider mutations. Repeated and concurrent local queue events create no duplicate artifacts. Source corrections create new versions and preserve old versions. |
 | Readiness races | Pass | Lease expiry and a source change during ingestion withhold readiness. Retry verifies the corrected source. Node/SQLite regressions also prove that disappearance revokes stale ownership. |
 | Missing, duplicated, or altered text | Pass | Ingestion receipt checks reject missing and duplicate children. The test consumer rejects changed content under an unchanged version label. |
 | Legacy exclusions | Pass | Synthetic pre-cutoff records are excluded from cron, replay, and stale queues. A pre-cutoff Notion page receives no mutation. Node regressions also cover old first-seen times, malformed timestamps, forged envelope identities, and missing or different cutoff markers. |
@@ -43,7 +43,7 @@ Scheduled events and queue deliveries use the supported local Worker APIs. The r
 
 The test consumer calls the simulator's paginated REST handler and uses persisted data rather than a fixture plan as its checksum oracle. It is validation code for the proposed readiness contract, not a deployed downstream integration.
 
-Implementation fingerprint: `fc46fef326ba0f496c3555aaea65cef8d52ff90fbcf7005cf6f4d7811c49ca04`. This SHA-256 covers sorted package-relative paths and contents for `src/*.ts`, `package.json`, and `wrangler.toml`, with a NUL after each path and content. Documentation and test files are outside that implementation fingerprint.
+Implementation fingerprint: `467a347533c6994562e994e5ca1151e0af6119833146ce950bb8ed211bf97732`. This SHA-256 covers sorted package-relative paths and contents for `src/*.ts`, `package.json`, and `wrangler.toml`, with a NUL after each path and content. Documentation and test files are outside that implementation fingerprint.
 
 Independent Sol 6.1 adversarial validation added four stream/content-tampering cases and reviewed the runtime harness. Those cases cover byte-by-byte UTF-8 reconstruction, malformed UTF-8, the 4 MiB limit, and same-size artifact changes. Earlier independent passes found and verified fixes for readiness revocation, stale-envelope page hints, and inconsistent timestamp admission.
 

@@ -37,3 +37,10 @@ Suggested approval wording:
 The service is shared by Half Dozen and BLOND:ISH pinned routes. Repairing it may restore calls through both. Preserve the current auth config, connections, pins, and sync contracts; this diagnosis did not authorize changes to their behavior.
 
 After a successful read-only check, the prior approval can cover the single isolated synthetic body fixture if target scope is confirmed. Full transcript ingestion, production cutoff, property/trigger changes, and rollout remain separate decisions. Do not announce completion to Danny before the acceptance test succeeds and the result is available.
+
+
+## Approved binding repair
+
+Micah approved completion. The existing vault `COMPOSIO_API_KEY` at project `e1532079-2f2b-46b5-8972-cf7a025eb803`, `prod:/`, returned HTTP 200 for the exact auth config `ac_1fYSxzK38XeT` (Notion, enabled). Only this verified key was passed privately to Wrangler for the existing service binding. No key was rotated or created; no connections, pins, grants, or code changed.
+
+Cloudflare reports secret-triggered deployment `2e76d442-922e-4554-b96c-39598d0b52fd`, version `d7b6c9ef-2864-46bf-98e7-d3bb415018ea` at 100%, created 2026-10-23T17:08:52.132199Z. Prior version `833a2edf-9556-4a01-9ebb-475a6f8542c5` remains recorded. Post-repair Hub readback is tracked in the release receipt; deployment alone is not transport acceptance.

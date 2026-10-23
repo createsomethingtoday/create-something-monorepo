@@ -37,13 +37,23 @@ test('local workerd + D1 validation, deterministic provider simulator, no real p
       assert.equal(retrieved.blocks, 478); assert.ok(retrieved.parts > 1);
       assert.ok(!retrieved.canonical.includes('WRONG ALTERNATE'));
     });
-    await t.test('duplicate delivery creates no artifact or page duplicates', async () => {
-      const appends = sim.appends; const pages = sim.pages.size; const version = (await runtime.state(key)).ready_version;
+    await t.test('duplicate verification preserves operator Status and causes no provider mutations', async () => {
+      const ready = await runtime.state(key);
+      const page = sim.pages.get(ready.page_id);
+      page.properties.Status = { select: { name: 'Operator reviewed' } };
+      const preservedProperties = structuredClone(page.properties);
+      const appends = sim.appends; const pages = sim.pages.size; const mutations = sim.mutations;
+      const version = ready.ready_version;
       await runtime.delivery(message); await runtime.delivery(message);
       assert.equal(sim.appends, appends); assert.equal(sim.pages.size, pages); assert.equal((await runtime.state(key)).ready_version, version);
+      assert.equal(sim.mutations, mutations, 'Unchanged verification must not emit property or body mutations');
+      assert.deepEqual(page.properties, preservedProperties, 'Operator metadata must survive repeated verification');
     });
     await t.test('partial write with lost response resumes receipts, keeps original version, publishes only verified update', async () => {
       const old = await retrieveVerified(runtime, key); sim.recordings.get('long-primary').raw = syntheticVtt(478, ' correction');
+      const preservedProperties = structuredClone(sim.pages.get((await runtime.state(key)).page_id).properties);
+      const propertyPatchCount = () => sim.requests.filter(([method, url]) => method === 'PATCH' && new URL(url).pathname.startsWith('/v1/pages/')).length;
+      const beforePropertyPatches = propertyPatchCount();
       sim.failAppendAt = sim.appends + 2;
       const first = await runtime.delivery(message);
       assert.equal(first.retryMessages.length, 1); assert.equal((await runtime.state(key)).ready_version, null);
@@ -53,6 +63,8 @@ test('local workerd + D1 validation, deterministic provider simulator, no real p
       const parent = sim.blocks.get((await runtime.state(key)).page_id);
       const markers = parent.map(blockText); assert.equal(new Set(markers).size, markers.length);
       assert.ok(markers.some(marker => marker.includes(old.version))); assert.equal(sim.pages.size, 1);
+      assert.equal(propertyPatchCount(), beforePropertyPatches, 'Source corrections must not PATCH existing page properties');
+      assert.deepEqual(sim.pages.get((await runtime.state(key)).page_id).properties, preservedProperties);
     });
     await t.test('same-version Notion tampering and downstream pre/post version races reject consumption', async () => {
       const before = await runtime.state(key); const part = sim.blocks.get(before.page_id).find(block => blockText(block).includes(`| ${before.version} | part:1 |`));

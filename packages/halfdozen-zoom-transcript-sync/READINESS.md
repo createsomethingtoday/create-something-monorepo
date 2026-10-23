@@ -33,10 +33,10 @@ D1 leases expire after ten minutes. Owner tokens prevent an expired worker from 
 
 ## Evidence and rollout limits
 
-The source was verified against `origin/main` at `3396d7755`. The existing configuration targets the Half Dozen account and an hourly cron. Deployment verification is separate from successful ingestion. This change has not been deployed or run against live Zoom or Notion records.
+The source was verified against `origin/main` at `3396d7755`. The existing configuration targets the Half Dozen account and an hourly cron. Deployment verification is separate from successful ingestion. The actual indexed core passed one approved synthetic Notion fixture through the CLI adapter and local D1. This is separate from deployed Worker or Hub acceptance.
 
 The manual fixture was left untouched: [11 parts, 478 timestamp blocks, 01:36–56:25](https://app.notion.com/p/e3ccf11baf124889a7453e188b2b1b09). Those counts are supplied context, not a verification performed by this PR. The synthetic tests use their own text. The roughly 6,500-character manual size is not a platform guarantee.
 
 Before production promotion, review this contract, verify the direct and Hub transport behavior against an approved nonproduction page, measure runtime and request use, and verify downstream version checks. Do not use OD x DM as a test. A rollout needs separate authorization for deployment and any live writes.
 
-The forward-only cutoff is proposed in [ROLLOUT.md](./ROLLOUT.md). It excludes legacy records from ingestion and readiness mutations. No production cutoff has been chosen.
+The forward-only cutoff is proposed in [ROLLOUT.md](./ROLLOUT.md). It excludes legacy records from ingestion and readiness mutations. The approved release will record its deployment-time UTC cutoff.
