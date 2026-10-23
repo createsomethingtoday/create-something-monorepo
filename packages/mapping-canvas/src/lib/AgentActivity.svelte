@@ -20,7 +20,9 @@
     const focused = document.activeElement;
     if (!focused || !panel?.contains(focused) || focused === toggleButton) return;
     // Only rescue focus from controls being hidden; leave operator canvas focus alone.
+    const completion = completionIdentity;
     void tick().then(() => {
+      if (expanded || completionIdentity !== completion) return;
       if (document.activeElement === focused || document.activeElement === document.body) toggleButton?.focus({ preventScroll: true });
     });
   });
