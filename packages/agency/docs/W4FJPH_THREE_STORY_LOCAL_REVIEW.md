@@ -228,7 +228,7 @@ See the existing membership plans
 
 ## Release decision
 
-Parent initially reported publication delegation was rejected for insufficient explicit approval of public copy, placement and release. No publication was attempted during that pause. Fresh explicit approval subsequently authorized this exact three-story scope, with anonymous examples and unchanged pricing, through normal CI, merge and deployment gates. The implementation branch is codex/W4FJPH-three-story-local, based on current origin/main (2755274473d5cfd2ac3fb2482ce7599850a8683b).
+Parent initially reported publication delegation was rejected for insufficient explicit approval of public copy, placement and release. No publication was attempted during that pause. Fresh explicit approval subsequently authorized this exact three-story scope, with anonymous examples and unchanged pricing, through normal CI, merge and deployment gates. The implementation branch is codex/W4FJPH-three-story-local, based on current origin/main (60542c00c7f65da17e63744a310a1b03fc28f14b).
 
 ## Validation
 
