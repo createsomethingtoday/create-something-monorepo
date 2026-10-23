@@ -175,6 +175,7 @@
   <Analytics property="space" />
 
   <!-- Unified Search - Cmd/Ctrl+K to open -->
+  <div class:space-header-search={workshopShell} data-canon-palette={workshopShell ? 'operator' : undefined}>
   <UnifiedSearch
     currentProperty="space"
     searchApiUrl="/api/workshop"
@@ -183,6 +184,8 @@
     showMobileButton={!mobileNavigationOpen}
     deferMobileButtonUntilCampaignExit={workshopShell ? false : ['/', '/workbench'].includes($page.url.pathname)}
   />
+
+  </div>
 
   <div
     class="layout property-performance"

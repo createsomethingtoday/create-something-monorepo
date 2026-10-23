@@ -93,7 +93,7 @@
 <Analytics property="ltd" userId={data.user?.id} userOptedOut={data.user?.analytics_opt_out ?? false} />
 
 <!-- Unified Search - Cmd/Ctrl+K to open -->
-<div class:ltd-header-search={isPublicLibraryRoute && !isCanonRoute}>
+<div class:ltd-header-search={isPublicLibraryRoute && !isCanonRoute} data-canon-palette={isPublicLibraryRoute && !isCanonRoute ? 'operator' : undefined}>
 <UnifiedSearch
 	currentProperty="ltd"
 	localItems={quickAccessItems}

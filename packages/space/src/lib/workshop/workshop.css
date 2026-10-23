@@ -198,5 +198,8 @@
 }
 /* Keep search reachable beside mobile navigation, away from reading/form content. */
 @media (max-width: 768px) {
- html body:has(.layout.workshop-shell) .mobile-search-button { top: 10px; bottom: auto; right: 80px; width: 44px; height: 44px; z-index: 41; border-radius: var(--radius-operator-panel); box-shadow: none; background: var(--color-operator-secondary); color: var(--color-operator-foreground); }
+ html body:has(.layout.workshop-shell) .mobile-search-button { top: 10px; bottom: auto; right: 80px; width: 44px; height: 44px; z-index: 51; border-radius: var(--radius-operator-panel); box-shadow: none; background: var(--color-operator-secondary); color: var(--color-operator-foreground); }
 }
+
+body .space-header-search .palette-overlay { z-index: 60; }
+body .space-header-search .palette { z-index: 61; }
