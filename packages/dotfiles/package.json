@@ -6,6 +6,7 @@
   "scripts": {
     "install-dotfiles": "./scripts/install.sh",
     "install-codex-skills": "./scripts/install-codex-skills.sh",
+    "install-rtk": "./scripts/install-rtk.sh",
     "check": "echo 'Checking dotfiles...' && if [ -d ~/.config/neomutt ] && [ -f ~/.taskrc ]; then ls -la ~/.config/neomutt && ls -la ~/.taskrc; else echo 'Dotfiles not installed in this environment; skipping installed-state check.'; fi"
   },
   "keywords": [
