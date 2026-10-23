@@ -27,7 +27,7 @@ for(const width of [1440,1024,768,390,320]) {
   assert.equal(r.overflow,false,`page overflow ${width}`);assert.equal(r.headingIntroOverlap,false);assert.equal(r.headerRowOverlap,false);assert.ok(r.headerContainsTitle&&r.headerContainsIntro);assert.deepEqual(r.storyCollisions,[]);
   if(width===1440){
     await page.locator('#engineering-work').screenshot({style:'[aria-label="Primary"],.privacy-choice{opacity:0!important;visibility:hidden!important}',path:`${out}/library-after.png`});
-    const oldCss=execFileSync('git',['show','HEAD:packages/agency/static/styles/agency/home.css'],{encoding:'utf8'});
+    const oldCss=execFileSync('git',['show','cc86a62e4:packages/agency/static/styles/agency/home.css'],{encoding:'utf8'});
     const old=await page.addStyleTag({content:oldCss});
     const before=await check();assert.equal(before.headerContainsTitle,false,'reproduce original fixed-header overflow');results.push({mode:'before',...before});
     await page.locator('#engineering-work').screenshot({style:'[aria-label="Primary"],.privacy-choice{opacity:0!important;visibility:hidden!important}',path:`${out}/library-before.png`});await old.evaluate(e=>e.remove());
@@ -41,6 +41,18 @@ for(const width of [1440,1024,768,390,320]) {
   assert.equal(r.overflow,false);assert.equal(r.headingIntroOverlap,false);assert.equal(r.headerRowOverlap,false);assert.ok(r.headerContainsTitle&&r.headerContainsIntro);assert.deepEqual(r.storyCollisions,[]);
   await page.locator('#work-library > summary').focus();await page.keyboard.press('Enter');await page.locator('#engineering-work').waitFor({state:'detached'});
   await page.close();
+}
+for (const reducedMotion of ['reduce','no-preference']) {
+ const page=await browser.newPage({viewport:{width:390,height:844},reducedMotion});
+ await page.goto(`${url}/#workstreams`);await page.waitForLoadState('networkidle');
+ const cta=page.getByRole('link',{name:'Choose your monthly support',exact:true});
+ await cta.focus();await page.keyboard.press('Enter');await page.waitForURL('**/#plans');
+ await page.locator('.cc-disclosure > summary').focus();await page.keyboard.press('Enter');
+ assert.equal(await page.locator('.cc-disclosure').getAttribute('open'),'');
+ await page.locator('.cc-faq details > summary').first().focus();await page.keyboard.press('Enter');
+ assert.ok(await page.getByText('Larger Builds, managed Control and production incident response need separate agreements.',{exact:false}).first().isVisible());
+ const labels=await page.locator('.ws-story .ws-heading').innerText();assert.match(labels,/one agreed area of work within your AI-native Technical support membership/);
+ results.push({mode:reducedMotion,keyboardStoryToPlans:true,keyboardScopeFAQ:true});await page.close();
 }
 await writeFile(`${out}/results.json`,JSON.stringify(results,null,2));console.log(JSON.stringify({passed:true,checks:results.length,evidence:out}));
 } finally {await browser.close();}

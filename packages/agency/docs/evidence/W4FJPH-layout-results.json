@@ -119,5 +119,15 @@
     "headerRowOverlap": false,
     "storyCollisions": [],
     "headerDisplay": "block"
+  },
+  {
+    "mode": "reduce",
+    "keyboardStoryToPlans": true,
+    "keyboardScopeFAQ": true
+  },
+  {
+    "mode": "no-preference",
+    "keyboardStoryToPlans": true,
+    "keyboardScopeFAQ": true
   }
 ]
