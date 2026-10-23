@@ -1,3 +1,13 @@
+# Inline repair validation
+
+The inline repair is local and uncommitted. Independent Sol 6.1 review passes 17 focused tests and TypeScript checks. Coverage includes one readable section, long transcript pagination, corrections, A-B-A restoration, committed lost responses, unknown absent responses, stale owner rejection and shared continuation budgets. Six finalization regressions verify that partial projections retain an updating label and completed response-loss retries do not duplicate writes.
+
+The full package passes 74/74 tests. The local workerd/D1 suite passes 13/13 tests, including twelve scenarios and their parent. TypeScript and scoped diff checks pass. These use intercepted deterministic providers. They do not establish live Notion positioning, archived-block behavior, latency or UI acceptance.
+
+See [PRESENTATION_REMEDY.md](PRESENTATION_REMEDY.md) for the bounded provider acceptance plan. Live inline core acceptance passed through the existing CLI and local D1; see [LIVE_INLINE_ACCEPTANCE.md](LIVE_INLINE_ACCEPTANCE.md). The final top and bottom UI checks pass. Repair deployment and one-meeting replacement remain pending. Prior v2 evidence below is historical and must not be presented as inline acceptance.
+
+---
+
 # Latest local validation
 
 The latest local revision passes synthetic validation through workerd and local D1. Provider responses are simulated. Live synthetic acceptance is recorded separately in LIVE_ACCEPTANCE.md. No extraction-quality result is claimed.
@@ -20,7 +30,7 @@ The validated implementation includes the forward-only cutoff gate, not just the
 | Downstream version pre/post check | Pass in test consumer | The test-only consumer rebuilds original and canonical text from persisted index links, recomputes the version, and checks D1 before and after retrieval. Changed readiness or versions reject consumption. No production downstream consumer is connected. |
 | Latest local TypeScript check | Pass | `tsc --noEmit`. |
 | Latest local CI | Not run | Revised-head CI is pending publication. All seven CI checks passed on original PR head `1ffcf2096358100a863bc79a67f99eabdda64960`; that is separate evidence. |
-| Live provider acceptance | See LIVE_ACCEPTANCE.md | One approved synthetic Notion fixture uses the actual core through the existing CLI. No live Zoom transcript is fetched. Hub acceptance remains blocked. |
+| Live provider acceptance | See LIVE_ACCEPTANCE.md | One approved synthetic Notion fixture uses the actual core through the existing CLI. No live Zoom transcript is fetched. The retired Hub is not a dependency. |
 | Task-extraction quality | Not tested | Retrieval correctness does not establish which tasks should be extracted. |
 
 ## Runtime and reproduction
@@ -49,6 +59,6 @@ Independent Sol 6.1 adversarial validation added four stream/content-tampering c
 
 ## Smallest remaining acceptance step
 
-The approved single synthetic fixture passed nested artifact writes, exact reconstruction, controlled response-loss recovery, idempotent repeats, and source correction through the CLI adapter. See LIVE_ACCEPTANCE.md for evidence and limits. Hub transport needs its own check if it will be used. A genuine provider timeout cannot be inferred from the simulated 503-after-commit case.
+The approved single synthetic fixture passed nested artifact writes, exact reconstruction, controlled response-loss recovery, idempotent repeats, and source correction through the CLI adapter. See LIVE_ACCEPTANCE.md for evidence and limits. The retired Hub is not used by the active direct Worker. A genuine provider timeout cannot be inferred from the simulated 503-after-commit case.
 
 Production rollout still needs approval for the exact UTC cutoff in [ROLLOUT.md](./ROLLOUT.md), publication of the revised branch, and CI on that revised head. A live new-meeting ingestion check needs separate authorization. It must not use OD x DM, the manual fixture, a real historical transcript, or a broad backfill. The readiness design still needs agreement before any Notion property or downstream-trigger changes.

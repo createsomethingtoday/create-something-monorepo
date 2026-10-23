@@ -113,12 +113,13 @@ export function blockText(block: Block): string {
 
 export interface ArtifactTransport {
   list(parent: string): Promise<Block[]>;
-  append(parent: string, blocks: Block[]): Promise<void>;
+  append(parent: string, blocks: Block[], after?: string): Promise<void>;
 }
 export interface WriteJournal {
   // Atomic insert. A key is never sent twice, even across expired leases.
   reserve(key: string): Promise<boolean>;
   assertOwner(): Promise<void>;
+  projectionFence?(): { key: string; selected: string; owner: string };
 }
 
 export async function ensureArtifact(
@@ -158,7 +159,7 @@ export async function ensureArtifact(
 }
 
 export async function writeIndexedTranscript(
-  transport: ArtifactTransport, journal: WriteJournal, parent: string, plan: TranscriptPlan,
+  transport: ArtifactTransport, journal: WriteJournal, parent: string, plan: TranscriptPlan, linkPage = parent,
 ): Promise<string> {
   const receipts: Array<{ artifact: Artifact; id: string }> = [];
   for (const artifact of plan.artifacts) {
@@ -183,7 +184,7 @@ export async function writeIndexedTranscript(
     `Version: ${plan.version}`,
     `Format: ${TRANSCRIPT_FORMAT}; original encoding: UTF-8 base64`,
     `Canonical timestamp blocks: ${plan.blockCount}`,
-    ...receipts.map(({ artifact, id }) => `${artifact.title}\nhttps://www.notion.so/${parent.replace(/-/g, '')}#${id.replace(/-/g, '')}`),
+    ...receipts.map(({ artifact, id }) => `${artifact.title}\nhttps://www.notion.so/${linkPage.replace(/-/g, '')}#${id.replace(/-/g, '')}`),
   ].join('\n');
   const index: Artifact = { key: 'index', title: 'Ordered transcript index', chunks: exactChunks(indexText) };
   if (index.chunks.length > 90) throw new Error('Index exceeds block budget');

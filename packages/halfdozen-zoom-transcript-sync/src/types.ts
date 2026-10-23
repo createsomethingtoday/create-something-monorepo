@@ -45,6 +45,7 @@ export interface TranscriptCandidate {
 }
 
 export interface TranscriptQueueMessage extends TranscriptCandidate {
+  inlineContinuation?: number;
   rolloutCutoff?: string;
   runId: number | null;
   replay: boolean;
