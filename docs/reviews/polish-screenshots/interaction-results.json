@@ -1,0 +1,167 @@
+[
+  {
+    "n": "io",
+    "mobileButtons": [
+      {
+        "text": "",
+        "label": "Open search",
+        "rect": {
+          "x": 266,
+          "y": 10,
+          "w": 44,
+          "h": 44
+        }
+      },
+      {
+        "text": "",
+        "label": "Open menu",
+        "rect": {
+          "x": 314,
+          "y": 8,
+          "w": 44,
+          "h": 44
+        }
+      },
+      {
+        "text": "Pause motion",
+        "label": null,
+        "rect": {
+          "x": 280.8125,
+          "y": 1189.3125,
+          "w": 93.1875,
+          "h": 53.1875
+        }
+      }
+    ]
+  },
+  {
+    "n": "io",
+    "focus": {
+      "text": "",
+      "outline": "oklch(0.708 0 0) solid 3px"
+    }
+  },
+  {
+    "n": "io",
+    "pause": [
+      "",
+      "",
+      "Resume motion"
+    ],
+    "animations": [
+      "paused"
+    ]
+  },
+  {
+    "n": "io",
+    "reducedAnimations": []
+  },
+  {
+    "n": "ltd",
+    "mobileButtons": [
+      {
+        "text": "",
+        "label": "Open search",
+        "rect": {
+          "x": 308.125,
+          "y": 802.125,
+          "w": 56,
+          "h": 56
+        }
+      },
+      {
+        "text": "",
+        "label": "Open menu",
+        "rect": {
+          "x": 334,
+          "y": 12.46875,
+          "w": 44,
+          "h": 44
+        }
+      },
+      {
+        "text": "Get the note",
+        "label": null,
+        "rect": {
+          "x": 29,
+          "y": 5976.71875,
+          "w": 332,
+          "h": 49.65625
+        }
+      }
+    ]
+  },
+  {
+    "n": "ltd",
+    "focus": {
+      "text": "",
+      "outline": "rgba(167, 184, 255, 0.72) solid 2px"
+    }
+  },
+  {
+    "n": "ltd",
+    "reducedAnimations": []
+  },
+  {
+    "n": "space",
+    "mobileButtons": [
+      {
+        "text": "",
+        "label": "Open menu",
+        "rect": {
+          "x": 334,
+          "y": 12.46875,
+          "w": 44,
+          "h": 44
+        }
+      },
+      {
+        "text": "Pause motion",
+        "label": null,
+        "rect": {
+          "x": 272,
+          "y": 3785.859375,
+          "w": 102,
+          "h": 60.84375
+        }
+      }
+    ]
+  },
+  {
+    "n": "space",
+    "focus": {
+      "text": "Skip to main content",
+      "outline": "oklch(0.708 0 0) solid 2px"
+    }
+  },
+  {
+    "n": "space",
+    "pause": [
+      "",
+      "Play motion"
+    ],
+    "animations": [
+      "paused"
+    ]
+  },
+  {
+    "n": "space",
+    "reducedAnimations": []
+  },
+  {
+    "readiness": "STATE · READY\n\nThis workflow has a visible operating boundary.\n\nChoose the playbook that fits the work and make the owner, wait point, and receipt explicit.\n\nChoose a playbook\nCheck another workflow"
+  },
+  {
+    "readinessReset": "READINESS CHECK\n0 / 5"
+  },
+  {
+    "spaceFilter": "0 results\n\nClear filters",
+    "spaceEmpty": "No matching projects.\n\nTry a broader word or clear the type filter.\n\nShow all projects"
+  },
+  {
+    "spaceClear": "22 results"
+  },
+  {
+    "ioFilter": "Research Papers\n\n0 of 51 papers\n\nConcept illustration · An agent separates the observed evidence from the part still unknown.\nSearch papers\nAll\nResearch\nCase Study\nMethodology\nNewest\nOldest\nQuick Reads\n\nNo papers match your search.\n\nClear filters"
+  }
+]

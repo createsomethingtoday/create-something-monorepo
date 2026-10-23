@@ -124,3 +124,11 @@ Research detail pages retain their artifact-specific diagrams and original evide
 | `/terms` | Existing artifact / functional surface retained |
 | `/unsubscribe` | Existing artifact / functional surface retained |
 | `/visualizations/arena-scale` | Existing artifact / functional surface retained |
+
+## Finished-pass polish
+
+The desktop homepage pairs the unchanged research thesis/actions with a full-frame comparison scene. Papers and experiment archives pair orientation with a smaller scene so search/filter controls remain reachable. All mobile scenes retain the complete composition. Captions use a 12px minimum; no photographic overlays or decorative crop are introduced. Documentation index, Ground documentation, and newsletter archive now use meaningful existing connection/comparison/notebook scenes. Reference interiors keep their command snippets, arrays and subscription components intact. Nested main landmarks were removed on the edited papers, docs, Ground and newsletter routes.
+
+Precise image coverage is now nine templates: `/`, `/papers`, `/experiments`, `/methodology`, `/about`, `/plugins`, `/docs`, `/docs/ground`, `/newsletters`. Deep paper/experiment bodies keep artifact-specific diagrams and evidence. Plugin detail, agent/MCP trust cards, categories, graph, other newsletters and legacy reference pages retain existing dark reading-shell styling rather than receiving new images. Auth, admin, transactions and interactive tools are inventoried/preserved, not redesigned.
+
+Actual browser review covered fifteen representative research/reference families at desktop1440 and mobile390: no overflow, no page errors, all HTTP200; images retained native proportions. A fresh independent final 390/768/1440 review is recorded under `docs/reviews/cross-property-polish-independent-review.md`. No new imagery generated: the already inspected Agency scenes match these stories.

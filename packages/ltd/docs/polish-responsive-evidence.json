@@ -1,0 +1,194 @@
+[
+  {
+    "route": "/",
+    "width": 390,
+    "status": 200,
+    "overflow": false,
+    "loaded": true,
+    "h1": 1
+  },
+  {
+    "route": "/playbooks",
+    "width": 390,
+    "status": 200,
+    "overflow": false,
+    "loaded": true,
+    "h1": 1
+  },
+  {
+    "route": "/readiness",
+    "width": 390,
+    "status": 200,
+    "overflow": false,
+    "loaded": true,
+    "h1": 1
+  },
+  {
+    "route": "/standards",
+    "width": 390,
+    "status": 200,
+    "overflow": false,
+    "loaded": true,
+    "h1": 1
+  },
+  {
+    "route": "/playbooks/inbound-triage",
+    "width": 390,
+    "status": 200,
+    "overflow": false,
+    "loaded": true,
+    "h1": 1
+  },
+  {
+    "route": "/playbooks/decision-brief",
+    "width": 390,
+    "status": 200,
+    "overflow": false,
+    "loaded": true,
+    "h1": 1
+  },
+  {
+    "route": "/playbooks/exception-handoff",
+    "width": 390,
+    "status": 200,
+    "overflow": false,
+    "loaded": true,
+    "h1": 1
+  },
+  {
+    "route": "/playbooks/solo-control-tower",
+    "width": 390,
+    "status": 200,
+    "overflow": false,
+    "loaded": true,
+    "h1": 1
+  },
+  {
+    "route": "/",
+    "width": 768,
+    "status": 200,
+    "overflow": false,
+    "loaded": true,
+    "h1": 1
+  },
+  {
+    "route": "/playbooks",
+    "width": 768,
+    "status": 200,
+    "overflow": false,
+    "loaded": true,
+    "h1": 1
+  },
+  {
+    "route": "/readiness",
+    "width": 768,
+    "status": 200,
+    "overflow": false,
+    "loaded": true,
+    "h1": 1
+  },
+  {
+    "route": "/standards",
+    "width": 768,
+    "status": 200,
+    "overflow": false,
+    "loaded": true,
+    "h1": 1
+  },
+  {
+    "route": "/playbooks/inbound-triage",
+    "width": 768,
+    "status": 200,
+    "overflow": false,
+    "loaded": true,
+    "h1": 1
+  },
+  {
+    "route": "/playbooks/decision-brief",
+    "width": 768,
+    "status": 200,
+    "overflow": false,
+    "loaded": true,
+    "h1": 1
+  },
+  {
+    "route": "/playbooks/exception-handoff",
+    "width": 768,
+    "status": 200,
+    "overflow": false,
+    "loaded": true,
+    "h1": 1
+  },
+  {
+    "route": "/playbooks/solo-control-tower",
+    "width": 768,
+    "status": 200,
+    "overflow": false,
+    "loaded": true,
+    "h1": 1
+  },
+  {
+    "route": "/",
+    "width": 1440,
+    "status": 200,
+    "overflow": false,
+    "loaded": true,
+    "h1": 1
+  },
+  {
+    "route": "/playbooks",
+    "width": 1440,
+    "status": 200,
+    "overflow": false,
+    "loaded": true,
+    "h1": 1
+  },
+  {
+    "route": "/readiness",
+    "width": 1440,
+    "status": 200,
+    "overflow": false,
+    "loaded": true,
+    "h1": 1
+  },
+  {
+    "route": "/standards",
+    "width": 1440,
+    "status": 200,
+    "overflow": false,
+    "loaded": true,
+    "h1": 1
+  },
+  {
+    "route": "/playbooks/inbound-triage",
+    "width": 1440,
+    "status": 200,
+    "overflow": false,
+    "loaded": true,
+    "h1": 1
+  },
+  {
+    "route": "/playbooks/decision-brief",
+    "width": 1440,
+    "status": 200,
+    "overflow": false,
+    "loaded": true,
+    "h1": 1
+  },
+  {
+    "route": "/playbooks/exception-handoff",
+    "width": 1440,
+    "status": 200,
+    "overflow": false,
+    "loaded": true,
+    "h1": 1
+  },
+  {
+    "route": "/playbooks/solo-control-tower",
+    "width": 1440,
+    "status": 200,
+    "overflow": false,
+    "loaded": true,
+    "h1": 1
+  }
+]
