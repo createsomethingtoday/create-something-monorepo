@@ -93,12 +93,15 @@
 <Analytics property="ltd" userId={data.user?.id} userOptedOut={data.user?.analytics_opt_out ?? false} />
 
 <!-- Unified Search - Cmd/Ctrl+K to open -->
+<div class:ltd-header-search={isPublicLibraryRoute && !isCanonRoute}>
 <UnifiedSearch
 	currentProperty="ltd"
 	localItems={quickAccessItems}
 	showMobileButton={!mobileNavigationOpen}
-	deferMobileButtonUntilCampaignExit={data?.pathname === '/'}
+	deferMobileButtonUntilCampaignExit={isPublicLibraryRoute && !isCanonRoute ? false : data?.pathname === '/'}
 />
+
+</div>
 
 <div class="min-h-screen flex flex-col ltd-clear-shell property-performance" class:ltd-public-library={isPublicLibraryRoute} class:ltd-operator-public={isPublicLibraryRoute} data-canon-palette={isPublicLibraryRoute ? 'operator' : undefined}>
 	<SkipToContent />

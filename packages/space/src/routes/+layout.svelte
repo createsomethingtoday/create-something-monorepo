@@ -181,7 +181,7 @@
     placeholder="Search workshop projects and tools..."
     localItems={quickAccessItems}
     showMobileButton={!mobileNavigationOpen}
-    deferMobileButtonUntilCampaignExit={['/', '/workbench'].includes($page.url.pathname)}
+    deferMobileButtonUntilCampaignExit={workshopShell ? false : ['/', '/workbench'].includes($page.url.pathname)}
   />
 
   <div

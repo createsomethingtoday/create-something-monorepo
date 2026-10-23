@@ -435,3 +435,8 @@ body:has(.ltd-operator-public) {
   letter-spacing: .06em;
   text-transform: uppercase;
 }
+
+/* Public reading and assessment text stays clear of a fixed search control. */
+@media (max-width: 768px) {
+ body .ltd-header-search .mobile-search-button { top: 10px; bottom: auto; right: 80px; width: 44px; height: 44px; z-index: 41; border-radius: var(--radius-operator-panel); box-shadow: none; }
+}
