@@ -33,4 +33,22 @@ A public-interface red check failed on unchanged Draw because **Revise selection
 
 Functional correctness is passed for the bounded synthetic browser fixture; perceptual/product review covers desktop/mobile screenshots and actual interactions, not human usability research. Independent Sol 6.1 retest and parent PR review remain separate gates. Release readiness is **not applicable**: this is not approved for production/native distribution. Linear key and CTX retention-lease blockers are recorded by the parent; no credential lookup or alternate tracker was used. Worktree disposition: retained on `codex/draw-focused-revisions-prototype-20261023` for separate review.
 
-Final recorded results: 425 package tests across 38 files passed; Svelte check 0 errors/0 warnings; production build passed; 20 real-browser assertions passed with no page errors; local production page refused the opt-in and built artifacts contained no prototype markers. Desktop conflict and mobile preview screenshots were directly inspected. Final tests/check/build used pinned Node 22.23.4; initial exploratory browser development also used installed Node 26.11.0.
+Initial prototype recorded results: 425 package tests across 38 files passed; Svelte check 0 errors/0 warnings; production build passed; 20 real-browser assertions passed with no page errors; local production page refused the opt-in and built artifacts contained no prototype markers. Desktop conflict and mobile preview screenshots were directly inspected. Final tests/check/build used pinned Node 22.23.4; initial exploratory browser development also used installed Node 26.11.0.
+
+## Approved polish pass
+
+The preview now summarizes the exact replacement count, highlights only the matched spans before and the substituted spans after, and explicitly identifies an empty replacement/empty note. Existing identical text elsewhere is not falsely highlighted. Note headings use their names or first text line rather than only opaque IDs. Excluded elements remain inspectable in a disclosure, and compact request actions reduce inspector scrolling. The scope remains literal, case-sensitive replacement of all occurrences in the selected editable plain notes.
+
+Field-specific validation associates errors using `aria-invalid`/`aria-describedby` and focuses the field needing correction. Delayed Accept/Undo completion restores focus only if the operator has not moved it outside the panel. Project replacement clears the request, preview and receipt; a late result cannot populate feedback or Undo in the new project. These safeguards do not change atomic mutation or targeted-revert authority.
+
+Additional verification:
+
+```sh
+pnpm verify:focused-revision-focus
+```
+
+This separate browser harness mounts the actual Svelte panel with a controlled delayed/failing executor. It verifies focus/project/error behavior only, not real mutation semantics; those remain covered by the actual registered application tools in `verify:focused-revision`. It is an unreferenced test fixture under `src/lib/testing`, not an application route or native feature. The harness initially failed to load from outside Vite's normal source allowlist; it was moved into the normal source tree without broadening that allowlist.
+
+Polish red: the actual pre-polish UI failed the new replacement-summary assertion while its preview stayed non-mutating. This pass's final evidence is under `output/focused-revision/`: full app `result.json`, controlled component `focus-error-result.json`, desktop/mobile PNGs, `tests-polish.log`, `check-polish.log`, and production exclusion receipts. No frozen comparison or obstruction-fix files were changed. The previous independent review at c52685126 applies only to the initial prototype; the polished head requires a fresh independent review.
+
+Polished validation: 427 tests across 38 files pass; Svelte check reports 0 errors/0 warnings; production build passes. All 26 real-application browser assertions and 6 controlled focus/error assertions pass with no page errors. Desktop and 390×844 mobile screenshots were directly inspected. Production query opt-in is refused, and a recursive built-output scan finds neither prototype nor test-harness markers. Native behavior remains untested and out of scope.

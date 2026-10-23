@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { createDocument, type CanvasDocument } from './document';
 import { applyCanvasOperations } from './paired-session';
 import { createDrawWebMcpTools, drawRevision } from './webmcp';
-import { prepareFocusedRevision, focusedRevisionPatch } from './focused-revision';
+import { prepareFocusedRevision, focusedRevisionPatch, focusedRevisionDiff, FocusedRevisionInputError } from './focused-revision';
 function fixture(): CanvasDocument { return { ...createDocument(), objects: [
   { id: 'review', kind: 'note', createdAt: 'now', x: 0, y: 0, width: 300, height: 160, text: 'Noah reviews Noah’s actions.' },
   { id: 'other', kind: 'note', createdAt: 'now', x: 400, y: 0, width: 300, height: 160, text: 'Noah handles exceptions.' },
@@ -22,6 +22,22 @@ describe('focused revision public contract', () => {
     expect(d).toEqual(before); expect(p.affected[0].after).toBe('$& Inez reviews $& Inez’s actions.');
     expect(p.excluded).toEqual([{ id: 'annotation', reason: 'Non-note annotation/artwork preserved' }]);
     expect(focusedRevisionPatch(p, d, ['annotation', 'review']).patches).toEqual([{ id: 'review', text: p.affected[0].after }]);
+  });
+  it('highlights only substituted spans and represents literal strings and deletion exactly', () => {
+    const diff = focusedRevisionDiff('Noah / Inez / Noah', 'Noah', '$& Inez');
+    expect(diff.count).toBe(2);
+    expect(diff.original.map(part => part.text).join('')).toBe('Noah / Inez / Noah');
+    expect(diff.proposed.map(part => part.text).join('')).toBe('$& Inez / Inez / $& Inez');
+    expect(diff.proposed.filter(part => part.changed).map(part => part.text)).toEqual(['$& Inez', '$& Inez']);
+    expect(diff.proposed.find(part => !part.changed)?.text).toBe(' / Inez / ');
+    const deletion = focusedRevisionDiff('Noah', 'Noah', '');
+    expect(deletion.count).toBe(1); expect(deletion.proposed.map(part => part.text).join('')).toBe('');
+  });
+  it('identifies the request field that needs correction', () => {
+    for (const [find, replacement, field] of [['', 'Inez', 'find'], ['Noah', 'Noah', 'replacement'], ['missing', 'Inez', 'find']]) {
+      try { prepareFocusedRevision(fixture(), ['review'], find, replacement); throw new Error('Expected validation failure'); }
+      catch (error) { expect(error).toBeInstanceOf(FocusedRevisionInputError); expect((error as FocusedRevisionInputError).field).toBe(field); }
+    }
   });
   it('accepts via real patch API; targeted Undo retains a later independent annotation edit', async () => {
     const h = harness(), original = structuredClone(h.read()), p = prepareFocusedRevision(h.read(), ['review'], 'Noah', 'Inez');
