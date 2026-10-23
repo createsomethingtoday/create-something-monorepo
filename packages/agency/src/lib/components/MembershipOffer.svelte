@@ -10,7 +10,7 @@
     {
       question: 'What does the membership cover?',
       answer:
-        'Focused covers one workstream, two 30-minute check-ins, two 60-minute remote work sessions and one agreed milestone each billing month. Team covers up to two workstreams, two check-ins, four remote sessions and two milestones. Both plans include one feedback and revision round per milestone, learning resources and Slack support. We agree on the work, response times and acceptance checks before payment. Neither plan includes unlimited development or production incident response.'
+        'A workstream is one agreed area of work within membership, such as meeting follow-up. Individual tasks and tools can belong to the same workstream. Focused covers one workstream at a time, two 30-minute check-ins, two 60-minute remote work sessions and one agreed milestone each billing month. Team covers up to two workstreams, two check-ins, four remote sessions and two milestones. Both plans include one feedback and revision round per milestone, learning resources and Slack support. We agree on the work, response times and acceptance checks before payment. Neither plan includes unlimited development or production incident response.'
     },
     {
       question: 'Is this the same as managed Control?',
@@ -62,7 +62,7 @@
       <h2 id="membership-title">Choose the support your work needs.</h2>
       <p>
         Two plans for agreed improvements, with project context carried from one task to the next.
-        Choose by the number of workstreams and the time your team needs.
+        A workstream is one agreed area of work, such as meeting follow-up. It can involve several tasks or tools. Choose by the number of workstreams and the time your team needs.
       </p>
       <p><strong>Micah Johnson currently delivers the service.</strong> <a href="/about">Meet Micah →</a></p>
       <p><strong>Focused and managed Control cover different work.</strong> Focused is {PUBLIC_PRICING.membership.focused.label} for agreed improvements, learning and operator support. <a href="/control">Managed Control</a> starts at $900/month for agreed live operations after launch, under a separate agreement. Production incident response is not included in membership.</p>
