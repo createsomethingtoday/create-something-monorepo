@@ -1,4 +1,5 @@
 <script lang="ts">
+  import ResearchScene from '$lib/components/ResearchScene.svelte';
 	import type { PageData } from './$types';
 	import { PapersGrid, SEO } from '@create-something/canon';
 	import type { Paper } from '@create-something/canon/types';
@@ -126,6 +127,8 @@
 				{/if}
 			</p>
 		</div>
+
+		<ResearchScene sizes="(min-width: 1200px) 600px, (min-width: 960px) 52vw, 94vw" scene="editorial-experiments-isolated-sandbox" caption="An agent tests a mechanism inside a contained sandbox." />
 
 		<!-- Search & Filter Controls -->
 		<div class="controls-container">

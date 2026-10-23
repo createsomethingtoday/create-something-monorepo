@@ -1,4 +1,5 @@
 <script lang="ts">
+	import LibraryScene from '$lib/components/LibraryScene.svelte';
 	import { SEO } from '@create-something/canon';
 </script>
 
@@ -21,6 +22,7 @@
 			A pattern should name the constraint, the repair, or the reduction before a team adds
 			more surface area.
 		</p>
+		<LibraryScene scene="tool-fit-without-forcing" caption="Choose the pattern that fits the constraint." />
 	</div>
 </section>
 

@@ -1,0 +1,100 @@
+[
+  {
+    "n": "io",
+    "search": {
+      "x": 266,
+      "y": 10,
+      "width": 44,
+      "height": 44
+    },
+    "menu": {
+      "x": 314,
+      "y": 8,
+      "width": 44,
+      "height": 44
+    }
+  },
+  {
+    "n": "io",
+    "searchOpen": 1,
+    "inputs": [
+      {
+        "placeholder": "Search across all properties...",
+        "focused": true
+      }
+    ]
+  },
+  {
+    "n": "io",
+    "menuExpanded": "false",
+    "searchVisible": true
+  },
+  {
+    "n": "ltd",
+    "search": {
+      "x": 266,
+      "y": 10,
+      "width": 44,
+      "height": 44
+    },
+    "menu": {
+      "x": 334,
+      "y": 12.46875,
+      "width": 44,
+      "height": 44
+    }
+  },
+  {
+    "n": "ltd",
+    "searchOpen": 1,
+    "inputs": [
+      {
+        "placeholder": "Search across all properties...",
+        "focused": true
+      },
+      {
+        "placeholder": "",
+        "focused": false
+      },
+      {
+        "placeholder": "your@email.com",
+        "focused": false
+      }
+    ]
+  },
+  {
+    "n": "ltd",
+    "menuExpanded": "false",
+    "searchVisible": true
+  },
+  {
+    "n": "space",
+    "search": {
+      "x": 266,
+      "y": 10,
+      "width": 44,
+      "height": 44
+    },
+    "menu": {
+      "x": 334,
+      "y": 12.46875,
+      "width": 44,
+      "height": 44
+    }
+  },
+  {
+    "n": "space",
+    "searchOpen": 1,
+    "inputs": [
+      {
+        "placeholder": "Search workshop projects and tools...",
+        "focused": true
+      }
+    ]
+  },
+  {
+    "n": "space",
+    "menuExpanded": "false",
+    "searchVisible": true
+  }
+]

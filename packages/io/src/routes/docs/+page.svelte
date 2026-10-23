@@ -1,4 +1,5 @@
 <script lang="ts">
+  import ResearchScene from '$lib/components/ResearchScene.svelte';
 	const tools = [
 		{
 			name: 'Ground',
@@ -25,14 +26,17 @@
 	<meta name="keywords" content="MCP, Model Context Protocol, AI coding, Claude Code, Cursor, Windsurf, code analysis, agent coordination, documentation" />
 </svelte:head>
 
-<main class="docs-index">
-	<header class="hero">
+<div class="docs-index">
+	<header class="hero io-reference-opening">
+<div class="io-reference-copy">
 		<h1>Documentation</h1>
 		<p class="tagline">Tools for AI-native development</p>
 		<p class="description">
 			MCP servers and CLI tools that extend Claude Code, Cursor, Windsurf, VS Code Copilot, and other AI coding assistants.
 		</p>
-	</header>
+	</div>
+<ResearchScene sizes="(min-width: 960px) 50vw, 94vw" scene="editorial-mcp-modular-port" caption="An agent checks a modular connection before putting the tool to use." />
+</header>
 
 	<section class="tools-grid">
 		{#each tools as tool}
@@ -77,7 +81,7 @@
 			<li>Gemini</li>
 		</ul>
 	</section>
-</main>
+</div>
 
 <style>
 	.docs-index {

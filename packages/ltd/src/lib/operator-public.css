@@ -362,3 +362,84 @@ body:has(.ltd-operator-public) {
 .ltd-operator-public main section.py-16 { padding-block: 2.5rem; }
 .ltd-operator-public main section.pt-24 { padding-top: 3rem; }
 .ltd-operator-public main section.pb-16 { padding-bottom: 2.5rem; }
+
+/* The approved Agency material scenes become native, server-rendered library chapters.
+   Existing operator tokens, semantics, controls and route ownership remain in place. */
+.ltd-operator-public .ltd-operator-hero {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.12fr);
+  align-items: center;
+  gap: clamp(1.25rem, 3vw, 3rem);
+  padding-block: clamp(2rem, 5vw, 5rem);
+}
+.ltd-operator-public .ltd-operator-hero .library-scene { margin: 0; }
+.ltd-operator-public .ltd-operator-hero__proof {
+  grid-column: 1 / -1;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border-radius: 0;
+  background: transparent;
+}
+.ltd-operator-public .ltd-operator-hero__proof li + li { border-top: 0; border-left: 1px solid var(--color-operator-border); }
+.ltd-operator-public .ltd-operator-hero h1 { font-size: clamp(2.3rem, 4.1vw, 4.5rem); line-height: 1.02; letter-spacing: -.055em; }
+.ltd-operator-public .library-standard-scene { width: min(75rem, calc(100% - 3rem)); margin: 0 auto 3rem; }
+.ltd-operator-public .readiness-page__hero .library-scene,
+.ltd-operator-public .playbook-detail__hero .library-scene { max-width: 58rem; }
+@media (max-width: 63.99rem) {
+  .ltd-operator-public .ltd-operator-hero { grid-template-columns: 1fr; }
+  .ltd-operator-public .ltd-operator-hero__intro { max-width: 43rem; }
+  .ltd-operator-public .ltd-operator-hero__proof { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ltd-operator-public .ltd-operator-hero__proof li:nth-child(3) { border-left: 0; border-top: 1px solid var(--color-operator-border); }
+  .ltd-operator-public .ltd-operator-hero__proof li:nth-child(4) { border-top: 1px solid var(--color-operator-border); }
+}
+
+/* Paired openings preserve the whole material scene while bringing the working
+   artifact into view sooner. The mobile reading order remains text, scene, tool. */
+.ltd-operator-public .library-standard-opening {
+  width: min(82rem, calc(100% - 3rem));
+  margin: 0 auto;
+  padding-block: clamp(2rem, 5vw, 5rem);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.12fr);
+  gap: clamp(1.25rem, 3vw, 3rem);
+  align-items: center;
+}
+.ltd-operator-public .library-standard-opening .clear-page-section { padding: 0; border: 0; }
+.ltd-operator-public .library-standard-opening .clear-page-section__inner { width: 100%; max-width: none; }
+.ltd-operator-public .library-standard-opening .library-scene { margin: 0; }
+.ltd-operator-public main .readiness-page__intro > p:not(:first-child) {
+  max-width: 60ch;
+  margin-top: 1.25rem;
+  color: var(--color-operator-muted);
+  line-height: 1.65;
+}
+@media (min-width: 64rem) {
+  .ltd-operator-public main .readiness-page__hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.12fr);
+    column-gap: clamp(2rem, 4vw, 4rem);
+    align-items: center;
+  }
+  .ltd-operator-public main .readiness-page__hero .library-scene { margin: 0; }
+}
+@media (max-width: 63.99rem) {
+  .ltd-operator-public .library-standard-opening { grid-template-columns: 1fr; }
+}
+@media (max-width: 47.99rem) {
+  .ltd-operator-public .library-standard-opening { width: calc(100% - 2rem); }
+}
+
+.ltd-operator-public main .readiness-page__intro > p:first-child {
+  margin: 0 0 1rem;
+  font-family: var(--font-performance-mono);
+  font-size: .75rem;
+  font-weight: var(--font-performance-semibold);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+/* Public reading and assessment text stays clear of a fixed search control. */
+@media (max-width: 768px) {
+ body .ltd-header-search .mobile-search-button { top: 10px; bottom: auto; right: 80px; width: 44px; height: 44px; z-index: 51; background: var(--color-operator-secondary); color: var(--color-operator-foreground); border-radius: var(--radius-operator-panel); box-shadow: none; }
+}
+
+body .ltd-header-search .palette-overlay { z-index: 60; }
+body .ltd-header-search .palette { z-index: 61; }

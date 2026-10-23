@@ -1,4 +1,5 @@
 <script lang="ts">
+  import WorkshopScene from '$lib/workshop/WorkshopScene.svelte';
   import { SEO } from '@create-something/canon';
   import '$lib/workshop/workshop.css';
 </script>
@@ -7,12 +8,15 @@
   title="About the Workshop | CREATE SOMETHING .space"
   description="Why CREATE SOMETHING shares tools, workflows, skills, and reusable code."
   propertyName="space"
-  ogImage="/images/workshop/open-workshop.webp"
+  ogImage="/images/workshop/stories/about-careful-working-notes.webp"
 />
 <article class="workshop">
-  <header class="wrap section">
-    <p class="eyebrow">About the workshop</p>
-    <h1>Made through use.<br />Shared for reuse.</h1>
+  <header class="wrap section story-opening">
+    <div>
+      <p class="eyebrow">About the workshop</p>
+      <h1>Made through use.<br />Shared for reuse.</h1>
+    </div>
+    <WorkshopScene scene="notes" eager />
   </header>
   <section class="wrap body">
     <p class="lead">
