@@ -84,12 +84,14 @@ export class ProviderSimulator {
       for (const property of Object.values(page.properties)) {
         if (property.title) property.title = property.title.map(item => ({ ...item, plain_text: item.text.content }));
       }
-      this.pages.set(id, page); this.blocks.set(id, []); return Respond.json(page);
+      this.pages.set(id, page); this.blocks.set(id, []);
+      await this.onPageCreate?.(page);
+      return Respond.json(page);
     }
     const pageMatch = url.pathname.match(/^\/v1\/pages\/([^/]+)$/);
     if (pageMatch) {
       const page = this.pages.get(pageMatch[1]); assert.ok(page, 'synthetic page exists');
-      if (method === 'PATCH') { this.mutations++; page.properties = body.properties;
+      if (method === 'PATCH') { await this.onPagePatch?.(page, body.properties); this.mutations++; Object.assign(page.properties, body.properties);
         for (const property of Object.values(page.properties)) if (property.title) property.title.forEach(item => { item.plain_text = item.text.content; }); }
       return Respond.json(page);
     }
@@ -124,7 +126,7 @@ export class ProviderSimulator {
   };
 }
 
-export async function startRuntime(simulator = new ProviderSimulator()) {
+export async function startRuntime(simulator = new ProviderSimulator(), bindings = {}) {
   const bundle = await build({ entryPoints: [`${packageRoot}/src/index.ts`], bundle: true, write: false, format: 'esm', target: 'es2022' });
   // Synthetic relative cutoff only. This is not a proposed production configuration.
   const cutoff = new Date(Date.now() - 60 * 60_000).toISOString();
@@ -134,7 +136,7 @@ export async function startRuntime(simulator = new ProviderSimulator()) {
       compatibilityDate, compatibilityFlags: ['nodejs_compat'], d1Databases: { DB: 'synthetic-only-database' },
       queueProducers: { SYNC_QUEUE: 'synthetic-sync' }, outboundService: simulator.handle,
       bindings: { INDEXED_INGESTION_NOT_BEFORE: cutoff, SYNC_API_KEY: 'synthetic-key', ZOOM_ACCESS_TOKEN: 'synthetic-key',
-        NOTION_API_KEY: 'synthetic-key', NOTION_DATABASE_ID: 'synthetic-database' } },
+        NOTION_API_KEY: 'synthetic-key', NOTION_DATABASE_ID: 'synthetic-database', ...bindings } },
     { name: 'queue-capture', modules: true, compatibilityDate, outboundService: simulator.handle,
       queueConsumers: { 'synthetic-sync': { maxBatchSize: 1, maxBatchTimeout: 0 } },
       script: `export default { async queue(batch) { await fetch('https://simulator.invalid/queue', {method:'POST',body:JSON.stringify(batch.messages.map(m => m.body))}); }, fetch(){return new Response('Synthetic queue capture')} }` },

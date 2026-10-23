@@ -38,6 +38,7 @@ async function fingerprint(block: Block): Promise<string> { return hashText(JSON
 export async function writeInlineTranscript(
   db: D1Database, transport: InlineTransport, journal: WriteJournal, page: string,
   parsed: ParsedTranscript, plan: TranscriptPlan, budget = { changes: 0, appendedBatches: 0 },
+  beforeWrite?: (version: string, generation: number, writing: boolean) => Promise<void>,
 ): Promise<string> {
   const desired = inlineBlocks(parsed);
   if (!desired.length || desired.length > 20000) throw new Error('Inline block budget exceeded or empty transcript');
@@ -74,7 +75,7 @@ export async function writeInlineTranscript(
     if (priorPlan.version !== state.version) throw new Error('Prior inline write is unresolved; source archive incomplete');
     // Reconcile the persisted prior intent without downloading or publishing it
     // as current. An absent uncertain mutation still blocks the new version.
-    await writeInlineTranscript(db, transport, journal, page, priorParsed, priorPlan, budget);
+    await writeInlineTranscript(db, transport, journal, page, priorParsed, priorPlan, budget, beforeWrite);
     state = (await load())!;
   }
   if (state.version !== plan.version) {
@@ -84,6 +85,7 @@ export async function writeInlineTranscript(
     state = (await load())!;
   }
   const generation = state.generation;
+  await beforeWrite?.(state.version, generation, state.phase === 'writing');
   const save = async () => {
     await journal.assertOwner();
     const changed = await fencedRun('UPDATE transcript_inline_projection SET manifest = ? WHERE page_id = ? AND version = ? AND generation = ?', [JSON.stringify(state!.manifest), page, plan.version, generation]);

@@ -1,6 +1,6 @@
 # Half Dozen Zoom Transcript Sync
 
-Scheduled Cloudflare Worker that discovers Zoom meeting transcript files, tracks them in a D1 ledger, and writes a verified transcript index into the Half Dozen `Internal LLM` Notion database.
+An hourly Cloudflare Worker writes complete Zoom transcripts into the Half Dozen `Internal LLM` Notion database. A D1 ledger tracks discovery, retries and verified versions.
 
 ## Why this exists
 
@@ -16,7 +16,7 @@ This package uses:
 
 ## Forward-only release gate
 
-The proposed release requires an approved UTC `INDEXED_INGESTION_NOT_BEFORE` value. No production cutoff is configured. Both the recording start and original ledger first-seen time must meet that cutoff. Legacy queue envelopes and pre-cutoff Notion pages are excluded. See [cutoff semantics and approval status](./ROLLOUT.md). The revised rollout must not be merged or deployed before cutoff approval.
+Production uses the approved UTC `INDEXED_INGESTION_NOT_BEFORE` cutoff `2026-10-23T17:16:35.564Z`. Both the recording start and original ledger first-seen time must meet that cutoff. Legacy queue envelopes and pre-cutoff Notion pages are excluded. See [cutoff semantics and approval status](./ROLLOUT.md). The readiness extension does not change this cutoff or authorize historical replay.
 
 ## Runtime modes
 
@@ -25,7 +25,7 @@ Notion writes support two transport modes:
 - `api` — direct Notion API via `NOTION_API_KEY`
 - `hub` — legacy configuration only; the inline writer rejects it before page creation. Production uses the direct Notion API. The retired Hub is not a release dependency.
 
-`hub` is the practical default for current Half Dozen operator-managed access. `NOTION_RUNTIME_CONNECTION_REF` can be carried as an approved runtime handle for rollout governance, but this package does not yet resolve raw `ntn_...` refs directly.
+Production ingestion uses `api`. The retired Hub must not be restored as part of this workflow.
 
 ## Zoom scopes
 
@@ -60,6 +60,8 @@ The sync follows the live `Internal LLM [HD]` schema:
 The worker presents one inline `📝 FULL TRANSCRIPT` section with timestamp headings and paragraphs. A single `Source archive` toggle at the bottom contains immutable originals, canonical parts and their verification index. Long transcripts use bounded batches and paginated readback. Corrections reuse owned blocks and retain prior source versions. An updating heading warns readers while a projection is incomplete.
 
 The additive `transcript_inline_projection` D1 table tracks owned IDs and pending writes. Unknown writes without a verified receipt fail closed. Normal deliveries do not convert existing untracked pages. Archived-page replacement requires explicit replay. See [PRESENTATION_REMEDY.md](PRESENTATION_REMEDY.md) for the repair boundary and provider acceptance plan.
+
+The optional [readiness and retrieval gate](READINESS_GATE.md) adds generation-aware publication tokens for managed pages. Production activation requires isolated native-agent acceptance. It preserves the inline reading experience and existing human-review flags.
 
 ## Select one rendition
 

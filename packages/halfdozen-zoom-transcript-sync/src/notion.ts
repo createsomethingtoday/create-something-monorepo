@@ -1,6 +1,7 @@
 import { atOrAfter, rolloutCutoff } from './rollout';
 import { writeInlineTranscript } from './inline-transcript';
 import { type TranscriptPlan, type WriteJournal } from './indexed-transcript';
+import { Gate, GATE_FIELDS, gateCreationProperties, gateToken, propertyText } from './readiness-gate';
 import type { Env, NotionPageSummary, NotionWriteResult, ParsedTranscript, TranscriptCandidate } from './types';
 
 const NOTION_API_BASE = 'https://api.notion.com/v1';
@@ -74,13 +75,17 @@ export async function syncTranscriptToNotion(
       .bind(existing.id).first();
     if (!owned) throw new Error('Existing untracked page requires explicit replay');
   }
-  const properties = buildPageProperties(env, candidate, parsedTranscript);
+  const gated = env.NOTION_TRANSCRIPT_GATE_ENABLED === 'true';
+  const properties = { ...buildPageProperties(env, candidate, parsedTranscript), ...(gated ? gateCreationProperties(plan.version) : {}) };
   await journal.assertOwner();
   let pageId: string;
   let pageUrl: string;
+  let managed = gated && !existing;
   if (existing) {
     pageId = existing.id;
     pageUrl = existing.url;
+    managed = !!propertyText((await notion.getPage(pageId)).properties[GATE_FIELDS.current])
+      || !!await env.DB.prepare('SELECT page_id FROM transcript_gate_intent WHERE page_id = ?').bind(pageId).first();
     // Existing lifecycle properties belong to operators and downstream workflows.
     // Source corrections update only projection-owned text and preserve originals.
   } else {
@@ -102,14 +107,44 @@ export async function syncTranscriptToNotion(
     pageId = page.id;
     pageUrl = page.url ?? notionUrl(page.id);
   }
+  const gate = managed ? new Gate(env.DB, notion, journal, pageId) : null;
+  // Resolve any uncertain property write before a newer projection can advance.
+  await gate?.reconcile();
   const indexBlockId = await writeInlineTranscript(env.DB, {
     list: (id) => listAllBlocks(notion, id),
     append: (id, blocks, after) => notion.appendBlocks(id, blocks, after),
     get: id => notion.getBlock(id),
     update: (id, block) => notion.updateBlock(id, block),
     archive: id => notion.archiveBlock(id),
-  }, journal, pageId, parsedTranscript, plan);
-  return { pageId, pageUrl, action: existing ? 'updated' : 'created', indexBlockId };
+  }, journal, pageId, parsedTranscript, plan, undefined, gate
+    ? (version, generation, writing) => gate.prepare(gateToken(version, generation), writing) : undefined);
+  const projection = gate ? await env.DB.prepare('SELECT generation FROM transcript_inline_projection WHERE page_id = ? AND version = ? AND phase = ?')
+    .bind(pageId, plan.version, 'complete').first<{ generation: number }>() : null;
+  if (gate && !projection) throw Error('Missing complete readiness projection');
+  return { pageId, pageUrl, action: existing ? 'updated' : 'created', indexBlockId,
+    ...(projection ? { gateVersion: gateToken(plan.version, projection.generation) } : {}) };
+}
+
+export async function invalidateNotionReadiness(env: Env, pageId: string, journal: WriteJournal): Promise<void> {
+  if (env.NOTION_TRANSCRIPT_GATE_ENABLED !== 'true'
+    && !await env.DB.prepare('SELECT page_id FROM transcript_gate_intent WHERE page_id = ?').bind(pageId).first()) return;
+  await new Gate(env.DB, createNotionTransport(env), journal, pageId).invalidate();
+}
+
+export async function publishNotionReadiness(env: Env, write: NotionWriteResult, journal: WriteJournal): Promise<void> {
+  if (!write.gateVersion || !write.indexBlockId) return;
+  const fence = journal.projectionFence?.();
+  if (!fence) throw Error('Readiness publication requires an ingestion fence');
+  const assertReady = async () => {
+    await journal.assertOwner();
+    const row = await env.DB.prepare(`SELECT p.version, p.generation FROM transcript_inline_projection p
+      JOIN transcript_ingestion i ON i.page_id = p.page_id
+      WHERE p.page_id = ? AND p.phase = 'complete' AND i.meeting_key = ? AND i.selected_key = ?
+      AND i.owner = ? AND i.version = p.version AND i.ready_version = p.version AND i.index_block_id = ?`)
+      .bind(write.pageId, fence.key, fence.selected, fence.owner, write.indexBlockId).first<{ version: string; generation: number }>();
+    if (!row || gateToken(row.version, row.generation) !== write.gateVersion) throw Error('Readiness publication fence changed');
+  };
+  await new Gate(env.DB, createNotionTransport(env), journal, write.pageId).publish(write.gateVersion, write.indexBlockId, assertReady);
 }
 
 async function listAllBlocks(notion: NotionTransport, parent: string): Promise<BlockObject[]> {
