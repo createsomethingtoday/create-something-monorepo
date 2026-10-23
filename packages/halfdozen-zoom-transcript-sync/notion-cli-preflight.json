@@ -1,0 +1,35 @@
+{
+  "host": "Micah-W4FJPH",
+  "cli": {
+    "path": "/opt/homebrew/bin/ntn",
+    "version": "0.23.20"
+  },
+  "identity": {
+    "integrationName": "Notion CLI",
+    "integrationId": "40101918-7ac5-81a6-ab6e-002753349d7e",
+    "owner": "MJ",
+    "ownerEmail": "micah@createsomething.io",
+    "workspaceName": "Half Dozen",
+    "workspaceId": "a20b7e9b-3cbe-401e-8c63-0417697a9666",
+    "identityRequestId": "ea44829c-e860-4934-8fcd-15bed6c2e9c2"
+  },
+  "parentRead": {
+    "databaseId": "8f646f93-fdc8-4b43-8ad8-93125c38f8e0",
+    "title": "Goldin Coordination \u2014 SYNTHETIC TESTS ONLY",
+    "apiVersion": "2022-06-28",
+    "succeeded": true,
+    "requestId": "a27ae0f0-e4c5-477e-8d44-7eddc4a7f813"
+  },
+  "noChanges": {
+    "login": true,
+    "credentials": true,
+    "connections": true,
+    "pages": true,
+    "deployment": true
+  },
+  "limits": [
+    "Raw API read verified; write acceptance not exercised",
+    "Does not repair Composio COMPOSIO_API_KEY",
+    "CLI adapter would validate core indexed engine over direct Notion access, not deployed Worker/Hub transport"
+  ]
+}

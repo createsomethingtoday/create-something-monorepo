@@ -1,0 +1,816 @@
+{
+  "runId": "zoom-synthetic-58b5bd80-0f6b-4822-99e9-1ad86afa7fee",
+  "databaseId": "8f646f93-fdc8-4b43-8ad8-93125c38f8e0",
+  "workspaceId": "a20b7e9b-3cbe-401e-8c63-0417697a9666",
+  "startedAt": "2026-10-23T16:54:11.635Z",
+  "status": "passed",
+  "pageId": "40201918-7ac5-818b-a035-fcb4d41bbc0d",
+  "pageUrl": "https://app.notion.com/p/SYNTHETIC-Zoom-indexed-transcript-acceptance-zoom-synthetic-58b5bd80-0f6b-4822-99e9-1ad86afa7fee-402019187ac5818ba035fcb4d41bbc0d",
+  "requestReceipts": [
+    {
+      "method": "GET",
+      "path": "v1/databases/8f646f93-fdc8-4b43-8ad8-93125c38f8e0",
+      "requestId": "76a6912a-664e-4637-940d-14a28cb37bf0",
+      "at": "2026-10-23T16:54:12.049Z"
+    },
+    {
+      "method": "POST",
+      "path": "v1/pages",
+      "requestId": "6c01a01d-b02d-4158-941b-84b4491c5b07",
+      "at": "2026-10-23T16:54:12.589Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-818b-a035-fcb4d41bbc0d/children?page_size=100",
+      "requestId": "41c9e30c-7229-402b-9923-92ecdb20887f",
+      "at": "2026-10-23T16:54:13.519Z"
+    },
+    {
+      "method": "PATCH",
+      "path": "v1/blocks/40201918-7ac5-818b-a035-fcb4d41bbc0d/children",
+      "requestId": "707884bb-f9f6-471f-aa1e-238bf8b3c3f8",
+      "at": "2026-10-23T16:54:16.880Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-818b-a035-fcb4d41bbc0d/children?page_size=100",
+      "requestId": "bb2357e9-3185-4610-af56-70563ec7af20",
+      "at": "2026-10-23T16:54:17.413Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-81c6-8d29-c4655cd09fc5/children?page_size=100",
+      "requestId": "ff5bc176-c346-4ef9-b332-c7a50124aedb",
+      "at": "2026-10-23T16:54:17.760Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/databases/8f646f93-fdc8-4b43-8ad8-93125c38f8e0",
+      "requestId": "eb5c3d3d-8038-425e-9386-5c4b5b6f92c2",
+      "at": "2026-10-23T16:59:58.721Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-818b-a035-fcb4d41bbc0d/children?page_size=100",
+      "requestId": "c2a7ce62-bcc7-44d0-88f3-7317efe4be3b",
+      "at": "2026-10-23T16:59:59.547Z"
+    },
+    {
+      "method": "PATCH",
+      "path": "v1/blocks/40201918-7ac5-818b-a035-fcb4d41bbc0d/children",
+      "requestId": "7392aa62-2629-4b35-a3ff-eb44a3f42c2b",
+      "at": "2026-10-23T17:00:00.126Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-818b-a035-fcb4d41bbc0d/children?page_size=100",
+      "requestId": "0f2dde75-8ae0-4893-a29f-6196aef35679",
+      "at": "2026-10-23T17:00:00.600Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-81c3-bd5f-f1fa85e59237/children?page_size=100",
+      "requestId": "ae6d6398-f000-41a8-8d95-f0576eb57b1e",
+      "at": "2026-10-23T17:00:00.972Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-818b-a035-fcb4d41bbc0d/children?page_size=100",
+      "requestId": "31c657b7-364f-49e7-a7e4-3e5bbb7f1aee",
+      "at": "2026-10-23T17:00:01.353Z"
+    },
+    {
+      "method": "PATCH",
+      "path": "v1/blocks/40201918-7ac5-818b-a035-fcb4d41bbc0d/children",
+      "requestId": "54da9949-bd71-4a25-87ca-89e47273fc9e",
+      "at": "2026-10-23T17:00:01.997Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-818b-a035-fcb4d41bbc0d/children?page_size=100",
+      "requestId": "0d086144-a2d4-4a2a-b32a-92fe328df243",
+      "at": "2026-10-23T17:00:02.735Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-811a-b744-d10dbfcd1e8d/children?page_size=100",
+      "requestId": "38cb51cb-4c79-43ea-9e63-c2d07fc8fed7",
+      "at": "2026-10-23T17:00:03.125Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-818b-a035-fcb4d41bbc0d/children?page_size=100",
+      "requestId": "6c998993-d77a-45d3-a3f4-a9f85c4aee19",
+      "at": "2026-10-23T17:00:03.481Z"
+    },
+    {
+      "method": "PATCH",
+      "path": "v1/blocks/40201918-7ac5-818b-a035-fcb4d41bbc0d/children",
+      "requestId": "a7a4a155-92d4-480c-b10c-97de616c8fed",
+      "at": "2026-10-23T17:00:04.276Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-818b-a035-fcb4d41bbc0d/children?page_size=100",
+      "requestId": "fbdc9286-902f-4487-ac0a-e0c60bdad7e9",
+      "at": "2026-10-23T17:00:04.666Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-81b5-9c3e-c1ac7489421f/children?page_size=100",
+      "requestId": "71ae635b-b38e-4d82-9b4d-5542934a7f6c",
+      "at": "2026-10-23T17:00:05.111Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-818b-a035-fcb4d41bbc0d/children?page_size=100",
+      "requestId": "879c1388-7af4-41cd-8770-0b5f2e5ccb91",
+      "at": "2026-10-23T17:00:05.553Z"
+    },
+    {
+      "method": "PATCH",
+      "path": "v1/blocks/40201918-7ac5-818b-a035-fcb4d41bbc0d/children",
+      "requestId": "babc94ed-6c4e-47e6-9e22-bec36bac6aff",
+      "at": "2026-10-23T17:00:07.986Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-818b-a035-fcb4d41bbc0d/children?page_size=100",
+      "requestId": "bb616644-8c39-41c8-a84b-028c3da30f17",
+      "at": "2026-10-23T17:00:10.748Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-81be-b691-dd516bd21c44/children?page_size=100",
+      "requestId": "a3abbc87-5b89-44c4-83fd-9bb69929951f",
+      "at": "2026-10-23T17:00:11.226Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-818b-a035-fcb4d41bbc0d/children?page_size=100",
+      "requestId": "a617afd2-f612-4d38-b046-d0307cf3078a",
+      "at": "2026-10-23T17:00:11.618Z"
+    },
+    {
+      "method": "PATCH",
+      "path": "v1/blocks/40201918-7ac5-818b-a035-fcb4d41bbc0d/children",
+      "requestId": "d6c6c665-9f7b-41d3-bb80-7e00efb5818d",
+      "at": "2026-10-23T17:00:12.322Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-818b-a035-fcb4d41bbc0d/children?page_size=100",
+      "requestId": "d56d3044-a7c6-41d1-90fa-883b56c71d62",
+      "at": "2026-10-23T17:00:12.655Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-8124-a4e6-cfefa7ceccb9/children?page_size=100",
+      "requestId": "da48d88c-b15d-4c1b-94fc-3b4707ab6193",
+      "at": "2026-10-23T17:00:13.090Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-81c3-bd5f-f1fa85e59237/children?page_size=100",
+      "requestId": "79dfbc1c-818b-42b8-bddd-fa64d7eb4c2f",
+      "at": "2026-10-23T17:00:13.610Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-811a-b744-d10dbfcd1e8d/children?page_size=100",
+      "requestId": "8ab70c83-64ed-4474-b0c9-468657f6d2ae",
+      "at": "2026-10-23T17:00:13.975Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-81b5-9c3e-c1ac7489421f/children?page_size=100",
+      "requestId": "21321223-5439-4c4b-8bec-476bd029d61d",
+      "at": "2026-10-23T17:00:14.412Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-81be-b691-dd516bd21c44/children?page_size=100",
+      "requestId": "306f44ca-453c-4820-b4be-7cbc5b0881d9",
+      "at": "2026-10-23T17:00:14.766Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-8124-a4e6-cfefa7ceccb9/children?page_size=100",
+      "requestId": "0b922ec7-7099-4e7e-89dc-8c4d6f16f466",
+      "at": "2026-10-23T17:00:15.144Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-818b-a035-fcb4d41bbc0d/children?page_size=100",
+      "requestId": "fb1e6103-12e7-4502-8ad8-36b10c979085",
+      "at": "2026-10-23T17:00:15.574Z"
+    },
+    {
+      "method": "PATCH",
+      "path": "v1/blocks/40201918-7ac5-818b-a035-fcb4d41bbc0d/children",
+      "requestId": "f6451b39-2b9a-4079-9b08-cfa37246146a",
+      "at": "2026-10-23T17:00:17.621Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-818b-a035-fcb4d41bbc0d/children?page_size=100",
+      "requestId": "0f053828-3299-4797-9b90-66872023cef9",
+      "at": "2026-10-23T17:00:17.999Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-8102-87f7-d66b601ce7b6/children?page_size=100",
+      "requestId": "6d7fc359-a107-4ee8-b85c-f53fee1fbaa8",
+      "at": "2026-10-23T17:00:18.427Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-818b-a035-fcb4d41bbc0d/children?page_size=100",
+      "requestId": "fc8c2724-40d7-4d60-bfb7-4178c3842ab0",
+      "at": "2026-10-23T17:00:18.794Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-81c3-bd5f-f1fa85e59237/children?page_size=100",
+      "requestId": "3bf78c0c-3774-4850-a620-6fa7b5b2bd98",
+      "at": "2026-10-23T17:00:19.203Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-811a-b744-d10dbfcd1e8d/children?page_size=100",
+      "requestId": "26c725eb-4f22-47c4-a8d6-bc25228a3375",
+      "at": "2026-10-23T17:00:19.652Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-81b5-9c3e-c1ac7489421f/children?page_size=100",
+      "requestId": "b84b4317-4a2c-406d-93fa-37712372e720",
+      "at": "2026-10-23T17:00:20.027Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-81be-b691-dd516bd21c44/children?page_size=100",
+      "requestId": "e30da2d5-18eb-4bb0-8cec-08112252b9f9",
+      "at": "2026-10-23T17:00:20.371Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-8124-a4e6-cfefa7ceccb9/children?page_size=100",
+      "requestId": "97dd7e64-569e-456d-aeef-9b53b43ede25",
+      "at": "2026-10-23T17:00:20.801Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-8102-87f7-d66b601ce7b6/children?page_size=100",
+      "requestId": "c3027dd4-2ff0-47c7-9ca1-e8c9bc6f439e",
+      "at": "2026-10-23T17:00:21.234Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-818b-a035-fcb4d41bbc0d/children?page_size=100",
+      "requestId": "4aa6cbe5-74f0-4416-8d0a-fbe366f705d0",
+      "at": "2026-10-23T17:00:21.658Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-81c3-bd5f-f1fa85e59237/children?page_size=100",
+      "requestId": "87b46258-4e07-4a3d-9e45-ed5a07a0821e",
+      "at": "2026-10-23T17:00:22.093Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-818b-a035-fcb4d41bbc0d/children?page_size=100",
+      "requestId": "5f6d8553-b7d7-4a12-864f-463202ec4b4f",
+      "at": "2026-10-23T17:00:22.453Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-811a-b744-d10dbfcd1e8d/children?page_size=100",
+      "requestId": "9b3d6bde-8f4f-4cca-a341-b433b2161eb0",
+      "at": "2026-10-23T17:00:22.863Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-818b-a035-fcb4d41bbc0d/children?page_size=100",
+      "requestId": "60fc2c58-3ebf-4e7c-bb1e-e22f9c8c7d49",
+      "at": "2026-10-23T17:00:23.320Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-81b5-9c3e-c1ac7489421f/children?page_size=100",
+      "requestId": "7629ea7c-89d9-4aed-a723-603320bcb069",
+      "at": "2026-10-23T17:00:23.663Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-818b-a035-fcb4d41bbc0d/children?page_size=100",
+      "requestId": "ec803f6e-1eae-44a9-ba74-e2d86d787c69",
+      "at": "2026-10-23T17:00:24.025Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-81be-b691-dd516bd21c44/children?page_size=100",
+      "requestId": "fed3850f-6167-4cbe-a475-c8b40d9701a2",
+      "at": "2026-10-23T17:00:24.454Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-818b-a035-fcb4d41bbc0d/children?page_size=100",
+      "requestId": "6207f762-11e8-42f6-9d06-b0bf5d10da30",
+      "at": "2026-10-23T17:00:24.913Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-8124-a4e6-cfefa7ceccb9/children?page_size=100",
+      "requestId": "24992a06-0d24-4536-9f91-0366e9c47eab",
+      "at": "2026-10-23T17:00:25.263Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-81c3-bd5f-f1fa85e59237/children?page_size=100",
+      "requestId": "e8f2197e-58bd-4113-8fca-6356dbfe1627",
+      "at": "2026-10-23T17:00:25.676Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-811a-b744-d10dbfcd1e8d/children?page_size=100",
+      "requestId": "ab09f369-e880-4916-8602-e4b0dd067287",
+      "at": "2026-10-23T17:00:26.068Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-81b5-9c3e-c1ac7489421f/children?page_size=100",
+      "requestId": "1a331ea6-6cad-4ee8-9b0a-f965ddc5d8c0",
+      "at": "2026-10-23T17:00:26.519Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-81be-b691-dd516bd21c44/children?page_size=100",
+      "requestId": "cf02892e-3374-493d-a102-5831f65b6e0d",
+      "at": "2026-10-23T17:00:26.851Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-8124-a4e6-cfefa7ceccb9/children?page_size=100",
+      "requestId": "4848021d-a3b3-479d-b995-16b0ac0219cd",
+      "at": "2026-10-23T17:00:27.337Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-818b-a035-fcb4d41bbc0d/children?page_size=100",
+      "requestId": "d235c6f5-70b1-4c2d-a978-e5bf69cbb042",
+      "at": "2026-10-23T17:00:27.708Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-8102-87f7-d66b601ce7b6/children?page_size=100",
+      "requestId": "7035659c-2297-404c-ae04-8570232bcefe",
+      "at": "2026-10-23T17:00:28.069Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-818b-a035-fcb4d41bbc0d/children?page_size=100",
+      "requestId": "7e9cdc6d-52a6-4131-b5c5-a790e6f158c1",
+      "at": "2026-10-23T17:00:29.002Z"
+    },
+    {
+      "method": "PATCH",
+      "path": "v1/blocks/40201918-7ac5-818b-a035-fcb4d41bbc0d/children",
+      "requestId": "b80bc818-c4d0-4dee-8e68-cf1b37b449d8",
+      "at": "2026-10-23T17:00:29.551Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-818b-a035-fcb4d41bbc0d/children?page_size=100",
+      "requestId": "38e8b6a5-0677-41de-aa35-8135a082adb5",
+      "at": "2026-10-23T17:00:29.874Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-819a-980e-ec6725f9cf29/children?page_size=100",
+      "requestId": "48d6c0df-d260-4222-94f5-304edeed8fa4",
+      "at": "2026-10-23T17:00:30.286Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-818b-a035-fcb4d41bbc0d/children?page_size=100",
+      "requestId": "7bf18f05-c9d3-410b-ab79-8588951007bf",
+      "at": "2026-10-23T17:00:30.711Z"
+    },
+    {
+      "method": "PATCH",
+      "path": "v1/blocks/40201918-7ac5-818b-a035-fcb4d41bbc0d/children",
+      "requestId": "59aaaf06-6a69-44d2-8bb5-4f3977897ebf",
+      "at": "2026-10-23T17:00:31.294Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-818b-a035-fcb4d41bbc0d/children?page_size=100",
+      "requestId": "32c06cdd-be82-44e7-ab73-22e2242e05f7",
+      "at": "2026-10-23T17:00:31.707Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-81a5-96c7-c8d255d90c26/children?page_size=100",
+      "requestId": "858616ca-0bce-4624-8194-1faa52000f94",
+      "at": "2026-10-23T17:00:32.070Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-818b-a035-fcb4d41bbc0d/children?page_size=100",
+      "requestId": "1d7f95ba-318a-42af-97e1-d522279544aa",
+      "at": "2026-10-23T17:00:32.439Z"
+    },
+    {
+      "method": "PATCH",
+      "path": "v1/blocks/40201918-7ac5-818b-a035-fcb4d41bbc0d/children",
+      "requestId": "60e32cc1-d20c-4e78-b469-1d3dc974dc0c",
+      "at": "2026-10-23T17:00:35.730Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-818b-a035-fcb4d41bbc0d/children?page_size=100",
+      "requestId": "661fa52c-5809-4838-9224-eecaf4eaf1d9",
+      "at": "2026-10-23T17:00:36.087Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-819b-a9c5-feaffbacf301/children?page_size=100",
+      "requestId": "359955e1-e55a-4140-84f1-5217383bc363",
+      "at": "2026-10-23T17:00:36.472Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-818b-a035-fcb4d41bbc0d/children?page_size=100",
+      "requestId": "653d598a-302f-4873-a017-42c4704cf9c8",
+      "at": "2026-10-23T17:00:36.950Z"
+    },
+    {
+      "method": "PATCH",
+      "path": "v1/blocks/40201918-7ac5-818b-a035-fcb4d41bbc0d/children",
+      "requestId": "05fd5408-9f34-4a53-b526-3517d7e838c5",
+      "at": "2026-10-23T17:00:37.506Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-818b-a035-fcb4d41bbc0d/children?page_size=100",
+      "requestId": "c3aea169-bb26-42f8-aee0-c36ae108751e",
+      "at": "2026-10-23T17:00:37.986Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-8187-a990-e464e98c376f/children?page_size=100",
+      "requestId": "b08dc011-ac40-4fe0-a1a9-8783f0108319",
+      "at": "2026-10-23T17:00:38.347Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-818b-a035-fcb4d41bbc0d/children?page_size=100",
+      "requestId": "39f9f821-6a2f-4ceb-b0c7-67967fdc5399",
+      "at": "2026-10-23T17:00:38.704Z"
+    },
+    {
+      "method": "PATCH",
+      "path": "v1/blocks/40201918-7ac5-818b-a035-fcb4d41bbc0d/children",
+      "requestId": "06b0c175-d9b7-48ab-9de7-60a310a0fa0d",
+      "at": "2026-10-23T17:00:39.393Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-818b-a035-fcb4d41bbc0d/children?page_size=100",
+      "requestId": "30986938-a26f-4b1c-bc1f-940b21c50cd2",
+      "at": "2026-10-23T17:00:39.738Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-8110-90c7-cc4333a1c64e/children?page_size=100",
+      "requestId": "212a1ed3-ccf0-4de9-a43c-93d066f52556",
+      "at": "2026-10-23T17:00:40.128Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-819a-980e-ec6725f9cf29/children?page_size=100",
+      "requestId": "726ff63f-a030-4fd9-89ae-ebbe7559623b",
+      "at": "2026-10-23T17:00:40.598Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-81a5-96c7-c8d255d90c26/children?page_size=100",
+      "requestId": "52080322-8f99-4b36-8c81-bc8f849b6c9f",
+      "at": "2026-10-23T17:00:40.967Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-819b-a9c5-feaffbacf301/children?page_size=100",
+      "requestId": "c5eeb48a-7771-4714-9f4a-39601dbdf5ce",
+      "at": "2026-10-23T17:00:41.332Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-8187-a990-e464e98c376f/children?page_size=100",
+      "requestId": "0ac83351-5840-415b-9c09-17ec8226d0ca",
+      "at": "2026-10-23T17:00:41.732Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-8110-90c7-cc4333a1c64e/children?page_size=100",
+      "requestId": "48b4176e-ee03-441f-8aa8-c6ec2e1b5fa3",
+      "at": "2026-10-23T17:00:42.177Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-818b-a035-fcb4d41bbc0d/children?page_size=100",
+      "requestId": "ef25b0f2-09ee-494c-89a9-ad63fbef78a0",
+      "at": "2026-10-23T17:00:42.559Z"
+    },
+    {
+      "method": "PATCH",
+      "path": "v1/blocks/40201918-7ac5-818b-a035-fcb4d41bbc0d/children",
+      "requestId": "52986cf1-701f-4acf-aa53-b4b74a92e26b",
+      "at": "2026-10-23T17:00:43.165Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-818b-a035-fcb4d41bbc0d/children?page_size=100",
+      "requestId": "d3e52144-62dd-4eb9-9970-0472d8c34568",
+      "at": "2026-10-23T17:00:43.510Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-8178-9e5a-c09f883f6918/children?page_size=100",
+      "requestId": "0aeedd79-7776-46b4-9773-6bc13327394a",
+      "at": "2026-10-23T17:00:43.912Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-818b-a035-fcb4d41bbc0d/children?page_size=100",
+      "requestId": "fe7bff1f-35ed-4336-ba06-812f85e1df00",
+      "at": "2026-10-23T17:00:44.331Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-819a-980e-ec6725f9cf29/children?page_size=100",
+      "requestId": "204cb467-0457-46f4-b58c-3521a237924a",
+      "at": "2026-10-23T17:00:44.722Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-81a5-96c7-c8d255d90c26/children?page_size=100",
+      "requestId": "78161703-5ae2-40fa-b106-6b20b6cca4dc",
+      "at": "2026-10-23T17:00:45.163Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-819b-a9c5-feaffbacf301/children?page_size=100",
+      "requestId": "ce24c40b-8d32-465d-b2c4-694c25b52b29",
+      "at": "2026-10-23T17:00:45.495Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-8187-a990-e464e98c376f/children?page_size=100",
+      "requestId": "a764ae6a-8f5d-44ec-96ad-77fc8b7d3f93",
+      "at": "2026-10-23T17:00:45.905Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-8110-90c7-cc4333a1c64e/children?page_size=100",
+      "requestId": "a24c332b-1947-4223-afa0-8124763e70b4",
+      "at": "2026-10-23T17:00:46.593Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-8178-9e5a-c09f883f6918/children?page_size=100",
+      "requestId": "0d14e7b0-9e0c-47e6-9bbd-2c285bb1db69",
+      "at": "2026-10-23T17:00:47.067Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-818b-a035-fcb4d41bbc0d/children?page_size=100",
+      "requestId": "123c287f-46ba-4452-bff0-5e93068c9df9",
+      "at": "2026-10-23T17:00:47.475Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-81c6-8d29-c4655cd09fc5/children?page_size=100",
+      "requestId": "bbee26dc-dc88-41a4-90d5-618bd3743796",
+      "at": "2026-10-23T17:00:47.800Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-81c3-bd5f-f1fa85e59237/children?page_size=100",
+      "requestId": "2ef5e48e-8c11-4166-9570-672e5b71cd08",
+      "at": "2026-10-23T17:00:48.224Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-811a-b744-d10dbfcd1e8d/children?page_size=100",
+      "requestId": "e1507d24-31bc-4c10-a763-06577bdbc1ee",
+      "at": "2026-10-23T17:00:48.610Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-81b5-9c3e-c1ac7489421f/children?page_size=100",
+      "requestId": "de41a521-a53b-4e9f-ac8d-8f06a07bb60b",
+      "at": "2026-10-23T17:00:49.024Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-81be-b691-dd516bd21c44/children?page_size=100",
+      "requestId": "40b32b1b-b89f-409b-9bdb-c0bf35456c1d",
+      "at": "2026-10-23T17:00:49.420Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-8124-a4e6-cfefa7ceccb9/children?page_size=100",
+      "requestId": "3be8dc08-129a-469f-8a2f-333c8cfd5ce1",
+      "at": "2026-10-23T17:00:49.882Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-8102-87f7-d66b601ce7b6/children?page_size=100",
+      "requestId": "76690e20-4715-40f5-853b-edb2d463bf2f",
+      "at": "2026-10-23T17:00:50.244Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-819a-980e-ec6725f9cf29/children?page_size=100",
+      "requestId": "b88176b4-9bca-4ad4-9053-4b2ff44f95a8",
+      "at": "2026-10-23T17:00:50.652Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-81a5-96c7-c8d255d90c26/children?page_size=100",
+      "requestId": "0eb4009c-46dd-4df1-ab25-12abd0d4d5ab",
+      "at": "2026-10-23T17:00:51.175Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-819b-a9c5-feaffbacf301/children?page_size=100",
+      "requestId": "5b01abf0-6e7f-4ac1-9def-2737cd773bd2",
+      "at": "2026-10-23T17:00:51.561Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-8187-a990-e464e98c376f/children?page_size=100",
+      "requestId": "17dc617a-f639-4922-ae67-3e030097fc3f",
+      "at": "2026-10-23T17:00:51.981Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-8110-90c7-cc4333a1c64e/children?page_size=100",
+      "requestId": "769c16af-ded8-45b2-bc9d-fb919793a460",
+      "at": "2026-10-23T17:00:52.363Z"
+    },
+    {
+      "method": "GET",
+      "path": "v1/blocks/40201918-7ac5-8178-9e5a-c09f883f6918/children?page_size=100",
+      "requestId": "91151e7c-12a2-4576-903f-5e107971adbc",
+      "at": "2026-10-23T17:00:52.720Z"
+    }
+  ],
+  "phases": [
+    {
+      "name": "simulated-response-loss",
+      "liveAppendCommitted": true,
+      "limit": "Adapter deliberately hid one successful response; no genuine provider failure induced"
+    },
+    {
+      "name": "partial_write_not_ready",
+      "passed": true
+    },
+    {
+      "name": "simulated-response-loss",
+      "formatVersion": "indexed-transcript-v2",
+      "liveAppendCommitted": true,
+      "limit": "Adapter deliberately hid one successful response; no genuine provider failure induced"
+    },
+    {
+      "name": "partial_write_not_ready",
+      "passed": true
+    },
+    {
+      "name": "reconciled_version_one",
+      "version": "aee72e37760986e12f31ca383f5eda58073bd4b75238f3878cdf45a995fb8338",
+      "timestampBlocks": 24,
+      "originalCharacters": 9016,
+      "canonicalCharacters": 8197,
+      "originalChunks": 3,
+      "numberedParts": 2,
+      "indexLinks": 5,
+      "exactReconstruction": true,
+      "completeIndex": true,
+      "indexId": "40201918-7ac5-8102-87f7-d66b601ce7b6"
+    },
+    {
+      "name": "repeated_run_idempotent",
+      "passed": true,
+      "newAppendRequests": 0
+    },
+    {
+      "name": "version_two_invalidated_and_verified",
+      "version": "993ba29266d9e76e987501c924427be19eed9e6aeb3bd30b2e09ad6e6f0647eb",
+      "timestampBlocks": 24,
+      "originalCharacters": 9054,
+      "canonicalCharacters": 8235,
+      "originalChunks": 3,
+      "numberedParts": 2,
+      "indexLinks": 5,
+      "exactReconstruction": true,
+      "completeIndex": true,
+      "indexId": "40201918-7ac5-8178-9e5a-c09f883f6918",
+      "priorVersionArtifactsPreserved": true
+    }
+  ],
+  "stats": {
+    "apiReads": 96,
+    "pageCreates": 1,
+    "appendRequests": 13
+  },
+  "scope": {
+    "provider": "Live Notion via existing ntn CLI session",
+    "engine": "actual planTranscript/writeIndexedTranscript/IngestionLease",
+    "source": "24 generated synthetic VTT cues, no Zoom call",
+    "database": "isolated existing synthetic database",
+    "journal": "local Miniflare D1 only",
+    "hubValidated": false,
+    "workerDeployed": false,
+    "productionCutoffSelected": false
+  },
+  "createdTime": "2026-10-23T16:54:00.000Z",
+  "lastError": null,
+  "totalTopLevelArtifacts": 13,
+  "totalParagraphBlocks": 36,
+  "formatVersion": "indexed-transcript-v2",
+  "completedAt": "2026-10-23T17:00:52.721Z",
+  "disposition": "Retained in synthetic test database; no archive or permanent deletion",
+  "postCorrectionReadOnlyReverification": {
+    "passed": true,
+    "versions": [
+      {
+        "version": "aee72e37760986e12f31ca383f5eda58073bd4b75238f3878cdf45a995fb8338",
+        "exactHashReverifiedAfterCorrection": true
+      },
+      {
+        "version": "993ba29266d9e76e987501c924427be19eed9e6aeb3bd30b2e09ad6e6f0647eb",
+        "exactHashReverifiedAfterCorrection": true
+      }
+    ],
+    "requests": [
+      {
+        "method": "GET",
+        "path": "v1/blocks/40201918-7ac5-818b-a035-fcb4d41bbc0d/children?page_size=100",
+        "requestId": "39259b68-d6bc-427c-8ae6-a1e564413ed4"
+      },
+      {
+        "method": "GET",
+        "path": "v1/blocks/40201918-7ac5-81c3-bd5f-f1fa85e59237/children?page_size=100",
+        "requestId": "e364449b-9680-4f36-afa1-a759069aa2bf"
+      },
+      {
+        "method": "GET",
+        "path": "v1/blocks/40201918-7ac5-811a-b744-d10dbfcd1e8d/children?page_size=100",
+        "requestId": "c7c3f489-e100-4d6a-bea3-95318272f740"
+      },
+      {
+        "method": "GET",
+        "path": "v1/blocks/40201918-7ac5-81b5-9c3e-c1ac7489421f/children?page_size=100",
+        "requestId": "73b82f7e-0da2-41ef-92e6-051bb2552795"
+      },
+      {
+        "method": "GET",
+        "path": "v1/blocks/40201918-7ac5-81be-b691-dd516bd21c44/children?page_size=100",
+        "requestId": "d835cf13-13b5-4f10-a0f1-119a76ea0085"
+      },
+      {
+        "method": "GET",
+        "path": "v1/blocks/40201918-7ac5-8124-a4e6-cfefa7ceccb9/children?page_size=100",
+        "requestId": "7b061649-47bb-4e57-9b50-81b67d182c69"
+      },
+      {
+        "method": "GET",
+        "path": "v1/blocks/40201918-7ac5-819a-980e-ec6725f9cf29/children?page_size=100",
+        "requestId": "d5b79c31-ad17-421d-8963-46cc3f0ba8d2"
+      },
+      {
+        "method": "GET",
+        "path": "v1/blocks/40201918-7ac5-81a5-96c7-c8d255d90c26/children?page_size=100",
+        "requestId": "ae7f422c-fff8-4327-9649-b055012cdad7"
+      },
+      {
+        "method": "GET",
+        "path": "v1/blocks/40201918-7ac5-819b-a9c5-feaffbacf301/children?page_size=100",
+        "requestId": "caae9021-e639-4809-b4fe-05cce54943fd"
+      },
+      {
+        "method": "GET",
+        "path": "v1/blocks/40201918-7ac5-8187-a990-e464e98c376f/children?page_size=100",
+        "requestId": "311ccae7-73a5-41a5-8746-ab557ed4c206"
+      },
+      {
+        "method": "GET",
+        "path": "v1/blocks/40201918-7ac5-8110-90c7-cc4333a1c64e/children?page_size=100",
+        "requestId": "63abf1b0-128c-473f-ae3e-81afccaa79e3"
+      }
+    ]
+  }
+}
