@@ -97,6 +97,16 @@ export async function listTranscriptCandidates(env: Env): Promise<ZoomDiscoveryR
   };
 }
 
+/** Prefer one primary VTT. Never concatenate renditions or guess between equal-ranked files. */
+export function selectCanonicalRendition(files: TranscriptCandidate[]): TranscriptCandidate | null {
+  const rank = (file: TranscriptCandidate): number =>
+    file.transcriptFileExtension === 'vtt' && file.transcriptFileType?.toUpperCase() === 'TRANSCRIPT' ? 0
+    : file.transcriptFileExtension === 'vtt' ? 1 : 2;
+  const bestRank = Math.min(...files.map(rank));
+  const best = files.filter(file => rank(file) === bestRank);
+  return best.length === 1 ? best[0]! : null;
+}
+
 export async function inspectMeetingRecordings(
   env: Env,
   meetingId: string,
@@ -203,7 +213,26 @@ export async function downloadTranscript(env: Env, candidate: TranscriptCandidat
     throw new Error(`Zoom transcript download failed (${response.status}) for ${candidate.transcriptDownloadUrl}`);
   }
 
-  return response.text();
+  if (!response.body) throw new Error('Zoom transcript response has no body');
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true });
+  let bytes = 0;
+  let text = '';
+  try {
+    while (true) {
+      const chunk = await reader.read();
+      if (chunk.done) break;
+      bytes += chunk.value.byteLength;
+      if (bytes > 4 * 1024 * 1024) throw new Error('Zoom transcript exceeds 4 MiB ingestion budget');
+      text += decoder.decode(chunk.value, { stream: true });
+    }
+    return text + decoder.decode();
+  } catch (error) {
+    await reader.cancel().catch(() => {});
+    throw error;
+  } finally {
+    reader.releaseLock();
+  }
 }
 
 export function parseTranscript(rawText: string, extension: string | null): ParsedTranscript {
@@ -373,6 +402,7 @@ function dedupeRecordingFiles(files: ZoomRecordingFile[]): ZoomRecordingFile[] {
 }
 
 function isTranscriptFile(file: ZoomRecordingFile): boolean {
+  if (file.status && file.status.toLowerCase() !== 'completed') return false;
   const fileType = (file.file_type ?? '').toUpperCase();
   const extension = (file.file_extension ?? '').toLowerCase();
   const recordingType = (file.recording_type ?? '').toLowerCase();
