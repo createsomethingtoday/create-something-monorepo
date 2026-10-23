@@ -150,8 +150,8 @@ test('the Agency opening exposes proof, approval and ownership alongside the app
   assert.match(content, /before payment/);
   assert.match(content, /you own commissioned deliverables under your agreement, except reusable provider tools, which are licensed for continued use/);
   assert.match(content, /href="\/services"/);
-  assert.match(home, /what AI may do/);
-  assert.match(home, /what needs approval/);
+  assert.match(content, /which records can be read, which actions can run, and which need approval/);
+  assert.match(content, /Your team keeps approval authority/);
   assert.match(campaignOpening, /media\?: PerformanceCampaignMedia/);
   assert.match(field, /O = owner/);
   assert.match(field, /X = opposition/);

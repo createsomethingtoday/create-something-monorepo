@@ -1,5 +1,6 @@
 <script lang="ts">
   import { tick } from 'svelte';
+  import { usesAgentReadinessStudyCopy } from '$lib/data/agentReadinessStudyVariants';
   import { mountPreviewTrace } from '$lib/motion/previewWorkflowTrace';
   import { page } from '$app/stores';
   import { originalHeroImages } from '$lib/data/agencyPreviewOriginalImages';
@@ -26,7 +27,7 @@
   $effect(() => {
     const route = $page.url.pathname; const item = current; const f = family;
     const study = $page.url.searchParams.get('study');
-    const useBaselineCopy = !study || study === 'baseline';
+    const useBaselineCopy = !usesAgentReadinessStudyCopy(route, study);
     let alive=true; let figure:HTMLElement|undefined; let closing:HTMLElement|undefined; let stopTrace:(()=>void)|undefined;
     const originals: Array<{element:HTMLElement; clone:Element; hidden:boolean; id:string}> = [];
     const replaceCopy = (element:Element|null, text:string|undefined, selector:string) => {

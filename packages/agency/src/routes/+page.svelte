@@ -39,30 +39,27 @@
     }
   ];
 
+  // Keep this schema identical to the five visible native FAQ items; guarded by public-marketing-copy.test.ts.
   const faqItems = [
     {
-      question: 'What does ongoing support mean?',
-      answer: 'We keep project context across agreed work: the diagnosis, decisions, changes, checks and open questions. Scheduled sessions and Slack support follow your plan. Scope and response times are agreed before payment; production incident response requires a separate managed Control agreement.'
+      "question": "What needs a separate agreement?",
+      "answer": "Larger Builds, managed Control and production incident response need separate agreements. Membership capacity covers the agreed workstreams and milestones above."
     },
     {
-      question: 'Where do we start?',
-      answer: 'Bring one task and an example of a good result. We agree on the deliverable, capacity, revisions and how to check the work before payment. If the task is unclear, start with a mapping session.'
+      "question": "What costs extra?",
+      "answer": "Project-specific AI development, testing and production usage, hosting and third-party services are budgeted separately. You approve the budget first. Our everyday coding tools are our expense. More API credit does not add delivery capacity."
     },
     {
-      question: 'How do you check the work?',
-      answer: 'We test an agreed example and a failure case. For AI agents—software that uses AI and connected tools to carry out a task—we agree on what AI may do and what needs approval. Your team reviews the result before launch. Launch and production incident response require a separate agreement.'
+      "question": "Who delivers the service?",
+      "answer": "Micah Johnson currently delivers the service, with agents assisting the work. The dedicated member portal is in development. We confirm resource access, session times and response times before payment."
     },
     {
-      question: 'What do we keep?',
-      answer: 'After full payment, you own commissioned deliverables under your agreement, except reusable provider tools. You keep the instructions, tests, project history and recovery guide. We help your team use and maintain what we deliver. See Services for the delivery process and What You Keep for ownership and provider details.'
+      "question": "What does our team keep?",
+      "answer": "After full payment, you own commissioned deliverables under your agreement, except reusable provider tools, which are licensed for continued use. You keep the agreed code, tests, instructions and project history."
     },
     {
-      question: 'How is AI spending controlled?',
-      answer: 'For substantial AI development, testing or production, we arrange a client-owned provider project or agreed metered billing. Development and production have separate budgets. We pause new billable runs at the agreed limit until you approve more. A website or form that does not use AI needs no API account.'
-    },
-    {
-      question: 'Can we cancel?',
-      answer: 'Cancel before your next renewal by emailing support@createsomething.io to stop future membership charges. Support continues through your paid period while we hand over your code and documentation, document open work, and plan the transition. If you need more help afterward, we’ll agree on the scope and price before extending support. Separately scoped projects follow their agreed terms.'
+      "question": "Can we cancel?",
+      "answer": "Cancel before renewal by emailing support@createsomething.io. Support continues through your paid period while we document open work and arrange the handoff. Separately scoped projects follow their agreed terms."
     }
   ];
 </script>

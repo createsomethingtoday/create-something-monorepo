@@ -172,7 +172,7 @@ test('public agency surfaces explain ownership and provider roles', () => {
   const stack = readFileSync(new URL('../src/routes/stack/+page.svelte', import.meta.url), 'utf8');
   const partners = readFileSync(new URL('../src/routes/partners/+page.svelte', import.meta.url), 'utf8');
   assert.match(home, /you own commissioned deliverables under your agreement, except reusable provider tools/);
-  assert.match(home, /ownership and provider details/);
+  assert.match(home, /You keep the agreed code, tests, instructions and project history/);
   assert.match(stack, /Your project keeps its data, code, tool definitions, instructions, tests, and recovery guide/);
   assert.match(stack, /A different model must pass the relevant checks before you switch/);
   assert.match(partners, /open-weight and custom models/);
@@ -221,8 +221,9 @@ test('commercial decision routes explain the task, delivery, ownership, and proo
   const layout = read('+layout.svelte');
   assert.match(layout, /label: 'Technical Support', href: '\/services'/);
   assert.match(layout, /label: 'What You Keep', href: '\/stack'/);
-  assert.match(home, /We test an agreed example and a failure case/);
-  assert.match(home, /Your team reviews the result before launch/);
+  const homeContent = readFileSync(new URL('../src/lib/content/agency-home.html', import.meta.url), 'utf8');
+  assert.match(homeContent, /Agree the scope, then build and test a useful workflow together/);
+  assert.match(homeContent, /Your team keeps approval authority/);
   assert.match(read('services/+page.svelte'), /Bring a workflow, software problem or existing product/);
   assert.match(read('services/+page.svelte'), /Your team keeps approval authority/);
   assert.match(read('services/+page.svelte'), /one agreed workstream/);
@@ -450,11 +451,13 @@ test('the Practice argument is editorial while its operating artifacts stay fiel
 test('the compact homepage preserves buying boundaries and detailed destinations', () => {
   const home = readFileSync(new URL('../src/routes/+page.svelte', import.meta.url), 'utf8');
   const offer = readFileSync(new URL('../src/lib/components/MembershipOffer.svelte', import.meta.url), 'utf8');
-  assert.match(home, /what AI may do and what needs approval/);
-  assert.match(home, /Launch and production incident response require a separate agreement/);
-  assert.match(home, /Development and production have separate budgets/);
-  assert.match(home, /pause new billable runs at the agreed limit/);
-  assert.match(home, /Cancel before your next renewal/);
+  const content = readFileSync(new URL('../src/lib/content/agency-home.html', import.meta.url), 'utf8');
+  assert.match(content, /which records can be read, which actions can run, and which need approval/);
+  assert.match(home, /production incident response need separate agreements/);
+  assert.match(home, /AI development, testing and production usage, hosting and third-party services are budgeted separately/);
+  assert.match(home, /You approve the budget first/);
+  assert.match(content, /If usage cannot be confirmed, pause for review/);
+  assert.match(home, /Cancel before renewal/);
   assert.match(offer, /href="\/services"/);
   assert.match(offer, /href="\/stack"/);
   assert.match(offer, /workflowMappingSessionHref/);
@@ -474,7 +477,16 @@ test('the homepage has one FAQ and avoids redundant standalone explanations', ()
   }
   assert.match(faq, /you own commissioned deliverables under your agreement/);
   assert.match(faq, /You approve the budget first/);
-  assert.match(home, /software that uses AI and connected tools/);
+  const visibleFaq = [...faq.matchAll(/<details><summary>(.*?)<\/summary>([\s\S]*?)<\/details>/g)].map(([, question, answer]) => ({
+    question,
+    answer: [...answer.matchAll(/<p>([\s\S]*?)<\/p>/g)]
+      .map(([, paragraph]) => paragraph.replace(/<[^>]*>/g, ''))
+      .join(' ')
+  }));
+  const schemaSource = home.match(/const faqItems = (\[[\s\S]*?\]);/)?.[1];
+  assert.ok(schemaSource, 'homepage must supply the visible FAQ to SEO');
+  assert.match(home, /\{faqItems\}/);
+  assert.deepEqual(JSON.parse(schemaSource), visibleFaq, 'FAQ schema must match all five visible questions and complete answers');
   assert.doesNotMatch(home, /<MeridianAccordion|<MembershipFAQ|<GroundFilm|<ProjectReviewEntry|<AgencyPerformanceReadback|<PerformanceConversionHandoff|foundation-example|ownership-callout/);
 });
 
