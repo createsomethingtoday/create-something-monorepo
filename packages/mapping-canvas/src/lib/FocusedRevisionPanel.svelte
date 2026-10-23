@@ -64,7 +64,7 @@
           {/each}
           {#if proposal.excluded.length}<h4>Excluded and preserved</h4><ul>{#each proposal.excluded as item}<li>{item.id}: {item.reason}</li>{/each}</ul>{/if}
           <p>{proposal.unchangedSelectedIds.length} selected elements unchanged. Unselected elements and the current view are retained.</p>
-          {#if stale}<p role="alert">Canvas, selection or request changed. Preview the revision again; nothing was applied.</p>{/if}
+          {#if stale}<p role="alert">Canvas, selection or request changed. This preview is stale; inspect the canvas before preparing another revision.</p>{/if}
           <button disabled={disabled || working || stale} onclick={() => void accept()}>Accept revision</button>
         </div>
       {/if}
