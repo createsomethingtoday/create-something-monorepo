@@ -12,7 +12,7 @@
     "build:isolated": "node build-pages.mjs --isolated"
   },
   "engines": {
-    "node": ">=24"
+    "node": "^22.13.0 || >=24.0.0"
   },
   "devDependencies": {
     "esbuild": "0.25.12",

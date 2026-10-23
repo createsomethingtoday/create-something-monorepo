@@ -7,3 +7,5 @@ Independent gpt-6.1-sol reviews identified exhausted-status health visibility, i
 An earlier separately authorized hosted synthetic-only acceptance passed and was cleaned up. Its detailed receipts and destination/account identities remain in the private handoff. It does not establish hosted verification of the newer production-profile code. Production remains disabled; actual mapping, scoped credentials/permissions, policy decisions and deployment approval are outstanding. Native Pixieset automation remains unverified.
 
 The repository-wide retired-provider scan was previously blocked by a pre-existing EISDIR; this is not represented as a passing global check. Linear tracking requires an unavailable API key; no alternate tracker or credential was created.
+
+The same31 Node and28 runtime tests also passed on Node22.23.4. The manifest admits Node22.13+ LTS or24+, matching the unflagged SQLite API, and CI verifies22.23.4/26.11.0. Clean CI builds auth-platform, Tufte and Canon exports before app artifacts. Both staff apps include Canon token/theme and cross-modality boundary-policy overlays. No check is skipped to accommodate the new package.

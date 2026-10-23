@@ -24,9 +24,13 @@ concurrency:
 
 jobs:
   goldin:
-    name: Goldin domain and actual Cloudflare runtime
+    name: Goldin domain and actual Cloudflare runtime (${{ matrix.node }})
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ['22.23.4', '26.11.0']
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
       - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
@@ -34,7 +38,7 @@ jobs:
           version: 9.15.0
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
         with:
-          node-version: '26.11.0'
+          node-version: ${{ matrix.node }}
           cache: pnpm
       - name: Install locked owning app and coordinator dependencies
         run: pnpm --filter @create-something/ona-agents... install --frozen-lockfile --ignore-scripts
