@@ -561,5 +561,5 @@
  .io-research-shell .io-reference-opening > .research-scene { margin: 0; }
 }
 @media (max-width: 768px) {
- .io-research-shell .mobile-search-button { top: 10px; bottom: auto; right: 80px; width: 44px; height: 44px; z-index: 41; border-radius: var(--radius-operator-panel); box-shadow: none; }
+ .layout-root.io-research-shell[data-canon-palette='operator'] .mobile-search-button { top: 10px; bottom: auto; right: 80px; width: 44px; height: 44px; z-index: 41; border-radius: var(--radius-operator-panel); box-shadow: none; }
 }
