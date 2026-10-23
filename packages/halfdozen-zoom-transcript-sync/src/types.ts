@@ -80,6 +80,7 @@ export interface NotionWriteResult {
   pageId: string;
   pageUrl: string;
   action: 'created' | 'updated' | 'skipped';
+  indexBlockId?: string;
   reason?: string;
 }
 

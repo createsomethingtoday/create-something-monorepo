@@ -1,9 +1,9 @@
+import { writeIndexedTranscript, type TranscriptPlan, type WriteJournal } from './indexed-transcript';
 import type { Env, NotionPageSummary, NotionWriteResult, ParsedTranscript, TranscriptCandidate } from './types';
 
 const NOTION_API_BASE = 'https://api.notion.com/v1';
 const NOTION_VERSION = '2022-06-28';
 const MAX_RICH_TEXT_CONTENT = 1900;
-const MAX_BLOCKS_PER_REQUEST = 100;
 const DEFAULT_STATUS = 'Active';
 const DEFAULT_SOURCE = 'Internal';
 const DEFAULT_TYPE = 'Meeting';
@@ -35,7 +35,7 @@ interface HubToolResult {
   structuredContent?: Record<string, unknown>;
 }
 
-interface NotionTransport {
+export interface NotionTransport {
   queryDatabase(filter: unknown, pageSize: number): Promise<QueryResult>;
   getPage(pageId: string): Promise<PageObject>;
   createPage(properties: Record<string, unknown>): Promise<PageObject>;
@@ -48,52 +48,52 @@ export async function syncTranscriptToNotion(
   env: Env,
   candidate: TranscriptCandidate,
   parsedTranscript: ParsedTranscript,
-  transcriptHash: string,
+  plan: TranscriptPlan,
+  journal: WriteJournal,
   existingPageHint?: { pageId: string; pageUrl: string | null } | null,
 ): Promise<NotionWriteResult> {
   const notion = createNotionTransport(env);
   const existing = await resolveExistingMeetingPage(notion, candidate, existingPageHint);
   const properties = buildPageProperties(env, candidate, parsedTranscript);
-  const transcriptBlocks = buildTranscriptBlocks(parsedTranscript);
-
-  if (!existing) {
+  await journal.assertOwner();
+  let pageId: string;
+  let pageUrl: string;
+  if (existing) {
+    pageId = existing.id;
+    pageUrl = existing.url;
+    await notion.updatePage(pageId, properties);
+  } else {
+    // Reserve once before create. A timeout must resolve through the existing-page query.
+    if (!await journal.reserve(`meeting-page:${candidate.canonicalMeetingKey}:${candidate.meetingDate}`)) {
+      throw new Error('Uncertain Notion page creation requires reconciliation');
+    }
+    await journal.assertOwner();
     const page = await notion.createPage(properties);
-    if (!page || typeof page.id !== 'string') {
-      throw new Error(`Unexpected create_page response: ${safeJson(page)}`);
+    if (!page || typeof page.id !== 'string') throw new Error('Invalid page creation receipt');
+    pageId = page.id;
+    pageUrl = page.url ?? notionUrl(page.id);
+  }
+  const indexBlockId = await writeIndexedTranscript({
+    list: (id) => listAllBlocks(notion, id),
+    append: (id, blocks) => notion.appendBlocks(id, blocks),
+  }, journal, pageId, plan);
+  return { pageId, pageUrl, action: existing ? 'updated' : 'created', indexBlockId };
+}
+
+async function listAllBlocks(notion: NotionTransport, parent: string): Promise<BlockObject[]> {
+  const blocks: BlockObject[] = [];
+  let cursor: string | undefined;
+  const seen = new Set<string>();
+  do {
+    const response = await notion.listBlockChildren(parent, cursor);
+    blocks.push(...response.results);
+    if (response.has_more && (!response.next_cursor || seen.has(response.next_cursor))) {
+      throw new Error('Incomplete Notion pagination');
     }
-    if (transcriptBlocks.length > 0) {
-      await appendBatchedBlocks(notion, page.id, transcriptBlocks);
-    }
-    return {
-      pageId: page.id,
-      pageUrl: page.url ?? notionUrl(page.id),
-      action: 'created',
-    };
-  }
-
-  await notion.updatePage(existing.id, properties);
-  const existingBodyText = await getAllBlockText(notion, existing.id);
-  const existingNormalized = normalizeComparableText(existingBodyText);
-  const transcriptNormalized = normalizeComparableText(parsedTranscript.plainText);
-
-  if (transcriptNormalized.length > 120 && existingNormalized.includes(transcriptNormalized.slice(0, Math.min(400, transcriptNormalized.length)))) {
-    return {
-      pageId: existing.id,
-      pageUrl: existing.url,
-      action: 'skipped',
-      reason: `Transcript hash ${transcriptHash} already present in page body`,
-    };
-  }
-
-  if (transcriptBlocks.length > 0) {
-    await appendBatchedBlocks(notion, existing.id, transcriptBlocks);
-  }
-
-  return {
-    pageId: existing.id,
-    pageUrl: existing.url,
-    action: 'updated',
-  };
+    cursor = response.has_more ? response.next_cursor! : undefined;
+    if (cursor) seen.add(cursor);
+  } while (cursor);
+  return blocks;
 }
 
 async function resolveExistingMeetingPage(
@@ -140,6 +140,7 @@ async function findExistingMeetingPage(
       5,
     );
 
+    if (directUrlMatch.has_more) throw new Error('Ambiguous paginated Notion page match');
     const matched = pickSourceUrlMatch(directUrlMatch.results, candidate);
     if (matched) return matched;
   }
@@ -160,20 +161,17 @@ async function findExistingMeetingPage(
     10,
   );
 
+  if (titleDateMatch.has_more) throw new Error('Ambiguous paginated Notion page match');
   return pickTitleDateMatch(titleDateMatch.results, candidate);
 }
 
 function pickSourceUrlMatch(pages: PageObject[], candidate: TranscriptCandidate): NotionPageSummary | null {
   if (!candidate.sourceUrl) return null;
 
-  for (const page of pages) {
-    const summary = toPageSummary(page);
-    if (summary.sourceUrl === candidate.sourceUrl && summary.date === candidate.meetingDate) {
-      return summary;
-    }
-  }
-
-  return null;
+  const matches = pages.map(toPageSummary).filter(summary =>
+    summary.sourceUrl === candidate.sourceUrl && summary.date === candidate.meetingDate);
+  if (matches.length > 1) throw new Error('Ambiguous Notion source URL match');
+  return matches[0] ?? null;
 }
 
 function pickTitleDateMatch(pages: PageObject[], candidate: TranscriptCandidate): NotionPageSummary | null {
@@ -185,14 +183,16 @@ function pickTitleDateMatch(pages: PageObject[], candidate: TranscriptCandidate)
     return null;
   }
 
-  const exactSourceUrl = candidate.sourceUrl
-    ? matchingPages.find((summary) => summary.sourceUrl === candidate.sourceUrl) ?? null
-    : null;
+  const exactMatches = matchingPages.filter(summary => summary.sourceUrl === candidate.sourceUrl);
+  if (exactMatches.length > 1) throw new Error('Ambiguous Notion title/date match');
+  const exactSourceUrl = candidate.sourceUrl ? exactMatches[0] ?? null : null;
   if (exactSourceUrl) {
     return exactSourceUrl;
   }
 
-  const emptySourceUrl = matchingPages.find((summary) => !summary.sourceUrl);
+  const emptyMatches = matchingPages.filter(summary => !summary.sourceUrl);
+  if (emptyMatches.length > 1) throw new Error('Ambiguous legacy Notion page match');
+  const emptySourceUrl = emptyMatches[0];
   if (emptySourceUrl) {
     return emptySourceUrl;
   }
@@ -205,7 +205,8 @@ function pickTitleDateMatch(pages: PageObject[], candidate: TranscriptCandidate)
 }
 
 function isMatchingMeetingPageHint(summary: NotionPageSummary, candidate: TranscriptCandidate): boolean {
-  return summary.title === candidate.meetingTitle && summary.date === candidate.meetingDate;
+  return summary.title === candidate.meetingTitle && summary.date === candidate.meetingDate
+    && (!hasOccurrenceFragment(summary.sourceUrl) || summary.sourceUrl === candidate.sourceUrl);
 }
 
 function hasOccurrenceFragment(sourceUrl: string | null): boolean {
@@ -271,116 +272,6 @@ function buildPageProperties(
   return properties;
 }
 
-function buildTranscriptBlocks(parsedTranscript: ParsedTranscript): BlockObject[] {
-  if (!parsedTranscript.plainText.trim()) {
-    return [];
-  }
-
-  const blocks: BlockObject[] = [
-    {
-      object: 'block',
-      type: 'heading_3',
-      heading_3: {
-        rich_text: [
-          {
-            type: 'text',
-            text: { content: '📝 FULL TRANSCRIPT' },
-          },
-        ],
-      },
-    },
-  ];
-
-  if (parsedTranscript.segments.length > 0) {
-    for (const segment of parsedTranscript.segments) {
-      blocks.push({
-        object: 'block',
-        type: 'heading_3',
-        heading_3: {
-          rich_text: [
-            {
-              type: 'text',
-              text: { content: segment.timestamp },
-            },
-          ],
-        },
-      });
-
-      for (const chunk of chunkText(segment.text)) {
-        blocks.push({
-          object: 'block',
-          type: 'paragraph',
-          paragraph: {
-            rich_text: [
-              {
-                type: 'text',
-                text: { content: chunk },
-              },
-            ],
-          },
-        });
-      }
-    }
-
-    return blocks;
-  }
-
-  for (const chunk of chunkText(parsedTranscript.plainText)) {
-    blocks.push({
-      object: 'block',
-      type: 'paragraph',
-      paragraph: {
-        rich_text: [
-          {
-            type: 'text',
-            text: { content: chunk },
-          },
-        ],
-      },
-    });
-  }
-
-  return blocks;
-}
-
-async function appendBatchedBlocks(notion: NotionTransport, pageId: string, blocks: BlockObject[]): Promise<void> {
-  for (let cursor = 0; cursor < blocks.length; cursor += MAX_BLOCKS_PER_REQUEST) {
-    const batch = blocks.slice(cursor, cursor + MAX_BLOCKS_PER_REQUEST);
-    await notion.appendBlocks(pageId, batch);
-  }
-}
-
-async function getAllBlockText(notion: NotionTransport, blockId: string): Promise<string> {
-  const parts: string[] = [];
-  let cursor: string | undefined;
-
-  do {
-    const response = await notion.listBlockChildren(blockId, cursor);
-    for (const block of response.results) {
-      const text = extractBlockText(block);
-      if (text) parts.push(text);
-
-      if (block.has_children === true && typeof block.id === 'string') {
-        const childText = await getAllBlockText(notion, block.id);
-        if (childText) parts.push(childText);
-      }
-    }
-    cursor = response.has_more ? response.next_cursor ?? undefined : undefined;
-  } while (cursor);
-
-  return parts.join('\n');
-}
-
-function extractBlockText(block: BlockObject): string {
-  const type = typeof block.type === 'string' ? block.type : '';
-  const typed = block[type] as { rich_text?: Array<{ plain_text?: string; text?: { content?: string } }> } | undefined;
-  const richText = Array.isArray(typed?.rich_text) ? typed.rich_text : [];
-  return richText
-    .map((entry) => entry.plain_text ?? entry.text?.content ?? '')
-    .join('')
-    .trim();
-}
-
 function toPageSummary(page: PageObject): NotionPageSummary {
   const title = page.properties?.Item?.title?.[0]?.plain_text
     ?? page.properties?.title?.title?.[0]?.plain_text
@@ -415,39 +306,8 @@ function resolveWriteMode(env: Env): 'api' | 'hub' {
   return 'api';
 }
 
-function chunkText(text: string): string[] {
-  const normalized = text.replace(/\s+/g, ' ').trim();
-  if (!normalized) return [];
-
-  const chunks: string[] = [];
-  let remaining = normalized;
-
-  while (remaining.length > MAX_RICH_TEXT_CONTENT) {
-    let splitAt = remaining.lastIndexOf('. ', MAX_RICH_TEXT_CONTENT);
-    if (splitAt < MAX_RICH_TEXT_CONTENT * 0.5) {
-      splitAt = remaining.lastIndexOf(' ', MAX_RICH_TEXT_CONTENT);
-    }
-    if (splitAt < MAX_RICH_TEXT_CONTENT * 0.25) {
-      splitAt = MAX_RICH_TEXT_CONTENT;
-    }
-
-    chunks.push(remaining.slice(0, splitAt).trim());
-    remaining = remaining.slice(splitAt).trim();
-  }
-
-  if (remaining) {
-    chunks.push(remaining);
-  }
-
-  return chunks;
-}
-
 function truncate(value: string, maxLength: number): string {
   return value.length > maxLength ? value.slice(0, maxLength) : value;
-}
-
-function normalizeComparableText(text: string): string {
-  return text.toLowerCase().replace(/\s+/g, ' ').trim();
 }
 
 function notionUrl(pageId: string): string {
