@@ -31,11 +31,25 @@ struct Cache {
     values: HashMap<[u8; 32], Vec<u8>>,
     order: VecDeque<[u8; 32]>,
     metrics: CacheStats,
+    // Keep the most recently used graph through subsequent per-file parse churn.
+    // It shares the same entry/payload budget; a new graph may replace it.
+    retained_graph: Option<[u8; 32]>,
 }
 impl Cache {
-    fn insert(&mut self, key: [u8; 32], value: Vec<u8>) {
+    fn insert(&mut self, key: [u8; 32], value: Vec<u8>, graph: bool) {
         if value.len() > MAX_BYTES {
             return;
+        }
+        // A parse record must not evict the active graph, even when the graph
+        // consumes the whole payload budget. Decline that record instead.
+        if !graph {
+            if let Some(retained) = self.retained_graph {
+                if let Some(bytes) = self.values.get(&retained) {
+                    if key == retained || bytes.len() + value.len() > MAX_BYTES {
+                        return;
+                    }
+                }
+            }
         }
         if let Some(old) = self.values.remove(&key) {
             self.metrics.payload_bytes -= old.len();
@@ -44,18 +58,29 @@ impl Cache {
         while self.values.len() >= MAX_ENTRIES
             || self.metrics.payload_bytes + value.len() > MAX_BYTES
         {
-            if let Some(old) = self.order.pop_front() {
+            let victim = self
+                .order
+                .iter()
+                .position(|candidate| graph || Some(*candidate) != self.retained_graph);
+            if let Some(index) = victim {
+                let old = self.order.remove(index).expect("selected cache entry");
                 if let Some(bytes) = self.values.remove(&old) {
                     self.metrics.payload_bytes -= bytes.len();
                     self.metrics.evictions += 1;
                 }
+                if self.retained_graph == Some(old) {
+                    self.retained_graph = None;
+                }
             } else {
-                break;
+                return;
             }
         }
         self.metrics.payload_bytes += value.len();
         self.values.insert(key, value);
         self.order.push_back(key);
+        if graph {
+            self.retained_graph = Some(key);
+        }
     }
 }
 /// Set once at process startup. Disabling also drops retained derived data.
@@ -110,6 +135,7 @@ pub(crate) fn get<T: DeserializeOwned>(key: &[u8; 32], graph: bool) -> Option<T>
     if result.is_some() {
         if graph {
             cache.metrics.graph_hits += 1;
+            cache.retained_graph = Some(*key);
         } else {
             cache.metrics.parse_hits += 1;
         }
@@ -119,12 +145,18 @@ pub(crate) fn get<T: DeserializeOwned>(key: &[u8; 32], graph: bool) -> Option<T>
     result
 }
 pub(crate) fn put<T: Serialize>(key: [u8; 32], value: &T) {
+    put_kind(key, value, false);
+}
+pub(crate) fn put_graph<T: Serialize>(key: [u8; 32], value: &T) {
+    put_kind(key, value, true);
+}
+fn put_kind<T: Serialize>(key: [u8; 32], value: &T, graph: bool) {
     if !enabled() {
         return;
     }
     if let Some(bytes) = serialize_bounded(value) {
         if let Ok(mut cache) = CACHE.get_or_init(|| Mutex::new(Cache::default())).lock() {
-            cache.insert(key, bytes);
+            cache.insert(key, bytes, graph);
         }
     }
 }
@@ -205,14 +237,38 @@ mod tests {
     fn payload_and_entry_limits_evict_without_exceeding_bounds() {
         let mut cache = Cache::default();
         for i in 0..MAX_ENTRIES + 5 {
-            cache.insert(key(&[&i.to_le_bytes()]), vec![0; 32]);
+            cache.insert(key(&[&i.to_le_bytes()]), vec![0; 32], false);
         }
         assert_eq!(cache.values.len(), MAX_ENTRIES);
         assert_eq!(cache.metrics.evictions, 5);
-        cache.insert([255; 32], vec![1; MAX_BYTES]);
+        cache.insert([255; 32], vec![1; MAX_BYTES], false);
         assert_eq!(cache.values.len(), 1);
         assert_eq!(cache.metrics.payload_bytes, MAX_BYTES);
-        cache.insert([254; 32], vec![1; MAX_BYTES + 1]);
+        cache.insert([254; 32], vec![1; MAX_BYTES + 1], false);
+        assert_eq!(cache.values.len(), 1);
+    }
+    #[test]
+    fn active_graph_survives_parse_churn_within_combined_limits() {
+        let mut cache = Cache::default();
+        let graph = [255; 32];
+        cache.insert(graph, vec![1; 4096], true);
+        for i in 0..MAX_ENTRIES * 3 {
+            cache.insert(key(&[&i.to_le_bytes()]), vec![0; 32], false);
+            assert!(cache.values.contains_key(&graph));
+            assert!(cache.values.len() <= MAX_ENTRIES);
+            assert!(cache.metrics.payload_bytes <= MAX_BYTES);
+        }
+        assert!(cache.metrics.evictions > 0);
+        // Byte pressure must also spare the graph; oversized parse data is skipped.
+        cache.insert([254; 32], vec![0; MAX_BYTES], false);
+        assert!(!cache.values.contains_key(&[254; 32]));
+        assert!(cache.values.contains_key(&graph));
+        // A new graph can replace the retained graph within the same byte limit.
+        cache.insert([253; 32], vec![0; MAX_BYTES], true);
+        assert_eq!(cache.values.len(), 1);
+        assert_eq!(cache.metrics.payload_bytes, MAX_BYTES);
+        assert_eq!(cache.retained_graph, Some([253; 32]));
+        cache.insert([252; 32], vec![0; 1], false);
         assert_eq!(cache.values.len(), 1);
     }
 }
