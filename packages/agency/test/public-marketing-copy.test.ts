@@ -211,7 +211,7 @@ test('the builder-facing homepage retains commercial terms, film evidence and di
   assert.match(films, /searchParams.get\('film'\)/);
   assert.match(films, /href=\{active.source\}/);
   assert.ok(salesHome.indexOf('<BuiltWork') < salesHome.indexOf('<FilmCollection'));
-  assert.match(salesHome, /<details id="work"/);
+  assert.match(salesHome, /<details id="work-library"/);
   assert.match(salesHome, /<noscript>[\s\S]*?href="\/products"[\s\S]*?href="\/field-reports"/);
 });
 
