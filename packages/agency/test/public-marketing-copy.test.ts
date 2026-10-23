@@ -457,7 +457,7 @@ test('the compact homepage preserves buying boundaries and detailed destinations
   assert.match(home, /AI development, testing and production usage, hosting and third-party services are budgeted separately/);
   assert.match(home, /You approve the budget first/);
   assert.match(content, /If usage cannot be confirmed, pause for review/);
-  assert.match(home, /Cancel before renewal/);
+  assert.match(home, /Cancel before your next renewal/);
   assert.match(offer, /href="\/services"/);
   assert.match(offer, /href="\/stack"/);
   assert.match(offer, /workflowMappingSessionHref/);
