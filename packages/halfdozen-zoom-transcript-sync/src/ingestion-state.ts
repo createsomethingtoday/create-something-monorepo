@@ -1,5 +1,7 @@
 import type { WriteJournal } from './indexed-transcript';
 
+export const INGESTION_LEASE_TTL_SECONDS = 10 * 60;
+
 export const INGESTION_SCHEMA = [
   `CREATE TABLE IF NOT EXISTS transcript_ingestion (
     meeting_key TEXT PRIMARY KEY, selected_key TEXT NOT NULL, owner TEXT, expires_at TEXT,
@@ -23,7 +25,7 @@ export async function selectRendition(db: D1Database, key: string, selected: str
 
 export async function claimIngestion(db: D1Database, key: string, selected: string): Promise<IngestionLease> {
   const owner = crypto.randomUUID();
-  const expires = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+  const expires = new Date(Date.now() + INGESTION_LEASE_TTL_SECONDS * 1000).toISOString();
   const result = await db.prepare(`UPDATE transcript_ingestion SET owner = ?, expires_at = ?, ready_version = NULL,
       index_block_id = NULL, verified_at = NULL
     WHERE meeting_key = ? AND selected_key = ? AND (owner IS NULL OR expires_at < ?)`)

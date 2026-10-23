@@ -1,7 +1,7 @@
 import { InlineContinuation } from './inline-transcript';
 import { atOrAfter, ledgerAdmitted, rolloutCutoff } from './rollout';
 import { planTranscript } from './indexed-transcript';
-import { claimIngestion, meetingKey, selectRendition } from './ingestion-state';
+import { INGESTION_LEASE_TTL_SECONDS, claimIngestion, meetingKey, selectRendition } from './ingestion-state';
 import {
   acquireLock,
   completeSyncRun,
@@ -158,7 +158,9 @@ export default {
         console.error(`Transcript sync failed for ${message.body.dedupKey}:`, errorMessage);
 
         if (errorMessage.startsWith('Meeting sync lock is busy')) {
-          message.retry({ delaySeconds: 60 });
+          // A canceled owner can retain its full lease. Wait past that lease
+          // rather than spending the queue retry budget while it is still held.
+          message.retry({ delaySeconds: INGESTION_LEASE_TTL_SECONDS + 1 });
           continue;
         }
 
