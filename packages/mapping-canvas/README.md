@@ -24,6 +24,12 @@ pnpm --filter @create-something/mapping-canvas build
 pnpm --filter @create-something/mapping-canvas verify:download
 ```
 
+## Agent activity
+
+Completed agent activity collapses automatically to a compact status button. Reopen it to inspect the last action or adjust follow and motion controls. Working tasks, approval waits and failures remain expanded. This disclosure is temporary UI state and does not change the drawing or its undo history.
+
+Run `pnpm --filter @create-something/mapping-canvas verify:activity` against a local server (`CANVAS_URL`); set `CANVAS_BROWSER_CHANNEL=chrome` to use installed Chrome. The check uses disposable synthetic browser contexts and covers completion, keyboard/focus, approval/failure visibility, new-document scope and annotation preservation at desktop/mobile sizes.
+
 ## WebMCP site tools
 
 Draw registers its current tool catalog through `document.modelContext.registerTool`, with a compatibility fallback for older `navigator.modelContext` or `provideContext` implementations:
