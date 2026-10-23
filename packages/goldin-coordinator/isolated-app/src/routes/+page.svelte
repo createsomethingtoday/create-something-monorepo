@@ -1,0 +1,1 @@
+<svelte:head><title>Goldin isolated synthetic test</title></svelte:head><main><h1>Goldin isolated synthetic test</h1><p>Synthetic database only. No messages, charges or gallery releases.</p><a href="/sign-in">Sign in with CREATE SOMETHING</a></main>
