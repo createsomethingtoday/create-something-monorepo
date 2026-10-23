@@ -1,5 +1,11 @@
 # GiGi desktop beta
 
+## Tauri polish (0.2.10 local candidate)
+
+Restores the slate studio theme after reference layout styles, clarifies active secondary-page navigation, and standardizes system typography, metadata, dates and artwork/media surfaces. Music keeps in-progress controls and focus during reads, distinguishes loading/read failure from an empty library, offers explicit retry/filter reset, and restores focus after a cancelled picker. Artwork saves return focus to the matching action after the detail refresh. Database, integration and MCP contracts are unchanged.
+
+This is a local ad-hoc debug candidate, not a qualified distribution release. See [polish evidence](evidence/polish-0210/REVIEW.md) for baseline, validation, artifact identity and remaining release gates.
+
 ## Setup checks and event selection (0.2.9 candidate)
 
 Settings → External agent connection offers a read-only Codex setup check. It compares this app's connector and workspace with the narrow `gigi` entry in the local Codex configuration, reads the discovered CLI version, and checks the bundled connector's version and media catalog in a fresh process. It never rewrites configuration or reconnects accounts. A mismatched registered executable is not executed. Other configuration scopes and an already-running host remain separate: run `gigi_connection_check` and `gigi_workspace_get` in the external session you intend to use, then confirm the executable, version, media tools and workspace.

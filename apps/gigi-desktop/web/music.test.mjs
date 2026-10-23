@@ -96,3 +96,13 @@ test('music save sends the original revision and preserves edits when another wr
   container.children[0].querySelector=()=>null;controller.dispose();
  }finally{globalThis.document=previous.document;globalThis.FormData=previous.FormData;}
 });
+
+test('music loading and read errors do not pretend the library is empty',()=>{
+ for(const state of [{loading:true},{error:'Read unavailable'}]){
+  const html=musicView(state);
+  assert.doesNotMatch(html,/Make room for your next idea|Add your first files|Nothing matches this view/);
+ }
+ assert.match(musicView({loading:true}),/aria-busy="true"/);
+ assert.match(musicView({error:'Read unavailable'}),/class="music-error"[^>]*[\s\S]*data-music-retry/);
+ assert.match(musicView({query:'missing'}),/data-music-reset/);
+});
