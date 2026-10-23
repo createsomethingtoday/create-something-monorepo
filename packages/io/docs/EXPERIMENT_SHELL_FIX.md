@@ -13,6 +13,12 @@ The Living Arena GPU page replaces undefined `--color-accent` / `--color-accent-
 - 51 browser cases: 17 routes at 390, 768 and 1440 pixels, reduced-motion preference. All return 200, opt into the shell, have no horizontal overflow, broken images or page errors. Machine evidence: `evidence/experiment-shell-layout.json`.
 - Local AI-native filtering uses its existing empty fallback because local D1 lacks `fnji_products`; this does not verify its production data workflow.
 
-Independent interaction review and final release receipts follow after completion.
+## Independent Sol 6.1 review
+
+Reviewed runtime source at `558ce741f879aff6acd1d2855ec005d12b93175c`; no simulation handlers, initialization, state or destruction logic changed. Native Chrome WebGPU initialized context, simulation and telemetry and started successfully, including restarts after count and seed changes. Keyboard count adjustment and Apply produced 10,000 agents; seed changed from 123 to 456; LIVE switched to PAUSED; scenario 2 selected; focus outline remained visible at 3 pixels. This verifies the existing LIVE control's scenario-cycle pause, not a newly added GPU renderer pause.
+
+With `navigator.gpu` absent, the unsupported fallback appears, GPU controls are hidden and the original SVG experiment link remains usable. On route-away, experiment-owned 100 ms and FPS intervals are removed; only baseline layout intervals remain. No page errors or overflow at 390/1440. Semantic status colors remain intact. Native GPU testing represents this Chrome/macOS host, not every GPU/driver/browser combination. No synthetic GPU mock was used to claim hardware support.
+
+Final production receipts are maintained in the PR closeout.
 
 Worktree disposition: preserved at `property-images`, branch `codex/experiment-research-shell` until release verification.
