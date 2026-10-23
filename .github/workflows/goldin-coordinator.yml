@@ -45,6 +45,7 @@ jobs:
           pnpm --filter @create-something/goldin-coordinator test
       - name: Build exported shared packages from source
         run: |
+          pnpm --filter @create-something/auth-platform build
           pnpm --filter @create-something/tufte package
           pnpm --filter @create-something/canon package
       - name: Generated app artifacts and actual transactional runtime

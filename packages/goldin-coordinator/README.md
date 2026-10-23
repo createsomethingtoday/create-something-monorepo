@@ -7,6 +7,7 @@ Default-disabled coordination around an existing Notion operations system. Staff
 Node>=24 is required for the offline SQLite harness; CI uses26.11.0. Local Cloudflare tests use Miniflare4.20260708.1 with explicitly pinned workerd1.20261022.1 at compatibility2026-10-22. There is no older-runtime fallback. Install locked dependencies with pnpm9.15.0, then run:
 
 ```sh
+pnpm --filter @create-something/auth-platform build
 pnpm --filter @create-something/tufte package
 pnpm --filter @create-something/canon package
 pnpm --filter @create-something/goldin-coordinator check
