@@ -14,6 +14,10 @@ This package uses:
 - account-level recording discovery for Server-to-Server Zoom apps
 - versioned Notion page-body parts with read-back verification
 
+## Forward-only release gate
+
+The proposed release requires an approved UTC `INDEXED_INGESTION_NOT_BEFORE` value. No production cutoff is configured. Both the recording start and original ledger first-seen time must meet that cutoff. Legacy queue envelopes and pre-cutoff Notion pages are excluded. See [cutoff semantics and approval status](./ROLLOUT.md). The revised rollout must not be merged or deployed before cutoff approval.
+
 ## Runtime modes
 
 Notion writes support two transport modes:
@@ -57,7 +61,7 @@ The worker preserves existing page content. It appends immutable toggles for the
 
 ## Select one rendition
 
-Group files by Zoom occurrence and date. Prefer one `TRANSCRIPT` VTT, then one other VTT, then one remaining transcript file. A tie at the best rank blocks that meeting. Incomplete recording files are excluded. Never concatenate alternate renditions or choose by length. The selected original is retained exactly as decoded UTF-8 text, including CRLF and a BOM. Other Zoom files remain untouched at their source.
+Group files by Zoom occurrence and date. Prefer one `TRANSCRIPT` VTT, then one other VTT, then one remaining transcript file. A tie at the best rank blocks that meeting. Incomplete recording files are excluded. Never concatenate alternate renditions or choose by length. The selected original is retained as standard base64 of its exact UTF-8 bytes, including CRLF and a BOM. Notion normalizes raw text, so the v2 original archive uses ASCII encoding; numbered canonical parts remain readable. Other Zoom files remain untouched at their source.
 
 VTT canonical text uses the existing cue parser: each cue becomes a timestamp at whole-second precision, a newline, and cue text. Voice tags become speaker labels. Formatting tags are removed, `&nbsp;` becomes a space, and cue whitespace is collapsed. Every nonempty cue remains in source order, including repeated cues. The original retains precise timestamps and formatting. Malformed timing lines, empty cues, and orphan speech block readiness. Header metadata and `NOTE`, `STYLE`, and `REGION` blocks are not spoken text. Plain text uses CR removal and outer trimming; a long untimestamped block is rejected rather than split into invented timestamps.
 
@@ -74,6 +78,9 @@ From the repository root, run `pnpm bootstrap:worktree`, then:
 ```sh
 pnpm --filter @create-something/halfdozen-zoom-transcript-sync check
 pnpm --filter @create-something/halfdozen-zoom-transcript-sync test
+pnpm --filter @create-something/halfdozen-zoom-transcript-sync test:runtime
 ```
 
 The synthetic suite covers long transcripts, exact reconstruction, partial failure and retry, uncertain writes, changed transcripts, repeated runs, duplicate blocks, rendition ties, and expired owners. SQLite-backed tests execute the D1 SQL locally. They do not prove provider behavior or successful live ingestion.
+
+Read the [latest local validation matrix](./VALIDATION.md) for the distinction between workerd/D1 execution, deterministic providers, original-head CI, and live acceptance.

@@ -2,6 +2,7 @@ import type { ParsedTranscript } from './types';
 
 // Product budgets, not Notion guarantees. Each artifact is a single bounded write.
 export const PART_CHAR_BUDGET = 6000;
+export const TRANSCRIPT_FORMAT = 'indexed-transcript-v2';
 const MAX_ARTIFACTS = 800;
 export type Block = Record<string, any>;
 export interface Artifact { key: string; title: string; chunks: string[] }
@@ -16,6 +17,24 @@ export interface TranscriptPlan {
 export async function hashText(text: string): Promise<string> {
   const hash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
   return Array.from(new Uint8Array(hash), byte => byte.toString(16).padStart(2, '0')).join('');
+}
+
+// Notion normalizes CRLF and a leading BOM in rich text. Preserve source bytes
+// with an ASCII representation; canonical parts remain readable transcript text.
+export function encodeOriginal(text: string): string {
+  const bytes = new TextEncoder().encode(text);
+  const chunks: string[] = [];
+  for (let i = 0; i < bytes.length; i += 8192) {
+    chunks.push(String.fromCharCode(...bytes.subarray(i, i + 8192)));
+  }
+  return btoa(chunks.join(''));
+}
+
+export function decodeOriginal(encoded: string): string {
+  const bytes = Uint8Array.from(atob(encoded), character => character.charCodeAt(0));
+  const text = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(bytes);
+  if (encodeOriginal(text) !== encoded) throw new Error('Noncanonical original encoding');
+  return text;
 }
 
 // Slice without trimming, whitespace normalization, or splitting surrogate pairs.
@@ -63,12 +82,13 @@ export async function planTranscript(parsed: ParsedTranscript): Promise<Transcri
     } else parts.push({ text: blocks[i]!, first: i, last: i });
   }
   if (parts.map(part => part.text).join('\n') !== canonical) throw new Error('Part reconstruction mismatch');
-  const version = await hashText(JSON.stringify(['indexed-transcript-v1', parsed.rawText, canonical]));
+  const version = await hashText(JSON.stringify([TRANSCRIPT_FORMAT, parsed.rawText, canonical]));
   const artifacts: Artifact[] = [];
-  // Preserve the selected original byte-for-byte as decoded UTF-8 text, including CRLF.
-  const originals = exactChunks(parsed.rawText, PART_CHAR_BUDGET);
+  const encodedOriginal = encodeOriginal(parsed.rawText);
+  if (decodeOriginal(encodedOriginal) !== parsed.rawText) throw new Error('Original is not valid UTF-8 text');
+  const originals = exactChunks(encodedOriginal, PART_CHAR_BUDGET);
   originals.forEach((text, i) => artifacts.push({
-    key: `original:${i + 1}`, title: `Original ${i + 1}/${originals.length}`, chunks: exactChunks(text),
+    key: `original:${i + 1}`, title: `Original UTF-8 base64 ${i + 1}/${originals.length}`, chunks: exactChunks(text),
   }));
   parts.forEach((part, i) => artifacts.push({
     key: `part:${i + 1}`,
@@ -80,7 +100,7 @@ export async function planTranscript(parsed: ParsedTranscript): Promise<Transcri
 }
 
 export function artifactMarker(version: string, artifact: Artifact): string {
-  return `Zoom indexed v1 | ${version} | ${artifact.key} | ${artifact.title}`;
+  return `Zoom indexed v2 | ${version} | ${artifact.key} | ${artifact.title}`;
 }
 
 export function textBlock(text: string, type = 'paragraph'): Block {
@@ -156,11 +176,12 @@ export async function writeIndexedTranscript(
     const text = children.map(blockText).join('');
     (artifact.key.startsWith('part:') ? reconstructed : originals).push(text);
   }
-  if (reconstructed.join('\n') !== plan.canonical || originals.join('') !== plan.original) {
+  if (reconstructed.join('\n') !== plan.canonical || decodeOriginal(originals.join('')) !== plan.original) {
     throw new Error('Read-back reconstruction mismatch');
   }
   const indexText = [
     `Version: ${plan.version}`,
+    `Format: ${TRANSCRIPT_FORMAT}; original encoding: UTF-8 base64`,
     `Canonical timestamp blocks: ${plan.blockCount}`,
     ...receipts.map(({ artifact, id }) => `${artifact.title}\nhttps://www.notion.so/${parent.replace(/-/g, '')}#${id.replace(/-/g, '')}`),
   ].join('\n');

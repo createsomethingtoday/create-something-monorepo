@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { DatabaseSync } from 'node:sqlite';
-import { planTranscript, writeIndexedTranscript, blockText, PART_CHAR_BUDGET, type Block, type WriteJournal } from '../src/indexed-transcript.ts';
+import { decodeOriginal, planTranscript, writeIndexedTranscript, blockText, PART_CHAR_BUDGET, type Block, type WriteJournal } from '../src/indexed-transcript.ts';
 import { INGESTION_SCHEMA, claimIngestion, selectRendition } from '../src/ingestion-state.ts';
 import { parseTranscript, selectCanonicalRendition } from '../src/zoom.ts';
 import { discoverTranscript, initSchema } from '../src/db.ts';
@@ -68,7 +68,7 @@ test('478 timestamp blocks reconstruct exactly across bounded parts and original
   assert.ok(parts.length > 11);
   assert.ok(parts.every(a => a.chunks.join('').length <= PART_CHAR_BUDGET));
   assert.equal(parts.map(a => a.chunks.join('')).join('\n'), parsed.plainText);
-  assert.equal(plan.artifacts.filter(a => a.key.startsWith('original:')).flatMap(a => a.chunks).join(''), raw);
+  assert.equal(decodeOriginal(plan.artifacts.filter(a => a.key.startsWith('original:')).flatMap(a => a.chunks).join('')), raw);
   const notion = new MemoryNotion();
   const journal = memoryJournal();
   await writeIndexedTranscript(notion, journal, 'parent', plan);
@@ -178,7 +178,7 @@ test('worker integration verifies readback, resumes failed writes, rechecks edit
   let downloads = 0;
   let created = false;
   const notion = new MemoryNotion();
-  const page = { id: 'parent', url: 'https://www.notion.so/parent', properties: {
+  const page = { created_time: '2026-10-23T12:00:00.000Z', id: 'parent', url: 'https://www.notion.so/parent', properties: {
     Item: { title: [{ plain_text: candidate.meetingTitle }] },
     Date: { date: { start: candidate.meetingDate } },
     'Source URL': { url: candidate.sourceUrl },
@@ -210,8 +210,8 @@ test('worker integration verifies readback, resumes failed writes, rechecks edit
     }
     throw new Error(`Unexpected test request: ${url}`);
   };
-  const env = { DB: db, NOTION_DATABASE_ID: 'database', NOTION_API_KEY: 'fake', ZOOM_ACCESS_TOKEN: 'fake' } as Env;
-  const message = { ...candidate, replay: false, runId: null };
+  const env = { INDEXED_INGESTION_NOT_BEFORE: '2026-10-23T00:00:00Z', DB: db, NOTION_DATABASE_ID: 'database', NOTION_API_KEY: 'fake', ZOOM_ACCESS_TOKEN: 'fake' } as Env;
+  const message = { ...candidate, rolloutCutoff: '2026-10-23T00:00:00.000Z', replay: false, runId: null };
   try {
     await assert.rejects(ingestionTestExports.processTranscriptMessage(env, message), /lost response/);
     assert.equal(sql.prepare('SELECT ready_version FROM transcript_ingestion').get()!.ready_version, null);
@@ -246,7 +246,7 @@ test('discovery invalidates a disappeared selected file in the scanned window', 
   const savedFetch = globalThis.fetch;
   globalThis.fetch = async () => Response.json({ meetings: [] });
   try {
-    await ingestionTestExports.executeDiscoveryRun({ DB: db, ZOOM_ACCESS_TOKEN: 'fake' } as Env, 'test');
+    await ingestionTestExports.executeDiscoveryRun({ INDEXED_INGESTION_NOT_BEFORE: '2026-10-23T00:00:00Z', DB: db, ZOOM_ACCESS_TOKEN: 'fake' } as Env, 'test');
     assert.equal(sql.prepare('SELECT ready_version FROM transcript_ingestion').get()!.ready_version, null);
   } finally { globalThis.fetch = savedFetch; }
 });

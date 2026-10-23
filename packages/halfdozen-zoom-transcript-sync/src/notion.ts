@@ -1,3 +1,4 @@
+import { atOrAfter, rolloutCutoff } from './rollout';
 import { writeIndexedTranscript, type TranscriptPlan, type WriteJournal } from './indexed-transcript';
 import type { Env, NotionPageSummary, NotionWriteResult, ParsedTranscript, TranscriptCandidate } from './types';
 
@@ -52,8 +53,12 @@ export async function syncTranscriptToNotion(
   journal: WriteJournal,
   existingPageHint?: { pageId: string; pageUrl: string | null } | null,
 ): Promise<NotionWriteResult> {
+  const cutoff = rolloutCutoff(env);
   const notion = createNotionTransport(env);
   const existing = await resolveExistingMeetingPage(notion, candidate, existingPageHint);
+  if (existing && !atOrAfter(existing.createdTime, cutoff)) {
+    throw new Error('Existing Notion page is outside the forward-only rollout boundary');
+  }
   const properties = buildPageProperties(env, candidate, parsedTranscript);
   await journal.assertOwner();
   let pageId: string;
@@ -279,6 +284,7 @@ function toPageSummary(page: PageObject): NotionPageSummary {
 
   return {
     id: page.id,
+    createdTime: typeof page.created_time === 'string' ? page.created_time : null,
     url: page.url ?? notionUrl(page.id),
     title,
     sourceUrl: page.properties?.['Source URL']?.url ?? null,

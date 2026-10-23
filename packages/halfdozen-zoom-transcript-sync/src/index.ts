@@ -1,3 +1,4 @@
+import { atOrAfter, ledgerAdmitted, rolloutCutoff } from './rollout';
 import { planTranscript } from './indexed-transcript';
 import { claimIngestion, meetingKey, selectRendition } from './ingestion-state';
 import {
@@ -25,8 +26,6 @@ const LOCK_TTL_SECONDS = 10 * 60;
 
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
-    await initSchema(env.DB);
-
     const url = new URL(request.url);
 
     if (url.pathname === '/health') {
@@ -38,6 +37,7 @@ export default {
         notion_runtime_connection_configured: Boolean(env.NOTION_RUNTIME_CONNECTION_REF?.trim()),
         sync_api_key_configured: Boolean(env.SYNC_API_KEY?.trim()),
         zoom_auth_mode: resolveZoomAuthMode(env),
+        indexed_ingestion_not_before: env.INDEXED_INGESTION_NOT_BEFORE ?? null,
       });
     }
 
@@ -81,6 +81,8 @@ export default {
       const authError = requireApiKey(request, env);
       if (authError) return authError;
 
+      rolloutCutoff(env);
+      await initSchema(env.DB);
       const trigger = 'manual';
       const runPromise = executeDiscoveryRun(env, trigger);
       ctx.waitUntil(runPromise);
@@ -91,14 +93,19 @@ export default {
       const authError = requireApiKey(request, env);
       if (authError) return authError;
 
+      const cutoff = rolloutCutoff(env);
       const dedupKey = decodeURIComponent(url.pathname.slice('/replay/'.length));
       const ledger = await getLedgerByDedupKey(env.DB, dedupKey);
       if (!ledger) {
         return json({ ok: false, error: `No ledger row found for ${dedupKey}` }, 404);
       }
 
+      if (!ledgerAdmitted(ledger, cutoff)) {
+        return json({ ok: false, error: 'Record is outside the forward-only rollout boundary' }, 409);
+      }
       await env.SYNC_QUEUE.send({
         runId: null,
+        rolloutCutoff: cutoff,
         replay: true,
         dedupKey: ledger.dedup_key,
         canonicalMeetingKey: ledger.canonical_meeting_key,
@@ -124,17 +131,19 @@ export default {
   },
 
   async scheduled(_event: ScheduledEvent, env: Env, _ctx: ExecutionContext): Promise<void> {
+    rolloutCutoff(env);
     await initSchema(env.DB);
     await executeDiscoveryRun(env, 'scheduled');
   },
 
   async queue(batch: MessageBatch<TranscriptQueueMessage>, env: Env): Promise<void> {
+    rolloutCutoff(env);
     await initSchema(env.DB);
 
     for (const message of batch.messages) {
       try {
-        await processTranscriptMessage(env, message.body);
-        if (message.body.runId) {
+        const outcome = await processTranscriptMessage(env, message.body);
+        if (outcome === 'processed' && message.body.runId) {
           await incrementRunCounter(env.DB, message.body.runId, 'synced_count');
         }
         message.ack();
@@ -162,6 +171,7 @@ export default {
 };
 
 async function executeDiscoveryRun(env: Env, trigger: string): Promise<SyncRunSummary | null> {
+  const cutoff = rolloutCutoff(env);
   const acquired = await acquireLock(env.DB, DISCOVERY_LOCK_ID, LOCK_TTL_SECONDS);
   if (!acquired) {
     console.log(`[${trigger}] skipped discovery because another run holds the lock`);
@@ -174,16 +184,23 @@ async function executeDiscoveryRun(env: Env, trigger: string): Promise<SyncRunSu
     const discovery = await listTranscriptCandidates(env);
     // Readiness is an observed snapshot. Invalidate the scanned window even when
     // a formerly selected recording disappears or loses transcript eligibility.
-    await env.DB.prepare(`UPDATE transcript_ingestion SET ready_version = NULL,
+    const tracked = await env.DB.prepare(`SELECT * FROM transcript_sync_ledger WHERE meeting_date BETWEEN ? AND ?`)
+      .bind(discovery.from, discovery.to).all<import('./types').LedgerRow>();
+    for (const row of tracked.results ?? []) {
+      if (!ledgerAdmitted(row, cutoff)) continue;
+      await env.DB.prepare(`UPDATE transcript_ingestion SET ready_version = NULL,
         index_block_id = NULL, verified_at = NULL, selected_key = 'unobserved', owner = NULL, expires_at = NULL
-      WHERE meeting_key IN (SELECT json_array(canonical_meeting_key, meeting_date)
-        FROM transcript_sync_ledger WHERE meeting_date BETWEEN ? AND ?)`)
-      .bind(discovery.from, discovery.to).run();
+      WHERE meeting_key = ?`)
+      .bind(meetingKey({ canonicalMeetingKey: row.canonical_meeting_key, meetingDate: row.meeting_date })).run();
+    }
     let queued = 0;
     let skipped = 0;
 
     const groups = new Map<string, TranscriptCandidate[]>();
     for (const candidate of discovery.candidates) {
+      if (!atOrAfter(candidate.startTime, cutoff)) { skipped++; continue; }
+      const prior = await getLedgerByDedupKey(env.DB, candidate.dedupKey);
+      if (prior && !ledgerAdmitted(prior, cutoff)) { skipped++; continue; }
       const key = meetingKey(candidate);
       groups.set(key, [...(groups.get(key) ?? []), candidate]);
     }
@@ -200,6 +217,7 @@ async function executeDiscoveryRun(env: Env, trigger: string): Promise<SyncRunSu
         await env.SYNC_QUEUE.send({
           ...candidate,
           runId,
+          rolloutCutoff: cutoff,
           replay: false,
         });
         await markLedgerEnqueued(env.DB, candidate.dedupKey);
@@ -237,13 +255,17 @@ async function executeDiscoveryRun(env: Env, trigger: string): Promise<SyncRunSu
   }
 }
 
-async function processTranscriptMessage(env: Env, payload: TranscriptQueueMessage): Promise<void> {
+async function processTranscriptMessage(env: Env, payload: TranscriptQueueMessage): Promise<'processed' | 'excluded'> {
+  const cutoff = rolloutCutoff(env);
+  if (payload.rolloutCutoff !== cutoff) return 'excluded';
   const ledger = await getLedgerByDedupKey(env.DB, payload.dedupKey);
   if (!ledger) {
     throw new Error(`No transcript ledger row found for ${payload.dedupKey}`);
   }
 
-  const key = meetingKey(payload);
+  if (!ledgerAdmitted(ledger, cutoff) || payload.canonicalMeetingKey !== ledger.canonical_meeting_key
+    || payload.meetingDate !== ledger.meeting_date) return 'excluded';
+  const key = meetingKey({ canonicalMeetingKey: ledger.canonical_meeting_key, meetingDate: ledger.meeting_date });
   // Use the latest discovered file URL, never the stale URL carried by a queued message.
   const current = {
     ...payload,
@@ -256,7 +278,7 @@ async function processTranscriptMessage(env: Env, payload: TranscriptQueueMessag
   };
   const selected = await env.DB.prepare(`SELECT selected_key FROM transcript_ingestion WHERE meeting_key = ?`)
     .bind(key).first<{ selected_key: string }>();
-  if (!selected || selected.selected_key !== payload.dedupKey) return;
+  if (!selected || selected.selected_key !== payload.dedupKey) return 'excluded';
   const lease = await claimIngestion(env.DB, key, payload.dedupKey);
   try {
     // Claim clears readiness before download, parse, or writes can fail.
@@ -264,7 +286,7 @@ async function processTranscriptMessage(env: Env, payload: TranscriptQueueMessag
     const parsedTranscript = parseTranscript(rawTranscript, current.transcriptFileExtension);
     const plan = await planTranscript(parsedTranscript);
     await lease.begin(plan.version);
-    const canonicalPage = await getCanonicalMeetingPage(env.DB, payload.canonicalMeetingKey, payload.meetingDate);
+    const canonicalPage = await getCanonicalMeetingPage(env.DB, current.canonicalMeetingKey, current.meetingDate);
     const notionWrite = await syncTranscriptToNotion(env, current, parsedTranscript, plan, lease, canonicalPage);
     if (!notionWrite.indexBlockId) throw new Error('Missing verified index receipt');
     // Detect edits made while the write was running before publishing readiness.
@@ -272,6 +294,7 @@ async function processTranscriptMessage(env: Env, payload: TranscriptQueueMessag
     if (latest !== rawTranscript) throw new Error('Transcript changed during ingestion; readiness withheld');
     await lease.ready(plan.version, notionWrite.pageId, notionWrite.indexBlockId);
     await markLedgerSynced(env.DB, payload.dedupKey, notionWrite.pageId, notionWrite.pageUrl, plan.version);
+    return 'processed';
   } finally {
     await lease.release();
   }

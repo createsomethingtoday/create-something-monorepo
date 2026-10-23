@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { DatabaseSync } from 'node:sqlite';
 import { artifactMarker, blockText, ensureArtifact, planTranscript, textBlock, type Block, type WriteJournal } from '../src/indexed-transcript.ts';
+import { decodeOriginal } from '../src/indexed-transcript.ts';
 import { claimIngestion, meetingKey, selectRendition } from '../src/ingestion-state.ts';
 import { discoverTranscript, initSchema } from '../src/db.ts';
 import { ingestionTestExports } from '../src/index.ts';
@@ -107,7 +108,7 @@ test('independent: repeated cues remain distinct and original text preserves CRL
   const plan = await planTranscript(parseTranscript(raw, 'vtt'));
   assert.equal(plan.blockCount, 2);
   assert.equal(plan.canonical, '00:00\nSame 😀\n00:01\nSame 😀');
-  assert.equal(plan.artifacts.filter(a => a.key.startsWith('original:')).flatMap(a => a.chunks).join(''), raw);
+  assert.equal(decodeOriginal(plan.artifacts.filter(a => a.key.startsWith('original:')).flatMap(a => a.chunks).join('')), raw);
   assert.equal(blockText(textBlock(artifactMarker(plan.version, artifact))), artifactMarker(plan.version, artifact));
 });
 
@@ -129,7 +130,7 @@ test('independent: disappearance discovery revokes in-flight and queued old sele
   const candidate: TranscriptCandidate = {
     dedupKey: 'gone::primary', canonicalMeetingKey: 'gone', meetingId: '1', meetingUuid: 'gone',
     meetingTitle: 'Disappeared synthetic recording', meetingDate: new Date().toISOString().slice(0, 10),
-    startTime: null, sourceUrl: null, originalSourceUrl: null, transcriptDownloadUrl: 'https://example.test/gone',
+    startTime: new Date().toISOString(), sourceUrl: null, originalSourceUrl: null, transcriptDownloadUrl: 'https://example.test/gone',
     transcriptFileId: 'primary', transcriptFileType: 'TRANSCRIPT', transcriptFileExtension: 'vtt', hostId: null,
   };
   await initSchema(db);
@@ -144,7 +145,7 @@ test('independent: disappearance discovery revokes in-flight and queued old sele
     return Response.json({ meetings: [], next_page_token: '' });
   };
   try {
-    await ingestionTestExports.executeDiscoveryRun({ DB: db, ZOOM_ACCESS_TOKEN: 'synthetic' } as Env, 'independent-test');
+    await ingestionTestExports.executeDiscoveryRun({ INDEXED_INGESTION_NOT_BEFORE: new Date(Date.now() - 60_000).toISOString(), DB: db, ZOOM_ACCESS_TOKEN: 'synthetic' } as Env, 'independent-test');
     await assert.rejects(oldLease.ready('old-version', 'page', 'index'), /ownership lost/i);
     await oldLease.release();
     await assert.rejects(claimIngestion(db, key, candidate.dedupKey), /no longer selected|busy/i);
