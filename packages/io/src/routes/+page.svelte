@@ -105,6 +105,7 @@
 
 <div class="io-research-home">
   <section class="research-opening" aria-labelledby="research-title">
+    <div class="research-opening-copy">
     <p class="research-eyebrow">CREATE SOMETHING .io / Research + field evidence</p>
     <h1 id="research-title">Research for automation you can defend.</h1>
     <p class="research-lede">
@@ -116,7 +117,8 @@
       >
       <a class="research-action" href="/experiments">Browse Experiments</a>
     </div>
-    <ResearchScene scene="ground-compare-before-claim" caption="Two agents compare a material against its reference before accepting the fit." />
+    </div>
+    <ResearchScene sizes="(min-width: 1200px) 600px, (min-width: 960px) 52vw, 94vw" scene="ground-compare-before-claim" caption="Two agents compare a material against its reference before accepting the fit." />
     <dl class="research-metrics">
       {#each proofMetrics as metric}
         <div>

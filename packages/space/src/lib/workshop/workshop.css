@@ -196,3 +196,7 @@
 .workshop-shell .nav-clear .nav-cta {
   color: var(--color-operator-background);
 }
+/* Keep search reachable beside mobile navigation, away from reading/form content. */
+@media (max-width: 768px) {
+ body:has(.workshop-shell) .mobile-search-button { top: 10px; bottom: auto; right: 80px; width: 44px; height: 44px; z-index: 41; border-radius: var(--radius-operator-panel); box-shadow: none; background: var(--color-operator-secondary); color: var(--color-operator-foreground); }
+}

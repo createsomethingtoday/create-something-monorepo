@@ -15,25 +15,30 @@
   ogImage={data.project.image}
 />
 <article class="workshop">
-  <header class="wrap section">
-    <a class="text-link" href="/projects">← All projects</a>
-    <p class="eyebrow category">
-      {data.project.kind} / {data.project.distribution}
-    </p>
-    <h1>{data.project.name}</h1>
-    <p class="lead summary">{data.project.summary}</p>
+  <header class="wrap section story-opening">
+    <div>
+      <a class="text-link" href="/projects">← All projects</a>
+      <p class="eyebrow category">
+        {data.project.kind} / {data.project.distribution}
+      </p>
+      <h1>{data.project.name}</h1>
+      <p class="lead summary">{data.project.summary}</p>
+    </div>
+    <WorkshopScene scene={projectScene(data.project.slug)} eager />
   </header>
   <section class="wrap detail" aria-label="Project overview">
-    <WorkshopScene scene={projectScene(data.project.slug)} eager />
     <div class="instructions">
-      <p class="eyebrow">Put it to work</p>
-      <h2>Start here.</h2>
-      <p class="lead">{data.project.usage}</p>
-      <div class="actions">
-        <a class="primary" href={data.project.install ?? data.project.source}
-          >{data.project.install ? 'Installation & releases' : 'Source & instructions'} ↗</a
-        >{#if data.project.install}<a class="text-link" href={data.project.source}>View source ↗</a
-          >{/if}
+      <div>
+        <p class="eyebrow">Put it to work</p>
+        <h2>Start here.</h2>
+        <p class="lead">{data.project.usage}</p>
+        <div class="actions">
+          <a class="primary" href={data.project.install ?? data.project.source}
+            >{data.project.install ? 'Installation & releases' : 'Source & instructions'} ↗</a
+          >{#if data.project.install}<a class="text-link" href={data.project.source}
+              >View source ↗</a
+            >{/if}
+        </div>
       </div>
       <div class="limit">
         <h3>Before you begin</h3>
@@ -67,7 +72,7 @@
   .summary {
     margin-top: 1.5rem;
   }
-  .detail {
+  .instructions {
     display: grid;
     grid-template-columns: 1.15fr 1fr;
     gap: 3rem;
@@ -77,7 +82,7 @@
     margin: 1rem 0;
   }
   .limit {
-    margin-top: 2.5rem;
+    margin-top: 0;
     border-top: 1px solid var(--color-performance-line);
     padding: var(--space-performance-md);
     background: var(--color-performance-panel);
@@ -103,7 +108,7 @@
     border-bottom: 1px solid var(--color-performance-line);
   }
   @media (max-width: 800px) {
-    .detail,
+    .instructions,
     .continuation {
       grid-template-columns: 1fr;
       gap: 2rem;

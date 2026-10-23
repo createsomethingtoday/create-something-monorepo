@@ -128,7 +128,7 @@
 			</p>
 		</div>
 
-		<ResearchScene scene="editorial-experiments-isolated-sandbox" caption="An agent tests a mechanism inside a contained sandbox." />
+		<ResearchScene sizes="(min-width: 1200px) 600px, (min-width: 960px) 52vw, 94vw" scene="editorial-experiments-isolated-sandbox" caption="An agent tests a mechanism inside a contained sandbox." />
 
 		<!-- Search & Filter Controls -->
 		<div class="controls-container">

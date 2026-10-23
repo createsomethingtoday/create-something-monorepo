@@ -10,6 +10,7 @@
     <WorkshopScene
       scene={projectScene(project.slug)}
       caption={false}
+      compact
       sizes="(max-width: 640px) calc(100vw - 64px), 40vw"
     />
   </div>

@@ -529,3 +529,37 @@
 .layout-root.io-research-shell[data-canon-palette='operator'] .property-funnel__button--secondary:hover {
   color: var(--color-operator-background);
 }
+
+/* Image and orientation share the opening; archives keep controls within reach. */
+@media (min-width: 960px) {
+  .layout-root.io-research-shell[data-canon-palette='operator'] .research-opening {
+    display: grid;
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    grid-template-rows: auto auto;
+    column-gap: clamp(2rem, 4vw, 4rem);
+    padding-top: 48px;
+  }
+  .io-research-home .research-opening-copy { grid-column: 1; align-self: center; }
+  .io-research-home .research-opening > .research-scene { grid-column: 2; grid-row: 1; margin-top: 0; align-self: start; }
+  .io-research-home .research-opening > .research-metrics { grid-column: 1 / -1; }
+  .layout-root.io-research-shell[data-canon-palette='operator'] .research-opening h1 { font-size: clamp(2.5rem, 4vw, 4rem); }
+  .io-research-shell .research-index-inner { display: grid; grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr); align-items: center; gap: 24px 48px; }
+  .io-research-shell .research-index-inner > .research-scene { grid-column: 2; grid-row: 1; margin-top: 0; }
+  .io-research-shell .research-index-inner > .controls-container { grid-column: 1 / -1; }
+}
+.io-research-shell .research-index-inner > .research-scene { margin-bottom: 24px; }
+.io-research-shell .research-artifact:focus-visible { outline-offset: 4px; }
+
+/* Reference interiors share the same material orientation without interrupting reading. */
+.io-research-shell .io-reference-opening { padding-block: 32px; border-bottom: 1px solid var(--color-performance-line); }
+.io-research-shell .io-reference-opening > .research-scene { margin-top: 24px; }
+.io-research-shell .io-reference-opening .io-reference-copy { min-width: 0; }
+.io-research-shell .io-method-opening { padding-top: 48px; }
+.io-research-shell .archive-hero .research-scene { max-width: 720px; margin-block: 24px; }
+@media (min-width: 960px) {
+ .io-research-shell .io-reference-opening { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 48px; align-items: center; text-align: left; }
+ .io-research-shell .io-reference-opening > .research-scene { margin: 0; }
+}
+@media (max-width: 768px) {
+ .io-research-shell .mobile-search-button { top: 10px; bottom: auto; right: 80px; width: 44px; height: 44px; z-index: 41; border-radius: var(--radius-operator-panel); box-shadow: none; }
+}

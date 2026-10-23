@@ -39,13 +39,15 @@
 
 <div class="readiness-page">
 	<header class="readiness-page__hero">
+		<div class="readiness-page__intro">
 		<p>CREATE SOMETHING .ltd · Workflow readiness</p>
 		<h1>Find the boundary before work crosses it.</h1>
 		<p>
 			Answer five questions about one recurring workflow. This stays in your browser; it is a
 			quick way to see what must be clear before a team or agent can run the work with trust.
 		</p>
-		<LibraryScene scene="permission-two-separate-gates" caption="Access and authority are separate checks before work continues." />
+		</div>
+		<LibraryScene paired scene="permission-two-separate-gates" caption="Access and authority are separate checks before work continues." />
 	</header>
 
 	<section class="readiness-page__assessment" aria-labelledby="assessment-title">
@@ -133,7 +135,7 @@
 		color: var(--color-performance-panel, #fff);
 	}
 
-	.readiness-page__hero > p:first-child,
+	.readiness-page__intro > p:first-child,
 	.readiness-page__progress,
 	.readiness-page__result > p:first-child {
 		margin: 0;
@@ -164,7 +166,7 @@
 		font-size: clamp(2rem, 4.5vw, 4.4rem);
 	}
 
-	.readiness-page__hero > p:last-child {
+	.readiness-page__intro > p:last-child {
 		max-width: 43rem;
 		margin: 1.5rem 0 0;
 		color: rgba(255, 255, 255, 0.72);

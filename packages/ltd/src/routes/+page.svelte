@@ -82,7 +82,7 @@
 		</p>
 	</div>
 
-	<PerformanceCardGrid items={playbookCards} columns={3} ariaLabel="Start with a playbook" />
+	<PerformanceCardGrid items={playbookCards} columns={2} ariaLabel="Start with a playbook" />
 </section>
 
 <section class="opposition" aria-labelledby="opposition-title">

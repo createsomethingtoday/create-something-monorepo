@@ -59,7 +59,7 @@
 		</p>
 	</div>
 
-	<PerformanceCardGrid items={playbookCards} columns={3} ariaLabel="Operator playbooks" />
+	<PerformanceCardGrid items={playbookCards} columns={2} ariaLabel="Operator playbooks" />
 </section>
 
 <section class="playbook-note" aria-labelledby="playbook-note-title">

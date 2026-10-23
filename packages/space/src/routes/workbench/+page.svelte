@@ -185,6 +185,9 @@
 </div>
 
 <style>
+  .space-workbench > header {
+    padding-block: clamp(3rem, 6vw, 6rem);
+  }
   .runtime-explanation {
     margin-top: 2rem;
     border: 1px solid var(--color-performance-line);

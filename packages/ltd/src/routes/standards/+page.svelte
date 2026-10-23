@@ -80,6 +80,7 @@
 	]}
 />
 
+<div class="library-standard-opening">
 <PerformancePageSection
 	variant="hero"
 	titleLevel="h1"
@@ -89,8 +90,7 @@
 	ariaLabel="The Canon standards opening"
 />
 
-<div class="library-standard-scene">
-	<LibraryScene scene="proof-preserve-the-sequence" caption="Keep the rule and its evidence together." />
+	<LibraryScene paired scene="proof-preserve-the-sequence" caption="Keep the rule and its evidence together." />
 </div>
 
 <PerformanceNarrativeStage

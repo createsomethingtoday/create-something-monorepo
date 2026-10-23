@@ -126,7 +126,7 @@
 			</p>
 		</div>
 
-		<ResearchScene scene="brief-evidence-and-unknowns" caption="An agent separates the observed evidence from the part still unknown." />
+		<ResearchScene sizes="(min-width: 1200px) 600px, (min-width: 960px) 52vw, 94vw" scene="brief-evidence-and-unknowns" caption="An agent separates the observed evidence from the part still unknown." />
 
 		<!-- Search & Filter Controls -->
 		<div class="controls-container">
@@ -232,7 +232,7 @@
 	</div>
 </section>
 
-<main class="papers-page">
+<div class="papers-page">
 
 	{#if resultCount > 0}
 		<section class="papers-grid highlight-flex">
@@ -325,7 +325,7 @@
 			</button>
 		</div>
 	{/if}
-</main>
+</div>
 
 <style>
 	/* Hero Section */

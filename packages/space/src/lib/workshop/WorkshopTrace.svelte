@@ -14,7 +14,7 @@
       Find a tool <span aria-hidden="true">→</span> Inspect the source
       <span aria-hidden="true">→</span> Make it useful
     </p>
-    <button type="button" onclick={() => (paused = !paused)}
+    <button type="button" aria-pressed={paused} onclick={() => (paused = !paused)}
       >{paused ? 'Play motion' : 'Pause motion'}</button
     >
   </div>
