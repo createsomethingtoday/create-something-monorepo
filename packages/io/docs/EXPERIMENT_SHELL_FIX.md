@@ -2,6 +2,8 @@
 
 The public shell policy previously matched only the dynamic experiment template. All 17 concrete experiment pages now share the Canon research palette, navigation and type. Nested experiment endpoints, auth, account and transaction surfaces remain excluded. Simulations, research content and semantic data colors are preserved.
 
+The original SVG Living Arena also resolves its local legacy brand accent to a neutral foreground, restoring its clipped-gradient title without altering semantic data colors.
+
 The Living Arena GPU page replaces undefined `--color-accent` / `--color-accent-rgb` brand references with defined neutral performance tokens; the badge is dark text on a light neutral surface. Agent count and simulation seed inputs have accessible names.
 
 ## Validation
