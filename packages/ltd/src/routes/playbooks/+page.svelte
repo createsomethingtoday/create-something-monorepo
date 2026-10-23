@@ -1,4 +1,5 @@
 <script lang="ts">
+	import LibraryScene from '$lib/components/LibraryScene.svelte';
 	import {
 		Button,
 		PerformanceCardGrid,
@@ -38,6 +39,8 @@
 			<Button href="/canon" variant="secondary">Why this works</Button>
 		</div>
 	</div>
+	<LibraryScene paired scene="about-careful-working-notes" caption="A playbook gives people and agents the same working picture." />
+
 	<ul class="ltd-operator-hero__proof" aria-label="The operating sequence">
 		<li><span>01 / Start</span><strong>One workflow</strong></li>
 		<li><span>02 / Name</span><strong>One owner</strong></li>

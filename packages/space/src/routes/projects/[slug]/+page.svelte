@@ -1,4 +1,7 @@
 <script lang="ts">
+  import WorkshopScene from '$lib/workshop/WorkshopScene.svelte';
+  import WorkshopTrace from '$lib/workshop/WorkshopTrace.svelte';
+  import { projectScene } from '$lib/workshop/scenes';
   import { SEO } from '@create-something/canon';
   import type { PageData } from './$types';
   import '$lib/workshop/workshop.css';
@@ -21,15 +24,7 @@
     <p class="lead summary">{data.project.summary}</p>
   </header>
   <section class="wrap detail" aria-label="Project overview">
-    <figure>
-      <img
-        src={data.project.image}
-        alt="A material study of reusable ivory and machined-metal instruments."
-        width="1536"
-        height="1024"
-      />
-      <figcaption>Conceptual material study. See the source for the working software.</figcaption>
-    </figure>
+    <WorkshopScene scene={projectScene(data.project.slug)} eager />
     <div class="instructions">
       <p class="eyebrow">Put it to work</p>
       <h2>Start here.</h2>
@@ -50,6 +45,7 @@
       </div>
     </div>
   </section>
+  <div class="wrap section"><WorkshopTrace /></div>
   <footer class="wrap section continuation">
     <div>
       <p class="eyebrow">Keep exploring</p>
@@ -76,18 +72,6 @@
     grid-template-columns: 1.15fr 1fr;
     gap: 3rem;
     align-items: start;
-  }
-  figure {
-    margin: 0;
-  }
-  img {
-    width: 100%;
-    height: auto;
-  }
-  figcaption {
-    font-size: 0.75rem;
-    color: var(--color-performance-fg-secondary);
-    margin-top: 0.75rem;
   }
   h2 {
     margin: 1rem 0;

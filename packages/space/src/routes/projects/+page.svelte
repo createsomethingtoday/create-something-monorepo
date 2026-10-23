@@ -1,4 +1,5 @@
 <script lang="ts">
+  import WorkshopScene from '$lib/workshop/WorkshopScene.svelte';
   import { SEO } from '@create-something/canon';
   import { page } from '$app/stores';
   import { goto } from '$app/navigation';
@@ -18,16 +19,19 @@
   title="Projects | CREATE SOMETHING .space"
   description="Browse tools, workflows, skills, plugins, and reusable code from the CREATE SOMETHING public workshop."
   propertyName="space"
-  ogImage="/images/workshop/open-workshop.webp"
+  ogImage="/images/workshop/stories/tool-fit-without-forcing.webp"
 />
 <div class="workshop">
-  <header class="section wrap">
-    <p class="eyebrow">The collection</p>
-    <h1>Find your<br />next useful thing.</h1>
-    <p class="lead">
-      Complete tools and small parts worth reusing. Each entry links to its source, instructions,
-      and boundaries.
-    </p>
+  <header class="section wrap story-opening">
+    <div>
+      <p class="eyebrow">The collection</p>
+      <h1>Find your<br />next useful thing.</h1>
+      <p class="lead">
+        Complete tools and small parts worth reusing. Each entry links to its source, instructions,
+        and boundaries.
+      </p>
+    </div>
+    <WorkshopScene scene="fit" eager />
   </header>
   <section class="wrap collection" aria-label="Project collection">
     <form action="/projects" method="GET" class="filters">

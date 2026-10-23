@@ -1,4 +1,6 @@
 <script lang="ts">
+  import ResearchTrace from '$lib/components/ResearchTrace.svelte';
+  import ResearchScene from '$lib/components/ResearchScene.svelte';
   import type { PageData } from './$types';
   import { PropertyFunnel, SEO, type PerformanceDecisionItem } from '@create-something/canon';
   import type { Paper } from '@create-something/canon/types';
@@ -106,9 +108,7 @@
     <p class="research-eyebrow">CREATE SOMETHING .io / Research + field evidence</p>
     <h1 id="research-title">Research for automation you can defend.</h1>
     <p class="research-lede">
-      CREATE SOMETHING .io turns experiments, papers, and field notes into a usable research layer
-      for operators. The goal is evidence you can carry into the next build, review, or production
-      decision.
+      Experiments, papers, and field notes. Inspect the method and evidence before carrying a pattern into your next build.
     </p>
     <div class="research-actions">
       <a class="research-action research-action-primary" href="/papers"
@@ -116,6 +116,7 @@
       >
       <a class="research-action" href="/experiments">Browse Experiments</a>
     </div>
+    <ResearchScene scene="ground-compare-before-claim" caption="Two agents compare a material against its reference before accepting the fit." />
     <dl class="research-metrics">
       {#each proofMetrics as metric}
         <div>
@@ -125,6 +126,8 @@
       {/each}
     </dl>
   </section>
+
+  <ResearchTrace />
 
   <section class="research-collection" aria-labelledby="featured-title">
     <div class="research-section-heading">
@@ -179,9 +182,12 @@
           <p class="research-eyebrow">0{index + 1} / {decision.label} · {decision.summary}</p>
           <h3>{decision.title}</h3>
           <p>{decision.detail}</p>
+          <details>
+            <summary>Evidence to inspect</summary>
           <ul>
             {#each decision.evidence ?? [] as item}<li>{item}</li>{/each}
           </ul>
+          </details>
           <p class="research-receipts">{decision.receipts?.join(' / ')}</p>
           <div class="research-actions">
             {#each decision.actions ?? [] as action}<a href={action.href}

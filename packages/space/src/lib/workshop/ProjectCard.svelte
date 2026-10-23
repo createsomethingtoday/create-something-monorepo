@@ -1,11 +1,17 @@
 <script lang="ts">
+  import WorkshopScene from './WorkshopScene.svelte';
+  import { projectScene } from './scenes';
   import type { WorkshopProject } from './catalog';
   let { project, index = 0 }: { project: WorkshopProject; index?: number } = $props();
 </script>
 
 <a class="project-card" href={`/projects/${project.slug}`}>
   <div class="project-card__image">
-    <img src={project.image} alt="" width="1536" height="1024" loading="lazy" />
+    <WorkshopScene
+      scene={projectScene(project.slug)}
+      caption={false}
+      sizes="(max-width: 640px) calc(100vw - 64px), 40vw"
+    />
   </div>
   <div class="project-card__meta">
     <span>{String(index + 1).padStart(2, '0')} / {project.kind}</span><span
@@ -28,18 +34,12 @@
     color: inherit;
     text-decoration: none;
   }
-  .project-card:hover { background: var(--color-performance-court); }
+  .project-card:hover {
+    background: var(--color-performance-court);
+  }
   .project-card__image {
-    display: none;
-  }
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform var(--duration-performance-micro) ease;
-  }
-  a:hover img {
-    transform: scale(1.025);
+    display: block;
+    margin: -1rem -1rem 1.5rem;
   }
   .project-card__meta {
     display: flex;
@@ -66,13 +66,5 @@
   a:focus-visible {
     outline: 3px solid var(--color-performance-signal);
     outline-offset: 8px;
-  }
-  @media (prefers-reduced-motion: reduce) {
-    img {
-      transition: none;
-    }
-    a:hover img {
-      transform: none;
-    }
   }
 </style>

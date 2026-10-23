@@ -136,3 +136,63 @@
 .workshop .body {
   padding-block: 0;
 }
+
+/* PR2045's dark material field, scoped to public workshop routes only. */
+.workshop-shell {
+  --color-performance-paper: var(--color-operator-background);
+  --color-performance-panel: var(--color-operator-panel);
+  --color-performance-court: var(--color-operator-secondary);
+  --color-performance-ink: var(--color-operator-foreground);
+  --color-performance-muted: var(--color-operator-muted);
+  --color-performance-fg-secondary: var(--color-operator-muted);
+  --color-performance-line: var(--color-operator-border);
+  --color-performance-line-strong: var(--color-operator-input-border);
+  --color-performance-shell-surface: var(--color-operator-background);
+  --color-performance-shell-surface-secondary: var(--color-operator-secondary);
+  --color-performance-shell-surface-tertiary: var(--color-operator-secondary);
+  --color-performance-shell-surface-hover: var(--color-operator-hover);
+  --color-performance-bg-pure: var(--color-operator-background);
+  --color-performance-bg-elevated: var(--color-operator-panel);
+  --color-performance-fg-primary: var(--color-operator-foreground);
+  --radius-operator-panel: 2px;
+  --radius-performance-md: 2px;
+  --radius-operator-control: 2px;
+  color: var(--color-operator-foreground);
+}
+.workshop-shell nav img[src*='-black.svg'] {
+  filter: invert(1);
+}
+.workshop h1 {
+  font-size: clamp(2.8rem, 5.5vw, 5rem);
+}
+.workshop h2 {
+  font-size: clamp(1.8rem, 3.2vw, 3rem);
+}
+.workshop .section {
+  padding-block: clamp(3rem, 6vw, 6rem);
+}
+.workshop .story-opening {
+  display: grid;
+  grid-template-columns: 0.85fr 1.15fr;
+  align-items: center;
+  gap: clamp(2rem, 5vw, 5rem);
+}
+.workshop .story-opening .lead {
+  margin-top: 1.5rem;
+  color: var(--color-performance-fg-secondary);
+}
+.workshop .story-opening h1 {
+  margin-block: 1.5rem;
+}
+@media (max-width: 800px) {
+  .workshop .story-opening {
+    grid-template-columns: 1fr;
+  }
+}
+.workshop-shell .nav-clear.nav-fixed {
+  background: var(--color-operator-background);
+  border-bottom: 1px solid var(--color-operator-border);
+}
+.workshop-shell .nav-clear .nav-cta {
+  color: var(--color-operator-background);
+}

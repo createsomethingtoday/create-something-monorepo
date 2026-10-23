@@ -1,4 +1,5 @@
 <script lang="ts">
+	import LibraryScene from '$lib/components/LibraryScene.svelte';
 	import { Button, SEO } from '@create-something/canon';
 	import {
 		assessWorkflowReadiness,
@@ -44,6 +45,7 @@
 			Answer five questions about one recurring workflow. This stays in your browser; it is a
 			quick way to see what must be clear before a team or agent can run the work with trust.
 		</p>
+		<LibraryScene scene="permission-two-separate-gates" caption="Access and authority are separate checks before work continues." />
 	</header>
 
 	<section class="readiness-page__assessment" aria-labelledby="assessment-title">

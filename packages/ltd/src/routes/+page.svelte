@@ -1,4 +1,5 @@
 <script lang="ts">
+	import LibraryScene from '$lib/components/LibraryScene.svelte';
 	import {
 		Button,
 		PerformanceCardGrid,
@@ -61,6 +62,8 @@
 			<Button href="/readiness" variant="secondary">Assess a workflow</Button>
 		</div>
 	</div>
+	<LibraryScene paired scene="editorial-workflow-library-tool-drawers-continuity-v2" caption="Keep a useful operating rule close to the work." />
+
 	<ul class="ltd-operator-hero__proof" aria-label="The operating sequence">
 		<li><span>01 / Start</span><strong>One workflow</strong></li>
 		<li><span>02 / Name</span><strong>One owner</strong></li>

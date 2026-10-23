@@ -1,5 +1,7 @@
 <script lang="ts">
   import { SEO } from '@create-something/canon';
+  import WorkshopScene from '$lib/workshop/WorkshopScene.svelte';
+  import WorkshopTrace from '$lib/workshop/WorkshopTrace.svelte';
   import ProjectCard from '$lib/workshop/ProjectCard.svelte';
   import { projects, workbenchTools } from '$lib/workshop/catalog';
   import '$lib/workshop/workshop.css';
@@ -8,7 +10,7 @@
 <SEO
   title="The Public Workshop | CREATE SOMETHING .space"
   description="Tools, workflows, skills, and building blocks from CREATE SOMETHING. Find something useful, inspect the source, and make it your own."
-  ogImage="/images/workshop/open-workshop.webp"
+  ogImage="/images/workshop/stories/products-workbench-paths-continuity-v2.webp"
   propertyName="space"
 />
 <div class="workshop">
@@ -27,6 +29,7 @@
         >
       </div>
     </div>
+    <WorkshopScene scene="workshop" eager />
   </section>
   <section class="section wrap" aria-labelledby="selected-title">
     <div class="section-head">
@@ -42,10 +45,6 @@
           {index}
         />{/each}
     </div>
-    <figure class="material-study">
-      <img src="/images/workshop/open-workshop.webp" alt="Ivory modules lift from a machined docking rail, a material study of tools made for reuse." width="1536" height="1024" loading="lazy" />
-      <figcaption class="eyebrow">Study 01 / Made to be taken apart</figcaption>
-    </figure>
   </section>
   <section class="workbench section" aria-labelledby="workbench-title">
     <div class="wrap workbench__grid">
@@ -69,6 +68,7 @@
       </div>
     </div>
   </section>
+  <div class="wrap"><WorkshopTrace /></div>
   <section class="section wrap closing" aria-labelledby="closing-title">
     <p class="eyebrow">03 / In good company</p>
     <h2 id="closing-title">Use the work.<br />Help it get better.</h2>
@@ -87,53 +87,32 @@
 
 <style>
   .opening {
-    display: block;
-    padding: 0;
-    border-bottom: 1px solid var(--color-performance-line);
-    background: var(--color-performance-paper);
-    color: var(--color-performance-ink);
+    width: min(1440px, calc(100% - 2 * var(--space-performance-lg)));
+    margin-inline: auto;
+    display: grid;
+    grid-template-columns: 0.8fr 1.2fr;
+    align-items: center;
+    gap: clamp(2rem, 5vw, 6rem);
+    padding-block: clamp(2.5rem, 6vw, 6rem);
   }
   .opening__copy {
-    width: min(1280px, calc(100% - 2 * var(--space-performance-lg)));
-    margin-inline: auto;
-    padding: clamp(1.75rem, 4vw, 3rem) 0;
+    padding-block: 1rem;
   }
   .opening .eyebrow {
-    color: var(--color-performance-muted);
-    margin-bottom: 0.75rem;
+    margin-bottom: 1.5rem;
+    color: var(--color-performance-fg-secondary);
   }
   .opening .lead {
-    margin-top: 1rem;
-    color: var(--color-performance-muted);
-    max-width: 42rem;
+    margin-top: 1.5rem;
+    color: var(--color-performance-fg-secondary);
+    max-width: 30rem;
   }
-  .opening .primary {
-    background: var(--color-performance-ink);
-    color: var(--color-performance-paper);
-  }
-  .material-study {
-    position: relative;
-    min-width: 0;
-    margin: 1.5rem 0 0;
-    max-width: 38rem;
-  }
-  .material-study img {
-    width: 100%;
-    height: auto;
-    max-height: 15rem;
-    object-fit: cover;
-    border-radius: 8px;
-  }
-  figcaption {
-    position: absolute;
-    bottom: 1.5rem;
-    left: 1.5rem;
-    background: var(--color-performance-paper);
-    padding: 0.5rem 0.75rem;
-    margin: 0 !important;
+  .opening :global(h1) {
+    font-size: clamp(3rem, 5.7vw, 5.7rem);
   }
   .workbench {
-    background: var(--color-performance-court, #e6e6e0);
+    background: var(--color-performance-panel);
+    border-block: 1px solid var(--color-performance-line);
   }
   .workbench__grid {
     display: grid;
@@ -148,12 +127,12 @@
     display: flex;
     justify-content: space-between;
     gap: 1rem;
-    padding: var(--space-performance-sm);
+    padding: 1.5rem 0.25rem;
     border-bottom: 1px solid var(--color-performance-line-strong);
     text-decoration: none;
   }
   .tool-list a:hover {
-    background: var(--color-performance-paper);
+    background: var(--color-performance-court);
   }
   .tool-list a:first-child {
     border-top: 1px solid var(--color-performance-line-strong);
@@ -172,9 +151,10 @@
     max-width: 1280px;
   }
   @media (max-width: 900px) {
-    .opening__copy {
+    .opening {
       width: calc(100% - 2 * var(--space-performance-sm));
-      padding: 1.5rem 0;
+      grid-template-columns: 1fr;
+      gap: 2rem;
     }
     .workbench__grid {
       grid-template-columns: 1fr;

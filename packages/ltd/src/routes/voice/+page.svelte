@@ -1,4 +1,5 @@
 <script lang="ts">
+	import LibraryScene from '$lib/components/LibraryScene.svelte';
   import {
     PerformanceNarrativeStage,
     SEO,
@@ -73,6 +74,7 @@
       Say what the reader can inspect, decide, approve, or stop. Cut the language that hides the
       work.
     </p>
+    <LibraryScene scene="about-careful-working-notes" caption="Keep the instruction clear enough for the next person to act." />
   </div>
 </section>
 

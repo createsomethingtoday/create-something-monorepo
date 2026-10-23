@@ -1,4 +1,5 @@
 <script lang="ts">
+	import LibraryScene from '$lib/components/LibraryScene.svelte';
 	import {
 		PerformancePageSection,
 		PerformanceNarrativeStage,
@@ -87,6 +88,10 @@
 	description="Codified criteria for evaluating pages, workflows, experiments, and deliverables. The reader should see the rule, the proof, and the next action."
 	ariaLabel="The Canon standards opening"
 />
+
+<div class="library-standard-scene">
+	<LibraryScene scene="proof-preserve-the-sequence" caption="Keep the rule and its evidence together." />
+</div>
 
 <PerformanceNarrativeStage
 	id="standards-operating-story"

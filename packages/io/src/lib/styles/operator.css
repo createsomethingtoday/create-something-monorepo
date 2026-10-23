@@ -505,3 +505,27 @@
 :is(html, body):has(.io-research-shell[data-canon-palette='operator'])::-webkit-scrollbar-thumb {
   background-color: GrayText;
 }
+
+/* Keep the shared handoff legible when this property opts into the dark palette. */
+.layout-root.io-research-shell[data-canon-palette='operator'] .property-funnel__button--primary {
+  color: var(--color-operator-background);
+  background: var(--color-operator-foreground);
+  border-color: var(--color-operator-foreground);
+}
+.layout-root.io-research-shell[data-canon-palette='operator'] .property-funnel__button--primary:hover {
+  color: var(--color-operator-foreground);
+  background: var(--color-operator-secondary);
+}
+.layout-root.io-research-shell[data-canon-palette='operator'] .research-opening h1 {
+  max-width: 17ch;
+  font-size: clamp(2.5rem, 5.5vw, 4.75rem);
+  line-height: 1.06;
+  letter-spacing: -.045em;
+}
+.layout-root.io-research-shell[data-canon-palette='operator'] .property-funnel__step--active .property-funnel__step {
+  background: var(--color-operator-raised);
+  border-color: var(--color-operator-foreground);
+}
+.layout-root.io-research-shell[data-canon-palette='operator'] .property-funnel__button--secondary:hover {
+  color: var(--color-operator-background);
+}

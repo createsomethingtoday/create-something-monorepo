@@ -10,6 +10,11 @@
 
   let { children } = $props();
   let mobileNavigationOpen = $state(false);
+  import '$lib/workshop/workshop.css';
+  const workshopShell = $derived(
+    ['/', '/projects', '/about', '/workbench'].includes($page.url.pathname) ||
+      $page.url.pathname.startsWith('/projects/')
+  );
   const isWorkWayLocalPreview = $derived($page.url.pathname === '/workway/threshold-dwelling');
 
   // View Transitions API - Hermeneutic Navigation
@@ -126,7 +131,10 @@
 
     const element = document.querySelector(hash);
     if (element) {
-      element.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+      element.scrollIntoView({
+        behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+        block: 'start'
+      });
     }
   }
 
@@ -176,7 +184,11 @@
     deferMobileButtonUntilCampaignExit={['/', '/workbench'].includes($page.url.pathname)}
   />
 
-  <div class="layout property-performance" data-canon-palette="operator">
+  <div
+    class="layout property-performance"
+    class:workshop-shell={workshopShell}
+    data-canon-palette="operator"
+  >
     <SkipToContent />
     <Navigation
       logo="CREATE SOMETHING"

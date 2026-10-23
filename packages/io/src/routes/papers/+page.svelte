@@ -1,4 +1,5 @@
 <script lang="ts">
+  import ResearchScene from '$lib/components/ResearchScene.svelte';
 	/**
 	 * Research Papers Index
 	 *
@@ -124,6 +125,8 @@
 				{/if}
 			</p>
 		</div>
+
+		<ResearchScene scene="brief-evidence-and-unknowns" caption="An agent separates the observed evidence from the part still unknown." />
 
 		<!-- Search & Filter Controls -->
 		<div class="controls-container">
