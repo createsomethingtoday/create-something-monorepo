@@ -141,10 +141,14 @@
   let transformGesture = $state<{ before: CanvasDocument; ids: string[]; start: Point; bounds: ReturnType<typeof editBounds>; rotation: number; mode: 'resize' | 'rotate' } | null>(null);
   const transform = $derived(`translate(${viewport.x} ${viewport.y}) scale(${viewport.zoom})`);
 
+  let FocusedRevision = $state<typeof import('$lib/FocusedRevisionPanel.svelte').default>();
+  let focusedRevisionPrototype = $state(false);
   let connectionTools = $state.raw<DrawWebMcpTool[]>([]);
 
   onMount(() => {
     nativeShell = hasNativeBridge();
+    focusedRevisionPrototype = import.meta.env.DEV && !nativeShell && new URLSearchParams(window.location.search).get('revisionPrototype') === '1';
+    if (import.meta.env.DEV && focusedRevisionPrototype) void import('$lib/FocusedRevisionPanel.svelte').then(module => { FocusedRevision = module.default; });
     const narrowViewport = window.matchMedia('(max-width: 820px)');
     panelOpen = !narrowViewport.matches;
     const closeInspectorOnNarrow = () => {
@@ -1487,7 +1491,13 @@
       {#if currentActivity}<AgentActivityPanel activity={currentActivity} now={activityNow} bind:follow={followAgent} bind:reduced={reduceAgentMotion} stop={stopAgentCamera} />{/if}
       {#if pairingOpen}<section class="pairing-panel" data-ui="true" aria-label="Device pairing"><header><strong>{nativeRole === 'host' ? 'Pair iPhone' : 'Connect to Mac'}</strong><button aria-label="Close pairing" onclick={() => pairingOpen = false}>×</button></header>{#if pairingBusy}<p>Looking for the secure session…</p>{:else if nativeRole === 'host'}<p>Enter this one-time code on the iPhone. Both devices must be on the same local network.</p><output class="pairing-code">{pairingOffer?.code || '—'}</output><small>Mac fingerprint {nativeSession.transport?.certificateFingerprint?.slice(0, 16) || 'unavailable'} · expires {pairingOffer ? new Date(pairingOffer.expiresAt).toLocaleTimeString() : 'soon'}</small>{#if nativeSession.pairedClients?.length}<div class="paired-list">{#each nativeSession.pairedClients as client}<span>{client.clientId}<button disabled={Boolean(client.revokedAt)} onclick={async () => { await revokeCompanion(client.clientId); nativeSession = await hostStatus(); }}>Revoke</button></span>{/each}</div>{/if}{:else if nativeSession.sessionId}<p>{nativeSession.requiresRepair ? 'This Mac rejected the pairing credentials. Export if needed, then forget and re-pair.' : 'Securely linked to the Mac session.'}</p><small>{nativeSession.certificateFingerprint?.slice(0, 16)} · revision {nativeSession.revision} · {nativeSession.queueDepth || 0} queued</small><button disabled={nativeSession.requiresRepair} onclick={async () => { const result = await setCompanionOnline(nativeSession.online === false); nativeSession = { ...nativeSession, ...result }; if (result.document) history = { past: [], present: result.document, future: [] }; }}> {nativeSession.online === false ? 'Reconnect' : 'Test offline'} </button><button onclick={async () => { nativeSession = await forgetCompanion(); discoveredHosts = []; selectedHost = null; pairingCode = ''; status = 'Pairing removed · choose Link to pair again'; pairingOpen = false; }}>Forget and re-pair</button>{:else}<p>{discoveredHosts.length ? 'Confirm the Mac fingerprint, then enter its six-digit code.' : 'No Mac session found. Open Draw on Mac and choose Pair.'}</p>{#if selectedHost}<label>Mac session<select bind:value={selectedHost}>{#each discoveredHosts as host}<option value={host}>{host.endpoint}</option>{/each}</select></label><small>Fingerprint {selectedHost.certificateFingerprint.slice(0, 16)}</small><label>Pairing code<input inputmode="numeric" maxlength="6" bind:value={pairingCode} placeholder="000000" /></label><button class="convert" disabled={!/^\d{6}$/.test(pairingCode)} onclick={confirmCompanionPairing}>Pair securely</button>{/if}{/if}</section>{/if}
     </div>
-    {#if inspectorOpen}<WorkbenchPanel {document} {selectedIds} select={(ids)=>{if(!drawing && !agentMutationActive){selectedIds=ids;tool='select';}}} edit={editSelection} disabled={drawing || agentMutationActive || replacingDocument || sharing} />{/if}
+    {#if inspectorOpen}<WorkbenchPanel {document} {selectedIds} select={(ids)=>{if(!drawing && !agentMutationActive){selectedIds=ids;tool='select';}}} edit={editSelection} disabled={drawing || agentMutationActive || replacingDocument || sharing} >
+      {#snippet revision()}
+        {#if import.meta.env.DEV && focusedRevisionPrototype && FocusedRevision && !nativeShell && nativeRole === 'web'}
+          <FocusedRevision {document} {selectedIds} disabled={drawing || agentMutationActive || replacingDocument || sharing} execute={async (name, input) => { const target = connectionTools.find(tool => tool.name === name); if (!target) throw new Error('Draw tool is unavailable. Nothing was applied.'); return await target.execute(input) as Record<string, unknown>; }} />
+        {/if}
+      {/snippet}
+    </WorkbenchPanel>{/if}
   </section>
   <footer class="statusbar"><span role="status" aria-live="polite">{status}</span><span class="object-count">{document.objects.length} {document.objects.length === 1 ? 'object' : 'objects'}</span><button class="shortcuts-trigger" aria-haspopup="dialog" title="Keyboard shortcuts (?)" onclick={() => shortcutsDialog.showModal()}>Shortcuts <b aria-hidden="true">?</b></button><span>{nativeRole === 'host' ? 'MAC AUTHORITY' : nativeRole === 'companion' ? 'IPHONE COMPANION' : 'LOCAL CANVAS'}</span></footer>
   <dialog bind:this={importErrorDialog} class="shortcuts-dialog import-error-dialog" aria-labelledby="import-error-title" aria-describedby="import-error-description">
