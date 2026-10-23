@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "status": "proposed",
+  "tenant": "goldin-operational",
+  "approvedBy": null,
+  "evidence": null,
+  "issuedAt": null,
+  "expiresAt": null,
+  "appOrigin": "https://goldin-operations.pages.dev",
+  "coordinatorOrigin": "https://goldin-coordinator-production.createsomething.workers.dev",
+  "intakeMode": "staff-reviewed",
+  "deliveryMode": "reviewed-no-send",
+  "staffEmails": [],
+  "releaseReviewers": [],
+  "notion": {
+    "createPolicy": "existing-only",
+    "dataSourceId": null,
+    "fields": {}
+  },
+  "prices": [],
+  "decisions": {}
+}

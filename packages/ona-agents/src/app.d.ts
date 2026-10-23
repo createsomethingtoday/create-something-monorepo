@@ -4,6 +4,9 @@ declare global {
   namespace App {
     interface Platform {
       env?: {
+        GOLDIN_SYNTHETIC_ENABLED?: string;
+        GOLDIN_SYNTHETIC_STARTED_AT?: string;
+        GOLDIN_SYNTHETIC_EXPIRES_AT?: string;
         ENVIRONMENT?: string;
         ALLOW_CS_AUTH_PREVIEW?: string;
         CS_AUTH_ALLOW_ANY_AUTHENTICATED?: string;
