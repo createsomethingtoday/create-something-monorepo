@@ -10,6 +10,6 @@ Research is canonical on `.io`. `/experiments` retains its approved scene and li
 
 ## Promotion and rollback
 
-Use the normal PR checks and Agency Pages Deploy workflow on main. Do not deploy directly around its Ground release gate. The current main baseline is `86b8ef50fb7d9e512d55037adf38b54b613abf13`; it contains an unreleased `packages/ground/action/action.yml` change relative to the matching Ground tag `73e856e2b8498ee964a6508909ac34df0e205385`. A matching Ground release is required before production Pages deployment can succeed. Rollback uses the prior successful Pages deployment; code rollback is a normal revert PR, not a forced main reset. Resource data is unchanged.
+Use the normal PR checks and Agency Pages Deploy workflow on main. Do not deploy directly around its Ground release gate. Ground 0.5.3 is tagged at reviewed merge `7e341099606b7028d93500a05152b793ec753d1d`, including bounded graph retention and the intentional Node 22 security update. Production promotion still requires the normal workflow to verify the published five-platform artifacts, calibration and consumer receipts, npm metadata, and exact tag parity; a tag alone is not publication evidence. Rollback uses the prior successful Pages deployment; code rollback is a normal revert PR, not a forced main reset. Resource data is unchanged.
 
 Linear evidence could not be recorded from this host: the configured wrapper requires LINEAR_API_KEY and no connected Linear tool was available. PR and workflow receipts retain release evidence meanwhile.
