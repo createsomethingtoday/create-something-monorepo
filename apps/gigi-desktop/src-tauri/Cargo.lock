@@ -1344,7 +1344,7 @@ dependencies = [
 
 [[package]]
 name = "gigi_desktop"
-version = "0.2.9"
+version = "0.2.10"
 dependencies = [
  "chrono",
  "chrono-tz",

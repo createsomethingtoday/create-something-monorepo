@@ -85,3 +85,83 @@ h2 { font-size: 22px; line-height: 1.3; }
   background-size: 5px 5px;
   background-repeat: no-repeat;
 }
+
+/* Final product layer: loaded after reference geometry so slate remains the
+   owning theme. Decorative separators are quieter than interactive controls. */
+:root { --space-unit: 4px; --artwork-ground: #141619; }
+body { line-height: 1.5; }
+.content { padding-top: 24px; padding-bottom: 48px; }
+.page-head { align-items: flex-start; gap: 24px; }
+.page-head h1, .music-header h1, .social-workspace h1 { line-height: 1.2; }
+.page-head .subhead { max-width: 68ch; line-height: 1.6; }
+.reference-header { height: 56px; gap: 8px; }
+.reference-header .reference-brand { font-size: 22px; letter-spacing: -1px; padding-right: 16px; }
+.reference-nav { gap: 4px; }
+.reference-nav > button, .reference-more > summary { min-height: 36px; padding-inline: 12px; }
+.reference-nav > button[aria-current=page], .reference-more > summary.selected {
+  color: var(--text); background: var(--raised); box-shadow: inset 0 -2px var(--signal);
+}
+.reference-header .reference-ask { border: 1px solid var(--control-border); padding-inline: 12px; }
+.reference-menu { padding: 12px; }
+.reference-menu button[aria-current=page] { background: var(--raised); }
+.reference-history button { min-width: 28px; }
+.chat-panel { top: 56px; }
+.panel-head { gap: 12px; }
+.today-card { border-radius: 8px; padding: 16px; gap: 8px; }
+.today-card strong { font-size: 20px; letter-spacing: -.025em; }
+.today-card-footer { line-height: 1.5; }
+.artwork-frame { background: var(--artwork-ground); border: 1px solid var(--line); }
+.artwork-open .artwork-frame { height: 240px; }
+.artwork-dialog { border-radius: 12px; line-height: 1.6; }
+.artwork-dialog h2 { margin: 0 0 12px; }
+.music-player:not(:empty) { padding: 16px; gap: 12px; border-radius: 8px; }
+.music-player strong { font-size: 16px; }
+.music-player video { max-height: 320px; background: var(--artwork-ground); }
+.music-player audio { max-width: none; }
+.music-status:empty, .music-error:empty { display: none; }
+.music-error:not(:empty) { border: 1px solid var(--danger); border-radius: 8px; padding: 12px; line-height: 1.6; }
+.music-error .btn { margin-left: 8px; }
+.music-filters { gap: 12px; align-items: end; }
+.music-filters input, .music-filters select { min-height: 42px; }
+.music-empty { border: 1px dashed var(--line); background: var(--panel); padding: 40px 24px; }
+.music-privacy, .music-limit { max-width: 90ch; line-height: 1.6; }
+@media (max-width: 1000px) {
+  .reference-nav > button, .reference-more > summary { padding-inline: 8px; }
+  .reference-header .reference-find span { display: none; }
+}
+@media (max-width: 700px) {
+  .reference-header { height: auto; min-height: 56px; }
+  .chat-panel { top: 104px; }
+  .content { padding: 20px 16px 40px; }
+}
+
+/* Typography: use the installed system face; no font download or new license.
+   Dates and amounts use tabular figures without changing stored formatting. */
+body { font-size: 14px; font-weight: 400; line-height: 1.55; }
+h1, .page-head h1, .music-header h1, .social-workspace h1 { font-weight: 600; letter-spacing: -.025em; }
+h2, .panel-head h2 { font-weight: 600; line-height: 1.35; }
+.page-head > div, .music-info, .social-draft-card { min-width: 0; }
+h1, .row strong, .music-info h2, .social-draft-card strong { overflow-wrap: anywhere; }
+.row strong, .music-info h2 { font-weight: 600; line-height: 1.45; }
+.field label, .music-filters label, .music-edit-fields label, .social-editor label {
+  font-size: 12px; font-weight: 600; color: var(--muted); line-height: 1.5;
+}
+.field input, .field select, .field textarea, .music-filters input, .music-filters select,
+.music-edit-fields input, .social-editor input, .social-editor select, .social-editor textarea {
+  font-size: 14px; font-weight: 400; line-height: 1.5;
+}
+.row small, .field-help, .artwork-origin, .music-privacy, .music-limit, .music-availability,
+.social-draft-card small, .social-preview small, .today-card-kind, .today-card-footer {
+  font-size: 12px; font-weight: 400; line-height: 1.6; color: var(--muted);
+}
+.detail-grid dt { font-size: 12px; font-weight: 500; line-height: 1.6; }
+.detail-grid dd { font-size: 13px; font-weight: 400; line-height: 1.6; }
+.agenda-time, .gigs-row small, .today-card-footer, .card .value, .today-summary strong,
+.detail-grid dd, .music-info p { font-variant-numeric: tabular-nums; }
+.agenda-time { white-space: nowrap; }
+.music-info p, .social-draft-card, .artwork-target, .reference-menu p { overflow-wrap: anywhere; }
+.btn, .reference-header button, .reference-header summary { font-weight: 500; }
+@media (max-width: 900px) {
+  .page-head h1, .music-header h1, .social-workspace h1 { font-size: 28px; }
+  .detail-grid { grid-template-columns: 112px minmax(0, 1fr); }
+}

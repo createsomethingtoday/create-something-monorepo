@@ -1,32 +1,41 @@
 import {confirmAction} from './confirm.mjs';
 import {musicView} from './music-view.mjs';
+import {captureViewState,restoreViewState} from './view-state.mjs';
 
 /** Local UI controller. The native picker owns path selection; this bridge never accepts arbitrary paths. */
 export function mountMusic(container,{call,workspaceId,confirm=confirmAction}={}) {
- let disposed=false,requestRevision=0,editing=null,dirty=false,importRequest=null,previewId=null;
- let state={items:[],total:0,offset:0,hasMore:false,query:'',kind:'',busy:false,notice:'Loading your local music…',error:''};
+ let disposed=false,requestRevision=0,editing=null,dirty=false,importRequest=null,previewId=null,renderedEditorId=null;
+ let state={items:[],total:0,offset:0,hasMore:false,query:'',kind:'',busy:false,loading:true,notice:'',error:''};
  const content=document.createElement('div'); const playerHost=document.createElement('div');
  playerHost.className='music-player'; container.replaceChildren(playerHost,content);
  const invoke=(operation,input={})=>call(operation,{...input,workspaceId});
- const render=()=>{if(!disposed)content.innerHTML=musicView({...state,editing,dirty,importing:Boolean(importRequest)});};
+ const render=(preserve=true)=>{if(disposed)return;const snapshot=preserve?captureViewState(content):null;if(snapshot&&renderedEditorId!==editing?.id)snapshot.forms=snapshot.forms.filter(form=>form.id!=='music-edit-form');renderedEditorId=editing?.id;const y=globalThis.scrollY||0;content.innerHTML=musicView({...state,editing,dirty,importing:Boolean(importRequest)});restoreViewState(content,snapshot);globalThis.scrollTo?.(0,y);};
  function stop(restoreFocus=false){const previousId=previewId;previewId=null;const media=playerHost.querySelector('audio,video');if(media){media.pause();media.removeAttribute('src');media.load();}playerHost.replaceChildren();if(restoreFocus&&previousId){[...content.querySelectorAll('[data-music-preview]')].find(button=>button.dataset.musicPreview===previousId)?.focus();}}
- async function load(){const revision=++requestRevision;try{const result=await invoke('music.list',{query:state.query,kind:state.kind,offset:state.offset});if(disposed||revision!==requestRevision)return;state={...state,...result,notice:state.notice==='Loading your local music…'?'':state.notice,error:''};render();}catch(error){if(disposed||revision!==requestRevision)return;state.error=error.message||String(error);state.notice='';render();}}
+ async function load(preserve=true){
+  const revision=++requestRevision;state.loading=true;state.error='';render(preserve);
+  try{const result=await invoke('music.list',{query:state.query,kind:state.kind,offset:state.offset});if(disposed||revision!==requestRevision)return;state={...state,...result,error:''};}
+  catch(error){if(disposed||revision!==requestRevision)return;state.error=error.message||String(error);state.notice='';}
+  finally{if(!disposed&&revision===requestRevision){state.loading=false;render();}}
+ }
  async function action(operation,input={},after){
    if(state.busy)return;
+   const previousFocus=captureViewState(content);
    state.busy=true;state.error='';render();
    try{const result=await invoke(operation,input);if(disposed)return;await after?.(result);}
    catch(error){if(!disposed)state.error=error.message||String(error);}
-   finally{if(!disposed){state.busy=false;render();}}
+   finally{if(!disposed){state.busy=false;render();const active=globalThis.document?.activeElement;if(!active||active===document.body||active===document.documentElement)restoreViewState(content,{...previousFocus,forms:[],details:[]});}}
  }
  const canLeave=async()=>!dirty||await confirm('Discard unsaved music organization changes?',{title:'Discard changes?',acceptLabel:'Discard changes'});
  async function click(event){
   const button=event.target.closest('button');if(!button)return;
   if(button.hasAttribute('data-music-cancel')){if(importRequest){try{await invoke('music.cancel',{requestId:importRequest});state.notice='Cancellation requested. Waiting for the import receipt.';}catch(error){state.error=error.message||String(error);}render();}return;}
   if(state.busy)return;
+  if(button.hasAttribute('data-music-retry')){await load();return;}
+  if(button.hasAttribute('data-music-reset')){if(!await canLeave())return;editing=null;dirty=false;state.query='';state.kind='';state.offset=0;await load(false);content.querySelector('#music-query')?.focus();return;}
   if(button.dataset.musicImport){
    if(!await canLeave())return;editing=null;dirty=false;importRequest=crypto.randomUUID();
    await action('music.import',{mode:button.dataset.musicImport,requestId:importRequest},async result=>{
-    state.notice=result.cancelled?'Import cancelled. No new entries saved.':`Added ${result.added} entries. ${result.duplicates||0} duplicates and ${result.skipped||0} unreadable or excluded entries skipped.${result.limited?' The import or library limit was reached; select a smaller folder for the remaining files.':''} Nothing uploaded.`;
+    state.notice=result.cancelled?'Import cancelled. No new entries saved.':`Added ${result.added} ${result.added===1?'entry':'entries'}. ${result.duplicates||0} duplicates and ${result.skipped||0} unreadable or excluded entries skipped.${result.limited?' The import or library limit was reached; select a smaller folder for the remaining files.':''} Nothing uploaded.`;
     state.offset=0;await load();
    });importRequest=null;return;
   }

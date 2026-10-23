@@ -18,3 +18,18 @@ test('Today cards preserve identifiers, escape stored text and never fabricate a
  const html=referenceCards('tasks',[{id:'a"b',title:'<Plan>',date:null}],{status:()=>'',date:x=>x,money:()=>''});
  assert.match(html,/data-open="a&quot;b"/);assert.match(html,/&lt;Plan&gt;/);assert.match(html,/Saved task/);assert.match(html,/No date recorded/);assert.match(html,/Status not set/);assert.doesNotMatch(html,/Approve|Send|Fresh|Verified/);
 });
+
+test('overflow names the active destination and history describes page navigation',()=>{
+ const html=referenceHeader({page:'schedule',sections,workspace:'QA',history:createWorkspaceHistory()});
+ assert.match(html,/<summary data-nav-overflow="1" class="selected">Schedule /);
+ assert.match(html,/aria-label="Previous page"/);
+ assert.match(html,/aria-label="Workspace pages"/);
+});
+
+test('slate product theme is the final stylesheet after reference geometry',async()=>{
+ const {readFile}=await import('node:fs/promises');
+ const html=await readFile(new URL('./index.html',import.meta.url),'utf8');
+ const sheets=[...html.matchAll(/rel="stylesheet" href="([^"]+)"/g)].map(match=>match[1]);
+ assert.equal(sheets.at(-1),'studio.css');
+ assert.ok(sheets.indexOf('reference-layout.css')<sheets.indexOf('studio.css'));
+});
