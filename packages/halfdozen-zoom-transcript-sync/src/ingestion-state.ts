@@ -35,6 +35,8 @@ export async function claimIngestion(db: D1Database, key: string, selected: stri
 export class IngestionLease implements WriteJournal {
   constructor(private db: D1Database, private key: string, private selected: string, private owner: string) {}
 
+  projectionFence() { return { key: this.key, selected: this.selected, owner: this.owner }; }
+
   async assertOwner(): Promise<void> {
     const row = await this.db.prepare(`SELECT owner FROM transcript_ingestion
       WHERE meeting_key = ? AND selected_key = ? AND owner = ? AND expires_at > ?`)

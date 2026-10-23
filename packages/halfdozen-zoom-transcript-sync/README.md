@@ -23,7 +23,7 @@ The proposed release requires an approved UTC `INDEXED_INGESTION_NOT_BEFORE` val
 Notion writes support two transport modes:
 
 - `api` — direct Notion API via `NOTION_API_KEY`
-- `hub` — Hub-backed writes via `NOTION_HUB_URL`, `NOTION_HUB_API_TOKEN`, and `NOTION_HUB_PROXY_TOOL`
+- `hub` — legacy configuration only; the inline writer rejects it before page creation. Production uses the direct Notion API. The retired Hub is not a release dependency.
 
 `hub` is the practical default for current Half Dozen operator-managed access. `NOTION_RUNTIME_CONNECTION_REF` can be carried as an approved runtime handle for rollout governance, but this package does not yet resolve raw `ntn_...` refs directly.
 
@@ -57,7 +57,9 @@ The sync follows the live `Internal LLM [HD]` schema:
 - `Type`
 - `Attendees`
 
-The worker preserves existing page content. It appends immutable toggles for the selected original text, numbered canonical parts, and an ordered index. Every artifact carries the same SHA-256 version derived from the original and canonical text plus the format version. The index links to each artifact. It is published only after read-back reconstruction succeeds. There is no opening-excerpt skip.
+The worker presents one inline `📝 FULL TRANSCRIPT` section with timestamp headings and paragraphs. A single `Source archive` toggle at the bottom contains immutable originals, canonical parts and their verification index. Long transcripts use bounded batches and paginated readback. Corrections reuse owned blocks and retain prior source versions. An updating heading warns readers while a projection is incomplete.
+
+The additive `transcript_inline_projection` D1 table tracks owned IDs and pending writes. Unknown writes without a verified receipt fail closed. Normal deliveries do not convert existing untracked pages. Archived-page replacement requires explicit replay. See [PRESENTATION_REMEDY.md](PRESENTATION_REMEDY.md) for the repair boundary and provider acceptance plan.
 
 ## Select one rendition
 

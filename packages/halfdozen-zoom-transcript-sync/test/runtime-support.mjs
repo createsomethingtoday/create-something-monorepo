@@ -22,7 +22,7 @@ export function syntheticVtt(count, suffix = '') {
   }).join('');
 }
 export class ProviderSimulator {
-  recordings = new Map(); pages = new Map(); blocks = new Map(); queued = [];
+  records = new Map(); recordings = new Map(); pages = new Map(); blocks = new Map(); queued = [];
   requests = []; deniedNetwork = []; mutations = 0; appends = 0; sequence = 0;
   failAppendAt = Infinity; failBeforeCommit = false; onAppend = null; onSourceRead = null;
   sourceReads = 0;
@@ -46,7 +46,7 @@ export class ProviderSimulator {
       assert.ok(children.length <= 100, 'simulated Notion children limit');
       delete block[block.type]?.children;
       block.has_children = children.length > 0;
-      this.blocks.set(block.id, this.richBlocks(children)); return block;
+      this.blocks.set(block.id, this.richBlocks(children)); this.records.set(block.id, block); return block;
     });
   }
   matches(page, filter) {
@@ -93,6 +93,16 @@ export class ProviderSimulator {
         for (const property of Object.values(page.properties)) if (property.title) property.title.forEach(item => { item.plain_text = item.text.content; }); }
       return Respond.json(page);
     }
+    const exactBlock = url.pathname.match(/^\/v1\/blocks\/([^/]+)$/);
+    if (exactBlock) {
+      const block = this.records.get(exactBlock[1]); assert.ok(block);
+      if (method === 'PATCH') {
+        this.mutations++;
+        if (body.archived) { block.archived = true; for (const nodes of this.blocks.values()) { const at = nodes.findIndex(b => b.id === block.id); if (at >= 0) nodes.splice(at, 1); } }
+        else block[block.type] = body[block.type];
+      }
+      return Respond.json(block);
+    }
     const blockMatch = url.pathname.match(/^\/v1\/blocks\/([^/]+)\/children$/);
     if (blockMatch) {
       const id = blockMatch[1]; assert.ok(this.blocks.has(id), 'synthetic block exists');
@@ -100,7 +110,8 @@ export class ProviderSimulator {
         this.appends++; assert.ok(body.children.length <= 100);
         assert.ok(Buffer.byteLength(JSON.stringify(body)) <= 500_000, 'synthetic request byte budget');
         if (this.appends === this.failAppendAt && this.failBeforeCommit) return new Respond('Synthetic uncertain outcome', { status: 503 });
-        this.mutations++; this.blocks.get(id).push(...this.richBlocks(body.children));
+        this.mutations++; const nodes = this.blocks.get(id); const added = this.richBlocks(body.children);
+        if (body.after) { const at = nodes.findIndex(b => b.id === body.after); assert.ok(at >= 0); nodes.splice(at + 1, 0, ...added); } else nodes.push(...added);
         if (this.onAppend) await this.onAppend(id, body.children);
         if (this.appends === this.failAppendAt) return new Respond('Synthetic response lost after commit', { status: 503 });
         return Respond.json({ results: [] });
@@ -130,7 +141,24 @@ export async function startRuntime(simulator = new ProviderSimulator()) {
   ] });
   const worker = await mf.getWorker('ingestion-under-test'); const db = await mf.getD1Database('DB', 'ingestion-under-test');
   const state = async key => db.prepare('SELECT * FROM transcript_ingestion WHERE meeting_key = ?').bind(key).first();
-  const delivery = async (message, attempts = 1) => worker.queue('synthetic-sync', [{ id: simulator.id(), timestamp: new Date(), attempts, body: message }]);
+  const delivery = async (message, attempts = 1) => {
+    let current = message;
+    for (let pass = 0; pass < 1000; pass++) {
+      const result = await worker.queue('synthetic-sync', [{ id: simulator.id(), timestamp: new Date(), attempts, body: current }]);
+      if (result.retryMessages.length) return result;
+      let next;
+      for(let wait = 0; wait < 100; wait++) {
+        const at = simulator.queued.findIndex(item => item.dedupKey === current.dedupKey && item.inlineContinuation === (current.inlineContinuation ?? 0) + 1);
+        if (at >= 0) { next = simulator.queued.splice(at, 1)[0]; break; }
+        if (wait > 0 && (await state(JSON.stringify([current.canonicalMeetingKey,current.meetingDate])))?.ready_version) break;
+        if (wait > 2 && !current.inlineContinuation && simulator.deniedNetwork.length) break;
+        await new Promise(resolve => setTimeout(resolve, 10));
+      }
+      if (!next) return result;
+      current = next; attempts = 1;
+    }
+    throw Error('Synthetic continuation driver exceeded budget');
+  };
   const cron = async () => worker.scheduled({ cron: '0 * * * *' });
   await cron();
   return { mf, worker, db, cutoff, simulator, state, delivery, cron, dispose: () => mf.dispose() };
@@ -159,7 +187,11 @@ export async function retrieveVerified(runtime, key, { betweenReads } = {}) {
   assert.ok(index.startsWith(`Version: ${before.version}\n`), 'Index version must match D1');
   const ids = [...index.matchAll(/https:\/\/www\.notion\.so\/[a-f0-9]+#([a-f0-9]{32})/g)].map(match => match[1]);
   const toId = id => `${id.slice(0, 8)}-${id.slice(8, 12)}-${id.slice(12, 16)}-${id.slice(16, 20)}-${id.slice(20)}`;
-  const parent = await listPersisted(before.page_id); const originals = [], parts = [];
+  const visible = await listPersisted(before.page_id);
+  assert.equal(blockText(visible[0]), '📝 FULL TRANSCRIPT');
+  assert.equal(blockText(visible.at(-1)), 'Source archive');
+  assert.equal(visible.filter(b => blockText(b) === '📝 FULL TRANSCRIPT').length, 1);
+  const parent = await listPersisted(visible.at(-1).id); const originals = [], parts = [];
   const expectedBlocks = Number(index.match(/Canonical timestamp blocks: (\d+)/)?.[1]);
   const selected = [];
   let lastBlock = 0;
@@ -182,6 +214,15 @@ export async function retrieveVerified(runtime, key, { betweenReads } = {}) {
   assert.ok(originals.length && parts.length, 'Original and canonical artifacts required');
   assert.equal(lastBlock, expectedBlocks, 'Complete timestamp-block range required');
   const original = Buffer.from(originals.join(''), 'base64').toString('utf8'); const canonical = parts.join('\n');
+  const inline = visible.slice(1, -1);
+  assert.equal(inline.length % 2, 0);
+  const visibleText = [];
+  for (let i = 0; i < inline.length; i += 2) {
+    assert.equal(inline[i].type, 'heading_3'); assert.equal(inline[i + 1].type, 'paragraph');
+    assert.ok(!inline[i].has_children && !inline[i + 1].has_children);
+    visibleText.push(`${blockText(inline[i])}\n${blockText(inline[i + 1])}`);
+  }
+  assert.equal(visibleText.join('\n'), canonical, 'Visible transcript must reconstruct canonical text');
   const version = createHash('sha256').update(JSON.stringify(['indexed-transcript-v2', original, canonical])).digest('hex');
   assert.equal(version, before.version, 'Reconstructed content must match version');
   if (betweenReads) await betweenReads();

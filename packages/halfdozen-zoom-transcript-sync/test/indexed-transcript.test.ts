@@ -1,3 +1,4 @@
+import { InlineContinuation } from '../src/inline-transcript.ts';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { DatabaseSync } from 'node:sqlite';
@@ -21,20 +22,20 @@ export function vtt(count: number, suffix = ''): string {
 }
 class MemoryNotion {
   nodes = new Map<string, Block[]>([['parent', []]]);
-  calls = 0;
+  calls = 0; sequence = 0; records = new Map<string, Block>();
   failAt = Infinity;
   failBefore = false;
   list = async (id: string) => structuredClone(this.nodes.get(id) ?? []);
-  append = async (id: string, blocks: Block[]) => {
+  append = async (id: string, blocks: Block[], after?: string) => {
     this.calls++;
     if (this.calls === this.failAt && this.failBefore) throw new Error('timeout before commit');
     for (const block of structuredClone(blocks)) {
-      block.id = `block-${this.calls}`;
+      block.id = `block-${++this.sequence}`; this.records.set(block.id, block);
       const children = block[block.type].children;
       delete block[block.type].children;
       block.has_children = !!children?.length;
       this.nodes.set(block.id, children ?? []);
-      this.nodes.get(id)!.push(block);
+      const nodes = this.nodes.get(id)!; if (after) { const at = nodes.findIndex(b => b.id === after); assert.ok(at >= 0); nodes.splice(at + 1, 0, block); } else nodes.push(block); after = block.id;
     }
     if (this.calls === this.failAt) throw new Error('timeout after commit');
   };
@@ -194,11 +195,20 @@ test('worker integration verifies readback, resumes failed writes, rechecks edit
     if (url.endsWith('/query')) return Response.json({ results: created ? [page] : [] });
     if (url.endsWith('/pages') && init?.method === 'POST') { created = true; return Response.json(page); }
     if (url.includes('/pages/parent')) return Response.json(page);
+    const blockRoute = new URL(url).pathname.match(/^\/v1\/blocks\/([^/]+)$/);
+    if (blockRoute) {
+      const block = notion.records.get(blockRoute[1]!)!;
+      if (init?.method === 'PATCH') {
+        if (body.archived) { block.archived = true; for (const nodes of notion.nodes.values()) { const at = nodes.findIndex(b => b.id === block.id); if (at >= 0) nodes.splice(at, 1); } }
+        else block[block.type] = body[block.type];
+      }
+      return Response.json(block);
+    }
     const match = new URL(url).pathname.match(/\/blocks\/([^/]+)\/children/);
     if (match) {
       if (init?.method === 'PATCH') {
         appendCalls++;
-        await notion.append(match[1]!, body.children);
+        await notion.append(match[1]!, body.children, body.after);
         if (appendCalls === failAppend) throw new Error('lost response');
         return Response.json({ results: [] });
       }
@@ -212,24 +222,25 @@ test('worker integration verifies readback, resumes failed writes, rechecks edit
   };
   const env = { INDEXED_INGESTION_NOT_BEFORE: '2026-10-23T00:00:00Z', DB: db, NOTION_DATABASE_ID: 'database', NOTION_API_KEY: 'fake', ZOOM_ACCESS_TOKEN: 'fake' } as Env;
   const message = { ...candidate, rolloutCutoff: '2026-10-23T00:00:00.000Z', replay: false, runId: null };
+  async function deliver() { for(let i=0;i<1000;i++) { try {return await ingestionTestExports.processTranscriptMessage(env,message);} catch(e) { if(!(e instanceof InlineContinuation)) throw e; } } throw Error('Continuation budget'); }
   try {
-    await assert.rejects(ingestionTestExports.processTranscriptMessage(env, message), /lost response/);
+    await assert.rejects(deliver(), /lost response/);
     assert.equal(sql.prepare('SELECT ready_version FROM transcript_ingestion').get()!.ready_version, null);
     failAppend = Infinity;
-    await ingestionTestExports.processTranscriptMessage(env, message);
+    await deliver();
     const ready = sql.prepare('SELECT ready_version FROM transcript_ingestion').get()!.ready_version;
     assert.equal(typeof ready, 'string');
     const calls = appendCalls;
-    await ingestionTestExports.processTranscriptMessage(env, message);
+    await deliver();
     assert.equal(appendCalls, calls);
     raw = vtt(2000, 'correction');
-    await ingestionTestExports.processTranscriptMessage(env, message);
+    await deliver();
     assert.notEqual(sql.prepare('SELECT ready_version FROM transcript_ingestion').get()!.ready_version, ready);
     mutateOnDownload = true; downloads = 0;
-    await assert.rejects(ingestionTestExports.processTranscriptMessage(env, message), /changed during ingestion/);
+    await assert.rejects(deliver(), /changed during ingestion/);
     assert.equal(sql.prepare('SELECT ready_version FROM transcript_ingestion').get()!.ready_version, null);
     mutateOnDownload = false; raw = 'WEBVTT\n\n';
-    await assert.rejects(ingestionTestExports.processTranscriptMessage(env, message), /Empty/);
+    await assert.rejects(deliver(), /Empty/);
     assert.equal(sql.prepare('SELECT ready_version FROM transcript_ingestion').get()!.ready_version, null);
   } finally { globalThis.fetch = savedFetch; }
 });
@@ -249,4 +260,14 @@ test('discovery invalidates a disappeared selected file in the scanned window', 
     await ingestionTestExports.executeDiscoveryRun({ INDEXED_INGESTION_NOT_BEFORE: '2026-10-23T00:00:00Z', DB: db, ZOOM_ACCESS_TOKEN: 'fake' } as Env, 'test');
     assert.equal(sql.prepare('SELECT ready_version FROM transcript_ingestion').get()!.ready_version, null);
   } finally { globalThis.fetch = savedFetch; }
+});
+
+
+test('normal queue delivery never migrates an already written untracked page', async () => {
+  const {db,sql}=sqliteDb();await initSchema(db);await discoverTranscript(db,candidate);
+  sql.prepare("UPDATE transcript_sync_ledger SET notion_page_id = 'existing-v2-page'").run();
+  const before=sql.prepare('SELECT total_changes() AS count').get()!.count;
+  const result=await ingestionTestExports.processTranscriptMessage({DB:db,INDEXED_INGESTION_NOT_BEFORE:'2026-10-23T00:00:00Z'} as Env,
+    {...candidate,rolloutCutoff:'2026-10-23T00:00:00.000Z',runId:null,replay:false});
+  assert.equal(result,'excluded');assert.equal(sql.prepare('SELECT total_changes() AS count').get()!.count,before);
 });

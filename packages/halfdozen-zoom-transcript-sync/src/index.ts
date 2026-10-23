@@ -1,3 +1,4 @@
+import { InlineContinuation } from './inline-transcript';
 import { atOrAfter, ledgerAdmitted, rolloutCutoff } from './rollout';
 import { planTranscript } from './indexed-transcript';
 import { claimIngestion, meetingKey, selectRendition } from './ingestion-state';
@@ -148,6 +149,11 @@ export default {
         }
         message.ack();
       } catch (error) {
+        if (error instanceof InlineContinuation) {
+          await env.SYNC_QUEUE.send({ ...message.body, inlineContinuation: (message.body.inlineContinuation ?? 0) + 1 });
+          message.ack();
+          continue;
+        }
         const errorMessage = error instanceof Error ? error.message : String(error);
         console.error(`Transcript sync failed for ${message.body.dedupKey}:`, errorMessage);
 
@@ -265,6 +271,15 @@ async function processTranscriptMessage(env: Env, payload: TranscriptQueueMessag
 
   if (!ledgerAdmitted(ledger, cutoff) || payload.canonicalMeetingKey !== ledger.canonical_meeting_key
     || payload.meetingDate !== ledger.meeting_date) return 'excluded';
+  // A presentation release must not silently migrate already-written pages.
+  // An authenticated, explicit replay may replace an archived page; the Notion
+  // layer still refuses in-place conversion of an untracked existing body.
+  const priorPage = ledger.notion_page_id ?? (await getCanonicalMeetingPage(env.DB, ledger.canonical_meeting_key, ledger.meeting_date))?.pageId;
+  if (priorPage && !payload.replay) {
+    const tracked = await env.DB.prepare('SELECT page_id FROM transcript_inline_projection WHERE page_id = ?')
+      .bind(priorPage).first();
+    if (!tracked) return 'excluded';
+  }
   const key = meetingKey({ canonicalMeetingKey: ledger.canonical_meeting_key, meetingDate: ledger.meeting_date });
   // Use the latest discovered file URL, never the stale URL carried by a queued message.
   const current = {
@@ -287,7 +302,7 @@ async function processTranscriptMessage(env: Env, payload: TranscriptQueueMessag
     const plan = await planTranscript(parsedTranscript);
     await lease.begin(plan.version);
     const canonicalPage = await getCanonicalMeetingPage(env.DB, current.canonicalMeetingKey, current.meetingDate);
-    const notionWrite = await syncTranscriptToNotion(env, current, parsedTranscript, plan, lease, canonicalPage);
+    const notionWrite = await syncTranscriptToNotion(env, current, parsedTranscript, plan, lease, canonicalPage, payload.replay === true);
     if (!notionWrite.indexBlockId) throw new Error('Missing verified index receipt');
     // Detect edits made while the write was running before publishing readiness.
     const latest = await downloadTranscript(env, current);

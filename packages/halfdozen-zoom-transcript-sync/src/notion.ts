@@ -1,5 +1,6 @@
 import { atOrAfter, rolloutCutoff } from './rollout';
-import { writeIndexedTranscript, type TranscriptPlan, type WriteJournal } from './indexed-transcript';
+import { writeInlineTranscript } from './inline-transcript';
+import { type TranscriptPlan, type WriteJournal } from './indexed-transcript';
 import type { Env, NotionPageSummary, NotionWriteResult, ParsedTranscript, TranscriptCandidate } from './types';
 
 const NOTION_API_BASE = 'https://api.notion.com/v1';
@@ -41,7 +42,10 @@ export interface NotionTransport {
   getPage(pageId: string): Promise<PageObject>;
   createPage(properties: Record<string, unknown>): Promise<PageObject>;
   updatePage(pageId: string, properties: Record<string, unknown>): Promise<PageObject>;
-  appendBlocks(blockId: string, children: BlockObject[]): Promise<void>;
+  appendBlocks(blockId: string, children: BlockObject[], after?: string): Promise<void>;
+  getBlock(blockId: string): Promise<PageObject>;
+  updateBlock(blockId: string, block: BlockObject): Promise<void>;
+  archiveBlock(blockId: string): Promise<void>;
   listBlockChildren(blockId: string, startCursor?: string): Promise<BlockListResult>;
 }
 
@@ -52,9 +56,15 @@ export async function syncTranscriptToNotion(
   plan: TranscriptPlan,
   journal: WriteJournal,
   existingPageHint?: { pageId: string; pageUrl: string | null } | null,
+  allowReplacement = false,
 ): Promise<NotionWriteResult> {
   const cutoff = rolloutCutoff(env);
+  if (resolveWriteMode(env) === 'hub') throw new Error('Inline projection requires direct Notion transport');
   const notion = createNotionTransport(env);
+  if (existingPageHint && !allowReplacement) {
+    const prior = await notion.getPage(existingPageHint.pageId);
+    if (prior.archived || prior.in_trash) throw new Error('Archived page replacement requires explicit replay');
+  }
   const existing = await resolveExistingMeetingPage(notion, candidate, existingPageHint);
   if (existing && !atOrAfter(existing.createdTime, cutoff)) {
     throw new Error('Existing Notion page is outside the forward-only rollout boundary');
@@ -67,10 +77,18 @@ export async function syncTranscriptToNotion(
     pageId = existing.id;
     pageUrl = existing.url;
     // Existing lifecycle properties belong to operators and downstream workflows.
-    // Verification and source corrections append versioned artifacts only.
+    // Source corrections update only projection-owned text and preserve originals.
   } else {
     // Reserve once before create. A timeout must resolve through the existing-page query.
-    if (!await journal.reserve(`meeting-page:${candidate.canonicalMeetingKey}:${candidate.meetingDate}`)) {
+    let creationKey = `meeting-page:${candidate.canonicalMeetingKey}:${candidate.meetingDate}`;
+    if (existingPageHint) {
+      const prior = await notion.getPage(existingPageHint.pageId);
+      if (prior.archived || prior.in_trash) {
+        if (!allowReplacement) throw new Error('Archived page replacement requires explicit replay');
+        creationKey += `:replacement:${existingPageHint.pageId}`;
+      }
+    }
+    if (!await journal.reserve(creationKey)) {
       throw new Error('Uncertain Notion page creation requires reconciliation');
     }
     await journal.assertOwner();
@@ -79,10 +97,13 @@ export async function syncTranscriptToNotion(
     pageId = page.id;
     pageUrl = page.url ?? notionUrl(page.id);
   }
-  const indexBlockId = await writeIndexedTranscript({
+  const indexBlockId = await writeInlineTranscript(env.DB, {
     list: (id) => listAllBlocks(notion, id),
-    append: (id, blocks) => notion.appendBlocks(id, blocks),
-  }, journal, pageId, plan);
+    append: (id, blocks, after) => notion.appendBlocks(id, blocks, after),
+    get: id => notion.getBlock(id),
+    update: (id, block) => notion.updateBlock(id, block),
+    archive: id => notion.archiveBlock(id),
+  }, journal, pageId, parsedTranscript, plan);
   return { pageId, pageUrl, action: existing ? 'updated' : 'created', indexBlockId };
 }
 
@@ -108,8 +129,9 @@ async function resolveExistingMeetingPage(
   existingPageHint?: { pageId: string; pageUrl: string | null } | null,
 ): Promise<NotionPageSummary | null> {
   if (existingPageHint) {
-    const hintedPage = toPageSummary(await notion.getPage(existingPageHint.pageId));
-    if (isMatchingMeetingPageHint(hintedPage, candidate)) {
+    const hintedObject = await notion.getPage(existingPageHint.pageId);
+    const hintedPage = toPageSummary(hintedObject);
+    if (!hintedObject.archived && !hintedObject.in_trash && isMatchingMeetingPageHint(hintedPage, candidate)) {
       return {
         ...hintedPage,
         url: existingPageHint.pageUrl ?? hintedPage.url,
@@ -428,8 +450,14 @@ class DirectNotionTransport implements NotionTransport {
     );
   }
 
-  async appendBlocks(blockId: string, children: BlockObject[]): Promise<void> {
-    await this.request(`/blocks/${blockId}/children`, 'PATCH', { children });
+  async getBlock(blockId: string): Promise<PageObject> { return this.request(`/blocks/${blockId}`); }
+  async updateBlock(blockId: string, block: BlockObject): Promise<void> {
+    await this.request(`/blocks/${blockId}`, 'PATCH', { [block.type as string]: block[block.type as string] });
+  }
+  async archiveBlock(blockId: string): Promise<void> { await this.request(`/blocks/${blockId}`, 'PATCH', { archived: true }); }
+
+  async appendBlocks(blockId: string, children: BlockObject[], after?: string): Promise<void> {
+    await this.request(`/blocks/${blockId}/children`, 'PATCH', { children, ...(after ? { after } : {}) });
   }
 
   async listBlockChildren(blockId: string, startCursor?: string): Promise<BlockListResult> {
@@ -544,7 +572,12 @@ class HubNotionTransport implements NotionTransport {
     });
   }
 
-  async appendBlocks(blockId: string, children: BlockObject[]): Promise<void> {
+  async getBlock(_id: string): Promise<PageObject> { throw new Error('Inline projection requires direct Notion transport'); }
+  async updateBlock(_id: string, _block: BlockObject): Promise<void> { throw new Error('Inline projection requires direct Notion transport'); }
+  async archiveBlock(_id: string): Promise<void> { throw new Error('Inline projection requires direct Notion transport'); }
+
+  async appendBlocks(blockId: string, children: BlockObject[], after?: string): Promise<void> {
+    if (after) throw new Error('Inline positioning requires direct Notion transport');
     await this.call('append_blocks', {
       block_id: blockId,
       children,

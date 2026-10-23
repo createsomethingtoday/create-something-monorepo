@@ -1,13 +1,9 @@
 # Handoff
 
-Draft PR [#2050](https://github.com/createsomethingtoday/create-something-monorepo/pull/2050) adds versioned transcript parts and an ordered index. Readiness stays empty until complete read-back verification succeeds. The selected original is preserved as lossless UTF-8 base64; canonical parts remain readable. The live test found that Notion normalizes raw BOM/CRLF text, which prompted this local v2 correction.
+The local repair restores the inline FULL TRANSCRIPT reading experience. Source preservation, exact readback, retry reconciliation and forward-only admission remain. Archive artifacts move behind one Source archive toggle. The candidate is not deployed.
 
-All 49 Node tests, 12 local workerd/D1 scenarios, TypeScript, and independent Sol 6.1 review pass. One approved disposable synthetic Notion page also passes through the actual indexed-write core and the existing CLI adapter. It verifies exact reconstruction, ordered links, controlled response-loss recovery, unchanged retries, and source correction. See [live acceptance](./LIVE_ACCEPTANCE.md) and [validation](./VALIDATION.md).
+See [PRESENTATION_REMEDY.md](PRESENTATION_REMEDY.md) for the bounded synthetic provider acceptance and one-meeting replacement plan. Current tests use local SQLite or workerd/D1 with intercepted providers. Fresh live inline acceptance passed through the CLI and local D1. See [LIVE_INLINE_ACCEPTANCE.md](LIVE_INLINE_ACCEPTANCE.md) for counts and UI evidence.
 
-The synthetic fixture is retained. No real transcript, OD x DM occurrence, or manual fixture was accessed or rerun. No schema, schedule, credential, or downstream trigger changed. Retrieval tests do not establish task-extraction quality.
+Production uses a direct Notion credential. Its observed ingestion and readback succeeded. The retired Hub is unrelated and must not be repaired or reactivated as part of this release. Normal enabled downstream automation on the replacement still needs separate observation. No verified attendee roster or speaker labels are available; do not infer attendance.
 
-The Hub path remains blocked by its operator service's rejected Composio project API key. The CLI test does not validate that path, deployed Worker bindings, full meeting-page creation, or production D1. Credential repair needs separate approval.
-
-The forward-only guard requires an approved UTC cutoff. Both recording start and original ledger first-seen time must meet it; old queue envelopes and pre-cutoff pages are excluded. No production cutoff has been selected. See [rollout semantics](./ROLLOUT.md). Readiness and downstream version checks still need agreement before adding properties or changing triggers.
-
-All seven CI checks passed on original head `1ffcf2096358100a863bc79a67f99eabdda64960`. The forward-only guard, v2 correction, and latest tests are included in the revised draft PR. Revised-head CI is required before release. Nothing was merged or deployed, and no completion message was sent to Danny.
+Worktree disposition: preserved in the isolated zoom-ingestion checkout until provider acceptance, exact-head CI and targeted release finish.
