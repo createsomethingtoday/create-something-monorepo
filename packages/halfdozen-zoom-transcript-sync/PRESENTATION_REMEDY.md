@@ -16,7 +16,7 @@ During initial writes and corrections the heading says `📝 FULL TRANSCRIPT (up
 
 ## Existing records and the one-meeting repair
 
-Normal deliveries exclude existing pages without tracked inline state. Nonempty untracked pages are never silently converted. Replacing an archived page requires explicit replay. The existing forward-only cutoff and both meeting-start and ledger-first-seen checks remain unchanged.
+Normal deliveries exclude existing pages without tracked inline state, including empty pages discovered by a matching query when D1 has no page hint. A lost creation response without projection ownership fails closed until explicit replay reconciles the page; it never creates another page automatically. Nonempty untracked pages are never silently converted. Replacing an archived page requires explicit replay. The existing forward-only cutoff and both meeting-start and ledger-first-seen checks remain unchanged.
 
 The operator has authorized replacement of one reported meeting. Capture its content, properties, relations and ledger before changes. Check for an existing replacement. Preserve the old page recoverably and create one new page through the supported ingestion path after release gates pass. Do not relax the global cutoff, replay other meetings, guess attendees, enable paused agents or force completion flags.
 

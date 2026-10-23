@@ -54,7 +54,8 @@ export async function writeInlineTranscript(
     ...(fence ? [fence.key, fence.selected, fence.owner, new Date().toISOString()] : [])).run();
   let state = await load();
   if (!state) {
-    // Existing pages require an explicit migration, never automatic replacement.
+    // The caller must authorize page provenance. Existing body content still
+    // requires an explicit migration, never implicit replacement.
     if ((await transport.list(page)).length) throw new Error('Existing page needs explicit inline migration');
     await fencedRun("INSERT OR IGNORE INTO transcript_inline_projection SELECT ?, ?, 1, 'writing', NULL WHERE 1 = 1", [page, plan.version]);
     state = await load();

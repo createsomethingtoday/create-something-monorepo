@@ -69,6 +69,11 @@ export async function syncTranscriptToNotion(
   if (existing && !atOrAfter(existing.createdTime, cutoff)) {
     throw new Error('Existing Notion page is outside the forward-only rollout boundary');
   }
+  if (existing && !allowReplacement) {
+    const owned = await env.DB.prepare('SELECT page_id FROM transcript_inline_projection WHERE page_id = ?')
+      .bind(existing.id).first();
+    if (!owned) throw new Error('Existing untracked page requires explicit replay');
+  }
   const properties = buildPageProperties(env, candidate, parsedTranscript);
   await journal.assertOwner();
   let pageId: string;

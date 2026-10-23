@@ -8,7 +8,7 @@ import { parseTranscript } from '../src/zoom.ts';
 import type { Env, TranscriptCandidate } from '../src/types.ts';
 import { ProviderSimulator } from './runtime-support.mjs';
 
-async function fixture(flag: 'archived' | 'in_trash', failure?: 'before' | 'after', archiveAfterInitialCheck = false) {
+async function fixture(flag: 'archived' | 'in_trash', failure?: 'before' | 'after', archiveAfterInitialCheck = false, queryOnlyEmpty = false) {
   const sql = new DatabaseSync(':memory:');
   sql.exec(INLINE_SCHEMA);
   const db = { prepare(query: string) {
@@ -30,13 +30,13 @@ async function fixture(flag: 'archived' | 'in_trash', failure?: 'before' | 'afte
   };
   const simulator = new ProviderSimulator();
   const oldId = simulator.id();
-  const oldPage = { id: oldId, url: `https://www.notion.so/${oldId}`, [flag]: !archiveAfterInitialCheck,
+  const oldPage = { id: oldId, url: `https://www.notion.so/${oldId}`, [flag]: !(archiveAfterInitialCheck || queryOnlyEmpty),
     created_time: '2026-10-23T10:00:00.000Z', properties: {
       Item: { title: [{ plain_text: candidate.meetingTitle }] }, Date: { date: { start: candidate.meetingDate } },
       'Source URL': { url: candidate.sourceUrl }, Status: { select: { name: 'Operator reviewed' } },
     } };
   simulator.pages.set(oldId, structuredClone(oldPage));
-  simulator.blocks.set(oldId, simulator.richBlocks([{ object: 'block', type: 'paragraph',
+  simulator.blocks.set(oldId, queryOnlyEmpty ? [] : simulator.richBlocks([{ object: 'block', type: 'paragraph',
     paragraph: { rich_text: [{ type: 'text', text: { content: 'Existing protected source' } }] } }]));
   const oldBody = structuredClone(simulator.blocks.get(oldId));
   const originalFetch = globalThis.fetch;
@@ -90,7 +90,7 @@ async function fixture(flag: 'archived' | 'in_trash', failure?: 'before' | 'afte
   return { simulator, sql, reserved, creationKey, replacementKey, oldId,
     createAttempts: () => createAttempts,
     priorPageReads: () => priorPageReads,
-    sync: (allowReplacement?: boolean) => syncTranscriptToNotion(env, candidate, parsed, plan, journal, hint, allowReplacement),
+    sync: (allowReplacement?: boolean) => syncTranscriptToNotion(env, candidate, parsed, plan, journal, queryOnlyEmpty ? undefined : hint, allowReplacement),
     assertOldUnchanged() {
       assert.deepEqual(simulator.pages.get(oldId), oldPage);
       assert.deepEqual(simulator.blocks.get(oldId), oldBody);
@@ -158,4 +158,54 @@ test('independent inline replacement: an active page archived after the first GE
       } finally { f.close(); }
     }
   }
+});
+
+test('independent inline ownership: normal query-only matching empty page cannot be adopted without D1 ownership', async () => {
+  const f = await fixture('archived', undefined, false, true);
+  try {
+    await assert.rejects(f.sync(), /Existing untracked page requires explicit replay/);
+    await assert.rejects(f.sync(false), /Existing untracked page requires explicit replay/);
+    assert.equal(f.priorPageReads(), 0, 'Resolve the existing page through queries without a D1 hint');
+    assert.ok(f.simulator.requests.some(([method, url]: string[]) => method === 'POST' && new URL(url).pathname.endsWith('/query')));
+    assert.equal(f.createAttempts(), 0); assert.equal(f.simulator.mutations, 0);
+    assert.deepEqual([...f.reserved], [f.creationKey]);
+    assert.equal(f.sql.prepare('SELECT COUNT(*) AS n FROM transcript_inline_projection').get()!.n, 0);
+    f.assertOldUnchanged();
+  } finally { f.close(); }
+});
+
+test('independent inline ownership: explicit replay initializes a query-matched empty page and normal owned repeat is unchanged', async () => {
+  const f = await fixture('archived', undefined, false, true);
+  try {
+    const properties = structuredClone(f.simulator.pages.get(f.oldId).properties);
+    const receipt = await f.sync(true);
+    assert.equal(receipt.pageId, f.oldId); assert.ok(receipt.indexBlockId);
+    assert.equal(f.createAttempts(), 0); assert.equal(f.simulator.pages.size, 1);
+    assert.deepEqual(f.simulator.pages.get(f.oldId).properties, properties);
+    const state = f.sql.prepare('SELECT * FROM transcript_inline_projection WHERE page_id = ?').get(f.oldId);
+    assert.equal(state!.phase, 'complete');
+    const mutations = f.simulator.mutations, roots = structuredClone(f.simulator.blocks.get(f.oldId)), reserved = [...f.reserved];
+    const repeated = await f.sync();
+    assert.equal(repeated.pageId, receipt.pageId); assert.equal(repeated.indexBlockId, receipt.indexBlockId);
+    assert.equal(f.simulator.mutations, mutations); assert.equal(f.createAttempts(), 0);
+    assert.deepEqual(f.simulator.blocks.get(f.oldId), roots); assert.deepEqual([...f.reserved], reserved);
+    assert.deepEqual(f.sql.prepare('SELECT * FROM transcript_inline_projection WHERE page_id = ?').get(f.oldId), state);
+  } finally { f.close(); }
+});
+
+test('independent inline ownership: lost normal create response fails closed until explicit replay without another creation', async () => {
+  const f = await fixture('archived', 'after', false, true);
+  try {
+    f.simulator.pages.delete(f.oldId); f.simulator.blocks.delete(f.oldId); f.reserved.clear();
+    await assert.rejects(f.sync(), /committed create response lost/);
+    assert.equal(f.createAttempts(), 1); assert.equal(f.simulator.pages.size, 1);
+    const mutations = f.simulator.mutations;
+    await assert.rejects(f.sync(), /Existing untracked page requires explicit replay/);
+    assert.equal(f.simulator.mutations, mutations); assert.equal(f.createAttempts(), 1);
+    assert.equal(f.sql.prepare('SELECT COUNT(*) AS n FROM transcript_inline_projection').get()!.n, 0);
+    const receipt = await f.sync(true);
+    assert.ok(receipt.indexBlockId); assert.equal(f.createAttempts(), 1); assert.equal(f.simulator.pages.size, 1);
+    const completeMutations = f.simulator.mutations;
+    await f.sync(); assert.equal(f.simulator.mutations, completeMutations);
+  } finally { f.close(); }
 });

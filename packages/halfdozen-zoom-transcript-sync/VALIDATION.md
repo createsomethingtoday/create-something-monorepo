@@ -2,7 +2,7 @@
 
 The inline repair is local and uncommitted. Independent Sol 6.1 review passes 17 focused tests and TypeScript checks. Coverage includes one readable section, long transcript pagination, corrections, A-B-A restoration, committed lost responses, unknown absent responses, stale owner rejection and shared continuation budgets. Six finalization regressions verify that partial projections retain an updating label and completed response-loss retries do not duplicate writes.
 
-The full package passes 71/71 tests. The local workerd/D1 suite passes 13/13 tests, including twelve scenarios and their parent. TypeScript and scoped diff checks pass. These use intercepted deterministic providers. They do not establish live Notion positioning, archived-block behavior, latency or UI acceptance.
+The full package passes 74/74 tests. The local workerd/D1 suite passes 13/13 tests, including twelve scenarios and their parent. TypeScript and scoped diff checks pass. These use intercepted deterministic providers. They do not establish live Notion positioning, archived-block behavior, latency or UI acceptance.
 
 See [PRESENTATION_REMEDY.md](PRESENTATION_REMEDY.md) for the bounded provider acceptance plan. Live inline core acceptance passed through the existing CLI and local D1; see [LIVE_INLINE_ACCEPTANCE.md](LIVE_INLINE_ACCEPTANCE.md). The final top and bottom UI checks pass. Repair deployment and one-meeting replacement remain pending. Prior v2 evidence below is historical and must not be presented as inline acceptance.
 
