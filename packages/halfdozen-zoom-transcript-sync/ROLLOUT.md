@@ -1,6 +1,6 @@
 # Admit only new meetings after release
 
-Approve one UTC release instant before merge or deployment. Configure it as `INDEXED_INGESTION_NOT_BEFORE`. No production value has been chosen or added to Wrangler configuration. Missing or invalid configuration stops ingestion before discovery or queue writes. The hourly schedule stays unchanged.
+The approved production cutoff is `2026-10-23T17:16:35.564Z`. It is supplied in the deployment configuration, not the checked-in Wrangler file. Missing or invalid configuration stops ingestion before discovery or queue writes. The hourly schedule stays unchanged.
 
 ## Cutoff semantics
 
@@ -20,12 +20,12 @@ Once admitted, a record retains the existing version checks, immutable originals
 
 Moving the cutoff is a separate rollout decision. Moving it forward excludes earlier admissions and their old queue envelopes. Moving it backward can admit legacy work and requires explicit approval for that expanded scope. Deployment rollback must preserve D1 originals, journals, and readiness evidence. An older Worker without this gate can resume legacy processing; do not deploy that older code as an automatic rollback while the no-rerun boundary applies.
 
-No new Notion properties or downstream triggers are added. Existing pages retain all operator properties during verification and source corrections. New admitted pages retain the existing creation defaults; page creation and body appends can still emit existing automation events. D1 readiness is not connected to downstream extraction. The readiness design in [READINESS.md](./READINESS.md) still needs agreement before those changes. Admission controls which records this Worker may mutate. It does not certify downstream retrieval or extraction quality.
+The deployed admission gate did not add Notion properties or downstream triggers. Existing pages retain operator properties during verification and source corrections. Page creation and body appends can still emit existing automation events. The separately approved [readiness extension](READINESS_GATE.md) is awaiting isolated native-agent acceptance before production activation. Admission controls which records this Worker may mutate. It does not certify downstream retrieval or extraction quality.
 
 ## Approval and verification
 
-Micah approved completion through the parent task, including configuration repair and a forward-only deployment. The release will record its actual deployment-time UTC cutoff. No historical date will be used.
+Micah approved the forward-only deployment. PR #2050 introduced the indexed writer; PR #2059 restored inline presentation; PR #2060 adjusted retry timing for retained leases. The current deployed version is `05608b24-2b98-4179-8557-1009d21ce759`, from commit `60542c00c7f65da17e63744a310a1b03fc28f14b`. The readiness extension has not been deployed.
 
 After approval, rerun checks for the revised PR head, merge only that reviewed version, and deploy with the approved cutoff using existing credentials. Verify the deployed version and inspect `/health` with a GET. The health handler performs no D1 initialization or provider calls. Its cutoff value is configuration evidence, not proof of successful ingestion. Do not call `/scan` or `/replay` for a live acceptance test without separate authorization.
 
-The required CI checks passed on the original PR head `1ffcf2096358100a863bc79a67f99eabdda64960`. Those results do not validate this local revision. The revised package tests exercise cron, replay, stale queues, legacy first-seen dates, malformed timestamps, existing Notion page creation times, and admitted source updates with synthetic inputs.
+CI evidence must match each release's exact head. Earlier results do not validate the readiness extension. Its tests cover cron, replay, stale queues, legacy first-seen dates, malformed timestamps, page creation times and admitted source updates with synthetic inputs.

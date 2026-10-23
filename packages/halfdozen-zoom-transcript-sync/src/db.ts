@@ -1,4 +1,5 @@
 import { INLINE_SCHEMA } from './inline-transcript';
+import { GATE_SCHEMA } from './readiness-gate';
 import { INGESTION_SCHEMA } from './ingestion-state';
 import type { LedgerRow, SyncRunRow, TranscriptCandidate } from './types';
 
@@ -56,7 +57,7 @@ const SCHEMA_STATEMENTS = [
 const STALE_QUEUE_WINDOW_MS = 2 * 60 * 60 * 1000;
 
 export async function initSchema(db: D1Database): Promise<void> {
-  for (const statement of [...SCHEMA_STATEMENTS, ...INGESTION_SCHEMA, INLINE_SCHEMA]) {
+  for (const statement of [...SCHEMA_STATEMENTS, ...INGESTION_SCHEMA, INLINE_SCHEMA, GATE_SCHEMA]) {
     await db.prepare(statement).run();
   }
 }

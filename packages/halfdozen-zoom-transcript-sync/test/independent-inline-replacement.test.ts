@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { DatabaseSync } from 'node:sqlite';
 import { INLINE_SCHEMA } from '../src/inline-transcript.ts';
+import { GATE_SCHEMA } from '../src/readiness-gate.ts';
 import { planTranscript, type WriteJournal } from '../src/indexed-transcript.ts';
 import { syncTranscriptToNotion } from '../src/notion.ts';
 import { parseTranscript } from '../src/zoom.ts';
@@ -11,6 +12,7 @@ import { ProviderSimulator } from './runtime-support.mjs';
 async function fixture(flag: 'archived' | 'in_trash', failure?: 'before' | 'after', archiveAfterInitialCheck = false, queryOnlyEmpty = false) {
   const sql = new DatabaseSync(':memory:');
   sql.exec(INLINE_SCHEMA);
+  sql.exec(GATE_SCHEMA);
   const db = { prepare(query: string) {
     let args: any[] = [];
     const statement = {

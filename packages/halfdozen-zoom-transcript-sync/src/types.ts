@@ -25,6 +25,7 @@ export interface Env {
   NOTION_DEFAULT_SOURCE?: string;
   NOTION_DEFAULT_TYPE?: string;
   NOTION_ATTENDEES_PROPERTY?: string;
+  NOTION_TRANSCRIPT_GATE_ENABLED?: string;
 }
 
 export interface TranscriptCandidate {
@@ -85,6 +86,7 @@ export interface NotionWriteResult {
   pageUrl: string;
   action: 'created' | 'updated' | 'skipped';
   indexBlockId?: string;
+  gateVersion?: string;
   reason?: string;
 }
 

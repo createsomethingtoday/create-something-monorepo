@@ -59,6 +59,11 @@ export class IngestionLease implements WriteJournal {
       .bind(version, this.key, this.owner).run();
   }
 
+  async invalidateReady(): Promise<void> {
+    await this.db.prepare(`UPDATE transcript_ingestion SET ready_version = NULL, index_block_id = NULL, verified_at = NULL
+      WHERE meeting_key = ? AND selected_key = ? AND owner = ?`).bind(this.key, this.selected, this.owner).run();
+  }
+
   async ready(version: string, page: string, index: string): Promise<void> {
     const result = await this.db.prepare(`UPDATE transcript_ingestion
       SET ready_version = ?, page_id = ?, index_block_id = ?, verified_at = ?

@@ -18,7 +18,7 @@ import {
   markLedgerSynced,
   releaseLock,
 } from './db';
-import { syncTranscriptToNotion } from './notion';
+import { syncTranscriptToNotion, invalidateNotionReadiness, publishNotionReadiness } from './notion';
 import type { Env, SyncRunSummary, TranscriptQueueMessage, TranscriptCandidate } from './types';
 import { downloadTranscript, inspectMeetingRecordings, listTranscriptCandidates, parseTranscript, selectCanonicalRendition } from './zoom';
 
@@ -194,12 +194,28 @@ async function executeDiscoveryRun(env: Env, trigger: string): Promise<SyncRunSu
     // a formerly selected recording disappears or loses transcript eligibility.
     const tracked = await env.DB.prepare(`SELECT * FROM transcript_sync_ledger WHERE meeting_date BETWEEN ? AND ?`)
       .bind(discovery.from, discovery.to).all<import('./types').LedgerRow>();
+    const observed = new Map<string, TranscriptCandidate[]>();
+    for (const candidate of discovery.candidates) {
+      if (!atOrAfter(candidate.startTime, cutoff)) continue;
+      const key = meetingKey(candidate); observed.set(key, [...(observed.get(key) ?? []), candidate]);
+    }
+    const invalidated = new Set<string>();
     for (const row of tracked.results ?? []) {
       if (!ledgerAdmitted(row, cutoff)) continue;
+      const key = meetingKey({ canonicalMeetingKey: row.canonical_meeting_key, meetingDate: row.meeting_date });
+      if (invalidated.has(key)) continue;
+      invalidated.add(key);
+      const prior = await env.DB.prepare('SELECT selected_key, page_id FROM transcript_ingestion WHERE meeting_key = ?')
+        .bind(key).first<{ selected_key: string; page_id: string | null }>();
+      const next = selectCanonicalRendition(observed.get(key) ?? []);
       await env.DB.prepare(`UPDATE transcript_ingestion SET ready_version = NULL,
         index_block_id = NULL, verified_at = NULL, selected_key = 'unobserved', owner = NULL, expires_at = NULL
       WHERE meeting_key = ?`)
-      .bind(meetingKey({ canonicalMeetingKey: row.canonical_meeting_key, meetingDate: row.meeting_date })).run();
+      .bind(key).run();
+      if (prior?.page_id && next?.dedupKey !== prior.selected_key) {
+        const lease = await claimIngestion(env.DB, key, 'unobserved');
+        try { await invalidateNotionReadiness(env, prior.page_id, lease); } finally { await lease.release(); }
+      }
     }
     let queued = 0;
     let skipped = 0;
@@ -297,6 +313,7 @@ async function processTranscriptMessage(env: Env, payload: TranscriptQueueMessag
     .bind(key).first<{ selected_key: string }>();
   if (!selected || selected.selected_key !== payload.dedupKey) return 'excluded';
   const lease = await claimIngestion(env.DB, key, payload.dedupKey);
+  let gatePage = priorPage;
   try {
     // Claim clears readiness before download, parse, or writes can fail.
     const rawTranscript = await downloadTranscript(env, current);
@@ -305,13 +322,21 @@ async function processTranscriptMessage(env: Env, payload: TranscriptQueueMessag
     await lease.begin(plan.version);
     const canonicalPage = await getCanonicalMeetingPage(env.DB, current.canonicalMeetingKey, current.meetingDate);
     const notionWrite = await syncTranscriptToNotion(env, current, parsedTranscript, plan, lease, canonicalPage, payload.replay === true);
+    gatePage = notionWrite.pageId;
     if (!notionWrite.indexBlockId) throw new Error('Missing verified index receipt');
     // Detect edits made while the write was running before publishing readiness.
     const latest = await downloadTranscript(env, current);
     if (latest !== rawTranscript) throw new Error('Transcript changed during ingestion; readiness withheld');
     await lease.ready(plan.version, notionWrite.pageId, notionWrite.indexBlockId);
+    await publishNotionReadiness(env, notionWrite, lease);
     await markLedgerSynced(env.DB, payload.dedupKey, notionWrite.pageId, notionWrite.pageUrl, plan.version);
     return 'processed';
+  } catch (error) {
+    if (!(error instanceof InlineContinuation)) {
+      await lease.invalidateReady();
+      if (gatePage) await invalidateNotionReadiness(env, gatePage, lease);
+    }
+    throw error;
   } finally {
     await lease.release();
   }
