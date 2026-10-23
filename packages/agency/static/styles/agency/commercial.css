@@ -1,0 +1,42 @@
+/* Scoped to the local route preview. Existing controls, evidence and route content remain live. */
+body.design-preview[data-preview-family='commercial'] :is(.performance-campaign-opening,.clear-page-section--hero){padding-block:var(--space-performance-3xl) var(--space-performance-2xl);border-bottom:1px solid var(--color-performance-line)}
+body.design-preview[data-preview-family='commercial'] :is(.performance-campaign-opening__content,.clear-page-section__inner){max-width:90rem;margin-inline:auto}
+body.design-preview[data-preview-family='commercial'] :is(.performance-campaign-opening h1,.clear-page-section--hero h1){font-weight:400;font-size:clamp(3.2rem,6.8vw,7rem);line-height:1.02;letter-spacing:-.06em;max-width:17ch;text-wrap:balance}
+body.design-preview[data-preview-family='commercial'] :is(.performance-campaign-opening__lede,.clear-page-section--hero .clear-page-section__description){max-width:54ch;font-size:clamp(1rem,1.5vw,1.25rem);line-height:1.65}
+body.design-preview[data-preview-family='commercial'] :is(.performance-campaign-opening__identity,.clear-page-section__copy){min-width:0}
+body.design-preview[data-preview-family='commercial'] :is(.clear-page-section__actions,.performance-campaign-opening__actions){gap:var(--space-performance-sm);margin-top:var(--space-performance-lg);flex-wrap:wrap}
+/* Image chapters are separate from the working hero artifacts and isometric route signs. */
+body.design-preview[data-preview-family='commercial'] .agency-preview-media{margin:0;padding:var(--space-performance-xl) 6vw;background:var(--color-performance-shell-surface-secondary);color:var(--color-performance-fg-secondary);border-block:1px solid var(--color-performance-shell-border-default)}
+body.design-preview[data-preview-family='commercial'] .agency-preview-media img{display:block;width:100%;height:clamp(18rem,44vw,42rem);object-fit:cover;object-position:center;border-radius:var(--radius-performance-sm)}
+body.design-preview[data-preview-family='commercial'] .agency-preview-media figcaption{display:flex;justify-content:space-between;max-width:90rem;margin:var(--space-performance-sm) auto 0;font-size:.7rem;line-height:1.6;color:var(--color-performance-fg-tertiary)}
+/* Commercial chapters use generous reading intervals without replacing their proof objects. */
+body.design-preview[data-preview-family='commercial'] :is(.clear-page-section:not(.clear-page-section--hero),.performance-narrative-stage,.foundation-proof,.foundation-boundary,.foundation-fit,.practice-evidence,.practice-wayfinding){padding-block:var(--space-performance-2xl);border-top:1px solid var(--color-performance-line)}
+body.design-preview[data-preview-family='commercial'] :is(.clear-page-section__title,.performance-narrative-stage__header h2,.foundation-proof__heading h2,.foundation-boundary__heading h2){font-size:clamp(2.3rem,4.2vw,4.8rem);font-weight:400;line-height:1.06;letter-spacing:-.05em;text-wrap:balance}
+body.design-preview[data-preview-family='commercial'] .clear-page-section__after{margin-top:var(--space-performance-xl)}
+body.design-preview[data-preview-family='commercial'] :is(.performance-conversion-handoff,.route-handoff){padding-block:var(--space-performance-2xl);border-top:1px solid var(--color-performance-line-strong)}
+body.design-preview[data-preview-family='commercial'] .performance-conversion-handoff__copy h2{font-size:clamp(2.6rem,5.4vw,5.8rem);font-weight:400;line-height:1.04;letter-spacing:-.055em;max-width:20ch}
+/* Keep capacity and cost boundaries adjacent to actual membership plans. */
+body.design-preview[data-preview-family='commercial'] .membership{padding-block:var(--space-performance-2xl)}
+body.design-preview[data-preview-family='commercial'] .membership .plans{gap:var(--space-performance-lg)}
+body.design-preview[data-preview-family='commercial'] .membership .plan{border-radius:var(--radius-performance-sm);padding:var(--space-performance-lg);border-color:var(--color-performance-line-strong)}
+body.design-preview[data-preview-family='commercial'] .membership .cost-boundary{margin-top:var(--space-performance-xl);padding-top:var(--space-performance-lg);border-top:1px solid var(--color-performance-line-strong)}
+/* Consulting and local support retain their own diagnosis/proof/handoff compositions. */
+body.design-preview[data-preview-family='commercial'] :is(.airtable-workflow,.dfw-support)>.chapter{padding-block:var(--space-performance-2xl);gap:var(--space-performance-xl)}
+body.design-preview[data-preview-family='commercial'] :is(.airtable-workflow,.dfw-support)>.opening{padding-top:var(--space-performance-3xl)}
+body.design-preview[data-preview-family='commercial'] :is(.airtable-workflow,.dfw-support)>.opening h1{font-size:clamp(3rem,5.8vw,6.3rem);font-weight:400;line-height:1.03;letter-spacing:-.06em}
+body.design-preview[data-preview-family='commercial'] :is(.airtable-workflow,.dfw-support) :is(.workflow-map,.receipt,.handoff-notes){border-radius:var(--radius-performance-sm);border-color:var(--color-performance-line-strong)}
+/* An actual founder letter receives editorial spacing, never an invented staff portrait. */
+body.design-preview[data-preview-family='commercial'] .about-letter{transform:none;background:var(--color-performance-paper);color:var(--color-performance-ink);box-shadow:none;border-color:var(--color-performance-line);padding:var(--space-performance-xl)}
+body.design-preview[data-preview-family='commercial'] .about-letter h1{font-size:clamp(3rem,5.5vw,5.5rem);line-height:1.02;font-weight:400;letter-spacing:-.055em}
+body.design-preview[data-preview-family='commercial'] .letter-body{max-width:62ch;line-height:1.85}
+body.design-preview[data-preview-family='commercial'] .methodology-page>.hero{padding-block:var(--space-performance-3xl) var(--space-performance-2xl)}
+body.design-preview[data-preview-family='commercial'] .methodology-page .hero-title{font-size:clamp(3.2rem,6vw,6.5rem);line-height:1.03;font-weight:400;letter-spacing:-.055em}
+body.design-preview[data-preview-family='commercial'] :is(a,button,summary):focus-visible{outline:2px solid var(--color-performance-focus);outline-offset:5px}
+@media(max-width:48rem){body.design-preview[data-preview-family='commercial'] :is(.performance-campaign-opening,.clear-page-section--hero){padding-block:var(--space-performance-2xl) var(--space-performance-xl)}body.design-preview[data-preview-family='commercial'] :is(.performance-campaign-opening h1,.clear-page-section--hero h1){font-size:clamp(2.7rem,10vw,4.5rem)}body.design-preview[data-preview-family='commercial'] :is(.clear-page-section:not(.clear-page-section--hero),.performance-narrative-stage,.foundation-proof,.foundation-boundary,.foundation-fit,.practice-evidence,.practice-wayfinding){padding-block:var(--space-performance-xl)}body.design-preview[data-preview-family='commercial'] .agency-preview-media{padding:var(--space-performance-lg) 6vw}body.design-preview[data-preview-family='commercial'] .agency-preview-media img{height:auto;aspect-ratio:4/3;object-fit:cover}body.design-preview[data-preview-family='commercial'] .about-letter{padding:var(--space-performance-lg)}body.design-preview[data-preview-family='commercial'] :is(.airtable-workflow,.dfw-support)>.chapter{gap:var(--space-performance-lg);padding-block:var(--space-performance-xl)}}
+@media(prefers-reduced-motion:reduce){body.design-preview[data-preview-family='commercial'] .agency-preview-media{animation:none;transition:none}}
+/* Material inspection stays tighter than the wide team practice chapter. */
+body.design-preview[data-preview-family='commercial'] .agency-preview-media[data-shot='macro'] img{height:clamp(18rem,35vw,34rem);object-position:center}
+body.design-preview[data-preview-family='commercial'] .agency-preview-media[data-shot='team'] img{height:clamp(20rem,43vw,41rem);object-position:center}
+body.design-preview[data-preview-family='commercial'] .agency-preview-media[data-shot='hero']{padding-inline:0;padding-top:0}
+body.design-preview[data-preview-family='commercial'] .agency-preview-media[data-shot='hero'] figcaption{padding-inline:6vw}
+@media(max-width:48rem){body.design-preview[data-preview-family='commercial'] .agency-preview-media:is([data-shot='macro'],[data-shot='team']) img{height:auto;aspect-ratio:4/3}}

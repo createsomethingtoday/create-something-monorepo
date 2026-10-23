@@ -1,0 +1,12 @@
+/** Original WorkflowSignalBand algorithm; illustrative, never live telemetry. */
+export function mountPreviewTrace(field: HTMLElement) {
+ const canvas=field.querySelector('canvas')!,button=field.querySelector('button')!,ctx=canvas.getContext('2d');if(!ctx)return()=>{};
+ const pref=matchMedia('(prefers-reduced-motion: reduce)');let width=0,height=0,visible=false,timer=0,paused=false;
+ const hash=(x:number,y:number)=>{const v=Math.sin(x*127.1+y*311.7)*43758.5453;return v-Math.floor(v)};
+ const paint=(time=0)=>{if(!width||!height)return;const s=getComputedStyle(field),glyphs=['.',':','+','/','=','#'],cols=Math.ceil(width/14),rows=Math.ceil(height/17),phase=(pref.matches||paused)?.16:(time/11000)%1;
+ ctx.clearRect(0,0,width,height);ctx.font=`11px ${s.getPropertyValue('--font-performance-mono').trim()||'monospace'}`;ctx.textBaseline='middle';
+ for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){const x=c/Math.max(1,cols-1),y=r/Math.max(1,rows-1),route=.5+Math.sin(x*Math.PI*2.3)*.15,on=Math.abs(y-route)<.1;if(!on&&hash(c,r)<.79)continue;ctx.fillStyle=s.getPropertyValue(on&&Math.abs(x-phase)<.045?'--color-performance-fg-primary':on?'--color-performance-fg-muted':'--color-performance-fg-subtle').trim();ctx.fillText(glyphs[Math.floor(hash(c+7,r+19)*glyphs.length)],c*14,r*17+8)}};
+ const sync=()=>{clearTimeout(timer);paint(pref.matches||paused?0:performance.now());button.disabled=pref.matches;button.textContent=pref.matches?'Reduced motion on':paused?'Enable motion':'Pause motion';button.setAttribute('aria-pressed',String(pref.matches||paused));if(visible&&!pref.matches&&!paused&&!document.hidden)timer=window.setTimeout(sync,140)};
+ const resize=()=>{const r=canvas.getBoundingClientRect(),d=Math.min(devicePixelRatio||1,2);width=r.width;height=r.height;canvas.width=Math.round(width*d);canvas.height=Math.round(height*d);ctx.setTransform(d,0,0,d,0,0);sync()};
+ const io=new IntersectionObserver(([e])=>{visible=e.isIntersecting;sync()}),ro=new ResizeObserver(resize);io.observe(field);ro.observe(canvas);const toggle=()=>{paused=!paused;sync()};button.addEventListener('click',toggle);pref.addEventListener('change',sync);document.addEventListener('visibilitychange',sync);field.classList.add('is-ready');button.hidden=false;resize();return()=>{clearTimeout(timer);io.disconnect();ro.disconnect();button.removeEventListener('click',toggle);pref.removeEventListener('change',sync);document.removeEventListener('visibilitychange',sync)};
+}

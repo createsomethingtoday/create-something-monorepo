@@ -1,5 +1,7 @@
 <script lang="ts">
   import '../app.css';
+  import { IO_EXPERIMENTS_URL, IO_PAPERS_URL } from '$lib/data/ioResearchLinks';
+  import AgencyPageTreatment from '$lib/components/AgencyPageTreatment.svelte';
   import CanonBrandSignature from '$lib/components/CanonBrandSignature.svelte';
   import '$lib/styles/operator-palette.css';
   import { initializeFilmMotion, filmNavigationOpen } from '$lib/motion/filmPlayback';
@@ -127,7 +129,8 @@
       { label: 'Services & tools', href: '/products', description: 'Explore the full catalog.' },
       { label: 'Proof', href: '/field-reports', description: 'Inspect results and their limits.' },
       { label: 'Try a workflow', href: '/practice', description: 'Try the method yourself.' },
-      { label: 'What you keep', href: '/stack', description: 'Code, instructions and ownership.' }
+      { label: 'What you keep', href: '/stack', description: 'Code, instructions and ownership.' },
+      { label: 'Research on .io', href: IO_EXPERIMENTS_URL, description: 'Experiments, evidence and limits.' }
     ] }
   ];
   const primaryCtaHref = agencyCoreMessaging.membershipHref;
@@ -181,6 +184,8 @@
       ariaLabel: 'Guides and articles',
       links: [
         { label: 'Workflow Guides', href: '/workflows' },
+        { label: 'Experiments on .io', href: IO_EXPERIMENTS_URL },
+        { label: 'Research papers on .io', href: IO_PAPERS_URL },
         {
           label: agencyCoreMessaging.governanceChecklistLabel,
           href: agencyCoreMessaging.governanceChecklistHref
@@ -350,6 +355,9 @@
   />
 
   <main id="main-content" class="pt-[72px]">
+    {#if usesPublicNavigation && $page.url.pathname !== '/'}
+      <AgencyPageTreatment />
+    {/if}
     {@render children()}
   </main>
 
@@ -411,5 +419,17 @@
       top: calc(72px + var(--space-performance-md, 1rem));
       bottom: auto;
     }
+  }
+
+  /* Homepage campaign preview: preserve the shared navigation behavior and logo. */
+  .film-home :global(.nav-editorial.nav-fixed) { top: 0; left: 0; right: 0; border: 0; border-radius: 0; background: rgba(8,8,8,.88); backdrop-filter: blur(16px); }
+  .film-home :global(.nav-editorial .nav-inner) { padding-inline: 3vw; }
+  .film-home :global(main#main-content) { padding-top: 0; }
+  .film-home :global(.nav-editorial .nav-link-list) { font-size: 12px; }
+  @media(max-width:700px) { .film-home :global(.nav-editorial.nav-fixed) { top: 0; left: 0; right: 0; } .film-home :global(.nav-editorial .nav-inner) { padding-inline: 6vw; } }
+  @media(min-width:1024px) and (max-width:1200px) {
+    .film-home :global(.footer-editorial .footer-links-grid) { grid-template-columns: minmax(0,.82fr) minmax(0,1.12fr) minmax(0,.9fr); }
+    .film-home :global(.footer-link-groups) { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 32px 24px; }
+    .film-home :global(.footer-link-groups nav) { min-width: 0; }
   }
 </style>
