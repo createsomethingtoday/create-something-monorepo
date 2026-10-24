@@ -302,6 +302,30 @@ export type CookiesAPI = {
  */
 export function createSessionManager(cookies: CookiesAPI, options: SessionManagerOptions = {}) {
 	const { isProduction = true, domain, onAnalyticsEvent, authProvider } = options;
+	async function verifiedUser(token: string): Promise<User | null> {
+		const { verifyIdentityToken, validateToken } = await import('./server.js');
+		if (options.identityVerification) {
+			const identity = await verifyIdentityToken(token, options.identityVerification);
+			if (identity?.email) {
+				return {
+					id: identity.subject,
+					email: identity.email,
+					tier: identity.tier,
+					source: identity.source as User['source'],
+				};
+			}
+		}
+		if (authProvider?.type === 'auth0' && 'domain' in authProvider) {
+			return validateToken(token, {
+				AUTH0_DOMAIN: authProvider.domain,
+				AUTH0_CLIENT_ID: authProvider.clientId,
+				AUTH0_ISSUER_BASE_URL: authProvider.issuer,
+				AUTH0_JWKS_URL: authProvider.jwksUrl,
+				AUTH0_CLAIMS_NAMESPACE: authProvider.claimsNamespace,
+			});
+		}
+		return null;
+	}
 
 	return {
 		/**
@@ -317,7 +341,7 @@ export function createSessionManager(cookies: CookiesAPI, options: SessionManage
 
 			// Access token valid
 			if (session.accessToken && !isTokenExpired(session.accessToken)) {
-				return getUserFromToken(session.accessToken);
+				return verifiedUser(session.accessToken);
 			}
 
 			// Try to refresh
@@ -325,7 +349,7 @@ export function createSessionManager(cookies: CookiesAPI, options: SessionManage
 				const refreshed = await this.refresh();
 				if (refreshed) {
 					const newSession = getSessionCookies(cookies);
-					return newSession.accessToken ? getUserFromToken(newSession.accessToken) : null;
+					return newSession.accessToken ? verifiedUser(newSession.accessToken) : null;
 				}
 			}
 
@@ -342,7 +366,7 @@ export function createSessionManager(cookies: CookiesAPI, options: SessionManage
 		},
 
 		/**
-		 * Get session state with expiration info
+		 * Decode display state only; never use this for server authorization
 		 */
 		getState(): SessionState {
 			const session = getSessionCookies(cookies);
@@ -383,6 +407,17 @@ export function createSessionManager(cookies: CookiesAPI, options: SessionManage
 			const result = await refreshTokens(session.refreshToken, authProvider);
 
 			if (result.success && result.tokens) {
+				if (!(await verifiedUser(result.tokens.access_token))) {
+					// The configured token endpoint has already rotated this opaque credential.
+					// Retain only its successor so a transient JWKS outage does not cause replay
+					// on retry. No unverified access token or user is accepted.
+					setSessionCookies(
+						cookies,
+						{ refreshToken: result.tokens.refresh_token, domain },
+						isProduction,
+					);
+					return false;
+				}
 				setSessionCookies(
 					cookies,
 					{
@@ -588,6 +623,8 @@ export function createAuthHooks(config: AuthHooksConfig = {}): Handle {
 		// Get session and attempt to get user (with auto-refresh)
 		const authProvider = configuredAuthProvider ?? getAuth0Config(platformEnv);
 		const sessionManager = createSessionManager(cookies, {
+			identityVerification: config.identityVerification ??
+				identitySessionVerification(platformEnv, config.identityAudience),
 			isProduction,
 			domain,
 			onAnalyticsEvent,
@@ -612,6 +649,28 @@ export function createAuthHooks(config: AuthHooksConfig = {}): Handle {
 		}
 
 		return resolve(event);
+	};
+}
+
+/** Server configuration only. Never infer an accepted audience from token claims. */
+export function identitySessionVerification(
+	env?: {
+		CS_IDENTITY_ISSUER?: unknown;
+		CS_IDENTITY_JWKS_URL?: unknown;
+		CS_IDENTITY_AUDIENCE?: unknown;
+	},
+	applicationAudience?: string,
+): import('./server.js').IdentityVerificationConfig | undefined {
+	for (const value of [env?.CS_IDENTITY_ISSUER, env?.CS_IDENTITY_JWKS_URL, env?.CS_IDENTITY_AUDIENCE]) {
+		if (value !== undefined && typeof value !== 'string') return undefined;
+	}
+	const audience = (env?.CS_IDENTITY_AUDIENCE as string | undefined) || applicationAudience;
+	if (!audience || audience.includes(',')) return undefined;
+	const issuer = (env?.CS_IDENTITY_ISSUER as string | undefined) || SESSION_CONFIG.IDENTITY_ENDPOINT;
+	return {
+		issuer,
+		audience,
+		jwksUrl: (env?.CS_IDENTITY_JWKS_URL as string | undefined) || `${issuer}/.well-known/jwks.json`,
 	};
 }
 

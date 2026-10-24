@@ -2,6 +2,7 @@ import type { Cookies } from '@sveltejs/kit';
 import {
 	PROPERTY_DOMAINS,
 	createSessionManager,
+	identitySessionVerification,
 	getAuth0Config,
 	type User
 } from '@create-something/canon/auth';
@@ -103,6 +104,7 @@ export async function getOptionalAgencySessionUser(input: {
 	const platformEnv = input.platform?.env as Record<string, string | undefined> | undefined;
 	const authProvider = getAuth0Config(platformEnv);
 	const session = createSessionManager(input.cookies, {
+		identityVerification: identitySessionVerification(platformEnv, 'client-workspace'),
 		isProduction: platformEnv?.ENVIRONMENT === 'production',
 		domain: PROPERTY_DOMAINS.agency,
 		authProvider: authProvider ?? undefined

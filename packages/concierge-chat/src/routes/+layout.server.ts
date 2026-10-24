@@ -8,7 +8,7 @@ import {
 	resolveIntakeAccess
 } from '$lib/server/intake-access';
 
-const loadAgencySession = createLayoutServerLoader({ property: 'agency' });
+const loadAgencySession = createLayoutServerLoader({ property: 'agency', identityAudience: 'client-workspace' });
 
 export const load: LayoutServerLoad = async (event) => {
 	const intakeAccess = resolveIntakeAccess({

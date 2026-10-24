@@ -230,6 +230,7 @@ export const verifyIdentityToken = async (
 	config: IdentityVerificationConfig,
 ): Promise<VerifiedIdentity | null> => {
 	try {
+		if (token.split('.').length !== 3) return null;
 		const [headerB64, payloadB64, signatureB64] = token.split('.');
 		if (!headerB64 || !payloadB64 || !signatureB64) return null;
 
@@ -239,7 +240,7 @@ export const verifyIdentityToken = async (
 		if (!header.kid || (header.alg !== 'ES256' && header.alg !== 'RS256')) return null;
 
 		const payload = parseJwtPayload(token);
-		if (!payload || payload.iss !== config.issuer || typeof payload.sub !== 'string') return null;
+		if (!payload || payload.iss !== config.issuer || typeof payload.sub !== 'string' || !payload.sub) return null;
 		if (!isCurrentIdentitySession(payload)) return null;
 
 		const tokenAudience = normalizeAudience(payload.aud);

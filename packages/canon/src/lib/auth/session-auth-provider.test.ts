@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { clearJWKSCache } from './server.js';
 import { createAuthHooks, handleLogout } from './session.js';
 
 function token(payload: Record<string, unknown>): string {
@@ -9,6 +10,7 @@ function token(payload: Record<string, unknown>): string {
 describe('createAuthHooks provider ownership', () => {
 	afterEach(() => {
 		vi.unstubAllGlobals();
+		clearJWKSCache();
 	});
 
 	it('keeps refresh on Identity when retired provider configuration is still present', async () => {
@@ -26,25 +28,21 @@ describe('createAuthHooks provider ownership', () => {
 			],
 			['cs_refresh_token', 'identity-refresh-token'],
 		]);
-		const identityFetch = vi.fn(async () =>
-			Response.json({
-				access_token: token({
-					sub: 'usr_customer',
-					email: 'owner@example.com',
-					iss: 'https://id.createsomething.space',
-					aud: ['client-workspace'],
-					iat: 1_900_000_000,
-					exp: 1_900_000_900,
-				}),
-				refresh_token: 'rotated-refresh-token',
-				token_type: 'Bearer',
-				expires_in: 900,
-			}),
-		);
+		const pair = await crypto.subtle.generateKey({ name: 'ECDSA', namedCurve: 'P-256' }, true, ['sign','verify']);
+		const jwk = { ...await crypto.subtle.exportKey('jwk', pair.publicKey), kid: 'test', alg: 'ES256', use: 'sig' };
+		const encode = (value: unknown) => Buffer.from(JSON.stringify(value)).toString('base64url');
+		const now = Math.floor(Date.now()/1000);
+		const signingInput = `${encode({ alg: 'ES256', kid: 'test' })}.${encode({ sub: 'usr_customer', email: 'owner@example.com', iss: 'https://id.createsomething.space', aud: ['client-workspace'], iat: now, exp: now+900, kind: 'identity_access_token', session_version: 2, email_verified: true })}`;
+		const signature = await crypto.subtle.sign({name:'ECDSA',hash:'SHA-256'},pair.privateKey,new TextEncoder().encode(signingInput));
+		const identityFetch = vi.fn(async (input: unknown) => String(input).endsWith('/jwks.json') ? Response.json({keys:[jwk]}) : Response.json({
+			access_token: `${signingInput}.${Buffer.from(signature).toString('base64url')}`,
+			refresh_token: 'rotated-refresh-token', token_type: 'Bearer', expires_in: 900,
+		}));
 		vi.stubGlobal('fetch', identityFetch);
 
 		const handle = createAuthHooks({
 			protectedPaths: ['/map/workspace'],
+			identityAudience: 'client-workspace',
 			authProvider: { type: 'identity-worker' },
 		});
 		const locals: { user?: unknown } = {};
