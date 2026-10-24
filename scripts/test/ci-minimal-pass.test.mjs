@@ -103,3 +103,11 @@ test('workflow-only changes execute the contract test for every inspected workfl
     }
   }
 });
+
+test('Agency runner configuration changes execute shared-auth regressions', () => {
+  for (const file of ['package.json', 'svelte.config.js', 'tsconfig.json', 'vite.config.ts', 'vitest.config.ts']) {
+    for (const event of ['pull_request', 'push']) {
+      assert(triggered('shared-auth-regressions', `packages/agency/${file}`, event), `${event}: ${file}`);
+    }
+  }
+});
