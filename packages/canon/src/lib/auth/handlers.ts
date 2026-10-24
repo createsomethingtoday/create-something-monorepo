@@ -615,10 +615,11 @@ export function createLoginPageLoader(options: LoginPageLoaderOptions) {
 		cookies: Cookies;
 		platform?: { env?: Record<string, string | undefined> };
 	}) => {
-		const { createSessionManager } = await import('./session.js');
+		const { createSessionManager, identitySessionVerification } = await import('./session.js');
 		const authProvider = getAuth0Config(platform?.env);
 		
 		const session = createSessionManager(cookies, {
+			identityVerification: identitySessionVerification(platform?.env, options.property),
 			isProduction: platform?.env?.ENVIRONMENT === 'production',
 			domain: productionDomain,
 			authProvider: authProvider ?? undefined,
@@ -638,6 +639,8 @@ export function createLoginPageLoader(options: LoginPageLoaderOptions) {
 }
 
 interface LayoutServerLoaderOptions {
+	/** Exact owning application audience; defaults to the property for existing callers. */
+	identityAudience?: string;
 	property: 'ltd' | 'io' | 'agency' | 'space' | 'lms';
 }
 
@@ -658,10 +661,11 @@ export function createLayoutServerLoader(options: LayoutServerLoaderOptions) {
 		cookies: Cookies;
 		platform?: { env?: Record<string, string | undefined> };
 	}) => {
-		const { createSessionManager } = await import('./session.js');
+		const { createSessionManager, identitySessionVerification } = await import('./session.js');
 		const authProvider = getAuth0Config(platform?.env);
 		
 		const session = createSessionManager(cookies, {
+			identityVerification: identitySessionVerification(platform?.env, options.identityAudience ?? options.property),
 			isProduction: platform?.env?.ENVIRONMENT === 'production',
 			domain: productionDomain,
 			authProvider: authProvider ?? undefined,

@@ -1,9 +1,10 @@
 import type { LayoutServerLoad } from './$types';
-import { createSessionManager } from '@create-something/canon/auth';
+import { createSessionManager, identitySessionVerification } from '@create-something/canon/auth';
 
 export const load: LayoutServerLoad = async ({ cookies, platform }) => {
 	// Get user from session cookies (with auto-refresh)
 	const session = createSessionManager(cookies, {
+		identityVerification: identitySessionVerification(platform?.env, 'io'),
 		isProduction: platform?.env?.ENVIRONMENT === 'production',
 		domain: '.createsomething.io'
 	});
