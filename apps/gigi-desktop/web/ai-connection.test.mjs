@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { AiConnection, aiConnectionView, connectionError } from './ai-connection.mjs';
+import { AiConnection, aiConnectionView, connectionError, messageBudget, updateAiDraft } from './ai-connection.mjs';
 const status={available:true,busy:false,activeClientId:'a',accounts:[{clientId:'a',email:'inez@example.test',connected:true,planEnabled:true}],pendingClientIds:[],error:null};
 function fixture(fn=()=>structuredClone(status)){const calls=[];const c=new AiConnection({call:async(op,input)=>{calls.push([op,input]);return fn(op,input);}});return {c,calls};}
 
@@ -19,7 +19,7 @@ test('connect/select/disconnect use separate operations without source or Codex 
 test('typed text only, model must be catalog member, no implicit source context',async()=>{
  const {c,calls}=fixture(op=>op.endsWith('models')?[{slug:'allowed',displayName:'Allowed'}]:op.endsWith('ask')?{text:'answer'}:structuredClone(status));
  await c.refresh();c.draft='synthetic question';c.model='injected';await c.action('ask');assert.equal(calls.length,1);
- await c.action('models');await c.action('ask');assert.deepEqual(calls.at(-1),['ai.connection.ask',{model:'allowed',text:'synthetic question'}]);assert.equal(c.reply,'answer');assert.equal(c.draft,'synthetic question');
+ await c.action('models');assert.deepEqual(calls.at(-1),['ai.connection.models',{expectedClientId:'a'}]);await c.action('ask');assert.deepEqual(calls.at(-1),['ai.connection.ask',{expectedClientId:'a',model:'allowed',text:'synthetic question'}]);assert.equal(c.reply,'answer');assert.equal(c.draft,'synthetic question');
 });
 test('cancel invalidates in-flight output and prevents overlapping action',async()=>{
  let resolve;const {c,calls}=fixture(op=>op.endsWith('ask')?new Promise(r=>resolve=r):structuredClone(status));c.status=structuredClone(status);c.models=[{slug:'m',displayName:'M'}];c.model='m';c.draft='keep';
@@ -39,7 +39,7 @@ test('status account change drops prior model and reply while preserving typed d
  const {c}=fixture(()=>({...structuredClone(status),activeClientId:'b',accounts:[{clientId:'b',connected:true,planEnabled:true}]}));c.status=structuredClone(status);c.model='old';c.models=[{slug:'old',displayName:'Old'}];c.reply='private reply';c.draft='keep';await c.refresh();assert.equal(c.reply,'');assert.equal(c.model,'');assert.equal(c.draft,'keep');
 });
 test('usage settings are a fixed native operation and preserve existing response',async()=>{
- const {c,calls}=fixture();c.reply='existing';await c.action('usage');assert.deepEqual(calls,[['ai.connection.usage',undefined]]);assert.equal(c.reply,'existing');
+ const {c,calls}=fixture();c.status=structuredClone(status);c.reply='existing';await c.action('usage');assert.deepEqual(calls,[['ai.connection.usage',undefined]]);assert.equal(c.reply,'existing');
 });
 
 test('action-returned revocation warning is immediate and never hidden as success',async()=>{
@@ -75,4 +75,73 @@ test('new action clears old receipt and hostile receipt fields cannot enter UI',
 
 test('prototype property names are unknown outcomes, not receipt text or error functions',async()=>{
  const {c}=fixture(()=>({...structuredClone(status),disconnectOutcome:{localTokensRemoved:true,remoteRevocation:'constructor'}}));c.status=structuredClone(status);await c.action('disconnect','a');assert.match(c.disconnectNotice,/outcome is unknown/);assert.equal(typeof connectionError('toString'),'string');assert.doesNotMatch(connectionError('toString'),/function/);
+});
+
+test('in-flight disconnect ignores cancel and reentry, hides Cancel, and retains actual outcome',async()=>{
+ for(const [remoteRevocation,error] of [['request_succeeded',null],['request_failed_or_unverifiable','revocation_unconfirmed']]){
+  let resolve;const {c,calls}=fixture(()=>new Promise(r=>{resolve=r;}));c.status=structuredClone(status);
+  const pending=c.action('disconnect','a');const epoch=c.epoch;
+  assert.equal(c.busy,true);assert.doesNotMatch(aiConnectionView(c),/data-ai-action="cancel"/);
+  await c.action('cancel');await c.action('disconnect','a');
+  assert.equal(c.epoch,epoch);assert.equal(c.busy,true);assert.deepEqual(calls,[['ai.connection.disconnect',{clientId:'a'}]]);
+  resolve({...structuredClone(status),accounts:[],activeClientId:null,error,disconnectOutcome:{localTokensRemoved:true,remoteRevocation}});await pending;
+  assert.equal(c.busy,false);assert.equal(c.operation,'');assert.match(c.disconnectNotice,/Local account tokens removed/);
+  if(error){assert.match(c.error,/Revocation could not be confirmed/);assert.match(c.disconnectNotice,/failed or could not be verified/);}else{assert.equal(c.error,'');assert.match(c.disconnectNotice,/request acknowledged/);assert.match(c.disconnectNotice,/does not prove/);}
+ }
+});
+
+test('unknown native busy after remount cannot cancel and read-only status can observe completion',async()=>{
+ let completed=false;const {c,calls}=fixture(()=>({...structuredClone(status),busy:!completed}));
+ await c.refresh();assert.equal(c.busy,false);assert.equal(c.operation,'');assert.equal(c.status.busy,true);
+ const view=aiConnectionView(c);assert.doesNotMatch(view,/data-ai-action="cancel"/);assert.match(view,/data-ai-action="refresh">Check status/);
+ const epoch=c.epoch;await c.action('cancel');assert.equal(c.epoch,epoch);assert.deepEqual(calls.map(x=>x[0]),['ai.connection.status']);
+ completed=true;await c.action('refresh');assert.equal(c.status.busy,false);assert.deepEqual(calls.map(x=>x[0]),['ai.connection.status','ai.connection.status']);
+});
+
+test('UTF-8 byte boundaries reject oversized drafts before IPC and preserve their text',async()=>{
+ for(const [unit,under,over] of [['a',65536,65537],['界',21845,21846],['😀',16384,16385]]){
+  const {c,calls}=fixture(()=>({text:'answer'}));c.status=structuredClone(status);c.models=[{slug:'m',displayName:'M'}];c.model='m';c.draft=unit.repeat(under);
+  assert.doesNotMatch(aiConnectionView(c),/data-ai-action="ask" disabled/);await c.action('ask');assert.equal(calls.length,1);assert.equal(calls[0][1].text,unit.repeat(under));
+  c.draft=unit.repeat(over);await c.action('ask');assert.equal(calls.length,1);assert.equal(c.draft,unit.repeat(over));assert.match(c.error,/Shorten/);const view=aiConnectionView(c);assert.match(view,/data-ai-action="ask" disabled/);assert.match(view,/Shorten it before sending/);
+ }
+});
+
+test('actual draft input helper updates Send, UTF-8 help and accessibility without rerendering',()=>{
+ let renders=0;const c=new AiConnection({},()=>renders++);c.model='m';const send={},help={},error={},attrs={};const input={setAttribute:(key,value)=>attrs[key]=value};const root={querySelector:q=>({'[data-ai-action="ask"]':send,'#ai-message-budget':help,'#ai-message':input,'#ai-connection-error':error}[q])};
+ updateAiDraft(c,'界'.repeat(21846),root);assert.equal(send.disabled,true);assert.match(help.textContent,/Shorten/);assert.equal(attrs['aria-invalid'],'true');assert.equal(c.draft,'界'.repeat(21846));
+ c.error=help.textContent;updateAiDraft(c,'😀'.repeat(16384),root);assert.equal(send.disabled,false);assert.equal(attrs['aria-invalid'],'false');assert.doesNotMatch(help.textContent,/Shorten/);assert.equal(c.error,'');assert.equal(error.hidden,true);assert.equal(renders,0);
+ c.error='Other connection problem';updateAiDraft(c,'ok',root);assert.equal(c.error,'Other connection problem');assert.equal(messageBudget('😀'.repeat(16384)).bytes,65536);
+});
+
+test('cleared active selection retains explicit reconnect for an expired existing registration',async()=>{
+ const clientId='existing-registration';const disconnected={...structuredClone(status),activeClientId:null,accounts:[{clientId,email:'inez@example.test',connected:false,planEnabled:false}]};
+ const {c,calls}=fixture(()=>structuredClone(disconnected));await c.refresh();
+ assert.equal(c.status.activeClientId,null);assert.deepEqual(calls,[['ai.connection.status',undefined]]);
+ const view=aiConnectionView(c);const reconnect=view.match(/<button[^>]*data-ai-action="connect" data-ai-client="existing-registration"[^>]*>Reconnect<\/button>/)?.[0];
+ assert.ok(reconnect);assert.doesNotMatch(reconnect,/disabled/);assert.match(view,/Disconnected\./);assert.doesNotMatch(view,/id="ai-message"/);
+ await c.action('connect',clientId);assert.deepEqual(calls,[['ai.connection.status',undefined],['ai.connection.connect',{clientId}]]);
+});
+
+test('late cancelled-connect cleanup warning survives refresh and later actions without stale state',async()=>{
+ let rejectConnect;const disconnected={...structuredClone(status),activeClientId:null,accounts:[]};
+ const {c}=fixture(op=>op==='ai.connection.connect'?new Promise((_,reject)=>{rejectConnect=reject;}):structuredClone(disconnected));c.status=structuredClone(disconnected);c.draft='keep';
+ const pending=c.action('connect');await c.action('cancel');rejectConnect(new Error('cancelled_revocation_unconfirmed'));await pending;
+ assert.match(c.safetyWarning,/remote access is unconfirmed/);assert.match(aiConnectionView(c),/ai-connection-safety-warning/);assert.deepEqual(c.status,disconnected);assert.deepEqual(c.models,[]);assert.equal(c.reply,'');assert.equal(c.draft,'keep');
+ const warning=c.safetyWarning;await c.refresh();await c.action('usage');assert.equal(c.safetyWarning,warning);assert.equal(c.cancelledConnectEpochs.size,0);assert.equal(c.operationEpoch,null);
+});
+test('ordinary late cancelled-connect errors stay ignored and repeated cancel markers are cleaned',async()=>{
+ let rejectConnect;const disconnected={...structuredClone(status),activeClientId:null,accounts:[]};
+ const {c}=fixture(op=>op==='ai.connection.connect'?new Promise((_,reject)=>{rejectConnect=reject;}):structuredClone(disconnected));c.status=structuredClone(disconnected);
+ const pending=c.action('connect');await c.action('cancel');await c.action('cancel');rejectConnect(new Error('network_unavailable'));await pending;
+ assert.equal(c.safetyWarning,'');assert.equal(c.error,'');assert.deepEqual(c.status,disconnected);assert.equal(c.cancelledConnectEpochs.size,0);assert.equal(c.operationEpoch,null);
+});
+
+test('models and ask bind selected account before provider work and refresh on external change',async()=>{
+ for(const action of ['models','ask']){
+  let provider=0;const next={...structuredClone(status),activeClientId:'b',accounts:[{clientId:'b',connected:true,planEnabled:true}]};
+  const {c,calls}=fixture((op,input)=>{if(op.endsWith('status'))return next;if(op.endsWith(action)){assert.equal(input.expectedClientId,'a');if(input.expectedClientId!==next.activeClientId)throw 'account_changed';provider++;}return [];});c.status=structuredClone(status);c.models=[{slug:'m',displayName:'M'}];c.model='m';c.draft='keep draft';c.reply='old';await c.action(action);assert.equal(provider,0);assert.equal(c.status.activeClientId,'b');assert.equal(c.reply,'');assert.equal(c.model,'');assert.equal(c.draft,'keep draft');assert.match(c.error,/selected account changed/);assert.equal(calls.filter(([op])=>op.endsWith(action)).length,1);
+ }
+});
+test('unselected account cannot request models or ask; usage updates current identity',async()=>{
+ const {c,calls}=fixture(()=>({...structuredClone(status),activeClientId:'b',accounts:[{clientId:'b',connected:true,planEnabled:true}]}));c.status={...structuredClone(status),activeClientId:null};c.models=[{slug:'m',displayName:'M'}];c.model='m';c.draft='keep';await c.action('models');await c.action('ask');assert.deepEqual(calls,[]);c.status=structuredClone(status);c.reply='old';await c.action('usage');assert.equal(c.status.activeClientId,'b');assert.equal(c.reply,'');assert.equal(c.draft,'keep');
 });

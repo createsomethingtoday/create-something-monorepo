@@ -22,6 +22,7 @@
       return;
     }
     error = chatGPTError(e);
+    if (e === 'account_changed') { models = []; model = ''; answer = ''; }
     try { const value = await chatGPT.status(); if (id === generation) apply(value); } catch { /* Preserve the sanitized original error and typed request. */ }
   }
   async function connect(clientId: string | null = null) {
@@ -54,14 +55,14 @@
   }
   async function manageUsage() { try { await chatGPT.openUsage(); } catch { error = 'Could not open ChatGPT Settings. Open chatgpt.com/settings/usage in your browser.'; } }
   async function loadModels() {
-    if (!planReady || busy) return; const id = ++generation; const clientId = status.activeClientId; working = true; error = ''; answer = ''; models = []; model = '';
-    try { const value = await chatGPT.models(); if (id === generation && status.activeClientId === clientId) { models = value; model = value[0]?.slug || ''; if (!value.length) notice = 'No models are currently available for this account.'; } }
+    if (!planReady || busy || !status.activeClientId) return; const id = ++generation; const clientId = status.activeClientId; working = true; error = ''; answer = ''; models = []; model = '';
+    try { const value = await chatGPT.models(clientId!); if (id === generation && status.activeClientId === clientId) { models = value; model = value[0]?.slug || ''; if (!value.length) notice = 'No models are currently available for this account.'; } }
     catch (e) { await failed(e, id); }
     finally { if (id === generation) working = false; }
   }
   async function ask() {
-    if (!planReady || busy || !model || !input.trim()) return; const id = ++generation; const clientId = status.activeClientId; working = true; error = ''; notice = ''; answer = '';
-    try { const value = await chatGPT.respond(model, input); if (id === generation && status.activeClientId === clientId) answer = value; }
+    if (!planReady || busy || !status.activeClientId || !model || !input.trim()) return; const id = ++generation; const clientId = status.activeClientId; working = true; error = ''; notice = ''; answer = '';
+    try { const value = await chatGPT.respond(clientId!, model, input); if (id === generation && status.activeClientId === clientId) answer = value; }
     catch (e) { await failed(e, id); }
     finally { if (id === generation) working = false; }
   }

@@ -88,12 +88,16 @@ async fn run(c: &Controller, operation: &str, input: Value) -> Result<Value, Str
             .await
             .map_err(|e| e.to_string())?,
         "ai.connection.models" => {
-            return serde_json::to_value(c.models().await.map_err(|e| e.to_string())?)
-                .map_err(|_| "invalid_response".into())
+            return serde_json::to_value(
+                c.models(field(&input, "expectedClientId", 512)?)
+                    .await
+                    .map_err(|e| e.to_string())?,
+            )
+            .map_err(|_| "invalid_response".into())
         }
         "ai.connection.ask" => {
             return Ok(
-                json!({"text":c.respond(field(&input,"model",200)?,field(&input,"text",65536)?).await.map_err(|e|e.to_string())?}),
+                json!({"text":c.respond(field(&input,"expectedClientId",512)?,field(&input,"model",200)?,field(&input,"text",65536)?).await.map_err(|e|e.to_string())?}),
             )
         }
         _ => return Err("unsupported_operation".into()),
@@ -133,6 +137,36 @@ mod tests {
             assert!(!browser_url_allowed(url), "URL should be refused");
             assert_eq!(browser(url).unwrap_err(), "browser_url_refused");
         }
+    }
+    #[test]
+    fn expected_account_field_is_required_for_models_and_ask() {
+        tauri::async_runtime::block_on(async {
+            let c = Controller::new("GiGi fixture", "synthetic-unused", false).unwrap();
+            for expected in [
+                Value::Null,
+                json!(""),
+                json!(" "),
+                json!("x".repeat(513)),
+                json!(1),
+            ] {
+                for operation in ["ai.connection.models", "ai.connection.ask"] {
+                    let input =
+                        json!({"expectedClientId":expected,"model":"fixture","text":"draft"});
+                    assert_eq!(
+                        run(&c, operation, input).await.unwrap_err(),
+                        "invalid_request"
+                    );
+                }
+            }
+            for operation in ["ai.connection.models", "ai.connection.ask"] {
+                assert_eq!(
+                    run(&c, operation, json!({"model":"fixture","text":"draft"}))
+                        .await
+                        .unwrap_err(),
+                    "invalid_request"
+                );
+            }
+        });
     }
     #[test]
     fn invalid_input_and_unknown_operations_do_not_open_auth_or_inference() {

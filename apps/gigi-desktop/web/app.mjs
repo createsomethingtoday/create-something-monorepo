@@ -18,7 +18,7 @@ import { canUseSource, sourceDraft, reviewSourceDraft, sourceProposalView } from
 import { icon, entityIcon } from './icons.mjs';
 import { tauriBridge } from './bridge.mjs';
 import { ChatController, chatView } from './chat.mjs';
-import { AiConnection, aiConnectionView } from './ai-connection.mjs';
+import { AiConnection, aiConnectionView, updateAiDraft } from './ai-connection.mjs';
 import { sections, fields, moneyFields, booleanFields, fieldOptions, listFrom, recordFields, editedFields, formatMoney, gigBalance, relatedEndpoint, sourcePreview, sourceSessionBlocked, sourceCanBegin, sourceNeedsOperatorReview, importRunForAccount, pendingConsentForProvider, pendingAccountForProvider, linkInput } from './model.mjs';
 
 const root = document.querySelector('#app');
@@ -847,7 +847,7 @@ root.addEventListener('input', (event) => {
     }
     return;
   }
-  if(event.target.id==='ai-message'){ai.draft=event.target.value; const send=root.querySelector('[data-ai-action="ask"]');if(send)send.disabled=ai.busy||!ai.draft.trim()||!ai.model;return;}
+  if(event.target.id==='ai-message'){updateAiDraft(ai,event.target.value,root);return;}
   if(event.target.id==='gigs-search'){gigs.update({query:event.target.value});return;}
   if (event.target.id === 'contact-search') { searchContacts(event.target.value); return; }
   if (event.target.id === 'chat-message' && chat) chat.draft = event.target.value;

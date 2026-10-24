@@ -134,8 +134,13 @@ pub(crate) async fn draw_chatgpt_select(
 #[tauri::command]
 pub(crate) async fn draw_chatgpt_models(
     state: tauri::State<'_, ChatGptState>,
+    expected_client_id: String,
 ) -> Result<Vec<Model>, String> {
-    state.controller()?.models().await.map_err(public_error)
+    state
+        .controller()?
+        .models(&expected_client_id)
+        .await
+        .map_err(public_error)
 }
 // Match HTML textarea maxlength, which counts UTF-16 code units, not UTF-8 bytes.
 const MAX_INPUT_UTF16_UNITS: usize = 8_000;
@@ -148,13 +153,14 @@ fn validate_input(input: &str) -> Result<(), String> {
 #[tauri::command]
 pub(crate) async fn draw_chatgpt_respond(
     state: tauri::State<'_, ChatGptState>,
+    expected_client_id: String,
     model: String,
     input: String,
 ) -> Result<String, String> {
     validate_input(&input)?;
     state
         .controller()?
-        .respond(&model, &input)
+        .respond(&expected_client_id, &model, &input)
         .await
         .map_err(public_error)
 }

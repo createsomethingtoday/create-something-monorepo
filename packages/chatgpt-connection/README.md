@@ -2,7 +2,7 @@
 
 Independent Rust implementation of OpenAI's documented Sign in with ChatGPT local-client protocol. This is an optional model-provider connection, not CREATE SOMETHING Identity or permission to read application records, approve proposals or access source services. No DevKit implementation code is incorporated.
 
-`Controller` owns OAuth, loopback callbacks, native-only credentials, model discovery and text-only Responses requests. Callers supply a distinct application Keychain service and native system-browser opener. Public DTOs contain no tokens or authorization URLs. Drawing and existing Codex integration must remain available without this connection.
+`Controller` owns OAuth, loopback callbacks, native-only credentials, model discovery and text-only Responses requests. Callers supply a distinct application Keychain service and native system-browser opener. Public DTOs contain no tokens or authorization URLs. Drawing and existing Codex integration must remain available without this connection. Model discovery and typed-text requests require the renderer’s expected client registration ID. Under the existing gate and process lock, the controller reloads the native vault and rejects a changed account before credential renewal or provider access. Callers refresh identity and require a new explicit request after a mismatch.
 
 The admission gate must be false for a paid/private offering without provider approval. The open-source/local client route does not establish commercial eligibility. Do not let renderer data or an environment flag override a distribution decision.
 

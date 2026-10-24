@@ -11,8 +11,8 @@ export const chatGPT = {
   cancel: () => invokeNative<void>('draw_chatgpt_cancel'),
   disconnect: (clientId: string) => invokeNative<ChatGPTStatus>('draw_chatgpt_disconnect', { clientId }),
   select: (clientId: string) => invokeNative<ChatGPTStatus>('draw_chatgpt_select', { clientId }),
-  models: () => invokeNative<ChatGPTModel[]>('draw_chatgpt_models'),
-  respond: (model: string, input: string) => invokeNative<string>('draw_chatgpt_respond', { model, input })
+  models: (expectedClientId: string) => invokeNative<ChatGPTModel[]>('draw_chatgpt_models', { expectedClientId }),
+  respond: (expectedClientId: string, model: string, input: string) => invokeNative<string>('draw_chatgpt_respond', { expectedClientId, model, input })
 };
 // Never display arbitrary native/provider errors, which may contain diagnostic data.
 export function chatGPTError(error: unknown): string {
@@ -25,6 +25,7 @@ export function chatGPTError(error: unknown): string {
   if (code === 'REVOCATION_UNCONFIRMED' || code === 'revocation_unconfirmed') return 'Signed out locally. Remote revocation was not confirmed; disconnect Draw in ChatGPT Settings.';
   if (code === 'UNAVAILABLE') return 'ChatGPT is unavailable in this app. You can keep drawing offline.';
   if (code === 'plan_or_model_unavailable') return 'This plan or model is unavailable. Choose another available model or keep drawing without AI. No other billing method was used.';
+  if (code === 'account_changed') return 'The selected account changed. Check the current account and load its models before sending again. Your typed request is retained.';
   if (code === 'refresh_models_required') return 'Load available models again before sending. No request was sent.';
   if (code === 'sign_in_timed_out') return 'Sign-in timed out. You can retry when ready; your drawing is retained.';
   if (code === 'network_unavailable' || code === 'provider_unavailable') return 'ChatGPT is temporarily unavailable. Your request is retained; try later. No other billing method was used.';
