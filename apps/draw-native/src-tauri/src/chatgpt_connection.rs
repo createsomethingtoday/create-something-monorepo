@@ -34,6 +34,7 @@ fn unavailable() -> ConnectionStatus {
         active_client_id: None,
         accounts: Vec::<AccountSummary>::new(),
         pending_client_ids: vec![],
+        disconnect_outcome: None,
         error: Some("UNAVAILABLE".into()),
     }
 }

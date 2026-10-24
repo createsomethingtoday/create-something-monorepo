@@ -1,6 +1,6 @@
 import { invokeNative } from './native-pairing';
 export type ChatGPTAccount = { clientId: string; email?: string | null; subject: string; connected: boolean; planEnabled: boolean };
-export type ChatGPTStatus = { available: boolean; busy: boolean; activeClientId?: string | null; accounts: ChatGPTAccount[]; pendingClientIds: string[]; error?: string | null };
+export type ChatGPTStatus = { available: boolean; busy: boolean; activeClientId?: string | null; accounts: ChatGPTAccount[]; pendingClientIds: string[]; error?: string | null; disconnectOutcome?: ChatGPTDisconnectOutcome | null };
 export type ChatGPTModel = { slug: string; displayName: string };
 export const activeChatGPTAccount = (status: ChatGPTStatus) => status.accounts.find(account => account.clientId === status.activeClientId);
 export const canUseChatGPTPlan = (status: ChatGPTStatus) => Boolean(status.available && !status.busy && activeChatGPTAccount(status)?.connected && activeChatGPTAccount(status)?.planEnabled);
@@ -30,4 +30,16 @@ export function chatGPTError(error: unknown): string {
   if (code === 'network_unavailable' || code === 'provider_unavailable') return 'ChatGPT is temporarily unavailable. Your request is retained; try later. No other billing method was used.';
   if (code === 'INVALID_INPUT') return 'Enter a request of at most 16,000 bytes.';
   return 'ChatGPT could not complete this action. Your drawing and typed request are retained. No other billing method was used.';
+}
+
+export type ChatGPTDisconnectOutcome = { localTokensRemoved: boolean; remoteRevocation: 'no_refresh_token' | 'not_attempted_unverifiable' | 'request_succeeded' | 'request_failed_or_unverifiable' };
+// Receipts describe this disconnect only; never infer past revocation from signed-out status.
+export function chatGPTDisconnectNotice(outcome?: ChatGPTDisconnectOutcome | null): string {
+  const local = outcome?.localTokensRemoved ? 'Local credentials removed from this device.' : 'Local credential removal is unconfirmed.';
+  const remote = outcome?.remoteRevocation === 'no_refresh_token' ? 'No refresh token was stored to revoke; remote access status is unknown.'
+    : outcome?.remoteRevocation === 'not_attempted_unverifiable' ? 'Remote revocation was not attempted or could not be verified.'
+    : outcome?.remoteRevocation === 'request_succeeded' ? 'The server acknowledged the revocation request; this does not prove token invalidation.'
+    : outcome?.remoteRevocation === 'request_failed_or_unverifiable' ? 'The remote revocation request failed or could not be verified.'
+    : 'Remote revocation status is unknown; no disconnect receipt is available.';
+  return `${local} ${remote} Review Draw access in ChatGPT Settings if needed.`;
 }

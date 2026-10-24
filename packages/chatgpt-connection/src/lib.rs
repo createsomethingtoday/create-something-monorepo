@@ -43,6 +43,25 @@ pub struct ConnectionStatus {
     pub accounts: Vec<AccountSummary>,
     pub pending_client_ids: Vec<String>,
     pub error: Option<String>,
+    /// Present only on the disconnect response; never inferred from later status.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub disconnect_outcome: Option<DisconnectOutcome>,
+}
+/// Non-secret receipt of local removal and remote request acknowledgement.
+/// An HTTP acknowledgement does not prove server-side token invalidation.
+#[derive(Clone, Serialize, Debug, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct DisconnectOutcome {
+    pub local_tokens_removed: bool,
+    pub remote_revocation: RemoteRevocation,
+}
+#[derive(Clone, Serialize, Debug, PartialEq)]
+#[serde(rename_all = "snake_case")]
+pub enum RemoteRevocation {
+    NoRefreshToken,
+    NotAttemptedUnverifiable,
+    RequestSucceeded,
+    RequestFailedOrUnverifiable,
 }
 #[derive(Clone, Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
@@ -263,6 +282,7 @@ impl Controller {
             accounts: v.accounts.values().map(Account::summary).collect(),
             pending_client_ids: v.pending_registrations.iter().cloned().collect(),
             error,
+            disconnect_outcome: None,
         }
     }
     pub async fn status(&self) -> ConnectionStatus {
@@ -618,14 +638,17 @@ impl Controller {
         Ok(metadata)
     }
     async fn revoke(&self, client_id: &str, refresh: &str) -> bool {
+        self.revoke_outcome(client_id, refresh).await == RemoteRevocation::RequestSucceeded
+    }
+    async fn revoke_outcome(&self, client_id: &str, refresh: &str) -> RemoteRevocation {
         let Ok(metadata) = self.discovery().await else {
-            return false;
+            return RemoteRevocation::NotAttemptedUnverifiable;
         };
         let Some(endpoint) = metadata.get("revocation_endpoint").and_then(|v| v.as_str()) else {
-            return false;
+            return RemoteRevocation::NotAttemptedUnverifiable;
         };
         let Ok(endpoint) = trusted_auth_url(endpoint) else {
-            return false;
+            return RemoteRevocation::NotAttemptedUnverifiable;
         };
         for attempt in 0..3 {
             let result = self
@@ -640,15 +663,19 @@ impl Controller {
                 .send()
                 .await;
             match result {
-                Ok(response) if response.status() == reqwest::StatusCode::OK => return true,
-                Ok(response) if !response.status().is_server_error() => return false,
+                Ok(response) if response.status() == reqwest::StatusCode::OK => {
+                    return RemoteRevocation::RequestSucceeded
+                }
+                Ok(response) if !response.status().is_server_error() => {
+                    return RemoteRevocation::RequestFailedOrUnverifiable
+                }
                 _ => {}
             }
             if attempt < 2 {
                 tokio::time::sleep(Duration::from_millis(150 * (attempt + 1))).await;
             }
         }
-        false
+        RemoteRevocation::RequestFailedOrUnverifiable
     }
     async fn clear_account_tokens(&self, client_id: &str) -> Result<(), ConnectionError> {
         {
@@ -881,18 +908,24 @@ impl Controller {
         self.busy.store(true, Ordering::SeqCst);
         let _busy = Busy(&self.busy);
         self.clear_account_tokens(client_id).await?;
-        let revoke = if let Some(refresh) = &account.refresh_token {
-            self.revoke(client_id, refresh).await
+        let remote = if let Some(refresh) = &account.refresh_token {
+            self.revoke_outcome(client_id, refresh).await
         } else {
-            true
+            RemoteRevocation::NoRefreshToken
         };
-        Ok(self
-            .snapshot(if revoke {
-                None
-            } else {
-                Some("revocation_unconfirmed".into())
-            })
-            .await)
+        Ok(self.disconnect_snapshot(remote).await)
+    }
+    async fn disconnect_snapshot(&self, remote: RemoteRevocation) -> ConnectionStatus {
+        let warning = match remote {
+            RemoteRevocation::NoRefreshToken | RemoteRevocation::RequestSucceeded => None,
+            _ => Some("revocation_unconfirmed".into()),
+        };
+        let mut status = self.snapshot(warning).await;
+        status.disconnect_outcome = Some(DisconnectOutcome {
+            local_tokens_removed: true,
+            remote_revocation: remote,
+        });
+        status
     }
 }
 
@@ -1278,6 +1311,10 @@ fn write_secret(_: &str, _: &[u8]) -> Result<(), ConnectionError> {
 #[cfg(test)]
 mod controller_tests {
     use super::*;
+    // A concurrently forked child can temporarily inherit another test's flock
+    // before exec closes CLOEXEC descriptors. Serialize only these lock/spawn
+    // tests; production lock lifetime and fail-closed behavior stay unchanged.
+    static LOCK_PROCESS_TEST_GATE: std::sync::Mutex<()> = std::sync::Mutex::new(());
     fn account(id: &str, subject: &str) -> Account {
         Account {
             client_id: id.into(),
@@ -1293,6 +1330,7 @@ mod controller_tests {
     #[test]
     #[cfg(unix)]
     fn process_file_lock_excludes_other_handles_and_rejects_symlinks() {
+        let _test_gate = LOCK_PROCESS_TEST_GATE.lock().unwrap();
         let path = std::env::temp_dir().join(format!("siwc-lock-test-{}", uuid::Uuid::new_v4()));
         let first = open_process_lock(&path).unwrap();
         assert_eq!(open_process_lock(&path).unwrap_err().0, "connection_busy");
@@ -1325,6 +1363,7 @@ mod controller_tests {
     #[test]
     #[cfg(unix)]
     fn separate_process_cannot_take_held_lock() {
+        let _test_gate = LOCK_PROCESS_TEST_GATE.lock().unwrap();
         let path =
             std::env::temp_dir().join(format!("siwc-crossprocess-test-{}", uuid::Uuid::new_v4()));
         let held = open_process_lock(&path).unwrap();
@@ -1336,6 +1375,40 @@ mod controller_tests {
         assert!(result.status.success(), "synthetic child lock probe failed");
         drop(held);
         std::fs::remove_file(path).unwrap();
+    }
+    #[tokio::test]
+    async fn disconnect_receipts_distinguish_all_remote_outcomes_without_secrets() {
+        for (remote, warning, encoded) in [
+            (RemoteRevocation::NoRefreshToken, false, "no_refresh_token"),
+            (
+                RemoteRevocation::NotAttemptedUnverifiable,
+                true,
+                "not_attempted_unverifiable",
+            ),
+            (
+                RemoteRevocation::RequestSucceeded,
+                false,
+                "request_succeeded",
+            ),
+            (
+                RemoteRevocation::RequestFailedOrUnverifiable,
+                true,
+                "request_failed_or_unverifiable",
+            ),
+        ] {
+            let c = Controller::new("Test", "never-use-os-keychain", true).unwrap();
+            let status = c.disconnect_snapshot(remote.clone()).await;
+            assert_eq!(status.error.is_some(), warning);
+            let receipt = status.disconnect_outcome.as_ref().unwrap();
+            assert!(receipt.local_tokens_removed);
+            assert_eq!(receipt.remote_revocation, remote);
+            let json = serde_json::to_value(receipt).unwrap();
+            assert_eq!(
+                json,
+                serde_json::json!({"localTokensRemoved": true, "remoteRevocation": encoded})
+            );
+            assert!(c.snapshot(None).await.disconnect_outcome.is_none());
+        }
     }
     #[tokio::test]
     async fn reload_detects_another_process_account_switch() {
@@ -1492,7 +1565,25 @@ mod controller_tests {
             v.accounts.insert("a".into(), account("a", "s"));
             v.active = Some("a".into());
         }
-        c.clear_account_tokens("a").await.unwrap();
+        let status = c.disconnect("a").await.unwrap();
+        assert_eq!(
+            status.disconnect_outcome.unwrap(),
+            DisconnectOutcome {
+                local_tokens_removed: true,
+                remote_revocation: RemoteRevocation::NoRefreshToken,
+            }
+        );
+        assert!(status.error.is_none());
+        let bytes = c.test_store.lock().unwrap().clone().unwrap();
+        let persisted: Vault = serde_json::from_slice(&bytes).unwrap();
+        let saved = persisted.accounts.get("a").unwrap();
+        assert!(
+            saved.access_token.is_none()
+                && saved.refresh_token.is_none()
+                && saved.id_token.is_none()
+        );
+        assert!(persisted.active.is_none());
+        assert_eq!(persisted.host_id.as_deref(), Some("urn:uuid:fixture"));
         let v = c.vault.lock().await;
         let a = v.accounts.get("a").unwrap();
         assert!(a.access_token.is_none() && a.refresh_token.is_none() && a.id_token.is_none());

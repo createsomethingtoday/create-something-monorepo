@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount, tick } from 'svelte';
-  import { chatGPT, chatGPTError, activeChatGPTAccount, canUseChatGPTPlan, type ChatGPTStatus, type ChatGPTModel } from './native-chatgpt';
+  import { chatGPT, chatGPTError, chatGPTDisconnectNotice, activeChatGPTAccount, canUseChatGPTPlan, type ChatGPTStatus, type ChatGPTModel } from './native-chatgpt';
   let open = $state(false), status = $state<ChatGPTStatus>({ available: false, busy: false, accounts: [], pendingClientIds: [] });
   let working = $state(false), connecting = $state(false), error = $state(''), notice = $state('');
   let models = $state<ChatGPTModel[]>([]), model = $state(''), input = $state(''), answer = $state('');
@@ -37,7 +37,7 @@
   }
   async function disconnect() {
     if (!account) return; const id = ++generation; const clientId = account.clientId; working = true; error = ''; notice = ''; models = []; model = ''; answer = '';
-    try { await chatGPT.cancel(); const value = await chatGPT.disconnect(clientId); if (id === generation) { apply(value); notice = 'Connection ended on this device.'; } }
+    try { await chatGPT.cancel(); const value = await chatGPT.disconnect(clientId); if (id === generation) { apply(value); notice = chatGPTDisconnectNotice(value.disconnectOutcome); } }
     catch (e) { await failed(e, id); }
     finally { if (id === generation) working = false; }
   }
