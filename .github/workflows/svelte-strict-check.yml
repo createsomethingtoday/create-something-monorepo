@@ -4,6 +4,9 @@ on:
   pull_request:
     paths:
       - 'packages/**/src/**/*.svelte'
+      # Shared TypeScript contracts affect Svelte consumers without editing a component.
+      - 'packages/canon/**'
+      - 'packages/auth-platform/**'
       - 'packages/**/package.json'
       - 'package.json'
       - 'pnpm-lock.yaml'

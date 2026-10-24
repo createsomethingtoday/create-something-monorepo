@@ -5,6 +5,8 @@ on:
     paths:
       - 'packages/**'
       - 'scripts/mcp-quality-gate.mjs'
+      - 'scripts/test/ci-minimal-pass.test.mjs'
+      - 'scripts/test/mcp-quality-gate.test.mjs'
       - 'package.json'
       - 'pnpm-lock.yaml'
       - '.github/workflows/mcp-quality-gate.yml'
@@ -14,6 +16,8 @@ on:
     paths:
       - 'packages/**'
       - 'scripts/mcp-quality-gate.mjs'
+      - 'scripts/test/ci-minimal-pass.test.mjs'
+      - 'scripts/test/mcp-quality-gate.test.mjs'
       - 'package.json'
       - 'pnpm-lock.yaml'
       - '.github/workflows/mcp-quality-gate.yml'
@@ -46,14 +50,12 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: MCP typecheck gate
-        run: pnpm mcp:gate:typecheck
+      - name: Verify CI coverage and failure contracts
+        run: node --test scripts/test/ci-minimal-pass.test.mjs scripts/test/mcp-quality-gate.test.mjs
 
-      - name: MCP lint gate
-        run: pnpm mcp:gate:lint
-
-      - name: MCP test gate
-        run: pnpm mcp:gate:test
+      - name: MCP typecheck, lint and test gates
+        # The all-stage entry point builds prerequisites once and aggregates failures.
+        run: pnpm mcp:gate
 
       - name: Local MCP hub typecheck
         run: pnpm --filter @create-something/cs-mcp-hub typecheck

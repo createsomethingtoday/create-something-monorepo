@@ -1,0 +1,117 @@
+name: Shared auth regressions
+
+on:
+  pull_request:
+    paths:
+      - 'packages/mcp-authz/**'
+      - 'packages/canon/src/lib/auth/**'
+      - 'packages/auth-platform/**'
+      - 'packages/io/src/hooks.server.ts'
+      - 'packages/io/src/routes/+layout.server.ts'
+      - 'packages/io/src/routes/login/**'
+      - 'packages/io/src/routes/api/auth/**'
+      - 'packages/io/test/*session*.test.ts'
+      - 'packages/agency/src/hooks.server.ts'
+      - 'packages/agency/src/lib/server/*identity*'
+      - 'packages/agency/src/lib/server/mcp-token.ts'
+      - 'packages/agency/src/routes/+layout.server.ts'
+      - 'packages/concierge-chat/src/lib/server/agency-access.ts'
+      - 'packages/concierge-chat/src/routes/+layout.server.ts'
+      - 'scripts/ci-auth-regressions.mjs'
+      - 'scripts/test/ci-auth-regressions.test.mjs'
+      - 'packages/canon/package.json'
+      - 'packages/canon/vite.config.*'
+      - 'packages/canon/vitest.config.*'
+      - 'packages/canon/svelte.config.*'
+      - 'packages/canon/tsconfig.json'
+      - 'packages/io/package.json'
+      - 'packages/io/vite.config.*'
+      - 'packages/io/vitest.config.*'
+      - 'packages/io/svelte.config.*'
+      - 'packages/io/tsconfig.json'
+      - 'pnpm-workspace.yaml'
+      - 'packages/policy-os-engine/**'
+      - 'packages/cs-mcp-hub-remote/**'
+      - 'packages/identity-worker/**'
+      - 'packages/interaction-atlas-mcp/**'
+      - 'docs/policies/**'
+      - 'scripts/compile-authz-manifests.ts'
+      - 'scripts/publish-authz-policy.ts'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/shared-auth-regressions.yml'
+      - '.github/workflows/mcp-authz-policy.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'packages/mcp-authz/**'
+      - 'packages/canon/src/lib/auth/**'
+      - 'packages/auth-platform/**'
+      - 'packages/io/src/hooks.server.ts'
+      - 'packages/io/src/routes/+layout.server.ts'
+      - 'packages/io/src/routes/login/**'
+      - 'packages/io/src/routes/api/auth/**'
+      - 'packages/io/test/*session*.test.ts'
+      - 'packages/agency/src/hooks.server.ts'
+      - 'packages/agency/src/lib/server/*identity*'
+      - 'packages/agency/src/lib/server/mcp-token.ts'
+      - 'packages/agency/src/routes/+layout.server.ts'
+      - 'packages/concierge-chat/src/lib/server/agency-access.ts'
+      - 'packages/concierge-chat/src/routes/+layout.server.ts'
+      - 'scripts/ci-auth-regressions.mjs'
+      - 'scripts/test/ci-auth-regressions.test.mjs'
+      - 'packages/canon/package.json'
+      - 'packages/canon/vite.config.*'
+      - 'packages/canon/vitest.config.*'
+      - 'packages/canon/svelte.config.*'
+      - 'packages/canon/tsconfig.json'
+      - 'packages/io/package.json'
+      - 'packages/io/vite.config.*'
+      - 'packages/io/vitest.config.*'
+      - 'packages/io/svelte.config.*'
+      - 'packages/io/tsconfig.json'
+      - 'pnpm-workspace.yaml'
+      - 'packages/policy-os-engine/**'
+      - 'packages/cs-mcp-hub-remote/**'
+      - 'packages/identity-worker/**'
+      - 'packages/interaction-atlas-mcp/**'
+      - 'docs/policies/**'
+      - 'scripts/compile-authz-manifests.ts'
+      - 'scripts/publish-authz-policy.ts'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/shared-auth-regressions.yml'
+      - '.github/workflows/mcp-authz-policy.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  session-regressions:
+    name: Canon and IO session regressions
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - name: Setup pnpm
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+        with:
+          version: 9.15.0
+      - name: Setup Node
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: '22'
+          cache: pnpm
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Verify auth regression runner
+        run: node --test scripts/test/ci-auth-regressions.test.mjs
+
+      - name: Verify Canon and IO session regressions
+        run: |
+          pnpm --filter @create-something/auth-platform build
+          pnpm --filter @create-something/canon package
+          node scripts/ci-auth-regressions.mjs
+          pnpm auth:retired-provider:check
