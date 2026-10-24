@@ -20,6 +20,7 @@ path = "src/bin/gigi-mcp.rs"
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
+create-something-chatgpt-connection = { path = "../../../packages/chatgpt-connection" }
 libc = "0.2"
 rusqlite = { version = "0.37", features = ["bundled", "backup"] }
 serde = { version = "1", features = ["derive"] }
