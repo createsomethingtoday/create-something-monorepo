@@ -4,12 +4,12 @@ import {mkdir,writeFile} from 'node:fs/promises';
 const output=new URL('../output/chatgpt-connection/',import.meta.url);await mkdir(output,{recursive:true});
 const browser=await chromium.launch({channel:process.env.PLAYWRIGHT_CHANNEL || 'chrome'});
 const checks=[];
-async function pageFor(role='host',width=1440,height=920){
+async function pageFor(role='host',width=1440,height=920,nativeBusy=false){
  const context=await browser.newContext({viewport:{width,height}});
- await context.addInitScript(({role})=>{
+ await context.addInitScript(({role,nativeBusy})=>{
   const clone=x=>JSON.parse(JSON.stringify(x));
   const doc={version:'create-something.mapping-canvas.v1',id:'chatgpt-synthetic',title:'SYNTHETIC — connection isolation',createdAt:'2026-10-24T00:00:00Z',updatedAt:'2026-10-24T00:00:00Z',background:'#000000',viewport:{x:0,y:0,zoom:1},objects:[{kind:'note',id:'protected-note',text:'Never automatically send this canvas text.',x:100,y:100,width:300,height:150,createdAt:'2026-10-24T00:00:00Z'}]};
-  const t=window.__chatGPTTest={document:doc,calls:[],status:{available:true,busy:false,accounts:[],activeClientId:null,pendingClientIds:['incomplete']},mode:'normal',pending:null};
+  const t=window.__chatGPTTest={document:doc,calls:[],status:{available:true,busy:nativeBusy,accounts:[],activeClientId:null,pendingClientIds:['incomplete']},mode:'normal',pending:null};
   window.__TAURI_INTERNALS__={invoke:async(command,args={})=>{
    t.calls.push({command,args:clone(args)});
    if(command==='draw_runtime_role')return role;
@@ -32,10 +32,10 @@ async function pageFor(role='host',width=1440,height=920){
     if(t.mode==='delayed-response')return new Promise(resolve=>{t.pending=()=>resolve('Late response must be ignored.');});
     return t.mode==='long-response' ? 'Synthetic long response.\n'.repeat(200) : 'Synthetic text-only response.';
    }
-   if(command==='draw_chatgpt_disconnect'){t.status.accounts.find(x=>x.clientId===args.clientId).connected=false;t.status.error='revocation_unconfirmed';if(t.disconnectOutcome)t.status.disconnectOutcome=clone(t.disconnectOutcome);return clone(t.status);}
+   if(command==='draw_chatgpt_disconnect'){if(t.mode==='delayed-disconnect')await new Promise(resolve=>{t.pending=resolve;});t.status.accounts.find(x=>x.clientId===args.clientId).connected=false;t.status.error='revocation_unconfirmed';if(t.disconnectOutcome)t.status.disconnectOutcome=clone(t.disconnectOutcome);return clone(t.status);}
    throw new Error('Unexpected synthetic command: '+command);
   }};
- },{role});
+ },{role,nativeBusy});
  const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));await page.goto(process.env.CANVAS_URL || 'http://127.0.0.1:5288');
  await expect(page.getByText(role==='host'?'MAC AUTHORITY':role==='companion'?'IPHONE COMPANION':'LOCAL CANVAS',{exact:true})).toBeAttached();
  return{context,page,errors};
@@ -81,6 +81,21 @@ try{
  for(const [remoteRevocation,phrase] of [['no_refresh_token','No refresh token'],['not_attempted_unverifiable','not attempted'],['request_succeeded','does not prove token invalidation'],['request_failed_or_unverifiable','failed or could not be verified'],[null,'Remote revocation status is unknown']]){
   const x=await pageFor();await x.page.getByRole('button',{name:'ChatGPT',exact:true}).click();const p=x.page.getByRole('dialog',{name:'ChatGPT connection'});await p.getByRole('button',{name:'Add ChatGPT account',exact:true}).click();await x.page.evaluate(outcome=>{window.__chatGPTTest.disconnectOutcome=outcome;},remoteRevocation?{localTokensRemoved:true,remoteRevocation}:null);await p.getByRole('button',{name:'Disconnect ChatGPT'}).click();await expect(p.getByRole('status')).toContainText(phrase);await expect(p.getByRole('status')).toContainText(remoteRevocation?'Local credentials removed':'Local credential removal is unconfirmed');await expect(p.getByRole('button',{name:'Continue with saved ChatGPT account'})).toBeVisible();expect(x.errors).toEqual([]);await x.context.close();
  }checks.push('All four disconnect receipts and legacy absent receipt show local and remote outcomes separately without claiming invalidation');
+ {
+  const x=await pageFor();await x.page.getByRole('button',{name:'ChatGPT',exact:true}).click();const p=x.page.getByRole('dialog',{name:'ChatGPT connection'});await p.getByRole('button',{name:'Add ChatGPT account',exact:true}).click();
+  await x.page.evaluate(()=>{const t=window.__chatGPTTest;t.mode='delayed-disconnect';t.disconnectOutcome={localTokensRemoved:true,remoteRevocation:'request_succeeded'};});
+  const button=p.getByRole('button',{name:'Disconnect ChatGPT',exact:true});
+  // Two synchronous DOM activations test the handler guard before Svelte flushes disabled.
+  await button.evaluate(el=>{el.click();el.click();});
+  await expect.poll(()=>x.page.evaluate(()=>window.__chatGPTTest.calls.filter(c=>c.command==='draw_chatgpt_disconnect').length)).toBe(1);await expect(button).toBeDisabled();await expect(p.getByRole('button',{name:'Cancel request',exact:true})).toHaveCount(0);await expect(p.getByText('Request cancelled. You can keep drawing.',{exact:true})).toHaveCount(0);
+  const cancelCount=await x.page.evaluate(()=>window.__chatGPTTest.calls.filter(c=>c.command==='draw_chatgpt_cancel').length);expect(cancelCount).toBe(1); // intentional cancellation before disconnect, not a second cancel gesture
+  await button.dispatchEvent('click');await x.page.waitForTimeout(50);expect(await x.page.evaluate(()=>window.__chatGPTTest.calls.filter(c=>c.command==='draw_chatgpt_disconnect').length)).toBe(1);expect(await x.page.evaluate(()=>window.__chatGPTTest.calls.filter(c=>c.command==='draw_chatgpt_cancel').length)).toBe(cancelCount);
+  await x.page.evaluate(()=>window.__chatGPTTest.pending());await expect(p.getByRole('status')).toContainText('server acknowledged the revocation request');await expect(p.getByRole('status')).toContainText('does not prove token invalidation');await expect(p.getByText('Request cancelled. You can keep drawing.',{exact:true})).toHaveCount(0);expect(await x.page.evaluate(()=>window.__chatGPTTest.calls.filter(c=>c.command==='draw_chatgpt_disconnect').length)).toBe(1);expect(x.errors).toEqual([]);await x.context.close();
+ }checks.push('Held disconnect is single-flight under repeated activation; Cancel hidden, no extra native cancel, exact remote receipt retained');
+ {
+  const x=await pageFor('host',1440,920,true);await x.page.getByRole('button',{name:'ChatGPT',exact:true}).click();const p=x.page.getByRole('dialog',{name:'ChatGPT connection'});await expect(p.getByRole('status')).toContainText('Finishing an earlier connection operation');await expect(p.getByRole('button',{name:'Cancel request',exact:true})).toHaveCount(0);await expect(p.getByRole('button',{name:'Cancel sign-in',exact:true})).toHaveCount(0);expect(await x.page.evaluate(()=>window.__chatGPTTest.calls.some(c=>c.command==='draw_chatgpt_cancel'))).toBe(false);await expect(p.getByText('Request cancelled. You can keep drawing.',{exact:true})).toHaveCount(0);
+  const polls=await x.page.evaluate(()=>window.__chatGPTTest.calls.filter(c=>c.command==='draw_chatgpt_status').length);await x.page.evaluate(()=>window.__chatGPTTest.status.busy=false);await expect.poll(()=>x.page.evaluate(()=>window.__chatGPTTest.calls.filter(c=>c.command==='draw_chatgpt_status').length)).toBeGreaterThan(polls);await expect(p.getByText('Finishing an earlier connection operation.',{exact:false})).toHaveCount(0);await expect(p.getByRole('button',{name:'Add ChatGPT account',exact:true})).toBeEnabled();expect(x.errors).toEqual([]);await x.context.close();
+ }checks.push('Unknown native busy operation after renderer mount has no Cancel or invented cancellation; honest status polls to completion');
  for(const role of ['web','companion']){const x=await pageFor(role);await expect(x.page.getByRole('button',{name:'ChatGPT',exact:true})).toHaveCount(0);expect(await x.page.evaluate(()=>window.__chatGPTTest.calls.some(x=>x.command.startsWith('draw_chatgpt')))).toBe(false);await x.context.close();}checks.push('No ChatGPT connection UI or commands in web/iPhone roles');
  await writeFile(new URL('result.json',output),JSON.stringify({passed:true,checks,liveOAuth:false,providerCalls:false,syntheticNativeBridge:true},null,2)+'\n');console.log(JSON.stringify({passed:true,checks:checks.length}));
 }finally{await browser.close();}

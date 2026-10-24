@@ -2,7 +2,7 @@
   import { onMount, tick } from 'svelte';
   import { chatGPT, chatGPTError, chatGPTDisconnectNotice, activeChatGPTAccount, canUseChatGPTPlan, type ChatGPTStatus, type ChatGPTModel } from './native-chatgpt';
   let open = $state(false), status = $state<ChatGPTStatus>({ available: false, busy: false, accounts: [], pendingClientIds: [] });
-  let working = $state(false), connecting = $state(false), error = $state(''), notice = $state('');
+  let working = $state(false), connecting = $state(false), disconnecting = $state(false), error = $state(''), notice = $state('');
   let models = $state<ChatGPTModel[]>([]), model = $state(''), input = $state(''), answer = $state('');
   let trigger: HTMLButtonElement | undefined = $state();
   let heading: HTMLHeadingElement | undefined = $state();
@@ -25,6 +25,7 @@
     finally { if (id === generation) { working = false; connecting = false; } }
   }
   async function cancel() {
+    if (disconnecting || (!working && !connecting)) return;
     const id = ++generation; working = true; connecting = false; error = ''; notice = 'Request cancelled. You can keep drawing.';
     try { await chatGPT.cancel(); const value = await chatGPT.status(); if (id === generation) apply(value); } catch { if (id === generation) error = chatGPTError('cancelled'); }
     finally { if (id === generation) working = false; }
@@ -36,10 +37,10 @@
     finally { if (id === generation) working = false; }
   }
   async function disconnect() {
-    if (!account) return; const id = ++generation; const clientId = account.clientId; working = true; error = ''; notice = ''; models = []; model = ''; answer = '';
+    if (!account || disconnecting) return; const id = ++generation; const clientId = account.clientId; disconnecting = true; working = true; error = ''; notice = ''; models = []; model = ''; answer = '';
     try { await chatGPT.cancel(); const value = await chatGPT.disconnect(clientId); if (id === generation) { apply(value); notice = chatGPTDisconnectNotice(value.disconnectOutcome); } }
     catch (e) { await failed(e, id); }
-    finally { if (id === generation) working = false; }
+    finally { if (id === generation) { working = false; disconnecting = false; } }
   }
   async function manageUsage() { try { await chatGPT.openUsage(); } catch { error = 'Could not open ChatGPT Settings. Open chatgpt.com/settings/usage in your browser.'; } }
   async function loadModels() {
@@ -69,9 +70,10 @@
         {#if !account.connected}<button disabled={busy} onclick={() => void connect(account.clientId)}>Continue with saved ChatGPT account</button>{/if}
         <p>{account.connected ? 'Identity connected' : 'Signed out'} · ChatGPT plan usage {account.connected && account.planEnabled ? 'enabled' : 'not enabled'}</p>
         {#if account.connected && !account.planEnabled}<button disabled={busy} onclick={() => void connect(account.clientId)}>Enable ChatGPT plan usage</button>{/if}
-        {#if account.connected}<button onclick={() => void disconnect()}>Disconnect ChatGPT</button>{/if}
+        {#if account.connected}<button disabled={disconnecting} onclick={() => void disconnect()}>Disconnect ChatGPT</button>{/if}
       {/if}
-      {#if (working && !connecting) || status.busy}<button onclick={() => void cancel()}>Cancel request</button>{/if}
+      {#if working && !connecting && !disconnecting}<button onclick={() => void cancel()}>Cancel request</button>{/if}
+      {#if status.busy && !working && !connecting}<p role="status">Finishing an earlier connection operation. Draw is checking its status.</p>{/if}
       <p class="hint">Eligible requests use this account’s ChatGPT plan or available credits. Manage limits in ChatGPT Settings → Usage. Draw never switches to paid API billing automatically.</p><button onclick={() => void manageUsage()}>Manage usage</button>
       {#if planReady}
         <button disabled={busy} onclick={() => void loadModels()}>Load available models</button>
