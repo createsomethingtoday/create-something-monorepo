@@ -1,0 +1,4 @@
+// This panel does not start OAuth or replace the installed-Codex connection.
+export function aiConnectionView() {
+  return `<section class="panel" aria-labelledby="ai-connection-title"><div class="panel-head"><h2 id="ai-connection-title">ChatGPT connection</h2><small>Not available in this build</small></div><p>Ask GiGi continues to use your installed Codex connection. An app-owned ChatGPT connection is under development and requires provider eligibility confirmation before sign-in can be enabled.</p><button type="button" class="btn" disabled aria-describedby="ai-connection-boundaries">Continue with ChatGPT</button><p id="ai-connection-boundaries" class="muted">Your GiGi source sign-in and Google or Instagram permissions remain separate. No account or billing method is changed here.</p></section>`;
+}

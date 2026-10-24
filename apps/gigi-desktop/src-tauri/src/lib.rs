@@ -17,12 +17,14 @@ mod agent_setup;
 mod agent_preflight;
 mod navigation;
 pub mod chat;
+mod ai_connection;
 pub mod diagnostics;
 
 use tauri::Manager;
 
 #[tauri::command]
 async fn dispatch(app: tauri::AppHandle, operation: String, input: serde_json::Value) -> Result<serde_json::Value, String> {
+    if operation.starts_with("ai.connection.") { return ai_connection::dispatch(&operation).await; }
     let data_dir = match std::env::var_os("GIGI_DATA_DIR") {
         Some(path) => std::path::PathBuf::from(path),
         None => app.path().app_data_dir().map_err(|e| e.to_string())?,
