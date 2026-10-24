@@ -2,7 +2,10 @@
 //! Separate from source identity and installed-Codex authentication.
 use create_something_chatgpt_connection::Controller;
 use serde_json::{json, Value};
-use std::sync::OnceLock;
+use std::{process::Stdio, sync::OnceLock};
+
+const USAGE_URL: &str = "https://chatgpt.com/settings/usage";
+const AUTHORIZE_URL: &str = "https://auth.openai.com/api/accounts/authorize";
 
 const ENABLED: bool = cfg!(target_os = "macos");
 static CONNECTION: OnceLock<Result<Controller, String>> = OnceLock::new();
@@ -22,10 +25,30 @@ fn field<'a>(input: &'a Value, name: &str, limit: usize) -> Result<&'a str, Stri
         .filter(|s| !s.trim().is_empty() && s.len() <= limit)
         .ok_or_else(|| "invalid_request".into())
 }
+fn browser_url_allowed(url: &str) -> bool {
+    if url
+        .bytes()
+        .any(|c| c.is_ascii_control() || c.is_ascii_whitespace())
+        || url.contains('#')
+    {
+        return false;
+    }
+    url == USAGE_URL
+        || url == AUTHORIZE_URL
+        || url
+            .strip_prefix(AUTHORIZE_URL)
+            .is_some_and(|suffix| suffix.starts_with('?'))
+}
 fn browser(url: &str) -> Result<(), String> {
-    // Only the shared controller's generated authorization URL reaches this function.
+    // No caller-supplied URL is accepted through IPC. Defense in depth for the
+    // controller-generated authorization URL and fixed usage page only.
+    if !browser_url_allowed(url) {
+        return Err("browser_url_refused".into());
+    }
     std::process::Command::new("/usr/bin/open")
         .arg(url)
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
         .status()
         .map_err(|_| "browser_unavailable".to_string())?
         .success()
@@ -49,7 +72,7 @@ async fn run(c: &Controller, operation: &str, input: Value) -> Result<Value, Str
                 .map_err(|e| e.to_string())?
         }
         "ai.connection.usage" => {
-            browser("https://chatgpt.com/#settings")?;
+            browser(USAGE_URL)?;
             c.status().await
         }
         "ai.connection.cancel" => {
@@ -89,6 +112,28 @@ pub async fn dispatch(operation: &str, input: Value) -> Result<Value, String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn browser_urls_are_bounded_without_launching_a_browser() {
+        assert!(browser_url_allowed(USAGE_URL));
+        assert!(browser_url_allowed(&format!(
+            "{AUTHORIZE_URL}?state=synthetic&code_challenge=fixture"
+        )));
+        for url in [
+            "https://chatgpt.com/#settings",
+            "https://chatgpt.com/settings/usage?extra=1",
+            "https://auth.openai.com.evil.test/api/accounts/authorize?x=1",
+            "https://auth.openai.com@evil.test/api/accounts/authorize?x=1",
+            "https://auth.openai.com/api/accounts/authorize/extra?x=1",
+            "http://auth.openai.com/api/accounts/authorize?x=1",
+            "javascript:alert(1)",
+            "file:///tmp/fixture",
+            "https://auth.openai.com/api/accounts/authorize?x=1#bad",
+            "https://auth.openai.com/api/accounts/authorize?x=1\n",
+        ] {
+            assert!(!browser_url_allowed(url), "URL should be refused");
+            assert_eq!(browser(url).unwrap_err(), "browser_url_refused");
+        }
+    }
     #[test]
     fn invalid_input_and_unknown_operations_do_not_open_auth_or_inference() {
         tauri::async_runtime::block_on(async {

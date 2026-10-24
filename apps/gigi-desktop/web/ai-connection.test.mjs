@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { AiConnection, aiConnectionView, connectionError } from './ai-connection.mjs';
 const status={available:true,busy:false,activeClientId:'a',accounts:[{clientId:'a',email:'inez@example.test',connected:true,planEnabled:true}],pendingClientIds:[],error:null};
 function fixture(fn=()=>structuredClone(status)){const calls=[];const c=new AiConnection({call:async(op,input)=>{calls.push([op,input]);return fn(op,input);}});return {c,calls};}
@@ -46,4 +47,8 @@ test('action-returned revocation warning is immediate and never hidden as succes
 });
 test('incomplete sign-in uses reconnect, never attempts unverified disconnect',async()=>{
  const {c,calls}=fixture();c.status={...structuredClone(status),pendingClientIds:['p']};await c.action('connect','p');assert.deepEqual(calls[0],['ai.connection.connect',{clientId:'p'}]);
+});
+
+test('native usage opens only the verified fixed usage URL with output suppressed',()=>{
+ const source=readFileSync(new URL('../src-tauri/src/ai_connection.rs',import.meta.url),'utf8');assert.match(source,/const USAGE_URL: &str = "https:\/\/chatgpt.com\/settings\/usage"/);assert.match(source,/browser\(USAGE_URL\)/);assert.match(source,/stdout\(Stdio::null\(\)\)/);assert.match(source,/stderr\(Stdio::null\(\)\)/);
 });
