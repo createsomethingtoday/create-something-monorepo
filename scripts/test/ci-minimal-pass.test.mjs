@@ -95,3 +95,11 @@ test('shared auth main pushes do not broaden Oso publication triggers', () => {
     assert(triggered('shared-auth-regressions', file, 'push'), file);
   }
 });
+
+test('workflow-only changes execute the contract test for every inspected workflow', () => {
+  for (const name of ['mcp-quality-gate', 'agent-legibility-check', 'svelte-strict-check', 'mcp-authz-policy', 'shared-auth-regressions', 'draw-agent', 'chatgpt-connection', 'public-distribution-ga', 'github-actions-policy']) {
+    for (const event of ['pull_request', 'push']) {
+      assert(triggered('mcp-quality-gate', `.github/workflows/${name}.yml`, event), `${event}: ${name}`);
+    }
+  }
+});
