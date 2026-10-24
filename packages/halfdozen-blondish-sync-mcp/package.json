@@ -16,7 +16,7 @@
     "@modelcontextprotocol/sdk": "1.26.0",
     "agents": "0.3.10",
     "langfuse": "^3.0.0",
-    "zod": "3.25.76"
+    "zod": "4.6.6"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "4.20260621.1",

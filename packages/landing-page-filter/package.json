@@ -16,7 +16,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "zod": "^3.25.67"
+    "zod": "^4.6.6"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260621.1",
