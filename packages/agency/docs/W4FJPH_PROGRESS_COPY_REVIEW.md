@@ -80,3 +80,9 @@ Publication remains a separate decision after review of this exact pass.
 Validation result: full agency check passes with zero Svelte errors or warnings; public-copy tests pass 71/71. Primary and independent Chrome runs both pass all 20 route/viewport/motion combinations, including doubled text, keyboard disclosures and no document overflow, text collisions or page errors. Independent Sol 6.1 reader verdict: pass, no remaining findings. Prose checks report zero deterministic blockers; sentence-length warnings were reviewed in context.
 
 Final production build: pass (Cloudflare adapter completed). No publication performed. Worktree disposition: preserved for copy approval at this path and local branch.
+
+## Approved operating rhythm, added before merge
+
+Build days are Monday and Wednesday. Meetings are scheduled on Tuesday and Thursday, within your plan’s allowance and the times agreed before payment.
+
+Friday is unspecified. This states the working rhythm without adding meetings or delivery capacity. No calendar events, booking configuration, time zone, hours or credentials were changed. The user explicitly approved publication of the copy polish, then supplied this rhythm before the PR merged.

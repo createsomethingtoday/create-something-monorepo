@@ -15,6 +15,7 @@ try {
     const copy = (await page.locator(region).allTextContents()).join(' ');
     assert.match(copy, /work between check-ins/); assert.match(copy, /onboarding, pairing or troubleshooting/);
     assert.match(copy, /\$900/); assert.match(copy, /\$2,500/);
+    assert.match(copy, /Monday and Wednesday/); assert.match(copy, /Tuesday and Thursday/);
     assert.match(copy, /production incident response/); assert.match(copy, /separate/);
     const check = () => page.evaluate(region => {
       const roots = [...document.querySelectorAll(region)];
