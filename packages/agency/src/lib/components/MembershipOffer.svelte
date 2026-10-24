@@ -10,7 +10,7 @@
     {
       question: 'What does the membership cover?',
       answer:
-        'A workstream is one agreed area of work within membership, such as meeting follow-up. Individual tasks and tools can belong to the same workstream. Focused covers one workstream at a time, two 30-minute check-ins, two 60-minute remote work sessions and one agreed milestone each billing month. Team covers up to two workstreams, two check-ins, four remote sessions and two milestones. Both plans include one feedback and revision round per milestone, learning resources and Slack support. We agree on the work, response times and acceptance checks before payment. Neither plan includes unlimited development or production incident response.'
+        'A workstream is one agreed area of work within membership, such as improving a product or connecting a workflow. Individual tasks and tools can belong to the same workstream. We work between check-ins, show what changed and agree the next step. Focused covers one workstream at a time and one agreed milestone each billing month, with two 30-minute check-ins and two 60-minute remote work sessions available when useful. Team covers up to two workstreams and two milestones, with two check-ins and four remote sessions available. Remote sessions can help with onboarding, pairing or troubleshooting. Both plans include one feedback and revision round per milestone, learning resources and Slack support. We agree on the work, response times and acceptance checks before payment. Neither plan includes unlimited development or production incident response.'
     },
     {
       question: 'Is this the same as managed Control?',
@@ -62,7 +62,7 @@
       <h2 id="membership-title">Choose the support your work needs.</h2>
       <p>
         Two plans for agreed improvements, with project context carried from one task to the next.
-        A workstream is one agreed area of work, such as meeting follow-up. It can involve several tasks or tools. Choose by the number of workstreams and the time your team needs.
+        A workstream is one agreed area of work, such as improving a product or connecting a workflow. It can involve several tasks or tools. We work between check-ins, show what changed and agree the next step. Choose by the number of workstreams and milestones your team needs.
       </p>
       <p><strong>Micah Johnson currently delivers the service.</strong> <a href="/about">Meet Micah →</a></p>
       <p><strong>Focused and managed Control cover different work.</strong> Focused is {PUBLIC_PRICING.membership.focused.label} for agreed improvements, learning and operator support. <a href="/control">Managed Control</a> starts at $900/month for agreed live operations after launch, under a separate agreement. Production incident response is not included in membership.</p>
@@ -74,9 +74,9 @@
         <p class="price">{PUBLIC_PRICING.membership.focused.label}</p>
         <p>For one agreed workstream at a time, with diagnosis, engineering, learning and operator support.</p>
         <ul>
-          <li>{PUBLIC_PRICING.membership.focused.checkInsPerMonth} × {PUBLIC_PRICING.membership.focused.checkInMinutes}-minute check-ins each billing month</li>
-          <li>{PUBLIC_PRICING.membership.focused.remoteSessionsPerMonth} × {PUBLIC_PRICING.membership.focused.remoteSessionMinutes}-minute attended remote work sessions</li>
           <li>{PUBLIC_PRICING.membership.focused.milestonesPerMonth} agreed milestone with {PUBLIC_PRICING.membership.focused.revisionRoundsPerMilestone} feedback and revision round</li>
+          <li>{PUBLIC_PRICING.membership.focused.checkInsPerMonth} × {PUBLIC_PRICING.membership.focused.checkInMinutes}-minute check-ins each billing month</li>
+          <li>{PUBLIC_PRICING.membership.focused.remoteSessionsPerMonth} × {PUBLIC_PRICING.membership.focused.remoteSessionMinutes}-minute attended remote work sessions, available when useful</li>
           <li>Skills, learning resources and Slack support</li>
         </ul>
         <Button href={agencyCoreMessaging.membershipInquiryHref}>Discuss Focused</Button>
@@ -85,17 +85,18 @@
         <p class="eyebrow">Up to two workstreams</p>
         <h3 id="team-plan-title">Team</h3>
         <p class="price">{PUBLIC_PRICING.membership.team.label}</p>
-        <p>For up to two agreed workstreams and more time working with your team.</p>
+        <p>For progress across up to two agreed workstreams.</p>
         <ul>
-          <li>{PUBLIC_PRICING.membership.team.checkInsPerMonth} × {PUBLIC_PRICING.membership.team.checkInMinutes}-minute check-ins each billing month</li>
-          <li>{PUBLIC_PRICING.membership.team.remoteSessionsPerMonth} × {PUBLIC_PRICING.membership.team.remoteSessionMinutes}-minute attended remote work sessions</li>
           <li>{PUBLIC_PRICING.membership.team.milestonesPerMonth} agreed milestones across up to two workstreams, each with {PUBLIC_PRICING.membership.team.revisionRoundsPerMilestone} feedback and revision round</li>
+          <li>{PUBLIC_PRICING.membership.team.checkInsPerMonth} × {PUBLIC_PRICING.membership.team.checkInMinutes}-minute check-ins each billing month</li>
+          <li>{PUBLIC_PRICING.membership.team.remoteSessionsPerMonth} × {PUBLIC_PRICING.membership.team.remoteSessionMinutes}-minute attended remote work sessions, available when useful</li>
           <li>Skills, learning resources and Slack support</li>
         </ul>
         <Button href={agencyCoreMessaging.teamMembershipInquiryHref}>Discuss Team</Button>
       </article>
     </div>
-    <p class="availability">A milestone is one agreed workflow map or one scoped improvement to an existing workflow. It includes an acceptance check, verification and a handoff you keep. We agree on scope, session times, response times and any usage budget before payment. {PUBLIC_PRICING.membership.terms}. Larger Builds, managed Control and production incident response need separate agreements.</p>
+    <p class="availability">A milestone is one agreed workflow map or one scoped improvement to an existing workflow. It includes an acceptance check, verification and a handoff you keep. Remote sessions are an option for onboarding, pairing or troubleshooting within the plan allowance. We agree on scope, session times, response times and any usage budget before payment. {PUBLIC_PRICING.membership.terms}. Larger Builds, managed Control and production incident response need separate agreements.</p>
+    <p class="availability">Build days are Monday and Wednesday. Meetings are scheduled on Tuesday and Thursday, within your plan’s allowance and the times agreed before payment.</p>
     {#if compact}
       <p class="next-steps"><a href={agencyCoreMessaging.workflowMappingSessionHref}>Book a mapping session →</a></p>
     {/if}
@@ -133,6 +134,7 @@
   a:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; }
   .membership {
     scroll-margin-top: 6rem;
+    overflow-wrap: anywhere;
     background: var(--color-performance-paper);
     color: var(--color-performance-ink);
     border-block: 1px solid var(--color-performance-line);
