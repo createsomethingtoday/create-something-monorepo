@@ -4,8 +4,8 @@ import {mkdir,writeFile} from 'node:fs/promises';
 const output=new URL('../output/chatgpt-connection/',import.meta.url);await mkdir(output,{recursive:true});
 const browser=await chromium.launch({channel:process.env.PLAYWRIGHT_CHANNEL || 'chrome'});
 const checks=[];
-async function pageFor(role='host',width=1440){
- const context=await browser.newContext({viewport:{width,height:920}});
+async function pageFor(role='host',width=1440,height=920){
+ const context=await browser.newContext({viewport:{width,height}});
  await context.addInitScript(({role})=>{
   const clone=x=>JSON.parse(JSON.stringify(x));
   const doc={version:'create-something.mapping-canvas.v1',id:'chatgpt-synthetic',title:'SYNTHETIC — connection isolation',createdAt:'2026-10-24T00:00:00Z',updatedAt:'2026-10-24T00:00:00Z',background:'#000000',viewport:{x:0,y:0,zoom:1},objects:[{kind:'note',id:'protected-note',text:'Never automatically send this canvas text.',x:100,y:100,width:300,height:150,createdAt:'2026-10-24T00:00:00Z'}]};
@@ -30,7 +30,7 @@ async function pageFor(role='host',width=1440){
     if(t.mode==='limit')throw 'usage_limit_reached';
     if(t.mode==='expired'){const account=t.status.accounts.find(x=>x.clientId===t.status.activeClientId);account.connected=false;account.planEnabled=false;throw 'sign_in_required';}
     if(t.mode==='delayed-response')return new Promise(resolve=>{t.pending=()=>resolve('Late response must be ignored.');});
-    return 'Synthetic text-only response.';
+    return t.mode==='long-response' ? 'Synthetic long response.\n'.repeat(200) : 'Synthetic text-only response.';
    }
    if(command==='draw_chatgpt_disconnect'){t.status.accounts.find(x=>x.clientId===args.clientId).connected=false;t.status.error='revocation_unconfirmed';return clone(t.status);}
    throw new Error('Unexpected synthetic command: '+command);
@@ -71,6 +71,13 @@ try{
  expect(await page.evaluate(()=>window.__chatGPTTest.document)).toEqual(before);
  expect(await page.evaluate(()=>window.__chatGPTTest.calls.filter(x=>/draw_agent_(start|review)|draw_host_apply|draw_get_state/.test(x.command)))).toEqual([]);expect(errors).toEqual([]);checks.push('Escape focus, document equality and no local-agent permission/edit calls');await context.close();
  const mobile=await pageFor('host',780);await mobile.page.getByRole('button',{name:'ChatGPT',exact:true}).click();await expect(mobile.page.getByRole('dialog',{name:'ChatGPT connection'})).toBeVisible();expect(await mobile.page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);await mobile.page.screenshot({path:new URL('narrow-780.png',output).pathname});await mobile.context.close();checks.push('Native minimum-width connection panel fits');
+ for(const [width,height] of [[1440,920],[780,600]]){
+  const x=await pageFor('host',width,height);const p=x.page.getByRole('dialog',{name:'ChatGPT connection'});
+  await x.page.getByRole('button',{name:'ChatGPT',exact:true}).click();await p.getByRole('button',{name:'Add ChatGPT account',exact:true}).click();await p.getByRole('button',{name:'Load available models'}).click();await p.getByLabel('Text to send to ChatGPT').fill('Synthetic viewport regression only.');await x.page.evaluate(()=>window.__chatGPTTest.mode='long-response');await p.getByRole('button',{name:'Send text to ChatGPT'}).click();await expect(p.getByRole('article',{name:'ChatGPT response'})).toContainText('Synthetic long response.');
+  const bounds=await p.boundingBox();expect(bounds.x).toBeGreaterThanOrEqual(0);expect(bounds.y).toBeGreaterThanOrEqual(0);expect(bounds.x+bounds.width).toBeLessThanOrEqual(width);expect(bounds.y+bounds.height).toBeLessThanOrEqual(height);
+  for(const name of ['Disconnect ChatGPT','Send text to ChatGPT']){const action=p.getByRole('button',{name,exact:true});await action.scrollIntoViewIfNeeded();const box=await action.boundingBox();expect(box.y).toBeGreaterThanOrEqual(bounds.y);expect(box.y+box.height).toBeLessThanOrEqual(height);await expect(action).toBeInViewport();}
+  await p.evaluate(el=>el.scrollTop=el.scrollHeight);const close=p.getByRole('button',{name:'Close ChatGPT connection'});await expect(close).toBeInViewport();const closeBox=await close.boundingBox();expect(closeBox.y).toBeGreaterThanOrEqual(bounds.y);expect(closeBox.y+closeBox.height).toBeLessThanOrEqual(height);await x.page.screenshot({path:new URL(`viewport-long-${width}x${height}.png`,output).pathname});await close.click();await expect(p).toHaveCount(0);await expect(x.page.getByRole('button',{name:'ChatGPT · connected',exact:true})).toBeFocused();expect(x.errors).toEqual([]);await x.context.close();
+ }checks.push('Long connected panel fits desktop and 780x600 minimum window; actions scroll into view and sticky Close remains reachable with focus restored');
  for(const role of ['web','companion']){const x=await pageFor(role);await expect(x.page.getByRole('button',{name:'ChatGPT',exact:true})).toHaveCount(0);expect(await x.page.evaluate(()=>window.__chatGPTTest.calls.some(x=>x.command.startsWith('draw_chatgpt')))).toBe(false);await x.context.close();}checks.push('No ChatGPT connection UI or commands in web/iPhone roles');
  await writeFile(new URL('result.json',output),JSON.stringify({passed:true,checks,liveOAuth:false,providerCalls:false,syntheticNativeBridge:true},null,2)+'\n');console.log(JSON.stringify({passed:true,checks:checks.length}));
 }finally{await browser.close();}
