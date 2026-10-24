@@ -72,3 +72,7 @@ test('disconnect error and receipt stay visible together, subsequent status cann
 test('new action clears old receipt and hostile receipt fields cannot enter UI',async()=>{
  const {c}=fixture(()=>({...structuredClone(status),disconnectOutcome:{localTokensRemoved:'true',remoteRevocation:'<script>secret</script>'}}));c.status=structuredClone(status);await c.action('disconnect','a');assert.match(c.disconnectNotice,/unconfirmed/);assert.match(c.disconnectNotice,/unknown/);assert.doesNotMatch(aiConnectionView(c),/<script>|secret/);await c.action('select','a');assert.equal(c.disconnectNotice,'');
 });
+
+test('prototype property names are unknown outcomes, not receipt text or error functions',async()=>{
+ const {c}=fixture(()=>({...structuredClone(status),disconnectOutcome:{localTokensRemoved:true,remoteRevocation:'constructor'}}));c.status=structuredClone(status);await c.action('disconnect','a');assert.match(c.disconnectNotice,/outcome is unknown/);assert.equal(typeof connectionError('toString'),'string');assert.doesNotMatch(connectionError('toString'),/function/);
+});

@@ -10,16 +10,17 @@ const errors = {
 };
 export function connectionError(error) {
   const code = typeof error === 'string' ? error : error?.message;
-  return errors[code] || 'The request could not finish. Your draft is preserved. Check connection status or reconnect; billing has not changed.';
+  return (typeof code === 'string' && Object.hasOwn(errors, code) ? errors[code] : '') || 'The request could not finish. Your draft is preserved. Check connection status or reconnect; billing has not changed.';
 }
 export function disconnectNotice(outcome) {
   const local = outcome?.localTokensRemoved === true ? 'Local account tokens removed.' : 'Local token removal is unconfirmed.';
-  const remote = {
+  const outcomes = {
     no_refresh_token: 'No refresh token was present; no remote revocation request was sent. Remote invalidation is unverified.',
     not_attempted_unverifiable: 'Remote revocation was not attempted and cannot be verified. Review access in ChatGPT settings.',
     request_succeeded: 'Remote revocation request acknowledged. This does not prove server-side token invalidation.',
     request_failed_or_unverifiable: 'Remote revocation request failed or could not be verified. Review access in ChatGPT settings.',
-  }[outcome?.remoteRevocation] || 'Remote revocation outcome is unknown; no usable receipt was returned. Review access in ChatGPT settings.';
+  };
+  const remote = (typeof outcome?.remoteRevocation === 'string' && Object.hasOwn(outcomes, outcome.remoteRevocation) ? outcomes[outcome.remoteRevocation] : '') || 'Remote revocation outcome is unknown; no usable receipt was returned. Review access in ChatGPT settings.';
   return `${local} ${remote}`;
 }
 export class AiConnection {
