@@ -52,3 +52,23 @@ test('incomplete sign-in uses reconnect, never attempts unverified disconnect',a
 test('native usage opens only the verified fixed usage URL with output suppressed',()=>{
  const source=readFileSync(new URL('../src-tauri/src/ai_connection.rs',import.meta.url),'utf8');assert.match(source,/const USAGE_URL: &str = "https:\/\/chatgpt.com\/settings\/usage"/);assert.match(source,/browser\(USAGE_URL\)/);assert.match(source,/stdout\(Stdio::null\(\)\)/);assert.match(source,/stderr\(Stdio::null\(\)\)/);
 });
+
+test('disconnect distinguishes local removal and all four remote receipts without claiming invalidation',async()=>{
+ const expected={no_refresh_token:'No refresh token was present',not_attempted_unverifiable:'was not attempted',request_succeeded:'request acknowledged',request_failed_or_unverifiable:'failed or could not be verified'};
+ for(const [remoteRevocation,message] of Object.entries(expected)){
+  const {c}=fixture(()=>({...structuredClone(status),accounts:[],activeClientId:null,disconnectOutcome:{localTokensRemoved:true,remoteRevocation}}));c.status=structuredClone(status);await c.action('disconnect','a');
+  assert.match(c.disconnectNotice,/Local account tokens removed/);assert.ok(c.disconnectNotice.includes(message));const view=aiConnectionView(c);assert.match(view,/role="status"/);assert.doesNotMatch(view,/successfully revoked|invalidation confirmed/);
+  if(remoteRevocation==='request_succeeded')assert.match(view,/does not prove server-side token invalidation/);
+ }
+});
+test('missing receipt or failed operation never implies local removal or remote success',async()=>{
+ for(const failure of [false,true]){
+  const {c}=fixture(op=>{if(failure&&op.endsWith('disconnect'))throw new Error('secret provider body');return {...structuredClone(status),accounts:[],activeClientId:null};});c.status=structuredClone(status);await c.action('disconnect','a');assert.match(c.disconnectNotice,/Local token removal is unconfirmed/);assert.match(c.disconnectNotice,/outcome is unknown/);assert.doesNotMatch(c.disconnectNotice,/secret/);if(failure)assert.ok(c.error);
+ }
+});
+test('disconnect error and receipt stay visible together, subsequent status cannot recreate receipt',async()=>{
+ const {c}=fixture(()=>({...structuredClone(status),error:'revocation_unconfirmed',disconnectOutcome:{localTokensRemoved:true,remoteRevocation:'request_failed_or_unverifiable'}}));c.status=structuredClone(status);await c.action('disconnect','a');assert.match(c.error,/Revocation could not be confirmed/);assert.match(c.disconnectNotice,/Local account tokens removed/);await c.refresh();assert.equal(c.disconnectNotice,'');assert.match(c.error,/Revocation could not be confirmed/);
+});
+test('new action clears old receipt and hostile receipt fields cannot enter UI',async()=>{
+ const {c}=fixture(()=>({...structuredClone(status),disconnectOutcome:{localTokensRemoved:'true',remoteRevocation:'<script>secret</script>'}}));c.status=structuredClone(status);await c.action('disconnect','a');assert.match(c.disconnectNotice,/unconfirmed/);assert.match(c.disconnectNotice,/unknown/);assert.doesNotMatch(aiConnectionView(c),/<script>|secret/);await c.action('select','a');assert.equal(c.disconnectNotice,'');
+});
