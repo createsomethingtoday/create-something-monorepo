@@ -53,65 +53,90 @@ const moduleCache = new Map<string, CachedJWKS>();
  * 3. Fetch from Identity Worker if cache miss/expired
  * 4. Update both KV and module cache on successful fetch
  */
+// Network work is bounded per configured URL (never per attacker-controlled kid).
+// The bound is per isolate; KV distributes successful key sets, not a global lock.
+const JWKS_RETRY_INTERVAL_MS = 30_000;
+const jwksInFlight = new Map<string, Promise<JWK[]>>();
+const jwksNextAttempt = new Map<string, number>();
+
+function validKeySet(value: unknown): value is CachedJWKS {
+	if (!value || typeof value !== 'object') return false;
+	const entry = value as CachedJWKS;
+	return Number.isFinite(entry.fetchedAt) && Array.isArray(entry.keys) && entry.keys.length <= 64 &&
+		entry.keys.every(key => key && typeof key === 'object' && typeof key.kty === 'string');
+}
+
 async function fetchJWKS(
 	jwksUrl: string,
 	env?: AuthEnv,
 	runtimeFetch: typeof globalThis.fetch = globalThis.fetch,
+	forceRefresh = false,
 ): Promise<JWK[]> {
 	const now = Date.now();
-	const ttlMs = JWKS_KV_TTL * 1000;
 	const cacheKey = `identity:jwks:${jwksUrl}`;
-
-	// Try KV cache first
-	if (env?.AUTH_CACHE) {
+	const fresh = (entry?: CachedJWKS | null) => validKeySet(entry) && now - entry.fetchedAt < JWKS_KV_TTL * 1000;
+	// Prefer this isolate's fresh result over eventually consistent, older KV data.
+	const local = moduleCache.get(cacheKey);
+	if (!forceRefresh && fresh(local)) return local!.keys;
+	if (!forceRefresh && env?.AUTH_CACHE) {
 		try {
 			const cached = await env.AUTH_CACHE.get(cacheKey, 'json') as CachedJWKS | null;
-			if (cached && now - cached.fetchedAt < ttlMs) {
-				// Also update module cache for faster subsequent calls
-				moduleCache.set(cacheKey, cached);
-				return cached.keys;
+			// A different request may have refreshed this isolate while KV was pending.
+			const current = moduleCache.get(cacheKey);
+			if (fresh(current) && (!fresh(cached) || current!.fetchedAt >= cached!.fetchedAt)) return current!.keys;
+			if (fresh(cached)) {
+				moduleCache.set(cacheKey, cached!);
+				return cached!.keys;
 			}
-		} catch {
-			// KV read failed, fall through to module cache
-		}
+		} catch { /* KV is an optional cache. */ }
 	}
-
-	// Try module cache
-	const cachedModuleEntry = moduleCache.get(cacheKey);
-	if (cachedModuleEntry && now - cachedModuleEntry.fetchedAt < ttlMs) {
-		return cachedModuleEntry.keys;
-	}
-
-	// Fetch from Identity Worker
-	try {
-		const response = await runtimeFetch(jwksUrl);
-		if (!response.ok) {
-			console.error('Failed to fetch JWKS:', response.status);
-			return cachedModuleEntry?.keys ?? [];
-		}
-
-		const data = await response.json() as { keys: JWK[] };
-		const cached: CachedJWKS = { keys: data.keys, fetchedAt: now };
-
-		// Update module cache
-		moduleCache.set(cacheKey, cached);
-
-		// Update KV cache (fire and forget)
-		if (env?.AUTH_CACHE) {
-			try {
-				await env.AUTH_CACHE.put(cacheKey, JSON.stringify(cached), {
-					expirationTtl: JWKS_KV_TTL,
-				});
-			} catch {
-				// KV write failed, continue with module cache
+	const pending = jwksInFlight.get(cacheKey);
+	if (pending) return pending;
+	if (now < (jwksNextAttempt.get(cacheKey) ?? 0)) return fresh(local) ? local!.keys : [];
+	jwksNextAttempt.set(cacheKey, now + JWKS_RETRY_INTERVAL_MS);
+	const request = (async (): Promise<JWK[]> => {
+		try {
+			const response = await runtimeFetch(jwksUrl, { signal: AbortSignal.timeout(5_000), redirect: 'error' });
+			if (!response.ok) return [];
+			// Bound the document as well as the number of keys before parsing it.
+			const reader = response.body?.getReader();
+			if (!reader) return [];
+			let bytes = 0;
+			const chunks: Uint8Array[] = [];
+			for (;;) {
+				const { done, value } = await reader.read();
+				if (done) break;
+				bytes += value.byteLength;
+				if (bytes > 131_072) { await reader.cancel(); return []; }
+				chunks.push(value);
 			}
-		}
+			const body = new Uint8Array(bytes);
+			let offset = 0;
+			for (const chunk of chunks) { body.set(chunk, offset); offset += chunk.byteLength; }
+			const data = JSON.parse(new TextDecoder().decode(body)) as { keys: JWK[] };
+			const cached = { keys: data?.keys, fetchedAt: Date.now() };
+			if (!validKeySet(cached)) return [];
+			moduleCache.set(cacheKey, cached);
+			if (env?.AUTH_CACHE) {
+				try { await env.AUTH_CACHE.put(cacheKey, JSON.stringify(cached), { expirationTtl: JWKS_KV_TTL }); }
+				catch { /* Verification can use the fetched keys without KV. */ }
+			}
+			return cached.keys;
+		} catch { return []; }
+	})();
+	jwksInFlight.set(cacheKey, request);
+	try { return await request; }
+	finally { jwksInFlight.delete(cacheKey); }
+}
 
-		return data.keys;
-	} catch (error) {
-		console.error('JWKS fetch error:', error);
-		return cachedModuleEntry?.keys ?? [];
-	}
+async function findVerificationKey(
+	jwksUrl: string, kid: string, alg: string, env?: AuthEnv,
+	runtimeFetch: typeof globalThis.fetch = globalThis.fetch,
+): Promise<JWK | undefined> {
+	let keys = await fetchJWKS(jwksUrl, env, runtimeFetch);
+	if (!keys.some(key => key.kid === kid)) keys = await fetchJWKS(jwksUrl, env, runtimeFetch, true);
+	return keys.find(key => key.kid === kid && (!key.alg || key.alg === alg) &&
+		(!key.use || key.use === 'sig') && (alg === 'ES256' ? key.kty === 'EC' && key.crv === 'P-256' : key.kty === 'RSA'));
 }
 
 // =============================================================================
@@ -237,7 +262,7 @@ export const verifyIdentityToken = async (
 		const header = JSON.parse(
 			atob(headerB64.replace(/-/g, '+').replace(/_/g, '/')),
 		) as { kid?: string; alg?: string };
-		if (!header.kid || (header.alg !== 'ES256' && header.alg !== 'RS256')) return null;
+		if (typeof header.kid !== 'string' || !header.kid || header.kid.length > 256 || (header.alg !== 'ES256' && header.alg !== 'RS256')) return null;
 
 		const payload = parseJwtPayload(token);
 		if (!payload || payload.iss !== config.issuer || typeof payload.sub !== 'string' || !payload.sub) return null;
@@ -253,8 +278,7 @@ export const verifyIdentityToken = async (
 		if (!Number.isFinite(payload.exp) || payload.exp <= now) return null;
 		if (typeof payload.iat === 'number' && payload.iat > now + 60) return null;
 
-		const keys = await fetchJWKS(config.jwksUrl, config.cache, config.fetch);
-		const jwk = keys.find((candidate) => candidate.kid === header.kid);
+		const jwk = await findVerificationKey(config.jwksUrl, header.kid, header.alg, config.cache, config.fetch);
 		if (!jwk) return null;
 
 		const publicKey = await crypto.subtle.importKey(
@@ -404,7 +428,7 @@ export async function validateToken(token: string, env?: AuthEnv): Promise<User 
 		const kid = header.kid;
 
 		// Verify algorithm
-		if (header.alg !== 'ES256' && header.alg !== 'RS256') return null;
+		if (typeof kid !== 'string' || !kid || kid.length > 256 || (header.alg !== 'ES256' && header.alg !== 'RS256')) return null;
 
 		const payload = parseJwtPayload(token);
 		if (!payload) return null;
@@ -416,8 +440,7 @@ export async function validateToken(token: string, env?: AuthEnv): Promise<User 
 		if (provider.audience && !audience.includes(provider.audience)) return null;
 
 		// Get public key from JWKS (with KV caching)
-		const keys = await fetchJWKS(provider.jwksUrl, env);
-		const jwk = keys.find((k) => k.kid === kid);
+		const jwk = await findVerificationKey(provider.jwksUrl, kid, header.alg, env);
 		if (!jwk) return null;
 
 		// Import public key
@@ -563,6 +586,8 @@ export async function getOptionalUser(request: Request, env?: AuthEnv): Promise<
  */
 export async function clearJWKSCache(env?: AuthEnv): Promise<void> {
 	moduleCache.clear();
+	jwksNextAttempt.clear();
+	jwksInFlight.clear();
 
 	void env;
 }
