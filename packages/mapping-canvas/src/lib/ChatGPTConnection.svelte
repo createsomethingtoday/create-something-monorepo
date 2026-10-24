@@ -11,13 +11,17 @@
   const planReady = $derived(canUseChatGPTPlan(status));
   const busy = $derived(working || status.busy);
   onMount(() => { let live = true; void chatGPT.status().then(value => { if (live) status = value; }).catch(() => { if (live) error = chatGPTError('UNAVAILABLE'); }); const timer = setInterval(() => { if (open && status.busy && !working && !connecting) { const id = generation; void chatGPT.status().then(value => { if (live && id === generation) apply(value); }).catch(() => {}); } }, 500); return () => { live = false; generation++; clearInterval(timer); }; });
-  function apply(value: ChatGPTStatus) { if (value.activeClientId !== status.activeClientId) { models = []; model = ''; answer = ''; } status = value; if (value.error) error = chatGPTError(value.error); }
+  function apply(value: ChatGPTStatus) { const before = activeChatGPTAccount(status), after = activeChatGPTAccount(value); if (value.activeClientId !== status.activeClientId || before?.connected !== after?.connected || before?.planEnabled !== after?.planEnabled) { models = []; model = ''; answer = ''; } status = value; if (value.error) error = chatGPTError(value.error); }
   async function toggle() { if (open) return close(); open = true; await tick(); heading?.focus(); }
   async function close() { open = false; await tick(); trigger?.focus(); }
+  async function failed(e: unknown, id: number) {
+    if (id !== generation) return; error = chatGPTError(e);
+    try { const value = await chatGPT.status(); if (id === generation) apply(value); } catch { /* Preserve the sanitized original error and typed request. */ }
+  }
   async function connect(clientId: string | null = null) {
     if (busy) return; const id = ++generation; working = true; connecting = true; error = ''; notice = ''; models = []; model = ''; answer = '';
     try { const value = await chatGPT.connect(clientId); if (id === generation) { apply(value); notice = 'ChatGPT connection updated.'; } }
-    catch (e) { if (id === generation) error = chatGPTError(e); }
+    catch (e) { await failed(e, id); }
     finally { if (id === generation) { working = false; connecting = false; } }
   }
   async function cancel() {
@@ -28,26 +32,26 @@
   async function changeAccount(clientId: string) {
     if (busy) return; const id = ++generation; working = true; error = ''; notice = ''; models = []; model = ''; answer = '';
     try { const value = await chatGPT.select(clientId); if (id === generation) apply(value); }
-    catch (e) { if (id === generation) error = chatGPTError(e); }
+    catch (e) { await failed(e, id); }
     finally { if (id === generation) working = false; }
   }
   async function disconnect() {
     if (!account) return; const id = ++generation; const clientId = account.clientId; working = true; error = ''; notice = ''; models = []; model = ''; answer = '';
     try { await chatGPT.cancel(); const value = await chatGPT.disconnect(clientId); if (id === generation) { apply(value); notice = 'Connection ended on this device.'; } }
-    catch (e) { if (id === generation) error = chatGPTError(e); }
+    catch (e) { await failed(e, id); }
     finally { if (id === generation) working = false; }
   }
   async function manageUsage() { try { await chatGPT.openUsage(); } catch { error = 'Could not open ChatGPT Settings. Open chatgpt.com/settings/usage in your browser.'; } }
   async function loadModels() {
-    if (!planReady || busy) return; const id = ++generation; const clientId = status.activeClientId; working = true; error = ''; answer = '';
+    if (!planReady || busy) return; const id = ++generation; const clientId = status.activeClientId; working = true; error = ''; answer = ''; models = []; model = '';
     try { const value = await chatGPT.models(); if (id === generation && status.activeClientId === clientId) { models = value; model = value[0]?.slug || ''; if (!value.length) notice = 'No models are currently available for this account.'; } }
-    catch (e) { if (id === generation) error = chatGPTError(e); }
+    catch (e) { await failed(e, id); }
     finally { if (id === generation) working = false; }
   }
   async function ask() {
     if (!planReady || busy || !model || !input.trim()) return; const id = ++generation; const clientId = status.activeClientId; working = true; error = ''; notice = ''; answer = '';
     try { const value = await chatGPT.respond(model, input); if (id === generation && status.activeClientId === clientId) answer = value; }
-    catch (e) { if (id === generation) error = chatGPTError(e); }
+    catch (e) { await failed(e, id); }
     finally { if (id === generation) working = false; }
   }
 </script>
@@ -84,5 +88,5 @@
 {/if}
 <style>
   .connection-toggle{white-space:nowrap}.connection-panel{position:fixed;right:var(--space-md);top:var(--space-3xl);z-index:81;width:min(28rem,calc(100vw - var(--space-xl)));max-height:80vh;overflow:auto;background:var(--color-bg-elevated);color:var(--color-fg-primary);border:1px solid var(--color-border-default);border-radius:var(--radius-lg);padding:var(--space-lg);box-shadow:var(--shadow-lg)}
-  header{display:flex;justify-content:space-between;align-items:center;gap:var(--space-md)}h2{font-size:var(--text-h5);margin:0}h3{font-size:var(--text-body)}p{line-height:1.5;margin:var(--space-sm) 0}.hint{font-size:var(--text-caption);color:var(--color-fg-secondary)}label{display:grid;gap:var(--space-xs);margin:var(--space-sm) 0}select,textarea{min-width:0;width:100%;font:inherit;padding:var(--space-sm);background:var(--color-bg-surface);color:inherit;border:1px solid var(--color-border-default)}button{min-height:44px;margin:var(--space-xs);padding:var(--space-xs) var(--space-sm);color:inherit;background:var(--color-bg-surface);border:1px solid var(--color-border-default);border-radius:var(--radius-sm)}button:disabled{opacity:.45}.primary{border-color:#fcaa2d}.answer{white-space:pre-wrap;overflow-wrap:anywhere}.error{color:var(--color-error)}article{border-top:1px solid var(--color-border-default);margin-top:var(--space-md);padding-top:var(--space-md)}:focus-visible{outline:2px solid #fcaa2d;outline-offset:2px}
+  header{position:sticky;top:calc(-1 * var(--space-lg));background:var(--color-bg-elevated);padding-block:var(--space-sm);z-index:1;display:flex;justify-content:space-between;align-items:center;gap:var(--space-md)}h2{font-size:var(--text-h5);margin:0}h3{font-size:var(--text-body)}p{line-height:1.5;margin:var(--space-sm) 0}.hint{font-size:var(--text-caption);color:var(--color-fg-secondary)}label{display:grid;gap:var(--space-xs);margin:var(--space-sm) 0}select,textarea{min-width:0;width:100%;font:inherit;padding:var(--space-sm);background:var(--color-bg-surface);color:inherit;border:1px solid var(--color-border-default)}button{min-height:44px;margin:var(--space-xs);padding:var(--space-xs) var(--space-sm);color:inherit;background:var(--color-bg-surface);border:1px solid var(--color-border-default);border-radius:var(--radius-sm)}button:disabled{opacity:.45}.primary{border-color:#fcaa2d}.answer{white-space:pre-wrap;overflow-wrap:anywhere}.error{color:var(--color-error)}article{border-top:1px solid var(--color-border-default);margin-top:var(--space-md);padding-top:var(--space-md)}:focus-visible{outline:2px solid #fcaa2d;outline-offset:2px}
 </style>
