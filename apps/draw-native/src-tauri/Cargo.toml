@@ -11,6 +11,7 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
+create-something-chatgpt-connection = { path = "../../../packages/chatgpt-connection" }
 axum = "0.8"
 axum-server = { version = "0.7", features = ["tls-rustls"] }
 base64 = "0.23"
