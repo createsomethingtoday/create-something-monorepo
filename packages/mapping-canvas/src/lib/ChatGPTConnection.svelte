@@ -2,31 +2,38 @@
   import { onMount, tick } from 'svelte';
   import { chatGPT, chatGPTError, chatGPTDisconnectNotice, activeChatGPTAccount, canUseChatGPTPlan, type ChatGPTStatus, type ChatGPTModel } from './native-chatgpt';
   let open = $state(false), status = $state<ChatGPTStatus>({ available: false, busy: false, accounts: [], pendingClientIds: [] });
-  let working = $state(false), connecting = $state(false), disconnecting = $state(false), error = $state(''), notice = $state('');
+  let working = $state(false), connecting = $state(false), disconnecting = $state(false), error = $state(''), notice = $state(''), safetyWarning = $state('');
   let models = $state<ChatGPTModel[]>([]), model = $state(''), input = $state(''), answer = $state('');
   let trigger: HTMLButtonElement | undefined = $state();
   let heading: HTMLHeadingElement | undefined = $state();
-  let generation = 0;
+  let generation = 0, componentAlive = true;
+  const cancelledConnects = new Set<number>();
   const account = $derived(activeChatGPTAccount(status));
   const planReady = $derived(canUseChatGPTPlan(status));
   const busy = $derived(working || status.busy);
-  onMount(() => { let live = true; void chatGPT.status().then(value => { if (live) status = value; }).catch(() => { if (live) error = chatGPTError('UNAVAILABLE'); }); const timer = setInterval(() => { if (open && status.busy && !working && !connecting) { const id = generation; void chatGPT.status().then(value => { if (live && id === generation) apply(value); }).catch(() => {}); } }, 500); return () => { live = false; generation++; clearInterval(timer); }; });
+  onMount(() => { let live = true; void chatGPT.status().then(value => { if (live) status = value; }).catch(() => { if (live) error = chatGPTError('UNAVAILABLE'); }); const timer = setInterval(() => { if (open && status.busy && !working && !connecting) { const id = generation; void chatGPT.status().then(value => { if (live && id === generation) apply(value); }).catch(() => {}); } }, 500); return () => { live = false; componentAlive = false; cancelledConnects.clear(); generation++; clearInterval(timer); }; });
   function apply(value: ChatGPTStatus) { const before = activeChatGPTAccount(status), after = activeChatGPTAccount(value); if (value.activeClientId !== status.activeClientId || before?.connected !== after?.connected || before?.planEnabled !== after?.planEnabled) { models = []; model = ''; answer = ''; } status = value; if (value.error) error = chatGPTError(value.error); }
   async function toggle() { if (open) return close(); open = true; await tick(); heading?.focus(); }
   async function close() { open = false; await tick(); trigger?.focus(); }
   async function failed(e: unknown, id: number) {
-    if (id !== generation) return; error = chatGPTError(e);
+    if (!componentAlive) return;
+    if (id !== generation) {
+      if (cancelledConnects.has(id) && e === 'cancelled_revocation_unconfirmed') safetyWarning = 'Remote access cleanup was not confirmed after a cancelled sign-in. Review Draw access in ChatGPT Settings.';
+      return;
+    }
+    error = chatGPTError(e);
     try { const value = await chatGPT.status(); if (id === generation) apply(value); } catch { /* Preserve the sanitized original error and typed request. */ }
   }
   async function connect(clientId: string | null = null) {
     if (busy) return; const id = ++generation; working = true; connecting = true; error = ''; notice = ''; models = []; model = ''; answer = '';
     try { const value = await chatGPT.connect(clientId); if (id === generation) { apply(value); notice = 'ChatGPT connection updated.'; } }
     catch (e) { await failed(e, id); }
-    finally { if (id === generation) { working = false; connecting = false; } }
+    finally { cancelledConnects.delete(id); if (id === generation) { working = false; connecting = false; } }
   }
   async function cancel() {
     if (disconnecting || (!working && !connecting)) return;
-    const id = ++generation; working = true; connecting = false; error = ''; notice = 'Request cancelled. You can keep drawing.';
+    if (connecting) cancelledConnects.add(generation);
+    const id = ++generation; working = true; connecting = false; error = ''; notice = 'Cancellation requested. You can keep drawing.';
     try { await chatGPT.cancel(); const value = await chatGPT.status(); if (id === generation) apply(value); } catch { if (id === generation) error = chatGPTError('cancelled'); }
     finally { if (id === generation) working = false; }
   }
@@ -37,7 +44,10 @@
     finally { if (id === generation) working = false; }
   }
   async function disconnect() {
-    if (!account || disconnecting) return; const id = ++generation; const clientId = account.clientId; disconnecting = true; working = true; error = ''; notice = ''; models = []; model = ''; answer = '';
+    if (!account || disconnecting) return;
+    if (connecting) cancelledConnects.add(generation);
+    connecting = false;
+    const id = ++generation; const clientId = account.clientId; disconnecting = true; working = true; error = ''; notice = ''; models = []; model = ''; answer = '';
     try { await chatGPT.cancel(); const value = await chatGPT.disconnect(clientId); if (id === generation) { apply(value); notice = chatGPTDisconnectNotice(value.disconnectOutcome); } }
     catch (e) { await failed(e, id); }
     finally { if (id === generation) { working = false; disconnecting = false; } }
@@ -66,6 +76,11 @@
       {#if status.pendingClientIds?.length}<p>Sign-in was interrupted before it completed.</p>{#each status.pendingClientIds as pendingId, index (pendingId)}<button disabled={busy} onclick={() => void connect(pendingId)}>Retry incomplete connection{status.pendingClientIds.length > 1 ? ` ${index + 1}` : ''}</button>{/each}{/if}
       {#if status.accounts.length}<label>Saved ChatGPT account<select aria-label="Saved ChatGPT account" value={status.activeClientId || ''} disabled={busy} onchange={(event) => void changeAccount(event.currentTarget.value)}><option value="" disabled>Choose an account</option>{#each status.accounts as saved, index (saved.clientId)}<option value={saved.clientId}>{saved.email || saved.subject} · {saved.connected ? saved.planEnabled ? 'plan enabled' : 'identity only' : 'signed out'} · connection {index + 1}</option>{/each}</select></label>{/if}
       {#if connecting}<p role="status">Complete sign-in in your system browser.</p><button onclick={() => void cancel()}>Cancel sign-in</button>{:else}<button disabled={busy} onclick={() => void connect()}>{status.accounts.length || status.pendingClientIds?.length ? 'Add ChatGPT account' : 'Continue with ChatGPT'}</button>{/if}
+      {#if !account}
+        {#each status.accounts as saved, index (saved.clientId)}
+          {#if !saved.connected}<button disabled={busy} onclick={() => void connect(saved.clientId)}>Continue with saved ChatGPT account · {saved.email || saved.subject} · connection {index + 1}</button>{/if}
+        {/each}
+      {/if}
       {#if account}
         {#if !account.connected}<button disabled={busy} onclick={() => void connect(account.clientId)}>Continue with saved ChatGPT account</button>{/if}
         <p>{account.connected ? 'Identity connected' : 'Signed out'} · ChatGPT plan usage {account.connected && account.planEnabled ? 'enabled' : 'not enabled'}</p>
@@ -83,6 +98,7 @@
         <button disabled={busy || !model || !input.trim()} onclick={() => void ask()}>{working ? 'Working…' : 'Send text to ChatGPT'}</button>
       {/if}
     {/if}
+    {#if safetyWarning}<p role="alert" class="error">{safetyWarning}</p>{/if}
     {#if error}<div role="alert" class="error"><p>{error}</p>{#if error === chatGPTError('usage_limit_reached')}<button class="primary" onclick={() => void manageUsage()}>Manage usage</button>{/if}</div>{/if}
     {#if notice}<p role="status" aria-live="polite">{notice}</p>{/if}
     {#if answer}<article aria-label="ChatGPT response"><h3>Response</h3><p class="answer">{answer}</p></article>{/if}
