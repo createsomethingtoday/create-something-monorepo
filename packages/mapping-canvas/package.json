@@ -32,7 +32,8 @@
     "verify:composition": "node scripts/composition/verify-browser.mjs",
     "verify:polish": "node scripts/composition/verify-polish.mjs",
     "verify:hyperframes": "node scripts/composition/verify-hyperframes.mjs",
-    "verify:activity": "node scripts/verify-completed-activity.mjs"
+    "verify:activity": "node scripts/verify-completed-activity.mjs",
+    "verify:chatgpt": "node scripts/verify-chatgpt-connection.mjs"
   },
   "dependencies": {
     "@create-something/canon": "workspace:*",
