@@ -666,6 +666,33 @@ impl Controller {
         }
         self.save().await
     }
+    async fn handle_refresh_failure(
+        &self,
+        client_id: &str,
+        mut error: ConnectionError,
+    ) -> Result<ConnectionError, ConnectionError> {
+        if error
+            .1
+            .as_ref()
+            .and_then(|d| d.code.as_deref())
+            .is_some_and(|code| {
+                matches!(
+                    code,
+                    "invalid_grant"
+                        | "invalid_client"
+                        | "refresh_token_reused"
+                        | "refresh_token_expired"
+                        | "invalid_refresh_token"
+                        | "token_expired"
+                        | "refresh_token_invalidated"
+                )
+            })
+        {
+            self.clear_account_tokens(client_id).await?;
+            error.0 = "sign_in_required".into();
+        }
+        Ok(error)
+    }
     async fn access(&self) -> Result<(String, String), ConnectionError> {
         self.load().await?;
         let account = {
@@ -702,27 +729,7 @@ impl Controller {
             .await;
         let reply = match result {
             Ok(reply) => reply,
-            Err(e) => {
-                if e.1
-                    .as_ref()
-                    .and_then(|d| d.code.as_deref())
-                    .is_some_and(|code| {
-                        matches!(
-                            code,
-                            "invalid_grant"
-                                | "invalid_client"
-                                | "refresh_token_reused"
-                                | "refresh_token_expired"
-                                | "invalid_refresh_token"
-                                | "token_expired"
-                                | "refresh_token_invalidated"
-                        )
-                    })
-                {
-                    self.clear_account_tokens(&account.client_id).await?;
-                }
-                return Err(e);
-            }
+            Err(e) => return Err(self.handle_refresh_failure(&account.client_id, e).await?),
         };
         let mut updated = account.clone();
         updated.access_token = Some(reply.access_token);
@@ -1348,6 +1355,65 @@ mod controller_tests {
             c.snapshot(None).await.active_client_id.as_deref(),
             Some("b")
         );
+    }
+    #[tokio::test]
+    async fn terminal_refresh_reconnects_but_temporary_failure_retains_session() {
+        for code in [
+            "invalid_grant",
+            "invalid_client",
+            "refresh_token_reused",
+            "refresh_token_expired",
+            "invalid_refresh_token",
+            "token_expired",
+            "refresh_token_invalidated",
+        ] {
+            let c = Controller::new("Test", "never-use-os-keychain", true).unwrap();
+            c.loaded.store(true, Ordering::SeqCst);
+            {
+                let mut v = c.vault.lock().await;
+                v.accounts.insert("a".into(), account("a", "s"));
+                v.active = Some("a".into());
+            }
+            let error = ConnectionError(
+                "provider_request_rejected".into(),
+                Some(ProviderFailure {
+                    status: 400,
+                    request_id: Some("req_synthetic".into()),
+                    code: Some(code.into()),
+                    parameter: None,
+                }),
+            );
+            let error = c.handle_refresh_failure("a", error).await.unwrap();
+            assert_eq!(error.0, "sign_in_required");
+            assert_eq!(error.1.unwrap().code.as_deref(), Some(code));
+            let status = c.snapshot(None).await;
+            assert!(!status.accounts[0].connected);
+            assert!(status.active_client_id.is_none());
+        }
+        let c = Controller::new("Test", "never-use-os-keychain", true).unwrap();
+        c.loaded.store(true, Ordering::SeqCst);
+        {
+            let mut v = c.vault.lock().await;
+            v.accounts.insert("a".into(), account("a", "s"));
+            v.active = Some("a".into());
+        }
+        let error = c
+            .handle_refresh_failure(
+                "a",
+                ConnectionError(
+                    "provider_unavailable".into(),
+                    Some(ProviderFailure {
+                        status: 503,
+                        request_id: None,
+                        code: Some("temporarily_unavailable".into()),
+                        parameter: None,
+                    }),
+                ),
+            )
+            .await
+            .unwrap();
+        assert_eq!(error.0, "provider_unavailable");
+        assert!(c.snapshot(None).await.accounts[0].connected);
     }
     #[tokio::test]
     async fn same_email_accounts_stay_separate_and_cancel_invalidates_catalog() {
