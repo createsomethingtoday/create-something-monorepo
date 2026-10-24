@@ -54,7 +54,7 @@
     {
       question: 'What is your primary service?',
       answer:
-        'We provide AI-native technical support: diagnosis, engineering improvements and help using what we deliver. Focused is $900/month for one workstream and one milestone, with two check-ins and two remote work sessions. Team is $2,500/month for up to two workstreams and two milestones, with two check-ins and four remote sessions. Larger Builds, managed Control and project costs are separate.'
+        'We provide AI-native technical support: diagnosis, engineering improvements and help using what we deliver. We work between check-ins, show what changed and agree the next step. Focused is $900/month for one workstream and one milestone, with two check-ins and two remote work sessions available when useful. Team is $2,500/month for up to two workstreams and two milestones, with two check-ins and four remote sessions available. Remote sessions are an option for onboarding, pairing or troubleshooting. Larger Builds, managed Control and project costs are separate.'
     },
     {
       question: 'Are agents part of the workforce?',
@@ -130,7 +130,9 @@
     <p>
       Focused is $900/month for one agreed workstream and one milestone.
       Team is $2,500/month for up to two workstreams and two milestones.
-      Both include two check-ins; Focused has two remote work sessions and Team has four.
+      We work between check-ins, show what changed and agree the next step.
+      Both include two check-ins; Focused has two remote work sessions available and Team has four.
+      Use them when helpful for onboarding, pairing or troubleshooting.
     </p>
     <p>
       Delivered code follows your agreement; reusable provider tools are licensed for continued use.

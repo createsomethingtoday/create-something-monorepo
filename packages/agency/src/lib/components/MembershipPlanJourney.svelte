@@ -52,10 +52,10 @@
       <section class="chapter" data-chapter="1" aria-labelledby="plan-capacity-title">
         <p class="eyebrow">02 / Each billing month</p>
         <h4 id="plan-capacity-title">Choose the capacity your work needs.</h4>
-        <p><strong>Focused · {focused.label}.</strong> {focused.workstreams} workstream, {focused.milestonesPerMonth} agreed milestone and {focused.remoteSessionsPerMonth} attended {focused.remoteSessionMinutes}-minute remote work sessions.</p>
-        <p><strong>Team · {team.label}.</strong> Up to {team.workstreams} workstreams, {team.milestonesPerMonth} agreed milestones and {team.remoteSessionsPerMonth} attended {team.remoteSessionMinutes}-minute remote work sessions.</p>
+        <p><strong>Focused · {focused.label}.</strong> {focused.workstreams} workstream, {focused.milestonesPerMonth} agreed milestone and {focused.remoteSessionsPerMonth} attended {focused.remoteSessionMinutes}-minute remote work sessions available when useful.</p>
+        <p><strong>Team · {team.label}.</strong> Up to {team.workstreams} workstreams, {team.milestonesPerMonth} agreed milestones and {team.remoteSessionsPerMonth} attended {team.remoteSessionMinutes}-minute remote work sessions available when useful.</p>
         <p class="example">An illustrative Focused month could map the approval handoff for your website. With Team, you might agree on that map plus one scoped improvement to an existing intake workflow. We confirm feasibility and acceptance checks before committing to either milestone.</p>
-        <p>Both include {focused.checkInsPerMonth} × {focused.checkInMinutes}-minute check-ins and {focused.revisionRoundsPerMilestone} feedback and revision round per milestone. Capacity and scope are agreed; neither plan is unlimited development.</p>
+        <p>Both include {focused.checkInsPerMonth} × {focused.checkInMinutes}-minute check-ins and {focused.revisionRoundsPerMilestone} feedback and revision round per milestone. We work between check-ins and show what changed. Remote sessions can help with onboarding, pairing or troubleshooting. Capacity and scope are agreed; neither plan is unlimited development.</p>
       </section>
       <section class="chapter" data-chapter="2" aria-labelledby="plan-handoff-title">
         <p class="eyebrow">03 / Check, then carry it forward</p>
