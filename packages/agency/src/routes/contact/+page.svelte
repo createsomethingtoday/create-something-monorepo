@@ -50,12 +50,12 @@
       value: 'membership',
       label: 'Discuss membership',
       description:
-        'Focused is $900/month for one milestone, two check-ins and two remote work sessions. Team is $2,500/month for two milestones, two check-ins and four remote sessions.',
+        'Focused is $900/month for one agreed workstream and one milestone. Team is $2,500/month for up to two workstreams and two milestones. We work between check-ins and show what changed.',
       funnelStage: 'decision',
       serviceInterest: 'AI-native technical support membership',
       submitLabel: 'Send membership inquiry',
       successMessage:
-        'Received. We will review your workflow and reply with fit and onboarding details.'
+        'Received. We will review your goals and reply with fit and onboarding details.'
     },
     {
       value: 'governance-checklist',
@@ -125,15 +125,15 @@
       seoTitle: 'Discuss Technical Support | CREATE SOMETHING',
       seoDescription: 'Discuss AI-native technical support: Focused at $900/month or Team at $2,500/month. Agree on diagnosis, engineering work, and scope before payment.',
       eyebrow: 'AI-native technical support',
-      title: 'Start with the workflow you want to improve.',
+      title: 'Start with the work you want to improve.',
       description:
-        'Focused is $900/month for one workstream and one milestone, with two check-ins and two remote work sessions. Team is $2,500/month for up to two workstreams and two milestones, with two check-ins and four remote sessions. We agree on scope before payment. Project costs are separate.',
+        'A workstream is one agreed area of work, such as improving a product or connecting a workflow. Focused is $900/month for one workstream and one milestone. Team is $2,500/month for up to two workstreams and two milestones. We agree the next useful change, work between check-ins and show what changed. Scope is agreed before payment. Project costs are separate.',
       formTitle: 'Discuss membership',
       formDescription: 'Tell us what needs diagnosis or improvement, and what your team needs help learning.',
       messageLabel: 'What would you like help with?',
       messageHelper:
         'Include your tools, the result you want and whether AI usage is involved. We will agree on any development and runtime budgets before billable work. Do not include API keys, passwords or client secrets.',
-      messagePlaceholder: 'We want to improve one workflow. We currently use…'
+      messagePlaceholder: 'We want to improve our product or connect a workflow. We currently use…'
     },
     'governance-checklist': {
       seoTitle: 'Get the Workflow Control Checklist | CREATE SOMETHING .agency',
@@ -372,10 +372,11 @@
         {#if selectedIntent === 'membership'}
           <div class="form-field">
             <label for="membership-plan" class="form-label">Support plan</label>
-            <select id="membership-plan" name="membership-plan" class="form-input" bind:value={selectedPlan}>
-              <option value="focused">Focused · $900/month · 2 check-ins + 2 remote sessions</option>
-              <option value="team">Team · $2,500/month · 2 check-ins + 4 remote sessions</option>
+            <select id="membership-plan" name="membership-plan" class="form-input" aria-describedby="membership-plan-help" bind:value={selectedPlan}>
+              <option value="focused">Focused · 1 workstream</option>
+              <option value="team">Team · up to 2 workstreams</option>
             </select>
+            <p id="membership-plan-help" class="form-helper">Focused is $900/month. Team is $2,500/month. Both plans include two 30-minute check-ins each month. Focused has two 60-minute remote sessions available; Team has four. Use remote sessions when helpful for onboarding, pairing or troubleshooting. Scope and times are agreed before payment.</p>
           </div>
         {/if}
 
