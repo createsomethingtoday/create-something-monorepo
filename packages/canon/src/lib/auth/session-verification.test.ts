@@ -1,10 +1,27 @@
 import { afterEach, expect, it, vi } from 'vitest';
-import { createSessionManager } from './session.js';
+import { createAuthHooks, createSessionManager } from './session.js';
 import { clearJWKSCache } from './server.js';
 
 afterEach(() => {
   clearJWKSCache();
   vi.unstubAllGlobals();
+});
+
+it('keeps anonymous prerenders independent of runtime bindings and protects private routes', async () => {
+  const env = new Proxy({}, { get() { throw new Error('runtime binding accessed during prerender'); } });
+  const event = {
+    cookies: { get() { return undefined; }, set() {}, delete() {} },
+    url: new URL('https://agency.test/public'),
+    locals: {} as { user?: import('./types.js').User | null },
+    platform: { env }
+  };
+  const resolve = vi.fn(async () => new Response('public'));
+  const handle = createAuthHooks({ identityAudience: 'client-workspace', protectedPaths: ['/account'] });
+  expect((await handle({ event, resolve })).status).toBe(200);
+  expect(event.locals.user).toBeNull();
+  event.url = new URL('https://agency.test/account');
+  expect((await handle({ event, resolve })).status).toBe(302);
+  expect(resolve).toHaveBeenCalledTimes(1);
 });
 
 it('does not authenticate decoded attacker claims, even with a future expiry', async () => {

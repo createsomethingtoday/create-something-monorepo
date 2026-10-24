@@ -621,10 +621,13 @@ export function createAuthHooks(config: AuthHooksConfig = {}): Handle {
 			.platform?.env;
 
 		// Get session and attempt to get user (with auto-refresh)
-		const authProvider = configuredAuthProvider ?? getAuth0Config(platformEnv);
+		// Anonymous prerenders have no session to verify and cannot read runtime bindings.
+		const session = getSessionCookies(cookies);
+		const hasSession = !!(session.accessToken || session.refreshToken);
+		const authProvider = hasSession ? configuredAuthProvider ?? getAuth0Config(platformEnv) : undefined;
 		const sessionManager = createSessionManager(cookies, {
-			identityVerification: config.identityVerification ??
-				identitySessionVerification(platformEnv, config.identityAudience),
+			identityVerification: hasSession ? config.identityVerification ??
+				identitySessionVerification(platformEnv, config.identityAudience) : undefined,
 			isProduction,
 			domain,
 			onAnalyticsEvent,
