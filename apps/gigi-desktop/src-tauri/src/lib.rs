@@ -24,7 +24,7 @@ use tauri::Manager;
 
 #[tauri::command]
 async fn dispatch(app: tauri::AppHandle, operation: String, input: serde_json::Value) -> Result<serde_json::Value, String> {
-    if operation.starts_with("ai.connection.") { return ai_connection::dispatch(&operation).await; }
+    if operation.starts_with("ai.connection.") { return ai_connection::dispatch(&operation, input).await; }
     let data_dir = match std::env::var_os("GIGI_DATA_DIR") {
         Some(path) => std::path::PathBuf::from(path),
         None => app.path().app_data_dir().map_err(|e| e.to_string())?,
@@ -78,6 +78,7 @@ pub fn run() {
             if matches!(event, tauri::RunEvent::Exit) {
                 integrations::cancel_all();
                 chat::cancel_all();
+                ai_connection::cancel_if_initialized();
             }
         });
 }

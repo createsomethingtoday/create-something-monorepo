@@ -18,11 +18,12 @@ import { canUseSource, sourceDraft, reviewSourceDraft, sourceProposalView } from
 import { icon, entityIcon } from './icons.mjs';
 import { tauriBridge } from './bridge.mjs';
 import { ChatController, chatView } from './chat.mjs';
-import { aiConnectionView } from './ai-connection.mjs';
+import { AiConnection, aiConnectionView } from './ai-connection.mjs';
 import { sections, fields, moneyFields, booleanFields, fieldOptions, listFrom, recordFields, editedFields, formatMoney, gigBalance, relatedEndpoint, sourcePreview, sourceSessionBlocked, sourceCanBegin, sourceNeedsOperatorReview, importRunForAccount, pendingConsentForProvider, pendingAccountForProvider, linkInput } from './model.mjs';
 
 const root = document.querySelector('#app');
 const bridge = tauriBridge(workspace=>gigs.invalidate(workspace));
+const ai = new AiConnection(bridge, () => { if (state.page === 'settings') render(); });
 let chat;
 let routeVersion = 0;
 const workspaceHistory=createWorkspaceHistory();
@@ -157,6 +158,7 @@ async function openPage(page, resetScroll = false, historyIndex = null) {
     if (!currentRoute(route)) return false;
     state.history = listFrom(value);
   } else if (page === 'settings') {
+    await ai.refresh();
     const providers = ['gmail', 'googlecalendar'];
     state.setupChatStatus = null; state.setupChatFailed = false;
     state.sources = Object.fromEntries(providers.map((provider) => [provider, { provider, state: 'checking' }]));
@@ -440,7 +442,7 @@ function settings() {
   const sourceSignInNeeded = !sourceStates.some(sourceSessionBlocked) && (state.sourceSignedOut || !sourceStates.some(source => source?.detail === 'access_denied') && (sourceStates.some(source => ['session_expired','reauthentication_required','unauthorized'].includes(source?.detail)) || !sourceStates.some(source => ['connected','pending'].includes(source?.state))));
   return heading('Workspace', 'Setup & safety', 'Review what is ready, what still needs your consent, and how to protect your local data.') +
     `${state.justCreated ? `<div class="callout setup-welcome"><strong>Your private workspace is ready.</strong><p>Connect sources and an agent below, or start with a record. You can return to Settings at any time.</p><button class="btn" data-new="gigs">${icon('plus')}Start with a gig</button></div>` : ''}` +
-    builtInChatSetup(state.setupChatStatus, state.setupChatFailed) + aiConnectionView() + `<section class="setup-checklist"><div class="panel-head"><h2>Choose your next step</h2><small>Connections are optional</small></div><button class="btn section-gap" data-page="overview">Continue with local records ${icon('arrow-up-right')}</button><p class="muted">${safe(setupSummary(state).nextStep)}</p><div class="steps">${setupSummary(state).steps.map((step, index) => `<div class="step"><span class="number">${index + 1}</span><div><h3>${safe(step.title)}</h3><p>${safe(step.description)}</p>${step.href ? `<a class="setup-link" href="${step.href}">Open ${step.id === 'agent' ? 'agent setup' : step.id === 'phone' ? 'phone guide' : 'source setup'} ↓</a>` : ''}</div><span class="tag ${step.id === 'workspace' ? '' : 'off'}">${safe(step.label)}</span></div>`).join('')}</div></section>
+    builtInChatSetup(state.setupChatStatus, state.setupChatFailed) + aiConnectionView(ai) + `<section class="setup-checklist"><div class="panel-head"><h2>Choose your next step</h2><small>Connections are optional</small></div><button class="btn section-gap" data-page="overview">Continue with local records ${icon('arrow-up-right')}</button><p class="muted">${safe(setupSummary(state).nextStep)}</p><div class="steps">${setupSummary(state).steps.map((step, index) => `<div class="step"><span class="number">${index + 1}</span><div><h3>${safe(step.title)}</h3><p>${safe(step.description)}</p>${step.href ? `<a class="setup-link" href="${step.href}">Open ${step.id === 'agent' ? 'agent setup' : step.id === 'phone' ? 'phone guide' : 'source setup'} ↓</a>` : ''}</div><span class="tag ${step.id === 'workspace' ? '' : 'off'}">${safe(step.label)}</span></div>`).join('')}</div></section>
     <section class="panel" id="source-connections"><div class="panel-head"><h2>${icon('unplug')}<span>Source connections</span></h2><small>Separate consent required</small></div><p class="muted">Your local workspace needs no login. GiGi source sign-in confirms access to this app. Google consent connects the Google account you choose; it may be different from your GiGi sign-in.</p><details data-view-key="source-stages"><summary>How source setup works</summary><ol class="welcome-plan" aria-label="Source setup stages">${journey.stages.map((title, index) => `<li ${index === journey.current ? 'aria-current="step"' : ''}><strong>${safe(title)}</strong>${index === journey.current ? '<span>Current step</span>' : ''}</li>`).join('')}</ol></details><p role="status">${safe(journey.next)}</p>${sourceSignInNeeded ? `<button class="btn" data-sign-in="1" ${state.signingIn ? 'disabled' : ''}>${state.signingIn ? 'Waiting for browser sign-in…' : 'Sign in to GiGi sources'}</button>` : ''}${state.sourceSignedOut ? '<p class="muted" role="status">Signed out of GiGi sources on this Mac. Google consent and imported records are unchanged.</p>' : `<div class="source-session section-gap"><button class="btn text" data-source-sign-out="1" ${state.signingIn || state.signingOut || Object.keys(state.sourceBusy).length || Object.values(state.imports).some(sourceImportRunning) ? 'disabled' : ''}>${state.signingOut ? 'Signing out…' : 'Sign out of GiGi sources'}</button><p class="muted">Clears source sign-in on this Mac. Keeps Google consent and imported records.</p></div>`}<details data-view-key="source-permissions"><summary>What connecting and importing allow</summary><p>Review the Google consent screen before continuing. The configured Google grants are broader than read-only. GiGi’s source workflow uses them only to read source identity and the bounded pages described below; it does not send email, modify calendars or invite anyone.</p><p>Return here after consent, choose Check status, then Verify connection if shown. Once Account verified appears, review the Google identity and preview a source page. Preview reads a bounded selection without adding local records. Import reviewed records saves that selection. Your agent can use the same scoped read and import tools when you ask. You can skip sources and keep working with local records.</p></details><div class="steps section-gap">${sourceCard('gmail', 'Gmail')}${sourceCard('googlecalendar', 'Google Calendar')}</div><p class="muted">If a connection needs operator help, <a href="#source-diagnostics">record local diagnostics below</a>, then review the report before sharing it.</p></section>
     ${diagnosticsView(state.diagnostics, state.busy)}
     ${agentSetup()}
@@ -644,6 +646,7 @@ async function findPeople() {
 
 root.addEventListener('click', (event) => {
   const button = event.target.closest('button'); if (!button) return;
+  if (button.dataset.aiAction) { const action=button.dataset.aiAction, client=button.dataset.aiClient; void ai.action(action,client).then(()=>{ if(state.page==='settings') root.querySelector('[data-ai-action="refresh"]')?.focus?.({preventScroll:true}); }); return; }
   if(button.dataset.agentPreflight){
     if(state.busy)return;
     const route=readRoute(),x=globalThis.scrollX||0,y=globalThis.scrollY||0;
@@ -830,7 +833,7 @@ globalThis.document?.addEventListener?.('pointerdown', () => { chatRefreshFocus 
   focusChatTrigger();
 });
 
-root.addEventListener('change',event=>{const field=event.target?.dataset?.gigsField;if(!field)return;gigs.update({[field]:['status','type'].includes(field)?gigsFilterValue(event.target.value):event.target.value},false);});
+root.addEventListener('change',event=>{if(event.target.id==='ai-model'){ai.model=event.target.value;render();root.querySelector('#ai-model')?.focus?.();return;}const field=event.target?.dataset?.gigsField;if(!field)return;gigs.update({[field]:['status','type'].includes(field)?gigsFilterValue(event.target.value):event.target.value},false);});
 
 root.addEventListener('toggle', (event) => { if (event.target.dataset?.libraryNav) state.libraryOpen = event.target.open; }, true);
 
@@ -844,6 +847,7 @@ root.addEventListener('input', (event) => {
     }
     return;
   }
+  if(event.target.id==='ai-message'){ai.draft=event.target.value; const send=root.querySelector('[data-ai-action="ask"]');if(send)send.disabled=ai.busy||!ai.draft.trim()||!ai.model;return;}
   if(event.target.id==='gigs-search'){gigs.update({query:event.target.value});return;}
   if (event.target.id === 'contact-search') { searchContacts(event.target.value); return; }
   if (event.target.id === 'chat-message' && chat) chat.draft = event.target.value;
