@@ -137,15 +137,21 @@ pub(crate) async fn draw_chatgpt_models(
 ) -> Result<Vec<Model>, String> {
     state.controller()?.models().await.map_err(public_error)
 }
+// Match HTML textarea maxlength, which counts UTF-16 code units, not UTF-8 bytes.
+const MAX_INPUT_UTF16_UNITS: usize = 8_000;
+fn validate_input(input: &str) -> Result<(), String> {
+    if input.trim().is_empty() || input.encode_utf16().count() > MAX_INPUT_UTF16_UNITS {
+        return Err("INVALID_INPUT".into());
+    }
+    Ok(())
+}
 #[tauri::command]
 pub(crate) async fn draw_chatgpt_respond(
     state: tauri::State<'_, ChatGptState>,
     model: String,
     input: String,
 ) -> Result<String, String> {
-    if input.trim().is_empty() || input.len() > 16_000 {
-        return Err("INVALID_INPUT".into());
-    }
+    validate_input(&input)?;
     state
         .controller()?
         .respond(&model, &input)
@@ -156,6 +162,26 @@ pub(crate) async fn draw_chatgpt_respond(
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn input_limit_matches_textarea_utf16_units_without_credentials() {
+        for input in [
+            "a".repeat(8_000),
+            "界".repeat(6_000),
+            "界".repeat(8_000),
+            "😀".repeat(4_000),
+        ] {
+            assert!(validate_input(&input).is_ok());
+        }
+        for input in [
+            "a".repeat(8_001),
+            "界".repeat(8_001),
+            "😀".repeat(4_001),
+            String::new(),
+            " \n\t".into(),
+        ] {
+            assert_eq!(validate_input(&input), Err("INVALID_INPUT".into()));
+        }
+    }
     #[test]
     fn only_opens_the_official_authorization_endpoint() {
         assert_eq!(USAGE_URL, "https://chatgpt.com/settings/usage");

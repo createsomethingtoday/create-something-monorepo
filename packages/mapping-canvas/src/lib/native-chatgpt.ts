@@ -28,7 +28,7 @@ export function chatGPTError(error: unknown): string {
   if (code === 'refresh_models_required') return 'Load available models again before sending. No request was sent.';
   if (code === 'sign_in_timed_out') return 'Sign-in timed out. You can retry when ready; your drawing is retained.';
   if (code === 'network_unavailable' || code === 'provider_unavailable') return 'ChatGPT is temporarily unavailable. Your request is retained; try later. No other billing method was used.';
-  if (code === 'INVALID_INPUT') return 'Enter a request of at most 16,000 bytes.';
+  if (code === 'INVALID_INPUT') return 'Enter a nonblank request within the 8,000-character limit. Emoji can count as two characters.';
   return 'ChatGPT could not complete this action. Your drawing and typed request are retained. No other billing method was used.';
 }
 
