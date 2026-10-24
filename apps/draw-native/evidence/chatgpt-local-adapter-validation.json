@@ -1,0 +1,43 @@
+{
+  "schema": "create-something/draw-chatgpt-local-validation@1",
+  "scope": "optional native connection; no release or live auth",
+  "baseSource": "f7611ba8e42fc2f12996b17b665a06b6f871c315",
+  "sharedCore": "46105496ac560770b4f1e8b108fe5bef5b757829",
+  "tools": {
+    "node": "22.23.4",
+    "pnpm": "9.15.0",
+    "cargo": "1.99.0",
+    "rustc": "1.99.0",
+    "chrome": "156.0.8078.48"
+  },
+  "checks": {
+    "frontendTests": 423,
+    "nativeTests": 57,
+    "compiledFrontendSyntheticChecks": 13,
+    "svelteErrors": 0,
+    "svelteWarnings": 0,
+    "nativeFrontendBuild": "passed",
+    "originalCargoPackageVersionsPreserved": true,
+    "addedCargoPackageEntries": 8,
+    "rsaDependencyPresent": false
+  },
+  "commands": [
+    "pnpm bootstrap:worktree",
+    "pnpm --dir packages/mapping-canvas test",
+    "pnpm --dir packages/mapping-canvas check",
+    "pnpm --dir packages/mapping-canvas build:native",
+    "cargo test --manifest-path apps/draw-native/src-tauri/Cargo.toml --lib",
+    "CANVAS_URL=http://127.0.0.1:5289 node packages/mapping-canvas/scripts/verify-chatgpt-connection.mjs"
+  ],
+  "fixtureLimits": {
+    "liveOAuth": false,
+    "liveKeychain": false,
+    "providerInference": false,
+    "nativeAppLaunch": false,
+    "syntheticBridge": true
+  },
+  "output": "packages/mapping-canvas/output/chatgpt-connection/",
+  "functionalGate": "passed for local compile/tests/fixtures",
+  "perceptualGate": "builder directly viewed desktop and minimum-width fixtures; independent native review pending",
+  "releaseGate": "not qualified; real OAuth/Keychain/entitlement/model acceptance and packaging not performed"
+}
