@@ -64,7 +64,11 @@ call → HTML + screenshot) with the probe account's session cookie, stores the
 PNG in KV, and (with `post=1`) posts it to the channel as an image block. The
 rendered HTML is checked for the login page first — an expired or missing
 `PROBE_SESSION_COOKIE` is reported with a remediation message, and a login
-page is **never** posted as if it were a consent screen.
+page is **never** posted as if it were a consent screen. The same check covers
+webflow.com's bot challenge interstitial ("Confirm you’re not a bot", press and
+hold): since 2026-10-26 Browser Rendering's egress is served that page on the
+authorize URL, so `challengeDetected: true` means the capture holds no consent
+screen and the leg needs a different runner or an allowlisted egress.
 
 Flow when a new scope GAs: alert arrives → add the scope to the Scope Probe
 app in the dashboard (30 seconds; app updates have no API-token path) →

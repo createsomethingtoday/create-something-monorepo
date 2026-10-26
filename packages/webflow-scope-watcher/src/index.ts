@@ -247,6 +247,13 @@ export default {
 						error:
 							'login page detected — PROBE_SESSION_COOKIE is missing or expired; refresh it and retry',
 					};
+				} else if (capture.challengeDetected) {
+					// Never post a bot-challenge interstitial as if it were a consent screen.
+					posted = {
+						posted: false,
+						error:
+							'bot challenge detected — webflow.com served the "Confirm you’re not a bot" page to Browser Rendering instead of the authorize screen; the capture is not a consent screen',
+					};
 				} else {
 					const label = scopes.length > 0 ? scopes.join(', ') : 'the app’s configured scopes';
 					posted = await postImageToSlack(
