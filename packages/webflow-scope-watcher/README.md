@@ -70,9 +70,12 @@ hold): since 2026-10-26 Browser Rendering's egress is served that page on the
 authorize URL, so `challengeDetected: true` means the capture holds no consent
 screen and the leg needs a different runner or an allowlisted egress.
 
-Flow when a new scope GAs: alert arrives → add the scope to the Scope Probe
-app in the dashboard (30 seconds; app updates have no API-token path) →
-`POST /api/probe-capture?scopes=<new scope>&post=1`.
+Flow when a new scope GAs: the alert lists each GA scope with a ready-made
+authorize link for the Scope Probe app (needs `PROBE_CLIENT_ID`). Add the
+scope to the app in the dashboard (30 seconds; app updates have no API-token
+path), open the link as the probe account, screenshot, reply in the alert
+thread. `POST /api/probe-capture?scopes=<new scope>&post=1` remains for when
+the automated capture is unblocked.
 
 Cookie refresh: log in as the probe account, copy the `Cookie` request header
 from devtools on any dashboard request, then

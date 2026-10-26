@@ -134,7 +134,9 @@ async function runCheck(env: Env, opts: { dryRun: boolean; trigger: string }): P
 		change.endpoints = await lookupScopeEndpoints(env, change.scope!.constant);
 	}
 
-	const text = formatMessage(changes, commits, next.categories, env.GITHUB_REPO, env.SCOPES_PATH);
+	const text = formatMessage(changes, commits, next.categories, env.GITHUB_REPO, env.SCOPES_PATH, {
+		probeClientId: env.PROBE_CLIENT_ID,
+	});
 
 	let posted = false;
 	if (!opts.dryRun) {
