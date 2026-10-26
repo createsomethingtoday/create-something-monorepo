@@ -784,11 +784,23 @@ impl Controller {
         }
         Ok((token, account.client_id))
     }
-    pub async fn models(&self) -> Result<Vec<Model>, ConnectionError> {
+    async fn require_expected_account(
+        &self,
+        expected_client_id: &str,
+    ) -> Result<(), ConnectionError> {
+        self.load().await?;
+        if self.vault.lock().await.active.as_deref() != Some(expected_client_id) {
+            return Err(err("account_changed"));
+        }
+        Ok(())
+    }
+    pub async fn models(&self, expected_client_id: &str) -> Result<Vec<Model>, ConnectionError> {
+        validate_expected_client_id(expected_client_id)?;
         self.admission()?;
         let epoch = self.epoch.load(Ordering::SeqCst);
         let _lock = self.gate.try_lock().map_err(|_| err("connection_busy"))?;
         let _process_lock = self.process_lock()?;
+        self.require_expected_account(expected_client_id).await?;
         self.current(epoch)?;
         self.busy.store(true, Ordering::SeqCst);
         let _busy = Busy(&self.busy);
@@ -831,7 +843,13 @@ impl Controller {
         Ok(models)
     }
     /// Text-only, explicitly invoked input. No canvas/source reads or write tools.
-    pub async fn respond(&self, model: &str, input: &str) -> Result<String, ConnectionError> {
+    pub async fn respond(
+        &self,
+        expected_client_id: &str,
+        model: &str,
+        input: &str,
+    ) -> Result<String, ConnectionError> {
+        validate_expected_client_id(expected_client_id)?;
         self.admission()?;
         if input.trim().is_empty()
             || input.len() > 64 * 1024
@@ -843,6 +861,7 @@ impl Controller {
         let epoch = self.epoch.load(Ordering::SeqCst);
         let _lock = self.gate.try_lock().map_err(|_| err("connection_busy"))?;
         let _process_lock = self.process_lock()?;
+        self.require_expected_account(expected_client_id).await?;
         self.current(epoch)?;
         self.busy.store(true, Ordering::SeqCst);
         let _busy = Busy(&self.busy);
@@ -929,6 +948,12 @@ impl Controller {
     }
 }
 
+fn validate_expected_client_id(value: &str) -> Result<(), ConnectionError> {
+    if value.trim().is_empty() || value.len() > 512 {
+        return Err(err("invalid_request"));
+    }
+    Ok(())
+}
 fn account_from_reply(
     client_id: String,
     identity: Claims,
@@ -1429,6 +1454,115 @@ mod controller_tests {
             Some("b")
         );
     }
+    // Any regression reaching token/model/inference HTTP can only contact a
+    // closed loopback proxy, never OpenAI or an ambient machine proxy.
+    fn deny_network(c: &mut Controller) {
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        let proxy = format!("http://{}", listener.local_addr().unwrap());
+        drop(listener);
+        c.http = reqwest::Client::builder()
+            .proxy(reqwest::Proxy::all(proxy).unwrap())
+            .redirect(reqwest::redirect::Policy::none())
+            .timeout(Duration::from_millis(300))
+            .build()
+            .unwrap();
+    }
+    async fn foreign_account_fixture() -> Controller {
+        let mut c = Controller::new("Test", "synthetic-memory-only", true).unwrap();
+        deny_network(&mut c);
+        let mut stored = Vault::default();
+        let mut b = account("b", "foreign-subject");
+        b.expires_at = 0;
+        b.refresh_token = Some("SYNTHETIC_REFRESH_ONLY".into());
+        stored.accounts.insert("b".into(), b);
+        stored.active = Some("b".into());
+        *c.test_store.lock().unwrap() = Some(serde_json::to_vec(&stored).unwrap());
+        // Reproduce Manage Usage/status already observing another process's B.
+        assert_eq!(c.status().await.active_client_id.as_deref(), Some("b"));
+        let epoch = c.epoch.load(Ordering::SeqCst);
+        *c.catalog.lock().await = Some((
+            epoch,
+            "b".into(),
+            vec![Model {
+                slug: "fixture-model".into(),
+                display_name: "Fixture".into(),
+            }],
+        ));
+        c
+    }
+    #[tokio::test]
+    async fn stale_expected_account_cannot_refresh_or_infer_after_status_observed_foreign_account()
+    {
+        let c = foreign_account_fixture().await;
+        let before = c.test_store.lock().unwrap().clone();
+        assert_eq!(c.models("a").await.unwrap_err().0, "account_changed");
+        assert_eq!(
+            c.respond("a", "fixture-model", "synthetic draft")
+                .await
+                .unwrap_err()
+                .0,
+            "account_changed"
+        );
+        assert_eq!(
+            c.snapshot(None).await.active_client_id.as_deref(),
+            Some("b")
+        );
+        assert_eq!(*c.test_store.lock().unwrap(), before);
+        // The same synthetic expired B is valid when explicitly expected. It
+        // reaches only the closed proxy and fails network, not account binding.
+        assert_eq!(c.models("b").await.unwrap_err().0, "network_unavailable");
+        assert_eq!(
+            c.respond("b", "fixture-model", "synthetic draft")
+                .await
+                .unwrap_err()
+                .0,
+            "network_unavailable"
+        );
+        assert_eq!(*c.test_store.lock().unwrap(), before);
+    }
+    #[tokio::test]
+    async fn account_binding_precedes_reload_epoch_and_catalog_errors() {
+        let c = foreign_account_fixture().await;
+        c.vault.lock().await.active = Some("a".into());
+        c.loaded.store(false, Ordering::SeqCst);
+        assert_eq!(c.models("a").await.unwrap_err().0, "account_changed");
+        *c.catalog.lock().await = None;
+        assert_eq!(
+            c.respond("a", "fixture-model", "synthetic draft")
+                .await
+                .unwrap_err()
+                .0,
+            "account_changed"
+        );
+        assert_eq!(
+            c.respond("b", "fixture-model", "synthetic draft")
+                .await
+                .unwrap_err()
+                .0,
+            "refresh_models_required"
+        );
+        assert_eq!(
+            c.snapshot(None).await.active_client_id.as_deref(),
+            Some("b")
+        );
+    }
+    #[tokio::test]
+    async fn expected_account_is_mandatory_bounded_and_validated_before_storage() {
+        let mut c = Controller::new("Test", "synthetic-memory-only", true).unwrap();
+        deny_network(&mut c);
+        for invalid in [String::new(), " \n\t".into(), "x".repeat(513)] {
+            assert_eq!(c.models(&invalid).await.unwrap_err().0, "invalid_request");
+            assert_eq!(
+                c.respond(&invalid, "fixture-model", "draft")
+                    .await
+                    .unwrap_err()
+                    .0,
+                "invalid_request"
+            );
+        }
+        assert!(!c.loaded.load(Ordering::SeqCst));
+        assert!(validate_expected_client_id(&"x".repeat(512)).is_ok());
+    }
     #[tokio::test]
     async fn terminal_refresh_reconnects_but_temporary_failure_retains_session() {
         for code in [
@@ -1514,7 +1648,7 @@ mod controller_tests {
         assert_eq!(status.accounts.len(), 2);
         assert_eq!(status.active_client_id.as_deref(), Some("b"));
         assert_eq!(
-            c.respond("fixture-model", "never sent")
+            c.respond("b", "fixture-model", "never sent")
                 .await
                 .unwrap_err()
                 .0,
@@ -1525,9 +1659,9 @@ mod controller_tests {
     async fn busy_request_refused_instead_of_queueing_across_accounts() {
         let c = Controller::new("Test", "never-use-os-keychain", true).unwrap();
         let _lock = c.gate.lock().await;
-        assert_eq!(c.models().await.unwrap_err().0, "connection_busy");
+        assert_eq!(c.models("a").await.unwrap_err().0, "connection_busy");
         assert_eq!(
-            c.respond("model", "never sent").await.unwrap_err().0,
+            c.respond("a", "model", "never sent").await.unwrap_err().0,
             "connection_busy"
         );
         assert!(!c.loaded.load(Ordering::SeqCst));
@@ -1832,8 +1966,8 @@ mod tests {
                 .unwrap_err(),
             err("provider_admission_required")
         );
-        assert!(c.models().await.is_err());
-        assert!(c.respond("model", "test").await.is_err());
+        assert!(c.models("a").await.is_err());
+        assert!(c.respond("a", "model", "test").await.is_err());
         assert!(!c.loaded.load(Ordering::SeqCst));
     }
     #[test]

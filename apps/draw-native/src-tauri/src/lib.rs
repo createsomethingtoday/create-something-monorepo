@@ -14,6 +14,8 @@ mod native_history;
 mod profile_owner;
 mod agent_access;
 mod local_socket;
+mod chatgpt_connection;
+use chatgpt_connection::*;
 pub use local_socket::verify_transport as verify_local_transport;
 use native_history::NativeState;
 
@@ -1388,6 +1390,7 @@ pub fn run() {
                 transport::start(runtime.clone(), &home).map_err(std::io::Error::other)?;
             }
             app.manage(runtime);
+            app.manage(ChatGptState::new());
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -1399,6 +1402,7 @@ pub fn run() {
             draw_host_apply_batch,
             draw_host_history,
             draw_agent_start,draw_agent_status,draw_agent_revoke,draw_agent_review,
+            draw_chatgpt_open_usage,draw_chatgpt_status,draw_chatgpt_connect,draw_chatgpt_cancel,draw_chatgpt_disconnect,draw_chatgpt_select,draw_chatgpt_models,draw_chatgpt_respond,
             draw_host_replace_document,
             draw_companion_submit,
             draw_companion_set_online,
